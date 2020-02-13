@@ -19,9 +19,9 @@ import asdf
 
 ARTIFACTORY_REPO = "jwst-pipeline-results"
 BUILD_NAME = "RT :: JWST"
-TERMINAL_WIDTH = shutil.get_terminal_size((80, 20)).columns
-RTDATA_SUFFIX = "_rtdata.asdf"
 SPECFILE_SUFFIX = "_okify.json"
+RTDATA_SUFFIX = "_rtdata.asdf"
+TERMINAL_WIDTH = shutil.get_terminal_size((80, 20)).columns
 
 
 def parse_args():
@@ -44,48 +44,29 @@ def artifactory_copy(specfile, dry_run=False):
     subprocess.run(args, check=True)
 
 
-def artifactory_get_okify_specfiles(build_number):
-    """Download specfiles from Artifactory associated with a build number and
-    return a list of their locations on the local file system
+def artifactory_get_breadcrumbs(build_number, suffix):
+    """Download specfiles or other breadcrump from Artifactory associated with
+    a build number and return a list of their locations on the local file system
 
-    The search would be:
+    An example search would be:
 
     jfrog rt search jwst-pipeline-results/*/*_okify.json --props="build.number=540;build.name=RT :: JWST"
     """
     build_name = BUILD_NAME
 
-    props = f"build.number={build_number};build.name={build_name}"
-
     # Retreive all the okify specfiles for failed tests.
     args = list(["jfrog", "rt", "dl"]
-        + [f"{ARTIFACTORY_REPO}/*/*_okify.json"]
-        + [f'--props="{props}"']
+        + [f"{ARTIFACTORY_REPO}/*/*{suffix}"]
+        + [f'--build={build_name}/{build_number}']
         + ["--flat"])
-    cmd = " ".join(args)
-    subprocess.run(cmd, check=True, shell=True, capture_output=True)
+    subprocess.run(args, check=True, capture_output=True)
 
-    return sorted(glob("*_okify.json"))
-
-
-def artifactory_get_rtdata_asdf(build_number):
-    build_name = BUILD_NAME
-
-    props = f"build.number={build_number};build.name={build_name}"
-
-    # Retreive all the rtdata ASDF files for failed tests.
-    args = list(["jfrog", "rt", "dl"]
-        + [f"{ARTIFACTORY_REPO}/*/*_rtdata.asdf"]
-        + [f'--props="{props}"']
-        + ["--flat"])
-    cmd = " ".join(args)
-    subprocess.run(cmd, check=True, shell=True, capture_output=True)
-
-    return sorted(glob("*_rtdata.asdf"))
+    return sorted(glob(f"*{suffix}"))
 
 
 def artifactory_get_build_artifacts(build):
-    specfiles = artifactory_get_okify_specfiles(build)
-    asdffiles = artifactory_get_rtdata_asdf(build)
+    specfiles = artifactory_get_breadcrumbs(build, SPECFILE_SUFFIX)
+    asdffiles = artifactory_get_breadcrumbs(build, RTDATA_SUFFIX)
 
     if len(specfiles) != len(asdffiles):
         raise RuntimeError("Different number of _okify.json and _rtdata.asdf files")
