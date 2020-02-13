@@ -49,7 +49,7 @@ bc0.build_cmds = [
     "pip install pytest-xdist",
 ]
 bc0.test_cmds = [
-    "pytest --cov-report=xml --cov -r sxf -n 30 --bigdata --slow \
+    "pytest --cov-report=xml --cov -r sxf -n 5 --bigdata --slow \
     --basetemp=${pytest_basetemp} --junit-xml=results.xml --dist=loadscope \
     --ignore-glob='*assoc*' jwst/regtest/"
 ]
