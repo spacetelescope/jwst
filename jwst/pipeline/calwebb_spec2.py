@@ -283,6 +283,7 @@ class Spec2Pipeline(Pipeline):
         and not isinstance(result, datamodels.CubeModel):
 
             # Call the resample_spec step for 2D slit data
+            self.resample_spec.save_results = self.save_results
             self.resample_spec.suffix = 's2d'
             result_extra = self.resample_spec(result)
 
@@ -300,6 +301,7 @@ class Spec2Pipeline(Pipeline):
             result_extra = result
 
         # Extract a 1D spectrum from the 2D/3D data
+        self.extract_1d.save_results = self.save_results
         if tso_mode:
             self.extract_1d.suffix = 'x1dints'
         else:
