@@ -20,6 +20,8 @@ import asdf
 ARTIFACTORY_REPO = "jwst-pipeline-results"
 BUILD_NAME = "RT :: JWST"
 TERMINAL_WIDTH = shutil.get_terminal_size((80, 20)).columns
+RTDATA_SUFFIX = "_rtdata.asdf"
+SPECFILE_SUFFIX = "_okify.json"
 
 
 def parse_args():
@@ -70,7 +72,7 @@ def artifactory_get_rtdata_asdf(build_number):
 
     props = f"build.number={build_number};build.name={build_name}"
 
-    # Retreive all the okify specfiles for failed tests.
+    # Retreive all the rtdata ASDF files for failed tests.
     args = list(["jfrog", "rt", "dl"]
         + [f"{ARTIFACTORY_REPO}/*/*_rtdata.asdf"]
         + [f'--props="{props}"']
@@ -89,14 +91,14 @@ def artifactory_get_build_artifacts(build):
         raise RuntimeError("Different number of _okify.json and _rtdata.asdf files")
 
     for a,b in zip(specfiles, asdffiles):
-        if a.split(".")[0][:-6] != b.split(".")[0][:-7]:
+        if a.replace(SPECFILE_SUFFIX, "") != b.replace(RTDATA_SUFFIX, ""):
             raise RuntimeError("The _okify.json and _rtdata.asdf files are not matched")
 
     return specfiles, asdffiles
 
 
 @contextmanager
-def cd(newdir):
+def pushd(newdir):
     prevdir = os.getcwd()
     os.chdir(os.path.expanduser(newdir))
     try:
@@ -113,7 +115,7 @@ def main():
     # Create and chdir to a temporary directory to store specfiles
     with tempfile.TemporaryDirectory() as tmpdir:
         print(f"Downloading test okify artifacts to local directory {tmpdir}")
-        with cd(tmpdir):
+        with pushd(tmpdir):
             # Retreive all the okify specfiles for failed tests.
             specfiles, asdffiles = artifactory_get_build_artifacts(build)
 
