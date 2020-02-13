@@ -1,6 +1,11 @@
 0.14.3 (Unreleased)
 ===================
 
+assign_wcs
+----------
+
+- A ``ValueError`` is now raised if input data is missing ``xref_sci`` or ``yref_sci`` keywords. [#4561]
+
 associations
 ------------
 
@@ -43,6 +48,8 @@ extract_2d
 - For GRISM data, the variance arrays and INT_TIMES table are copied to output,
   and keywords SLTSTRT1 and SLTSTRT2 are set to the pixel location of the
   cutout in the input file. [#4504]
+
+- A ``ValueError`` is now raised if the input data is missing ``xref_sci`` or ``yref_sci`` keywords. [#4561]
 
 master_background
 -----------------
@@ -117,6 +124,10 @@ wfs_combine
 - Use float64 data types internally in ``wfs_combine`` so as not to cause an
   error in ``scipy.signal.convolve``. [#4432]
 
+tso_photometry
+--------------
+
+- A ``ValueError`` is now raised if the input data for ``call`` is missing ``crpix1`` or ``crpix2`` keywords. [#4561]
 
 0.14.2 (2019-11-18)
 ===================
@@ -2075,6 +2086,7 @@ assign_wcs
 
 - fix input units to meters when filter=OPAQUE [#2134]
 
+
 associations
 ------------
 
@@ -2137,7 +2149,6 @@ extract_1d
 
 extract_2d
 ----------
-
 
 firstframe
 ----------
