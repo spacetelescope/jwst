@@ -91,6 +91,7 @@ def detect_jumps (input_model, gain_model, readnoise_model,
     ncols = data.shape[-1]
     num_groups = data.shape[1]
     num_ints = data.shape[0]
+    frames_per_group = input_model.meta.exposure.nframes
     row_above_gdq = np.zeros((num_ints, num_groups, ncols), dtype=np.uint8)
     previous_row_above_gdq = np.zeros((num_ints, num_groups, ncols), dtype=np.uint8)
     row_below_gdq = np.zeros((num_ints, num_groups, ncols), dtype=np.uint8)
@@ -104,17 +105,17 @@ def detect_jumps (input_model, gain_model, readnoise_model,
         slices.insert(i, (data[:, :, i * yincrement:(i + 1) * yincrement, :],
                           gdq[:, :, i * yincrement:(i + 1) * yincrement, :],
                           readnoise_2d[i * yincrement:(i + 1) * yincrement, :],
-                          rejection_threshold, num_groups, flag_4_neighbors,
+                          rejection_threshold, frames_per_group, flag_4_neighbors,
                           max_jump_to_flag_neighbors, min_jump_to_flag_neighbors))
     # last slice get the rest
     slices.insert(numslices - 1, (data[:, :, (numslices - 1) * yincrement:nrows, :],
                                  gdq[:, :, (numslices - 1) * yincrement:nrows, :],
                                  readnoise_2d[(numslices - 1) * yincrement:nrows, :],
-                                 rejection_threshold, num_groups, flag_4_neighbors,
+                                 rejection_threshold, frames_per_group, flag_4_neighbors,
                                  max_jump_to_flag_neighbors, min_jump_to_flag_neighbors))
     if numslices == 1:
         gdq, row_below_dq, row_above_dq = twopt.find_crs(data, gdq, readnoise_2d, rejection_threshold,
-                                                                        num_groups, flag_4_neighbors,
+                                                                        frames_per_group, flag_4_neighbors,
                                                                         max_jump_to_flag_neighbors,
                                                                         min_jump_to_flag_neighbors)
         elapsed = time.time() - start

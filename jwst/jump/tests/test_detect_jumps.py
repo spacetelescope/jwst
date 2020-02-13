@@ -67,6 +67,37 @@ def test_onecr_10_groups_neighbors_flagged(setup_inputs):
     assert (4 == out_model.groupdq[0, 5, 6, 5])
     assert (4 == out_model.groupdq[0, 5, 4, 5])
 
+def test_nocr_100_groups_nframes1(setup_inputs):
+    """"
+    NO CR in a 100 group exposure to make sure that frames_per_group is passed correctly to
+    twopoint_difference. This test recreates the problem found in issue #4571.
+    """
+    grouptime = 3.0
+    ingain = 1 #to make the noise calculation simple
+    inreadnoise = np.float64(7)
+    ngroups = 100
+    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
+                                                          gain=ingain, readnoise=inreadnoise,
+                                                          deltatime=grouptime)
+    model1.meta.exposure.nframes = 1
+    # two segments perfect fit, second segment has twice the slope
+    model1.data[0, 0, 5, 5] = 14.0
+    model1.data[0, 1, 5, 5] = 20.0
+    model1.data[0, 2, 5, 5] = 27.0
+    model1.data[0, 3, 5, 5] = 30.0
+    model1.data[0, 4, 5, 5] = 38.0
+    model1.data[0, 5, 5, 5] = 40.0
+    model1.data[0, 6, 5, 5] = 50.0
+    model1.data[0, 7, 5, 5] = 52.0
+    model1.data[0, 8, 5, 5] = 63.0
+    model1.data[0, 9, 5, 5] = 68.0
+    for i in range(10,100):
+        model1.data[0,i,5,5] = i * 5
+    out_model = detect_jumps(model1, gain, rnModel, 4.0,  1, 200, 4, True)
+    total_CRs_in_pixel = np.sum(out_model.groupdq[0,:, 5, 5])
+    assert(total_CRs_in_pixel, 0)
+    assert (0 == np.max(out_model.groupdq))
+
 def test_twoints_onecr_each_10_groups_neighbors_flagged(setup_inputs):
     """"
         Two integrations with CRs in different locations. This makes sure we are correctly
