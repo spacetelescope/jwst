@@ -1,0 +1,1400 @@
+{
+      "crds" : {
+          "type" : "object",
+          "properties" : {
+              "sw_version" : {
+                  "title" : "Version of CRDS file selection software used",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(20)",
+                  "fits_keyword" : "CRDS_VER",
+                  "description" : "Identifies the version of the CRDS client software that was used to select calibration reference files during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.crds_ver","GuideStarRefData.crds_ver"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+                  },
+
+              "context_used" : {
+                  "title" : "CRDS context (.pmap) used to select ref files",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(20)",
+                  "fits_keyword" : "CRDS_CTX",
+                  "description" : "Identifies the version of the CRDS context (PMAP file) that was used to control the logic involved in selecting certain versions or instances of calibration reference files.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.crds_ctx","GuideStarRefData.crds_ctx"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "area" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Pixel area reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_AREA",
+                  "description" : "The name of the pixel area map reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_area"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+               }
+          }
+      },
+
+      "barshadow" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "NIRSpec bar shadow reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_BARSHA",
+                  "description" : "The name of the NIRSpec bar shadow reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_barsha"],
+                  "level" : "2b",
+                  "si" : "NIRSPEC",
+                  "section" : "Reference file information",
+                  "mode" : "NRS_MSASPEC",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+               }
+          }
+      },
+
+      "camera" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Nirspec Camera reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_CAMERA",
+                  "description" : "The name of the NIRSpec camera transform reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_camera"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "collimator" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Nirspec Collimator reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_COLLIM",
+                  "description" : "The name of the NIRSpec collimator transform reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_collim"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "cubepar" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "IFU cube parameters reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_CUBPAR",
+                  "description" : "The name of the IFU cube parameters reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_cubpar"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "dark" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Dark reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_DARK",
+                  "description" : "The name of the dark current reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_dark"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "dflat" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Detector Flat reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_DFLAT",
+                  "description" : "Records the name of the NIRSpec detector flat-field (DFLAT) reference file used during level-2b calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_dflat"],
+                  "level" : "2",
+                  "si" : "NIRSPEC",
+                  "section" : "Reference file information",
+                  "mode" : "NRS_MSASPEC,NRS_FIXEDSLIT,NRS_IFU,NRS_BRIGHTOBJ",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "disperser" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Disperser reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_DISPER",
+                  "description" : "The name of the NIRSpec disperser transform reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_disper"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "distortion" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Distortion reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_DISTOR",
+                  "description" : "The name of the distortion transform reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_distor"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "drizpars" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Drizzle parameters reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_DRZPAR",
+                  "description" : "The name of the drizzle parameters reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_drzpar"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "extract1d" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "1-D extraction parameters reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_EXTR1D",
+                  "description" : "The name of the 1-D spectral extraction parameters reference file used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_extr1d"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "fflat" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Fore-optics Flat reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_FFLAT",
+                  "description" : "Records the name of the NIRSpec fore-optics flat-field (FFLAT) reference file used during level-2b calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_fflat"],
+                  "level" : "2",
+                  "si" : "NIRSPEC",
+                  "section" : "Reference file information",
+                  "mode" : "NRS_MSASPEC,NRS_FIXEDSLIT,NRS_IFU,NRS_BRIGHTOBJ",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "filteroffset" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Filter Offset reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_FILOFF",
+                  "description" : "The name of the MIRI filter offset transform reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_filoff"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "flat" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Flat reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_FLAT",
+                  "description" : "The name of the flat-field reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                   "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_flat","GuideStarRefData.r_flat"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+               }
+           }
+      },
+
+      "fore" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Nirspec FORE Model reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_FORE",
+                  "description" : "The name of the NIRSpec fore-optics transform reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_fore"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+               }
+           }
+      },
+
+      "fpa" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Nirspec FPA Model reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_FPA",
+                  "description" : "The name of the NIRSpec FPA transform reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                   "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_fpa"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+               }
+           }
+      },
+
+      "fringe" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Fringe reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_FRINGE",
+                  "description" : "The name of the MIRI MRS fringe correction reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_fringe"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "gain" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Gain reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_GAIN",
+                  "description" : "The name of the detector gain (electrons/ADU) reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_gain"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "ifufore" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "ifufore reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_IFUFOR",
+                  "description" : "The name of the NIRSpec IFU fore transform reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_ifufor"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "ifupost" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "ifupost reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_IFUPOS",
+                  "description" : "The name of the NIRSpec IFU post transform reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_ifupos"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "ifuslicer" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "ifuslicer reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_IFUSLI",
+                  "description" : "The name of the NIRSpec IFU slicer transform reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_ifusli"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "ipc" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "IPC reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_IPC",
+                  "description" : "The name of the Inter-Pixel Capacitance (IPC) correction reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_ipc"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "lastframe" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Last Frame reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_LASTFR",
+                  "description" : "The name of the MIRI last frame correction reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_lastfr"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "linearity" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Linearity reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_LINEAR",
+                  "description" : "The name of the linearity correction reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_linear"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "mask" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Mask reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_MASK",
+                  "description" : "The name of the static bad pixel mask reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_mask","GuideStarRefData.r_mask"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "msa" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Nirspec MSA Model reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_MSA",
+                  "description" : "The name of the NIRSpec Micro-Shutter Array (MSA) transform reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_msa"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "badshutter" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "MSA operability reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_MSAOPE",
+                  "description" : "The name of the NIRSpec Micro-Shutter Array (MSA) operability reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_msaope"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "ote" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Nirspec OTE Model reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_OTE",
+                  "description" : "The name of the NIRSpec Optical Telescope Element (OTE) transform reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_ote"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "persat" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Persistence saturation reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_PERSAT",
+                  "description" : "The name of the persistence saturation threshold reference file used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_persat"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "photom" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Photometric reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_PHOTOM",
+                  "description" : "The name of the photometric calibration reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_photom"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "psfmask" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "PSF mask reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_PSFMAS",
+                  "description" : "The name of the PSF mask reference file that was used in the level-3 coronagraphic processing step align_refs.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_psfmas"],
+                  "level" : "3",
+                  "si" : "MIRI,NIRCAM",
+                  "section" : "Reference file information",
+                  "mode" : "Coronagraphic",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "pathloss" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Pathloss reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_PTHLOS",
+                  "description" : "The name of the path loss correction reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_pthlos"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "readnoise" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Read noise reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_READNO",
+                  "description" : "The name of the detector read noise reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_readno"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "refpix" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Reference pixels reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_REFPIX",
+                  "description" : "The name of the reference pixel parameters reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_refpix"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "regions" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Regions reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_REGION",
+                  "description" : "The name of the MIRI MRS regions definition reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_region"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "resample" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Resample parameters reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_RESAMP",
+                  "description" : "The name of the resampling parameters reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_resamp"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "reset" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Reset reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_RESET",
+                  "description" : "The name of the MIRI reset correction reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_reset"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "resolution" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "MRS resolution reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_RESOL",
+                  "description" : "The name of the MIRI MRS spectral resolution reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_resol"],
+                  "level" : "2",
+                  "si" : "MIRI",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "rscd" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "RSCD reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_RSCD",
+                  "description" : "Records the name of the MIRI Reset Switch Charge Decay (RSCD) reference file that was used.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_rscd"],
+                  "level" : "2a",
+                  "si" : "MIRI",
+                  "section" : "Reference file information",
+                  "mode" : "MIR_*",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "saturation" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Saturation reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_SATURA",
+                  "description" : "The name of the saturation threshold reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_satura"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "sflat" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Spectrograph Flat reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_SFLAT",
+                  "description" : "Records the name of the NIRSpec spectrograph flat-field (SFLAT) reference file used during level-2b calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_sflat"],
+                  "level" : "2",
+                  "si" : "NIRSPEC",
+                  "section" : "Reference file information",
+                  "mode" : "NRS_MSASPEC,NRS_FIXEDSLIT,NRS_IFU,NRS_BRIGHTOBJ",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "specwcs" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Spectral distortion reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_SPCWCS",
+                  "description" : "The name of the reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_spcwcs"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "straylight" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Straylight reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_STRAY",
+                  "description" : "The name of the MIRI MRS spectral distortions reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_stray"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+    },
+
+      "superbias" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Superbias reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_SUPERB",
+                  "description" : "The name of the superbias reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_superb"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "throughput" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Filter throughput reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_THRPUT",
+                  "description" : "The name of the filter throughput reference file used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_thrput"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "trapdensity" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Trap density reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_TRPDEN",
+                  "description" : "The name of the persistence trap density reference file used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_trpden"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "trappars" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Trap parameters reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_TRPPAR",
+                  "description" : "The name of the persistence trap parameters reference file used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_trppar"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "tso_photometry" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "TSO imaging photometry reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_TSPHOT",
+                  "description" : "The name of the TSO photometry reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "jwst_nircam_tsophot_0042.asdf",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_tsphot"],
+                  "level" : "3",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "v2v3" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "V2_V3 Model reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_V2V3",
+                  "description" : "The name of the MIRI MRS V2/V3 transform reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_v2v3"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+      },
+
+      "wavelengthrange" : {
+          "type" : "object",
+          "properties" : {
+              "name" : {
+                  "title" : "Wavelength Range reference file name",
+                  "type" : "string",
+                  "sql_dtype" : "nvarchar(50)",
+                  "fits_keyword" : "R_WAVRAN",
+                  "description" : "The name of the MIRI MRS or NIRSpec wavelength range definitions reference file that was used during calibration processing.",
+                  "calculation" : "",
+                  "default_value" : "",
+                  "special_processing" : "OPTIONAL",
+                  "example" : "",
+                  "units" : "",
+                  "sw_source" : "",
+                  "source" : "Calibration Software",
+                  "destination" : ["ScienceRefData.r_wavran"],
+                  "level" : "2",
+                  "si" : "Multiple",
+                  "section" : "Reference file information",
+                  "mode" : "All",
+                  "fits_hdu" : "PRIMARY",
+                  "misc" : ""
+              }
+          }
+     }
+}

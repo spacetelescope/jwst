@@ -1,0 +1,25 @@
+{
+    "coronagraph" : {
+        "title" : "coronagraph mask used",
+        "type" : "string",
+        "sql_dtype" : "nvarchar(20)",
+        "enum" :  ["MASK210R", "MASKSWB", "MASK335R", "MASK430R", "MASKLWB"],
+        "fits_keyword" : "CORONMSK",
+        "description" : "NIRCam coronagraph mask being used.",
+        "calculation" : "",
+        "default_value" : "",
+        "special_processing" : "VALUE_REQUIRED",
+        "example" : "",
+        "units" : "",
+        "sw_source" : "METRICS:nrcMechanism.coron",
+        "source" : "Observatory Status File (OSF)",
+        "destination" : ["NircamScience.coronmsk"],
+        "level" : "1b",
+        "si" : "NIRCAM",
+        "section" : "Instrument",
+        "mode" : ["NRC_TACQ","NRC_CORON"],
+        "fits_hdu" : "PRIMARY",
+        "misc" : "Redundant source:PPS:nircam_templates.coronagraph"
+    }
+}
+

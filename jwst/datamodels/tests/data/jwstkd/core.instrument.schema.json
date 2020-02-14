@@ -1,0 +1,48 @@
+{
+    "name" : {
+        "title" : "Instrument used to acquire the data",
+        "type" : "string",
+        "sql_dtype" : "nvarchar(7)",
+        "enum" :  ["NIRCAM", "NIRSPEC", "MIRI", "TFI", "FGS", "NIRISS", "ANY", "N/A"],
+        "fits_keyword" : "INSTRUME",
+        "description" : "Identifies the instrument used to acquire the data. The options are: NIRCAM, NIRSPEC, MIRI, NIRISS, or FGS.",
+        "calculation" : "detector table lookup using apid",
+        "default_value" : "",
+        "special_processing" : "VALUE_REQUIRED",
+        "example" : "NIRCAM",
+        "units" : "",
+        "sw_source" : "calculation",
+        "source" : "Science and Operations Center Project Reference Database (PRD)",
+        "destination" : ["ScienceCommon.instrume","GuideStar.instrume"],
+        "level" : "1a",
+        "si" : "Multiple",
+        "section" : "Instrument",
+        "mode" : "All",
+        "fits_hdu" : "PRIMARY",
+        "misc" : "Redundant source:PRD:detector.xml",
+        "comment_line" : "/Exposure parameters"
+    },
+
+    "detector" : {
+        "title" : "Name of detector used to acquire the data",
+        "type" : "string",
+        "sql_dtype" : "nvarchar(12)",
+        "enum" :  ["NRCA1", "NRCA2", "NRCA3", "NRCA4", "NRCALONG", "NRCB1", "NRCB2", "NRCB3", "NRCB4", "NRCBLONG", "NRS1", "NRS2", "ANY", "MIRIMAGE", "MIRIFULONG", "MIRIFUSHORT", "NIS", "GUIDER1", "GUIDER2", "N/A"],
+        "fits_keyword" : "DETECTOR",
+        "description" : "Name of SCA detector used to acquire the data (APID to detector name map configured in S&OC Project Reference Database (S&OC PRD))",
+        "calculation" : "detector table lookup",
+        "default_value" : "",
+        "special_processing" : "VALUE_REQUIRED",
+        "example" : "NRCA1",
+        "units" : "",
+        "sw_source" : "",
+        "source" : "Science and Operations Center Project Reference Database (PRD)",
+        "destination" : ["ScienceCommon.detector","GuideStar.detector"],
+        "level" : "1a",
+        "si" : "Multiple",
+        "section" : "Instrument",
+        "mode" : "All",
+        "fits_hdu" : "PRIMARY",
+        "misc" : "ScienceImageHeader.ApID"
+    }
+}

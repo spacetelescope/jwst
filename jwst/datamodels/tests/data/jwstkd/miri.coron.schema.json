@@ -1,0 +1,25 @@
+{
+    "coronagraph"  : {
+        "title" : "coronagraph mask used",
+        "type" : "string",
+        "sql_dtype" : "nvarchar(20)",
+        "enum" :  ["LYOT", "LYOT_2300", "4QPM", "4QPM_1065", "4QPM_1140", "4QPM_1550"],
+        "fits_keyword" : "CORONMSK",
+        "description" : "MIRI coronagraph mask being used.",
+        "calculation" : "",
+        "default_value" : "",
+        "special_processing" : "VALUE_REQUIRED",
+        "example" : "",
+        "units" : "",
+        "sw_source" : "METRICS:mirMechanism.coron",
+        "source" : "Observatory Status File (OSF)",
+        "destination" : ["MiriScience.coronmsk"],
+        "level" : "1b",
+        "si" : "MIRI",
+        "section" : "Instrument",
+        "mode" : "All",
+        "fits_hdu" : "PRIMARY",
+        "misc" : "Redundant source:PPS:miri_templates.coronagraph"
+    }
+}
+

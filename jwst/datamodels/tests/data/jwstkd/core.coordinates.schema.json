@@ -1,0 +1,23 @@
+{
+    "reference_frame" : {
+        "title" : "Name of the coordinate reference frame",
+        "type" : "string",
+        "sql_dtype" : "nvarchar(10)",
+        "enum" : [ "ICRS" ],
+        "fits_keyword" : "RADESYS",
+        "description" : "Name of the reference frame of equatorial or ecliptic coordinates. The coordinate reference frame for JWST data is expected to be International Celecestial Reference System.",
+        "calculation" : "",
+        "default_value" : "ICRS",
+        "example" : "ICRS",
+        "units" : "",
+        "sw_source" : "",
+        "source" : "Science Data Processing (SDP)",
+        "destination" : ["ScienceCommonExt.radesys","GuideStarExt.radesys"],
+        "level" : "1a",
+        "si" : "Multiple",
+        "section" : "Coordinates",
+        "mode" : "All",
+        "fits_hdu" : "SCI",
+        "misc" : ""
+    }
+}

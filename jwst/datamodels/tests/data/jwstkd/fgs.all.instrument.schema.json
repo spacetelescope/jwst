@@ -1,0 +1,23 @@
+{
+    "focus_position" : {
+        "title" : "Focus position",
+        "type" : "float",
+        "sql_dtype" : "float",
+        "fits_keyword" : "FOCUSPOS",
+        "description" : "Identifies the position of the FGS focus mechanism in millimeters (-4.0 to 4.0)",
+        "calculation" : "",
+        "default_value" : "0.0",
+        "example" : "0.0",
+        "units" : "millimeters",
+        "sw_source" : "METRICS:fgsMechanism.focus",
+        "source" : "Observatory Status File (OSF)",
+        "destination" : ["FgsScience.focuspos","GuideStar.focuspos"],
+        "level" : "1b",
+        "si" : "FGS",
+        "section" : "Instrument",
+        "mode" : "All",
+        "fits_hdu" : "PRIMARY",
+        "misc" : ""
+    }
+}
+

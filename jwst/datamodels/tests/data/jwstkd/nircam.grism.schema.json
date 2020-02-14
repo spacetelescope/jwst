@@ -1,0 +1,23 @@
+{
+    "noutputs" : {
+        "title" : "Number of detector outputs used",
+        "type" : "integer",
+        "sql_dtype" : "tinyint",
+        "fits_keyword" : "NOUTPUTS",
+        "description" : "The keyword NOUTPUTS indicates the number of detector amplifier outputs that were used for reading the detector. For NIRCam grism time series observations, this can be 1 or 4 outputs. For other cases, it is set to 1 for subarrays, and set to 4 for full-frame observations.",
+        "calculation" : "",
+        "default_value" : "1",
+        "example" : "1",
+        "units" : "",
+        "sw_source" : "PPS:nircam_templates.number_of_detector_outputs",
+        "source" : "Proposal and Planning System (PPS)",
+        "destination" : ["NircamScience.noutputs"],
+        "level" : "1b",
+        "si" : "NIRCAM",
+        "section" : "Exposure",
+        "mode" : ["NRC_TSGRISM"],
+        "fits_hdu" : "PRIMARY",
+        "misc" : ""
+    }
+}
+

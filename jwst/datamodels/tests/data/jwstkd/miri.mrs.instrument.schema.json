@@ -1,0 +1,47 @@
+{
+    "channel" : {
+        "title" : "MIRI MRS (IFU) channel",
+        "type" : "string",
+        "sql_dtype" : "nvarchar(3)",
+        "enum" : ["1234", "123", "234", "12", "34", "1", "2", "3", "4", "ANY", "N/A"],
+        "fits_keyword" : "CHANNEL",
+        "description" : "Identifies which channels (1,2,3,4) of IFU data are contained in an exposure. For exposures on the MIRIFUSHORT detector, CHANNEL will indicate that data from both channels 1 and 2 are present with a value of '12'. Similarly, for the MIRIFULONG detector, CHANNEL will be '34' to indicate that data from channels 3 and 4 are present. ",
+        "calculation" : "12 if miri ifu short, 34 if miri ifu long, individual 1,2,3,4 may be set by calibrationn later.",
+        "default_value" : "",
+        "special_processing" : "VALUE_REQUIRED",
+        "example" : "12",
+        "units" : "",
+        "sw_source" : "calculation",
+        "source" : "Science Data Processing (SDP)",
+        "destination" : ["MiriScience.channel"],
+        "level" : "1b",
+        "si" : "MIRI",
+        "section" : "Instrument",
+        "mode" : "MIR_MRS",
+        "fits_hdu" : "PRIMARY",
+        "misc" : "Redundant source:PPS:miri_exposure_specification.wavelength*"
+    },
+
+    "band" : {
+        "title" : "MRS wavelength band",
+        "type" : "string",
+        "sql_dtype" : "nvarchar(30)",
+        "enum" : ["SHORT", "MEDIUM", "LONG", "SHORT-MEDIUM", "SHORT-LONG", "MEDIUM-SHORT", "MEDIUM-LONG", "LONG-SHORT", "LONG-MEDIUM", "MULTIPLE", "N/A", "ANY"],
+        "fits_keyword" : "BAND",
+        "description" : "The entire wavelength range of the MIRI MRS is not observable in a single exposure and therefore a particular wavelength range, or sub-band, must be selected for each exposure. Three sub-band settings are available: SHORT, MEDIUM, and LONG. The selected bands are realized by changing the positions of the dichroic/grating wheel assemblies that are in the IFU optical paths. Each of the 2 wheel assemblies supplies light to 2 of the 4 IFU channels: wheel 1 supplies channels 1 and 4, while wheel 2 supplies channels 2 and 3. The light from channels 1 and 2 fall on the first MRS detector, and the light from channels 3 and 4 fall on the second MRS detector. Under normal science operations the two grating wheel assemblies will always be positioned to the same wavelength sub-band, in which case the value of this keyword will contain a single value of either SHORT, MEDIUM, or LONG. It is possible, however, for engineering modes to intentionally set the two wheels to different positions. In these cases the keyword value will contain the two unique values, such as SHORT-LONG or LONG-MEDIUM.",
+        "calculation" : "if grating14==grating23 use grating14 otherwise use grating14 + '-' + grating23. NOTE sw_source can currently take only 1 field name",
+        "default_value" : "",
+        "special_processing" : "",
+        "example" : "LONG",
+        "units" : "",
+        "sw_source" : "PPS:dms_exposure_specification_view.wavelength_1_4",
+        "source" : "Proposal and Planning System (PPS)",
+        "destination" : ["MiriScience.band"],
+        "level" : "1b",
+        "si" : "MIRI",
+        "section" : "Instrument",
+        "mode" : "MIR_MRS",
+        "fits_hdu" : "PRIMARY",
+        "misc" : "Replaced grating14 and grating23."
+    }
+}

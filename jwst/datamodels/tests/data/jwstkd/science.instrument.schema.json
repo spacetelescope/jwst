@@ -1,0 +1,23 @@
+{
+    "lamp_state" : {
+        "title" : "Internal lamp state",
+        "type" : "string",
+        "sql_dtype" : "nvarchar(10)",
+        "enum" :  [ "FLAT1", "FLAT2", "FLAT3", "FLAT4", "FLAT5", "LINE1", "LINE2", "LINE3", "LINE4", "REF", "TEST", "NULL"],
+        "fits_keyword" : "LAMP",
+        "description" : "The LAMP keyword lists the internal lamp state for all science instruments. ",
+        "calculation" : "",
+        "default_value" : "NONE",
+        "example" : "",
+        "units" : "",
+        "sw_source" : "",
+        "source" : "Observatory Status File (OSF)",
+        "destination" : ["ScienceCommon.lamp"],
+        "level" : "1b",
+        "si" : "Multiple",
+        "section" : "Instrument",
+        "mode" : "All",
+        "fits_hdu" : "PRIMARY",
+        "misc" : "Requires Module/Detector to determine"
+    }
+}

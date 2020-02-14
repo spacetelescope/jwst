@@ -1,0 +1,43 @@
+{
+    "rma_pos" : {
+        "title" : "Refocus Mechanism Assembly hall-position sensor value",
+        "type" : "integer",
+        "sql_dtype" : "smallint",
+        "fits_keyword" : "RMA_POS",
+        "description" : "NIRSpec Refocus Mechanism Assembly (RMA) latest recorded hall-position sensor value",
+        "calculation" : "",
+        "default_value" : "0",
+        "example" : "",
+        "units" : "",
+        "sw_source" : "ENGSERVICE:INRSH_RMA_HALLPOS:EXPSTART:EXPEND",
+        "source" : "Engineering Service",
+        "destination" : ["NirspecScience.rma_pos"],
+        "level" : "1b",
+        "si" : "NIRSPEC",
+        "section" : "NIRSPEC WFSC parameters",
+        "mode" : "All",
+        "fits_hdu" : "PRIMARY",
+        "misc" : ""
+    },
+
+    "rma_step" : {
+        "title" : "Refocus Mechanism Assembly relative position",
+        "type" : "integer",
+        "sql_dtype" : "int",
+        "fits_keyword" : "FCSRLPOS",
+        "description" : "NIRSpec Refocus Mechanism Assembly (RMA) relative position, in motor steps (-18400 to +18400). The offsets are from the current position.",
+        "calculation" : "",
+        "default_value" : "0" ,
+        "example" : "",
+        "units" : "step",
+        "sw_source" : "ENGSERVICE:INRSI_RMA_CNT:EXPSTART:EXPEND",
+        "source" : "Engineering Service",
+        "destination" : ["NirspecScience.fcsrlpos"],
+        "level" : "1b",
+        "si" : "NIRSPEC",
+        "section" : "NIRSPEC WFSC parameters",
+        "mode" : "All",
+        "fits_hdu" : "PRIMARY",
+        "misc" : ""
+    }
+}

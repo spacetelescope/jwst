@@ -1,0 +1,41 @@
+{
+                "group"           :  {
+                    "title" : "GROUP extension",
+                    "type" : "object",
+                    "properties"        : {"$ref" : "group.extension.schema.json"}
+                },
+
+                "integration_time"           :  {
+                    "title" : "integration time information",
+                    "type" : "object",
+                    "properties"        : {"$ref" : "integration.extension.schema.json"}
+                },
+
+                "chebychev"           :  {
+                    "title" : "chebychev information",
+                    "type" : "object",
+                    "properties"        : {"$ref" : "cheby.extension.schema.json"}
+                 },
+
+                "single_target_acquistion_extensions"           :  {
+                    "title" : "single star target acqusition information",
+                    "type" : "object",
+                    "properties"        : {"$ref" : "core.target.acquisition.schema.json"}
+                 },
+                "multiple_target_acquistion_extensions"           :  {
+                    "title" : "multiple star target acqusition information",
+                    "type" : "object",
+                    "properties"        : {"$ref" : "core.targacq.msa.schema.json"}
+                 },
+                "multipe_found_target_acquistion_extensions"           :  {
+                    "title" : "MSA found target acqusition information",
+                    "type" : "object",
+                    "properties"        : {"$ref" : "core.targacq.msa.found.schema.json"}
+                 },
+                "multiple_removed_target_acquistion_extensions"           :  {
+                    "title" : "MSA removed target acqusition information",
+                    "type" : "object",
+                    "properties"        : {"$ref" : "core.targacq.msa.removed.schema.json"}
+                 }
+
+}

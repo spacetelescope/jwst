@@ -1,0 +1,67 @@
+{
+    "name" : {
+        "title" : "S&OC PRD science aperture used",
+        "type" : "string",
+        "sql_dtype" : "nvarchar(40)",
+        "fits_keyword" : "APERNAME",
+        "description" : "The S&OC Project Reference Database (S&OC PRD) aperture used. The names for each JWST aperture are used to populate the APERNAME keyword based on engineering telemetry. <P>For NIRCam Time Series and Grism Time Series templates a subset of the NIRCam detectors will be read out.  The PPS database specifies a single aperture for each exposure that is used for telescope pointing.  For NIRCam multi-detector exposures, the PPS provided aperture name is mapped to detector specific apertures for identifying the best reference pixel from which to set the WCS parameters for the individual exposure/detector based FITS files.   Special mapping will need to be performed for the NIRCam Time Series and Grism Time Series templates. <P>NIRCam Time Series<TABLE BORDER COLS=3><TR><TH>Detector</TH><TH>Subarray</TH><TH>Aperture</TH></TR> <TR><TD>B1        </TD><TD>FULL   </TD><TD>NRCB1_FULLP  </TD></TR> <TR><TD>B5 (BLONG)</TD><TD>FULL   </TD><TD>NRCB5_FULLP  </TD></TR> <TR><TD>B1        </TD><TD>SUB400P</TD><TD>NRCB1_SUB400P</TD></TR> <TR><TD>B5 (BLONG)</TD><TD>SUB400P</TD><TD>NRCB5_SUB400P</TD></TR> <TR><TD>B1        </TD><TD>SUB160P</TD><TD>NRCB1_SUB160P</TD></TR> <TR><TD>B5 (BLONG)</TD><TD>SUB160P</TD><TD>NRCB5_SUB160P</TD></TR> <TR><TD>B1        </TD><TD>SUB64P </TD><TD>NRCB1_SUB64P </TD></TR> <TR><TD>B5 (BLONG)</TD><TD>SUB64P </TD><TD>NRCB5_SUB64P </TD></TR></TABLE> <P>NIRCam Grism Time Series <TABLE BORDER COLS=3> <TR><TH>Detector</TH><TH>Subarray</TH><TH>Aperture</TH> </TR> <TR><TD>A1</TD><TD>FULL       </TD><TD>NRCA1_GRISMTS   </TD></TR> <TR><TD>A1</TD><TD>SUBGRISM256</TD><TD>NRCA1_GRISMTS256</TD></TR> <TR><TD>A1</TD><TD>SUBGRISM128</TD><TD>NRCA1_GRISMTS128</TD></TR> <TR><TD>A1</TD><TD>SUBGRISM64 </TD><TD>NRCA1_GRISMTS64 </TD></TR> <TR><TD>A3</TD><TD>FULL       </TD><TD>NRCA3_GRISMTS   </TD></TR> <TR><TD>A3</TD><TD>SUBGRISM256</TD><TD>NRCA3_GRISMTS256</TD></TR> <TR><TD>A3</TD><TD>SUBGRISM128</TD><TD>NRCA3_GRISMTS128</TD></TR> <TR><TD>A3</TD><TD>SUBGRISM64 </TD><TD>NRCA3_GRISMTS64 </TD></TR></TABLE><P>NIRCam Grism Time Series - long wavelength, detector = A5<P><TABLE BORDER COLS=3> <TR><TH>Subarray</TH><TH>Filter</TH><TH>Aperture</TH> </TR> <TR><TD>FULL</TD><TD>F277W</TD><TD>NRCA5_GRISM_F277W</TD></TR><TR><TD>FULL</TD><TD>F322W2</TD><TD>NRCA5_GRISM_F322W2</TD></TR><TR><TD>FULL</TD><TD>F356W</TD><TD>NRCA5_GRISM_F356W</TD></TR> <TR><TD>FULL</TD><TD>F444W </TD><TD>NRCA5_GRISM_F444W</TD></TR><TR><TD>SUBGRISM256</TD><TD>F277W </TD><TD>NRCA5_GRISM256_F277W</TD></TR><TR><TD>SUBGRISM256</TD><TD>F322W2</TD><TD>NRCA5_GRISM256_F322W2</TD></TR><TR><TD>SUBGRISM256</TD><TD>F356W</TD><TD>NRCA5_GRISM256_F356W</TD></TR> <TR><TD>SUBGRISM256</TD><TD>F444W</TD><TD>NRCA5_GRISM256_F444W </TD></TR> <TR><TD>SUBGRISM128</TD><TD>F277W</TD><TD>NRCA5_GRISM128_F277W </TD></TR> <TR><TD>SUBGRISM128</TD><TD>F322W2</TD><TD>NRCA5_GRISM128_F322W2</TD></TR><TR><TD>SUBGRISM128</TD><TD>F356W</TD><TD>NRCA5_GRISM128_F356W</TD></TR> <TR><TD>SUBGRISM128</TD><TD>F444W </TD><TD>NRCA5_GRISM128_F444W </TD></TR></TABLE> ",
+        "calculation" : "",
+        "special_processing" : "VALUE_REQUIRED",
+        "default_value" : "",
+        "example" : "NRCALL_FULL",
+        "units" : "",
+        "sw_source" : "",
+        "source" : "Proposal and Planning System (PPS)",
+        "destination" : ["ScienceCommon.apername","GuideStar.apername"],
+        "level" : "1b",
+        "si" : "Multiple",
+        "section" : "Aperture",
+        "mode" : "All",
+        "fits_hdu" : "PRIMARY",
+        "misc" : ""
+    },
+
+    "position_angle" : {
+        "title" : "Position angle of aperture used (deg)",
+        "type" : "float",
+        "sql_dtype" : "float",
+        "fits_keyword" : "PA_APER",
+        "description" : "Position angle of aperture used with target (deg). The S&OC Project Reference Database (S&OC PRD) definition of an aperture includes a reference position in the V2-V3 frame. The position angle of the aperture reference position is calculated from the position angle of the V3 axis and S&OC PRD defined translations from V2-V3 to aperture reference frames.",
+        "calculation" : "",
+        "default_value" : "0",
+        "example" : "",
+        "units" : "degrees",
+        "sw_source" : "",
+        "source" : "Proposal and Planning System (PPS)",
+        "destination" : ["ScienceCommonExt.pa_aper"],
+        "level" : "1b",
+        "si" : "Multiple",
+        "section" : "Aperture",
+        "mode" : "All",
+        "fits_hdu" : "SCI",
+        "misc" : ""
+    },
+
+    "pps_name" : {
+        "title" : "original AperName supplied by PPS",
+        "type" : "string",
+        "sql_dtype" : "nvarchar(40)",
+        "fits_keyword" : "PPS_APER",
+        "description" : "Holds the original aperture value supplied by PPS in the PPS_DB.exposures.AperName database field.",
+        "calculation" : "",
+        "special_processing" : "VALUE_REQUIRED",
+        "default_value" : "",
+        "example" : "NRS1_FULL",
+        "units" : "",
+        "sw_source" : "",
+        "source" : "Proposal and Planning System (PPS)",
+        "destination" : ["ScienceCommon.pps_aper"],
+        "level" : "1b",
+        "si" : "Multiple",
+        "section" : "Aperture",
+        "mode" : "All",
+        "fits_hdu" : "PRIMARY",
+        "misc" : ""
+    }
+
+}
