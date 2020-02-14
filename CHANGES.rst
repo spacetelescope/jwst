@@ -51,6 +51,8 @@ extract_2d
 
 - A ``ValueError`` is now raised if the input data is missing ``xref_sci`` or ``yref_sci`` keywords. [#4561]
 
+- Fix the WCS subarray offsets for NIRCam TSGRISM cutouts [#4573]
+
 master_background
 -----------------
 
