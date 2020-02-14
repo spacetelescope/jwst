@@ -12,7 +12,7 @@ from gwcs.wcstools import grid_from_bounding_box
 
 from .. import datamodels
 from ..assign_wcs import util
-from ..datamodels import CubeModel, WavelengthrangeModel
+from ..datamodels import WavelengthrangeModel
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -28,8 +28,8 @@ def extract_tso_object(input_model,
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.CubeModel`
-        The input TSO image as an instance of a CubeModel
+    input_model : `~jwst.datamodels.CubeModel` or `~jwst.datamodels.ImageModel`
+        The input TSO image as an instance of a CubeModel (3D) or ImageModel (2D)
 
     reference_files : dict
         Needs to include the name of the wavelengthrange reference file
@@ -81,9 +81,6 @@ def extract_tso_object(input_model,
     if 'wavelengthrange' not in reference_files.keys():
         raise KeyError("No wavelengthrange reference file specified")
 
-    if not isinstance(input_model, CubeModel):
-        raise TypeError('The input data model is not a CubeModel.')
-
     if extract_height is None:
         extract_height = input_model.meta.subarray.ysize
     log.info("Setting extraction height to {}".format(extract_height))
@@ -113,6 +110,12 @@ def extract_tso_object(input_model,
 
     if len(available_orders) > 1:
         raise NotImplementedError("Multiple order extraction for TSO not currently implemented")
+
+    if input_model.meta.wcsinfo.siaf_xref_sci is None:
+        raise ValueError('XREF_SCI is missing.')
+
+    if input_model.meta.wcsinfo.siaf_yref_sci is None:
+        raise ValueError('YREF_SCI is missing.')
 
     log.info("Extracting order: {}".format(available_orders))
     output_model = datamodels.SlitModel()
@@ -189,17 +192,34 @@ def extract_tso_object(input_model,
         ymax = int(ymax)
 
         # cut it out, keep the entire row though
-        ext_data = input_model.data[:, ymin: ymax + 1, :].copy()
-        ext_err = input_model.err[:, ymin: ymax + 1, :].copy()
-        ext_dq = input_model.dq[:, ymin: ymax + 1, :].copy()
+        ext_data = input_model.data[..., ymin: ymax + 1, :].copy()
+        ext_err = input_model.err[..., ymin: ymax + 1, :].copy()
+        ext_dq = input_model.dq[..., ymin: ymax + 1, :].copy()
 
         log.info("WCS made explicit for order: {}".format(order))
         log.info("Trace extents are: (xmin:{}, ymin:{}), (xmax:{}, ymax:{})".format(xmin, ymin, xmax, ymax))
+
+        # Note that for variances we copy the entire row, as with ext_data, etc.
+        if input_model.var_poisson is not None and np.size(input_model.var_poisson) > 0:
+            var_poisson = input_model.var_poisson[..., ymin:ymax+1, :].copy()
+        else:
+            var_poisson = None
+        if input_model.var_rnoise is not None and np.size(input_model.var_rnoise) > 0:
+            var_rnoise = input_model.var_rnoise[..., ymin:ymax+1, :].copy()
+        else:
+            var_rnoise = None
+        if input_model.var_flat is not None and np.size(input_model.var_flat) > 0:
+            var_flat = input_model.var_flat[..., ymin:ymax+1, :].copy()
+        else:
+            var_flat = None
 
         if output_model.meta.model_type == "SlitModel":
             output_model.data = ext_data
             output_model.err = ext_err
             output_model.dq = ext_dq
+            output_model.var_poisson = var_poisson
+            output_model.var_rnoise = var_rnoise
+            output_model.var_flat = var_flat
             output_model.meta.wcs = subwcs
             output_model.meta.wcs.bounding_box = util.wcs_bbox_from_shape(ext_data.shape)
             output_model.meta.wcsinfo.siaf_yref_sci = 34  # update for the move, vals are the same
@@ -209,16 +229,21 @@ def extract_tso_object(input_model,
                         input_model.meta.wcsinfo.dispersion_direction
             if compute_wavelength:
                 output_model.wavelength = compute_wavelength_array(output_model)
-            output_model.name = 'TSO object'
+            output_model.name = '1'
+            output_model.source_type = input_model.meta.target.source_type
+            output_model.source_name = input_model.meta.target.catalog_name
+            output_model.source_alias = input_model.meta.target.proposer_name
             output_model.xstart = 1  # fits pixels
-            output_model.xsize = ext_data.shape[2]
-            output_model.ystart = 1  # fits pixels
-            output_model.ysize = ext_data.shape[1]
+            output_model.xsize = ext_data.shape[-1]
+            output_model.ystart = ymin + 1  # fits pixels
+            output_model.ysize = ext_data.shape[-2]
             output_model.source_xpos = source_xpos
             output_model.source_ypos = 34
             output_model.source_id = 1
             output_model.bunit_data = input_model.meta.bunit_data
             output_model.bunit_err = input_model.meta.bunit_err
+            if hasattr(input_model, 'int_times'):
+                output_model.int_times = input_model.int_times.copy()
 
     del subwcs
     log.info("Finished extractions")
@@ -434,9 +459,10 @@ def extract_grism_objects(input_model,
                 # The overall subarray offset is recorded in model.meta.subarray.
                 # nslit = obj.sid - 1  # catalog id starts at zero
                 new_slit.name = "{0}".format(obj.sid)
-                new_slit.xstart = 1  # fits pixels
+                new_slit.source_type = 'UNKNOWN'
+                new_slit.xstart = xmin + 1  # fits pixels
                 new_slit.xsize = ext_data.shape[1]
-                new_slit.ystart = 1  # fits pixels
+                new_slit.ystart = ymin + 1  # fits pixels
                 new_slit.ysize = ext_data.shape[0]
                 new_slit.source_xpos = float(obj.xcentroid)
                 new_slit.source_ypos = float(obj.ycentroid)

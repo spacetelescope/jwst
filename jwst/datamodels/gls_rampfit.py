@@ -25,4 +25,4 @@ class GLS_RampFitModel(DataModel):
     sigcrmag : numpy float32 array
          Sigma for CR magnitudes
     """
-    schema_url = "gls_rampfit.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/gls_rampfit.schema"

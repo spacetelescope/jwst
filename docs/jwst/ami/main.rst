@@ -12,3 +12,5 @@ of three steps:
 These three steps are applied to an association of AMI exposures using the
 pipeline module :ref:`calwebb_ami3 <calwebb_ami3>`.
 
+Unit tests for these steps can be found in :ref:`AMI unit test information <ami_unit_test>`
+

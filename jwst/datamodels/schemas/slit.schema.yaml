@@ -1,5 +1,8 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/slit.schema"
 allOf:
-- $ref: core.schema.yaml
-- $ref: slitdata.schema.yaml
-- $ref: int_times.schema.yaml
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema
+- $ref: core.schema
+- $ref: slitdata.schema
+- $ref: int_times.schema

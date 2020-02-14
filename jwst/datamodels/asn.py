@@ -8,7 +8,7 @@ class AsnModel(DataModel):
     """
     A data model for association tables.
     """
-    schema_url = "asn.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/asn.schema"
     supported_formats = ['yaml', 'json', 'fits']
 
     def __init__(self, init=None, **kwargs):

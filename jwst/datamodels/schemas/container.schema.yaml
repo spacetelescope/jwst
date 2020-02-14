@@ -1,3 +1,7 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/container.schema"
 type: object
 properties:
   meta:
@@ -21,4 +25,3 @@ properties:
           pointings:
             title: Number of pointings
             type: integer
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

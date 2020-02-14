@@ -13,4 +13,4 @@ class PsfMaskModel(ReferenceFileModel):
     data : numpy float32 array
          The PSF mask
     """
-    schema_url = "psfmask.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/psfmask.schema"

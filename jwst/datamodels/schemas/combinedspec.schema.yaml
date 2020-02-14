@@ -1,6 +1,10 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/combinedspec.schema"
 title: Combined spectrum data model
 allOf:
-- $ref: core.schema.yaml
+- $ref: core.schema
 - type: object
   properties:
     spec_table:
@@ -23,4 +27,3 @@ allOf:
         datatype: float64
       - name: N_INPUT
         datatype: float64
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

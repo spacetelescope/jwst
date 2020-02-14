@@ -1,6 +1,10 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/contrast.schema"
 title: Coronagraphic contrast curve data model
 allOf:
-- $ref: core.schema.yaml
+- $ref: core.schema
 - type: object
   properties:
     contrast_table:
@@ -11,4 +15,3 @@ allOf:
         datatype: float32
       - name: sigma
         datatype: float32
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

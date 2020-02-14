@@ -1,7 +1,11 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/throughput.schema"
 title: Filter throughput data model
 allOf:
-- $ref: referencefile.schema.yaml
-- $ref: keyword_filter.schema.yaml
+- $ref: referencefile.schema
+- $ref: keyword_filter.schema
 - type: object
   properties:
     filter_table:
@@ -12,4 +16,3 @@ allOf:
         datatype: float32
       - name: throughput
         datatype: float32
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

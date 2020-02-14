@@ -13,4 +13,4 @@ class ReadnoiseModel(ReferenceFileModel):
     data : numpy float32 array
          Read noise
     """
-    schema_url = "readnoise.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/readnoise.schema"

@@ -1,8 +1,12 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/cube.schema"
 allOf:
-- $ref: core.schema.yaml
-- $ref: bunit.schema.yaml
-- $ref: photometry.schema.yaml
-- $ref: wcsinfo.schema.yaml
+- $ref: core.schema
+- $ref: bunit.schema
+- $ref: photometry.schema
+- $ref: wcsinfo.schema
 - type: object
   properties:
     data:
@@ -38,7 +42,6 @@ allOf:
       ndim: 2
       default: 0.0
       datatype: float32
-- $ref: int_times.schema.yaml
-- $ref: variance.schema.yaml
+- $ref: int_times.schema
+- $ref: variance.schema
 
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

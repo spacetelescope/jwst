@@ -8,8 +8,8 @@ Dark Current Subtraction
    :maxdepth: 2
 
    description.rst
-   reference_files.rst
    arguments.rst
+   reference_files.rst
 
 
 .. automodapi:: jwst.dark_current

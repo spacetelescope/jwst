@@ -18,4 +18,3 @@ SkyMatch
    region
 
 .. automodapi:: jwst.skymatch
-

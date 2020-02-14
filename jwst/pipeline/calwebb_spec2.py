@@ -292,10 +292,10 @@ class Spec2Pipeline(Pipeline):
             # always create a single cube containing multiple
             # wavelength bands
             self.cube_build.output_type = 'multi'
-            self.cube_build.suffix = 's3d'
             self.cube_build.save_results = False
             result_extra = self.cube_build(result)
-            self.save_model(result_extra[0], 's3d')
+            if not self.cube_build.skip:
+                self.save_model(result_extra[0], 's3d')
         else:
             result_extra = result
 

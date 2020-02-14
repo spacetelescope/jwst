@@ -1,4 +1,6 @@
 import math
+import warnings
+
 import pytest
 import numpy as np
 
@@ -253,6 +255,7 @@ def create_input(instrument, detector, exptype,
                 slit.var_poisson = var_p
                 slit.var_rnoise = var_r
                 slit.var_flat = var_f
+                slit.meta.wcsinfo.spectral_order = 1
                 slit.meta.photometry.pixelarea_arcsecsq = 0.0025
                 slit.meta.photometry.pixelarea_steradians = 0.0025 * A2_TO_SR
                 input_model.slits.append(slit.copy())
@@ -1573,3 +1576,20 @@ def test_apply_photom_2(srctype):
         result.append(np.allclose(ratio, compare, rtol=1.e-7))
 
     assert np.alltrue(result)
+
+
+def test_find_row():
+    ftab = create_photom_nircam_wfss(min_wl=2.4, max_wl=5.0,
+                                     min_r=8.0, max_r=9.0)
+    ind = photom.find_row(ftab.phot_table, {'filter': 'F444W', 'pupil': 'GRISMR', 'order': 1})
+    assert ind == 4
+
+    # Use lower case
+    ftab.phot_table[-1][1] = 'grismr'
+    ind = photom.find_row(ftab.phot_table, {'filter': 'F444W', 'pupil': 'GRISMR', 'order': 1})
+    assert ind == 4
+
+    with warnings.catch_warnings(record=True) as caught:
+        ind = photom.find_row(ftab.phot_table, {'filter': 'F444W', 'pupil': 'GRISMR', 'order': 2})
+        assert ind is None
+        assert len(caught) == 1

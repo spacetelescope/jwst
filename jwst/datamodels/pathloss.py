@@ -22,4 +22,4 @@ class PathlossModel(ReferenceFileModel):
     apertures.items.uniform_err : numpy float32 array
          Uniform source pathloss variance
     """
-    schema_url = "pathloss.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/pathloss.schema"

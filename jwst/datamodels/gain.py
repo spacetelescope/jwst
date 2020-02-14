@@ -13,4 +13,4 @@ class GainModel(ReferenceFileModel):
     data : numpy float32 array
          The gain
     """
-    schema_url = "gain.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/gain.schema"

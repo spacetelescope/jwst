@@ -128,6 +128,7 @@ def test_nirspec_cubepars(_jail, nirspec_cube_pars):
 
     cube_build_io_util.read_cubepars(nirspec_cube_pars,
                                      'NIRSPEC',
+                                     'msm',
                                      all_channel,
                                      all_subchannel,
                                      all_grating,

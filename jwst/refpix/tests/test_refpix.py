@@ -1,11 +1,7 @@
 import numpy as np
 import pytest
 
-from jwst.datamodels import (
-    MIRIRampModel,
-    RampModel,
-    dqflags,
-)
+from jwst.datamodels import RampModel, dqflags
 from jwst.refpix import RefPixStep
 from jwst.refpix.reference_pixels import Dataset, NIRDataset, correct_model, create_dataset
 
@@ -589,7 +585,7 @@ def make_rampmodel(ngroups, ysize, xsize):
     csize = (1, ngroups, ysize, xsize)
 
     # create JWST datamodel and set each frame equal to frame number
-    dm_ramp = MIRIRampModel(csize)
+    dm_ramp = RampModel(csize)
 
     for i in range(0, ngroups-1):
         dm_ramp.data[0, i, :, :] = i

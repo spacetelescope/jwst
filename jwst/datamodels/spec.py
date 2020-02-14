@@ -15,4 +15,4 @@ class SpecModel(DataModel):
         A table with at least four columns:  wavelength, flux, an error
         estimate for the flux, and data quality flags.
     """
-    schema_url = "spec.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/spec.schema"

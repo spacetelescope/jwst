@@ -2,7 +2,7 @@ import numpy as np
 import numpy.testing as npt
 
 from jwst.ramp_fitting.ramp_fit import ramp_fit
-from jwst.datamodels import MIRIRampModel
+from jwst.datamodels import RampModel
 from jwst.datamodels import GainModel, ReadnoiseModel
 
 #
@@ -618,7 +618,7 @@ def create_mod_arrays(ngroups, nints, nrows, ncols, deltatime, gain, readnoise):
     gdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.uint8)
 
     # Create and populate ramp model
-    RampMod = MIRIRampModel(data=data, err=err, pixeldq=pixdq, groupdq=gdq)
+    RampMod = RampModel(data=data, err=err, pixeldq=pixdq, groupdq=gdq)
     RampMod.meta.instrument.name = 'MIRI'
     RampMod.meta.instrument.detector = 'MIRIMAGE'
     RampMod.meta.instrument.filter = 'F480M'

@@ -11,7 +11,7 @@ class TsoPhotModel(ReferenceFileModel):
     """
     A model for a reference file of type "tsophot".
     """
-    schema_url = "tsophot.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/tsophot.schema"
     reftype = "tsophot"
 
     def __init__(self, init=None, radii=None, **kwargs):

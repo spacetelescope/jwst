@@ -1,5 +1,9 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/rampfitoutput.schema"
 allOf:
-- $ref: core.schema.yaml
+- $ref: core.schema
 - type: object
   properties:
     slope:
@@ -56,4 +60,3 @@ allOf:
       default: 0.0
       ndim: 4
       datatype: float32
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

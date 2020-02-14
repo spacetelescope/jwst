@@ -225,6 +225,7 @@ def metablender(input_models, spec):
     # Aggregate data into table
     dtype = []
     arrays = []
+
     # Use Numpy to "guess" a data type for each of the columns
     for i, mapping in enumerate(mappings):
         if mapping.agg_func is None:

@@ -136,6 +136,7 @@ class OutlierDetectionIFU(OutlierDetection):
                     basepath=model.meta.filename,
                     suffix=self.resample_suffix
                 )
+
                 if save_intermediate_results:
                     log.info("Writing out resampled IFU cubes...")
                     model.save(model.meta.filename)
@@ -166,11 +167,16 @@ class OutlierDetectionIFU(OutlierDetection):
             # channels (MIRI) of data into a single frame to match the
             # original input...
             self.blot_median(median_model)
-            if save_intermediate_results:
-                log.info("Writing out BLOT images...")
-                self.blot_models.save(
-                    partial(self.make_output_path, suffix='blot')
+
+        if save_intermediate_results:
+            log.info("Writing out BLOT images...")
+
+            self.blot_models.save(
+                partial(self.make_output_path, suffix='blot')
                 )
+
+            for model in self.blot_models:
+                log.info("Blotted files {}".format(model.meta.filename))
 
         # Perform outlier detection using statistical comparisons between
         # each original input image and the blotted version of the

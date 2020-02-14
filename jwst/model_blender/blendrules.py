@@ -380,17 +380,31 @@ def _build_schema_rules_dict(schema):
             attr = '.'.join(path)
             if subschema.get('properties'):
                 return # Ignore ObjectNodes
+
+            # Get blending info
             kwrule = subschema.get('blend_rule')
-            kwtab = subschema.get('blend_table', False)
+            kwtab = subschema.get('blend_table')
             kwname = subschema.get('fits_keyword', attr)
-            results[attr] = []
-            if kwrule is not None:
-                results[attr].append({attr: {'rule': kwrule}})
-            else:
-                # default 'first' if nothing specified in schema for attr
-                results[attr].append({attr: {'rule': 'first'}})
+
+            # If rules had already been set, only modify
+            # the rules if there are explicit settings.
+            rule_spec = None
+            result = results.get(attr, [])
+            if kwrule:
+                rule_spec = {attr: {'rule': kwrule}}
+            elif not results.get(attr):
+                rule_spec = {attr: {'rule': 'first'}}
+            if rule_spec:
+                result.append(rule_spec)
+
+            # Add keyword to table if specified.
             if kwtab:
-                results[attr].append({attr: kwname})
+                result.append({attr: kwname})
+
+            # Add the results back.
+            if len(result):
+                results[attr] = result
+
         else:
             return
 
