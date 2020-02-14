@@ -483,12 +483,17 @@ class Options:
          time, and ask if you want to make the change. If you say yes, the
          change will be made to the schema. Finally, it will create a new
          subdirectory in the output directory whose name starts with "schemas"
-         and write all modified schemas to that directory. It will also write
-         the options to a file in your home directory so that the next time the
-         script is run it will not ask you about the same changes twice. It is
-         a text file, you can edit it or delete it. You are seeing the message
-         because no options file was found in your home directory. If one is
-         found, this message will not be displayed.
+         and write all modified schemas to that directory.
+
+         If schema are modified, and keywords are omitted, a file
+         `aaa_omitted_keywords.yaml` will be created. This file can be used as
+         the input to the `--omit_file` option
+
+         It will also write the options to a file in your home directory so
+         that the next time the script is run it will not ask you about the
+         same changes twice. It is a text file, you can edit it or delete it.
+         You are seeing the message because no options file was found in your
+         home directory. If one is found, this message will not be displayed.
 
          The first two inputs are the names of the input and output directories.
          If you leave them blank, this script will use the current directory.
@@ -496,6 +501,7 @@ class Options:
          Each question has a default answer which will be displayed as a
          capital letter (Y or N). If you hit return, the script will use
          the default value.
+
         """
 
     run_script = "do you want to continue running the editor"
@@ -957,6 +963,10 @@ class Schema_editor:
                 '\tadd, delete, edit, or rename'
             )
 
+        # If not listing, get the output directory setup.
+        if not self.list:
+            output_dir = self.dated_directory(self.output, "schemas")
+
         # Parse the keyword database files
         keyword_db = Keyword_db(self.input)
         keyword_dict = keyword_db.create_dict()
@@ -972,7 +982,6 @@ class Schema_editor:
             self.match_fits_keywords(schema_file, model_schema, keyword_schema,
                                      keyword_dict, fits_dict, model_path)
 
-        first = True
         for schema_file in model_db:
             self.current_file_name = schema_file
             self.current_file_changed = False
@@ -984,9 +993,6 @@ class Schema_editor:
 
             if self.current_file_changed:
                 # current_file_changed is set in report_and_query
-                if first:
-                    first = False
-                    output_dir = self.dated_directory(self.output, "schemas")
                 schema_file = os.path.join(output_dir, schema_file)
                 model_db.save(schema_file, model_schema)
 
@@ -997,11 +1003,14 @@ class Schema_editor:
                            keyword_dict, fits_dict)
 
         if self.current_file_changed:
-            if first:
-                first = False
-                output_dir = self.dated_directory(self.output, "schemas")
             schema_file = os.path.join(output_dir, schema_file)
             model_db.save(schema_file, model_schema)
+
+        # Save the list of omitted parameters
+        if not self.list and self.omit:
+            omit_path = os.path.join(output_dir, 'aaa_omitted_keywords.yaml')
+            with open(omit_path, 'w') as fh:
+                yaml.safe_dump(list(self.omit), fh)
 
         # Write the opject attributes back to disk
         if self.options is not None:
