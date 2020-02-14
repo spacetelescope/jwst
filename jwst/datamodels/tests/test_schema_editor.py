@@ -17,12 +17,27 @@ def t_path(partial_path):
     return ospath.join(test_dir, partial_path)
 
 
-def test_just_run(_jail):
+@pytest.fixture
+def keyword_db():
+    """Define the keyword database"""
+    keyword_db = t_path(ospath.join('data', 'jwstkd'))
+    return keyword_db
+
+
+def test_just_run(_jail, keyword_db):
     """Just run the editor"""
 
-    keyword_db = t_path(ospath.join('data', 'jwstkd'))
     editor = Schema_editor(
         input=keyword_db,
         add=True, delete=True, edit=True, rename=True, list=True
     )
     editor.change()
+
+
+def test_no_option_warning(_jail, keyword_db):
+    """If no operations are given, warn"""
+    editor = Schema_editor(
+        input=keyword_db
+    )
+    with pytest.raises(RuntimeError):
+        editor.change()

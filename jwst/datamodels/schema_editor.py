@@ -932,6 +932,15 @@ class Schema_editor:
         else:
             self.fd = open(self.log, "w")
 
+        # Is anything going to be done?
+        if not any((
+                self.add, self.delete, self.edit, self.rename,
+        )):
+            raise RuntimeError(
+                'No operation has been requested. Set at least one of:\n'
+                '\tadd, delete, edit, or rename'
+            )
+
         # Parse the keyword database files
         keyword_db = Keyword_db(self.input)
         keyword_dict = keyword_db.create_dict()
