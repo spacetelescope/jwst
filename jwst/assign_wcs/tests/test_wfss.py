@@ -1,3 +1,4 @@
+import os.path
 import numpy as np
 from numpy.testing import assert_allclose
 
@@ -11,6 +12,9 @@ from ...transforms import models as transforms
 from ...extract_2d.grisms import compute_wavelength_array
 
 import pytest
+
+from . import data
+data_path = os.path.split(os.path.abspath(data.__file__))[0]
 
 
 def create_slit(model, x0, y0, order):
@@ -146,12 +150,12 @@ def test_NIRCAMBackwardDispersion():
                              [20., 21., 22., 23., 24., 25.],
                              [20., 21., 22., 23., 24., 25.]])
 
-    expected_ydy = np.array([[1584.5, 1584.50000003, 1584.5, 1584.5, 1584.5, 1584.5],
-                             [1586.5, 1586.5, 1586.5, 1586.5, 1586.5, 1586.5],
-                             [1588.5, 1588.5, 1588.5, 1588.5, 1588.5, 1588.5],
-                             [1590.5, 1590.5, 1590.5, 1590.5, 1590.5, 1590.5],
-                             [1592.5, 1592.5, 1592.5, 1592.5, 1592.5, 1592.5],
-                             [1594.5, 1594.5, 1594.5, 1594.5, 1594.5, 1594.5]])
+    expected_ydy = np.array([[1584.50000003, 1584.50000003, 1584.50000003, 1584.50000003, 1584.50000003, 1584.50000003],
+                             [1586.50000003, 1586.50000003, 1586.50000003, 1586.50000003, 1586.50000003, 1586.50000003],
+                             [1588.50000003, 1588.50000003, 1588.50000003, 1588.50000003, 1588.50000003, 1588.50000003],
+                             [1590.50000003, 1590.50000003, 1590.50000003, 1590.50000003, 1590.50000003, 1590.50000003],
+                             [1592.50000003, 1592.50000003, 1592.50000003, 1592.50000003, 1592.50000003, 1592.50000003],
+                             [1594.50000003, 1594.50000003, 1594.50000003, 1594.50000003, 1594.50000003, 1594.50000003]])
     # refactored call
     # x, y = wcstools.grid_from_bounding_box(slit.meta.wcs.bounding_box)
     # xdx, ydy, _, _ = model(x, y, wavelength, np.zeros(x.shape)+1)
@@ -367,7 +371,9 @@ RADESYS = 'ICRS'               / Equatorial coordinate system
 SPECSYS = 'BARYCENT'           / Reference frame of spectral coordinates
     """
     fits_wcs = wcs.WCS(fits.Header.fromstring(fits_header, sep='\n'))
-    fa = asdf.open('grism_wcs.asdf')
+    grism_wcs_file = os.path.join(data_path, "grism_wcs.asdf")
+    fa = asdf.open(grism_wcs_file)
+
     grism_wcs = fa.tree['grism_wcs']
     detector_to_grism = grism_wcs.get_transform('detector', 'grism_detector')
     sky_to_grism = grism_wcs.backward_transform
