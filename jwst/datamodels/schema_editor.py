@@ -491,9 +491,11 @@ class Options:
 
          It will also write the options to a file in your home directory so
          that the next time the script is run it will not ask you about the
-         same changes twice. It is a text file, you can edit it or delete it.
-         You are seeing the message because no options file was found in your
-         home directory. If one is found, this message will not be displayed.
+         same changes twice. The name of this file is
+         `schema_editor_options.txt`. It is a text file, you can edit it or
+         delete it. You are seeing the message because no options file was
+         found in your home directory. If one is found, this message will not
+         be displayed.
 
          The first two inputs are the names of the input and output directories.
          If you leave them blank, this script will use the current directory.
