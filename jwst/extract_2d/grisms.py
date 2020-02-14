@@ -195,7 +195,7 @@ def extract_tso_object(input_model,
         # subarray WCS transform. If the team ever decides to change the extraction limits,
         # the following two constants must be modified accordingly.
         xmin_ext = 0  # hardwire min x for extraction to zero
-        xmax_ext = input_model.data.shape[-1]  # hardwire max x for extraction to size of data
+        xmax_ext = input_model.data.shape[-1] - 1  # hardwire max x for extraction to size of data
 
         order_model = Const1D(order)
         order_model.inverse = Const1D(order)
@@ -210,22 +210,22 @@ def extract_tso_object(input_model,
 
         log.info("WCS made explicit for order: {}".format(order))
         log.info("Spectral trace extents: (xmin:{}, ymin:{}), (xmax:{}, ymax:{})".format(xmin, ymin, xmax, ymax))
-        log.info("Extraction limits: (xmin:{}, ymin:{}), (xmax:{}, ymax:{})".format(xmin_ext, ymin, xmax_ext-1, ymax))
+        log.info("Extraction limits: (xmin:{}, ymin:{}), (xmax:{}, ymax:{})".format(xmin_ext, ymin, xmax_ext, ymax))
 
         # Cut out the subarray from the input data arrays
-        ext_data = input_model.data[..., ymin: ymax + 1, xmin_ext:xmax_ext].copy()
-        ext_err = input_model.err[..., ymin: ymax + 1, xmin_ext:xmax_ext].copy()
-        ext_dq = input_model.dq[..., ymin: ymax + 1, xmin_ext:xmax_ext].copy()
+        ext_data = input_model.data[..., ymin: ymax + 1, xmin_ext:xmax_ext + 1].copy()
+        ext_err = input_model.err[..., ymin: ymax + 1, xmin_ext:xmax_ext + 1].copy()
+        ext_dq = input_model.dq[..., ymin: ymax + 1, xmin_ext:xmax_ext + 1].copy()
         if input_model.var_poisson is not None and np.size(input_model.var_poisson) > 0:
-            var_poisson = input_model.var_poisson[..., ymin:ymax+1, xmin_ext:xmax_ext].copy()
+            var_poisson = input_model.var_poisson[..., ymin:ymax+1, xmin_ext:xmax_ext + 1].copy()
         else:
             var_poisson = None
         if input_model.var_rnoise is not None and np.size(input_model.var_rnoise) > 0:
-            var_rnoise = input_model.var_rnoise[..., ymin:ymax+1, xmin_ext:xmax_ext].copy()
+            var_rnoise = input_model.var_rnoise[..., ymin:ymax+1, xmin_ext:xmax_ext + 1].copy()
         else:
             var_rnoise = None
         if input_model.var_flat is not None and np.size(input_model.var_flat) > 0:
-            var_flat = input_model.var_flat[..., ymin:ymax+1, xmin_ext:xmax_ext].copy()
+            var_flat = input_model.var_flat[..., ymin:ymax+1, xmin_ext:xmax_ext + 1].copy()
         else:
             var_flat = None
 
