@@ -1,7 +1,6 @@
 import numpy as np
 from numpy.testing import assert_allclose
 
-from astropy.io import fits
 from astropy.modeling.models import (Polynomial1D, Polynomial2D, Shift,
                                      Const1D, Mapping)
 from gwcs import wcs
@@ -16,8 +15,10 @@ import pytest
 
 def create_slit(model, x0, y0, order):
     """ Create a SlitModel representing a grism slit."""
-    ymin, ymax = 0, 58
-    xmin, xmax = 0, 1323
+    ymin = 0
+    xmin = 0
+    # ymax = 58
+    # xmax = 1323
     model = Mapping((0, 1, 0, 0, 0)) | (Shift(xmin) & Shift(ymin) &
                                         Const1D(x0) & Const1D(y0) & Const1D(order) )| model
     wcsobj = wcs.WCS([('det', model), ('world', None)])
