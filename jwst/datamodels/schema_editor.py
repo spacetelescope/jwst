@@ -210,7 +210,7 @@ class Keyword_db:
                    If blank, use the current directory
         """
 
-        directory = self.find_directory(directory, "JWSTDP")
+        directory = self.find_directory(directory)
         if directory is None:
             raise ValueError("Cannot locate keyword database directory")
 
@@ -335,30 +335,19 @@ class Keyword_db:
         return keyword_dict
 
 
-    def find_directory(self, directory, prefix):
+    def find_directory(self, directory):
         """
-        Find a directory with a given prefix in the specified directory
+        Return full path to requested directory
+
+        Notes
+        -----
+        There was originally some functionality involving a prefix.
+        This functionality has been removed.
         """
         if len(directory) == 0:
             directory = os.getcwd()
 
-        directory_path = os.path.split(directory)
-        if directory_path[1].startswith(prefix):
-            chosen_dir = directory
-
-        else:
-            chosen_dir = None
-            for subdirectory in os.listdir(directory):
-                if os.path.isdir(subdirectory) and subdirectory.startswith(prefix):
-                    if chosen_dir is None:
-                        chosen_dir = subdirectory
-                    elif subdirectory > chosen_dir:
-                        # Naming convention means that more recent directories
-                        # have names later in alphabetical order
-                        chosen_dir = subdirectory
-
-        if chosen_dir is not None:
-            chosen_dir = os.path.join(os.path.abspath(chosen_dir), "")
+        chosen_dir = os.path.join(os.path.abspath(directory), "")
 
         return chosen_dir
 
