@@ -480,25 +480,25 @@ class Options:
          files to match information in the keyword database. You have control
          over which changes are made when the editor is run.
 
-         Before starting, download the keyword database files from
+         Before starting, refer to the process document found at:
 
-         https://iwjwdmsdauiwebv.stsci.edu/portal/Mashup/Clients/jwkeywords/
+         https://innerspace.stsci.edu/display/SCSB/Keyword+Dictionary+JSON+vs.+YAML+Comparision+Process
 
-         and unpack them. Then run this script. First it will ask you for
-         the name of the directory containing the keyword database and the
-         output directory you want the changed model schemas written to.
-         Then it will ask you what kind of changes you wish to make to the
-         schema files. (Additions to the schema, deletions, and so on.)
-         Then it will determine the differences, display them one at a time,
-         and ask if you want to make the change. If you say yes, the change
-         will be made to the schema. Finally, it will create a new subdirectory
-         in the output directory whose name starts with "schemas" and write
-         all modified schemas to that directory. It will also write the options
-         to a file in  your home directory so that the next time the script
-         is run it will not ask you about the same changes twice. It is a
-         text file, you can edit it or delete it. You are seeing the message
-         because no options file was found in your home directory. If one
-         is found, this message  will not be displayed.
+         Retrieve the JWST Keyword Database as described. Then run this script.
+         First it will ask you for the name of the directory containing the
+         keyword database and the output directory you want the changed model
+         schemas written to. Then it will ask you what kind of changes you wish
+         to make to the schema files. (Additions to the schema, deletions, and
+         so on.) Then it will determine the differences, display them one at a
+         time, and ask if you want to make the change. If you say yes, the
+         change will be made to the schema. Finally, it will create a new
+         subdirectory in the output directory whose name starts with "schemas"
+         and write all modified schemas to that directory. It will also write
+         the options to a file in your home directory so that the next time the
+         script is run it will not ask you about the same changes twice. It is
+         a text file, you can edit it or delete it. You are seeing the message
+         because no options file was found in your home directory. If one is
+         found, this message will not be displayed.
 
          The first two inputs are the names of the input and output directories.
          If you leave them blank, this script will use the current directory.
