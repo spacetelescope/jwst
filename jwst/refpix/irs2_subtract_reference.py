@@ -290,7 +290,7 @@ def exclude_ref(output_model, irs2_mask):
 def decode_mask(output, mask, row):
     """Interpret the MASK column of the DQ table.
 
-    As per the ESA CD{3 document:
+    As per the ESA CDP3 document:
     "There is also a DQ extension that holds a binary table with three
     columns (OUTPUT, ODD_EVEN, and MASK) and eight rows. In the current
     IRS2 implementation, one jumps 32 times to odd and 32 times to even

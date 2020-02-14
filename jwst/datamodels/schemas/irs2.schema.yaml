@@ -30,7 +30,7 @@ allOf:
       - name: beta_3
         datatype: float32
     dq_table:
-      title: Reference file for IRS2 refpix correction
+      title: Table of Data Quality information
       fits_hdu: DQ
       datatype:
       - name: OUTPUT
