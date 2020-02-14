@@ -42,15 +42,16 @@
 # line. Options that are not set are assumed to be false. To list the
 # options, invoke the script with --help on the command line.
 
+import argparse
+from collections import OrderedDict
+import datetime
+import inspect
 import os
+import os.path
 import re
 import sys
-import os.path
-import inspect
-import datetime
-import argparse
 from urllib.parse import urlparse
-from collections import OrderedDict
+import yaml
 
 from asdf import schema as aschema
 from asdf import resolver as aresolver
@@ -499,17 +500,22 @@ class Options:
 
     run_script = "do you want to continue running the editor"
 
+    # Command line options. 2 or 3-tuple where:
+    #    - name: Parameter name and full option name
+    #    - help: The help text
+    #    - Create a short option. If not present or True, a single character option,
+    #      based on the first character of the name, is created.
     prompts = (
-               ("input", "directory name containing keyword database"),
-               ("output", "directory name model schemas will be written to"),
-               ("add", "fields in the keyword db but not in the model to the model") ,
-               ("delete", "fields in the model but not in the keyword db from the model") ,
-               ("edit", "fields found in both to match the values in the keyword db") ,
-               ("rename", "fields in the model to match the names in the keyword db") ,
-               ("list", "changes without making them"),
-               ("query", "for approval of changes before they are made"),
-               ("omit", "")
-            )
+        ("input", "directory name containing keyword database"),
+        ("output", "directory name model schemas will be written to"),
+        ("add", "fields in the keyword db but not in the model to the model"),
+        ("delete", "fields in the model but not in the keyword db from the model"),
+        ("edit", "fields found in both to match the values in the keyword db"),
+        ("rename", "fields in the model to match the names in the keyword db"),
+        ("list", "changes without making them"),
+        ("query", "for approval of changes before they are made"),
+        ("omit_file", "file containing list of parameters to omit", False),
+    )
 
 
     def __init__(self, filename=None):
@@ -590,7 +596,7 @@ class Options:
         Save the object's fields into a dictionary
         """
         parameters = {}
-        for name, prompt in self.prompts:
+        for name, prompt, *abbr in self.prompts:
             parameters[name] = getattr(editor, name)
 
         return parameters
@@ -605,14 +611,18 @@ class Options:
         for prompt in self.prompts:
             if prompt[1]:
                 name = prompt[0]
-                help_text = " ".join(prompt)
+                help_text = " ".join(prompt[:2])
                 full = "--" + name
-                abbrev = full[1:3]
+                if len(prompt) > 2 and not prompt[2]:
+                    option_names = (full,)
+                else:
+                    abbrev = full[1:3]
+                    option_names = (abbrev, full)
                 if isinstance(parameters[name], bool):
-                    parser.add_argument(abbrev, full, help=help_text,
+                    parser.add_argument(*option_names, help=help_text,
                                         action="store_true")
                 else:
-                    parser.add_argument(abbrev, full, help=help_text)
+                    parser.add_argument(*option_names, help=help_text)
 
         args = parser.parse_args()
 
@@ -660,7 +670,7 @@ class Options:
         for prompt in self.prompts:
             if prompt[1]:
                 default_choice = parameters[prompt[0]]
-                choice = self.query_user(" ".join(prompt), default_choice)
+                choice = self.query_user(" ".join(prompt[:2]), default_choice)
                 self.type_check(parameters, prompt[0], choice)
                 parameters[prompt[0]] = choice
         return parameters
@@ -831,6 +841,7 @@ class Schema_editor:
         self.output = ""
         self.log = ""
         self.omit = set()
+        self.omit_file = ''
 
         # Set attributes from keywds
         for name, value in keywds.items():
@@ -924,6 +935,11 @@ class Schema_editor:
         else:
             if not self.options.get(self):
                 return
+
+        # If an omit file was specified, add the contents to the omit set.
+        if self.omit_file:
+            with open(self.omit_file) as fh:
+                self.omit.update(yaml.safe_load(fh))
 
         # Set output file for messages depending on list,
         # so output can be captured to a file
