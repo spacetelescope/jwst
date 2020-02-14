@@ -86,13 +86,13 @@ reference pixels/columns from left to right (increasing column index)
 in the native detector frame. When a bit is set, the corresponding
 reference data should not be used for the correction."
 
-I assumed that "native detector frame" in the above description referred to
+We assume that "native detector frame" in the above description referred to
 the order that the data and interleaved reference pixels were read out from
 the detector, not the physical locations of the pixels on the detector.  The
 difference is that the readout direction changes when going from one
 amplifier output to the next; that is, the pixels are read out from left to
 right for the first and third outputs, and they are read out from right to
-left for the second and fourth outputs.  Furthermore, I assumed that for the
+left for the second and fourth outputs.  Furthermore, we assume that for the
 first amplifier output, it is the least significant bit in the value from the
 MASK column that corresponds to the first set of four reads of interleaved
 reference pixel values (reading pixels from left to right).

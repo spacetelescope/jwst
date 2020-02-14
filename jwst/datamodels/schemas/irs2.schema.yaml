@@ -10,7 +10,7 @@ allOf:
 - type: object
   properties:
     irs2_table:
-      title: Reference file for IRS2 refpix correction
+      title: Table for IRS2 refpix correction
       fits_hdu: IRS2
       datatype:
       - name: alpha_0

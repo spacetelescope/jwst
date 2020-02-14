@@ -152,11 +152,30 @@ def correct_model(input_model, irs2_model,
     if got_dq:
         for integ in range(n_int):
             for row in range(len(output)):
-                part = output[row]
+                part = output[row]      # `part` is 1, 2, 3, or 4
+                # This is the offset in pixels from the beginning of the row
+                # to the start of the current amp output.  There are no pixels
+                # flagged in the reference output.
+                offset = part * (nx // 5)               # nx // 5 is 640
                 bits = decode_mask(output, mask, row)
                 log.debug("output {} DQ bits {}".format(part, bits))
+                """
+                Reads of reference pixels are interleaved with reads of
+                science data.  The pattern of science pixels (S) and
+                reference pixels (r) looks like this:
+    SSSSSSSSrrrrSSSSSSSSSSSSSSSSrrrrSSSSSSSSSSSSSSSSrrrr ... rrrrSSSSSSSS
+                Within each amplifier output, a row starts and ends with 8
+                (scipix_n / 2) science pixels, and the row contains 32 blocks
+                of 4 reference pixels.  There are 20 (scipix_n + refpix_r)
+                pixels from the start of one block of reference pixels to
+                the start of the next.  `k` is an integer between 0 and 31,
+                inclusive, an index to identify the block of reference pixels
+                that we need to modify (we'll set two of the pixels to zero).
+                `odd_even` is either 1 or 2, indicating that we should set
+                either the first or the second pair of reference pixels to 0.
+                """
                 for k in bits:
-                    ref = (scipix_n // 2 + k * (scipix_n + refpix_r) +
+                    ref = (offset + scipix_n // 2 + k * (scipix_n + refpix_r) +
                            2 * (odd_even[row] - 1))
                     log.debug("bad interleaved reference at pixels {} {}"
                               .format(ref, ref+1))
@@ -303,7 +322,7 @@ def decode_mask(output, mask, row):
     Parameters
     ----------
     output : 1-D ndarray, int
-        An array of amplifier output numbers, 1, 2, 3, or 3.
+        An array of amplifier output numbers, 1, 2, 3, or 4.
 
     mask : 1-D ndarray, uint32
         An array of mask values.
@@ -324,13 +343,13 @@ def decode_mask(output, mask, row):
     bits = np.where(temp > 0)[0]
 
     # The bit number corresponds to a count of groups of reads of the
-    # interleaved reference pixels.  It wasn't clear to me whether bit
+    # interleaved reference pixels.  It wasn't clear to us whether bit
     # number increases from left to right or right to left within a
     # 32-bit unsigned integer.  It also wasn't clear whether the direction
     # should follow the direction of reading within an amplifier output.
-    # The following is my interpretation of the description.
+    # The following is out interpretation of the description.
     if part // 2 * 2 != part:
-        bits = 31 - bits
+        bits = [31 - bit for bit in bits]
 
     return bits
 
