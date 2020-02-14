@@ -11,10 +11,14 @@ class IRS2Model(DataModel):
     Parameters
     __________
     irs2_table : numpy table
-         Reference file for IRS2 refpix correction
-         A table with 8 columns and 2916352 (2048 * 712 * 2) rows.  All
-         values are float, but these are interpreted as alternating real
-         and imaginary parts (real, imag, real, imag, ...) of complex
-         values.  There are four columns for ALPHA and four for BETA.
+        Reference file for IRS2 refpix correction
+        A table with 8 columns and 2916352 (2048 * 712 * 2) rows.  All
+        values are float, but these are interpreted as alternating real
+        and imaginary parts (real, imag, real, imag, ...) of complex
+        values.  There are four columns for ALPHA and four for BETA.
+
+    dq_table : data quality info table
+        A table with three columns (OUTPUT, ODD_EVEN, and MASK) and
+        eight rows.
     """
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/irs2.schema"

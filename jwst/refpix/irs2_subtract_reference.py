@@ -8,15 +8,15 @@ log.setLevel(logging.DEBUG)
 
 def correct_model(input_model, irs2_model,
                   scipix_n_default=16, refpix_r_default=4, pad=8):
-    """Process IRS^2 data.
+    """Process IRS2 data.
 
     Parameters
     ----------
     input_model: ramp model
         The input science data model.
 
-    irs2_model: IRS^2 model
-        The reference file model for IRS^2 correction.
+    irs2_model: IRS2 model
+        The reference file model for IRS2 correction.
 
     scipix_n_default: int
         Number of regular samples before stepping out to collect
@@ -138,6 +138,30 @@ def correct_model(input_model, irs2_model,
     # or interspersed reference pixels).
     irs2_mask = make_irs2_mask(output_model, scipix_n, refpix_r)
 
+    # If the IRS2 reference file includes data quality info, use that to
+    # set bad reference pixel values to zero.
+    if hasattr(irs2_model, 'dq_table') and len(irs2_model.dq_table) > 0:
+        output = irs2_model.dq_table.field("output")
+        odd_even = irs2_model.dq_table.field("odd_even")
+        mask = irs2_model.dq_table.field("mask")
+        got_dq = True
+    else:
+        log.warning("DQ extension not found in reference file")
+        got_dq = False
+
+    if got_dq:
+        for integ in range(n_int):
+            for row in range(len(output)):
+                part = output[row]
+                bits = decode_mask(output, mask, row)
+                log.debug("output {} DQ bits {}".format(part, bits))
+                for k in bits:
+                    ref = (scipix_n // 2 + k * (scipix_n + refpix_r) +
+                           2 * (odd_even[row] - 1))
+                    log.debug("bad interleaved reference at pixels {} {}"
+                              .format(ref, ref+1))
+                    data[integ, :, :, ref:ref+2] = 0.
+
     for integ in range(n_int):
         # The input data have a length of 3200 for the last axis (X), while
         # the output data have an X axis with length 2048, the same as the
@@ -212,6 +236,7 @@ def make_irs2_mask(output_model, scipix_n, refpix_r):
 
     return irs2_mask
 
+
 def exclude_ref(output_model, irs2_mask):
     """Copy out the normal pixels from PIXELDQ, GROUPDQ, and ERR arrays.
 
@@ -260,6 +285,55 @@ def exclude_ref(output_model, irs2_mask):
 
         temp_array = output_model.err
         output_model.err = temp_array[..., irs2_mask]
+
+
+def decode_mask(output, mask, row):
+    """Interpret the MASK column of the DQ table.
+
+    As per the ESA CD{3 document:
+    "There is also a DQ extension that holds a binary table with three
+    columns (OUTPUT, ODD_EVEN, and MASK) and eight rows. In the current
+    IRS2 implementation, one jumps 32 times to odd and 32 times to even
+    reference pixels, which are then read twice consecutively. Therefore,
+    the masks are 32 bit unsigned integers that encode bad interleaved
+    reference pixels/columns from left to right (increasing column index)
+    in the native detector frame. When a bit is set, the corresponding
+    reference data should not be used for the correction."
+
+    Parameters
+    ----------
+    output : 1-D ndarray, int
+        An array of amplifier output numbers, 1, 2, 3, or 3.
+
+    mask : 1-D ndarray, uint32
+        An array of mask values.
+
+    row : int
+        Row number (zero based) in the DQ table
+
+    Returns
+    -------
+    bits : list
+        A list of the indices of bits set in the `mask` value.
+    """
+
+    part = output[row]
+    value = mask[row]
+    flags = np.array([2**n for n in range(32)], dtype=np.uint32)
+    temp = np.bitwise_and(flags, value)
+    bits = np.where(temp > 0)[0]
+
+    # The bit number corresponds to a count of groups of reads of the
+    # interleaved reference pixels.  It wasn't clear to me whether bit
+    # number increases from left to right or right to left within a
+    # 32-bit unsigned integer.  It also wasn't clear whether the direction
+    # should follow the direction of reading within an amplifier output.
+    # The following is my interpretation of the description.
+    if part // 2 * 2 != part:
+        bits = 31 - bits
+
+    return bits
+
 
 def subtract_reference(data0, alpha, beta, irs2_mask,
                        scipix_n, refpix_r, pad):
@@ -560,19 +634,20 @@ def subtract_reference(data0, alpha, beta, irs2_mask,
     for k in range(1, 5):
         r0f[k] = np.fft.fft(r0[k, :, :], axis=1) / normalization
 
+    # Note that where the IDL code uses alpha, we use beta, and vice versa.
     # IDL:  for k=0,3 do oBridge[k]->Execute,
     #           "for i=0, s3-1 do r0[*,i] *= alpha"
     for k in range(1, 5):
         for i in range(ngroups):
             # Each element of r0f is the fft of r0[k, :, :], for some k.
-            r0f[k][i, :] *= alpha[k - 1]
+            r0f[k][i, :] *= beta[k - 1]
 
     # IDL:  for k=0,3 do oBridge[k]->Execute,
     #           "for i=0, s3-1 do r0[*,i] += beta * refout0[*,i]"
     if beta is not None:
         for k in range(1, 5):
             for i in range(ngroups):
-                r0f[k][i, :] += (beta[k - 1] * refout0[i, :])
+                r0f[k][i, :] += (alpha[k - 1] * refout0[i, :])
 
     # IDL:  for k=0,3 do oBridge[k]->Execute,
     #           "r0 = fft(r0, 1, dim=1, /overwrite)", /nowait
@@ -613,6 +688,7 @@ def subtract_reference(data0, alpha, beta, irs2_mask,
 
     return data0
 
+
 def fft_interp_norm(dd0, mask0, row, hnorm, hnorm1,
                     ny, ngroups, aa, n_iter_norm):
 
@@ -628,6 +704,7 @@ def fft_interp_norm(dd0, mask0, row, hnorm, hnorm1,
             p[:] = np.fft.ifft(pp).real
             p[hm.ravel()] = dd[hm]
         dd0[j, :, :] = p.reshape((ny, row))
+
 
 def ols_line(x, y):
     """Fit a straight line using ordinary least squares."""
