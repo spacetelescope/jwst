@@ -223,7 +223,7 @@ def test_imaging_distortion():
     """Verify that the distortion correction round trips."""
     wcsobj = create_imaging_wcs()
     sky_to_detector = wcsobj.get_transform('world', 'detector')
-    detector_to_sky = wcsobj.get_transform('detector', 'sky')
+    detector_to_sky = wcsobj.get_transform('detector', 'world')
 
     # we'll use the crpix as the simplest reference point
     ra = wcs_wfss_kw['crval1']
