@@ -25,9 +25,11 @@ MIRI       INSTRUME, DETECTOR, EXP_TYPE, DATE-OBS, TIME-OBS
 
 Reference File Format
 +++++++++++++++++++++
-The filter offset reference file is an ASDF file that contains a dictionary of row and column offsets for the MIRI imaging dataset. The filter offset reference file contains a dictionary in the tree that is indexed by the instrument filter. Each filter points to two fields - row_offset and column_offset. The format is
+The filteroffset reference file is an ASDF file that contains a list
+called ``filters``. Every item in the list contains three fields -
+``row_offset``, ``column_offset`` and ``name`` - the name of the filter they are valid for. The offsets, in pixels, are applied in the image science frame.
 
-:miri_filter_name:
+:filters:
     :column_offset: Offset in x (in pix)
     :row_offset: Offset in y (in pix)
-
+    :filter_name: Filter name
