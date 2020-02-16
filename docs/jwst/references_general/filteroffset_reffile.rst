@@ -32,4 +32,4 @@ called ``filters``. Every item in the list contains three fields -
 :filters:
     :column_offset: Offset in x (in pix)
     :row_offset: Offset in y (in pix)
-    :filter_name: Filter name
+    :name: Filter name
