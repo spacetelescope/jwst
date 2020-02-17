@@ -471,8 +471,8 @@ class Options:
          over which changes are made when the editor is run.
 
          Before starting, refer to the process document found at:
+         https://innerspace.stsci.edu/display/SCSB/Keyword+Dictionary+JSON+vs.+YAML+Comparison+Process
 
-         https://innerspace.stsci.edu/display/SCSB/Keyword+Dictionary+JSON+vs.+YAML+Comparision+Process
 
          Retrieve the JWST Keyword Database as described. Then run this script.
          First it will ask you for the name of the directory containing the
@@ -604,7 +604,7 @@ class Options:
         Save the object's fields into a dictionary
         """
         parameters = {}
-        for name, prompt, *abbr in self.prompts:
+        for name, prompt, *abbrev in self.prompts:
             parameters[name] = getattr(editor, name)
 
         return parameters
