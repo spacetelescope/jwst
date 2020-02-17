@@ -5,18 +5,11 @@ from gwcs.wcstools import grid_from_bounding_box
 from jwst.assign_wcs import AssignWcsStep, nirspec
 from jwst.datamodels import ImageModel
 
-test_data = {'ifu_nrs1':'jw00011001001_01120_00001_nrs1_rate.fits',
-             'ifu_nrs1_opaque':'jw00011001001_01120_00002_nrs1_rate.fits',
-             'ifu_nrs2': 'jw00011001001_01120_00003_nrs2_rate.fits',
-             'fs_nrs1': 'jw00023001001_01101_00001_nrs1_rate.fits',
-             'mos_nrs1':'msa_patt_num.fits'}
 
-@pytest.fixture(scope="module")
-def run_pipeline(jail, rtdata_module):
+@pytest.fixture
+def run_pipeline(rtdata):
     """Run assign_wcs"""
     def _run_pipe_with_file(input_file):
-        rtdata = rtdata_module
-
         if input_file == 'msa_patt_num.fits':
             rtdata.get_data('nirspec/mos/V9621500100101_short_msa.fits')
 
@@ -24,50 +17,51 @@ def run_pipeline(jail, rtdata_module):
 
         AssignWcsStep.call(input_file, save_results=True, suffix='assign_wcs')
 
-        return rtdata
-
     return _run_pipe_with_file
 
-@pytest.mark.bigdata
-def test_nirspec_fixedslit_wcs(run_pipeline):
 
-    input_file = test_data['fs_nrs1']
-    rtdata = run_pipeline(input_file)
+@pytest.fixture(scope="module")
+def run_pipeline_fixed_slit(rtdata_module):
+    rtdata = rtdata_module
+
+    input_file = 'jw00023001001_01101_00001_nrs1_rate.fits'
+    rtdata.get_data('nirspec/test_wcs/' + input_file)
+    AssignWcsStep.call(input_file, save_results=True, suffix='assign_wcs')
 
     output = input_file.replace('rate', 'assign_wcs')
     rtdata.output = output
 
     rtdata.get_truth("truth/test_nirspec_wcs/" + output)
 
+
+@pytest.mark.parametrize("slit", ['S200A1', 'S200A2', 'S400A1', 'S1600A1'])
+@pytest.mark.bigdata
+def test_nirspec_fixedslit_wcs(slit, rtdata_module, run_pipeline_fixed_slit):
+    rtdata = rtdata_module
+
     im = ImageModel(rtdata.output)
     im_ref = ImageModel(rtdata.truth)
 
-    print(rtdata.output)
-    print(rtdata.truth)
-    print(im.meta.exposure.type)
+    # Create WCS objects for each image
+    wcs = nirspec.nrs_wcs_set_input(im, slit)
+    wcs_ref = nirspec.nrs_wcs_set_input(im_ref, slit)
 
-    # Loop over the 4 slit instances
-    for slit in ['S200A1', 'S200A2', 'S400A1', 'S1600A1']:
+    # Compute RA, Dec, lambda values for each image array
+    grid = grid_from_bounding_box(wcs.bounding_box)
+    ra, dec, lam = wcs(*grid)
+    ra_ref, dec_ref, lam_ref = wcs_ref(*grid)
 
-        # Create WCS objects for each image
-        wcs = nirspec.nrs_wcs_set_input(im, slit)
-        wcs_ref = nirspec.nrs_wcs_set_input(im_ref, slit)
+    # Compare the sky coordinates
+    assert_allclose(ra, ra_ref, equal_nan=True)
+    assert_allclose(dec, dec_ref, equal_nan=True)
+    assert_allclose(lam, lam_ref, equal_nan=True)
 
-        # Compute RA, Dec, lambda values for each image array
-        grid = grid_from_bounding_box(wcs.bounding_box)
-        ra, dec, lam = wcs(*grid)
-        ra_ref, dec_ref, lam_ref = wcs_ref(*grid)
-
-        # Compare the sky coordinates
-        assert_allclose(ra, ra_ref, equal_nan=True)
-        assert_allclose(dec, dec_ref, equal_nan=True)
-        assert_allclose(lam, lam_ref, equal_nan=True)
 
 @pytest.mark.bigdata
-def test_nirspec_mos_wcs(run_pipeline):
+def test_nirspec_mos_wcs(rtdata, run_pipeline):
 
-    input_file = test_data['mos_nrs1']
-    rtdata = run_pipeline(input_file)
+    input_file = 'msa_patt_num.fits'
+    run_pipeline(input_file)
 
     output = input_file.replace('.fits', '_assign_wcs.fits')
     rtdata.output = output
@@ -98,73 +92,21 @@ def test_nirspec_mos_wcs(run_pipeline):
     assert_allclose(dec, dec_ref, equal_nan=True)
     assert_allclose(lam, lam_ref, equal_nan=True)
 
+
+test_data = {
+    'ifu_nrs1':'jw00011001001_01120_00001_nrs1_rate.fits',
+    'ifu_nrs1_opaque':'jw00011001001_01120_00002_nrs1_rate.fits',
+    'ifu_nrs2': 'jw00011001001_01120_00003_nrs2_rate.fits',
+}
+
+params = [item[1] for item in test_data.items()]
+ids = [item[0] for item in test_data.items()]
+@pytest.mark.parametrize("input", params, ids=ids)
 @pytest.mark.bigdata
-def test_nirspec_ifu_wcs(run_pipeline):
+def test_nirspec_ifu_wcs(input, rtdata, run_pipeline):
 
     input_file = test_data['ifu_nrs1']
-    rtdata = run_pipeline(input_file)
-
-    output = input_file.replace('rate.fits', 'assign_wcs.fits')
-    rtdata.output = output
-
-    rtdata.get_truth("truth/test_nirspec_wcs/" + output)
-
-    im = ImageModel(rtdata.output)
-    im_ref = ImageModel(rtdata.truth)
-
-    # Create WCS objects for each image
-    wcs = nirspec.nrs_wcs_set_input(im, 0)
-    wcs_ref = nirspec.nrs_wcs_set_input(im_ref, 0)
-
-    # Compute RA, Dec, lambda values for each image array
-    grid = grid_from_bounding_box(wcs.bounding_box)
-    ra, dec, lam = wcs(*grid)
-    ra_ref, dec_ref, lam_ref = wcs_ref(*grid)
-
-    # Compare the sky coordinates
-    # equal_nan is used, because many of the entries are NaN,
-    # due to the bounding_box being rectilinear while the
-    # defined spectral traces are curved
-    assert_allclose(ra, ra_ref, equal_nan=True)
-    assert_allclose(dec, dec_ref, equal_nan=True)
-    assert_allclose(lam, lam_ref, equal_nan=True)
-
-@pytest.mark.bigdata
-def test_nirspec_ifu_nrs2_wcs(run_pipeline):
-
-    input_file = test_data['ifu_nrs2']
-    rtdata = run_pipeline(input_file)
-
-    output = input_file.replace('rate.fits', 'assign_wcs.fits')
-    rtdata.output = output
-
-    rtdata.get_truth("truth/test_nirspec_wcs/" + output)
-
-    im = ImageModel(rtdata.output)
-    im_ref = ImageModel(rtdata.truth)
-
-    # Create WCS objects for each image
-    wcs = nirspec.nrs_wcs_set_input(im, 0)
-    wcs_ref = nirspec.nrs_wcs_set_input(im_ref, 0)
-
-    # Compute RA, Dec, lambda values for each image array
-    grid = grid_from_bounding_box(wcs.bounding_box)
-    ra, dec, lam = wcs(*grid)
-    ra_ref, dec_ref, lam_ref = wcs_ref(*grid)
-
-    # Compare the sky coordinates
-    # equal_nan is used, because many of the entries are NaN,
-    # due to the bounding_box being rectilinear while the
-    # defined spectral traces are curved
-    assert_allclose(ra, ra_ref, equal_nan=True)
-    assert_allclose(dec, dec_ref, equal_nan=True)
-    assert_allclose(lam, lam_ref, equal_nan=True)
-
-@pytest.mark.bigdata
-def test_nirspec_ifu_opaque_wcs(run_pipeline):
-
-    input_file = test_data['ifu_nrs1_opaque']
-    rtdata = run_pipeline(input_file)
+    run_pipeline(input_file)
 
     output = input_file.replace('rate.fits', 'assign_wcs.fits')
     rtdata.output = output
