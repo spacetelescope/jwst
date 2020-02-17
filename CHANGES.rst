@@ -96,6 +96,11 @@ photom
 - Added ``spectral_order`` to the fields matching the ``photom`` reference files
   for NIRCAM WFSS and TSGRISM modes. [#4538, 4558]
 
+refpix
+------
+
+- Interchanged alpha and beta reference arrays; use the DQ extension [#4575]
+
 set_telescope_pointing
 ----------------------
 

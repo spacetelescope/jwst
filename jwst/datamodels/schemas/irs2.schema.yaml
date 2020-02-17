@@ -10,7 +10,7 @@ allOf:
 - type: object
   properties:
     irs2_table:
-      title: Reference file for IRS2 refpix correction
+      title: Table for IRS2 refpix correction
       fits_hdu: IRS2
       datatype:
       - name: alpha_0
@@ -29,3 +29,13 @@ allOf:
         datatype: float32
       - name: beta_3
         datatype: float32
+    dq_table:
+      title: Table of Data Quality information
+      fits_hdu: DQ
+      datatype:
+      - name: OUTPUT
+        datatype: int16
+      - name: ODD_EVEN
+        datatype: int16
+      - name: MASK
+        datatype: uint32
