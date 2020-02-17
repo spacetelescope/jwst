@@ -16,32 +16,32 @@ def run_pipeline(jail, rtdata_module):
     """Run assign_wcs"""
     def _run_pipe_with_file(input_file):
         rtdata = rtdata_module
-        
+
         if input_file == 'msa_patt_num.fits':
             rtdata.get_data('nirspec/mos/V9621500100101_short_msa.fits')
 
         rtdata.get_data('nirspec/test_wcs/' + input_file)
 
         AssignWcsStep.call(input_file, save_results=True, suffix='assign_wcs')
-        
+
         return rtdata
-    
+
     return _run_pipe_with_file
 
 @pytest.mark.bigdata
 def test_nirspec_fixedslit_wcs(run_pipeline):
-    
+
     input_file = test_data['fs_nrs1']
     rtdata = run_pipeline(input_file)
 
     output = input_file.replace('rate', 'assign_wcs')
     rtdata.output = output
-        
+
     rtdata.get_truth("truth/test_nirspec_wcs/" + output)
-    
+
     im = ImageModel(rtdata.output)
     im_ref = ImageModel(rtdata.truth)
-    
+
     print(rtdata.output)
     print(rtdata.truth)
     print(im.meta.exposure.type)
@@ -65,19 +65,19 @@ def test_nirspec_fixedslit_wcs(run_pipeline):
 
 @pytest.mark.bigdata
 def test_nirspec_mos_wcs(run_pipeline):
-    
+
     input_file = test_data['mos_nrs1']
     rtdata = run_pipeline(input_file)
 
     output = input_file.replace('.fits', '_assign_wcs.fits')
     rtdata.output = output
-    
+
     truth = input_file.replace('.fits', '_truth_assign_wcs.fits')
     rtdata.get_truth("truth/test_nirspec_wcs/" + truth)
-    
+
     im = ImageModel(rtdata.output)
     im_ref = ImageModel(rtdata.truth)
-    
+
     # Get the WCS test data
     slits = nirspec.get_open_slits(im)
     name = slits[0].name
@@ -100,18 +100,18 @@ def test_nirspec_mos_wcs(run_pipeline):
 
 @pytest.mark.bigdata
 def test_nirspec_ifu_wcs(run_pipeline):
-    
+
     input_file = test_data['ifu_nrs1']
     rtdata = run_pipeline(input_file)
 
     output = input_file.replace('rate.fits', 'assign_wcs.fits')
     rtdata.output = output
-    
+
     rtdata.get_truth("truth/test_nirspec_wcs/" + output)
-    
+
     im = ImageModel(rtdata.output)
     im_ref = ImageModel(rtdata.truth)
-    
+
     # Create WCS objects for each image
     wcs = nirspec.nrs_wcs_set_input(im, 0)
     wcs_ref = nirspec.nrs_wcs_set_input(im_ref, 0)
@@ -131,18 +131,18 @@ def test_nirspec_ifu_wcs(run_pipeline):
 
 @pytest.mark.bigdata
 def test_nirspec_ifu_nrs2_wcs(run_pipeline):
-    
+
     input_file = test_data['ifu_nrs2']
     rtdata = run_pipeline(input_file)
 
     output = input_file.replace('rate.fits', 'assign_wcs.fits')
     rtdata.output = output
-    
+
     rtdata.get_truth("truth/test_nirspec_wcs/" + output)
-    
+
     im = ImageModel(rtdata.output)
     im_ref = ImageModel(rtdata.truth)
-    
+
     # Create WCS objects for each image
     wcs = nirspec.nrs_wcs_set_input(im, 0)
     wcs_ref = nirspec.nrs_wcs_set_input(im_ref, 0)
@@ -162,18 +162,18 @@ def test_nirspec_ifu_nrs2_wcs(run_pipeline):
 
 @pytest.mark.bigdata
 def test_nirspec_ifu_opaque_wcs(run_pipeline):
-    
+
     input_file = test_data['ifu_nrs1_opaque']
     rtdata = run_pipeline(input_file)
 
     output = input_file.replace('rate.fits', 'assign_wcs.fits')
     rtdata.output = output
-    
+
     rtdata.get_truth("truth/test_nirspec_wcs/" + output)
-    
+
     im = ImageModel(rtdata.output)
     im_ref = ImageModel(rtdata.truth)
-    
+
     # Create WCS objects for each image
     wcs = nirspec.nrs_wcs_set_input(im, 0)
     wcs_ref = nirspec.nrs_wcs_set_input(im_ref, 0)
