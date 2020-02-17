@@ -20,7 +20,6 @@ class ResampleSpecStep(ResampleStep):
 
     # Spec is all the same except for the suffix
     spec = """
-        suffix = string(default='s2d')
     """
 
     def process(self, input):

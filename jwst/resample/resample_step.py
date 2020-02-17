@@ -33,7 +33,6 @@ class ResampleStep(Step):
         good_bits = integer(min=0, default=6)
         single = boolean(default=False)
         blendheaders = boolean(default=True)
-        suffix = string(default='i2d')
     """
 
     reference_file_types = ['drizpars']
