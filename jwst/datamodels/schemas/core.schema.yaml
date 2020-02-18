@@ -2208,7 +2208,7 @@ properties:
         title: Resample Parameters
         type: object
         properties:
-	  pointings:
+          pointings:
             title: "Number of groups/pointings included in resampled product"
             type: integer
             fits_keyword: NDRIZ

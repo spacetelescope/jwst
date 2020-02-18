@@ -15,7 +15,6 @@ from .cube import CubeModel
 from .dark import DarkModel
 from .darkMIRI import DarkMIRIModel
 from .drizpars import DrizParsModel
-from .drizproduct import DrizProductModel
 from .extract1dimage import Extract1dImageModel
 from .flat import FlatModel
 from .fringe import FringeModel
@@ -35,7 +34,6 @@ from .mask import MaskModel
 from .ramp import MIRIRampModel
 from .multiexposure import MultiExposureModel
 from .multiextract1d import MultiExtract1dImageModel
-from .multiprod import MultiProductModel
 from .multislit import MultiSlitModel
 from .multispec import MultiSpecModel
 from .nirspec_flat import NirspecFlatModel, NirspecQuadFlatModel
