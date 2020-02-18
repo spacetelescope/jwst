@@ -3,96 +3,100 @@ from numpy.testing import assert_allclose
 from gwcs.wcstools import grid_from_bounding_box
 
 from jwst.assign_wcs import AssignWcsStep, nirspec
-from jwst.datamodels import ImageModel
+from jwst import datamodels
 
 
 @pytest.mark.bigdata
 def test_nirspec_fixedslit_wcs(rtdata):
-
+    """Test NIRSpec fixed slit wcs"""
     input_file = 'jw00023001001_01101_00001_nrs1_rate.fits'
-    rtdata.get_data('nirspec/test_wcs/' + input_file)
+    rtdata.get_data(f"nirspec/fs/{input_file}")
     AssignWcsStep.call(input_file, save_results=True, suffix='assign_wcs')
 
     output = input_file.replace('rate', 'assign_wcs')
     rtdata.output = output
 
-    rtdata.get_truth("truth/test_nirspec_wcs/" + output)
+    rtdata.get_truth(f"truth/test_nirspec_wcs/{output}")
 
-    im = ImageModel(rtdata.output)
-    im_truth = ImageModel(rtdata.truth)
+    im = datamodels.open(rtdata.output)
+    im_truth = datamodels.open(rtdata.truth)
 
-    for slit in ['S200A1']:
+    # Check the 4 science slits
+    for slit in ['S200A1', 'S200A2', 'S400A1', 'S1600A1']:
         wcs = nirspec.nrs_wcs_set_input(im, slit)
         wcs_truth = nirspec.nrs_wcs_set_input(im_truth, slit)
-        assert_specwcs_grid_allclose(wcs, wcs_truth)
+
+        assert_wcs_grid_allclose(wcs, wcs_truth)
 
 
 @pytest.mark.bigdata
 def test_nirspec_mos_wcs(rtdata):
-
+    """Test NIRSpec MOS wcs"""
     input_file = 'msa_patt_num.fits'
+    # Get MSA meta file
     rtdata.get_data('nirspec/mos/V9621500100101_short_msa.fits')
-    rtdata.get_data('nirspec/test_wcs/' + input_file)
+    rtdata.get_data(f"nirspec/mos/{input_file}")
     AssignWcsStep.call(input_file, save_results=True, suffix='assign_wcs')
 
     output = input_file.replace('.fits', '_assign_wcs.fits')
     rtdata.output = output
 
     truth = input_file.replace('.fits', '_truth_assign_wcs.fits')
-    rtdata.get_truth("truth/test_nirspec_wcs/" + truth)
+    rtdata.get_truth(f"truth/test_nirspec_wcs/{output}")
 
-    im = ImageModel(rtdata.output)
-    im_truth = ImageModel(rtdata.truth)
+    im = datamodels.open(rtdata.output)
+    im_truth = datamodels.open(rtdata.truth)
 
-    slits = nirspec.get_open_slits(im)
-    names = [slit.name for slit in slits]
+    names = [slit.name for slit in nirspec.get_open_slits(im)]
     for name in names:
         wcs = nirspec.nrs_wcs_set_input(im, name)
         wcs_truth = nirspec.nrs_wcs_set_input(im_truth, name)
-        assert_specwcs_grid_allclose(wcs, wcs_truth)
+
+        assert_wcs_grid_allclose(wcs, wcs_truth)
 
 
-params = [
+input_files = [
     'jw00011001001_01120_00001_nrs1_rate.fits',
     'jw00011001001_01120_00002_nrs1_rate.fits',
     'jw00011001001_01120_00003_nrs2_rate.fits',
 ]
-ids = ['ifu_nrs1', 'ifu_nrs1_opaque', 'ifu_nrs2']
+test_ids = ['nrs1_f170lp', 'nrs1_opaque', 'nrs2_f170lp']
 
-@pytest.mark.parametrize("input_file", params, ids=ids)
+@pytest.mark.parametrize("input_file", input_files, ids=test_ids)
 @pytest.mark.bigdata
 def test_nirspec_ifu_wcs(input_file, rtdata):
+    """Test NIRSpec IFU wcs"""
+    rtdata.get_data(f"nirspec/ifu/{input_file}")
 
-    rtdata.get_data('nirspec/test_wcs/' + input_file)
     AssignWcsStep.call(input_file, save_results=True, suffix='assign_wcs')
 
     output = input_file.replace('rate.fits', 'assign_wcs.fits')
     rtdata.output = output
 
-    rtdata.get_truth("truth/test_nirspec_wcs/" + output)
+    rtdata.get_truth(f"truth/test_nirspec_wcs/{output}")
 
-    im = ImageModel(rtdata.output)
-    im_truth = ImageModel(rtdata.truth)
+    im = datamodels.open(rtdata.output)
+    im_truth = datamodels.open(rtdata.truth)
 
-    for slice_ in range(29):
+    # Test several slices in the IFU, range(30)
+    for slice_ in [0, 9, 16, 23, 29]:
         wcs = nirspec.nrs_wcs_set_input(im, slice_)
         wcs_truth = nirspec.nrs_wcs_set_input(im_truth, slice_)
-        assert_specwcs_grid_allclose(wcs, wcs_truth)
+
+        assert_wcs_grid_allclose(wcs, wcs_truth)
 
 
-def assert_specwcs_grid_allclose(wcs, wcs_truth):
-    __traceback__ = False
-
-    # Compute RA, Dec, lambda values for each image array
+def assert_wcs_grid_allclose(wcs, wcs_truth):
+    """Assertion helper verifying the RA/DEC/(lam) are the same for 2 WCSs"""
+    __tracebackhide__ = True
+    # Compute RA, Dec[, lambda] values at each pixel in bounding box.
     grid = grid_from_bounding_box(wcs.bounding_box)
-    ra, dec, lam = wcs(*grid)
     grid_truth = grid_from_bounding_box(wcs_truth.bounding_box)
-    ra_truth, dec_truth, lam_truth = wcs_truth(*grid_truth)
+    # Store in tuple (RA, Dec, lambda)
+    skycoords = wcs(*grid)
+    skycoords_truth = wcs_truth(*grid_truth)
 
-    # Compare the sky coordinates
-    # equal_nan is used, because many of the entries are NaN,
-    # due to the bounding_box being rectilinear while the
-    # defined spectral traces are curved
-    assert_allclose(ra, ra_truth, equal_nan=True)
-    assert_allclose(dec, dec_truth, equal_nan=True)
-    assert_allclose(lam, lam_truth, equal_nan=True)
+    # Compare each RA, Dec[, lambda] grid
+    for n, (coord, coord_truth) in enumerate(zip(skycoords, skycoords_truth)):
+        assert_allclose(coord, coord_truth,
+            err_msg=f"for coordinate axis '{wcs.output_frame.axes_names[n]}'")
