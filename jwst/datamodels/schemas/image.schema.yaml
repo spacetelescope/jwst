@@ -8,7 +8,6 @@ allOf:
 - $ref: photometry.schema
 - $ref: wcsinfo.schema
 - $ref: slitmeta.schema
-- $ref: resampmeta.schema
 - type: object
   properties:
     data:
