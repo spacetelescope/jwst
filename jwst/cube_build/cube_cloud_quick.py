@@ -133,7 +133,7 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
         weight_distance = weight_distance.flatten('F')
         weighted_flux = weight_distance * flux[ipt]
         weighted_var = (weight_distance * err[ipt]) * (weight_distance * err[ipt])
-        
+
         icube_index = [iz * nplane + ixy for iz in zindex_good for ixy in xyindex_good]
         spaxel_flux[icube_index] = spaxel_flux[icube_index] + weighted_flux
         spaxel_weight[icube_index] = spaxel_weight[icube_index] + weight_distance

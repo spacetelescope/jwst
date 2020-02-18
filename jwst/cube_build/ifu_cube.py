@@ -911,7 +911,7 @@ class IFUCubeData():
                     self.rois = self.rois * 1.5
                     log.info('Increasing spatial region of interest ' +
                              'default value set for 4 dithers %f', self.rois)
-                    
+
         if self.scale1 != 0:
             self.spatial_size = self.scale1
 
@@ -2015,7 +2015,7 @@ class IFUCubeData():
                                           self.naxis2, self.naxis1))
         temp_var = self.spaxel_var.reshape((self.naxis3,
                                               self.naxis2, self.naxis1))
-        
+
         ifucube_model.data = temp_flux
         ifucube_model.weightmap = temp_wmap
         ifucube_model.dq = temp_dq

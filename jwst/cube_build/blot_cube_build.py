@@ -279,7 +279,6 @@ class CubeBlot():
             index_y = np.where(ydistance <= roi_det)
 
             if len(index_x[0]) > 0 and len(index_y[0]) > 0:
-                nx,ny=len(index_x[0]),len(index_y[0])
                 d1pix = np.array(x_cube[ipt] - xcenter[index_x])
                 d2pix = np.array(y_cube[ipt] - ycenter[index_y])
                 dxy=[]
