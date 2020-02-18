@@ -42,8 +42,14 @@ def postmortem(request, fixturename):
     """Retrieve a fixture object if a test failed
     """
     if request.node.report_setup.passed:
-        if request.node.report_call.failed:
-            return request.node.funcargs.get(fixturename, None)
+        try:
+            if request.node.report_call.failed:
+                return request.node.funcargs.get(fixturename, None)
+        # Handle case where `report_call` hasn't been generated yet
+        # because the test hasn't finished running, as in the case of
+        # a user interrupt
+        except AttributeError:
+            return None
 
 
 @pytest.fixture(scope='function', autouse=True)
