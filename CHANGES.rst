@@ -72,6 +72,8 @@ outlier_detection
 pipeline
 --------
 
+- Hardwire required pipeline outputs in the pipeline. [#4578]
+
 - Added FGS_IMAGE to the exposure types to apply resampling in calwebb_image2.py [#4421]
 
 - Make the naming and writing out of the resampled results to an `i2d` file
