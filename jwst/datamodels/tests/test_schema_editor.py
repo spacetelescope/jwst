@@ -3,7 +3,7 @@
 Notes
 -----
 The tests do not have coverage. The original code was written without tests.
-The tests here are for later modifiations.
+The tests here are for later modifications.
 """
 from os import path as ospath
 import pytest
@@ -12,7 +12,7 @@ from ..schema_editor import Schema_editor
 
 
 def t_path(partial_path):
-    """Construction the full path for test files"""
+    """Construct the full path for test files"""
     test_dir = ospath.dirname(__file__)
     return ospath.join(test_dir, partial_path)
 

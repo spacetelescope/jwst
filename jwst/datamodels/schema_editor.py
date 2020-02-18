@@ -516,7 +516,7 @@ class Options:
     prompts = (
         ("input", "directory name containing keyword database"),
         ("output", "directory name model schemas will be written to"),
-        ("add", "fields in the keyword db but not in the model to the model"),
+        ("add", "fields in the keyword db but not in the model to the model schema"),
         ("delete", "fields in the model but not in the keyword db from the model"),
         ("edit", "fields found in both to match the values in the keyword db"),
         ("rename", "fields in the model to match the names in the keyword db"),
