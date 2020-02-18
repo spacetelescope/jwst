@@ -1883,6 +1883,11 @@ class IFUCubeData():
 
         ifucube_model.meta.wcsinfo.cdelt1 = self.cdelt1 / 3600.0
         ifucube_model.meta.wcsinfo.cdelt2 = self.cdelt2 / 3600.0
+        # Now that we've got a pixel scale, set photometric area keywords
+        ifucube_model.meta.photometry.pixelarea_arcsecsq = (
+            self.cdelt1 * self.cdelt2)
+        ifucube_model.meta.photometry.pixelarea_steradians = (
+            ifucube_model.meta.photometry.pixelarea_arcsecsq * 2.3504e-11)
         if self.linear_wavelength:
             ifucube_model.meta.wcsinfo.crval3 = self.crval3
             ifucube_model.meta.wcsinfo.cdelt3 = self.cdelt3
