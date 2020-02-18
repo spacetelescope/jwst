@@ -948,12 +948,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             if not protected_keyword(path):
                 set_hdu_keyword(self._instance, d, path)
 
-        # Perform updates to extra_fits area of a model
-
-        for hdu_name in hdu_names:
-            path = ['extra_fits', hdu_name, 'header']
-            set_hdu_keyword(self._instance, d, path)
-
         self.validate()
 
     def to_flat_dict(self, include_arrays=True):

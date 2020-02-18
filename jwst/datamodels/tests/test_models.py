@@ -47,9 +47,10 @@ def teardown():
 
 
 def test_set_shape():
-    with pytest.raises(AttributeError):
-        with ImageModel((50, 50)) as dm:
-            assert dm.shape == (50, 50)
+    with ImageModel((50, 50)) as dm:
+        assert dm.shape == (50, 50)
+
+        with pytest.raises(AttributeError):
             dm.shape = (42, 23)
 
 
@@ -426,6 +427,29 @@ def test_image_with_extra_keyword_to_multislit():
         assert len(ms.slits) == 3
         for slit in ms.slits:
             assert slit.data.shape == (4, 4)
+
+
+def test_update_extra_fits(tmpdir):
+    """Test that the update method does not update from extra_fits"""
+    tmpfile = str(tmpdir.join("old.fits"))
+    with DataModel() as im:
+        im.save(tmpfile)
+
+    from astropy.io import fits
+    with fits.open(tmpfile, mode="update") as hdulist:
+        hdulist[0].header['FOO'] = 'BAR'
+
+    newtmpfile = str(tmpdir.join("new.fits"))
+    with DataModel() as newim:
+        with DataModel(tmpfile) as oldim:
+            assert oldim.extra_fits.PRIMARY.header == [['FOO', 'BAR', '']]
+            newim.update(oldim)
+        newim.save(newtmpfile)
+
+    with fits.open(newtmpfile) as hdulist:
+        assert "FOO" not in hdulist[0].header
+
+
 
 
 @pytest.fixture(scope="module")

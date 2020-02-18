@@ -34,6 +34,8 @@ datamodels
 - Update core.schema.yaml to include new allowed values for PATTTYPE
   [#4475, 4517, 4564]
 
+- DataModel.update() no longer updates from ``extra_fits`` [#4593]
+
 extract_1d
 ----------
 
