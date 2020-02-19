@@ -124,7 +124,7 @@ def detect_jumps (input_model, gain_model, readnoise_model,
         pool = multiprocessing.Pool(processes=numslices)
         real_result = pool.starmap(twopt.find_crs, slices)
         k = 0
-        # Reconstruct median_slopes and gdq from the slice results
+        # Reconstruct gdq, the row_above_gdq, and the row_below_gdq from the slice result
         for resultslice in real_result:
 
             if len(real_result) == k + 1:  # last result
