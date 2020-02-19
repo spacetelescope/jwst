@@ -1,5 +1,8 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
 allOf:
-- $ref: ../../schemas/core.schema.yaml
+- $ref: http://stsci.edu/schemas/jwst_datamodel/core.schema
 - type: object
   title: Test schema - demonstrate infinite recursion loop
   properties:
@@ -17,4 +20,3 @@ allOf:
       ndim: 2
       units: arcsec
       datatype: float32
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

@@ -1,3 +1,7 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/group.schema"
 type: object
 properties:
   group:
@@ -30,4 +34,3 @@ properties:
       datatype: float64
     - name: helio_end_time
       datatype: float64
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

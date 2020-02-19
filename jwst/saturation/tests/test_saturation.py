@@ -9,7 +9,7 @@ import numpy as np
 
 from jwst.saturation import SaturationStep
 from jwst.saturation.saturation import do_correction, correct_for_NaN
-from jwst.datamodels import MIRIRampModel, RampModel, SaturationModel, dqflags
+from jwst.datamodels import RampModel, SaturationModel, dqflags
 
 
 def test_basic_saturation_flagging(setup_nrc_cube):
@@ -297,7 +297,7 @@ def setup_miri_cube():
         nints = 1
 
         # create a JWST datamodel for MIRI data
-        data_model = MIRIRampModel((nints, ngroups, nrows, ncols))
+        data_model = RampModel((nints, ngroups, nrows, ncols))
         data_model.data += 1
         data_model.meta.instrument.name = 'MIRI'
         data_model.meta.instrument.detector = 'MIRIMAGE'

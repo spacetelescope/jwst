@@ -1,12 +1,16 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/irs2.schema"
 title: IRS2 refpix reference file data model
 allOf:
-- $ref: referencefile.schema.yaml
-- $ref: keyword_readpatt.schema.yaml
-- $ref: keyword_preadpatt.schema.yaml
+- $ref: referencefile.schema
+- $ref: keyword_readpatt.schema
+- $ref: keyword_preadpatt.schema
 - type: object
   properties:
     irs2_table:
-      title: Reference file for IRS2 refpix correction
+      title: Table for IRS2 refpix correction
       fits_hdu: IRS2
       datatype:
       - name: alpha_0
@@ -25,4 +29,13 @@ allOf:
         datatype: float32
       - name: beta_3
         datatype: float32
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema
+    dq_table:
+      title: Table of Data Quality information
+      fits_hdu: DQ
+      datatype:
+      - name: OUTPUT
+        datatype: int16
+      - name: ODD_EVEN
+        datatype: int16
+      - name: MASK
+        datatype: uint32

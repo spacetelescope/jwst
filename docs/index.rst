@@ -14,19 +14,9 @@ User Manual
    jwst/introduction.rst
 
 
-=====================
-Package Documentation
-=====================
-
-.. toctree::
-   :maxdepth: 1
-
-   jwst/package_index.rst
-
-
-==========================
-Dataproducts Documentation
-==========================
+===========================
+Data products Documentation
+===========================
 
 .. toctree::
    :maxdepth: 1
@@ -42,3 +32,15 @@ Error Propagation Documentation
    :maxdepth: 1
 
    jwst/error_propagation/index.rst
+
+
+=====================
+Package Documentation
+=====================
+
+.. toctree::
+   :maxdepth: 1
+
+   jwst/package_index.rst
+
+

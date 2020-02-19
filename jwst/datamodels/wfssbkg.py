@@ -23,7 +23,7 @@ class WfssBkgModel(ReferenceFileModel):
     dq_def : numpy table
          DQ flag definitions
     """
-    schema_url = "wfssbkg.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/wfssbkg.schema"
 
     def __init__(self, init=None, **kwargs):
         super(WfssBkgModel, self).__init__(init=init, **kwargs)

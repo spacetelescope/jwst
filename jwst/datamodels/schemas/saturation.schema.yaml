@@ -1,8 +1,12 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/saturation.schema"
 title: Saturation checking data
 allOf:
-- $ref: referencefile.schema.yaml
-- $ref: subarray.schema.yaml
-- $ref: keyword_gainfact.schema.yaml
+- $ref: referencefile.schema
+- $ref: subarray.schema
+- $ref: keyword_gainfact.schema
 - type: object
   properties:
     data:
@@ -16,5 +20,4 @@ allOf:
       fits_hdu: DQ
       default: 0
       datatype: uint32
-- $ref: dq_def.schema.yaml
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema
+- $ref: dq_def.schema

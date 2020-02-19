@@ -38,9 +38,12 @@ have keyword SLTNAME to specify which slit was extracted, though if there
 is only one slit (e.g. full-frame data), the slit name can be taken from
 the JSON reference file instead.
 
-The input data should be in units of surface brightness, megajanskys per
-steradian.  The photom step reads data in units of count rate and writes
-data in units of surface brightness.
+For almost all purposes, the photom step should have been run before running
+extract_1d.  (If photom has not been run, a warning will be logged and the
+output of extract_1d will be in units of count rate.)  The photom step
+reads data in units of count rate and converts to units of either surface
+brightness (megajanskys per steradian) or, for point sources observed with
+NIRSpec or NIRISS SOSS only, units of flux density (megajanskys).
 
 Output
 ======
@@ -49,29 +52,37 @@ be an output table extension with the name EXTRACT1D.  This extension will
 have columns WAVELENGTH, FLUX, ERROR, SURF_BRIGHT, SB_ERROR, DQ,
 BACKGROUND, BERROR and NPIXELS.
 
-Some metadata will be written to the table header, including the dispersion
-direction (1 = horizontal, 2 = vertical) in the input 2-D or 3-D image.
+Some metadata will be written to the table header, mostly copied from the
+input header.
 
 WAVELENGTH was copied from the wavelength attribute of the input 2-D data,
 if that attribute exists and was populated, or it was calculated from the
 WCS otherwise.
-FLUX is the flux density in janskys (or mJy for IFU data); see keyword
-TUNIT2, if the data are in a FITS BINTABLE.  ERROR is the error estimate
-for FLUX, and it has the same units as FLUX.
-SURF_BRIGHT is the surface brightness in MJy / sr.  SB_ERROR is the error
-estimate for SURF_BRIGHT.
+FLUX is the flux density in janskys; see keyword TUNIT2 if the data are
+in a FITS BINTABLE.  ERROR is the error estimate for FLUX, and it has the
+same units as FLUX.
+SURF_BRIGHT is the surface brightness in MJy / sr, except that for point
+sources observed with NIRSpec or NIRISS SOSS, SURF_BRIGHT will be set to
+zero.  SB_ERROR is the error estimate for SURF_BRIGHT.
 While it was expected that a user would make use of the FLUX column for
 point-source data or the SURF_BRIGHT column for an extended source,
-both columns will be populated regardless of the target.
+both columns will be populated, except for NIRSpec or NIRISS SOSS for
+point sources.
 The extract_1d step collapses the input data from 2-D to 1-D by summing
 one or more rows (or columns, depending on the dispersion direction).
 A background may optionally be subtracted by the extract_1d step, but
 there are also other options for background subtraction prior to extract_1d.
-Since the input data are in units of MJy / sr, the SURF_BRIGHT column will be
+For the case that the input data are in units of MJy / sr, the SURF_BRIGHT
+and BACKGROUND columns will be
 populated by dividing the sum by the number of pixels (see the NPIXELS column,
-described below) that were added together.  The FLUX column will be populated
-by multiplying the sum by the solid angle of a pixel, and then multiplying
+described below) that were added together; the FLUX column will be populated
+by multiplying the sum by the solid angle of a pixel, and also multiplying
 by 10^6 to convert from MJy to Jy.
+For the case that the input data are in units of MJy (i.e. point sources,
+NIRSpec or NIRISS SOSS), the SURF_BRIGHT column will be set to zero; the
+FLUX column will just be multiplied by 10^6; the BACKGROUND column will be
+divided by NPIXELS and by the solid angle of a pixel to convert to surface
+brightness (MJy / sr).
 
 NPIXELS is the number of pixels that were added together for the source
 extraction region.  Note that this is not necessarily a constant, and

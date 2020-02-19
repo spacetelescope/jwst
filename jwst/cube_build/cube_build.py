@@ -109,6 +109,7 @@ class CubeData():
         log.info('Reading  cube parameter file %s', self.par_filename)
         cube_build_io_util.read_cubepars(self.par_filename,
                                          self.instrument,
+                                         self.weighting,
                                          self.all_channel,
                                          self.all_subchannel,
                                          self.all_grating,

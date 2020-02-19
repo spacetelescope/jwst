@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from jwst.datamodels.miri_ramp import MIRIRampModel
+from jwst.datamodels import RampModel
 from jwst.datamodels.mask import MaskModel
 
 from jwst.dq_init import DQInitStep
@@ -15,7 +15,7 @@ from jwst.stpipe.config_parser import ValidationError
 
 
 def create_models():
-    """Returns  MIRIRampModel(), MaskModel()."""
+    """Returns  RampModel(), MaskModel()."""
     # size of integration
     nints = 1
     ngroups = 5
@@ -66,7 +66,7 @@ def make_rawramp(nints, ngroups, ysize, xsize):
     data = np.full(csize, 1.0)
 
     # create a JWST datamodel for MIRI data
-    dm_ramp = MIRIRampModel(data=data)
+    dm_ramp = RampModel(data=data)
     dm_ramp.meta.subarray.xstart = 1
     dm_ramp.meta.subarray.xsize = xsize
     dm_ramp.meta.subarray.ystart = 1

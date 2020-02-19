@@ -1,6 +1,10 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/multispec.schema"
 allOf:
-- $ref: core.schema.yaml
-- $ref: int_times.schema.yaml
+- $ref: core.schema
+- $ref: int_times.schema
 - type: object
   properties:
     spec:
@@ -150,4 +154,3 @@ allOf:
             type: number
             fits_keyword: TDB-END
             fits_hdu: EXTRACT1D
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

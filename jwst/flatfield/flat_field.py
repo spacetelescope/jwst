@@ -303,7 +303,7 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model,
     any_updated = False
 
     for slit in output_model.slits:
-        log.info("Processing slit %s", slit.name)
+        log.info("Working on slit %s", slit.name)
         if exposure_type == "NRS_MSASPEC":
             slit_nt = slit                      # includes quadrant info
         else:

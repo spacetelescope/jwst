@@ -13,22 +13,18 @@ Exit Status
 import sys
 
 from jwst.assign_wcs.util import NoDataOnDetectorError
-import jwst.stpipe as stpipe
 from jwst.stpipe import Step
+import jwst
 
 if __name__ == '__main__':
 
     if '--version' in sys.argv:
-        sys.stdout.write("%s\n" % stpipe.__version__)
+        sys.stdout.write(f"{jwst.__version__}\n")
         sys.exit(0)
 
     try:
         step = Step.from_cmdline(sys.argv[1:])
     except NoDataOnDetectorError:
-        import traceback
-        traceback.print_exc()
         sys.exit(64)
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
+    except Exception:
         sys.exit(1)

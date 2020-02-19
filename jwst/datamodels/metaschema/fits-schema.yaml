@@ -1,6 +1,6 @@
 %YAML 1.1
 ---
-$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+$schema: "http://json-schema.org/draft-04/schema"
 id: "http://stsci.edu/schemas/fits-schema/fits-schema"
 description: |
   A metaschema extending ASDF's YAML schema to support things specific
@@ -17,4 +17,3 @@ allOf:
         anyOf:
           - type: string
           - type: integer
-...

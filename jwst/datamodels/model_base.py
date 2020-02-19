@@ -30,16 +30,14 @@ from ..lib import s3_utils
 
 from .history import HistoryList
 
-from .extension import URL_PREFIX
-
 
 class DataModel(properties.ObjectNode, ndmodel.NDModel):
     """
     Base class of all of the data models.
     """
-    schema_url = "core.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/core.schema"
 
-    def __init__(self, init=None, schema=None,
+    def __init__(self, init=None, schema=None, memmap=False,
                  pass_invalid_values=False, strict_validation=False,
                  ignore_missing_extensions=True, **kwargs):
         """
@@ -70,6 +68,10 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             If not provided, the schema associated with this class
             will be used.
 
+        memmap : bool
+            Turn memmap of FITS file on or off.  (default: False).  Ignored for
+            ASDF files.
+
         pass_invalid_values : bool
             If `True`, values that do not validate the schema
             will be added to the metadata. If `False`, they will be set to `None`.
@@ -99,10 +101,9 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         # Load the schema files
         if schema is None:
-            schema_path = os.path.join(URL_PREFIX, self.schema_url)
             # Create an AsdfFile so we can use its resolver for loading schemas
             asdf_file = AsdfFile()
-            schema = asdf_schema.load_schema(schema_path,
+            schema = asdf_schema.load_schema(self.schema_url,
                                              resolver=asdf_file.resolver,
                                              resolve_references=True)
 
@@ -163,7 +164,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                 if s3_utils.is_s3_uri(init):
                     hdulist = fits.open(s3_utils.get_object(init))
                 else:
-                    hdulist = fits.open(init)
+                    hdulist = fits.open(init, memmap=memmap)
 
                 asdffile = fits_support.from_fits(hdulist,
                                               self._schema,

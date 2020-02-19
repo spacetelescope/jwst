@@ -220,22 +220,23 @@ def test_getpars_model(step_obj, full_spec, expected):
             'search_output_file': True,
             'input_dir': None,
             'par1': 'Name the atomizer',
-            'make_list': {
-                'pre_hooks': [],
-                'post_hooks': [],
-                'output_file': None,
-                'output_dir': None,
-                'output_ext': '.fits',
-                'output_use_model': False,
-                'output_use_index': True,
-                'save_results': False,
-                'skip': False,
-                'suffix': None,
-                'search_output_file': True,
-                'input_dir': None,
-                'par3': False,
-                'par1': 'float() # Control the frobulization',
-                'par2': 'string() # Reticulate the splines'
+            'steps': {
+                'make_list': {'pre_hooks': [],
+                              'post_hooks': [],
+                              'output_file': None,
+                              'output_dir': None,
+                              'output_ext': '.fits',
+                              'output_use_model': False,
+                              'output_use_index': True,
+                              'save_results': False,
+                              'skip': False,
+                              'suffix': None,
+                              'search_output_file': True,
+                              'input_dir': None,
+                              'par3': False,
+                              'par1': 'float() # Control the frobulization',
+                              'par2': 'string() # Reticulate the splines'
+                }
             }
         }),
         #
@@ -257,22 +258,24 @@ def test_getpars_model(step_obj, full_spec, expected):
             'search_output_file': True,
             'input_dir': '',
             'par1': 'Instantiated',
-            'make_list': {
-                'pre_hooks': [],
-                'post_hooks': [],
-                'output_file': None,
-                'output_dir': None,
-                'output_ext': '.fits',
-                'output_use_model': False,
-                'output_use_index': True,
-                'save_results': False,
-                'skip': False,
-                'suffix': None,
-                'search_output_file': True,
-                'input_dir': '',
-                'par1': 0.0,
-                'par2': 'sub-instantiated',
-                'par3': False
+            'steps': {
+                'make_list': {
+                    'pre_hooks': [],
+                    'post_hooks': [],
+                    'output_file': None,
+                    'output_dir': None,
+                    'output_ext': '.fits',
+                    'output_use_model': False,
+                    'output_use_index': True,
+                    'save_results': False,
+                    'skip': False,
+                    'suffix': None,
+                    'search_output_file': True,
+                    'input_dir': '',
+                    'par1': 0.0,
+                    'par2': 'sub-instantiated',
+                    'par3': False
+                }
             }
         }),
         #
@@ -291,7 +294,8 @@ def test_getpars_model(step_obj, full_spec, expected):
             'suffix': None,
             'search_output_file': True,
             'input_dir': None,
-            'par1': 'Name the atomizer'
+            'par1': 'Name the atomizer',
+            'steps': {}
         }),
         #
         # Pipeline instance without any sub-steps
@@ -309,7 +313,8 @@ def test_getpars_model(step_obj, full_spec, expected):
             'suffix': None,
             'search_output_file': True,
             'input_dir': '',
-            'par1': 'Instantiated'
+            'par1': 'Instantiated',
+            'steps': {}
         }),
         # ######################################
         # Test `get_pars` with `full_spec=False`
@@ -335,10 +340,12 @@ def test_getpars_model(step_obj, full_spec, expected):
         #
         (MakeListPipeline, False, {
             'par1': 'Name the atomizer',
-            'make_list': {
-                'par3': False,
-                'par1': 'float() # Control the frobulization',
-                'par2': 'string() # Reticulate the splines'
+            'steps': {
+                'make_list': {
+                    'par3': False,
+                    'par1': 'float() # Control the frobulization',
+                    'par2': 'string() # Reticulate the splines'
+                }
             }
         }),
         #
@@ -348,23 +355,27 @@ def test_getpars_model(step_obj, full_spec, expected):
             par1='Instantiated', steps={'make_list': {'par1': 0., 'par2': 'sub-instantiated'}}
         ), False, {
             'par1': 'Instantiated',
-            'make_list': {
-                'par1': 0.0,
-                'par2': 'sub-instantiated',
-                'par3': False
+            'steps': {
+                'make_list': {
+                    'par1': 0.0,
+                    'par2': 'sub-instantiated',
+                    'par3': False
+                }
             }
         }),
         #
         # Pipeline class without any sub-steps
         #
         (EmptyPipeline, False, {
-            'par1': 'Name the atomizer'
+            'par1': 'Name the atomizer',
+            'steps': {}
         }),
         #
         # Pipeline instance without any sub-steps
         #
         (EmptyPipeline(par1='Instantiated'), False, {
-            'par1': 'Instantiated'
+            'par1': 'Instantiated',
+            'steps': {}
         }),
     ]
 )

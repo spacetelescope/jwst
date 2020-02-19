@@ -3,7 +3,7 @@
 OutlierDetection for IFU Data
 ==============================
 
-This module serves as the interface for applying outlier_detection to IFU
+This module serves as the interface for applying ``outlier_detection`` to IFU
 observations, like those taken with NIRSpec and MIRI.  The code implements the
 basic outlier detection algorithm used with HST data, as adapted to JWST IFU
 observations.
@@ -18,26 +18,26 @@ Specifically, this routine performs the following operations (modified from
      also applies to this code
 
  * Resample all input :py:class:`~jwst.datamodels.IFUImageModel` images into 
-   :py:class:`~jwst.datamodels.IFUCubeModel` observations.
+   :py:class:`~jwst.datamodels.IFUCubeModel` data cubes
 
    - Resampling uses :py:class:`~jwst.cube_build.CubeBuildStep` to create 
-     :py:class:`~jwst.datamodels.IFUCubeModel` formatted data for processing.
-   - Resampled cubes will be written out to disk if ``save_intermediate_results`` 
-     parameter has been set to `True`
+     :py:class:`~jwst.datamodels.IFUCubeModel` formatted data for processing
+   - Resampled cubes are written out to disk if the ``save_intermediate_results`` 
+     parameter is set to `True`
 
- * Creates a median image from the set of resampled 
-   :py:class:`~jwst.datamodels.IFUCubeModel` observations
+ * Create a median cube from the set of resampled 
+   :py:class:`~jwst.datamodels.IFUCubeModel` cubes
 
-   - Median image will be written out to disk if ``save_intermediate_results`` 
-     parameter has been set to `True`
+   - The median cube is written out to disk if the ``save_intermediate_results`` 
+     parameter is set to `True`
 
- * Blot median image to match each original input exposure.
+ * Blot median cube to match each original 2D input image
 
-   - Resampled/blotted cubes will be written out to disk if 
-     ``save_intermediate_results`` parameter has been set to `True`
+   - Resampled/blotted images are written out to disk if 
+     the ``save_intermediate_results`` parameter is set to `True`
 
- * Perform statistical comparison between blotted image and original image to identify outliers.
- * Updates input data model DQ arrays with mask of detected outliers.
+ * Perform statistical comparison between blotted image and original image to identify outliers
+ * Update input data model DQ arrays with mask of detected outliers
 
 
 .. automodapi:: jwst.outlier_detection.outlier_detection_ifu

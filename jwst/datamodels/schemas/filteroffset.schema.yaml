@@ -1,9 +1,13 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/asdf/asdf-schema-1.0.0"
+id: "http://stsci.edu/schemas/jwst_datamodel/filteroffset.schema"
 title: MIRI Imager Filteroffset reference file model
 allOf:
-- $ref: referencefile.schema.yaml
-- $ref: keyword_exptype.schema.yaml
-- $ref: keyword_filter.schema.yaml
-- $ref: keyword_pfilter.schema.yaml
+- $ref: referencefile.schema
+- $ref: keyword_exptype.schema
+- $ref: keyword_filter.schema
+- $ref: keyword_pfilter.schema
 - type: object
   properties:
     filters:

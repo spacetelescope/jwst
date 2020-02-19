@@ -1,13 +1,13 @@
 Description
 ===========
-The combine_1d step computes a weighted average of 1-D spectra and writes
+The ``combine_1d`` step computes a weighted average of 1-D spectra and writes
 the combined 1-D spectrum as output.
 
 The combination of spectra proceeds as follows.  For each pixel of each
 input spectrum, the corresponding pixel in the output is identified
 (based on wavelength), and the input value multiplied by the weight is
 added to the output buffer.  Pixels that are flagged (via the DQ column)
-with DO_NOT_USE will not contribute to the output.  After all input
+with "DO_NOT_USE" will not contribute to the output.  After all input
 spectra have been included, the output is normalized by dividing by
 the sum of the weights.
 

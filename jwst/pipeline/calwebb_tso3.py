@@ -68,6 +68,11 @@ class Tso3Pipeline(Pipeline):
             if input_tsovisit is None:
                 input_tsovisit = cube.meta.visit.tsovisit
 
+            # Can't do outlier detection if there isn't a stack of images
+            if len(cube.data.shape) < 3:
+                self.log.warning('Input data are 2D; skipping outlier_detection')
+                break
+
             # Convert CubeModel into ModelContainer of 2-D DataModels
             input_2dmodels = datamodels.ModelContainer()
             for i in range(cube.data.shape[0]):
@@ -153,9 +158,10 @@ class Tso3Pipeline(Pipeline):
             self.log.info("Could not create a photometric catalog for data")
         else:
             phot_results = vstack(phot_result_list)
+            phot_results.meta['number_of_integrations'] = len(phot_results)
             phot_tab_name = self.make_output_path(suffix=phot_tab_suffix, ext='ecsv')
             self.log.info("Writing Level 3 photometry catalog {}...".format(
                       phot_tab_name))
-            phot_results.write(phot_tab_name, format='ascii.ecsv')
+            phot_results.write(phot_tab_name, format='ascii.ecsv', overwrite=True)
 
         return

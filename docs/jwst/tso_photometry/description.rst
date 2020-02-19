@@ -1,8 +1,8 @@
 Description
 ===========
-The tso_photometry step does aperture photometry with a circular aperture
+The ``tso_photometry`` step does aperture photometry with a circular aperture
 for the target.  Background is computed as the mean within a circular annulus.
-The output is a catalog, a table (ecsv format) containing the time at the
+The output is a table (ASCII ecsv format) containing the time at the
 midpoint of each integration and the photometry values.
 
 Assumptions
@@ -10,21 +10,24 @@ Assumptions
 This step is intended to be used for aperture photometry with time-series
 exposures.  Only direct images should be used, not spectra.
 
-The location of the target is assumed to be given by the CRPIX1 and CRPIX2
-FITS keywords (note that these are one-based).
+The target is assumed to have been placed at the aperture reference location,
+which is stored in the CRPIX1 and CRPIX2 FITS keywords
+(note that these are 1-indexed values). Hence the step uses those keyword
+values as the target location within the image.
 
 Algorithm
 ---------
-The Astropy affiliated package photutils does the work.
+The Astropy affiliated package ``photutils`` does the work.
 
-If the input file was not averaged over integrations, and if the file
-contains an INT_TIMES table, the times shown in the output table will be
-extracted from column 'int_mid_MJD_UTC' of the INT_TIMES table.  Otherwise,
+If the input file was *not* averaged over integrations (i.e. a _calints
+product), and if the file contains an INT_TIMES table extension, the times
+listed in the output table from this step will be extracted from column
+'int_mid_MJD_UTC' of the INT_TIMES extension.  Otherwise,
 the times will be computed from the exposure start time, the group time,
 and the number of groups in an integration.  In either case, the times are
 Modified Julian Date, time scale UTC.
 
-The output catalog will contain these fields:
+The output table contains these fields:
 
 - MJD
 - aperture_sum

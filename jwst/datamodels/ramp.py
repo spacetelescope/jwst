@@ -1,3 +1,5 @@
+import warnings
+
 from .model_base import DataModel
 
 
@@ -32,7 +34,7 @@ class RampModel(DataModel):
          table of times for each integration
 
     """
-    schema_url = "ramp.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/ramp.schema"
 
     def __init__(self, init=None, **kwargs):
         super(RampModel, self).__init__(init=init, **kwargs)
@@ -41,3 +43,10 @@ class RampModel(DataModel):
         self.pixeldq = self.pixeldq
         self.groupdq = self.groupdq
         self.err = self.err
+
+
+def MIRIRampModel(*args, **kwargs):
+    warnings.simplefilter('default')
+    warnings.warn(message="MIRIRampModel is deprecated and will be removed.  "
+        "Use RampModel.", category=DeprecationWarning)
+    return RampModel(*args, **kwargs)

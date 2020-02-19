@@ -1,3 +1,7 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/core.schema"
 type: object
 properties:
   meta:
@@ -353,6 +357,7 @@ properties:
           source_type:
             title: Advised source type (point/extended)
             type: string
+            enum: [EXTENDED, POINT, UNKNOWN]
             fits_keyword: SRCTYPE
             blend_table: True
       instrument:
@@ -921,12 +926,27 @@ properties:
           primary_type:
             title: Primary dither pattern type
             type: string
-            enum: [2-POINT, 2-POINT-NOD, 3-POINT-NOD,
-              4-POINT, 4-POINT-NOD, 4-POINT-DITHER, 4-POINT-SETS,
-              5-POINT-NOD, 5-POINT-SMALL-GRID, 9-POINT-SMALL-GRID,
-              ALONG-SLIT-NOD, CYCLING, EXTENDED-SOURCE, FULL, FULL-TIGHT,
-              GAUSSIAN, INTRAMODULE, INTRASCA, MAPPING, NONE, POINT-SOURCE,
-              REULEAUX, SPARSE-CYCLING, WFSC]
+            enum:
+              # MIRI coron
+             [5-POINT-SMALL-GRID, 9-POINT-SMALL-GRID,
+              # MIRI imaging
+              4-POINT-SETS, CYCLING, GAUSSIAN, REULEAUX, WFSC,
+              # MIRI LRS
+              2PIXEL-SLITLESS-SCAN-SHORT, ALONG-SLIT-NOD, MAPPING,
+              # MIRI MRS
+              2-POINT, 4-POINT, EXTENDED-SOURCE, POINT-SOURCE,
+              # NIRCam
+              FULL, FULLBOX, FULL-TIGHT,
+              INTRAMODULE, INTRAMODULEBOX, INTRAMODULEX, INTRASCA,
+              SUBARRAY-DITHER,
+              # NIRISS
+              AMI, IMAGING, MIMF, PARALLEL, WFSS,
+              # NIRSpec FS, IFU, and MOS
+              2-POINT-WITH-NIRCAM-SIZE2, 2-POINT-NOD, 3-POINT-NOD, 5-POINT-NOD,
+              # NIRSpec IFU
+              4-POINT-NOD, 4-POINT-DITHER, CYCLING, SPARSE-CYCLING,
+              # Misc
+              N/A, NONE, ANY]
             fits_keyword: PATTTYPE
             blend_table: True
           position_number:
@@ -2196,4 +2216,3 @@ properties:
             title: Master background file used
             type: string
             fits_keyword: MASTERBG
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

@@ -237,7 +237,7 @@ def make_ifu_cube(data_shape, source=None, background=None,
     input_model = datamodels.IFUCubeModel(data=data, dq=dq)
     # Populate the BUNIT keyword so that in ifu.py the net will be moved
     # to the flux column.
-    input_model.meta.bunit_data = 'mJy/arcsec^2'
+    input_model.meta.bunit_data = 'MJy/sr'
 
     def mock_wcs(x, y, z):
         """Fake wcs method."""

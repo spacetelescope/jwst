@@ -1,6 +1,10 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/extract1dimage.schema"
 title: 1-D extraction regions array
 allOf:
-- $ref: subarray.schema.yaml
+- $ref: subarray.schema
 - type: object
   properties:
     data:
@@ -28,4 +32,3 @@ allOf:
       type: integer
       fits_keyword: SMOOTH_L
       fits_hdu: SCI
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

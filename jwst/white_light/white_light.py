@@ -8,6 +8,7 @@ from astropy.time import Time, TimeDelta
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+
 def white_light(input):
 
     ntables = len(input.spec)
@@ -36,7 +37,6 @@ def white_light(input):
         else:
             ntables_order[norders - 1] += 1
 
-    nints = max(ntables_order)
     log.debug("norders = %d, sporders = %s, ntables_order = %s",
               norders, str(sporders), str(ntables_order))
 
@@ -53,7 +53,6 @@ def white_light(input):
     tbl_meta['filter'] = input.meta.instrument.filter
     tbl_meta['pupil'] = input.meta.instrument.pupil
     tbl_meta['target_name'] = input.meta.target.catalog_name
-    tbl_meta['number_of_integrations'] = nints
 
     # Create the output table
     tbl = QTable(meta=tbl_meta)

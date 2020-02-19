@@ -46,7 +46,7 @@ class MultiSpecModel(model_base.DataModel):
     ...     spec = datamodels.SpecModel(spec_table=otab)
     ...     output_model.spec.append(spec)
     """
-    schema_url = "multispec.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/multispec.schema"
 
     def __init__(self, init=None, **kwargs):
 

@@ -2,16 +2,15 @@ from datetime import datetime
 import os
 import copy
 import json
-import pprint
 
 import getpass
 import pytest
-from ci_watson.artifactory_helpers import (
-    get_bigdata_root,
-    get_bigdata,
-    BigdataError,
-    UPLOAD_SCHEMA,
-)
+from ci_watson.artifactory_helpers import UPLOAD_SCHEMA
+from astropy.table import Table
+from numpy.testing import assert_allclose
+
+from .regtestdata import RegtestData
+from jwst.regtest.sdp_pools_source import SDPPoolsSource
 
 
 TODAYS_DATE = datetime.now().strftime("%Y-%m-%d")
@@ -19,6 +18,7 @@ TODAYS_DATE = datetime.now().strftime("%Y-%m-%d")
 
 @pytest.fixture(scope="session")
 def artifactory_repos(pytestconfig):
+    """Provides Artifactory inputs_root and results_root"""
     inputs_root = pytestconfig.getini('inputs_root')[0]
     results_root = pytestconfig.getini('results_root')[0]
     return inputs_root, results_root
@@ -43,7 +43,7 @@ def postmortem(request, fixturename):
     """
     if request.node.report_setup.passed:
         if request.node.report_call.failed:
-            return request.node.funcargs.get(fixturename)
+            return request.node.funcargs.get(fixturename, None)
 
 
 @pytest.fixture(scope='function', autouse=True)
@@ -73,26 +73,45 @@ def generate_artifactory_json(request, artifactory_repos):
 
     rtdata = postmortem(request, 'rtdata') or postmortem(request, 'rtdata_module')
     if rtdata:
-        path = rtdata.output
-        cwd, _ = os.path.split(path)
-        remote_results_path = artifactory_result_path()
+        try:
+            # The _jail fixture from ci_watson sets tmp_path
+            cwd = str(request.node.funcargs['tmp_path'])
+        except KeyError:
+            # The jail fixture (module-scoped) returns the path
+            cwd = str(request.node.funcargs['jail'])
+        rtdata.remote_results_path = artifactory_result_path()
+        rtdata.test_name = request.node.name
+        # Dump the failed test traceback into rtdata
+        rtdata.traceback = str(request.node.report_call.longrepr)
 
-        upload_schema_pattern.append(path)
-        upload_schema = generate_upload_schema(upload_schema_pattern, remote_results_path)
+        # Upload and allow okify of truth by rtdata.output, if the test did not
+        # fail before producing rtdata.output
+        if os.path.exists(rtdata.output):
+            # Write the rtdata class out as an ASDF file
+            path_asdf = os.path.join(cwd, f"{request.node.name}_rtdata.asdf")
+            rtdata.to_asdf(path_asdf)
 
-        # Write the upload schema to JSON file
-        jsonfile = os.path.join(cwd, "{}_results.json".format(request.node.name))
-        with open(jsonfile, 'w') as outfile:
-            json.dump(upload_schema, outfile, indent=2)
+            # Generate an OKify JSON file
+            pattern = os.path.join(rtdata.remote_results_path,
+                os.path.basename(rtdata.output))
+            okify_schema_pattern.append(pattern)
+            okify_schema = generate_upload_schema(okify_schema_pattern,
+                f"{os.path.dirname(rtdata.truth_remote)}/")
 
+            jsonfile = os.path.join(cwd, f"{request.node.name}_okify.json")
+            with open(jsonfile, 'w') as fd:
+                json.dump(okify_schema, fd, indent=2)
 
-        okify_schema_pattern.append(rtdata.truth)
-        okify_schema = generate_upload_schema(okify_schema_pattern, rtdata.truth_remote)
+            # Generate an upload JSON file, including the OKify, asdf file
+            upload_schema_pattern.append(rtdata.output)
+            upload_schema_pattern.append(os.path.abspath(jsonfile))
+            upload_schema_pattern.append(path_asdf)
+            upload_schema = generate_upload_schema(upload_schema_pattern,
+                rtdata.remote_results_path)
 
-        # Write the okify schema to JSON file
-        jsonfile = os.path.join(cwd, "{}_okify.json".format(request.node.name))
-        with open(jsonfile, 'w') as outfile:
-            json.dump(okify_schema, outfile, indent=2)
+            jsonfile = os.path.join(cwd, f"{request.node.name}_results.json")
+            with open(jsonfile, 'w') as fd:
+                json.dump(upload_schema, fd, indent=2)
 
 
 def generate_upload_schema(pattern, target, recursive=False):
@@ -151,132 +170,13 @@ def jail(request, tmpdir_factory):
     temporary directory, and then have the tests access them.
     """
     old_dir = os.getcwd()
-    newpath = tmpdir_factory.mktemp(request.module.__name__.split('.')[-1] +
-        "_" + request._parent_request.fixturename)
+    path = request.module.__name__.split('.')[-1]
+    if request._parent_request.fixturename is not None:
+        path = path + "_" + request._parent_request.fixturename
+    newpath = tmpdir_factory.mktemp(path)
     os.chdir(str(newpath))
     yield newpath
     os.chdir(old_dir)
-
-
-class RegtestData:
-    """Defines data paths on Artifactory and data retrieval methods"""
-
-    def __init__(self, env="dev", inputs_root="jwst-pipeline",
-        results_root="jwst-pipeline-results", docopy=True):
-        self._env = env
-        self._inputs_root = inputs_root
-        self._results_root = results_root
-
-        self.docopy = docopy
-
-        self._input_remote = None
-        self._truth_remote = None
-        self._input = None
-        self._truth = None
-        self._output = None
-        self._bigdata_root = get_bigdata_root()
-
-    def __repr__(self):
-        return pprint.pformat(
-            dict(input=self.input, output=self.output, truth=self.truth,
-            input_remote=self.input_remote, truth_remote=self.truth_remote),
-            indent=2
-        )
-
-    @property
-    def input_remote(self):
-        if self._input_remote is not None:
-            return os.path.join(*self._input_remote)
-        else:
-            return None
-
-    @input_remote.setter
-    def input_remote(self, value):
-        self._input_remote = value.split(os.sep)
-
-    @property
-    def truth_remote(self):
-        if self._truth_remote is not None:
-            return os.path.join(*self._truth_remote)
-        else:
-            return None
-
-    @truth_remote.setter
-    def truth_remote(self, value):
-        self._truth_remote = value.split(os.sep)
-
-    @property
-    def input(self):
-        return self._input
-
-    @input.setter
-    def input(self, value):
-        self._input = os.path.abspath(value)
-
-    @property
-    def truth(self):
-        return self._truth
-
-    @truth.setter
-    def truth(self, value):
-        self._truth = os.path.abspath(value)
-
-    @property
-    def output(self):
-        return self._output
-
-    @output.setter
-    def output(self, value):
-        self._output = os.path.abspath(value)
-
-    @property
-    def bigdata_root(self):
-        return self._bigdata_root
-
-    @bigdata_root.setter
-    def bigdata_root(self, value):
-        return NotImplementedError("Set TEST_BIGDATA environment variable "
-            "to change this value.")
-
-    # The methods
-    def get_data(self, path=None):
-        """Copy data from Artifactory remote resource to the CWD
-
-        Updates self.input and self.input_remote upon completion
-        """
-        if path is None:
-            path = self.input_remote
-        else:
-            self.input_remote = path
-        self.input = get_bigdata(self._inputs_root, self._env,
-            os.path.dirname(path), os.path.basename(path), docopy=self.docopy)
-
-        return self.input
-
-    def get_truth(self, path=None):
-        """Copy truth data from Artifactory remote resource to the CWD/truth
-
-        Updates self.truth and self.truth_remote on completion
-        """
-        if path is None:
-            path = self.truth_remote
-        else:
-            self.truth_remote = path
-        os.makedirs('truth', exist_ok=True)
-        os.chdir('truth')
-        try:
-            self.truth = get_bigdata(self._inputs_root, self._env,
-                os.path.dirname(path), os.path.basename(path), docopy=self.docopy)
-            self.truth_remote = os.path.join(self._bigdata_root, self._inputs_root, self._env, path)
-        except BigdataError:
-            os.chdir('..')
-            raise
-        os.chdir('..')
-
-        return self.truth
-
-    def get_association(self, asn):
-        raise NotImplementedError()
 
 
 def _rtdata_fixture_implementation(artifactory_repos, envopt, request):
@@ -289,20 +189,115 @@ def _rtdata_fixture_implementation(artifactory_repos, envopt, request):
 
 
 @pytest.fixture(scope='function')
-def rtdata(artifactory_repos, envopt, request):
+def rtdata(artifactory_repos, envopt, request, _jail):
     yield from _rtdata_fixture_implementation(artifactory_repos, envopt, request)
 
 
 @pytest.fixture(scope='module')
-def rtdata_module(artifactory_repos, envopt, request):
+def rtdata_module(artifactory_repos, envopt, request, jail):
     yield from _rtdata_fixture_implementation(artifactory_repos, envopt, request)
 
 
 @pytest.fixture
 def fitsdiff_default_kwargs():
+    ignore_keywords = ['DATE', 'CAL_VER', 'CAL_VCS', 'CRDS_VER', 'CRDS_CTX',
+        'NAXIS1', 'TFORM*']
     return dict(
         ignore_hdus=['ASDF'],
-        ignore_keywords=['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
-        rtol=0.00001,
-        atol=0.0000001,
+        ignore_keywords=ignore_keywords,
+        ignore_fields=ignore_keywords,
+        rtol=1e-5,
+        atol=1e-7,
     )
+
+
+@pytest.fixture
+def diff_astropy_tables():
+    """Compare astropy tables with tolerances for float columns."""
+
+    def _diff_astropy_tables(result_path, truth_path, rtol=1e-5, atol=1e-7):
+        result = Table.read(result_path)
+        truth = Table.read(truth_path)
+
+        diffs = []
+
+        if result.colnames != truth.colnames:
+            diffs.append("Column names (or order) do not match")
+
+        if len(result) != len(truth):
+            diffs.append("Row count does not match")
+
+        # If either the columns or the row count is mismatched, then don't
+        # bother checking the individual column values.
+        if len(diffs) > 0:
+            return diffs
+
+        if result.meta != truth.meta:
+            diffs.append("Metadata does not match")
+
+        for col_name in truth.colnames:
+            try:
+                if result[col_name].dtype != truth[col_name].dtype:
+                    diffs.append(f"Column '{col_name}' dtype does not match")
+                    continue
+
+                dtype = truth[col_name].dtype
+                if dtype.kind == "f":
+                    try:
+                        assert_allclose(result[col_name], truth[col_name],
+                            rtol=rtol, atol=atol)
+                    except AssertionError as err:
+                        diffs.append(
+                            f"Column '{col_name}' values do not match (within tolerances) \n{str(err)}"
+                        )
+                else:
+                    if not (result[col_name] == truth[col_name]).all():
+                        diffs.append(f"Column '{col_name}' values do not match")
+            except AttributeError:
+                # Ignore case where a column does not have a dtype, as in the case
+                # of SkyCoord objects
+                pass
+
+        return diffs
+
+    return _diff_astropy_tables
+
+# Add option to specify a single pool name
+def pytest_addoption(parser):
+    parser.addoption(
+        '--sdp-pool', metavar='sdp_pool', default=None,
+        help='SDP test pool to run. Specify the name only, not extension or path'
+    )
+    parser.addoption(
+        '--standard-pool', metavar='standard_pool', default=None,
+        help='Standard test pool to run. Specify the name only, not extension or path'
+    )
+
+
+@pytest.fixture
+def sdp_pool(request):
+    """Retrieve a specific SDP pool to test"""
+    return request.config.getoption('--sdp-pool')
+
+
+@pytest.fixture
+def standard_pool(request):
+    """Retrieve a specific standard pool to test"""
+    return request.config.getoption('--standard-pool')
+
+
+def pytest_generate_tests(metafunc):
+    """Prefetch and parametrize a set of test pools"""
+    if 'pool_path' in metafunc.fixturenames:
+        SDPPoolsSource.inputs_root = metafunc.config.getini('inputs_root')[0]
+        SDPPoolsSource.results_root = metafunc.config.getini('results_root')[0]
+        SDPPoolsSource.env = metafunc.config.getoption('env')
+
+        pools = SDPPoolsSource()
+
+        try:
+            pool_paths = pools.pool_paths
+        except Exception:
+            pool_paths = []
+
+        metafunc.parametrize('pool_path', pool_paths)
