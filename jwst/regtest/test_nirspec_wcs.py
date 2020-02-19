@@ -41,7 +41,6 @@ def test_nirspec_mos_wcs(rtdata):
     output = input_file.replace('.fits', '_assign_wcs.fits')
     rtdata.output = output
 
-    truth = input_file.replace('.fits', '_truth_assign_wcs.fits')
     rtdata.get_truth(f"truth/test_nirspec_wcs/{output}")
 
     im = datamodels.open(rtdata.output)
