@@ -1,3 +1,4 @@
+from difflib import unified_diff
 from glob import glob as _sys_glob
 import os
 import os.path as op
@@ -399,6 +400,35 @@ def is_like_truth(rtdata, fitsdiff_default_kwargs, output, truth_path, is_suffix
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
+
+
+def text_diff(from_path, to_path):
+    """Generate a list of differences between files
+
+    Parameters
+    ----------
+    from_path: str
+        File to diff from.
+
+    to_path: str
+        File to diff to.
+
+    Returns
+    -------
+    diffs: [str[,...]]
+        A generator of a list of strings that are the differences.
+        The output from `difflib.unified_diff`
+    """
+    with open(from_path) as fh:
+        from_lines = fh.readlines()
+    with open(to_path) as fh:
+        to_lines = fh.readlines()
+
+    diffs = unified_diff(
+        from_lines, to_lines, from_path, to_path
+    )
+
+    return diffs
 
 
 def _data_glob_local(*glob_parts):
