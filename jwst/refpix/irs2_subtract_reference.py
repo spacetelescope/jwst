@@ -144,42 +144,11 @@ def correct_model(input_model, irs2_model,
         output = irs2_model.dq_table.field("output")
         odd_even = irs2_model.dq_table.field("odd_even")
         mask = irs2_model.dq_table.field("mask")
-        got_dq = True
+        # Set interleaved reference pixel values to zero if they are flagged
+        # as bad in the DQ extension of the CRDS reference file.
+        clobber_ref(data, output, odd_even, mask)
     else:
         log.warning("DQ extension not found in reference file")
-        got_dq = False
-
-    if got_dq:
-        for integ in range(n_int):
-            for row in range(len(output)):
-                part = output[row]      # `part` is 1, 2, 3, or 4
-                # This is the offset in pixels from the beginning of the row
-                # to the start of the current amp output.  There are no pixels
-                # flagged in the reference output.
-                offset = part * (nx // 5)               # nx // 5 is 640
-                bits = decode_mask(output, mask, row)
-                log.debug("output {} DQ bits {}".format(part, bits))
-                """
-                Reads of reference pixels are interleaved with reads of
-                science data.  The pattern of science pixels (S) and
-                reference pixels (r) looks like this:
-    SSSSSSSSrrrrSSSSSSSSSSSSSSSSrrrrSSSSSSSSSSSSSSSSrrrr ... rrrrSSSSSSSS
-                Within each amplifier output, a row starts and ends with 8
-                (scipix_n / 2) science pixels, and the row contains 32 blocks
-                of 4 reference pixels.  There are 20 (scipix_n + refpix_r)
-                pixels from the start of one block of reference pixels to
-                the start of the next.  `k` is an integer between 0 and 31,
-                inclusive, an index to identify the block of reference pixels
-                that we need to modify (we'll set two of the pixels to zero).
-                `odd_even` is either 1 or 2, indicating that we should set
-                either the first or the second pair of reference pixels to 0.
-                """
-                for k in bits:
-                    ref = (offset + scipix_n // 2 + k * (scipix_n + refpix_r) +
-                           2 * (odd_even[row] - 1))
-                    log.debug("bad interleaved reference at pixels {} {}"
-                              .format(ref, ref+1))
-                    data[integ, :, :, ref:ref+2] = 0.
 
     for integ in range(n_int):
         # The input data have a length of 3200 for the last axis (X), while
@@ -306,7 +275,83 @@ def exclude_ref(output_model, irs2_mask):
         output_model.err = temp_array[..., irs2_mask]
 
 
-def decode_mask(output, mask, row):
+def clobber_ref(data, output, odd_even, mask, scipix_n=16, refpix_r=4):
+    """Set some interleaved reference pixel values to zero.
+
+    Long Description
+    ----------------
+    This is an explanation of the arithmetic for computing `ref` in the loop
+    over the list of bit numbers that is returned by `decode_mask`.
+    Reads of reference pixels are interleaved with reads of science data.  The
+    pattern of science pixels (S) and reference pixels (r) looks like this:
+
+    SSSSSSSSrrrrSSSSSSSSSSSSSSSSrrrrSSSSSSSSSSSSSSSSrrrr ... rrrrSSSSSSSS
+
+    Within each amplifier output, a row starts and ends with 8 (scipix_n / 2)
+    science pixels, and the row contains 32 blocks of 4 reference pixels.
+    There are 20 (scipix_n + refpix_r) pixels from the start of one block of
+    reference pixels to the start of the next.  `k` is an integer between
+    0 and 31, inclusive, an index to identify the block of reference pixels
+    that we need to modify (we'll set two of the pixels to zero).  `odd_even`
+    is either 1 or 2, indicating that we should set either the first or the
+    second pair of reference pixels to 0.
+
+    The same set of interleaved reference pixels will be set to 0 regardless
+    of integration number, group number, or image line number.
+
+    Parameters
+    ----------
+    data : 4-D ndarray
+        The data array in detector orientation.  This includes both the
+        science and interleaved reference pixel values.  `data` will be
+        modified in-place to set some of the reference pixel values to zero.
+        The science data values will not be modified.
+
+    output : 1-D ndarray, int16
+        An array of amplifier output numbers, 1, 2, 3, or 4, read from the
+        OUTPUT column in the DQ extension of the CRDS reference file.
+
+    odd_even : 1-D ndarray, int16
+        An array of integer values, which may be either 1 or 2, read from the
+        ODD_EVEN column in the DQ extension of the CRDS reference file.
+
+    mask : 1-D ndarray, uint32
+        The MASK column read from the CRDS reference file.
+
+    scipix_n : int
+        Number of regular (science) samples before stepping out to collect
+        reference samples.
+
+    refpix_r : int
+        Number of reference samples before stepping back in to collect
+        regular samples.
+    """
+
+    nx = data.shape[-1]                 # 3200
+    nrows = len(output)
+
+    for row in range(nrows):
+        # `offset` is the offset in pixels from the beginning of the row
+        # to the start of the current amp output.  `offset` starts with
+        # 640 in order to skip over the reference output.
+        offset = output[row] * (nx // 5)                # nx // 5 is 640
+        # The readout direction alternates from one amp output to the next.
+        if output[row] // 2 * 2 == output[row]:
+            odd_even_row = 3 - odd_even[row]            # 1 --> 2;  2 --> 1
+        else:
+            odd_even_row = odd_even[row]
+        bits = decode_mask(output[row], mask[row])
+        log.debug("output {}  odd_even {}  mask {}  DQ bits {}"
+                  .format(output[row], odd_even[row], mask[row], bits))
+        for k in bits:
+            ref = (offset + scipix_n // 2 + k * (scipix_n + refpix_r) +
+                   2 * (odd_even_row - 1))
+            log.debug("bad interleaved reference at pixels {} {}"
+                      .format(ref, ref+1))
+            data[..., ref:ref+2] = 0.
+
+
+def decode_mask(output, mask):
     """Interpret the MASK column of the DQ table.
 
     As per the ESA CDP3 document:
@@ -321,14 +366,11 @@ def decode_mask(output, mask, row):
 
     Parameters
     ----------
-    output : 1-D ndarray, int
-        An array of amplifier output numbers, 1, 2, 3, or 4.
+    output : int
+        An amplifier output number, 1, 2, 3, or 4.
 
-    mask : 1-D ndarray, uint32
-        An array of mask values.
-
-    row : int
-        Row number (zero based) in the DQ table
+    mask : uint32
+        A mask value.
 
     Returns
     -------
@@ -336,20 +378,20 @@ def decode_mask(output, mask, row):
         A list of the indices of bits set in the `mask` value.
     """
 
-    part = output[row]
-    value = mask[row]
-    flags = np.array([2**n for n in range(32)], dtype=np.uint32)
-    temp = np.bitwise_and(flags, value)
-    bits = np.where(temp > 0)[0]
-
     # The bit number corresponds to a count of groups of reads of the
     # interleaved reference pixels.  It wasn't clear to us whether bit
     # number increases from left to right or right to left within a
     # 32-bit unsigned integer.  It also wasn't clear whether the direction
     # should follow the direction of reading within an amplifier output.
-    # The following is out interpretation of the description.
-    if part // 2 * 2 != part:
+    # The following is our interpretation of the description.
+
+    flags = np.array([2**n for n in range(32)], dtype=np.uint32)
+    temp = np.bitwise_and(flags, mask)
+    bits = np.where(temp > 0)[0]
+    bits = list(bits)
+    if output // 2 * 2 == output:
         bits = [31 - bit for bit in bits]
+    bits.sort()
 
     return bits
 
