@@ -95,7 +95,6 @@ def test_nocr_100_groups_nframes1(setup_inputs):
         model1.data[0,i,5,5] = i * 5
     out_model = detect_jumps(model1, gain, rnModel, 4.0,  1, 200, 4, True)
     total_CRs_in_pixel = np.sum(out_model.groupdq[0,:, 5, 5])
-    assert(total_CRs_in_pixel, 0)
     assert (0 == np.max(out_model.groupdq))
 
 def test_twoints_onecr_each_10_groups_neighbors_flagged(setup_inputs):
@@ -417,7 +416,6 @@ def test_onecr_10_groups_fullarray(setup_inputs):
     model1.data[0, 8, 5, 10] = 410
     model1.data[0, 9, 5, 10] = 420
     out_model = detect_jumps(model1, gain, rnModel, 4.0,  1, 200, 10, False)
-    first_row = out_model.groupdq[0,5,:,0]
     assert (np.all(out_model.groupdq[0, 5, 5, 0:10] == 4)) # The jump is in group 5 for columns 0-9
     assert (out_model.groupdq[0, 7, 5, 10] == 4)  # The jump is in group 7 for column 10
     assert (np.all(out_model.groupdq[0, 5, 5, 11:] == 4)) # The jump is in group 5 for columns 11+
