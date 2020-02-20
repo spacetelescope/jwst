@@ -47,13 +47,13 @@ class ResampleSpecStep(ResampleStep):
         self.drizpars = kwargs
 
         if isinstance(input_models[0], MultiSlitModel):
-            # result is a MultiResampModel
+            # result is a MultiSlitModel
             result = self._process_multislit(input_models)
         elif len(input_models[0].data.shape) != 2:
             # resample can only handle 2D images, not 3D cubes, etc
             raise RuntimeError("Input {} is not a 2D image.".format(input_models[0]))
         else:
-            # result is a DrizProductModel
+            # result is a ImageModel
             result = self._process_slit(input_models)
         return result
 
@@ -108,7 +108,7 @@ class ResampleSpecStep(ResampleStep):
 
         Returns
         -------
-        result : `~jwst.datamodels.DrizProductModel`
+        result : `~jwst.datamodels.ImageModel`
             The resampled output, one per source
         """
         resamp = resample_spec.ResampleSpecData(input_models, **self.drizpars)

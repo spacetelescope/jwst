@@ -67,7 +67,7 @@ class ResampleSpecData:
         # Define output WCS based on all inputs, including a reference WCS
         # wcslist = [m.meta.wcs for m in self.input_models]
         self.output_wcs = self.build_interpolated_output_wcs()
-        self.blank_output = datamodels.DrizProductModel(self.data_size)
+        self.blank_output = datamodels.ImageModel(self.data_size)
 
         self.blank_output.update(datamodels.ImageModel(self.input_models[0]._instance))
         self.blank_output.meta.wcs = self.output_wcs
