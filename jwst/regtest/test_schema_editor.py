@@ -12,7 +12,7 @@ import sys
 import pytest
 
 from jwst.regtest.regtestdata import text_diff
-from jwst.datamodels.schema_editor import Schema_editor
+import jwst.datamodels.schema_editor as se
 from jwst.lib.file_utils import pushdir
 
 # Define data locations in artifactory
@@ -40,7 +40,7 @@ def keyword_db(jail, rtdata_module):
 def run_editor_full(jail, keyword_db):
     """Just run the editor"""
 
-    editor = Schema_editor(
+    editor = se.Schema_editor(
         input=str(keyword_db), output=FIXED_SCHEMA,
         add=True, delete=True, edit=True, rename=True
     )
@@ -49,6 +49,18 @@ def run_editor_full(jail, keyword_db):
     # The fixed schema live in a date-stamped folder under FIXED_SCHEMA.
     # It will be the only folder, so we can just return the first from the list.
     return os.path.join(FIXED_SCHEMA, os.listdir(FIXED_SCHEMA)[0])
+
+
+def test_limit_datamodels():
+    """Limit the datamodel list"""
+
+    # Load the `DataModel` schemas as normal.
+    models = se.Model_db()
+
+    # Now reaload the models but exclude everything except the first model.
+    exclude_list = list(models)[1:]
+    models_limited = se.Model_db(exclude=exclude_list)
+    assert len(models_limited) == 1
 
 
 @pytest.mark.bigdata
@@ -78,7 +90,7 @@ def test_full_run(jail, schema, run_editor_full, rtdata_module):
 @pytest.mark.bigdata
 def test_no_option_warning(jail, keyword_db):
     """If no operations is given, raise an error"""
-    editor = Schema_editor(
+    editor = se.Schema_editor(
         input=keyword_db
     )
     with pytest.raises(RuntimeError):
