@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
 import os
-from ..stpipe import Step
-from . import source_catalog
+
+from .source_catalog import SourceCatalog
 from .. import datamodels
+from ..stpipe import Step
+
 __all__ = ["SourceCatalogStep"]
 
 
@@ -19,53 +21,30 @@ class SourceCatalogStep(Step):
     """
 
     spec = """
+        bkg_boxsize = float(default=100)      # background mesh box size in pixels
         kernel_fwhm = float(default=2.0)      # Gaussian kernel FWHM in pixels
         kernel_xsize = float(default=5)       # Kernel x size in pixels
         kernel_ysize = float(default=5)       # Kernel y size in pixels
         snr_threshold = float(default=3.0)    # SNR threshold above the bkg
         npixels = float(default=5.0)          # min number of pixels in source
         deblend = boolean(default=False)      # deblend sources?
-        output_ext = string(default='.ecsv')  # Default type of output
+        output_ext = string(default='.ecsv')  # Default file extension
         suffix = string(default='cat')        # Default suffix for output files
     """
 
-    def process(self, input):
-        kernel_fwhm = self.kernel_fwhm
-        kernel_xsize = self.kernel_xsize
-        kernel_ysize = self.kernel_ysize
-        snr_threshold = self.snr_threshold
-        npixels = self.npixels
-        deblend = self.deblend
-
+    def process(self, input_model):
         with datamodels.open(input)  as model:
-            bkg = source_catalog.estimate_background(model, box_size=128)
-            model.data -= bkg.background
-
-            threshold = snr_threshold * bkg.background_rms
-
-            kernel = source_catalog.make_kernel(kernel_fwhm, kernel_xsize,
-                                                kernel_ysize)
-
-            segm = source_catalog.detect_sources(
-                model, threshold, npixels, kernel, deblend=deblend)
-            catalog = source_catalog.make_source_catalog(model, segm, kernel)
-
-            if catalog is None:
-                self.log.info('No sources were found.  Source catalog will '
-                              'not be written.')
-                return
-
-            self.log.info('Detected {0} sources'.format(len(catalog)))
+            catobj = SourceCatalog(model, bkg_boxsize=self.bkg_boxsize,
+                                   kernel_fwhm=self.kernel_fwhm,
+                                   snr_threshold=self.snr_threshold,
+                                   npixels=self.npixels, deblend=self.deblend)
+            catalog = catobj.run()
 
             if self.save_results:
                 cat_filepath = self.make_output_path()
-                catalog.write(
-                    cat_filepath, format='ascii.ecsv', overwrite=True
-                )
-                self.log.info('Wrote source catalog: {0}'
-                              .format(cat_filepath))
-                model.meta.source_catalog = os.path.basename(
-                    cat_filepath)
+                catalog.write(cat_filepath, format='ascii.ecsv',
+                              overwrite=True)
+                model.meta.source_catalog = os.path.basename(cat_filepath)
+                self.log.info(f'Wrote source catalog: {cat_filepath}')
 
-        # nothing is returned because this is the last step
-        return
+        return catalog
