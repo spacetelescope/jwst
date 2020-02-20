@@ -233,11 +233,9 @@ def test_two_CRs(generate_miri_reffiles, max_cores, setup_inputs):
 def test_two_group_integration(generate_miri_reffiles, max_cores, setup_inputs):
     override_gain, override_readnoise = generate_miri_reffiles
     grouptime = 3.0
-    deltaDN = 5
     ingain = 6
     inreadnoise = np.float64(7)
     ngroups = 2
-    CR_fraction = 5
     xsize = 103
     ysize = 102
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
