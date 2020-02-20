@@ -105,6 +105,8 @@ refpix
 
 - Interchanged alpha and beta reference arrays; use the DQ extension [#4575]
 
+- Fixed bugs in PR #4575; added unit tests [#4596]
+
 set_telescope_pointing
 ----------------------
 
