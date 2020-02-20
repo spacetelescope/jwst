@@ -94,7 +94,6 @@ def test_nocr_100_groups_nframes1(setup_inputs):
     for i in range(10,100):
         model1.data[0,i,5,5] = i * 5
     out_model = detect_jumps(model1, gain, rnModel, 4.0,  1, 200, 4, True)
-    total_CRs_in_pixel = np.sum(out_model.groupdq[0,:, 5, 5])
     assert (0 == np.max(out_model.groupdq))
 
 def test_twoints_onecr_each_10_groups_neighbors_flagged(setup_inputs):
