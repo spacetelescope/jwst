@@ -15,6 +15,7 @@ from tweakwcs.matchutils import TPMatch
 from ..stpipe import Step
 from .. import datamodels
 
+from . import astrometric_utils as amutils
 from .tweakreg_catalog import make_tweakreg_catalog
 
 
@@ -55,7 +56,13 @@ class TweakRegStep(Step):
         fitgeometry = option('shift', 'rscale', 'general', default='general') # Fitting geometry
         nclip = integer(min=0, default=3) # Number of clipping iterations in fit
         sigma = float(min=0.0, default=3.0) # Clipping limit in sigma units
+
+        # Absolute astrometry fitting parameters:
+        align_to_gaia = boolean(default=True)  # Align to GAIA catalog
+        gaia_catalog = option('GAIADR2', 'GAIADR1', default='GAIADR2')
+        output_gaia = boolean(default=False)  # Write out GAIA catalog as a separate product
     """
+
 
     reference_file_types = []
 
@@ -199,6 +206,61 @@ class TweakRegStep(Step):
 
             else:
                 raise e
+
+        if self.align_to_gaia:
+            try:
+                # Get catalog of GAIA sources for the field
+                #
+                # NOTE:  If desired, the pipeline can write out the reference catalog
+                #        as a separate product with a name based on whatever convention
+                #        is determined by the JWST Cal Working Group
+                if self.output_gaia:
+                    output_name = 'fit_{}_ref.ecsv'.format(self.gaia_catalog.lower())
+                else:
+                    output_name = None
+                ref_cat = amutils.create_astrometric_catalog(self.input_models,
+                                                             self.gaia_catalog,
+                                                             output=output_name)
+
+                # Check that there are enough GAIA sources for a reliable/valid fit
+                num_ref = len(ref_cat)
+                if num_ref < self.minobj:
+                    msg = "Not enough GAIA sources for a fit: {}\n".format(num_ref)
+                    msg += "Skipping alignment to {} astrometric catalog!\n".format(self.gaia_catalog)
+                    raise ValueError(msg)
+                # Set group_id to same value so all get fit as one observation
+                for imcat in imcats:
+                    imcat.meta['orig_group_id'] = imcat.meta['group_id']
+                    imcat.meta['group_id'] = 987654
+
+                # Perform fit
+                align_wcs(
+                    imcats,
+                    refcat=ref_cat,
+                    enforce_user_order=False,
+                    expand_refcat=False,
+                    minobj=self.minobj,
+                    match=tpmatch,
+                    fitgeom=self.fitgeometry,
+                    nclip=self.nclip,
+                    sigma=(self.sigma, 'rmse')
+                )
+                # Reset group_id to original values
+                # Also, update/create the WCS .name attribute with information on this astrometric fit
+                for imcat in imcats:
+                    imcat.meta['group_id'] = imcat.meta['orig_group_id']
+                    # NOTE: This .name attribute needs to be defined using a convention
+                    #       agreed upon by the JWST Cal Working Group.
+                    #       Current value is merely a place-holder based on HST conventions
+                    #       This value should also be translated to the FITS WCSNAME keyword
+                    #       IF that is what gets recorded in the archive for end-user searches
+                    imcat.meta.wcs.name = "FIT-LVL3-{}".format(self.gaia_catalog)
+
+            except ValueError as e:
+                msg = e.args[0]
+                # Warn the user that the FIT to the astrometric catalog was not successful.
+                self.log.warning(msg)
+
 
         for imcat in imcats:
             imcat.meta['image_model'].meta.cal_step.tweakreg = 'COMPLETE'
