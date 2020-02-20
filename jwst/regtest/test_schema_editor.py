@@ -8,6 +8,7 @@ The tests here are for later modifications.
 import os
 from pathlib import Path
 import sys
+import yaml
 
 import pytest
 
@@ -37,6 +38,13 @@ def keyword_db(jail, rtdata_module):
 
 
 @pytest.fixture(scope='module')
+def model_db():
+    """Create a full Model_db"""
+    models = se.Model_db()
+    return models
+
+
+@pytest.fixture(scope='module')
 def run_editor_full(jail, keyword_db):
     """Just run the editor"""
 
@@ -51,14 +59,28 @@ def run_editor_full(jail, keyword_db):
     return os.path.join(FIXED_SCHEMA, os.listdir(FIXED_SCHEMA)[0])
 
 
-def test_limit_datamodels():
+@pytest.mark.bigdata
+def test_limit_datamodels_from_file(jail, model_db, keyword_db, rtdata_module):
+    """Test limiting datamodels from Schema_editor"""
+
+    # Create the exclusion file.
+    exclude = list(model_db)[1:]
+    exclude_path = 'exclude.yaml'
+    with open(exclude_path, 'w') as fh:
+        yaml.dump(exclude, fh)
+
+    # Run the editor
+    editor = se.Schema_editor(input=str(keyword_db), exclude_file=exclude_path,
+                              list=True, rename=True)
+    editor.change()
+    assert len(editor.model_db) == 1
+
+
+def test_limit_datamodels(model_db):
     """Limit the datamodel list"""
 
-    # Load the `DataModel` schemas as normal.
-    models = se.Model_db()
-
-    # Now reaload the models but exclude everything except the first model.
-    exclude_list = list(models)[1:]
+    # Reload the models but exclude everything except the first model.
+    exclude_list = list(model_db)[1:]
     models_limited = se.Model_db(exclude=exclude_list)
     assert len(models_limited) == 1
 

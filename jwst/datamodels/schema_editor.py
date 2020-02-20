@@ -435,7 +435,7 @@ class Model_db:
     schema_files: [str[...]]
         The schema files loaded.
     """
-    
+
     def __init__(self, exclude=None):
         if exclude is None:
             exclude = []
@@ -537,13 +537,14 @@ class Options:
     prompts = (
         ("input", "directory name containing keyword database"),
         ("output", "directory name model schemas will be written to"),
-        ("add", "fields in the keyword db but not in the model to the model schema"),
+        ("add", "fields that exist in the keyword db but are not in the model schemas"),
         ("delete", "fields in the model but not in the keyword db from the model"),
         ("edit", "fields found in both to match the values in the keyword db"),
         ("rename", "fields in the model to match the names in the keyword db"),
         ("list", "changes without making them"),
         ("query", "for approval of changes before they are made"),
-        ("omit_file", "file containing list of parameters to omit", False),
+        ("omit_file", "containing the list of parameters to omit", False),
+        ("exclude_file", "containing the list of DataModel schema to exclude from the comparisoni", False)
     )
 
 
@@ -871,6 +872,9 @@ class Schema_editor:
         self.log = ""
         self.omit = set()
         self.omit_file = ''
+        self.exclude = []
+        self.exclude_file = ''
+        self.model_db = None
 
         # Set attributes from keywds
         for name, value in keywds.items():
@@ -970,6 +974,12 @@ class Schema_editor:
             with open(self.omit_file) as fh:
                 self.omit.update(yaml.safe_load(fh))
 
+        # If an exclude file was specified, add the list of `DataModel` schema
+        # to the exclusion list.
+        if self.exclude_file:
+            with open(self.exclude_file) as fh:
+                self.exclude.extend(yaml.safe_load(fh))
+
         # Set output file for messages depending on list,
         # so output can be captured to a file
         if self.query or self.log == "":
@@ -998,7 +1008,8 @@ class Schema_editor:
         # Loop over the model schema files, updating them from the keyword db
 
         fits_dict = {}
-        model_db = Model_db()
+        model_db = Model_db(exclude=self.exclude)
+        self.model_db = model_db
         for schema_file in model_db:
             model_path = []
             model_schema = model_db.read(schema_file)
