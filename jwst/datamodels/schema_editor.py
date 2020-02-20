@@ -419,18 +419,39 @@ class Keyword_db:
 
 
 class Model_db:
-    def __init__(self):
-        """
-        Load the list of datamodels schema files from the schema directory
-        """
+    """
+    Load the list of datamodels schema files from the schema directory
+
+    Parameters
+    ----------
+    exclude: None or [str[,...]]
+        List of `DataModel` schemas to ignore.
+
+    Attributes
+    ----------
+    base_url: str
+        The location of the `DataModel` schemas
+
+    schema_files: [str[...]]
+        The schema files loaded.
+    """
+    
+    def __init__(self, exclude=None):
+        if exclude is None:
+            exclude = []
+
         source_file = os.path.abspath(inspect.getfile(model_base.DataModel))
         self.base_url = os.path.join(os.path.dirname(source_file),
                                      'schemas', '')
         self.schema_files = []
 
         for filename in os.listdir(self.base_url):
-            if filename.endswith(".yaml"):
+            if filename.endswith(".yaml") and filename not in exclude:
                 self.schema_files.append(filename)
+
+
+    def __len__(self):
+        return len(self.schema_files)
 
 
     def __iter__(self):
