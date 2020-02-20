@@ -76,7 +76,7 @@ def test_nocr_100_groups_nframes1(setup_inputs):
     ingain = 1 #to make the noise calculation simple
     inreadnoise = np.float64(7)
     ngroups = 100
-    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
+    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups, nrows=100, ncols=100,
                                                           gain=ingain, readnoise=inreadnoise,
                                                           deltatime=grouptime)
     model1.meta.exposure.nframes = 1
