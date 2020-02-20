@@ -15,7 +15,8 @@ from collections import namedtuple
 import numpy as np
 from astropy.modeling.core import Model
 from astropy.modeling.parameters import Parameter, InputParameterError
-from astropy.modeling.models import Rotation2D
+from astropy.modeling.models import (Rotation2D, Identity, Mapping, Tabular1D, Const1D)
+from astropy.modeling.models import math as astmath
 from astropy.utils import isiterable
 
 
@@ -1151,16 +1152,21 @@ class NIRCAMForwardRowGrismDispersion(Model):
             the spectral order to use
         """
         try:
-            iorder = self._order_mapping[int(order)]
+            iorder = self._order_mapping[int(order.flatten()[0])]
         except KeyError:
             raise ValueError("Specified order is not available")
 
-        # for accepting the dy and known source object center
-        t = self.xmodels[iorder](x - x0)
-        dy = self.ymodels[iorder](t)
-        wavelength = self.lmodels[iorder](t)
+        xmodel = self.xmodels[iorder]
+        ymodel = self.ymodels[iorder]
+        lmodel = self.lmodels[iorder]
 
-        return (x0, y0+dy, wavelength, order)
+        # inputs are x, y, x0, y0, order
+        # x, x0, x0, y0, order
+        tmodel = astmath.SubtractUfunc() | xmodel
+        model = Mapping((0, 2, 0, 2, 2, 3, 4)) | ( tmodel | ymodel) & (tmodel | lmodel) & Identity(3) |\
+              Mapping((2, 3, 0, 1, 4)) | Identity(1) & astmath.AddUfunc() &  Identity(2) | Mapping((0, 1, 2, 3), n_inputs=4)
+
+        return model(x, y, x0, y0, order)
 
 
 class NIRCAMForwardColumnGrismDispersion(Model):
@@ -1231,16 +1237,30 @@ class NIRCAMForwardColumnGrismDispersion(Model):
             the spectral order to use
         """
         try:
-            iorder = self._order_mapping[int(order)]
+            iorder = self._order_mapping[int(order.flatten()[0])]
         except KeyError:
             raise ValueError("Specified order is not available")
 
         # for accepting the dy and known source object center
-        t = self.ymodels[iorder](y-y0)
-        dx = self.xmodels[iorder](t)
-        wavelength = self.lmodels[iorder](t)
+        #t = self.ymodels[iorder](y-y0)
+        #dx = self.xmodels[iorder](t)
+        #wavelength = self.lmodels[iorder](t)
 
-        return (x0+dx, y0, wavelength, order)
+        #return (x0+dx, y0, wavelength, order)
+        xmodel = self.xmodels[iorder]
+        ymodel = self.ymodels[iorder]
+        lmodel = self.lmodels[iorder]
+
+        # inputs are x, y, x0, y0, order
+        tmodel = astmath.SubtractUfunc() | ymodel
+        dx = tmodel | xmodel
+        wavelength = tmodel | lmodel
+        model = Mapping((1, 3, 1, 3, 2, 3, 4)) | \
+              dx  & wavelength & Identity(3) |\
+              Mapping((0, 2, 3, 1, 4)) | astmath.AddUfunc() &  Identity(3)
+
+        #output is (x0+dx, y0, wavelength, order)
+        return model(x, y, x0, y0, order)
 
 
 class NIRCAMBackwardGrismDispersion(Model):
@@ -1308,17 +1328,35 @@ class NIRCAMBackwardGrismDispersion(Model):
             specifies the spectral order
         """
         try:
-            iorder = self._order_mapping[int(order)]
+            iorder = self._order_mapping[int(order.flatten()[0])]
         except KeyError:
             raise ValueError("Specified order is not available")
 
-        if wavelength < 0:
+        if (wavelength < 0).any():
             raise ValueError("wavelength should be greater than zero")
-
+        '''
         t = self.lmodels[iorder](float(wavelength))
         dx = self.xmodels[iorder](float(t))
         dy = self.ymodels[iorder](float(t))
         return (x+dx, y+dy, x, y, order)
+        '''
+
+        xmodel = self.xmodels[iorder]
+        ymodel = self.ymodels[iorder]
+        lmodel = self.lmodels[iorder]
+
+        dx = lmodel | xmodel
+        dy = lmodel | ymodel
+        model = Mapping((0, 2, 1, 2, 0, 1, 3)) | \
+              ((Identity(1) & dx) | astmath.AddUfunc())  & \
+              ((Identity(1) & dy) | astmath.AddUfunc()) & Identity(3)
+        # inputs are x, y, wavelength, order
+        #model = Mapping((0, 2, 1, 2, 0, 1, 3)) | \
+              #(Identity(1) & (lmodel | xmodel) | astmath.AddUfunc() ) & \
+              #(Identity(1) & (lmodel | ymodel) | astmath.AddUfunc()) & Identity(3)
+
+        # Output is x+dx, y+dy, x, y, order
+        return model(x, y, wavelength, order)
 
 
 class NIRISSBackwardGrismDispersion(Model):
@@ -1406,23 +1444,42 @@ class NIRISSBackwardGrismDispersion(Model):
         reference file and fwcpos from the input image.
 
         """
-        if wavelength < 0:
+        if (wavelength < 0).any():
             raise ValueError("Wavelength should be greater than zero")
         try:
-            iorder = self._order_mapping[int(order)]
+            iorder = self._order_mapping[int(order.flatten()[0])]
         except KeyError:
             raise ValueError("Specified order is not available")
 
         t = self.lmodels[iorder](wavelength)
-        # use that t to compute the dx and dy
-        dx = self.xmodels[iorder][0](x, y) + t * self.xmodels[iorder][1](x, y)
-        dy = self.ymodels[iorder][0](x, y) + t * self.ymodels[iorder][1](x, y)
-        # rotate by theta
+        xmodel = self.xmodels[iorder]
+        ymodel = self.ymodels[iorder]
+        lmodel = self.lmodels[iorder]
+
+        dx = xmodel[0](x, y) + t * xmodel[1](x, y)
+        dy = ymodel[0](x, y) + t * ymodel[1](x, y)
+
+        ## use that t to compute the dx and dy
+        #dx = self.xmodels[iorder][0](x, y) + t * self.xmodels[iorder][1](x, y)
+        #dy = self.ymodels[iorder][0](x, y) + t * self.ymodels[iorder][1](x, y)
+        ## rotate by theta
         if self.theta != 0.0:
             rotate = Rotation2D(self.theta)
             dx, dy = rotate(dx, dy)
 
+        #return (x+dx, y+dy, x, y, order)
         return (x+dx, y+dy, x, y, order)
+
+
+        # input is x, y, wavelength, order
+        #dx = xmodel[0] & ((xmodel[1] & lmodel) | astmath.MultiplyUfunc )| astmath.AddUfunc()
+        #dy = ymodel[0] & ((ymodel[1] & lmodel) | astmath.MultiplyUfunc )| astmath.AddUfunc()
+
+        #model =  Mapping((0, 1, 0, 1, 2, 0, 1, 0, 1, 2, 0, 1, 3)) | \
+              #(dx & dy | rotation ) & Identity(3)
+
+        ##output is x+dx, y+dy, x, y, order
+        #return model(x, y, wavelength, order)
 
 
 class NIRISSForwardRowGrismDispersion(Model):
@@ -1510,23 +1567,45 @@ class NIRISSForwardRowGrismDispersion(Model):
 
         """
         try:
-            iorder = self._order_mapping[int(order)]
+            iorder = self._order_mapping[int(order.flatten()[0])]
         except KeyError:
             raise ValueError("Specified order is not available")
+        x00 = x0.flatten()[0]
+        y00 = y0.flatten()[0]
 
-        dxr = x - x0  # delta x in rotated trace coordinates
+        #dxr = x - x0  # delta x in rotated trace coordinates
 
         t = np.linspace(0, 1, 10)  #sample t
-        dx = self.xmodels[iorder][0](x0, y0) + t * self.xmodels[iorder][1](x0, y0)
-        dy = self.ymodels[iorder][0](x0, y0) + t * self.ymodels[iorder][1](x0, y0)
+        #dx = self.xmodels[iorder][0](x0, y0) + t * self.xmodels[iorder][1](x0, y0)
+        #dy = self.ymodels[iorder][0](x0, y0) + t * self.ymodels[iorder][1](x0, y0)
+        xmodel = self.xmodels[iorder]
+        ymodel = self.ymodels[iorder]
+        lmodel = self.lmodels[iorder]
+        #rotation = Rotation2D(self.theta)
+
+        dx = xmodel[0](x00, y00) + t * xmodel[1](x00, y00)
+        dy = ymodel[0](x00, y00) + t * ymodel[1](x00, y00)
+
+
         if self.theta != 0.0:
             rotate = Rotation2D(self.theta)
             dx, dy = rotate(dx, dy)
         so = np.argsort(dx)
-        tr = np.interp(dxr, dx[so], t[so])
-        wavelength = self.lmodels[iorder](tr)
 
-        return (x0, y0, wavelength, order)
+        #tr = np.interp(dxr, dx[so], t[so])
+        #wavelength = self.lmodels[iorder](tr)
+        tab = Tabular1D(dx[so], t[so], bounds_error=False, fill_value=None)
+
+        #return (x0, y0, wavelength, order)
+        # input is x, y, x0, y0, order
+        #dx = xmodel[0] & ((xmodel[1] & lmodel) | astmath.MultiplyUfunc )| astmath.AddUfunc()
+        #model = Mapping((0, 1, 2, 3))
+        #return (x0, y0, wavelength, order)
+        # input is x, y, x0, y0, order
+        dxr = astmath.SubtractUfunc()
+        wavelength = dxr | tab | lmodel
+        model = Mapping((2, 3, 0, 2, 4)) | Const1D(x0) & Const1D(y0) & wavelength & Const1D(order)
+        return model(x, y, x0, y0, order)
 
 
 class NIRISSForwardColumnGrismDispersion(Model):
@@ -1609,19 +1688,31 @@ class NIRISSForwardColumnGrismDispersion(Model):
 
         """
         try:
-            iorder = self._order_mapping[int(order)]
+            iorder = self._order_mapping[int(order.flatten()[0])]
         except KeyError:
             raise ValueError("Specified order is not available")
+        x00 = x0.flatten()[0]
+        y00 = y0.flatten()[0]
 
-        dyr = y - y0  # delta x in rotated trace coordinate
+        #dyr = y - y0  # delta x in rotated trace coordinate
         t = np.linspace(0, 1, 10)
-        dx = self.xmodels[iorder][0](x0, y0) + t * self.xmodels[iorder][1](x0, y0)
-        dy = self.ymodels[iorder][0](x0, y0) + t * self.ymodels[iorder][1](x0, y0)
+
+        xmodel = self.xmodels[iorder]
+        ymodel = self.ymodels[iorder]
+        lmodel = self.lmodels[iorder]
+        dx = xmodel[0](x00, y00) + t * xmodel[1](x00, y00)
+        dy = ymodel[0](x00, y00) + t * ymodel[1](x00, y00)
+
         if self.theta != 0.0:
             rotate = Rotation2D(self.theta)
             dx, dy = rotate(dx, dy)
         so = np.argsort(dy)
-        tr = np.interp(dyr, dy[so], t[so])
-        wavelength = self.lmodels[iorder](tr)
-
-        return (x0, y0, wavelength, order)
+        #tr = np.interp(dyr, dy[so], t[so])
+        #wavelength = self.lmodels[iorder](tr)
+        tab = Tabular1D(dy[so], t[so], bounds_error=False, fill_value=None)
+        #return (x0, y0, wavelength, order)
+        # input is x, y, x0, y0, order
+        dyr = astmath.SubtractUfunc()
+        wavelength = dyr | tab | lmodel
+        model = Mapping((2, 3, 1, 3, 4)) | Const1D(x0) & Const1D(y0) & wavelength & Const1D(order)
+        return model(x, y, x0, y0, order)

@@ -551,11 +551,13 @@ def compute_wavelength_array(slit):
     wavelength : numpy.array
         The wavelength array
     """
-    grid = grid_from_bounding_box(slit.meta.wcs.bounding_box)
-    shape = grid[0].shape
-    wavelength = np.empty(shape, dtype=np.float64)
+    #grid = grid_from_bounding_box(slit.meta.wcs.bounding_box)
+    #shape = grid[0].shape
+    #wavelength = np.empty(shape, dtype=np.float64)
     transform = slit.meta.wcs.forward_transform
-    for j in range(shape[0]):
-        for i in range(shape[1]):
-            wavelength[j, i] = transform(grid[0][j, i], grid[1][j, i])[2]
+    #for j in range(shape[0]):
+        #for i in range(shape[1]):
+            #wavelength[j, i] = transform(grid[0][j, i], grid[1][j, i])[2]
+    x, y = grid_from_bounding_box(slit.meta.wcs.bounding_box)
+    wavelength = transform(x, y)[2]
     return wavelength
