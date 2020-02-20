@@ -3,6 +3,7 @@
 
 assign_wcs
 ----------
+- Remove full path from SCATFILE keyword [#4387]
 
 - A ``ValueError`` is now raised if input data is missing ``xref_sci`` or ``yref_sci`` keywords. [#4561]
 
