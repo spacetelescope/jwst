@@ -198,10 +198,16 @@ class OutlierDetectionIFU(OutlierDetection):
         maskpt = self.outlierpars.get('maskpt', 0.7)
         badmasks = []
         for w in resampled_wht:
-            mean_weight, _, _ = sigma_clipped_stats(w,
-                                                    sigma=3.0,
-                                                    mask_value=0.)
+            # Due to a bug in numpy.nanmean, need to check
+            # for a completely zero array
+            if not np.any(w):
+                mean_weight = 0.
+            else:
+                mean_weight, _, _ = sigma_clipped_stats(
+                    w, sigma=3.0, mask_value=0.
+                )
             weight_threshold = mean_weight * maskpt
+
             # Mask pixels were weight falls below MASKPT percent of
             #    the mean weight
             mask = np.less(w, weight_threshold)
