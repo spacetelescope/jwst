@@ -26,10 +26,6 @@ def create_slit(model, x0, y0, order):
     model = Mapping((0, 1, 0, 0, 0)) | (Shift(xmin) & Shift(ymin) &
                                         Const1D(x0) & Const1D(y0) & Const1D(order) )| model
     wcsobj = wcs.WCS([('det', model), ('world', None)])
-    # refactored call
-    # wcsobj.bounding_box = ((3, 7), (2, 5), (x0-1, x0+1), (y0-1, y0+1), (1, 3))
-
-    #wcsobj.bounding_box = ((xmin, xmax), (ymin, ymax))
     wcsobj.bounding_box = ((20, 25), (800, 805))
     slit = SlitModel()
     slit.meta.wcs = wcsobj
@@ -194,14 +190,6 @@ def test_NIRISSBackwardDispersion():
 
     slit = create_slit(forward_model, x0, y0, order)
     slit.meta.wcs.bounding_box = ((910, 916), (12,18))
-    #grid = grid_from_bounding_box(slit.meta.wcs.bounding_box)
-    #shape = grid[0].shape
-    #xdx = np.empty(shape, dtype=np.float64)
-    #ydy = np.empty(shape, dtype=np.float64)
-    #for j in range(shape[0]):
-        #for i in range(shape[1]):
-            #xdx[j, i], ydy[j, i], _, _, _ = model(grid[0][j, i], grid[1][j, i],
-                                                  #wavelength[j, i], 1)
 
     expected_xdx = np.array(
         [[641.69045022, 642.69044108, 643.69043194, 644.6904228, 645.69041366, 646.69040451, 647.69039537],
@@ -299,8 +287,6 @@ def test_NIRISSForwardColumnGrismDispersion():
 
     slit = create_slit(model, x0, y0, order)
     slit.meta.wcs.bounding_box = ((910, 916), (12, 18))
-
-    #wavelength = compute_wavelength_array(slit)
     expected = np.array(
         [[2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3],
          [0.98553179, 0.98553179, 0.98553179, 0.98553179, 0.98553179, 0.98553179, 0.98553179],
