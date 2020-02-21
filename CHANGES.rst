@@ -69,6 +69,8 @@ model_blender
 outlier_detection
 -----------------
 
+- Check for a zero array before sigma clipping [#4598]
+
 - Fix bug and logic pertaining to detecting if the background has been
   subtracted or not. [#4523]
 
