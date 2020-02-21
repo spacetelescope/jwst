@@ -544,7 +544,7 @@ class Options:
         ("list", "changes without making them"),
         ("query", "for approval of changes before they are made"),
         ("omit_file", "containing the list of parameters to omit", False),
-        ("exclude_file", "containing the list of DataModel schema to exclude from the comparisoni", False)
+        ("exclude_file", "containing the list of DataModel schema to exclude from the comparison", False)
     )
 
 
