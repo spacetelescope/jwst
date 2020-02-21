@@ -26,10 +26,10 @@ class ResampleStep(Step):
     """
 
     spec = """
-        pixfrac = float(default=None)
-        kernel = string(default=None)
-        fillval = string(default=None)
-        weight_type = option('exptime', default=None)
+        pixfrac = float(default=1.0)
+        kernel = string(default='square')
+        fillval = string(default='INDEF')
+        weight_type = option('exptime', default='exptime')
         good_bits = integer(min=0, default=6)
         single = boolean(default=False)
         blendheaders = boolean(default=True)

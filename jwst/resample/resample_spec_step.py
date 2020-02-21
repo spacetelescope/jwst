@@ -18,6 +18,10 @@ class ResampleSpecStep(ResampleStep):
         A singe datamodel, a container of datamodels, or an association file
     """
 
+    # Spec is all the same except for the suffix
+    spec = """
+    """
+
     def process(self, input):
         input = datamodels.open(input)
 
