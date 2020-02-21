@@ -129,28 +129,7 @@ def detect_jumps (input_model, gain_model, readnoise_model,
         pool.close()
         elapsed = time.time() - start
     log.debug('Elapsed time of twopoint difference = %g sec' % elapsed)
-    nrows = gdq.shape[3]
-    ncols = gdq.shape[2]
-    cr_int, cr_group, cr_row, cr_col = np.where(np.bitwise_and(gdq, dqflags.group['JUMP_DET']))
-    number_pixels_with_cr = len(cr_int)
-    for j in range(number_pixels_with_cr):
-        if cr_row[j] != 0:
-            gdq[cr_int[j], cr_group[j], cr_row[j]-1, cr_col[j]] = np.bitwise_or(
-                gdq[cr_int[j], cr_group[j], cr_row[j]-1, cr_col[j]],
-                dqflags.group['JUMP_DET'])
-        if cr_row[j] != nrows-1:
-            gdq[cr_int[j], cr_group[j], cr_row[j] + 1, cr_col[j]] = np.bitwise_or(
-                gdq[cr_int[j], cr_group[j], cr_row[j] + 1, cr_col[j]],
-                dqflags.group['JUMP_DET'])
-        if cr_col[j] != 0:
-            gdq[cr_int[j], cr_group[j], cr_row[j], cr_col[j]- 1] = np.bitwise_or(
-                gdq[cr_int[j], cr_group[j], cr_row[j], cr_col[j]-1],
-                dqflags.group['JUMP_DET'])
-        if cr_col[j] !=  ncols -1:
-            gdq[cr_int[j], cr_group[j], cr_row[j], cr_col[j] + 1] = np.bitwise_or(
-                gdq[cr_int[j], cr_group[j], cr_row[j], cr_col[j] + 1],
-                dqflags.group['JUMP_DET'])
-
+   
     elapsed = time.time() - start
     log.debug('Elapsed time = %g sec' % elapsed)
 
