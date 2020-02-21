@@ -88,7 +88,7 @@ MIR Detector Data
        it has been found that there is a significant odd-even row effect.
        Bad pixels (those whose DQ flag has the "DO_NOT_USE" bit set) are not
        included in the calculation of the mean. The mean is calculated as a
-       clipped mean with a 3-sigma rejection threshold using the 
+       clipped mean with a 3-sigma rejection threshold using the
        ``scipy.stats.sigmaclip`` method.
     #. Average the left and right reference pixel mean values.
     #. Subtract each mean from all pixels that the mean is representative of,
@@ -153,7 +153,10 @@ CRDS reference file factors are applied.  IRS2 readout is only used for
 full-frame data, never for subarrays.  The full detector is read out
 by four separate amplifiers simultaneously, and the reference output is
 read at the same time.  Each of these five readouts is the same size,
-640 by 2048 pixels (for IRS2).  The first step in this processing is to
+640 by 2048 pixels (for IRS2).  If the CRDS reference file includes a
+DQ (data quality) BINTABLE extension, interleaved reference pixel values
+will be set to zero if they are flagged as bad in the DQ extension.
+The next step in this processing is to
 copy the science data and the reference pixel data separately to temporary
 1-D arrays (both of length 712 * 2048); this is done separately for each
 amp output.  The reference output is also copied to such an array, but
@@ -179,7 +182,7 @@ output amplifiers.  ``alpha`` is read from columns 'ALPHA_0', 'ALPHA_1',
 'ALPHA_2', and 'ALPHA_3'.  ``beta`` is read from columns 'BETA_0',
 'BETA_1', 'BETA_2', and 'BETA_3'.
 
-The following is done in a loop over groups.
+For each integration, the following is done in a loop over groups.
 
 Let ``k`` be the output number, i.e. an index for sectors 0 through 3.
 Let ``ft_refpix`` be an array of shape (4, 712 * 2048); for each output
@@ -188,7 +191,7 @@ number ``k``, ``ft_refpix[k]`` is the Fourier transform of the temporary
 transform of the temporary 1-D array of reference output data.  Then: ::
 
     for k in range(4):
-        ft_refpix_corr[k] = ft_refpix[k] * alpha[k] + ft_refout * beta[k]
+        ft_refpix_corr[k] = ft_refpix[k] * beta[k] + ft_refout * alpha[k]
 
 For each ``k``, the inverse Fourier transform of ``ft_refpix_corr[k]`` is
 the processed array of reference pixel data, which is then subtracted from

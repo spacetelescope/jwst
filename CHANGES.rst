@@ -3,11 +3,14 @@
 
 assign_wcs
 ----------
+- Remove full path from SCATFILE keyword [#4387]
 
 - A ``ValueError`` is now raised if input data is missing ``xref_sci`` or ``yref_sci`` keywords. [#4561]
 
 associations
 ------------
+
+- Correct PATTTYPE values in ASN level 3 rules [#4570]
 
 - Update act_id format to allow base 36 values in product name [#4282]
 
@@ -51,6 +54,8 @@ extract_2d
 
 - A ``ValueError`` is now raised if the input data is missing ``xref_sci`` or ``yref_sci`` keywords. [#4561]
 
+- Fix the WCS subarray offsets for NIRCam TSGRISM cutouts [#4573]
+
 master_background
 -----------------
 
@@ -64,11 +69,15 @@ model_blender
 outlier_detection
 -----------------
 
+- Check for a zero array before sigma clipping [#4598]
+
 - Fix bug and logic pertaining to detecting if the background has been
   subtracted or not. [#4523]
 
 pipeline
 --------
+
+- Hardwire required pipeline outputs in the pipeline. [#4578]
 
 - Added FGS_IMAGE to the exposure types to apply resampling in calwebb_image2.py [#4421]
 
@@ -93,6 +102,13 @@ photom
 
 - Added ``spectral_order`` to the fields matching the ``photom`` reference files
   for NIRCAM WFSS and TSGRISM modes. [#4538, 4558]
+
+refpix
+------
+
+- Interchanged alpha and beta reference arrays; use the DQ extension [#4575]
+
+- Fixed bugs in PR #4575; added unit tests [#4596]
 
 set_telescope_pointing
 ----------------------
