@@ -30,7 +30,7 @@ allOf:
           items:
             type: number
         tilt_model:
-          $ref: http://stsci.edu/schemas/asdf/transform/polynomial-1.2.0
+          $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
           description: |
             Relation THETA_Y vs GWA_X reading.
         unit:
@@ -56,7 +56,7 @@ allOf:
           items:
             type: number
         tilt_model:
-          $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+          $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
           description: |
             Relation THETA_Y vs GWA_X reading.
         unit:
