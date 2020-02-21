@@ -601,26 +601,52 @@ properties:
             fits_keyword: EXP_TYPE
             blend_table: True
           start_time:
-            allOf:
-              - type: number
-              - fits_keyword: EXPSTART
-                title: UTC exposure start time
-                blend_table: True
-                blend_rule: first
+            title: UTC exposure start time
+            type: number
+            fits_keyword: EXPSTART
+            blend_table: True
+            blend_rule: first
+          start_time_mjd:
+            title: "[d] exposure start time in MJD"
+            type: number
+            fits_keyword: MJD-BEG
+            fits_hdu: SCI
+            blend_table: True
+            blend_rule: first
           mid_time:
-            allOf:
-              - type: number
-              - fits_keyword: EXPMID
-                title: UTC exposure mid time
-                blend_table: True
-                blend_rule: mean
+            title: UTC exposure mid time
+            type: number
+            fits_keyword: EXPMID
+            blend_table: True
+            blend_rule: mean
+          mid_time_mjd:
+            title: "[d] exposure mid-point in MJD"
+            type: number
+            fits_keyword: MJD-AVG
+            fits_hdu: SCI
+            blend_table: True
+            blend_rule: first
           end_time:
-            allOf:
-              - type: number
-                title: UTC exposure end time
-                fits_keyword: EXPEND
-                blend_table: True
-                blend_rule: last
+            title: UTC exposure end time
+            type: number
+            fits_keyword: EXPEND
+            blend_table: True
+            blend_rule: last
+          end_time_mjd:
+            title: "[d] exposure end time in MJD"
+            type: number
+            fits_keyword: MJD-END
+            fits_hdu: SCI
+            blend_table: True
+            blend_rule: first
+          start_time_eng:
+            title: UTC exposure start time from engineering data
+            type: string
+            fits_keyword: EXPSTENG
+          osf_file:
+            title: Observatory Status File name covering this exposure
+            type: string
+            fits_keyword: OSF_FILE
           readpatt:
             title: Readout pattern
             type: string
@@ -954,7 +980,7 @@ properties:
             type: integer
             fits_keyword: PATT_NUM
             blend_table: True
-          starting_point:
+          pattern_start:
             title: Starting point in pattern
             type: integer
             fits_keyword: PATTSTRT
@@ -968,11 +994,6 @@ properties:
             title: "Primary dither pattern size"
             type: string
             fits_keyword: PATTSIZE
-            blend_table: True
-          subpixel_type:
-            title: Subpixel dither type
-            type: string
-            fits_keyword: SUBPXTYP
             blend_table: True
           subpixel_number:
             title: Subpixel pattern number
@@ -1028,11 +1049,6 @@ properties:
             title: "[arcsec] Spatial offset from pattern start"
             type: number
             fits_keyword: SPTOFFST
-            blend_table: True
-          slitlet_points:
-            title: Number of slitlet offsets in spectral direction
-            type: integer
-            fits_keyword: SLIT_OFF
             blend_table: True
           x_offset:
             title: x offset from pattern starting position

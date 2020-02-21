@@ -246,7 +246,7 @@ properties:
             blend_table: True
           dispersion_direction:
             title: Dispersion direction
-            type: number
+            type: integer
             fits_keyword: DISPAXIS
             fits_hdu: SCI
             blend_table: True
