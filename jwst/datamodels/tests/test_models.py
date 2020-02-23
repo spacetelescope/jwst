@@ -429,8 +429,9 @@ def test_image_with_extra_keyword_to_multislit():
             assert slit.data.shape == (4, 4)
 
 
-def test_update_extra_fits(tmpdir):
-    """Test that the update method does not update from extra_fits"""
+@pytest.mark.parametrize("extra_fits", [True, False])
+def test_update_extra_fits(tmpdir, extra_fits):
+    """Test update method does not update from extra_fits unless asked"""
     tmpfile = str(tmpdir.join("old.fits"))
     with DataModel() as im:
         im.save(tmpfile)
@@ -443,13 +444,14 @@ def test_update_extra_fits(tmpdir):
     with DataModel() as newim:
         with DataModel(tmpfile) as oldim:
             assert oldim.extra_fits.PRIMARY.header == [['FOO', 'BAR', '']]
-            newim.update(oldim)
+            newim.update(oldim, extra_fits=extra_fits)
         newim.save(newtmpfile)
 
     with fits.open(newtmpfile) as hdulist:
-        assert "FOO" not in hdulist[0].header
-
-
+        if extra_fits:
+            assert "FOO" in hdulist[0].header
+        else:
+            assert "FOO" not in hdulist[0].header
 
 
 @pytest.fixture(scope="module")
