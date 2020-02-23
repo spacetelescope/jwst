@@ -951,9 +951,9 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         # Update from extra_fits as well, if indicated
         if extra_fits:
-            for hdu_name in hdu_names:		
-                 path = ['extra_fits', hdu_name, 'header']		
-                 set_hdu_keyword(self._instance, d, path)		
+            for hdu_name in hdu_names:
+                 path = ['extra_fits', hdu_name, 'header']
+                 set_hdu_keyword(self._instance, d, path)
 
         self.validate()
 
