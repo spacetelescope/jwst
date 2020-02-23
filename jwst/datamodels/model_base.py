@@ -837,7 +837,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
     values = itervalues
 
-    def update(self, d, only=''):
+    def update(self, d, only='', extra_fits=False):
         """
         Updates this model with the metadata elements from another model.
 
@@ -852,6 +852,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             Only update the named hdu from ``extra_fits``, e.g.
             ``only='PRIMARY'``. Can either be a list of hdu names
             or a single string. If left blank, update all the hdus.
+        extra_fits : boolean
+            Update from ``extra_fits``.  Default is False.
         """
         def hdu_keywords_from_data(d, path, hdu_keywords):
             # Walk tree and add paths to keywords to hdu keywords
@@ -943,10 +945,15 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             hdu_keywords_from_data(d, path, hdu_keywords)
 
         # Perform the updates to the keywords mentioned in the schema
-
         for path in hdu_keywords:
             if not protected_keyword(path):
                 set_hdu_keyword(self._instance, d, path)
+
+        # Update from extra_fits as well, if indicated
+        if extra_fits:
+            for hdu_name in hdu_names:		
+                 path = ['extra_fits', hdu_name, 'header']		
+                 set_hdu_keyword(self._instance, d, path)		
 
         self.validate()
 
