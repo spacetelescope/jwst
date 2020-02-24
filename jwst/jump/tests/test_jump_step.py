@@ -7,7 +7,7 @@ from jwst.datamodels import RampModel
 from jwst.datamodels import GainModel, ReadnoiseModel
 from jwst.jump import JumpStep
 
-MAXIMUM_CORES = [None, 'quarter','half','all']
+MAXIMUM_CORES = ['one', 'quarter','half','all']
 
 @pytest.fixture(scope="module")
 def generate_miri_reffiles(tmpdir_factory):

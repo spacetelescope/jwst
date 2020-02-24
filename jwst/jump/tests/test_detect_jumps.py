@@ -12,7 +12,7 @@ def test_nocrs_noflux(setup_inputs):
     all pixel values are zero. So slope should be zero
     """
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=5)
-    out_model = detect_jumps(model1, gain, rnModel, 4.0,  1, 200, 4, True)
+    out_model = detect_jumps(model1, gain, rnModel, 4.0,  'one', 200, 4, True)
     assert (0 == np.max(out_model.groupdq))
 
 def test_nocrs_noflux_badgain_pixel(setup_inputs):
@@ -23,7 +23,7 @@ def test_nocrs_noflux_badgain_pixel(setup_inputs):
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=5)
     gain.data[7, 7] = -10 #bad gain
     gain.data[17, 17] = np.nan  # bad gain
-    out_model = detect_jumps(model1, gain, rnModel, 4.0,  1, 200, 4, True)
+    out_model = detect_jumps(model1, gain, rnModel, 4.0,  'one', 200, 4, True)
     assert(np.bitwise_and(out_model.pixeldq[7, 7], dqflags.pixel['NO_GAIN_VALUE']))
     assert (np.bitwise_and(out_model.pixeldq[7, 7], dqflags.pixel['DO_NOT_USE']))
     assert (np.bitwise_and(out_model.pixeldq[17, 17], dqflags.pixel['NO_GAIN_VALUE']))
@@ -36,7 +36,7 @@ def test_nocrs_noflux_subarray(setup_inputs):
     versions.
     """
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=5, subarray=True)
-    out_model = detect_jumps(model1, gain, rnModel, 4.0,  1, 200, 4, True)
+    out_model = detect_jumps(model1, gain, rnModel, 4.0,  'one', 200, 4, True)
     assert (0 == np.max(out_model.groupdq))
 
 def test_onecr_10_groups_neighbors_flagged(setup_inputs):
@@ -60,7 +60,7 @@ def test_onecr_10_groups_neighbors_flagged(setup_inputs):
     model1.data[0, 7, 5, 5] = 160.0
     model1.data[0, 8, 5, 5] = 170.0
     model1.data[0, 9, 5, 5] = 180.0
-    out_model = detect_jumps(model1, gain, rnModel, 4.0,  1, 200, 4, True)
+    out_model = detect_jumps(model1, gain, rnModel, 4.0,  'one', 200, 4, True)
     assert (4 == np.max(out_model.groupdq[0, 5, 5, 5]))
     assert (4 == out_model.groupdq[0, 5, 5, 6])
     assert (4 == out_model.groupdq[0, 5, 5, 4])
@@ -92,8 +92,8 @@ def test_nocr_100_groups_nframes1(setup_inputs):
     model1.data[0, 8, 5, 5] = 63.0
     model1.data[0, 9, 5, 5] = 68.0
     for i in range(10,100):
-        model1.data[0,i,5,5] = i * 5
-    out_model = detect_jumps(model1, gain, rnModel, 4.0,  1, 200, 4, True)
+        model1.data[0,i,5,5] = i * 5 + 20
+    out_model = detect_jumps(model1, gain, rnModel, 4.0,  'one', 200, 4, True)
     assert (0 == np.max(out_model.groupdq))
 
 def test_twoints_onecr_each_10_groups_neighbors_flagged(setup_inputs):
@@ -128,7 +128,7 @@ def test_twoints_onecr_each_10_groups_neighbors_flagged(setup_inputs):
     model1.data[1, 7, 15, 5] = 160.0
     model1.data[1, 8, 15, 5] = 170.0
     model1.data[1, 9, 15, 5] = 180.0
-    out_model = detect_jumps(model1, gain, rnModel, 4.0,  1, 200, 4, True)
+    out_model = detect_jumps(model1, gain, rnModel, 4.0,  'one', 200, 4, True)
     assert (4 == np.max(out_model.groupdq[0, 5, 5, 5]))
     assert (4 == out_model.groupdq[0, 5, 5, 6])
     assert (4 == out_model.groupdq[0, 5, 5, 4])
@@ -331,7 +331,7 @@ def test_crs_on_edge_with_neighbor_flagging(setup_inputs):
     model1.data[0, 7, 15, 1027] = 160.0
     model1.data[0, 8, 15, 1027] = 170.0
     model1.data[0, 9, 15, 1027] = 180.0
-    out_model = detect_jumps(model1, gain, rnModel, 4.0,  1, 200, 10, True)
+    out_model = detect_jumps(model1, gain, rnModel, 4.0,  'one', 200, 10, True)
     #flag CR and three neighbors of first row CR
     assert (4 == out_model.groupdq[0, 5, 0, 15])
     assert (4 == out_model.groupdq[0, 5, 1, 15])
@@ -377,7 +377,7 @@ def test_onecr_10_groups(setup_inputs):
     model1.data[0, 7, 5, 5] = 160.0
     model1.data[0, 8, 5, 5] = 170.0
     model1.data[0, 9, 5, 5] = 180.0
-    out_model = detect_jumps(model1, gain, rnModel, 4.0,  1, 200, 10, False)
+    out_model = detect_jumps(model1, gain, rnModel, 4.0,  'one', 200, 10, False)
     assert (out_model.groupdq[0, 5, 5, 5] == 4)
     assert (out_model.groupdq[0, 5, 4, 5] == 0)
     assert (out_model.groupdq[0, 5, 6, 5] == 0)
@@ -414,7 +414,7 @@ def test_onecr_10_groups_fullarray(setup_inputs):
     model1.data[0, 7, 5, 10] = 400
     model1.data[0, 8, 5, 10] = 410
     model1.data[0, 9, 5, 10] = 420
-    out_model = detect_jumps(model1, gain, rnModel, 4.0,  1, 200, 10, False)
+    out_model = detect_jumps(model1, gain, rnModel, 4.0,  'one', 200, 10, False)
     assert (np.all(out_model.groupdq[0, 5, 5, 0:10] == 4)) # The jump is in group 5 for columns 0-9
     assert (out_model.groupdq[0, 7, 5, 10] == 4)  # The jump is in group 7 for column 10
     assert (np.all(out_model.groupdq[0, 5, 5, 11:] == 4)) # The jump is in group 5 for columns 11+
@@ -444,7 +444,7 @@ def test_onecr_50_groups(setup_inputs):
     model1.data[0, 9, 5, 5] = 180.0
     model1.data[0, 10:30, 5, 5] = np.arange(190, 290, 5)
     model1.data[0, 30:50, 5, 5] = np.arange(500, 600, 5)
-    out_model = detect_jumps(model1, gain, rnModel, 4.0,  1, 200, 10, False)
+    out_model = detect_jumps(model1, gain, rnModel, 4.0,  'one', 200, 10, False)
     assert (out_model.groupdq[0, 5, 5, 5] == 4) # CR in group 5
     assert (out_model.groupdq[0, 30, 5, 5] == 4) # CR in group 30
     assert (np.all(out_model.groupdq[0, 6:30, 5, 5] == 0)) # groups inbetween are not flagged
