@@ -2720,7 +2720,7 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                         input_model.meta.exposure.type)
 
     if (was_source_model or
-        isinstance(input_model, datamodels.MultiSlitModel):
+        isinstance(input_model, datamodels.MultiSlitModel)):
 #        isinstance(input_model, datamodels.MultiSlitModel) or
 #        isinstance(input_model, datamodels.MultiProductModel)):
 
