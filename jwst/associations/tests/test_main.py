@@ -13,12 +13,19 @@ POOL_PATH = 'pool_018_all_exptypes.csv'
 
 
 @pytest.fixture(scope='module')
-def gen_all_candidates():
-    """"Retrieve the all exposure pool"""
+def pool():
+    """Retreive pool path"""
     pool_path = t_path(os.path.join('data', POOL_PATH))
     pool = combine_pools(pool_path)
+
+    return pool
+
+
+@pytest.fixture(scope='module')
+def all_candidates(pool):
+    """"Retrieve the all exposure pool"""
     all_candidates = Main(['--dry-run', '--all-candidates'], pool=pool)
-    return pool, all_candidates
+    return all_candidates
 
 
 @pytest.mark.parametrize(
@@ -65,9 +72,8 @@ def test_toomanyoptions(args):
         (['-i', 'c1001', 'c1002'], 2),
     ]
 )
-def test_asn_candidates(gen_all_candidates, case):
+def test_asn_candidates(pool, all_candidates, case):
     """Test candidate selection option"""
-    pool, all_candidates = gen_all_candidates
     args, n_expected = case
 
     if args:
