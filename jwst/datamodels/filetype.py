@@ -1,5 +1,6 @@
 import os.path
 
+
 def check(init):
     """
     Determine the type of a file and return it as a string
@@ -15,14 +16,13 @@ def check(init):
     """
 
     if isinstance(init, str):
-        if os.path.exists(init):
+        filename, file_extension = os.path.splitext(init)
+        file_type = file_extension[1:]
+
+        if file_type not in ("asdf", "fits"):  # If the type can't be determined from the name, attempt to open
             with open(init, "rb") as fd:
-                magic = fd.read(5)
+                magic = fd.read(5)  # Will raise FileNotFoundError if the input file doesn't exist.
         else:
-            filename, file_extension = os.path.splitext(init)
-            file_type = file_extension[1:]
-            if file_type not in ("asdf", "fits"):
-                raise ValueError("Cannot get file type of " + str(init))
             return file_type
 
     elif hasattr(init, "read") and hasattr(init, "seek"):
