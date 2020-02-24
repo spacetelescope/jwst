@@ -1436,7 +1436,6 @@ class NIRISSBackwardGrismDispersion(Model):
         t = self.lmodels[iorder](wavelength)
         xmodel = self.xmodels[iorder]
         ymodel = self.ymodels[iorder]
-        lmodel = self.lmodels[iorder]
 
         dx = xmodel[0](x, y) + t * xmodel[1](x, y)
         dy = ymodel[0](x, y) + t * ymodel[1](x, y)
