@@ -36,12 +36,12 @@ N_SHUTTERS_QUADRANT = 62415
 Slit = namedtuple('Slit', ["name", "shutter_id", "dither_position", "xcen", "ycen",
                            "ymin", "ymax", "quadrant", "source_id", "shutter_state",
                            "source_name", "source_alias", "stellarity",
-                           "source_xpos", "source_ypos", ])
+                           "source_xpos", "source_ypos", "source_ra", "source_dec"])
 """ Nirspec Slit structure definition"""
 
 
-Slit.__new__.__defaults__ = ("", 0, 0, 0.0, 0.0, 0.0, 0.0, 0, 0, "", "", "", "",
-                             0.0, 0.0, 0.0)
+Slit.__new__.__defaults__ = ("", 0, 0, 0.0, 0.0, 0.0, 0.0, 0, 0, "", "", "",
+                             0.0, 0.0, 0.0, 0.0, 0.0)
 
 
 class GrismObject(namedtuple('GrismObject', ("sid",
@@ -194,10 +194,9 @@ class Snell(Model):
     """
     Apply transforms, including Snell law, through the NIRSpec prism.
 
-
     Parameters
     ----------
-    angle : flaot
+    angle : float
         Prism angle in deg.
     kcoef : list
         K coefficients in Sellmeir equation.
@@ -717,7 +716,7 @@ class Gwa2Slit(Model):
 
 class Slit2Msa(Model):
     """
-    NIRSpec slit to MSA transform.
+    Transform from Nirspec ``slit_frame`` to ``msa_frame``.
 
     Parameters
     ----------
@@ -768,7 +767,7 @@ class Slit2Msa(Model):
 
 class NirissSOSSModel(Model):
     """
-    NIRISS SOSS wavelength solution implemented as a Model.
+    NIRISS SOSS wavelength solution model.
 
     Parameters
     ----------

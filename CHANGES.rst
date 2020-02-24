@@ -37,9 +37,14 @@ datamodels
 - Update core.schema.yaml to include new allowed values for PATTTYPE
   [#4475, 4517, 4564]
 
+
 - DataModel.update() now has ``extra_fits=False`` kwarg that controls whether
   an update happens from the ``extra_fits`` section of the datamodel.  Default
   is to stop doing this by default, i.e. ``False``. [#4593]
+
+- Updated ``slitdata.schema.yaml`` to include ``SRCRA`` and ``SRCDEC`` for
+  MOS slitlets to FITS SCI headers. These values are taken from the MOS
+  metadata file. [#4613]
 
 extract_1d
 ----------
@@ -59,6 +64,9 @@ extract_2d
 - A ``ValueError`` is now raised if the input data is missing ``xref_sci`` or ``yref_sci`` keywords. [#4561]
 
 - Fix the WCS subarray offsets for NIRCam TSGRISM cutouts [#4573]
+
+- Added ``source_ra`` and ``source_dec`` to MSA ``Slit`` with values
+  from the MSA metadata file. [#4613]
 
 master_background
 -----------------
@@ -130,6 +138,15 @@ stpipe
 
 - Fix sub-step nesting in parameter reference files [#4488]
 
+transforms
+----------
+
+ - Refactored the WFSS transforms to improve performance. [#4603]
+
+ - Added ``source_ra`` and ``source_dec`` to the ``Slit`` namedtuple
+   with default values of 0.0. These are populated from the MSA metadata file. [#4613]
+
+  
 tweakreg
 --------
 
