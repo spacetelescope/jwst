@@ -1,42 +1,42 @@
 """test_associations: Test of general Association functionality."""
 import pytest
 
-from ..main import Main
+from jwst.associations import AssociationPool
+from jwst.associations.main import Main
 
 
-def test_toomanyoptions(full_pool_rules):
-    """Test argument parsing"""
-    pool, rules, pool_fname = full_pool_rules
-
-    with pytest.raises(SystemExit):
-        Main([
-            pool_fname,
+@pytest.mark.parametrize(
+    'args',
+    [
+        [
             '--dry-run',
             '--discover',
             '--all-candidates',
             '-i', 'o001',
-        ])
-    with pytest.raises(SystemExit):
-        Main([
-            pool_fname,
+        ],
+        [
             '--dry-run',
             '--discover',
             '--all-candidates',
-        ])
-    with pytest.raises(SystemExit):
-        Main([
-            pool_fname,
+        ],
+        [
             '--dry-run',
             '--discover',
             '-i', 'o001',
-        ])
-    with pytest.raises(SystemExit):
-        Main([
-            pool_fname,
+        ],
+        [
             '--dry-run',
             '--all-candidates',
             '-i', 'o001',
-        ])
+        ]
+    ]
+)
+def test_toomanyoptions(args):
+    """Test argument parsing for failures"""
+    pool = AssociationPool()
+
+    with pytest.raises(SystemExit):
+        Main(args, pool=pool)
 
 
 @pytest.mark.xfail(
