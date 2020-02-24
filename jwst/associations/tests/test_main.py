@@ -1,5 +1,7 @@
 """test_associations: Test of general Association functionality."""
 import os
+import re
+
 import pytest
 
 from jwst.associations.tests.helpers import combine_pools, t_path
@@ -83,3 +85,20 @@ def test_asn_candidates(pool, all_candidates, case):
         n_actual = len(all_candidates.associations)
 
     assert n_actual == n_expected
+
+
+@pytest.mark.parametrize(
+    'version_id, expected', [
+        ('', r'\d{3}t\d{6}'),
+        ('mytestid', r'mytestid'),
+    ]
+)
+def test_generate_version_id(version_id, expected, pool):
+    """Check that an association has been given the appropriate version id"""
+    regex = re.compile(expected)
+    args = ['--dry-run', '-i', 'o001', '--version-id']
+    if version_id:
+        args.append(version_id)
+    generated = Main(args, pool=pool)
+    for asn in generated.associations:
+        assert regex.search(asn.asn_name)
