@@ -1,8 +1,24 @@
 """test_associations: Test of general Association functionality."""
+import os
 import pytest
+
+from jwst.associations.tests.helpers import combine_pools, t_path
 
 from jwst.associations import AssociationPool
 from jwst.associations.main import Main
+
+
+# Basic pool
+POOL_PATH = 'pool_018_all_exptypes.csv'
+
+
+@pytest.fixture(scope='module')
+def gen_all_candidates():
+    """"Retrieve the all exposure pool"""
+    pool_path = t_path(os.path.join('data', POOL_PATH))
+    pool = combine_pools(pool_path)
+    all_candidates = Main(['--dry-run', '--all-candidates'], pool=pool)
+    return pool, all_candidates
 
 
 @pytest.mark.parametrize(
@@ -39,14 +55,25 @@ def test_toomanyoptions(args):
         Main(args, pool=pool)
 
 
-@pytest.mark.xfail(
-    reason='Need to further investigate',
-    run=False
+@pytest.mark.parametrize(
+    'case', [
+        (None, 62),  # Don't re-run, just compare to the generator fixture results
+        (['-i', 'o001'], 2),
+        (['-i', 'o001', 'o002'], 3),
+        (['-i', 'c1001'], 1),
+        (['-i', 'o001', 'c1001'], 3),
+        (['-i', 'c1001', 'c1002'], 2),
+    ]
 )
-def test_discovered(full_pool_rules):
-    pool, rules, pool_fname = full_pool_rules
+def test_asn_candidates(gen_all_candidates, case):
+    """Test candidate selection option"""
+    pool, all_candidates = gen_all_candidates
+    args, n_expected = case
 
-    full = Main([pool_fname, '--dry-run'])
-    candidates = Main([pool_fname, '--dry-run', '--all-candidates'])
-    discovered = Main([pool_fname, '--dry-run', '--discover'])
-    assert len(full.associations) == len(candidates.associations) + len(discovered.associations)
+    if args:
+        generated = Main(['--dry-run'] + args, pool=pool)
+        n_actual = len(generated.associations)
+    else:
+        n_actual = len(all_candidates.associations)
+
+    assert n_actual == n_expected
