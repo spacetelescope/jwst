@@ -130,7 +130,7 @@ def subtract_wfss_bkg(input_model, bkg_filename, wl_range_name):
 
     bkg_ref = datamodels.open(bkg_filename)
 
-    if hasattr(input_model.meta, "source_catalog"):
+    if hasattr(input_model.meta.resample, "source_catalog"):
         got_catalog = True
     else:
         log.warning("No source_catalog found in input.meta.")
