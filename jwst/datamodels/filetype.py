@@ -1,4 +1,3 @@
-import os.path
 
 
 def check(init):
@@ -16,14 +15,8 @@ def check(init):
     """
 
     if isinstance(init, str):
-        filename, file_extension = os.path.splitext(init)
-        file_type = file_extension[1:]
-
-        if file_type not in ("asdf", "fits"):  # If the type can't be determined from the name, attempt to open
-            with open(init, "rb") as fd:
-                magic = fd.read(5)  # Will raise FileNotFoundError if the input file doesn't exist.
-        else:
-            return file_type
+        with open(init, "rb") as fd:
+            magic = fd.read(5)  # Will raise FileNotFoundError if the input file doesn't exist.
 
     elif hasattr(init, "read") and hasattr(init, "seek"):
         magic = init.read(5)
