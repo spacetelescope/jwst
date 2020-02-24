@@ -68,11 +68,11 @@ class ResampleSpecStep(ResampleStep):
 
         Returns
         -------
-        result : `~jwst.datamodels.MultiResampModel`
+        result : `~jwst.datamodels.MultiSlitModel`
             The resampled output, one per source
         """
         containers = multislit_to_container(input_models)
-        result = datamodels.MultiResampModel()
+        result = datamodels.MultiSlitModel()
         result.update(input_models[0])
         for container in containers.values():
             resamp = resample_spec.ResampleSpecData(container, **self.drizpars)
