@@ -2190,6 +2190,18 @@ properties:
             type: string
             fits_keyword: S_WHTLIT
             blend_table: True
+      resample:
+        title: Resample Parameters
+        type: object
+        properties:
+          tweakreg_catalog:
+            title: Tweakreg catalog filename
+            type: string
+            fits_keyword: TCATFILE
+          source_catalog:
+            title: Source catalog filename
+            type: string
+            fits_keyword: SCATFILE
       background:
         title: Background information
         type: object

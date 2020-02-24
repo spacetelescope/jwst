@@ -483,15 +483,15 @@ def create_grism_bbox(input_model,
         raise ValueError("Input model is from unexpected instrument")
 
     # extract the catalog objects
-    if input_model.meta.source_catalog.filename is None:
+    if input_model.meta.source_catalog is None:
         err_text = "No source catalog listed in datamodel"
         log.error(err_text)
         raise ValueError(err_text)
 
-    log.info("Getting objects from {}".format(input_model.meta.source_catalog.filename))
+    log.info("Getting objects from {}".format(input_model.meta.source_catalog))
 
     # this contains the pure information from the catalog with no translations
-    skyobject_list = get_object_info(input_model.meta.source_catalog.filename)
+    skyobject_list = get_object_info(input_model.meta.source_catalog)
 
     # get the imaging transform to record the center of the object in the image
     # here, image is in the imaging reference frame, before going through the

@@ -163,10 +163,10 @@ class Spec2Pipeline(Pipeline):
         # name from the asn and record it to the meta
         if exp_type in WFSS_TYPES:
             try:
-                input.meta.source_catalog.filename = members_by_type['sourcecat'][0]
-                self.log.info('Using sourcecat file {}'.format(input.meta.source_catalog.filename))
+                input.meta.source_catalog = members_by_type['sourcecat'][0]
+                self.log.info('Using sourcecat file {}'.format(input.meta.source_catalog))
             except IndexError:
-                if input.meta.source_catalog.filename is None:
+                if input.meta.source_catalog is None:
                     raise IndexError("No source catalog specified in association or datamodel")
 
         assign_wcs_exception = None
