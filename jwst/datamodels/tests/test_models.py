@@ -619,3 +619,8 @@ def test_ifuimage():
     im = ImageModel(ifuimage)
     assert type(im) == ImageModel
     im.close()
+
+
+def test_datamodel_raises_filenotfound():
+    with pytest.raises(FileNotFoundError):
+        DataModel(init='file_does_not_exist.fits')
