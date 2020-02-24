@@ -37,6 +37,10 @@ datamodels
 - Update core.schema.yaml to include new allowed values for PATTTYPE
   [#4475, 4517, 4564]
 
+- DataModel.update() now has ``extra_fits=False`` kwarg that controls whether
+  an update happens from the ``extra_fits`` section of the datamodel.  Default
+  is to stop doing this by default, i.e. ``False``. [#4593]
+
 extract_1d
 ----------
 

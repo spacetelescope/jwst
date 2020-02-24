@@ -9,6 +9,7 @@ import pytest
 from astropy.time import Time
 import numpy as np
 from numpy.testing import assert_allclose
+from astropy.io import fits
 
 from .. import (DataModel, ImageModel, MaskModel, QuadModel,
                 MultiSlitModel, ModelContainer, SlitModel,
@@ -47,9 +48,10 @@ def teardown():
 
 
 def test_set_shape():
-    with pytest.raises(AttributeError):
-        with ImageModel((50, 50)) as dm:
-            assert dm.shape == (50, 50)
+    with ImageModel((50, 50)) as dm:
+        assert dm.shape == (50, 50)
+
+        with pytest.raises(AttributeError):
             dm.shape = (42, 23)
 
 
@@ -406,7 +408,7 @@ def test_open_fits_model_s3():
     assert isinstance(model, DataModel)
 
 def test_image_with_extra_keyword_to_multislit():
-    with ImageModel(data=np.empty((32, 32))) as im:
+    with ImageModel((32, 32)) as im:
         im.save(TMP_FITS, overwrite=True)
 
     from astropy.io import fits
@@ -417,7 +419,7 @@ def test_image_with_extra_keyword_to_multislit():
         with MultiSlitModel() as ms:
             ms.update(im)
             for i in range(3):
-                ms.slits.append(ImageModel(data=np.empty((4, 4))))
+                ms.slits.append(ImageModel((4, 4)))
             assert len(ms.slits) == 3
 
             ms.save(TMP_FITS2, overwrite=True)
@@ -426,6 +428,90 @@ def test_image_with_extra_keyword_to_multislit():
         assert len(ms.slits) == 3
         for slit in ms.slits:
             assert slit.data.shape == (4, 4)
+
+
+@pytest.fixture
+def datamodel_for_update(tmpdir):
+    """Provide ImageModel with one keyword each defined in PRIMARY and SCI
+    extensions from the schema, and one each not in the schema"""
+    tmpfile = str(tmpdir.join("old.fits"))
+    with ImageModel((5, 5)) as im:
+        # Add schema keywords, one to each extension
+        im.meta.telescope = "JWST"
+        im.meta.wcsinfo.crval1 = 5
+
+        im.save(tmpfile)
+    # Add non-schema keywords that will get dumped in the extra_fits attribute
+    with fits.open(tmpfile, mode="update") as hdulist:
+        hdulist["PRIMARY"].header["FOO"] = "BAR"
+        hdulist["SCI"].header["BAZ"] = "BUZ"
+
+    return tmpfile
+
+
+@pytest.mark.parametrize("extra_fits", [True, False])
+@pytest.mark.parametrize("only", [None, "PRIMARY", "SCI"])
+def test_update_from_datamodel(tmpdir, datamodel_for_update, only, extra_fits):
+    """Test update method does not update from extra_fits unless asked"""
+    tmpfile = datamodel_for_update
+
+    newtmpfile = str(tmpdir.join("new.fits"))
+    with ImageModel((5, 5)) as newim:
+        with ImageModel(tmpfile) as oldim:
+
+            # Verify the fixture returns keywords we expect
+            assert oldim.meta.telescope == "JWST"
+            assert oldim.meta.wcsinfo.crval1 == 5
+            assert oldim.extra_fits.PRIMARY.header == [['FOO', 'BAR', '']]
+            assert oldim.extra_fits.SCI.header == [['BAZ', 'BUZ', '']]
+
+            newim.update(oldim, only=only, extra_fits=extra_fits)
+        newim.save(newtmpfile)
+
+    with fits.open(newtmpfile) as hdulist:
+        if extra_fits:
+            if only == "PRIMARY":
+                assert "TELESCOP" in hdulist["PRIMARY"].header
+                assert "CRVAL1" not in hdulist["SCI"].header
+                assert "FOO" in hdulist["PRIMARY"].header
+                assert "BAZ" not in hdulist["SCI"].header
+            elif only == "SCI":
+                assert "TELESCOP" not in hdulist["PRIMARY"].header
+                assert "CRVAL1" in hdulist["SCI"].header
+                assert "FOO" not in hdulist["PRIMARY"].header
+                assert "BAZ" in hdulist["SCI"].header
+            else:
+                assert "TELESCOP" in hdulist["PRIMARY"].header
+                assert "CRVAL1" in hdulist["SCI"].header
+                assert "FOO" in hdulist["PRIMARY"].header
+                assert "BAZ" in hdulist["SCI"].header
+
+        else:
+            assert "FOO" not in hdulist["PRIMARY"].header
+            assert "BAZ" not in hdulist["SCI"].header
+
+            if only == "PRIMARY":
+                assert "TELESCOP" in hdulist["PRIMARY"].header
+                assert "CRVAL1" not in hdulist["SCI"].header
+            elif only == "SCI":
+                assert "TELESCOP" not in hdulist["PRIMARY"].header
+                assert "CRVAL1" in hdulist["SCI"].header
+            else:
+                assert "TELESCOP" in hdulist["PRIMARY"].header
+                assert "CRVAL1" in hdulist["SCI"].header
+
+
+def test_update_from_dict(tmpdir):
+    """Test update method from a dictionary"""
+    tmpfile = str(tmpdir.join("update.fits"))
+    with ImageModel((5, 5)) as im:
+        update_dict = dict(meta=dict(telescope="JWST", wcsinfo=dict(crval1=5)))
+        im.update(update_dict)
+        im.save(tmpfile)
+
+    with fits.open(tmpfile) as hdulist:
+        assert "TELESCOP" in hdulist[0].header
+        assert "CRVAL1" in hdulist[1].header
 
 
 @pytest.fixture(scope="module")
