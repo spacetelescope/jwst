@@ -451,7 +451,7 @@ def datamodel_for_update(tmpdir):
 
 @pytest.mark.parametrize("extra_fits", [True, False])
 @pytest.mark.parametrize("only", [None, "PRIMARY", "SCI"])
-def test_update(tmpdir, datamodel_for_update, only, extra_fits):
+def test_update_from_datamodel(tmpdir, datamodel_for_update, only, extra_fits):
     """Test update method does not update from extra_fits unless asked"""
     tmpfile = datamodel_for_update
 
@@ -499,6 +499,19 @@ def test_update(tmpdir, datamodel_for_update, only, extra_fits):
             else:
                 assert "TELESCOP" in hdulist["PRIMARY"].header
                 assert "CRVAL1" in hdulist["SCI"].header
+
+
+def test_update_from_dict(tmpdir):
+    """Test update method from a dictionary"""
+    tmpfile = str(tmpdir.join("update.fits"))
+    with ImageModel((5, 5)) as im:
+        update_dict = dict(meta=dict(telescope="JWST", wcsinfo=dict(crval1=5)))
+        im.update(update_dict)
+        im.save(tmpfile)
+
+    with fits.open(tmpfile) as hdulist:
+        assert "TELESCOP" in hdulist[0].header
+        assert "CRVAL1" in hdulist[1].header
 
 
 @pytest.fixture(scope="module")
