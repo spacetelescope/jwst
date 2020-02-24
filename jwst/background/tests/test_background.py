@@ -197,7 +197,7 @@ def make_wfss_datamodel():
     image.meta.subarray._instance.update(subarray)
     image.meta.exposure._instance.update(exposure)
     image.data = np.random.rand(2048, 2048)
-    image.meta.source_catalog.filename = get_file_path('test_cat.ecsv')
+    image.meta.source_catalog = get_file_path('test_cat.ecsv')
 
     return image
 
