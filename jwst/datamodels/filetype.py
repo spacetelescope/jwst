@@ -31,26 +31,24 @@ def check(init):
             if ext not in supported:
                 raise ValueError(f'Unrecognized file type for: {init}')
 
-        if ext == 'json':
+        if ext == 'json':  # Assume json input is an association
             return 'asn'
 
         return ext
 
-    elif hasattr(init, "read") and hasattr(init, "seek"):
+    if hasattr(init, "read") and hasattr(init, "seek"):
         magic = init.read(5)
         init.seek(0, 0)
 
-    else:
-        magic = None
+        if not magic or len(magic) < 5:
+            raise ValueError(f"Cannot get file type of {str(init)}")
 
-    if magic is None or len(magic) < 5:
-        raise ValueError("Cannot get file type of " + str(init))
+        if magic == b'#ASDF':
+            return "asdf"
 
-    if magic == b'#ASDF':
-        file_type = "asdf"
-    elif magic == b'SIMPL':
-        file_type = "fits"
-    else:
-        file_type = "asn"
+        if magic == b'SIMPL':
+            return "fits"
 
-    return file_type
+        return "asn"
+
+    raise ValueError(f"Cannot get file type of {str(init)}")
