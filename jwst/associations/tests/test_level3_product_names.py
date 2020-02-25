@@ -39,7 +39,7 @@ EMPTY = (None, '', 'NULL', 'Null', 'null', 'F', 'f', 'N', 'n')
 
 @pytest.fixture(scope='module')
 def pool_file():
-    return t_path('data/mega_pool.csv')
+    return t_path('data/pool_018_all_exptypes.csv')
 
 
 @pytest.fixture(scope='module')
