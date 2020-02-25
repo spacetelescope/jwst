@@ -673,7 +673,8 @@ class Gwa2Slit(Model):
         A slit is a namedtupe of type `~jwst.transforms.models.Slit`
         Slit("name", "shutter_id", "dither_position", "xcen", "ycen", "ymin", "ymax",
         "quadrant", "source_id", "shutter_state", "source_name",
-        "source_alias", "stellarity", "source_xpos", "source_ypos"])
+        "source_alias", "stellarity", "source_xpos", "source_ypos",
+        "source_ra", "source_dec"])
     models : list
         List of models (`~astropy.modeling.core.Model`) corresponding to the
         list of slits.
@@ -725,7 +726,8 @@ class Slit2Msa(Model):
         A slit is a namedtupe, `~jwst.transforms.models.Slit`
         Slit("name", "shutter_id", "dither_position", "xcen", "ycen", "ymin", "ymax",
         "quadrant", "source_id", "shutter_state", "source_name",
-        "source_alias", "stellarity", "source_xpos", "source_ypos")
+        "source_alias", "stellarity", "source_xpos", "source_ypos",
+        "source_ra", "source_dec")
     models : list
         List of models (`~astropy.modeling.core.Model`) corresponding to the
         list of slits.
