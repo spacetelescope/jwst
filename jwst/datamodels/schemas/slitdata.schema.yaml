@@ -95,7 +95,7 @@ allOf:
       title: Center of shutter in MSA coordinates (Y dir)
       type: integer
     source_ra:
-      title: Right Ascention of the source
+      title: Right Ascension of the source
       type: number
       fits_keyword: SRCRA
       fits_hdu: SCI
