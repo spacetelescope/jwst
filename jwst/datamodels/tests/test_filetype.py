@@ -6,12 +6,17 @@ SUPPORTED_EXTS = (('fits', 'fits'), ('json', 'asn'), ('asdf', 'asdf'))  # (ext, 
 
 
 @pytest.fixture(params=SUPPORTED_EXTS)
-def test_file(request):
+def input_file(request):
     return f'test_file.{request.param[0]}', request.param[-1]
 
 
-def test_check_on_str_init(test_file):
-    filename, expected = test_file
+@pytest.fixture(params=['stpipe.MyPipeline.fits', 'stpipe.MyPipeline.fits.gz'])
+def pipeline_file(request):
+    return request.param
+
+
+def test_check_on_str_init(input_file):
+    filename, expected = input_file
     filetype = check(filename)
 
     assert filetype == expected
@@ -20,3 +25,16 @@ def test_check_on_str_init(test_file):
 def test_check_fails_on_unsupported_ext():
     with pytest.raises(ValueError):
         check('test_file')
+
+
+def test_check_works_for_zipped(input_file):
+    filename, expected = input_file
+    filename += '.gz'  # extra zip extension
+
+    filetype = check(filename)
+
+    assert filetype == expected
+
+
+def test_check_works_for_pipeline_patters(pipeline_file):
+    assert check(pipeline_file) == 'fits'

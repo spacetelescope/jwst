@@ -15,20 +15,26 @@ def check(init):
     file_type: a string with the file type ("asdf", "asn", or "fits")
 
     """
-    if isinstance(init, str):
-        exts = init.split(os.extsep)  # Will support multiple extensions, for example in cases of zipped files.
-        exts.pop(0)  # Don't need the filename
+    supported = ('asdf', 'fits', 'json')
 
-        if not len(exts):
+    if isinstance(init, str):
+        path, ext = os.path.splitext(init)
+        ext = ext.strip('.')
+
+        if not ext:
             raise ValueError(f'Input file path does not have an extension: {init}')
 
-        if exts[0] not in ('fits', 'json', 'asdf'):
-            raise ValueError(f'Unrecognized file type: {exts[0]}')
+        if ext not in supported:  # Could be the file is zipped; try splitting again
+            path, ext = os.path.splitext(path)
+            ext = ext.strip('.')
 
-        if exts[0] == 'json':
+            if ext not in supported:
+                raise ValueError(f'Unrecognized file type for: {init}')
+
+        if ext == 'json':
             return 'asn'
 
-        return exts[0]
+        return ext
 
     elif hasattr(init, "read") and hasattr(init, "seek"):
         magic = init.read(5)
