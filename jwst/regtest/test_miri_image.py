@@ -8,7 +8,7 @@ from jwst import datamodels
 
 @pytest.fixture(scope="module")
 def run_detector1(rtdata_module):
-    """Run stage 1-3 pipelines on MIRI imaging data."""
+    """Run detector1 pipeline on MIRI imaging data."""
     rtdata = rtdata_module
     rtdata.get_data("miri/image/det_image_1_MIRIMAGE_F770Wexp1_5stars_uncal.fits")
 
