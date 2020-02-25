@@ -45,7 +45,7 @@ class JumpStep(Step):
             flag_4_neighbors = self.flag_4_neighbors
 
             self.log.info('CR rejection threshold = %g sigma', rej_thresh)
-            if self.maximum_cores is not 'one':
+            if self.maximum_cores != 'one':
                 self.log.info('Maximum cores to use = %s', max_cores)
 
             # Get the gain and readnoise reference files
