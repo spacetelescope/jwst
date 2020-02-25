@@ -31,7 +31,7 @@ def detect_jumps (input_model, gain_model, readnoise_model,
     image.  Also, a 2-dimensional read noise array with appropriate values for
     each pixel is passed to the detection methods.
     """
-    if max_cores is 'one':
+    if max_cores == 'one':
         numslices = 1
     else:
         num_cores = multiprocessing.cpu_count()
