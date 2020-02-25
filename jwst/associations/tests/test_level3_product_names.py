@@ -1,5 +1,6 @@
-import pytest
 import re
+
+import pytest
 
 from .helpers import (
     combine_pools,
@@ -14,51 +15,44 @@ from ..lib.dms_base import DMSAttrConstraint
 
 
 LEVEL3_PRODUCT_NAME_REGEX = (
-    'jw'
-    '(?P<program>\d{5})'
-    '-(?P<acid>[a-z]\d{3,4})'
-    '_(?P<target>(?:t\d{3})|(?:\{source_id\}))'
-    '(?:-(?P<epoch>epoch\d+))?'
-    '_(?P<instrument>.+?)'
-    '_(?P<opt_elem>.+)'
+    r'jw'
+    r'(?P<program>\d{5})'
+    r'-(?P<acid>[a-z]\d{3,4})'
+    r'_(?P<target>(?:t\d{3})|(?:\{source_id\}))'
+    r'(?:-(?P<epoch>epoch\d+))?'
+    r'_(?P<instrument>.+?)'
+    r'_(?P<opt_elem>.+)'
 )
 
 LEVEL3_PRODUCT_NAME_NO_OPTELEM_REGEX = (
-    'jw'
-    '(?P<program>\d{5})'
-    '-(?P<acid>[a-z]\d{3,4})'
-    '_(?P<target>(?:t\d{3})|(?:s\d{5}))'
-    '(?:-(?P<epoch>epoch\d+))?'
-    '_(?P<instrument>.+?)'
+    r'jw'
+    r'(?P<program>\d{5})'
+    r'-(?P<acid>[a-z]\d{3,4})'
+    r'_(?P<target>(?:t\d{3})|(?:s\d{5}))'
+    r'(?:-(?P<epoch>epoch\d+))?'
+    r'_(?P<instrument>.+?)'
 )
 
 # Null values
 EMPTY = (None, '', 'NULL', 'Null', 'null', 'F', 'f', 'N', 'n')
 
 
-pool_file = func_fixture(
-    generate_params,
-    scope='module',
-    params=[
-        t_path('data/mega_pool.csv'),
-    ]
-)
+@pytest.fixture(scope='module')
+def pool_file():
+    return t_path('data/mega_pool.csv')
 
 
-global_constraints = func_fixture(
-    generate_params,
-    scope='module',
-    params=[
-        DMSAttrConstraint(
-            name='asn_candidate',
-            value=['.+o002.+'],
-            sources=['asn_candidate'],
-            force_unique=True,
-            is_acid=True,
-            evaluate=True,
-        ),
-    ]
-)
+@pytest.fixture(scope='module')
+def global_constraints():
+    constraint = DMSAttrConstraint(
+        name='asn_candidate',
+        value=['.+o002.+'],
+        sources=['asn_candidate'],
+        force_unique=True,
+        is_acid=True,
+        evaluate=True,
+    )
+    return constraint
 
 
 def test_level3_productname_components_discovered():
