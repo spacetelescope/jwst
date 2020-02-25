@@ -7,8 +7,14 @@ from jwst.lib.suffix import replace_suffix
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
-file_roots = ['jw00023001001_01101_00001_nrs1_', 'jw93045010001_02101_00001_nrs2_', 'jwtest1013001_01101_00001_nrs1_']
-@pytest.fixture(scope="module", params=file_roots, ids=file_roots)
+file_roots = [
+    'jw00023001001_01101_00001_nrs1_',
+    'jw93045010001_02101_00001_nrs2_',
+    'jwtest1013001_01101_00001_nrs1_'
+]
+ids = ["fullframe", "ALLSLITS-subarray", "S400A1-subarray"]
+
+@pytest.fixture(scope="module", params=file_roots, ids=ids)
 def run_pipeline(jail, rtdata_module, request):
     """Run the calwebb_spec2 pipeline on NIRSpec Fixed-Slit exposures.
        We currently test the following types of inputs:

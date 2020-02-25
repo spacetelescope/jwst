@@ -5,7 +5,7 @@ import pytest
 
 
 @pytest.mark.bigdata
-def test_regtestdata_get_data(rtdata, _jail):
+def test_regtestdata_get_data(rtdata):
     rtdata.get_data("infrastructure/test_regtestdata/file1_rate.fits")
     rtdata.output = "file1_cal.fits"
 
@@ -13,7 +13,7 @@ def test_regtestdata_get_data(rtdata, _jail):
 
 
 @pytest.mark.bigdata
-def test_regtestdata_get_truth(rtdata, _jail):
+def test_regtestdata_get_truth(rtdata):
     rtdata.get_truth("infrastructure/test_regtestdata/file1_rate.fits")
     rtdata.output = "file1_rate.fits"
 
@@ -21,7 +21,7 @@ def test_regtestdata_get_truth(rtdata, _jail):
 
 
 @pytest.mark.bigdata
-def test_regtestdata_get_asn(_jail, rtdata):
+def test_regtestdata_get_asn(rtdata):
     rtdata.get_asn("infrastructure/test_regtestdata/my_asn.json")
     files = glob("*.fits")
     rtdata.output = "file1_rate.fits"
