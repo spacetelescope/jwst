@@ -109,10 +109,6 @@ def test_level3_names(pool_file, global_constraints):
         assert m.groupdict()['acid'] == 'o002'
 
 
-@pytest.mark.xfail(
-    reason='Unknown, need to investigate',
-    run=False
-)
 def test_multiple_optelems(pool_file):
     rules = registry_level3_only()
     pool = AssociationPool.read(pool_file)
@@ -123,7 +119,7 @@ def test_multiple_optelems(pool_file):
             m = re.match(LEVEL3_PRODUCT_NAME_REGEX, product_name)
             assert m is not None
             try:
-                value = '-'.join(asn.constraints['opt_elem2']['found_values'])
+                value = '-'.join(asn.constraints['opt_elem2'].found_values)
             except KeyError:
                 value = None
             if value in EMPTY:
