@@ -1,11 +1,10 @@
+"""Check formatting of the level 3 product names"""
 import re
 
 import pytest
 
 from .helpers import (
     combine_pools,
-    func_fixture,
-    generate_params,
     registry_level3_only,
     t_path,
 )
