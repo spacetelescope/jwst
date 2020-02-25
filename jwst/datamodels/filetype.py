@@ -1,3 +1,4 @@
+import os
 
 
 def check(init):
@@ -12,11 +13,22 @@ def check(init):
     Returns
     -------
     file_type: a string with the file type ("asdf", "asn", or "fits")
-    """
 
+    """
     if isinstance(init, str):
-        with open(init, "rb") as fd:
-            magic = fd.read(5)  # Will raise FileNotFoundError if the input file doesn't exist.
+        exts = init.split(os.extsep)  # Will support multiple extensions, for example in cases of zipped files.
+        exts.pop(0)  # Don't need the filename
+
+        if not len(exts):
+            raise ValueError(f'Input file path does not have an extension: {init}')
+
+        if exts[0] not in ('fits', 'json', 'asdf'):
+            raise ValueError(f'Unrecognized file type: {exts[0]}')
+
+        if exts[0] == 'json':
+            return 'asn'
+
+        return exts[0]
 
     elif hasattr(init, "read") and hasattr(init, "seek"):
         magic = init.read(5)
