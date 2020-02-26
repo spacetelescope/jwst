@@ -31,7 +31,6 @@ from ..datamodels import (CollimatorModel, CameraModel, DisperserModel, FOREMode
                           WavelengthrangeModel, FPAModel)
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 __all__ = ["create_pipeline", "imaging", "ifu", "slits_wcs", "get_open_slits", "nrs_wcs_set_input",

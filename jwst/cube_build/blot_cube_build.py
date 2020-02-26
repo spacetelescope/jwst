@@ -9,7 +9,6 @@ from gwcs import wcstools
 from . import instrument_defaults
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class CubeBlot():

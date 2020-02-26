@@ -2,7 +2,6 @@ import numpy as np
 import logging
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def do_correction(input_model, gain_factor):

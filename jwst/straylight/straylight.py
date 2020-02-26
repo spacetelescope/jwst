@@ -16,7 +16,6 @@ from ..datamodels import dqflags
 from astropy.convolution import convolve, Box2DKernel
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def correct_mrs(input_model, slice_map):
