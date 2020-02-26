@@ -968,7 +968,9 @@ properties:
               # NIRISS
               AMI, IMAGING, MIMF, PARALLEL, WFSS,
               # NIRSpec FS, IFU, and MOS
-              2-POINT-WITH-NIRCAM-SIZE2, 2-POINT-NOD, 3-POINT-NOD, 5-POINT-NOD,
+              2-POINT-WITH-NIRCAM-SIZE1, 2-POINT-WITH-NIRCAM-SIZE2, 2-POINT-WITH-NIRCAM-SIZE3,
+              3-POINT-WITH-NIRCAM-SIZE1, 3-POINT-WITH-NIRCAM-SIZE2, 3-POINT-WITH-NIRCAM-SIZE3,
+              2-POINT-NOD, 3-POINT-NOD, 5-POINT-NOD,
               # NIRSpec IFU
               4-POINT-NOD, 4-POINT-DITHER, CYCLING, SPARSE-CYCLING,
               # Misc
@@ -989,6 +991,10 @@ properties:
             title: Total number of points in pattern
             type: integer
             fits_keyword: NUMDTHPT
+            blend_table: True
+          dither_points:
+            title: Total number of points in image dither pattern
+            fits_keyword: NRIMDTPT
             blend_table: True
           pattern_size:
             title: "Primary dither pattern size"
