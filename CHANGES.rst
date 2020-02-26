@@ -124,6 +124,9 @@ refpix
 
 - Fixed bugs in PR #4575; added unit tests [#4596]
 
+- Changed the data type of columns OUTPUT and ODD_EVEN in the section of the
+  schema for the DQ table in the NIRSpec IRS2 refpix reference file [#4618]
+
 set_telescope_pointing
 ----------------------
 
