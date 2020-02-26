@@ -285,8 +285,10 @@ class SourceCatalog:
                    'sky_bbox_lr', 'sky_bbox_ur']
         catalog = source_props.to_table(columns=columns)
 
-        catalog.rename_column('source_sum', 'isophotal_flux')
-        catalog.rename_column('source_sum_err', 'isophotal_fluxerr')
+        flux_col = 'isophotal_flux'
+        flux_err_col = 'isophotal_flux_err'
+        catalog.rename_column('source_sum', flux_col)
+        catalog.rename_column('source_sum_err', flux_err_col)
         catalog.rename_column('area', 'isophotal_area')
         catalog.rename_column('semimajor_axis_sigma', 'semimajor_sigma')
         catalog.rename_column('semiminor_axis_sigma', 'semiminor_sigma')
@@ -297,13 +299,17 @@ class SourceCatalog:
                                       self.model.meta.wcsinfo.crpix2 - 1)
         _, angle = _pixel_scale_angle_at_skycoord(skycoord, wcs)
         sky_orientation = (180.0 * u.deg) - angle + catalog['orientation']
+        catalog.add_column(sky_orientation, name='sky_orientation', index=11)
 
-        #TODO
-        #catalog.add_column(sky_orientation, name='sky_orientation', index=11)
-        catalog.add_column(sky_orientation, name='sky_orientation')
-
-        #TODO
-        # add magnitude columns
+        flux = catalog[flux_col]
+        flux_err = catalog[flux_err_col]
+        abmag, abmag_err = self.flux_to_abmag(flux, flux_err)
+        vegamag = abmag - self.abmag_offset
+        vegamag_err = abmag_err
+        catalog.add_column(abmag, name='isophotal_abmag', index=6)
+        catalog.add_column(abmag_err, name='isophotal_abmag_err', index=7)
+        catalog.add_column(vegamag, name='isophotal_vegamag', index=8)
+        catalog.add_column(vegamag_err, name='isophotal_vegamag_err', index=9)
 
         self.segment_catalog = catalog
         self.xypos = np.transpose((catalog['xcentroid'],
