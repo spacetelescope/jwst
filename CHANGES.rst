@@ -10,6 +10,8 @@ assign_wcs
 associations
 ------------
 
+- Cull Association tests [#4610]
+
 - Correct PATTTYPE values in ASN level 3 rules [#4570]
 
 - Update act_id format to allow base 36 values in product name [#4282]
