@@ -124,6 +124,8 @@ refpix
 
 - Fixed bugs in PR #4575; added unit tests [#4596]
 
+- Changed the data type of columns OUTPUT and ODD_EVEN in DQ [#4618]
+
 set_telescope_pointing
 ----------------------
 
