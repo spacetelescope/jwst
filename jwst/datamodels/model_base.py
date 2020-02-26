@@ -201,11 +201,17 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                     "no primary array in its schema")
             setattr(self, primary_array_name, init)
 
+        # If a shape has been given, initialize the primary array.
         if is_shape:
-            if not self.get_primary_array_name():
+            primary_array_name = self.get_primary_array_name()
+            if not primary_array_name:
                 raise TypeError(
                     "Shape passed to DataModel.__init__, but model has "
                     "no primary array in its schema")
+
+            # Initialization occurs when the primary array is first
+            # referenced. Do so now.
+            getattr(self, primary_array_name)
 
         # if the input is from a file, set the filename attribute
         if isinstance(init, str):
