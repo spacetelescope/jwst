@@ -605,14 +605,14 @@ properties:
             type: number
             fits_keyword: EXPSTART
             blend_table: True
-            blend_rule: first
+            blend_rule: min
           start_time_mjd:
             title: "[d] exposure start time in MJD"
             type: number
             fits_keyword: MJD-BEG
             fits_hdu: SCI
             blend_table: True
-            blend_rule: first
+            blend_rule: min
           mid_time:
             title: UTC exposure mid time
             type: number
@@ -625,20 +625,20 @@ properties:
             fits_keyword: MJD-AVG
             fits_hdu: SCI
             blend_table: True
-            blend_rule: first
+            blend_rule: mean
           end_time:
             title: UTC exposure end time
             type: number
             fits_keyword: EXPEND
             blend_table: True
-            blend_rule: last
+            blend_rule: max
           end_time_mjd:
             title: "[d] exposure end time in MJD"
             type: number
             fits_keyword: MJD-END
             fits_hdu: SCI
             blend_table: True
-            blend_rule: first
+            blend_rule: max
           start_time_eng:
             title: UTC exposure start time from engineering data
             type: string
