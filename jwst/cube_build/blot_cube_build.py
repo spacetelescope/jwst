@@ -65,7 +65,7 @@ class CubeBlot():
 
         # using wcs of ifu cube determine ra,dec,lambda
         self.cube_ra, self.cube_dec, self.cube_wave = \
-            self.median_skycube.meta.wcs(xcube, ycube, zcube)
+            self.median_skycube.meta.wcs(xcube + 1, ycube + 1, zcube + 1)
 
         # pull out flux from the median sky cube that matches with
         # cube_ra,dec,wave
@@ -264,7 +264,7 @@ class CubeBlot():
         # num = x_cube.size
         # loop over valid points in cube (not empty edge pixels)
         # TODO need to move this value (roi_det)  to reference file  or at least in spec ?
-        roi_det = 0.5  # 1/2 a pixel
+        roi_det = 1.0  # Just large enough that we don't get holes
         ivalid = np.nonzero(np.absolute(flux_cube))
         # for ipt in range(num):
         for ipt in ivalid[0]:
@@ -279,9 +279,12 @@ class CubeBlot():
             index_y = np.where(ydistance <= roi_det)
 
             if len(index_x[0]) > 0 and len(index_y[0]) > 0:
-                d1 = np.array(x_cube[ipt] - xcenter[index_x])
-                d2 = np.array(y_cube[ipt] - ycenter[index_y])
-                dxy = (d1 * d1) + (d2 * d2)
+                d1pix = np.array(x_cube[ipt] - xcenter[index_x])
+                d2pix = np.array(y_cube[ipt] - ycenter[index_y])
+                dxy=[]
+                for dy in d2pix:
+                    for dx in d1pix:
+                        dxy.append((dx * dx) + (dy * dy))
                 dxy = np.sqrt(dxy)
                 weight_distance = np.exp(-dxy)
                 weighted_flux = weight_distance * flux_cube[ipt]

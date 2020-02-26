@@ -1,4 +1,5 @@
-import os.path
+import os
+
 
 def check(init):
     """
@@ -12,34 +13,42 @@ def check(init):
     Returns
     -------
     file_type: a string with the file type ("asdf", "asn", or "fits")
+
     """
+    supported = ('asdf', 'fits', 'json')
 
     if isinstance(init, str):
-        if os.path.exists(init):
-            with open(init, "rb") as fd:
-                magic = fd.read(5)
-        else:
-            filename, file_extension = os.path.splitext(init)
-            file_type = file_extension[1:]
-            if file_type not in ("asdf", "fits"):
-                raise ValueError("Cannot get file type of " + str(init))
-            return file_type
+        path, ext = os.path.splitext(init)
+        ext = ext.strip('.')
 
-    elif hasattr(init, "read") and hasattr(init, "seek"):
+        if not ext:
+            raise ValueError(f'Input file path does not have an extension: {init}')
+
+        if ext not in supported:  # Could be the file is zipped; try splitting again
+            path, ext = os.path.splitext(path)
+            ext = ext.strip('.')
+
+            if ext not in supported:
+                raise ValueError(f'Unrecognized file type for: {init}')
+
+        if ext == 'json':  # Assume json input is an association
+            return 'asn'
+
+        return ext
+
+    if hasattr(init, "read") and hasattr(init, "seek"):
         magic = init.read(5)
         init.seek(0, 0)
 
-    else:
-        magic = None
+        if not magic or len(magic) < 5:
+            raise ValueError(f"Cannot get file type of {str(init)}")
 
-    if magic is None or len(magic) < 5:
-        raise ValueError("Cannot get file type of " + str(init))
+        if magic == b'#ASDF':
+            return "asdf"
 
-    if magic == b'#ASDF':
-        file_type = "asdf"
-    elif magic == b'SIMPL':
-        file_type = "fits"
-    else:
-        file_type = "asn"
+        if magic == b'SIMPL':
+            return "fits"
 
-    return file_type
+        return "asn"
+
+    raise ValueError(f"Cannot get file type of {str(init)}")

@@ -155,8 +155,7 @@ def test_miri_lrs_slitless_tso3_whtlt(run_tso3_pipeline, generate_tso3_asn,
     rtdata.output = output_filename
     rtdata.get_truth(f"truth/test_miri_lrs_slitless_tso3/{output_filename}")
 
-    diff = diff_astropy_tables(rtdata.output, rtdata.truth)
-    assert len(diff) == 0, "\n".join(diff)
+    assert diff_astropy_tables(rtdata.output, rtdata.truth)
 
 
 @pytest.mark.bigdata

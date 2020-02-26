@@ -36,24 +36,21 @@ As can a particular commit hash:
 
 We still package our releases to DMS via environment snapshots that specify the exact versions of all packages to be installed.
 
-The latest release 0.14.2 may be installed in two steps by running the following commands:
+The latest release 0.14.2 may be installed by running the following commands in Linux or MacOS:
 
-Step 1:
+Linux:
 
-    conda create -n jwstdp-0.14.2 --file https://ssb.stsci.edu/releases/jwstdp/0.14.2/[env_file]
+    conda create -n jwstdp-0.14.2 --file https://ssb.stsci.edu/releases/jwstdp/0.14.2/conda_python_stable-deps.txt
     conda activate jwstdp-0.14.2
+    pip install -r https://ssb.stsci.edu/releases/jwstdp/0.14.2/reqs_stable-deps.txt
 
-Where `[env_file]` = `conda_python_stable-deps.txt` for Linux
-and   `[env_file]` = `conda_python_macos-stable-deps.txt` for Macos
+MacOS:
 
-Step 2:
+    conda create -n jwstdp-0.14.2 --file https://ssb.stsci.edu/releases/jwstdp/0.14.2/conda_python_macos-stable-deps.txt
+    conda activate jwstdp-0.14.2
+    pip install -r https://ssb.stsci.edu/releases/jwstdp/0.14.2/reqs_macos-stable-deps.txt
 
-    pip install -r https://ssb.stsci.edu/releases/jwstdp/0.14.2/[pkgs_file]
-
-Where `[pkgs_file]` = `reqs_stable-deps.txt` for Linux
-and   `[pkgs_file]` = `reqs_macos-stable-deps.txt` for Macos
-
-Each such delivery has its own installation instructions which may be found in
+Each delivery has its own installation instructions which may be found in
 the corresponding release documentation linked from this page: https://github.com/astroconda/astroconda-releases/tree/master/jwstdp
 
 The version values shown there are the JWSTDP releases available to install.

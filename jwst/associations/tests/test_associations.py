@@ -1,4 +1,3 @@
-
 """test_associations: Test of general Association functionality."""
 import pytest
 
@@ -85,7 +84,7 @@ def test_base_instatiation():
                 value='V99009001001P0000000002101',
                 sources=['obs_id']
             ),
-            helpers.t_path('data/mega_pool.csv'),
+            helpers.t_path('data/pool_018_all_exptypes.csv'),
             1,
         ),
         (
