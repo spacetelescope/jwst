@@ -39,5 +39,3 @@ class ImageModel(DataModel):
     def __init__(self, init=None, **kwargs):
 
         super(ImageModel, self).__init__(init=init, **kwargs)
-
-        
