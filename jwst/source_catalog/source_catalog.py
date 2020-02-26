@@ -35,6 +35,10 @@ class SourceCatalog:
         self.deblend = deblend
         self.aperture_ee = aperture_ee
 
+        self._flux_colnames = self._make_aper_colnames('flux')
+        self._abmag_colnames = self._make_aper_colnames('abmag')
+        self._vegamag_colnames = self._make_aper_colnames('vegamag')
+
         self.coverage_mask = None
         self._bkg = None
         self.background = None
@@ -44,12 +48,25 @@ class SourceCatalog:
         self.segm = None
         self.total_error = None
         self.segment_catalog = None
+        self.null_column = None
 
         self.bkg_aper_in = None
         self.bkg_aper_out = None
         self.aper_radii = None
         self.abmag_offset = None
         self.aperture_catalog = None
+        self._ci_colname = None
+
+    def _colnames_generator(self, name):
+        for ee in self.aperture_ee:
+            base = f'aper{ee}_{name}'
+            yield base
+            yield f'{base}_err'
+
+    def _make_aper_colnames(self, name):
+        colnames = list(self._colnames_generator(name))
+        colnames.extend([f'aper_total_{name}', f'aper_total_{name}_err'])
+        return colnames
 
     def convert_to_jy(self):
         """ convert from MJy/sr to Jy"""
@@ -67,7 +84,7 @@ class SourceCatalog:
         # always an exposure-time map
         self.coverage_mask = (self.model.wht == 0)
 
-        return
+        return self.coverage_mask
 
     def estimate_background(self):
         """
@@ -104,7 +121,7 @@ class SourceCatalog:
         self.background = bkg.background
         self.background_rms = bkg.background_rms
 
-        return
+        return self.background, self.background_rms
 
     def subtract_background(self):
         self.model.data -= self.background
@@ -136,11 +153,11 @@ class SourceCatalog:
 
         self.kernel = kernel
 
-        return
+        return self.kernel
 
     def calc_threshold(self):
         self.threshold = self.snr_threshold * self.background_rms
-        return
+        return self.threshold
 
     def detect_sources(self):
         """
@@ -235,11 +252,11 @@ class SourceCatalog:
         self.total_error = calc_total_error(self.model.data, bkg_error,
                                             effective_gain)
 
-        return
+        return self.total_error
 
     def calc_total_error(self):
         self.total_error = np.zeros_like(self.model.data)
-        return
+        return self.total_error
 
     def apply_units(self):
         unit = u.Jy
@@ -315,9 +332,14 @@ class SourceCatalog:
         self.xypos = np.transpose((catalog['xcentroid'],
                                    catalog['ycentroid']))
 
-        return
+        return self.segment_catalog
 
-    def aper_local_background(self, bkg_aper):
+    def make_null_column(self):
+        values = np.empty(len(self.segment_catalog))
+        values.fill(np.nan)
+        self.null_column = values
+
+    def calc_aper_local_background(self, bkg_aper):
         """
         Estimate the local background as the sigma-clipped median value
         in the input aperture.
@@ -347,6 +369,26 @@ class SourceCatalog:
 
         return bkg_median, bkg_median_err
 
+    def append_aper_total(self, catalog):
+        catalog['aper_total_flux'] = self.null_column
+        catalog['aper_total_flux_err'] = self.null_column
+        catalog['aper_total_abmag'] = self.null_column
+        catalog['aper_total_abmag_err'] = self.null_column
+        catalog['aper_total_vegamag'] = self.null_column
+        catalog['aper_total_vegamag_err'] = self.null_column
+
+        return catalog
+
+    def calc_concentration_index(self, catalog):
+        eefractions = [self.aperture_ee[i] for i in (0, 2)]
+        self._ci_colname = f'CI_{eefractions[0]}_{eefractions[1]}'
+        col1 = f'aper{eefractions[0]}_abmag'
+        col2 = f'aper{eefractions[1]}_abmag'
+        return catalog[col1] - catalog[col2]
+
+    def calc_is_star(self, catalog):
+        return self.null_column
+
     def get_aperture_radii(self):
         self.bkg_aper_in = 10
         self.bkg_aper_out = 15
@@ -357,13 +399,14 @@ class SourceCatalog:
         filepath = 'abmag_to_vega.ecsv'
         tbl = QTable.read(filepath)
         self.abmag_offset = 0.
-        return
+        return self.abmag_offset
 
     def make_aperture_catalog(self):
         self.get_aperture_radii()
         bkg_aperture = CircularAnnulus(self.xypos, self.bkg_aper_in,
                                        self.bkg_aper_out)
-        bkg_median, bkg_median_err = self.aper_local_background(bkg_aperture)
+        bkg_median, bkg_median_err = self.calc_aper_local_background(
+            bkg_aperture)
 
         apertures = [CircularAperture(self.xypos, radius) for radius in
                      self.aper_radii]
@@ -374,21 +417,8 @@ class SourceCatalog:
             flux_col = f'aperture_sum_{i}'
             flux_err_col = f'aperture_sum_err_{i}'
 
-            eefraction = self.aperture_ee[i]
-            name = f'aper{eefraction}'
-            new_flux_col = name + '_flux'
-            new_flux_err_col = name + '_flux_err'
-            abmag_col = name + '_abmag'
-            abmag_err_col = name + '_abmag_err'
-            vegamag_col = name + '_vegamag'
-            vegamag_err_col = name + '_vegamag_err'
-
-            #new_flux_col = f'aper_flux_{eefraction}'
-            #new_flux_err_col = f'aper_flux_err_{eefraction}'
-            #abmag_col = f'aper_abmag_{eefraction}'
-            #abmag_err_col = f'aper_abmag_err_{eefraction}'
-            #vegamag_col = f'aper_vegamag_{eefraction}'
-            #vegamag_err_col = f'aper_vegamag_err_{eefraction}'
+            # subtract the local background measured in the annulus
+            aper_phot[flux_col] -= (bkg_median * aperture.area)
 
             flux = aper_phot[flux_col]
             flux_err = aper_phot[flux_err_col]
@@ -396,7 +426,15 @@ class SourceCatalog:
             vegamag = abmag - self.abmag_offset
             vegamag_err = abmag_err
 
-            aper_phot[flux_col] -= (bkg_median * aperture.area)
+            idx0 = 2 * i
+            idx1 = (2 * i) + 1
+            new_flux_col = self._flux_colnames[idx0]
+            new_flux_err_col = self._flux_colnames[idx1]
+            abmag_col = self._abmag_colnames[idx0]
+            abmag_err_col = self._abmag_colnames[idx1]
+            vegamag_col = self._vegamag_colnames[idx0]
+            vegamag_err_col = self._vegamag_colnames[idx1]
+
             aper_phot.rename_column(flux_col, new_flux_col)
             aper_phot.rename_column(flux_err_col, new_flux_err_col)
 
@@ -408,13 +446,47 @@ class SourceCatalog:
         aper_phot['aper_bkg_flux'] = bkg_median
         aper_phot['aper_bkg_fluxerr'] = bkg_median_err
 
+        aper_phot = self.append_aper_total(aper_phot)
+
+        aper_phot[self._ci_colname] = self.calc_concentration_index(aper_phot)
+        aper_phot['is_star'] = self.calc_is_star(aper_phot)
+
         self.aperture_catalog = aper_phot
 
-        return
+        return self.aperture_catalog
+
+    def calc_sharpness(self, catalog):
+        return self.null_column
+
+    def calc_roundness(self, catalog):
+        return self.null_column
+
+    def calc_isolation_metric(self, catalog):
+        return self.null_column
 
     def make_source_catalog(self):
-        self.catalog = join(self.segment_catalog, self.aperture_catalog)
-        return
+        catalog = join(self.segment_catalog, self.aperture_catalog)
+
+        catalog['sharpness'] = self.calc_sharpness(catalog)
+        catalog['roundness'] = self.calc_roundness(catalog)
+        catalog['isolation_metric'] = self.calc_isolation_metric(catalog)
+
+        for colname in catalog.colnames:
+            if colname.endswith('_err'):
+                catalog[colname] = self.null_column
+
+        colnames = self.segment_catalog.colnames[0:4]
+        colnames.extend(self._flux_colnames)
+        colnames.extend(['aper_bkg_flux', 'aper_bkg_fluxerr'])
+        colnames.extend(self._abmag_colnames)
+        colnames.extend(self._vegamag_colnames)
+        colnames.extend([self._ci_colname, 'is_star', 'sharpness',
+                         'roundness', 'isolation_metric'])
+        colnames.extend(self.segment_catalog.colnames[4:])
+
+        self.catalog = catalog[colnames]
+
+        return self.catalog
 
     def run(self):
         self.convert_to_jy()
@@ -431,15 +503,12 @@ class SourceCatalog:
             return None
         log.info(f'Detected {segm.nlabels} sources')
 
-        # TODO
-        from astropy.io import fits
-        fits.writeto('segm_new.fits', segm.data, overwrite=True)
-
-        self._calc_total_error()
+        self.calc_total_error()
         self.apply_units()
         self.get_abmag_offset()
 
         self.make_segment_catalog()
+        self.make_nan_column()
         self.make_aperture_catalog()
         self.make_source_catalog()
 
