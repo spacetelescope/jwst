@@ -3274,9 +3274,9 @@ def populate_time_keywords(input_model, output_model):
             spec = output_model.spec[n]             # n is incremented below
             spec.int_num = int_num[row]
             spec.time_scale = "UTC"
-            spec.start_utc = start_utc[row]
-            spec.mid_utc = mid_utc[row]
-            spec.end_utc = end_utc[row]
+            spec.start_time_mjd = start_utc[row]
+            spec.mid_time_mjd = mid_utc[row]
+            spec.end_time_mjd = end_utc[row]
             spec.start_tdb = start_tdb[row]
             spec.mid_tdb = mid_tdb[row]
             spec.end_tdb = end_tdb[row]

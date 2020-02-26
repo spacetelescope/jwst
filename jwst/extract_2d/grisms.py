@@ -365,7 +365,7 @@ def extract_grism_objects(input_model,
                                                    use_fits_wcs=use_fits_wcs,
                                                    mmag_extract=mmag_extract)
             log.info("Grism object list created from source catalog: {0:s}"
-                     .format(input_model.meta.source_catalog.filename))
+                     .format(input_model.meta.source_catalog))
 
     if not isinstance(grism_objects, list):
         raise TypeError("Expected input grism objects to be a list")

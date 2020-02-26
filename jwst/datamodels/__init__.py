@@ -21,8 +21,7 @@ from .flat import FlatModel
 from .fringe import FringeModel
 from .gain import GainModel
 from .gls_rampfit import GLS_RampFitModel
-from .guiderraw import GuiderRawModel
-from .guidercal import GuiderCalModel
+from .guider import GuiderRawModel, GuiderCalModel
 from .ifucube import IFUCubeModel
 from .ifucubepars import NirspecIFUCubeParsModel, MiriIFUCubeParsModel
 from .ifuimage import IFUImageModel

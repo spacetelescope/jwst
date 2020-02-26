@@ -246,7 +246,7 @@ properties:
             blend_table: True
           dispersion_direction:
             title: Dispersion direction
-            type: number
+            type: integer
             fits_keyword: DISPAXIS
             fits_hdu: SCI
             blend_table: True
@@ -293,7 +293,7 @@ properties:
             fits_hdu: SCI
             blend_table: True
           roll_ref:
-            title: "[deg] Telescope roll angle of V3 measured from North over East at the ref. point"
+            title: "[deg] V3 roll angle at the ref point (N over E)"
             type: number
             fits_keyword: ROLL_REF
             fits_hdu: SCI
@@ -309,12 +309,12 @@ properties:
             fits_keyword: SPECSYS
             fits_hdu: SCI
           siaf_xref_sci:
-            title: Aperture X reference point in SCI frame from SIAF (NRC_TSGRISM mode)
+            title: Aperture X reference point in SCI frame
             type: number
             fits_keyword: XREF_SCI
             fits_hdu: SCI
           siaf_yref_sci:
-            title: Aperture Y reference point in SCI frame from SIAF (NRC_TSGRISM mode)
+            title: Aperture Y reference point in SCI frame
             type: number
             fits_keyword: YREF_SCI
             fits_hdu: SCI

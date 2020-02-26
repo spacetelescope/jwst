@@ -113,7 +113,7 @@ class TweakRegStep(Step):
                 catalog.write(catalog_filename, format=fmt, overwrite=True)
                 self.log.info('Wrote source catalog: {}'
                               .format(catalog_filename))
-                image_model.meta.tweakreg_catalog.filename = catalog_filename
+                image_model.meta.tweakreg_catalog = catalog_filename
 
             image_model.catalog = catalog
 
@@ -214,7 +214,7 @@ class TweakRegStep(Step):
         if hasattr(image_model, 'catalog'):
             catalog = image_model.catalog
         else:
-            catalog = image_model.meta.tweakreg_catalog.filename
+            catalog = image_model.meta.tweakreg_catalog
 
         model_name = path.splitext(image_model.meta.filename)[0].strip('_- ')
 

@@ -57,7 +57,7 @@ class SourceCatalogStep(Step):
                 )
                 self.log.info('Wrote source catalog: {0}'
                               .format(cat_filepath))
-                model.meta.source_catalog.filename = os.path.basename(
+                model.meta.source_catalog = os.path.basename(
                     cat_filepath)
 
         # nothing is returned because this is the last step
