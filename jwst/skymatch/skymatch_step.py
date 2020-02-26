@@ -9,7 +9,6 @@ JWST pipeline step for sky matching.
 
 import collections
 import numpy as np
-import logging
 
 from ..stpipe import Step
 from .. import datamodels
