@@ -358,6 +358,7 @@ def get_open_slits(input_model, reference_files=None, slit_y_range=[-.55, .55]):
     """Return the opened slits/shutters in a MOS or Fixed Slits exposure.
     """
     exp_type = input_model.meta.exposure.type.lower()
+    lamp_mode = input_model.meta.instrument.lamp_mode.lower()
     if exp_type in ["nrs_msaspec", "nrs_autoflat"]:
         msa_metadata_file, msa_metadata_id, dither_point = get_msa_metadata(
             input_model, reference_files)
@@ -368,6 +369,9 @@ def get_open_slits(input_model, reference_files=None, slit_y_range=[-.55, .55]):
         slits = [Slit('S1600A1', 3, 0, 0, 0, slit_y_range[0], slit_y_range[1], 5, 4)]
     elif exp_type == "nrs_lamp":
         slits = get_open_fixed_slits(input_model, slit_y_range)
+    elif exp_type == "nrs_autowave":
+        if lamp_mode == 'fixedslit':
+            slits = get_open_fixed_slits(input_model, slit_y_range)
     else:
         raise ValueError("EXP_TYPE {0} is not supported".format(exp_type.upper()))
     if reference_files is not None:
@@ -1695,6 +1699,31 @@ def _create_ifupost_transform(ifupost_slice):
     model = linear & Identity(1) | model_poly
     return model
 
+def autowave(input_model, reference_files, slit_y_range):
+    """Return the appropriate function for autowave data
+
+    Parameters
+    ----------
+
+    input_model : `~jwst.datamodels.DataModel`
+        The input data model.
+
+    reference_files : dict
+        The reference files used for this mode.
+
+    slit_y_range : list
+        The slit dimensions relative to the center of the slit.
+
+    """
+    lamp_mode = input_model.meta.instrument.lamp_mode.lower()
+    if lamp_mode in ['fixedslit', 'brightobj']:
+        return slits_wcs(input_model, reference_files, slit_y_range)
+    elif lamp_mode == 'ifu':
+        return ifu(input_model, reference_files, slit_y_range)
+    elif lamp_mode == 'msaspec':
+        return slits_wcs(input_model, reference_files, slit_y_range)
+    else:
+        return not_implemented_mode
 
 exp_type2transform = {'nrs_tacq': imaging,
                       'nrs_taslit': imaging,
@@ -1709,7 +1738,7 @@ exp_type2transform = {'nrs_tacq': imaging,
                       'nrs_msata': imaging,
                       'nrs_wata': imaging,
                       'nrs_autoflat': slits_wcs,
-                      'nrs_autowave': not_implemented_mode,
+                      'nrs_autowave': autowave,
                       'nrs_lamp': slits_wcs,
                       'nrs_brightobj': slits_wcs,
                       'nrs_dark': not_implemented_mode,
