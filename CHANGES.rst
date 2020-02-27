@@ -3,7 +3,6 @@
 
 assign_wcs
 ----------
-- Remove full path from SCATFILE keyword [#4387]
 
 - A ``ValueError`` is now raised if input data is missing ``xref_sci`` or ``yref_sci`` keywords. [#4561]
 
@@ -44,9 +43,17 @@ datamodels
   an update happens from the ``extra_fits`` section of the datamodel.  Default
   is to stop doing this by default, i.e. ``False``. [#4593]
 
+- Add units to filteroffset schema.  [#4595]
+
 - Updated ``slitdata.schema.yaml`` to include ``SRCRA`` and ``SRCDEC`` for
   MOS slitlets to FITS SCI headers. These values are taken from the MOS
   metadata file. [#4613]
+
+- Many keyword updates to bring us in-sync with KWD. [#4602]
+
+- Update schemas to use transform-1.2.0. [#4604]
+
+- Allow FileNotFoundError to be raised. [#4605]
 
 extract_1d
 ----------
@@ -131,6 +138,11 @@ set_telescope_pointing
 ----------------------
 
 - Round S_REGION values in ``set_telescope_pointing`` [#4476]
+
+source_catalog
+--------------
+
+- Remove directory path when populating SCATFILE keyword. [#4597]
 
 srctype
 -------

@@ -115,6 +115,7 @@ def test_spec2(run_spec2, fitsdiff_default_kwargs, suffix):
                      truth_path=TRUTH_PATH)
 
 
+@pytest.mark.skip(reason="single exposure processing is redundant with calspec2")
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
     'output',
