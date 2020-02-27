@@ -49,7 +49,7 @@ datamodels
   MOS slitlets to FITS SCI headers. These values are taken from the MOS
   metadata file. [#4613]
 
-- Many keyword updates to bring us in-sync with KWD. [#4602]
+- Many keyword updates to bring us in-sync with KWD. [#4602, #4627]
 
 - Update schemas to use transform-1.2.0. [#4604]
 
