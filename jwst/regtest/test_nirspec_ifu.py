@@ -47,7 +47,6 @@ def run_spec2(jail, rtdata_module):
     return rtdata
 
 
-@pytest.mark.skip(reason="single exposure processing is redundant with calspec2")
 @pytest.fixture(scope='module')
 def run_spec3(jail, run_spec2):
     """Run the Spec3Pipeline on the results from the Spec2Pipeline run"""
@@ -105,6 +104,7 @@ def run_spec3_multi(jail, rtdata_module):
     return rtdata
 
 
+@pytest.mark.skip(reason="single exposure processing is redundant with calspec2")
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
     'suffix',
