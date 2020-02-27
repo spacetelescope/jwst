@@ -4,7 +4,6 @@ import numpy as np
 import logging
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def match_det2cube_msm(naxis1, naxis2, naxis3,

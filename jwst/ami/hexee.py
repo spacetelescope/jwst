@@ -15,7 +15,6 @@ import logging
 import numpy as np
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def g_eeAG(xi, eta, **kwargs):

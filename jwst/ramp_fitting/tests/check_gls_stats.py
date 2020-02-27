@@ -11,7 +11,6 @@ from jwst.ramp_fitting.ramp_fit import ramp_fit
 
 import logging
 log = logging.getLogger(__name__)
-log.setLevel(logging.WARNING)
 
 
 def setup_inputs(ngroups=10, readnoise=10, nints=1,

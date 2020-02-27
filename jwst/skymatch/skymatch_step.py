@@ -9,7 +9,6 @@ JWST pipeline step for sky matching.
 
 import collections
 import numpy as np
-import logging
 
 from ..stpipe import Step
 from .. import datamodels
@@ -55,7 +54,6 @@ class SkyMatchStep(Step):
     reference_file_types = []
 
     def process(self, input):
-        self.log.setLevel(logging.DEBUG)
         img = datamodels.ModelContainer(input)
 
         self._dqbits = interpret_bit_flags(self.dqbits)

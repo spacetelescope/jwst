@@ -7,7 +7,6 @@ from ..lib.exposure_types import IMAGING_TYPES, SPEC_TYPES
 from ..lib.dispaxis import get_dispersion_direction
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 __all__ = ["load_wcs"]
 

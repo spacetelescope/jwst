@@ -4,7 +4,6 @@ import numpy as np
 from scipy.ndimage.filters import convolve1d
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 def correct_model(input_model, irs2_model,
                   scipix_n_default=16, refpix_r_default=4, pad=8):
