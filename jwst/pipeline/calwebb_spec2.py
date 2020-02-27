@@ -237,7 +237,8 @@ class Spec2Pipeline(Pipeline):
             input = self.extract_2d(input)
         else:
             # Extract 2D sub-windows for NIRSpec slit and MSA
-            if exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ', 'NRS_MSASPEC', 'NRS_LAMP']:
+            if exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ', 'NRS_MSASPEC',
+                            'NRS_LAMP', 'NRS_AUTOWAVE']:
                 input = self.extract_2d(input)
 
             # Apply flat-field correction

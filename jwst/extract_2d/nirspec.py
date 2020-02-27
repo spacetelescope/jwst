@@ -37,7 +37,7 @@ def nrs_extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_f
     exp_type = input_model.meta.exposure.type.upper()
 
     wavecorr_supported_modes = ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ',
-                                'NRS_AUTOFLAT']
+                                'NRS_AUTOFLAT', 'NRS_AUTOWAVE']
 
     if exp_type in wavecorr_supported_modes:
         reffile = reference_files['wavecorr']
