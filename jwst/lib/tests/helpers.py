@@ -12,6 +12,12 @@ S3_TEST_DATA_PATH = os.path.join(
 
 
 class MockS3Client:
+    def __init__(self, s3_test_data_path=None):
+        if s3_test_data_path:
+            self.s3_test_data_path = s3_test_data_path
+        else:
+            self.s3_test_data_path = S3_TEST_DATA_PATH
+
     def get_object(self, bucket_name, key):
         assert self.object_exists(bucket_name, key)
 
@@ -36,9 +42,9 @@ class MockS3Client:
                 yield k
 
     def _get_path(self, key):
-        return os.path.join(S3_TEST_DATA_PATH, key)
+        return os.path.join(self.s3_test_data_path, key)
 
     def _list_keys(self):
-        paths = glob.glob(S3_TEST_DATA_PATH + "/**", recursive=True)
+        paths = glob.glob(self.s3_test_data_path + "/**", recursive=True)
         paths = [p for p in paths if os.path.isfile(p)]
-        return [p.replace(S3_TEST_DATA_PATH, "") for p in paths]
+        return [p.replace(self.s3_test_data_path, "") for p in paths]

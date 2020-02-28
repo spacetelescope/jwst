@@ -134,7 +134,12 @@ def test_crds_failed_getreferences_bad_context():
         crds.getreferences(header, reftypes=["flat"], context="jwst_9942.pmap")
 
 
-def test_check_reference_open_s3():
-    assert crds_client.check_reference_open("s3://test-s3-data/data_model.fits") == "s3://test-s3-data/data_model.fits"
-    with pytest.raises(Exception):
+def test_check_reference_open_s3(tmpdir):
+    path = str(tmpdir.join("test.fits"))
+    with fits.HDUList(fits.PrimaryHDU()) as hdulist:
+        hdulist.writeto(path)
+
+    assert crds_client.check_reference_open("s3://test-s3-data/test.fits") == "s3://test-s3-data/test.fits"
+
+    with pytest.raises(RuntimeError):
         assert crds_client.check_reference_open("s3://test-s3-data/missing.fits")
