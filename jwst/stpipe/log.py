@@ -89,7 +89,7 @@ class BreakHandler(logging.Handler):
 log_config = {}
 
 
-class LogConfig():
+class LogConfig:
     """
     Stores a single logging configuration.
 
@@ -98,25 +98,24 @@ class LogConfig():
     name : str
         The `fnmatch` pattern used to match the logging class
 
-    handler, level, break_level, format : str
+    handler : str, list
+
+    level, break_level, format : str
         See LogConfig.spec for a description of these values.
     """
-    def __init__(self, name, handler=None, level=logging.NOTSET,
-                 break_level=logging.NOTSET, format=None):
+    def __init__(self, name, handler=None, level=None, break_level=None, format=None):
         if name in ('', '.', 'root'):
             name = '*'
+
         self.name = name
         self.handler = handler
-        if not isinstance(self.handler, list):
-            if self.handler.strip() == '':
-                self.handler = []
-            else:
-                self.handler = [x.strip() for x in self.handler.split(',')]
-        self.level = level
-        self.break_level = break_level
-        if format is None:
-            format = DEFAULT_FORMAT
-        self.format = format
+
+        if isinstance(self.handler, str) and self.handler is not None:
+            self.handler = [x.strip() for x in self.handler.split(',')] if self.handler.strip() else []
+
+        self.level = level if level is not None else logging.NOTSET
+        self.break_level = break_level if break_level is not None else logging.NOTSET
+        self.format = format if format is not None else DEFAULT_FORMAT
 
     def match(self, log_name):
         """
@@ -125,61 +124,67 @@ class LogConfig():
         """
         if log_name.startswith(STPIPE_ROOT_LOGGER):
             log_name = log_name[len(STPIPE_ROOT_LOGGER) + 1:]
+
             if fnmatch.fnmatchcase(log_name, self.name):
                 return True
+
         return False
 
-    def get_handler(self, handler_str):
+    @staticmethod
+    def get_handler(handler_str):
         """
         Given a handler string, returns a `logging.Handler` object.
         """
         if handler_str.startswith("file:"):
             return logging.FileHandler(handler_str[5:], 'w', 'utf-8', True)
-        elif handler_str.startswith("append:"):
-            return logging.FileHandler(handler_str[7:], 'a', 'utf-8', True)
-        elif handler_str == 'stdout':
-            return logging.StreamHandler(sys.stdout)
-        elif handler_str == 'stderr':
-            return logging.StreamHandler(sys.stderr)
-        else:
-            raise ValueError("Can't parse handler {0!r}".format(handler_str))
 
-    def apply(self, log):
+        if handler_str.startswith("append:"):
+            return logging.FileHandler(handler_str[7:], 'a', 'utf-8', True)
+
+        if handler_str == 'stdout':
+            return logging.StreamHandler(sys.stdout)
+
+        if handler_str == 'stderr':
+            return logging.StreamHandler(sys.stderr)
+
+        raise ValueError(f"Can't parse handler {handler_str!r}")
+
+    def apply(self, logger):
         """
         Applies the configuration to the given `logging.Logger`
         object.
         """
-        for handler in log.handlers[:]:
+        for handler in logger.handlers[:]:
             if hasattr(handler, '_from_config'):
-                log.handlers.remove(handler)
+                logger.handlers.remove(handler)
 
         # Set a handler
-        for handler_str in self.handler:
-            handler = self.get_handler(handler_str)
-            handler._from_config = True
-            handler.setLevel(self.level)
-            log.addHandler(handler)
+        if self.handler is not None:
+            for handler_str in self.handler:
+                handler = self.get_handler(handler_str)
+                handler._from_config = True
+                handler.setLevel(self.level)
+                logger.addHandler(handler)
 
         # Set the log level
-        log.setLevel(self.level)
+        logger.setLevel(self.level)
 
         # Set the break level
         if self.break_level != logging.NOTSET:
-            log.addHandler(BreakHandler(self.break_level))
+            logger.addHandler(BreakHandler(self.break_level))
 
         formatter = logging.Formatter(self.format)
-        for handler in log.handlers:
-            if (isinstance(handler, logging.Handler) and
-                hasattr(handler, '_from_config')):
+        for handler in logger.handlers:
+            if isinstance(handler, logging.Handler) and hasattr(handler, '_from_config'):
                 handler.setFormatter(formatter)
 
-    def match_and_apply(self, log):
+    def match_and_apply(self, logger):
         """
         If the given `logging.Logger` object matches the pattern of
         this configuration, it applies the configuration to it.
         """
-        if self.match(log.name):
-            self.apply(log)
+        if self.match(logger.name):
+            self.apply(logger)
 
 
 def load_configuration(config_file):
@@ -196,10 +201,12 @@ def load_configuration(config_file):
             value = int(value)
         except ValueError:
             pass
+
         try:
             value = logging._checkLevel(value)
         except ValueError:
             raise validate.VdtTypeError(value)
+
         return value
 
     spec = config_parser.load_spec_file(LogConfig)
@@ -220,9 +227,9 @@ def load_configuration(config_file):
 
 
 def getLogger(name=None):
-    log = logging.getLogger(name)
+    logger = logging.getLogger(name)
 
-    return log
+    return logger
 
 
 def _find_logging_config_file():
@@ -234,10 +241,12 @@ def _find_logging_config_file():
 
     for file in files:
         file = os.path.expanduser(file)
+
         if os.path.exists(file):
             return os.path.abspath(file)
 
     buffer = io.BytesIO(DEFAULT_CONFIGURATION)
+
     return buffer
 
 
@@ -260,22 +269,23 @@ class DelegationHandler(logging.Handler):
         logging.Handler.__init__(self, *args, **kwargs)
 
     def emit(self, record):
-        log = self.log
-        if (log is not None and
-            not record.name.startswith(STPIPE_ROOT_LOGGER)):
-            record.name = log.name
-            log.handle(record)
+        logger = self.log
+
+        if logger is not None and not record.name.startswith(STPIPE_ROOT_LOGGER):
+            record.name = logger.name
+            logger.handle(record)
 
     @property
     def log(self):
         return self._logs.get(threading.current_thread(), None)
 
     @log.setter
-    def log(self, log):
-        assert (log is None or
-                (isinstance(log, logging.Logger) and
-                 log.name.startswith(STPIPE_ROOT_LOGGER)))
-        self._logs[threading.current_thread()] = log
+    def log(self, logger):
+        assert (logger is None or
+                (isinstance(logger, logging.Logger) and
+                 logger.name.startswith(STPIPE_ROOT_LOGGER)))
+        self._logs[threading.current_thread()] = logger
+
 
 # Install the delegation handler on the root logger.  The Step class
 # uses the `delegator` instance to change what the current Step logger
