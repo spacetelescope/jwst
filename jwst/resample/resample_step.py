@@ -9,8 +9,6 @@ from .. import datamodels
 from . import resample
 from ..assign_wcs import util
 
-log = logging.getLogger(__name__)
-
 __all__ = ["ResampleStep"]
 
 

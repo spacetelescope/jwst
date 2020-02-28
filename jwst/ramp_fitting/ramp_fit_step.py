@@ -5,8 +5,6 @@ from .. import datamodels
 from . import ramp_fit
 
 import logging
-log = logging.getLogger(__name__)
-
 
 __all__ = ["RampFitStep"]
 
@@ -43,9 +41,9 @@ class RampFitStep (Step):
                                                           'readnoise')
             gain_filename = self.get_reference_file(input_model, 'gain')
 
-            log.info('Using READNOISE reference file: %s', readnoise_filename)
+            self.log.info('Using READNOISE reference file: %s', readnoise_filename)
             readnoise_model = datamodels.ReadnoiseModel(readnoise_filename)
-            log.info('Using GAIN reference file: %s', gain_filename)
+            self.log.info('Using GAIN reference file: %s', gain_filename)
             gain_model = datamodels.GainModel(gain_filename)
 
             # Try to retrieve the gain factor from the gain reference file.
@@ -56,8 +54,8 @@ class RampFitStep (Step):
                 input_model.meta.exposure.gain_factor = \
                     gain_model.meta.exposure.gain_factor
 
-            log.info('Using algorithm = %s' % self.algorithm)
-            log.info('Using weighting = %s' % self.weighting)
+            self.log.info('Using algorithm = %s' % self.algorithm)
+            self.log.info('Using weighting = %s' % self.weighting)
 
             buffsize = ramp_fit.BUFSIZE
             if self.algorithm == "GLS":
