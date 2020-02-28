@@ -1,10 +1,17 @@
+from difflib import unified_diff
+from glob import glob as _sys_glob
 import os
+import os.path as op
+from pathlib import Path
 import pprint
+import requests
 import shutil
+import sys
 
 import asdf
 from astropy.io.fits.diff import FITSDiff
 from ci_watson.artifactory_helpers import (
+    check_url,
     get_bigdata_root,
     get_bigdata,
     BigdataError,
@@ -14,6 +21,9 @@ from jwst.associations import AssociationNotValidError, load_asn
 from jwst.lib.suffix import replace_suffix
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
+
+# Define location of default Artifactory API key, for Jenkins use only
+ARTIFACTORY_API_KEY_FILE = '/eng/ssb2/keys/svc_rodata.key'
 
 
 class RegtestData:
@@ -137,6 +147,37 @@ class RegtestData:
         self.input_remote = os.path.join(self._inputs_root, self._env, path)
 
         return self.input
+
+    def data_glob(self, path=None, glob='*', docopy=None):
+        """Get a list of files"""
+        if path is None:
+            path = self.input_remote
+        else:
+            self.input_remote = path
+        if docopy is None:
+            docopy = self.docopy
+
+        # Get full path and proceed depending on whether
+        # is a local path or URL.
+        root = self.bigdata_root
+        if op.exists(root):
+            root_path = op.join(root, self._inputs_root, self._env)
+            root_len = len(root_path) + 1
+            path = op.join(root_path, path)
+            file_paths = _data_glob_local(path, glob)
+        elif check_url(root):
+            root_len = len(self._env) + 1
+            file_paths = _data_glob_url(self._inputs_root, self._env, path, glob, root=root)
+        else:
+            raise BigdataError('Path cannot be found: {}'.format(path))
+
+        # Remove the root from the paths
+        file_paths = [
+            file_path[root_len:]
+            for file_path in file_paths
+        ]
+        return file_paths
+
 
     def get_truth(self, path=None, docopy=None):
         """Copy truth data from Artifactory remote resource to the CWD/truth
@@ -359,3 +400,104 @@ def is_like_truth(rtdata, fitsdiff_default_kwargs, output, truth_path, is_suffix
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
+
+
+def text_diff(from_path, to_path):
+    """Generate a list of differences between files
+
+    Parameters
+    ----------
+    from_path: str
+        File to diff from.
+
+    to_path: str
+        File to diff to.
+
+    Returns
+    -------
+    diffs: [str[,...]]
+        A generator of a list of strings that are the differences.
+        The output from `difflib.unified_diff`
+    """
+    with open(from_path) as fh:
+        from_lines = fh.readlines()
+    with open(to_path) as fh:
+        to_lines = fh.readlines()
+
+    diffs = unified_diff(
+        from_lines, to_lines, from_path, to_path
+    )
+
+    return diffs
+
+
+def _data_glob_local(*glob_parts):
+    """Perform a glob on the local path
+
+    Parameters
+    ----------
+    glob_parts: (path-like,[...])
+        List of components that will be built into a single path
+
+    Returns
+    -------
+    file_paths: [str[, ...]]
+        Full file paths that match the glob criterion
+    """
+    full_glob = Path().joinpath(*glob_parts)
+    return _sys_glob(str(full_glob))
+
+
+def _data_glob_url(*url_parts, root=None):
+    """
+    Parameters
+    ----------
+    url: (str[,...])
+        List of components that will be used to create a URL path
+
+    root: str
+        The root server path to the Artifactory server.
+        Normally retrieved from `get_bigdata_root`.
+
+    Returns
+    -------
+    url_paths: [str[, ...]]
+        Full URLS that match the glob criterion
+    """
+    # Fix root root-ed-ness
+    if root.endswith('/'):
+        root = root[:-1]
+
+    # Access
+    try:
+        envkey = os.environ['API_KEY_FILE']
+    except KeyError:
+        envkey = ARTIFACTORY_API_KEY_FILE
+
+    try:
+        with open(envkey) as fp:
+            headers = {'X-JFrog-Art-Api': fp.readline().strip()}
+    except (PermissionError, FileNotFoundError):
+        print("Warning: Anonymous Artifactory search requests are limited to "
+            "1000 results. Use an API key and define API_KEY_FILE environment "
+            "variable to get full search results.", file=sys.stderr)
+        headers = None
+
+    search_url = '/'.join([root, 'api/search/pattern'])
+
+    # Join and re-split the url so that every component is identified.
+    url = '/'.join([root] + [idx for idx in url_parts])
+    all_parts = url.split('/')
+
+    # Pick out "jwst-pipeline", the repo name
+    repo = all_parts[4]
+
+    # Format the pattern
+    pattern = repo + ':' + '/'.join(all_parts[5:])
+
+    # Make the query
+    params = {'pattern': pattern}
+    with requests.get(search_url, params=params, headers=headers) as r:
+        url_paths = r.json()['files']
+
+    return url_paths

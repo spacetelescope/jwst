@@ -92,7 +92,7 @@ def generate_artifactory_json(request, artifactory_repos):
 
         # Upload and allow okify of truth by rtdata.output, if the test did not
         # fail before producing rtdata.output
-        if os.path.exists(rtdata.output):
+        if rtdata.output and os.path.exists(rtdata.output):
             # Write the rtdata class out as an ASDF file
             path_asdf = os.path.join(cwd, f"{request.node.name}_rtdata.asdf")
             rtdata.to_asdf(path_asdf)

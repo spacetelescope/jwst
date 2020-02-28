@@ -31,6 +31,8 @@ combine_1d
 datamodels
 ----------
 
+- Update schema-editor to match documentation and clarify execution [#4578]
+
 - Force data model type setting on save [#4318]
 
 - Deprecate ``MIRIRampModel`` [#4328]
