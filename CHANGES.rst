@@ -1,10 +1,11 @@
-0.14.3 (Unreleased)
+0.15.0 (2020-02-28)
 ===================
 
 assign_wcs
 ----------
 
-- A ``ValueError`` is now raised if input data is missing ``xref_sci`` or ``yref_sci`` keywords. [#4561]
+- A ``ValueError`` is now raised if input data is missing ``xref_sci`` or
+  ``yref_sci`` keywords. [#4561]
 
 associations
 ------------
@@ -70,7 +71,8 @@ extract_2d
   and keywords SLTSTRT1 and SLTSTRT2 are set to the pixel location of the
   cutout in the input file. [#4504]
 
-- A ``ValueError`` is now raised if the input data is missing ``xref_sci`` or ``yref_sci`` keywords. [#4561]
+- A ``ValueError`` is now raised if the input data is missing ``xref_sci`` or
+  ``yref_sci`` keywords. [#4561]
 
 - Fix the WCS subarray offsets for NIRCam TSGRISM cutouts [#4573]
 
@@ -100,7 +102,8 @@ pipeline
 
 - Hardwire required pipeline outputs in the pipeline. [#4578]
 
-- Added FGS_IMAGE to the exposure types to apply resampling in calwebb_image2.py [#4421]
+- Added FGS_IMAGE to the exposure types to apply resampling in
+  calwebb_image2.py [#4421]
 
 - Make the naming and writing out of the resampled results to an `i2d` file
   in `Image2Pipeline` consistent between config and class invocations [#4333]
@@ -161,7 +164,8 @@ transforms
  - Refactored the WFSS transforms to improve performance. [#4603]
 
  - Added ``source_ra`` and ``source_dec`` to the ``Slit`` namedtuple
-   with default values of 0.0. These are populated from the MSA metadata file. [#4613]
+   with default values of 0.0. These are populated from the MSA metadata
+   file. [#4613]
 
   
 tweakreg
@@ -181,7 +185,9 @@ wfs_combine
 tso_photometry
 --------------
 
-- A ``ValueError`` is now raised if the input data for ``call`` is missing ``crpix1`` or ``crpix2`` keywords. [#4561]
+- A ``ValueError`` is now raised if the input data for ``call`` is missing
+  ``crpix1`` or ``crpix2`` keywords. [#4561]
+
 
 0.14.2 (2019-11-18)
 ===================
