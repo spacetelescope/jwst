@@ -20,15 +20,14 @@ Algorithm
 This routine detects jumps in an exposure by looking for outliers
 in the up-the-ramp signal for each pixel in each integration within
 an input exposure. On output, the GROUPDQ array is updated with the DQ flag
-JUMP_DET to indicate the location of each jump that was found.
+"JUMP_DET" to indicate the location of each jump that was found.
 In addition, any pixels that have non-positive or NaN values in the gain
-reference file will have DQ flags NO_GAIN_VALUE and DO_NOT_USE set in the
+reference file will have DQ flags "NO_GAIN_VALUE" and "DO_NOT_USE" set in the
 output PIXELDQ array.
 The SCI and ERR arrays of the input data are not modified.
 
 The current implementation uses the two-point difference method described
-in Anderson and Gordon, PASP 132, 1237 (2011).
-
+in Anderson&Gordon2011_.
 
 Two-Point Difference Method
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -53,17 +52,11 @@ Note that any ramp values flagged as SATURATED in the input GROUPDQ array
 are not used in any of the above calculations and hence will never be
 marked as containing a jump.
 
-Step Arguments
-==============
-The ``jump`` step has one optional argument that can be set by the user:
-
-* ``--rejection_threshold``: A floating-point value that sets the sigma
-  threshold for jump detection.
-
-
 Subarrays
 =========
 The use of the reference files is flexible. Full-frame reference
 files can be used for all science exposures, in which case subarrays will be
 extracted from the reference file data to match the science exposure, or
 subarray-specific reference files may be used.
+
+.. _Anderson&Gordon2011: https://ui.adsabs.harvard.edu/abs/2011PASP..123.1237A

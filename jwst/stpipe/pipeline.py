@@ -346,13 +346,14 @@ class Pipeline(Step):
             Keys are the parameters and values are the values.
         """
         pars = super().get_pars(full_spec=full_spec)
+        pars['steps'] = {}
         for step_name, step_class in pipeline.step_defs.items():
 
             # If a step has already been instantiated, get its parameters
             # from the instantiation. Otherwise, retrieve from the class
             # itself.
             try:
-                pars[step_name] = getattr(pipeline, step_name).get_pars(full_spec=full_spec)
+                pars['steps'][step_name] = getattr(pipeline, step_name).get_pars(full_spec=full_spec)
             except AttributeError:
-                pars[step_name] = step_class.get_pars(full_spec=full_spec)
+                pars['steps'][step_name] = step_class.get_pars(full_spec=full_spec)
         return pars

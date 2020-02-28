@@ -27,8 +27,14 @@ class TSOPhotometryStep(Step):
 
     reference_file_types = ['tsophot']
 
-    def process(self, input):
-        with CubeModel(input) as model:
+    def process(self, input_data):
+        with CubeModel(input_data) as model:
+
+            if model.meta.wcsinfo.crpix1 is None:
+                raise ValueError('CRPIX1 is missing.')
+
+            if model.meta.wcsinfo.crpix2 is None:
+                raise ValueError('CRPIX2 is missing.')
 
             xcenter = model.meta.wcsinfo.crpix1 - 1    # 1-based origin
             ycenter = model.meta.wcsinfo.crpix2 - 1    # 1-based origin

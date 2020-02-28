@@ -20,7 +20,6 @@ from . import cube_cloud
 from . import coord
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class IFUCubeData():
@@ -80,10 +79,12 @@ class IFUCubeData():
         self.this_cube_filenames = []
 
         self.soft_rad = None
+        self.scalerad = None
         self.linear_wavelength = True
         self.roiw_table = None
         self.rois_table = None
         self.softrad_table = None
+        self.scalerad_table = None
         self.weight_power_table = None
         self.wavelength_table = None
 
@@ -206,7 +207,7 @@ class IFUCubeData():
                 fg_name = fg_name.lower()
                 newname = self.output_name_base + fg_name + '_s3d.fits'
                 if self.output_type == 'single':
-                    newname = self.output_name_base + fg_name + 'single_s3d.fits'
+                    newname = self.output_name_base + fg_name + '_single_s3d.fits'
 # ______________________________________________________________________________
         if self.output_type != 'single':
             log.info('Output Name: %s', newname)
@@ -494,6 +495,7 @@ class IFUCubeData():
         self.spaxel_flux = np.zeros(total_num)
         self.spaxel_weight = np.zeros(total_num)
         self.spaxel_iflux = np.zeros(total_num)
+        self.spaxel_var = np.zeros(total_num)
         self.spaxel_dq = np.zeros((self.naxis3, self.naxis2 * self.naxis1), dtype=np.uint32)
 
         spaxel_ra = None
@@ -548,8 +550,8 @@ class IFUCubeData():
                                                                    subtract_background,
                                                                    ifile)
 
-                    coord1, coord2, wave, flux, slice_no, rois_pixel, roiw_pixel, weight_pixel,\
-                        softrad_pixel, alpha_det, beta_det = pixelresult
+                    coord1, coord2, wave, flux, err, slice_no, rois_pixel, roiw_pixel, weight_pixel,\
+                        softrad_pixel, scalerad_pixel, alpha_det, beta_det = pixelresult
                     t1 = time.time()
                     log.info("Time to transform pixels to output frame = %.1f s" % (t1 - t0,))
 
@@ -562,21 +564,8 @@ class IFUCubeData():
                         self.map_fov_to_dqplane(this_par1, coord1, coord2, wave, roiw_ave, slice_no)
                         t1 = time.time()
                         log.info("Time to set initial dq values = %.1f s" % (t1 - t0,))
-                    if self.weighting == 'msm':
+                    if self.weighting == 'msm' or self.weighting == 'emsm':
                         t0 = time.time()
-#                        if self.new_code:
-#                            print('calling new cube_cloud')
-#                            cube_cloud_quick.match_det2cube_msm(self.naxis1,self.naxis2,self.naxis3,
-#                                                              self.cdelt1,self.cdelt2,self.cdelt3,
-#                                                              self.rois,self.roiw,self.weight_power,
-#                                                              self.xcoord,self.ycoord,self.zcoord,
-#                                                              self.spaxel_flux,
-#                                                              self.spaxel_weight,
-#                                                              self.spaxel_iflux,
-#                                                              flux,
-#                                                              coord1,coord2,wave)
-#                        else:
-#                            print('calling old cube_cloud')
                         cube_cloud.match_det2cube_msm(self.naxis1, self.naxis2, self.naxis3,
                                                       self.cdelt1, self.cdelt2,
                                                       self.cdelt3_normal,
@@ -584,10 +573,15 @@ class IFUCubeData():
                                                       self.spaxel_flux,
                                                       self.spaxel_weight,
                                                       self.spaxel_iflux,
+                                                      self.spaxel_var,
                                                       flux,
+                                                      err,
                                                       coord1, coord2, wave,
-                                                      rois_pixel, roiw_pixel, weight_pixel,
-                                                      softrad_pixel)
+                                                      self.weighting,
+                                                      rois_pixel, roiw_pixel,
+                                                      weight_pixel,
+                                                      softrad_pixel,
+                                                      scalerad_pixel)
 
                         t1 = time.time()
                         log.info("Time to match file to ifucube = %.1f s" % (t1 - t0,))
@@ -619,12 +613,17 @@ class IFUCubeData():
                                                               self.spaxel_flux,
                                                               self.spaxel_weight,
                                                               self.spaxel_iflux,
+                                                              self.spaxel_var,
                                                               spaxel_alpha, spaxel_beta, spaxel_wave,
                                                               flux,
+                                                              err,
                                                               coord1, coord2, wave,
                                                               alpha_det, beta_det,
-                                                              rois_pixel, roiw_pixel, weight_pixel,
-                                                              softrad_pixel)
+                                                              self.weighting,
+                                                              rois_pixel, roiw_pixel,
+                                                              weight_pixel,
+                                                              softrad_pixel,
+                                                              scalerad_pixel)
 # --------------------------------------------------------------------------------
 # 2D area method - only works for single files and coord_system = 'alpha-beta'
 # --------------------------------------------------------------------------------
@@ -651,6 +650,7 @@ class IFUCubeData():
                                                         self.spaxel_flux,
                                                         self.spaxel_weight,
                                                         self.spaxel_iflux,
+                                                        self.spaxel_var,
                                                         self.xcoord, self.zcoord,
                                                         self.crval1, self.crval3,
                                                         self.cdelt1, self.cdelt3,
@@ -695,8 +695,6 @@ class IFUCubeData():
         this_par1 = self.list_par1[0]  # only one channel is used in this approach
 #        this_par2 = None  # not important for this type of mapping
 
-        self.weighting == 'msm'
-
         for j in range(n):
             log.info("Working on next Single IFU Cube = %i" % (j + 1))
             t0 = time.time()
@@ -706,6 +704,7 @@ class IFUCubeData():
             self.spaxel_weight = np.zeros(total_num)
             self.spaxel_iflux = np.zeros(total_num)
             self.spaxel_dq = np.zeros((self.naxis3, self.naxis2 * self.naxis1), dtype=np.uint32)
+            self.spaxel_var = np.zeros(total_num)
 
             subtract_background = False
 
@@ -713,8 +712,8 @@ class IFUCubeData():
                                                            subtract_background,
                                                            self.input_models[j])
 
-            coord1, coord2, wave, flux, slice_no, rois_pixel, roiw_pixel, weight_pixel, \
-                softrad_pixel, alpha_det, beta_det = pixelresult
+            coord1, coord2, wave, flux, err, slice_no, rois_pixel, roiw_pixel, weight_pixel, \
+                softrad_pixel, scalerad_pixel, alpha_det, beta_det = pixelresult
 
             cube_cloud.match_det2cube_msm(self.naxis1,
                                           self.naxis2,
@@ -727,10 +726,15 @@ class IFUCubeData():
                                           self.spaxel_flux,
                                           self.spaxel_weight,
                                           self.spaxel_iflux,
+                                          self.spaxel_var,
                                           flux,
+                                          err,
                                           coord1, coord2, wave,
-                                          rois_pixel, roiw_pixel, weight_pixel,
-                                          softrad_pixel)
+                                          self.weighting,
+                                          rois_pixel, roiw_pixel,
+                                          weight_pixel,
+                                          softrad_pixel,
+                                          scalerad_pixel)
 # _______________________________________________________________________
 # shove Flux and iflux in the  final ifucube
             self.find_spaxel_flux()
@@ -770,6 +774,7 @@ class IFUCubeData():
         roiw = np.zeros(number_bands)
         power = np.zeros(number_bands)
         softrad = np.zeros(number_bands)
+        scalerad = np.zeros(number_bands)
         minwave = np.zeros(number_bands)
         maxwave = np.zeros(number_bands)
 
@@ -790,21 +795,25 @@ class IFUCubeData():
             spaxelsize[i] = a_scale
             spectralsize[i] = w_scale
 
-            power[i] = self.instrument_info.GetMSMPower(par1, par2)
-            softrad[i] = self.instrument_info.GetSoftRad(par1, par2)
             minwave[i] = self.instrument_info.GetWaveMin(par1, par2)
             maxwave[i] = self.instrument_info.GetWaveMax(par1, par2)
-# Check the spatial size. If it is the same for the array set up the parameters
+            # values will be set to NONE if cube pars table does not contain them
+
+            power[i] = self.instrument_info.GetMSMPower(par1, par2)
+            softrad[i] = self.instrument_info.GetSoftRad(par1, par2)
+            scalerad[i] = self.instrument_info.GetScaleRad(par1, par2)
+        # Check the spatial size. If it is the same for the array set up the parameters
         all_same = np.all(spaxelsize == spaxelsize[0])
 
         if all_same:
             self.spatial_size = spaxelsize[0]
             spatial_roi = rois[0]
+        # if it is not the same then use the minimum value
         else:
             index_min = np.argmin(spaxelsize)
             self.spatial_size = spaxelsize[index_min]
             spatial_roi = rois[index_min]
-# find min and max wavelength
+        # find min and max wavelength
         min_wave = np.amin(minwave)
         max_wave = np.amax(maxwave)
 
@@ -818,26 +827,35 @@ class IFUCubeData():
         else:
             self.wavemax = np.float64(self.wavemax)
 
-# now check spectral step
+        # now check spectral step - this will determine
+        # if the wavelength dimension is linear or not
         all_same_spectral = np.all(spectralsize == spectralsize[0])
 
-# check if scalew has been set - if yes then linear scale
+        # check if scalew has been set - if yes then linear scale
         if self.scalew != 0:
             self.spectral_size = self.scalew
             self.linear_wavelength = True
             wave_roi = np.amin(roiw)
             weight_power = np.amin(power)
             self.soft_rad = np.amin(softrad)
+            self.scalerad = np.amin(scalerad)
+
+        # if all bands have the same spectral size then linear_wavelength
         elif all_same_spectral:
             self.spectral_size = spectralsize[0]
             wave_roi = roiw[0]
             weight_power = power[0]
+            self.linear_wavelength = True  # added this 10/01/19
             self.soft_rad = softrad[0]
+            self.scalerad = scalerad[0]
         else:
             self.linear_wavelength = False
             if self.instrument == 'MIRI':
-                table = self.instrument_info.Get_multichannel_table()
-                table_wavelength, table_sroi, table_wroi, table_power, table_softrad = table
+
+                table = self.instrument_info.Get_multichannel_table(self.weighting)
+                (table_wavelength, table_sroi,
+                 table_wroi, table_power,
+                 table_softrad, table_scalerad) = table
 
             # getting NIRSPEC Table Values
             elif self.instrument == 'NIRSPEC':
@@ -854,7 +872,9 @@ class IFUCubeData():
                         table = self.instrument_info.Get_med_table()
                     if par1 in high:
                         table = self.instrument_info.Get_high_table()
-                    table_wavelength, table_sroi, table_wroi, table_power, table_softrad = table
+                    (table_wavelength, table_sroi,
+                     table_wroi, table_power,
+                     table_softrad, table_scalerad) = table
             # based on Min and Max wavelength - pull out the tables values that fall in this range
             # find the closest table entries to the self.wavemin and self.wavemax limits
             imin = (np.abs(table_wavelength - self.wavemin)).argmin()
@@ -874,6 +894,7 @@ class IFUCubeData():
 
             self.softrad_table = table_softrad[imin:imax+1]
             self.weight_power_table = table_power[imin:imax+1]
+            self.scalerad_table = table_scalerad[imin:imax+1]
             self.wavelength_table = table_wavelength[imin:imax+1]
 
         # check if using default values from the table  (not user set)
@@ -884,19 +905,33 @@ class IFUCubeData():
             # increase rois if less than 4 file
 
             if self.output_type == 'single' or self.num_files < 4:
-                self.rois = self.rois * 1.5
-                log.info('Increasing spatial region of interest ' +
-                         'default value set for 4 dithers %f', self.rois)
+                # We don't need to increase it if using 'emsm' weighting
+                if self.weighting.lower() != 'emsm':
+                    self.rois = self.rois * 1.5
+                    log.info('Increasing spatial region of interest ' +
+                             'default value set for 4 dithers %f', self.rois)
 
         if self.scale1 != 0:
             self.spatial_size = self.scale1
 
-            # set wave_roi, weight_power, soft_rad to same values if they are in  list
+        # set wave_roi and  weight_power to same values if they are in  list
         if self.roiw == 0:
             self.roiw = wave_roi
+
         if self.weight_power == 0:
             self.weight_power = weight_power
 
+        # catch where self.weight_power, softrad or scalerad could be nan and
+        # set to None - this should not happen - these varibles
+        if self.weight_power is not None:
+            if np.isnan(self.weight_power):
+                self.weight_power = None
+        if self.soft_rad is not None:
+            if np.isnan(self.soft_rad):
+                self.soft_rad = None
+        if self.scalerad is not None:
+            if np.isnan(self.scalerad):
+                self.scalerad = None
 #        print('spatial size', self.spatial_size)
 #        print('spectral size', self.spectral_size)
 #        print('spatial roi', self.rois)
@@ -904,7 +939,9 @@ class IFUCubeData():
 #        print('linear wavelength', self.linear_wavelength)
 #        print('roiw', self.roiw)
 #        print('output_type',self.output_type)
-
+#        print('weight_power',self.weight_power)
+#        print('softrad',self.soft_rad)
+#        print('scalerad',self.scalerad)
 # ******************************************************************************
 
     def setup_ifucube_wcs(self):
@@ -1069,6 +1106,8 @@ class IFUCubeData():
            wavelength associated with coord1,coord2
         flux: numpy.ndarray
            flux associated with coord1, coord2
+        err: numpy.ndarray
+           err associated with coord1, coord2
         rois_det: float
            spatial roi size to use
         roiw_det: numpy.ndarray
@@ -1090,6 +1129,7 @@ class IFUCubeData():
         coord1 = None
         coord2 = None
         flux = None
+        err = None
         wave = None
         slice_no = None  # Slice number
 # Open the input data model
@@ -1211,6 +1251,7 @@ class IFUCubeData():
 # The following is for both MIRI and NIRSPEC
 # grab the flux and DQ values for these pixles
             flux_all = input_model.data[y, x]
+            err_all = input_model.err[y, x]
             dq_all = input_model.dq[y, x]
             valid2 = np.isfinite(flux_all)
 
@@ -1245,6 +1286,7 @@ class IFUCubeData():
 
             # good data holds the location of pixels we want to map to cube
             flux = flux_all[good_data]
+            err = err_all[good_data]
             wave = wave[good_data]
             slice_no = slice_no[good_data]
             # based on the wavelength define the sroi, wroi, weight_power and
@@ -1253,11 +1295,14 @@ class IFUCubeData():
             roiw_det = np.zeros(wave.shape)
             weight_det = np.zeros(wave.shape)
             softrad_det = np.zeros(wave.shape)
+            scalerad_det = np.zeros(wave.shape)
+
             if self.linear_wavelength:
                 rois_det[:] = self.rois
                 roiw_det[:] = self.roiw
                 weight_det[:] = self.weight_power
                 softrad_det[:] = self.soft_rad
+                scalerad_det[:] = self.scalerad
             else:
                 # for each wavelength find the closest point in the self.wavelength_table
                 for iw, w in enumerate(wave):
@@ -1266,6 +1311,7 @@ class IFUCubeData():
                     roiw_det[iw] = self.roiw_table[ifound]
                     softrad_det[iw] = self.softrad_table[ifound]
                     weight_det[iw] = self.weight_power_table[ifound]
+                    scalerad_det[iw] = self.scalerad_table[ifound]
 
             if self.coord_system == 'world':
                 ra_use = ra[good_data]
@@ -1281,8 +1327,8 @@ class IFUCubeData():
                 coord1 = alpha[good_data]
                 coord2 = beta[good_data]
 
-        return coord1, coord2, wave, flux, slice_no, rois_det, roiw_det, weight_det, \
-            softrad_det, alpha_det, beta_det
+        return coord1, coord2, wave, flux, err, slice_no, rois_det, roiw_det, weight_det, \
+            softrad_det, scalerad_det, alpha_det, beta_det
 # ********************************************************************************
 
     def map_fov_to_dqplane(self, this_par1, coord1, coord2, wave, roiw_ave, slice_no):
@@ -1651,9 +1697,11 @@ class IFUCubeData():
         if self.interpolation == 'area':
             good = self.spaxel_iflux > 0
             self.spaxel_flux[good] = self.spaxel_flux[good] / self.spaxel_weight[good]
+            self.spaxel_var[good] = self.spaxel_var[good] / (self.spaxel_weight[good] * self.spaxel_weight[good])
         elif self.interpolation == 'pointcloud':
             good = self.spaxel_iflux > 0
             self.spaxel_flux[good] = self.spaxel_flux[good] / self.spaxel_weight[good]
+            self.spaxel_var[good] = self.spaxel_var[good] / (self.spaxel_weight[good] * self.spaxel_weight[good])
 # ********************************************************************************
 
     def set_final_dq_flags(self):
@@ -1834,6 +1882,11 @@ class IFUCubeData():
 
         ifucube_model.meta.wcsinfo.cdelt1 = self.cdelt1 / 3600.0
         ifucube_model.meta.wcsinfo.cdelt2 = self.cdelt2 / 3600.0
+        # Now that we've got a pixel scale, set photometric area keywords
+        ifucube_model.meta.photometry.pixelarea_arcsecsq = (
+            self.cdelt1 * self.cdelt2)
+        ifucube_model.meta.photometry.pixelarea_steradians = (
+            ifucube_model.meta.photometry.pixelarea_arcsecsq * 2.3504e-11)
         if self.linear_wavelength:
             ifucube_model.meta.wcsinfo.crval3 = self.crval3
             ifucube_model.meta.wcsinfo.cdelt3 = self.cdelt3
@@ -1878,7 +1931,7 @@ class IFUCubeData():
 
         # weight_power is needed for single cubes. Linear Wavelengths
         # if non-linear wavelengths then this will be None
-        ifucube_model.meta.ifu.weight_power = float(self.weight_power)
+        ifucube_model.meta.ifu.weight_power = self.weight_power
 
         with datamodels.open(self.input_models[j]) as input:
             ifucube_model.meta.bunit_data = input.meta.bunit_data
@@ -1957,13 +2010,15 @@ class IFUCubeData():
                                               self.naxis2, self.naxis1))
         temp_wmap = self.spaxel_iflux.reshape((self.naxis3,
                                                self.naxis2, self.naxis1))
-
         temp_dq = self.spaxel_dq.reshape((self.naxis3,
                                           self.naxis2, self.naxis1))
+        temp_var = self.spaxel_var.reshape((self.naxis3,
+                                              self.naxis2, self.naxis1))
 
         ifucube_model.data = temp_flux
         ifucube_model.weightmap = temp_wmap
         ifucube_model.dq = temp_dq
+        ifucube_model.err = np.sqrt(temp_var)
         ifucube_model.meta.cal_step.cube_build = 'COMPLETE'
 
 # ***************************************************************************

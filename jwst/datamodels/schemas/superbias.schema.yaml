@@ -1,9 +1,13 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/superbias.schema"
 allOf:
-- $ref: referencefile.schema.yaml
-- $ref: subarray.schema.yaml
-- $ref: keyword_readpatt.schema.yaml
-- $ref: keyword_preadpatt.schema.yaml
-- $ref: keyword_gainfact.schema.yaml
+- $ref: referencefile.schema
+- $ref: subarray.schema
+- $ref: keyword_readpatt.schema
+- $ref: keyword_preadpatt.schema
+- $ref: keyword_gainfact.schema
 - type: object
   properties:
     data:
@@ -22,5 +26,4 @@ allOf:
       fits_hdu: ERR
       default: 0.0
       datatype: float32
-- $ref: dq_def.schema.yaml
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema
+- $ref: dq_def.schema

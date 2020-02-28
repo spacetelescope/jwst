@@ -1,8 +1,9 @@
 import logging
 from ..lib import pipe_utils
 
+from .. import datamodels
+
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def set_source_type(input_model):
@@ -11,12 +12,16 @@ def set_source_type(input_model):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`, or `~jwst.datamodels.MultiSlitModel`
+    input_model : `~jwst.datamodels.CubeModel`, `~jwst.datamodels.ImageModel`,
+                  `~jwst.datamodels.IFUImageModel`, `~jwst.datamodels.MultiSlitModel`,
+                  or `~jwst.datamodels.SlitModel`
         The data model to be processed.
 
     Returns
     -------
-    input_model : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`, `~jwst.datamodels.MultiSlitModel`
+    input_model : `~jwst.datamodels.CubeModel`, `~jwst.datamodels.ImageModel`,
+                  `~jwst.datamodels.IFUImageModel`, `~jwst.datamodels.MultiSlitModel`,
+                  or `~jwst.datamodels.SlitModel`
         The updated model.
     """
 
@@ -28,8 +33,8 @@ def set_source_type(input_model):
     else:
         log.info('Input EXP_TYPE is %s' % exptype)
 
-    # For exposure types that use a single source, get the user-supplied
-    # source type from the selection they provided in the APT
+    # For exposure types that have a single source specification, get the
+    # user-supplied source type from the selection they provided in the APT
     if exptype in ['MIR_LRS-FIXEDSLIT', 'MIR_LRS-SLITLESS', 'MIR_MRS',
                    'NRC_TSGRISM', 'NIS_SOSS', 'NRS_FIXEDSLIT',
                    'NRS_BRIGHTOBJ', 'NRS_IFU']:
@@ -44,6 +49,10 @@ def set_source_type(input_model):
             # source type to EXTENDED regardless of any other settings
             src_type = 'EXTENDED'
             log.info('Exposure is a background target; setting SRCTYPE = %s' % src_type)
+
+        elif pipe_utils.is_tso(input_model):
+            src_type = 'POINT'
+            log.info('Input is a TSO exposure; setting SRCTYPE = %s' % src_type)
 
         elif (patttype is not None) and (('NOD' in patttype) or ('POINT-SOURCE' in patttype)):
 
@@ -67,7 +76,29 @@ def set_source_type(input_model):
 
             log.info('Input SRCTYPE is unknown; setting default SRCTYPE = %s' % src_type)
 
+        # Set the source type in the global meta attribute
         input_model.meta.target.source_type = src_type
+
+        # If the input contains one or more slit instances,
+        # set the value in each slit too
+        if isinstance(input_model, datamodels.SlitModel):
+            input_model.source_type = src_type
+
+        elif input_model.meta.exposure.type == 'NRS_FIXEDSLIT':
+
+            # NIRSpec fixed-slit is a special case: Apply the source type
+            # determined above to only the primary slit (the one in which
+            # the target is located). Set all other slits to the default
+            # value, which for NRS_FIXEDSLIT is 'POINT'.
+            default_type = 'POINT'
+            primary_slit = input_model.meta.instrument.fixed_slit
+            log.debug(' primary_slit = {}'.format(primary_slit))
+            for slit in input_model.slits:
+                if slit.name == primary_slit:
+                    slit.source_type = src_type
+                else:
+                    slit.source_type = default_type
+                log.debug(' slit {} = {}'.format(slit.name, slit.source_type))
 
     # For NIRSpec MSA exposures, read the stellarity value for the
     # source in each extracted slit and set the point/extended value
@@ -101,10 +132,10 @@ def set_source_type(input_model):
         log.info('Input is a TSO exposure; setting default SRCTYPE = %s' % src_type)
         input_model.meta.target.source_type = src_type
 
-    # Unrecognized exposure type; set to EXTENDED as default
+    # Unrecognized exposure type; set to UNKNOWN as default
     else:
         log.warning('EXP_TYPE %s not applicable to this operation' % exptype)
-        src_type = 'EXTENDED'
+        src_type = 'UNKNOWN'
         log.warning('Setting SRCTYPE = %s' % src_type)
         input_model.meta.target.source_type = src_type
 

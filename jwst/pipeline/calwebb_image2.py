@@ -40,7 +40,7 @@ class Image2Pipeline(Pipeline):
         }
 
     # List of normal imaging exp_types
-    image_exptypes = ['MIR_IMAGE', 'NRC_IMAGE', 'NIS_IMAGE']
+    image_exptypes = ['MIR_IMAGE', 'NRC_IMAGE', 'NIS_IMAGE', 'FGS_IMAGE']
 
     def process(self, input):
 
@@ -153,6 +153,8 @@ class Image2Pipeline(Pipeline):
         # regular 2D science image types
         if input.meta.exposure.type.upper() in self.image_exptypes and \
         len(input.data.shape) == 2:
+            self.resample.save_results = self.save_results
+            self.resample.suffix = 'i2d'
             self.resample(input)
 
         # That's all folks

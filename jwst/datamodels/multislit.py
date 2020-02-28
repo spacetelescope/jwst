@@ -55,7 +55,7 @@ class MultiSlitModel(model_base.DataModel):
     slits.items.pathloss : numpy float32 array
          pathloss array
     """
-    schema_url = "multislit.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/multislit.schema"
 
     def __init__(self, init=None, **kwargs):
         if isinstance(init, (SlitModel, ImageModel)):

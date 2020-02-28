@@ -65,6 +65,20 @@ class Spec3Pipeline(Pipeline):
         self.log.info('Starting calwebb_spec3 ...')
         asn_exptypes = ['science', 'background']
 
+        # Setup sub-step defaults
+        self.master_background.suffix = 'mbsub'
+        self.mrs_imatch.suffix = 'mrs_imatch'
+        self.outlier_detection.suffix = 'crf'
+        self.outlier_detection.save_results = self.save_results
+        self.resample_spec.suffix = 's2d'
+        self.resample_spec.save_results = self.save_results
+        self.cube_build.suffix = 's3d'
+        self.cube_build.save_results = self.save_results
+        self.extract_1d.suffix = 'x1d'
+        self.extract_1d.save_results = self.save_results
+        self.combine_1d.suffix = 'x1d'
+        self.combine_1d.save_results = self.save_results
+
         # Retrieve the inputs:
         # could either be done via LoadAsAssociation and then manually
         # load input members into models and ModelContainer, or just
@@ -150,6 +164,11 @@ class Spec3Pipeline(Pipeline):
 
             # Call outlier detection
             if exptype not in SLITLESS_TYPES:
+                # Update the asn table name to the level 3 instance so that
+                # the downstream products have the correct table name since
+                # the _cal files are not saved they will not be updated
+                for cal_array in result:
+                    cal_array.meta.asn.table_name = result.meta.table_name
                 result = self.outlier_detection(result)
 
                 # Resample time. Dependent on whether the data is IFU or not.

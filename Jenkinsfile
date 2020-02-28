@@ -7,6 +7,8 @@ withCredentials([string(
 env_vars = [
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
     "CRDS_PATH=./crds_cache",
+    "CRDS_CLIENT_RETRY_COUNT=3",
+    "CRDS_CLIENT_RETRY_DELAY_SECONDS=20",
 ]
 
 // pip related setup for local index, not used currently
@@ -18,7 +20,7 @@ def pip_install_args = "--index-url ${pip_index} --progress-bar=off"
 bc0 = new BuildConfig()
 bc0.nodetype = 'linux'
 bc0.name = 'wheel-sdist'
-bc0.conda_ver = '4.6.14'
+bc0.conda_ver = '4.8.2'
 bc0.conda_packages = [
     "python=3.6",
 ]

@@ -1,19 +1,23 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/asdf/asdf-schema-1.0.0"
+id: "http://stsci.edu/schemas/jwst_datamodel/distortion.schema"
 title: Distortion data model
 allOf:
-- $ref: referencefile.schema.yaml
-- $ref: keyword_filter.schema.yaml
-- $ref: keyword_pfilter.schema.yaml
-- $ref: keyword_pupil.schema.yaml
-- $ref: keyword_ppupil.schema.yaml
-- $ref: keyword_module.schema.yaml
-- $ref: keyword_exptype.schema.yaml
-- $ref: keyword_pexptype.schema.yaml
-- $ref: subarray.schema.yaml
-- $ref: keyword_psubarray.schema.yaml
+- $ref: referencefile.schema
+- $ref: keyword_filter.schema
+- $ref: keyword_pfilter.schema
+- $ref: keyword_pupil.schema
+- $ref: keyword_ppupil.schema
+- $ref: keyword_module.schema
+- $ref: keyword_exptype.schema
+- $ref: keyword_pexptype.schema
+- $ref: subarray.schema
+- $ref: keyword_psubarray.schema
 - type: object
   properties:
     model:
-      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
     meta:
       type: object
       properties:

@@ -614,7 +614,8 @@ class Utility():
 format_product = FormatTemplate(
     key_formats={
         'source_id': ['s{:05d}', 's{:s}'],
-        'expspcin': ['{:02d}']
+        'expspcin': ['{:0>2s}']
+
     }
 )
 

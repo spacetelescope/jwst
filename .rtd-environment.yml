@@ -1,9 +1,0 @@
-name: jwst
-dependencies:
-  - "python>=3"
-  - "pip>=10.0"
-  - "nomkl"
-  - numpy
-  - setuptools
-  - pip:
-    - ".[docs]"

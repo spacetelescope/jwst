@@ -1,3 +1,7 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/core.schema"
 type: object
 properties:
   meta:
@@ -353,6 +357,7 @@ properties:
           source_type:
             title: Advised source type (point/extended)
             type: string
+            enum: [EXTENDED, POINT, UNKNOWN]
             fits_keyword: SRCTYPE
             blend_table: True
       instrument:
@@ -596,26 +601,52 @@ properties:
             fits_keyword: EXP_TYPE
             blend_table: True
           start_time:
-            allOf:
-              - type: number
-              - fits_keyword: EXPSTART
-                title: UTC exposure start time
-                blend_table: True
-                blend_rule: first
+            title: UTC exposure start time
+            type: number
+            fits_keyword: EXPSTART
+            blend_table: True
+            blend_rule: min
+          start_time_mjd:
+            title: "[d] exposure start time in MJD"
+            type: number
+            fits_keyword: MJD-BEG
+            fits_hdu: SCI
+            blend_table: True
+            blend_rule: min
           mid_time:
-            allOf:
-              - type: number
-              - fits_keyword: EXPMID
-                title: UTC exposure mid time
-                blend_table: True
-                blend_rule: mean
+            title: UTC exposure mid time
+            type: number
+            fits_keyword: EXPMID
+            blend_table: True
+            blend_rule: mean
+          mid_time_mjd:
+            title: "[d] exposure mid-point in MJD"
+            type: number
+            fits_keyword: MJD-AVG
+            fits_hdu: SCI
+            blend_table: True
+            blend_rule: mean
           end_time:
-            allOf:
-              - type: number
-                title: UTC exposure end time
-                fits_keyword: EXPEND
-                blend_table: True
-                blend_rule: last
+            title: UTC exposure end time
+            type: number
+            fits_keyword: EXPEND
+            blend_table: True
+            blend_rule: max
+          end_time_mjd:
+            title: "[d] exposure end time in MJD"
+            type: number
+            fits_keyword: MJD-END
+            fits_hdu: SCI
+            blend_table: True
+            blend_rule: max
+          start_time_eng:
+            title: UTC exposure start time from engineering data
+            type: string
+            fits_keyword: EXPSTENG
+          osf_file:
+            title: Observatory Status File name covering this exposure
+            type: string
+            fits_keyword: OSF_FILE
           readpatt:
             title: Readout pattern
             type: string
@@ -921,12 +952,29 @@ properties:
           primary_type:
             title: Primary dither pattern type
             type: string
-            enum: [2-POINT, 2-POINT-NOD, 3-POINT-NOD,
-              4-POINT, 4-POINT-NOD, 4-POINT-DITHER, 4-POINT-SETS,
-              5-POINT-NOD, 5-POINT-SMALL-GRID, 9-POINT-SMALL-GRID,
-              ALONG-SLIT-NOD, CYCLING, EXTENDED-SOURCE, FULL, FULL-TIGHT,
-              GAUSSIAN, INTRAMODULE, INTRASCA, MAPPING, NONE, POINT-SOURCE,
-              REULEAUX, SPARSE-CYCLING, WFSC]
+            enum:
+              # MIRI coron
+             [5-POINT-SMALL-GRID, 9-POINT-SMALL-GRID,
+              # MIRI imaging
+              4-POINT-SETS, CYCLING, GAUSSIAN, REULEAUX, WFSC,
+              # MIRI LRS
+              2PIXEL-SLITLESS-SCAN-SHORT, ALONG-SLIT-NOD, MAPPING,
+              # MIRI MRS
+              2-POINT, 4-POINT, EXTENDED-SOURCE, POINT-SOURCE,
+              # NIRCam
+              FULL, FULLBOX, FULL-TIGHT,
+              INTRAMODULE, INTRAMODULEBOX, INTRAMODULEX, INTRASCA,
+              SUBARRAY-DITHER,
+              # NIRISS
+              AMI, IMAGING, MIMF, PARALLEL, WFSS,
+              # NIRSpec FS, IFU, and MOS
+              2-POINT-WITH-NIRCAM-SIZE1, 2-POINT-WITH-NIRCAM-SIZE2, 2-POINT-WITH-NIRCAM-SIZE3,
+              3-POINT-WITH-NIRCAM-SIZE1, 3-POINT-WITH-NIRCAM-SIZE2, 3-POINT-WITH-NIRCAM-SIZE3,
+              2-POINT-NOD, 3-POINT-NOD, 5-POINT-NOD,
+              # NIRSpec IFU
+              4-POINT-NOD, 4-POINT-DITHER, CYCLING, SPARSE-CYCLING,
+              # Misc
+              N/A, NONE, ANY]
             fits_keyword: PATTTYPE
             blend_table: True
           position_number:
@@ -934,7 +982,7 @@ properties:
             type: integer
             fits_keyword: PATT_NUM
             blend_table: True
-          starting_point:
+          pattern_start:
             title: Starting point in pattern
             type: integer
             fits_keyword: PATTSTRT
@@ -944,15 +992,14 @@ properties:
             type: integer
             fits_keyword: NUMDTHPT
             blend_table: True
+          dither_points:
+            title: Total number of points in image dither pattern
+            fits_keyword: NRIMDTPT
+            blend_table: True
           pattern_size:
             title: "Primary dither pattern size"
             type: string
             fits_keyword: PATTSIZE
-            blend_table: True
-          subpixel_type:
-            title: Subpixel dither type
-            type: string
-            fits_keyword: SUBPXTYP
             blend_table: True
           subpixel_number:
             title: Subpixel pattern number
@@ -1008,11 +1055,6 @@ properties:
             title: "[arcsec] Spatial offset from pattern start"
             type: number
             fits_keyword: SPTOFFST
-            blend_table: True
-          slitlet_points:
-            title: Number of slitlet offsets in spectral direction
-            type: integer
-            fits_keyword: SLIT_OFF
             blend_table: True
           x_offset:
             title: x offset from pattern starting position
@@ -2154,6 +2196,14 @@ properties:
             type: string
             fits_keyword: S_WHTLIT
             blend_table: True
+      tweakreg_catalog:
+        title: Tweakreg catalog filename
+        type: string
+        fits_keyword: TCATFILE
+      source_catalog:
+        title: Source catalog filename
+        type: string
+        fits_keyword: SCATFILE
       background:
         title: Background information
         type: object
@@ -2196,4 +2246,3 @@ properties:
             title: Master background file used
             type: string
             fits_keyword: MASTERBG
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

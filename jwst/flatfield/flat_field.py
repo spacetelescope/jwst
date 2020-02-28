@@ -14,7 +14,6 @@ from .. lib import reffile_utils
 from .. assign_wcs import nirspec
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 MICRONS_100 = 1.e-4                     # 100 microns, in meters
 
@@ -176,14 +175,18 @@ def apply_flat_field(science, flat):
     # on array broadcasting to handle the cubes
     science.data /= flat_data
 
-    # Update the variances using BASELINE algorithm
-    # Skip for guider data, as it has not gone through ramp fitting
+    # Update the variances using BASELINE algorithm.  For guider data, it has
+    # not gone through ramp fitting so there is no Poisson noise or readnoise
     if not isinstance(science, datamodels.GuiderCalModel):
         flat_data_squared = flat_data**2
         science.var_poisson /= flat_data_squared
         science.var_rnoise /= flat_data_squared
         science.var_flat = science.data**2 / flat_data_squared * flat_err**2
         science.err = np.sqrt(science.var_poisson + science.var_rnoise + science.var_flat)
+    else:
+        flat_data_squared = flat_data**2
+        science.var_flat = science.data**2 / flat_data_squared * flat_err**2
+        science.err = np.sqrt(science.var_flat)
 
     # Combine the science and flat DQ arrays
     science.dq = np.bitwise_or(science.dq, flat_dq)
@@ -299,7 +302,7 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model,
     any_updated = False
 
     for slit in output_model.slits:
-        log.info("Processing slit %s", slit.name)
+        log.info("Working on slit %s", slit.name)
         if exposure_type == "NRS_MSASPEC":
             slit_nt = slit                      # includes quadrant info
         else:

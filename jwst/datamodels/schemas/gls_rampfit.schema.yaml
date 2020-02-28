@@ -1,6 +1,10 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/gls_rampfit.schema"
 title: Optional output for GLS ramp fitting
 allOf:
-- $ref: core.schema.yaml
+- $ref: core.schema
 - type: object
   properties:
     yint:
@@ -33,4 +37,3 @@ allOf:
       default: 0.0
       ndim: 4
       datatype: float32
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

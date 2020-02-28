@@ -1,6 +1,10 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/multispec.schema"
 allOf:
-- $ref: core.schema.yaml
-- $ref: int_times.schema.yaml
+- $ref: core.schema
+- $ref: int_times.schema
 - type: object
   properties:
     spec:
@@ -114,24 +118,24 @@ allOf:
             type: integer
             fits_keyword: INT_NUM
             fits_hdu: EXTRACT1D
-          time_scale:
+          time_sys:
             title: "principal time system for time-related keywords"
             type: string
             default: "UTC"
             fits_keyword: TIMESYS
             fits_hdu: EXTRACT1D
-          start_utc:
-            title: "UTC at start of integration [MJD]"
+          start_time_mjd:
+            title: "[d] integration start time in MJD"
             type: number
             fits_keyword: MJD-BEG
             fits_hdu: EXTRACT1D
-          mid_utc:
-            title: "UTC at middle of integration [MJD]"
+          mid_time_mjd:
+            title: "[d] integration mid-point in MJD"
             type: number
             fits_keyword: MJD-AVG
             fits_hdu: EXTRACT1D
-          end_utc:
-            title: "UTC at end of integration [MJD]"
+          end_time_mjd:
+            title: "[d] integration end time in MJD"
             type: number
             fits_keyword: MJD-END
             fits_hdu: EXTRACT1D
@@ -150,4 +154,3 @@ allOf:
             type: number
             fits_keyword: TDB-END
             fits_hdu: EXTRACT1D
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

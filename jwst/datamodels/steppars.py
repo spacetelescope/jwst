@@ -24,7 +24,7 @@ class StepParsModel(DataModel):
     """
     A data model for `Step` parameters.
     """
-    schema_url = "steppars.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/steppars.schema"
 
     def __init__(self, init=None, **kwargs):
         super().__init__(init=init, **kwargs)

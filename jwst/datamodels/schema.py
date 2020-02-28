@@ -155,7 +155,7 @@ def search_schema(schema, substring):
     return results
 
 
-def walk_schema(schema, callback, ctx={}):
+def walk_schema(schema, callback, ctx=None):
     """
     Walks a JSON schema tree in breadth-first order, calling a
     callback function at each entry.
@@ -204,6 +204,8 @@ def walk_schema(schema, callback, ctx={}):
             elif len(items):
                 recurse(items, path + ['items'], combiner, ctx)
 
+    if ctx is None:
+        ctx = {}
     recurse(schema, [], None, ctx)
 
 

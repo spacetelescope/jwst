@@ -5,14 +5,14 @@ import numpy as np
 from ..datamodels import dqflags
 from ..lib import reffile_utils
 from . import twopoint_difference as twopt
-from . import yintercept as yint
 import multiprocessing
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 def detect_jumps (input_model, gain_model, readnoise_model,
-                  rejection_threshold, do_yint, signal_threshold, max_cores=None):
+                  rejection_threshold, max_cores,
+                  max_jump_to_flag_neighbors, min_jump_to_flag_neighbors,
+                  flag_4_neighbors):
     """
     This is the high-level controlling routine for the jump detection process.
     It loads and sets the various input data and parameters needed by each of
@@ -51,8 +51,6 @@ def detect_jumps (input_model, gain_model, readnoise_model,
     gdq  = input_model.groupdq
     pdq  = input_model.pixeldq
 
-    ngroups = data.shape[1]
-    nframes = input_model.meta.exposure.nframes
 
     # Get 2D gain and read noise values from their respective models
     if reffile_utils.ref_matches_sci(input_model, gain_model):
@@ -88,10 +86,16 @@ def detect_jumps (input_model, gain_model, readnoise_model,
     # Apply the 2-point difference method as a first pass
     log.info('Executing two-point difference method')
     start = time.time()
-    numx = data.shape[-1]
-    numy = data.shape[-2]
-    median_slopes = np.zeros((numy, numx), dtype=np.float32)
-    yincrement = int(numy / numslices)
+    nrows = data.shape[-2]
+    ncols = data.shape[-1]
+    num_groups = data.shape[1]
+    num_ints = data.shape[0]
+    frames_per_group = input_model.meta.exposure.nframes
+    row_above_gdq = np.zeros((num_ints, num_groups, ncols), dtype=np.uint8)
+    previous_row_above_gdq = np.zeros((num_ints, num_groups, ncols), dtype=np.uint8)
+    row_below_gdq = np.zeros((num_ints, num_groups, ncols), dtype=np.uint8)
+
+    yincrement = int(nrows / numslices)
     slices = []
     # Slice up data, gdq, readnoise_2d into slices
     # Each element of slices is a tuple of
@@ -100,49 +104,49 @@ def detect_jumps (input_model, gain_model, readnoise_model,
         slices.insert(i, (data[:, :, i * yincrement:(i + 1) * yincrement, :],
                           gdq[:, :, i * yincrement:(i + 1) * yincrement, :],
                           readnoise_2d[i * yincrement:(i + 1) * yincrement, :],
-                          rejection_threshold, nframes))
+                          rejection_threshold, frames_per_group, flag_4_neighbors,
+                          max_jump_to_flag_neighbors, min_jump_to_flag_neighbors))
     # last slice get the rest
-    slices.insert(numslices - 1, (data[:, :, (numslices - 1) * yincrement:numy, :],
-                                 gdq[:, :, (numslices - 1) * yincrement:numy, :],
-                                 readnoise_2d[(numslices - 1) * yincrement:numy, :],
-                                 rejection_threshold, nframes))
+    slices.insert(numslices - 1, (data[:, :, (numslices - 1) * yincrement:nrows, :],
+                                 gdq[:, :, (numslices - 1) * yincrement:nrows, :],
+                                 readnoise_2d[(numslices - 1) * yincrement:nrows, :],
+                                 rejection_threshold, frames_per_group, flag_4_neighbors,
+                                 max_jump_to_flag_neighbors, min_jump_to_flag_neighbors))
     if numslices == 1:
-        median_slopes, gdq = twopt.find_crs(data, gdq, readnoise_2d, rejection_threshold, nframes)
+        gdq, row_below_dq, row_above_dq = twopt.find_crs(data, gdq, readnoise_2d, rejection_threshold,
+                                                                        frames_per_group, flag_4_neighbors,
+                                                                        max_jump_to_flag_neighbors,
+                                                                        min_jump_to_flag_neighbors)
         elapsed = time.time() - start
     else:
         log.info("Creating %d processes for jump detection " % numslices)
         pool = multiprocessing.Pool(processes=numslices)
         real_result = pool.starmap(twopt.find_crs, slices)
         k = 0
-        # Reconstruct median_slopes and gdq from the slice results
+        # Reconstruct gdq, the row_above_gdq, and the row_below_gdq from the slice result
         for resultslice in real_result:
-            if (len(real_result) == k + 1):  # last result
-                median_slopes[k * yincrement:numy, :] = resultslice[0]
-                gdq[:, :, k * yincrement:numy, :] = resultslice[1]
+
+            if len(real_result) == k + 1:  # last result
+                gdq[:, :, k * yincrement:nrows, :] = resultslice[0]
             else:
-                median_slopes[k * yincrement:(k + 1) * yincrement, :] = resultslice[0]
-                gdq[:, :, k * yincrement:(k + 1) * yincrement, :] = resultslice[1]
+                gdq[:, :, k * yincrement:(k + 1) * yincrement, :] = resultslice[0]
+            row_below_gdq[:, :, :] = resultslice[1]
+            row_above_gdq[:, :, :] = resultslice[2]
+            if k != 0: #for all but the first slice, flag any CR neighbors in the top row of the previous slice and
+                #flag any neighbors in the bottom row of this slice saved from the top of the previous slice
+                gdq[:, :, k * yincrement - 1, :] = np.bitwise_or(gdq[:, :, k * yincrement - 1, :],
+                                                                     row_below_gdq[:, :, :])
+                gdq[:, :, k * yincrement, :] = np.bitwise_or(gdq[:, :, k * yincrement, :],
+                                                                     previous_row_above_gdq[:, :, :])
+            #save the neighbors to be flagged that will be in the next slice
+            previous_row_above_gdq = row_above_gdq.copy()
             k += 1
         pool.terminate()
         pool.close()
         elapsed = time.time() - start
-    log.debug('Elapsed time = %g sec' % elapsed)
 
-    # Apply the y-intercept method as a second pass, if requested
-    if do_yint:
-
-        # Set up the ramp time array for the y-intercept method
-        group_time = output_model.meta.exposure.group_time
-        times = np.array([(k+1)*group_time for k in range(ngroups)])
-        median_slopes /= group_time
-
-        # Now apply the y-intercept method
-        log.info('Executing yintercept method')
-        start = time.time()
-        yint.find_crs(data, err, gdq, times, readnoise_2d,
-                        rejection_threshold, signal_threshold, median_slopes)
-        elapsed = time.time() - start
-        log.debug('Elapsed time = %g sec' % elapsed)
+    elapsed = time.time() - start
+    log.info('Total elapsed time = %g sec' % elapsed)
 
     # Update the DQ arrays of the output model with the jump detection results
     output_model.groupdq = gdq

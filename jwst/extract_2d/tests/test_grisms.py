@@ -160,6 +160,40 @@ def get_reference_files(datamodel):
     return refs
 
 
+@pytest.fixture(params=tsgrism_filters)
+def tsgrism_inputs(request):
+    def _add_missing_key(missing_key=None):
+        tso_kw = wcs_tso_kw.copy()
+        tso_kw.update({'xref_sci': 887.0, 'yref_sci': 35.0})
+
+        if missing_key is not None:
+            tso_kw[missing_key] = None
+
+        hdu = create_hdul(
+            exptype='NRC_TSGRISM',
+            pupil='GRISMR',
+            filtername=request.param,
+            detector='NRCALONG',
+            subarray='SUBGRISM256',
+            wcskeys=tso_kw,
+            channel='LONG',
+            module='A',
+        )
+
+        image_model = CubeModel(hdu)
+
+        return image_model, get_reference_files(image_model)
+
+    return _add_missing_key
+
+
+@pytest.mark.parametrize('key', ['xref_sci', 'yref_sci'])
+def test_extract_tso_object_fails_without_xref_yref(tsgrism_inputs, key):
+    with pytest.raises(ValueError):
+        image_model, refs = tsgrism_inputs(missing_key=key)
+        extract_tso_object(image_model, reference_files=refs)
+
+
 @pytest.mark.filterwarnings("ignore: Card is too long")
 def test_create_box_fits():
     """Make sure that a box is created around a source catalog object.
@@ -172,7 +206,7 @@ def test_create_box_fits():
     im = ImageModel(hdul)
     aswcs = AssignWcsStep()
     imwcs = aswcs(im)
-    imwcs.meta.source_catalog.filename = source_catalog
+    imwcs.meta.source_catalog = source_catalog
     refs = get_reference_files(im)
     test_boxes = create_grism_bbox(imwcs, refs,
                                    use_fits_wcs=True,
@@ -203,7 +237,7 @@ def test_create_box_gwcs():
     im = ImageModel(hdul)
     aswcs = AssignWcsStep()
     imwcs = aswcs(im)
-    imwcs.meta.source_catalog.filename = source_catalog
+    imwcs.meta.source_catalog = source_catalog
     refs = get_reference_files(im)
     test_boxes = create_grism_bbox(imwcs, refs,
                                    use_fits_wcs=False,
@@ -225,7 +259,7 @@ def setup_image_cat():
     source_catalog = get_file_path('step_SourceCatalogStep_cat.ecsv')
     hdul = create_hdul(exptype='NRC_WFSS', pupil='GRISMR', wcskeys=wcs_wfss_kw)
     im = ImageModel(hdul)
-    im.meta.source_catalog.filename = source_catalog
+    im.meta.source_catalog = source_catalog
     aswcs = AssignWcsStep()
     imwcs = aswcs(im)
     refs = get_reference_files(im)
@@ -336,7 +370,7 @@ def test_extract_wfss_object():
     """
     source_catalog = get_file_path('step_SourceCatalogStep_cat.ecsv')
     wcsimage = create_wfss_image(pupil='GRISMR')
-    wcsimage.meta.source_catalog.filename = source_catalog
+    wcsimage.meta.source_catalog = source_catalog
     refs = get_reference_files(wcsimage)
     outmodel = extract_grism_objects(wcsimage,
                                      use_fits_wcs=True,

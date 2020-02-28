@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 from ..stpipe import Step
 from ..datamodels import DrizProductModel
 from . import source_catalog
@@ -56,7 +57,8 @@ class SourceCatalogStep(Step):
                 )
                 self.log.info('Wrote source catalog: {0}'
                               .format(cat_filepath))
-                model.meta.source_catalog.filename = cat_filepath
+                model.meta.source_catalog = os.path.basename(
+                    cat_filepath)
 
         # nothing is returned because this is the last step
         return

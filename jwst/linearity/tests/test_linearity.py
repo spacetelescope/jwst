@@ -5,7 +5,7 @@ Authors:
 """
 from jwst.linearity import LinearityStep
 from jwst.linearity.linearity import do_correction as lincorr
-from jwst.datamodels import dqflags, LinearityModel, MIRIRampModel
+from jwst.datamodels import dqflags, LinearityModel, RampModel
 import numpy as np
 
 
@@ -214,7 +214,7 @@ def test_lin_subarray():
     xsize = 288
 
     # create a JWST datamodel for MIRI data
-    im = MIRIRampModel((1, ngroups, ysize, xsize))
+    im = RampModel((1, ngroups, ysize, xsize))
     im.data += 1
 
     im.meta.instrument.name = 'MIRI'
@@ -274,7 +274,7 @@ def test_err_array():
     ysize = 1024
 
     # create a JWST datamodel for MIRI data
-    im = MIRIRampModel((1, ngroups, ysize, xsize))
+    im = RampModel((1, ngroups, ysize, xsize))
     im.data += 1
     im.err += 2
     # set file header values
@@ -298,7 +298,7 @@ def test_err_array():
 def make_rampmodel(nints, ngroups, ysize, xsize):
     """Function to provide ramp model to tests"""
 
-    dm_ramp = MIRIRampModel((nints, ngroups, ysize, xsize))
+    dm_ramp = RampModel((nints, ngroups, ysize, xsize))
     dm_ramp.data += 1
 
     dm_ramp.meta.instrument.name = 'MIRI'

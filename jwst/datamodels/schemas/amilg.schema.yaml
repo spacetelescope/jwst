@@ -1,6 +1,10 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/amilg.schema"
 title: AMI LG analysis data model
 allOf:
-- $ref: core.schema.yaml
+- $ref: core.schema
 - type: object
   properties:
     fit_image:
@@ -50,4 +54,3 @@ allOf:
       datatype:
       - name: coeffs
         datatype: float64
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

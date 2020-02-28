@@ -10,13 +10,7 @@ from jwst.dark_current.dark_sub import (
     average_dark_frames,
     do_correction as darkcorr
     )
-from jwst.datamodels import (
-    RampModel,
-    DarkModel,
-    MIRIRampModel,
-    DarkMIRIModel,
-    dqflags,
-)
+from jwst.datamodels import RampModel, DarkModel, DarkMIRIModel, dqflags
 
 
 # Define frame_time and number of groups in the generated dark reffile
@@ -363,7 +357,7 @@ def make_rampmodel():
         data = np.full(csize, 1.0)
 
         # create a JWST datamodel for MIRI data
-        dm_ramp = MIRIRampModel(data=data)
+        dm_ramp = RampModel(data=data)
 
         dm_ramp.meta.instrument.name = 'MIRI'
         dm_ramp.meta.observation.date = '2018-01-01'

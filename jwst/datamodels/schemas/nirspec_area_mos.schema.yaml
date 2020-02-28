@@ -1,9 +1,13 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/nirspec_area_mos.schema"
 title: NIRSpec MOS pixel area data model
 allOf:
-- $ref: referencefile.schema.yaml
-- $ref: keyword_filter.schema.yaml
-- $ref: keyword_grating.schema.yaml
-- $ref: keyword_exptype.schema.yaml
+- $ref: referencefile.schema
+- $ref: keyword_filter.schema
+- $ref: keyword_grating.schema
+- $ref: keyword_exptype.schema
 - type: object
   properties:
     area_table:
@@ -18,4 +22,3 @@ allOf:
         datatype: int16
       - name: pixarea
         datatype: float32
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

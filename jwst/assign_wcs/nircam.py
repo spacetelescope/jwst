@@ -8,14 +8,12 @@ import gwcs.coordinate_frames as cf
 from . import pointing
 from .util import (not_implemented_mode, subarray_transform, velocity_correction,
                    transform_bbox_from_shape, bounding_box_from_subarray)
-from ..datamodels import (ImageModel, NIRCAMGrismModel, DistortionModel,
-                          CubeModel)
+from ..datamodels import (ImageModel, NIRCAMGrismModel, DistortionModel)
 from ..transforms.models import (NIRCAMForwardRowGrismDispersion,
                                  NIRCAMForwardColumnGrismDispersion,
                                  NIRCAMBackwardGrismDispersion)
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 __all__ = ["create_pipeline", "imaging", "tsgrism", "wfss"]
@@ -141,10 +139,6 @@ def tsgrism(input_model, reference_files):
     TSGRISM is only slated to work with GRISMR and Mod A
     """
 
-    # The input is the grism image
-    if not isinstance(input_model, CubeModel):
-        raise TypeError('The input data model must be a CubeModel.')
-
     # make sure this is a grism image
     if "NRC_TSGRISM" != input_model.meta.exposure.type:
         raise ValueError('The input exposure is not a NIRCAM time series grism')
@@ -195,13 +189,21 @@ def tsgrism(input_model, reference_files):
     # input into the forward transform is x,y,x0,y0,order
     # where x,y is the pixel location in the grism image
     # and x0,y0 is the source location in the "direct" image
-    # For this mode, the source is always at crpix1,crpis2
-    # discussion with nadia that wcsinfo might not be available
+    # For this mode, the source is always at crpix1 x crpix2, which
+    # are stored in keywords XREF_SCI, YREF_SCI.
+    # Discussion with nadia that wcsinfo might not be available
     # here but crpix info could be in wcs.source_location or similar
     # TSGRISM mode places the sources at crpix, and all subarrays
     # begin at 0,0, so no need to translate the crpix to full frame
     # because they already are in full frame coordinates.
-    xc, yc = (input_model.meta.wcsinfo.crpix1, input_model.meta.wcsinfo.crpix2)
+    xc, yc = (input_model.meta.wcsinfo.siaf_xref_sci, input_model.meta.wcsinfo.siaf_yref_sci)
+
+    if xc is None:
+        raise ValueError('XREF_SCI is missing.')
+
+    if yc is None:
+        raise ValueError('YREF_SCI is missing.')
+
     xcenter = Const1D(xc)
     xcenter.inverse = Const1D(xc)
     ycenter = Const1D(yc)

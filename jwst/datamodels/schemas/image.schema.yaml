@@ -1,8 +1,12 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/image.schema"
 allOf:
-- $ref: core.schema.yaml
-- $ref: bunit.schema.yaml
-- $ref: photometry.schema.yaml
-- $ref: wcsinfo.schema.yaml
+- $ref: core.schema
+- $ref: bunit.schema
+- $ref: photometry.schema
+- $ref: wcsinfo.schema
 - type: object
   properties:
     data:
@@ -31,25 +35,5 @@ allOf:
       fits_hdu: AREA
       default: 0.0
       datatype: float32
-- $ref: variance.schema.yaml
-- $ref: pathlosscorr.schema.yaml
-- type: object
-  properties:
-    meta:
-      type: object
-      properties:
-        tweakreg_catalog:
-            type: object
-            properties:
-              filename:
-                title: Output tweakreg catalog filename
-                type: string
-                fits_keyword: TCATFILE
-        source_catalog:
-            type: object
-            properties:
-              filename:
-                title: Output source catalog filename
-                type: string
-                fits_keyword: SCATFILE
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema
+- $ref: variance.schema
+- $ref: pathlosscorr.schema

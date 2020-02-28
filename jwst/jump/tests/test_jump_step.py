@@ -3,7 +3,7 @@ from itertools import cycle
 import pytest
 import numpy as np
 
-from jwst.datamodels import MIRIRampModel
+from jwst.datamodels import RampModel
 from jwst.datamodels import GainModel, ReadnoiseModel
 from jwst.jump import JumpStep
 
@@ -80,11 +80,11 @@ def setup_inputs():
         gain = np.ones(shape=(nrows, ncols), dtype=np.float64) * gain
         err = np.ones(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
         data = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
-        pixdq = np.zeros(shape=(nrows, ncols), dtype=np.float64)
+        pixdq = np.zeros(shape=(nrows, ncols), dtype=np.uint32)
         read_noise = np.full((nrows, ncols), readnoise, dtype=np.float64)
-        gdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.int32)
+        gdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.uint32)
 
-        rampmodel = MIRIRampModel(data=data, err=err, pixeldq=pixdq, groupdq=gdq, times=times)
+        rampmodel = RampModel(data=data, err=err, pixeldq=pixdq, groupdq=gdq, times=times)
         rampmodel.meta.instrument.name = 'MIRI'
         rampmodel.meta.instrument.detector = 'MIRIMAGE'
         rampmodel.meta.instrument.filter = 'F480M'
@@ -227,3 +227,20 @@ def test_two_CRs(generate_miri_reffiles, max_cores, setup_inputs):
         CR_group = next(CR_pool)
         assert (4 == np.max(out_model.groupdq[0, CR_group, CR_y_locs[i], CR_x_locs[i]]))
         assert (4 == np.max(out_model.groupdq[0, CR_group+8, CR_y_locs[i], CR_x_locs[i]]))
+
+
+@pytest.mark.parametrize("max_cores", MAXIMUM_CORES)
+def test_two_group_integration(generate_miri_reffiles, max_cores, setup_inputs):
+    override_gain, override_readnoise = generate_miri_reffiles
+    grouptime = 3.0
+    ingain = 6
+    inreadnoise = np.float64(7)
+    ngroups = 2
+    xsize = 103
+    ysize = 102
+    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
+        nrows=ysize, ncols=xsize,
+        gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
+    out_model = JumpStep.call(model1, override_gain=override_gain,
+                              override_readnoise=override_readnoise, maximum_cores=max_cores)
+    assert(out_model.meta.cal_step.jump == 'SKIPPED')

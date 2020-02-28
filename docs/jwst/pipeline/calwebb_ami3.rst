@@ -76,16 +76,16 @@ as indicated by the "exptype" values for each.
       {"name": "jw10005-a3001_t001_niriss_f277w-nrm",
        "members": [
            {"expname": "jw10005007001_02102_00001_nis_cal.fits",
-            "exptype": "psf",
+            "exptype": "psf"
            },
            {"expname": "jw10005027001_02102_00001_nis_cal.fits",
-            "exptype": "psf",
+            "exptype": "psf"
            },
            {"expname": "jw10005004001_02102_00001_nis_cal.fits",
-            "exptype": "science",
+            "exptype": "science"
            },
            {"expname": "jw10005001001_02102_00001_nis_cal.fits",
-            "exptype": "science",
+            "exptype": "science"
            }
        ]
       }

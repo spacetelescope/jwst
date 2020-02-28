@@ -20,7 +20,6 @@ from ..lib import s3_utils
 
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 __all__ = ["create_pipeline", "imaging", "lrs", "ifu"]

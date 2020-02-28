@@ -41,11 +41,11 @@ class CubeBuildStep (Step):
          scale1 = float(default=0.0) # cube sample size to use for axis 1, arc seconds
          scale2 = float(default=0.0) # cube sample size to use for axis 2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
-         weighting = option('msm','miripsf','area',default = 'msm') # Type of weighting function
+         weighting = option('emsm','msm','miripsf','area',default = 'msm') # Type of weighting function
          coord_system = option('world','alpha-beta',default='world') # Output Coordinate system. Options: world or alpha-beta
          rois = float(default=0.0) # region of interest spatial size, arc seconds
          roiw = float(default=0.0) # region of interest wavelength size, microns
-         weight_power = float(default=2.0) # Weighting option to use for Modified Shepard Method
+         weight_power = float(default=0.0) # Weighting option to use for Modified Shepard Method
          wavemin = float(default=None)  # Minimum wavelength to be used in the IFUCube
          wavemax = float(default=None)  # Maximum wavelength to be used in the IFUCube
          single = boolean(default=false) # Internal pipeline option used by mrs_imatch & outlier detection
@@ -156,14 +156,17 @@ class CubeBuildStep (Step):
         if self.interpolation == 'pointcloud':
             self.log.info('Weighting method for point cloud: %s',
                           self.weighting)
-            self.log.info('Power weighting distance : %f', self.weight_power)
+            if self.weight_power != 0:
+                self.log.info('Power weighting distance : %f', self.weight_power)
 
         if self.single:
             self.output_type = 'single'
             self.log.info('Cube Type: Single cubes ')
             self.coord_system = 'world'
             self.interpolation = 'pointcloud'
-            self.weighting = 'msm'
+            # Don't allow anything but msm or emsm weightings
+            if ((self.weighting != 'msm')and(self.weighting != 'emsm')):
+                self.weighting = 'msm'
 
 # ________________________________________________________________________________
 # read input parameters - Channel, Band (Subchannel), Grating, Filter

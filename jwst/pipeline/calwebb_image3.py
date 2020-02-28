@@ -100,6 +100,7 @@ class Image3Pipeline(Pipeline):
         self.save_model(result, suffix=self.suffix)
 
         self.log.info("Creating source catalog...")
+        self.source_catalog.save_results = self.save_results
         self.source_catalog(result)
         # NOTE: source_catalog step writes out the catalog in .ecsv format
         # In the future it would be nice if it was returned to the pipeline,

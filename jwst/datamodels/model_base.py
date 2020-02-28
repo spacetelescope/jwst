@@ -30,16 +30,14 @@ from ..lib import s3_utils
 
 from .history import HistoryList
 
-from .extension import URL_PREFIX
-
 
 class DataModel(properties.ObjectNode, ndmodel.NDModel):
     """
     Base class of all of the data models.
     """
-    schema_url = "core.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/core.schema"
 
-    def __init__(self, init=None, schema=None,
+    def __init__(self, init=None, schema=None, memmap=False,
                  pass_invalid_values=False, strict_validation=False,
                  ignore_missing_extensions=True, **kwargs):
         """
@@ -70,6 +68,10 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             If not provided, the schema associated with this class
             will be used.
 
+        memmap : bool
+            Turn memmap of FITS file on or off.  (default: False).  Ignored for
+            ASDF files.
+
         pass_invalid_values : bool
             If `True`, values that do not validate the schema
             will be added to the metadata. If `False`, they will be set to `None`.
@@ -99,10 +101,9 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         # Load the schema files
         if schema is None:
-            schema_path = os.path.join(URL_PREFIX, self.schema_url)
             # Create an AsdfFile so we can use its resolver for loading schemas
             asdf_file = AsdfFile()
-            schema = asdf_schema.load_schema(schema_path,
+            schema = asdf_schema.load_schema(self.schema_url,
                                              resolver=asdf_file.resolver,
                                              resolve_references=True)
 
@@ -163,7 +164,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                 if s3_utils.is_s3_uri(init):
                     hdulist = fits.open(s3_utils.get_object(init))
                 else:
-                    hdulist = fits.open(init)
+                    hdulist = fits.open(init, memmap=memmap)
 
                 asdffile = fits_support.from_fits(hdulist,
                                               self._schema,
@@ -237,16 +238,13 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                 if 'datatype' in subschema:
                     setattr(self, attr, value)
 
+    @property
+    def _model_type(self):
+        return self.__class__.__name__
 
     def __repr__(self):
-        import re
-
         buf = ['<']
-        match = re.search(r"(\w+)'", str(type(self)))
-        if match:
-            buf.append(match.group(1))
-        else:
-            buf.append("DataModel")
+        buf.append(self._model_type)
 
         if self.shape:
             buf.append(str(self.shape))
@@ -470,6 +468,9 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         current_date = Time(datetime.datetime.now())
         current_date.format = 'isot'
         self.meta.date = current_date.value
+
+        # Enforce model_type to be the actual type of model being saved.
+        self.meta.model_type = self._model_type
 
     def save(self, path, dir_path=None, *args, **kwargs):
         """
@@ -836,7 +837,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
     values = itervalues
 
-    def update(self, d, only=''):
+    def update(self, d, only=None, extra_fits=False):
         """
         Updates this model with the metadata elements from another model.
 
@@ -847,10 +848,11 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         d : `~jwst.datamodels.DataModel` or dictionary-like object
             The model to copy the metadata elements from. Can also be a
             dictionary or dictionary of dictionaries or lists.
-        only: str
-            Only update the named hdu from ``extra_fits``, e.g.
-            ``only='PRIMARY'``. Can either be a list of hdu names
-            or a single string. If left blank, update all the hdus.
+        only: str, None
+            Update only the named hdu, e.g. ``only='PRIMARY'``. Can either be
+            a string or list of hdu names. Default is to update all the hdus.
+        extra_fits : boolean
+            Update from ``extra_fits``.  Default is False.
         """
         def hdu_keywords_from_data(d, path, hdu_keywords):
             # Walk tree and add paths to keywords to hdu keywords
@@ -921,7 +923,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         # Get the list of hdu names from the model so that updates
         # are limited to those hdus
 
-        if only:
+        if only is not None:
             if isinstance(only, str):
                 hdu_names = set([only])
             else:
@@ -942,16 +944,15 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             hdu_keywords_from_data(d, path, hdu_keywords)
 
         # Perform the updates to the keywords mentioned in the schema
-
         for path in hdu_keywords:
             if not protected_keyword(path):
                 set_hdu_keyword(self._instance, d, path)
 
-        # Perform updates to extra_fits area of a model
-
-        for hdu_name in hdu_names:
-            path = ['extra_fits', hdu_name, 'header']
-            set_hdu_keyword(self._instance, d, path)
+        # Update from extra_fits as well, if indicated
+        if extra_fits:
+            for hdu_name in hdu_names:
+                path = ['extra_fits', hdu_name, 'header']
+                set_hdu_keyword(self._instance, d, path)
 
         self.validate()
 

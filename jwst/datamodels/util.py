@@ -13,13 +13,12 @@ from ..lib import s3_utils
 
 import logging
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 log.addHandler(logging.NullHandler())
 
 class NoTypeWarning(Warning):
     pass
 
-def open(init=None, **kwargs):
+def open(init=None, memmap=False, **kwargs):
     """
     Creates a DataModel from a number of different types
 
@@ -43,6 +42,10 @@ def open(init=None, **kwargs):
           to what was passed in.
 
         - dict: The object model tree for the data model
+
+    memmap : bool
+        Turn memmap of FITS file on or off.  (default: False).  Ignored for
+        ASDF files.
 
     Returns
     -------
@@ -83,7 +86,7 @@ def open(init=None, **kwargs):
             if s3_utils.is_s3_uri(init):
                 hdulist = fits.open(s3_utils.get_object(init))
             else:
-                hdulist = fits.open(init)
+                hdulist = fits.open(init, memmap=memmap)
             file_to_close = hdulist
 
         elif file_type == "asn":
@@ -165,10 +168,8 @@ def open(init=None, **kwargs):
     if not has_model_type:
         class_name = new_class.__name__.split('.')[-1]
         if file_name:
-            errmsg = \
-                "model_type not found. Opening {} as a {}".format(file_name, class_name)
-            warnings.warn(errmsg, NoTypeWarning)
-
+            warnings.warn(f"model_type not found. Opening {file_name} as a {class_name}",
+                NoTypeWarning)
         try:
             delattr(model.meta, 'model_type')
         except AttributeError:

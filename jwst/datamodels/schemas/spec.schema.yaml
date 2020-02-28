@@ -1,6 +1,10 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/spec.schema"
 title: Spectrum data model
 allOf:
-- $ref: core.schema.yaml
+- $ref: core.schema
 - type: object
   properties:
     spec_table:
@@ -25,4 +29,3 @@ allOf:
         datatype: float64
       - name: NPIXELS
         datatype: float64
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

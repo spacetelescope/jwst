@@ -14,7 +14,6 @@ from ..datamodels.properties import merge_tree
 __all__ = ['exp_to_source', 'multislit_to_container']
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def exp_to_source(inputs):
@@ -27,7 +26,7 @@ def exp_to_source(inputs):
 
     Returns
     -------
-    {str: MultiExposureModel, }
+    multiexposures: {str: MultiExposureModel[,...]}
         Returns a dict of MultiExposureModel instances wherein each
         instance contains slits belonging to the same source.
         The key is the ID of each source, i.e. ``source_id``.

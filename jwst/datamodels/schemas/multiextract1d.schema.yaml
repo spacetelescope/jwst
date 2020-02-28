@@ -1,5 +1,9 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/multiextract1d.schema"
 allOf:
-- $ref: referencefile.schema.yaml
+- $ref: referencefile.schema
 - type: object
   properties:
     images:
@@ -22,7 +26,7 @@ allOf:
             type: integer
             fits_keyword: SPORDER
             fits_hdu: SCI
-          dispersion_axis:
+          dispersion_direction:
             title: Dispersion direction
             type: integer
             fits_keyword: DISPAXIS
@@ -32,4 +36,3 @@ allOf:
             type: integer
             fits_keyword: SMOOTH_L
             fits_hdu: SCI
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

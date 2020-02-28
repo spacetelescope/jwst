@@ -12,10 +12,9 @@ from gwcs.wcstools import grid_from_bounding_box
 
 from .. import datamodels
 from ..assign_wcs import util
-from ..datamodels import CubeModel, WavelengthrangeModel
+from ..datamodels import WavelengthrangeModel
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def extract_tso_object(input_model,
@@ -24,22 +23,22 @@ def extract_tso_object(input_model,
                        extract_orders=None,
                        compute_wavelength=True):
     """
-    Extract the spectrum for a NIRCAM TSO observation.
+    Extract the spectrum for a NIRCam TSO grism observation.
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.CubeModel`
-        The input TSO image as an instance of a CubeModel
+    input_model : `~jwst.datamodels.CubeModel` or `~jwst.datamodels.ImageModel`
+        The input TSO data is an instance of a CubeModel (3D) or ImageModel (2D)
 
     reference_files : dict
         Needs to include the name of the wavelengthrange reference file
 
     extract_height : int
-        The extraction height, in total, for the spectra in the
+        The extraction height, in total, for the spectrum in the
         cross-dispersion direction. If this is other than None,
         it will override the team default of 64 pixels. The team
         wants the source centered near row 34, so the extraction
-        height is not the same on either size of the central pixel.
+        height is not the same on either size of the central row.
 
     extract_orders : list[ints]
         This is an optional parameter that will override the
@@ -57,38 +56,37 @@ def extract_tso_object(input_model,
 
     Notes
     -----
-    This method supports NRC_TSGRISM only, where only one
-    bright object is considered in the field, so there's
-    no catalog of sources and the object is assumed to
-    have been observed at the aperture location crpix1/2.
-    CRPIX1/2 are read from the SIAF and saved as
-    "meta.wcsinfo.siaf_xref_sci" and "meta.wcsinfo.siaf_yref_sci".
+    This method supports NRC_TSGRISM only, where only one bright object is
+    considered in the field, so there's no catalog of sources and the object
+    is assumed to have been observed at the aperture reference position.
+    The aperture reference location is read during level-1b (uncal) product
+    creation by the "set_telescope_pointing" script from the SIAF entries
+    XSciRef and YSciRef (reference location in the science frame) and saved as
+    "meta.wcsinfo.siaf_xref_sci" and "meta.wcsinfo.siaf_yref_sci" (FITS header
+    keywords XREF_SCI and YREF_SCI).
 
-    GrismObject is a named tuple which contains distilled
-    information about each catalog object and the bounding
-    boxes that will be used to define the 2d extraction area.
+    Because this mode has a single known source location, the utilities used
+    in the WFSS modes are overkill. Instead, similar structures are created
+    during the extract2d process and then directly used.
 
-    Since this mode has a single known source location the utilities
-    used in the WFSS modes are overkill, instead, similar structures
-    are created during the extrac 2d process and then directly used.
-
-    https://jwst-docs.stsci.edu/display/JTI/NIRCam+Grism+Time+Series
+    https://jwst-docs.stsci.edu/near-infrared-camera/nircam-observing-modes/nircam-time-series-observations/nircam-grism-time-series
     """
 
+    # Check for reference files
     if not isinstance(reference_files, dict):
         raise TypeError("Expected a dictionary for reference_files")
 
+    # Check for wavelengthrange reference file
     if 'wavelengthrange' not in reference_files.keys():
         raise KeyError("No wavelengthrange reference file specified")
 
-    if not isinstance(input_model, CubeModel):
-        raise TypeError('The input data model is not a CubeModel.')
-
+    # If an extraction height is not supplied, default to entire
+    # cross-dispersion size of the data array
     if extract_height is None:
         extract_height = input_model.meta.subarray.ysize
     log.info("Setting extraction height to {}".format(extract_height))
 
-    # Get the disperser parameters which have the wave limits
+    # Get the disperser parameters that have the wave limits
     with WavelengthrangeModel(reference_files['wavelengthrange']) as f:
         if (f.meta.instrument.name != 'NIRCAM'):
             raise ValueError("Wavelengthrange reference file not for NIRCAM!")
@@ -97,8 +95,8 @@ def extract_tso_object(input_model,
         wavelengthrange = f.wavelengthrange
         ref_extract_orders = f.extract_orders
 
-    # this supports the user override and overriding the WFSS order extraction
-    # when called from the pipeline only the first order is extracted
+    # If user-supplied spectral orders are not provided,
+    # default to extracting only the 1st order
     if extract_orders is None:
         log.info("Using default order extraction from reference file")
         extract_orders = ref_extract_orders
@@ -114,20 +112,29 @@ def extract_tso_object(input_model,
     if len(available_orders) > 1:
         raise NotImplementedError("Multiple order extraction for TSO not currently implemented")
 
+    # Check for the existence of the aperture reference location meta data
+    if input_model.meta.wcsinfo.siaf_xref_sci is None:
+        raise ValueError('XREF_SCI is missing.')
+
+    if input_model.meta.wcsinfo.siaf_yref_sci is None:
+        raise ValueError('YREF_SCI is missing.')
+
+    # Create the extracted output as a SlitModel
     log.info("Extracting order: {}".format(available_orders))
     output_model = datamodels.SlitModel()
     output_model.update(input_model)
     subwcs = copy.deepcopy(input_model.meta.wcs)
 
+    # Loop over spectral orders
     for order in available_orders:
         range_select = [(x[2], x[3]) for x in wavelengthrange if (x[0] == order and x[1] == input_model.meta.instrument.filter)]
-        # All objects in the catalog will use the same filter for translation
-        # that filter is the one that was used in front of the grism
+
+        # Use the filter that was in front of the grism for translation
         lmin, lmax = range_select.pop()
 
-        # create the order bounding box
-        source_xpos = input_model.meta.wcsinfo.siaf_xref_sci - 1  # remove fits
-        source_ypos = input_model.meta.wcsinfo.siaf_yref_sci - 1  # remove fits
+        # Create the order bounding box
+        source_xpos = input_model.meta.wcsinfo.siaf_xref_sci - 1  # remove FITS 1-indexed offset
+        source_ypos = input_model.meta.wcsinfo.siaf_yref_sci - 1  # remove FITS 1-indexed offset
         transform = input_model.meta.wcs.get_transform('full_detector', 'grism_detector')
         xmin, ymin, _ = transform(source_xpos,
                                   source_ypos,
@@ -138,20 +145,18 @@ def extract_tso_object(input_model,
                                   lmax,
                                   order)
 
-        # Add the shift to the lower corner to each subarray WCS object
-        # The shift should just be the lower bounding box corner
-        # also replace the object center location inputs to the GrismDispersion
+        # Add the shift to the lower corner to the subarray WCS object.
+        # The shift should just be the lower bounding box corner.
+        # Also replace the object center location inputs to the GrismDispersion
         # model with the known object center and order information (in pixels of direct image)
-        # This is changes the user input to the model from (x,y,x0,y0,order) -> (x,y)
+        # This changes the user input to the model from (x,y,x0,y0,order) -> (x,y)
         #
-        # The bounding boxes here are also limited to the size of the detector in the
-        # dispersion direction and 64 pixels in the cross-dispersion
-        # The check for boxes entirely off the detector is done in create_grism_bbox right now
-
-        # The team wants the object to fall near  row 34 for all cutouts,
-        # but the default cutout height is 64pixel (32 on either side)
-        # so use crpix2 when it equals 34, but  bump the ycenter by 2 pixel
-        # in the case that it's 32 so that the height is 30 above and 34 below (in full frame)
+        # The bounding box is limited to the size of the detector in the dispersion direction
+        # and 64 pixels in the cross-dispersion direction (at request of instrument team).
+        #
+        # The team wants the object to fall near row 34 for all cutouts, but the default cutout
+        # height is 64 pixels (32 on either side). So bump the extraction ycenter, when necessary,
+        # so that the height is 30 above and 34 below (in full frame) the object center.
         bump = source_ypos - 34
         extract_y_center = source_ypos - bump
 
@@ -164,23 +169,37 @@ def extract_tso_object(input_model,
             extract_y_min = 0
             extract_y_max = extract_height - 1
         else:
-            extract_y_min = extract_y_center - 34  # always return source at pixel 34 in cutout.
+            extract_y_min = extract_y_center - 34  # always return source at row 34 in cutout
             extract_y_max = extract_y_center + extract_height - 34 - 1
 
+        # Check for bad results
         if (extract_y_min > extract_y_max):
             raise ValueError("Something bad happened calculating extraction y-size")
 
-        # limit the bounding box to the detector
+        # Limit the bounding box to the detector edges
         ymin, ymax = (max(extract_y_min, 0), min(extract_y_max, input_model.meta.subarray.ysize))
         xmin, xmax = (max(xmin, 0), min(xmax, input_model.meta.subarray.xsize))
-        log.info("xmin, xmax: {} {}  ymin, ymax: {} {}".format(xmin, xmax, ymin, ymax))
 
-        # the order and source position are put directly into
-        # the new wcs for the subarray for the forward transform
+        # The order and source position are put directly into the new WCS of the subarray
+        # for the forward transform.
+        #
+        # NOTE NOTE NOTE  2020-02-14
+        # We would normally use x-axis (along dispersion) extraction limits calculated
+        # above based on the min/max wavelength range and the source position to do the
+        # subarray extraction and set the subarray WCS accordingly. HOWEVER, the NIRCam
+        # team has asked for all data along the dispersion direction to be included in
+        # subarray cutout, so here we override the xmin/xmax values calculated above and
+        # instead hardwire the extraction limits for the x (dispersion) direction to
+        # cover the entire range of the data and use this new minimum x value in the
+        # subarray WCS transform. If the team ever decides to change the extraction limits,
+        # the following two constants must be modified accordingly.
+        xmin_ext = 0  # hardwire min x for extraction to zero
+        xmax_ext = input_model.data.shape[-1] - 1  # hardwire max x for extraction to size of data
+
         order_model = Const1D(order)
         order_model.inverse = Const1D(order)
         tr = input_model.meta.wcs.get_transform('grism_detector', 'full_detector')
-        tr = Mapping((0, 1, 0)) | Shift(xmin) & Shift(ymin) & order_model | tr
+        tr = Mapping((0, 1, 0)) | Shift(xmin_ext) & Shift(ymin) & order_model | tr
         subwcs.set_transform('grism_detector', 'full_detector', tr)
 
         xmin = int(xmin)
@@ -188,40 +207,63 @@ def extract_tso_object(input_model,
         ymin = int(ymin)
         ymax = int(ymax)
 
-        # cut it out, keep the entire row though
-        ext_data = input_model.data[:, ymin: ymax + 1, :].copy()
-        ext_err = input_model.err[:, ymin: ymax + 1, :].copy()
-        ext_dq = input_model.dq[:, ymin: ymax + 1, :].copy()
-
         log.info("WCS made explicit for order: {}".format(order))
-        log.info("Trace extents are: (xmin:{}, ymin:{}), (xmax:{}, ymax:{})".format(xmin, ymin, xmax, ymax))
+        log.info("Spectral trace extents: (xmin:{}, ymin:{}), (xmax:{}, ymax:{})".format(xmin, ymin, xmax, ymax))
+        log.info("Extraction limits: (xmin:{}, ymin:{}), (xmax:{}, ymax:{})".format(xmin_ext, ymin, xmax_ext, ymax))
 
+        # Cut out the subarray from the input data arrays
+        ext_data = input_model.data[..., ymin: ymax + 1, xmin_ext:xmax_ext + 1].copy()
+        ext_err = input_model.err[..., ymin: ymax + 1, xmin_ext:xmax_ext + 1].copy()
+        ext_dq = input_model.dq[..., ymin: ymax + 1, xmin_ext:xmax_ext + 1].copy()
+        if input_model.var_poisson is not None and np.size(input_model.var_poisson) > 0:
+            var_poisson = input_model.var_poisson[..., ymin:ymax+1, xmin_ext:xmax_ext + 1].copy()
+        else:
+            var_poisson = None
+        if input_model.var_rnoise is not None and np.size(input_model.var_rnoise) > 0:
+            var_rnoise = input_model.var_rnoise[..., ymin:ymax+1, xmin_ext:xmax_ext + 1].copy()
+        else:
+            var_rnoise = None
+        if input_model.var_flat is not None and np.size(input_model.var_flat) > 0:
+            var_flat = input_model.var_flat[..., ymin:ymax+1, xmin_ext:xmax_ext + 1].copy()
+        else:
+            var_flat = None
+
+        # Finish populating the output model and meta data
         if output_model.meta.model_type == "SlitModel":
             output_model.data = ext_data
             output_model.err = ext_err
             output_model.dq = ext_dq
+            output_model.var_poisson = var_poisson
+            output_model.var_rnoise = var_rnoise
+            output_model.var_flat = var_flat
             output_model.meta.wcs = subwcs
             output_model.meta.wcs.bounding_box = util.wcs_bbox_from_shape(ext_data.shape)
             output_model.meta.wcsinfo.siaf_yref_sci = 34  # update for the move, vals are the same
             output_model.meta.wcsinfo.siaf_xref_sci = input_model.meta.wcsinfo.siaf_xref_sci
             output_model.meta.wcsinfo.spectral_order = order
             output_model.meta.wcsinfo.dispersion_direction = \
-                        input_model.meta.wcsinfo.dispersion_direction
+                input_model.meta.wcsinfo.dispersion_direction
             if compute_wavelength:
+                log.debug("Computing wavelengths (this takes a while ...)")
                 output_model.wavelength = compute_wavelength_array(output_model)
-            output_model.name = 'TSO object'
-            output_model.xstart = 1  # fits pixels
-            output_model.xsize = ext_data.shape[2]
-            output_model.ystart = 1  # fits pixels
-            output_model.ysize = ext_data.shape[1]
+            output_model.name = '1'
+            output_model.source_type = input_model.meta.target.source_type
+            output_model.source_name = input_model.meta.target.catalog_name
+            output_model.source_alias = input_model.meta.target.proposer_name
+            output_model.xstart = 1  # FITS pixels are 1-indexed
+            output_model.xsize = ext_data.shape[-1]
+            output_model.ystart = ymin + 1  # FITS pixels are 1-indexed
+            output_model.ysize = ext_data.shape[-2]
             output_model.source_xpos = source_xpos
             output_model.source_ypos = 34
             output_model.source_id = 1
             output_model.bunit_data = input_model.meta.bunit_data
             output_model.bunit_err = input_model.meta.bunit_err
+            if hasattr(input_model, 'int_times'):
+                output_model.int_times = input_model.int_times.copy()
 
     del subwcs
-    log.info("Finished extractions")
+    log.info("Finished extraction")
     return output_model
 
 
@@ -322,10 +364,10 @@ def extract_grism_objects(input_model,
                                                    use_fits_wcs=use_fits_wcs,
                                                    mmag_extract=mmag_extract)
             log.info("Grism object list created from source catalog: {0:s}"
-                     .format(input_model.meta.source_catalog.filename))
+                     .format(input_model.meta.source_catalog))
 
     if not isinstance(grism_objects, list):
-            raise TypeError("Expected input grism objects to be a list")
+        raise TypeError("Expected input grism objects to be a list")
     if len(grism_objects) == 0:
         raise ValueError("No grism objects created from source catalog")
 
@@ -425,18 +467,20 @@ def extract_grism_objects(input_model,
                                                 var_flat=var_flat)
                 new_slit.meta.wcsinfo.spectral_order = order
                 new_slit.meta.wcsinfo.dispersion_direction = \
-                        input_model.meta.wcsinfo.dispersion_direction
+                    input_model.meta.wcsinfo.dispersion_direction
                 new_slit.meta.wcs = subwcs
                 if compute_wavelength:
+                    log.debug("Computing wavelengths (this takes a while ...)")
                     new_slit.wavelength = compute_wavelength_array(new_slit)
 
                 # set x/ystart values relative to the image (screen) frame.
                 # The overall subarray offset is recorded in model.meta.subarray.
                 # nslit = obj.sid - 1  # catalog id starts at zero
                 new_slit.name = "{0}".format(obj.sid)
-                new_slit.xstart = 1  # fits pixels
+                new_slit.source_type = 'UNKNOWN'
+                new_slit.xstart = xmin + 1  # fits pixels
                 new_slit.xsize = ext_data.shape[1]
-                new_slit.ystart = 1  # fits pixels
+                new_slit.ystart = ymin + 1  # fits pixels
                 new_slit.ysize = ext_data.shape[0]
                 new_slit.source_xpos = float(obj.xcentroid)
                 new_slit.source_ypos = float(obj.ycentroid)
@@ -506,11 +550,13 @@ def compute_wavelength_array(slit):
     wavelength : numpy.array
         The wavelength array
     """
-    grid = grid_from_bounding_box(slit.meta.wcs.bounding_box)
-    shape = grid[0].shape
-    wavelength = np.empty(shape, dtype=np.float64)
+    #grid = grid_from_bounding_box(slit.meta.wcs.bounding_box)
+    #shape = grid[0].shape
+    #wavelength = np.empty(shape, dtype=np.float64)
     transform = slit.meta.wcs.forward_transform
-    for j in range(shape[0]):
-        for i in range(shape[1]):
-            wavelength[j, i] = transform(grid[0][j, i], grid[1][j, i])[2]
+    #for j in range(shape[0]):
+        #for i in range(shape[1]):
+            #wavelength[j, i] = transform(grid[0][j, i], grid[1][j, i])[2]
+    x, y = grid_from_bounding_box(slit.meta.wcs.bounding_box)
+    wavelength = transform(x, y)[2]
     return wavelength

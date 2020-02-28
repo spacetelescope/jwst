@@ -1,3 +1,7 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/slitdata.schema"
 allOf:
 - type: object
   properties:
@@ -60,6 +64,7 @@ allOf:
     source_type:
       title: Source type (point/extended)
       type: string
+      enum: [EXTENDED, POINT, UNKNOWN]
       fits_keyword: SRCTYPE
       fits_hdu: SCI
     source_xpos:
@@ -89,6 +94,16 @@ allOf:
     ycen:
       title: Center of shutter in MSA coordinates (Y dir)
       type: integer
+    source_ra:
+      title: Right Ascension of the source
+      type: number
+      fits_keyword: SRCRA
+      fits_hdu: SCI
+    source_dec:
+      title: Declination of the source
+      type: number
+      fits_keyword: SRCDEC
+      fits_hdu: SCI
     data:
       title: The science data
       fits_hdu: SCI
@@ -122,9 +137,8 @@ allOf:
       fits_hdu: AREA
       default: 0.0
       datatype: float32
-- $ref: variance.schema.yaml
-- $ref: pathlosscorr.schema.yaml
-- $ref: bunit.schema.yaml
-- $ref: photometry.schema.yaml
-- $ref: wcsinfo.schema.yaml
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema
+- $ref: variance.schema
+- $ref: pathlosscorr.schema
+- $ref: bunit.schema
+- $ref: photometry.schema
+- $ref: wcsinfo.schema

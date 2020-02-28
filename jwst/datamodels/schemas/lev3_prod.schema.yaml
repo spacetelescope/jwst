@@ -1,3 +1,7 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/lev3_prod.schema"
 type: object
 properties:
   meta:
@@ -57,18 +61,3 @@ properties:
             title: Extname of the WHT extension
             type: string
             fits_keyword: WHTEXT
-      tweakreg_catalog:
-        type: object
-        properties:
-          filename:
-            title: Output tweakreg catalog filename
-            type: string
-            fits_keyword: TCATFILE
-      source_catalog:
-        type: object
-        properties:
-          filename:
-            title: Output source catalog filename
-            type: string
-            fits_keyword: SCATFILE
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

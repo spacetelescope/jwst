@@ -184,16 +184,6 @@ def test_extra_fits():
         assert _header_to_dict(dm.extra_fits.PRIMARY.header)['SCIYSTRT'] == 705
 
 
-def test_extra_fits_update():
-    path = os.path.join(ROOT_DIR, "headers.fits")
-
-    with DataModel(path) as dm:
-        with DataModel() as dm2:
-            dm2.update(dm)
-            assert 'BITPIX' not in _header_to_dict(dm.extra_fits.PRIMARY.header)
-            assert _header_to_dict(dm.extra_fits.PRIMARY.header)['SCIYSTRT'] == 705
-
-
 def test_hdu_order():
     from astropy.io import fits
 
