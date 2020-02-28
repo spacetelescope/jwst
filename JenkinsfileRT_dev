@@ -61,7 +61,7 @@ bc0.build_cmds = PipInject(env.OVERRIDE_REQUIREMENTS) + bc0.build_cmds
 bc0.test_cmds = [
     "pytest -r sxf -n 30 --bigdata --slow \
     --basetemp=${pytest_basetemp} --junit-xml=results.xml \
-    -k 'not regtest' jwst"
+    -k 'not regtest' jwst/assign_wcs/tests/test_wcs.py"
 ]
 bc0.test_configs = [data_config]
 
