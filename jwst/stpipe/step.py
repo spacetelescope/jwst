@@ -245,8 +245,8 @@ class Step():
 
         return step
 
-    def __init__(self, name=None, parent=None, config_file=None,
-                 _validate_kwds=True, **kws):
+    def __init__(self, name=None, parent=None, config_file=None, _validate_kwds=True, log_handler=None, log_level=None,
+                 log_break_level=None, log_format=None, **kws):
         """
         Create a `Step` instance.
 
@@ -265,6 +265,10 @@ class Step():
         config_file : str path, optional
             The path to the config file that this step was initialized
             with.  Use to determine relative path names of other config files.
+
+        log_handler : str, list
+        log_level, log_break_level, log_format : str
+            See LogConfig.spec for a description of these
 
         **kws : dict
             Additional parameters to set.  These will be set as member
@@ -296,7 +300,17 @@ class Step():
             setattr(self, key, val)
 
         # Create a new logger for this step
+        self._logconfig = log.LogConfig(
+            self.qualified_name,
+            handler=log_handler,
+            level=log_level,
+            break_level=log_break_level,
+            format=log_format
+        )
+
         self.log = log.getLogger(self.qualified_name)
+
+        self._logconfig.apply(log.getLogger('stpipe'))
 
         # Log the fact that we have been init-ed.
         self.log.info('{0} instance created.'.format(self.__class__.__name__))
@@ -519,8 +533,25 @@ class Step():
         a new instance but simply runs the existing instance of the `Step`
         class.
         """
+        # Set up and configure log
+        log_handler = kwargs.get('log_handler')
+        log_level = kwargs.get('log_level')
+        log_break_level = kwargs.get('log_break_level')
+        log_format = kwargs.get('log_format')
+
         logger_name = cls.get_pars_model().instance['parameters']['name']
+
+        log_config = log.LogConfig(
+            logger_name,
+            handler=log_handler,
+            level=log_level,
+            break_level=log_break_level,
+            format=log_format
+        )
+
         log_cls = log.getLogger(logger_name)
+        log_config.apply(log.getLogger('stpipe'))
+
         if len(args) > 0:
             filename = args[0]
             crds_config = cls.get_config_from_reference(filename)
