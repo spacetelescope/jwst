@@ -176,9 +176,9 @@ def just_the_step_from_cmdline(args, cls=None):
         help="The logging configuration file to load")
     parser1.add_argument(
         "--verbose", "-v", action="store_true",
-        help="Turn on all logging messages")
+        help="Set logging level to DEBUG")
     parser1.add_argument(
-        "--debug", action="store_true",
+        "--debug_run", action="store_true",
         help="When an exception occurs, invoke the Python debugger, pdb")
     parser1.add_argument(
         '--save-parameters', type=str,
