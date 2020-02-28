@@ -91,7 +91,10 @@ class MRSIMatchStep(Step):
 
         # set step completion status in the input images
         for m in all_models2d:
-            m.meta.cal_step.mrs_imatch = 'COMPLETE'
+            if m.meta.cal_step.mrs_imatch == 'SKIPPED':
+                self.log.info('Background can not be determined, skipping mrs_imatch')
+            else:
+                m.meta.cal_step.mrs_imatch = 'COMPLETE'
 
         return images
 
@@ -337,17 +340,22 @@ def _match_models(models, channel, degree, center=None, center_cs='image'):
     # if requested:
     ##### model.meta.instrument.channel
 
-    # set 2D models' background meta info:
-    for im, poly in zip(models, bkg_poly_coef):
-        im.meta.background.subtracted = False
-        im.meta.background.polynomial_info.append(
-            {
+    if np.isnan(bkg_poly_coef).any():
+        bkg_poly_coef = None
+        for im in models:
+            im.meta.cal_step.mrs_imatch = 'SKIPPED'
+    else:
+        # set 2D models' background meta info:
+        for im, poly in zip(models, bkg_poly_coef):
+            im.meta.background.subtracted = False
+            im.meta.background.polynomial_info.append(
+                {
                 'degree': degree,
                 'refpoint': center,
                 'coefficients': poly.ravel().tolist(),
                 'channel': channel
-            }
-        )
+                }
+            )
 
     return models
 
