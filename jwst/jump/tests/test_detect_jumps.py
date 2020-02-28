@@ -75,24 +75,14 @@ def test_nocr_100_groups_nframes1(setup_inputs):
     grouptime = 3.0
     ingain = 1 #to make the noise calculation simple
     inreadnoise = np.float64(7)
-    ngroups = 100
-    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups, nrows=100, ncols=100,
+    ngroups = 200
+    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups, nrows=50, ncols=50,
                                                           gain=ingain, readnoise=inreadnoise,
                                                           deltatime=grouptime)
     model1.meta.exposure.nframes = 1
-    # two segments perfect fit, second segment has twice the slope
-    model1.data[0, 0, 5, 5] = 14.0
-    model1.data[0, 1, 5, 5] = 20.0
-    model1.data[0, 2, 5, 5] = 27.0
-    model1.data[0, 3, 5, 5] = 30.0
-    model1.data[0, 4, 5, 5] = 38.0
-    model1.data[0, 5, 5, 5] = 40.0
-    model1.data[0, 6, 5, 5] = 50.0
-    model1.data[0, 7, 5, 5] = 52.0
-    model1.data[0, 8, 5, 5] = 63.0
-    model1.data[0, 9, 5, 5] = 68.0
-    for i in range(10,100):
-        model1.data[0,i,5,5] = i * 5 + 20
+   # one small jump, should be below theshold unless ngroups is used instead of nframes
+    model1.data[0, 0:5, 5, 5] = 0.0
+    model1.data[0, 5:200, 5, 5] = 5.0
     out_model = detect_jumps(model1, gain, rnModel, 4.0,  'one', 200, 4, True)
     assert (0 == np.max(out_model.groupdq))
 
