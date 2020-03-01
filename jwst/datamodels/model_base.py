@@ -913,6 +913,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                     else:
                         if isinstance(part, int):
                             this_cursor.append({})
+                        elif isinstance(that_cursor, list):
+                            this_cursor[part] = []
                         else:
                             this_cursor[part] = {}
                 this_cursor = this_cursor[part]
