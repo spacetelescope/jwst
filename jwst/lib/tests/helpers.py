@@ -4,19 +4,11 @@ import io
 
 
 S3_BUCKET_NAME = "test-s3-data"
-S3_TEST_DATA_PATH = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)),
-    "data",
-    "s3"
-)
 
 
 class MockS3Client:
-    def __init__(self, s3_test_data_path=None):
-        if s3_test_data_path:
-            self.s3_test_data_path = s3_test_data_path
-        else:
-            self.s3_test_data_path = S3_TEST_DATA_PATH
+    def __init__(self, s3_test_data_path):
+        self.s3_test_data_path = s3_test_data_path
 
     def get_object(self, bucket_name, key):
         assert self.object_exists(bucket_name, key)

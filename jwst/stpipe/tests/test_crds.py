@@ -134,8 +134,8 @@ def test_crds_failed_getreferences_bad_context():
         crds.getreferences(header, reftypes=["flat"], context="jwst_9942.pmap")
 
 
-def test_check_reference_open_s3(tmpdir):
-    path = str(tmpdir.join("test.fits"))
+def test_check_reference_open_s3(s3_root_dir):
+    path = str(s3_root_dir.join("test.fits"))
     with fits.HDUList(fits.PrimaryHDU()) as hdulist:
         hdulist.writeto(path)
 

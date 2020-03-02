@@ -26,18 +26,18 @@ def test_open_fits():
     m = open(fits_file)
     assert isinstance(m, DataModel)
 
-def test_open_fits_s3(tmpdir):
+def test_open_fits_s3(s3_root_dir):
     """Test opening a model from a FITS file on S3"""
-    path = str(tmpdir.join("test.fits"))
+    path = str(s3_root_dir.join("test.fits"))
     with DataModel() as dm:
         dm.save(path)
 
     m = open("s3://test-s3-data/test.fits")
     assert isinstance(m, DataModel)
 
-def test_open_asdf_s3(tmpdir):
+def test_open_asdf_s3(s3_root_dir):
     """Test opening a model from an ASDF file on S3"""
-    path = str(tmpdir.join("test.asdf"))
+    path = str(s3_root_dir.join("test.asdf"))
     with DataModel() as dm:
         dm.save(path)
 
