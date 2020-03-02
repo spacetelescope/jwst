@@ -232,12 +232,12 @@ def diff_astropy_tables():
             diffs.append("Column names (or order) do not match")
 
         if len(result) != len(truth):
-            diffs.append("Row count does not match")
+            diffs.append(f"Row count does not match({len(result)} vs {len(truth)})")
 
         # If either the columns or the row count is mismatched, then don't
         # bother checking the individual column values.
         if len(diffs) > 0:
-            return diffs
+            raise AssertionError("\n".join(diffs))
 
         if result.meta != truth.meta:
             diffs.append("Metadata does not match")
@@ -269,6 +269,8 @@ def diff_astropy_tables():
         if len(diffs) != 0:
             raise AssertionError("\n".join(diffs))
 
+        # No differences
+        return True
 
     return _diff_astropy_tables
 
