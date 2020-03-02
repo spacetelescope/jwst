@@ -71,10 +71,7 @@ def test_spatial_transform_nirspec():
     im.meta.exposure._instance.update(exposure)
     im.meta.subarray._instance.update(subarray)
     im = AssignWcsStep.call(im)
-
-    
     im = Extract2dStep.call(im)
-
     im = ResampleSpecStep.call(im)
 
     for slit in im.slits:
