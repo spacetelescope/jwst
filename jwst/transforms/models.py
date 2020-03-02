@@ -1162,10 +1162,7 @@ class NIRCAMForwardRowGrismDispersion(Model):
         lmodel = self.lmodels[iorder]
 
         # inputs are x, y, x0, y0, order
-<<<<<<< HEAD
 
-=======
->>>>>>> clean code
         tmodel = astmath.SubtractUfunc() | xmodel
         model = Mapping((0, 2, 0, 2, 2, 3, 4)) | ( tmodel | ymodel) & (tmodel | lmodel) & Identity(3) |\
               Mapping((2, 3, 0, 1, 4)) | Identity(1) & astmath.AddUfunc() &  Identity(2) | Mapping((0, 1, 2, 3), n_inputs=4)
@@ -1257,10 +1254,6 @@ class NIRCAMForwardColumnGrismDispersion(Model):
               dx  & wavelength & Identity(3) |\
               Mapping((0, 2, 3, 1, 4)) | astmath.AddUfunc() &  Identity(3)
 
-<<<<<<< HEAD
-=======
-        # output is (x0+dx, y0, wavelength, order)
->>>>>>> clean code
         return model(x, y, x0, y0, order)
 
 
@@ -1365,7 +1358,7 @@ class NIRISSBackwardGrismDispersion(Model):
     orders : list
         The list of orders which are available to the model
     theta : float
-        The rotation to apply
+        Angle [deg] - defines the NIRISS filter wheel position
 
     Notes
     -----
@@ -1374,9 +1367,6 @@ class NIRISSBackwardGrismDispersion(Model):
 
     This model needs to be generalized, at the moment it satisfies the
     2t x 6(xy)th order polynomial currently used by NIRISS.
-
-    There's spatial dependence for NIRISS so the forward transform is
-    iterative
 
     """
 
@@ -1457,21 +1447,23 @@ class NIRISSBackwardGrismDispersion(Model):
 
 
 class NIRISSForwardRowGrismDispersion(Model):
-    """This model calculates the dispersion extent of NIRISS pixels.
+    """This model calculates the wavelengths of vertically dispersed NIRISS grism data.
 
     The dispersion polynomial is relative to the input x,y pixels
     in the direct image for a given wavelength.
 
     Parameters
     ----------
+    orders : list
+        The list of orders which are available to the model
     xmodels : list[tuples]
         The list of tuple(models) for the polynomial model in x
     ymodels : list[tuples]
         The list of tuple(models) for the polynomial model in y
     lmodels : list
         The list of models for the polynomial model in l
-    orders : list
-        The list of orders which are available to the model
+    theta : float
+        Angle [deg] - defines the NIRISS filter wheel position
 
     Notes
     -----
@@ -1544,10 +1536,7 @@ class NIRISSForwardRowGrismDispersion(Model):
             iorder = self._order_mapping[int(order.flatten()[0])]
         except KeyError:
             raise ValueError("Specified order is not available")
-<<<<<<< HEAD
 
-=======
->>>>>>> clean code
         # The next two lines are to get around the fact that
         # modeling.standard_broadcasting=False does not work.
         x00 = x0.flatten()[0]
@@ -1557,10 +1546,7 @@ class NIRISSForwardRowGrismDispersion(Model):
         xmodel = self.xmodels[iorder]
         ymodel = self.ymodels[iorder]
         lmodel = self.lmodels[iorder]
-<<<<<<< HEAD
 
-=======
->>>>>>> clean code
         dx = xmodel[0](x00, y00) + t * xmodel[1](x00, y00)
         dy = ymodel[0](x00, y00) + t * ymodel[1](x00, y00)
 
@@ -1569,35 +1555,33 @@ class NIRISSForwardRowGrismDispersion(Model):
             rotate = Rotation2D(self.theta)
             dx, dy = rotate(dx, dy)
 
-<<<<<<< HEAD
         so = np.argsort(dx)
         tab = Tabular1D(dx[so], t[so], bounds_error=False, fill_value=None)
 
-=======
-        tab = Tabular1D(dx[so], t[so], bounds_error=False, fill_value=None)
->>>>>>> clean code
         dxr = astmath.SubtractUfunc()
         wavelength = dxr | tab | lmodel
-        model = Mapping((2, 3, 0, 2, 4)) | Const1D(x0) & Const1D(y0) & wavelength & Const1D(order)
+        model = Mapping((2, 3, 0, 2, 4)) | Const1D(x00) & Const1D(y00) & wavelength & Const1D(order)
         return model(x, y, x0, y0, order)
 
 
 class NIRISSForwardColumnGrismDispersion(Model):
-    """This model calculates the dispersion extent of NIRISS pixels.
+    """This model calculates the wavelengths for horicontally dispersed NIRISS grism data.
 
     The dispersion polynomial is relative to the input x,y pixels
     in the direct image for a given wavelength.
 
     Parameters
     ----------
+    orders : list
+        The list of orders which are available to the model.
     xmodels : list[tuple]
         The list of tuple(models) for the polynomial model in x
     ymodels : list[tuple]
         The list of tuple(models) for the polynomial model in y
     lmodels : list
-        The list of models for the polynomial model in l
-    orders : list
-        The list of orders which are available to the model
+        The list of models for the polynomial model in wavelength.
+    theta : float
+        Angle [deg] - defines the NIRISS filter wheel position
 
     Notes
     -----
@@ -1665,10 +1649,7 @@ class NIRISSForwardColumnGrismDispersion(Model):
             iorder = self._order_mapping[int(order.flatten()[0])]
         except KeyError:
             raise ValueError("Specified order is not available")
-<<<<<<< HEAD
 
-=======
->>>>>>> clean code
         # The next two lines are to get around the fact that
         # modeling.standard_broadcasting=False does not work.
         x00 = x0.flatten()[0]
@@ -1686,11 +1667,8 @@ class NIRISSForwardColumnGrismDispersion(Model):
             dx, dy = rotate(dx, dy)
         so = np.argsort(dy)
         tab = Tabular1D(dy[so], t[so], bounds_error=False, fill_value=None)
-<<<<<<< HEAD
 
-=======
->>>>>>> clean code
         dyr = astmath.SubtractUfunc()
         wavelength = dyr | tab | lmodel
-        model = Mapping((2, 3, 1, 3, 4)) | Const1D(x0) & Const1D(y0) & wavelength & Const1D(order)
+        model = Mapping((2, 3, 1, 3, 4)) | Const1D(x00) & Const1D(y00) & wavelength & Const1D(order)
         return model(x, y, x0, y0, order)
