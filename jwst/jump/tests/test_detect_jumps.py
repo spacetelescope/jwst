@@ -201,7 +201,7 @@ def test_twoints_onecr_10_groups_neighbors_flagged_multi(setup_inputs):
     """"
     A multiprocessing test that has two CRs on the boundary between two slices
     in different integrations. This makes sure that we are correctly flagging
-    neighbors in different slices and the we are parsing the integrations correctly.
+    neighbors in different slices and that we are parsing the integrations correctly.
     """
     grouptime = 3.0
     ingain = 200
@@ -452,7 +452,7 @@ def test_single_CR_neighbor_flag( setup_inputs):
     """"
     A single CR in a 10 group exposure. Tests that:
     - if neighbor-flagging is set, the 4 neighboring pixels *ARE* flagged, and
-    - if neighbor-flagging is *NOT* set, the 4 neighboring pixels are *NOT flagged
+    - if neighbor-flagging is *NOT* set, the 4 neighboring pixels are *NOT* flagged
     """
     grouptime = 3.0
     ingain = 5
