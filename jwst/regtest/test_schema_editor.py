@@ -88,15 +88,15 @@ def test_limit_datamodels(model_db):
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
     'schema',
-    ['container.schema.yaml', 'core.schema.yaml',
+    ['core.schema.yaml',
      'extract1dimage.schema.yaml',
-     'guider_cal.schema.yaml', 'guider_raw.schema.yaml',
+     'guider_meta.schema.yaml',
      'ifucube.schema.yaml',
      'keyword_exptype.schema.yaml', 'keyword_pband.schema.yaml', 'keyword_readpatt.schema.yaml',
-     'lev3_prod.schema.yaml',
      'multiextract1d.schema.yaml', 'multispec.schema.yaml',
      'pathloss.schema.yaml',
      'referencefile.schema.yaml',
+     'slitdata.schema.yaml',
      'wcsinfo.schema.yaml',]
 )
 def test_full_run(jail, schema, run_editor_full, rtdata_module):
