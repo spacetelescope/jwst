@@ -1565,7 +1565,7 @@ class NIRISSForwardRowGrismDispersion(Model):
 
 
 class NIRISSForwardColumnGrismDispersion(Model):
-    """This model calculates the wavelengths for horicontally dispersed NIRISS grism data.
+    """This model calculates the wavelengths for horizontally dispersed NIRISS grism data.
 
     The dispersion polynomial is relative to the input x,y pixels
     in the direct image for a given wavelength.

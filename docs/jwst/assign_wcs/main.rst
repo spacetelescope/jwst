@@ -99,17 +99,17 @@ to create the WCS object. What reference files are retrieved
 from CRDS is determined based on EXP_TYPE and other keywords in the science file header.
 
 The assign_wcs step can accept the single slope image that is the result of averaging
-over all integrations or a cube in the case of TSO observations.
+over all integrations or a 3D cube of integrations in the case of TSO exposures.
 
-WFSS mode
----------
+WCS of slitless grism exposures
+-------------------------------
 
-The WCS forward transforms for WFSS observations (``NIS_WFSS``, ``NRC_WFSS``, ``NRC_TSGRISM``)
+The WCS forward transforms for WFSS slitless grism exposures (``NIS_WFSS``, ``NRC_WFSS``, ``NRC_TSGRISM``)
 take as input the ``x, y`` coordinates on the dispersed image, the ``x0, y0`` coordinate of
-the center of the object in the direct imahe and ``spectral order``. They return the ``x0, y0`` coordinate of the center
+the center of the object in the direct image and ``spectral order``. They return the ``x0, y0`` coordinate of the center
 of the object in the direct image, ``wavelength`` and ``spectral order``.
 
-For NIRISS WFSS data the reference files contains a reference value for the filter wheel
+For NIRISS WFSS data the reference files contain a reference value for the filter wheel
 position angle. The trace is rotated about an angle which is the difference between
 the reference and actual angles.
 
