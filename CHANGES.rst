@@ -1,6 +1,11 @@
 0.14.3 (Unreleased)
 ===================
 
+assign_wcs
+----------
+
+- Added code to enable processing of NIRSPEC FIXEDSLIT AUTOWAVE data [#4626]
+
 associations
 ------------
 
@@ -45,6 +50,13 @@ extract_2d
   and keywords SLTSTRT1 and SLTSTRT2 are set to the pixel location of the
   cutout in the input file. [#4504]
 
+- Added code to enable processing of NIRSPEC FIXEDSLIT AUTOWAVE data [#4626]
+
+flatfield
+---------
+
+- Added code to enable processing of NIRSPEC FIXEDSLIT AUTOWAVE data [#4626]
+
 master_background
 -----------------
 
@@ -81,6 +93,9 @@ pipeline
 - Fixed the ``calwebb_tso3`` calculation of the number_of_integrations recorded
   in the photometric table product to avoid ``astropy.table`` merge conflicts.
   [#4502]
+
+- Added code to enable the ``calwebb_spec2`` pipeline to process NIRSPEC FIXEDSLIT
+  AUTOWAVE data [#4626]
 
 photom
 ------

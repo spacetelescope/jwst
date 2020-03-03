@@ -1721,7 +1721,7 @@ def autowave(input_model, reference_files, slit_y_range):
     elif lamp_mode == 'msaspec':
         return slits_wcs(input_model, reference_files, slit_y_range)
     else:
-        return not_implemented_mode
+        return not_implemented_mode(input_model, reference_files, slit_y_range)
 
 exp_type2transform = {'nrs_tacq': imaging,
                       'nrs_taslit': imaging,

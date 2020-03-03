@@ -511,6 +511,7 @@ properties:
           lamp_mode:
             title: Lamp operating mode
             type: string
+            enum: [BRIGHTOBJ, FIXEDSLIT, GRATING-ONLY, IFU, MSASPEC, NULL]
             fits_keyword: OPMODE
             blend_table: True
           gwa_xtilt:
