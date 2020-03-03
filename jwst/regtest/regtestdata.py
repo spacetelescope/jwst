@@ -403,7 +403,7 @@ def is_like_truth(rtdata, fitsdiff_default_kwargs, output, truth_path, is_suffix
 
 
 def text_diff(from_path, to_path):
-    """Generate a list of differences between files
+    """Assertion helper for diffing two text files
 
     Parameters
     ----------
@@ -411,7 +411,7 @@ def text_diff(from_path, to_path):
         File to diff from.
 
     to_path: str
-        File to diff to.
+        File to diff to.  The truth.
 
     Returns
     -------
@@ -419,16 +419,20 @@ def text_diff(from_path, to_path):
         A generator of a list of strings that are the differences.
         The output from `difflib.unified_diff`
     """
+    __tracebackhide__ = True
     with open(from_path) as fh:
         from_lines = fh.readlines()
     with open(to_path) as fh:
         to_lines = fh.readlines()
 
-    diffs = unified_diff(
-        from_lines, to_lines, from_path, to_path
-    )
+    diffs = unified_diff(from_lines, to_lines, from_path, to_path)
 
-    return diffs
+    diff = list(diffs)
+    if len(diff) > 0:
+        diff.insert(0, "\n")
+        raise AssertionError("".join(diff))
+    else:
+        return True
 
 
 def _data_glob_local(*glob_parts):
