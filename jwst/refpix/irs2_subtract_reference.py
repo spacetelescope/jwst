@@ -4,19 +4,18 @@ import numpy as np
 from scipy.ndimage.filters import convolve1d
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 def correct_model(input_model, irs2_model,
                   scipix_n_default=16, refpix_r_default=4, pad=8):
-    """Process IRS^2 data.
+    """Process IRS2 data.
 
     Parameters
     ----------
     input_model: ramp model
         The input science data model.
 
-    irs2_model: IRS^2 model
-        The reference file model for IRS^2 correction.
+    irs2_model: IRS2 model
+        The reference file model for IRS2 correction.
 
     scipix_n_default: int
         Number of regular samples before stepping out to collect
@@ -138,6 +137,18 @@ def correct_model(input_model, irs2_model,
     # or interspersed reference pixels).
     irs2_mask = make_irs2_mask(output_model, scipix_n, refpix_r)
 
+    # If the IRS2 reference file includes data quality info, use that to
+    # set bad reference pixel values to zero.
+    if hasattr(irs2_model, 'dq_table') and len(irs2_model.dq_table) > 0:
+        output = irs2_model.dq_table.field("output")
+        odd_even = irs2_model.dq_table.field("odd_even")
+        mask = irs2_model.dq_table.field("mask")
+        # Set interleaved reference pixel values to zero if they are flagged
+        # as bad in the DQ extension of the CRDS reference file.
+        clobber_ref(data, output, odd_even, mask)
+    else:
+        log.warning("DQ extension not found in reference file")
+
     for integ in range(n_int):
         # The input data have a length of 3200 for the last axis (X), while
         # the output data have an X axis with length 2048, the same as the
@@ -212,6 +223,7 @@ def make_irs2_mask(output_model, scipix_n, refpix_r):
 
     return irs2_mask
 
+
 def exclude_ref(output_model, irs2_mask):
     """Copy out the normal pixels from PIXELDQ, GROUPDQ, and ERR arrays.
 
@@ -260,6 +272,128 @@ def exclude_ref(output_model, irs2_mask):
 
         temp_array = output_model.err
         output_model.err = temp_array[..., irs2_mask]
+
+
+def clobber_ref(data, output, odd_even, mask, scipix_n=16, refpix_r=4):
+    """Set some interleaved reference pixel values to zero.
+
+    Long Description
+    ----------------
+    This is an explanation of the arithmetic for computing `ref` in the loop
+    over the list of bit numbers that is returned by `decode_mask`.
+    Reads of reference pixels are interleaved with reads of science data.  The
+    pattern of science pixels (S) and reference pixels (r) looks like this:
+
+    SSSSSSSSrrrrSSSSSSSSSSSSSSSSrrrrSSSSSSSSSSSSSSSSrrrr ... rrrrSSSSSSSS
+
+    Within each amplifier output, a row starts and ends with 8 (scipix_n / 2)
+    science pixels, and the row contains 32 blocks of 4 reference pixels.
+    There are 20 (scipix_n + refpix_r) pixels from the start of one block of
+    reference pixels to the start of the next.  `k` is an integer between
+    0 and 31, inclusive, an index to identify the block of reference pixels
+    that we need to modify (we'll set two of the pixels to zero).  `odd_even`
+    is either 1 or 2, indicating that we should set either the first or the
+    second pair of reference pixels to 0.
+
+    The same set of interleaved reference pixels will be set to 0 regardless
+    of integration number, group number, or image line number.
+
+    Parameters
+    ----------
+    data : 4-D ndarray
+        The data array in detector orientation.  This includes both the
+        science and interleaved reference pixel values.  `data` will be
+        modified in-place to set some of the reference pixel values to zero.
+        The science data values will not be modified.
+
+    output : 1-D ndarray, int16
+        An array of amplifier output numbers, 1, 2, 3, or 4, read from the
+        OUTPUT column in the DQ extension of the CRDS reference file.
+
+    odd_even : 1-D ndarray, int16
+        An array of integer values, which may be either 1 or 2, read from the
+        ODD_EVEN column in the DQ extension of the CRDS reference file.
+
+    mask : 1-D ndarray, uint32
+        The MASK column read from the CRDS reference file.
+
+    scipix_n : int
+        Number of regular (science) samples before stepping out to collect
+        reference samples.
+
+    refpix_r : int
+        Number of reference samples before stepping back in to collect
+        regular samples.
+    """
+
+    nx = data.shape[-1]                 # 3200
+    nrows = len(output)
+
+    for row in range(nrows):
+        # `offset` is the offset in pixels from the beginning of the row
+        # to the start of the current amp output.  `offset` starts with
+        # 640 in order to skip over the reference output.
+        offset = output[row] * (nx // 5)                # nx // 5 is 640
+        # The readout direction alternates from one amp output to the next.
+        if output[row] // 2 * 2 == output[row]:
+            odd_even_row = 3 - odd_even[row]            # 1 --> 2;  2 --> 1
+        else:
+            odd_even_row = odd_even[row]
+        bits = decode_mask(output[row], mask[row])
+        log.debug("output {}  odd_even {}  mask {}  DQ bits {}"
+                  .format(output[row], odd_even[row], mask[row], bits))
+        for k in bits:
+            ref = (offset + scipix_n // 2 + k * (scipix_n + refpix_r) +
+                   2 * (odd_even_row - 1))
+            log.debug("bad interleaved reference at pixels {} {}"
+                      .format(ref, ref+1))
+            data[..., ref:ref+2] = 0.
+
+
+def decode_mask(output, mask):
+    """Interpret the MASK column of the DQ table.
+
+    As per the ESA CDP3 document:
+    "There is also a DQ extension that holds a binary table with three
+    columns (OUTPUT, ODD_EVEN, and MASK) and eight rows. In the current
+    IRS2 implementation, one jumps 32 times to odd and 32 times to even
+    reference pixels, which are then read twice consecutively. Therefore,
+    the masks are 32 bit unsigned integers that encode bad interleaved
+    reference pixels/columns from left to right (increasing column index)
+    in the native detector frame. When a bit is set, the corresponding
+    reference data should not be used for the correction."
+
+    Parameters
+    ----------
+    output : int
+        An amplifier output number, 1, 2, 3, or 4.
+
+    mask : uint32
+        A mask value.
+
+    Returns
+    -------
+    bits : list
+        A list of the indices of bits set in the `mask` value.
+    """
+
+    # The bit number corresponds to a count of groups of reads of the
+    # interleaved reference pixels.  It wasn't clear to us whether bit
+    # number increases from left to right or right to left within a
+    # 32-bit unsigned integer.  It also wasn't clear whether the direction
+    # should follow the direction of reading within an amplifier output.
+    # The following is our interpretation of the description.
+
+    flags = np.array([2**n for n in range(32)], dtype=np.uint32)
+    temp = np.bitwise_and(flags, mask)
+    bits = np.where(temp > 0)[0]
+    bits = list(bits)
+    if output // 2 * 2 == output:
+        bits = [31 - bit for bit in bits]
+    bits.sort()
+
+    return bits
+
 
 def subtract_reference(data0, alpha, beta, irs2_mask,
                        scipix_n, refpix_r, pad):
@@ -560,19 +694,20 @@ def subtract_reference(data0, alpha, beta, irs2_mask,
     for k in range(1, 5):
         r0f[k] = np.fft.fft(r0[k, :, :], axis=1) / normalization
 
+    # Note that where the IDL code uses alpha, we use beta, and vice versa.
     # IDL:  for k=0,3 do oBridge[k]->Execute,
     #           "for i=0, s3-1 do r0[*,i] *= alpha"
     for k in range(1, 5):
         for i in range(ngroups):
             # Each element of r0f is the fft of r0[k, :, :], for some k.
-            r0f[k][i, :] *= alpha[k - 1]
+            r0f[k][i, :] *= beta[k - 1]
 
     # IDL:  for k=0,3 do oBridge[k]->Execute,
     #           "for i=0, s3-1 do r0[*,i] += beta * refout0[*,i]"
     if beta is not None:
         for k in range(1, 5):
             for i in range(ngroups):
-                r0f[k][i, :] += (beta[k - 1] * refout0[i, :])
+                r0f[k][i, :] += (alpha[k - 1] * refout0[i, :])
 
     # IDL:  for k=0,3 do oBridge[k]->Execute,
     #           "r0 = fft(r0, 1, dim=1, /overwrite)", /nowait
@@ -613,6 +748,7 @@ def subtract_reference(data0, alpha, beta, irs2_mask,
 
     return data0
 
+
 def fft_interp_norm(dd0, mask0, row, hnorm, hnorm1,
                     ny, ngroups, aa, n_iter_norm):
 
@@ -628,6 +764,7 @@ def fft_interp_norm(dd0, mask0, row, hnorm, hnorm1,
             p[:] = np.fft.ifft(pp).real
             p[hm.ravel()] = dd[hm]
         dd0[j, :, :] = p.reshape((ny, row))
+
 
 def ols_line(x, y):
     """Fit a straight line using ordinary least squares."""

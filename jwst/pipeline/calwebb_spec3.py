@@ -65,6 +65,20 @@ class Spec3Pipeline(Pipeline):
         self.log.info('Starting calwebb_spec3 ...')
         asn_exptypes = ['science', 'background']
 
+        # Setup sub-step defaults
+        self.master_background.suffix = 'mbsub'
+        self.mrs_imatch.suffix = 'mrs_imatch'
+        self.outlier_detection.suffix = 'crf'
+        self.outlier_detection.save_results = self.save_results
+        self.resample_spec.suffix = 's2d'
+        self.resample_spec.save_results = self.save_results
+        self.cube_build.suffix = 's3d'
+        self.cube_build.save_results = self.save_results
+        self.extract_1d.suffix = 'x1d'
+        self.extract_1d.save_results = self.save_results
+        self.combine_1d.suffix = 'x1d'
+        self.combine_1d.save_results = self.save_results
+
         # Retrieve the inputs:
         # could either be done via LoadAsAssociation and then manually
         # load input members into models and ModelContainer, or just

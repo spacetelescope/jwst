@@ -10,27 +10,27 @@ definitions:
       The Nirspec IFUPOST transform for one slice.
     properties:
       linear:
-        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
         description: |
           The linear part of the transform per slice.
           It has an analytical inverse.
       xpoly:
-        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
         description: |
           The forward polynomial in X.
           The backward polynomial should be assigned when creating the model.
       xpoly_distortion:
-        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
         description: |
           The wavelength dependent distortion polynomial in X.
           The backward polynomial is assigned as inverse.
       ypoly:
-        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
         description: |
           The forward polynomial in Y.
           The backward polynomial should be assigned when creating the model.
       ypoly_distortion:
-        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
         description: |
           The wavelength dependent distortion polynomial in X.
           The backward polynomial is assigned as inverse.

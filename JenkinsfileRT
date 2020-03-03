@@ -39,7 +39,7 @@ bc0 = new BuildConfig()
 bc0.nodetype = 'jwst'
 bc0.name = 'stable-deps'
 bc0.env_vars = env_vars
-bc0.conda_ver = '4.8.1'
+bc0.conda_ver = '4.8.2'
 bc0.conda_packages = [
     "python=${python_version}",
 ]
@@ -51,7 +51,6 @@ bc0.build_cmds = [
 bc0.test_cmds = [
     "pytest --cov-report=xml --cov -r sxf -n 30 --bigdata --slow \
     --basetemp=${pytest_basetemp} --junit-xml=results.xml --dist=loadscope",
-    "codecov --token=${codecov_token} -F nightly"
 ]
 bc0.test_configs = [data_config]
 

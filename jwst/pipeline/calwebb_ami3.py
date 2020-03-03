@@ -15,7 +15,6 @@ __all__ = ['Ami3Pipeline']
 
 # Define logging
 log = logging.getLogger()
-log.setLevel(logging.DEBUG)
 
 
 class Ami3Pipeline(Pipeline):

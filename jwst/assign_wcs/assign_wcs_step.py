@@ -7,7 +7,6 @@ from .util import MSAFileError
 
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 __all__ = ["AssignWcsStep"]
 
@@ -68,6 +67,7 @@ class AssignWcsStep(Step):
             for reftype in self.reference_file_types:
                 reffile = self.get_reference_file(input_model, reftype)
                 reference_file_names[reftype] = reffile if reffile else ""
+            log.debug(f'reference files used in assign_wcs: {reference_file_names}')
 
             # Get the MSA metadata file if needed and add to reffiles
             if input_model.meta.exposure.type == "NRS_MSASPEC":

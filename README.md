@@ -13,18 +13,18 @@ JWST Calibration Pipeline
 Installation
 ------------
 
-The ``jwst`` package can be installed into a virtualenv or conda environment via ``pip``.  We recommend creating a fresh environment with only python installed.  Via conda:
+The `jwst` package can be installed into a virtualenv or conda environment via `pip`.  We recommend creating a fresh environment with only python installed.  If using conda, make sure you have a recent version of Anaconda or Miniconda installed.  Via conda:
 
-    conda create -n jwst_env python=3.7
+    conda create -n jwst_env python
     conda activate jwst_env
 
 ### Installing for end-users ###
 
-To install a released (tagged) version, you can install directly from Github.  To install tagged release ``jwst 0.14.2``:
+To install a released (tagged) version, you can install directly from Github.  To install release `jwst 0.15.0`:
 
-    pip install git+https://github.com/spacetelescope/jwst@0.14.2
+    pip install git+https://github.com/spacetelescope/jwst@0.15.0
 
-The latest development version (from ``master``) can also be installed from Github:
+The latest development version (from `master`) can also be installed from Github:
 
     pip install git+https://github.com/spacetelescope/jwst
 
@@ -32,28 +32,29 @@ As can a particular commit hash:
 
     pip install git+https://github.com/spacetelescope/jwst@3f03323c
 
+To include extra testing dependencies, the syntax is as follows:
+
+    pip install "jwst[test] @ git+https://github.com/spacetelescope/jwst"
+
 ### Installing a DMS release ###
 
 We still package our releases to DMS via environment snapshots that specify the exact versions of all packages to be installed.
 
-The latest release 0.14.2 may be installed in two stages by running the following commands:
+The latest release 0.15.0 may be installed by running the following commands in Linux or MacOS:
 
-Stage 1:
+Linux:
 
-    conda create -n jwstdp-0.14.2 --file https://ssb.stsci.edu/releases/jwstdp/0.14.2/[env_file]
-    source activate jwstdp-0.14.2
+    conda create -n jwstdp-0.15.0 --file https://ssb.stsci.edu/releases/jwstdp/0.15.0/conda_python_stable-deps.txt
+    conda activate jwstdp-0.15.0
+    pip install -r https://ssb.stsci.edu/releases/jwstdp/0.15.0/reqs_stable-deps.txt
 
-Where `[env_file]` = `conda_python_stable-deps.txt` for Linux
-and   `[env_file]` = `conda_python_macos-stable-deps.txt` for Macos
+MacOS:
 
-Stage 2:
+    conda create -n jwstdp-0.15.0 --file https://ssb.stsci.edu/releases/jwstdp/0.15.0/conda_python_macos-stable-deps.txt
+    conda activate jwstdp-0.15.0
+    pip install -r https://ssb.stsci.edu/releases/jwstdp/0.15.0/reqs_macos-stable-deps.txt
 
-    pip install -r https://ssb.stsci.edu/releases/jwstdp/0.14.2/[pkgs_file]
-
-Where `[pkgs_file]` = `reqs_stable-deps.txt` for Linux
-and   `[pkgs_file]` = `reqs_macos-stable-deps.txt` for Macos
-
-Each such delivery has its own installation instructions which may be found in
+Each delivery has its own installation instructions which may be found in
 the corresponding release documentation linked from this page: https://github.com/astroconda/astroconda-releases/tree/master/jwstdp
 
 The version values shown there are the JWSTDP releases available to install.
@@ -83,10 +84,6 @@ If you want to run the tests and/or build the docs, you can make sure those depe
     pip install -e .[test]
     pip install -e .[docs]
     pip install -e .[test,docs]
-    
-Note: If you wish to install directly from github, but also include the extra dependencies, the syntax is as follows:
-
-    pip install "jwst[test] @ git+https://github.com/spacetelescope/jwst"
 
 Need other useful packages in your development environment?
 
@@ -130,6 +127,7 @@ Software vs DMS build version map
 
 | jwst tag | DMS build | CRDS_CONTEXT |   Date     |          Notes                           |
 | -------- | --------- | ------------ | ---------- | -----------------------------------------|
+|  0.15.0  | B7.4.2rc1 | 0585         | 02/28/2020 | First release candidate for B7.4.2       |
 |  0.14.2  | B7.4      | 0570         | 11/18/2019 | Final release candidate for B7.4         |
 |  0.14.1  | B7.4rc2   | 0568         | 11/11/2019 | Second release candidate for B7.4        |
 |  0.14.0  | B7.4rc1   | 0563         | 10/25/2019 | First release candidate for B7.4         |
@@ -198,7 +196,7 @@ You can control where the test results are written with the `--basetemp=<PATH>` 
 
 If you would like to run a specific test, find its name or ID and use the `-k` option:
 
-    pytest --bigdata --basetemp=<PATH> jwst/regtest -k wcs
+    pytest --bigdata jwst/regtest -k nirspec
 
 If developers need to update the truth files in our nightly regression tests, there are instructions in the repository wiki.
 

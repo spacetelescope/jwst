@@ -6,13 +6,9 @@ coverage:
         flags: unit
       nightly:
         flags: nightly
-      newnightly:
-        flags: newnightly
 
 flags:
   unit:
     joined: true
   nightly:
-    joined: false
-  newnightly:
     joined: false

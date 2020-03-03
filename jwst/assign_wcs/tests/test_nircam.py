@@ -119,6 +119,32 @@ def get_reference_files(datamodel):
     return refs
 
 
+@pytest.fixture(params=tsgrism_filters)
+def tsgrism_inputs(request):
+    def _add_missing_key(missing_key=None):
+        tso_kw = wcs_tso_kw.copy()
+
+        if missing_key is not None:
+            tso_kw[missing_key] = None
+
+        hdu = create_hdul(
+            exptype='NRC_TSGRISM',
+            pupil='GRISMR',
+            filtername=request.param,
+            detector='NRCALONG',
+            subarray='SUBGRISM256',
+            wcskeys=tso_kw,
+            channel='LONG',
+            module='A',
+        )
+
+        image_model = CubeModel(hdu)
+
+        return image_model, get_reference_files(image_model)
+
+    return _add_missing_key
+
+
 def test_nircam_wfss_available_frames():
     """Make sure that the expected GWCS reference frames are created."""
     for p in ['GRISMR', 'GRISMC']:
@@ -132,6 +158,12 @@ def test_nircam_tso_available_frames():
     wcsobj = create_tso_wcs()
     available_frames = wcsobj.available_frames
     assert all([a == b for a, b in zip(nircam_tsgrism_frames, available_frames)])
+
+
+@pytest.mark.parametrize('key', ['xref_sci', 'yref_sci'])
+def test_extract_tso_object_fails_without_xref_yref(tsgrism_inputs, key):
+    with pytest.raises(ValueError):
+        nircam.tsgrism(*tsgrism_inputs(missing_key=key))
 
 
 def traverse_wfss_trace(pupil):
@@ -191,7 +223,7 @@ def test_imaging_distortion():
     """Verify that the distortion correction round trips."""
     wcsobj = create_imaging_wcs()
     sky_to_detector = wcsobj.get_transform('world', 'detector')
-    detector_to_sky = wcsobj.get_transform('detector', 'sky')
+    detector_to_sky = wcsobj.get_transform('detector', 'world')
 
     # we'll use the crpix as the simplest reference point
     ra = wcs_wfss_kw['crval1']

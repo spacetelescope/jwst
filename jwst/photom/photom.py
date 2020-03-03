@@ -10,7 +10,6 @@ from .. datamodels import dqflags
 from .. lib.wcs_utils import get_wavelengths
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 PHOT_TOL = 0.001  # relative tolerance between PIXAR_* keys
 
@@ -452,6 +451,13 @@ class DataSet():
                 if row is None:
                     continue
                 self.photom_io(ftab.phot_table[row])
+        elif self.exptype == 'NRC_TSGRISM':
+            order = self.input.meta.wcsinfo.spectral_order
+            fields_to_match = {'filter': self.filter, 'pupil': self.pupil, 'order': order}
+            row = find_row(ftab.phot_table, fields_to_match)
+            if row is None:
+                return
+            self.photom_io(ftab.phot_table[row])
         else:
             fields_to_match = {'filter': self.filter, 'pupil': self.pupil}
             row = find_row(ftab.phot_table, fields_to_match)

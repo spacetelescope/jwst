@@ -31,7 +31,6 @@ from ..datamodels import (CollimatorModel, CameraModel, DisperserModel, FOREMode
                           WavelengthrangeModel, FPAModel)
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 __all__ = ["create_pipeline", "imaging", "ifu", "slits_wcs", "get_open_slits", "nrs_wcs_set_input",
@@ -514,7 +513,8 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
     slitlets : list
         A list of `~jwst.transforms.models.Slit` objects. Each slitlet is a tuple with
         ("name", "shutter_id", "xcen", "ycen", "ymin", "ymax",
-        "quadrant", "source_id", "shutter_state")
+        "quadrant", "source_id", "shutter_state", "source_name", "source_alias", "stellarity",
+        "source_xpos", "source_ypos", "source_ra", "source_dec")
 
     """
     slitlets = []
@@ -584,7 +584,6 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
         open_shutters = [x['shutter_column'] for x in slitlets_sid]
 
         n_main_shutter = len([s for s in slitlets_sid if s['primary_source'] == 'Y'])
-
         # In the next part we need to calculate, find, determine 5 things:
         #    quadrant,  xcen, ycen,  ymin, ymax
 
@@ -632,8 +631,8 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
         # subtract 1 because shutter numbers in the MSA reference file are 1-based.
         shutter_id = xcen + (ycen - 1) * 365
         try:
-            source_name, source_alias, stellarity = [
-                (s['source_name'], s['alias'], s['stellarity']) \
+            source_name, source_alias, stellarity, source_ra, source_dec = [
+                (s['source_name'], s['alias'], s['stellarity'], s['ra'], s['dec']) \
                 for s in msa_source if s['source_id'] == source_id][0]
         except IndexError:
             # all background shutters
@@ -641,6 +640,8 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
             source_name = "background_{}".format(slitlet_id)
             source_alias = "bkg_{}".format(slitlet_id)
             stellarity = 0.0
+            source_ra = 0.0
+            source_dec = 0.0
 
         # Create the output list of tuples that contain the required
         # data for further computations
@@ -660,7 +661,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
 
         slitlets.append(Slit(slitlet_id, shutter_id, dither_position, xcen, ycen, ymin, ymax,
                              quadrant, source_id, all_shutters, source_name, source_alias,
-                             stellarity, source_xpos, source_ypos))
+                             stellarity, source_xpos, source_ypos, source_ra, source_dec))
     msa_file.close()
     return slitlets
 

@@ -9,7 +9,7 @@ allOf:
 - type: object
   properties:
     model:
-      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
     meta:
       type: object
       properties:

@@ -1,4 +1,4 @@
-0.14.3 (Unreleased)
+0.15.1 (Unreleased)
 ===================
 
 assign_wcs
@@ -6,8 +6,43 @@ assign_wcs
 
 - Added code to enable processing of NIRSPEC FIXEDSLIT AUTOWAVE data [#4626]
 
+datamodels
+----------
+
+- Added enum list for lamp_mode in core schema
+
+extract_2d
+----------
+
+- Added code to enable processing of NIRSPEC FIXEDSLIT AUTOWAVE data [#4626]
+
+flatfield
+---------
+
+- Added code to enable processing of NIRSPEC FIXEDSLIT AUTOWAVE data [#4626]
+
+pipeline
+--------
+
+- Added code to enable the ``calwebb_spec2`` pipeline to process NIRSPEC FIXEDSLIT
+  AUTOWAVE data [#4626]
+
+
+0.15.0 (2020-02-28)
+===================
+
+assign_wcs
+----------
+
+- A ``ValueError`` is now raised if input data is missing ``xref_sci`` or
+  ``yref_sci`` keywords. [#4561]
+
 associations
 ------------
+
+- Cull Association tests [#4610]
+
+- Correct PATTTYPE values in ASN level 3 rules [#4570]
 
 - Update act_id format to allow base 36 values in product name [#4282]
 
@@ -21,6 +56,8 @@ combine_1d
 datamodels
 ----------
 
+- Update schema-editor to match documentation and clarify execution [#4578]
+
 - Force data model type setting on save [#4318]
 
 - Deprecate ``MIRIRampModel`` [#4328]
@@ -31,9 +68,25 @@ datamodels
   from filesystem paths to URIs.  Make ``schema_url`` absolute to facilitate
   subclassing DataModel with schemas from other asdf extensions. [#4435]
 
-- Update core.schema.yaml to include new NIRCam entries for PATTTYPE [#4475]
+- Update core.schema.yaml to include new allowed values for PATTTYPE
+  [#4475, 4517, 4564]
 
-- Update core.schema.yaml to include NIRISS PATTTYPE values [#4517]
+
+- DataModel.update() now has ``extra_fits=False`` kwarg that controls whether
+  an update happens from the ``extra_fits`` section of the datamodel.  Default
+  is to stop doing this by default, i.e. ``False``. [#4593]
+
+- Add units to filteroffset schema.  [#4595]
+
+- Updated ``slitdata.schema.yaml`` to include ``SRCRA`` and ``SRCDEC`` for
+  MOS slitlets to FITS SCI headers. These values are taken from the MOS
+  metadata file. [#4613]
+
+- Many keyword updates to bring us in-sync with KWD. [#4602, #4627]
+
+- Update schemas to use transform-1.2.0. [#4604]
+
+- Allow FileNotFoundError to be raised. [#4605]
 
 extract_1d
 ----------
@@ -50,12 +103,13 @@ extract_2d
   and keywords SLTSTRT1 and SLTSTRT2 are set to the pixel location of the
   cutout in the input file. [#4504]
 
-- Added code to enable processing of NIRSPEC FIXEDSLIT AUTOWAVE data [#4626]
+- A ``ValueError`` is now raised if the input data is missing ``xref_sci`` or
+  ``yref_sci`` keywords. [#4561]
 
-flatfield
----------
+- Fix the WCS subarray offsets for NIRCam TSGRISM cutouts [#4573]
 
-- Added code to enable processing of NIRSPEC FIXEDSLIT AUTOWAVE data [#4626]
+- Added ``source_ra`` and ``source_dec`` to MSA ``Slit`` with values
+  from the MSA metadata file. [#4613]
 
 master_background
 -----------------
@@ -70,13 +124,18 @@ model_blender
 outlier_detection
 -----------------
 
+- Check for a zero array before sigma clipping [#4598]
+
 - Fix bug and logic pertaining to detecting if the background has been
   subtracted or not. [#4523]
 
 pipeline
 --------
 
-- Added FGS_IMAGE to the exposure types to apply resampling in calwebb_image2.py [#4421]
+- Hardwire required pipeline outputs in the pipeline. [#4578]
+
+- Added FGS_IMAGE to the exposure types to apply resampling in
+  calwebb_image2.py [#4421]
 
 - Make the naming and writing out of the resampled results to an `i2d` file
   in `Image2Pipeline` consistent between config and class invocations [#4333]
@@ -94,19 +153,31 @@ pipeline
   in the photometric table product to avoid ``astropy.table`` merge conflicts.
   [#4502]
 
-- Added code to enable the ``calwebb_spec2`` pipeline to process NIRSPEC FIXEDSLIT
-  AUTOWAVE data [#4626]
-
 photom
 ------
 
 - Added ``spectral_order`` to the fields matching the ``photom`` reference files
-  for NIRCAM WFSS mode. [#4538]
+  for NIRCAM WFSS and TSGRISM modes. [#4538, 4558]
+
+refpix
+------
+
+- Interchanged alpha and beta reference arrays; use the DQ extension [#4575]
+
+- Fixed bugs in PR #4575; added unit tests [#4596]
+
+- Changed the data type of columns OUTPUT and ODD_EVEN in the section of the
+  schema for the DQ table in the NIRSpec IRS2 refpix reference file [#4618]
 
 set_telescope_pointing
 ----------------------
 
 - Round S_REGION values in ``set_telescope_pointing`` [#4476]
+
+source_catalog
+--------------
+
+- Remove directory path when populating SCATFILE keyword. [#4597]
 
 srctype
 -------
@@ -119,6 +190,16 @@ stpipe
 
 - Fix sub-step nesting in parameter reference files [#4488]
 
+transforms
+----------
+
+ - Refactored the WFSS transforms to improve performance. [#4603]
+
+ - Added ``source_ra`` and ``source_dec`` to the ``Slit`` namedtuple
+   with default values of 0.0. These are populated from the MSA metadata
+   file. [#4613]
+
+  
 tweakreg
 --------
 
@@ -132,6 +213,12 @@ wfs_combine
 
 - Use float64 data types internally in ``wfs_combine`` so as not to cause an
   error in ``scipy.signal.convolve``. [#4432]
+
+tso_photometry
+--------------
+
+- A ``ValueError`` is now raised if the input data for ``call`` is missing
+  ``crpix1`` or ``crpix2`` keywords. [#4561]
 
 
 0.14.2 (2019-11-18)
@@ -2091,6 +2178,7 @@ assign_wcs
 
 - fix input units to meters when filter=OPAQUE [#2134]
 
+
 associations
 ------------
 
@@ -2153,7 +2241,6 @@ extract_1d
 
 extract_2d
 ----------
-
 
 firstframe
 ----------
