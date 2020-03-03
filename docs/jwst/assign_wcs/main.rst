@@ -104,7 +104,7 @@ over all integrations or a 3D cube of integrations in the case of TSO exposures.
 WCS of slitless grism exposures
 -------------------------------
 
-The WCS forward transforms for WFSS slitless grism exposures (``NIS_WFSS``, ``NRC_WFSS``, ``NRC_TSGRISM``)
+The WCS forward transforms for slitless grism exposures (``NIS_WFSS``, ``NRC_WFSS``, ``NRC_TSGRISM``)
 take as input the ``x, y`` coordinates on the dispersed image, the ``x0, y0`` coordinate of
 the center of the object in the direct image and ``spectral order``. They return the ``x0, y0`` coordinate of the center
 of the object in the direct image, ``wavelength`` and ``spectral order``.
