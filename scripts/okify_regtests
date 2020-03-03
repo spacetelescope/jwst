@@ -100,9 +100,11 @@ def main():
             # Retreive all the okify specfiles for failed tests.
             specfiles, asdffiles = artifactory_get_build_artifacts(build)
 
-            print(f"{len(specfiles)} failed tests to okify")
+            number_failed_tests = len(specfiles)
 
-            for specfile, asdffile in zip(specfiles, asdffiles):
+            print(f"{number_failed_tests} failed tests to okify")
+
+            for i, (specfile, asdffile) in enumerate(zip(specfiles, asdffiles)):
 
                 # Print traceback and OKify info for this test failure
                 with asdf.open(asdffile) as af:
@@ -118,12 +120,14 @@ def main():
                 remote_results = os.path.join(remote_results_path,
                     os.path.basename(output))
 
-                print(f" {test_name} ".center(TERMINAL_WIDTH, "-"))
+                test_number = i + 1
+
+                print(f" {test_name} ".center(TERMINAL_WIDTH, "—"))
                 print(traceback)
-                print("-" * TERMINAL_WIDTH)
+                print("—" * TERMINAL_WIDTH)
                 print(f"OK: {remote_results}")
                 print(f"--> {truth_remote}")
-                print("-" * TERMINAL_WIDTH)
+                print(f"[ test {test_number} of {number_failed_tests} ]".center(TERMINAL_WIDTH, "—"))
 
                 # Ask if user wants to okify this test
                 while True:
