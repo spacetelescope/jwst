@@ -7,7 +7,6 @@ The tests here are for later modifications.
 """
 import os
 from pathlib import Path
-import sys
 import yaml
 
 import pytest
@@ -105,8 +104,7 @@ def test_full_run(jail, schema, run_editor_full, rtdata_module):
     rt.output = os.path.join(run_editor_full, schema)
     rt.get_truth(SCHEMA_TRUTH + '/' + schema)
 
-    diff = list(text_diff(rt.output, rt.truth))
-    assert not diff, sys.stderr.writelines(diff)
+    assert text_diff(rt.output, rt.truth)
 
 
 @pytest.mark.bigdata
