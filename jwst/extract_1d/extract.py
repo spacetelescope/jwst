@@ -3486,28 +3486,25 @@ def extract_one_slit(input_model, slit, integ,
     input_dq = None                             # possibly replaced below
     if integ > -1:
         data = input_model.data[integ]
-        if "dq" in input_model._instance.keys():
-            input_dq = input_model.dq[integ]
-            if input_dq.size == 0: # secondary check to check is only initialized  
-                input_dq = None
+        input_dq = input_model.dq[integ]
+        if input_dq.size == 0: # secondary check to check is only initialized  
+            input_dq = None
         wl_array = get_wavelengths(input_model, exp_type,
                                    extract_params['spectral_order'])
 
     elif slit is None:
         data = input_model.data
-        if "dq" in input_model._instance.keys():
-            input_dq = input_model.dq
-            if input_dq.size == 0:
-                input_dq = None
+        input_dq = input_model.dq
+        if input_dq.size == 0:
+            input_dq = None
         wl_array = get_wavelengths(input_model, exp_type,
                                    extract_params['spectral_order'])
 
     else:
         data = slit.data
-        if "dq" in slit._instance.keys():
-            input_dq = slit.dq
-            if input_dq.size== 0:
-                input_dq = None                
+        input_dq = slit.dq
+        if input_dq.size== 0:
+            input_dq = None                
         wl_array = get_wavelengths(slit, exp_type,
                                    extract_params['spectral_order'])
 
