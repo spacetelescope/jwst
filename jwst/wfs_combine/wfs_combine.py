@@ -11,7 +11,7 @@ from scipy.signal import convolve
 from scipy import mgrid
 
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 # The following should probably be in a ref file instead
 OFF_DELTA = 2  # for searching +/-2 around nominal offsets

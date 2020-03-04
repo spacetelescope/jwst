@@ -19,7 +19,7 @@ from ..datamodels import (DistortionModel, FilteroffsetModel,
 from ..lib import s3_utils
 
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 __all__ = ["create_pipeline", "imaging", "lrs", "ifu"]

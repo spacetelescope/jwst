@@ -1,7 +1,7 @@
 import numpy as np
 
 import logging
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 def subtract(model1, model2):

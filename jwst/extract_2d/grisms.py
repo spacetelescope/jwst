@@ -14,7 +14,7 @@ from .. import datamodels
 from ..assign_wcs import util
 from ..datamodels import WavelengthrangeModel
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 def extract_tso_object(input_model,

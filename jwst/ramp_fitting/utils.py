@@ -9,7 +9,7 @@ from .. import datamodels
 from ..datamodels import dqflags
 from ..lib import reffile_utils
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 # Replace zero or negative variances with this:
 LARGE_VARIANCE = 1.e8

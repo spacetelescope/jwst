@@ -44,7 +44,7 @@ import scipy.interpolate as sciint
 import logging
 
 # Configure logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('.'.join(['stpipe', __name__]))
 
 JDOFFSET = 2400000.5
 

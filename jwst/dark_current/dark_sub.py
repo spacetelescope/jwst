@@ -6,7 +6,7 @@ import numpy as np
 import logging
 from .. import datamodels
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 def do_correction(input_model, dark_model, dark_output=None):

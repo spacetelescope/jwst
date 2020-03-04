@@ -1,7 +1,7 @@
 from jwst import datamodels
 import logging
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 def is_subarray(input_model):

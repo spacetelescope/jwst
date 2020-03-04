@@ -5,7 +5,7 @@ single datamodel or several data models stored in a ModelContainer.
 import os
 from .. import datamodels
 import logging
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 # ******************************************************************************

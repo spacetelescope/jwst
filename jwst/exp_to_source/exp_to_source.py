@@ -13,7 +13,7 @@ from ..datamodels.properties import merge_tree
 
 __all__ = ['exp_to_source', 'multislit_to_container']
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 def exp_to_source(inputs):

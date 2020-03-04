@@ -12,7 +12,7 @@ from astropy.io import fits
 from ..lib import s3_utils
 
 import logging
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 log.addHandler(logging.NullHandler())
 
 class NoTypeWarning(Warning):

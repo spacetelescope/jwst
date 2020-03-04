@@ -4,7 +4,7 @@ import numpy as np
 from ..assign_wcs import nirspec
 from gwcs import wcstools
 import logging
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 def find_footprint_MIRI(input, this_channel, instrument_info, coord_system):

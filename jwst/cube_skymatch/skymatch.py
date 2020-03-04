@@ -16,7 +16,7 @@ __all__ = ['match']
 __author__ = 'Mihai Cara'
 
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 def match(skycubes, subtract=False):

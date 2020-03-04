@@ -6,7 +6,7 @@ import numpy as np
 import logging
 from gwcs import wcstools
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 SLITRATIO = 1.15     # Ratio of slit spacing to slit height
 

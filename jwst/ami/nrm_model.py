@@ -27,7 +27,7 @@ from . import utils
 from . import hexee
 from . import nrm_consts
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 class NrmModel:

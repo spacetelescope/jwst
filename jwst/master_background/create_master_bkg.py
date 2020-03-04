@@ -4,7 +4,7 @@ import numpy as np
 
 from .. import datamodels
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 def create_background(wavelength, surf_bright):
     """Create a 1-D spectrum table as a MultiSpecModel.

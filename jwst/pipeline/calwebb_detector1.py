@@ -22,9 +22,6 @@ from ..gain_scale import gain_scale_step
 
 __all__ = ['Detector1Pipeline']
 
-# Define logging
-log = logging.getLogger()
-
 
 class Detector1Pipeline(Pipeline):
     """
@@ -60,7 +57,7 @@ class Detector1Pipeline(Pipeline):
     # start the actual processing
     def process(self, input):
 
-        log.info('Starting calwebb_detector1 ...')
+        self.log.info('Starting calwebb_detector1 ...')
 
         # open the input as a RampModel
         input = datamodels.RampModel(input)
@@ -73,7 +70,7 @@ class Detector1Pipeline(Pipeline):
 
             # process MIRI exposures;
             # the steps are in a different order than NIR
-            log.debug('Processing a MIRI exposure')
+            self.log.debug('Processing a MIRI exposure')
 
             input = self.group_scale(input)
             input = self.dq_init(input)
@@ -92,7 +89,7 @@ class Detector1Pipeline(Pipeline):
         else:
 
             # process Near-IR exposures
-            log.debug('Processing a Near-IR exposure')
+            self.log.debug('Processing a Near-IR exposure')
 
             input = self.group_scale(input)
             input = self.dq_init(input)
@@ -140,7 +137,7 @@ class Detector1Pipeline(Pipeline):
         # setup output_file for saving
         self.setup_output(input)
 
-        log.info('... ending calwebb_detector1')
+        self.log.info('... ending calwebb_detector1')
 
         return input
 

@@ -12,7 +12,7 @@ from .util import (not_implemented_mode, subarray_transform,
 from . import pointing
 from ..datamodels import DistortionModel
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 __all__ = ["create_pipeline", "imaging"]

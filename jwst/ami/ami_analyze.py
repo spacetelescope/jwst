@@ -11,7 +11,7 @@ from .nrm_model import NrmModel
 from . import webb_psf
 from . import leastsqnrm
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 def apply_LG(input_model, filter_model, oversample, rotation):

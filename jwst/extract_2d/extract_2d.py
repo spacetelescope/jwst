@@ -7,7 +7,7 @@ import logging
 from .nirspec import nrs_extract2d
 from .grisms import extract_grism_objects, extract_tso_object
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 def extract2d(input_model,

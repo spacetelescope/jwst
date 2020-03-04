@@ -7,7 +7,7 @@ import logging
 from .. import datamodels
 from .. datamodels import dqflags
 
-log = logging.getLogger()
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 SCALEFACTOR = 2.
 """This factor is to account for the difference in gain for charges freed

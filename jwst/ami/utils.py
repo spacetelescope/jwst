@@ -3,7 +3,7 @@ import logging
 import numpy as np
 import numpy.fft as fft
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 def quadratic(p, x):
     """

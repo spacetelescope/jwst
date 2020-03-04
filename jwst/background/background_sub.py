@@ -7,7 +7,7 @@ from ..assign_wcs.util import create_grism_bbox
 from astropy.stats import sigma_clip
 
 import logging
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 def background_sub(input_model, bkg_list, sigma, maxiters):

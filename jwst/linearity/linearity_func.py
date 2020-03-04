@@ -1,7 +1,7 @@
 import logging
 import numpy as np
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 def apply_linearity_func(ramparr, dqarr, coeffarr, dq_flag):

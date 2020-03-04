@@ -5,7 +5,7 @@ import numpy as np
 import logging
 from ..datamodels import dqflags
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 def do_correction(input_model):

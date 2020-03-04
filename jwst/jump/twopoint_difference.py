@@ -13,7 +13,7 @@ import logging
 import numpy as np
 from ..datamodels import dqflags
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 HUGE_NUM = np.finfo(np.float32).max
 

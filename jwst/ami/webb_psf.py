@@ -5,7 +5,7 @@ import numpy as np
 from . import utils
 from . import nrm_consts
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 def get_webbpsf_filter(filter_model, specbin=None, trim=False):

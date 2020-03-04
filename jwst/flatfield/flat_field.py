@@ -13,7 +13,7 @@ from .. datamodels import dqflags
 from .. lib import reffile_utils
 from .. assign_wcs import nirspec
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 MICRONS_100 = 1.e-4                     # 100 microns, in meters
 

@@ -7,7 +7,7 @@ import logging
 
 from .. import datamodels
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 def guider_cds(model):

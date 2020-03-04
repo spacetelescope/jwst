@@ -6,7 +6,7 @@ from .util import (update_s_region_spectral, update_s_region_imaging,
 from ..lib.exposure_types import IMAGING_TYPES, SPEC_TYPES
 from ..lib.dispaxis import get_dispersion_direction
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 __all__ = ["load_wcs"]
 

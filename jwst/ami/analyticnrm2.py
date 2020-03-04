@@ -10,7 +10,7 @@ import numpy as np
 import scipy.special
 from . import leastsqnrm
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 def Jinc(x, y):
     """

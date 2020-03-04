@@ -19,7 +19,7 @@ from . import cube_overlap
 from . import cube_cloud
 from . import coord
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 class IFUCubeData():

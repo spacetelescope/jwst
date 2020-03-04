@@ -8,7 +8,7 @@ from astropy import coordinates as coord
 from gwcs.wcs import WCS
 from gwcs import coordinate_frames as cf
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 def create_spectral_wcs(ra, dec, wavelength):
     """Assign a WCS for sky coordinates and a table of wavelengths

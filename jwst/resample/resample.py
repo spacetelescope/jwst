@@ -8,7 +8,7 @@ from . import gwcs_drizzle
 from . import resample_utils
 from ..model_blender import blendmeta
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 __all__ = ["ResampleData"]
 

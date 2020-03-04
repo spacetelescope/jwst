@@ -6,7 +6,7 @@ import logging
 from jwst.assign_wcs import nirspec, util
 from gwcs import wcstools
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 # There are 30 slices in the NIRSPEC IFU, numbered from 0 to 29

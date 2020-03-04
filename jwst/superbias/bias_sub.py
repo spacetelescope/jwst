@@ -6,7 +6,7 @@ import numpy as np
 import logging
 from ..lib import reffile_utils
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 def do_correction(input_model, bias_model):

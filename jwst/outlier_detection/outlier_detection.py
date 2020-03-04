@@ -14,7 +14,7 @@ from ..resample.resample_utils import build_driz_weight, calc_gwcs_pixmap
 from ..stpipe.step import Step
 
 import logging
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 CRBIT = np.uint32(datamodels.dqflags.pixel['JUMP_DET'])
 

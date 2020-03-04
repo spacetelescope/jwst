@@ -18,7 +18,7 @@ __all__ = ['extract1d']
 __taskname__ = 'extract1d'
 __author__ = 'Mihai Cara'
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 def extract1d(image, lambdas, disp_range,
               p_src, p_bkg=None, independent_var="wavelength",

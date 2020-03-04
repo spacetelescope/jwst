@@ -6,7 +6,7 @@ from scipy.ndimage import fourier_shift
 from ..datamodels import QuadModel
 
 import logging
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 def align_fourierLSQ(reference, target, mask=None):

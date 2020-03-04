@@ -14,7 +14,7 @@
 import logging
 import numpy as np
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 def g_eeAG(xi, eta, **kwargs):

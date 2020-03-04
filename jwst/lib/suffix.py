@@ -32,7 +32,7 @@ import sys
 __all__ = ['remove_suffix']
 
 # Configure logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('.'.join(['stpipe', __name__]))
 logger.addHandler(logging.NullHandler())
 
 # Suffixes that are hard-coded or otherwise

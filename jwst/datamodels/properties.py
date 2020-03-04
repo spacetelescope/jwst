@@ -15,7 +15,7 @@ from . import validate
 from . import schema as mschema
 
 import logging
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 log.addHandler(logging.NullHandler())
 
 __all__ = ['ObjectNode', 'ListNode']

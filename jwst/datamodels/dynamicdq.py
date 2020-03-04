@@ -2,7 +2,7 @@ import numpy as np
 from . import dqflags
 
 import logging
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 log.addHandler(logging.NullHandler())
 
 def dynamic_mask(input_model):

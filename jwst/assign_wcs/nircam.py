@@ -13,7 +13,7 @@ from ..transforms.models import (NIRCAMForwardRowGrismDispersion,
                                  NIRCAMForwardColumnGrismDispersion,
                                  NIRCAMBackwardGrismDispersion)
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 __all__ = ["create_pipeline", "imaging", "tsgrism", "wfss"]

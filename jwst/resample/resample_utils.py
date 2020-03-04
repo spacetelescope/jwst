@@ -11,7 +11,7 @@ from astropy.nddata.bitmask import interpret_bit_flags
 
 from ..assign_wcs.util import wcs_from_footprints, wcs_bbox_from_shape
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 def make_output_wcs(input_models):

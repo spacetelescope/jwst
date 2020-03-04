@@ -5,7 +5,7 @@ import numpy as np
 from .. import datamodels
 from ..lib import reffile_utils
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 # FGS guide star mode exposure types

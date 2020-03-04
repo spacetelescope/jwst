@@ -11,7 +11,7 @@ from .. import datamodels
 from ..datamodels import dqflags
 from . import spec_wcs
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 # These values are used to indicate whether the input reference file
 # (if any) is JSON or IMAGE.

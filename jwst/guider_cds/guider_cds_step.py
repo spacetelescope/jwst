@@ -4,9 +4,6 @@ from ..stpipe import Step
 from .. import datamodels
 from . import guider_cds
 
-import logging
-log = logging.getLogger(__name__)
-
 __all__ = ["GuiderCdsStep"]
 
 

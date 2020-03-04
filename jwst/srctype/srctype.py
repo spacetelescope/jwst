@@ -3,7 +3,7 @@ from ..lib import pipe_utils
 
 from .. import datamodels
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 def set_source_type(input_model):

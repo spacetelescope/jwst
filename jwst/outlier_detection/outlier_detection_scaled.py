@@ -14,7 +14,7 @@ from ..tso_photometry.tso_photometry import tso_aperture_photometry
 from .outlier_detection import OutlierDetection
 
 import logging
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 class OutlierDetectionScaled(OutlierDetection):

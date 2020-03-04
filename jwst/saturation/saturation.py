@@ -10,7 +10,7 @@ from . import x_irs2
 
 import numpy as np
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 HUGE_NUM = 100000.
 

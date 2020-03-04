@@ -26,7 +26,7 @@ from . import gls_fit           # used only if algorithm is "GLS"
 from . import utils
 
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 BUFSIZE = 1024 * 30000  # 30Mb cache size for data section
 

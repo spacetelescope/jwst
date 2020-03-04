@@ -5,7 +5,7 @@ from collections import OrderedDict
 from astropy.table import QTable
 from astropy.time import Time, TimeDelta
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 def white_light(input):

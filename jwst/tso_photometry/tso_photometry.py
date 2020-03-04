@@ -11,7 +11,7 @@ from photutils import CircularAperture, CircularAnnulus
 
 from ..datamodels import CubeModel
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,

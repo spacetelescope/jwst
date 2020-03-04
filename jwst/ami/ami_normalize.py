@@ -5,7 +5,7 @@
 
 import logging
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 def normalize_LG(target_model, reference_model):

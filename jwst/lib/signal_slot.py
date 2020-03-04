@@ -10,7 +10,7 @@ __all__ = ['Signal',
            'SignalsNotAClass']
 
 # Configure logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('.'.join(['stpipe', __name__]))
 logger.addHandler(logging.NullHandler())
 
 """Slot data structure

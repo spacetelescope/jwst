@@ -23,7 +23,7 @@ from . import util
 from . import validate
 
 import logging
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 log.addHandler(logging.NullHandler())
 
 

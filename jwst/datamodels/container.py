@@ -21,7 +21,7 @@ __doctest_skip__ = ['ModelContainer']
 __all__ = ['ModelContainer']
 
 # Configure logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('.'.join(['stpipe', __name__]))
 logger.addHandler(logging.NullHandler())
 
 class ModelContainer(model_base.DataModel):

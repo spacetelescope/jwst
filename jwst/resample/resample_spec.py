@@ -19,7 +19,7 @@ from . import resample_utils
 
 CRBIT = np.uint32(datamodels.dqflags.pixel['JUMP_DET'])
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 class ResampleSpecData:

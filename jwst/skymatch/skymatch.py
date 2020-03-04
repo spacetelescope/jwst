@@ -21,7 +21,7 @@ __author__ = 'Mihai Cara'
 #DEBUG
 __local_debug__ = True
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 def match(images, skymethod='global+match', match_down=True, subtract=False):

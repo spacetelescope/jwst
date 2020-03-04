@@ -23,7 +23,7 @@ from ..lib.catalog_utils import SkyObject
 from ..transforms.models import GrismObject
 from ..datamodels import WavelengthrangeModel, DataModel
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 __all__ = ["reproject", "wcs_from_footprints", "velocity_correction",

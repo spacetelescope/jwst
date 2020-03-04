@@ -43,7 +43,7 @@ import logging
 from ..datamodels import dqflags
 from ..lib import reffile_utils
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 #
 # NIR Reference section dictionaries are zero indexed and specify the values

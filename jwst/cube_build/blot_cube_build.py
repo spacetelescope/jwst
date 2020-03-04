@@ -8,7 +8,7 @@ from ..assign_wcs import nirspec
 from gwcs import wcstools
 from . import instrument_defaults
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 class CubeBlot():

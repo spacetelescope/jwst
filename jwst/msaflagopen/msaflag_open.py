@@ -10,7 +10,7 @@ from ..assign_wcs.nirspec import slitlets_wcs, nrs_wcs_set_input
 from ..transforms.models import Slit
 from gwcs.wcs import WCS
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 FAILEDOPENFLAG = datamodels.dqflags.pixel['MSA_FAILED_OPEN']

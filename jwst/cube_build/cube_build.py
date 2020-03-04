@@ -5,7 +5,7 @@ from . import cube_build_io_util
 from . import file_table
 from . import instrument_defaults
 
-log = logging.getLogger(__name__)
+log = llogging.getLogger('.'.join(['stpipe', __name__]))
 
 
 class CubeData():

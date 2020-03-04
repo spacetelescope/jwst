@@ -16,7 +16,7 @@ from . import extract1d
 from . import ifu
 from . import spec_wcs
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_WFSS', 'NRC_GRISM', 'NRC_TSGRISM']
 """Exposure types to be regarded as wide-field slitless spectroscopy."""

@@ -9,7 +9,7 @@ from .. import datamodels
 from .. datamodels import dqflags
 from .. lib.wcs_utils import get_wavelengths
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 PHOT_TOL = 0.001  # relative tolerance between PIXAR_* keys
 

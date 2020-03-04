@@ -9,7 +9,7 @@ import numpy as np
 from .. import datamodels
 
 import logging
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 def make_cube(input_models):

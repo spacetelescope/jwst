@@ -15,7 +15,7 @@ import logging
 from ..datamodels import dqflags
 from astropy.convolution import convolve, Box2DKernel
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 def correct_mrs(input_model, slice_map):

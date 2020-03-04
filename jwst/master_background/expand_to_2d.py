@@ -8,7 +8,7 @@ from .. assign_wcs import nirspec   # For NIRSpec IFU data
 from .. datamodels import dqflags
 from ..lib.wcs_utils import get_wavelengths
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_WFSS', 'NRC_GRISM', 'NRC_TSGRISM']
 

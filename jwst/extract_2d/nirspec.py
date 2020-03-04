@@ -14,7 +14,7 @@ from ..assign_wcs import nirspec
 from ..assign_wcs import util
 from ..lib import pipe_utils
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 def nrs_extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_files={}):

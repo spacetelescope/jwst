@@ -7,7 +7,7 @@ from ..lib import reffile_utils
 from . import twopoint_difference as twopt
 import multiprocessing
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 def detect_jumps (input_model, gain_model, readnoise_model,
                   rejection_threshold, max_cores,

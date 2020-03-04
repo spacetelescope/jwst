@@ -6,7 +6,7 @@ from ..resample import resample_spec, resample_utils
 from .outlier_detection import OutlierDetection
 
 import logging
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 __all__ = ["OutlierDetectionSpec"]

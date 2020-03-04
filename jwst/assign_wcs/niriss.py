@@ -17,7 +17,7 @@ from ..transforms.models import (NirissSOSSModel,
 from ..datamodels import ImageModel, NIRISSGrismModel, DistortionModel
 from ..lib import s3_utils
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 __all__ = ["create_pipeline", "imaging", "niriss_soss", "niriss_soss_set_input", "wfss"]
 

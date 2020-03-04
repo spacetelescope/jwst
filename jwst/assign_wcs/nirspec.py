@@ -30,7 +30,7 @@ from ..datamodels import (CollimatorModel, CameraModel, DisperserModel, FOREMode
                           IFUFOREModel, MSAModel, OTEModel, IFUPostModel, IFUSlicerModel,
                           WavelengthrangeModel, FPAModel)
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 __all__ = ["create_pipeline", "imaging", "ifu", "slits_wcs", "get_open_slits", "nrs_wcs_set_input",

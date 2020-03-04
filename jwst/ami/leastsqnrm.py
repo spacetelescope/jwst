@@ -5,7 +5,7 @@ import numpy.linalg as linalg
 from scipy.special import comb, jv
 from . import hexee
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 def flip(holearray):
     """

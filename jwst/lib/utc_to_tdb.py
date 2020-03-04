@@ -18,7 +18,7 @@ except Exception:
     import astropy.constants
     USE_TIMECONVERSION = False
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 # This is an interface to call
 #    timeconversion.compute_bary_helio_time(targetcoord, times)

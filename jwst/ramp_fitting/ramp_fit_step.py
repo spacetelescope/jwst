@@ -5,7 +5,7 @@ from .. import datamodels
 from . import ramp_fit
 
 import logging
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 
 __all__ = ["RampFitStep"]

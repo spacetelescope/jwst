@@ -9,7 +9,7 @@ from .. import datamodels
 from . import resample
 from ..assign_wcs import util
 
-log = logging.getLogger(__name__)
+log = logging.getLogger('.'.join(['stpipe', __name__]))
 
 __all__ = ["ResampleStep"]
 
