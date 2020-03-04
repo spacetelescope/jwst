@@ -5,6 +5,7 @@ import pytest
 from astropy.table import Table
 import astropy.units as u
 import numpy as np
+from .regtestdata import text_diff
 
 
 @pytest.mark.bigdata
@@ -103,3 +104,20 @@ def test_diff_astropy_tables_allclose(diff_astropy_tables, two_tables):
 
     with pytest.raises(AssertionError, match="Not equal to tolerance"):
         assert diff_astropy_tables(path1, path2)
+
+
+def test_text_diff(tmpdir):
+    path1 = str(tmpdir.join("test1.txt"))
+    path2 = str(tmpdir.join("test2.txt"))
+    with open(path1, "w") as text_file:
+        print("foo", file=text_file)
+    with open(path2, "w") as text_file:
+        print("foo", file=text_file)
+
+    assert text_diff(path1, path2)
+
+    with open(path2, "w") as text_file:
+        print("bar", file=text_file)
+
+    with pytest.raises(AssertionError):
+        assert text_diff(path1, path2)
