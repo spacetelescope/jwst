@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+
 """
 JWST pipeline step for image intensity matching for MIRI images.
 
@@ -316,6 +316,10 @@ def _match_models(models, channel, degree, center=None, center_cs='image'):
 
         image_data.append(cm.data)
         sigma_data.append(sigmas)
+
+    print('Mask',mask_data)
+    print('Image data',image_data)
+
 
     bkg_poly_coef, mat, _, _, effc, cs = match_lsq(
         images=image_data,
