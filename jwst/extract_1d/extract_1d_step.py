@@ -109,13 +109,8 @@ class Extract1dStep(Step):
         elif isinstance(input_model, datamodels.MultiExposureModel):
             self.log.warning('Input is a MultiExposureModel, '
                              'which is not currently supported')
-#        elif isinstance(input_model, datamodels.MultiProductModel):
-#            self.log.debug('Input is a MultiProductModel')
         elif isinstance(input_model, datamodels.IFUCubeModel):
             self.log.debug('Input is an IFUCubeModel')
-#        elif isinstance(input_model, datamodels.DrizProductModel):
-            # Resampled 2-D data
-#            self.log.debug('Input is a DrizProductModel')
         elif isinstance(input_model, datamodels.SlitModel):
             # NRS_BRIGHTOBJ mode
             self.log.debug('Input is a SlitModel')

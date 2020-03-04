@@ -69,6 +69,7 @@ class ResampleSpecData:
         self.output_wcs = self.build_interpolated_output_wcs()
         self.blank_output = datamodels.ImageModel(self.data_size)
 
+        # update works on meta data
         self.blank_output.update(datamodels.ImageModel(self.input_models[0]._instance))
         self.blank_output.meta.wcs = self.output_wcs
         self.output_models = datamodels.ModelContainer()

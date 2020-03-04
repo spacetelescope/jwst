@@ -14,7 +14,7 @@ class ResampleSpecStep(ResampleStep):
 
     Parameters
     -----------
-    input : `~jwst.datamodels.MultSlitModel`, `~jwst.datamodels.ModelContainer`, Association
+    input : `~jwst.datamodels.MultiSlitModel`, `~jwst.datamodels.ModelContainer`, Association
         A singe datamodel, a container of datamodels, or an association file
     """
 
@@ -45,9 +45,9 @@ class ResampleSpecStep(ResampleStep):
             kwargs = self._set_spec_defaults()
 
         self.drizpars = kwargs
-
         if isinstance(input_models[0], MultiSlitModel):
             result = self._process_multislit(input_models)
+
         elif len(input_models[0].data.shape) != 2:
             # resample can only handle 2D images, not 3D cubes, etc
             raise RuntimeError("Input {} is not a 2D image.".format(input_models[0]))
@@ -73,6 +73,7 @@ class ResampleSpecStep(ResampleStep):
         containers = multislit_to_container(input_models)
         result = datamodels.MultiSlitModel()
         result.update(input_models[0])
+
         for container in containers.values():
             resamp = resample_spec.ResampleSpecData(container, **self.drizpars)
             drizzled_models = resamp.do_drizzle()
@@ -92,7 +93,6 @@ class ResampleSpecStep(ResampleStep):
                 for model in drizzled_models:
                     result.slits.append(model)
                     result.slits[-1].bunit_data = container[0].meta.bunit_data
-
         return result
 
     def _process_slit(self, input_models):
