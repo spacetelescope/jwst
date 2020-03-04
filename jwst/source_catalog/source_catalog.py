@@ -33,11 +33,13 @@ class SourceCatalog:
         self.snr_threshold = snr_threshold
         self.npixels = npixels
         self.deblend = deblend
-        self.aperture_ee = aperture_ee
+        self.aperture_ee = np.array(aperture_ee)
 
+        self._ci_colname = f'CI_{self.aperture_ee[0]}_{self.aperture_ee[2]}'
         self._flux_colnames = self._make_aper_colnames('flux')
         self._abmag_colnames = self._make_aper_colnames('abmag')
         self._vegamag_colnames = self._make_aper_colnames('vegamag')
+        self._bkg_colnames = ['aper_bkg_flux', 'aper_bkg_flux_err']
 
         self.coverage_mask = None
         self._bkg = None
@@ -48,6 +50,7 @@ class SourceCatalog:
         self.segm = None
         self.total_error = None
         self.segment_catalog = None
+        self.xypos = None
         self.null_column = None
 
         self.bkg_aper_in = None
@@ -55,13 +58,14 @@ class SourceCatalog:
         self.aper_radii = None
         self.abmag_offset = None
         self.aperture_catalog = None
-        self._ci_colname = None
+        self.extras_catalog = None
+        self.catalog = None
 
     def _colnames_generator(self, name):
-        for ee in self.aperture_ee:
-            base = f'aper{ee}_{name}'
-            yield base
-            yield f'{base}_err'
+        for aper_ee in self.aperture_ee:
+            basename = f'aper{aper_ee}_{name}'
+            yield basename
+            yield f'{basename}_err'
 
     def _make_aper_colnames(self, name):
         colnames = list(self._colnames_generator(name))
@@ -302,6 +306,10 @@ class SourceCatalog:
                    'sky_bbox_lr', 'sky_bbox_ur']
         catalog = source_props.to_table(columns=columns)
 
+        # save the source positions for aperture photometry
+        self.xypos = np.transpose((catalog['xcentroid'],
+                                   catalog['ycentroid']))
+
         flux_col = 'isophotal_flux'
         flux_err_col = 'isophotal_flux_err'
         catalog.rename_column('source_sum', flux_col)
@@ -310,7 +318,7 @@ class SourceCatalog:
         catalog.rename_column('semimajor_axis_sigma', 'semimajor_sigma')
         catalog.rename_column('semiminor_axis_sigma', 'semiminor_sigma')
 
-        # define the orientation position angle (E of N)
+        # Define the orientation position angle (E of N)
         # NOTE: crpix1 and crpix2 are 1-based values
         skycoord = wcs.pixel_to_world(self.model.meta.wcsinfo.crpix1 - 1,
                                       self.model.meta.wcsinfo.crpix2 - 1)
@@ -318,6 +326,7 @@ class SourceCatalog:
         sky_orientation = (180.0 * u.deg) - angle + catalog['orientation']
         catalog.add_column(sky_orientation, name='sky_orientation', index=11)
 
+        # Add ABmag and Vegamag columns
         flux = catalog[flux_col]
         flux_err = catalog[flux_err_col]
         abmag, abmag_err = self.flux_to_abmag(flux, flux_err)
@@ -329,8 +338,6 @@ class SourceCatalog:
         catalog.add_column(vegamag_err, name='isophotal_vegamag_err', index=9)
 
         self.segment_catalog = catalog
-        self.xypos = np.transpose((catalog['xcentroid'],
-                                   catalog['ycentroid']))
 
         return self.segment_catalog
 
@@ -338,6 +345,8 @@ class SourceCatalog:
         values = np.empty(len(self.segment_catalog))
         values.fill(np.nan)
         self.null_column = values
+
+        return self.null_column
 
     def calc_aper_local_background(self, bkg_aper):
         """
@@ -379,14 +388,19 @@ class SourceCatalog:
 
         return catalog
 
-    def calc_concentration_index(self, catalog):
-        eefractions = [self.aperture_ee[i] for i in (0, 2)]
-        self._ci_colname = f'CI_{eefractions[0]}_{eefractions[1]}'
-        col1 = f'aper{eefractions[0]}_abmag'
-        col2 = f'aper{eefractions[1]}_abmag'
-        return catalog[col1] - catalog[col2]
+    def calc_concentration_index(self):
+        col1 = self._abmag_colnames[0]  # ee_fraction[0]
+        col2 = self._abmag_colnames[4]  # ee_fraction[2]
+        return self.aperture_catalog[col1] - self.aperture_catalog[col2]
 
-    def calc_is_star(self, catalog):
+    def calc_is_star(self):
+        """
+        Column containing a flag based on whether the source is a star.
+
+        2020.03.02: The JWST Photometry Working Group has not determined
+        the criteria for this flag.
+        """
+
         return self.null_column
 
     def get_aperture_radii(self):
@@ -443,13 +457,9 @@ class SourceCatalog:
             aper_phot[vegamag_col] = vegamag
             aper_phot[vegamag_err_col] = vegamag_err
 
-        aper_phot['aper_bkg_flux'] = bkg_median
-        aper_phot['aper_bkg_fluxerr'] = bkg_median_err
-
-        aper_phot = self.append_aper_total(aper_phot)
-
-        aper_phot[self._ci_colname] = self.calc_concentration_index(aper_phot)
-        aper_phot['is_star'] = self.calc_is_star(aper_phot)
+        aper_phot.add_column(bkg_median, name=self._bkg_colnames[0], index=3)
+        aper_phot.add_column(bkg_median_err, name=self._bkg_colnames[1],
+                             index=4)
 
         self.aperture_catalog = aper_phot
 
@@ -464,26 +474,40 @@ class SourceCatalog:
     def calc_isolation_metric(self, catalog):
         return self.null_column
 
-    def make_source_catalog(self):
-        catalog = join(self.segment_catalog, self.aperture_catalog)
+    def make_extras_catalog(self):
+        catalog = self.segment_catalog[['id']]  # new table
+
+        catalog = self.append_aper_total(catalog)
+
+        catalog[self._ci_colname] = self.calc_concentration_index()
+        catalog['is_star'] = self.calc_is_star()
 
         catalog['sharpness'] = self.calc_sharpness(catalog)
         catalog['roundness'] = self.calc_roundness(catalog)
         catalog['isolation_metric'] = self.calc_isolation_metric(catalog)
 
+        self.extras_catalog = catalog
+
+        return self.extras_catalog
+
+    def make_source_catalog(self):
+        catalog = join(self.segment_catalog, self.aperture_catalog)
+        catalog = join(catalog, self.extras_catalog)
+
+        # Until errors are produced for the level 3 drizzle products,
+        # the JPWG has decided that the errors should not be populated.
         for colname in catalog.colnames:
             if colname.endswith('_err'):
                 catalog[colname] = self.null_column
 
+        # Define the column name order for the final source catalog
         colnames = self.segment_catalog.colnames[0:4]
+        colnames.extend(self._bkg_colnames)
         colnames.extend(self._flux_colnames)
-        colnames.extend(['aper_bkg_flux', 'aper_bkg_fluxerr'])
         colnames.extend(self._abmag_colnames)
         colnames.extend(self._vegamag_colnames)
-        colnames.extend([self._ci_colname, 'is_star', 'sharpness',
-                         'roundness', 'isolation_metric'])
+        colnames.extend(self.extras_catalog.colnames[7:])
         colnames.extend(self.segment_catalog.colnames[4:])
-
         self.catalog = catalog[colnames]
 
         return self.catalog
@@ -508,8 +532,9 @@ class SourceCatalog:
         self.get_abmag_offset()
 
         self.make_segment_catalog()
-        self.make_nan_column()
+        self.make_null_column()
         self.make_aperture_catalog()
+        self.make_extras_catalog()
         self.make_source_catalog()
 
         return self.catalog
