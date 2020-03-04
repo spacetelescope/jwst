@@ -3483,11 +3483,11 @@ def extract_one_slit(input_model, slit, integ,
         log_initial_parameters(extract_params)
 
     exp_type = input_model.meta.exposure.type
-    input_dq = None                             # possibly replaced below
+    input_dq = None
     if integ > -1:
         data = input_model.data[integ]
         input_dq = input_model.dq[integ]
-        if input_dq.size == 0: # secondary check to check is only initialized  
+        if input_dq.size == 0:
             input_dq = None
         wl_array = get_wavelengths(input_model, exp_type,
                                    extract_params['spectral_order'])
@@ -3504,7 +3504,7 @@ def extract_one_slit(input_model, slit, integ,
         data = slit.data
         input_dq = slit.dq
         if input_dq.size== 0:
-            input_dq = None                
+            input_dq = None
         wl_array = get_wavelengths(slit, exp_type,
                                    extract_params['spectral_order'])
 
