@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 """
 JWST pipeline step for image intensity matching for MIRI images.
 
@@ -91,7 +90,10 @@ class MRSIMatchStep(Step):
 
         # set step completion status in the input images
         for m in all_models2d:
-            m.meta.cal_step.mrs_imatch = 'COMPLETE'
+            if m.meta.cal_step.mrs_imatch == 'SKIPPED':
+                self.log.info('Background can not be determined, skipping mrs_imatch')
+            else:
+                m.meta.cal_step.mrs_imatch = 'COMPLETE'
 
         return images
 
@@ -314,6 +316,19 @@ def _match_models(models, channel, degree, center=None, center_cs='image'):
         image_data.append(cm.data)
         sigma_data.append(sigmas)
 
+    # leaving in below commented out lines for
+    # Mihia to de-bug step  when coefficients are NAN
+    #mask_array = np.asarray(mask_data)
+    #image_array = np.asarray(image_data)
+    #sigma_array = np.asarray(sigma_data)
+    #test_data = image_array[mask_array>0]
+    #test_sigma = sigma_array[mask_array>0]
+    #if np.isnan(test_data).any():
+    #    print('a nan exists in test data')
+    #if np.isnan(sigma_data).any():
+    #    print('a nan exists in sigma data')
+
+
     bkg_poly_coef, mat, _, _, effc, cs = match_lsq(
         images=image_data,
         masks=mask_data,
@@ -337,17 +352,23 @@ def _match_models(models, channel, degree, center=None, center_cs='image'):
     # if requested:
     ##### model.meta.instrument.channel
 
-    # set 2D models' background meta info:
-    for im, poly in zip(models, bkg_poly_coef):
-        im.meta.background.subtracted = False
-        im.meta.background.polynomial_info.append(
-            {
+    if np.isnan(bkg_poly_coef).any():
+        bkg_poly_coef = None
+        for im in models:
+            im.meta.cal_step.mrs_imatch = 'SKIPPED'
+            im.meta.background.subtracted = False
+    else:
+        # set 2D models' background meta info:
+        for im, poly in zip(models, bkg_poly_coef):
+            im.meta.background.subtracted = False
+            im.meta.background.polynomial_info.append(
+                {
                 'degree': degree,
                 'refpoint': center,
                 'coefficients': poly.ravel().tolist(),
                 'channel': channel
-            }
-        )
+                }
+            )
 
     return models
 
