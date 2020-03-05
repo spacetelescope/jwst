@@ -157,10 +157,11 @@ class LogConfig():
         for handler_str in self.handler:
             handler = self.get_handler(handler_str)
 
-            # Adding additional stream handlers will result in duplicate messages if a stream handler is in the root
+            # Adding additional stream handlers will result in duplicate messages if a stream handler is in the
+            # top-level ancestor.
             if (
                     isinstance(handler, logging.StreamHandler)
-                    and logging.StreamHandler in [type(item) for item in log.root.handlers]
+                    and logging.StreamHandler in [type(item) for item in getLogger(log.name.split('.')[0]).handlers]
             ):
                 continue
 
