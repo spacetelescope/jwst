@@ -156,6 +156,14 @@ class LogConfig():
         # Set a handler
         for handler_str in self.handler:
             handler = self.get_handler(handler_str)
+
+            # Adding additional stream handlers will result in duplicate messages if a stream handler is in the root
+            if (
+                    isinstance(handler, logging.StreamHandler)
+                    and logging.StreamHandler in [type(item) for item in log.root.handlers]
+            ):
+                continue
+
             handler._from_config = True
             handler.setLevel(self.level)
             log.addHandler(handler)
