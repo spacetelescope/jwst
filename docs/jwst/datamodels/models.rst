@@ -163,6 +163,56 @@ description is::
 where the second argument is the dictionary with the keywords
 mentioned.
 
+Looking at the contents of a model
+----------------------------------
+
+Use ``model.info()`` to look at the contents of a data model. It renders
+the underlying ASDF tree starting at the root or a specified ``node``.
+The number of displayed rows is controlled by the ``max_row`` argument::
+
+  im.info()
+  root.tree (AsdfObject)
+  ├─asdf_library (Software)
+  │ ├─author (str): Space Telescope Science Institute
+  │ ├─homepage (str): http://github.com/spacetelescope/asdf
+  │ ├─name (str): asdf
+  │ └─version (str): 2.5.2a1.dev12+g12aa460
+  ├─history (dict)
+  │ └─extensions (list) ...
+  ├─data (ndarray): shape=(2048, 2048), dtype=float32
+  ├─dq (ndarray): shape=(2048, 2048), dtype=uint32
+  ├─err (ndarray): shape=(2048, 2048), dtype=float32
+  ├─meta (dict)
+  │ ├─aperture (dict) ...
+  │ ├─bunit_data (str): DN/s
+  │ ├─bunit_err (str): DN/s
+  │ ├─cal_step (dict) ...
+  │ ├─calibration_software_revision (str): 3bfd782b
+  │ ├─calibration_software_version (str): 0.14.3a1.dev133+g3bfd782b.d20200216
+  │ ├─coordinates (dict) ...
+  │ └─28 not shown
+  ├─var_poisson (ndarray): shape=(2048, 2048), dtype=float32
+  ├─var_rnoise (ndarray): shape=(2048, 2048), dtype=float32
+  └─extra_fits (dict) ...
+  Some nodes not shown.
+
+
+Searching a model
+-----------------
+
+``model.search()`` can be used to search the ASDF tree by ``key`` or
+``value``::
+
+  im.search(key='filter')
+
+  root.tree (AsdfObject)
+  └─meta (dict)
+  ├─instrument (dict)
+  │ └─filter (str): F170LP
+  └─ref_file (dict)
+    └─filteroffset (dict)
+
+
 
 Converting from ``astropy.io.fits``
 ===================================

@@ -599,29 +599,6 @@ def test_hasattr():
     assert not model.meta.hasattr('filename')
 
 
-def test_info():
-    warnings.simplefilter("ignore")
-    with datamodels.open(FITS_FILE) as model:
-        info = model.info()
-    matches = 0
-    for line in info.split("\n"):
-        words = line.split()
-        if len(words) > 0:
-            if words[0] == "data":
-                matches += 1
-                assert words[1] == "(32,40,35,5)", "Correct size for data"
-                assert words[2] == "float32", "Correct type for data"
-            elif words[0] == "dq":
-                matches += 1
-                assert words[1] == "(32,40,35,5)", "Correct size for dq"
-                assert words[2] == "uint32", "Correct type for dq"
-            elif words[0] == "err":
-                matches += 1
-                assert words[1] == "(32,40,35,5)", "Correct size for err"
-                assert words[2] == "float32", "Correct type for err"
-    assert matches == 3, "Check all extensions are described"
-
-
 def test_validate_on_read():
     schema = ImageModel((10, 10))._schema.copy()
     schema['properties']['meta']['properties']['calibration_software_version']['fits_required'] = True
