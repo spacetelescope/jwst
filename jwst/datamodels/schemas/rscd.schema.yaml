@@ -7,9 +7,33 @@ allOf:
 - $ref: referencefile.schema
 - type: object
   properties:
-    rscd_table:
-      title: Reference file for RSCD correction
-      fits_hdu: RSCD
+    rscd_group_skip_table:
+      title: Reference file for RSCD baseline correction
+      fits_hdu: RSCD_GROUP_SKIP
+      datatype:
+      - name: subarray
+        datatype: [ascii, 13]
+      - name: readpatt
+        datatype: [ascii, 4]
+      - name: group_skip
+        datatype: float32
+    rscd_gen_table:
+      title: Reference file for RSCD enhanced correction
+      fits_hdu: RSCD_GEN
+      datatype:
+      - name: subarray
+        datatype: [ascii, 13]
+      - name: readpatt
+        datatype: [ascii, 4]
+      - name: lower_cutoff
+        datatype: float32
+      - name: alpha_even
+        datatype: float32
+      - name: alpha_odd
+        datatype: float32
+    rscd_int1_table:
+      title: Reference file for RSCD baseline correction for int 1
+      fits_hdu: RSCD_INT1
       datatype:
       - name: subarray
         datatype: [ascii, 13]
@@ -17,31 +41,47 @@ allOf:
         datatype: [ascii, 4]
       - name: rows
         datatype: [ascii, 4]
-      - name: tau
+      - name: a0
         datatype: float32
-      - name: ascale
+      - name: a1
         datatype: float32
-      - name: pow
+      - name: a2
         datatype: float32
-      - name: illum_zp
+      - name: a3
         datatype: float32
-      - name: illum_slope
+    rscd_int2_table:
+      title: Reference file for RSCD baseline correction for int 2
+      fits_hdu: RSCD_INT2
+      datatype:
+      - name: subarray
+        datatype: [ascii, 13]
+      - name: readpatt
+        datatype: [ascii, 4]
+      - name: rows
+        datatype: [ascii, 4]
+      - name: b0
         datatype: float32
-      - name: illum2
+      - name: b1
         datatype: float32
-      - name: param3
+      - name: b2
         datatype: float32
-      - name: crossopt
+      - name: b3
         datatype: float32
-      - name: sat_zp
+    rscd_int1_table:
+      title: Reference file for RSCD baseline correction for int 1
+      fits_hdu: RSCD_INT2
+      datatype:
+      - name: subarray
+        datatype: [ascii, 13]
+      - name: readpatt
+        datatype: [ascii, 4]
+      - name: rows
+        datatype: [ascii, 4]
+      - name: c0
         datatype: float32
-      - name: sat_slope
+      - name: c1
         datatype: float32
-      - name: sat_2
+      - name: c2
         datatype: float32
-      - name: sat_mzp
-        datatype: float32
-      - name: sat_rowterm
-        datatype: float32
-      - name:  sat_scale
+      - name: c3
         datatype: float32
