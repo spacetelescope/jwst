@@ -317,8 +317,17 @@ def _match_models(models, channel, degree, center=None, center_cs='image'):
         image_data.append(cm.data)
         sigma_data.append(sigmas)
 
-    print('Mask',mask_data)
-    print('Image data',image_data)
+    # leaving in below commented out lines for
+    # Mihia to de-bug step  when coefficients are NAN
+    #mask_array = np.asarray(mask_data)
+    #image_array = np.asarray(image_data)
+    #sigma_array = np.asarray(sigma_data)
+    #test_data = image_array[mask_array>0]
+    #test_sigma = sigma_array[mask_array>0]
+    #if np.isnan(test_data).any():
+    #    print('a nan exists in test data')
+    #if np.isnan(sigma_data).any():
+    #    print('a nan exists in sigma data')
 
 
     bkg_poly_coef, mat, _, _, effc, cs = match_lsq(

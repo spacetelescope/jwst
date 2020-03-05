@@ -1312,6 +1312,8 @@ model_blender
 mrs_imatch
 ----------
 
+- If the background polynomial contains any Nan Values the mrs_imatch step is skipped [#4642]
+
 msaflagopen
 -----------
 
