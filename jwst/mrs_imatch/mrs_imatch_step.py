@@ -1,4 +1,3 @@
-
 """
 JWST pipeline step for image intensity matching for MIRI images.
 
@@ -357,6 +356,7 @@ def _match_models(models, channel, degree, center=None, center_cs='image'):
         bkg_poly_coef = None
         for im in models:
             im.meta.cal_step.mrs_imatch = 'SKIPPED'
+            im.meta.background.subtracted = False
     else:
         # set 2D models' background meta info:
         for im, poly in zip(models, bkg_poly_coef):
