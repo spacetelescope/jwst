@@ -12,7 +12,7 @@ from astropy.io import fits
 from astropy.modeling import models as astmodels
 from astropy.table import QTable
 from astropy.constants import c
-from astropy.wcs.utils import skycoord_to_pixel
+#from astropy.wcs.utils import skycoord_to_pixel
 
 from gwcs import WCS
 from gwcs.wcstools import wcs_from_fiducial, grid_from_bounding_box
@@ -403,8 +403,7 @@ def get_object_info(catalog_name=None):
 def create_grism_bbox(input_model,
                       reference_files,
                       mmag_extract=99.0,
-                      extract_orders=None,
-                      use_fits_wcs=False):
+                      extract_orders=None):
     """Create bounding boxes for each object in the catalog
 
     The sky coordinates in the catalog image are first related
@@ -426,13 +425,6 @@ def create_grism_bbox(input_model,
     extract_orders : list
         The list of orders to extract, if specified this will
         override the orders listed in the wavelengthrange reference file
-    use_fits_wcs: bool
-        Use the fits_wcs to translate the object centers in source catalog.
-        In early pipeline testing the source catalog step is not using GWCS
-        to translate detector<->sky locations. This will allow for part of the
-        transform to get the correct detector pointing to send the correct
-        object centers in the trace polynomial transforms that live in the
-        gwcs object.
 
     Returns
     -------
@@ -459,18 +451,15 @@ def create_grism_bbox(input_model,
     NIRISS only has one detector, but GRISMC disperses along rows and
     GRISMR disperses along columns.
 
-    photutils is used to create the source catalog in the pipeline,
-    it's currently using the fits wcs for it's sky translation, it
-    grabs the fits wcs from the data model using get_fits_wcs(). Until
-    GWCS is fully implemented, this translation may be off in the
-    pipeline.
+    #photutils is used to create the source catalog in the pipeline,
+    #it's currently using the fits wcs for it's sky translation, it
+    #grabs the fits wcs from the data model using get_fits_wcs(). Until
+    #GWCS is fully implemented, this translation may be off in the
+    #pipeline.
 
     """
-    if use_fits_wcs:
-        log.info("Using fits_wcs object for sky->detector translations")
-
     if not isinstance(mmag_extract, (int, float)):
-        raise TypeError("Expected mmag_extract to be an int or float")
+        raise TypeError(f"Expected mmag_extract to be a number, got {mmag_extract}")
     log.info("Extracting objects < abmag = {0}".format(mmag_extract))
 
     instr_name = input_model.meta.instrument.name
@@ -479,7 +468,7 @@ def create_grism_bbox(input_model,
     elif instr_name == "NIRISS":
         filter_name = input_model.meta.instrument.pupil
     else:
-        raise ValueError("Input model is from unexpected instrument")
+        raise ValueError("create_grism_object works with NIRCAM and NIRISS WFSS exposures only.")
 
     # extract the catalog objects
     if input_model.meta.source_catalog is None:
@@ -495,16 +484,9 @@ def create_grism_bbox(input_model,
     # get the imaging transform to record the center of the object in the image
     # here, image is in the imaging reference frame, before going through the
     # dispersion coefficients
-    if use_fits_wcs:
-        # use the fits wcs to get the source and box positions
-        fits_wcs = input_model.get_fits_wcs()
-        # but use the gwcs to translate the trace
-        detector_to_grism = input_model.meta.wcs.get_transform('detector',
-                                                               'grism_detector')
-    else:
-        # this only uses the gwcs object and is preferred
-        sky_to_detector = input_model.meta.wcs.get_transform('world', 'detector')
-        sky_to_grism = input_model.meta.wcs.get_transform('world', 'grism_detector')
+
+    sky_to_detector = input_model.meta.wcs.get_transform('world', 'detector')
+    sky_to_grism = input_model.meta.wcs.get_transform('world', 'grism_detector')
 
     # Get the disperser parameters which have the wave limits
     with WavelengthrangeModel(reference_files['wavelengthrange']) as f:
@@ -540,16 +522,9 @@ def create_grism_bbox(input_model,
                 # save the image frame center of the object
                 # takes in ra, dec, wavelength, order but wave and order
                 # don't get used until the detector->grism_detector transform
-                ##
-                ## TODO: temp to check fits_wcs catalog use, remove with #2533
-                ##
-                if use_fits_wcs:
-                    xcenter, ycenter = skycoord_to_pixel(obj.sky_centroid.icrs,
-                                                         fits_wcs, origin=0)
-                else:
-                    xcenter, ycenter, _, _ = sky_to_detector(obj.sky_centroid.icrs.ra.value,
-                                                             obj.sky_centroid.icrs.dec.value,
-                                                             1, 1)
+                xcenter, ycenter, _, _ = sky_to_detector(obj.sky_centroid.icrs.ra.value,
+                                                         obj.sky_centroid.icrs.dec.value,
+                                                         1, 1)
 
                 order_bounding = {}
                 waverange = {}
@@ -562,37 +537,20 @@ def create_grism_bbox(input_model,
                     # location of the +/- sides of the bounding box in the
                     # grism image
                     lmin, lmax = range_select.pop()
-
-                    # TODO: temp to check fits_wcs catalog use, remove with #2533
-                    if use_fits_wcs:
-                        # translate the boxes using fits wcs
-                        dxmax, dymax = skycoord_to_pixel(obj.sky_bbox_ur,
-                                                         fits_wcs, origin=1)
-                        dxmin, dymin = skycoord_to_pixel(obj.sky_bbox_ll,
-                                                         fits_wcs, origin=1)
-
-                        # now translate through the grism transforms
-                        xmin, ymin, _, _, _ = detector_to_grism(dxmin, dymin, lmin, order)
-                        xmax, ymax, _, _, _ = detector_to_grism(dxmax, dymax, lmax, order)
-                    else:
-                        xmax, ymax, _, _, _ = sky_to_grism(obj.sky_bbox_ll.ra.value,
-                                                           obj.sky_bbox_ll.dec.value,
-                                                           lmin, order)
-                        xmin, ymin, _, _, _ = sky_to_grism(obj.sky_bbox_ur.ra.value,
-                                                           obj.sky_bbox_ur.dec.value,
-                                                           lmax, order)
+                    xmin, ymin, _, _, _ = sky_to_grism(obj.sky_bbox_ll.ra.value,
+                                                       obj.sky_bbox_ll.dec.value,
+                                                       lmin, order)
+                    xmax, ymax, _, _, _ = sky_to_grism(obj.sky_bbox_ur.ra.value,
+                                                       obj.sky_bbox_ur.dec.value,
+                                                       lmax, order)
 
                     # Make sure that we have the correct box corners tagged
                     # as the min and max extents for the grism, the dispersion
                     # direction changes with grism and detector
                     if (xmax < xmin):
-                        txmax = xmax
-                        xmax = xmin
-                        xmin = txmax
+                        xmin, xmax = xmax, xmin
                     if (ymax < ymin):
-                        tymax = ymax
-                        ymax = ymin
-                        ymin = tymax
+                        ymin, ymax = ymax, ymin
 
                     xmin = int(xmin)
                     xmax = int(xmax)

@@ -271,7 +271,6 @@ def extract_grism_objects(input_model,
                           grism_objects=None,
                           reference_files=None,
                           extract_orders=None,
-                          use_fits_wcs=False,
                           mmag_extract=99.,
                           compute_wavelength=True):
     """
@@ -290,8 +289,6 @@ def extract_grism_objects(input_model,
 
     extract_orders : int
         Spectral orders to extract
-
-    use_fits_wcs : bool
 
     mmag_extract : float
         Sources with magnitudes fainter than this minimum magnitude extraction
@@ -358,10 +355,8 @@ def extract_grism_objects(input_model,
         if (not reference_files['wavelengthrange'] or reference_files['wavelengthrange'] == 'N/A'):
             raise ValueError("Expected name of wavelengthrange reference file")
         else:
-            # TODO: remove/reset the use_fits_wcs when source_catalog uses GWCS to make the catalog
             grism_objects = util.create_grism_bbox(input_model, reference_files,
                                                    extract_orders=extract_orders,
-                                                   use_fits_wcs=use_fits_wcs,
                                                    mmag_extract=mmag_extract)
             log.info("Grism object list created from source catalog: {0:s}"
                      .format(input_model.meta.source_catalog))
@@ -435,10 +430,10 @@ def extract_grism_objects(input_model,
 
                 tr = inwcs.get_transform('grism_detector', 'detector')
 
-                tr = Identity(2) | Mapping((0, 1, 0, 0, 0)) | (Shift(xmin) & Shift(ymin) &
-                                                               xcenter_model &
-                                                               ycenter_model &
-                                                               order_model) | tr
+                tr = Mapping((0, 1, 0, 0, 0)) | (Shift(xmin) & Shift(ymin) &
+                                                 xcenter_model &
+                                                 ycenter_model &
+                                                 order_model) | tr
 
                 ext_data = input_model.data[ymin: ymax + 1, xmin: xmax + 1].copy()
                 ext_err = input_model.err[ymin: ymax + 1, xmin: xmax + 1].copy()
