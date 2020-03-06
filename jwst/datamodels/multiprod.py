@@ -50,8 +50,13 @@ class MultiProductModel(model_base.DataModel):
 
         super(MultiProductModel, self).__init__(init=init, **kwargs)
 
-def MultiProductModel(*args, **kwargs):
-    warnings.simplefilter('default')
-    warnings.warn(message="MultiProductModel is deprecated and will be removed.  "
-        "Use MultiSlitModel.", category=DeprecationWarning)
-    return MultiSlitModel(*args, **kwargs)
+        warnings.simplefilter('default')
+        warnings.warn(message="MultiProductModel is deprecated and will be removed.  "
+                      "Use MultiSlitModel.", category=DeprecationWarning)
+        return MultiSlitModel(*args, **kwargs)
+
+#def MultiProductModel(*args, **kwargs):
+#    warnings.simplefilter('default')
+#    warnings.warn(message="MultiProductModel is deprecated and will be removed.  "
+#        "Use MultiSlitModel.", category=DeprecationWarning)
+#    return MultiSlitModel(*args, **kwargs)
