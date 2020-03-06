@@ -12,7 +12,6 @@ from scipy import mgrid
 
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 # The following should probably be in a ref file instead
 OFF_DELTA = 2  # for searching +/-2 around nominal offsets

@@ -10,7 +10,6 @@ from ..datamodels import dqflags
 from ..lib import reffile_utils
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 # Replace zero or negative variances with this:
 LARGE_VARIANCE = 1.e8

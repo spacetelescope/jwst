@@ -15,7 +15,6 @@ from ..assign_wcs import util
 from ..lib import pipe_utils
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def nrs_extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_files={}):
@@ -181,6 +180,8 @@ def set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi):
         output_model.xcen = int(slit.xcen)
         output_model.ycen = int(slit.ycen)
         output_model.dither_position = int(slit.dither_position)
+        output_model.source_ra = float(slit.source_ra)
+        output_model.source_dec = float(slit.source_dec)
         # for pathloss correction
         output_model.shutter_state = slit.shutter_state
     log.info('set slit_attributes completed')

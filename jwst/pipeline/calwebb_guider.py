@@ -12,7 +12,6 @@ __all__ = ['GuiderPipeline']
 
 # Define logging
 log = logging.getLogger()
-log.setLevel(logging.DEBUG)
 
 
 class GuiderPipeline(Pipeline):

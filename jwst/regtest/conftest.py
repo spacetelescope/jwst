@@ -39,7 +39,7 @@ def pytest_runtest_makereport(item, call):
 
 
 def postmortem(request, fixturename):
-    """Retrieve a fixture object if a test failed
+    """Retrieve a fixture object if a test failed, else return None
     """
     if request.node.report_setup.passed:
         try:
@@ -92,7 +92,7 @@ def generate_artifactory_json(request, artifactory_repos):
 
         # Upload and allow okify of truth by rtdata.output, if the test did not
         # fail before producing rtdata.output
-        if os.path.exists(rtdata.output):
+        if rtdata.output and os.path.exists(rtdata.output):
             # Write the rtdata class out as an ASDF file
             path_asdf = os.path.join(cwd, f"{request.node.name}_rtdata.asdf")
             rtdata.to_asdf(path_asdf)
@@ -222,6 +222,7 @@ def diff_astropy_tables():
     """Compare astropy tables with tolerances for float columns."""
 
     def _diff_astropy_tables(result_path, truth_path, rtol=1e-5, atol=1e-7):
+        __tracebackhide__ = True
         result = Table.read(result_path)
         truth = Table.read(truth_path)
 
@@ -231,12 +232,12 @@ def diff_astropy_tables():
             diffs.append("Column names (or order) do not match")
 
         if len(result) != len(truth):
-            diffs.append("Row count does not match")
+            diffs.append(f"Row count does not match({len(result)} vs {len(truth)})")
 
         # If either the columns or the row count is mismatched, then don't
         # bother checking the individual column values.
         if len(diffs) > 0:
-            return diffs
+            raise AssertionError("\n".join(diffs))
 
         if result.meta != truth.meta:
             diffs.append("Metadata does not match")
@@ -253,8 +254,9 @@ def diff_astropy_tables():
                         assert_allclose(result[col_name], truth[col_name],
                             rtol=rtol, atol=atol)
                     except AssertionError as err:
-                        diffs.append(
-                            f"Column '{col_name}' values do not match (within tolerances) \n{str(err)}"
+                        diffs.append("\n----------------------------------\n"
+                            + f"Column '{col_name}' values do not "
+                            + f"match (within tolerances) \n{str(err)}"
                         )
                 else:
                     if not (result[col_name] == truth[col_name]).all():
@@ -264,7 +266,11 @@ def diff_astropy_tables():
                 # of SkyCoord objects
                 pass
 
-        return diffs
+        if len(diffs) != 0:
+            raise AssertionError("\n".join(diffs))
+
+        # No differences
+        return True
 
     return _diff_astropy_tables
 

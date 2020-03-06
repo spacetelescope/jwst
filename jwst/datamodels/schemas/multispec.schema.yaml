@@ -118,24 +118,24 @@ allOf:
             type: integer
             fits_keyword: INT_NUM
             fits_hdu: EXTRACT1D
-          time_scale:
+          time_sys:
             title: "principal time system for time-related keywords"
             type: string
             default: "UTC"
             fits_keyword: TIMESYS
             fits_hdu: EXTRACT1D
-          start_utc:
-            title: "UTC at start of integration [MJD]"
+          start_time_mjd:
+            title: "[d] integration start time in MJD"
             type: number
             fits_keyword: MJD-BEG
             fits_hdu: EXTRACT1D
-          mid_utc:
-            title: "UTC at middle of integration [MJD]"
+          mid_time_mjd:
+            title: "[d] integration mid-point in MJD"
             type: number
             fits_keyword: MJD-AVG
             fits_hdu: EXTRACT1D
-          end_utc:
-            title: "UTC at end of integration [MJD]"
+          end_time_mjd:
+            title: "[d] integration end time in MJD"
             type: number
             fits_keyword: MJD-END
             fits_hdu: EXTRACT1D

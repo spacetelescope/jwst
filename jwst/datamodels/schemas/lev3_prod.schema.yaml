@@ -61,17 +61,3 @@ properties:
             title: Extname of the WHT extension
             type: string
             fits_keyword: WHTEXT
-      tweakreg_catalog:
-        type: object
-        properties:
-          filename:
-            title: Output tweakreg catalog filename
-            type: string
-            fits_keyword: TCATFILE
-      source_catalog:
-        type: object
-        properties:
-          filename:
-            title: Output source catalog filename
-            type: string
-            fits_keyword: SCATFILE

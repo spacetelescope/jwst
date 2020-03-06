@@ -10,7 +10,6 @@ from . import resample
 from ..assign_wcs import util
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 __all__ = ["ResampleStep"]
 

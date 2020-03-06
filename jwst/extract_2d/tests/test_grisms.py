@@ -206,7 +206,7 @@ def test_create_box_fits():
     im = ImageModel(hdul)
     aswcs = AssignWcsStep()
     imwcs = aswcs(im)
-    imwcs.meta.source_catalog.filename = source_catalog
+    imwcs.meta.source_catalog = source_catalog
     refs = get_reference_files(im)
     test_boxes = create_grism_bbox(imwcs, refs,
                                    use_fits_wcs=True,
@@ -237,7 +237,7 @@ def test_create_box_gwcs():
     im = ImageModel(hdul)
     aswcs = AssignWcsStep()
     imwcs = aswcs(im)
-    imwcs.meta.source_catalog.filename = source_catalog
+    imwcs.meta.source_catalog = source_catalog
     refs = get_reference_files(im)
     test_boxes = create_grism_bbox(imwcs, refs,
                                    use_fits_wcs=False,
@@ -259,7 +259,7 @@ def setup_image_cat():
     source_catalog = get_file_path('step_SourceCatalogStep_cat.ecsv')
     hdul = create_hdul(exptype='NRC_WFSS', pupil='GRISMR', wcskeys=wcs_wfss_kw)
     im = ImageModel(hdul)
-    im.meta.source_catalog.filename = source_catalog
+    im.meta.source_catalog = source_catalog
     aswcs = AssignWcsStep()
     imwcs = aswcs(im)
     refs = get_reference_files(im)
@@ -370,7 +370,7 @@ def test_extract_wfss_object():
     """
     source_catalog = get_file_path('step_SourceCatalogStep_cat.ecsv')
     wcsimage = create_wfss_image(pupil='GRISMR')
-    wcsimage.meta.source_catalog.filename = source_catalog
+    wcsimage.meta.source_catalog = source_catalog
     refs = get_reference_files(wcsimage)
     outmodel = extract_grism_objects(wcsimage,
                                      use_fits_wcs=True,

@@ -1,14 +1,21 @@
-0.14.3 (Unreleased)
+0.15.1 (Unreleased)
+===================
+
+
+
+0.15.0 (2020-02-28)
 ===================
 
 assign_wcs
 ----------
-- Remove full path from SCATFILE keyword [#4387]
 
-- A ``ValueError`` is now raised if input data is missing ``xref_sci`` or ``yref_sci`` keywords. [#4561]
+- A ``ValueError`` is now raised if input data is missing ``xref_sci`` or
+  ``yref_sci`` keywords. [#4561]
 
 associations
 ------------
+
+- Cull Association tests [#4610]
 
 - Correct PATTTYPE values in ASN level 3 rules [#4570]
 
@@ -24,6 +31,8 @@ combine_1d
 datamodels
 ----------
 
+- Update schema-editor to match documentation and clarify execution [#4578]
+
 - Force data model type setting on save [#4318]
 
 - Deprecate ``MIRIRampModel`` [#4328]
@@ -36,6 +45,23 @@ datamodels
 
 - Update core.schema.yaml to include new allowed values for PATTTYPE
   [#4475, 4517, 4564]
+
+
+- DataModel.update() now has ``extra_fits=False`` kwarg that controls whether
+  an update happens from the ``extra_fits`` section of the datamodel.  Default
+  is to stop doing this by default, i.e. ``False``. [#4593]
+
+- Add units to filteroffset schema.  [#4595]
+
+- Updated ``slitdata.schema.yaml`` to include ``SRCRA`` and ``SRCDEC`` for
+  MOS slitlets to FITS SCI headers. These values are taken from the MOS
+  metadata file. [#4613]
+
+- Many keyword updates to bring us in-sync with KWD. [#4602, #4627]
+
+- Update schemas to use transform-1.2.0. [#4604]
+
+- Allow FileNotFoundError to be raised. [#4605]
 
 extract_1d
 ----------
@@ -52,9 +78,13 @@ extract_2d
   and keywords SLTSTRT1 and SLTSTRT2 are set to the pixel location of the
   cutout in the input file. [#4504]
 
-- A ``ValueError`` is now raised if the input data is missing ``xref_sci`` or ``yref_sci`` keywords. [#4561]
+- A ``ValueError`` is now raised if the input data is missing ``xref_sci`` or
+  ``yref_sci`` keywords. [#4561]
 
 - Fix the WCS subarray offsets for NIRCam TSGRISM cutouts [#4573]
+
+- Added ``source_ra`` and ``source_dec`` to MSA ``Slit`` with values
+  from the MSA metadata file. [#4613]
 
 master_background
 -----------------
@@ -79,7 +109,8 @@ pipeline
 
 - Hardwire required pipeline outputs in the pipeline. [#4578]
 
-- Added FGS_IMAGE to the exposure types to apply resampling in calwebb_image2.py [#4421]
+- Added FGS_IMAGE to the exposure types to apply resampling in
+  calwebb_image2.py [#4421]
 
 - Make the naming and writing out of the resampled results to an `i2d` file
   in `Image2Pipeline` consistent between config and class invocations [#4333]
@@ -110,10 +141,18 @@ refpix
 
 - Fixed bugs in PR #4575; added unit tests [#4596]
 
+- Changed the data type of columns OUTPUT and ODD_EVEN in the section of the
+  schema for the DQ table in the NIRSpec IRS2 refpix reference file [#4618]
+
 set_telescope_pointing
 ----------------------
 
 - Round S_REGION values in ``set_telescope_pointing`` [#4476]
+
+source_catalog
+--------------
+
+- Remove directory path when populating SCATFILE keyword. [#4597]
 
 srctype
 -------
@@ -126,6 +165,16 @@ stpipe
 
 - Fix sub-step nesting in parameter reference files [#4488]
 
+transforms
+----------
+
+ - Refactored the WFSS transforms to improve performance. [#4603]
+
+ - Added ``source_ra`` and ``source_dec`` to the ``Slit`` namedtuple
+   with default values of 0.0. These are populated from the MSA metadata
+   file. [#4613]
+
+  
 tweakreg
 --------
 
@@ -143,7 +192,9 @@ wfs_combine
 tso_photometry
 --------------
 
-- A ``ValueError`` is now raised if the input data for ``call`` is missing ``crpix1`` or ``crpix2`` keywords. [#4561]
+- A ``ValueError`` is now raised if the input data for ``call`` is missing
+  ``crpix1`` or ``crpix2`` keywords. [#4561]
+
 
 0.14.2 (2019-11-18)
 ===================
@@ -1260,6 +1311,8 @@ model_blender
 
 mrs_imatch
 ----------
+
+- If the background polynomial contains any Nan Values the mrs_imatch step is skipped [#4642]
 
 msaflagopen
 -----------

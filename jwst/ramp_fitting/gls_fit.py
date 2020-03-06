@@ -4,7 +4,6 @@ import numpy as np
 import numpy.linalg as la
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 # This is the number of iterations that will be done with use_extra_terms
 # set to False.  If this is zero, use_extra_terms will be set to True even

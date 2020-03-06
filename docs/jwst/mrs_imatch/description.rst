@@ -11,6 +11,10 @@ from the input 2D images), in such a way as to minimize - in the least squares
 sense - inter-image mismatches in intensity. The "background matching" polynomials
 are defined in the frame of world coordinates (e.g. RA, DEC, lambda).
 
+
+If any of background polynomial coefficients are a nan then the step is skipped and
+S_MRSMAT is set to SKIPPED.
+
 Assumptions
 -----------
 Because the fitted polynomials are defined in terms of world coordinates, and because
