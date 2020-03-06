@@ -12,7 +12,6 @@ from astropy.io import fits
 from astropy.modeling import models as astmodels
 from astropy.table import QTable
 from astropy.constants import c
-#from astropy.wcs.utils import skycoord_to_pixel
 
 from gwcs import WCS
 from gwcs.wcstools import wcs_from_fiducial, grid_from_bounding_box
@@ -450,12 +449,6 @@ def create_grism_bbox(input_model,
 
     NIRISS only has one detector, but GRISMC disperses along rows and
     GRISMR disperses along columns.
-
-    #photutils is used to create the source catalog in the pipeline,
-    #it's currently using the fits wcs for it's sky translation, it
-    #grabs the fits wcs from the data model using get_fits_wcs(). Until
-    #GWCS is fully implemented, this translation may be off in the
-    #pipeline.
 
     """
     if not isinstance(mmag_extract, (int, float)):
