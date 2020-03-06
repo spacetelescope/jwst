@@ -12,7 +12,6 @@ from ..datamodels import dqflags
 from . import spec_wcs
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 # These values are used to indicate whether the input reference file
 # (if any) is JSON or IMAGE.

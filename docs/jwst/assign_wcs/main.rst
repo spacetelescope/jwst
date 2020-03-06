@@ -50,7 +50,8 @@ oriented more nearly along the horizontal (DISPAXIS = 1) or vertical
 Using the WCS interactively
 ---------------------------
 
-Once a FITS file is opened as a `DataModel` the WCS can be accessed as an attribute of the meta object. Calling it as a function with detector positions as inputs returns the
+Once a FITS file is opened as a `DataModel` the WCS can be accessed as an attribute
+of the meta object. Calling it as a function with detector positions as inputs returns the
 corresponding world coordinates. Using MIRI LRS fixed slit as an example:
 
 .. doctest-skip::
@@ -97,11 +98,20 @@ For each exposure, assign_wcs uses reference files and WCS header keywords
 to create the WCS object. What reference files are retrieved
 from CRDS is determined based on EXP_TYPE and other keywords in the science file header.
 
+The assign_wcs step can accept the single slope image that is the result of averaging
+over all integrations or a 3D cube of integrations in the case of TSO exposures.
 
-The assign_wcs step can accept any type of DataModel as input. In particular, for
-multiple-integration datasets the step will accept either of these data products:
-the slope results for each integration in the exposure, or the single slope image
-that is the result of averaging over all integrations.
+WCS of slitless grism exposures
+-------------------------------
+
+The WCS forward transforms for slitless grism exposures (``NIS_WFSS``, ``NRC_WFSS``, ``NRC_TSGRISM``)
+take as input the ``x, y`` coordinates on the dispersed image, the ``x0, y0`` coordinate of
+the center of the object in the direct image and ``spectral order``. They return the ``x0, y0`` coordinate of the center
+of the object in the direct image, ``wavelength`` and ``spectral order``.
+
+For NIRISS WFSS data the reference files contain a reference value for the filter wheel
+position angle. The trace is rotated about an angle which is the difference between
+the reference and actual angles.
 
 ``jwst.assign_wcs`` is based on gwcs and uses the modeling, units and coordinates subpackages in astropy.
 

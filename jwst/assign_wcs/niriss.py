@@ -18,7 +18,6 @@ from ..datamodels import ImageModel, NIRISSGrismModel, DistortionModel
 from ..lib import s3_utils
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 __all__ = ["create_pipeline", "imaging", "niriss_soss", "niriss_soss_set_input", "wfss"]
 

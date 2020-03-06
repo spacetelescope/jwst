@@ -128,5 +128,4 @@ def test_nircam_image_stage3_catalog(run_image3pipeline, rtdata_module, diff_ast
     rtdata.output = "jw42424-o002_t001_nircam_clear-f444w_cat.ecsv"
     rtdata.get_truth("truth/test_nircam_image_stages/jw42424-o002_t001_nircam_clear-f444w_cat.ecsv")
 
-    diff = diff_astropy_tables(rtdata.output, rtdata.truth, atol=1e-5)
-    assert len(diff) == 0, "\n".join(diff)
+    assert diff_astropy_tables(rtdata.output, rtdata.truth, rtol=1e-4, atol=1e-5)

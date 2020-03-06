@@ -164,7 +164,9 @@ class CubeBuildStep (Step):
             self.log.info('Cube Type: Single cubes ')
             self.coord_system = 'world'
             self.interpolation = 'pointcloud'
-            self.weighting = 'msm'
+            # Don't allow anything but msm or emsm weightings
+            if ((self.weighting != 'msm')and(self.weighting != 'emsm')):
+                self.weighting = 'msm'
 
 # ________________________________________________________________________________
 # read input parameters - Channel, Band (Subchannel), Grating, Filter

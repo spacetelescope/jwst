@@ -15,7 +15,6 @@ from ..assign_wcs import util
 from ..datamodels import WavelengthrangeModel
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def extract_tso_object(input_model,
@@ -365,7 +364,7 @@ def extract_grism_objects(input_model,
                                                    use_fits_wcs=use_fits_wcs,
                                                    mmag_extract=mmag_extract)
             log.info("Grism object list created from source catalog: {0:s}"
-                     .format(input_model.meta.source_catalog.filename))
+                     .format(input_model.meta.source_catalog))
 
     if not isinstance(grism_objects, list):
         raise TypeError("Expected input grism objects to be a list")
@@ -551,11 +550,13 @@ def compute_wavelength_array(slit):
     wavelength : numpy.array
         The wavelength array
     """
-    grid = grid_from_bounding_box(slit.meta.wcs.bounding_box)
-    shape = grid[0].shape
-    wavelength = np.empty(shape, dtype=np.float64)
+    #grid = grid_from_bounding_box(slit.meta.wcs.bounding_box)
+    #shape = grid[0].shape
+    #wavelength = np.empty(shape, dtype=np.float64)
     transform = slit.meta.wcs.forward_transform
-    for j in range(shape[0]):
-        for i in range(shape[1]):
-            wavelength[j, i] = transform(grid[0][j, i], grid[1][j, i])[2]
+    #for j in range(shape[0]):
+        #for i in range(shape[1]):
+            #wavelength[j, i] = transform(grid[0][j, i], grid[1][j, i])[2]
+    x, y = grid_from_bounding_box(slit.meta.wcs.bounding_box)
+    wavelength = transform(x, y)[2]
     return wavelength
