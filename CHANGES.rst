@@ -12,6 +12,8 @@ assign_wcs
 - A ``ValueError`` is now raised if input data is missing ``xref_sci`` or
   ``yref_sci`` keywords. [#4561]
 
+- Replaced FITS WCS transforms with GWCS transforms in computing bounding boxes of grisms slits. [#4665]
+
 associations
 ------------
 
