@@ -7,7 +7,7 @@ import logging
 
 import numpy as np
 
-from astropy.modeling.models import Shift, Const1D, Mapping, Identity
+from astropy.modeling.models import Shift, Const1D, Mapping
 from gwcs.wcstools import grid_from_bounding_box
 
 from .. import datamodels
