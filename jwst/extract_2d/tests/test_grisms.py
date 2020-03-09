@@ -209,7 +209,6 @@ def test_create_box_fits():
     imwcs.meta.source_catalog = source_catalog
     refs = get_reference_files(im)
     test_boxes = create_grism_bbox(imwcs, refs,
-                                   use_fits_wcs=True,
                                    mmag_extract=99.)
 
     assert len(test_boxes) >= 2  # the catalog has 4 objects
@@ -240,7 +239,6 @@ def test_create_box_gwcs():
     imwcs.meta.source_catalog = source_catalog
     refs = get_reference_files(im)
     test_boxes = create_grism_bbox(imwcs, refs,
-                                   use_fits_wcs=False,
                                    mmag_extract=99.)
     assert len(test_boxes) >= 2  # the catalog has 4 objects
     for sid in [9, 19]:
@@ -276,8 +274,6 @@ def test_create_specific_orders():
      -----
      The filter warning is for fits card length
 
-     TODO:  set use_fits_wcs to False when ready
-     test_create_box_gwcs stops failing
      objects 9 and 19 should have order 1 extracted
      object 25 should have partial boxes for both orders
      object 26 should have order 2 excluded at order 1 partial
@@ -285,7 +281,6 @@ def test_create_specific_orders():
     imwcs, refs = setup_image_cat()
     extract_orders = [1]  # just extract the first order
     test_boxes = create_grism_bbox(imwcs, refs,
-                                   use_fits_wcs=True,
                                    mmag_extract=99.,
                                    extract_orders=extract_orders)
 
@@ -373,7 +368,6 @@ def test_extract_wfss_object():
     wcsimage.meta.source_catalog = source_catalog
     refs = get_reference_files(wcsimage)
     outmodel = extract_grism_objects(wcsimage,
-                                     use_fits_wcs=True,
                                      reference_files=refs,
                                      compute_wavelength=False)
     assert isinstance(outmodel, MultiSlitModel)
