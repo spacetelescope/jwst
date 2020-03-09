@@ -21,7 +21,7 @@ class RSCD_Step(Step):
     #  TBD - only do this for the 2nd+ integrations
     #  do nothing for single integration exposures
 
-    reference_file_types = ['rscd']
+#    reference_file_types = ['rscd']
 
     def process(self, input):
 

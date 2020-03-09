@@ -67,9 +67,9 @@ allOf:
         datatype: float32
       - name: b3
         datatype: float32
-    rscd_int1_table:
-      title: Reference file for RSCD baseline correction for int 1
-      fits_hdu: RSCD_INT2
+    rscd_int3_table:
+      title: Reference file for RSCD baseline correction for int 3
+      fits_hdu: RSCD_INT3
       datatype:
       - name: subarray
         datatype: [ascii, 13]
