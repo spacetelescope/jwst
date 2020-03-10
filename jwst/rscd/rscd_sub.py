@@ -96,6 +96,7 @@ def correction_skip_groups(input_model, group_skip):
         log.warning("Too few groups to apply RSCD correction")
         log.warning("RSCD step will be skipped")
         output.meta.cal_step.rscd = 'SKIPPED'
+        return output
 
     # Update the step status, and if ngroups > nflag+3, set all of the GROUPDQ in
     # the first group to 'DO_NOT_USE'
@@ -108,8 +109,8 @@ def correction_skip_groups(input_model, group_skip):
         if ((i + 1) % mdelta) == 0:
             log.info(' Working on integration %d', i + 1)
 
-        output.groupdq[:, 0:group_skip :, :] = \
-            np.bitwise_or(output.groupdq[:,0:group_skip,:,:], dqflags.group['DO_NOT_USE'])
+        output.groupdq[i, 0:group_skip :, :] = \
+            np.bitwise_or(output.groupdq[i, 0:group_skip,:,:], dqflags.group['DO_NOT_USE'])
 
         log.debug(f"RSCD Sub: resetting GROUPDQ in the first {group_skip} groups to DO_NOT_USE")
 
