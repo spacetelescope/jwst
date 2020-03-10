@@ -328,7 +328,7 @@ def get_rscd_parameters(input_model, rscd_model):
         readpatt_table = tabdata['readpatt']
         group_skip_table = tabdata['group_skip']
         group_skip_table = int(group_skip_table)
-        if(subarray_table == subarray and readpatt_table == readpatt):
+        if (subarray_table == subarray and readpatt_table == readpatt):
             param['skip'] = group_skip_table
 
     # read table 2: General RSCD enhanced parameters
@@ -339,7 +339,7 @@ def get_rscd_parameters(input_model, rscd_model):
         lower_cutoff_gen = tabdata['lower_cutoff']
         alpha_even_gen = tabdata['alpha_even']
         alpha_odd_gen = tabdata['alpha_even']
-        if(subarray_gen == subarray and readpatt_gen == readpatt):
+        if (subarray_gen == subarray and readpatt_gen == readpatt):
             param['gen']['lower_cutoff'] = lower_cutoff_gen
             param['gen']['lower_alpha_odd'] = alpha_odd_gen
             param['gen']['lower_alpha_even'] = alpha_even_gen
@@ -356,7 +356,7 @@ def get_rscd_parameters(input_model, rscd_model):
         a1_int1 = tabdata['a1']
         a2_int1 = tabdata['a2']
         a3_int1 = tabdata['a3']
-        if(subarray_int1 == subarray and readpatt_int1 == readpatt):
+        if (subarray_int1 == subarray and readpatt_int1 == readpatt):
             if rows_int1 == 'EVEN':
                 param['int1']['even']['a0'] = a0_int1
                 param['int1']['even']['a1'] = a1_int1
@@ -381,7 +381,7 @@ def get_rscd_parameters(input_model, rscd_model):
         a1_int2 = tabdata['b1']
         a2_int2 = tabdata['b2']
         a3_int2 = tabdata['b3']
-        if(subarray_int2 == subarray and readpatt_int2 == readpatt):
+        if (subarray_int2 == subarray and readpatt_int2 == readpatt):
             if rows_int2 == 'EVEN':
                 param['int2']['even']['a0'] = a0_int2
                 param['int2']['even']['a1'] = a1_int2
@@ -406,7 +406,7 @@ def get_rscd_parameters(input_model, rscd_model):
         a1_int3 = tabdata['c1']
         a2_int3 = tabdata['c2']
         a3_int3 = tabdata['c3']
-        if(subarray_int3 == subarray and readpatt_int3 == readpatt):
+        if (subarray_int3 == subarray and readpatt_int3 == readpatt):
             if rows_int3 == 'EVEN':
                 param['int3']['even']['a0'] = a0_int3
                 param['int3']['even']['a1'] = a1_int3
