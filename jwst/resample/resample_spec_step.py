@@ -73,7 +73,6 @@ class ResampleSpecStep(ResampleStep):
         containers = multislit_to_container(input_models)
         result = datamodels.MultiSlitModel()
         result.update(input_models[0])
-
         for container in containers.values():
             resamp = resample_spec.ResampleSpecData(container, **self.drizpars)
             drizzled_models = resamp.do_drizzle()
@@ -83,7 +82,6 @@ class ResampleSpecStep(ResampleStep):
                 model.meta.asn.pool_name = input_models.meta.pool_name
                 model.meta.asn.table_name = input_models.meta.table_name
                 update_s_region_spectral(model)
-
             # Everything resampled to single output model
             if len(drizzled_models) == 1:
                 result.slits.append(drizzled_models[0])

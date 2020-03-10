@@ -68,11 +68,9 @@ class ResampleSpecData:
         # wcslist = [m.meta.wcs for m in self.input_models]
         self.output_wcs = self.build_interpolated_output_wcs()
         self.blank_output = datamodels.ImageModel(self.data_size)
-
-        # update works on meta data
-        self.blank_output.update(datamodels.ImageModel(self.input_models[0]._instance))
         self.blank_output.meta.wcs = self.output_wcs
         self.output_models = datamodels.ModelContainer()
+
 
     def build_interpolated_output_wcs(self, refmodel=None):
         """
@@ -246,7 +244,6 @@ class ResampleSpecData:
             for n, img in enumerate(group):
                 exposure_times['start'].append(img.meta.exposure.start_time)
                 exposure_times['end'].append(img.meta.exposure.end_time)
-
                 inwht = resample_utils.build_driz_weight(img,
                     weight_type=self.drizpars['weight_type'],
                     good_bits=self.drizpars['good_bits'])
