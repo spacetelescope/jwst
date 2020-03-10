@@ -3,7 +3,6 @@ import numpy as np
 from jwst.datamodels import RampModel
 from jwst.datamodels import dqflags
 from jwst.rscd.rscd_sub import correction_skip_groups
-# from jwst.rscd import RSCD_Step
 
 
 def test_rscd_baseline_set_groupdq():

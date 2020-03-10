@@ -55,7 +55,7 @@ def do_correction(input_model, rscd_model, type):
         log.warning('Enhanced algorithm not support yet: RSCD correction will be skipped')
         output.meta.cal_step.rscd = 'SKIPPED'
         return output
-        # decay function algorithm updated soon
+        # decay function algorithm update needed
         #output = correction_decay_function(input_model, param)
 
     return output
