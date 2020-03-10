@@ -8,14 +8,16 @@ __all__ = ["RSCD_Step"]
 
 class RSCD_Step(Step):
     """
-    RSCD_Step: Performs an RSCD correction to MIRI data by flagging
-    the first n frames in the 2nd+ integrations to a copy of the input
+    RSCD_Step: Performs an RSCD correction to MIRI data.
+    Baseline version flags the first N groups as 'DO_NOT_USE' in
+    the 2nd and later integrations to a copy of the input
     science data model.
+    Enhanced version is not ready nor enabled.
     """
 
     # allow swtiching between baseline and enhanced algorithms
     spec = """
-         type = option('baseline','enhanced',default = 'baseline') # Type of weighting function
+         type = option('baseline','enhanced',default = 'baseline') # Type of correction
        """
 
     #  TBD - only do this for the 2nd+ integrations
