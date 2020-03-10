@@ -2,6 +2,7 @@ import numpy as np
 
 import logging
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 def subtract(model1, model2):

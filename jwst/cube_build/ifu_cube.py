@@ -20,6 +20,7 @@ from . import cube_cloud
 from . import coord
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 class IFUCubeData():

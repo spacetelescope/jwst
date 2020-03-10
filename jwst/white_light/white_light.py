@@ -6,6 +6,7 @@ from astropy.table import QTable
 from astropy.time import Time, TimeDelta
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 def white_light(input):

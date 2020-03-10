@@ -5,6 +5,7 @@ import logging
 from .. import datamodels
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 def average_LG(lg_products):

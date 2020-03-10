@@ -6,6 +6,7 @@ from scipy.special import comb, jv
 from . import hexee
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 def flip(holearray):
     """

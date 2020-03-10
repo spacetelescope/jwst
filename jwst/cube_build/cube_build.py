@@ -6,6 +6,7 @@ from . import file_table
 from . import instrument_defaults
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 class CubeData():

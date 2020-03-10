@@ -15,6 +15,7 @@ __all__ = ["CubeSkyMatchStep"]
 
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 def help():
