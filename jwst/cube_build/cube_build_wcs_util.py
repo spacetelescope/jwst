@@ -5,6 +5,7 @@ from ..assign_wcs import nirspec
 from gwcs import wcstools
 import logging
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 def find_footprint_MIRI(input, this_channel, instrument_info, coord_system):

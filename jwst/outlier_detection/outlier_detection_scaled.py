@@ -15,6 +15,7 @@ from .outlier_detection import OutlierDetection
 
 import logging
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 class OutlierDetectionScaled(OutlierDetection):

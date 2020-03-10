@@ -4,6 +4,7 @@ import numpy as np
 import numpy.fft as fft
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 def quadratic(p, x):
     """

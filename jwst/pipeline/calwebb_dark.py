@@ -20,6 +20,7 @@ __all__ = ['DarkPipeline']
 
 # Define logging
 log = logging.getLogger()
+log.setLevel(logging.DEBUG)
 
 
 class DarkPipeline(Pipeline):

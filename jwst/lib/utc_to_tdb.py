@@ -19,6 +19,7 @@ except Exception:
     USE_TIMECONVERSION = False
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 # This is an interface to call
 #    timeconversion.compute_bary_helio_time(targetcoord, times)

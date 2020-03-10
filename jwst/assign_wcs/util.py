@@ -23,6 +23,7 @@ from ..transforms.models import GrismObject
 from ..datamodels import WavelengthrangeModel, DataModel
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 __all__ = ["reproject", "wcs_from_footprints", "velocity_correction",

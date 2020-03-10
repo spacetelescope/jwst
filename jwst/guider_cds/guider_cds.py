@@ -8,6 +8,7 @@ import logging
 from .. import datamodels
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 def guider_cds(model):
