@@ -1,12 +1,17 @@
+0.15.2 (unreleased)
+==================
+
+
+
 0.15.1 (2020-03-10)
 ===================
 
 assign_wcs
 ----------
 
-- Replaced FITS WCS transforms with GWCS transforms in computing bounding boxes of grisms slits. [#4665]
-
 - Fix NIRISS WFSS FWPOS angle bugs [#4653]
+
+- Replaced FITS WCS transforms with GWCS transforms in computing bounding boxes of grisms slits. [#4665]
 
 datamodels
 ----------
@@ -23,7 +28,7 @@ mrs_imatch
 stpipe
 ------
 
-- Revert JP-1090: Remove setLevel calls [#4667]
+- Revert "JP-1090: Remove setLevel calls (#4621)" [#4667]
 
 
 0.15.0 (2020-02-28)
