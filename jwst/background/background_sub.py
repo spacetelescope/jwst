@@ -8,6 +8,7 @@ from astropy.stats import sigma_clip
 
 import logging
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 def background_sub(input_model, bkg_list, sigma, maxiters):

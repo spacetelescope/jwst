@@ -298,6 +298,8 @@ class Step():
         # Create a new logger for this step
         self.log = log.getLogger(self.qualified_name)
 
+        self.log.setLevel(log.logging.DEBUG)
+
         # Log the fact that we have been init-ed.
         self.log.info('{0} instance created.'.format(self.__class__.__name__))
 

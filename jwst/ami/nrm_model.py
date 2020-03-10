@@ -28,6 +28,7 @@ from . import hexee
 from . import nrm_consts
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 class NrmModel:

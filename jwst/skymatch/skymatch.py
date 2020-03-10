@@ -22,6 +22,7 @@ __author__ = 'Mihai Cara'
 __local_debug__ = True
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 def match(images, skymethod='global+match', match_down=True, subtract=False):

@@ -1,3 +1,31 @@
+0.15.1 (2020-03-10)
+===================
+
+assign_wcs
+----------
+
+- Fix NIRISS WFSS FWPOS angle bugs [#4653]
+
+- Replaced FITS WCS transforms with GWCS transforms in computing bounding boxes of grisms slits. [#4665]
+
+datamodels
+----------
+
+- Update schema-editor to match documentation and clarify execution [#4587]
+
+- Remove the init file usage. Way too confusing [#4645]
+
+mrs_imatch
+----------
+
+- If the background polynomial contains any Nan Values the mrs_imatch step is skipped [#4642]
+
+stpipe
+------
+
+- Revert "JP-1090: Remove setLevel calls (#4621)" [#4667]
+
+
 0.15.0 (2020-02-28)
 ===================
 
@@ -25,6 +53,8 @@ combine_1d
 
 datamodels
 ----------
+
+- Update schema-editor to match documentation and clarify execution [#4578]
 
 - Force data model type setting on save [#4318]
 
@@ -1301,9 +1331,6 @@ master_background
 model_blender
 -------------
 
-
-mrs_imatch
-----------
 
 msaflagopen
 -----------

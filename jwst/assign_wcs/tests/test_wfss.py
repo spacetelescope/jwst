@@ -234,7 +234,8 @@ def test_NIRISSForwardRowGrismDispersion():
     lmodels = [Polynomial1D(1, c0=0.75, c1=1.55),
                Polynomial1D(1, c0=0.75, c1=1.55)]
 
-    model = transforms.NIRISSForwardRowGrismDispersion([1, 2, 3, -1], lmodels, xmodels, ymodels)
+    model = transforms.NIRISSForwardRowGrismDispersion([1, 2, 3, -1], lmodels, xmodels,
+                                                       ymodels, theta=354.222)
 
 
     x0 = 913.7
@@ -246,14 +247,20 @@ def test_NIRISSForwardRowGrismDispersion():
 
     wavelength = compute_wavelength_array(slit)
     expected = np.array(
-        [[1.06411857, 1.05944798, 1.0547774, 1.05010681, 1.04543623, 1.04076564, 1.03609506],
-         [1.06411857, 1.05944798, 1.0547774, 1.05010681, 1.04543623, 1.04076564, 1.03609506],
-         [1.06411857, 1.05944798, 1.0547774, 1.05010681, 1.04543623, 1.04076564, 1.03609506],
-         [1.06411857, 1.05944798, 1.0547774, 1.05010681, 1.04543623, 1.04076564, 1.03609506],
-         [1.06411857, 1.05944798, 1.0547774, 1.05010681, 1.04543623, 1.04076564, 1.03609506],
-         [1.06411857, 1.05944798, 1.0547774, 1.05010681, 1.04543623, 1.04076564, 1.03609506],
-         [1.06411857, 1.05944798, 1.0547774, 1.05010681, 1.04543623, 1.04076564, 1.03609506]])
-
+        [[1.06299959, 1.05830671, 1.05361383, 1.04892095, 1.04422808,
+        1.0395352 , 1.03484232],
+       [1.06299959, 1.05830671, 1.05361383, 1.04892095, 1.04422808,
+        1.0395352 , 1.03484232],
+       [1.06299959, 1.05830671, 1.05361383, 1.04892095, 1.04422808,
+        1.0395352 , 1.03484232],
+       [1.06299959, 1.05830671, 1.05361383, 1.04892095, 1.04422808,
+        1.0395352 , 1.03484232],
+       [1.06299959, 1.05830671, 1.05361383, 1.04892095, 1.04422808,
+        1.0395352 , 1.03484232],
+       [1.06299959, 1.05830671, 1.05361383, 1.04892095, 1.04422808,
+        1.0395352 , 1.03484232],
+       [1.06299959, 1.05830671, 1.05361383, 1.04892095, 1.04422808,
+        1.0395352 , 1.03484232]])
 
     # refactored call
     x, y = grid_from_bounding_box(slit.meta.wcs.bounding_box)
@@ -261,7 +268,6 @@ def test_NIRISSForwardRowGrismDispersion():
     assert_allclose(wavelength, expected)
 
 
-@pytest.mark.xfail
 def test_NIRISSForwardColumnGrismDispersion():
     ymodels = [[Polynomial2D(2, c0_0=-1.876215, c1_0=-5.179793e-04, c2_0=2.116366e-08,
                              c0_1=-2.259297e-04, c0_2=-2.502127e-12, c1_1=4.771951e-08),
@@ -279,8 +285,8 @@ def test_NIRISSForwardColumnGrismDispersion():
                Polynomial1D(1, c0=0.75, c1=1.55)]
 
     model = transforms.NIRISSForwardColumnGrismDispersion([1, 2, 3, -1], lmodels=lmodels,
-                                                          xmodels=xmodels, ymodels=ymodels)
-
+                                                          xmodels=xmodels, ymodels=ymodels,
+                                                          theta=33.5677)
 
     x0 = 913.7
     y0 = 15.5
@@ -288,88 +294,24 @@ def test_NIRISSForwardColumnGrismDispersion():
 
     slit = create_slit(model, x0, y0, order)
     slit.meta.wcs.bounding_box = ((910, 916), (12, 18))
+
     expected = np.array(
-        [[2.409979, 2.409979, 2.409979, 2.409979, 2.409979, 2.409979, 2.409979],
-         [0.98553179, 0.98553179, 0.98553179, 0.98553179, 0.98553179, 0.98553179, 0.98553179],
-         [0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75],
-         [0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75],
-         [0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75],
-         [0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75],
-         [0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75]])
+        [[1.05844596, 1.05844596, 1.05844596, 1.05844596, 1.05844596,
+        1.05844596, 1.05844596],
+       [1.0500404 , 1.0500404 , 1.0500404 , 1.0500404 , 1.0500404 ,
+        1.0500404 , 1.0500404 ],
+       [1.04163483, 1.04163483, 1.04163483, 1.04163483, 1.04163483,
+        1.04163483, 1.04163483],
+       [1.03322927, 1.03322927, 1.03322927, 1.03322927, 1.03322927,
+        1.03322927, 1.03322927],
+       [1.02482371, 1.02482371, 1.02482371, 1.02482371, 1.02482371,
+        1.02482371, 1.02482371],
+       [1.01641815, 1.01641815, 1.01641815, 1.01641815, 1.01641815,
+        1.01641815, 1.01641815],
+       [1.00801258, 1.00801258, 1.00801258, 1.00801258, 1.00801258,
+        1.00801258, 1.00801258]])
 
     # refactored call
     x, y = grid_from_bounding_box(slit.meta.wcs.bounding_box)
     wavelength = compute_wavelength_array(slit)
     assert_allclose(wavelength, expected)
-
-
-@pytest.mark.xfail
-def test_compare_fits_gwcs():
-    from astropy.coordinates import SkyCoord
-    from astropy import units as u
-    from jwst.lib.catalog_utils import SkyObject
-    from astropy import wcs
-    from astropy.wcs.utils import skycoord_to_pixel
-    from astropy.io import fits
-    import asdf
-
-    sk = SkyObject(sid=10, xcentroid=1942.42047611*u.pix, ycentroid=96.66721183*u.pix,
-                 sky_centroid=SkyCoord(53.16349779, -27.81034994, unit=(u.deg, u.deg)),
-                 abmag=93.81427764892578, abmag_error=5085.0444,
-                 sky_bbox_ll=SkyCoord(53.16439778, -27.81106339, unit=(u.deg, u.deg)),
-                 sky_bbox_lr=SkyCoord(53.1626226, -27.81107933, unit=(u.deg, u.deg)),
-                 sky_bbox_ul=SkyCoord(53.16438104, -27.80960604, unit=(u.deg, u.deg)),
-                 sky_bbox_ur=SkyCoord(53.16260589, -27.80962197, unit=(u.deg, u.deg)))
-
-    lmin, lmax = (3.001085025, 4.302320901)
-    order = 1
-
-    fits_header = """
-WCSAXES =                    2 / Number of coordinate axes
-CRPIX1  =               1024.5 / Pixel coordinate of reference point
-CRPIX2  =               1024.5 / Pixel coordinate of reference point
-PC1_1   =     -0.9999988613384 / Coordinate transformation matrix element
-PC1_2   =  -0.0015090798219302 / Coordinate transformation matrix element
-PC2_1   =  -0.0015090798219302 / Coordinate transformation matrix element
-PC2_2   =      0.9999988613384 / Coordinate transformation matrix element
-CDELT1  =  1.7438002777778E-05 / [deg] Coordinate increment at reference point
-CDELT2  =  1.7521186111111E-05 / [deg] Coordinate increment at reference point
-CUNIT1  = 'deg'                / Units of coordinate increment and value
-CUNIT2  = 'deg'                / Units of coordinate increment and value
-CTYPE1  = 'RA---TAN'           / Right ascension, gnomonic projection
-CTYPE2  = 'DEC--TAN'           / Declination, gnomonic projection
-CRVAL1  =      53.161292774469 / [deg] Coordinate value at reference point
-CRVAL2  =     -27.792691818741 / [deg] Coordinate value at reference point
-LONPOLE =                180.0 / [deg] Native longitude of celestial pole
-LATPOLE =     -27.792691818741 / [deg] Native latitude of celestial pole
-MJDREFI =                  0.0 / [d] MJD of fiducial time, integer part
-MJDREFF =                  0.0 / [d] MJD of fiducial time, fractional part
-RADESYS = 'ICRS'               / Equatorial coordinate system
-SPECSYS = 'BARYCENT'           / Reference frame of spectral coordinates
-    """
-    fits_wcs = wcs.WCS(fits.Header.fromstring(fits_header, sep='\n'))
-    grism_wcs_file = os.path.join(data_path, "grism_wcs.asdf")
-    fa = asdf.open(grism_wcs_file)
-
-    grism_wcs = fa.tree['grism_wcs']
-    detector_to_grism = grism_wcs.get_transform('detector', 'grism_detector')
-    sky_to_grism = grism_wcs.backward_transform
-
-    # translate the boxes using fits wcs
-    dxmax, dymax = skycoord_to_pixel(sk.sky_bbox_ur,
-                                     fits_wcs, origin=1)
-    dxmin, dymin = skycoord_to_pixel(sk.sky_bbox_ll,
-                                     fits_wcs, origin=1)
-
-    # now translate through the grism transforms
-    fxmin, fymin, _, _, _ = detector_to_grism(dxmin, dymin, lmin, order)
-    fxmax, fymax, _, _, _ = detector_to_grism(dxmax, dymax, lmax, order)
-
-    # Now use GWCS
-    gxmax, gymax, _, _, _ = sky_to_grism(sk.sky_bbox_ll.ra.value,
-                                         sk.sky_bbox_ll.dec.value,
-                                         lmin, order)
-    gxmin, gymin, _, _, _ = sky_to_grism(sk.sky_bbox_ur.ra.value,
-                                         sk.sky_bbox_ur.dec.value,
-                                         lmax, order)
-    assert_allclose((fxmin, fxmax, fymin, fymax), (gxmin+1, gxmax+1, gymin+1, gymax+1))

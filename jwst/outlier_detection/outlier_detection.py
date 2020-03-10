@@ -15,6 +15,7 @@ from ..stpipe.step import Step
 
 import logging
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 CRBIT = np.uint32(datamodels.dqflags.pixel['JUMP_DET'])
 

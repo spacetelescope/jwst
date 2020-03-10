@@ -8,6 +8,7 @@ from .. import datamodels
 from .. datamodels import dqflags
 
 log = logging.getLogger()
+log.setLevel(logging.DEBUG)
 
 SCALEFACTOR = 2.
 """This factor is to account for the difference in gain for charges freed

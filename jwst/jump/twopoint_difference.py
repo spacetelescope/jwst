@@ -14,6 +14,7 @@ import numpy as np
 from ..datamodels import dqflags
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 HUGE_NUM = np.finfo(np.float32).max
 

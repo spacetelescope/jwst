@@ -7,6 +7,7 @@ from . import resample_utils
 
 import logging
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 class GWCSDrizzle:

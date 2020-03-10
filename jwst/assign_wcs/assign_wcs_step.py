@@ -7,6 +7,7 @@ from .util import MSAFileError
 
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 __all__ = ["AssignWcsStep"]
 

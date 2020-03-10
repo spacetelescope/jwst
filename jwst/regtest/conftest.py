@@ -92,7 +92,7 @@ def generate_artifactory_json(request, artifactory_repos):
 
         # Upload and allow okify of truth by rtdata.output, if the test did not
         # fail before producing rtdata.output
-        if os.path.exists(rtdata.output):
+        if rtdata.output and os.path.exists(rtdata.output):
             # Write the rtdata class out as an ASDF file
             path_asdf = os.path.join(cwd, f"{request.node.name}_rtdata.asdf")
             rtdata.to_asdf(path_asdf)
@@ -232,12 +232,12 @@ def diff_astropy_tables():
             diffs.append("Column names (or order) do not match")
 
         if len(result) != len(truth):
-            diffs.append("Row count does not match")
+            diffs.append(f"Row count does not match({len(result)} vs {len(truth)})")
 
         # If either the columns or the row count is mismatched, then don't
         # bother checking the individual column values.
         if len(diffs) > 0:
-            return diffs
+            raise AssertionError("\n".join(diffs))
 
         if result.meta != truth.meta:
             diffs.append("Metadata does not match")
@@ -269,6 +269,8 @@ def diff_astropy_tables():
         if len(diffs) != 0:
             raise AssertionError("\n".join(diffs))
 
+        # No differences
+        return True
 
     return _diff_astropy_tables
 

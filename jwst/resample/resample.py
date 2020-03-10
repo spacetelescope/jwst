@@ -9,6 +9,7 @@ from . import resample_utils
 from ..model_blender import blendmeta
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 __all__ = ["ResampleData"]
 

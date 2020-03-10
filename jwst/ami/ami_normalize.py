@@ -6,6 +6,7 @@
 import logging
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 def normalize_LG(target_model, reference_model):

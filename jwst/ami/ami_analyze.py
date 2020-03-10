@@ -12,6 +12,7 @@ from . import webb_psf
 from . import leastsqnrm
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 def apply_LG(input_model, filter_model, oversample, rotation):

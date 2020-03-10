@@ -399,12 +399,20 @@ def test_open_asdf_model():
     assert model._asdf._ignore_unrecognized_tag == True
     model.close()
 
-def test_open_asdf_model_s3():
-    model = DataModel("s3://test-s3-data/data_model.asdf")
+def test_open_asdf_model_s3(s3_root_dir):
+    path = str(s3_root_dir.join("test.asdf"))
+    with DataModel() as dm:
+        dm.save(path)
+
+    model = DataModel("s3://test-s3-data/test.asdf")
     assert isinstance(model, DataModel)
 
-def test_open_fits_model_s3():
-    model = DataModel("s3://test-s3-data/data_model.fits")
+def test_open_fits_model_s3(s3_root_dir):
+    path = str(s3_root_dir.join("test.fits"))
+    with DataModel() as dm:
+        dm.save(path)
+
+    model = DataModel("s3://test-s3-data/test.fits")
     assert isinstance(model, DataModel)
 
 def test_image_with_extra_keyword_to_multislit():

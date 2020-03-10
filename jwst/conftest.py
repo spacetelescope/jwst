@@ -35,8 +35,18 @@ def mk_tmp_dirs():
 
 
 @pytest.fixture(autouse=True)
-def monkey_patch_s3_client(monkeypatch):
-    monkeypatch.setattr(s3_utils, "_CLIENT", lib_helpers.MockS3Client())
+def monkey_patch_s3_client(monkeypatch, request):
+    # If tmpdir is used in the test, then it is providing the file.  Map to it.
+    if "s3_root_dir" in request.fixturenames:
+        path = request.getfixturevalue("s3_root_dir")
+    else:
+        path = None
+    monkeypatch.setattr(s3_utils, "_CLIENT", lib_helpers.MockS3Client(path))
+
+
+@pytest.fixture
+def s3_root_dir(tmpdir):
+    return tmpdir
 
 
 @pytest.fixture

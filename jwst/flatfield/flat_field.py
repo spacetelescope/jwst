@@ -14,6 +14,7 @@ from .. lib import reffile_utils
 from .. assign_wcs import nirspec
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 MICRONS_100 = 1.e-4                     # 100 microns, in meters
 
