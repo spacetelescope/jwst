@@ -2,6 +2,8 @@ import logging
 
 import numpy as np
 
+from jwst import datamodels
+
 from astropy.convolution import Gaussian2DKernel
 from astropy.stats import gaussian_fwhm_to_sigma, SigmaClip
 from astropy.table import join, QTable
@@ -22,7 +24,7 @@ log.setLevel(logging.DEBUG)
 class SourceCatalog:
     def __init__(self, model, bkg_boxsize=100, kernel_fwhm=2.0,
                  snr_threshold=3.0, npixels=5.0, deblend=False,
-                 aperture_ee=(30, 50, 70)):
+                 aperture_ee=(30, 50, 70), apcorr_filename=None):
 
         if not isinstance(model, ImageModel):
             raise ValueError('The input model must be a ImageModel.')
@@ -33,12 +35,32 @@ class SourceCatalog:
         self.snr_threshold = snr_threshold
         self.npixels = npixels
         self.deblend = deblend
-        self.aperture_ee = np.array(aperture_ee)
+        self.apcorr_filename = apcorr_filename
+
+        aperture_ee = np.array(aperture_ee)
+        if len(aperture_ee) != 3:
+            raise ValueError('aperture_ee must contain only 3 values')
+        if np.any(np.logical_or(aperture_ee <= 0, aperture_ee >= 100)):
+            raise ValueError('aperture_ee values must be between 0 and 100')
+        if np.any(aperture_ee[1:] < aperture_ee[:-1]):
+            raise ValueError('aperture_ee values must be in increasing order')
+        self.aperture_ee = aperture_ee
+
+        self.instrument = self.model.meta.instrument.name
+        self.filtername = self.model.meta.instrument.filter
+        self.pupil = model.meta.instrument.pupil
+        self.subarray = self.model.meta.subarray.name
+        log.info(f'Instrument: {self.instrument}')
+        log.info(f'Filter: {self.filtername}')
+        if self.pupil is not None:
+            log.info(f'Pupil: {self.pupil}')
+        if self.subarray is not None:
+            log.info(f'Subarray: {self.subarray}')
 
         self._ci_colname = f'CI_{self.aperture_ee[0]}_{self.aperture_ee[2]}'
-        self._flux_colnames = self._make_aper_colnames('flux')
-        self._abmag_colnames = self._make_aper_colnames('abmag')
-        self._vegamag_colnames = self._make_aper_colnames('vegamag')
+        self._flux_colnames = self._make_aperture_colnames('flux')
+        self._abmag_colnames = self._make_aperture_colnames('abmag')
+        self._vegamag_colnames = self._make_aperture_colnames('vegamag')
         self._bkg_colnames = ['aper_bkg_flux', 'aper_bkg_flux_err']
 
         self.coverage_mask = None
@@ -53,24 +75,84 @@ class SourceCatalog:
         self.xypos = None
         self.null_column = None
 
-        self.bkg_aper_in = None
-        self.bkg_aper_out = None
-        self.aper_radii = None
+        self.aperture_radii = None
+        self.aperture_corrs = None
+        self.bkg_aperture_inner = None
+        self.bkg_aperture_outer = None
         self.abmag_offset = None
         self.aperture_catalog = None
         self.extras_catalog = None
         self.catalog = None
 
-    def _colnames_generator(self, name):
+    def _make_aperture_colnames(self, name):
+        colnames = []
         for aper_ee in self.aperture_ee:
             basename = f'aper{aper_ee}_{name}'
-            yield basename
-            yield f'{basename}_err'
+            colnames.append(basename)
+            colnames.append(f'{basename}_err')
 
-    def _make_aper_colnames(self, name):
-        colnames = list(self._colnames_generator(name))
         colnames.extend([f'aper_total_{name}', f'aper_total_{name}_err'])
+
         return colnames
+
+    def _find_aperture_params(self, selector):
+        apcorr_model = datamodels.open(self.apcorr_filename)
+        apcorr = apcorr_model.apcorr_table
+        if selector is None:  # FGS
+            ee_table = apcorr
+        else:
+            mask_idx = [apcorr[key] == value
+                        for key, value in selector.items()]
+            ee_table = apcorr[np.logical_and.reduce(mask_idx)]
+
+        radii = []
+        apcorrs = []
+        skyins = []
+        skyouts = []
+        for ee in self.aperture_ee:
+            row = ee_table[np.round(ee_table['eefraction'] * 100) == ee]
+            if len(row) == 0:
+                raise RuntimeError('Aperture encircled energy value of {0} '
+                                   'appears to be invalid. No matching row '
+                                   'was found in the apcorr reference file '
+                                   '{1}'.format(ee, self.apcorr_filename))
+            if len(row) > 1:
+                raise RuntimeError('More than one matching row was found in '
+                                   'the apcorr reference file {0}'
+                                   .format(self.apcorr_filename))
+
+            radii.append(row['radius'])
+            apcorrs.append(row['apcorr'])
+            skyins.append(row['skyin'])
+            skyouts.append(row['skyout'])
+
+        self.aperture_radii = np.array(radii)
+        self.aperture_corrs = np.array(apcorrs)
+
+        skyins = np.unique(skyins)
+        skyouts = np.unique(skyouts)
+        if len(skyins) != 1 or len(skyouts) != 1:
+            raise RuntimeError('Expected to find only one value for skyin '
+                               'and skyout in the apcorr reference file for '
+                               'a given selector.')
+        self.bkg_aperture_inner = skyins[0]
+        self.bkg_aperture_outer = skyouts[0]
+
+        return
+
+    def set_aperture_params(self):
+        if self.instrument == 'NIRCAM' or self.instrument == 'NIRISS':
+            selector = {'filter': self.filtername, 'pupil': self.pupil}
+        elif self.instrument == 'MIRI':
+            selector = {'filter': self.filtername, 'subarray': self.subarray}
+        elif self.instrument == 'FGS':
+            selector = None
+        else:
+            raise RuntimeError(f'{self.instrument} is not a valid instrument')
+
+        self._find_aperture_params(selector)
+
+        return
 
     def convert_to_jy(self):
         """ convert from MJy/sr to Jy"""
@@ -151,8 +233,7 @@ class SourceCatalog:
         """
 
         sigma = self.kernel_fwhm * gaussian_fwhm_to_sigma
-        #kernel = Gaussian2DKernel(sigma)
-        kernel = Gaussian2DKernel(sigma, x_size=5, y_size=5)
+        kernel = Gaussian2DKernel(sigma)
         kernel.normalize(mode='integral')
 
         self.kernel = kernel
@@ -533,6 +614,9 @@ class SourceCatalog:
 
         self.make_segment_catalog()
         self.make_null_column()
+
+        self.set_aperture_params()
+
         self.make_aperture_catalog()
         self.make_extras_catalog()
         self.make_source_catalog()
