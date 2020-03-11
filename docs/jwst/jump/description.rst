@@ -7,9 +7,10 @@ We assume that the ``saturation`` step has already been applied to the input
 science exposure, so that saturated values are appropriately flagged in the
 input GROUPDQ array. We also assume that steps such as the reference pixel
 correction (``refpix``) and non-linearity correction (``linearity``) have been applied, so
-that the input data ramps do not have any non-linearities or noise above the modelled Poission and read noise due to instrumental
-effects. The absence of any of these preceding corrections  or resdiual non-linearities or noise can lead to the
-false detection of jumps in the ramps, due to departure from linearity.
+that the input data ramps do not have any non-linearities or noise above the modelled Poission
+and read noise due to instrumental effects. The absence of any of these preceding corrections
+or residual non-linearities or noise can lead to the false detection of jumps in the ramps,
+due to departure from linearity.
 
 The ``jump`` step will automatically skip execution if the input data contain fewer
 than 3 groups per integration, because it's impossible to detect jumps with
@@ -56,8 +57,8 @@ Multiprocessing
 ===============
 This step has the option of running in multiprocessing mode. In that mode it will
 split the input data cube into a number of slices based on the number of available
-cores on the host computer and the value of the --max_cores input parameter. By
-default the step runs on a single processor. At the other extreme if --max_cores is
+cores on the host computer and the value of the max_cores input parameter. By
+default the step runs on a single processor. At the other extreme if max_cores is
 set to 'all', it will use all available cores (real and virtual). Testing has shown
 a reduction in the elapsed time for the step proportional to the number of real
 cores used.
