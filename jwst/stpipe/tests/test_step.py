@@ -1,3 +1,4 @@
+import os
 from os.path import (
     abspath,
     dirname,
@@ -7,13 +8,13 @@ from os.path import (
 import pytest
 import jwst
 from jwst import datamodels
-from jwst.refpix import RefPixStep
-from jwst.stpipe import Step
-from jwst.stpipe.config_parser import ValidationError
-from jwst.stpipe import crds_client
 from jwst.extern.configobj.configobj import ConfigObj
+from jwst.refpix import RefPixStep
+from jwst.stpipe import Step, crds_client
+from jwst.stpipe import cmdline
+from jwst.stpipe.config_parser import ValidationError
 
-from .steps import EmptyPipeline, MakeListPipeline, MakeListStep
+from .steps import EmptyPipeline, MakeListPipeline, MakeListStep, WithDefaultsStep
 from .util import t_path
 
 from crds.core.exceptions import CrdsLookupError
@@ -31,6 +32,40 @@ REFPIXSTEP_CRDS_MIRI_PARS = {
     'side_smoothing_length': 21,
     'use_side_ref_pixels': False
 }
+
+
+@pytest.mark.parametrize(
+    'arg, expected', [
+        ('--verbose', False),
+        ('--disable-crds-steppars', True),
+    ]
+)
+def test_disable_crds_steppars_from_cmdline(arg, expected):
+    """Test setting of disable_crds_steppars"""
+    step, step_class, positional, debug_on_exception = cmdline.just_the_step_from_cmdline(
+        ['jwst.stpipe.tests.steps.WithDefaultsStep', arg]
+    )
+    assert step.disable_crds_steppars is expected
+
+
+@pytest.mark.parametrize(
+    'value, expected', [
+        (None, False),
+        ('true', True),
+        ('True', True),
+        ('t', True),
+    ]
+)
+def test_disable_crds_steppars_from_environment(value, expected):
+    """Test setting disable_crds_steppars from the environment"""
+    if value:
+        os.environ['STPIPE_DISABLE_CRDS_STEPPARS'] = value
+    try:
+        step = WithDefaultsStep()
+        flag = step.disable_crds_steppars
+    finally:
+        os.environ.pop('DISABLE_CRDS_STEPPARS', None)
+    assert flag is expected
 
 
 @pytest.mark.xfail(

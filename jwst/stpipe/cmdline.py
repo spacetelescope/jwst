@@ -184,6 +184,10 @@ def just_the_step_from_cmdline(args, cls=None):
         '--save-parameters', type=str,
         help='Save step parameters to specified file.'
     )
+    parser1.add_argument(
+        '--disable-crds-steppars', action='store_true',
+        help='Disable retrieval of step parameter references files from CRDS'
+    )
     known, _ = parser1.parse_known_args(args)
 
     try:
@@ -245,6 +249,7 @@ def just_the_step_from_cmdline(args, cls=None):
     del args.verbose
     del args.debug
     del args.save_parameters
+    del args.disable_crds_steppars
     positional = args.args
     del args.args
 
@@ -298,6 +303,9 @@ def just_the_step_from_cmdline(args, cls=None):
     if known.save_parameters:
         step.get_pars_model().save(known.save_parameters)
         log.log.info(f"Step/Pipeline parameters saved to '{known.save_parameters}'")
+
+    # Set CRDS `steppars` reference file retrieval
+    step._disable_crds_steppars = known.disable_crds_steppars
 
     return step, step_class, positional, debug_on_exception
 
