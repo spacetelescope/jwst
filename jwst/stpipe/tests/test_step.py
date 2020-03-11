@@ -33,39 +33,32 @@ REFPIXSTEP_CRDS_MIRI_PARS = {
     'use_side_ref_pixels': False
 }
 
+CRDS_ERROR_STRING = 'PARS-WITHDEFAULTSSTEP: No parameters found'
 
 @pytest.mark.parametrize(
-    'arg, expected', [
-        ('--verbose', False),
-        ('--disable-crds-steppars', True),
+    'arg, env_set, expected_fn', [
+        ('--disable-crds-steppars', None,   lambda stream: not CRDS_ERROR_STRING in stream),
+        ('--verbose',               None,   lambda stream: CRDS_ERROR_STRING in stream),
+        ('--verbose',               'true', lambda stream: not CRDS_ERROR_STRING in stream),
+        ('--verbose',               'True', lambda stream: not CRDS_ERROR_STRING in stream),
+        ('--verbose',               't',    lambda stream: not CRDS_ERROR_STRING in stream),
     ]
 )
-def test_disable_crds_steppars_from_cmdline(arg, expected):
+def test_disable_crds_steppars(capsys, arg, env_set, expected_fn):
     """Test setting of disable_crds_steppars"""
-    step, step_class, positional, debug_on_exception = cmdline.just_the_step_from_cmdline(
-        ['jwst.stpipe.tests.steps.WithDefaultsStep', arg]
-    )
-    assert step.disable_crds_steppars is expected
+    data_path = t_path(join('data', 'miri_data.fits'))
+    if env_set:
+        os.environ['STPIPE_DISABLE_CRDS_STEPPARS'] = env_set
 
-
-@pytest.mark.parametrize(
-    'value, expected', [
-        (None, False),
-        ('true', True),
-        ('True', True),
-        ('t', True),
-    ]
-)
-def test_disable_crds_steppars_from_environment(value, expected):
-    """Test setting disable_crds_steppars from the environment"""
-    if value:
-        os.environ['STPIPE_DISABLE_CRDS_STEPPARS'] = value
     try:
-        step = WithDefaultsStep()
-        flag = step.disable_crds_steppars
+        step, step_class, positional, debug_on_exception = cmdline.just_the_step_from_cmdline(
+            ['jwst.stpipe.tests.steps.WithDefaultsStep', data_path, arg]
+        )
     finally:
         os.environ.pop('DISABLE_CRDS_STEPPARS', None)
-    assert flag is expected
+
+    captured = capsys.readouterr()
+    assert expected_fn(captured.err)
 
 
 @pytest.mark.xfail(

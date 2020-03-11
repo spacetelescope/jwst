@@ -229,7 +229,9 @@ def just_the_step_from_cmdline(args, cls=None):
 
     debug_on_exception = known.debug
 
-    #
+    # Determine whether CRDS should be queried for step parameters
+    disable_crds_steppars = get_disable_crds_steppars(known.disable_crds_steppars)
+
     # This creates a config object from the spec file of the step class merged with
     # the spec files of the superclasses of the step class and adds arguments for
     # all of the expected reference files
@@ -257,15 +259,16 @@ def just_the_step_from_cmdline(args, cls=None):
         input_file = positional[0]
         if args.input_dir:
             input_file = args.input_dir + '/' + input_file
-        try:
-            # If step_class is a pipeline, this function lives in pipeline.py, otherwise
-            # in step.py
-            parameter_cfg = step_class.get_config_from_reference(input_file)
-            if config:
-                config_parser.merge_config(parameter_cfg, config)
-            config = parameter_cfg
-        except FileNotFoundError:
-            log.log.warning("Unable to open input file, cannot get cfg from CRDS")
+
+        # If enabled, attempt to retrieve Step parameters from CRDS
+        if not disable_crds_steppars:
+            try:
+                parameter_cfg = step_class.get_config_from_reference(input_file)
+                if config:
+                    config_parser.merge_config(parameter_cfg, config)
+                config = parameter_cfg
+            except FileNotFoundError:
+                log.log.warning("Unable to open input file, cannot get cfg from CRDS")
     else:
         log.log.info("No input file specified, unable to retrieve parameters from CRDS")
     #
@@ -303,9 +306,6 @@ def just_the_step_from_cmdline(args, cls=None):
     if known.save_parameters:
         step.get_pars_model().save(known.save_parameters)
         log.log.info(f"Step/Pipeline parameters saved to '{known.save_parameters}'")
-
-    # Set CRDS `steppars` reference file retrieval
-    step._disable_crds_steppars = known.disable_crds_steppars
 
     return step, step_class, positional, debug_on_exception
 
@@ -385,3 +385,25 @@ def steps_to_reftypes_from_config(cfg):
     for name, substep in step.step_defs.items():
         steps_to_reftypes[name] = sorted(list(substep.reference_file_types))
     return steps_to_reftypes
+
+def get_disable_crds_steppars(default=None):
+    """Return either the explicit default flag or retrieve from the environment
+
+    If a default is not specified, retrieve the value from the environmental variable
+    `STPIPE_DISABLE_CRDS_STEPPARS`.
+
+    Parameters
+    ----------
+    default: str, bool, or None
+        Flag to use. If None, the environmental is used.
+    """
+    truths =  ('true', 'True', 't', 'yes', 'y')
+    if default:
+        if isinstance(default, bool):
+            return default
+        elif isinstance(default, str):
+            return default in truths
+        raise ValueError(f'default must be string or boolean: {default}')
+
+    flag = os.environ.get('STPIPE_DISABLE_CRDS_STEPPARS', '')
+    return flag in truths

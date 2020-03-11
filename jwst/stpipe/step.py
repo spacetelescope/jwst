@@ -272,7 +272,6 @@ class Step():
             variables on the new Step instance.
         """
         self._pars_model = None
-        self._disable_crds_steppars = None
         self._reference_files_used = []
         self._input_filename = None
         self._input_dir = None
@@ -613,35 +612,6 @@ class Step():
             if value is None:
                 value = default
             return value
-
-    @property
-    def disable_crds_steppars(self):
-        """Flag to use CRDS to get Step Parameters References
-
-        This flag is either explicitly set, or is retrieved from the
-        environmental variable `STPIPE_DISABLE_CRDS_STEPPARS`
-
-        Returns
-        -------
-        disable_crds_steppars: bool
-            Do not query CRDS references
-        """
-        if self._disable_crds_steppars:
-            return self._disable_crds_steppars
-
-        flag = os.environ.get('STPIPE_DISABLE_CRDS_STEPPARS', '')
-        return flag.lower() in ['true', 't', 'yes', 'y']
-
-    @disable_crds_steppars.setter
-    def disable_crds_steppars(self, flag):
-        """Set disable flag
-
-        Parameters
-        ----------
-        flag: bool
-           Boolean state to set
-        """
-        self._disable_crds_steppars = flag
 
     def _precache_references(self, input_file):
         """Because Step precaching precedes calls to get_reference_file() almost
