@@ -110,13 +110,12 @@ class ResampleSpecStep(ResampleStep):
         """
         resamp = resample_spec.ResampleSpecData(input_models, **self.drizpars)
         drizzled_models = resamp.do_drizzle()
-
+        drizzled_models[0].update(input_models[0])
         for model in drizzled_models:
             model.meta.cal_step.resample = "COMPLETE"
             model.meta.asn.pool_name = input_models.meta.pool_name
             model.meta.asn.table_name = input_models.meta.table_name
             update_s_region_spectral(model)
-
         # Return either the single resampled datamodel, or the container
         # of datamodels.
         if len(drizzled_models) == 1:
