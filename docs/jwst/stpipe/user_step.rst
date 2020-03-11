@@ -191,6 +191,15 @@ required, see :ref:`user-logging`).
 To start the Python debugger if the step itself raises an exception,
 pass the `--debug` option to the commandline.
 
+
+Disabling CRDS Retrieval of Step Parameters
+```````````````````````````````````````````
+
+Retrieval of ``Step`` parameters from CRDS can be completely disabled by
+using the ``--disable-crds-steppars`` command-line switch, or setting the
+environmental variable ``STPIPE_DISABLE_CRDS_STEPPARS`` to ``true``.
+
+
 Running a Step in Python
 ------------------------
 
