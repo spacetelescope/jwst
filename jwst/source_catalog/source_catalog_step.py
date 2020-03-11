@@ -28,16 +28,35 @@ class SourceCatalogStep(Step):
         snr_threshold = float(default=3.0)    # SNR threshold above the bkg
         npixels = float(default=5.0)          # min number of pixels in source
         deblend = boolean(default=False)      # deblend sources?
+        aperture_ee1 = float(default=30)      # aperture encircled energy 1
+        aperture_ee2 = float(default=50)      # aperture encircled energy 2
+        aperture_ee3 = float(default=70)      # aperture encircled energy 3
         output_ext = string(default='.ecsv')  # Default file extension
         suffix = string(default='cat')        # Default suffix for output files
     """
 
+    reference_file_types = ['apcorr']
+
     def process(self, input_model):
         with datamodels.open(input)  as model:
+            apcorr_filename = self.get_reference_file(input_model, 'apcorr')
+            self.log.info(f'Using apcorr reference file {apcorr_filename}')
+
+            if self.aperture_ee2 < self.aperture_ee1:
+                raise ValueError('aperture_ee2 value must be less than '
+                                 'aperture_ee1')
+            if self.aperture_ee3 < self.aperture_ee2:
+                raise ValueError('aperture_ee3 value must be less than '
+                                 'aperture_ee2')
+            aperture_ee = (self.aperture_ee1, self.aperture_ee2,
+                           self.aperture_ee3)
+
             catobj = SourceCatalog(model, bkg_boxsize=self.bkg_boxsize,
                                    kernel_fwhm=self.kernel_fwhm,
                                    snr_threshold=self.snr_threshold,
-                                   npixels=self.npixels, deblend=self.deblend)
+                                   npixels=self.npixels, deblend=self.deblend,
+                                   aperture_ee=aperture_ee,
+                                   apcorr_filename=apcorr_filename)
             catalog = catobj.run()
 
             if self.save_results:
