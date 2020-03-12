@@ -1,6 +1,10 @@
 0.15.2 (unreleased)
 ==================
 
+stpipe
+------
+
+- Add command line and environmental options to not retrieve steppars references [#4676]
 
 
 0.15.1 (2020-03-10)
