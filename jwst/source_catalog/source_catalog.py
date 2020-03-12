@@ -121,10 +121,10 @@ class SourceCatalog:
                                    'the apcorr reference file {0}'
                                    .format(self.apcorr_filename))
 
-            radii.append(row['radius'])
-            apcorrs.append(row['apcorr'])
-            skyins.append(row['skyin'])
-            skyouts.append(row['skyout'])
+            radii.append(row['radius'][0])
+            apcorrs.append(row['apcorr'][0])
+            skyins.append(row['skyin'][0])
+            skyouts.append(row['skyout'][0])
 
         self.aperture_radii = np.array(radii)
         self.aperture_corrs = np.array(apcorrs)
@@ -459,19 +459,10 @@ class SourceCatalog:
 
         return bkg_median, bkg_median_err
 
-    def append_aper_total(self, catalog):
-        catalog['aper_total_flux'] = self.null_column
-        catalog['aper_total_flux_err'] = self.null_column
-        catalog['aper_total_abmag'] = self.null_column
-        catalog['aper_total_abmag_err'] = self.null_column
-        catalog['aper_total_vegamag'] = self.null_column
-        catalog['aper_total_vegamag_err'] = self.null_column
-
-        return catalog
-
     def calc_concentration_index(self):
         col1 = self._abmag_colnames[0]  # ee_fraction[0]
         col2 = self._abmag_colnames[4]  # ee_fraction[2]
+
         return self.aperture_catalog[col1] - self.aperture_catalog[col2]
 
     def calc_is_star(self):
@@ -484,11 +475,16 @@ class SourceCatalog:
 
         return self.null_column
 
-    def get_aperture_radii(self):
-        self.bkg_aper_in = 10
-        self.bkg_aper_out = 15
-        self.aper_radii = (3, 5, 7)
-        return
+    def append_aper_total(self, catalog):
+        # self.aperture_corrs
+        catalog['aper_total_flux'] = self.null_column
+        catalog['aper_total_flux_err'] = self.null_column
+        catalog['aper_total_abmag'] = self.null_column
+        catalog['aper_total_abmag_err'] = self.null_column
+        catalog['aper_total_vegamag'] = self.null_column
+        catalog['aper_total_vegamag_err'] = self.null_column
+
+        return catalog
 
     def get_abmag_offset(self):
         filepath = 'abmag_to_vega.ecsv'
@@ -497,14 +493,14 @@ class SourceCatalog:
         return self.abmag_offset
 
     def make_aperture_catalog(self):
-        self.get_aperture_radii()
-        bkg_aperture = CircularAnnulus(self.xypos, self.bkg_aper_in,
-                                       self.bkg_aper_out)
+        bkg_aperture = CircularAnnulus(self.xypos, self.bkg_aperture_inner,
+                                       self.bkg_aperture_outer)
         bkg_median, bkg_median_err = self.calc_aper_local_background(
             bkg_aperture)
 
+        log.info('{}'.format(self.aperture_radii))
         apertures = [CircularAperture(self.xypos, radius) for radius in
-                     self.aper_radii]
+                     self.aperture_radii]
         aper_phot = aperture_photometry(self.model.data, apertures,
                                         error=self.total_error)
 
@@ -616,7 +612,6 @@ class SourceCatalog:
         self.make_null_column()
 
         self.set_aperture_params()
-
         self.make_aperture_catalog()
         self.make_extras_catalog()
         self.make_source_catalog()
