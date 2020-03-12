@@ -1,4 +1,3 @@
-import logging
 import os
 from os.path import (
     abspath,
@@ -15,7 +14,7 @@ from jwst.stpipe import Step, crds_client
 from jwst.stpipe import cmdline
 from jwst.stpipe.config_parser import ValidationError
 
-from .steps import EmptyPipeline, MakeListPipeline, MakeListStep, WithDefaultsStep
+from .steps import EmptyPipeline, MakeListPipeline, MakeListStep
 from .util import t_path
 
 from crds.core.exceptions import CrdsLookupError
