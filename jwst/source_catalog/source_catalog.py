@@ -498,7 +498,6 @@ class SourceCatalog:
         bkg_median, bkg_median_err = self.calc_aper_local_background(
             bkg_aperture)
 
-        log.info('{}'.format(self.aperture_radii))
         apertures = [CircularAperture(self.xypos, radius) for radius in
                      self.aperture_radii]
         aper_phot = aperture_photometry(self.model.data, apertures,
@@ -615,5 +614,17 @@ class SourceCatalog:
         self.make_aperture_catalog()
         self.make_extras_catalog()
         self.make_source_catalog()
+
+        # output formatting requested by the JPWG (2020.02.05)
+        for colname in self.catalog.colnames:
+            if colname in ('xcentroid', 'ycentroid') or 'CI_' in colname:
+                self.catalog[colname].info.format = '.4f'
+            if 'flux' in colname:
+                self.catalog[colname].info.format = '.6e'
+            if 'abmag' in colname or 'vegamag' in colname:
+                self.catalog[colname].info.format = '.6f'
+            if colname in ('semimajor_sigma', 'semiminor_sigma',
+                           'ellipticity', 'orientation', 'sky_orientation'):
+                self.catalog[colname].info.format = '.6f'
 
         return self.catalog
