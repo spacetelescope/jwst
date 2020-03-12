@@ -99,36 +99,3 @@ def test_rscd_baseline_too_few_groups():
                                   dq_diff,
                                   err_msg='groupdq flags changed when '
                                   + 'not enough groups are present')
-
-
-if __name__ == '__main__':
-    # size of integration
-    ngroups = 10
-    xsize = 1032
-    ysize = 1024
-
-    # create the data and groupdq arrays
-    csize = (2, ngroups, ysize, xsize)
-    data = np.full(csize, 1.0, dtype=np.float32)
-    groupdq = np.zeros(csize, dtype=np.uint8)
-
-    # create a JWST datamodel for MIRI data
-    dm_ramp = RampModel(data=data, groupdq=groupdq)
-
-    # get the number of groups to flag
-    nflag = 3
-
-    # run the RSCD baseline correction step
-    dm_ramp_rscd = correction_skip_groups(dm_ramp, nflag)
-
-    # check that the difference in the groupdq flags is equal to
-    #   the 'do_not_use' flag for the 2nd integration
-    dq_diff = (dm_ramp_rscd.groupdq[1, 0:nflag, :, :]
-               - dm_ramp.groupdq[1, 0:nflag, :, :])
-    print(dq_diff)
-    np.testing.assert_array_equal(np.full((nflag, ysize, xsize),
-                                          dqflags.group['DO_NOT_USE'],
-                                          dtype=np.uint8),
-                                  dq_diff,
-                                  err_msg='Diff in groupdq flags is not '
-                                  + 'equal to the DO_NOT_USE flag')
