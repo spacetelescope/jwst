@@ -62,7 +62,7 @@ def test_disable_crds_steppars_cmdline(capsys, data_path, arg, env_set, expected
             ['jwst.stpipe.tests.steps.WithDefaultsStep', data_path, arg]
         )
     finally:
-        os.environ.pop('DISABLE_CRDS_STEPPARS', None)
+        os.environ.pop('STPIPE_DISABLE_CRDS_STEPPARS', None)
 
     captured = capsys.readouterr()
     assert expected_fn(captured.err)
