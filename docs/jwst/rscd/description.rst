@@ -24,7 +24,7 @@ to allow charge to build up and to also initialize (clear) the charge. However, 
 reset the level, instead the exponential adjustment of the  FET after a reset causes the initial frames in an integration
 to be offset from their expected values. Between exposures the MIRI detectors
 are continually reset; however for a multiple integration exposure there is a single reset between integrations.
-The affects of this decay are
+The effects of this decay are
 not measurable in the first integration  because a number of resets have occurred from the last exposure and
 the effect has decayed away by the time it takes to read out the last exposure, set up the next exposure and begin
 exposing. There are low level reset effects in the first integration that are related to the strength of the dark
@@ -43,8 +43,9 @@ as bad (the "DO_NOT_USE" bit is set in the
 GROUPDQ flag array), but only if the total number of groups in each
 integration is greater than N+3.
 This results in the data contained in the the first N groups
-being excluded from subsequent steps, such as jump detection and ramp fitting.
-No flags are added if NGROUPS <= N+2, because doing so would leave too few good
+being excluded from subsequent steps, such as :ref:`jump detection <jump_step>`
+and :ref:`ramp_fitting <ramp_fitting_step>`.
+No flags are added if NGROUPS <= N+3, because doing so would leave too few good
 groups to work with in later steps.
 
 Only the GROUPDQ array is modified. The SCI, ERR, and PIXELDQ arrays are unchanged.

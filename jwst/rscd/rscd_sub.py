@@ -20,10 +20,10 @@ def do_correction(input_model, rscd_model, type):
 
     Parameters
     ----------
-    input_model: data model object
+    input_model: ~jwst.datamodels.RampModel
         science data to be corrected
 
-    rscd_model: rscd model object
+    rscd_model: ~jwst.datamodels.RSCDModel
         rscd reference data
 
     type: string
@@ -31,30 +31,28 @@ def do_correction(input_model, rscd_model, type):
 
     Returns
     -------
-    output_model: data model object
+    output_model: ~jwst.datamodels.RampModel
         RSCD-corrected science data
 
     """
 
-    output = input_model.copy()
-
     # Retrieve the reference parameters for this exposure type
-    param = {}
     param = get_rscd_parameters(input_model, rscd_model)
 
-    if param is None:
-        log.warning('RSCD correction will be skipped')
-        output.meta.cal_step.rscd = 'SKIPPED'
-        return output
+    if not param:  # empty dictionary
+        log.warning('Issue with reference file: RSCD correction will be skipped')
+        input_model.meta.cal_step.rscd = 'SKIPPED'
+        return input_model
 
     if type == 'baseline':
+        output = input_model.copy()
         group_skip = param['skip']
         output = correction_skip_groups(input_model, group_skip)
     else:
         # enhanced algorithm is not enabled yet (updated code and validation needed)
         log.warning('Enhanced algorithm not support yet: RSCD correction will be skipped')
-        output.meta.cal_step.rscd = 'SKIPPED'
-        return output
+        input_model.meta.cal_step.rscd = 'SKIPPED'
+        return input_model
         # decay function algorithm update needed
         #output = correction_decay_function(input_model, param)
 
@@ -65,20 +63,20 @@ def correction_skip_groups(input_model, group_skip):
     """
     Short Summary
     -------------
-    Set initial groups in integration to DO_NOT_USE to skip groups
+    Set the initial groups in integration to DO_NOT_USE to skip groups
     affected by RSCD effect
 
     Parameters
     ----------
-    input_model: data model object
+    input_model: ~jwst.datamodels.RampModel
         science data to be corrected
 
     group_skip: int
-        number of groups to skip at the beginnig of the ramp
+        number of groups to skip at the beginning of the ramp
 
     Returns
     -------
-    output_model: data model object
+    output_model: ~jwst.datamodels.RampModel
         RSCD-corrected science data
     """
 
@@ -92,28 +90,19 @@ def correction_skip_groups(input_model, group_skip):
     # Create output as a copy of the input science data model
     output = input_model.copy()
 
+    # If ngroups <= group_skip+3, skip the flagging
+    # the +3 is to ensure there is a slope to be fit including the flagging for
+    # the last frame correction
     if sci_ngroups <= (group_skip + 3):
         log.warning("Too few groups to apply RSCD correction")
         log.warning("RSCD step will be skipped")
         output.meta.cal_step.rscd = 'SKIPPED'
         return output
 
-    # Update the step status, and if ngroups > nflag+3, set all of the GROUPDQ in
-    # the first group to 'DO_NOT_USE'
-    # the +3 is to ensure there is a slope to be fit including the flagging for
-    # the last frame correction
-
-    # loop over all integrations except the first
-    mdelta = int(sci_nints / 10) + 1
-    for i in range(1, sci_nints):
-        if ((i + 1) % mdelta) == 0:
-            log.info(' Working on integration %d', i + 1)
-
-        output.groupdq[i, 0:group_skip :, :] = \
-            np.bitwise_or(output.groupdq[i, 0:group_skip,:,:], dqflags.group['DO_NOT_USE'])
-
-        log.debug(f"RSCD Sub: resetting GROUPDQ in the first {group_skip} groups to DO_NOT_USE")
-
+    # If ngroups > group_skip+3, set all of the GROUPDQ in the first group to 'DO_NOT_USE'
+    output.groupdq[1:, 0:group_skip :, :] = \
+        np.bitwise_or(output.groupdq[1:, 0:group_skip,:,:], dqflags.group['DO_NOT_USE'])
+    log.debug(f"RSCD Sub: adding DO_NOT_USE to GROUPDQ for the first {group_skip} groups")
     output.meta.cal_step.rscd = 'COMPLETE'
 
     return output
@@ -144,15 +133,15 @@ def correction_decay_function(input_model, param):
 
     Parameters
     ----------
-    input_model: data model object
+    input_model: ~jwst.datamodels.RampModel
         science data to be corrected
 
     param: dict
-        paramters of RSCD correction
+        parameters of correction
 
     Returns
     -------
-    output_model: data model object
+    output_model: ~jwst.datamodels.RampModel
         RSCD-corrected science data
 
     """
@@ -291,23 +280,22 @@ def correction_decay_function(input_model, param):
 
 
 def get_rscd_parameters(input_model, rscd_model):
-
-
     """
     Read in the parameters from the reference file
     Store the parameters in a param dictionary
 
     Parameters
     ----------
-    input_model: data model object
+    input_model: ~jwst.datamodels.RampModel
         science data to be corrected
 
-    rscd_model: rscd model object
+    rscd_model: ~jwst.datamodels.RSCDModel
         rscd reference data
 
     Returns
     -------
-    RSCD dictionary of parameters
+    param: dict
+        dictionary of parameters
 
     """
 
@@ -327,13 +315,13 @@ def get_rscd_parameters(input_model, rscd_model):
         subarray_table = tabdata['subarray']
         readpatt_table = tabdata['readpatt']
         group_skip_table = tabdata['group_skip']
-        group_skip_table = int(group_skip_table)
         if (subarray_table == subarray and readpatt_table == readpatt):
             param['skip'] = group_skip_table
+            break
 
     # read table 2: General RSCD enhanced parameters
-    param['gen'] = {}
     for tabdata in rscd_model.rscd_gen_table:
+        param['gen'] = {}
         readpatt_gen = tabdata['readpatt']
         subarray_gen = tabdata['subarray']
         lower_cutoff_gen = tabdata['lower_cutoff']
@@ -343,12 +331,13 @@ def get_rscd_parameters(input_model, rscd_model):
             param['gen']['lower_cutoff'] = lower_cutoff_gen
             param['gen']['lower_alpha_odd'] = alpha_odd_gen
             param['gen']['lower_alpha_even'] = alpha_even_gen
+            break
 
     # read table 3: Enhanced RSCD integration 1 parameters
-    param['int1'] = {}
-    param['int1']['even'] = {}
-    param['int1']['odd'] = {}
     for tabdata in rscd_model.rscd_int1_table:
+        param['int1'] = {}
+        param['int1']['even'] = {}
+        param['int1']['odd'] = {}
         readpatt_int1 = tabdata['readpatt']
         subarray_int1= tabdata['subarray']
         rows_int1 = tabdata['rows']
@@ -367,13 +356,13 @@ def get_rscd_parameters(input_model, rscd_model):
                 param['int1']['odd']['a1'] = a1_int1
                 param['int1']['odd']['a2'] = a2_int1
                 param['int1']['odd']['a3'] = a3_int1
+            break
 
     # read table 4: Enhanced RSCD integration 2 parameters
-    param['int2'] = {}
-    param['int2']['even'] = {}
-    param['int2']['odd'] = {}
-
     for tabdata in rscd_model.rscd_int2_table:
+        param['int2'] = {}
+        param['int2']['even'] = {}
+        param['int2']['odd'] = {}
         readpatt_int2 = tabdata['readpatt']
         subarray_int2= tabdata['subarray']
         rows_int2 = tabdata['rows']
@@ -392,13 +381,13 @@ def get_rscd_parameters(input_model, rscd_model):
                 param['int2']['odd']['a1'] = a1_int2
                 param['int2']['odd']['a2'] = a2_int2
                 param['int2']['odd']['a3'] = a3_int2
+            break
 
     # read table 5: Enhanced RSCD integration 3 parameters
-    param['int3'] = {}
-    param['int3']['even'] = {}
-    param['int3']['odd'] = {}
-
     for tabdata in rscd_model.rscd_int3_table:
+        param['int3'] = {}
+        param['int3']['even'] = {}
+        param['int3']['odd'] = {}
         readpatt_int3 = tabdata['readpatt']
         subarray_int3= tabdata['subarray']
         rows_int3 = tabdata['rows']
@@ -417,12 +406,12 @@ def get_rscd_parameters(input_model, rscd_model):
                 param['int3']['odd']['a1'] = a1_int3
                 param['int3']['odd']['a2'] = a2_int3
                 param['int3']['odd']['a3'] = a3_int3
+            break
 
     return param
 
 
 def get_DNaccumulated_last_int(input_model, i, sci_ngroups):
-
     """
     Find the accumulated DN from the last integration
     This data should already have the Reset Anomaly correction
@@ -433,7 +422,7 @@ def get_DNaccumulated_last_int(input_model, i, sci_ngroups):
 
     Parameters
     ----------
-    input_model: input ramp data
+    input_model: ~jwst.datamodels.RampModel
     i: integration #
     sci_ngroups: number of frames/integration
 
@@ -486,7 +475,6 @@ def get_DNaccumulated_last_int(input_model, i, sci_ngroups):
 
 
 def ols_fit(y, dq):
-
     """
     An estimation of the lastframe value from the previous integration is
     needed for the RSCD correction.

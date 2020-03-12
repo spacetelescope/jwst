@@ -8,19 +8,19 @@ from jwst.rscd.rscd_sub import correction_skip_groups
 def test_rscd_baseline_set_groupdq():
     """
     For a 2 integration exposure, test if the rscd code sets the groupdq flag on
-    the n groups to 'do_not_use' for the 2nd integrations and did not change the
+    the n groups to 'do_not_use' for the 2nd integration and did not change the
     groupdq flags in the 1st integration
     """
 
     # size of integration
     ngroups = 10
-    xsize = 1032
-    ysize = 1024
+    xsize = 10
+    ysize = 10
 
     # create the data and groupdq arrays
     csize = (2, ngroups, ysize, xsize)
-    data = np.full(csize, 1.0)
-    groupdq = np.zeros(csize, dtype=int)
+    data = np.full(csize, 1.0, dtype=np.float32)
+    groupdq = np.zeros(csize, dtype=np.uint8)
 
     # create a JWST datamodel for MIRI data
     dm_ramp = RampModel(data=data, groupdq=groupdq)
@@ -73,13 +73,13 @@ def test_rscd_baseline_too_few_groups():
     # size of exposure
     nints = 2
     ngroups = 3
-    xsize = 1032
-    ysize = 1024
+    xsize = 10
+    ysize = 10
 
     # create the data and groupdq arrays
     csize = (nints, ngroups, ysize, xsize)
-    data = np.full(csize, 1.0)
-    groupdq = np.zeros(csize, dtype=int)
+    data = np.full(csize, 1.0, dtype=np.float32)
+    groupdq = np.zeros(csize, dtype=np.uint8)
 
     # create a JWST datamodel for MIRI data
     dm_ramp = RampModel(data=data, groupdq=groupdq)
@@ -97,5 +97,38 @@ def test_rscd_baseline_too_few_groups():
                                           0,
                                           dtype=int),
                                   dq_diff,
-                                  err_msg='groupdq flags changed in when '
+                                  err_msg='groupdq flags changed when '
                                   + 'not enough groups are present')
+
+
+if __name__ == '__main__':
+    # size of integration
+    ngroups = 10
+    xsize = 1032
+    ysize = 1024
+
+    # create the data and groupdq arrays
+    csize = (2, ngroups, ysize, xsize)
+    data = np.full(csize, 1.0, dtype=np.float32)
+    groupdq = np.zeros(csize, dtype=np.uint8)
+
+    # create a JWST datamodel for MIRI data
+    dm_ramp = RampModel(data=data, groupdq=groupdq)
+
+    # get the number of groups to flag
+    nflag = 3
+
+    # run the RSCD baseline correction step
+    dm_ramp_rscd = correction_skip_groups(dm_ramp, nflag)
+
+    # check that the difference in the groupdq flags is equal to
+    #   the 'do_not_use' flag for the 2nd integration
+    dq_diff = (dm_ramp_rscd.groupdq[1, 0:nflag, :, :]
+               - dm_ramp.groupdq[1, 0:nflag, :, :])
+    print(dq_diff)
+    np.testing.assert_array_equal(np.full((nflag, ysize, xsize),
+                                          dqflags.group['DO_NOT_USE'],
+                                          dtype=np.uint8),
+                                  dq_diff,
+                                  err_msg='Diff in groupdq flags is not '
+                                  + 'equal to the DO_NOT_USE flag')
