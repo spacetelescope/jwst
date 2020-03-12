@@ -48,6 +48,8 @@ class ModelContainer(model_base.DataModel):
        - asn_exptypes: list of exposure types from the asn file to read
          into the pipeline, if None read all the given files.
 
+       - asn_n_members: Open only the first N qualifying members.
+
     Examples
     --------
     >>> container = ModelContainer('example_asn.json')
@@ -72,12 +74,13 @@ class ModelContainer(model_base.DataModel):
     # does not describe the data contents of the container.
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/container.schema"
 
-    def __init__(self, init=None, asn_exptypes=None, **kwargs):
+    def __init__(self, init=None, asn_exptypes=None, asn_n_members=None, **kwargs):
 
         super().__init__(init=None, asn_exptypes=None, **kwargs)
 
         self._models = []
         self.asn_exptypes = asn_exptypes
+        self.asn_n_members = asn_n_members 
 
         if init is None:
             # Don't populate the container with models
@@ -209,8 +212,14 @@ class ModelContainer(model_base.DataModel):
         if asn_file_path:
             asn_dir = op.dirname(asn_file_path)
             infiles = [op.join(asn_dir, f) for f in infiles]
+
+        # Only handle the specified number of members.
+        if self.asn_n_members:
+            sublist = infiles[:self.asn_n_members]
+        else:
+            sublist = infiles
         try:
-            self._models = [datamodel_open(infile) for infile in infiles]
+            self._models = [datamodel_open(infile) for infile in sublist]
         except IOError:
             raise IOError('Cannot open {}'.format(infiles))
 
