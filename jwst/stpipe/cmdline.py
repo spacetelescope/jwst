@@ -10,7 +10,7 @@ from . import config_parser
 from . import log
 from . import Step
 from . import utilities
-
+from .step import get_disable_crds_steppars
 
 built_in_configuration_parameters = [
     'debug', 'logcfg', 'verbose'
@@ -385,25 +385,3 @@ def steps_to_reftypes_from_config(cfg):
     for name, substep in step.step_defs.items():
         steps_to_reftypes[name] = sorted(list(substep.reference_file_types))
     return steps_to_reftypes
-
-def get_disable_crds_steppars(default=None):
-    """Return either the explicit default flag or retrieve from the environment
-
-    If a default is not specified, retrieve the value from the environmental variable
-    `STPIPE_DISABLE_CRDS_STEPPARS`.
-
-    Parameters
-    ----------
-    default: str, bool, or None
-        Flag to use. If None, the environmental is used.
-    """
-    truths =  ('true', 'True', 't', 'yes', 'y')
-    if default:
-        if isinstance(default, bool):
-            return default
-        elif isinstance(default, str):
-            return default in truths
-        raise ValueError(f'default must be string or boolean: {default}')
-
-    flag = os.environ.get('STPIPE_DISABLE_CRDS_STEPPARS', '')
-    return flag in truths

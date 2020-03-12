@@ -1,3 +1,4 @@
+import logging
 import os
 from os.path import (
     abspath,
@@ -35,6 +36,13 @@ REFPIXSTEP_CRDS_MIRI_PARS = {
 
 CRDS_ERROR_STRING = 'PARS-WITHDEFAULTSSTEP: No parameters found'
 
+@pytest.fixture(scope='module')
+def data_path():
+    """Provide a test data model"""
+    data_path = t_path(join('data', 'miri_data.fits'))
+    return data_path
+
+
 @pytest.mark.parametrize(
     'arg, env_set, expected_fn', [
         ('--disable-crds-steppars', None,   lambda stream: not CRDS_ERROR_STRING in stream),
@@ -44,9 +52,8 @@ CRDS_ERROR_STRING = 'PARS-WITHDEFAULTSSTEP: No parameters found'
         ('--verbose',               't',    lambda stream: not CRDS_ERROR_STRING in stream),
     ]
 )
-def test_disable_crds_steppars(capsys, arg, env_set, expected_fn):
+def test_disable_crds_steppars_cmdline(capsys, data_path, arg, env_set, expected_fn):
     """Test setting of disable_crds_steppars"""
-    data_path = t_path(join('data', 'miri_data.fits'))
     if env_set:
         os.environ['STPIPE_DISABLE_CRDS_STEPPARS'] = env_set
 

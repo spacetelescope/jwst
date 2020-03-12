@@ -708,9 +708,14 @@ class Step():
         # Get the root logger, since the following operations
         # are happening in the surrounding architecture.
         logger = log.delegator.log
+        pars_model = cls.get_pars_model()
+
+        # Check if retrieval should be attempted.
+        if get_disable_crds_steppars():
+            logger.info(f'{pars_model.meta.reftype.upper()}: CRDS parameter reference retrieval disabled.')
+            return config_parser.ConfigObj()
 
         # Retrieve step parameters from CRDS
-        pars_model = cls.get_pars_model()
         logger.debug(f'Retrieving step {pars_model.meta.reftype.upper()} parameters from CRDS')
         exceptions = crds_client.get_exceptions_module()
         try:
@@ -1297,3 +1302,31 @@ def _get_suffix(suffix, step=None, default_suffix=None):
     if suffix is None and step is not None:
         suffix = step.name.lower()
     return suffix
+
+
+def get_disable_crds_steppars(default=None):
+    """Return either the explicit default flag or retrieve from the environment
+
+    If a default is not specified, retrieve the value from the environmental variable
+    `STPIPE_DISABLE_CRDS_STEPPARS`.
+
+    Parameters
+    ----------
+    default: str, bool, or None
+        Flag to use. If None, the environmental is used.
+
+    Returns
+    -------
+    flag: bool
+        True to disable CRDS STEPPARS retrieval.
+    """
+    truths =  ('true', 'True', 't', 'yes', 'y')
+    if default:
+        if isinstance(default, bool):
+            return default
+        elif isinstance(default, str):
+            return default in truths
+        raise ValueError(f'default must be string or boolean: {default}')
+
+    flag = os.environ.get('STPIPE_DISABLE_CRDS_STEPPARS', '')
+    return flag in truths
