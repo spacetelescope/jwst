@@ -1,6 +1,32 @@
 0.15.2 (unreleased)
 ==================
 
+assign_wcs
+----------
+
+- Added code to enable processing of NIRSPEC FIXEDSLIT AUTOWAVE data [#4626]
+
+datamodels
+----------
+
+- Added enum list for lamp_mode in core schema [#4626]
+
+extract_2d
+----------
+
+- Added code to enable processing of NIRSPEC FIXEDSLIT AUTOWAVE data [#4626]
+
+flatfield
+---------
+
+- Added code to enable processing of NIRSPEC FIXEDSLIT AUTOWAVE data [#4626]
+
+pipeline
+--------
+
+- Added code to enable the ``calwebb_spec2`` pipeline to process NIRSPEC FIXEDSLIT
+  AUTOWAVE data [#4626]
+
 stpipe
 ------
 
@@ -77,7 +103,6 @@ datamodels
 
 - Update core.schema.yaml to include new allowed values for PATTTYPE
   [#4475, 4517, 4564]
-
 
 - DataModel.update() now has ``extra_fits=False`` kwarg that controls whether
   an update happens from the ``extra_fits`` section of the datamodel.  Default
