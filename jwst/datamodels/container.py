@@ -80,7 +80,7 @@ class ModelContainer(model_base.DataModel):
 
         self._models = []
         self.asn_exptypes = asn_exptypes
-        self.asn_n_members = asn_n_members 
+        self.asn_n_members = asn_n_members
 
         if init is None:
             # Don't populate the container with models
