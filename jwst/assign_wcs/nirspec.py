@@ -1715,7 +1715,11 @@ def autowave(input_model, reference_files, slit_y_range):
         The slit dimensions relative to the center of the slit.
 
     """
-    lamp_mode = input_model.meta.instrument.lamp_mode.lower()
+    lamp_mode = input_model.meta.instrument.lamp_mode
+    if type(lamp_mode) == str:
+        lamp_mode = lamp_mode.lower()
+    else:
+        lamp_mode = 'null'
     if lamp_mode in ['fixedslit', 'brightobj']:
         return slits_wcs(input_model, reference_files, slit_y_range)
     elif lamp_mode == 'ifu':
