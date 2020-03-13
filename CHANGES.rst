@@ -6,6 +6,8 @@ stpipe
 
 - Add command line and environmental options to not retrieve steppars references [#4676]
 
+- Use only a single member of an association for CRDS STEPPARS checking [#4684]
+
 
 0.15.1 (2020-03-10)
 ===================
