@@ -1155,6 +1155,48 @@ class ExtractBase:
     def assign_polynomial_limits(self, verbose):
         pass
 
+    def get_celestial_coordinates(self, input_model, slit):
+        """Get the right ascension and declination of the target.
+
+        For MultiSlitModel (or similar) data, each slit has the source
+        right ascension and declination as attributes, and this can vary
+        from one slit to another (e.g. for NIRSpec MOS, or for WFSS).  In
+        this case, we want the celestial coordinates from the slit object.
+        For other models, however, the celestial coordinates of the source
+        are in input_model.meta.target.
+
+        Parameters
+        ----------
+        input_model : data model
+            The input science data model.
+
+        slit : SlitModel or None
+            One slit from a MultiSlitModel (or similar), or None if
+            there are no slits.
+
+        Returns
+        -------
+        targ_ra : float or None
+            The right ascension of the target, or None
+
+        targ_dec : float or None
+            The declination of the target, or None
+        """
+
+        if slit is None:
+            targ_ra = input_model.meta.target.ra
+            targ_dec = input_model.meta.target.dec
+        else:
+            targ_ra = slit.source_ra
+            targ_dec = slit.source_dec
+
+        if targ_ra is None or targ_dec is None:
+            log.warning("Target RA and Dec could not be determined.")
+            targ_ra = None
+            targ_dec = None
+
+        return (targ_ra, targ_dec)
+
     def offset_from_offset(self, input_model, slit, verbose):
         """Get nod/dither pixel offset from the target coordinates.
 
@@ -1166,6 +1208,9 @@ class ExtractBase:
         slit : SlitModel or None
             One slit from a MultiSlitModel (or similar), or None if
             there are no slits.
+
+        verbose : bool
+            If True, log messages.
 
         Returns
         -------
@@ -1180,18 +1225,18 @@ class ExtractBase:
             The pixel coordinate of the target in the cross-dispersion
             direction, at the middle of the spectrum in the dispersion
             direction.
-
-        verbose : bool
-            If True, log messages.
         """
+
+        targ_ra, targ_dec = self.get_celestial_coordinates(input_model, slit)
+        if targ_ra is None or targ_dec is None:
+            return (0., None)
 
         # Use the WCS function to find the cross-dispersion (XD) location that
         # is closest to the target coordinates.  This is the "actual" location
         # of the spectrum, so the extraction region should be centered here.
-        (middle, middle_wl, locn) = self.locn_from_wcs(
-                                        input_model,
-                                        slit,
-                                        verbose)
+        locn_info = self.locn_from_wcs(input_model, slit, targ_ra, targ_dec,
+                                       verbose)
+        (middle, middle_wl, locn) = locn_info
         if middle is not None and verbose:
             log.debug("Spectrum location from WCS used column (or row) %d",
                       middle)
@@ -1222,7 +1267,7 @@ class ExtractBase:
 
         return offset, locn
 
-    def locn_from_wcs(self, input_model, slit, verbose):
+    def locn_from_wcs(self, input_model, slit, targ_ra, targ_dec, verbose):
         """Get the location of the spectrum, based on the WCS.
 
         Parameters
@@ -1234,6 +1279,12 @@ class ExtractBase:
             The WCS and target coordinates will be gotten from `slit`
             unless `slit` is None, and in that case they will be gotten
             from `input_model`.
+
+        targ_ra : float or None
+            The right ascension of the target, or None
+
+        targ_dec : float or None
+            The declination of the target, or None
 
         verbose : bool
             If True, log messages.
@@ -1260,15 +1311,6 @@ class ExtractBase:
             if there was not sufficient information available, e.g. if the
             wavelength attribute or wcs function is not defined.
         """
-
-        # WFSS data are not currently supported because we don't have the
-        # target coordinates; also, we would have to loop over pixels when
-        # calling the wcs function.
-        if input_model.meta.exposure.type in WFSS_EXPTYPES:
-            log.warning("For exposure type %s, we currently can't use "
-                        "target coordinates to get location of spectrum.",
-                        input_model.meta.exposure.type)
-            return None, None, None
 
         bb = self.wcs.bounding_box          # ((x0, x1), (y0, y1))
 
@@ -1307,9 +1349,6 @@ class ExtractBase:
         stuff = self.wcs(x, y)
         middle_wl = np.nanmean(stuff[2])
 
-        targ_ra = input_model.meta.target.ra
-        targ_dec = input_model.meta.target.dec
-
         try:
             x_y = self.wcs.backward_transform(targ_ra, targ_dec, middle_wl)
         except NotImplementedError:
@@ -1317,7 +1356,7 @@ class ExtractBase:
                         "target coordinates to get location of spectrum.")
             return None, None, None
 
-        # locn is the xd location of the spectrum:
+        # locn is the XD location of the spectrum:
         if self.dispaxis == HORIZONTAL:
             locn = x_y[1]
         else:
@@ -1874,34 +1913,10 @@ class ExtractModel(ExtractBase):
             x_array.fill((self.xstart + self.xstop) / 2.)
 
         if self.wcs is not None:
-            nelem = slice1 - slice0
-            if self.exp_type in WFSS_EXPTYPES:
-                # We expect two (x and y) or three (x, y, spectral order).
-                n_inputs = self.wcs.forward_transform.n_inputs
-                ra = np.zeros(nelem, dtype=np.float64)
-                dec = np.zeros(nelem, dtype=np.float64)
-                # Temporary variable so as not to clobber `wavelength`.
-                wcs_wl = np.zeros(nelem, dtype=np.float64)
-                transform = self.wcs.forward_transform
-                if n_inputs == 2:
-                    for i in range(nelem):
-                        ra[i], dec[i], wcs_wl[i], _ = transform(
-                                        x_array[i], y_array[i])
-                elif n_inputs == 3:
-                    for i in range(nelem):
-                        ra[i], dec[i], wcs_wl[i], _ = transform(
-                                x_array[i], y_array[i], self.spectral_order)
-                else:
-                    if verbose:
-                        log.warning("n_inputs for wcs function is %d",
-                                    n_inputs)
-                        log.warning("WCS function was expected to take "
-                                    "either 2 or 3 arguments.")
-                    ra[:] = -999.
-                    dec[:] = -999.
-                    wcs_wl[:] = -999.
-            else:
-                ra, dec, wcs_wl = self.wcs(x_array, y_array)
+            stuff = self.wcs(x_array, y_array)
+            ra = stuff[0]
+            dec = stuff[1]
+            wcs_wl = stuff[2]
             # We need one right ascension and one declination, representing
             # the direction of pointing.
             mask = np.isnan(ra)
@@ -2353,36 +2368,11 @@ class ImageExtractModel(ExtractBase):
             indy = np.where(indy >= shape[0], shape[0] - 1, indy)
             wavelength = wl_array[indy, indx]
 
-        nelem = len(x_array)
-
         if self.wcs is not None:
-            if self.exp_type in WFSS_EXPTYPES:
-                # We expect two (x and y) or three (x, y, spectral order).
-                n_inputs = self.wcs.forward_transform.n_inputs
-                ra = np.zeros(nelem, dtype=np.float)
-                dec = np.zeros(nelem, dtype=np.float)
-                # Temporary variable so as not to clobber `wavelength`.
-                wcs_wl = np.zeros(nelem, dtype=np.float)
-                transform = self.wcs.forward_transform
-                if n_inputs == 2:
-                    for i in range(nelem):
-                        ra[i], dec[i], wcs_wl[i], _ = transform(
-                                        x_array[i], y_array[i])
-                elif n_inputs == 3:
-                    for i in range(nelem):
-                        ra[i], dec[i], wcs_wl[i], _ = transform(
-                                x_array[i], y_array[i], self.spectral_order)
-                else:
-                    if verbose:
-                        log.warning("n_inputs for wcs function is %d",
-                                    n_inputs)
-                        log.warning("WCS function was expected to take "
-                                    "either 2 or 3 arguments.")
-                    ra[:] = -999.
-                    dec[:] = -999.
-                    wcs_wl[:] = -999.
-            else:
-                ra, dec, wcs_wl = self.wcs(x_array, y_array)
+            ra, dec, wcs_wl = self.wcs(x_array, y_array)
+            ra = stuff[0]
+            dec = stuff[1]
+            wcs_wl = stuff[2]
             # We need one right ascension and one declination, representing
             # the direction of pointing.
             middle = ra.shape[0] // 2           # ra and dec have same shape
@@ -2885,6 +2875,9 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
             # should no longer be needed. See JP-1144.
             if input_model.meta.exposure.type == 'NRS_FIXEDSLIT':
                 slitname = input_model.meta.instrument.fixed_slit
+            elif hasattr(input_model, "name") and input_model.name is not None:
+                slitname = input_model.name
+            # else slitname was assigned above
 
             prev_offset = OFFSET_NOT_ASSIGNED_YET
             for sp_order in spectral_order_list:
@@ -2969,14 +2962,19 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                 spec.slit_dec = dec
                 spec.spectral_order = sp_order
                 spec.dispersion_direction = extract_params['dispaxis']
-                if slitname is not None and slitname != "ANY":
-                    spec.name = slitname
+                # The first argument of copy_keyword_info was originally
+                # intended to be a SlitModel object, but ImageModel now has
+                # the attributes we will look for in this function.
+                copy_keyword_info(input_model, slitname, spec)
                 output_model.spec.append(spec)
 
         elif isinstance(input_model, (datamodels.CubeModel,
                                       datamodels.SlitModel)):
 
             slit = None
+            if hasattr(input_model, "name") and input_model.name is not None:
+                slitname = input_model.name
+            # else slitname was assigned above
             if photom_has_been_run:
                 pixel_solid_angle = input_model.meta.photometry.pixelarea_steradians
                 if pixel_solid_angle is None:
@@ -3080,6 +3078,7 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                     spec.slit_dec = dec
                     spec.spectral_order = sp_order
                     spec.dispersion_direction = extract_params['dispaxis']
+                    copy_keyword_info(input_model, slitname, spec)
                     output_model.spec.append(spec)
 
                     if (log_increment > 0 and
@@ -3274,9 +3273,9 @@ def populate_time_keywords(input_model, output_model):
             spec = output_model.spec[n]             # n is incremented below
             spec.int_num = int_num[row]
             spec.time_scale = "UTC"
-            spec.start_time_mjd = start_utc[row]
-            spec.mid_time_mjd = mid_utc[row]
-            spec.end_time_mjd = end_utc[row]
+            spec.start_utc = start_utc[row]
+            spec.mid_utc = mid_utc[row]
+            spec.end_utc = end_utc[row]
             spec.start_tdb = start_tdb[row]
             spec.mid_tdb = mid_tdb[row]
             spec.end_tdb = end_tdb[row]
@@ -3396,6 +3395,12 @@ def copy_keyword_info(slit, slitname, spec):
 
     if hasattr(slit, "source_ypos"):
         spec.source_ypos = slit.source_ypos
+
+    if hasattr(slit, "source_ra"):
+        spec.source_ra = slit.source_ra
+
+    if hasattr(slit, "source_dec"):
+        spec.source_dec = slit.source_dec
 
     if hasattr(slit, "shutter_state"):
         spec.shutter_state = slit.shutter_state
