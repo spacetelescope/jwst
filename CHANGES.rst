@@ -5,7 +5,7 @@ extract_1d
 ----------
 
 - Remove pixel-by-pixel calls to wcs; copy input keywords to output for
-  more types of input data. [#4684]
+  more types of input data. [#4685]
 
 stpipe
 ------
