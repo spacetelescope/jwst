@@ -1189,8 +1189,8 @@ class ExtractBase:
             targ_ra = input_model.meta.target.ra
             targ_dec = input_model.meta.target.dec
         else:
-            targ_ra = getattr(slit, 'source_ra', default=None)
-            targ_dec = getattr(slit, 'source_dec', default=None)
+            targ_ra = getattr(slit, 'source_ra', None)
+            targ_dec = getattr(slit, 'source_dec', None)
 
         if targ_ra is None or targ_dec is None:
             log.warning("Target RA and Dec could not be determined.")
@@ -2874,7 +2874,7 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
             # value, if possible.
             if input_model.meta.exposure.type == 'NRS_FIXEDSLIT':
                 slitname = input_model.meta.instrument.fixed_slit
-            elif getattr(input_model, "name", default=None) is not None:
+            elif getattr(input_model, "name", None) is not None:
                 slitname = input_model.name
 
             prev_offset = OFFSET_NOT_ASSIGNED_YET
@@ -2972,7 +2972,7 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
             slit = None
             # Replace the default value for slitname with a more accurate
             # value, if possible.
-            if getattr(input_model, "name", default=None) is not None:
+            if getattr(input_model, "name", None) is not None:
                 slitname = input_model.name
             if photom_has_been_run:
                 pixel_solid_angle = input_model.meta.photometry.pixelarea_steradians
