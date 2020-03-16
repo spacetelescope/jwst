@@ -1155,7 +1155,7 @@ class ExtractBase:
     def assign_polynomial_limits(self, verbose):
         pass
 
-    def get_celestial_coordinates(self, input_model, slit):
+    def get_target_coordinates(self, input_model, slit):
         """Get the right ascension and declination of the target.
 
         For MultiSlitModel (or similar) data, each slit has the source
@@ -1231,7 +1231,7 @@ class ExtractBase:
             direction.
         """
 
-        targ_ra, targ_dec = self.get_celestial_coordinates(input_model, slit)
+        targ_ra, targ_dec = self.get_target_coordinates(input_model, slit)
         if targ_ra is None or targ_dec is None:
             return (0., None)
 
@@ -1923,29 +1923,22 @@ class ExtractModel(ExtractBase):
             wcs_wl = stuff[2]
             # We need one right ascension and one declination, representing
             # the direction of pointing.
-            mask = np.isnan(ra)
+            mask = np.isnan(wcs_wl)
             not_nan = np.logical_not(mask)
             if np.any(not_nan):
                 ra2 = ra[not_nan]
                 min_ra = ra2.min()
                 max_ra = ra2.max()
                 ra = (min_ra + max_ra) / 2.
-            else:
-                if verbose:
-                    log.warning("All right ascension values are NaN; "
-                                "assigning dummy value -999.")
-                ra = -999.
-            mask = np.isnan(dec)
-            not_nan = np.logical_not(mask)
-            if np.any(not_nan):
                 dec2 = dec[not_nan]
                 min_dec = dec2.min()
                 max_dec = dec2.max()
                 dec = (min_dec + max_dec) / 2.
             else:
                 if verbose:
-                    log.warning("All declination values are NaN; "
-                                "assigning dummy value -999.")
+                    log.warning("All wavelength values are NaN; assigning "
+                                "dummy value -999 to RA and Dec.")
+                ra = -999.
                 dec = -999.
 
         else:
