@@ -25,7 +25,7 @@ header.
 
 The ``srctype`` calibration step checks to see if the "SRCTYPE" keyword
 is present and has already been populated. If the observer did not provide a
-source type value or it is set to "UNKNOWN", the ``srctype``
+source type value or chose "UNKNOWN", the ``srctype``
 step chooses a suitable value based on the observing mode and
 other characteristics of the exposure. The following choices are used, in
 order of priority:
@@ -63,11 +63,11 @@ order of priority:
 +-------------------+------------------------+----------+
 | NRS_BRIGHTOBJ     | NIRSpec bright object  | POINT    |
 +-------------------+------------------------+----------+
-| NRS_IFU           | NIRSpec IFU            | POINT    |
+| NRS_IFU           | NIRSpec IFU            | EXTENDED |
 +-------------------+------------------------+----------+
 
 If the EXP_TYPE value of the input image is not in the above list,
-the default choice will be SRCTYPE="EXTENDED."
+SRCTYPE will be set to "UNKNOWN".
 
 NOTE: NIRSpec fixed-slit (EXP_TYPE="NRS_FIXEDSLIT") exposures are
 unique in that a single target is specified in the APT, yet data for
