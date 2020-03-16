@@ -12,25 +12,21 @@ properties:
   xstart:
     title: Starting pixel in x direction
     type: integer
-    default: 1
     fits_keyword: SLTSTRT1
     fits_hdu: SCI
   xsize:
     title: Number of pixels in x direction
     type: integer
-    default: 0
     fits_keyword: SLTSIZE1
     fits_hdu: SCI
   ystart:
     title: Starting pixel in y direction
     type: integer
-    default: 1
     fits_keyword: SLTSTRT2
     fits_hdu: SCI
   ysize:
     title: Number of pixels in y direction
     type: integer
-    default: 0
     fits_keyword: SLTSIZE2
     fits_hdu: SCI
   slitlet_id:

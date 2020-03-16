@@ -1,7 +1,7 @@
 __all__ = ["ResampleSpecStep"]
 
 from .. import datamodels
-from ..datamodels import MultiSlitModel, ModelContainer
+from ..datamodels import MultiSlitModel, ModelContainer, ImageModel
 from . import resample_spec, ResampleStep
 from ..exp_to_source import multislit_to_container
 from ..assign_wcs.util import update_s_region_spectral
@@ -25,6 +25,23 @@ class ResampleSpecStep(ResampleStep):
     def process(self, input):
         input = datamodels.open(input)
 
+        if isinstance(input, ImageModel):
+            slit_model = datamodels.SlitDataModel()
+            input.meta.bunit_err = None  # this prevents error array populated in slit model
+            # copy the meta data from input do slit_model
+            slit_model.update(input)
+            slit_model.update(input,only='PRIMARY') # tried this it does not help populate Primary meta
+            slit_model.data = input.data
+            slit_model.meta  = input.meta
+            # testing  what is in slit model
+            slit_model.save('temp1.fits')
+            # Primary header does not contain meta data
+            # SCI header does have meta data
+            # also tried copying Primary over
+
+            input = slit_model
+            # more testing - still primary meta data not copied
+            input.save('temp.fits')
         # If single DataModel input, wrap in a ModelContainer
         if not isinstance(input, ModelContainer):
             input_models = datamodels.ModelContainer([input])
@@ -108,11 +125,21 @@ class ResampleSpecStep(ResampleStep):
         result : `~jwst.datamodels.ImageModel`
             The resampled output, one per source
         """
+#        slit_model = datamodels.SlitDataModel()
+#        print(input_models)
+#        print(len(input_models))
+#        slit_model.update(input_models[0])
+#        slit_model.save('test.fits')
+#        slit_model.data = input_models[0].data
+        
+
         resamp = resample_spec.ResampleSpecData(input_models, **self.drizpars)
+#        resamp = resample_spec.ResampleSpecData(slit_model, **self.drizpars)
         drizzled_models = resamp.do_drizzle()
+#        input_models[0].meta.bunit_err = None
 #        drizzled_models[0].update(input_models[0]) #creates a empty err array
-        drizzled_models[0].update(input_models[0],only='PRIMARY')
-        drizzled_models[0].update(input_models[0],only='SCI')
+#        drizzled_models[0].update(input_models[0],only='PRIMARY')
+#        drizzled_models[0].update(input_models[0],only='SCI')
 
         for model in drizzled_models:
             model.meta.cal_step.resample = "COMPLETE"
