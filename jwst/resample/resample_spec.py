@@ -91,8 +91,10 @@ class ResampleSpecData:
         output_wcs : `~gwcs.WCS` object
             A gwcs WCS object defining the output frame WCS
         """
+
         if refmodel is None:
             refmodel = self.input_models[0]
+        # error for MIRI LRS occuring here - no wcs 
         refwcs = refmodel.meta.wcs
         bb = refwcs.bounding_box
 
