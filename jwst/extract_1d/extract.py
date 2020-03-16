@@ -1183,23 +1183,20 @@ class ExtractBase:
             The declination of the target, or None
         """
 
+        targ_ra = targ_dec = None
+
         if slit is None:
             targ_ra = input_model.meta.target.ra
             targ_dec = input_model.meta.target.dec
         else:
-            targ_ra = None
-            targ_dec = None
-            if hasattr(slit, 'source_ra'):
-                targ_ra = slit.source_ra
-            if hasattr(slit, 'source_dec'):
-                targ_dec = slit.source_dec
+            targ_ra = getattr(slit, 'source_ra', default=None)
+            targ_dec = getattr(slit, 'source_dec', default=None)
 
         if targ_ra is None or targ_dec is None:
             log.warning("Target RA and Dec could not be determined.")
-            targ_ra = None
-            targ_dec = None
+            targ_ra = targ_dec = None
 
-        return (targ_ra, targ_dec)
+        return targ_ra, targ_dec
 
     def offset_from_offset(self, input_model, slit, verbose):
         """Get nod/dither pixel offset from the target coordinates.
@@ -1233,14 +1230,14 @@ class ExtractBase:
 
         targ_ra, targ_dec = self.get_target_coordinates(input_model, slit)
         if targ_ra is None or targ_dec is None:
-            return (0., None)
+            return 0., None
 
         # Use the WCS function to find the cross-dispersion (XD) location that
         # is closest to the target coordinates.  This is the "actual" location
         # of the spectrum, so the extraction region should be centered here.
         locn_info = self.locn_from_wcs(input_model, slit, targ_ra, targ_dec,
                                        verbose)
-        (middle, middle_wl, locn) = locn_info
+        middle, middle_wl, locn = locn_info
         if middle is not None and verbose:
             log.debug("Spectrum location from WCS used column (or row) %d",
                       middle)
@@ -1917,10 +1914,10 @@ class ExtractModel(ExtractBase):
             x_array.fill((self.xstart + self.xstop) / 2.)
 
         if self.wcs is not None:
-            stuff = self.wcs(x_array, y_array)
-            ra = stuff[0]
-            dec = stuff[1]
-            wcs_wl = stuff[2]
+            coords = self.wcs(x_array, y_array)
+            ra = coords[0]
+            dec = coords[1]
+            wcs_wl = coords[2]
             # We need one right ascension and one declination, representing
             # the direction of pointing.
             mask = np.isnan(wcs_wl)
@@ -2825,6 +2822,9 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
             copy_keyword_info(slit, slit.name, spec)
             output_model.spec.append(spec)
     else:
+        # These default values for slitname are not really slit names, and
+        # slitname may be assigned a better value below.  See the sections
+        # for input_model being an ImageModel or a SlitModel.
         slitname = input_model.meta.exposure.type
         if slitname is None:
             slitname = ANY
@@ -2870,11 +2870,12 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
             # through processing. Once the DrizProductModel schema is
             # updated to carry over the necessary slit meta data, this
             # should no longer be needed. See JP-1144.
+            # Replace the default value for slitname with a more accurate
+            # value, if possible.
             if input_model.meta.exposure.type == 'NRS_FIXEDSLIT':
                 slitname = input_model.meta.instrument.fixed_slit
-            elif hasattr(input_model, "name") and input_model.name is not None:
+            elif getattr(input_model, "name", default=None) is not None:
                 slitname = input_model.name
-            # else slitname was assigned above
 
             prev_offset = OFFSET_NOT_ASSIGNED_YET
             for sp_order in spectral_order_list:
@@ -2969,9 +2970,10 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                                       datamodels.SlitModel)):
 
             slit = None
-            if hasattr(input_model, "name") and input_model.name is not None:
+            # Replace the default value for slitname with a more accurate
+            # value, if possible.
+            if getattr(input_model, "name", default=None) is not None:
                 slitname = input_model.name
-            # else slitname was assigned above
             if photom_has_been_run:
                 pixel_solid_angle = input_model.meta.photometry.pixelarea_steradians
                 if pixel_solid_angle is None:
