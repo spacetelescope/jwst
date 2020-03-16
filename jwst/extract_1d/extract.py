@@ -2369,7 +2369,7 @@ class ImageExtractModel(ExtractBase):
             wavelength = wl_array[indy, indx]
 
         if self.wcs is not None:
-            ra, dec, wcs_wl = self.wcs(x_array, y_array)
+            stuff = self.wcs(x_array, y_array)
             ra = stuff[0]
             dec = stuff[1]
             wcs_wl = stuff[2]
