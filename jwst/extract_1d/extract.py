@@ -3220,9 +3220,9 @@ def populate_time_keywords(input_model, output_model):
         return
 
     int_num = input_model.int_times['integration_number']
-    start_utc = input_model.int_times['int_start_MJD_UTC']
-    mid_utc = input_model.int_times['int_mid_MJD_UTC']
-    end_utc = input_model.int_times['int_end_MJD_UTC']
+    start_time_mjd = input_model.int_times['int_start_MJD_UTC']
+    mid_time_mjd = input_model.int_times['int_mid_MJD_UTC']
+    end_time_mjd = input_model.int_times['int_end_MJD_UTC']
     start_tdb = input_model.int_times['int_start_BJD_TDB']
     mid_tdb = input_model.int_times['int_mid_BJD_TDB']
     end_tdb = input_model.int_times['int_end_BJD_TDB']
@@ -3277,9 +3277,9 @@ def populate_time_keywords(input_model, output_model):
             spec = output_model.spec[n]             # n is incremented below
             spec.int_num = int_num[row]
             spec.time_scale = "UTC"
-            spec.start_utc = start_utc[row]
-            spec.mid_utc = mid_utc[row]
-            spec.end_utc = end_utc[row]
+            spec.start_time_mjd = start_time_mjd[row]
+            spec.mid_time_mjd = mid_time_mjd[row]
+            spec.end_time_mjd = end_time_mjd[row]
             spec.start_tdb = start_tdb[row]
             spec.mid_tdb = mid_tdb[row]
             spec.end_tdb = end_tdb[row]
