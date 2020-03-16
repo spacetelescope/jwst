@@ -24,8 +24,6 @@ class ResampleSpecStep(ResampleStep):
 
     def process(self, input):
         input = datamodels.open(input)
-        print('test input wcs',input.meta.wcs)
-
         if isinstance(input, ImageModel):
             slit_model = datamodels.SlitModel()
             input.meta.bunit_err = None  # this prevents error array populated in slit model
@@ -84,7 +82,6 @@ class ResampleSpecStep(ResampleStep):
         for container in containers.values():
             resamp = resample_spec.ResampleSpecData(container, **self.drizpars)
             drizzled_models = resamp.do_drizzle()
-
             for model in drizzled_models:
                 model.meta.cal_step.resample = "COMPLETE"
                 model.meta.asn.pool_name = input_models.meta.pool_name
@@ -117,25 +114,30 @@ class ResampleSpecStep(ResampleStep):
             The resampled output, one per source
         """
 
-#        result = datamodels.SlitModel()
-#        result.update(input_models[0])
+        result = datamodels.SlitModel()
+        result.update(input_models[0])
         resamp = resample_spec.ResampleSpecData(input_models, **self.drizpars)
         drizzled_models = resamp.do_drizzle()
+        drizzled_models[0].update(input_models[0]) #creates a empty err array
+        result = drizzled_models[0]
+        result.meta.cal_step.resample = "COMPLETE"
+        result.meta.asn.pool_name = input_models.meta.pool_name
+        result.meta.asn.table_name = input_models.meta.table_name
+        update_s_region_spectral(result)
+        result.bunit_data = drizzled_models[0].meta.bunit_data
         
-#        drizzled_models[0].update(input_models[0]) #creates a empty err array
-#        drizzled_models[0].update(input_models[0],only='PRIMARY')
-#        drizzled_models[0].update(input_models[0],only='SCI')
 
-        for model in drizzled_models:
-            model.meta.cal_step.resample = "COMPLETE"
-            model.meta.asn.pool_name = input_models.meta.pool_name
-            model.meta.asn.table_name = input_models.meta.table_name
-            update_s_region_spectral(model)
+#        for model in drizzled_models:
+#            model.meta.cal_step.resample = "COMPLETE"
+#            model.meta.asn.pool_name = input_models.meta.pool_name
+#            model.meta.asn.table_name = input_models.meta.table_name
+#            update_s_region_spectral(model)
+
         # Return either the single resampled datamodel, or the container
         # of datamodels.
-        if len(drizzled_models) == 1:
-            result = drizzled_models[0]
-        else:
-            result = drizzled_models
+#        if len(drizzled_models) == 1:
+#            result = drizzled_models[0]
+#        else:
+#            result = drizzled_models
 
         return result
