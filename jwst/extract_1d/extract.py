@@ -1187,8 +1187,12 @@ class ExtractBase:
             targ_ra = input_model.meta.target.ra
             targ_dec = input_model.meta.target.dec
         else:
-            targ_ra = slit.source_ra
-            targ_dec = slit.source_dec
+            targ_ra = None
+            targ_dec = None
+            if hasattr(slit, 'source_ra'):
+                targ_ra = slit.source_ra
+            if hasattr(slit, 'source_dec'):
+                targ_dec = slit.source_dec
 
         if targ_ra is None or targ_dec is None:
             log.warning("Target RA and Dec could not be determined.")
