@@ -358,7 +358,11 @@ def get_open_slits(input_model, reference_files=None, slit_y_range=[-.55, .55]):
     """Return the opened slits/shutters in a MOS or Fixed Slits exposure.
     """
     exp_type = input_model.meta.exposure.type.lower()
-    lamp_mode = input_model.meta.instrument.lamp_mode.lower()
+    lamp_mode = input_model.meta.instrument.lamp_mode
+    if type(lamp_mode) == str:
+        lamp_mode = lamp_model.lower()
+    else:
+        lamp_mode = 'null'
     if exp_type in ["nrs_msaspec", "nrs_autoflat"]:
         msa_metadata_file, msa_metadata_id, dither_point = get_msa_metadata(
             input_model, reference_files)
