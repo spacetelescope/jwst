@@ -45,7 +45,6 @@ def do_correction(input_model, rscd_model, type):
         return input_model
 
     if type == 'baseline':
-        output = input_model.copy()
         group_skip = param['skip']
         output = correction_skip_groups(input_model, group_skip)
     else:
