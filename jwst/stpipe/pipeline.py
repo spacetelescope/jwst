@@ -38,6 +38,7 @@ from . import Step
 from . import crds_client
 from . import log
 from .step import get_disable_crds_steppars
+from ..datamodels import open as dm_open
 from ..lib.class_property import ClassInstanceMethod
 
 
@@ -185,17 +186,18 @@ class Pipeline(Step):
         log.log.debug('Retrieving all substep parameters from CRDS')
         #
         # Iterate over the steps in the pipeline
+        model = dm_open(dataset, asn_n_members=1)
         for cal_step in cls.step_defs.keys():
             cal_step_class = cls.step_defs[cal_step]
             refcfg['steps'][cal_step] = cal_step_class.get_config_from_reference(
-                dataset, observatory=observatory
+                model, observatory=observatory
             )
         #
         # Now merge any config parameters from the step cfg file
         log.log.debug(f'Retrieving pipeline {pars_model.meta.reftype.upper()} parameters from CRDS')
         exceptions = crds_client.get_exceptions_module()
         try:
-            ref_file = crds_client.get_reference_file(dataset,
+            ref_file = crds_client.get_reference_file(model,
                                                       pars_model.meta.reftype,
                                                       observatory=observatory,
                                                       asn_exptypes=['science'])

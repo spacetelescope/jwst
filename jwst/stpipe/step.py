@@ -705,6 +705,7 @@ class Step():
             The parameters as retrieved from CRDS. If there is an issue, log as such
             and return an empty config obj.
         """
+
         # Get the root logger, since the following operations
         # are happening in the surrounding architecture.
         logger = log.delegator.log
