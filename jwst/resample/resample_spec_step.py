@@ -24,11 +24,13 @@ class ResampleSpecStep(ResampleStep):
 
     def process(self, input):
         input = datamodels.open(input)
+        print('test input wcs',input.meta.wcs)
 
         if isinstance(input, ImageModel):
             slit_model = datamodels.SlitModel()
             input.meta.bunit_err = None  # this prevents error array populated in slit model
             slit_model.update(input)
+            slit_model.meta.wcs  = input.meta.wcs
             slit_model.data = input.data
             input = slit_model
         # If single DataModel input, wrap in a ModelContainer
