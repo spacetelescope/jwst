@@ -1313,6 +1313,13 @@ class ExtractBase:
             wavelength attribute or wcs function is not defined.
         """
 
+        # WFSS data are not currently supported.
+        if input_model.meta.exposure.type in WFSS_EXPTYPES:
+            log.warning("For exposure type %s, we currently can't use "
+                        "target coordinates to get location of spectrum.",
+                        input_model.meta.exposure.type)
+            return None, None, None
+
         bb = self.wcs.bounding_box          # ((x0, x1), (y0, y1))
 
         if bb is None:
@@ -2823,14 +2830,13 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
             output_model.spec.append(spec)
     else:
         # These default values for slitname are not really slit names, and
-        # slitname may be assigned a better value below.  See the sections
+        # slitname may be assigned a better value below, in the sections
         # for input_model being an ImageModel or a SlitModel.
         slitname = input_model.meta.exposure.type
         if slitname is None:
             slitname = ANY
         if slitname == 'NIS_SOSS':
             slitname = input_model.meta.subarray.name
-        log.debug('slitname=%s', slitname)
 
         # Loop over these spectral order numbers.
         if input_model.meta.exposure.type == "NIS_SOSS":
@@ -2876,6 +2882,7 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                 slitname = input_model.meta.instrument.fixed_slit
             elif getattr(input_model, "name", None) is not None:
                 slitname = input_model.name
+            log.debug('slitname=%s', slitname)
 
             prev_offset = OFFSET_NOT_ASSIGNED_YET
             for sp_order in spectral_order_list:
@@ -2972,8 +2979,9 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
             slit = None
             # Replace the default value for slitname with a more accurate
             # value, if possible.
-            if getattr(input_model, "name", None) is not None:
-                slitname = input_model.name
+            # xxx if getattr(input_model, "name", None) is not None:
+            # xxx     slitname = input_model.name
+            log.debug('slitname=%s', slitname)
             if photom_has_been_run:
                 pixel_solid_angle = input_model.meta.photometry.pixelarea_steradians
                 if pixel_solid_angle is None:
