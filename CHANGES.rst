@@ -1,6 +1,11 @@
 0.15.2 (unreleased)
 ==================
 
+associations
+------------
+
+- Update association rules so that nodded observations procduce level 3 asn's [#4675]
+
 extract_1d
 ----------
 
