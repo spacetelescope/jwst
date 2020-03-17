@@ -264,11 +264,12 @@ def just_the_step_from_cmdline(args, cls=None):
         if not disable_crds_steppars:
             try:
                 parameter_cfg = step_class.get_config_from_reference(input_file)
+            except (FileNotFoundError, OSError):
+                log.log.warning("Unable to open input file, cannot get parameters from CRDS")
+            else:
                 if config:
                     config_parser.merge_config(parameter_cfg, config)
                 config = parameter_cfg
-            except FileNotFoundError:
-                log.log.warning("Unable to open input file, cannot get cfg from CRDS")
         else:
             log.log.info('CRDS parameter retrieval disabled.')
     else:
