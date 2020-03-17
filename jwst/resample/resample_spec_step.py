@@ -114,18 +114,24 @@ class ResampleSpecStep(ResampleStep):
             The resampled output, one per source
         """
 
-        result = datamodels.SlitModel()
-        result.update(input_models[0])
+        bb = input_models[0].meta.wcs.bounding_box
+        ((x1,x2),(y1,y2)) = bb
+        xmin  = int(min(x1,x2))
+        ymin  = int(min(y1,y2))
+        xmax  = int(max(x1,x2))
+        ymax  = int(max(y1,y2))
+        #result = datamodels.SlitModel()
         resamp = resample_spec.ResampleSpecData(input_models, **self.drizpars)
-        drizzled_models = resamp.do_drizzle()
+        drizzled_models = resamp.do_drizzle(xmin=xmin, xmax=xmax,
+                                            ymin=ymin, ymax=ymax)
         drizzled_models[0].update(input_models[0]) #creates a empty err array
         result = drizzled_models[0]
+        result.update(input_models[0])
         result.meta.cal_step.resample = "COMPLETE"
         result.meta.asn.pool_name = input_models.meta.pool_name
         result.meta.asn.table_name = input_models.meta.table_name
         update_s_region_spectral(result)
         result.bunit_data = drizzled_models[0].meta.bunit_data
-        
 
 #        for model in drizzled_models:
 #            model.meta.cal_step.resample = "COMPLETE"
