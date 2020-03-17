@@ -6,7 +6,13 @@ associations
 
 - Update association rules so that nodded observations procduce level 3 asn's [#4675]
 
-  stpipe
+extract_1d
+----------
+
+- Remove pixel-by-pixel calls to wcs; copy input keywords to output for
+  more types of input data. [#4685]
+
+stpipe
 ------
 
 - Add command line and environmental options to not retrieve steppars references [#4676]
