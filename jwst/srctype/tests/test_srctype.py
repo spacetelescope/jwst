@@ -154,7 +154,7 @@ def test_nrs_msaspec():
     result = srctype.set_source_type(input)
 
     assert(result.slits[0].source_type == 'POINT')
-    assert(result.slits[1].source_type == 'UNKNOWN')
+    assert(result.slits[1].source_type == 'POINT')
     assert(result.slits[2].source_type == 'EXTENDED')
 
 def test_nrs_fixedslit():

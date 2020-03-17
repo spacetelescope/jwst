@@ -1,6 +1,18 @@
 0.15.2 (unreleased)
 ==================
 
+extract_2d
+----------
+
+- Change the source type for NIRSpec MOS sources with stellarity = -1 from
+  UNKOWN to POINT. [#4686]
+
+srctype
+-------
+
+- Change default source type for NRS_IFU from POINT to EXTENDED. Change the source
+  type for NIRSpec MOS sources with stellarity = -1 from UNKNOWN to POINT. [#4686]
+
 stpipe
 ------
 
