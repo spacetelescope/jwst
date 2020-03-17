@@ -1,7 +1,12 @@
 0.15.2 (unreleased)
 ==================
 
-stpipe
+associations
+------------
+
+- Update association rules so that nodded observations procduce level 3 asn's [#4675]
+
+  stpipe
 ------
 
 - Add command line and environmental options to not retrieve steppars references [#4676]
