@@ -15,6 +15,8 @@ extract_1d
 stpipe
 ------
 
+- Unhide exceptions during CRDS steppars retrieval [#4691]
+
 - Add command line and environmental options to not retrieve steppars references [#4676]
 
 - Use only a single member of an association for CRDS STEPPARS checking [#4684]

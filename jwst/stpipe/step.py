@@ -684,7 +684,7 @@ class Step():
         return crds_client.check_reference_open(reference_name)
 
     @classmethod
-    def get_config_from_reference(cls, dataset, observatory=None):
+    def get_config_from_reference(cls, dataset, observatory=None, disable=None):
         """Retrieve step parameters from reference database
 
         Parameters
@@ -699,6 +699,9 @@ class Step():
         observatory : str
             telescope name used with CRDS,  e.g. 'jwst'.
 
+        disable: bool or None
+            Do not retrieve parameters from CRDS. If None, check global settings.
+
         Returns
         -------
         step_parameters : configobj
@@ -712,7 +715,9 @@ class Step():
         pars_model = cls.get_pars_model()
 
         # Check if retrieval should be attempted.
-        if get_disable_crds_steppars():
+        if disable is None:
+            disable = get_disable_crds_steppars()
+        if disable:
             logger.info(f'{pars_model.meta.reftype.upper()}: CRDS parameter reference retrieval disabled.')
             return config_parser.ConfigObj()
 
