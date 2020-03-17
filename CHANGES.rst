@@ -1,6 +1,12 @@
 0.15.2 (unreleased)
 ==================
 
+extract_1d
+----------
+
+- Remove pixel-by-pixel calls to wcs; copy input keywords to output for
+  more types of input data. [#4685]
+
 extract_2d
 ----------
 
