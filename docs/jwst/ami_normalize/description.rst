@@ -1,11 +1,8 @@
-.. _ami_normalize_step:
-
-ami_normalize
-=============
-
 Description
 -----------
-The ``ami_normalize`` step provides normalization of LG processing results for
+The ``ami_normalize`` step is one of the AMI-specific steps in the ``ami``
+sub-package and is used in Stage 3 :ref:`calwebb_ami3 <calwebb_ami3>`
+processing. It provides normalization of LG processing results for
 a science target using LG results of a reference PSF target. The algorithm
 subtracts the PSF target closure phases from the science target closure
 phases and divides the science target fringe amplitudes by the PSF target

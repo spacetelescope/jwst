@@ -1,11 +1,8 @@
-.. _stack_refs_step:
-
-stack_refs
-==========
-
 Description
 -----------
-The ``stack_refs`` step takes a list of reference PSF products and stacks all of the
+The ``stack_refs`` step is one of the coronagraphic-specific steps in the
+``coron`` sub-package and is part of Stage 3 :ref:`calwebb_coron3 <calwebb_coron3>`
+processing. It takes a list of reference PSF products and stacks all of the
 per-integration images contained in each PSF product into a single 3D data cube.
 This operation prepares the PSF images for use by subsequent steps in the
 :ref:`calwebb_coron3 <calwebb_coron3>` pipeline. The image data are simply copied
@@ -54,5 +51,3 @@ e.g. "jw86073-a3001_t001_nircam_f140m-maskbar_psfstack.fits."
 Reference Files
 ---------------
 The ``stack_refs`` step does not use any reference files.
-
-.. automodapi:: jwst.coron.stack_refs_step

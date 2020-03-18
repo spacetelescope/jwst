@@ -1,10 +1,20 @@
 0.15.2 (unreleased)
 ==================
 
+ami
+---
+
+- Reorganized step documentation [#4697]
+
 associations
 ------------
 
 - Update association rules so that nodded observations procduce level 3 asn's [#4675]
+
+coron
+-----
+
+- Reorganized step documentation [#4697]
 
 extract_1d
 ----------
