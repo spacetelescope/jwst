@@ -80,7 +80,7 @@ def test_user_input():
     # Result should be POINT regardless of other input settings
     assert output.meta.target.source_type == 'POINT'
 
-def test_unknown():
+def test_mrs_unknown():
 
     # An exposure with upstream input UNKNOWN
     input = datamodels.ImageModel((10,10))
@@ -88,6 +88,21 @@ def test_unknown():
     input.meta.exposure.type = 'MIR_MRS'
     input.meta.observation.bkgdtarg = False
     input.meta.dither.primary_type = 'CYCLING'
+    input.meta.target.source_type = 'UNKNOWN'
+
+    output = srctype.set_source_type(input)
+
+    # Result should be EXTENDED regardless of other input settings
+    assert output.meta.target.source_type == 'EXTENDED'
+
+def test_ifu_unknown():
+
+    # An exposure with upstream input UNKNOWN
+    input = datamodels.ImageModel((10,10))
+
+    input.meta.exposure.type = 'NRS_IFU'
+    input.meta.observation.bkgdtarg = False
+    input.meta.dither.primary_type = '4-POINT'
     input.meta.target.source_type = 'UNKNOWN'
 
     output = srctype.set_source_type(input)
@@ -139,7 +154,7 @@ def test_nrs_msaspec():
     result = srctype.set_source_type(input)
 
     assert(result.slits[0].source_type == 'POINT')
-    assert(result.slits[1].source_type == 'UNKNOWN')
+    assert(result.slits[1].source_type == 'POINT')
     assert(result.slits[2].source_type == 'EXTENDED')
 
 def test_nrs_fixedslit():
