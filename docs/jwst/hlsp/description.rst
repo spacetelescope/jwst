@@ -1,11 +1,7 @@
-.. _hlsp_step:
-
-HLSP
-====
-
 Description
 -----------
-The ``hlsp`` step produces high-level science products for KLIP-processed
+The ``hlsp`` step is one of the coronagraphic-specific steps in the ``coron``
+sub-package. It produces high-level science products for KLIP-processed
 (PSF-subtracted) coronagraphic images. The step is currently a prototype and
 produces two simple products: a signal-to-noise ratio (SNR) image and a table
 of contrast data. The SNR image is computed by simply taking the ratio of the
@@ -15,8 +11,8 @@ is computed as the 1-sigma standard deviation within a set of concentric
 annuli centered in the input image. The annuli regions are computed to the
 nearest whole pixel; no sub-pixel calculations are performed.
 
-This step is not currently included in the :ref:`calwebb_coron3 <calwebb_coron3>`
-pipeline, but can be run standalone.
+.. Note:: This step is not currently included in the :ref:`calwebb_coron3 <calwebb_coron3>`
+   pipeline, but can be run standalone.
 
 Arguments
 ---------
@@ -57,5 +53,3 @@ The table of contrast data, containing columns of radii (in pixels) and 1-sigma 
 Reference Files
 ---------------
 The ``hlsp`` step does not use any reference files.
-
-.. automodapi:: jwst.coron.hlsp_step

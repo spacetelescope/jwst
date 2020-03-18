@@ -1,11 +1,8 @@
-.. _align_refs_step:
-
-align_refs
-==========
-
 Description
 -----------
-The ``align_refs`` step is used to compute offsets between science target
+The ``align_refs`` step is one of the coronagraphic-specific steps in the ``coron``
+sub-package that is part of Stage 3 :ref:`calwebb_coron3 <calwebb_coron3>` processing.
+It computes offsets between science target
 images and reference PSF images, and shift the PSF images into
 alignment. This is performed on a per-integration basis for both the science target
 data and the reference PSF data. Each integration contained in the stacked PSF data
@@ -72,5 +69,3 @@ Reference Files
 The ``align_refs`` step uses a PSFMASK reference file.
 
 .. include:: ../references_general/psfmask_reffile.inc
-
-.. automodapi:: jwst.coron.align_refs_step

@@ -1,11 +1,8 @@
-.. _ami_analyze_step:
-
-ami_analyze
-===========
-
 Description
 -----------
-The ``ami_analyze`` step applies the Lacour-Greenbaum (LG) image plane
+The ``ami_analyze`` step is one of the AMI-specific steps in the ``ami``
+sub-package that is part of Stage 3 :ref:`calwebb_ami3 <calwebb_ami3>`
+processing. It applies the Lacour-Greenbaum (LG) image plane
 modeling algorithm to a NIRISS AMI image.
 The routine computes a number of parameters, including a model fit (and
 residuals) to the image, fringe amplitudes and phases, and closure phases

@@ -4,13 +4,15 @@ Package Index
 .. toctree::
    :maxdepth: 2
 
-   ami/index.rst
+   align_refs/index.rst
+   ami_analyze/index.rst
+   ami_average/index.rst
+   ami_normalize/index.rst
    assign_wcs/index.rst
    associations/index.rst
    background/index.rst
    barshadow/index.rst
    combine_1d/index.rst
-   coron/index.rst
    csv_tools/index.rst
    cube_build/index.rst
    dark_current/index.rst
@@ -26,9 +28,11 @@ Package Index
    gain_scale/index.rst
    group_scale/index.rst
    guider_cds/index.rst
+   hlsp/index.rst
    imprint/index.rst
    ipc/index.rst
    jump/index.rst
+   klip/index.rst
    lastframe/index.rst
    linearity/index.rst
    master_background/index.rst
@@ -50,6 +54,7 @@ Package Index
    skymatch/index.rst
    source_catalog/index.rst
    srctype/index.rst
+   stack_refs/index.rst
    stpipe/index.rst
    straylight/index.rst
    superbias/index.rst

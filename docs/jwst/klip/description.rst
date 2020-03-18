@@ -1,11 +1,8 @@
-.. _klip_step:
-
-klip
-====
-
 Description
 -----------
-The ``klip`` step applies the Karhunen-Loeve Image Plane (KLIP) algorithm to coronagraphic
+The ``klip`` step is one of the coronagraphic-specific steps in the ``coron``
+sub-package and is used in Stage 3 :ref:`calwebb_coron3 <calwebb_coron3>` processing.
+It applies the Karhunen-Loeve Image Plane (KLIP) algorithm to coronagraphic
 images, using an accompanying set of reference PSF images, in order to fit and subtract an
 optimal PSF from a source image. The KLIP algorithm uses a KL decomposition of the set of
 reference PSF's, and generates a model PSF from the projection of the target on the KL vectors.
@@ -74,5 +71,3 @@ association candidate ID and the "_psfsub" product type suffix, e.g.
 Reference Files
 ---------------
 The ``klip`` step does not use any reference files.
-
-.. automodapi:: jwst.coron.klip_step

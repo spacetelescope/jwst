@@ -196,7 +196,9 @@ the configuration file would look like:
 Python API
 ----------
 
-Configuration files can be created and modified through the use of the `asdf` package. The example below demonstrates how to create, from scratch, the ``Spec2Pipeline` configuration file show in the above example:
+Configuration files can be created and modified through the use of the `asdf` package.
+The example below demonstrates how to create, from scratch, the ``Spec2Pipeline`` configuration
+file shown in the above example:
 
 .. code-block::
 

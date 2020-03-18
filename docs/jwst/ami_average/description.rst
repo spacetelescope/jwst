@@ -1,11 +1,8 @@
-.. _ami_average_step:
-
-ami_average
-===========
-
 Description
 -----------
-The ``ami_average`` step averages the results of LG processing from the
+The ``ami_average`` step is one of the AMI-specific steps in the ``ami``
+sub-package and is part of Stage 3 :ref:`calwebb_ami3 <calwebb_ami3>` processing.
+It averages the results of LG processing from the
 :ref:`ami_analyze <ami_analyze_step>` step for multiple exposures of a given target.
 It computes a simple average for all 8 components of the "_ami" product files from all
 input exposures.
