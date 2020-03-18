@@ -28,11 +28,12 @@ class ResampleSpecStep(ResampleStep):
             slit_model = datamodels.SlitModel()
             input.meta.bunit_err = None  # this prevents error array populated in slit model
             slit_model.update(input)
-            slit_model.meta.wcs  = input.meta.wcs
+            slit_model.meta.wcs = input.meta.wcs
             slit_model.data = input.data
             input = slit_model
         # If single DataModel input, wrap in a ModelContainer
         if not isinstance(input, ModelContainer):
+            input.meta.bunit_err = None  # this prevents error array populated in slit model
             input_models = datamodels.ModelContainer([input])
             input_models.meta.resample.output = input.meta.filename
             self.blendheaders = False
@@ -115,16 +116,15 @@ class ResampleSpecStep(ResampleStep):
         """
 
         bb = input_models[0].meta.wcs.bounding_box
-        ((x1,x2),(y1,y2)) = bb
-        xmin  = int(min(x1,x2))
-        ymin  = int(min(y1,y2))
-        xmax  = int(max(x1,x2))
-        ymax  = int(max(y1,y2))
-        #result = datamodels.SlitModel()
+        ((x1, x2), (y1, y2)) = bb
+        xmin = int(min(x1, x2))
+        ymin = int(min(y1, y2))
+        xmax = int(max(x1, x2))
+        ymax = int(max(y1, y2))
         resamp = resample_spec.ResampleSpecData(input_models, **self.drizpars)
         drizzled_models = resamp.do_drizzle(xmin=xmin, xmax=xmax,
                                             ymin=ymin, ymax=ymax)
-        drizzled_models[0].update(input_models[0]) #creates a empty err array
+        drizzled_models[0].update(input_models[0])
         result = drizzled_models[0]
         result.update(input_models[0])
         result.meta.cal_step.resample = "COMPLETE"
@@ -133,6 +133,8 @@ class ResampleSpecStep(ResampleStep):
         update_s_region_spectral(result)
         result.bunit_data = drizzled_models[0].meta.bunit_data
 
+# the following code was left for now. Don't think it is needed (JEM)
+# for slit case we should not have more than 1 drizzle model
 #        for model in drizzled_models:
 #            model.meta.cal_step.resample = "COMPLETE"
 #            model.meta.asn.pool_name = input_models.meta.pool_name

@@ -65,13 +65,11 @@ class ResampleSpecData:
         self.blank_output = None
 
         # Define output WCS based on all inputs, including a reference WCS
-        # wcslist = [m.meta.wcs for m in self.input_models]
         self.output_wcs = self.build_interpolated_output_wcs()
-#        self.blank_output = datamodels.ImageModel(self.data_size)
         self.blank_output = datamodels.SlitModel(self.data_size)
+        self.blank_output.update(self.input_models[0])
         self.blank_output.meta.wcs = self.output_wcs
         self.output_models = datamodels.ModelContainer()
-
 
     def build_interpolated_output_wcs(self, refmodel=None):
         """
@@ -168,7 +166,7 @@ class ResampleSpecData:
                 mapping.inverse = Mapping(mapping_tuple)
 
         # The final transform
-        transform = mapping | (pix_to_ra & pix_to_dec | undist2sky)  & pix_to_wavelength
+        transform = mapping | (pix_to_ra & pix_to_dec | undist2sky) & pix_to_wavelength
 
         det = cf.Frame2D(name='detector', axes_order=(0, 1))
         sky = cf.CelestialFrame(name='sky', axes_order=(0, 1),
@@ -194,7 +192,7 @@ class ResampleSpecData:
 
         return output_wcs
 
-    def do_drizzle(self, xmin=0, xmax=0, ymin=0, ymax=0,**pars):
+    def do_drizzle(self, xmin=0, xmax=0, ymin=0, ymax=0, **pars):
         """ Perform drizzling operation on input images's to create a new output
         """
         # Set up information about what outputs we need to create: single or final
@@ -249,7 +247,6 @@ class ResampleSpecData:
                     weight_type=self.drizpars['weight_type'],
                     good_bits=self.drizpars['good_bits'])
 
-
                 if hasattr(img, 'name'):
                     log.info('Resampling slit {} {}'.format(img.name, self.data_size))
                 else:
@@ -271,9 +268,9 @@ class ResampleSpecData:
 
             # Update mutlislit slit info on the output_model
             for attr in ['name', 'xstart', 'xsize', 'ystart', 'ysize',
-                    'slitlet_id', 'source_id', 'source_name', 'source_alias',
-                    'stellarity', 'source_type', 'source_xpos', 'source_ypos',
-                    'dispersion_direction', 'shutter_state']:
+                         'slitlet_id', 'source_id', 'source_name', 'source_alias',
+                         'stellarity', 'source_type', 'source_xpos', 'source_ypos',
+                         'dispersion_direction', 'shutter_state']:
                 try:
                     val = getattr(img, attr)
                 except AttributeError:
