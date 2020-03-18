@@ -1,6 +1,16 @@
 0.15.2 (unreleased)
 ==================
 
+ami
+---
+
+- Reorganized step documentation [#4697]
+
+coron
+-----
+
+- Reorganized step documentation [#4697]
+
 extract_1d
 ----------
 
