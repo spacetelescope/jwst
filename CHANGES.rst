@@ -6,6 +6,11 @@ ami
 
 - Reorganized step documentation [#4697]
 
+associations
+------------
+
+- Update association rules so that nodded observations procduce level 3 asn's [#4675]
+
 coron
 -----
 
@@ -17,8 +22,22 @@ extract_1d
 - Remove pixel-by-pixel calls to wcs; copy input keywords to output for
   more types of input data. [#4685]
 
+extract_2d
+----------
+
+- Change the source type for NIRSpec MOS sources with stellarity = -1 from
+  UNKOWN to POINT. [#4686]
+
+srctype
+-------
+
+- Change default source type for NRS_IFU from POINT to EXTENDED. Change the source
+  type for NIRSpec MOS sources with stellarity = -1 from UNKNOWN to POINT. [#4686]
+
 stpipe
 ------
+
+- Unhide exceptions during CRDS steppars retrieval [#4691]
 
 - Add command line and environmental options to not retrieve steppars references [#4676]
 

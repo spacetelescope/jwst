@@ -260,15 +260,15 @@ def just_the_step_from_cmdline(args, cls=None):
         if args.input_dir:
             input_file = args.input_dir + '/' + input_file
 
-        # If enabled, attempt to retrieve Step parameters from CRDS
-        if not disable_crds_steppars:
-            try:
-                parameter_cfg = step_class.get_config_from_reference(input_file)
-                if config:
-                    config_parser.merge_config(parameter_cfg, config)
-                config = parameter_cfg
-            except FileNotFoundError:
-                log.log.warning("Unable to open input file, cannot get cfg from CRDS")
+        # Attempt to retrieve Step parameters from CRDS
+        try:
+            parameter_cfg = step_class.get_config_from_reference(input_file, disable=disable_crds_steppars)
+        except (FileNotFoundError, OSError):
+            log.log.warning("Unable to open input file, cannot get parameters from CRDS")
+        else:
+            if config:
+                config_parser.merge_config(parameter_cfg, config)
+            config = parameter_cfg
     else:
         log.log.info("No input file specified, unable to retrieve parameters from CRDS")
     #

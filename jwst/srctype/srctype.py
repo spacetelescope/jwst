@@ -70,7 +70,7 @@ def set_source_type(input_model):
         else:
 
             # Set a default value based on the exposure type
-            if exptype == 'MIR_MRS':
+            if exptype in ['MIR_MRS', 'NRS_IFU']:
                 src_type = 'EXTENDED'
             else:
                 src_type = 'POINT'
@@ -114,7 +114,7 @@ def set_source_type(input_model):
             # a threshold value from a reference file. For now, the
             # threshold is hardwired.
             if stellarity < 0.0:
-                slit.source_type = 'UNKNOWN'
+                slit.source_type = 'POINT'
             elif stellarity > 0.75:
                 slit.source_type = 'POINT'
             else:

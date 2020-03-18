@@ -366,7 +366,7 @@ class Asn_IFU(AsnMixin_Spectrum):
                     DMSAttrConstraint(
                         name='patttype',
                         sources=['patttype'],
-                        value=['2-point-nod|4-point-nod|along-slit-nod'],
+                        value=['none'],
                     )
                 ],
                 reduce=Constraint.notany
