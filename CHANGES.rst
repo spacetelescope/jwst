@@ -4,6 +4,8 @@
 associations
 ------------
 
+- Update rules so exclude dark files from associations [#4668]
+
 - Update association rules so that nodded observations procduce level 3 asn's [#4675]
 
 extract_1d
