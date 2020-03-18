@@ -84,6 +84,16 @@ allOf:
             default: 0.0
             fits_keyword: SRCYPOS
             fits_hdu: EXTRACT1D
+          source_ra:
+            title: Right Ascension of the source
+            type: number
+            fits_keyword: SRCRA
+            fits_hdu: EXTRACT1D
+          source_dec:
+            title: Declination of the source
+            type: number
+            fits_keyword: SRCDEC
+            fits_hdu: EXTRACT1D
           shutter_state:
             title: All (open and close) shutters in a slit
             type: string
