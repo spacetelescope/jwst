@@ -434,6 +434,11 @@ class Asn_Lv2NRSLAMPSpectral(
                         name='opt_elem2',
                         sources=['grating'],
                         value='mirror'
+                    ),
+                    DMSAttrConstraint(
+                        name='exp_type',
+                        sources=['exp_type'],
+                        value='.*_dark$'
                     )
                 ],
                 reduce=Constraint.notany
