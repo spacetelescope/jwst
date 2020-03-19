@@ -1237,7 +1237,10 @@ class ExtractBase:
         # of the spectrum, so the extraction region should be centered here.
         locn_info = self.locn_from_wcs(input_model, slit, targ_ra, targ_dec,
                                        verbose)
-        middle, middle_wl, locn = locn_info
+        if locn_info is None:
+            middle = middle_wl = locn = None
+        else:
+            middle, middle_wl, locn = locn_info
         if middle is not None and verbose:
             log.debug("Spectrum location from WCS used column (or row) %d",
                       middle)
@@ -1292,7 +1295,8 @@ class ExtractBase:
 
         Returns
         -------
-        middle : int or None
+        tuple (middle, middle_wl, locn) or None
+        middle : int
             Pixel coordinate in the dispersion direction within the 2-D
             cutout (or the entire input image) at the middle of the WCS
             bounding box.  This is the point at which to determine the
@@ -1300,18 +1304,26 @@ class ExtractBase:
             spectrum.  The offset will then be the difference between
             `locn` (below) and the nominal location.
 
-        middle_wl : float or None
+        middle_wl : float
             The wavelength at pixel `middle`.
 
-        locn : float or None
+        locn : float
             Pixel coordinate in the cross-dispersion direction within the
             2-D cutout (or the entire input image) that has right ascension
             and declination coordinates corresponding to the target location.
             The spectral extraction region should be centered here.
-            None will be returned for `middle`, `middle_wl`, and `locn`
-            if there was not sufficient information available, e.g. if the
-            wavelength attribute or wcs function is not defined.
+
+        None will be returned if there was not sufficient information
+        available, e.g. if the wavelength attribute or wcs function is not
+        defined.
         """
+
+        # WFSS data are not currently supported.
+        if input_model.meta.exposure.type in WFSS_EXPTYPES:
+            log.warning("For exposure type %s, we currently can't use "
+                        "target coordinates to get location of spectrum.",
+                        input_model.meta.exposure.type)
+            return None
 
         bb = self.wcs.bounding_box          # ((x0, x1), (y0, y1))
 
@@ -1355,7 +1367,7 @@ class ExtractBase:
         except NotImplementedError:
             log.warning("Inverse wcs is not implemented, so can't use "
                         "target coordinates to get location of spectrum.")
-            return None, None, None
+            return None
 
         # locn is the XD location of the spectrum:
         if self.dispaxis == HORIZONTAL:
@@ -2823,14 +2835,13 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
             output_model.spec.append(spec)
     else:
         # These default values for slitname are not really slit names, and
-        # slitname may be assigned a better value below.  See the sections
+        # slitname may be assigned a better value below, in the sections
         # for input_model being an ImageModel or a SlitModel.
         slitname = input_model.meta.exposure.type
         if slitname is None:
             slitname = ANY
         if slitname == 'NIS_SOSS':
             slitname = input_model.meta.subarray.name
-        log.debug('slitname=%s', slitname)
 
         # Loop over these spectral order numbers.
         if input_model.meta.exposure.type == "NIS_SOSS":
@@ -2876,6 +2887,7 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                 slitname = input_model.meta.instrument.fixed_slit
             elif getattr(input_model, "name", None) is not None:
                 slitname = input_model.name
+            log.debug(f'slitname={slitname}')
 
             prev_offset = OFFSET_NOT_ASSIGNED_YET
             for sp_order in spectral_order_list:
@@ -2972,8 +2984,9 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
             slit = None
             # Replace the default value for slitname with a more accurate
             # value, if possible.
-            if getattr(input_model, "name", None) is not None:
-                slitname = input_model.name
+            # xxx if getattr(input_model, "name", None) is not None:
+            # xxx     slitname = input_model.name
+            log.debug(f'slitname={slitname}')
             if photom_has_been_run:
                 pixel_solid_angle = input_model.meta.photometry.pixelarea_steradians
                 if pixel_solid_angle is None:
