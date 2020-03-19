@@ -30,7 +30,6 @@ class ResampleSpecStep(ResampleStep):
             slit_model.update(input_new)
             slit_model.meta.wcs = input_new.meta.wcs
             slit_model.data = input_new.data
-            slit_model.meta.bunit_err = None
             input_new = slit_model
         # If single DataModel input, wrap in a ModelContainer
         if not isinstance(input_new, ModelContainer):
