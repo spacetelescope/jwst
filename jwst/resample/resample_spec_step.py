@@ -23,22 +23,21 @@ class ResampleSpecStep(ResampleStep):
     """
 
     def process(self, input):
-        input = datamodels.open(input)
-        if isinstance(input, ImageModel):
+        input_new = datamodels.open(input)
+        input_new.meta.bunit_err = None
+        if isinstance(input_new, ImageModel):
             slit_model = datamodels.SlitModel()
-            input.meta.bunit_err = None  # this prevents error array populated in slit model
-            slit_model.update(input)
-            slit_model.meta.wcs = input.meta.wcs
-            slit_model.data = input.data
-            input = slit_model
+            slit_model.update(input_new)
+            slit_model.meta.wcs = input_new.meta.wcs
+            slit_model.data = input_new.data
+            input_new = slit_model
         # If single DataModel input, wrap in a ModelContainer
-        if not isinstance(input, ModelContainer):
-            input.meta.bunit_err = None  # this prevents error array populated in slit model
-            input_models = datamodels.ModelContainer([input])
-            input_models.meta.resample.output = input.meta.filename
+        if not isinstance(input_new, ModelContainer):
+            input_models = datamodels.ModelContainer([input_new])
+            input_models.meta.resample.output = input_new.meta.filename
             self.blendheaders = False
         else:
-            input_models = input
+            input_models = input_new
 
         for reftype in self.reference_file_types:
             ref_filename = self.get_reference_file(input_models[0], reftype)
