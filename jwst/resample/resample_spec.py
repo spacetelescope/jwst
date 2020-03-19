@@ -60,7 +60,6 @@ class ResampleSpecData:
             output = input_models.meta.resample.output
 
         self.drizpars = pars
-
         self.pscale_ratio = 1.
         self.blank_output = None
 

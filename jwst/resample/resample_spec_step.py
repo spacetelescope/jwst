@@ -23,13 +23,14 @@ class ResampleSpecStep(ResampleStep):
     """
 
     def process(self, input):
-        input_new = datamodels.open(input)
-        input_new.meta.bunit_err = None
+        input_new = datamodels.open(input)  # define input_new since if ImageModel it will
+                                            # redefined to SlitModel
         if isinstance(input_new, ImageModel):
             slit_model = datamodels.SlitModel()
             slit_model.update(input_new)
             slit_model.meta.wcs = input_new.meta.wcs
             slit_model.data = input_new.data
+            slit_model.meta.bunit_err = None
             input_new = slit_model
         # If single DataModel input, wrap in a ModelContainer
         if not isinstance(input_new, ModelContainer):
@@ -114,15 +115,20 @@ class ResampleSpecStep(ResampleStep):
             The resampled output, one per source
         """
 
-        bb = input_models[0].meta.wcs.bounding_box
-        ((x1, x2), (y1, y2)) = bb
-        xmin = int(min(x1, x2))
-        ymin = int(min(y1, y2))
-        xmax = int(max(x1, x2))
-        ymax = int(max(y1, y2))
         resamp = resample_spec.ResampleSpecData(input_models, **self.drizpars)
-        drizzled_models = resamp.do_drizzle(xmin=xmin, xmax=xmax,
-                                            ymin=ymin, ymax=ymax)
+
+        if input_models[0].meta.exposure.type == "MIR_LRS-FIXEDSLIT":
+            bb = input_models[0].meta.wcs.bounding_box
+            ((x1, x2), (y1, y2)) = bb
+            xmin = int(min(x1, x2))
+            ymin = int(min(y1, y2))
+            xmax = int(max(x1, x2))
+            ymax = int(max(y1, y2))
+            drizzled_models = resamp.do_drizzle(xmin=xmin, xmax=xmax,
+                                                ymin=ymin, ymax=ymax)
+        else:
+            drizzled_models = resamp.do_drizzle()
+
         drizzled_models[0].update(input_models[0])
         result = drizzled_models[0]
         result.update(input_models[0])
