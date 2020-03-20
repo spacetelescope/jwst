@@ -47,6 +47,7 @@ bc0.pip_reqs_files = ['requirements-sdp.txt']
 bc0.build_cmds = [
     "pip install -e .[test,ephem]",
     "pip install pytest-xdist",
+    'echo "CRDS_CONTEXT = $(crds list --contexts jwst-edit --mappings | grep pmap)"',
 ]
 bc0.test_cmds = [
     "pytest --cov-report=xml --cov -r sxf -n 30 --bigdata --slow \
