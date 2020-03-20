@@ -2876,7 +2876,6 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
             # through processing. Once the DrizProductModel schema is
             # updated to carry over the necessary slit meta data, this
             # should no longer be needed. See JP-1144. #THIS MAY NOT BE NEEDED NOW
-
             if input_model.meta.exposure.type == 'NRS_FIXEDSLIT':
                 slitname = input_model.meta.instrument.fixed_slit
             elif getattr(input_model, "name", None) is not None:
