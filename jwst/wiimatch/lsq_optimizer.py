@@ -16,7 +16,7 @@ __all__ = ['build_lsq_eqs', 'pinv_solve', 'rlu_solve']
 
 def build_lsq_eqs(images, masks, sigmas, degree, center=None,
                   image2world=None, center_cs='image'):
-    """
+    r"""
     Build system of linear equations whose solution would provide image
     intensity matching in the least squares sense.
 

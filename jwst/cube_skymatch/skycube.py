@@ -14,7 +14,7 @@ __all__ = ['SkyCube']
 
 
 class SkyCube():
-    """
+    r"""
     Container that holds information about properties of a *single*
     image such as:
 
@@ -39,7 +39,6 @@ class SkyCube():
     be computed as a function of world coordinates
     (:math:`\alpha`, :math:`\delta`, :math:`\lambda`) instead of the
     image/cube coordinates (x, y, z).
-
     """
     def __init__(self, data, wcs=None, wcsinfo=None,
                  weights=None, cube_weight=1.0,
