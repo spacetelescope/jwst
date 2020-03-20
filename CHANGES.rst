@@ -9,7 +9,7 @@ ami
 assign_wcs
 ----------
 
-- Added code to enable processing of NIRSPEC FIXEDSLIT AUTOWAVE data [#4626]
+- Added code to enable processing of NIRSPEC FIXEDSLIT AUTOWAVE data [#4710]
 
 associations
 ------------
@@ -21,13 +21,16 @@ coron
 
 - Reorganized step documentation [#4697]
 
+datamodels
+----------
+
+- Updated core schema to include enum values for lamp_mode attribute [#4710]
+
 extract_1d
 ----------
 
 - Remove pixel-by-pixel calls to wcs; copy input keywords to output for
   more types of input data. [#4685]
-
-- Added code to enable processing of NIRSPEC FIXEDSLIT AUTOWAVE data [#4626]
 
 extract_2d
 ----------
@@ -35,10 +38,18 @@ extract_2d
 - Change the source type for NIRSpec MOS sources with stellarity = -1 from
   UNKOWN to POINT. [#4686]
 
+- Added code to enable processing of NIRSPEC FIXEDSLIT AUTOWAVE data [#4710]
+
 flatfield
 ---------
 
-- Added code to enable processing of NIRSPEC FIXEDSLIT AUTOWAVE data [#4626]
+- Added code to enable processing of NIRSPEC FIXEDSLIT AUTOWAVE data [#4710]
+
+pipeline
+--------
+
+- Added code to enable the ``calwebb_spec2`` pipeline to process NIRSPEC FIXEDSLIT
+  AUTOWAVE data [#4710]
 
 srctype
 -------
@@ -208,9 +219,6 @@ pipeline
 - Fixed the ``calwebb_tso3`` calculation of the number_of_integrations recorded
   in the photometric table product to avoid ``astropy.table`` merge conflicts.
   [#4502]
-
-- Added code to enable the ``calwebb_spec2`` pipeline to process NIRSPEC FIXEDSLIT
-  AUTOWAVE data [#4626]
 
 photom
 ------
