@@ -1971,6 +1971,11 @@ properties:
             type: string
             fits_keyword: S_WCS
             blend_table: True
+          assign_mtwcs:
+            title: Assign Moving Target World Coordinate System 
+            type: string
+            fits_keyword: S_MTWCS
+            blend_table: True
           back_sub:
             title: Background subtraction
             type: string

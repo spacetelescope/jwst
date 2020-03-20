@@ -188,6 +188,8 @@ _calculated_suffixes = set([
     'jump',
     'extract1dstep',
     'tweakregstep',
+    'assignmtwcsstep',
+    'assign_mtwcs',
 ])
 
 

@@ -8,6 +8,7 @@ Package Index
    ami_analyze/index.rst
    ami_average/index.rst
    ami_normalize/index.rst
+   assign_mtwcs/index.rst
    assign_wcs/index.rst
    associations/index.rst
    background/index.rst

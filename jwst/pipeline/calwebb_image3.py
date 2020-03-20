@@ -2,7 +2,9 @@ import os
 
 from ..stpipe import Pipeline
 from .. import datamodels
+from ..lib.exposure_types import is_moving_target
 
+from ..assign_mtwcs import assign_mtwcs_step
 from ..tweakreg import tweakreg_step
 from ..skymatch import skymatch_step
 from ..resample import resample_step
@@ -18,6 +20,7 @@ class Image3Pipeline(Pipeline):
                     any JWST instrument.
 
     Included steps are:
+        assign_mtwcs
         tweakreg
         skymatch
         outlier_detection
@@ -30,7 +33,8 @@ class Image3Pipeline(Pipeline):
     """
 
     # Define alias to steps
-    step_defs = {'tweakreg': tweakreg_step.TweakRegStep,
+    step_defs = {'assign_mtwcs': assign_mtwcs_step.AssignMTWcsStep,
+                 'tweakreg': tweakreg_step.TweakRegStep,
                  'skymatch': skymatch_step.SkyMatchStep,
                  'outlier_detection': outlier_detection_step.OutlierDetectionStep,
                  'resample': resample_step.ResampleStep,
@@ -65,9 +69,12 @@ class Image3Pipeline(Pipeline):
         except Exception:
             has_groups = False
         if is_container and has_groups:
-
-            self.log.info("Aligning input images...")
-            input_models = self.tweakreg(input_models)
+            if is_moving_target(input_models):
+                self.log.info("Assigning WCS to a Moving Target exposure.")
+                input_models = self.assign_mtwcs(input_models)
+            else:
+                self.log.info("Aligning input images...")
+                input_models = self.tweakreg(input_models)
 
             self.log.info("Matching sky values across all input images...")
             input_models = self.skymatch(input_models)
