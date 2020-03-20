@@ -27,7 +27,8 @@ class ResampleSpecStep(ResampleStep):
                                             # redefined to SlitModel
         if isinstance(input_new, ImageModel):
             slit_model = datamodels.SlitModel()
-            slit_model.update(input_new)
+            slit_model.update(input_new, only="PRIMARY")
+            slit_model.update(input_new, only="SCI")
             slit_model.meta.wcs = input_new.meta.wcs
             slit_model.data = input_new.data
             input_new = slit_model
@@ -78,7 +79,8 @@ class ResampleSpecStep(ResampleStep):
         """
         containers = multislit_to_container(input_models)
         result = datamodels.MultiSlitModel()
-        result.update(input_models[0])
+        result.update(input_models[0], only="PRIMARY")
+        result.update(input_models[0], only="SCI")
         for container in containers.values():
             resamp = resample_spec.ResampleSpecData(container, **self.drizpars)
             drizzled_models = resamp.do_drizzle()
@@ -90,12 +92,12 @@ class ResampleSpecStep(ResampleStep):
             # Everything resampled to single output model
             if len(drizzled_models) == 1:
                 result.slits.append(drizzled_models[0])
-                result.slits[-1].bunit_data = container[0].meta.bunit_data
+                result.slits[-1].meta.bunit_data = container[0].meta.bunit_data
             else:
                 # When each input is resampled to its own output
                 for model in drizzled_models:
                     result.slits.append(model)
-                    result.slits[-1].bunit_data = container[0].meta.bunit_data
+                    result.slits[-1].meta.bunit_data = container[0].meta.bunit_data
         return result
 
     def _process_slit(self, input_models):
@@ -128,28 +130,12 @@ class ResampleSpecStep(ResampleStep):
         else:
             drizzled_models = resamp.do_drizzle()
 
-        drizzled_models[0].update(input_models[0])
+        drizzled_models[0].update(input_models[0], only="PRIMARY")
+        drizzled_models[0].update(input_models[0], only="SCI")
         result = drizzled_models[0]
-        result.update(input_models[0])
         result.meta.cal_step.resample = "COMPLETE"
         result.meta.asn.pool_name = input_models.meta.pool_name
         result.meta.asn.table_name = input_models.meta.table_name
         update_s_region_spectral(result)
-        result.bunit_data = drizzled_models[0].meta.bunit_data
-
-# the following code was left for now. Don't think it is needed (JEM)
-# for slit case we should not have more than 1 drizzle model
-#        for model in drizzled_models:
-#            model.meta.cal_step.resample = "COMPLETE"
-#            model.meta.asn.pool_name = input_models.meta.pool_name
-#            model.meta.asn.table_name = input_models.meta.table_name
-#            update_s_region_spectral(model)
-
-        # Return either the single resampled datamodel, or the container
-        # of datamodels.
-#        if len(drizzled_models) == 1:
-#            result = drizzled_models[0]
-#        else:
-#            result = drizzled_models
-
+        result.meta.bunit_data = drizzled_models[0].meta.bunit_data
         return result

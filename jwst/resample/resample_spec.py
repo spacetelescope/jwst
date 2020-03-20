@@ -66,9 +66,8 @@ class ResampleSpecData:
         # Define output WCS based on all inputs, including a reference WCS
         self.output_wcs = self.build_interpolated_output_wcs()
         self.blank_output = datamodels.SlitModel(self.data_size)
-        del self.input_models[0].meta.bunit_err
-        self.blank_output.update(self.input_models[0])
-        #del self.blank_output.meta.bunit_err
+        self.blank_output.update(self.input_models[0], only="PRIMARY")
+        self.blank_output.update(self.input_models[0], only="SCI")
         self.blank_output.meta.wcs = self.output_wcs
         self.output_models = datamodels.ModelContainer()
 
