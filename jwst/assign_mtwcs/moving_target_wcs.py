@@ -1,5 +1,11 @@
 """
-DEscription
+Adjust the WCS of a moving target exposure.
+
+Computes the average RA and DEC of a moving
+target in all exposures in an association and adds a step to
+each of the WCS pipelines to allow aligning the exposures to the average
+location of the target.
+
 """
 from copy import deepcopy
 import numpy as np
