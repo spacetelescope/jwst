@@ -1,12 +1,17 @@
 """Test suffix replacement"""
 
+import logging
 import pytest
 
 from .. import suffix as s
 
+s_logger = logging.getLogger(s.__name__)
+s_logger.addHandler(logging.StreamHandler())
+
 
 def test_suffix_existence():
     """Generate current suffix list and compare"""
+
     calculated_suffixes = s.find_suffixes()
     found_suffixes = s.combine_suffixes(
         to_add=(calculated_suffixes, s.SUFFIXES_TO_ADD),
