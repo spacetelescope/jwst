@@ -2966,11 +2966,10 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
 
         elif isinstance(input_model, (datamodels.CubeModel,
                                       datamodels.SlitModel)):
-
             slit = None
             # Replace the default value for slitname with a more accurate
             # value, if possible.
-            # next two lines are for NRS_BRIGHTOBJ 
+            # next two lines are for NRS_BRIGHTOBJ
             if getattr(input_model, "name", None) is not None:
                 slitname = input_model.name
             if input_model.meta.exposure.type == 'NRS_FIXEDSLIT':
