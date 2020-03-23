@@ -2869,7 +2869,8 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                         "so apply_nod_offset will be set to False",
                         source_type)
 
-        if isinstance(input_model, datamodels.ImageModel):
+        if isinstance(input_model,(datamodels.ImageModel,
+                                   datamodels.SlitModel)):
 
             # The following 2 lines are a temporary hack to get NIRSpec
             # fixed-slit exposures containing just 1 slit to make it
