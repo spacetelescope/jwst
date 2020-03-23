@@ -1,7 +1,10 @@
 0.15.2 (unreleased)
 ==================
 
+rscd
+----
 
+- Added baseline algorithm that flags groups [#4669]
 
 0.15.1 (2020-03-10)
 ===================
@@ -202,7 +205,7 @@ transforms
    with default values of 0.0. These are populated from the MSA metadata
    file. [#4613]
 
-  
+
 tweakreg
 --------
 
