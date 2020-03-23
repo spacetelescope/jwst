@@ -2869,17 +2869,9 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                         "so apply_nod_offset will be set to False",
                         source_type)
 
-        if isinstance(input_model,(datamodels.ImageModel,
-                                   datamodels.SlitModel)):
+        if isinstance(input_model, datamodels.ImageModel):
 
-            # The following 2 lines are a temporary hack to get NIRSpec
-            # fixed-slit exposures containing just 1 slit to make it
-            # through processing. Once the DrizProductModel schema is
-            # updated to carry over the necessary slit meta data, this
-            # should no longer be needed. See JP-1144. #THIS MAY NOT BE NEEDED NOW
-            if input_model.meta.exposure.type == 'NRS_FIXEDSLIT':
-                slitname = input_model.meta.instrument.fixed_slit
-            elif getattr(input_model, "name", None) is not None:
+            if getattr(input_model, "name", None) is not None:
                 slitname = input_model.name
             log.debug(f'slitname={slitname}')
 
@@ -2978,8 +2970,12 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
             slit = None
             # Replace the default value for slitname with a more accurate
             # value, if possible.
-            # xxx if getattr(input_model, "name", None) is not None:
-            # xxx     slitname = input_model.name
+            # next two lines are for NRS_BRIGHTOBJ 
+            if getattr(input_model, "name", None) is not None:
+                slitname = input_model.name
+            if input_model.meta.exposure.type == 'NRS_FIXEDSLIT':
+                slitname = input_model.meta.instrument.fixed_slit
+
             log.debug(f'slitname={slitname}')
             if photom_has_been_run:
                 pixel_solid_angle = input_model.meta.photometry.pixelarea_steradians
