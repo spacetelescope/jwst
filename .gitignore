@@ -4,6 +4,7 @@ build/
 dist/
 .cache
 *~
+.*.sw[op]
 *.pyc
 *.egg-info/
 *.so
