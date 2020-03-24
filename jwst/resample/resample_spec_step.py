@@ -130,8 +130,6 @@ class ResampleSpecStep(ResampleStep):
         else:
             drizzled_models = resamp.do_drizzle()
 
-        drizzled_models[0].update(input_models[0], only="PRIMARY")
-        drizzled_models[0].update(input_models[0], only="SCI")
         result = drizzled_models[0]
         result.meta.cal_step.resample = "COMPLETE"
         result.meta.asn.pool_name = input_models.meta.pool_name
