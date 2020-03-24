@@ -49,6 +49,7 @@ class TweakRegStep(Step):
         sigma = float(min=0.0, default=3.0) # Clipping limit in sigma units
         align_to_gaia = boolean(default=True)  # Align to GAIA catalog
         gaia_catalog = option('GAIADR2', 'GAIADR1', default='GAIADR2')
+        min_gaia = integer(min=0, default=5) # Min number of GAIA sources needed
         output_gaia = boolean(default=False)  # Write out GAIA catalog as a separate product
     """
 
@@ -213,7 +214,7 @@ class TweakRegStep(Step):
 
                 # Check that there are enough GAIA sources for a reliable/valid fit
                 num_ref = len(ref_cat)
-                if num_ref < self.minobj:
+                if num_ref < self.min_gaia:
                     msg = "Not enough GAIA sources for a fit: {}\n".format(num_ref)
                     msg += "Skipping alignment to {} astrometric catalog!\n".format(self.gaia_catalog)
                     raise ValueError(msg)
