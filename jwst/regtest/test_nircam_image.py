@@ -129,3 +129,16 @@ def test_nircam_image_stage3_catalog(run_image3pipeline, rtdata_module, diff_ast
     rtdata.get_truth("truth/test_nircam_image_stages/jw42424-o002_t001_nircam_clear-f444w_cat.ecsv")
 
     assert diff_astropy_tables(rtdata.output, rtdata.truth, rtol=1e-4, atol=1e-5)
+
+
+@pytest.mark.bigdata
+def test_nircam_image_moving_target(run_image3pipeline, rtdata_module, fitsdiff_default_kwargs):
+    """Test resampled i2d of moving target exposures for NIRCam imaging"""
+    rtdata = rtdata_module
+    rtdata.input = "mt_asn.json"
+    rtdata.output = "mt_assoc_i2d.fits"
+    rtdata.get_truth("truth/test_nircam_image_stages/mt_assoc_i2d.fits")
+
+    fitsdiff_default_kwargs["atol"] = 1e-5
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
