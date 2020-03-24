@@ -29,21 +29,14 @@ class TweakRegStep(Step):
     """
 
     spec = """
-        # Source finding parameters:
         save_catalogs = boolean(default=False) # Write out catalogs?
         catalog_format = string(default='ecsv') # Catalog output file format
         kernel_fwhm = float(default=2.5) # Gaussian kernel FWHM in pixels
         snr_threshold = float(default=10.0) # SNR threshold above the bkg
         brightest = integer(default=100) # Keep top ``brightest`` objects
         peakmax = float(default=None) # Filter out objects with pixel values >= ``peakmax``
-
-        # Optimize alignment order:
         enforce_user_order = boolean(default=False) # Align images in user specified order?
-
-        # Reference Catalog parameters:
         expand_refcat = boolean(default=False) # Expand reference catalog with new sources?
-
-        # Object matching parameters:
         minobj = integer(default=15) # Minimum number of objects acceptable for matching
         searchrad = float(default=1.0) # The search radius in arcsec for a match
         use2dhist = boolean(default=True) # Use 2d histogram to find initial offset?
@@ -51,13 +44,9 @@ class TweakRegStep(Step):
         tolerance = float(default=1.0) # Matching tolerance for xyxymatch in arcsec
         xoffset = float(default=0.0), # Initial guess for X offset in arcsec
         yoffset = float(default=0.0) # Initial guess for Y offset in arcsec
-
-        # Catalog fitting parameters:
         fitgeometry = option('shift', 'rscale', 'general', default='general') # Fitting geometry
         nclip = integer(min=0, default=3) # Number of clipping iterations in fit
         sigma = float(min=0.0, default=3.0) # Clipping limit in sigma units
-
-        # Absolute astrometry fitting parameters:
         align_to_gaia = boolean(default=True)  # Align to GAIA catalog
         gaia_catalog = option('GAIADR2', 'GAIADR1', default='GAIADR2')
         output_gaia = boolean(default=False)  # Write out GAIA catalog as a separate product
@@ -229,6 +218,10 @@ class TweakRegStep(Step):
                     msg += "Skipping alignment to {} astrometric catalog!\n".format(self.gaia_catalog)
                     raise ValueError(msg)
                 # Set group_id to same value so all get fit as one observation
+                # The assigned value, 987654, has been hard-coded to make it 
+                # easy to recognize when alignment to GAIA was being performed
+                # as opposed to the group_id values used for relative alignment
+                # earlier in this step.  
                 for imcat in imcats:
                     imcat.meta['orig_group_id'] = imcat.meta['group_id']
                     imcat.meta['group_id'] = 987654
