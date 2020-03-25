@@ -9,6 +9,8 @@ ami
 associations
 ------------
 
+- Update asn_from_list to have default values in the asn header [#4720]
+
 - Update rules so exclude dark files from associations [#4668]
 
 - Update association rules so that nodded observations procduce level 3 asn's [#4675]
