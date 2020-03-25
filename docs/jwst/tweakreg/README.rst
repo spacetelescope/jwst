@@ -56,6 +56,12 @@ The ``tweakreg`` step has the following optional arguments:
 * ``snr_threshold``: A `float` value indicating SNR threshold above the
   background. (Default=5.0)
 
+* ``brightest``: A positive `int` value indicating the number of brightest
+  objects to keep. (Default=100)
+
+* ``peakmax``: A `float` value used to filter out objects with pixel values
+  >= ``peakmax``. (Default=None)
+
 **Optimize alignment order:**
 
 * ``enforce_user_order``: a boolean value indicating whether or not take the

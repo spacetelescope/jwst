@@ -20,3 +20,6 @@ The ``source_catalog`` step uses the following user-settable arguments:
 
 * ``--deblend``: A boolean indicating whether to deblend sources
   [default=False]
+
+* ``--suffix``: A string value giving the file name suffix to use for
+  the output catalog file [default='cat']
