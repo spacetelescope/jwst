@@ -2,7 +2,6 @@
 Utility function for assign_wcs.
 
 """
-import warnings
 import logging
 import functools
 import numpy as np
@@ -121,12 +120,7 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
         Bounding_box of the new WCS.
         If not supplied it is computed from the bounding_box of all inputs.
     """
-    if domain is not None:
-        warnings.warning("'domain' was deprecated in 0.8 and will be removed from next"
-                         "version. Use 'bounding_box' instead.")
-        bb = _domain_to_bounding_box(domain)
-    else:
-        bb = bounding_box
+    bb = bounding_box
     wcslist = [im.meta.wcs for im in dmodels]
     if not isiterable(wcslist):
         raise ValueError("Expected 'wcslist' to be an iterable of WCS objects.")
@@ -187,9 +181,7 @@ def compute_fiducial(wcslist, bounding_box=None, domain=None):
 
     This function assumes all WCSs have the same output coordinate frame.
     """
-    if domain is not None:
-        warnings.warning("'domain' was deprecated in 0.8 and will be removed from next"
-                         "version. Use 'bounding_box' instead.")
+
     axes_types = wcslist[0].output_frame.axes_type
     spatial_axes = np.array(axes_types) == 'SPATIAL'
     spectral_axes = np.array(axes_types) == 'SPECTRAL'
