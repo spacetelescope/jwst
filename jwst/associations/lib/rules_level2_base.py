@@ -100,6 +100,15 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
                 'check': self.validate_candidates
             }
         })
+        # Other presumptions on the association
+        if 'constraints' not in self.data:
+            self.data['constraints'] = 'No constraints'
+        if 'asn_type' not in self.data:
+            self.data['asn_type'] = 'user_built'
+        if 'asn_id' not in self.data:
+            self.data['asn_id'] = 'a3001'
+        if 'asn_pool' not in self.data:
+            self.data['asn_pool'] = 'none'
 
     def check_and_set_constraints(self, item):
         """Override of Association method
