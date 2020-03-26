@@ -952,7 +952,7 @@ class ExtractBase:
             The input science data.
 
         slit : an input slit, or None if not used
-            For MultiSlit or MultiProduct data, `slit` is one slit from
+            For MultiSlit, `slit` is one slit from
             a list of slits in the input.  For other types of data, `slit`
             will not be used.
 
@@ -1433,7 +1433,7 @@ class ExtractModel(ExtractBase):
             The input science data.
 
         slit : an input slit, or None if not used
-            For MultiSlit or MultiProduct data, `slit` is one slit from
+            For MultiSlit, `slit` is one slit from
             a list of slits in the input.  For other types of data, `slit`
             will not be used.
 
@@ -2030,7 +2030,7 @@ class ImageExtractModel(ExtractBase):
             The input science data.
 
         slit : an input slit, or None if not used
-            For MultiSlit or MultiProduct data, `slit` is one slit from
+            For MultiSlit, `slit` is one slit from
             a list of slits in the input.  For other types of data, `slit`
             will not be used.
 
@@ -2720,15 +2720,11 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                         input_model.meta.exposure.type)
 
     if (was_source_model or
-        isinstance(input_model, datamodels.MultiSlitModel) or
-        isinstance(input_model, datamodels.MultiProductModel)):
-
-        if was_source_model:            # from a SourceModelContainer?
+        isinstance(input_model, datamodels.MultiSlitModel)):
+        if was_source_model:
             slits = [input_model]
         elif isinstance(input_model, datamodels.MultiSlitModel):
             slits = input_model.slits
-        else:                           # MultiProductModel
-            slits = input_model.products
 
         # Loop over the slits in the input model
         for slit in slits:
@@ -2873,19 +2869,9 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                         "so apply_nod_offset will be set to False",
                         source_type)
 
-        if isinstance(input_model, (datamodels.ImageModel,
-                                    datamodels.DrizProductModel)):
+        if isinstance(input_model, datamodels.ImageModel):
 
-            # The following 2 lines are a temporary hack to get NIRSpec
-            # fixed-slit exposures containing just 1 slit to make it
-            # through processing. Once the DrizProductModel schema is
-            # updated to carry over the necessary slit meta data, this
-            # should no longer be needed. See JP-1144.
-            # Replace the default value for slitname with a more accurate
-            # value, if possible.
-            if input_model.meta.exposure.type == 'NRS_FIXEDSLIT':
-                slitname = input_model.meta.instrument.fixed_slit
-            elif getattr(input_model, "name", None) is not None:
+            if getattr(input_model, "name", None) is not None:
                 slitname = input_model.name
             log.debug(f'slitname={slitname}')
 
@@ -2980,12 +2966,15 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
 
         elif isinstance(input_model, (datamodels.CubeModel,
                                       datamodels.SlitModel)):
-
             slit = None
             # Replace the default value for slitname with a more accurate
             # value, if possible.
-            # xxx if getattr(input_model, "name", None) is not None:
-            # xxx     slitname = input_model.name
+            # next two lines are for NRS_BRIGHTOBJ
+            if getattr(input_model, "name", None) is not None:
+                slitname = input_model.name
+            if input_model.meta.exposure.type == 'NRS_FIXEDSLIT':
+                slitname = input_model.meta.instrument.fixed_slit
+
             log.debug(f'slitname={slitname}')
             if photom_has_been_run:
                 pixel_solid_angle = input_model.meta.photometry.pixelarea_steradians
@@ -3139,6 +3128,8 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
     else:
         log.debug("Not copying from the INT_TIMES table because "
                   "this is not a TSO exposure.")
+        if hasattr(output_model, "int_times"):
+            del output_model.int_times
 
     # See output_model.spec[i].meta.wcs instead.
     output_model.meta.wcs = None
@@ -3200,9 +3191,7 @@ def populate_time_keywords(input_model, output_model):
     skip = False                        # initial value
 
     if isinstance(input_model, (datamodels.MultiSlitModel,
-                                datamodels.MultiProductModel,
-                                datamodels.ImageModel,
-                                datamodels.DrizProductModel)):
+                                datamodels.ImageModel)):
         if num_integrations > 1:
             log.warning("Not using INT_TIMES table because the data "
                         "have been averaged over integrations.")
@@ -3491,23 +3480,28 @@ def extract_one_slit(input_model, slit, integ,
         log_initial_parameters(extract_params)
 
     exp_type = input_model.meta.exposure.type
-    input_dq = None                             # possibly replaced below
+    input_dq = None
     if integ > -1:
         data = input_model.data[integ]
-        if hasattr(input_model, 'dq'):
-            input_dq = input_model.dq[integ]
+        input_dq = input_model.dq[integ]
+        if input_dq.size == 0:
+            input_dq = None
         wl_array = get_wavelengths(input_model, exp_type,
                                    extract_params['spectral_order'])
+
     elif slit is None:
         data = input_model.data
-        if hasattr(input_model, 'dq'):
-            input_dq = input_model.dq
+        input_dq = input_model.dq
+        if input_dq.size == 0:
+            input_dq = None
         wl_array = get_wavelengths(input_model, exp_type,
                                    extract_params['spectral_order'])
+
     else:
         data = slit.data
-        if hasattr(slit, 'dq'):
-            input_dq = slit.dq
+        input_dq = slit.dq
+        if input_dq.size== 0:
+            input_dq = None
         wl_array = get_wavelengths(slit, exp_type,
                                    extract_params['spectral_order'])
 

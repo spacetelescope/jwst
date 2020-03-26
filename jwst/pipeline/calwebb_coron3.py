@@ -153,14 +153,14 @@ class Coron3Pipeline(Pipeline):
         result = self.resample(resample_input)
 
         if result == resample_input:
-            # Resampling was skipped,
-            #     yet we need to return a DrizProductModel, so...
-            warn1 = 'Creating fake resample results until step is available'
-            self.log.warning(warn1)
-            result = datamodels.DrizProductModel(data=resample_input[0].data,
-                                                 con=resample_input[0].dq,
-                                                 wht=resample_input[0].err)
-            result.update(resample_input[0])
+            # Resampling was skipped
+            #     yet we need to return an output resampled ImageModel, so...
+            #warn1 = 'Creating fake resample results until step is available'
+            #self.log.warning(warn1)
+            #result = datamodels.ImageModel(data=resample_input[0].data,
+            #                                     con=resample_input[0].dq,
+            #                                     wht=resample_input[0].err)
+            #result.update(resample_input[0])
             # The resample step blends headers already...
             self.log.debug('Blending metadata for {}'.format(
                 result.meta.filename))

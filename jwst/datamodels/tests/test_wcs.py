@@ -32,6 +32,11 @@ def _header_to_dict(x):
 
 def test_wcs():
     with ImageModel(FITS_FILE) as dm:
+
+        # Refer to the data array to initialize it.
+        dm.data
+
+        # Now continue with the test.
         wcs1 = dm.get_fits_wcs()
         dm2 = dm.copy()
         wcs2 = dm2.get_fits_wcs()

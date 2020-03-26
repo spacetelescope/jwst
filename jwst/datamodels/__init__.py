@@ -35,9 +35,9 @@ from .mask import MaskModel
 from .ramp import MIRIRampModel
 from .multiexposure import MultiExposureModel
 from .multiextract1d import MultiExtract1dImageModel
-from .multiprod import MultiProductModel
 from .multislit import MultiSlitModel
 from .multispec import MultiSpecModel
+from .multiprod import MultiProductModel
 from .nirspec_flat import NirspecFlatModel, NirspecQuadFlatModel
 from .outlierpars import OutlierParsModel
 from .pathloss import PathlossModel
@@ -89,8 +89,8 @@ __all__ = [
     'CombinedSpecModel', 'ContrastModel', 'CubeModel',
     'DarkModel', 'DarkMIRIModel',
     'DisperserModel', 'DistortionModel', 'DistortionMRSModel',
-    'DrizProductModel',
     'DrizParsModel',
+    'DrizProductModel',
     'Extract1dImageModel',
     'FilteroffsetModel',
     'FlatModel', 'NirspecFlatModel', 'NirspecQuadFlatModel',
@@ -102,7 +102,7 @@ __all__ = [
     'IFUFOREModel', 'IFUImageModel', 'IFUPostModel', 'IFUSlicerModel',
     'ImageModel', 'IPCModel', 'IRS2Model', 'LastFrameModel', 'Level1bModel',
     'LinearityModel', 'MaskModel', 'ModelContainer', 'MSAModel',
-    'MultiExposureModel', 'MultiExtract1dImageModel', 'MultiProductModel', 'MultiSlitModel',
+    'MultiExposureModel', 'MultiExtract1dImageModel', 'MultiSlitModel',
     'MultiSpecModel', 'OTEModel',
     'NIRCAMGrismModel','NIRISSGrismModel',
     'OutlierParsModel',
@@ -111,6 +111,7 @@ __all__ = [
     'PixelAreaModel', 'NirspecSlitAreaModel', 'NirspecMosAreaModel', 'NirspecIfuAreaModel',
     'FgsImgPhotomModel',
     'MirImgPhotomModel', 'MirLrsPhotomModel', 'MirMrsPhotomModel',
+    'MultiProductModel',
     'NrcImgPhotomModel', 'NrcWfssPhotomModel',
     'NisImgPhotomModel', 'NisSossPhotomModel', 'NisWfssPhotomModel',
     'NrsFsPhotomModel', 'NrsMosPhotomModel',

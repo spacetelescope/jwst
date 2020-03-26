@@ -75,6 +75,8 @@ class ResampleStep(Step):
             util.update_s_region_imaging(model)
             model.meta.asn.pool_name = input_models.meta.pool_name
             model.meta.asn.table_name = input_models.meta.table_name
+            if hasattr(model.meta, "bunit_err") and model.meta.bunit_err is not None:
+                del model.meta.bunit_err
 
         if len(resamp.output_models) == 1:
             result = resamp.output_models[0]

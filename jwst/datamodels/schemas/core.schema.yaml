@@ -2209,6 +2209,23 @@ properties:
         title: Source catalog filename
         type: string
         fits_keyword: SCATFILE
+      resample:
+        title: Resample Parameters
+        type: object
+        properties:
+          pointings:
+            title: "Number of groups/pointings included in resampled product"
+            type: integer
+            fits_keyword: NDRIZ
+          product_exposure_time:
+            title: "[s] Total exposure time for product"
+            type: number
+            fits_keyword: TEXPTIME
+          weight_type:
+            title: Type of drizzle weighting to use in resampling input
+            type: string
+            enum: [exptime, error]
+            fits_keyword: RESWHT
       background:
         title: Background information
         type: object

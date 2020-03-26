@@ -4,7 +4,7 @@ from astropy.stats import sigma_clipped_stats, gaussian_fwhm_to_sigma
 import astropy.units as u
 import photutils
 
-from ..datamodels import DrizProductModel
+from ..datamodels import ImageModel
 
 
 def make_source_catalog(model, kernel_fwhm, kernel_xsize, kernel_ysize,
@@ -16,8 +16,8 @@ def make_source_catalog(model, kernel_fwhm, kernel_xsize, kernel_ysize,
 
     Parameters
     ----------
-    model : `DrizProductModel`
-        The input `DrizProductModel` of a single drizzled image.  The
+    model : `ImageModel`
+        The input `ImageModel` of a single drizzled image.  The
         input image is assumed to be background subtracted.
 
     kernel_fwhm : float
@@ -81,8 +81,8 @@ def make_source_catalog(model, kernel_fwhm, kernel_xsize, kernel_ysize,
         returned.
     """
 
-    if not isinstance(model, DrizProductModel):
-        raise ValueError('The input model must be a DrizProductModel.')
+    if not isinstance(model, ImageModel):
+        raise ValueError('The input model must be a ImageModel.')
 
     # Use this when model.wht contains an IVM map
     # Calculate "background-only" error assuming the weight image is an

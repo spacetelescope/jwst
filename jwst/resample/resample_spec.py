@@ -60,16 +60,14 @@ class ResampleSpecData:
             output = input_models.meta.resample.output
 
         self.drizpars = pars
-
         self.pscale_ratio = 1.
         self.blank_output = None
 
         # Define output WCS based on all inputs, including a reference WCS
-        # wcslist = [m.meta.wcs for m in self.input_models]
         self.output_wcs = self.build_interpolated_output_wcs()
-        self.blank_output = datamodels.DrizProductModel(self.data_size)
-
-        self.blank_output.update(datamodels.ImageModel(self.input_models[0]._instance))
+        self.blank_output = datamodels.SlitModel(self.data_size)
+        self.blank_output.update(self.input_models[0], only="PRIMARY")
+        self.blank_output.update(self.input_models[0], only="SCI")
         self.blank_output.meta.wcs = self.output_wcs
         self.output_models = datamodels.ModelContainer()
 
@@ -92,11 +90,12 @@ class ResampleSpecData:
         output_wcs : `~gwcs.WCS` object
             A gwcs WCS object defining the output frame WCS
         """
+
         if refmodel is None:
             refmodel = self.input_models[0]
+
         refwcs = refmodel.meta.wcs
         bb = refwcs.bounding_box
-
         grid = wcstools.grid_from_bounding_box(bb)
         ra, dec, lam = np.array(refwcs(*grid))
         lon = np.nanmean(ra)
@@ -167,7 +166,7 @@ class ResampleSpecData:
                 mapping.inverse = Mapping(mapping_tuple)
 
         # The final transform
-        transform = mapping | (pix_to_ra & pix_to_dec | undist2sky)  & pix_to_wavelength
+        transform = mapping | (pix_to_ra & pix_to_dec | undist2sky) & pix_to_wavelength
 
         det = cf.Frame2D(name='detector', axes_order=(0, 1))
         sky = cf.CelestialFrame(name='sky', axes_order=(0, 1),
@@ -188,13 +187,12 @@ class ResampleSpecData:
 
         # turn the size into a numpy shape in (y, x) order
         self.data_size = tuple(output_array_size[::-1])
-
         bounding_box = resample_utils.wcs_bbox_from_shape(self.data_size)
         output_wcs.bounding_box = bounding_box
 
         return output_wcs
 
-    def do_drizzle(self, **pars):
+    def do_drizzle(self, xmin=0, xmax=0, ymin=0, ymax=0, **pars):
         """ Perform drizzling operation on input images's to create a new output
         """
         # Set up information about what outputs we need to create: single or final
@@ -245,10 +243,10 @@ class ResampleSpecData:
             for n, img in enumerate(group):
                 exposure_times['start'].append(img.meta.exposure.start_time)
                 exposure_times['end'].append(img.meta.exposure.end_time)
-
                 inwht = resample_utils.build_driz_weight(img,
                     weight_type=self.drizpars['weight_type'],
                     good_bits=self.drizpars['good_bits'])
+
                 if hasattr(img, 'name'):
                     log.info('Resampling slit {} {}'.format(img.name, self.data_size))
                 else:
@@ -256,8 +254,9 @@ class ResampleSpecData:
 
                 in_wcs = img.meta.wcs
                 driz.add_image(img.data, in_wcs, inwht=inwht,
-                        expin=img.meta.exposure.exposure_time,
-                        pscale_ratio=self.pscale_ratio)
+                               expin=img.meta.exposure.exposure_time,
+                               pscale_ratio=self.pscale_ratio,
+                               xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
 
             # Update some basic exposure time values based on all the inputs
             output_model.meta.exposure.exposure_time = texptime
@@ -269,9 +268,9 @@ class ResampleSpecData:
 
             # Update mutlislit slit info on the output_model
             for attr in ['name', 'xstart', 'xsize', 'ystart', 'ysize',
-                    'slitlet_id', 'source_id', 'source_name', 'source_alias',
-                    'stellarity', 'source_type', 'source_xpos', 'source_ypos',
-                    'dispersion_direction', 'shutter_state']:
+                         'slitlet_id', 'source_id', 'source_name', 'source_alias',
+                         'stellarity', 'source_type', 'source_xpos', 'source_ypos',
+                         'dispersion_direction', 'shutter_state']:
                 try:
                     val = getattr(img, attr)
                 except AttributeError:

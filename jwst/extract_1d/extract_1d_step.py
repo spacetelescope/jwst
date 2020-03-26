@@ -97,7 +97,7 @@ class Extract1dStep(Step):
             # It's a 3-D multi-integration model
             self.log.debug('Input is a CubeModel for a multiple integ. file')
         elif isinstance(input_model, datamodels.ImageModel):
-            # It's a single 2-D image
+            # It's a single 2-D image. This could be a resampled 2-D image
             self.log.debug('Input is an ImageModel')
         elif isinstance(input_model, datamodels.SourceModelContainer):
             self.log.debug('Input is a SourceModelContainer')
@@ -109,13 +109,8 @@ class Extract1dStep(Step):
         elif isinstance(input_model, datamodels.MultiExposureModel):
             self.log.warning('Input is a MultiExposureModel, '
                              'which is not currently supported')
-        elif isinstance(input_model, datamodels.MultiProductModel):
-            self.log.debug('Input is a MultiProductModel')
         elif isinstance(input_model, datamodels.IFUCubeModel):
             self.log.debug('Input is an IFUCubeModel')
-        elif isinstance(input_model, datamodels.DrizProductModel):
-            # Resampled 2-D data
-            self.log.debug('Input is a DrizProductModel')
         elif isinstance(input_model, datamodels.SlitModel):
             # NRS_BRIGHTOBJ mode
             self.log.debug('Input is a SlitModel')
