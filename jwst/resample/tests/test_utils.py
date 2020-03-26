@@ -1,3 +1,8 @@
+"""Test various utility functions"""
+import pytest
+
+import numpy as np
+
 from jwst.datamodels import SlitModel
 from jwst.resample.resample_spec import find_dispersion_axis
 from jwst.resample.resample_utils import build_mask
@@ -10,21 +15,17 @@ BITVALUES_INV_STR = f'~{2**0}, {2**2}'
 JWST_NAMES = 'DO_NOT_USE, JUMP_DET'
 JWST_NAMES_INV = '~' + JWST_NAMES
 @pytest.mark.parametrize(
-    'dq, bitvalues, invert, expected', [
-        (DQ, 0,                 False, np.array([1, 0, 0, 0, 0, 0, 0, 0, 0])),
-        (DQ, 0,                 True,  np.array([1, 1, 1, 1, 1, 1, 1, 1, 1])),
-        (DQ, BITVALUES,         False, np.array([1, 1, 0, 0, 1, 1, 0, 0, 0])),
-        (DQ, BITVALUES,         True,  np.array([1, 0, 1, 0, 0, 0, 0, 0, 1])),
-        (DQ, BITVALUES_STR,     False, np.array([1, 1, 0, 0, 1, 1, 0, 0, 0])),
-        (DQ, BITVALUES_STR,     True,  np.array([1, 0, 1, 0, 0, 0, 0, 0, 1])),
-        (DQ, BITVALUES_INV_STR, False, np.array([1, 0, 1, 0, 0, 0, 0, 0, 1])),
-        (DQ, JWST_NAMES,        False, np.array([1, 1, 0, 0, 1, 1, 0, 0, 0])),
-        (DQ, JWST_NAMES_INV,    False, np.array([1, 0, 1, 0, 0, 0, 0, 0, 1])),
-        (DQ, None,              False, np.array([1, 1, 1, 1, 1, 1, 1, 1, 1])),
-        (DQ, None,              True,  np.array([1, 0, 0, 0, 0, 0, 0, 0, 0])),
+    'dq, bitvalues, expected', [
+        (DQ, 0,                 np.array([1, 0, 0, 0, 0, 0, 0, 0, 0])),
+        (DQ, BITVALUES,         np.array([1, 1, 0, 0, 1, 1, 0, 0, 0])),
+        (DQ, BITVALUES_STR,     np.array([1, 1, 0, 0, 1, 1, 0, 0, 0])),
+        (DQ, BITVALUES_INV_STR, np.array([1, 0, 1, 0, 0, 0, 0, 0, 1])),
+        (DQ, JWST_NAMES,        np.array([1, 1, 0, 0, 1, 1, 0, 0, 0])),
+        (DQ, JWST_NAMES_INV,    np.array([1, 0, 1, 0, 0, 0, 0, 0, 1])),
+        (DQ, None,              np.array([1, 1, 1, 1, 1, 1, 1, 1, 1])),
     ]
 )
-def test_build_mask(dq, bitvalues, invert, expected):
+def test_build_mask(dq, bitvalues, expected):
     """Test logic of mask building
 
     Parameters
@@ -32,7 +33,14 @@ def test_build_mask(dq, bitvalues, invert, expected):
     dq: numpy.array
         The input data quality array
 
-from jwst.resample.resample_spec import find_dispersion_axis
+    bitvalues: int or str
+        The bitvalues to match against
+
+    expected: numpy.array
+        Expected mask array
+    """
+    result = build_mask(dq, bitvalues)
+    assert np.array_equal(result, expected)
 
 
 def test_find_dispersion_axis():
