@@ -32,6 +32,27 @@ extract_2d
 - Change the source type for NIRSpec MOS sources with stellarity = -1 from
   UNKOWN to POINT. [#4686]
 
+master_background
+-----------------
+
+- Updated step arguments in the documentation. [#4723]
+
+outlier_detection
+-----------------
+
+- Updated step arguments in the documentation. [#4723]
+
+resample
+--------
+
+- Updated documentation to include step arguments and reference file
+  description. [#4723]
+
+source_catalog
+--------------
+
+- Updated step arguments in the documentation. [#4723]
+
 srctype
 -------
 
@@ -47,6 +68,10 @@ stpipe
 
 - Use only a single member of an association for CRDS STEPPARS checking [#4684]
 
+tweakreg
+--------
+
+- Updated step arguments in the documentation. [#4723]
 
 0.15.1 (2020-03-10)
 ===================
