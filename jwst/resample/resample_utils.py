@@ -7,7 +7,8 @@ from astropy.coordinates import SkyCoord
 from astropy.modeling.models import Scale, AffineTransformation2D
 from astropy.modeling import Model
 from gwcs import WCS, wcstools
-from astropy.nddata.bitmask import interpret_bit_flags
+
+from jwst.datamodels.dqflags import interpret_bit_flags
 
 from ..assign_wcs.util import wcs_from_footprints, wcs_bbox_from_shape
 

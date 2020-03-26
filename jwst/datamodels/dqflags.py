@@ -5,7 +5,7 @@ The definitions are documented in the JWST RTD:
 https://jwst-pipeline.readthedocs.io/en/latest/jwst/references_general/references_general.html#data-quality-flags
 
 
-Impementation
+Implementation
 -------------
 
 The flags are implemented as "bit flags": Each flag is assigned a bit position
@@ -16,6 +16,9 @@ The data structure that stores bit flags is just the standard Python `int`,
 which provides 32 bits. Bits of an integer are most easily referred to using
 the formula `2**bit_number` where `bit_number` is the 0-index bit of interest.
 """
+from astropy.nddata.bitmask import interpret_bit_flags as ap_interpret_bit_flags
+
+from jwst.lib.basic_utils import multiple_replace
 
 # Pixel-specific flags
 pixel = {'GOOD':             0,      # No bits set, all is good
@@ -62,3 +65,44 @@ group = {'GOOD':       pixel['GOOD'],
          'JUMP_DET':   pixel['JUMP_DET'],
          'DROPOUT':    pixel['DROPOUT'],
 }
+
+
+def interpret_bit_flags(bit_flags, flip_bits=None):
+    """Converts input bit flags to a single integer value (bit mask) or `None`.
+
+    Wraps `astropy.nddate.bitmask.interpret_bit_flags`, allowing the JWST
+    bit mnemonics to be used in place of integers.
+
+    Parameters
+    ----------
+    bit_flags : int, str, list, None
+        See `astropy.nddate.bitmask.interpret_bit_flags`.
+        Also allows strings using JWST mnemonics
+
+    flip_bits : bool, None
+        See `astropy.nddate.bitmask.interpret_bit_flags`.
+
+    Returns
+    -------
+    bitmask : int or None
+        Returns an integer bit mask formed from the input bit value or `None`
+        if input ``bit_flags`` parameter is `None` or an empty string.
+        If input string value was prepended with '~' (or ``flip_bits`` was set
+        to `True`), then returned value will have its bits flipped
+        (inverse mask).
+
+    Examples
+    --------
+    Using JWST mnemonics:
+    TBD
+    """
+    bit_flags_dm = bit_flags
+    if isinstance(bit_flags, str):
+        dm_flags = {
+            key: str(val)
+            for key, val in pixel.items()
+        }
+        bit_flags_dm = multiple_replace(bit_flags, dm_flags)
+
+    return ap_interpret_bit_flags(bit_flags_dm, flip_bits=flip_bits)
+
