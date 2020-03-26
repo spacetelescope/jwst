@@ -286,7 +286,7 @@ class OptRes:
         warnings.resetwarnings()
 
         rfo_model = \
-        datamodels.RampFitOutputModel(\
+        datamodels.RampFitOutputModel(
             slope=self.slope_seg.astype(np.float32) / effintim,
             sigslope=self.sigslope_seg.astype(np.float32),
             var_poisson=self.var_p_seg.astype(np.float32),
@@ -603,7 +603,7 @@ def calc_slope_vars(rn_sect, gain_sect, gdq_sect, group_time, max_seg):
     #   be compared to the plane of (near) zeros resulting from the reset. For
     #   longer segments, this value is overwritten below.
     den_r3 = num_r3.copy() * 0. + 1./6
-    wh_seg_pos = np.where (segs_beg_3 > 1)
+    wh_seg_pos = np.where(segs_beg_3 > 1)
 
     # Suppress, then, re-enable harmless arithmetic warnings, as NaN will be
     #   checked for and handled later
@@ -665,12 +665,13 @@ def calc_pedestal(num_int, slope_int, firstf_int, dq_first, nframes, groupgap,
     return ped
 
 
-def output_integ(model, slope_int, dq_int, effintim, var_p3, var_r3, var_both3,
-                 int_times):
+def ols_output_integ(model, slope_int, dq_int, effintim, var_p3, var_r3,
+                     var_both3, int_times):
     """
-    Construct the output integration-specific results. Any variance values that
-    are a large fraction of the default value LARGE_VARIANCE correspond to
-    non-existent segments, so will be set to 0 here before output.
+    For the OLS algorithm, construct the output integration-specific results.
+    Any variance values that are a large fraction of the default value
+    LARGE_VARIANCE correspond to non-existent segments, so will be set to 0
+    here before output.
 
     Parameters
     ----------
@@ -721,6 +722,49 @@ def output_integ(model, slope_int, dq_int, effintim, var_p3, var_r3, var_both3,
     cubemod.var_poisson = var_p3
     cubemod.var_rnoise = var_r3
     cubemod.int_times = int_times
+
+    # Reset the warnings filter to its original state
+    warnings.resetwarnings()
+
+    cubemod.update(model) # keys from input needed for photom step
+
+    return cubemod
+
+
+def gls_output_integ( model, slope_int, slope_err_int, dq_int, effintim):
+    """
+    For the GLS algorithm, construct the output integration-specific results.
+
+    Parameters
+    ----------
+    model : instance of Data Model
+        DM object for input
+
+    slope_int : float, 3D array
+        Data cube of weighted slopes for each integration
+
+    slope_err_int : float, 3D array
+        Data cube of slope errors for each integration
+
+    dq_int : int, 3D array
+        Data cube of DQ arrays for each integration
+
+    effintim : float
+        Effective integration time per integration
+
+    Returns
+    -------
+    cubemod : Data Model object
+
+    """
+    # Suppress harmless arithmetic warnings for now
+    warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
+    warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
+
+    cubemod = datamodels.CubeModel()
+    cubemod.data = slope_int / effintim
+    cubemod.err = slope_err_int
+    cubemod.dq = dq_int
 
     # Reset the warnings filter to its original state
     warnings.resetwarnings()
