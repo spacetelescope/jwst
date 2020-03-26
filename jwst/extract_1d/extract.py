@@ -3128,6 +3128,8 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
     else:
         log.debug("Not copying from the INT_TIMES table because "
                   "this is not a TSO exposure.")
+        if hasattr(output_model, "int_times"):
+            del output_model.int_times
 
     # See output_model.spec[i].meta.wcs instead.
     output_model.meta.wcs = None
