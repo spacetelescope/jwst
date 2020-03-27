@@ -47,7 +47,7 @@ class TweakRegStep(Step):
         fitgeometry = option('shift', 'rscale', 'general', default='general') # Fitting geometry
         nclip = integer(min=0, default=3) # Number of clipping iterations in fit
         sigma = float(min=0.0, default=3.0) # Clipping limit in sigma units
-        align_to_gaia = boolean(default=True)  # Align to GAIA catalog
+        align_to_gaia = boolean(default=False)  # Align to GAIA catalog
         gaia_catalog = option('GAIADR2', 'GAIADR1', default='GAIADR2')
         min_gaia = integer(min=0, default=5) # Min number of GAIA sources needed
         output_gaia = boolean(default=False)  # Write out GAIA catalog as a separate product
