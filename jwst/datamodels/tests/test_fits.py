@@ -1,7 +1,6 @@
 import os
 import shutil
 import tempfile
-import gc
 
 import pytest
 
@@ -238,10 +237,9 @@ def test_metadata_doesnt_override():
     from astropy.io import fits
     with fits.open(TMP_FITS, mode='update', memmap=False) as hdulist:
         hdulist[0].header['FILTER'] = 'F150W2'
-        hdulist.close()
 
-        with ImageModel(TMP_FITS) as dm:
-            assert dm.meta.instrument.filter == 'F150W2'
+    with ImageModel(TMP_FITS) as dm:
+        assert dm.meta.instrument.filter == 'F150W2'
 
 
 def test_table_with_metadata():

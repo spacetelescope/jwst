@@ -62,7 +62,8 @@ def test_save_step_withoutput(mk_tmp_dirs):
         '--output_file=' + output_file
     ]
 
-    Step.from_cmdline(args)
+    step = Step.from_cmdline(args)
+    step.closeout()
 
     output_path, output_ext = path.splitext(output_file)
     assert path.isfile(output_path + '_stepwithmodel' + output_ext)
@@ -81,7 +82,8 @@ def test_save_step_withoutputsuffix(mk_tmp_dirs):
         '--output_file=' + output_file
     ]
 
-    Step.from_cmdline(args)
+    step = Step.from_cmdline(args)
+    step.closeout()
 
     assert path.isfile(actual_output_file)
 
@@ -96,7 +98,8 @@ def test_save_step_withdir(mk_tmp_dirs):
         '--output_dir=' + tmp_data_path
     ]
 
-    Step.from_cmdline(args)
+    step = Step.from_cmdline(args)
+    step.closeout()
 
     output_fn_path = path.join(
         tmp_data_path,
@@ -117,7 +120,8 @@ def test_save_step_withdir_environment(mk_tmp_dirs):
         '--output_dir=$TSSWE_OUTPATH'
     ]
 
-    Step.from_cmdline(args)
+    step = Step.from_cmdline(args)
+    step.closeout()
 
     output_fn_path = path.join(
         tmp_data_path,
@@ -139,7 +143,8 @@ def test_save_step_withdir_withoutput(mk_tmp_dirs):
         '--output_file=' + output_file
     ]
 
-    Step.from_cmdline(args)
+    step = Step.from_cmdline(args)
+    step.closeout()
 
     output_path, output_ext = path.splitext(output_file)
     output_fn_path = path.join(

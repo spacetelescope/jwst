@@ -299,11 +299,6 @@ class ModelContainer(model_base.DataModel):
 
         return output_paths
 
-    def close(self):
-        for model in self._models:
-            model.close()
-
-
     def _assign_group_ids(self):
         """
         Assign an ID grouping by exposure.

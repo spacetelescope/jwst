@@ -173,8 +173,8 @@ class StepWithModel(Step):
 
     def process(self, *args):
         with self.open_model(args[0]) as input_path:
-            model = ImageModel(input_path)
-        return model
+            with ImageModel(input_path) as model:
+                return model
 
 
 class EmptyPipeline(Pipeline):

@@ -14,6 +14,8 @@ from ..lib import s3_utils
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
+log.addHandler(logging.NullHandler())
+
 
 class NoTypeWarning(Warning):
     pass
