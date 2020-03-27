@@ -137,6 +137,13 @@ The ``skymatch`` step has the following optional arguments:
   final "good" bits. For example, both ``4,8`` and ``4+8``
   are equivalent to setting ``dqbits`` to 12.
 
+  Finally, instead of integers, the JWST mnemonics for the bitflags may
+  be used. For example, all the following specifications are equivalent:
+
+  `12 == 4 + 8 == "4, 8" == "JUMP_DET, DROPOUT"`
+
+  The DQ flag mnemonics are found in :ref:`Data Quality Flags`.
+
   .. note::
     - The default value (0) will make *all* non-zero
       pixels in the DQ mask be considered "bad" pixels and the

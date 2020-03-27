@@ -572,7 +572,7 @@ Bit  Value         Name              Description
 1    2             SATURATED         Pixel saturated during exposure
 2    4             JUMP_DET          Jump detected during exposure
 3    8             DROPOUT           Data lost in transmission
-4    16            RESERVED
+4    16            OUTLIER           Removed by outlier detection
 5    32            RESERVED
 6    64            RESERVED
 7    128           RESERVED
