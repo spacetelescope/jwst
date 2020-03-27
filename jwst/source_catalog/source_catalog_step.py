@@ -25,6 +25,7 @@ class SourceCatalogStep(Step):
         snr_threshold = float(default=3.0)    # SNR threshold above the bkg
         npixels = float(default=5.0)          # min number of pixels in source
         deblend = boolean(default=False)      # deblend sources?
+        output_ext = string(default='.ecsv')  # Default type of output
         suffix = string(default='cat')        # Default suffix for output files
     """
 
