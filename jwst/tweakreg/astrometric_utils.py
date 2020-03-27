@@ -133,7 +133,7 @@ Utility functions for creating an astrometric reference catalog.
 def compute_radius(wcs):
     """Compute the radius from the center to the furthest edge of the WCS."""
 
-    fiducial = wcsutil.compute_fiducial(wcslist, bb)
+    fiducial = wcsutil.compute_fiducial([wcs], wcs.bounding_box)
     img_center = SkyCoord(ra=fiducial[0] * u.degree, dec=fiducial[1] * u.degree)
     wcs_foot = wcs.footprint()
     img_corners = SkyCoord(ra=wcs_foot[:, 0] * u.degree,
