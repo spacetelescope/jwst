@@ -124,7 +124,7 @@ def test_create_fitwcs(tmpdir):
     hdu = fits_support.get_hdu(ff._hdulist, "SCI")
     w = wcs.WCS(hdu.header)
     wcel = w.sub(['celestial'])
-    ra, dec = wcel.all_pix2world(1, 1, 1)
+    ra, dec = wcel.all_pix2world(1, 1, 0)
     utils.assert_allclose((ra, dec), (gra, gdec))
 
     # test serialization
