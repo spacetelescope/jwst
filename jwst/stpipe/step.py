@@ -468,7 +468,7 @@ class Step():
         finally:
             log.delegator.log = orig_log
 
-        self.closeout(args)
+        self.closeout(to_close=args)
 
         return step_result
 
