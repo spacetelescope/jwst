@@ -522,7 +522,7 @@ def test_update_from_dict(tmpdir):
         assert "CRVAL1" in hdulist[1].header
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def container():
     warnings.simplefilter("ignore")
     asn_file_path, asn_file_name = op.split(ASN_FILE)
@@ -544,37 +544,38 @@ def container():
 def test_modelcontainer_iteration(container):
     for model in container:
         assert model.meta.telescope == 'JWST'
+    container.close()
 
 
 def test_modelcontainer_indexing(container):
     assert isinstance(container[0], DataModel)
+    container.close()
 
 
 def test_modelcontainer_group1(container):
-    reset_group_id(container)
     for group in container.models_grouped:
         assert len(group) == 2
         for model in group:
             pass
+    container.close()
 
 
 def test_modelcontainer_group2(container):
-    reset_group_id(container)
     container[0].meta.observation.exposure_number = '2'
     for group in container.models_grouped:
         assert len(group) == 1
         for model in group:
             pass
     container[0].meta.observation.exposure_number = '1'
+    container.close()
 
 
 def test_modelcontainer_group_names(container):
-    reset_group_id(container)
     assert len(container.group_names) == 1
     reset_group_id(container)
     container[0].meta.observation.exposure_number = '2'
     assert len(container.group_names) == 2
-    container[0].meta.observation.exposure_number = '1'
+    container.close()
 
 
 def test_object_node_iterator():
