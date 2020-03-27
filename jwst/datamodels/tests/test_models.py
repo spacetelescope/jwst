@@ -522,7 +522,7 @@ def test_update_from_dict(tmpdir):
         assert "CRVAL1" in hdulist[1].header
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def container():
     warnings.simplefilter("ignore")
     asn_file_path, asn_file_name = op.split(ASN_FILE)

@@ -12,7 +12,7 @@ from astropy.io import fits
 
 from jwst.datamodels import (DataModel, ModelContainer, ImageModel,
     ReferenceFileModel, ReferenceImageModel, ReferenceCubeModel,
-    ReferenceQuadModel, FlatModel, MaskModel, NircamPhotomModel, GainModel,
+    ReferenceQuadModel, FlatModel, MaskModel, NrcImgPhotomModel, GainModel,
     ReadnoiseModel, DistortionModel)
 from jwst import datamodels
 

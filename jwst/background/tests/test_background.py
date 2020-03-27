@@ -263,21 +263,23 @@ def test_nis_wfss_background(filters, pupils, make_wfss_datamodel):
 
     # Get References
     wavelenrange = Step().get_reference_file(wcs_corrected, "wavelengthrange")
+    bkg_file = Step().get_reference_file(wcs_corrected, 'wfssbkg')
+
     mask = mask_from_source_cat(wcs_corrected, wavelenrange)
 
-    bkg_file = Step().get_reference_file(wcs_corrected, 'wfssbkg')
-    bkg_ref = datamodels.open(bkg_file)
-    bkg_ref = no_NaN(bkg_ref)
+    with datamodels.open(bkg_file) as bkg_ref:
+        bkg_ref = no_NaN(bkg_ref)
 
-    # calculate backgrounds
-    pipeline_data_mean = robust_mean(wcs_corrected.data[mask])
-    test_data_mean,_,_ = sigma_clipped_stats(wcs_corrected.data, sigma=2)
+        # calculate backgrounds
+        pipeline_data_mean = robust_mean(wcs_corrected.data[mask])
+        test_data_mean,_,_ = sigma_clipped_stats(wcs_corrected.data, sigma=2)
 
-    pipeline_reference_mean = robust_mean(bkg_ref.data[mask])
-    test_reference_mean,_,_ = sigma_clipped_stats(bkg_ref.data, sigma=2)
+        pipeline_reference_mean = robust_mean(bkg_ref.data[mask])
+        test_reference_mean,_,_ = sigma_clipped_stats(bkg_ref.data, sigma=2)
 
-    assert np.isclose([pipeline_data_mean], [test_data_mean], rtol=1e-3)
-    assert np.isclose([pipeline_reference_mean], [test_reference_mean], rtol=1e-1)
+        assert np.isclose([pipeline_data_mean], [test_data_mean], rtol=1e-3)
+        assert np.isclose([pipeline_reference_mean], [test_reference_mean], rtol=1e-1)
+
 
 def test_robust_mean():
     """Test robust mean calculation"""

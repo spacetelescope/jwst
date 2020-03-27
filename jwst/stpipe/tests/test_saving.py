@@ -43,7 +43,8 @@ def test_save_step_default(mk_tmp_dirs):
         data_fn_path
     ]
 
-    Step.from_cmdline(args)
+    step = Step.from_cmdline(args)
+    step.closeout()
 
     fname = 'flat_stepwithmodel.fits'
     assert path.isfile(fname)

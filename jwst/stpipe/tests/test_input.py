@@ -55,6 +55,7 @@ def test_default_input_dir(mk_tmp_dirs):
     # Check that `input_dir` is set.
     input_path = path.split(input_file)[0]
     assert step.input_dir == input_path
+    step.closeout()
 
     step.closeout()
 
