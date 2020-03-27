@@ -20,8 +20,22 @@ coron
 
 - Reorganized step documentation [#4697]
 
+datamodels
+----------
+
+- Deprecate ``DrizProductModel`` and ``MultiProductModel`` and replace with
+  updated versions of ``ImageModel`` and ``SlitModel`` that include "CON" and
+  "WHT" arrays for resampled data. [#4552]
+
+- Remove lev3_prod schema and move resample-related keywords to
+  core schema. [#4552]
+
 extract_1d
 ----------
+
+- Updates for handling resampled input data as ``ImageModel``, ``SlitModel``,
+  and ``MultiSlitModel``, instead of ``DrizProductModel`` and ``MultiProductModel``,
+  which are deprecated. [#4552]
 
 - Remove pixel-by-pixel calls to wcs; copy input keywords to output for
   more types of input data. [#4685]
@@ -42,14 +56,35 @@ outlier_detection
 
 - Updated step arguments in the documentation. [#4723]
 
+pipeline
+--------
+
+- Update ``calwebb_coron3`` to return ``ImageModel`` instead of ``DrizProductModel``,
+  when necessary. [#4552]
+
 resample
 --------
+
+- Update to return resampled data in an ``ImageModel``, instead of
+  ``DrizProductModel``. [#4552]
 
 - Updated documentation to include step arguments and reference file
   description. [#4723]
 
+resample_spec
+-------------
+
+- Update to return resampled data in a ``SlitModel`` or ``MultiSlitModel``,
+  instead of ``DrizProductModel`` or ``MultiProductModel``. [#4552]
+
+- Fix bug that was causing resampled MIRI LRS fixed-slit data to be all zero.
+  [#4552]
+
 source_catalog
 --------------
+
+- Update to use ``ImageModel`` for resampled input data, instead of
+  ``DrizProductModel``. [#4552]
 
 - Updated step arguments in the documentation. [#4723]
 
