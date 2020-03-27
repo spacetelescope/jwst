@@ -208,7 +208,7 @@ class TweakRegStep(Step):
                     output_name = 'fit_{}_ref.ecsv'.format(self.gaia_catalog.lower())
                 else:
                     output_name = None
-                ref_cat = amutils.create_astrometric_catalog(self.input_models,
+                ref_cat = amutils.create_astrometric_catalog(images,
                                                              self.gaia_catalog,
                                                              output=output_name)
 
