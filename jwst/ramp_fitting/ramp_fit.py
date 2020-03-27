@@ -1000,9 +1000,8 @@ def gls_ramp_fit(model,
     final_pixeldq = dq_compress_final(dq_int, n_int)
 
     if n_int > 1:
-        effintim = 1.  # slopes are already in DN/s
         int_model = utils.gls_output_integ(model, slope_int, slope_err_int,
-                                           dq_int, effintim)
+                                           dq_int)
     else:
         int_model = None
 

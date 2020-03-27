@@ -731,7 +731,7 @@ def ols_output_integ(model, slope_int, dq_int, effintim, var_p3, var_r3,
     return cubemod
 
 
-def gls_output_integ( model, slope_int, slope_err_int, dq_int, effintim):
+def gls_output_integ( model, slope_int, slope_err_int, dq_int):
     """
     For the GLS algorithm, construct the output integration-specific results.
 
@@ -749,9 +749,6 @@ def gls_output_integ( model, slope_int, slope_err_int, dq_int, effintim):
     dq_int : int, 3D array
         Data cube of DQ arrays for each integration
 
-    effintim : float
-        Effective integration time per integration
-
     Returns
     -------
     cubemod : Data Model object
@@ -762,7 +759,7 @@ def gls_output_integ( model, slope_int, slope_err_int, dq_int, effintim):
     warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
 
     cubemod = datamodels.CubeModel()
-    cubemod.data = slope_int / effintim
+    cubemod.data = slope_int
     cubemod.err = slope_err_int
     cubemod.dq = dq_int
 
