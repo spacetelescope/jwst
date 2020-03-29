@@ -44,7 +44,7 @@ class SkyCube():
                  weights=None, cube_weight=1.0,
                  bkg_deg=0, bkg_center=None,
                  id=None, meta=None):
-        """ Initializes the SkyCube object.
+        r""" Initializes the SkyCube object.
 
         Parameters
         ----------
