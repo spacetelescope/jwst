@@ -25,6 +25,6 @@ FGS_GUIDE_EXP_TYPES = [
 def is_moving_target(input_models):
     """ Determine if a moving target exposure."""
     model = input_models[0]
-    if model.meta.target.type == 'moving':
+    if model.meta.target.type.lower() == 'moving':
         return True
     return False
