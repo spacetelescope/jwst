@@ -105,4 +105,3 @@ def interpret_bit_flags(bit_flags, flip_bits=None):
         bit_flags_dm = multiple_replace(bit_flags, dm_flags)
 
     return ap_interpret_bit_flags(bit_flags_dm, flip_bits=flip_bits)
-
