@@ -13,19 +13,29 @@ JWST Calibration Pipeline
 Installation
 ------------
 
-The `jwst` package can be installed into a virtualenv or conda environment via `pip`.  We recommend creating a fresh environment with only python installed.  If using conda, make sure you have a recent version of Anaconda or Miniconda installed.  Via conda:
+The `jwst` package can be installed into a virtualenv or conda environment via `pip`.  In general, we recommend creating a fresh environment with only python installed.  If using conda, make sure you have a recent version of Anaconda or Miniconda installed.  From a bash shell enter:
 
-    conda create -n jwst_env python
-    conda activate jwst_env
+    conda create -n <env_name> python
+    conda activate <env_name>
+If conda is not in your path, you will need to cd to the bin directory of your anaconda installation and enter:
+
+    ./conda create -n <env_name> python
+    ./conda activate <env_name>
+
+## Below are three different ways to install the pipeline.
 
 ### Installing for end-users ###
 
-To install a released (tagged) version, you can install directly from Github.  To install release `jwst 0.15.0`:
+If you want to run the latest fully tested version of the pipeline you should install a released (tagged) version. you can install these versions directly from Github.  For example, to install release `jwst 0.15.0`:
 
+    conda create -n <env_name> python
+    conda activate <env_name>
     pip install git+https://github.com/spacetelescope/jwst@0.15.0
 
-The latest development version (from `master`) can also be installed from Github:
+The latest development (unreleased) version (from `master`) can also be installed from Github:
 
+    conda create -n <env_name> python
+    conda activate <env_name>
     pip install git+https://github.com/spacetelescope/jwst
 
 As can a particular commit hash:
@@ -36,22 +46,22 @@ To include extra testing dependencies, the syntax is as follows:
 
     pip install "jwst[test] @ git+https://github.com/spacetelescope/jwst"
 
-### Installing a DMS release ###
+### Installing a Data Management System (DMS) release ###
 
-We still package our releases to DMS via environment snapshots that specify the exact versions of all packages to be installed.
+We still package our releases to DMS via environment snapshots that specify the exact versions of all packages to be installed. This method can should be more more stable than the above method because the latest versions of packages may cause problems.
 
 The latest release 0.15.0 may be installed by running the following commands in Linux or MacOS:
 
 Linux:
 
-    conda create -n jwstdp-0.15.0 --file https://ssb.stsci.edu/releases/jwstdp/0.15.0/conda_python_stable-deps.txt
-    conda activate jwstdp-0.15.0
+    conda create -n <env_name> --file https://ssb.stsci.edu/releases/jwstdp/0.15.0/conda_python_stable-deps.txt
+    conda activate <env_name>
     pip install -r https://ssb.stsci.edu/releases/jwstdp/0.15.0/reqs_stable-deps.txt
 
 MacOS:
 
-    conda create -n jwstdp-0.15.0 --file https://ssb.stsci.edu/releases/jwstdp/0.15.0/conda_python_macos-stable-deps.txt
-    conda activate jwstdp-0.15.0
+    conda create -n <env_name> --file https://ssb.stsci.edu/releases/jwstdp/0.15.0/conda_python_macos-stable-deps.txt
+    conda activate <env_name>
     pip install -r https://ssb.stsci.edu/releases/jwstdp/0.15.0/reqs_macos-stable-deps.txt
 
 Each delivery has its own installation instructions which may be found in
@@ -70,6 +80,9 @@ that version installed.
 
 Fork and clone the repo:
 
+    conda create -n <env_name> python
+    conda activate <env_name>
+    cd <where you want to put the repo>
     git clone https://github.com/spacetelescope/jwst
     cd jwst
 
@@ -89,9 +102,9 @@ Need other useful packages in your development environment?
 
     pip install ipython flake8 pytest-xdist
 
-### CRDS Setup ###
+### Calibration References Data System (CRDS) Setup ###
 
-Inside the STScI network, the pipeline works with default CRDS setup with no modifications.  To run the pipeline outside the STScI network, CRDS must be configured by setting two environment variables:
+CRDS is the system that manages the reference files needed to run the pipeline. Inside the STScI network, the pipeline works with default CRDS setup with no modifications.  To run the pipeline outside the STScI network, CRDS must be configured by setting two environment variables:
 
     export CRDS_PATH=$HOME/crds_cache
     export CRDS_SERVER_URL=https://jwst-crds.stsci.edu
