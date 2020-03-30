@@ -28,14 +28,10 @@ If conda is not in your path, you will need to cd to the bin directory of your a
 
 If you want to run the latest fully tested version of the pipeline you should install a released (tagged) version. you can install these versions directly from Github.  For example, to install release `jwst 0.15.0`:
 
-    conda create -n <env_name> python
-    conda activate <env_name>
     pip install git+https://github.com/spacetelescope/jwst@0.15.0
 
 The latest development (unreleased) version (from `master`) can also be installed from Github:
 
-    conda create -n <env_name> python
-    conda activate <env_name>
     pip install git+https://github.com/spacetelescope/jwst
 
 As can a particular commit hash:
@@ -54,14 +50,12 @@ The latest release 0.15.0 may be installed by running the following commands in 
 
 Linux:
 
-    conda create -n <env_name> --file https://ssb.stsci.edu/releases/jwstdp/0.15.0/conda_python_stable-deps.txt
-    conda activate <env_name>
+    conda install --file https://ssb.stsci.edu/releases/jwstdp/0.15.0/conda_python_stable-deps.txt
     pip install -r https://ssb.stsci.edu/releases/jwstdp/0.15.0/reqs_stable-deps.txt
 
 MacOS:
 
-    conda create -n <env_name> --file https://ssb.stsci.edu/releases/jwstdp/0.15.0/conda_python_macos-stable-deps.txt
-    conda activate <env_name>
+    conda install --file https://ssb.stsci.edu/releases/jwstdp/0.15.0/conda_python_macos-stable-deps.txt
     pip install -r https://ssb.stsci.edu/releases/jwstdp/0.15.0/reqs_macos-stable-deps.txt
 
 Each delivery has its own installation instructions which may be found in
@@ -80,8 +74,6 @@ that version installed.
 
 Fork and clone the repo:
 
-    conda create -n <env_name> python
-    conda activate <env_name>
     cd <where you want to put the repo>
     git clone https://github.com/spacetelescope/jwst
     cd jwst
