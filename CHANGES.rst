@@ -56,6 +56,10 @@ outlier_detection
 
 - Updated step arguments in the documentation. [#4723]
 
+- Change outlier and resample DQ bit usage.  [#4726]
+  Default value of ``good_bits`` now includes all DQ flags except ``DO_NOT_USE``.
+  Also, newly flagged outliers are flagged with ``DO_NOT_USE + OUTLIER``.
+
 pipeline
 --------
 
@@ -70,6 +74,10 @@ resample
 
 - Updated documentation to include step arguments and reference file
   description. [#4723]
+
+- Change outlier and resample DQ bit usage.  [#4726]
+  The parameter ``good_bits`` has been removed in favor of allowing all
+  DQ flags except for ``DO_NOT_USE``
 
 resample_spec
 -------------
