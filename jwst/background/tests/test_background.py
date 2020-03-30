@@ -1,11 +1,12 @@
 """
 Unit tests for background subtraction
 """
+import os
+
 from astropy.stats import sigma_clipped_stats
 import pytest
 import numpy as np
-import os
-from numpy.testing.utils import assert_allclose
+from numpy.testing import assert_allclose
 
 from jwst import datamodels
 from jwst.assign_wcs import AssignWcsStep
@@ -15,11 +16,14 @@ from jwst.stpipe.step import Step
 from jwst.background.background_sub import robust_mean, mask_from_source_cat, no_NaN
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 
+
 data_path = os.path.split(os.path.abspath(data_directory.__file__))[0]
+
 
 def get_file_path(filename):
     """Construct an absolute path."""
     return os.path.join(data_path, filename)
+
 
 @pytest.fixture(scope='module')
 def background(tmpdir_factory):
