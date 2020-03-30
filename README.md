@@ -22,7 +22,9 @@ If conda is not in your path, you will need to cd to the bin directory of your a
     ./conda create -n <env_name> python
     ./conda activate <env_name>
 
-## Below are three different ways to install the pipeline.
+## Below are directions on how to install three different versions of the pipeline.
+Note that you need to always create and activate your new evironment
+before proceeding.
 
 ### Installing for end-users ###
 
@@ -44,7 +46,7 @@ To include extra testing dependencies, the syntax is as follows:
 
 ### Installing a Data Management System (DMS) release ###
 
-We still package our releases to DMS via environment snapshots that specify the exact versions of all packages to be installed. This method can should be more more stable than the above method because the latest versions of packages may cause problems.
+We still package our releases to DMS via environment snapshots that specify the exact versions of all packages to be installed. This method should be more stable than the frist method because the latest versions of packages may cause problems.
 
 The latest release 0.15.0 may be installed by running the following commands in Linux or MacOS:
 
