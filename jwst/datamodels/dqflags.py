@@ -26,7 +26,7 @@ pixel = {'GOOD':             0,      # No bits set, all is good
          'SATURATED':        2**1,   # Pixel saturated during exposure
          'JUMP_DET':         2**2,   # Jump detected during exposure
          'DROPOUT':          2**3,   # Data lost in transmission
-         'OUTLIER':          2**4,   # Removed by outlier detection. Was RESERVED_1
+         'OUTLIER':          2**4,   # Flagged by outlier detection. Was RESERVED_1
          'RESERVED_2':       2**5,   #
          'RESERVED_3':       2**6,   #
          'RESERVED_4':       2**7,   #
