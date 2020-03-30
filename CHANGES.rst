@@ -37,6 +37,12 @@ master_background
 
 - Updated step arguments in the documentation. [#4723]
 
+mrs_imatch
+-----------------
+
+- Updated step to use EMSM cube weighting, and to perform iterative sigma
+  rejection of sources prior to running the background solver.  [#4732]
+
 outlier_detection
 -----------------
 
