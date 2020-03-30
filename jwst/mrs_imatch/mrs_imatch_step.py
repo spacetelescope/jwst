@@ -335,25 +335,14 @@ def _match_models(models, channel, degree, center=None, center_cs='image'):
     # Therefore use sigma-clipping to detect and remove sources
     # (and unmasked outliers) prior to doing the background matching.
     # Loop over input exposures
-    for i in range(0,len(models)):
-        image = image_data[i]
-        mask = mask_data[i]
-        weight = sigma_data[i]
+    for image, mask in zip(image_data, mask_data):
         # Do statistics wavelength by wavelength
-        for j in range(0,len(image)):
-            thisimg = image[j,:,:]
-            thismask = mask[j,:,:]
-            thiswght = weight[j,:,:]
+        for thisimg, thismask in zip(image, mask):
             # Sigma clipped statistics, ignoring zeros where no data
             _, themed, clipsig = sigclip(thisimg, mask_value=0.)
-            im1d = thisimg.ravel()
-            mask1d = thismask.ravel()
-            wght1d = thiswght.ravel()
-            # Reject beyond 3sigma
-            reject = np.where(np.abs(im1d - themed) > 3*clipsig)
-            im1d[reject] = themed
-            mask1d[reject] = 0
-            wght1d[reject] = 1e18
+            # Reject beyond 3 sigma
+            reject = np.where(np.abs(thisimg - themed) > 3 * clipsig)
+            thismask[reject] = 0
 
     bkg_poly_coef, mat, _, _, effc, cs = match_lsq(
         images=image_data,
