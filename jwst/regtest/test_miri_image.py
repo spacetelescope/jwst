@@ -75,11 +75,28 @@ def run_image3(run_image2, rtdata_module):
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["dq_init", "saturation", "refpix", "rscd",
     "firstframe", "lastframe", "linearity", "dark_current", "ramp", "rate",
-    "rateints",
-    "assign_wcs", "flat_field", "cal", "i2d",
-    "a3001_crf"])
-def test_miri_image(run_image3, rtdata_module, fitsdiff_default_kwargs, suffix):
-    """Regression test of detector1 and image2 pipelines performed on MIRI data."""
+    "rateints"])
+def test_miri_image_detector1(run_detector1, rtdata_module, fitsdiff_default_kwargs, suffix):
+    """Regression test of detector1 pipeline performed on MIRI data."""
+    _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix)
+
+
+@pytest.mark.bigdata
+@pytest.mark.parametrize("suffix", ["assign_wcs", "flat_field", "cal", "i2d"])
+def test_miri_image_image2(run_image2, rtdata_module, fitsdiff_default_kwargs, suffix):
+    """Regression test of image2 pipeline performed on MIRI data."""
+    _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix)
+
+
+@pytest.mark.bigdata
+@pytest.mark.parametrize("suffix", ["a3001_crf"])
+def test_miri_image_image3(run_image3, rtdata_module, fitsdiff_default_kwargs, suffix):
+    """Regression test of image3 pipeline performed on MIRI data."""
+    _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix)
+
+
+def _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix):
+    """Assertion helper for the above tests"""
     rtdata = rtdata_module
     rtdata.input = "det_image_1_MIRIMAGE_F770Wexp1_5stars_uncal.fits"
     output = f"det_image_1_MIRIMAGE_F770Wexp1_5stars_{suffix}.fits"
