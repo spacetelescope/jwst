@@ -5,6 +5,7 @@ import pytest
 from .. import log as stpipe_log
 
 
+@pytest.mark.openfiles_ignore
 def test_configuration(tmpdir):
     logfilename = tmpdir.join('output.log')
 
@@ -20,6 +21,7 @@ format = '%(message)s'
     fd.write(configuration)
     fd.seek(0)
     stpipe_log.load_configuration(fd)
+    fd.close()
 
     log = stpipe_log.getLogger(stpipe_log.STPIPE_ROOT_LOGGER)
 

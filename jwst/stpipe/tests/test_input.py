@@ -59,6 +59,8 @@ def test_default_input_dir(mk_tmp_dirs):
     input_path = path.split(input_file)[0]
     assert step.input_dir == input_path
 
+    step.closeout()
+
 
 def test_set_input_dir(mk_tmp_dirs):
     """Simply set the path"""
@@ -72,6 +74,8 @@ def test_set_input_dir(mk_tmp_dirs):
 
     # Check that `input_dir` is set.
     assert step.input_dir == 'junkdir'
+
+    step.closeout()
 
 
 def test_use_input_dir(mk_tmp_dirs):
@@ -88,6 +92,8 @@ def test_use_input_dir(mk_tmp_dirs):
     # Check that `input_dir` is set.
     assert step.input_dir == input_dir
 
+    step.closeout()
+
 
 def test_fail_input_dir(mk_tmp_dirs):
     """Fail with a bad file path"""
@@ -102,8 +108,8 @@ def test_fail_input_dir(mk_tmp_dirs):
 
 def test_input_dir_with_model(mk_tmp_dirs):
     """Use with an already opened DataModel"""
-    model = dm_open(t_path('data/flat.fits'))
-    step = StepWithModel()
-    step.run(model)
+    with dm_open(t_path('data/flat.fits')) as model:
+        step = StepWithModel()
+        step.run(model)
 
     assert step.input_dir == ''

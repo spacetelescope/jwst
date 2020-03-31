@@ -86,6 +86,8 @@ def test_parameters_from_crds_fail():
     pars = RefPixStep.get_config_from_reference(data)
     assert not len(pars)
 
+    data.close()
+
 
 @pytest.mark.parametrize(
     'cfg_file, expected',
@@ -110,14 +112,17 @@ def test_saving_pars(tmpdir):
     """Save the step parameters from the commandline"""
     cfg_path = t_path(join('steps', 'jwst_generic_pars-makeliststep_0002.asdf'))
     saved_path = tmpdir.join('savepars.asdf')
-    Step.from_cmdline([
+    step = Step.from_cmdline([
         cfg_path,
         '--save-parameters',
         str(saved_path)
     ])
     assert saved_path.check()
-    saved = datamodels.StepParsModel(str(saved_path))
-    assert saved.parameters == ParsModelWithPar3.parameters
+
+    with datamodels.StepParsModel(str(saved_path)) as saved:
+        assert saved.parameters == ParsModelWithPar3.parameters
+
+    step.closeout()
 
 
 @pytest.mark.parametrize(

@@ -365,6 +365,11 @@ class ModelContainer(model_base.DataModel):
             result.append(group[0].meta.group_id)
         return result
 
+    def close(self):
+        """Close all datamodels."""
+        for model in self._models:
+            model.close()
+
 
 def make_file_with_index(file_path, idx):
     """Append an index to a filename
