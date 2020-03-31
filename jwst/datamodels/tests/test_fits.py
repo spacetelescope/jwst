@@ -192,7 +192,7 @@ def test_hdu_order():
                     err=np.array([[0.0]])) as dm:
         dm.save(TMP_FITS)
 
-    with fits.open(TMP_FITS) as hdulist:
+    with fits.open(TMP_FITS, memmap=False) as hdulist:
         assert hdulist[1].header['EXTNAME'] == 'SCI'
         assert hdulist[2].header['EXTNAME'] == 'DQ'
         assert hdulist[3].header['EXTNAME'] == 'ERR'
@@ -218,18 +218,16 @@ def test_fits_comments():
         dm.save(TMP_FITS, overwrite=True)
 
     from astropy.io import fits
-    hdulist = fits.open(TMP_FITS)
+    with fits.open(TMP_FITS, memmap=False) as hdulist:
+        header = hdulist[0].header
+        find = ['Subarray parameters']
+        found = 0
 
-    header = hdulist[0].header
+        for card in header.cards:
+            if card[1] in find:
+                found += 1
 
-    find = ['Subarray parameters']
-    found = 0
-
-    for card in header.cards:
-        if card[1] in find:
-            found += 1
-
-    assert found == len(find)
+        assert found == len(find)
 
 
 def test_metadata_doesnt_override():
@@ -237,9 +235,8 @@ def test_metadata_doesnt_override():
         dm.save(TMP_FITS, overwrite=True)
 
     from astropy.io import fits
-    hdulist = fits.open(TMP_FITS, mode='update')
-    hdulist[0].header['FILTER'] = 'F150W2'
-    hdulist.close()
+    with fits.open(TMP_FITS, mode='update', memmap=False) as hdulist:
+        hdulist[0].header['FILTER'] = 'F150W2'
 
     with ImageModel(TMP_FITS) as dm:
         assert dm.meta.instrument.filter == 'F150W2'
@@ -303,11 +300,11 @@ def test_table_with_metadata():
         del datamodel
 
     from astropy.io import fits
-    hdulist = fits.open(TMP_FITS)
-    assert len(hdulist) == 3
-    assert isinstance(hdulist[1], fits.BinTableHDU)
-    assert hdulist[1].name == 'FLUX'
-    assert hdulist[2].name == 'ASDF'
+    with fits.open(TMP_FITS, memmap=False) as hdulist:
+        assert len(hdulist) == 3
+        assert isinstance(hdulist[1], fits.BinTableHDU)
+        assert hdulist[1].name == 'FLUX'
+        assert hdulist[2].name == 'ASDF'
 
 
 def test_replace_table():
@@ -374,7 +371,7 @@ def test_replace_table():
     m.data = x
     m.to_fits(TMP_FITS, overwrite=True)
 
-    with fits.open(TMP_FITS) as hdulist:
+    with fits.open(TMP_FITS, memmap=False) as hdulist:
         assert records_equal(x, np.asarray(hdulist[1].data))
         assert hdulist[1].data.dtype[1].str == '>f4'
         assert hdulist[1].header['TFORM2'] == 'E'
@@ -382,7 +379,7 @@ def test_replace_table():
     with DataModel(TMP_FITS, schema=schema_wide) as m:
         m.to_fits(TMP_FITS2, overwrite=True)
 
-    with fits.open(TMP_FITS2) as hdulist:
+    with fits.open(TMP_FITS2, memmap=False) as hdulist:
         assert records_equal(x, np.asarray(hdulist[1].data))
         assert hdulist[1].data.dtype[1].str == '>f8'
         assert hdulist[1].header['TFORM2'] == 'D'
@@ -455,7 +452,7 @@ def test_metadata_from_fits():
     with DataModel(init=TMP_FITS) as dm:
         dm.save(TMP_FITS2)
 
-    with fits.open(TMP_FITS2) as hdulist:
+    with fits.open(TMP_FITS2, memmap=False) as hdulist:
         assert hdulist[2].name == 'ASDF'
 
 

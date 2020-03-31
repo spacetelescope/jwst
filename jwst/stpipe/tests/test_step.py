@@ -81,12 +81,10 @@ def test_parameters_from_crds():
 
 def test_parameters_from_crds_fail():
     """Test retrieval of parameters from CRDS"""
-    data = datamodels.open(t_path(join('data', 'miri_data.fits')))
-    data.meta.instrument.name = 'NIRSPEC'
-    pars = RefPixStep.get_config_from_reference(data)
-    assert not len(pars)
-
-    data.close()
+    with datamodels.open(t_path(join('data', 'miri_data.fits'))) as data:
+        data.meta.instrument.name = 'NIRSPEC'
+        pars = RefPixStep.get_config_from_reference(data)
+        assert not len(pars)
 
 
 @pytest.mark.parametrize(

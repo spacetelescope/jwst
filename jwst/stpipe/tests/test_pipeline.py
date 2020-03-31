@@ -101,13 +101,15 @@ class MyPipeline(Pipeline):
         self.display(combined)
         dm = datamodels.ImageModel(combined)
         dm.save(self.output_filename)
+        science.close()
+        flat.close()
         return dm
 
 
-def test_pipeline():
+def test_pipeline(tmpdir):
     pipeline_fn = join(dirname(__file__), 'steps', 'python_pipeline.cfg')
     pipe = Step.from_config_file(pipeline_fn)
-    pipe.output_filename = "output.fits"
+    pipe.output_filename = tmpdir.join("output.fits")
 
     assert pipe.flat_field.threshold == 42.0
     assert pipe.flat_field.multiplier == 2.0

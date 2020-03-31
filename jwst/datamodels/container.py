@@ -81,21 +81,23 @@ class ModelContainer(model_base.DataModel):
         self._models = []
         self.asn_exptypes = asn_exptypes
         self.asn_n_members = asn_n_members
+        self._memmap = kwargs.get("memmap", False)
 
         if init is None:
             # Don't populate the container with models
             pass
         elif isinstance(init, fits.HDUList):
-            self._models.append([datamodel_open(init)])
+            self._models.append([datamodel_open(init, memmap=self._memmap)])
         elif isinstance(init, list):
-            if all(isinstance(x, (str, fits.HDUList)) for x in init):
-                # Try opening the list of files as datamodels
+            if all(isinstance(x, (str, fits.HDUList, model_base.DataModel)) for x in init):
+                # Try opening the list as datamodels
                 try:
-                    init = [datamodel_open(m) for m in init]
+                    init = [datamodel_open(m, memmap=self._memmap) for m in init]
                 except (FileNotFoundError, ValueError):
                     raise
-            elif not all(isinstance(x, model_base.DataModel) for x in init):
-                raise TypeError('list must contain DataModels')
+            else:
+                raise TypeError("list must contain items that can be opened "
+                                "with jwst.datamodels.open()")
             self._models = init
         elif isinstance(init, self.__class__):
             instance = copy.deepcopy(init._instance)
@@ -219,7 +221,7 @@ class ModelContainer(model_base.DataModel):
         else:
             sublist = infiles
         try:
-            self._models = [datamodel_open(infile) for infile in sublist]
+            self._models = [datamodel_open(infile, memmap=self._memmap) for infile in sublist]
         except IOError:
             raise IOError('Cannot open {}'.format(infiles))
 

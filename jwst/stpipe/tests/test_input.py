@@ -6,33 +6,30 @@ import pytest
 from .steps import StepWithModel
 from .util import t_path
 
-from ..step import Step
-from ...datamodels import (DataModel, ModelContainer)
-from ...datamodels import open as dm_open
+from jwst.stpipe import Step
+from jwst.datamodels import (DataModel, ModelContainer)
+from jwst import datamodels
 
 
 def test_default_input_with_container(mk_tmp_dirs):
     """Test default input name from a ModelContainer"""
 
     model_path = t_path('data/flat.fits')
-    model = dm_open(model_path)
-    container = ModelContainer([model])
+    with ModelContainer([model_path]) as container:
+        step = StepWithModel()
+        step.run(container)
 
-    step = StepWithModel()
-    step.run(container)
-
-    assert step._input_filename is None
+        assert step._input_filename is None
 
 
 def test_default_input_with_full_model():
     """Test default input name retrieval with actual model"""
     model_path = t_path('data/flat.fits')
-    model = dm_open(model_path)
+    with datamodels.open(model_path) as model:
+        step = StepWithModel()
+        step.run(model)
 
-    step = StepWithModel()
-    step.run(model)
-
-    assert step._input_filename == model.meta.filename
+        assert step._input_filename == model.meta.filename
 
 
 def test_default_input_with_new_model():
@@ -59,8 +56,6 @@ def test_default_input_dir(mk_tmp_dirs):
     input_path = path.split(input_file)[0]
     assert step.input_dir == input_path
 
-    step.closeout()
-
 
 def test_set_input_dir(mk_tmp_dirs):
     """Simply set the path"""
@@ -74,8 +69,6 @@ def test_set_input_dir(mk_tmp_dirs):
 
     # Check that `input_dir` is set.
     assert step.input_dir == 'junkdir'
-
-    step.closeout()
 
 
 def test_use_input_dir(mk_tmp_dirs):
@@ -92,8 +85,6 @@ def test_use_input_dir(mk_tmp_dirs):
     # Check that `input_dir` is set.
     assert step.input_dir == input_dir
 
-    step.closeout()
-
 
 def test_fail_input_dir(mk_tmp_dirs):
     """Fail with a bad file path"""
@@ -108,8 +99,8 @@ def test_fail_input_dir(mk_tmp_dirs):
 
 def test_input_dir_with_model(mk_tmp_dirs):
     """Use with an already opened DataModel"""
-    with dm_open(t_path('data/flat.fits')) as model:
+    with datamodels.open(t_path('data/flat.fits')) as model:
         step = StepWithModel()
         step.run(model)
 
-    assert step.input_dir == ''
+        assert step.input_dir == ''

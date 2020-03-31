@@ -1,4 +1,5 @@
 import io
+import logging
 
 import pytest
 
@@ -30,6 +31,8 @@ format = '%(message)s'
 
     with pytest.raises(stpipe_log.LoggedException):
         log.critical("Breaking")
+
+    logging.shutdown()
 
     with open(logfilename, 'r') as fd:
         lines = [x.strip() for x in fd.readlines()]
