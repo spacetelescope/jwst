@@ -118,11 +118,11 @@ def test_saving_pars(tmpdir):
         str(saved_path)
     ])
     assert saved_path.check()
-    saved = datamodels.StepParsModel(str(saved_path))
-    assert saved.parameters == ParsModelWithPar3.parameters
+
+    with datamodels.StepParsModel(str(saved_path)) as saved:
+        assert saved.parameters == ParsModelWithPar3.parameters
 
     step.closeout()
-    saved.close()
 
 
 @pytest.mark.parametrize(
