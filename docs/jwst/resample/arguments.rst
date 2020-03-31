@@ -23,10 +23,6 @@ image.
   the scaling value will be set equal to the exposure time found in
   the image header.
 
-``--good_bits`` (int, default=6)
-  The integer sum of all bit values from the input image DQ arrays
-  that should be considered 'good' when building the weight mask.
-
 ``--single`` (bool, default=False)
   Resample each input image into a separate output.
 
