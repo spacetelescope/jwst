@@ -121,45 +121,9 @@ The ``skymatch`` step has the following optional arguments:
   value computations. Supported values are: 'mean', 'mode', 'midpt',
   and 'median'. (Default = 'mode')
 
-* ``dqbits`` (str): 
-  Integer sum of all the DQ bit values from the input images
-  DQ arrays that should be considered "good" when building masks for
-  sky computations. For example, if pixels in the DQ array can have
-  combinations of 1, 2, 4, and 8 and one wants to consider DQ
-  flags 2 and 4 as being acceptable for sky
-  computations, then ``dqbits`` should be set to 6 (2+4). In this
-  case a pixel having DQ values 2, 4, or 6 will be considered a good pixel,
-  while a pixel with a DQ value, e.g., 1+2=3, 4+8=12, etc. will be flagged as
-  a "bad" pixel.
-
-  Alternatively, one can enter a comma-separated or '+' separated list
-  of integer bit flags that should be summed to obtain the
-  final "good" bits. For example, both ``4,8`` and ``4+8``
-  are equivalent to setting ``dqbits`` to 12.
-
-  Finally, instead of integers, the JWST mnemonics for the bitflags may
-  be used. For example, all the following specifications are equivalent:
-
-  `12 == 4 + 8 == "4, 8" == "JUMP_DET, DROPOUT"`
-
-  The DQ flag mnemonics are found in :ref:`Data Quality Flags`.
-
-  .. note::
-    - The default value (0) will make *all* non-zero
-      pixels in the DQ mask be considered "bad" pixels and the
-      corresponding image pixels will not be used for sky computations.
-
-    - Set ``dqbits`` to `None` to turn off the use of image's DQ array
-      for sky computations.
-
-    - In order to reverse the meaning of the ``dqbits``
-      parameter from indicating values of the "good" DQ flags
-      to indicating the "bad" DQ flags, prepend '~' to the string
-      value. For example, in order to exclude pixels with
-      DQ flags 4 and 8 for sky computations and to consider
-      as "good" all other pixels (regardless of their DQ flag),
-      set ``dqbits`` to ``~4+8``, or ``~4,8``. A ``dqbits`` string value of
-      ``~0`` would be equivalent to setting ``dqbits=None``.
+* ``dqbits`` (str): The DQ bit values from the input images' DQ arrays that
+  should be considered "good" when building masks for sky computations. See
+  DQ flag :ref:`dq_parameter_specification` for details. (Default='0')
 
 * ``lower`` (float):
   An optional value indicating the lower limit of usable pixel

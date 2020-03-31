@@ -58,9 +58,10 @@ that control the behavior of the processing:
   Specifies whether or not to resample the input images when
   performing outlier detection.
 
-``--good_bits`` (int, default=6)
-  The integer sum of all bit values from the input image DQ arrays
-  that should be considered 'good' when building the weight mask.
+``--good_bits`` (string, default="~DO_NOT_USE")
+  The DQ bit values from the input image DQ arrays
+  that should be considered 'good' when building the weight mask. See
+  DQ flag :ref:`dq_parameter_specification` for details.
 
 ``--scale_detection`` (bool, default=False)
   Specifies whether or not to rescale the individual input images
