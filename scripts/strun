@@ -24,10 +24,20 @@ if __name__ == '__main__':
 
     try:
         step = Step.from_cmdline(sys.argv[1:])
+
     except NoDataOnDetectorError:
+        #  No science data is present on a detector. This can happen
+        #  with NIRSpec and the NRS2 detector: Situations occur when no spectra
+        #  disperse across both detectors.
+        #
+        #  Special exit status is provided so that automatic processing can detect
+        #  this situation and act accordingly.
+        #
+        #  Full discussion: https://github.com/spacetelescope/jwst/issues/2336
         import traceback
         traceback.print_exc()
         sys.exit(64)
+
     except Exception:
         import traceback
         traceback.print_exc()
