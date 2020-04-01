@@ -25,6 +25,10 @@ if __name__ == '__main__':
     try:
         step = Step.from_cmdline(sys.argv[1:])
     except NoDataOnDetectorError:
+        import traceback
+        traceback.print_exc()
         sys.exit(64)
     except Exception:
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
