@@ -25,7 +25,6 @@ def test_suffix_existence(enable_logging):
         to_add=(calculated_suffixes, s.SUFFIXES_TO_ADD),
         to_remove=(s.SUFFIXES_TO_DISCARD, )
     )
-    assert False
     assert set(found_suffixes) == set(s.KNOW_SUFFIXES)
 
 
