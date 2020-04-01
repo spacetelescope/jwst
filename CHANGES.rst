@@ -15,6 +15,11 @@ associations
 
 - Update association rules so that nodded observations procduce level 3 asn's [#4675]
 
+cmdline
+-------
+
+- Re-enable exeption tracebacks from strun for issues outside step processing [#4761]
+
 coron
 -----
 
@@ -102,6 +107,11 @@ stpipe
 - Add command line and environmental options to not retrieve steppars references [#4676]
 
 - Use only a single member of an association for CRDS STEPPARS checking [#4684]
+
+strun
+-----
+
+- Re-enable exeption tracebacks from strun for issues outside step processing [#4761]
 
 tweakreg
 --------
