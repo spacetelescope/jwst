@@ -3,7 +3,6 @@ from astropy.io.fits.diff import FITSDiff
 from astropy.table import Table, setdiff
 
 from jwst.lib.set_telescope_pointing import add_wcs
-from jwst.lib import engdb_tools
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
