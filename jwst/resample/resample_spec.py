@@ -63,8 +63,11 @@ class ResampleSpecData:
         self.pscale_ratio = 1.
         self.blank_output = None
 
+        print('in __init__',input_models)
+        
         # Define output WCS based on all inputs, including a reference WCS
         self.output_wcs = self.build_interpolated_output_wcs()
+        print('data size',self.data_size)
         self.blank_output = datamodels.SlitModel(self.data_size)
         self.blank_output.update(self.input_models[0], only="PRIMARY")
         self.blank_output.update(self.input_models[0], only="SCI")
@@ -91,47 +94,85 @@ class ResampleSpecData:
             A gwcs WCS object defining the output frame WCS
         """
 
-        if refmodel is None:
-            refmodel = self.input_models[0]
+#        if refmodel is None:
+#            refmodel = self.input_models[0]
 
-        refwcs = refmodel.meta.wcs
-        bb = refwcs.bounding_box
-        grid = wcstools.grid_from_bounding_box(bb)
-        ra, dec, lam = np.array(refwcs(*grid))
-        lon = np.nanmean(ra)
-        lat = np.nanmean(dec)
-        tan = Pix2Sky_TAN()
-        native2celestial = RotateNative2Celestial(lon, lat, 180)
-        undist2sky = tan | native2celestial
-        # Filter out RuntimeWarnings due to computed NaNs in the WCS
-        warnings.simplefilter("ignore")
-        x_tan, y_tan = undist2sky.inverse(ra, dec)
-        warnings.resetwarnings()
+#        refwcs = refmodel.meta.wcs
+#        bb = refwcs.bounding_box
+#        grid = wcstools.grid_from_bounding_box(bb)
+#        ra, dec, lam = np.array(refwcs(*grid))
 
-        spectral_axis = find_dispersion_axis(refmodel)
-        spatial_axis = spectral_axis ^ 1
 
-        # Compute the wavelength array, trimming NaNs from the ends
-        wavelength_array = np.nanmedian(lam, axis=spectral_axis)
-        wavelength_array = wavelength_array[~np.isnan(wavelength_array)]
+        # for each input model convert slit x,y to ra,dec,lam
+        # for the center of the slit compute ra,dec held in
+        # x_tan, y_tan
+        # append the x_tan, y_tan and wavelength arrays
+        # sort them and store in lookup table 
+        all_x_tan = []
+        all_y_tan = []
+        all_wavelength = []
+        for model in self.input_models:
+            wcs = model.meta.wcs
+            bb = wcs.bounding_box
+            grid = wcstools.grid_from_bounding_box(bb)
+            ra, dec, lam = np.array(wcs(*grid))
 
-        # Compute RA and Dec up the slit (spatial direction) at the center
-        # of the dispersion.  Use spectral_axis to determine slicing dimension
-        lam_center_index = int((bb[spectral_axis][1] - bb[spectral_axis][0]) / 2)
-        if not spectral_axis:
-            x_tan_array = x_tan.T[lam_center_index]
-            y_tan_array = y_tan.T[lam_center_index]
-        else:
-            x_tan_array = x_tan[lam_center_index]
-            y_tan_array = y_tan[lam_center_index]
-        x_tan_array = x_tan_array[~np.isnan(x_tan_array)]
-        y_tan_array = y_tan_array[~np.isnan(y_tan_array)]
+            lon = np.nanmean(ra)
+            lat = np.nanmean(dec)
+            tan = Pix2Sky_TAN()
+            native2celestial = RotateNative2Celestial(lon, lat, 180)
+            undist2sky = tan | native2celestial
+            # Filter out RuntimeWarnings due to computed NaNs in the WCS
+            warnings.simplefilter("ignore")
+            x_tan, y_tan = undist2sky.inverse(ra, dec)
+            warnings.resetwarnings()
+
+           # spectral_axis = find_dispersion_axis(refmodel)
+            spectral_axis = find_dispersion_axis(model)
+            spatial_axis = spectral_axis ^ 1
+
+            # Compute the wavelength array, trimming NaNs from the ends
+            wavelength_array = np.nanmedian(lam, axis=spectral_axis)
+            wavelength_array = wavelength_array[~np.isnan(wavelength_array)]
+
+            # Compute RA and Dec up the slit (spatial direction) at the center
+            # of the dispersion.  Use spectral_axis to determine slicing dimension
+            lam_center_index = int((bb[spectral_axis][1] - bb[spectral_axis][0]) / 2)
+            if not spectral_axis:
+                x_tan_array = x_tan.T[lam_center_index]
+                y_tan_array = y_tan.T[lam_center_index]
+            else:
+                x_tan_array = x_tan[lam_center_index]
+                y_tan_array = y_tan[lam_center_index]
+                x_tan_array = x_tan_array[~np.isnan(x_tan_array)]
+                y_tan_array = y_tan_array[~np.isnan(y_tan_array)]
+
+            # append all arrays together - this is a list of arrays 
+            all_x_tan.append(x_tan_array)
+            all_y_tan.append(y_tan_array)
+            all_wavelength.append(wavelength_array)
+            
+        all_x = np.hstack(all_x_tan)
+        all_y = np.hstack(all_y_tan)
+        all_wave = np.hstack(all_wavelength)
+        all_x = all_x[~np.isnan(all_x)]
+        all_y = all_y[~np.isnan(all_y)]
+        all_wave = all_wave[~np.isnan(all_wave)]
+        all_x = np.sort(all_x,axis=None)
+        all_y = np.sort(all_y,axis=None)
+        all_wave = np.sort(all_wave,axis=None)
 
         fitter = LinearLSQFitter()
         fit_model = Linear1D()
+        # for now just redefine what the arrays are to be in fitting. 
+        x_tan_array = all_x
+        y_tan_array = all_y
+        wavelength_array = all_wave
         pix_to_ra = fitter(fit_model, np.arange(x_tan_array.shape[0]), x_tan_array)
         pix_to_dec = fitter(fit_model, np.arange(y_tan_array.shape[0]), y_tan_array)
-
+        
+        print(x_tan_array)
+        print('pix_to_ra',pix_to_ra)
         # Tabular interpolation model, pixels -> lambda
         pix_to_wavelength = Tabular1D(lookup_table=wavelength_array,
             bounds_error=False, fill_value=None, name='pix2wavelength')
