@@ -1,5 +1,4 @@
 """General utility objects"""
-import logging
 import re
 
 
