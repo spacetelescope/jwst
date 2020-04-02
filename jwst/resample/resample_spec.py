@@ -15,7 +15,7 @@ from gwcs import coordinate_frames as cf
 from .. import datamodels
 from . import gwcs_drizzle
 from . import resample_utils
-
+from ..model_blender import blendmeta
 
 CRBIT = np.uint32(datamodels.dqflags.pixel['JUMP_DET'])
 
@@ -192,6 +192,14 @@ class ResampleSpecData:
 
         return output_wcs
 
+    def blend_output_metadata(self, output_model):
+        """Create new output metadata based on blending all input metadata."""
+        # Run fitsblender on output product
+        output_file = output_model.meta.filename
+
+        log.info(f'Blending metadata for {output_file}')
+        blendmeta.blendmodels(output_model, inputs=self.input_models, output=output_file)
+
     def do_drizzle(self, xmin=0, xmax=0, ymin=0, ymax=0, **pars):
         """ Perform drizzling operation on input images's to create a new output
         """
@@ -227,6 +235,9 @@ class ResampleSpecData:
             bb = resample_utils.wcs_bbox_from_shape(output_model.data.shape)
             output_model.meta.wcs.bounding_box = bb
             output_model.meta.filename = obs_product
+
+            if self.drizpars['blendheaders']:
+                self.blend_output_metadata(output_model)
 
             exposure_times = {'start': [], 'end': []}
 
