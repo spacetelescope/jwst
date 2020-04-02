@@ -543,7 +543,7 @@ def calc_slope_vars(rn_sect, gain_sect, gdq_sect, group_time, max_seg):
         del wh_good
 
         # Locate any CRs that appear before the first SAT group...
-        wh_cr = np.where( gdq_2d_nan[i_read, :] == dqflags.group['JUMP_DET'])
+        wh_cr = np.where( gdq_2d_nan[i_read, :] & dqflags.group['JUMP_DET'] > 0 )
 
         # ... but not on final read:
         if (len(wh_cr[0]) > 0 and (i_read < nreads-1) ):
