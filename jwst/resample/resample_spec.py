@@ -110,7 +110,7 @@ class ResampleSpecData:
         all_dec_slit = []
         xtan_slope = []
         ytan_slope = []
-        for model in self.input_models:
+        for im, model in enumerate(self.input_models):
             wcs = model.meta.wcs
             bb = wcs.bounding_box
             grid = wcstools.grid_from_bounding_box(bb)
@@ -170,9 +170,16 @@ class ResampleSpecData:
             fitter = LinearLSQFitter()
             fit_model = Linear1D()
 
+            
             pix_to_xtan = fitter(fit_model, np.arange(x_tan_array.shape[0]), x_tan_array)
             pix_to_ytan = fitter(fit_model, np.arange(y_tan_array.shape[0]), y_tan_array)
 
+            
+            # try just using the first model to to slope and  yintercept
+            if im == 0:
+                pix_to_xtan_save = pix_to_xtan
+                pix_to_ytan_save = pix_to_ytan
+                
             xtan_slope.append(pix_to_xtan.slope)
             ytan_slope.append(pix_to_ytan.slope)
             print('pix to xtan scale',pix_to_xtan.slope*3600.0)
@@ -184,6 +191,9 @@ class ResampleSpecData:
         # redefine the spatial scale using mean of all the slits
         pix_to_xtan.slope = xtan_mean_slope
         pix_to_ytan.slope = ytan_mean_slope
+        # try using just the first model values 
+        pix_to_xtan = pix_to_xtan_save
+        pix_to_ytan = pix_to_ytan_save
         all_ra = np.hstack(all_ra_slit)
         all_dec = np.hstack(all_dec_slit)
         all_wave = np.hstack(all_wavelength)
@@ -246,7 +256,7 @@ class ResampleSpecData:
         y_max = np.amax(y_tan_all)
         print(x_max,x_min,pix_to_xtan.slope)
         x_size = int(math.ceil((x_max - x_min)/pix_to_xtan.slope))
-        y_size = int(math.ceil((x_max - x_min)/pix_to_ytan.slope))
+        y_size = int(math.ceil((y_max - y_min)/pix_to_ytan.slope))
 
         print('xy size',x_size, y_size)
         # define the output wcs 

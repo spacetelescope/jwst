@@ -142,7 +142,9 @@ def reproject(wcs1, wcs2):
 
     if isinstance(wcs1, fitswcs.WCS):
         forward_transform = wcs1.all_pix2world
+        print('all pix2world')
     elif isinstance(wcs1, WCS):
+        print('WCS')
         forward_transform = wcs1.forward_transform
     elif issubclass(wcs1, Model):
         forward_transform = wcs1
@@ -162,8 +164,8 @@ def reproject(wcs1, wcs2):
 
     def _reproject(x, y):
         sky = forward_transform(x, y)
-
-        print('sky',sky)
+        print(len(sky[0]))
+        print('sky',sky[0][1])
         flat_sky = []
         for axis in sky:
             flat_sky.append(axis.flatten())
