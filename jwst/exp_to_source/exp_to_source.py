@@ -49,6 +49,8 @@ def exp_to_source(inputs):
 
                 result_slit.update(exposure)
 
+            result_slit.meta.filename = None  # Resulting merged data doesn't come from one file
+
         exposure.close()
 
     # Turn off the default factory
