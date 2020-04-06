@@ -1,7 +1,10 @@
 from .reference import ReferenceFileModel
 
 __all__ = ['FgsImgApcorrModel', 'MirImgApcorrModel',
-           'NrcImgApcorrModel', 'NisImgApcorrModel']
+           'NrcImgApcorrModel', 'NisImgApcorrModel',
+           'MirLrsApcorrModel', 'MirMrsApcorrModel',
+           'NrcWfssApcorrModel', 'NisWfssApcorrModel',
+           'NrsMosApcorrModel', 'NrsFsApcorrModel']
 
 
 class FgsImgApcorrModel(ReferenceFileModel):
@@ -50,6 +53,56 @@ class MirImgApcorrModel(ReferenceFileModel):
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/mirimg_apcorr.schema"
 
 
+class MirLrsApcorrModel(ReferenceFileModel):
+    """
+    A data model for MIRI LRS apcorr reference files.
+
+    Parameters
+    __________
+    apcorr_table : numpy table
+        Aperture correction factors table
+        A table-like object containing row selection criteria made up
+        of instrument mode parameters and aperture correction
+        factors associated with those modes.
+
+        - subarray: str[15]
+        - wavelength: float32
+        - nelem_wl: int16
+        - size: float32
+        - nelem_size: int16
+        - apcorr: float32
+        - apcorr_err: float32
+
+    """
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/mirlrs_apcorr.schema"
+
+
+class MirMrsApcorrModel(ReferenceFileModel):
+    """
+    A data model for MIRI MRS apcorr reference files.
+
+    Parameters
+    __________
+    apcorr_table : numpy table
+        Aperture correction factors table
+        A table-like object containing row selection criteria made up
+        of instrument mode parameters and aperture correction
+        factors associated with those modes.
+
+        - wavelength: float32
+        - nelem_wl: int16
+        - radius: float32
+        - apcorr: float32
+        - apcorr_err: float32
+        - inner_bkg: float32
+        - outer_bkg: float32
+        - axis_ratio: float32
+        - axis_pa: float32
+
+    """
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/mirmrs_apcorr.schema"
+
+
 class NrcImgApcorrModel(ReferenceFileModel):
     """
     A data model for NIRCam imaging apcorr reference files.
@@ -74,6 +127,31 @@ class NrcImgApcorrModel(ReferenceFileModel):
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/nrcimg_apcorr.schema"
 
 
+class NrcWfssApcorrModel(ReferenceFileModel):
+    """
+    A data model for NIRCam WFSS apcorr reference files.
+
+    Parameters
+    __________
+    apcorr_table : numpy table
+        Aperture correction factors table
+        A table-like object containing row selection criteria made up
+        of instrument mode parameters and aperture correction
+        factors associated with those modes.
+
+        - filter: str[12]
+        - pupil: str[15]
+        - wavelength: float32
+        - nelem_wl: int16
+        - size: float32
+        - nelem_size: int16
+        - apcorr: float32
+        - apcorr_err: float32
+
+    """
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/nrcwfss_apcorr.schema"
+
+
 class NisImgApcorrModel(ReferenceFileModel):
     """
     A data model for NIRISS imaging apcorr reference files.
@@ -96,3 +174,81 @@ class NisImgApcorrModel(ReferenceFileModel):
 
     """
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/nisimg_apcorr.schema"
+
+
+class NisWfssApcorrModel(ReferenceFileModel):
+    """
+    A data model for NIRISS WFSS apcorr reference files.
+
+    Parameters
+    __________
+    apcorr_table : numpy table
+        Aperture correction factors table
+        A table-like object containing row selection criteria made up
+        of instrument mode parameters and aperture correction
+        factors associated with those modes.
+
+        - filter: str[12]
+        - pupil: str[15]
+        - wavelength: float32
+        - nelem_wl: int16
+        - size: float32
+        - nelem_size: int16
+        - apcorr: float32
+        - apcorr_err: float32
+
+    """
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/niswfss_apcorr.schema"
+
+
+class NrsMosApcorrModel(ReferenceFileModel):
+    """
+    A data model for NIRSpec MOS and IFU apcorr reference files.
+
+    Parameters
+    __________
+    apcorr_table : numpy table
+        Aperture correction factors table
+        A table-like object containing row selection criteria made up
+        of instrument mode parameters and aperture correction
+        factors associated with those modes.
+
+        - filter: str[12]
+        - grating: str[15]
+        - wavelength: float32
+        - nelem_wl: int16
+        - size: float32
+        - nelem_size: int16
+        - pixphase: float32
+        - apcorr: float32
+        - apcorr_err: float32
+
+    """
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/nrsmos_apcorr.schema"
+
+
+class NrsFsApcorrModel(ReferenceFileModel):
+    """
+    A data model for NIRSpec Fixed-Slit apcorr reference files.
+
+    Parameters
+    __________
+    apcorr_table : numpy table
+        Aperture correction factors table
+        A table-like object containing row selection criteria made up
+        of instrument mode parameters and aperture correction
+        factors associated with those modes.
+
+        - filter: str[12]
+        - grating: str[15]
+        - slit: str[15]
+        - wavelength: float32
+        - nelem_wl: int16
+        - size: float32
+        - nelem_size: int16
+        - pixphase: float32
+        - apcorr: float32
+        - apcorr_err: float32
+
+    """
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/nrsfs_apcorr.schema"
