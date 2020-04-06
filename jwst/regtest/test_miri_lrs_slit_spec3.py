@@ -1,6 +1,5 @@
 """ Test of the spec3 pipeline using MIRI LRS fixed-slit exposures.
     This takes an association and generates the level 3 products."""
-import os
 import pytest
 from astropy.io.fits.diff import FITSDiff
 
@@ -27,7 +26,7 @@ def run_pipeline(jail, rtdata_module):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["s2d", "x1d"])
-def test_miri_lrs_fs_spec3(run_pipeline, rtdata_module, fitsdiff_default_kwargs, suffix):
+def test_miri_lrs_slit_spec3(run_pipeline, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Regression test of the calwebb_spec3 pipeline on MIRI
        LRS fixed-slit data using along-slit-nod pattern for
        background subtraction."""
