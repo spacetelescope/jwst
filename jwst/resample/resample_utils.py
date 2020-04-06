@@ -106,7 +106,15 @@ def calc_gwcs_pixmap(in_wcs, out_wcs, shape=None):
         bb = in_wcs.bounding_box
         log.debug("Bounding box from WCS: {}".format(in_wcs.bounding_box))
 
+    print('*****resample_utilt',bb)
     grid = wcstools.grid_from_bounding_box(bb)
+
+    print('in resample_utils')
+    print('grid 0',grid[0])
+    print('grid 1',grid[1])
+    print(in_wcs)
+    print(out_wcs)
+
     pixmap = np.dstack(reproject(in_wcs, out_wcs)(grid[0], grid[1]))
     pixmap[np.isnan(pixmap)] = -1
 
@@ -154,6 +162,8 @@ def reproject(wcs1, wcs2):
 
     def _reproject(x, y):
         sky = forward_transform(x, y)
+
+        print('sky',sky)
         flat_sky = []
         for axis in sky:
             flat_sky.append(axis.flatten())

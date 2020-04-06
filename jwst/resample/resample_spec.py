@@ -1,7 +1,7 @@
 import logging
 from collections import OrderedDict
 import warnings
-
+import math
 import numpy as np
 
 from astropy import coordinates as coord
@@ -63,8 +63,6 @@ class ResampleSpecData:
         self.pscale_ratio = 1.
         self.blank_output = None
 
-        print('in __init__',input_models)
-        
         # Define output WCS based on all inputs, including a reference WCS
         self.output_wcs = self.build_interpolated_output_wcs()
         print('data size',self.data_size)
@@ -76,7 +74,7 @@ class ResampleSpecData:
 
     def build_interpolated_output_wcs(self, refmodel=None):
         """
-        Create a spatial/spectral WCS output frame
+        Create a spatial/spectral WCS output frame using all the input models
 
         Creates output frame by linearly fitting RA, Dec along the slit and
         producing a lookup table to interpolate wavelengths in the dispersion
@@ -102,78 +100,100 @@ class ResampleSpecData:
 #        grid = wcstools.grid_from_bounding_box(bb)
 #        ra, dec, lam = np.array(refwcs(*grid))
 
-
         # for each input model convert slit x,y to ra,dec,lam
         # for the center of the slit compute ra,dec held in
         # x_tan, y_tan
         # append the x_tan, y_tan and wavelength arrays
         # sort them and store in lookup table 
-        all_x_tan = []
-        all_y_tan = []
         all_wavelength = []
+        all_ra_slit = []
+        all_dec_slit = []
+        xtan_slope = []
+        ytan_slope = []
         for model in self.input_models:
             wcs = model.meta.wcs
             bb = wcs.bounding_box
             grid = wcstools.grid_from_bounding_box(bb)
             ra, dec, lam = np.array(wcs(*grid))
 
-            lon = np.nanmean(ra)
-            lat = np.nanmean(dec)
-            tan = Pix2Sky_TAN()
-            native2celestial = RotateNative2Celestial(lon, lat, 180)
-            undist2sky = tan | native2celestial
-            # Filter out RuntimeWarnings due to computed NaNs in the WCS
-            warnings.simplefilter("ignore")
-            x_tan, y_tan = undist2sky.inverse(ra, dec)
-            warnings.resetwarnings()
-
-           # spectral_axis = find_dispersion_axis(refmodel)
             spectral_axis = find_dispersion_axis(model)
             spatial_axis = spectral_axis ^ 1
-
+            # print('spectral axis',spectral_axis)
+            # print('spatial axis',spatial_axis)
             # Compute the wavelength array, trimming NaNs from the ends
             wavelength_array = np.nanmedian(lam, axis=spectral_axis)
             wavelength_array = wavelength_array[~np.isnan(wavelength_array)]
-
-            # Compute RA and Dec up the slit (spatial direction) at the center
-            # of the dispersion.  Use spectral_axis to determine slicing dimension
-            lam_center_index = int((bb[spectral_axis][1] - bb[spectral_axis][0]) / 2)
-            if not spectral_axis:
-                x_tan_array = x_tan.T[lam_center_index]
-                y_tan_array = y_tan.T[lam_center_index]
-            else:
-                x_tan_array = x_tan[lam_center_index]
-                y_tan_array = y_tan[lam_center_index]
-                x_tan_array = x_tan_array[~np.isnan(x_tan_array)]
-                y_tan_array = y_tan_array[~np.isnan(y_tan_array)]
-
-            # append all arrays together - this is a list of arrays 
-            all_x_tan.append(x_tan_array)
-            all_y_tan.append(y_tan_array)
             all_wavelength.append(wavelength_array)
-            
-        all_x = np.hstack(all_x_tan)
-        all_y = np.hstack(all_y_tan)
+
+            # append all ra and dec values to use later to find min and max
+            # ra and dec 
+            ra_use = ra.flatten()
+            ra_use = ra_use[~np.isnan(ra_use)]
+            dec_use = dec.flatten()
+            dec_use = dec_use[~np.isnan(dec_use)]
+            all_ra_slit.append(ra_use)
+            all_dec_slit.append(dec_use)
+            # need to estimate the spatial sampling to use for the output WCS
+            # Steps to do this:
+            # 1. find the center of slit in wavelength
+            # 2. Pull out the ra and dec at the center of the slit. 
+            # 3. Find the mean ra,dec and the center of the slit this will
+            # represent the tangent point
+            # 4. Convert ra,dec -> tangent plane projection: x_tan,y_tan 
+            # 5. using x_tan, y_tan perform a linear fit to find spatial sampling
+            lam_center_index = int((bb[spectral_axis][1] - bb[spectral_axis][0]) / 2)
+            #print('lam_center_index',lam_center_index)
+            if not spatial_axis:
+                ra_center = np.nanmean(ra[lam_center_index,:])
+                dec_center = np.nanmean(dec[lam_center_index,:])
+            else:
+                ra_center = ra[:,lam_center_index]
+                dec_center = dec[:,lam_center_index]
+
+            # find the ra and dec for this slit using center of slit
+            ra_center_pt = np.nanmean(ra_center)
+            dec_center_pt = np.nanmean(dec_center)
+
+            tan = Pix2Sky_TAN()
+            native2celestial = RotateNative2Celestial(ra_center_pt, dec_center_pt, 180)
+            undist2sky = tan | native2celestial
+            # Filter out RuntimeWarnings due to computed NaNs in the WCS
+            warnings.simplefilter("ignore")
+            # at this center of slit find x,y tangent proction - x_tan, y_tan
+            x_tan_array, y_tan_array = undist2sky.inverse(ra_center, dec_center)
+            warnings.resetwarnings()
+
+            x_tan_array = x_tan_array[~np.isnan(x_tan_array)]
+            y_tan_array = y_tan_array[~np.isnan(y_tan_array)]
+
+            # estimate the spatial sampling
+            fitter = LinearLSQFitter()
+            fit_model = Linear1D()
+
+            pix_to_xtan = fitter(fit_model, np.arange(x_tan_array.shape[0]), x_tan_array)
+            pix_to_ytan = fitter(fit_model, np.arange(y_tan_array.shape[0]), y_tan_array)
+
+            xtan_slope.append(pix_to_xtan.slope)
+            ytan_slope.append(pix_to_ytan.slope)
+            print('pix to xtan scale',pix_to_xtan.slope*3600.0)
+
+        # find the mean spatial sampling 
+        xtan_mean_slope = np.mean(xtan_slope)
+        ytan_mean_slope = np.mean(ytan_slope)
+    
+        # redefine the spatial scale using mean of all the slits
+        pix_to_xtan.slope = xtan_mean_slope
+        pix_to_ytan.slope = ytan_mean_slope
+        all_ra = np.hstack(all_ra_slit)
+        all_dec = np.hstack(all_dec_slit)
         all_wave = np.hstack(all_wavelength)
-        all_x = all_x[~np.isnan(all_x)]
-        all_y = all_y[~np.isnan(all_y)]
         all_wave = all_wave[~np.isnan(all_wave)]
-        all_x = np.sort(all_x,axis=None)
-        all_y = np.sort(all_y,axis=None)
         all_wave = np.sort(all_wave,axis=None)
 
-        fitter = LinearLSQFitter()
-        fit_model = Linear1D()
-        # for now just redefine what the arrays are to be in fitting. 
-        x_tan_array = all_x
-        y_tan_array = all_y
-        wavelength_array = all_wave
-        pix_to_ra = fitter(fit_model, np.arange(x_tan_array.shape[0]), x_tan_array)
-        pix_to_dec = fitter(fit_model, np.arange(y_tan_array.shape[0]), y_tan_array)
-        
-        print(x_tan_array)
-        print('pix_to_ra',pix_to_ra)
         # Tabular interpolation model, pixels -> lambda
+        wavelength_array = all_wave
+        print('wavelength_array',wavelength_array.shape)
+        print('wavelength range',wavelength_array[0],wavelength_array[-1])
         pix_to_wavelength = Tabular1D(lookup_table=wavelength_array,
             bounds_error=False, fill_value=None, name='pix2wavelength')
 
@@ -195,10 +215,10 @@ class ResampleSpecData:
 
         # Sometimes the slit is perpendicular to the RA or Dec axis.
         # For example, if the slit is perpendicular to RA, that means
-        # the slope of pix_to_ra will be nearly zero, so make sure
-        # mapping.inverse uses pix_to_dec.inverse.  The auto definition
+        # the slope of pix_to_xtan will be nearly zero, so make sure
+        # mapping.inverse uses pix_to_ytan.inverse.  The auto definition
         # of mapping.inverse is to use the 2nd spatial coordinate, i.e. Dec.
-        if np.isclose(pix_to_dec.slope, 0, atol=1e-8):
+        if np.isclose(pix_to_ytan.slope, 0, atol=1e-8):
             mapping_tuple = (0, 1)
             # Account for vertical or horizontal dispersion on detector
             if spatial_axis:
@@ -207,7 +227,30 @@ class ResampleSpecData:
                 mapping.inverse = Mapping(mapping_tuple)
 
         # The final transform
-        transform = mapping | (pix_to_ra & pix_to_dec | undist2sky) & pix_to_wavelength
+        # redefine the ra, dec center tangent point to include all data
+        ra_min = np.amin(all_ra)
+        ra_max = np.amax(all_ra)
+        ra_center_final  = (ra_max + ra_min)/2.0
+        dec_min = np.amin(all_dec)
+        dec_max = np.amax(all_dec)
+        dec_center_final  = (dec_max + dec_min)/2.0
+        tan = Pix2Sky_TAN()
+        native2celestial = RotateNative2Celestial(ra_center_final, dec_center_final, 180)
+        undist2sky = tan | native2celestial
+
+        # find the spatial size of the output
+        x_tan_all, y_tan_all = undist2sky.inverse(all_ra, all_dec)
+        x_min = np.amin(x_tan_all)
+        x_max = np.amax(x_tan_all)
+        y_min = np.amin(y_tan_all)
+        y_max = np.amax(y_tan_all)
+        print(x_max,x_min,pix_to_xtan.slope)
+        x_size = int(math.ceil((x_max - x_min)/pix_to_xtan.slope))
+        y_size = int(math.ceil((x_max - x_min)/pix_to_ytan.slope))
+
+        print('xy size',x_size, y_size)
+        # define the output wcs 
+        transform = mapping | (pix_to_xtan & pix_to_ytan | undist2sky) & pix_to_wavelength
 
         det = cf.Frame2D(name='detector', axes_order=(0, 1))
         sky = cf.CelestialFrame(name='sky', axes_order=(0, 1),
@@ -224,8 +267,10 @@ class ResampleSpecData:
         # compute the output array size in WCS axes order, i.e. (x, y)
         output_array_size = [0, 0]
         output_array_size[spectral_axis] = len(wavelength_array)
-        output_array_size[spatial_axis] = len(x_tan_array)
+        
+        output_array_size[spatial_axis] = x_size
 
+        print('output_array_size',output_array_size)
         # turn the size into a numpy shape in (y, x) order
         self.data_size = tuple(output_array_size[::-1])
         bounding_box = resample_utils.wcs_bbox_from_shape(self.data_size)
@@ -275,6 +320,7 @@ class ResampleSpecData:
 
             bb = resample_utils.wcs_bbox_from_shape(output_model.data.shape)
             output_model.meta.wcs.bounding_box = bb
+            print('resample_spec do drizzle bb',bb)
             output_model.meta.filename = obs_product
 
             if self.drizpars['blendheaders']:

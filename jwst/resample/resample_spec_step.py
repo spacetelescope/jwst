@@ -21,6 +21,7 @@ class ResampleSpecStep(ResampleStep):
     def process(self, input):
         input_new = datamodels.open(input)  # define input_new since if ImageModel it will
                                             # redefined to SlitModel
+
         if isinstance(input_new, ImageModel):
             slit_model = datamodels.SlitModel()
             slit_model.update(input_new, only="PRIMARY")
@@ -76,8 +77,9 @@ class ResampleSpecStep(ResampleStep):
         """
         containers = multislit_to_container(input_models)
         result = datamodels.MultiSlitModel()
+
         result.update(input_models[0], only="PRIMARY")
-        result.update(input_models[0], only="SCI")
+        #result.update(input_models[0], only="SCI")
         for container in containers.values():
             resamp = resample_spec.ResampleSpecData(container, **self.drizpars)
             drizzled_models = resamp.do_drizzle()

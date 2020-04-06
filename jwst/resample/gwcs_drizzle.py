@@ -422,6 +422,8 @@ def dodrizzle(insci, input_wcs, inwht,
 
     # Compute the mapping between the input and output pixel coordinates
     # for use in drizzle.cdrizzle.tdriz
+    print('gwcs_drizzle',input_wcs,output_wcs,insci.shape)
+
     pixmap = resample_utils.calc_gwcs_pixmap(input_wcs, output_wcs, insci.shape)
     # pixmap[np.isnan(pixmap)] = -10
     # print("Number of NaNs: ", len(np.isnan(pixmap)) / 2)
