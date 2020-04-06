@@ -671,7 +671,7 @@ class FilteroffsetModel(ReferenceFileModel):
         super(FilteroffsetModel, self).__init__(init, **kwargs)
         if filters is not None:
             self.filters = filters
-            if instrument is None or instrument not in ("NIRCAM", "MIRI", "NIRISS"):
+            if instrument is None or instrument.upper() not in ("NIRCAM", "MIRI", "NIRISS"):
                 raise ValueError("Please specify the instrument")
             self.meta.instrument.name = instrument
 
@@ -685,15 +685,16 @@ class FilteroffsetModel(ReferenceFileModel):
     def validate(self):
         super(FilteroffsetModel, self).validate()
 
-        instrument_name = self.meta.instrument.name
-        nircam_detectors = ["NRCA1", "NRCA2", "NRCA3", "NRCA4", "NRCALONG", "NRCB1", "NRCB2", "NRCB3", "NRCB4", "NRCBLONG"]
+        instrument_name = self.meta.instrument.name.upper()
+        nircam_detectors = ["NRCA1", "NRCA2", "NRCA3", "NRCA4", "NRCALONG",
+                            "NRCB1", "NRCB2", "NRCB3", "NRCB4", "NRCBLONG"]
         if instrument_name not in ['MIRI', 'NIRCAM', 'NIRISS']:
             self.print_err('Expected "meta.instrument.name" to be one of "NIRCAM, "MIRI" or "NIRISS"')
-        if instrument_name == "MIRI" and self.meta.instrument.detector != "MIRIMAGE":
+        if instrument_name == "MIRI" and self.meta.instrument.detector.upper() != "MIRIMAGE":
             self.print_err('Expected detector to be MIRIMAGE for instrument MIRI')
-        elif instrument_name == "NIRCAM" and self.meta.instrument.detector not in nircam_detectors:
+        elif instrument_name == "NIRCAM" and self.meta.instrument.detector.upper() not in nircam_detectors:
             self.print_err('Expected detector for instrument NIRCAM to be one of nircam_detectors')
-        elif instrument_name == "NIRISS" and self.meta.instrument.detector != 'NIS':
+        elif instrument_name == "NIRISS" and self.meta.instrument.detector.upper() != 'NIS':
             self.print_err('Expected detector for instrument NIRISS to be "NIS"')
 
 

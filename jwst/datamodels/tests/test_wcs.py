@@ -73,7 +73,7 @@ def test_wcs_ref_models():
             assert str(e.value()) == ("Model.meta is missing values for "
                                      "['description', 'reftype', 'author', 'pedigree',"
                                      "'useafter']")
-                                     
+
     filters = [{'filter': 'F090W', 'pupil': 'GRISMR',
                 'row_offset': 1, 'column_offset': 1},
                {'filter': 'F070W', 'pupil': 'GRISMC',
