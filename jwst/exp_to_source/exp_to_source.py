@@ -36,13 +36,11 @@ def exp_to_source(inputs):
 
     for exposure in inputs:
         log.info(f'Reorganizing data from exposure {exposure.meta.filename}')
-        initial = True
 
         for slit in exposure.slits:
             log.debug(f'Copying source {slit.source_id}')
             result_slit = result[str(slit.source_id)]
             result_slit.exposures.append(slit)
-            result[str(slit.source_id)].exposures.append(slit)
             merge_tree(result_slit.exposures[-1].meta.instance, exposure.meta.instance)
 
             if result_slit.meta.instrument.name is None:
