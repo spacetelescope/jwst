@@ -702,10 +702,11 @@ class FilteroffsetModel(ReferenceFileModel):
             self.print_err('Expected "meta.instrument.name" to be one of "NIRCAM, "MIRI" or "NIRISS"')
         if instrument_name == "MIRI" and self.meta.instrument.detector != "MIRIMAGE":
             self.print_err('Expected detector to be MIRIMAGE for instrument MIRI')
-        elif instrument_name == "NIRCAM" and \
-            self.meta.instrument.channel not in nircam_channels and \
-            self.meta.instrument.module not in nircam_module:
-            self.print_err('Expected detector for instrument NIRCAM to be one of nircam_detectors')
+        elif instrument_name == "NIRCAM":
+            if self.meta.instrument.channel not in nircam_channels:
+                self.print_err(f'Expected meta.instrument.channel for instrument NIRCAM to be one of {nircam_channels}')
+            if self.meta.instrument.module not in nircam_module:
+                self.print_err(f'Expected meta.instrument.module for instrument NIRCAM to be one of {nircam_module}')
 
 
 class IFUFOREModel(_SimpleModel):

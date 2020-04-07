@@ -89,7 +89,8 @@ def test_wcs_ref_models():
 
         with pytest.raises(ValueError) as e:
             fo.validate()
-            assert str(e.value()) == ('Expected detector for instrument NIRCAM to be one of "NRCA1, NRCA2, "'
-                                      'NRCA3, NRCA4, NRCALONG, NRCB1, NRCB2, NRCB3, NRCB4, NRCBLONG"')
-        fo.meta.instrument.detector = 'NRCA3'
+            assert str(e.value()) == ("Expected meta.instrument.channel for instrument NIRCAM to be one of "
+                                      "['SHORT', 'LONG']")
+        fo.meta.instrument.channel = 'SHORT'
+        fo.meta.instrument.module="A"
         fo.validate()
