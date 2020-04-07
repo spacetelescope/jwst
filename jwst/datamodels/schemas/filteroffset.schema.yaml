@@ -8,6 +8,8 @@ allOf:
 - $ref: keyword_exptype.schema
 - $ref: keyword_filter.schema
 - $ref: keyword_pfilter.schema
+- $ref: keyword_channel.schema
+- $ref: keyword_module.schema
 - type: object
   properties:
     meta:
