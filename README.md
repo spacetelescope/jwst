@@ -14,23 +14,24 @@ Installation
 ------------
 
 The `jwst` package can be installed into a virtualenv or conda environment via `pip`.  In general, we recommend creating a fresh environment with only python installed.  If using conda, make sure you have a recent version of Anaconda or Miniconda installed.  From a bash shell enter:
+## Step 1. Create a Conda Environment ##
 
     conda create -n <env_name> python
     conda activate <env_name>
-If conda is not in your path, you will need to cd to the bin directory of your anaconda installation and enter:
-
-    ./conda create -n <env_name> python
-    ./conda activate <env_name>
 
 ## Below are directions on how to install three different versions of the pipeline.
 Note that you need to always create and activate your new evironment
 before proceeding.
 
-### Installing for end-users ###
+### Step 2 - Option A - Installing for end-users ###
 
-If you want to run the latest fully tested version of the pipeline you should install a released (tagged) version. you can install these versions directly from Github.  For example, to install release `jwst 0.15.0`:
 
-    pip install git+https://github.com/spacetelescope/jwst@0.15.0
+If you want to run the latest fully tested version of the pipeline you should install a released (tagged) version. you can install these versions directly from Github.  For example, to install release `jwst 0.15.1`:
+
+__Note that you need to always create and activate your new environment
+before proceeding.__
+
+    pip install git+https://github.com/spacetelescope/jwst@0.15.1
 
 The latest development (unreleased) version (from `master`) can also be installed from Github:
 
@@ -44,11 +45,14 @@ To include extra testing dependencies, the syntax is as follows:
 
     pip install "jwst[test] @ git+https://github.com/spacetelescope/jwst"
 
-### Installing a Data Management System (DMS) release ###
+### Step 2. - Option B - Installing a Data Management System (DMS) release ###
 
-We still package our releases to DMS via environment snapshots that specify the exact versions of all packages to be installed. This method should be more stable than the frist method because the latest versions of packages may cause problems.
+We still package our releases to DMS via environment snapshots that specify the exact versions of all packages to be installed. This method should be more stable than the first method because the latest versions of packages may cause problems.
 
 The latest release 0.15.0 may be installed by running the following commands in Linux or MacOS:
+
+__Note that you need to always create and activate your new environment
+before proceeding.__
 
 Linux:
 
@@ -72,9 +76,12 @@ The installation procedures may change from time to time, so consulting the
 documentation page for the specific version in question is the best way to get
 that version installed.
 
-### Installing for developers ###
+### Step 2. - Option C - Installing for developers ###
 
 Fork and clone the repo:
+
+__Note that you need to always create and activate your new environment
+before proceeding.__
 
     cd <where you want to put the repo>
     git clone https://github.com/spacetelescope/jwst
