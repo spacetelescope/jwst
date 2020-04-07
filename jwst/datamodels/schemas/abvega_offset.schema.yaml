@@ -5,43 +5,23 @@ id: "http://stsci.edu/schemas/jwst_datamodel/abvegamag_offset.schema"
 title: AB to Vega magnitude offset reference file model
 allOf:
 - $ref: referencefile.schema
-- anyOf:
-  - type: object
-    properties:
-      abvega_offset_detector:
-        title: Offsets to convert AB to Vega magnitudes (FGS)
-        type: object
-        properties:
+- type: object
+  properties:
+    abvega_offset:
+      title: Offsets to convert AB to Vega magnitudes
+      type: object
+      properties:
+        abvega_offset:
+          title: AB_mag - Vega_mag
+          type: number
+        anyOf:
           detector:
             title: Detector name
             type: string
-          abvega_offset:
-            title: AB_mag - Vega_mag
-            type: number
-  - type: object
-    properties:
-      abvega_offset_filter_pupil:
-        title: Offsets to convert AB to Vega magnitudes (NIRCam and NIRISS)
-        type: object
-        properties:
           filter:
             title: Filter wheel element name
             type: string
           pupil:
             title: Pupil wheel element name
             type: string
-          abvega_offset:
-            title: AB_mag - Vega_mag
-            type: number
-  - type: object
-    properties:
-      abvega_offset_filter:
-        title: Offsets to convert AB to Vega magnitudes (MIRI)
-        type: object
-        properties:
-          filter:
-            title: Filter wheel element name
-            type: string
-          abvega_offset:
-            title: AB_mag - Vega_mag
-            type: number
+...
