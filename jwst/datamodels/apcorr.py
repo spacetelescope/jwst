@@ -66,12 +66,12 @@ class MirLrsApcorrModel(ReferenceFileModel):
         factors associated with those modes.
 
         - subarray: str[15]
-        - wavelength: float32
+        - wavelength: float32 1D array
         - nelem_wl: int16
-        - size: float32
+        - size: uint8 1D array
         - nelem_size: int16
-        - apcorr: float32
-        - apcorr_err: float32
+        - apcorr: float32 2D array
+        - apcorr_err: float32 2D array
 
     """
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/mirlrs_apcorr.schema"
@@ -89,15 +89,15 @@ class MirMrsApcorrModel(ReferenceFileModel):
         of instrument mode parameters and aperture correction
         factors associated with those modes.
 
-        - wavelength: float32
+        - wavelength: float32 1D array
         - nelem_wl: int16
-        - radius: float32
-        - apcorr: float32
-        - apcorr_err: float32
-        - inner_bkg: float32
-        - outer_bkg: float32
-        - axis_ratio: float32
-        - axis_pa: float32
+        - radius: float32 1D array
+        - apcorr: float32 1D array
+        - apcorr_err: float32 1D array
+        - inner_bkg: float32 1D array
+        - outer_bkg: float32 1D array
+        - axis_ratio: float32 1D array
+        - axis_pa: float32 1D array
 
     """
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/mirmrs_apcorr.schema"
@@ -141,12 +141,12 @@ class NrcWfssApcorrModel(ReferenceFileModel):
 
         - filter: str[12]
         - pupil: str[15]
-        - wavelength: float32
+        - wavelength: float32 1D array
         - nelem_wl: int16
-        - size: float32
+        - size: uint8 1D array
         - nelem_size: int16
-        - apcorr: float32
-        - apcorr_err: float32
+        - apcorr: float32 2D array
+        - apcorr_err: float32 2D array
 
     """
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/nrcwfss_apcorr.schema"
@@ -190,12 +190,12 @@ class NisWfssApcorrModel(ReferenceFileModel):
 
         - filter: str[12]
         - pupil: str[15]
-        - wavelength: float32
+        - wavelength: float32 1D array
         - nelem_wl: int16
-        - size: float32
+        - size: uint8 1D array
         - nelem_size: int16
-        - apcorr: float32
-        - apcorr_err: float32
+        - apcorr: float32 2D array
+        - apcorr_err: float32 2D array
 
     """
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/niswfss_apcorr.schema"
@@ -215,13 +215,13 @@ class NrsMosApcorrModel(ReferenceFileModel):
 
         - filter: str[12]
         - grating: str[15]
-        - wavelength: float32
+        - wavelength: float32 1D array
         - nelem_wl: int16
-        - size: float32
+        - size: float32 2D array
         - nelem_size: int16
-        - pixphase: float32
-        - apcorr: float32
-        - apcorr_err: float32
+        - pixphase: float32 1D array
+        - apcorr: float32 3D array
+        - apcorr_err: float32 3D array
 
     """
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/nrsmos_apcorr.schema"
@@ -242,13 +242,13 @@ class NrsFsApcorrModel(ReferenceFileModel):
         - filter: str[12]
         - grating: str[15]
         - slit: str[15]
-        - wavelength: float32
+        - wavelength: float32 1D array
         - nelem_wl: int16
-        - size: float32
+        - size: float32 2D array
         - nelem_size: int16
-        - pixphase: float32
-        - apcorr: float32
-        - apcorr_err: float32
+        - pixphase: float32 1D array
+        - apcorr: float32 3D array
+        - apcorr_err: float32 3D array
 
     """
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/nrsfs_apcorr.schema"
