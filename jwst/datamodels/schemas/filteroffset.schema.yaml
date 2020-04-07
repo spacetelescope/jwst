@@ -6,7 +6,6 @@ title: MIRI Imager Filteroffset reference file model
 allOf:
 - $ref: referencefile.schema
 - $ref: keyword_exptype.schema
-- $ref: keyword_filter.schema
 - $ref: keyword_pfilter.schema
 - $ref: keyword_channel.schema
 - $ref: keyword_module.schema
