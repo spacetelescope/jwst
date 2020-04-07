@@ -681,6 +681,16 @@ class FilteroffsetModel(ReferenceFileModel):
             self.meta.instrument.detector = "MIRIMAGE"
             self.meta.instrument.pfilter = "F1130W|F1140C|F2300C|F2100W|F1800W|\
             F1550C|F560W|F2550WR|FND|F2550W|F1500W|F1000W|F1065C|F770W|F1280W|"
+        elif self.meta.instrument.name == "NIRCAM":
+            self.meta.instrument.pdetector = "NRCA1|NRCA2|NRCA3|NRCA4|NRCALONG|\
+            NRCB1|NRCB2|NRCB3|NRCB4|NRCBLONG"
+            self.meta.instrument.pfilter = "F070W|F090W|F115W|F140M|F150W|\
+            F162M|F164N|F150W2|F182M|F187N|F200W|F210M|F212N|"
+        elif self.meta.instrument.name == "NIRISS":
+            self.meta.instrument.pfilter = "F070W|F115W|F140M|F150W|F158M|\
+            F200W|F277W|F356W|F380M|F430M|F444W|F480M|"
+        else:
+            raise ValueError(f"Unsupported instrument: {self.meta.instrument.name}")
 
     def validate(self):
         super(FilteroffsetModel, self).validate()
