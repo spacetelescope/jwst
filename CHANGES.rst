@@ -35,6 +35,8 @@ datamodels
 - Remove lev3_prod schema and move resample-related keywords to
   core schema. [#4552]
 
+- Add data models for spectroscopic mode APCORR reference files. [#4770]
+
 extract_1d
 ----------
 
