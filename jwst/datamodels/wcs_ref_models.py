@@ -667,30 +667,44 @@ class FilteroffsetModel(ReferenceFileModel):
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/filteroffset.schema"
     reftype = "filteroffset"
 
-    def __init__(self, init=None, filters=None, **kwargs):
+    def __init__(self, init=None, filters=None, instrument=None, **kwargs):
         super(FilteroffsetModel, self).__init__(init, **kwargs)
         if filters is not None:
             self.filters = filters
+            if instrument is None or instrument not in ("NIRCAM", "MIRI", "NIRISS"):
+                raise ValueError("Please specify the instrument")
+            self.meta.instrument.name = instrument
 
     def populate_meta(self):
-        self.meta.instrument.name = "MIRI"
-        self.meta.instrument.detector = "MIRIMAGE"
-        self.meta.instrument.pfilter = "F1130W|F1140C|F2300C|F2100W|F1800W|\
-        F1550C|F560W|F2550WR|FND|F2550W|F1500W|F1000W|F1065C|F770W|F1280W|"
-
-    def on_save(self, path=None):
         self.meta.reftype = self.reftype
+        if self.meta.instrument.name == "MIRI":
+            self.meta.instrument.detector = "MIRIMAGE"
+            self.meta.instrument.pfilter = "F1130W|F1140C|F2300C|F2100W|F1800W|\
+            F1550C|F560W|F2550WR|FND|F2550W|F1500W|F1000W|F1065C|F770W|F1280W|"
+        elif self.meta.instrument.name == "NIRCAM":
+            self.meta.instrument.pfilter = "F070W|F090W|F115W|F140M|F150W|\
+            F162M|F164N|F150W2|F182M|F187N|F200W|F210M|F212N|"
+        elif self.meta.instrument.name == "NIRISS":
+            self.meta.instrument.pfilter = "F070W|F115W|F140M|F150W|F158M|\
+            F200W|F277W|F356W|F380M|F430M|F444W|F480M|"
+        else:
+            raise ValueError(f"Unsupported instrument: {self.meta.instrument.name}")
 
     def validate(self):
         super(FilteroffsetModel, self).validate()
-        try:
-            assert self.meta.instrument.name == "MIRI"
-            assert self.meta.instrument.detector == "MIRIMAGE"
-        except AssertionError as errmsg:
-            if self._strict_validation:
-                raise AssertionError(errmsg)
-            else:
-                warnings.warn(str(errmsg), ValidationWarning)
+
+        instrument_name = self.meta.instrument.name
+        nircam_channels = ["SHORT", "LONG"]
+        nircam_module = ["A", "B"]
+        if instrument_name not in ['MIRI', 'NIRCAM', 'NIRISS']:
+            self.print_err('Expected "meta.instrument.name" to be one of "NIRCAM, "MIRI" or "NIRISS"')
+        if instrument_name == "MIRI" and self.meta.instrument.detector != "MIRIMAGE":
+            self.print_err('Expected detector to be MIRIMAGE for instrument MIRI')
+        elif instrument_name == "NIRCAM":
+            if self.meta.instrument.channel not in nircam_channels:
+                self.print_err(f'Expected meta.instrument.channel for instrument NIRCAM to be one of {nircam_channels}')
+            if self.meta.instrument.module not in nircam_module:
+                self.print_err(f'Expected meta.instrument.module for instrument NIRCAM to be one of {nircam_module}')
 
 
 class IFUFOREModel(_SimpleModel):
