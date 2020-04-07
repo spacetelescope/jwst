@@ -93,6 +93,8 @@ resample_spec
 - Fix bug that was causing resampled MIRI LRS fixed-slit data to be all zero.
   [#4552]
 
+- Enable model metadata blending [#4765]
+
 source_catalog
 --------------
 
