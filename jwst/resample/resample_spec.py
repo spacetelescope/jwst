@@ -92,7 +92,7 @@ class ResampleSpecData:
             A gwcs WCS object defining the output frame WCS
         """
         # JEM - working on JP-936
-        # this code was run. Keeping it for now to compare against
+        # this is how the code was run. Keeping it for now to compare against
         if len(self.input_models) == 1:
 
             if refmodel is None:
@@ -107,7 +107,7 @@ class ResampleSpecData:
             tan = Pix2Sky_TAN()
             native2celestial = RotateNative2Celestial(lon, lat, 180)
             undist2sky = tan | native2celestial
-        # Filter out RuntimeWarnings due to computed NaNs in the WCS
+            # Filter out RuntimeWarnings due to computed NaNs in the WCS
             warnings.simplefilter("ignore")
             x_tan, y_tan = undist2sky.inverse(ra, dec)
             warnings.resetwarnings()
@@ -115,12 +115,12 @@ class ResampleSpecData:
             spectral_axis = find_dispersion_axis(refmodel)
             spatial_axis = spectral_axis ^ 1
 
-        # Compute the wavelength array, trimming NaNs from the ends
+            # Compute the wavelength array, trimming NaNs from the ends
             wavelength_array = np.nanmedian(lam, axis=spectral_axis)
             wavelength_array = wavelength_array[~np.isnan(wavelength_array)]
 
-        # Compute RA and Dec up the slit (spatial direction) at the center
-        # of the dispersion.  Use spectral_axis to determine slicing dimension
+            # Compute RA and Dec up the slit (spatial direction) at the center
+            # of the dispersion.  Use spectral_axis to determine slicing dimension
             lam_center_index = int((bb[spectral_axis][1] - bb[spectral_axis][0]) / 2)
             if not spectral_axis:
                 x_tan_array = x_tan.T[lam_center_index]
@@ -136,14 +136,16 @@ class ResampleSpecData:
             pix_to_ra = fitter(fit_model, np.arange(x_tan_array.shape[0]), x_tan_array)
             pix_to_dec = fitter(fit_model, np.arange(y_tan_array.shape[0]), y_tan_array)
 
-        # Tabular interpolation model, pixels -> lambda
+            print('pix to ra',pix_to_ra)
+            print('pix to ra',pix_to_dec)
+            # Tabular interpolation model, pixels -> lambda
             pix_to_wavelength = Tabular1D(lookup_table=wavelength_array,
                                           bounds_error=False, fill_value=None, name='pix2wavelength')
 
-        # Tabular models need an inverse explicitly defined.
-        # If the wavelength array is decending instead of ascending, both
-        # points and lookup_table need to be reversed in the inverse transform
-        # for scipy.interpolate to work properly
+           # Tabular models need an inverse explicitly defined.
+           # If the wavelength array is decending instead of ascending, both
+           # points and lookup_table need to be reversed in the inverse transform
+           # for scipy.interpolate to work properly
             points = wavelength_array
             lookup_table = np.arange(wavelength_array.shape[0])
             if not np.all(np.diff(wavelength_array) > 0):
@@ -153,23 +155,23 @@ class ResampleSpecData:
             lookup_table=lookup_table,
             bounds_error=False, fill_value=None, name='wavelength2pix')
 
-        # For the input mapping, duplicate the spatial coordinate
+            # For the input mapping, duplicate the spatial coordinate
             mapping = Mapping((spatial_axis, spatial_axis, spectral_axis))
 
-        # Sometimes the slit is perpendicular to the RA or Dec axis.
-        # For example, if the slit is perpendicular to RA, that means
-        # the slope of pix_to_ra will be nearly zero, so make sure
-        # mapping.inverse uses pix_to_dec.inverse.  The auto definition
-        # of mapping.inverse is to use the 2nd spatial coordinate, i.e. Dec.
+            # Sometimes the slit is perpendicular to the RA or Dec axis.
+            # For example, if the slit is perpendicular to RA, that means
+            # the slope of pix_to_ra will be nearly zero, so make sure
+            # mapping.inverse uses pix_to_dec.inverse.  The auto definition
+            # of mapping.inverse is to use the 2nd spatial coordinate, i.e. Dec.
             if np.isclose(pix_to_dec.slope, 0, atol=1e-8):
                 mapping_tuple = (0, 1)
-            # Account for vertical or horizontal dispersion on detector
+                # Account for vertical or horizontal dispersion on detector
                 if spatial_axis:
                     mapping.inverse = Mapping(mapping_tuple[::-1])
                 else:
                     mapping.inverse = Mapping(mapping_tuple)
 
-        # The final transform
+            # The final transform
             transform = mapping | (pix_to_ra & pix_to_dec | undist2sky) & pix_to_wavelength
 
             det = cf.Frame2D(name='detector', axes_order=(0, 1))
@@ -184,12 +186,12 @@ class ResampleSpecData:
 
             output_wcs = WCS(pipeline)
 
-        # compute the output array size in WCS axes order, i.e. (x, y)
+            # compute the output array size in WCS axes order, i.e. (x, y)
             output_array_size = [0, 0]
             output_array_size[spectral_axis] = len(wavelength_array)
             output_array_size[spatial_axis] = len(x_tan_array)
 
-        # turn the size into a numpy shape in (y, x) order
+            # turn the size into a numpy shape in (y, x) order
             self.data_size = tuple(output_array_size[::-1])
             bounding_box = resample_utils.wcs_bbox_from_shape(self.data_size)
             output_wcs.bounding_box = bounding_box
