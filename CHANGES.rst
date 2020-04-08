@@ -9,7 +9,7 @@ ami
 assign_wcs
 ---
 
-- Updated MIRI imaging distortion to use new filteroffset file format [#XX]
+- Updated MIRI imaging distortion to use new filteroffset file format [#4776]
 
 associations
 ------------
@@ -44,7 +44,7 @@ datamodels
 
 - Added ``pupil`` to the ``FilteroffsetModel`` to support NIRCAM and NIRISS WCS. [#4750]
 
-- Removed old MIRI-specific filteroffset schema.  [#XX]
+- Removed old MIRI-specific filteroffset schema.  [#4776]
 
 extract_1d
 ----------
