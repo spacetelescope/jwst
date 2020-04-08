@@ -8,6 +8,7 @@ from astropy.convolution import Gaussian2DKernel
 from astropy.stats import gaussian_fwhm_to_sigma, SigmaClip
 from astropy.table import join
 import astropy.units as u
+from scipy.spatial import cKDTree
 
 from photutils import Background2D, MedianBackground
 from photutils import detect_sources, deblend_sources, source_properties
@@ -625,8 +626,27 @@ class SourceCatalog:
     def calc_roundness(self, catalog):
         return self.null_column
 
-    def calc_isolation_metric(self, catalog):
-        return self.null_column
+    def calc_nearest_neighbors(self, catalog):
+        """
+        Calculate the distance in pixels to the nearest neighbor and
+        its AB magnitude.
+
+        If the nearest-neighbor is a star, then its aperture-corrected
+        total AB magnitude is used.  Otherwise, its isophotal AB
+        magnitude is used.
+        """
+
+        xypos = np.transpose((self.segment_catalog['xcentroid'],
+                              self.segment_catalog['ycentroid']))
+        tree = cKDTree(xypos)
+        qdist, qidx = tree.query(xypos, k=2)
+        dist = np.transpose(qdist)[1]
+        idx = np.transpose(qidx)[1]
+
+        nn_abmag = catalog['aper_total_abmag'][idx]
+        nn_isomag = self.segment_catalog['isophotal_abmag'][idx]
+
+        return dist, np.where(np.isnan(nn_abmag), nn_isomag, nn_abmag)
 
     def make_extras_catalog(self):
         catalog = self.segment_catalog[['id']]  # new table
@@ -638,7 +658,10 @@ class SourceCatalog:
         catalog['is_star'] = self.is_star
         catalog['sharpness'] = self.calc_sharpness(catalog)
         catalog['roundness'] = self.calc_roundness(catalog)
-        catalog['isolation_metric'] = self.calc_isolation_metric(catalog)
+
+        nn_dist, nn_abmag = self.calc_nearest_neighbors(catalog)
+        catalog['nn_dist'] = nn_dist * u.pixel
+        catalog['nn_abmag'] = nn_abmag
 
         self.extras_catalog = catalog
 
