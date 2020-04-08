@@ -35,12 +35,19 @@ class SourceCatalogStep(Step):
         suffix = string(default='cat')        # Default suffix for output files
     """
 
-    reference_file_types = ['apcorr']
+    reference_file_types = ['apcorr', 'abvega_offset']
 
     def process(self, input_model):
-        with datamodels.open(input)  as model:
+        with datamodels.open(input_model) as model:
             apcorr_filename = self.get_reference_file(input_model, 'apcorr')
             self.log.info(f'Using apcorr reference file {apcorr_filename}')
+
+            # TODO: fix after reference file is in CRDS
+            #abvega_offset_filename = self.get_reference_file(
+            #    input_model, 'abvega_offset')
+            abvega_offset_filename = None
+            self.log.info('Using abvega_offset reference file ' +
+                          f'{abvega_offset_filename}')
 
             if self.aperture_ee2 < self.aperture_ee1:
                 raise ValueError('aperture_ee2 value must be less than '
@@ -48,15 +55,16 @@ class SourceCatalogStep(Step):
             if self.aperture_ee3 < self.aperture_ee2:
                 raise ValueError('aperture_ee3 value must be less than '
                                  'aperture_ee2')
-            aperture_ee = (self.aperture_ee1, self.aperture_ee2,
-                           self.aperture_ee3)
+            aperture_ee = (int(self.aperture_ee1), int(self.aperture_ee2),
+                           int(self.aperture_ee3))
 
             catobj = SourceCatalog(model, bkg_boxsize=self.bkg_boxsize,
                                    kernel_fwhm=self.kernel_fwhm,
                                    snr_threshold=self.snr_threshold,
                                    npixels=self.npixels, deblend=self.deblend,
                                    aperture_ee=aperture_ee,
-                                   apcorr_filename=apcorr_filename)
+                                   apcorr_filename=apcorr_filename,
+                                   abvega_offset_filename=abvega_offset_filename)
             catalog = catobj.run()
 
             if self.save_results:
