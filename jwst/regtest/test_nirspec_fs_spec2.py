@@ -12,7 +12,7 @@ file_roots = [
     'jw93045010001_02101_00001_nrs2_',
     'jwtest1013001_01101_00001_nrs1_'
 ]
-ids = ["fullframe", "ALLSLITS-subarray", "S400A1-subarray"]
+ids = ["fullframe", "S400A1-subarray", "ALLSLITS-subarray"]
 
 @pytest.fixture(scope="module", params=file_roots, ids=ids)
 def run_pipeline(jail, rtdata_module, request):
