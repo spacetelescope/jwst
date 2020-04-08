@@ -6,6 +6,11 @@ ami
 
 - Reorganized step documentation [#4697]
 
+assign_wcs
+---
+
+- Updated MIRI imaging distortion to use new filteroffset file format [#XX]
+
 associations
 ------------
 
@@ -38,6 +43,8 @@ datamodels
 - Add data models for spectroscopic mode APCORR reference files. [#4770]
 
 - Added ``pupil`` to the ``FilteroffsetModel`` to support NIRCAM and NIRISS WCS. [#4750]
+
+- Removed old MIRI-specific filteroffset schema.  [#XX]
 
 extract_1d
 ----------

@@ -27,28 +27,14 @@ allOf:
         are matched with the SCI exposure metadata to get
         values for "row_offset" and "column_offset".
 
-        The option with the "name" key is used for
-        MIRI data.
-      anyOf:
-        - type: array
-          items:
-            type: object
-            properties:
-              name:
-                type: string
-              column_offset:
-                type: number
-              row_offset:
-                type: number
-        - type: array
-          items:
-            type: object
-            properties:
-              filter:
-                type: string
-              pupil:
-                type: string
-              row_offset:
-                type: number
-              column_offset:
-                type: number
+      items:
+        type: object
+        properties:
+          filter:
+            type: string
+          pupil:
+            type: string
+          row_offset:
+            type: number
+          column_offset:
+            type: number
