@@ -6,7 +6,7 @@ from jwst import datamodels
 
 from astropy.convolution import Gaussian2DKernel
 from astropy.stats import gaussian_fwhm_to_sigma, SigmaClip
-from astropy.table import join, QTable
+from astropy.table import join
 import astropy.units as u
 
 from photutils import Background2D, MedianBackground
@@ -15,7 +15,7 @@ from photutils import CircularAperture, CircularAnnulus, aperture_photometry
 from photutils.utils import calc_total_error
 from photutils.utils._wcs_helpers import _pixel_scale_angle_at_skycoord
 
-from ..datamodels import ImageModel
+from ..datamodels import ImageModel, ABVegaOffsetModel
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -24,7 +24,8 @@ log.setLevel(logging.DEBUG)
 class SourceCatalog:
     def __init__(self, model, bkg_boxsize=100, kernel_fwhm=2.0,
                  snr_threshold=3.0, npixels=5.0, deblend=False,
-                 aperture_ee=(30, 50, 70), apcorr_filename=None):
+                 aperture_ee=(30, 50, 70), apcorr_filename=None,
+                 abvega_offset_filename=None):
 
         if not isinstance(model, ImageModel):
             raise ValueError('The input model must be a ImageModel.')
@@ -36,8 +37,9 @@ class SourceCatalog:
         self.npixels = npixels
         self.deblend = deblend
         self.apcorr_filename = apcorr_filename
+        self.abvega_offset_filename = abvega_offset_filename
 
-        aperture_ee = np.array(aperture_ee)
+        aperture_ee = np.array(aperture_ee).astype(int)
         if len(aperture_ee) != 3:
             raise ValueError('aperture_ee must contain only 3 values')
         if np.any(np.logical_or(aperture_ee <= 0, aperture_ee >= 100)):
@@ -79,7 +81,7 @@ class SourceCatalog:
         self.aperture_corrs = None
         self.bkg_aperture_inner = None
         self.bkg_aperture_outer = None
-        self.abmag_offset = None
+        self.abvega_offset = None
         self.aperture_catalog = None
         self.extras_catalog = None
         self.catalog = None
@@ -151,6 +153,50 @@ class SourceCatalog:
             raise RuntimeError(f'{self.instrument} is not a valid instrument')
 
         self._find_aperture_params(selector)
+
+        return
+
+    def set_abvega_offset(self):
+        if self.instrument == 'NIRCAM' or self.instrument == 'NIRISS':
+            selector = {'filter': self.filtername, 'pupil': self.pupil}
+        elif self.instrument == 'MIRI':
+            selector = {'filter': self.filtername}
+        elif self.instrument == 'FGS':
+            selector = {'detector': self.detector}
+        else:
+            raise RuntimeError(f'{self.instrument} is not a valid instrument')
+
+        if self.abvega_offset_filename is None:
+            self.abvega_offset = 0.0
+            log.info('ABVegaOffsetModel reference file was not input -- '
+                     'catalog Vega magnitudes are not correct.')
+            return
+
+        abvega_offset_model = ABVegaOffsetModel(self.abvega_offset_filename)
+        offsets_table = abvega_offset_model.abvega_offset
+
+        try:
+            mask_idx = [offsets_table[key] == value
+                        for key, value in selector.items()]
+        except KeyError as badkey:
+            raise KeyError('{0} not found in ABVegaOffsetModel reference '
+                           'file {1}'.format(badkey,
+                                             self.abvega_offset_filename))
+
+        row = offsets_table[np.logical_and.reduce(mask_idx)]
+
+        if len(row) == 0:
+            raise RuntimeError('Did not find matching row in '
+                               'ABVegaOffsetModel reference file {0}'
+                               .format(self.abvega_offset_filename))
+        if len(row) > 1:
+            raise RuntimeError('Found more than one matching row in '
+                               'ABVegaOffsetModel reference file {0}'
+                               .format(self.abvega_offset_filename))
+
+        self.abvega_offset = row['abvega_offset'][0]
+        log.info('AB to Vega magnitude offset {:.5f}'
+                 .format(self.abvega_offset))
 
         return
 
@@ -411,7 +457,7 @@ class SourceCatalog:
         flux = catalog[flux_col]
         flux_err = catalog[flux_err_col]
         abmag, abmag_err = self.flux_to_abmag(flux, flux_err)
-        vegamag = abmag - self.abmag_offset
+        vegamag = abmag - self.abvega_offset
         vegamag_err = abmag_err
         catalog.add_column(abmag, name='isophotal_abmag', index=6)
         catalog.add_column(abmag_err, name='isophotal_abmag_err', index=7)
@@ -486,12 +532,6 @@ class SourceCatalog:
 
         return catalog
 
-    def get_abmag_offset(self):
-        filepath = 'abmag_to_vega.ecsv'
-        tbl = QTable.read(filepath)
-        self.abmag_offset = 0.
-        return self.abmag_offset
-
     def make_aperture_catalog(self):
         bkg_aperture = CircularAnnulus(self.xypos, self.bkg_aperture_inner,
                                        self.bkg_aperture_outer)
@@ -513,7 +553,7 @@ class SourceCatalog:
             flux = aper_phot[flux_col]
             flux_err = aper_phot[flux_err_col]
             abmag, abmag_err = self.flux_to_abmag(flux, flux_err)
-            vegamag = abmag - self.abmag_offset
+            vegamag = abmag - self.abvega_offset
             vegamag_err = abmag_err
 
             idx0 = 2 * i
@@ -605,7 +645,7 @@ class SourceCatalog:
 
         self.calc_total_error()
         self.apply_units()
-        self.get_abmag_offset()
+        self.set_abvega_offset()
 
         self.make_segment_catalog()
         self.make_null_column()
