@@ -386,6 +386,7 @@ class SourceCatalog:
         return self.total_error
 
     def calc_total_error(self):
+        #self.total_error = self._calc_total_error()
         self.total_error = np.zeros_like(self.model.data)
         return self.total_error
 
@@ -409,6 +410,11 @@ class SourceCatalog:
         abmag = -2.5 * np.log10(flux.value) + 8.9
         # assuming SNR >> 1 (otherwise abmag_err is asymmetric)
         abmag_err = 2.5 * np.log10(np.e) * (flux_err.value / flux.value)
+
+        # handle negative fluxes
+        idx = flux.value < 0
+        abmag[idx] = np.nan
+        abmag_err[idx] = np.nan
 
         return abmag, abmag_err
 
@@ -513,22 +519,54 @@ class SourceCatalog:
 
     def calc_is_star(self):
         """
-        Column containing a flag based on whether the source is a star.
+        Calculate a flag based on whether the source is a star.
 
         2020.03.02: The JWST Photometry Working Group has not determined
         the criteria for this flag.
         """
 
+        # TODO: need algorithm for this flag
+        #is_star = np.random.randint(2, size=len(self.aperture_catalog))
+        #return is_star.astype(bool)
+
         return self.null_column
 
     def append_aper_total(self, catalog):
-        # self.aperture_corrs
-        catalog['aper_total_flux'] = self.null_column
-        catalog['aper_total_flux_err'] = self.null_column
-        catalog['aper_total_abmag'] = self.null_column
-        catalog['aper_total_abmag_err'] = self.null_column
-        catalog['aper_total_vegamag'] = self.null_column
-        catalog['aper_total_vegamag_err'] = self.null_column
+        """
+        Calculate the aperture-corrected total flux for sources that are
+        stars.
+
+        The aperture fluxes in the largest aperture (i.e., the largest
+        encircled energy) are corrected to total flux.
+        """
+
+        idx = 2  # apcorr for the largest EE (largest radius)
+        apcorr = self.aperture_corrs[idx]
+        total_flux = (apcorr *
+                      self.aperture_catalog[self._flux_colnames[idx*2]])
+        total_flux_err = (apcorr *
+                          self.aperture_catalog[self._flux_colnames[idx*2 + 1]])
+
+        if np.isnan(self.is_star[0]):
+            # TODO: remove this when ``is_star`` values are available
+            # this array is all False
+            is_star = np.zeros(len(self.aperture_catalog), dtype=bool)
+        else:
+            is_star = self.is_star
+
+        not_star = np.logical_not(is_star)
+        total_flux[not_star] = np.nan
+        total_flux_err[not_star] = np.nan
+        catalog[self._flux_colnames[-2]] = total_flux
+        catalog[self._flux_colnames[-1]] = total_flux_err
+
+        abmag, abmag_err = self.flux_to_abmag(total_flux, total_flux_err)
+        vegamag = abmag - self.abvega_offset
+        vegamag_err = abmag_err
+        catalog[self._abmag_colnames[-2]] = abmag
+        catalog[self._abmag_colnames[-1]] = abmag_err
+        catalog[self._vegamag_colnames[-2]] = vegamag
+        catalog[self._vegamag_colnames[-1]] = vegamag_err
 
         return catalog
 
@@ -593,11 +631,11 @@ class SourceCatalog:
     def make_extras_catalog(self):
         catalog = self.segment_catalog[['id']]  # new table
 
+        self.is_star = self.calc_is_star()
         catalog = self.append_aper_total(catalog)
 
         catalog[self._ci_colname] = self.calc_concentration_index()
-        catalog['is_star'] = self.calc_is_star()
-
+        catalog['is_star'] = self.is_star
         catalog['sharpness'] = self.calc_sharpness(catalog)
         catalog['roundness'] = self.calc_roundness(catalog)
         catalog['isolation_metric'] = self.calc_isolation_metric(catalog)
@@ -610,8 +648,9 @@ class SourceCatalog:
         catalog = join(self.segment_catalog, self.aperture_catalog)
         catalog = join(catalog, self.extras_catalog)
 
-        # Until errors are produced for the level 3 drizzle products,
-        # the JPWG has decided that the errors should not be populated.
+        # TODO: Until errors are produced for the level 3 drizzle
+        # products, the JPWG has decided that the errors should not be
+        # populated.
         for colname in catalog.colnames:
             if colname.endswith('_err'):
                 catalog[colname] = self.null_column
