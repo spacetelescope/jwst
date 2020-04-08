@@ -93,8 +93,9 @@ class ResampleSpecData:
         """
         # JEM - working on JP-936
         # this is how the code was run. Keeping it for now to compare against
-        if len(self.input_models) == 1:
-
+        do = 0
+        if len(self.input_models) == 1 and do == 1:
+            print('using the old way to figure out output wcs')
             if refmodel is None:
                 refmodel = self.input_models[0]
 
@@ -130,7 +131,8 @@ class ResampleSpecData:
                 y_tan_array = y_tan[lam_center_index]
             x_tan_array = x_tan_array[~np.isnan(x_tan_array)]
             y_tan_array = y_tan_array[~np.isnan(y_tan_array)]
-
+            print('size of x_tan',x_tan_array.shape)
+            
             fitter = LinearLSQFitter()
             fit_model = Linear1D()
             pix_to_ra = fitter(fit_model, np.arange(x_tan_array.shape[0]), x_tan_array)
@@ -203,6 +205,7 @@ class ResampleSpecData:
         # x_tan, y_tan
         # append the x_tan, y_tan and wavelength arrays
         # sort them and store in lookup table 
+            print('using new method to determine output WCS')
             all_wavelength = []
             all_ra_slit = []
             all_dec_slit = []
