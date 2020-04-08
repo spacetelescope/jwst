@@ -44,9 +44,6 @@ def exp_to_source(inputs):
             merge_tree(result_slit.exposures[-1].meta.instance, exposure.meta.instance)
 
             if result_slit.meta.instrument.name is None:
-                if isinstance(inputs, DataModel):
-                    result_slit.update(inputs)
-
                 result_slit.update(exposure)
 
             result_slit.meta.filename = None  # Resulting merged data doesn't come from one file
