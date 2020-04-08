@@ -37,6 +37,8 @@ datamodels
 
 - Add data models for spectroscopic mode APCORR reference files. [#4770]
 
+- Added ``pupil`` to the ``FilteroffsetModel`` to support NIRCAM and NIRISS WCS. [#4750]
+
 extract_1d
 ----------
 
