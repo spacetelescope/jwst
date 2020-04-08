@@ -1,3 +1,6 @@
+import warnings
+
+from .validate import ValidationWarning
 from .reference import ReferenceFileModel
 
 __all__ = ['ABVegaOffsetModel']
@@ -37,3 +40,30 @@ class ABVegaOffsetModel(ReferenceFileModel):
     """
 
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/abvega_offset.schema"
+
+    def __init__(self, init=None, **kwargs):
+        super(ABVegaOffsetModel, self).__init__(init=init, **kwargs)
+
+    def validate(self):
+        super(ABVegaOffsetModel, self).validate()
+        try:
+            assert len(self.abvega_offset) > 0
+            assert (self.meta.instrument.name in
+                    ('FGS', 'MIRI', 'NIRCAM', 'NIRISS'))
+            assert 'abvega_offset' in self.abvega_offset.colnames
+
+            if self.meta.instrument.name == 'FGS':
+                assert 'detector' in self.abvega_offset.colnames
+
+            if self.meta.instrument.name == 'MIRI':
+                assert 'filter' in self.abvega_offset.colnames
+
+            if self.meta.instrument.name in ('NIRCAM', 'NIRISS'):
+                assert 'filter' in self.abvega_offset.colnames
+                assert 'pupil' in self.abvega_offset.colnames
+
+        except AssertionError as errmsg:
+            if self._strict_validation:
+                raise AssertionError(errmsg)
+            else:
+                warnings.warn(str(errmsg), ValidationWarning)

@@ -6,6 +6,7 @@ import warnings
 import jsonschema
 
 import pytest
+from astropy.table import Table
 from astropy.time import Time
 import numpy as np
 from numpy.testing import assert_allclose
@@ -13,7 +14,7 @@ from astropy.io import fits
 
 from jwst.datamodels import (DataModel, ImageModel, MaskModel, QuadModel,
                 MultiSlitModel, ModelContainer, SlitModel,
-                SlitDataModel, IFUImageModel)
+                SlitDataModel, IFUImageModel, ABVegaOffsetModel)
 from jwst import datamodels
 from jwst.lib.file_utils import pushdir
 
@@ -691,3 +692,13 @@ def test_ifuimage():
 def test_datamodel_raises_filenotfound():
     with pytest.raises(FileNotFoundError):
         DataModel(init='file_does_not_exist.fits')
+
+def test_abvega_offset_model():
+    filepath = os.path.join(ROOT_DIR, 'nircam_abvega_offset.asdf')
+    model = ABVegaOffsetModel(filepath)
+    assert isinstance(model, ABVegaOffsetModel)
+    assert hasattr(model, 'abvega_offset')
+    assert isinstance(model.abvega_offset, Table)
+    assert model.abvega_offset.colnames == ['filter', 'pupil', 'abvega_offset']
+    model.validate()
+    model.close()
