@@ -7,8 +7,7 @@ from collections.abc import Callable
 
 from ..datamodels import (
     MultiExposureModel,
-    SourceModelContainer,
-    DataModel)
+    SourceModelContainer)
 from ..datamodels.properties import merge_tree
 
 __all__ = ['exp_to_source', 'multislit_to_container']
