@@ -69,6 +69,9 @@ outlier_detection
   Default value of ``good_bits`` now includes all DQ flags except ``DO_NOT_USE``.
   Also, newly flagged outliers are flagged with ``DO_NOT_USE + OUTLIER``.
 
+- Added a hardcoded declaration of a reasonable scale parameter for MIRI MRS as a stopgap
+  measure until a parameter reference file can pass one more cleanly. [#4778]
+
 pipeline
 --------
 
