@@ -1,6 +1,6 @@
-from ... import (Pipeline, Step)
-from .... import datamodels
-from ....datamodels import (
+from jwst.stpipe import (Pipeline, Step)
+from jwst import datamodels
+from jwst.datamodels import (
     ImageModel,
     ModelContainer,
 )
@@ -139,12 +139,12 @@ class SaveStep(Step):
     """
 
     def process(self, *args):
-        model = ImageModel(args[0])
+        with ImageModel(args[0]) as model:
 
-        self.log.info('Saving model as "processed"')
-        self.save_model(model, 'processed')
+            self.log.info('Saving model as "processed"')
+            self.save_model(model, 'processed')
 
-        return model
+            return model
 
 
 class StepWithContainer(Step):
@@ -172,10 +172,9 @@ class StepWithModel(Step):
     """
 
     def process(self, *args):
-        input_path = self.open_model(args[0])
-        model = ImageModel(input_path)
-
-        return model
+        with self.open_model(args[0]) as input_path:
+            with ImageModel(input_path) as model:
+                return model
 
 
 class EmptyPipeline(Pipeline):

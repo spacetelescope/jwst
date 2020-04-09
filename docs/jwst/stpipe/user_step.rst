@@ -191,6 +191,21 @@ required, see :ref:`user-logging`).
 To start the Python debugger if the step itself raises an exception,
 pass the `--debug` option to the commandline.
 
+
+CRDS Retrieval of Step Parameters
+`````````````````````````````````
+
+In general, CRDS uses the input to a ``Step`` to determine which reference files
+to use. Nearly all JWST-related steps take only a single input file. However,
+often times that input file is an association. Since step parameters are
+configured only once per execution of a step or pipeline, only the first
+qualifying member, usually of type ``science`` is used.
+
+Retrieval of ``Step`` parameters from CRDS can be completely disabled by
+using the ``--disable-crds-steppars`` command-line switch, or setting the
+environmental variable ``STPIPE_DISABLE_CRDS_STEPPARS`` to ``true``.
+
+
 Running a Step in Python
 ------------------------
 

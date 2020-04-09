@@ -20,3 +20,12 @@ FGS_GUIDE_EXP_TYPES = [
     'fgs_id-stack',
     'fgs_track',
 ]
+
+
+def is_moving_target(input_models):
+    """ Determine if a moving target exposure."""
+    model = input_models[0]
+    if hasattr(model.meta.target, 'type') and \
+        model.meta.target.type is not None and model.meta.target.type.lower() == 'moving':
+        return True
+    return False

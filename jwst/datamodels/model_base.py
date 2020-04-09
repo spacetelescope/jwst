@@ -162,15 +162,17 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
             if file_type == "fits":
                 if s3_utils.is_s3_uri(init):
-                    hdulist = fits.open(s3_utils.get_object(init))
+                    init_fitsopen = s3_utils.get_object(init)
+                    memmap = None
                 else:
-                    hdulist = fits.open(init, memmap=memmap)
+                    init_fitsopen = init
 
-                asdffile = fits_support.from_fits(hdulist,
-                                              self._schema,
-                                              self._ctx,
-                                              **kwargs)
-                self._files_to_close.append(hdulist)
+                with fits.open(init_fitsopen, memmap=memmap) as hdulist:
+                    asdffile = fits_support.from_fits(hdulist,
+                                                  self._schema,
+                                                  self._ctx,
+                                                  **kwargs)
+                    self._files_to_close.append(hdulist)
 
             elif file_type == "asdf":
                 asdffile = self.open_asdf(init=init, **kwargs)
@@ -201,11 +203,17 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                     "no primary array in its schema")
             setattr(self, primary_array_name, init)
 
+        # If a shape has been given, initialize the primary array.
         if is_shape:
-            if not self.get_primary_array_name():
+            primary_array_name = self.get_primary_array_name()
+            if not primary_array_name:
                 raise TypeError(
                     "Shape passed to DataModel.__init__, but model has "
                     "no primary array in its schema")
+
+            # Initialization occurs when the primary array is first
+            # referenced. Do so now.
+            getattr(self, primary_array_name)
 
         # if the input is from a file, set the filename attribute
         if isinstance(init, str):
@@ -907,6 +915,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                     else:
                         if isinstance(part, int):
                             this_cursor.append({})
+                        elif isinstance(that_cursor, list):
+                            this_cursor[part] = []
                         else:
                             this_cursor[part] = {}
                 this_cursor = this_cursor[part]

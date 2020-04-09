@@ -35,5 +35,15 @@ allOf:
       fits_hdu: AREA
       default: 0.0
       datatype: float32
+    con:
+      title: Drizzle Context array
+      fits_hdu: CON
+      default: 0
+      datatype: int32
+    wht:
+      title: Drizzle Weight array
+      fits_hdu: WHT
+      default: 0.0
+      datatype: float32
 - $ref: variance.schema
 - $ref: pathlosscorr.schema

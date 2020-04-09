@@ -70,13 +70,12 @@ def test_spatial_transform_nirspec():
     im.meta.observation._instance.update(observation)
     im.meta.exposure._instance.update(exposure)
     im.meta.subarray._instance.update(subarray)
+    im.meta.filename = 'test.fits'
     im = AssignWcsStep.call(im)
-
     im = Extract2dStep.call(im)
-
     im = ResampleSpecStep.call(im)
 
-    for slit in im.products:
+    for slit in im.slits:
         x, y =grid_from_bounding_box(slit.meta.wcs.bounding_box)
         ra, dec, lam = slit.meta.wcs(x, y)
 

@@ -7,30 +7,30 @@ from .. import generate
 from ..main import constrain_on_candidates
 
 LEVEL3_ASN_ACID_NAME_REGEX = (
-    'jw'
-    '(?P<program>\d{5})'
-    '-(?P<acid>(o|c)\d{3,4})'
-    '_(?P<asn_type>\w+)'
-    '_(?P<sequence>\d{3})'
-    '_asn'
+    r'jw'
+    r'(?P<program>\d{5})'
+    r'-(?P<acid>(o|c)\d{3,4})'
+    r'_(?P<asn_type>\w+)'
+    r'_(?P<sequence>\d{3})'
+    r'_asn'
 )
 LEVEL3_ASN_DISCOVERED_NAME_REGEX = (
-    'jw'
-    '(?P<program>\d{5})'
-    '-(?P<acid>a\d{4})'
-    '_(?P<asn_type>\w+)'
-    '_(?P<sequence>\d{3})'
-    '_asn'
+    r'jw'
+    r'(?P<program>\d{5})'
+    r'-(?P<acid>a\d{4})'
+    r'_(?P<asn_type>\w+)'
+    r'_(?P<sequence>\d{3})'
+    r'_asn'
 )
 
 LEVEL3_ASN_WITH_VERSION = (
-    'jw'
-    '(?P<program>\d{5})'
-    '-(?P<acid>[a-z]\d{3,4})'
-    '_(?P<stamp>.+)'
-    '_(?P<asn_type>.+)'
-    '_(?P<sequence>\d{3})'
-    '_asn'
+    r'jw'
+    r'(?P<program>\d{5})'
+    r'-(?P<acid>[a-z]\d{3,4})'
+    r'_(?P<stamp>.+)'
+    r'_(?P<asn_type>.+)'
+    r'_(?P<sequence>\d{3})'
+    r'_asn'
 )
 
 all_candidates = constrain_on_candidates(None)

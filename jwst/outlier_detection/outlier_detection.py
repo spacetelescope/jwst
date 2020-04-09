@@ -17,7 +17,9 @@ import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-CRBIT = np.uint32(datamodels.dqflags.pixel['JUMP_DET'])
+CRBIT = np.uint32(
+    datamodels.dqflags.pixel['DO_NOT_USE'] + datamodels.dqflags.pixel['OUTLIER']
+)
 
 
 __all__ = ["OutlierDetection", "flag_cr", "abs_deriv"]

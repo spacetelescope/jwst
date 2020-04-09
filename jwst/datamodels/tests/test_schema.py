@@ -614,8 +614,8 @@ def test_validate_transform_from_file():
     Tests that custom types, like transform, can be validated.
     """
     fname = os.path.join(os.path.dirname(__file__), 'data', 'collimator_fake.asdf')
-    m = CollimatorModel(fname, strict_validation=True)
-    m.validate()
+    with CollimatorModel(fname, strict_validation=True) as m:
+        m.validate()
 
 
 def test_multislit_append_string():

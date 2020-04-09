@@ -1,10 +1,151 @@
 0.15.2 (unreleased)
 ==================
 
+ami
+---
+
+- Reorganized step documentation [#4697]
+
+associations
+------------
+
+- Update asn_from_list to have default values in the asn header [#4720]
+
+- Update rules so exclude dark files from associations [#4668]
+
+- Update association rules so that nodded observations procduce level 3 asn's [#4675]
+
+cmdline
+-------
+
+- Re-enable exeption tracebacks from strun for issues outside step processing [#4761]
+
+coron
+-----
+
+- Reorganized step documentation [#4697]
+
+datamodels
+----------
+
+- Deprecate ``DrizProductModel`` and ``MultiProductModel`` and replace with
+  updated versions of ``ImageModel`` and ``SlitModel`` that include "CON" and
+  "WHT" arrays for resampled data. [#4552]
+
+- Remove lev3_prod schema and move resample-related keywords to
+  core schema. [#4552]
+
+- Add data models for spectroscopic mode APCORR reference files. [#4770]
+
+- Added ``pupil`` to the ``FilteroffsetModel`` to support NIRCAM and NIRISS WCS. [#4750]
+
+exp_to_source
+-------------
+
+- Resulting MultiExposureModels are now updated with header information from the inputs. [#4771]
+
+extract_1d
+----------
+
+- Updates for handling resampled input data as ``ImageModel``, ``SlitModel``,
+  and ``MultiSlitModel``, instead of ``DrizProductModel`` and ``MultiProductModel``,
+  which are deprecated. [#4552]
+
+- Remove pixel-by-pixel calls to wcs; copy input keywords to output for
+  more types of input data. [#4685]
+
+extract_2d
+----------
+
+- Change the source type for NIRSpec MOS sources with stellarity = -1 from
+  UNKOWN to POINT. [#4686]
+
+master_background
+-----------------
+
+- Updated step arguments in the documentation. [#4723]
+
+- Fix issue with files left open at end of step [#4775]
+
+outlier_detection
+-----------------
+
+- Updated step arguments in the documentation. [#4723]
+
+- Change outlier and resample DQ bit usage.  [#4726]
+  Default value of ``good_bits`` now includes all DQ flags except ``DO_NOT_USE``.
+  Also, newly flagged outliers are flagged with ``DO_NOT_USE + OUTLIER``.
+
+pipeline
+--------
+
+- Update ``calwebb_coron3`` to return ``ImageModel`` instead of ``DrizProductModel``,
+  when necessary. [#4552]
+
+- Fix issue with files left open at end of ``calwebb_spec2`` [#4775]
+
+
+resample
+--------
+
+- Update to return resampled data in an ``ImageModel``, instead of
+  ``DrizProductModel``. [#4552]
+
+- Updated documentation to include step arguments and reference file
+  description. [#4723]
+
+- Change outlier and resample DQ bit usage.  [#4726]
+  The parameter ``good_bits`` has been removed in favor of allowing all
+  DQ flags except for ``DO_NOT_USE``
+
+resample_spec
+-------------
+
+- Update to return resampled data in a ``SlitModel`` or ``MultiSlitModel``,
+  instead of ``DrizProductModel`` or ``MultiProductModel``. [#4552]
+
+- Fix bug that was causing resampled MIRI LRS fixed-slit data to be all zero.
+  [#4552]
+
+- Enable model metadata blending [#4765]
+
 rscd
 ----
 
 - Added baseline algorithm that flags groups [#4669]
+
+source_catalog
+--------------
+
+- Update to use ``ImageModel`` for resampled input data, instead of
+  ``DrizProductModel``. [#4552]
+
+- Updated step arguments in the documentation. [#4723]
+
+srctype
+-------
+
+- Change default source type for NRS_IFU from POINT to EXTENDED. Change the source
+  type for NIRSpec MOS sources with stellarity = -1 from UNKNOWN to POINT. [#4686]
+
+stpipe
+------
+
+- Unhide exceptions during CRDS steppars retrieval [#4691]
+
+- Add command line and environmental options to not retrieve steppars references [#4676]
+
+- Use only a single member of an association for CRDS STEPPARS checking [#4684]
+
+strun
+-----
+
+- Re-enable exeption tracebacks from strun for issues outside step processing [#4761]
+
+tweakreg
+--------
+
+- Updated step arguments in the documentation. [#4723]
 
 0.15.1 (2020-03-10)
 ===================

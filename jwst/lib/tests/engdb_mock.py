@@ -57,7 +57,6 @@ class EngDB_Mocker(requests_mock.Mocker):
 
         # Setup from meta query
         meta_query = re.compile(''.join([
-            engdb_tools.ENGDB_BASE_URL,
             engdb_tools.ENGDB_METADATA,
             '.*'
         ]))
@@ -65,7 +64,6 @@ class EngDB_Mocker(requests_mock.Mocker):
 
         # Setup to return a general data query
         data_query = re.compile(''.join([
-            engdb_tools.ENGDB_BASE_URL,
             engdb_tools.ENGDB_DATA,
             r'.+\?sTime=.+\&eTime=.+'
         ]))

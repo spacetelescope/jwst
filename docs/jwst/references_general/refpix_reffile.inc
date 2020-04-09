@@ -62,13 +62,13 @@ rows in the table.
 The second BINTABLE extension is labeled with EXTNAME = "DQ" and has the
 following column characteristics:
 
-=======   =========
+========  =========
 Column    Data type
-=======   =========
+========  =========
 output    int16
 odd_even  int16
 mask      uint32
-=======   =========
+========  =========
 
 This table has eight rows.  The "output" column contains the amplifier output
 numbers:  1, 1, 2, 2, 3, 3, 4, 4.  The "odd_even" column contains values

@@ -25,7 +25,7 @@ header.
 
 The ``srctype`` calibration step checks to see if the "SRCTYPE" keyword
 is present and has already been populated. If the observer did not provide a
-source type value or it is set to "UNKNOWN", the ``srctype``
+source type value or chose "UNKNOWN", the ``srctype``
 step chooses a suitable value based on the observing mode and
 other characteristics of the exposure. The following choices are used, in
 order of priority:
@@ -63,11 +63,11 @@ order of priority:
 +-------------------+------------------------+----------+
 | NRS_BRIGHTOBJ     | NIRSpec bright object  | POINT    |
 +-------------------+------------------------+----------+
-| NRS_IFU           | NIRSpec IFU            | POINT    |
+| NRS_IFU           | NIRSpec IFU            | EXTENDED |
 +-------------------+------------------------+----------+
 
 If the EXP_TYPE value of the input image is not in the above list,
-the default choice will be SRCTYPE="EXTENDED."
+SRCTYPE will be set to "UNKNOWN".
 
 NOTE: NIRSpec fixed-slit (EXP_TYPE="NRS_FIXEDSLIT") exposures are
 unique in that a single target is specified in the APT, yet data for
@@ -100,9 +100,9 @@ evaluated by the ``srctype`` step to determine whether each source
 should be treated as point or extended.
 
 If the stellarity value for a given source in the MSA metadata is less
-than zero, the source type is set to "UNKNOWN." If the stellarity value is
+than zero, the source type defaults to "POINT." If the stellarity value is
 between zero and 0.75, it is set to "EXTENDED", and if the stellarity value
-is greater than 0.75, it is set to "POINT." The resulting choice as stored in
+is greater than 0.75, it is set to "POINT." The resulting choice is stored in
 the "SRCTYPE" keyword located in the header of the SCI extension associated with
 each slitlet.
 

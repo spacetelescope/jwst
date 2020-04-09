@@ -97,15 +97,14 @@ def test_nircam_image_stage2_wcs(run_image2pipeline, rtdata_module):
     rtdata.output = output
     rtdata.get_truth("truth/test_nircam_image_stages/" + output)
 
-    model = datamodels.open(rtdata.output)
-    model_truth = datamodels.open(rtdata.truth)
-    grid = grid_from_bounding_box(model.meta.wcs.bounding_box)
+    with datamodels.open(rtdata.output) as model, datamodels.open(rtdata.truth) as model_truth:
+        grid = grid_from_bounding_box(model.meta.wcs.bounding_box)
 
-    ra, dec = model.meta.wcs(*grid)
-    ra_truth, dec_truth = model_truth.meta.wcs(*grid)
+        ra, dec = model.meta.wcs(*grid)
+        ra_truth, dec_truth = model_truth.meta.wcs(*grid)
 
-    assert_allclose(ra, ra_truth)
-    assert_allclose(dec, dec_truth)
+        assert_allclose(ra, ra_truth)
+        assert_allclose(dec, dec_truth)
 
 
 @pytest.mark.bigdata

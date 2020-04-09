@@ -24,3 +24,7 @@ The master background subtraction step uses the following optional arguments.
   :ref:`calwebb_spec2 <calwebb_spec2>` :ref:`background <background_step>` step has
   already been applied. If ``--force_subtract = True``, the master background will be
   applied.
+
+``--output_use_model``
+  A boolean indicating whether to use the "filename" meta attribute in the data model to
+  determine the name of the output file created by the step. Defaults to ``True``.

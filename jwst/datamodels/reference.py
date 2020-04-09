@@ -1,6 +1,4 @@
 import warnings
-import sys
-import traceback
 
 from .model_base import DataModel
 from .dynamicdq import dynamic_mask
@@ -26,24 +24,24 @@ class ReferenceFileModel(DataModel):
         Convenience function to be run when files are created.
         Checks that required reference file keywords are set.
         """
-        try:
-            assert self.meta.description is not None
-            assert self.meta.telescope == 'JWST'
-            assert self.meta.reftype is not None
-            assert self.meta.author is not None
-            assert self.meta.pedigree is not None
-            assert self.meta.useafter is not None
-            assert self.meta.instrument.name is not None
-        except AssertionError:
-            if self._strict_validation:
-                raise
-            else:
-                tb = sys.exc_info()[-1]
-                tb_info = traceback.extract_tb(tb)
-                text = tb_info[-1][-1]
-                warnings.warn(text, ValidationWarning)
+        to_fix = []
+        to_check = ['description', 'reftype', 'author', 'pedigree', 'useafter']
+        for field in to_check:
+            if getattr(self.meta, field) is None:
+                to_fix.append(field)
+        if self.meta.instrument.name is None:
+            to_fix.append('instrument.name')
+        if self.meta.telescope != 'JWST':
+            to_fix.append('telescope')
+        if to_fix:
+            self.print_err(f'Model.meta is missing values for {to_fix}')
+        super().validate()
 
-        super(ReferenceFileModel, self).validate()
+    def print_err(self, message):
+        if self._strict_validation:
+            raise ValueError(message)
+        else:
+            warnings.warn(message, ValidationWarning)
 
 
 class ReferenceImageModel(ReferenceFileModel):
