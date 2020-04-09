@@ -782,8 +782,45 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
             err=err_tot.astype(np.float32))
 
  #   new_model.update(model)  # ... and add all keys from input
+    if int_model is not None:
+        int_data = int_model.data.copy()
+        int_dq = int_model.dq.copy()
+        int_var_poisson = int_model.var_poisson.copy()
+        int_var_rnoise = int_model.var_rnoise.copy()
+        int_err = int_model.var_err.copy()
+        int_int_times = int_model.int_times.copy()
+    else:
+        int_data = None
+        int_dq = None
+        int_var_poisson = None
+        int_var_rnoise = None
+        int_err = None
+        int_int_times = None
+    if opt_model is not None:
+        opt_slope = opt_model.slope.copy()
+        opt_sigslope = opt_model.sigslope.copy()
+        opt_var_poisson = opt_model.var_poisson.copy()
+        opt_var_rnoise = opt_model.var_rnoise.copy()
+        opt_yint = opt_model.yint.copy()
+        opt_sigyint = opt_model.sigyint.copy()
+        opt_pedestal = opt_model.pedestal.copy()
+        opt_weights = opt_model.weights.copy()
+        opt_crmag = opt_model.crmag.copy()
+    else:
+        opt_slope = None
+        opt_sigslope = None
+        opt_var_poisson = None
+        opt_var_rnoise = None
+        opt_yint = None
+        opt_sigyint = None
+        opt_pedestal = None
+        opt_weights = None
+        opt_crmag = None
 
-    return new_model, int_model, opt_model
+    return new_model.data, new_model.dq, new_model.var_poisson, new_model.rnoise, new_model.err, \
+            int_data, int_dq, int_var_poisson, int_var_rnoise, int_err, int_int_times, \
+            opt_slope, opt_sigslope, opt_var_poisson, opt_var_rnoise, opt_yint, opt_sigyint, \
+            opt_pedestal, opt_weights, opt_crmag
 
 
 def gls_ramp_fit(model, buffsize, save_opt,

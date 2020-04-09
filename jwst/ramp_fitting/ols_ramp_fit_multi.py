@@ -89,13 +89,13 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
                                       err=np.zeros(imshape, dtype=np.float32))
     out_model.update(input_model)  # ... and add all keys from input
     #create per integrations model, if this is a multi-integration exposure
-    if number_of_integrations > 0:
+    if number_of_integrations > 1:
         int_model = datamodels.CubeModel(
             data=np.zeros((number_of_integrations,) + imshape, dtype=np.float32),
             dq=np.zeros(imshape, dtype=np.unit32),
             var_poisson=np.zeros((number_of_integrations,) + imshape, dtype=np.float32),
             var_rnoise=np.zeros((number_of_integrations,) + imshape, dtype=np.float32),
-            int_times=None,
+            int_times=np.zeros((number_of_integrations,) + imshape, dtype=np.float32),
             err=np.zeros((number_of_integrations,) + imshape, dtype=np.float32))
         int_model.update(input_model)  # ... and add all keys from input
     else:
@@ -121,47 +121,50 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
 
     for resultslice in real_results:
         if len(real_results) == k + 1:  # last result
-            out_model.data[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[0].data
-            out_model.dq[k * rows_per_slice:total_rows, :] = resultslice[0].dq
-            out_model.var_poisson[:, :, k * rows_per_slice:total_rows, :] = resultslice[0].var_poisson
-            out_model.var_rnoise[:, :, k * rows_per_slice:total_rows, :] = resultslice[0].var_rnoise
-            out_model.err[:, :, k * rows_per_slice:total_rows, :] = resultslice[0].err
-            if resultslice[1] is not None:
-                int_model.data[:, :, k * rows_per_slice:total_rows, :] = resultslice[1].data
-                int_model.dq[k * rows_per_slice:total_rows, :] = resultslice[1].dq
-                int_model.var_poisson[:, :, k * rows_per_slice:total_rows, :] = resultslice[1].var_poisson
-                int_model.var_rnoise[:, :, k * rows_per_slice:total_rows, :] = resultslice[1].var_rnoise
-                int_model.err[:, :, k * rows_per_slice:total_rows, :] = resultslice[1].err
-            if resultslice[2] is not None:
-                opt_model.slope[:, :, k * rows_per_slice:total_rows, :] = resultslice[2].slope
-                opt_model.sigslope[:, :, k * rows_per_slice:total_rows, :] = resultslice[2].sigslope
-                opt_model.var_poisson[:, :, k * rows_per_slice:total_rows, :] = resultslice[2].var_poisson
-                opt_model.var_rnoise[:, :, k * rows_per_slice:total_rows, :] = resultslice[2].var_rnoise
-                opt_model.yint[:, :, k * rows_per_slice:total_rows, :] = resultslice[2].yint
-                opt_model.sigyint[:, :, k * rows_per_slice:total_rows, :] = resultslice[2].sigyint
-                opt_model.pedestal[:, :, k * rows_per_slice:total_rows, :] = resultslice[2].pedestal
-                opt_model.weights[:, :, k * rows_per_slice:total_rows, :] = resultslice[2].weights
-                opt_model.crmag[:, :, k * rows_per_slice:total_rows, :] = resultslice[2].crmag
+            out_model.data[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[0]
+            out_model.dq[k * rows_per_slice:total_rows, :] = resultslice[1]
+            out_model.var_poisson[:, :, k * rows_per_slice:total_rows, :] = resultslice[2]
+            out_model.var_rnoise[:, :, k * rows_per_slice:total_rows, :] = resultslice[3]
+            out_model.err[:, :, k * rows_per_slice:total_rows, :] = resultslice[4]
+            if resultslice[5] is not None:
+                int_model.data[:, :, k * rows_per_slice:total_rows, :] = resultslice[5]
+                int_model.dq[k * rows_per_slice:total_rows, :] = resultslice[6]
+                int_model.var_poisson[:, :, k * rows_per_slice:total_rows, :] = resultslice[7]
+                int_model.var_rnoise[:, :, k * rows_per_slice:total_rows, :] = resultslice[8]
+                int_model.err[:, :, k * rows_per_slice:total_rows, :] = resultslice[9]
+                int_model.int_times[:, :, k * rows_per_slice:total_rows, :] = resultslice[10]
+            if resultslice[11] is not None:
+                opt_model.slope[:, :, k * rows_per_slice:total_rows, :] = resultslice[11]
+                opt_model.sigslope[:, :, k * rows_per_slice:total_rows, :] = resultslice[12]
+                opt_model.var_poisson[:, :, k * rows_per_slice:total_rows, :] = resultslice[13]
+                opt_model.var_rnoise[:, :, k * rows_per_slice:total_rows, :] = resultslice[14]
+                opt_model.yint[:, :, k * rows_per_slice:total_rows, :] = resultslice[15]
+                opt_model.sigyint[:, :, k * rows_per_slice:total_rows, :] = resultslice[16]
+                opt_model.pedestal[:, :, k * rows_per_slice:total_rows, :] = resultslice[17]
+                opt_model.weights[:, :, k * rows_per_slice:total_rows, :] = resultslice[18]
+                opt_model.crmag[:, :, k * rows_per_slice:total_rows, :] = resultslice[19]
         else:
-            out_model.data[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[0].data
-            out_model.dq[k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[0].dq
-            out_model.var_poisson[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[0].var_poisson
-            out_model.var_rnoise[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[0].var_rnoise
-            out_model.err[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[0].err
-            if resultslice[1] is not None:
-                int_model.data[:, :, k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[1].data
-                int_model.dq[k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[1].dq
-                int_model.var_poisson[:, :, k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[1].var_poisson
-                int_model.var_rnoise[:, :, k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[1].var_rnoise
-                int_model.err[:, :, k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[1].err
-            if resultslice[2] is not None:
-                opt_model.slope[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[2].slope
-                opt_model.sigslope[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[2].sigslope
-                opt_model.var_poisson[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[2].var_poisson
-                opt_model.var_rnoise[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[2].var_rnoise
-                opt_model.yint[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[2].yint
-                opt_model.sigyint[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[2].sigyint
-                opt_model.pedestal[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[2].pedestal
-                opt_model.weights[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[2].weights
-                opt_model.crmag[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[2].crmag
+            out_model.data[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[0]
+            out_model.dq[k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[1]
+            out_model.var_poisson[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[2]
+            out_model.var_rnoise[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[3]
+            out_model.err[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[4]
+            if resultslice[5] is not None:
+                int_model.data[:, :, k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[5]
+                int_model.dq[k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[6]
+                int_model.var_poisson[:, :, k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[7]
+                int_model.var_rnoise[:, :, k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[8]
+                int_model.err[:, :, k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[9]
+                int_model.int_times[:, :, k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[10]
+            if resultslice[11] is not None:
+                opt_model.slope[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[11]
+                opt_model.sigslope[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[12]
+                opt_model.var_poisson[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[13]
+                opt_model.var_rnoise[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[14]
+                opt_model.yint[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[15]
+                opt_model.sigyint[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[16]
+                opt_model.pedestal[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[17]
+                opt_model.weights[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[18]
+                opt_model.crmag[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[19]
+        k = k + 1
     return out_model, int_model, opt_model
