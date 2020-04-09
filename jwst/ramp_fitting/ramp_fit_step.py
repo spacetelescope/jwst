@@ -66,7 +66,7 @@ class RampFitStep (Step):
             out_model, int_model, opt_model, gls_opt_model = ramp_fit.ramp_fit(
                 input_model, buffsize,
                 self.save_opt, readnoise_model, gain_model, self.algorithm,
-                self.weighting
+                self.weighting, True
             )
 
             readnoise_model.close()

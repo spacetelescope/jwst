@@ -121,7 +121,7 @@ def detect_jumps (input_model, gain_model, readnoise_model,
     else:
         log.info("Creating %d processes for jump detection " % numslices)
         pool = multiprocessing.Pool(processes=numslices)
-        real_result = pool.starmap(twopt.find_crs, slices)
+        real_result = pool.map(twopt.find_crs, slices)
         k = 0
         # Reconstruct gdq, the row_above_gdq, and the row_below_gdq from the slice result
         for resultslice in real_result:
