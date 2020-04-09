@@ -708,6 +708,7 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
     # For multiple-integration datasets, will output integration-specific
     #    results to separate file named <basename> + '_integ.fits'
     int_times = None
+    print("int pixel dt shape",dq_int.shape)
     if n_int > 1:
         int_model = utils.output_integ(slope_int, dq_int, effintim,
                                        var_p3, var_r3, var_both3, int_times)
@@ -817,7 +818,7 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
         opt_weights = None
         opt_crmag = None
 
-    return new_model.data, new_model.dq, new_model.var_poisson, new_model.rnoise, new_model.err, \
+    return new_model.data, new_model.dq, new_model.var_poisson, new_model.var_rnoise, new_model.err, \
             int_data, int_dq, int_var_poisson, int_var_rnoise, int_err, int_int_times, \
             opt_slope, opt_sigslope, opt_var_poisson, opt_var_rnoise, opt_yint, opt_sigyint, \
             opt_pedestal, opt_weights, opt_crmag
