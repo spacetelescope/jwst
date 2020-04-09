@@ -1,13 +1,10 @@
 import logging
 
-import numpy as np
-
-from jwst import datamodels
-
 from astropy.convolution import Gaussian2DKernel
 from astropy.stats import gaussian_fwhm_to_sigma, SigmaClip
 from astropy.table import join
 import astropy.units as u
+import numpy as np
 from scipy.spatial import cKDTree
 
 from photutils import Background2D, MedianBackground
@@ -16,6 +13,7 @@ from photutils import CircularAperture, CircularAnnulus, aperture_photometry
 from photutils.utils import calc_total_error
 from photutils.utils._wcs_helpers import _pixel_scale_angle_at_skycoord
 
+from .. import datamodels
 from ..datamodels import ImageModel, ABVegaOffsetModel
 
 log = logging.getLogger(__name__)
@@ -50,21 +48,26 @@ class SourceCatalog:
         self.aperture_ee = aperture_ee
 
         self.instrument = self.model.meta.instrument.name
+        self.detector = self.model.meta.instrument.detector
         self.filtername = self.model.meta.instrument.filter
         self.pupil = model.meta.instrument.pupil
         self.subarray = self.model.meta.subarray.name
         log.info(f'Instrument: {self.instrument}')
-        log.info(f'Filter: {self.filtername}')
+        if self.detector is not None:
+            log.info(f'Detector: {self.detector}')
+        if self.filtername is not None:
+            log.info(f'Filter: {self.filtername}')
         if self.pupil is not None:
             log.info(f'Pupil: {self.pupil}')
         if self.subarray is not None:
             log.info(f'Subarray: {self.subarray}')
 
         self._ci_colname = f'CI_{self.aperture_ee[0]}_{self.aperture_ee[2]}'
-        self._flux_colnames = self._make_aperture_colnames('flux')
-        self._abmag_colnames = self._make_aperture_colnames('abmag')
-        self._vegamag_colnames = self._make_aperture_colnames('vegamag')
+        self._flux_colnames, self._flux_coldesc = self._make_aperture_colnames('flux')
+        self._abmag_colnames, self._abmag_coldesc = self._make_aperture_colnames('abmag')
+        self._vegamag_colnames, self._vegamag_coldesc = self._make_aperture_colnames('vegamag')
         self._bkg_colnames = ['aper_bkg_flux', 'aper_bkg_flux_err']
+        self._bkg_coldesc = ['The local background value calculated as the sigma-clipped median value in the background annulus aperture', 'The standard error of the sigma-clipped median background value']
 
         self.coverage_mask = None
         self._bkg = None
@@ -78,6 +81,7 @@ class SourceCatalog:
         self.xypos = None
         self.null_column = None
 
+        self.is_star = None
         self.aperture_radii = None
         self.aperture_corrs = None
         self.bkg_aperture_inner = None
@@ -87,16 +91,36 @@ class SourceCatalog:
         self.extras_catalog = None
         self.catalog = None
 
+    @staticmethod
+    def _add_column(catalog, column, value, description=None):
+        catalog[column] = value
+        if description is not None:
+            catalog[column].info.description = description
+        return
+
     def _make_aperture_colnames(self, name):
+        if name == 'flux':
+            ftype = 'Flux'
+            ftype2 = 'flux'
+        elif name == 'abmag':
+            ftype = ftype2 = 'AB magnitude'
+        elif name == 'vegamag':
+            ftype = ftype2 = 'Vega magnitude'
+
         colnames = []
+        descriptions = []
         for aper_ee in self.aperture_ee:
             basename = f'aper{aper_ee}_{name}'
             colnames.append(basename)
+            descriptions.append(f'{ftype} within the {aper_ee}% encircled energy circular aperture')
             colnames.append(f'{basename}_err')
+            descriptions.append(f'{ftype} error within the {aper_ee}% encircled energy circular aperture')
 
         colnames.extend([f'aper_total_{name}', f'aper_total_{name}_err'])
+        descriptions.append(f'Total aperture-corrected {ftype2} based on the {self.aperture_ee[-1]}% encircled energy circular aperture - calculated only for stars')
+        descriptions.append(f'Total aperture-corrected {ftype2} error based on the {self.aperture_ee[-1]}% encircled energy circular aperture - calculated only for stars')
 
-        return colnames
+        return colnames, descriptions
 
     def _find_aperture_params(self, selector):
         apcorr_model = datamodels.open(self.apcorr_filename)
@@ -129,6 +153,12 @@ class SourceCatalog:
             skyins.append(row['skyin'][0])
             skyouts.append(row['skyout'][0])
 
+        # TODO
+        # These aperture and background-aperture radii are in pixel
+        # units and are based on the detector native pixel scales.  If
+        # the user changes the output pixel scale in the resample step,
+        # then these radii need to be scaled.  Changing the output pixel
+        # scale is not yet a pipeline option (as of Apr 2020).
         self.aperture_radii = np.array(radii)
         self.aperture_corrs = np.array(apcorrs)
 
@@ -247,8 +277,8 @@ class SourceCatalog:
                            sigma_clip=sigma_clip, bkg_estimator=bkg_estimator)
 
         # apply the coverage mask
-        bkg.background *= ~self.coverage_mask
-        bkg.background_rms *= ~self.coverage_mask
+        bkg.background *= np.logical_not(self.coverage_mask)
+        bkg.background_rms *= np.logical_not(self.coverage_mask)
 
         self._bkg = bkg
         self.background = bkg.background
@@ -471,6 +501,68 @@ class SourceCatalog:
         catalog.add_column(vegamag, name='isophotal_vegamag', index=8)
         catalog.add_column(vegamag_err, name='isophotal_vegamag_err', index=9)
 
+        # add column descriptions
+        desc = {}
+        desc['id'] = 'Unique source identification number'
+        desc['xcentroid'] = 'X pixel value of the source centroid'
+        desc['ycentroid'] = 'Y pixel value of the source centroid'
+        desc['sky_centroid'] = 'Sky coordinate of the source centroid'
+        desc['isophotal_flux'] = 'Isophotal flux'
+        desc['isophotal_flux_err'] = 'Isophotal flux error'
+        desc['isophotal_abmag'] = 'Isophotal AB magnitude'
+        desc['isophotal_abmag_err'] = 'Isophotal AB magnitude error'
+        desc['isophotal_vegamag'] = 'Isophotal Vega magnitude'
+        desc['isophotal_vegamag_err'] = 'Isophotal Vega magnitude error'
+        desc['isophotal_area'] = 'Isophotal area'
+        desc['semimajor_sigma'] = ('1-sigma standard deviation along the '
+                                   'semimajor axis of the 2D Gaussian '
+                                   'function that has the same second-order '
+                                   'central moments as the source')
+        desc['semiminor_sigma'] = ('1-sigma standard deviation along the '
+                                   'semiminor axis of the 2D Gaussian '
+                                   'function that has the same second-order '
+                                   'central moments as the source')
+        desc['ellipticity'] = ('1 minus the ratio of the 1-sigma lengths of '
+                               'the semimajor and semiminor axes')
+        desc['orientation'] = ('The angle (degrees) between the positive X '
+                               'axis and the major axis (increases '
+                               'counter-clockwise)')
+        desc['sky_orientation'] = ('The position angle (degrees) from North '
+                                   'of the major axis')
+        desc['sky_bbox_ll'] = ('Sky coordinate of the lower-left vertex of '
+                               'the minimal bounding box of the source')
+        desc['sky_bbox_ul'] = ('Sky coordinate of the upper-left vertex of '
+                               'the minimal bounding box of the source')
+        desc['sky_bbox_lr'] = ('Sky coordinate of the lower-right vertex of '
+                               'the minimal bounding box of the source')
+        desc['sky_bbox_ur'] = ('Sky coordinate of the upper-right vertex of '
+                               'the minimal bounding box of the source')
+
+        for key, val in desc.items():
+            catalog[key].info.description = val
+
+
+        #catalog['id'].info.description = 'Unique source identification number'
+        #catalog['xcentroid'].info.description = 'X pixel value of the source centroid'
+        #catalog['ycentroid'].info.description = 'Y pixel value of the source centroid'
+        #catalog['sky_centroid'].info.description = 'Sky coordinate of the source centroid'
+        #catalog['isophotal_flux'].info.description = 'Isophotal flux'
+        #catalog['isophotal_flux_err'].info.description = 'Isophotal flux error'
+        #catalog['isophotal_abmag'].info.description = 'Isophotal AB magnitude'
+        #catalog['isophotal_abmag_err'].info.description = 'Isophotal AB magnitude error'
+        #catalog['isophotal_vegamag'].info.description = 'Isophotal Vega magnitude'
+        #catalog['isophotal_vegamag_err'].info.description = 'Isophotal Vega magnitude error'
+        #catalog['isophotal_area'].info.description = 'Isophotal area'
+        #catalog['semimajor_sigma'].info.description = '1-sigma standard deviation along the semimajor axis of the 2D Gaussian function that has the same second-order central moments as the source'
+        #catalog['semiminor_sigma'].info.description = '1-sigma standard deviation along the semiminor axis of the 2D Gaussian function that has the same second-order central moments as the source'
+        #catalog['ellipticity'].info.description = '1 minus the ratio of the 1-sigma lengths of the semimajor and semiminor axes'
+        #catalog['orientation'].info.description = 'The angle (degrees) between the positive X axis and the major axis (increases counter-clockwise)'
+        #catalog['sky_orientation'].info.description = 'The position angle (degrees) from North of the major axis'
+        #catalog['sky_bbox_ll'].info.description = 'Sky coordinate of the lower-left vertex of the minimal bounding box of the source'
+        #catalog['sky_bbox_ul'].info.description = 'Sky coordinate of the upper-left vertex of the minimal bounding box of the source'
+        #catalog['sky_bbox_lr'].info.description = 'Sky coordinate of the lower-right vertex of the minimal bounding box of the source'
+        #catalog['sky_bbox_ur'].info.description = 'Sky coordinate of the upper-right vertex of the minimal bounding box of the source'
+
         self.segment_catalog = catalog
 
         return self.segment_catalog
@@ -564,10 +656,26 @@ class SourceCatalog:
         abmag, abmag_err = self.flux_to_abmag(total_flux, total_flux_err)
         vegamag = abmag - self.abvega_offset
         vegamag_err = abmag_err
-        catalog[self._abmag_colnames[-2]] = abmag
-        catalog[self._abmag_colnames[-1]] = abmag_err
-        catalog[self._vegamag_colnames[-2]] = vegamag
-        catalog[self._vegamag_colnames[-1]] = vegamag_err
+        #catalog[self._abmag_colnames[-2]] = abmag
+        #catalog[self._abmag_colnames[-1]] = abmag_err
+        #catalog[self._vegamag_colnames[-2]] = vegamag
+        #catalog[self._vegamag_colnames[-1]] = vegamag_err
+
+        for idx in (-2, -1):
+            self._add_column(catalog, self._flux_colnames[idx], total_flux,
+                             self._flux_coldesc[idx])
+            self._add_column(catalog, self._abmag_colnames[idx], total_flux,
+                             self._abmag_coldesc[idx])
+            self._add_column(catalog, self._vegamag_colnames[idx], total_flux,
+                             self._vegamag_coldesc[idx])
+
+
+        #catalog[self._flux_colnames[-2]].info.description = self._flux_coldesc[-2]
+        #catalog[self._flux_colnames[-1]].info.description = self._flux_coldesc[-1]
+        #catalog[self._abmag_colnames[-2]].info.description = self._abmag_coldesc[-2]
+        #catalog[self._abmag_colnames[-1]].info.description = self._abmag_coldesc[-1]
+        #catalog[self._vegamag_colnames[-2]].info.description = self._vegamag_coldesc[-2]
+        #catalog[self._vegamag_colnames[-1]].info.description = self._vegamag_coldesc[-2]
 
         return catalog
 
@@ -606,15 +714,25 @@ class SourceCatalog:
 
             aper_phot.rename_column(flux_col, new_flux_col)
             aper_phot.rename_column(flux_err_col, new_flux_err_col)
+            aper_phot[new_flux_col].info.description = self._flux_coldesc[idx0]
+            aper_phot[new_flux_err_col].info.description = self._flux_coldesc[idx1]
 
-            aper_phot[abmag_col] = abmag
-            aper_phot[abmag_err_col] = abmag_err
-            aper_phot[vegamag_col] = vegamag
-            aper_phot[vegamag_err_col] = vegamag_err
+            #print(abmag_col, abmag, self._abmag_coldesc[idx0])
+
+            self._add_column(aper_phot, abmag_col, abmag,
+                             self._abmag_coldesc[idx0])
+            self._add_column(aper_phot, abmag_err_col, abmag_err,
+                             self._abmag_coldesc[idx1])
+            self._add_column(aper_phot, vegamag_col, vegamag,
+                             self._vegamag_coldesc[idx0])
+            self._add_column(aper_phot, vegamag_err_col, vegamag_err,
+                             self._vegamag_coldesc[idx1])
 
         aper_phot.add_column(bkg_median, name=self._bkg_colnames[0], index=3)
         aper_phot.add_column(bkg_median_err, name=self._bkg_colnames[1],
                              index=4)
+        aper_phot[self._bkg_colnames[0]].info.description = self._bkg_coldesc[0]
+        aper_phot[self._bkg_colnames[1]].info.description = self._bkg_coldesc[1]
 
         self.aperture_catalog = aper_phot
 
@@ -654,14 +772,28 @@ class SourceCatalog:
         self.is_star = self.calc_is_star()
         catalog = self.append_aper_total(catalog)
 
-        catalog[self._ci_colname] = self.calc_concentration_index()
-        catalog['is_star'] = self.is_star
-        catalog['sharpness'] = self.calc_sharpness(catalog)
-        catalog['roundness'] = self.calc_roundness(catalog)
+        ci_desc = ('Concentration index calculated as '
+                   f'{self._abmag_colnames[0]} - {self._abmag_colnames[4]}')
+        self._add_column(catalog, self._ci_colname,
+                         self.calc_concentration_index(), ci_desc)
+
+        is_star_desc = 'Flag indicating whether the source is a star'
+        self._add_column(catalog, 'is_star', self.is_star, is_star_desc)
+
+        sharpness_desc = 'The DAOFind source sharpness statistic'
+        self._add_column(catalog, 'sharpness', self.calc_sharpness(catalog),
+                         sharpness_desc)
+
+        roundness_desc = 'The DAOFind source roundness statistic'
+        self._add_column(catalog, 'roundness', self.calc_roundness(catalog),
+                         roundness_desc)
 
         nn_dist, nn_abmag = self.calc_nearest_neighbors(catalog)
-        catalog['nn_dist'] = nn_dist * u.pixel
-        catalog['nn_abmag'] = nn_abmag
+        nn_dist_desc = 'The distance in pixels to the nearest neighbor'
+        self._add_column(catalog, 'nn_dist', nn_dist * u.pixel, nn_dist_desc)
+
+        nn_abmag_desc = 'The AB magnitude of the nearest neighbor'
+        self._add_column(catalog, 'nn_abmag', nn_abmag, nn_abmag_desc)
 
         self.extras_catalog = catalog
 
@@ -676,7 +808,7 @@ class SourceCatalog:
         # populated.
         for colname in catalog.colnames:
             if colname.endswith('_err'):
-                catalog[colname] = self.null_column
+                catalog[colname][:] = self.null_column
 
         # Define the column name order for the final source catalog
         colnames = self.segment_catalog.colnames[0:4]
@@ -723,7 +855,7 @@ class SourceCatalog:
                 self.catalog[colname].info.format = '.4f'
             if 'flux' in colname:
                 self.catalog[colname].info.format = '.6e'
-            if 'abmag' in colname or 'vegamag' in colname:
+            if 'abmag' in colname or 'vegamag' in colname or 'nn_' in colname:
                 self.catalog[colname].info.format = '.6f'
             if colname in ('semimajor_sigma', 'semiminor_sigma',
                            'ellipticity', 'orientation', 'sky_orientation'):
