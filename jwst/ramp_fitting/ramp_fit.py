@@ -787,7 +787,7 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
         int_dq = int_model.dq.copy()
         int_var_poisson = int_model.var_poisson.copy()
         int_var_rnoise = int_model.var_rnoise.copy()
-        int_err = int_model.var_err.copy()
+        int_err = int_model.err.copy()
         int_int_times = int_model.int_times.copy()
     else:
         int_data = None
