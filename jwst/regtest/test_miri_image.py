@@ -142,18 +142,17 @@ def test_miri_image_wcs(run_image2, rtdata_module, fitsdiff_default_kwargs):
     output = "det_image_1_MIRIMAGE_F770Wexp1_5stars_assign_wcs.fits"
     rtdata.output = output
     rtdata.get_truth("truth/test_miri_image_stages/" + output)
+
     # Open the output and truth file
-    im = datamodels.open(output)
-    im_truth = datamodels.open(rtdata.truth)
+    with datamodels.open(rtdata.output) as im, datamodels.open(rtdata.truth) as im_truth:
+        x, y = grid_from_bounding_box(im.meta.wcs.bounding_box)
+        ra, dec = im.meta.wcs(x, y)
+        ratruth, dectruth = im_truth.meta.wcs(x, y)
+        assert_allclose(ra, ratruth)
+        assert_allclose(dec, dectruth)
 
-    x, y = grid_from_bounding_box(im.meta.wcs.bounding_box)
-    ra, dec = im.meta.wcs(x, y)
-    ratruth, dectruth = im_truth.meta.wcs(x, y)
-    assert_allclose(ra, ratruth)
-    assert_allclose(dec, dectruth)
-
-    # Test the inverse transform
-    xtest, ytest = im.meta.wcs.backward_transform(ra, dec)
-    xtruth, ytruth = im_truth.meta.wcs.backward_transform (ratruth, dectruth)
-    assert_allclose(xtest, xtruth)
-    assert_allclose(ytest, ytruth)
+        # Test the inverse transform
+        xtest, ytest = im.meta.wcs.backward_transform(ra, dec)
+        xtruth, ytruth = im_truth.meta.wcs.backward_transform (ratruth, dectruth)
+        assert_allclose(xtest, xtruth)
+        assert_allclose(ytest, ytruth)

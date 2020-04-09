@@ -33,11 +33,11 @@ def test_miri_lrs_slit_spec3(run_pipeline, rtdata_module, fitsdiff_default_kwarg
 
     # Run the pipeline and retrieve outputs
     rtdata = rtdata_module
-    output = f"jw00623-o044_t007_miri_p750l_{suffix}.fits"
+    output = f"jw00623-o032_t007_miri_p750l_{suffix}.fits"
     rtdata.output = output
 
     # Get the truth files
-    rtdata.get_truth(f"truth/test_miri_lrs_fs_spec3/{output}")
+    rtdata.get_truth(f"truth/test_miri_lrs_slit_spec3/{output}")
 
     # Compare the results
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
