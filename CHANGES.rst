@@ -35,6 +35,11 @@ datamodels
 - Remove lev3_prod schema and move resample-related keywords to
   core schema. [#4552]
 
+exp_to_source
+-------------
+
+- Resulting MultiExposureModels are now updated with header information from the inputs
+
 extract_1d
 ----------
 
