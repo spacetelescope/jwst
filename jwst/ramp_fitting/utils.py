@@ -250,7 +250,7 @@ class OptRes:
         self.cr_mag_seg = cr_com [:,:max_num_crs,:,:]
 
 
-    def output_optional(self, model, effintim):
+    def output_optional(self, effintim):
         """
         These results are the cosmic ray magnitudes in the
         segment-specific results for the count rates, y-intercept,
@@ -297,8 +297,8 @@ class OptRes:
             weights=self.weights.astype(np.float32),
             crmag=self.cr_mag_seg)
 
-        rfo_model.meta.filename = model.meta.filename
-        rfo_model.update(model)  # add all keys from input
+ #       rfo_model.meta.filename = model.meta.filename
+ #       rfo_model.update(model)  # add all keys from input
 
         return rfo_model
 
@@ -665,7 +665,7 @@ def calc_pedestal(num_int, slope_int, firstf_int, dq_first, nframes, groupgap,
     return ped
 
 
-def output_integ(model, slope_int, dq_int, effintim, var_p3, var_r3, var_both3,
+def output_integ(slope_int, dq_int, effintim, var_p3, var_r3, var_both3,
                  int_times):
     """
     Construct the output integration-specific results. Any variance values that
@@ -725,7 +725,7 @@ def output_integ(model, slope_int, dq_int, effintim, var_p3, var_r3, var_both3,
     # Reset the warnings filter to its original state
     warnings.resetwarnings()
 
-    cubemod.update(model) # keys from input needed for photom step
+#    cubemod.update(model) # keys from input needed for photom step
 
     return cubemod
 
@@ -1246,7 +1246,7 @@ def fix_sat_ramps( sat_0th_group_int, var_p3, var_both3, slope_int):
     return var_p3, var_both3, slope_int
 
 
-def do_all_sat( model, imshape, n_int, save_opt):
+def do_all_sat( pixeldq, groupdq, imshape, n_int, save_opt):
     """
     For an input exposure where all groups in all integrations are saturated,
     the DQ in the primary and integration-specific output products are updated,
@@ -1281,27 +1281,27 @@ def do_all_sat( model, imshape, n_int, save_opt):
     """
     # Create model for the primary output. Flag all pixels in the pixiel DQ
     #   extension as SATURATED and DO_NOT_USE.
-    model.pixeldq = np.bitwise_or(model.pixeldq, dqflags.group['SATURATED'] )
-    model.pixeldq = np.bitwise_or(model.pixeldq, dqflags.group['DO_NOT_USE'] )
+    pixeldq = np.bitwise_or(pixeldq, dqflags.group['SATURATED'] )
+    pixeldq = np.bitwise_or(pixeldq, dqflags.group['DO_NOT_USE'] )
 
     new_model = datamodels.ImageModel(data = np.zeros(imshape, dtype=np.float32),
-        dq = model.pixeldq,
+        dq = pixeldq,
         var_poisson = np.zeros(imshape, dtype=np.float32),
         var_rnoise = np.zeros(imshape, dtype=np.float32),
         err = np.zeros(imshape, dtype=np.float32) )
 
-    new_model.update(model)  # ... and add all keys from input
+#    new_model.update(model)  # ... and add all keys from input
 
     # Create model for the integration-specific output. The 3D group DQ created
     #   is based on the 4D group DQ of the model, and all pixels in all
     #   integrations will be flagged here as DO_NOT_USE (they are already flagged
     #   as SATURATED). The INT_TIMES extension will be left as None.
     if n_int > 1:
-        m_sh = model.groupdq.shape  # (integ, grps/integ, y, x )
+        m_sh = groupdq.shape  # (integ, grps/integ, y, x )
         groupdq_3d = np.zeros((m_sh[0], m_sh[2], m_sh[3]), dtype=np.uint32)
 
         for ii in range(n_int): # add SAT flag to existing groupdq in each slice
-            groupdq_3d[ii,:,:] = np.bitwise_or.reduce( model.groupdq[ii,:,:,:],
+            groupdq_3d[ii,:,:] = np.bitwise_or.reduce( groupdq[ii,:,:,:],
                                                        axis=0)
 
         groupdq_3d = np.bitwise_or( groupdq_3d, dqflags.group['DO_NOT_USE'] )
@@ -1313,7 +1313,7 @@ def do_all_sat( model, imshape, n_int, save_opt):
             int_times = None,
             err =  np.zeros((n_int,) + imshape, dtype=np.float32))
 
-        int_model.update(model)  # ... and add all keys from input
+  #      int_model.update(model)  # ... and add all keys from input
     else:
         int_model = None
 
@@ -1332,8 +1332,8 @@ def do_all_sat( model, imshape, n_int, save_opt):
             weights = new_arr,
             crmag = new_arr)
 
-        opt_model.meta.filename = model.meta.filename
-        opt_model.update(model)  # ... and add all keys from input
+ #       opt_model.meta.filename = model.meta.filename
+ #       opt_model.update(model)  # ... and add all keys from input
     else:
         opt_model = None
 

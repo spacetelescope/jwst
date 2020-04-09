@@ -3,7 +3,7 @@ import logging
 import numpy as np
 import warnings
 #import multiprocessing
-from multiprocessing.pool import ThreadPool as Pool
+from multiprocessing.pool import Pool as Pool
 import dill
 #from pathos.multiprocessing import ProcessingPool as Pool
 import psutil
@@ -36,10 +36,10 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
     total_cols = input_model.data.shape[3]
     number_of_integrations = input_model.data.shape[0]
     number_of_groups = input_model.data.shape[1]
-    data = np.zeroslike(input_model.data)
-    err = np.zeroslike(input_model.derr)
-    groupdq = np.zeroslike(input_model.groupdq)
-    pixeldq = np.zeroslike(input_model.pixeldq)
+    data = np.zeros_like(input_model.data)
+    err = np.zeros_like(input_model.err)
+    groupdq = np.zeros_like(input_model.groupdq)
+    pixeldq = np.zeros_like(input_model.pixeldq)
     rows_per_slice = round(total_rows / number_slices)
     pool = Pool(processes=number_slices)
     slices = []
@@ -51,7 +51,15 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
         err = input_model.err[:, :, i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
         groupdq = input_model.groupdq[:, :, i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
         pixeldq = input_model.pixeldq[ i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
-        slices.insert(i, (data, err, groupdq, pixeldq, buffsize, save_opt, readnoise_slice, gain_slice, weighting))
+        if pipe_utils.is_tso(input_model) and hasattr(input_model, 'int_times'):
+            int_times = input_model.int_times
+        else:
+            int_times = None
+        slices.insert(i, (data, err, groupdq, pixeldq, buffsize, save_opt, readnoise_slice, gain_slice, weighting,
+                      input_model.meta.instrument.name, input_model.meta.exposure.frame_time,
+                      input_model.meta.exposure.ngroups, input_model.meta.exposure.group_time,
+                      input_model.meta.exposure.groupgap, input_model.meta.exposure.nframes,
+                      input_model.meta.exposure.drop_frames1, int_times))
 
     # last slice gets the rest
     readnoise_slice = readnoise_2d[(number_slices - 1) * rows_per_slice: total_rows, :]
@@ -60,11 +68,16 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
     err = input_model.err[:, :, (number_slices - 1) * rows_per_slice: total_rows, :].copy()
     groupdq = input_model.groupdq[:, :, (number_slices - 1) * rows_per_slice: total_rows, :].copy()
     pixeldq = input_model.pixeldq[(number_slices - 1) * rows_per_slice: total_rows, :].copy()
-    slices.insert(number_slices - 1, (data, err, groupdq, pixeldq, buffsize, save_opt, readnoise_slice, gain_slice, weighting))
+    slices.insert(number_slices - 1, (data, err, groupdq, pixeldq, buffsize, save_opt, readnoise_slice, gain_slice, weighting,
+                                      input_model.meta.instrument.name, input_model.meta.exposure.frame_time,
+                                      input_model.meta.exposure.ngroups, input_model.meta.exposure.group_time,
+                                      input_model.meta.exposure.groupgap, input_model.meta.exposure.nframes,
+                                      input_model.meta.exposure.drop_frames1, int_times))
+
     log.info("Creating %d processes for ramp fitting " % number_slices)
   #  pool = multiprocessing.Pool(processes=number_slices)
   #  real_results = pool.map(rf.ols_ramp_fit, slices[0], slices[1], slices[2], slices[3])
-    real_results = Pool.starmap(rf.ols_ramp_fit, slices)
+    real_results = pool.starmap(rf.ols_ramp_fit, slices)
     k = 0
     log.info("All processes complete")
     # Create new model for the primary output.
