@@ -35,10 +35,14 @@ datamodels
 - Remove lev3_prod schema and move resample-related keywords to
   core schema. [#4552]
 
+- Add data models for spectroscopic mode APCORR reference files. [#4770]
+
+- Added ``pupil`` to the ``FilteroffsetModel`` to support NIRCAM and NIRISS WCS. [#4750]
+
 exp_to_source
 -------------
 
-- Resulting MultiExposureModels are now updated with header information from the inputs
+- Resulting MultiExposureModels are now updated with header information from the inputs. [#4771]
 
 extract_1d
 ----------
@@ -97,6 +101,8 @@ resample_spec
 
 - Fix bug that was causing resampled MIRI LRS fixed-slit data to be all zero.
   [#4552]
+
+- Enable model metadata blending [#4765]
 
 source_catalog
 --------------

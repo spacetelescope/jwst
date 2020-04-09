@@ -35,7 +35,6 @@ undergone by the files before being ingested in CRDS.
 Reference File Types
 ====================
 
-
 Most reference files have a one-to-one relationship with calibration steps, e.g.
 there is one step that uses one type of reference file. Some steps, however, use
 several types of reference files and some reference file types are used by more
@@ -96,6 +95,8 @@ documentation on each reference file.
 | :ref:`dq_init <dq_init_step>`               | :ref:`MASK <mask_reffile>`                       |
 +---------------------------------------------+--------------------------------------------------+
 | :ref:`extract_1d <extract_1d_step>`         | :ref:`EXTRACT1D <extract1d_reffile>`             |
++                                             +--------------------------------------------------+
+|                                             | :ref:`APCORR <apcorr_reffile>`                   |
 +---------------------------------------------+--------------------------------------------------+
 | :ref:`extract_2d <extract_2d_step>`         | :ref:`WAVECORR <wavecorr_reffile>`               |
 +                                             +--------------------------------------------------+
@@ -147,6 +148,8 @@ documentation on each reference file.
 +---------------------------------------------+--------------------------------------------------+
 | :ref:`saturation <saturation_step>`         | :ref:`SATURATION <saturation_reffile>`           |
 +---------------------------------------------+--------------------------------------------------+
+| :ref:`source_catalog <source_catalog_step>` | :ref:`APCORR <apcorr_reffile>`                   |
++---------------------------------------------+--------------------------------------------------+
 | :ref:`straylight <straylight_step>`         | :ref:`REGIONS <regions_reffile>`                 |
 +---------------------------------------------+--------------------------------------------------+
 | :ref:`superbias <superbias_step>`           | :ref:`SUPERBIAS <superbias_reffile>`             |
@@ -157,6 +160,10 @@ documentation on each reference file.
 +--------------------------------------------------+---------------------------------------------+
 | Reference File Type (REFTYPE)                    | Pipeline Step                               |
 +==================================================+=============================================+
+| :ref:`APCORR <apcorr_reffile>`                   | :ref:`extract_1d <extract_1d_step>`         |
++                                                  +---------------------------------------------+
+|                                                  | :ref:`source_catalog <source_catalog_step>` |
++--------------------------------------------------+---------------------------------------------+
 | :ref:`AREA <area_reffile>`                       | :ref:`photom <photom_step>`                 |
 +--------------------------------------------------+---------------------------------------------+
 | :ref:`BARSHADOW <barshadow_reffile>`             | :ref:`barshadow <barshadow_step>`           |

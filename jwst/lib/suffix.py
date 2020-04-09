@@ -335,12 +335,12 @@ def load_local_pkg(fpath):
             module_path = '.'.join(module_path)
             try:
                 module = import_module(module_path)
-            except ImportError as err:
+            except Exception as err:
                 logger.debug(f'Cannot load module "{module_path}": {str(err)}')
             else:
                 yield module
     except Exception as err:
-        logger.debug(f'Exception occurred: "{str(err)}"')
+        logger.debug(f'Cannot complete package loading: Exception occurred: "{str(err)}"')
     finally:
         sys.path = sys_path
 
