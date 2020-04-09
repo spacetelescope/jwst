@@ -7,8 +7,7 @@ from collections.abc import Callable
 
 from ..datamodels import (
     MultiExposureModel,
-    SourceModelContainer
-)
+    SourceModelContainer)
 from ..datamodels.properties import merge_tree
 
 __all__ = ['exp_to_source', 'multislit_to_container']
@@ -33,15 +32,21 @@ def exp_to_source(inputs):
         The key is the ID of each source, i.e. ``source_id``.
     """
     result = DefaultOrderedDict(MultiExposureModel)
+
     for exposure in inputs:
-        log.info('Reorganizing data from exposure {}'.format(exposure.meta.filename))
+        log.info(f'Reorganizing data from exposure {exposure.meta.filename}')
+
         for slit in exposure.slits:
-            log.debug('Copying source {}'.format(slit.source_id))
-            result[str(slit.source_id)].exposures.append(slit)
-            merge_tree(
-                result[str(slit.source_id)].exposures[-1].meta.instance,
-                exposure.meta.instance
-            )
+            log.debug(f'Copying source {slit.source_id}')
+            result_slit = result[str(slit.source_id)]
+            result_slit.exposures.append(slit)
+            merge_tree(result_slit.exposures[-1].meta.instance, exposure.meta.instance)
+
+            if result_slit.meta.instrument.name is None:
+                result_slit.update(exposure)
+
+            result_slit.meta.filename = None  # Resulting merged data doesn't come from one file
+
         exposure.close()
 
     # Turn off the default factory

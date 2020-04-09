@@ -39,6 +39,11 @@ datamodels
 
 - Added ``pupil`` to the ``FilteroffsetModel`` to support NIRCAM and NIRISS WCS. [#4750]
 
+exp_to_source
+-------------
+
+- Resulting MultiExposureModels are now updated with header information from the inputs. [#4771]
+
 extract_1d
 ----------
 
