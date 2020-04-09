@@ -1,4 +1,3 @@
-import os
 from typing import List
 
 import pytest
@@ -55,10 +54,11 @@ def test_nirspec_fs_mbkg_user(run_nirspec_mbkg, fitsdiff_default_kwargs):
         user_files=[('--user_background', 'nirspec/fs/v2_nrs_bkg_user_clean_x1d.fits')]
     )
 
-    rtdata.output = "nrs_sci+bkg_master_background.fits"
+    output = "nrs_sci+bkg_master_background.fits"
+    rtdata.output = output
 
     # Get the truth file
-    rtdata.get_truth(os.path.join("truth/test_nirspec_fs_mbkg_user", "nrs_sci+bkg_master_background.fits"))
+    rtdata.get_truth(f"truth/test_nirspec_fs_mbkg_user/{output}")
 
     # Compare the results
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
@@ -72,10 +72,11 @@ def test_nirspec_ifu_mbkg_user(run_nirspec_mbkg, fitsdiff_default_kwargs):
         user_files=[('--user_background', 'nirspec/ifu/prism_bkg_x1d.fits')]
     )
 
-    rtdata.output = 'prism_sci_bkg_master_background.fits'
+    output = "prism_sci_bkg_master_background.fits"
+    rtdata.output = output
 
     # Get the truth file
-    rtdata.get_truth(os.path.join("truth/test_nirspec_ifu_mbkg_user", 'prism_sci_bkg_master_background.fits'))
+    rtdata.get_truth(f"truth/test_nirspec_ifu_mbkg_user/{output}")
 
     # Compare the results
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
@@ -89,10 +90,11 @@ def test_nirspec_mos_mbkg_user(run_nirspec_mbkg, fitsdiff_default_kwargs):
         user_files=[('--user_background', 'nirspec/mos/v2_nrs_mos_bkg_x1d.fits')]
     )
 
-    rtdata.output = "nrs_mos_sci+bkg_master_background.fits"
+    output = "nrs_mos_sci+bkg_master_background.fits"
+    rtdata.output = output
 
     # Get the truth file
-    rtdata.get_truth(os.path.join("truth/test_nirspec_mos_mbkg_user", "nrs_mos_sci+bkg_master_background.fits"))
+    rtdata.get_truth(f"truth/test_nirspec_mos_mbkg_user/{output}")
 
     # Compare the results
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
@@ -100,7 +102,10 @@ def test_nirspec_mos_mbkg_user(run_nirspec_mbkg, fitsdiff_default_kwargs):
 
 
 @pytest.mark.parametrize(
-    'output_file', ['ifu_prism_source_on_NRS1_master_background.fits', 'ifu_prism_source_off_NRS1_o001_masterbg.fits']
+    'output_file',
+    ['ifu_prism_source_on_NRS1_master_background.fits',
+    'ifu_prism_source_off_NRS1_o001_masterbg.fits'],
+    ids=["on-source", "off-source"]
 )
 def test_nirspec_ifu_mbkg_nod(run_nirspec_mbkg, fitsdiff_default_kwargs, output_file):
     """Test NIRSpec IFU nodded data."""
@@ -113,9 +118,7 @@ def test_nirspec_ifu_mbkg_nod(run_nirspec_mbkg, fitsdiff_default_kwargs, output_
     rtdata.output = output_file
 
     # Get the truth file
-    rtdata.get_truth(
-        os.path.join("truth/test_nirspec_ifu_mbkg_nod", output_file)
-    )
+    rtdata.get_truth(f"truth/test_nirspec_ifu_mbkg_nod/{output_file}")
 
     # Compare the results
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)

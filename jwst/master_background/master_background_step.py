@@ -115,6 +115,8 @@ class MasterBackgroundStep(Step):
                         exptime_key='exposure_time',
                         )
 
+                    background_data.close()
+
                     result = datamodels.ModelContainer()
                     result.update(input_data)
                     for model in input_data:

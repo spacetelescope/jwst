@@ -65,6 +65,8 @@ master_background
 
 - Updated step arguments in the documentation. [#4723]
 
+- Fix issue with files left open at end of step [#4775]
+
 outlier_detection
 -----------------
 
@@ -79,6 +81,9 @@ pipeline
 
 - Update ``calwebb_coron3`` to return ``ImageModel`` instead of ``DrizProductModel``,
   when necessary. [#4552]
+
+- Fix issue with files left open at end of ``calwebb_spec2`` [#4775]
+
 
 resample
 --------

@@ -64,19 +64,18 @@ def test_miri_lrs_slit_wcs(run_pipeline, fitsdiff_default_kwargs):
     output = "jw00623032001_03102_00001_mirimage_assign_wcs.fits"
     rtdata.output = output
     rtdata.get_truth("truth/test_miri_lrs_slit_spec2/" + output)
-    # Open the output and truth file
-    im = datamodels.open(output)
-    im_truth = datamodels.open(rtdata.truth)
 
-    x, y = grid_from_bounding_box(im.meta.wcs.bounding_box)
-    ra, dec, lam = im.meta.wcs(x, y)
-    ratruth, dectruth, lamtruth = im_truth.meta.wcs(x, y)
-    assert_allclose(ra, ratruth)
-    assert_allclose(dec, dectruth)
-    assert_allclose(lam, lamtruth)
+    # Compare the output and truth file
+    with datamodels.open(output) as im, datamodels.open(rtdata.truth) as im_truth:
+        x, y = grid_from_bounding_box(im.meta.wcs.bounding_box)
+        ra, dec, lam = im.meta.wcs(x, y)
+        ratruth, dectruth, lamtruth = im_truth.meta.wcs(x, y)
+        assert_allclose(ra, ratruth)
+        assert_allclose(dec, dectruth)
+        assert_allclose(lam, lamtruth)
 
-    # Test the inverse transform
-    xtest, ytest = im.meta.wcs.backward_transform(ra, dec, lam)
-    xtruth, ytruth = im_truth.meta.wcs.backward_transform (ratruth, dectruth, lamtruth)
-    assert_allclose(xtest, xtruth)
-    assert_allclose(ytest, ytruth)
+        # Test the inverse transform
+        xtest, ytest = im.meta.wcs.backward_transform(ra, dec, lam)
+        xtruth, ytruth = im_truth.meta.wcs.backward_transform(ratruth, dectruth, lamtruth)
+        assert_allclose(xtest, xtruth)
+        assert_allclose(ytest, ytruth)
