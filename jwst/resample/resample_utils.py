@@ -56,36 +56,6 @@ def make_output_wcs(input_models):
     return output_wcs
 
 
-def compute_output_transform(refwcs, filename, fiducial):
-    """Compute a simple FITS-type WCS transform
-    """
-    x0, y0 = refwcs.backward_transform(*fiducial)
-    x1 = x0 + 1
-    y1 = y0 + 1
-    ra0, dec0 = refwcs(x0, y0)
-    ra_xdir, dec_xdir = refwcs(x1, y0)
-    ra_ydir, dec_ydir = refwcs(x0, y1)
-
-    position0 = SkyCoord(ra=ra0, dec=dec0, unit='deg')
-    position_xdir = SkyCoord(ra=ra_xdir, dec=dec_xdir, unit='deg')
-    position_ydir = SkyCoord(ra=ra_ydir, dec=dec_ydir, unit='deg')
-    offset_xdir = position0.spherical_offsets_to(position_xdir)
-    offset_ydir = position0.spherical_offsets_to(position_ydir)
-
-    xscale = np.abs(position0.separation(position_xdir).value)
-    yscale = np.abs(position0.separation(position_ydir).value)
-    scale = np.sqrt(xscale * yscale)
-
-    c00 = offset_xdir[0].value / scale
-    c01 = offset_xdir[1].value / scale
-    c10 = offset_ydir[0].value / scale
-    c11 = offset_ydir[1].value / scale
-    pc_matrix = AffineTransformation2D(matrix=[[c00, c01], [c10, c11]])
-    cdelt = Scale(scale) & Scale(scale)
-
-    return pc_matrix | cdelt
-
-
 def shape_from_bounding_box(bounding_box):
     """ Return a numpy shape based on the provided bounding_box
     """

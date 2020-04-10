@@ -6,6 +6,7 @@ import logging
 import functools
 import numpy as np
 
+from astropy.coordinates import SkyCoord
 from astropy.utils.misc import isiterable
 from astropy.io import fits
 from astropy.modeling import models as astmodels
@@ -88,6 +89,70 @@ def reproject(wcs1, wcs2, origin=0):
     return _reproject
 
 
+def compute_scale_transform(refwcs, fiducial):
+    """Compute scaling transform
+    """
+    x0, y0 = refwcs.backward_transform(*fiducial)
+
+    x1 = x0 + 1
+    y1 = y0 + 1
+    ra0, dec0 = refwcs(x0, y0)
+    ra_xdir, dec_xdir = refwcs(x1, y0)
+    ra_ydir, dec_ydir = refwcs(x0, y1)
+
+    position0 = SkyCoord(ra=ra0, dec=dec0, unit='deg')
+    position_xdir = SkyCoord(ra=ra_xdir, dec=dec_xdir, unit='deg')
+    position_ydir = SkyCoord(ra=ra_ydir, dec=dec_ydir, unit='deg')
+
+    xscale = np.abs(position0.separation(position_xdir).value)
+    yscale = np.abs(position0.separation(position_ydir).value)
+    scale = np.sqrt(xscale * yscale)
+
+    return astmodels.Scale(scale) & astmodels.Scale(scale)
+
+
+def calc_rotation_matrix(angle, vparity=1):
+    """ Calculate the rotation matrix.
+
+    Parameters
+    ----------
+    angle : float in radians
+        The angle to create the matrix.
+
+    vparity : int
+        The x-axis parity, usually taken from
+        the JWST SIAF parameter VIdlParity.
+        Value should be "1" or "-1".
+
+    Returns
+    -------
+    matrix: [pc1_1, pc1_2, pc2_1, pc2_2]
+        The rotation matrix
+
+    Notes
+    -----
+    The rotation is
+
+       ----------------
+       | pc1_1  pc2_1 |
+       | pc1_2  pc2_2 |
+       ----------------
+
+    where:
+        pc1_1 = vparity * cos(angle)
+        pc1_2 = sin(angle)
+        pc2_1 = -1 * vparity * sin(angle)
+        pc2_2 = cos(angle)
+    """
+
+    pc1_1 = vparity * np.cos(angle)
+    pc1_2 = np.sin(angle)
+    pc2_1 = vparity * -np.sin(angle)
+    pc2_2 = np.cos(angle)
+
+    return [pc1_1, pc1_2, pc2_1, pc2_2]
+
+
 def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=None, domain=None):
     """
     Create a WCS from a list of input data models.
@@ -122,17 +187,20 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
     """
     bb = bounding_box
     wcslist = [im.meta.wcs for im in dmodels]
+
     if not isiterable(wcslist):
         raise ValueError("Expected 'wcslist' to be an iterable of WCS objects.")
+
     if not all([isinstance(w, WCS) for w in wcslist]):
         raise TypeError("All items in wcslist are to be instances of gwcs.WCS.")
+
     if refmodel is None:
         refmodel = dmodels[0]
     else:
         if not isinstance(refmodel, DataModel):
             raise TypeError("Expected refmodel to be an instance of DataModel.")
 
-    fiducial = compute_fiducial(wcslist, bb)
+    fiducial = compute_fiducial(wcslist, bb)  # possibly retrieve from reference wcs
 
     prj = astmodels.Pix2Sky_TAN()
 
@@ -140,29 +208,33 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
         transform = []
         wcsinfo = pointing.wcsinfo_from_model(refmodel)
         sky_axes, spec, other = gwutils.get_axes(wcsinfo)
-        rotation = astmodels.AffineTransformation2D(wcsinfo['PC'])
+
+        pc = np.reshape(
+            calc_rotation_matrix(refmodel.meta.wcsinfo.roll_ref, vparity=refmodel.meta.wcsinfo.vparity), (2, 2)
+        ).T
+        rotation = astmodels.AffineTransformation2D(pc)
         transform.append(rotation)
+
         if sky_axes:
-            cdelt1, cdelt2 = wcsinfo['CDELT'][sky_axes]
-            scale = np.sqrt(np.abs(cdelt1 * cdelt2))
-            scales = astmodels.Scale(scale) & astmodels.Scale(scale)
-            transform.append(scales)
+            transform.append(compute_scale_transform(refmodel.meta.wcs, fiducial))
 
         if transform:
             transform = functools.reduce(lambda x, y: x | y, transform)
 
     out_frame = refmodel.meta.wcs.output_frame
-    wnew = wcs_from_fiducial(fiducial, coordinate_frame=out_frame,
-                             projection=prj, transform=transform)
+    wnew = wcs_from_fiducial(fiducial, coordinate_frame=out_frame, projection=prj, transform=transform)
 
     footprints = [w.footprint().T for w in wcslist]
     domain_bounds = np.hstack([wnew.backward_transform(*f) for f in footprints])
+
     for axs in domain_bounds:
         axs -= axs.min()
+
     bounding_box = []
     for axis in out_frame.axes_order:
         axis_min, axis_max = domain_bounds[axis].min(), domain_bounds[axis].max()
         bounding_box.append((axis_min, axis_max))
+
     bounding_box = tuple(bounding_box)
     ax1, ax2 = np.array(bounding_box)[sky_axes]
     offset1 = (ax1[1] - ax1[0]) / 2
@@ -171,6 +243,7 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
 
     wnew.insert_transform('detector', offsets, after=True)
     wnew.bounding_box = bounding_box
+
     return wnew
 
 

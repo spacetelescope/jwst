@@ -9,7 +9,7 @@ from astropy.time import Time
 from scipy.interpolate import interp1d
 import numpy as np
 
-from ..assign_wcs.util import update_s_region_keyword
+from ..assign_wcs.util import update_s_region_keyword, calc_rotation_matrix
 from ..datamodels import Level1bModel
 from ..lib.engdb_tools import ENGDB_Service
 from .exposure_types import IMAGING_TYPES, FGS_GUIDE_EXP_TYPES
@@ -1238,48 +1238,6 @@ def _get_wcs_values_from_siaf(aperture_name, useafter, prd_db_filepath=None):
         return siaf
     else:
         return default_siaf
-
-
-def calc_rotation_matrix(angle, vparity=1):
-    """ Calculate the rotation matrix.
-
-    Parameters
-    ----------
-    angle : float in radians
-        The angle to create the matrix.
-
-    vparity : int
-        The x-axis parity, usually taken from
-        the JWST SIAF parameter VIdlParity.
-        Value should be "1" or "-1".
-
-    Returns
-    -------
-    matrix: [pc1_1, pc1_2, pc2_1, pc2_2]
-        The rotation matrix
-
-    Notes
-    -----
-    The rotation is
-
-       ----------------
-       | pc1_1  pc2_1 |
-       | pc1_2  pc2_2 |
-       ----------------
-
-    where:
-        pc1_1 = vparity * cos(angle)
-        pc1_2 = sin(angle)
-        pc2_1 = -1 * vparity * sin(angle)
-        pc2_2 = cos(angle)
-    """
-
-    pc1_1 = vparity * cos(angle)
-    pc1_2 = sin(angle)
-    pc2_1 = vparity * -sin(angle)
-    pc2_2 = cos(angle)
-
-    return [pc1_1, pc1_2, pc2_1, pc2_2]
 
 
 def get_mnemonics(obsstart, obsend, tolerance, engdb_url=None):
