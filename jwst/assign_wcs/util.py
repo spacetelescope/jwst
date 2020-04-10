@@ -64,7 +64,7 @@ def _domain_to_bounding_box(domain):
     return bb
 
 
-def reproject(wcs1, wcs2, origin=0):
+def reproject(wcs1, wcs2):
     """
     Given two WCSs return a function which takes pixel coordinates in
     the first WCS and computes their location in the second one.
