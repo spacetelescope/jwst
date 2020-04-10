@@ -153,6 +153,7 @@ class ResampleSpecData:
             if not np.all(np.diff(wavelength_array) > 0):
                 points = points[::-1]
                 lookup_table = lookup_table[::-1]
+
             pix_to_wavelength.inverse = Tabular1D(points=points,
             lookup_table=lookup_table,
             bounds_error=False, fill_value=None, name='wavelength2pix')
@@ -305,6 +306,8 @@ class ResampleSpecData:
             pix_to_wavelength = Tabular1D(lookup_table=wavelength_array,
                                           bounds_error=False, fill_value=None, name='pix2wavelength')
 
+            print('tabular1d',pix_to_wavelength)
+            
            # Tabular models need an inverse explicitly defined.
            # If the wavelength array is decending instead of ascending, both
            # points and lookup_table need to be reversed in the inverse transform
