@@ -422,9 +422,6 @@ def dodrizzle(insci, input_wcs, inwht,
 
     # Compute the mapping between the input and output pixel coordinates
     # for use in drizzle.cdrizzle.tdriz
-    print('*** gwcs_drizzle input wcs',input_wcs)
-    print('*** gwcs_drizzle output wcs',output_wcs)
-    print('*** gwcs_drizzle input shape',insci.shape)
 
     pixmap = resample_utils.calc_gwcs_pixmap(input_wcs, output_wcs, insci.shape)
     # pixmap[np.isnan(pixmap)] = -10

@@ -15,7 +15,7 @@ from gwcs import coordinate_frames as cf
 from .. import datamodels
 from . import gwcs_drizzle
 from . import resample_utils
-from ..model_blender import blendmeta
+
 
 CRBIT = np.uint32(datamodels.dqflags.pixel['JUMP_DET'])
 
@@ -65,7 +65,6 @@ class ResampleSpecData:
 
         # Define output WCS based on all inputs, including a reference WCS
         self.output_wcs = self.build_interpolated_output_wcs()
-        print('data size',self.data_size)
         self.blank_output = datamodels.SlitModel(self.data_size)
         self.blank_output.update(self.input_models[0], only="PRIMARY")
         self.blank_output.update(self.input_models[0], only="SCI")
@@ -220,8 +219,7 @@ class ResampleSpecData:
 
                 spectral_axis = find_dispersion_axis(model)
                 spatial_axis = spectral_axis ^ 1
-            # print('spectral axis',spectral_axis)
-            # print('spatial axis',spatial_axis)
+
             # Compute the wavelength array, trimming NaNs from the ends
                 wavelength_array = np.nanmedian(lam, axis=spectral_axis)
                 wavelength_array = wavelength_array[~np.isnan(wavelength_array)]
@@ -300,13 +298,13 @@ class ResampleSpecData:
             all_wave = np.sort(all_wave,axis=None)
 
             # Tabular interpolation model, pixels -> lambda
-            wavelength_array = all_wave
+            wavelength_array = np.unique(all_wave)
             print('wavelength_array',wavelength_array.shape)
             print('wavelength range',wavelength_array[0],wavelength_array[-1])
             pix_to_wavelength = Tabular1D(lookup_table=wavelength_array,
                                           bounds_error=False, fill_value=None, name='pix2wavelength')
 
-            print('tabular1d',pix_to_wavelength)
+            print('Pix to Wavelength model: ',pix_to_wavelength)
             
            # Tabular models need an inverse explicitly defined.
            # If the wavelength array is decending instead of ascending, both
@@ -314,13 +312,15 @@ class ResampleSpecData:
            # for scipy.interpolate to work properly
             points = wavelength_array
             lookup_table = np.arange(wavelength_array.shape[0])
+            print('number of points in wavelenght array',wavelength_array.shape[0])
+            
             if not np.all(np.diff(wavelength_array) > 0):
                 points = points[::-1]
                 lookup_table = lookup_table[::-1]
             pix_to_wavelength.inverse = Tabular1D(points=points,
                                                   lookup_table=lookup_table,
                                                   bounds_error=False, fill_value=None, name='wavelength2pix')
-
+            print('Wavelength to Pixel model: ',pix_to_wavelength.inverse)
             # For the input mapping, duplicate the spatial coordinate
             mapping = Mapping((spatial_axis, spatial_axis, spectral_axis))
 
@@ -355,11 +355,9 @@ class ResampleSpecData:
             x_max = np.amax(x_tan_all)
             y_min = np.amin(y_tan_all)
             y_max = np.amax(y_tan_all)
-            print(x_max,x_min,pix_to_xtan.slope)
             x_size = int(math.ceil((x_max - x_min)/pix_to_xtan.slope))
             y_size = int(math.ceil((y_max - y_min)/pix_to_ytan.slope))
 
-            print('xy size',x_size, y_size)
         # define the output wcs 
             transform = mapping | (pix_to_xtan & pix_to_ytan | undist2sky) & pix_to_wavelength
 
@@ -388,14 +386,6 @@ class ResampleSpecData:
             output_wcs.bounding_box = bounding_box
 
         return output_wcs
-
-    def blend_output_metadata(self, output_model):
-        """Create new output metadata based on blending all input metadata."""
-        # Run fitsblender on output product
-        output_file = output_model.meta.filename
-
-        log.info(f'Blending metadata for {output_file}')
-        blendmeta.blendmodels(output_model, inputs=self.input_models, output=output_file)
 
     def do_drizzle(self, xmin=0, xmax=0, ymin=0, ymax=0, **pars):
         """ Perform drizzling operation on input images's to create a new output
@@ -431,11 +421,7 @@ class ResampleSpecData:
 
             bb = resample_utils.wcs_bbox_from_shape(output_model.data.shape)
             output_model.meta.wcs.bounding_box = bb
-            print('resample_spec do drizzle bb',bb)
             output_model.meta.filename = obs_product
-
-            if self.drizpars['blendheaders']:
-                self.blend_output_metadata(output_model)
 
             exposure_times = {'start': [], 'end': []}
 

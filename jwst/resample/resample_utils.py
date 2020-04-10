@@ -106,15 +106,7 @@ def calc_gwcs_pixmap(in_wcs, out_wcs, shape=None):
         bb = in_wcs.bounding_box
         log.debug("Bounding box from WCS: {}".format(in_wcs.bounding_box))
 
-    print('*****resample_utils',bb)
     grid = wcstools.grid_from_bounding_box(bb)
-
-    print('****in resample_utils')
-    print('grid 0',grid[0])
-    print('grid 1',grid[1])
-    print('*** in wcs',in_wcs)
-    print('*** out wcs',out_wcs)
-
     pixmap = np.dstack(reproject(in_wcs, out_wcs)(grid[0], grid[1]))
     pixmap[np.isnan(pixmap)] = -1
 
@@ -162,27 +154,9 @@ def reproject(wcs1, wcs2):
 
     def _reproject(x, y):
         sky = forward_transform(x, y)
-        #print(len(sky[0]))
-        #print('sky',sky[0][1])
         flat_sky = []
         for axis in sky:
             flat_sky.append(axis.flatten())
-            temp_axis = axis.flatten()
-            temp_axis = temp_axis[~np.isnan(temp_axis)]
-            print(temp_axis.shape)
-            print(temp_axis[0:100])
-            # test if temp_axis is ascending
-            test = temp_axis[0]
-            print('testing if ascending')
-            i = 0
-            for number in temp_axis:
-                i = i + 1
-                if number < test:
-                    print('not ascending',i,number,test,number-test)
-                
-                test = number
-            print('done testing if ascending')
-                
 
         # Filter out RuntimeWarnings due to computed NaNs in the WCS
         warnings.simplefilter("ignore")
