@@ -94,7 +94,7 @@ setup(
         # https://github.com/spacetelescope/asdf/pull/777
         # We can remove the upper limit here once asdf 2.6 is released
         # and jwst starts using the _visit_repeat_nodes flag.
-        'asdf>=2.5,<2.6',
+        'asdf~=2.5.0',
         'astropy>=4.0',
         'crds>=7.2.7',
         'drizzle>=1.13',
