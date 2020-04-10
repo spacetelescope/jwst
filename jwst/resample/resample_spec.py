@@ -11,6 +11,7 @@ from astropy.modeling.models import (Mapping, Tabular1D, Linear1D,
 from astropy.modeling.fitting import LinearLSQFitter
 from gwcs import wcstools, WCS
 from gwcs import coordinate_frames as cf
+from ..cube_build.cube_build_wcs_util import  wrap_ra
 
 from .. import datamodels
 from . import gwcs_drizzle
@@ -324,6 +325,10 @@ class ResampleSpecData:
 
             # The final transform
             # redefine the ra, dec center tangent point to include all data
+
+            # check if all_ra crosses 0 degress - this makes it hard to
+            # define the min and max ra correctly
+            all_ra = wrap_ra(all_ra)
             ra_min = np.amin(all_ra)
             ra_max = np.amax(all_ra)
             ra_center_final  = (ra_max + ra_min)/2.0
