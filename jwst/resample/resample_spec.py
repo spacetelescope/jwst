@@ -95,11 +95,11 @@ class ResampleSpecData:
         # code below until we are sure this new version works the
         # way we want it to. Then we can remove it and use
         # a single method to determine output wcs
+
         do = 0
         if len(self.input_models) == 1 and do == 1:
             if refmodel is None:
                 refmodel = self.input_models[0]
-
             refwcs = refmodel.meta.wcs
             bb = refwcs.bounding_box
             grid = wcstools.grid_from_bounding_box(bb)
@@ -113,7 +113,6 @@ class ResampleSpecData:
             warnings.simplefilter("ignore")
             x_tan, y_tan = undist2sky.inverse(ra, dec)
             warnings.resetwarnings()
-
             spectral_axis = find_dispersion_axis(refmodel)
             spatial_axis = spectral_axis ^ 1
 
@@ -130,9 +129,9 @@ class ResampleSpecData:
             else:
                 x_tan_array = x_tan[lam_center_index]
                 y_tan_array = y_tan[lam_center_index]
-
             x_tan_array = x_tan_array[~np.isnan(x_tan_array)]
             y_tan_array = y_tan_array[~np.isnan(y_tan_array)]
+
             fitter = LinearLSQFitter()
             fit_model = Linear1D()
             pix_to_ra = fitter(fit_model, np.arange(x_tan_array.shape[0]), x_tan_array)
@@ -199,10 +198,12 @@ class ResampleSpecData:
 
         else:
         # for each input model convert slit x,y to ra,dec,lam
-        # for the center of the slit compute ra,dec held in
-        # x_tan, y_tan
-        # append the x_tan, y_tan and wavelength arrays
-        # sort them and store in lookup table
+        # use first input model to set spatial scale
+        # append all ra,dec, wavelength array for each slit
+        # Use appended wavelengths to set up output spectral
+        # use center of appended ra and dec arrays to set up
+        # center of final ra,dec
+
             all_wavelength = []
             all_ra_slit = []
             all_dec_slit = []
@@ -213,7 +214,6 @@ class ResampleSpecData:
                 bb = wcs.bounding_box
                 grid = wcstools.grid_from_bounding_box(bb)
                 ra, dec, lam = np.array(wcs(*grid))
-
                 spectral_axis = find_dispersion_axis(model)
                 spatial_axis = spectral_axis ^ 1
 
@@ -222,14 +222,6 @@ class ResampleSpecData:
                 wavelength_array = wavelength_array[~np.isnan(wavelength_array)]
                 all_wavelength.append(wavelength_array)
 
-                # append all ra and dec values to use later to find min and max
-                # ra and dec
-                ra_use = ra.flatten()
-                ra_use = ra_use[~np.isnan(ra_use)]
-                dec_use = dec.flatten()
-                dec_use = dec_use[~np.isnan(dec_use)]
-                all_ra_slit.append(ra_use)
-                all_dec_slit.append(dec_use)
                 # need to estimate the spatial sampling to use for the output WCS
                 # it is assumed the spatial sampling is the same for all the input
                 # models. So we can use the first input model to set the spatial
@@ -244,17 +236,18 @@ class ResampleSpecData:
                 if im == 0:
                     lam_center_index = int((bb[spectral_axis][1] -
                                             bb[spectral_axis][0]) / 2)
-                    print('lam_center_index',lam_center_index)
                     if not spatial_axis:
-                        ra_center = np.nanmean(ra[lam_center_index,:])
-                        dec_center = np.nanmean(dec[lam_center_index,:])
+                        ra_center = ra[lam_center_index,:]
+                        dec_center = dec[lam_center_index,:]
                     else:
                         ra_center = ra[:,lam_center_index]
                         dec_center = dec[:,lam_center_index]
-
                     # find the ra and dec for this slit using center of slit
                     ra_center_pt = np.nanmean(ra_center)
                     dec_center_pt = np.nanmean(dec_center)
+                    #ra_center_pt = np.nanmean(ra)
+                    #dec_center_pt = np.nanmean(dec)
+
                     # ra and dec this converted to tangent projection
                     tan = Pix2Sky_TAN()
                     native2celestial = RotateNative2Celestial(ra_center_pt, dec_center_pt, 180)
@@ -262,8 +255,18 @@ class ResampleSpecData:
                     # Filter out RuntimeWarnings due to computed NaNs in the WCS
                     warnings.simplefilter("ignore")
                     # at this center of slit find x,y tangent proction - x_tan, y_tan
-                    x_tan_array, y_tan_array = undist2sky.inverse(ra_center, dec_center)
+                    #x_tan, y_tan = undist2sky.inverse(ra_center, dec_center)
+                    x_tan, y_tan = undist2sky.inverse(ra, dec)
                     warnings.resetwarnings()
+
+                    # pull out data from center
+                    if not spectral_axis:
+                        x_tan_array = x_tan.T[lam_center_index]
+                        y_tan_array = y_tan.T[lam_center_index]
+                    else:
+                        x_tan_array = x_tan[lam_center_index]
+                        y_tan_array = y_tan[lam_center_index]
+
                     x_tan_array = x_tan_array[~np.isnan(x_tan_array)]
                     y_tan_array = y_tan_array[~np.isnan(y_tan_array)]
 
@@ -274,6 +277,15 @@ class ResampleSpecData:
                     pix_to_ytan = fitter(fit_model, np.arange(y_tan_array.shape[0]), y_tan_array)
                     # xtan_slope.append(pix_to_xtan.slope)
                     # ytan_slope.append(pix_to_ytan.slope)
+
+                # append all ra and dec values to use later to find min and max
+                # ra and dec
+                ra_use = ra.flatten()
+                ra_use = ra_use[~np.isnan(ra_use)]
+                dec_use = dec.flatten()
+                dec_use = dec_use[~np.isnan(dec_use)]
+                all_ra_slit.append(ra_use)
+                all_dec_slit.append(dec_use)
 
             # done looping over set of models
             # find the mean spatial sampling use all slits
@@ -340,6 +352,7 @@ class ResampleSpecData:
                                             # with how resample was done before
                 ra_center_final = ra_center_pt
                 dec_center_final = dec_center_pt
+
             native2celestial = RotateNative2Celestial(ra_center_final, dec_center_final, 180)
             undist2sky = tan | native2celestial
 
@@ -372,7 +385,6 @@ class ResampleSpecData:
             output_array_size[spectral_axis] = len(wavelength_array)
             output_array_size[spatial_axis] = x_size
 
-            # print('output_array_size',output_array_size)
         # turn the size into a numpy shape in (y, x) order
             self.data_size = tuple(output_array_size[::-1])
             bounding_box = resample_utils.wcs_bbox_from_shape(self.data_size)
