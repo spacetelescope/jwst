@@ -2,7 +2,9 @@
 
 import os
 
-from .source_catalog import SourceCatalog
+from .source_catalog import (ReferenceData, Background, make_kernel,
+                             make_segment_img, calc_total_error,
+                             SourceCatalog)
 from .. import datamodels
 from ..stpipe import Step
 
@@ -39,33 +41,48 @@ class SourceCatalogStep(Step):
 
     def process(self, input_model):
         with datamodels.open(input_model) as model:
-            apcorr_filename = self.get_reference_file(input_model, 'apcorr')
-            self.log.info(f'Using apcorr reference file {apcorr_filename}')
+            apcorr_fn = self.get_reference_file(input_model, 'apcorr')
+            self.log.info(f'Using apcorr reference file {apcorr_fn}')
 
             # TODO: fix after reference file is in CRDS
-            #abvega_offset_filename = self.get_reference_file(
+            #abvega_offset_fn = self.get_reference_file(
             #    input_model, 'abvega_offset')
-            abvega_offset_filename = None
+            abvega_offset_fn = None
             self.log.info('Using abvega_offset reference file ' +
-                          f'{abvega_offset_filename}')
+                          f'{abvega_offset_fn}')
 
-            if self.aperture_ee2 < self.aperture_ee1:
-                raise ValueError('aperture_ee2 value must be less than '
-                                 'aperture_ee1')
-            if self.aperture_ee3 < self.aperture_ee2:
-                raise ValueError('aperture_ee3 value must be less than '
-                                 'aperture_ee2')
-            aperture_ee = (int(self.aperture_ee1), int(self.aperture_ee2),
-                           int(self.aperture_ee3))
+            aperture_ee = (self.aperture_ee1, self.aperture_ee2,
+                           self.aperture_ee3)
+            refdata = ReferenceData(model, aperture_ee=aperture_ee,
+                                    apcorr_filename=apcorr_fn,
+                                    abvega_offset_filename=abvega_offset_fn)
 
-            catobj = SourceCatalog(model, bkg_boxsize=self.bkg_boxsize,
-                                   kernel_fwhm=self.kernel_fwhm,
-                                   snr_threshold=self.snr_threshold,
-                                   npixels=self.npixels, deblend=self.deblend,
-                                   aperture_ee=aperture_ee,
-                                   apcorr_filename=apcorr_filename,
-                                   abvega_offset_filename=abvega_offset_filename)
-            catalog = catobj.run()
+            coverage_mask = (model.wht == 0)
+            bkg = Background(model.data, bkg_boxsize=self.bkg_boxsize,
+                             mask=coverage_mask)
+            model.data -= bkg.background
+
+            threshold = self.snr_threshold * bkg.background_rms
+            kernel = make_kernel(self.kernel_fwhm)
+            segment_img = make_segment_img(model.data, threshold,
+                                           npixels=self.npixels,
+                                           kernel=kernel,
+                                           mask=coverage_mask,
+                                           deblend=self.deblend)
+            if segment_img is None:
+                self.log.info('No sources were found. Source catalog will '
+                              'not be created.')
+                return
+            self.log.info(f'Detected {segment_img.nlabels} sources')
+
+            # TODO: update when model contains errors
+            total_error = calc_total_error(model)
+
+            catobj = SourceCatalog(model, segment_img, error=total_error,
+                                   kernel=kernel,
+                                   aperture_params=refdata.aperture_params,
+                                   abvega_offset=refdata.abvega_offset)
+            catalog = catobj.catalog
 
             if self.save_results:
                 cat_filepath = self.make_output_path()
