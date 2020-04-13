@@ -1,5 +1,5 @@
-JWST Calibration Pipeline
-=========================
+# JWST Calibration Pipeline
+
 [![Documentation Status](https://readthedocs.org/projects/jwst-pipeline/badge/?version=latest)](http://jwst-pipeline.readthedocs.io/en/latest/?badge=latest)
 [![Build Status](https://travis-ci.org/spacetelescope/jwst.svg?branch=master)](https://travis-ci.org/spacetelescope/jwst)
 [![codecov](https://codecov.io/gh/spacetelescope/jwst/branch/master/graph/badge.svg)](https://codecov.io/gh/spacetelescope/jwst)
@@ -10,8 +10,8 @@ JWST Calibration Pipeline
 
 **JWST requires Python 3.6 or above and a C compiler for dependencies**.
 
-Installation
-------------
+
+## Installation
 
 The `jwst` package can be installed into a virtualenv or conda environment via `pip`.
 We recommend that for each installation you start by creating a fresh
@@ -31,8 +31,8 @@ Details are given below on how to do this for different types of installations,
 including tagged releases, DMS builds used in operations, and development versions.
 Remember that all conda operations must be done from within a bash shell.
 
-Installing From Github
-++++++++++++++++++++++
+
+### Installing From Github
 
 You can install various versions of `jwst` directly from the code repo on Github.
 For example, to install a fully tested and tagged release version, such as `jwst 0.15.1`,
@@ -54,8 +54,8 @@ and regression tests, if desired, using:
 
     pip install "jwst[test] @ git+https://github.com/spacetelescope/jwst"
  
-Installing a DMS Operational Build
-++++++++++++++++++++++++++++++++++
+
+### Installing a DMS Operational Build
 
 There may be occasions where an exact copy of an operational DMS build is
 desired (e.g. for validation testing or debugging operational issues).
@@ -66,7 +66,8 @@ tagged release, because that method installs the latest versions of dependency
 packages, while this method installs dependencies pinned to particular versions
 that have been well tested.
 
-To install a particular DMS build, consult the "Software vs DMS build version map"
+To install a particular DMS build, consult the
+[Software vs DMS build version map](https://github.com/spacetelescope/jwst#software-vs-dms-build-version-map)
 table shown below to determine the correct jwst tag. For example, to install the
 version of `jwst` used in DMS build 7.4.2, use jwst tag 0.15.1. The overall
 procedure is similar to the 3-step process outlined in the previous section, but the
@@ -93,8 +94,8 @@ The installation procedures may change from time to time, so consulting the
 documentation page for the specific version in question is the best way to get
 that version installed.
 
-Installing for Developers
-+++++++++++++++++++++++++
+
+### Installing for Developers
 
 If you want to be able to work on and test the source code with the `jwst` package,
 the high-level procedure to do this is to first create a conda environment using
@@ -132,8 +133,8 @@ Need other useful packages in your development environment?
 
     pip install ipython flake8 pytest-xdist
 
-Calibration References Data System (CRDS) Setup
------------------------------------------------
+
+## Calibration References Data System (CRDS) Setup
 
 CRDS is the system that manages the reference files needed to run the pipeline.
 Inside the STScI network, the pipeline works with default CRDS setup with no modifications.
@@ -144,8 +145,7 @@ two environment variables:
     export CRDS_SERVER_URL=https://jwst-crds.stsci.edu
 
 
-Documentation
--------------
+## Documentation
 
 Documentation (built daily from the Github `master` branch) is available at:
 
@@ -158,8 +158,9 @@ To build the docs yourself, clone this repository and build the documentation wi
     make html
     make latexpdf
 
-Contributions and Feedback
---------------------------
+
+## Contributions and Feedback
+
 We welcome contributions and feedback on the project. Please follow the
 [contributing guidelines](CONTRIBUTING.md) to submit an issue or a pull request.
 
@@ -170,8 +171,8 @@ If you have questions or concerns regarding the software, please open an issue
 at https://github.com/spacetelescope/jwst/issues or
 contact the [JWST Help Desk](https://jwsthelp.stsci.edu).
 
-Software vs DMS build version map
----------------------------------
+
+## Software vs DMS build version map
 
 | jwst tag | DMS build | CRDS_CONTEXT |   Date     |          Notes                           |
 | -------- | --------- | ------------ | ---------- | -----------------------------------------|
@@ -209,8 +210,8 @@ Software vs DMS build version map
 Note: CRDS_CONTEXT values flagged with an asterisk in the above table are estimates
 (formal CONTEXT deliveries are only provided with final builds).
 
-Unit Tests
-----------
+
+## Unit Tests
 
 Unit tests can be run via `pytest`.  Within the top level of your local `jwst` repo checkout:
 
@@ -223,8 +224,7 @@ Need to parallelize your test runs over 8 cores?
     pytest -n 8
 
 
-Regression Tests
-----------------
+## Regression Tests
 
 Latest regression test results can be found here (STScI staff only):
 
@@ -256,8 +256,8 @@ there are instructions in the repository wiki.
 
 https://github.com/spacetelescope/jwst/wiki/Maintaining-Regression-Tests
 
-JupyterHub Access
------------------
+
+## JupyterHub Access
 
 **NOTE:** This is currently still in research-and-development stage and is subject to change.
 
