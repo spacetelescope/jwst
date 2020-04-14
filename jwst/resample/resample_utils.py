@@ -3,8 +3,6 @@ import warnings
 
 import numpy as np
 from astropy import wcs as fitswcs
-from astropy.coordinates import SkyCoord
-from astropy.modeling.models import Scale, AffineTransformation2D
 from astropy.modeling import Model
 from gwcs import WCS, wcstools
 
