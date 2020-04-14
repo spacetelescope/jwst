@@ -12,6 +12,7 @@ from astropy.io import fits
 from astropy.modeling import models as astmodels
 from astropy.table import QTable
 from astropy.constants import c
+from typing import Union
 
 from gwcs import WCS
 from gwcs.wcstools import wcs_from_fiducial, grid_from_bounding_box
@@ -89,26 +90,34 @@ def reproject(wcs1, wcs2, origin=0):
     return _reproject
 
 
-def compute_scale_transform(refwcs, fiducial):
-    """Compute scaling transform
+def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray]) -> float:
+    """Compute scaling transform.
+
+    Parameters
+    ----------
+    wcs :
+        Reference WCS object from which to compute a scaling factor.
+    fiducial :
+        Input fiducial of (RA, DEC) used in calculating reference points.
+
+    Returns
+    -------
+    scale :
+        Scaling factor for x and y.
+
     """
-    x0, y0 = refwcs.backward_transform(*fiducial)
+    if len(fiducial) != 2:
+        raise ValueError(f'Input fiducial must contain only (RA, DEC); Instead recieved: {fiducial}')
 
-    x1 = x0 + 1
-    y1 = y0 + 1
-    ra0, dec0 = refwcs(x0, y0)
-    ra_xdir, dec_xdir = refwcs(x1, y0)
-    ra_ydir, dec_ydir = refwcs(x0, y1)
+    crpix = np.array(wcs.backward_transform(*fiducial))
+    crpix_with_offsets = np.vstack((crpix, crpix + (1, 0), crpix + (0, 1))).T
+    crval_with_offsets = wcs(*crpix_with_offsets)
 
-    position0 = SkyCoord(ra=ra0, dec=dec0, unit='deg')
-    position_xdir = SkyCoord(ra=ra_xdir, dec=dec_xdir, unit='deg')
-    position_ydir = SkyCoord(ra=ra_ydir, dec=dec_ydir, unit='deg')
+    coords = SkyCoord(ra=crval_with_offsets[0], dec=crval_with_offsets[1], unit="deg")
+    xscale = np.abs(coords[0].separation(coords[1]).value)
+    yscale = np.abs(coords[0].separation(coords[2]).value)
 
-    xscale = np.abs(position0.separation(position_xdir).value)
-    yscale = np.abs(position0.separation(position_ydir).value)
-    scale = np.sqrt(xscale * yscale)
-
-    return astmodels.Scale(scale) & astmodels.Scale(scale)
+    return np.sqrt(xscale * yscale)
 
 
 def calc_rotation_matrix(angle, vparity=1):
@@ -138,13 +147,7 @@ def calc_rotation_matrix(angle, vparity=1):
        | pc1_2  pc2_2 |
        ----------------
 
-    where:
-        pc1_1 = vparity * cos(angle)
-        pc1_2 = sin(angle)
-        pc2_1 = -1 * vparity * sin(angle)
-        pc2_2 = cos(angle)
     """
-
     pc1_1 = vparity * np.cos(angle)
     pc1_2 = np.sin(angle)
     pc2_1 = vparity * -np.sin(angle)
@@ -153,7 +156,7 @@ def calc_rotation_matrix(angle, vparity=1):
     return [pc1_1, pc1_2, pc2_1, pc2_2]
 
 
-def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=None, domain=None):
+def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=None):
     """
     Create a WCS from a list of input data models.
 
@@ -209,14 +212,19 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
         wcsinfo = pointing.wcsinfo_from_model(refmodel)
         sky_axes, spec, other = gwutils.get_axes(wcsinfo)
 
+        # Need to put the rotation matrix (List[float, float, float, float]) returned from calc_rotation_matrix into the
+        # correct shape for constructing the transformation
         pc = np.reshape(
-            calc_rotation_matrix(refmodel.meta.wcsinfo.roll_ref, vparity=refmodel.meta.wcsinfo.vparity), (2, 2)
+            calc_rotation_matrix(np.deg2rad(refmodel.meta.wcsinfo.roll_ref), vparity=refmodel.meta.wcsinfo.vparity),
+            (2, 2)
         ).T
+
         rotation = astmodels.AffineTransformation2D(pc)
         transform.append(rotation)
 
         if sky_axes:
-            transform.append(compute_scale_transform(refmodel.meta.wcs, fiducial))
+            scale = compute_scale(refmodel.meta.wcs, fiducial)
+            transform.append(astmodels.Scale(scale) & astmodels.Scale(scale))
 
         if transform:
             transform = functools.reduce(lambda x, y: x | y, transform)
@@ -247,7 +255,7 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
     return wnew
 
 
-def compute_fiducial(wcslist, bounding_box=None, domain=None):
+def compute_fiducial(wcslist, bounding_box=None):
     """
     For a celestial footprint this is the center.
     For a spectral footprint, it is the beginning of the range.
