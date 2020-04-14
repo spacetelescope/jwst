@@ -76,40 +76,45 @@ class Detector1Pipeline(Pipeline):
             # the steps are in a different order than NIR
             log.debug('Processing a MIRI exposure')
 
-            input = self.group_scale(input)
-            input = self.dq_init(input)
+            input1 = self.group_scale(input)
             input1 = input.copy()
             input.close()
             del input
-            input1 = self.saturation(input1)
+            input1 = self.dq_init(input1)
             input2 = input1.copy()
             input1.close()
             del input1
-            input2 = self.ipc(input2)
+            input2 = self.saturation(input2)
             input3 = input2.copy()
             input2.close()
             del input2
-            input3 = self.firstframe(input3)
+            input3 = self.ipc(input3)
             input4 = input3.copy()
             input3.close()
             del input3
-            input4 = self.lastframe(input4)
+            input4 = self.firstframe(input4)
             input5 = input4.copy()
             input4.close()
             del input4
-            input5 = self.linearity(input5)
+            input5 = self.lastframe(input5)
             input6 = input5.copy()
             input5.close()
             del input5
-            input6 = self.rscd(input6)
+            input6 = self.linearity(input6)
             input7 = input6.copy()
             input6.close()
             del input6
-            input7 = self.dark_current(input7)
+            input7 = self.rscd(input7)
             input8 = input7.copy()
             input7.close()
             del input7
-            input8 = self.refpix(input8)
+            input8 = self.dark_current(input8)
+            input9 = input8.copy()
+            input8.close()
+            del input8
+            input_jump = self.refpix(input9)
+            input9.close()
+            del input9
 
             # skip until MIRI team has figured out an algorithm
             #input = self.persistence(input)
@@ -157,14 +162,14 @@ class Detector1Pipeline(Pipeline):
                 del input6
 
             input7 = self.dark_current(input7)
-            input8 = input7.copy()
+            input_jump = input7.copy()
             input7.close()
             del input7
         # apply the jump step
-        input8 = self.jump(input8)
-        input = input8.copy()
-        input8.close()
-        del input8
+        input_jump = self.jump(input_jump)
+        input = input_jump.copy()
+        input_jump.close()
+        del input_jump
 
         # save the corrected ramp data, if requested
         if self.save_calibrated_ramp:
