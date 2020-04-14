@@ -78,14 +78,38 @@ class Detector1Pipeline(Pipeline):
 
             input = self.group_scale(input)
             input = self.dq_init(input)
-            input = self.saturation(input)
-            input = self.ipc(input)
-            input = self.firstframe(input)
-            input = self.lastframe(input)
-            input = self.linearity(input)
-            input = self.rscd(input)
-            input = self.dark_current(input)
-            input = self.refpix(input)
+            input1 = input.copy()
+            input.close()
+            del input
+            input1 = self.saturation(input1)
+            input2 = input1.copy()
+            input1.close()
+            del input1
+            input2 = self.ipc(input2)
+            input3 = input2.copy()
+            input2.close()
+            del input2
+            input3 = self.firstframe(input3)
+            input4 = input3.copy()
+            input3.close()
+            del input3
+            input4 = self.lastframe(input4)
+            input5 = input4.copy()
+            input4.close()
+            del input4
+            input5 = self.linearity(input5)
+            input6 = input5.copy()
+            input5.close()
+            del input5
+            input6 = self.rscd(input6)
+            input7 = input6.copy()
+            input6.close()
+            del input6
+            input7 = self.dark_current(input7)
+            input8 = input7.copy()
+            input7.close()
+            del input7
+            input8 = self.refpix(input8)
 
             # skip until MIRI team has figured out an algorithm
             #input = self.persistence(input)
@@ -97,20 +121,50 @@ class Detector1Pipeline(Pipeline):
 
             input = self.group_scale(input)
             input = self.dq_init(input)
-            input = self.saturation(input)
-            input = self.ipc(input)
-            input = self.superbias(input)
-            input = self.refpix(input)
-            input = self.linearity(input)
+            input1 = input.copy()
+            input.close()
+            del input
+            input1 = self.saturation(input1)
+            input2 = input1.copy()
+            input1.close()
+            del input1
+            input2 = self.ipc(input2)
+            input3 = input2.copy()
+            input2.close()
+            del input2
+            input3 = self.superbias(input3)
+            input4 = input3.copy()
+            input3.close()
+            del input3
+            input4 = self.refpix(input4)
+            input5 = input4.copy()
+            input4.close()
+            del input4
+            input5 = self.linearity(input5)
+            input6 = input5.copy()
+            input5.close()
+            del input5
 
             # skip persistence for NIRSpec
-            if input.meta.instrument.name != 'NIRSPEC':
-                input = self.persistence(input)
+            if input6.meta.instrument.name != 'NIRSPEC':
+                input6 = self.persistence(input6)
+                input7 = input6.copy()
+                input6.close()
+                del input6
+            else:
+                input7 = input6.copy()
+                input6.close()
+                del input6
 
-            input = self.dark_current(input)
-
+            input7 = self.dark_current(input7)
+            input8 = input7.copy()
+            input7.close()
+            del input7
         # apply the jump step
-        input = self.jump(input)
+        input8 = self.jump(input8)
+        input = input8.copy()
+        input8.close()
+        del input8
 
         # save the corrected ramp data, if requested
         if self.save_calibrated_ramp:
