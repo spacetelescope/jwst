@@ -16,20 +16,17 @@
 import time
 import logging
 import numpy as np
-import warnings
-#import multiprocessing
-#from multiprocessing.pool import ThreadPool as Pool
-import dill
-from pathos.multiprocessing import ProcessingPool as Pool
+from multiprocessing.pool import Pool as Pool
 import psutil
 
+import warnings
+from astropy.io import fits
 from .. import datamodels
 from ..datamodels import dqflags
 from ..lib import pipe_utils
 
 from . import gls_fit           # used only if algorithm is "GLS"
 from . import utils
-from . import ols_ramp_fit_multi as ramp_multi
 
 log = logging.getLogger(__name__)
 
@@ -37,7 +34,7 @@ BUFSIZE = 1024 * 300000  # 300Mb cache size for data section
 
 
 def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
-             algorithm, weighting, do_multi):
+             algorithm, weighting, max_cores):
     """
     Calculate the count rate for each pixel in all data cube sections and all
     integrations, equal to the slope for all sections (intervals between
@@ -103,14 +100,10 @@ def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
         readnoise_2d, gain_2d = utils.get_ref_subs(model, readnoise_model,
                                                    gain_model, frames_per_group)
 
-        if do_multi:
-            new_model, int_model, opt_model = \
-                ramp_multi.ols_ramp_fit_multi(model, buffsize, save_opt, readnoise_2d,
-                             gain_2d, weighting)
-        else:
-            new_model, int_model, opt_model = \
-               ols_ramp_fit(model, buffsize, save_opt, readnoise_2d,
-               gain_2d, weighting)
+        new_model, int_model, opt_model = \
+                ols_ramp_fit_multi(model, buffsize, save_opt, readnoise_2d,
+                             gain_2d, weighting, max_cores)
+
         gls_opt_model = None
 
     # Update data units in output models
@@ -123,6 +116,167 @@ def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
         int_model.meta.bunit_err = 'DN/s'
 
     return new_model, int_model, opt_model, gls_opt_model
+
+def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
+                 weighting, max_cores):
+    if max_cores is 'none':
+        number_slices = 1
+    else:
+        num_cores = psutil.cpu_count()
+        log.info("Found %d possible cores to use for ramp fitting " % num_cores)
+        if max_cores == 'quarter':
+            number_slices = num_cores // 4 or 1
+        elif max_cores == 'half':
+            number_slices = num_cores // 2 or 1
+        elif max_cores == 'all':
+            number_slices = num_cores
+        else:
+            number_slices = 1
+
+    log.info("number of processes being used is %d" % number_slices)
+
+    total_rows = input_model.data.shape[2]
+    total_cols = input_model.data.shape[3]
+    number_of_integrations = input_model.data.shape[0]
+    number_of_groups = input_model.data.shape[1]
+    data = np.zeros_like(input_model.data)
+    err = np.zeros_like(input_model.err)
+    groupdq = np.zeros_like(input_model.groupdq)
+    pixeldq = np.zeros_like(input_model.pixeldq)
+    if pipe_utils.is_tso(input_model) and hasattr(input_model, 'int_times'):
+        int_times = input_model.int_times
+    else:
+        int_times = None
+    rows_per_slice = round(total_rows / number_slices)
+    pool = Pool(processes=number_slices)
+    slices = []
+    for i in range(number_slices - 1):
+        readnoise_slice = readnoise_2d[i * rows_per_slice: (i + 1) * rows_per_slice, :]
+        gain_slice = gain_2d[i * rows_per_slice: (i + 1) * rows_per_slice, :]
+        data = input_model.data[:,:,i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
+        err = input_model.err[:, :, i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
+        groupdq = input_model.groupdq[:, :, i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
+        pixeldq = input_model.pixeldq[ i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
+
+        slices.insert(i, (data, err, groupdq, pixeldq, buffsize, save_opt, readnoise_slice, gain_slice, weighting,
+                      input_model.meta.instrument.name, input_model.meta.exposure.frame_time,
+                      input_model.meta.exposure.ngroups, input_model.meta.exposure.group_time,
+                      input_model.meta.exposure.groupgap, input_model.meta.exposure.nframes,
+                      input_model.meta.exposure.drop_frames1, int_times))
+
+    # last slice gets the rest
+    readnoise_slice = readnoise_2d[(number_slices - 1) * rows_per_slice: total_rows, :]
+    gain_slice = gain_2d[(number_slices - 1) * rows_per_slice: total_rows, :]
+    data = input_model.data[:, :, (number_slices - 1) * rows_per_slice: total_rows, :].copy()
+    err = input_model.err[:, :, (number_slices - 1) * rows_per_slice: total_rows, :].copy()
+    groupdq = input_model.groupdq[:, :, (number_slices - 1) * rows_per_slice: total_rows, :].copy()
+    pixeldq = input_model.pixeldq[(number_slices - 1) * rows_per_slice: total_rows, :].copy()
+    max_number_segments = calc_num_seg(groupdq, number_of_integrations)
+
+    slices.insert(number_slices - 1, (data, err, groupdq, pixeldq, buffsize, save_opt, readnoise_slice, gain_slice, weighting,
+                                      input_model.meta.instrument.name, input_model.meta.exposure.frame_time,
+                                      input_model.meta.exposure.ngroups, input_model.meta.exposure.group_time,
+                                      input_model.meta.exposure.groupgap, input_model.meta.exposure.nframes,
+                                      input_model.meta.exposure.drop_frames1, int_times))
+
+    log.info("Creating %d processes for ramp fitting " % number_slices)
+
+    real_results = pool.starmap(ols_ramp_fit, slices)
+    k = 0
+    log.info("All processes complete")
+    # Create new model for the primary output.
+    imshape = (total_rows, total_cols)
+    out_model = datamodels.ImageModel(data=np.zeros(imshape, dtype=np.float32),
+                                      dq=np.zeros(imshape, dtype=np.uint32),
+                                      var_poisson=np.zeros(imshape, dtype=np.float32),
+                                      var_rnoise=np.zeros(imshape, dtype=np.float32),
+                                      err=np.zeros(imshape, dtype=np.float32))
+    # ... and add all keys from input
+    out_model.update(input_model)
+
+    #create per integrations model, if this is a multi-integration exposure
+    if number_of_integrations > 1:
+        int_model = datamodels.CubeModel(
+            data=np.zeros((number_of_integrations,) + imshape, dtype=np.float32),
+            dq=np.zeros((number_of_integrations,) +imshape, dtype=np.uint32),
+            var_poisson=np.zeros((number_of_integrations,) + imshape, dtype=np.float32),
+            var_rnoise=np.zeros((number_of_integrations,) + imshape, dtype=np.float32),
+            err=np.zeros((number_of_integrations,) + imshape, dtype=np.float32))
+        int_model.int_times = None
+        int_model.update(input_model)  # ... and add all keys from input
+    else:
+        int_model = None
+
+    # Create model for the optional output
+    if save_opt:
+        opt_model = datamodels.RampFitOutputModel(
+            slope=np.zeros((number_of_integrations,) + (max_number_segments,) + imshape, dtype=np.float32),
+            yint = np.zeros((number_of_integrations,) + (max_number_segments,) + imshape, dtype=np.float32),
+            sigyint = np.zeros((number_of_integrations,) + (max_number_segments,) + imshape, dtype=np.float32),
+            sigslope = np.zeros((number_of_integrations,) + (max_number_segments,) + imshape, dtype=np.float32),
+            weights = np.zeros((number_of_integrations,) + (max_number_segments,) + imshape, dtype=np.float32),
+            firstf_int = np.zeros(( number_of_integrations,) + imshape, dtype=np.float32),
+            pedestal = np.zeros(( number_of_integrations,) + imshape, dtype=np.float32),
+            crmag = np.zeros(( number_of_integrations,) + (max_number_segments,) + imshape, dtype=np.float32),
+            var_poisson = np.zeros(( number_of_integrations,) + (max_number_segments,) + imshape, dtype=np.float32),
+            var_rnoise = np.zeros(( number_of_integrations,) + (max_number_segments,) + imshape, dtype=np.float32),
+        )
+
+        opt_model.meta.filename = input_model.meta.filename
+        opt_model.update(input_model)  # ... and add all keys from input
+    else:
+        opt_model = None
+
+    for resultslice in real_results:
+        if len(real_results) == k + 1:  # last result
+            out_model.data[k * rows_per_slice: total_rows, :] = resultslice[0]
+            out_model.dq[k * rows_per_slice:total_rows, :] = resultslice[1]
+            out_model.var_poisson[k * rows_per_slice:total_rows, :] = resultslice[2]
+            out_model.var_rnoise[k * rows_per_slice:total_rows, :] = resultslice[3]
+            out_model.err[k * rows_per_slice:total_rows, :] = resultslice[4]
+            if resultslice[5] is not None: #Integration results exist
+                int_model.data[: , k * rows_per_slice:total_rows, :] = resultslice[5]
+                int_model.dq[:, k * rows_per_slice:total_rows, :] = resultslice[6]
+                int_model.var_poisson[:, k * rows_per_slice:total_rows, :] = resultslice[7]
+                int_model.var_rnoise[:, k * rows_per_slice:total_rows, :] = resultslice[8]
+                int_model.err[:, k * rows_per_slice:total_rows, :] = resultslice[9]
+ #               int_model.int_times[:, k * rows_per_slice:total_rows, :] = None
+            if resultslice[11] is not None: #Optional results exist
+                opt_model.slope[:, :, k * rows_per_slice:total_rows, :] = resultslice[11]
+                opt_model.sigslope[:, :, k * rows_per_slice:total_rows, :] = resultslice[12]
+                opt_model.var_poisson[:,:, k * rows_per_slice:total_rows, :] = resultslice[13]
+                opt_model.var_rnoise[:, :, k * rows_per_slice:total_rows, :] = resultslice[14]
+                opt_model.yint[:, :, k * rows_per_slice:total_rows, :] = resultslice[15]
+                opt_model.sigyint[:, :, k * rows_per_slice:total_rows, :] = resultslice[16]
+                opt_model.pedestal[:, k * rows_per_slice:total_rows, :] = resultslice[17]
+                opt_model.weights[:, :, k * rows_per_slice:total_rows, :] = resultslice[18]
+                opt_model.crmag[:, :, k * rows_per_slice:total_rows, :] = resultslice[19]
+
+        else:
+            out_model.data[k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[0]
+            out_model.dq[k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[1]
+            out_model.var_poisson[ k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[2]
+            out_model.var_rnoise[ k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[3]
+            out_model.err[k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[4]
+            if resultslice[5] is not None: #Multiple integration results exist
+                int_model.data[:, k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[5]
+                int_model.dq[:, k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[6]
+                int_model.var_poisson[:, k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[7]
+                int_model.var_rnoise[:, k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[8]
+                int_model.err[:, k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[9]
+ #               int_model.int_times[:, k * rows_per_slice: (k + 1) * rows_per_slice, :] = None
+            if resultslice[11] is not None: #Optional Results exist
+                opt_model.slope[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[11]
+                opt_model.sigslope[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[12]
+                opt_model.var_poisson[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[13]
+                opt_model.var_rnoise[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[14]
+                opt_model.yint[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[15]
+                opt_model.sigyint[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[16]
+                opt_model.pedestal[:, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[17]
+                opt_model.weights[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[18]
+                opt_model.crmag[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[19]
+        k = k + 1
+    return out_model, int_model, opt_model
 
 
 def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d, gain_2d,
@@ -180,7 +334,6 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
     ncols = data.shape[3]
     imshape = (nrows, ncols)
     cubeshape = (nreads,) + imshape
-
     # Save original shapes for writing to log file, as these may change for MIRI
     orig_nreads = nreads
     orig_cubeshape = cubeshape
@@ -246,7 +399,6 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
             data = data[:,:-1,:,:]
             err = err[:,:-1,:,:]
             groupdq = groupdq[:,:-1,:,:]
-
             cubeshape = (nreads,)+imshape
             log.info('MIRI dataset has all pixels in the final group flagged as DO_NOT_USE.')
 
@@ -329,7 +481,8 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
                 rhi = cubeshape[1]
 
 #            data_sect = model.get_section('data')[num_int, :, rlo:rhi, :]
-            data_sect = data[num_int,: , :, :]
+            data_sect = np.float64(data[num_int,: , :, :])
+            #dt = np.dtype(data_sect)
             # Skip data section if it is all NaNs
             if  np.all(np.isnan( data_sect)):
                 log.error('Current data section is all nans, so not processing the section.')
@@ -376,10 +529,6 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
                 #   starting at group 1.  The purpose of starting at index 1 is
                 #   to shift all the indices down by 1, so they line up with the
                 #   indices in first_diffs.
-                print("FD shape", first_diffs_sect.shape)
-                print("igroup size",i_group.size)
-                print("iyy size", i_yy.size)
-                print("ixx size", i_xx.size)
                 first_diffs_sect[ i_group-1, i_yy, i_xx ] = np.NaN
 
                 del i_group, i_yy, i_xx
@@ -708,7 +857,6 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
     # For multiple-integration datasets, will output integration-specific
     #    results to separate file named <basename> + '_integ.fits'
     int_times = None
-    print("int pixel dt shape",dq_int.shape)
     if n_int > 1:
         int_model = utils.output_integ(slope_int, dq_int, effintim,
                                        var_p3, var_r3, var_both3, int_times)
@@ -1136,6 +1284,15 @@ def calc_power(snr):
 
     return pow_wt.ravel()
 
+def interpolate_power(snr):
+    pow_wt = snr.copy() * 0.0
+    pow_wt[np.where(snr > 5.)] = ((snr[snr>5]-5)/(10 - 5)) * 0.6 + 0.4
+    pow_wt[np.where(snr > 10.)] = ((snr[snr>10]-10)/(20 - 10)) * 2.0 + 1.0
+    pow_wt[np.where(snr > 20.)] = ((snr[snr>20]-20))/(50 - 20) * 3.0 + 3.0
+    pow_wt[np.where(snr > 50.)] = ((snr[snr>50] - 50))/(100 - 50) * 4.0 + 6.0
+    pow_wt[np.where(snr > 100.)] = 10.0
+
+    return pow_wt.ravel()
 
 def dq_compress_final(dq_int, n_int):
     """
@@ -2563,7 +2720,7 @@ def calc_opt_sums(rn_sect, gain_sect, data_masked, mask_2d, xvalues, good_pix):
         rolled up indices of valid pixel values for all groups
     """
     c_mask_2d = mask_2d.copy() # copy the mask to prevent propagation
-
+    rn_sect = np.float64(rn_sect)
     # Return 'empty' sums if there is no more data to fit
     if (data_masked.size == 0):
         return np.array([]), np.array([]), np.array([]), np.array([]),\
@@ -2588,7 +2745,6 @@ def calc_opt_sums(rn_sect, gain_sect, data_masked, mask_2d, xvalues, good_pix):
     data_diff = data_final - data_zero # correctly does *NOT* have nans
 
     ind_lastnz = 0
-    data_zero = 0
 
     # Use the readnoise and gain for good pixels only
     rn_sect_rav = rn_sect.flatten()[ good_pix ]
@@ -2599,7 +2755,6 @@ def calc_opt_sums(rn_sect, gain_sect, data_masked, mask_2d, xvalues, good_pix):
     # Calculate the sigma for nonzero gain values
     sigma_ir = data_final.copy() * 0.0
     numer_ir = data_final.copy() * 0.0
-    data_final = 0
 
     # Calculate the SNR for pixels from the readnoise, the gain, and the
     # difference between the last and first reads for pixels where this results
@@ -2623,8 +2778,7 @@ def calc_opt_sums(rn_sect, gain_sect, data_masked, mask_2d, xvalues, good_pix):
     data_diff = 0
     sigma_ir = 0
 
-    power_wt_r = calc_power(snr)  # get the weighting exponent for this SNR
-
+    power_wt_r = interpolate_power(snr) # Get the interpolated power for this SNR
     # Make array of number of good groups, and exponents for each pixel
     num_nz = (data_masked != 0.).sum(0) # number of nonzero groups per pixel
     nrd_data_a = num_nz.copy()
@@ -2644,7 +2798,7 @@ def calc_opt_sums(rn_sect, gain_sect, data_masked, mask_2d, xvalues, good_pix):
 
     # Set optimal weights for each group of each pixel;
     #    for all pixels at once, loop over the groups
-    wt_h = np.zeros(data_masked.shape, dtype=np.float32)
+    wt_h = np.zeros(data_masked.shape, dtype=np.float64)
 
     for jj_rd in range(data_masked.shape[0]):
         wt_h[jj_rd, :] = \
@@ -2652,9 +2806,6 @@ def calc_opt_sums(rn_sect, gain_sect, data_masked, mask_2d, xvalues, good_pix):
 
     wt_h[np.isnan(wt_h)] = 0.
     wt_h[np.isinf(wt_h)] = 0.
-
-    nrd_prime = 0
-    power_wt_r = 0
 
     # For all pixels, 'roll' up the leading zeros such that the 0th group of
     #  each pixel is the lowest nonzero group for that pixel
