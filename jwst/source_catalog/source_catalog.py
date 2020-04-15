@@ -6,6 +6,7 @@ from collections import OrderedDict
 import logging
 
 from astropy.convolution import Gaussian2DKernel
+from astropy.nddata.utils import extract_array
 from astropy.stats import gaussian_fwhm_to_sigma, SigmaClip
 from astropy.table import QTable
 import astropy.units as u
@@ -16,7 +17,9 @@ from scipy.spatial import cKDTree
 from photutils import Background2D, MedianBackground
 from photutils import detect_sources, deblend_sources, source_properties
 from photutils import CircularAperture, CircularAnnulus, aperture_photometry
+from photutils.detection.findstars import _StarFinderKernel
 from photutils.utils._wcs_helpers import _pixel_scale_angle_at_skycoord
+from photutils.utils._convolution import _filter_data
 
 from .. import datamodels
 from ..datamodels import ImageModel, ABVegaOffsetModel
@@ -337,6 +340,9 @@ def make_kernel(kernel_fwhm):
     Filtering the image will smooth the noise and maximize detectability
     of objects with a shape similar to the kernel.
 
+    The kernel must have odd sizes in both X and Y, be centered in the
+    central pixel, and normalized to sum to 1.
+
     Parameters
     ----------
     kernel_fwhm : float
@@ -472,6 +478,9 @@ class SourceCatalog:
         The kernel should be the same one used in defining the source
         segments.
 
+    kernel_fwhm : float
+        The full-width at half-maximum (FWHM) of the 2D Gaussian kernel.
+
     aperture_params : `dict`
         A dictionary containing the aperture parameters (radii, aperture
         corrections, and background annulus inner and outer radii).
@@ -482,7 +491,7 @@ class SourceCatalog:
     """
 
     def __init__(self, model, segment_img, error=None, kernel=None,
-                 aperture_params=None, abvega_offset=0.0):
+                 kernel_fwhm=None, aperture_params=None, abvega_offset=0.0):
 
         if not isinstance(model, ImageModel):
             raise ValueError('The input model must be a ImageModel.')
@@ -491,6 +500,7 @@ class SourceCatalog:
         self.segment_img = segment_img
         self.error = error  # total error array
         self.kernel = kernel
+        self.kernel_fwhm = kernel_fwhm
         self.aperture_params = aperture_params
         self.abvega_offset = abvega_offset
 
@@ -605,6 +615,9 @@ class SourceCatalog:
                                          error=self.error,
                                          filter_kernel=self.kernel,
                                          wcs=self.wcs)
+
+        self._xpeak = source_props.maxval_xpos.value.astype(int)
+        self._ypeak = source_props.maxval_ypos.value.astype(int)
 
         # rename some columns in the output catalog
         prop_names = {}
@@ -969,6 +982,39 @@ class SourceCatalog:
         return self.null_column
 
     @lazyproperty
+    def _daofind_kernel(self):
+        kernel = _StarFinderKernel(self.kernel_fwhm, ratio=1.0, theta=0.0,
+                                   sigma_radius=1.5, normalize_zerosum=True)
+        return kernel.data
+
+    @lazyproperty
+    def _kernel_ycenter(self):
+        return (self._daofind_kernel.shape[0] - 1) // 2
+
+    @lazyproperty
+    def _kernel_xcenter(self):
+        return (self._daofind_kernel.shape[1] - 1) // 2
+
+    @lazyproperty
+    def _daofind_convolved_data(self):
+        return _filter_data(self.model.data, self._daofind_kernel,
+                            mode='constant', fill_value=0.0,
+                            check_normalization=False)
+
+    @lazyproperty
+    def _daofind_cutout(self):
+        # the cutout size always matches the kernel size, which have odd
+        # dimensions.
+
+        cutout = []
+        for xpeak, ypeak in zip(self._xpeak, self._ypeak):
+            cutout.append(extract_array(self._daofind_convolved_data,
+                                        self._daofind_kernel.shape,
+                                        (ypeak, xpeak),
+                                        fill_value=0.0))
+        return np.array(cutout)  # all cutouts are the same size
+
+    @lazyproperty
     def sharpness(self):
         """
         The DAOFind source sharpness statistic.
@@ -994,7 +1040,27 @@ class SourceCatalog:
         "Round" objects have a ``roundness`` close to 0, generally
         between -1 and 1.
         """
-        return self.null_column
+
+        # set the central (peak) pixel to zero
+        cutout = self._daofind_cutout.copy()
+        cutout[:, self._kernel_ycenter, self._kernel_xcenter] = 0.0
+
+        # calculate the four roundness quadrants
+        quad1 = cutout[:, 0:self._kernel_ycenter + 1,
+                       self._kernel_xcenter + 1:]
+        quad2 = cutout[:, 0:self._kernel_ycenter, 0:self._kernel_xcenter + 1]
+        quad3 = cutout[:, self._kernel_ycenter:, 0:self._kernel_xcenter]
+        quad4 = cutout[:, self._kernel_ycenter + 1:, self._kernel_xcenter:]
+
+        axis = (1, 2)
+        sum2 = (-quad1.sum(axis=axis) + quad2.sum(axis=axis) -
+                quad3.sum(axis=axis) + quad4.sum(axis=axis))
+        sum2[sum2 == 0] = 0.0
+
+        sum4 = np.abs(cutout).sum(axis=axis)
+        sum4[sum4 == 0] = np.nan
+
+        return 2.0 * sum2 / sum4
 
     @lazyproperty
     def _ckdtree_query(self):

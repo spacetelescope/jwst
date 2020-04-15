@@ -81,6 +81,7 @@ class SourceCatalogStep(Step):
 
             catobj = SourceCatalog(model, segment_img, error=total_error,
                                    kernel=kernel,
+                                   kernel_fwhm=self.kernel_fwhm,
                                    aperture_params=refdata.aperture_params,
                                    abvega_offset=refdata.abvega_offset)
             catalog = catobj.catalog
