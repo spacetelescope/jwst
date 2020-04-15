@@ -1,4 +1,6 @@
-#!/usr/bin/env python
+"""
+Module for the source catalog step.
+"""
 
 import os
 
@@ -18,8 +20,7 @@ class SourceCatalogStep(Step):
     Parameters
     -----------
     input : str or `ImageModel`
-        A FITS filename or a `ImageModel` of a single drizzled
-        image.  The input image is assumed to be background subtracted.
+        A FITS filename or an `ImageModel` of a drizzled image.
     """
 
     spec = """
@@ -58,7 +59,7 @@ class SourceCatalogStep(Step):
                                     abvega_offset_filename=abvega_offset_fn)
 
             coverage_mask = (model.wht == 0)
-            bkg = Background(model.data, bkg_boxsize=self.bkg_boxsize,
+            bkg = Background(model.data, box_size=self.bkg_boxsize,
                              mask=coverage_mask)
             model.data -= bkg.background
 
