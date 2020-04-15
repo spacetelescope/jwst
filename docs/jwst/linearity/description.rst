@@ -10,7 +10,7 @@ for those instruments must have been derived from data that has also been
 bias subtracted.
 MIRI data, on the other hand, do not receive bias subtraction
 (see :ref:`calwebb_detector1 <calwebb_detector1>`) and hence the linearity
-correction is derived and applied in the raw data space.
+correction is derived from data that has not been bias subtracted.
 
 It is also assumed that the saturation step has already been applied to
 the input data, so that saturation flags are set in the GROUPDQ array of
