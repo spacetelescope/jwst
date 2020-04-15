@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+from astropy.io import fits
 
 from jwst.ramp_fitting.ramp_fit import ramp_fit
 from jwst.datamodels import dqflags
@@ -30,6 +31,45 @@ def test_one_group_two_ints_fit_ols():
     model1.data[1, 0, 50, 50] = 12.0
     slopes = ramp_fit(model1, 1024*30000., True, rnModel, gain, 'OLS', 'optimal')
     np.testing.assert_allclose(slopes[0].data[50, 50],11.0, 1e-6)
+
+def test_multiprocessing():
+    nrows =100
+    ncols =100
+    ngroups=25
+    nints = 3
+    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups, gain=1, readnoise=10, nints=nints, nrows=nrows,
+                                                          ncols = ncols)
+    delta_plane1 = np.zeros((nrows,ncols),dtype=np.float64)
+    delta_plane2 = np.zeros((nrows, ncols), dtype=np.float64)
+    delta_vec = np.asarray([x/50.0 for x in range(nrows)])
+    for i in range(ncols):
+        delta_plane1[i,:] = delta_vec * i
+        delta_plane2[:,i] = delta_vec * i
+    model1.data[:, :, :, :] = 0
+    for j in range(ngroups-1):
+        model1.data[0, j+1, :, :] = model1.data[0, j, :, :] + delta_plane1 + delta_plane2
+        model1.data[1, j + 1, :, :] = model1.data[1, j, :, :] + delta_plane1 + delta_plane2
+        model1.data[2, j + 1, :, :] = model1.data[2, j, :, :] + delta_plane1 + delta_plane2
+    model1.data = np.round(model1.data + np.random.normal(0, 5, (nints, ngroups, ncols, nrows)))
+    hdu = fits.PrimaryHDU(model1.data)
+    hdu1 = fits.HDUList(hdu)
+    hdu1.writeto('model1.fits', overwrite=True)
+    slopes, int_model, opt_model, gls_opt_model = ramp_fit(model1, 1024 * 30000., True, rnModel, gain, 'OLS', 'optimal', 'none')
+
+    slopes_multi, int_model_multi, opt_model_multi, gls_opt_model_multi = ramp_fit(model1, 1024 * 30000., True, rnModel, gain, 'OLS', 'optimal', 'half')
+    hdu = fits.PrimaryHDU(slopes.data)
+    hdu1 = fits.HDUList(hdu)
+    hdu1.writeto('out_reg.fits', overwrite=True)
+    hdu = fits.PrimaryHDU(slopes_multi.data)
+    hdu1 = fits.HDUList(hdu)
+    hdu1.writeto('out_multi.fits', overwrite=True)
+    hdu = fits.PrimaryHDU(slopes_multi.data - slopes.data)
+    hdu1 = fits.HDUList(hdu)
+    hdu1.writeto('diff_int.fits', overwrite=True)
+    np.testing.assert_allclose(slopes.data, slopes_multi.data, rtol = 1e-6)
+#    hdu = fits.PrimaryHDU(model1.data)
+#    hdu1 = fits.HDUList(hdu)
+#    hdu1.writeto('testdata.fits',overwrite=True)
 
 @pytest.mark.xfail(reason="GLS code does not [yet] handle single group integrations.")
 def test_one_group_two_ints_fit_gls():
@@ -576,7 +616,7 @@ def setup_inputs(ngroups=10, readnoise=10, nints=1,
     times = np.array(list(range(ngroups)),dtype=np.float64) * deltatime
     gain = np.ones(shape=(nrows, ncols), dtype=np.float64) * gain
     err = np.ones(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
-    data = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
+    data = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.uint32)
     pixdq = np.zeros(shape=(nrows, ncols), dtype= np.float64)
     read_noise = np.full((nrows, ncols), readnoise, dtype=np.float64)
     gdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.int32)
@@ -597,6 +637,7 @@ def setup_inputs(ngroups=10, readnoise=10, nints=1,
     model1.meta.exposure.group_time = deltatime
     model1.meta.exposure.nframes = 1
     model1.meta.exposure.groupgap = 0
+    model1.meta.exposure.drop_frames1 = 0
     gain = GainModel(data=gain)
     gain.meta.instrument.name='MIRI'
     gain.meta.subarray.xstart = 1
