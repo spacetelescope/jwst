@@ -247,7 +247,11 @@ class OptRes:
                         end_cr[y, x] += 1
 
         max_num_crs = end_cr.max()
-        self.cr_mag_seg = cr_com [:,:max_num_crs,:,:]
+        if max_num_crs == 0:
+            max_num_crs = 1
+            self.cr_mag_seg = np.zeros(shape=(n_int, 1, imshape[0], imshape[1] ))
+        else:
+            self.cr_mag_seg = cr_com [:,:max_num_crs,:,:]
 
 
     def output_optional(self, effintim):
@@ -1113,7 +1117,7 @@ def get_ref_subs(model, readnoise_model, gain_model, nframes):
         gain_2d = reffile_utils.get_subarray_data(model, gain_model)
 
     if reffile_utils.ref_matches_sci(model, readnoise_model):
-        readnoise_2d = readnoise_model.data
+        readnoise_2d = readnoise_model.data.copy()
     else:
         log.info('Extracting readnoise subarray to match science data')
         readnoise_2d = reffile_utils.get_subarray_data(model, readnoise_model)
