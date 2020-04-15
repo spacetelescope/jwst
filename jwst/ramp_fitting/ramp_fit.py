@@ -326,8 +326,6 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
     tstart = time.time()
 
     # Get needed sizes and shapes
- #   nreads, npix, imshape, cubeshape, n_int, instrume, frame_time, ngroups, \
- #       group_time = utils.get_dataset_info(model)
     n_int = data.shape[0]
     nreads = data.shape[1]
     nrows = data.shape[2]
@@ -420,10 +418,7 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
     #   is the number of given by the NFRAMES keyword, and is the number of
     #   frames averaged on-board for a group, i.e., it does not include the
     #   groupgap.
- #   effintim, nframes, groupgap, dropframes1 = utils.get_efftim_ped(model)
-#    groupgap = model.meta.exposure.groupgap
-#    nframes = model.meta.exposure.nframes
-#    dropframes1 = model.meta.exposure.drop_frames1
+
     effintim = (nframes + groupgap) * frame_time
 
     # Get GROUP DQ and ERR arrays from input file
@@ -452,8 +447,6 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
 
     opt_res = utils.OptRes(n_int, imshape, max_seg, nreads, save_opt)
 
-    # Calculate number of (contiguous) rows per data section
-#    nrows = calc_nrows(model, buffsize, cubeshape, nreads)
 
     # Get Pixel DQ array from input file. The incoming RampModel has uint32
     #   PIXELDQ, but ramp fitting will update this array here by flagging
@@ -480,7 +473,6 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
             if rhi > cubeshape[1]:
                 rhi = cubeshape[1]
 
-#            data_sect = model.get_section('data')[num_int, :, rlo:rhi, :]
             data_sect = np.float64(data[num_int,: , :, :])
             #dt = np.dtype(data_sect)
             # Skip data section if it is all NaNs
@@ -489,11 +481,8 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
                 continue
 
             # first frame section for 1st group of current integration
-#            ff_sect = model.get_section('data')[ num_int, 0, rlo:rhi, :].\
-#                astype(np.float32)
             ff_sect = data[ num_int, 0, rlo:rhi, :]
             # Get appropriate sections
-#            gdq_sect = model.get_section('groupdq')[num_int, :, rlo:rhi, :]
             gdq_sect = groupdq[num_int,:,:,:]
             rn_sect = readnoise_2d[rlo:rhi, :]
             gain_sect = gain_2d[rlo:rhi, :]
@@ -639,8 +628,6 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
             if rhi > cubeshape[1]:
                 rhi = cubeshape[1]
 
-            # gdq_sect is: [ groups, y, x ]
- #           gdq_sect = model.get_section('groupdq')[num_int, :, rlo:rhi, :]
             gdq_sect = groupdq[num_int, :, rlo:rhi, :]
             rn_sect = readnoise_2d[rlo:rhi, :]
             gain_sect = gain_2d[rlo:rhi, :]
@@ -807,7 +794,6 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
                             dtype=np.uint32)
 
         for num_int in range(0, n_int):
-#            dq_slice =  model.get_section('groupdq')[num_int, 0, :, :]
             dq_slice = groupdq[num_int, 0, :, :]
             opt_res.ped_int[ num_int, :, : ] = \
                 utils.calc_pedestal(num_int, slope_int, opt_res.firstf_int,
@@ -930,7 +916,6 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
             var_rnoise=var_r2.astype(np.float32),
             err=err_tot.astype(np.float32))
 
- #   new_model.update(model)  # ... and add all keys from input
     if int_model is not None:
         int_data = int_model.data.copy()
         int_dq = int_model.dq.copy()

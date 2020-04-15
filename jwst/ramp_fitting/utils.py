@@ -301,8 +301,6 @@ class OptRes:
             weights=self.weights.astype(np.float32),
             crmag=self.cr_mag_seg)
 
- #       rfo_model.meta.filename = model.meta.filename
- #       rfo_model.update(model)  # add all keys from input
 
         return rfo_model
 
@@ -729,7 +727,6 @@ def output_integ(slope_int, dq_int, effintim, var_p3, var_r3, var_both3,
     # Reset the warnings filter to its original state
     warnings.resetwarnings()
 
-#    cubemod.update(model) # keys from input needed for photom step
 
     return cubemod
 
@@ -1294,7 +1291,6 @@ def do_all_sat( pixeldq, groupdq, imshape, n_int, save_opt):
         var_rnoise = np.zeros(imshape, dtype=np.float32),
         err = np.zeros(imshape, dtype=np.float32) )
 
-#    new_model.update(model)  # ... and add all keys from input
 
     # Create model for the integration-specific output. The 3D group DQ created
     #   is based on the 4D group DQ of the model, and all pixels in all
@@ -1317,7 +1313,6 @@ def do_all_sat( pixeldq, groupdq, imshape, n_int, save_opt):
             int_times = None,
             err =  np.zeros((n_int,) + imshape, dtype=np.float32))
 
-  #      int_model.update(model)  # ... and add all keys from input
     else:
         int_model = None
 
@@ -1336,8 +1331,6 @@ def do_all_sat( pixeldq, groupdq, imshape, n_int, save_opt):
             weights = new_arr,
             crmag = new_arr)
 
- #       opt_model.meta.filename = model.meta.filename
- #       opt_model.update(model)  # ... and add all keys from input
     else:
         opt_model = None
 
