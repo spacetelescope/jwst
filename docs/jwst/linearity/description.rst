@@ -4,12 +4,16 @@ Description
 Assumptions
 -----------
 It is assumed that the input science exposure data for near-IR instruments
-have had the superbias subtraction applied, therefore the correction
-coefficients stored in the linearity reference files for those instruments
-must have been derived from data that also had the zero group subtracted.
+have had the :ref:`superbias <superbias_step>` subtraction step applied,
+therefore the correction coefficients stored in the linearity reference files
+for those instruments must have been derived from data that has also been
+bias subtracted.
+MIRI data, on the other hand, do not receive bias subtraction
+(see :ref:`calwebb_detector1 <calwebb_detector1>`) and hence the linearity
+correction is derived from data that has not been bias subtracted.
 
 It is also assumed that the saturation step has already been applied to
-the science data, so that saturation flags are set in the GROUPDQ array of
+the input data, so that saturation flags are set in the GROUPDQ array of
 the input science data.
 
 Algorithm
