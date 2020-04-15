@@ -12,6 +12,7 @@ from astropy.table import QTable
 import astropy.units as u
 from astropy.utils import lazyproperty
 import numpy as np
+from scipy import ndimage
 from scipy.spatial import cKDTree
 
 from photutils import Background2D, MedianBackground
@@ -19,7 +20,6 @@ from photutils import detect_sources, deblend_sources, source_properties
 from photutils import CircularAperture, CircularAnnulus, aperture_photometry
 from photutils.detection.findstars import _StarFinderKernel
 from photutils.utils._wcs_helpers import _pixel_scale_angle_at_skycoord
-from photutils.utils._convolution import _filter_data
 
 from .. import datamodels
 from ..datamodels import ImageModel, ABVegaOffsetModel
@@ -983,33 +983,68 @@ class SourceCatalog:
 
     @lazyproperty
     def _daofind_kernel(self):
+        """
+        The DAOFind kernel.
+        """
         kernel = _StarFinderKernel(self.kernel_fwhm, ratio=1.0, theta=0.0,
                                    sigma_radius=1.5, normalize_zerosum=True)
-        return kernel.data
-
-    @lazyproperty
-    def _kernel_ycenter(self):
-        return (self._daofind_kernel.shape[0] - 1) // 2
+        return kernel
 
     @lazyproperty
     def _kernel_xcenter(self):
-        return (self._daofind_kernel.shape[1] - 1) // 2
+        """
+        The DAOFind kernel x center.
+        """
+        return (self._daofind_kernel.data.shape[1] - 1) // 2
+
+    @lazyproperty
+    def _kernel_ycenter(self):
+        """
+        The DAOFind kernel y center.
+        """
+        return (self._daofind_kernel.data.shape[0] - 1) // 2
 
     @lazyproperty
     def _daofind_convolved_data(self):
-        return _filter_data(self.model.data, self._daofind_kernel,
-                            mode='constant', fill_value=0.0,
-                            check_normalization=False)
+        """
+        The DAOFind convolved data.
+        """
+        return ndimage.convolve(self.model.data.value,
+                                self._daofind_kernel.data, mode='constant',
+                                cval=0.0)
 
     @lazyproperty
     def _daofind_cutout(self):
-        # the cutout size always matches the kernel size, which have odd
-        # dimensions.
+        """
+        3D array containing 2D cutouts centered on each source from the
+        input data.
+
+        The cutout size always matches the size of the DAOFind kernel,
+        which has odd dimensions.
+        """
+
+        cutout = []
+        for xpeak, ypeak in zip(self._xpeak, self._ypeak):
+            cutout.append(extract_array(self.model.data,
+                                        self._daofind_kernel.data.shape,
+                                        (ypeak, xpeak),
+                                        fill_value=0.0))
+        return np.array(cutout)  # all cutouts are the same size
+
+    @lazyproperty
+    def _daofind_cutout_conv(self):
+        """
+        3D array containing 2D cutouts centered on each source from the
+        DAOFind convolved data.
+
+        The cutout size always matches the size of the DAOFind kernel,
+        which has odd dimensions.
+        """
 
         cutout = []
         for xpeak, ypeak in zip(self._xpeak, self._ypeak):
             cutout.append(extract_array(self._daofind_convolved_data,
-                                        self._daofind_kernel.shape,
+                                        self._daofind_kernel.data.shape,
                                         (ypeak, xpeak),
                                         fill_value=0.0))
         return np.array(cutout)  # all cutouts are the same size
@@ -1026,7 +1061,18 @@ class SourceCatalog:
 
         Stars generally have a ``sharpness`` between 0.2 and 1.0.
         """
-        return self.null_column
+
+        npixels = self._daofind_kernel.npixels - 1  # exclude the peak pixel
+        data_masked = self._daofind_cutout * self._daofind_kernel.mask
+        data_peak = self._daofind_cutout[:, self._kernel_ycenter,
+                                         self._kernel_xcenter]
+        conv_peak = self._daofind_cutout_conv[:, self._kernel_ycenter,
+                                              self._kernel_xcenter]
+
+        data_mean = ((np.sum(data_masked, axis=(1, 2)) -
+                      data_peak) / npixels)
+
+        return (data_peak - data_mean) / conv_peak
 
     @lazyproperty
     def roundness(self):
@@ -1042,7 +1088,7 @@ class SourceCatalog:
         """
 
         # set the central (peak) pixel to zero
-        cutout = self._daofind_cutout.copy()
+        cutout = self._daofind_cutout_conv.copy()
         cutout[:, self._kernel_ycenter, self._kernel_xcenter] = 0.0
 
         # calculate the four roundness quadrants
@@ -1200,7 +1246,8 @@ class SourceCatalog:
                 catalog[colname].info.format = '.4f'
             if 'flux' in colname:
                 catalog[colname].info.format = '.6e'
-            if 'abmag' in colname or 'vegamag' in colname or 'nn_' in colname:
+            if ('abmag' in colname or 'vegamag' in colname or 'nn_' in colname
+                    or colname in ('sharpness', 'roundness')):
                 catalog[colname].info.format = '.6f'
             if colname in ('semimajor_sigma', 'semiminor_sigma',
                            'ellipticity', 'orientation', 'sky_orientation'):
