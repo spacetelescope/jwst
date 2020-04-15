@@ -199,16 +199,17 @@ class ResampleSpecData:
         else:
         # for each input model convert slit x,y to ra,dec,lam
         # use first input model to set spatial scale
-        # append all ra,dec, wavelength array for each slit
-        # Use appended wavelengths to set up output spectral
         # use center of appended ra and dec arrays to set up
         # center of final ra,dec
+        # append all ra,dec, wavelength array for each slit
+        # use first model to initialize wavelenth array
+        # append wavelengths that fall outside the endpoint of
+        # of wavelength array when looping over additional data
 
             all_wavelength = []
             all_ra_slit = []
             all_dec_slit = []
-            #xtan_slope = []
-            #ytan_slope = []
+
             for im, model in enumerate(self.input_models):
                 wcs = model.meta.wcs
                 bb = wcs.bounding_box
@@ -220,7 +221,6 @@ class ResampleSpecData:
                 # Compute the wavelength array, trimming NaNs from the ends
                 wavelength_array = np.nanmedian(lam, axis=spectral_axis)
                 wavelength_array = wavelength_array[~np.isnan(wavelength_array)]
-                all_wavelength.append(wavelength_array)
 
                 # need to estimate the spatial sampling to use for the output WCS
                 # it is assumed the spatial sampling is the same for all the input
@@ -233,7 +233,13 @@ class ResampleSpecData:
                 # represent the tangent point
                 # 4. Convert ra,dec -> tangent plane projection: x_tan,y_tan
                 # 5. using x_tan, y_tan perform a linear fit to find spatial sampling
+                # first input model sets intializes wavelength array and defines
+                # the spatial scale of the output wcs
                 if im == 0:
+                    for iw in wavelength_array:
+                        all_wavelength.append(iw)
+                    print(len(all_wavelength))
+
                     lam_center_index = int((bb[spectral_axis][1] -
                                             bb[spectral_axis][0]) / 2)
                     if not spatial_axis:
@@ -245,8 +251,6 @@ class ResampleSpecData:
                     # find the ra and dec for this slit using center of slit
                     ra_center_pt = np.nanmean(ra_center)
                     dec_center_pt = np.nanmean(dec_center)
-                    #ra_center_pt = np.nanmean(ra)
-                    #dec_center_pt = np.nanmean(dec)
 
                     # ra and dec this converted to tangent projection
                     tan = Pix2Sky_TAN()
@@ -255,7 +259,6 @@ class ResampleSpecData:
                     # Filter out RuntimeWarnings due to computed NaNs in the WCS
                     warnings.simplefilter("ignore")
                     # at this center of slit find x,y tangent proction - x_tan, y_tan
-                    #x_tan, y_tan = undist2sky.inverse(ra_center, dec_center)
                     x_tan, y_tan = undist2sky1.inverse(ra, dec)
                     warnings.resetwarnings()
 
@@ -276,9 +279,6 @@ class ResampleSpecData:
                     pix_to_xtan = fitter(fit_model, np.arange(x_tan_array.shape[0]), x_tan_array)
                     pix_to_ytan = fitter(fit_model, np.arange(y_tan_array.shape[0]), y_tan_array)
 
-                    # xtan_slope.append(pix_to_xtan.slope)
-                    # ytan_slope.append(pix_to_ytan.slope)
-
                 # append all ra and dec values to use later to find min and max
                 # ra and dec
                 ra_use = ra.flatten()
@@ -288,13 +288,31 @@ class ResampleSpecData:
                 all_ra_slit.append(ra_use)
                 all_dec_slit.append(dec_use)
 
+                # now check wavlength array to see if we need to add to it
+                this_minw = np.min(wavelength_array)
+                this_maxw = np.max(wavelength_array)
+                all_minw = np.min(all_wavelength)
+                all_maxw = np.max(all_wavelength)
+
+                print('all_wavelength stats',len(all_wavelength))
+                print('min and max of this wavelength',this_minw, this_maxw)
+                print('min and max of all wavelength',all_minw, all_maxw)
+
+                if this_minw < all_minw:
+                    addpts = wavelength_array[wavelength_array < all_minw]
+                    for ip in range(len(addpts)):
+                        all_wavelength.append(addpts[ip])
+                if this_maxw > all_maxw:
+                    addpts = wavelength_array[wavelength_array > all_maxw]
+                    for ip in range(len(addpts)):
+                        all_wavelength.append(addpts[ip])
+
+                print('all_wavelength stats end',len(all_wavelength))
+                print(np.min(all_wavelength), np.max(all_wavelength))
+
             # done looping over set of models
             # find the mean spatial sampling use all slits - I left this code in case
             # using the spatial sampling from the first input images is not correct.
-            #xtan_mean_slope = np.mean(xtan_slope)
-            #ytan_mean_slope = np.mean(ytan_slope)
-            #pix_to_xtan.slope = xtan_mean_slope
-            #pix_to_ytan.slope = ytan_mean_slope
 
             all_ra = np.hstack(all_ra_slit)
             all_dec = np.hstack(all_dec_slit)
@@ -304,12 +322,13 @@ class ResampleSpecData:
             # Tabular interpolation model, pixels -> lambda
             wavelength_array = np.unique(all_wave)
             if self.input_models[0].meta.exposure.type == 'MIR_LRS-FIXEDSLIT' :
-                            #all_wave = all_wave[::-1]
                 wavelength_array = np.flip(wavelength_array,axis=None)
 
             pix_to_wavelength = Tabular1D(lookup_table=wavelength_array,
                                           bounds_error=False, fill_value=None, name='pix2wavelength')
 
+            print(pix_to_wavelength.points[450:550])
+            print(pix_to_wavelength.lookup_table[450:550])
            # Tabular models need an inverse explicitly defined.
            # If the wavelength array is decending instead of ascending, both
            # points and lookup_table need to be reversed in the inverse transform
