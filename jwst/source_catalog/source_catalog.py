@@ -5,6 +5,7 @@ Module to calculate the source catalog.
 from collections import OrderedDict
 import logging
 
+from astropy import __version__ as astropy_version
 from astropy.convolution import Gaussian2DKernel
 from astropy.nddata.utils import extract_array
 from astropy.stats import gaussian_fwhm_to_sigma, SigmaClip
@@ -12,14 +13,18 @@ from astropy.table import QTable
 import astropy.units as u
 from astropy.utils import lazyproperty
 import numpy as np
+from scipy import __version__ as scipy_version
 from scipy import ndimage
 from scipy.spatial import cKDTree
 
+from photutils import __version__ as photutils_version
 from photutils import Background2D, MedianBackground
 from photutils import detect_sources, deblend_sources, source_properties
 from photutils import CircularAperture, CircularAnnulus, aperture_photometry
 from photutils.detection.findstars import _StarFinderKernel
 from photutils.utils._wcs_helpers import _pixel_scale_angle_at_skycoord
+
+from jwst import __version__ as jwst_version
 
 from .. import datamodels
 from ..datamodels import ImageModel, ABVegaOffsetModel
@@ -167,11 +172,11 @@ class ReferenceData:
             log.info('APCorrModel reference file was not input -- '
                      'using fallback aperture sizes without any aperture '
                      'corrections.')
-            params = {'aperture_radii': (1.0, 2.0, 3.0),
-                      'aperture_corrs': (1.0, 1.0, 1.0),
-                      'aperture_ee': (1, 2, 3),
-                      'bkg_aperture_inner': 10.,
-                      'bkg_aperture_outer': 20.}
+            params = {'aperture_radii': np.array((1.0, 2.0, 3.0)),
+                      'aperture_corrections': np.array((1.0, 1.0, 1.0)),
+                      'aperture_ee': np.array((1, 2, 3)),
+                      'bkg_aperture_inner_radius': 5.0,
+                      'bkg_aperture_outer_radius': 10.0}
             return params
 
         params = {}
@@ -194,7 +199,7 @@ class ReferenceData:
         # scale is not yet a pipeline option (as of Apr 2020).
         params['aperture_ee'] = self.aperture_ee
         params['aperture_radii'] = np.array(radii)
-        params['aperture_corrs'] = np.array(apcorrs)
+        params['aperture_corrections'] = np.array(apcorrs)
 
         skyins = np.unique(skyins)
         skyouts = np.unique(skyouts)
@@ -202,8 +207,8 @@ class ReferenceData:
             raise RuntimeError('Expected to find only one value for skyin '
                                'and skyout in the apcorr reference file for '
                                'a given selector.')
-        params['bkg_aperture_inner'] = skyins[0]
-        params['bkg_aperture_outer'] = skyouts[0]
+        params['bkg_aperture_inner_radius'] = skyins[0]
+        params['bkg_aperture_outer_radius'] = skyouts[0]
 
         return params
 
@@ -859,9 +864,9 @@ class SourceCatalog:
         median, sqrt(pi / 2N) * std.
         """
 
-        bkg_aper = CircularAnnulus(self.xypos,
-                                   self.aperture_params['bkg_aperture_inner'],
-                                   self.aperture_params['bkg_aperture_outer'])
+        bkg_aper = CircularAnnulus(
+            self.xypos, self.aperture_params['bkg_aperture_inner_radius'],
+            self.aperture_params['bkg_aperture_outer_radius'])
         bkg_aper_masks = bkg_aper.to_mask(method='center')
         sigclip = SigmaClip(sigma=3)
 
@@ -1166,7 +1171,7 @@ class SourceCatalog:
         based on the flux in largest aperture.
         """
         idx = self.n_aper - 1  # apcorr for the largest EE (largest radius)
-        flux = (self.aperture_params['aperture_corrs'][idx] *
+        flux = (self.aperture_params['aperture_corrections'][idx] *
                 getattr(self, self.aperture_flux_colnames[idx*2]))
         flux[self._not_star] = np.nan
 
@@ -1179,7 +1184,7 @@ class SourceCatalog:
         stars, based on the flux in largest aperture.
         """
         idx = self.n_aper - 1  # apcorr for the largest EE (largest radius)
-        flux_err = (self.aperture_params['aperture_corrs'][idx] *
+        flux_err = (self.aperture_params['aperture_corrections'][idx] *
                     getattr(self, self.aperture_flux_colnames[idx*2 + 1]))
         flux_err[self._not_star] = np.nan
 
@@ -1264,6 +1269,18 @@ class SourceCatalog:
         return catalog
 
     @lazyproperty
+    def catalog_metadata(self):
+        meta = {}
+        meta['jwst version'] = jwst_version
+        meta['numpy version'] = np.__version__
+        meta['scipy version'] = scipy_version
+        meta['astropy version'] = astropy_version
+        meta['photutils version'] = photutils_version
+        meta['aperture_params'] = self.aperture_params
+        meta['abvega_offset'] = self.abvega_offset
+        return meta
+
+    @lazyproperty
     def catalog(self):
         """
         The final source catalog.
@@ -1290,5 +1307,6 @@ class SourceCatalog:
                 catalog[colname][:] = self.null_column
 
         catalog = self.format_columns(catalog)
+        catalog.meta.update(self.catalog_metadata)
 
         return catalog
