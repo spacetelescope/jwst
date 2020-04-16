@@ -36,7 +36,6 @@ class SourceCatalogStep(Step):
         aperture_ee1 = float(default=30)      # aperture encircled energy 1
         aperture_ee2 = float(default=50)      # aperture encircled energy 2
         aperture_ee3 = float(default=70)      # aperture encircled energy 3
-        output_ext = string(default='.ecsv')  # Default file extension
         suffix = string(default='cat')        # Default suffix for output files
     """
 
@@ -93,7 +92,7 @@ class SourceCatalogStep(Step):
             catalog = catobj.catalog
 
             if self.save_results:
-                cat_filepath = self.make_output_path()
+                cat_filepath = self.make_output_path(ext='.ecsv')
                 catalog.write(cat_filepath, format='ascii.ecsv',
                               overwrite=True)
                 model.meta.source_catalog = os.path.basename(cat_filepath)
