@@ -44,6 +44,7 @@ from ..datamodels import dqflags
 from ..lib import reffile_utils
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 #
 # NIR Reference section dictionaries are zero indexed and specify the values
@@ -810,6 +811,7 @@ class NIRDataset(Dataset):
                 #
                 #  Now transform back from detector to DMS coordinates.
                 self.detector_to_DMS(integration, group)
+        log.setLevel(logging.INFO)
         return
 
     def do_subarray_corrections(self):
@@ -870,6 +872,7 @@ class NIRDataset(Dataset):
                 #
                 #  Now transform back from detector to DMS coordinates.
                 self.detector_to_DMS(integration, group)
+        log.setLevel(logging.INFO)
         return
 
 
@@ -1509,6 +1512,7 @@ class MIRIDataset(Dataset):
                 #
                 #  Now transform back from detector to DMS coordinates and transfer results to output
                 self.restore_group(integration, group)
+        log.setLevel(logging.INFO)
         #
         #  All done, now add the first read back in
         log.info('Adding initial read back in')

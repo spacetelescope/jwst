@@ -6,6 +6,9 @@ from .model_base import DataModel
 from .amilg import AmiLgModel
 from .apcorr import FgsImgApcorrModel, MirImgApcorrModel
 from .apcorr import NrcImgApcorrModel, NisImgApcorrModel
+from .apcorr import MirLrsApcorrModel, MirMrsApcorrModel
+from .apcorr import NrcWfssApcorrModel, NisWfssApcorrModel
+from .apcorr import NrsMosApcorrModel, NrsFsApcorrModel
 from .asn import AsnModel
 from .barshadow import BarshadowModel
 from .combinedspec import CombinedSpecModel
@@ -84,13 +87,15 @@ __all__ = [
     'DataModel',
     'AmiLgModel',
     'FgsImgApcorrModel', 'MirImgApcorrModel', 'NrcImgApcorrModel', 'NisImgApcorrModel',
+    'MirLrsApcorrModel', 'MirMrsApcorrModel', 'NrcWfssApcorrModel', 'NisWfssApcorrModel',
+    'NrsMosApcorrModel', 'NrsFsApcorrModel',
     'AsnModel',
     'BarshadowModel', 'CameraModel', 'CollimatorModel',
     'CombinedSpecModel', 'ContrastModel', 'CubeModel',
     'DarkModel', 'DarkMIRIModel',
     'DisperserModel', 'DistortionModel', 'DistortionMRSModel',
-    'DrizProductModel',
     'DrizParsModel',
+    'DrizProductModel',
     'Extract1dImageModel',
     'FilteroffsetModel',
     'FlatModel', 'NirspecFlatModel', 'NirspecQuadFlatModel',
@@ -102,7 +107,8 @@ __all__ = [
     'IFUFOREModel', 'IFUImageModel', 'IFUPostModel', 'IFUSlicerModel',
     'ImageModel', 'IPCModel', 'IRS2Model', 'LastFrameModel', 'Level1bModel',
     'LinearityModel', 'MaskModel', 'ModelContainer', 'MSAModel',
-    'MultiExposureModel', 'MultiExtract1dImageModel', 'MultiProductModel', 'MultiSlitModel',
+    'MultiExposureModel', 'MultiExtract1dImageModel', 'MultiSlitModel',
+    'MultiProductModel',
     'MultiSpecModel', 'OTEModel',
     'NIRCAMGrismModel','NIRISSGrismModel',
     'OutlierParsModel',

@@ -15,6 +15,7 @@ from ..assign_wcs import util
 from ..lib import pipe_utils
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 def nrs_extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_files={}):
@@ -397,12 +398,12 @@ def _is_point_source(slit, exp_type, user_type):
     """
     result = False
     if exp_type == 'NRS_MSASPEC':
-        if slit.stellarity > 0.75:
+        if slit.stellarity > 0.75 or slit.stellarity < 0.0:
             result = True
-            log.info("Detected a point source in slit {0}, stelarity is {1}".format(slit.name, slit.stellarity))
+            log.info("Detected a point source in slit {0}, stellarity is {1}".format(slit.name, slit.stellarity))
         else:
             result = False
-            log.info("Detected an extended source in slit {0}, stelarity is {1}".format(slit.name, slit.stellarity))
+            log.info("Detected an extended source in slit {0}, stellarity is {1}".format(slit.name, slit.stellarity))
     else:
         # Get the value the user specified (if any)
         if (user_type is not None) and (user_type.upper() in ['POINT', 'EXTENDED']):

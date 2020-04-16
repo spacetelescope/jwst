@@ -34,9 +34,8 @@ WCS Correction
 The linear coordinate transformation computed in the previous step
 is used to define tangent-plane corrections that need to be applied
 to the GWCS pipeline in order to correct input image WCS.
-This correction is implemented using the `~jwst.transforms.tpcorr.TPCorr`
-class and a correcponding object is inserted into the GWCS pipeline
-of the image's WCS.
+This correction is implemented by inserting a ``v2v3corr`` frame with
+tangent plane corrections into the GWCS pipeline of the image's WCS.
 
 Step Arguments
 --------------
@@ -55,6 +54,12 @@ The ``tweakreg`` step has the following optional arguments:
 
 * ``snr_threshold``: A `float` value indicating SNR threshold above the
   background. (Default=5.0)
+
+* ``brightest``: A positive `int` value indicating the number of brightest
+  objects to keep. (Default=100)
+
+* ``peakmax``: A `float` value used to filter out objects with pixel values
+  >= ``peakmax``. (Default=None)
 
 **Optimize alignment order:**
 

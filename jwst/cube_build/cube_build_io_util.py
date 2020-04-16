@@ -3,6 +3,7 @@
 from .. import datamodels
 import logging
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 def read_cubepars(par_filename,

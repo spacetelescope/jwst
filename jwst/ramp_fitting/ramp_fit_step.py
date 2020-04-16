@@ -6,6 +6,7 @@ from . import ramp_fit
 
 import logging
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 __all__ = ["RampFitStep"]
@@ -30,7 +31,10 @@ class RampFitStep (Step):
     #      # 'unweighted' or 'optimal'
     # As of 04/26/17, the only allowed algorithm is 'ols', and the
     #      only allowed weighting is 'optimal'.
+
     algorithm = 'ols'      # Only algorithm allowed for Build 7.1
+#    algorithm = 'gls'       # 032520
+
     weighting = 'optimal'  # Only weighting allowed for Build 7.1
 
     reference_file_types = ['readnoise', 'gain']

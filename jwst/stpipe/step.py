@@ -4,6 +4,7 @@ Step
 from functools import partial
 import gc
 import inspect
+import os
 from os.path import (
     abspath,
     basename,
@@ -270,7 +271,7 @@ class Step():
             Additional parameters to set.  These will be set as member
             variables on the new Step instance.
         """
-        # Setup primary input
+        self._pars_model = None
         self._reference_files_used = []
         self._input_filename = None
         self._input_dir = None
@@ -297,6 +298,8 @@ class Step():
 
         # Create a new logger for this step
         self.log = log.getLogger(self.qualified_name)
+
+        self.log.setLevel(log.logging.DEBUG)
 
         # Log the fact that we have been init-ed.
         self.log.info('{0} instance created.'.format(self.__class__.__name__))
@@ -464,6 +467,8 @@ class Step():
                 'Step {0} done'.format(self.name))
         finally:
             log.delegator.log = orig_log
+
+        self.closeout(to_close=args)
 
         return step_result
 
@@ -681,7 +686,7 @@ class Step():
         return crds_client.check_reference_open(reference_name)
 
     @classmethod
-    def get_config_from_reference(cls, dataset, observatory=None):
+    def get_config_from_reference(cls, dataset, observatory=None, disable=None):
         """Retrieve step parameters from reference database
 
         Parameters
@@ -696,18 +701,29 @@ class Step():
         observatory : str
             telescope name used with CRDS,  e.g. 'jwst'.
 
+        disable: bool or None
+            Do not retrieve parameters from CRDS. If None, check global settings.
+
         Returns
         -------
         step_parameters : configobj
             The parameters as retrieved from CRDS. If there is an issue, log as such
             and return an empty config obj.
         """
+
         # Get the root logger, since the following operations
         # are happening in the surrounding architecture.
         logger = log.delegator.log
+        pars_model = cls.get_pars_model()
+
+        # Check if retrieval should be attempted.
+        if disable is None:
+            disable = get_disable_crds_steppars()
+        if disable:
+            logger.info(f'{pars_model.meta.reftype.upper()}: CRDS parameter reference retrieval disabled.')
+            return config_parser.ConfigObj()
 
         # Retrieve step parameters from CRDS
-        pars_model = cls.get_pars_model()
         logger.debug(f'Retrieving step {pars_model.meta.reftype.upper()} parameters from CRDS')
         exceptions = crds_client.get_exceptions_module()
         try:
@@ -1018,7 +1034,8 @@ class Step():
         to_del += to_close
         for item in to_close:
             try:
-                item.close()
+                if hasattr(item, 'close'):
+                    item.close()
             except Exception as exception:
                 self.log.debug(
                     'Could not close "{}"'
@@ -1294,3 +1311,31 @@ def _get_suffix(suffix, step=None, default_suffix=None):
     if suffix is None and step is not None:
         suffix = step.name.lower()
     return suffix
+
+
+def get_disable_crds_steppars(default=None):
+    """Return either the explicit default flag or retrieve from the environment
+
+    If a default is not specified, retrieve the value from the environmental variable
+    `STPIPE_DISABLE_CRDS_STEPPARS`.
+
+    Parameters
+    ----------
+    default: str, bool, or None
+        Flag to use. If None, the environmental is used.
+
+    Returns
+    -------
+    flag: bool
+        True to disable CRDS STEPPARS retrieval.
+    """
+    truths =  ('true', 'True', 't', 'yes', 'y')
+    if default:
+        if isinstance(default, bool):
+            return default
+        elif isinstance(default, str):
+            return default in truths
+        raise ValueError(f'default must be string or boolean: {default}')
+
+    flag = os.environ.get('STPIPE_DISABLE_CRDS_STEPPARS', '')
+    return flag in truths

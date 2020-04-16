@@ -8,12 +8,16 @@ import pytest
 from ci_watson.artifactory_helpers import UPLOAD_SCHEMA
 from astropy.table import Table
 from numpy.testing import assert_allclose
+from astropy.io.fits import conf
 
 from .regtestdata import RegtestData
 from jwst.regtest.sdp_pools_source import SDPPoolsSource
 
 
 TODAYS_DATE = datetime.now().strftime("%Y-%m-%d")
+
+# Turn of FITS memmap for all regtests (affects FITSDiff)
+conf.use_memmap = False
 
 
 @pytest.fixture(scope="session")

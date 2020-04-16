@@ -1,4 +1,3 @@
-import os
 from os.path import dirname, join, abspath
 import sys
 
@@ -6,7 +5,8 @@ import numpy as np
 from numpy.testing import assert_allclose
 import pytest
 
-from .. import Step, Pipeline, LinearPipeline
+from jwst.stpipe import Step, Pipeline, LinearPipeline
+from jwst import datamodels
 # TODO: Test system call steps
 
 
@@ -24,8 +24,6 @@ class FlatField(Step):
     # Load the spec from a file
 
     def process(self, science, flat):
-        from ... import datamodels
-
         self.log.info("Removing flat field")
         self.log.info("Threshold: {0}".format(self.threshold))
         library_function()
@@ -40,8 +38,6 @@ class Combine(Step):
     """
 
     def process(self, images):
-        from ... import datamodels
-
         combined = np.zeros((50, 50))
         for image in images:
             combined += image.data
@@ -63,8 +59,6 @@ class MultiplyBy2(Step):
     """
 
     def process(self, image):
-        from ... import datamodels
-
         with datamodels.ImageModel(image) as dm:
             with datamodels.ImageModel() as dm2:
                 dm2.data = dm.data * 2
@@ -89,8 +83,6 @@ class MyPipeline(Pipeline):
     """
 
     def process(self, *args):
-        from ... import datamodels
-
         science = datamodels.open(self.science_filename)
         if self.flat_filename is None:
             self.flat_filename = join(dirname(__file__), "data/flat.fits")
@@ -101,10 +93,12 @@ class MyPipeline(Pipeline):
         self.display(combined)
         dm = datamodels.ImageModel(combined)
         dm.save(self.output_filename)
+        science.close()
+        flat.close()
         return dm
 
 
-def test_pipeline():
+def test_pipeline(_jail):
     pipeline_fn = join(dirname(__file__), 'steps', 'python_pipeline.cfg')
     pipe = Step.from_config_file(pipeline_fn)
     pipe.output_filename = "output.fits"
@@ -113,10 +107,9 @@ def test_pipeline():
     assert pipe.flat_field.multiplier == 2.0
 
     pipe.run()
-    os.remove(pipe.output_filename)
 
 
-def test_pipeline_python():
+def test_pipeline_python(_jail):
     steps = {
         'flat_field': {'threshold': 42.0}
         }
@@ -133,7 +126,6 @@ def test_pipeline_python():
     assert pipe.flat_field.multiplier == 1.0
 
     pipe.run()
-    os.remove(pipe.output_filename)
 
 
 class MyLinearPipeline(LinearPipeline):
@@ -144,7 +136,7 @@ class MyLinearPipeline(LinearPipeline):
         ]
 
 
-def test_partial_pipeline():
+def test_partial_pipeline(_jail):
     pipe = MyLinearPipeline()
 
     pipe.end_step = 'multiply2'
@@ -155,9 +147,9 @@ def test_partial_pipeline():
     result = pipe.run(abspath(join(dirname(__file__), 'data', 'science.fits')))
 
     assert_allclose(np.sum(result.data), 9969.82514685, rtol=1e-4)
-    os.remove('stpipe.MyLinearPipeline.fits')
 
-def test_pipeline_commandline():
+
+def test_pipeline_commandline(_jail):
     args = [
         abspath(join(dirname(__file__), 'steps', 'python_pipeline.cfg')),
         '--steps.flat_field.threshold=47'
@@ -169,10 +161,9 @@ def test_pipeline_commandline():
     assert pipe.flat_field.multiplier == 2.0
 
     pipe.run()
-    os.remove(pipe.output_filename)
 
 
-def test_pipeline_commandline_class():
+def test_pipeline_commandline_class(_jail):
     args = [
         'jwst.stpipe.tests.test_pipeline.MyPipeline',
         '--logcfg={0}'.format(
@@ -191,7 +182,6 @@ def test_pipeline_commandline_class():
     assert pipe.flat_field.multiplier == 1.0
 
     pipe.run()
-    os.remove(pipe.output_filename)
 
 
 def test_pipeline_commandline_invalid_args():

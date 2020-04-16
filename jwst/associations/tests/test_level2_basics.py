@@ -14,7 +14,7 @@ from .. import (
 from ..main import Main
 
 NONSSCIENCE = ['background']
-REGEX_LEVEL2A = '(?P<path>.+)(?P<type>_rate(ints)?)(?P<extension>\..+)'
+REGEX_LEVEL2A = r'(?P<path>.+)(?P<type>_rate(ints)?)(?P<extension>\..+)'
 
 
 def from_level2_schema():

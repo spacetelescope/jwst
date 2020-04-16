@@ -7,6 +7,7 @@ from ..datamodels import QuadModel
 
 import logging
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 def align_fourierLSQ(reference, target, mask=None):

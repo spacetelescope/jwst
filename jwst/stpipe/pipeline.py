@@ -37,6 +37,8 @@ from . import config_parser
 from . import Step
 from . import crds_client
 from . import log
+from .step import get_disable_crds_steppars
+from ..datamodels import open as dm_open
 from ..lib.class_property import ClassInstanceMethod
 
 
@@ -148,7 +150,7 @@ class Pipeline(Step):
         return spec
 
     @classmethod
-    def get_config_from_reference(cls, dataset, observatory=None):
+    def get_config_from_reference(cls, dataset, observatory=None, disable=None):
         """Retrieve step parameters from reference database
 
         Parameters
@@ -165,29 +167,42 @@ class Pipeline(Step):
         observatory : str
             telescope name used with CRDS,  e.g. 'jwst'.
 
+        disable: bool or None
+            Do not retrieve parameters from CRDS. If None, check global settings.
+
         Returns
         -------
         step_parameters : configobj
             The parameters as retrieved from CRDS. If there is an issue, log as such
             and return an empty config obj.
         """
+        pars_model = cls.get_pars_model()
         refcfg = ConfigObj()
         refcfg['steps'] = Section(refcfg, refcfg.depth + 1, refcfg.main, name="steps")
+
+        # Check if retrieval should be attempted.
+        if disable is None:
+            disable = get_disable_crds_steppars()
+        if disable:
+            log.log.debug(f'{pars_model.meta.reftype.upper()}: CRDS parameter reference retrieval disabled.')
+            return refcfg
+
+
         log.log.debug('Retrieving all substep parameters from CRDS')
         #
         # Iterate over the steps in the pipeline
+        model = dm_open(dataset, asn_n_members=1)
         for cal_step in cls.step_defs.keys():
             cal_step_class = cls.step_defs[cal_step]
             refcfg['steps'][cal_step] = cal_step_class.get_config_from_reference(
-                dataset, observatory=observatory
+                model, observatory=observatory
             )
         #
         # Now merge any config parameters from the step cfg file
-        pars_model = cls.get_pars_model()
         log.log.debug(f'Retrieving pipeline {pars_model.meta.reftype.upper()} parameters from CRDS')
         exceptions = crds_client.get_exceptions_module()
         try:
-            ref_file = crds_client.get_reference_file(dataset,
+            ref_file = crds_client.get_reference_file(model,
                                                       pars_model.meta.reftype,
                                                       observatory=observatory,
                                                       asn_exptypes=['science'])

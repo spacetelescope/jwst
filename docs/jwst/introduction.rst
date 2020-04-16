@@ -427,6 +427,11 @@ overridden either by the command line options, as previously described, and by a
 local configuration file. See :ref:`Parameter Precedence` for a full description of
 how a parameter gets its final value.
 
+.. note::
+
+   Retrieval of ``Step`` parameters from CRDS can be completely disabled by
+   using the ``--disable-crds-steppars`` command-line switch, or setting the
+   environmental variable ``STPIPE_DISABLE_CRDS_STEPPARS`` to ``true``.
 
 A configuration file should be used when there are parameters a user wishes to
 change from the default/CRDS version for a custom run of the step. To create a

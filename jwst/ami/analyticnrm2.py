@@ -11,6 +11,7 @@ import scipy.special
 from . import leastsqnrm
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 def Jinc(x, y):
     """

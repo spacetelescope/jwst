@@ -22,10 +22,11 @@ __author__ = 'Mihai Cara'
 __local_debug__ = True
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 def match(images, skymethod='global+match', match_down=True, subtract=False):
-    """
+    r"""
     A function to compute and/or "equalize" sky background in input images.
 
     .. note::
@@ -107,8 +108,7 @@ stsci_python_sphinxdocs_2.13/drizzlepac/astrodrizzle.html>`_ because it
 
     :py:func:`match` provides new algorithms for sky value computations
     and enhances previously available algorithms used by, e.g.,
-    `astrodrizzle <http://stsdas.stsci.edu/\
-stsci_python_sphinxdocs_2.13/drizzlepac/astrodrizzle.html>`_\ .
+    `astrodrizzle <http://stsdas.stsci.edu/stsci_python_sphinxdocs_2.13/drizzlepac/astrodrizzle.html>`_ .
 
     Two new methods of sky subtraction have been introduced (compared to the
     standard ``'local'``): ``'global'`` and ``'match'``, as well as a

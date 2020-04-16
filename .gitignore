@@ -4,6 +4,7 @@ build/
 dist/
 .cache
 *~
+.*.sw[op]
 *.pyc
 *.egg-info/
 *.so
@@ -32,3 +33,4 @@ scripts/launch.json
 *.orig
 .ipynb_checkpoints
 */.ipynb_checkpoints/*.ipynb
+htmlcov

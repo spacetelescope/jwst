@@ -297,7 +297,7 @@ def get_shape(im, defaults):
     Get the shape of the image
     """
     shape = im.shape
-    if shape[0] == 0:
+    if not shape or shape[0] == 0:
         xsize = defaults['meta.subarray.xsize']
         ysize = defaults['meta.subarray.ysize']
         shape = (xsize, ysize)
@@ -534,10 +534,11 @@ def set_pipeline_defaults(im, defaults):
         defaults.update(exposure_deltas)
 
     shape = im.shape
-    if shape[0] != 0:
-        defaults['meta.subarray.xsize'] = shape[0]
-    if shape[1] != 0:
-        defaults['meta.subarray.ysize'] = shape[1]
+    if shape:
+        if shape[0] != 0:
+            defaults['meta.subarray.xsize'] = shape[0]
+        if shape[1] != 0:
+            defaults['meta.subarray.ysize'] = shape[1]
 
 def set_standard_defaults(im, defaults, instrument, mode, level):
     """

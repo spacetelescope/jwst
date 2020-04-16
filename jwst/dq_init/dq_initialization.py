@@ -6,6 +6,7 @@ from .. import datamodels
 from ..lib import reffile_utils
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 # FGS guide star mode exposure types

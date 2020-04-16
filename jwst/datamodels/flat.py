@@ -31,5 +31,4 @@ class FlatModel(ReferenceFileModel):
         self.dq = dynamic_mask(self)
 
         # Implicitly create arrays
-        self.dq = self.dq
         self.err = self.err

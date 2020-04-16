@@ -31,6 +31,7 @@ from ..datamodels import (CollimatorModel, CameraModel, DisperserModel, FOREMode
                           WavelengthrangeModel, FPAModel)
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 __all__ = ["create_pipeline", "imaging", "ifu", "slits_wcs", "get_open_slits", "nrs_wcs_set_input",
@@ -518,7 +519,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
     # If they passed in a string then we shall assume it is the filename
     # of the configuration file.
     try:
-        msa_file = fits.open(msa_file)
+        msa_file = fits.open(msa_file, memmap=False)
     except FileNotFoundError:
         message = "Missing MSA meta (MSAMETFL) file {}".format(msa_file)
         log.error(message)

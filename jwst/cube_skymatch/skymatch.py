@@ -17,6 +17,7 @@ __author__ = 'Mihai Cara'
 
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 def match(skycubes, subtract=False):
