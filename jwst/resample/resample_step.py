@@ -10,8 +10,13 @@ from . import resample
 from ..assign_wcs import util
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 __all__ = ["ResampleStep"]
+
+
+# Force use of all DQ flagged data except for DO_NOT_USE
+GOOD_BITS = '~DO_NOT_USE'
 
 
 class ResampleStep(Step):
@@ -29,7 +34,6 @@ class ResampleStep(Step):
         kernel = string(default='square')
         fillval = string(default='INDEF')
         weight_type = option('exptime', default='exptime')
-        good_bits = integer(min=0, default=6)
         single = boolean(default=False)
         blendheaders = boolean(default=True)
     """
@@ -74,6 +78,8 @@ class ResampleStep(Step):
             util.update_s_region_imaging(model)
             model.meta.asn.pool_name = input_models.meta.pool_name
             model.meta.asn.table_name = input_models.meta.table_name
+            if hasattr(model.meta, "bunit_err") and model.meta.bunit_err is not None:
+                del model.meta.bunit_err
 
         if len(resamp.output_models) == 1:
             result = resamp.output_models[0]
@@ -160,7 +166,7 @@ class ResampleStep(Step):
         all_drizpars['weight_type'] = all_drizpars.pop('wht_type')
 
         kwargs = dict(
-            good_bits=self.good_bits,
+            good_bits=GOOD_BITS,
             single=self.single,
             blendheaders=self.blendheaders
             )
@@ -189,6 +195,9 @@ class ResampleStep(Step):
         config = ConfigObj(configspec=configspec)
         if config.validate(Validator()):
             kwargs = config.dict()
+
+        # Force definition of good bits
+        kwargs['good_bits'] = GOOD_BITS
 
         if kwargs['pixfrac'] is None:
             kwargs['pixfrac'] = 1.0

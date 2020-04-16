@@ -18,15 +18,13 @@ def test_nirspec_fixedslit_wcs(rtdata):
 
     rtdata.get_truth(f"truth/test_nirspec_wcs/{output}")
 
-    im = datamodels.open(rtdata.output)
-    im_truth = datamodels.open(rtdata.truth)
+    with datamodels.open(rtdata.output) as im, datamodels.open(rtdata.truth) as im_truth:
+        # Check the 4 science slits
+        for slit in ['S200A1', 'S200A2', 'S400A1', 'S1600A1']:
+            wcs = nirspec.nrs_wcs_set_input(im, slit)
+            wcs_truth = nirspec.nrs_wcs_set_input(im_truth, slit)
 
-    # Check the 4 science slits
-    for slit in ['S200A1', 'S200A2', 'S400A1', 'S1600A1']:
-        wcs = nirspec.nrs_wcs_set_input(im, slit)
-        wcs_truth = nirspec.nrs_wcs_set_input(im_truth, slit)
-
-        assert_wcs_grid_allclose(wcs, wcs_truth)
+            assert_wcs_grid_allclose(wcs, wcs_truth)
 
 
 @pytest.mark.bigdata
@@ -43,25 +41,22 @@ def test_nirspec_mos_wcs(rtdata):
 
     rtdata.get_truth(f"truth/test_nirspec_wcs/{output}")
 
-    im = datamodels.open(rtdata.output)
-    im_truth = datamodels.open(rtdata.truth)
+    with datamodels.open(rtdata.output) as im, datamodels.open(rtdata.truth) as im_truth:
+        names = [slit.name for slit in nirspec.get_open_slits(im)]
+        for name in names:
+            wcs = nirspec.nrs_wcs_set_input(im, name)
+            wcs_truth = nirspec.nrs_wcs_set_input(im_truth, name)
 
-    names = [slit.name for slit in nirspec.get_open_slits(im)]
-    for name in names:
-        wcs = nirspec.nrs_wcs_set_input(im, name)
-        wcs_truth = nirspec.nrs_wcs_set_input(im_truth, name)
-
-        assert_wcs_grid_allclose(wcs, wcs_truth)
+            assert_wcs_grid_allclose(wcs, wcs_truth)
 
 
-input_files = [
+@pytest.mark.parametrize("input_file",
+    [
     'jw00011001001_01120_00001_nrs1_rate.fits',
     'jw00011001001_01120_00002_nrs1_rate.fits',
     'jw00011001001_01120_00003_nrs2_rate.fits',
-]
-test_ids = ['nrs1_f170lp', 'nrs1_opaque', 'nrs2_f170lp']
-
-@pytest.mark.parametrize("input_file", input_files, ids=test_ids)
+    ],
+    ids=['nrs1_f170lp', 'nrs1_opaque', 'nrs2_f170lp'])
 @pytest.mark.bigdata
 def test_nirspec_ifu_wcs(input_file, rtdata):
     """Test NIRSpec IFU wcs"""
@@ -74,15 +69,13 @@ def test_nirspec_ifu_wcs(input_file, rtdata):
 
     rtdata.get_truth(f"truth/test_nirspec_wcs/{output}")
 
-    im = datamodels.open(rtdata.output)
-    im_truth = datamodels.open(rtdata.truth)
+    with datamodels.open(rtdata.output) as im, datamodels.open(rtdata.truth) as im_truth:
+        # Test several slices in the IFU, range(30)
+        for slice_ in [0, 9, 16, 23, 29]:
+            wcs = nirspec.nrs_wcs_set_input(im, slice_)
+            wcs_truth = nirspec.nrs_wcs_set_input(im_truth, slice_)
 
-    # Test several slices in the IFU, range(30)
-    for slice_ in [0, 9, 16, 23, 29]:
-        wcs = nirspec.nrs_wcs_set_input(im, slice_)
-        wcs_truth = nirspec.nrs_wcs_set_input(im_truth, slice_)
-
-        assert_wcs_grid_allclose(wcs, wcs_truth)
+            assert_wcs_grid_allclose(wcs, wcs_truth)
 
 
 def assert_wcs_grid_allclose(wcs, wcs_truth):

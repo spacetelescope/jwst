@@ -10,7 +10,7 @@ from . import config_parser
 from . import log
 from . import Step
 from . import utilities
-
+from .step import get_disable_crds_steppars
 
 built_in_configuration_parameters = [
     'debug', 'logcfg', 'verbose'
@@ -184,6 +184,10 @@ def just_the_step_from_cmdline(args, cls=None):
         '--save-parameters', type=str,
         help='Save step parameters to specified file.'
     )
+    parser1.add_argument(
+        '--disable-crds-steppars', action='store_true',
+        help='Disable retrieval of step parameter references files from CRDS'
+    )
     known, _ = parser1.parse_known_args(args)
 
     try:
@@ -225,7 +229,9 @@ def just_the_step_from_cmdline(args, cls=None):
 
     debug_on_exception = known.debug
 
-    #
+    # Determine whether CRDS should be queried for step parameters
+    disable_crds_steppars = get_disable_crds_steppars(known.disable_crds_steppars)
+
     # This creates a config object from the spec file of the step class merged with
     # the spec files of the superclasses of the step class and adds arguments for
     # all of the expected reference files
@@ -245,6 +251,7 @@ def just_the_step_from_cmdline(args, cls=None):
     del args.verbose
     del args.debug
     del args.save_parameters
+    del args.disable_crds_steppars
     positional = args.args
     del args.args
 
@@ -252,15 +259,16 @@ def just_the_step_from_cmdline(args, cls=None):
         input_file = positional[0]
         if args.input_dir:
             input_file = args.input_dir + '/' + input_file
+
+        # Attempt to retrieve Step parameters from CRDS
         try:
-            # If step_class is a pipeline, this function lives in pipeline.py, otherwise
-            # in step.py
-            parameter_cfg = step_class.get_config_from_reference(input_file)
+            parameter_cfg = step_class.get_config_from_reference(input_file, disable=disable_crds_steppars)
+        except (FileNotFoundError, OSError):
+            log.log.warning("Unable to open input file, cannot get parameters from CRDS")
+        else:
             if config:
                 config_parser.merge_config(parameter_cfg, config)
             config = parameter_cfg
-        except FileNotFoundError:
-            log.log.warning("Unable to open input file, cannot get cfg from CRDS")
     else:
         log.log.info("No input file specified, unable to retrieve parameters from CRDS")
     #
@@ -337,11 +345,9 @@ def step_from_cmdline(args, cls=None):
         else:
             step.run(*positional)
     except Exception as e:
-        import traceback
-        lines = traceback.format_exc()
         _print_important_message(
-            "ERROR RUNNING STEP {0!r}:".format(step_class.__name__),
-            str(e), lines)
+            "ERROR RUNNING STEP {0!r}:".format(step_class.__name__), str(e)
+        )
 
         if debug_on_exception:
             import pdb

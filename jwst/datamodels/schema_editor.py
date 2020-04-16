@@ -54,10 +54,10 @@ from urllib.parse import urlparse
 import yaml
 
 from asdf import schema as aschema
-from asdf import resolver as aresolver
 from asdf import generic_io
 from asdf import reference
 from asdf import treeutil
+from asdf.extension import get_default_resolver
 
 from . import model_base
 
@@ -386,7 +386,7 @@ class Keyword_db:
         """
         Resolve urls in the schema
         """
-        resolver = aresolver.default_url_mapping
+        resolver = get_default_resolver()
 
         def resolve_refs(node, json_id):
             if json_id is None:

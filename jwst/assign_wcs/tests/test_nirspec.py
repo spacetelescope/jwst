@@ -2,22 +2,24 @@
 Test functions for NIRSPEC WCS - all modes.
 """
 import os.path
+
+import pytest
 import numpy as np
-from numpy.testing.utils import assert_allclose
+from numpy.testing import assert_allclose
 from astropy.io import fits
 from astropy.modeling import models as astmodels
 from astropy import wcs as astwcs
 import astropy.units as u
 import astropy.coordinates as coords
 from gwcs import wcs
-from ... import datamodels
-from ...transforms.models import Slit
-from .. import nirspec
-from .. import assign_wcs_step
-from . import data
-from ..util import MSAFileError
 
-import pytest
+from jwst import datamodels
+from jwst.transforms.models import Slit
+from jwst.assign_wcs import nirspec
+from jwst.assign_wcs import assign_wcs_step
+from . import data
+from jwst.assign_wcs.util import MSAFileError
+
 
 data_path = os.path.split(os.path.abspath(data.__file__))[0]
 

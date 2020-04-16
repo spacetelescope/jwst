@@ -8,6 +8,7 @@ from .nirspec import nrs_extract2d
 from .grisms import extract_grism_objects, extract_tso_object
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 def extract2d(input_model,
@@ -70,17 +71,10 @@ def extract2d(input_model,
                                               extract_height=extract_height,
                                               extract_orders=extract_orders)
         else:
-            # TODO: temp to check fits_wcs catalog use, remove with #2533
-            if exp_type == 'NRC_WFSS':
-                use_fits_wcs = True
-            else:
-                use_fits_wcs = False
-
             output_model = extract_grism_objects(input_model,
                                                  grism_objects=grism_objects,
                                                  reference_files=reference_files,
                                                  extract_orders=extract_orders,
-                                                 use_fits_wcs=use_fits_wcs,
                                                  mmag_extract=99.)
 
     else:

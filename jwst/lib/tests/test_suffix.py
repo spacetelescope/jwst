@@ -1,12 +1,25 @@
 """Test suffix replacement"""
 
+import logging
 import pytest
+
+from jwst.lib.basic_utils import LoggingContext
 
 from .. import suffix as s
 
 
-def test_suffix_existence():
+@pytest.fixture(scope='module')
+def enable_logging():
+    with LoggingContext(
+            logging.getLogger(s.__name__),
+            handler=logging.StreamHandler()
+    ):
+        yield
+
+
+def test_suffix_existence(enable_logging):
     """Generate current suffix list and compare"""
+
     calculated_suffixes = s.find_suffixes()
     found_suffixes = s.combine_suffixes(
         to_add=(calculated_suffixes, s.SUFFIXES_TO_ADD),
@@ -19,7 +32,7 @@ def test_suffix_existence():
     'suffix',
     s.KNOW_SUFFIXES
 )
-def test_suffix_removal(suffix):
+def test_suffix_removal(suffix, enable_logging):
     """Test suffix removal"""
     basename = 'file'
     full_fpath = basename + '_' + suffix
@@ -32,7 +45,7 @@ def test_suffix_removal(suffix):
     'suffix',
     s.KNOW_SUFFIXES
 )
-def test_suffix_replacement(suffix, base='file', new='junk', sep='_'):
+def test_suffix_replacement(suffix, enable_logging, base='file', new='junk', sep='_'):
     """Test suffix replacement"""
     full_path = base + sep + suffix
     replaced = s.replace_suffix(full_path, new)

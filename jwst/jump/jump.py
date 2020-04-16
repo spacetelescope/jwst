@@ -8,6 +8,7 @@ from . import twopoint_difference as twopt
 import multiprocessing
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 def detect_jumps (input_model, gain_model, readnoise_model,
                   rejection_threshold, max_cores,

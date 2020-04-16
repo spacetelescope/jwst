@@ -75,11 +75,28 @@ def run_image3(run_image2, rtdata_module):
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["dq_init", "saturation", "refpix", "rscd",
     "firstframe", "lastframe", "linearity", "dark_current", "ramp", "rate",
-    "rateints",
-    "assign_wcs", "flat_field", "cal", "i2d",
-    "a3001_crf"])
-def test_miri_image(run_image3, rtdata_module, fitsdiff_default_kwargs, suffix):
-    """Regression test of detector1 and image2 pipelines performed on MIRI data."""
+    "rateints"])
+def test_miri_image_detector1(run_detector1, rtdata_module, fitsdiff_default_kwargs, suffix):
+    """Regression test of detector1 pipeline performed on MIRI data."""
+    _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix)
+
+
+@pytest.mark.bigdata
+@pytest.mark.parametrize("suffix", ["assign_wcs", "flat_field", "cal", "i2d"])
+def test_miri_image_image2(run_image2, rtdata_module, fitsdiff_default_kwargs, suffix):
+    """Regression test of image2 pipeline performed on MIRI data."""
+    _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix)
+
+
+@pytest.mark.bigdata
+@pytest.mark.parametrize("suffix", ["a3001_crf"])
+def test_miri_image_image3(run_image3, rtdata_module, fitsdiff_default_kwargs, suffix):
+    """Regression test of image3 pipeline performed on MIRI data."""
+    _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix)
+
+
+def _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix):
+    """Assertion helper for the above tests"""
     rtdata = rtdata_module
     rtdata.input = "det_image_1_MIRIMAGE_F770Wexp1_5stars_uncal.fits"
     output = f"det_image_1_MIRIMAGE_F770Wexp1_5stars_{suffix}.fits"
@@ -125,18 +142,17 @@ def test_miri_image_wcs(run_image2, rtdata_module, fitsdiff_default_kwargs):
     output = "det_image_1_MIRIMAGE_F770Wexp1_5stars_assign_wcs.fits"
     rtdata.output = output
     rtdata.get_truth("truth/test_miri_image_stages/" + output)
+
     # Open the output and truth file
-    im = datamodels.open(output)
-    im_truth = datamodels.open(rtdata.truth)
+    with datamodels.open(rtdata.output) as im, datamodels.open(rtdata.truth) as im_truth:
+        x, y = grid_from_bounding_box(im.meta.wcs.bounding_box)
+        ra, dec = im.meta.wcs(x, y)
+        ratruth, dectruth = im_truth.meta.wcs(x, y)
+        assert_allclose(ra, ratruth)
+        assert_allclose(dec, dectruth)
 
-    x, y = grid_from_bounding_box(im.meta.wcs.bounding_box)
-    ra, dec = im.meta.wcs(x, y)
-    ratruth, dectruth = im_truth.meta.wcs(x, y)
-    assert_allclose(ra, ratruth)
-    assert_allclose(dec, dectruth)
-
-    # Test the inverse transform
-    xtest, ytest = im.meta.wcs.backward_transform(ra, dec)
-    xtruth, ytruth = im_truth.meta.wcs.backward_transform (ratruth, dectruth)
-    assert_allclose(xtest, xtruth)
-    assert_allclose(ytest, ytruth)
+        # Test the inverse transform
+        xtest, ytest = im.meta.wcs.backward_transform(ra, dec)
+        xtruth, ytruth = im_truth.meta.wcs.backward_transform (ratruth, dectruth)
+        assert_allclose(xtest, xtruth)
+        assert_allclose(ytest, ytruth)

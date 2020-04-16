@@ -11,11 +11,11 @@ import numpy as np
 from numpy.testing import assert_allclose
 from astropy.io import fits
 
-from .. import (DataModel, ImageModel, MaskModel, QuadModel,
+from jwst.datamodels import (DataModel, ImageModel, MaskModel, QuadModel,
                 MultiSlitModel, ModelContainer, SlitModel,
                 SlitDataModel, IFUImageModel)
-from ..util import open as open_model
-from ...lib.file_utils import pushdir
+from jwst import datamodels
+from jwst.lib.file_utils import pushdir
 
 
 ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
@@ -73,14 +73,14 @@ def test_broadcast2():
 def test_from_hdulist():
     from astropy.io import fits
     warnings.simplefilter("ignore")
-    with fits.open(FITS_FILE) as hdulist:
-        with open_model(hdulist) as dm:
+    with fits.open(FITS_FILE, memmap=False) as hdulist:
+        with datamodels.open(hdulist) as dm:
             dm.data
         assert hdulist.fileinfo(0)['file'].closed == False
 
 
 def delete_array():
-    with open_model() as dm:
+    with datamodels.open() as dm:
         del dm.data
 
 
@@ -128,21 +128,21 @@ def test_delete():
 
 
 def test_open():
-    with open_model() as dm:
+    with datamodels.open() as dm:
         pass
 
-    with open_model((50, 50)) as dm:
+    with datamodels.open((50, 50)) as dm:
         pass
 
     warnings.simplefilter("ignore")
-    with open_model(FITS_FILE) as dm:
+    with datamodels.open(FITS_FILE) as dm:
         assert isinstance(dm, QuadModel)
 
 def test_open_warning():
     with warnings.catch_warnings(record=True) as warners:
         # Cause all warnings to always be triggered.
         warnings.simplefilter("always")
-        with open_model(FITS_FILE) as model:
+        with datamodels.open(FITS_FILE) as model:
             pass
 
         class_name = model.__class__.__name__
@@ -191,7 +191,7 @@ def test_section():
 
 def test_init_with_array():
     array = np.empty((50, 50))
-    with open_model(array) as dm:
+    with datamodels.open(array) as dm:
         assert dm.data.shape == (50, 50)
         assert isinstance(dm, ImageModel)
 
@@ -332,7 +332,7 @@ def test_multislit_copy():
         assert i == 4
 
     from astropy.io import fits
-    with fits.open(TMP_FITS) as hdulist:
+    with fits.open(TMP_FITS, memmap=False) as hdulist:
         assert len(hdulist) == 6
 
     with MultiSlitModel(TMP_FITS) as input:
@@ -420,7 +420,7 @@ def test_image_with_extra_keyword_to_multislit():
         im.save(TMP_FITS, overwrite=True)
 
     from astropy.io import fits
-    with fits.open(TMP_FITS, mode="update") as hdulist:
+    with fits.open(TMP_FITS, mode="update", memmap=False) as hdulist:
         hdulist[1].header['BUNIT'] = 'x'
 
     with ImageModel(TMP_FITS) as im:
@@ -522,12 +522,12 @@ def test_update_from_dict(tmpdir):
         assert "CRVAL1" in hdulist[1].header
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def container():
     warnings.simplefilter("ignore")
     asn_file_path, asn_file_name = op.split(ASN_FILE)
     with pushdir(asn_file_path):
-        with ModelContainer(asn_file_name, persist=True) as c:
+        with ModelContainer(asn_file_name) as c:
             for m in c:
                 m.meta.observation.program_number = '0001'
                 m.meta.observation.observation_number = '1'
@@ -538,7 +538,7 @@ def container():
                 m.meta.observation.exposure_number = '1'
                 m.meta.instrument.name = 'NIRCAM'
                 m.meta.instrument.channel = 'SHORT'
-            yield c
+        yield c
 
 
 def test_modelcontainer_iteration(container):
@@ -551,7 +551,6 @@ def test_modelcontainer_indexing(container):
 
 
 def test_modelcontainer_group1(container):
-    reset_group_id(container)
     for group in container.models_grouped:
         assert len(group) == 2
         for model in group:
@@ -559,7 +558,6 @@ def test_modelcontainer_group1(container):
 
 
 def test_modelcontainer_group2(container):
-    reset_group_id(container)
     container[0].meta.observation.exposure_number = '2'
     for group in container.models_grouped:
         assert len(group) == 1
@@ -569,12 +567,10 @@ def test_modelcontainer_group2(container):
 
 
 def test_modelcontainer_group_names(container):
-    reset_group_id(container)
     assert len(container.group_names) == 1
     reset_group_id(container)
     container[0].meta.observation.exposure_number = '2'
     assert len(container.group_names) == 2
-    container[0].meta.observation.exposure_number = '1'
 
 
 def test_object_node_iterator():
@@ -586,18 +582,16 @@ def test_object_node_iterator():
     assert 'date' in items
     assert 'model_type' in items
 
+
 def test_hasattr():
     model = DataModel()
+    assert model.meta.hasattr('date')
+    assert not model.meta.hasattr('filename')
 
-    has_date = model.meta.hasattr('date')
-    assert has_date, "Check that date exists"
-
-    has_filename = model.meta.hasattr('filename')
-    assert not has_filename, "Check that filename does not exist"
 
 def test_info():
     warnings.simplefilter("ignore")
-    with open_model(FITS_FILE) as model:
+    with datamodels.open(FITS_FILE) as model:
         info = model.info()
     matches = 0
     for line in info.split("\n"):
@@ -617,45 +611,27 @@ def test_info():
                 assert words[2] == "float32", "Correct type for err"
     assert matches== 3, "Check all extensions are described"
 
+
 def test_validate_on_read():
-    im1 = ImageModel((10,10))
-    schema = im1.meta._schema
-    schema['properties']['calibration_software_version']['fits_required'] = True
+    schema = ImageModel((10, 10))._schema.copy()
+    schema['properties']['meta']['properties']['calibration_software_version']['fits_required'] = True
 
-    try:
-        im2 = ImageModel(FITS_FILE,
-                          schema=im1._schema,
-                          strict_validation=True)
-    except jsonschema.ValidationError:
-        caught = True
-    else:
-        caught = False
-        im2.close()
+    with pytest.raises(jsonschema.ValidationError):
+        with ImageModel(FITS_FILE, schema=schema, strict_validation=True):
+            pass
 
-    im1.close()
-    assert caught, "Test of validation while reading image"
 
 def test_validate_required_field():
-    im = ImageModel((10,10), strict_validation=True)
+    im = ImageModel((10, 10), strict_validation=True)
     schema = im.meta._schema
     schema['properties']['telescope']['fits_required'] = True
 
-    try:
+    with pytest.raises(jsonschema.ValidationError):
         im.validate_required_fields()
-    except jsonschema.ValidationError:
-        caught = True
-    else:
-        caught = False
-    assert caught, "Test of validate_required_fields"
 
     im.meta.telescope = 'JWST'
-    try:
-        im.validate_required_fields()
-    except jsonschema.ValidationError:
-        caught = True
-    else:
-        caught = False
-    assert not caught, "Test of validate_required_fields"
+    im.validate_required_fields()
+
 
 def test_multislit_model():
     data = np.arange(24, dtype=np.float32).reshape((6, 4))
@@ -695,11 +671,9 @@ def test_slit_from_image():
 
     im = ImageModel(slit)
     assert type(im) == ImageModel
-    im.close()
 
     im = ImageModel(slit_dm)
     assert type(im) == ImageModel
-    im.close()
 
 
 def test_ifuimage():
@@ -712,7 +686,6 @@ def test_ifuimage():
 
     im = ImageModel(ifuimage)
     assert type(im) == ImageModel
-    im.close()
 
 
 def test_datamodel_raises_filenotfound():

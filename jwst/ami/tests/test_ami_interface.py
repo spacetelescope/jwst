@@ -18,7 +18,7 @@ def test_ami_analyze_calints_fail():
 
 def test_ami_analyze_cube_fail():
     """Make sure ami_analyze fails if input is CubeModel (_calints)"""
-    model = datamodels.ImageModel((25, 19, 19))
+    model = datamodels.CubeModel((25, 19, 19))
     model.meta.instrument.name = "NIRISS"
     model.meta.instrument.filter = "F277W"
     model.meta.observation.date = "2019-01-01"

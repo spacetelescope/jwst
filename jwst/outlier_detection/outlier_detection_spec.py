@@ -7,6 +7,7 @@ from .outlier_detection import OutlierDetection
 
 import logging
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 __all__ = ["OutlierDetectionSpec"]
@@ -68,9 +69,7 @@ class OutlierDetectionSpec(OutlierDetection):
         if pars['resample_data'] is True:
             # Start by creating resampled/mosaic images for
             #  each group of exposures
-            sdriz = resample_spec.ResampleSpecData(self.input_models,
-                                                   single=True,
-                                                   **pars)
+            sdriz = resample_spec.ResampleSpecData(self.input_models, single=True, blendheaders=False, **pars)
             sdriz.do_drizzle()
             drizzled_models = sdriz.output_models
             for model in drizzled_models:

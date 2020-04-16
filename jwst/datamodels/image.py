@@ -39,7 +39,3 @@ class ImageModel(DataModel):
     def __init__(self, init=None, **kwargs):
 
         super(ImageModel, self).__init__(init=init, **kwargs)
-
-        # Implicitly create arrays
-        self.dq = self.dq
-        self.err = self.err

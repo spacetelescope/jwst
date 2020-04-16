@@ -1,11 +1,12 @@
 """
 Unit tests for background subtraction
 """
+import os
+
 from astropy.stats import sigma_clipped_stats
 import pytest
 import numpy as np
-import os
-from numpy.testing.utils import assert_allclose
+from numpy.testing import assert_allclose
 
 from jwst import datamodels
 from jwst.assign_wcs import AssignWcsStep
@@ -15,11 +16,14 @@ from jwst.stpipe.step import Step
 from jwst.background.background_sub import robust_mean, mask_from_source_cat, no_NaN
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 
+
 data_path = os.path.split(os.path.abspath(data_directory.__file__))[0]
+
 
 def get_file_path(filename):
     """Construct an absolute path."""
     return os.path.join(data_path, filename)
+
 
 @pytest.fixture(scope='module')
 def background(tmpdir_factory):
@@ -27,25 +31,26 @@ def background(tmpdir_factory):
 
     filename = tmpdir_factory.mktemp('background_input')
     filename = str(filename.join('background.fits'))
-    image = datamodels.IFUImageModel((10, 10))
-    image.data[:,:] = 10
-    image.meta.instrument.name = 'NIRSPEC'
-    image.meta.instrument.detector = 'NRS1'
-    image.meta.instrument.filter = 'CLEAR'
-    image.meta.instrument.grating = 'PRISM'
-    image.meta.exposure.type = 'NRS_IFU'
-    image.meta.observation.date = '2019-02-27'
-    image.meta.observation.time = '13:37:18.548'
-    image.meta.date = '2019-02-27T13:37:18.548'
+    with datamodels.IFUImageModel((10, 10)) as image:
+        image.data[:,:] = 10
+        image.meta.instrument.name = 'NIRSPEC'
+        image.meta.instrument.detector = 'NRS1'
+        image.meta.instrument.filter = 'CLEAR'
+        image.meta.instrument.grating = 'PRISM'
+        image.meta.exposure.type = 'NRS_IFU'
+        image.meta.observation.date = '2019-02-27'
+        image.meta.observation.time = '13:37:18.548'
+        image.meta.date = '2019-02-27T13:37:18.548'
 
-    image.meta.subarray.xstart = 1
-    image.meta.subarray.ystart = 1
+        image.meta.subarray.xstart = 1
+        image.meta.subarray.ystart = 1
 
-    image.meta.instrument.gwa_xtilt = 0.0001
-    image.meta.instrument.gwa_ytilt = 0.0001
-    image.meta.instrument.gwa_tilt = 37.0610
+        image.meta.instrument.gwa_xtilt = 0.0001
+        image.meta.instrument.gwa_ytilt = 0.0001
+        image.meta.instrument.gwa_tilt = 37.0610
 
-    image.save(filename)
+        image.save(filename)
+
     return filename
 
 
@@ -226,21 +231,22 @@ def test_nrc_wfss_background(filters, pupils, detectors, make_wfss_datamodel):
 
     # Get References
     wavelenrange = Step().get_reference_file(wcs_corrected, "wavelengthrange")
+    bkg_file = Step().get_reference_file(wcs_corrected, 'wfssbkg')
+
     mask = mask_from_source_cat(wcs_corrected, wavelenrange)
 
-    bkg_file = Step().get_reference_file(wcs_corrected, 'wfssbkg')
-    bkg_ref = datamodels.open(bkg_file)
-    bkg_ref = no_NaN(bkg_ref)
+    with datamodels.open(bkg_file) as bkg_ref:
+        bkg_ref = no_NaN(bkg_ref)
 
-    # calculate backgrounds
-    pipeline_data_mean = robust_mean(wcs_corrected.data[mask])
-    test_data_mean,_,_ = sigma_clipped_stats(wcs_corrected.data, sigma=2)
+        # calculate backgrounds
+        pipeline_data_mean = robust_mean(wcs_corrected.data[mask])
+        test_data_mean,_,_ = sigma_clipped_stats(wcs_corrected.data, sigma=2)
 
-    pipeline_reference_mean = robust_mean(bkg_ref.data[mask])
-    test_reference_mean,_,_ = sigma_clipped_stats(bkg_ref.data, sigma=2)
+        pipeline_reference_mean = robust_mean(bkg_ref.data[mask])
+        test_reference_mean,_,_ = sigma_clipped_stats(bkg_ref.data, sigma=2)
 
-    assert np.isclose([pipeline_data_mean], [test_data_mean], rtol=1e-3)
-    assert np.isclose([pipeline_reference_mean], [test_reference_mean], rtol=1e-1)
+        assert np.isclose([pipeline_data_mean], [test_data_mean], rtol=1e-3)
+        assert np.isclose([pipeline_reference_mean], [test_reference_mean], rtol=1e-1)
 
 
 @pytest.mark.parametrize("filters", ['GR150C', 'GR150R'])
@@ -259,21 +265,23 @@ def test_nis_wfss_background(filters, pupils, make_wfss_datamodel):
 
     # Get References
     wavelenrange = Step().get_reference_file(wcs_corrected, "wavelengthrange")
+    bkg_file = Step().get_reference_file(wcs_corrected, 'wfssbkg')
+
     mask = mask_from_source_cat(wcs_corrected, wavelenrange)
 
-    bkg_file = Step().get_reference_file(wcs_corrected, 'wfssbkg')
-    bkg_ref = datamodels.open(bkg_file)
-    bkg_ref = no_NaN(bkg_ref)
+    with datamodels.open(bkg_file) as bkg_ref:
+        bkg_ref = no_NaN(bkg_ref)
 
-    # calculate backgrounds
-    pipeline_data_mean = robust_mean(wcs_corrected.data[mask])
-    test_data_mean,_,_ = sigma_clipped_stats(wcs_corrected.data, sigma=2)
+        # calculate backgrounds
+        pipeline_data_mean = robust_mean(wcs_corrected.data[mask])
+        test_data_mean,_,_ = sigma_clipped_stats(wcs_corrected.data, sigma=2)
 
-    pipeline_reference_mean = robust_mean(bkg_ref.data[mask])
-    test_reference_mean,_,_ = sigma_clipped_stats(bkg_ref.data, sigma=2)
+        pipeline_reference_mean = robust_mean(bkg_ref.data[mask])
+        test_reference_mean,_,_ = sigma_clipped_stats(bkg_ref.data, sigma=2)
 
-    assert np.isclose([pipeline_data_mean], [test_data_mean], rtol=1e-3)
-    assert np.isclose([pipeline_reference_mean], [test_reference_mean], rtol=1e-1)
+        assert np.isclose([pipeline_data_mean], [test_data_mean], rtol=1e-3)
+        assert np.isclose([pipeline_reference_mean], [test_reference_mean], rtol=1e-1)
+
 
 def test_robust_mean():
     """Test robust mean calculation"""

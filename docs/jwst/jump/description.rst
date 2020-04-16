@@ -7,9 +7,10 @@ We assume that the ``saturation`` step has already been applied to the input
 science exposure, so that saturated values are appropriately flagged in the
 input GROUPDQ array. We also assume that steps such as the reference pixel
 correction (``refpix``) and non-linearity correction (``linearity``) have been applied, so
-that the input data ramps do not have any non-linearities due to instrumental
-effects. The absence of any of these preceding corrections can lead to the
-false detection of jumps in the ramps, due to departure from linearity.
+that the input data ramps do not have any non-linearities or noise above the modeled Poission
+and read noise due to instrumental effects. The absence of any of these preceding corrections
+or residual non-linearities or noise can lead to the false detection of jumps in the ramps,
+due to departure from linearity.
 
 The ``jump`` step will automatically skip execution if the input data contain fewer
 than 3 groups per integration, because it's impossible to detect jumps with
@@ -35,22 +36,38 @@ The two-point difference method is applied to each integration as follows:
 
 * Compute the first differences for each pixel (the difference between
   adjacent groups)
-* Compute the clipped median of the first differences for each pixel
+* Compute the clipped (dropping the largest difference) median of the first differences for each pixel.
 * Use the median to estimate the Poisson noise for each group and combine it
   with the read noise to arrive at an estimate of the total expected noise for
-  each group
+  each difference.
 * Compute the "difference ratio" as the difference between the first differences
-  of each group and the median, divided by the expected noise
+  of each group and the median, divided by the expected noise.
 * If the largest "difference ratio" is greater than the rejection threshold,
-  flag the group corresponding to that ratio as having a jump
+  flag the group corresponding to that ratio as having a jump.
 * If a jump is found in a given pixel, iterate the above steps with the
   jump-impacted group excluded, looking for additional lower-level jumps
-  that still exceed the rejection threshold
+  that still exceed the rejection threshold.
 * Stop iterating on a given pixel when no new jumps are found
 
 Note that any ramp values flagged as SATURATED in the input GROUPDQ array
 are not used in any of the above calculations and hence will never be
 marked as containing a jump.
+
+Multiprocessing
+===============
+This step has the option of running in multiprocessing mode. In that mode it will
+split the input data cube into a number of slices based on the number of available
+cores on the host computer and the value of the max_cores input parameter. By
+default the step runs on a single processor. At the other extreme if max_cores is
+set to 'all', it will use all available cores (real and virtual). Testing has shown
+a reduction in the elapsed time for the step proportional to the number of real
+cores used.
+
+If multiprocessing is requested the input cube will be divided into a number of
+slices in the row dimension (with the last slice being slightly larger, if needed).
+The slices are then sent to twopoint_difference.py by detect_jumps. After all the
+slices have finished processing, detect_jumps assembles the output group_dq cube
+from the slices.
 
 Subarrays
 =========

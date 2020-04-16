@@ -5,105 +5,6 @@ id: "http://stsci.edu/schemas/jwst_datamodel/slitdata.schema"
 allOf:
 - type: object
   properties:
-    name:
-      title: Name of the slit
-      type: string
-      fits_keyword: SLTNAME
-      fits_hdu: SCI
-    xstart:
-      title: Starting pixel in x direction
-      type: integer
-      default: 1
-      fits_keyword: SLTSTRT1
-      fits_hdu: SCI
-    xsize:
-      title: Number of pixels in x direction
-      type: integer
-      default: 0
-      fits_keyword: SLTSIZE1
-      fits_hdu: SCI
-    ystart:
-      title: Starting pixel in y direction
-      type: integer
-      default: 1
-      fits_keyword: SLTSTRT2
-      fits_hdu: SCI
-    ysize:
-      title: Number of pixels in y direction
-      type: integer
-      default: 0
-      fits_keyword: SLTSIZE2
-      fits_hdu: SCI
-    slitlet_id:
-      title: Slitlet ID
-      type: integer
-      default: 0
-      fits_keyword: SLITID
-      fits_hdu: SCI
-    source_id:
-      title: Source ID
-      type: integer
-      default: 0
-      fits_keyword: SOURCEID
-      fits_hdu: SCI
-    source_name:
-      title: Source name
-      type: string
-      fits_keyword: SRCNAME
-      fits_hdu: SCI
-    source_alias:
-      title: Source alias
-      type: string
-      fits_keyword: SRCALIAS
-      fits_hdu: SCI
-    stellarity:
-      title: Source stellarity
-      type: number
-      fits_keyword: STLARITY
-      fits_hdu: SCI
-    source_type:
-      title: Source type (point/extended)
-      type: string
-      enum: [EXTENDED, POINT, UNKNOWN]
-      fits_keyword: SRCTYPE
-      fits_hdu: SCI
-    source_xpos:
-      title: Source position in slit (x-axis)
-      type: number
-      default: 0.0
-      fits_keyword: SRCXPOS
-      fits_hdu: SCI
-    source_ypos:
-      title: Source position in slit (y-axis)
-      type: number
-      default: 0.0
-      fits_keyword: SRCYPOS
-      fits_hdu: SCI
-    shutter_state:
-      title: All (open and closed) shutters in a slit
-      type: string
-      default: ""
-      fits_keyword: SHUTSTA
-      fits_hdu: SCI
-    quadrant:
-      title: MSA quadrant for slit
-      type: integer
-    xcen:
-      title: Center of shutter in MSA coordinates (X dir)
-      type: integer
-    ycen:
-      title: Center of shutter in MSA coordinates (Y dir)
-      type: integer
-    source_ra:
-      title: Right Ascension of the source
-      type: number
-      fits_keyword: SRCRA
-      fits_hdu: SCI
-    source_dec:
-      title: Declination of the source
-      type: number
-      fits_keyword: SRCDEC
-      fits_hdu: SCI
     data:
       title: The science data
       fits_hdu: SCI
@@ -137,6 +38,17 @@ allOf:
       fits_hdu: AREA
       default: 0.0
       datatype: float32
+    wht:
+      title: Drizzle Weight array
+      fits_hdu: WHT
+      default: 0.0
+      datatype: float32
+    con:
+      title: Drizzle Context array
+      fits_hdu: CON
+      default: 0
+      datatype: int32
+- $ref: slitmeta.schema
 - $ref: variance.schema
 - $ref: pathlosscorr.schema
 - $ref: bunit.schema
