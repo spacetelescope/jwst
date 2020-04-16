@@ -39,6 +39,8 @@ datamodels
 
 - Added ``pupil`` to the ``FilteroffsetModel`` to support NIRCAM and NIRISS WCS. [#4750]
 
+- Added FASTGRPAVG[8,16,32,64] to the READPATT keyword allowed values. [#4818]
+
 exp_to_source
 -------------
 
