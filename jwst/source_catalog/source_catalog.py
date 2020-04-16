@@ -70,8 +70,6 @@ class ReferenceData:
         self.model = model
 
         self.aperture_ee = self._validate_aperture_ee(aperture_ee)
-        if apcorr_filename is None:
-            raise ValueError('apcorr_filename must be input')
         self.apcorr_filename = apcorr_filename
         self.abvega_offset_filename = abvega_offset_filename
 
@@ -165,8 +163,18 @@ class ReferenceData:
         corrections, and background annulus inner and outer radii).
         """
 
-        params = {}
+        if self.apcorr_filename is None:
+            log.info('APCorrModel reference file was not input -- '
+                     'using fallback aperture sizes without any aperture '
+                     'corrections.')
+            params = {'aperture_radii': (1.0, 2.0, 3.0),
+                      'aperture_corrs': (1.0, 1.0, 1.0),
+                      'aperture_ee': (1, 2, 3),
+                      'bkg_aperture_inner': 10.,
+                      'bkg_aperture_outer': 20.}
+            return params
 
+        params = {}
         radii = []
         apcorrs = []
         skyins = []
@@ -207,6 +215,11 @@ class ReferenceData:
         The value reprents m_AB - m_Vega.
         """
 
+        if self.abvega_offset_filename is None:
+            log.info('ABVegaOffsetModel reference file was not input -- '
+                     'catalog Vega magnitudes are not correct.')
+            return 0.0
+
         if self.instrument == 'NIRCAM' or self.instrument == 'NIRISS':
             selector = {'filter': self.filtername, 'pupil': self.pupil}
         elif self.instrument == 'MIRI':
@@ -215,11 +228,6 @@ class ReferenceData:
             selector = {'detector': self.detector}
         else:
             raise RuntimeError(f'{self.instrument} is not a valid instrument')
-
-        if self.abvega_offset_filename is None:
-            log.info('ABVegaOffsetModel reference file was not input -- '
-                     'catalog Vega magnitudes are not correct.')
-            return 0.0
 
         abvega_offset_model = ABVegaOffsetModel(self.abvega_offset_filename)
         offsets_table = abvega_offset_model.abvega_offset

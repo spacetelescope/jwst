@@ -4,6 +4,8 @@ Module for the source catalog step.
 
 import os
 
+from crds.core.exceptions import CrdsLookupError
+
 from .source_catalog import (ReferenceData, Background, make_kernel,
                              make_segment_img, calc_total_error,
                              SourceCatalog)
@@ -42,13 +44,17 @@ class SourceCatalogStep(Step):
 
     def process(self, input_model):
         with datamodels.open(input_model) as model:
-            apcorr_fn = self.get_reference_file(input_model, 'apcorr')
+            try:
+                apcorr_fn = self.get_reference_file(input_model, 'apcorr')
+            except CrdsLookupError:
+                apcorr_fn = None
             self.log.info(f'Using apcorr reference file {apcorr_fn}')
 
-            # TODO: fix after reference file is in CRDS
-            #abvega_offset_fn = self.get_reference_file(
-            #    input_model, 'abvega_offset')
-            abvega_offset_fn = None
+            try:
+                abvega_offset_fn = self.get_reference_file(
+                    input_model, 'abvega_offset')
+            except CrdsLookupError:
+                abvega_offset_fn = None
             self.log.info('Using abvega_offset reference file ' +
                           f'{abvega_offset_fn}')
 
