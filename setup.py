@@ -98,7 +98,7 @@ setup(
         'astropy>=4.0',
         'crds>=7.2.7',
         'drizzle>=1.13',
-        'gwcs>=0.12',
+        'gwcs>=0.13.0',
         'jsonschema>=2.3,<4',
         'numpy>=1.16',
         'photutils>=0.7',
@@ -106,7 +106,7 @@ setup(
         'spherical-geometry>=1.2',
         'stsci.image>=2.3.3',
         'stsci.imagestats>=1.4',
-        'tweakwcs==0.5.3',
+        'tweakwcs>=0.6.3',
     ],
     extras_require={
         'docs': DOCS_REQUIRE,
