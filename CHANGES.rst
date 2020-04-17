@@ -84,6 +84,8 @@ outlier_detection
 pipeline
 --------
 
+- Update ``calwebb_detector1`` to reduce the memory used in processing. [#4643]
+
 - Update ``calwebb_coron3`` to return ``ImageModel`` instead of ``DrizProductModel``,
   when necessary. [#4552]
 
