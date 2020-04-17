@@ -534,6 +534,7 @@ class IFUCubeData():
 
         number_bands = len(self.list_par1)
 
+        ta = time.time()
         for i in range(number_bands):
             this_par1 = self.list_par1[i]
             this_par2 = self.list_par2[i]
@@ -554,7 +555,7 @@ class IFUCubeData():
                     coord1, coord2, wave, flux, err, slice_no, rois_pixel, roiw_pixel, weight_pixel,\
                         softrad_pixel, scalerad_pixel, alpha_det, beta_det = pixelresult
                     t1 = time.time()
-                    log.info("Time to transform pixels to output frame = %.1f s" % (t1 - t0,))
+                    log.info("Time to transform 1 input model pixels to output frame = %.1f s" % (t1 - t0,))
 
                     # If setting the DQ plane of the IFU
                     if self.skip_dqflagging:
@@ -662,6 +663,8 @@ class IFUCubeData():
 # _______________________________________________________________________
 # Mapped all data to cube or Point Cloud
 # now determine Cube Spaxel flux
+        tb = time.time()
+        log.info("Time build all IFU cubes for this run  = %.1f s" % (tb - ta,))
 
         t0 = time.time()
         self.find_spaxel_flux()

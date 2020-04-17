@@ -1,5 +1,6 @@
 """ Routines related to WCS procedures of cube_build
 """
+import time
 import numpy as np
 from ..assign_wcs import nirspec
 from gwcs import wcstools
@@ -36,6 +37,7 @@ def find_footprint_MIRI(input, this_channel, instrument_info, coord_system):
     # x,y values for channel - convert to output coordinate system
     # return the min & max of spatial coords and wavelength
 
+    t0 = time.time()
     xstart, xend = instrument_info.GetMIRISliceEndPts(this_channel)
     ysize = input.data.shape[0]
 
@@ -62,6 +64,8 @@ def find_footprint_MIRI(input, this_channel, instrument_info, coord_system):
     lambda_min = np.nanmin(lam)
     lambda_max = np.nanmax(lam)
 
+    t1 = time.time()
+    log.info("Time to determine output WCS  = %.1f s" % (t1 - t0,))
     return a_min, a_max, b_min, b_max, lambda_min, lambda_max
 # ********************************************************************************
 
@@ -95,6 +99,7 @@ def find_footprint_NIRSPEC(input, coord_system):
     # x,y values for slice. Then convert the x,y values to  v2,v3,lambda
     # return the min & max of spatial coords and wavelength  - these are of the pixel centers
 
+    t0 = time.time()
     nslices = 30
     a_slice = np.zeros(nslices * 2)
     b_slice = np.zeros(nslices * 2)
@@ -144,6 +149,8 @@ def find_footprint_NIRSPEC(input, coord_system):
     if (a_min == 0.0 and a_max == 0.0 and b_min == 0.0 and b_max == 0.0):
         log.info('This NIRSPEC exposure has no IFU data on it - skipping file')
 
+    t1 = time.time()
+    log.info("Time to determine output WCS input model  = %.1f s" % (t1 - t0,))
     return a_min, a_max, b_min, b_max, lambda_min, lambda_max
 # _______________________________________________________________________________
 

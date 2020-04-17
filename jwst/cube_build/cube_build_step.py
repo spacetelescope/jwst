@@ -1,6 +1,7 @@
 """ This is the main ifu spectral cube building routine.
 """
 from ..stpipe import Step
+import time
 from .. import datamodels
 from . import cube_build
 from . import ifu_cube
@@ -327,7 +328,10 @@ class CubeBuildStep (Step):
 
             thiscube.determine_cube_parameters()
 
+            t0 = time.time()
             thiscube.setup_ifucube_wcs()
+            t1 = time.time()
+            self.log.info("Time to set up complete WCS = %.1f s" % (t1 - t0,))
 # _______________________________________________________________________________
 # build the IFU Cube
 
@@ -336,14 +340,20 @@ class CubeBuildStep (Step):
 # This option is used for background matching and outlier rejection
             if self.single:
                 self.output_file = None
+                t0 = time.time()
                 cube_container = thiscube.build_ifucube_single()
+                t1 = time.time()
+                self.log.info("Time to build set of single IFU cubes = %.1f s" % (t1 - t0,))
                 self.log.info("Number of Single IFUCube models returned %i ",
                               len(cube_container))
 
 # Else standard IFU cube building
             else:
+                t0 = time.time()
                 result = thiscube.build_ifucube()
                 cube_container.append(result)
+                t1 = time.time()
+                self.log.info("Time to build IFU cube = %.1f s" % (t1 - t0,))
             if self.debug_pixel == 1:
                 self.spaxel_debug.close()
         for cube in cube_container:
