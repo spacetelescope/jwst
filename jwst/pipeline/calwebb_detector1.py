@@ -76,104 +76,45 @@ class Detector1Pipeline(Pipeline):
             # the steps are in a different order than NIR
             log.debug('Processing a MIRI exposure')
 
-            input1 = self.group_scale(input)
-            input1 = input.copy()
-            input.close()
-            del input
-            input1 = self.dq_init(input1)
-            input2 = input1.copy()
-            input1.close()
-            del input1
-            input2 = self.saturation(input2)
-            input3 = input2.copy()
-            input2.close()
-            del input2
-            input3 = self.ipc(input3)
-            input4 = input3.copy()
-            input3.close()
-            del input3
-            input4 = self.firstframe(input4)
-            input5 = input4.copy()
-            input4.close()
-            del input4
-            input5 = self.lastframe(input5)
-            input6 = input5.copy()
-            input5.close()
-            del input5
-            input6 = self.linearity(input6)
-            input7 = input6.copy()
-            input6.close()
-            del input6
-            input7 = self.rscd(input7)
-            input8 = input7.copy()
-            input7.close()
-            del input7
-            input8 = self.dark_current(input8)
-            input9 = input8.copy()
-            input8.close()
-            del input8
-            input_jump = self.refpix(input9)
-            input9.close()
-            del input9
+            result = self.group_scale(input)
+            result = self.dq_init(result)
+            result = self.saturation(result)
+            result = self.ipc(result)
+            result = self.firstframe(result)
+            result = self.lastframe(result)
+            result = self.linearity(result)
+            result = self.rscd(result)
+            result = self.dark_current(result)
+            result = self.refpix(result)
 
             # skip until MIRI team has figured out an algorithm
-            #input = self.persistence(input)
+            #result = self.persistence(result)
 
         else:
 
             # process Near-IR exposures
             log.debug('Processing a Near-IR exposure')
 
-            input = self.group_scale(input)
-            input = self.dq_init(input)
-            input1 = input.copy()
-            input.close()
-            del input
-            input1 = self.saturation(input1)
-            input2 = input1.copy()
-            input1.close()
-            del input1
-            input2 = self.ipc(input2)
-            input3 = input2.copy()
-            input2.close()
-            del input2
-            input3 = self.superbias(input3)
-            input4 = input3.copy()
-            input3.close()
-            del input3
-            input4 = self.refpix(input4)
-            input5 = input4.copy()
-            input4.close()
-            del input4
-            input5 = self.linearity(input5)
-            input6 = input5.copy()
-            input5.close()
-            del input5
+            result = self.group_scale(input)
+            result = self.dq_init(result)
+            result = self.saturation(result)
+            result = self.ipc(result)
+            result = self.superbias(result)
+            result = self.refpix(result)
+            result = self.linearity(result)
 
             # skip persistence for NIRSpec
-            if input6.meta.instrument.name != 'NIRSPEC':
-                input6 = self.persistence(input6)
-                input7 = input6.copy()
-                input6.close()
-                del input6
-            else:
-                input7 = input6.copy()
-                input6.close()
-                del input6
+            if result.meta.instrument.name != 'NIRSPEC':
+                result = self.persistence(result)
 
-            input7 = self.dark_current(input7)
-            input_jump = input7.copy()
-            input7.close()
-            del input7
+            result = self.dark_current(result)
+
         # apply the jump step
-        input_jump = self.jump(input_jump)
-        input = input_jump.copy()
-        input_jump.close()
-        del input_jump
+        result = self.jump(result)
 
         # save the corrected ramp data, if requested
         if self.save_calibrated_ramp:
-            self.save_model(input, 'ramp')
+            self.save_model(result, 'ramp')
 
         # apply the ramp_fit step
         # This explicit test on self.ramp_fit.skip is a temporary workaround
@@ -181,14 +122,14 @@ class Detector1Pipeline(Pipeline):
         # objects, but when the step is skipped due to `skip = True` in a
         # cfg file, only the input is returned when the step is invoked.
         if self.ramp_fit.skip:
-            input = self.ramp_fit(input)
+            result = self.ramp_fit(result)
             ints_model = None
         else:
-            input, ints_model = self.ramp_fit(input)
+            result, ints_model = self.ramp_fit(result)
 
         # apply the gain_scale step to the exposure-level product
         self.gain_scale.suffix = 'gain_scale'
-        input = self.gain_scale(input)
+        result = self.gain_scale(result)
 
         # apply the gain scale step to the multi-integration product,
         # if it exists, and then save it
@@ -198,11 +139,11 @@ class Detector1Pipeline(Pipeline):
             self.save_model(ints_model, 'rateints')
 
         # setup output_file for saving
-        self.setup_output(input)
+        self.setup_output(result)
 
         log.info('... ending calwebb_detector1')
 
-        return input
+        return result
 
     def setup_output(self, input):
         # Determine the proper file name suffix to use later
