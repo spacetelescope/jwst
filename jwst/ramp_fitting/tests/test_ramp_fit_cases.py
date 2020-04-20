@@ -33,7 +33,7 @@ def test_pix_0():
     RampMod.groupdq[0,:,0,0] = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
     new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit( RampMod, 1024*300., True,
-                                                RnMod, GMod, 'OLS', 'optimal' )
+                                                RnMod, GMod, 'OLS', 'optimal' ,'none')
 
     # Set truth values for PRIMARY results:
     # [data, dq, err, var_p, var_r]
@@ -68,7 +68,7 @@ def test_pix_1():
     RampMod.groupdq[0,:,0,0] = np.array([0, 4, 4, 0, 2, 2, 2, 2, 2, 2])
 
     new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit( RampMod, 1024*300., True,
-                                                RnMod, GMod, 'OLS', 'optimal' )
+                                                RnMod, GMod, 'OLS', 'optimal', 'none')
 
     # Set truth values for PRIMARY results:
     p_true = [1.8999999, 6, 1.046670, 0.02636364, 1.0691562 ]
@@ -98,7 +98,7 @@ def test_pix_2():
     RampMod.groupdq[0,:,0,0] = np.array([0, 0, 0, 4, 0, 4, 0, 4, 2, 2])
 
     new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit( RampMod, 1024*300., True,
-                                                RnMod, GMod, 'OLS', 'optimal' )
+                                                RnMod, GMod, 'OLS', 'optimal', 'none')
 
     # Set truth values for PRIMARY results:
     p_true = [0.84761256, 6, 0.42986465, 0.00659091, 0.1781927 ]
@@ -135,7 +135,7 @@ def test_pix_3():
     RampMod.groupdq[0,:,0,0] = np.array([0, 0, 0, 0, 0, 0, 0, 0, 4, 0])
 
     new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit( RampMod, 1024*300., True,
-                                                RnMod, GMod, 'OLS', 'optimal' )
+                                                RnMod, GMod, 'OLS', 'optimal', 'none')
 
     # Set truth values for PRIMARY results:
     p_true = [1.0746869, 4, 0.12186482, 0.00227273, 0.01257831 ]
@@ -145,9 +145,9 @@ def test_pix_3():
               [ 6.450687, 56.870003],
               [ 0.0025974, 0.01818182],
               [ 0.01272805, 1.0691562 ],
-              [ 14.504951, 15.],
+              [ 14.504965, 15.],
               [ 27.842508, 56.870003],
-              [ 4.25313],
+              [ 4.253134],
               [ 4.2576841e+03, 8.458062e-01],
              ]
 
@@ -172,7 +172,7 @@ def test_pix_4():
     RampMod.groupdq[0,:,0,0] = np.array([0, 2, 2, 2, 2, 2, 2, 2, 2, 2])
 
     new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit( RampMod, 1024*300., True,
-                                                RnMod, GMod, 'OLS', 'optimal' )
+                                                RnMod, GMod, 'OLS', 'optimal', 'none')
 
     # Set truth values for PRIMARY results:
     p_true = [1.5, 2, 1.047105, 0.02727273, 1.0691562]
@@ -202,10 +202,10 @@ def test_pix_5():
     RampMod.groupdq[0,:,0,0] = np.array([0, 0, 0, 0, 4, 0, 0, 0, 0, 0])
 
     new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit( RampMod, 1024*300., True,
-                                                RnMod, GMod, 'OLS', 'optimal' )
+                                                RnMod, GMod, 'OLS', 'optimal', 'none')
 
     # Set truth values for PRIMARY results:
-    p_true = [ 1.0760875, 4, 0.16134359, 0.00227273, 0.02375903 ]
+    p_true = [ 1.076075, 4, 0.16134359, 0.00227273, 0.02375903 ]
 
     # Set truth values for OPTIONAL results:
     o_true = [[ 1.2799551, 1.0144024 ],
@@ -239,7 +239,7 @@ def test_pix_6():
     RampMod.groupdq[0,:,0,0] = np.array([0, 0, 4, 4, 0, 0, 0, 0, 0, 0])
 
     new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit( RampMod, 1024*300., True,
-                                                RnMod, GMod, 'OLS', 'optimal' )
+                                                RnMod, GMod, 'OLS', 'optimal', 'none')
 
     # Set truth values for PRIMARY results:
     p_true = [ 6.092052, 4, 0.14613187, 0.0025974, 0.01875712 ]
@@ -275,7 +275,7 @@ def test_pix_7():
     RampMod.groupdq[0,:,0,0] = np.array([0, 0, 0, 0, 0, 0, 0, 0, 4, 4])
 
     new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit( RampMod, 1024*300., True,
-                                                RnMod, GMod, 'OLS', 'optimal' )
+                                                RnMod, GMod, 'OLS', 'optimal', 'none')
 
     # Set truth values for PRIMARY results:
     p_true = [ 1.0757396, 4, 0.12379601, 0.0025974, 0.01272805 ]
@@ -305,7 +305,7 @@ def test_pix_8():
     RampMod.groupdq[0,:,0,0] = np.array([0, 4, 0, 0, 0, 0, 0, 2, 2, 2])
 
     new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit( RampMod, 1024*300., True,
-                                                RnMod, GMod, 'OLS', 'optimal' )
+                                                RnMod, GMod, 'OLS', 'optimal', 'none')
 
     # Set truth values for PRIMARY results:
     p_true =[ 1.0101178, 6, 0.1848883, 0.00363636, 0.03054732 ]
@@ -336,7 +336,7 @@ def test_pix_9():
     RampMod.groupdq[0,:,0,0] = np.array([0, 0, 4, 4, 0, 0, 0, 0, 4, 0])
 
     new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit( RampMod, 1024*300., True,
-                                                RnMod, GMod, 'OLS', 'optimal' )
+                                                RnMod, GMod, 'OLS', 'optimal', 'none')
 
     # Set truth values for PRIMARY results:
     p_true = [ 0.9999994, 4, 0.22721863, 0.0030303, 0.048598]
@@ -374,7 +374,7 @@ def test_pix_10():
     RampMod.groupdq[0,:,0,0] = np.array([0, 0, 4, 0, 0, 4, 0, 0, 0, 0])
 
     new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit( RampMod, 1024*300., True,
-                                                RnMod, GMod, 'OLS', 'optimal' )
+                                                RnMod, GMod, 'OLS', 'optimal', 'none')
 
     # Set truth values for PRIMARY results:
     p_true = [ 1., 4, 0.21298744, 0.0025974, 0.04276625 ]
@@ -410,7 +410,7 @@ def test_pix_11():
     RampMod.groupdq[0,:,0,0] = np.array([0, 0, 2, 2, 2, 2, 2, 2, 2, 2])
 
     new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit( RampMod, 1024*300., True,
-                                                RnMod, GMod, 'OLS', 'optimal' )
+                                                RnMod, GMod, 'OLS', 'optimal', 'none')
 
     # Set truth values for PRIMARY results:
     p_true = [ 1., 2, 1.042755, 0.01818182, 1.0691562 ]
@@ -439,7 +439,7 @@ def test_miri_0():
     RampMod.groupdq[0,:,0,0] = np.array([1, 0, 0, 0, 0, 0, 0, 0, 0, 1])
 
     new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit( RampMod, 1024*300., True,
-                                                RnMod, GMod, 'OLS', 'optimal' )
+                                                RnMod, GMod, 'OLS', 'optimal', 'none')
 
     # Set truth values for PRIMARY results:
     p_true = [ 1.025854, 0, 0.12379601, 0.0025974, 0.01272805]
@@ -469,7 +469,7 @@ def test_miri_1():
     RampMod.groupdq[0,:,0,0] = np.array([5, 0, 0, 0, 0, 0, 0, 0, 0, 1])
 
     new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit( RampMod, 1024*300., True,
-                                                RnMod, GMod, 'OLS', 'optimal' )
+                                                RnMod, GMod, 'OLS', 'optimal', 'none')
 
     # Set truth values for PRIMARY results:
     p_true = [ 1.1996487, 0, 0.12379601, 0.0025974, 0.01272805]
@@ -499,7 +499,7 @@ def test_miri_2():
     RampMod.groupdq[0,:,0,0] = np.array([5, 0, 0, 0, 0, 0, 0, 0, 0, 5])
 
     new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit( RampMod, 1024*300., True,
-                                                RnMod, GMod, 'OLS', 'optimal' )
+                                                RnMod, GMod, 'OLS', 'optimal', 'none')
 
     # Set truth values for PRIMARY results:
     p_true = [ 1.025854, 0, 0.12379601, 0.0025974, 0.01272805]
@@ -529,7 +529,7 @@ def test_miri_3():
     RampMod.groupdq[0,:,0,0] = np.array([1, 0, 0, 0, 0, 0, 0, 0, 0, 5])
 
     new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit( RampMod, 1024*300., True,
-                                                RnMod, GMod, 'OLS', 'optimal' )
+                                                RnMod, GMod, 'OLS', 'optimal', 'none')
 
     # Set truth values for PRIMARY results:
     p_true = [ 1.025854, 0, 0.12379601, 0.0025974, 0.01272805]
@@ -548,11 +548,11 @@ def assert_pri( p_true, new_mod ):
     SCI, DQ, ERR, VAR_POISSSON, VAR_RNOISE.
     """
 
-    npt.assert_allclose( new_mod.data,        p_true[0], atol=1E-6 )
+    npt.assert_allclose( new_mod.data,        p_true[0], atol=2E-5, rtol=2e-5 )
     npt.assert_allclose( new_mod.dq,          p_true[1], atol=1E-1 )
-    npt.assert_allclose( new_mod.err,         p_true[2], atol=1E-6 )
-    npt.assert_allclose( new_mod.var_poisson, p_true[3], atol=1E-6 )
-    npt.assert_allclose( new_mod.var_rnoise,  p_true[4], atol=1E-6 )
+    npt.assert_allclose( new_mod.err,         p_true[2], atol=2E-5, rtol=2e-5 )
+    npt.assert_allclose( new_mod.var_poisson, p_true[3], atol=2E-5, rtol=2e-5 )
+    npt.assert_allclose( new_mod.var_rnoise,  p_true[4], atol=2E-5, rtol=2e-5 )
 
     return None
 
@@ -574,14 +574,14 @@ def assert_opt( o_true, opt_mod ):
     opt_pedestal = opt_mod.pedestal[:,0,0]
     opt_weights = opt_mod.weights[0,:,0,0]
 
-    npt.assert_allclose( opt_slope, o_true[0], atol=1E-6 )
-    npt.assert_allclose( opt_sigslope, o_true[1], atol=1E-6 )
-    npt.assert_allclose( opt_var_poisson, o_true[2], atol=1E-6 )
-    npt.assert_allclose( opt_var_rnoise, o_true[3], atol=1E-6 )
-    npt.assert_allclose( opt_yint, o_true[4], atol=1E-6 )
-    npt.assert_allclose( opt_sigyint, o_true[5], atol=1E-6 )
-    npt.assert_allclose( opt_pedestal, o_true[6], atol=1E-6 )
-    npt.assert_allclose( opt_weights, o_true[7], atol=1E-6 )
+    npt.assert_allclose( opt_slope, o_true[0], atol=2E-5, rtol=2e-5 )
+    npt.assert_allclose( opt_sigslope, o_true[1], atol=2E-5, rtol=2e-5 )
+    npt.assert_allclose( opt_var_poisson, o_true[2], atol=2E-5, rtol=2e-5 )
+    npt.assert_allclose( opt_var_rnoise, o_true[3], atol=2E-5, rtol=2e-5 )
+    npt.assert_allclose( opt_yint, o_true[4], atol=2E-2 )
+    npt.assert_allclose( opt_sigyint, o_true[5], atol=2E-5, rtol=2e-5 )
+    npt.assert_allclose( opt_pedestal, o_true[6], atol=2E-5, rtol=3e-5 )
+    npt.assert_allclose( opt_weights, o_true[7], atol=2E-5, rtol=2e-5 )
 
     return None
 
@@ -637,6 +637,7 @@ def create_mod_arrays(ngroups, nints, nrows, ncols, deltatime, gain, readnoise):
     RampMod.meta.exposure.group_time = deltatime
     RampMod.meta.exposure.nframes = 1
     RampMod.meta.exposure.groupgap = 0
+    RampMod.meta.exposure.drop_frames1 = 0
 
     # Create and populate gain model
     GMod = GainModel(data=gain)
