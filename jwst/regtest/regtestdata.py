@@ -383,7 +383,7 @@ def is_like_truth(rtdata, fitsdiff_default_kwargs, output, truth_path, is_suffix
         Interpret `output` as just a suffix on the expected output root.
         Otherwise, assume it is a full file name
     """
-
+    __tracebackhide__ = True
     # If given only a suffix, get the root to change the suffix of.
     # If the input was an association, the output should be the name of the product
     # Otherwise, output is based on input.

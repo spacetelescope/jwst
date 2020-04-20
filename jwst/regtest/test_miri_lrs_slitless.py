@@ -147,7 +147,7 @@ def test_miri_lrs_slitless_tso3_x1dints(run_tso3_pipeline, rtdata_module,
 @pytest.mark.bigdata
 def test_miri_lrs_slitless_tso3_whtlt(run_tso3_pipeline, generate_tso3_asn,
     rtdata_module, diff_astropy_tables):
-    """Compare the output of a MIRI LRS slitless calwebb_tso3 pipeline."""
+    """Compare the whitelight output of a MIRI LRS slitless calwebb_tso3 pipeline."""
     rtdata = rtdata_module
     _, asn_id = generate_tso3_asn
 
@@ -161,20 +161,18 @@ def test_miri_lrs_slitless_tso3_whtlt(run_tso3_pipeline, generate_tso3_asn,
 @pytest.mark.bigdata
 def test_miri_lrs_slitless_wcs(run_tso_spec2_pipeline, fitsdiff_default_kwargs,
                                rtdata_module):
-
+    """Compare the assign_wcs output of a MIRI LRS slitless calwebb_tso3 pipeline."""
     rtdata = rtdata_module
     output = f"{DATASET_ID}_assign_wcs.fits"
     # get input assign_wcs and truth file
     rtdata.output = output
     rtdata.get_truth("truth/test_miri_lrs_slitless_tso_spec2/"+output)
 
-    # Open the output and truth file
-    im = datamodels.open(rtdata.output)
-    im_truth = datamodels.open(rtdata.truth)
-
-    x, y = grid_from_bounding_box(im.meta.wcs.bounding_box)
-    ra, dec, lam = im.meta.wcs(x, y)
-    ratruth, dectruth, lamtruth = im_truth.meta.wcs(x, y)
-    assert_allclose(ra, ratruth)
-    assert_allclose(dec, dectruth)
-    assert_allclose(lam, lamtruth)
+    # Compare the output and truth file
+    with datamodels.open(rtdata.output) as im, datamodels.open(rtdata.truth) as im_truth:
+        x, y = grid_from_bounding_box(im.meta.wcs.bounding_box)
+        ra, dec, lam = im.meta.wcs(x, y)
+        ratruth, dectruth, lamtruth = im_truth.meta.wcs(x, y)
+        assert_allclose(ra, ratruth)
+        assert_allclose(dec, dectruth)
+        assert_allclose(lam, lamtruth)

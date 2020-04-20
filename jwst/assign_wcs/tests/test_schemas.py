@@ -7,6 +7,7 @@ def test_distortion_schema(tmpdir):
     """Make sure DistortionModel roundtrips"""
     m = models.Shift(1) & models.Shift(2)
     dist = DistortionModel(model=m, input_units=u.pixel, output_units=u.arcsec)
+
     dist.meta.instrument.name = "NIRCAM"
     dist.meta.instrument.detector = "NRCA1"
     dist.meta.instrument.p_pupil = "F162M|F164N|CLEAR|"

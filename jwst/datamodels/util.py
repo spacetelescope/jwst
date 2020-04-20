@@ -16,6 +16,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 log.addHandler(logging.NullHandler())
 
+
 class NoTypeWarning(Warning):
     pass
 
@@ -431,7 +432,7 @@ def create_history_entry(description, software=None):
     import datetime
 
     if isinstance(software, list):
-            software = [Software(x) for x in software]
+        software = [Software(x) for x in software]
     elif software is not None:
         software = Software(software)
 

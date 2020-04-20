@@ -468,6 +468,8 @@ class Step():
         finally:
             log.delegator.log = orig_log
 
+        self.closeout(to_close=args)
+
         return step_result
 
     __call__ = run
@@ -1032,7 +1034,8 @@ class Step():
         to_del += to_close
         for item in to_close:
             try:
-                item.close()
+                if hasattr(item, 'close'):
+                    item.close()
             except Exception as exception:
                 self.log.debug(
                     'Could not close "{}"'

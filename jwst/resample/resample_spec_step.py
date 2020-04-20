@@ -18,10 +18,6 @@ class ResampleSpecStep(ResampleStep):
         A singe datamodel, a container of datamodels, or an association file
     """
 
-    # Spec is all the same except for the suffix
-    spec = """
-    """
-
     def process(self, input):
         input_new = datamodels.open(input)  # define input_new since if ImageModel it will
                                             # redefined to SlitModel
@@ -50,6 +46,7 @@ class ResampleSpecStep(ResampleStep):
             # Deal with NIRSpec which currently has no default drizpars reffile
             self.log.info("No NIRSpec DIRZPARS reffile")
             kwargs = self._set_spec_defaults()
+            kwargs['blendheaders'] = self.blendheaders
 
         self.drizpars = kwargs
         if isinstance(input_models[0], MultiSlitModel):
@@ -88,6 +85,8 @@ class ResampleSpecStep(ResampleStep):
                 model.meta.cal_step.resample = "COMPLETE"
                 model.meta.asn.pool_name = input_models.meta.pool_name
                 model.meta.asn.table_name = input_models.meta.table_name
+                if hasattr(model.meta, "bunit_err") and model.meta.bunit_err is not None:
+                    del model.meta.bunit_err
                 update_s_region_spectral(model)
             # Everything resampled to single output model
             if len(drizzled_models) == 1:
@@ -134,6 +133,8 @@ class ResampleSpecStep(ResampleStep):
         result.meta.cal_step.resample = "COMPLETE"
         result.meta.asn.pool_name = input_models.meta.pool_name
         result.meta.asn.table_name = input_models.meta.table_name
+        if hasattr(result.meta, "bunit_err") and result.meta.bunit_err is not None:
+            del result.meta.bunit_err
         update_s_region_spectral(result)
         result.meta.bunit_data = drizzled_models[0].meta.bunit_data
         return result

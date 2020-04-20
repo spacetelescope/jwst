@@ -151,6 +151,7 @@ class Spec2Pipeline(Pipeline):
         science = science[0]
 
         self.log.info('Working on input %s ...', science)
+        # The following should be switched to the with context manager
         input = self.open_model(science)
         exp_type = input.meta.exposure.type
         tso_mode = is_tso(input)
@@ -184,6 +185,7 @@ class Spec2Pipeline(Pipeline):
                 '\nAborting remaining processing for this exposure.'
                 '\nNo output product will be created.'
             )
+            input.close()
             if self.assign_wcs.skip:
                 self.log.warning(message)
                 return

@@ -22,6 +22,7 @@ env_vars = [
     "TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory",
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
     "CRDS_CONTEXT=jwst-edit",
+    "ENG_BASE_URL=http://twjwdmsemwebag.stsci.edu/JWDMSEngFqAccSide1/TlmMnemonicDataSrv.svc/",
 ]
 
 // Set pytest basetemp output directory
@@ -65,5 +66,5 @@ bc1.build_cmds = ["pip install -e ."]
 bc1.test_cmds = []
 bc1.test_configs = []
 
-utils.run([jobconfig, bc0, bc1])
+utils.run([jobconfig, bc0])
 }  // withCredentials

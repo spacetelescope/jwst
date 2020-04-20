@@ -519,7 +519,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
     # If they passed in a string then we shall assume it is the filename
     # of the configuration file.
     try:
-        msa_file = fits.open(msa_file)
+        msa_file = fits.open(msa_file, memmap=False)
     except FileNotFoundError:
         message = "Missing MSA meta (MSAMETFL) file {}".format(msa_file)
         log.error(message)

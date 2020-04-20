@@ -345,11 +345,9 @@ def step_from_cmdline(args, cls=None):
         else:
             step.run(*positional)
     except Exception as e:
-        import traceback
-        lines = traceback.format_exc()
         _print_important_message(
-            "ERROR RUNNING STEP {0!r}:".format(step_class.__name__),
-            str(e), lines)
+            "ERROR RUNNING STEP {0!r}:".format(step_class.__name__), str(e)
+        )
 
         if debug_on_exception:
             import pdb

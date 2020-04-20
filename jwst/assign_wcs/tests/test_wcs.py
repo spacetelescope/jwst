@@ -1,5 +1,5 @@
 import pytest
-from numpy.testing import utils
+from numpy.testing import assert_allclose
 from astropy import units as u
 from astropy import wcs
 from astropy.tests.helper import  assert_quantity_allclose
@@ -61,7 +61,7 @@ def test_roll_angle():
     v2 = .01 # in arcsec
     v3 = .01 # in arcsec
     roll_angle = pointing.compute_roll_ref(v2_ref, v3_ref, r0, ra_ref, dec_ref, v2, v3)
-    utils.assert_allclose(roll_angle, r0, atol=1e-3)
+    assert_allclose(roll_angle, r0, atol=1e-3)
 
 
 def test_v23_to_sky():
@@ -81,7 +81,7 @@ def test_v23_to_sky():
     axes = "zyxyz"
     v2s = models.V23ToSky(angles, axes_order=axes)
     radec = v2s(v2, v3)
-    utils.assert_allclose(radec, expected_ra_dec, atol=1e-10)
+    assert_allclose(radec, expected_ra_dec, atol=1e-10)
 
 
 def test_frame_from_model(tmpdir):
@@ -90,8 +90,8 @@ def test_frame_from_model(tmpdir):
     im = _create_model_3d()
     frame = pointing.frame_from_model(im)
     radec, lam = frame.coordinates(1, 2, 3)
-    utils.assert_allclose(radec.spherical.lon.value, 1)
-    utils.assert_allclose(radec.spherical.lat.value, 2)
+    assert_allclose(radec.spherical.lon.value, 1)
+    assert_allclose(radec.spherical.lat.value, 2)
     assert_quantity_allclose(lam, 3 * u.um)
 
     # Test CompositeFrame initialization with custom frames
@@ -114,7 +114,7 @@ def test_frame_from_model(tmpdir):
 
 
 @pytest.mark.filterwarnings("ignore: The WCS transformation has more axes")
-def test_create_fitwcs(tmpdir):
+def test_create_fits_wcs(tmpdir):
     """ Test GWCS vs FITS WCS results. """
     im = _create_model_3d()
     w3d = pointing.create_fitswcs(im)
@@ -124,8 +124,8 @@ def test_create_fitwcs(tmpdir):
     hdu = fits_support.get_hdu(ff._hdulist, "SCI")
     w = wcs.WCS(hdu.header)
     wcel = w.sub(['celestial'])
-    ra, dec = wcel.all_pix2world(1, 1, 1)
-    utils.assert_allclose((ra, dec), (gra, gdec))
+    ra, dec = wcel.all_pix2world(1, 1, 0)
+    assert_allclose((ra, dec), (gra, gdec))
 
     # test serialization
     tree = {'wcs': w3d}

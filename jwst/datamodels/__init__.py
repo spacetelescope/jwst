@@ -6,6 +6,9 @@ from .model_base import DataModel
 from .amilg import AmiLgModel
 from .apcorr import FgsImgApcorrModel, MirImgApcorrModel
 from .apcorr import NrcImgApcorrModel, NisImgApcorrModel
+from .apcorr import MirLrsApcorrModel, MirMrsApcorrModel
+from .apcorr import NrcWfssApcorrModel, NisWfssApcorrModel
+from .apcorr import NrsMosApcorrModel, NrsFsApcorrModel
 from .asn import AsnModel
 from .barshadow import BarshadowModel
 from .combinedspec import CombinedSpecModel
@@ -35,9 +38,9 @@ from .mask import MaskModel
 from .ramp import MIRIRampModel
 from .multiexposure import MultiExposureModel
 from .multiextract1d import MultiExtract1dImageModel
+from .multiprod import MultiProductModel
 from .multislit import MultiSlitModel
 from .multispec import MultiSpecModel
-from .multiprod import MultiProductModel
 from .nirspec_flat import NirspecFlatModel, NirspecQuadFlatModel
 from .outlierpars import OutlierParsModel
 from .pathloss import PathlossModel
@@ -84,6 +87,8 @@ __all__ = [
     'DataModel',
     'AmiLgModel',
     'FgsImgApcorrModel', 'MirImgApcorrModel', 'NrcImgApcorrModel', 'NisImgApcorrModel',
+    'MirLrsApcorrModel', 'MirMrsApcorrModel', 'NrcWfssApcorrModel', 'NisWfssApcorrModel',
+    'NrsMosApcorrModel', 'NrsFsApcorrModel',
     'AsnModel',
     'BarshadowModel', 'CameraModel', 'CollimatorModel',
     'CombinedSpecModel', 'ContrastModel', 'CubeModel',
@@ -103,6 +108,7 @@ __all__ = [
     'ImageModel', 'IPCModel', 'IRS2Model', 'LastFrameModel', 'Level1bModel',
     'LinearityModel', 'MaskModel', 'ModelContainer', 'MSAModel',
     'MultiExposureModel', 'MultiExtract1dImageModel', 'MultiSlitModel',
+    'MultiProductModel',
     'MultiSpecModel', 'OTEModel',
     'NIRCAMGrismModel','NIRISSGrismModel',
     'OutlierParsModel',
@@ -111,7 +117,6 @@ __all__ = [
     'PixelAreaModel', 'NirspecSlitAreaModel', 'NirspecMosAreaModel', 'NirspecIfuAreaModel',
     'FgsImgPhotomModel',
     'MirImgPhotomModel', 'MirLrsPhotomModel', 'MirMrsPhotomModel',
-    'MultiProductModel',
     'NrcImgPhotomModel', 'NrcWfssPhotomModel',
     'NisImgPhotomModel', 'NisSossPhotomModel', 'NisWfssPhotomModel',
     'NrsFsPhotomModel', 'NrsMosPhotomModel',

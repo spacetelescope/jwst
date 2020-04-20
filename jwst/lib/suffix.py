@@ -297,8 +297,8 @@ def find_suffixes():
                 step = Step.from_config_file(
                     path.join(config_path, config_file)
                 )
-            except Exception:
-                pass
+            except Exception as err:
+                logger.debug(f'Configuration {config_file} failed: {str(err)}')
             else:
                 suffixes.add(step.name.lower())
                 if step.suffix is not None:
@@ -327,7 +327,7 @@ def load_local_pkg(fpath):
     sys.path.insert(0, package_fpath)
     try:
         for module_fpath in folder_traverse(
-            fpath, basename_regex='[^_].+\.py$', path_exclude_regex='tests'
+            fpath, basename_regex=r'[^_].+\.py$', path_exclude_regex='tests'
         ):
             folder_path, fname = path.split(module_fpath[package_fpath_len:])
             module_path = folder_path.split('/')
@@ -335,12 +335,12 @@ def load_local_pkg(fpath):
             module_path = '.'.join(module_path)
             try:
                 module = import_module(module_path)
-            except Exception:
-                logging.debug('Cannot load module "{}"'.format(module_path))
+            except Exception as err:
+                logger.debug(f'Cannot load module "{module_path}": {str(err)}')
             else:
                 yield module
-    except Exception as exception:
-        logging.debug('Exception occurred: "{}'.format(exception))
+    except Exception as err:
+        logger.debug(f'Cannot complete package loading: Exception occurred: "{str(err)}"')
     finally:
         sys.path = sys_path
 
