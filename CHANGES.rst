@@ -69,6 +69,12 @@ master_background
 
 - Fix issue with files left open at end of step [#4775]
 
+mrs_imatch
+----------
+
+- Updated step to use EMSM cube weighting, and to perform iterative sigma
+  rejection of sources prior to running the background solver.  [#4732]
+
 outlier_detection
 -----------------
 
