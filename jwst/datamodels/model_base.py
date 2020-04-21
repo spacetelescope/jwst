@@ -96,11 +96,11 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         # Override value of validation parameters if not explicitly set.
         if not pass_invalid_values:
             pass_invalid_values = self.get_envar_as_boolean("PASS_INVALID_VALUES",
-                                                 False)
+                                                            False)
         self._pass_invalid_values = pass_invalid_values
         if not strict_validation:
             strict_validation = self.get_envar_as_boolean("STRICT_VALIDATION",
-                                               False)
+                                                          False)
         self._strict_validation = strict_validation
         self._ignore_missing_extensions = ignore_missing_extensions
 
