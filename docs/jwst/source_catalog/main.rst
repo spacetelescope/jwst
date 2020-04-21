@@ -48,7 +48,7 @@ encircled energy values.  The total aperture-corrected flux and
 magnitudes are also calculated, based on the largest aperture.  Both
 AB and Vega magnitudes are calculated.
 
-For the isophotal photometry is based on `photutils segmentation
+The isophotal photometry is based on `photutils segmentation
 <https://photutils.readthedocs.org/en/latest/segmentation.html>`_.
 The properties that are currently calculated for each source include
 source centroids (both in pixel and sky coordinates), isophotal fluxes
