@@ -93,15 +93,14 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             Additional arguments passed to lower level functions.
         """
 
-        # Override value of validation parameters
-        # if environment value set
+        # Override value of validation parameters if not explicitly set.
         if not pass_invalid_values:
-            pass_invalid_values = self.get_envar("PASS_INVALID_VALUES",
+            pass_invalid_values = self.get_envar_as_boolean("PASS_INVALID_VALUES",
                                                  False)
         self._pass_invalid_values = pass_invalid_values
         if not strict_validation:
-            strict_validation = self.get_envar("STRICT_VALIDATION",
-                                                     False)
+            strict_validation = self.get_envar_as_boolean("STRICT_VALIDATION",
+                                               False)
         self._strict_validation = strict_validation
         self._ignore_missing_extensions = ignore_missing_extensions
 
@@ -314,14 +313,31 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             if fd is not None:
                 fd.close()
 
-    def get_envar(self, name, value):
+    def get_envar_as_boolean(self, name, default=False):
+        """Interpret an environmental as a boolean flag
+
+        Truth is any numeric value that is not 0 or
+        any of the following case-insensitive strings:
+
+        ('true', 't', 'yes', 'y')
+
+        Parameters
+        ----------
+        name : str
+            The name of the environmental variable to retrieve
+
+        default : bool
+            If the value cannot be determined, use as the default.
+        """
+        truths = ('true', 't', 'yes', 'y')
         if name in os.environ:
             value = os.environ[name]
             try:
                 value = bool(int(value))
             except ValueError:
-                value = True
-        return value
+                return value.lower() in truths
+            return value
+        return default
 
     @staticmethod
     def clone(target, source, deepcopy=False, memo=None):

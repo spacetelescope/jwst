@@ -1,3 +1,4 @@
+from copy import copy
 import os
 from os import path as op
 import shutil
@@ -702,3 +703,75 @@ def test_abvega_offset_model():
     assert model.abvega_offset.colnames == ['filter', 'pupil', 'abvega_offset']
     model.validate()
     model.close()
+
+@pytest.fixture(scope='module')
+def empty_model():
+    """Create an empy model"""
+    return DataModel()
+
+
+@pytest.fixture(scope='module')
+def jail_environ():
+    """Lock cheanges to the environment"""
+    original = copy(os.environ)
+    try:
+        yield
+    finally:
+        os.environ = original
+
+
+@pytest.mark.parametrize(
+    'case, default, expected', [
+        (None, False, False),
+        (None, True, True),
+        ('0',  False, False),
+        ('0',  True, False),
+        ('1', False, True),
+        ('1', True, True),
+        ('2', False, True),
+        ('2', True, True),
+        ('f', False, False),
+        ('f', True, False),
+        ('F', False, False),
+        ('F', True, False),
+        ('false', False, False),
+        ('false', True, False),
+        ('False', False, False),
+        ('False', True, False),
+        ('FALSE', False, False),
+        ('FALSE', True, False),
+        ('t', False, True),
+        ('t', True, True),
+        ('T', False, True),
+        ('T', True, True),
+        ('true', False, True),
+        ('true', True, True),
+        ('True', False, True),
+        ('True', True, True),
+        ('TRUE', False, True),
+        ('TRUE', True, True),
+        ('y', False, True),
+        ('y', True, True),
+        ('Y', False, True),
+        ('Y', True, True),
+        ('yes', False, True),
+        ('yes', True, True),
+        ('Yes', False, True),
+        ('Yes', True, True),
+        ('YES', False, True),
+        ('YES', True, True),
+    ]
+)
+def test_get_envar_as_boolean(case, default, expected, jail_environ, empty_model):
+    """Test various options to a boolean environmental variable"""
+    var = '__TEST_GET_ENVAR_AS_BOOLEAN'
+    if case is None:
+        try:
+            del os.environ[var]
+        except KeyError:
+            pass
+    else:
+        os.environ[var] = case
+
+    value = empty_model.get_envar_as_boolean(var, default=default)
+    assert value == expected
