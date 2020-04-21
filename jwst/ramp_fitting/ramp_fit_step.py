@@ -33,7 +33,7 @@ class RampFitStep (Step):
     #      only allowed weighting is 'optimal'.
 
     algorithm = 'ols'      # Only algorithm allowed for Build 7.1
-#    algorithm = 'gls'       # 032520
+    algorithm = 'gls'       # 032520
 
     weighting = 'optimal'  # Only weighting allowed for Build 7.1
 
