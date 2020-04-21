@@ -139,10 +139,10 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
     total_cols = input_model.data.shape[3]
     number_of_integrations = input_model.data.shape[0]
     number_of_groups = input_model.data.shape[1]
-    data = np.zeros_like(input_model.data)
-    err = np.zeros_like(input_model.err)
-    groupdq = np.zeros_like(input_model.groupdq)
-    pixeldq = np.zeros_like(input_model.pixeldq)
+#    data = np.zeros_like(input_model.data)
+#    err = np.zeros_like(input_model.err)
+#    groupdq = np.zeros_like(input_model.groupdq)
+#    pixeldq = np.zeros_like(input_model.pixeldq)
     if pipe_utils.is_tso(input_model) and hasattr(input_model, 'int_times'):
         int_times = input_model.int_times
     else:
@@ -153,12 +153,12 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
     for i in range(number_slices - 1):
         readnoise_slice = readnoise_2d[i * rows_per_slice: (i + 1) * rows_per_slice, :]
         gain_slice = gain_2d[i * rows_per_slice: (i + 1) * rows_per_slice, :]
-        data = input_model.data[:,:,i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
-        err = input_model.err[:, :, i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
-        groupdq = input_model.groupdq[:, :, i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
-        pixeldq = input_model.pixeldq[ i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
+        data_slice = input_model.data[:,:,i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
+        err_slice = input_model.err[:, :, i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
+        groupdq_slice = input_model.groupdq[:, :, i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
+        pixeldq_slice = input_model.pixeldq[ i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
 
-        slices.insert(i, (data, err, groupdq, pixeldq, buffsize, save_opt, readnoise_slice, gain_slice, weighting,
+        slices.insert(i, (data_slice, err_slice, groupdq_slice, pixeldq_slice, buffsize, save_opt, readnoise_slice, gain_slice, weighting,
                       input_model.meta.instrument.name, input_model.meta.exposure.frame_time,
                       input_model.meta.exposure.ngroups, input_model.meta.exposure.group_time,
                       input_model.meta.exposure.groupgap, input_model.meta.exposure.nframes,
@@ -167,19 +167,19 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
     # last slice gets the rest
     readnoise_slice = readnoise_2d[(number_slices - 1) * rows_per_slice: total_rows, :]
     gain_slice = gain_2d[(number_slices - 1) * rows_per_slice: total_rows, :]
-    data = input_model.data[:, :, (number_slices - 1) * rows_per_slice: total_rows, :].copy()
-    err = input_model.err[:, :, (number_slices - 1) * rows_per_slice: total_rows, :].copy()
-    groupdq = input_model.groupdq[:, :, (number_slices - 1) * rows_per_slice: total_rows, :].copy()
-    pixeldq = input_model.pixeldq[(number_slices - 1) * rows_per_slice: total_rows, :].copy()
-    max_number_segments, max_CRs = calc_num_seg(groupdq, number_of_integrations)
-    slices.insert(number_slices - 1, (data, err, groupdq, pixeldq, buffsize, save_opt, readnoise_slice, gain_slice, weighting,
+    data_slice = input_model.data[:, :, (number_slices - 1) * rows_per_slice: total_rows, :].copy()
+    err_slice = input_model.err[:, :, (number_slices - 1) * rows_per_slice: total_rows, :].copy()
+    groupdq_slice = input_model.groupdq[:, :, (number_slices - 1) * rows_per_slice: total_rows, :].copy()
+    pixeldq_slice = input_model.pixeldq[(number_slices - 1) * rows_per_slice: total_rows, :].copy()
+    max_number_segments, max_CRs = calc_num_seg(input_model.groupdq, number_of_integrations)
+    slices.insert(number_slices - 1, (data_slice, err_slice, groupdq_slice, pixeldq_slice, buffsize, save_opt, readnoise_slice, gain_slice, weighting,
                                       input_model.meta.instrument.name, input_model.meta.exposure.frame_time,
                                       input_model.meta.exposure.ngroups, input_model.meta.exposure.group_time,
                                       input_model.meta.exposure.groupgap, input_model.meta.exposure.nframes,
                                       input_model.meta.exposure.drop_frames1, int_times))
 
     log.info("Creating %d processes for ramp fitting " % number_slices)
-
+    #start up the processes for each slice
     real_results = pool.starmap(ols_ramp_fit, slices)
     k = 0
     log.info("All processes complete")
