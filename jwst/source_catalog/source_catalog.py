@@ -109,9 +109,6 @@ class ReferenceData:
             raise ValueError('aperture_ee must contain only 3 values')
         if np.any(np.logical_or(aperture_ee <= 0, aperture_ee >= 100)):
             raise ValueError('aperture_ee values must be between 0 and 100')
-        if np.any(aperture_ee[1:] < aperture_ee[:-1]):
-            raise ValueError('aperture_ee values must be in increasing order')
-
         return aperture_ee
 
     @lazyproperty
@@ -169,9 +166,9 @@ class ReferenceData:
         """
 
         if self.apcorr_filename is None:
-            log.info('APCorrModel reference file was not input -- '
-                     'using fallback aperture sizes without any aperture '
-                     'corrections.')
+            log.warning('APCorrModel reference file was not input -- '
+                        'using fallback aperture sizes without any aperture '
+                        'corrections.')
             params = {'aperture_radii': np.array((1.0, 2.0, 3.0)),
                       'aperture_corrections': np.array((1.0, 1.0, 1.0)),
                       'aperture_ee': np.array((1, 2, 3)),
@@ -221,8 +218,8 @@ class ReferenceData:
         """
 
         if self.abvega_offset_filename is None:
-            log.info('ABVegaOffsetModel reference file was not input -- '
-                     'catalog Vega magnitudes are not correct.')
+            log.warning('ABVegaOffsetModel reference file was not input -- '
+                        'catalog Vega magnitudes are not correct.')
             return 0.0
 
         if self.instrument == 'NIRCAM' or self.instrument == 'NIRISS':
@@ -471,7 +468,7 @@ class SourceCatalog:
     ----------
     model : `ImageModel`
         The input `ImageModel`.  The data is assumed to be
-        background-subtracted.
+        background subtracted.
 
     segment_image : `~photutils.segmentation.SegmentationImage`
         A 2D segmentation image, with the same shape as the input data,
@@ -521,6 +518,8 @@ class SourceCatalog:
         self.n_aper = len(self.aperture_ee)
         self.column_desc = {}
 
+        # cannot use gwcs until this issue is resolved (both in jwst and
+        # gwcs):  https://github.com/spacetelescope/gwcs/issues/294
         # self.wcs = self.model.meta.wcs  # gWCS
         self.wcs = self.model.get_fits_wcs()  # FITS WCS
 
@@ -983,7 +982,7 @@ class SourceCatalog:
     @lazyproperty
     def is_star(self):
         """
-        Flag indicationg whether the source is a star.
+        Flag indicating whether the source is a star.
 
         2020.03.02: The JWST Photometry Working Group has not determined
         the criteria for this flag.
