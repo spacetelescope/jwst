@@ -145,6 +145,8 @@ stpipe
 
 - Use only a single member of an association for CRDS STEPPARS checking [#4684]
 
+- Fix handling of the boolean-like environmental variables PASS_INVALID_VALUES and STRICT_VALIDATION [#4842]
+
 strun
 -----
 

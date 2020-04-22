@@ -773,5 +773,5 @@ def test_get_envar_as_boolean(case, default, expected, jail_environ, empty_model
     else:
         os.environ[var] = case
 
-    value = empty_model.get_envar_as_boolean(var, default=default)
+    value = empty_model._get_envar_as_boolean(var, default=default)
     assert value == expected
