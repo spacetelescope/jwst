@@ -152,5 +152,16 @@ saved as a "_x1d" file, and is normally the result of performing the
 
 For NIRCam and NIRISS WFSS, as well as NIRISS SOSS data, the
 :ref:`extract_1d <extract_1d_step>` is performed on the individual unresampled 2D
-cutout images, and then the :ref:`combine_1d <combine_1d_step>` step is used to
-combine those spectra into a single combined "x1d" product for each source.
+cutout images, resulting in multiple 1-D spectra per source in a "_x1d" product.
+Those spectra are combined using the subsequent
+:ref:`combine_1d <combine_1d_step>` step (see below).
+
+1D combined spectral data
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:Data model: `~jwst.datamodels.CombinedSpecModel`
+:File suffix: _c1d
+
+For NIRCam and NIRISS WFSS, as well as NIRISS SOSS data, the
+:ref:`combine_1d <combine_1d_step>` combines the multiple 1-D spectra for a
+given source into a final spectrum, which is saved as a "_c1d" product.
