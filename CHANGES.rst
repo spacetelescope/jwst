@@ -56,6 +56,10 @@ extract_1d
 - Remove pixel-by-pixel calls to wcs; copy input keywords to output for
   more types of input data. [#4685]
 
+- Updated to create a single ``x1d`` product per source for WFSS data, containing
+  all extracted spectra for a given source, instead of multiple ``x1d`` files per
+  source. [#4846]
+
 extract_2d
 ----------
 
@@ -97,6 +101,8 @@ pipeline
 
 - Fix issue with files left open at end of ``calwebb_spec2`` [#4775]
 
+- Update ``calwebb_spec3`` to use suffix ``c1d`` for ``combine_1d`` products.
+  [#4846]
 
 resample
 --------

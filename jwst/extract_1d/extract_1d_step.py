@@ -125,8 +125,6 @@ class Extract1dStep(Step):
         if isinstance(input_model, datamodels.ModelContainer):
 
             # This is the branch MRS and WFSS data take
-            self.log.debug(' In ModelContainer branch ...')
-
             if len(input_model) > 1:
                 self.log.debug("Input contains %d items", len(input_model))
 
@@ -174,7 +172,6 @@ class Extract1dStep(Step):
                         del temp
 
             elif len(input_model) == 1:
-                self.log.debug(' input contains 1 item ...')
                 if input_model[0].meta.exposure.type in extract.WFSS_EXPTYPES:
                     ref_file = 'N/A'
                     self.log.info('No EXTRACT1D reference file will be used')
@@ -201,7 +198,6 @@ class Extract1dStep(Step):
         else:
 
             # Input is a single model, resulting in a single output.
-            self.log.debug(' In single model branch ...')
 
             # Get the reference file name
             if input_model.meta.exposure.type in extract.WFSS_EXPTYPES:
