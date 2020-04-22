@@ -668,13 +668,8 @@ def calc_pedestal(num_int, slope_int, firstf_int, dq_first, nframes, groupgap,
     return ped
 
 
-<<<<<<< HEAD
 def output_integ(slope_int, dq_int, effintim, var_p3, var_r3, var_both3,
                  int_times):
-=======
-def ols_output_integ(model, slope_int, dq_int, effintim, var_p3, var_r3,
-                     var_both3, int_times):
->>>>>>> master
     """
     For the OLS algorithm, construct the output integration-specific results.
     Any variance values that are a large fraction of the default value

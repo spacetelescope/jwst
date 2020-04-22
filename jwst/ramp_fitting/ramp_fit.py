@@ -102,14 +102,8 @@ def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
                                                    gain_model, frames_per_group)
 
         new_model, int_model, opt_model = \
-<<<<<<< HEAD
-                ols_ramp_fit_multi(model, buffsize, save_opt, readnoise_2d,
-                             gain_2d, weighting, max_cores)
-
-=======
                ols_ramp_fit(model, buffsize, save_opt, readnoise_model,
                gain_model, weighting)
->>>>>>> master
         gls_opt_model = None
 
     # Update data units in output models
@@ -351,13 +345,9 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
     #   all groups are flagged, return None for the models.
 
     if (instrume == 'MIRI' and nreads > 1):
-<<<<<<< HEAD
+
         first_gdq = groupdq[:,0,:,:]
         num_bad_slices = 0 # number of initial groups that are all DO_NOT_USE
-=======
-        first_gdq = model.groupdq[:,0,:,:]
-        num_bad_slices = 0  # number of initial groups that are all DO_NOT_USE
->>>>>>> master
 
         while (np.all(np.bitwise_and( first_gdq, dqflags.group['DO_NOT_USE']))):
             num_bad_slices += 1
@@ -384,13 +374,8 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
             num_cr_1st = len(wh_cr[0])
 
             for ii in range(num_cr_1st):
-<<<<<<< HEAD
                 groupdq[ wh_cr[0][ii], 0, wh_cr[1][ii],
                     wh_cr[2][ii]] -=  dqflags.group['JUMP_DET']
-=======
-                model.groupdq[ wh_cr[0][ii], 0, wh_cr[1][ii],
-                    wh_cr[2][ii]] -= dqflags.group['JUMP_DET']
->>>>>>> master
 
             first_gdq = groupdq[:,0,:,:]
 
@@ -411,18 +396,11 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
                 log.error('  so will not process this dataset.')
                 return None, None, None
 
-<<<<<<< HEAD
             data = data[:,:-1,:,:]
             err = err[:,:-1,:,:]
             groupdq = groupdq[:,:-1,:,:]
             cubeshape = (nreads,)+imshape
-=======
-            model.data = model.data[:,:-1,:,:]
-            model.err = model.err[:,:-1,:,:]
-            model.groupdq = model.groupdq[:,:-1,:,:]
 
-            cubeshape = (nreads,) + imshape
->>>>>>> master
             log.info('MIRI dataset has all pixels in the final group flagged as DO_NOT_USE.')
 
         # Next block is to satisfy github issue 1681:
@@ -875,15 +853,7 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
     #    results to separate file named <basename> + '_integ.fits'
     int_times = None
     if n_int > 1:
-<<<<<<< HEAD
         int_model = utils.output_integ(slope_int, dq_int, effintim,
-=======
-        if pipe_utils.is_tso(model) and hasattr(model, 'int_times'):
-            int_times = model.int_times
-        else:
-            int_times = None
-        int_model = utils.ols_output_integ(model, slope_int, dq_int, effintim,
->>>>>>> master
                                        var_p3, var_r3, var_both3, int_times)
     else:
         int_model = None
@@ -1046,7 +1016,6 @@ def gls_ramp_fit(input_model, buffsize, save_opt,
         Object containing optional GLS-specific ramp fitting data for the
         exposure; this will be None if save_opt is False.
     """
-<<<<<<< HEAD
     if max_cores is 'none':
         number_slices = 1
     else:
@@ -1079,8 +1048,6 @@ def gls_ramp_fit(input_model, buffsize, save_opt,
     rows_per_slice = round(total_rows / number_slices)
     pool = Pool(processes=number_slices)
     slices = []
-=======
->>>>>>> master
     tstart = time.time()
 
     # Get needed sizes and shapes
@@ -1243,14 +1210,9 @@ def gls_ramp_fit(input_model, buffsize, save_opt,
     final_pixeldq = dq_compress_final(dq_int, n_int)
 
     if n_int > 1:
-<<<<<<< HEAD
         effintim = 1.                   # slopes are already in DN/s
         int_model = utils.gls_output_integ(input_model, slope_int, slope_err_int, dq_int)
 
-=======
-        int_model = utils.gls_output_integ(model, slope_int, slope_err_int,
-                                           dq_int)
->>>>>>> master
     else:
         int_model = None
 
