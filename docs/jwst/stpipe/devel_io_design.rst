@@ -331,6 +331,9 @@ be seen in the `calwebb_spec3` default configuration file::
         [[extract_1d]]
           suffix = 'x1d'
           save_results = True
+        [[combine_1d]]
+          suffix = 'c1d'
+          save_results = True
 
 Output API: When More Control Is Needed
 ---------------------------------------

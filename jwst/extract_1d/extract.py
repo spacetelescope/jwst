@@ -2688,31 +2688,31 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
     # meta attributes in subsequent statements
     if was_source_model:
         # input_model is SourceContainer with a single SlitModel
-        input = input_model[0]
+        input_temp = input_model[0]
     else:
-        input = input_model
+        input_temp = input_model
 
     # Setup the output model
     output_model = datamodels.MultiSpecModel()
-    if hasattr(input, "int_times"):
-        output_model.int_times = input.int_times.copy()
-    output_model.update(input)
+    if hasattr(input_temp, "int_times"):
+        output_model.int_times = input_temp.int_times.copy()
+    output_model.update(input_temp)
 
     # This data type is used for creating an output table.
     spec_dtype = datamodels.SpecModel().spec_table.dtype
 
     # This will be relevant if we're asked to extract a spectrum and the
     # spectral order is zero.  That's only OK if the disperser is a prism.
-    prism_mode = is_prism(input)
-    instrument = input.meta.instrument.name
-    exp_type = input.meta.exposure.type
+    prism_mode = is_prism(input_temp)
+    instrument = input_temp.meta.instrument.name
+    exp_type = input_temp.meta.exposure.type
     if instrument is not None:
         instrument = instrument.upper()
 
     # We need a flag to indicate whether the photom step has been run.  If
     # it hasn't, we'll copy the count rate to the flux column.
     try:
-        s_photom = input.meta.cal_step.photom
+        s_photom = input_temp.meta.cal_step.photom
     except AttributeError:
         s_photom = None
     if s_photom is not None and s_photom.upper() == 'COMPLETE':
@@ -2731,7 +2731,7 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
             log.warning("Correcting for nod/dither offset is currently "
                         "not supported for exp_type = %s, so "
                         "apply_nod_offset will be set to False",
-                        input.meta.exposure.type)
+                        input_temp.meta.exposure.type)
 
     # Handle inputs that contain one or more slit models
     if (was_source_model or
@@ -3510,7 +3510,7 @@ def extract_one_slit(input_model, slit, integ,
 
     try:
         exp_type = input_model.meta.exposure.type
-    except:
+    except AttributeError:
         exp_type = slit.meta.exposure.type
 
     input_dq = None
