@@ -338,13 +338,16 @@ stpipe
 transforms
 ----------
 
- - Refactored the WFSS transforms to improve performance. [#4603]
+- Removed ``TPCorr`` WCS correction model as it is now defined in ``tweakwcs``
+  as a compound model of elementary ``astropy`` and ``gwcs`` models. [#4790]
 
- - Added ``source_ra`` and ``source_dec`` to the ``Slit`` namedtuple
-   with default values of 0.0. These are populated from the MSA metadata
-   file. [#4613]
+- Refactored the WFSS transforms to improve performance. [#4603]
 
-  
+- Added ``source_ra`` and ``source_dec`` to the ``Slit`` namedtuple
+  with default values of 0.0. These are populated from the MSA metadata
+  file. [#4613]
+
+
 tweakreg
 --------
 

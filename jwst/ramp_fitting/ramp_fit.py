@@ -29,6 +29,7 @@ from . import gls_fit           # used only if algorithm is "GLS"
 from . import utils
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 BUFSIZE = 1024 * 300000  # 300Mb cache size for data section
 
@@ -88,7 +89,7 @@ def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
         Object containing optional GLS-specific ramp fitting data for the
         exposure
     """
-    if algorithm == "GLS":
+    if algorithm.upper() == "GLS":
         new_model, int_model, gls_opt_model = gls_ramp_fit(model,
                                 buffsize, save_opt,
                                 readnoise_model, gain_model, max_cores)
@@ -101,9 +102,14 @@ def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
                                                    gain_model, frames_per_group)
 
         new_model, int_model, opt_model = \
+<<<<<<< HEAD
                 ols_ramp_fit_multi(model, buffsize, save_opt, readnoise_2d,
                              gain_2d, weighting, max_cores)
 
+=======
+               ols_ramp_fit(model, buffsize, save_opt, readnoise_model,
+               gain_model, weighting)
+>>>>>>> master
         gls_opt_model = None
 
     # Update data units in output models
@@ -345,8 +351,13 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
     #   all groups are flagged, return None for the models.
 
     if (instrume == 'MIRI' and nreads > 1):
+<<<<<<< HEAD
         first_gdq = groupdq[:,0,:,:]
         num_bad_slices = 0 # number of initial groups that are all DO_NOT_USE
+=======
+        first_gdq = model.groupdq[:,0,:,:]
+        num_bad_slices = 0  # number of initial groups that are all DO_NOT_USE
+>>>>>>> master
 
         while (np.all(np.bitwise_and( first_gdq, dqflags.group['DO_NOT_USE']))):
             num_bad_slices += 1
@@ -354,7 +365,7 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
             ngroups -= 1
 
             # Check if there are remaining groups before accessing data
-            if ngroups < 1 : # no usable data
+            if ngroups < 1 :  # no usable data
                 log.error('1. All groups have all pixels flagged as DO_NOT_USE,')
                 log.error('  so will not process this dataset.')
                 return None, None, None
@@ -363,7 +374,7 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
             err = err[:,1:,:,:]
             groupdq = groupdq[:,1:,:,:]
 
-            cubeshape = (nreads,)+imshape
+            cubeshape = (nreads,) + imshape
 
             # Where the initial group of the just-truncated data is a cosmic ray,
             #   remove the JUMP_DET flag from the group dq for those pixels so
@@ -373,8 +384,13 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
             num_cr_1st = len(wh_cr[0])
 
             for ii in range(num_cr_1st):
+<<<<<<< HEAD
                 groupdq[ wh_cr[0][ii], 0, wh_cr[1][ii],
                     wh_cr[2][ii]] -=  dqflags.group['JUMP_DET']
+=======
+                model.groupdq[ wh_cr[0][ii], 0, wh_cr[1][ii],
+                    wh_cr[2][ii]] -= dqflags.group['JUMP_DET']
+>>>>>>> master
 
             first_gdq = groupdq[:,0,:,:]
 
@@ -390,15 +406,23 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
             ngroups -= 1
 
             # Check if there are remaining groups before accessing data
-            if ngroups < 1 : # no usable data
+            if ngroups < 1 :  # no usable data
                 log.error('2. All groups have all pixels flagged as DO_NOT_USE,')
                 log.error('  so will not process this dataset.')
                 return None, None, None
 
+<<<<<<< HEAD
             data = data[:,:-1,:,:]
             err = err[:,:-1,:,:]
             groupdq = groupdq[:,:-1,:,:]
             cubeshape = (nreads,)+imshape
+=======
+            model.data = model.data[:,:-1,:,:]
+            model.err = model.err[:,:-1,:,:]
+            model.groupdq = model.groupdq[:,:-1,:,:]
+
+            cubeshape = (nreads,) + imshape
+>>>>>>> master
             log.info('MIRI dataset has all pixels in the final group flagged as DO_NOT_USE.')
 
         # Next block is to satisfy github issue 1681:
@@ -851,7 +875,15 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
     #    results to separate file named <basename> + '_integ.fits'
     int_times = None
     if n_int > 1:
+<<<<<<< HEAD
         int_model = utils.output_integ(slope_int, dq_int, effintim,
+=======
+        if pipe_utils.is_tso(model) and hasattr(model, 'int_times'):
+            int_times = model.int_times
+        else:
+            int_times = None
+        int_model = utils.ols_output_integ(model, slope_int, dq_int, effintim,
+>>>>>>> master
                                        var_p3, var_r3, var_both3, int_times)
     else:
         int_model = None
@@ -1014,6 +1046,7 @@ def gls_ramp_fit(input_model, buffsize, save_opt,
         Object containing optional GLS-specific ramp fitting data for the
         exposure; this will be None if save_opt is False.
     """
+<<<<<<< HEAD
     if max_cores is 'none':
         number_slices = 1
     else:
@@ -1046,6 +1079,8 @@ def gls_ramp_fit(input_model, buffsize, save_opt,
     rows_per_slice = round(total_rows / number_slices)
     pool = Pool(processes=number_slices)
     slices = []
+=======
+>>>>>>> master
     tstart = time.time()
 
     # Get needed sizes and shapes
@@ -1208,9 +1243,14 @@ def gls_ramp_fit(input_model, buffsize, save_opt,
     final_pixeldq = dq_compress_final(dq_int, n_int)
 
     if n_int > 1:
+<<<<<<< HEAD
         effintim = 1.                   # slopes are already in DN/s
         int_model = utils.gls_output_integ(input_model, slope_int, slope_err_int, dq_int)
 
+=======
+        int_model = utils.gls_output_integ(model, slope_int, slope_err_int,
+                                           dq_int)
+>>>>>>> master
     else:
         int_model = None
 
@@ -1811,8 +1851,8 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
             f_max_seg = max(f_max_seg, num_seg.max())
 
 
-    # CASE B) Long enough (semiramp has >2 groups ), not at array end (meaning final
-    #    group for this semiramp is not final group of the whole ramp)
+    # CASE B) Long enough (semiramp has >2 groups ), not at array end (meaning
+    #  final group for this semiramp is not final group of the whole ramp)
     #    - remove current end from end stack
     #    - decrement number of ends
     #    - add slopes and variances to running sums
@@ -1942,7 +1982,7 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
         num_wh = len(wh_check[0])
         for ii in range( num_wh ): # locate pixels with at least 1 good group
             this_pix = wh_check[0][ii]
-            sum_final_2 =  mask_2d_init[start[this_pix]:, this_pix].sum()
+            sum_final_2 = mask_2d_init[start[this_pix]:, this_pix].sum()
 
             if sum_final_2 > 0:
                 wh_list.append( wh_check[0][ii] ) # add to list to be fit
@@ -2085,7 +2125,7 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
         these_pix = wh_check[0]
         got_case[ these_pix ] = True
         start[ these_pix ] += 1
-        start[ start > nreads-1 ] = nreads -1  # to keep at max level
+        start[ start > nreads-1 ] = nreads - 1  # to keep at max level
         end_st[ end_heads[ these_pix ] - 1, these_pix ] = 0
         end_heads[ these_pix ] -= 1
         end_heads [end_heads < 0. ] = 0.
@@ -2199,9 +2239,9 @@ def fit_lines(data, mask_2d, rn_sect, gain_sect, ngroups, weighting):
     data_masked = data * np.reshape(c_mask_2d, data.shape)
     data_masked = np.reshape(data_masked, (data_masked.shape[0], npix))
 
-   # For datasets having >2 groups/integration, for any semiramp in which the
-   #   0th group is good and the 1st group is bad, determine whether or not to
-   #   use the 0th group.
+    # For datasets having >2 groups/integration, for any semiramp in which the
+    #   0th group is good and the 1st group is bad, determine whether or not to
+    #   use the 0th group.
     wh_pix_1r = np.where(c_mask_2d[0,:] & (np.logical_not(c_mask_2d[1,:])))
 
     if (len(wh_pix_1r[0]) > 0 ):
@@ -2211,8 +2251,8 @@ def fit_lines(data, mask_2d, rn_sect, gain_sect, ngroups, weighting):
 
     del wh_pix_1r
 
-   # For datasets having >2 groups/integrations, for any semiramp in which only
-   #   the 0th and 1st group are good, set slope, etc
+    # For datasets having >2 groups/integrations, for any semiramp in which only
+    #   the 0th and 1st group are good, set slope, etc
     wh_pix_2r = np.where( c_mask_2d.sum(axis=0) ==2) # ramps with 2 good groups
     slope_s, intercept_s, variance_s, sig_slope_s, sig_intercept_s = \
         fit_double_read( c_mask_2d, wh_pix_2r, data_masked, slope_s, intercept_s,
@@ -2390,15 +2430,18 @@ def fit_double_read(mask_2d, wh_pix_2r, data_masked, slope_s, intercept_s,
     sig_intercept_s : float, 1D array
         sigma of y-intercepts from fit for data section
     """
+    rn_sect_flattened = rn_sect.flatten()
+
     for ff in range(len(wh_pix_2r[0])): # loop over the pixels
         pixel_ff = wh_pix_2r[0][ff] # pixel index (1d)
-        rn = rn_sect.flatten()[pixel_ff] # read noise for this pixel
+
+        rn = rn_sect_flattened[pixel_ff] # read noise for this pixel
 
         read_nums = np.where( mask_2d[:,pixel_ff])
         second_read = read_nums[0][1]
         data_ramp = data_masked[:, pixel_ff] * mask_2d[:, pixel_ff]
         data_semi = data_ramp[ mask_2d[:, pixel_ff]] # picks only the 2
-        diff_data =  data_semi[1] - data_semi[0]
+        diff_data = data_semi[1] - data_semi[0]
 
         slope_s[ pixel_ff ] = diff_data
         intercept_s[ pixel_ff ] = data_semi[1]*(1.- second_read) + \
@@ -2455,8 +2498,8 @@ def calc_unwtd_fit(xvalues, nreads_1d, sumxx, sumx, sumxy, sumy):
 
     denominator = nreads_1d * sumxx - sumx**2
 
-     # In case this branch is ever used again, suppress, and then re-enable
-     #   harmless arithmetic warnings
+    # In case this branch is ever used again, suppress, and then re-enable
+    #   harmless arithmetic warnings
     warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
     warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
     slope = (nreads_1d * sumxy - sumx * sumy) / denominator
