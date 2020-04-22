@@ -111,7 +111,7 @@ def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray]) -> float:
 
     crpix = np.array(wcs.backward_transform(*fiducial))
     crpix_with_offsets = np.vstack((crpix, crpix + (1, 0), crpix + (0, 1))).T
-    crval_with_offsets = wcs(*crpix_with_offsets)
+    crval_with_offsets = wcs(*crpix_with_offsets, with_bounding_box=False)
 
     coords = SkyCoord(ra=crval_with_offsets[0], dec=crval_with_offsets[1], unit="deg")
     xscale = np.abs(coords[0].separation(coords[1]).value)
@@ -120,7 +120,7 @@ def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray]) -> float:
     return np.sqrt(xscale * yscale)
 
 
-def calc_rotation_matrix(angle, vparity=1):
+def calc_rotation_matrix(angle, v3i_yang, vparity=1):
     """ Calculate the rotation matrix.
 
     Parameters
@@ -148,10 +148,12 @@ def calc_rotation_matrix(angle, vparity=1):
        ----------------
 
     """
-    pc1_1 = vparity * np.cos(angle)
-    pc1_2 = np.sin(angle)
-    pc2_1 = vparity * -np.sin(angle)
-    pc2_2 = np.cos(angle)
+    rel_angle = angle - (vparity * v3i_yang)
+
+    pc1_1 = vparity * np.cos(rel_angle)
+    pc1_2 = np.sin(rel_angle)
+    pc2_1 = vparity * -np.sin(rel_angle)
+    pc2_2 = np.cos(rel_angle)
 
     return [pc1_1, pc1_2, pc2_1, pc2_2]
 
@@ -215,7 +217,11 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
         # Need to put the rotation matrix (List[float, float, float, float]) returned from calc_rotation_matrix into the
         # correct shape for constructing the transformation
         pc = np.reshape(
-            calc_rotation_matrix(np.deg2rad(refmodel.meta.wcsinfo.roll_ref), vparity=refmodel.meta.wcsinfo.vparity),
+            calc_rotation_matrix(
+                np.deg2rad(refmodel.meta.wcsinfo.roll_ref),
+                refmodel.meta.wcsinfo.v3yangle,
+                vparity=refmodel.meta.wcsinfo.vparity)
+            ,
             (2, 2)
         ).T
 
