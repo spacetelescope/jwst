@@ -123,7 +123,7 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
         number_slices = 1
     else:
         num_cores = psutil.cpu_count()
-        log.info("Found %d possible cores to use for ramp fitting " % num_cores)
+        log.debug("Found %d possible cores to use for ramp fitting " % num_cores)
         if max_cores == 'quarter':
             number_slices = num_cores // 4 or 1
         elif max_cores == 'half':
@@ -133,7 +133,7 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
         else:
             number_slices = 1
 
-    log.info("number of processes being used is %d" % number_slices)
+    log.debug("number of processes being used is %d" % number_slices)
 
     total_rows = input_model.data.shape[2]
     total_cols = input_model.data.shape[3]
@@ -178,11 +178,11 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
                                       input_model.meta.exposure.groupgap, input_model.meta.exposure.nframes,
                                       input_model.meta.exposure.drop_frames1, int_times))
 
-    log.info("Creating %d processes for ramp fitting " % number_slices)
+    log.debug("Creating %d processes for ramp fitting " % number_slices)
     #start up the processes for each slice
     real_results = pool.starmap(ols_ramp_fit, slices)
     k = 0
-    log.info("All processes complete")
+    log.debug("All processes complete")
     # Create new model for the primary output.
     imshape = (total_rows, total_cols)
     out_model = datamodels.ImageModel(data=np.zeros(imshape, dtype=np.float32),
@@ -1233,15 +1233,15 @@ def gls_ramp_fit(input_model, buffsize, save_opt,
     else:
         log_stats(slope_int[0])
 
-    log.info('Instrument: %s' % instrume)
+    log.debug('Instrument: %s' % instrume)
+    log.debug('Number of pixels in 2D array: %d' % npix)
+    log.debug('Shape of 2D image: (%d, %d)' % imshape)
+    log.debug('Shape of data cube: (%d, %d, %d)' % cubeshape)
+    log.debug('Buffer size (bytes): %d' % buffsize)
+    log.debug('Number of rows per slice: %d' % rows_per_slice)
     log.info('Number of groups per integration: %d' % nreads)
-    log.info('Number of pixels in 2D array: %d' % npix)
-    log.info('Shape of 2D image: (%d, %d)' % imshape)
-    log.info('Shape of data cube: (%d, %d, %d)' % cubeshape)
-    log.info('Buffer size (bytes): %d' % buffsize)
-    log.info('Number of rows per slice: %d' % rows_per_slice)
     log.info('Number of integrations: %d' % n_int)
-    log.info('The execution time in seconds: %f' % (tstop - tstart,))
+    log.debug('The execution time in seconds: %f' % (tstop - tstart,))
 
     # Create new model...
     if n_int > 1:
