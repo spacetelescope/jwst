@@ -260,7 +260,7 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None, engdb_url=None,
     model : `~jwst.datamodels.DataModel`
         The model to update.
 
-    default_pa_v3 : float
+    default_roll_ref : float
         If pointing information cannot be retrieved,
         use this as the V3 position angle.
 
@@ -315,7 +315,7 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None, engdb_url=None,
         )
 
 
-def update_wcs_from_fgs_guiding(model, default_pa_v3=0.0, default_vparity=1):
+def update_wcs_from_fgs_guiding(model, default_roll_ref=0.0, default_vparity=1, default_v3yangle=0.0):
     """ Update WCS pointing from header information
 
     For Fine Guidance guiding observations, nearly everything
@@ -343,14 +343,14 @@ def update_wcs_from_fgs_guiding(model, default_pa_v3=0.0, default_vparity=1):
 
     # Get position angle
     try:
-        pa = model.meta.wcsinfo.pa_v3
+        pa = model.meta.wcsinfo.roll_ref
     except AttributeError:
         logger.warning(
-            'Keyword `PA_V3` not found. Using {} as default value'.format(
-                default_pa_v3
+            'Keyword `ROLL_REF` not found. Using {} as default value'.format(
+                default_roll_ref
             )
         )
-        pa = default_pa_v3
+        pa = default_roll_ref
     pa_rad = pa * D2R
 
     # Get VIdlParity
@@ -364,10 +364,17 @@ def update_wcs_from_fgs_guiding(model, default_pa_v3=0.0, default_vparity=1):
         )
         vparity = default_vparity
 
+    try:
+        v3i_yang = model.meta.wcsinfo.v3yangle
+    except AttributeError:
+        logger.warning(f'Keyword "V3I_YANG" not found. Using {default_v3yangle} as default value.')
+
+        v3i_yang = default_v3yangle
+
     (model.meta.wcsinfo.pc1_1,
      model.meta.wcsinfo.pc1_2,
      model.meta.wcsinfo.pc2_1,
-     model.meta.wcsinfo.pc2_2) = calc_rotation_matrix(pa_rad, vparity=vparity)
+     model.meta.wcsinfo.pc2_2) = calc_rotation_matrix(pa_rad, v3i_yang, vparity=vparity)
 
 
 def update_wcs_from_telem(
