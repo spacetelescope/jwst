@@ -244,7 +244,7 @@ def update_mt_kwds(model):
     return model
 
 
-def update_wcs(model, default_pa_v3=0., siaf_path=None, engdb_url=None,
+def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, engdb_url=None,
                tolerance=60, allow_default=False,
                reduce_func=None, **transform_kwargs):
     """Update WCS pointing information
@@ -263,6 +263,10 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None, engdb_url=None,
     default_roll_ref : float
         If pointing information cannot be retrieved,
         use this as the V3 position angle.
+
+    default_roll_ref : float
+        If pointing information cannot be retrieved,
+        use this as the roll ref angle.
 
     siaf_path : str
         The path to the SIAF file, i.e. ``XML_DATA`` env variable.
@@ -305,7 +309,7 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None, engdb_url=None,
 
     if exp_type in FGS_GUIDE_EXP_TYPES:
         update_wcs_from_fgs_guiding(
-            model, default_pa_v3=default_pa_v3
+            model, default_roll_ref=default_roll_ref
         )
     else:
         update_wcs_from_telem(
