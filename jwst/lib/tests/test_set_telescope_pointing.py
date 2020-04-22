@@ -243,10 +243,10 @@ def test_add_wcs_default(data_file):
     assert model.meta.wcsinfo.cunit2 == 'deg'
     assert np.isclose(model.meta.wcsinfo.cdelt1, 3.0555555e-5)
     assert np.isclose(model.meta.wcsinfo.cdelt2, 3.0555555e-5)
-    assert np.isclose(model.meta.wcsinfo.pc1_1, -1.0)
-    assert np.isclose(model.meta.wcsinfo.pc1_2, 0.0)
-    assert np.isclose(model.meta.wcsinfo.pc2_1, 0.0)
-    assert np.isclose(model.meta.wcsinfo.pc2_2, 1.0)
+    assert np.isclose(model.meta.wcsinfo.pc1_1, 0.3999853149883513)
+    assert np.isclose(model.meta.wcsinfo.pc1_2, -0.9165215479156338)
+    assert np.isclose(model.meta.wcsinfo.pc2_1, -0.9165215479156338)
+    assert np.isclose(model.meta.wcsinfo.pc2_2, -0.3999853149883513)
     assert model.meta.wcsinfo.v2_ref == 200.0
     assert model.meta.wcsinfo.v3_ref == -350.0
     assert model.meta.wcsinfo.vparity == -1
@@ -305,10 +305,10 @@ def test_add_wcs_fsmcorr_v1(data_file):
     assert model.meta.wcsinfo.cunit2 == 'deg'
     assert np.isclose(model.meta.wcsinfo.cdelt1, 3.0555555e-5)
     assert np.isclose(model.meta.wcsinfo.cdelt2, 3.0555555e-5)
-    assert np.isclose(model.meta.wcsinfo.pc1_1, -1.0)
-    assert np.isclose(model.meta.wcsinfo.pc1_2, 0.0)
-    assert np.isclose(model.meta.wcsinfo.pc2_1, 0.0)
-    assert np.isclose(model.meta.wcsinfo.pc2_2, 1.0)
+    assert np.isclose(model.meta.wcsinfo.pc1_1, 0.3999853149883513)
+    assert np.isclose(model.meta.wcsinfo.pc1_2, -0.9165215479156338)
+    assert np.isclose(model.meta.wcsinfo.pc2_1, -0.9165215479156338)
+    assert np.isclose(model.meta.wcsinfo.pc2_2, -0.3999853149883513)
     assert model.meta.wcsinfo.v2_ref == 200.0
     assert model.meta.wcsinfo.v3_ref == -350.0
     assert model.meta.wcsinfo.vparity == -1
@@ -349,10 +349,10 @@ def test_add_wcs_with_db(eng_db_ngas, data_file, siaf_file=siaf_db):
     assert model.meta.wcsinfo.cunit2 == 'deg'
     assert np.isclose(model.meta.wcsinfo.cdelt1, 3.0555555e-5)
     assert np.isclose(model.meta.wcsinfo.cdelt2, 3.0555555e-5)
-    assert np.isclose(model.meta.wcsinfo.pc1_1, 0.0385309)
-    assert np.isclose(model.meta.wcsinfo.pc1_2, 0.9992574)
-    assert np.isclose(model.meta.wcsinfo.pc2_1, 0.9992574)
-    assert np.isclose(model.meta.wcsinfo.pc2_2, -0.0385309)
+    assert np.isclose(model.meta.wcsinfo.pc1_1, -0.9312527700727293)
+    assert np.isclose(model.meta.wcsinfo.pc1_2, -0.3643738166112768)
+    assert np.isclose(model.meta.wcsinfo.pc2_1, -0.3643738166112768)
+    assert np.isclose(model.meta.wcsinfo.pc2_2, 0.9312527700727293)
     assert model.meta.wcsinfo.v2_ref == 200.0
     assert model.meta.wcsinfo.v3_ref == -350.0
     assert model.meta.wcsinfo.vparity == -1
@@ -393,10 +393,10 @@ def test_add_wcs_with_db_fsmcorr_v1(eng_db_ngas, data_file):
     assert model.meta.wcsinfo.cunit2 == 'deg'
     assert np.isclose(model.meta.wcsinfo.cdelt1, 3.0555555e-5)
     assert np.isclose(model.meta.wcsinfo.cdelt2, 3.0555555e-5)
-    assert np.isclose(model.meta.wcsinfo.pc1_1, 0.0385309)
-    assert np.isclose(model.meta.wcsinfo.pc1_2, 0.9992574)
-    assert np.isclose(model.meta.wcsinfo.pc2_1, 0.9992574)
-    assert np.isclose(model.meta.wcsinfo.pc2_2, -0.0385309)
+    assert np.isclose(model.meta.wcsinfo.pc1_1, -0.9312527700727293)
+    assert np.isclose(model.meta.wcsinfo.pc1_2, -0.3643738166112768)
+    assert np.isclose(model.meta.wcsinfo.pc2_1, -0.3643738166112768)
+    assert np.isclose(model.meta.wcsinfo.pc2_2, 0.9312527700727293)
     assert model.meta.wcsinfo.v2_ref == 200.0
     assert model.meta.wcsinfo.v3_ref == -350.0
     assert model.meta.wcsinfo.vparity == -1

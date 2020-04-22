@@ -347,7 +347,7 @@ def update_wcs_from_fgs_guiding(model, default_roll_ref=0.0, default_vparity=1, 
 
     # Get position angle
     try:
-        pa = model.meta.wcsinfo.roll_ref
+        pa = model.meta.wcsinfo.roll_ref if model.meta.wcsinfo.roll_ref is not None else default_roll_ref
     except AttributeError:
         logger.warning(
             'Keyword `ROLL_REF` not found. Using {} as default value'.format(
@@ -355,6 +355,7 @@ def update_wcs_from_fgs_guiding(model, default_roll_ref=0.0, default_vparity=1, 
             )
         )
         pa = default_roll_ref
+
     pa_rad = pa * D2R
 
     # Get VIdlParity
@@ -491,7 +492,7 @@ def update_wcs_from_telem(
          model.meta.wcsinfo.pc1_2,
          model.meta.wcsinfo.pc2_1,
          model.meta.wcsinfo.pc2_2) = calc_rotation_matrix(
-             wcsinfo.pa * D2R, vparity=siaf.vparity
+             wcsinfo.pa * D2R, model.meta.wcsinfo.v3yangle, vparity=siaf.vparity
          )
 
     # Calculate S_REGION with the footprint
