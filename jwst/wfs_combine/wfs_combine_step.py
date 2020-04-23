@@ -47,7 +47,7 @@ class WfsCombineStep(Step):
             # Do the processing
             output_model = wfs.do_all()
 
-            # Update necessary meta info in the ouput
+            # Update necessary meta info in the output
             output_model.meta.cal_step.wfs_combine = 'COMPLETE'
             output_model.meta.asn.pool_name = asn_table['asn_pool']
             output_model.meta.asn.table_name = op.basename(input_table)
