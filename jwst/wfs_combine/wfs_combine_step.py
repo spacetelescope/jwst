@@ -29,7 +29,7 @@ class WfsCombineStep(Step):
         # Process each pair of input images listed in the association table
         for which_set in asn_table['products']:
 
-            # Get the list science members in this pair
+            # Get the list of science members in this pair
             science_members = [
                 member
                 for member in which_set['members']
