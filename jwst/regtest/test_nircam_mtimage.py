@@ -22,13 +22,18 @@ def test_nircam_image_moving_target(rtdata, fitsdiff_default_kwargs):
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
+@pytest.mark.parametrize("input_file",
+                         [
+                             'jw00634_nrcblong_mttest_tnotinrange_uncal.fits',
+                             'jw00634_nrcblong_no_mtt_uncal.fits',
+                             'jw00634_nrcblong_mttest_uncal.fits',
+                         ])
 @pytest.mark.bigdata
-def test_nircam_image_moving_target_kwds_oot(rtdata, fitsdiff_default_kwargs):
-    """Test that if the requested time does not overlap the times in the moving
-       target table the input data are not altered."""
+def test_nircam_image_moving_target_kwds(input_file, rtdata, fitsdiff_default_kwargs):
+    """Tests for moving target table nkeyword additions"""
 
-    # Get the input level-1b file
-    rtdata.get_data("nircam/image/jw00634_nrcblong_mttest_tnotinrange_uncal.fits")
+    # Get the input file
+    rtdata.get_data(f"nircam/image/{input_file}")
 
     # The add_mt_kwds function overwrites its input, so output = input
     rtdata.output = rtdata.input
@@ -38,54 +43,8 @@ def test_nircam_image_moving_target_kwds_oot(rtdata, fitsdiff_default_kwargs):
         # since the model is updated in place we need to write out the update
         model.write(rtdata.input)
 
-    rtdata.get_truth("truth/test_nircam_mtimage/jw00634_nrcblong_mttest_tnotinrange_uncal.fits")
+    rtdata.get_truth(f"truth/test_nircam_mtimage/{input_file}")
 
     # Compare the results and the truth
-    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
-    assert diff.identical, diff.report()
-
-
-@pytest.mark.bigdata
-def test_nircam_no_moving_target_table_kwds(rtdata, fitsdiff_default_kwargs):
-    """Test that if the input data does not have a moving target table the
-       input data are returned without the MT_RA & MT_DEC kwywords."""
-
-    # Get the input level-1b file
-    rtdata.get_data("nircam/image/jw00634_nrcblong_no_mtt_uncal.fits")
-
-    # The add_mt_kwds function overwrites its input, so output = input
-    rtdata.output = rtdata.input
-
-    with datamodels.open(rtdata.output) as model:
-        update_mt_kwds(model)
-        # since the model is updated in place we need to write out the update
-        model.write(rtdata.input)
-
-    rtdata.get_truth("truth/test_nircam_mtimage/jw00634_nrcblong_no_mtt_uncal.fits")
-
-    # Compare the results and the truth
-    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
-    assert diff.identical, diff.report()
-
-@pytest.mark.bigdata
-def test_nircam_moving_target_table_kwds(rtdata, fitsdiff_default_kwargs):
-    """Test that if the input data does not have a moving target table the
-       input data are returned without the MT_RA & MT_DEC kwywords."""
-
-    # Get the input level-1b file
-    rtdata.get_data("nircam/image/jw00634_nrcblong_mttest_uncal.fits")
-
-    # The add_mt_kwds function overwrites its input, so output = input
-    rtdata.output = rtdata.input
-
-    with datamodels.open(rtdata.input) as model:
-        update_mt_kwds(model)
-        # since the model is updated in place we need to write out the update
-        model.write(rtdata.input)
-
-    rtdata.get_truth("truth/test_nircam_mtimage/jw00634_nrcblong_mttest_uncal.fits")
-
-    # Compare the results and the truth
-    fitsdiff_default_kwargs['ignore_keywords'].append('HISTORY')
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()

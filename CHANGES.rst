@@ -122,6 +122,11 @@ resample_spec
 
 - Enable model metadata blending [#4765]
 
+  set_telescope_pointing
+----------------------
+
+- Update to add moving target coords to the header [#4760]
+
 source_catalog
 --------------
 

@@ -196,8 +196,9 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
         **transform_kwargs
     )
 
-    if model.meta.target.type.lower() == 'moving':
-        update_mt_kwds(model)
+    if model.meta.target.type:
+        if model.meta.target.type.lower() == 'moving':
+            update_mt_kwds(model)
 
     model.meta.model_type = None
 
