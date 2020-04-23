@@ -72,7 +72,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             Turn memmap of FITS file on or off.  (default: False).  Ignored for
             ASDF files.
 
-        pass_invalid_values : bool or None 
+        pass_invalid_values : bool or None
             If `True`, values that do not validate the schema
             will be added to the metadata. If `False`, they will be set to `None`.
             If `None`, value will be taken from the environmental PASS_INVALID_VALUES.
