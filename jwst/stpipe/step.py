@@ -152,7 +152,7 @@ class Step():
             as member variables on the returned `Step` instance.
         """
         from . import cmdline
-  
+
         return cmdline.step_from_cmdline(args)
 
     @classmethod
