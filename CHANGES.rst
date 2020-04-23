@@ -161,6 +161,11 @@ tweakreg
 
 - Updated step arguments in the documentation. [#4723]
 
+wfs_combine
+-----------
+
+- Update the value of the ASNTABLE keyword in the output ``wfscmb`` product. [#4849]
+
 0.15.1 (2020-03-10)
 ===================
 
