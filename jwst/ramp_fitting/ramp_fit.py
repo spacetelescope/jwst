@@ -20,7 +20,6 @@ from multiprocessing.pool import Pool as Pool
 import psutil
 
 import warnings
-from astropy.io import fits
 from .. import datamodels
 from ..datamodels import dqflags
 from ..lib import pipe_utils
@@ -102,8 +101,8 @@ def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
                                                    gain_model, frames_per_group)
 
         new_model, int_model, opt_model = \
-               ols_ramp_fit(model, buffsize, save_opt, readnoise_model,
-               gain_model, weighting)
+               ols_ramp_fit_multi(model, buffsize, save_opt, readnoise_2d,
+               gain_2d, weighting, max_cores)
         gls_opt_model = None
 
     # Update data units in output models
