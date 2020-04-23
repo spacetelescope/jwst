@@ -15,6 +15,9 @@ are defined in the frame of world coordinates (e.g. RA, DEC, lambda).
 If any of background polynomial coefficients are a nan then the step is skipped and
 S_MRSMAT is set to SKIPPED.
 
+Any sources in the scene are identified via sigma clipping and removed from the
+matching region.
+
 Assumptions
 -----------
 Because the fitted polynomials are defined in terms of world coordinates, and because
