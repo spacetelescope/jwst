@@ -637,7 +637,7 @@ def create_mod_arrays(ngroups, nints, nrows, ncols, deltatime, gain, readnoise):
     RampMod.meta.exposure.group_time = deltatime
     RampMod.meta.exposure.nframes = 1
     RampMod.meta.exposure.groupgap = 0
-    RampMod.meta.exposure.drop_frames1 = 0 #added for multi-proc
+    RampMod.meta.exposure.drop_frames1 = 0 
 
     # Create and populate gain model
     GMod = GainModel(data=gain)

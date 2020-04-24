@@ -32,6 +32,7 @@ def test_one_group_two_ints_fit_ols():
     slopes = ramp_fit(model1, 1024*30000., True, rnModel, gain, 'OLS', 'optimal', 'none')
     np.testing.assert_allclose(slopes[0].data[50, 50],11.0, 1e-6)
 
+@pytest.mark.skip(reason="Skip for Travis testing")
 def test_multiprocessing():
     nrows =100
     ncols =100
@@ -67,10 +68,8 @@ def test_multiprocessing():
     hdu1 = fits.HDUList(hdu)
     hdu1.writeto('diff_int.fits', overwrite=True)
     np.testing.assert_allclose(slopes.data, slopes_multi.data, rtol = 1e-5)
-#    hdu = fits.PrimaryHDU(model1.data)
-#    hdu1 = fits.HDUList(hdu)
-#    hdu1.writeto('testdata.fits',overwrite=True)
 
+pytest.mark.skip(reason="Skip for Travis testing")
 def test_multiprocessing2():
     nrows =100
     ncols =100
