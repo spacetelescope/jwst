@@ -15,8 +15,8 @@ log.setLevel(logging.DEBUG)
 __all__ = ["ResampleStep"]
 
 
-# Force use of all DQ flagged data except for DO_NOT_USE
-GOOD_BITS = '~DO_NOT_USE'
+# Force use of all DQ flagged data except for DO_NOT_USE and NON_SCIENCE
+GOOD_BITS = '~DO_NOT_USE+NON_SCIENCE'
 
 
 class ResampleStep(Step):

@@ -117,6 +117,9 @@ resample
   The parameter ``good_bits`` has been removed in favor of allowing all
   DQ flags except for ``DO_NOT_USE``
 
+- Updated to reject pixels with DQ flag NON_SCIENCE, in addition to
+  DO_NOT_USE. [#4851]
+
 resample_spec
 -------------
 
