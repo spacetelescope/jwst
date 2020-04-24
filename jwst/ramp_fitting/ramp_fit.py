@@ -185,54 +185,143 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
             number_slices = num_cores
         else:
             number_slices = 1
-
-    log.debug("number of processes being used is %d" % number_slices)
-
-    total_rows = input_model.data.shape[2]
-    total_cols = input_model.data.shape[3]
-    number_of_integrations = input_model.data.shape[0]
     if pipe_utils.is_tso(input_model) and hasattr(input_model, 'int_times'):
         int_times = input_model.int_times
     else:
         int_times = None
-    rows_per_slice = round(total_rows / number_slices)
-    pool = Pool(processes=number_slices)
-    slices = []
-    for i in range(number_slices - 1):
-        readnoise_slice = readnoise_2d[i * rows_per_slice: (i + 1) * rows_per_slice, :]
-        gain_slice = gain_2d[i * rows_per_slice: (i + 1) * rows_per_slice, :]
-        data_slice = input_model.data[:,:,i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
-        err_slice = input_model.err[:, :, i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
-        groupdq_slice = input_model.groupdq[:, :, i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
-        pixeldq_slice = input_model.pixeldq[ i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
+    total_rows = input_model.data.shape[2]
+    total_cols = input_model.data.shape[3]
+    number_of_integrations = input_model.data.shape[0]
+    if number_slices == 1:
+        max_segments, max_CRs = calc_num_seg(input_model.groupdq, number_of_integrations)
+        int_model, opt_model, out_model = create_output_models(input_model,
+                                            number_of_integrations, save_opt, total_cols, total_rows,
+                                                               max_segments, max_CRs)
 
-        slices.insert(i, (data_slice, err_slice, groupdq_slice, pixeldq_slice, buffsize, save_opt, readnoise_slice, gain_slice, weighting,
-                      input_model.meta.instrument.name, input_model.meta.exposure.frame_time,
-                      input_model.meta.exposure.ngroups, input_model.meta.exposure.group_time,
-                      input_model.meta.exposure.groupgap, input_model.meta.exposure.nframes,
-                      input_model.meta.exposure.drop_frames1, int_times))
+        out_model.data, out_model.dq, out_model.var_poisson, out_model.var_rnoise, out_model.err,\
+        int_data, int_dq, int_var_poisson, int_var_rnoise, int_err,\
+        dummy, opt_slope, opt_sigslope, opt_var_poisson, opt_var_rnoise, \
+        opt_yint, opt_sigyint, opt_pedestal, opt_weights, opt_crmag,\
+        actual_segments, actual_CRs = \
+        ols_ramp_fit(input_model.data, input_model.err, input_model.groupdq, input_model.pixeldq,
+                     buffsize, save_opt, readnoise_2d, gain_2d, weighting,
+                          input_model.meta.instrument.name, input_model.meta.exposure.frame_time,
+                          input_model.meta.exposure.ngroups, input_model.meta.exposure.group_time,
+                          input_model.meta.exposure.groupgap, input_model.meta.exposure.nframes,
+                          input_model.meta.exposure.drop_frames1, int_times)
+        if number_of_integrations > 1:
+            int_model.data = int_data
+            int_model.dq = int_dq
+            int_model.var_poisson = int_var_poisson
+            int_model.var_rnoise = int_var_rnoise
+        if save_opt:
+            opt_model.slope = opt_slope
+            opt_model.sigslope = opt_sigslope
+            opt_model.var_poisson = opt_var_poisson
+            opt_model.var_rnoise = opt_var_rnoise
+            opt_model.yint = opt_yint
+            opt_model.sigyint = opt_sigyint
+            opt_model.pedestal = opt_pedestal
+            opt_model.weights = opt_weights
+            opt_model.crmag = opt_crmag
+        return out_model, int_model, opt_model
+    else:
+        log.debug("number of processes being used is %d" % number_slices)
+        rows_per_slice = round(total_rows / number_slices)
+        pool = Pool(processes=number_slices)
+        slices = []
+        for i in range(number_slices - 1):
+            readnoise_slice = readnoise_2d[i * rows_per_slice: (i + 1) * rows_per_slice, :]
+            gain_slice = gain_2d[i * rows_per_slice: (i + 1) * rows_per_slice, :]
+            data_slice = input_model.data[:,:,i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
+            err_slice = input_model.err[:, :, i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
+            groupdq_slice = input_model.groupdq[:, :, i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
+            pixeldq_slice = input_model.pixeldq[ i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
 
-    # last slice gets the rest
-    readnoise_slice = readnoise_2d[(number_slices - 1) * rows_per_slice: total_rows, :]
-    gain_slice = gain_2d[(number_slices - 1) * rows_per_slice: total_rows, :]
-    data_slice = input_model.data[:, :, (number_slices - 1) * rows_per_slice: total_rows, :].copy()
-    err_slice = input_model.err[:, :, (number_slices - 1) * rows_per_slice: total_rows, :].copy()
-    groupdq_slice = input_model.groupdq[:, :, (number_slices - 1) * rows_per_slice: total_rows, :].copy()
-    pixeldq_slice = input_model.pixeldq[(number_slices - 1) * rows_per_slice: total_rows, :].copy()
-    slices.insert(number_slices - 1, (data_slice, err_slice, groupdq_slice, pixeldq_slice, buffsize, save_opt, readnoise_slice, gain_slice, weighting,
-                                      input_model.meta.instrument.name, input_model.meta.exposure.frame_time,
-                                      input_model.meta.exposure.ngroups, input_model.meta.exposure.group_time,
-                                      input_model.meta.exposure.groupgap, input_model.meta.exposure.nframes,
-                                      input_model.meta.exposure.drop_frames1, int_times))
+            slices.insert(i, (data_slice, err_slice, groupdq_slice, pixeldq_slice, buffsize, save_opt, readnoise_slice, gain_slice, weighting,
+                          input_model.meta.instrument.name, input_model.meta.exposure.frame_time,
+                          input_model.meta.exposure.ngroups, input_model.meta.exposure.group_time,
+                          input_model.meta.exposure.groupgap, input_model.meta.exposure.nframes,
+                          input_model.meta.exposure.drop_frames1, int_times))
 
-    log.debug("Creating %d processes for ramp fitting " % number_slices)
-    #start up the processes for each slice
-    real_results = pool.starmap(ols_ramp_fit, slices)
-    pool.close()
-    pool.join()
-    k = 0
-    log.debug("All processes complete")
-    # Create new model for the primary output.
+        # last slice gets the rest
+        readnoise_slice = readnoise_2d[(number_slices - 1) * rows_per_slice: total_rows, :]
+        gain_slice = gain_2d[(number_slices - 1) * rows_per_slice: total_rows, :]
+        data_slice = input_model.data[:, :, (number_slices - 1) * rows_per_slice: total_rows, :].copy()
+        err_slice = input_model.err[:, :, (number_slices - 1) * rows_per_slice: total_rows, :].copy()
+        groupdq_slice = input_model.groupdq[:, :, (number_slices - 1) * rows_per_slice: total_rows, :].copy()
+        pixeldq_slice = input_model.pixeldq[(number_slices - 1) * rows_per_slice: total_rows, :].copy()
+        slices.insert(number_slices - 1, (data_slice, err_slice, groupdq_slice, pixeldq_slice, buffsize, save_opt, readnoise_slice, gain_slice, weighting,
+                                          input_model.meta.instrument.name, input_model.meta.exposure.frame_time,
+                                          input_model.meta.exposure.ngroups, input_model.meta.exposure.group_time,
+                                          input_model.meta.exposure.groupgap, input_model.meta.exposure.nframes,
+                                          input_model.meta.exposure.drop_frames1, int_times))
+
+        log.debug("Creating %d processes for ramp fitting " % number_slices)
+        #start up the processes for each slice
+        real_results = pool.starmap(ols_ramp_fit, slices)
+        pool.close()
+        pool.join()
+        k = 0
+        log.debug("All processes complete")
+        # Create new model for the primary output.
+        actual_segments = real_results[0][20]
+        actual_CRs = real_results[0][21]
+        int_model, opt_model, out_model = create_output_models(input_model,
+                            number_of_integrations, save_opt, total_cols, total_rows,
+                                                               actual_segments, actual_CRs)
+        # iterate over the number of slices and place the results into the output models
+        for resultslice in real_results:
+            if len(real_results) == k + 1:  # last result
+                out_model.data[k * rows_per_slice: total_rows, :] = resultslice[0]
+                out_model.dq[k * rows_per_slice:total_rows, :] = resultslice[1]
+                out_model.var_poisson[k * rows_per_slice:total_rows, :] = resultslice[2]
+                out_model.var_rnoise[k * rows_per_slice:total_rows, :] = resultslice[3]
+                out_model.err[k * rows_per_slice:total_rows, :] = resultslice[4]
+                if resultslice[5] is not None: #Integration results exist
+                    int_model.data[: , k * rows_per_slice:total_rows, :] = resultslice[5]
+                    int_model.dq[:, k * rows_per_slice:total_rows, :] = resultslice[6]
+                    int_model.var_poisson[:, k * rows_per_slice:total_rows, :] = resultslice[7]
+                    int_model.var_rnoise[:, k * rows_per_slice:total_rows, :] = resultslice[8]
+                    int_model.err[:, k * rows_per_slice:total_rows, :] = resultslice[9]
+                if resultslice[11] is not None: #Optional results exist
+                    opt_model.slope[:, :, k * rows_per_slice:total_rows, :] = resultslice[11]
+                    opt_model.sigslope[:, :, k * rows_per_slice:total_rows, :] = resultslice[12]
+                    opt_model.var_poisson[:,:, k * rows_per_slice:total_rows, :] = resultslice[13]
+                    opt_model.var_rnoise[:, :, k * rows_per_slice:total_rows, :] = resultslice[14]
+                    opt_model.yint[:, :, k * rows_per_slice:total_rows, :] = resultslice[15]
+                    opt_model.sigyint[:, :, k * rows_per_slice:total_rows, :] = resultslice[16]
+                    opt_model.pedestal[:, k * rows_per_slice:total_rows, :] = resultslice[17]
+                    opt_model.weights[:, :, k * rows_per_slice:total_rows, :] = resultslice[18]
+                    opt_model.crmag[:, :, k * rows_per_slice:total_rows, :] = resultslice[19]
+            else: #all but last slice
+                out_model.data[k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[0]
+                out_model.dq[k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[1]
+                out_model.var_poisson[ k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[2]
+                out_model.var_rnoise[ k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[3]
+                out_model.err[k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[4]
+                if resultslice[5] is not None: #Multiple integration results exist
+                    int_model.data[:, k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[5]
+                    int_model.dq[:, k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[6]
+                    int_model.var_poisson[:, k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[7]
+                    int_model.var_rnoise[:, k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[8]
+                    int_model.err[:, k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[9]
+                if resultslice[11] is not None: #Optional Results exist
+                    opt_model.slope[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[11]
+                    opt_model.sigslope[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[12]
+                    opt_model.var_poisson[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[13]
+                    opt_model.var_rnoise[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[14]
+                    opt_model.yint[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[15]
+                    opt_model.sigyint[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[16]
+                    opt_model.pedestal[:, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[17]
+                    opt_model.weights[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[18]
+                    opt_model.crmag[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[19]
+            k = k + 1
+        return out_model, int_model, opt_model
+
+
+def create_output_models(input_model, number_of_integrations, save_opt, total_cols, total_rows,
+                         actual_segments, actual_CRs):
     imshape = (total_rows, total_cols)
     out_model = datamodels.ImageModel(data=np.zeros(imshape, dtype=np.float32),
                                       dq=np.zeros(imshape, dtype=np.uint32),
@@ -241,12 +330,11 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
                                       err=np.zeros(imshape, dtype=np.float32))
     # ... and add all keys from input
     out_model.update(input_model)
-
-    #create per integrations model, if this is a multi-integration exposure
+    # create per integrations model, if this is a multi-integration exposure
     if number_of_integrations > 1:
         int_model = datamodels.CubeModel(
             data=np.zeros((number_of_integrations,) + imshape, dtype=np.float32),
-            dq=np.zeros((number_of_integrations,) +imshape, dtype=np.uint32),
+            dq=np.zeros((number_of_integrations,) + imshape, dtype=np.uint32),
             var_poisson=np.zeros((number_of_integrations,) + imshape, dtype=np.float32),
             var_rnoise=np.zeros((number_of_integrations,) + imshape, dtype=np.float32),
             err=np.zeros((number_of_integrations,) + imshape, dtype=np.float32))
@@ -254,76 +342,27 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
         int_model.update(input_model)  # ... and add all keys from input
     else:
         int_model = None
-
     # Create model for the optional output
     if save_opt:
-        actual_segments = real_results[0][20]
-        actual_CRs = real_results[0][21]
         opt_model = datamodels.RampFitOutputModel(
             slope=np.zeros((number_of_integrations,) + (actual_segments,) + imshape, dtype=np.float32),
-            yint = np.zeros((number_of_integrations,) + (actual_segments,) + imshape, dtype=np.float32),
-            sigyint = np.zeros((number_of_integrations,) + (actual_segments,) + imshape, dtype=np.float32),
-            sigslope = np.zeros((number_of_integrations,) + (actual_segments,) + imshape, dtype=np.float32),
-            weights = np.zeros((number_of_integrations,) + (actual_segments,) + imshape, dtype=np.float32),
-            firstf_int = np.zeros(( number_of_integrations,) + imshape, dtype=np.float32),
-            pedestal = np.zeros(( number_of_integrations,) + imshape, dtype=np.float32),
-            crmag = np.zeros(( number_of_integrations,) + (actual_CRs,) + imshape, dtype=np.float32),
-            var_poisson = np.zeros(( number_of_integrations,) + (actual_segments,) + imshape, dtype=np.float32),
-            var_rnoise = np.zeros(( number_of_integrations,) + (actual_segments,) + imshape, dtype=np.float32),
+            yint=np.zeros((number_of_integrations,) + (actual_segments,) + imshape, dtype=np.float32),
+            sigyint=np.zeros((number_of_integrations,) + (actual_segments,) + imshape, dtype=np.float32),
+            sigslope=np.zeros((number_of_integrations,) + (actual_segments,) + imshape, dtype=np.float32),
+            weights=np.zeros((number_of_integrations,) + (actual_segments,) + imshape, dtype=np.float32),
+            firstf_int=np.zeros((number_of_integrations,) + imshape, dtype=np.float32),
+            pedestal=np.zeros((number_of_integrations,) + imshape, dtype=np.float32),
+            crmag=np.zeros((number_of_integrations,) + (actual_CRs,) + imshape, dtype=np.float32),
+            var_poisson=np.zeros((number_of_integrations,) + (actual_segments,) + imshape, dtype=np.float32),
+            var_rnoise=np.zeros((number_of_integrations,) + (actual_segments,) + imshape, dtype=np.float32),
         )
 
         opt_model.meta.filename = input_model.meta.filename
         opt_model.update(input_model)  # ... and add all keys from input
     else:
         opt_model = None
-    # iterate over the number of slices and place the results into the output models
-    for resultslice in real_results:
-        if len(real_results) == k + 1:  # last result
-            out_model.data[k * rows_per_slice: total_rows, :] = resultslice[0]
-            out_model.dq[k * rows_per_slice:total_rows, :] = resultslice[1]
-            out_model.var_poisson[k * rows_per_slice:total_rows, :] = resultslice[2]
-            out_model.var_rnoise[k * rows_per_slice:total_rows, :] = resultslice[3]
-            out_model.err[k * rows_per_slice:total_rows, :] = resultslice[4]
-            if resultslice[5] is not None: #Integration results exist
-                int_model.data[: , k * rows_per_slice:total_rows, :] = resultslice[5]
-                int_model.dq[:, k * rows_per_slice:total_rows, :] = resultslice[6]
-                int_model.var_poisson[:, k * rows_per_slice:total_rows, :] = resultslice[7]
-                int_model.var_rnoise[:, k * rows_per_slice:total_rows, :] = resultslice[8]
-                int_model.err[:, k * rows_per_slice:total_rows, :] = resultslice[9]
-            if resultslice[11] is not None: #Optional results exist
-                opt_model.slope[:, :, k * rows_per_slice:total_rows, :] = resultslice[11]
-                opt_model.sigslope[:, :, k * rows_per_slice:total_rows, :] = resultslice[12]
-                opt_model.var_poisson[:,:, k * rows_per_slice:total_rows, :] = resultslice[13]
-                opt_model.var_rnoise[:, :, k * rows_per_slice:total_rows, :] = resultslice[14]
-                opt_model.yint[:, :, k * rows_per_slice:total_rows, :] = resultslice[15]
-                opt_model.sigyint[:, :, k * rows_per_slice:total_rows, :] = resultslice[16]
-                opt_model.pedestal[:, k * rows_per_slice:total_rows, :] = resultslice[17]
-                opt_model.weights[:, :, k * rows_per_slice:total_rows, :] = resultslice[18]
-                opt_model.crmag[:, :, k * rows_per_slice:total_rows, :] = resultslice[19]
-        else: #all but last slice
-            out_model.data[k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[0]
-            out_model.dq[k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[1]
-            out_model.var_poisson[ k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[2]
-            out_model.var_rnoise[ k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[3]
-            out_model.err[k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[4]
-            if resultslice[5] is not None: #Multiple integration results exist
-                int_model.data[:, k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[5]
-                int_model.dq[:, k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[6]
-                int_model.var_poisson[:, k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[7]
-                int_model.var_rnoise[:, k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[8]
-                int_model.err[:, k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[9]
-            if resultslice[11] is not None: #Optional Results exist
-                opt_model.slope[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[11]
-                opt_model.sigslope[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[12]
-                opt_model.var_poisson[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[13]
-                opt_model.var_rnoise[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[14]
-                opt_model.yint[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[15]
-                opt_model.sigyint[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[16]
-                opt_model.pedestal[:, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[17]
-                opt_model.weights[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[18]
-                opt_model.crmag[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[19]
-        k = k + 1
-    return out_model, int_model, opt_model
+    return int_model, opt_model, out_model
+
 
 def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d, gain_2d,
                  weighting, instrume, frame_time,
