@@ -124,6 +124,8 @@ def detect_jumps (input_model, gain_model, readnoise_model,
         pool = multiprocessing.Pool(processes=numslices)
         #Starts each slice in it's own process. Starmap allows more than one parameter to be passed.
         real_result = pool.starmap(twopt.find_crs, slices)
+        pool.close()
+        pool.join()
         k = 0
         # Reconstruct gdq, the row_above_gdq, and the row_below_gdq from the slice result
         for resultslice in real_result:
