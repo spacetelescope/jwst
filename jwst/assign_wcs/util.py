@@ -12,7 +12,7 @@ from astropy.io import fits
 from astropy.modeling import models as astmodels
 from astropy.table import QTable
 from astropy.constants import c
-from typing import Union
+from typing import Union, List
 
 from gwcs import WCS
 from gwcs.wcstools import wcs_from_fiducial, grid_from_bounding_box
@@ -97,6 +97,7 @@ def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray]) -> float:
     ----------
     wcs :
         Reference WCS object from which to compute a scaling factor.
+
     fiducial :
         Input fiducial of (RA, DEC) used in calculating reference points.
 
@@ -111,7 +112,7 @@ def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray]) -> float:
 
     crpix = np.array(wcs.backward_transform(*fiducial))
     crpix_with_offsets = np.vstack((crpix, crpix + (1, 0), crpix + (0, 1))).T
-    crval_with_offsets = wcs(*crpix_with_offsets, with_bounding_box=False)
+    crval_with_offsets = wcs(*crpix_with_offsets)
 
     coords = SkyCoord(ra=crval_with_offsets[0], dec=crval_with_offsets[1], unit="deg")
     xscale = np.abs(coords[0].separation(coords[1]).value)
@@ -120,17 +121,19 @@ def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray]) -> float:
     return np.sqrt(xscale * yscale)
 
 
-def calc_rotation_matrix(angle, v3i_yang, vparity=1):
-    """ Calculate the rotation matrix.
+def calc_rotation_matrix(angle: float, v3i_yang: float, vparity: int = 1) -> List[float]:
+    """Calculate the rotation matrix.
 
     Parameters
     ----------
-    angle : float in radians
-        The angle to create the matrix.
+    angle :
+        The angle in radians to create the matrix.
+
+    v3i_yang :
+        The angle between ideal Y-axis and V3 in radians.
 
     vparity : int
-        The x-axis parity, usually taken from
-        the JWST SIAF parameter VIdlParity.
+        The x-axis parity, usually taken from the JWST SIAF parameter VIdlParity.
         Value should be "1" or "-1".
 
     Returns
@@ -148,6 +151,9 @@ def calc_rotation_matrix(angle, v3i_yang, vparity=1):
        ----------------
 
     """
+    if vparity not in (1, -1):
+        raise ValueError(f'vparity should be 1 or -1. Input was: {vparity}')
+
     rel_angle = angle - (vparity * v3i_yang)
 
     pc1_1 = vparity * np.cos(rel_angle)
@@ -205,7 +211,8 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
         if not isinstance(refmodel, DataModel):
             raise TypeError("Expected refmodel to be an instance of DataModel.")
 
-    fiducial = compute_fiducial(wcslist, bb)  # possibly retrieve from reference wcs
+    fiducial = compute_fiducial(wcslist, bb)
+    ref_fiducial = compute_fiducial([refmodel.meta.wcs])
 
     prj = astmodels.Pix2Sky_TAN()
 
@@ -219,9 +226,8 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
         pc = np.reshape(
             calc_rotation_matrix(
                 np.deg2rad(refmodel.meta.wcsinfo.roll_ref),
-                refmodel.meta.wcsinfo.v3yangle,
-                vparity=refmodel.meta.wcsinfo.vparity)
-            ,
+                np.deg2rad(refmodel.meta.wcsinfo.v3yangle),
+                vparity=refmodel.meta.wcsinfo.vparity),
             (2, 2)
         ).T
 
@@ -229,7 +235,7 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
         transform.append(rotation)
 
         if sky_axes:
-            scale = compute_scale(refmodel.meta.wcs, fiducial)
+            scale = compute_scale(refmodel.meta.wcs, ref_fiducial)
             transform.append(astmodels.Scale(scale) & astmodels.Scale(scale))
 
         if transform:
@@ -277,22 +283,21 @@ def compute_fiducial(wcslist, bounding_box=None):
     spectral_footprint = footprints[spectral_axes]
 
     fiducial = np.empty(len(axes_types))
-    if (spatial_footprint).any():
+    if spatial_footprint.any():
         lon, lat = spatial_footprint
         lon, lat = np.deg2rad(lon), np.deg2rad(lat)
         x_mean = np.mean(np.cos(lat) * np.cos(lon))
         y_mean = np.mean(np.cos(lat) * np.sin(lon))
         z_mean = np.mean(np.sin(lat))
         lon_fiducial = np.rad2deg(np.arctan2(y_mean, x_mean)) % 360.0
-        lat_fiducial = np.rad2deg(np.arctan2(z_mean, np.sqrt(x_mean ** 2 +
-            y_mean ** 2)))
+        lat_fiducial = np.rad2deg(np.arctan2(z_mean, np.sqrt(x_mean ** 2 + y_mean ** 2)))
         fiducial[spatial_axes] = lon_fiducial, lat_fiducial
-    if (spectral_footprint).any():
+    if spectral_footprint.any():
         fiducial[spectral_axes] = spectral_footprint.min()
     return fiducial
 
 
-def is_fits(input):
+def is_fits(input_img):
     """
     Returns
     --------
@@ -316,22 +321,22 @@ def is_fits(input):
     isfits = False
     fitstype = None
     names = ['fits', 'fit', 'FITS', 'FIT']
-    #determine if input is a fits file based on extension
+    # determine if input is a fits file based on extension
     # Only check type of FITS file if filename ends in valid FITS string
     f = None
     fileclose = False
-    if isinstance(input, fits.HDUList):
+    if isinstance(input_img, fits.HDUList):
         isfits = True
-        f = input
+        f = input_img
     else:
-        isfits = True in [input.endswith(l) for l in names]
+        isfits = True in [input_img.endswith(l) for l in names]
 
     # if input is a fits file determine what kind of fits it is
     # waiver fits len(shape) == 3
     if isfits:
         if not f:
             try:
-                f = fits.open(input, mode='readonly')
+                f = fits.open(input_img, mode='readonly')
                 fileclose = True
             except Exception:
                 if f is not None:
@@ -390,7 +395,7 @@ def subarray_transform(input_model):
         return subarray2full
 
 
-def not_implemented_mode(input_model, ref):
+def not_implemented_mode(input_model):
     """
     Return ``None`` if assign_wcs has not been implemented for a mode.
     """
@@ -421,7 +426,7 @@ def get_object_info(catalog_name=None):
     -----
 
     """
-    if isinstance(catalog_name, (str)):
+    if isinstance(catalog_name, str):
         if len(catalog_name) == 0:
             err_text = "Empty catalog filename"
             log.error(err_text)
@@ -563,7 +568,7 @@ def create_grism_bbox(input_model,
 
     # Get the disperser parameters which have the wave limits
     with WavelengthrangeModel(reference_files['wavelengthrange']) as f:
-        if ('WFSS' not in f.meta.exposure.type):
+        if 'WFSS' not in f.meta.exposure.type:
             err_text = "Wavelengthrange reference file not for WFSS"
             log.error(err_text)
             raise ValueError(err_text)
@@ -620,9 +625,9 @@ def create_grism_bbox(input_model,
                     # Make sure that we have the correct box corners tagged
                     # as the min and max extents for the grism, the dispersion
                     # direction changes with grism and detector
-                    if (xmax < xmin):
+                    if xmax < xmin:
                         xmin, xmax = xmax, xmin
-                    if (ymax < ymin):
+                    if ymax < ymin:
                         ymin, ymax = ymax, ymin
 
                     xmin = int(xmin)
@@ -796,7 +801,7 @@ def compute_footprint_spectral(model):
 
     Parameters
     ----------
-    output_model : `~jwst.datamodels.IFUImageModel`
+    model : `~jwst.datamodels.IFUImageModel`
         The output of assign_wcs.
     """
     swcs = model.meta.wcs
