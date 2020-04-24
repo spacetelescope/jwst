@@ -38,7 +38,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/core.schema"
 
     def __init__(self, init=None, schema=None, memmap=False,
-                 pass_invalid_values=False, strict_validation=False,
+                 pass_invalid_values=None, strict_validation=None,
                  ignore_missing_extensions=True, **kwargs):
         """
         Parameters
@@ -72,13 +72,17 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             Turn memmap of FITS file on or off.  (default: False).  Ignored for
             ASDF files.
 
-        pass_invalid_values : bool
+        pass_invalid_values : bool or None
             If `True`, values that do not validate the schema
             will be added to the metadata. If `False`, they will be set to `None`.
+            If `None`, value will be taken from the environmental PASS_INVALID_VALUES.
+            Otherwise the default value is `False`.
 
-        strict_validation : bool
+        strict_validation : bool or None
             If `True`, schema validation errors will generate
             an exception. If `False`, they will generate a warning.
+            If `None`, value will be taken from the environmental STRICT_VALIDATION.
+            Otherwise, the default value is `False`.
 
         ignore_missing_extensions : bool
             When `False`, raise warnings when a file is read that
@@ -89,12 +93,15 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             Additional arguments passed to lower level functions.
         """
 
-        # Override value of validation parameters
-        # if environment value set
-        self._pass_invalid_values = self.get_envar("PASS_INVALID_VALUES",
-                                                    pass_invalid_values)
-        self._strict_validation = self.get_envar("STRICT_VALIDATION",
-                                                 strict_validation)
+        # Override value of validation parameters if not explicitly set.
+        if not pass_invalid_values:
+            pass_invalid_values = self._get_envar_as_boolean("PASS_INVALID_VALUES",
+                                                            False)
+        self._pass_invalid_values = pass_invalid_values
+        if not strict_validation:
+            strict_validation = self._get_envar_as_boolean("STRICT_VALIDATION",
+                                                          False)
+        self._strict_validation = strict_validation
         self._ignore_missing_extensions = ignore_missing_extensions
 
         kwargs.update({'ignore_missing_extensions': ignore_missing_extensions})
@@ -306,14 +313,31 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             if fd is not None:
                 fd.close()
 
-    def get_envar(self, name, value):
+    def _get_envar_as_boolean(self, name, default=False):
+        """Interpret an environmental as a boolean flag
+
+        Truth is any numeric value that is not 0 or
+        any of the following case-insensitive strings:
+
+        ('true', 't', 'yes', 'y')
+
+        Parameters
+        ----------
+        name : str
+            The name of the environmental variable to retrieve
+
+        default : bool
+            If the value cannot be determined, use as the default.
+        """
+        truths = ('true', 't', 'yes', 'y')
         if name in os.environ:
             value = os.environ[name]
             try:
                 value = bool(int(value))
             except ValueError:
-                value = True
-        return value
+                return value.lower() in truths
+            return value
+        return default
 
     @staticmethod
     def clone(target, source, deepcopy=False, memo=None):
