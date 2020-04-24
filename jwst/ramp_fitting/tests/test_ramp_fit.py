@@ -69,7 +69,7 @@ def test_multiprocessing():
     hdu1.writeto('diff_int.fits', overwrite=True)
     np.testing.assert_allclose(slopes.data, slopes_multi.data, rtol = 1e-5)
 
-pytest.mark.skip(reason="Skip for Travis testing")
+@pytest.mark.skip(reason="Skip for Travis testing")
 def test_multiprocessing2():
     nrows =100
     ncols =100
