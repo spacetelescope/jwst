@@ -481,7 +481,7 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
             if rhi > cubeshape[1]:
                 rhi = cubeshape[1]
 
-            data_sect = np.float64(data[num_int,: , :, :])
+            data_sect = np.float32(data[num_int,: , :, :])
             #dt = np.dtype(data_sect)
             # Skip data section if it is all NaNs
             if  np.all(np.isnan( data_sect)):
@@ -1055,8 +1055,8 @@ def gls_ramp_fit(input_model, buffsize, save_opt,
 
     (group_time, frames_per_group, saturated_flag, jump_flag) = \
             utils.get_more_info(input_model)
-    slopes = np.zeros(imshape, dtype=np.float64)
-    sum_weight = np.zeros(imshape, dtype=np.float64)
+    slopes = np.zeros(imshape, dtype=np.float32)
+    sum_weight = np.zeros(imshape, dtype=np.float32)
 #    if n_int > 1:
         # `slopes` will be used for accumulating the sum of weighted slopes.
 
@@ -2833,7 +2833,7 @@ def calc_opt_sums(rn_sect, gain_sect, data_masked, mask_2d, xvalues, good_pix):
         rolled up indices of valid pixel values for all groups
     """
     c_mask_2d = mask_2d.copy() # copy the mask to prevent propagation
-    rn_sect = np.float64(rn_sect)
+    rn_sect = np.float32(rn_sect)
     # Return 'empty' sums if there is no more data to fit
     if (data_masked.size == 0):
         return np.array([]), np.array([]), np.array([]), np.array([]),\
@@ -2911,7 +2911,7 @@ def calc_opt_sums(rn_sect, gain_sect, data_masked, mask_2d, xvalues, good_pix):
 
     # Set optimal weights for each group of each pixel;
     #    for all pixels at once, loop over the groups
-    wt_h = np.zeros(data_masked.shape, dtype=np.float64)
+    wt_h = np.zeros(data_masked.shape, dtype=np.float32)
 
     for jj_rd in range(data_masked.shape[0]):
         wt_h[jj_rd, :] = \
