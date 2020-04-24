@@ -379,7 +379,7 @@ def update_wcs_from_fgs_guiding(model, default_roll_ref=0.0, default_vparity=1, 
     (model.meta.wcsinfo.pc1_1,
      model.meta.wcsinfo.pc1_2,
      model.meta.wcsinfo.pc2_1,
-     model.meta.wcsinfo.pc2_2) = calc_rotation_matrix(pa_rad, v3i_yang, vparity=vparity)
+     model.meta.wcsinfo.pc2_2) = calc_rotation_matrix(pa_rad, np.deg2rad(v3i_yang), vparity=vparity)
 
 
 def update_wcs_from_telem(
@@ -492,7 +492,7 @@ def update_wcs_from_telem(
          model.meta.wcsinfo.pc1_2,
          model.meta.wcsinfo.pc2_1,
          model.meta.wcsinfo.pc2_2) = calc_rotation_matrix(
-             wcsinfo.pa * D2R, model.meta.wcsinfo.v3yangle, vparity=siaf.vparity
+             wcsinfo.pa * D2R, np.deg2rad(model.meta.wcsinfo.v3yangle), vparity=siaf.vparity
          )
 
     # Calculate S_REGION with the footprint
