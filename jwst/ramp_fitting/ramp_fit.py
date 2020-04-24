@@ -68,8 +68,10 @@ def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
         'optimal' specifies that optimal weighting should be used;
          currently the only weighting supported.
 
-    do_multi : boolean
-        Flag to turn on multiprocessing
+    max_cores : string
+        Number of cores to use for multiprocessing. If set to 'none' (the default), then no multiprocessing will be done.
+        The other allowable values are 'quarter', 'half', and 'all'. This is the fraction of cores to use for multi-proc.
+        The total number of cores includes the SMT cores (Hyper Threading for Intel).
 
     Returns
     -------
@@ -118,6 +120,58 @@ def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
 
 def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
                  weighting, max_cores):
+    """
+       Setup the inputs to ols_ramp_fit with and without multiprocessing. The input inputs will be sliced into the
+       number of cores that are being used for multiprocessing. Because the data models cannot be pickeled, only
+       numpy arrays are passed and returned as parameters to ols_ramp_fit.
+
+       Parameters
+       ----------
+       input_model : data model
+           input data model, assumed to be of type RampModel
+
+       buffsize : int
+           size of data section (buffer) in bytes (not used)
+
+       save_opt : boolean
+          calculate optional fitting results
+
+       readnoise_model : instance of data Model
+           readnoise for all pixels
+
+       gain_model : instance of gain model
+           gain for all pixels
+
+       algorithm : string
+           'OLS' specifies that ordinary least squares should be used;
+           'GLS' specifies that generalized least squares should be used.
+
+       weighting : string
+           'optimal' specifies that optimal weighting should be used;
+            currently the only weighting supported.
+
+       max_cores : string
+           Number of cores to use for multiprocessing. If set to 'none' (the default), then no multiprocessing will be done.
+           The other allowable values are 'quarter', 'half', and 'all'. This is the fraction of cores to use for multi-proc.
+           The total number of cores includes the SMT cores (Hyper Threading for Intel).
+
+       Returns
+       -------
+       new_model : Data Model object
+           DM object containing a rate image averaged over all integrations in
+           the exposure
+
+       int_model : Data Model object or None
+           DM object containing rate images for each integration in the exposure
+
+       opt_model : RampFitOutputModel object or None
+           DM object containing optional OLS-specific ramp fitting data for the
+           exposure
+
+       gls_opt_model : GLS_RampFitModel object or None
+           Object containing optional GLS-specific ramp fitting data for the
+           exposure
+       """
     if max_cores is 'none':
         number_slices = 1
     else:
@@ -137,11 +191,6 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
     total_rows = input_model.data.shape[2]
     total_cols = input_model.data.shape[3]
     number_of_integrations = input_model.data.shape[0]
-    number_of_groups = input_model.data.shape[1]
-#    data = np.zeros_like(input_model.data)
-#    err = np.zeros_like(input_model.err)
-#    groupdq = np.zeros_like(input_model.groupdq)
-#    pixeldq = np.zeros_like(input_model.pixeldq)
     if pipe_utils.is_tso(input_model) and hasattr(input_model, 'int_times'):
         int_times = input_model.int_times
     else:
@@ -170,7 +219,6 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
     err_slice = input_model.err[:, :, (number_slices - 1) * rows_per_slice: total_rows, :].copy()
     groupdq_slice = input_model.groupdq[:, :, (number_slices - 1) * rows_per_slice: total_rows, :].copy()
     pixeldq_slice = input_model.pixeldq[(number_slices - 1) * rows_per_slice: total_rows, :].copy()
-    max_number_segments, max_CRs = calc_num_seg(input_model.groupdq, number_of_integrations)
     slices.insert(number_slices - 1, (data_slice, err_slice, groupdq_slice, pixeldq_slice, buffsize, save_opt, readnoise_slice, gain_slice, weighting,
                                       input_model.meta.instrument.name, input_model.meta.exposure.frame_time,
                                       input_model.meta.exposure.ngroups, input_model.meta.exposure.group_time,
@@ -180,6 +228,8 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
     log.debug("Creating %d processes for ramp fitting " % number_slices)
     #start up the processes for each slice
     real_results = pool.starmap(ols_ramp_fit, slices)
+    pool.close()
+    pool.join()
     k = 0
     log.debug("All processes complete")
     # Create new model for the primary output.
@@ -226,7 +276,7 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
         opt_model.update(input_model)  # ... and add all keys from input
     else:
         opt_model = None
-
+    # iterate over the number of slices and place the results into the output models
     for resultslice in real_results:
         if len(real_results) == k + 1:  # last result
             out_model.data[k * rows_per_slice: total_rows, :] = resultslice[0]
@@ -240,7 +290,6 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
                 int_model.var_poisson[:, k * rows_per_slice:total_rows, :] = resultslice[7]
                 int_model.var_rnoise[:, k * rows_per_slice:total_rows, :] = resultslice[8]
                 int_model.err[:, k * rows_per_slice:total_rows, :] = resultslice[9]
- #               int_model.int_times[:, k * rows_per_slice:total_rows, :] = None
             if resultslice[11] is not None: #Optional results exist
                 opt_model.slope[:, :, k * rows_per_slice:total_rows, :] = resultslice[11]
                 opt_model.sigslope[:, :, k * rows_per_slice:total_rows, :] = resultslice[12]
@@ -251,8 +300,7 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
                 opt_model.pedestal[:, k * rows_per_slice:total_rows, :] = resultslice[17]
                 opt_model.weights[:, :, k * rows_per_slice:total_rows, :] = resultslice[18]
                 opt_model.crmag[:, :, k * rows_per_slice:total_rows, :] = resultslice[19]
-
-        else:
+        else: #all but last slice
             out_model.data[k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[0]
             out_model.dq[k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[1]
             out_model.var_poisson[ k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[2]
@@ -264,7 +312,6 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
                 int_model.var_poisson[:, k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[7]
                 int_model.var_rnoise[:, k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[8]
                 int_model.err[:, k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[9]
- #               int_model.int_times[:, k * rows_per_slice: (k + 1) * rows_per_slice, :] = None
             if resultslice[11] is not None: #Optional Results exist
                 opt_model.slope[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[11]
                 opt_model.sigslope[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[12]
@@ -278,7 +325,6 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
         k = k + 1
     return out_model, int_model, opt_model
 
-
 def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d, gain_2d,
                  weighting, instrume, frame_time,
            ngroups, group_time, groupgap, nframes, dropframes1, int_times):
@@ -290,38 +336,49 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
 
     Parameters
     ----------
-    model : data model
-        input data model, assumed to be of type RampModel
-
-    buffsize : int
-        size of data section (buffer) in bytes
-
-    save_opt : boolean
-        calculate optional fitting results
-
-    readnoise_model : instance of data Model
-        readnoise for all pixels
-
-    gain_model : instance of gain model
-        gain for all pixels
-
-    weighting : string
-        'optimal' specifies that optimal weighting should be used; currently
-        the only weighting supported.
+    data :
+    err :
+    groupdq :
+    inpixeldq :
+    buffsize :
+    save_opt :
+    readnoise_2d :
+    gain_2d :
+    weighting:
+    instrume :
+    frame_time :
+    ngroups :
+    group_time :
+    groupgap :
+    nframes :
+    dropframes1 :
+    int_times :
 
     Returns
     -------
-    new_model : Data Model object
-        DM object containing a rate image averaged over all integrations in
-        the exposure
+    new_model.data :
+    new_model.dq :
+    new_model.var_poisson :
+    new_model.var_rnoise :
+    new_model.err :
+    int_data :
+    int_dq :
+    int_var_poisson :
+    int_var_rnoise :
+    int_err :
+    int_int_times :
+    opt_slope :
+    opt_sigslope :
+    opt_var_poisson :
+    opt_var_rnoise :
+    opt_yint :
+    opt_sigyint :
+    opt_pedestal :
+    opt_weights :
+    opt_crmag :
+    actual_segments :
+    actual_CRs :
 
-    int_model : Data Model object or None
-        DM object containing rate images for each integration in the exposure,
-        or None if there is only one integration in the exposure
-
-    opt_model : Data Model object or None
-        DM object containing optional OLS-specific ramp fitting data for the
-        exposure; this will be None if save_opt is False
     """
     tstart = time.time()
 
