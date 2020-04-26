@@ -7,7 +7,7 @@ ami
 - Reorganized step documentation [#4697]
 
 assign_wcs
----
+----------
 
 - Updated MIRI imaging distortion to use new filteroffset file format [#4776]
 
