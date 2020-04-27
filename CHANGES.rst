@@ -28,6 +28,9 @@ coron
 datamodels
 ----------
 
+- Update schemas to add moving_target_position and cheby tables to the level1b
+  schema [#4760]
+  
 - Deprecate ``DrizProductModel`` and ``MultiProductModel`` and replace with
   updated versions of ``ImageModel`` and ``SlitModel`` that include "CON" and
   "WHT" arrays for resampled data. [#4552]

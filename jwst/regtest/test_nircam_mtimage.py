@@ -27,7 +27,9 @@ def test_nircam_image_moving_target(rtdata, fitsdiff_default_kwargs):
                              'jw00634_nrcblong_mttest_tnotinrange_uncal.fits',
                              'jw00634_nrcblong_no_mtt_uncal.fits',
                              'jw00634_nrcblong_mttest_uncal.fits',
-                         ])
+                         ],
+                         ids=["midpt_not_in_mt_table_range", "no_mt_table", "with_mt_table"]
+                         )
 @pytest.mark.bigdata
 def test_nircam_image_moving_target_kwds(input_file, rtdata, fitsdiff_default_kwargs):
     """Tests for moving target table nkeyword additions"""
