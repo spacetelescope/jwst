@@ -238,11 +238,12 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
             groupdq_slice = input_model.groupdq[:, :, i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
             pixeldq_slice = input_model.pixeldq[ i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
 
-            slices.insert(i, (data_slice, err_slice, groupdq_slice, pixeldq_slice, buffsize, save_opt, readnoise_slice, gain_slice, weighting,
-                          input_model.meta.instrument.name, input_model.meta.exposure.frame_time,
-                          input_model.meta.exposure.ngroups, input_model.meta.exposure.group_time,
-                          input_model.meta.exposure.groupgap, input_model.meta.exposure.nframes,
-                          input_model.meta.exposure.drop_frames1, int_times))
+            slices.insert(i, (data_slice, err_slice, groupdq_slice, pixeldq_slice, buffsize, save_opt, readnoise_slice,
+                            gain_slice, weighting,
+                            input_model.meta.instrument.name, input_model.meta.exposure.frame_time,
+                            input_model.meta.exposure.ngroups, input_model.meta.exposure.group_time,
+                            input_model.meta.exposure.groupgap, input_model.meta.exposure.nframes,
+                            input_model.meta.exposure.drop_frames1, int_times))
 
         # last slice gets the rest
         readnoise_slice = readnoise_2d[(number_slices - 1) * rows_per_slice: total_rows, :]
@@ -251,7 +252,8 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
         err_slice = input_model.err[:, :, (number_slices - 1) * rows_per_slice: total_rows, :].copy()
         groupdq_slice = input_model.groupdq[:, :, (number_slices - 1) * rows_per_slice: total_rows, :].copy()
         pixeldq_slice = input_model.pixeldq[(number_slices - 1) * rows_per_slice: total_rows, :].copy()
-        slices.insert(number_slices - 1, (data_slice, err_slice, groupdq_slice, pixeldq_slice, buffsize, save_opt, readnoise_slice, gain_slice, weighting,
+        slices.insert(number_slices - 1, (data_slice, err_slice, groupdq_slice, pixeldq_slice, buffsize, save_opt,
+                                          readnoise_slice, gain_slice, weighting,
                                           input_model.meta.instrument.name, input_model.meta.exposure.frame_time,
                                           input_model.meta.exposure.ngroups, input_model.meta.exposure.group_time,
                                           input_model.meta.exposure.groupgap, input_model.meta.exposure.nframes,
@@ -414,7 +416,7 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
     save_opt : Boolean
             Whether to return the optional output model
     readnoise_2d : 2D float32
-        The read noise of each pixel 
+        The read noise of each pixel
     gain_2d : 2D float32
         The gain of each pixel
     weighting : string
@@ -479,7 +481,7 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
     opt_crmag : 4-D float32
         The magnitude of each CR in each integration
     actual_segments : int
-        The actual maximum number of segments in any integration 
+        The actual maximum number of segments in any integration
     actual_CRs : int
         The actual maximum number of CRs in any integration
     """
@@ -1259,16 +1261,11 @@ def gls_ramp_fit(input_model, buffsize, save_opt,
             # The pedestal is the extrapolation of the first group back to zero
             # time, for each integration.
             pedestal_int = np.zeros((n_int,) + imshape, dtype=np.float32)
-            # The first group, for calculating the pedestal.  (This only needs
-            # to be nrows high, but we don't have nrows yet.  xxx)
-            first_group = np.zeros(imshape, dtype=np.float32)
             # If there are no cosmic rays, set the last axis length to 1.
             shape_ampl = (n_int, imshape[0], imshape[1], max(1, max_num_cr))
             ampl_int = np.zeros(shape_ampl, dtype=np.float32)
             ampl_err_int = np.zeros(shape_ampl, dtype=np.float32)
 
-        # Used for flagging pixels with UNRELIABLE_SLOPE.
-        temp_dq = np.zeros(imshape, dtype=np.uint32)
 ##Loop over number of processes
         for i in range(number_slices - 1):
             readnoise_slice = readnoise_2d[i * rows_per_slice: (i + 1) * rows_per_slice, :]
@@ -1277,7 +1274,6 @@ def gls_ramp_fit(input_model, buffsize, save_opt,
             err_slice = input_model.err[:, :, i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
             groupdq_slice = input_model.groupdq[:, :, i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
             pixeldq_slice = pixeldq[ i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
-            first_group_slice = pixeldq[i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
             slices.insert(i, (frame_time, gain_slice, groupdq_slice, group_time,
                               jump_flag, max_num_cr, data_slice, err_slice, frames_per_group, pixeldq_slice,
                               readnoise_slice, saturated_flag, save_opt))
@@ -1360,7 +1356,6 @@ def gls_ramp_fit(input_model, buffsize, save_opt,
     final_pixeldq = dq_compress_final(dq_int, n_int)
 
     if n_int > 1:
-        effintim = 1.                   # slopes are already in DN/s
         int_model = utils.gls_output_integ(input_model, slope_int, slope_err_int, dq_int)
 
     else:
@@ -1468,7 +1463,6 @@ def gls_fit_all_integrations(frame_time, gain_2d, gdq_cube,
     number_rows = data_sect.shape[2]
     number_cols = data_sect.shape[3]
     imshape = (data_sect.shape[2], data_sect.shape[3])
-    cubeshape = data_sect.shape
     slope_int = np.zeros((number_ints, number_rows, number_cols), dtype=np.float32)
     slope_err_int = np.zeros((number_ints, number_rows, number_cols), dtype=np.float32)
     dq_int = np.zeros((number_ints, number_rows, number_cols), dtype=np.uint32)
@@ -1534,7 +1528,7 @@ def gls_fit_all_integrations(frame_time, gain_2d, gdq_cube,
             # Note:  save s_mask until after the call to utils.gls_pedestal.
         s_mask = (gdq_cube[0] == saturated_flag)
         if s_mask.any():
-           temp_dq[:, :][s_mask] = dqflags.pixel['UNRELIABLE_SLOPE']
+            temp_dq[:, :][s_mask] = dqflags.pixel['UNRELIABLE_SLOPE']
         slope_err_int[num_int, :, :] = np.sqrt(slope_var_sect)
 
             # We need to take a weighted average if (and only if) number_ints > 1.

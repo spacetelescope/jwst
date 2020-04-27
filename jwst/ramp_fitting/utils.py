@@ -765,46 +765,6 @@ def gls_output_integ( model, slope_int, slope_err_int, dq_int):
 
     return cubemod
 
-def gls_output_integ( model, slope_int, slope_err_int, dq_int):
-    """
-    For the GLS algorithm, construct the output integration-specific results.
-
-    Parameters
-    ----------
-    model : instance of Data Model
-        DM object for input
-
-    slope_int : float, 3D array
-        Data cube of weighted slopes for each integration
-
-    slope_err_int : float, 3D array
-        Data cube of slope errors for each integration
-
-    dq_int : int, 3D array
-        Data cube of DQ arrays for each integration
-
-    Returns
-    -------
-    cubemod : Data Model object
-
-    """
-    # Suppress harmless arithmetic warnings for now
-    warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
-    warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
-
-    cubemod = datamodels.CubeModel()
-    cubemod.data = slope_int
-    cubemod.err = slope_err_int
-    cubemod.dq = dq_int
-
-    # Reset the warnings filter to its original state
-    warnings.resetwarnings()
-
-    cubemod.update(model) # keys from input needed for photom step
-
-    return cubemod
-
-
 def gls_output_optional(model, intercept_int, intercept_err_int,
                         pedestal_int,
                         ampl_int, ampl_err_int):# pragma: no cover

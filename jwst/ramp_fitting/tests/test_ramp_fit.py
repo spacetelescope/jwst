@@ -38,7 +38,8 @@ def test_multiprocessing():
     ncols =100
     ngroups=25
     nints = 3
-    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups, gain=1, readnoise=10, nints=nints, nrows=nrows,
+    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups, gain=1, readnoise=10, nints=nints,
+                                                          nrows=nrows,
                                                           ncols = ncols)
     delta_plane1 = np.zeros((nrows,ncols),dtype=np.float64)
     delta_plane2 = np.zeros((nrows, ncols), dtype=np.float64)
@@ -55,9 +56,11 @@ def test_multiprocessing():
     hdu = fits.PrimaryHDU(model1.data)
     hdu1 = fits.HDUList(hdu)
     hdu1.writeto('model1.fits', overwrite=True)
-    slopes, int_model, opt_model, gls_opt_model = ramp_fit(model1, 1024 * 30000., False, rnModel, gain, 'GLS', 'optimal', 'none')
+    slopes, int_model, opt_model, gls_opt_model = ramp_fit(model1, 1024 * 30000., False, rnModel, gain, 'GLS',
+                                                           'optimal', 'none')
 
-    slopes_multi, int_model_multi, opt_model_multi, gls_opt_model_multi = ramp_fit(model1, 1024 * 30000., False, rnModel, gain, 'GLS', 'optimal', 'half')
+    slopes_multi, int_model_multi, opt_model_multi, gls_opt_model_multi = ramp_fit(model1,
+                                1024 * 30000., False, rnModel, gain, 'GLS', 'optimal', 'half')
     hdu = fits.PrimaryHDU(slopes.data)
     hdu1 = fits.HDUList(hdu)
     hdu1.writeto('out_reg.fits', overwrite=True)
@@ -75,7 +78,8 @@ def test_multiprocessing2():
     ncols =100
     ngroups=25
     nints = 1
-    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups, gain=1, readnoise=10, nints=nints, nrows=nrows,
+    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups, gain=1, readnoise=10, nints=nints,
+                                                          nrows=nrows,
                                                           ncols = ncols)
     delta_plane1 = np.zeros((nrows,ncols),dtype=np.float64)
     delta_plane2 = np.zeros((nrows, ncols), dtype=np.float64)
@@ -90,9 +94,11 @@ def test_multiprocessing2():
     hdu = fits.PrimaryHDU(model1.data)
     hdu1 = fits.HDUList(hdu)
     hdu1.writeto('model1.fits', overwrite=True)
-    slopes, int_model, opt_model, gls_opt_model = ramp_fit(model1, 1024 * 30000., True, rnModel, gain, 'GLS', 'optimal', 'none')
+    slopes, int_model, opt_model, gls_opt_model = ramp_fit(model1, 1024 * 30000., True, rnModel, gain, 'GLS',
+                                                           'optimal', 'none')
 
-    slopes_multi, int_model_multi, opt_model_multi, gls_opt_model_multi = ramp_fit(model1, 1024 * 30000., True, rnModel, gain, 'GLS', 'optimal', 'half')
+    slopes_multi, int_model_multi, opt_model_multi, gls_opt_model_multi = ramp_fit(model1,
+                                    1024 * 30000., True, rnModel, gain, 'GLS', 'optimal', 'half')
     hdu = fits.PrimaryHDU(slopes.data)
     hdu1 = fits.HDUList(hdu)
     hdu1.writeto('out_reg.fits', overwrite=True)
@@ -155,7 +161,8 @@ class TestMethods:
         inreadnoise =7
         ngroups=5
         model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
-                                                              gain=ingain, readnoise=inreadnoise,deltatime=grouptime, nints=2)
+                                                              gain=ingain, readnoise=inreadnoise,deltatime=grouptime,
+                                                              nints=2)
         model1.data[0, 0, 50, 50] = 10.0
         model1.data[0, 1, 50, 50] = 15.0
         model1.data[0, 2, 50, 50] = 25.0
@@ -486,7 +493,8 @@ class TestMethods:
         model1.data[0, 8, 50, 50] = 168.0
         model1.data[0, 9, 50, 50] = 180.0
         model1.groupdq[0,5,50,50]=dqflags.group['JUMP_DET']
-        slopes, int_model, opt_model, gls_opt_model= ramp_fit(model1, 1024*30000.,  True, rnModel, gain, 'OLS', 'optimal', 'none')
+        slopes, int_model, opt_model, gls_opt_model= ramp_fit(model1, 1024*30000.,  True, rnModel, gain, 'OLS',
+                                                              'optimal', 'none')
         avg_slope = (opt_model.slope[0,0,50,50] + opt_model.slope[0,1,50,50])/2.0
             #even with noiser second segment, final slope should be just the average since they have the same number of groups
         np.testing.assert_allclose(slopes.data[50, 50], avg_slope,rtol=1e-5)
