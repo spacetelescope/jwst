@@ -1243,6 +1243,8 @@ def gls_ramp_fit(input_model, buffsize, save_opt,
 
     log.debug("Creating %d processes for ramp fitting " % number_slices)
     real_results = pool.starmap(gls_fit_all_integrations, slices)
+    pool.close()
+    pool.join()
     k = 0
     log.debug("All processes complete")
 
