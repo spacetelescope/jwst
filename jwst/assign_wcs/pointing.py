@@ -222,11 +222,15 @@ def create_fitswcs(inp, input_frame=None):
     if isinstance(inp, DataModel):
         wcsinfo = wcsinfo_from_model(inp)
         wavetable = None
+        print(gwutils.get_axes(wcsinfo))
         spatial_axes, spectral_axes, unknown = gwutils.get_axes(wcsinfo)
-        sp_axis = spectral_axes[0]
-        if wcsinfo['CTYPE'][sp_axis] == 'WAVE-TAB':
-            wavetable = inp.wavetable
-        transform = fitswcs_transform_from_model(wcsinfo, wavetable)
+        if spectral_axes:
+            sp_axis = spectral_axes[0]
+            if wcsinfo['CTYPE'][sp_axis] == 'WAVE-TAB':
+                wavetable = inp.wavetable
+        else:
+            wavetable = None
+        transform = fitswcs_transform_from_model(wcsinfo, wavetable=wavetable)
         output_frame = frame_from_model(wcsinfo)
     #elif isinstance(inp, str):
         #transform = create_fitswcs_transform(inp)
