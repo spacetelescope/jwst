@@ -2,7 +2,7 @@
 """
 import numpy as np
 import logging
-
+import time
 from .. import datamodels
 from ..assign_wcs import nirspec
 from gwcs import wcstools
@@ -111,9 +111,9 @@ class CubeBlot():
            for every pixel in a valid slice on the detector.
         2. Using WCS of input  image convert the ra and dec of input model
            to then tangent plane values: xi,eta.
-        3. Loop over every input model and using the inverse (backwards) transfor
+        3. Loop over every input model and using the inverse (backwards) transform
            convert the median sky cube values ra, dec, lambda to the blotted
-           x, y detector value (x_cibe, y_cube).
+           x, y detector value (x_cube, y_cube).
 
         4. For each input model loop over the blotted x,y values and find
             The x, y detector values that fall within the roi region. We loop
@@ -196,11 +196,17 @@ class CubeBlot():
 
                 nslices = 30
                 log.info('Looping over 30 slices on NIRSPEC detector, this takes a little while')
+                t0 = time.time()
                 for ii in range(nslices):
                     # for each slice pull out the blotted values that actually fall on the slice region
                     # used the bounding box of each slice to determine the slice limits
                     slice_wcs = nirspec.nrs_wcs_set_input(model, ii)
+                    print('size of median cube inverting back',self.cube_ra.size)
+                    ta = time.time()
                     x_slice, y_slice = slice_wcs.invert(self.cube_ra, self.cube_dec, self.cube_wave)
+                    tb = time.time()
+                    log.info("Time to invert median cube to slice = %.1f s" % (tb-ta,))
+                    
                     x_slice = np.ndarray.flatten(x_slice)
                     y_slice = np.ndarray.flatten(y_slice)
                     flux_slice = np.ndarray.flatten(self.cube_flux)
@@ -208,9 +214,13 @@ class CubeBlot():
 
                     xuse = np.logical_and(x_slice >= xlimit[0], x_slice <= xlimit[1])
                     yuse = np.logical_and(y_slice >= ylimit[0], y_slice <= ylimit[1])
+
+                    print('for slice x y range',ii+1,xlimit[0],xlimit[1],ylimit[0],ylimit[1])
+
                     fuse = np.logical_and(xuse, yuse)
                     x_slice = x_slice[fuse]
                     y_slice = y_slice[fuse]
+                    
                     # For now keeping these print statements in case we need to revise
                     # how blotting is done for NIRSPEC. It is very slow. After the NIRSPEC team
                     # confirms the blotting routine is working these can be take out.
@@ -219,7 +229,7 @@ class CubeBlot():
                     # print('min max of xslice', np.amin(x_slice), np.amax(x_slice))
                     # print('min max of yslice', np.amin(y_slice), np.amax(y_slice))
                     flux_slice = flux_slice[fuse]
-                    # print('number for slice', flux_slice.size)
+                    print('number for slice', flux_slice.size)
                     if ii == 0:
                         x_cube = x_slice
                         y_cube = y_slice
@@ -228,7 +238,9 @@ class CubeBlot():
                         x_cube = np.concatenate((x_cube, x_slice), axis=0)
                         y_cube = np.concatenate((y_cube, y_slice), axis=0)
                         flux_cube = np.concatenate((flux_cube, flux_slice), axis=0)
-
+                        print('cube pixels on detector',flux_cube.size)
+                t1 = time.time()
+                log.info("Time to invert all slices = %.1f s" % (t1-t0,))
             log.info('Blotting back to %s', model.meta.filename)
             # ______________________________________________________________________________
             # For every detector pixel find the overlapping median cube spaxels.
@@ -254,6 +266,7 @@ class CubeBlot():
         # to xcenter ycenter is quicker than looping over detector x,y and
         # finding overlap with large array for x_cube, y_cube
 
+        print('in blot overlap quick')
         blot_flux = np.zeros(model.shape, dtype=np.float32)
         blot_weight = np.zeros(model.shape, dtype=np.float32)
         blot_ysize, blot_xsize = blot_flux.shape
@@ -266,7 +279,8 @@ class CubeBlot():
         # TODO need to move this value (roi_det)  to reference file  or at least in spec ?
         roi_det = 1.0  # Just large enough that we don't get holes
         ivalid = np.nonzero(np.absolute(flux_cube))
-        # for ipt in range(num):
+        
+        t0 = time.time()
         for ipt in ivalid[0]:
             # if(flux_cube[ipt] > 0):
             # search xcenter and ycenter seperately. These arrays are smallsh.
@@ -281,10 +295,15 @@ class CubeBlot():
             if len(index_x[0]) > 0 and len(index_y[0]) > 0:
                 d1pix = np.array(x_cube[ipt] - xcenter[index_x])
                 d2pix = np.array(y_cube[ipt] - ycenter[index_y])
+
+                dxy = [ (dx*dx + dy*dy)  for dy in d2pix for dx in d1pix]
+                print('new dxy',dxy)
                 dxy=[]
                 for dy in d2pix:
                     for dx in d1pix:
                         dxy.append((dx * dx) + (dy * dy))
+                
+                print('old dxy',dxy)
                 dxy = np.sqrt(dxy)
                 weight_distance = np.exp(-dxy)
                 weighted_flux = weight_distance * flux_cube[ipt]
@@ -292,6 +311,8 @@ class CubeBlot():
                 blot_flux[index2d] = blot_flux[index2d] + weighted_flux
                 blot_weight[index2d] = blot_weight[index2d] + weight_distance
 
+        t1 = time.time()
+        log.info("Time to blot median image to input model = %.1f s" % (t1-t0,))
         # done mapping blotted x,y (x_cube, y_cube) to detector
         igood = np.where(blot_weight > 0)
         blot_flux[igood] = blot_flux[igood] / blot_weight[igood]
