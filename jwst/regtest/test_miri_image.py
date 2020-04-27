@@ -6,6 +6,7 @@ from gwcs.wcstools import grid_from_bounding_box
 from jwst.stpipe import Step
 from jwst import datamodels
 
+
 @pytest.fixture(scope="module")
 def run_detector1(rtdata_module):
     """Run detector1 pipeline on MIRI imaging data."""
@@ -61,6 +62,7 @@ def run_image3(run_image2, rtdata_module):
     """Get the level3 assocation json file (though not its members) and run
     image3 pipeline on all _cal files listed in association"""
     rtdata = rtdata_module
+    rtdata.get_data("miri/image/jwst_miri_abvega_offset_0001.asdf")
     rtdata.get_data("miri/image/det_dithered_5stars_image3_asn.json")
     args = ["config/calwebb_image3.cfg", rtdata.input,
         # Set some unique param values needed for these data
@@ -68,6 +70,7 @@ def run_image3(run_image2, rtdata_module):
         "--steps.tweakreg.use2dhist=False",
         "--steps.tweakreg.minobj=4",
         "--steps.source_catalog.snr_threshold=20",
+        "--steps.source_catalog.override_abvega_offset=jwst_miri_abvega_offset_0001.asdf",
         ]
     Step.from_cmdline(args)
 
