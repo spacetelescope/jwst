@@ -17,7 +17,7 @@ log.setLevel(logging.DEBUG)
 
 
 def make_output_wcs(input_models):
-    """ Generate output WCS here based on footprint of all input WCS objects
+    """ Generate output WCS here based on footprints of all input WCS objects
     Parameters
     ----------
     wcslist : list of gwcs.WCS objects
@@ -157,7 +157,6 @@ def reproject(wcs1, wcs2):
         flat_sky = []
         for axis in sky:
             flat_sky.append(axis.flatten())
-
         # Filter out RuntimeWarnings due to computed NaNs in the WCS
         warnings.simplefilter("ignore")
         det = backward_transform(*tuple(flat_sky))
