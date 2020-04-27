@@ -122,7 +122,8 @@ def test_one_group_two_ints_fit_gls():
 # tests that apply to both 'ols' and 'gls' are in the TestMethods class so
 # that both can use the parameterized 'method'
 
-@pytest.mark.parametrize("method", ['OLS', 'GLS'])
+#@pytest.mark.parametrize("method", ['OLS', 'GLS']) don't do GLS to see if it causes hang
+@pytest.mark.parametrize("method", ['OLS'])
 class TestMethods:
 
     def test_nocrs_noflux(self, method):
