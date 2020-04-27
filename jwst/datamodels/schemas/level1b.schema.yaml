@@ -7,6 +7,8 @@ allOf:
 - $ref: bunit.schema
 - $ref: photometry.schema
 - $ref: wcsinfo.schema
+- $ref: moving_target.schema
+- $ref: cheby.schema
 - type: object
   properties:
     data:
