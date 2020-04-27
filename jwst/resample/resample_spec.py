@@ -127,7 +127,7 @@ class ResampleSpecData:
             # configurations as the first input model.
 
             # Steps to do this for first input model:
-            # 1. find the center of slit in wavelength
+            # 1. find the middle of the spectrum in wavelength
             # 2. Pull out the ra and dec at the center of the slit.
             # 3. Find the mean ra,dec and the center of the slit this will
             #    represent the tangent point
@@ -141,7 +141,7 @@ class ResampleSpecData:
 
                 lam_center_index = int((bb[spectral_axis][1] -
                                             bb[spectral_axis][0]) / 2)
-                if not spatial_axis:
+                if spatial_axis == 0:
                     ra_center = ra[lam_center_index,:]
                     dec_center = dec[lam_center_index,:]
                 else:
@@ -162,7 +162,7 @@ class ResampleSpecData:
                 warnings.resetwarnings()
 
                 # pull out data from center
-                if not spectral_axis:
+                if spectral_axis == 0:
                     x_tan_array = x_tan.T[lam_center_index]
                     y_tan_array = y_tan.T[lam_center_index]
                 else:
@@ -211,6 +211,9 @@ class ResampleSpecData:
         all_wave = np.sort(all_wave,axis=None)
         # Tabular interpolation model, pixels -> lambda
         wavelength_array = np.unique(all_wave)
+        # Check if the data is MIRI LRS FIXED Slit. If it is then
+        # the wavelength array needs to be flipped so that the resampled
+        # dispersion direction matches the disperion direction on the detector. 
         if self.input_models[0].meta.exposure.type == 'MIR_LRS-FIXEDSLIT' :
             wavelength_array = np.flip(wavelength_array,axis=None)
 

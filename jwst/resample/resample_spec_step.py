@@ -79,7 +79,7 @@ class ResampleSpecStep(ResampleStep):
         result = datamodels.MultiSlitModel()
 
         result.update(input_models[0], only="PRIMARY")
-        #result.update(input_models[0], only="SCI")
+        result.update(input_models[0], only="SCI")
         for container in containers.values():
             resamp = resample_spec.ResampleSpecData(container, **self.drizpars)
             drizzled_models = resamp.do_drizzle()
