@@ -1206,14 +1206,7 @@ def gls_ramp_fit(input_model, buffsize, save_opt,
     log.info("number of processes being used is %d" % number_slices)
 
     total_rows = input_model.data.shape[2]
-#    total_cols = input_model.data.shape[3]
-#    number_of_integrations = input_model.data.shape[0]
-#   number_of_groups = input_model.data.shape[1]
 
-    if pipe_utils.is_tso(input_model) and hasattr(input_model, 'int_times'):
-        int_times = input_model.int_times
-    else:
-        int_times = None
     tstart = time.time()
 
     # Determine the maximum number of cosmic ray hits for any pixel.
