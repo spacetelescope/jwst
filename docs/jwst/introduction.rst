@@ -501,11 +501,12 @@ Calibrated image                               cal
 Calibrated per integration images              calints
 CR-flagged image                               crf
 CR-flagged per integration images              crfints
-1D extracted spectrum                          x1d
-1D extracted spectra per integration           x1dints
 Resampled 2D image                             i2d
 Resampled 2D spectrum                          s2d
 Resampled 3D IFU cube                          s3d
+1D extracted spectrum                          x1d
+1D extracted spectra per integration           x1dints
+1D combined spectrum                           c1d
 Source catalog                                 cat
 Time Series photometric catalog                phot
 Time Series white-light catalog                whtlt

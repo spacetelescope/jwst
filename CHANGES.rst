@@ -56,6 +56,10 @@ extract_1d
 - Remove pixel-by-pixel calls to wcs; copy input keywords to output for
   more types of input data. [#4685]
 
+- Updated to create a single ``x1d`` product per source for WFSS data, containing
+  all extracted spectra for a given source, instead of multiple ``x1d`` files per
+  source. [#4846]
+
 extract_2d
 ----------
 
@@ -97,6 +101,8 @@ pipeline
 
 - Fix issue with files left open at end of ``calwebb_spec2`` [#4775]
 
+- Update ``calwebb_spec3`` to use suffix ``c1d`` for ``combine_1d`` products.
+  [#4846]
 
 resample
 --------
@@ -110,6 +116,9 @@ resample
 - Change outlier and resample DQ bit usage.  [#4726]
   The parameter ``good_bits`` has been removed in favor of allowing all
   DQ flags except for ``DO_NOT_USE``
+
+- Updated to reject pixels with DQ flag NON_SCIENCE, in addition to
+  DO_NOT_USE. [#4851]
 
 resample_spec
 -------------
@@ -150,6 +159,8 @@ stpipe
 
 - Use only a single member of an association for CRDS STEPPARS checking [#4684]
 
+- Fix handling of the boolean-like environmental variables PASS_INVALID_VALUES and STRICT_VALIDATION [#4842]
+
 strun
 -----
 
@@ -159,6 +170,11 @@ tweakreg
 --------
 
 - Updated step arguments in the documentation. [#4723]
+
+wfs_combine
+-----------
+
+- Update the value of the ASNTABLE keyword in the output ``wfscmb`` product. [#4849]
 
 0.15.1 (2020-03-10)
 ===================

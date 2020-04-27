@@ -80,7 +80,7 @@ class Spec3Pipeline(Pipeline):
         self.cube_build.save_results = self.save_results
         self.extract_1d.suffix = 'x1d'
         self.extract_1d.save_results = self.save_results
-        self.combine_1d.suffix = 'x1d'
+        self.combine_1d.suffix = 'c1d'
         self.combine_1d.save_results = self.save_results
 
         # Retrieve the inputs:

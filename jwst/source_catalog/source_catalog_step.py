@@ -1,9 +1,18 @@
-#!/usr/bin/env python
+"""
+Module for the source catalog step.
+"""
 
 import os
-from ..stpipe import Step
-from . import source_catalog
+import warnings
+
+from crds.core.exceptions import CrdsLookupError
+
+from .source_catalog import (ReferenceData, Background, make_kernel,
+                             make_segment_img, calc_total_error,
+                             SourceCatalog)
 from .. import datamodels
+from ..stpipe import Step
+
 __all__ = ["SourceCatalogStep"]
 
 
@@ -14,50 +23,85 @@ class SourceCatalogStep(Step):
     Parameters
     -----------
     input : str or `ImageModel`
-        A FITS filename or a `ImageModel` of a single drizzled
-        image.  The input image is assumed to be background subtracted.
+        A FITS filename or an `ImageModel` of a drizzled image.
     """
 
     spec = """
+        bkg_boxsize = float(default=100)      # background mesh box size in pixels
         kernel_fwhm = float(default=2.0)      # Gaussian kernel FWHM in pixels
-        kernel_xsize = float(default=5)       # Kernel x size in pixels
-        kernel_ysize = float(default=5)       # Kernel y size in pixels
+        kernel_xsize = float(default=None)    # Kernel x size in pixels
+        kernel_ysize = float(default=None)    # Kernel y size in pixels
         snr_threshold = float(default=3.0)    # SNR threshold above the bkg
         npixels = float(default=5.0)          # min number of pixels in source
         deblend = boolean(default=False)      # deblend sources?
-        output_ext = string(default='.ecsv')  # Default type of output
+        aperture_ee1 = float(default=30)      # aperture encircled energy 1
+        aperture_ee2 = float(default=50)      # aperture encircled energy 2
+        aperture_ee3 = float(default=70)      # aperture encircled energy 3
         suffix = string(default='cat')        # Default suffix for output files
     """
 
-    def process(self, input):
-        kernel_fwhm = self.kernel_fwhm
-        kernel_xsize = self.kernel_xsize
-        kernel_ysize = self.kernel_ysize
-        snr_threshold = self.snr_threshold
-        npixels = self.npixels
-        deblend = self.deblend
+    reference_file_types = ['apcorr', 'abvega_offset']
 
-        with datamodels.open(input)  as model:
-            catalog = source_catalog.make_source_catalog(
-                model, kernel_fwhm, kernel_xsize, kernel_ysize, snr_threshold,
-                npixels, deblend=deblend)
+    def process(self, input_model):
+        if self.kernel_xsize is not None or self.kernel_ysize is not None:
+            warnings.simplefilter('default')
+            warnings.warn('kernel_xsize and kernel_ysize are deprecated and '
+                          'no longer used', DeprecationWarning)
 
-            if catalog is None:
-                self.log.info('No sources were found.  Source catalog will '
-                              'not be written.')
+        with datamodels.open(input_model) as model:
+            try:
+                apcorr_fn = self.get_reference_file(input_model, 'apcorr')
+            except CrdsLookupError:
+                apcorr_fn = None
+            self.log.info(f'Using apcorr reference file {apcorr_fn}')
+
+            try:
+                abvega_offset_fn = self.get_reference_file(
+                    input_model, 'abvega_offset')
+            except CrdsLookupError:
+                abvega_offset_fn = None
+            self.log.info('Using abvega_offset reference file ' +
+                          f'{abvega_offset_fn}')
+
+            aperture_ee = (self.aperture_ee1, self.aperture_ee2,
+                           self.aperture_ee3)
+            refdata = ReferenceData(model, aperture_ee=aperture_ee,
+                                    apcorr_filename=apcorr_fn,
+                                    abvega_offset_filename=abvega_offset_fn)
+
+            coverage_mask = (model.wht == 0)
+            bkg = Background(model.data, box_size=self.bkg_boxsize,
+                             mask=coverage_mask)
+            model.data -= bkg.background
+
+            threshold = self.snr_threshold * bkg.background_rms
+            kernel = make_kernel(self.kernel_fwhm)
+            segment_img = make_segment_img(model.data, threshold,
+                                           npixels=self.npixels,
+                                           kernel=kernel,
+                                           mask=coverage_mask,
+                                           deblend=self.deblend)
+            if segment_img is None:
+                self.log.info('No sources were found. Source catalog will '
+                              'not be created.')
                 return
+            self.log.info(f'Detected {segment_img.nlabels} sources')
 
-            self.log.info('Detected {0} sources'.format(len(catalog)))
+            # TODO: update when model contains errors
+            total_error = calc_total_error(model)
+
+            catobj = SourceCatalog(model, segment_img, error=total_error,
+                                   kernel=kernel,
+                                   kernel_fwhm=self.kernel_fwhm,
+                                   aperture_params=refdata.aperture_params,
+                                   abvega_offset=refdata.abvega_offset)
+            catalog = catobj.catalog
 
             if self.save_results:
-                cat_filepath = self.make_output_path()
-                catalog.write(
-                    cat_filepath, format='ascii.ecsv', overwrite=True
-                )
-                self.log.info('Wrote source catalog: {0}'
-                              .format(cat_filepath))
-                model.meta.source_catalog = os.path.basename(
-                    cat_filepath)
+                cat_filepath = self.make_output_path(ext='.ecsv')
+                catalog.write(cat_filepath, format='ascii.ecsv',
+                              overwrite=True)
+                model.meta.source_catalog = os.path.basename(cat_filepath)
+                self.log.info(f'Wrote source catalog: {cat_filepath}')
 
-        # nothing is returned because this is the last step
-        return
+        return catalog
