@@ -172,7 +172,7 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
            Object containing optional GLS-specific ramp fitting data for the
            exposure
        """
-    if max_cores is 'none':
+    if max_cores == 'none':
         number_slices = 1
     else:
         num_cores = psutil.cpu_count()
