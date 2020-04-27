@@ -17,7 +17,7 @@ import time
 import logging
 import numpy as np
 from multiprocessing.pool import Pool as Pool
-import psutil
+import multiprocessing
 
 import warnings
 from .. import datamodels
@@ -175,7 +175,7 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
     if max_cores == 'none':
         number_slices = 1
     else:
-        num_cores = psutil.cpu_count()
+        num_cores = multiprocessing.cpu_count()
         log.debug("Found %d possible cores to use for ramp fitting " % num_cores)
         if max_cores == 'quarter':
             number_slices = num_cores // 4 or 1
@@ -319,9 +319,37 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
             k = k + 1
         return out_model, int_model, opt_model
 
-
 def create_output_models(input_model, number_of_integrations, save_opt, total_cols, total_rows,
                          actual_segments, actual_CRs):
+    """
+    Create_output_models is used to make blank output models to hold the results from the OLS
+    ramp fitting.
+
+    Parameters
+       ----------
+    input_model : DataModel
+        The input ramp model
+    number_of_integrations : int
+        The number of integration in the input model
+    save_opt : Boolean
+        Whether to save the optional outputs
+    total_cols : int
+        The number of columns in the input image
+    total_rows : int
+        The number of rows in the input image
+    actual_segments : int
+        The largest number of segments in the integration resulting from cosmic rays
+    actual_CRs : int
+        The largest number of cosmic rays jumps found in any integration
+    Returns
+    ------------
+    int_model : DataModel
+        The per integration output model
+    opt_model : DataModel
+        The optional output model
+    out_model : RampFitOutputModel
+        The standard rate output model
+    """
     imshape = (total_rows, total_cols)
     out_model = datamodels.ImageModel(data=np.zeros(imshape, dtype=np.float32),
                                       dq=np.zeros(imshape, dtype=np.uint32),
@@ -367,6 +395,7 @@ def create_output_models(input_model, number_of_integrations, save_opt, total_co
 def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d, gain_2d,
                  weighting, instrume, frame_time,
            ngroups, group_time, groupgap, nframes, dropframes1, int_times):
+
     """
     Fit a ramp using ordinary least squares. Calculate the count rate for each
     pixel in all data cube sections and all integrations, equal to the weighted
@@ -375,49 +404,84 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
 
     Parameters
     ----------
-    data :
-    err :
-    groupdq :
-    inpixeldq :
-    buffsize :
-    save_opt :
-    readnoise_2d :
-    gain_2d :
-    weighting:
-    instrume :
-    frame_time :
-    ngroups :
-    group_time :
-    groupgap :
-    nframes :
+    data : The input 4-D array with ramp data (num_integrations, num_groups, num_rows, num_cols)
+        The input ramp data
+    err : The input 4-D error that matches the ramp data
+    groupdq : The input 4-D group DQ flags
+    inpixeldq : The input 2-D pixel DQ flags
+    buffsize : int
+        The working buffer size
+    save_opt : Boolean
+            Whether to return the optional output model
+    readnoise_2d : 2D float32
+        The read noise of each pixel 
+    gain_2d : 2D float32
+        The gain of each pixel
+    weighting : string
+        'optimal' is the only valid value
+    instrume : string
+        Instrument name
+    frame_time : float32
+        The time to read one frame.
+    ngroups : int
+        The number of groups in each integration
+    group_time : float32
+        The time to read one group.
+    groupgap : int
+        The number of frames that are not included in the group average
+    nframes : int
+        The number of frames that are included in the group average
     dropframes1 :
-    int_times :
+        The number of frames dropped at the beginning of every integration
+    int_times : None
+        Not used
 
     Returns
     -------
-    new_model.data :
-    new_model.dq :
-    new_model.var_poisson :
-    new_model.var_rnoise :
-    new_model.err :
-    int_data :
-    int_dq :
-    int_var_poisson :
-    int_var_rnoise :
-    int_err :
-    int_int_times :
-    opt_slope :
-    opt_sigslope :
-    opt_var_poisson :
-    opt_var_rnoise :
-    opt_yint :
-    opt_sigyint :
-    opt_pedestal :
-    opt_weights :
-    opt_crmag :
-    actual_segments :
-    actual_CRs :
-
+    new_model.data : 2-D float32
+        The output final rate of each pixel
+    new_model.dq : 2-D DQflag
+        The output pixel dq for each pixel
+    new_model.var_poisson : 2-D float32
+        The variance in each pixel due to Poisson noise
+    new_model.var_rnoise : 2-D float32
+        The variance in each piel due to read noise
+    new_model.err : 2-D float32
+        The output total variance for each pixel
+    int_data : 3-D float32
+        The rate for each pixel in each integration
+    int_dq : 3-D float32
+        The pixel dq flag for each integration
+    int_var_poisson : 3-D float32
+        The variance of the rate for each integration due to Poisson noise
+    int_var_rnoise : 3-D float32
+        The variance of the rate for each integration due to read noise
+    int_err : 3-D float32
+        The total variance of the rate for each integration
+    int_int_times : 3-D
+        The total time for each integration
+    opt_slope : 4-D float32
+        The rate of each segment in each integration
+    opt_sigslope : 4-D float32
+        The total variance of the rate for each pixel in each segment of each integration
+    opt_var_poisson : 4-D float32
+        The Poisson variance of the rate for each pixel in each segment of each integration
+    opt_var_rnoise : 4-D float32
+        The read noise variance of the rate for each pixel in each segment of each integration
+    opt_yint : 4-D float32
+        The y-intercept for each pixel in each segment of each integration
+    opt_sigyint : 4-D float32
+        The variance for each pixel in each segment of each integration
+    opt_pedestal : 4-D float32
+        The zero point for each pixel in each segment of each integration
+    opt_weights : 4-D float32
+        The weight of each pixel to use in combining the segments
+    opt_crmag : 4-D float32
+        The magnitude of each CR in each integration
+    actual_segments : int
+        The actual maximum number of segments in any integration 
+    actual_CRs : int
+        The actual maximum number of CRs in any integration
     """
     tstart = time.time()
 
@@ -1111,10 +1175,10 @@ def gls_ramp_fit(input_model, buffsize, save_opt,
         Object containing optional GLS-specific ramp fitting data for the
         exposure; this will be None if save_opt is False.
     """
-    if max_cores is 'none':
+    if max_cores == 'none':
         number_slices = 1
     else:
-        num_cores = psutil.cpu_count()
+        num_cores = multiprocessing.cpu_count()
         log.info("Found %d possible cores to use for ramp fitting " % num_cores)
         if max_cores == 'quarter':
             number_slices = num_cores // 4 or 1
@@ -1344,6 +1408,62 @@ def gls_ramp_fit(input_model, buffsize, save_opt,
 def gls_fit_all_integrations(frame_time, gain_2d, gdq_cube,
                              group_time, jump_flag, max_num_cr, data_sect, input_var_sect,
                              nframes_used, pixeldq, readnoise_2d, saturated_flag, save_opt):
+    """
+    This method will fit the rate for all pixels and all integrations using the Generalized Least
+    Squares (GLS) method.
+     Parameters
+    ----------
+    frame_time : float32
+        The time to read one frame
+    gain_2d : 2D float32
+        The gain in electrons per DN for each pixel
+    gdq_cube : 4-D DQ Flags
+        The group dq flag values for all groups in the exposure
+    group_time : float32
+        The time to read one group
+    jump_flag : DQ flag
+        The DQ value to mark a jump
+    max_num_cr : int
+        The largest number of cosmic rays found in any integration
+    data_sect : 4-D float32
+        The input ramp cube with the sample values for each group of each integration for each pixel
+    input_var_sect: 4-D float32
+        The input variance for each group of each integration for each pixel
+    nframes_used : int
+        The number of frames used to form each group average
+    pixel_dq : 2-D DQ flags
+        The pixel DQ flags for all pixels
+    readnoise_2d : 2-D float32
+        The read noise for each pixel
+    saturated_flag : DQ flag
+        The DQ flag value to mark saturation
+    save_opt : boolean
+        Set to true to return the optional output model
+    Returns
+    --------
+    slopes : 2-D float32
+        The output rate for each pixel
+    slope_int : 2-D float32
+        The output y-intercept for each pixel
+    slope_var_sect : 2-D float32
+        The variance of the rate for each pixel
+    pixeldq_sect : 2-D DQ flag
+        The pixel dq for each pixel
+    dq_int : 3-D DQ flag
+        The pixel dq for each integration for each pixel
+    sum_weight : 2-D float32
+        The sum of the weights for each pixel
+    intercept_int : 3-D float32
+        The y-intercept for each integration for each pixel
+    intercept_err_int : 3-D float32
+        The uncertainty of the y-intercept for each pixel of each integration
+    pedestal_int : 3-D float32
+        The pedestal value for each integration for each pixel
+    ampl_int : 3-D float32
+        The amplitude of each cosmic ray for each pixel
+    ampl_err_int :
+        The variance of the amplitude of each cosmic ray for each pixel
+    """
     number_ints = data_sect.shape[0]
     number_rows = data_sect.shape[2]
     number_cols = data_sect.shape[3]
@@ -1387,7 +1507,6 @@ def gls_fit_all_integrations(frame_time, gain_2d, gdq_cube,
             # current step by using the variance.
         input_var_sect = input_var_sect ** 2
 
-            # A test comment
             # Convert the data section from DN to electrons.
         data_sect *= gain_2d
         if save_opt:
@@ -1461,12 +1580,12 @@ def calc_power(snr):
 
     Parameters
     ----------
-    snr : float, 1D array
+    snr : float32, 1D array
         signal-to-noise for the ramp segments
 
     Returns
     -------
-    pow_wt.ravel() : float, 1D array
+    pow_wt.ravel() : float32, 1D array
         weighting exponent
     """
     pow_wt = snr.copy() * 0.0
