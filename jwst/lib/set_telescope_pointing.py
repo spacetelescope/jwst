@@ -196,9 +196,11 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
         **transform_kwargs
     )
 
-    if model.meta.target.type:
+    try:
         if model.meta.target.type.lower() == 'moving':
             update_mt_kwds(model)
+    except AttributeError:
+        pass
 
     model.meta.model_type = None
 
@@ -218,16 +220,16 @@ def update_mt_kwds(model):
     and insert or update MT_RA & MT_DEC.
     """
 
-    if model.extra_fits.hasattr('MOVING_TARGET_POSITION'):
-        time_mt = model.extra_fits.MOVING_TARGET_POSITION.data.time
-        exp_midpt_mjd = model.meta.exposure.mid_time #- 0.207
+    if model.hasattr('moving_target'):
+        time_mt = model.moving_target.time
+        exp_midpt_mjd = model.meta.exposure.mid_time
         # check to see if the midpoint of the observation is contained within
         # the timerange of the MT table
         if time_mt[0] <= exp_midpt_mjd <= time_mt[-1]:
-            ra = model.extra_fits.MOVING_TARGET_POSITION.data.moving_target_RA
-            dec = model.extra_fits.MOVING_TARGET_POSITION.data.moving_target_Dec
-            f_ra = interp1d(time_mt,ra)
-            f_dec = interp1d(time_mt,dec)
+            ra = model.moving_target.moving_target_RA
+            dec = model.moving_target.moving_target_Dec
+            f_ra = interp1d(time_mt, ra)
+            f_dec = interp1d(time_mt, dec)
             model.meta.wcsinfo.mt_ra = f_ra(exp_midpt_mjd).item(0)
             model.meta.wcsinfo.mt_dec = f_dec(exp_midpt_mjd).item(0)
         else:
