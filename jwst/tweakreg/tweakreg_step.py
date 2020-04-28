@@ -219,10 +219,10 @@ class TweakRegStep(Step):
                     msg += "Skipping alignment to {} astrometric catalog!\n".format(self.gaia_catalog)
                     raise ValueError(msg)
                 # Set group_id to same value so all get fit as one observation
-                # The assigned value, 987654, has been hard-coded to make it 
+                # The assigned value, 987654, has been hard-coded to make it
                 # easy to recognize when alignment to GAIA was being performed
                 # as opposed to the group_id values used for relative alignment
-                # earlier in this step.  
+                # earlier in this step.
                 for imcat in imcats:
                     imcat.meta['orig_group_id'] = imcat.meta['group_id']
                     imcat.meta['group_id'] = 987654
