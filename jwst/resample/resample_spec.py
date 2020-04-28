@@ -117,14 +117,10 @@ class ResampleSpecData:
             wavelength_array = np.nanmedian(lam, axis=spectral_axis)
             wavelength_array = wavelength_array[~np.isnan(wavelength_array)]
 
-            # need to estimate the spatial sampling to use for the output WCS
-            # it is assumed the spatial sampling is the same for all the input
+            # We need to estimate the spatial sampling to use for the output WCS.
+            # Tt is assumed the spatial sampling is the same for all the input
             # models. So we can use the first input model to set the spatial
             # sampling.
-            # Note: using the first input model sets up the spatial output to match
-            # this  model. For nodded (background subtracted data)
-            # this means the positive and negative traces will have the same
-            # configurations as the first input model.
 
             # Steps to do this for first input model:
             # 1. find the middle of the spectrum in wavelength
@@ -187,7 +183,7 @@ class ResampleSpecData:
             all_ra_slit.append(ra_use)
             all_dec_slit.append(dec_use)
 
-            # now check wavlength array to see if we need to add to it
+            # now check wavelength array to see if we need to add to it
             this_minw = np.min(wavelength_array)
             this_maxw = np.max(wavelength_array)
             all_minw = np.min(all_wavelength)
