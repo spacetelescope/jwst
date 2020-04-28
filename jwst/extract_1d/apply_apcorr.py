@@ -1,8 +1,4 @@
-from typing import Union, Tuple
-
-import numpy as np
-
-from astropy.io import fits
+from typing import Tuple
 from scipy.interpolate import interp2d
 
 from ..assign_wcs.util import compute_scale
@@ -88,8 +84,19 @@ class ApCorr:
         )
 
     def apply_apcorr(self, spec_table):
-        # TODO: multiply derived correction  with relevant cols such as flux, err, surf_bright, sb_error, etc
-        ...
+        cols_to_correct = ('flux', 'surf_bright', 'background')
+        errs_to_correct = ('error', 'sb_error', 'berror')
+
+        for row in spec_table:
+            correction = self.apcorr_func(row['wavelength'], row['npixels'])
+            error = self.apcorr_err_func(row['wavelength'], row['npixels'])
+
+            for col in cols_to_correct:
+                row[col] *= correction
+
+            for err in errs_to_correct:
+                row[err] *= error
+
 
 # def inperpolate_apcorr(wavelength, apcorr_wl, size, size_units, **compute_scale_kwargs):
 #

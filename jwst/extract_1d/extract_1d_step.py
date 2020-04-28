@@ -156,10 +156,10 @@ class Extract1dStep(Step):
                     for model in input_model:
 
                         # Get the reference file name
-                        ref_file = self.get_reference_file(model, 'extract1d')
+                        ref_file = self.get_reference_file(model, 'extract1d')  # TODO: also retrieve apcorr file
                         self.log.info('Using EXTRACT1D reference file %s',
                                       ref_file)
-                        temp = extract.run_extract1d(model, ref_file,
+                        temp = extract.run_extract1d(model, ref_file,  # TODO: Refactor to accept apcorr file also
                                                      self.smoothing_length,
                                                      self.bkg_order,
                                                      self.log_increment,
