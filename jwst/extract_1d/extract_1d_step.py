@@ -73,7 +73,7 @@ class Extract1dStep(Step):
     apply_nod_offset = boolean(default=None)
     """
 
-    reference_file_types = ['extract1d']
+    reference_file_types = ['extract1d', 'apcorr']
 
     def process(self, input):
         """Execute the step.
