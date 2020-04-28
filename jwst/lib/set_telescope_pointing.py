@@ -495,7 +495,11 @@ def update_wcs_from_telem(
             model.meta.wcsinfo.pc1_2,
             model.meta.wcsinfo.pc2_1,
             model.meta.wcsinfo.pc2_2
-        ) = calc_rotation_matrix(np.deg2rad(wcsinfo.pa), np.deg2rad(model.meta.wcsinfo.v3yangle), vparity=siaf.vparity)
+        ) = calc_rotation_matrix(
+            np.deg2rad(model.meta.wcsinfo.roll_ref),
+            np.deg2rad(model.meta.wcsinfo.v3yangle),
+            vparity=siaf.vparity
+        )
 
     # Calculate S_REGION with the footprint
     # information
