@@ -121,13 +121,13 @@ def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray]) -> float:
     return np.sqrt(xscale * yscale)
 
 
-def calc_rotation_matrix(angle: float, v3i_yang: float, vparity: int = 1) -> List[float]:
+def calc_rotation_matrix(roll_ref: float, v3i_yang: float, vparity: int = 1) -> List[float]:
     """Calculate the rotation matrix.
 
     Parameters
     ----------
-    angle :
-        The angle in radians to create the matrix.
+    roll_ref :
+        Telescope roll angle of V3 North over East at the ref. point in radians
 
     v3i_yang :
         The angle between ideal Y-axis and V3 in radians.
@@ -154,7 +154,7 @@ def calc_rotation_matrix(angle: float, v3i_yang: float, vparity: int = 1) -> Lis
     if vparity not in (1, -1):
         raise ValueError(f'vparity should be 1 or -1. Input was: {vparity}')
 
-    rel_angle = angle - (vparity * v3i_yang)
+    rel_angle = roll_ref - (vparity * v3i_yang)
 
     pc1_1 = vparity * np.cos(rel_angle)
     pc1_2 = np.sin(rel_angle)
