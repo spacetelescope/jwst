@@ -347,16 +347,16 @@ def update_wcs_from_fgs_guiding(model, default_roll_ref=0.0, default_vparity=1, 
 
     # Get position angle
     try:
-        pa = model.meta.wcsinfo.roll_ref if model.meta.wcsinfo.roll_ref is not None else default_roll_ref
+        roll_ref = model.meta.wcsinfo.roll_ref if model.meta.wcsinfo.roll_ref is not None else default_roll_ref
     except AttributeError:
         logger.warning(
             'Keyword `ROLL_REF` not found. Using {} as default value'.format(
                 default_roll_ref
             )
         )
-        pa = default_roll_ref
+        roll_ref = default_roll_ref
 
-    pa_rad = np.deg2rad(pa)
+    roll_ref = np.deg2rad(roll_ref)
 
     # Get VIdlParity
     try:
@@ -381,7 +381,7 @@ def update_wcs_from_fgs_guiding(model, default_roll_ref=0.0, default_vparity=1, 
         model.meta.wcsinfo.pc1_2,
         model.meta.wcsinfo.pc2_1,
         model.meta.wcsinfo.pc2_2
-    ) = calc_rotation_matrix(pa_rad, np.deg2rad(v3i_yang), vparity=vparity)
+    ) = calc_rotation_matrix(roll_ref, np.deg2rad(v3i_yang), vparity=vparity)
 
 
 def update_wcs_from_telem(
