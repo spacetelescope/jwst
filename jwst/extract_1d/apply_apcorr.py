@@ -39,7 +39,7 @@ class ApCorr:
                     f'(RA, DEC) must be provided in order to convert to pixels.'
                 )
 
-        self.apcorr_func, self.apcorr_err_func = self._approx_apcorr_fn()
+        self.apcorr_func = self._approx_apcorr_fn()
 
     def _get_match_keys(self):
         match_pars = {
@@ -78,10 +78,12 @@ class ApCorr:
         self.reference = table
 
     def _approx_apcorr_fn(self):
-        return (
-            interp2d(self.reference['wavelength'], self.reference['size'], self.reference['apcorr']),
-            interp2d(self.reference['wavelength'], self.reference['size'], self.reference['apcorr_err'])
-        )
+        wavelength = self.reference['wavelength'][0][:self.reference['nelem_wl']]
+        size = self.reference['size'][0][:self.reference['nelem_size']]
+
+        apcorr = self.reference['apcorr'][0][:self.reference['nelem_size'][0], :self.reference['nelem_wl'][0]]
+
+        return interp2d(size, wavelength, apcorr)
 
     def apply_apcorr(self, spec_table):
         cols_to_correct = ('flux', 'surf_bright', 'error', 'sb_error')
