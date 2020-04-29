@@ -95,22 +95,22 @@ def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray]) -> float:
 
     Parameters
     ----------
-    wcs :
+    wcs : `~gwcs.wcs.WCS`
         Reference WCS object from which to compute a scaling factor.
 
-    fiducial :
+    fiducial : tuple
         Input fiducial of (RA, DEC) used in calculating reference points.
 
     Returns
     -------
-    scale :
+    scale : float
         Scaling factor for x and y.
 
     """
     if len(fiducial) != 2:
         raise ValueError(f'Input fiducial must contain only (RA, DEC); Instead recieved: {fiducial}')
 
-    crpix = np.array(wcs.backward_transform(*fiducial))
+    crpix = np.array(wcs.invert(*fiducial))
     crpix_with_offsets = np.vstack((crpix, crpix + (1, 0), crpix + (0, 1))).T
     crval_with_offsets = wcs(*crpix_with_offsets)
 
@@ -126,10 +126,10 @@ def calc_rotation_matrix(roll_ref: float, v3i_yang: float, vparity: int = 1) -> 
 
     Parameters
     ----------
-    roll_ref :
+    roll_ref : float
         Telescope roll angle of V3 North over East at the ref. point in radians
 
-    v3i_yang :
+    v3i_yang : float
         The angle between ideal Y-axis and V3 in radians.
 
     vparity : int
