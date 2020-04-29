@@ -243,8 +243,10 @@ def diff_astropy_tables():
         if len(diffs) > 0:
             raise AssertionError("\n".join(diffs))
 
-        if result.meta != truth.meta:
-            diffs.append("Metadata does not match")
+        # Disable meta comparison for now, until we're able to specify
+        # individual entries for comparison
+        #if result.meta != truth.meta:
+        #    diffs.append("Metadata does not match")
 
         for col_name in truth.colnames:
             try:
