@@ -14,9 +14,9 @@ def test_refpix_subarray():
 
     # create input data
     # create model of data with 0 value array
-    ngroups = 10
-    ysize = 224
-    xsize = 288
+    ngroups = 3
+    ysize = 22
+    xsize = 28
 
     # make ramp model
     im = make_rampmodel(ngroups, ysize, xsize)
@@ -31,12 +31,8 @@ def test_refpix_subarray():
 
     outim = RefPixStep.call(im)
 
-    diff = im.data[:, :, :, :] - outim.data[:, :, :, :]
-
     # test that the science data are not changed
-
-    np.testing.assert_array_equal(np.full((1, ngroups, ysize, xsize), 0.0, dtype=float),
-                                  diff, err_msg='no changes should be seen in array ')
+    np.testing.assert_array_equal(im.data, outim.data)
 
 
 def test_each_amp():
@@ -45,7 +41,7 @@ def test_each_amp():
 
     # create input data
     # create model of data with 0 value array
-    ngroups = 10
+    ngroups = 7
     ysize = 1024
     xsize = 1032
 
@@ -89,7 +85,7 @@ def test_firstframe_sub():
 
     # create input data
     # create model of data with 0 value array
-    ngroups = 10
+    ngroups = 5
     ysize = 1024
     xsize = 1032
 
@@ -113,12 +109,8 @@ def test_firstframe_sub():
     # run the step
     outim = RefPixStep.call(im)
 
-    diff = im.data - outim.data
-
     # test that the science data are not changed
-
-    np.testing.assert_array_equal(np.full((1, ngroups, ysize, xsize), 0.0, dtype=float),
-                                  diff, err_msg='no changes should be seen in array ')
+    np.testing.assert_array_equal(im.data, outim.data)
 
 
 def test_odd_even():
@@ -128,7 +120,7 @@ def test_odd_even():
 
     # create input data
     # create model of data with 0 value array
-    ngroups = 10
+    ngroups = 7
     ysize = 1024
     xsize = 1032
 
@@ -180,7 +172,7 @@ def test_no_odd_even():
 
     # create input data
     # create model of data with 0 value array
-    ngroups = 10
+    ngroups = 7
     ysize = 1024
     xsize = 1032
 
@@ -234,7 +226,7 @@ def test_side_averaging():
 
     # create input data
     # create model of data with 0 value array
-    ngroups = 10
+    ngroups = 7
     ysize = 1024
     xsize = 1032
 
@@ -328,7 +320,7 @@ def test_do_corrections_subarray_no_oddEven(setup_subarray_cube):
     '''Test all corrections for subarray data with no even/odd.'''
 
     # Create inputs and subarray SUB320A335R data, and set correction parameters
-    ngroups = 5
+    ngroups = 3
     nrows = 160
     ncols = 160
     xstart = 1
@@ -371,7 +363,7 @@ def test_do_corrections_subarray(setup_subarray_cube):
     '''Test all corrections for subarray data.'''
 
     # Create inputs and subarray SUB320A335R data, and set correction parameters
-    ngroups = 5
+    ngroups = 3
     nrows = 160
     ncols = 160
     xstart = 1
@@ -414,7 +406,7 @@ def test_get_restore_group_subarray(setup_subarray_cube):
     '''Test subarray input model data is replaced with group data.'''
 
     # Create inputs and subarray SUB320A335R data, and set correction parameters
-    ngroups = 5
+    ngroups = 3
     nrows = 320
     ncols = 320
     xstart = 486
@@ -453,7 +445,7 @@ def test_get_restore_group_subarray(setup_subarray_cube):
 def test_do_top_bottom_correction(setup_cube):
     '''Test top/bottom correction for NIRCam data.'''
 
-    ngroups = 5
+    ngroups = 3
     nrows = 2048
     ncols = 2048
 
@@ -523,10 +515,10 @@ def test_do_top_bottom_correction(setup_cube):
             decimal=1)
 
 
-def test_do_top_bottom_correction_no_evenOdd(setup_cube):
+def test_do_top_bottom_correction_no_even_odd(setup_cube):
     '''Test top/bottom correction with no even/odd.'''
 
-    ngroups = 5
+    ngroups = 3
     nrows = 2048
     ncols = 2048
 
@@ -660,17 +652,26 @@ def setup_subarray_cube():
     return _cube
 
 
-# Set parameters for difference instruments
-args = "instr, det_list, ngroups, nrows, ncols"
-testdata = [('NIRCAM', ['NRCA1', 'NRCA2', 'NRCA3', 'NRCA4','NRCALONG', 'NRCB1', 'NRCB2', 'NRCB3',
-              'NRCB4', 'NRCBLONG'], 5, 2048, 2048),
-            ('FGS', ["GUIDER1", "GUIDER2"], 6, 2048, 2048)]
-ids = ["NIRCAM", "FGS"]
-
-@pytest.mark.parametrize(args, testdata, ids=ids)
-def test_do_corrections_all_detectors(setup_cube, instr, det_list, ngroups, nrows, ncols):
+@pytest.mark.parametrize("instr, det", [
+    ('NIRCAM', 'NRCA1'),
+    ('NIRCAM', 'NRCA2'),
+    ('NIRCAM', 'NRCA3'),
+    ('NIRCAM', 'NRCA4'),
+    ('NIRCAM', 'NRCALONG'),
+    ('NIRCAM', 'NRCB1'),
+    ('NIRCAM', 'NRCB2'),
+    ('NIRCAM', 'NRCB3'),
+    ('NIRCAM', 'NRCB4'),
+    ('NIRCAM', 'NRCBLONG'),
+    ('FGS', "GUIDER1"),
+    ('FGS', "GUIDER2")
+])
+def test_correct_model(setup_cube, instr, det):
     '''Test all corrections for full frame data for all detectors.'''
 
+    ngroups = 2
+    nrows = 2048
+    ncols = 2048
     # Set correction parameters
     odd_even_columns = True
     use_side_ref_pixels = True
@@ -681,18 +682,16 @@ def test_do_corrections_all_detectors(setup_cube, instr, det_list, ngroups, nrow
     rpix = 7
     dataval = 150
 
-    for det in det_list:
+    input_model = setup_cube(instr, det, ngroups, nrows, ncols)
+    input_model.data[0, 0, :, :] = rpix
+    input_model.data[0, 0, 4:-4, 4:-4] = dataval
 
-        input_model = setup_cube(instr, det, ngroups, nrows, ncols)
-        input_model.data[0, 0, :, :] = rpix
-        input_model.data[0, 0, 4:-4, 4:-4] = dataval
+    correct_model(input_model,
+                  odd_even_columns,
+                  use_side_ref_pixels,
+                  side_smoothing_length,
+                  side_gain,
+                  odd_even_rows)
 
-        correct_model(input_model,
-                      odd_even_columns,
-                      use_side_ref_pixels,
-                      side_smoothing_length,
-                      side_gain,
-                      odd_even_rows)
-
-        np.testing.assert_almost_equal(np.mean(input_model.data[0, 0, :4, 4:-4]), rpix - rpix, decimal=0)
-        np.testing.assert_almost_equal(np.mean(input_model.data[0, 0, 4:-4, 4:-4]), dataval - rpix, decimal=0)
+    np.testing.assert_almost_equal(np.mean(input_model.data[0, 0, :4, 4:-4]), 0, decimal=0)
+    np.testing.assert_almost_equal(np.mean(input_model.data[0, 0, 4:-4, 4:-4]), dataval - rpix, decimal=0)

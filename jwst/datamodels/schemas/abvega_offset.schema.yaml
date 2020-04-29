@@ -1,0 +1,27 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/asdf/asdf-schema-1.0.0"
+id: "http://stsci.edu/schemas/jwst_datamodel/abvegamag_offset.schema"
+title: AB to Vega magnitude offset reference file model
+allOf:
+- $ref: referencefile.schema
+- type: object
+  properties:
+    abvega_offset:
+      title: Offsets to convert AB to Vega magnitudes
+      type: object
+      properties:
+        abvega_offset:
+          title: AB_mag - Vega_mag
+          type: number
+        anyOf:
+          detector:
+            title: Detector name
+            type: string
+          filter:
+            title: Filter wheel element name
+            type: string
+          pupil:
+            title: Pupil wheel element name
+            type: string
+...

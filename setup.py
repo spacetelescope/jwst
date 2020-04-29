@@ -89,11 +89,16 @@ setup(
         'setuptools_scm',
     ],
     install_requires=[
-        'asdf>=2.5',
+        # asdf 2.6 will change a validator implementation detail whose
+        # behavior jwst currently relies upon.  See
+        # https://github.com/spacetelescope/asdf/pull/777
+        # We can remove the upper limit here once asdf 2.6 is released
+        # and jwst starts using the _visit_repeat_nodes flag.
+        'asdf~=2.5.0',
         'astropy>=4.0',
         'crds>=7.2.7',
         'drizzle>=1.13',
-        'gwcs>=0.12',
+        'gwcs>=0.13.0',
         'jsonschema>=2.3,<4',
         'numpy>=1.16',
         'photutils>=0.7',
@@ -101,7 +106,7 @@ setup(
         'spherical-geometry>=1.2',
         'stsci.image>=2.3.3',
         'stsci.imagestats>=1.4',
-        'tweakwcs==0.5.3',
+        'tweakwcs>=0.6.3',
     ],
     extras_require={
         'docs': DOCS_REQUIRE,

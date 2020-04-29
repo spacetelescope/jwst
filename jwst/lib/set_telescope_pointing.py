@@ -6,6 +6,7 @@ import sqlite3
 from collections import namedtuple
 
 from astropy.time import Time
+from scipy.interpolate import interp1d
 import numpy as np
 
 from ..assign_wcs.util import update_s_region_keyword
@@ -194,6 +195,13 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
         reduce_func=reduce_func,
         **transform_kwargs
     )
+
+    try:
+        if model.meta.target.type.lower() == 'moving':
+            update_mt_kwds(model)
+    except AttributeError:
+        pass
+
     model.meta.model_type = None
 
     if dry_run:
@@ -203,6 +211,37 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
 
     model.close()
     logger.info('...update completed')
+
+def update_mt_kwds(model):
+    """Add/update the Moving target header keywords
+
+    If the target type is "moving_target" check for the moving target position
+    table. If this is available calculate the moving target position keywords
+    and insert or update MT_RA & MT_DEC.
+    """
+
+    if model.hasattr('moving_target'):
+        time_mt = model.moving_target.time
+        exp_midpt_mjd = model.meta.exposure.mid_time
+        # check to see if the midpoint of the observation is contained within
+        # the timerange of the MT table
+        if time_mt[0] <= exp_midpt_mjd <= time_mt[-1]:
+            ra = model.moving_target.moving_target_RA
+            dec = model.moving_target.moving_target_Dec
+            f_ra = interp1d(time_mt, ra)
+            f_dec = interp1d(time_mt, dec)
+            model.meta.wcsinfo.mt_ra = f_ra(exp_midpt_mjd).item(0)
+            model.meta.wcsinfo.mt_dec = f_dec(exp_midpt_mjd).item(0)
+        else:
+            logger.info('Exposure midpoint {} is not in the moving_target '
+                        'table range of {} to {}'.format(exp_midpt_mjd, time_mt[0], time_mt[-1]))
+            return
+    else:
+        logger.info("Moving target position table not found in the file")
+        return
+
+    logger.info("Moving target RA and Dec updated.")
+    return model
 
 
 def update_wcs(model, default_pa_v3=0., siaf_path=None, engdb_url=None,

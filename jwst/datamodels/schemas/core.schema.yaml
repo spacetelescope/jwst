@@ -384,7 +384,7 @@ properties:
             fits_keyword: MODULE
             blend_table: True
           channel:
-            title: 'NIRCam channel: long or short'
+            title: Instrument channel
             type: string
             # Values grouped by instrument:
             anyOf:
@@ -650,8 +650,8 @@ properties:
           readpatt:
             title: Readout pattern
             type: string
-            enum: [ACQ1, ACQ2, BRIGHT1, BRIGHT2,
-              DEEP2, DEEP8, FAST, FASTGRPAVG,
+            enum: [ACQ1, ACQ2, BRIGHT1, BRIGHT2, DEEP2, DEEP8, FAST,
+              FASTGRPAVG, FASTGRPAVG8, FASTGRPAVG16, FASTGRPAVG32, FASTGRPAVG64,
               FGS, FGS60, FGS8370, FGS840, FGSRAPID, FINEGUIDE,
               ID, MEDIUM2, MEDIUM8, NIS, NISRAPID,
               NRS, NRSIRS2, NRSN16R4, NRSN32R8, NRSN8R2,

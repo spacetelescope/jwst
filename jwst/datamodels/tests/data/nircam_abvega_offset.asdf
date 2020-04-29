@@ -1,0 +1,61 @@
+#ASDF 1.0.0
+#ASDF_STANDARD 1.4.0
+%YAML 1.1
+%TAG ! tag:stsci.edu:asdf/
+--- !core/asdf-1.1.0
+asdf_library: !core/software-1.0.0 {author: Space Telescope Science Institute, homepage: 'http://github.com/spacetelescope/asdf',
+  name: asdf, version: 2.5.2}
+history:
+  entries:
+  - !core/history_entry-1.0.0 {description: File data provided by Kevin Volk in February
+      2020. Errors are at the 3-6% level., time: ! '2020-04-17 17:40:03'}
+  extensions:
+  - !core/extension_metadata-1.0.0
+    extension_class: asdf.extension.BuiltinExtension
+    software: {name: asdf, version: 2.5.2}
+  - !core/extension_metadata-1.0.0
+    extension_class: astropy.io.misc.asdf.extension.AstropyExtension
+    software: {name: astropy, version: 4.0.1.post1}
+abvega_offset: !<tag:astropy.org:astropy/table/table-1.0.0>
+  colnames: [filter, pupil, abvega_offset]
+  columns:
+  - !core/column-1.0.0
+    data: !core/ndarray-1.0.0
+      data: [F070W, F090W, F115W, F140M, F150W, F150W2, F150W2, F150W2, F182M, F187N,
+        F200W, F210M, F212N, F250M, F277W, F300M, F322W2, F322W2, F335M, F356W, F360M,
+        F410M, F430M, F444W, F444W, F444W, F444W, F460M, F480M]
+      datatype: [ucs4, 6]
+      shape: [29]
+    name: filter
+  - !core/column-1.0.0
+    data: !core/ndarray-1.0.0
+      data: [CLEAR, CLEAR, CLEAR, CLEAR, CLEAR, CLEAR, F162M, F164N, CLEAR, CLEAR,
+        CLEAR, CLEAR, CLEAR, CLEAR, CLEAR, CLEAR, CLEAR, F323N, CLEAR, CLEAR, CLEAR,
+        CLEAR, CLEAR, CLEAR, F405N, F466N, F470N, CLEAR, CLEAR]
+      datatype: [ucs4, 5]
+      shape: [29]
+    name: pupil
+  - !core/column-1.0.0
+    data: !core/ndarray-1.0.0
+      data: [0.2497600018978119, 0.5041199922561646, 0.7828400135040283, 1.1191799640655518,
+        1.2431399822235107, 1.2230199575424194, 1.3764400482177734, 1.4193600416183472,
+        1.5876799821853638, 1.6553699970245361, 1.705970048904419, 1.8102200031280518,
+        1.8312100172042847, 2.1488699913024902, 2.315419912338257, 2.490180015563965,
+        2.570039987564087, 2.6431798934936523, 2.71697998046875, 2.823899984359741,
+        2.870759963989258, 3.107640027999878, 3.212130069732666, 3.2418100833892822,
+        3.1260299682617188, 3.422950029373169, 3.4076600074768066, 3.3788299560546875,
+        3.4422800540924072]
+      datatype: float32
+      shape: [29]
+    name: abvega_offset
+meta:
+  author: Space Telescope Science Institute
+  description: Offset from AB to Vega magnitudes
+  instrument: {name: NIRCAM}
+  model_type: ABVegaOffsetModel
+  pedigree: GROUND
+  reftype: abvega_offset
+  telescope: JWST
+  title: AB to Vega magnitude offset reference file
+  useafter: '2015-01-01T00:00:00'
+...

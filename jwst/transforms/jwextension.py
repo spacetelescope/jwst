@@ -5,7 +5,7 @@ from asdf import util
 from .tags import (GratingEquationType, CoordsType, RotationSequenceType,
                    Gwa2SlitType, Slit2MsaType, LogicalType, NirissSOSSType, V23ToSkyType,
                    RefractionIndexType, SnellType, MIRI_AB2SliceType, NIRCAMGrismDispersionType,
-                   NIRISSGrismDispersionType, TPCorrType)
+                   NIRISSGrismDispersionType)
 
 from .jwst_types import _jwst_types
 
@@ -13,7 +13,7 @@ from .jwst_types import _jwst_types
 __all__ = ['GratingEquationType', 'CoordsType', 'RotationSequenceType',
            'Gwa2SlitType', 'Slit2MsaType', 'LogicalType', 'NirissSOSSType', 'V23ToSkyType',
            'RefractionIndexType', 'SnellType', 'MIRI_AB2SliceType', 'NIRCAMGrismDispersionType',
-           'NIRISSGrismDispersionType', 'TPCorrType']
+           'NIRISSGrismDispersionType']
 
 
 SCHEMA_PATH = os.path.abspath(

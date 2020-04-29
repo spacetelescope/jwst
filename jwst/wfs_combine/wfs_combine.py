@@ -16,9 +16,10 @@ log.setLevel(logging.DEBUG)
 
 # The following should probably be in a ref file instead
 OFF_DELTA = 2  # for searching +/-2 around nominal offsets
-PSF_SIZE = 200 # half width of psf for 12 waves
+PSF_SIZE = 200  # half width of psf for 12 waves
 BLUR_SIZE = 10  # size of gaussian kernel for convolution
-N_SIZE = 2 # size of neighborhood in create_griddata_array
+N_SIZE = 2  # size of neighborhood in create_griddata_array
+
 
 class DataSet():
     """
@@ -51,7 +52,7 @@ class DataSet():
             self.input_1 = datamodels.open(infile_1)
             self.input_2 = datamodels.open(infile_2)
         except IOError:
-            log.error('Error creating a model from at least 1 of : %s %s ',
+            log.error('Error creating a model from at least 1 of : %s %s',
                       infile_1, infile_2)
 
         self.do_refine = do_refine
@@ -59,11 +60,10 @@ class DataSet():
         if (self.input_1.data.shape != self.input_2.data.shape):
             log.error('Incompatible sizes for input files')
 
-        log.info('File 1 to combine: %s ', infile_1)
-        log.info('File 2 to combine: %s ', infile_2)
-        log.info('Output file: %s ', outfile)
-        log.info('do_refine: %s ', do_refine)
-
+        log.info('File 1 to combine: %s', infile_1)
+        log.info('File 2 to combine: %s', infile_2)
+        log.info('Output file: %s', outfile)
+        log.info('do_refine: %s', do_refine)
 
     def do_all(self):
         """
@@ -96,7 +96,6 @@ class DataSet():
         new_model.update(self.input_1)
 
         return new_model
-
 
     def create_aligned_2(self):
         """
@@ -148,8 +147,6 @@ class DataSet():
             g = gauss_kern(BLUR_SIZE, sizey=None)
             s_data_1 = convolve(data_1, g, mode='valid')
 
-
-
             # 2. Find approximate center of PSF in umsmoothed frame by taking
             #    all pixels in smoothed image exceeding 50% of the maximum
             #    of the smoothed image, and taking the mean of the coordinates
@@ -159,7 +156,7 @@ class DataSet():
             ctrd_x = wh_data_hi[1].mean() + BLUR_SIZE
             ctrd_y = wh_data_hi[0].mean() + BLUR_SIZE
 
-            log.info('Approximate centroid of image 1 PSF has x,y : %s %s ', \
+            log.info('Approximate centroid of image 1 PSF has x,y : %s %s',
                      round(ctrd_x), round(ctrd_y))
 
             # 3. Set limits of the subarrays (in frames of input data)
@@ -182,22 +179,23 @@ class DataSet():
             # 4. Determine overlap of these interpolated images, and
             #    return nominally aligned, interpolated images
             sci_nai_1, sci_nai_2 = get_overlap(sci_int_1, sci_int_2,
-                                                 self.off_x, self.off_y)
+                                               self.off_x, self.off_y)
 
             # 5. Around this nominal alignment, get refined (delta) offsets
             ref_del_off_x, ref_del_off_y = optimize_offs(sci_nai_1, sci_nai_2)
 
-            log.info('From the refined offsets calculation, the x,y changes in\
-                     ofsets are: %s %s ', ref_del_off_x, ref_del_off_y)
+            log.info('From the refined offsets calculation,'
+                     'the x,y changes in ofsets are: %s %s',
+                     ref_del_off_x, ref_del_off_y)
 
             # 6. Add the refined delta offsets to the nominal offsets
             self.off_x += ref_del_off_x
             self.off_y += ref_del_off_y
 
-            log.info('Values for the refined offsets are, for x,y : %s %s ', \
+            log.info('Values for the refined offsets are, for x,y : %s %s',
                      self.off_x, self.off_y)
 
-        log.info('Final values for x,y offsets:%s %s ', self.off_x, self.off_y)
+        log.info('Final values for x,y offsets:%s %s', self.off_x, self.off_y)
 
         # Do final alignment for original (not interpolated) image #2
         data_2_a, dq_2_a, err_2_a = self.apply_final_offsets()
@@ -208,7 +206,6 @@ class DataSet():
         model_2_a.err = err_2_a
 
         return model_2_a
-
 
     def apply_final_offsets(self):
         """
@@ -234,7 +231,6 @@ class DataSet():
         err_2_a = self.do_2d_shifts(self.input_2.err)
 
         return data_2_a, dq_2_a, err_2_a
-
 
     def get_wcs_offsets(self):
         """
@@ -270,11 +266,10 @@ class DataSet():
         off_x = pixels[0] - xcen
         off_y = pixels[1] - ycen
 
-        off_x = int(round(off_x)) # Offsets required to be integers
+        off_x = int(round(off_x))  # Offsets required to be integers
         off_y = int(round(off_y))
 
         return off_x, off_y
-
 
     def create_combined(self, im_1_a, im_2_a):
         """
@@ -345,14 +340,13 @@ class DataSet():
         dq_comb[wh_1_bad_2_bad] = np.bitwise_or(dqflags.group['DO_NOT_USE'],
                                                 dq_comb[wh_1_bad_2_bad])
 
-        err_comb = err_data_1.copy() * 0 # will leave bad (= 0)
+        err_comb = err_data_1.copy() * 0  # will leave bad (= 0)
         err_comb[wh_1_good_2_good] = 0.5 * (err_data_1[wh_1_good_2_good] +
                                             err_data_2[wh_1_good_2_good])
         err_comb[wh_1_good_2_bad] = err_data_1[wh_1_good_2_bad]
         err_comb[wh_1_bad_2_good] = err_data_2[wh_1_bad_2_good]
 
         return data_comb, dq_comb, err_comb
-
 
     def do_2d_shifts(self, a):
         """
