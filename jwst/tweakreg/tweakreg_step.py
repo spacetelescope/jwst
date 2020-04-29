@@ -7,6 +7,7 @@ JWST pipeline step for image alignment.
 from os import path
 
 from astropy.table import Table
+from astropy import wcs
 from tweakwcs.imalign import align_wcs
 from tweakwcs.tpwcs import JWSTgWCS
 from tweakwcs.matchutils import TPMatch
@@ -33,7 +34,7 @@ class TweakRegStep(Step):
         catalog_format = string(default='ecsv') # Catalog output file format
         kernel_fwhm = float(default=2.5) # Gaussian kernel FWHM in pixels
         snr_threshold = float(default=10.0) # SNR threshold above the bkg
-        brightest = integer(default=100) # Keep top ``brightest`` objects
+        brightest = integer(default=1000) # Keep top ``brightest`` objects
         peakmax = float(default=None) # Filter out objects with pixel values >= ``peakmax``
         enforce_user_order = boolean(default=False) # Align images in user specified order?
         expand_refcat = boolean(default=False) # Expand reference catalog with new sources?
@@ -226,29 +227,24 @@ class TweakRegStep(Step):
                 for imcat in imcats:
                     imcat.meta['orig_group_id'] = imcat.meta['group_id']
                     imcat.meta['group_id'] = 987654
+                    if 'REFERENCE' in imcat.meta['fit_info']['status']:
+                        del imcat.meta['fit_info']
 
                 # Perform fit
-                align_wcs(
-                    imcats,
-                    refcat=ref_cat,
-                    enforce_user_order=False,
-                    expand_refcat=False,
-                    minobj=self.minobj,
-                    match=tpmatch,
-                    fitgeom=self.fitgeometry,
-                    nclip=self.nclip,
-                    sigma=(self.sigma, 'rmse')
-                )
+                align_tab = align_wcs(imcats,
+                                      refcat=ref_cat,
+                                      enforce_user_order=False,
+                                      expand_refcat=False,
+                                      minobj=self.minobj,
+                                      match=tpmatch,
+                                      fitgeom=self.fitgeometry,
+                                      nclip=self.nclip,
+                                      sigma=(self.sigma, 'rmse')
+                                     )
                 # Reset group_id to original values
                 # Also, update/create the WCS .name attribute with information on this astrometric fit
                 for imcat in imcats:
                     imcat.meta['group_id'] = imcat.meta['orig_group_id']
-                    # NOTE: This .name attribute needs to be defined using a convention
-                    #       agreed upon by the JWST Cal Working Group.
-                    #       Current value is merely a place-holder based on HST conventions
-                    #       This value should also be translated to the FITS WCSNAME keyword
-                    #       IF that is what gets recorded in the archive for end-user searches
-                    imcat.meta.wcs.name = "FIT-LVL3-{}".format(self.gaia_catalog)
 
             except ValueError as e:
                 msg = e.args[0]
@@ -260,8 +256,21 @@ class TweakRegStep(Step):
             imcat.meta['image_model'].meta.cal_step.tweakreg = 'COMPLETE'
             # retrieve fit status and update wcs if fit is successful:
             fit_info = imcat.meta.get('fit_info')
-            if fit_info['status'] in 'SUCCESS':
+            if 'SUCCESS' in fit_info['status']:
                 imcat.meta['image_model'].meta.wcs = imcat.wcs
+                # NOTE: This .name attribute needs to be defined using a convention
+                #       agreed upon by the JWST Cal Working Group.
+                #       Current value is merely a place-holder based on HST conventions
+                #       This value should also be translated to the FITS WCSNAME keyword
+                #       IF that is what gets recorded in the archive for end-user searches
+                imcat.meta['image_model'].meta.wcs.name = "FIT-LVL3-{}".format(self.gaia_catalog)
+                
+                # Also update FITS representation 
+                gwcs_header = imcat.wcs.to_fits_sip(max_pix_error=0.1, 
+                                                max_inv_pix_error=0.1,
+                                                degree=3, 
+                                                npoints=128)
+                imcat.meta['image_model'].wcs = wcs.WCS(header=gwcs_header)
 
         return images
 
