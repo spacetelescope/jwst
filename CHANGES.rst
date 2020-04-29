@@ -14,6 +14,8 @@ ami
 associations
 ------------
 
+- Restrict NIRSpec IFU data to include one grating per level 3 association [#4854]
+
 - Update asn_from_list to have default values in the asn header [#4720]
 
 - Update rules so exclude dark files from associations [#4668]

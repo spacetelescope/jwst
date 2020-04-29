@@ -334,7 +334,14 @@ class Asn_SpectralSource(AsnMixin_Spectrum):
                     Constraint_MSA()
                 ],
                 reduce=Constraint.any
-            )
+            ),
+            Constraint([
+                DMSAttrConstraint(
+                    name='grating',
+                    sources=['grating'],
+                    force_unique=True),
+
+            ])
         ])
 
         # Check and continue initialization.
@@ -367,10 +374,16 @@ class Asn_IFU(AsnMixin_Spectrum):
                         name='patttype',
                         sources=['patttype'],
                         value=['none'],
-                    )
+                    ),
                 ],
-                reduce=Constraint.notany
-            )        ])
+                reduce=Constraint.notany),
+            Constraint([
+                DMSAttrConstraint(
+                    name='grating',
+                    sources=['grating'],
+                    force_unique=True)
+                        ]),
+            ])
         # Check and continue initialization.
         super(Asn_IFU, self).__init__(*args, **kwargs)
 
@@ -428,6 +441,13 @@ class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_BkgScience):
                 ],
                 reduce=Constraint.any
                 ),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        name='grating',
+                        sources=['grating'],
+                        force_unique=True)
+                ])
                 ])
 
         # Check and continue initialization.
