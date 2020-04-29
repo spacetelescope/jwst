@@ -107,6 +107,9 @@ pipeline
 - Update ``calwebb_spec3`` to use suffix ``c1d`` for ``combine_1d`` products.
   [#4846]
 
+- Update ``calwebb_spec3`` to update the ASNTABLE keyword in all output
+  products, to reflect the name of the spec3 ASN used as input. [#4865]
+
 resample
 --------
 
