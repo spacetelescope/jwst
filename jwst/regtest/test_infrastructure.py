@@ -84,6 +84,7 @@ def test_diff_astropy_tables_columns(diff_astropy_tables, two_tables):
         assert diff_astropy_tables(path1, path2)
 
 
+@pytest.mark.xfail(reason='table meta comparison currently deactivated')
 def test_diff_astropy_tables_meta(diff_astropy_tables, two_tables):
     path1, path2 = two_tables
 
