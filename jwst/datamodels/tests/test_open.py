@@ -55,6 +55,8 @@ def test_open_association():
         warnings.filterwarnings("ignore", "model_type not found")
         with datamodels.open(asn_file) as c:
             assert isinstance(c, ModelContainer)
+            for model in c:
+                assert model.meta.asn.table_name == "association.json"
 
 
 def test_open_shape():
