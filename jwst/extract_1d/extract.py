@@ -2520,7 +2520,7 @@ class ImageExtractModel(ExtractBase):
 
 
 def run_extract1d(input_model, extract_ref_name, smoothing_length, bkg_order, log_increment, subtract_background,
-                  apply_nod_offset, was_source_model=False, apcorr=None):
+                  apply_nod_offset, was_source_model=False, apcorr_ref_name=None):
     """Extract 1-D spectra.
 
     This just reads the reference file (if any) and calls do_extract1d.
@@ -2562,7 +2562,7 @@ def run_extract1d(input_model, extract_ref_name, smoothing_length, bkg_order, lo
         obtained by iterating over a SourceModelContainer.  The default
         is False.
 
-    apcorr : str
+    apcorr_ref_name : str
         Name of the APCORR reference file. Default is None
 
     Returns
@@ -2574,7 +2574,7 @@ def run_extract1d(input_model, extract_ref_name, smoothing_length, bkg_order, lo
     # Read and interpret the reference file.
     ref_dict = load_ref_file(extract_ref_name)  # TODO: either modify or add function to "load" apcorr data
 
-    apcorr_table = dm_open(apcorr) if apcorr is not None else None
+    apcorr_table = dm_open(apcorr_ref_name) if apcorr_ref_name is not None else None
 
     # This item is a flag to let us know that do_extract1d was called
     # from run_extract1d; that is, we don't expect this key to be present
@@ -2642,7 +2642,7 @@ def ref_dict_sanity_check(ref_dict):
     return ref_dict
 
 
-def do_extract1d(input_model, ref_dict, smoothing_length=None, bkg_order=None, log_increment=50,
+def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order=None, log_increment=50,
                  subtract_background=None, apply_nod_offset=None, was_source_model=False, apcorr_table=None):
     """Extract 1-D spectra.
 
@@ -2656,7 +2656,7 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None, bkg_order=None, l
     input_model : data model
         The input science model.
 
-    ref_dict : dict, or None
+    extract_ref_dict : dict, or None
         The contents of the reference file, or None in order to use
         default values.  If `ref_dict` is not None, use key 'ref_file_type'
         to specify whether the parameters are those that could be read
@@ -2703,7 +2703,7 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None, bkg_order=None, l
         A new MultiSpecModel containing the extracted spectra.
     """
 
-    ref_dict = ref_dict_sanity_check(ref_dict)
+    extract_ref_dict = ref_dict_sanity_check(extract_ref_dict)
 
     was_source_model = False                 # default value
     if isinstance(input_model, datamodels.SourceModelContainer):
@@ -2805,7 +2805,7 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None, bkg_order=None, l
                     f"so apply_nod_offset will be set to False"
                 )
             extract_params = get_extract_parameters(
-                ref_dict,
+                extract_ref_dict,
                 slit,
                 slit.name,
                 sp_order,
@@ -2971,7 +2971,7 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None, bkg_order=None, l
                     continue
 
                 extract_params = get_extract_parameters(
-                    ref_dict,
+                    extract_ref_dict,
                     input_model,
                     slitname,
                     sp_order,
@@ -3100,7 +3100,7 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None, bkg_order=None, l
                         continue
 
                 extract_params = get_extract_parameters(
-                    ref_dict,
+                    extract_ref_dict,
                     input_model,
                     slitname,
                     sp_order,
@@ -3236,7 +3236,7 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None, bkg_order=None, l
             if source_type is None:
                 source_type = "UNKNOWN"
 
-            output_model = ifu.ifu_extract1d(input_model, ref_dict, source_type, subtract_background)
+            output_model = ifu.ifu_extract1d(input_model, extract_ref_dict, source_type, subtract_background)
 
         else:
             log.error("The input file is not supported for this step.")
@@ -3256,10 +3256,10 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None, bkg_order=None, l
     output_model.meta.wcs = None
 
     # If the reference file is an image, explicitly close it.
-    if ref_dict is not None and 'ref_model' in ref_dict:
-        ref_dict['ref_model'].close()
+    if extract_ref_dict is not None and 'ref_model' in extract_ref_dict:
+        extract_ref_dict['ref_model'].close()
 
-    if ref_dict is None or 'need_to_set_to_complete' not in ref_dict or ref_dict['need_to_set_to_complete']:
+    if extract_ref_dict is None or 'need_to_set_to_complete' not in extract_ref_dict or extract_ref_dict['need_to_set_to_complete']:
         output_model.meta.cal_step.extract_1d = 'COMPLETE'
 
     return output_model

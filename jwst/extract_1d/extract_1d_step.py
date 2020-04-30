@@ -150,7 +150,7 @@ class Extract1dStep(Step):
                         self.subtract_background,
                         self.apply_nod_offset,
                         was_source_model=was_source_model,
-                        apcorr=apcorr_ref
+                        apcorr_ref_name=apcorr_ref
                     )
                     # Set the step flag to complete
                     result.meta.cal_step.extract_1d = 'COMPLETE'
@@ -177,7 +177,7 @@ class Extract1dStep(Step):
                             self.subtract_background,
                             self.apply_nod_offset,
                             was_source_model=was_source_model,
-                            apcorr=apcorr_ref
+                            apcorr_ref_name=apcorr_ref
                         )
                         # Set the step flag to complete in each MultiSpecModel
                         temp.meta.cal_step.extract_1d = 'COMPLETE'
@@ -204,7 +204,7 @@ class Extract1dStep(Step):
                     self.subtract_background,
                     self.apply_nod_offset,
                     was_source_model=was_source_model,
-                    apcorr=apcorr_ref
+                    apcorr_ref_name=apcorr_ref
                 )
 
                 # Set the step flag to complete
@@ -237,7 +237,7 @@ class Extract1dStep(Step):
                 self.subtract_background,
                 self.apply_nod_offset,
                 was_source_model=False,
-                apcorr=apcorr_ref
+                apcorr_ref_name=apcorr_ref
             )
 
             # Set the step flag to complete
