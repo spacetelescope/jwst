@@ -3,7 +3,7 @@ from scipy.interpolate import interp2d
 from astropy.io import fits
 
 from ..assign_wcs.util import compute_scale
-from ..datamodels import DataModel, ReferenceFileModel
+from ..datamodels import DataModel
 
 
 class ApCorr:
@@ -104,18 +104,3 @@ class ApCorr:
 
             for col in cols_to_correct:
                 row[col] *= correction
-
-
-# def inperpolate_apcorr(wavelength, apcorr_wl, size, size_units, **compute_scale_kwargs):
-#
-#     if size_units.startswith('arcsec'):
-#         # This assumes that the image scale is the same in both the dispersion
-#         # and cross-dispersion directions, which is probably not valid.
-#         # This is the pixel scale in arcseconds per pixel.
-#         # pixel_scale = compute_scale(**compute_scale_kwargs)
-#         # size /= pixel_scale                     # convert to pixels
-#
-#     wavelength[np.isnan(wavelength)] = -1.
-#     extr_size = np.interp(wavelength, apcorr_wl, size,
-#                           left=np.NaN, right=np.NaN)
-#     no_cal = np.isnan(extr_size)
