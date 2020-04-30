@@ -137,6 +137,11 @@ resample_spec
 
 - Enable model metadata blending [#4765]
 
+rscd
+----
+
+- Added baseline algorithm that flags groups [#4669]
+
 set_telescope_pointing
 ----------------------
 
@@ -383,7 +388,6 @@ transforms
 - Added ``source_ra`` and ``source_dec`` to the ``Slit`` namedtuple
   with default values of 0.0. These are populated from the MSA metadata
   file. [#4613]
-
 
 tweakreg
 --------
