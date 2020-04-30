@@ -62,12 +62,14 @@ def run_image3pipeline(run_image2pipeline, rtdata_module, jail):
 
     # Get the level3 assocation json file (though not its members) and run
     # image3 pipeline on all _cal files listed in association
+    rtdata.get_data("nircam/image/jwst_nircam_abvega_offset_0001.asdf")
     rtdata.get_data("nircam/image/jw42424-o002_20191220t214154_image3_001_asn.json")
     args = ["config/calwebb_image3.cfg", rtdata.input,
         # Comment out following lines, as the dataset is currently broken
         # "--steps.tweakreg.save_results=True",
         # "--steps.skymatch.save_results=True",
         "--steps.source_catalog.snr_threshold=20",
+        "--steps.source_catalog.override_abvega_offset='jwst_nircam_abvega_offset_0001.asdf'",
         ]
     Step.from_cmdline(args)
 
@@ -97,15 +99,14 @@ def test_nircam_image_stage2_wcs(run_image2pipeline, rtdata_module):
     rtdata.output = output
     rtdata.get_truth("truth/test_nircam_image_stages/" + output)
 
-    model = datamodels.open(rtdata.output)
-    model_truth = datamodels.open(rtdata.truth)
-    grid = grid_from_bounding_box(model.meta.wcs.bounding_box)
+    with datamodels.open(rtdata.output) as model, datamodels.open(rtdata.truth) as model_truth:
+        grid = grid_from_bounding_box(model.meta.wcs.bounding_box)
 
-    ra, dec = model.meta.wcs(*grid)
-    ra_truth, dec_truth = model_truth.meta.wcs(*grid)
+        ra, dec = model.meta.wcs(*grid)
+        ra_truth, dec_truth = model_truth.meta.wcs(*grid)
 
-    assert_allclose(ra, ra_truth)
-    assert_allclose(dec, dec_truth)
+        assert_allclose(ra, ra_truth)
+        assert_allclose(dec, dec_truth)
 
 
 @pytest.mark.bigdata

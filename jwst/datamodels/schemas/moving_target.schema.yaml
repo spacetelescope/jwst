@@ -1,0 +1,48 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/moving_target.schema"
+type: object
+properties:
+  moving_target:
+    title: table of information for moving targets
+    fits_hdu: MOVING_TARGET_POSITION
+    datatype:
+    - name: time
+      datatype: float64
+    - name: moving_target_x
+      datatype: int32
+    - name: moving_target_y
+      datatype: int32
+    - name: ref_pixel_RA
+      datatype: float64
+    - name: ref_pixel_Dec
+      datatype: float64
+    - name: moving_target_RA
+      datatype: float64
+    - name: moving_target_Dec
+      datatype: float64
+    - name: mt_x_helio
+      datatype: float64
+    - name: mt_y_helio
+      datatype: float64
+    - name: mt_z_helio
+      datatype: float64
+    - name: jwst_x_helio
+      datatype: float64
+    - name: jwst_y_helio
+      datatype: float64
+    - name: jwst_z_helio
+      datatype: float64
+    - name: mt_x_jwst
+      datatype: float64
+    - name: mt_y_jwst
+      datatype: float64
+    - name: mt_z_jwst
+      datatype: float64
+    - name: mt_jwst_distance
+      datatype: float64
+    - name: mt_sun_distance
+      datatype: float64
+    - name: phase_angle
+      datatype: float64

@@ -8,12 +8,16 @@ import pytest
 from ci_watson.artifactory_helpers import UPLOAD_SCHEMA
 from astropy.table import Table
 from numpy.testing import assert_allclose
+from astropy.io.fits import conf
 
 from .regtestdata import RegtestData
 from jwst.regtest.sdp_pools_source import SDPPoolsSource
 
 
 TODAYS_DATE = datetime.now().strftime("%Y-%m-%d")
+
+# Turn of FITS memmap for all regtests (affects FITSDiff)
+conf.use_memmap = False
 
 
 @pytest.fixture(scope="session")
@@ -239,8 +243,10 @@ def diff_astropy_tables():
         if len(diffs) > 0:
             raise AssertionError("\n".join(diffs))
 
-        if result.meta != truth.meta:
-            diffs.append("Metadata does not match")
+        # Disable meta comparison for now, until we're able to specify
+        # individual entries for comparison
+        #if result.meta != truth.meta:
+        #    diffs.append("Metadata does not match")
 
         for col_name in truth.colnames:
             try:

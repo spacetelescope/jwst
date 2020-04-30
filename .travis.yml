@@ -1,6 +1,6 @@
 dist: xenial
 language: python
-python: 3.7.6
+python: 3.7.7
 
 sudo: false
 
@@ -27,12 +27,12 @@ matrix:
   fast_finish: true
 
   include:
-    - python: 3.6.9
-    - python: 3.7.6
-    - python: 3.8.1
+    - python: 3.6.10
+    - python: 3.7.7
+    - python: 3.8.2
 
     - env: PIP_DEPENDENCIES="numpy~=1.16.0 .[test]"
-      python: 3.6.9
+      python: 3.6.10
 
     - env: PIP_DEPENDENCIES="numpy~=1.17.0 .[test]"
 
@@ -42,7 +42,7 @@ matrix:
 
     # Test with dev dependencies
     - env: PIP_DEPENDENCIES="-r requirements-dev.txt .[test]"
-      python: 3.8.1
+      python: 3.8.2
 
     # Test with latest delivered CRDS_CONTEXT, as in regressions tests
     - env: CRDS_CONTEXT="jwst-edit"
@@ -58,7 +58,7 @@ matrix:
 
   allow_failures:
     - env: PIP_DEPENDENCIES="-r requirements-dev.txt .[test]"
-      python: 3.8.1
+      python: 3.8.2
 
     - env: CRDS_CONTEXT="jwst-edit"
            PIP_DEPENDENCIES=".[test]"

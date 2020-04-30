@@ -123,31 +123,54 @@ class Extract1dStep(Step):
 
         # Do the extraction
         if isinstance(input_model, datamodels.ModelContainer):
+
+            # This is the branch MRS and WFSS data take
             if len(input_model) > 1:
                 self.log.debug("Input contains %d items", len(input_model))
-                result = datamodels.ModelContainer()
-                for model in input_model:
-                    # This is a flag for do_extract1d.
-                    if model.meta.exposure.type in extract.WFSS_EXPTYPES:
-                        ref_file = 'N/A'
-                        self.log.info('No EXTRACT1D reference file '
-                                      'will be used')
-                    else:
+
+                if input_model[0].meta.exposure.type in extract.WFSS_EXPTYPES:
+
+                    # For WFSS level-3, the input is a single entry of a
+                    # SourceContainer, which contains a list of multiple
+                    # SlitModels for a single source. Send the whole list
+                    # into extract1d and put all results in a single product.
+                    ref_file = 'N/A'
+                    self.log.info('No EXTRACT1D reference file will be used')
+
+                    result = extract.run_extract1d(input_model, ref_file,
+                                                   self.smoothing_length,
+                                                   self.bkg_order,
+                                                   self.log_increment,
+                                                   self.subtract_background,
+                                                   self.apply_nod_offset,
+                                                   was_source_model=was_source_model)
+                    # Set the step flag to complete
+                    result.meta.cal_step.extract_1d = 'COMPLETE'
+
+                else:
+
+                    # For MRS, the input is a container with a list of multiple
+                    # IFUCubeModels. Work on one model at a time, creating
+                    # separate outputs for each.
+                    result = datamodels.ModelContainer()
+                    for model in input_model:
+
                         # Get the reference file name
                         ref_file = self.get_reference_file(model, 'extract1d')
                         self.log.info('Using EXTRACT1D reference file %s',
                                       ref_file)
-                    temp = extract.run_extract1d(model, ref_file,
-                                                 self.smoothing_length,
-                                                 self.bkg_order,
-                                                 self.log_increment,
-                                                 self.subtract_background,
-                                                 self.apply_nod_offset,
-                                                 was_source_model=was_source_model)
-                    # Set the step flag to complete in each MultiSpecModel
-                    temp.meta.cal_step.extract_1d = 'COMPLETE'
-                    result.append(temp)
-                    del temp
+                        temp = extract.run_extract1d(model, ref_file,
+                                                     self.smoothing_length,
+                                                     self.bkg_order,
+                                                     self.log_increment,
+                                                     self.subtract_background,
+                                                     self.apply_nod_offset,
+                                                     was_source_model=was_source_model)
+                        # Set the step flag to complete in each MultiSpecModel
+                        temp.meta.cal_step.extract_1d = 'COMPLETE'
+                        result.append(temp)
+                        del temp
+
             elif len(input_model) == 1:
                 if input_model[0].meta.exposure.type in extract.WFSS_EXPTYPES:
                     ref_file = 'N/A'
@@ -171,7 +194,11 @@ class Extract1dStep(Step):
                 self.log.error('Input model is empty;')
                 self.log.error('extract_1d will be skipped.')
                 return input_model
+
         else:
+
+            # Input is a single model, resulting in a single output.
+
             # Get the reference file name
             if input_model.meta.exposure.type in extract.WFSS_EXPTYPES:
                 ref_file = 'N/A'
@@ -179,6 +206,7 @@ class Extract1dStep(Step):
             else:
                 ref_file = self.get_reference_file(input_model, 'extract1d')
                 self.log.info('Using EXTRACT1D reference file %s', ref_file)
+
             result = extract.run_extract1d(input_model, ref_file,
                                            self.smoothing_length,
                                            self.bkg_order,

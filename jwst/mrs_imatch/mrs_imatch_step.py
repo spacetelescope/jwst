@@ -11,7 +11,7 @@ import numpy as np
 from .. stpipe import Step
 from .. import datamodels
 from .. wiimatch.match import match_lsq
-
+from astropy.stats import sigma_clipped_stats as sigclip
 
 __all__ = ['MRSIMatchStep', 'apply_background_2d']
 
@@ -259,6 +259,7 @@ def _match_models(models, channel, degree, center=None, center_cs='image'):
     cbs.channel = str(channel)
     cbs.band = 'ALL'
     cbs.single = True
+    cbs.weighting = 'EMSM'
     cube_models = cbs.process(models)
     if len(cube_models) != len(models):
         raise RuntimeError("The number of generated cube models does not "
@@ -328,6 +329,20 @@ def _match_models(models, channel, degree, center=None, center_cs='image'):
     #if np.isnan(sigma_data).any():
     #    print('a nan exists in sigma data')
 
+    # MRS fields of view are small compared to source sizes,
+    # and undersampling produces significant differences
+    # in overlap regions between exposures.
+    # Therefore use sigma-clipping to detect and remove sources
+    # (and unmasked outliers) prior to doing the background matching.
+    # Loop over input exposures
+    for image, mask in zip(image_data, mask_data):
+        # Do statistics wavelength by wavelength
+        for thisimg, thismask in zip(image, mask):
+            # Sigma clipped statistics, ignoring zeros where no data
+            _, themed, clipsig = sigclip(thisimg, mask_value=0.)
+            # Reject beyond 3 sigma
+            reject = np.where(np.abs(thisimg - themed) > 3 * clipsig)
+            thismask[reject] = 0
 
     bkg_poly_coef, mat, _, _, effc, cs = match_lsq(
         images=image_data,

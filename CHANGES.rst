@@ -33,6 +33,9 @@ coron
 datamodels
 ----------
 
+- Update schemas to add moving_target_position and cheby tables to the level1b
+  schema [#4760]
+  
 - Deprecate ``DrizProductModel`` and ``MultiProductModel`` and replace with
   updated versions of ``ImageModel`` and ``SlitModel`` that include "CON" and
   "WHT" arrays for resampled data. [#4552]
@@ -46,6 +49,13 @@ datamodels
 
 - Removed old MIRI-specific filteroffset schema.  [#4776]
 
+- Added FASTGRPAVG[8,16,32,64] to the READPATT keyword allowed values. [#4818]
+
+exp_to_source
+-------------
+
+- Resulting MultiExposureModels are now updated with header information from the inputs. [#4771]
+
 extract_1d
 ----------
 
@@ -55,6 +65,10 @@ extract_1d
 
 - Remove pixel-by-pixel calls to wcs; copy input keywords to output for
   more types of input data. [#4685]
+
+- Updated to create a single ``x1d`` product per source for WFSS data, containing
+  all extracted spectra for a given source, instead of multiple ``x1d`` files per
+  source. [#4846]
 
 extract_2d
 ----------
@@ -67,6 +81,14 @@ master_background
 
 - Updated step arguments in the documentation. [#4723]
 
+- Fix issue with files left open at end of step [#4775]
+
+mrs_imatch
+----------
+
+- Updated step to use EMSM cube weighting, and to perform iterative sigma
+  rejection of sources prior to running the background solver.  [#4732]
+
 outlier_detection
 -----------------
 
@@ -76,11 +98,24 @@ outlier_detection
   Default value of ``good_bits`` now includes all DQ flags except ``DO_NOT_USE``.
   Also, newly flagged outliers are flagged with ``DO_NOT_USE + OUTLIER``.
 
+- Added a hardcoded declaration of a reasonable scale parameter for MIRI MRS as a stopgap
+  measure until a parameter reference file can pass one more cleanly. [#4778]
+
 pipeline
 --------
 
+- Update ``calwebb_detector1`` to reduce the memory used in processing. [#4643]
+
 - Update ``calwebb_coron3`` to return ``ImageModel`` instead of ``DrizProductModel``,
   when necessary. [#4552]
+
+- Fix issue with files left open at end of ``calwebb_spec2`` [#4775]
+
+- Update ``calwebb_spec3`` to use suffix ``c1d`` for ``combine_1d`` products.
+  [#4846]
+
+- Update ``calwebb_spec3`` to update the ASNTABLE keyword in all output
+  products, to reflect the name of the spec3 ASN used as input. [#4865]
 
 resample
 --------
@@ -95,6 +130,9 @@ resample
   The parameter ``good_bits`` has been removed in favor of allowing all
   DQ flags except for ``DO_NOT_USE``
 
+- Updated to reject pixels with DQ flag NON_SCIENCE, in addition to
+  DO_NOT_USE. [#4851]
+
 resample_spec
 -------------
 
@@ -105,6 +143,16 @@ resample_spec
   [#4552]
 
 - Enable model metadata blending [#4765]
+
+rscd
+----
+
+- Added baseline algorithm that flags groups [#4669]
+
+set_telescope_pointing
+----------------------
+
+- Update to add moving target coords to the header [#4760]
 
 source_catalog
 --------------
@@ -129,6 +177,8 @@ stpipe
 
 - Use only a single member of an association for CRDS STEPPARS checking [#4684]
 
+- Fix handling of the boolean-like environmental variables PASS_INVALID_VALUES and STRICT_VALIDATION [#4842]
+
 strun
 -----
 
@@ -138,6 +188,11 @@ tweakreg
 --------
 
 - Updated step arguments in the documentation. [#4723]
+
+wfs_combine
+-----------
+
+- Update the value of the ASNTABLE keyword in the output ``wfscmb`` product. [#4849]
 
 0.15.1 (2020-03-10)
 ===================
@@ -332,13 +387,15 @@ stpipe
 transforms
 ----------
 
- - Refactored the WFSS transforms to improve performance. [#4603]
+- Removed ``TPCorr`` WCS correction model as it is now defined in ``tweakwcs``
+  as a compound model of elementary ``astropy`` and ``gwcs`` models. [#4790]
 
- - Added ``source_ra`` and ``source_dec`` to the ``Slit`` namedtuple
-   with default values of 0.0. These are populated from the MSA metadata
-   file. [#4613]
+- Refactored the WFSS transforms to improve performance. [#4603]
 
-  
+- Added ``source_ra`` and ``source_dec`` to the ``Slit`` namedtuple
+  with default values of 0.0. These are populated from the MSA metadata
+  file. [#4613]
+
 tweakreg
 --------
 

@@ -118,12 +118,13 @@ def test_spec2(run_spec2, fitsdiff_default_kwargs, suffix):
 @pytest.mark.parametrize(
     'output',
     [
+        'ifushort_ch12_spec3_mrs_imatch.fits',
         'ifushort_ch12_spec3_ch1-medium_s3d.fits',
-        'ifushort_ch12_spec3_ch1-medium_x1d.fits',
         'ifushort_ch12_spec3_ch2-medium_s3d.fits',
+        'ifushort_ch12_spec3_ch1-medium_x1d.fits',
         'ifushort_ch12_spec3_ch2-medium_x1d.fits',
-        'ifushort_ch12_spec3_mrs_imatch.fits'
-    ]
+    ],
+    ids=["mrs_imatch", "ch1-s3d", "ch2-s3d", "ch1-x1d", "ch2-x1d"]
 )
 def test_spec3(run_spec3, fitsdiff_default_kwargs, output):
     """Regression test matching output files"""
@@ -138,15 +139,17 @@ def test_spec3(run_spec3, fitsdiff_default_kwargs, output):
 @pytest.mark.parametrize(
     'output',
     [
-        'ifushort_set2_0_a3001_crf.fits',
         'ifushort_set2_0_mrs_imatch.fits',
-        'ifushort_set2_1_a3001_crf.fits',
         'ifushort_set2_1_mrs_imatch.fits',
+        'ifushort_set2_0_a3001_crf.fits',
+        'ifushort_set2_1_a3001_crf.fits',
         'ifushort_set2_ch1-short_s3d.fits',
-        'ifushort_set2_ch1-short_x1d.fits',
         'ifushort_set2_ch2-short_s3d.fits',
+        'ifushort_set2_ch1-short_x1d.fits',
         'ifushort_set2_ch2-short_x1d.fits',
-    ]
+    ],
+    ids=["ch1-mrs_imatch", "ch2-mrs_imatch", "ch1-crf", "ch2-crf",
+        "ch1-s3d", "ch2-s3d", "ch1-x1d", "ch2-x1d"]
 )
 def test_spec3_multi(run_spec3_multi, fitsdiff_default_kwargs, output):
     """Regression test matching output files"""
@@ -163,21 +166,19 @@ def test_miri_mrs_wcs(run_spec2, fitsdiff_default_kwargs):
     # get input assign_wcs and truth file
     output = "ifushort_ch12_assign_wcs.fits"
     rtdata.output = output
-    rtdata.get_truth("truth/test_miri_mrs/"+output)
+    rtdata.get_truth(f"truth/test_miri_mrs/{output}")
 
     # Open the output and truth file
-    im = datamodels.open(rtdata.output)
-    im_truth = datamodels.open(rtdata.truth)
+    with datamodels.open(rtdata.output) as im, datamodels.open(rtdata.truth) as im_truth:
+        x, y = grid_from_bounding_box(im.meta.wcs.bounding_box)
+        ra, dec, lam = im.meta.wcs(x, y)
+        ratruth, dectruth, lamtruth = im_truth.meta.wcs(x, y)
+        assert_allclose(ra, ratruth)
+        assert_allclose(dec, dectruth)
+        assert_allclose(lam, lamtruth)
 
-    x, y = grid_from_bounding_box(im.meta.wcs.bounding_box)
-    ra, dec, lam = im.meta.wcs(x, y)
-    ratruth, dectruth, lamtruth = im_truth.meta.wcs(x, y)
-    assert_allclose(ra, ratruth)
-    assert_allclose(dec, dectruth)
-    assert_allclose(lam, lamtruth)
-
-    # Test the inverse transform
-    xtest, ytest = im.meta.wcs.backward_transform(ra, dec, lam)
-    xtruth, ytruth = im_truth.meta.wcs.backward_transform (ratruth, dectruth, lamtruth)
-    assert_allclose(xtest, xtruth)
-    assert_allclose(ytest, ytruth)
+        # Test the inverse transform
+        xtest, ytest = im.meta.wcs.backward_transform(ra, dec, lam)
+        xtruth, ytruth = im_truth.meta.wcs.backward_transform(ratruth, dectruth, lamtruth)
+        assert_allclose(xtest, xtruth)
+        assert_allclose(ytest, ytruth)

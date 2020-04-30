@@ -154,6 +154,21 @@ def test_invalid_fits():
         model = util.open(TMP_FITS)
         model.close()
 
+    # Check that specifying an argument does not get
+    # overridden by the environmental.
+    with pytest.raises(jsonschema.ValidationError):
+        os.environ['STRICT_VALIDATION'] = '0'
+        model = util.open(TMP_FITS, strict_validation=True)
+        model.close()
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        os.environ['PASS_INVALID_VALUES'] = '0'
+        os.environ['STRICT_VALIDATION'] = '0'
+        model = util.open(TMP_FITS, pass_invalid_values=True)
+        assert model.meta.instrument.name == 'FOO'
+        model.close()
+
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
         os.environ['PASS_INVALID_VALUES'] = '0'
