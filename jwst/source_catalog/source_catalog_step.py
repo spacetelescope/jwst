@@ -40,7 +40,7 @@ class SourceCatalogStep(Step):
         suffix = string(default='cat')        # Default suffix for output files
     """
 
-    reference_file_types = ['apcorr', 'abvega_offset']
+    reference_file_types = ['apcorr', 'abvegaoffset']
 
     def process(self, input_model):
         if self.kernel_xsize is not None or self.kernel_ysize is not None:
@@ -53,21 +53,22 @@ class SourceCatalogStep(Step):
                 apcorr_fn = self.get_reference_file(input_model, 'apcorr')
             except CrdsLookupError:
                 apcorr_fn = None
-            self.log.info(f'Using apcorr reference file {apcorr_fn}')
+            self.log.info(f'Using APCORR reference file {apcorr_fn}')
 
             try:
-                abvega_offset_fn = self.get_reference_file(
-                    input_model, 'abvega_offset')
+                abvegaoffset_fn = self.get_reference_file(input_model,
+                                                          'abvegaoffset')
+
             except CrdsLookupError:
-                abvega_offset_fn = None
-            self.log.info('Using abvega_offset reference file ' +
-                          f'{abvega_offset_fn}')
+                abvegaoffset_fn = None
+            self.log.info('Using ABVEGAOFFSET reference file '
+                          f'{abvegaoffset_fn}')
 
             aperture_ee = (self.aperture_ee1, self.aperture_ee2,
                            self.aperture_ee3)
             refdata = ReferenceData(model, aperture_ee=aperture_ee,
                                     apcorr_filename=apcorr_fn,
-                                    abvega_offset_filename=abvega_offset_fn)
+                                    abvegaoffset_filename=abvegaoffset_fn)
 
             coverage_mask = (model.wht == 0)
             bkg = Background(model.data, box_size=self.bkg_boxsize,
