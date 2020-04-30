@@ -100,7 +100,7 @@ class ApCorr:
         cols_to_correct = ('flux', 'surf_bright', 'error', 'sb_error')
 
         for row in spec_table:
-            correction = self.apcorr_func(row['wavelength'], row['npixels'])
+            correction = self.apcorr_func(row['npixels'], row['wavelength'])
 
             for col in cols_to_correct:
                 row[col] *= correction
