@@ -61,14 +61,14 @@ class ApCorr:
         }
 
         instrument = self.model.meta.instrument.name.upper()
-        mode = self.model.meta.mode.name.upper()
+        detector = self.model.meta.instrument.detector.upper()
 
         relevant_pars = match_pars[instrument]
 
-        if mode in ('IFU', 'MOS'):
+        if detector in ('IFU', 'MOS'):
             return relevant_pars['IFU/MOS']
 
-        return relevant_pars[mode]
+        return relevant_pars[detector]
 
     def _reduce_reftable(self):
         """Reduce full reference table to a matched row."""

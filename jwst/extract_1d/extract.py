@@ -2863,9 +2863,7 @@ def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order
             # The input units will normally be MJy / sr, but for NIRSpec and
             # NIRISS SOSS point-source spectra the units will be MJy.
             input_units_are_megajanskys = (
-                    photom_has_been_run
-                    and source_type == 'POINT'
-                    and (instrument == 'NIRSPEC' or exp_type == 'NIS_SOSS')
+                photom_has_been_run and source_type == 'POINT' and (instrument == 'NIRSPEC' or exp_type == 'NIS_SOSS')
             )
 
             if photom_has_been_run:
@@ -2880,6 +2878,7 @@ def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order
                     # surf_bright was assigned above
             else:
                 flux = temp_flux                        # count rate
+
             del temp_flux
 
             error = np.zeros_like(flux)
