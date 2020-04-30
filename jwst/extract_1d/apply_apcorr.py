@@ -1,22 +1,22 @@
 from typing import Tuple
 from scipy.interpolate import interp2d
+from astropy.io import fits
 
 from ..assign_wcs.util import compute_scale
 from ..datamodels import DataModel, ReferenceFileModel
 
 
 class ApCorr:
-    """Perform the appropriate aperture correction on input extraction data.
+    """Perform aperture correction on input extraction data.
 
     """
-    def __init__(self, input_model: DataModel, appcorr_model: ReferenceFileModel, slitname: str = None,
+    def __init__(self, input_model: DataModel, appcorr_table: fits.FITS_rec, slitname: str = None,
                  location: Tuple[float, float] = None):
-        # TODO: Need to keep the input_model to access wcs and whatnot for calculating pixel scale if needed
         self.reference = None
         self.correction = None
 
         self.model = input_model
-        self._reference_table = appcorr_model.appcorr_table
+        self._reference_table = appcorr_table
         self.slitname = slitname
         self.location = location
         self.match_keys = self._get_match_keys()
@@ -42,6 +42,7 @@ class ApCorr:
         self.apcorr_func = self._approx_apcorr_fn()
 
     def _get_match_keys(self):
+        """Get column keys needed for reducing the reference table."""
         match_pars = {
             'MIRI': {
                 'LRS': ['subarray'],
@@ -70,6 +71,7 @@ class ApCorr:
         return relevant_pars[mode]
 
     def _reduce_reftable(self):
+        """Reduce full reference table to a matched row."""
         table = self._reference_table.copy()
 
         for key, value in self.match_pars:
@@ -78,6 +80,7 @@ class ApCorr:
         self.reference = table
 
     def _approx_apcorr_fn(self):
+        """Generate an approximate function for interpolating apcorr values to input wavelength and size."""
         wavelength = self.reference['wavelength'][0][:self.reference['nelem_wl']]
         size = self.reference['size'][0][:self.reference['nelem_size']]
 
@@ -85,7 +88,15 @@ class ApCorr:
 
         return interp2d(size, wavelength, apcorr)
 
-    def apply_apcorr(self, spec_table):
+    def apply_apcorr(self, spec_table: fits.FITS_rec):
+        """Apply interpolated aperture correction value to source-related extraction results.
+
+        Parameters
+        ----------
+        spec_table : `~fits.FITS_rec`
+            Table of aperture corrections values from apcorr reference file.
+
+        """
         cols_to_correct = ('flux', 'surf_bright', 'error', 'sb_error')
 
         for row in spec_table:

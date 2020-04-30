@@ -7,7 +7,7 @@ import math
 import numpy as np
 from astropy.modeling import polynomial
 from .. import datamodels
-from ..datamodels import dqflags
+from ..datamodels import dqflags, open as dm_open
 from ..assign_wcs import niriss         # for specifying spectral order number
 from ..assign_wcs.util import wcs_bbox_from_shape
 from ..lib import pipe_utils
@@ -15,6 +15,7 @@ from ..lib.wcs_utils import get_wavelengths
 from . import extract1d
 from . import ifu
 from . import spec_wcs
+from .apply_apcorr import ApCorr
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -2518,9 +2519,8 @@ class ImageExtractModel(ExtractBase):
         return (mask_target, mask_bkg)
 
 
-def run_extract1d(input_model, refname, smoothing_length, bkg_order,
-                  log_increment, subtract_background, apply_nod_offset,
-                  was_source_model=False):
+def run_extract1d(input_model, extract_ref_name, smoothing_length, bkg_order, log_increment, subtract_background,
+                  apply_nod_offset, was_source_model=False, apcorr=None):
     """Extract 1-D spectra.
 
     This just reads the reference file (if any) and calls do_extract1d.
@@ -2530,7 +2530,7 @@ def run_extract1d(input_model, refname, smoothing_length, bkg_order,
     input_model : data model
         The input science model.
 
-    refname : str
+    extract_ref_name : str
         The name of the reference file, or "N/A".
 
     smoothing_length : int or None
@@ -2562,14 +2562,19 @@ def run_extract1d(input_model, refname, smoothing_length, bkg_order,
         obtained by iterating over a SourceModelContainer.  The default
         is False.
 
+    apcorr : str
+        Name of the APCORR reference file. Default is None
+
     Returns
     -------
     output_model : data model
         A new MultiSpecModel containing the extracted spectra.
-    """
 
+    """
     # Read and interpret the reference file.
-    ref_dict = load_ref_file(refname)
+    ref_dict = load_ref_file(extract_ref_name)  # TODO: either modify or add function to "load" apcorr data
+
+    apcorr_table = dm_open(apcorr) if apcorr is not None else None
 
     # This item is a flag to let us know that do_extract1d was called
     # from run_extract1d; that is, we don't expect this key to be present
@@ -2578,10 +2583,21 @@ def run_extract1d(input_model, refname, smoothing_length, bkg_order,
     # we'll set S_EXTR1D to 'COMPLETE'.
     if ref_dict is not None:
         ref_dict['need_to_set_to_complete'] = False
-    output_model = do_extract1d(input_model, ref_dict,
-                                smoothing_length, bkg_order,
-                                log_increment, subtract_background,
-                                apply_nod_offset, was_source_model)
+
+    output_model = do_extract1d(
+        input_model,
+        ref_dict,
+        smoothing_length,
+        bkg_order,
+        log_increment,
+        subtract_background,
+        apply_nod_offset,
+        was_source_model,
+        apcorr_table=apcorr_table
+    )
+
+    if apcorr_table is not None:
+        apcorr_table.close()
 
     # Remove target.source_type from the output model, so that it
     # doesn't force creation of an empty SCI extension in the output
@@ -2626,10 +2642,8 @@ def ref_dict_sanity_check(ref_dict):
     return ref_dict
 
 
-def do_extract1d(input_model, ref_dict, smoothing_length=None,
-                 bkg_order=None, log_increment=50,
-                 subtract_background=None, apply_nod_offset=None,
-                 was_source_model=False):
+def do_extract1d(input_model, ref_dict, smoothing_length=None, bkg_order=None, log_increment=50,
+                 subtract_background=None, apply_nod_offset=None, was_source_model=False, apcorr_table=None):
     """Extract 1-D spectra.
 
     In the pipeline, this function would be called by run_extract1d.
@@ -2680,6 +2694,9 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
         obtained by iterating over a SourceModelContainer.  The default
         is False.
 
+    apcorr_table : `~fits.FITS_rec`
+        Table of aperture correction values from the APCORR reference file.
+
     Returns
     -------
     output_model : data model
@@ -2704,8 +2721,10 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
 
     # Setup the output model
     output_model = datamodels.MultiSpecModel()
+
     if hasattr(input_temp, "int_times"):
         output_model.int_times = input_temp.int_times.copy()
+
     output_model.update(input_temp)
 
     # This data type is used for creating an output table.
@@ -2716,6 +2735,7 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
     prism_mode = is_prism(input_temp)
     instrument = input_temp.meta.instrument.name
     exp_type = input_temp.meta.exposure.type
+
     if instrument is not None:
         instrument = instrument.upper()
 
@@ -2725,6 +2745,7 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
         s_photom = input_temp.meta.cal_step.photom
     except AttributeError:
         s_photom = None
+
     if s_photom is not None and s_photom.upper() == 'COMPLETE':
         photom_has_been_run = True
         flux_units = 'Jy'
@@ -2738,17 +2759,16 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
     if apply_nod_offset:
         if exp_type in WFSS_EXPTYPES + ['NRS_FIXEDSLIT', 'NRS_MSASPEC']:
             apply_nod_offset = False
-            log.warning("Correcting for nod/dither offset is currently "
-                        "not supported for exp_type = %s, so "
-                        "apply_nod_offset will be set to False",
-                        input_temp.meta.exposure.type)
+            log.warning(
+                f"Correcting for nod/dither offset is currently not supported for exp_type = "
+                f"{input_temp.meta.exposure.type}, so apply_nod_offset will be set to False",
+            )
 
     # Handle inputs that contain one or more slit models
     if (was_source_model or
         isinstance(input_model, datamodels.MultiSlitModel)):
 
         if was_source_model:
-
             # SourceContainer has a single list of SlitModels
             slits = input_model
 
@@ -2758,61 +2778,77 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
             input_model = input_model[0]
 
         elif isinstance(input_model, datamodels.MultiSlitModel):
-
             # A simple MultiSlitModel, not in a container
             slits = input_model.slits
 
         # Loop over the slits in the input model
         for slit in slits:
-            log.info('Working on slit %s', slit.name)
+            log.info(f'Working on slit {slit.name}')
             prev_offset = OFFSET_NOT_ASSIGNED_YET
+
             if np.size(slit.data) <= 0:
-                log.info('No data for slit %s, skipping ...', slit.name)
+                log.info(f'No data for slit {slit.name}, skipping ...')
                 continue
+
             sp_order = get_spectral_order(slit)
+
             if sp_order == 0 and not prism_mode:
                 log.info("Spectral order 0 is a direct image, skipping ...")
                 continue
+
             source_type = slit.source_type
+
             if source_type != 'POINT':
                 apply_nod_offset = False
-                log.warning("SRCTYPE = '%s'; correcting for nod/dither "
-                            "offset will only be done for a point source, "
-                            "so apply_nod_offset will be set to False",
-                            source_type)
+                log.warning(
+                    f"SRCTYPE = {source_type}'; correcting for nod/dither offset will only be done for a point source, "
+                    f"so apply_nod_offset will be set to False"
+                )
             extract_params = get_extract_parameters(
-                                ref_dict,
-                                slit, slit.name, sp_order,
-                                input_model.meta, smoothing_length, bkg_order,
-                                apply_nod_offset)
+                ref_dict,
+                slit,
+                slit.name,
+                sp_order,
+                input_model.meta,
+                smoothing_length,
+                bkg_order,
+                apply_nod_offset
+            )
+
             if subtract_background is not None:
                 extract_params['subtract_background'] = subtract_background
+
             if extract_params['match'] == NO_MATCH:
                 log.critical('Missing extraction parameters.')
                 raise ValueError('Missing extraction parameters.')
             elif extract_params['match'] == PARTIAL:
-                log.info('Spectral order %d not found, skipping ...', sp_order)
+                log.info(f'Spectral order {sp_order: d} not found, skipping ...')
                 continue
-            extract_params['dispaxis'] = \
-                        slit.meta.wcsinfo.dispersion_direction
+
+            extract_params['dispaxis'] = slit.meta.wcsinfo.dispersion_direction
+
             if extract_params['dispaxis'] is None:
-                log.warning("The dispersion direction information is "
-                            "missing, so skipping ...")
+                log.warning("The dispersion direction information is missing, so skipping ...")
                 continue
+
             if photom_has_been_run:
                 pixel_solid_angle = slit.meta.photometry.pixelarea_steradians
+
                 if pixel_solid_angle is None:
                     pixel_solid_angle = 1.
-                    log.warning("Pixel area (solid angle) is not populated; "
-                                "the flux will not be correct.")
+                    log.warning("Pixel area (solid angle) is not populated; the flux will not be correct.")
             else:
                 pixel_solid_angle = 1.                  # not needed
 
             try:
-                (ra, dec, wavelength, temp_flux, background,
-                 npixels, dq, prev_offset) = extract_one_slit(
-                                        input_model, slit, -1,
-                                        prev_offset, True, extract_params)
+                ra, dec, wavelength, temp_flux, background, npixels, dq, prev_offset = extract_one_slit(
+                    input_model,
+                    slit,
+                    -1,
+                    prev_offset,
+                    True,
+                    extract_params
+                )
             except InvalidSpectralOrderNumberError as e:
                 log.info(str(e) + ", skipping ...")
                 continue
@@ -2826,10 +2862,12 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
             # Convert to flux density.
             # The input units will normally be MJy / sr, but for NIRSpec and
             # NIRISS SOSS point-source spectra the units will be MJy.
-            input_units_are_megajanskys = (photom_has_been_run and
-                                           source_type == 'POINT' and
-                                           (instrument == 'NIRSPEC' or
-                                            exp_type == 'NIS_SOSS'))
+            input_units_are_megajanskys = (
+                    photom_has_been_run
+                    and source_type == 'POINT'
+                    and (instrument == 'NIRSPEC' or exp_type == 'NIS_SOSS')
+            )
+
             if photom_has_been_run:
                 # for NIRSpec data and NIRISS SOSS, point source
                 if input_units_are_megajanskys:
@@ -2843,13 +2881,16 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
             else:
                 flux = temp_flux                        # count rate
             del temp_flux
+
             error = np.zeros_like(flux)
             sb_error = np.zeros_like(flux)
             berror = np.zeros_like(flux)
-            otab = np.array(list(zip(wavelength,
-                                     flux, error, surf_bright, sb_error,
-                                     dq, background, berror, npixels)),
-                            dtype=spec_dtype)
+
+            otab = np.array(
+                list(zip(wavelength, flux, error, surf_bright, sb_error, dq, background, berror, npixels)),
+                dtype=spec_dtype
+            )
+
             spec = datamodels.SpecModel(spec_table=otab)
             spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
             spec.spec_table.columns['wavelength'].unit = 'um'
@@ -2864,14 +2905,21 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
             spec.spectral_order = sp_order
             spec.dispersion_direction = extract_params['dispaxis']
             copy_keyword_info(slit, slit.name, spec)
+
+            if apcorr_table is not None:
+                apcorr = ApCorr(input_model, apcorr_table, slitname=slit.name, location=(ra, dec))
+                apcorr.apply_apcorr(spec.spec_table)
+
             output_model.spec.append(spec)
     else:
         # These default values for slitname are not really slit names, and
         # slitname may be assigned a better value below, in the sections
         # for input_model being an ImageModel or a SlitModel.
         slitname = input_model.meta.exposure.type
+
         if slitname is None:
             slitname = ANY
+
         if slitname == 'NIS_SOSS':
             slitname = input_model.meta.subarray.name
 
@@ -2886,67 +2934,79 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
 
         if photom_has_been_run:
             pixel_solid_angle = input_model.meta.photometry.pixelarea_steradians
+
             if pixel_solid_angle is None:
-                log.warning("Pixel area (solid angle) is not populated; "
-                            "the flux will not be correct.")
+                log.warning("Pixel area (solid angle) is not populated; the flux will not be correct.")
                 pixel_solid_angle = 1.
         else:
             pixel_solid_angle = 1.                      # not needed
 
         source_type = input_model.meta.target.source_type
-        input_units_are_megajanskys = (photom_has_been_run and
-                                       source_type == 'POINT' and
-                                       (instrument == 'NIRSPEC' or
-                                        exp_type == 'NIS_SOSS'))
+
+        input_units_are_megajanskys = (
+            photom_has_been_run and source_type == 'POINT' and (instrument == 'NIRSPEC' or exp_type == 'NIS_SOSS')
+        )
+
         if source_type != 'POINT':
             apply_nod_offset = False
-            log.warning("SRCTYPE = '%s'; correcting for nod/dither "
-                        "offset will only be done for a point source, "
-                        "so apply_nod_offset will be set to False",
-                        source_type)
+            log.warning(
+                f"SRCTYPE = '{source_type}'; correcting for nod/dither offset will only be done for a point source, so "
+                f"apply_nod_offset will be set to False"
+            )
 
         if isinstance(input_model, datamodels.ImageModel):
 
             if getattr(input_model, "name", None) is not None:
                 slitname = input_model.name
+
             log.debug(f'slitname={slitname}')
 
             prev_offset = OFFSET_NOT_ASSIGNED_YET
             for sp_order in spectral_order_list:
                 if sp_order == "not set yet":
                     sp_order = get_spectral_order(input_model)
+
                 if sp_order == 0 and not prism_mode:
-                    log.info("Spectral order 0 is a direct image, "
-                             "skipping ...")
+                    log.info("Spectral order 0 is a direct image, skipping ...")
                     continue
 
                 extract_params = get_extract_parameters(
-                                    ref_dict,
-                                    input_model, slitname, sp_order,
-                                    input_model.meta, smoothing_length,
-                                    bkg_order,
-                                    apply_nod_offset)
+                    ref_dict,
+                    input_model,
+                    slitname,
+                    sp_order,
+                    input_model.meta,
+                    smoothing_length,
+                    bkg_order,
+                    apply_nod_offset
+                )
+
                 if subtract_background is not None:
                     extract_params['subtract_background'] = subtract_background
+
                 if extract_params['match'] == EXACT:
                     slit = None
-                    extract_params['dispaxis'] = \
-                                input_model.meta.wcsinfo.dispersion_direction
+                    extract_params['dispaxis'] = input_model.meta.wcsinfo.dispersion_direction
+
                     if extract_params['dispaxis'] is None:
-                        log.warning("The dispersion direction information is "
-                                    "missing, so skipping ...")
+                        log.warning("The dispersion direction information is missing, so skipping ...")
                         continue
+
                     try:
-                        (ra, dec, wavelength, temp_flux, background,
-                         npixels, dq, prev_offset) = extract_one_slit(
-                                        input_model, slit, -1,
-                                        prev_offset, True, extract_params)
+                        ra, dec, wavelength, temp_flux, background, npixels, dq, prev_offset = extract_one_slit(
+                            input_model,
+                            slit,
+                            -1,
+                            prev_offset,
+                            True,
+                            extract_params
+                        )
                     except InvalidSpectralOrderNumberError as e:
                         log.info(str(e) + ", skipping ...")
                         continue
+
                 elif extract_params['match'] == PARTIAL:
-                    log.info('Spectral order %d not found, skipping ...',
-                             sp_order)
+                    log.info(f'Spectral order {sp_order: d} not found, skipping ...')
                     continue
                 else:
                     log.critical('Missing extraction parameters.')
@@ -2971,18 +3031,20 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                         # surf_bright was assigned above
                 else:
                     flux = temp_flux                        # count rate
+
                 del temp_flux
+
                 error = np.zeros_like(flux)
                 sb_error = np.zeros_like(flux)
                 berror = np.zeros_like(flux)
-                otab = np.array(list(zip(wavelength,
-                                         flux, error,
-                                         surf_bright, sb_error,
-                                         dq, background, berror, npixels)),
-                                dtype=spec_dtype)
+
+                otab = np.array(
+                    list(zip(wavelength, flux, error, surf_bright, sb_error, dq, background, berror, npixels)),
+                    dtype=spec_dtype
+                )
+
                 spec = datamodels.SpecModel(spec_table=otab)
-                spec.meta.wcs = spec_wcs.create_spectral_wcs(
-                                        ra, dec, wavelength)
+                spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
                 spec.spec_table.columns['wavelength'].unit = 'um'
                 spec.spec_table.columns['flux'].unit = flux_units
                 spec.spec_table.columns['error'].unit = flux_units
@@ -2998,10 +3060,14 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                 # intended to be a SlitModel object, but ImageModel now has
                 # the attributes we will look for in this function.
                 copy_keyword_info(input_model, slitname, spec)
+
+                if apcorr_table is not None:
+                    apcorr = ApCorr(input_model, apcorr_table, slitname=slitname, location=(ra, dec))
+                    apcorr.apply_apcorr(spec.spec_table)
+
                 output_model.spec.append(spec)
 
-        elif isinstance(input_model, (datamodels.CubeModel,
-                                      datamodels.SlitModel)):
+        elif isinstance(input_model, (datamodels.CubeModel, datamodels.SlitModel)):
             slit = None
             # Replace the default value for slitname with a more accurate
             # value, if possible.
@@ -3018,59 +3084,70 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
             if photom_has_been_run:
                 pixel_solid_angle = input_model.meta.photometry.pixelarea_steradians
                 if pixel_solid_angle is None:
-                    log.warning("Pixel area (solid angle) is not populated; "
-                                "the flux will not be correct.")
+                    log.warning("Pixel area (solid angle) is not populated; the flux will not be correct.")
                     pixel_solid_angle = 1.
             else:
                 pixel_solid_angle = 1.                  # not needed
+
             # NRS_BRIGHTOBJ exposures are instances of SlitModel.
             prev_offset = OFFSET_NOT_ASSIGNED_YET
+
             for sp_order in spectral_order_list:
                 if sp_order == "not set yet":
                     sp_order = get_spectral_order(input_model)
                     if sp_order == 0 and not prism_mode:
-                        log.info("Spectral order 0 is a direct image, "
-                                 "skipping ...")
+                        log.info("Spectral order 0 is a direct image, skipping ...")
                         continue
 
                 extract_params = get_extract_parameters(
-                                    ref_dict,
-                                    input_model, slitname, sp_order,
-                                    input_model.meta, smoothing_length,
-                                    bkg_order,
-                                    apply_nod_offset)
+                    ref_dict,
+                    input_model,
+                    slitname,
+                    sp_order,
+                    input_model.meta,
+                    smoothing_length,
+                    bkg_order,
+                    apply_nod_offset
+                )
+
                 if subtract_background is not None:
                     extract_params['subtract_background'] = subtract_background
+
                 if extract_params['match'] == NO_MATCH:
                     log.critical('Missing extraction parameters.')
                     raise ValueError('Missing extraction parameters.')
                 elif extract_params['match'] == PARTIAL:
-                    log.warning('Spectral order %d not found, skipping ...',
-                                sp_order)
+                    log.warning(f'Spectral order {sp_order: d} not found, skipping ...')
                     continue
-                extract_params['dispaxis'] = \
-                                input_model.meta.wcsinfo.dispersion_direction
+
+                extract_params['dispaxis'] = input_model.meta.wcsinfo.dispersion_direction
+
                 if extract_params['dispaxis'] is None:
-                    log.warning("The dispersion direction information is "
-                                "missing, so skipping ...")
+                    log.warning("The dispersion direction information is missing, so skipping ...")
                     continue
 
                 # Loop over each integration in the input model
                 verbose = True          # for just the first integration
                 shape = input_model.data.shape
+
                 if len(shape) == 3 and shape[0] == 1 or len(shape) == 2:
                     log.info("Beginning loop, just 1 integration ...")
                     integrations = [-1]
                 else:
-                    log.info("Beginning loop over {} integrations ...".format(shape[0]))
+                    log.info(f"Beginning loop over {shape[0]} integrations ...")
                     integrations = range(shape[0])
+
                 for integ in integrations:
                     # Extract spectrum
                     try:
-                        (ra, dec, wavelength, temp_flux, background,
-                         npixels, dq, prev_offset) = extract_one_slit(
-                                        input_model, slit, integ,
-                                        prev_offset, verbose, extract_params)
+                        ra, dec, wavelength, temp_flux, background, npixels, dq, prev_offset = extract_one_slit(
+                            input_model,
+                            slit,
+                            integ,
+                            prev_offset,
+                            verbose,
+                            extract_params
+                        )
                     except InvalidSpectralOrderNumberError as e:
                         log.info(str(e) + ", skipping ...")
                         break
@@ -3094,19 +3171,20 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                             # surf_bright was assigned above
                     else:
                         flux = temp_flux                # count rate
+
                     del temp_flux
+
                     error = np.zeros_like(flux)
                     sb_error = np.zeros_like(flux)
                     berror = np.zeros_like(flux)
-                    otab = np.array(list(zip(wavelength,
-                                             flux, error,
-                                             surf_bright, sb_error,
-                                             dq, background, berror,
-                                             npixels)),
-                                    dtype=spec_dtype)
+
+                    otab = np.array(
+                        list(zip(wavelength, flux, error, surf_bright, sb_error, dq, background, berror, npixels)),
+                        dtype=spec_dtype
+                    )
+
                     spec = datamodels.SpecModel(spec_table=otab)
-                    spec.meta.wcs = spec_wcs.create_spectral_wcs(
-                                        ra, dec, wavelength)
+                    spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
                     spec.spec_table.columns['wavelength'].unit = 'um'
                     spec.spec_table.columns['flux'].unit = flux_units
                     spec.spec_table.columns['error'].unit = flux_units
@@ -3119,31 +3197,34 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                     spec.spectral_order = sp_order
                     spec.dispersion_direction = extract_params['dispaxis']
                     copy_keyword_info(input_model, slitname, spec)
+
+                    if apcorr_table is not None:
+                        apcorr = ApCorr(input_model, apcorr_table, slitname=slitname, location=(ra, dec))
+                        apcorr.apply_apcorr(spec.spec_table)
+
                     output_model.spec.append(spec)
 
-                    if (log_increment > 0 and
-                        (integ + 1) % log_increment == 0):
-                            if integ == 0:
-                                if input_model.data.shape[0] == 1:
-                                    log.info("1 integration done")
-                                else:
-                                    log.info("... 1 integration done")
-                            elif integ == input_model.data.shape[0] - 1:
-                                log.info("All %d integrations done",
-                                         input_model.data.shape[0])
+                    if log_increment > 0 and (integ + 1) % log_increment == 0:
+                        if integ == 0:
+                            if input_model.data.shape[0] == 1:
+                                log.info("1 integration done")
                             else:
-                                log.info("... %d integrations done", integ + 1)
-                            progress_msg_printed = True
+                                log.info("... 1 integration done")
+                        elif integ == input_model.data.shape[0] - 1:
+                            log.info(f"All {input_model.data.shape[0]} integrations done")
+                        else:
+                            log.info(f"... {integ + 1} integrations done")
+                        progress_msg_printed = True
                     else:
-                            progress_msg_printed = False
+                        progress_msg_printed = False
+
                     verbose = False
 
                 if not progress_msg_printed:
                     if input_model.data.shape[0] == 1:
                         log.info("1 integration done")
                     else:
-                        log.info("All %d integrations done",
-                                 input_model.data.shape[0])
+                        log.info(f"All {input_model.data.shape[0]} integrations done")
 
         elif isinstance(input_model, datamodels.IFUCubeModel):
 
@@ -3151,10 +3232,11 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
                 source_type = input_model.meta.target.source_type
             except AttributeError:
                 source_type = "UNKNOWN"
+
             if source_type is None:
                 source_type = "UNKNOWN"
-            output_model = ifu.ifu_extract1d(input_model, ref_dict,
-                                             source_type, subtract_background)
+
+            output_model = ifu.ifu_extract1d(input_model, ref_dict, source_type, subtract_background)
 
         else:
             log.error("The input file is not supported for this step.")
@@ -3165,8 +3247,8 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
     if pipe_utils.is_tso(input_model):
         populate_time_keywords(input_model, output_model)
     else:
-        log.debug("Not copying from the INT_TIMES table because "
-                  "this is not a TSO exposure.")
+        log.debug("Not copying from the INT_TIMES table because  is not a TSO exposure.")
+
         if hasattr(output_model, "int_times"):
             del output_model.int_times
 
@@ -3177,9 +3259,8 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
     if ref_dict is not None and 'ref_model' in ref_dict:
         ref_dict['ref_model'].close()
 
-    if (ref_dict is None or 'need_to_set_to_complete' not in ref_dict or
-        ref_dict['need_to_set_to_complete']):
-            output_model.meta.cal_step.extract_1d = 'COMPLETE'
+    if ref_dict is None or 'need_to_set_to_complete' not in ref_dict or ref_dict['need_to_set_to_complete']:
+        output_model.meta.cal_step.extract_1d = 'COMPLETE'
 
     return output_model
 

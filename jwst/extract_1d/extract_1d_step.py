@@ -92,6 +92,8 @@ class Extract1dStep(Step):
         # Open the input and figure out what type of model it is
         input_model = datamodels.open(input)
 
+        get_apcorr = True if input_model.meta.mode.name != 'SOSS' and input_model.meta.srctype == 'POINT' else False
+
         was_source_model = False                 # default value
         if isinstance(input_model, datamodels.CubeModel):
             # It's a 3-D multi-integration model
@@ -115,7 +117,7 @@ class Extract1dStep(Step):
             # NRS_BRIGHTOBJ mode
             self.log.debug('Input is a SlitModel')
         else:
-            self.log.error('Input is a %s,', str(type(input_model)))
+            self.log.error(f'Input is a {str(type(input_model))}, ')
             self.log.error('which was not expected for extract_1d.')
             self.log.error('extract_1d will be skipped.')
             input_model.meta.cal_step.extract_1d = 'SKIPPED'
@@ -126,7 +128,7 @@ class Extract1dStep(Step):
 
             # This is the branch MRS and WFSS data take
             if len(input_model) > 1:
-                self.log.debug("Input contains %d items", len(input_model))
+                self.log.debug(f"Input contains {input_model: d} items", len(input_model))
 
                 if input_model[0].meta.exposure.type in extract.WFSS_EXPTYPES:
 
@@ -134,16 +136,22 @@ class Extract1dStep(Step):
                     # SourceContainer, which contains a list of multiple
                     # SlitModels for a single source. Send the whole list
                     # into extract1d and put all results in a single product.
-                    ref_file = 'N/A'
+                    extract_ref = 'N/A'
                     self.log.info('No EXTRACT1D reference file will be used')
 
-                    result = extract.run_extract1d(input_model, ref_file,
-                                                   self.smoothing_length,
-                                                   self.bkg_order,
-                                                   self.log_increment,
-                                                   self.subtract_background,
-                                                   self.apply_nod_offset,
-                                                   was_source_model=was_source_model)
+                    apcorr_ref = (self.get_reference_file(input_model, 'apcorr') if get_apcorr else None)
+
+                    result = extract.run_extract1d(
+                        input_model,
+                        extract_ref,
+                        self.smoothing_length,
+                        self.bkg_order,
+                        self.log_increment,
+                        self.subtract_background,
+                        self.apply_nod_offset,
+                        was_source_model=was_source_model,
+                        apcorr=apcorr_ref
+                    )
                     # Set the step flag to complete
                     result.meta.cal_step.extract_1d = 'COMPLETE'
 
@@ -154,18 +162,23 @@ class Extract1dStep(Step):
                     # separate outputs for each.
                     result = datamodels.ModelContainer()
                     for model in input_model:
+                        # Get the reference file names
+                        extract_ref = self.get_reference_file(model, 'extract1d')  # TODO: also retrieve apcorr file
+                        apcorr_ref = (self.get_reference_file(input_model, 'apcorr') if get_apcorr else None)
 
-                        # Get the reference file name
-                        ref_file = self.get_reference_file(model, 'extract1d')  # TODO: also retrieve apcorr file
-                        self.log.info('Using EXTRACT1D reference file %s',
-                                      ref_file)
-                        temp = extract.run_extract1d(model, ref_file,  # TODO: Refactor to accept apcorr file also
-                                                     self.smoothing_length,
-                                                     self.bkg_order,
-                                                     self.log_increment,
-                                                     self.subtract_background,
-                                                     self.apply_nod_offset,
-                                                     was_source_model=was_source_model)
+                        self.log.info(f'Using EXTRACT1D reference file {extract_ref}')
+
+                        temp = extract.run_extract1d(
+                            model,
+                            extract_ref,  # TODO: Refactor to accept apcorr file also
+                            self.smoothing_length,
+                            self.bkg_order,
+                            self.log_increment,
+                            self.subtract_background,
+                            self.apply_nod_offset,
+                            was_source_model=was_source_model,
+                            apcorr=apcorr_ref
+                        )
                         # Set the step flag to complete in each MultiSpecModel
                         temp.meta.cal_step.extract_1d = 'COMPLETE'
                         result.append(temp)
@@ -173,21 +186,27 @@ class Extract1dStep(Step):
 
             elif len(input_model) == 1:
                 if input_model[0].meta.exposure.type in extract.WFSS_EXPTYPES:
-                    ref_file = 'N/A'
+                    extract_ref = 'N/A'
                     self.log.info('No EXTRACT1D reference file will be used')
                 else:
                     # Get the reference file name for the one model in input
-                    ref_file = self.get_reference_file(input_model[0],
-                                                            'extract1d')
-                    self.log.info('Using EXTRACT1D reference file %s',
-                                  ref_file)
-                result = extract.run_extract1d(input_model[0], ref_file,
-                                               self.smoothing_length,
-                                               self.bkg_order,
-                                               self.log_increment,
-                                               self.subtract_background,
-                                               self.apply_nod_offset,
-                                               was_source_model=was_source_model)
+                    extract_ref = self.get_reference_file(input_model[0], 'extract1d')
+                    self.log.info(f'Using EXTRACT1D reference file {extract_ref}')
+
+                apcorr_ref = (self.get_reference_file(input_model, 'apcorr') if get_apcorr else None)
+
+                result = extract.run_extract1d(
+                    input_model[0],
+                    extract_ref,
+                    self.smoothing_length,
+                    self.bkg_order,
+                    self.log_increment,
+                    self.subtract_background,
+                    self.apply_nod_offset,
+                    was_source_model=was_source_model,
+                    apcorr=apcorr_ref
+                )
+
                 # Set the step flag to complete
                 result.meta.cal_step.extract_1d = 'COMPLETE'
             else:
@@ -201,19 +220,26 @@ class Extract1dStep(Step):
 
             # Get the reference file name
             if input_model.meta.exposure.type in extract.WFSS_EXPTYPES:
-                ref_file = 'N/A'
+                extract_ref = 'N/A'
                 self.log.info('No EXTRACT1D reference file will be used')
             else:
-                ref_file = self.get_reference_file(input_model, 'extract1d')
-                self.log.info('Using EXTRACT1D reference file %s', ref_file)
+                extract_ref = self.get_reference_file(input_model, 'extract1d')
+                self.log.info(f'Using EXTRACT1D reference file {extract_ref}')
 
-            result = extract.run_extract1d(input_model, ref_file,
-                                           self.smoothing_length,
-                                           self.bkg_order,
-                                           self.log_increment,
-                                           self.subtract_background,
-                                           self.apply_nod_offset,
-                                           was_source_model=False)
+            apcorr_ref = (self.get_reference_file(input_model, 'apcorr') if get_apcorr else None)
+
+            result = extract.run_extract1d(
+                input_model,
+                extract_ref,
+                self.smoothing_length,
+                self.bkg_order,
+                self.log_increment,
+                self.subtract_background,
+                self.apply_nod_offset,
+                was_source_model=False,
+                apcorr=apcorr_ref
+            )
+
             # Set the step flag to complete
             result.meta.cal_step.extract_1d = 'COMPLETE'
 
