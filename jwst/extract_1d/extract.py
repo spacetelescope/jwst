@@ -2694,7 +2694,7 @@ def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order
         obtained by iterating over a SourceModelContainer.  The default
         is False.
 
-    apcorr_table : `~fits.FITS_rec`
+    apcorr_table : `~fits.FITS_rec` or None
         Table of aperture correction values from the APCORR reference file.
 
     Returns
