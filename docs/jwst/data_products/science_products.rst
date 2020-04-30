@@ -40,7 +40,7 @@ The FITS file structure is as follows.
 +-----+------------+----------+-----------+---------------------------------+
 |     | ZEROFRAME* | IMAGE    | uint16    | ncols x nrows x nints           |
 +-----+------------+----------+-----------+---------------------------------+
-|     | REFOUT*    | IMAGE    | uint16    | ncols x 256 x ngroups x nints   |
+|     | REFOUT*    | IMAGE    | uint16    | ncols/4 x 256 x ngroups x nints |
 +-----+------------+----------+-----------+---------------------------------+
 |     | ASDF       | BINTABLE | N/A       | variable                        |
 +-----+------------+----------+-----------+---------------------------------+
@@ -94,7 +94,7 @@ also added to the product. The FITS file layout is as follows:
 +-----+------------+----------+-----------+---------------------------------+
 |     | INT_TIMES  | BINTABLE | N/A       | nints (rows) x 7 cols           |
 +-----+------------+----------+-----------+---------------------------------+
-|     | REFOUT*    | IMAGE    | uint16    | ncols x 256 x ngroups x nints   |
+|     | REFOUT*    | IMAGE    | uint16    | ncols/4 x 256 x ngroups x nints |
 +-----+------------+----------+-----------+---------------------------------+
 |     | ASDF       | BINTABLE | N/A       | variable                        |
 +-----+------------+----------+-----------+---------------------------------+
