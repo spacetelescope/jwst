@@ -1,7 +1,6 @@
 import logging
 from collections import OrderedDict
 import warnings
-import math
 import numpy as np
 
 from astropy import coordinates as coord
@@ -273,7 +272,7 @@ class ResampleSpecData:
         x_tan_all, y_tan_all = undist2sky.inverse(all_ra, all_dec)
         x_min = np.amin(x_tan_all)
         x_max = np.amax(x_tan_all)
-        x_size = int(math.ceil((x_max - x_min)/np.absolute(pix_to_xtan.slope)))
+        x_size = int(np.ceil((x_max - x_min)/np.absolute(pix_to_xtan.slope)))
 
         if len(self.input_models) == 1: # single model use size of x_tan_array
                                         # to be consistent with method before
