@@ -229,7 +229,7 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
                 np.deg2rad(refmodel.meta.wcsinfo.v3yangle),
                 vparity=refmodel.meta.wcsinfo.vparity),
             (2, 2)
-        ).T
+        )
 
         rotation = astmodels.AffineTransformation2D(pc)
         transform.append(rotation)
