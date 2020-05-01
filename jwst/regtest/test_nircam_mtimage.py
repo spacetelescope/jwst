@@ -16,7 +16,7 @@ def test_nircam_image_moving_target(rtdata, fitsdiff_default_kwargs):
     rtdata.get_asn("nircam/image/mt_asn.json")
     rtdata.output = "mt_assoc_i2d.fits"
     args = ["config/calwebb_image3.cfg", rtdata.input,
-            "--steps.source_catalog.override_abvega_offset='jwst_nircam_abvega_offset_0001.asdf'"]
+            "--steps.source_catalog.override_abvegaoffset='jwst_nircam_abvega_offset_0001.asdf'"]
     Step.from_cmdline(args)
     rtdata.get_truth("truth/test_nircam_mtimage/mt_assoc_i2d.fits")
 

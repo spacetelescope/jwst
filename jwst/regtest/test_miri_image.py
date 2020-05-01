@@ -70,7 +70,7 @@ def run_image3(run_image2, rtdata_module):
         "--steps.tweakreg.use2dhist=False",
         "--steps.tweakreg.minobj=4",
         "--steps.source_catalog.snr_threshold=20",
-        "--steps.source_catalog.override_abvega_offset=jwst_miri_abvega_offset_0001.asdf",
+        "--steps.source_catalog.override_abvegaoffset=jwst_miri_abvega_offset_0001.asdf",
         ]
     Step.from_cmdline(args)
 
