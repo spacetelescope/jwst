@@ -9,7 +9,7 @@ from astropy.time import Time
 from scipy.interpolate import interp1d
 import numpy as np
 
-from ..assign_wcs.util import update_s_region_keyword
+from ..assign_wcs.util import update_s_region_keyword, calc_rotation_matrix
 from ..datamodels import Level1bModel
 from ..lib.engdb_tools import ENGDB_Service
 from .exposure_types import IMAGING_TYPES, FGS_GUIDE_EXP_TYPES
@@ -244,7 +244,7 @@ def update_mt_kwds(model):
     return model
 
 
-def update_wcs(model, default_pa_v3=0., siaf_path=None, engdb_url=None,
+def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, engdb_url=None,
                tolerance=60, allow_default=False,
                reduce_func=None, **transform_kwargs):
     """Update WCS pointing information
@@ -260,9 +260,13 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None, engdb_url=None,
     model : `~jwst.datamodels.DataModel`
         The model to update.
 
-    default_pa_v3 : float
+    default_roll_ref : float
         If pointing information cannot be retrieved,
         use this as the V3 position angle.
+
+    default_roll_ref : float
+        If pointing information cannot be retrieved,
+        use this as the roll ref angle.
 
     siaf_path : str
         The path to the SIAF file, i.e. ``XML_DATA`` env variable.
@@ -305,7 +309,7 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None, engdb_url=None,
 
     if exp_type in FGS_GUIDE_EXP_TYPES:
         update_wcs_from_fgs_guiding(
-            model, default_pa_v3=default_pa_v3
+            model, default_roll_ref=default_roll_ref
         )
     else:
         update_wcs_from_telem(
@@ -315,7 +319,7 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None, engdb_url=None,
         )
 
 
-def update_wcs_from_fgs_guiding(model, default_pa_v3=0.0, default_vparity=1):
+def update_wcs_from_fgs_guiding(model, default_roll_ref=0.0, default_vparity=1, default_v3yangle=0.0):
     """ Update WCS pointing from header information
 
     For Fine Guidance guiding observations, nearly everything
@@ -343,15 +347,16 @@ def update_wcs_from_fgs_guiding(model, default_pa_v3=0.0, default_vparity=1):
 
     # Get position angle
     try:
-        pa = model.meta.wcsinfo.pa_v3
+        roll_ref = model.meta.wcsinfo.roll_ref if model.meta.wcsinfo.roll_ref is not None else default_roll_ref
     except AttributeError:
         logger.warning(
-            'Keyword `PA_V3` not found. Using {} as default value'.format(
-                default_pa_v3
+            'Keyword `ROLL_REF` not found. Using {} as default value'.format(
+                default_roll_ref
             )
         )
-        pa = default_pa_v3
-    pa_rad = pa * D2R
+        roll_ref = default_roll_ref
+
+    roll_ref = np.deg2rad(roll_ref)
 
     # Get VIdlParity
     try:
@@ -364,10 +369,19 @@ def update_wcs_from_fgs_guiding(model, default_pa_v3=0.0, default_vparity=1):
         )
         vparity = default_vparity
 
-    (model.meta.wcsinfo.pc1_1,
-     model.meta.wcsinfo.pc1_2,
-     model.meta.wcsinfo.pc2_1,
-     model.meta.wcsinfo.pc2_2) = calc_rotation_matrix(pa_rad, vparity=vparity)
+    try:
+        v3i_yang = model.meta.wcsinfo.v3yangle
+    except AttributeError:
+        logger.warning(f'Keyword "V3I_YANG" not found. Using {default_v3yangle} as default value.')
+
+        v3i_yang = default_v3yangle
+
+    (
+        model.meta.wcsinfo.pc1_1,
+        model.meta.wcsinfo.pc1_2,
+        model.meta.wcsinfo.pc2_1,
+        model.meta.wcsinfo.pc2_2
+    ) = calc_rotation_matrix(roll_ref, np.deg2rad(v3i_yang), vparity=vparity)
 
 
 def update_wcs_from_telem(
@@ -476,12 +490,16 @@ def update_wcs_from_telem(
     if model.meta.exposure.type.lower() in TYPES_TO_UPDATE:
         model.meta.wcsinfo.crval1 = wcsinfo.ra
         model.meta.wcsinfo.crval2 = wcsinfo.dec
-        (model.meta.wcsinfo.pc1_1,
-         model.meta.wcsinfo.pc1_2,
-         model.meta.wcsinfo.pc2_1,
-         model.meta.wcsinfo.pc2_2) = calc_rotation_matrix(
-             wcsinfo.pa * D2R, vparity=siaf.vparity
-         )
+        (
+            model.meta.wcsinfo.pc1_1,
+            model.meta.wcsinfo.pc1_2,
+            model.meta.wcsinfo.pc2_1,
+            model.meta.wcsinfo.pc2_2
+        ) = calc_rotation_matrix(
+            np.deg2rad(model.meta.wcsinfo.roll_ref),
+            np.deg2rad(model.meta.wcsinfo.v3yangle),
+            vparity=siaf.vparity
+        )
 
     # Calculate S_REGION with the footprint
     # information
@@ -1238,48 +1256,6 @@ def _get_wcs_values_from_siaf(aperture_name, useafter, prd_db_filepath=None):
         return siaf
     else:
         return default_siaf
-
-
-def calc_rotation_matrix(angle, vparity=1):
-    """ Calculate the rotation matrix.
-
-    Parameters
-    ----------
-    angle : float in radians
-        The angle to create the matrix.
-
-    vparity : int
-        The x-axis parity, usually taken from
-        the JWST SIAF parameter VIdlParity.
-        Value should be "1" or "-1".
-
-    Returns
-    -------
-    matrix: [pc1_1, pc1_2, pc2_1, pc2_2]
-        The rotation matrix
-
-    Notes
-    -----
-    The rotation is
-
-       ----------------
-       | pc1_1  pc2_1 |
-       | pc1_2  pc2_2 |
-       ----------------
-
-    where:
-        pc1_1 = vparity * cos(angle)
-        pc1_2 = sin(angle)
-        pc2_1 = -1 * vparity * sin(angle)
-        pc2_2 = cos(angle)
-    """
-
-    pc1_1 = vparity * cos(angle)
-    pc1_2 = sin(angle)
-    pc2_1 = vparity * -sin(angle)
-    pc2_2 = cos(angle)
-
-    return [pc1_1, pc1_2, pc2_1, pc2_2]
 
 
 def get_mnemonics(obsstart, obsend, tolerance, engdb_url=None):
