@@ -69,7 +69,7 @@ def run_image3pipeline(run_image2pipeline, rtdata_module, jail):
         # "--steps.tweakreg.save_results=True",
         # "--steps.skymatch.save_results=True",
         "--steps.source_catalog.snr_threshold=20",
-        "--steps.source_catalog.override_abvega_offset='jwst_nircam_abvega_offset_0001.asdf'",
+        "--steps.source_catalog.override_abvegaoffset='jwst_nircam_abvega_offset_0001.asdf'",
         ]
     Step.from_cmdline(args)
 
