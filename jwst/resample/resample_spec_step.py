@@ -87,6 +87,7 @@ class ResampleSpecStep(ResampleStep):
         """
         containers = multislit_to_container(input_models)
         result = datamodels.MultiSlitModel()
+
         result.update(input_models[0], only="PRIMARY")
         result.update(input_models[0], only="SCI")
 
