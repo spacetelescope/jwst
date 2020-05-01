@@ -92,8 +92,6 @@ class Extract1dStep(Step):
         # Open the input and figure out what type of model it is
         input_model = datamodels.open(input)
 
-        get_apcorr = True if input_model.meta.mode.name != 'SOSS' and input_model.meta.srctype == 'POINT' else False
-
         was_source_model = False                 # default value
         if isinstance(input_model, datamodels.CubeModel):
             # It's a 3-D multi-integration model
@@ -128,7 +126,7 @@ class Extract1dStep(Step):
 
             # This is the branch MRS and WFSS data take
             if len(input_model) > 1:
-                self.log.debug(f"Input contains {input_model: d} items", len(input_model))
+                self.log.debug(f"Input contains {input_model} items", len(input_model))
 
                 if input_model[0].meta.exposure.type in extract.WFSS_EXPTYPES:
 
@@ -136,10 +134,9 @@ class Extract1dStep(Step):
                     # SourceContainer, which contains a list of multiple
                     # SlitModels for a single source. Send the whole list
                     # into extract1d and put all results in a single product.
+                    apcorr_ref = self.get_reference_file(input_model, 'apcorr')
                     extract_ref = 'N/A'
                     self.log.info('No EXTRACT1D reference file will be used')
-
-                    apcorr_ref = (self.get_reference_file(input_model, 'apcorr') if get_apcorr else None)
 
                     result = extract.run_extract1d(
                         input_model,
@@ -163,9 +160,8 @@ class Extract1dStep(Step):
                     result = datamodels.ModelContainer()
                     for model in input_model:
                         # Get the reference file names
-                        extract_ref = self.get_reference_file(model, 'extract1d')  # TODO: also retrieve apcorr file
-                        apcorr_ref = (self.get_reference_file(input_model, 'apcorr') if get_apcorr else None)
-
+                        extract_ref = self.get_reference_file(model, 'extract1d')
+                        apcorr_ref = self.get_reference_file(model, 'apcorr')
                         self.log.info(f'Using EXTRACT1D reference file {extract_ref}')
 
                         temp = extract.run_extract1d(
@@ -193,7 +189,7 @@ class Extract1dStep(Step):
                     extract_ref = self.get_reference_file(input_model[0], 'extract1d')
                     self.log.info(f'Using EXTRACT1D reference file {extract_ref}')
 
-                apcorr_ref = (self.get_reference_file(input_model, 'apcorr') if get_apcorr else None)
+                apcorr_ref = self.get_reference_file(input_model[0], 'apcorr')
 
                 result = extract.run_extract1d(
                     input_model[0],
@@ -226,7 +222,7 @@ class Extract1dStep(Step):
                 extract_ref = self.get_reference_file(input_model, 'extract1d')
                 self.log.info(f'Using EXTRACT1D reference file {extract_ref}')
 
-            apcorr_ref = (self.get_reference_file(input_model, 'apcorr') if get_apcorr else None)
+            apcorr_ref = self.get_reference_file(input_model, 'apcorr')
 
             result = extract.run_extract1d(
                 input_model,

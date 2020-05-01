@@ -2572,9 +2572,10 @@ def run_extract1d(input_model, extract_ref_name, smoothing_length, bkg_order, lo
 
     """
     # Read and interpret the reference file.
-    ref_dict = load_ref_file(extract_ref_name)  # TODO: either modify or add function to "load" apcorr data
+    ref_dict = load_ref_file(extract_ref_name)
 
-    apcorr_table = dm_open(apcorr_ref_name) if apcorr_ref_name is not None else None
+    apcorr_table = dm_open(apcorr_ref_name) if apcorr_ref_name is not None or apcorr_ref_name is not 'N/A' else None
+    # TODO: apcorr_table can't always be opened by dm_open..
 
     # This item is a flag to let us know that do_extract1d was called
     # from run_extract1d; that is, we don't expect this key to be present
@@ -2906,6 +2907,7 @@ def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order
             copy_keyword_info(slit, slit.name, spec)
 
             if apcorr_table is not None:
+                log.info('Applying Aperture correction.')
                 apcorr = ApCorr(input_model, apcorr_table, slitname=slit.name, location=(ra, dec))
                 apcorr.apply_apcorr(spec.spec_table)
 
@@ -3061,6 +3063,7 @@ def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order
                 copy_keyword_info(input_model, slitname, spec)
 
                 if apcorr_table is not None:
+                    log.info('Applying Aperture correction.')
                     apcorr = ApCorr(input_model, apcorr_table, slitname=slitname, location=(ra, dec))
                     apcorr.apply_apcorr(spec.spec_table)
 
@@ -3198,6 +3201,7 @@ def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order
                     copy_keyword_info(input_model, slitname, spec)
 
                     if apcorr_table is not None:
+                        log.info('Applying Aperture correction.')
                         apcorr = ApCorr(input_model, apcorr_table, slitname=slitname, location=(ra, dec))
                         apcorr.apply_apcorr(spec.spec_table)
 
