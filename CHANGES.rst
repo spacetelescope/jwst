@@ -28,6 +28,9 @@ coron
 datamodels
 ----------
 
+- Update schemas to add moving_target_position and cheby tables to the level1b
+  schema [#4760]
+  
 - Deprecate ``DrizProductModel`` and ``MultiProductModel`` and replace with
   updated versions of ``ImageModel`` and ``SlitModel`` that include "CON" and
   "WHT" arrays for resampled data. [#4552]
@@ -104,6 +107,9 @@ pipeline
 - Update ``calwebb_spec3`` to use suffix ``c1d`` for ``combine_1d`` products.
   [#4846]
 
+- Update ``calwebb_spec3`` to update the ASNTABLE keyword in all output
+  products, to reflect the name of the spec3 ASN used as input. [#4865]
+
 resample
 --------
 
@@ -130,6 +136,16 @@ resample_spec
   [#4552]
 
 - Enable model metadata blending [#4765]
+
+rscd
+----
+
+- Added baseline algorithm that flags groups [#4669]
+
+set_telescope_pointing
+----------------------
+
+- Update to add moving target coords to the header [#4760]
 
 source_catalog
 --------------
@@ -372,7 +388,6 @@ transforms
 - Added ``source_ra`` and ``source_dec`` to the ``Slit`` namedtuple
   with default values of 0.0. These are populated from the MSA metadata
   file. [#4613]
-
 
 tweakreg
 --------

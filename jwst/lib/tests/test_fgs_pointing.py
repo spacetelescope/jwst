@@ -36,10 +36,10 @@ def test_fgs_pointing():
     model = make_level1b()
     stp.update_wcs(model, siaf_path=siaf_db)
 
-    assert model.meta.wcsinfo.pc1_1 == -1.0
-    assert model.meta.wcsinfo.pc1_2 == 0.0
-    assert model.meta.wcsinfo.pc2_1 == 0.0
-    assert model.meta.wcsinfo.pc2_2 == 1.0
+    assert model.meta.wcsinfo.pc1_1 == -0.9997617223891989
+    assert model.meta.wcsinfo.pc1_2 == -0.02182884434372137
+    assert model.meta.wcsinfo.pc2_1 == -0.02182884434372137
+    assert model.meta.wcsinfo.pc2_2 == 0.9997617223891989
 
 
 # ---------

@@ -35,7 +35,7 @@ log.setLevel(logging.DEBUG)
 
 class ReferenceData:
     """
-    Class for apcorr and abvega_offset reference file data needed by
+    Class for APCORR and ABVEGAOFFSET reference file data needed by
     `SourceCatalogStep`.
 
     Parameters
@@ -46,15 +46,14 @@ class ReferenceData:
     aperture_ee : tuple of 3 int
         The aperture encircled energies to be used for aperture
         photometry.  The values must be 3 strictly-increasing integers.
-        Valid values are defined in the ``apcorr`` reference files (20,
-        30, 40, 50, 60, 70, or 80).
+        Valid values are defined in the APCORR reference files (20, 30,
+        40, 50, 60, 70, or 80).
 
     apcorr_filename : str
-        The full path and filenames of the ``apcorr`` reference file.
+        The full path and filenames of the APCORR reference file.
 
-    abvega_offset_filename : str
-        The full path and filenames of the ``abvega_offset`` reference
-        file.
+    abvegaoffset_filename : str
+        The full path and filenames of the ABVEGAOFFSET reference file.
 
     Attributes
     ----------
@@ -68,7 +67,7 @@ class ReferenceData:
     """
 
     def __init__(self, model, aperture_ee=(30, 50, 70),
-                 apcorr_filename=None, abvega_offset_filename=None):
+                 apcorr_filename=None, abvegaoffset_filename=None):
 
         if not isinstance(model, ImageModel):
             raise ValueError('The input model must be a ImageModel.')
@@ -76,7 +75,7 @@ class ReferenceData:
 
         self.aperture_ee = self._validate_aperture_ee(aperture_ee)
         self.apcorr_filename = apcorr_filename
-        self.abvega_offset_filename = abvega_offset_filename
+        self.abvegaoffset_filename = abvegaoffset_filename
 
         self.instrument = self.model.meta.instrument.name
         self.detector = self.model.meta.instrument.detector
@@ -149,12 +148,12 @@ class ReferenceData:
         if len(ee_row) == 0:
             raise RuntimeError('Aperture encircled energy value of {0} '
                                'appears to be invalid. No matching row '
-                               'was found in the apcorr reference file '
+                               'was found in the APCORR reference file '
                                '{1}'.format(aperture_ee,
                                             self.apcorr_filename))
         if len(ee_row) > 1:
             raise RuntimeError('More than one matching row was found in '
-                               'the apcorr reference file {0}'
+                               'the APCORR reference file {0}'
                                .format(self.apcorr_filename))
         return ee_row
 
@@ -202,7 +201,7 @@ class ReferenceData:
         skyouts = np.unique(skyouts)
         if len(skyins) != 1 or len(skyouts) != 1:
             raise RuntimeError('Expected to find only one value for skyin '
-                               'and skyout in the apcorr reference file for '
+                               'and skyout in the APCORR reference file for '
                                'a given selector.')
         params['bkg_aperture_inner_radius'] = skyins[0]
         params['bkg_aperture_outer_radius'] = skyouts[0]
@@ -217,8 +216,8 @@ class ReferenceData:
         The value reprents m_AB - m_Vega.
         """
 
-        if self.abvega_offset_filename is None:
-            log.warning('ABVegaOffsetModel reference file was not input -- '
+        if self.abvegaoffset_filename is None:
+            log.warning('ABVEGAOFFSET reference file was not input -- '
                         'catalog Vega magnitudes are not correct.')
             return 0.0
 
@@ -231,27 +230,27 @@ class ReferenceData:
         else:
             raise RuntimeError(f'{self.instrument} is not a valid instrument')
 
-        abvega_offset_model = ABVegaOffsetModel(self.abvega_offset_filename)
-        offsets_table = abvega_offset_model.abvega_offset
+        abvegaoffset_model = ABVegaOffsetModel(self.abvegaoffset_filename)
+        offsets_table = abvegaoffset_model.abvega_offset
 
         try:
             mask_idx = [offsets_table[key] == value
                         for key, value in selector.items()]
         except KeyError as badkey:
-            raise KeyError('{0} not found in ABVegaOffsetModel reference '
+            raise KeyError('{0} not found in ABVEGAOFFSET reference '
                            'file {1}'.format(badkey,
-                                             self.abvega_offset_filename))
+                                             self.abvegaoffset_filename))
 
         row = offsets_table[np.logical_and.reduce(mask_idx)]
 
         if len(row) == 0:
-            raise RuntimeError('Did not find matching row in '
-                               'ABVegaOffsetModel reference file {0}'
-                               .format(self.abvega_offset_filename))
+            raise RuntimeError('Did not find matching row in ABVEGAOFFSET '
+                               'reference file {0}'
+                               .format(self.abvegaoffset_filename))
         if len(row) > 1:
             raise RuntimeError('Found more than one matching row in '
-                               'ABVegaOffsetModel reference file {0}'
-                               .format(self.abvega_offset_filename))
+                               'ABVEGAOFFSET reference file {0}'
+                               .format(self.abvegaoffset_filename))
 
         abvega_offset = row['abvega_offset'][0]
         log.info('AB to Vega magnitude offset {:.5f}'.format(abvega_offset))

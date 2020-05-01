@@ -39,7 +39,7 @@ class ABVegaOffsetModel(ReferenceFileModel):
           - abvega_offset: float32
     """
 
-    schema_url = "http://stsci.edu/schemas/jwst_datamodel/abvega_offset.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/abvegaoffset.schema"
 
     def __init__(self, init=None, **kwargs):
         super(ABVegaOffsetModel, self).__init__(init=init, **kwargs)
