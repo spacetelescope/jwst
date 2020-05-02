@@ -68,7 +68,7 @@ allOf:
             fits_keyword: STLARITY
             fits_hdu: EXTRACT1D
           source_type:
-            title: Source type (point/extended)
+            title: Source type used for calibration
             type: string
             fits_keyword: SRCTYPE
             fits_hdu: EXTRACT1D
