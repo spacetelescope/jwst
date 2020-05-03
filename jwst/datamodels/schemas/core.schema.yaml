@@ -354,12 +354,18 @@ properties:
             type: number
             fits_keyword: PROP_DEC
             blend_table: True
+          source_type_apt:
+            title: Source type from APT (point/extended)
+            type: string
+            enum: [EXTENDED, POINT, UNKNOWN]
+            fits_keyword: SRCTYAPT
+            blend_table: True
           source_type:
-            title: Advised source type (point/extended)
+            title: Source type used for calibration
             type: string
             enum: [EXTENDED, POINT, UNKNOWN]
             fits_keyword: SRCTYPE
-            blend_table: True
+            fits_hdu: SCI
       instrument:
         title: Instrument configuration information
         type: object

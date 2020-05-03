@@ -44,6 +44,9 @@ datamodels
 
 - Added FASTGRPAVG[8,16,32,64] to the READPATT keyword allowed values. [#4818]
 
+- Added the SRCTYAPT keyword and moved SRCTYPE to the SCI extension header of
+  all applicable data model schemas. [#4885]
+
 exp_to_source
 -------------
 
@@ -160,6 +163,9 @@ srctype
 
 - Change default source type for NRS_IFU from POINT to EXTENDED. Change the source
   type for NIRSpec MOS sources with stellarity = -1 from UNKNOWN to POINT. [#4686]
+
+- Modified the step to use the SRCTYAPT keyword to get the user input value from
+  the APT and store the derived source type in the SRCTYPE keyword. [#4885]
 
 stpipe
 ------
