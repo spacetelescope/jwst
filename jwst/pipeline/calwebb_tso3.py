@@ -137,9 +137,7 @@ class Tso3Pipeline(Pipeline):
             # Remove source_type from the output model, if it exists,
             # to prevent the creation of an empty SCI extension just
             # for that keyword.
-            if (hasattr(x1d_result.meta.target, "source_type") and
-                x1d_result.meta.target.source_type is not None):
-                    del x1d_result.meta.target.source_type
+            x1d_result.meta.target.source_type = None
 
             # For each exposure in the TSO...
             for cube in input_models:

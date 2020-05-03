@@ -2586,8 +2586,7 @@ def run_extract1d(input_model, refname, smoothing_length, bkg_order,
     # Remove target.source_type from the output model, so that it
     # doesn't force creation of an empty SCI extension in the output
     # x1d product just to hold this keyword.
-    if hasattr(output_model.meta.target, "source_type"):
-        del output_model.meta.target.source_type
+    output_model.meta.target.source_type = None
 
     return output_model
 
