@@ -10,6 +10,8 @@ EXTRACT_2D_IS_OK = [
     "NRS_FIXEDSLIT",
     "NRS_LAMP",
     "NRS_MSASPEC",
+    "NRS_AUTOWAVE",
+    "NRS_AUTOFLAT",
     ]
 
 # NIRSpec imaging types (see exp_type2transform in assign_wcs/nirspec.py)
@@ -30,6 +32,8 @@ NRS_SPEC_MODES = [
     "NRS_FIXEDSLIT",
     "NRS_IFU",
     "NRS_MSASPEC",
+    "NRS_LAMP",
+    "NRS_AUTOWAVE",
     ]
 
 

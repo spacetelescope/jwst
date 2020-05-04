@@ -51,7 +51,7 @@ def extract2d(input_model,
 
     """
     nrs_modes = ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ',
-                 'NRS_LAMP', 'NRS_AUTOFLAT']
+                 'NRS_LAMP', 'NRS_AUTOFLAT', 'NRS_AUTOWAVE']
     slitless_modes = ['NIS_WFSS', 'NRC_WFSS', 'NRC_TSGRISM']
 
     exp_type = input_model.meta.exposure.type.upper()

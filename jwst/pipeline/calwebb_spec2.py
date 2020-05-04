@@ -5,6 +5,7 @@ import traceback
 
 from .. import datamodels
 from ..assign_wcs.util import NoDataOnDetectorError
+from ..lib.exposure_types import is_nrs_ifu_flatlamp, is_nrs_ifu_linelamp
 from ..stpipe import Pipeline
 
 # step imports
@@ -253,7 +254,7 @@ class Spec2Pipeline(Pipeline):
             # Call the resample_spec step for 2D slit data
             result_extra = self.resample_spec(result)
 
-        elif exp_type in ['MIR_MRS', 'NRS_IFU']:
+        elif (exp_type in ['MIR_MRS', 'NRS_IFU']) or is_nrs_ifu_linelamp(result):
 
             # Call the cube_build step for IFU data;
             # always create a single cube containing multiple
@@ -310,11 +311,11 @@ class Spec2Pipeline(Pipeline):
                 self.log.debug('Science data does not allow direct background subtraction. Skipping "bkg_subtract".')
                 self.bkg_subtract.skip = True
 
-        # Check for imprint subtraction.
+        # Check for imprint subtraction
         imprint = members_by_type['imprint']
         if not self.imprint_subtract.skip:
-            if exp_type in ['NRS_MSASPEC', 'NRS_IFU'] and \
-               len(imprint) > 0:
+            if len(imprint) > 0 and (exp_type in ['NRS_MSASPEC', 'NRS_IFU'] or \
+               is_nrs_ifu_flatlamp(input)):
                 if len(imprint) > 1:
                     self.log.warning('Wrong number of imprint members')
                 members_by_type['imprint'] = imprint[0]

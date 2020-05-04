@@ -418,7 +418,7 @@ def subarray_transform(input_model):
         return subarray2full
 
 
-def not_implemented_mode(input_model):
+def not_implemented_mode(input_model, ref, slit_y_range=None):
     """
     Return ``None`` if assign_wcs has not been implemented for a mode.
     """
