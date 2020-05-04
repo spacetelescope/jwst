@@ -5,6 +5,10 @@ import traceback
 
 from .. import datamodels
 from ..assign_wcs.util import NoDataOnDetectorError
+from ..lib.pipe_utils import is_tso
+from ..lib.exposure_types import (is_nrs_ifu_flatlamp, is_nrs_ifu_lamp,
+                                  is_nrs_msaspec_lamp, is_nrs_ifu_linelamp,
+                                  is_nrs_autoflat)
 from ..stpipe import Pipeline
 
 # step imports
@@ -225,15 +229,17 @@ class Spec2Pipeline(Pipeline):
         # Technically there should be just one.
         # We'll just get the first one found
         imprint = members_by_type['imprint']
-        if exp_type in ['NRS_MSASPEC', 'NRS_IFU'] and \
-           len(imprint) > 0:
+        if len(imprint) > 0 and (exp_type in ['NRS_MSASPEC', 'NRS_IFU'] or \
+           is_nrs_ifu_flatlamp(input)):
             if len(imprint) > 1:
                 self.log.warning('Wrong number of imprint members')
             imprint = imprint[0]
             input = self.imprint_subtract(input, imprint)
 
         # Apply NIRSpec MSA bad shutter flagging
-        if exp_type in ['NRS_MSASPEC', 'NRS_IFU']:
+        if (exp_type in ['NRS_MSASPEC', 'NRS_IFU']) or is_nrs_ifu_lamp(input) or \
+                                                       is_nrs_msaspec_lamp(input) or \
+                                                       is_nrs_autoflat(input):
             input = self.msa_flagging(input)
 
         # The order of the next few steps is tricky, depending on mode:
@@ -246,8 +252,18 @@ class Spec2Pipeline(Pipeline):
             input = self.extract_2d(input)
             input = self.srctype(input)
         else:
-            # Extract 2D sub-windows for NIRSpec slit and MSA
-            if exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ', 'NRS_MSASPEC', 'NRS_LAMP']:
+            # Extract 2D sub-windows for NIRSpec slit and MSA (including lamp modes)
+            lamp_mode = input.meta.instrument.lamp_mode
+            if type(lamp_mode) == str:
+                lamp_mode = lamp_mode.upper()
+            else:
+                lamp_mode = 'NONE'
+            do_extract_2d = exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ', 'NRS_MSASPEC',
+                                         'NRS_AUTOWAVE', 'NRS_AUTOFLAT']
+            do_extract_2d = do_extract_2d | ((exp_type == 'NRS_LAMP') & (lamp_mode in ['BRIGHTOBJ',
+                                                                                       'FIXEDSLIT',
+                                                                                       'MSASPEC']))
+            if do_extract_2d:
                 input = self.extract_2d(input)
                 input = self.srctype(input)
                 input = self.wavecorr(input)
@@ -302,7 +318,7 @@ class Spec2Pipeline(Pipeline):
             self.resample_spec.suffix = 's2d'
             result_extra = self.resample_spec(result)
 
-        elif exp_type in ['MIR_MRS', 'NRS_IFU']:
+        elif (exp_type in ['MIR_MRS', 'NRS_IFU']) or is_nrs_ifu_linelamp(result):
 
             # Call the cube_build step for IFU data;
             # always create a single cube containing multiple

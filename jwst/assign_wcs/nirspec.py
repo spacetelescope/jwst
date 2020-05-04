@@ -29,6 +29,7 @@ from . import pointing
 from ..datamodels import (CollimatorModel, CameraModel, DisperserModel, FOREModel,
                           IFUFOREModel, MSAModel, OTEModel, IFUPostModel, IFUSlicerModel,
                           WavelengthrangeModel, FPAModel)
+from ..lib.exposure_types import is_nrs_ifu_lamp
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -211,7 +212,19 @@ def ifu(input_model, reference_files, slit_y_range=[-.55, .55]):
 
     det, sca, gwa, slit_frame, msa_frame, oteip, v2v3, world = create_frames()
 
-    if input_model.meta.instrument.filter != 'OPAQUE':
+    exp_type = input_model.meta.exposure.type.upper()
+
+    is_lamp_exposure = exp_type in ['NRS_LAMP', 'NRS_AUTOWAVE', 'NRS_AUTOFLAT']
+    
+    if input_model.meta.instrument.filter == 'OPAQUE' or is_lamp_exposure:
+        # If filter is "OPAQUE" or if internal lamp exposure the pipeline stops at the MSA.
+        pipeline = [(det, dms2detector),
+                    (sca, det2gwa.rename('detector2gwa')),
+                    (gwa, gwa2slit.rename('gwa2slit')),
+                    (slit_frame, slit2slicer),
+                    ('slicer', slicer2msa),
+                    (msa_frame, None)]
+    else:
         # MSA to OTEIP transform
         msa2oteip = ifu_msa_to_oteip(reference_files)
         # OTEIP to V2,V3 transform
@@ -237,14 +250,6 @@ def ifu(input_model, reference_files, slit_y_range=[-.55, .55]):
                     (oteip, oteip2v23.rename('oteip2v23')),
                     (v2v3, tel2sky),
                     (world, None)]
-    else:
-        # If filter is "OPAQUE" the pipeline stops at the MSA.
-        pipeline = [(det, dms2detector),
-                    (sca, det2gwa.rename('detector2gwa')),
-                    (gwa, gwa2slit.rename('gwa2slit')),
-                    (slit_frame, slit2slicer),
-                    ('slicer', slicer2msa),
-                    (msa_frame, None)]
 
     return pipeline
 
@@ -321,7 +326,19 @@ def slitlets_wcs(input_model, reference_files, open_slits_id):
     # Create coordinate frames in the NIRSPEC WCS pipeline"
     # "detector", "gwa", "slit_frame", "msa_frame", "oteip", "v2v3", "world"
     det, sca, gwa, slit_frame, msa_frame, oteip, v2v3, world = create_frames()
-    if input_model.meta.instrument.filter != 'OPAQUE':
+
+    exp_type = input_model.meta.exposure.type.upper()
+
+    is_lamp_exposure = exp_type in ['NRS_LAMP', 'NRS_AUTOWAVE', 'NRS_AUTOFLAT']
+
+    if input_model.meta.instrument.filter == 'OPAQUE' or is_lamp_exposure:
+        # convert to microns if the pipeline ends earlier
+        msa_pipeline = [(det, dms2detector),
+                        (sca, det2gwa),
+                        (gwa, gwa2slit),
+                        (slit_frame, slit2msa),
+                        (msa_frame, None)]
+    else:
         # MSA to OTEIP transform
         msa2oteip = msa_to_oteip(reference_files)
         msa2oteip.name = "msa2oteip"
@@ -343,13 +360,6 @@ def slitlets_wcs(input_model, reference_files, open_slits_id):
                         (oteip, oteip2v23),
                         (v2v3, tel2sky),
                         (world, None)]
-    else:
-        # convert to microns if the pipeline ends earlier
-        msa_pipeline = [(det, dms2detector),
-                        (sca, det2gwa),
-                        (gwa, gwa2slit),
-                        (slit_frame, slit2msa),
-                        (msa_frame, None)]
 
     return msa_pipeline
 
@@ -358,7 +368,13 @@ def get_open_slits(input_model, reference_files=None, slit_y_range=[-.55, .55]):
     """Return the opened slits/shutters in a MOS or Fixed Slits exposure.
     """
     exp_type = input_model.meta.exposure.type.lower()
-    if exp_type in ["nrs_msaspec", "nrs_autoflat"]:
+    lamp_mode = input_model.meta.instrument.lamp_mode
+    if type(lamp_mode) == str:
+        lamp_mode = lamp_mode.lower()
+    else:
+        lamp_mode = 'none'
+    if exp_type in ["nrs_msaspec", "nrs_autoflat"] or ((exp_type in ["nrs_lamp", "nrs_autowave"]) and \
+                                                        (lamp_mode == "msaspec")):
         msa_metadata_file, msa_metadata_id, dither_point = get_msa_metadata(
             input_model, reference_files)
         slits = get_open_msa_slits(msa_metadata_file, msa_metadata_id, dither_point, slit_y_range)
@@ -366,8 +382,9 @@ def get_open_slits(input_model, reference_files=None, slit_y_range=[-.55, .55]):
         slits = get_open_fixed_slits(input_model, slit_y_range)
     elif exp_type == "nrs_brightobj":
         slits = [Slit('S1600A1', 3, 0, 0, 0, slit_y_range[0], slit_y_range[1], 5, 4)]
-    elif exp_type == "nrs_lamp":
-        slits = get_open_fixed_slits(input_model, slit_y_range)
+    elif exp_type in ["nrs_lamp", "nrs_autowave"]:
+        if lamp_mode in ['fixedslit', 'brightobj']:
+            slits = get_open_fixed_slits(input_model, slit_y_range)
     else:
         raise ValueError("EXP_TYPE {0} is not supported".format(exp_type.upper()))
     if reference_files is not None:
@@ -708,10 +725,13 @@ def get_spectral_order_wrange(input_model, wavelengthrange_file):
     filter = input_model.meta.instrument.filter
     lamp = input_model.meta.instrument.lamp_state
     grating = input_model.meta.instrument.grating
+    exp_type = input_model.meta.exposure.type
+
+    is_lamp_exposure = exp_type in ['NRS_LAMP', 'NRS_AUTOWAVE', 'NRS_AUTOFLAT']
 
     wave_range_model = WavelengthrangeModel(wavelengthrange_file)
     wrange_selector = wave_range_model.waverange_selector
-    if filter == "OPAQUE":
+    if filter == "OPAQUE" or is_lamp_exposure:
         keyword = lamp + '_' + grating
     else:
         keyword = filter + '_' + grating
@@ -869,7 +889,8 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files, slit_y_range)
     # The wavelength units up to this point are
     # meters as required by the pipeline but the desired output wavelength units is microns.
     # So we are going to Scale the spectral units by 1e6 (meters -> microns)
-    if input_model.meta.instrument.filter == 'OPAQUE':
+    is_lamp_exposure = input_model.meta.exposure.type in ['NRS_LAMP', 'NRS_AUTOWAVE', 'NRS_AUTOFLAT']
+    if input_model.meta.instrument.filter == 'OPAQUE' or is_lamp_exposure:
         lgreq = lgreq | Scale(1e6)
 
     lam_cen = 0.5 * (input_model.meta.wcsinfo.waverange_end -
@@ -1533,7 +1554,10 @@ def nrs_wcs_set_input(input_model, slit_name, wavelength_range=None):
     open_slits = g2s.slits
 
     slit_wcs.set_transform('gwa', 'slit_frame', g2s.get_model(slit_name))
-    if input_model.meta.exposure.type.lower() == 'nrs_ifu':
+
+    exp_type = input_model.meta.exposure.type
+    is_nirspec_ifu = is_nrs_ifu_lamp(input_model) or exp_type == 'nrs_ifu'
+    if is_nirspec_ifu:
         slit_wcs.set_transform('slit_frame', 'slicer',
                            wcsobj.pipeline[3][1].get_model(slit_name) & Identity(1))
     else:
@@ -1541,12 +1565,13 @@ def nrs_wcs_set_input(input_model, slit_name, wavelength_range=None):
                            wcsobj.pipeline[3][1].get_model(slit_name) & Identity(1))
     slit2detector = slit_wcs.get_transform('slit_frame', 'detector')
 
-    if input_model.meta.exposure.type.lower() != 'nrs_ifu':
+    if is_nirspec_ifu:
+        bb = compute_bounding_box(slit2detector, wrange)
+    else:
         slit = [s for s in open_slits if s.name == slit_name][0]
         bb = compute_bounding_box(slit2detector, wrange,
                                   slit_ymin=slit.ymin, slit_ymax=slit.ymax)
-    else:
-        bb = compute_bounding_box(slit2detector, wrange)
+
     slit_wcs.bounding_box = bb
     return slit_wcs
 
@@ -1695,6 +1720,31 @@ def _create_ifupost_transform(ifupost_slice):
     model = linear & Identity(1) | model_poly
     return model
 
+def nrs_lamp(input_model, reference_files, slit_y_range):
+    """Return the appropriate function for lamp data
+
+    Parameters
+    ----------
+    input_model : `~jwst.datamodels.DataModel`
+        The input data model.
+    reference_files : dict
+        The reference files used for this mode.
+    slit_y_range : list
+        The slit dimensions relative to the center of the slit.
+    """
+    lamp_mode = input_model.meta.instrument.lamp_mode
+    if type(lamp_mode) == str:
+        lamp_mode = lamp_mode.lower()
+    else:
+        lamp_mode = 'none'
+    if lamp_mode in ['fixedslit', 'brightobj']:
+        return slits_wcs(input_model, reference_files, slit_y_range)
+    elif lamp_mode == 'ifu':
+        return ifu(input_model, reference_files, slit_y_range)
+    elif lamp_mode == 'msaspec':
+        return slits_wcs(input_model, reference_files, slit_y_range)
+    else:
+        return not_implemented_mode(input_model, reference_files, slit_y_range)
 
 exp_type2transform = {'nrs_tacq': imaging,
                       'nrs_taslit': imaging,
@@ -1709,8 +1759,8 @@ exp_type2transform = {'nrs_tacq': imaging,
                       'nrs_msata': imaging,
                       'nrs_wata': imaging,
                       'nrs_autoflat': slits_wcs,
-                      'nrs_autowave': not_implemented_mode,
-                      'nrs_lamp': slits_wcs,
+                      'nrs_autowave': nrs_lamp,
+                      'nrs_lamp': nrs_lamp,
                       'nrs_brightobj': slits_wcs,
                       'nrs_dark': not_implemented_mode,
                       }

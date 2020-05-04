@@ -28,6 +28,7 @@ def nrs_extract2d(input_model, slit_name=None):
         Slit name.
     """
     exp_type = input_model.meta.exposure.type.upper()
+    lamp_mode = input_model.meta.instrument.lamp_mode.upper()
 
     if hasattr(input_model.meta.cal_step, 'assign_wcs') and input_model.meta.cal_step.assign_wcs == 'SKIPPED':
         log.info("assign_wcs was skipped")
@@ -44,7 +45,7 @@ def nrs_extract2d(input_model, slit_name=None):
     # This model keeps open_slits as an attribute.
     open_slits = slit2msa.slits[:]
     if slit_name is not None:
-        open_slits = [sub for sub in open_slits if sub.name == slit_name]
+        open_slits = [sub for sub in open_slits if sub.name == slit_name]<<<<<<< HEAD
 
     # NIRSpec BRIGHTOBJ (S1600A1 TSO) mode
     if exp_type == 'NRS_BRIGHTOBJ':
@@ -52,14 +53,12 @@ def nrs_extract2d(input_model, slit_name=None):
         slit = open_slits[0]
         output_model, xlo, xhi, ylo, yhi = process_slit(input_model, slit, exp_type)
         set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi)
-
-        # Update the S_REGION keyword value for the extracted slit
-        orig_s_region = output_model.meta.wcsinfo.s_region.strip()
-        util.update_s_region_nrs_slit(output_model)
-        if orig_s_region != output_model.meta.wcsinfo.s_region.strip():
-            log.info(f'Updated S_REGION to {output_model.meta.wcsinfo.s_region}')
-
-    # All other FS and MOS modes
+        if 'world' in input_model.meta.wcs.available_frames:
+            orig_s_region = output_model.meta.wcsinfo.s_region.strip()
+            util.update_s_region_nrs_slit(output_model)
+            if orig_s_region != output_model.meta.wcsinfo.s_region.strip():
+                log.info('extract_2d updated S_REGION to '
+                         '{0}'.format(output_model.meta.wcsinfo.s_region))
     else:
         output_model = datamodels.MultiSlitModel()
         output_model.update(input_model)
@@ -100,13 +99,14 @@ def process_slit(input_model, slit, exp_type):
     ----------
     input_model : `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
         Input data model. The ``CubeModel`` is used only for TSO data, i.e.
-        ``NRS_BRIGHTOBJ`` exposure.
-    slit : namedtuple
-        A `~jwst.transforms.models.Slit` object representing a slit.
-        Slit object.
+        ``NRS_BRIGHTOBJ`` exposure or internal lamp exposures with lamp_mode
+        set to ``BRIGHTOBJ``.
+    slit_name : str or int
+        Slit name.
     exp_type : str
         The type of exposure. Supported types are
-        ``NRS_FIXEDSLIT``, ``NRS_MSASPEC``, ``NRS_BRIGHTOBJ``
+        ``NRS_FIXEDSLIT``, ``NRS_MSASPEC``, ``NRS_BRIGHTOBJ``, ``NRS_LAMP``,
+        ``NRS_AUTOFLAT``, ``NRS_AUTOWAVE``
 
     Returns
     -------
@@ -147,9 +147,9 @@ def set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi):
     output_model.source_id = int(slit.source_id)
     output_model.slit_ymin = slit.ymin
     output_model.slit_ymax = slit.ymax
-    log.debug(f'slit.ymin {slit.ymin}')
-    output_model.shutter_id = int(slit.shutter_id)  # for use in wavecorr
-    if output_model.meta.exposure.type.lower() in ['nrs_msaspec', 'nrs_autoflat']:
+    log.debug('slit.ymin {}'.format(slit.ymin))
+    if output_model.meta.exposure.type.lower() in ['nrs_msaspec', 'nrs_autoflat'] or \
+       output_model.meta.instrument.lamp_mode.upper == 'MSASPEC':
         #output_model.source_id = int(slit.source_id)
         output_model.source_name = slit.source_name
         output_model.source_alias = slit.source_alias
