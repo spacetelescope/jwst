@@ -172,7 +172,14 @@ def ifu(input_model, reference_files, slit_y_range=[-.55, .55]):
     detector = input_model.meta.instrument.detector
     grating = input_model.meta.instrument.grating
     filter = input_model.meta.instrument.filter
-
+    # Check for ifu reference files
+    if reference_files['ifufore'] is None and \
+       reference_files['ifuslicer'] is None and \
+       reference_files['ifupost'] is None:
+        # No ifu reference files, won't be able to create pipeline
+        log_message = 'No ifufore, ifuslicer or ifupost reference files'
+        log.critical(log_message)
+        raise RuntimeError(log_message)
     # Check for data actually being present on NRS2
     log_message = "No IFU slices fall on detector {0}".format(detector)
     if detector == "NRS2" and grating.endswith('M'):
@@ -215,7 +222,7 @@ def ifu(input_model, reference_files, slit_y_range=[-.55, .55]):
     exp_type = input_model.meta.exposure.type.upper()
 
     is_lamp_exposure = exp_type in ['NRS_LAMP', 'NRS_AUTOWAVE', 'NRS_AUTOFLAT']
-    
+ 
     if input_model.meta.instrument.filter == 'OPAQUE' or is_lamp_exposure:
         # If filter is "OPAQUE" or if internal lamp exposure the pipeline stops at the MSA.
         pipeline = [(det, dms2detector),

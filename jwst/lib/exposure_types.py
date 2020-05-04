@@ -31,10 +31,9 @@ NRS_LAMP_MODE_SPEC_TYPES = [
 
 def is_nrs_lamp(datamodel):
     exp_type = datamodel.meta.exposure.type.lower()
-    return exp_type in ['nrs_lamp', 'nrs_autowave'] 
+    return exp_type in ['nrs_lamp', 'nrs_autowave']
 
 def is_nrs_linelamp(datamodel):
-    lamp_mode = datamodel.meta.instrument.lamp_mode.lower()
     lamp_state = datamodel.meta.instrument.lamp_state.lower()
     return lamp_state[0:3] in ['lin', 'ref']
 
