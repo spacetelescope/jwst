@@ -166,7 +166,7 @@ class Extract1dStep(Step):
 
                         temp = extract.run_extract1d(
                             model,
-                            extract_ref,  # TODO: Refactor to accept apcorr file also
+                            extract_ref,
                             self.smoothing_length,
                             self.bkg_order,
                             self.log_increment,
