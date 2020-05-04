@@ -1,44 +1,9 @@
-import numpy as np
-
-from astropy.coordinates import SkyCoord
-from gwcs.wcs import WCS
-from typing import Tuple, Union
+from typing import Tuple
 from scipy.interpolate import interp2d, interp1d
 from astropy.io import fits
 
-# from ..assign_wcs.util import compute_scale
+from ..assign_wcs.util import compute_scale
 from ..datamodels import DataModel
-
-
-def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray]) -> float:
-    """Compute scaling transform.
-
-    Parameters
-    ----------
-    wcs : `~gwcs.wcs.WCS`
-        Reference WCS object from which to compute a scaling factor.
-
-    fiducial : tuple
-        Input fiducial of (RA, DEC) used in calculating reference points.
-
-    Returns
-    -------
-    scale : float
-        Scaling factor for x and y.
-
-    """
-    if len(fiducial) != 2:
-        raise ValueError(f'Input fiducial must contain only (RA, DEC); Instead recieved: {fiducial}')
-
-    crpix = np.array(wcs.invert(*fiducial))
-    crpix_with_offsets = np.vstack((crpix, crpix + (1, 0), crpix + (0, 1))).T
-    crval_with_offsets = wcs(*crpix_with_offsets)
-
-    coords = SkyCoord(ra=crval_with_offsets[0], dec=crval_with_offsets[1], unit="deg")
-    xscale = np.abs(coords[0].separation(coords[1]).value)
-    yscale = np.abs(coords[0].separation(coords[2]).value)
-
-    return np.sqrt(xscale * yscale)
 
 
 class ApCorr:
@@ -50,7 +15,7 @@ class ApCorr:
         self.correction = None
 
         self.model = input_model
-        self._reference_table = appcorr_table.apcorr_table
+        self._reference_table = appcorr_table
         self.slitname = slitname
         self.location = location
 
@@ -62,9 +27,9 @@ class ApCorr:
 
         self.reference = self._reduce_reftable()
 
-        if self.reference.columns['size'].unit is not None and self.reference.columns['size'].unit.startswith('arcsec'):
+        if 'size' in self.reference and self.reference.columns['size'].unit.startswith('arcsec'):
             if self.location is not None:
-                self.reference['size'] /= compute_scale(self.model.wcs, location)
+                self.reference['size'][0] /= compute_scale(self.model.wcs, location)
             else:
                 raise ValueError(
                     f'If the size column for the input APCORR reference file are in units with arcseconds, a location '
@@ -81,8 +46,9 @@ class ApCorr:
                 'MRS': {'instrument': []},
             },
             'NIRSPEC': {
-                'IFU/MOS': {'instrument': ['filter', 'grating']},
-                'FS': {'instrument': ['filter', 'grating', 'slit']},
+                'IFU': {'instrument': ['filter', 'grating']},
+                'MSASPEC': {'instrument': ['filter', 'grating']},
+                'FIXEDSLIT': {'instrument': ['filter', 'grating', 'slit']},
             },
             'NIRCAM': {
                 'WFSS': {'insturment': ['filter', 'pupil']}
