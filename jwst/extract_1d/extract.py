@@ -5,6 +5,7 @@ import json
 import math
 
 import numpy as np
+from astropy.io import fits
 from astropy.modeling import polynomial
 from .. import datamodels
 from ..datamodels import dqflags, open as dm_open
@@ -2574,8 +2575,9 @@ def run_extract1d(input_model, extract_ref_name, smoothing_length, bkg_order, lo
     # Read and interpret the reference file.
     ref_dict = load_ref_file(extract_ref_name)
 
-    apcorr_table = dm_open(apcorr_ref_name) if apcorr_ref_name is not None or apcorr_ref_name is not 'N/A' else None
-    # TODO: apcorr_table can't always be opened by dm_open..
+    apcorr_table = (
+        fits.getdata(apcorr_ref_name) if apcorr_ref_name is not None or apcorr_ref_name is not 'N/A' else None
+    )
 
     # This item is a flag to let us know that do_extract1d was called
     # from run_extract1d; that is, we don't expect this key to be present
@@ -2596,9 +2598,6 @@ def run_extract1d(input_model, extract_ref_name, smoothing_length, bkg_order, lo
         was_source_model,
         apcorr_table=apcorr_table
     )
-
-    if apcorr_table is not None:
-        apcorr_table.close()
 
     # Remove target.source_type from the output model, so that it
     # doesn't force creation of an empty SCI extension in the output
@@ -2906,7 +2905,7 @@ def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order
             spec.dispersion_direction = extract_params['dispaxis']
             copy_keyword_info(slit, slit.name, spec)
 
-            if apcorr_table is not None:
+            if source_type.upper() == 'POINT' and apcorr_table is not None:
                 log.info('Applying Aperture correction.')
                 apcorr = ApCorr(input_model, apcorr_table, slitname=slit.name, location=(ra, dec))
                 apcorr.apply_apcorr(spec.spec_table)
@@ -3062,7 +3061,7 @@ def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order
                 # the attributes we will look for in this function.
                 copy_keyword_info(input_model, slitname, spec)
 
-                if apcorr_table is not None:
+                if source_type.upper() == 'POINT' and apcorr_table is not None:
                     log.info('Applying Aperture correction.')
                     apcorr = ApCorr(input_model, apcorr_table, slitname=slitname, location=(ra, dec))
                     apcorr.apply_apcorr(spec.spec_table)
@@ -3200,7 +3199,7 @@ def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order
                     spec.dispersion_direction = extract_params['dispaxis']
                     copy_keyword_info(input_model, slitname, spec)
 
-                    if apcorr_table is not None:
+                    if source_type.upper() == 'POINT' and apcorr_table is not None:
                         log.info('Applying Aperture correction.')
                         apcorr = ApCorr(input_model, apcorr_table, slitname=slitname, location=(ra, dec))
                         apcorr.apply_apcorr(spec.spec_table)
