@@ -35,12 +35,12 @@ Remember that all conda operations must be done from within a bash shell.
 ### Installing From Github
 
 You can install various versions of `jwst` directly from the code repo on Github.
-For example, to install a fully tested and tagged release version, such as `jwst 0.15.1`,
+For example, to install a fully tested and tagged release version, such as `jwst 0.16.0`,
 enter (from a bash shell):
 
     conda create -n <env_name> python
     conda activate <env_name>
-    pip install git+https://github.com/spacetelescope/jwst@0.15.1
+    pip install git+https://github.com/spacetelescope/jwst@0.16.0
 
 Or to install the latest development version (not as well tested) from the
 Github master branch:
@@ -69,7 +69,7 @@ that have been well tested.
 To install a particular DMS build, consult the
 [Software vs DMS build version map](https://github.com/spacetelescope/jwst#software-vs-dms-build-version-map)
 table shown below to determine the correct jwst tag. For example, to install the
-version of `jwst` used in DMS build 7.4.2, use jwst tag 0.15.1. The overall
+version of `jwst` used in DMS build 7.5, use jwst tag 0.16.0. The overall
 procedure is similar to the 3-step process outlined in the previous section, but the
 details of each command vary, due to the use of environment snapshot files that specify
 all of the particular packages to install. Also note that different snapshot files are
@@ -77,15 +77,15 @@ used for Linux and Mac OS systems.
 
 Linux:
 
-    conda create -n <env_name> --file https://ssb.stsci.edu/releases/jwstdp/0.15.1/conda_python_stable-deps.txt
+    conda create -n <env_name> --file https://ssb.stsci.edu/releases/jwstdp/0.16.0/conda_python_stable-deps.txt
     conda activate <env_name>
-    pip install -r https://ssb.stsci.edu/releases/jwstdp/0.15.1/reqs_stable-deps.txt
+    pip install -r https://ssb.stsci.edu/releases/jwstdp/0.16.0/reqs_stable-deps.txt
 
 MacOS:
 
-    conda create -n <env_name> --file https://ssb.stsci.edu/releases/jwstdp/0.15.1/conda_python_macos-stable-deps.txt
+    conda create -n <env_name> --file https://ssb.stsci.edu/releases/jwstdp/0.16.0/conda_python_macos-stable-deps.txt
     conda activate <env_name>
-    pip install -r https://ssb.stsci.edu/releases/jwstdp/0.15.1/reqs_macos-stable-deps.txt
+    pip install -r https://ssb.stsci.edu/releases/jwstdp/0.16.0/reqs_macos-stable-deps.txt
 
 Each DMS delivery has its own installation instructions, which may be found in
 the corresponding release documentation linked from this page:
@@ -176,6 +176,7 @@ contact the [JWST Help Desk](https://jwsthelp.stsci.edu).
 
 | jwst tag | DMS build | CRDS_CONTEXT |   Date     |          Notes                           |
 | -------- | --------- | ------------ | ---------- | -----------------------------------------|
+|  0.16.0  | B7.5rc1   | 0615         | 05/04/2020 | First release candidate for B7.5         |
 |  0.15.1  | B7.4.2    | 0586         | 03/10/2020 | Final release candidate for B7.4.2       |
 |  0.15.0  | B7.4.2rc1 | 0585         | 02/28/2020 | First release candidate for B7.4.2       |
 |  0.14.2  | B7.4      | 0570         | 11/18/2019 | Final release candidate for B7.4         |
