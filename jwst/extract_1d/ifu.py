@@ -7,6 +7,7 @@ import photutils
 from photutils import CircularAperture, CircularAnnulus, \
                       RectangularAperture, aperture_photometry
 
+from .apply_apcorr import ApCorr
 from .. import datamodels
 from ..datamodels import dqflags
 from . import spec_wcs
@@ -27,7 +28,8 @@ OFFSET_NOT_ASSIGNED_YET = "not assigned yet"
 # between the target and any point in the image; used by locn_from_wcs().
 HUGE_DIST = 1.e10
 
-def ifu_extract1d(input_model, ref_dict, source_type, subtract_background):
+
+def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcorr_table=None):
     """Extract a 1-D spectrum from an IFU cube.
 
     Parameters
@@ -46,6 +48,9 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background):
         If None, the value in the extract_1d reference file will be used.
         If not None, this parameter overrides the value in the
         extract_1d reference file.
+
+    apcorr_table : ~.fits.FITS_rec or None
+        Aperture correction table.
 
     Returns
     -------
@@ -146,6 +151,12 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background):
     spec.slit_dec = dec
     if slitname is not None and slitname != "ANY":
         spec.name = slitname
+
+    if source_type == 'POINT' and apcorr_table is not None:
+        log.info('Applying Aperture correction.')
+        apcorr = ApCorr(input_model, apcorr_table, slitname=slitname, location=(ra, dec))
+        apcorr.apply_apcorr(spec.spec_table)
+
     output_model.spec.append(spec)
 
     # See output_model.spec[0].meta.wcs instead.
