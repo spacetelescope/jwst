@@ -51,7 +51,7 @@ class TweakRegStep(Step):
         align_to_gaia = boolean(default=False)  # Align to GAIA catalog
         gaia_catalog = option('GAIADR2', 'GAIADR1', default='GAIADR2')
         min_gaia = integer(min=0, default=5) # Min number of GAIA sources needed
-        output_gaia = boolean(default=False)  # Write out GAIA catalog as a separate product
+        save_gaia_catalog = boolean(default=False)  # Write out GAIA catalog as a separate product
     """
 
 
@@ -205,7 +205,7 @@ class TweakRegStep(Step):
                 # NOTE:  If desired, the pipeline can write out the reference catalog
                 #        as a separate product with a name based on whatever convention
                 #        is determined by the JWST Cal Working Group
-                if self.output_gaia:
+                if self.save_gaia_catalog:
                     output_name = 'fit_{}_ref.ecsv'.format(self.gaia_catalog.lower())
                 else:
                     output_name = None
@@ -218,7 +218,9 @@ class TweakRegStep(Step):
                 if num_ref < self.min_gaia:
                     msg = "Not enough GAIA sources for a fit: {}\n".format(num_ref)
                     msg += "Skipping alignment to {} astrometric catalog!\n".format(self.gaia_catalog)
-                    raise ValueError(msg)
+                    # Raise Exception here to avoid rest of code in this try block
+                    raise ValueError(msg)   
+
                 # Set group_id to same value so all get fit as one observation
                 # The assigned value, 987654, has been hard-coded to make it
                 # easy to recognize when alignment to GAIA was being performed
