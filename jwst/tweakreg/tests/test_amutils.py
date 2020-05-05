@@ -47,7 +47,7 @@ def test_get_catalog():
                               sr=radius, 
                               catalog=TEST_CATALOG)
     # check results
-    assert(len(cat) == EXPECTED_NUM_SOURCES 
+    assert(len(cat) == EXPECTED_NUM_SOURCES)
 
 
 def test_create_catalog():
