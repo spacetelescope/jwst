@@ -1,4 +1,5 @@
 """Test astrometric utility functions for alignment"""
+import os
 import pytest
 
 import asdf
@@ -17,7 +18,8 @@ TEST_RTOL = 1e-6
 
 # Utility functions for the tests
 def read_test_gwcs():
-    asdf_file = asdf.open(WCS_NAME)
+    file_dir = os.path.abspath(os.path.split(__file__)[0])
+    asdf_file = asdf.open(os.path.join(file_dir, WCS_NAME))
     wcsobj = asdf_file['wcs']
 
     return wcsobj
