@@ -1,6 +1,5 @@
 """Test astrometric utility functions for alignment"""
 import os
-import pytest
 
 import asdf
 import numpy as np
@@ -29,39 +28,39 @@ def read_test_gwcs():
 def test_radius():
     # Read GWCS object
     wcsobj = read_test_gwcs()
-    
+
     # compute radius
     radius, fiducial = amutils.compute_radius(wcsobj)
-    
+
     # check results
     assert(np.allclose([radius], [EXPECTED_RADIUS], rtol=TEST_RTOL))
-    
-    
+
+
 def test_get_catalog():
     # Read GWCS object
     wcsobj = read_test_gwcs()
 
     # Interpret the GWCS 
     radius, fiducial = amutils.compute_radius(wcsobj)
-    
+
     # Get the catalog
-    cat = amutils.get_catalog(fiducial[0], fiducial[1], 
-                              sr=radius, 
+    cat = amutils.get_catalog(fiducial[0], fiducial[1],
+                              sr=radius,
                               catalog=TEST_CATALOG)
     # check results
     assert(len(cat) == EXPECTED_NUM_SOURCES)
 
 
 def test_create_catalog():
-    # Read GWCS object 
+    # Read GWCS object
     wcsobj = read_test_gwcs()
-    
+
     # Create catalog
-    gcat = amutils.create_astrometric_catalog(None, 
+    gcat = amutils.create_astrometric_catalog(None,
                                                 existing_wcs=wcsobj,
                                                 catalog=TEST_CATALOG,
-                                                output=None)    
+                                                output=None)
 
     # check that we got expected number of sources
     assert(len(gcat) == EXPECTED_NUM_SOURCES)
-  
+

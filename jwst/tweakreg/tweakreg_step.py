@@ -218,7 +218,7 @@ class TweakRegStep(Step):
                 msg = "Not enough GAIA sources for a fit: {}\n".format(num_ref)
                 msg += "Skipping alignment to {} astrometric catalog!\n".format(self.gaia_catalog)
                 # Raise Exception here to avoid rest of code in this try block
-                self.log.warning(msg)  
+                self.log.warning(msg)
             else:
                 # Set group_id to same value so all get fit as one observation
                 # The assigned value, 987654, has been hard-coded to make it
@@ -232,41 +232,44 @@ class TweakRegStep(Step):
                         del imcat.meta['fit_info']
 
                 # Perform fit
-                align_tab = align_wcs(imcats,
-                                      refcat=ref_cat,
-                                      enforce_user_order=False,
-                                      expand_refcat=False,
-                                      minobj=self.minobj,
-                                      match=tpmatch,
-                                      fitgeom=self.fitgeometry,
-                                      nclip=self.nclip,
-                                      sigma=(self.sigma, 'rmse')
-                                     )
+                align_wcs(imcats,
+                          refcat=ref_cat,
+                          enforce_user_order=False,
+                          expand_refcat=False,
+                          minobj=self.minobj,
+                          match=tpmatch,
+                          fitgeom=self.fitgeometry,
+                          nclip=self.nclip,
+                          sigma=(self.sigma, 'rmse')
+                         )
+
                 # Reset group_id to original values
                 # Also, update/create the WCS .name attribute with information on this astrometric fit
                 for imcat in imcats:
                     imcat.meta['group_id'] = imcat.meta['orig_group_id']
+                    if 'SUCCESS' in imcat.meta.get('fit_info')['status']:
+                        # NOTE: This .name attribute needs to be defined using a convention
+                        #       agreed upon by the JWST Cal Working Group.
+                        #       Current value is merely a place-holder based on HST conventions
+                        #       This value should also be translated to the FITS WCSNAME keyword
+                        #       IF that is what gets recorded in the archive for end-user searches
+                        imcat.meta['image_model'].meta.wcs.name = "FIT-LVL3-{}".format(self.gaia_catalog)
 
 
         for imcat in imcats:
             imcat.meta['image_model'].meta.cal_step.tweakreg = 'COMPLETE'
             # retrieve fit status and update wcs if fit is successful:
-            fit_info = imcat.meta.get('fit_info')
-            if 'SUCCESS' in fit_info['status']:
+            # fit_info = imcat.meta.get('fit_info')
+            if 'SUCCESS' in imcat.meta.get('fit_info')['status']:
                 imcat.meta['image_model'].meta.wcs = imcat.wcs
-                # NOTE: This .name attribute needs to be defined using a convention
-                #       agreed upon by the JWST Cal Working Group.
-                #       Current value is merely a place-holder based on HST conventions
-                #       This value should also be translated to the FITS WCSNAME keyword
-                #       IF that is what gets recorded in the archive for end-user searches
-                imcat.meta['image_model'].meta.wcs.name = "FIT-LVL3-{}".format(self.gaia_catalog)
-                
-                # Also update FITS representation 
-                gwcs_header = imcat.wcs.to_fits_sip(max_pix_error=0.1, 
+                """
+                # Also update FITS representation
+                gwcs_header = imcat.wcs.to_fits_sip(max_pix_error=0.1,
                                                 max_inv_pix_error=0.1,
-                                                degree=3, 
+                                                degree=3,
                                                 npoints=128)
                 imcat.meta['image_model'].wcs = wcs.WCS(header=gwcs_header)
+                """
 
         return images
 
