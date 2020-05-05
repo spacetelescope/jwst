@@ -199,28 +199,27 @@ class TweakRegStep(Step):
                 raise e
 
         if self.align_to_gaia:
-            try:
-                # Get catalog of GAIA sources for the field
-                #
-                # NOTE:  If desired, the pipeline can write out the reference catalog
-                #        as a separate product with a name based on whatever convention
-                #        is determined by the JWST Cal Working Group
-                if self.save_gaia_catalog:
-                    output_name = 'fit_{}_ref.ecsv'.format(self.gaia_catalog.lower())
-                else:
-                    output_name = None
-                ref_cat = amutils.create_astrometric_catalog(images,
-                                                             self.gaia_catalog,
-                                                             output=output_name)
+            # Get catalog of GAIA sources for the field
+            #
+            # NOTE:  If desired, the pipeline can write out the reference catalog
+            #        as a separate product with a name based on whatever convention
+            #        is determined by the JWST Cal Working Group
+            if self.save_gaia_catalog:
+                output_name = 'fit_{}_ref.ecsv'.format(self.gaia_catalog.lower())
+            else:
+                output_name = None
+            ref_cat = amutils.create_astrometric_catalog(images,
+                                                         self.gaia_catalog,
+                                                         output=output_name)
 
-                # Check that there are enough GAIA sources for a reliable/valid fit
-                num_ref = len(ref_cat)
-                if num_ref < self.min_gaia:
-                    msg = "Not enough GAIA sources for a fit: {}\n".format(num_ref)
-                    msg += "Skipping alignment to {} astrometric catalog!\n".format(self.gaia_catalog)
-                    # Raise Exception here to avoid rest of code in this try block
-                    raise ValueError(msg)   
-
+            # Check that there are enough GAIA sources for a reliable/valid fit
+            num_ref = len(ref_cat)
+            if num_ref < self.min_gaia:
+                msg = "Not enough GAIA sources for a fit: {}\n".format(num_ref)
+                msg += "Skipping alignment to {} astrometric catalog!\n".format(self.gaia_catalog)
+                # Raise Exception here to avoid rest of code in this try block
+                self.log.warning(msg)  
+            else:
                 # Set group_id to same value so all get fit as one observation
                 # The assigned value, 987654, has been hard-coded to make it
                 # easy to recognize when alignment to GAIA was being performed
@@ -247,11 +246,6 @@ class TweakRegStep(Step):
                 # Also, update/create the WCS .name attribute with information on this astrometric fit
                 for imcat in imcats:
                     imcat.meta['group_id'] = imcat.meta['orig_group_id']
-
-            except ValueError as e:
-                msg = e.args[0]
-                # Warn the user that the FIT to the astrometric catalog was not successful.
-                self.log.warning(msg)
 
 
         for imcat in imcats:
