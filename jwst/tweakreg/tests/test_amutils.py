@@ -32,7 +32,7 @@ def test_radius():
     radius, fiducial = amutils.compute_radius(wcsobj)
     
     # check results
-    assert(np.allclose([radius], [EXPECTED_RADIUS], rtol=TEST_RTOL)
+    assert(np.allclose([radius], [EXPECTED_RADIUS], rtol=TEST_RTOL))
     
     
 def test_get_catalog():
