@@ -1,8 +1,7 @@
+os: linux
 dist: xenial
 language: python
 python: 3.7.7
-
-sudo: false
 
 # The apt packages below are needed for sphinx builds
 addons:
@@ -22,7 +21,7 @@ env:
     - TEST_COMMAND="pytest --cov-report=xml --cov=./"
     - PIP_DEPENDENCIES=".[test]"
 
-matrix:
+jobs:
   # Don't wait for allowed failures
   fast_finish: true
 
@@ -38,7 +37,7 @@ matrix:
 
     # Test with SDP pinned dependencies
     - env: PIP_DEPENDENCIES="-r requirements-sdp.txt .[test]"
-      python: 3.7.6
+      python: 3.7.7
 
     # Test with dev dependencies
     - env: PIP_DEPENDENCIES="-r requirements-dev.txt .[test]"
