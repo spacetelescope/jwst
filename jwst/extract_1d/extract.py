@@ -2583,6 +2583,11 @@ def run_extract1d(input_model, refname, smoothing_length, bkg_order,
                                 log_increment, subtract_background,
                                 apply_nod_offset, was_source_model)
 
+    # Remove target.source_type from the output model, so that it
+    # doesn't force creation of an empty SCI extension in the output
+    # x1d product just to hold this keyword.
+    output_model.meta.target.source_type = None
+
     return output_model
 
 

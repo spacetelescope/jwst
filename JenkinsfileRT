@@ -21,7 +21,7 @@ def pip_install_args = "--index-url ${pip_index} --progress-bar=off"
 env_vars = [
     "TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory",
     "CRDS_SERVER_URL=https://jwst-crds-test.stsci.edu",
-    "CRDS_CONTEXT=jwst_0595.pmap",
+    "CRDS_CONTEXT=jwst_0615.pmap",
     "CRDS_PATH=/grp/crds/test_cache",
     "ENG_BASE_URL=http://twjwdmsemwebag.stsci.edu/JWDMSEngFqAccSide1/TlmMnemonicDataSrv.svc/",
 ]
@@ -67,5 +67,5 @@ bc1.build_cmds = ["pip install -e ."]
 bc1.test_cmds = []
 bc1.test_configs = []
 
-utils.run([jobconfig, bc0])
+utils.run([jobconfig, bc0, bc1])
 }  // withCredentials

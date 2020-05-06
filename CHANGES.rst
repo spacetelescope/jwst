@@ -1,5 +1,10 @@
-0.15.2 (unreleased)
-==================
+0.16.1 (unreleased)
+===================
+
+
+
+0.16.0 (2020-05-04)
+===================
 
 ami
 ---
@@ -45,6 +50,9 @@ datamodels
 - Added ``pupil`` to the ``FilteroffsetModel`` to support NIRCAM and NIRISS WCS. [#4750]
 
 - Added FASTGRPAVG[8,16,32,64] to the READPATT keyword allowed values. [#4818]
+
+- Added the SRCTYAPT keyword and moved SRCTYPE to the SCI extension header of
+  all applicable data model schemas. [#4885]
 
 exp_to_source
 -------------
@@ -109,6 +117,9 @@ pipeline
 - Update ``calwebb_spec3`` to use suffix ``c1d`` for ``combine_1d`` products.
   [#4846]
 
+- Update ``calwebb_spec3`` to update the ASNTABLE keyword in all output
+  products, to reflect the name of the spec3 ASN used as input. [#4865]
+
 resample
 --------
 
@@ -136,6 +147,11 @@ resample_spec
 
 - Enable model metadata blending [#4765]
 
+rscd
+----
+
+- Added baseline algorithm that flags groups [#4669]
+
 set_telescope_pointing
 ----------------------
 
@@ -154,6 +170,9 @@ srctype
 
 - Change default source type for NRS_IFU from POINT to EXTENDED. Change the source
   type for NIRSpec MOS sources with stellarity = -1 from UNKNOWN to POINT. [#4686]
+
+- Modified the step to use the SRCTYAPT keyword to get the user input value from
+  the APT and store the derived source type in the SRCTYPE keyword. [#4885]
 
 stpipe
 ------
@@ -382,7 +401,6 @@ transforms
 - Added ``source_ra`` and ``source_dec`` to the ``Slit`` namedtuple
   with default values of 0.0. These are populated from the MSA metadata
   file. [#4613]
-
 
 tweakreg
 --------

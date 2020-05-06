@@ -66,6 +66,8 @@ search is case-insensitive::
     <BLANKLINE>
     meta.target.source_type
     <BLANKLINE>
+    meta.target.source_type_apt
+    <BLANKLINE>
     meta.target.type
     <BLANKLINE>
     meta.visit.internal_target

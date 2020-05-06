@@ -1,17 +1,7 @@
+os: linux
 dist: xenial
 language: python
 python: 3.7.7
-
-sudo: false
-
-# The apt packages below are needed for sphinx builds
-addons:
-  apt:
-    packages:
-      - texlive-latex-extra
-      - dvipng
-      - graphviz
-      - liblapack-dev
 
 env:
   global:
@@ -22,7 +12,7 @@ env:
     - TEST_COMMAND="pytest --cov-report=xml --cov=./"
     - PIP_DEPENDENCIES=".[test]"
 
-matrix:
+jobs:
   # Don't wait for allowed failures
   fast_finish: true
 
@@ -38,7 +28,7 @@ matrix:
 
     # Test with SDP pinned dependencies
     - env: PIP_DEPENDENCIES="-r requirements-sdp.txt .[test]"
-      python: 3.7.6
+      python: 3.7.7
 
     # Test with dev dependencies
     - env: PIP_DEPENDENCIES="-r requirements-dev.txt .[test]"
@@ -48,9 +38,15 @@ matrix:
     - env: CRDS_CONTEXT="jwst-edit"
            PIP_DEPENDENCIES=".[test]"
 
-    # Build sphinx documentation with warnings
-    - env: TEST_COMMAND="make --directory=docs html"
-           PIP_DEPENDENCIES=".[docs]"
+    # Build documentation
+    - env: PIP_DEPENDENCIES=".[docs]"
+           TEST_COMMAND="make --directory=docs html"
+      addons:
+        apt:
+          packages:
+            - texlive-latex-extra
+            - dvipng
+            - graphviz
 
     # PEP8 check
     - env: TEST_COMMAND="flake8"
