@@ -7,7 +7,7 @@ import photutils
 from photutils import CircularAperture, CircularAnnulus, \
                       RectangularAperture, aperture_photometry
 
-from .apply_apcorr import ApCorr
+from .apply_apcorr import select_apcorr
 from .. import datamodels
 from ..datamodels import dqflags
 from . import spec_wcs
@@ -154,7 +154,7 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
 
     if source_type == 'POINT' and apcorr_table is not None:
         log.info('Applying Aperture correction.')
-        apcorr = ApCorr(input_model, apcorr_table, slitname=slitname, location=(ra, dec))
+        apcorr = select_apcorr(input_model)(input_model, apcorr_table, slitname=slitname, location=(ra, dec))
         apcorr.apply_apcorr(spec.spec_table)
 
     output_model.spec.append(spec)

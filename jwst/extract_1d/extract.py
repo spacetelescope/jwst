@@ -8,7 +8,7 @@ import numpy as np
 from astropy.io import fits
 from astropy.modeling import polynomial
 from .. import datamodels
-from ..datamodels import dqflags, open as dm_open
+from ..datamodels import dqflags
 from ..assign_wcs import niriss         # for specifying spectral order number
 from ..assign_wcs.util import wcs_bbox_from_shape
 from ..lib import pipe_utils
@@ -16,7 +16,7 @@ from ..lib.wcs_utils import get_wavelengths
 from . import extract1d
 from . import ifu
 from . import spec_wcs
-from .apply_apcorr import ApCorr
+from .apply_apcorr import select_apcorr
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -2822,7 +2822,7 @@ def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order
                 log.critical('Missing extraction parameters.')
                 raise ValueError('Missing extraction parameters.')
             elif extract_params['match'] == PARTIAL:
-                log.info(f'Spectral order {sp_order: d} not found, skipping ...')
+                log.info(f'Spectral order {sp_order} not found, skipping ...')
                 continue
 
             extract_params['dispaxis'] = slit.meta.wcsinfo.dispersion_direction
@@ -2907,8 +2907,8 @@ def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order
 
             if source_type.upper() == 'POINT' and apcorr_table is not None:
                 log.info('Applying Aperture correction.')
-                apcorr = ApCorr(input_model, apcorr_table, slitname=slit.name, location=(ra, dec))
-                apcorr.apply_apcorr(spec.spec_table)
+                apcorr = select_apcorr(input_model)(input_model, apcorr_table, slit=slit.name, location=(ra, dec))
+                apcorr.apply(spec.spec_table)
 
             output_model.spec.append(spec)
     else:
@@ -3006,7 +3006,7 @@ def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order
                         continue
 
                 elif extract_params['match'] == PARTIAL:
-                    log.info(f'Spectral order {sp_order: d} not found, skipping ...')
+                    log.info(f'Spectral order {sp_order} not found, skipping ...')
                     continue
                 else:
                     log.critical('Missing extraction parameters.')
@@ -3063,8 +3063,8 @@ def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order
 
                 if source_type.upper() == 'POINT' and apcorr_table is not None:
                     log.info('Applying Aperture correction.')
-                    apcorr = ApCorr(input_model, apcorr_table, slitname=slitname, location=(ra, dec))
-                    apcorr.apply_apcorr(spec.spec_table)
+                    apcorr = select_apcorr(input_model)(input_model, apcorr_table, location=(ra, dec))
+                    apcorr.apply(spec.spec_table)
 
                 output_model.spec.append(spec)
 
@@ -3118,7 +3118,7 @@ def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order
                     log.critical('Missing extraction parameters.')
                     raise ValueError('Missing extraction parameters.')
                 elif extract_params['match'] == PARTIAL:
-                    log.warning(f'Spectral order {sp_order: d} not found, skipping ...')
+                    log.warning(f'Spectral order {sp_order} not found, skipping ...')
                     continue
 
                 extract_params['dispaxis'] = input_model.meta.wcsinfo.dispersion_direction
@@ -3201,8 +3201,10 @@ def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order
 
                     if source_type.upper() == 'POINT' and apcorr_table is not None:
                         log.info('Applying Aperture correction.')
-                        apcorr = ApCorr(input_model, apcorr_table, slitname=slitname, location=(ra, dec))
-                        apcorr.apply_apcorr(spec.spec_table)
+                        apcorr = select_apcorr(input_model)(
+                            input_model, apcorr_table, slit=slitname, location=(ra, dec)
+                        )
+                        apcorr.apply(spec.spec_table)
 
                     output_model.spec.append(spec)
 
@@ -3261,7 +3263,11 @@ def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order
     if extract_ref_dict is not None and 'ref_model' in extract_ref_dict:
         extract_ref_dict['ref_model'].close()
 
-    if extract_ref_dict is None or 'need_to_set_to_complete' not in extract_ref_dict or extract_ref_dict['need_to_set_to_complete']:
+    if (
+            extract_ref_dict is None
+            or 'need_to_set_to_complete' not in extract_ref_dict
+            or extract_ref_dict['need_to_set_to_complete']
+    ):
         output_model.meta.cal_step.extract_1d = 'COMPLETE'
 
     return output_model
