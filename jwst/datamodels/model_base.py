@@ -173,12 +173,11 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                 else:
                     init_fitsopen = init
 
-                with fits.open(init_fitsopen, memmap=memmap) as hdulist:
-                    asdffile = fits_support.from_fits(hdulist,
-                                                  self._schema,
-                                                  self._ctx,
-                                                  **kwargs)
-                    self._files_to_close.append(hdulist)
+                hdulist = fits.open(init_fitsopen, memmap=memmap)
+                asdffile = fits_support.from_fits(
+                    hdulist, self._schema, self._ctx, **kwargs
+                )
+                self._files_to_close.append(hdulist)
 
             elif file_type == "asdf":
                 asdffile = self.open_asdf(init=init, **kwargs)
@@ -274,6 +273,10 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         return "".join(buf)
 
+    def __del__(self):
+        """Ensure closure of resources when deleted."""
+        self.close()
+
     @property
     def override_handle(self):
         """override_handle identifies in-memory models where a filepath
@@ -304,7 +307,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         _drop_array(self._instance)
 
     def close(self):
-        if not self._iscopy and self._asdf is not None:
+        if not self._iscopy and getattr(self, '_asdf', None) is not None:
             self._asdf.close()
             self._drop_arrays()
 

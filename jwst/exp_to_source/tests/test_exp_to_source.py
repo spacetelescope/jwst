@@ -14,7 +14,9 @@ def run_exp_to_source():
         for f in helpers.INPUT_FILES
     ]
     outputs = exp_to_source(inputs)
-    return inputs, outputs
+    yield inputs, outputs
+    for model in inputs:
+        model.close()
 
 
 @pytest.fixture(scope='module')
@@ -46,13 +48,13 @@ def test_model_roundtrip(tmpdir, run_exp_to_source):
         outputs[output].save(file_path)
         files.append(file_path)
     for file_path in files:
-        multiexposure_model = MultiExposureModel(file_path)
-        assert len(multiexposure_model.exposures) == 3
-        exp_files = set()
-        for exposure in multiexposure_model.exposures:
-            exp_files.add(exposure.meta.filename)
-        assert len(exp_files) == len(multiexposure_model.exposures)
-        assert multiexposure_model.meta.filename not in exp_files
+        with MultiExposureModel(file_path) as multiexposure_model:
+            assert len(multiexposure_model.exposures) == 3
+            exp_files = set()
+            for exposure in multiexposure_model.exposures:
+                exp_files.add(exposure.meta.filename)
+            assert len(exp_files) == len(multiexposure_model.exposures)
+            assert multiexposure_model.meta.filename not in exp_files
 
 
 def test_container_structure(run_multislit_to_container):
