@@ -7,7 +7,6 @@ JWST pipeline step for image alignment.
 from os import path
 
 from astropy.table import Table
-from astropy import wcs
 from tweakwcs.imalign import align_wcs
 from tweakwcs.tpwcs import JWSTgWCS
 from tweakwcs.matchutils import TPMatch

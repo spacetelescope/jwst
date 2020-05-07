@@ -40,7 +40,7 @@ def test_get_catalog():
     # Read GWCS object
     wcsobj = read_test_gwcs()
 
-    # Interpret the GWCS 
+    # Interpret the GWCS
     radius, fiducial = amutils.compute_radius(wcsobj)
 
     # Get the catalog
@@ -63,4 +63,3 @@ def test_create_catalog():
 
     # check that we got expected number of sources
     assert(len(gcat) == EXPECTED_NUM_SOURCES)
-
