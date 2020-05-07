@@ -946,10 +946,8 @@ class SourceCatalog:
 
         desc = OrderedDict()
 
-        ci_desc = ('Concentration index calculated as '
-                   f'{self.aperture_abmag_colnames[0]} - '
-                   f'{self.aperture_abmag_colnames[4]}')
-        desc['concentration_index'] = ci_desc
+        for idx, colname in enumerate(self.ci_colnames):
+            desc[colname] = self.ci_colname_descriptions[idx]
 
         desc['is_star'] = 'Flag indicating whether the source is a star'
         desc['sharpness'] = 'The DAOFind source sharpness statistic'
@@ -962,21 +960,65 @@ class SourceCatalog:
         return list(desc.keys())
 
     @lazyproperty
-    def ci_colname(self):
+    def _ci_ee_indices(self):
         """
-        The concentration index column name.
+        The EE indicies for the concentration indices.
+
+        The three concentration indices are the difference in
+        AB magnitudes between:
+
+            * the smallest and middle aperture radii/EE;  idx = (0, 1)
+            * the middle and largest aperture radii/EE; idx (1, 2)
+            * the smallest and largest aperture radii/EE; idx (0, 2)
         """
-        return f'CI_{self.aperture_ee[0]}_{self.aperture_ee[2]}'
+
+        # NOTE:  the EE values are always in increasing order
+        return ((0, 1), (1, 2), (0, 2))
 
     @lazyproperty
-    def concentration_index(self):
+    def ci_colnames(self):
         """
-        The concentration index calculated as the difference of AB
-        magnitudes between the smallest and largest aperture radii.
+        The column names of the three concentration indices.
         """
-        abmag1 = self.aperture_abmag_colnames[0]  # ee_fraction[0]
-        abmag2 = self.aperture_abmag_colnames[4]  # ee_fraction[2]
-        return getattr(self, abmag1) - getattr(self, abmag2)
+
+        return [f'CI_{self.aperture_ee[i]}_{self.aperture_ee[j]}'
+                for (i, j) in self._ci_ee_indices]
+
+    @lazyproperty
+    def ci_colname_descriptions(self):
+        """
+        The concentration indicies column descriptions.
+        """
+        return ['Concentration index calculated as '
+                f'{self.aperture_abmag_colnames[2*i]} - '
+                f'{self.aperture_abmag_colnames[2*j]}' for (i, j) in
+                self._ci_ee_indices]
+
+    @lazyproperty
+    def concentration_indices(self):
+        """
+        A list of concentration indices, calculated as the difference of
+        AB magnitudes between:
+
+            * the smallest and middle aperture radii/EE
+            * the middle and largest aperture radii/EE
+            * the smallest and largest aperture radii/EE
+        """
+
+        abmags = [(self.aperture_abmag_colnames[2*i],
+                   self.aperture_abmag_colnames[2*j]) for (i, j) in
+                  self._ci_ee_indices]
+        return [getattr(self, mag1) - getattr(self, mag2)
+                for mag1, mag2 in abmags]
+
+    def set_ci_properties(self):
+        """
+        Set the concentration indices as dynamic attributes.
+        """
+
+        for name, value in zip(self.ci_colnames, self.concentration_indices):
+            setattr(self, name, value)
+        return
 
     @lazyproperty
     def is_star(self):
@@ -1287,15 +1329,12 @@ class SourceCatalog:
         self.convert_to_jy()
         self.set_segment_properties()
         self.set_aperture_properties()
-
-        renamed = {}
-        renamed['concentration_index'] = self.ci_colname
+        self.set_ci_properties()
 
         catalog = QTable()
         for column in self.colnames:
-            colname = renamed.get(column, column)
-            catalog[colname] = getattr(self, column)
-            catalog[colname].info.description = self.column_desc[column]
+            catalog[column] = getattr(self, column)
+            catalog[column].info.description = self.column_desc[column]
 
         # TODO: Until errors are produced for the level 3 drizzle
         # products, the JPWG has decided that the errors should not be
