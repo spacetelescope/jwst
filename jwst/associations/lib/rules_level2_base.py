@@ -19,7 +19,6 @@ from jwst.associations.lib.constraint import (
     Constraint,
     SimpleConstraint,
 )
-from jwst.associations.lib.diff import get_product_names
 from jwst.associations.lib.dms_base import (
     Constraint_TargetAcq,
     CORON_EXP_TYPES,
@@ -34,7 +33,7 @@ from jwst.associations.lib.member import Member
 from jwst.associations.lib.rules_level3_base import _EMPTY
 from jwst.associations.lib.rules_level3_base import Utility as Utility_Level3
 from jwst.lib.suffix import remove_suffix
-
+from jwst.associations.lib.product_utils import prune_duplicate_products
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -520,7 +519,7 @@ class Utility():
                     lv2_asns.extend(finalized)
             else:
                 finalized_asns.append(asn)
-        lv2_asns = Utility.prune_duplicate_products(lv2_asns)
+        lv2_asns = prune_duplicate_products(lv2_asns)
 
         # Ensure sequencing is correct.
         Utility_Level3.resequence(lv2_asns)
@@ -552,44 +551,6 @@ class Utility():
         lv2_asns = Utility._merge_asns(lv2_asns)
 
         return others + lv2_asns
-
-    @staticmethod
-    def prune_duplicate_products(asns):
-        """Remove duplicate products in favor of higher level versions
-
-        For Level 2 associations, since the products are always just the input
-        exposures, different candidates can be created for each exposure. Remove
-        those associations of lesser candidates.
-
-        The assumption is that there is only one product per association, before merging
-
-        Parameters
-        ----------
-        asns: [Association[,...]]
-            Associations to prune
-
-        Returns
-        pruned: [Association[,...]]
-            Pruned list of associations
-        """
-        product_names, dups = get_product_names(asns)
-        if not dups:
-            return asns
-
-        pruned = copy.copy(asns)
-        to_prune = defaultdict(list)
-        for asn in asns:
-            product_name = asn['products'][0]['name']
-            if product_name in dups:
-                to_prune[product_name].append(asn)
-
-        for product_name, asns_to_prune in to_prune.items():
-            asns_to_prune = Utility.sort_by_candidate(asns_to_prune)
-            for asn in asns_to_prune[1:]:
-                pruned.remove(asn)
-
-        return pruned
-
 
     @staticmethod
     def rename_to_level2a(level1b_name, use_integrations=False):
