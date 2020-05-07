@@ -150,7 +150,7 @@ documentation on each reference file.
 +---------------------------------------------+--------------------------------------------------+
 | :ref:`source_catalog <source_catalog_step>` | :ref:`APCORR <apcorr_reffile>`                   |
 +                                             +--------------------------------------------------+
-|                                             | :ref:`ABVEGA_OFFSET <abvega_offset_reffile>`     |
+|                                             | :ref:`ABVEGAOFFSET <abvegaoffset_reffile>`      |
 +---------------------------------------------+--------------------------------------------------+
 | :ref:`straylight <straylight_step>`         | :ref:`REGIONS <regions_reffile>`                 |
 +---------------------------------------------+--------------------------------------------------+
@@ -162,7 +162,7 @@ documentation on each reference file.
 +--------------------------------------------------+---------------------------------------------+
 | Reference File Type (REFTYPE)                    | Pipeline Step                               |
 +==================================================+=============================================+
-| :ref:`ABVEGA_OFFSET <abvega_offset_reffile>`     | :ref:`source_catalog <source_catalog_step>` |
+| :ref:`ABVEGAOFFSET <abvegaoffset_reffile>`       | :ref:`source_catalog <source_catalog_step>` |
 +--------------------------------------------------+---------------------------------------------+
 | :ref:`APCORR <apcorr_reffile>`                   | :ref:`extract_1d <extract_1d_step>`         |
 +                                                  +---------------------------------------------+

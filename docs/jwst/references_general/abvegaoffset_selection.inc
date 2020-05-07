@@ -1,8 +1,8 @@
-Reference Selection Keywords for ABVEGA_OFFSET
-++++++++++++++++++++++++++++++++++++++++++++++
+Reference Selection Keywords for ABVEGAOFFSET
++++++++++++++++++++++++++++++++++++++++++++++
 
-CRDS selects appropriate ABVEGA_OFFSET references based on the
-following keywords.  ABVEGA_OFFSET is not applicable for instruments
+CRDS selects appropriate ABVEGAOFFSET references based on the
+following keywords.  ABVEGAOFFSET is not applicable for instruments
 not in the table.  All keywords used for file selection are
 *required*.
 

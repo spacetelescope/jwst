@@ -1,22 +1,22 @@
-.. _abvega_offset_reffile:
+.. _abvegaoffset_reffile:
 
-ABVEGA_OFFSET Reference File
-----------------------------
+ABVEGAOFFSET Reference File
+---------------------------
 
-:REFTYPE: ABVEGA_OFFSET
+:REFTYPE: ABVEGAOFFSET
 :Data model: `~jwst.datamodels.ABVegaOffsetModel`
 
-The ABVEGA_OFFSET reference file contains data necessary for converting
+The ABVEGAOFFSET reference file contains data necessary for converting
 from AB to Vega magnitudes.
 
-.. include:: ../references_general/abvega_offset_selection.inc
+.. include:: ../references_general/abvegaoffset_selection.inc
 
 .. include:: ../includes/standard_keywords.inc
 
-ABVEGA_OFFSET Reference File Format
-+++++++++++++++++++++++++++++++++++
+ABVEGAOFFSET Reference File Format
+++++++++++++++++++++++++++++++++++
 
-ABVEGA_OFFSET reference files are in ASDF format.  The ABVEGA_OFFSET
+ABVEGAOFFSET reference files are in ASDF format.  The ABVEGAOFFSET
 reference file contains tabular data in a key called
 ``abvega_offset``.  The content of the table varies for different
 instrument modes, as shown in the tables below.
