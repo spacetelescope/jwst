@@ -67,6 +67,11 @@ class TweakRegStep(Step):
                       "containing one or more DataModels.", ) + e.args[1:]
             raise e
 
+        if align_to_gaia:
+            # Set expand_refcat to True to eliminate possibility of duplicate
+            # entries when aligning to GAIA
+            self.expand_refcat=True
+            
         # Build the catalogs for input images
         for image_model in images:
             catalog = make_tweakreg_catalog(
@@ -220,6 +225,19 @@ class TweakRegStep(Step):
                 # Raise Exception here to avoid rest of code in this try block
                 self.log.warning(msg)
             else:
+                # align images:
+                # Update to separation needed to prevent confusion of sources 
+                # from overlapping images where centering is not consistent or
+                # for the possibility that errors still exist in relative overlap.  
+                tpmatch_gaia = TPMatch(
+                    searchrad=self.searchrad,
+                    separation=self.separation / 5.0,
+                    use2dhist=self.use2dhist,
+                    tolerance=self.tolerance,
+                    xoffset=0.0,
+                    yoffset=0.0
+                )
+
                 # Set group_id to same value so all get fit as one observation
                 # The assigned value, 987654, has been hard-coded to make it
                 # easy to recognize when alignment to GAIA was being performed
@@ -230,21 +248,22 @@ class TweakRegStep(Step):
                     imcat.meta['group_id'] = 987654
                     if 'REFERENCE' in imcat.meta['fit_info']['status']:
                         del imcat.meta['fit_info']
-
+                    
                 # Perform fit
                 align_wcs(imcats,
                           refcat=ref_cat,
                           enforce_user_order=False,
                           expand_refcat=False,
                           minobj=self.minobj,
-                          match=tpmatch,
+                          match=tpmatch_gaia,
                           fitgeom=self.fitgeometry,
                           nclip=self.nclip,
                           sigma=(self.sigma, 'rmse')
                          )
 
                 # Reset group_id to original values
-                # Also, update/create the WCS .name attribute with information on this astrometric fit
+                # Also, update/create the WCS .name attribute with information 
+                #  on this astrometric fit as the only record that it was successful
                 for imcat in imcats:
                     imcat.meta['group_id'] = imcat.meta['orig_group_id']
                     if 'SUCCESS' in imcat.meta.get('fit_info')['status']:
@@ -255,15 +274,16 @@ class TweakRegStep(Step):
                         #       IF that is what gets recorded in the archive for end-user searches
                         imcat.meta['image_model'].meta.wcs.name = "FIT-LVL3-{}".format(self.gaia_catalog)
 
-
         for imcat in imcats:
             imcat.meta['image_model'].meta.cal_step.tweakreg = 'COMPLETE'
             # retrieve fit status and update wcs if fit is successful:
-            # fit_info = imcat.meta.get('fit_info')
             if 'SUCCESS' in imcat.meta.get('fit_info')['status']:
                 imcat.meta['image_model'].meta.wcs = imcat.wcs
+
                 """
-                # Also update FITS representation
+                # Also update FITS representation in input exposures for 
+                # subsequent reprocessing by the end-user.  
+                # Not currently enabled, but may be requested later...
                 gwcs_header = imcat.wcs.to_fits_sip(max_pix_error=0.1,
                                                 max_inv_pix_error=0.1,
                                                 degree=3,
