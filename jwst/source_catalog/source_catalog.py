@@ -165,8 +165,8 @@ class ReferenceData:
         """
 
         if self.apcorr_filename is None:
-            log.warning('APCorrModel reference file was not input -- '
-                        'using fallback aperture sizes without any aperture '
+            log.warning('APCorrModel reference file was not input. '
+                        'Using fallback aperture sizes without any aperture '
                         'corrections.')
             params = {'aperture_radii': np.array((1.0, 2.0, 3.0)),
                       'aperture_corrections': np.array((1.0, 1.0, 1.0)),
@@ -217,8 +217,8 @@ class ReferenceData:
         """
 
         if self.abvegaoffset_filename is None:
-            log.warning('ABVEGAOFFSET reference file was not input -- '
-                        'catalog Vega magnitudes are not correct.')
+            log.warning('ABVEGAOFFSET reference file was not input. '
+                        'Catalog Vega magnitudes are not correct.')
             return 0.0
 
         if self.instrument == 'NIRCAM' or self.instrument == 'NIRISS':
@@ -777,10 +777,10 @@ class SourceCatalog:
 
         desc.append(f'Total aperture-corrected {ftype2} based on the '
                     f'{self.aperture_ee[-1]}% encircled energy circular '
-                    'aperture - calculated only for stars')
+                    'aperture; calculated only for stars')
         desc.append(f'Total aperture-corrected {ftype2} error based on the '
                     f'{self.aperture_ee[-1]}% encircled energy circular '
-                    'aperture - calculated only for stars')
+                    'aperture; calculated only for stars')
 
         return desc
 
@@ -953,7 +953,10 @@ class SourceCatalog:
         desc['sharpness'] = 'The DAOFind source sharpness statistic'
         desc['roundness'] = 'The DAOFind source roundness statistic'
         desc['nn_dist'] = 'The distance in pixels to the nearest neighbor'
-        desc['nn_abmag'] = 'The AB magnitude of the nearest neighbor'
+        desc['nn_abmag'] = ('The AB magnitude of the nearest neighbor.  If '
+                            'the object is a star it is the total '
+                            'aperture-corrected AB magnitude, otherwise it '
+                            'is the isophotal AB magnitude.')
 
         self.column_desc.update(desc)
 
