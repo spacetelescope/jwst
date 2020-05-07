@@ -67,7 +67,7 @@ class TweakRegStep(Step):
                       "containing one or more DataModels.", ) + e.args[1:]
             raise e
 
-        if align_to_gaia:
+        if self.align_to_gaia:
             # Set expand_refcat to True to eliminate possibility of duplicate
             # entries when aligning to GAIA
             self.expand_refcat=True
