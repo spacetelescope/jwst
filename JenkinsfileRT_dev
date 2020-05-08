@@ -56,7 +56,7 @@ bc0.pip_reqs_files = ['requirements-dev.txt']
 bc0.build_cmds = [
     "pip install -e .[test,ephem]",
     "pip install pytest-xdist",
-    'if [ -z "$CRDS_CONTEXT" ]; then echo "CRDS_CONTEXT = $(crds list --contexts jwst-edit --mappings | grep pmap)"; else  echo "CRDS_CONTEXT = $CRDS_CONTEXT"; fi',
+    'echo "CRDS_CONTEXT = $(crds list --contexts $CRDS_CONTEXT --mappings | grep pmap)"',
 ]
 bc0.build_cmds = PipInject(env.OVERRIDE_REQUIREMENTS) + bc0.build_cmds
 bc0.test_cmds = [
