@@ -45,7 +45,7 @@ DOCS_REQUIRE = [
 ]
 TESTS_REQUIRE = [
     'ci-watson>=0.3.0',
-    'pytest<=5.3.5',
+    'pytest',
     'pytest-doctestplus',
     'requests_mock',
     'pytest-openfiles',
