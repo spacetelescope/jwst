@@ -1,5 +1,6 @@
 """Base classes which define the Level3 Associations"""
 from collections import defaultdict
+#import copy
 import logging
 from os.path import (
     basename,
@@ -41,7 +42,6 @@ from jwst.associations.lib.dms_base import (
 )
 from jwst.associations.lib.format_template import FormatTemplate
 from jwst.associations.lib.member import Member
-from jwst.associations.lib.product_utils import prune_duplicate_products
 
 __all__ = [
     'ASN_SCHEMA',
@@ -600,7 +600,6 @@ class Utility():
             else:
                 finalized_asns.append(asn)
 
-        lv3_asns = prune_duplicate_products(lv3_asns)
         # Ensure sequencing is correct.
         Utility.resequence(lv3_asns)
 

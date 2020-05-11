@@ -580,19 +580,6 @@ class DMSBaseMixin(ACIDMixin):
         target = 't{0:0>3s}'.format(str(target_id))
         return target
 
-    def _get_grating(self):
-        """Get string representation of the grating
-
-        Returns
-        -------
-        target : str
-            The Level3 Product name representation
-            of the grating or source ID.
-        """
-        grating_id = format_list(self.constraints['grating'].found_values)
-        grating = 't{0:0>3s}'.format(str(grating_id))
-        return grating
-
 
 # -----------------
 # Basic constraints
