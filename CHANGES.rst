@@ -212,6 +212,8 @@ tweakreg
 
 - Updated step arguments in the documentation. [#4723]
 
+- Added align_to_gaia processing as an option [#4599]
+
 wfs_combine
 -----------
 
