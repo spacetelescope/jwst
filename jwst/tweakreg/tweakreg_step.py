@@ -70,7 +70,7 @@ class TweakRegStep(Step):
             # Set expand_refcat to True to eliminate possibility of duplicate
             # entries when aligning to GAIA
             self.expand_refcat=True
-            
+
         # Build the catalogs for input images
         for image_model in images:
             catalog = make_tweakreg_catalog(
@@ -225,12 +225,12 @@ class TweakRegStep(Step):
                 self.log.warning(msg)
             else:
                 # align images:
-                # Update to separation needed to prevent confusion of sources 
+                # Update to separation needed to prevent confusion of sources
                 # from overlapping images where centering is not consistent or
-                # for the possibility that errors still exist in relative overlap.  
+                # for the possibility that errors still exist in relative overlap.
                 tpmatch_gaia = TPMatch(
-                    searchrad=self.searchrad,
-                    separation=self.separation / 5.0,
+                    searchrad=self.searchrad * 3.0,
+                    separation=self.separation / 10.0,
                     use2dhist=self.use2dhist,
                     tolerance=self.tolerance,
                     xoffset=0.0,
@@ -243,11 +243,10 @@ class TweakRegStep(Step):
                 # as opposed to the group_id values used for relative alignment
                 # earlier in this step.
                 for imcat in imcats:
-                    imcat.meta['orig_group_id'] = imcat.meta['group_id']
                     imcat.meta['group_id'] = 987654
                     if 'REFERENCE' in imcat.meta['fit_info']['status']:
                         del imcat.meta['fit_info']
-                    
+
                 # Perform fit
                 align_wcs(imcats,
                           refcat=ref_cat,
@@ -261,10 +260,9 @@ class TweakRegStep(Step):
                          )
 
                 # Reset group_id to original values
-                # Also, update/create the WCS .name attribute with information 
+                # Also, update/create the WCS .name attribute with information
                 #  on this astrometric fit as the only record that it was successful
                 for imcat in imcats:
-                    imcat.meta['group_id'] = imcat.meta['orig_group_id']
                     if 'SUCCESS' in imcat.meta.get('fit_info')['status']:
                         # NOTE: This .name attribute needs to be defined using a convention
                         #       agreed upon by the JWST Cal Working Group.
@@ -280,8 +278,8 @@ class TweakRegStep(Step):
                 imcat.meta['image_model'].meta.wcs = imcat.wcs
 
                 """
-                # Also update FITS representation in input exposures for 
-                # subsequent reprocessing by the end-user.  
+                # Also update FITS representation in input exposures for
+                # subsequent reprocessing by the end-user.
                 # Not currently enabled, but may be requested later...
                 gwcs_header = imcat.wcs.to_fits_sip(max_pix_error=0.1,
                                                 max_inv_pix_error=0.1,
