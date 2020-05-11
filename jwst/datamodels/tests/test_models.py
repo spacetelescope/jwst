@@ -624,11 +624,10 @@ def test_validate_on_read():
     """
     schema = ImageModel((10, 10))._schema.copy()
     schema['properties']['meta']['properties']['calibration_software_version']['fits_required'] = True
-    hduls = fits.open(FITS_FILE)
 
-    with pytest.raises(jsonschema.ValidationError):
-        ImageModel(hduls, schema=schema, strict_validation=True)
-    hduls.close()
+    with fits.open(FITS_FILE) as hduls:
+        with pytest.raises(jsonschema.ValidationError):
+            ImageModel(hduls, schema=schema, strict_validation=True)
 
 
 def test_validate_required_field():
