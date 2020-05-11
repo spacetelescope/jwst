@@ -6,6 +6,7 @@ import os
 import warnings
 
 from crds.core.exceptions import CrdsLookupError
+from photutils.utils.exceptions import NoDetectionsWarning
 
 from .source_catalog import (ReferenceData, Background, make_kernel,
                              make_segment_img, calc_total_error,
@@ -82,11 +83,15 @@ class SourceCatalogStep(Step):
 
             threshold = self.snr_threshold * bkg.background_rms
             kernel = make_kernel(self.kernel_fwhm)
-            segment_img = make_segment_img(model.data, threshold,
-                                           npixels=self.npixels,
-                                           kernel=kernel,
-                                           mask=coverage_mask,
-                                           deblend=self.deblend)
+            with warnings.catch_warnings():
+                # suppress NoDetectionsWarning from photutils
+                warnings.filterwarnings('ignore',
+                                        category=NoDetectionsWarning)
+                segment_img = make_segment_img(model.data, threshold,
+                                               npixels=self.npixels,
+                                               kernel=kernel,
+                                               mask=coverage_mask,
+                                               deblend=self.deblend)
             if segment_img is None:
                 self.log.warn('No sources were found. Source catalog will '
                               'not be created.')
