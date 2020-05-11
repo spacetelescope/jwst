@@ -1563,7 +1563,7 @@ def nrs_wcs_set_input(input_model, slit_name, wavelength_range=None):
     slit_wcs.set_transform('gwa', 'slit_frame', g2s.get_model(slit_name))
 
     exp_type = input_model.meta.exposure.type
-    is_nirspec_ifu = is_nrs_ifu_lamp(input_model) or exp_type == 'nrs_ifu'
+    is_nirspec_ifu = is_nrs_ifu_lamp(input_model) or (exp_type.lower() == 'nrs_ifu')
     if is_nirspec_ifu:
         slit_wcs.set_transform('slit_frame', 'slicer',
                            wcsobj.pipeline[3][1].get_model(slit_name) & Identity(1))
