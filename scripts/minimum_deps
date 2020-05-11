@@ -1,0 +1,45 @@
+#!/usr/bin/env python
+"""
+Generate a requirements-min.txt file based on install_requres
+"""
+import pkg_resources
+import urllib.request
+import json
+import warnings
+
+
+def get_minimum_version(requirement):
+    """Return minimum version available on PyPi for a given version specification"""
+    content = urllib.request.urlopen(f'https://pypi.python.org/pypi/{requirement.name}/json').read()
+    versions = sorted([pkg_resources.parse_version(v) for v in json.loads(content)["releases"].keys()])
+    # print(requirement)
+    # print(versions)
+    for version in versions:
+        if version in requirement:
+            return version
+    # If there was no version specifier in setup.py, return the 2nd lowest
+    # version available on PyPi, avoiding 0.0 versions
+    warnings.warn(f"Exact version specified in {requirement} not found on PyPi")
+    return versions[1]
+
+
+def write_minimum_requirements_file():
+    """Write out a requirements-min.txt file for minimum package versions"""
+    dist = pkg_resources.get_distribution('jwst')
+    extras = dist.extras
+    extras.remove("ephem")
+    extras.remove("docs")
+
+    with open("requirements-min.txt", "w") as fd:
+        for requirement in dist.requires(extras=extras):
+            if "http" not in requirement.name:
+                version = get_minimum_version(requirement)
+                fd.write(f'{requirement.name}=={version}\n')
+
+
+def main():
+    write_minimum_requirements_file()
+
+
+if __name__ == "__main__":
+    main()
