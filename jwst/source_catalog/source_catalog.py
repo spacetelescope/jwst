@@ -4,6 +4,7 @@ Module to calculate the source catalog.
 
 from collections import OrderedDict
 import logging
+import warnings
 
 from astropy import __version__ as astropy_version
 from astropy.convolution import Gaussian2DKernel
@@ -569,14 +570,18 @@ class SourceCatalog:
             The output AB magnitude and error arrays.
         """
 
-        abmag = -2.5 * np.log10(flux.value) + 8.9
-        # assuming SNR >> 1 (otherwise abmag_err is asymmetric)
-        abmag_err = 2.5 * np.log10(np.e) * (flux_err.value / flux.value)
+        # ignore RunTimeWarning if flux or flux_err contains NaNs
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning)
 
-        # handle negative fluxes
-        idx = flux.value < 0
-        abmag[idx] = np.nan
-        abmag_err[idx] = np.nan
+            abmag = -2.5 * np.log10(flux.value) + 8.9
+            # assuming SNR >> 1 (otherwise abmag_err is asymmetric)
+            abmag_err = 2.5 * np.log10(np.e) * (flux_err.value / flux.value)
+
+            # handle negative fluxes
+            idx = flux.value < 0
+            abmag[idx] = np.nan
+            abmag_err[idx] = np.nan
 
         return abmag, abmag_err
 
