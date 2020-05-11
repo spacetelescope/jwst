@@ -8,7 +8,7 @@ properties:
     type: object
     properties:
       date:
-        title: "[yyyy-mm-ddThh:mm:ss.ss] UTC date file created"
+        title: "UTC date file created"
         type: string
         fits_keyword: DATE
         blend_table: True
@@ -153,24 +153,20 @@ properties:
             blend_rule: mintime
           date_beg:
             type: string
-            title: "Date-time start of data acquisition"
+            title: "Date-time start of exposure"
             fits_keyword: DATE-BEG
             blend_table: True
+            # Despite what the title might lead you to believe, this keyword
+            # actually contains a full datetime string.
             blend_rule: mindatetime
           date_end:
             type: string
-            title: "Date-time end of data acquisition"
+            title: "Date-time end of exposure"
             fits_keyword: DATE-END
             blend_table: True
             # Despite what the title might lead you to believe, this keyword
             # actually contains a full datetime string.
             blend_rule: maxdatetime
-          time_end:
-            title: "[hh:mm:ss.sss] UTC time at end of exposure"
-            type: string
-            fits_keyword: TIME-END
-            blend_table: True
-            blend_rule: maxtime
           obs_id:
             title: Programmatic observation identifier
             type: string
@@ -645,6 +641,27 @@ properties:
             fits_hdu: SCI
             blend_table: True
             blend_rule: max
+          start_time_tdb:
+            title: "[d] TDB time of exposure start in MJD"
+            type: number
+            fits_keyword: TDB-BEG
+            fits_hdu: SCI
+            blend_table: True
+            blend_rule: min
+          mid_time_tdb:
+            title: "[d] TDB time of exposure mid-point in MJD"
+            type: number
+            fits_keyword: TDB-MID
+            fits_hdu: SCI
+            blend_table: True
+            blend_rule: mean
+          end_time_tdb:
+            title: "[d] TDB time of exposure end in MJD"
+            type: number
+            fits_keyword: TDB-END
+            fits_hdu: SCI
+            blend_table: True
+            blend_rule: max
           start_time_eng:
             title: UTC exposure start time from engineering data
             type: string
@@ -770,10 +787,24 @@ properties:
             fits_keyword: EFFEXPTM
             blend_rule: sum
             blend_table: True
+          effective_exposure_time:
+            title: "[s] Effective exposure time"
+            type: number
+            fits_keyword: XPOSURE
+            fits_hdu: SCI
+            blend_rule: sum
+            blend_table: True
           duration:
             title: "[s] Total duration of exposure"
             type: number
             fits_keyword: DURATION
+            blend_rule: sum
+            blend_table: True
+          elapsed_exposure_time:
+            title: "[s] Total elapsed exposure time"
+            type: number
+            fits_keyword: TELAPSE
+            fits_hdu: SCI
             blend_rule: sum
             blend_table: True
           nresets_at_start:
@@ -817,7 +848,7 @@ properties:
             fits_keyword: NRS_REF
             blend_table: True
           clock_adjust_rate:
-            title: Spacecraft Clock Time Adjust RATE
+            title: "[ms/s] Spacecraft Clock Time Adjust RATE"
             type: number
             fits_keyword: SCTARATE
             blend_table: True
