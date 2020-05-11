@@ -20,6 +20,13 @@ source_catalog
 - Fixed the nearest-neighbor code to handle the case of exactly one
   detected source. [#4929]
 
+tweakreg
+--------
+
+- Added align_to_gaia processing as an option [#4599]
+
+
+
 0.16.0 (2020-05-04)
 ===================
 
