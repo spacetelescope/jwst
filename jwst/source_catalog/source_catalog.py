@@ -1187,9 +1187,12 @@ class SourceCatalog:
         """
         The distance in pixels to the nearest neighbor and its index.
         """
-        tree = cKDTree(self.xypos)
-        qdist, qidx = tree.query(self.xypos, k=2)
-        return np.transpose(qdist)[1], np.transpose(qidx)[1]
+        if self.xypos.shape[0] == 1:  # only one detected source
+            return [np.nan], [np.nan]
+        else:
+            tree = cKDTree(self.xypos)
+            qdist, qidx = tree.query(self.xypos, k=2)
+            return np.transpose(qdist)[1], np.transpose(qidx)[1]
 
     @lazyproperty
     def nn_dist(self):
@@ -1207,6 +1210,10 @@ class SourceCatalog:
         total AB magnitude is used.  Otherwise, its isophotal AB
         magnitude is used.
         """
+
+        if len(self._ckdtree_query[1]) == 1:  # only one detected source
+            return np.nan
+
         nn_abmag = self.aper_total_abmag[self._ckdtree_query[1]]
         nn_isomag = self.isophotal_abmag[self._ckdtree_query[1]]
         return np.where(np.isnan(nn_abmag), nn_isomag, nn_abmag)
