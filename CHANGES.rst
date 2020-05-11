@@ -1,7 +1,9 @@
 0.16.1 (unreleased)
 ===================
 
-
+associations
+------------
+- Modify NIRSpec IFU level-3 ASN rules to include only one grating per association [#4845]
 
 0.16.0 (2020-05-04)
 ===================
