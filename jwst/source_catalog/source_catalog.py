@@ -289,7 +289,7 @@ class Background:
 
     def __init__(self, data, box_size=100, mask=None):
         self.data = data
-        self.box_size = np.int(box_size)  # must be integer
+        self.box_size = np.asarray(box_size).astype(int)  # must be integer
         self.mask = mask
 
     @lazyproperty
@@ -316,9 +316,22 @@ class Background:
         sigma_clip = SigmaClip(sigma=3.)
         bkg_estimator = MedianBackground()
         filter_size = (3, 3)
-        bkg = Background2D(self.data, self.box_size,
-                           filter_size=filter_size, mask=self.mask,
-                           sigma_clip=sigma_clip, bkg_estimator=bkg_estimator)
+
+        try:
+            bkg = Background2D(self.data, self.box_size,
+                               filter_size=filter_size, mask=self.mask,
+                               sigma_clip=sigma_clip,
+                               bkg_estimator=bkg_estimator)
+        except ValueError:
+            # use the entire unmasked array
+            bkg = Background2D(self.data, self.data.shape,
+                               filter_size=filter_size, mask=self.mask,
+                               sigma_clip=sigma_clip,
+                               bkg_estimator=bkg_estimator,
+                               exclude_percentile=100.)
+            log.info('Background could not be estimated in meshes. '
+                     'Using the entire unmasked array for background '
+                     f'estimation:  bkg_boxsize={self.data.shape}.')
 
         # apply the coverage mask
         bkg.background *= np.logical_not(self.mask)
