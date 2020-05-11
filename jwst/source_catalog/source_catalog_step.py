@@ -71,6 +71,11 @@ class SourceCatalogStep(Step):
                                     abvegaoffset_filename=abvegaoffset_fn)
 
             coverage_mask = (model.wht == 0)
+            if coverage_mask.all():
+                self.log.warn('There are no pixels with non-zero weight. '
+                              'Source catalog will not be created.')
+                return
+
             bkg = Background(model.data, box_size=self.bkg_boxsize,
                              mask=coverage_mask)
             model.data -= bkg.background
@@ -83,7 +88,7 @@ class SourceCatalogStep(Step):
                                            mask=coverage_mask,
                                            deblend=self.deblend)
             if segment_img is None:
-                self.log.info('No sources were found. Source catalog will '
+                self.log.warn('No sources were found. Source catalog will '
                               'not be created.')
                 return
             self.log.info(f'Detected {segment_img.nlabels} sources')
