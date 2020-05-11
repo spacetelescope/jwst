@@ -45,12 +45,12 @@ DOCS_REQUIRE = [
 ]
 TESTS_REQUIRE = [
     'ci-watson>=0.3.0',
-    'pytest',
+    'pytest>=3.9.1',
     'pytest-doctestplus',
-    'requests_mock',
+    'requests_mock>=1.0',
     'pytest-openfiles',
-    'pytest-cov',
-    'codecov',
+    'pytest-cov>=2.0.0',
+    'codecov>=1.6.0',
 ]
 AWS_REQUIRE = [
     'stsci-aws-utils>=0.1.2'
