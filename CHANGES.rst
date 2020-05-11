@@ -1,7 +1,12 @@
 0.16.1 (unreleased)
 ===================
 
+datamodels
+----------
 
+- Updated core schema to include recent Keyword Dictionary changes
+  (remove TIME-END; add TDB-BEG, TDB-MID, TDB-END, XPOSURE, TELAPSE)
+  [#4925]
 
 0.16.0 (2020-05-04)
 ===================
