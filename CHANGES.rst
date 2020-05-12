@@ -5,6 +5,12 @@ associations
 ------------
 - Modify NIRSpec IFU level-3 ASN rules to include only one grating per association [#4845]
 
+pipeline
+--------
+
+- Updated calwebb_image3 pipeline to only load science and background member
+  types from an input ASN. [#4937]
+
 source_catalog
 --------------
 

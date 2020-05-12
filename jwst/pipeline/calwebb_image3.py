@@ -53,10 +53,11 @@ class Image3Pipeline(Pipeline):
 
         self.log.info('Starting calwebb_image3 ...')
 
-        input_models = datamodels.open(input)
+        # Only load science and background members from input ASN
+        asn_exptypes = ['science', 'background']
+        input_models = datamodels.open(input, asn_exptypes=asn_exptypes)
 
-        # If input is an association, set the output to the product
-        # name.
+        # If input is an association, set the output to the product name.
         try:
             self.output_file = input_models.meta.asn_table.products[0].name
         except AttributeError:
