@@ -581,15 +581,6 @@ class DMSBaseMixin(ACIDMixin):
         return target
 
     def _get_grating(self):
-<<<<<<< HEAD
-        """Get string representation of the grating
-
-        Returns
-        -------
-        target : str
-            The Level3 Product name representation
-            of the grating or source ID.
-=======
         """Get string representation of the grating in use
 
         Returns
@@ -597,7 +588,6 @@ class DMSBaseMixin(ACIDMixin):
         grating : str
             The Level3 Product name representation
             of the grating in use.
->>>>>>> JP-1413 Updates to split grating observations into separate asns
         """
         grating_id = format_list(self.constraints['grating'].found_values)
         grating = 't{0:0>3s}'.format(str(grating_id))
