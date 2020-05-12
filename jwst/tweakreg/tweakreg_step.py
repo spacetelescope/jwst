@@ -259,7 +259,6 @@ class TweakRegStep(Step):
                           sigma=(self.sigma, 'rmse')
                          )
 
-                # Reset group_id to original values
                 # Also, update/create the WCS .name attribute with information
                 #  on this astrometric fit as the only record that it was successful
                 for imcat in imcats:
