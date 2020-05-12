@@ -1,7 +1,9 @@
 0.16.1 (unreleased)
 ===================
 
-
+associations
+------------
+- Modify NIRSpec IFU level-3 ASN rules to include only one grating per association [#4845]
 
 0.16.0 (2020-05-04)
 ===================
@@ -13,6 +15,8 @@ ami
 
 associations
 ------------
+
+- Restrict NIRSpec IFU data to include one grating per level 3 association [#4854]
 
 - Update asn_from_list to have default values in the asn header [#4720]
 
