@@ -26,6 +26,11 @@ jobs:
 
     - env: PIP_DEPENDENCIES="numpy~=1.17.0 .[test]"
 
+    - env: PIP_DEPENDENCIES="-r requirements-min.txt .[test]"
+      python: 3.6.0
+      PRE_INSTALL1="pip install . --no-deps"
+      PRE_INSTALL2="minimum_deps"
+
     # Test with SDP pinned dependencies
     - env: PIP_DEPENDENCIES="-r requirements-sdp.txt .[test]"
       python: 3.7.7
@@ -60,6 +65,8 @@ jobs:
            PIP_DEPENDENCIES=".[test]"
 
 install:
+  - if [[ ${PRE_INSTALL1} ]]; then $PRE_INSTALL1; fi
+  - if [[ ${PRE_INSTALL2} ]]; then $PRE_INSTALL2; fi
   - pip install $PIP_DEPENDENCIES
 
 script:
