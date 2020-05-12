@@ -153,6 +153,7 @@ rscd
 ----
 
 - Added baseline algorithm that flags groups [#4669]
+- Fixed bug when the READPATT/SUBARRAY data is not found in ref file [#4934]
 
 set_telescope_pointing
 ----------------------
