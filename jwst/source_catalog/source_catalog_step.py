@@ -6,6 +6,7 @@ import os
 import warnings
 
 from crds.core.exceptions import CrdsLookupError
+from photutils.utils.exceptions import NoDetectionsWarning
 
 from .source_catalog import (ReferenceData, Background, make_kernel,
                              make_segment_img, calc_total_error,
@@ -71,19 +72,28 @@ class SourceCatalogStep(Step):
                                     abvegaoffset_filename=abvegaoffset_fn)
 
             coverage_mask = (model.wht == 0)
+            if coverage_mask.all():
+                self.log.warn('There are no pixels with non-zero weight. '
+                              'Source catalog will not be created.')
+                return
+
             bkg = Background(model.data, box_size=self.bkg_boxsize,
                              mask=coverage_mask)
             model.data -= bkg.background
 
             threshold = self.snr_threshold * bkg.background_rms
             kernel = make_kernel(self.kernel_fwhm)
-            segment_img = make_segment_img(model.data, threshold,
-                                           npixels=self.npixels,
-                                           kernel=kernel,
-                                           mask=coverage_mask,
-                                           deblend=self.deblend)
+            with warnings.catch_warnings():
+                # suppress NoDetectionsWarning from photutils
+                warnings.filterwarnings('ignore',
+                                        category=NoDetectionsWarning)
+                segment_img = make_segment_img(model.data, threshold,
+                                               npixels=self.npixels,
+                                               kernel=kernel,
+                                               mask=coverage_mask,
+                                               deblend=self.deblend)
             if segment_img is None:
-                self.log.info('No sources were found. Source catalog will '
+                self.log.warn('No sources were found. Source catalog will '
                               'not be created.')
                 return
             self.log.info(f'Detected {segment_img.nlabels} sources')
