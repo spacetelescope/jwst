@@ -22,42 +22,41 @@ class ApCorrBase(abc.ABC):
             'IFU': {'instrument': ['filter', 'grating']},
             'MSASPEC': {'instrument': ['filter', 'grating']},
             'FIXEDSLIT': {'instrument': ['filter', 'grating']},  # Slit is also required; passed in as init arg
+            'BRIGHTOBJ': {'instrument': ['filter', 'grating']}
         },
         'NIRCAM': {
-            'WFSS': {'insturment': ['filter', 'pupil']}
+            'WFSS': {'instrument': ['filter', 'pupil']},
+            'NRC_GRISM': {'instrument': ['filter', 'pupil']}
         },
         'NIRISS': {
             'WFSS': {'instrument': ['filter', 'pupil']}
         }
     }
 
-    def __init__(self, input_model: DataModel, appcorr_table: fits.FITS_rec, location: Tuple[float, float] = None,
-                 **match_kwargs):
+    def __init__(self, input_model: DataModel, apcorr_table: fits.FITS_rec, location: Tuple[float, float] = None,
+                 apcorr_row_units: str = None, **match_kwargs):
         self.correction = None
 
         self.model = input_model
-        self._reference_table = appcorr_table
+        self._reference_table = apcorr_table
         self.location = location
+        self.apcorr_row_units = apcorr_row_units
 
         self.match_keys = self._get_match_keys()
-
         self.match_pars = self._get_match_pars()
         self.match_pars.update(match_kwargs)
 
         self.reference = self._reduce_reftable()
-
-        if 'size' in self.reference and self.reference.columns['size'].unit.startswith('arcsec'):
-            if self.location is not None:
-                self.reference['size'][0] /= compute_scale(self.model.wcs, location)
-            else:
-                raise ValueError(
-                    f'If the size column for the input APCORR reference file are in units with arcseconds, a location '
-                    f'(RA, DEC) must be provided in order to convert to pixels.'
-                )
-
         self.apcorr_func = self.approximate()
 
-    def _get_match_keys(self):
+    def _get_row_units(self, row_key: str):
+        if self.apcorr_row_units is None:
+            self.apcorr_row_units = self._reference_table[row_key].units
+
+        if not self.apcorr_row_units:
+            raise ValueError(f'Could not determine units for {row_key} from input reference table.')
+
+    def _get_match_keys(self) -> dict:
         """Get column keys needed for reducing the reference table based on input."""
         instrument = self.model.meta.instrument.name.upper()
         exptype = self.model.meta.exposure.type.upper()
@@ -68,7 +67,7 @@ class ApCorrBase(abc.ABC):
             if key in exptype:
                 return relevant_pars[key]
 
-    def _get_match_pars(self):
+    def _get_match_pars(self) -> dict:
         """Get meta parameters required for reference table row-selection."""
         match_pars = {}
 
@@ -80,7 +79,7 @@ class ApCorrBase(abc.ABC):
 
         return match_pars
 
-    def _reduce_reftable(self):
+    def _reduce_reftable(self) -> fits.FITS_record:
         """Reduce full reference table to a matched row."""
         table = self._reference_table.copy()
 
@@ -118,17 +117,28 @@ class ApCorrBase(abc.ABC):
 
 
 class ApCorrPhase(ApCorrBase):
-    def __init__(self, pixphase: float = 0.5, *args, **kwargs):
+    def __init__(self, *args, pixphase: float = 0.5, **kwargs):
         self.phase = pixphase  # In the future we'll attempt to measure the pixel phase from inputs.
 
         super().__init__(*args, **kwargs)
 
+        self._get_row_units('size')
+
+        if self.apcorr_row_units.startswith('arcsec'):
+            if self.location is not None:
+                self.reference['size'] /= compute_scale(self.model.wcs, self.location)
+            else:
+                raise ValueError(
+                    f'If the size column for the input APCORR reference file are in units with arcseconds, a location '
+                    f'(RA, DEC) must be provided in order to compute a pixel scale to convert arcseconds to pixels.'
+                )
+
     def approximate(self):
         """Generate an approximate function for interpolating apcorr values to input wavelength and size."""
         wavelength = self.reference['wavelength'][:self.reference['nelem_wl']]
-        phase_idx = np.where(self.reference['pixphase'] == self.phase)
+        phase_idx = np.where(self.reference['pixphase'] == self.phase)[0][0]
 
-        size = self.reference['size'][phase_idx][:self.reference['nelem_size'][phase_idx]]
+        size = self.reference['size'][phase_idx][:self.reference['nelem_size']]
 
         apcorr = (
             self.reference['apcorr'][phase_idx][:self.reference['nelem_size'], :self.reference['nelem_wl']]
@@ -144,6 +154,17 @@ class ApCorrRadial(ApCorrBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self._get_row_units('radius')
+
+        if self.apcorr_row_units.startswith('arcsec'):
+            if self.location is not None:
+                self.reference['radius'] /= compute_scale(self.model.wcs, self.location)
+            else:
+                raise ValueError(
+                    f'If the radius column for the input APCORR reference file are in units with arcseconds, a location'
+                    f' (RA, DEC) must be provided in order to compute a pixel scale to convert arcseconds to pixels.'
+                )
+
     def approximate(self):
         """Generate an approximate function for interpolating apcorr values to input wavelength and radius."""
         wavelength = self.reference['wavelength'][:self.reference['nelem_wl']]
@@ -156,6 +177,17 @@ class ApCorrRadial(ApCorrBase):
 class ApCorr(ApCorrBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self._get_row_units('size')
+
+        if self.apcorr_row_units.startswith('arcsec'):
+            if self.location is not None:
+                self.reference['size'] /= compute_scale(self.model.wcs, self.location)
+            else:
+                raise ValueError(
+                    f'If the size column for the input APCORR reference file are in units with arcseconds, a location '
+                    f'(RA, DEC) must be provided in order to compute a pixel scale to convert arcseconds to pixels.'
+                )
 
     def approximate(self):
         """Generate an approximate function for interpolating apcorr values to input wavelength and size."""
