@@ -1,9 +1,18 @@
 0.16.1 (unreleased)
 ===================
 
+
 associations
 ------------
 - Modify NIRSpec IFU level-3 ASN rules to include only one grating per association [#4845]
+=======
+rscd
+----
+
+- Fixed bug when the READPATT/SUBARRAY data is not found in RSCD reference file [#4934]
+
+
+
 
 0.16.0 (2020-05-04)
 ===================
@@ -153,7 +162,6 @@ rscd
 ----
 
 - Added baseline algorithm that flags groups [#4669]
-- Fixed bug when the READPATT/SUBARRAY data is not found in ref file [#4934]
 
 set_telescope_pointing
 ----------------------
@@ -2545,9 +2553,7 @@ rscd
 ----
 
 - The performance of the RSCD step was improved by a factor of 20 [#2247]
-
 - Update to the RSCD documentation [#2211]
-
 
 saturation
 ----------
