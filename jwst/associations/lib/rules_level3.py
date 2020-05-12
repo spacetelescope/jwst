@@ -385,7 +385,11 @@ class Asn_IFU(AsnMixin_Spectrum):
                 ],
                        reduce=Constraint.notany
                       ),
+<<<<<<< HEAD
             ])
+=======
+                ])
+>>>>>>> JP-1413 Updates to split grating observations into separate asns
         # Check and continue initialization.
         super(Asn_IFU, self).__init__(*args, **kwargs)
 
