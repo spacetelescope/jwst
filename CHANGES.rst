@@ -11,6 +11,12 @@ datamodels
 
 - Relax asdf requirement and use validator flag when asdf 2.6.x is installed [#4905]
 
+pipeline
+--------
+
+- Updated calwebb_image3 pipeline to only load science and background member
+  types from an input ASN. [#4937]
+
 source_catalog
 --------------
 
