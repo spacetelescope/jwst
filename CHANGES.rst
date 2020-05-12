@@ -3,7 +3,19 @@
 
 associations
 ------------
-- Modify NIRSpec IFU level-3 ASN rules to include only one grating per association [#4845]
+
+- Modify NIRSpec IFU level-3 ASN rules to include only one grating per association [#4926]
+
+datamodels
+----------
+
+- Relax asdf requirement and use validator flag when asdf 2.6.x is installed [#4905]
+
+pipeline
+--------
+
+- Updated calwebb_image3 pipeline to only load science and background member
+  types from an input ASN. [#4937]
 
 rscd
 ----
@@ -29,8 +41,6 @@ ami
 
 associations
 ------------
-
-- Restrict NIRSpec IFU data to include one grating per level 3 association [#4854]
 
 - Update asn_from_list to have default values in the asn header [#4720]
 
