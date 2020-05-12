@@ -4,6 +4,7 @@ Module to calculate the source catalog.
 
 from collections import OrderedDict
 import logging
+import warnings
 
 from astropy import __version__ as astropy_version
 from astropy.convolution import Gaussian2DKernel
@@ -289,7 +290,7 @@ class Background:
 
     def __init__(self, data, box_size=100, mask=None):
         self.data = data
-        self.box_size = np.int(box_size)  # must be integer
+        self.box_size = np.asarray(box_size).astype(int)  # must be integer
         self.mask = mask
 
     @lazyproperty
@@ -316,9 +317,22 @@ class Background:
         sigma_clip = SigmaClip(sigma=3.)
         bkg_estimator = MedianBackground()
         filter_size = (3, 3)
-        bkg = Background2D(self.data, self.box_size,
-                           filter_size=filter_size, mask=self.mask,
-                           sigma_clip=sigma_clip, bkg_estimator=bkg_estimator)
+
+        try:
+            bkg = Background2D(self.data, self.box_size,
+                               filter_size=filter_size, mask=self.mask,
+                               sigma_clip=sigma_clip,
+                               bkg_estimator=bkg_estimator)
+        except ValueError:
+            # use the entire unmasked array
+            bkg = Background2D(self.data, self.data.shape,
+                               filter_size=filter_size, mask=self.mask,
+                               sigma_clip=sigma_clip,
+                               bkg_estimator=bkg_estimator,
+                               exclude_percentile=100.)
+            log.info('Background could not be estimated in meshes. '
+                     'Using the entire unmasked array for background '
+                     f'estimation:  bkg_boxsize={self.data.shape}.')
 
         # apply the coverage mask
         bkg.background *= np.logical_not(self.mask)
@@ -556,14 +570,18 @@ class SourceCatalog:
             The output AB magnitude and error arrays.
         """
 
-        abmag = -2.5 * np.log10(flux.value) + 8.9
-        # assuming SNR >> 1 (otherwise abmag_err is asymmetric)
-        abmag_err = 2.5 * np.log10(np.e) * (flux_err.value / flux.value)
+        # ignore RunTimeWarning if flux or flux_err contains NaNs
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning)
 
-        # handle negative fluxes
-        idx = flux.value < 0
-        abmag[idx] = np.nan
-        abmag_err[idx] = np.nan
+            abmag = -2.5 * np.log10(flux.value) + 8.9
+            # assuming SNR >> 1 (otherwise abmag_err is asymmetric)
+            abmag_err = 2.5 * np.log10(np.e) * (flux_err.value / flux.value)
+
+            # handle negative fluxes
+            idx = flux.value < 0
+            abmag[idx] = np.nan
+            abmag_err[idx] = np.nan
 
         return abmag, abmag_err
 
@@ -1169,9 +1187,12 @@ class SourceCatalog:
         """
         The distance in pixels to the nearest neighbor and its index.
         """
-        tree = cKDTree(self.xypos)
-        qdist, qidx = tree.query(self.xypos, k=2)
-        return np.transpose(qdist)[1], np.transpose(qidx)[1]
+        if self.xypos.shape[0] == 1:  # only one detected source
+            return [np.nan], [np.nan]
+        else:
+            tree = cKDTree(self.xypos)
+            qdist, qidx = tree.query(self.xypos, k=2)
+            return np.transpose(qdist)[1], np.transpose(qidx)[1]
 
     @lazyproperty
     def nn_dist(self):
@@ -1189,6 +1210,10 @@ class SourceCatalog:
         total AB magnitude is used.  Otherwise, its isophotal AB
         magnitude is used.
         """
+
+        if len(self._ckdtree_query[1]) == 1:  # only one detected source
+            return np.nan
+
         nn_abmag = self.aper_total_abmag[self._ckdtree_query[1]]
         nn_isomag = self.isophotal_abmag[self._ckdtree_query[1]]
         return np.where(np.isnan(nn_abmag), nn_isomag, nn_abmag)

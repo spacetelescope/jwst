@@ -10,6 +10,15 @@ rscd
 
 - Fixed bug when the READPATT/SUBARRAY data is not found in RSCD reference file [#4934]
 
+source_catalog
+--------------
+
+- Added fallback background estimation method to make background
+  estimation moare robust. [#4929]
+
+- Fixed the nearest-neighbor code to handle the case of exactly one
+  detected source. [#4929]
+
 0.16.0 (2020-05-04)
 ===================
 
@@ -44,7 +53,7 @@ datamodels
 
 - Update schemas to add moving_target_position and cheby tables to the level1b
   schema [#4760]
-  
+
 - Deprecate ``DrizProductModel`` and ``MultiProductModel`` and replace with
   updated versions of ``ImageModel`` and ``SlitModel`` that include "CON" and
   "WHT" arrays for resampled data. [#4552]
