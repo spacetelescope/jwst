@@ -2,11 +2,14 @@ import datetime
 import os
 import re
 
+from packaging import version
+
 import numpy as np
 
 from astropy.io import fits
 from astropy import time
 
+import asdf
 from asdf import fits_embed
 from asdf import resolver
 from asdf import schema as asdf_schema
@@ -29,6 +32,9 @@ log.addHandler(logging.NullHandler())
 
 
 __all__ = ['to_fits', 'from_fits', 'fits_hdu_name', 'get_hdu']
+
+
+_ASDF_GE_2_6 = version.parse(asdf.__version__) >= version.parse('2.6')
 
 
 _builtin_regexes = [
@@ -330,8 +336,13 @@ def _save_from_schema(hdulist, tree, schema):
         return node
     tree = treeutil.walk_and_modify(tree, convert_datetimes)
 
+    if _ASDF_GE_2_6:
+        kwargs = {"_visit_repeat_nodes": True}
+    else:
+        kwargs = {}
+
     validator = asdf_schema.get_validator(
-        schema, None, FITS_VALIDATORS, FITS_SCHEMA_URL_MAPPING)
+        schema, None, FITS_VALIDATORS, FITS_SCHEMA_URL_MAPPING, **kwargs)
 
     validator.hdulist = hdulist
     # TODO: Handle comment stack on per-hdu-basis
