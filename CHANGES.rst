@@ -3,12 +3,22 @@
 
 associations
 ------------
+
 - Modify NIRSpec IFU level-3 ASN rules to include only one grating per association [#4845]
 
 datamodels
 ----------
 
 - Relax asdf requirement and use validator flag when asdf 2.6.x is installed [#4905]
+
+source_catalog
+--------------
+
+- Added fallback background estimation method to make background
+  estimation moare robust. [#4929]
+
+- Fixed the nearest-neighbor code to handle the case of exactly one
+  detected source. [#4929]
 
 0.16.0 (2020-05-04)
 ===================
