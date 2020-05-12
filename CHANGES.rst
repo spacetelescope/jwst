@@ -5,7 +5,7 @@
 associations
 ------------
 - Modify NIRSpec IFU level-3 ASN rules to include only one grating per association [#4845]
-=======
+
 rscd
 ----
 
