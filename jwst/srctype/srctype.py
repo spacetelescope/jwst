@@ -53,11 +53,11 @@ def set_source_type(input_model):
             user_type = input_model.meta.target.source_type_apt
             log.info(f'Input SRCTYAPT = {user_type}')
             if user_type is None:
-                log.warning(f'SRCTYAPT keyword not found in input; using SRCTYPE instead')
+                log.warning('SRCTYAPT keyword not found in input; using SRCTYPE instead')
                 user_type = input_model.meta.target.source_type
                 input_model.meta.target.source_type_apt = user_type
         except AttributeError:
-            log.warning(f'SRCTYAPT keyword not found in input; using SRCTYPE instead')
+            log.warning('SRCTYAPT keyword not found in input; using SRCTYPE instead')
             user_type = input_model.meta.target.source_type
             input_model.meta.target.source_type_apt = user_type
 
