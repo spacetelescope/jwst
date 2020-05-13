@@ -453,7 +453,7 @@ def get_object_info(catalog_name=None):
 
     try:
         if not set(required_fields).issubset(set(catalog.colnames)):
-            difference = set(catalog.colnames).difference(required_fields)
+            difference = set(required_fields).difference(set(catalog.colnames))
             err_text = "Missing required columns in source catalog: {0}".format(difference)
             log.error(err_text)
             raise KeyError(err_text)
