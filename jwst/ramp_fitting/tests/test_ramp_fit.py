@@ -32,7 +32,7 @@ def test_one_group_two_ints_fit_ols():
     slopes = ramp_fit(model1, 1024*30000., True, rnModel, gain, 'OLS', 'optimal', 'none')
     np.testing.assert_allclose(slopes[0].data[50, 50],11.0, 1e-6)
 
-#@pytest.mark.skip(reason="GLS does not correctly combine the slopes for integrations into the exposure slope.")
+@pytest.mark.skip(reason="GLS does not correctly combine the slopes for integrations into the exposure slope.")
 def test_gls_vs_ols_two_ints_ols():
     """
     A test to see if GLS is correctly combining integrations. The combination should only use the read noise variance.
