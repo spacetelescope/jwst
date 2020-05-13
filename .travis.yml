@@ -63,8 +63,8 @@ jobs:
     - env: CRDS_CONTEXT=jwst-edit
 
 install:
-  - if [ ${PIP_NO_DEPS} ]; then $PIP_NO_DEPS; fi
-  - if [ ${GENERATE_MIN_DEPS} ]; then $GENERATE_MIN_DEPS; fi
+  - if [[ ${PIP_NO_DEPS} ]]; then $PIP_NO_DEPS; fi
+  - if [[ ${GENERATE_MIN_DEPS} ]]; then $GENERATE_MIN_DEPS; fi
   - pip install $PIP_DEPENDENCIES
 
 script:
