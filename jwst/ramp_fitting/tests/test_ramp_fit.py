@@ -32,7 +32,21 @@ def test_one_group_two_ints_fit_ols():
     slopes = ramp_fit(model1, 1024*30000., True, rnModel, gain, 'OLS', 'optimal', 'none')
     np.testing.assert_allclose(slopes[0].data[50, 50],11.0, 1e-6)
 
-#@pytest.mark.skip(reason="Skip for Travis testing")
+#@pytest.mark.skip(reason="GLS does not correctly combine the slopes for integrations into the exposure slope.")
+def test_gls_vs_ols_two_ints_ols():
+    """
+    A test to see if GLS is correctly combining integrations. The combination should only use the read noise variance.
+    The current version of GLS does not work correctly.
+    """
+    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=11,gain=5,readnoise=1,nints=2)
+    ramp = np.asarray([x*100 for x in range(11)])
+    model1.data[0, :, 50, 50] = ramp
+    model1.data[1, :, 50, 50] = ramp * 2
+    slopes = ramp_fit(model1, 1024*30000., True, rnModel, gain, 'OLS', 'optimal', 'none')
+    np.testing.assert_allclose(slopes[0].data[50, 50],150.0, 1e-6)
+    slopes_gls = ramp_fit(model1, 1024 * 30000., True, rnModel, gain, 'GLS', 'optimal', 'none')
+    np.testing.assert_allclose(slopes_gls[0].data[50, 50], 150.0, 1e-6)
+
 def test_multiprocessing():
     nrows =100
     ncols =100
