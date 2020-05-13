@@ -40,7 +40,6 @@ def run_nis_wfss_spec2(jail, rtdata_module):
 )
 def test_nis_wfss_spec2(run_nis_wfss_spec2, fitsdiff_default_kwargs, suffix):
     """Regression test for calwebb_spec2 applied to NIRISS WFSS data"""
-    fitsdiff_default_kwargs['ignore_keywords'].append('SCATFILE')
     rt.is_like_truth(
         run_nis_wfss_spec2, fitsdiff_default_kwargs, suffix, 'truth/test_niriss_wfss'
     )
