@@ -34,6 +34,7 @@ from jwst.associations.lib.rules_level3_base import _EMPTY
 from jwst.associations.lib.rules_level3_base import Utility as Utility_Level3
 from jwst.lib.suffix import remove_suffix
 from jwst.associations.lib.product_utils import prune_duplicate_products
+
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())

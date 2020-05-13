@@ -39,8 +39,8 @@ def do_correction(input_model, rscd_model, type):
     # Retrieve the reference parameters for this exposure type
     param = get_rscd_parameters(input_model, rscd_model)
 
-    if not param:  # empty dictionary
-        log.warning('Issue with reference file: RSCD correction will be skipped')
+    if not bool(param):  # empty dictionary
+        log.warning('READPATT, SUBARRAY combination not found in ref file: RSCD correction will be skipped')
         input_model.meta.cal_step.rscd = 'SKIPPED'
         return input_model
 
@@ -320,13 +320,13 @@ def get_rscd_parameters(input_model, rscd_model):
 
     # read table 2: General RSCD enhanced parameters
     for tabdata in rscd_model.rscd_gen_table:
-        param['gen'] = {}
         readpatt_gen = tabdata['readpatt']
         subarray_gen = tabdata['subarray']
         lower_cutoff_gen = tabdata['lower_cutoff']
         alpha_even_gen = tabdata['alpha_even']
         alpha_odd_gen = tabdata['alpha_even']
         if (subarray_gen == subarray and readpatt_gen == readpatt):
+            param['gen'] = {}
             param['gen']['lower_cutoff'] = lower_cutoff_gen
             param['gen']['lower_alpha_odd'] = alpha_odd_gen
             param['gen']['lower_alpha_even'] = alpha_even_gen
@@ -334,9 +334,6 @@ def get_rscd_parameters(input_model, rscd_model):
 
     # read table 3: Enhanced RSCD integration 1 parameters
     for tabdata in rscd_model.rscd_int1_table:
-        param['int1'] = {}
-        param['int1']['even'] = {}
-        param['int1']['odd'] = {}
         readpatt_int1 = tabdata['readpatt']
         subarray_int1= tabdata['subarray']
         rows_int1 = tabdata['rows']
@@ -345,6 +342,9 @@ def get_rscd_parameters(input_model, rscd_model):
         a2_int1 = tabdata['a2']
         a3_int1 = tabdata['a3']
         if (subarray_int1 == subarray and readpatt_int1 == readpatt):
+            param['int1'] = {}
+            param['int1']['even'] = {}
+            param['int1']['odd'] = {}
             if rows_int1 == 'EVEN':
                 param['int1']['even']['a0'] = a0_int1
                 param['int1']['even']['a1'] = a1_int1
@@ -359,9 +359,6 @@ def get_rscd_parameters(input_model, rscd_model):
 
     # read table 4: Enhanced RSCD integration 2 parameters
     for tabdata in rscd_model.rscd_int2_table:
-        param['int2'] = {}
-        param['int2']['even'] = {}
-        param['int2']['odd'] = {}
         readpatt_int2 = tabdata['readpatt']
         subarray_int2= tabdata['subarray']
         rows_int2 = tabdata['rows']
@@ -370,6 +367,9 @@ def get_rscd_parameters(input_model, rscd_model):
         a2_int2 = tabdata['b2']
         a3_int2 = tabdata['b3']
         if (subarray_int2 == subarray and readpatt_int2 == readpatt):
+            param['int2'] = {}
+            param['int2']['even'] = {}
+            param['int2']['odd'] = {}
             if rows_int2 == 'EVEN':
                 param['int2']['even']['a0'] = a0_int2
                 param['int2']['even']['a1'] = a1_int2
@@ -384,9 +384,6 @@ def get_rscd_parameters(input_model, rscd_model):
 
     # read table 5: Enhanced RSCD integration 3 parameters
     for tabdata in rscd_model.rscd_int3_table:
-        param['int3'] = {}
-        param['int3']['even'] = {}
-        param['int3']['odd'] = {}
         readpatt_int3 = tabdata['readpatt']
         subarray_int3= tabdata['subarray']
         rows_int3 = tabdata['rows']
@@ -395,6 +392,9 @@ def get_rscd_parameters(input_model, rscd_model):
         a2_int3 = tabdata['c2']
         a3_int3 = tabdata['c3']
         if (subarray_int3 == subarray and readpatt_int3 == readpatt):
+            param['int3'] = {}
+            param['int3']['even'] = {}
+            param['int3']['odd'] = {}
             if rows_int3 == 'EVEN':
                 param['int3']['even']['a0'] = a0_int3
                 param['int3']['even']['a1'] = a1_int3

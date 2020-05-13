@@ -1,12 +1,39 @@
 0.16.1 (unreleased)
 ===================
 
+associations
+------------
+
+- Modify NIRSpec IFU level-3 ASN rules to include only one grating per association [#4926]
+
 datamodels
 ----------
+
+- Relax asdf requirement and use validator flag when asdf 2.6.x is installed [#4905]
 
 - Updated core schema to include recent Keyword Dictionary changes
   (remove TIME-END; add TDB-BEG, TDB-MID, TDB-END, XPOSURE, TELAPSE)
   [#4925]
+
+pipeline
+--------
+
+- Updated calwebb_image3 pipeline to only load science and background member
+  types from an input ASN. [#4937]
+
+rscd
+----
+
+- Fixed bug when the READPATT/SUBARRAY data is not found in RSCD reference file [#4934]
+
+source_catalog
+--------------
+
+- Added fallback background estimation method to make background
+  estimation moare robust. [#4929]
+
+- Fixed the nearest-neighbor code to handle the case of exactly one
+  detected source. [#4929]
 
 0.16.0 (2020-05-04)
 ===================
@@ -18,8 +45,6 @@ ami
 
 associations
 ------------
-
-- Restrict NIRSpec IFU data to include one grating per level 3 association [#4854]
 
 - Update asn_from_list to have default values in the asn header [#4720]
 
@@ -42,7 +67,7 @@ datamodels
 
 - Update schemas to add moving_target_position and cheby tables to the level1b
   schema [#4760]
-  
+
 - Deprecate ``DrizProductModel`` and ``MultiProductModel`` and replace with
   updated versions of ``ImageModel`` and ``SlitModel`` that include "CON" and
   "WHT" arrays for resampled data. [#4552]
@@ -2533,7 +2558,6 @@ refpix
 
 - Refpix has been updated to handle subarray exposures [#2207]
 
-
 resample
 --------
 - Fixed update_fits_wcs() to work on DrizProductModels [#2222]
@@ -2550,7 +2574,6 @@ rscd
 
 - Update to the RSCD documentation [#2211]
 
-
 saturation
 ----------
 
@@ -2559,7 +2582,6 @@ skymatch
 
 source_catalog
 --------------
-
 
 srctype
 -------
