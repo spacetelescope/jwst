@@ -4,7 +4,8 @@
 assign_wcs
 ----------
 
-- Update get_object_info to check for and replace legacy keys for WFSS inputs [#4943]
+- Update keyword and attribute usage around SkyObject to reflect updated keywords. [#4943]
+
 associations
 ------------
 
@@ -18,6 +19,11 @@ datamodels
 - Updated core schema to include recent Keyword Dictionary changes
   (remove TIME-END; add TDB-BEG, TDB-MID, TDB-END, XPOSURE, TELAPSE)
   [#4925]
+
+lib
+---
+
+- Update SkyObject keys. [#4943]
 
 pipeline
 --------

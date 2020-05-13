@@ -446,14 +446,7 @@ def get_object_info(catalog_name=None):
     objects = []
 
     # validate that the expected columns are there
-    # id is just a bad name for a param, but it's used in the catalog
-    required_fields = list(SkyObject()._fields)
-
-    legacy_keys = {'sid': 'id', 'abmag': 'isophotal_abmag', 'abmag_error': 'isophotal_abmag_err'}
-
-    for legacy, updated in legacy_keys.items():
-        if legacy in required_fields:
-            required_fields[required_fields.index(legacy)] = updated
+    required_fields = set(SkyObject()._fields)
 
     try:
         if not set(required_fields).issubset(set(catalog.colnames)):
@@ -473,12 +466,12 @@ def get_object_info(catalog_name=None):
     # (hence, the four separate columns).
 
     for row in catalog:
-        objects.append(SkyObject(sid=row['id'],
+        objects.append(SkyObject(id=row['id'],
                                  xcentroid=row['xcentroid'],
                                  ycentroid=row['ycentroid'],
                                  sky_centroid=row['sky_centroid'],
-                                 abmag=row['isophotal_abmag'],
-                                 abmag_error=row['isophotal_abmag_err'],
+                                 isophotal_abmag=row['isophotal_abmag'],
+                                 isophotal_abmag_err=row['isophotal_abmag_err'],
                                  sky_bbox_ll=row['sky_bbox_ll'],
                                  sky_bbox_lr=row['sky_bbox_lr'],
                                  sky_bbox_ul=row['sky_bbox_ul'],
@@ -597,8 +590,8 @@ def create_grism_bbox(input_model,
 
     grism_objects = []  # the return list of GrismObjects
     for obj in skyobject_list:
-        if obj.abmag is not None:
-            if obj.abmag < mmag_extract:
+        if obj.isophotal_abmag is not None:
+            if obj.isophotal_abmag < mmag_extract:
                 # could add logic to ignore object if too far off image,
 
                 # save the image frame center of the object
@@ -658,12 +651,12 @@ def create_grism_bbox(input_model,
 
                     if contained == 0:
                         exclude = True
-                        log.info("Excluding off-image object: {}, order {}".format(obj.sid, order))
+                        log.info("Excluding off-image object: {}, order {}".format(obj.id, order))
                     elif contained >= 1:
                         outbox = pts[np.logical_not(inidx)]
                         if len(outbox) > 0:
                             ispartial = True
-                            log.info("Partial order on detector for obj: {} order: {}".format(obj.sid, order))
+                            log.info("Partial order on detector for obj: {} order: {}".format(obj.id, order))
 
                     if not exclude:
                         order_bounding[order] = ((round(ymin), round(ymax)), (round(xmin), round(xmax)))
@@ -671,7 +664,7 @@ def create_grism_bbox(input_model,
                         partial_order[order] = ispartial
 
                 if len(order_bounding) > 0:
-                    grism_objects.append(GrismObject(sid=obj.sid,
+                    grism_objects.append(GrismObject(sid=obj.id,
                                                      order_bounding=order_bounding,
                                                      sky_centroid=obj.sky_centroid,
                                                      partial_order=partial_order,
