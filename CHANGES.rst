@@ -15,6 +15,12 @@ datamodels
   (remove TIME-END; add TDB-BEG, TDB-MID, TDB-END, XPOSURE, TELAPSE)
   [#4925]
 
+mrs_imatch
+----------
+
+- Fix ``mrs_imatch`` to avoid calls to ``sigma_clipped_stats`` with all-zero
+  arrays. [#4944]
+
 pipeline
 --------
 
