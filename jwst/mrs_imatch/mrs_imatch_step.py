@@ -338,8 +338,14 @@ def _match_models(models, channel, degree, center=None, center_cs='image'):
     for image, mask in zip(image_data, mask_data):
         # Do statistics wavelength by wavelength
         for thisimg, thismask in zip(image, mask):
-            # Sigma clipped statistics, ignoring zeros where no data
-            _, themed, clipsig = sigclip(thisimg, mask_value=0.)
+            # Avoid bug in sigma_clipped_stats (fixed in astropy 4.0.2) which
+            # fails on all-zero arrays passed when mask_value=0
+            if not np.any(thisimg):
+                themed = 0.
+                clipsig = 0.
+            else:
+                # Sigma clipped statistics, ignoring zeros where no data
+                _, themed, clipsig = sigclip(thisimg, mask_value=0.)
             # Reject beyond 3 sigma
             reject = np.where(np.abs(thisimg - themed) > 3 * clipsig)
             thismask[reject] = 0
