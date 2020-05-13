@@ -448,8 +448,12 @@ def get_object_info(catalog_name=None):
     # validate that the expected columns are there
     # id is just a bad name for a param, but it's used in the catalog
     required_fields = list(SkyObject()._fields)
-    if "sid" in required_fields:
-        required_fields[required_fields.index("sid")] = "id"
+
+    legacy_keys = {'sid': 'id', 'abmag': 'isophotal_abmag', 'abmag_error': 'isophotal_abmag_err'}
+
+    for legacy, updated in legacy_keys.items():
+        if legacy in required_fields:
+            required_fields[required_fields.index(legacy)] = updated
 
     try:
         if not set(required_fields).issubset(set(catalog.colnames)):
@@ -473,8 +477,8 @@ def get_object_info(catalog_name=None):
                                  xcentroid=row['xcentroid'],
                                  ycentroid=row['ycentroid'],
                                  sky_centroid=row['sky_centroid'],
-                                 abmag=row['abmag'],
-                                 abmag_error=row['abmag_error'],
+                                 abmag=row['isophotal_abmag'],
+                                 abmag_error=row['isophotal_abmag_err'],
                                  sky_bbox_ll=row['sky_bbox_ll'],
                                  sky_bbox_lr=row['sky_bbox_lr'],
                                  sky_bbox_ul=row['sky_bbox_ul'],
