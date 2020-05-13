@@ -11,6 +11,10 @@ datamodels
 
 - Relax asdf requirement and use validator flag when asdf 2.6.x is installed [#4905]
 
+- Updated core schema to include recent Keyword Dictionary changes
+  (remove TIME-END; add TDB-BEG, TDB-MID, TDB-END, XPOSURE, TELAPSE)
+  [#4925]
+
 pipeline
 --------
 
