@@ -25,11 +25,21 @@ lib
 
 - Update SkyObject keys. [#4943]
 
+mrs_imatch
+----------
+
+- Fix ``mrs_imatch`` to avoid calls to ``sigma_clipped_stats`` with all-zero
+  arrays. [#4944]
+
 pipeline
 --------
 
 - Updated calwebb_image3 pipeline to only load science and background member
   types from an input ASN. [#4937]
+
+- Updated the calwebb_spec2 pipeline to only use the basename of the source
+  catalog file when updating the source_catalogue keyword for WFSS inputs.
+  [#4940]
 
 rscd
 ----
