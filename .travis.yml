@@ -27,7 +27,7 @@ jobs:
     - env: PIP_DEPENDENCIES="numpy~=1.17.0 .[test]"
 
     - env: PIP_DEPENDENCIES="-r requirements-min.txt .[test]"
-           PIP_NO_DEPS="pip install . --no-deps=true"
+           PIP_NO_DEPS="pip install . --no-deps"
            GENERATE_MIN_DEPS=minimum_deps
       python: 3.6.10
 
@@ -63,9 +63,8 @@ jobs:
     - env: CRDS_CONTEXT=jwst-edit
 
 install:
-  - pip install -U pip
-  - if [[ ${PIP_NO_DEPS} ]]; then $PIP_NO_DEPS; fi
-  - if [[ ${GENERATE_MIN_DEPS} ]]; then $GENERATE_MIN_DEPS; fi
+  - if ! [[ -z "${PIP_NO_DEPS}" ]]; then $PIP_NO_DEPS; fi
+  - if ! [[ -z "${GENERATE_MIN_DEPS}" ]]; then $GENERATE_MIN_DEPS; fi
   - pip install $PIP_DEPENDENCIES
 
 script:
