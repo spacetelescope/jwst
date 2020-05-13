@@ -21,6 +21,10 @@ pipeline
 - Updated calwebb_image3 pipeline to only load science and background member
   types from an input ASN. [#4937]
 
+- Updated the calwebb_spec2 pipeline to only use the basename of the source
+  catalogue file when updating the source_catalogue keyword for WFSS inputs.
+  [#4940
+
 rscd
 ----
 
