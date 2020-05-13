@@ -121,8 +121,8 @@ def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
 def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
                  weighting, max_cores):
     """
-       Setup the inputs to ols_ramp_fit with and without multiprocessing. The input inputs will be sliced into the
-       number of cores that are being used for multiprocessing. Because the data models cannot be pickeled, only
+       Setup the inputs to ols_ramp_fit with and without multiprocessing. The inputs will be sliced into the
+       number of cores that are being used for multiprocessing. Because the data models cannot be pickled, only
        numpy arrays are passed and returned as parameters to ols_ramp_fit.
 
        Parameters
@@ -176,7 +176,7 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
         number_slices = 1
     else:
         num_cores = multiprocessing.cpu_count()
-        log.debug("Found %d possible cores to use for ramp fitting " % num_cores)
+        log.debug(f'Found {num_cores} possible cores to use for ramp fitting')
         if max_cores == 'quarter':
             number_slices = num_cores // 4 or 1
         elif max_cores == 'half':
@@ -226,17 +226,19 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
             opt_model.crmag = opt_crmag
         return out_model, int_model, opt_model
     else:
-        log.debug("number of processes being used is %d" % number_slices)
+        log.debug(f'number of processes being used is {number_slices}')
         rows_per_slice = round(total_rows / number_slices)
         pool = Pool(processes=number_slices)
         slices = []
         for i in range(number_slices - 1):
-            readnoise_slice = readnoise_2d[i * rows_per_slice: (i + 1) * rows_per_slice, :]
-            gain_slice = gain_2d[i * rows_per_slice: (i + 1) * rows_per_slice, :]
-            data_slice = input_model.data[:,:,i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
-            err_slice = input_model.err[:, :, i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
-            groupdq_slice = input_model.groupdq[:, :, i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
-            pixeldq_slice = input_model.pixeldq[ i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
+            start_row = i * rows_per_slice
+            stop_row = (i + 1) * rows_per_slice
+            readnoise_slice = readnoise_2d[start_row: stop_row, :]
+            gain_slice = gain_2d[start_row: stop_row, :]
+            data_slice = input_model.data[:,:,start_row: stop_row, :].copy()
+            err_slice = input_model.err[:, :, start_row: stop_row, :].copy()
+            groupdq_slice = input_model.groupdq[:, :, start_row: stop_row, :].copy()
+            pixeldq_slice = input_model.pixeldq[ start_row: stop_row, :].copy()
 
             slices.insert(i, (data_slice, err_slice, groupdq_slice, pixeldq_slice, buffsize, save_opt, readnoise_slice,
                             gain_slice, weighting,
@@ -246,12 +248,13 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
                             input_model.meta.exposure.drop_frames1, int_times))
 
         # last slice gets the rest
-        readnoise_slice = readnoise_2d[(number_slices - 1) * rows_per_slice: total_rows, :]
-        gain_slice = gain_2d[(number_slices - 1) * rows_per_slice: total_rows, :]
-        data_slice = input_model.data[:, :, (number_slices - 1) * rows_per_slice: total_rows, :].copy()
-        err_slice = input_model.err[:, :, (number_slices - 1) * rows_per_slice: total_rows, :].copy()
-        groupdq_slice = input_model.groupdq[:, :, (number_slices - 1) * rows_per_slice: total_rows, :].copy()
-        pixeldq_slice = input_model.pixeldq[(number_slices - 1) * rows_per_slice: total_rows, :].copy()
+        start_row = (number_slices - 1) * rows_per_slice
+        readnoise_slice = readnoise_2d[start_row: total_rows, :]
+        gain_slice = gain_2d[start_row: total_rows, :]
+        data_slice = input_model.data[:, :, start_row: total_rows, :].copy()
+        err_slice = input_model.err[:, :, start_row: total_rows, :].copy()
+        groupdq_slice = input_model.groupdq[:, :, start_row: total_rows, :].copy()
+        pixeldq_slice = input_model.pixeldq[start_row: total_rows, :].copy()
         slices.insert(number_slices - 1, (data_slice, err_slice, groupdq_slice, pixeldq_slice, buffsize, save_opt,
                                           readnoise_slice, gain_slice, weighting,
                                           input_model.meta.instrument.name, input_model.meta.exposure.frame_time,
@@ -1261,24 +1264,25 @@ def gls_ramp_fit(input_model, buffsize, save_opt,
 
 ##Loop over number of processes
         for i in range(number_slices - 1):
-            readnoise_slice = readnoise_2d[i * rows_per_slice: (i + 1) * rows_per_slice, :]
-            gain_slice = gain_2d[i * rows_per_slice: (i + 1) * rows_per_slice, :]
-            data_slice = input_model.data[:,:,i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
-            err_slice = input_model.err[:, :, i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
-            groupdq_slice = input_model.groupdq[:, :, i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
-            pixeldq_slice = pixeldq[ i * rows_per_slice: (i + 1) * rows_per_slice, :].copy()
+            start_row = i * rows_per_slice
+            stop_row = (i + 1) * rows_per_slice
+            readnoise_slice = readnoise_2d[start_row: stop_row, :]
+            gain_slice = gain_2d[start_row: stop_row, :]
+            data_slice = input_model.data[:,:,start_row: stop_row, :].copy()
+            err_slice = input_model.err[:, :, start_row: stop_row, :].copy()
+            groupdq_slice = input_model.groupdq[:, :, start_row: stop_row, :].copy()
+            pixeldq_slice = pixeldq[ start_row: stop_row, :].copy()
             slices.insert(i, (frame_time, gain_slice, groupdq_slice, group_time,
                               jump_flag, max_num_cr, data_slice, err_slice, frames_per_group, pixeldq_slice,
                               readnoise_slice, saturated_flag, save_opt))
         #The last slice takes the remainder of the rows
-        readnoise_slice = readnoise_2d[(number_slices - 1) * rows_per_slice: total_rows, :]
-        gain_slice = gain_2d[(number_slices - 1) * rows_per_slice: total_rows, :]
-        data_slice = input_model.data[:, :, (number_slices - 1) * rows_per_slice: total_rows, :].copy()
-        err_slice = input_model.err[:, :, (number_slices - 1) * rows_per_slice: total_rows, :].copy()
-        groupdq_slice = input_model.groupdq[:, :, (number_slices - 1) * rows_per_slice: total_rows, :].copy()
-        pixeldq_slice = input_model.pixeldq[(number_slices - 1) * rows_per_slice: total_rows, :].copy()
-     #   first_group_slice = pixeldq[(number_slices - 1) * rows_per_slice: total_rows, :].copy()
-     #   max_number_segments, num_CRs = calc_num_seg(groupdq, number_of_integrations)
+        start_row = (number_slices - 1) * rows_per_slice
+        readnoise_slice = readnoise_2d[start_row: total_rows, :]
+        gain_slice = gain_2d[start_row: total_rows, :]
+        data_slice = input_model.data[:, :, start_row: total_rows, :].copy()
+        err_slice = input_model.err[:, :, start_row: total_rows, :].copy()
+        groupdq_slice = input_model.groupdq[:, :, start_row: total_rows, :].copy()
+        pixeldq_slice = input_model.pixeldq[start_row: total_rows, :].copy()
         slices.insert(number_slices - 1, (frame_time, gain_slice, groupdq_slice, group_time,
                           jump_flag, max_num_cr, data_slice, err_slice, frames_per_group, pixeldq_slice,
                           readnoise_slice, saturated_flag, save_opt))
