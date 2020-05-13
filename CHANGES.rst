@@ -23,7 +23,7 @@ pipeline
 
 - Updated the calwebb_spec2 pipeline to only use the basename of the source
   catalogue file when updating the source_catalogue keyword for WFSS inputs.
-  [#4940
+  [#4940]
 
 rscd
 ----
