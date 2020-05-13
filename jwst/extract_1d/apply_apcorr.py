@@ -1,7 +1,7 @@
 import abc
 import numpy as np
 
-from typing import Tuple
+from typing import Tuple, Union, Type
 from scipy.interpolate import interp2d
 from astropy.io import fits
 
@@ -10,7 +10,28 @@ from ..datamodels import DataModel
 
 
 class ApCorrBase(abc.ABC):
-    """Perform aperture correction on input extraction data.
+    """Base class for aperture correction classes.
+
+    Parameters
+    ----------
+    input_model : `~/jwst.datamodels.DataModel`
+        Input data model used to determine matching parameters.
+    apcorr_table : `~/astropy.io.fits.FITS_rec`
+        Aperture correction table data from APCORR reference file.
+    location : tuple, Optional
+        Reference location (RA, DEC) used to calculate the pixel scale used in converting values in arcec to pixels.
+        Default is None, however, if the input reference data contains size/radius data in units of arcsecs, a location
+        is required.
+    apcorr_row_units : str, Optional
+        Units for the aperture correction data "row" values (assuming the aperture correction is a 2D array).
+        If not given, units will be determined from the input apcorr_table ColDefs if possible.
+
+    Raises
+    ------
+    ValueError :
+        If apcorr_row_units are not supplied and units are undifined in apcorr_table ColDefs
+    ValueError :
+        If the input apcorr_table cannot be reduced to a single row based on match criteria from input_model.
 
     """
     match_pars = {
@@ -50,6 +71,19 @@ class ApCorrBase(abc.ABC):
         self.apcorr_func = self.approximate()
 
     def _get_row_units(self, row_key: str):
+        """Attempt to read units of the apcorr data row dimension.
+
+        Parameters
+        ----------
+        row_key : str
+            Column name that corresponds to the row-dimension of the input apcorr data.
+
+        Raises
+        ------
+        ValuError :
+            If apcorr_row_units are not given during init and units are not defined for the input FITS_rec ColDefs.
+
+        """
         if self.apcorr_row_units is None:
             self.apcorr_row_units = self._reference_table[row_key].units
 
@@ -80,7 +114,7 @@ class ApCorrBase(abc.ABC):
         return match_pars
 
     def _reduce_reftable(self) -> fits.FITS_record:
-        """Reduce full reference table to a matched row."""
+        """Reduce full reference table to a single matched row."""
         table = self._reference_table.copy()
 
         for key, value in self.match_pars.items():
@@ -117,6 +151,17 @@ class ApCorrBase(abc.ABC):
 
 
 class ApCorrPhase(ApCorrBase):
+    """Produce and apply aperture correction for input data with pixel phase.
+
+    Parameters
+    ----------
+    pixphase : float, Default = 0.5
+        Pixel phase of the input data.
+
+    *args, **kwargs :
+        See ApCorrBase for more.
+
+    """
     def __init__(self, *args, pixphase: float = 0.5, **kwargs):
         self.phase = pixphase  # In the future we'll attempt to measure the pixel phase from inputs.
 
@@ -129,8 +174,8 @@ class ApCorrPhase(ApCorrBase):
                 self.reference['size'] /= compute_scale(self.model.wcs, self.location)
             else:
                 raise ValueError(
-                    f'If the size column for the input APCORR reference file are in units with arcseconds, a location '
-                    f'(RA, DEC) must be provided in order to compute a pixel scale to convert arcseconds to pixels.'
+                    'If the size column for the input APCORR reference file are in units with arcseconds, a location '
+                    '(RA, DEC) must be provided in order to compute a pixel scale to convert arcseconds to pixels.'
                 )
 
     def approximate(self):
@@ -151,6 +196,7 @@ class ApCorrPhase(ApCorrBase):
 
 
 class ApCorrRadial(ApCorrBase):
+    """Aperture correction class used with spectral data produced from an extraction aperture radius."""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -161,8 +207,8 @@ class ApCorrRadial(ApCorrBase):
                 self.reference['radius'] /= compute_scale(self.model.wcs, self.location)
             else:
                 raise ValueError(
-                    f'If the radius column for the input APCORR reference file are in units with arcseconds, a location'
-                    f' (RA, DEC) must be provided in order to compute a pixel scale to convert arcseconds to pixels.'
+                    'If the radius column for the input APCORR reference file are in units with arcseconds, a location'
+                    ' (RA, DEC) must be provided in order to compute a pixel scale to convert arcseconds to pixels.'
                 )
 
     def approximate(self):
@@ -175,6 +221,7 @@ class ApCorrRadial(ApCorrBase):
 
 
 class ApCorr(ApCorrBase):
+    """'Default' Aperture correction class for use with most spectroscopic modes."""
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -185,8 +232,8 @@ class ApCorr(ApCorrBase):
                 self.reference['size'] /= compute_scale(self.model.wcs, self.location)
             else:
                 raise ValueError(
-                    f'If the size column for the input APCORR reference file are in units with arcseconds, a location '
-                    f'(RA, DEC) must be provided in order to compute a pixel scale to convert arcseconds to pixels.'
+                    'If the size column for the input APCORR reference file are in units with arcseconds, a location '
+                    '(RA, DEC) must be provided in order to compute a pixel scale to convert arcseconds to pixels.'
                 )
 
     def approximate(self):
@@ -198,7 +245,19 @@ class ApCorr(ApCorrBase):
         return interp2d(wavelength, size, apcorr)
 
 
-def select_apcorr(input_model):
+def select_apcorr(input_model: DataModel) -> Union[Type[ApCorr], Type[ApCorrPhase], Type[ApCorrRadial]]:
+    """Select appropriate Aperture correction class based on input DataModel.
+
+    Parameters
+    ----------
+    input_model : `~/jwst.datamodels.DataModel`
+        Input data on which the aperture correction is to be applied.
+
+    Returns
+    -------
+    Aperture correction class.
+
+    """
     if input_model.meta.instrument.name == 'MIRI':
         if 'MRS' in input_model.meta.exposure.type:
             return ApCorrRadial

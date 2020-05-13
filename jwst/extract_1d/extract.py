@@ -2576,7 +2576,7 @@ def run_extract1d(input_model, extract_ref_name, smoothing_length, bkg_order, lo
     ref_dict = load_ref_file(extract_ref_name)
 
     apcorr_table = (
-        fits.getdata(apcorr_ref_name) if apcorr_ref_name is not None or apcorr_ref_name is not 'N/A' else None
+        fits.getdata(apcorr_ref_name) if apcorr_ref_name is not None or apcorr_ref_name != 'N/A' else None
     )
 
     # This item is a flag to let us know that do_extract1d was called
