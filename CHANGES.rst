@@ -1,6 +1,10 @@
 0.16.1 (unreleased)
 ===================
 
+assign_wcs
+----------
+
+- Update get_object_info to check for and replace legacy keys for WFSS inputs [#4943]
 associations
 ------------
 
