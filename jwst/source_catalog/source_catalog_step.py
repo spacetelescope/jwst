@@ -67,9 +67,16 @@ class SourceCatalogStep(Step):
 
             aperture_ee = (self.aperture_ee1, self.aperture_ee2,
                            self.aperture_ee3)
-            refdata = ReferenceData(model, aperture_ee=aperture_ee,
-                                    apcorr_filename=apcorr_fn,
-                                    abvegaoffset_filename=abvegaoffset_fn)
+            try:
+                refdata = ReferenceData(model, aperture_ee=aperture_ee,
+                                        apcorr_filename=apcorr_fn,
+                                        abvegaoffset_filename=abvegaoffset_fn)
+                aperture_params = refdata.aperture_params
+                abvega_offset = refdata.abvega_offset
+            except RuntimeError as err:
+                msg = f'{err} Source catalog will not be created.'
+                self.log.warn(msg)
+                return
 
             coverage_mask = (model.wht == 0)
             if coverage_mask.all():
@@ -104,8 +111,8 @@ class SourceCatalogStep(Step):
             catobj = SourceCatalog(model, segment_img, error=total_error,
                                    kernel=kernel,
                                    kernel_fwhm=self.kernel_fwhm,
-                                   aperture_params=refdata.aperture_params,
-                                   abvega_offset=refdata.abvega_offset)
+                                   aperture_params=aperture_params,
+                                   abvega_offset=abvega_offset)
             catalog = catobj.catalog
 
             if self.save_results:
