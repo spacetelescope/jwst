@@ -20,7 +20,7 @@ jobs:
     - name: Latest dependency versions
 
     - name: Oldest dependency versions
-      python: 3.6
+      python: 3.6.10
       env:
         GEN_MIN_DEPS=true
         PIP_DEPENDENCIES="-r requirements-min.txt .[test]"
