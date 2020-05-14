@@ -136,6 +136,11 @@ class ReferenceData:
                         for key, value in selector.items()]
             ee_table = apcorr[np.logical_and.reduce(mask_idx)]
 
+        if len(ee_table) == 0:
+            raise RuntimeError('APCORR reference file data is missing for '
+                               f'{selector}.')
+            return
+
         return ee_table
 
     def _get_ee_table_row(self, aperture_ee):
