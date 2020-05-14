@@ -75,12 +75,12 @@ def replace_suffix_ext(filename, old_suffix_list, new_suffix,
     return output_path
 
 
-class SkyObject(namedtuple('SkyObject', ("sid",
+class SkyObject(namedtuple('SkyObject', ("id",
                                          "xcentroid",
                                          "ycentroid",
                                          "sky_centroid",
-                                         "abmag",
-                                         "abmag_error",
+                                         "isophotal_abmag",
+                                         "isophotal_abmag_err",
                                          "sky_bbox_ll",
                                          "sky_bbox_lr",
                                          "sky_bbox_ul",
@@ -98,7 +98,7 @@ class SkyObject(namedtuple('SkyObject', ("sid",
 
     Parameters
     ----------
-    sid : int
+    id : int
         source identifed
     xcentroid : float
         x center of object in pixels
@@ -106,9 +106,9 @@ class SkyObject(namedtuple('SkyObject', ("sid",
         y center of object in pixels
     sky_centroid: `~astropy.coordinates.SkyCoord`
         ra and dec of the center of the object
-    abmag : float
+    isophotal_abmag : float
         AB Magnitude of object
-    abmag_error : float
+    isophotal_abmag_err : float
         Error on the AB magnitude
     sky_bbox_ll : `~astropy.coordinates.SkyCoord`
         Lower left corner of the minimum bounding box
@@ -122,24 +122,24 @@ class SkyObject(namedtuple('SkyObject', ("sid",
 
     __slots__ = ()  # prevent instance dictionary creation for lower mem
 
-    def __new__(cls, sid=None,
+    def __new__(cls, id=None,
                      xcentroid=None,
                      ycentroid=None,
                      sky_centroid=None,
-                     abmag=None,
-                     abmag_error=None,
+                     isophotal_abmag=None,
+                     isophotal_abmag_err=None,
                      sky_bbox_ll=None,
                      sky_bbox_lr=None,
                      sky_bbox_ul=None,
                      sky_bbox_ur=None):
 
         return super(SkyObject, cls).__new__(cls,
-                                             sid=sid,
+                                             id=id,
                                              xcentroid=xcentroid,
                                              ycentroid=ycentroid,
                                              sky_centroid=sky_centroid,
-                                             abmag=abmag,
-                                             abmag_error=abmag_error,
+                                             isophotal_abmag=isophotal_abmag,
+                                             isophotal_abmag_err=isophotal_abmag_err,
                                              sky_bbox_ll=sky_bbox_ll,
                                              sky_bbox_lr=sky_bbox_lr,
                                              sky_bbox_ul=sky_bbox_ul,
@@ -151,18 +151,18 @@ class SkyObject(namedtuple('SkyObject', ("sid",
                 "xcentroid: {1}\n"
                 "ycentroid: {2}\n"
                 "sky_centroid: {3}\n"
-                "abmag: {4}\n"
-                "abmag_error: {5}\n"
+                "isophotal_abmag: {4}\n"
+                "isophotal_abmag_err: {5}\n"
                 "sky_bbox_ll: {6}\n"
                 "sky_bbox_lr: {7}\n"
                 "sky_bbox_ul: {8}\n"
                 "sky_bbox_ur: {9}\n"
-                .format(self.sid,
+                .format(self.id,
                         self.xcentroid,
                         self.ycentroid,
                         str(self.sky_centroid),
-                        self.abmag,
-                        self.abmag_error,
+                        self.isophotal_abmag,
+                        self.isophotal_abmag_err,
                         str(self.sky_bbox_ll),
                         str(self.sky_bbox_lr),
                         str(self.sky_bbox_ul),

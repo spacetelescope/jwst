@@ -1,6 +1,11 @@
 0.16.1 (unreleased)
 ===================
 
+assign_wcs
+----------
+
+- Update keyword and attribute usage around SkyObject to reflect updated keywords. [#4943]
+
 associations
 ------------
 
@@ -14,6 +19,11 @@ datamodels
 - Updated core schema to include recent Keyword Dictionary changes
   (remove TIME-END; add TDB-BEG, TDB-MID, TDB-END, XPOSURE, TELAPSE)
   [#4925]
+
+lib
+---
+
+- Update SkyObject keys. [#4943]
 
 mrs_imatch
 ----------
