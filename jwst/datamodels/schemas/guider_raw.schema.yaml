@@ -89,7 +89,7 @@ allOf:
       - name: delta_j3_pa
         datatype: float64
       - name: HGA_motion
-        datatype: int16
+        datatype: [ascii, 16]
     centroid_table:
       title: Centroid packet table
       fits_hdu: FGS Centroid Packet
