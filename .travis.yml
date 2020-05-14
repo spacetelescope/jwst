@@ -18,14 +18,13 @@ jobs:
 
   include:
     - python: 3.7.7
+
     - python: 3.8.2
 
     - env: PIP_DEPENDENCIES="numpy~=1.17.0 .[test]"
       name: Python 3.7.x, Numpy 1.17.x
 
     - env: PIP_DEPENDENCIES="-r requirements-min.txt .[test]"
-           PIP_NO_DEPS="pip install . --no-deps"
-           GENERATE_MIN_DEPS=minimum_deps
       python: 3.6.10
       name: Dependencies set at minimum version allowed in setup.py
 
@@ -55,15 +54,15 @@ jobs:
   allow_failures:
     - env: PIP_DEPENDENCIES="-r requirements-dev.txt .[test]"
       python: 3.8.2
-      name: Dependencies of development versions in requirements-dev.txt
+      name: Dev dependencies specified in requirements-dev.txt
 
     - env: CRDS_CONTEXT=jwst-edit
       name: Latest delivered CRDS_CONTEXT=jwst-edit
 
 install:
-  - $PIP_NO_DEPS
-    $GENERATE_MIN_DEPS
-    pip install $PIP_DEPENDENCIES
+  - pip install . --no-deps
+  - minimum_deps
+  - pip install $PIP_DEPENDENCIES
 
 script:
   - $TEST_COMMAND
