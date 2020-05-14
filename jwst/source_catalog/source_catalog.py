@@ -575,8 +575,7 @@ class SourceCatalog:
             warnings.simplefilter("ignore", category=RuntimeWarning)
 
             abmag = -2.5 * np.log10(flux.value) + 8.9
-            # assuming SNR >> 1 (otherwise abmag_err is asymmetric)
-            abmag_err = 2.5 * np.log10(np.e) * (flux_err.value / flux.value)
+            abmag_err = 2.5 * np.log10(1.0 + (flux_err.value / flux.value))
 
             # handle negative fluxes
             idx = flux.value < 0
