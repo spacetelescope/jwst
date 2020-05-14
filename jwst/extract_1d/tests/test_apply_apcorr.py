@@ -114,9 +114,9 @@ def apcorr_instance(inputs):
     apcorr = select_apcorr(dm)
 
     if dm.meta.instrument.name == 'NIRSPEC' and 'FIXEDSLIT' in dm.meta.exposure.type:
-        return apcorr(dm, table, apcorr_row_units='pixels', slit='S200A1')
+        return apcorr(dm, table, 'pixels', slit='S200A1')
 
-    return apcorr(dm, table, apcorr_row_units='pixels')
+    return apcorr(dm, table, 'pixels')
 
 
 def test_select_apcorr(inputs):
