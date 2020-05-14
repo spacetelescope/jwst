@@ -2575,9 +2575,13 @@ def run_extract1d(input_model, extract_ref_name, smoothing_length, bkg_order, lo
     # Read and interpret the reference file.
     ref_dict = load_ref_file(extract_ref_name)
 
-    apcorr_table = (
-        fits.getdata(apcorr_ref_name) if apcorr_ref_name is not None or apcorr_ref_name != 'N/A' else None
-    )
+    apcorr_table = apcorr_sizeunits = None
+    if apcorr_ref_name is not None or apcorr_ref_name != 'N/A':
+        with fits.open(apcorr_ref_name) as ap_ref:
+            apcorr_table = ap_ref['APCORR'].data.copy()
+            apcorr_sizeunits = ap_ref['APCORR'].header['SIZEUNIT']
+
+        del ap_ref
 
     # This item is a flag to let us know that do_extract1d was called
     # from run_extract1d; that is, we don't expect this key to be present
@@ -2596,7 +2600,8 @@ def run_extract1d(input_model, extract_ref_name, smoothing_length, bkg_order, lo
         subtract_background,
         apply_nod_offset,
         was_source_model,
-        apcorr_table=apcorr_table
+        apcorr_table=apcorr_table,
+        apcorr_sizeunits=apcorr_sizeunits
     )
 
     # Remove target.source_type from the output model, so that it
@@ -2643,7 +2648,8 @@ def ref_dict_sanity_check(ref_dict):
 
 
 def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order=None, log_increment=50,
-                 subtract_background=None, apply_nod_offset=None, was_source_model=False, apcorr_table=None):
+                 subtract_background=None, apply_nod_offset=None, was_source_model=False, apcorr_table=None,
+                 apcorr_sizeunits=None):
     """Extract 1-D spectra.
 
     In the pipeline, this function would be called by run_extract1d.
@@ -2907,7 +2913,9 @@ def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order
 
             if source_type.upper() == 'POINT' and apcorr_table is not None:
                 log.info('Applying Aperture correction.')
-                apcorr = select_apcorr(input_model)(input_model, apcorr_table, slit=slit.name, location=(ra, dec))
+                apcorr = select_apcorr(input_model)(
+                    input_model, apcorr_table, apcorr_sizeunits, slit=slit.name, location=(ra, dec)
+                )
                 apcorr.apply(spec.spec_table)
 
             output_model.spec.append(spec)
@@ -3063,7 +3071,7 @@ def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order
 
                 if source_type.upper() == 'POINT' and apcorr_table is not None:
                     log.info('Applying Aperture correction.')
-                    apcorr = select_apcorr(input_model)(input_model, apcorr_table, location=(ra, dec))
+                    apcorr = select_apcorr(input_model)(input_model, apcorr_table, apcorr_sizeunits, location=(ra, dec))
                     apcorr.apply(spec.spec_table)
 
                 output_model.spec.append(spec)
@@ -3202,7 +3210,7 @@ def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order
                     if source_type.upper() == 'POINT' and apcorr_table is not None:
                         log.info('Applying Aperture correction.')
                         apcorr = select_apcorr(input_model)(
-                            input_model, apcorr_table, slit=slitname, location=(ra, dec)
+                            input_model, apcorr_table, apcorr_sizeunits, slit=slitname, location=(ra, dec)
                         )
                         apcorr.apply(spec.spec_table)
 
@@ -3240,7 +3248,9 @@ def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order
             if source_type is None:
                 source_type = "UNKNOWN"
 
-            output_model = ifu.ifu_extract1d(input_model, extract_ref_dict, source_type, subtract_background)
+            output_model = ifu.ifu_extract1d(
+                input_model, extract_ref_dict, source_type, subtract_background, apcorr_table, apcorr_sizeunits
+            )
 
         else:
             log.error("The input file is not supported for this step.")

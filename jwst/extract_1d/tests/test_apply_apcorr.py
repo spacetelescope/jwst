@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+import os
 
 from astropy.io import fits
 from astropy.table import Table
@@ -7,6 +8,12 @@ from astropy.table import Table
 from ...datamodels import DataModel
 
 from ..apply_apcorr import ApCorr, ApCorrRadial, ApCorrPhase, select_apcorr
+
+data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data'))
+NIR_TEST_FILES = {
+    'ISU/MSASPEC': os.path.join(data_dir, 'jwst_nirspec_apcorr_0003.fits'),
+    'FIXEDSLIT/BRIGHTOBJ': os.path.join(data_dir, 'jwst_nirspec_apcorr_0004.fits')
+}
 
 
 @pytest.fixture(
@@ -56,25 +63,15 @@ def inputs(request):
                 }
             )
 
-    if instrument == 'NIRSPEC':
+    if instrument == 'NIRSPEC':  # Too complicated to come up with silly example data; using "dummy" ref file
         dm.meta.instrument.filter = 'CLEAR'
         dm.meta.instrument.grating = 'PRISM'
-        table = Table(
-            {
-                'wavelength': [[1, 2, 3, 0], [1, 2, 3, 0]],
-                'pixphase': [[0.5], [1.0]],
-                'size': [[[1, 2, 3, 0], [1, 2, 3, 0]], [[1, 2, 3, 0], [1, 2, 3, 0]]],
-                'nelem_size': [3, 3],
-                'nelem_wl': [3, 3],
-                'apcorr': np.full((2, 2, 4, 4), 0.5),
-                'filter': ['CLEAR', 'filter02'],
-                'grating': ['PRISM', 'grating02']
-            }
 
-        )
         if 'FIXEDSLIT' in dm.meta.exposure.type:
             dm.meta.instrument.fixed_slit = 'S200A1'
-            table.add_column(['S200A1', 'slit2'], name='slit')
+            table = Table.read(NIR_TEST_FILES['FIXEDSLIT/BRIGHTOBJ'], format='fits')
+        else:
+            table = Table.read(NIR_TEST_FILES['ISU/MSASPEC'], format='fits')
 
     if instrument == 'NIRCAM':
         dm.meta.instrument.filter = 'F322W2'
@@ -157,4 +154,12 @@ class TestApCorr:
             assert apcorr_instance.match_pars == {'filter': 'GR150R', 'pupil': 'F090W'}
 
     def test_approximate(self, apcorr_instance):
-        assert np.isclose(apcorr_instance.apcorr_func(0.5, 0.5)[0], 0.5)
+        if isinstance(apcorr_instance, ApCorrPhase):
+            assert np.isclose(
+                apcorr_instance.apcorr_func(
+                    apcorr_instance.reference['wavelength'][0],
+                    apcorr_instance.reference['size'][0], 0.5)[0],
+                1
+            )
+        else:
+            assert np.isclose(apcorr_instance.apcorr_func(0.5, 0.5)[0], 0.5)

@@ -1,8 +1,7 @@
 import abc
-import numpy as np
 
 from typing import Tuple, Union, Type
-from scipy.interpolate import interp2d
+from scipy.interpolate import interp2d, interp1d
 from astropy.io import fits
 
 from ..assign_wcs.util import compute_scale
@@ -54,14 +53,14 @@ class ApCorrBase(abc.ABC):
         }
     }
 
-    def __init__(self, input_model: DataModel, apcorr_table: fits.FITS_rec, location: Tuple[float, float] = None,
-                 apcorr_row_units: str = None, **match_kwargs):
+    def __init__(self, input_model: DataModel, apcorr_table: fits.FITS_rec, sizeunits: str,
+                 location: Tuple[float, float] = None, **match_kwargs):
         self.correction = None
 
         self.model = input_model
         self._reference_table = apcorr_table
         self.location = location
-        self.apcorr_row_units = apcorr_row_units
+        self.apcorr_sizeunits = sizeunits
 
         self.match_keys = self._get_match_keys()
         self.match_pars = self._get_match_pars()
@@ -69,26 +68,6 @@ class ApCorrBase(abc.ABC):
 
         self.reference = self._reduce_reftable()
         self.apcorr_func = self.approximate()
-
-    def _get_row_units(self, row_key: str):
-        """Attempt to read units of the apcorr data row dimension.
-
-        Parameters
-        ----------
-        row_key : str
-            Column name that corresponds to the row-dimension of the input apcorr data.
-
-        Raises
-        ------
-        ValuError :
-            If apcorr_row_units are not given during init and units are not defined for the input FITS_rec ColDefs.
-
-        """
-        if self.apcorr_row_units is None:
-            self.apcorr_row_units = self._reference_table[row_key].units
-
-        if not self.apcorr_row_units:
-            raise ValueError(f'Could not determine units for {row_key} from input reference table.')
 
     def _get_match_keys(self) -> dict:
         """Get column keys needed for reducing the reference table based on input."""
@@ -167,9 +146,7 @@ class ApCorrPhase(ApCorrBase):
 
         super().__init__(*args, **kwargs)
 
-        self._get_row_units('size')
-
-        if self.apcorr_row_units.startswith('arcsec'):
+        if self.apcorr_sizeunits.startswith('arcsec'):
             if self.location is not None:
                 self.reference['size'] /= compute_scale(self.model.wcs, self.location)
             else:
@@ -180,19 +157,38 @@ class ApCorrPhase(ApCorrBase):
 
     def approximate(self):
         """Generate an approximate function for interpolating apcorr values to input wavelength and size."""
-        wavelength = self.reference['wavelength'][:self.reference['nelem_wl']]
-        phase_idx = np.where(self.reference['pixphase'] == self.phase)[0][0]
+        def _approx_func(wavelength, size, pixel_phase):
+            apcorr_wl_func = interp1d(self.reference['wavelength'], self.reference['apcorr'])
+            size_wl_func = interp1d(self.reference['wavelength'], self.reference['size'])
 
-        size = self.reference['size'][phase_idx][:self.reference['nelem_size']]
+            apcorr_wl = apcorr_wl_func(wavelength)
+            size_wl = size_wl_func(wavelength)
 
-        apcorr = (
-            self.reference['apcorr'][phase_idx][:self.reference['nelem_size'], :self.reference['nelem_wl']]
-        )
+            pixphase_size_func = interp2d(self.reference['pixphase'], size_wl, apcorr_wl)
 
-        return interp2d(wavelength, size, apcorr)
+            return pixphase_size_func(pixel_phase, size)
+
+        return _approx_func
 
     def measure_phase(self):  # Future method in determining pixel phase
         pass
+
+    def apply(self, spec_table: fits.FITS_rec):
+        """Apply interpolated aperture correction value to source-related extraction results in-place.
+
+        Parameters
+        ----------
+        spec_table : `~fits.FITS_rec`
+            Table of aperture corrections values from apcorr reference file.
+
+        """
+        cols_to_correct = ('flux', 'surf_bright', 'error', 'sb_error')
+
+        for row in spec_table:
+            correction = self.apcorr_func(row['wavelength'], row['npixels'], self.phase)
+
+            for col in cols_to_correct:
+                row[col] *= correction
 
 
 class ApCorrRadial(ApCorrBase):
@@ -200,9 +196,7 @@ class ApCorrRadial(ApCorrBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self._get_row_units('radius')
-
-        if self.apcorr_row_units.startswith('arcsec'):
+        if self.apcorr_sizeunits.startswith('arcsec'):
             if self.location is not None:
                 self.reference['radius'] /= compute_scale(self.model.wcs, self.location)
             else:
@@ -225,9 +219,7 @@ class ApCorr(ApCorrBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self._get_row_units('size')
-
-        if self.apcorr_row_units.startswith('arcsec'):
+        if self.apcorr_sizeunits.startswith('arcsec'):
             if self.location is not None:
                 self.reference['size'] /= compute_scale(self.model.wcs, self.location)
             else:
