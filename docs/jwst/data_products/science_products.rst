@@ -27,23 +27,23 @@ Additional extensions can be included for certain instruments and readout types,
 below.
 The FITS file structure is as follows.
 
-+-----+------------+----------+-----------+---------------------------------+
-| HDU | EXTNAME    | HDU Type | Data Type | Dimensions                      |
-+=====+============+==========+===========+=================================+
-|  0  | N/A        | primary  | N/A       | N/A                             |
-+-----+------------+----------+-----------+---------------------------------+
-|  1  | SCI        | IMAGE    | uint16    | ncols x nrows x ngroups x nints |
-+-----+------------+----------+-----------+---------------------------------+
-|  2  | GROUP      | BINTABLE | N/A       | variable                        |
-+-----+------------+----------+-----------+---------------------------------+
-|  3  | INT_TIMES  | BINTABLE | N/A       | nints (rows) x 7 cols           |
-+-----+------------+----------+-----------+---------------------------------+
-|     | ZEROFRAME* | IMAGE    | uint16    | ncols x nrows x nints           |
-+-----+------------+----------+-----------+---------------------------------+
-|     | REFOUT*    | IMAGE    | uint16    | ncols/4 x 256 x ngroups x nints |
-+-----+------------+----------+-----------+---------------------------------+
-|     | ASDF       | BINTABLE | N/A       | variable                        |
-+-----+------------+----------+-----------+---------------------------------+
++-----+------------+----------+-----------+-----------------------------------+
+| HDU | EXTNAME    | HDU Type | Data Type | Dimensions                        |
++=====+============+==========+===========+===================================+
+|  0  | N/A        | primary  | N/A       | N/A                               |
++-----+------------+----------+-----------+-----------------------------------+
+|  1  | SCI        | IMAGE    | uint16    | ncols x nrows x ngroups x nints   |
++-----+------------+----------+-----------+-----------------------------------+
+|  2  | GROUP      | BINTABLE | N/A       | variable                          |
++-----+------------+----------+-----------+-----------------------------------+
+|  3  | INT_TIMES  | BINTABLE | N/A       | nints (rows) x 7 cols             |
++-----+------------+----------+-----------+-----------------------------------+
+|     | ZEROFRAME* | IMAGE    | uint16    | ncols x nrows x nints             |
++-----+------------+----------+-----------+-----------------------------------+
+|     | REFOUT*    | IMAGE    | uint16    | ncols/4 x nrows x ngroups x nints |
++-----+------------+----------+-----------+-----------------------------------+
+|     | ASDF       | BINTABLE | N/A       | variable                          |
++-----+------------+----------+-----------+-----------------------------------+
 
  - SCI: 4-D data array containing the raw pixel values. The first two dimensions are equal to
    the size of the detector readout, with the data from multiple groups (NGROUPS) within each
@@ -75,29 +75,29 @@ from integer to floating-point data type. The same is true for the ZEROFRAME and
 data extensions, if they are present. An ERR array and two types of data quality arrays are
 also added to the product. The FITS file layout is as follows:
 
-+-----+------------+----------+-----------+---------------------------------+
-| HDU | EXTNAME    | HDU Type | Data Type | Dimensions                      |
-+=====+============+==========+===========+=================================+
-|  0  | N/A        | primary  | N/A       | N/A                             |
-+-----+------------+----------+-----------+---------------------------------+
-|  1  | SCI        | IMAGE    | float32   | ncols x nrows x ngroups x nints |
-+-----+------------+----------+-----------+---------------------------------+
-|  2  | PIXELDQ    | IMAGE    | uint32    | ncols x nrows                   |
-+-----+------------+----------+-----------+---------------------------------+
-|  3  | GROUPDQ    | IMAGE    | uint8     | ncols x nrows x ngroups x nints |
-+-----+------------+----------+-----------+---------------------------------+
-|  4  | ERR        | IMAGE    | float32   | ncols x nrows x ngroups x nints |
-+-----+------------+----------+-----------+---------------------------------+
-|     | ZEROFRAME* | IMAGE    | float32   | ncols x nrows x nints           |
-+-----+------------+----------+-----------+---------------------------------+
-|     | GROUP      | BINTABLE | N/A       | variable                        |
-+-----+------------+----------+-----------+---------------------------------+
-|     | INT_TIMES  | BINTABLE | N/A       | nints (rows) x 7 cols           |
-+-----+------------+----------+-----------+---------------------------------+
-|     | REFOUT*    | IMAGE    | uint16    | ncols/4 x 256 x ngroups x nints |
-+-----+------------+----------+-----------+---------------------------------+
-|     | ASDF       | BINTABLE | N/A       | variable                        |
-+-----+------------+----------+-----------+---------------------------------+
++-----+------------+----------+-----------+-----------------------------------+
+| HDU | EXTNAME    | HDU Type | Data Type | Dimensions                        |
++=====+============+==========+===========+===================================+
+|  0  | N/A        | primary  | N/A       | N/A                               |
++-----+------------+----------+-----------+-----------------------------------+
+|  1  | SCI        | IMAGE    | float32   | ncols x nrows x ngroups x nints   |
++-----+------------+----------+-----------+-----------------------------------+
+|  2  | PIXELDQ    | IMAGE    | uint32    | ncols x nrows                     |
++-----+------------+----------+-----------+-----------------------------------+
+|  3  | GROUPDQ    | IMAGE    | uint8     | ncols x nrows x ngroups x nints   |
++-----+------------+----------+-----------+-----------------------------------+
+|  4  | ERR        | IMAGE    | float32   | ncols x nrows x ngroups x nints   |
++-----+------------+----------+-----------+-----------------------------------+
+|     | ZEROFRAME* | IMAGE    | float32   | ncols x nrows x nints             |
++-----+------------+----------+-----------+-----------------------------------+
+|     | GROUP      | BINTABLE | N/A       | variable                          |
++-----+------------+----------+-----------+-----------------------------------+
+|     | INT_TIMES  | BINTABLE | N/A       | nints (rows) x 7 cols             |
++-----+------------+----------+-----------+-----------------------------------+
+|     | REFOUT*    | IMAGE    | uint16    | ncols/4 x nrows x ngroups x nints |
++-----+------------+----------+-----------+-----------------------------------+
+|     | ASDF       | BINTABLE | N/A       | variable                          |
++-----+------------+----------+-----------+-----------------------------------+
 
  - SCI: 4-D data array containing the pixel values. The first two dimensions are equal to
    the size of the detector readout, with the data from multiple groups (NGROUPS) within each

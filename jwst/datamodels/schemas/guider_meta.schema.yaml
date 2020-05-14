@@ -17,6 +17,11 @@ properties:
         type: string
         fits_keyword: GUIDESTA
         fits_hdu: FGS Centroid Packet
+      numrefst:
+        title: Number of reference stars
+        type: integer
+        fits_keyword: NUMREFST
+        fits_hdu: Flight Reference Stars
       ddc_field_point:
         title: Differential Distortion Compensation field point
         type: string

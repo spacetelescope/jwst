@@ -9,29 +9,29 @@ Dark exposures processed by the :ref:`calwebb_dark <calwebb_dark>` pipeline resu
 product that has the same structure and content as the :ref:`ramp <ramp>` product described above.
 The details are as follows:
 
-+-----+------------+----------+-----------+---------------------------------+
-| HDU | EXTNAME    | HDU Type | Data Type | Dimensions                      |
-+=====+============+==========+===========+=================================+
-|  0  | N/A        | primary  | N/A       | N/A                             |
-+-----+------------+----------+-----------+---------------------------------+
-|  1  | SCI        | IMAGE    | float32   | ncols x nrows x ngroups x nints |
-+-----+------------+----------+-----------+---------------------------------+
-|  2  | PIXELDQ    | IMAGE    | uint32    | ncols x nrows                   |
-+-----+------------+----------+-----------+---------------------------------+
-|  3  | GROUPDQ    | IMAGE    | uint8     | ncols x nrows x ngroups x nints |
-+-----+------------+----------+-----------+---------------------------------+
-|  4  | ERR        | IMAGE    | float32   | ncols x nrows x ngroups x nints |
-+-----+------------+----------+-----------+---------------------------------+
-|  5  | GROUP      | BINTABLE | N/A       | variable                        |
-+-----+------------+----------+-----------+---------------------------------+
-|  6  | INT_TIMES  | BINTABLE | N/A       | nints (rows) x 7 cols           |
-+-----+------------+----------+-----------+---------------------------------+
-|     | ZEROFRAME* | IMAGE    | float32   | ncols x nrows x nints           |
-+-----+------------+----------+-----------+---------------------------------+
-|     | REFOUT*    | IMAGE    | uint16    | ncols/4 x 256 x ngroups x nints |
-+-----+------------+----------+-----------+---------------------------------+
-|     | ASDF       | BINTABLE | N/A       | variable                        |
-+-----+------------+----------+-----------+---------------------------------+
++-----+------------+----------+-----------+-----------------------------------+
+| HDU | EXTNAME    | HDU Type | Data Type | Dimensions                        |
++=====+============+==========+===========+===================================+
+|  0  | N/A        | primary  | N/A       | N/A                               |
++-----+------------+----------+-----------+-----------------------------------+
+|  1  | SCI        | IMAGE    | float32   | ncols x nrows x ngroups x nints   |
++-----+------------+----------+-----------+-----------------------------------+
+|  2  | PIXELDQ    | IMAGE    | uint32    | ncols x nrows                     |
++-----+------------+----------+-----------+-----------------------------------+
+|  3  | GROUPDQ    | IMAGE    | uint8     | ncols x nrows x ngroups x nints   |
++-----+------------+----------+-----------+-----------------------------------+
+|  4  | ERR        | IMAGE    | float32   | ncols x nrows x ngroups x nints   |
++-----+------------+----------+-----------+-----------------------------------+
+|  5  | GROUP      | BINTABLE | N/A       | variable                          |
++-----+------------+----------+-----------+-----------------------------------+
+|  6  | INT_TIMES  | BINTABLE | N/A       | nints (rows) x 7 cols             |
++-----+------------+----------+-----------+-----------------------------------+
+|     | ZEROFRAME* | IMAGE    | float32   | ncols x nrows x nints             |
++-----+------------+----------+-----------+-----------------------------------+
+|     | REFOUT*    | IMAGE    | uint16    | ncols/4 x nrows x ngroups x nints |
++-----+------------+----------+-----------+-----------------------------------+
+|     | ASDF       | BINTABLE | N/A       | variable                          |
++-----+------------+----------+-----------+-----------------------------------+
 
  - SCI: 4-D data array containing the pixel values. The first two dimensions are equal to
    the size of the detector readout, with the data from multiple groups (NGROUPS) within each
