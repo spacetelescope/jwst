@@ -17,58 +17,58 @@ jobs:
   fast_finish: true
 
   include:
-    - python: 3.6.10
     - python: 3.7.7
     - python: 3.8.2
 
-    - env: PIP_DEPENDENCIES="numpy~=1.16.0 .[test]"
-      python: 3.6.10
-
     - env: PIP_DEPENDENCIES="numpy~=1.17.0 .[test]"
+      name: Python 3.7.x, Numpy 1.17.x
 
     - env: PIP_DEPENDENCIES="-r requirements-min.txt .[test]"
            PIP_NO_DEPS="pip install . --no-deps"
            GENERATE_MIN_DEPS=minimum_deps
       python: 3.6.10
+      name: Dependencies set at minimum version allowed in setup.py
 
-    # Test with SDP pinned dependencies
     - env: PIP_DEPENDENCIES="-r requirements-sdp.txt .[test]"
       python: 3.7.7
+      name: SDP dependencies set in requirements-sdp.txt
 
-    # Test with dev dependencies
     - env: PIP_DEPENDENCIES="-r requirements-dev.txt .[test]"
       python: 3.8.2
+      name: Dev dependencies specified in requirements-dev.txt
 
-    # Test with latest delivered CRDS_CONTEXT, as in regressions tests
     - env: CRDS_CONTEXT=jwst-edit
+      name: Latest delivered CRDS_CONTEXT=jwst-edit
 
-    # Build documentation
     - env: PIP_DEPENDENCIES=.[docs]
            TEST_COMMAND="make --directory=docs html"
+      name: Documentation
       addons:
         apt:
           packages:
-            - texlive-latex-extra
-            - dvipng
             - graphviz
 
-    # PEP8 check
     - env: TEST_COMMAND=flake8
            PIP_DEPENDENCIES=flake8
+      name: Code style check
 
   allow_failures:
     - env: PIP_DEPENDENCIES="-r requirements-dev.txt .[test]"
       python: 3.8.2
+      name: Dependencies of development versions in requirements-dev.txt
 
     - env: CRDS_CONTEXT=jwst-edit
+      name: Latest delivered CRDS_CONTEXT=jwst-edit
 
 install:
   - $PIP_NO_DEPS
-  - $GENERATE_MIN_DEPS
-  - pip install $PIP_DEPENDENCIES
+    $GENERATE_MIN_DEPS
+    pip install $PIP_DEPENDENCIES
 
 script:
   - $TEST_COMMAND
 
 after_success:
-  - if [[ ${TEST_COMMAND} =~ ^pytest ]]; then codecov -F unit; fi
+  - if [[ ${TEST_COMMAND} =~ ^pytest ]]; then
+      codecov -F unit;
+    fi
