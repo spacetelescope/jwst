@@ -97,6 +97,7 @@ setup(
         'jsonschema>=2.3,<4',
         'numpy>=1.16',
         'photutils>=0.7',
+        'requests>=2.22',
         'scipy>=1.0',
         'spherical-geometry>=1.2',
         'stsci.image>=2.3.3',
