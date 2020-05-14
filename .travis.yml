@@ -1,7 +1,7 @@
 os: linux
-dist: xenial
+dist: bionic
 language: python
-python: 3.8.2
+python: 3.8
 
 env:
   global:
@@ -18,21 +18,20 @@ jobs:
 
   include:
     - name: Latest dependency versions
-      python: 3.8.2
 
     - name: Oldest dependency versions
-      python: 3.6.10
+      python: 3.6
       env:
+        GEN_MIN_DEPS=true
         PIP_DEPENDENCIES="-r requirements-min.txt .[test]"
-        GEN_MIN_DEPS=1
 
-    - name: SDP dependencies set in requirements-sdp.txt
+    - name: SDP dependencies in requirements-sdp.txt
       python: 3.7.7
       env:
         PIP_DEPENDENCIES="-r requirements-sdp.txt .[test]"
         TEST_COMMAND=pytest
 
-    - name: Dev dependencies specified in requirements-dev.txt
+    - name: Dev dependencies in requirements-dev.txt
       env:
         PIP_DEPENDENCIES="-r requirements-dev.txt .[test]"
         TEST_COMMAND=pytest
@@ -43,7 +42,7 @@ jobs:
     - name: Documentation
       env:
         PIP_DEPENDENCIES=.[docs]
-        TEST_COMMAND="make --directory=docs html"
+        TEST_COMMAND="make html --directory=docs"
       addons:
         apt:
           packages:
@@ -55,7 +54,7 @@ jobs:
         PIP_DEPENDENCIES=flake8
 
   allow_failures:
-    - name: Dev dependencies specified in requirements-dev.txt
+    - name: Dev dependencies in requirements-dev.txt
       env:
         PIP_DEPENDENCIES="-r requirements-dev.txt .[test]"
         TEST_COMMAND=pytest
@@ -64,8 +63,13 @@ jobs:
       env: CRDS_CONTEXT=jwst-edit
 
 install:
-  - pip install . --no-deps
-  - minimum_deps
+  - pip install --upgrade pip
+  # For the case where we want to build with the minimum versions allowed by
+  # setup.py
+  - if [[ ${GEN_MIN_DEPS} = "true" ]]; then
+      pip install . --no-deps;
+      minimum_deps;
+    fi
   - pip install $PIP_DEPENDENCIES
 
 script:
