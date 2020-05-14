@@ -1,5 +1,5 @@
 os: linux
-dist: bionic
+dist: xenial
 language: python
 python: 3.8
 
@@ -63,7 +63,6 @@ jobs:
       env: CRDS_CONTEXT=jwst-edit
 
 install:
-  - pip install --upgrade pip
   # For the case where we want to build with the minimum versions allowed by
   # setup.py
   - if [[ ${GEN_MIN_DEPS} = "true" ]]; then
