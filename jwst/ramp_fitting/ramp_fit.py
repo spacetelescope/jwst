@@ -277,50 +277,52 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
                                                                actual_segments, actual_CRs)
         # iterate over the number of slices and place the results into the output models
         for resultslice in real_results:
+            start_row = k * rows_per_slice
             if len(real_results) == k + 1:  # last result
-                out_model.data[k * rows_per_slice: total_rows, :] = resultslice[0]
-                out_model.dq[k * rows_per_slice:total_rows, :] = resultslice[1]
-                out_model.var_poisson[k * rows_per_slice:total_rows, :] = resultslice[2]
-                out_model.var_rnoise[k * rows_per_slice:total_rows, :] = resultslice[3]
-                out_model.err[k * rows_per_slice:total_rows, :] = resultslice[4]
+                out_model.data[start_row: total_rows, :] = resultslice[0]
+                out_model.dq[start_row:total_rows, :] = resultslice[1]
+                out_model.var_poisson[start_row:total_rows, :] = resultslice[2]
+                out_model.var_rnoise[start_row:total_rows, :] = resultslice[3]
+                out_model.err[start_row:total_rows, :] = resultslice[4]
                 if resultslice[5] is not None: #Integration results exist
-                    int_model.data[: , k * rows_per_slice:total_rows, :] = resultslice[5]
-                    int_model.dq[:, k * rows_per_slice:total_rows, :] = resultslice[6]
-                    int_model.var_poisson[:, k * rows_per_slice:total_rows, :] = resultslice[7]
-                    int_model.var_rnoise[:, k * rows_per_slice:total_rows, :] = resultslice[8]
-                    int_model.err[:, k * rows_per_slice:total_rows, :] = resultslice[9]
+                    int_model.data[: , start_row:total_rows, :] = resultslice[5]
+                    int_model.dq[:, start_row:total_rows, :] = resultslice[6]
+                    int_model.var_poisson[:, start_row:total_rows, :] = resultslice[7]
+                    int_model.var_rnoise[:, start_row:total_rows, :] = resultslice[8]
+                    int_model.err[:, start_row:total_rows, :] = resultslice[9]
                 if resultslice[11] is not None: #Optional results exist
-                    opt_model.slope[:, :, k * rows_per_slice:total_rows, :] = resultslice[11]
-                    opt_model.sigslope[:, :, k * rows_per_slice:total_rows, :] = resultslice[12]
-                    opt_model.var_poisson[:,:, k * rows_per_slice:total_rows, :] = resultslice[13]
-                    opt_model.var_rnoise[:, :, k * rows_per_slice:total_rows, :] = resultslice[14]
-                    opt_model.yint[:, :, k * rows_per_slice:total_rows, :] = resultslice[15]
-                    opt_model.sigyint[:, :, k * rows_per_slice:total_rows, :] = resultslice[16]
-                    opt_model.pedestal[:, k * rows_per_slice:total_rows, :] = resultslice[17]
-                    opt_model.weights[:, :, k * rows_per_slice:total_rows, :] = resultslice[18]
-                    opt_model.crmag[:, :, k * rows_per_slice:total_rows, :] = resultslice[19]
+                    opt_model.slope[:, :, start_row:total_rows, :] = resultslice[11]
+                    opt_model.sigslope[:, :, start_row:total_rows, :] = resultslice[12]
+                    opt_model.var_poisson[:,:, start_row:total_rows, :] = resultslice[13]
+                    opt_model.var_rnoise[:, :, start_row:total_rows, :] = resultslice[14]
+                    opt_model.yint[:, :, start_row:total_rows, :] = resultslice[15]
+                    opt_model.sigyint[:, :, start_row:total_rows, :] = resultslice[16]
+                    opt_model.pedestal[:, start_row:total_rows, :] = resultslice[17]
+                    opt_model.weights[:, :, start_row:total_rows, :] = resultslice[18]
+                    opt_model.crmag[:, :, start_row:total_rows, :] = resultslice[19]
             else: #all but last slice
-                out_model.data[k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[0]
-                out_model.dq[k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[1]
-                out_model.var_poisson[ k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[2]
-                out_model.var_rnoise[ k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[3]
-                out_model.err[k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[4]
+                stop_row = (k + 1) * rows_per_slice
+                out_model.data[start_row: stop_row, :] = resultslice[0]
+                out_model.dq[start_row: stop_row, :] = resultslice[1]
+                out_model.var_poisson[ start_row: stop_row, :] = resultslice[2]
+                out_model.var_rnoise[ start_row: stop_row, :] = resultslice[3]
+                out_model.err[start_row: stop_row, :] = resultslice[4]
                 if resultslice[5] is not None: #Multiple integration results exist
-                    int_model.data[:, k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[5]
-                    int_model.dq[:, k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[6]
-                    int_model.var_poisson[:, k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[7]
-                    int_model.var_rnoise[:, k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[8]
-                    int_model.err[:, k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[9]
+                    int_model.data[:, start_row: stop_row, :] = resultslice[5]
+                    int_model.dq[:, start_row: stop_row, :] = resultslice[6]
+                    int_model.var_poisson[:, start_row: stop_row, :] = resultslice[7]
+                    int_model.var_rnoise[:, start_row: stop_row, :] = resultslice[8]
+                    int_model.err[:, start_row: stop_row, :] = resultslice[9]
                 if resultslice[11] is not None: #Optional Results exist
-                    opt_model.slope[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[11]
-                    opt_model.sigslope[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[12]
-                    opt_model.var_poisson[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[13]
-                    opt_model.var_rnoise[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[14]
-                    opt_model.yint[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[15]
-                    opt_model.sigyint[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[16]
-                    opt_model.pedestal[:, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[17]
-                    opt_model.weights[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[18]
-                    opt_model.crmag[:, :, k * rows_per_slice: (k + 1) *rows_per_slice, :] = resultslice[19]
+                    opt_model.slope[:, :, start_row: (k + 1) *rows_per_slice, :] = resultslice[11]
+                    opt_model.sigslope[:, :, start_row: (k + 1) *rows_per_slice, :] = resultslice[12]
+                    opt_model.var_poisson[:, :, start_row: (k + 1) *rows_per_slice, :] = resultslice[13]
+                    opt_model.var_rnoise[:, :, start_row: (k + 1) *rows_per_slice, :] = resultslice[14]
+                    opt_model.yint[:, :, start_row: (k + 1) *rows_per_slice, :] = resultslice[15]
+                    opt_model.sigyint[:, :, start_row: (k + 1) *rows_per_slice, :] = resultslice[16]
+                    opt_model.pedestal[:, start_row: (k + 1) *rows_per_slice, :] = resultslice[17]
+                    opt_model.weights[:, :, start_row: (k + 1) *rows_per_slice, :] = resultslice[18]
+                    opt_model.crmag[:, :, start_row: (k + 1) *rows_per_slice, :] = resultslice[19]
             k = k + 1
         return out_model, int_model, opt_model
 
@@ -1293,36 +1295,37 @@ def gls_ramp_fit(input_model, buffsize, save_opt,
         pool.join()
         k = 0
         log.debug("All processes complete")
-
         for resultslice in real_results:
+            start_row = k * rows_per_slice
             if len(real_results) == k + 1:  # last result
-                slopes[k * rows_per_slice:total_rows, :] = resultslice[0]
-                slope_int[:, k * rows_per_slice:total_rows, :] = resultslice[1]
-                slope_err_int[:, k * rows_per_slice:total_rows, :] = resultslice[2]
-                out_pixeldq[k * rows_per_slice:total_rows, :] = resultslice[3]
+                slopes[start_row:total_rows, :] = resultslice[0]
+                slope_int[:, start_row:total_rows, :] = resultslice[1]
+                slope_err_int[:, start_row:total_rows, :] = resultslice[2]
+                out_pixeldq[start_row:total_rows, :] = resultslice[3]
                 if resultslice[4] is not None:
-                    dq_int[:, k * rows_per_slice:total_rows, :] = resultslice[4]#nint > 1
-                    sum_weight[k * rows_per_slice:total_rows, :] = resultslice[5] #nint > 1
+                    dq_int[:, start_row:total_rows, :] = resultslice[4]#nint > 1
+                    sum_weight[start_row:total_rows, :] = resultslice[5] #nint > 1
                 if resultslice[6] is not None:
-                    intercept_int[:, k * rows_per_slice: total_rows, :] = resultslice[6]  # optional
-                    intercept_err_int[:, k * rows_per_slice:total_rows, :] = resultslice[7]  # optional
-                    pedestal_int[:, k * rows_per_slice: total_rows, :] = resultslice[8]  # optional
-                    ampl_int[:, k * rows_per_slice:total_rows, :] = resultslice[9]  # optional
-                    ampl_err_int[:, k * rows_per_slice: total_rows, :] = resultslice[10]  # optional
+                    intercept_int[:, start_row: total_rows, :] = resultslice[6]  # optional
+                    intercept_err_int[:, start_row:total_rows, :] = resultslice[7]  # optional
+                    pedestal_int[:, start_row: total_rows, :] = resultslice[8]  # optional
+                    ampl_int[:, start_row:total_rows, :] = resultslice[9]  # optional
+                    ampl_err_int[:, start_row: total_rows, :] = resultslice[10]  # optional
             else:
-                slopes[k * rows_per_slice:(k + 1) * rows_per_slice, :] = resultslice[0]
-                slope_int[:, k * rows_per_slice:(k + 1) * rows_per_slice, :] = resultslice[1]
-                slope_err_int[:, k * rows_per_slice:(k + 1) * rows_per_slice, :] = resultslice[2]
-                out_pixeldq[k * rows_per_slice:(k + 1) * rows_per_slice, :] = resultslice[3]
+                stop_row = (k + 1) * rows_per_slice
+                slopes[start_row:stop_row, :] = resultslice[0]
+                slope_int[:, start_row:stop_row, :] = resultslice[1]
+                slope_err_int[:, start_row:stop_row, :] = resultslice[2]
+                out_pixeldq[start_row:stop_row, :] = resultslice[3]
                 if resultslice[4] is not None:
-                    dq_int[:, k * rows_per_slice:(k + 1) * rows_per_slice, :] = resultslice[4]  # nint > 1
-                    sum_weight[k * rows_per_slice:(k + 1) * rows_per_slice, :] = resultslice[5]  # nint > 1
+                    dq_int[:, start_row:stop_row, :] = resultslice[4]  # nint > 1
+                    sum_weight[start_row:stop_row, :] = resultslice[5]  # nint > 1
                 if resultslice[6] is not None:
-                    intercept_int[:, k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[6]  # optional
-                    intercept_err_int[:, k * rows_per_slice:(k + 1) * rows_per_slice, :] = resultslice[7]  # optional
-                    pedestal_int[:, k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[8]  # optional
-                    ampl_int[:, k * rows_per_slice:(k + 1) * rows_per_slice, :] = resultslice[9]  # optional
-                    ampl_err_int[:, k * rows_per_slice: (k + 1) * rows_per_slice, :] = resultslice[10]  # optional
+                    intercept_int[:, start_row: stop_row, :] = resultslice[6]  # optional
+                    intercept_err_int[:, start_row:stop_row, :] = resultslice[7]  # optional
+                    pedestal_int[:, start_row: stop_row, :] = resultslice[8]  # optional
+                    ampl_int[:, start_row:stop_row, :] = resultslice[9]  # optional
+                    ampl_err_int[:, start_row: stop_row, :] = resultslice[10]  # optional
             k = k + 1
     # Average the slopes over all integrations.
     if n_int > 1:
