@@ -14,6 +14,8 @@ associations
 datamodels
 ----------
 
+- Limit looping over HDU's while resolving arrays in schema [#4951]
+
 - Relax asdf requirement and use validator flag when asdf 2.6.x is installed [#4905]
 
 - Updated core schema to include recent Keyword Dictionary changes
