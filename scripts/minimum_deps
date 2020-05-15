@@ -12,8 +12,6 @@ def get_minimum_version(requirement):
     """Return minimum version available on PyPi for a given version specification"""
     content = urllib.request.urlopen(f'https://pypi.python.org/pypi/{requirement.name}/json').read()
     versions = sorted([pkg_resources.parse_version(v) for v in json.loads(content)["releases"].keys()])
-    # print(requirement)
-    # print(versions)
     for version in versions:
         if version in requirement:
             return version
