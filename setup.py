@@ -102,7 +102,7 @@ setup(
         'spherical-geometry>=1.2',
         'stsci.image>=2.3.3',
         'stsci.imagestats>=1.4',
-        'tweakwcs>=0.6.3',
+        'tweakwcs>=0.6.4',
     ],
     extras_require={
         'docs': DOCS_REQUIRE,

@@ -53,7 +53,6 @@ class TweakRegStep(Step):
         save_gaia_catalog = boolean(default=False)  # Write out GAIA catalog as a separate product
     """
 
-
     reference_file_types = []
 
     def process(self, input):
@@ -205,9 +204,10 @@ class TweakRegStep(Step):
         if self.align_to_gaia:
             # Get catalog of GAIA sources for the field
             #
-            # NOTE:  If desired, the pipeline can write out the reference catalog
-            #        as a separate product with a name based on whatever convention
-            #        is determined by the JWST Cal Working Group
+            # NOTE:  If desired, the pipeline can write out the reference
+            #        catalog as a separate product with a name based on
+            #        whatever convention is determined by the JWST Cal Working
+            #        Group.
             if self.save_gaia_catalog:
                 output_name = 'fit_{}_ref.ecsv'.format(self.gaia_catalog.lower())
             else:
@@ -248,32 +248,37 @@ class TweakRegStep(Step):
                         del imcat.meta['fit_info']
 
                 # Perform fit
-                align_wcs(imcats,
-                          refcat=ref_cat,
-                          enforce_user_order=False,
-                          expand_refcat=False,
-                          minobj=self.minobj,
-                          match=tpmatch_gaia,
-                          fitgeom=self.fitgeometry,
-                          nclip=self.nclip,
-                          sigma=(self.sigma, 'rmse')
-                         )
-
-                # Also, update/create the WCS .name attribute with information
-                #  on this astrometric fit as the only record that it was successful
-                for imcat in imcats:
-                    if 'SUCCESS' in imcat.meta.get('fit_info')['status']:
-                        # NOTE: This .name attribute needs to be defined using a convention
-                        #       agreed upon by the JWST Cal Working Group.
-                        #       Current value is merely a place-holder based on HST conventions
-                        #       This value should also be translated to the FITS WCSNAME keyword
-                        #       IF that is what gets recorded in the archive for end-user searches
-                        imcat.meta['image_model'].meta.wcs.name = "FIT-LVL3-{}".format(self.gaia_catalog)
+                align_wcs(
+                    imcats,
+                    refcat=ref_cat,
+                    enforce_user_order=True,
+                    expand_refcat=False,
+                    minobj=self.minobj,
+                    match=tpmatch_gaia,
+                    fitgeom=self.fitgeometry,
+                    nclip=self.nclip,
+                    sigma=(self.sigma, 'rmse')
+                )
 
         for imcat in imcats:
             imcat.meta['image_model'].meta.cal_step.tweakreg = 'COMPLETE'
+
             # retrieve fit status and update wcs if fit is successful:
             if 'SUCCESS' in imcat.meta.get('fit_info')['status']:
+
+                # Update/create the WCS .name attribute with information
+                # on this astrometric fit as the only record that it was
+                # successful:
+                if self.align_to_gaia:
+                    # NOTE: This .name attrib agreed upon by the JWST Cal
+                    #       Working Group.
+                    #       Current value is merely a place-holder based
+                    #       on HST conventions. This value should also be
+                    #       translated to the FITS WCSNAME keyword
+                    #       IF that is what gets recorded in the archive
+                    #       for end-user searches.
+                    imcat.wcs.name = "FIT-LVL3-{}".format(self.gaia_catalog)
+
                 imcat.meta['image_model'].meta.wcs = imcat.wcs
 
                 """
