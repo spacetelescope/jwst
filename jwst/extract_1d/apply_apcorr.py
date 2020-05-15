@@ -158,6 +158,8 @@ class ApCorrPhase(ApCorrBase):
     def approximate(self):
         """Generate an approximate function for interpolating apcorr values to input wavelength and size."""
         def _approx_func(wavelength, size, pixel_phase):
+            # apcorr column data has shape (pixphase, wavelength, size)
+            # Reduce apcorr dimensionality by interpolating in the pixphase dimension first, then size & wavelenght
             apcorr_pixphase_func = interp1d(self.reference['pixphase'], self.reference['apcorr'])
             size_wl_func = interp1d(self.reference['wavelength'], self.reference['size'])
 
