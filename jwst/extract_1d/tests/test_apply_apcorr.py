@@ -69,9 +69,11 @@ def inputs(request):
 
         if 'FIXEDSLIT' in dm.meta.exposure.type:
             dm.meta.instrument.fixed_slit = 'S200A1'
-            table = Table.read(NIR_TEST_FILES['FIXEDSLIT/BRIGHTOBJ'], format='fits')
+            table = Table.read(NIR_TEST_FILES['FIXEDSLIT/BRIGHTOBJ'], format='fits')[:2]
         else:
-            table = Table.read(NIR_TEST_FILES['ISU/MSASPEC'], format='fits')
+            table = Table.read(NIR_TEST_FILES['ISU/MSASPEC'], format='fits')[:2]
+
+        table['APCORR'] = table['APCORR'].reshape((len(table), 3, 2048, 3))  # Reshape test data to expected shape
 
     if instrument == 'NIRCAM':
         dm.meta.instrument.filter = 'F322W2'
@@ -158,7 +160,9 @@ class TestApCorr:
             assert np.isclose(
                 apcorr_instance.apcorr_func(
                     apcorr_instance.reference['wavelength'][0],
-                    apcorr_instance.reference['size'][0], 0.5)[0],
+                    apcorr_instance.reference['size'][0],
+                    0.5
+                )[0],
                 1
             )
         else:

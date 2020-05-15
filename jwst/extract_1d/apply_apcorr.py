@@ -158,15 +158,15 @@ class ApCorrPhase(ApCorrBase):
     def approximate(self):
         """Generate an approximate function for interpolating apcorr values to input wavelength and size."""
         def _approx_func(wavelength, size, pixel_phase):
-            apcorr_wl_func = interp1d(self.reference['wavelength'], self.reference['apcorr'])
+            apcorr_pixphase_func = interp1d(self.reference['pixphase'], self.reference['apcorr'])
             size_wl_func = interp1d(self.reference['wavelength'], self.reference['size'])
 
-            apcorr_wl = apcorr_wl_func(wavelength)
+            apcorr_pixphase = apcorr_pixphase_func(pixel_phase)
             size_wl = size_wl_func(wavelength)
 
-            pixphase_size_func = interp2d(self.reference['pixphase'], size_wl, apcorr_wl)
+            pixphase_size_func = interp2d(self.reference['wavelength'], size_wl, apcorr_pixphase)
 
-            return pixphase_size_func(pixel_phase, size)
+            return pixphase_size_func(wavelength, size)
 
         return _approx_func
 
@@ -211,7 +211,7 @@ class ApCorrRadial(ApCorrBase):
         size = self.reference['radius'][:self.reference['nelem_wl']]
         apcorr = self.reference['apcorr'][:self.reference['nelem_wl']]
 
-        return interp2d(wavelength, size, apcorr)
+        return interp2d(size, wavelength, apcorr)
 
 
 class ApCorr(ApCorrBase):
@@ -232,9 +232,9 @@ class ApCorr(ApCorrBase):
         """Generate an approximate function for interpolating apcorr values to input wavelength and size."""
         wavelength = self.reference['wavelength'][:self.reference['nelem_wl']]
         size = self.reference['size'][:self.reference['nelem_size']]
-        apcorr = self.reference['apcorr'][:self.reference['nelem_size'], :self.reference['nelem_wl']]
+        apcorr = self.reference['apcorr'][:self.reference['nelem_wl'], :self.reference['nelem_size']]
 
-        return interp2d(wavelength, size, apcorr)
+        return interp2d(size, wavelength, apcorr)
 
 
 def select_apcorr(input_model: DataModel) -> Union[Type[ApCorr], Type[ApCorrPhase], Type[ApCorrRadial]]:
