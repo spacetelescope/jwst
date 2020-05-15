@@ -1,3 +1,4 @@
+from collections import Counter
 import datetime
 import os
 import re
@@ -407,6 +408,7 @@ def to_fits(tree, schema):
 
 
 def _fits_keyword_loader(hdulist, fits_keyword, schema, hdu_index, known_keywords):
+
     hdu_name = _get_hdu_name(schema)
     try:
         hdu = get_hdu(hdulist, hdu_name, hdu_index)
@@ -453,6 +455,10 @@ def _load_from_schema(hdulist, schema, tree, context):
     known_keywords = {}
     known_datas = set()
 
+    # Determine maximum EXTVER that could be used in finding named HDU's.
+    # This is needed to constrain the loop over HDU's when resolving arrays.
+    max_extver = calculate_max_extver(hdulist)
+
     def callback(schema, path, combiner, ctx, recurse):
         result = None
         if 'fits_keyword' in schema:
@@ -489,7 +495,7 @@ def _load_from_schema(hdulist, schema, tree, context):
         if schema.get('type') == 'array':
             has_fits_hdu = _schema_has_fits_hdu(schema)
             if has_fits_hdu:
-                for i in range(len(hdulist)):
+                for i in range(max_extver):
                     recurse(schema['items'],
                             path + [i],
                             combiner,
@@ -548,9 +554,11 @@ def from_fits(hdulist, schema, context, **kwargs):
     except Exception as exc:
         raise exc.__class__("ERROR loading embedded ASDF: " + str(exc)) from exc
 
-    known_keywords, known_datas = _load_from_schema(hdulist, schema,
-                                                    ff.tree, context)
+    known_keywords, known_datas = _load_from_schema(
+        hdulist, schema, ff.tree, context
+    )
     _load_extra_fits(hdulist, known_keywords, known_datas, ff.tree)
+
     _load_history(hdulist, ff.tree)
 
     return ff
@@ -589,3 +597,23 @@ def from_fits_hdu(hdu, schema):
         data._coldefs._listeners = listeners
 
     return data
+
+
+def calculate_max_extver(hdulist):
+    """Return the maxiumum EXTVER possible
+
+    Parameters
+    ----------
+    hdulist: FITS hdulist
+        The HDUlist.
+
+    Returns
+    -------
+    max_extver: int
+        The maximum EXTVER for any named HDU.
+    """
+    if not len(hdulist):
+        return 0
+    hdu_counts = Counter(hdu.name for hdu in hdulist)
+    max_extver = max(hdu_counts.values())
+    return max_extver
