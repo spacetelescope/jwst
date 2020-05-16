@@ -10,15 +10,22 @@ import warnings
 
 def get_minimum_version(requirement):
     """Return minimum version available on PyPi for a given version specification"""
+    if not requirement.specs:
+        warnings.warn(f"No version specifier for {requirement.name} in "
+            "install_requires.  Using lowest available version on PyPi.",
+            stacklevel=2)
     content = urllib.request.urlopen(f'https://pypi.python.org/pypi/{requirement.name}/json').read()
     versions = sorted([pkg_resources.parse_version(v) for v in json.loads(content)["releases"].keys()])
     for version in versions:
         if version in requirement:
+            # If the requirement does not list any version, the lowest will be
+            # returned
             return version
-    # If there was no version specifier in setup.py, return the 2nd lowest
-    # version available on PyPi, avoiding 0.0 versions
-    warnings.warn(f"Exact version specified in {requirement} not found on PyPi")
-    return versions[1]
+    # If the specified version does not exist on PyPi, issue a warning
+    # and return the lowest available version
+    warnings.warn(f"Exact version specified in {requirement} not found "
+        "on PyPi.  Using lowest available version.", stacklevel=2)
+    return versions[0]
 
 
 def write_minimum_requirements_file():
@@ -30,9 +37,12 @@ def write_minimum_requirements_file():
 
     with open("requirements-min.txt", "w") as fd:
         for requirement in dist.requires(extras=extras):
-            if "http" not in requirement.name:
+            if "git+http" not in requirement.name:
                 version = get_minimum_version(requirement)
                 fd.write(f'{requirement.name}=={version}\n')
+            else:
+                raise RuntimeError(f"{requirement.name} is not a package "
+                    "that can by installed from PyPi.")
 
 
 def main():
