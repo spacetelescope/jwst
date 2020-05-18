@@ -457,7 +457,7 @@ def _load_from_schema(hdulist, schema, tree, context):
 
     # Determine maximum EXTVER that could be used in finding named HDU's.
     # This is needed to constrain the loop over HDU's when resolving arrays.
-    max_extver = calculate_max_extver(hdulist)
+    max_extver = max(hdu.ver for hdu in hdulist) if len(hdulist) else 0
 
     def callback(schema, path, combiner, ctx, recurse):
         result = None
@@ -597,23 +597,3 @@ def from_fits_hdu(hdu, schema):
         data._coldefs._listeners = listeners
 
     return data
-
-
-def calculate_max_extver(hdulist):
-    """Return the maxiumum EXTVER possible
-
-    Parameters
-    ----------
-    hdulist: FITS hdulist
-        The HDUlist.
-
-    Returns
-    -------
-    max_extver: int
-        The maximum EXTVER for any named HDU.
-    """
-    if not len(hdulist):
-        return 0
-    hdu_counts = Counter(hdu.name for hdu in hdulist)
-    max_extver = max(hdu_counts.values())
-    return max_extver
