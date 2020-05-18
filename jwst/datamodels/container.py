@@ -237,7 +237,11 @@ class ModelContainer(model_base.DataModel):
         else:
             self.meta.table_name = op.basename(asn_file_path)
             for model in self:
-                model.meta.asn.table_name = op.basename(asn_file_path)
+                try:
+                    model.meta.asn.table_name = op.basename(asn_file_path)
+                    model.meta.asn.pool_name = asn_data['asn_pool']
+                except AttributeError:
+                    pass
         self.meta.pool_name = asn_data['asn_pool']
 
     def save(self,
