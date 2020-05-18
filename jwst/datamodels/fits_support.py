@@ -357,7 +357,7 @@ def _save_extra_fits(hdulist, tree):
         hdu_name = fits_hdu_name(hdu_name)
         if 'data' in parts:
             hdu_type = _get_hdu_type(hdu_name, value=parts['data'])
-            hdu = _get_or_make_hdu(hdulist, hdu_name, hdu_type = hdu_type,
+            hdu = _get_or_make_hdu(hdulist, hdu_name, hdu_type=hdu_type,
                                    value=parts['data'])
         if 'header' in parts:
             hdu = _get_or_make_hdu(hdulist, hdu_name)
@@ -390,6 +390,7 @@ def _save_history(hdulist, tree):
                 history[i] = HistoryEntry({'description': str(history[i])})
         hdulist[0].header['HISTORY'] = history[i]['description']
 
+
 def to_fits(tree, schema):
     hdulist = fits.HDUList()
     hdulist.append(fits.PrimaryHDU())
@@ -407,6 +408,7 @@ def to_fits(tree, schema):
 
 
 def _fits_keyword_loader(hdulist, fits_keyword, schema, hdu_index, known_keywords):
+
     hdu_name = _get_hdu_name(schema)
     try:
         hdu = get_hdu(hdulist, hdu_name, hdu_index)
@@ -453,6 +455,10 @@ def _load_from_schema(hdulist, schema, tree, context):
     known_keywords = {}
     known_datas = set()
 
+    # Determine maximum EXTVER that could be used in finding named HDU's.
+    # This is needed to constrain the loop over HDU's when resolving arrays.
+    max_extver = max(hdu.ver for hdu in hdulist) if len(hdulist) else 0
+
     def callback(schema, path, combiner, ctx, recurse):
         result = None
         if 'fits_keyword' in schema:
@@ -489,7 +495,7 @@ def _load_from_schema(hdulist, schema, tree, context):
         if schema.get('type') == 'array':
             has_fits_hdu = _schema_has_fits_hdu(schema)
             if has_fits_hdu:
-                for i in range(len(hdulist)):
+                for i in range(max_extver):
                     recurse(schema['items'],
                             path + [i],
                             combiner,
@@ -548,17 +554,20 @@ def from_fits(hdulist, schema, context, **kwargs):
     except Exception as exc:
         raise exc.__class__("ERROR loading embedded ASDF: " + str(exc)) from exc
 
-    known_keywords, known_datas = _load_from_schema(hdulist, schema,
-                                                    ff.tree, context)
+    known_keywords, known_datas = _load_from_schema(
+        hdulist, schema, ff.tree, context
+    )
     _load_extra_fits(hdulist, known_keywords, known_datas, ff.tree)
+
     _load_history(hdulist, ff.tree)
 
     return ff
 
+
 def from_fits_asdf(hdulist,
-                  ignore_version_mismatch=True,
-                  ignore_unrecognized_tag=False,
-                  **kwargs):
+                   ignore_version_mismatch=True,
+                   ignore_unrecognized_tag=False,
+                   **kwargs):
     """
     Wrap asdf call to extract optional argumentscommet
     """
