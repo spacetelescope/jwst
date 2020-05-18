@@ -650,8 +650,8 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
         origin is the lower left corner of the shutter, positive x is to the right
         and positive y is downwards.
         """
-        source_xpos = source_xpos - 0.5
-        source_ypos = source_ypos - 0.5
+        source_xpos -= 0.5
+        source_ypos -= 0.5
 
         # Create the shutter_state string
         all_shutters = _shutter_id_to_str(open_shutters, ycen)
