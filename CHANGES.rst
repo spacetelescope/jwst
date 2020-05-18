@@ -148,6 +148,11 @@ datamodels
 - Populate meta.asn.table_name when an association is loaded into a
   ``ModelContainer``. [#4873]
 
+extract_1d
+----------
+
+- Add aperture correction in extract_1d processing. [#4902]
+
 lib
 ---
 
