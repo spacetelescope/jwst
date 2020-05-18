@@ -738,12 +738,12 @@ class DataSet():
             if no_cal is not None:
                 self.input.dq[..., no_cal] = np.bitwise_or(self.input.dq[..., no_cal],
                                                            dqflags.pixel['DO_NOT_USE'])
-            if unit_is_surface_brightness:
-                self.input.meta.bunit_data = 'MJy/sr'
-                self.input.meta.bunit_err = 'MJy/sr'
-            else:
-                self.input.meta.bunit_data = 'MJy'
-                self.input.meta.bunit_err = 'MJy'
+        if unit_is_surface_brightness:
+            self.input.meta.bunit_data = 'MJy/sr'
+            self.input.meta.bunit_err = 'MJy/sr'
+        else:
+            self.input.meta.bunit_data = 'MJy'
+            self.input.meta.bunit_err = 'MJy'
 
         return
 
