@@ -1,4 +1,3 @@
-from collections import Counter
 import datetime
 import os
 import re
@@ -358,7 +357,7 @@ def _save_extra_fits(hdulist, tree):
         hdu_name = fits_hdu_name(hdu_name)
         if 'data' in parts:
             hdu_type = _get_hdu_type(hdu_name, value=parts['data'])
-            hdu = _get_or_make_hdu(hdulist, hdu_name, hdu_type = hdu_type,
+            hdu = _get_or_make_hdu(hdulist, hdu_name, hdu_type=hdu_type,
                                    value=parts['data'])
         if 'header' in parts:
             hdu = _get_or_make_hdu(hdulist, hdu_name)
@@ -390,6 +389,7 @@ def _save_history(hdulist, tree):
             else:
                 history[i] = HistoryEntry({'description': str(history[i])})
         hdulist[0].header['HISTORY'] = history[i]['description']
+
 
 def to_fits(tree, schema):
     hdulist = fits.HDUList()
@@ -563,10 +563,11 @@ def from_fits(hdulist, schema, context, **kwargs):
 
     return ff
 
+
 def from_fits_asdf(hdulist,
-                  ignore_version_mismatch=True,
-                  ignore_unrecognized_tag=False,
-                  **kwargs):
+                   ignore_version_mismatch=True,
+                   ignore_unrecognized_tag=False,
+                   **kwargs):
     """
     Wrap asdf call to extract optional argumentscommet
     """
