@@ -1,69 +1,80 @@
 os: linux
 dist: xenial
 language: python
-python: 3.7.7
+python: 3.8.2
 
 env:
   global:
-    - CRDS_SERVER_URL="https://jwst-crds.stsci.edu"
-    - CRDS_PATH="/tmp/crds_cache"
+    - CRDS_SERVER_URL=https://jwst-crds.stsci.edu
+    - CRDS_PATH=/tmp/crds_cache
     - CRDS_CLIENT_RETRY_COUNT=3
     - CRDS_CLIENT_RETRY_DELAY_SECONDS=20
     - TEST_COMMAND="pytest --cov-report=xml --cov=./"
-    - PIP_DEPENDENCIES=".[test]"
+    - PIP_DEPENDENCIES=.[test]
 
 jobs:
   # Don't wait for allowed failures
   fast_finish: true
 
   include:
-    - python: 3.6.10
-    - python: 3.7.7
-    - python: 3.8.2
+    - name: Latest dependency versions
 
-    - env: PIP_DEPENDENCIES="numpy~=1.16.0 .[test]"
+    - name: Oldest dependency versions
       python: 3.6.10
+      env:
+        GEN_MIN_DEPS=true
+        PIP_DEPENDENCIES="-r requirements-min.txt .[test]"
 
-    - env: PIP_DEPENDENCIES="numpy~=1.17.0 .[test]"
-
-    # Test with SDP pinned dependencies
-    - env: PIP_DEPENDENCIES="-r requirements-sdp.txt .[test]"
+    - name: SDP dependencies in requirements-sdp.txt
       python: 3.7.7
+      env:
+        PIP_DEPENDENCIES="-r requirements-sdp.txt .[test]"
+        TEST_COMMAND=pytest
 
-    # Test with dev dependencies
-    - env: PIP_DEPENDENCIES="-r requirements-dev.txt .[test]"
-      python: 3.8.2
+    - name: Dev dependencies in requirements-dev.txt
+      env:
+        PIP_DEPENDENCIES="-r requirements-dev.txt .[test]"
+        TEST_COMMAND=pytest
 
-    # Test with latest delivered CRDS_CONTEXT, as in regressions tests
-    - env: CRDS_CONTEXT="jwst-edit"
-           PIP_DEPENDENCIES=".[test]"
+    - name: CRDS_CONTEXT=jwst-edit
+      env: CRDS_CONTEXT=jwst-edit
 
-    # Build documentation
-    - env: PIP_DEPENDENCIES=".[docs]"
-           TEST_COMMAND="make --directory=docs html"
+    - name: Documentation
+      env:
+        PIP_DEPENDENCIES=.[docs]
+        TEST_COMMAND="make html --directory=docs"
       addons:
         apt:
           packages:
-            - texlive-latex-extra
-            - dvipng
             - graphviz
 
-    # PEP8 check
-    - env: TEST_COMMAND="flake8"
-           PIP_DEPENDENCIES="flake8"
+    - name: Code style check
+      env:
+        TEST_COMMAND=flake8
+        PIP_DEPENDENCIES=flake8
 
   allow_failures:
-    - env: PIP_DEPENDENCIES="-r requirements-dev.txt .[test]"
-      python: 3.8.2
+    - name: Dev dependencies in requirements-dev.txt
+      env:
+        PIP_DEPENDENCIES="-r requirements-dev.txt .[test]"
+        TEST_COMMAND=pytest
 
-    - env: CRDS_CONTEXT="jwst-edit"
-           PIP_DEPENDENCIES=".[test]"
+    - name: CRDS_CONTEXT=jwst-edit
+      env: CRDS_CONTEXT=jwst-edit
 
 install:
+  # For the case where we want to build with the minimum versions allowed by
+  # setup.py
+  - if [[ ${GEN_MIN_DEPS} = "true" ]]; then
+      pip install . --no-deps;
+      minimum_deps;
+    fi
   - pip install $PIP_DEPENDENCIES
 
 script:
   - $TEST_COMMAND
 
 after_success:
-  - if [[ ${TEST_COMMAND} =~ ^pytest ]]; then codecov -F unit; fi
+  - if [[ ${TEST_COMMAND} =~ ^pytest ]]; then
+      codecov -F unit;
+    fi

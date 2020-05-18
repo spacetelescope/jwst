@@ -45,15 +45,15 @@ DOCS_REQUIRE = [
 ]
 TESTS_REQUIRE = [
     'ci-watson>=0.3.0',
-    'pytest',
+    'pytest>=3.9.1',
     'pytest-doctestplus',
-    'requests_mock',
+    'requests_mock>=1.0',
     'pytest-openfiles',
-    'pytest-cov',
-    'codecov',
+    'pytest-cov>=2.0.0',
+    'codecov>=1.6.0',
 ]
 AWS_REQUIRE = [
-    'stsci-aws-utils @ git+https://github.com/spacetelescope/stsci-aws-utils@0.1.1'
+    'stsci-aws-utils>=0.1.2'
 ]
 ENTRY_POINTS = dict(asdf_extensions=['jwst_pipeline = jwst.transforms.jwextension:JWSTExtension',
                                      'jwst_datamodel = jwst.datamodels.extension:DataModelExtension'])
@@ -91,17 +91,16 @@ setup(
     install_requires=[
         'asdf>=2.5',
         'astropy>=4.0',
-        'crds>=7.2.7',
+        'crds>=7.4.1.3',
         'drizzle>=1.13',
         'gwcs>=0.13.0',
-        'jsonschema>=2.3,<4',
+        'jsonschema>=3.0.1',
         'numpy>=1.16',
         'photutils>=0.7',
         'requests>=2.22',
-        'scipy>=1.0',
-        'spherical-geometry>=1.2',
+        'scipy>=1.1.0',
+        'spherical-geometry>=1.2.2',
         'stsci.image>=2.3.3',
-        'stsci.imagestats>=1.4',
         'tweakwcs>=0.6.4',
     ],
     extras_require={
