@@ -22,6 +22,9 @@ datamodels
   (remove TIME-END; add TDB-BEG, TDB-MID, TDB-END, XPOSURE, TELAPSE)
   [#4925]
 
+- Populate meta.asn.table_name when an association is loaded into a
+  ``ModelContainer``. [#4873]
+
 lib
 ---
 
