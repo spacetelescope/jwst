@@ -31,6 +31,11 @@ mrs_imatch
 - Fix ``mrs_imatch`` to avoid calls to ``sigma_clipped_stats`` with all-zero
   arrays. [#4944]
 
+photom
+------
+
+- Fix flux units in photom for MultiSlit cases. [#4958]
+
 pipeline
 --------
 
