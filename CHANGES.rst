@@ -6,6 +6,8 @@ assign_wcs
 
 - Update keyword and attribute usage around SkyObject to reflect updated keywords. [#4943]
 
+- Refactor PPS origin to bottom left rather than top left.
+
 associations
 ------------
 
