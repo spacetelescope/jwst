@@ -85,6 +85,11 @@ class Coron3Pipeline(Pipeline):
             psf_models.append(psf_input)
             psf_input.close()
 
+        # Perform outlier detection on the PSFs.
+        if not self.outlier_detection.skip:
+            for model in psf_models:
+                self.outlier_detection(model)
+
         # Stack all the PSF images into a single CubeModel
         psf_stack = self.stack_refs(psf_models)
         psf_models.close()
@@ -92,7 +97,7 @@ class Coron3Pipeline(Pipeline):
         # Save the resulting PSF stack
         self.save_model(psf_stack, suffix='psfstack')
 
-        # Call the sequence of steps align_refs, klip, and outlier_detection
+        # Call the sequence of steps outlier_detection, align_refs, and klip.
         # once for each input target exposure
         resample_input = datamodels.ModelContainer()
         for target_file in targ_files:
@@ -129,9 +134,6 @@ class Coron3Pipeline(Pipeline):
                 image.update(psf_sub)
                 image.meta.wcs = psf_sub.meta.wcs
                 target_models.append(image)
-
-            # Call outlier_detection
-            target_models = self.outlier_detection(target_models)
 
             # Create Level 2c products
             if target_models[0].meta.cal_step.outlier_detection == 'COMPLETE':
