@@ -648,7 +648,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
         columns "estimated_source_in_shutter_x" and "estimated_source_in_shutter_y".
         The source position is in a coordinate system associated with each shutter whose
         origin is the lower left corner of the shutter, positive x is to the right
-        and positive y is downwards.
+        and positive y is upwards.
         """
         source_xpos -= 0.5
         source_ypos -= 0.5
