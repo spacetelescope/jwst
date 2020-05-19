@@ -48,7 +48,7 @@ def make_cube(input_models):
             outdq[nint] = input_models[i].dq[j]
             nint += 1
 
-    # Create the ouput Cube model
+    # Create the output Cube model
     output_model = datamodels.CubeModel(data=outdata, err=outerr, dq=outdq)
     output_model.update(input_models[0])  # copy input meta data to output
 
