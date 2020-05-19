@@ -11,6 +11,8 @@ assign_wcs
 
 - Update keyword and attribute usage around SkyObject to reflect updated keywords. [#4943]
 
+- Refactor PPS origin of NIRSpec MOS shutters from top left to bottom left. [#4959]
+
 associations
 ------------
 
