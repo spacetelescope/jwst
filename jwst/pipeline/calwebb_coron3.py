@@ -102,9 +102,11 @@ class Coron3Pipeline(Pipeline):
         resample_input = datamodels.ModelContainer()
         for target_file in targ_files:
 
+            # Remove outliers from the target.
+            target = self.outlier_detection(target_file)
+
             # Call align_refs
-            self.log.debug('Calling align_refs for member %s', target_file)
-            psf_aligned = self.align_refs(target_file, psf_stack)
+            psf_aligned = self.align_refs(target, psf_stack)
 
             # Save the alignment results
             self.save_model(
@@ -113,8 +115,7 @@ class Coron3Pipeline(Pipeline):
             )
 
             # Call KLIP
-            self.log.debug('Calling klip for member %s', target_file)
-            psf_sub = self.klip(target_file, psf_aligned)
+            psf_sub = self.klip(target, psf_aligned)
             psf_aligned.close()
 
             # Save the psf subtraction results
@@ -123,9 +124,7 @@ class Coron3Pipeline(Pipeline):
                 suffix='psfsub', acid=acid
             )
 
-            # Create a ModelContainer of the psf_sub results to send to
-            # outlier_detection
-            self.log.debug('Building ModelContainer of klip results')
+            # Create a ModelContainer of the psf_sub results.
             target_models = datamodels.ModelContainer()
             for i in range(psf_sub.data.shape[0]):
                 image = datamodels.ImageModel(data=psf_sub.data[i],
@@ -134,18 +133,6 @@ class Coron3Pipeline(Pipeline):
                 image.update(psf_sub)
                 image.meta.wcs = psf_sub.meta.wcs
                 target_models.append(image)
-
-            # Create Level 2c products
-            if target_models[0].meta.cal_step.outlier_detection == 'COMPLETE':
-                err_str1 = "Creating Level 2c output with updated DQ arrays..."
-                self.log.info(err_str1)
-                lev2c_model = psf_sub.copy()
-                # Replace Level 2b product DQ array with Level 2c DQ array
-                for i in range(len(target_models)):
-                    lev2c_model.dq[i] = target_models[i].dq
-                lev2c_model.meta.cal_step.outlier_detection = 'COMPLETE'
-                self.save_model(lev2c_model, output_file=target_file,
-                                suffix='crfints', acid=acid)
 
             # Append results from this target exposure to resample input model
             for i in range(len(target_models)):
