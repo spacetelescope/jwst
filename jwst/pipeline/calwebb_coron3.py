@@ -56,6 +56,10 @@ class Coron3Pipeline(Pipeline):
         prod = asn['products'][0]
         self.output_file = prod.get('name', self.output_file)
 
+        # Setup required output products
+        self.outlier_detection.suffix = f'{acid}_crfints'
+        self.outlier_detection.save_results = self.save_results
+
         # Construct lists of all the PSF and science target members
         psf_files = [m['expname'] for m in prod['members']
                      if m['exptype'].upper() == 'PSF']
