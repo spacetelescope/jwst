@@ -1,7 +1,10 @@
 0.16.2 (unreleased)
 ===================
 
+extract_1d
+----------
 
+- Fix bug in creating a polynomial fit used in background extraction. [#4970]
 
 0.16.1 (2020-05-19)
 ===================
