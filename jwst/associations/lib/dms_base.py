@@ -149,9 +149,6 @@ class DMSBaseMixin(ACIDMixin):
 
     Attributes
     ----------
-    from_items : [item[,...]]
-        The list of items that contributed to the association.
-
     sequence : int
         The sequence number of the current association
     """
@@ -235,7 +232,7 @@ class DMSBaseMixin(ACIDMixin):
 
     @property
     def from_items(self):
-        """List of items from which members were created"""
+        """The list of items that contributed to the association."""
         try:
             items = [
                 member.item

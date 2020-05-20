@@ -150,7 +150,7 @@ documentation on each reference file.
 +---------------------------------------------+--------------------------------------------------+
 | :ref:`source_catalog <source_catalog_step>` | :ref:`APCORR <apcorr_reffile>`                   |
 +                                             +--------------------------------------------------+
-|                                             | :ref:`ABVEGAOFFSET <abvegaoffset_reffile>`      |
+|                                             | :ref:`ABVEGAOFFSET <abvegaoffset_reffile>`       |
 +---------------------------------------------+--------------------------------------------------+
 | :ref:`straylight <straylight_step>`         | :ref:`REGIONS <regions_reffile>`                 |
 +---------------------------------------------+--------------------------------------------------+

@@ -407,6 +407,7 @@ class Asn_IFU(AsnMixin_Spectrum):
 @RegistryMarker.rule
 class Asn_IFUGrating(AsnMixin_Spectrum):
     """Level 3 IFU gratings Association
+
     Note: This is here to split the associations based on the gratings
           used in the observation. In principle these observations can
           (and maybe should) be combined but to reduce processing time

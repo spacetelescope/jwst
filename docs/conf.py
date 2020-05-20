@@ -19,14 +19,18 @@ import sphinx
 import stsci_rtd_theme
 import sphinx_astropy
 
-def setup(app):
-    app.add_stylesheet("stsci.css")
-
 from distutils.version import LooseVersion
 try:
     from ConfigParser import ConfigParser
 except ImportError:
     from configparser import ConfigParser
+
+def setup(app):
+    try:
+        app.add_css_file("stsci.css")
+    except AttributeError:
+        app.add_stylesheet("stsci.css")
+
 conf = ConfigParser()
 
 

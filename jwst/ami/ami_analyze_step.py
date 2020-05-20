@@ -2,11 +2,11 @@ from ..stpipe import Step
 from .. import datamodels
 from . import ami_analyze
 
+__all__ = ["AmiAnalyzeStep"]
+
 
 class AmiAnalyzeStep(Step):
-    """
-    AmiAnalyzeStep: Performs analysis of an AMI mode exposure by
-    applying the LG algorithm.
+    """Performs analysis of an AMI mode exposure by applying the LG algorithm.
     """
 
     spec = """

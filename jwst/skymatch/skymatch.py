@@ -26,7 +26,7 @@ log.setLevel(logging.DEBUG)
 
 
 def match(images, skymethod='global+match', match_down=True, subtract=False):
-    r"""
+    """
     A function to compute and/or "equalize" sky background in input images.
 
     .. note::

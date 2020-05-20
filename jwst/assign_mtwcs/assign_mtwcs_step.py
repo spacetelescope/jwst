@@ -17,7 +17,7 @@ class AssignMTWcsStep(Step):
 
     Parameters
     ----------
-    input : `~jwst.associations.Association.
+    input : `~jwst.associations.Association`
         A JWST association file.
     """
 

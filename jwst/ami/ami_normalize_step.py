@@ -3,6 +3,8 @@ from .. import datamodels
 
 from . import ami_normalize
 
+__all__ = ["AmiNormalizeStep"]
+
 
 class AmiNormalizeStep(Step):
     """
