@@ -25,19 +25,17 @@ jobs:
         GEN_MIN_DEPS=true
         PIP_DEPENDENCIES="-r requirements-min.txt .[test]"
 
-    - name: SDP dependencies in requirements-sdp.txt
+    - name: SDP dependencies in requirements-sdp.txt, CRDS_CONTEXT=jwst-edit
       python: 3.7.7
       env:
         PIP_DEPENDENCIES="-r requirements-sdp.txt .[test]"
+        CRDS_CONTEXT=jwst-edit
         TEST_COMMAND=pytest
 
     - name: Dev dependencies in requirements-dev.txt
       env:
         PIP_DEPENDENCIES="-r requirements-dev.txt .[test]"
         TEST_COMMAND=pytest
-
-    - name: CRDS_CONTEXT=jwst-edit
-      env: CRDS_CONTEXT=jwst-edit
 
     - name: Documentation
       env:
@@ -59,16 +57,15 @@ jobs:
         PIP_DEPENDENCIES="-r requirements-dev.txt .[test]"
         TEST_COMMAND=pytest
 
-    - name: CRDS_CONTEXT=jwst-edit
-      env: CRDS_CONTEXT=jwst-edit
-
-install:
+before_install:
   # For the case where we want to build with the minimum versions allowed by
   # setup.py
   - if [[ ${GEN_MIN_DEPS} = "true" ]]; then
       pip install . --no-deps;
       minimum_deps;
     fi
+
+install:
   - pip install $PIP_DEPENDENCIES
 
 script:
