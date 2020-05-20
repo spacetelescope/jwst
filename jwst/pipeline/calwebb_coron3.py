@@ -103,7 +103,7 @@ class Coron3Pipeline(Pipeline):
         # Save the resulting PSF stack
         self.save_model(psf_stack, suffix='psfstack')
 
-        # Call the sequence of steps outlier_detection, align_refs, and klip.
+        # Call the sequence of steps outlier_detection, align_refs, and klip
         # once for each input target exposure
         resample_input = datamodels.ModelContainer()
         for target_file in targ_files:
