@@ -6,7 +6,7 @@ import math
 # _______________________________________________________________________
 
 
-def radec2std(crval1, crval2, ra, dec):
+def radec2std(crval1, crval2, rot_angle, ra, dec):
     """ Compute the tangent projection coordinates (xi,eta) from ra,dec
     using crval1 and crval2 (the tangent point).
 
@@ -49,9 +49,16 @@ def radec2std(crval1, crval2, ra, dec):
 
 # xi is made negative so it increases in the opposite direction
 # of ra to match the images the Parity of the ifu_cube.
-    xi = -xi
+    #xi = -xi
     eta = eta * rad2arcsec
 
+    if rot_angle is not None:
+        temp1 = xi * np.cos(-rot_angle * deg2rad) - eta * np.sin(-rot_angle * deg2rad)
+        temp2 = xi * np.sin(-rot_angle * deg2rad) + eta * np.cos(-rot_angle * deg2rad)
+        xi = temp1
+        eta = temp2
+
+    xi = -xi 
     return xi, eta
 # ________________________________________________________________________________
 

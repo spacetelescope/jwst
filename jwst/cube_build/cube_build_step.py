@@ -42,7 +42,7 @@ class CubeBuildStep (Step):
          scale2 = float(default=0.0) # cube sample size to use for axis 2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
          weighting = option('emsm','msm','miripsf','area',default = 'msm') # Type of weighting function
-         coord_system = option('world','alpha-beta','align_slicer,default='world') # Output Coordinate system.
+         coord_system = option('world','alpha-beta','align_slicer',default='world') # Output Coordinate system.
          rois = float(default=0.0) # region of interest spatial size, arc seconds
          roiw = float(default=0.0) # region of interest wavelength size, microns
          weight_power = float(default=0.0) # Weighting option to use for Modified Shepard Method
@@ -131,7 +131,7 @@ class CubeBuildStep (Step):
         # valid coord_system:
         # 1. alpha-beta (only valid for MIRI Single Cubes)
         # 2. world
-        # 3. align_slicer 
+        # 3. align_slicer (ifu cube aligned with slicer plane/ MRS local coord system) 
         self.interpolation = 'pointcloud'  # initialize
 
         # if the weighting is area then interpolation is area
@@ -153,7 +153,10 @@ class CubeBuildStep (Step):
         if self.coord_system == 'world':
             self.interpolation = 'pointcloud'  # can not be area
 
+        self.align_slicer = False
         if self.coord_system == 'align_slicer':
+            self.coord_system = 'world'
+            self.align_slicer = True
             self.interpolation = 'pointcloud'  # can not be area
 
         self.log.info('Input interpolation: %s', self.interpolation)
@@ -256,6 +259,7 @@ class CubeBuildStep (Step):
             'weighting': self.weighting,
             'weight_power': self.weight_power,
             'coord_system': self.coord_system,
+            'align_slicer': self.align_slicer,
             'rois': self.rois,
             'roiw': self.roiw,
             'wavemin': self.wavemin,

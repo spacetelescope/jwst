@@ -64,6 +64,7 @@ class IFUCubeData():
         self.spectral_size = None
         self.interpolation = pars_cube.get('interpolation')
         self.coord_system = pars_cube.get('coord_system')
+        self.align_slicer = pars_cube.get('align_slicer')
         self.wavemin = pars_cube.get('wavemin')
         self.wavemax = pars_cube.get('wavemax')
         self.weighting = pars_cube.get('weighting')
@@ -102,6 +103,7 @@ class IFUCubeData():
         self.naxis2 = None
         self.naxis3 = None
         self.cdelt3_normal = None
+        self.rot_angle = None # rotation angle between Ra-Dec and slicer plane (alpha-beta plane)
 
         self.a_min = 0
         self.a_max = 0
@@ -242,12 +244,16 @@ class IFUCubeData():
 
         self.crval1 = ra_ave
         self.crval2 = dec_ave
-        xi_center, eta_center = coord.radec2std(self.crval1, self.crval2,
+        rot_angle = 0
+        xi_center, eta_center = coord.radec2std(self.crval1, self.crval2, rot_angle,
                                                 ra_ave, dec_ave)
-        xi_min, eta_min = coord.radec2std(self.crval1, self.crval2,
+        xi_min, eta_min = coord.radec2std(self.crval1, self.crval2, rot_angle,
                                           ra_min, dec_min)
-        xi_max, eta_max = coord.radec2std(self.crval1, self.crval2,
+
+        xi_max, eta_max = coord.radec2std(self.crval1, self.crval2, rot_angle,
                                           ra_max, dec_max)
+        print('min',xi_min,eta_min)
+        print('max',xi_max,eta_max)
 # ________________________________________________________________________________
 # find the CRPIX1 CRPIX2 - xi and eta centered at 0,0
 # to find location of center abs of min values is how many pixels
@@ -444,6 +450,9 @@ class IFUCubeData():
                 log.info('Axis 3 %5d  %5.2f %12.8f %12.8f %12.8f',
                          self.naxis3, self.crpix3, self.crval3,
                          self.wavelength_table[0], self.wavelength_table[self.naxis3 - 1])
+
+            if self.rot_angle is not None:
+                log.info('Rotation angle between Ra-Dec and Slicer-Plane %12.8f',self.rot_angle)
 
         if self.instrument == 'MIRI':
             # length of channel and subchannel are the same
@@ -682,7 +691,6 @@ class IFUCubeData():
         """ Build a set of single mode IFU cubes used for outlier detection
         and background matching
 
-
         Loop over every band contained in the IFU cube and read in the data
         associated with the band. Map each band to the output cube  coordinate
         system
@@ -901,7 +909,7 @@ class IFUCubeData():
         # check if using default values from the table  (not user set)
         if self.rois == 0.0:
             self.rois = spatial_roi
-            # not set by use but determined from tables
+            # not set by user but determined from tables
             # default rois in tables is designed with a 4 dither pattern
             # increase rois if less than 4 file
 
@@ -1036,12 +1044,16 @@ class IFUCubeData():
         final_a_max = max(a_max)
         final_b_min = min(b_min)
         final_b_max = max(b_max)
-        # final_lambda_min = min(lambda_min)
-        # final_lambda_max = max(lambda_max)
 
-        # wavelength range read in from cube pars reference file
-        final_lambda_min = self.wavemin
-        final_lambda_max = self.wavemax
+        # for MIRI wavelength range read in from cube pars reference file
+        if self.instrument == 'MIRI':
+            final_lambda_min = self.wavemin
+            final_lambda_max = self.wavemax
+
+        # for NIRSPec wavelength range determined from the data 
+        if self.instrument == 'NIRSPEC':
+            final_lambda_min = min(lambda_min)
+            final_lambda_max = max(lambda_max)
         # ______________________________________________________________________
         if self.instrument == 'MIRI' and self.coord_system == 'alpha-beta':
             #  we have a 1 to 1 mapping in beta dimension.
@@ -1051,6 +1063,46 @@ class IFUCubeData():
             final_b_max = final_b_min + (nslice) * self.cdelt2
             log.info('Changed the Beta Scale dimension so we have 1-1 mapping between beta and slice #')
             log.info('New Beta Scale %f ', self.cdelt2)
+
+# ________________________________________________________________________________
+# Define the rotation angle between the ra-dec and alpha beta coord system using
+# the first input model. Use first file in first band to set up rotation angle
+
+        if self.instrument == 'MIRI' and self.align_slicer:
+            this_a = parameter1[0] # 0 is first band - this_a is channel 
+            this_b = parameter2[0] # 0 is first band - this_b is sub-channel
+            log.info('Defining rotation between ra-dec and alpha-beta using %s, %s'
+                     , this_a, this_b)
+            # first file for this band 
+            ifile = self.master_table.FileMap[self.instrument][this_a][this_b][0]
+            with datamodels.IFUImageModel(ifile) as input_model:
+                xstart, xend = self.instrument_info.GetMIRISliceEndPts(this_a)
+                ysize = input_model.data.shape[0]
+                y, x = np.mgrid[:ysize, xstart:xend]
+                detector2alpha_beta = input_model.meta.wcs.get_transform('detector',
+                                                                   'alpha_beta')
+                alpha, beta, lam = detector2alpha_beta(x, y)
+                valid1 = ~np.isnan(alpha)
+                alpha = alpha[valid1]
+                beta = beta[valid1]
+                lam = lam[valid1]
+                
+                lam_med = np.median(lam)
+                # Compute the rotation angle between alpha-beta and RA-DEC
+                # (angle of -beta axis measured E from N)
+                # using some arbitrary in-range wavelength
+
+                # for now define two alpha beta points (0, 0) and (0, -1)
+                # units are in arcseconds 0,0 is orign and -1 beta because
+                # alpha/beta is system left-handed and ra/dec is a right handed system  
+                alpha_beta2world = input_model.meta.wcs.get_transform('alpha_beta','world')
+                temp_ra1, temp_dec1, lam_temp = alpha_beta2world(0, 0, lam_med)
+                temp_ra2, temp_dec2, lam_temp = alpha_beta2world(0, -1, lam_med)
+
+                dra, ddec = (temp_ra2 - temp_ra1) * np.cos(temp_dec1), (temp_dec2 - temp_dec1)
+                self.rot_angle = np.arctan2(dra,ddec) * 180./np.pi
+
+                print('rotation angle',self.rot_angle)
 # ________________________________________________________________________________
 # Test that we have data (NIRSPEC NRS2 only has IFU data for 3 configurations)
         test_a = final_a_max - final_a_min
@@ -1202,7 +1254,7 @@ class IFUCubeData():
                 # initialize the ra,dec, and wavelength arrays
                 # we will loop over slice_nos and fill in values
                 # the flag_det will be set when a slice_no pixel is filled in
-                #   at the end we will use this flag to pull out valid data
+                # at the end we will use this flag to pull out valid data
 
                 ysize, xsize = input_model.data.shape
                 ra_det = np.zeros((ysize, xsize))
@@ -1319,6 +1371,7 @@ class IFUCubeData():
                 dec_use = dec[good_data]
                 coord1, coord2 = coord.radec2std(self.crval1,
                                                  self.crval2,
+                                                 self.rot_angle,
                                                  ra_use, dec_use)
 
                 if self.weighting == 'miripsf':
