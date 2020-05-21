@@ -1,6 +1,8 @@
+""" Smooth and align psf image with target image."""
 from ..stpipe import Step
 from .. import datamodels
 from . import imageregistration
+from . smooth_psf import smooth_psf
 
 __all__ = ["AlignRefsStep"]
 
@@ -13,6 +15,7 @@ class AlignRefsStep(Step):
     """
 
     spec = """
+        smoothing_box_length = integer(default=4,min=0) # Smoothing kernel
     """
 
     reference_file_types = ['psfmask']
@@ -37,6 +40,16 @@ class AlignRefsStep(Step):
 
             # Open the input psf images
             psf_model = datamodels.open(psf)
+
+            # Retrieve the lenth of the smoothing box for the filter
+            try:
+                box_size = self.smoothing_length
+            except AttributeError:
+                box_size = 4
+                self.log.warning('Smoothing length not found, set to default')
+
+            # Smooth the psf images
+            psf_model = smooth_psf(psf_model, box_size)
 
             # Call the alignment routine
             result = imageregistration.align_models(target_model, psf_model,

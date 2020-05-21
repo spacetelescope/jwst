@@ -9,6 +9,11 @@ associations
 extract_1d
 ----------
 
+coron
+-----
+
+- Bad pixel replacment & median smoothing for psf images [#]
+
 - Fix bug in creating a polynomial fit used in background extraction. [#4970]
 
 datamodels
