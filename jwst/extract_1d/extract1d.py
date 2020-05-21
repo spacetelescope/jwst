@@ -390,7 +390,8 @@ def _extract_src_flux(image, x, j, lam, srclim,
 
 
 def _fit_background_model(image, x, j, bkglim, bkg_order):
-    """Extract background pixels and fit a polynomial.
+    """Extract background pixels and fit a polynomial. If the number of good data points is <= 1, the fit model will be
+    forced to 0 to avoid divergent
 
     Parameters:
     -----------
