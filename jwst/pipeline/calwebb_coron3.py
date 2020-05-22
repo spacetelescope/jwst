@@ -130,19 +130,10 @@ class Coron3Pipeline(Pipeline):
                 suffix='psfsub', acid=acid
             )
 
-            # Create a ModelContainer of the psf_sub results.
-            target_models = datamodels.ModelContainer()
-            for i in range(psf_sub.data.shape[0]):
-                image = datamodels.ImageModel(data=psf_sub.data[i],
-                                              err=psf_sub.err[i],
-                                              dq=psf_sub.dq[i])
-                image.update(psf_sub)
-                image.meta.wcs = psf_sub.meta.wcs
-                target_models.append(image)
-
-            # Append results from this target exposure to resample input model
-            for i in range(len(target_models)):
-                resample_input.append(target_models[i])
+            # Split out the integrations into separate models
+            # in a ModelContainer to pass to `resample`
+            for model in psf_sub.to_container():
+                resample_input.append(model)
 
         # Call the resample step to combine all psf-subtracted target images
         result = self.resample(resample_input)
