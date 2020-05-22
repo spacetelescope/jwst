@@ -402,12 +402,14 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
     def info(self, **kwargs):
         return self._asdf.info(**kwargs)
 
-    info.__doc__ = AsdfFile().info.__doc__
-
     def search(self, *args, **kwargs):
         return self._asdf.search(*args, **kwargs)
 
-    search.__doc__ = AsdfFile().search.__doc__
+    try:
+        info.__doc__ = AsdfFile().info.__doc__
+        search.__doc__ = AsdfFile().search.__doc__
+    except AttributeError:
+        pass
 
     def get_primary_array_name(self):
         """
