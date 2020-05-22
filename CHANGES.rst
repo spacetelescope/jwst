@@ -19,9 +19,9 @@ calwebb_coron3
 datamodels
 ----------
 
-- Add `to_container` to `CubeModel` to convert a cube to a list of images [#4968]
+- Add ``to_container`` to ``CubeModel`` to convert a cube to a list of images [#4968]
 
-- Add `getarray_noinit` to `DataModel` to access arrays without causing initialization [#4968]
+- Add ``getarray_noinit`` to ``DataModel`` to access arrays without causing initialization [#4968]
 
 - Limit looping over HDU's while resolving arrays in schema [#4951]
 
