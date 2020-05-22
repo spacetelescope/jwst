@@ -37,6 +37,10 @@ jobs:
         PIP_DEPENDENCIES="-r requirements-dev.txt .[test]"
         TEST_COMMAND=pytest
 
+    - name: Warnings treated as Exceptions
+      env:
+        TEST_COMMAND="pytest -W error"
+
     - name: Documentation
       env:
         PIP_DEPENDENCIES=.[docs]
@@ -50,14 +54,18 @@ jobs:
 
     - name: Code style check
       env:
-        TEST_COMMAND=flake8
         PIP_DEPENDENCIES=flake8
+        TEST_COMMAND=flake8
 
   allow_failures:
     - name: Dev dependencies in requirements-dev.txt
       env:
         PIP_DEPENDENCIES="-r requirements-dev.txt .[test]"
         TEST_COMMAND=pytest
+
+    - name: Warnings treated as Exceptions
+      env:
+        TEST_COMMAND="pytest -W error"
 
 before_install:
   # For the case where we want to build with the minimum versions allowed by
