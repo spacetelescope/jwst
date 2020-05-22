@@ -775,3 +775,30 @@ def test_get_envar_as_boolean(case, default, expected, jail_environ, empty_model
 
     value = empty_model._get_envar_as_boolean(var, default=default)
     assert value == expected
+
+
+def test_getarray_noinit_valid():
+    """Test for valid value return"""
+    arr = np.ones((5, 5))
+    model = ImageModel(data=arr)
+    fetched = model.getarray_noinit('data')
+    assert (fetched == arr).all()
+
+
+def test_getarray_noinit_raises():
+    """Test for error when accessing non-existent array"""
+    arr = np.ones((5, 5))
+    model = ImageModel(data=arr)
+    with pytest.raises(AttributeError):
+        fetched = model.getarray_noinit('area')
+
+
+def test_getarray_noinit_noinit():
+    """Test that calling on a non-existant array does not initialize that array"""
+    arr = np.ones((5, 5))
+    model = ImageModel(data=arr)
+    try:
+        fetched = model.getarray_noinit('area')
+    except AttributeError:
+        pass
+    assert 'area' not in model.instance
