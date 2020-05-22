@@ -15,15 +15,13 @@ import datetime
 import importlib
 import sys
 import os
+from distutils.version import LooseVersion
+from configparser import ConfigParser
+
 import sphinx
 import stsci_rtd_theme
 import sphinx_astropy
 
-from distutils.version import LooseVersion
-try:
-    from ConfigParser import ConfigParser
-except ImportError:
-    from configparser import ConfigParser
 
 def setup(app):
     try:
