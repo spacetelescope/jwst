@@ -17,9 +17,9 @@ from astropy import time
 
 from .. import util, validate
 from .. import _defined_models as defined_models
-from .. import (DataModel, ImageModel, RampModel, MaskModel,
-                MultiSlitModel, AsnModel, CollimatorModel,
-                SourceModelContainer, MultiExposureModel)
+from .. import (DataModel, ImageModel, RampModel, MaskModel, MultiSlitModel,
+    AsnModel, CollimatorModel, SourceModelContainer, MultiExposureModel,
+    DrizProductModel, MultiProductModel, MIRIRampModel)
 from ..schema import merge_property_trees, build_docstring
 
 from ..extension import URL_PREFIX
@@ -679,10 +679,7 @@ def test_schema_docstring():
         assert docstring[i].startswith(hdu)
 
 
-non_deprecated_datamodels = [v for k,v in defined_models.items()
-    if k not in ("DrizProductModel", "MultiProductModel", "MIRIRampModel")]
-
-@pytest.mark.parametrize("model", non_deprecated_datamodels)
+@pytest.mark.parametrize("model", [v for v in defined_models.values()])
 def test_all_datamodels_init(model):
     """
     Test that all current datamodels can be initialized.
@@ -690,6 +687,9 @@ def test_all_datamodels_init(model):
     if model is SourceModelContainer:
         # SourceModelContainer cannot have init=None
         model(MultiExposureModel())
+    elif model in (DrizProductModel, MultiProductModel, MIRIRampModel):
+        with pytest.warns(DeprecationWarning):
+            model()
     else:
         model()
 
