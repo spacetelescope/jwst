@@ -1130,3 +1130,29 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
     def write(self, path, *args, **kwargs):
         self.save(path, *args, **kwargs)
+
+    def getarray_noinit(self, attribute):
+        """Retrieve array but without initilization
+
+        Arrays initialize when directly referenced if they had
+        not previously been initialized. This circumvents the
+        initialization and instead raises `AttributeError`.
+
+        Parameters
+        ----------
+        attribute : str
+            The attribute to retrieve.
+
+        Returns
+        -------
+        value : object
+           The value of the attribute.
+
+        Raises
+        ------
+        AttributeError
+            If the attribute does not exist.
+        """
+        if attribute in self.instance:
+            return getattr(self, attribute)
+        raise AttributeError(f'{self} has no attribute "{attribute}"')
