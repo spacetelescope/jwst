@@ -130,15 +130,16 @@ def test_delete():
 
 
 def test_open():
-    with datamodels.open() as dm:
+    with datamodels.open():
         pass
 
-    with datamodels.open((50, 50)) as dm:
+    with datamodels.open((50, 50)):
         pass
 
-    warnings.simplefilter("ignore")
-    with datamodels.open(FITS_FILE) as dm:
-        assert isinstance(dm, QuadModel)
+    with pytest.warns(datamodels.util.NoTypeWarning):
+        with datamodels.open(FITS_FILE) as dm:
+            assert isinstance(dm, QuadModel)
+
 
 
 def test_open_warning():
@@ -176,16 +177,13 @@ def test_copy():
 def test_stringify():
     im = DataModel()
     assert str(im) == '<DataModel>'
-    im.close()
 
     im = ImageModel((10, 100))
     assert str(im) == '<ImageModel(10, 100)>'
-    im.close()
 
-    image = ROOT_DIR + "/nircam_mask.fits"
-    im = MaskModel(image)
-    assert str(im) == '<MaskModel(2048, 2048) from nircam_mask.fits>'
-    im.close()
+    image = os.path.join(ROOT_DIR, "nircam_mask.fits")
+    with MaskModel(image) as im:
+        assert str(im) ==  '<MaskModel(2048, 2048) from nircam_mask.fits>'
 
 
 def test_section():
@@ -385,26 +383,13 @@ def test_initialize_arrays_with_arglist():
     assert np.array_equal(im.dq, bitz)
 
 
-def test_open_asdf_model():
+@pytest.mark.parametrize("init", [None, ASDF_FILE])
+def test_open_asdf_model(init):
     # Open an empty asdf file, pass extra arguments
-
-    model = DataModel(init=None,
-                      ignore_version_mismatch=False,
-                      ignore_unrecognized_tag=True)
-
-    assert not model._asdf._ignore_version_mismatch
-    assert model._asdf._ignore_unrecognized_tag
-    model.close()
-
-    # Open an existing asdf file
-
-    model = DataModel(ASDF_FILE,
-                      ignore_version_mismatch=False,
-                      ignore_unrecognized_tag=True)
-
-    assert not model._asdf._ignore_version_mismatch
-    assert model._asdf._ignore_unrecognized_tag
-    model.close()
+    with DataModel(init=init, ignore_version_mismatch=False,
+                                ignore_unrecognized_tag=True) as model:
+        assert model._asdf._ignore_version_mismatch == False
+        assert model._asdf._ignore_unrecognized_tag == True
 
 
 def test_open_asdf_model_s3(s3_root_dir):

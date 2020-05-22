@@ -621,7 +621,6 @@ def test_validate_transform():
     m.meta.useafter = "2018/06/18"
     m.meta.reftype = "collimator"
     m.validate()
-    m.close()
 
 
 def test_validate_transform_from_file():
@@ -679,17 +678,20 @@ def test_schema_docstring():
     for i, hdu in enumerate(('SCI', 'DQ', 'ERR', 'ZEROFRAME')):
         assert docstring[i].startswith(hdu)
 
-@pytest.mark.parametrize("model", [m for m in defined_models.values()])
+
+non_deprecated_datamodels = [v for k,v in defined_models.items()
+    if k not in ("DrizProductModel", "MultiProductModel", "MIRIRampModel")]
+
+@pytest.mark.parametrize("model", non_deprecated_datamodels)
 def test_all_datamodels_init(model):
     """
     Test that all current datamodels can be initialized.
     """
     if model is SourceModelContainer:
         # SourceModelContainer cannot have init=None
-        m = model(MultiExposureModel())
+        model(MultiExposureModel())
     else:
-        m = model()
-    del m
+        model()
 
 
 def test_datamodel_schema_entry_points():
