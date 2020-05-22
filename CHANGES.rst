@@ -13,6 +13,8 @@ assign_wcs
 
 - Pass an optional ``input_frame`` parameter in ``assign_wcs.util.wcs_from_footprintss``. [#5120]
 
+- Improved calculation of bounding boxes in grism images. [#5122]
+
 associations
 ------------
 
@@ -61,13 +63,16 @@ datamodels
 extract_1d
 ----------
 
-- rechecks the input model container in run_extract1d to select the correct processing [#5076]
-- implement aperture correction in the Extract1dStep. [#4902]
+- Rechecks the input model container in run_extract1d to select the correct processing. [#5076]
+
+- Implement aperture correction in the Extract1dStep. [#4902]
 
 extract_2d
 ----------
 
-- checks subwcs and new_slit variables exist before trying to delete them [#5093]
+- Checks subwcs and new_slit variables exist before trying to delete them. [#5093]
+
+- Parameter ``mmag_extract`` is now propagated to the extraction routine. [#5122]
 
 coron
 -----
@@ -93,7 +98,7 @@ pathloss
 
 - Fix bug in NIRSpec IFU data that causes valid pixel dq flags to set to
   NON-SCIENCE in the region of an overlapping bounding box slice [#5047]
-  
+
 - Update to save both point source and uniform source 2D pathloss correction
   arrays to output. [#5112]
 

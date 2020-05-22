@@ -583,7 +583,7 @@ def create_grism_bbox(input_model,
     # dispersion coefficients
 
     sky_to_detector = input_model.meta.wcs.get_transform('world', 'detector')
-    sky_to_grism = input_model.meta.wcs.get_transform('world', 'grism_detector')
+    sky_to_grism = input_model.meta.wcs.backward_transform
 
     # Get the disperser parameters which have the wave limits
     with WavelengthrangeModel(reference_files['wavelengthrange']) as f:
@@ -634,25 +634,24 @@ def create_grism_bbox(input_model,
                     # location of the +/- sides of the bounding box in the
                     # grism image
                     lmin, lmax = range_select.pop()
-                    xmin, ymin, _, _, _ = sky_to_grism(obj.sky_bbox_ll.ra.value,
-                                                       obj.sky_bbox_ll.dec.value,
-                                                       lmin, order)
-                    xmax, ymax, _, _, _ = sky_to_grism(obj.sky_bbox_ur.ra.value,
-                                                       obj.sky_bbox_ur.dec.value,
-                                                       lmax, order)
+                    ra = np.array([obj.sky_bbox_ll.ra.value, obj.sky_bbox_lr.ra.value,
+                                   obj.sky_bbox_ul.ra.value, obj.sky_bbox_ur.ra.value])
+                    dec = np.array([obj.sky_bbox_ll.dec.value, obj.sky_bbox_lr.dec.value,
+                                   obj.sky_bbox_ul.dec.value, obj.sky_bbox_ur.dec.value])
+                    x1, y1, _, _, _ = sky_to_grism(ra, dec, [lmin] * 4, [order]*4)
+                    x2, y2, _, _, _ = sky_to_grism(ra, dec, [lmax] * 4, [order]*4)
 
-                    # Make sure that we have the correct box corners tagged
-                    # as the min and max extents for the grism, the dispersion
-                    # direction changes with grism and detector
-                    if xmax < xmin:
-                        xmin, xmax = xmax, xmin
-                    if ymax < ymin:
-                        ymin, ymax = ymax, ymin
+                    xstack = np.hstack([x1, x2])
+                    ystack = np.hstack([y1, y2])
+                    xmin = np.min(xstack)
+                    xmax = np.max(xstack)
+                    ymin = np.min(ystack)
+                    ymax = np.max(ystack)
 
-                    xmin = int(xmin)
-                    xmax = int(xmax)
-                    ymin = int(ymin)
-                    ymax = int(ymax)
+                    xmin = int(xmin) - input_model.meta.subarray.xstart
+                    xmax = int(xmax) - input_model.meta.subarray.xstart
+                    ymin = int(ymin) - input_model.meta.subarray.ystart
+                    ymax = int(ymax) - input_model.meta.subarray.ystart
 
                     # don't add objects and orders which are entirely
                     # off the detector partial_order marks partial
