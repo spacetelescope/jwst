@@ -44,6 +44,8 @@ jobs:
       addons:
         apt:
           packages:
+            - texlive-latex-extra
+            - dvipng
             - graphviz
 
     - name: Code style check
