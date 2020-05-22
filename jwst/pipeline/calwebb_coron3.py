@@ -138,6 +138,7 @@ class Coron3Pipeline(Pipeline):
         # Call the resample step to combine all psf-subtracted target images
         result = self.resample(resample_input)
 
+        # If resampling was skipped, need to blend headers anyways.
         if result == resample_input:
             self.log.debug('Blending metadata for {}'.format(
                 result.meta.filename))
