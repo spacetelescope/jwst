@@ -357,8 +357,10 @@ class CubeBuildStep (Step):
                 self.spaxel_debug.close()
         for cube in cube_container:
             footprint = cube.meta.wcs.footprint(axis_type="spatial")
-            update_s_region_keyword(cube, footprint)
+            print('footprint',footprint)
 
+            update_s_region_keyword(cube, footprint)
+            print('done cube')
         return cube_container
 # ******************************************************************************
 

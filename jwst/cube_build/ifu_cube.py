@@ -432,27 +432,27 @@ class IFUCubeData():
             log.info('axis#  Naxis  CRPIX    CRVAL      CDELT(arcsec)  Min & Max (alpha, beta arcsec)')
         else:
             log.info('axis#  Naxis  CRPIX    CRVAL      CDELT(arcsec)  Min & Max (xi, eta arcsec)')
-            log.info('Axis 1 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f',
-                     self.naxis1, self.crpix1, self.crval1, self.cdelt1,
-                     self.a_min, self.a_max)
-            log.info('Axis 2 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f',
-                     self.naxis2, self.crpix2, self.crval2, self.cdelt2,
-                     self.b_min, self.b_max)
-            if self.linear_wavelength:
-                log.info('axis#  Naxis  CRPIX    CRVAL      CDELT(microns)  Min & Max (microns)')
-                log.info('Axis 3 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f',
-                         self.naxis3, self.crpix3, self.crval3, self.cdelt3,
-                         self.lambda_min, self.lambda_max)
+        log.info('Axis 1 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f',
+                 self.naxis1, self.crpix1, self.crval1, self.cdelt1,
+                 self.a_min, self.a_max)
+        log.info('Axis 2 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f',
+                 self.naxis2, self.crpix2, self.crval2, self.cdelt2,
+                 self.b_min, self.b_max)
+        if self.linear_wavelength:
+            log.info('axis#  Naxis  CRPIX    CRVAL      CDELT(microns)  Min & Max (microns)')
+            log.info('Axis 3 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f',
+                     self.naxis3, self.crpix3, self.crval3, self.cdelt3,
+                     self.lambda_min, self.lambda_max)
 
-            if not self.linear_wavelength:
-                log.info('Non-linear wavelength dimension; CDELT3 variable')
-                log.info('axis#  Naxis  CRPIX    CRVAL     Min & Max (microns)')
-                log.info('Axis 3 %5d  %5.2f %12.8f %12.8f %12.8f',
-                         self.naxis3, self.crpix3, self.crval3,
-                         self.wavelength_table[0], self.wavelength_table[self.naxis3 - 1])
+        if not self.linear_wavelength:
+            log.info('Non-linear wavelength dimension; CDELT3 variable')
+            log.info('axis#  Naxis  CRPIX    CRVAL     Min & Max (microns)')
+            log.info('Axis 3 %5d  %5.2f %12.8f %12.8f %12.8f',
+                     self.naxis3, self.crpix3, self.crval3,
+                     self.wavelength_table[0], self.wavelength_table[self.naxis3 - 1])
 
-            if self.rot_angle is not None:
-                log.info('Rotation angle between Ra-Dec and Slicer-Plane %12.8f',self.rot_angle)
+        if self.rot_angle is not None:
+            log.info('Rotation angle between Ra-Dec and Slicer-Plane %12.8f',self.rot_angle)
 
         if self.instrument == 'MIRI':
             # length of channel and subchannel are the same
@@ -571,7 +571,7 @@ class IFUCubeData():
                     else:
                         t0 = time.time()
                         roiw_ave = np.mean(roiw_pixel)
-                        self.map_fov_to_dqplane(this_par1, coord1, coord2, wave, roiw_ave, slice_no)
+                        #self.map_fov_to_dqplane(this_par1, coord1, coord2, wave, roiw_ave, slice_no)
                         t1 = time.time()
                         log.info("Time to set initial dq values = %.1f s" % (t1 - t0,))
                     if self.weighting == 'msm' or self.weighting == 'emsm':
@@ -1082,10 +1082,15 @@ class IFUCubeData():
                 detector2alpha_beta = input_model.meta.wcs.get_transform('detector',
                                                                    'alpha_beta')
                 alpha, beta, lam = detector2alpha_beta(x, y)
+                #coord1, coord2, wave = input_model.meta.wcs(x, y)
                 valid1 = ~np.isnan(alpha)
                 alpha = alpha[valid1]
                 beta = beta[valid1]
                 lam = lam[valid1]
+                
+                #ra = coord1[valid1]
+                #dec = coord1[valid1]
+                #wave = coord1[valid1]
                 
                 lam_med = np.median(lam)
                 # Compute the rotation angle between alpha-beta and RA-DEC
@@ -1096,13 +1101,16 @@ class IFUCubeData():
                 # units are in arcseconds 0,0 is orign and -1 beta because
                 # alpha/beta is system left-handed and ra/dec is a right handed system  
                 alpha_beta2world = input_model.meta.wcs.get_transform('alpha_beta','world')
+
                 temp_ra1, temp_dec1, lam_temp = alpha_beta2world(0, 0, lam_med)
-                temp_ra2, temp_dec2, lam_temp = alpha_beta2world(0, -1, lam_med)
+                temp_ra2, temp_dec2, lam_temp = alpha_beta2world(0, -2, lam_med)
 
                 dra, ddec = (temp_ra2 - temp_ra1) * np.cos(temp_dec1), (temp_dec2 - temp_dec1)
+                rot_angle = np.arctan2(dra,ddec) * 180./np.pi
                 self.rot_angle = np.arctan2(dra,ddec) * 180./np.pi
+                print('rotation angle',rot_angle)
 
-                print('rotation angle',self.rot_angle)
+
 # ________________________________________________________________________________
 # Test that we have data (NIRSPEC NRS2 only has IFU data for 3 configurations)
         test_a = final_a_max - final_a_min
@@ -1122,6 +1130,7 @@ class IFUCubeData():
             self.set_geometry(cube_footprint)
         else:
             self.set_geometryAB(cube_footprint)
+        
         self.print_cube_geometry()
 # **************************************************************************
 
@@ -1957,7 +1966,7 @@ class IFUCubeData():
             ifucube_model.meta.wcsinfo.cdelt3 = None
             ifucube_model.meta.ifu.roi_wave = np.mean(self.roiw_table)
             ifucube_model.wavedim = '(1,{:d})'.format(num)
-
+            
         ifucube_model.meta.wcsinfo.ctype1 = 'RA---TAN'
         ifucube_model.meta.wcsinfo.ctype2 = 'DEC--TAN'
         ifucube_model.meta.wcsinfo.cunit1 = 'deg'
@@ -1982,7 +1991,6 @@ class IFUCubeData():
         ifucube_model.meta.ifu.error_type = 'ERR'
         ifucube_model.meta.ifu.dq_extension = 'DQ'
         ifucube_model.meta.ifu.weighting = str(self.weighting)
-
         # weight_power is needed for single cubes. Linear Wavelengths
         # if non-linear wavelengths then this will be None
         ifucube_model.meta.ifu.weight_power = self.weight_power
@@ -1994,6 +2002,13 @@ class IFUCubeData():
         if self.coord_system == 'alpha-beta':
             ifucube_model.meta.wcsinfo.cunit1 = 'arcsec'
             ifucube_model.meta.wcsinfo.cunit2 = 'arcsec'
+
+            # stick in values of 0, otherwize it is NaN and 
+            # fits file can not be written because these 
+            # values are defined in ifucube.schema.yaml
+            ifucube_model.meta.ifu.weight_power = 0
+            ifucube_model.meta.ifu.roi_wave=0
+            ifucube_model.meta.ifu.roi_spatial=0
 
 # we only need to check list_par1[0] and list_par2[0] because these types
 # of cubes are made from 1 exposures (setup_cube checks this at the start
