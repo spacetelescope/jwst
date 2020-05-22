@@ -390,7 +390,8 @@ def _extract_src_flux(image, x, j, lam, srclim,
 
 
 def _fit_background_model(image, x, j, bkglim, bkg_order):
-    """Extract background pixels and fit a polynomial.
+    """Extract background pixels and fit a polynomial. If the number of good data points is <= 1, the fit model will be
+    forced to 0 to avoid divergent
 
     Parameters:
     -----------
@@ -434,8 +435,8 @@ def _fit_background_model(image, x, j, bkglim, bkg_order):
     good = np.isfinite(val)
     npts = good.sum()
 
-    if npts == 0 or not np.any(good):
-        return (models.Polynomial1D(0), 0)
+    if npts <= 1 or not np.any(good):
+        return models.Polynomial1D(0), 0
 
     # filter-out bad values:
     val = val[good]
@@ -446,7 +447,7 @@ def _fit_background_model(image, x, j, bkglim, bkg_order):
     bkg_model = lsqfitter(models.Polynomial1D(min(bkg_order, npts - 1)),
                           y, val, weights=wht)
 
-    return (bkg_model, npts)
+    return bkg_model, npts
 
 
 def _extract_colpix(image_data, x, j, limits):
