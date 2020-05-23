@@ -1,8 +1,6 @@
 """Test aspects of CubeModel"""
 import pytest
 
-import numpy as np
-
 from jwst.datamodels import CubeModel
 
 
@@ -11,12 +9,7 @@ def make_container():
     """Create the container to test"""
     size = 5
     cube = CubeModel((size, size, size))
-    cube.meta.target.proposer_name = 'JWST regresstion test'
-    for idx in range(size):
-        arr = np.zeros((size, size))
-        cube.data[idx] = arr + idx
-        cube.dq[idx] = arr + (idx * 2)
-        cube.err[idx] = arr + (idx * 3)
+    cube.meta.target.proposer_name = 'JWST regression test'
     container = cube.to_container()
     return cube, container
 
