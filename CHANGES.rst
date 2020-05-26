@@ -6,6 +6,11 @@ extract_1d
 
 - Fix bug in creating a polynomial fit used in background extraction. [#4970]
 
+datamodels
+----------
+
+- Added methods ``Model.info`` and ``Model.search``. [#4660]
+
 0.16.1 (2020-05-19)
 ===================
 
