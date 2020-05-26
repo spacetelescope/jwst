@@ -97,6 +97,7 @@ setup(
         'jsonschema>=3.0.1',
         'numpy>=1.16',
         'photutils>=0.7',
+        'pyparsing>=2.2',
         'requests>=2.22',
         'scipy>=1.1.0',
         'spherical-geometry>=1.2.2',

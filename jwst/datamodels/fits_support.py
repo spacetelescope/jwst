@@ -1,14 +1,11 @@
 import datetime
 import os
 import re
-
-from packaging import version
+from pkg_resources import parse_version
 
 import numpy as np
-
 from astropy.io import fits
 from astropy import time
-
 import asdf
 from asdf import fits_embed
 from asdf import resolver
@@ -17,7 +14,6 @@ from asdf.tags.core import ndarray, HistoryEntry
 from asdf import treeutil
 from asdf.util import HashableDict
 from asdf import tagged
-
 from jsonschema import validators
 
 from . import properties
@@ -34,7 +30,7 @@ log.addHandler(logging.NullHandler())
 __all__ = ['to_fits', 'from_fits', 'fits_hdu_name', 'get_hdu']
 
 
-_ASDF_GE_2_6 = version.parse(asdf.__version__) >= version.parse('2.6')
+_ASDF_GE_2_6 = parse_version(asdf.__version__) >= parse_version('2.6')
 
 
 _builtin_regexes = [
