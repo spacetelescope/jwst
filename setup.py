@@ -90,7 +90,7 @@ setup(
     ],
     install_requires=[
         'asdf>=2.5',
-        'astropy>=4.0',
+        'astropy==4.1rc1',
         'crds>=7.4.1.3',
         'drizzle>=1.13',
         'gwcs>=0.13.0',
