@@ -40,7 +40,7 @@ from . import objects
 from . import generators
 from . import util
 from . import verifiers
-from ..extern.pyparsing import *
+from pyparsing import *
 
 class TemplateParserBase:
     # This parser is a hybrid between hand-written parsing and
