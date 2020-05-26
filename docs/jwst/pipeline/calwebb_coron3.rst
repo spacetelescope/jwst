@@ -17,24 +17,25 @@ below.
 +---------------------------------------------------+
 | calwebb_coron3                                    |
 +===================================================+
+| :ref:`outlier_detection <outlier_detection_step>` |
++---------------------------------------------------+
 | :ref:`stack_refs <stack_refs_step>`               |
 +---------------------------------------------------+
 | :ref:`align_refs <align_refs_step>`               |
 +---------------------------------------------------+
 | :ref:`klip <klip_step>`                           |
 +---------------------------------------------------+
-| :ref:`outlier_detection <outlier_detection_step>` |
-+---------------------------------------------------+
 | :ref:`resample <resample_step>`                   |
 +---------------------------------------------------+
 
 The high-level processing provided by these steps is:
 
-1) Accumulate all reference PSF images into a single product
-2) Align every PSF image to every science target image
-3) Compute an optimal PSF fit and subtract it from every science target image
-4) Compare the PSF-subtracted target images against one another to identify outliers
-5) Combine the PSF-subtracted and CR-flagged images into a single resampled image
+1) CR-flag all PSF and science target exposures
+2) Accumulate all reference PSF images into a single product
+3) Align every PSF image to every science target image
+4) Compute an optimal PSF fit and subtract it from every science target image
+5) Compare the PSF-subtracted target images against one another to identify outliers
+6) Combine the PSF-subtracted and CR-flagged images into a single resampled image
 
 Currently the individual steps shown above can only be run in a convenient way by
 running the ``calwebb_coron3`` pipeline on an association (ASN) file that lists the
@@ -54,7 +55,7 @@ Inputs
 :File suffix: _calints
 
 The input to ``calwebb_coron3`` must be in the form of an ASN file that lists
-one or more exposures of a science target and a reference PSF target.
+one or more exposures of a science target and one or more  reference PSF targets.
 The individual target and reference PSF exposures should be in the form of 3D
 calibrated ("_calints") products from :ref:`calwebb_image2 <calwebb_image2>`
 processing. Each pipeline step will loop over the 3D stack of per-integration images
@@ -91,6 +92,18 @@ indicated by the "exptype" values for each::
 Outputs
 -------
 
+CR-flagged images
+^^^^^^^^^^^^^^^^^
+
+:Data model: `~jwst.datamodels.CubeModel`
+:File suffix: _crfints
+
+If the :ref:`outlier_detection <outlier_detection_step>` step is applied, a new version of
+each exposure is created, in which the DQ array is updated to flag pixels detected
+as outliers. These files use the "_crfints" (CR-Flagged per integration)
+product type suffix and include the association candidate ID, e.g.
+"jw8607342001_02102_00001_nrcb3_a3001_crfints.fits."
+
 3D stacked PSF images
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -126,18 +139,6 @@ subtraction for each integration, resulting in a 3D stack of PSF-subtracted
 images. The data for each science target exposure are saved to a "_psfsub"
 product, using exposure-based file names, e.g.
 "jw8607342001_02102_00001_nrcb3_a3001_psfsub.fits."
-
-CR-flagged images
-^^^^^^^^^^^^^^^^^
-
-:Data model: `~jwst.datamodels.CubeModel`
-:File suffix: _crfints
-
-If the :ref:`outlier_detection <outlier_detection_step>` step is applied, a new version of
-each "_psfsub" product is created, in which the DQ array is updated to flag pixels detected
-as outliers. These files use the "_crfints" (CR-Flagged per integration)
-product type suffix and include the association candidate ID, e.g.
-"jw8607342001_02102_00001_nrcb3_a3001_crfints.fits."
 
 2D resampled image
 ^^^^^^^^^^^^^^^^^^

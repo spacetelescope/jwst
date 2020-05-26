@@ -21,8 +21,17 @@ associations
 
 - Modify NIRSpec IFU level-3 ASN rules to include only one grating per association [#4926]
 
+calwebb_coron3
+--------------
+
+- Update coron3 for new outlier detection application [#4968]
+
 datamodels
 ----------
+
+- Add ``to_container`` to ``CubeModel`` to convert a cube to a list of images [#4968]
+
+- Add ``getarray_noinit`` to ``DataModel`` to access arrays without causing initialization [#4968]
 
 - Limit looping over HDU's while resolving arrays in schema [#4951]
 
