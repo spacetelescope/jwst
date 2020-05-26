@@ -2,6 +2,8 @@ from ..stpipe import Step
 
 from . import ami_average
 
+__all__ = ["AmiAverageStep"]
+
 
 class AmiAverageStep(Step):
     """
