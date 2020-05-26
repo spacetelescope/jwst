@@ -569,7 +569,7 @@ def from_fits_asdf(hdulist,
                    ignore_unrecognized_tag=False,
                    **kwargs):
     """
-    Wrap asdf call to extract optional argumentscommet
+    Wrap asdf call to extract optional arguments
     """
     ignore_missing_extensions = kwargs.pop('ignore_missing_extensions')
     return fits_embed.AsdfInFits.open(hdulist,

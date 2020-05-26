@@ -17,9 +17,9 @@ from astropy import time
 
 from .. import util, validate
 from .. import _defined_models as defined_models
-from .. import (DataModel, ImageModel, RampModel, MaskModel,
-                MultiSlitModel, AsnModel, CollimatorModel,
-                SourceModelContainer, MultiExposureModel)
+from .. import (DataModel, ImageModel, RampModel, MaskModel, MultiSlitModel,
+    AsnModel, CollimatorModel, SourceModelContainer, MultiExposureModel,
+    DrizProductModel, MultiProductModel, MIRIRampModel)
 from ..schema import merge_property_trees, build_docstring
 
 from ..extension import URL_PREFIX
@@ -621,7 +621,6 @@ def test_validate_transform():
     m.meta.useafter = "2018/06/18"
     m.meta.reftype = "collimator"
     m.validate()
-    m.close()
 
 
 def test_validate_transform_from_file():
@@ -679,17 +678,20 @@ def test_schema_docstring():
     for i, hdu in enumerate(('SCI', 'DQ', 'ERR', 'ZEROFRAME')):
         assert docstring[i].startswith(hdu)
 
-@pytest.mark.parametrize("model", [m for m in defined_models.values()])
+
+@pytest.mark.parametrize("model", [v for v in defined_models.values()])
 def test_all_datamodels_init(model):
     """
     Test that all current datamodels can be initialized.
     """
     if model is SourceModelContainer:
         # SourceModelContainer cannot have init=None
-        m = model(MultiExposureModel())
+        model(MultiExposureModel())
+    elif model in (DrizProductModel, MultiProductModel, MIRIRampModel):
+        with pytest.warns(DeprecationWarning):
+            model()
     else:
-        m = model()
-    del m
+        model()
 
 
 def test_datamodel_schema_entry_points():
