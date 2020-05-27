@@ -399,15 +399,15 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         mschema.walk_schema(self._schema, callback, ctx=self)
 
-    def info(self, **kwargs):
+    def info(self, *args, **kwargs):
         return self._asdf.info(**kwargs)
 
     def search(self, *args, **kwargs):
         return self._asdf.search(*args, **kwargs)
 
     try:
-        info.__doc__ = AsdfFile().info.__doc__
-        search.__doc__ = AsdfFile().search.__doc__
+        info.__doc__ = AsdfFile.info.__doc__
+        search.__doc__ = AsdfFile.search.__doc__
     except AttributeError:
         pass
 
