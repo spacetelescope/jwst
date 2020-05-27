@@ -34,8 +34,7 @@ The high-level processing provided by these steps is:
 2) Accumulate all reference PSF images into a single product
 3) Align every PSF image to every science target image
 4) Compute an optimal PSF fit and subtract it from every science target image
-5) Compare the PSF-subtracted target images against one another to identify outliers
-6) Combine the PSF-subtracted and CR-flagged images into a single resampled image
+5) Combine the PSF-subtracted and CR-flagged images into a single resampled image
 
 Currently the individual steps shown above can only be run in a convenient way by
 running the ``calwebb_coron3`` pipeline on an association (ASN) file that lists the
