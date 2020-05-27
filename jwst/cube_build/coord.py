@@ -16,6 +16,8 @@ def radec2std(crval1, crval2, rot_angle, ra, dec):
       RA value of tangent point
     crval2 : float
       DEC value of tangent point
+    rot_angle: float
+      rotation angle given in degrees
     ra : numpy.ndarray or float
       A list (or single value) of ra points to convert
     dec : numpy.ndarray  or float
@@ -45,12 +47,12 @@ def radec2std(crval1, crval2, rot_angle, ra, dec):
     eta = (np.sin(decr) * math.cos(dec0) -
            np.cos(decr) * math.sin(dec0) * np.cos(radiff)) / h
 
+    xi = -xi 
     xi = xi * rad2arcsec
-
-# xi is made negative so it increases in the opposite direction
-# of ra to match the images the Parity of the ifu_cube.
-    #xi = -xi
     eta = eta * rad2arcsec
+
+    # xi is made negative so it increases in the opposite direction
+    # of ra to match the images the Parity of the ifu_cube.
 
     if rot_angle is not None:
         temp1 = xi * np.cos(-rot_angle * deg2rad) - eta * np.sin(-rot_angle * deg2rad)
@@ -58,7 +60,7 @@ def radec2std(crval1, crval2, rot_angle, ra, dec):
         xi = temp1
         eta = temp2
 
-    xi = -xi 
+
     return xi, eta
 # ________________________________________________________________________________
 

@@ -109,9 +109,9 @@ def find_footprint_NIRSPEC(input, coord_system):
         if coord_system == 'world':
             coord1, coord2, lam = slice_wcs(x, y)
         else:  # coord_system == 'alpha-beta':
-            raise InvalidCoordSystem(" The Alpha-Beta Coordinate system is not valid (at this time) for NIRSPEC data")
-#                detector2slicer = input.meta.wcs.get_transform('detector','slicer')
-#                coord1,coord2,lam = detector2slicer(x,y)
+#            raise InvalidCoordSystem(" The Alpha-Beta Coordinate system is not valid (at this time) for NIRSPEC data")
+            detector2slicer = input.meta.wcs.get_transform('detector','slicer')
+            coord1,coord2,lam = detector2slicer(x,y)
 # ________________________________________________________________________________
 # For each slice  test for 0/360 wrapping in ra.
 # If exists it makes it difficult to determine  ra range of IFU cube.

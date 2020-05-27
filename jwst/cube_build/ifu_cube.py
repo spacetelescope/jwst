@@ -245,6 +245,7 @@ class IFUCubeData():
         self.crval1 = ra_ave
         self.crval2 = dec_ave
         rot_angle = 0
+        # for now just leave rot_angle = 0 - this part sets up size of grid
         xi_center, eta_center = coord.radec2std(self.crval1, self.crval2, rot_angle,
                                                 ra_ave, dec_ave)
         xi_min, eta_min = coord.radec2std(self.crval1, self.crval2, rot_angle,
@@ -1056,14 +1057,24 @@ class IFUCubeData():
             final_lambda_max = max(lambda_max)
         # ______________________________________________________________________
         if self.instrument == 'MIRI' and self.coord_system == 'alpha-beta':
-            #  we have a 1 to 1 mapping in beta dimension.
+            #  we have a 1 to 1 mapping in beta dimension (coord2) 
             nslice = self.instrument_info.GetNSlice(parameter1[0])
             log.info('Beta Scale %f ', self.cdelt2)
             self.cdelt2 = (final_b_max - final_b_min) / nslice
             final_b_max = final_b_min + (nslice) * self.cdelt2
             log.info('Changed the Beta Scale dimension so we have 1-1 mapping between beta and slice #')
             log.info('New Beta Scale %f ', self.cdelt2)
-
+        # ______________________________________________________________________
+        if self.instrument == 'NIRSPEC' and self.coord_system == 'alpha-beta':
+            #  we have a 1 to 1 mapping in ? dimension.
+            nslice = 30
+            print('final coords',final_a_min,final_a_max,final_b_min, final_b_max)
+            log.info('Beta Scale %f ', self.cdelt2)
+            self.cdelt2 = (final_b_max - final_b_min) / nslice
+            final_b_max = final_b_min + (nslice) * self.cdelt2
+            log.info('Changed the Beta Scale dimension so we have 1-1 mapping between beta and slice #')
+            log.info('New Beta Scale %f ', self.cdelt2)
+            exit(0)
 # ________________________________________________________________________________
 # Define the rotation angle between the ra-dec and alpha beta coord system using
 # the first input model. Use first file in first band to set up rotation angle
@@ -1104,12 +1115,11 @@ class IFUCubeData():
 
                 temp_ra1, temp_dec1, lam_temp = alpha_beta2world(0, 0, lam_med)
                 temp_ra2, temp_dec2, lam_temp = alpha_beta2world(0, -2, lam_med)
-
-                dra, ddec = (temp_ra2 - temp_ra1) * np.cos(temp_dec1), (temp_dec2 - temp_dec1)
-                rot_angle = np.arctan2(dra,ddec) * 180./np.pi
-                self.rot_angle = np.arctan2(dra,ddec) * 180./np.pi
-                print('rotation angle',rot_angle)
-
+                
+                # temp_dec1 is in degrees 
+                dra, ddec = (temp_ra2 - temp_ra1) * np.cos(temp_dec1 * np.pi/180.0), (temp_dec2 - temp_dec1)
+                self.rot_angle = np.arctan2(dra, ddec) * 180./np.pi
+                print('rotation angle degrees',self.rot_angle)
 
 # ________________________________________________________________________________
 # Test that we have data (NIRSPEC NRS2 only has IFU data for 3 configurations)
@@ -1985,6 +1995,14 @@ class IFUCubeData():
         ifucube_model.meta.wcsinfo.pc3_1 = 0
         ifucube_model.meta.wcsinfo.pc3_2 = 0
         ifucube_model.meta.wcsinfo.pc3_3 = 1
+
+        if self.rot_angle is None:
+            self.rot_angle = 0.
+        ifucube_model.meta.wcsinfo.pc1_1 = -np.cos(self.rot_angle * np.pi / 180.)
+        ifucube_model.meta.wcsinfo.pc1_2 = np.sin(self.rot_angle * np.pi / 180.)
+        ifucube_model.meta.wcsinfo.pc2_1 = np.sin(self.rot_angle * np.pi / 180.)
+        ifucube_model.meta.wcsinfo.pc2_2 = np.cos(self.rot_angle * np.pi / 180.)
+
 
         ifucube_model.meta.ifu.flux_extension = 'SCI'
         ifucube_model.meta.ifu.error_extension = 'ERR'
