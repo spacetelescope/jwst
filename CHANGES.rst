@@ -1,6 +1,11 @@
 0.16.2 (unreleased)
 ===================
 
+associations
+------------
+
+- Update diagrams to change sloper to detector1. [#4986]
+
 extract_1d
 ----------
 
