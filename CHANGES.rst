@@ -16,6 +16,11 @@ datamodels
 
 - Added methods ``Model.info`` and ``Model.search``. [#4660]
 
+stpipe
+------
+
+- Remove further sloper references. [#4989]
+
 0.16.1 (2020-05-19)
 ===================
 
