@@ -41,6 +41,15 @@ jobs:
       env:
         TEST_COMMAND="pytest -W error"
 
+    - name: Windows
+      os: windows
+      language: shell
+      before_install:
+        - choco install python --version=3.8
+      env:
+        - TEST_COMMAND=pytest
+        - PATH=/c/Python38:/c/Python38/Scripts:$PATH
+
     - name: Documentation build
       env:
         PIP_DEPENDENCIES=.[docs]
@@ -71,6 +80,15 @@ jobs:
     - name: Warnings treated as Exceptions
       env:
         TEST_COMMAND="pytest -W error"
+
+    - name: Windows
+      os: windows
+      language: shell
+      before_install:
+        - choco install python --version=3.8
+      env:
+        - TEST_COMMAND=pytest
+        - PATH=/c/Python38:/c/Python38/Scripts:$PATH
 
 before_install:
   # For the case where we want to build with the minimum versions allowed by
