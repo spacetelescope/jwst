@@ -46,7 +46,7 @@ class ModelContainer(model_base.DataModel):
           DataModels can be added via the ``append()`` method.
 
        - asn_exptypes: list of exposure types from the asn file to read
-         into the pipeline, if None read all the given files.
+         into the ModelContainer, if None read all the given files.
 
        - asn_n_members: Open only the first N qualifying members.
 

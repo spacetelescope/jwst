@@ -268,6 +268,10 @@ class Spec2Pipeline(Pipeline):
         # Apply flux calibration
         result = self.photom(input)
 
+        # Close the input file.  We should really be doing this further up
+        # passing along result all the way down.
+        input.close()
+
         # Record ASN pool and table names in output
         result.meta.asn.pool_name = pool_name
         result.meta.asn.table_name = op.basename(asn_file)

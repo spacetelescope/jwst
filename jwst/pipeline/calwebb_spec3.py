@@ -126,7 +126,9 @@ class Spec3Pipeline(Pipeline):
             # would've been done in master_background
             if self.master_background.skip:
                 source_models, bkg_models = split_container(input_models)
-                del bkg_models  # we don't need the background members
+                # we don't need the background members
+                bkg_models.close()
+                del bkg_models
         else:
             # The input didn't contain any background members,
             # so we use all the inputs in subsequent steps
@@ -225,6 +227,7 @@ class Spec3Pipeline(Pipeline):
                     'Resampling was not completed. Skipping extract_1d.'
                 )
 
-        # We're done
+        source_models.close()
+
         self.log.info('Ending calwebb_spec3')
         return

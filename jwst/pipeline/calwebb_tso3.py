@@ -152,12 +152,13 @@ class Tso3Pipeline(Pipeline):
                 phot_result_list.append(self.white_light(result))
 
             # Update some metadata from the association
-            x1d_result.meta.asn.pool_name = \
-                input_models.meta.asn_table.asn_pool
+            x1d_result.meta.asn.pool_name = input_models.meta.asn_table.asn_pool
             x1d_result.meta.asn.table_name = op.basename(input)
 
             # Save the final x1d Multispec model
             self.save_model(x1d_result, suffix='x1dints')
+
+        input_models.close()
 
         if len(phot_result_list) == 1 and phot_result_list[0] is None:
             self.log.info("Could not create a photometric catalog for data")
