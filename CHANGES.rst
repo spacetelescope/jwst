@@ -9,6 +9,8 @@ associations
 datamodels
 ----------
 
+- Add blend rule for detector. [#4998]
+
 - Added methods ``Model.info`` and ``Model.search``. [#4660]
 
 - Trimmed MT_RA, MT_DEC keyword comments to fit within FITS record. [#4994]
