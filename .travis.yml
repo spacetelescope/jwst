@@ -44,11 +44,14 @@ jobs:
     - name: Windows
       os: windows
       language: shell
+      compiler: gcc
       before_install:
-        - choco install python --version=3.8
+        - choco install python --version=3.8.2
+        - export PATH="/c/Python38:/c/Python38/Scripts:$PATH"
+        - pip install numpy~=1.18.0
       env:
+        - PIP_DEPENDENCIES=".[test]"
         - TEST_COMMAND=pytest
-        - PATH=/c/Python38:/c/Python38/Scripts:$PATH
 
     - name: Documentation build
       env:
@@ -84,11 +87,14 @@ jobs:
     - name: Windows
       os: windows
       language: shell
+      compiler: gcc
       before_install:
-        - choco install python --version=3.8
+        - choco install python --version=3.8.2
+        - export PATH="/c/Python38:/c/Python38/Scripts:$PATH"
+        - pip install numpy~=1.18.0
       env:
+        - PIP_DEPENDENCIES=".[test]"
         - TEST_COMMAND=pytest
-        - PATH=/c/Python38:/c/Python38/Scripts:$PATH
 
 before_install:
   # For the case where we want to build with the minimum versions allowed by
