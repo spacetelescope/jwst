@@ -32,13 +32,14 @@ class Image3Pipeline(Pipeline):
     """
 
     # Define alias to steps
-    step_defs = {'assign_mtwcs': assign_mtwcs_step.AssignMTWcsStep,
-                 'tweakreg': tweakreg_step.TweakRegStep,
-                 'skymatch': skymatch_step.SkyMatchStep,
-                 'outlier_detection': outlier_detection_step.OutlierDetectionStep,
-                 'resample': resample_step.ResampleStep,
-                 'source_catalog': source_catalog_step.SourceCatalogStep
-                 }
+    step_defs = {
+        'assign_mtwcs': assign_mtwcs_step.AssignMTWcsStep,
+        'tweakreg': tweakreg_step.TweakRegStep,
+        'skymatch': skymatch_step.SkyMatchStep,
+        'outlier_detection': outlier_detection_step.OutlierDetectionStep,
+        'resample': resample_step.ResampleStep,
+        'source_catalog': source_catalog_step.SourceCatalogStep
+    }
 
     def process(self, input_data):
         """
@@ -65,15 +66,16 @@ class Image3Pipeline(Pipeline):
 
         with datamodels.open(input_data, asn_exptypes=asn_exptypes) as input_models:
             # If input is an association, set the output to the product name.
-            try:
-                self.output_file = input_models.meta.asn_table.products[0].name
-            except AttributeError:
-                pass
+            if self.output_file is None:
+                try:
+                    self.output_file = input_models.meta.asn_table.products[0].name
+                except (AttributeError, IndexError):
+                    pass
 
             # Check if input is single or multiple exposures
             try:
                 has_groups = len(input_models.group_names) > 1
-            except Exception:
+            except (AttributeError, TypeError, KeyError):
                 has_groups = False
 
             if isinstance(input_models, datamodels.ModelContainer) and has_groups:
@@ -86,17 +88,4 @@ class Image3Pipeline(Pipeline):
                 input_models = self.outlier_detection(input_models)
 
             result = self.resample(input_models)
-
-            try:
-                result.meta.asn.pool_name = input_models.meta.asn_table.asn_pool
-                result.meta.asn.table_name = os.path.basename(input_data)
-                result.meta.filename = input_models.meta.asn_table.products[0].name
-            except Exception:
-                pass
-
             self.source_catalog(result)
-            # NOTE: source_catalog step writes out the catalog in .ecsv format
-            # In the future it would be nice if it was returned to the pipeline,
-            # and then written here.  A datamodel for .ecsv might be required.
-
-        self.log.info('Ending calwebb_image3')
