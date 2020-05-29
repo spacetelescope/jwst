@@ -1,5 +1,3 @@
-import os
-
 from ..stpipe import Pipeline
 from .. import datamodels
 from ..lib.exposure_types import is_moving_target
