@@ -76,14 +76,7 @@ jobs:
 
   allow_failures:
     - name: Dev dependencies in requirements-dev.txt
-      env:
-        PIP_DEPENDENCIES="-r requirements-dev.txt .[test]"
-        TEST_COMMAND=pytest
-
     - name: Warnings treated as Exceptions
-      env:
-        TEST_COMMAND="pytest -W error"
-
     - name: Windows
 
 before_install:
