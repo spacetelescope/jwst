@@ -6,6 +6,13 @@ associations
 
 - Update diagrams to change sloper to detector1. [#4986]
 
+datamodels
+----------
+
+- Added methods ``Model.info`` and ``Model.search``. [#4660]
+
+- Trimmed MT_RA, MT_DEC keyword comments to fit within FITS record. [#4994]
+
 extract_1d
 ----------
 
@@ -16,10 +23,10 @@ coron
 
 - Fix bug in creating a polynomial fit used in background extraction. [#4970]
 
-datamodels
-----------
+stpipe
+------
 
-- Added methods ``Model.info`` and ``Model.search``. [#4660]
+- Remove further sloper references. [#4989]
 
 0.16.1 (2020-05-19)
 ===================

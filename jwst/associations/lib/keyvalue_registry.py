@@ -1,12 +1,7 @@
 """Key/Value Registry"""
 
-try:
-    from collections import UserDict
-except ImportError:
-    from UserDict import IterableUserDict
+from collections import UserDict
 
-    class UserDict(IterableUserDict, object):
-        pass
 
 __all__ = [
     'KeyValueRegistry',

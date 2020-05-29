@@ -5,17 +5,8 @@ import logging
 from logging.config import dictConfig
 from collections import defaultdict
 
-try:
-    from functools import partialmethod
-except ImportError:
-    from functools import partial
+from functools import partialmethod
 
-    class partialmethod(partial):
-        def __get__(self, instance, owner):
-            if instance is None:
-                return self
-            return partial(self.func, instance,
-                           *(self.args or ()), **(self.keywords or {}))
 
 __all__ = ['log_config']
 

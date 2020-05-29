@@ -41,7 +41,7 @@ jobs:
       env:
         TEST_COMMAND="pytest -W error"
 
-    - name: Documentation
+    - name: Documentation build
       env:
         PIP_DEPENDENCIES=.[docs]
         TEST_COMMAND="make html --directory=docs"
@@ -56,6 +56,11 @@ jobs:
       env:
         PIP_DEPENDENCIES=flake8
         TEST_COMMAND=flake8
+
+    - name: Verify install_requires in setup.py
+      env:
+        PIP_DEPENDENCIES=.
+        TEST_COMMAND=verify_install_requires
 
   allow_failures:
     - name: Dev dependencies in requirements-dev.txt
