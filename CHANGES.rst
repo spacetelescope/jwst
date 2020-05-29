@@ -6,6 +6,11 @@ associations
 
 - Update diagrams to change sloper to detector1. [#4986]
 
+pipeline
+--------
+
+- Refactor the ``Image3Pipeline`` to use ``stpipe`` infrastructure. [#4990]
+
 datamodels
 ----------
 
