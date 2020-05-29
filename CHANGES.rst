@@ -6,11 +6,6 @@ associations
 
 - Update diagrams to change sloper to detector1. [#4986]
 
-pipeline
---------
-
-- Refactor the ``Image3Pipeline`` to use ``stpipe`` infrastructure. [#4990]
-
 datamodels
 ----------
 
@@ -22,6 +17,11 @@ extract_1d
 ----------
 
 - Fix bug in creating a polynomial fit used in background extraction. [#4970]
+
+pipeline
+--------
+
+- Refactor the ``Image3Pipeline`` to use ``stpipe`` infrastructure. [#4990]
 
 stpipe
 ------
