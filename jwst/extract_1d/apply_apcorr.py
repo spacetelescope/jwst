@@ -64,6 +64,13 @@ class ApCorrBase(abc.ABC):
 
         self.match_keys = self._get_match_keys()
         self.match_pars = self._get_match_pars()
+
+        # In do_extract1d, occasionally the slit is given as exptype and should not be used for filtering
+        slit = match_kwargs.get('slit')
+
+        if slit == self.model.meta.exposure.type:
+            del match_kwargs['slit']
+
         self.match_pars.update(match_kwargs)
 
         self.reference = self._reduce_reftable()
