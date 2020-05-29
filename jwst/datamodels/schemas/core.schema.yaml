@@ -386,6 +386,7 @@ properties:
             type: string
             fits_keyword: MODULE
             blend_table: True
+            blend_rule: multi
           channel:
             title: Instrument channel
             type: string

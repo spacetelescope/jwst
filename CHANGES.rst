@@ -9,7 +9,7 @@ associations
 datamodels
 ----------
 
-- Add blend rule for detector. [#4998]
+- Add blend rule for DETECTOR and MODULE. [#4998]
 
 - Added methods ``Model.info`` and ``Model.search``. [#4660]
 
