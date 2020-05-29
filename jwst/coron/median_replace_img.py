@@ -4,8 +4,6 @@
 import logging
 import numpy as np
 
-from scipy.ndimage import median_filter
-
 from jwst.datamodels import dqflags
 
 log = logging.getLogger(__name__)
@@ -49,30 +47,31 @@ def median_fill_value(input_array, input_dq_array, bsize, xc, yc):
     return median_value
 
 
-def smooth_psf(psf_model, box_size):
-    """ Routine to median smooth the psf images after flagging and replacing the bad pixels.
+def median_replace_img(img_model, box_size):
+    """ Routine to replace any bad pixels with the median value of the surrounding
+        pixels.
         Arguments:
         ----------
-        input_array : psf model
+        input_array : image model
             Input array to filter.
         box_size : scalar
             box size for the median smoothing
     """
 
-    n_ints, _, _ = psf_model.data.shape
+    n_ints, _, _ = img_model.data.shape
     for nimage in range(n_ints):
-        psf_int = psf_model.data[nimage]
-        psf_dq = psf_model.dq[nimage]
-        bad_locations  = np.where(np.equal(psf_dq, dqflags.pixel['DO_NOT_USE']))
-        if bad_locations:
+        img_int = img_model.data[nimage]
+        img_dq = img_model.dq[nimage]
+        # check to see if any of the pixels are flagged
+        if np.count_nonzero(img_dq == dqflags.pixel['DO_NOT_USE']) > 0:
+            bad_locations  = np.where(np.equal(img_dq, dqflags.pixel['DO_NOT_USE']))
             # fill the bad pixel values with the media of the data in a box region
             for i_pos in range(len(bad_locations[0])):
                 x_box_pos = bad_locations[0][i_pos]
                 y_box_pos = bad_locations[1][i_pos]
-                median_fill = median_fill_value(psf_int, psf_dq, box_size, x_box_pos, y_box_pos)
-                psf_int[x_box_pos, y_box_pos] = median_fill
+                median_fill = median_fill_value(img_int, img_dq, box_size, x_box_pos, y_box_pos)
+                img_int[x_box_pos, y_box_pos] = median_fill
 
-        psf_smooth = median_filter(psf_int, box_size)
-        psf_model.data[nimage] = psf_smooth
+        img_model.data[nimage] = img_int
 
-    return psf_model
+    return img_model

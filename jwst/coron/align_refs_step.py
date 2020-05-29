@@ -2,7 +2,7 @@
 from ..stpipe import Step
 from .. import datamodels
 from . import imageregistration
-from . smooth_psf import smooth_psf
+from . median_replace_img import median_replace_img
 
 __all__ = ["AlignRefsStep"]
 
@@ -42,14 +42,13 @@ class AlignRefsStep(Step):
             psf_model = datamodels.open(psf)
 
             # Retrieve the lenth of the smoothing box for the filter
-            try:
-                box_size = self.smoothing_length
-            except AttributeError:
-                box_size = 4
-                self.log.warning('Smoothing length not found, set to default')
+            box_size = self.smoothing_box_length
 
             # Smooth the psf images
-            psf_model = smooth_psf(psf_model, box_size)
+            psf_model = median_replace_img(psf_model, box_size)
+
+            # Smooth the target image
+            target_model = median_replace_img(target_model, box_size)
 
             # Call the alignment routine
             result = imageregistration.align_models(target_model, psf_model,
