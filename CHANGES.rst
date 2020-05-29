@@ -20,6 +20,11 @@ extract_1d
 
 - Fix bug in creating a polynomial fit used in background extraction. [#4970]
 
+pipeline
+--------
+
+- Refactor the ``Image3Pipeline`` to use ``stpipe`` infrastructure. [#4990]
+
 stpipe
 ------
 
