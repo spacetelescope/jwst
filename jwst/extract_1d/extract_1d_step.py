@@ -126,7 +126,7 @@ class Extract1dStep(Step):
 
             # This is the branch MRS and WFSS data take
             if len(input_model) > 1:
-                self.log.debug(f"Input contains {input_model} items", len(input_model))
+                self.log.debug(f"Input contains {len(input_model)} items")
 
                 if input_model[0].meta.exposure.type in extract.WFSS_EXPTYPES:
 
@@ -134,7 +134,7 @@ class Extract1dStep(Step):
                     # SourceContainer, which contains a list of multiple
                     # SlitModels for a single source. Send the whole list
                     # into extract1d and put all results in a single product.
-                    apcorr_ref = self.get_reference_file(input_model, 'apcorr')
+                    apcorr_ref = self.get_reference_file(input_model[0], 'apcorr')
                     extract_ref = 'N/A'
                     self.log.info('No EXTRACT1D reference file will be used')
 

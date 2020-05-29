@@ -2911,7 +2911,7 @@ def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order
             spec.dispersion_direction = extract_params['dispaxis']
             copy_keyword_info(slit, slit.name, spec)
 
-            if source_type.upper() == 'POINT' and apcorr_table is not None:
+            if source_type is not None and source_type.upper() == 'POINT' and apcorr_table is not None:
                 log.info('Applying Aperture correction.')
                 apcorr = select_apcorr(input_model)(
                     input_model, apcorr_table, apcorr_sizeunits, slit=slit.name, location=(ra, dec)
