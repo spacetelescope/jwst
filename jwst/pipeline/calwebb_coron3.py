@@ -144,8 +144,11 @@ class Coron3Pipeline(Pipeline):
                 result.meta.filename))
             blendmeta.blendmodels(result, inputs=targ_files)
 
-        result.meta.asn.pool_name = asn['asn_pool']
-        result.meta.asn.table_name = op.basename(input)
+        try:
+            result.meta.asn.pool_name = asn['asn_pool']
+            result.meta.asn.table_name = op.basename(input)
+        except AttributeError:
+            self.log.debug(f'Cannot set association information on final result {result}')
 
         # Save the final result
         self.save_model(result, suffix=self.suffix)
