@@ -1,4 +1,4 @@
-""" Smooth and align psf image with target image."""
+""" Replace bad pixels and align psf image with target image."""
 from ..stpipe import Step
 from .. import datamodels
 from . import imageregistration
@@ -15,7 +15,7 @@ class AlignRefsStep(Step):
     """
 
     spec = """
-        smoothing_box_length = integer(default=4,min=0) # Smoothing kernel
+        median_box_length = integer(default=4,min=0) # box size for the median filter
     """
 
     reference_file_types = ['psfmask']
@@ -41,13 +41,13 @@ class AlignRefsStep(Step):
             # Open the input psf images
             psf_model = datamodels.open(psf)
 
-            # Retrieve the lenth of the smoothing box for the filter
-            box_size = self.smoothing_box_length
+            # Retrieve the box size for the filter
+            box_size = self.median_box_length
 
-            # Smooth the psf images
+            # PSF images to correct
             psf_model = median_replace_img(psf_model, box_size)
 
-            # Smooth the target image
+            # Target image to correct
             target_model = median_replace_img(target_model, box_size)
 
             # Call the alignment routine

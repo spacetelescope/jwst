@@ -1,5 +1,5 @@
 """Replace bad pixels with the median of the surrounding pixel and median fill
-   smooth the psf images.
+   the input images.
  """
 import logging
 import numpy as np
@@ -41,7 +41,7 @@ def median_fill_value(input_array, input_dq_array, bsize, xc, yc):
 
     if np.isnan(median_value):
         # If the median fails return 0
-        log.warning('Median filter returned N/A setting value to 0.')
+        log.warning('Median filter returned NaN setting value to 0.')
         median_value = 0.
 
     return median_value
@@ -55,7 +55,7 @@ def median_replace_img(img_model, box_size):
         input_array : image model
             Input array to filter.
         box_size : scalar
-            box size for the median smoothing
+            box size for the median filter
     """
 
     n_ints, _, _ = img_model.data.shape
@@ -65,7 +65,7 @@ def median_replace_img(img_model, box_size):
         # check to see if any of the pixels are flagged
         if np.count_nonzero(img_dq == dqflags.pixel['DO_NOT_USE']) > 0:
             bad_locations  = np.where(np.equal(img_dq, dqflags.pixel['DO_NOT_USE']))
-            # fill the bad pixel values with the media of the data in a box region
+            # fill the bad pixel values with the median of the data in a box region
             for i_pos in range(len(bad_locations[0])):
                 x_box_pos = bad_locations[0][i_pos]
                 y_box_pos = bad_locations[1][i_pos]
