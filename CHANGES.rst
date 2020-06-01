@@ -6,6 +6,11 @@ associations
 
 - Update diagrams to change sloper to detector1. [#4986]
 
+coron3
+------
+
+- Blend headers just from each input science model, not every integration. [#5007]
+
 datamodels
 ----------
 
