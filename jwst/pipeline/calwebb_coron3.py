@@ -107,33 +107,34 @@ class Coron3Pipeline(Pipeline):
         # once for each input target exposure
         resample_input = datamodels.ModelContainer()
         for target_file in targ_files:
+            with datamodels.open(target_file) as target:
 
-            # Remove outliers from the target.
-            target = self.outlier_detection(target_file)
+                # Remove outliers from the target.
+                target = self.outlier_detection(target)
 
-            # Call align_refs
-            psf_aligned = self.align_refs(target, psf_stack)
+                # Call align_refs
+                psf_aligned = self.align_refs(target, psf_stack)
 
-            # Save the alignment results
-            self.save_model(
-                psf_aligned, output_file=target_file,
-                suffix='psfalign', acid=acid
-            )
+                # Save the alignment results
+                self.save_model(
+                    psf_aligned, output_file=target_file,
+                    suffix='psfalign', acid=acid
+                )
 
-            # Call KLIP
-            psf_sub = self.klip(target, psf_aligned)
-            psf_aligned.close()
+                # Call KLIP
+                psf_sub = self.klip(target, psf_aligned)
+                psf_aligned.close()
 
-            # Save the psf subtraction results
-            self.save_model(
-                psf_sub, output_file=target_file,
-                suffix='psfsub', acid=acid
-            )
+                # Save the psf subtraction results
+                self.save_model(
+                    psf_sub, output_file=target_file,
+                    suffix='psfsub', acid=acid
+                )
 
-            # Split out the integrations into separate models
-            # in a ModelContainer to pass to `resample`
-            for model in psf_sub.to_container():
-                resample_input.append(model)
+                # Split out the integrations into separate models
+                # in a ModelContainer to pass to `resample`
+                for model in psf_sub.to_container():
+                    resample_input.append(model)
 
         # Call the resample step to combine all psf-subtracted target images
         result = self.resample(resample_input)
