@@ -9,6 +9,8 @@ associations
 datamodels
 ----------
 
+- Add blend rule for DETECTOR and MODULE. [#4998]
+
 - Added methods ``Model.info`` and ``Model.search``. [#4660]
 
 - Trimmed MT_RA, MT_DEC keyword comments to fit within FITS record. [#4994]
@@ -22,6 +24,11 @@ coron
 - Bad pixel replacment & median smoothing for psf images [#4973]
 
 - Fix bug in creating a polynomial fit used in background extraction. [#4970]
+
+pipeline
+--------
+
+- Refactor the ``Image3Pipeline`` to use ``stpipe`` infrastructure. [#4990]
 
 stpipe
 ------
