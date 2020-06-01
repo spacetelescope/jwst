@@ -44,10 +44,10 @@ class AlignRefsStep(Step):
             # Retrieve the box size for the filter
             box_size = self.median_box_length
 
-            # PSF images to correct
+            # Replace bad pixels in the psf images
             psf_model = median_replace_img(psf_model, box_size)
 
-            # Target image to correct
+            # Replace bad pixels in the target images
             target_model = median_replace_img(target_model, box_size)
 
             # Call the alignment routine
