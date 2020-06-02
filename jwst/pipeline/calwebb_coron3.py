@@ -56,9 +56,10 @@ class Coron3Pipeline(Pipeline):
         prod = asn['products'][0]
         self.output_file = prod.get('name', self.output_file)
 
-        # Setup required output products
+        # Setup required output products and formats
         self.outlier_detection.suffix = f'{acid}_crfints'
         self.outlier_detection.save_results = self.save_results
+        self.resample.blendheaders = False
 
         # Construct lists of all the PSF and science target members
         psf_files = [m['expname'] for m in prod['members']
@@ -107,45 +108,53 @@ class Coron3Pipeline(Pipeline):
         # once for each input target exposure
         resample_input = datamodels.ModelContainer()
         for target_file in targ_files:
+            with datamodels.open(target_file) as target:
 
-            # Remove outliers from the target.
-            target = self.outlier_detection(target_file)
+                # Remove outliers from the target.
+                target = self.outlier_detection(target)
 
-            # Call align_refs
-            psf_aligned = self.align_refs(target, psf_stack)
+                # Call align_refs
+                psf_aligned = self.align_refs(target, psf_stack)
 
-            # Save the alignment results
-            self.save_model(
-                psf_aligned, output_file=target_file,
-                suffix='psfalign', acid=acid
-            )
+                # Save the alignment results
+                self.save_model(
+                    psf_aligned, output_file=target_file,
+                    suffix='psfalign', acid=acid
+                )
 
-            # Call KLIP
-            psf_sub = self.klip(target, psf_aligned)
-            psf_aligned.close()
+                # Call KLIP
+                psf_sub = self.klip(target, psf_aligned)
+                psf_aligned.close()
 
-            # Save the psf subtraction results
-            self.save_model(
-                psf_sub, output_file=target_file,
-                suffix='psfsub', acid=acid
-            )
+                # Save the psf subtraction results
+                self.save_model(
+                    psf_sub, output_file=target_file,
+                    suffix='psfsub', acid=acid
+                )
 
-            # Split out the integrations into separate models
-            # in a ModelContainer to pass to `resample`
-            for model in psf_sub.to_container():
-                resample_input.append(model)
+                # Split out the integrations into separate models
+                # in a ModelContainer to pass to `resample`
+                for model in psf_sub.to_container():
+                    resample_input.append(model)
 
         # Call the resample step to combine all psf-subtracted target images
         result = self.resample(resample_input)
 
-        # If resampling was skipped, need to blend headers anyways.
-        if result == resample_input:
-            self.log.debug('Blending metadata for {}'.format(
-                result.meta.filename))
+        # Blend the science headers
+        try:
+            completed = result.meta.cal_step.resample
+        except AttributeError:
+            self.log.debug('Could not determine whether resample was completed. Presuming not.')
+            completed = 'SKIPPED'
+        if completed == 'COMPLETE':
+            self.log.debug(f'Blending metadata for {result}')
             blendmeta.blendmodels(result, inputs=targ_files)
 
-        result.meta.asn.pool_name = asn['asn_pool']
-        result.meta.asn.table_name = op.basename(input)
+        try:
+            result.meta.asn.pool_name = asn['asn_pool']
+            result.meta.asn.table_name = op.basename(input)
+        except AttributeError:
+            self.log.debug(f'Cannot set association information on final result {result}')
 
         # Save the final result
         self.save_model(result, suffix=self.suffix)
