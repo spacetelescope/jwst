@@ -25,7 +25,7 @@ pipeline
 
 - Refactor the ``Image3Pipeline`` to use ``stpipe`` infrastructure. [#4990]
 
-- Blend headers just from each input science model, not every integration. [#5007]
+- Fix ``Coron3Pipeline`` to blend headers just from each input science model, not every integration. [#5007]
 
 stpipe
 ------
