@@ -550,10 +550,12 @@ def from_fits(hdulist, schema, context, **kwargs):
     except Exception as exc:
         raise exc.__class__("ERROR loading embedded ASDF: " + str(exc)) from exc
 
-    known_keywords, known_datas = _load_from_schema(
-        hdulist, schema, ff.tree, context
-    )
-    _load_extra_fits(hdulist, known_keywords, known_datas, ff.tree)
+    no_fits_update = kwargs.pop('no_fits_update', False)
+    if not len(ff.tree) or not no_fits_update:
+        known_keywords, known_datas = _load_from_schema(
+            hdulist, schema, ff.tree, context
+        )
+        _load_extra_fits(hdulist, known_keywords, known_datas, ff.tree)
 
     _load_history(hdulist, ff.tree)
 
