@@ -42,8 +42,10 @@ various science target and reference PSF exposures to be processed.
 
 Arguments
 ---------
-The ``calwebb_coron3`` pipeline does not have any optional arguments.
+The ``calwebb_coron3`` pipeline pipeline has one optional argument::
 
+  --median_box_length  integer  default=4
+  
 Inputs
 ------
 
@@ -121,11 +123,17 @@ ASN file, e.g. "jw86073-a3001_t001_nircam_f140m-maskbar_psfstack.fits."
 :Data model: `~jwst.datamodels.QuadModel`
 :File suffix: _psfalign
 
-For each science target exposure, all of the reference PSF images in the
-"_psfstack" product are aligned to each science target integration and saved to
-a 4D "_psfalign" product by the :ref:`align_refs <align_refs_step>` step. The output file
-name is exposure-based, with the addition of the associated candidate ID, e.g.
-"jw8607342001_02102_00001_nrcb3_a3001_psfalign.fits."
+For each science target exposure, all of the reference PSF images in
+the "_psfstack" product are aligned to each science target integration
+and saved to a 4D "_psfalign" product by the :ref:`align_refs
+<align_refs_step>` step. If the target or PSF images have any of the
+data quality flags set to "DO_NOT_USE" these pixels are replaced with
+the median value of a region around the flagged data. The size of the
+box region to use for the replacement can be specified.  These
+corrected images are using in the :ref:`align_refs <align_refs_step>`
+step and passed along for subsequent processing.  The output file name
+is exposure-based, with the addition of the associated candidate ID,
+e.g.  "jw8607342001_02102_00001_nrcb3_a3001_psfalign.fits."
 
 3D PSF-subtracted images
 ^^^^^^^^^^^^^^^^^^^^^^^^
