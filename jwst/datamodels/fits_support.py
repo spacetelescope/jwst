@@ -447,9 +447,15 @@ def _schema_has_fits_hdu(schema):
     return has_fits_hdu[0]
 
 
-def _load_from_schema(hdulist, schema, tree, context):
+def _load_from_schema(hdulist, schema, tree, context, skip_fits_update=False):
     known_keywords = {}
     known_datas = set()
+
+    # Check if there are any table HDU's. If not, this whole process
+    # can be skipped.
+    if skip_fits_update and \
+       not any(isinstance(hdu, fits.BinTableHDU) for hdu in hdulist if hdu.name != 'ASDF'):
+        return known_keywords, known_datas
 
     # Determine maximum EXTVER that could be used in finding named HDU's.
     # This is needed to constrain the loop over HDU's when resolving arrays.
@@ -457,7 +463,7 @@ def _load_from_schema(hdulist, schema, tree, context):
 
     def callback(schema, path, combiner, ctx, recurse):
         result = None
-        if 'fits_keyword' in schema:
+        if not skip_fits_update and 'fits_keyword' in schema:
             fits_keyword = schema['fits_keyword']
             result = _fits_keyword_loader(
                 hdulist, fits_keyword, schema,
@@ -576,6 +582,7 @@ def from_fits(hdulist, schema, context, skip_fits_update=None, **kwargs):
     # Determine whether skipping the FITS loading can be done.
     if skip_fits_update is None:
         skip_fits_update = util.get_envar_as_boolean('SKIP_FITS_UPDATE', False)
+    skip_fits_update = skip_fits_update and len(ff.tree)
     if skip_fits_update:
         hdulist_class = util._class_from_model_type(hdulist)
         if hdulist_class is None:
@@ -583,12 +590,10 @@ def from_fits(hdulist, schema, context, skip_fits_update=None, **kwargs):
         else:
             skip_fits_update = isinstance(context, hdulist_class)
 
-    # Load from FITS unless otherwise directed.
-    if not len(ff.tree) or not skip_fits_update:
-        known_keywords, known_datas = _load_from_schema(
-            hdulist, schema, ff.tree, context
-        )
-        _load_extra_fits(hdulist, known_keywords, known_datas, ff.tree)
+    known_keywords, known_datas = _load_from_schema(
+        hdulist, schema, ff.tree, context, skip_fits_update=skip_fits_update
+    )
+    _load_extra_fits(hdulist, known_keywords, known_datas, ff.tree)
 
     _load_history(hdulist, ff.tree)
 
