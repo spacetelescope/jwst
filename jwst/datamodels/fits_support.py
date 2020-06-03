@@ -568,14 +568,22 @@ def from_fits(hdulist, schema, context, skip_fits_update=None, **kwargs):
         When `None`, the value is taken from the environmental SKIP_FITS_UPDATE.
         Otherwise, the default is `False`
     """
-    if skip_fits_update is None:
-        skip_fits_update = util.get_envar_as_boolean('SKIP_FITS_UPDATE', False)
-
     try:
         ff = from_fits_asdf(hdulist, **kwargs)
     except Exception as exc:
         raise exc.__class__("ERROR loading embedded ASDF: " + str(exc)) from exc
 
+    # Determine whether skipping the FITS loading can be done.
+    if skip_fits_update is None:
+        skip_fits_update = util.get_envar_as_boolean('SKIP_FITS_UPDATE', False)
+    if skip_fits_update:
+        hdulist_class = util._class_from_model_type(hdulist)
+        if hdulist_class is None:
+            skip_fits_update = False
+        else:
+            skip_fits_update = isinstance(context, hdulist_class)
+
+    # Load from FITS unless otherwise directed.
     if not len(ff.tree) or not skip_fits_update:
         known_keywords, known_datas = _load_from_schema(
             hdulist, schema, ff.tree, context
