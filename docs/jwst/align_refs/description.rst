@@ -21,14 +21,21 @@ function and the computed sub-pixel offsets.
 
 Arguments
 ---------
-The ``align_refs`` step does not have any step-specific arguments.
+The ``align_refs`` step  has one optional argument::
+
+  --median_box_length  integer  default=4
 
 Inputs
 ------
 
 The ``align_refs`` step takes 2 inputs: a science target exposure containing a 3D
 stack of calibrated per-integration images and a "_psfstack" product containing a 3D
-stack of reference PSF images.
+stack of reference PSF images. If the target or PSF images have any of the
+data quality flags set to "DO_NOT_USE" these pixels are replaced with
+the median value of a region around the flagged data. The size of the
+box region to use for the replacement can be specified.  These
+corrected images are using in the :ref:`align_refs <align_refs_step>`
+step and passed along for subsequent processing.  
 
 3D calibrated images
 ^^^^^^^^^^^^^^^^^^^^
