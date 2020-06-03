@@ -34,7 +34,9 @@ def assign_moving_target_wcs(input_model):
     if (None in mt_ra) or (None in mt_dec):
         log.warning("One or more MT RA/Dec values missing in input images")
         log.warning("Step will be skipped, resulting in target misalignment")
-        return None
+        for model in input_model:
+            model.meta.cal_step.assign_mtwcs = 'SKIPPED'
+        return input_model
     else:
         mt_avra = mt_ra.mean()
         mt_avdec = mt_dec.mean()

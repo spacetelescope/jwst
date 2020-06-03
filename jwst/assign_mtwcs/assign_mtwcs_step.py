@@ -40,10 +40,4 @@ class AssignMTWcsStep(Step):
         # Apply the step
         result = assign_moving_target_wcs(input)
 
-        # Check for a null result
-        if result is None:
-            for model in input:
-                model.meta.cal_step.assign_mtwcs = 'SKIPPED'
-            return input
-
         return result
