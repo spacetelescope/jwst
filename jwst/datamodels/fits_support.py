@@ -544,14 +544,39 @@ def _load_history(hdulist, tree):
         history['entries'].append(HistoryEntry({'description': entry}))
 
 
-def from_fits(hdulist, schema, context, **kwargs):
+def from_fits(hdulist, schema, context, skip_fits_update=None, **kwargs):
+    """Read model information from a FITS HDU list
+
+    Parameters
+    ----------
+    hdulist : astropy.io.fits.HDUList
+        The FITS HDUList
+
+    schema : dict
+        The schema defininging the FITS->ASDF mapping
+
+    context: DataModel
+        The `DataModel` to update
+
+
+    skip_fits_update : bool or None
+        When `False`, models opened from FITS files will proceed
+        and load the FITS header values into the model.
+        When `True` and the FITS file has an ASDF extension, the
+        loading/validation of the FITS header will be skipped, loading
+        the model only from the ASDF extension.
+        When `None`, the value is taken from the environmental SKIP_FITS_UPDATE.
+        Otherwise, the default is `False`
+    """
+    if skip_fits_update is None:
+        skip_fits_update = util.get_envar_as_boolean('SKIP_FITS_UPDATE', False)
+
     try:
         ff = from_fits_asdf(hdulist, **kwargs)
     except Exception as exc:
         raise exc.__class__("ERROR loading embedded ASDF: " + str(exc)) from exc
 
-    no_fits_update = kwargs.pop('no_fits_update', False)
-    if not len(ff.tree) or not no_fits_update:
+    if not len(ff.tree) or not skip_fits_update:
         known_keywords, known_datas = _load_from_schema(
             hdulist, schema, ff.tree, context
         )

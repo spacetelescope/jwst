@@ -4,6 +4,7 @@ Various utility functions and data types
 
 import sys
 import warnings
+import os
 from os.path import basename
 
 import numpy as np
@@ -444,3 +445,30 @@ def create_history_entry(description, software=None):
     if software is not None:
         entry['software'] = software
     return entry
+
+
+def get_envar_as_boolean(name, default=False):
+    """Interpret an environmental as a boolean flag
+
+    Truth is any numeric value that is not 0 or
+    any of the following case-insensitive strings:
+
+    ('true', 't', 'yes', 'y')
+
+    Parameters
+    ----------
+    name : str
+        The name of the environmental variable to retrieve
+
+    default : bool
+        If the value cannot be determined, use as the default.
+    """
+    truths = ('true', 't', 'yes', 'y')
+    if name in os.environ:
+        value = os.environ[name]
+        try:
+            value = bool(int(value))
+        except ValueError:
+            return value.lower() in truths
+        return value
+    return default
