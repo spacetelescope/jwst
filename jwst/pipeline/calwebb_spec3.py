@@ -227,7 +227,7 @@ class Spec3Pipeline(Pipeline):
                     'Resampling was not completed. Skipping extract_1d.'
                 )
 
-        source_models.close()
+        input_models.close()
 
         self.log.info('Ending calwebb_spec3')
         return
