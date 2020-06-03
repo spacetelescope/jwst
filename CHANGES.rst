@@ -1,6 +1,11 @@
 0.16.2 (unreleased)
 ===================
 
+assign_mtwcs
+------------
+
+- Skip the step if any input MT_RA/DEC keyword values are missing. [#5015]
+
 associations
 ------------
 
