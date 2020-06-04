@@ -453,9 +453,11 @@ def _load_from_schema(hdulist, schema, tree, context, skip_fits_update=False):
 
     # Check if there are any table HDU's. If not, this whole process
     # can be skipped.
-    if skip_fits_update and \
-       not any(isinstance(hdu, fits.BinTableHDU) for hdu in hdulist if hdu.name != 'ASDF'):
-        return known_keywords, known_datas
+    if skip_fits_update:
+        if not any(isinstance(hdu, fits.BinTableHDU) for hdu in hdulist if hdu.name != 'ASDF'):
+            log.debug('Skipping FITS updating completely.')
+            return known_keywords, known_datas
+        log.debug('Skipping FITS keyword updating. FITS Table and data HDU updating will occur.')
 
     # Determine maximum EXTVER that could be used in finding named HDU's.
     # This is needed to constrain the loop over HDU's when resolving arrays.
@@ -580,15 +582,9 @@ def from_fits(hdulist, schema, context, skip_fits_update=None, **kwargs):
         raise exc.__class__("ERROR loading embedded ASDF: " + str(exc)) from exc
 
     # Determine whether skipping the FITS loading can be done.
-    if skip_fits_update is None:
-        skip_fits_update = util.get_envar_as_boolean('SKIP_FITS_UPDATE', False)
-    skip_fits_update = skip_fits_update and len(ff.tree)
-    if skip_fits_update:
-        hdulist_class = util._class_from_model_type(hdulist)
-        if hdulist_class is None:
-            skip_fits_update = False
-        else:
-            skip_fits_update = isinstance(context, hdulist_class)
+    skip_fits_update = _verify_skip_fits_update(
+        skip_fits_update, hdulist, ff, context
+    )
 
     known_keywords, known_datas = _load_from_schema(
         hdulist, schema, ff.tree, context, skip_fits_update=skip_fits_update
@@ -634,3 +630,35 @@ def from_fits_hdu(hdu, schema):
         data._coldefs._listeners = listeners
 
     return data
+
+
+def _verify_skip_fits_update(skip_fits_update, hdulist, ff, context):
+    """Ensure all conditions for skipping FITS updating are true"""
+    if skip_fits_update is None:
+        skip_fits_update = util.get_envar_as_boolean('SKIP_FITS_UPDATE', False)
+    if not skip_fits_update:
+        return False
+
+    # Need an already existing ASDF
+    if not len(ff.tree):
+        log.debug('`skip_fits_update` requested.'
+                  ' However, input FITS file has no ASDF extension'
+                  ' requiring full FITS updating.')
+        return False
+
+    # Ensure model types match
+    hdulist_class = util._class_from_model_type(hdulist)
+    if hdulist_class is None:
+        log.debug('`skip_fits_update` requested.'
+                  ' However cannot determine model of the FITS file'
+                  ' requiring full FITS updating.')
+        return False
+    if not isinstance(context, hdulist_class):
+        log.debug('`skip_fits_update` requested'
+                  f' However input model {hdulist_class} does not match the'
+                  f' requested model {type(context)}'
+                  ' requiring full FITS updating.')
+        return False
+
+    # All conditions are good. Go ahead and skip
+    return True
