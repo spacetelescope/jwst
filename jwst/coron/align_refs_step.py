@@ -1,6 +1,8 @@
+""" Replace bad pixels and align psf image with target image."""
 from ..stpipe import Step
 from .. import datamodels
 from . import imageregistration
+from . median_replace_img import median_replace_img
 
 __all__ = ["AlignRefsStep"]
 
@@ -13,6 +15,7 @@ class AlignRefsStep(Step):
     """
 
     spec = """
+        median_box_length = integer(default=4,min=0) # box size for the median filter
     """
 
     reference_file_types = ['psfmask']
@@ -37,6 +40,15 @@ class AlignRefsStep(Step):
 
             # Open the input psf images
             psf_model = datamodels.open(psf)
+
+            # Retrieve the box size for the filter
+            box_size = self.median_box_length
+
+            # Replace bad pixels in the psf images
+            psf_model = median_replace_img(psf_model, box_size)
+
+            # Replace bad pixels in the target images
+            target_model = median_replace_img(target_model, box_size)
 
             # Call the alignment routine
             result = imageregistration.align_models(target_model, psf_model,

@@ -129,7 +129,7 @@ _calculated_suffixes = set([
     'flat_field',
     'guidercdsstep',
     'mrsimatchstep',
-    'alignrefs',
+    'align_refs',
     'dqinitstep',
     'outlierdetectionscaledstep',
     'superbias',

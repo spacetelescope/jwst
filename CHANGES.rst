@@ -23,6 +23,11 @@ datamodels
 extract_1d
 ----------
 
+coron
+-----
+
+- Bad pixel replacment & median smoothing for psf images [#4973]
+
 - Fix bug in creating a polynomial fit used in background extraction. [#4970]
 
 master_background
