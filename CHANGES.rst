@@ -25,12 +25,21 @@ extract_1d
 
 - Fix bug in creating a polynomial fit used in background extraction. [#4970]
 
+master_background
+-----------------
+
+- Fix open files bug [#4995]
+
 pipeline
 --------
 
 - Refactor the ``Image3Pipeline`` to use ``stpipe`` infrastructure. [#4990]
 
-- Fix ``Coron3Pipeline`` to blend headers just from each input science model, not every integration. [#5007]
+- Fix ``Coron3Pipeline`` to blend headers just from each input science model,
+  not every integration. [#5007]
+
+- Fix open files bug in ``get_config_from_reference`` class method, and in
+  ``Spec2Pipeline``, ``Spec3Pipeline`` and ``tso3``. [#4995]
 
 stpipe
 ------
