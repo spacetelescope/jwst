@@ -1,7 +1,8 @@
 import datetime
+import hashlib
 import os
-import re
 from pkg_resources import parse_version
+import re
 
 import numpy as np
 from astropy.io import fits
@@ -63,6 +64,9 @@ _keyword_indices = [
     ('n', 10, None),
     ('s', 27, ' ABCDEFGHIJKLMNOPQRSTUVWXYZ')
     ]
+
+# Key where the FITS hash is stored in the ASDF tree
+FITS_HASH_KEY = '_fits_hash'
 
 
 def _get_indexed_keyword(keyword, i):
@@ -658,30 +662,61 @@ def _verify_skip_fits_update(skip_fits_update, hdulist, asdf_struct, context):
         All conditions are satisfied for skipping FITS updating.
     """
     if skip_fits_update is None:
-        skip_fits_update = util.get_envar_as_boolean('SKIP_FITS_UPDATE', False)
-    if not skip_fits_update:
+        skip_fits_update = util.get_envar_as_boolean('SKIP_FITS_UPDATE', None)
+
+    # If skipping has been explicitly disallowed, indicate as such.
+    if skip_fits_update is False:
         return False
 
-    # Need an already existing ASDF
+    # Skipping has either been requested or has been left to be determined automatically.
+    # Continue checking conditions necessary for skipping.
+
+    # Need an already existing ASDF. If not, cannot skip.
     if not len(asdf_struct.tree):
-        log.debug('`skip_fits_update` requested.'
-                  ' However, input FITS file has no ASDF extension'
-                  ' requiring full FITS updating.')
+        log.debug('No ASDF information found. Cannot skip updating from FITS headers.')
         return False
 
     # Ensure model types match
     hdulist_class = util._class_from_model_type(hdulist)
     if hdulist_class is None:
-        log.debug('`skip_fits_update` requested.'
-                  ' However cannot determine model of the FITS file'
-                  ' requiring full FITS updating.')
+        log.debug('Cannot determine model of the FITS file.'
+                  ' Cannot skip updating from FITS headers.')
         return False
     if not isinstance(context, hdulist_class):
-        log.debug('`skip_fits_update` requested'
-                  f' However input model {hdulist_class} does not match the'
-                  f' requested model {type(context)}'
-                  ' requiring full FITS updating.')
+        log.debug(f'Input model {hdulist_class} does not match the'
+                  f' requested model {type(context)}.'
+                  ' Cannot skip updating from FITS headers.')
         return False
 
-    # All conditions are good. Go ahead and skip
-    return True
+    # Check for FITS hash and compare to current. If equal, automatically skip.
+    if asdf_struct.tree.get(FITS_HASH_KEY, None) is not None:
+        if asdf_struct.tree[FITS_HASH_KEY] == fits_hash(hdulist):
+            log.debug('FITS hash matches. Skipping FITS updating.')
+            return True
+
+    # If skip only if explicitly requested.
+    return False if skip_fits_update is None else True
+
+
+def fits_hash(hdulist):
+    """Calculate a hash based on all HDU headers
+
+    Uses basic SHA-256 hash to calculate.
+
+    Parameters
+    ----------
+    hdulist : astropy.fits.HDUList
+        The FITS structure.
+
+    Returns
+    -------
+    fits_hash : str
+        The hash of all HDU headers.
+    """
+    fits_hash = hashlib.sha256()
+    fits_hash.update(''.join(
+        str(hdu.header)
+        for hdu in hdulist
+        if hdu.name != 'ASDF').encode()
+    )
+    return fits_hash.hexdigest()
