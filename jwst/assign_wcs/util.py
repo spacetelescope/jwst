@@ -91,7 +91,7 @@ def reproject(wcs1, wcs2):
     return _reproject
 
 
-def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray]) -> float:
+def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray], spec: bool = False, disp_axis: int = None) -> float:
     """Compute scaling transform.
 
     Parameters
@@ -100,24 +100,39 @@ def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray]) -> float:
         Reference WCS object from which to compute a scaling factor.
 
     fiducial : tuple
-        Input fiducial of (RA, DEC) used in calculating reference points.
+        Input fiducial of (RA, DEC) or (RA, DEC, Wavelength) used in calculating reference points.
+
+    spec : bool
+        Switch to use if input is a spectral WCS
+
+    disp_axis : int
+        Dispersion axis integer. Assumes the same convention as `wcsfino.dispersion_direction`
 
     Returns
     -------
     scale : float
-        Scaling factor for x and y.
+        Scaling factor for x and y or dispersion direction.
 
     """
-    if len(fiducial) != 2:
-        raise ValueError(f'Input fiducial must contain only (RA, DEC); Instead recieved: {fiducial}')
+    if spec and disp_axis is None:
+        raise ValueError(f'If spec is True, a disp_axis must be given')
 
     crpix = np.array(wcs.invert(*fiducial))
-    crpix_with_offsets = np.vstack((crpix, crpix + (1, 0), crpix + (0, 1))).T
+
+    delta = np.zeros_like(crpix)
+    spatial_idx = np.where(np.array(wcs.output_frame.axes_type) == 'SPATIAL')[0]
+    delta[spatial_idx[0]] = 1
+
+    crpix_with_offsets = np.vstack((crpix, crpix + delta, crpix + np.roll(delta, 1))).T
     crval_with_offsets = wcs(*crpix_with_offsets)
 
-    coords = SkyCoord(ra=crval_with_offsets[0], dec=crval_with_offsets[1], unit="deg")
+    coords = SkyCoord(ra=crval_with_offsets[spatial_idx[0]], dec=crval_with_offsets[spatial_idx[1]], unit="deg")
     xscale = np.abs(coords[0].separation(coords[1]).value)
     yscale = np.abs(coords[0].separation(coords[2]).value)
+
+    if spec:
+        # Assuming disp_axis is consistent with DataModel.meta.wcsinfo.dispersion.direction
+        return yscale if disp_axis == 1 else xscale
 
     return np.sqrt(xscale * yscale)
 
