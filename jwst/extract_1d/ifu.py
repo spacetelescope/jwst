@@ -154,10 +154,16 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
 
     if source_type == 'POINT' and apcorr_table is not None:
         log.info('Applying Aperture correction.')
+
+        if instrument == 'NIRSPEC':
+            wl = np.median(wavelength)
+        else:
+            wl = wavelength.min()
+
         apcorr = select_apcorr(input_model)(
-            input_model, apcorr_table, apcorr_sizeunits, slitname=slitname, location=(ra, dec)
+            input_model, apcorr_table, apcorr_sizeunits, slit=slitname, location=(ra, dec, wl)
         )
-        apcorr.apply_apcorr(spec.spec_table)
+        apcorr.apply(spec.spec_table)
 
     output_model.spec.append(spec)
 

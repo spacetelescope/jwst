@@ -2771,9 +2771,7 @@ def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order
             )
 
     # Handle inputs that contain one or more slit models
-    if (was_source_model or
-        isinstance(input_model, datamodels.MultiSlitModel)):
-
+    if (was_source_model or isinstance(input_model, datamodels.MultiSlitModel)):
         if was_source_model:
             # SourceContainer has a single list of SlitModels
             slits = input_model
@@ -2913,8 +2911,13 @@ def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order
 
             if source_type is not None and source_type.upper() == 'POINT' and apcorr_table is not None:
                 log.info('Applying Aperture correction.')
+                if instrument == 'NIRSPEC':
+                    wl = np.median(wavelength)
+                else:
+                    wl = wavelength.min()
+
                 apcorr = select_apcorr(input_model)(
-                    input_model, apcorr_table, apcorr_sizeunits, slit=slit.name, location=(ra, dec)
+                    input_model, apcorr_table, apcorr_sizeunits, location=(ra, dec, wl)
                 )
                 apcorr.apply(spec.spec_table)
 
@@ -3071,7 +3074,18 @@ def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order
 
                 if source_type.upper() == 'POINT' and apcorr_table is not None:
                     log.info('Applying Aperture correction.')
-                    apcorr = select_apcorr(input_model)(input_model, apcorr_table, apcorr_sizeunits, location=(ra, dec))
+
+                    if instrument == 'NIRSPEC':
+                        wl = np.median(wavelength)
+                    else:
+                        wl = wavelength.min()
+
+                    apcorr = select_apcorr(input_model)(
+                        input_model,
+                        apcorr_table,
+                        apcorr_sizeunits,
+                        location=(ra, dec, wl)
+                    )
                     apcorr.apply(spec.spec_table)
 
                 output_model.spec.append(spec)
@@ -3209,8 +3223,18 @@ def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order
 
                     if source_type.upper() == 'POINT' and apcorr_table is not None:
                         log.info('Applying Aperture correction.')
+
+                        if instrument == 'NIRSPEC':
+                            wl = np.median(wavelength)
+                        else:
+                            wl = wavelength.min()
+
+                        match_kwargs = {'location': (ra, dec, wl)}
+                        if exp_type == 'NRS_FIXEDSLIT':
+                            match_kwargs['slit'] = slitname
+
                         apcorr = select_apcorr(input_model)(
-                            input_model, apcorr_table, apcorr_sizeunits, slit=slitname, location=(ra, dec)
+                            input_model, apcorr_table, apcorr_sizeunits, **match_kwargs
                         )
                         apcorr.apply(spec.spec_table)
 
