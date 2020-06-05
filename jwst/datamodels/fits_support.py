@@ -3,10 +3,12 @@ import hashlib
 import os
 from pkg_resources import parse_version
 import re
+import warnings
 
 import numpy as np
 from astropy.io import fits
 from astropy import time
+from astropy.utils.exceptions import AstropyWarning
 import asdf
 from asdf import fits_embed
 from asdf import resolver
@@ -399,6 +401,9 @@ def to_fits(tree, schema):
     _save_extra_fits(hdulist, tree)
     _save_history(hdulist, tree)
 
+    # Store the FITS hash in the tree
+    tree[FITS_HASH_KEY] = fits_hash(hdulist)
+
     asdf = fits_embed.AsdfInFits(hdulist, tree)
     return asdf
 
@@ -714,9 +719,11 @@ def fits_hash(hdulist):
         The hash of all HDU headers.
     """
     fits_hash = hashlib.sha256()
-    fits_hash.update(''.join(
-        str(hdu.header)
-        for hdu in hdulist
-        if hdu.name != 'ASDF').encode()
-    )
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', AstropyWarning)
+        fits_hash.update(''.join(
+            str(hdu.header)
+            for hdu in hdulist
+            if hdu.name != 'ASDF').encode()
+        )
     return fits_hash.hexdigest()
