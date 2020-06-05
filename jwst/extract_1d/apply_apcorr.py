@@ -53,6 +53,8 @@ class ApCorrBase(abc.ABC):
         }
     }
 
+    size_key = None
+
     def __init__(self, input_model: DataModel, apcorr_table: fits.FITS_rec, sizeunits: str,
                  location: Tuple[float, float] = None, **match_kwargs):
         self.correction = None
@@ -64,17 +66,28 @@ class ApCorrBase(abc.ABC):
 
         self.match_keys = self._get_match_keys()
         self.match_pars = self._get_match_pars()
-
-        # In do_extract1d, occasionally the slit is given as exptype and should not be used for filtering
-        slit = match_kwargs.get('slit')
-
-        if slit == self.model.meta.exposure.type:
-            del match_kwargs['slit']
-
         self.match_pars.update(match_kwargs)
 
         self.reference = self._reduce_reftable()
+        self._convert_size_units()
         self.apcorr_func = self.approximate()
+
+    def _convert_size_units(self):
+        """If the SIZE or Radius column is in units of arcseconds, convert to pixels."""
+        if self.apcorr_sizeunits.startswith('arcsec'):
+            if self.location is not None:
+                self.reference[self.size_key] /= compute_scale(
+                    self.model.meta.wcs,
+                    self.location,
+                    spec=True,
+                    disp_axis=self.model.meta.wcsinfo.dispersion_direction
+                )
+            else:
+                raise ValueError(
+                    'If the size column for the input APCORR reference file are in units with arcseconds, a location '
+                    '(RA, DEC, wavelength) must be provided in order to compute a pixel scale to convert arcseconds to '
+                    'pixels.'
+                )
 
     def _get_match_keys(self) -> dict:
         """Get column keys needed for reducing the reference table based on input."""
@@ -148,19 +161,12 @@ class ApCorrPhase(ApCorrBase):
         See ApCorrBase for more.
 
     """
+    size_key = 'size'
+
     def __init__(self, *args, pixphase: float = 0.5, **kwargs):
         self.phase = pixphase  # In the future we'll attempt to measure the pixel phase from inputs.
 
         super().__init__(*args, **kwargs)
-
-        if self.apcorr_sizeunits.startswith('arcsec'):
-            if self.location is not None:
-                self.reference['size'] /= compute_scale(self.model.wcs, self.location)
-            else:
-                raise ValueError(
-                    'If the size column for the input APCORR reference file are in units with arcseconds, a location '
-                    '(RA, DEC) must be provided in order to compute a pixel scale to convert arcseconds to pixels.'
-                )
 
     def approximate(self):
         """Generate an approximate function for interpolating apcorr values to input wavelength and size."""
@@ -194,25 +200,22 @@ class ApCorrPhase(ApCorrBase):
         cols_to_correct = ('flux', 'surf_bright', 'error', 'sb_error')
 
         for row in spec_table:
-            correction = self.apcorr_func(row['wavelength'], row['npixels'], self.phase)
+            try:
+                correction = self.apcorr_func(row['wavelength'], row['npixels'], self.phase)
+            except ValueError:
+                correction = None  # Some input wavelengths might not be supported (especially at the ends of the range
 
             for col in cols_to_correct:
-                row[col] *= correction
+                if correction:
+                    row[col] *= correction
 
 
 class ApCorrRadial(ApCorrBase):
     """Aperture correction class used with spectral data produced from an extraction aperture radius."""
+    size_key = 'radius'
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        if self.apcorr_sizeunits.startswith('arcsec'):
-            if self.location is not None:
-                self.reference['radius'] /= compute_scale(self.model.wcs, self.location)
-            else:
-                raise ValueError(
-                    'If the radius column for the input APCORR reference file are in units with arcseconds, a location'
-                    ' (RA, DEC) must be provided in order to compute a pixel scale to convert arcseconds to pixels.'
-                )
 
     def approximate(self):
         """Generate an approximate function for interpolating apcorr values to input wavelength and radius."""
@@ -225,17 +228,10 @@ class ApCorrRadial(ApCorrBase):
 
 class ApCorr(ApCorrBase):
     """'Default' Aperture correction class for use with most spectroscopic modes."""
+    size_key = 'size'
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        if self.apcorr_sizeunits.startswith('arcsec'):
-            if self.location is not None:
-                self.reference['size'] /= compute_scale(self.model.wcs, self.location)
-            else:
-                raise ValueError(
-                    'If the size column for the input APCORR reference file are in units with arcseconds, a location '
-                    '(RA, DEC) must be provided in order to compute a pixel scale to convert arcseconds to pixels.'
-                )
 
     def approximate(self):
         """Generate an approximate function for interpolating apcorr values to input wavelength and size."""
