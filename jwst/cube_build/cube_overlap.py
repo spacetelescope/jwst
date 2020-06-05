@@ -4,7 +4,7 @@ the interoplation method = area
 import numpy as np
 import math
 from ..datamodels import dqflags
-
+from jwst.transforms.models import _toindex
 
 def find_area_poly(nvertices, xpixel, ypixel):
     """ Find the area of the polygon
@@ -365,21 +365,26 @@ def sh_find_overlap(xcenter, ycenter, xlength, ylength, xp_corner, yp_corner):
     return area_clipped
 # _____________________________________________________________________________
 
+def match_det2cube_NIRSpec(instrument,
+                           x, y, sliceno,
+                           input_model, 
+                           transform,
+                           spaxel_flux,
+                           spaxel_weight,
+                           spaxel_iflux,
+                           spaxel_var,
+                           acoord, zcoord,
+                           crval_along, crval3, 
+                           cdelt_along, cdelt3, 
+                           naxis1, naxis2):
 
-def match_det2cube(x, y, sliceno, start_slice, input_model, transform,
-                   spaxel_flux,
-                   spaxel_weight,
-                   spaxel_iflux,
-                   spaxel_var,
-                   xcoord, zcoord,
-                   crval1, crval3, cdelt1, cdelt3, naxis1, naxis2):
-    """ Match detector pixels to output plane in alpha-beta coordinate system
+    """ Match detector pixels to output plane in local IFU coordinate system
 
-    This routine assumes a 1-1 mapping in beta - slice no.
-    This routine assumes the output coordinate systems is alpha-beta
-    The user can not change scaling in beta
-    Map the corners of the x,y detector values to a cube defined by alpha,beta,
-    lambda. In the alpha,lambda plane find the % area of the detector pixel
+    This routine assumes a 1-1 mapping in across slice to slice no.
+    This routine assumes the output coordinate systems is local IFU plane. 
+    The user can not change scaling in across slice dimension
+    Map the corners of the x,y detector values to a cube defined by local IFU plane.
+    In the along slice, lambda plane find the % area of the detector pixel
     which it overlaps with in the cube. For each spaxel record the detector
     pixels that overlap with it - store flux,  % overlap, beta_distance.
 
@@ -402,12 +407,10 @@ def match_det2cube(x, y, sliceno, start_slice, input_model, transform,
     -------
     spaxel filled in with needed information on overlapping detector pixels
     """
-    nxc = len(xcoord)
-    nzc = len(zcoord)
 
-    sliceno_use = sliceno - start_slice + 1
-    # 1-1 mapping in beta
-    yy = sliceno_use - 1
+    x = _toindex(x)
+    y = _toindex(y)
+
 
     pixel_dq = input_model.dq[y, x]
 
@@ -420,38 +423,91 @@ def match_det2cube(x, y, sliceno, start_slice, input_model, transform,
     x = x[good_data]
     y = y[good_data]
 
+    coord1, coord2, lam = transform(x,y)
+    valid = ~np.isnan(coord2)
+    x = x[valid]
+    y = y[valid]
+
+    yy_bot = y
+    yy_top = y + 1
+    xx_left = x
+    xx_right = x + 1
+    # along slice dimension is second coordinate returned from transform
+    if instrument == 'NIRSPEC':
+        b1, a1, lam1 = transform(xx_left, yy_bot)
+        b2, a2, lam2 = transform(xx_right, yy_bot)
+        b3, a3, lam3 = transform(xx_right, yy_top)
+        b4, a4, lam4 = transform(xx_left, yy_top)
+        lam1 = lam1*1.0e6
+        lam2 = lam2*1.0e6
+        lam3 = lam3*1.0e6
+        lam4 = lam4*1.0e6
+        
+    if instrument == 'MIRI':
+        a1, b1, lam1 = transform(xx_left, yy_bot)
+        a2, b2, lam2 = transform(xx_right, yy_bot)
+        a3, b3, lam3 = transform(xx_right, yy_top)
+        a4, b4, lam4 = transform(xx_left, yy_top)
+
+    #  corners are returned Nanned if outside range
+    # fixed the nanned corners when a1,lam1 is valid but
+    # adding 1 to x,y pushes data outside BB valid region
+    index_bad2 = np.isnan(a2)
+    index_bad3 = np.isnan(a3)
+    index_bad4 = np.isnan(a4)
+
+    index_good2 = ~np.isnan(a2)
+    index_good3 = ~np.isnan(a3)
+    index_good4 = ~np.isnan(a4)
+
+    w12 = np.mean(lam1[index_good2]-lam2[index_good2])
+    w13 = np.mean(lam1[index_good3]-lam3[index_good3])
+    w14 = np.mean(lam1[index_good4]-lam4[index_good4])
+
+    a12 = np.mean(a1[index_good2]-a2[index_good2])
+    a13 = np.mean(a1[index_good3]-a3[index_good3])
+    a14 = np.mean(a1[index_good4]-a4[index_good4])
+    
+    a2[index_bad2] = a1[index_bad2] - a12
+    a3[index_bad3] = a1[index_bad3] - a13
+    a4[index_bad4] = a1[index_bad4] - a14
+
+    lam2[index_bad2] = lam1[index_bad2] - w12
+    lam3[index_bad3] = lam1[index_bad3] - w13
+    lam4[index_bad4] = lam1[index_bad4] - w14
+    #print(a1.shape,a2[index_bad2].shape, a3[index_bad3].shape, a4[index_bad4].shape)
+    #print(w12,w13,w14,a12,a13,a14)
+
     # center of first pixel, x,y = 1 for Adrian's equations
     # but we want the pixel corners, x,y values passed into this
     # routine to start at 0
     pixel_flux = input_model.data[y, x]
     pixel_err = input_model.err[y, x]
 
-    yy_bot = y
-    yy_top = y + 1
-    xx_left = x
-    xx_right = x + 1
 
-    alpha, beta, lam = transform(x, y)
-    alpha1, beta1, lam1 = transform(xx_left, yy_bot)
-    alpha2, beta2, lam2 = transform(xx_right, yy_bot)
-    alpha3, beta3, lam3 = transform(xx_right, yy_top)
-    alpha4, beta4, lam4 = transform(xx_left, yy_top)
+    nzc = len(zcoord)
+    nac = len(acoord)
+    # 1-1 mapping in across slice direction (x for NIRSPEC, y for MIRI)
+    if instrument == 'NIRSPEC':
+        xx = sliceno
 
-    nn = len(x)
+    if instrument == 'MIRI':
+        yy = sliceno
+
     # Loop over all pixels in slice
+    nn = len(x)
     for ipixel in range(0, nn - 1):
-
         # detector pixel -> 4 corners
-        # In alpha,wave space
-        # in beta space: beta center + width
+        # In along slice,wave space
+        # along slice: a
 
-        alpha_corner = []
+        along_corner = []
         wave_corner = []
 
-        alpha_corner.append(alpha1[ipixel])
-        alpha_corner.append(alpha2[ipixel])
-        alpha_corner.append(alpha3[ipixel])
-        alpha_corner.append(alpha4[ipixel])
+        along_corner.append(a1[ipixel])
+        along_corner.append(a2[ipixel])
+        along_corner.append(a3[ipixel])
+        along_corner.append(a4[ipixel])
 
         wave_corner.append(lam1[ipixel])
         wave_corner.append(lam2[ipixel])
@@ -460,22 +516,22 @@ def match_det2cube(x, y, sliceno, start_slice, input_model, transform,
 
 # ________________________________________________________________________________
 # Now it does not matter the WCS method used
-        alpha_min = min(alpha_corner)
-        alpha_max = max(alpha_corner)
+        along_min = min(along_corner)
+        along_max = max(along_corner)
         wave_min = min(wave_corner)
         wave_max = max(wave_corner)
 
-        Area = find_area_quad(alpha_min, wave_min, alpha_corner, wave_corner)
+        Area = find_area_quad(along_min, wave_min, along_corner, wave_corner)
 
-        # estimate the where the pixel overlaps in the cube
+        # estimate where the pixel overlaps in the cube
         # find the min and max values in the cube xcoord,ycoord and zcoord
 
-        MinA = (alpha_min - crval1) / cdelt1
-        MaxA = (alpha_max - crval1) / cdelt1
-        ix1 = max(0, int(math.trunc(MinA)))
-        ix2 = int(math.ceil(MaxA))
-        if ix2 >= nxc:
-            ix2 = nxc - 1
+        MinA = (along_min - crval_along) / cdelt_along
+        MaxA = (along_max - crval_along) / cdelt_along
+        ia1 = max(0, int(math.trunc(MinA)))
+        ia2 = int(math.ceil(MaxA))
+        if ia2 >= nac:
+            ia2 = nac - 1
 
         MinW = (wave_min - crval3) / cdelt3
         MaxW = (wave_max - crval3) / cdelt3
@@ -488,19 +544,27 @@ def match_det2cube(x, y, sliceno, start_slice, input_model, transform,
         # noverlap = 0
         nplane = naxis1 * naxis2
 
+        
         for zz in range(iz1, iz2 + 1):
             zcenter = zcoord[zz]
             istart = zz * nplane
 
-            for xx in range(ix1, ix2 + 1):
-                cube_index = istart + yy * naxis1 + xx  # yy = slice # -1
-                xcenter = xcoord[xx]
-                area_overlap = sh_find_overlap(xcenter, zcenter,
-                                             cdelt1, cdelt3,
-                                             alpha_corner, wave_corner)
+            for aa in range(ia1, ia2 + 1):
+                if instrument == 'NIRSPEC':
+                    cube_index = istart + aa * naxis1 + xx  # xx = slice #
+
+                if instrument == 'MIRI':
+                    cube_index = istart + yy * naxis1 + aa  # xx = slice #
+
+                acenter = acoord[aa]
+                area_overlap = sh_find_overlap(acenter, zcenter,
+                                               cdelt_along, cdelt3,
+                                               along_corner, wave_corner)
 
                 if area_overlap > 0.0:
                     AreaRatio = area_overlap / Area
+                    if np.isnan(AreaRatio):
+                             print('nan Area',cube_index,along_corner,wave_corner)
                     spaxel_flux[cube_index] = spaxel_flux[cube_index] + \
                         (AreaRatio * pixel_flux[ipixel])
                     spaxel_weight[cube_index] = spaxel_weight[cube_index] + \

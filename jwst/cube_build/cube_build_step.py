@@ -41,8 +41,8 @@ class CubeBuildStep (Step):
          scale1 = float(default=0.0) # cube sample size to use for axis 1, arc seconds
          scale2 = float(default=0.0) # cube sample size to use for axis 2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
-         weighting = option('emsm','msm','miripsf','area',default = 'msm') # Type of weighting function
-         coord_system = option('world','alpha-beta','align_slicer',default='world') # Output Coordinate system.
+         weighting = option('emsm','msm','miripsf','area',default = 'emsm') # Type of weighting function
+         coord_system = option('skyalign','world','internal_cal','ifualign',default='skyalign') # Output Coordinate system.
          rois = float(default=0.0) # region of interest spatial size, arc seconds
          roiw = float(default=0.0) # region of interest wavelength size, microns
          weight_power = float(default=0.0) # Weighting option to use for Modified Shepard Method
@@ -129,9 +129,12 @@ class CubeBuildStep (Step):
                                     (self.xdebug, self.ydebug, self.zdebug) + '\n')
 
         # valid coord_system:
-        # 1. alpha-beta (only valid for MIRI Single Cubes)
-        # 2. world
-        # 3. align_slicer (ifu cube aligned with slicer plane/ MRS local coord system) 
+        # 1. skyalign (ra dec) (aka world)
+        # 2. ifualign (ifu cube aligned with slicer plane/ MRS local coord system) 
+        # 3. internal_cal (local IFU - ifu cubes built in local IFU system)
+        if self.coord_system == 'world':
+            self.coord_system = 'skyalign'
+
         self.interpolation = 'pointcloud'  # initialize
 
         # if the weighting is area then interpolation is area
@@ -140,9 +143,9 @@ class CubeBuildStep (Step):
 
         if self.weighting == 'area':
             self.interpolation = 'area'
-            self.coord_system = 'alpha-beta'
+            self.coord_system = 'internal_cal'
 
-        if self.coord_system == 'alpha-beta':
+        if self.coord_system == 'internal_cal':
             self.weighting = 'area'
             self.interpolation = 'area'
 
@@ -150,12 +153,12 @@ class CubeBuildStep (Step):
         # 1. MSM: modified shepard method
         # 2. EMSM
         # 3. miripsf - weighting for MIRI based on PSF and LSF
-        if self.coord_system == 'world':
+        if self.coord_system == 'skyalign':
             self.interpolation = 'pointcloud'  # can not be area
 
         self.align_slicer = False
-        if self.coord_system == 'align_slicer':
-            self.coord_system = 'world'
+        if self.coord_system == 'ifualign':
+            #self.coord_system = 'skyalign'
             self.align_slicer = True
             self.interpolation = 'pointcloud'  # can not be area
 
@@ -170,7 +173,7 @@ class CubeBuildStep (Step):
         if self.single:
             self.output_type = 'single'
             self.log.info('Cube Type: Single cubes ')
-            self.coord_system = 'world'
+            self.coord_system = 'skyalign'
             self.interpolation = 'pointcloud'
             # Don't allow anything but msm or emsm weightings
             if ((self.weighting != 'msm')and(self.weighting != 'emsm')):
@@ -357,10 +360,8 @@ class CubeBuildStep (Step):
                 self.spaxel_debug.close()
         for cube in cube_container:
             footprint = cube.meta.wcs.footprint(axis_type="spatial")
-            print('footprint',footprint)
-
             update_s_region_keyword(cube, footprint)
-            print('done cube')
+
         return cube_container
 # ******************************************************************************
 
