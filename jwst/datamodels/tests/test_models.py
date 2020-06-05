@@ -124,16 +124,15 @@ def test_skip_fits_update(jail_environ,
 
     # Decide how to skip. If using the environmental,
     # set that and pass None to the open function.
+    try:
+        del os.environ['SKIP_FITS_UPDATE']
+    except KeyError:
+        # No need to worry, environmental doesn't exist anyways
+        pass
     if use_env:
-        if skip_fits_update is None:
-            try:
-                del os.environ['SKIP_FITS_UPDATE']
-            except KeyError:
-                # No need to worry, environmental doesn't exist anyways
-                pass
-        else:
+        if skip_fits_update is not None:
             os.environ['SKIP_FITS_UPDATE'] = str(skip_fits_update)
-        skip_fits_update = None
+            skip_fits_update = None
 
     model = open_func(hduls, skip_fits_update=skip_fits_update)
     assert model.meta.exposure.type == expected_exp_type
