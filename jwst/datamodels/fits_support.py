@@ -632,15 +632,38 @@ def from_fits_hdu(hdu, schema):
     return data
 
 
-def _verify_skip_fits_update(skip_fits_update, hdulist, ff, context):
-    """Ensure all conditions for skipping FITS updating are true"""
+def _verify_skip_fits_update(skip_fits_update, hdulist, asdf_struct, context):
+    """Ensure all conditions for skipping FITS updating are true
+
+    Returns True if either 1) the FITS hash in the asdf structure matches the input
+    FITS structure. Or 2) skipping has been explicitly asked for in `skip_fits_update`.
+
+    Parameters
+    ----------
+    skip_fits_update : bool
+        Regardless of FIT hash check, attempt to skip if requested.
+
+    hdulist : astropy.io.fits.HDUList
+        The input FITS information
+
+    asdf_struct : asdf.ASDFFile
+        The association ASDF structure
+
+    context : DataModel
+        The DataModel being built.
+
+    Returns
+    -------
+    skip_fits_update : bool
+        All conditions are satisfied for skipping FITS updating.
+    """
     if skip_fits_update is None:
         skip_fits_update = util.get_envar_as_boolean('SKIP_FITS_UPDATE', False)
     if not skip_fits_update:
         return False
 
     # Need an already existing ASDF
-    if not len(ff.tree):
+    if not len(asdf_struct.tree):
         log.debug('`skip_fits_update` requested.'
                   ' However, input FITS file has no ASDF extension'
                   ' requiring full FITS updating.')
