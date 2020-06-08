@@ -6,6 +6,11 @@ assign_mtwcs
 
 - Skip the step if any input MT_RA/DEC keyword values are missing. [#5015]
 
+assign_wcs
+----------
+
+- Enabled ``filteroffset`` correction for NIRISS and NIRCAM imaging modes. [#5018]
+
 associations
 ------------
 
