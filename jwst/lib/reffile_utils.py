@@ -1,3 +1,5 @@
+import numpy as np
+
 from jwst import datamodels
 import logging
 
@@ -416,10 +418,10 @@ def find_row(ldict, match_keys):
     Examples
     --------
     >>> ldict = [{'row_offset': 2.1, 'col_offset': 1.3, 'filter': 'F444W', 'pupil': 'CLEAR'},
-                 {'row_offset': 1, 'col_offset': 3, 'filter': 'F277W', 'pupil': 'FLAT'},
-                ]
+    ...          {'row_offset': 1, 'col_offset': 3, 'filter': 'F277W', 'pupil': 'FLAT'},
+    ...         ]
     >>> match_keys = {'filter': 'F444W', 'pupil': 'CLEAR'}
-    >>> result = find_item(ldict, match_keys)
+    >>> result = find_row(ldict, match_keys)
     >>> print(result)
     {'row_offset': 2.1, 'col_offset': 1.3, 'filter': 'F444W', 'pupil': 'CLEAR'}
 
