@@ -47,7 +47,7 @@ def radec2std(crval1, crval2, rot_angle, ra, dec):
     eta = (np.sin(decr) * math.cos(dec0) -
            np.cos(decr) * math.sin(dec0) * np.cos(radiff)) / h
 
-    xi = -xi 
+    xi = -xi
     xi = xi * rad2arcsec
     eta = eta * rad2arcsec
 

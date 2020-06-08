@@ -43,7 +43,7 @@ def find_footprint_MIRI(input, this_channel, instrument_info, coord_system):
 
     if coord_system == 'internal_cal':
         # coord1 = along slice
-        # coord2 = across slice 
+        # coord2 = across slice
         detector2alpha_beta = input.meta.wcs.get_transform('detector',
                                                            'alpha_beta')
         coord1, coord2, lam = detector2alpha_beta(x, y)
@@ -77,7 +77,7 @@ def find_footprint_NIRSPEC(input, coord_system):
     For each slice find:
     a. the min and max spatial coordinates (along slice, across slice) or (ra,dec) depending
        on coordinate system of the output cube.
-    b. min and max wavelength 
+    b. min and max wavelength
 
     Parameters
     ----------
@@ -106,7 +106,7 @@ def find_footprint_NIRSPEC(input, coord_system):
         x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box, step=(1, 1), center=True)
         if coord_system == 'internal_cal':
             # coord1 = along slice
-            # coord2 = across slice 
+            # coord2 = across slice
             detector2slicer = slice_wcs.get_transform('detector','slicer')
             coord2, coord1, lam = detector2slicer(x,y) #lam ~0 for this transform
             lam = lam * 1.0e6

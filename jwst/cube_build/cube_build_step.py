@@ -130,7 +130,7 @@ class CubeBuildStep (Step):
 
         # valid coord_system:
         # 1. skyalign (ra dec) (aka world)
-        # 2. ifualign (ifu cube aligned with slicer plane/ MRS local coord system) 
+        # 2. ifualign (ifu cube aligned with slicer plane/ MRS local coord system)
         # 3. internal_cal (local IFU - ifu cubes built in local IFU system)
         if self.coord_system == 'world':
             self.coord_system = 'skyalign'

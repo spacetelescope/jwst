@@ -246,17 +246,36 @@ class IFUCubeData():
         self.crval1 = ra_ave
         self.crval2 = dec_ave
         rot_angle = self.rot_angle
-        rot_angle = 0 
-        # for now just leave rot_angle = 0 - this part sets up size of grid
-#        xi_center, eta_center = coord.radec2std(self.crval1, self.crval2, rot_angle,
-#                                                ra_ave, dec_ave)
-        xi_min, eta_min = coord.radec2std(self.crval1, self.crval2, rot_angle,
+        xi_center, eta_center = coord.radec2std(self.crval1, self.crval2, rot_angle,
+                                                ra_ave, dec_ave)
+        # find the 4 corners
+        xi1, eta1 = coord.radec2std(self.crval1, self.crval2, rot_angle,
                                           ra_min, dec_min)
 
-        xi_max, eta_max = coord.radec2std(self.crval1, self.crval2, rot_angle,
+        xi3, eta3 = coord.radec2std(self.crval1, self.crval2, rot_angle,
                                           ra_max, dec_max)
-        print('min',xi_min,eta_min)
-        print('max',xi_max,eta_max)
+
+        xi2, eta2 = coord.radec2std(self.crval1, self.crval2, rot_angle,
+                                          ra_min, dec_max)
+
+        xi4, eta4 = coord.radec2std(self.crval1, self.crval2, rot_angle,
+                                          ra_max, dec_min)
+        #print(xi1,xi2,xi3,xi4)
+        #print(eta1,eta2,eta3,eta4)
+        # length of each side
+        distance1 = np.sqrt( (xi2-xi1)*(xi2-xi1) + (eta2-eta1)*(eta2-eta1))
+        distance2 = np.sqrt( (xi3-xi2)*(xi3-xi2) + (eta3-eta2)*(eta3-eta2))
+        distance3 = np.sqrt( (xi4-xi3)*(xi4-xi3) + (eta4-eta3)*(eta4-eta3))
+        distance4 = np.sqrt( (xi4-xi1)*(xi4-xi1) + (eta4-eta1)*(eta4-eta1))
+        #print('distance',distance1,distance2,distance3,distance4)
+
+        xi_distance = (distance1 + distance3)/2.0
+        eta_distance = (distance2 + distance4)/2.0
+        xi_min  = -xi_distance/2
+        xi_max  = xi_distance/2
+
+        eta_min  = -eta_distance/2
+        eta_max  = eta_distance/2
 # ________________________________________________________________________________
 # find the CRPIX1 CRPIX2 - xi and eta centered at 0,0
 # to find location of center abs of min values is how many pixels
@@ -267,11 +286,11 @@ class IFUCubeData():
         n1b = int(math.ceil(math.fabs(xi_max) / self.cdelt1))
         n2b = int(math.ceil(math.fabs(eta_max) / self.cdelt2))
 
-        xi_min = 0.0 - (n1a * self.cdelt1) - (self.cdelt1 / 2.0)
-        xi_max = (n1b * self.cdelt1) + (self.cdelt1 / 2.0)
+        #xi_min = 0.0 - (n1a * self.cdelt1) - (self.cdelt1 / 2.0)
+        #xi_max = (n1b * self.cdelt1) + (self.cdelt1 / 2.0)
 
-        eta_min = 0.0 - (n2a * self.cdelt2) - (self.cdelt2 / 2.0)
-        eta_max = (n2b * self.cdelt2) + (self.cdelt2 / 2.0)
+        #eta_min = 0.0 - (n2a * self.cdelt2) - (self.cdelt2 / 2.0)
+        #eta_max = (n2b * self.cdelt2) + (self.cdelt2 / 2.0)
 
         self.crpix1 = float(n1a) + 1.0
         self.crpix2 = float(n2a) + 1.0
@@ -318,8 +337,6 @@ class IFUCubeData():
         self.xcenters = xgrid
         self.ycenters = ygrid
 
-        print('xcenters',self.xcenters)
-
 # _______________________________________________________________________
         # set up the lambda (z) coordinate of the cube
         self.cdelt3_normal = None
@@ -357,6 +374,7 @@ class IFUCubeData():
         self.cdelt3_normal = cdelt3_normal
 # _______________________________________________________________________
 
+
     def set_geometryAB(self, footprint):
         """Based on the along slice, across slice and wavelength footprint set up the
         size of the cube in internal IFU plane.
@@ -372,94 +390,68 @@ class IFUCubeData():
         """
         self.a_min, self.a_max, self.b_min, self.b_max, self.lambda_min, self.lambda_max = footprint
 
-        # set up the along slice (x) coordinates of the cube
+        # along slice: a
         range_a = self.a_max - self.a_min
-        self.naxis1 = int(math.ceil(range_a / self.cdelt1))
+        # across slice: b
+        range_b = self.b_max - self.b_min
 
-        # adjust min and max based on integer value of naxis1
+        if self.instrument == 'MIRI':
+            along_cdelt = self.cdelt1
+            self.naxis1 = int(math.ceil(range_a / self.cdelt1))
+            along_naxis = self.naxis1
+            self.naxis2 = int(math.ceil(range_b / self.cdelt2))
+            across_naxis = self.naxis2
+            across_cdelt = self.cdelt2
+
+        if self.instrument == 'NIRSPEC':
+            along_cdelt = self.cdelt2
+            self.naxis2 = int(math.ceil(range_a / self.cdelt2))
+            along_naxis = self.naxis2
+            self.naxis1 = int(math.ceil(range_b / self.cdelt1))
+            across_naxis = self.naxis1
+            across_cdelt = self.cdelt1
+
+        # set up along slice parameters
         a_center = (self.a_max + self.a_min) / 2.0
-        self.a_min = a_center - (self.naxis1 / 2.0) * self.cdelt1
-        self.a_max = a_center + (self.naxis1 / 2.0) * self.cdelt1
+        self.a_min = a_center - (along_naxis / 2.0) * along_cdelt
+        self.a_max = a_center + (along_naxis / 2.0) * along_cdelt
 
-        self.xcoord = np.zeros(self.naxis1)
-        self.crval1 = self.a_min
-        self.crpix1 = 0.5
-        xstart = self.a_min + self.cdelt1 / 2.0
-        for i in range(self.naxis1):
-            self.xcoord[i] = xstart
-            xstart = xstart + self.cdelt1
-# _______________________________________________________________________
-        # set up the lambda (z) coordinate of the cube
-        range_lambda = self.lambda_max - self.lambda_min
-        self.naxis3 = int(math.ceil(range_lambda / self.cdelt3))
+        acoord = np.zeros(along_naxis)
+        astart = self.a_min + along_cdelt / 2.0
+        for i in range(along_naxis):
+            acoord[i] = astart
+            astart = astart + along_cdelt
 
-        # adjust max based on integer value of naxis3
-        lambda_center = (self.lambda_max + self.lambda_min) / 2.0
-
-        self.lambda_min = lambda_center - (self.naxis3 / 2.0) * self.cdelt3
-        self.lambda_max = lambda_center + (self.naxis3 / 2.0) * self.cdelt3
-
-        self.lambda_max = self.lambda_min + (self.naxis3) * self.cdelt3
-        self.zcoord = np.zeros(self.naxis3)
-        zstart = self.lambda_min + self.cdelt3 / 2.0
-        self.crval3 = zstart
-        self.crpix3 = 1.0
-        for i in range(self.naxis3):
-            self.zcoord[i] = zstart
-            zstart = zstart + self.cdelt3
-# _______________________________________________________________________
         # set up the across slice  parameters
-        range_b = self.b_max - self.b_min
-
-        self.naxis2 = int(math.ceil(range_b / self.cdelt2))
         b_center = (self.b_max + self.b_min) / 2.0
         # adjust min and max based on integer value of naxis2
-        self.b_max = b_center + (self.naxis2 / 2.0) * self.cdelt2
-        self.b_min = b_center - (self.naxis2 / 2.0) * self.cdelt2
+        self.b_max = b_center + (across_naxis / 2.0) * across_cdelt
+        self.b_min = b_center - (across_naxis / 2.0) * across_cdelt
 
-        self.ycoord = np.zeros(self.naxis2)
-        self.crval2 = self.b_min
-        self.crpix2 = 0.5
-        ystart = self.b_min + self.cdelt2 / 2.0
-        for i in range(self.naxis2):
-            self.ycoord[i] = ystart
-            ystart = ystart + self.cdelt2
+        across_coord = np.zeros(across_naxis)
+        start = self.b_min + across_cdelt / 2.0
+        for i in range(across_naxis):
+            across_coord[i] = start
+            start = start + across_cdelt
 
-    def set_geometryAB_NIRSpec(self, footprint):
-        """Based on the along slice, across slice  and wavelength footprint set up the
-        size of the cube in the internal IFU space.
+        if self.instrument == 'MIRI':
+            self.crval1 = self.a_min
+            self.xcoord = acoord
+            self.ycoord = across_coord
+            self.crval2 = self.b_min
 
-        This will be a single exposure cube - small FOV assume
-        rectangular coord system.
-
-        Parameters
-        ----------
-        footprint : tuple
-           Holds the min and max alpha, beta and wavelength values of
-           cube on sky
-        """
-        self.a_min, self.a_max, self.b_min, self.b_max, self.lambda_min, self.lambda_max = footprint
-
-        # set up the along slice (y) coordinates of the cube
-        range_a = self.a_max - self.a_min
-        self.naxis2 = int(math.ceil(range_a / self.cdelt2))
-
-        # adjust min and max based on integer value of naxis2
-        a_center = (self.a_max + self.a_min) / 2.0
-        self.a_min = a_center - (self.naxis2 / 2.0) * self.cdelt2
-        self.a_max = a_center + (self.naxis2 / 2.0) * self.cdelt2
-
-        self.ycoord = np.zeros(self.naxis2)
-        self.crval2 = self.a_min
-        self.crpix2 = 0.5
-        ystart = self.a_min + self.cdelt2 / 2.0
-        for i in range(self.naxis2):
-            self.ycoord[i] = ystart
-            ystart = ystart + self.cdelt2
+        if self.instrument == 'NIRSPEC':
+            self.crval2 = self.a_min
+            self.ycoord = acoord
+            self.xcoord = across_coord
+            self.crval1 = self.b_min
 # _______________________________________________________________________
+# common to both MIRI and NIRSPEC
+        self.crpix1 = 0.5
+        self.crpix2 = 0.5
+
         # set up the lambda (z) coordinate of the cube
         range_lambda = self.lambda_max - self.lambda_min
-        print(self.lambda_min, self.lambda_max,self.cdelt3)
         self.naxis3 = int(math.ceil(range_lambda / self.cdelt3))
 
         # adjust max based on integer value of naxis3
@@ -469,32 +461,13 @@ class IFUCubeData():
         self.lambda_max = lambda_center + (self.naxis3 / 2.0) * self.cdelt3
 
         self.lambda_max = self.lambda_min + (self.naxis3) * self.cdelt3
-
         self.zcoord = np.zeros(self.naxis3)
         zstart = self.lambda_min + self.cdelt3 / 2.0
-
         self.crval3 = zstart
         self.crpix3 = 1.0
         for i in range(self.naxis3):
             self.zcoord[i] = zstart
             zstart = zstart + self.cdelt3
-# _______________________________________________________________________
-        # set up the across slice parameters
-        range_b = self.b_max - self.b_min
-
-        self.naxis1 = int(math.ceil(range_b / self.cdelt1))
-        b_center = (self.b_max + self.b_min) / 2.0
-        # adjust min and max based on integer value of naxis2
-        self.b_max = b_center + (self.naxis1 / 2.0) * self.cdelt1
-        self.b_min = b_center - (self.naxis1 / 2.0) * self.cdelt1
-
-        self.xcoord = np.zeros(self.naxis1)
-        self.crval1 = self.b_min
-        self.crpix1 = 0.5
-        xstart = self.b_min + self.cdelt1 / 2.0
-        for i in range(self.naxis1):
-            self.xcoord[i] = ystart
-            xstart = xstart + self.cdelt1
 # _______________________________________________________________________
 
     def print_cube_geometry(self):
@@ -648,7 +621,7 @@ class IFUCubeData():
                     else:
                         t0 = time.time()
                         roiw_ave = np.mean(roiw_pixel)
-                        #self.map_fov_to_dqplane(this_par1, coord1, coord2, wave, roiw_ave, slice_no)
+                        self.map_fov_to_dqplane(this_par1, coord1, coord2, wave, roiw_ave, slice_no)
                         t1 = time.time()
                         log.info("Time to set initial dq values = %.1f s" % (t1 - t0,))
                     if self.weighting == 'msm' or self.weighting == 'emsm':
@@ -727,7 +700,7 @@ class IFUCubeData():
                             end_region = self.instrument_info.GetEndSlice(this_par1)
                             regions = list(range(start_region, end_region + 1))
                             t0 = time.time()
-                            
+
                             for i in regions:
                                 log.info('Working on Slice # %d', i)
                                 y, x = (det2ab_transform.label_mapper.mapper == i).nonzero()
@@ -737,18 +710,18 @@ class IFUCubeData():
                                 y = y[index]
                                 x = x[index]
                                 slice = i - start_region
-                                cube_overlap.match_det2cube_NIRSpec(self.instrument, 
-                                                                    x, y, slice,
-                                                                    input_model,
-                                                                    det2ab_transform,
-                                                                    self.spaxel_flux,
-                                                                    self.spaxel_weight,
-                                                                    self.spaxel_iflux,
-                                                                    self.spaxel_var,
-                                                                    self.xcoord, self.zcoord,
-                                                                    self.crval1, self.crval3,
-                                                                    self.cdelt1, self.cdelt3,
-                                                                    self.naxis1, self.naxis2)
+                                cube_overlap.match_det2cube(self.instrument,
+                                                             x, y, slice,
+                                                             input_model,
+                                                             det2ab_transform,
+                                                             self.spaxel_flux,
+                                                             self.spaxel_weight,
+                                                             self.spaxel_iflux,
+                                                             self.spaxel_var,
+                                                             self.xcoord, self.zcoord,
+                                                             self.crval1, self.crval3,
+                                                             self.cdelt1, self.cdelt3,
+                                                             self.naxis1, self.naxis2)
                             t1 = time.time()
 
                             log.info("Time to Map All slices on Detector to Cube = %.1f s" % (t1 - t0,))
@@ -761,26 +734,26 @@ class IFUCubeData():
 
                             slicemap = [15,14,16,13,17,12,18,11,19,10,20,9,21,8,22,7,23,6,24,5,25,4,26,3,
                                         27,2,28,1,29,0]
-                                
+
                             for i in range(nslices):
                              #   print('slice and slice map',i ,slicemap[i])
-                                
+
                                 slice_wcs = nirspec.nrs_wcs_set_input(input_model, i)
                                 x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box, step=(1, 1), center=True)
                                 detector2slicer = slice_wcs.get_transform('detector','slicer')
 
-                                cube_overlap.match_det2cube_NIRSpec(self.instrument,
-                                                                    x, y, slicemap[i],
-                                                                    input_model,
-                                                                    detector2slicer,
-                                                                    self.spaxel_flux,
-                                                                    self.spaxel_weight,
-                                                                    self.spaxel_iflux,
-                                                                    self.spaxel_var,
-                                                                    self.ycoord, self.zcoord,
-                                                                    self.crval2, self.crval3,
-                                                                    self.cdelt2, self.cdelt3,
-                                                                    self.naxis1, self.naxis2)
+                                cube_overlap.match_det2cube(self.instrument,
+                                                            x, y, slicemap[i],
+                                                            input_model,
+                                                            detector2slicer,
+                                                            self.spaxel_flux,
+                                                            self.spaxel_weight,
+                                                            self.spaxel_iflux,
+                                                            self.spaxel_var,
+                                                            self.ycoord, self.zcoord,
+                                                            self.crval2, self.crval3,
+                                                            self.cdelt2, self.cdelt3,
+                                                            self.naxis1, self.naxis2)
 
 # _______________________________________________________________________
 # Mapped all data to cube or Point Cloud
@@ -1010,7 +983,7 @@ class IFUCubeData():
                 self.wavemax > table_wavelength[imax]):
                 imax = imax + 1
 
-            # print('wavelengths', self.wavemin, self.wavemax)
+
             self.roiw_table = table_wroi[imin:imax+1]
             self.rois_table = table_sroi[imin:imax+1]
             if self.num_files < 4:
@@ -1084,7 +1057,7 @@ class IFUCubeData():
         -----
         If the coordinate system is internal_cal then min and max
         coordinates of along slice, across slice  and lambda (microns)
-        
+
         For MIRI the units along/across slice dimension are arc seconds
         For NIRSPEC the units along/across slice dimension are meters
 
@@ -1104,15 +1077,15 @@ class IFUCubeData():
 # ________________________________________________________________________________
 # Define the rotation angle between the ra-dec and alpha beta coord system using
 # the first input model. Use first file in first band to set up rotation angle
-            
+
 # Compute the rotation angle between local IFU sysetem  and RA-DEC
 
         if self.coord_system == 'ifualign':
-            this_a = parameter1[0] # 0 is first band - this_a is channel 
+            this_a = parameter1[0] # 0 is first band - this_a is channel
             this_b = parameter2[0] # 0 is first band - this_b is sub-channel
             log.info('Defining rotation between ra-dec and IFU plane using %s, %s'
                      , this_a, this_b)
-            # first file for this band 
+            # first file for this band
             ifile = self.master_table.FileMap[self.instrument][this_a][this_b][0]
             with datamodels.IFUImageModel(ifile) as input_model:
 
@@ -1126,13 +1099,13 @@ class IFUCubeData():
                     valid1 = ~np.isnan(lam)
                     lam = lam[valid1]
                     lam_med = np.median(lam)
-                    # pick two alpha, beta values to determine rotation angle 
-                    # values in arc seconds 
+                    # pick two alpha, beta values to determine rotation angle
+                    # values in arc seconds
                     alpha_beta2world = input_model.meta.wcs.get_transform('alpha_beta','world')
 
                     temp_ra1, temp_dec1, lam_temp = alpha_beta2world(0, 0, lam_med)
                     temp_ra2, temp_dec2, lam_temp = alpha_beta2world(0, 2, lam_med)
-                
+
                 elif self.instrument == 'NIRSPEC':
                     slice_wcs = nirspec.nrs_wcs_set_input(input_model, 0)
                     x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box, step=(1, 1), center=True)
@@ -1142,17 +1115,16 @@ class IFUCubeData():
                     lam = lam[valid1]
                     lam_med = np.median(lam)
 
-                    # pick two along sice, across slice  values to determine rotation angle 
+                    # pick two along sice, across slice  values to determine rotation angle
                     # values in meters
-                    slicer2world = slice_wcs.get_transform('slicer','world')  
+                    slicer2world = slice_wcs.get_transform('slicer','world')
                     temp_ra1, temp_dec1, lam_temp = slicer2world(0, 0, lam_med)
                     temp_ra2, temp_dec2, lam_temp = slicer2world(0, 0.005, lam_med)
                 # ________________________________________________________________________________
-                # temp_dec1 is in degrees 
+                # temp_dec1 is in degrees
                 dra, ddec = (temp_ra2 - temp_ra1) * np.cos(temp_dec1 * np.pi/180.0), (temp_dec2 - temp_dec1)
                 self.rot_angle = np.arctan2(dra, ddec) * 180./np.pi
-                print('rotation angle degrees',self.rot_angle)
-
+                log.info('Rotation angle between ifu and sky: %f', self.rot_angle)
 
 # ________________________________________________________________________________
 # now loop over data and find min and max ranges data covers
@@ -1222,13 +1194,13 @@ class IFUCubeData():
             final_lambda_min = self.wavemin
             final_lambda_max = self.wavemax
 
-        # for NIRSPec wavelength range determined from the data 
+        # for NIRSPec wavelength range determined from the data
         if self.instrument == 'NIRSPEC':
             final_lambda_min = min(lambda_min)
             final_lambda_max = max(lambda_max)
         # ______________________________________________________________________
         if self.instrument == 'MIRI' and self.coord_system == 'internal_cal':
-            #  we have a 1 to 1 mapping in beta dimension (coord2) 
+            #  we have a 1 to 1 mapping in y across slice  dimension
             nslice = self.instrument_info.GetNSlice(parameter1[0])
             log.info('Across slice scale %f ', self.cdelt2)
             self.cdelt2 = (final_b_max - final_b_min) / nslice
@@ -1238,7 +1210,7 @@ class IFUCubeData():
 
         # ______________________________________________________________________
         if self.instrument == 'NIRSPEC' and self.coord_system == 'internal_cal':
-            #  we have a 1 to 1 mapping in ? dimension.
+            #  we have a 1 to 1 mapping in x - across slice  dimension.
             nslice = 30
             log.info('Across slice scale %f ', self.cdelt1)
             self.cdelt1 = (final_b_max - final_b_min) / nslice
@@ -1246,58 +1218,6 @@ class IFUCubeData():
             log.info('Changed the across slice scale dimension so we have 1-1 mapping between b and slice #')
             log.info('New across slice Scale %f ', self.cdelt1)
             self.cdelt2 = self.cdelt1/2.0
-
-# ________________________________________________________________________________
-# Define the rotation angle between the ra-dec and alpha beta coord system using
-# the first input model. Use first file in first band to set up rotation angle
-            
-# Compute the rotation angle between local IFU sysetem  and RA-DEC
-
-#        if self.coord_system == 'ifualign':
-#            this_a = parameter1[0] # 0 is first band - this_a is channel 
-#            this_b = parameter2[0] # 0 is first band - this_b is sub-channel
-#            log.info('Defining rotation between ra-dec and IFU plane using %s, %s'
-#                     , this_a, this_b)
-            # first file for this band 
-#            ifile = self.master_table.FileMap[self.instrument][this_a][this_b][0]
-#            with datamodels.IFUImageModel(ifile) as input_model:
-
-#                if self.instrument == 'MIRI':
-#                    xstart, xend = self.instrument_info.GetMIRISliceEndPts(this_a)
-#                    ysize = input_model.data.shape[0]
-#                    y, x = np.mgrid[:ysize, xstart:xend]
-#                    detector2alpha_beta = input_model.meta.wcs.get_transform('detector',
-#                                                                   'alpha_beta')
-#                    alpha, beta, lam = detector2alpha_beta(x, y)
-#                    valid1 = ~np.isnan(lam)
-#                    lam = lam[valid1]
-#                    lam_med = np.median(lam)
-                    # pick two alpha, beta values to determine rotation angle 
-                    # values in arc seconds 
-#                    alpha_beta2world = input_model.meta.wcs.get_transform('alpha_beta','world')
-
-#                    temp_ra1, temp_dec1, lam_temp = alpha_beta2world(0, 0, lam_med)
-#                    temp_ra2, temp_dec2, lam_temp = alpha_beta2world(0, 2, lam_med)
-                
-#                elif self.instrument == 'NIRSPEC':
-#                    slice_wcs = nirspec.nrs_wcs_set_input(input_model, 0)
-#                    x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box, step=(1, 1), center=True)
-#                    detector2slicer = slice_wcs.get_transform('detector','slicer')
-#                    across, along, lam = detector2slicer(x,y) #lam ~0 for this transform
-#                    valid1 = ~np.isnan(lam)
-#                    lam = lam[valid1]
-#                    lam_med = np.median(lam)
-
-                    # pick two along sice, across slice  values to determine rotation angle 
-#                    # values in meters
-#                    slicer2world = slice_wcs.get_transform('slicer','world')  
-#                    temp_ra1, temp_dec1, lam_temp = slicer2world(0, 0, lam_med)
-#                    temp_ra2, temp_dec2, lam_temp = slicer2world(0, 0.005, lam_med)
-#                # ________________________________________________________________________________
-#                # temp_dec1 is in degrees 
-#                dra, ddec = (temp_ra2 - temp_ra1) * np.cos(temp_dec1 * np.pi/180.0), (temp_dec2 - temp_dec1)
-#                self.rot_angle = np.arctan2(dra, ddec) * 180./np.pi
-#                print('rotation angle degrees',self.rot_angle)
 
 # ________________________________________________________________________________
 # Test that we have data (NIRSPEC NRS2 only has IFU data for 3 configurations)
@@ -1313,19 +1233,14 @@ class IFUCubeData():
 # ________________________________________________________________________________
     # Based on Scaling and Min and Max values determine naxis1, naxis2, naxis3
     # set cube CRVALs, CRPIXs
-        print('self.coord_system',self.coord_system)
 
         if self.coord_system == 'skyalign' or self.coord_system == 'ifualign':
-            print('Calling set_geometry')
             self.set_geometry(cube_footprint)
         else:
-            if self.instrument == 'MIRI':
-                self.set_geometryAB(cube_footprint)
-            if self.instrument == 'NIRSPEC':
-                self.set_geometryAB_NIRSpec(cube_footprint)
-        
+            self.set_geometryAB(cube_footprint)
+
         self.print_cube_geometry()
-        
+
 # **************************************************************************
 
     def map_detector_to_outputframe(self, this_par1,
@@ -1335,7 +1250,7 @@ class IFUCubeData():
 # **************************************************************************
         """Loop over a file and map the detector pixels to the output cube
 
-        The output frame is on the SKY (ra-dec) 
+        The output frame is on the SKY (ra-dec)
 
         Return the coordinates of all the detector pixel in the output frame.
         In addition, an array of pixel fluxes and weighing parameters are
@@ -1505,13 +1420,12 @@ class IFUCubeData():
                 dec = dec_det[valid_data]
                 wave = lam_det[valid_data]
                 slice_no = slice_det[valid_data]
-                valid_test = np.logical_and((wave >= self.zcoord[0]),
-                                            (wave <= self.zcoord[1]))
+                #valid_test = np.logical_and((wave >= self.zcoord[0]),
+                #                            (wave <= self.zcoord[1]))
 
             # find the location of all the values to reject in cube building
-                test= np.where(valid_test)
-
-                print('number between ',self.zcoord[0],self.zcoord[1], len(test[0]) )
+                #test= np.where(valid_test)
+                #print('number between ',self.zcoord[0],self.zcoord[1], len(test[0]) )
 # ______________________________________________________________________________
 # The following is for both MIRI and NIRSPEC
 # grab the flux and DQ values for these pixles
@@ -1523,11 +1437,10 @@ class IFUCubeData():
             min_wave_tolerance = self.crval3 - np.absolute(self.zcoord[1] - self.zcoord[0])
             max_wave_tolerance = self.zcoord[-1] + np.absolute(self.zcoord[-1] - self.zcoord[-2])
 
-            diff = self.zcoord[0] - wave
-            test = np.where(np.absolute(diff) < self.roiw)
+            #diff = self.zcoord[0] - wave
+            #test = np.where(np.absolute(diff) < self.roiw)
             # find the location of all the values to reject in cube building
-
-            print('number between ',self.zcoord[0],self.zcoord[1], len(test[0]) )
+            #print('number between ',self.zcoord[0],self.zcoord[1], len(test[0]) )
 
             valid_min = np.where(wave >= min_wave_tolerance)
             not_mapped_low = wave.size - len(valid_min[0])
@@ -2176,7 +2089,7 @@ class IFUCubeData():
             ifucube_model.meta.wcsinfo.cdelt3 = None
             ifucube_model.meta.ifu.roi_wave = np.mean(self.roiw_table)
             ifucube_model.wavedim = '(1,{:d})'.format(num)
-            
+
         ifucube_model.meta.wcsinfo.ctype1 = 'RA---TAN'
         ifucube_model.meta.wcsinfo.ctype2 = 'DEC--TAN'
         ifucube_model.meta.wcsinfo.cunit1 = 'deg'
@@ -2228,8 +2141,8 @@ class IFUCubeData():
                 ifucube_model.meta.wcsinfo.cunit1 = 'arcsec'
                 ifucube_model.meta.wcsinfo.cunit2 = 'arcsec'
 
-            # stick in values of 0, otherwize it is NaN and 
-            # fits file can not be written because these 
+            # stick in values of 0, otherwize it is NaN and
+            # fits file can not be written because these
             # values are defined in ifucube.schema.yaml
             ifucube_model.meta.ifu.weight_power = 0
             ifucube_model.meta.ifu.roi_wave=0
