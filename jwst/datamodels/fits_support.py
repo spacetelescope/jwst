@@ -598,7 +598,8 @@ def from_fits(hdulist, schema, context, skip_fits_update=None, **kwargs):
     known_keywords, known_datas = _load_from_schema(
         hdulist, schema, ff.tree, context, skip_fits_update=skip_fits_update
     )
-    _load_extra_fits(hdulist, known_keywords, known_datas, ff.tree)
+    if not skip_fits_update:
+        _load_extra_fits(hdulist, known_keywords, known_datas, ff.tree)
 
     _load_history(hdulist, ff.tree)
 
