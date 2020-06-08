@@ -1,14 +1,13 @@
 import pytest
 from astropy.io.fits.diff import FITSDiff
-from astropy.table import Table, setdiff
 
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
 
 @pytest.fixture(scope="module")
-def run_pipelines(jail, rtdata_module):
-    """Run stage 2-3 pipelines on NIRISS SOSS data."""
+def run_tso_spec2(jail, rtdata_module):
+    """Run stage 2 pipeline on NIRISS SOSS data."""
     rtdata = rtdata_module
     collect_pipeline_cfgs("config")
 
@@ -26,51 +25,62 @@ def run_pipelines(jail, rtdata_module):
     args = ["config/calwebb_tso-spec2.cfg", rtdata.input]
     Step.from_cmdline(args)
 
+
+@pytest.fixture(scope="module")
+def run_tso_spec3(jail, rtdata_module, run_tso_spec2):
+    """Run stage 3 pipeline on NIRISS SOSS data."""
+    rtdata = rtdata_module
     # Get the level3 assocation json file (though not its members) and run
     # the tso3 pipeline on all _calints files listed in association
     rtdata.get_data("niriss/soss/jw00625-o023_20191210t204036_tso3_001_asn.json")
     args = ["config/calwebb_tso3.cfg", rtdata.input]
     Step.from_cmdline(args)
 
-    return rtdata
-
-
 @pytest.mark.bigdata
-@pytest.mark.parametrize("suffix", ["calints", "flat_field", "o023_crfints",
-    "srctype", "x1dints"])
-def test_niriss_soss_stage2(run_pipelines, fitsdiff_default_kwargs, suffix):
+@pytest.mark.parametrize("suffix", ["calints", "flat_field", "srctype", "x1dints"])
+def test_niriss_soss_stage2(rtdata_module, run_tso_spec2, fitsdiff_default_kwargs, suffix):
     """Regression test of tso-spec2 pipeline performed on NIRISS SOSS data."""
-    rtdata = run_pipelines
-    rtdata.input = "jw00625023001_03101_00001-seg001_nis_rateints.fits"
-    output = "jw00625023001_03101_00001-seg001_nis_" + suffix + ".fits"
+    rtdata = rtdata_module
+    output = f"jw00625023001_03101_00001-seg001_nis_{suffix}.fits"
     rtdata.output = output
 
-    rtdata.get_truth("truth/test_niriss_soss_stages/" + output)
+    rtdata.get_truth(f"truth/test_niriss_soss_stages/{output}")
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
 
 @pytest.mark.bigdata
-def test_niriss_soss_stage3_x1dints(run_pipelines, fitsdiff_default_kwargs):
-    rtdata = run_pipelines
-    rtdata.input = "jw00625-o023_20191210t204036_tso3_001_asn.json"
-    rtdata.output = "jw00625-o023_t001_niriss_clear-gr700xd-substrip256_x1dints.fits"
-    rtdata.get_truth("truth/test_niriss_soss_stages/jw00625-o023_t001_niriss_clear-gr700xd-substrip256_x1dints.fits")
+def test_niriss_soss_stage2_crfints(rtdata_module, run_tso_spec3, fitsdiff_default_kwargs):
+    """Regression test of tso-spec2 pipeline performed on NIRISS SOSS data."""
+    rtdata = rtdata_module
+    output = "jw00625023001_03101_00001-seg001_nis_o023_crfints.fits"
+    rtdata.output = output
+
+    rtdata.get_truth(f"truth/test_niriss_soss_stages/{output}")
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
 
 @pytest.mark.bigdata
-def test_niriss_soss_stage3_whtlt(run_pipelines):
-    rtdata = run_pipelines
-    rtdata.input = "jw00625-o023_20191210t204036_tso3_001_asn.json"
-    rtdata.output = "jw00625-o023_t001_niriss_clear-gr700xd-substrip256_whtlt.ecsv"
-    rtdata.get_truth("truth/test_niriss_soss_stages/jw00625-o023_t001_niriss_clear-gr700xd-substrip256_whtlt.ecsv")
+def test_niriss_soss_stage3_x1dints(run_tso_spec3, rtdata_module, fitsdiff_default_kwargs):
+    rtdata = rtdata_module
 
-    table = Table.read(rtdata.output)
-    table_truth = Table.read(rtdata.truth)
+    output = "jw00625-o023_t001_niriss_clear-gr700xd-substrip256_x1dints.fits"
+    rtdata.output = output
+    rtdata.get_truth(f"truth/test_niriss_soss_stages/{output}")
 
-    # setdiff returns a table of length zero if there is no difference
-    assert len(setdiff(table, table_truth)) == 0
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
+
+
+@pytest.mark.bigdata
+def test_niriss_soss_stage3_whtlt(run_tso_spec3, rtdata_module, diff_astropy_tables):
+    rtdata = rtdata_module
+
+    output = "jw00625-o023_t001_niriss_clear-gr700xd-substrip256_whtlt.ecsv"
+    rtdata.output = output
+    rtdata.get_truth(f"truth/test_niriss_soss_stages/{output}")
+
+    assert diff_astropy_tables(rtdata.output, rtdata.truth)
