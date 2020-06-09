@@ -6,7 +6,7 @@ import math
 # _______________________________________________________________________
 
 
-def radec2std(crval1, crval2, rot_angle, ra, dec):
+def radec2std(crval1, crval2, ra, dec, rot_angle=None):
     """ Compute the tangent projection coordinates (xi,eta) from ra,dec
     using crval1 and crval2 (the tangent point).
 

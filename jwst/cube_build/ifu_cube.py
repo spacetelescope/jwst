@@ -246,20 +246,20 @@ class IFUCubeData():
         self.crval1 = ra_ave
         self.crval2 = dec_ave
         rot_angle = self.rot_angle
-        xi_center, eta_center = coord.radec2std(self.crval1, self.crval2, rot_angle,
-                                                ra_ave, dec_ave)
+        xi_center, eta_center = coord.radec2std(self.crval1, self.crval2,
+                                                ra_ave, dec_ave, rot_angle)
         # find the 4 corners
-        xi1, eta1 = coord.radec2std(self.crval1, self.crval2, rot_angle,
-                                          ra_min, dec_min)
+        xi1, eta1 = coord.radec2std(self.crval1, self.crval2,
+                                          ra_min, dec_min, rot_angle)
 
-        xi3, eta3 = coord.radec2std(self.crval1, self.crval2, rot_angle,
-                                          ra_max, dec_max)
+        xi3, eta3 = coord.radec2std(self.crval1, self.crval2,
+                                          ra_max, dec_max, rot_angle)
 
-        xi2, eta2 = coord.radec2std(self.crval1, self.crval2, rot_angle,
-                                          ra_min, dec_max)
+        xi2, eta2 = coord.radec2std(self.crval1, self.crval2,
+                                          ra_min, dec_max, rot_angle)
 
-        xi4, eta4 = coord.radec2std(self.crval1, self.crval2, rot_angle,
-                                          ra_max, dec_min)
+        xi4, eta4 = coord.radec2std(self.crval1, self.crval2,
+                                          ra_max, dec_min, rot_angle)
         #print(xi1,xi2,xi3,xi4)
         #print(eta1,eta2,eta3,eta4)
         # length of each side
@@ -276,6 +276,12 @@ class IFUCubeData():
 
         eta_min  = -eta_distance/2
         eta_max  = eta_distance/2
+
+        #xi_min = xi1
+        #xi_max = xi3
+        #eta_min = eta1
+        #eta_max = eta3
+        #print(xi_min, xi_max,eta_min, eta_max)
 # ________________________________________________________________________________
 # find the CRPIX1 CRPIX2 - xi and eta centered at 0,0
 # to find location of center abs of min values is how many pixels
@@ -286,6 +292,7 @@ class IFUCubeData():
         n1b = int(math.ceil(math.fabs(xi_max) / self.cdelt1))
         n2b = int(math.ceil(math.fabs(eta_max) / self.cdelt2))
 
+        print(n1a,n1b,n2a,n2b)
         #xi_min = 0.0 - (n1a * self.cdelt1) - (self.cdelt1 / 2.0)
         #xi_max = (n1b * self.cdelt1) + (self.cdelt1 / 2.0)
 
@@ -1502,8 +1509,8 @@ class IFUCubeData():
             dec_use = dec[good_data]
             coord1, coord2 = coord.radec2std(self.crval1,
                                              self.crval2,
-                                             self.rot_angle,
-                                             ra_use, dec_use)
+                                             ra_use, dec_use,
+                                             self.rot_angle)
 
             if self.weighting == 'miripsf':
                 alpha_det = alpha[good_data]
