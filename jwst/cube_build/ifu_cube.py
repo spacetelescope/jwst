@@ -267,6 +267,11 @@ class IFUCubeData():
         distance2 = np.sqrt( (xi3-xi2)*(xi3-xi2) + (eta3-eta2)*(eta3-eta2))
         distance3 = np.sqrt( (xi4-xi3)*(xi4-xi3) + (eta4-eta3)*(eta4-eta3))
         distance4 = np.sqrt( (xi4-xi1)*(xi4-xi1) + (eta4-eta1)*(eta4-eta1))
+
+        distance1 = distance1 * np.cos (rot_angle*np.pi/180)
+        distance2 = distance2 * np.cos (rot_angle*np.pi/180)
+        distance3 = distance3 * np.cos (rot_angle*np.pi/180)
+        distance4 = distance4 * np.cos (rot_angle*np.pi/180)
         #print('distance',distance1,distance2,distance3,distance4)
 
         xi_distance = (distance1 + distance3)/2.0
