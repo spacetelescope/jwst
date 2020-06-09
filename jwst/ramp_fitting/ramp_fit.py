@@ -2466,7 +2466,6 @@ def fit_lines(data, mask_2d, rn_sect, gain_sect, ngroups, weighting):
         log.error('FATAL ERROR: unsupported weighting type specified.')
 
     slope_s[good_pix] = slope
-    slope_s[good_pix] = slope
     variance_s[good_pix] = variance
     intercept_s[good_pix] = intercept
     sig_intercept_s[good_pix] = sig_intercept
