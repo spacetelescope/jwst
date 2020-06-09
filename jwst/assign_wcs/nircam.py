@@ -2,8 +2,10 @@ import logging
 
 from astropy import coordinates as coord
 from astropy import units as u
-from astropy.modeling.models import Identity, Const1D, Mapping
+from astropy.modeling.models import Identity, Const1D, Mapping, Shift
 import gwcs.coordinate_frames as cf
+
+import asdf
 
 from . import pointing
 from .util import (not_implemented_mode, subarray_transform, velocity_correction,
@@ -12,6 +14,8 @@ from ..datamodels import (ImageModel, NIRCAMGrismModel, DistortionModel)
 from ..transforms.models import (NIRCAMForwardRowGrismDispersion,
                                  NIRCAMForwardColumnGrismDispersion,
                                  NIRCAMBackwardGrismDispersion)
+from ..lib.reffile_utils import find_row
+
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -37,6 +41,8 @@ def create_pipeline(input_model, reference_files):
         The pipeline list that is returned is suitable for
         input into  gwcs.wcs.WCS to create a GWCS object.
     """
+
+    log.debug(f'reference files used in NIRCAM WCS pipeline: {reference_files}')
     exp_type = input_model.meta.exposure.type.lower()
     pipeline = exp_type2transform[exp_type](input_model, reference_files)
 
@@ -110,6 +116,22 @@ def imaging_distortion(input_model, reference_files):
         # If not set a ``bounding_box`` equal to the size of the image.
         transform.bounding_box = transform_bbox_from_shape(input_model.data.shape)
     dist.close()
+
+    # Add an offset for the filter
+    if reference_files['filteroffset'] is not None:
+        obsfilter = input_model.meta.instrument.filter
+        obspupil = input_model.meta.instrument.pupil
+        with asdf.open(reference_files['filteroffset']) as filter_offset:
+            filters = filter_offset.tree['filters']
+
+        match_keys = {'filter': obsfilter, 'pupil': obspupil}
+        row = find_row(filters, match_keys)
+        col_offset = row.get('col_offset', 'N/A')
+        row_offset = row.get('row_offset', 'N/A')
+
+        if col_offset != 'N/A' and row_offset != 'N/A':
+            transform = Shift(col_offset) & Shift(row_offset) | transform
+
     return transform
 
 
