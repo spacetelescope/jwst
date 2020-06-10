@@ -25,6 +25,8 @@ datamodels
 
 - Trimmed MT_RA, MT_DEC keyword comments to fit within FITS record. [#4994]
 
+- Add enum list and default value of 'NONE' for ``meta.instrument.lamp_mode`` [#5022]
+
 extract_1d
 ----------
 
