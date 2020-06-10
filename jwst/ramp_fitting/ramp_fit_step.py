@@ -23,6 +23,7 @@ class RampFitStep (Step):
         int_name = string(default='')
         save_opt = boolean(default=False) # Save optional output
         opt_name = string(default='')
+        maximum_cores = string(default='none')
     """
 
     # Prior to 04/26/17, the following were also in the spec above:
@@ -42,7 +43,7 @@ class RampFitStep (Step):
     def process(self, input):
 
         with datamodels.RampModel(input) as input_model:
-
+            max_cores = self.maximum_cores
             readnoise_filename = self.get_reference_file(input_model,
                                                           'readnoise')
             gain_filename = self.get_reference_file(input_model, 'gain')
@@ -70,7 +71,7 @@ class RampFitStep (Step):
             out_model, int_model, opt_model, gls_opt_model = ramp_fit.ramp_fit(
                 input_model, buffsize,
                 self.save_opt, readnoise_model, gain_model, self.algorithm,
-                self.weighting
+                self.weighting, max_cores
             )
 
             readnoise_model.close()
