@@ -49,6 +49,9 @@ pipeline
 stpipe
 ------
 
+- Limit reference file prefetch to the first "science" exptype
+  when a pipeline has an association as input. [#5031]
+
 - Remove further sloper references. [#4989]
 
 0.16.1 (2020-05-19)
