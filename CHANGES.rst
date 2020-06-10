@@ -1,4 +1,4 @@
-0.16.2 (unreleased)
+0.17.0 (unreleased)
 ===================
 
 assign_mtwcs
@@ -57,6 +57,13 @@ stpipe
 ------
 
 - Remove further sloper references. [#4989]
+
+
+0.16.2 (2020-06-10)
+===================
+
+- Fixed ``packaging`` dependency installation issue.  [#4977]
+
 
 0.16.1 (2020-05-19)
 ===================
