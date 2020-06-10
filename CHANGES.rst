@@ -9,7 +9,7 @@ assign_mtwcs
 assign_wcs
 ----------
 
-- Enabled ``filteroffset`` correction for NIRISS and NIRCAM imaging modes. [#5018]
+- Enabled ``filteroffset`` correction for NIRISS and NIRCAM imaging modes. [#5018, #5027]
 
 associations
 ------------

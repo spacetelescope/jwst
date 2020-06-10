@@ -1,7 +1,3 @@
-import numpy as np
-
-import asdf
-
 from ..reffile_utils import find_row
 
 def test_find_row():
