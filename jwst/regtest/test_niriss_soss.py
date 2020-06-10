@@ -51,8 +51,8 @@ def test_niriss_soss_stage2(rtdata_module, run_tso_spec2, fitsdiff_default_kwarg
 
 
 @pytest.mark.bigdata
-def test_niriss_soss_stage2_crfints(rtdata_module, run_tso_spec3, fitsdiff_default_kwargs):
-    """Regression test of tso-spec2 pipeline performed on NIRISS SOSS data."""
+def test_niriss_soss_stage3_crfints(rtdata_module, run_tso_spec3, fitsdiff_default_kwargs):
+    """Regression test of tso-spec3 pipeline outlier_detection results performed on NIRISS SOSS data."""
     rtdata = rtdata_module
     output = "jw00625023001_03101_00001-seg001_nis_o023_crfints.fits"
     rtdata.output = output
@@ -65,6 +65,7 @@ def test_niriss_soss_stage2_crfints(rtdata_module, run_tso_spec3, fitsdiff_defau
 
 @pytest.mark.bigdata
 def test_niriss_soss_stage3_x1dints(run_tso_spec3, rtdata_module, fitsdiff_default_kwargs):
+    """Regression test of tso-spec3 pipeline extract_1d results performed on NIRISS SOSS data."""
     rtdata = rtdata_module
 
     output = "jw00625-o023_t001_niriss_clear-gr700xd-substrip256_x1dints.fits"
@@ -77,6 +78,7 @@ def test_niriss_soss_stage3_x1dints(run_tso_spec3, rtdata_module, fitsdiff_defau
 
 @pytest.mark.bigdata
 def test_niriss_soss_stage3_whtlt(run_tso_spec3, rtdata_module, diff_astropy_tables):
+    """Regression test of tso-spec3 pipeline white_light results performed on NIRISS SOSS data."""
     rtdata = rtdata_module
 
     output = "jw00625-o023_t001_niriss_clear-gr700xd-substrip256_whtlt.ecsv"
