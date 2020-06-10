@@ -449,8 +449,8 @@ def find_row(ldict, match_keys):
         if all(row):
             results.append(d)
     if len(results) > 1:
-        raise MatchRowError(f"Expected to find one matching row in table, found {len(row)}.")
-    if len(row) == 0:
+        raise MatchRowError(f"Expected to find one matching row in table, found {len(results)}.")
+    if len(results) == 0:
         log.warning("Expected to find one matching row in table, found 0.")
         return None
     return results[0]
