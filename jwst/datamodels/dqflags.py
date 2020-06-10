@@ -59,11 +59,12 @@ pixel = {'GOOD':             0,      # No bits set, all is good
 
 # Group-specific flags. Once groups are combined, these flags
 # are equivalent to the pixel-specific flags.
-group = {'GOOD':       pixel['GOOD'],
-         'DO_NOT_USE': pixel['DO_NOT_USE'],
-         'SATURATED':  pixel['SATURATED'],
-         'JUMP_DET':   pixel['JUMP_DET'],
-         'DROPOUT':    pixel['DROPOUT'],
+group = {
+    'GOOD':       pixel['GOOD'],
+    'DO_NOT_USE': pixel['DO_NOT_USE'],
+    'SATURATED':  pixel['SATURATED'],
+    'JUMP_DET':   pixel['JUMP_DET'],
+    'DROPOUT':    pixel['DROPOUT'],
 }
 
 
@@ -105,3 +106,32 @@ def interpret_bit_flags(bit_flags, flip_bits=None):
         bit_flags_dm = multiple_replace(bit_flags, dm_flags)
 
     return ap_interpret_bit_flags(bit_flags_dm, flip_bits=flip_bits)
+
+
+def bit_flags_to_mnemonics(bit_flags):
+    """Interpret value as bit flags and return the mnemonics
+
+    Parameters
+    ----------
+    bit_flags : int-like
+        The value to interpret as bit flags
+
+    Returns
+    -------
+    mnemonics : [str[,...]]
+        List of mnemonics represented by the set bits
+
+    Examples
+    --------
+    >>> bit_flags_to_mnemonics(1)
+    ['DO_NOT_USE']
+
+    >>> bit_flags_to_mnemonics(7)
+    ['DO_NOT_USE', 'SATURATED', 'JUMP_DET']
+    """
+    mnemonics = [
+        mnemonic
+        for mnemonic, value in pixel.items()
+        if (bit_flags & value)
+    ]
+    return mnemonics
