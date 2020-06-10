@@ -37,12 +37,12 @@ Remember that all conda operations must be done from within a bash shell.
 ### Installing From Github
 
 You can install various versions of `jwst` directly from the code repo on Github.
-For example, to install a fully tested and tagged release version, such as `jwst 0.16.1`,
+For example, to install a fully tested and tagged release version, such as `jwst 0.16.2`,
 enter (from a bash shell):
 
     conda create -n <env_name> python
     conda activate <env_name>
-    pip install git+https://github.com/spacetelescope/jwst@0.16.1
+    pip install git+https://github.com/spacetelescope/jwst@0.16.2
 
 Or to install the latest development version (not as well tested) from the
 Github master branch:
@@ -176,40 +176,41 @@ contact the [JWST Help Desk](https://jwsthelp.stsci.edu).
 
 ## Software vs DMS build version map
 
-| jwst tag | DMS build | CRDS_CONTEXT |   Date     |          Notes                           |
-| -------- | --------- | ------------ | ---------- | -----------------------------------------|
-|  0.16.1  | B7.5rc2   | 0616         | 05/19/2020 | Second release candidate for B7.5        |
-|  0.16.0  | B7.5rc1   | 0614         | 05/04/2020 | First release candidate for B7.5         |
-|  0.15.1  | B7.4.2    | 0586         | 03/10/2020 | Final release candidate for B7.4.2       |
-|  0.15.0  | B7.4.2rc1 | 0585         | 02/28/2020 | First release candidate for B7.4.2       |
-|  0.14.2  | B7.4      | 0570         | 11/18/2019 | Final release candidate for B7.4         |
-|  0.14.1  | B7.4rc2   | 0568         | 11/11/2019 | Second release candidate for B7.4        |
-|  0.14.0  | B7.4rc1   | 0563         | 10/25/2019 | First release candidate for B7.4         |
-|  0.13.8  | B7.3.1    | 0541         | 09/05/2019 | Patch for Build 7.3 released as Build 7.3.1     |
-|  0.13.7  | B7.3      | 0535         | 06/21/2019 | Final release candidate for Build 7.3    |
-|  0.13.6  | B7.3rc4   | 0534         | 06/20/2019 | Fourth release candidate for Build 7.3   |
-|  0.13.5  | B7.3rc3   | 0534         | 06/19/2019 | Third release candidate for Build 7.3    |
-|  0.13.4  | B7.3rc2   | 0534         | 06/18/2019 | Second release candidate for Build 7.3   |
-|  0.13.3  | B7.3rc1   | 0532         | 06/04/2019 | First release candidate for Build 7.3    |
-|  0.13.2  |           | 0500*        | 05/14/2019 | DMS test, no delivery to I&T             |
-|  0.13.1  |           | 0500*        | 03/08/2019 | DMS test, no delivery to I&T             |
-|  0.13.0  |           | 0500         | 02/15/2019 | DMS test, no delivery to I&T             |
-|  0.12.3  | B7.2.1    | 0500         | 01/15/2019 | DMS Build 7.2.1 patch release            |
-|  0.12.2  | B7.2      | 0495         | 11/07/2018 | Final release candidate for Build 7.2    |
-|  0.12.1  | B7.2rc2   | 0495         | 11/01/2018 | Second release candidate for Build 7.2   |
-|  0.12.0  | B7.2rc1   | 0493*        | 10/09/2018 | First release candidate for Build 7.2    |
-|  0.11.0  |           | 0482*        | 09/10/2018 | DMS test, no delivery to I&T             |
-|  0.10.0  |           | 0477*        | 07/31/2018 | DMS test, no delivery to I&T             |
-|  0.9.6   | B7.1.3    | 0468         | 06/08/2018 | Final release candidate for Build 7.1.3  |
-|  0.9.5   | B7.1.3rc3 | 0468         | 06/06/2018 | Third release candidate for Build 7.1.3  |
-|  0.9.4   | B7.1.3rc2 | 0463*        | 05/29/2018 | Second release candidate for Build 7.1.3 |
-|  0.9.3   | B7.1.3rc1 | 0457*        | 05/11/2018 | First release candidate for Build 7.1.3  |
-|  0.9.2   |           | 0441*        | 03/28/2018 | DMS test, no delivery to I&T             |
-|  0.9.1   |           | 0432*        | 02/16/2018 | DMS test, no delivery to I&T             |
-|  0.9.0   | B7.1.2    | 0422         | 12/22/2017 | DMS patch release to I&T 02/15/2018      |
-|  0.8.0   | B7.1.1    | 0422         |            | DMS patch release to I&T 01/17/2018      |
-|  0.8.0   | B7.1      | 0422         | 11/14/2017 | Final, delivered to I&T 11/17/2017       |
-|  0.7.0rc7| B7.0      | 0303         | 12/13/2016 | Final, delivered to I&T                  |
+| jwst tag | DMS build | CRDS_CONTEXT |   Date     |          Notes                                |
+| -------- | --------- | ------------ | ---------- | ----------------------------------------------|
+|  0.16.2  | B7.5      | 0619         | 06/10/2020 | Same as 0.16.1, but with installation bug fix |
+|  0.16.1  | B7.5      | 0619         | 05/19/2020 | Final release candidate for B7.5              |
+|  0.16.0  | B7.5rc1   | 0614         | 05/04/2020 | First release candidate for B7.5              |
+|  0.15.1  | B7.4.2    | 0586         | 03/10/2020 | Final release candidate for B7.4.2            |
+|  0.15.0  | B7.4.2rc1 | 0585         | 02/28/2020 | First release candidate for B7.4.2            |
+|  0.14.2  | B7.4      | 0570         | 11/18/2019 | Final release candidate for B7.4              |
+|  0.14.1  | B7.4rc2   | 0568         | 11/11/2019 | Second release candidate for B7.4             |
+|  0.14.0  | B7.4rc1   | 0563         | 10/25/2019 | First release candidate for B7.4              |
+|  0.13.8  | B7.3.1    | 0541         | 09/05/2019 | Patch for Build 7.3 released as Build 7.3.1   |
+|  0.13.7  | B7.3      | 0535         | 06/21/2019 | Final release candidate for Build 7.3         |
+|  0.13.6  | B7.3rc4   | 0534         | 06/20/2019 | Fourth release candidate for Build 7.3        |
+|  0.13.5  | B7.3rc3   | 0534         | 06/19/2019 | Third release candidate for Build 7.3         |
+|  0.13.4  | B7.3rc2   | 0534         | 06/18/2019 | Second release candidate for Build 7.3        |
+|  0.13.3  | B7.3rc1   | 0532         | 06/04/2019 | First release candidate for Build 7.3         |
+|  0.13.2  |           | 0500*        | 05/14/2019 | DMS test, no delivery to I&T                  |
+|  0.13.1  |           | 0500*        | 03/08/2019 | DMS test, no delivery to I&T                  |
+|  0.13.0  |           | 0500         | 02/15/2019 | DMS test, no delivery to I&T                  |
+|  0.12.3  | B7.2.1    | 0500         | 01/15/2019 | DMS Build 7.2.1 patch release                 |
+|  0.12.2  | B7.2      | 0495         | 11/07/2018 | Final release candidate for Build 7.2         |
+|  0.12.1  | B7.2rc2   | 0495         | 11/01/2018 | Second release candidate for Build 7.2        |
+|  0.12.0  | B7.2rc1   | 0493*        | 10/09/2018 | First release candidate for Build 7.2         |
+|  0.11.0  |           | 0482*        | 09/10/2018 | DMS test, no delivery to I&T                  |
+|  0.10.0  |           | 0477*        | 07/31/2018 | DMS test, no delivery to I&T                  |
+|  0.9.6   | B7.1.3    | 0468         | 06/08/2018 | Final release candidate for Build 7.1.3       |
+|  0.9.5   | B7.1.3rc3 | 0468         | 06/06/2018 | Third release candidate for Build 7.1.3       |
+|  0.9.4   | B7.1.3rc2 | 0463*        | 05/29/2018 | Second release candidate for Build 7.1.3      |
+|  0.9.3   | B7.1.3rc1 | 0457*        | 05/11/2018 | First release candidate for Build 7.1.3       |
+|  0.9.2   |           | 0441*        | 03/28/2018 | DMS test, no delivery to I&T                  |
+|  0.9.1   |           | 0432*        | 02/16/2018 | DMS test, no delivery to I&T                  |
+|  0.9.0   | B7.1.2    | 0422         | 12/22/2017 | DMS patch release to I&T 02/15/2018           |
+|  0.8.0   | B7.1.1    | 0422         |            | DMS patch release to I&T 01/17/2018           |
+|  0.8.0   | B7.1      | 0422         | 11/14/2017 | Final, delivered to I&T 11/17/2017            |
+|  0.7.0rc7| B7.0      | 0303         | 12/13/2016 | Final, delivered to I&T                       |
 
 Note: CRDS_CONTEXT values flagged with an asterisk in the above table are estimates
 (formal CONTEXT deliveries are only provided with final builds).
