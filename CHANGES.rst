@@ -53,6 +53,11 @@ pipeline
 - Fix open files bug in ``get_config_from_reference`` class method, and in
   ``Spec2Pipeline``, ``Spec3Pipeline`` and ``tso3``. [#4995]
 
+ramp_fitting
+------------
+
+- Add multi-processing capability. [#4815]
+
 stpipe
 ------
 
@@ -1690,10 +1695,8 @@ master_background
 model_blender
 -------------
 
-
 msaflagopen
 -----------
-
 
 outlier_detection
 -----------------
