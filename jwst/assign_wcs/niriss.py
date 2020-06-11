@@ -272,11 +272,12 @@ def imaging_distortion(input_model, reference_files):
 
         match_keys = {'filter': obsfilter, 'pupil': obspupil}
         row = find_row(filters, match_keys)
-        col_offset = row.get('col_offset', 'N/A')
-        row_offset = row.get('row_offset', 'N/A')
+        if row is not None:
+            col_offset = row.get('col_offset', 'N/A')
+            row_offset = row.get('row_offset', 'N/A')
 
-        if col_offset != 'N/A' and row_offset != 'N/A':
-            distortion = Shift(col_offset) & Shift(row_offset) | distortion
+            if col_offset != 'N/A' and row_offset != 'N/A':
+                distortion = Shift(col_offset) & Shift(row_offset) | distortion
     return distortion
 
 
