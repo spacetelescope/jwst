@@ -172,6 +172,8 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
            Object containing optional GLS-specific ramp fitting data for the
            exposure
        """
+
+    # Determine number of slices to use for multi-processor computations
     if max_cores == 'none':
         number_slices = 1
     else:
@@ -185,18 +187,23 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
             number_slices = num_cores
         else:
             number_slices = 1
+
+    # Copy the int_times table for TSO data
     if pipe_utils.is_tso(input_model) and hasattr(input_model, 'int_times'):
         int_times = input_model.int_times
     else:
         int_times = None
+
     total_rows = input_model.data.shape[2]
     total_cols = input_model.data.shape[3]
     number_of_integrations = input_model.data.shape[0]
+
+    # Call ramp fitting for the single processor (1 data slice) case
     if number_slices == 1:
         max_segments, max_CRs = calc_num_seg(input_model.groupdq, number_of_integrations)
         int_model, opt_model, out_model = create_output_models(input_model,
                                             number_of_integrations, save_opt, total_cols, total_rows,
-                                                               max_segments, max_CRs)
+                                            max_segments, max_CRs)
 
         out_model.data, out_model.dq, out_model.var_poisson, out_model.var_rnoise, out_model.err,\
         int_data, int_dq, int_var_poisson, int_var_rnoise, int_err,\
@@ -205,15 +212,20 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
         actual_segments, actual_CRs = \
         ols_ramp_fit(input_model.data, input_model.err, input_model.groupdq, input_model.pixeldq,
                      buffsize, save_opt, readnoise_2d, gain_2d, weighting,
-                          input_model.meta.instrument.name, input_model.meta.exposure.frame_time,
-                          input_model.meta.exposure.ngroups, input_model.meta.exposure.group_time,
-                          input_model.meta.exposure.groupgap, input_model.meta.exposure.nframes,
-                          input_model.meta.exposure.drop_frames1, int_times)
+                     input_model.meta.instrument.name, input_model.meta.exposure.frame_time,
+                     input_model.meta.exposure.ngroups, input_model.meta.exposure.group_time,
+                     input_model.meta.exposure.groupgap, input_model.meta.exposure.nframes,
+                     input_model.meta.exposure.drop_frames1, int_times)
+
+        # Populate the rateints output model
         if number_of_integrations > 1:
             int_model.data = int_data
             int_model.dq = int_dq
             int_model.var_poisson = int_var_poisson
             int_model.var_rnoise = int_var_rnoise
+            int_model.err = int_err
+
+        # Populate the optional output model
         if save_opt:
             opt_model.slope = opt_slope
             opt_model.sigslope = opt_sigslope
@@ -224,12 +236,17 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
             opt_model.pedestal = opt_pedestal
             opt_model.weights = opt_weights
             opt_model.crmag = opt_crmag
+
         return out_model, int_model, opt_model
+
+    # Call ramp fitting for multi-processor (multiple data slices) case
     else:
         log.debug(f'number of processes being used is {number_slices}')
         rows_per_slice = round(total_rows / number_slices)
         pool = Pool(processes=number_slices)
         slices = []
+
+        # Populate the first n-1 slices
         for i in range(number_slices - 1):
             start_row = i * rows_per_slice
             stop_row = (i + 1) * rows_per_slice
@@ -262,19 +279,21 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
                                           input_model.meta.exposure.groupgap, input_model.meta.exposure.nframes,
                                           input_model.meta.exposure.drop_frames1, int_times))
 
+        # Start up the processes for each slice
         log.debug("Creating %d processes for ramp fitting " % number_slices)
-        #start up the processes for each slice
         real_results = pool.starmap(ols_ramp_fit, slices)
         pool.close()
         pool.join()
         k = 0
         log.debug("All processes complete")
+
         # Create new model for the primary output.
         actual_segments = real_results[0][20]
         actual_CRs = real_results[0][21]
         int_model, opt_model, out_model = create_output_models(input_model,
                             number_of_integrations, save_opt, total_cols, total_rows,
                                                                actual_segments, actual_CRs)
+
         # iterate over the number of slices and place the results into the output models
         for resultslice in real_results:
             start_row = k * rows_per_slice
@@ -324,7 +343,9 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
                     opt_model.weights[:, :, start_row: (k + 1) *rows_per_slice, :] = resultslice[18]
                     opt_model.crmag[:, :, start_row: (k + 1) *rows_per_slice, :] = resultslice[19]
             k = k + 1
+
         return out_model, int_model, opt_model
+
 
 def create_output_models(input_model, number_of_integrations, save_opt, total_cols, total_rows,
                          actual_segments, actual_CRs):
