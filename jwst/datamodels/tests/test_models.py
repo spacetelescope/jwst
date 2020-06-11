@@ -568,6 +568,20 @@ def test_modelcontainer_group_names(container):
     assert len(container.group_names) == 2
 
 
+def test_modelcontainer_error_from_asn(tmpdir):
+    from jwst.associations.asn_from_list import asn_from_list
+
+    asn = asn_from_list(["foo.fits"], product_name="foo_out")
+    name, serialized = asn.dump(format="json")
+    path = str(tmpdir.join(name))
+    with open(path, "w") as f:
+        f.write(serialized)
+
+    # The foo.fits file doesn't exist
+    with pytest.raises(FileNotFoundError):
+        datamodels.open(path)
+
+
 def test_object_node_iterator():
     im = ImageModel()
     items = []

@@ -265,7 +265,8 @@ class Pipeline(Step):
         """
         from .. import datamodels
         try:
-            with datamodels.open(input_file) as model:
+            with datamodels.open(input_file, asn_n_members=1,
+                                asn_exptypes=["science"]) as model:
                 self._precache_references_opened(model)
         except (ValueError, TypeError, IOError):
             self.log.info(
@@ -319,7 +320,7 @@ class Pipeline(Step):
 
         for (reftype, refpath) in sorted(ref_path_map.items()):
             how = "Override" if reftype in ovr_refs else "Prefetch"
-            self.log.info("{0} for {1} reference file is '{2}'.".format(how, reftype.upper(), refpath))
+            self.log.info(f"{how} for {reftype.upper()} reference file is '{refpath}'.")
             crds_client.check_reference_open(refpath)
 
     @classmethod

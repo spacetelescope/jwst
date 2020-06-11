@@ -221,9 +221,11 @@ class ModelContainer(model_base.DataModel):
         else:
             sublist = infiles
         try:
-            self._models = [datamodel_open(infile, memmap=self._memmap) for infile in sublist]
+            for filepath in sublist:
+                self._models.append(datamodel_open(filepath, memmap=self._memmap))
         except IOError:
-            raise IOError('Cannot open {}'.format(infiles))
+            self.close()
+            raise
 
         # Pull the whole association table into meta.asn_table
         self.meta.asn_table = {}

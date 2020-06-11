@@ -131,8 +131,8 @@ def check_reference_open(refpath):
             if not s3_utils.object_exists(refpath):
                 raise RuntimeError("S3 object does not exist: " + refpath)
         else:
-            opened = open(refpath, "rb")
-            opened.close()
+            with open(refpath, "rb"):
+                pass
     return refpath
 
 
