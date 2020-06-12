@@ -149,9 +149,6 @@ class DMSBaseMixin(ACIDMixin):
 
     Attributes
     ----------
-    from_items : [item[,...]]
-        The list of items that contributed to the association.
-
     sequence : int
         The sequence number of the current association
     """
@@ -235,7 +232,7 @@ class DMSBaseMixin(ACIDMixin):
 
     @property
     def from_items(self):
-        """List of items from which members were created"""
+        """The list of items that contributed to the association."""
         try:
             items = [
                 member.item
@@ -579,6 +576,19 @@ class DMSBaseMixin(ACIDMixin):
         target_id = format_list(self.constraints['target'].found_values)
         target = 't{0:0>3s}'.format(str(target_id))
         return target
+
+    def _get_grating(self):
+        """Get string representation of the grating in use
+
+        Returns
+        -------
+        grating : str
+            The Level3 Product name representation
+            of the grating in use.
+        """
+        grating_id = format_list(self.constraints['grating'].found_values)
+        grating = 't{0:0>3s}'.format(str(grating_id))
+        return grating
 
 
 # -----------------

@@ -19,8 +19,11 @@ class ResampleSpecStep(ResampleStep):
     """
 
     def process(self, input):
-        input_new = datamodels.open(input)  # define input_new since if ImageModel it will
-                                            # redefined to SlitModel
+
+        # Define input_new, because if input is ImageModel, it will
+        # get recreated as a SlitModel
+        input_new = datamodels.open(input)
+
         if isinstance(input_new, ImageModel):
             slit_model = datamodels.SlitModel()
             slit_model.update(input_new, only="PRIMARY")
@@ -28,6 +31,7 @@ class ResampleSpecStep(ResampleStep):
             slit_model.meta.wcs = input_new.meta.wcs
             slit_model.data = input_new.data
             input_new = slit_model
+
         # If single DataModel input, wrap in a ModelContainer
         if not isinstance(input_new, ModelContainer):
             input_models = datamodels.ModelContainer([input_new])
@@ -36,6 +40,7 @@ class ResampleSpecStep(ResampleStep):
         else:
             input_models = input_new
 
+        # Get the drizpars reference file
         for reftype in self.reference_file_types:
             ref_filename = self.get_reference_file(input_models[0], reftype)
 
@@ -43,11 +48,12 @@ class ResampleSpecStep(ResampleStep):
             self.log.info('Drizpars reference file: {}'.format(ref_filename))
             kwargs = self.get_drizpars(ref_filename, input_models)
         else:
-            # Deal with NIRSpec which currently has no default drizpars reffile
+            # Deal with NIRSpec, which currently has no default drizpars reffile
             self.log.info("No NIRSpec DIRZPARS reffile")
             kwargs = self._set_spec_defaults()
             kwargs['blendheaders'] = self.blendheaders
 
+        # Call resampling
         self.drizpars = kwargs
         if isinstance(input_models[0], MultiSlitModel):
             result = self._process_multislit(input_models)
@@ -55,9 +61,14 @@ class ResampleSpecStep(ResampleStep):
         elif len(input_models[0].data.shape) != 2:
             # resample can only handle 2D images, not 3D cubes, etc
             raise RuntimeError("Input {} is not a 2D image.".format(input_models[0]))
+
         else:
             # result is a SlitModel
             result = self._process_slit(input_models)
+
+        # Update ASNTABLE in output
+        result.meta.asn.table_name = input_models[0].meta.asn.table_name
+
         return result
 
     def _process_multislit(self, input_models):
@@ -76,18 +87,26 @@ class ResampleSpecStep(ResampleStep):
         """
         containers = multislit_to_container(input_models)
         result = datamodels.MultiSlitModel()
+
         result.update(input_models[0], only="PRIMARY")
         result.update(input_models[0], only="SCI")
+
         for container in containers.values():
             resamp = resample_spec.ResampleSpecData(container, **self.drizpars)
             drizzled_models = resamp.do_drizzle()
+
             for model in drizzled_models:
                 model.meta.cal_step.resample = "COMPLETE"
                 model.meta.asn.pool_name = input_models.meta.pool_name
                 model.meta.asn.table_name = input_models.meta.table_name
+
+                # Delete the BUNIT keyword for the ERR extension, so that datamodels
+                # doesn't create an empty ERR extension (just for that keyword)
                 if hasattr(model.meta, "bunit_err") and model.meta.bunit_err is not None:
                     del model.meta.bunit_err
+
                 update_s_region_spectral(model)
+
             # Everything resampled to single output model
             if len(drizzled_models) == 1:
                 result.slits.append(drizzled_models[0])
@@ -133,8 +152,12 @@ class ResampleSpecStep(ResampleStep):
         result.meta.cal_step.resample = "COMPLETE"
         result.meta.asn.pool_name = input_models.meta.pool_name
         result.meta.asn.table_name = input_models.meta.table_name
+
+        # Delete BUNIT keyword for ERR extension to prevent datamodels from
+        # creating an empty ERR extension (just for the keyword)
         if hasattr(result.meta, "bunit_err") and result.meta.bunit_err is not None:
             del result.meta.bunit_err
+
         update_s_region_spectral(result)
         result.meta.bunit_data = drizzled_models[0].meta.bunit_data
         return result

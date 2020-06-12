@@ -123,8 +123,11 @@ class MasterBackgroundStep(Step):
                         background_2d = expand_to_2d(model, master_background)
                         result.append(subtract_2d_background(model, background_2d))
 
+                    input_data.close()
+
                 else:
                     result = input_data.copy()
+                    input_data.close()
                     self.log.warning(
                         "Input %s of type %s cannot be handled without user-supplied background.  Step skipped.",
                         input, type(input)

@@ -191,12 +191,12 @@ class Pipeline(Step):
         log.log.debug('Retrieving all substep parameters from CRDS')
         #
         # Iterate over the steps in the pipeline
-        model = dm_open(dataset, asn_n_members=1)
-        for cal_step in cls.step_defs.keys():
-            cal_step_class = cls.step_defs[cal_step]
-            refcfg['steps'][cal_step] = cal_step_class.get_config_from_reference(
-                model, observatory=observatory
-            )
+        with dm_open(dataset, asn_n_members=1) as model:
+            for cal_step in cls.step_defs.keys():
+                cal_step_class = cls.step_defs[cal_step]
+                refcfg['steps'][cal_step] = cal_step_class.get_config_from_reference(
+                    model, observatory=observatory
+                )
         #
         # Now merge any config parameters from the step cfg file
         log.log.debug(f'Retrieving pipeline {pars_model.meta.reftype.upper()} parameters from CRDS')
@@ -265,7 +265,8 @@ class Pipeline(Step):
         """
         from .. import datamodels
         try:
-            with datamodels.open(input_file) as model:
+            with datamodels.open(input_file, asn_n_members=1,
+                                asn_exptypes=["science"]) as model:
                 self._precache_references_opened(model)
         except (ValueError, TypeError, IOError):
             self.log.info(
@@ -319,7 +320,7 @@ class Pipeline(Step):
 
         for (reftype, refpath) in sorted(ref_path_map.items()):
             how = "Override" if reftype in ovr_refs else "Prefetch"
-            self.log.info("{0} for {1} reference file is '{2}'.".format(how, reftype.upper(), refpath))
+            self.log.info(f"{how} for {reftype.upper()} reference file is '{refpath}'.")
             crds_client.check_reference_open(refpath)
 
     @classmethod

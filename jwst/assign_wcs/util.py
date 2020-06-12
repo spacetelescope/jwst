@@ -6,11 +6,13 @@ import logging
 import functools
 import numpy as np
 
+from astropy.coordinates import SkyCoord
 from astropy.utils.misc import isiterable
 from astropy.io import fits
 from astropy.modeling import models as astmodels
 from astropy.table import QTable
 from astropy.constants import c
+from typing import Union, List
 
 from gwcs import WCS
 from gwcs.wcstools import wcs_from_fiducial, grid_from_bounding_box
@@ -26,7 +28,8 @@ log.setLevel(logging.DEBUG)
 
 
 __all__ = ["reproject", "wcs_from_footprints", "velocity_correction",
-           "MSAFileError", "NoDataOnDetectorError"]
+           "MSAFileError", "NoDataOnDetectorError", "compute_scale",
+           "calc_rotation_matrix"]
 
 
 class MSAFileError(Exception):
@@ -62,7 +65,7 @@ def _domain_to_bounding_box(domain):
     return bb
 
 
-def reproject(wcs1, wcs2, origin=0):
+def reproject(wcs1, wcs2):
     """
     Given two WCSs return a function which takes pixel coordinates in
     the first WCS and computes their location in the second one.
@@ -88,7 +91,81 @@ def reproject(wcs1, wcs2, origin=0):
     return _reproject
 
 
-def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=None, domain=None):
+def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray]) -> float:
+    """Compute scaling transform.
+
+    Parameters
+    ----------
+    wcs : `~gwcs.wcs.WCS`
+        Reference WCS object from which to compute a scaling factor.
+
+    fiducial : tuple
+        Input fiducial of (RA, DEC) used in calculating reference points.
+
+    Returns
+    -------
+    scale : float
+        Scaling factor for x and y.
+
+    """
+    if len(fiducial) != 2:
+        raise ValueError(f'Input fiducial must contain only (RA, DEC); Instead recieved: {fiducial}')
+
+    crpix = np.array(wcs.invert(*fiducial))
+    crpix_with_offsets = np.vstack((crpix, crpix + (1, 0), crpix + (0, 1))).T
+    crval_with_offsets = wcs(*crpix_with_offsets)
+
+    coords = SkyCoord(ra=crval_with_offsets[0], dec=crval_with_offsets[1], unit="deg")
+    xscale = np.abs(coords[0].separation(coords[1]).value)
+    yscale = np.abs(coords[0].separation(coords[2]).value)
+
+    return np.sqrt(xscale * yscale)
+
+
+def calc_rotation_matrix(roll_ref: float, v3i_yang: float, vparity: int = 1) -> List[float]:
+    """Calculate the rotation matrix.
+
+    Parameters
+    ----------
+    roll_ref : float
+        Telescope roll angle of V3 North over East at the ref. point in radians
+
+    v3i_yang : float
+        The angle between ideal Y-axis and V3 in radians.
+
+    vparity : int
+        The x-axis parity, usually taken from the JWST SIAF parameter VIdlParity.
+        Value should be "1" or "-1".
+
+    Returns
+    -------
+    matrix: [pc1_1, pc1_2, pc2_1, pc2_2]
+        The rotation matrix
+
+    Notes
+    -----
+    The rotation is
+
+       ----------------
+       | pc1_1  pc2_1 |
+       | pc1_2  pc2_2 |
+       ----------------
+
+    """
+    if vparity not in (1, -1):
+        raise ValueError(f'vparity should be 1 or -1. Input was: {vparity}')
+
+    rel_angle = roll_ref - (vparity * v3i_yang)
+
+    pc1_1 = vparity * np.cos(rel_angle)
+    pc1_2 = np.sin(rel_angle)
+    pc2_1 = vparity * -np.sin(rel_angle)
+    pc2_2 = np.cos(rel_angle)
+
+    return [pc1_1, pc1_2, pc2_1, pc2_2]
+
+
+def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=None):
     """
     Create a WCS from a list of input data models.
 
@@ -122,10 +199,13 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
     """
     bb = bounding_box
     wcslist = [im.meta.wcs for im in dmodels]
+
     if not isiterable(wcslist):
         raise ValueError("Expected 'wcslist' to be an iterable of WCS objects.")
+
     if not all([isinstance(w, WCS) for w in wcslist]):
         raise TypeError("All items in wcslist are to be instances of gwcs.WCS.")
+
     if refmodel is None:
         refmodel = dmodels[0]
     else:
@@ -133,6 +213,7 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
             raise TypeError("Expected refmodel to be an instance of DataModel.")
 
     fiducial = compute_fiducial(wcslist, bb)
+    ref_fiducial = compute_fiducial([refmodel.meta.wcs])
 
     prj = astmodels.Pix2Sky_TAN()
 
@@ -140,29 +221,41 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
         transform = []
         wcsinfo = pointing.wcsinfo_from_model(refmodel)
         sky_axes, spec, other = gwutils.get_axes(wcsinfo)
-        rotation = astmodels.AffineTransformation2D(wcsinfo['PC'])
+
+        # Need to put the rotation matrix (List[float, float, float, float]) returned from calc_rotation_matrix into the
+        # correct shape for constructing the transformation
+        pc = np.reshape(
+            calc_rotation_matrix(
+                np.deg2rad(refmodel.meta.wcsinfo.roll_ref),
+                np.deg2rad(refmodel.meta.wcsinfo.v3yangle),
+                vparity=refmodel.meta.wcsinfo.vparity),
+            (2, 2)
+        )
+
+        rotation = astmodels.AffineTransformation2D(pc)
         transform.append(rotation)
+
         if sky_axes:
-            cdelt1, cdelt2 = wcsinfo['CDELT'][sky_axes]
-            scale = np.sqrt(np.abs(cdelt1 * cdelt2))
-            scales = astmodels.Scale(scale) & astmodels.Scale(scale)
-            transform.append(scales)
+            scale = compute_scale(refmodel.meta.wcs, ref_fiducial)
+            transform.append(astmodels.Scale(scale) & astmodels.Scale(scale))
 
         if transform:
             transform = functools.reduce(lambda x, y: x | y, transform)
 
     out_frame = refmodel.meta.wcs.output_frame
-    wnew = wcs_from_fiducial(fiducial, coordinate_frame=out_frame,
-                             projection=prj, transform=transform)
+    wnew = wcs_from_fiducial(fiducial, coordinate_frame=out_frame, projection=prj, transform=transform)
 
     footprints = [w.footprint().T for w in wcslist]
     domain_bounds = np.hstack([wnew.backward_transform(*f) for f in footprints])
+
     for axs in domain_bounds:
         axs -= axs.min()
+
     bounding_box = []
     for axis in out_frame.axes_order:
         axis_min, axis_max = domain_bounds[axis].min(), domain_bounds[axis].max()
         bounding_box.append((axis_min, axis_max))
+
     bounding_box = tuple(bounding_box)
     ax1, ax2 = np.array(bounding_box)[sky_axes]
     offset1 = (ax1[1] - ax1[0]) / 2
@@ -171,10 +264,11 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
 
     wnew.insert_transform('detector', offsets, after=True)
     wnew.bounding_box = bounding_box
+
     return wnew
 
 
-def compute_fiducial(wcslist, bounding_box=None, domain=None):
+def compute_fiducial(wcslist, bounding_box=None):
     """
     For a celestial footprint this is the center.
     For a spectral footprint, it is the beginning of the range.
@@ -190,22 +284,21 @@ def compute_fiducial(wcslist, bounding_box=None, domain=None):
     spectral_footprint = footprints[spectral_axes]
 
     fiducial = np.empty(len(axes_types))
-    if (spatial_footprint).any():
+    if spatial_footprint.any():
         lon, lat = spatial_footprint
         lon, lat = np.deg2rad(lon), np.deg2rad(lat)
         x_mean = np.mean(np.cos(lat) * np.cos(lon))
         y_mean = np.mean(np.cos(lat) * np.sin(lon))
         z_mean = np.mean(np.sin(lat))
         lon_fiducial = np.rad2deg(np.arctan2(y_mean, x_mean)) % 360.0
-        lat_fiducial = np.rad2deg(np.arctan2(z_mean, np.sqrt(x_mean ** 2 +
-            y_mean ** 2)))
+        lat_fiducial = np.rad2deg(np.arctan2(z_mean, np.sqrt(x_mean ** 2 + y_mean ** 2)))
         fiducial[spatial_axes] = lon_fiducial, lat_fiducial
-    if (spectral_footprint).any():
+    if spectral_footprint.any():
         fiducial[spectral_axes] = spectral_footprint.min()
     return fiducial
 
 
-def is_fits(input):
+def is_fits(input_img):
     """
     Returns
     --------
@@ -229,22 +322,22 @@ def is_fits(input):
     isfits = False
     fitstype = None
     names = ['fits', 'fit', 'FITS', 'FIT']
-    #determine if input is a fits file based on extension
+    # determine if input is a fits file based on extension
     # Only check type of FITS file if filename ends in valid FITS string
     f = None
     fileclose = False
-    if isinstance(input, fits.HDUList):
+    if isinstance(input_img, fits.HDUList):
         isfits = True
-        f = input
+        f = input_img
     else:
-        isfits = True in [input.endswith(l) for l in names]
+        isfits = True in [input_img.endswith(l) for l in names]
 
     # if input is a fits file determine what kind of fits it is
     # waiver fits len(shape) == 3
     if isfits:
         if not f:
             try:
-                f = fits.open(input, mode='readonly')
+                f = fits.open(input_img, mode='readonly')
                 fileclose = True
             except Exception:
                 if f is not None:
@@ -303,7 +396,7 @@ def subarray_transform(input_model):
         return subarray2full
 
 
-def not_implemented_mode(input_model, ref):
+def not_implemented_mode(input_model):
     """
     Return ``None`` if assign_wcs has not been implemented for a mode.
     """
@@ -334,7 +427,7 @@ def get_object_info(catalog_name=None):
     -----
 
     """
-    if isinstance(catalog_name, (str)):
+    if isinstance(catalog_name, str):
         if len(catalog_name) == 0:
             err_text = "Empty catalog filename"
             log.error(err_text)
@@ -354,14 +447,11 @@ def get_object_info(catalog_name=None):
     objects = []
 
     # validate that the expected columns are there
-    # id is just a bad name for a param, but it's used in the catalog
-    required_fields = list(SkyObject()._fields)
-    if "sid" in required_fields:
-        required_fields[required_fields.index("sid")] = "id"
+    required_fields = set(SkyObject()._fields)
 
     try:
         if not set(required_fields).issubset(set(catalog.colnames)):
-            difference = set(catalog.colnames).difference(required_fields)
+            difference = set(required_fields).difference(set(catalog.colnames))
             err_text = "Missing required columns in source catalog: {0}".format(difference)
             log.error(err_text)
             raise KeyError(err_text)
@@ -377,12 +467,12 @@ def get_object_info(catalog_name=None):
     # (hence, the four separate columns).
 
     for row in catalog:
-        objects.append(SkyObject(sid=row['id'],
+        objects.append(SkyObject(id=row['id'],
                                  xcentroid=row['xcentroid'],
                                  ycentroid=row['ycentroid'],
                                  sky_centroid=row['sky_centroid'],
-                                 abmag=row['abmag'],
-                                 abmag_error=row['abmag_error'],
+                                 isophotal_abmag=row['isophotal_abmag'],
+                                 isophotal_abmag_err=row['isophotal_abmag_err'],
                                  sky_bbox_ll=row['sky_bbox_ll'],
                                  sky_bbox_lr=row['sky_bbox_lr'],
                                  sky_bbox_ul=row['sky_bbox_ul'],
@@ -476,7 +566,7 @@ def create_grism_bbox(input_model,
 
     # Get the disperser parameters which have the wave limits
     with WavelengthrangeModel(reference_files['wavelengthrange']) as f:
-        if ('WFSS' not in f.meta.exposure.type):
+        if 'WFSS' not in f.meta.exposure.type:
             err_text = "Wavelengthrange reference file not for WFSS"
             log.error(err_text)
             raise ValueError(err_text)
@@ -501,8 +591,8 @@ def create_grism_bbox(input_model,
 
     grism_objects = []  # the return list of GrismObjects
     for obj in skyobject_list:
-        if obj.abmag is not None:
-            if obj.abmag < mmag_extract:
+        if obj.isophotal_abmag is not None:
+            if obj.isophotal_abmag < mmag_extract:
                 # could add logic to ignore object if too far off image,
 
                 # save the image frame center of the object
@@ -533,9 +623,9 @@ def create_grism_bbox(input_model,
                     # Make sure that we have the correct box corners tagged
                     # as the min and max extents for the grism, the dispersion
                     # direction changes with grism and detector
-                    if (xmax < xmin):
+                    if xmax < xmin:
                         xmin, xmax = xmax, xmin
-                    if (ymax < ymin):
+                    if ymax < ymin:
                         ymin, ymax = ymax, ymin
 
                     xmin = int(xmin)
@@ -562,12 +652,12 @@ def create_grism_bbox(input_model,
 
                     if contained == 0:
                         exclude = True
-                        log.info("Excluding off-image object: {}, order {}".format(obj.sid, order))
+                        log.info("Excluding off-image object: {}, order {}".format(obj.id, order))
                     elif contained >= 1:
                         outbox = pts[np.logical_not(inidx)]
                         if len(outbox) > 0:
                             ispartial = True
-                            log.info("Partial order on detector for obj: {} order: {}".format(obj.sid, order))
+                            log.info("Partial order on detector for obj: {} order: {}".format(obj.id, order))
 
                     if not exclude:
                         order_bounding[order] = ((round(ymin), round(ymax)), (round(xmin), round(xmax)))
@@ -575,7 +665,7 @@ def create_grism_bbox(input_model,
                         partial_order[order] = ispartial
 
                 if len(order_bounding) > 0:
-                    grism_objects.append(GrismObject(sid=obj.sid,
+                    grism_objects.append(GrismObject(sid=obj.id,
                                                      order_bounding=order_bounding,
                                                      sky_centroid=obj.sky_centroid,
                                                      partial_order=partial_order,
@@ -709,7 +799,7 @@ def compute_footprint_spectral(model):
 
     Parameters
     ----------
-    output_model : `~jwst.datamodels.IFUImageModel`
+    model : `~jwst.datamodels.IFUImageModel`
         The output of assign_wcs.
     """
     swcs = model.meta.wcs

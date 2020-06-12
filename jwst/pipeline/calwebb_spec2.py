@@ -1,3 +1,4 @@
+import os
 from collections import defaultdict
 import os.path as op
 import traceback
@@ -164,7 +165,7 @@ class Spec2Pipeline(Pipeline):
         # name from the asn and record it to the meta
         if exp_type in WFSS_TYPES:
             try:
-                input.meta.source_catalog = members_by_type['sourcecat'][0]
+                input.meta.source_catalog = os.path.basename(members_by_type['sourcecat'][0])
                 self.log.info('Using sourcecat file {}'.format(input.meta.source_catalog))
             except IndexError:
                 if input.meta.source_catalog is None:
@@ -266,6 +267,10 @@ class Spec2Pipeline(Pipeline):
 
         # Apply flux calibration
         result = self.photom(input)
+
+        # Close the input file.  We should really be doing this further up
+        # passing along result all the way down.
+        input.close()
 
         # Record ASN pool and table names in output
         result.meta.asn.pool_name = pool_name

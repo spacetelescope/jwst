@@ -11,7 +11,7 @@ class SourceTypeStep(Step):
     """
     SourceTypeStep: Selects and sets a source type based on various inputs.
     The source type is used in later calibrations to determine the appropriate
-    methods to use. Input comes from either the SRCTYPE keyword value, which
+    methods to use. Input comes from either the SRCTYAPT keyword value, which
     is populated from user info in the APT, or the NIRSpec MSA planning tool.
     """
 

@@ -56,6 +56,11 @@ class Coron3Pipeline(Pipeline):
         prod = asn['products'][0]
         self.output_file = prod.get('name', self.output_file)
 
+        # Setup required output products and formats
+        self.outlier_detection.suffix = f'{acid}_crfints'
+        self.outlier_detection.save_results = self.save_results
+        self.resample.blendheaders = False
+
         # Construct lists of all the PSF and science target members
         psf_files = [m['expname'] for m in prod['members']
                      if m['exptype'].upper() == 'PSF']
@@ -85,6 +90,13 @@ class Coron3Pipeline(Pipeline):
             psf_models.append(psf_input)
             psf_input.close()
 
+        # Perform outlier detection on the PSFs.
+        if not self.outlier_detection.skip:
+            for model in psf_models:
+                self.outlier_detection(model)
+        else:
+            self.log.info('Outlier detection for PSF\'s - Step skipped')
+
         # Stack all the PSF images into a single CubeModel
         psf_stack = self.stack_refs(psf_models)
         psf_models.close()
@@ -92,82 +104,57 @@ class Coron3Pipeline(Pipeline):
         # Save the resulting PSF stack
         self.save_model(psf_stack, suffix='psfstack')
 
-        # Call the sequence of steps align_refs, klip, and outlier_detection
+        # Call the sequence of steps outlier_detection, align_refs, and klip
         # once for each input target exposure
         resample_input = datamodels.ModelContainer()
         for target_file in targ_files:
+            with datamodels.open(target_file) as target:
 
-            # Call align_refs
-            self.log.debug('Calling align_refs for member %s', target_file)
-            psf_aligned = self.align_refs(target_file, psf_stack)
+                # Remove outliers from the target.
+                target = self.outlier_detection(target)
 
-            # Save the alignment results
-            self.save_model(
-                psf_aligned, output_file=target_file,
-                suffix='psfalign', acid=acid
-            )
+                # Call align_refs
+                psf_aligned = self.align_refs(target, psf_stack)
 
-            # Call KLIP
-            self.log.debug('Calling klip for member %s', target_file)
-            psf_sub = self.klip(target_file, psf_aligned)
-            psf_aligned.close()
+                # Save the alignment results
+                self.save_model(
+                    psf_aligned, output_file=target_file,
+                    suffix='psfalign', acid=acid
+                )
 
-            # Save the psf subtraction results
-            self.save_model(
-                psf_sub, output_file=target_file,
-                suffix='psfsub', acid=acid
-            )
+                # Call KLIP
+                psf_sub = self.klip(target, psf_aligned)
+                psf_aligned.close()
 
-            # Create a ModelContainer of the psf_sub results to send to
-            # outlier_detection
-            self.log.debug('Building ModelContainer of klip results')
-            target_models = datamodels.ModelContainer()
-            for i in range(psf_sub.data.shape[0]):
-                image = datamodels.ImageModel(data=psf_sub.data[i],
-                                              err=psf_sub.err[i],
-                                              dq=psf_sub.dq[i])
-                image.update(psf_sub)
-                image.meta.wcs = psf_sub.meta.wcs
-                target_models.append(image)
+                # Save the psf subtraction results
+                self.save_model(
+                    psf_sub, output_file=target_file,
+                    suffix='psfsub', acid=acid
+                )
 
-            # Call outlier_detection
-            target_models = self.outlier_detection(target_models)
-
-            # Create Level 2c products
-            if target_models[0].meta.cal_step.outlier_detection == 'COMPLETE':
-                err_str1 = "Creating Level 2c output with updated DQ arrays..."
-                self.log.info(err_str1)
-                lev2c_model = psf_sub.copy()
-                # Replace Level 2b product DQ array with Level 2c DQ array
-                for i in range(len(target_models)):
-                    lev2c_model.dq[i] = target_models[i].dq
-                lev2c_model.meta.cal_step.outlier_detection = 'COMPLETE'
-                self.save_model(lev2c_model, output_file=target_file,
-                                suffix='crfints', acid=acid)
-
-            # Append results from this target exposure to resample input model
-            for i in range(len(target_models)):
-                resample_input.append(target_models[i])
+                # Split out the integrations into separate models
+                # in a ModelContainer to pass to `resample`
+                for model in psf_sub.to_container():
+                    resample_input.append(model)
 
         # Call the resample step to combine all psf-subtracted target images
         result = self.resample(resample_input)
 
-        if result == resample_input:
-            # Resampling was skipped
-            #     yet we need to return an output resampled ImageModel, so...
-            #warn1 = 'Creating fake resample results until step is available'
-            #self.log.warning(warn1)
-            #result = datamodels.ImageModel(data=resample_input[0].data,
-            #                                     con=resample_input[0].dq,
-            #                                     wht=resample_input[0].err)
-            #result.update(resample_input[0])
-            # The resample step blends headers already...
-            self.log.debug('Blending metadata for {}'.format(
-                result.meta.filename))
+        # Blend the science headers
+        try:
+            completed = result.meta.cal_step.resample
+        except AttributeError:
+            self.log.debug('Could not determine whether resample was completed. Presuming not.')
+            completed = 'SKIPPED'
+        if completed == 'COMPLETE':
+            self.log.debug(f'Blending metadata for {result}')
             blendmeta.blendmodels(result, inputs=targ_files)
 
-        result.meta.asn.pool_name = asn['asn_pool']
-        result.meta.asn.table_name = op.basename(input)
+        try:
+            result.meta.asn.pool_name = asn['asn_pool']
+            result.meta.asn.table_name = op.basename(input)
+        except AttributeError:
+            self.log.debug(f'Cannot set association information on final result {result}')
 
         # Save the final result
         self.save_model(result, suffix=self.suffix)

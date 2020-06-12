@@ -28,23 +28,23 @@ WCS reference file information per EXP_TYPE
 
 :NRC_IMAGE, NRC_TSIMAGE, NRC_FOCUS, NRC_TACONFIRM, NRC_TACQ:
 
-  | reftypes: *distortion*
+  | reftypes: *distortion*, *filteroffset*
   | WCS pipeline coordinate frames: detector, v2v3, world
   | Implements: Distortion file created from TEL team data.
 
 :NRC_WFSS, NRC_TSGRISM:
-  | reftypes: *specwcs*, *distortion* 
+  | reftypes: *specwcs*, *distortion*, *filteroffset*
   | WCS pipeline coordinate frames: grism_detector, detector, v2v3, world
   | Implements: reference files provided by NIRCam team
 
 :NIS_IMAGE, NIS_TACQ, NIS_TACONFIRM, NIS_FOCUS:
 
-  | reftypes: *distortion*
+  | reftypes: *distortion*, *filteroffset*
   | WCS pipeline coordinate frames: detector, v2v3, world
   | Implements: reference file provided by NIRISS team
 
 :NIS_WFSS:
-  | reftypes: *specwcs*, *distortion*
+  | reftypes: *specwcs*, *distortion*, *filteroffset*
   | WCS pipeline coordinate frames: grism_detector, detector, v2v3, world
   | Implements: reference files provided by NIRISS team
 
@@ -72,5 +72,3 @@ WCS reference file information per EXP_TYPE
   | reftypes: *fpa*, *camera*, *disperser*, *collimator*, *msa*, *wavelengthrange*, *fore*, *ote*
   | WCS pipeline coordinate frames: detector, sca, bgwa, slit_frame, msa_frame, ote, v2v3, world
   | Implements: CDP 3 delivery
-
-

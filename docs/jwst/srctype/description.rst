@@ -15,20 +15,23 @@ has the option of designating a source type in the APT template for the
 observation. They have the choice of declaring whether or not the source
 should be considered extended. If they don't know the character of the source,
 they can also choose a value of "UNKNOWN." The observer's choice is passed along
-to DMS processing, which sets the value of the "SRCTYPE" keyword in the
-primary header of the uncalibrated (_uncal.fits) product that's used as input
-to the calibration pipeline. If the user has selected a value in the APT, the
-"SRCTYPE" keyword will be set to "POINT", "EXTENDED", or "UNKNOWN." If the
-selection is not available for a given observing mode or a choice wasn't
-made, the "SRCTYPE" keyword will not appear in the uncalibrated product
-header.
+to DMS processing, which sets the value of the "SRCTYAPT" keyword in the
+primary header of the products used as input to the calibration pipeline.
+If the user has selected a value in the APT, the "SRCTYAPT" keyword will be set
+to "POINT", "EXTENDED", or "UNKNOWN." If the selection is not available for a
+given observing mode or a choice wasn't made, the "SRCTYAPT" keyword will not
+appear in the uncalibrated product header.
 
-The ``srctype`` calibration step checks to see if the "SRCTYPE" keyword
-is present and has already been populated. If the observer did not provide a
-source type value or chose "UNKNOWN", the ``srctype``
-step chooses a suitable value based on the observing mode and
-other characteristics of the exposure. The following choices are used, in
-order of priority:
+The ``srctype`` step sets a value for the "SRCTYPE" keyword that is stored in
+the "SCI" extension header(s) of data products. The step sets the value of
+"SRCTYPE" based on input from the user given in the "SRCTYAPT" keyword, as
+well as other rules that can override the "SRCTYAPT" values.
+
+The ``srctype`` step first checks to see if the "SRCTYAPT" keyword
+is present and has already been populated. If "SRCTYAPT" is not present or
+is set to "UNKNOWN", the step determines a suitable value based on the
+observing mode and other characteristics of the exposure.
+The following choices are used, in order of priority:
 
  - Background target exposures default to a source type of "EXTENDED."
    Background exposures are identified by the keyword "BKGDTARG" set

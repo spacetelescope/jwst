@@ -57,7 +57,7 @@ properties:
     fits_keyword: STLARITY
     fits_hdu: SCI
   source_type:
-    title: Source type (point/extended)
+    title: Source type used for calibration
     type: string
     enum: [EXTENDED, POINT, UNKNOWN]
     fits_keyword: SRCTYPE

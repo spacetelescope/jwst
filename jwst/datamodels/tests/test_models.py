@@ -1,3 +1,4 @@
+from copy import copy
 import os
 from os import path as op
 import shutil
@@ -6,14 +7,15 @@ import warnings
 import jsonschema
 
 import pytest
+from astropy.table import Table
 from astropy.time import Time
 import numpy as np
 from numpy.testing import assert_allclose
 from astropy.io import fits
 
 from jwst.datamodels import (DataModel, ImageModel, MaskModel, QuadModel,
-                MultiSlitModel, ModelContainer, SlitModel,
-                SlitDataModel, IFUImageModel)
+                             MultiSlitModel, ModelContainer, SlitModel,
+                             SlitDataModel, IFUImageModel, ABVegaOffsetModel)
 from jwst import datamodels
 from jwst.lib.file_utils import pushdir
 
@@ -76,7 +78,7 @@ def test_from_hdulist():
     with fits.open(FITS_FILE, memmap=False) as hdulist:
         with datamodels.open(hdulist) as dm:
             dm.data
-        assert hdulist.fileinfo(0)['file'].closed == False
+        assert not hdulist.fileinfo(0)['file'].closed
 
 
 def delete_array():
@@ -128,15 +130,17 @@ def test_delete():
 
 
 def test_open():
-    with datamodels.open() as dm:
+    with datamodels.open():
         pass
 
-    with datamodels.open((50, 50)) as dm:
+    with datamodels.open((50, 50)):
         pass
 
-    warnings.simplefilter("ignore")
-    with datamodels.open(FITS_FILE) as dm:
-        assert isinstance(dm, QuadModel)
+    with pytest.warns(datamodels.util.NoTypeWarning):
+        with datamodels.open(FITS_FILE) as dm:
+            assert isinstance(dm, QuadModel)
+
+
 
 def test_open_warning():
     with warnings.catch_warnings(record=True) as warners:
@@ -169,19 +173,18 @@ def test_copy():
             dm2.meta.observation.obs_id = "FOO"
             assert dm.meta.observation.obs_id is None
 
+
 def test_stringify():
     im = DataModel()
     assert str(im) == '<DataModel>'
-    im.close()
 
-    im = ImageModel((10,100))
+    im = ImageModel((10, 100))
     assert str(im) == '<ImageModel(10, 100)>'
-    im.close()
 
-    image = ROOT_DIR + "/nircam_mask.fits"
-    im = MaskModel(image)
-    assert str(im) ==  '<MaskModel(2048, 2048) from nircam_mask.fits>'
-    im.close()
+    image = os.path.join(ROOT_DIR, "nircam_mask.fits")
+    with MaskModel(image) as im:
+        assert str(im) ==  '<MaskModel(2048, 2048) from nircam_mask.fits>'
+
 
 def test_section():
     with QuadModel((5, 35, 40, 32)) as dm:
@@ -369,8 +372,9 @@ def test_model_with_nonstandard_primary_array():
     m = NonstandardPrimaryArrayModel()
     list(m.keys())
 
+
 def test_initialize_arrays_with_arglist():
-    shape = (10,10)
+    shape = (10, 10)
     thirteen = np.full(shape, 13.0)
     bitz = np.full(shape, 7)
 
@@ -378,26 +382,15 @@ def test_initialize_arrays_with_arglist():
     assert np.array_equal(im.zeroframe, thirteen)
     assert np.array_equal(im.dq, bitz)
 
-def test_open_asdf_model():
+
+@pytest.mark.parametrize("init", [None, ASDF_FILE])
+def test_open_asdf_model(init):
     # Open an empty asdf file, pass extra arguments
+    with DataModel(init=init, ignore_version_mismatch=False,
+                                ignore_unrecognized_tag=True) as model:
+        assert model._asdf._ignore_version_mismatch == False
+        assert model._asdf._ignore_unrecognized_tag == True
 
-    model = DataModel(init=None,
-                     ignore_version_mismatch=False,
-                     ignore_unrecognized_tag=True)
-
-    assert model._asdf._ignore_version_mismatch == False
-    assert model._asdf._ignore_unrecognized_tag == True
-    model.close()
-
-    # Open an existing asdf file
-
-    model = DataModel(ASDF_FILE,
-                     ignore_version_mismatch=False,
-                     ignore_unrecognized_tag=True)
-
-    assert model._asdf._ignore_version_mismatch == False
-    assert model._asdf._ignore_unrecognized_tag == True
-    model.close()
 
 def test_open_asdf_model_s3(s3_root_dir):
     path = str(s3_root_dir.join("test.asdf"))
@@ -407,6 +400,7 @@ def test_open_asdf_model_s3(s3_root_dir):
     model = DataModel("s3://test-s3-data/test.asdf")
     assert isinstance(model, DataModel)
 
+
 def test_open_fits_model_s3(s3_root_dir):
     path = str(s3_root_dir.join("test.fits"))
     with DataModel() as dm:
@@ -414,6 +408,7 @@ def test_open_fits_model_s3(s3_root_dir):
 
     model = DataModel("s3://test-s3-data/test.fits")
     assert isinstance(model, DataModel)
+
 
 def test_image_with_extra_keyword_to_multislit():
     with ImageModel((32, 32)) as im:
@@ -573,6 +568,20 @@ def test_modelcontainer_group_names(container):
     assert len(container.group_names) == 2
 
 
+def test_modelcontainer_error_from_asn(tmpdir):
+    from jwst.associations.asn_from_list import asn_from_list
+
+    asn = asn_from_list(["foo.fits"], product_name="foo_out")
+    name, serialized = asn.dump(format="json")
+    path = str(tmpdir.join(name))
+    with open(path, "w") as f:
+        f.write(serialized)
+
+    # The foo.fits file doesn't exist
+    with pytest.raises(FileNotFoundError):
+        datamodels.open(path)
+
+
 def test_object_node_iterator():
     im = ImageModel()
     items = []
@@ -587,29 +596,6 @@ def test_hasattr():
     model = DataModel()
     assert model.meta.hasattr('date')
     assert not model.meta.hasattr('filename')
-
-
-def test_info():
-    warnings.simplefilter("ignore")
-    with datamodels.open(FITS_FILE) as model:
-        info = model.info()
-    matches = 0
-    for line in info.split("\n"):
-        words = line.split()
-        if len(words) > 0:
-            if words[0] == "data":
-                matches += 1
-                assert words[1] == "(32,40,35,5)", "Correct size for data"
-                assert words[2] == "float32", "Correct type for data"
-            elif words[0] == "dq":
-                matches += 1
-                assert words[1] == "(32,40,35,5)", "Correct size for dq"
-                assert words[2] == "uint32", "Correct type for dq"
-            elif words[0] == "err":
-                matches += 1
-                assert words[1] == "(32,40,35,5)", "Correct size for err"
-                assert words[2] == "float32", "Correct type for err"
-    assert matches== 3, "Check all extensions are described"
 
 
 def test_validate_on_read():
@@ -637,7 +623,7 @@ def test_multislit_model():
     data = np.arange(24, dtype=np.float32).reshape((6, 4))
     err = np.arange(24, dtype=np.float32).reshape((6, 4)) + 2
     wav = np.arange(24, dtype=np.float32).reshape((6, 4)) + 3
-    dq = np.arange(24,dtype=np.uint32).reshape((6, 4)) + 1
+    dq = np.arange(24, dtype=np.uint32).reshape((6, 4)) + 1
     s0 = SlitDataModel(data=data, err=err, dq=dq, wavelength=wav)
     s1 = SlitDataModel(data=data+1, err=err+1, dq=dq+1, wavelength=wav+1)
 
@@ -661,7 +647,7 @@ def test_slit_from_image():
     assert_allclose(im.data, slit_dm.data)
     assert hasattr(slit_dm, 'wavelength')
     # this should be enabled after gwcs starts using non-coordinate inputs
-    #assert not hasattr(slit_dm, 'meta')
+    # assert not hasattr(slit_dm, 'meta')
 
     slit = SlitModel(im)
     assert_allclose(im.data, slit.data)
@@ -691,3 +677,114 @@ def test_ifuimage():
 def test_datamodel_raises_filenotfound():
     with pytest.raises(FileNotFoundError):
         DataModel(init='file_does_not_exist.fits')
+
+
+def test_abvega_offset_model():
+    filepath = os.path.join(ROOT_DIR, 'nircam_abvega_offset.asdf')
+    model = ABVegaOffsetModel(filepath)
+    assert isinstance(model, ABVegaOffsetModel)
+    assert hasattr(model, 'abvega_offset')
+    assert isinstance(model.abvega_offset, Table)
+    assert model.abvega_offset.colnames == ['filter', 'pupil', 'abvega_offset']
+    model.validate()
+    model.close()
+
+
+@pytest.fixture(scope='module')
+def empty_model():
+    """Create an empy model"""
+    return DataModel()
+
+
+@pytest.fixture(scope='module')
+def jail_environ():
+    """Lock cheanges to the environment"""
+    original = copy(os.environ)
+    try:
+        yield
+    finally:
+        os.environ = original
+
+
+@pytest.mark.parametrize(
+    'case, default, expected', [
+        (None, False, False),
+        (None, True, True),
+        ('0',  False, False),
+        ('0',  True, False),
+        ('1', False, True),
+        ('1', True, True),
+        ('2', False, True),
+        ('2', True, True),
+        ('f', False, False),
+        ('f', True, False),
+        ('F', False, False),
+        ('F', True, False),
+        ('false', False, False),
+        ('false', True, False),
+        ('False', False, False),
+        ('False', True, False),
+        ('FALSE', False, False),
+        ('FALSE', True, False),
+        ('t', False, True),
+        ('t', True, True),
+        ('T', False, True),
+        ('T', True, True),
+        ('true', False, True),
+        ('true', True, True),
+        ('True', False, True),
+        ('True', True, True),
+        ('TRUE', False, True),
+        ('TRUE', True, True),
+        ('y', False, True),
+        ('y', True, True),
+        ('Y', False, True),
+        ('Y', True, True),
+        ('yes', False, True),
+        ('yes', True, True),
+        ('Yes', False, True),
+        ('Yes', True, True),
+        ('YES', False, True),
+        ('YES', True, True),
+    ]
+)
+def test_get_envar_as_boolean(case, default, expected, jail_environ, empty_model):
+    """Test various options to a boolean environmental variable"""
+    var = '__TEST_GET_ENVAR_AS_BOOLEAN'
+    if case is None:
+        try:
+            del os.environ[var]
+        except KeyError:
+            pass
+    else:
+        os.environ[var] = case
+
+    value = empty_model._get_envar_as_boolean(var, default=default)
+    assert value == expected
+
+
+def test_getarray_noinit_valid():
+    """Test for valid value return"""
+    arr = np.ones((5, 5))
+    model = ImageModel(data=arr)
+    fetched = model.getarray_noinit('data')
+    assert (fetched == arr).all()
+
+
+def test_getarray_noinit_raises():
+    """Test for error when accessing non-existent array"""
+    arr = np.ones((5, 5))
+    model = ImageModel(data=arr)
+    with pytest.raises(AttributeError):
+        model.getarray_noinit('area')
+
+
+def test_getarray_noinit_noinit():
+    """Test that calling on a non-existant array does not initialize that array"""
+    arr = np.ones((5, 5))
+    model = ImageModel(data=arr)
+    try:
+        model.getarray_noinit('area')
+    except AttributeError:
+        pass
+    assert 'area' not in model.instance

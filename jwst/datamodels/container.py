@@ -46,7 +46,7 @@ class ModelContainer(model_base.DataModel):
           DataModels can be added via the ``append()`` method.
 
        - asn_exptypes: list of exposure types from the asn file to read
-         into the pipeline, if None read all the given files.
+         into the ModelContainer, if None read all the given files.
 
        - asn_n_members: Open only the first N qualifying members.
 
@@ -221,9 +221,11 @@ class ModelContainer(model_base.DataModel):
         else:
             sublist = infiles
         try:
-            self._models = [datamodel_open(infile, memmap=self._memmap) for infile in sublist]
+            for filepath in sublist:
+                self._models.append(datamodel_open(filepath, memmap=self._memmap))
         except IOError:
-            raise IOError('Cannot open {}'.format(infiles))
+            self.close()
+            raise
 
         # Pull the whole association table into meta.asn_table
         self.meta.asn_table = {}
@@ -236,6 +238,12 @@ class ModelContainer(model_base.DataModel):
             self.meta.table_name = 'not specified'
         else:
             self.meta.table_name = op.basename(asn_file_path)
+            for model in self:
+                try:
+                    model.meta.asn.table_name = op.basename(asn_file_path)
+                    model.meta.asn.pool_name = asn_data['asn_pool']
+                except AttributeError:
+                    pass
         self.meta.pool_name = asn_data['asn_pool']
 
     def save(self,

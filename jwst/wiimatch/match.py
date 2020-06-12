@@ -21,7 +21,7 @@ SUPPORTED_SOLVERS = ['RLU', 'PINV']
 def match_lsq(images, masks=None, sigmas=None, degree=0,
               center=None, image2world=None, center_cs='image',
               ext_return=False, solver='RLU'):
-    r"""
+    """
     Compute coefficients of (multivariate) polynomials that once subtracted
     from input images would provide image intensity matching in the least
     squares sense.
@@ -128,9 +128,9 @@ def match_lsq(images, masks=None, sigmas=None, degree=0,
     that the following sum is minimized:
 
     .. math::
-        L = \sum^N_{n,m=1,n \\neq m} \sum_k\
+        L = \\sum^N_{n,m=1,n \\neq m} \\sum_k\
     \\frac{\\left[I_n(k) - I_m(k) - P_n(k) + P_m(k)\\right]^2}\
-    {\sigma^2_n(k) + \sigma^2_m(k)}.
+    {\\sigma^2_n(k) + \\sigma^2_m(k)}.
 
     In the above equation, index :math:`k=(k_1,k_2,...)` labels a position
     in input image's pixel grid [NOTE: all input images share a common
@@ -140,7 +140,7 @@ def match_lsq(images, masks=None, sigmas=None, degree=0,
     corresponding coefficients as:
 
     .. math::
-        P_n(k_1,k_2,...) = \sum_{d_1=0,d_2=0,...}^{D_1,D_2,...} \
+        P_n(k_1,k_2,...) = \\sum_{d_1=0,d_2=0,...}^{D_1,D_2,...} \
 c_{d_1,d_2,...}^n \\cdot k_1^{d_1} \\cdot k_2^{d_2}  \\cdot \\ldots .
 
     Coefficients :math:`c_{d_1,d_2,...}^n` are arranged in the vector :math:`c`

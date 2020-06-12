@@ -41,7 +41,7 @@ logger.addHandler(logging.NullHandler())
 SUFFIXES_TO_ADD = [
     'ami', 'amiavg', 'aminorm',
     'blot', 'bsub', 'bsubints',
-    'cal', 'calints', 'cat', 'crf', 'crfints',
+    'c1d', 'cal', 'calints', 'cat', 'crf', 'crfints',
     'dark',
     'i2d',
     'median',
@@ -129,7 +129,7 @@ _calculated_suffixes = set([
     'flat_field',
     'guidercdsstep',
     'mrsimatchstep',
-    'alignrefs',
+    'align_refs',
     'dqinitstep',
     'outlierdetectionscaledstep',
     'superbias',

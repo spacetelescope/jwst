@@ -6,6 +6,7 @@ from gwcs.wcstools import grid_from_bounding_box
 from jwst.stpipe import Step
 from jwst import datamodels
 
+
 @pytest.fixture(scope="module")
 def run_detector1(rtdata_module):
     """Run detector1 pipeline on MIRI imaging data."""

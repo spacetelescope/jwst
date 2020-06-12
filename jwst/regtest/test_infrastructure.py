@@ -84,6 +84,7 @@ def test_diff_astropy_tables_columns(diff_astropy_tables, two_tables):
         assert diff_astropy_tables(path1, path2)
 
 
+@pytest.mark.xfail(reason='table meta comparison currently deactivated')
 def test_diff_astropy_tables_meta(diff_astropy_tables, two_tables):
     path1, path2 = two_tables
 
@@ -103,6 +104,32 @@ def test_diff_astropy_tables_allclose(diff_astropy_tables, two_tables):
     t1.write(path1, overwrite=True, format="ascii.ecsv")
 
     with pytest.raises(AssertionError, match="Not equal to tolerance"):
+        assert diff_astropy_tables(path1, path2)
+
+
+def test_diff_astropy_tables_dtype(diff_astropy_tables, two_tables):
+    path1, path2 = two_tables
+
+    t1 = Table.read(path1)
+    t1['a'] = np.array([1, 4, 6], dtype=np.int)
+    t1.write(path1, overwrite=True, format="ascii.ecsv")
+
+    with pytest.raises(AssertionError, match="dtype does not match"):
+        assert diff_astropy_tables(path1, path2)
+
+
+def test_diff_astropy_tables_all_equal(diff_astropy_tables, two_tables):
+    path1, path2 = two_tables
+
+    t1 = Table.read(path1)
+    t1['a'] = np.array([1, 4, 6], dtype=np.int)
+    t1.write(path1, overwrite=True, format="ascii.ecsv")
+
+    t2 = Table.read(path2)
+    t2['a'] = np.array([1, 4, 7], dtype=np.int)
+    t2.write(path2, overwrite=True, format="ascii.ecsv")
+
+    with pytest.raises(AssertionError, match="values do not match"):
         assert diff_astropy_tables(path1, path2)
 
 

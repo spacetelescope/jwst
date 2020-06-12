@@ -56,10 +56,6 @@ class Main():
     associations : [`Association`, ...]
         The list of generated associations.
 
-    orphaned : `AssociationPool`
-        The pool of exposures that do not belong
-        to any association.
-
     Notes
     -----
     Refer to the :ref:`Association Generator <associations>`
@@ -286,6 +282,8 @@ class Main():
 
     @property
     def orphaned(self):
+        """The pool of exposures that do not belong to any association."""
+
         not_in_asn = np.ones((len(self.pool),), dtype=bool)
         for asn in self.associations:
             try:

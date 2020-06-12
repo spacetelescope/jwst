@@ -2,7 +2,6 @@ import pytest
 from numpy.testing import assert_allclose
 from astropy import units as u
 from astropy import wcs
-from astropy.tests.helper import  assert_quantity_allclose
 from asdf.tests import helpers
 
 from .. import pointing
@@ -92,7 +91,7 @@ def test_frame_from_model(tmpdir):
     radec, lam = frame.coordinates(1, 2, 3)
     assert_allclose(radec.spherical.lon.value, 1)
     assert_allclose(radec.spherical.lat.value, 2)
-    assert_quantity_allclose(lam, 3 * u.um)
+    u.allclose(lam, 3 * u.um)
 
     # Test CompositeFrame initialization with custom frames
     im.meta.wcsinfo.ctype1 = 'ALPHA1A'

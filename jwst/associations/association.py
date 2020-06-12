@@ -59,15 +59,6 @@ class Association(MutableMapping):
     schema_file : str
         The name of the output schema that an association
         must adhere to.
-
-    registry : AssociationRegistry
-        The registry this association came from.
-
-    asn_name : str
-        The suggested file name of association
-
-    asn_rule : str
-        The name of the rule
     """
 
     registry = None

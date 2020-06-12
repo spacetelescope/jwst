@@ -8,9 +8,20 @@ __all__ = ["RSCD_Step"]
 
 class RSCD_Step(Step):
     """
-    RSCD_Step: Performs an RSCD correction to MIRI data by adding a function
-    of time, frame by frame, to a copy of the input science data model.
+    RSCD_Step: Performs an RSCD correction to MIRI data.
+    Baseline version flags the first N groups as 'DO_NOT_USE' in
+    the 2nd and later integrations in a copy of the input
+    science data model.
+    Enhanced version is not ready nor enabled.
     """
+
+    # allow swtiching between baseline and enhanced algorithms
+    spec = """
+         type = option('baseline','enhanced',default = 'baseline') # Type of correction
+       """
+
+    #  TBD - only do this for the 2nd+ integrations
+    #  do nothing for single integration exposures
 
     reference_file_types = ['rscd']
 
@@ -33,21 +44,12 @@ class RSCD_Step(Step):
                     self.log.warning('RSCD step will be skipped')
                     input_model.meta.cal_step.rscd = 'SKIPPED'
                     return input_model
-                # Check that data has the minimum number of groups/int
-                sci_ngroups = input_model.data.shape[1]     # number of groups
-                min_number = 4
-                if sci_ngroups < min_number:
-                    self.log.warning('Input file does not contain enough groups '
-                                     'for RSCD correction to be applied')
-                    self.log.warning('RSCD step will be skipped')
-                    input_model.meta.cal_step.rscd = 'SKIPPED'
-                    return input_model
 
                 # Load the rscd ref file data model
                 rscd_model = datamodels.RSCDModel(self.rscd_name)
 
                 # Do the rscd correction
-                result = rscd_sub.do_correction(input_model, rscd_model)
+                result = rscd_sub.do_correction(input_model, rscd_model, self.type)
 
                 # Close the reference file
                 rscd_model.close()

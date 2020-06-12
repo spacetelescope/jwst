@@ -26,7 +26,7 @@ log.setLevel(logging.DEBUG)
 
 
 def match(images, skymethod='global+match', match_down=True, subtract=False):
-    r"""
+    """
     A function to compute and/or "equalize" sky background in input images.
 
     .. note::
@@ -36,13 +36,13 @@ def match(images, skymethod='global+match', match_down=True, subtract=False):
     Parameters
     ----------
     images : list of SkyImage or SkyGroup
-        A list of of :py:class:`~jwst_pipeline.skymatch.skyimage.SkyImage` or
-        :py:class:`~jwst_pipeline.skymatch.skyimage.SkyGroup` objects.
+        A list of of :py:class:`~jwst.skymatch.skyimage.SkyImage` or
+        :py:class:`~jwst.skymatch.skyimage.SkyGroup` objects.
 
     skymethod : {'local', 'global+match', 'global', 'match'}, optional
         Select the algorithm for sky computation:
 
-        * **'local'**\ : compute sky background values of each input image or
+        * **'local'** : compute sky background values of each input image or
           group of images (members of the same "exposure"). A single sky value
           is computed for each group of images.
 
@@ -51,26 +51,25 @@ def match(images, skymethod='global+match', match_down=True, subtract=False):
             are dominated by "pure" sky (as opposite to extended, diffuse
             sources).
 
-        * **'global'**\ : compute a common sky value for all input image and
+        * **'global'** : compute a common sky value for all input image and
           groups of images. In this setting `match` will compute
           sky values for each input image/group, find the minimum sky value,
           and then it will set (and/or subtract) sky value of each input image
           to this minimum value. This method *may* be
           useful when input images have been already matched.
 
-        * **'match'**\ : compute differences in sky values between images
+        * **'match'** : compute differences in sky values between images
           and/or groups in (pair-wise) common sky regions. In this case
           computed sky values will be relative (delta) to the sky computed
           in one of the input images whose sky value will be set to
           (reported to be) 0. This setting will "equalize" sky values between
           the images in large mosaics. However, this method is not recommended
           when used in conjunction with
-          `astrodrizzle <http://stsdas.stsci.edu/\
-stsci_python_sphinxdocs_2.13/drizzlepac/astrodrizzle.html>`_ because it
-          computes relative sky values while `astrodrizzle` needs
+          `astrodrizzle <http://stsdas.stsci.edu/stsci_python_sphinxdocs_2.13/drizzlepac/astrodrizzle.html>`_
+          because it computes relative sky values while `astrodrizzle` needs
           "measured" sky values for median image generation and CR rejection.
 
-        * **'global+match'**\ : first use **'match'** method to
+        * **'global+match'** : first use **'match'** method to
           equalize sky values between images and then find a minimum
           "global" sky value in all input images.
 
@@ -99,8 +98,8 @@ stsci_python_sphinxdocs_2.13/drizzlepac/astrodrizzle.html>`_ because it
 
     TypeError
         The `images` argument must be a Python list of
-        :py:class:`~jwst_pipeline.skymatch.skyimage.SkyImage` and/or
-        :py:class:`~jwst_pipeline.skymatch.skyimage.SkyGroup` objects
+        :py:class:`~jwst.skymatch.skyimage.SkyImage` and/or
+        :py:class:`~jwst.skymatch.skyimage.SkyGroup` objects.
 
 
     Notes
@@ -108,7 +107,7 @@ stsci_python_sphinxdocs_2.13/drizzlepac/astrodrizzle.html>`_ because it
 
     :py:func:`match` provides new algorithms for sky value computations
     and enhances previously available algorithms used by, e.g.,
-    `astrodrizzle <http://stsdas.stsci.edu/stsci_python_sphinxdocs_2.13/drizzlepac/astrodrizzle.html>`_ .
+    `astrodrizzle <http://stsdas.stsci.edu/stsci_python_sphinxdocs_2.13/drizzlepac/astrodrizzle.html>`_.
 
     Two new methods of sky subtraction have been introduced (compared to the
     standard ``'local'``): ``'global'`` and ``'match'``, as well as a
@@ -118,11 +117,10 @@ stsci_python_sphinxdocs_2.13/drizzlepac/astrodrizzle.html>`_ because it
       input images and/or groups. That sky value is then considered to be
       the background in all input images.
 
-    - The ``'match'`` algorithm is somewhat
-      similar to the traditional sky subtraction method (`skymethod`\ =\
-      ``'local'``\) in the sense that it measures the sky indipendently
-      in input images (or groups). The major differences are that,
-      unlike the traditional method,
+    - The ``'match'`` algorithm is somewhat similar to the traditional sky
+      subtraction method (`skymethod` = `'local'`) in the sense that it
+      measures the sky indipendently in input images (or groups). The major
+      differences are that, unlike the traditional method,
 
         #. ``'match'`` algorithm computes *relative* (delta) sky values with
            regard to the sky in a reference image chosen from the input list
@@ -191,10 +189,10 @@ stsci_python_sphinxdocs_2.13/drizzlepac/astrodrizzle.html>`_ because it
       measured sky may be the surface brightness of large galaxy, nebula, etc.
 
       In the discussion below we will refer to parameter names in
-      :py:class:`~jwst_pipeline.skymatch.skystatistics.SkyStats` and these
+      :py:class:`~jwst.skymatch.skystatistics.SkyStats` and these
       parameter names may differ from the parameters of the actual `skystat`
       object passed to initializer of the
-      :py:class:`~jwst_pipeline.skymatch.skyimage.SkyImage`.
+      :py:class:`~jwst.skymatch.skyimage.SkyImage`.
 
       Here is a brief list of possible limitations/factors that can affect
       the outcome of the matching (sky subtraction in general) algorithm:
@@ -212,7 +210,7 @@ stsci_python_sphinxdocs_2.13/drizzlepac/astrodrizzle.html>`_ because it
       * Normally, distorted flat-fielded images contain cosmic rays. This
         algorithm does not perform CR cleaning. A possible way of minimizing
         the effect of the cosmic rays on sky computations is to use
-        clipping (\ `nclip` > 0) and/or set `upper` parameter to a value
+        clipping (`nclip` > 0) and/or set `upper` parameter to a value
         larger than most of the sky background (or extended source) but
         lower than the values of most CR pixels.
 

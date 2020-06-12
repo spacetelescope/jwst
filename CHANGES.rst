@@ -1,10 +1,175 @@
-0.15.2 (unreleased)
-==================
+0.17.0 (unreleased)
+===================
+
+assign_mtwcs
+------------
+
+- Skip the step if any input MT_RA/DEC keyword values are missing. [#5015]
+
+assign_wcs
+----------
+
+- Enabled ``filteroffset`` correction for NIRISS and NIRCAM imaging modes. [#5018, #5027]
+
+associations
+------------
+
+- Update diagrams to change sloper to detector1. [#4986]
+
+datamodels
+----------
+
+- Add blend rule for DETECTOR and MODULE. [#4998]
+
+- Added methods ``Model.info`` and ``Model.search``. [#4660]
+
+- Trimmed MT_RA, MT_DEC keyword comments to fit within FITS record. [#4994]
+
+- Add enum list and default value of 'NONE' for ``meta.instrument.lamp_mode`` [#5022]
+
+extract_1d
+----------
+
+coron
+-----
+
+- Bad pixel replacment & median smoothing for psf images [#4973]
+
+- Fix bug in creating a polynomial fit used in background extraction. [#4970]
+
+master_background
+-----------------
+
+- Fix open files bug [#4995]
+
+pipeline
+--------
+
+- Refactor the ``Image3Pipeline`` to use ``stpipe`` infrastructure. [#4990]
+
+- Fix ``Coron3Pipeline`` to blend headers just from each input science model,
+  not every integration. [#5007]
+
+- Fix open files bug in ``get_config_from_reference`` class method, and in
+  ``Spec2Pipeline``, ``Spec3Pipeline`` and ``tso3``. [#4995]
+
+ramp_fitting
+------------
+
+- Add multi-processing capability. [#4815]
+
+stpipe
+------
+
+- Limit reference file prefetch to the first "science" exptype
+  when a pipeline has an association as input. [#5031]
+
+- Remove further sloper references. [#4989]
+
+
+0.16.2 (2020-06-10)
+===================
+
+- Fixed ``packaging`` dependency installation issue.  [#4977]
+
+
+0.16.1 (2020-05-19)
+===================
+
+assign_wcs
+----------
+
+- Update keyword and attribute usage around SkyObject to reflect updated keywords. [#4943]
+
+- Refactor PPS origin of NIRSpec MOS shutters from top left to bottom left. [#4959]
+
+associations
+------------
+
+- Modify NIRSpec IFU level-3 ASN rules to include only one grating per association [#4926]
+
+calwebb_coron3
+--------------
+
+- Update coron3 for new outlier detection application [#4968]
+
+datamodels
+----------
+
+- Add ``to_container`` to ``CubeModel`` to convert a cube to a list of images [#4968]
+
+- Add ``getarray_noinit`` to ``DataModel`` to access arrays without causing initialization [#4968]
+
+- Limit looping over HDU's while resolving arrays in schema [#4951]
+
+- Relax asdf requirement and use validator flag when asdf 2.6.x is installed [#4905]
+
+- Updated core schema to include recent Keyword Dictionary changes
+  (remove TIME-END; add TDB-BEG, TDB-MID, TDB-END, XPOSURE, TELAPSE)
+  [#4925]
+
+- Populate meta.asn.table_name when an association is loaded into a
+  ``ModelContainer``. [#4873]
+
+lib
+---
+
+- Update SkyObject keys. [#4943]
+
+mrs_imatch
+----------
+
+- Fix ``mrs_imatch`` to avoid calls to ``sigma_clipped_stats`` with all-zero
+  arrays. [#4944]
+
+photom
+------
+
+- Fix flux units in photom for MultiSlit cases. [#4958]
+
+pipeline
+--------
+
+- Updated calwebb_image3 pipeline to only load science and background member
+  types from an input ASN. [#4937]
+
+- Updated the calwebb_spec2 pipeline to only use the basename of the source
+  catalog file when updating the source_catalogue keyword for WFSS inputs.
+  [#4940]
+
+rscd
+----
+
+- Fixed bug when the READPATT/SUBARRAY data is not found in RSCD reference file [#4934]
+
+source_catalog
+--------------
+
+- Added fallback background estimation method to make background
+  estimation moare robust. [#4929]
+
+- Fixed the nearest-neighbor code to handle the case of exactly one
+  detected source. [#4929]
+
+tweakreg
+--------
+
+- Added align_to_gaia processing as an option [#4599]
+
+
+
+0.16.0 (2020-05-04)
+===================
 
 ami
 ---
 
 - Reorganized step documentation [#4697]
+
+assign_wcs
+----------
+
+- Updated MIRI imaging distortion to use new filteroffset file format [#4776]
 
 associations
 ------------
@@ -28,6 +193,9 @@ coron
 datamodels
 ----------
 
+- Update schemas to add moving_target_position and cheby tables to the level1b
+  schema [#4760]
+
 - Deprecate ``DrizProductModel`` and ``MultiProductModel`` and replace with
   updated versions of ``ImageModel`` and ``SlitModel`` that include "CON" and
   "WHT" arrays for resampled data. [#4552]
@@ -38,6 +206,13 @@ datamodels
 - Add data models for spectroscopic mode APCORR reference files. [#4770]
 
 - Added ``pupil`` to the ``FilteroffsetModel`` to support NIRCAM and NIRISS WCS. [#4750]
+
+- Removed old MIRI-specific filteroffset schema.  [#4776]
+
+- Added FASTGRPAVG[8,16,32,64] to the READPATT keyword allowed values. [#4818]
+
+- Added the SRCTYAPT keyword and moved SRCTYPE to the SCI extension header of
+  all applicable data model schemas. [#4885]
 
 exp_to_source
 -------------
@@ -54,6 +229,10 @@ extract_1d
 - Remove pixel-by-pixel calls to wcs; copy input keywords to output for
   more types of input data. [#4685]
 
+- Updated to create a single ``x1d`` product per source for WFSS data, containing
+  all extracted spectra for a given source, instead of multiple ``x1d`` files per
+  source. [#4846]
+
 extract_2d
 ----------
 
@@ -66,6 +245,12 @@ master_background
 - Updated step arguments in the documentation. [#4723]
 
 - Fix issue with files left open at end of step [#4775]
+
+mrs_imatch
+----------
+
+- Updated step to use EMSM cube weighting, and to perform iterative sigma
+  rejection of sources prior to running the background solver.  [#4732]
 
 outlier_detection
 -----------------
@@ -82,11 +267,18 @@ outlier_detection
 pipeline
 --------
 
+- Update ``calwebb_detector1`` to reduce the memory used in processing. [#4643]
+
 - Update ``calwebb_coron3`` to return ``ImageModel`` instead of ``DrizProductModel``,
   when necessary. [#4552]
 
 - Fix issue with files left open at end of ``calwebb_spec2`` [#4775]
 
+- Update ``calwebb_spec3`` to use suffix ``c1d`` for ``combine_1d`` products.
+  [#4846]
+
+- Update ``calwebb_spec3`` to update the ASNTABLE keyword in all output
+  products, to reflect the name of the spec3 ASN used as input. [#4865]
 
 resample
 --------
@@ -101,6 +293,9 @@ resample
   The parameter ``good_bits`` has been removed in favor of allowing all
   DQ flags except for ``DO_NOT_USE``
 
+- Updated to reject pixels with DQ flag NON_SCIENCE, in addition to
+  DO_NOT_USE. [#4851]
+
 resample_spec
 -------------
 
@@ -111,6 +306,16 @@ resample_spec
   [#4552]
 
 - Enable model metadata blending [#4765]
+
+rscd
+----
+
+- Added baseline algorithm that flags groups [#4669]
+
+set_telescope_pointing
+----------------------
+
+- Update to add moving target coords to the header [#4760]
 
 source_catalog
 --------------
@@ -126,6 +331,9 @@ srctype
 - Change default source type for NRS_IFU from POINT to EXTENDED. Change the source
   type for NIRSpec MOS sources with stellarity = -1 from UNKNOWN to POINT. [#4686]
 
+- Modified the step to use the SRCTYAPT keyword to get the user input value from
+  the APT and store the derived source type in the SRCTYPE keyword. [#4885]
+
 stpipe
 ------
 
@@ -134,6 +342,8 @@ stpipe
 - Add command line and environmental options to not retrieve steppars references [#4676]
 
 - Use only a single member of an association for CRDS STEPPARS checking [#4684]
+
+- Fix handling of the boolean-like environmental variables PASS_INVALID_VALUES and STRICT_VALIDATION [#4842]
 
 strun
 -----
@@ -144,6 +354,11 @@ tweakreg
 --------
 
 - Updated step arguments in the documentation. [#4723]
+
+wfs_combine
+-----------
+
+- Update the value of the ASNTABLE keyword in the output ``wfscmb`` product. [#4849]
 
 0.15.1 (2020-03-10)
 ===================
@@ -346,7 +561,6 @@ transforms
 - Added ``source_ra`` and ``source_dec`` to the ``Slit`` namedtuple
   with default values of 0.0. These are populated from the MSA metadata
   file. [#4613]
-
 
 tweakreg
 --------
@@ -1481,10 +1695,8 @@ master_background
 model_blender
 -------------
 
-
 msaflagopen
 -----------
-
 
 outlier_detection
 -----------------
@@ -2474,7 +2686,6 @@ refpix
 
 - Refpix has been updated to handle subarray exposures [#2207]
 
-
 resample
 --------
 - Fixed update_fits_wcs() to work on DrizProductModels [#2222]
@@ -2491,7 +2702,6 @@ rscd
 
 - Update to the RSCD documentation [#2211]
 
-
 saturation
 ----------
 
@@ -2500,7 +2710,6 @@ skymatch
 
 source_catalog
 --------------
-
 
 srctype
 -------

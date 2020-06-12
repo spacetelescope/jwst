@@ -57,24 +57,6 @@ class AssociationRegistry(dict):
         If True, include base classes not considered
         rules.
 
-    Attributes
-    ----------
-    rule_set : {rule [, ...]}
-        The rules in the registry.
-
-    Methods
-    -------
-    match(item)
-        Return associations where `item` matches any of the rules.
-
-    validate(association)
-        Determine whether an association is valid, or complete,
-        according to any of the rules in the registry.
-
-    load(serialized)
-        Create an association from a serialized form.
-
-
     Notes
     -----
     The general workflow is as follows:
@@ -225,7 +207,7 @@ class AssociationRegistry(dict):
             first=True,
             **kwargs
     ):
-        """Marshall a previously serialized association
+        """Load a previously serialized association
 
         Parameters
         ----------

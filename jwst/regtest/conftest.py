@@ -7,7 +7,7 @@ import getpass
 import pytest
 from ci_watson.artifactory_helpers import UPLOAD_SCHEMA
 from astropy.table import Table
-from numpy.testing import assert_allclose
+from numpy.testing import assert_allclose, assert_equal
 from astropy.io.fits import conf
 
 from .regtestdata import RegtestData
@@ -232,39 +232,48 @@ def diff_astropy_tables():
 
         diffs = []
 
-        if result.colnames != truth.colnames:
-            diffs.append("Column names (or order) do not match")
+        try:
+            assert result.colnames == truth.colnames
+        except AssertionError as err:
+            diffs.append(f"Column names (or order) do not match\n{err}")
 
-        if len(result) != len(truth):
-            diffs.append(f"Row count does not match({len(result)} vs {len(truth)})")
+        try:
+            assert len(result) == len(truth)
+        except AssertionError as err:
+            diffs.append(f"Row count does not match\n{err}")
 
         # If either the columns or the row count is mismatched, then don't
         # bother checking the individual column values.
         if len(diffs) > 0:
             raise AssertionError("\n".join(diffs))
 
-        if result.meta != truth.meta:
-            diffs.append("Metadata does not match")
+        # Disable meta comparison for now, until we're able to specify
+        # individual entries for comparison
+        #if result.meta != truth.meta:
+        #    diffs.append("Metadata does not match")
 
         for col_name in truth.colnames:
             try:
-                if result[col_name].dtype != truth[col_name].dtype:
-                    diffs.append(f"Column '{col_name}' dtype does not match")
+                try:
+                    assert result[col_name].dtype == truth[col_name].dtype
+                except AssertionError as err:
+                    diffs.append(f"Column '{col_name}' dtype does not match\n{err}")
                     continue
 
-                dtype = truth[col_name].dtype
-                if dtype.kind == "f":
+                if truth[col_name].dtype.kind == "f":
                     try:
                         assert_allclose(result[col_name], truth[col_name],
                             rtol=rtol, atol=atol)
                     except AssertionError as err:
                         diffs.append("\n----------------------------------\n"
                             + f"Column '{col_name}' values do not "
-                            + f"match (within tolerances) \n{str(err)}"
+                            + f"match (within tolerances) \n{err}"
                         )
                 else:
-                    if not (result[col_name] == truth[col_name]).all():
-                        diffs.append(f"Column '{col_name}' values do not match")
+                    try:
+                        assert_equal(result[col_name], truth[col_name])
+                    except AssertionError as err:
+                        diffs.append(f"Column '{col_name}' values do not match\n{err}")
             except AttributeError:
                 # Ignore case where a column does not have a dtype, as in the case
                 # of SkyCoord objects

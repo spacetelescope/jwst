@@ -127,7 +127,7 @@ def imaging_distortion(input_model, reference_files):
     col_offset = None
     row_offset = None
     for f in filters:
-        if f.name == obsfilter:
+        if f.filter == obsfilter:
             col_offset = f.column_offset
             row_offset = f.row_offset
             break

@@ -1,3 +1,5 @@
+import numpy as np
+
 from jwst import datamodels
 import logging
 
@@ -387,3 +389,68 @@ def get_subarray_model(sci_model, ref_model):
         sub_model = None
 
     return sub_model
+
+
+class MatchRowError(Exception):
+    """
+    Raised when more than one row is matched in a FITS table or list of dict.
+    """
+
+    def __init__(self, message):
+        if message is None:
+            message = "Expected to match one row only."
+        super().__init__(message)
+
+
+def find_row(ldict, match_keys):
+    """
+    Find a row in a FITS table matching fields.
+
+    Parameters
+    ----------
+    ldict : list of dict
+        A list of dictinaries, The dictionaries may have any number
+        of items but must include all keys in ``match_keys``.
+    match_keys : dict
+        {key: value} pairs are matched against all items in ``ldict``
+        to find the dict which matches them.
+
+    Examples
+    --------
+    >>> ldict = [{'row_offset': 2.1, 'col_offset': 1.3, 'filter': 'F444W', 'pupil': 'CLEAR'},
+    ...          {'row_offset': 1, 'col_offset': 3, 'filter': 'F277W', 'pupil': 'FLAT'},
+    ...         ]
+    >>> match_keys = {'filter': 'F444W', 'pupil': 'CLEAR'}
+    >>> result = find_row(ldict, match_keys)
+    >>> print(result)
+    {'row_offset': 2.1, 'col_offset': 1.3, 'filter': 'F444W', 'pupil': 'CLEAR'}
+
+    Raises
+    ------
+    Warning
+        When a field name is not in the table.
+    MatchFitsTableRowError
+        When more than one rows match.
+
+    Returns
+    -------
+    row : int, or None
+        FITS table row index, None if no match.
+    """
+    def _normalize_strings(field):
+        if isinstance(field[0], str):
+            return np.array([s.upper() for s in field])
+        return field
+
+    # item[1] is always converted to upper case in the `DataSet` initializer.
+    results = []
+    for d in ldict:
+        row = [d[key] == match_keys[key] for key in match_keys]
+        if all(row):
+            results.append(d)
+    if len(results) > 1:
+        raise MatchRowError(f"Expected to find one matching row in table, found {len(results)}.")
+    if len(results) == 0:
+        log.warning("Expected to find one matching row in table, found 0.")
+        return None
+    return results[0]

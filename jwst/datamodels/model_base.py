@@ -18,7 +18,6 @@ import asdf
 from asdf import AsdfFile
 from asdf import yamlutil
 from asdf import schema as asdf_schema
-from asdf.tags.core.ndarray import numpy_dtype_to_asdf_datatype
 
 from . import ndmodel
 from . import filetype
@@ -38,7 +37,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/core.schema"
 
     def __init__(self, init=None, schema=None, memmap=False,
-                 pass_invalid_values=False, strict_validation=False,
+                 pass_invalid_values=None, strict_validation=None,
                  ignore_missing_extensions=True, **kwargs):
         """
         Parameters
@@ -72,13 +71,17 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             Turn memmap of FITS file on or off.  (default: False).  Ignored for
             ASDF files.
 
-        pass_invalid_values : bool
+        pass_invalid_values : bool or None
             If `True`, values that do not validate the schema
             will be added to the metadata. If `False`, they will be set to `None`.
+            If `None`, value will be taken from the environmental PASS_INVALID_VALUES.
+            Otherwise the default value is `False`.
 
-        strict_validation : bool
+        strict_validation : bool or None
             If `True`, schema validation errors will generate
             an exception. If `False`, they will generate a warning.
+            If `None`, value will be taken from the environmental STRICT_VALIDATION.
+            Otherwise, the default value is `False`.
 
         ignore_missing_extensions : bool
             When `False`, raise warnings when a file is read that
@@ -89,12 +92,15 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             Additional arguments passed to lower level functions.
         """
 
-        # Override value of validation parameters
-        # if environment value set
-        self._pass_invalid_values = self.get_envar("PASS_INVALID_VALUES",
-                                                    pass_invalid_values)
-        self._strict_validation = self.get_envar("STRICT_VALIDATION",
-                                                 strict_validation)
+        # Override value of validation parameters if not explicitly set.
+        if not pass_invalid_values:
+            pass_invalid_values = self._get_envar_as_boolean("PASS_INVALID_VALUES",
+                                                            False)
+        self._pass_invalid_values = pass_invalid_values
+        if not strict_validation:
+            strict_validation = self._get_envar_as_boolean("STRICT_VALIDATION",
+                                                          False)
+        self._strict_validation = strict_validation
         self._ignore_missing_extensions = ignore_missing_extensions
 
         kwargs.update({'ignore_missing_extensions': ignore_missing_extensions})
@@ -306,14 +312,31 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             if fd is not None:
                 fd.close()
 
-    def get_envar(self, name, value):
+    def _get_envar_as_boolean(self, name, default=False):
+        """Interpret an environmental as a boolean flag
+
+        Truth is any numeric value that is not 0 or
+        any of the following case-insensitive strings:
+
+        ('true', 't', 'yes', 'y')
+
+        Parameters
+        ----------
+        name : str
+            The name of the environmental variable to retrieve
+
+        default : bool
+            If the value cannot be determined, use as the default.
+        """
+        truths = ('true', 't', 'yes', 'y')
         if name in os.environ:
             value = os.environ[name]
             try:
                 value = bool(int(value))
             except ValueError:
-                value = True
-        return value
+                return value.lower() in truths
+            return value
+        return default
 
     @staticmethod
     def clone(target, source, deepcopy=False, memo=None):
@@ -376,71 +399,17 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         mschema.walk_schema(self._schema, callback, ctx=self)
 
-    def info(self):
-        """
-        Return datatype and dimension for each array or table
-        """
-        def get_field_info(path, instance):
-            field_info = []
-            if isinstance(instance, dict):
-                if path:
-                    path += '.'
-                for name, val in instance.items():
-                    new_path = path + name.lower()
-                    field_info.extend(get_field_info(new_path, val))
-            elif isinstance(instance, list):
-                for index, val in enumerate(instance):
-                    new_path = "%s[%d]" % (path, index)
-                    field_info.extend(get_field_info(new_path, val))
-            elif isinstance(instance, np.ndarray):
-                if instance.shape[0] > 0:
-                    shape_info = get_shape_info(instance)
-                    type_info = get_type_info(instance)
-                    field_info = [(path, shape_info, type_info)]
-            return field_info
+    def info(self, *args, **kwargs):
+        return self._asdf.info(**kwargs)
 
-        def get_meta_info(meta):
-            meta_info = []
-            for attribute in ('filename', 'date', 'model_type'):
-                if hasattr(meta, attribute):
-                    value = getattr(meta, attribute)
-                    if value is not None:
-                        meta_info.append(attribute + ': ' + value)
-            return meta_info
+    def search(self, *args, **kwargs):
+        return self._asdf.search(*args, **kwargs)
 
-        def get_shape_info(instance):
-            if hasattr(instance, '_coldefs'):
-                nrows = instance.shape[0]
-                ncols = len(instance._coldefs)
-                shape_info = "{}R x {}C".format(nrows, ncols)
-            else:
-                # Display shape in fits order (reversed)
-                shape = [str(s) for s in reversed(instance.shape)]
-                shape_info = '(' + ','.join(shape) + ')'
-            return shape_info
-
-        def get_type_info(instance):
-            if hasattr(instance, '_coldefs'):
-                col_info = []
-                for coldef in instance._coldefs:
-                    col_info.append(coldef.name + ':' + coldef.format)
-                type_info = '(' + ','.join(col_info) + ')'
-            else:
-                type_info = numpy_dtype_to_asdf_datatype(instance.dtype)[0]
-            return type_info
-
-        meta_info = get_meta_info(self.meta)
-        field_info = get_field_info('', self._instance)
-
-
-        buffer = meta_info
-        format_string = "%-40s%-20s%s"
-        buffer.append(70 * '-')
-        buffer.append(format_string % ('attribute', 'size', 'type'))
-        buffer.append(70 * '-')
-        for field in field_info:
-            buffer.append(format_string % field)
-        return "\n".join(buffer) + "\n"
+    try:
+        info.__doc__ = AsdfFile.info.__doc__
+        search.__doc__ = AsdfFile.search.__doc__
+    except AttributeError:
+        pass
 
     def get_primary_array_name(self):
         """
@@ -1106,3 +1075,29 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
     def write(self, path, *args, **kwargs):
         self.save(path, *args, **kwargs)
+
+    def getarray_noinit(self, attribute):
+        """Retrieve array but without initilization
+
+        Arrays initialize when directly referenced if they had
+        not previously been initialized. This circumvents the
+        initialization and instead raises `AttributeError`.
+
+        Parameters
+        ----------
+        attribute : str
+            The attribute to retrieve.
+
+        Returns
+        -------
+        value : object
+           The value of the attribute.
+
+        Raises
+        ------
+        AttributeError
+            If the attribute does not exist.
+        """
+        if attribute in self.instance:
+            return getattr(self, attribute)
+        raise AttributeError(f'{self} has no attribute "{attribute}"')

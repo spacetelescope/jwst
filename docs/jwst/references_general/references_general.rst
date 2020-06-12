@@ -149,6 +149,8 @@ documentation on each reference file.
 | :ref:`saturation <saturation_step>`         | :ref:`SATURATION <saturation_reffile>`           |
 +---------------------------------------------+--------------------------------------------------+
 | :ref:`source_catalog <source_catalog_step>` | :ref:`APCORR <apcorr_reffile>`                   |
++                                             +--------------------------------------------------+
+|                                             | :ref:`ABVEGAOFFSET <abvegaoffset_reffile>`       |
 +---------------------------------------------+--------------------------------------------------+
 | :ref:`straylight <straylight_step>`         | :ref:`REGIONS <regions_reffile>`                 |
 +---------------------------------------------+--------------------------------------------------+
@@ -160,6 +162,8 @@ documentation on each reference file.
 +--------------------------------------------------+---------------------------------------------+
 | Reference File Type (REFTYPE)                    | Pipeline Step                               |
 +==================================================+=============================================+
+| :ref:`ABVEGAOFFSET <abvegaoffset_reffile>`       | :ref:`source_catalog <source_catalog_step>` |
++--------------------------------------------------+---------------------------------------------+
 | :ref:`APCORR <apcorr_reffile>`                   | :ref:`extract_1d <extract_1d_step>`         |
 +                                                  +---------------------------------------------+
 |                                                  | :ref:`source_catalog <source_catalog_step>` |

@@ -15,6 +15,7 @@ from tweakwcs.matchutils import TPMatch
 from ..stpipe import Step
 from .. import datamodels
 
+from . import astrometric_utils as amutils
 from .tweakreg_catalog import make_tweakreg_catalog
 
 
@@ -28,21 +29,14 @@ class TweakRegStep(Step):
     """
 
     spec = """
-        # Source finding parameters:
         save_catalogs = boolean(default=False) # Write out catalogs?
         catalog_format = string(default='ecsv') # Catalog output file format
         kernel_fwhm = float(default=2.5) # Gaussian kernel FWHM in pixels
         snr_threshold = float(default=10.0) # SNR threshold above the bkg
-        brightest = integer(default=100) # Keep top ``brightest`` objects
+        brightest = integer(default=1000) # Keep top ``brightest`` objects
         peakmax = float(default=None) # Filter out objects with pixel values >= ``peakmax``
-
-        # Optimize alignment order:
         enforce_user_order = boolean(default=False) # Align images in user specified order?
-
-        # Reference Catalog parameters:
         expand_refcat = boolean(default=False) # Expand reference catalog with new sources?
-
-        # Object matching parameters:
         minobj = integer(default=15) # Minimum number of objects acceptable for matching
         searchrad = float(default=1.0) # The search radius in arcsec for a match
         use2dhist = boolean(default=True) # Use 2d histogram to find initial offset?
@@ -50,11 +44,13 @@ class TweakRegStep(Step):
         tolerance = float(default=1.0) # Matching tolerance for xyxymatch in arcsec
         xoffset = float(default=0.0), # Initial guess for X offset in arcsec
         yoffset = float(default=0.0) # Initial guess for Y offset in arcsec
-
-        # Catalog fitting parameters:
         fitgeometry = option('shift', 'rscale', 'general', default='general') # Fitting geometry
         nclip = integer(min=0, default=3) # Number of clipping iterations in fit
         sigma = float(min=0.0, default=3.0) # Clipping limit in sigma units
+        align_to_gaia = boolean(default=False)  # Align to GAIA catalog
+        gaia_catalog = option('GAIADR2', 'GAIADR1', default='GAIADR2')
+        min_gaia = integer(min=0, default=5) # Min number of GAIA sources needed
+        save_gaia_catalog = boolean(default=False)  # Write out GAIA catalog as a separate product
     """
 
     reference_file_types = []
@@ -68,6 +64,11 @@ class TweakRegStep(Step):
                       "association, or an already open ModelContainer "
                       "containing one or more DataModels.", ) + e.args[1:]
             raise e
+
+        if self.align_to_gaia:
+            # Set expand_refcat to True to eliminate possibility of duplicate
+            # entries when aligning to GAIA
+            self.expand_refcat=True
 
         # Build the catalogs for input images
         for image_model in images:
@@ -200,12 +201,96 @@ class TweakRegStep(Step):
             else:
                 raise e
 
+        if self.align_to_gaia:
+            # Get catalog of GAIA sources for the field
+            #
+            # NOTE:  If desired, the pipeline can write out the reference
+            #        catalog as a separate product with a name based on
+            #        whatever convention is determined by the JWST Cal Working
+            #        Group.
+            if self.save_gaia_catalog:
+                output_name = 'fit_{}_ref.ecsv'.format(self.gaia_catalog.lower())
+            else:
+                output_name = None
+            ref_cat = amutils.create_astrometric_catalog(images,
+                                                         self.gaia_catalog,
+                                                         output=output_name)
+
+            # Check that there are enough GAIA sources for a reliable/valid fit
+            num_ref = len(ref_cat)
+            if num_ref < self.min_gaia:
+                msg = "Not enough GAIA sources for a fit: {}\n".format(num_ref)
+                msg += "Skipping alignment to {} astrometric catalog!\n".format(self.gaia_catalog)
+                # Raise Exception here to avoid rest of code in this try block
+                self.log.warning(msg)
+            else:
+                # align images:
+                # Update to separation needed to prevent confusion of sources
+                # from overlapping images where centering is not consistent or
+                # for the possibility that errors still exist in relative overlap.
+                tpmatch_gaia = TPMatch(
+                    searchrad=self.searchrad * 3.0,
+                    separation=self.separation / 10.0,
+                    use2dhist=self.use2dhist,
+                    tolerance=self.tolerance,
+                    xoffset=0.0,
+                    yoffset=0.0
+                )
+
+                # Set group_id to same value so all get fit as one observation
+                # The assigned value, 987654, has been hard-coded to make it
+                # easy to recognize when alignment to GAIA was being performed
+                # as opposed to the group_id values used for relative alignment
+                # earlier in this step.
+                for imcat in imcats:
+                    imcat.meta['group_id'] = 987654
+                    if 'REFERENCE' in imcat.meta['fit_info']['status']:
+                        del imcat.meta['fit_info']
+
+                # Perform fit
+                align_wcs(
+                    imcats,
+                    refcat=ref_cat,
+                    enforce_user_order=True,
+                    expand_refcat=False,
+                    minobj=self.minobj,
+                    match=tpmatch_gaia,
+                    fitgeom=self.fitgeometry,
+                    nclip=self.nclip,
+                    sigma=(self.sigma, 'rmse')
+                )
+
         for imcat in imcats:
             imcat.meta['image_model'].meta.cal_step.tweakreg = 'COMPLETE'
+
             # retrieve fit status and update wcs if fit is successful:
-            fit_info = imcat.meta.get('fit_info')
-            if fit_info['status'] in 'SUCCESS':
+            if 'SUCCESS' in imcat.meta.get('fit_info')['status']:
+
+                # Update/create the WCS .name attribute with information
+                # on this astrometric fit as the only record that it was
+                # successful:
+                if self.align_to_gaia:
+                    # NOTE: This .name attrib agreed upon by the JWST Cal
+                    #       Working Group.
+                    #       Current value is merely a place-holder based
+                    #       on HST conventions. This value should also be
+                    #       translated to the FITS WCSNAME keyword
+                    #       IF that is what gets recorded in the archive
+                    #       for end-user searches.
+                    imcat.wcs.name = "FIT-LVL3-{}".format(self.gaia_catalog)
+
                 imcat.meta['image_model'].meta.wcs = imcat.wcs
+
+                """
+                # Also update FITS representation in input exposures for
+                # subsequent reprocessing by the end-user.
+                # Not currently enabled, but may be requested later...
+                gwcs_header = imcat.wcs.to_fits_sip(max_pix_error=0.1,
+                                                max_inv_pix_error=0.1,
+                                                degree=3,
+                                                npoints=128)
+                imcat.meta['image_model'].wcs = wcs.WCS(header=gwcs_header)
+                """
 
         return images
 

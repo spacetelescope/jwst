@@ -1349,11 +1349,16 @@ class ExtractBase:
             lower = bb[1][0]
             upper = bb[1][1]
         else:                                   # dispaxis = VERTICAL
+            # Cross-dispersion total width of bounding box
             xd_width = int(round(bb[0][1]))     # must be an int
+            # Mid-point of width along dispersion direction
             middle = int((bb[1][0] + bb[1][1]) / 2.)
+            # 1-D vector of cross-dispersion (x) pixel indices
             x = np.arange(xd_width, dtype=np.float64)
+            # 1-D vector all set to middle y index
             y = np.empty(xd_width, dtype=np.float64)
             y[:] = float(middle)
+            # lower and upper range in cross-dispersion direction
             lower = bb[0][0]
             upper = bb[0][1]
 
@@ -2578,6 +2583,11 @@ def run_extract1d(input_model, refname, smoothing_length, bkg_order,
                                 log_increment, subtract_background,
                                 apply_nod_offset, was_source_model)
 
+    # Remove target.source_type from the output model, so that it
+    # doesn't force creation of an empty SCI extension in the output
+    # x1d product just to hold this keyword.
+    output_model.meta.target.source_type = None
+
     return output_model
 
 
@@ -2678,27 +2688,36 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
 
     ref_dict = ref_dict_sanity_check(ref_dict)
 
+    # Temporarily set "input" to either the first model in a container,
+    # or the individual input model, for convenience of retrieving
+    # meta attributes in subsequent statements
+    if was_source_model:
+        # input_model is SourceContainer with a single SlitModel
+        input_temp = input_model[0]
+    else:
+        input_temp = input_model
+
+    # Setup the output model
     output_model = datamodels.MultiSpecModel()
-    if hasattr(input_model, "int_times"):
-        output_model.int_times = input_model.int_times.copy()
-    output_model.update(input_model)
+    if hasattr(input_temp, "int_times"):
+        output_model.int_times = input_temp.int_times.copy()
+    output_model.update(input_temp)
 
     # This data type is used for creating an output table.
     spec_dtype = datamodels.SpecModel().spec_table.dtype
 
     # This will be relevant if we're asked to extract a spectrum and the
     # spectral order is zero.  That's only OK if the disperser is a prism.
-    prism_mode = is_prism(input_model)
-
-    instrument = input_model.meta.instrument.name
-    exp_type = input_model.meta.exposure.type
+    prism_mode = is_prism(input_temp)
+    instrument = input_temp.meta.instrument.name
+    exp_type = input_temp.meta.exposure.type
     if instrument is not None:
         instrument = instrument.upper()
 
     # We need a flag to indicate whether the photom step has been run.  If
     # it hasn't, we'll copy the count rate to the flux column.
     try:
-        s_photom = input_model.meta.cal_step.photom
+        s_photom = input_temp.meta.cal_step.photom
     except AttributeError:
         s_photom = None
     if s_photom is not None and s_photom.upper() == 'COMPLETE':
@@ -2717,13 +2736,25 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
             log.warning("Correcting for nod/dither offset is currently "
                         "not supported for exp_type = %s, so "
                         "apply_nod_offset will be set to False",
-                        input_model.meta.exposure.type)
+                        input_temp.meta.exposure.type)
 
+    # Handle inputs that contain one or more slit models
     if (was_source_model or
         isinstance(input_model, datamodels.MultiSlitModel)):
+
         if was_source_model:
-            slits = [input_model]
+
+            # SourceContainer has a single list of SlitModels
+            slits = input_model
+
+            # The subsequent work on data uses the individual SlitModels,
+            # but there are many places where meta attributes are retreived
+            # from input_model, so set this to allow that to work
+            input_model = input_model[0]
+
         elif isinstance(input_model, datamodels.MultiSlitModel):
+
+            # A simple MultiSlitModel, not in a container
             slits = input_model.slits
 
         # Loop over the slits in the input model
@@ -2972,6 +3003,9 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
             # next two lines are for NRS_BRIGHTOBJ
             if getattr(input_model, "name", None) is not None:
                 slitname = input_model.name
+
+            # Next 2 lines likely no longer needed, now that SlitModel
+            # already contains input_model.name value
             if input_model.meta.exposure.type == 'NRS_FIXEDSLIT':
                 slitname = input_model.meta.instrument.fixed_slit
 
@@ -3479,7 +3513,11 @@ def extract_one_slit(input_model, slit, integ,
     if verbose:
         log_initial_parameters(extract_params)
 
-    exp_type = input_model.meta.exposure.type
+    try:
+        exp_type = input_model.meta.exposure.type
+    except AttributeError:
+        exp_type = slit.meta.exposure.type
+
     input_dq = None
     if integ > -1:
         data = input_model.data[integ]

@@ -1,6 +1,5 @@
 from .model_base import DataModel
 
-
 __all__ = ['CubeModel']
 
 
@@ -46,3 +45,26 @@ class CubeModel(DataModel):
         # Implicitly create arrays
         self.dq = self.dq
         self.err = self.err
+
+    def to_container(self):
+        """Convert to a ModelContainer of ImageModels for each plane"""
+        from jwst.datamodels import ImageModel, ModelContainer
+
+        container = ModelContainer()
+        for plane in range(self.shape[0]):
+            image = ImageModel()
+            for attribute in [
+                    'data', 'dq', 'err', 'zeroframe', 'area',
+                    'var_poisson', 'var_rnoise', 'var_flat'
+            ]:
+                try:
+                    setattr(image, attribute, self.getarray_noinit(attribute)[plane])
+                except AttributeError:
+                    pass
+            image.update(self)
+            try:
+                image.meta.wcs = self.meta.wcs
+            except AttributeError:
+                pass
+            container.append(image)
+        return container

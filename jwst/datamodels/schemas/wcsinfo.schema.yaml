@@ -319,22 +319,22 @@ properties:
             fits_keyword: YREF_SCI
             fits_hdu: SCI
           mt_ra:
-            title: "[deg] Average right ascension of the moving target during exposure"
+            title: "[deg] Moving target RA at exposure mid-point"
             type: number
             fits_keyword: MT_RA
             fits_hdu: SCI
           mt_dec:
-            title: "[deg] Average declination of the moving target during exposure"
+            title: "[deg] Moving target Dec at exposure mid-point"
             type: number
             fits_keyword: MT_DEC
             fits_hdu: SCI
           mt_avra:
-            title: "[deg] Right ascension of the moving target averaged between exposures"
+            title: "[deg] Moving target average RA over exposures"
             type: number
             fits_keyword: MT_AVRA
             fits_hdu: SCI
           mt_avdec:
-            title: "[deg] Declination of the moving target averaged between exposures"
+            title: "[deg] Moving target average Dec over exposures"
             type: number
             fits_keyword: MT_AVDEC
             fits_hdu: SCI

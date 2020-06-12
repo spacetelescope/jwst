@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from collections import defaultdict
+import os.path as op
 
 from .. import datamodels
 from ..associations.lib.rules_level3_base import format_product
@@ -80,7 +81,7 @@ class Spec3Pipeline(Pipeline):
         self.cube_build.save_results = self.save_results
         self.extract_1d.suffix = 'x1d'
         self.extract_1d.save_results = self.save_results
-        self.combine_1d.suffix = 'x1d'
+        self.combine_1d.suffix = 'c1d'
         self.combine_1d.save_results = self.save_results
 
         # Retrieve the inputs:
@@ -88,6 +89,11 @@ class Spec3Pipeline(Pipeline):
         # load input members into models and ModelContainer, or just
         # do a direct open of all members in ASN file, e.g.
         input_models = datamodels.open(input, asn_exptypes=asn_exptypes)
+
+        # Immediately update the ASNTABLE keyword value in all inputs,
+        # so that all outputs get the new value
+        for model in input_models:
+            model.meta.asn.table_name = op.basename(input_models.meta.table_name)
 
         # For the first round of development we will assume that the input
         # is ALWAYS an ASN. There's no use case for anyone ever running a
@@ -120,7 +126,9 @@ class Spec3Pipeline(Pipeline):
             # would've been done in master_background
             if self.master_background.skip:
                 source_models, bkg_models = split_container(input_models)
-                del bkg_models  # we don't need the background members
+                # we don't need the background members
+                bkg_models.close()
+                del bkg_models
         else:
             # The input didn't contain any background members,
             # so we use all the inputs in subsequent steps
@@ -176,7 +184,7 @@ class Spec3Pipeline(Pipeline):
                 # the downstream products have the correct table name since
                 # the _cal files are not saved they will not be updated
                 for cal_array in result:
-                    cal_array.meta.asn.table_name = result.meta.table_name
+                    cal_array.meta.asn.table_name = op.basename(input_models.meta.table_name)
                 result = self.outlier_detection(result)
 
                 # Resample time. Dependent on whether the data is IFU or not.
@@ -219,6 +227,7 @@ class Spec3Pipeline(Pipeline):
                     'Resampling was not completed. Skipping extract_1d.'
                 )
 
-        # We're done
+        input_models.close()
+
         self.log.info('Ending calwebb_spec3')
         return

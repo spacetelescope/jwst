@@ -117,7 +117,7 @@ class Tso3Pipeline(Pipeline):
         # regardless of how many members there may be...
         phot_result_list = []
         if (input_exptype == 'NRC_TSIMAGE' or
-            (input_exptype == 'MIR_IMAGE'  and input_tsovisit)):
+            (input_exptype == 'MIR_IMAGE' and input_tsovisit)):
             # Create name for extracted photometry (Level 3) product
             phot_tab_suffix = 'phot'
 
@@ -132,7 +132,12 @@ class Tso3Pipeline(Pipeline):
             # define output for x1d (level 3) products
             x1d_result = datamodels.MultiSpecModel()
             # TODO: check to make sure the following line is working
-            x1d_result.update(input_models[0])
+            x1d_result.update(input_models[0], only="PRIMARY")
+
+            # Remove source_type from the output model, if it exists,
+            # to prevent the creation of an empty SCI extension just
+            # for that keyword.
+            x1d_result.meta.target.source_type = None
 
             # For each exposure in the TSO...
             for cube in input_models:
@@ -147,12 +152,13 @@ class Tso3Pipeline(Pipeline):
                 phot_result_list.append(self.white_light(result))
 
             # Update some metadata from the association
-            x1d_result.meta.asn.pool_name = \
-                input_models.meta.asn_table.asn_pool
+            x1d_result.meta.asn.pool_name = input_models.meta.asn_table.asn_pool
             x1d_result.meta.asn.table_name = op.basename(input)
 
             # Save the final x1d Multispec model
             self.save_model(x1d_result, suffix='x1dints')
+
+        input_models.close()
 
         if len(phot_result_list) == 1 and phot_result_list[0] is None:
             self.log.info("Could not create a photometric catalog for data")

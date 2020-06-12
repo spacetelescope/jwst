@@ -20,7 +20,9 @@ The extract_1d step has five step-specific arguments.
   subtracted from the target data.  ``bkg_order`` = 0 (the minimum allowed
   value) means to fit a constant.  The user-supplied value (if any)
   overrides the value in the reference file.  If neither is specified, a
-  value of 0 will be used.
+  value of 0 will be used. If a sufficient number of valid data points is
+  unavailable to construct the polynomial fit, the fit will be forced to
+  0 for that particular column (or row).
 
 ``--log_increment``
   Most log messages are suppressed while looping over integrations, i.e. when

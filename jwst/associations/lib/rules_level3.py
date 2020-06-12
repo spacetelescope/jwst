@@ -4,6 +4,7 @@ import logging
 
 from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.dms_base import (Constraint_TargetAcq, Constraint_TSO)
+from jwst.associations.lib.process_list import ProcessList
 from jwst.associations.lib.rules_level3_base import *
 from jwst.associations.lib.rules_level3_base import (
     dms_product_name_sources,
@@ -14,6 +15,7 @@ __all__ = [
     'Asn_AMI',
     'Asn_ACQ_Reprocess',
     'Asn_Coron',
+    'Asn_IFUGrating',
     'Asn_IFU',
     'Asn_Lv3SpecAux',
     'Asn_Image',
@@ -370,7 +372,20 @@ class Asn_IFU(AsnMixin_Spectrum):
                     )
                 ],
                 reduce=Constraint.notany
-            )        ])
+            ),
+            # The instrument constraint was addded to force nirspec observations
+            # to be processed in the IFUGrating class and should be removed if
+            # that class is deleted.
+            Constraint([
+                DMSAttrConstraint(
+                    name='instrument',
+                    sources=['instrume'],
+                    value=['nirspec'],
+                    )
+                ],
+                       reduce=Constraint.notany
+                      ),
+                ])
         # Check and continue initialization.
         super(Asn_IFU, self).__init__(*args, **kwargs)
 
@@ -388,6 +403,114 @@ class Asn_IFU(AsnMixin_Spectrum):
             instrument
         )
         return product_name.lower()
+
+@RegistryMarker.rule
+class Asn_IFUGrating(AsnMixin_Spectrum):
+    """Level 3 IFU gratings Association
+
+    Note: This is here to split the associations based on the gratings
+          used in the observation. In principle these observations can
+          (and maybe should) be combined but to reduce processing time
+          they are separated. To return to the original behavior just
+          remove this class and the different gratings will appear in
+          the same association.
+
+    Characteristics:
+        - Association type: ``spec3``
+        - Pipeline: ``calwebb_spec3``
+        - optical path determined by calibration
+    """
+
+    def __init__(self, *args, **kwargs):
+        # Setup for checking.
+        self.constraints = Constraint([
+            Constraint_Target(association=self),
+            Constraint_IFU(),
+            Constraint(
+                [
+                    Constraint_TSO(),
+                    DMSAttrConstraint(
+                        name='patttype',
+                        sources=['patttype'],
+                        value=['none'],
+                    )
+                ],
+                reduce=Constraint.notany
+            ),
+            Constraint([
+                DMSAttrConstraint(
+                    name='grating',
+                    sources=['grating'],
+                    force_unique=True,)
+                        ]),
+            ])
+        # Check and continue initialization.
+        super(Asn_IFUGrating, self).__init__(*args, **kwargs)
+
+    @property
+    def dms_product_name(self):
+        """Define product name."""
+        target = self._get_target()
+
+        instrument = self._get_instrument()
+
+        product_name = 'jw{}-{}_{}_{}_{}'.format(
+            self.data['program'],
+            self.acid.id,
+            target,
+            instrument,
+            self._get_grating()
+        )
+        return product_name.lower()
+
+@RegistryMarker.rule
+class Asn_IFUGratingBkg(AsnMixin_AuxData, AsnMixin_BkgScience):
+
+    """Level 3 Spectral Association
+
+    Characteristics:
+        - Association type: ``spec3``
+        - Pipeline: ``calwebb_spec3``
+    """
+    def __init__(self, *args, **kwargs):
+
+        # Setup for checking.
+        self.constraints = Constraint([
+            Constraint_Target(association=self),
+            Constraint(
+                [
+                    Constraint_TSO(),
+                ],
+                reduce=Constraint.notany
+            ),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        name='bkgdtarg',
+                        sources=['bkgdtarg'],
+                        value=['T'],)
+                ],
+                reduce=Constraint.any
+                ),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        name='allowed_bkgdtarg',
+                        sources=['exp_type'],
+                        value=['nrs_ifu'],)
+                ],
+                reduce=Constraint.any
+                ),
+            Constraint([
+                DMSAttrConstraint(
+                    name='grating',
+                    sources=['grating'],
+                    force_unique=True,)
+                        ]),
+                ])
+
+        # Check and continue initialization.
+        super(Asn_IFUGratingBkg, self).__init__(*args, **kwargs)
 
 @RegistryMarker.rule
 class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_BkgScience):
@@ -423,7 +546,7 @@ class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_BkgScience):
                     DMSAttrConstraint(
                         name='allowed_bkgdtarg',
                         sources=['exp_type'],
-                        value=['mir_mrs','nrs_ifu','mir_lrs-fixedslit',
+                        value=['mir_mrs','mir_lrs-fixedslit',
                                'nrs_fixedslit'],)
                 ],
                 reduce=Constraint.any

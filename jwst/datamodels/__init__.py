@@ -3,6 +3,7 @@ from astropy.io import registry
 from . import ndmodel
 
 from .model_base import DataModel
+from .abvega_offset import ABVegaOffsetModel
 from .amilg import AmiLgModel
 from .apcorr import FgsImgApcorrModel, MirImgApcorrModel
 from .apcorr import NrcImgApcorrModel, NisImgApcorrModel
@@ -85,6 +86,7 @@ from .util import open
 __all__ = [
     'open',
     'DataModel',
+    'ABVegaOffsetModel',
     'AmiLgModel',
     'FgsImgApcorrModel', 'MirImgApcorrModel', 'NrcImgApcorrModel', 'NisImgApcorrModel',
     'MirLrsApcorrModel', 'MirMrsApcorrModel', 'NrcWfssApcorrModel', 'NisWfssApcorrModel',

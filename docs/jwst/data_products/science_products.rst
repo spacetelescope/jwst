@@ -27,23 +27,23 @@ Additional extensions can be included for certain instruments and readout types,
 below.
 The FITS file structure is as follows.
 
-+-----+------------+----------+-----------+---------------------------------+
-| HDU | EXTNAME    | HDU Type | Data Type | Dimensions                      |
-+=====+============+==========+===========+=================================+
-|  0  | N/A        | primary  | N/A       | N/A                             |
-+-----+------------+----------+-----------+---------------------------------+
-|  1  | SCI        | IMAGE    | uint16    | ncols x nrows x ngroups x nints |
-+-----+------------+----------+-----------+---------------------------------+
-|  2  | GROUP      | BINTABLE | N/A       | variable                        |
-+-----+------------+----------+-----------+---------------------------------+
-|  3  | INT_TIMES  | BINTABLE | N/A       | nints (rows) x 7 cols           |
-+-----+------------+----------+-----------+---------------------------------+
-|     | ZEROFRAME* | IMAGE    | uint16    | ncols x nrows x nints           |
-+-----+------------+----------+-----------+---------------------------------+
-|     | REFOUT*    | IMAGE    | uint16    | ncols x 256 x ngroups x nints   |
-+-----+------------+----------+-----------+---------------------------------+
-|     | ASDF       | BINTABLE | N/A       | variable                        |
-+-----+------------+----------+-----------+---------------------------------+
++-----+------------+----------+-----------+-----------------------------------+
+| HDU | EXTNAME    | HDU Type | Data Type | Dimensions                        |
++=====+============+==========+===========+===================================+
+|  0  | N/A        | primary  | N/A       | N/A                               |
++-----+------------+----------+-----------+-----------------------------------+
+|  1  | SCI        | IMAGE    | uint16    | ncols x nrows x ngroups x nints   |
++-----+------------+----------+-----------+-----------------------------------+
+|  2  | GROUP      | BINTABLE | N/A       | variable                          |
++-----+------------+----------+-----------+-----------------------------------+
+|  3  | INT_TIMES  | BINTABLE | N/A       | nints (rows) x 7 cols             |
++-----+------------+----------+-----------+-----------------------------------+
+|     | ZEROFRAME* | IMAGE    | uint16    | ncols x nrows x nints             |
++-----+------------+----------+-----------+-----------------------------------+
+|     | REFOUT*    | IMAGE    | uint16    | ncols/4 x nrows x ngroups x nints |
++-----+------------+----------+-----------+-----------------------------------+
+|     | ASDF       | BINTABLE | N/A       | variable                          |
++-----+------------+----------+-----------+-----------------------------------+
 
  - SCI: 4-D data array containing the raw pixel values. The first two dimensions are equal to
    the size of the detector readout, with the data from multiple groups (NGROUPS) within each
@@ -75,29 +75,29 @@ from integer to floating-point data type. The same is true for the ZEROFRAME and
 data extensions, if they are present. An ERR array and two types of data quality arrays are
 also added to the product. The FITS file layout is as follows:
 
-+-----+------------+----------+-----------+---------------------------------+
-| HDU | EXTNAME    | HDU Type | Data Type | Dimensions                      |
-+=====+============+==========+===========+=================================+
-|  0  | N/A        | primary  | N/A       | N/A                             |
-+-----+------------+----------+-----------+---------------------------------+
-|  1  | SCI        | IMAGE    | float32   | ncols x nrows x ngroups x nints |
-+-----+------------+----------+-----------+---------------------------------+
-|  2  | PIXELDQ    | IMAGE    | uint32    | ncols x nrows                   |
-+-----+------------+----------+-----------+---------------------------------+
-|  3  | GROUPDQ    | IMAGE    | uint8     | ncols x nrows x ngroups x nints |
-+-----+------------+----------+-----------+---------------------------------+
-|  4  | ERR        | IMAGE    | float32   | ncols x nrows x ngroups x nints |
-+-----+------------+----------+-----------+---------------------------------+
-|     | ZEROFRAME* | IMAGE    | float32   | ncols x nrows x nints           |
-+-----+------------+----------+-----------+---------------------------------+
-|     | GROUP      | BINTABLE | N/A       | variable                        |
-+-----+------------+----------+-----------+---------------------------------+
-|     | INT_TIMES  | BINTABLE | N/A       | nints (rows) x 7 cols           |
-+-----+------------+----------+-----------+---------------------------------+
-|     | REFOUT*    | IMAGE    | uint16    | ncols x 256 x ngroups x nints   |
-+-----+------------+----------+-----------+---------------------------------+
-|     | ASDF       | BINTABLE | N/A       | variable                        |
-+-----+------------+----------+-----------+---------------------------------+
++-----+------------+----------+-----------+-----------------------------------+
+| HDU | EXTNAME    | HDU Type | Data Type | Dimensions                        |
++=====+============+==========+===========+===================================+
+|  0  | N/A        | primary  | N/A       | N/A                               |
++-----+------------+----------+-----------+-----------------------------------+
+|  1  | SCI        | IMAGE    | float32   | ncols x nrows x ngroups x nints   |
++-----+------------+----------+-----------+-----------------------------------+
+|  2  | PIXELDQ    | IMAGE    | uint32    | ncols x nrows                     |
++-----+------------+----------+-----------+-----------------------------------+
+|  3  | GROUPDQ    | IMAGE    | uint8     | ncols x nrows x ngroups x nints   |
++-----+------------+----------+-----------+-----------------------------------+
+|  4  | ERR        | IMAGE    | float32   | ncols x nrows x ngroups x nints   |
++-----+------------+----------+-----------+-----------------------------------+
+|     | ZEROFRAME* | IMAGE    | float32   | ncols x nrows x nints             |
++-----+------------+----------+-----------+-----------------------------------+
+|     | GROUP      | BINTABLE | N/A       | variable                          |
++-----+------------+----------+-----------+-----------------------------------+
+|     | INT_TIMES  | BINTABLE | N/A       | nints (rows) x 7 cols             |
++-----+------------+----------+-----------+-----------------------------------+
+|     | REFOUT*    | IMAGE    | uint16    | ncols/4 x nrows x ngroups x nints |
++-----+------------+----------+-----------+-----------------------------------+
+|     | ASDF       | BINTABLE | N/A       | variable                          |
++-----+------------+----------+-----------+-----------------------------------+
 
  - SCI: 4-D data array containing the pixel values. The first two dimensions are equal to
    the size of the detector readout, with the data from multiple groups (NGROUPS) within each
@@ -544,34 +544,79 @@ extension for each integration in the exposure.
 
 The structure of the "EXTRACT1D" table extension is as follows:
 
-+-------------+-----------+-------------------+----------------+
-| Column Name | Data Type | Contents          | Units          |
++-------------+-----------+--------------------+---------------+
+| Column Name | Data Type | Contents           | Units         |
 +=============+===========+===================+================+
-| WAVELENGTH  | float64   | Wavelength values | :math:`\mu` m  |
-+-------------+-----------+-------------------+----------------+
-| FLUX        | float64   | Flux values       | mJy            |
-+-------------+-----------+-------------------+----------------+
-| ERROR       | float64   | Error values      | mJy            |
-+-------------+-----------+-------------------+----------------+
-| DQ          | int32     | DQ flags          | N/A            |
-+-------------+-----------+-------------------+----------------+
-| NET         | float64   | Net flux          | DN/s           |
-+-------------+-----------+-------------------+----------------+
-| NERROR      | float64   | Net error         | DN/s           |
-+-------------+-----------+-------------------+----------------+
-| BACKGROUND  | float64   | Background signal | DN/s           |
-+-------------+-----------+-------------------+----------------+
-| BERROR      | float64   | Background error  | DN/s           |
-+-------------+-----------+-------------------+----------------+
+| WAVELENGTH  | float64   | Wavelength values  | :math:`\mu` m |
++-------------+-----------+--------------------+---------------+
+| FLUX        | float64   | Flux values        | Jy            |
++-------------+-----------+--------------------+---------------+
+| ERROR       | float64   | Error values       | Jy            |
++-------------+-----------+--------------------+---------------+
+| SURF_BRIGHT | float64   | Surface Brightness | MJy/sr        |
++-------------+-----------+--------------------+---------------+
+| SB_ERROR    | float64   | Surf. Brt. errors  | MJy/sr        |
++-------------+-----------+--------------------+---------------+
+| DQ          | uint32    | DQ flags           | N/A           |
++-------------+-----------+--------------------+---------------+
+| BACKGROUND  | float64   | Background signal  | MJy/sr        |
++-------------+-----------+--------------------+---------------+
+| BERROR      | float64   | Background error   | MJy/sr        |
++-------------+-----------+--------------------+---------------+
+| NPIXELS     | float64   | Number of pixels   | N/A           |
++-------------+-----------+--------------------+---------------+
 
 The table is constructed using a simple 2-D layout, using one row per extracted spectral
 element in the dispersion direction of the data (i.e. one row per wavelength bin).
-For some spectroscopic modes, such as MIRI MRS and NIRSpec IFU, the data that are used
-as input to the :ref:`extract_1d <extract_1d_step>` step are already in calibrated units of surface
-brightness and therefore it's not possible to present 1-D extracted results for the net
-and background spectral data in units of DN/s. In these cases the NET, NERROR, BACKGROUND,
-and BERROR table columns will be zero-filled and only the WAVELENGTH, FLUX, ERROR, and DQ
-columns will be populated.
+Note that for point sources observed with NIRSpec or NIRISS SOSS mode, it is not
+possible to express the extracted spectrum as surface brightness and hence the
+SURF_BRIGHT and SB_ERROR columns will be set to zero. NPIXELS gives the (fractional)
+number of pixels included in the source extraction region at each wavelength bin.
+
+.. _c1d:
+
+Combined 1-D spectroscopic data: ``c1d``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Combined spectral data produced by the :ref:`combine_1d <combine_1d_step>` step are stored
+in binary table extensions of FITS files. The overall layout of the FITS file is as follows:
+
++-----+-------------+----------+-----------+---------------+
+| HDU | EXTNAME     | HDU Type | Data Type | Dimensions    |
++=====+=============+==========+===========+===============+
+|  0  | N/A         | primary  | N/A       | N/A           |
++-----+-------------+----------+-----------+---------------+
+|  1  | COMBINE1D   | BINTABLE | N/A       | variable      |
++-----+-------------+----------+-----------+---------------+
+|  2  | ASDF        | BINTABLE | N/A       | variable      |
++-----+-------------+----------+-----------+---------------+
+
+ - COMBINE1D: A 2-D table containing the combined spectral data.
+ - ADSF: The data model meta data.
+
+The structure of the "COMBINE1D" table extension is as follows:
+
++-------------+-----------+--------------------+----------------+
+| Column Name | Data Type | Contents           | Units          |
++=============+===========+====================+================+
+| WAVELENGTH  | float64   | Wavelength values  | :math:`\mu` m  |
++-------------+-----------+--------------------+----------------+
+| FLUX        | float64   | Flux values        | Jy             |
++-------------+-----------+--------------------+----------------+
+| ERROR       | float64   | Error values       | Jy             |
++-------------+-----------+--------------------+----------------+
+| SURF_BRIGHT | float64   | Surface Brightness | MJy/sr         |
++-------------+-----------+--------------------+----------------+
+| SB_ERROR    | float64   | Surf. Brt. errors  | MJy/sr         |
++-------------+-----------+--------------------+----------------+
+| DQ          | uint32    | DQ flags           | N/A            |
++-------------+-----------+--------------------+----------------+
+| WEIGHT      | float64   | Sum of weights     | N/A            |
++-------------+-----------+--------------------+----------------+
+| N_INPUT     | float64   | Number of inputs   | N/A            |
++-------------+-----------+--------------------+----------------+
+
+The table is constructed using a simple 2-D layout, using one row per extracted spectral
+element in the dispersion direction of the data (i.e. one row per wavelength bin).
 
 .. _cat:
 
