@@ -16,6 +16,11 @@ associations
 
 - Update diagrams to change sloper to detector1. [#4986]
 
+combine_1d
+----------
+
+- Only warn when there are degenerate spectrum in combining [#5037]
+
 datamodels
 ----------
 
