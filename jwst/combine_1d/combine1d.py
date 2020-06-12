@@ -329,7 +329,7 @@ def count_input(input_spectra):
         input_wl = in_spec.wavelength
 
         # Check for degenerate spectrum. Skip with log.
-        if len(input_wl < 2):
+        if len(input_wl) < 2:
             log.warning(f'Spectrum {in_spec} is degenerate with length {len(input_wl)}')
             log.warning('Skipping...')
             continue
