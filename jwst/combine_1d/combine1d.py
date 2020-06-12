@@ -327,6 +327,13 @@ def count_input(input_spectra):
     n_input_spectra = np.zeros(nwl, dtype=np.int64)
     for in_spec in input_spectra:
         input_wl = in_spec.wavelength
+
+        # Check for degenerate spectrum. Skip with log.
+        if len(input_wl < 2):
+            log.warning(f'Spectrum {in_spec} is degenerate with length {len(input_wl)}')
+            log.warning('Skipping...')
+            continue
+
         # wl0 and wl1 will be about a half pixel wider on either side
         # of the wavelength range for the current input spectrum.
         if input_wl[1] > input_wl[0]:       # wavelengths are increasing
@@ -336,11 +343,14 @@ def count_input(input_spectra):
             wl0 = input_wl[-1] - 0.5 * (input_wl[-2] - input_wl[-1])
             wl1 = input_wl[0] + 0.5 * (input_wl[0] - input_wl[1])
         else:
-            raise RuntimeError("Wavelength increment must not be zero.")
+            log.warning(f'Spectrum {in_spec} has a monotonic wavelength solution.')
+            log.warning('Skipping...')
+            continue
         temp = np.where(wl >= wl0, 1, 0)
         temp = np.where(wl >= wl1, 0, temp)
         n_input_spectra += temp
         del temp
+
     # This shouldn't happen.
     if np.any(n_input_spectra <= 0.):
         raise RuntimeError("Problem with input wavelengths.")
