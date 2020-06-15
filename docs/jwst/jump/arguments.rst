@@ -13,14 +13,14 @@ The ``jump`` step has five optional arguments that can be set by the user:
   model is correct.
 
 * ``--maximum_cores``: The fraction of available cores that will be
-  used for multi-processing in this step. The default value is 'one' which does not use
+  used for multi-processing in this step. The default value is 'none' which does not use
   multi-processing. The other options are 'quarter', 'half', and 'all'. Note that these
   fractions refer to the total available cores and on most CPUs these include physical
-  and virtual cores. Testing has shown little reduction in clock time between 'half'
-  'all' on a processor with virtual cores. The clock time for the step is reduced
-  almost linearly by the number of physical cores used. For example, on an Intel CPU with
+  and virtual cores. The clock time for the step is reduced
+  almost linearly by the number of physical cores used on all machines. For example, on an Intel CPU with
   six real cores and 6 virtual cores setting maximum_cores to 'half' results in a
-  decrease of a factor of six in the clock time for the step to run.
+  decrease of a factor of six in the clock time for the step to run. Depending on the system
+  the clock time can also decrease even more with maximum_cores is set to 'all'.
 
 * ``--flag_4_neighbors``: If set to True (default is True) it will cause the four perpendicular
   neighbors of all detected jumps to be flagged as a jump. This is needed because of
