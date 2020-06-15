@@ -91,7 +91,7 @@ def reproject(wcs1, wcs2):
     return _reproject
 
 
-def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray], spec: bool = False, disp_axis: int = None) -> float:
+def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray], disp_axis: int = None) -> float:
     """Compute scaling transform.
 
     Parameters
@@ -102,11 +102,8 @@ def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray], spec: bool = Fal
     fiducial : tuple
         Input fiducial of (RA, DEC) or (RA, DEC, Wavelength) used in calculating reference points.
 
-    spec : bool
-        Switch to use if input is a spectral WCS
-
     disp_axis : int
-        Dispersion axis integer. Assumes the same convention as `wcsfino.dispersion_direction`
+        Dispersion axis integer. Assumes the same convention as `wcsinfo.dispersion_direction`
 
     Returns
     -------
@@ -114,8 +111,10 @@ def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray], spec: bool = Fal
         Scaling factor for x and y or dispersion direction.
 
     """
-    if spec and disp_axis is None:
-        raise ValueError(f'If spec is True, a disp_axis must be given')
+    spectral = 'SPECTRAL' in wcs.output_frame.axes_type
+
+    if spectral and disp_axis is None:
+        raise ValueError(f'If input WCS is spectral, a disp_axis must be given')
 
     crpix = np.array(wcs.invert(*fiducial))
 
@@ -130,7 +129,7 @@ def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray], spec: bool = Fal
     xscale = np.abs(coords[0].separation(coords[1]).value)
     yscale = np.abs(coords[0].separation(coords[2]).value)
 
-    if spec:
+    if spectral:
         # Assuming disp_axis is consistent with DataModel.meta.wcsinfo.dispersion.direction
         return yscale if disp_axis == 1 else xscale
 
