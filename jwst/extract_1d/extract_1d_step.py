@@ -71,6 +71,8 @@ class Extract1dStep(Step):
     # Currently this offset is not applied for NIRSpec fixed-slit or
     # MOS (MSA) data), or for WFSS data.
     apply_nod_offset = boolean(default=None)
+    # Turn aperture correction on or off
+    apply_apcorr = boolean(default=True)
     """
 
     reference_file_types = ['extract1d', 'apcorr']
@@ -134,7 +136,10 @@ class Extract1dStep(Step):
                     # SourceContainer, which contains a list of multiple
                     # SlitModels for a single source. Send the whole list
                     # into extract1d and put all results in a single product.
-                    apcorr_ref = self.get_reference_file(input_model[0], 'apcorr')
+                    apcorr_ref = (
+                        self.get_reference_file(input_model[0], 'apcorr') if self.apply_apcorr is True else 'N/A'
+                    )
+
                     extract_ref = 'N/A'
                     self.log.info('No EXTRACT1D reference file will be used')
 
@@ -161,7 +166,7 @@ class Extract1dStep(Step):
                     for model in input_model:
                         # Get the reference file names
                         extract_ref = self.get_reference_file(model, 'extract1d')
-                        apcorr_ref = self.get_reference_file(model, 'apcorr')
+                        apcorr_ref = self.get_reference_file(model, 'apcorr') if self.apply_apcorr is True else 'N/A'
                         self.log.info(f'Using EXTRACT1D reference file {extract_ref}')
 
                         temp = extract.run_extract1d(
@@ -189,7 +194,7 @@ class Extract1dStep(Step):
                     extract_ref = self.get_reference_file(input_model[0], 'extract1d')
                     self.log.info(f'Using EXTRACT1D reference file {extract_ref}')
 
-                apcorr_ref = self.get_reference_file(input_model[0], 'apcorr')
+                apcorr_ref = self.get_reference_file(input_model[0], 'apcorr') if self.apply_apcorr is True else 'N/A'
 
                 result = extract.run_extract1d(
                     input_model[0],
@@ -222,7 +227,7 @@ class Extract1dStep(Step):
                 extract_ref = self.get_reference_file(input_model, 'extract1d')
                 self.log.info(f'Using EXTRACT1D reference file {extract_ref}')
 
-            apcorr_ref = self.get_reference_file(input_model, 'apcorr')
+            apcorr_ref = self.get_reference_file(input_model, 'apcorr') if self.apply_apcorr is True else 'N/A'
 
             result = extract.run_extract1d(
                 input_model,

@@ -2532,7 +2532,7 @@ def run_extract1d(input_model, extract_ref_name, smoothing_length, bkg_order, lo
         The input science model.
 
     extract_ref_name : str
-        The name of the reference file, or "N/A".
+        The name of the EXTRACT1D reference file, or "N/A".
 
     smoothing_length : int or None
         Width of a boxcar function for smoothing the background regions.
@@ -2848,7 +2848,7 @@ def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order
                 ra, dec, wavelength, temp_flux, background, npixels, dq, prev_offset = extract_one_slit(
                     input_model,
                     slit,
-                    -1,
+                    -1,  # Integration number is not relevant in this case
                     prev_offset,
                     True,
                     extract_params
@@ -2911,6 +2911,8 @@ def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order
 
             if source_type is not None and source_type.upper() == 'POINT' and apcorr_table is not None:
                 log.info('Applying Aperture correction.')
+                # NIRSpec needs to use a wavelength in the middle of the range rather then the beginning of the range
+                # for calculating the pixel scale since some wavelengths at the edges of the range won't map to the sky
                 if instrument == 'NIRSPEC':
                     wl = np.median(wavelength)
                 else:
@@ -3569,8 +3571,7 @@ def copy_keyword_info(slit, slitname, spec):
         spec.shutter_state = slit.shutter_state
 
 
-def extract_one_slit(input_model, slit, integ,
-                     prev_offset, verbose, extract_params):
+def extract_one_slit(input_model, slit, integ, prev_offset, verbose, extract_params):
     """Extract data for one slit, or spectral order, or plane.
 
     Parameters

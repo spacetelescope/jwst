@@ -79,7 +79,6 @@ class ApCorrBase(abc.ABC):
                 self.reference[self.size_key] /= compute_scale(
                     self.model.meta.wcs,
                     self.location,
-                    spec=True,
                     disp_axis=self.model.meta.wcsinfo.dispersion_direction
                 )
             else:
