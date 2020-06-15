@@ -5,14 +5,13 @@ import os
 from astropy.io import fits
 from astropy.table import Table
 
-from ...datamodels import DataModel
-
-from ..apply_apcorr import ApCorr, ApCorrRadial, ApCorrPhase, select_apcorr
+from jwst.datamodels import DataModel
+from jwst.extract_1d.apply_apcorr import ApCorr, ApCorrRadial, ApCorrPhase, select_apcorr
 
 data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data'))
 NIR_TEST_FILES = {
-    'ISU/MSASPEC': os.path.join(data_dir, 'jwst_nirspec_apcorr_0003.fits'),
-    'FIXEDSLIT/BRIGHTOBJ': os.path.join(data_dir, 'jwst_nirspec_apcorr_0004.fits')
+    'ISU/MSASPEC': os.path.join(data_dir, 'jwst_nirspec_apcorr_ifu_dummy.fits'),
+    'FIXEDSLIT/BRIGHTOBJ': os.path.join(data_dir, 'jwst_nirspec_apcorr_fs_dummy.fits')
 }
 
 
