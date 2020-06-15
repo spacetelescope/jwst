@@ -27,6 +27,7 @@ def run_pipeline(jail, rtdata_module):
     return rtdata
 
 
+@pytest.mark.xfail(reason='known crds bestref error due to rmap')
 @pytest.mark.bigdata
 @pytest.mark.parametrize("output", [
     'nrs1_group_subarray_group_scale.fits',
