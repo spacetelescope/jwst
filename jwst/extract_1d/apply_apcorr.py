@@ -28,7 +28,7 @@ class ApCorrBase(abc.ABC):
     Raises
     ------
     ValueError :
-        If apcorr_row_units are not supplied and units are undifined in apcorr_table ColDefs
+        If apcorr_row_units are not supplied and units are undefined in apcorr_table ColDefs
     ValueError :
         If the input apcorr_table cannot be reduced to a single row based on match criteria from input_model.
 
@@ -84,7 +84,7 @@ class ApCorrBase(abc.ABC):
                 )
             else:
                 raise ValueError(
-                    'If the size column for the input APCORR reference file are in units with arcseconds, a location '
+                    'If the size column for the input APCORR reference file is in units with arcseconds, a location '
                     '(RA, DEC, wavelength) must be provided in order to compute a pixel scale to convert arcseconds to '
                     'pixels.'
                 )
