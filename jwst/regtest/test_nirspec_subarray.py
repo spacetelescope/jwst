@@ -6,6 +6,8 @@ from astropy.io.fits.diff import FITSDiff
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
+from crds.exceptions import CrdsLookupError
+
 """
 nrs1_group_subarray.fits                the input (uncal) file
 nrs1_group_subarray_group_scale.fits    output from group_scale
@@ -27,6 +29,9 @@ def run_pipeline(jail, rtdata_module):
     return rtdata
 
 
+@pytest.mark.xfail(reason='known crds bestref error due to rmap',
+                   strict = True,
+                   raises = CrdsLookupError)
 @pytest.mark.bigdata
 @pytest.mark.parametrize("output", [
     'nrs1_group_subarray_group_scale.fits',
