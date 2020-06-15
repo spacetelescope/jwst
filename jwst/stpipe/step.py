@@ -468,8 +468,6 @@ class Step():
         finally:
             log.delegator.log = orig_log
 
-        self.closeout(to_close=args)
-
         return step_result
 
     __call__ = run
