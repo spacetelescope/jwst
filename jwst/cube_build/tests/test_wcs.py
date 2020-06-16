@@ -220,6 +220,7 @@ def test_setup_wcs():
     thiscube.linear_wavelength = True
     thiscube.set_geometry(footprint)
 
+    print(footprint)
     assert thiscube.naxis1 == 30
     assert thiscube.naxis2 == 41
     assert thiscube.naxis3 == 1000
