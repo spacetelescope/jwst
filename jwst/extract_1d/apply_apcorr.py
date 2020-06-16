@@ -55,14 +55,14 @@ class ApCorrBase(abc.ABC):
 
     size_key = None
 
-    def __init__(self, input_model: DataModel, apcorr_table: fits.FITS_rec, sizeunits: str,
+    def __init__(self, input_model: DataModel, apcorr_table: fits.FITS_rec, sizeunit: str,
                  location: Tuple[float, float] = None, **match_kwargs):
         self.correction = None
 
         self.model = input_model
         self._reference_table = apcorr_table
         self.location = location
-        self.apcorr_sizeunits = sizeunits
+        self.apcorr_sizeunits = sizeunit
 
         self.match_keys = self._get_match_keys()
         self.match_pars = self._get_match_pars()

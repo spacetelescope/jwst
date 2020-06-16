@@ -29,7 +29,7 @@ OFFSET_NOT_ASSIGNED_YET = "not assigned yet"
 HUGE_DIST = 1.e10
 
 
-def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcorr_table=None, apcorr_sizeunits=None):
+def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcorr_ref_model=None):
     """Extract a 1-D spectrum from an IFU cube.
 
     Parameters
@@ -152,7 +152,7 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
     if slitname is not None and slitname != "ANY":
         spec.name = slitname
 
-    if source_type == 'POINT' and apcorr_table is not None:
+    if source_type == 'POINT' and apcorr_ref_model is not None:
         log.info('Applying Aperture correction.')
 
         if instrument == 'NIRSPEC':
@@ -161,7 +161,7 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
             wl = wavelength.min()
 
         apcorr = select_apcorr(input_model)(
-            input_model, apcorr_table, apcorr_sizeunits, slit=slitname, location=(ra, dec, wl)
+            input_model, apcorr_ref_model.apcorr_table, apcorr_ref_model.sizeunit, slit=slitname, location=(ra, dec, wl)
         )
         apcorr.apply(spec.spec_table)
 

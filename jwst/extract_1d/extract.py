@@ -5,10 +5,14 @@ import json
 import math
 
 import numpy as np
-from astropy.io import fits
 from astropy.modeling import polynomial
 from .. import datamodels
 from ..datamodels import dqflags
+
+from ..datamodels.apcorr import (
+    MirLrsApcorrModel, MirMrsApcorrModel, NrcWfssApcorrModel, NrsFsApcorrModel, NrsMosApcorrModel, NisWfssApcorrModel
+)
+
 from ..assign_wcs import niriss         # for specifying spectral order number
 from ..assign_wcs.util import wcs_bbox_from_shape
 from ..lib import pipe_utils
@@ -80,12 +84,13 @@ Aperture = namedtuple('Aperture', ['xstart', 'ystart', 'xstop', 'ystop'])
 class Extract1dError(Exception):
     pass
 
+
 class InvalidSpectralOrderNumberError(Extract1dError):
     """The spectral order number was invalid or off the detector."""
     pass
 
 
-def load_ref_file(refname):
+def open_extract1d_ref(refname):
     """Open the reference file.
 
     Parameters
@@ -122,14 +127,51 @@ def load_ref_file(refname):
             # Try opening the file as a reference image.
             try:
                 fd = datamodels.MultiExtract1dImageModel(refname)
-                ref_dict = {'ref_file_type': FILE_TYPE_IMAGE}
-                ref_dict['ref_model'] = fd      # only used for images
+                ref_dict = {'ref_file_type': FILE_TYPE_IMAGE, 'ref_model': fd}
             except OSError:
                 log.info("The reference file should be JSON or FITS.")
                 log.error("Don't know how to read %s.", refname)
                 raise
 
     return ref_dict
+
+
+def open_apcorr_ref(refname: str, exptype: str) -> datamodels.DataModel:
+    """Determine the appropriate DataModel class to use when opening the input APCORR reference file.
+
+    Parameters
+    ----------
+    refname : str
+        Path of the APCORR reference file
+
+    exptype : str
+        EXPTYPE of the input to the extract_1d step.
+
+    Returns
+    -------
+    Opened APCORR DataModel.
+
+    Notes
+    -----
+    This function should be removed after the DATAMODL keyword is required for the APCORR reference file.
+
+    """
+    apcorr_model_map = {
+        'MIR_LRS-FIXEDSLIT': MirLrsApcorrModel,
+        'MIR_LRS-SLITLESS': MirLrsApcorrModel,
+        'MIR_MRS': MirMrsApcorrModel,
+        'NRC_GRISM': NrcWfssApcorrModel,
+        'NRC_WFSS': NrcWfssApcorrModel,
+        'NIS_WFSS': NisWfssApcorrModel,
+        'NRS_BRIGHTOBJ': NrsFsApcorrModel,
+        'NRS_FIXEDSLIT': NrsFsApcorrModel,
+        'NRS_IFU': NrsMosApcorrModel,
+        'NRS_MSASPEC': NrsMosApcorrModel
+    }
+
+    apcorr_model = apcorr_model_map[exptype]
+
+    return apcorr_model(refname)
 
 
 def get_extract_parameters(ref_dict,
@@ -2573,15 +2615,12 @@ def run_extract1d(input_model, extract_ref_name, smoothing_length, bkg_order, lo
 
     """
     # Read and interpret the reference file.
-    ref_dict = load_ref_file(extract_ref_name)
+    ref_dict = open_extract1d_ref(extract_ref_name)
 
-    apcorr_table = apcorr_sizeunits = None
+    apcorr_ref_model = None
+
     if apcorr_ref_name is not None or apcorr_ref_name != 'N/A':
-        with fits.open(apcorr_ref_name) as ap_ref:
-            apcorr_table = ap_ref['APCORR'].data.copy()
-            apcorr_sizeunits = ap_ref['APCORR'].header['SIZEUNIT']
-
-        del ap_ref
+        apcorr_ref_model = open_apcorr_ref(apcorr_ref_name, input_model.meta.exposure.type)
 
     # This item is a flag to let us know that do_extract1d was called
     # from run_extract1d; that is, we don't expect this key to be present
@@ -2594,15 +2633,17 @@ def run_extract1d(input_model, extract_ref_name, smoothing_length, bkg_order, lo
     output_model = do_extract1d(
         input_model,
         ref_dict,
+        apcorr_ref_model,
         smoothing_length,
         bkg_order,
         log_increment,
         subtract_background,
         apply_nod_offset,
         was_source_model,
-        apcorr_table=apcorr_table,
-        apcorr_sizeunits=apcorr_sizeunits
     )
+
+    if apcorr_ref_model is not None:
+        apcorr_ref_model.close()
 
     # Remove target.source_type from the output model, so that it
     # doesn't force creation of an empty SCI extension in the output
@@ -2647,9 +2688,8 @@ def ref_dict_sanity_check(ref_dict):
     return ref_dict
 
 
-def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order=None, log_increment=50,
-                 subtract_background=None, apply_nod_offset=None, was_source_model=False, apcorr_table=None,
-                 apcorr_sizeunits=None):
+def do_extract1d(input_model, extract_ref_dict, apcorr_ref_model=None, smoothing_length=None, bkg_order=None,
+                 log_increment=50, subtract_background=None, apply_nod_offset=None, was_source_model=False):
     """Extract 1-D spectra.
 
     In the pipeline, this function would be called by run_extract1d.
@@ -2909,7 +2949,7 @@ def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order
             spec.dispersion_direction = extract_params['dispaxis']
             copy_keyword_info(slit, slit.name, spec)
 
-            if source_type is not None and source_type.upper() == 'POINT' and apcorr_table is not None:
+            if source_type is not None and source_type.upper() == 'POINT' and apcorr_ref_model is not None:
                 log.info('Applying Aperture correction.')
                 # NIRSpec needs to use a wavelength in the middle of the range rather then the beginning of the range
                 # for calculating the pixel scale since some wavelengths at the edges of the range won't map to the sky
@@ -2919,7 +2959,7 @@ def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order
                     wl = wavelength.min()
 
                 apcorr = select_apcorr(input_model)(
-                    input_model, apcorr_table, apcorr_sizeunits, location=(ra, dec, wl)
+                    input_model, apcorr_ref_model.apcorr_table, apcorr_ref_model.sizeunit, location=(ra, dec, wl)
                 )
                 apcorr.apply(spec.spec_table)
 
@@ -3074,7 +3114,7 @@ def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order
                 # the attributes we will look for in this function.
                 copy_keyword_info(input_model, slitname, spec)
 
-                if source_type.upper() == 'POINT' and apcorr_table is not None:
+                if source_type.upper() == 'POINT' and apcorr_ref_model is not None:
                     log.info('Applying Aperture correction.')
 
                     if instrument == 'NIRSPEC':
@@ -3084,8 +3124,8 @@ def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order
 
                     apcorr = select_apcorr(input_model)(
                         input_model,
-                        apcorr_table,
-                        apcorr_sizeunits,
+                        apcorr_ref_model.apcorr_table,
+                        apcorr_ref_model.sizeunit,
                         location=(ra, dec, wl)
                     )
                     apcorr.apply(spec.spec_table)
@@ -3223,7 +3263,7 @@ def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order
                     spec.dispersion_direction = extract_params['dispaxis']
                     copy_keyword_info(input_model, slitname, spec)
 
-                    if source_type.upper() == 'POINT' and apcorr_table is not None:
+                    if source_type.upper() == 'POINT' and apcorr_ref_model is not None:
                         log.info('Applying Aperture correction.')
 
                         if instrument == 'NIRSPEC':
@@ -3236,7 +3276,7 @@ def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order
                             match_kwargs['slit'] = slitname
 
                         apcorr = select_apcorr(input_model)(
-                            input_model, apcorr_table, apcorr_sizeunits, **match_kwargs
+                            input_model, apcorr_ref_model.apcorr_table, apcorr_ref_model.sizeunit, **match_kwargs
                         )
                         apcorr.apply(spec.spec_table)
 
@@ -3275,7 +3315,7 @@ def do_extract1d(input_model, extract_ref_dict, smoothing_length=None, bkg_order
                 source_type = "UNKNOWN"
 
             output_model = ifu.ifu_extract1d(
-                input_model, extract_ref_dict, source_type, subtract_background, apcorr_table, apcorr_sizeunits
+                input_model, extract_ref_dict, source_type, subtract_background, apcorr_ref_model
             )
 
         else:
