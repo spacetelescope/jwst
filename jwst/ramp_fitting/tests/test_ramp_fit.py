@@ -1,6 +1,5 @@
 import pytest
 import numpy as np
-from astropy.io import fits
 
 from jwst.ramp_fitting.ramp_fit import ramp_fit
 from jwst.datamodels import dqflags
