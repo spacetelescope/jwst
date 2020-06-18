@@ -47,6 +47,12 @@ master_background
 
 - Fix open files bug [#4995]
 
+pathloss
+--------
+- fix bug in NIRSpec IFU data that causes valid pixel dq flags to set to 
+  NON-SCIENCE in the region of an overlapping bounding box slice [#5047]
+  
+
 pipeline
 --------
 
@@ -57,6 +63,11 @@ pipeline
 
 - Fix open files bug in ``get_config_from_reference`` class method, and in
   ``Spec2Pipeline``, ``Spec3Pipeline`` and ``tso3``. [#4995]
+
+photom
+------
+- fix bug in NIRSpec IFU data that causes valid pixel dq flags to set to 
+  NON-SCIENCE in the region of an overlapping bounding box slice [#5047]
 
 ramp_fitting
 ------------
