@@ -117,6 +117,25 @@ def find_corners_MIRI(input, this_channel, instrument_info, coord_system):
         valid = np.logical_and(np.isfinite(coord1), np.isfinite(coord2))
         coord1 = coord1[valid]
         coord2 = coord2[valid]
+        coord1 = coord1.flatten()
+        coord2 = coord2.flatten()
+        lam = lam.flatten()
+
+        xedge = x + 1
+        yedge = y + 1
+        valid = np.where(yedge < 1023)
+        xedge = xedge[valid]
+        yedge = yedge[valid]
+        coord2b, coord1b, lamb = detector2alpha_beta(xedge,yedge) #lam ~0 for this transform
+        valid = np.logical_and(np.isfinite(coord1b), np.isfinite(coord2b))
+        coord1b = coord1b[valid]
+        coord2b = coord2b[valid]
+        coord1b = coord1b.flatten()
+        coord2b = coord2b.flatten()
+        lamb = lamb.flatten()
+        coord1 = np.concatenate([coord1,coord1b])
+        coord2 = np.concatenate([coord2,coord2b])
+        lam = np.concatenate([lam,lamb])
 
     else:  # skyalign or ifualign
         # coord1 = ra
@@ -152,7 +171,6 @@ def find_corners_MIRI(input, this_channel, instrument_info, coord_system):
     lambda_min = np.nanmin(lam)
     lambda_max = np.nanmax(lam)
 
-    #print(a_min, b1, a_max, b2, a1, b_min,  a2, b_max, lambda_min, lambda_max)
     return a_min, b1, a_max, b2, a1, b_min,  a2, b_max, lambda_min, lambda_max
 # ********************************************************************************
 
@@ -200,7 +218,26 @@ def find_corners_NIRSPEC(input, this_channel, instrument_info, coord_system):
             valid = np.logical_and(np.isfinite(coord1), np.isfinite(coord2))
             coord1 = coord1[valid]
             coord2 = coord2[valid]
-            lam = lam * 1.0e6
+            lam = lam[valid] * 1.0e6
+            coord1 = coord1.flatten()
+            coord2 = coord2.flatten()
+            lam = lam.flatten()
+
+            xedge = x + 1
+            yedge = y + 1
+            valid = np.where(yedge < 2023)
+            xedge = xedge[valid]
+            yedge = yedge[valid]
+            coord2b, coord1b, lamb = detector2slicer(xedge,yedge) #lam ~0 for this transform
+            valid = np.logical_and(np.isfinite(coord1b), np.isfinite(coord2b))
+            coord1b = coord1b[valid]
+            coord2b = coord2b[valid]
+            coord1b = coord1b.flatten()
+            coord2b = coord2b.flatten()
+
+            #coord1 = np.concatenate([coord1,coord1b])
+            #coord2 = np.concatenate([coord2,coord2b])
+
         else:  # coord_system: skyalign, ifualign
             # coord1 = ra
             # coord2 = dec
@@ -208,6 +245,7 @@ def find_corners_NIRSPEC(input, this_channel, instrument_info, coord_system):
             valid = np.logical_and(np.isfinite(coord1), np.isfinite(coord2))
             coord1 = coord1[valid]
             coord2 = coord2[valid]
+            lam = lam[valid]
             # fix 0/360 wrapping in ra. Wrapping makes it difficult to determine
             # ra range
             coord1_wrap = wrap_ra(coord1)
@@ -215,7 +253,9 @@ def find_corners_NIRSPEC(input, this_channel, instrument_info, coord_system):
 # ________________________________________________________________________________
         coord1 = coord1.flatten()
         coord2 = coord2.flatten()
+        lam = lam.flatten()
 
+        
         a_slice[k] = np.nanmin(coord1) 
         a_slice[k + 1] =np.nanmax(coord1) 
         a1_index = np.argmin(coord1)
@@ -238,13 +278,11 @@ def find_corners_NIRSPEC(input, this_channel, instrument_info, coord_system):
         lambda_slice[k] = np.nanmin(lam)
         lambda_slice[k + 1] = np.nanmax(lam)
 
+        print(np.nanmin(lam), np.nanmax(lam))
+
         k = k + 2
 # ________________________________________________________________________________
 # now test the ra slices for consistency. Adjust if needed.
-    #print('a_slice',a_slice)
-    #print('b',b)
-    #print('b_slice',b_slice)
-    #print('a',a)
 
     a_min = np.nanmin(a_slice)
     a_max = np.nanmax(a_slice)
@@ -262,9 +300,7 @@ def find_corners_NIRSPEC(input, this_channel, instrument_info, coord_system):
 
     lambda_min = min(lambda_slice)
     lambda_max = max(lambda_slice)
-
-    if (a_min == 0.0 and a_max == 0.0 and b_min == 0.0 and b_max == 0.0):
-        log.info('This NIRSPEC exposure has no IFU data on it - skipping file')
+    print('final min max',lambda_min, lambda_max)
 
     return a_min, b1, a_max, b2, a1, b_min, a2, b_max, lambda_min, lambda_max
 # _______________________________________________________________________________

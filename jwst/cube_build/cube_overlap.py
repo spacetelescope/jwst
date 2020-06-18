@@ -449,32 +449,48 @@ def match_det2cube(instrument,
         a3, b3, lam3 = transform(xx_right, yy_top)
         a4, b4, lam4 = transform(xx_left, yy_top)
 
-    #  corners are returned Nanned if outside range
+    #  corners are returned Nanned if outside range of slice
     # fixed the nanned corners when a1,lam1 is valid but
     # adding 1 to x,y pushes data outside BB valid region
-    index_bad2 = np.isnan(a2)
-    index_bad3 = np.isnan(a3)
-    index_bad4 = np.isnan(a4)
 
+    #index_bad2 = np.isnan(a2)
+    #index_bad3 = np.isnan(a3)
+    #index_bad4 = np.isnan(a4)
+    
+    # on the edge out of bounds 
     index_good2 = ~np.isnan(a2)
     index_good3 = ~np.isnan(a3)
     index_good4 = ~np.isnan(a4)
 
-    w12 = np.mean(lam1[index_good2]-lam2[index_good2])
-    w13 = np.mean(lam1[index_good3]-lam3[index_good3])
-    w14 = np.mean(lam1[index_good4]-lam4[index_good4])
+    # we need the cases of only all corners valid numbers 
+    good = np.where(index_good2 & index_good3 & index_good4)
 
-    a12 = np.mean(a1[index_good2]-a2[index_good2])
-    a13 = np.mean(a1[index_good3]-a3[index_good3])
-    a14 = np.mean(a1[index_good4]-a4[index_good4])
+    a1 = a1[good]
+    a2 = a2[good]
+    a3 = a3[good]
+    a4 = a4[good]
+    lam1 = lam1[good]
+    lam2 = lam2[good]
+    lam3 = lam3[good]
+    lam4 = lam4[good]
+    x = x[good]
+    y = y[good]
+    # approximate what out of bound value should be
+    #w12 = np.mean(lam1[index_good2]-lam2[index_good2])
+    #w13 = np.mean(lam1[index_good3]-lam3[index_good3])
+    #w14 = np.mean(lam1[index_good4]-lam4[index_good4])
 
-    a2[index_bad2] = a1[index_bad2] - a12
-    a3[index_bad3] = a1[index_bad3] - a13
-    a4[index_bad4] = a1[index_bad4] - a14
+    #a12 = np.mean(a1[index_good2]-a2[index_good2])
+    #a13 = np.mean(a1[index_good3]-a3[index_good3])
+    #a14 = np.mean(a1[index_good4]-a4[index_good4])
 
-    lam2[index_bad2] = lam1[index_bad2] - w12
-    lam3[index_bad3] = lam1[index_bad3] - w13
-    lam4[index_bad4] = lam1[index_bad4] - w14
+    #a2[index_bad2] = a1[index_bad2] - a12
+    #a3[index_bad3] = a1[index_bad3] - a13
+    #a4[index_bad4] = a1[index_bad4] - a14
+
+    #lam2[index_bad2] = lam1[index_bad2] - w12
+    #lam3[index_bad3] = lam1[index_bad3] - w13
+    #lam4[index_bad4] = lam1[index_bad4] - w14
 
     # center of first pixel, x,y = 1 for Adrian's equations
     # but we want the pixel corners, x,y values passed into this
@@ -510,7 +526,6 @@ def match_det2cube(instrument,
         wave_corner.append(lam2[ipixel])
         wave_corner.append(lam3[ipixel])
         wave_corner.append(lam4[ipixel])
-
 # ________________________________________________________________________________
 # Now it does not matter the WCS method used
         along_min = min(along_corner)
@@ -522,11 +537,13 @@ def match_det2cube(instrument,
 
         # estimate where the pixel overlaps in the cube
         # find the min and max values in the cube xcoord,ycoord and zcoord
-
+        #along_min = -2.0
+        #along_max = -1.86
         MinA = (along_min - crval_along) / cdelt_along
         MaxA = (along_max - crval_along) / cdelt_along
-        ia1 = max(0, int(math.trunc(MinA)))
-        ia2 = int(math.ceil(MaxA))
+        ia1 = max(0, int(MinA))
+        #ia2 = int(math.ceil(MaxA))
+        ia2 = int(MaxA)
         if ia2 >= nac:
             ia2 = nac - 1
 
@@ -556,7 +573,6 @@ def match_det2cube(instrument,
                 area_overlap = sh_find_overlap(acenter, zcenter,
                                                cdelt_along, cdelt3,
                                                along_corner, wave_corner)
-
                 if area_overlap > 0.0:
                     AreaRatio = area_overlap / Area
 

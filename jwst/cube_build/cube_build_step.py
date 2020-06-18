@@ -41,7 +41,7 @@ class CubeBuildStep (Step):
          scale1 = float(default=0.0) # cube sample size to use for axis 1, arc seconds
          scale2 = float(default=0.0) # cube sample size to use for axis 2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
-         weighting = option('emsm','msm','miripsf','area',default = 'emsm') # Type of weighting function
+         weighting = option('emsm','msm','miripsf',default = 'emsm') # Type of weighting function
          coord_system = option('skyalign','world','internal_cal','ifualign',default='skyalign') # Output Coordinate system.
          rois = float(default=0.0) # region of interest spatial size, arc seconds
          roiw = float(default=0.0) # region of interest wavelength size, microns
@@ -137,16 +137,8 @@ class CubeBuildStep (Step):
 
         self.interpolation = 'pointcloud'  # initialize
 
-        # if the weighting is area then interpolation is area
-        # valid only for single band single exposure ifucbes:
-        # weighting = area or interpoltion = area
-
-        if self.weighting == 'area':
-            self.interpolation = 'area'
-            self.coord_system = 'internal_cal'
-
+        # coord system = internal_cal only option for weighting = area
         if self.coord_system == 'internal_cal':
-            self.weighting = 'area'
             self.interpolation = 'area'
 
         # if interpolation is point cloud then weighting can be
@@ -154,13 +146,10 @@ class CubeBuildStep (Step):
         # 2. EMSM
         # 3. miripsf - weighting for MIRI based on PSF and LSF
         if self.coord_system == 'skyalign':
-            self.interpolation = 'pointcloud'  # can not be area
+            self.interpolation = 'pointcloud'
 
-        self.align_slicer = False
         if self.coord_system == 'ifualign':
-            #self.coord_system = 'skyalign'
-            self.align_slicer = True
-            self.interpolation = 'pointcloud'  # can not be area
+            self.interpolation = 'pointcloud'
 
         self.log.info('Input interpolation: %s', self.interpolation)
         self.log.info('Coordinate system to use: %s', self.coord_system)
@@ -177,7 +166,7 @@ class CubeBuildStep (Step):
             self.interpolation = 'pointcloud'
             # Don't allow anything but msm or emsm weightings
             if ((self.weighting != 'msm')and(self.weighting != 'emsm')):
-                self.weighting = 'msm'
+                self.weighting = 'emsm'
 
 # ________________________________________________________________________________
 # read input parameters - Channel, Band (Subchannel), Grating, Filter
@@ -262,7 +251,6 @@ class CubeBuildStep (Step):
             'weighting': self.weighting,
             'weight_power': self.weight_power,
             'coord_system': self.coord_system,
-            'align_slicer': self.align_slicer,
             'rois': self.rois,
             'roiw': self.roiw,
             'wavemin': self.wavemin,

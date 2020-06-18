@@ -64,7 +64,6 @@ class IFUCubeData():
         self.spectral_size = None
         self.interpolation = pars_cube.get('interpolation')
         self.coord_system = pars_cube.get('coord_system')
-        self.align_slicer = pars_cube.get('align_slicer')
         self.wavemin = pars_cube.get('wavemin')
         self.wavemax = pars_cube.get('wavemax')
         self.weighting = pars_cube.get('weighting')
@@ -146,24 +145,15 @@ class IFUCubeData():
             num_files = num_files + n
         self.num_files = num_files
 # do some basic checks on the cubes
-        if(self.interpolation == "area"):
-            if(num_files > 1):
-                raise IncorrectInput("For interpolation = area, only one file can" +
-                                     " be used to created the cube")
-            if(len(self.list_par1) > 1):
-                raise IncorrectInput("For interpolation = area, only a single channel" +
-                                     " can be used to created the cube. Use --channel=# option")
-            if(self.scale2 != 0):
-                raise AreaInterpolation("When using interpolation = area, the output" +
-                                        " coordinate system is internal_cal" +
-                                        " The beta dimension (naxis2) has a one to one" +
-                                        " mapping between slice_no and " +
-                                        " beta coordinate.")
 
         if(self.coord_system == "internal_cal"):
             if(num_files > 1):
                 raise IncorrectInput("Cubes built in internal_cal coordinate system" +
-                                     " are built from a single file")
+                                     " are built from a single file, not multiple exposures")
+            if(len(self.list_par1) > 1):
+                raise IncorrectInput("Only a single channel or grating " +
+                                     " can be used to create cubes in internal_cal coordinate system." +
+                                     " Use --output_type=band")
 # ________________________________________________________________________________
 
     def define_cubename(self):
@@ -219,7 +209,7 @@ class IFUCubeData():
         return newname
 # _______________________________________________________________________
 
-    def set_geometry(self, footprint):
+    def set_geometry(self, corner_a, corner_b, lambda_min, lambda_max):
         """ Based on the ra,dec and wavelength footprint set up the size
         of the cube in the tangent plane projected coordinate system.
 
@@ -229,182 +219,6 @@ class IFUCubeData():
           holds min and max or ra,dec, and wavelength for the cube
           footprint
         """
-
-        ra_min, ra_max, dec_min, dec_max, lambda_min, lambda_max = footprint
-        dec_ave = (dec_min + dec_max) / 2.0
-
-        # we can not average ra values because of the convergence
-        # of hour angles.
-        ravalues = np.zeros(2)
-        ravalues[0] = ra_min
-        ravalues[1] = ra_max
-
-        # astropy circmean assumes angles are in radians,
-        # we have angles in degrees
-        ra_ave = circmean(ravalues * u.deg).value
-
-        self.crval1 = ra_ave
-        self.crval2 = dec_ave
-        rot_angle = self.rot_angle
-        
-        #TODO sort out rot_angle - set_geometry_ifu called instead ?
-
-        xi_center, eta_center = coord.radec2std(self.crval1, self.crval2,
-                                                ra_ave, dec_ave, rot_angle)
-        # find the 4 corners
-        xi1, eta1 = coord.radec2std(self.crval1, self.crval2,
-                                          ra_min, dec_min, rot_angle)
-
-        xi3, eta3 = coord.radec2std(self.crval1, self.crval2,
-                                          ra_max, dec_max, rot_angle)
-
-        #xi2, eta2 = coord.radec2std(self.crval1, self.crval2,
-        #                                  ra_min, dec_max, rot_angle)
-
-        #xi4, eta4 = coord.radec2std(self.crval1, self.crval2,
-        #                                  ra_max, dec_min, rot_angle)
-        #print(xi1,xi2,xi3,xi4)
-        #print(eta1,eta2,eta3,eta4)
-        # length of each side
-        #distance1 = np.sqrt( (xi2-xi1)*(xi2-xi1) + (eta2-eta1)*(eta2-eta1))
-        #distance2 = np.sqrt( (xi3-xi2)*(xi3-xi2) + (eta3-eta2)*(eta3-eta2))
-        #distance3 = np.sqrt( (xi4-xi3)*(xi4-xi3) + (eta4-eta3)*(eta4-eta3))
-        #distance4 = np.sqrt( (xi4-xi1)*(xi4-xi1) + (eta4-eta1)*(eta4-eta1))
-
-        #if rot_angle is not None:
-        #    distance1 = distance1 * np.cos (rot_angle*np.pi/180)
-        #    distance2 = distance2 * np.cos (rot_angle*np.pi/180)
-        #    distance3 = distance3 * np.cos (rot_angle*np.pi/180)
-        #    distance4 = distance4 * np.cos (rot_angle*np.pi/180)
-        #print('distance',distance1,distance2,distance3,distance4)
-
-        #xi_distance = (distance1 + distance3)/2.0
-        #eta_distance = (distance2 + distance4)/2.0
-        #xi_min  = -xi_distance/2
-        #xi_max  = xi_distance/2
-
-        #eta_min  = -eta_distance/2
-        #eta_max  = eta_distance/2
-
-        #TODO leave this ? 
-        xi_min = xi1
-        xi_max = xi3
-        eta_min = eta1
-        eta_max = eta3
-        print(xi_min, xi_max,eta_min, eta_max)
-# ________________________________________________________________________________
-# find the CRPIX1 CRPIX2 - xi and eta centered at 0,0
-# to find location of center abs of min values is how many pixels
-
-        n1a = int(math.ceil(math.fabs(xi_min) / self.cdelt1))
-        n2a = int(math.ceil(math.fabs(eta_min) / self.cdelt2))
-
-        n1b = int(math.ceil(math.fabs(xi_max) / self.cdelt1))
-        n2b = int(math.ceil(math.fabs(eta_max) / self.cdelt2))
-
-        print(n1a,n1b,n2a,n2b)
-        #xi_min = 0.0 - (n1a * self.cdelt1) - (self.cdelt1 / 2.0)
-        #xi_max = (n1b * self.cdelt1) + (self.cdelt1 / 2.0)
-
-        #eta_min = 0.0 - (n2a * self.cdelt2) - (self.cdelt2 / 2.0)
-        #eta_max = (n2b * self.cdelt2) + (self.cdelt2 / 2.0)
-
-        self.crpix1 = float(n1a) + 1.0
-        self.crpix2 = float(n2a) + 1.0
-
-        self.naxis1 = n1a + n1b
-        self.naxis2 = n2a + n2b
-
-        print('axis',self.naxis1,self.naxis2) 
-        self.a_min = xi_min
-        self.a_max = xi_max
-        self.b_min = eta_min
-        self.b_max = eta_max
-# center of spaxels
-        self.xcoord = np.zeros(self.naxis1)
-        xstart = xi_min + self.cdelt1 / 2.0
-        for i in range(self.naxis1):
-            self.xcoord[i] = xstart
-            xstart = xstart + self.cdelt1
-
-        self.ycoord = np.zeros(self.naxis2)
-        ystart = eta_min + self.cdelt2 / 2.0
-        for i in range(self.naxis2):
-            self.ycoord[i] = ystart
-            ystart = ystart + self.cdelt2
-
-        ygrid = np.zeros(self.naxis2 * self.naxis1)
-        xgrid = np.zeros(self.naxis2 * self.naxis1)
-
-        k = 0
-        ystart = self.ycoord[0]
-        for i in range(self.naxis2):
-            xstart = self.xcoord[0]
-            for j in range(self.naxis1):
-                xgrid[k] = xstart
-                ygrid[k] = ystart
-                xstart = xstart + self.cdelt1
-                k = k + 1
-            ystart = ystart + self.cdelt2
-
-#        ycube,xcube = np.mgrid[0:self.naxis2,
-#                               0:self.naxis1]
-#        xcube = xcube.flatten()
-#        ycube = ycube.flatten()
-
-        self.xcenters = xgrid
-        self.ycenters = ygrid
-
-# _______________________________________________________________________
-        # set up the lambda (z) coordinate of the cube
-        self.cdelt3_normal = None
-        if self.linear_wavelength:
-            self.lambda_min = lambda_min
-            self.lambda_max = lambda_max
-            range_lambda = self.lambda_max - self.lambda_min
-            self.naxis3 = int(math.ceil(range_lambda / self.cdelt3))
-
-            # adjust max based on integer value of naxis3
-            lambda_center = (self.lambda_max + self.lambda_min) / 2.0
-            self.lambda_min = lambda_center - (self.naxis3 / 2.0) * self.cdelt3
-            self.lambda_max = self.lambda_min + (self.naxis3) * self.cdelt3
-
-            self.zcoord = np.zeros(self.naxis3)
-            # CRPIX3 for FITS is 1 (center of first pixel)
-            # CRVAL3 then is lambda_min + self.cdelt3/ 2.0, which is also zcoord[0]
-            self.crval3 = self.lambda_min + self.cdelt3 / 2.0
-            self.crpix3 = 1.0
-            zstart = self.lambda_min + self.cdelt3 / 2.0
-            for i in range(self.naxis3):
-                self.zcoord[i] = zstart
-                zstart = zstart + self.cdelt3
-        else:
-            self.naxis3 = len(self.wavelength_table)
-            self.zcoord = np.asarray(self.wavelength_table)
-            self.crval3 = self.wavelength_table[0]
-            self.crpix3 = 1.0
-        # set up the cdelt3_normal normalizing array used in cube_cloud.py
-        cdelt3_normal = np.zeros(self.naxis3)
-        for j in range(self.naxis3 - 1):
-            cdelt3_normal[j] = self.zcoord[j + 1] - self.zcoord[j]
-
-        cdelt3_normal[self.naxis3 - 1] = cdelt3_normal[self.naxis3 - 2]
-        self.cdelt3_normal = cdelt3_normal
-# _______________________________________________________________________
-
-
-    def set_geometry_ifu(self, corner_a, corner_b, lambda_min, lambda_max):
-        """ Based on the ra,dec and wavelength footprint set up the size
-        of the cube in the tangent plane projected coordinate system.
-
-        Parameters
-        ----------
-        footprint: tuple
-          holds min and max or ra,dec, and wavelength for the cube
-          footprint
-        """
-        #print('corner_a',corner_a)
-        #print('corner_b',corner_b)
 
         ra_min = np.min(corner_a)
         ra_max = np.max(corner_a)
@@ -432,7 +246,6 @@ class IFUCubeData():
         xi_corner = []
         eta_corner = []
         num = len(corner_a)
-        #print('number of corners ',num)
               
         for i in range(num):
 
@@ -446,20 +259,19 @@ class IFUCubeData():
 
         eta_min = min(eta_corner) 
         eta_max = max(eta_corner) 
-
-        #print(xi_min, xi_max,eta_min, eta_max)
 # ________________________________________________________________________________
 # find the CRPIX1 CRPIX2 - xi and eta centered at 0,0
 # to find location of center abs of min values is how many pixels
+        # we want a systemtric cube centered on xi,eta = 0 
+        xilimit = max( np.abs(xi_min), np.abs(xi_max))
+        etalimit = max( np.abs(eta_min), np.abs(eta_max))
+        
+        n1a = math.ceil(xilimit/self.cdelt1)
+        n1b = math.ceil(xilimit/ self.cdelt1)
 
-        n1a = int(math.ceil(math.fabs(xi_min) / self.cdelt1))
-        n2a = int(math.ceil(math.fabs(eta_min) / self.cdelt2))
+        n2a = math.ceil(etalimit / self.cdelt2)
+        n2b = math.ceil(etalimit / self.cdelt2)
 
-        n1b = int(math.ceil(math.fabs(xi_max) / self.cdelt1))
-        n2b = int(math.ceil(math.fabs(eta_max) / self.cdelt2))
-
-        #print(n1a,n1b,n2a,n2b)
-        #exit(0)
         xi_min = 0.0 - (n1a * self.cdelt1) - (self.cdelt1 / 2.0)
         xi_max = (n1b * self.cdelt1) + (self.cdelt1 / 2.0)
 
@@ -469,8 +281,8 @@ class IFUCubeData():
         self.crpix1 = float(n1a) + 1.0
         self.crpix2 = float(n2a) + 1.0
 
-        self.naxis1 = n1a + n1b
-        self.naxis2 = n2a + n2b
+        self.naxis1 = n1a + n1b + 1
+        self.naxis2 = n2a + n2b + 1
 
         self.a_min = xi_min
         self.a_max = xi_max
@@ -520,10 +332,13 @@ class IFUCubeData():
             range_lambda = self.lambda_max - self.lambda_min
             self.naxis3 = int(math.ceil(range_lambda / self.cdelt3))
 
+            
             # adjust max based on integer value of naxis3
-            lambda_center = (self.lambda_max + self.lambda_min) / 2.0
-            self.lambda_min = lambda_center - (self.naxis3 / 2.0) * self.cdelt3
-            self.lambda_max = self.lambda_min + (self.naxis3) * self.cdelt3
+            #lambda_center = (self.lambda_max + self.lambda_min) / 2.0
+            #self.lambda_min = lambda_center - (self.naxis3 / 2.0) * self.cdelt3
+            #self.lambda_max = self.lambda_min + (self.naxis3) * self.cdelt3
+            print(' wave',self.lambda_min, self.lambda_max,self.naxis3)
+
 
             self.zcoord = np.zeros(self.naxis3)
             # CRPIX3 for FITS is 1 (center of first pixel)
@@ -534,6 +349,8 @@ class IFUCubeData():
             for i in range(self.naxis3):
                 self.zcoord[i] = zstart
                 zstart = zstart + self.cdelt3
+            print(self.zcoord[0],self.zcoord[-1])
+
         else:
             self.naxis3 = len(self.wavelength_table)
             self.zcoord = np.asarray(self.wavelength_table)
@@ -548,7 +365,6 @@ class IFUCubeData():
         self.cdelt3_normal = cdelt3_normal
 # _______________________________________________________________________
 
-    #def set_geometryAB(self, footprint):
     def set_geometryAB(self, corner_a, corner_b, lambda_min, lambda_max):
         """Based on the along slice, across slice and wavelength footprint set up the
         size of the cube in internal IFU plane.
@@ -570,43 +386,52 @@ class IFUCubeData():
         self.b_max = np.max(corner_b)
         self.lambda_min = lambda_min
         self.lambda_max = lambda_max
-        #self.a_min, self.a_max, self.b_min, self.b_max, self.lambda_min, self.lambda_max = footprint
-
-        
-        #print(self.a_min,self.a_max,self.b_min,self.b_max)
 
         # along slice: a
-        range_a = self.a_max - self.a_min
         # across slice: b
-        range_b = self.b_max - self.b_min
+        alimit = max( np.abs(self.a_min), np.abs(self.a_max))
 
+        range_b = self.b_max - self.b_min
         if self.instrument == 'MIRI':
+            self.cdelt1 = self.cdelt2 # make cubes square
             along_cdelt = self.cdelt1
-            self.naxis1 = int(math.ceil(range_a / self.cdelt1))
+            #n1a = int(math.ceil(math.fabs(self.a_min) / along_cdelt))
+            #n1b = int(math.ceil(math.fabs(self.a_max) / along_cdelt))
+
+            n1a = math.ceil(alimit / along_cdelt)
+            n1b = math.ceil(alimit / along_cdelt)
+
+            self.a_min = 0.0 - (n1a * along_cdelt) - (along_cdelt / 2.0)
+            self.a_max = (n1b * along_cdelt) + (along_cdelt / 2.0)
+            self.naxis1 = n1a + n1b + 1
             along_naxis = self.naxis1
+ 
             self.naxis2 = int(math.ceil(range_b / self.cdelt2))
             across_naxis = self.naxis2
             across_cdelt = self.cdelt2
 
         if self.instrument == 'NIRSPEC':
+            self.cdelt2 = self.cdelt1 # make cubes square
             along_cdelt = self.cdelt2
-            self.naxis2 = int(math.ceil(range_a / self.cdelt2))
-            along_naxis = self.naxis2
+
+            n1a = math.ceil(alimit / along_cdelt)
+            n1b = math.ceil(alimit / along_cdelt)
+
+            self.a_min = 0.0 - (n1a * along_cdelt) - (along_cdelt / 2.0)
+            self.a_max = (n1b * along_cdelt) + (along_cdelt / 2.0)
+
+            self.naxis2 = n1a + n1b + 1
+            along_naxis = self.naxis2 
             self.naxis1 = int(math.ceil(range_b / self.cdelt1))
             across_naxis = self.naxis1
             across_cdelt = self.cdelt1
 
-        # set up along slice parameters
-        a_center = (self.a_max + self.a_min) / 2.0
-        self.a_min = a_center - (along_naxis / 2.0) * along_cdelt
-        self.a_max = a_center + (along_naxis / 2.0) * along_cdelt
-
         acoord = np.zeros(along_naxis)
-        astart = self.a_min + along_cdelt / 2.0
+        astart = self.a_min + (along_cdelt/2.0)
         for i in range(along_naxis):
             acoord[i] = astart
             astart = astart + along_cdelt
-
+        
         # set up the across slice  parameters
         b_center = (self.b_max + self.b_min) / 2.0
         # adjust min and max based on integer value of naxis2
@@ -717,7 +542,7 @@ class IFUCubeData():
         a. cube_cloud:match_det2_cube_msm: This routine uses the modified
         shepard method to determing the weighting function, which weights the detector
         fluxes based on the distance between the detector center and spaxel center.
-        b. cube_cloud:match_det2_cube_miripsf the weighting function based  width of the
+        b. cube_cloud:match_det2_cube_miripsf - the weighting function based on the width of the
         psf and lsf.
         c. cube_overlap.match_det2cube is only for single exposure, single band cubes and
         the ifucube in created in the detector plane. The weighting function is based on
@@ -1314,10 +1139,6 @@ class IFUCubeData():
 # ________________________________________________________________________________
 # now loop over data and find min and max ranges data covers
 
-        #a_min = []
-        #a_max = []
-        #b_min = []
-        #b_max = []
         corner_a = []
         corner_b  = []
 
@@ -1334,10 +1155,7 @@ class IFUCubeData():
             n = len(self.master_table.FileMap[self.instrument][this_a][this_b])
             log.debug('number of files %d', n)
             for k in range(n):
-                #amin = 0.0
-                #amax = 0.0
-                #bmin = 0.0
-                #bmax = 0.0
+
                 lmin = 0.0
                 lmax = 0.0
 
@@ -1347,9 +1165,6 @@ class IFUCubeData():
 # Find the footprint of the image
                 with datamodels.IFUImageModel(ifile) as input_model:
                     if self.instrument == 'NIRSPEC':
-                      #  ch_footprint = cube_build_wcs_util.find_footprint_NIRSPEC(
-                      #      input_model,
-                      #      self.coord_system)
                         ch_corners = cube_build_wcs_util.find_corners_NIRSPEC(
                             input_model,
                             this_a,
@@ -1358,16 +1173,8 @@ class IFUCubeData():
 
                         ca1, cb1, ca2, cb2, ca3, cb3, ca4, cb4, lmin, lmax = ch_corners
                         
-                      #  amin, amax, bmin, bmax, lmin, lmax = ch_footprint
-                        # We might be able to call cmpute_footprint from assign_wcs instead
 # ________________________________________________________________________________
                     if self.instrument == 'MIRI':
-                       # ch_footprint = cube_build_wcs_util.find_footprint_MIRI(
-                       #     input_model,
-                       #     this_a,
-                       #     self.instrument_info,
-                       #     self.coord_system)
-                       # amin, amax, bmin, bmax, lmin, lmax = ch_footprint
                         ch_corners = cube_build_wcs_util.find_corners_MIRI(
                             input_model,
                             this_a,
@@ -1375,12 +1182,6 @@ class IFUCubeData():
                             self.coord_system)
 
                         ca1, cb1, ca2, cb2, ca3, cb3, ca4, cb4, lmin, lmax = ch_corners
-                        # if we call compute_footprint from assign_wcs - need footprint
-                        # for band not both channels
-                    #a_min.append(amin)
-                    #a_max.append(amax)
-                    #b_min.append(bmin)
-                    #b_max.append(bmax)
 
                     corner_a.append(ca1)
                     corner_a.append(ca2)
@@ -1417,7 +1218,7 @@ class IFUCubeData():
             nslice = self.instrument_info.GetNSlice(parameter1[0])
             log.info('Across slice scale %f ', self.cdelt2)
             self.cdelt2 = (final_b_max - final_b_min) / nslice
-            print(final_b_max, final_b_min),nslice
+
             final_b_max = final_b_min + (nslice) * self.cdelt2
             log.info('Changed the across slice scale dimension so we have 1-1 mapping between b and slice #')
             log.info('New across slice scale %f ', self.cdelt2)
@@ -1435,32 +1236,18 @@ class IFUCubeData():
 
 # ________________________________________________________________________________
 # Test that we have data (NIRSPEC NRS2 only has IFU data for 3 configurations)
-        #test_a = final_a_max - final_a_min
-        #test_b = final_b_max - final_b_min
-        #tolerance1 = 0.00001
-        #if(test_a < tolerance1 or test_b < tolerance1):
-        #    log.info('No Valid IFU slice data found %f %f ', test_a, test_b)
-# ________________________________________________________________________________
-
-
-        #print('check',final_a_min,final_a_max,final_b_min, final_b_max)
-
+        test_a = final_a_max - final_a_min
+        test_b = final_b_max - final_b_min
+        tolerance1 = 0.00001
+        if(test_a < tolerance1 or test_b < tolerance1):
+            log.info('No Valid IFU slice data found %f %f ', test_a, test_b)
 # ________________________________________________________________________________
     # Based on Scaling and Min and Max values determine naxis1, naxis2, naxis3
     # set cube CRVALs, CRPIXs
 
-        if self.coord_system == 'skyalign':
-            #self.set_geometry(cube_footprint)
-            print('corners',corner_a,corner_b,final_lambda_min, final_lambda_max)
-
-            self.set_geometry_ifu(corner_a,corner_b,final_lambda_min, final_lambda_max)
-        elif self.coord_system == 'ifualign':
-            self.set_geometry_ifu(corner_a,corner_b,final_lambda_min, final_lambda_max)
+        if self.coord_system == 'skyalign' or self.coord_system == 'ifualign':
+            self.set_geometry(corner_a,corner_b,final_lambda_min, final_lambda_max)
         else:
-
-            #cube_footprint = (final_a_min, final_a_max, final_b_min, final_b_max,
-            #                  final_lambda_min, final_lambda_max)
-            #self.set_geometryAB(cube_footprint)
             self.set_geometryAB(corner_a,corner_b,final_lambda_min, final_lambda_max)
 
         self.print_cube_geometry()
@@ -1585,8 +1372,7 @@ class IFUCubeData():
 
                 if self.weighting == 'miripsf':
                     alpha, beta, lam = det2ab_transform(x, y)
-                #elif self.coord_system == 'internal_cal':
-                #    alpha, beta, wave = det2ab_transform(x, y)
+
                     valid1 = ~np.isnan(coord1)
                     alpha = alpha[valid1]
                     beta = beta[valid1]
@@ -1615,12 +1401,16 @@ class IFUCubeData():
                     x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
                     ra, dec, lam = slice_wcs(x, y)
 
+                    index = np.where(lam > 5.31)
+                    print('length a',len(index[0]))
                     # the slices are curved on detector so a rectangular region
                     # returns NaNs
                     valid = ~np.isnan(lam)
                     ra = ra[valid]
                     dec = dec[valid]
                     lam = lam[valid]
+                    index = np.where(lam > 5.31)
+                    print('length b',len(index[0]))
                     x = x[valid]
                     y = y[valid]
 
@@ -1636,7 +1426,8 @@ class IFUCubeData():
                     lam_det[yind, xind] = lam
                     flag_det[yind, xind] = 1
                     slice_det[yind, xind] = ii+1
-
+                    index = np.where(lam > 5.31)
+                    print('length c',len(index[0]))
                 # after looping over slices  - pull out valid values
                 valid_data = np.where(flag_det == 1)
                 y, x = valid_data
@@ -1644,12 +1435,8 @@ class IFUCubeData():
                 dec = dec_det[valid_data]
                 wave = lam_det[valid_data]
                 slice_no = slice_det[valid_data]
-                #valid_test = np.logical_and((wave >= self.zcoord[0]),
-                #                            (wave <= self.zcoord[1]))
-
-            # find the location of all the values to reject in cube building
-                #test= np.where(valid_test)
-                #print('number between ',self.zcoord[0],self.zcoord[1], len(test[0]) )
+                index = np.where(wave > 5.31)
+                print('length d',len(index[0]))
 # ______________________________________________________________________________
 # The following is for both MIRI and NIRSPEC
 # grab the flux and DQ values for these pixles
@@ -1660,11 +1447,6 @@ class IFUCubeData():
 
             min_wave_tolerance = self.crval3 - np.absolute(self.zcoord[1] - self.zcoord[0])
             max_wave_tolerance = self.zcoord[-1] + np.absolute(self.zcoord[-1] - self.zcoord[-2])
-
-            #diff = self.zcoord[0] - wave
-            #test = np.where(np.absolute(diff) < self.roiw)
-            # find the location of all the values to reject in cube building
-            #print('number between ',self.zcoord[0],self.zcoord[1], len(test[0]) )
 
             valid_min = np.where(wave >= min_wave_tolerance)
             not_mapped_low = wave.size - len(valid_min[0])
@@ -1688,7 +1470,7 @@ class IFUCubeData():
             valid3 = np.logical_and((wave >= min_wave_tolerance),
                                      (wave <= max_wave_tolerance))
 
-            # find the location of all the values to reject in cube building
+            # find the location of good data
             good_data = np.where((np.bitwise_and(dq_all, all_flags) == 0) &
                                  (valid2) & (valid3))
 
@@ -1697,6 +1479,8 @@ class IFUCubeData():
             err = err_all[good_data]
             wave = wave[good_data]
             slice_no = slice_no[good_data]
+            index = np.where(wave > 5.31)
+            print('length e',len(index[0]))
             # based on the wavelength define the sroi, wroi, weight_power and
             # softrad to use in matching detector to spaxel values
             rois_det = np.zeros(wave.shape)
@@ -1721,20 +1505,22 @@ class IFUCubeData():
                     weight_det[iw] = self.weight_power_table[ifound]
                     scalerad_det[iw] = self.scalerad_table[ifound]
 
-            #if self.coord_system == 'world':
+
             ra_use = ra[good_data]
             dec_use = dec[good_data]
             coord1, coord2 = coord.radec2std(self.crval1,
                                              self.crval2,
                                              ra_use, dec_use,
                                              self.rot_angle)
+            index = np.where(wave > 5.31)
+            print('length',len(index[0]))
+            print('coord1',coord1[index])
+            print('coord2',coord2[index])
 
             if self.weighting == 'miripsf':
                 alpha_det = alpha[good_data]
                 beta_det = beta[good_data]
-            #elif self.coord_system == 'alpha-beta':
-            #    coord1 = alpha[good_data]
-            #    coord2 = beta[good_data]
+
 
         return coord1, coord2, wave, flux, err, slice_no, rois_det, roiw_det, weight_det, \
             softrad_det, scalerad_det, alpha_det, beta_det
@@ -2105,7 +1891,6 @@ class IFUCubeData():
 
         if self.interpolation == 'area':
             good = self.spaxel_iflux > 0
-            print('size of good',good.shape)
             self.spaxel_flux[good] = self.spaxel_flux[good] / self.spaxel_weight[good]
             self.spaxel_var[good] = self.spaxel_var[good] / (self.spaxel_weight[good] * self.spaxel_weight[good])
         elif self.interpolation == 'pointcloud':
