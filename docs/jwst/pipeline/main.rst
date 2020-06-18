@@ -222,3 +222,23 @@ mode are marked as "N/A" in the TSOVISIT column.
 | | NRS_BRIGHTOBJ     | True     | calwebb_tso1      | calwebb_tso-spec2     | calwebb_tso3     |
 +---------------------+----------+-------------------+-----------------------+------------------+
 
+Wavefront Sensing and Control Images
+------------------------------------
+Exposures obtained by any instrument for the purpose of WaveFront Sensing and
+Control (WFS&C) use a dedicated processing flow through the pipeline stages.
+
+ - Stage 1: WFS&C exposures use the same :ref:`calwebb_detector1 <calwebb_detector1>`
+   pipeline processing and steps as regular images.
+
+ - Stage 2: The ASN generator identifies WFS&C exposures as those with the
+   string "WFSC" within their "VISITYPE" keyword value. The resulting ASN
+   uses the :ref:`calwebb_wfs-image2 <calwebb_wfs-image2>` pipeline for stage 2
+   processing.
+   This pipeline configuration is identical to :ref:`calwebb_image2 <calwebb_image2>`
+   with the omission of the :ref:`resample <resample_step>` step.
+
+ - Stage 3: The ASN generator identifies pairs of dithered WFS&C images to be
+   combined via the "PATTTYPE" keyword value "WFSC". The resulting ASN
+   uses the :ref:`calwebb_wfs-image3 <calwebb_wfs-image3>` pipeline
+   for stage 3 processing. This pipeline consists of the single step
+   :ref:`wfs_combine <wfs_combine_step>`.
