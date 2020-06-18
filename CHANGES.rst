@@ -34,6 +34,7 @@ datamodels
 
 extract_1d
 ----------
+- rechecks the input model container in run_extract1d to select the correct processing [#5076]
 
 coron
 -----
