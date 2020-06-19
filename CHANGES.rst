@@ -38,7 +38,7 @@ extract_1d
 
 extract_2d
 ----------
-- checks subwcs and new_slit variables exist before trying to delete them [#]
+- checks subwcs and new_slit variables exist before trying to delete them [#5093]
 
 coron
 -----
