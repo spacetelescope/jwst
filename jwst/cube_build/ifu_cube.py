@@ -68,12 +68,11 @@ class IFUCubeData():
         self.wavemax = pars_cube.get('wavemax')
         self.weighting = pars_cube.get('weighting')
         self.weight_power = pars_cube.get('weight_power')
-        self.debug = pars_cube.get('debug')
         self.xdebug = pars_cube.get('xdebug')
         self.ydebug = pars_cube.get('ydebug')
         self.zdebug = pars_cube.get('zdebug')
+        self.debug_file = pars_cube.get('debug_file')
         self.skip_dqflagging = pars_cube.get('skip_dqflagging')
-        self.spaxel_debug = pars_cube.get('spaxel_debug')
 
         self.num_bands = 0
         self.output_name = ''
@@ -331,14 +330,9 @@ class IFUCubeData():
             self.lambda_max = lambda_max
             range_lambda = self.lambda_max - self.lambda_min
             self.naxis3 = int(math.ceil(range_lambda / self.cdelt3))
-
             
             # adjust max based on integer value of naxis3
-            #lambda_center = (self.lambda_max + self.lambda_min) / 2.0
-            #self.lambda_min = lambda_center - (self.naxis3 / 2.0) * self.cdelt3
-            #self.lambda_max = self.lambda_min + (self.naxis3) * self.cdelt3
-            print(' wave',self.lambda_min, self.lambda_max,self.naxis3)
-
+            self.lambda_max = self.lambda_min + (self.naxis3) * self.cdelt3
 
             self.zcoord = np.zeros(self.naxis3)
             # CRPIX3 for FITS is 1 (center of first pixel)
@@ -349,7 +343,7 @@ class IFUCubeData():
             for i in range(self.naxis3):
                 self.zcoord[i] = zstart
                 zstart = zstart + self.cdelt3
-            print(self.zcoord[0],self.zcoord[-1])
+
 
         else:
             self.naxis3 = len(self.wavelength_table)
@@ -599,8 +593,15 @@ class IFUCubeData():
         # or Grating/filter(NIRSPEC)
         # and map the detector pixels to the cube spaxel
 
-        number_bands = len(self.list_par1)
+        cube_debug = None
+        if self.xdebug is not None:
+            nplane = self.naxis1 * self.naxis2
+            xydebug = self.ydebug* self.naxis1 + self.xdebug
+            cube_debug = (self.zdebug* nplane) + xydebug
+            print('Cube index debug',cube_debug)
+            print(nplane,xydebug,self.zdebug, self.ydebug, self.xdebug)
 
+        number_bands = len(self.list_par1)
         for i in range(number_bands):
             this_par1 = self.list_par1[i]
             this_par2 = self.list_par2[i]
@@ -636,6 +637,8 @@ class IFUCubeData():
                         log.info("Time to set initial dq values = %.1f s" % (t1 - t0,))
                     if self.weighting == 'msm' or self.weighting == 'emsm':
                         t0 = time.time()
+
+
                         cube_cloud.match_det2cube_msm(self.naxis1, self.naxis2, self.naxis3,
                                                       self.cdelt1, self.cdelt2,
                                                       self.cdelt3_normal,
@@ -651,7 +654,9 @@ class IFUCubeData():
                                                       rois_pixel, roiw_pixel,
                                                       weight_pixel,
                                                       softrad_pixel,
-                                                      scalerad_pixel)
+                                                      scalerad_pixel,
+                                                      cube_debug,
+                                                      self.debug_file)
 
                         t1 = time.time()
                         log.info("Time to match file to ifucube = %.1f s" % (t1 - t0,))
@@ -771,15 +776,14 @@ class IFUCubeData():
 
         t0 = time.time()
         self.find_spaxel_flux()
-
         self.set_final_dq_flags()
         t1 = time.time()
         log.info("Time to find Cube Flux = %.1f s" % (t1 - t0,))
 
+
         ifucube_model = self.setup_final_ifucube_model(0)
 # _______________________________________________________________________
 # shove Flux and iflux in the  final IFU cube
-        self.update_ifucube(ifucube_model)
 
         return ifucube_model
 # ********************************************************************************
@@ -848,7 +852,7 @@ class IFUCubeData():
 # now determine Cube Spaxel flux
 
             ifucube_model = self.setup_final_ifucube_model(j)
-            self.update_ifucube(ifucube_model)
+
             t1 = time.time()
             log.info("Time to Create Single ifucube = %.1f s" % (t1 - t0,))
 # _______________________________________________________________________
@@ -939,6 +943,7 @@ class IFUCubeData():
         all_same_spectral = np.all(spectralsize == spectralsize[0])
 
         # check if scalew has been set - if yes then linear scale
+
         if self.scalew != 0:
             self.spectral_size = self.scalew
             self.linear_wavelength = True
@@ -1039,16 +1044,16 @@ class IFUCubeData():
         if self.scalerad is not None:
             if np.isnan(self.scalerad):
                 self.scalerad = None
-#        print('spatial size', self.spatial_size)
-#        print('spectral size', self.spectral_size)
-#        print('spatial roi', self.rois)
-#        print('wave min and max', self.wavemin, self.wavemax)
-#        print('linear wavelength', self.linear_wavelength)
-#        print('roiw', self.roiw)
-#        print('output_type',self.output_type)
-#        print('weight_power',self.weight_power)
-#        print('softrad',self.soft_rad)
-#        print('scalerad',self.scaler/Users/morrison/Downloads ad)
+        #print('spatial size', self.spatial_size)
+        #print('spectral size', self.spectral_size)
+        #print('spatial roi', self.rois)
+        #print('wave min and max', self.wavemin, self.wavemax)
+        #print('linear wavelength', self.linear_wavelength)
+        #print('roiw', self.roiw)
+        #print('output_type',self.output_type)
+        #print('weight_power',self.weight_power)
+        #print('softrad',self.soft_rad)
+        #print('scalerad',self.scalerad)
 # ******************************************************************************
 
     def setup_ifucube_wcs(self):
@@ -1401,16 +1406,13 @@ class IFUCubeData():
                     x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
                     ra, dec, lam = slice_wcs(x, y)
 
-                    index = np.where(lam > 5.31)
-                    print('length a',len(index[0]))
                     # the slices are curved on detector so a rectangular region
                     # returns NaNs
                     valid = ~np.isnan(lam)
                     ra = ra[valid]
                     dec = dec[valid]
                     lam = lam[valid]
-                    index = np.where(lam > 5.31)
-                    print('length b',len(index[0]))
+
                     x = x[valid]
                     y = y[valid]
 
@@ -1426,17 +1428,15 @@ class IFUCubeData():
                     lam_det[yind, xind] = lam
                     flag_det[yind, xind] = 1
                     slice_det[yind, xind] = ii+1
-                    index = np.where(lam > 5.31)
-                    print('length c',len(index[0]))
+
                 # after looping over slices  - pull out valid values
                 valid_data = np.where(flag_det == 1)
                 y, x = valid_data
+
                 ra = ra_det[valid_data]
                 dec = dec_det[valid_data]
                 wave = lam_det[valid_data]
                 slice_no = slice_det[valid_data]
-                index = np.where(wave > 5.31)
-                print('length d',len(index[0]))
 # ______________________________________________________________________________
 # The following is for both MIRI and NIRSPEC
 # grab the flux and DQ values for these pixles
@@ -1479,8 +1479,7 @@ class IFUCubeData():
             err = err_all[good_data]
             wave = wave[good_data]
             slice_no = slice_no[good_data]
-            index = np.where(wave > 5.31)
-            print('length e',len(index[0]))
+
             # based on the wavelength define the sroi, wroi, weight_power and
             # softrad to use in matching detector to spaxel values
             rois_det = np.zeros(wave.shape)
@@ -1512,15 +1511,10 @@ class IFUCubeData():
                                              self.crval2,
                                              ra_use, dec_use,
                                              self.rot_angle)
-            index = np.where(wave > 5.31)
-            print('length',len(index[0]))
-            print('coord1',coord1[index])
-            print('coord2',coord2[index])
 
             if self.weighting == 'miripsf':
                 alpha_det = alpha[good_data]
                 beta_det = beta[good_data]
-
 
         return coord1, coord2, wave, flux, err, slice_no, rois_det, roiw_det, weight_det, \
             softrad_det, scalerad_det, alpha_det, beta_det
@@ -2011,6 +2005,63 @@ class IFUCubeData():
         return IFUCube model
 
         """
+
+        # loop over the wavelength planes to confirm each plane has some data
+        # for initial or final planes that do not have any data - eliminated them
+        # from the IFUcube
+        
+        temp_flux = self.spaxel_flux.reshape((self.naxis3,
+                                              self.naxis2, self.naxis1))
+        temp_wmap = self.spaxel_iflux.reshape((self.naxis3,
+                                               self.naxis2, self.naxis1))
+        temp_dq = self.spaxel_dq.reshape((self.naxis3,
+                                          self.naxis2, self.naxis1))
+        temp_var = self.spaxel_var.reshape((self.naxis3,
+                                            self.naxis2, self.naxis1))
+        remove_start = 0
+        k = 0
+        found = 0 
+        while (k < self.naxis3 and found == 0):
+            flux_at_wave = temp_flux[k,:,:]
+            sum = np.nansum(flux_at_wave)
+            if sum == 0.0:
+                remove_start = remove_start + 1
+            else:
+                found = 1
+                break;
+            k = k + 1
+
+        remove_final = 0
+        found = 0 
+        k = self.naxis3-1             
+        while (k > 0 and found == 0):
+            flux_at_wave = temp_flux[k,:,:]
+            sum = np.nansum(flux_at_wave)
+            if sum == 0.0:
+                remove_final = remove_final + 1
+            else:
+                found = 1
+                break;
+            k = k -1 
+
+        if (remove_start+remove_final) > 0:
+               log.info('Number of wavelength planes removed with no data: %i',
+                        remove_start+remove_final)            
+
+               temp_flux = temp_flux[remove_start:self.naxis3-remove_final,:,:]
+               temp_wmap = temp_wmap[remove_start:self.naxis3-remove_final,:,:]
+               temp_dq = temp_dq[remove_start:self.naxis3-remove_final,:,:]
+               temp_var = temp_var[remove_start:self.naxis3-remove_final,:,:]
+
+               if self.linear_wavelength:
+                   self.crval3 = self.zcoord[remove_start]
+        
+               else:
+                   self.wavelength_table = self.wavelength_table[remove_start:self.naxis3-remove_final]
+                   self.crval3 = self.wavelength_table[0]
+
+                   self.naxis3 = self.naxis3 - (remove_start + remove_final)        
+
         naxis1 = self.naxis1
         naxis2 = self.naxis2
         naxis3 = self.naxis3
@@ -2039,6 +2090,11 @@ class IFUCubeData():
 
         ifucube_model.update(self.input_models[j])
         ifucube_model.meta.filename = self.output_name
+
+        ifucube_model.data = temp_flux
+        ifucube_model.weightmap = temp_wmap
+        ifucube_model.dq = temp_dq
+        ifucube_model.err = np.sqrt(temp_var)
 
         # Call model_blender if there are multiple inputs
         if len(self.input_models) > 1:
@@ -2140,16 +2196,6 @@ class IFUCubeData():
             ifucube_model.meta.bunit_err = input.meta.bunit_err
 
         if self.coord_system == 'internal_cal':
-            if self.instrument == 'MIRI':
-                ifucube_model.meta.wcsinfo.cunit1 = 'arcsec'
-                ifucube_model.meta.wcsinfo.cunit2 = 'arcsec'
-
-            if self.instrument == 'NIRSPEC':
-                ifucube_model.meta.wcsinfo.cunit1 = 'meters'
-                ifucube_model.meta.wcsinfo.cunit2 = 'meters'
-                ifucube_model.meta.wcsinfo.cunit1 = 'arcsec'
-                ifucube_model.meta.wcsinfo.cunit2 = 'arcsec'
-
             # stick in values of 0, otherwize it is NaN and
             # fits file can not be written because these
             # values are defined in ifucube.schema.yaml
@@ -2157,6 +2203,9 @@ class IFUCubeData():
             ifucube_model.meta.ifu.roi_wave=0
             ifucube_model.meta.ifu.roi_spatial=0
 
+            if self.instrument == 'MIRI':
+                ifucube_model.meta.wcsinfo.cunit1 = 'arcsec'
+                ifucube_model.meta.wcsinfo.cunit2 = 'arcsec'
 # we only need to check list_par1[0] and list_par2[0] because these types
 # of cubes are made from 1 exposures (setup_cube checks this at the start
 # of cube_build).
@@ -2199,6 +2248,12 @@ class IFUCubeData():
                 ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4C'
                 ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4C'
 
+            if self.instrument == 'NIRSPEC':
+                ifucube_model.meta.wcsinfo.cunit1 = 'meters'
+                ifucube_model.meta.wcsinfo.cunit2 = 'meters'
+                ifucube_model.meta.wcsinfo.ctype1 = 'NRSLICERX'
+                ifucube_model.meta.wcsinfo.ctype2 = 'NRSSLICERY'
+
 # set WCS information
         wcsobj = pointing.create_fitswcs(ifucube_model)
         ifucube_model.meta.wcs = wcsobj
@@ -2206,38 +2261,10 @@ class IFUCubeData():
                                                (0, naxis2 - 1),
                                                (0, naxis3 - 1))
 
-        return ifucube_model
-# ********************************************************************************
-
-    def update_ifucube(self, ifucube_model):
-        """ Fill in the ifucube_model and run fits blender
-
-        Parameters
-        ----------
-        ifucube_model: datamodel
-          final ifucube data model
-
-        Returns
-        -------
-        fills in ifucube_model arrays using spaxel arrays
-        """
-    # pull out data into array and assign to ifucube data model
-        temp_flux = self.spaxel_flux.reshape((self.naxis3,
-                                              self.naxis2, self.naxis1))
-        temp_wmap = self.spaxel_iflux.reshape((self.naxis3,
-                                               self.naxis2, self.naxis1))
-        temp_dq = self.spaxel_dq.reshape((self.naxis3,
-                                          self.naxis2, self.naxis1))
-        temp_var = self.spaxel_var.reshape((self.naxis3,
-                                              self.naxis2, self.naxis1))
-
-        ifucube_model.data = temp_flux
-        ifucube_model.weightmap = temp_wmap
-        ifucube_model.dq = temp_dq
-        ifucube_model.err = np.sqrt(temp_var)
         ifucube_model.meta.cal_step.cube_build = 'COMPLETE'
 
-# ***************************************************************************
+        return ifucube_model
+# ********************************************************************************
 
     def blend_output_metadata(self, IFUCube):
 

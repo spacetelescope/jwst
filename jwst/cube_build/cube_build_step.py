@@ -109,10 +109,9 @@ class CubeBuildStep (Step):
         if self.roiw != 0.0:
             self.log.info('Input Wave ROI size %f', self.roiw)
 
-        self.debug_pixel = 0
-        self.spaxel_debug = None
+
+        self.debug_file = None
         if(self.xdebug is not None and self.ydebug is not None and self.zdebug is not None):
-            self.debug_pixel = 1
             self.log.info('Writing debug information for spaxel %i %i %i',
                           self.xdebug,
                           self.ydebug,
@@ -124,8 +123,8 @@ class CubeBuildStep (Step):
             self.xdebug = self.xdebug - 1
             self.ydebug = self.ydebug - 1
             self.zdebug = self.zdebug - 1
-            self.spaxel_debug = open('cube_spaxel_info.results', 'w')
-            self.spaxel_debug.write('Writing debug information for spaxel %i %i %i' %
+            self.debug_file = open('cube_spaxel_info.results', 'w')
+            self.debug_file.write('Writing debug information for spaxel %i %i %i' %
                                     (self.xdebug, self.ydebug, self.zdebug) + '\n')
 
         # valid coord_system:
@@ -259,8 +258,7 @@ class CubeBuildStep (Step):
             'xdebug': self.xdebug,
             'ydebug': self.ydebug,
             'zdebug': self.zdebug,
-            'debug_pixel': self.debug_pixel,
-            'spaxel_debug': self.spaxel_debug}
+            'debug_file': self.debug_file}
 # ________________________________________________________________________________
 # create an instance of class CubeData
 
@@ -344,8 +342,8 @@ class CubeBuildStep (Step):
             else:
                 result = thiscube.build_ifucube()
                 cube_container.append(result)
-            if self.debug_pixel == 1:
-                self.spaxel_debug.close()
+            if self.debug_file is not None:
+                self.debug_file.close()
         for cube in cube_container:
             footprint = cube.meta.wcs.footprint(axis_type="spatial")
             update_s_region_keyword(cube, footprint)

@@ -155,31 +155,38 @@ def test_wrap_ra():
 
 def test_setup_wcs():
     """ setting size of IFU given input min,max and cdelts """
+    ra1 = 98.83006930071556
+    dec1 = -66.8274397956464
+    ra2 = 98.8334511693978
+    dec2 = -66.82720255674548
+    ra3 = 98.83217303911556
+    dec3 = -66.82798122840644
+    ra4 = 98.83139113841862
+    dec4 = -66.82665445039441
+    lambda_min = 6.420
+    lambda_max =7.511
 
-    ra_center = 45.0
-    ra_diff = 2.0/3600.0
-    dec_center = 45.0
-    dec_diff = 2.0/3600.0
+    corner_a = []
+    corner_b = []
+    corner_a.append(ra1)
+    corner_a.append(ra2)
+    corner_a.append(ra3)
+    corner_a.append(ra4)
 
-    ra_min = ra_center - ra_diff
-    ra_max = ra_center + ra_diff
+    corner_b.append(dec1)
+    corner_b.append(dec2)
+    corner_b.append(dec3)
+    corner_b.append(dec4)
 
-    dec_min = dec_center - dec_diff
-    dec_max = dec_center + dec_diff
-
-    lambda_min = 7.5
-    lambda_max = 8.5
-
-    footprint = (ra_min, ra_max, dec_min, dec_max, lambda_min, lambda_max)
 
     pars_cube = {
         'scale1': 0.0,
         'scale2': 0.0,
         'scalew': 0.0,
         'interpolation': 'pointcloud',
-        'weighting': 'msm',
+        'weighting': 'emsm',
         'weight_power': 2,
-        'coord_system': 'world',
+        'coord_system': 'skyalign',
         'rois': 0.0,
         'roiw': 0.0,
         'wavemin': lambda_min,
@@ -188,7 +195,6 @@ def test_setup_wcs():
         'xdebug': None,
         'ydebug': None,
         'zdebug': None,
-        'debug_pixel': 0,
         'spaxel_debug': None}
 
     pipeline = 3
@@ -214,16 +220,16 @@ def test_setup_wcs():
         master_table,
         **pars_cube)
 
-    thiscube.cdelt1  = 0.1
-    thiscube.cdelt2 = 0.1
+    thiscube.cdelt1  = 0.13
+    thiscube.cdelt2 = 0.13
     thiscube.cdelt3 = 0.001
     thiscube.linear_wavelength = True
-    thiscube.set_geometry(footprint)
+    thiscube.set_geometry(corner_a, corner_b, lambda_min, lambda_max)
 
-    print(footprint)
-    assert thiscube.naxis1 == 30
-    assert thiscube.naxis2 == 41
-    assert thiscube.naxis3 == 1000
+
+    assert thiscube.naxis1 == 39
+    assert thiscube.naxis2 == 39
+    assert thiscube.naxis3 == 1092
 
 def test_footprint_miri():
 
@@ -239,9 +245,9 @@ def test_footprint_miri():
     input_model.meta.wcs = dummy_wcs
 
     this_channel = '3'
-    coord_system = 'world'
+    coord_system = 'skyalign'
     instrument_info = instrument_defaults.InstrumentInfo()
-    instrument_info.SetXSliceLimits(0, 99, this_channel)
+    instrument_info.SetXSliceLimits(0, 101, this_channel)
     x1, x2 = instrument_info.GetMIRISliceEndPts(this_channel)
 
     corners = cube_build_wcs_util.find_corners_MIRI(input_model,
@@ -252,7 +258,7 @@ def test_footprint_miri():
     (ra_min, b1, ra_max, b2, a1, dec_min, a2, dec_max,
      lambda_min, lambda_max) = corners
     assert ra_min == 40.6
-    assert ra_max == 49.9
+    assert ra_max == 50.1
     assert dec_min == 45.1
     assert dec_max == 45.4
     assert lambda_min == 7.5
