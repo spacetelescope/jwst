@@ -224,7 +224,6 @@ class IFUCubeData():
 
         dec_min = np.min(corner_b)
         dec_max = np.max(corner_b)
-        
         dec_ave = (dec_min + dec_max) / 2.0
 
         # we can not average ra values because of the convergence
@@ -245,26 +244,24 @@ class IFUCubeData():
         xi_corner = []
         eta_corner = []
         num = len(corner_a)
-              
+
         for i in range(num):
+            xi, eta= coord.radec2std(self.crval1, self.crval2,
+                                     corner_a[i],  corner_b[i], rot_angle)
+            xi_corner.append(xi)
+            eta_corner.append(eta)
 
-              xi, eta= coord.radec2std(self.crval1, self.crval2,
-                                       corner_a[i],  corner_b[i], rot_angle)
-              xi_corner.append(xi)
-              eta_corner.append(eta)
-
-        xi_min = min(xi_corner) 
-        xi_max = max(xi_corner) 
-
-        eta_min = min(eta_corner) 
-        eta_max = max(eta_corner) 
+        xi_min = min(xi_corner)
+        xi_max = max(xi_corner)
+        eta_min = min(eta_corner)
+        eta_max = max(eta_corner)
 # ________________________________________________________________________________
 # find the CRPIX1 CRPIX2 - xi and eta centered at 0,0
 # to find location of center abs of min values is how many pixels
-        # we want a systemtric cube centered on xi,eta = 0 
+        # we want a systemtric cube centered on xi,eta = 0
         xilimit = max( np.abs(xi_min), np.abs(xi_max))
         etalimit = max( np.abs(eta_min), np.abs(eta_max))
-        
+
         n1a = math.ceil(xilimit/self.cdelt1)
         n1b = math.ceil(xilimit/ self.cdelt1)
 
@@ -330,7 +327,7 @@ class IFUCubeData():
             self.lambda_max = lambda_max
             range_lambda = self.lambda_max - self.lambda_min
             self.naxis3 = int(math.ceil(range_lambda / self.cdelt3))
-            
+
             # adjust max based on integer value of naxis3
             self.lambda_max = self.lambda_min + (self.naxis3) * self.cdelt3
 
@@ -399,7 +396,7 @@ class IFUCubeData():
             self.a_max = (n1b * along_cdelt) + (along_cdelt / 2.0)
             self.naxis1 = n1a + n1b + 1
             along_naxis = self.naxis1
- 
+
             self.naxis2 = int(math.ceil(range_b / self.cdelt2))
             across_naxis = self.naxis2
             across_cdelt = self.cdelt2
@@ -415,7 +412,7 @@ class IFUCubeData():
             self.a_max = (n1b * along_cdelt) + (along_cdelt / 2.0)
 
             self.naxis2 = n1a + n1b + 1
-            along_naxis = self.naxis2 
+            along_naxis = self.naxis2
             self.naxis1 = int(math.ceil(range_b / self.cdelt1))
             across_naxis = self.naxis1
             across_cdelt = self.cdelt1
@@ -425,7 +422,7 @@ class IFUCubeData():
         for i in range(along_naxis):
             acoord[i] = astart
             astart = astart + along_cdelt
-        
+
         # set up the across slice  parameters
         b_center = (self.b_max + self.b_min) / 2.0
         # adjust min and max based on integer value of naxis2
@@ -1177,7 +1174,6 @@ class IFUCubeData():
                             self.coord_system)
 
                         ca1, cb1, ca2, cb2, ca3, cb3, ca4, cb4, lmin, lmax = ch_corners
-                        
 # ________________________________________________________________________________
                     if self.instrument == 'MIRI':
                         ch_corners = cube_build_wcs_util.find_corners_MIRI(
@@ -2009,7 +2005,6 @@ class IFUCubeData():
         # loop over the wavelength planes to confirm each plane has some data
         # for initial or final planes that do not have any data - eliminated them
         # from the IFUcube
-        
         temp_flux = self.spaxel_flux.reshape((self.naxis3,
                                               self.naxis2, self.naxis1))
         temp_wmap = self.spaxel_iflux.reshape((self.naxis3,
@@ -2020,7 +2015,7 @@ class IFUCubeData():
                                             self.naxis2, self.naxis1))
         remove_start = 0
         k = 0
-        found = 0 
+        found = 0
         while (k < self.naxis3 and found == 0):
             flux_at_wave = temp_flux[k,:,:]
             sum = np.nansum(flux_at_wave)
@@ -2032,8 +2027,8 @@ class IFUCubeData():
             k = k + 1
 
         remove_final = 0
-        found = 0 
-        k = self.naxis3-1             
+        found = 0
+        k = self.naxis3-1
         while (k > 0 and found == 0):
             flux_at_wave = temp_flux[k,:,:]
             sum = np.nansum(flux_at_wave)
@@ -2042,25 +2037,23 @@ class IFUCubeData():
             else:
                 found = 1
                 break;
-            k = k -1 
+            k = k -1
 
         if (remove_start+remove_final) > 0:
-               log.info('Number of wavelength planes removed with no data: %i',
-                        remove_start+remove_final)            
+            log.info('Number of wavelength planes removed with no data: %i',
+                     remove_start+remove_final)
 
-               temp_flux = temp_flux[remove_start:self.naxis3-remove_final,:,:]
-               temp_wmap = temp_wmap[remove_start:self.naxis3-remove_final,:,:]
-               temp_dq = temp_dq[remove_start:self.naxis3-remove_final,:,:]
-               temp_var = temp_var[remove_start:self.naxis3-remove_final,:,:]
+            temp_flux = temp_flux[remove_start:self.naxis3-remove_final,:,:]
+            temp_wmap = temp_wmap[remove_start:self.naxis3-remove_final,:,:]
+            temp_dq = temp_dq[remove_start:self.naxis3-remove_final,:,:]
+            temp_var = temp_var[remove_start:self.naxis3-remove_final,:,:]
 
-               if self.linear_wavelength:
-                   self.crval3 = self.zcoord[remove_start]
-        
-               else:
-                   self.wavelength_table = self.wavelength_table[remove_start:self.naxis3-remove_final]
-                   self.crval3 = self.wavelength_table[0]
-
-                   self.naxis3 = self.naxis3 - (remove_start + remove_final)        
+            if self.linear_wavelength:
+                self.crval3 = self.zcoord[remove_start]
+            else:
+                self.wavelength_table = self.wavelength_table[remove_start:self.naxis3-remove_final]
+                self.crval3 = self.wavelength_table[0]
+                self.naxis3 = self.naxis3 - (remove_start + remove_final)
 
         naxis1 = self.naxis1
         naxis2 = self.naxis2

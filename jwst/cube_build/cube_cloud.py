@@ -86,10 +86,8 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
     spaxel_flux, spaxel_weight, spaxel_ifux, and spaxel_var updated with the information
     from the detector pixels that fall within the roi if the spaxel center.
     """
-
     nplane = naxis1 * naxis2
-    
-    
+
     # now loop over the pixel values for this region and find the spaxels that fall
     # within the region of interest.
     nn = coord1.size
@@ -139,7 +137,6 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
             if cube_debug in icube_index:
                 print('cube_debug',ipt,flux[ipt],weight_distance[icube_index.index(cube_debug)])
 
-            
             spaxel_flux[icube_index] = spaxel_flux[icube_index] + weighted_flux
             spaxel_weight[icube_index] = spaxel_weight[icube_index] + weight_distance
             spaxel_iflux[icube_index] = spaxel_iflux[icube_index] + 1
