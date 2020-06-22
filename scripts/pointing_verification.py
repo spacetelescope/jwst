@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """Pointing verification
 
 Check for some consistency in exposure files for pointing accuracy.
@@ -15,16 +16,15 @@ from collections import namedtuple
 import logging
 
 from astropy.coordinates import SkyCoord
+from astropy.io import ascii
 from astropy.table import Table
 import astropy.units as u
 
 import jwst.datamodels as dm
 
 logger = logging.getLogger('jwst')
-handler = logging.StreamHandler()
-logger.addHandler(handler)
-logger.setLevel(logging.INFO)
-
+logger.addHandler(logging.StreamHandler())
+LogLevels = [logging.WARNING, logging.INFO, logging.DEBUG]
 
 # Basic delta structure
 Delta = namedtuple('Delta', 'target, v1, refpoint, delta_v1, delta_refpoint')
@@ -77,9 +77,8 @@ def calc_deltas(exposures):
 
     Returns
     -------
-    deltas: dict
-        Dict of column-oriented results, where each key contains the columne
-        of data. Keys returned are:
+    deltas : astropy.table.Table
+        Table of results with the following columns:
 
         - exposure: The exposure the pointing information is from
         - target:         `SkyCoord` of the proposed target
@@ -99,16 +98,16 @@ def calc_deltas(exposures):
     for exposure in exposures:
         with dm.open(exposure) as model:
             delta = calc_pointing_deltas(model)
-            logger.info(f'{model}: delta v1={delta.delta_v1} delta refpoint={delta.delta_refpoint}')
+            logger.debug(f'{model}: delta v1={delta.delta_v1} delta refpoint={delta.delta_refpoint}')
 
             targets.append(delta.target)
             v1s.append(delta.v1)
             refpoints.append(delta.refpoint)
-            delta_v1s.append(delta.delta_v1)
-            delta_refpoints.append(delta.delta_refpoint)
+            delta_v1s.append(delta.delta_v1.degree)
+            delta_refpoints.append(delta.delta_refpoint.degree)
 
-    # Return full dictionary
-    deltas = {
+    # Places results into a Table.
+    deltas_dict = {
         'exposure':       exposures,
         'target':         targets,
         'v1':             v1s,
@@ -116,6 +115,7 @@ def calc_deltas(exposures):
         'delta_v1':       delta_v1s,
         'delta_refpoint': delta_refpoints,
     }
+    deltas = Table(deltas_dict)
     return deltas
 
 
@@ -123,16 +123,24 @@ def calc_deltas(exposures):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(
-        description='Compare various pointing information for consistency'
+        description='Compare various pointing information for consistency.'
     )
 
     parser.add_argument(
         'exposures', type=str, nargs='+',
         help='List of JWST data files to examine.'
     )
+    parser.add_argument(
+        '-v', '--verbose', action='count', default=0,
+        help='Increase verbosity. Specifying multiple times adds more output.'
+    )
 
     args = parser.parse_args()
 
-    # Process the file list
+    # Set output detail.
+    level = LogLevels[min(len(LogLevels)-1, args.verbose)]
+    logger.setLevel(level)
+
+    # Process the file list.
     deltas = calc_deltas(args.exposures)
-    logger.info(f'Deltas = {deltas}')
+    ascii.write(deltas, format='ecsv')
