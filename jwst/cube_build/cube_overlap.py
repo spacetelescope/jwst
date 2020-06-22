@@ -456,13 +456,13 @@ def match_det2cube(instrument,
     #index_bad2 = np.isnan(a2)
     #index_bad3 = np.isnan(a3)
     #index_bad4 = np.isnan(a4)
-    
-    # on the edge out of bounds 
+
+    # on the edge out of bounds
     index_good2 = ~np.isnan(a2)
     index_good3 = ~np.isnan(a3)
     index_good4 = ~np.isnan(a4)
 
-    # we need the cases of only all corners valid numbers 
+    # we need the cases of only all corners valid numbers
     good = np.where(index_good2 & index_good3 & index_good4)
 
     a1 = a1[good]
