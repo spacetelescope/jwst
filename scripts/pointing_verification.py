@@ -67,7 +67,7 @@ def calc_pointing_deltas(model):
 
 
 def calc_deltas(exposures):
-    """Create dictionary of pointing deltas
+    """Create table of pointing deltas
 
     Parameters
     ----------
