@@ -12,8 +12,7 @@ Examples
 """
 import argparse
 import logging
-
-from astropy.io import ascii
+from sys import stdout
 
 from jwst.lib import pointing_summary
 
@@ -27,12 +26,16 @@ LogLevels = [logging.WARNING, logging.INFO, logging.DEBUG]
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(
-        description='Compare various pointing information for consistency.'
+        description='Summarize various pointing information in a table.'
     )
 
     parser.add_argument(
         'exposures', type=str, nargs='+',
         help='List of JWST data files to examine.'
+    )
+    parser.add_argument(
+        '-o', '--output', type=argparse.FileType('w'), default=stdout,
+        help='File to write summary table to. Default is standard output.'
     )
     parser.add_argument(
         '-v', '--verbose', action='count', default=0,
@@ -48,4 +51,5 @@ if __name__ == '__main__':
     # Process the file list.
     logger.info('Starting pointing summary.')
     deltas = pointing_summary.calc_deltas(args.exposures)
-    ascii.write(deltas, format='ecsv')
+    deltas.write(args.output, format='ascii.ecsv')
+    logger.info('........Summary completed.')
