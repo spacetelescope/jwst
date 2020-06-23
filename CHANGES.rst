@@ -16,6 +16,10 @@ associations
 
 - Update diagrams to change sloper to detector1. [#4986]
 
+  barshadow
+---------
+- Correct bar shadow parity bug for yslit. [#5095]
+
 combine_1d
 ----------
 
