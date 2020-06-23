@@ -3,6 +3,30 @@
 Review contents of a set of given models for pointing information.
 Compare the calculated V1 and REFPOINT pointing with the proposed
 TARGET pointing.
+
+Examples
+--------
+>>> from jwst.datamodels import ImageModel
+>>> im = ImageModel()
+>>> im.meta.target.ra       =  90.75541666666666
+>>> im.meta.target.dec      = -66.56055555555554
+>>> im.meta.pointing.ra_v1  =  91.08142004561715
+>>> im.meta.pointing.dec_v1 = -66.60547868904696
+>>> im.meta.wcsinfo.ra_ref  =  90.70377653291781
+>>> im.meta.wcsinfo.dec_ref = -66.59540223936895
+>>> calc_pointing_deltas(im)
+    Delta(target=<SkyCoord (ICRS): (ra, dec) in deg
+        (90.75541667, -66.56055556)>, v1=<SkyCoord (ICRS): (ra, dec) in deg
+        (91.08142005, -66.60547869)>, refpoint=<SkyCoord (ICRS): (ra, dec) in deg
+        (90.70377653, -66.59540224)>, delta_v1=<Angle 0.13712727 deg>, delta_refpoint=<Angle 0.04044315 deg>)
+
+>>> calc_deltas([im])
+    <Table length=1>
+      exposure                  target                ...    delta_refpoint
+                               deg,deg                ...
+       object                   object                ...       float64
+    ------------ ------------------------------------ ... -------------------
+    <ImageModel> 90.75541666666666,-66.56055555555554 ... 0.04044314761499765
 """
 from collections import namedtuple
 import logging
