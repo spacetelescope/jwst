@@ -5,6 +5,8 @@ import argparse
 import logging
 from sys import stdout
 
+from astropy.table import Table
+
 from jwst.lib import v1_calculate
 
 log_handler = logging.StreamHandler()
@@ -41,6 +43,15 @@ if __name__ == '__main__':
 
     # Process the file list.
     logger.info('Starting V1 calculation...')
-    deltas = v1_calculate.v1_calculate_from_models(args.exposures)
-    deltas.write(args.output, format='ascii.ecsv')
+    v1s = v1_calculate.v1_calculate_from_models(args.exposures)
+
+    # Reformat table to be more readable:
+    #     Ensure time is in a readable format.
+    #     Separate out the V1 information.
+    ras, decs, pa_v3s = list(map(list, zip(*v1s['v1'])))
+    formatted = Table(
+        [v1s['source'], v1s['obstime'].isot, ras, decs, pa_v3s],
+        names=('source', 'obstime', 'RA', 'DEC', 'PA_V3')
+    )
+    formatted.write(args.output, format='ascii.ecsv')
     logger.info('...V1 calculation completed.')

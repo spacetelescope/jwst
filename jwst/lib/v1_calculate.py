@@ -6,6 +6,8 @@ import logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+from astropy.table import Table
+
 import jwst.datamodels as dm
 import jwst.lib.set_telescope_pointing as stp
 
@@ -29,7 +31,7 @@ def v1_calculate_from_models(sources, **calc_wcs_from_time_kwargs):
     """
     # Initialize structures.
     v1_dict = defaultdict(list)
-    siaf = stp.SIAF(v2_ref=0., v3_ref = 0., v3yangle = 0., vparity = 1.)
+    siaf = stp.SIAF(v2_ref=0., v3_ref=0., v3yangle=0., vparity=1.)
 
     # Calculate V1 for all sources.
     for source in sources:
@@ -37,7 +39,13 @@ def v1_calculate_from_models(sources, **calc_wcs_from_time_kwargs):
             obsstart = model.meta.exposure.start_time
             obsend = model.meta.exposure.end_time
 
-            _, vinfos = stp.calc_wcs_from_time(obsstart, obsend, siaf=siaf, **calc_wcs_from_time_kwargs)
+            obstimes, _, vinfos = stp.calc_wcs_over_time(
+                obsstart, obsend, siaf=siaf, **calc_wcs_from_time_kwargs
+            )
+        sources = [source]*len(obstimes)
+        v1_dict['source'] += sources
+        v1_dict['obstime'] += obstimes
+        v1_dict['v1'] += vinfos
 
     # Format and return.
     v1_table = Table(v1_dict)
