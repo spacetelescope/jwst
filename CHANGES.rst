@@ -16,6 +16,15 @@ associations
 
 - Update diagrams to change sloper to detector1. [#4986]
 
+barshadow
+---------
+- Correct bar shadow parity bug for yslit. [#5095]
+
+combine_1d
+----------
+
+- Only warn when there are degenerate spectrum in combining [#5037]
+
 datamodels
 ----------
 
@@ -29,6 +38,11 @@ datamodels
 
 extract_1d
 ----------
+- rechecks the input model container in run_extract1d to select the correct processing [#5076]
+
+extract_2d
+----------
+- checks subwcs and new_slit variables exist before trying to delete them [#5093]
 
 coron
 -----
@@ -42,6 +56,12 @@ master_background
 
 - Fix open files bug [#4995]
 
+pathloss
+--------
+- fix bug in NIRSpec IFU data that causes valid pixel dq flags to set to 
+  NON-SCIENCE in the region of an overlapping bounding box slice [#5047]
+  
+
 pipeline
 --------
 
@@ -52,6 +72,11 @@ pipeline
 
 - Fix open files bug in ``get_config_from_reference`` class method, and in
   ``Spec2Pipeline``, ``Spec3Pipeline`` and ``tso3``. [#4995]
+
+photom
+------
+- fix bug in NIRSpec IFU data that causes valid pixel dq flags to set to 
+  NON-SCIENCE in the region of an overlapping bounding box slice [#5047]
 
 ramp_fitting
 ------------
@@ -741,6 +766,8 @@ associations
 
 barshadow
 ---------
+
+- Update barshadow position [#3897]
 
 - Unit tests were added. [#3930]
 

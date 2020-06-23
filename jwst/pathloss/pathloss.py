@@ -333,12 +333,11 @@ def do_correction(input_model, pathloss_model):
         for slice in NIRSPEC_IFU_SLICES:
             slice_wcs = nirspec.nrs_wcs_set_input(input_model, slice)
             x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
-            xmin = int(x.min())
-            xmax = int(x.max())
-            ymin = int(y.min())
-            ymax = int(y.max())
             ra, dec, wavelength = slice_wcs(x, y)
-            wavelength_array[ymin:ymax+1, xmin:xmax+1] = wavelength
+            valid = ~np.isnan(wavelength)
+            x = x[valid]
+            y = y[valid]
+            wavelength_array[y.astype(int), x.astype(int)] = wavelength[valid]
 
         # Compute the pathloss 2D correction
         if is_pointsource(input_model.meta.target.source_type):

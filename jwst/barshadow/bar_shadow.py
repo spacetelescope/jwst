@@ -89,7 +89,7 @@ def do_correction(input_model, barshadow_model):
                 # shutter_status has an index of shadow.shape[0] - shutter_height.  Each subsequent
                 # shutter center has an index shutter_height greater.
                 index_of_fiducial_in_array = shadow.shape[0] - shutter_height * (1 + index_of_fiducial)
-                yrow = index_of_fiducial_in_array - yslit * shutter_height
+                yrow = index_of_fiducial_in_array + yslit * shutter_height
                 wcol = (wavelength - w0)/wave_increment
 
                 # Interpolate the bar shadow correction for non-Nan pixels

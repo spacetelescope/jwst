@@ -195,7 +195,6 @@ class DataSet():
 
                 # Get the conversion factor from the PHOTMJ column
                 conv_factor = tabdata['photmj']
-
                 # Populate the photometry keywords
                 self.input.meta.photometry.conversion_megajanskys = \
                     conv_factor
@@ -234,13 +233,10 @@ class DataSet():
                 # Compute relative sensitivity for each pixel based
                 # on its wavelength
                 sens2d = np.interp(wave2d, waves, relresps)
-
                 # Include the scalar conversion factor
                 sens2d *= conv_factor
-
                 # Divide by pixel area
                 sens2d /= area2d
-
                 # Reset NON_SCIENCE pixels to 1 in sens2d array and flag
                 # them in the science data DQ array
                 where_dq = \
@@ -541,31 +537,28 @@ class DataSet():
 
             # Get the world coords for all pixels in this slice
             coords = ifu_wcs(x, y)
-
-            # Pull out the wavelengths only
+            dq = dqmap[y.astype(int),x.astype(int)]
             wl = coords[2]
-            nan_flag = np.isnan(wl)
-            good_flag = np.logical_not(nan_flag)
-            if wl[good_flag].max() < microns_100:
+            # pull out the valid wavelengths and reset other array to not include
+            # nan values
+            valid = ~np.isnan(wl)
+            wl = wl[valid]
+            dq = dq[valid]
+            x = x[valid]
+            y = y[valid]
+            dq[:] = 0
+
+            if wl.max() < microns_100:
                 log.info("Wavelengths in WCS table appear to be in meters")
 
-            # Set NaNs to a harmless value, but don't modify nan_flag.
-            wl[nan_flag] = 0.
-
-            # Mark pixels with no wavelength as non-science
-            dq = np.zeros_like(wl)
-            dq[nan_flag] = dqflags.pixel['NON_SCIENCE']
             dqmap[y.astype(int), x.astype(int)] = dq
-
             # Insert the wavelength values for this slice into the
             # whole image array
             wave2d[y.astype(int), x.astype(int)] = wl
-
             # Insert the pixel area value for this slice into the
             # whole image array
             ar = np.ones_like(wl)
-            ar[:, :] = area_data[np.where(area_data['slice_id'] == k)]['pixarea'][0]
-            ar[nan_flag] = 1.
+            ar[:] = area_data[np.where(area_data['slice_id'] == k)]['pixarea'][0]
             area2d[y.astype(int), x.astype(int)] = ar
 
         return wave2d, area2d, dqmap

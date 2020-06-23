@@ -1,11 +1,11 @@
 import pytest
 import numpy as np
-from astropy.io import fits
 
 from jwst.ramp_fitting.ramp_fit import ramp_fit
 from jwst.datamodels import dqflags
 from jwst.datamodels import RampModel
 from jwst.datamodels import GainModel, ReadnoiseModel
+
 
 # single group intergrations fail in the GLS fitting
 # so, keep the two method test separate and mark GLS test as
@@ -18,12 +18,14 @@ def test_one_group_small_buffer_fit_ols():
     slopes = ramp_fit(model1, 512, True, rnModel, gain, 'OLS', 'optimal', 'none')
     np.testing.assert_allclose(slopes[0].data[50, 50],10.0, 1e-6)
 
+    
 def test_drop_frames1_not_set():
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=1,gain=1,readnoise=10)
     model1.data[0, 0, 50, 50] = 10.0
     model1.meta.exposure.drop_frames1 = None
     slopes = ramp_fit(model1, 512, True, rnModel, gain, 'OLS', 'optimal', 'none')
     np.testing.assert_allclose(slopes[0].data[50, 50],10.0, 1e-6)
+
 
 @pytest.mark.skip(reason="GLS code does not [yet] handle single group integrations.")
 def test_one_group_small_buffer_fit_gls():
@@ -32,12 +34,14 @@ def test_one_group_small_buffer_fit_gls():
     slopes = ramp_fit(model1, 512, True, rnModel, gain, 'GLS', 'optimal', 'none')
     np.testing.assert_allclose(slopes[0].data[50, 50],10.0, 1e-6)
 
+
 def test_one_group_two_ints_fit_ols():
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=1,gain=1,readnoise=10,nints=2)
     model1.data[0, 0, 50, 50] = 10.0
     model1.data[1, 0, 50, 50] = 12.0
     slopes = ramp_fit(model1, 1024*30000., True, rnModel, gain, 'OLS', 'optimal', 'none')
     np.testing.assert_allclose(slopes[0].data[50, 50],11.0, 1e-6)
+
 
 @pytest.mark.skip(reason="GLS does not correctly combine the slopes for integrations into the exposure slope.")
 def test_gls_vs_ols_two_ints_ols():
@@ -54,6 +58,7 @@ def test_gls_vs_ols_two_ints_ols():
     slopes_gls = ramp_fit(model1, 1024 * 30000., True, rnModel, gain, 'GLS', 'optimal', 'none')
     np.testing.assert_allclose(slopes_gls[0].data[50, 50], 150.0, 1e-6)
 
+
 def test_multiprocessing():
     nrows =100
     ncols =100
@@ -61,8 +66,8 @@ def test_multiprocessing():
     nints = 3
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups, gain=1, readnoise=10, nints=nints,
                                                           nrows=nrows,
-                                                          ncols = ncols)
-    delta_plane1 = np.zeros((nrows,ncols),dtype=np.float64)
+                                                          ncols=ncols)
+    delta_plane1 = np.zeros((nrows, ncols), dtype=np.float64)
     delta_plane2 = np.zeros((nrows, ncols), dtype=np.float64)
     delta_vec = np.asarray([x/50.0 for x in range(nrows)])
     for i in range(ncols):
@@ -74,26 +79,15 @@ def test_multiprocessing():
         model1.data[1, j + 1, :, :] = model1.data[1, j, :, :] + delta_plane1 + delta_plane2
         model1.data[2, j + 1, :, :] = model1.data[2, j, :, :] + delta_plane1 + delta_plane2
     model1.data = np.round(model1.data + np.random.normal(0, 5, (nints, ngroups, ncols, nrows)))
-    hdu = fits.PrimaryHDU(model1.data)
-    hdu1 = fits.HDUList(hdu)
-    hdu1.writeto('model1.fits', overwrite=True)
+
     slopes, int_model, opt_model, gls_opt_model = ramp_fit(model1, 1024 * 30000., False, rnModel, gain, 'GLS',
                                                            'optimal', 'none')
-
     slopes_multi, int_model_multi, opt_model_multi, gls_opt_model_multi = ramp_fit(model1,
                                 1024 * 30000., False, rnModel, gain, 'GLS', 'optimal', 'half')
-    hdu = fits.PrimaryHDU(slopes.data)
-    hdu1 = fits.HDUList(hdu)
-    hdu1.writeto('out_reg.fits', overwrite=True)
-    hdu = fits.PrimaryHDU(slopes_multi.data)
-    hdu1 = fits.HDUList(hdu)
-    hdu1.writeto('out_multi.fits', overwrite=True)
-    hdu = fits.PrimaryHDU(slopes_multi.data - slopes.data)
-    hdu1 = fits.HDUList(hdu)
-    hdu1.writeto('diff_int.fits', overwrite=True)
-    np.testing.assert_allclose(slopes.data, slopes_multi.data, rtol = 1e-5)
 
-#@pytest.mark.skip(reason="Skip for Travis testing")
+    np.testing.assert_allclose(slopes.data, slopes_multi.data, rtol=1e-5)
+
+
 def test_multiprocessing2():
     nrows =100
     ncols =100
@@ -101,8 +95,8 @@ def test_multiprocessing2():
     nints = 1
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups, gain=1, readnoise=10, nints=nints,
                                                           nrows=nrows,
-                                                          ncols = ncols)
-    delta_plane1 = np.zeros((nrows,ncols),dtype=np.float64)
+                                                          ncols=ncols)
+    delta_plane1 = np.zeros((nrows, ncols), dtype=np.float64)
     delta_plane2 = np.zeros((nrows, ncols), dtype=np.float64)
     delta_vec = np.asarray([x/50.0 for x in range(nrows)])
     for i in range(ncols):
@@ -112,30 +106,13 @@ def test_multiprocessing2():
     for j in range(ngroups-1):
         model1.data[0, j+1, :, :] = model1.data[0, j, :, :] + delta_plane1 + delta_plane2
     model1.data = np.round(model1.data + np.random.normal(0, 5, (nints, ngroups, ncols, nrows)))
-    hdu = fits.PrimaryHDU(model1.data)
-    hdu1 = fits.HDUList(hdu)
-    hdu1.writeto('model1.fits', overwrite=True)
+
     slopes, int_model, opt_model, gls_opt_model = ramp_fit(model1, 1024 * 30000., True, rnModel, gain, 'GLS',
                                                            'optimal', 'none')
-
     slopes_multi, int_model_multi, opt_model_multi, gls_opt_model_multi = ramp_fit(model1,
                                     1024 * 30000., True, rnModel, gain, 'GLS', 'optimal', 'half')
-    hdu = fits.PrimaryHDU(slopes.data)
-    hdu1 = fits.HDUList(hdu)
-    hdu1.writeto('out_reg.fits', overwrite=True)
-    hdu = fits.PrimaryHDU(slopes_multi.data)
-    hdu1 = fits.HDUList(hdu)
-    hdu1.writeto('out_multi.fits', overwrite=True)
-    hdu = fits.PrimaryHDU(slopes_multi.data - slopes.data)
-    hdu1 = fits.HDUList(hdu)
-    hdu1.writeto('diff_int.fits', overwrite=True)
-    hdu = fits.PrimaryHDU(slopes_multi.data /slopes.data)
-    hdu1 = fits.HDUList(hdu)
-    hdu1.writeto('ratio_difference.fits', overwrite=True)
-    np.testing.assert_allclose(slopes.data, slopes_multi.data, rtol = 1e-5)
-#    hdu = fits.PrimaryHDU(model1.data)
-#    hdu1 = fits.HDUList(hdu)
-#    hdu1.writeto('testdata.fits',overwrite=True)
+
+    np.testing.assert_allclose(slopes.data, slopes_multi.data, rtol=1e-5)
 
 
 @pytest.mark.xfail(reason="GLS code does not [yet] handle single group integrations.")
@@ -150,7 +127,6 @@ def test_one_group_two_ints_fit_gls():
 # that both can use the parameterized 'method'
 
 @pytest.mark.parametrize("method", ['OLS', 'GLS']) #don't do GLS to see if it causes hang
-#@pytest.mark.parametrize("method", ['OLS'])
 class TestMethods:
 
     def test_nocrs_noflux(self, method):

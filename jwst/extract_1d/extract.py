@@ -2688,6 +2688,11 @@ def do_extract1d(input_model, ref_dict, smoothing_length=None,
 
     ref_dict = ref_dict_sanity_check(ref_dict)
 
+    was_source_model = False                 # default value
+    if isinstance(input_model, datamodels.SourceModelContainer):
+        log.debug('Input is a SourceModelContainer')
+        was_source_model = True
+
     # Temporarily set "input" to either the first model in a container,
     # or the individual input model, for convenience of retrieving
     # meta attributes in subsequent statements
