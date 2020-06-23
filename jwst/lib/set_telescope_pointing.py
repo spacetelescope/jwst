@@ -1,9 +1,10 @@
 """Set Telescope Pointing from quaternions"""
+from copy import copy
 import logging
 from math import (cos, sin)
 import os.path
 import sqlite3
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 
 from astropy.time import Time
 from scipy.interpolate import interp1d
@@ -1429,44 +1430,37 @@ def all_pointings(mnemonics):
         List of pointings.
     """
     pointings = []
-    for idx in range(len(mnemonics['SA_ZATTEST1'])):
-        values = [
-            mnemonics[mnemonic][idx].value
-            for mnemonic in mnemonics
-        ]
-        if any(values):
-            # The tagged obstime will come from the SA_ZATTEST1 mnemonic
-            # pointing.
-            obstime = mnemonics['SA_ZATTEST1'][idx].obstime
+    filled = fill_mnemonics_chronologically(mnemonics)
+    for obstime, mnemonics_at_time in filled.items():
 
-            # Fill out the matricies
-            q = np.array([
-                mnemonics['SA_ZATTEST1'][idx].value,
-                mnemonics['SA_ZATTEST2'][idx].value,
-                mnemonics['SA_ZATTEST3'][idx].value,
-                mnemonics['SA_ZATTEST4'][idx].value,
-            ])
+        # Fill out the matricies
+        q = np.array([
+            mnemonics_at_time['SA_ZATTEST1'].value,
+            mnemonics_at_time['SA_ZATTEST2'].value,
+            mnemonics_at_time['SA_ZATTEST3'].value,
+            mnemonics_at_time['SA_ZATTEST4'].value,
+        ])
 
-            j2fgs_matrix = np.array([
-                mnemonics['SA_ZRFGS2J11'][idx].value,
-                mnemonics['SA_ZRFGS2J12'][idx].value,
-                mnemonics['SA_ZRFGS2J13'][idx].value,
-                mnemonics['SA_ZRFGS2J21'][idx].value,
-                mnemonics['SA_ZRFGS2J22'][idx].value,
-                mnemonics['SA_ZRFGS2J23'][idx].value,
-                mnemonics['SA_ZRFGS2J31'][idx].value,
-                mnemonics['SA_ZRFGS2J32'][idx].value,
-                mnemonics['SA_ZRFGS2J33'][idx].value,
-            ])
+        j2fgs_matrix = np.array([
+            mnemonics_at_time['SA_ZRFGS2J11'].value,
+            mnemonics_at_time['SA_ZRFGS2J12'].value,
+            mnemonics_at_time['SA_ZRFGS2J13'].value,
+            mnemonics_at_time['SA_ZRFGS2J21'].value,
+            mnemonics_at_time['SA_ZRFGS2J22'].value,
+            mnemonics_at_time['SA_ZRFGS2J23'].value,
+            mnemonics_at_time['SA_ZRFGS2J31'].value,
+            mnemonics_at_time['SA_ZRFGS2J32'].value,
+            mnemonics_at_time['SA_ZRFGS2J33'].value,
+        ])
 
-            fsmcorr = np.array([
-                mnemonics['SA_ZADUCMDX'][idx].value,
-                mnemonics['SA_ZADUCMDY'][idx].value,
+        fsmcorr = np.array([
+            mnemonics_at_time['SA_ZADUCMDX'].value,
+            mnemonics_at_time['SA_ZADUCMDY'].value,
 
-            ])
-            pointing = Pointing(q=q, obstime=obstime, j2fgs_matrix=j2fgs_matrix,
-                                fsmcorr=fsmcorr)
-            pointings.append(pointing)
+        ])
+        pointing = Pointing(q=q, obstime=obstime, j2fgs_matrix=j2fgs_matrix,
+                            fsmcorr=fsmcorr)
+        pointings.append(pointing)
 
     if not len(pointings):
         raise ValueError('No non-zero quanternion found.')
@@ -1589,3 +1583,52 @@ def pointing_from_average(mnemonics):
                         fsmcorr=fsmcorr)
     # That's all folks
     return pointing
+
+
+def fill_mnemonics_chronologically(mnemonics, filled_only=True):
+    """Return time-ordered mnemonic list with progressive values
+
+    The different set of mnemonics used for observatory orientation
+    appear at different cadences. This routine creates a time-ordered dictionary
+    with all the mnemonics for each time found in the engineering. For mnemnonics
+    missing for a particular time, the last previous value is used.
+
+    Parameters
+    ----------
+    mnemonics : {mnemonic: [value[,...]]}
+
+    filled_only : bool
+        Only return a matrix where observation times have all the mnemonics defined.
+
+    Returns
+    -------
+    filled_by_time : {obstime: {mnemonic: value}}
+    """
+    # Collect all information by observation time and order.
+    by_obstime = defaultdict(dict)
+    n_mnemonics = len(mnemonics)
+    for mnemonic, values in mnemonics.items():
+        for value in values:
+            by_obstime[value.obstime][mnemonic] = value
+    by_obstime = sorted(by_obstime.items())
+
+    # Created the filled matrix
+    filled = dict()
+    last_obstime = dict()
+    for obstime, mnemonics_at_time in by_obstime:
+        last_obstime.update(mnemonics_at_time)
+        if len(last_obstime) >= n_mnemonics or not filled_only:
+
+            # Engineering data may be present, but all zeros.
+            # Filter out this situation also.
+            if filled_only:
+                values = [
+                    value.value
+                    for value in last_obstime.values()
+                ]
+                if not any(values):
+                    continue
+
+            filled[obstime] = copy(last_obstime)
+
+    return filled
