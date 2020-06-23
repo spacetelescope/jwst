@@ -1,30 +1,22 @@
-#!/usr/bin/env python
-"""Pointing verification
+"""Pointing Summary
 
-Check for some consistency in exposure files for pointing accuracy.
-Specifically, compare the V1 and Reference RA/DEC to what the intended
-TARG RA/DEC were specified.
-
-Examples
---------
->>> pointing_verification exp1.fits
-
->>> pointing_verification *.fits
+Review contents of a set of given models for pointing information.
+Compare the calculated V1 and REFPOINT pointing with the proposed
+TARGET pointing.
 """
-import argparse
 from collections import namedtuple
 import logging
 
 from astropy.coordinates import SkyCoord
-from astropy.io import ascii
 from astropy.table import Table
 import astropy.units as u
 
 import jwst.datamodels as dm
 
-logger = logging.getLogger('jwst')
-logger.addHandler(logging.StreamHandler())
-LogLevels = [logging.WARNING, logging.INFO, logging.DEBUG]
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
+
+__all__ = ['Delta', 'calc_pointing_deltas', 'calc_deltas']
 
 # Basic delta structure
 Delta = namedtuple('Delta', 'target, v1, refpoint, delta_v1, delta_refpoint')
@@ -117,30 +109,3 @@ def calc_deltas(exposures):
     }
     deltas = Table(deltas_dict)
     return deltas
-
-
-# Begin execution
-if __name__ == '__main__':
-
-    parser = argparse.ArgumentParser(
-        description='Compare various pointing information for consistency.'
-    )
-
-    parser.add_argument(
-        'exposures', type=str, nargs='+',
-        help='List of JWST data files to examine.'
-    )
-    parser.add_argument(
-        '-v', '--verbose', action='count', default=0,
-        help='Increase verbosity. Specifying multiple times adds more output.'
-    )
-
-    args = parser.parse_args()
-
-    # Set output detail.
-    level = LogLevels[min(len(LogLevels)-1, args.verbose)]
-    logger.setLevel(level)
-
-    # Process the file list.
-    deltas = calc_deltas(args.exposures)
-    ascii.write(deltas, format='ecsv')
