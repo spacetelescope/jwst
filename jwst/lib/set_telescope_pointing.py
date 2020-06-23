@@ -552,19 +552,72 @@ def update_s_region(model, siaf):
     update_s_region_keyword(model, footprint)
 
 
-def calc_wcs(pointing, siaf, **transform_kwargs):
+def calc_wcs_over_time(obsstart, obsend, engdb_url=None, tolerance=60, reduce_func=None,
+                       siaf=None, **transform_kwargs):
+    """Calculate V1 and WCS over a time period
+
+    Parameters
+    ----------
+    obsstart, obsend : float
+        MJD observation start/end times
+
+    engdb_url : str or None
+        URL of the engineering telemetry database REST interface.
+
+    tolerance : int
+        If no telemetry can be found during the observation,
+        the time, in seconds, beyond the observation time to
+        search for telemetry.
+
+    reduce_func : func or None
+        Reduction function to use on values.
+        If None, the average pointing is returned.
+
+    siaf : SIAF or None
+        The SIAF transformation. If `None`, a unit transformation is used.
+
+    transform_kwargs : dict
+        Keyword arguments used by matrix calculation routines
+
+    Returns
+    -------
+    obstimes, wcsinfos, vinfos : [], [WCSRef[,...]], [WCSRef[,...]]
+        A 3-tuple is returned with the WCS pointings for
+        the aperture and the V1 axis
+    """
+    # Setup structures
+    obstimes = list()
+    wcsinfos = list()
+    vinfos = list()
+
+    # Calculate WCS
+    pointings = get_pointing(obsstart, obsend, engdb_url=engdb_url,
+                             tolerance=tolerance, reduce_func=reduce_func)
+    if not isinstance(pointings, list):
+        pointings = [pointings]
+    for pointing in pointings:
+        wcsinfo, vinfo = calc_wcs(pointing, siaf=siaf, **transform_kwargs)
+        obstimes.append(pointing.obstime)
+        wcsinfos.append(wcsinfo)
+        vinfos.append(vinfo)
+
+    return obstimes, wcsinfos, vinfos
+
+
+def calc_wcs(pointing, siaf=None, **transform_kwargs):
     """Transform from the given SIAF information and Pointing
     the aperture and V1 wcs
 
     Parameters
     ----------
-    siaf: SIAF
-        The SIAF transformation. See ref:`Notes` for further details
-
-    pointing: Pointing
+    pointing : Pointing
         The telescope pointing. See ref:`Notes` for further details
 
-    transform_kwargs: dict
+    siaf : SIAF or None
+        The SIAF transformation. See ref:`Notes` for further details.
+        If `None`, unit transformation is used.
+
+    transform_kwargs : dict
         Keyword arguments used by matrix calculation routines
 
     Returns
@@ -598,6 +651,8 @@ def calc_wcs(pointing, siaf, **transform_kwargs):
     Parameter fsmcorr are two values provided as a list consisting of:
     [SA_ZADUCMDX, SA_ZADUCMDY]
     """
+    if siaf is None:
+        siaf = SIAF()
 
     # Calculate transforms
     tforms = calc_transforms(pointing, siaf, **transform_kwargs)

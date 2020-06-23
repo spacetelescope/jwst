@@ -29,18 +29,15 @@ def v1_calculate_from_models(sources, **calc_wcs_from_time_kwargs):
     """
     # Initialize structures.
     v1_dict = defaultdict(list)
+    siaf = stp.SIAF(v2_ref=0., v3_ref = 0., v3yangle = 0., vparity = 1.)
 
     # Calculate V1 for all sources.
     for source in sources:
         with dm.open(source) as model:
-            time_start = model.meta.exposure.start_time
-            time_end = model.meta.exposure.end_time
+            obsstart = model.meta.exposure.start_time
+            obsend = model.meta.exposure.end_time
 
-            _, vinfo = stp.calc_wcs_from_time(time_start, time_end, **calc_wcs_from_time_kwargs)
-
-            v1_dict['time_start'].append(time_start)
-            v1_dict['time_end'].append(time_end)
-            v1_dict['vinfo'].append(vinfo)
+            _, vinfos = stp.calc_wcs_from_time(obsstart, obsend, siaf=siaf, **calc_wcs_from_time_kwargs)
 
     # Format and return.
     v1_table = Table(v1_dict)
