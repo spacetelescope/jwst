@@ -8,12 +8,20 @@ from sys import stdout
 from astropy.table import Table
 
 from jwst.lib import v1_calculate
+import jwst.lib.set_telescope_pointing as stp
 
 log_handler = logging.StreamHandler()
 logger = logging.getLogger('jwst.lib.v1_calculate')
 logger.addHandler(log_handler)
 LogLevels = [logging.WARNING, logging.INFO, logging.DEBUG]
 
+# Available reduce functions
+REDUCE_FUNCS_MAPPING = {
+    'all': stp.all_pointings,
+    'first': stp.first_pointing,
+    'average': stp.pointing_from_average
+}
+REDUCE_FUNCS = list(REDUCE_FUNCS_MAPPING.keys())
 
 # Begin execution
 if __name__ == '__main__':
@@ -29,6 +37,13 @@ if __name__ == '__main__':
     parser.add_argument(
         '-o', '--output', type=argparse.FileType('w'), default=stdout,
         help='File to write V1 calculation table to. Default is standard output.'
+    )
+    parser.add_argument(
+        '--pointing', type=str, choices=REDUCE_FUNCS, default='average',
+        help=('Which pointing(s) to use within the specified time interval.'
+              f' Choices: {REDUCE_FUNCS}'
+              ' (default: %(default)s)'
+              )
     )
     parser.add_argument(
         '-v', '--verbose', action='count', default=0,
@@ -50,7 +65,10 @@ if __name__ == '__main__':
 
     # Process the file list.
     logger.info('Starting V1 calculation...')
-    v1s = v1_calculate.v1_calculate_from_models(args.exposures, engdb_url=args.engdb_url)
+    v1s = v1_calculate.v1_calculate_from_models(
+        args.exposures, engdb_url=args.engdb_url,
+        reduce_func=REDUCE_FUNCS_MAPPING[args.pointing]
+    )
 
     # Reformat table to be more readable:
     #     Ensure time is in a readable format.
@@ -58,7 +76,7 @@ if __name__ == '__main__':
     ras, decs, pa_v3s = list(map(list, zip(*v1s['v1'])))
     formatted = Table(
         [v1s['source'], v1s['obstime'].isot, ras, decs, pa_v3s],
-        names=('source', 'obstime', 'RA', 'DEC', 'PA_V3')
+        names=('source', 'obstime', 'ra', 'dec', 'pa_v3')
     )
     formatted.write(args.output, format='ascii.ecsv')
     logger.info('...V1 calculation completed.')
