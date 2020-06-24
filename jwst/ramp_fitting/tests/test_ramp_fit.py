@@ -18,7 +18,7 @@ def test_one_group_small_buffer_fit_ols():
     slopes = ramp_fit(model1, 512, True, rnModel, gain, 'OLS', 'optimal', 'none')
     np.testing.assert_allclose(slopes[0].data[50, 50],10.0, 1e-6)
 
-    
+
 def test_drop_frames1_not_set():
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=1,gain=1,readnoise=10)
     model1.data[0, 0, 50, 50] = 10.0
