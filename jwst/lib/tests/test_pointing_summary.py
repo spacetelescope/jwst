@@ -41,3 +41,13 @@ def test_calc_pointing_deltas(engdb):
     deltas = ps.calc_pointing_deltas(model)
 
     assert truth == str(deltas)
+
+
+def test_calc_deltas(engdb):
+    """Test `calc_deltas` basic running"""
+    model = dm.ImageModel(str(DATA_PATH / 'empty.fits'))
+    deltas = ps.calc_deltas([model])
+
+    truth = Table.read(DATA_PATH / 'calc_deltas_truth.ecsv')
+
+    assert report_diff_values(truth, deltas, fileobj=sys.stderr)
