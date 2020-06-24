@@ -41,3 +41,15 @@ def test_from_models(engdb):
     truth = Table.read(DATA_PATH / 'v1_calc_truth.ecsv')
 
     assert report_diff_values(truth, v1_formatted, fileobj=sys.stderr)
+
+
+def test_over_tiome(engdb):
+    """Test v1_calculate_over_time for basic running"""
+    v1_table = v1c.v1_calculate_over_time(
+        Time(GOOD_STARTTIME).mjd, Time(GOOD_ENDTIME).mjd
+    )
+    v1_formatted = v1c.simplify_table(v1_table)
+
+    truth = Table.read(DATA_PATH / 'v1_time_truth.ecsv')
+
+    assert report_diff_values(truth, v1_formatted, fileobj=sys.stderr)
