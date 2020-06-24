@@ -10,7 +10,7 @@ from astropy.table import Table
 from jwst.lib import v1_calculate
 
 log_handler = logging.StreamHandler()
-logger = logging.getLogger('jwst.lib.pointing_summary')
+logger = logging.getLogger('jwst.lib.v1_calculate')
 logger.addHandler(log_handler)
 LogLevels = [logging.WARNING, logging.INFO, logging.DEBUG]
 
@@ -34,6 +34,13 @@ if __name__ == '__main__':
         '-v', '--verbose', action='count', default=0,
         help='Increase verbosity. Specifying multiple times adds more output.'
     )
+    parser.add_argument(
+        '--engdb-url', type=str, default=None,
+        help=('The engineering database to use. If unspecified, the value'
+              ' of the environment ENG_BASE_URL is used. Otherwise, the production'
+              ' system is used.'
+              )
+    )
 
     args = parser.parse_args()
 
@@ -43,7 +50,7 @@ if __name__ == '__main__':
 
     # Process the file list.
     logger.info('Starting V1 calculation...')
-    v1s = v1_calculate.v1_calculate_from_models(args.exposures)
+    v1s = v1_calculate.v1_calculate_from_models(args.exposures, engdb_url=args.engdb_url)
 
     # Reformat table to be more readable:
     #     Ensure time is in a readable format.
