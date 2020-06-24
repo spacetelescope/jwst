@@ -802,6 +802,7 @@ class IFUCubeData():
         log.info("Number of Single IFU cubes to create = %i" % n)
         this_par1 = self.list_par1[0]  # only one channel is used in this approach
 #        this_par2 = None  # not important for this type of mapping
+        cube_debug = None
 
         for j in range(n):
             log.info("Working on next Single IFU Cube = %i" % (j + 1))
@@ -842,7 +843,9 @@ class IFUCubeData():
                                           rois_pixel, roiw_pixel,
                                           weight_pixel,
                                           softrad_pixel,
-                                          scalerad_pixel)
+                                          scalerad_pixel,
+                                          cube_debug,
+                                          self.debug_file)
 # _______________________________________________________________________
 # shove Flux and iflux in the  final ifucube
             self.find_spaxel_flux()
