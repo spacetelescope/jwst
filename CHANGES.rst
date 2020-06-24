@@ -83,6 +83,8 @@ ramp_fitting
 
 - Add multi-processing capability. [#4815]
 
+- Fix crash when DRPFRMS1 is not set [#5096]
+
 stpipe
 ------
 
