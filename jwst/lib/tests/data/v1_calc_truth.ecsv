@@ -1,0 +1,11 @@
+# %ECSV 0.9
+# ---
+# datatype:
+# - {name: source, datatype: object}
+# - {name: obstime, datatype: string}
+# - {name: ra, datatype: float64}
+# - {name: dec, datatype: float64}
+# - {name: pa_v3, datatype: float64}
+# schema: astropy-2.0
+source obstime ra dec pa_v3
+None 2016-01-18T15:25:23.776 133.3599835511599 -14.886980131752205 -161.3183607231063

@@ -99,13 +99,6 @@ if __name__ == '__main__':
             reduce_func=REDUCE_FUNCS_MAPPING[args.pointing]
         )
 
-    # Reformat table to be more readable:
-    #     Ensure time is in a readable format.
-    #     Separate out the V1 information.
-    ras, decs, pa_v3s = list(map(list, zip(*v1s['v1'])))
-    formatted = Table(
-        [v1s['source'], v1s['obstime'].isot, ras, decs, pa_v3s],
-        names=('source', 'obstime', 'ra', 'dec', 'pa_v3')
-    )
+    formatted = v1_calculate.simplify_table(v1s)
     formatted.write(args.output, format='ascii.ecsv')
     logger.info('...V1 calculation completed.')

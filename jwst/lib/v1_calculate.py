@@ -11,7 +11,7 @@ from astropy.table import Table
 import jwst.datamodels as dm
 import jwst.lib.set_telescope_pointing as stp
 
-__all__ = ['v1_calculate_from_models', 'v1_calculate_over_time']
+__all__ = ['v1_calculate_from_models', 'v1_calculate_over_time', 'simplify_table']
 
 
 def v1_calculate_from_models(sources, **calc_wcs_from_time_kwargs):
@@ -83,3 +83,36 @@ def v1_calculate_over_time(obsstart, obsend, **calc_wcs_from_time_kwargs):
     # Format and return.
     v1_table = Table(v1_dict)
     return v1_table
+
+
+def simplify_table(v1_table):
+    """Convert pure object-based table to ASCII/Human-friendly
+
+    The tables as produced by the `v1_calculate` functions use native objects.
+    For instance, the "obstime" column contains `astopy.time.Time` objects and
+    "v1" is the `jwst.lib.set_telescope_pointing.WCSREF` object
+
+    This routine converts such objects to strings or Python-native builtin objects.
+
+    Parameters
+    ----------
+    v1_table: astropy.table.Table
+        V1 table as produced by `v1_calculate` functions.
+
+    Returns
+    -------
+    formatted: astorpy.table.Table
+        Reformatted table.
+    """
+    if v1_table['source'].dtype == object:
+        source_formatted = [v.meta.filename for v in v1_table['source']]
+    else:
+        source_formatted = v1_table['source']
+    obstime_formatted = v1_table['obstime'].isot
+    ras, decs, pa_v3s = list(map(list, zip(*v1_table['v1'])))
+
+    formatted = Table(
+        [source_formatted, obstime_formatted, ras, decs, pa_v3s],
+        names=('source', 'obstime', 'ra', 'dec', 'pa_v3')
+    )
+    return formatted
