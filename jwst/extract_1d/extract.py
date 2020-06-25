@@ -131,9 +131,16 @@ def load_ref_file(refname: str) -> dict:
     return ref_dict
 
 
-def get_extract_parameters(ref_dict: Union[dict, None], input_model: DataModel, slitname: str, sp_order: int,
-                           meta: MetaNode, smoothing_length: Union[int, None], bkg_order: Union[int, None],
-                           apply_nod_offset: Union[bool, None]) -> dict:
+def get_extract_parameters(
+        ref_dict: Union[dict, None],
+        input_model: DataModel,
+        slitname: str,
+        sp_order: int,
+        meta: MetaNode,
+        smoothing_length: Union[int, None],
+        bkg_order: Union[int, None],
+        apply_nod_offset: Union[bool, None]
+) -> dict:
     """Get reference file values.
 
     Parameters
@@ -362,7 +369,9 @@ def log_initial_parameters(extract_params: dict):
     log.debug(f"bkg_order = {extract_params['bkg_order']}")
 
 
-def get_aperture(im_shape: tuple, wcs: WCS, verbose: bool, extract_params: dict) -> Union[Aperture, dict]:
+def get_aperture(
+        im_shape: tuple, wcs: WCS, verbose: bool, extract_params: dict
+) -> Union[Aperture, dict]:
     """Get the extraction limits xstart, xstop, ystart, ystop.
 
     Parameters
@@ -437,7 +446,9 @@ def aperture_from_ref(extract_params: dict, im_shape: Tuple[int]) -> Aperture:
     return ap_ref
 
 
-def update_from_width(ap_ref: Aperture, extract_width: Union[int, None], direction: int) -> Aperture:
+def update_from_width(
+        ap_ref: Aperture, extract_width: Union[int, None], direction: int
+) -> Aperture:
     """Update XD extraction limits based on extract_width.
 
     If extract_width was specified, that value should override
@@ -498,7 +509,9 @@ def update_from_width(ap_ref: Aperture, extract_width: Union[int, None], directi
     return ap_width
 
 
-def update_from_shape(ap: Aperture, im_shape: Tuple[int]) -> Tuple[Aperture, bool]:
+def update_from_shape(
+        ap: Aperture, im_shape: Tuple[int]
+) -> Tuple[Aperture, bool]:
     """Truncate extraction region based on input image shape.
 
     Parameters
@@ -603,8 +616,13 @@ def aperture_from_wcs(wcs: WCS, verbose: bool) -> Union[NamedTuple, None]:
     return ap_wcs
 
 
-def update_from_wcs(ap_ref: Aperture, ap_wcs: Union[Aperture, None], extract_width: int, direction: int,
-                    verbose: bool) -> Aperture:
+def update_from_wcs(
+        ap_ref: Aperture,
+        ap_wcs: Union[Aperture, None],
+        extract_width: int,
+        direction: int,
+        verbose: bool
+) -> Aperture:
     """Limit the extraction region to the WCS bounding box.
 
     Parameters
@@ -663,7 +681,9 @@ def update_from_wcs(ap_ref: Aperture, ap_wcs: Union[Aperture, None], extract_wid
     return ap
 
 
-def sanity_check_limits(ap_ref: Aperture, ap_wcs: Aperture, verbose: bool) -> bool:
+def sanity_check_limits(
+        ap_ref: Aperture, ap_wcs: Aperture, verbose: bool
+) -> bool:
     """Sanity check.
 
     Parameters
@@ -705,7 +725,9 @@ def sanity_check_limits(ap_ref: Aperture, ap_wcs: Aperture, verbose: bool) -> bo
     return flag
 
 
-def compare_start(start_ref: Union[int, float], start_wcs: Union[int, float]) -> Union[int, float]:
+def compare_start(
+        start_ref: Union[int, float], start_wcs: Union[int, float]
+) -> Union[int, float]:
     """Compare the start limit from the aperture with the WCS lower limit.
 
     Extended summary
@@ -742,7 +764,9 @@ def compare_start(start_ref: Union[int, float], start_wcs: Union[int, float]) ->
     return value
 
 
-def compare_stop(stop_ref: Union[int, float], stop_wcs: Union[int, float]) -> Union[int, float]:
+def compare_stop(
+        stop_ref: Union[int, float], stop_wcs: Union[int, float]
+) -> Union[int, float]:
     """Compare the stop limit from the aperture with the WCS upper limit.
 
     The more restrictive (i.e. smaller) limit is the one upon which the
@@ -913,13 +937,27 @@ class ExtractBase(abc.ABC):
         dither offset.
     """
 
-    def __init__(self, input_model: DataModel, slit: Union[DataModel, None] = None,
-                 ref_image: Union[DataModel, None] = None, dispaxis: int = HORIZONTAL, spectral_order: int = 1,
-                 xstart: int = None, xstop: int = None, ystart: int = None, ystop: int = None,
-                 extract_width: int = None, src_coeff: Union[List[List[float]], None] = None,
-                 bkg_coeff: Union[List[List[float]], None] = None, independent_var: str = "pixel",
-                 smoothing_length: int = 0, bkg_order: int = 0, nod_correction: float = 0.,
-                 subtract_background: Union[bool, None] = None, apply_nod_offset: Union[bool, None] = None):
+    def __init__(
+            self,
+            input_model: DataModel,
+            slit: Union[DataModel, None] = None,
+            ref_image: Union[DataModel, None] = None,
+            dispaxis: int = HORIZONTAL,
+            spectral_order: int = 1,
+            xstart: int = None,
+            xstop: int = None,
+            ystart: int = None,
+            ystop: int = None,
+            extract_width: int = None,
+            src_coeff: Union[List[List[float]], None] = None,
+            bkg_coeff: Union[List[List[float]], None] = None,
+            independent_var: str = "pixel",
+            smoothing_length: int = 0,
+            bkg_order: int = 0,
+            nod_correction: float = 0.,
+            subtract_background: Union[bool, None] = None,
+            apply_nod_offset: Union[bool, None] = None
+    ):
         """
         Parameters
         ----------
@@ -1078,8 +1116,9 @@ class ExtractBase(abc.ABC):
         pass
 
     @staticmethod
-    def get_target_coordinates(input_model: DataModel,
-                               slit: Union[DataModel, None]) -> Tuple[Union[float, None], Union[float, None]]:
+    def get_target_coordinates(
+            input_model: DataModel, slit: Union[DataModel, None]
+    ) -> Tuple[Union[float, None], Union[float, None]]:
         """Get the right ascension and declination of the target.
 
         For MultiSlitModel (or similar) data, each slit has the source
@@ -1119,8 +1158,9 @@ class ExtractBase(abc.ABC):
 
         return targ_ra, targ_dec
 
-    def offset_from_offset(self, input_model: DataModel, slit: DataModel,
-                           verbose: bool) -> Tuple[float, Union[float, None]]:
+    def offset_from_offset(
+            self, input_model: DataModel, slit: DataModel, verbose: bool
+    ) -> Tuple[float, Union[float, None]]:
         """Get nod/dither pixel offset from the target coordinates.
 
         Parameters
@@ -1195,8 +1235,14 @@ class ExtractBase(abc.ABC):
 
         return offset, locn
 
-    def locn_from_wcs(self, input_model: DataModel, slit: Union[DataModel, None], targ_ra: Union[float, None],
-                      targ_dec: Union[float, None], verbose: bool) -> Union[Tuple[int, float, float], None]:
+    def locn_from_wcs(
+            self,
+            input_model: DataModel,
+            slit: Union[DataModel, None],
+            targ_ra: Union[float, None],
+            targ_dec: Union[float, None],
+            verbose: bool
+    ) -> Union[Tuple[int, float, float], None]:
         """Get the location of the spectrum, based on the WCS.
 
         Parameters
@@ -1644,8 +1690,14 @@ class ExtractModel(ExtractBase):
 
         return result
 
-    def extract(self, data: np.ndarray, wl_array: Union[np.ndarray, None],
-                verbose: bool) -> Tuple[float, float, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    def extract(
+            self,
+            data: np.ndarray,
+            wl_array: Union[np.ndarray, None],
+            verbose: bool
+    ) -> Tuple[
+        float, float, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray
+    ]:
         """Do the extraction.
 
         Extended summary
@@ -1856,7 +1908,9 @@ class ImageExtractModel(ExtractBase):
 
         super().__init__(*base_args, **base_kwargs)
 
-    def nominal_locn(self, middle: float, middle_wl: float) -> Union[float, None]:
+    def nominal_locn(
+            self, middle: float, middle_wl: float
+    ) -> Union[float, None]:
         """Find the nominal cross-dispersion location of the target spectrum.
 
         This version is for the case that the reference file is an image.
@@ -1973,8 +2027,11 @@ class ImageExtractModel(ExtractBase):
         log.debug(f"smoothing_length = {self.smoothing_length}")
         log.debug(f"nod_correction = {self.nod_correction}")
 
-    def extract(self, data: np.ndarray, wl_array: np.ndarray,
-                verbose: bool) -> Tuple[float, float, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    def extract(
+            self, data: np.ndarray, wl_array: np.ndarray, verbose: bool
+    ) -> Tuple[
+        float, float, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray
+    ]:
         """
         Do the actual extraction, for the case that the reference file
         is an image.
@@ -2243,7 +2300,9 @@ class ImageExtractModel(ExtractBase):
         return buf
 
     @staticmethod
-    def separate_target_and_background(ref) -> Tuple[np.ndarray, Union[np.ndarray, None]]:
+    def separate_target_and_background(
+            ref
+    ) -> Tuple[np.ndarray, Union[np.ndarray, None]]:
         """Create masks for target and background.
 
         Parameters
@@ -2278,9 +2337,16 @@ class ImageExtractModel(ExtractBase):
         return mask_target, mask_bkg
 
 
-def run_extract1d(input_model: DataModel, refname: str, smoothing_length: Union[int, None], bkg_order: Union[int, None],
-                  log_increment: int, subtract_background: Union[bool, None], apply_nod_offset: Union[bool, None],
-                  was_source_model: bool = False) -> DataModel:
+def run_extract1d(
+        input_model: DataModel,
+        refname: str,
+        smoothing_length: Union[int, None],
+        bkg_order: Union[int, None],
+        log_increment: int,
+        subtract_background: Union[bool, None],
+        apply_nod_offset: Union[bool, None],
+        was_source_model: bool = False
+) -> DataModel:
     """Extract 1-D spectra.
 
     This just reads the reference file (if any) and calls do_extract1d.
@@ -2388,10 +2454,16 @@ def ref_dict_sanity_check(ref_dict: Union[dict, None]) -> Union[dict, None]:
     return ref_dict
 
 
-def do_extract1d(input_model: DataModel, ref_dict: Union[dict, None], smoothing_length: Union[int, None] = None,
-                 bkg_order: Union[int, None] = None, log_increment: int = 50,
-                 subtract_background: Union[int, None] = None, apply_nod_offset: Union[bool, None] = None,
-                 was_source_model: bool = False) -> DataModel:
+def do_extract1d(
+        input_model: DataModel,
+        ref_dict: Union[dict, None],
+        smoothing_length: Union[int, None] = None,
+        bkg_order: Union[int, None] = None,
+        log_increment: int = 50,
+        subtract_background: Union[int, None] = None,
+        apply_nod_offset: Union[bool, None] = None,
+        was_source_model: bool = False
+) -> DataModel:
     """Extract 1-D spectra.
 
     In the pipeline, this function would be called by run_extract1d.
@@ -2974,7 +3046,9 @@ def do_extract1d(input_model: DataModel, ref_dict: Union[dict, None], smoothing_
     return output_model
 
 
-def populate_time_keywords(input_model: DataModel, output_model: DataModel) -> Union[DataModel, None]:
+def populate_time_keywords(
+        input_model: DataModel, output_model: DataModel
+) -> Union[DataModel, None]:
     """Copy the integration times keywords to header keywords.
 
     Parameters
@@ -3194,7 +3268,9 @@ def is_prism(input_model: DataModel) -> bool:
     return prism_mode
 
 
-def copy_keyword_info(slit: SlitModel, slitname: Union[str, None], spec: SpecModel):
+def copy_keyword_info(
+        slit: SlitModel, slitname: Union[str, None], spec: SpecModel
+):
     """Copy metadata from the input to the output spectrum.
 
     Parameters
@@ -3246,9 +3322,22 @@ def copy_keyword_info(slit: SlitModel, slitname: Union[str, None], spec: SpecMod
         spec.shutter_state = slit.shutter_state
 
 
-def extract_one_slit(input_model: DataModel, slit: SlitModel, integ: int, prev_offset: Union[float, str], verbose: bool,
-                     extract_params: dict) -> Tuple[
-    float, float, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, float
+def extract_one_slit(
+        input_model: DataModel,
+        slit: SlitModel,
+        integ: int,
+        prev_offset: Union[float, str],
+        verbose: bool,
+        extract_params: dict
+) -> Tuple[
+    float,
+    float,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    np.ndarray,
+    float
 ]:
     """Extract data for one slit, or spectral order, or plane.
 
@@ -3379,7 +3468,11 @@ def extract_one_slit(input_model: DataModel, slit: SlitModel, integ: int, prev_o
     return ra, dec, wavelength, temp_flux, background, npixels, dq, offset
 
 
-def replace_bad_values(data: np.ndarray, input_dq: Union[np.ndarray, None], wl_array: np.ndarray) -> np.ndarray:
+def replace_bad_values(
+        data: np.ndarray,
+        input_dq: Union[np.ndarray, None],
+        wl_array: np.ndarray
+) -> np.ndarray:
     """Replace values flagged with DO_NOT_USE or that have NaN wavelengths.
 
     Parameters
@@ -3419,9 +3512,14 @@ def replace_bad_values(data: np.ndarray, input_dq: Union[np.ndarray, None], wl_a
     return data
 
 
-def nans_at_endpoints(wavelength: np.ndarray, temp_flux: np.ndarray, background: np.ndarray, npixels: np.ndarray,
-                      dq: np.ndarray,
-                      verbose: bool) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+def nans_at_endpoints(
+        wavelength: np.ndarray,
+        temp_flux: np.ndarray,
+        background: np.ndarray,
+        npixels: np.ndarray,
+        dq: np.ndarray,
+        verbose: bool
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Flag NaNs in the wavelength array.
 
     Extended summary
