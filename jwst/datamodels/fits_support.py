@@ -369,8 +369,8 @@ def _save_extra_fits(hdulist, tree):
                 hdu.header.append((key, val, comment), end=True)
 
     # Remove extra_fits so it is not written to the asdf extension
-    if 'extra_fits' in tree:
-        del tree['extra_fits']
+    # if 'extra_fits' in tree:
+    #    del tree['extra_fits']
 
 
 def _save_history(hdulist, tree):
