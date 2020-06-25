@@ -3,13 +3,13 @@
 from collections import defaultdict
 import logging
 
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
-
 from astropy.table import Table
 
-import jwst.datamodels as dm
-import jwst.lib.set_telescope_pointing as stp
+from . import set_telescope_pointing as stp
+from .. import datamodels as dm
+
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 __all__ = ['v1_calculate_from_models', 'v1_calculate_over_time', 'simplify_table']
 
