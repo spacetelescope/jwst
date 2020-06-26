@@ -2620,7 +2620,10 @@ def run_extract1d(input_model, extract_ref_name, smoothing_length, bkg_order, lo
     apcorr_ref_model = None
 
     if apcorr_ref_name is not None or apcorr_ref_name != 'N/A':
-        apcorr_ref_model = open_apcorr_ref(apcorr_ref_name, input_model.meta.exposure.type)
+        try:
+            apcorr_ref_model = open_apcorr_ref(apcorr_ref_name, input_model.meta.exposure.type)
+        except AttributeError:  # SourceModelContainers don't have exposure node
+            apcorr_ref_model = open_apcorr_ref(apcorr_ref_name, input_model[0].meta.exposure.type)
 
     # This item is a flag to let us know that do_extract1d was called
     # from run_extract1d; that is, we don't expect this key to be present

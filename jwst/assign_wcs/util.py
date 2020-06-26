@@ -108,7 +108,7 @@ def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray], disp_axis: int =
     Returns
     -------
     scale : float
-        Scaling factor for x and y or dispersion direction.
+        Scaling factor for x and y or cross-dispersion direction.
 
     """
     spectral = 'SPECTRAL' in wcs.output_frame.axes_type
@@ -129,7 +129,7 @@ def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray], disp_axis: int =
     xscale = np.abs(coords[0].separation(coords[1]).value)
     yscale = np.abs(coords[0].separation(coords[2]).value)
 
-    if spectral:
+    if spectral:  # Assuming scale doesn't change with wavelength
         # Assuming disp_axis is consistent with DataModel.meta.wcsinfo.dispersion.direction
         return yscale if disp_axis == 1 else xscale
 

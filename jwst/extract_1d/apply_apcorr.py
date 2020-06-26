@@ -56,7 +56,7 @@ class ApCorrBase(abc.ABC):
     size_key = None
 
     def __init__(self, input_model: DataModel, apcorr_table: fits.FITS_rec, sizeunit: str,
-                 location: Tuple[float, float] = None, **match_kwargs):
+                 location: Tuple[float, float, float] = None, **match_kwargs):
         self.correction = None
 
         self.model = input_model
@@ -128,6 +128,7 @@ class ApCorrBase(abc.ABC):
 
     @abc.abstractmethod
     def approximate(self):
+        """Generate an approximate aperture correction function based on input data."""
         pass
 
     def apply(self, spec_table: fits.FITS_rec):
@@ -169,9 +170,26 @@ class ApCorrPhase(ApCorrBase):
 
     def approximate(self):
         """Generate an approximate function for interpolating apcorr values to input wavelength and size."""
-        def _approx_func(wavelength, size, pixel_phase):
+        def _approx_func(wavelength: float, size: float, pixel_phase: float) -> interp2d:
+            """Create a 'custom' approximation function that approximates the aperture correction in two stages based on
+            input data.
+
+            Parameters
+            ----------
+            wavelength : float
+                Input wavelength
+            size : float
+                Input size (In extract.py this would be `n_pixels`)
+            pixel_phase : float
+                Input pixel phase
+
+            Returns
+            -------
+            Aperture correction approximation function that takes wavelength, size, and pixel_phase as inputs.
+
+            """
             # apcorr column data has shape (pixphase, wavelength, size)
-            # Reduce apcorr dimensionality by interpolating in the pixphase dimension first, then size & wavelenght
+            # Reduce apcorr dimensionality by interpolating in the pixphase dimension first, then size & wavelength
             apcorr_pixphase_func = interp1d(self.reference['pixphase'], self.reference['apcorr'])
             size_wl_func = interp1d(self.reference['wavelength'], self.reference['size'])
 
@@ -202,7 +220,7 @@ class ApCorrPhase(ApCorrBase):
             try:
                 correction = self.apcorr_func(row['wavelength'], row['npixels'], self.phase)
             except ValueError:
-                correction = None  # Some input wavelengths might not be supported (especially at the ends of the range
+                correction = None  # Some input wavelengths might not be supported (especially at the ends of the range)
 
             for col in cols_to_correct:
                 if correction:

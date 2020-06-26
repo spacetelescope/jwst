@@ -140,6 +140,11 @@ class Extract1dStep(Step):
                         self.get_reference_file(input_model[0], 'apcorr') if self.apply_apcorr is True else 'N/A'
                     )
 
+                    if apcorr_ref == 'N/A':
+                        self.log.info('APCORR will not be applied.')
+                    else:
+                        self.log.info(f'Using APCORR file {apcorr_ref}.')
+
                     extract_ref = 'N/A'
                     self.log.info('No EXTRACT1D reference file will be used')
 
@@ -166,8 +171,14 @@ class Extract1dStep(Step):
                     for model in input_model:
                         # Get the reference file names
                         extract_ref = self.get_reference_file(model, 'extract1d')
-                        apcorr_ref = self.get_reference_file(model, 'apcorr') if self.apply_apcorr is True else 'N/A'
                         self.log.info(f'Using EXTRACT1D reference file {extract_ref}')
+
+                        apcorr_ref = self.get_reference_file(model, 'apcorr') if self.apply_apcorr is True else 'N/A'
+
+                        if apcorr_ref == 'N/A':
+                            self.log.info('APCORR will not be applied.')
+                        else:
+                            self.log.info(f'Using APCORR file {apcorr_ref}.')
 
                         temp = extract.run_extract1d(
                             model,
@@ -195,6 +206,11 @@ class Extract1dStep(Step):
                     self.log.info(f'Using EXTRACT1D reference file {extract_ref}')
 
                 apcorr_ref = self.get_reference_file(input_model[0], 'apcorr') if self.apply_apcorr is True else 'N/A'
+
+                if apcorr_ref == 'N/A':
+                    self.log.info('APCORR will not be applied.')
+                else:
+                    self.log.info(f'Using APCORR file {apcorr_ref}.')
 
                 result = extract.run_extract1d(
                     input_model[0],
@@ -228,6 +244,11 @@ class Extract1dStep(Step):
                 self.log.info(f'Using EXTRACT1D reference file {extract_ref}')
 
             apcorr_ref = self.get_reference_file(input_model, 'apcorr') if self.apply_apcorr is True else 'N/A'
+
+            if apcorr_ref == 'N/A':
+                self.log.info('APCORR will not be applied.')
+            else:
+                self.log.info(f'Using APCORR file {apcorr_ref}.')
 
             result = extract.run_extract1d(
                 input_model,
