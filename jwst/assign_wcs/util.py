@@ -114,7 +114,7 @@ def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray], disp_axis: int =
     spectral = 'SPECTRAL' in wcs.output_frame.axes_type
 
     if spectral and disp_axis is None:
-        raise ValueError(f'If input WCS is spectral, a disp_axis must be given')
+        raise ValueError('If input WCS is spectral, a disp_axis must be given')
 
     crpix = np.array(wcs.invert(*fiducial))
 
