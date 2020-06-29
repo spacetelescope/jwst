@@ -73,6 +73,9 @@ pipeline
 - Fix open files bug in ``get_config_from_reference`` class method, and in
   ``Spec2Pipeline``, ``Spec3Pipeline`` and ``tso3``. [#4995]
 
+- Update ``calwebb_tso3`` to do more robust checking of input data type.
+  [#5107]
+
 photom
 ------
 - fix bug in NIRSpec IFU data that causes valid pixel dq flags to set to 

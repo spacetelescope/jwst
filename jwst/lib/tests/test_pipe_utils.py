@@ -1,5 +1,4 @@
 """Test utilities"""
-import inspect
 import pytest
 
 import numpy as np
