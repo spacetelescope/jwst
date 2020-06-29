@@ -28,7 +28,7 @@ log.setLevel(logging.DEBUG)
 WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_WFSS', 'NRC_GRISM', 'NRC_TSGRISM']
 """Exposure types to be regarded as wide-field slitless spectroscopy."""
 
-# These values are used to indicate whether the input reference file
+# These values are used to indicate whether the input extract1d reference file
 # (if any) is JSON or IMAGE.
 FILE_TYPE_JSON = "JSON"
 FILE_TYPE_IMAGE = "IMAGE"
@@ -46,7 +46,7 @@ Extended summary
 For full-frame input data, keyword SLTNAME may not be populated, so the
 slit name will be set to this string to indicate that the first slit in
 the reference file should be used.
-A slit name in the reference file can also be ANY, in which case the
+A slit name in the extract1d reference file can also be ANY, in which case the
 reference information for that slit will be regarded as matching any slit
 name from the input data.
 """
@@ -56,7 +56,7 @@ ANY_ORDER = 1000
 
 Extended summary
 ----------------
-If the reference file contains images, keyword SPORDER gives the order
+If the extract1d reference file contains images, keyword SPORDER gives the order
 number of the spectrum that would be extracted using a given image in
 the reference file.
 """
@@ -91,12 +91,12 @@ class InvalidSpectralOrderNumberError(Extract1dError):
 
 
 def open_extract1d_ref(refname):
-    """Open the reference file.
+    """Open the extract1d reference file.
 
     Parameters
     ----------
     refname : str
-        The name of the reference file.  This file is expected to be
+        The name of the extract1d reference file.  This file is expected to be
         either a JSON file giving extraction information, or a file
         containing one or more images that are to be used as masks that
         define the extraction region and optionally background regions.
@@ -104,13 +104,13 @@ def open_extract1d_ref(refname):
     Returns
     -------
     ref_dict : dict
-        If the reference file is in JSON format, ref_dict will be the
+        If the extract1d reference file is in JSON format, ref_dict will be the
         dictionary returned by json.load(), except that the file type
         ('JSON') will also be included with key 'ref_file_type'.
         If the reference file is an image, ref_dict will be a
         dictionary with two keys:  ref_dict['ref_file_type'] = 'IMAGE'
         and ref_dict['ref_model'].  The latter will be the open file
-        handle for the jwst.datamodels object for the reference file.
+        handle for the jwst.datamodels object for the extract1d file.
     """
 
     if refname == "N/A":
@@ -129,7 +129,7 @@ def open_extract1d_ref(refname):
                 fd = datamodels.MultiExtract1dImageModel(refname)
                 ref_dict = {'ref_file_type': FILE_TYPE_IMAGE, 'ref_model': fd}
             except OSError:
-                log.info("The reference file should be JSON or FITS.")
+                log.info("The extract1d reference file should be JSON or FITS.")
                 log.error("Don't know how to read %s.", refname)
                 raise
 
@@ -183,11 +183,11 @@ def get_extract_parameters(ref_dict,
     Parameters
     ----------
     ref_dict : dict or None
-        For a reference file in JSON format, `ref_dict` will be the entire
-        contents of the file.  For a reference image, `ref_dict` will have
+        For an extract1d reference file in JSON format, `ref_dict` will be the entire
+        contents of the file.  For an EXTRACT1D reference image, `ref_dict` will have
         just two entries, 'ref_file_type' (a string) and 'ref_model', a
         JWST data model for a collection of images.  If there is no
-        reference file, `ref_dict` will be None.
+        extract1d reference file, `ref_dict` will be None.
 
     input_model : data model
         This can be either the input science file or one SlitModel out of
@@ -245,7 +245,7 @@ def get_extract_parameters(ref_dict,
     extract_params = {'match': NO_MATCH}        # initial value
 
     if ref_dict is None:
-        # There is no reference file; use "reasonable" default values.
+        # There is no extract1d reference file; use "reasonable" default values.
         extract_params['ref_file_type'] = FILE_TYPE_OTHER
         extract_params['match'] = EXACT
         shape = input_model.data.shape
@@ -337,7 +337,7 @@ def get_extract_parameters(ref_dict,
                     break
 
     elif ref_dict['ref_file_type'] == FILE_TYPE_IMAGE:
-        # Note that we will use the supplied image-format reference file,
+        # Note that we will use the supplied image-format extract1d reference file,
         # without regard for the distinction between point source and
         # extended source.
         extract_params['ref_file_type'] = ref_dict['ref_file_type']
@@ -500,7 +500,7 @@ def update_from_width(ap_ref, extract_width, direction):
     ----------
     ap_ref : namedtuple
         Contains xstart, xstop, ystart, ystop.  These are the initial
-        values as read from the reference file, except that they may
+        values as read from the extract1d reference file, except that they may
         have been truncated at the image borders.
 
     extract_width : int or None
@@ -771,7 +771,7 @@ def compare_start(start_ref, start_wcs):
     Parameters
     ----------
     start_ref : int or float
-        xstart or ystart, as specified by the reference file or the image
+        xstart or ystart, as specified by the extract1d reference file or the image
         size.
 
     start_wcs : int or float
@@ -807,7 +807,7 @@ def compare_stop(stop_ref, stop_wcs):
     Parameters
     ----------
     stop_ref : int or float
-        xstop or ystop, as specified by the reference file or the image
+        xstop or ystop, as specified by the extract1d reference file or the image
         size.
 
     stop_wcs : int or float
@@ -1004,7 +1004,7 @@ class ExtractBase:
             If True, log messages.
 
         ref_file_type : str
-            This indicates whether the reference file (if any) was a JSON
+            This indicates whether the extract1d reference file (if any) was a JSON
             file or an image.
 
         ref_image : data model, or None
@@ -1490,7 +1490,7 @@ class ExtractModel(ExtractBase):
             If True, log messages.
 
         ref_file_type : str
-            This indicates whether the reference file (if any) was a JSON
+            This indicates whether the extract1d reference file (if any) was a JSON
             file or an image.
 
         match : str
@@ -2087,7 +2087,7 @@ class ImageExtractModel(ExtractBase):
             If True, log messages.
 
         ref_file_type : str
-            This indicates whether the reference file (if any) was a JSON
+            This indicates whether the extract1d reference file (if any) was a JSON
             file or an image.
 
         match : str
@@ -2263,7 +2263,7 @@ class ImageExtractModel(ExtractBase):
 
     def extract(self, data, wl_array, verbose):
         """
-        Do the actual extraction, for the case that the reference file
+        Do the actual extraction, for the case that the extract1d reference file
         is an image.
 
         Parameters
@@ -2566,7 +2566,7 @@ def run_extract1d(input_model, extract_ref_name, smoothing_length, bkg_order, lo
                   apply_nod_offset, was_source_model=False, apcorr_ref_name=None):
     """Extract 1-D spectra.
 
-    This just reads the reference file (if any) and calls do_extract1d.
+    This just reads the reference files (if any) and calls do_extract1d.
 
     Parameters
     ----------
@@ -2574,7 +2574,7 @@ def run_extract1d(input_model, extract_ref_name, smoothing_length, bkg_order, lo
         The input science model.
 
     extract_ref_name : str
-        The name of the EXTRACT1D reference file, or "N/A".
+        The name of the extract1d reference file, or "N/A".
 
     smoothing_length : int or None
         Width of a boxcar function for smoothing the background regions.
@@ -2614,7 +2614,7 @@ def run_extract1d(input_model, extract_ref_name, smoothing_length, bkg_order, lo
         A new MultiSpecModel containing the extracted spectra.
 
     """
-    # Read and interpret the reference file.
+    # Read and interpret the extract1d reference file.
     ref_dict = open_extract1d_ref(extract_ref_name)
 
     apcorr_ref_model = None
@@ -2622,7 +2622,7 @@ def run_extract1d(input_model, extract_ref_name, smoothing_length, bkg_order, lo
     if apcorr_ref_name is not None or apcorr_ref_name != 'N/A':
         try:
             apcorr_ref_model = open_apcorr_ref(apcorr_ref_name, input_model.meta.exposure.type)
-        except AttributeError:  # SourceModelContainers don't have exposure node
+        except AttributeError:  # SourceModelContainers don't have exposure nodes
             apcorr_ref_model = open_apcorr_ref(apcorr_ref_name, input_model[0].meta.exposure.type)
 
     # This item is a flag to let us know that do_extract1d was called
@@ -2662,7 +2662,7 @@ def ref_dict_sanity_check(ref_dict):
     Parameters
     ----------
     ref_dict : dict or None
-        The contents of the reference file.
+        The contents of the extract1d reference file.
 
     Returns
     -------
@@ -2675,18 +2675,18 @@ def ref_dict_sanity_check(ref_dict):
     if 'ref_file_type' not in ref_dict:
         # We can make an educated guess as to what this must be.
         if 'ref_model' in ref_dict:
-            log.info("Assuming reference file type is image")
+            log.info("Assuming extract1d reference file type is image")
             ref_dict['ref_file_type'] = FILE_TYPE_IMAGE
         else:
-            log.info("Assuming reference file type is JSON")
+            log.info("Assuming extract1d reference file type is JSON")
             ref_dict['ref_file_type'] = FILE_TYPE_JSON
             if 'apertures' not in ref_dict:
                 raise RuntimeError("Key 'apertures' must be present in "
-                                   "the reference file.")
+                                   "the extract1d reference file.")
             for aper in ref_dict['apertures']:
                 if 'id' not in aper:
                     log.warning("Key 'id' not found in aperture {} "
-                                "in reference file".format(aper))
+                                "in extract1d reference file".format(aper))
 
     return ref_dict
 
@@ -2698,7 +2698,7 @@ def do_extract1d(input_model, extract_ref_dict, apcorr_ref_model=None, smoothing
     In the pipeline, this function would be called by run_extract1d.
     This exists as a separate function to allow a user to call this step
     in a Python script, passing in a dictionary of parameters in order to
-    bypass reading a reference file.
+    bypass reading reference files.
 
     Parameters
     ----------
@@ -2706,7 +2706,7 @@ def do_extract1d(input_model, extract_ref_dict, apcorr_ref_model=None, smoothing
         The input science model.
 
     extract_ref_dict : dict, or None
-        The contents of the reference file, or None in order to use
+        The contents of the extract1d reference file, or None in order to use
         default values.  If `ref_dict` is not None, use key 'ref_file_type'
         to specify whether the parameters are those that could be read
         from a JSON-format reference file
@@ -2743,7 +2743,7 @@ def do_extract1d(input_model, extract_ref_dict, apcorr_ref_model=None, smoothing
         obtained by iterating over a SourceModelContainer.  The default
         is False.
 
-    apcorr_table : `~fits.FITS_rec` or None
+    apcorr_ref_model : `~fits.FITS_rec` or None
         Table of aperture correction values from the APCORR reference file.
 
     Returns
@@ -2754,7 +2754,6 @@ def do_extract1d(input_model, extract_ref_dict, apcorr_ref_model=None, smoothing
 
     extract_ref_dict = ref_dict_sanity_check(extract_ref_dict)
 
-    was_source_model = False                 # default value
     if isinstance(input_model, datamodels.SourceModelContainer):
         log.debug('Input is a SourceModelContainer')
         was_source_model = True
@@ -3338,7 +3337,7 @@ def do_extract1d(input_model, extract_ref_dict, apcorr_ref_model=None, smoothing
     # See output_model.spec[i].meta.wcs instead.
     output_model.meta.wcs = None
 
-    # If the reference file is an image, explicitly close it.
+    # If the extract1d reference file is an image, explicitly close it.
     if extract_ref_dict is not None and 'ref_model' in extract_ref_dict:
         extract_ref_dict['ref_model'].close()
 
@@ -3644,7 +3643,7 @@ def extract_one_slit(input_model, slit, integ, prev_offset, verbose, extract_par
         If True, log more info (extraction parameters, for example).
 
     extract_params : dict
-        Parameters read from the reference file.
+        Parameters read from the extract1d reference file.
 
     Returns
     -------
@@ -3718,11 +3717,11 @@ def extract_one_slit(input_model, slit, integ, prev_offset, verbose, extract_par
     data = replace_bad_values(data, input_dq, wl_array)
 
     if extract_params['ref_file_type'] == FILE_TYPE_IMAGE:
-        # The reference file is an image.
+        # The extract1d reference file is an image.
         extract_model = ImageExtractModel(input_model, slit, verbose, **extract_params)
         ap = None
     else:
-        # If there is a reference file (there doesn't have to be), it's in
+        # If there is an extract1d reference file (there doesn't have to be), it's in
         # JSON format.
         extract_model = ExtractModel(input_model, slit, verbose, **extract_params)
         ap = get_aperture(data.shape, extract_model.wcs,
@@ -3746,7 +3745,7 @@ def extract_one_slit(input_model, slit, integ, prev_offset, verbose, extract_par
     extract_model.nod_correction = offset
 
     # Add the nod/dither offset to the polynomial coefficients, or shift
-    # the reference image (depending on the type of reference file).
+    # the reference image (depending on the type of extract1d reference file).
     extract_model.add_nod_correction(verbose, data.shape)
 
     if verbose:

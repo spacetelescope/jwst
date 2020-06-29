@@ -15,7 +15,7 @@ from . import spec_wcs
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-# These values are used to indicate whether the input reference file
+# These values are used to indicate whether the input extract1d reference file
 # (if any) is JSON or IMAGE.
 FILE_TYPE_JSON = "JSON"
 FILE_TYPE_IMAGE = "IMAGE"
@@ -38,7 +38,7 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
         The input model.
 
     ref_dict : dict
-        The contents of the reference file.
+        The contents of the extract1d reference file.
 
     source_type : string
         "POINT" or "EXTENDED"
@@ -49,7 +49,7 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
         If not None, this parameter overrides the value in the
         extract_1d reference file.
 
-    apcorr_table : ~.fits.FITS_rec or None
+    apcorr_ref_model : ~.fits.FITS_rec or None
         Aperture correction table.
 
     Returns
@@ -179,7 +179,7 @@ def get_extract_parameters(ref_dict, slitname):
     Parameters
     ----------
     ref_dict : dict
-        The contents of the reference file.
+        The contents of the extract1d reference file.
 
     slitname : str
         The name of the slit, or "ANY".
@@ -233,7 +233,7 @@ def get_extract_parameters(ref_dict, slitname):
     else:
         log.error("Reference file type %s not recognized",
                   ref_dict['ref_file_type'])
-        raise RuntimeError("Reference file must be JSON or a FITS image.")
+        raise RuntimeError("extract1d reference file must be JSON or a FITS image.")
 
     return extract_params
 
@@ -538,16 +538,16 @@ def celestial_to_cartesian(ra, dec):
 
 
 def image_extract_ifu(input_model, source_type, extract_params):
-    """Extraction using a reference image.
+    """Extraction using a extract1d reference image.
 
     Extended summary
     ----------------
     One of the requirements for this step is that for an extended target,
     the entire aperture is supposed to be extracted (with no background
-    subtraction).  It doesn't make any sense to use an image reference file
-    to extract the entire aperture; a trivially simple JSON reference file
+    subtraction).  It doesn't make any sense to use an image extract1d reference file
+    to extract the entire aperture; a trivially simple JSON extract1d reference file
     would do.  Therefore, we assume that if the user specified a reference
-    file in image format, the user actually wanted that reference file
+    file in image format, the user actually wanted that extract1d reference file
     to be used, so we will ignore the requirement in this case.
 
     Parameters
@@ -721,8 +721,8 @@ def get_coordinates(input_model, x0, y0):
 
     x0, y0 : float
         The pixel number at which the coordinates should be determined.
-        If the reference file is JSON format, this point will be the
-        nominal center of the image.  For an image reference file this
+        If the extract1d reference file is JSON format, this point will be the
+        nominal center of the image.  For an image extract1d reference file this
         will be the centroid of the pixels that were flagged as source.
 
     Returns
@@ -927,7 +927,7 @@ def shift_ref_image(mask, delta_y, delta_x, fill=0):
     ----------
     mask : ndarray, 2-D or 3-D
         This is either the target mask or the background mask, which was
-        created from an image reference file.
+        created from an image extract1d reference file.
         It is assumed that all pixels in the science data are good.  If
         that is not correct, `shift_ref_image` may be called with a data
         quality array as the first argument, in order to obtain a shifted

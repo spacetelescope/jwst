@@ -54,6 +54,10 @@ class Extract1dStep(Step):
         It also doesn't make sense to apply a nod/dither offset for an
         extended target, so this flag can internally be overridden (set to
         False) for extended targets.
+
+    apply_apcorr : bool
+        Switch to select whether or not to apply an APERTURE correction during
+        the Extract1dStep. Default is True
     """
 
     spec = """
@@ -201,7 +205,7 @@ class Extract1dStep(Step):
                     extract_ref = 'N/A'
                     self.log.info('No EXTRACT1D reference file will be used')
                 else:
-                    # Get the reference file name for the one model in input
+                    # Get the extract1d reference file name for the one model in input
                     extract_ref = self.get_reference_file(input_model[0], 'extract1d')
                     self.log.info(f'Using EXTRACT1D reference file {extract_ref}')
 
@@ -235,7 +239,7 @@ class Extract1dStep(Step):
 
             # Input is a single model, resulting in a single output.
 
-            # Get the reference file name
+            # Get the reference file names
             if input_model.meta.exposure.type in extract.WFSS_EXPTYPES:
                 extract_ref = 'N/A'
                 self.log.info('No EXTRACT1D reference file will be used')
