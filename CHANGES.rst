@@ -56,7 +56,12 @@ master_background
 
 - Fix open files bug [#4995]
 
-pathloss
+outlier_detection
+-----------------
+
+- Fis but in saving intermediate resuls. [#]
+
+  pathloss
 --------
 - fix bug in NIRSpec IFU data that causes valid pixel dq flags to set to 
   NON-SCIENCE in the region of an overlapping bounding box slice [#5047]
