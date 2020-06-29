@@ -36,6 +36,8 @@ datamodels
 
 - Add enum list and default value of 'NONE' for ``meta.instrument.lamp_mode`` [#5022]
 
+- Add TIMEUNIT keyword to schemas. [#5109]
+
 extract_1d
 ----------
 - rechecks the input model container in run_extract1d to select the correct processing [#5076]
