@@ -59,7 +59,7 @@ master_background
 outlier_detection
 -----------------
 
-- Fix outlier_detection bug when saving intermediate resuls. [#5108]
+- Fix outlier_detection bug when saving intermediate results. [#5108]
 
   pathloss
 --------
