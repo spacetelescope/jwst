@@ -134,6 +134,12 @@ allOf:
             default: "UTC"
             fits_keyword: TIMESYS
             fits_hdu: EXTRACT1D
+          time_unit:
+            title: Default unit applicable to all time values
+            type: string
+            default: 's'
+            fits_keyword: TIMEUNIT
+            fits_hdu: EXTRACT1D
           start_time_mjd:
             title: "[d] integration start time in MJD"
             type: number
