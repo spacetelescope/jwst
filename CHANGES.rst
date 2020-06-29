@@ -41,6 +41,7 @@ datamodels
 extract_1d
 ----------
 - rechecks the input model container in run_extract1d to select the correct processing [#5076]
+- implement aperture correction in the Extract1dStep. [#4902]
 
 extract_2d
 ----------
