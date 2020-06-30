@@ -32,10 +32,10 @@ class IFUImageModel(DataModel):
     wavelength : numpy float32 array
          wavelength
 
-    pathloss_ps : numpy float32 array
+    pathloss_point : numpy float32 array
          pathloss correction for point source
 
-    pathloss_un : numpy float32 array
+    pathloss_uniform : numpy float32 array
          pathloss correction for uniform source
 
     area : numpy float32 array

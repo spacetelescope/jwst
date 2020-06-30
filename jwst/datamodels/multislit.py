@@ -49,10 +49,10 @@ class MultiSlitModel(model_base.DataModel):
     slits.items.barshadow : numpy float32 array
          Bar shadow correction
 
-    slits.items.pathloss_ps : numpy float32 array
+    slits.items.pathloss_point : numpy float32 array
          pathloss array for point source
 
-    slits.items.pathloss_un : numpy float32 array
+    slits.items.pathloss_uniform : numpy float32 array
          pathloss array for uniform source
 
     slits.items.area : numpy float32 array

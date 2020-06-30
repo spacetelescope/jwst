@@ -251,8 +251,8 @@ def do_correction(input_model, pathloss_model):
                         slit.var_rnoise /= pathloss_2d**2
                         if slit.var_flat is not None and np.size(slit.var_flat) > 0:
                             slit.var_flat /= pathloss_2d**2
-                        slit.pathloss_ps = pathloss_2d_ps
-                        slit.pathloss_un = pathloss_2d_un
+                        slit.pathloss_point = pathloss_2d_ps
+                        slit.pathloss_uniform = pathloss_2d_un
                     else:
                         log.warning("Source is outside slit. Skipping "
                                     f"pathloss correction for slit {slit_number}")
@@ -330,8 +330,8 @@ def do_correction(input_model, pathloss_model):
                     slit.var_rnoise /= pathloss_2d**2
                     if slit.var_flat is not None and np.size(slit.var_flat) > 0:
                         slit.var_flat /= pathloss_2d**2
-                    slit.pathloss_ps = pathloss_2d_ps
-                    slit.pathloss_un = pathloss_2d_un
+                    slit.pathloss_point = pathloss_2d_ps
+                    slit.pathloss_uniform = pathloss_2d_un
 
                 else:
                     log.warning('Source is outside slit. Skipping '
@@ -403,8 +403,8 @@ def do_correction(input_model, pathloss_model):
         output_model.var_rnoise /= pathloss_2d**2
         if output_model.var_flat is not None and np.size(output_model.var_flat) > 0:
             output_model.var_flat /= pathloss_2d**2
-        output_model.pathloss_ps = pathloss_2d_ps
-        output_model.pathloss_un = pathloss_2d_un
+        output_model.pathloss_point = pathloss_2d_ps
+        output_model.pathloss_uniform = pathloss_2d_un
 
         # This might be useful to other steps
         output_model.wavelength = wavelength_array
@@ -486,7 +486,7 @@ def do_correction(input_model, pathloss_model):
         output_model.var_rnoise /= pathloss_2d**2
         if output_model.var_flat is not None and np.size(output_model.var_flat) > 0:
             output_model.var_flat /= pathloss_2d**2
-        output_model.pathloss_ps = pathloss_2d
+        output_model.pathloss_point = pathloss_2d
 
         # Set step status to complete
         output_model.meta.cal_step.pathloss = 'COMPLETE'

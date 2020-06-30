@@ -67,8 +67,8 @@ class MultiExposureModel(DataModel):
             self.exposures[0].var_flat = init.var_flat
             self.exposures[0].wavelength = init.wavelength
             self.exposures[0].barshadow = init.barshadow
-            self.exposures[0].pathloss_ps = init.pathloss_ps
-            self.exposures[0].pathloss_un = init.pathloss_un
+            self.exposures[0].pathloss_point = init.pathloss_point
+            self.exposures[0].pathloss_uniform = init.pathloss_uniform
             self.exposures[0].area = init.area
             return
 

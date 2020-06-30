@@ -32,10 +32,10 @@ class SlitDataModel(DataModel):
     barshadow : numpy float32 array
          Bar shadow correction
 
-    pathloss_ps : numpy float32 array
+    pathloss_point : numpy float32 array
          pathloss array for point source
 
-    pathloss_un : numpy float32 array
+    pathloss_uniform : numpy float32 array
          pathloss array for uniform source
 
     area : numpy float32 array
@@ -98,10 +98,10 @@ class SlitModel(DataModel):
     barshadow : numpy float32 array
          Bar shadow correction
 
-    pathloss_ps : numpy float32 array
+    pathloss_point : numpy float32 array
          pathloss array for point source
 
-    pathloss_un : numpy float32 array
+    pathloss_uniform : numpy float32 array
          pathloss array for uniform source
 
     area : numpy float32 array
