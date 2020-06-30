@@ -61,6 +61,8 @@ master_background
 outlier_detection
 -----------------
 
+- Set maximum number of images to median filter to 1024, to account for stimage.median limits. [#]
+
 - Fix outlier_detection bug when saving intermediate results. [#5108]
 
   pathloss

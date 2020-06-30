@@ -291,8 +291,16 @@ class OutlierDetection:
         # Compute median of stack of images using `badmasks` to remove
         # low-weight values.  In the future we should use a masked array
         # and np.median
-        median_image = median(resampled_sci, nlow=nlow, nhigh=nhigh,
-                              badmasks=badmasks)
+        max_images_for_median = 1024
+        if len(resampled_sci) > max_images_for_median:
+            log.info("Generating median from the first {} images".format(max_images_for_median))
+            median_image = median(resampled_sci[0:max_images_for_median], nlow=nlow, nhigh=nhigh,
+                                  badmasks=badmasks)
+        else:
+            log.info("Generating median from {} images".format(len(resampled_sci)))
+            median_image = median(resampled_sci, nlow=nlow, nhigh=nhigh,
+                                  badmasks=badmasks)
+
 
         return median_image
 
