@@ -254,11 +254,11 @@ def do_correction(input_model, pathloss_model):
                         slit.pathloss_ps = pathloss_2d_ps
                         slit.pathloss_un = pathloss_2d_un
                     else:
-                        log.warning(f"Source is outside slit. Skipping "
-                                    "pathloss correction for slit {slit_number}")
+                        log.warning("Source is outside slit. Skipping "
+                                    f"pathloss correction for slit {slit_number}")
                 else:
-                    log.warning(f"Cannot find matching pathloss model for slit with"
-                                "{nshutters} shutters")
+                    log.warning("Cannot find matching pathloss model for slit with"
+                                f"{nshutters} shutters")
                     log.warning("Skipping pathloss correction for this slit")
                     continue
             else:
@@ -334,8 +334,8 @@ def do_correction(input_model, pathloss_model):
                     slit.pathloss_un = pathloss_2d_un
 
                 else:
-                    log.warning(f'Source is outside slit. Skipping '
-                                'pathloss correction for slit {slit.name}')
+                    log.warning('Source is outside slit. Skipping '
+                                f'pathloss correction for slit {slit.name}')
             else:
                 log.warning(f'Cannot find matching pathloss model for {slit.name}')
                 log.warning('Skipping pathloss correction for this slit')
@@ -431,8 +431,8 @@ def do_correction(input_model, pathloss_model):
         # Get the pupil wheel position
         pupil_wheel_position = input_model.meta.instrument.pupil_position
         if pupil_wheel_position is None:
-            log.warning(f'Unable to get pupil wheel position from PWCPOS keyword '
-                        'for {input_model.meta.filename}')
+            log.warning('Unable to get pupil wheel position from PWCPOS keyword '
+                        f'for {input_model.meta.filename}')
             log.warning("Pathloss correction skipped")
             output_model.meta.cal_step.pathloss = 'SKIPPED'
             return output_model
@@ -441,8 +441,8 @@ def do_correction(input_model, pathloss_model):
         subarray = input_model.meta.subarray.name
         aperture = get_aperture_from_model(pathloss_model, subarray)
         if aperture is None:
-            log.warning(f'Unable to get Aperture from reference file '
-                        'for subarray {subarray}')
+            log.warning('Unable to get Aperture from reference file '
+                        f'for subarray {subarray}')
             log.warning("Pathloss correction skipped")
             output_model.meta.cal_step.pathloss = 'SKIPPED'
             return output_model
