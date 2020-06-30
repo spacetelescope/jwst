@@ -257,7 +257,7 @@ def get_extract_parameters(
                 if spectral_order == sp_order or spectral_order == ANY:
                     extract_params['match'] = EXACT
                     extract_params['spectral_order'] = sp_order
-                    # Note: extract_params['dispaxis'] is not assigned. This is be done later, possibly slit by slit.
+                    # Note: extract_params['dispaxis'] is not assigned. This is done later, possibly slit by slit.
 
                     if meta.target.source_type == "EXTENDED":
                         log.info("Target is extended, so the entire region will be extracted.")
@@ -435,13 +435,22 @@ def aperture_from_ref(extract_params: dict, im_shape: Tuple[int]) -> Aperture:
     """
     nx = im_shape[-1]
     ny = im_shape[-2]
+    _xstart = 0
+    _xstop = nx - 1
+    _ystart = 0
+    _ystop = ny - 1
 
     xstart = extract_params.get('xstart', 0)
     xstop = extract_params.get('xstop', nx - 1)  # limits are inclusive
     ystart = extract_params.get('ystart', 0)
     ystop = extract_params.get('ystop', ny - 1)
 
-    ap_ref = Aperture(xstart=xstart, xstop=xstop, ystart=ystart, ystop=ystop)
+    ap_ref = Aperture(
+        xstart=xstart if xstart is not None else _xstart,
+        xstop=xstop if xstop is not None else _xstop,
+        ystart=ystart if ystart is not None else _ystart,
+        ystop=ystop if ystop is not None else _ystop
+    )
 
     return ap_ref
 
@@ -566,7 +575,7 @@ def aperture_from_wcs(wcs: WCS, verbose: bool) -> Union[NamedTuple, None]:
 
     Parameters
     ----------
-    wcs : data model ?
+    wcs : WCS
         The world coordinate system interface.
 
     verbose : bool
@@ -956,7 +965,9 @@ class ExtractBase(abc.ABC):
             bkg_order: int = 0,
             nod_correction: float = 0.,
             subtract_background: Union[bool, None] = None,
-            apply_nod_offset: Union[bool, None] = None
+            apply_nod_offset: Union[bool, None] = None,
+            match: Union[str, None] = None,
+            ref_file_type: Union[str, None] = None
     ):
         """
         Parameters
@@ -1040,6 +1051,8 @@ class ExtractBase(abc.ABC):
         self.xstop = xstop
         self.ystart = ystart
         self.ystop = ystop
+        self.match = match
+        self.ref_file_type = ref_file_type
 
         # xstart, xstop, ystart, or ystop may be overridden with src_coeff, they may be limited by the input image size
         # or by the WCS bounding box, or they may be modified if extract_width was specified (because extract_width
@@ -1310,7 +1323,7 @@ class ExtractBase(abc.ABC):
             # Width (height) in the cross-dispersion direction, from the start of the 2-D cutout (or of the full image)
             # to the upper limit of the bounding box.
             # This may be smaller than the full width of the image, but it's all we need to consider.
-            xd_width = round(bb[1][1])  # must be an int
+            xd_width = int(round(bb[1][1]))  # must be an int
             middle = int((bb[0][0] + bb[0][1]) / 2.)  # Middle of the bounding_box in the dispersion direction.
             x = np.empty(xd_width, dtype=np.float64)
             x[:] = float(middle)
@@ -1318,7 +1331,7 @@ class ExtractBase(abc.ABC):
             lower = bb[1][0]
             upper = bb[1][1]
         else:  # dispaxis = VERTICAL
-            xd_width = round(bb[0][1])  # Cross-dispersion total width of bounding box; must be an int
+            xd_width = int(round(bb[0][1]))  # Cross-dispersion total width of bounding box; must be an int
             middle = int((bb[1][0] + bb[1][1]) / 2.)  # Mid-point of width along dispersion direction
             x = np.arange(xd_width, dtype=np.float64)  # 1-D vector of cross-dispersion (x) pixel indices
             y = np.empty(xd_width, dtype=np.float64)  # 1-D vector all set to middle y index
@@ -1571,11 +1584,11 @@ class ExtractModel(ExtractBase):
         self.ystop = ap.ystop
 
         if self.dispaxis == HORIZONTAL:
-            self.xstart = round(self.xstart)
-            self.xstop = round(self.xstop)
+            self.xstart = int(round(self.xstart))
+            self.xstop = int(round(self.xstop))
         else:  # vertical
-            self.ystart = round(self.ystart)
-            self.ystop = round(self.ystop)
+            self.ystart = int(round(self.ystart))
+            self.ystop = int(round(self.ystop))
 
     def log_extraction_parameters(self):
         """Log the updated extraction parameters."""
@@ -1761,10 +1774,10 @@ class ExtractModel(ExtractBase):
         if got_wavelength:
             # We need a 1-D array of wavelengths, one element for each output table row.
             # These are slice limits.
-            sx0 = round(self.xstart)
-            sx1 = round(self.xstop) + 1
-            sy0 = round(self.ystart)
-            sy1 = round(self.ystop) + 1
+            sx0 = int(round(self.xstart))
+            sx1 = int(round(self.xstop)) + 1
+            sy0 = int(round(self.ystart))
+            sy1 = int(round(self.ystop)) + 1
 
             # Convert non-positive values to NaN, to easily ignore them.
             wl = wl_array.copy()  # Don't modify wl_array
@@ -1784,8 +1797,8 @@ class ExtractModel(ExtractBase):
 
         # Used for computing the celestial coordinates.
         if self.dispaxis == HORIZONTAL:
-            slice0 = round(self.xstart)
-            slice1 = round(self.xstop) + 1
+            slice0 = int(round(self.xstart))
+            slice1 = int(round(self.xstop)) + 1
             x_array = np.arange(slice0, slice1, dtype=np.float64)
             y_array = np.empty(x_array.shape, dtype=np.float64)
             y_array.fill((self.ystart + self.ystop) / 2.)
@@ -2602,7 +2615,7 @@ def do_extract1d(
 
             if source_type != 'POINT':
                 apply_nod_offset = False
-                log.warning(
+                log.info(
                     f"SRCTYPE = {source_type}'; correcting for nod/dither offset will only be done for a point source, "
                     f"so apply_nod_offset will be set to False"
                 )
@@ -2741,7 +2754,7 @@ def do_extract1d(
 
         if source_type != 'POINT':
             apply_nod_offset = False
-            log.warning(
+            log.info(
                 f"SRCTYPE = {source_type}'; correcting for nod/dither offset will only be done for a point source, so "
                 f"apply_nod_offset will be set to False"
             )
@@ -3427,14 +3440,14 @@ def extract_one_slit(
     if input_dq.size == 0:
         input_dq = None
 
-    wl_array = get_wavelengths(input_model, exp_type, extract_params['spectral_order'])
+    wl_array = get_wavelengths(input_model if slit is None else slit, exp_type, extract_params['spectral_order'])
     data = replace_bad_values(data, input_dq, wl_array)
 
     if extract_params['ref_file_type'] == FILE_TYPE_IMAGE:  # The reference file is an image.
-        extract_model = ImageExtractModel(input_model, slit, verbose, **extract_params)
+        extract_model = ImageExtractModel(input_model=input_model, slit=slit, verbose=verbose, **extract_params)
     else:
         # If there is a reference file (there doesn't have to be), it's in JSON format.
-        extract_model = ExtractModel(input_model, slit, verbose, **extract_params)
+        extract_model = ExtractModel(input_model=input_model, slit=slit, verbose=verbose, **extract_params)
         ap = get_aperture(data.shape, extract_model.wcs, verbose, extract_params)
         extract_model.update_extraction_limits(ap)
 
