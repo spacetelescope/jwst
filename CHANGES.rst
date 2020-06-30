@@ -63,12 +63,12 @@ outlier_detection
 
 - Fix outlier_detection bug when saving intermediate results. [#5108]
 
-  pathloss
---------
+pathloss
+------------
+
 - fix bug in NIRSpec IFU data that causes valid pixel dq flags to set to 
   NON-SCIENCE in the region of an overlapping bounding box slice [#5047]
   
-
 pipeline
 --------
 
@@ -85,6 +85,7 @@ pipeline
 
 photom
 ------
+
 - fix bug in NIRSpec IFU data that causes valid pixel dq flags to set to 
   NON-SCIENCE in the region of an overlapping bounding box slice [#5047]
 
