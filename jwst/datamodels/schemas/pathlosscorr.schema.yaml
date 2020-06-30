@@ -4,8 +4,13 @@ $schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
 id: "http://stsci.edu/schemas/jwst_datamodel/pathlosscorr.schema"
 type: object
 properties:
-  pathloss:
-    title: Path loss correction
-    fits_hdu: PATHLOSS
+  pathloss_ps:
+    title: Pathloss point source correction
+    fits_hdu: PATHLOSS_PS
+    ndim: 2
+    datatype: float32
+  pathloss_un:
+    title: Pathloss uniformsource correction
+    fits_hdu: PATHLOSS_UN
     ndim: 2
     datatype: float32

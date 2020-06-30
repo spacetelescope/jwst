@@ -37,23 +37,26 @@ class MultiSlitModel(model_base.DataModel):
     slits.items.err : numpy float32 array
          Error array
 
-    slits.items.wavelength : numpy float32 array
-         Wavelength array, corrected for zero-point
-
-    slits.items.barshadow : numpy float32 array
-         Bar shadow correction
-
-    slits.items.area : numpy float32 array
-         Pixel area map array
-
     slits.items.var_poisson : numpy float32 array
          variance due to poisson noise
 
     slits.items.var_rnoise : numpy float32 array
          variance due to read noise
 
-    slits.items.pathloss : numpy float32 array
-         pathloss array
+    slits.items.wavelength : numpy float32 array
+         Wavelength array, corrected for zero-point
+
+    slits.items.barshadow : numpy float32 array
+         Bar shadow correction
+
+    slits.items.pathloss_ps : numpy float32 array
+         pathloss array for point source
+
+    slits.items.pathloss_un : numpy float32 array
+         pathloss array for uniform source
+
+    slits.items.area : numpy float32 array
+         Pixel area map array
     """
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/multislit.schema"
 
