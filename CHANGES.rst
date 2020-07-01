@@ -70,7 +70,7 @@ outlier_detection
 pathloss
 --------
 
-- Fix bug in NIRSpec IFU data that causes valid pixel dq flags to set to 
+- Fix bug in NIRSpec IFU data that causes valid pixel dq flags to set to
   NON-SCIENCE in the region of an overlapping bounding box slice [#5047]
   
 - Update to save both point source and uniform source 2D pathloss correction
@@ -92,7 +92,8 @@ pipeline
 
 photom
 ------
-- fix bug in NIRSpec IFU data that causes valid pixel dq flags to set to
+
+- Fix bug in NIRSpec IFU data that causes valid pixel dq flags to set to
   NON-SCIENCE in the region of an overlapping bounding box slice [#5047]
 
 ramp_fitting
