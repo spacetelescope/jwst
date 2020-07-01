@@ -171,7 +171,7 @@ the output type will consist of either a single slit model or a mutli-slit model
 The multi-slit model is simply an array of multiple slit models, each one
 containing the data and relevant meta data for a particular extracted slit or
 source. A `~jwst.datamodels.MultiSlitModel` product will contain multiple
-tuples of SCI, ERR, DQ, WAVELENGTH, RELSENS, etc. arrays; one for each of the
+tuples of SCI, ERR, DQ, WAVELENGTH, etc. arrays; one for each of the
 extracted slits/sources.
 
 2D resampled data
