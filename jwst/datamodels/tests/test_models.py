@@ -261,7 +261,7 @@ def test_imagemodel():
     dims = (10,10)
     with ImageModel(dims) as dm:
         assert dm.data.shape == dims
-        assert dm.err.shape == dims 
+        assert dm.err.shape == dims
         assert dm.dq.shape == dims
         assert dm.data.mean() == 0.0
         assert dm.err.mean() == 0.0
@@ -270,7 +270,7 @@ def test_imagemodel():
         assert dm.area.shape == dims
         assert dm.pathloss_point.shape == dims
         assert dm.pathloss_uniform.shape == dims
-        
+
 
 def test_multislit():
     with MultiSlitModel() as dm:
