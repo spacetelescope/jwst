@@ -262,11 +262,11 @@ class IFUCubeData():
         xilimit = max( np.abs(xi_min), np.abs(xi_max))
         etalimit = max( np.abs(eta_min), np.abs(eta_max))
 
-        n1a = math.ceil(xilimit/self.cdelt1)
-        n1b = math.ceil(xilimit/ self.cdelt1)
+        n1a = math.ceil(xilimit/self.cdelt1) + 1
+        n1b = math.ceil(xilimit/ self.cdelt1) + 1
 
-        n2a = math.ceil(etalimit / self.cdelt2)
-        n2b = math.ceil(etalimit / self.cdelt2)
+        n2a = math.ceil(etalimit / self.cdelt2) + 1
+        n2b = math.ceil(etalimit / self.cdelt2) + 1
 
         xi_min = 0.0 - (n1a * self.cdelt1) - (self.cdelt1 / 2.0)
         xi_max = (n1b * self.cdelt1) + (self.cdelt1 / 2.0)
