@@ -27,6 +27,20 @@ combine_1d
 
 - Only warn when there are degenerate spectrum in combining [#5037]
 
+
+cube_build
+----------
+
+- change the name of  default types of cubes from ``world`` to ``skyalign`` [#4974]
+
+- added ``ifualign`` cubes to be cubes rotated on sky to align with ifu instrument plane [#4974]
+
+- for MIRI changed ``alpha-beta`` type cubes to ``internal_cal`` [#4974]
+
+- added ability to make NIRSpec ``internal_cal`` ifu cubes aligned with slicer plane [#4974]
+
+- changed default weighting from ``msm`` to ``emsm``
+
 datamodels
 ----------
 
@@ -56,17 +70,6 @@ coron
 - Bad pixel replacment & median smoothing for psf images [#4973]
 
 - Fix bug in creating a polynomial fit used in background extraction. [#4970]
-
-cube_build
-----------
-
-- change the name of  default types of cubes from ``world`` to ``skyalign`` [#4974]
-
-- added ``ifualign`` cubes to be cubes rotated on sky to align with ifu instrument plane [#4974]
-
-- for MIRI changed ``alpha-beta`` type cubes to ``internal_cal`` [#4974]
-
-- added ability to make NIRSpec ``internal_cal`` ifu cubes aligned with slicer plane [#4974]
 
 master_background
 -----------------
