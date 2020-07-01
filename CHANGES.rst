@@ -11,6 +11,8 @@ assign_wcs
 
 - Enabled ``filteroffset`` correction for NIRISS and NIRCAM imaging modes. [#5018, #5027]
 
+- Pass an optional ``input_frame`` parameter in ``assign_wcs.util.wcs_from_footprintss``. [#5120]
+
 associations
 ------------
 
@@ -60,8 +62,14 @@ master_background
 
 - Fix open files bug [#4995]
 
+outlier_detection
+-----------------
+
+- Fix outlier_detection bug when saving intermediate results. [#5108]
+
 pathloss
 --------
+
 - Fix bug in NIRSpec IFU data that causes valid pixel dq flags to set to 
   NON-SCIENCE in the region of an overlapping bounding box slice [#5047]
   
@@ -84,7 +92,7 @@ pipeline
 
 photom
 ------
-- fix bug in NIRSpec IFU data that causes valid pixel dq flags to set to 
+- fix bug in NIRSpec IFU data that causes valid pixel dq flags to set to
   NON-SCIENCE in the region of an overlapping bounding box slice [#5047]
 
 ramp_fitting
@@ -93,6 +101,11 @@ ramp_fitting
 - Add multi-processing capability. [#4815]
 
 - Fix crash when DRPFRMS1 is not set [#5096]
+
+source_catalog
+--------------
+
+- Use ``gwcs.WCS`` instead of FITS WCS. [#5120]
 
 stpipe
 ------
