@@ -11,6 +11,8 @@ assign_wcs
 
 - Enabled ``filteroffset`` correction for NIRISS and NIRCAM imaging modes. [#5018, #5027]
 
+- Pass an optional ``input_frame`` parameter in ``assign_wcs.util.wcs_from_footprintss``. [#5120]
+
 associations
 ------------
 
@@ -38,6 +40,8 @@ datamodels
 
 - Add TIMEUNIT keyword to schemas. [#5109]
 
+- Split ``pathloss`` object into ``pathloss_ps`` and ``pathloss_un``. [#5112]
+
 extract_1d
 ----------
 - rechecks the input model container in run_extract1d to select the correct processing [#5076]
@@ -64,11 +68,14 @@ outlier_detection
 - Fix outlier_detection bug when saving intermediate results. [#5108]
 
 pathloss
-------------
+--------
 
-- fix bug in NIRSpec IFU data that causes valid pixel dq flags to set to 
+- Fix bug in NIRSpec IFU data that causes valid pixel dq flags to set to
   NON-SCIENCE in the region of an overlapping bounding box slice [#5047]
   
+- Update to save both point source and uniform source 2D pathloss correction
+  arrays to output. [#5112]
+
 pipeline
 --------
 
@@ -86,7 +93,7 @@ pipeline
 photom
 ------
 
-- fix bug in NIRSpec IFU data that causes valid pixel dq flags to set to 
+- Fix bug in NIRSpec IFU data that causes valid pixel dq flags to set to
   NON-SCIENCE in the region of an overlapping bounding box slice [#5047]
 
 ramp_fitting
@@ -95,6 +102,11 @@ ramp_fitting
 - Add multi-processing capability. [#4815]
 
 - Fix crash when DRPFRMS1 is not set [#5096]
+
+source_catalog
+--------------
+
+- Use ``gwcs.WCS`` instead of FITS WCS. [#5120]
 
 stpipe
 ------

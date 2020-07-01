@@ -141,7 +141,6 @@ def test_open():
             assert isinstance(dm, QuadModel)
 
 
-
 def test_open_warning():
     with warnings.catch_warnings(record=True) as warners:
         # Cause all warnings to always be triggered.
@@ -258,6 +257,21 @@ def test_default_value_anyof_schema():
         assert val.instance == {}
 
 
+def test_imagemodel():
+    dims = (10,10)
+    with ImageModel(dims) as dm:
+        assert dm.data.shape == dims
+        assert dm.err.shape == dims
+        assert dm.dq.shape == dims
+        assert dm.data.mean() == 0.0
+        assert dm.err.mean() == 0.0
+        assert dm.dq.mean() == 0.0
+        assert dm.zeroframe.shape == dims
+        assert dm.area.shape == dims
+        assert dm.pathloss_point.shape == dims
+        assert dm.pathloss_uniform.shape == dims
+
+
 def test_multislit():
     with MultiSlitModel() as dm:
         dm.slits.append(dm.slits.item())
@@ -265,6 +279,10 @@ def test_multislit():
         slit.data = np.random.rand(5, 5)
         slit.dm = np.random.rand(5, 5)
         slit.err = np.random.rand(5, 5)
+        assert slit.wavelength.shape == (0,0)
+        assert slit.pathloss_point.shape == (0,0)
+        assert slit.pathloss_uniform.shape == (0,0)
+        assert slit.barshadow.shape == (0,0)
 
 
 def test_secondary_shapes():
