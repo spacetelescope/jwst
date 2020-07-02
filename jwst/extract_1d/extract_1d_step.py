@@ -122,7 +122,7 @@ class Extract1dStep(Step):
             self.log.debug('Input is a SlitModel')
         else:
             self.log.error(f'Input is a {str(type(input_model))}, ')
-            self.log.error('which was not expected for extract_1d.')
+            self.log.error('which was not expected for extract_1d')
             self.log.error('extract_1d will be skipped.')
             input_model.meta.cal_step.extract_1d = 'SKIPPED'
             return input_model
@@ -145,9 +145,10 @@ class Extract1dStep(Step):
                     )
 
                     if apcorr_ref == 'N/A':
-                        self.log.info('APCORR will not be applied.')
+                        self.log.info('APCORR reference file name is "N/A"')
+                        self.log.info('APCORR will NOT be applied')
                     else:
-                        self.log.info(f'Using APCORR file {apcorr_ref}.')
+                        self.log.info(f'Using APCORR file {apcorr_ref}')
 
                     extract_ref = 'N/A'
                     self.log.info('No EXTRACT1D reference file will be used')
@@ -180,9 +181,10 @@ class Extract1dStep(Step):
                         apcorr_ref = self.get_reference_file(model, 'apcorr') if self.apply_apcorr is True else 'N/A'
 
                         if apcorr_ref == 'N/A':
-                            self.log.info('APCORR will not be applied.')
+                            self.log.info('APCORR reference file name is "N/A"')
+                            self.log.info('APCORR will NOT be applied')
                         else:
-                            self.log.info(f'Using APCORR file {apcorr_ref}.')
+                            self.log.info(f'Using APCORR file {apcorr_ref}')
 
                         temp = extract.run_extract1d(
                             model,
@@ -212,9 +214,10 @@ class Extract1dStep(Step):
                 apcorr_ref = self.get_reference_file(input_model[0], 'apcorr') if self.apply_apcorr is True else 'N/A'
 
                 if apcorr_ref == 'N/A':
-                    self.log.info('APCORR will not be applied.')
+                    self.log.info('APCORR reference file name is "N/A"')
+                    self.log.info('APCORR will NOT be applied')
                 else:
-                    self.log.info(f'Using APCORR file {apcorr_ref}.')
+                    self.log.info(f'Using APCORR file {apcorr_ref}')
 
                 result = extract.run_extract1d(
                     input_model[0],
@@ -250,9 +253,10 @@ class Extract1dStep(Step):
             apcorr_ref = self.get_reference_file(input_model, 'apcorr') if self.apply_apcorr is True else 'N/A'
 
             if apcorr_ref == 'N/A':
-                self.log.info('APCORR will not be applied.')
+                self.log.info('APCORR reference file name is "N/A"')
+                self.log.info('APCORR will NOT be applied')
             else:
-                self.log.info(f'Using APCORR file {apcorr_ref}.')
+                self.log.info(f'Using APCORR file {apcorr_ref}')
 
             result = extract.run_extract1d(
                 input_model,

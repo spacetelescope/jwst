@@ -2619,7 +2619,7 @@ def run_extract1d(input_model, extract_ref_name, smoothing_length, bkg_order, lo
 
     apcorr_ref_model = None
 
-    if apcorr_ref_name is not None or apcorr_ref_name != 'N/A':
+    if apcorr_ref_name is not None and apcorr_ref_name != 'N/A':
         try:
             apcorr_ref_model = open_apcorr_ref(apcorr_ref_name, input_model.meta.exposure.type)
         except AttributeError:  # SourceModelContainers don't have exposure nodes
@@ -2830,6 +2830,7 @@ def do_extract1d(input_model, extract_ref_dict, apcorr_ref_model=None, smoothing
         # Loop over the slits in the input model
         for slit in slits:
             log.info(f'Working on slit {slit.name}')
+            slitname = slit.name
             prev_offset = OFFSET_NOT_ASSIGNED_YET
 
             if np.size(slit.data) <= 0:
@@ -2960,8 +2961,12 @@ def do_extract1d(input_model, extract_ref_dict, apcorr_ref_model=None, smoothing
                 else:
                     wl = wavelength.min()
 
+                match_kwargs = {'location': (ra, dec, wl)}
+                if exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
+                    match_kwargs['slit'] = slitname
+
                 apcorr = select_apcorr(input_model)(
-                    input_model, apcorr_ref_model.apcorr_table, apcorr_ref_model.sizeunit, location=(ra, dec, wl)
+                    input_model, apcorr_ref_model.apcorr_table, apcorr_ref_model.sizeunit, **match_kwargs
                 )
                 apcorr.apply(spec.spec_table)
 
@@ -3274,7 +3279,7 @@ def do_extract1d(input_model, extract_ref_dict, apcorr_ref_model=None, smoothing
                             wl = wavelength.min()
 
                         match_kwargs = {'location': (ra, dec, wl)}
-                        if exp_type == 'NRS_FIXEDSLIT':
+                        if exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
                             match_kwargs['slit'] = slitname
 
                         apcorr = select_apcorr(input_model)(
@@ -3329,7 +3334,7 @@ def do_extract1d(input_model, extract_ref_dict, apcorr_ref_model=None, smoothing
     if pipe_utils.is_tso(input_model):
         populate_time_keywords(input_model, output_model)
     else:
-        log.debug("Not copying from the INT_TIMES table because  is not a TSO exposure.")
+        log.debug("Not copying from the INT_TIMES table because is not a TSO exposure.")
 
         if hasattr(output_model, "int_times"):
             del output_model.int_times

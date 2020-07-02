@@ -5,7 +5,7 @@ from scipy.interpolate import interp2d, interp1d
 from astropy.io import fits
 
 from ..assign_wcs.util import compute_scale
-from ..datamodels import DataModel
+from ..datamodels import DataModel, MultiSlitModel
 
 
 class ApCorrBase(abc.ABC):
@@ -76,11 +76,18 @@ class ApCorrBase(abc.ABC):
         """If the SIZE or Radius column is in units of arcseconds, convert to pixels."""
         if self.apcorr_sizeunits.startswith('arcsec'):
             if self.location is not None:
-                self.reference[self.size_key] /= compute_scale(
-                    self.model.meta.wcs,
-                    self.location,
-                    disp_axis=self.model.meta.wcsinfo.dispersion_direction
-                )
+                if isinstance(self.model, MultiSlitModel):
+                    self.reference[self.size_key] /= compute_scale(
+                        self.model.slits[0].meta.wcs,
+                        self.location,
+                        disp_axis=self.model.slits[0].meta.wcsinfo.dispersion_direction
+                    )
+                else:
+                    self.reference[self.size_key] /= compute_scale(
+                        self.model.meta.wcs,
+                        self.location,
+                        disp_axis=self.model.meta.wcsinfo.dispersion_direction
+                    )
             else:
                 raise ValueError(
                     'If the size column for the input APCORR reference file is in units with arcseconds, a location '
