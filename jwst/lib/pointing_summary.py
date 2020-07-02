@@ -28,7 +28,7 @@ Examples
     ------------ ------------------------------------ ... -------------------
     <ImageModel> 90.75541666666666,-66.56055555555554 ... 0.04044314761499765
 """
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 import logging
 
 from astropy.coordinates import SkyCoord
@@ -82,7 +82,7 @@ def calc_pointing_deltas(model):
     return delta
 
 
-def calc_deltas(exposures):
+def calc_deltas(exposures, extra_meta=None):
     """Create table of pointing deltas
 
     Parameters
@@ -90,6 +90,9 @@ def calc_deltas(exposures):
     exposures : [file-like[,...]] or [DataModel[,...]]
         List of file-like objects or `jwst.datamodels.DataModel` to retrieve
         pointing information from.
+
+    extra_meta: [str[,...]] or None
+        List of model meta attributes to add to the table.
 
     Returns
     -------
@@ -109,6 +112,9 @@ def calc_deltas(exposures):
     refpoints = list()
     delta_v1s = list()
     delta_refpoints = list()
+    extra_meta_values = defaultdict(list)
+
+    extra_meta = extra_meta if extra_meta is not None else list()
 
     # Calculate deltas for all input.
     for exposure in exposures:
@@ -122,6 +128,10 @@ def calc_deltas(exposures):
             delta_v1s.append(delta.delta_v1.degree)
             delta_refpoints.append(delta.delta_refpoint.degree)
 
+            for meta in extra_meta:
+                extra_meta_values[meta].append(model[meta])
+
+
     # Places results into a Table.
     deltas_dict = {
         'exposure':       exposures,
@@ -131,5 +141,6 @@ def calc_deltas(exposures):
         'delta_v1':       delta_v1s,
         'delta_refpoint': delta_refpoints,
     }
+    deltas_dict.update(extra_meta_values)
     deltas = Table(deltas_dict)
     return deltas

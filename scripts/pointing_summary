@@ -40,6 +40,10 @@ if __name__ == '__main__':
         '-v', '--verbose', action='count', default=0,
         help='Increase verbosity. Specifying multiple times adds more output.'
     )
+    parser.add_argument(
+        '--extra-meta', type=str, nargs='+',
+        help='Extra meta information from the exposoures to add to the result table'
+    )
 
     args = parser.parse_args()
 
@@ -49,6 +53,6 @@ if __name__ == '__main__':
 
     # Process the file list.
     logger.info('Starting pointing summary.')
-    deltas = pointing_summary.calc_deltas(args.exposures)
+    deltas = pointing_summary.calc_deltas(args.exposures, extra_meta=args.extra_meta)
     deltas.write(args.output, format='ascii.ecsv')
     logger.info('........Summary completed.')
