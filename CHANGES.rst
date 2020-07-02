@@ -64,7 +64,7 @@ master_background
 
 - Fix open files bug [#4995]
 
-- Update to include pathloss corrections to NIRSpec IFU background [#xxxx]
+- Update to include pathloss corrections to NIRSpec IFU background [#5125]
 
 outlier_detection
 -----------------
