@@ -145,8 +145,8 @@ class IFUCubeData():
         self.num_files = num_files
 # do some basic checks on the cubes
 
-        if(self.coord_system == "internal_cal"):
-            if(num_files > 1):
+        if self.coord_system == "internal_cal":
+            if num_files > 1:
                 raise IncorrectInput("Cubes built in internal_cal coordinate system" +
                                      " are built from a single file, not multiple exposures")
             if(len(self.list_par1) > 1):
@@ -634,8 +634,6 @@ class IFUCubeData():
                         log.info("Time to set initial dq values = %.1f s" % (t1 - t0,))
                     if self.weighting == 'msm' or self.weighting == 'emsm':
                         t0 = time.time()
-
-
                         cube_cloud.match_det2cube_msm(self.naxis1, self.naxis2, self.naxis3,
                                                       self.cdelt1, self.cdelt2,
                                                       self.cdelt3_normal,
@@ -691,7 +689,7 @@ class IFUCubeData():
                                                               err,
                                                               coord1, coord2, wave,
                                                               alpha_det, beta_det,
-                                                              self.weighting,
+                                                              'emsm',
                                                               rois_pixel, roiw_pixel,
                                                               weight_pixel,
                                                               softrad_pixel,
@@ -776,7 +774,6 @@ class IFUCubeData():
         self.set_final_dq_flags()
         t1 = time.time()
         log.info("Time to find Cube Flux = %.1f s" % (t1 - t0,))
-
 
         ifucube_model = self.setup_final_ifucube_model(0)
 # _______________________________________________________________________
@@ -924,6 +921,7 @@ class IFUCubeData():
             index_min = np.argmin(spaxelsize)
             self.spatial_size = spaxelsize[index_min]
             spatial_roi = rois[index_min]
+
         # find min and max wavelength
         min_wave = np.amin(minwave)
         max_wave = np.amax(maxwave)
@@ -1377,7 +1375,7 @@ class IFUCubeData():
                 if self.weighting == 'miripsf':
                     alpha, beta, lam = det2ab_transform(x, y)
 
-                    valid1 = ~np.isnan(coord1)
+                    valid1 = ~np.isnan(alpha)
                     alpha = alpha[valid1]
                     beta = beta[valid1]
                     wave = wave[valid1]

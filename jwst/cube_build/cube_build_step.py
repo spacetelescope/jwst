@@ -220,9 +220,9 @@ class CubeBuildStep (Step):
 # ________________________________________________________________________________
 # If miripsf weight is set then set up reference file
         resol_filename = None
-        if(self.weighting == 'miripsf'):
+        if self.weighting == 'miripsf':
             resol_filename = self.get_reference_file(self.input_models[0], 'resol')
-
+            self.log.info('MIRI resol reference file %s',resol_filename)
             if resol_filename == 'N/A':
                 self.log.warning('No spectral resolution reference file found')
                 self.log.warning('Run again and turn off miripsf')

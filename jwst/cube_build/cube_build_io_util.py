@@ -88,7 +88,7 @@ def read_cubepars(par_filename,
                                                table_power, table_softrad)
 
             #  modified shepard method e^-r weighting
-            elif weighting == 'emsm':
+            elif weighting == 'emsm' or weighting == 'miripsf':
                 for tabdata in ptab.ifucubepars_emsm_table:
                     table_channel = tabdata['channel']
                     table_band = tabdata['band'].lower()
@@ -113,7 +113,7 @@ def read_cubepars(par_filename,
                                                      table_wroi, table_power,
                                                      table_softrad)
         #  read in wavelength table for modified shepard method 1/r weighting
-        elif weighting == 'emsm':
+        elif weighting == 'emsm' or weighting == 'miripsf' :
             for tabdata in ptab.ifucubepars_multichannel_emsm_wavetable:
                 table_wave = tabdata['WAVELENGTH']
                 table_sroi = tabdata['ROISPATIAL']
