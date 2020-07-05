@@ -1202,7 +1202,6 @@ class IFUCubeData():
         final_b_min = min(corner_b)
         final_b_max = max(corner_b)
 
-        print('final',final_a_min, final_a_max, final_b_min, final_b_max)
         # for MIRI wavelength range read in from cube pars reference file
         if self.instrument == 'MIRI':
             final_lambda_min = self.wavemin
