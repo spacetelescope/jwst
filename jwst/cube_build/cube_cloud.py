@@ -102,6 +102,7 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
         xdistance = (xcenters - coord1[ipt])
         ydistance = (ycenters - coord2[ipt])
         radius = np.sqrt(xdistance * xdistance + ydistance * ydistance)
+
         indexr = np.where(radius <= rois_pixel[ipt])
         indexz = np.where(abs(zcoord - wave[ipt]) <= roiw_pixel[ipt])
 
@@ -247,12 +248,20 @@ def match_det2cube_miripsf(alpha_resol, beta_resol, wave_resol,
     # _______________________________________________________________________
     for ipt in range(0, nn - 1):
         lower_limit = softrad_pixel[ipt]
+
+        # ________________________________________________________
+        # if weight is miripsf -distances determined in alpha-beta
+        # coordinate system
+
+        weights = FindNormalizationWeights(wave[ipt],
+                                           wave_resol,
+                                           alpha_resol,
+                                           beta_resol)
         # ___________________________________________________________________
         # xcenters, ycenters is a flattened 1-D array of the 2 X 2 xy plane
         # cube coordinates.
         # find the spaxels that fall withing ROI of point cloud defined by
         # coord1,coord2,wave
-
         xdistance = (xcenters - coord1[ipt])
         ydistance = (ycenters - coord2[ipt])
         radius = np.sqrt(xdistance * xdistance + ydistance * ydistance)
@@ -261,19 +270,12 @@ def match_det2cube_miripsf(alpha_resol, beta_resol, wave_resol,
         indexz = np.where(abs(zcoord - wave[ipt]) <= roiw_pixel[ipt])
 
         # _______________________________________________________________
+        # TODO if this method is used replace two for loops with quicker
+        # list comprehension
         # loop over the points in the ROI
         for iz, zz in enumerate(indexz[0]):
             istart = zz * nplane
             for ir, rr in enumerate(indexr[0]):
-                # ________________________________________________________
-                # if weight is miripsf -distances determined in alpha-beta
-                # coordinate system
-
-                weights = FindNormalizationWeights(wave[ipt],
-                                                   wave_resol,
-                                                   alpha_resol,
-                                                   beta_resol)
-
                 cube_index = istart + rr
 
                 alpha_distance = alpha_det[ipt] - spaxel_alpha[cube_index]
@@ -286,7 +288,6 @@ def match_det2cube_miripsf(alpha_resol, beta_resol, wave_resol,
 
                 # only included the spatial dimensions
                 wdistance = (xn * xn + yn * yn + wn * wn)
-
 # ________________________________________________________________________________
                 # MSM weighting based on 1/r**power
                 if weighting_type == 'msm':

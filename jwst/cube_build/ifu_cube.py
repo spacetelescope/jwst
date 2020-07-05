@@ -262,23 +262,20 @@ class IFUCubeData():
         xilimit = max( np.abs(xi_min), np.abs(xi_max))
         etalimit = max( np.abs(eta_min), np.abs(eta_max))
 
-        n1a = math.ceil(xilimit/self.cdelt1) + 1
-        n1b = math.ceil(xilimit/ self.cdelt1) + 1
+        na = math.ceil(xilimit / self.cdelt1) + 1
+        nb = math.ceil(etalimit / self.cdelt2) + 1
 
-        n2a = math.ceil(etalimit / self.cdelt2) + 1
-        n2b = math.ceil(etalimit / self.cdelt2) + 1
+        xi_min = 0.0 - (na * self.cdelt1) - (self.cdelt1 / 2.0)
+        xi_max = (na * self.cdelt1) + (self.cdelt1 / 2.0)
 
-        xi_min = 0.0 - (n1a * self.cdelt1) - (self.cdelt1 / 2.0)
-        xi_max = (n1b * self.cdelt1) + (self.cdelt1 / 2.0)
+        eta_min = 0.0 - (nb * self.cdelt2) - (self.cdelt2 / 2.0)
+        eta_max = (nb * self.cdelt2) + (self.cdelt2 / 2.0)
 
-        eta_min = 0.0 - (n2a * self.cdelt2) - (self.cdelt2 / 2.0)
-        eta_max = (n2b * self.cdelt2) + (self.cdelt2 / 2.0)
+        self.crpix1 = float(na) + 1.0
+        self.crpix2 = float(nb) + 1.0
 
-        self.crpix1 = float(n1a) + 1.0
-        self.crpix2 = float(n2a) + 1.0
-
-        self.naxis1 = n1a + n1b + 1
-        self.naxis2 = n2a + n2b + 1
+        self.naxis1 = na*2  + 1
+        self.naxis2 = nb*2  + 1
 
         self.a_min = xi_min
         self.a_max = xi_max
@@ -1205,6 +1202,7 @@ class IFUCubeData():
         final_b_min = min(corner_b)
         final_b_max = max(corner_b)
 
+        print('final',final_a_min, final_a_max, final_b_min, final_b_max)
         # for MIRI wavelength range read in from cube pars reference file
         if self.instrument == 'MIRI':
             final_lambda_min = self.wavemin
