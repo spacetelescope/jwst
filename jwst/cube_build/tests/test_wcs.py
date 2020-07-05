@@ -227,8 +227,8 @@ def test_setup_wcs():
     thiscube.set_geometry(corner_a, corner_b, lambda_min, lambda_max)
 
 
-    assert thiscube.naxis1 == 39
-    assert thiscube.naxis2 == 39
+    assert thiscube.naxis1 == 41
+    assert thiscube.naxis2 == 41
     assert thiscube.naxis3 == 1092
 
 def test_footprint_miri():
