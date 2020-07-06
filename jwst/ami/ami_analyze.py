@@ -13,7 +13,7 @@ from . import leastsqnrm
 from . import utils
 
 log = logging.getLogger(__name__)
-
+log.setLevel(logging.DEBUG)  ###### 0706 
 
 def apply_LG(input_model, filter_model, oversample, rotation):
     """
@@ -85,6 +85,8 @@ def apply_LG(input_model, filter_model, oversample, rotation):
 
     input_data = new_img_model.data.copy()
     input_model.data = input_data.astype(np.float64)
+
+    del datamodel_img_model, new_img_model
 
     subarray = input_model.meta.subarray.name.upper()
     if subarray == 'FULL':

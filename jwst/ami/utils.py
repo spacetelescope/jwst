@@ -7,6 +7,7 @@ import numpy as np
 import numpy.fft as fft
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 def quadratic(p, x):
     """
@@ -328,10 +329,9 @@ def pix_median_fill_value(input_array, input_dq_array, bsize, xc, yc):
         log.warning('Box for median filter is outside the data.')
         return 0.
 
-    filtered_array = data_array[(dq_array != dqflags.pixel['DO_NOT_USE']) &
-                     (np.isfinite(data_array))]
+    filtered_array = data_array[dq_array != dqflags.pixel['DO_NOT_USE']]
 
-    median_value = np.median(filtered_array)
+    median_value = np.nanmedian(filtered_array)
 
     if np.isnan(median_value):
         # If the median fails return 0
