@@ -62,13 +62,14 @@ class MultiExposureModel(DataModel):
             self.exposures[0].data = init.data
             self.exposures[0].dq = init.dq
             self.exposures[0].err = init.err
-            self.exposures[0].wavelength = init.wavelength
-            self.exposures[0].barshadow = init.barshadow
-            self.exposures[0].area = init.area
             self.exposures[0].var_poisson = init.var_poisson
             self.exposures[0].var_rnoise = init.var_rnoise
             self.exposures[0].var_flat = init.var_flat
-            self.exposures[0].pathloss = init.pathloss
+            self.exposures[0].wavelength = init.wavelength
+            self.exposures[0].barshadow = init.barshadow
+            self.exposures[0].pathloss_point = init.pathloss_point
+            self.exposures[0].pathloss_uniform = init.pathloss_uniform
+            self.exposures[0].area = init.area
             return
 
         super(MultiExposureModel, self).__init__(
