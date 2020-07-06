@@ -2,7 +2,6 @@
 Unit tests for master background NIRSpec corrections
 """
 import numpy as np
-import pytest
 
 from jwst import datamodels
 from ..nirspec_corrections import correct_nrs_ifu_bkg
