@@ -41,8 +41,8 @@ class CubeBuildStep (Step):
          scale1 = float(default=0.0) # cube sample size to use for axis 1, arc seconds
          scale2 = float(default=0.0) # cube sample size to use for axis 2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
-         weighting = option('emsm','msm','miripsf','area',default = 'msm') # Type of weighting function
-         coord_system = option('world','alpha-beta',default='world') # Output Coordinate system. Options: world or alpha-beta
+         weighting = option('emsm','msm','miripsf',default = 'emsm') # Type of weighting function
+         coord_system = option('skyalign','world','internal_cal','ifualign',default='skyalign') # Output Coordinate system.
          rois = float(default=0.0) # region of interest spatial size, arc seconds
          roiw = float(default=0.0) # region of interest wavelength size, microns
          weight_power = float(default=0.0) # Weighting option to use for Modified Shepard Method
@@ -109,10 +109,9 @@ class CubeBuildStep (Step):
         if self.roiw != 0.0:
             self.log.info('Input Wave ROI size %f', self.roiw)
 
-        self.debug_pixel = 0
-        self.spaxel_debug = None
+
+        self.debug_file = None
         if(self.xdebug is not None and self.ydebug is not None and self.zdebug is not None):
-            self.debug_pixel = 1
             self.log.info('Writing debug information for spaxel %i %i %i',
                           self.xdebug,
                           self.ydebug,
@@ -124,32 +123,32 @@ class CubeBuildStep (Step):
             self.xdebug = self.xdebug - 1
             self.ydebug = self.ydebug - 1
             self.zdebug = self.zdebug - 1
-            self.spaxel_debug = open('cube_spaxel_info.results', 'w')
-            self.spaxel_debug.write('Writing debug information for spaxel %i %i %i' %
+            self.debug_file = open('cube_spaxel_info.results', 'w')
+            self.debug_file.write('Writing debug information for spaxel %i %i %i' %
                                     (self.xdebug, self.ydebug, self.zdebug) + '\n')
 
         # valid coord_system:
-        # 1. alpha-beta (only valid for MIRI Single Cubes)
-        # 2. world
+        # 1. skyalign (ra dec) (aka world)
+        # 2. ifualign (ifu cube aligned with slicer plane/ MRS local coord system)
+        # 3. internal_cal (local IFU - ifu cubes built in local IFU system)
+        if self.coord_system == 'world':
+            self.coord_system = 'skyalign'
+
         self.interpolation = 'pointcloud'  # initialize
 
-        # if the weighting is area then interpolation is area
-        # valid only for single band single exposure ifucbes:
-        # weighting = area or interpoltion = area
-
-        if self.weighting == 'area':
-            self.interpolation = 'area'
-            self.coord_system = 'alpha-beta'
-
-        if self.coord_system == 'alpha-beta':
-            self.weighting = 'area'
+        # coord system = internal_cal only option for weighting = area
+        if self.coord_system == 'internal_cal':
             self.interpolation = 'area'
 
         # if interpolation is point cloud then weighting can be
         # 1. MSM: modified shepard method
-        # 2. miripsf - weighting for MIRI based on PSF and LSF
-        if self.coord_system == 'world':
-            self.interpolation = 'pointcloud'  # can not be area
+        # 2. EMSM
+        # 3. miripsf - weighting for MIRI based on PSF and LSF
+        if self.coord_system == 'skyalign':
+            self.interpolation = 'pointcloud'
+
+        if self.coord_system == 'ifualign':
+            self.interpolation = 'pointcloud'
 
         self.log.info('Input interpolation: %s', self.interpolation)
         self.log.info('Coordinate system to use: %s', self.coord_system)
@@ -162,11 +161,11 @@ class CubeBuildStep (Step):
         if self.single:
             self.output_type = 'single'
             self.log.info('Cube Type: Single cubes ')
-            self.coord_system = 'world'
+            self.coord_system = 'skyalign'
             self.interpolation = 'pointcloud'
             # Don't allow anything but msm or emsm weightings
             if ((self.weighting != 'msm')and(self.weighting != 'emsm')):
-                self.weighting = 'msm'
+                self.weighting = 'emsm'
 
 # ________________________________________________________________________________
 # read input parameters - Channel, Band (Subchannel), Grating, Filter
@@ -221,9 +220,9 @@ class CubeBuildStep (Step):
 # ________________________________________________________________________________
 # If miripsf weight is set then set up reference file
         resol_filename = None
-        if(self.weighting == 'miripsf'):
+        if self.weighting == 'miripsf':
             resol_filename = self.get_reference_file(self.input_models[0], 'resol')
-
+            self.log.info('MIRI resol reference file %s',resol_filename)
             if resol_filename == 'N/A':
                 self.log.warning('No spectral resolution reference file found')
                 self.log.warning('Run again and turn off miripsf')
@@ -259,8 +258,7 @@ class CubeBuildStep (Step):
             'xdebug': self.xdebug,
             'ydebug': self.ydebug,
             'zdebug': self.zdebug,
-            'debug_pixel': self.debug_pixel,
-            'spaxel_debug': self.spaxel_debug}
+            'debug_file': self.debug_file}
 # ________________________________________________________________________________
 # create an instance of class CubeData
 
@@ -344,8 +342,8 @@ class CubeBuildStep (Step):
             else:
                 result = thiscube.build_ifucube()
                 cube_container.append(result)
-            if self.debug_pixel == 1:
-                self.spaxel_debug.close()
+            if self.debug_file is not None:
+                self.debug_file.close()
         for cube in cube_container:
             footprint = cube.meta.wcs.footprint(axis_type="spatial")
             update_s_region_keyword(cube, footprint)
