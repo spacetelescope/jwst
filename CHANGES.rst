@@ -39,7 +39,9 @@ cube_build
 
 - added ability to make NIRSpec ``internal_cal`` ifu cubes aligned with slicer plane [#4974]
 
-- changed default weighting from ``msm`` to ``emsm``
+- changed default weighting from ``msm`` to ``emsm`` [#4974]
+
+- NIRSpec IFU cube built from all wavelengths rather than those defined in cube par ref file [#4974]
 
 datamodels
 ----------
