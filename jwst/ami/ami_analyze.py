@@ -13,7 +13,7 @@ from . import leastsqnrm
 from . import utils
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)  ###### 0706 
+log.setLevel(logging.DEBUG)
 
 def apply_LG(input_model, filter_model, oversample, rotation):
     """
