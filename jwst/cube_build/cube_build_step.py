@@ -327,6 +327,8 @@ class CubeBuildStep (Step):
             thiscube.determine_cube_parameters()
 
             thiscube.setup_ifucube_wcs()
+
+            print(thiscube.blot_corner_data)
 # _______________________________________________________________________________
 # build the IFU Cube
 

@@ -76,7 +76,7 @@ class IFUCubeData():
 
         self.num_bands = 0
         self.output_name = ''
-        self.this_cube_filenames = []
+        #self.this_cube_filenames = []
 
         self.wavemin_user = False # Check for NIRSpec if user has set wavelength limts
         self.wavemax_user = False
@@ -114,6 +114,7 @@ class IFUCubeData():
         self.xcoord = None
         self.ycoord = None
         self.zcoord = None
+        self.blot_corner_data = None 
 
         self.tolerance_dq_overlap = 0.05  # spaxel has to have 5% overlap to flag in FOV
         self.overlap_partial = 4  # intermediate flag
@@ -606,7 +607,7 @@ class IFUCubeData():
 # loop over the files that cover the spectral range the cube is for
             for k in range(nfiles):
                 ifile = self.master_table.FileMap[self.instrument][this_par1][this_par2][k]
-                self.this_cube_filenames.append(ifile)
+                #self.this_cube_filenames.append(ifile)
                 log.debug("Working on Band defined by: %s %s ", this_par1, this_par2)
                 # --------------------------------------------------------------------------------
                 # POINTCLOUD used for skyalign and IFUalign
@@ -1205,6 +1206,12 @@ class IFUCubeData():
 
         corner_a = []
         corner_b  = []
+        
+        filename = [] # same file to match up corner_a, corner_b with file in blotting 
+        a_min = []
+        a_max = []
+        b_min = []
+        b_max = [] 
 
         lambda_min = []
         lambda_max = []
@@ -1224,10 +1231,12 @@ class IFUCubeData():
                 lmax = 0.0
 
                 ifile = self.master_table.FileMap[self.instrument][this_a][this_b][k]
+
 # ______________________________________________________________________________
 # Open the input data model
 # Find the footprint of the image
                 with datamodels.IFUImageModel(ifile) as input_model:
+                    filename.append(input_model.meta.filename) 
                     if self.instrument == 'NIRSPEC':
                         ch_corners = cube_build_wcs_util.find_corners_NIRSPEC(
                             input_model,
@@ -1236,6 +1245,14 @@ class IFUCubeData():
                             self.coord_system)
 
                         ca1, cb1, ca2, cb2, ca3, cb3, ca4, cb4, lmin, lmax = ch_corners
+                        for k in range(30):
+                            a = [ca1[k], ca2[k], ca3[k], ca4[k]]
+                            b = [cb1[k], cb2[k], cb3[k], cb4[k]]
+                            a_min.append(np.min(a))
+                            a_max.append(np.max(a))
+
+                            b_min.append(np.min(b))
+                            b_max.append(np.max(b))
 # ________________________________________________________________________________
                     if self.instrument == 'MIRI':
                         ch_corners = cube_build_wcs_util.find_corners_MIRI(
@@ -1245,6 +1262,13 @@ class IFUCubeData():
                             self.coord_system)
 
                         ca1, cb1, ca2, cb2, ca3, cb3, ca4, cb4, lmin, lmax = ch_corners
+                        a = [ca1, ca2, ca3, ca4]
+                        b = [cb1, cb2, cb3, cb4]
+                        a_min.append(np.min(a))
+                        a_max.append(np.max(a))
+
+                        b_min.append(np.min(b))
+                        b_max.append(np.max(b))
 
                     corner_a.append(ca1)
                     corner_a.append(ca2)
@@ -1258,6 +1282,9 @@ class IFUCubeData():
 
                     lambda_min.append(lmin)
                     lambda_max.append(lmax)
+# ________________________________________________________________________________
+# find min and max corners to be used if outlier rejected is called (NIRSPEC)
+                    
 # ________________________________________________________________________________
     # done looping over files determine final size of cube
 
@@ -1315,6 +1342,7 @@ class IFUCubeData():
 
         self.print_cube_geometry()
 
+        self.blot_corner_data = [filename,a_min, a_max, b_min, b_max]
 # **************************************************************************
 
     def map_detector_to_outputframe(self, this_par1,
@@ -1418,7 +1446,7 @@ class IFUCubeData():
                 y = np.reshape(y, y.size)
                 x = np.reshape(x, x.size)
 
-                #if self.coord_system == 'skyalign' or self.coord_system == 'ifualign':
+                # if self.coord_system == 'skyalign' or self.coord_system == 'ifualign':
                 ra, dec, wave = input_model.meta.wcs(x, y)
                 valid1 = ~np.isnan(ra)
                 ra = ra[valid1]
@@ -1621,6 +1649,8 @@ class IFUCubeData():
             imin = np.where(iwavemin == np.amin(iwavemin))[0]
             imax = np.where(iwavemax == np.amin(iwavemax))[0]
 
+            print('in map fov to dq plane',imin,imax)
+
             # for each wavelength plane - find the 2 extreme slices to set the FOV
             for w in range(imin[0], imax[0]):
                 wave_distance = np.absolute(self.zcoord[w] - wave)
@@ -1629,17 +1659,6 @@ class IFUCubeData():
                 # use these points to set the FOV
                 start_region = self.instrument_info.GetStartSlice(this_par1)
                 end_region = self.instrument_info.GetEndSlice(this_par1)
-
-                # if not wavelength dependent
-                # coord1_start = coord1[slice == start_region]
-                # coord2_start = coord2[slice == start_region]
-                # coord1_end = coord1[slice == end_region]
-                # coord2_end = coord2[slice == end_region]
-                # wmin = imin[0]
-                # wmax = imax[0]
-
-                # the while loop should only be excuted 1 time if the slice matching
-                # start_region is located in the data (default mode).
 
                 istart = start_region
                 coord1_start = None
