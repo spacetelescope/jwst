@@ -60,10 +60,12 @@ datamodels
 
 extract_1d
 ----------
+
 - rechecks the input model container in run_extract1d to select the correct processing [#5076]
 
 extract_2d
 ----------
+
 - checks subwcs and new_slit variables exist before trying to delete them [#5093]
 
 coron
@@ -77,6 +79,8 @@ master_background
 -----------------
 
 - Fix open files bug [#4995]
+
+- Update to include pathloss corrections to NIRSpec IFU background [#5125]
 
 outlier_detection
 -----------------
