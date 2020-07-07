@@ -62,6 +62,7 @@ extract_1d
 ----------
 
 - rechecks the input model container in run_extract1d to select the correct processing [#5076]
+- implement aperture correction in the Extract1dStep. [#4902]
 
 extract_2d
 ----------
@@ -180,6 +181,11 @@ datamodels
 
 - Populate meta.asn.table_name when an association is loaded into a
   ``ModelContainer``. [#4873]
+
+extract_1d
+----------
+
+- Add aperture correction in extract_1d processing. [#4902]
 
 lib
 ---
