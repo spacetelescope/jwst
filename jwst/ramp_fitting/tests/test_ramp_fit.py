@@ -59,6 +59,7 @@ def test_gls_vs_ols_two_ints_ols():
     np.testing.assert_allclose(slopes_gls[0].data[50, 50], 150.0, 1e-6)
 
 
+@pytest.mark.skip(reason="Jenkins environment does not correctly handle multi-processing.")
 def test_multiprocessing():
     nrows =100
     ncols =100
@@ -88,6 +89,7 @@ def test_multiprocessing():
     np.testing.assert_allclose(slopes.data, slopes_multi.data, rtol=1e-5)
 
 
+@pytest.mark.skip(reason="Jenkins environment does not correctly handle multi-processing.")
 def test_multiprocessing2():
     nrows =100
     ncols =100
