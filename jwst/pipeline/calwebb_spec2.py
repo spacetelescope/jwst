@@ -13,6 +13,7 @@ from ..background import background_step
 from ..imprint import imprint_step
 from ..msaflagopen import msaflagopen_step
 from ..extract_2d import extract_2d_step
+from ..wavecorr import wavecorr_step
 from ..flatfield import flat_field_step
 from ..srctype import srctype_step
 from ..straylight import straylight_step
@@ -51,6 +52,7 @@ class Spec2Pipeline(Pipeline):
         'imprint_subtract': imprint_step.ImprintStep,
         'msa_flagging': msaflagopen_step.MSAFlagOpenStep,
         'extract_2d': extract_2d_step.Extract2dStep,
+        'wavecorr': wavecorr_step.WavecorrStep,
         'flat_field': flat_field_step.FlatFieldStep,
         'srctype': srctype_step.SourceTypeStep,
         'straylight': straylight_step.StraylightStep,
@@ -234,22 +236,26 @@ class Spec2Pipeline(Pipeline):
         if exp_type in ['NRS_MSASPEC', 'NRS_IFU']:
             input = self.msa_flagging(input)
 
-        # This makes it clear that flat_field
-        # should be done before extract_2d for all WFSS/GRISM data.
+        # The order of the next few steps is tricky, depending on mode:
+        # WFSS/Grism data need flat_field before extract_2d, but other modes
+        # need extract_2d first. Furthermore, NIRSpec MOS and FS need
+        # srctype and wavecorr before flat_field.
         if exp_type in ['NRC_WFSS', 'NIS_WFSS', 'NRC_TSGRISM']:
             # Apply flat-field correction
             input = self.flat_field(input)
             input = self.extract_2d(input)
+            input = self.srctype(input)
         else:
             # Extract 2D sub-windows for NIRSpec slit and MSA
             if exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ', 'NRS_MSASPEC', 'NRS_LAMP']:
                 input = self.extract_2d(input)
-
-            # Apply flat-field correction
-            input = self.flat_field(input)
-
-        # Apply the source type decision step
-        input = self.srctype(input)
+                input = self.srctype(input)
+                input = self.wavecorr(input)
+                input = self.flat_field(input)
+            else:
+                # Apply flat-field correction
+                input = self.srctype(input)
+                input = self.flat_field(input)
 
         # Apply the straylight correction for MIRI MRS
         if exp_type == 'MIR_MRS':
