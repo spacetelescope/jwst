@@ -643,15 +643,21 @@ def create_grism_bbox(input_model,
 
                     xstack = np.hstack([x1, x2])
                     ystack = np.hstack([y1, y2])
-                    xmin = np.min(xstack)
-                    xmax = np.max(xstack)
-                    ymin = np.min(ystack)
-                    ymax = np.max(ystack)
 
-                    xmin = int(xmin) - input_model.meta.subarray.xstart
-                    xmax = int(xmax) - input_model.meta.subarray.xstart
-                    ymin = int(ymin) - input_model.meta.subarray.ystart
-                    ymax = int(ymax) - input_model.meta.subarray.ystart
+                    # Subarrays are only allowed in nircam tsgrism mode. The polynomial transforms
+                    # only work with the full frame coordinates. The code here is called during extract_2d,
+                    # and is creating bounding boxes which should be in the full frame coordinates, it just
+                    # uses the input catalog and the magnitude to limit the objects that need bounding boxes.
+
+                    # Tsgrism is always supposed to have the source object at the same pixel, and that is
+                    # hardcoded into the transforms. At least a while ago, the 2d extraction for tsgrism mode
+                    # didn't call this bounding box code. So I think it's safe to leave the subarray
+                    # subtraction out, i.e. do not subtract x/ystart.
+
+                    xmin = int(np.min(xstack))
+                    xmax = int(np.max(xstack))
+                    ymin = int(np.min(ystack))
+                    ymax = int(np.max(ystack))
 
                     # don't add objects and orders which are entirely
                     # off the detector partial_order marks partial
