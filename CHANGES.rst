@@ -30,7 +30,10 @@ combine_1d
 
 cube_build
 ----------
+- changed default weighting back to 'msm' until NIRSPEC cube pars ref file contains emsm info [#5134]
 
+- Added checks read from cube pars reference file that parameters have valid data [#5134]
+ 
 - change the name of  default types of cubes from ``world`` to ``skyalign`` [#4974]
 
 - added ``ifualign`` cubes to be cubes rotated on sky to align with ifu instrument plane [#4974]
@@ -42,6 +45,9 @@ cube_build
 - changed default weighting from ``msm`` to ``emsm`` [#4974]
 
 - NIRSpec IFU cube built from all wavelengths rather than those defined in cube par ref file [#4974]
+
+- Removed wavelength planes that contained only 0 data. These planes are edge cases [#4974]
+
 
 datamodels
 ----------
