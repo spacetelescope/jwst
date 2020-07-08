@@ -31,7 +31,7 @@ def nrs_extract2d(input_model, slit_name=None):
 
     if hasattr(input_model.meta.cal_step, 'assign_wcs') and input_model.meta.cal_step.assign_wcs == 'SKIPPED':
         log.info("assign_wcs was skipped")
-        log.warning("extract_2d: SKIPPED")
+        log.warning("extract_2d will be SKIPPED")
         input_model.meta.cal_step.extract_2d = "SKIPPED"
         return input_model
 
@@ -40,26 +40,32 @@ def nrs_extract2d(input_model, slit_name=None):
                              "be run before extract_2d.")
 
     slit2msa = input_model.meta.wcs.get_transform('slit_frame', 'msa_frame')
-    # This is a cludge but will work for now.
+    # This is a kludge but will work for now.
     # This model keeps open_slits as an attribute.
     open_slits = slit2msa.slits[:]
     if slit_name is not None:
         open_slits = [sub for sub in open_slits if sub.name == slit_name]
-    log.debug('open slits {0}'.format(open_slits))
+
+    # NIRSpec BRIGHTOBJ (S1600A1 TSO) mode
     if exp_type == 'NRS_BRIGHTOBJ':
-        # the output model is a SlitModel
+        # the output model is a single SlitModel
         slit = open_slits[0]
         output_model, xlo, xhi, ylo, yhi = process_slit(input_model, slit, exp_type)
         set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi)
+
+        # Update the S_REGION keyword value for the extracted slit
         orig_s_region = output_model.meta.wcsinfo.s_region.strip()
         util.update_s_region_nrs_slit(output_model)
         if orig_s_region != output_model.meta.wcsinfo.s_region.strip():
-            log.info('extract_2d updated S_REGION to '
-                     '{0}'.format(output_model.meta.wcsinfo.s_region))
+            log.info(f'Updated S_REGION to {output_model.meta.wcsinfo.s_region}')
+
+    # All other FS and MOS modes
     else:
         output_model = datamodels.MultiSlitModel()
         output_model.update(input_model)
         slits = []
+
+        # Loop over all slit instances that are present
         for slit in open_slits:
             new_model, xlo, xhi, ylo, yhi = process_slit(input_model, slit, exp_type)
 
@@ -69,15 +75,18 @@ def nrs_extract2d(input_model, slit_name=None):
             # The overall subarray offset is recorded in model.meta.subarray.
             set_slit_attributes(new_model, slit, xlo, xhi, ylo, yhi)
 
+            # Update the S_REGION keyword value for the extracted slit
             if 'world' in input_model.meta.wcs.available_frames:
                 util.update_s_region_nrs_slit(new_model)
                 if orig_s_region != new_model.meta.wcsinfo.s_region.strip():
-                    log.info('extract_2d updated S_REGION to {0}'.format(new_model.meta.wcsinfo.s_region))
+                    log.info(f'Updated S_REGION to {new_model.meta.wcsinfo.s_region}')
 
             # Copy BUNIT values to output slit
             new_model.meta.bunit_data = input_model.meta.bunit_data
             new_model.meta.bunit_err = input_model.meta.bunit_err
+
         output_model.slits.extend(slits)
+
     return output_model
 
 
@@ -92,26 +101,27 @@ def process_slit(input_model, slit, exp_type):
     input_model : `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
         Input data model. The ``CubeModel`` is used only for TSO data, i.e.
         ``NRS_BRIGHTOBJ`` exposure.
-    slit_name : str or int
-        Slit name.
+    slit : namedtuple
+        A `~jwst.transforms.models.Slit` object representing a slit.
+        Slit object.
     exp_type : str
         The type of exposure. Supported types are
         ``NRS_FIXEDSLIT``, ``NRS_MSASPEC``, ``NRS_BRIGHTOBJ``
 
     Returns
     -------
-    new_model : `~jwst/datamodels/SlitModel`
+    new_model : `~jwst.datamodels.SlitModel`
         The new data model for a slit.
     xlo, xhi, ylo, yhi : float
         The corners of the extracted slit in pixel space.
 
     """
-    log.debug(f' process_slit: slit_name={slit}')
     new_model, xlo, xhi, ylo, yhi = extract_slit(input_model, slit, exp_type)
 
     # Copy the DISPAXIS keyword to the output slit.
     new_model.meta.wcsinfo.dispersion_direction = \
         input_model.meta.wcsinfo.dispersion_direction
+
     return new_model, xlo, xhi, ylo, yhi
 
 
@@ -137,7 +147,8 @@ def set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi):
     output_model.source_id = int(slit.source_id)
     output_model.slit_ymin = slit.ymin
     output_model.slit_ymax = slit.ymax
-    log.info('slit.ymin {}'.format(slit.ymin))
+    log.debug(f'slit.ymin {slit.ymin}')
+    output_model.shutter_id = int(slit.shutter_id)  # for use in wavecorr
     if output_model.meta.exposure.type.lower() in ['nrs_msaspec', 'nrs_autoflat']:
         #output_model.source_id = int(slit.source_id)
         output_model.source_name = slit.source_name
@@ -152,7 +163,6 @@ def set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi):
         output_model.dither_position = int(slit.dither_position)
         output_model.source_ra = float(slit.source_ra)
         output_model.source_dec = float(slit.source_dec)
-        output_model.shutter_id = int(slit.shutter_id)
         # for pathloss correction
         output_model.shutter_state = slit.shutter_state
     log.info('set slit_attributes completed')
@@ -200,9 +210,9 @@ def extract_slit(input_model, slit, exp_type):
     """
     slit_wcs = nirspec.nrs_wcs_set_input(input_model, slit.name)
     xlo, xhi, ylo, yhi = offset_wcs(slit_wcs)
-    log.info('Name of subarray extracted: %s', slit.name)
-    log.info('Subarray x-extents are: %s %s', xlo, xhi)
-    log.info('Subarray y-extents are: %s %s', ylo, yhi)
+    log.info(f'Name of subarray extracted: {slit.name}')
+    log.info(f'Subarray x-extents are: {xlo} {xhi}')
+    log.info(f'Subarray y-extents are: {ylo} {yhi}')
     ndim = len(input_model.data.shape)
     if ndim == 2:
         slit_slice = np.s_[ylo: yhi, xlo: xhi]
@@ -238,7 +248,7 @@ def extract_slit(input_model, slit, exp_type):
     new_model = datamodels.SlitModel(data=ext_data, err=ext_err, dq=ext_dq, wavelength=lam,
                                      var_rnoise=ext_var_rnoise, var_poisson=ext_var_poisson,
                                      int_times=int_times)
-    log.info('Input model type is {}'.format(input_model.__class__.__name__))
+    log.debug(f'Input model type is {input_model.__class__.__name__}')
     new_model.update(input_model)
     new_model.meta.wcs = slit_wcs
 

@@ -39,9 +39,15 @@ class WavecorrStep(Step):
                 input_model.meta.cal_step.wavecorr = 'SKIPPED'
                 return input_model
 
-            if not (hasattr(input_model.slits[0].meta, 'wcs') and input_model.slits[0].meta.wcs is not None):
-                raise AttributeError("Input model does not have a WCS object; assign_wcs should "
-                                     "be run before wavecorr.")
+            # Check for existence of WCS
+            if isinstance(input_model, datamodels.SlitModel):
+                if not (hasattr(input_model.meta, 'wcs') and input_model.meta.wcs is not None):
+                    raise AttributeError("Input model does not have a WCS object; assign_wcs should "
+                                         "be run before wavecorr.")
+            else:
+                if not (hasattr(input_model.slits[0].meta, 'wcs') and input_model.slits[0].meta.wcs is not None):
+                    raise AttributeError("Input model does not have a WCS object; assign_wcs should "
+                                         "be run before wavecorr.")
 
             # Get the reference file
             reffile = self.get_reference_file(input_model, 'wavecorr')

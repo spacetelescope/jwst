@@ -2237,6 +2237,11 @@ properties:
             type: string
             fits_keyword: S_TWKREG
             blend_table: True
+          wavecorr:
+            title: NIRSpec wavelength correction
+            type: string
+            fits_keyword: S_WAVCOR
+            blend_table: True
           wfs_combine:
             title: Wavefront Sensing Combination
             type: string
