@@ -1107,7 +1107,7 @@ class IFUCubeData():
         log.debug('weight_power %d ',self.weight_power)
         log.debug('softrad %d ',self.soft_rad)
         log.debug('scalerad %d ',self.scalerad)
-        
+
 # ******************************************************************************
 
     def setup_ifucube_wcs(self):
