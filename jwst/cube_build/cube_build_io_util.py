@@ -5,7 +5,6 @@ import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-
 def read_cubepars(par_filename,
                   instrument,
                   weighting,
@@ -49,7 +48,6 @@ def read_cubepars(par_filename,
     by the input data
 
     """
-
     if instrument == 'MIRI':
         ptab = datamodels.MiriIFUCubeParsModel(par_filename)
         number_bands = len(all_channel)
@@ -113,7 +111,7 @@ def read_cubepars(par_filename,
                                                      table_wroi, table_power,
                                                      table_softrad)
         #  read in wavelength table for modified shepard method 1/r weighting
-        elif weighting == 'emsm' or weighting == 'miripsf' :
+        elif weighting == 'emsm' or weighting == 'miripsf':
             for tabdata in ptab.ifucubepars_multichannel_emsm_wavetable:
                 table_wave = tabdata['WAVELENGTH']
                 table_sroi = tabdata['ROISPATIAL']

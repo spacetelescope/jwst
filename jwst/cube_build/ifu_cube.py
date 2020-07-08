@@ -78,6 +78,8 @@ class IFUCubeData():
         self.output_name = ''
         self.this_cube_filenames = []
 
+        self.wavemin_user = False # Check for NIRSpec if user has set wavelength limts
+        self.wavemax_user = False
         self.soft_rad = None
         self.scalerad = None
         self.linear_wavelength = True
@@ -592,8 +594,8 @@ class IFUCubeData():
             nplane = self.naxis1 * self.naxis2
             xydebug = self.ydebug* self.naxis1 + self.xdebug
             cube_debug = (self.zdebug* nplane) + xydebug
-            print('Cube index debug',cube_debug)
-            print(nplane,xydebug,self.zdebug, self.ydebug, self.xdebug)
+            log.info('Cube index debug %d',cube_debug)
+            log.info('%i %i %i %',xydebug,self.zdebug, self.ydebug, self.xdebug)
 
         number_bands = len(self.list_par1)
         for i in range(number_bands):
@@ -843,7 +845,8 @@ class IFUCubeData():
 # _______________________________________________________________________
 # shove Flux and iflux in the  final ifucube
             self.find_spaxel_flux()
-# now determine Cube Spaxel flux
+
+            #now determine Cube Spaxel flux
 
             ifucube_model = self.setup_final_ifucube_model(j)
 
@@ -927,11 +930,13 @@ class IFUCubeData():
             self.wavemin = min_wave
         else:
             self.wavemin = np.float64(self.wavemin)
+            self.wavemin_user = True
 
         if self.wavemax is None:
             self.wavemax = max_wave
         else:
             self.wavemax = np.float64(self.wavemax)
+            self.wavemax_user = True
 
         # now check spectral step - this will determine
         # if the wavelength dimension is linear or not
@@ -1028,27 +1033,81 @@ class IFUCubeData():
         if self.weight_power == 0:
             self.weight_power = weight_power
 
-        # catch where self.weight_power, softrad or scalerad could be nan and
-        # set to None - this should not happen - these varibles
+        # check on valid values
+        #make checks here
+
+        found_error = False
+        if self.linear_wavelength:
+            # check we have valid data for key values
+            if np.isnan(self.rois):
+                log.error('Spatial roi is nan, possible reference file value error')
+                found_error = True
+            if np.isnan(self.roiw):
+                log.error('Spectral roi is nan, possible reference file value error')
+                found_error = True
+
+            if self.weighting == 'msm':
+                if np.isnan(self.weight_power):
+                    log.error('Weight power is nan, possible reference file value error')
+                    found_error = True
+                if np.isnan(self.soft_rad):
+                    log.error('Soft rad is nan, possible reference file value error')
+                    found_error = True
+            if self.weighting == 'emsm':
+                if np.isnan(self.scalerad):
+                    log.error('Scalerad is nan, possible reference file value error')
+                    found_error = True
+        else:
+            if np.isnan(self.wavelength_table).all():
+                log.error('Wavelength table contains all nans, possible reference file value error')
+                found_error = True
+            if np.isnan(self.rois_table).all():
+                log.error('Spatial roi table contains all nans, possible reference file value error')
+                found_error = True
+            if np.isnan(self.roiw_table).all():
+                log.error('Spectral roi table contains all nans, possible reference file value error')
+                found_error = True
+
+            if self.weighting == 'msm':
+                if np.isnan(self.softrad_table).all():
+                    log.error('Soft rad table contains all nans, possible reference file value error')
+                    found_error = True
+                if np.isnan(self.weight_power_table).all():
+                    log.error('Weight power table contains all nans, possible reference file value error')
+                    found_error = True
+            if self.weighting == 'emsm':
+                if np.isnan(self.scalerad_table).all():
+                    log.error('Scalerad table contains all nans, possible reference file value error')
+                    found_error = True
+
+        if found_error:
+            raise IncorrectParameter("An essential parameter is = nan, refer to apply error message")
+
+        # catch where self.weight_power = nan weighting = msm written to header
+        # TODO update writting to header scalerad if weighting = emsm
+
         if self.weight_power is not None:
             if np.isnan(self.weight_power):
                 self.weight_power = None
-        if self.soft_rad is not None:
-            if np.isnan(self.soft_rad):
-                self.soft_rad = None
-        if self.scalerad is not None:
-            if np.isnan(self.scalerad):
-                self.scalerad = None
-        #print('spatial size', self.spatial_size)
-        #print('spectral size', self.spectral_size)
-        #print('spatial roi', self.rois)
-        #print('wave min and max', self.wavemin, self.wavemax)
-        #print('linear wavelength', self.linear_wavelength)
-        #print('roiw', self.roiw)
-        #print('output_type',self.output_type)
-        #print('weight_power',self.weight_power)
-        #print('softrad',self.soft_rad)
-        #print('scalerad',self.scalerad)
+        #if self.soft_rad is not None:
+        #    if np.isnan(self.soft_rad):
+        #        self.soft_rad = None
+        #if self.scalerad is not None:
+        #    if np.isnan(self.scalerad):
+        #        self.scalerad = None
+
+
+        log.debug('spatial size %d', self.spatial_size)
+        log.debug('spectral size %d', self.spectral_size)
+        log.debug('spatial roi %d', self.rois)
+        log.debug('wave min and max %d %d', self.wavemin, self.wavemax)
+        log.debug('linear wavelength %d', self.linear_wavelength)
+        log.debug('roiw %d ', self.roiw)
+        log.debug('output_type %s ',self.output_type)
+        log.debug('weight_power %d ',self.weight_power)
+        log.debug('softrad %d ',self.soft_rad)
+        log.debug('scalerad %d ',self.scalerad)
+        
 # ******************************************************************************
 
     def setup_ifucube_wcs(self):
@@ -1876,7 +1935,6 @@ class IFUCubeData():
         """
 # currently these are the same but in the future there could be a difference in
 # how the spaxel flux is determined according to self.interpolation.
-
         if self.interpolation == 'area':
             good = self.spaxel_iflux > 0
             self.spaxel_flux[good] = self.spaxel_flux[good] / self.spaxel_weight[good]
@@ -2011,48 +2069,52 @@ class IFUCubeData():
                                           self.naxis2, self.naxis1))
         temp_var = self.spaxel_var.reshape((self.naxis3,
                                             self.naxis2, self.naxis1))
-        remove_start = 0
-        k = 0
-        found = 0
-        while (k < self.naxis3 and found == 0):
-            flux_at_wave = temp_flux[k,:,:]
-            sum = np.nansum(flux_at_wave)
-            if sum == 0.0:
-                remove_start = remove_start + 1
-            else:
-                found = 1
-                break;
-            k = k + 1
 
-        remove_final = 0
-        found = 0
-        k = self.naxis3-1
-        while (k > 0 and found == 0):
-            flux_at_wave = temp_flux[k,:,:]
-            sum = np.nansum(flux_at_wave)
-            if sum == 0.0:
-                remove_final = remove_final + 1
-            else:
-                found = 1
-                break;
-            k = k -1
+        # clean up empty wavelength planes except for single case
+        if self.output_type != 'single':
+            remove_start = 0
+            k = 0
+            found = 0
+            while (k < self.naxis3 and found == 0):
+                flux_at_wave = temp_flux[k,:,:]
+                sum = np.nansum(flux_at_wave)
+                if sum == 0.0:
+                    remove_start = remove_start + 1
+                else:
+                    found = 1
+                    break;
+                k = k + 1
 
-        if (remove_start+remove_final) > 0:
-            log.info('Number of wavelength planes removed with no data: %i',
-                     remove_start+remove_final)
+            remove_final = 0
+            found = 0
+            k = self.naxis3-1
+            while (k > 0 and found == 0):
+                flux_at_wave = temp_flux[k,:,:]
+                sum = np.nansum(flux_at_wave)
+                if sum == 0.0:
+                    remove_final = remove_final + 1
+                else:
+                    found = 1
+                    break;
+                k = k -1
 
-            temp_flux = temp_flux[remove_start:self.naxis3-remove_final,:,:]
-            temp_wmap = temp_wmap[remove_start:self.naxis3-remove_final,:,:]
-            temp_dq = temp_dq[remove_start:self.naxis3-remove_final,:,:]
-            temp_var = temp_var[remove_start:self.naxis3-remove_final,:,:]
+            if (remove_start+remove_final) > 0:
+                log.info('Number of wavelength planes removed with no data: %i',
+                         remove_start+remove_final)
 
-            if self.linear_wavelength:
-                self.crval3 = self.zcoord[remove_start]
-            else:
-                self.wavelength_table = self.wavelength_table[remove_start:self.naxis3-remove_final]
-                self.crval3 = self.wavelength_table[0]
-                self.naxis3 = self.naxis3 - (remove_start + remove_final)
+                temp_flux = temp_flux[remove_start:self.naxis3-remove_final,:,:]
+                temp_wmap = temp_wmap[remove_start:self.naxis3-remove_final,:,:]
+                temp_dq = temp_dq[remove_start:self.naxis3-remove_final,:,:]
+                temp_var = temp_var[remove_start:self.naxis3-remove_final,:,:]
 
+                if self.linear_wavelength:
+                    self.crval3 = self.zcoord[remove_start]
+                else:
+                    self.wavelength_table = self.wavelength_table[remove_start:self.naxis3-remove_final]
+                    self.crval3 = self.wavelength_table[0]
+                    self.naxis3 = self.naxis3 - (remove_start + remove_final)
+
+        # end removing empty wavelength planes
         naxis1 = self.naxis1
         naxis2 = self.naxis2
         naxis3 = self.naxis3
@@ -2172,7 +2234,6 @@ class IFUCubeData():
         ifucube_model.meta.wcsinfo.pc2_1 = np.sin(self.rot_angle * np.pi / 180.)
         ifucube_model.meta.wcsinfo.pc2_2 = np.cos(self.rot_angle * np.pi / 180.)
 
-
         ifucube_model.meta.ifu.flux_extension = 'SCI'
         ifucube_model.meta.ifu.error_extension = 'ERR'
         ifucube_model.meta.ifu.error_type = 'ERR'
@@ -2269,6 +2330,11 @@ class IFUCubeData():
 class IncorrectInput(Exception):
     """ Raises an exception if input parameter, Interpolation, is set to area
     when more than one file is used to build the cube.
+    """
+    pass
+
+class IncorrectParameter(Exception):
+    """ Raises an exception if cube building  parameter is nan
     """
     pass
 
