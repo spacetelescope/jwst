@@ -294,11 +294,15 @@ class OutlierDetection:
         max_images_for_median = 1024
         if len(resampled_sci) > max_images_for_median:
             log.info("Generating median from the first {} images".format(max_images_for_median))
+            #median_image = median(resampled_sci[0:max_images_for_median], nlow=nlow, nhigh=nhigh,
+            #                      badmasks=badmasks)
             median_image = median(resampled_sci[0:max_images_for_median], nlow=nlow, nhigh=nhigh,
                                   badmasks=badmasks)
         else:
             log.info("Generating median from {} images".format(len(resampled_sci)))
-            median_image = median(resampled_sci, nlow=nlow, nhigh=nhigh,
+            #median_image = median(resampled_sci, nlow=nlow, nhigh=nhigh,
+            #                      badmasks=badmasks)
+            median_image = np.median(np.dstack(resampled_sci), nlow=nlow, nhigh=nhigh,
                                   badmasks=badmasks)
 
 
