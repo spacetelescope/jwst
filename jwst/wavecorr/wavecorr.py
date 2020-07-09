@@ -55,9 +55,9 @@ def do_correction(input_model, wavecorr_file):
         # For FS only work on the primary slit
         if exp_type == 'NRS_FIXEDSLIT':
             for slit in output_model.slits:
-              if slit.name == primary_slit and _is_point_source(slit, exp_type):
-                  apply_zero_point_correction(slit, wavecorr_file)
-                  break
+                if slit.name == primary_slit and _is_point_source(slit, exp_type):
+                    apply_zero_point_correction(slit, wavecorr_file)
+                    break
 
         # For MOS work on all slits containing a point source
         else:

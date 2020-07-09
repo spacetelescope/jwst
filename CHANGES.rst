@@ -1,6 +1,11 @@
 0.17.0 (unreleased)
 ===================
 
+align_refs
+----------
+
+- Add bad pixel replacement for target and psf images [#4973]
+
 assign_mtwcs
 ------------
 
@@ -16,65 +21,63 @@ assign_wcs
 associations
 ------------
 
-- Update diagrams to change sloper to detector1. [#4986]
+- Update diagrams in documentation to change sloper to detector1. [#4986]
 
 barshadow
 ---------
+
 - Correct bar shadow parity bug for yslit. [#5095]
 
 combine_1d
 ----------
 
-- Only warn when there are degenerate spectrum in combining [#5037]
-
+- Skip spectra that are degenerate when combining [#5037]
 
 cube_build
 ----------
 
-- change the name of  default types of cubes from ``world`` to ``skyalign`` [#4974]
+- Change the name of default cube types from ``world`` to ``skyalign`` [#4974]
 
-- added ``ifualign`` cubes to be cubes rotated on sky to align with ifu instrument plane [#4974]
+- Add ``ifualign`` cubes to be cubes rotated on sky to align with ifu instrument plane [#4974]
 
-- for MIRI changed ``alpha-beta`` type cubes to ``internal_cal`` [#4974]
+- Change the name of MIRI ``alpha-beta`` cube type to ``internal_cal`` [#4974]
 
-- added ability to make NIRSpec ``internal_cal`` ifu cubes aligned with slicer plane [#4974]
+- Add ability to make NIRSpec ``internal_cal`` ifu cubes aligned with slicer plane [#4974]
 
-- changed default weighting from ``msm`` to ``emsm`` [#4974]
+- Change default weighting from ``msm`` to ``emsm`` [#4974]
 
-- NIRSpec IFU cube built from all wavelengths rather than those defined in cube par ref file [#4974]
+- NIRSpec IFU cubes built from all wavelengths rather than those defined in cube par ref file [#4974]
 
 datamodels
 ----------
 
-- Add blend rule for DETECTOR and MODULE. [#4998]
+- Add blend rule for keywords DETECTOR and MODULE. [#4998]
 
-- Added methods ``Model.info`` and ``Model.search``. [#4660]
+- Add methods ``Model.info`` and ``Model.search``. [#4660]
 
-- Trimmed MT_RA, MT_DEC keyword comments to fit within FITS record. [#4994]
+- Trim MT_RA, MT_DEC keyword comments to fit within FITS record. [#4994]
 
 - Add enum list and default value of 'NONE' for ``meta.instrument.lamp_mode`` [#5022]
 
 - Add TIMEUNIT keyword to schemas. [#5109]
 
-- Split ``pathloss`` object into ``pathloss_ps`` and ``pathloss_un``. [#5112]
+- Split ``pathloss`` object into ``pathloss_ps`` and ``pathloss_un`` in schemas. [#5112]
 
 extract_1d
 ----------
 
-- rechecks the input model container in run_extract1d to select the correct processing [#5076]
-- implement aperture correction in the Extract1dStep. [#4902]
+- Fix bug in creating a polynomial fit used in background extraction. [#4970]
+
+- Recheck the input model container in run_extract1d to select the correct processing [#5076]
+
+- Implement aperture corrections in the Extract1dStep. [#4902]
 
 extract_2d
 ----------
 
-- checks subwcs and new_slit variables exist before trying to delete them [#5093]
+- Check that ``subwcs`` and ``new_slit`` variables exist before trying to delete them [#5093]
 
-coron
------
-
-- Bad pixel replacment & median smoothing for psf images [#4973]
-
-- Fix bug in creating a polynomial fit used in background extraction. [#4970]
+- Move NIRSpec wavecorr routines to the ``wavecorr`` step. [#5133]
 
 master_background
 -----------------
@@ -111,6 +114,9 @@ pipeline
 - Update ``calwebb_tso3`` to do more robust checking of input data type.
   [#5107]
 
+- Update the ``Spec2Pipeline`` to include the new ``wavecorr`` step and put
+  ``srctype`` before ``wavecorr``. [#5133]
+
 photom
 ------
 
@@ -137,6 +143,11 @@ stpipe
 
 - Remove further sloper references. [#4989]
 
+wavecorr
+--------
+
+- Implemented the ``wavecorr`` step by pulling routines from the
+  ``extract_2d`` step. [#5133]
 
 0.16.2 (2020-06-10)
 ===================
