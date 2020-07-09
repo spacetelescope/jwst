@@ -289,7 +289,6 @@ def findmax(mag, vals, mid=1.0):
 
     return maxx, maxy
 
-
 def pix_median_fill_value(input_array, input_dq_array, bsize, xc, yc):
     """
     Short Summary
@@ -329,7 +328,10 @@ def pix_median_fill_value(input_array, input_dq_array, bsize, xc, yc):
         log.warning('Box for median filter is outside the data.')
         return 0.
 
-    filtered_array = data_array[dq_array != dqflags.pixel['DO_NOT_USE']]
+    wh_good  = np.where((np.bitwise_and(dq_array, dqflags.pixel['DO_NOT_USE'])
+                        == 0))
+
+    filtered_array = data_array[wh_good]
 
     median_value = np.nanmedian(filtered_array)
 
