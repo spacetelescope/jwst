@@ -18,6 +18,8 @@ assign_wcs
 
 - Pass an optional ``input_frame`` parameter in ``assign_wcs.util.wcs_from_footprintss``. [#5120]
 
+- Improved calculation of bounding boxes in grism images. [#5122]
+
 associations
 ------------
 
@@ -96,7 +98,7 @@ pathloss
 
 - Fix bug in NIRSpec IFU data that causes valid pixel dq flags to set to
   NON-SCIENCE in the region of an overlapping bounding box slice [#5047]
-  
+
 - Update to save both point source and uniform source 2D pathloss correction
   arrays to output. [#5112]
 
