@@ -20,6 +20,7 @@ from . import cube_cloud
 from . import coord
 
 log = logging.getLogger(__name__)
+log.addHandler(logging.StreamHandler())
 log.setLevel(logging.DEBUG)
 
 
@@ -1035,7 +1036,6 @@ class IFUCubeData():
             self.weight_power = weight_power
 
         # check on valid values
-        #make checks here
 
         found_error = False
         if self.linear_wavelength:
@@ -1098,21 +1098,18 @@ class IFUCubeData():
         #        self.scalerad = None
 
 
-        log.debug('spatial size %d', self.spatial_size)
-        if self.spectral_size is not None:
-            log.debug('spectral size %d', self.spectral_size)
-        log.debug('spatial roi %d', self.rois)
-        log.debug('wave min and max %d %d', self.wavemin, self.wavemax)
+        log.debug('spatial size %f', self.spatial_size)
+        log.debug('spectral size %f', self.spectral_size)
+        log.debug('spatial roi %f', self.rois)
+        log.debug('wave min and max %f %f', self.wavemin, self.wavemax)
         log.debug('linear wavelength %d', self.linear_wavelength)
-        if self.roiw is not None:
-            log.debug('roiw %d ', self.roiw)
+        log.debug('roiw %f ', self.roiw)
         log.debug('output_type %s ',self.output_type)
-        if self.weight_power is not None:
-            log.debug('weight_power %d ',self.weight_power)
-        if self.soft_rad is not None:
-            log.debug('softrad %d ',self.soft_rad)
-        if self.scalerad is not None:
-            log.debug('scalerad %d ',self.scalerad)
+        if self.weighting == 'msm': 
+            log.debug('weight_power %f ',self.weight_power)
+            log.debug('softrad %f ',self.soft_rad)
+        if self.weighting == 'emsm': 
+            log.debug('scalerad %f ',self.scalerad)
 
 # ******************************************************************************
 
@@ -1207,7 +1204,9 @@ class IFUCubeData():
         corner_a = []
         corner_b  = []
         
-        filename = [] # same file to match up corner_a, corner_b with file in blotting 
+        # The following 5 lists are used in blotting. Determined here, past to outlier detection
+        # and then past to blot_cube_build to aid NIRSpec inverse mapping
+        filename = []
         a_min = []
         a_max = []
         b_min = []
@@ -1226,12 +1225,10 @@ class IFUCubeData():
             n = len(self.master_table.FileMap[self.instrument][this_a][this_b])
             log.debug('number of files %d', n)
             for k in range(n):
-
                 lmin = 0.0
                 lmax = 0.0
 
                 ifile = self.master_table.FileMap[self.instrument][this_a][this_b][k]
-
 # ______________________________________________________________________________
 # Open the input data model
 # Find the footprint of the image
@@ -1245,14 +1242,14 @@ class IFUCubeData():
                             self.coord_system)
 
                         ca1, cb1, ca2, cb2, ca3, cb3, ca4, cb4, lmin, lmax = ch_corners
-                        for k in range(30):
-                            a = [ca1[k], ca2[k], ca3[k], ca4[k]]
-                            b = [cb1[k], cb2[k], cb3[k], cb4[k]]
-                            a_min.append(np.min(a))
-                            a_max.append(np.max(a))
 
-                            b_min.append(np.min(b))
-                            b_max.append(np.max(b))
+                        a = [ca1, ca2, ca3, ca4]
+                        b = [cb1, cb2, cb3, cb4]
+                        a_min.append(np.min(a))
+                        a_max.append(np.max(a))
+
+                        b_min.append(np.min(b))
+                        b_max.append(np.max(b))
 # ________________________________________________________________________________
                     if self.instrument == 'MIRI':
                         ch_corners = cube_build_wcs_util.find_corners_MIRI(
@@ -1341,6 +1338,8 @@ class IFUCubeData():
             self.set_geometryAB(corner_a,corner_b,final_lambda_min, final_lambda_max)
 
         self.print_cube_geometry()
+
+        print('a min',a_min)
 
         self.blot_corner_data = [filename,a_min, a_max, b_min, b_max]
 # **************************************************************************
