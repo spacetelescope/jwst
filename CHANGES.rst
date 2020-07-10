@@ -22,6 +22,7 @@ associations
 
 barshadow
 ---------
+
 - Correct bar shadow parity bug for yslit. [#5095]
 
 combine_1d
@@ -32,11 +33,12 @@ combine_1d
 
 cube_build
 ----------
+
 - changed default weighting back to 'msm' until NIRSPEC cube pars ref file contains emsm info [#5134]
 
 - Added checks read from cube pars reference file that parameters have valid data [#5134]
  
-- change the name of  default types of cubes from ``world`` to ``skyalign`` [#4974]
+- change the name of default types of cubes from ``world`` to ``skyalign`` [#4974]
 
 - added ``ifualign`` cubes to be cubes rotated on sky to align with ifu instrument plane [#4974]
 
@@ -65,6 +67,8 @@ datamodels
 - Add TIMEUNIT keyword to schemas. [#5109]
 
 - Split ``pathloss`` object into ``pathloss_ps`` and ``pathloss_un``. [#5112]
+
+- Added "PERSISTENCE" DQ flag definition. [#5137]
 
 extract_1d
 ----------
@@ -107,6 +111,12 @@ pathloss
 
 - Update to save both point source and uniform source 2D pathloss correction
   arrays to output. [#5112]
+
+persistence
+-----------
+
+- Flag pixels with high persistence using "PERSISTENCE" DQ flag instead
+  of "DO_NOT_USE". [#5137]
 
 pipeline
 --------

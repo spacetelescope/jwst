@@ -14,10 +14,10 @@ as input to the persistence step for a subsequent exposure.
 
 *  ``--flag_pers_cutoff``
 
-If this floating-point value is specified, pixels that have received a
+If this floating-point value is specified, pixels that receive a
 persistence correction greater than or equal to ``flag_pers_cutoff`` DN
-(the default is 40) will be flagged in the pixeldq extension of the
-output file.
+(the default is 40) are flagged in the PIXELDQ array of the
+output file with the DQ value "PERSISTENCE".
 
 *  ``--save_persistence``
 
