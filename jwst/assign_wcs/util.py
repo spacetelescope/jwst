@@ -504,9 +504,11 @@ def get_object_info(catalog_name=None):
 
 
 def create_grism_bbox(input_model,
-                      reference_files,
+                      reference_files=None,
                       mmag_extract=99.0,
-                      extract_orders=None):
+                      extract_orders=None,
+                      wfss_extract_half_height=None,
+                      wavelength_range=None):
     """Create bounding boxes for each object in the catalog
 
     The sky coordinates in the catalog image are first related
@@ -521,19 +523,32 @@ def create_grism_bbox(input_model,
     ----------
     input_model : `jwst.datamodels.ImagingModel`
         Data model which holds the grism image
-    reference_files : dict
-        Dictionary of reference files
-    mmag_extract : float
-        The faintest magnitude to extract from the catalog
-    extract_orders : list
+    reference_files : dict, optional
+        Dictionary of reference file names.
+        If ``None``, ``wavelength_range`` must be supplied to specify
+        the orders and corresponding wavelength ranges to be used in extraction.
+    mmag_extract : float, optional
+        The faintest magnitude to extract from the catalog.
+    extract_orders : list, optional
         The list of orders to extract, if specified this will
-        override the orders listed in the wavelengthrange reference file
+        override the orders listed in the wavelengthrange reference file.
+        If ``None``, the default one in the wavelengthrange reference file is used.
+    wfss_extract_half_height : int, optional
+        Cross-dispersion extraction half height in pixels, WFSS mode.
+        Overwrites the computed extraction height in ``GrismObject.order_bounding.``
+        If ``None``, it's computed from the segementation map,
+        using the min and max wavelegnth for each of the orders that
+        are available.
+    wavelength_range : dict, optional
+        Pairs of {spectral_order: (wave_min, wave_max)} for each order.
+        If ``None``, the default one in the wavelengthrange reference file is used.
 
     Returns
     -------
-    A list of GrismObject(s) for every source in the catalog
-    Each grism object contains information about it's
-    spectral extent
+    grism_objects : list
+        A list of GrismObject(s) for every source in the catalog.
+        Each grism object contains information about its
+        spectral extent.
 
     Notes
     -----
@@ -547,18 +562,16 @@ def create_grism_bbox(input_model,
     the on-detector portion of the bounding box)
 
     Bounding box dispersion direction is dependent on the filter and
-    module for NIRCAM and changes for GRISMR, but is consistent for
-    GRISMC, see https://jwst-
-    docs.stsci.edu/display/JTI/NIRCam+Wide+Field+Slitless+Spectroscopy
+    module for NIRCAM and changes for GRISMR, but is consistent for GRISMC,
+    see https://jwst-docs.stsci.edu/display/JTI/NIRCam+Wide+Field+Slitless+Spectroscopy
 
-    NIRISS only has one detector, but GRISMC disperses along rows and
+    NIRISS has one detector.  GRISMC disperses along rows and
     GRISMR disperses along columns.
 
-    """
-    if not isinstance(mmag_extract, (int, float)):
-        raise TypeError(f"Expected mmag_extract to be a number, got {mmag_extract}")
-    log.info("Extracting objects < abmag = {0}".format(mmag_extract))
+    If ``wfss_extract_half_height`` is specified it is used to compute the extent in
+    the cross-dispersion direction, which becomes ``2 * wfss_extract_half_height + 1``.
 
+    """
     instr_name = input_model.meta.instrument.name
     if instr_name == "NIRCAM":
         filter_name = input_model.meta.instrument.filter
@@ -567,48 +580,54 @@ def create_grism_bbox(input_model,
     else:
         raise ValueError("create_grism_object works with NIRCAM and NIRISS WFSS exposures only.")
 
+    if reference_files is None:
+        # Get the list of extract_orders and lmin, lmax from wavelength_range.
+        if wavelength_range is None:
+            message = "If reference files are not supplied, ``wavelength_range`` must be provided."
+            raise TypeError(message)
+    else:
+        # Get the list of extract_orders and lmin, lmax from the ``wavelengthrange11 reference file.
+        with WavelengthrangeModel(reference_files['wavelengthrange']) as f:
+            if 'WFSS' not in f.meta.exposure.type:
+                err_text = "Wavelengthrange reference file not for WFSS"
+                log.error(err_text)
+                raise ValueError(err_text)
+            ref_extract_orders = f.extract_orders
+            if extract_orders is None:
+                #ref_extract_orders = extract_orders
+                extract_orders = [x[1] for x in ref_extract_orders if x[0] == filter_name].pop()
+
+            wavelength_range = f.get_wfss_wavelength_range(filter_name, extract_orders)
+
+
+    if not isinstance(mmag_extract, (int, float)):
+        raise TypeError(f"Expected mmag_extract to be a number, got {mmag_extract}")
+    log.info("Extracting objects < abmag = {0}".format(mmag_extract))
+
     # extract the catalog objects
     if input_model.meta.source_catalog is None:
-        err_text = "No source catalog listed in datamodel"
+        err_text = "No source catalog listed in datamodel."
         log.error(err_text)
         raise ValueError(err_text)
 
-    log.info("Getting objects from {}".format(input_model.meta.source_catalog))
+    log.info(f"Getting objects from {input_model.meta.source_catalog}")
+
+    return _create_grism_bbox(input_model, mmag_extract, wfss_extract_half_height, wavelength_range)
+
+
+def _create_grism_bbox(input_model, mmag_extract=99.0,
+                       wfss_extract_half_height=None, wavelength_range=None):
+
+    log.debug(f'Extracting with wavelength_range {wavelength_range}')
 
     # this contains the pure information from the catalog with no translations
     skyobject_list = get_object_info(input_model.meta.source_catalog)
-
     # get the imaging transform to record the center of the object in the image
     # here, image is in the imaging reference frame, before going through the
     # dispersion coefficients
 
     sky_to_detector = input_model.meta.wcs.get_transform('world', 'detector')
     sky_to_grism = input_model.meta.wcs.backward_transform
-
-    # Get the disperser parameters which have the wave limits
-    with WavelengthrangeModel(reference_files['wavelengthrange']) as f:
-        if 'WFSS' not in f.meta.exposure.type:
-            err_text = "Wavelengthrange reference file not for WFSS"
-            log.error(err_text)
-            raise ValueError(err_text)
-        wavelengthrange = f.wavelengthrange
-        ref_extract_orders = f.extract_orders
-
-    # this supports the user override and overriding the WFSS order extraction
-    # when called from the pipeline only the first order is extracted
-    if extract_orders is None:
-        log.info("Using default order extraction from reference file")
-        extract_orders = ref_extract_orders
-        available_orders = [x[1] for x in extract_orders if x[0] == filter_name].pop()
-    else:
-        if isinstance(extract_orders, list):
-            if not all(isinstance(item, int) for item in extract_orders):
-                raise TypeError("Expected extract_orders to be a list of ints")
-        else:
-            err_text = 'Expected extract_orders to be a list of integers'
-            log.error(err_text)
-            raise TypeError(err_text)
-        available_orders = extract_orders
 
     grism_objects = []  # the return list of GrismObjects
     for obj in skyobject_list:
@@ -626,14 +645,14 @@ def create_grism_bbox(input_model,
                 order_bounding = {}
                 waverange = {}
                 partial_order = {}
-                for order in available_orders:
-                    range_select = [(x[2], x[3]) for x in wavelengthrange if (x[0] == order and x[1] == filter_name)]
+                for order in wavelength_range:
+                    # range_select = [(x[2], x[3]) for x in wavelengthrange if (x[0] == order and x[1] == filter_name)]
                     # The orders of the bounding box in the non-dispersed image
                     # drive the extraction extent. The location of the min and
                     # max wavelengths for each order are used to get the
                     # location of the +/- sides of the bounding box in the
                     # grism image
-                    lmin, lmax = range_select.pop()
+                    lmin, lmax = wavelength_range[order]
                     ra = np.array([obj.sky_bbox_ll.ra.value, obj.sky_bbox_lr.ra.value,
                                    obj.sky_bbox_ul.ra.value, obj.sky_bbox_ur.ra.value])
                     dec = np.array([obj.sky_bbox_ll.dec.value, obj.sky_bbox_lr.dec.value,
@@ -658,6 +677,17 @@ def create_grism_bbox(input_model,
                     xmax = int(np.max(xstack))
                     ymin = int(np.min(ystack))
                     ymax = int(np.max(ystack))
+                    if wfss_extract_half_height is not None:
+                        if input_model.meta.wcsinfo.dispaxis == 2:
+                            center = (xmax + xmin) / 2
+                            xmin = center - wfss_extract_half_height
+                            xmax = center + wfss_extract_half_height
+                        elif input_model.meta.wcsinfo.dispaxis == 1:
+                            center = (ymax + ymin) / 2
+                            ymin = center - wfss_extract_half_height
+                            ymax = center + wfss_extract_half_height
+                        else:
+                            raise ValueError("Cannot determine dispersion direction.")
 
                     # don't add objects and orders which are entirely
                     # off the detector partial_order marks partial

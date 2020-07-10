@@ -273,7 +273,8 @@ def extract_grism_objects(input_model,
                           reference_files=None,
                           extract_orders=None,
                           mmag_extract=99.,
-                          compute_wavelength=True):
+                          compute_wavelength=True,
+                          wfss_extract_half_height=None):
     """
     Extract 2d boxes around each objects spectra for each order.
 
@@ -299,6 +300,9 @@ def extract_grism_objects(input_model,
         Compute a wavelength array for the datamodel.  Computationally
         expensive, but saves doing it repeatedly later on in pipeline.
 
+    wfss_extract_half_heigh : int, (optional)
+        Cross-dispersion extraction half height in pixels, WFSS mode.
+        Overwrites the computed extraction height.
 
     Returns
     -------
@@ -358,7 +362,8 @@ def extract_grism_objects(input_model,
         else:
             grism_objects = util.create_grism_bbox(input_model, reference_files,
                                                    extract_orders=extract_orders,
-                                                   mmag_extract=mmag_extract)
+                                                   mmag_extract=mmag_extract,
+                                                   wfss_extract_half_height=wfss_extract_half_height)
             log.info("Grism object list created from source catalog: {0:s}"
                      .format(input_model.meta.source_catalog))
 

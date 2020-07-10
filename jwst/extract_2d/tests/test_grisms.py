@@ -222,6 +222,7 @@ def test_create_box_fits():
         if sid == 9:
             assert [1] == list(ids[0].order_bounding.keys())
 
+
 @pytest.mark.xfail(reason='NIRCam distortion reffile')
 def test_create_box_gwcs():
     """Make sure that a box is created around a source catalog object.
@@ -261,6 +262,7 @@ def setup_image_cat():
     aswcs = AssignWcsStep()
     imwcs = aswcs(im)
     refs = get_reference_files(im)
+
     return imwcs, refs
 
 
@@ -377,3 +379,41 @@ def test_extract_wfss_object():
 
     names = [slit.name for slit in outmodel.slits]
     assert names == ['9', '19', '19']
+
+
+def test_wfss_extract_custom_height():
+    """Test WFSS extraction with a user supplied half height.
+
+     Notes
+     -----
+     The filter warning is for fits card length
+
+     objects 9 and 19 should have order 1 extracted
+     object 25 should have partial boxes for both orders
+     object 26 should have order 2 excluded at order 1 partial
+    """
+    imwcs, refs = setup_image_cat()
+    imwcs.meta.wcsinfo._instance['dispaxis'] = 1
+    extract_orders = [1]  # just extract the first order
+    test_boxes = create_grism_bbox(imwcs, refs,
+                                   mmag_extract=99.,
+                                   extract_orders=extract_orders,
+                                   wfss_extract_half_height=5)
+
+    for sid in [9, 19]:
+        ids = [source for source in test_boxes if source.sid == sid]
+        assert len(ids) == 1
+        assert [1] == list(ids[0].order_bounding.keys())
+        y_extent = ids[0].order_bounding[1][0]
+        assert y_extent[1] - y_extent[0] == 10
+
+
+def test_wfss_extract_custom_wavelength_range():
+    """ Test WFSS extraction with a user supplied wavelength_range. """
+    imwcs, refs = setup_image_cat()
+    test_boxes = create_grism_bbox(imwcs, mmag_extract=99., wavelength_range={1: (3.01, 4.26)})
+
+    for sid in [9, 19]:
+        ids = [source for source in test_boxes if source.sid == sid]
+        assert len(ids) == 1
+        assert [1] == list(ids[0].order_bounding.keys())
