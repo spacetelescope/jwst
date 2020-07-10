@@ -307,7 +307,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         _drop_array(self._instance)
 
     def close(self):
-        if not self._iscopy and getattr(self, '_asdf', None) is not None:
+        if not self._iscopy and self._asdf is not None:
             self._asdf.close()
             self._drop_arrays()
 
