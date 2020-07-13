@@ -18,6 +18,8 @@ assign_wcs
 
 - Pass an optional ``input_frame`` parameter in ``assign_wcs.util.wcs_from_footprintss``. [#5120]
 
+- Improved calculation of bounding boxes in grism images. [#5122]
+
 associations
 ------------
 
@@ -36,7 +38,11 @@ combine_1d
 cube_build
 ----------
 
-- Change the name of default cube types from ``world`` to ``skyalign`` [#4974]
+- changed default weighting back to 'msm' until NIRSPEC cube pars ref file contains emsm info [#5134]
+
+- Added checks read from cube pars reference file that parameters have valid data [#5134]
+ 
+- change the name of default types of cubes from ``world`` to ``skyalign`` [#4974]
 
 - Add ``ifualign`` cubes to be cubes rotated on sky to align with ifu instrument plane [#4974]
 
@@ -47,6 +53,9 @@ cube_build
 - Change default weighting from ``msm`` to ``emsm`` [#4974]
 
 - NIRSpec IFU cubes built from all wavelengths rather than those defined in cube par ref file [#4974]
+
+- Removed wavelength planes that contained only 0 data. These planes are edge cases [#4974]
+
 
 datamodels
 ----------
@@ -63,14 +72,28 @@ datamodels
 
 - Split ``pathloss`` object into ``pathloss_ps`` and ``pathloss_un`` in schemas. [#5112]
 
+- Added "PERSISTENCE" DQ flag definition. [#5137]
+
 extract_1d
 ----------
 
+<<<<<<< HEAD
 - Fix bug in creating a polynomial fit used in background extraction. [#4970]
+=======
+- Rechecks the input model container in run_extract1d to select the correct processing. [#5076]
+
+- Implement aperture correction in the Extract1dStep. [#4902]
+>>>>>>> ff9ea4017ebdc62309cf97661a5093f72c402722
 
 - Recheck the input model container in run_extract1d to select the correct processing [#5076]
 
+<<<<<<< HEAD
 - Implement aperture corrections in the Extract1dStep. [#4902]
+=======
+- Checks subwcs and new_slit variables exist before trying to delete them. [#5093]
+
+- Parameter ``mmag_extract`` is now propagated to the extraction routine. [#5122]
+>>>>>>> ff9ea4017ebdc62309cf97661a5093f72c402722
 
 extract_2d
 ----------
@@ -96,9 +119,15 @@ pathloss
 
 - Fix bug in NIRSpec IFU data that causes valid pixel dq flags to set to
   NON-SCIENCE in the region of an overlapping bounding box slice [#5047]
-  
+
 - Update to save both point source and uniform source 2D pathloss correction
   arrays to output. [#5112]
+
+persistence
+-----------
+
+- Flag pixels with high persistence using "PERSISTENCE" DQ flag instead
+  of "DO_NOT_USE". [#5137]
 
 pipeline
 --------

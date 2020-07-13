@@ -68,7 +68,7 @@ def extract2d(input_model,
                                                  grism_objects=grism_objects,
                                                  reference_file=reference_file,
                                                  extract_orders=extract_orders,
-                                                 mmag_extract=99.)
+                                                 mmag_extract=mmag_extract)
 
     else:
         log.info(f'EXP_TYPE {exp_type} not supported for extract 2D')

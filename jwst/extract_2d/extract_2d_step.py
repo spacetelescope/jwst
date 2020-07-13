@@ -32,6 +32,7 @@ class Extract2dStep(Step):
                                                 reference_file=reference_file_name,
                                                 extract_orders=self.extract_orders,
                                                 grism_objects=self.grism_objects,
-                                                extract_height=self.extract_height)
+                                                extract_height=self.extract_height,
+                                                mmag_extract=self.mmag_extract)
 
         return output_model
