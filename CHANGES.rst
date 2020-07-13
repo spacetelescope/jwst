@@ -56,7 +56,6 @@ cube_build
 
 - Removed wavelength planes that contained only 0 data. These planes are edge cases [#4974]
 
-
 datamodels
 ----------
 
@@ -77,31 +76,15 @@ datamodels
 extract_1d
 ----------
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-- Fix bug in creating a polynomial fit used in background extraction. [#4970]
-=======
-- Rechecks the input model container in run_extract1d to select the correct processing. [#5076]
-
 - Implement aperture correction in the Extract1dStep. [#4902]
->>>>>>> ff9ea4017ebdc62309cf97661a5093f72c402722
+
+- Fix bug in creating a polynomial fit used in background extraction. [#4970]
 
 - Recheck the input model container in run_extract1d to select the correct processing [#5076]
 
-<<<<<<< HEAD
-- Implement aperture corrections in the Extract1dStep. [#4902]
-=======
 - Checks subwcs and new_slit variables exist before trying to delete them. [#5093]
 
 - Parameter ``mmag_extract`` is now propagated to the extraction routine. [#5122]
->>>>>>> ff9ea4017ebdc62309cf97661a5093f72c402722
-=======
-- Fix bug in creating a polynomial fit used in background extraction. [#4970]
-
-- Recheck the input model container in run_extract1d to select the correct processing [#5076]
-
-- Implement aperture corrections in the Extract1dStep. [#4902]
->>>>>>> origin/jp1555
 
 extract_2d
 ----------
