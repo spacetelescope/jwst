@@ -50,7 +50,9 @@ traps-filled image must be updated at the end of each group.
 
 For each pixel, the persistence in a group is the sum of the trap decays
 over all trap families.  This persistence is subtracted from the science
-data for the current group.
+data for the current group. Pixels that have large persistence values
+subtracted from them are flagged in the DQ array, as information to the
+user (see the Step Arguments section).
 
 Trap capture is more involved than is trap decay.  The computation of trap
 capture is different for an impulse (e.g. a cosmic-ray event) than for a
