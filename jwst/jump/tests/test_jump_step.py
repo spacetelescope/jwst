@@ -7,7 +7,7 @@ from jwst.datamodels import RampModel
 from jwst.datamodels import GainModel, ReadnoiseModel
 from jwst.jump import JumpStep
 
-MAXIMUM_CORES = [None, 'quarter','half','all']
+MAXIMUM_CORES = ['none', 'quarter','half','all']
 
 @pytest.fixture(scope="module")
 def generate_miri_reffiles(tmpdir_factory):
@@ -124,6 +124,7 @@ def setup_inputs():
 @pytest.mark.parametrize("max_cores", MAXIMUM_CORES)
 def test_one_CR(generate_miri_reffiles, max_cores, setup_inputs):
     override_gain, override_readnoise = generate_miri_reffiles
+    print("max_cores = ",max_cores)
     grouptime = 3.0
     deltaDN = 5
     ingain = 6
@@ -150,7 +151,7 @@ def test_one_CR(generate_miri_reffiles, max_cores, setup_inputs):
     print("number of CRs {}".format(len(CR_x_locs)))
 
     out_model = JumpStep.call(model1, override_gain=override_gain,
-        override_readnoise=override_readnoise, maximum_cores=max_cores)
+        override_readnoise = override_readnoise, maximum_cores = max_cores)
     CR_pool = cycle(first_CR_group_locs)
     for i in range(len(CR_x_locs)):
         CR_group = next(CR_pool)

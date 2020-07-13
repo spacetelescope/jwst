@@ -260,7 +260,7 @@ class ReferenceData:
 
         abvega_offset = row['abvega_offset'][0]
         log.info('AB to Vega magnitude offset {:.5f}'.format(abvega_offset))
-
+        abvegaoffset_model.close()
         return abvega_offset
 
 
@@ -536,10 +536,7 @@ class SourceCatalog:
         self.n_aper = len(self.aperture_ee)
         self.column_desc = {}
 
-        # cannot use gwcs until this issue is resolved (both in jwst and
-        # gwcs):  https://github.com/spacetelescope/gwcs/issues/294
-        # self.wcs = self.model.meta.wcs  # gWCS
-        self.wcs = self.model.get_fits_wcs()  # FITS WCS
+        self.wcs = self.model.meta.wcs
 
     def convert_to_jy(self):
         """

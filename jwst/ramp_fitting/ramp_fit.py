@@ -523,6 +523,9 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
     # Save original shapes for writing to log file, as these may change for MIRI
     orig_nreads = nreads
     orig_cubeshape = cubeshape
+    if (dropframes1 is None):    # set to default if missing
+        dropframes1 = 0
+        log.debug('Missing keyword DRPFRMS1, so setting to default value of 0')
 
     # For MIRI datasets having >1 group, if all pixels in the final group are
     #   flagged as DO_NOT_USE, resize the input model arrays to exclude the

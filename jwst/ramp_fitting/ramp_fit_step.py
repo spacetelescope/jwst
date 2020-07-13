@@ -23,7 +23,7 @@ class RampFitStep (Step):
         int_name = string(default='')
         save_opt = boolean(default=False) # Save optional output
         opt_name = string(default='')
-        maximum_cores = string(default='none')
+        maximum_cores = option('none', 'quarter', 'half', 'all', default='none') # max number of processes to create
     """
 
     # Prior to 04/26/17, the following were also in the spec above:

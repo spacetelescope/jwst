@@ -7,8 +7,7 @@ __all__ = ["PathLossStep"]
 
 class PathLossStep(Step):
     """
-    PathLossStep: Inserts the pathloss and wavelength arrays
-    into the data.
+    PathLossStep: Apply the path loss correction to a science exposure.
 
     Pathloss depends on the centering of the source in the aperture if the
     source is a point source.
@@ -24,16 +23,14 @@ class PathLossStep(Step):
         # Open the input data model
         with datamodels.open(input) as input_model:
 
-            # Get the name of the path loss reference file to use
-            self.pathloss_name = self.get_reference_file(input_model,
-                                                         'pathloss')
-            self.log.info('Using PATHLOSS reference file %s',
-                          self.pathloss_name)
+            # Get the name of the pathloss reference file to use
+            self.pathloss_name = self.get_reference_file(input_model, 'pathloss')
+            self.log.info(f'Using PATHLOSS reference file {self.pathloss_name}')
 
             # Check for a valid reference file
             if self.pathloss_name == 'N/A':
                 self.log.warning('No PATHLOSS reference file found')
-                self.log.warning('Path loss step will be skipped')
+                self.log.warning('Pathloss step will be skipped')
                 result = input_model.copy()
                 result.meta.cal_step.pathloss = 'SKIPPED'
                 return result

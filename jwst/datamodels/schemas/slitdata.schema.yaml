@@ -31,7 +31,6 @@ allOf:
       title: Bar shadow correction
       fits_hdu: BARSHADOW
       ndim: 2
-      default: 1.0
       datatype: float32
     area:
       title: Pixel area map array
@@ -48,9 +47,9 @@ allOf:
       fits_hdu: CON
       default: 0
       datatype: int32
-- $ref: slitmeta.schema
 - $ref: variance.schema
 - $ref: pathlosscorr.schema
+- $ref: slitmeta.schema
 - $ref: bunit.schema
 - $ref: photometry.schema
 - $ref: wcsinfo.schema

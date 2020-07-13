@@ -7,6 +7,7 @@ from .. import datamodels
 from .. assign_wcs import nirspec   # For NIRSpec IFU data
 from .. datamodels import dqflags
 from ..lib.wcs_utils import get_wavelengths
+from .nirspec_corrections import correct_nrs_ifu_bkg
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -275,6 +276,11 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
                                         tab_background, left=0., right=0.)
             background.data[y.astype(int), x.astype(int)] = bkg_surf_bright.copy()
 
+        # If the science target is a point source, apply pathloss corrections
+        # to the background to make it match the calibrated science data
+        if input.meta.target.source_type == 'POINT':
+            background = correct_nrs_ifu_bkg(background)
+
     elif input.meta.instrument.name.upper() == "MIRI":
         shape = input.data.shape
         grid = np.indices(shape, dtype=np.float64)
@@ -292,8 +298,8 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
         bkg_surf_bright = np.interp(wl_array, tab_wavelength, tab_background,
                                     left=0., right=0.)
         background.data[:, :] = bkg_surf_bright.copy()
+
     else:
-        raise RuntimeError("Exposure type {} is not supported."
-                           .format(input.meta.exposure.type))
+        raise RuntimeError(f'Exposure type {input.meta.exposure.type} is not supported.')
 
     return background

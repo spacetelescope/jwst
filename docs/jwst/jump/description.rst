@@ -56,12 +56,13 @@ marked as containing a jump.
 Multiprocessing
 ===============
 This step has the option of running in multiprocessing mode. In that mode it will
-split the input data cube into a number of slices based on the number of available
+split the input data cube into a number of row slices based on the number of available
 cores on the host computer and the value of the max_cores input parameter. By
 default the step runs on a single processor. At the other extreme if max_cores is
 set to 'all', it will use all available cores (real and virtual). Testing has shown
 a reduction in the elapsed time for the step proportional to the number of real
-cores used.
+cores used. Using the virtual cores also reduces the elasped time but at a slightly
+lower rate than the real cores.
 
 If multiprocessing is requested the input cube will be divided into a number of
 slices in the row dimension (with the last slice being slightly larger, if needed).
