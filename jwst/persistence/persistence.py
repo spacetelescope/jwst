@@ -368,7 +368,7 @@ class DataSet():
                         persistence.copy()
                 if persistence.max() >= self.flag_pers_cutoff:
                     mask = (persistence >= self.flag_pers_cutoff)
-                    self.output_obj.pixeldq[mask] |= dqflags.pixel['DO_NOT_USE']
+                    self.output_obj.pixeldq[mask] |= dqflags.pixel['PERSISTENCE']
 
             # Update traps_filled with the number of traps that captured
             # a charge during the current integration.

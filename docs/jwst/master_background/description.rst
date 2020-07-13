@@ -191,22 +191,6 @@ step then combines the background spectra into a master background spectrum and
 performs background subtraction on all of the source slit data, the same as the
 other observing scenarios.
 
-There are, however, additional factors that must be taken into account in order to
-yield scientifically-correct results. This is due to the fact that background slits
-are processed as extended sources in :ref:`calwebb_spec2 <calwebb_spec2>`, but
-the background spectra must then be applied to some slits that were processed as
-point sources. Extended sources and point sources receive different corrections
-in steps like :ref:`pathloss <pathloss_step>` and :ref:`barshadow <barshadow_step>`,
-hence the data are not a one-to-one match. This requires additional operations to
-be performed on the background spectrum before it can be correctly applied to slits
-containing point sources.
-
-**These unique capabilities are not yet implemented in the ``master_background`` step,
-hence NIRSpec MOS observations can not be processed properly at this time.** The
-only workable option for NIRSpec MOS data at this time is to employ the
-user-supplied background spectrum option, which is then subtracted from every
-slit instance in a MOS exposure.
-
 Creating the 1-D Master Background Spectrum
 -------------------------------------------
 The 1-D master background spectrum is created by combining data contained in the
@@ -253,3 +237,50 @@ performed:
 
 - Subtract the resulting 2-D background image from the 2-D source data. DQ values from the
   2-D background image are propagated into the DQ array of the subtracted science data.
+
+NIRSpec Background Corrections
+------------------------------
+Once the 1-D master background spectrum has been interpolated to the 2-D space of
+the science data, NIRSpec data can sometimes need additional corrections to make the
+computed background match the science data. This is due to two primary effects of NIRSpec
+calibration:
+
+- Point sources in MOS and fixed-slit mode receive wavelength offset
+  corrections if the source is not centered (in the dispersion direction) within the slit.
+  Hence the wavelength grid assigned to the 2-D slit cutout is shifted slightly relative
+  to the wavelengths of the background signal contained in the same cutout. And because the
+  flat-field, pathloss, and photom corrections/calibrations are wavelength-dependent, the
+  pixel-level calibrations for the source signal are slightly different than the background.
+
+- Point sources and uniform sources receive different pathloss and bar shadow corrections
+  (in fact point sources don't receive any bar shadow correction). So the background signal
+  contained within a calibrated point source cutout has received the wrong pathloss
+  correction and hasn't received any bar shadow correction. Meanwhile, the master background
+  is created from data that had corrections for a uniform source applied to it and hence
+  there's a mismatch relative to the point source data.
+
+The 2-D background that's initially created from the 1-D master background is essenentially
+a perfectly calibrated background signal. However, due to the effects mentioned above, the
+actual background signal contained within a calibrated point source slit (or IFU image) is not
+perfect (e.g. it still has the bar shadow effects in it). So all of these effects need to be
+accounted for in the computed 2-D background before subtracting from the source data.
+
+NIRSpec IFU Mode
+^^^^^^^^^^^^^^^^
+For the NIRSpec IFU mode, the only effect that needs to be accounted for is the difference
+between point source and uniform source pathloss corrections, because no wavelength or
+bar shadow corrections are applied to IFU data. The 2-D background generated from the
+master background spectrum must have the uniform source pathloss correction removed from
+it and the point source pathloss correction imposed on it, so the operation performed on
+the 2-D background is:
+
+.. math::
+ bkg(corr) = bkg * pathloss(point) / pathloss(uniform)
+
+NIRSpec MOS Mode
+^^^^^^^^^^^^^^^^
+**Not yet implemented**
+
+NIRSpec Fixed-Slit Mode
+^^^^^^^^^^^^^^^^^^^^^^^
+**Not yet implemented**

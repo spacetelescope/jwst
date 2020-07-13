@@ -56,6 +56,10 @@ class IFUImageModel(DataModel):
                 self.var_rnoise = init.var_rnoise
             if init.hasattr('area'):
                 self.area = init.area
+            if init.hasattr('pathloss_point'):
+                self.pathloss_point = init.pathloss_point
+            if init.hasattr('pathloss_uniform'):
+                self.pathloss_uniform = init.pathloss_uniform
             return
 
         super(IFUImageModel, self).__init__(init=init, **kwargs)

@@ -8,7 +8,8 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def find_footprint_MIRI(input, this_channel, instrument_info, coord_system):
+# ********************************************************************************
+def find_corners_MIRI(input, this_channel, instrument_info, coord_system):
 
     """ For MIRI channel data find the foot of this data on the sky
 
@@ -26,12 +27,13 @@ def find_footprint_MIRI(input, this_channel, instrument_info, coord_system):
     instrument_info : dictionary
        dictionary holding x pixel min and max values for each channel
     coord_system : str
-       coordinate system of output cube, either alpha-beta or world
+       coordinate system of output cube: skyalign, ifualign, internal_cal
 
     Returns
     -------
-    min and max spaxial coordinates  and wavelength for channel.
-    spaxial coordinates are in units of arc seconds.
+    corners of the spatial system determined from min and max of spatial values
+    min and max of wavelength
+
     """
     # x,y values for channel - convert to output coordinate system
     # return the min & max of spatial coords and wavelength
@@ -41,63 +43,101 @@ def find_footprint_MIRI(input, this_channel, instrument_info, coord_system):
 
     y, x = np.mgrid[:ysize, xstart:xend]
 
-    if coord_system == 'alpha-beta':
+    if coord_system == 'internal_cal':
+        # coord1 = along slice
+        # coord2 = across slice
         detector2alpha_beta = input.meta.wcs.get_transform('detector',
                                                            'alpha_beta')
         coord1, coord2, lam = detector2alpha_beta(x, y)
-    else:  # coord_system == 'world'
+
+        valid = np.logical_and(np.isfinite(coord1), np.isfinite(coord2))
+        coord1 = coord1[valid]
+        coord2 = coord2[valid]
+        coord1 = coord1.flatten()
+        coord2 = coord2.flatten()
+        lam = lam.flatten()
+
+        xedge = x + 1
+        yedge = y + 1
+        valid = np.where(yedge < 1023)
+        xedge = xedge[valid]
+        yedge = yedge[valid]
+        coord2b, coord1b, lamb = detector2alpha_beta(xedge,yedge) #lam ~0 for this transform
+        valid = np.logical_and(np.isfinite(coord1b), np.isfinite(coord2b))
+        coord1b = coord1b[valid]
+        coord2b = coord2b[valid]
+        coord1b = coord1b.flatten()
+        coord2b = coord2b.flatten()
+        lamb = lamb.flatten()
+        coord1 = np.concatenate([coord1,coord1b])
+        coord2 = np.concatenate([coord2,coord2b])
+        lam = np.concatenate([lam,lamb])
+
+    else:  # skyalign or ifualign
+        # coord1 = ra
+        # coord2 = dec
         coord1, coord2, lam = input.meta.wcs(x, y)
+        valid = np.logical_and(np.isfinite(coord1), np.isfinite(coord2))
+        coord1 = coord1[valid]
+        coord2 = coord2[valid]
+        # fix 0/360 wrapping in ra. Wrapping makes it difficult to determine
+        # ra range
+        coord1_wrap = wrap_ra(coord1)
+        coord1 = coord1_wrap
 
-# ________________________________________________________________________________
-# test for 0/360 wrapping in ra. if exists it makes it difficult to determine
-# ra range of IFU cube.
+    coord1 = coord1.flatten()
+    coord2 = coord2.flatten()
+    a_min = np.nanmin(coord1)
+    a_max = np.nanmax(coord1)
 
-    coord1_wrap = wrap_ra(coord1)
-    a_min = np.nanmin(coord1_wrap)
-    a_max = np.nanmax(coord1_wrap)
+    a1_index = np.argmin(coord1)
+    a2_index = np.argmax(coord1)
+
+    b1 = coord2[a1_index]
+    b2 = coord2[a2_index]
 
     b_min = np.nanmin(coord2)
     b_max = np.nanmax(coord2)
 
+    b1_index = np.argmin(coord2)
+    b2_index = np.argmax(coord2)
+    a1 = coord1[b1_index]
+    a2 = coord1[b2_index]
+
     lambda_min = np.nanmin(lam)
     lambda_max = np.nanmax(lam)
 
-    return a_min, a_max, b_min, b_max, lambda_min, lambda_max
+    return a_min, b1, a_max, b2, a1, b_min,  a2, b_max, lambda_min, lambda_max
 # ********************************************************************************
 
+def find_corners_NIRSPEC(input, this_channel, instrument_info, coord_system):
 
-def find_footprint_NIRSPEC(input, coord_system):
-
-    """For a NIRSPEC slice on an exposure find the foot of this data on the sky
+    """For a NIRSPEC slice on an exposure find the footprint of this data on the sky
 
     For each slice find:
-    a. the min and max spatial coordinates (alpha,beta) or (ra,dec) depending
+    a. the min and max spatial coordinates (along slice, across slice) or (ra,dec) depending
        on coordinate system of the output cube.
-    b. min and max wavelength is also determined.
+    b. min and max wavelength
 
     Parameters
     ----------
     input: data model
        input model (or file)
     coord_system : str
-       coordinate system of output cube, either alpha-beta or world
+       coordinate system of output cube: skyalign, ifualign, internal_cal
 
     Notes
     -----
-    The coordinate system of alpha-beta is not yet implemented for NIRSPEC
     Returns
     -------
     min and max spaxial coordinates and wavelength for slice.
 
     """
-    # loop over all the region (Slices) in the Channel
-    # based on regions mask (indexed by slice number) find all the detector
-    # x,y values for slice. Then convert the x,y values to  v2,v3,lambda
-    # return the min & max of spatial coords and wavelength  - these are of the pixel centers
-
     nslices = 30
     a_slice = np.zeros(nslices * 2)
+    b = np.zeros(nslices * 2)
     b_slice = np.zeros(nslices * 2)
+    a = np.zeros(nslices * 2)
     lambda_slice = np.zeros(nslices * 2)
     k = 0
     # for NIRSPEC there are 30 regions
@@ -106,45 +146,78 @@ def find_footprint_NIRSPEC(input, coord_system):
     for i in range(nslices):
         slice_wcs = nirspec.nrs_wcs_set_input(input, i)
         x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box, step=(1, 1), center=True)
-        if coord_system == 'world':
+        if coord_system == 'internal_cal':
+            # coord1 = along slice
+            # coord2 = across slice
+            detector2slicer = slice_wcs.get_transform('detector','slicer')
+            coord2, coord1, lam = detector2slicer(x,y) #lam ~0 for this transform
+            valid = np.logical_and(np.isfinite(coord1), np.isfinite(coord2))
+            coord1 = coord1[valid]
+            coord2 = coord2[valid]
+            lam = lam[valid] * 1.0e6
+            coord1 = coord1.flatten()
+            coord2 = coord2.flatten()
+            lam = lam.flatten()
+        else:  # coord_system: skyalign, ifualign
+            # coord1 = ra
+            # coord2 = dec
             coord1, coord2, lam = slice_wcs(x, y)
-        else:  # coord_system == 'alpha-beta':
-            raise InvalidCoordSystem(" The Alpha-Beta Coordinate system is not valid (at this time) for NIRSPEC data")
-#                detector2slicer = input.meta.wcs.get_transform('detector','slicer')
-#                coord1,coord2,lam = detector2slicer(x,y)
+            valid = np.logical_and(np.isfinite(coord1), np.isfinite(coord2))
+            coord1 = coord1[valid]
+            coord2 = coord2[valid]
+            lam = lam[valid]
+            # fix 0/360 wrapping in ra. Wrapping makes it difficult to determine
+            # ra range
+            coord1_wrap = wrap_ra(coord1)
+            coord1 = coord1_wrap
 # ________________________________________________________________________________
-# For each slice  test for 0/360 wrapping in ra.
-# If exists it makes it difficult to determine  ra range of IFU cube.
-        coord1_wrap = wrap_ra(coord1)
-        a_min = np.nanmin(coord1_wrap)
-        a_max = np.nanmax(coord1_wrap)
+        coord1 = coord1.flatten()
+        coord2 = coord2.flatten()
+        lam = lam.flatten()
 
-        a_slice[k] = a_min
-        a_slice[k + 1] = a_max
+        a_slice[k] = np.nanmin(coord1)
+        a_slice[k + 1] =np.nanmax(coord1)
+        a1_index = np.argmin(coord1)
+        a2_index = np.argmax(coord1)
+        b1 = coord2[a1_index]
+        b2 = coord2[a2_index]
+        b[k] = b1
+        b[k+1] = b2
 
         b_slice[k] = np.nanmin(coord2)
         b_slice[k + 1] = np.nanmax(coord2)
+
+        b1_index = np.argmin(coord2)
+        b2_index = np.argmax(coord2)
+        a1 = coord1[b1_index]
+        a2 = coord1[b2_index]
+        a[k] = a1
+        a[k +1] = a2
 
         lambda_slice[k] = np.nanmin(lam)
         lambda_slice[k + 1] = np.nanmax(lam)
 
         k = k + 2
 # ________________________________________________________________________________
-# now test the ra slices for conistency. Adjust if needed.
-    a_slice_wrap = wrap_ra(a_slice)
-    a_min = np.nanmin(a_slice_wrap)
-    a_max = np.nanmax(a_slice_wrap)
+# now test the ra slices for consistency. Adjust if needed.
 
-    b_min = min(b_slice)
-    b_max = max(b_slice)
+    a_min = np.nanmin(a_slice)
+    a_max = np.nanmax(a_slice)
+    a1_index = np.argmin(a_slice)
+    a2_index = np.argmax(a_slice)
+    b1 = b[a1_index]
+    b2 = b[a2_index]
+
+    b_min = np.nanmin(b_slice)
+    b_max = np.nanmax(b_slice)
+    b1_index = np.argmin(b_slice)
+    b2_index = np.argmax(b_slice)
+    a1 = a[b1_index]
+    a2 = a[b2_index]
 
     lambda_min = min(lambda_slice)
     lambda_max = max(lambda_slice)
-
-    if (a_min == 0.0 and a_max == 0.0 and b_min == 0.0 and b_max == 0.0):
-        log.info('This NIRSPEC exposure has no IFU data on it - skipping file')
-
-    return a_min, a_max, b_min, b_max, lambda_min, lambda_max
+    return a_min, b1, a_max, b2, a1, b_min, a2, b_max, lambda_min, lambda_max
 # _______________________________________________________________________________
 
 
@@ -182,10 +255,3 @@ def wrap_ra(ravalues):
 
     return ravalues_wrap
 # ________________________________________________________________________________
-# Errors
-
-
-class InvalidCoordSystem(Exception):
-    """ Raise exeception when alpha-beta coordinate system is use for NIRSPEC
-    """
-    pass

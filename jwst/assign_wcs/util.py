@@ -91,7 +91,7 @@ def reproject(wcs1, wcs2):
     return _reproject
 
 
-def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray]) -> float:
+def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray], disp_axis: int = None) -> float:
     """Compute scaling transform.
 
     Parameters
@@ -100,24 +100,38 @@ def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray]) -> float:
         Reference WCS object from which to compute a scaling factor.
 
     fiducial : tuple
-        Input fiducial of (RA, DEC) used in calculating reference points.
+        Input fiducial of (RA, DEC) or (RA, DEC, Wavelength) used in calculating reference points.
+
+    disp_axis : int
+        Dispersion axis integer. Assumes the same convention as `wcsinfo.dispersion_direction`
 
     Returns
     -------
     scale : float
-        Scaling factor for x and y.
+        Scaling factor for x and y or cross-dispersion direction.
 
     """
-    if len(fiducial) != 2:
-        raise ValueError(f'Input fiducial must contain only (RA, DEC); Instead recieved: {fiducial}')
+    spectral = 'SPECTRAL' in wcs.output_frame.axes_type
+
+    if spectral and disp_axis is None:
+        raise ValueError('If input WCS is spectral, a disp_axis must be given')
 
     crpix = np.array(wcs.invert(*fiducial))
-    crpix_with_offsets = np.vstack((crpix, crpix + (1, 0), crpix + (0, 1))).T
+
+    delta = np.zeros_like(crpix)
+    spatial_idx = np.where(np.array(wcs.output_frame.axes_type) == 'SPATIAL')[0]
+    delta[spatial_idx[0]] = 1
+
+    crpix_with_offsets = np.vstack((crpix, crpix + delta, crpix + np.roll(delta, 1))).T
     crval_with_offsets = wcs(*crpix_with_offsets)
 
-    coords = SkyCoord(ra=crval_with_offsets[0], dec=crval_with_offsets[1], unit="deg")
+    coords = SkyCoord(ra=crval_with_offsets[spatial_idx[0]], dec=crval_with_offsets[spatial_idx[1]], unit="deg")
     xscale = np.abs(coords[0].separation(coords[1]).value)
     yscale = np.abs(coords[0].separation(coords[2]).value)
+
+    if spectral:  # Assuming scale doesn't change with wavelength
+        # Assuming disp_axis is consistent with DataModel.meta.wcsinfo.dispersion.direction
+        return yscale if disp_axis == 1 else xscale
 
     return np.sqrt(xscale * yscale)
 
@@ -569,7 +583,7 @@ def create_grism_bbox(input_model,
     # dispersion coefficients
 
     sky_to_detector = input_model.meta.wcs.get_transform('world', 'detector')
-    sky_to_grism = input_model.meta.wcs.get_transform('world', 'grism_detector')
+    sky_to_grism = input_model.meta.wcs.backward_transform
 
     # Get the disperser parameters which have the wave limits
     with WavelengthrangeModel(reference_files['wavelengthrange']) as f:
@@ -620,25 +634,30 @@ def create_grism_bbox(input_model,
                     # location of the +/- sides of the bounding box in the
                     # grism image
                     lmin, lmax = range_select.pop()
-                    xmin, ymin, _, _, _ = sky_to_grism(obj.sky_bbox_ll.ra.value,
-                                                       obj.sky_bbox_ll.dec.value,
-                                                       lmin, order)
-                    xmax, ymax, _, _, _ = sky_to_grism(obj.sky_bbox_ur.ra.value,
-                                                       obj.sky_bbox_ur.dec.value,
-                                                       lmax, order)
+                    ra = np.array([obj.sky_bbox_ll.ra.value, obj.sky_bbox_lr.ra.value,
+                                   obj.sky_bbox_ul.ra.value, obj.sky_bbox_ur.ra.value])
+                    dec = np.array([obj.sky_bbox_ll.dec.value, obj.sky_bbox_lr.dec.value,
+                                   obj.sky_bbox_ul.dec.value, obj.sky_bbox_ur.dec.value])
+                    x1, y1, _, _, _ = sky_to_grism(ra, dec, [lmin] * 4, [order]*4)
+                    x2, y2, _, _, _ = sky_to_grism(ra, dec, [lmax] * 4, [order]*4)
 
-                    # Make sure that we have the correct box corners tagged
-                    # as the min and max extents for the grism, the dispersion
-                    # direction changes with grism and detector
-                    if xmax < xmin:
-                        xmin, xmax = xmax, xmin
-                    if ymax < ymin:
-                        ymin, ymax = ymax, ymin
+                    xstack = np.hstack([x1, x2])
+                    ystack = np.hstack([y1, y2])
 
-                    xmin = int(xmin)
-                    xmax = int(xmax)
-                    ymin = int(ymin)
-                    ymax = int(ymax)
+                    # Subarrays are only allowed in nircam tsgrism mode. The polynomial transforms
+                    # only work with the full frame coordinates. The code here is called during extract_2d,
+                    # and is creating bounding boxes which should be in the full frame coordinates, it just
+                    # uses the input catalog and the magnitude to limit the objects that need bounding boxes.
+
+                    # Tsgrism is always supposed to have the source object at the same pixel, and that is
+                    # hardcoded into the transforms. At least a while ago, the 2d extraction for tsgrism mode
+                    # didn't call this bounding box code. So I think it's safe to leave the subarray
+                    # subtraction out, i.e. do not subtract x/ystart.
+
+                    xmin = int(np.min(xstack))
+                    xmax = int(np.max(xstack))
+                    ymin = int(np.min(ystack))
+                    ymax = int(np.max(ystack))
 
                     # don't add objects and orders which are entirely
                     # off the detector partial_order marks partial
