@@ -38,11 +38,11 @@ combine_1d
 cube_build
 ----------
 
-- changed default weighting back to 'msm' until NIRSPEC cube pars ref file contains emsm info [#5134]
+- Changed default weighting back to 'msm' until NIRSPEC cube pars ref file contains emsm info [#5134]
 
 - Added checks read from cube pars reference file that parameters have valid data [#5134]
  
-- change the name of default types of cubes from ``world`` to ``skyalign`` [#4974]
+- Change the name of default types of cubes from ``world`` to ``skyalign`` [#4974]
 
 - Add ``ifualign`` cubes to be cubes rotated on sky to align with ifu instrument plane [#4974]
 
