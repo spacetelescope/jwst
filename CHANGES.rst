@@ -42,7 +42,7 @@ cube_build
 
 - Added checks read from cube pars reference file that parameters have valid data [#5134]
  
-- Change the name of default types of cubes from ``world`` to ``skyalign`` [#4974]
+- Change the name of default cube type from ``world`` to ``skyalign`` [#4974]
 
 - Add ``ifualign`` cubes to be cubes rotated on sky to align with ifu instrument plane [#4974]
 
@@ -78,6 +78,7 @@ extract_1d
 ----------
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 - Fix bug in creating a polynomial fit used in background extraction. [#4970]
 =======
 - Rechecks the input model container in run_extract1d to select the correct processing. [#5076]
@@ -94,6 +95,13 @@ extract_1d
 
 - Parameter ``mmag_extract`` is now propagated to the extraction routine. [#5122]
 >>>>>>> ff9ea4017ebdc62309cf97661a5093f72c402722
+=======
+- Fix bug in creating a polynomial fit used in background extraction. [#4970]
+
+- Recheck the input model container in run_extract1d to select the correct processing [#5076]
+
+- Implement aperture corrections in the Extract1dStep. [#4902]
+>>>>>>> origin/jp1555
 
 extract_2d
 ----------
