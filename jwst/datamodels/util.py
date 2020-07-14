@@ -461,14 +461,20 @@ def get_envar_as_boolean(name, default=False):
         The name of the environmental variable to retrieve
 
     default : bool
-        If the value cannot be determined, use as the default.
+        If the environmental variable cannot be accessed, use as the default.
     """
     truths = ('true', 't', 'yes', 'y')
+    falses = ('false', 'f', 'no', 'n')
     if name in os.environ:
         value = os.environ[name]
         try:
             value = bool(int(value))
         except ValueError:
-            return value.lower() in truths
+            value_lowcase = value.lower()
+            if value_lowcase not in truths + falses:
+                raise ValueError(f'Cannot convert value "{value}" to boolean unambiguously.')
+            return value_lowcase in truths
         return value
+
+    log.debug('Environmental "{name}" cannot be found. Using default value of "{default}".')
     return default
