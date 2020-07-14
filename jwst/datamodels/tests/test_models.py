@@ -49,7 +49,7 @@ def teardown():
     shutil.rmtree(TMP_DIR)
 
 
-@pytest.fixture 
+@pytest.fixture
 def jail_environ():
     """Lock changes to the environment"""
     original = os.environ.copy()
@@ -265,7 +265,7 @@ def test_stringify():
 
     image = os.path.join(ROOT_DIR, "nircam_mask.fits")
     with MaskModel(image) as im:
-        assert str(im) ==  '<MaskModel(2048, 2048) from nircam_mask.fits>'
+        assert str(im) == '<MaskModel(2048, 2048) from nircam_mask.fits>'
 
 
 def test_section():
@@ -341,7 +341,7 @@ def test_default_value_anyof_schema():
 
 
 def test_imagemodel():
-    dims = (10,10)
+    dims = (10, 10)
     with ImageModel(dims) as dm:
         assert dm.data.shape == dims
         assert dm.err.shape == dims
@@ -362,10 +362,10 @@ def test_multislit():
         slit.data = np.random.rand(5, 5)
         slit.dm = np.random.rand(5, 5)
         slit.err = np.random.rand(5, 5)
-        assert slit.wavelength.shape == (0,0)
-        assert slit.pathloss_point.shape == (0,0)
-        assert slit.pathloss_uniform.shape == (0,0)
-        assert slit.barshadow.shape == (0,0)
+        assert slit.wavelength.shape == (0, 0)
+        assert slit.pathloss_point.shape == (0, 0)
+        assert slit.pathloss_uniform.shape == (0, 0)
+        assert slit.barshadow.shape == (0, 0)
 
 
 def test_secondary_shapes():
@@ -488,9 +488,9 @@ def test_initialize_arrays_with_arglist():
 def test_open_asdf_model(init):
     # Open an empty asdf file, pass extra arguments
     with DataModel(init=init, ignore_version_mismatch=False,
-                                ignore_unrecognized_tag=True) as model:
-        assert model._asdf._ignore_version_mismatch == False
-        assert model._asdf._ignore_unrecognized_tag == True
+                   ignore_unrecognized_tag=True) as model:
+        assert not model._asdf._ignore_version_mismatch
+        assert model._asdf._ignore_unrecognized_tag
 
 
 def test_open_asdf_model_s3(s3_root_dir):
