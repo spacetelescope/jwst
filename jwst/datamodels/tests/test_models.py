@@ -51,7 +51,7 @@ def teardown():
 
 @pytest.fixture 
 def jail_environ():
-    """Lock cheanges to the environment"""
+    """Lock changes to the environment"""
     original = os.environ.copy()
     try:
         yield
