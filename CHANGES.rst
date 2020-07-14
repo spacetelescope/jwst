@@ -70,7 +70,9 @@ datamodels
 
 - Added "PERSISTENCE" DQ flag definition. [#5137]
 
-- Fix nonsensical premature closing of FITS file of a ``DataModel``. [#4930]
+- Fixed nonsensical premature closing of FITS file of a ``DataModel``. [#4930]
+
+- Added a hash set/check to DataModel I/O to check whether schema traversal is necessary. [#5110]
 
 extract_1d
 ----------
