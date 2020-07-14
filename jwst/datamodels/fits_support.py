@@ -462,7 +462,7 @@ def _load_from_schema(hdulist, schema, tree, context, skip_fits_update=False):
         if not any(isinstance(hdu, fits.BinTableHDU) for hdu in hdulist if hdu.name != 'ASDF'):
             log.debug('Skipping FITS updating completely.')
             return known_keywords, known_datas
-        log.debug('Skipping FITS keyword updating. FITS BinTableHDU and ImageHDU updating will occur.')
+        log.debug('Skipping FITS keyword updating except for BinTableHDU and its associated header keywords.')
 
     # Determine maximum EXTVER that could be used in finding named HDU's.
     # This is needed to constrain the loop over HDU's when resolving arrays.
