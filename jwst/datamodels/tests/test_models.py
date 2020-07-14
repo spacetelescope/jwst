@@ -49,12 +49,6 @@ def teardown():
     shutil.rmtree(TMP_DIR)
 
 
-@pytest.fixture(scope='module')
-def empty_model():
-    """Create an empy model"""
-    return DataModel()
-
-
 @pytest.fixture 
 def jail_environ():
     """Lock cheanges to the environment"""
