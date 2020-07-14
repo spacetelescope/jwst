@@ -292,10 +292,13 @@ class CubeBuildStep (Step):
             self.log.info('Number of ifucubes produced by a this run %i',
                           num_cubes)
 
+        if self.single:
+            self.log.info('Number of single ifucubes produced by a this run %i',
+                          num_cubes)
+
         # ModelContainer of ifucubes
         cube_container = datamodels.ModelContainer()
 
-        blot_footprint = []
         for i in range(num_cubes):
             icube = str(i + 1)
             list_par1 = cube_pars[icube]['par1']
@@ -328,9 +331,6 @@ class CubeBuildStep (Step):
             thiscube.determine_cube_parameters()
 
             thiscube.setup_ifucube_wcs()
-
-            print(thiscube.blot_corner_data)
-            
 # _______________________________________________________________________________
 # build the IFU Cube
 
@@ -343,7 +343,6 @@ class CubeBuildStep (Step):
                 self.log.info("Number of Single IFUCube models returned %i ",
                               len(cube_container))
 
-                blot_footprint = thiscube.blot_corner_data
 # Else standard IFU cube building
             else:
                 result = thiscube.build_ifucube()
@@ -354,10 +353,6 @@ class CubeBuildStep (Step):
             footprint = cube.meta.wcs.footprint(axis_type="spatial")
             update_s_region_keyword(cube, footprint)
 
-        if self.single: 
-            result  = [cube_container,blot_footprint]
-            return cube_container
-        else: 
             return cube_container
 # ******************************************************************************
 
