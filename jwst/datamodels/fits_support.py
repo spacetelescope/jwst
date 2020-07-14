@@ -462,7 +462,7 @@ def _load_from_schema(hdulist, schema, tree, context, skip_fits_update=False):
         if not any(isinstance(hdu, fits.BinTableHDU) for hdu in hdulist if hdu.name != 'ASDF'):
             log.debug('Skipping FITS updating completely.')
             return known_keywords, known_datas
-        log.debug('Skipping FITS keyword updating. FITS Table and data HDU updating will occur.')
+        log.debug('Skipping FITS keyword updating. FITS BinTableHDU and ImageHDU updating will occur.')
 
     # Determine maximum EXTVER that could be used in finding named HDU's.
     # This is needed to constrain the loop over HDU's when resolving arrays.
@@ -566,11 +566,10 @@ def from_fits(hdulist, schema, context, skip_fits_update=None, **kwargs):
         The FITS HDUList
 
     schema : dict
-        The schema defininging the FITS->ASDF mapping
+        The schema defining the ASDF > FITS_KEYWORD, FITS_HDU mapping.
 
     context: DataModel
         The `DataModel` to update
-
 
     skip_fits_update : bool or None
         When `False`, models opened from FITS files will proceed
@@ -653,7 +652,7 @@ def _verify_skip_fits_update(skip_fits_update, hdulist, asdf_struct, context):
         The input FITS information
 
     asdf_struct : asdf.ASDFFile
-        The association ASDF structure
+        The associated ASDF structure
 
     context : DataModel
         The DataModel being built.
@@ -716,6 +715,9 @@ def fits_hash(hdulist):
         The hash of all HDU headers.
     """
     fits_hash = hashlib.sha256()
+
+    # Ignore FITS header warnings, such as "Card is too long".
+    # Such issues are inconsequential to hash calculation.
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', AstropyWarning)
         fits_hash.update(''.join(
