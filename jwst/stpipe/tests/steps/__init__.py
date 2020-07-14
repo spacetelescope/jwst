@@ -139,12 +139,12 @@ class SaveStep(Step):
     """
 
     def process(self, *args):
-        with ImageModel(args[0]) as model:
+        model = ImageModel(args[0])
 
-            self.log.info('Saving model as "processed"')
-            self.save_model(model, 'processed')
+        self.log.info('Saving model as "processed"')
+        self.save_model(model, 'processed')
 
-            return model
+        return model
 
 
 class StepWithContainer(Step):
@@ -172,9 +172,9 @@ class StepWithModel(Step):
     """
 
     def process(self, *args):
-        with self.open_model(args[0]) as input_path:
-            with ImageModel(input_path) as model:
-                return model
+        model = self.open_model(args[0])
+        model = ImageModel(model)
+        return model
 
 
 class EmptyPipeline(Pipeline):

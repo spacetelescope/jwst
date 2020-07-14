@@ -617,12 +617,17 @@ def test_hasattr():
 
 
 def test_validate_on_read():
+    """ Test for proper validation error
+
+    Note: The FITS file is opened separately in order to properly close
+    the file.
+    """
     schema = ImageModel((10, 10))._schema.copy()
     schema['properties']['meta']['properties']['calibration_software_version']['fits_required'] = True
 
-    with pytest.raises(jsonschema.ValidationError):
-        with ImageModel(FITS_FILE, schema=schema, strict_validation=True):
-            pass
+    with fits.open(FITS_FILE) as hduls:
+        with pytest.raises(jsonschema.ValidationError):
+            ImageModel(hduls, schema=schema, strict_validation=True)
 
 
 def test_validate_required_field():

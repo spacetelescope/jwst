@@ -173,12 +173,11 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                 else:
                     init_fitsopen = init
 
-                with fits.open(init_fitsopen, memmap=memmap) as hdulist:
-                    asdffile = fits_support.from_fits(hdulist,
-                                                  self._schema,
-                                                  self._ctx,
-                                                  **kwargs)
-                    self._files_to_close.append(hdulist)
+                hdulist = fits.open(init_fitsopen, memmap=memmap)
+                asdffile = fits_support.from_fits(
+                    hdulist, self._schema, self._ctx, **kwargs
+                )
+                self._files_to_close.append(hdulist)
 
             elif file_type == "asdf":
                 asdffile = self.open_asdf(init=init, **kwargs)
@@ -273,6 +272,10 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         buf.append('>')
 
         return "".join(buf)
+
+    def __del__(self):
+        """Ensure closure of resources when deleted."""
+        self.close()
 
     @property
     def override_handle(self):
