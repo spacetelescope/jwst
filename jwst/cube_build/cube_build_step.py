@@ -353,7 +353,7 @@ class CubeBuildStep (Step):
             footprint = cube.meta.wcs.footprint(axis_type="spatial")
             update_s_region_keyword(cube, footprint)
 
-            return cube_container
+        return cube_container
 # ******************************************************************************
 
     def read_user_input(self):
