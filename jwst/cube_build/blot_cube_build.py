@@ -71,9 +71,6 @@ class CubeBlot():
         # cube_ra,dec,wave
         self.cube_flux = self.median_skycube.data
 
-        print('**** size of arrays ******',self.cube_ra.size, self.cube_dec.size,
-              self.cube_wave.size, self.cube_flux.size)
-
         # remove all the nan values
         valid1 = ~np.isnan(self.cube_ra)
         valid2 = ~np.isnan(self.cube_dec)
@@ -82,9 +79,6 @@ class CubeBlot():
         self.cube_dec = self.cube_dec[good_data]
         self.cube_wave = self.cube_wave[good_data]
         self.cube_flux = self.cube_flux[good_data]
-
-        print('**** size of arrays ******',self.cube_ra.size, self.cube_dec.size,
-              self.cube_wave.size, self.cube_flux.size)
 
         # initialize blotted images to be original input images
         self.input_models = input_models
@@ -216,7 +210,6 @@ class CubeBlot():
         # to xcenter ycenter is quicker than looping over detector x,y and
         # finding overlap with large array for x_cube, y_cube
 
-        print('in blot overlap quick')
         blot_flux = np.zeros(model.shape, dtype=np.float32)
         blot_weight = np.zeros(model.shape, dtype=np.float32)
         blot_ysize, blot_xsize = blot_flux.shape
@@ -228,7 +221,7 @@ class CubeBlot():
         ivalid = np.nonzero(np.absolute(flux_cube))
 
         t0 = time.time()
-        print('number of points looping over',len(ivalid[0]))
+        #print('number of points looping over',len(ivalid[0]))
         for ipt in ivalid[0]:
 
             # search xcenter and ycenter seperately. These arrays are smallsh.
@@ -253,7 +246,7 @@ class CubeBlot():
                 blot_weight[index2d] = blot_weight[index2d] + weight_distance
 
         t1 = time.time()
-        log.info("Time to blot median image to input model = %.1f s" % (t1-t0,))
+        log.debug("Time to blot median image to input model = %.1f s" % (t1-t0,))
         # done mapping blotted x,y (x_cube, y_cube) to detector
         igood = np.where(blot_weight > 0)
         blot_flux[igood] = blot_flux[igood] / blot_weight[igood]
