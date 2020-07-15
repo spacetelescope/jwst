@@ -71,7 +71,7 @@ datamodels
 
 - Split ``pathloss`` object into ``pathloss_ps`` and ``pathloss_un`` in schemas. [#5112]
 
-- Added "PERSISTENCE" DQ flag definition. [#5137]
+- Add "PERSISTENCE" DQ flag definition. [#5137]
 
 - Fixed nonsensical premature closing of FITS file of a ``DataModel``. [#4930]
 

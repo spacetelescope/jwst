@@ -17,13 +17,13 @@ class WavecorrStep(Step):
 
     reference_file_types = ['wavecorr']
 
-    def process(self, input, *args, **kwargs):
+    def process(self, step_input):
 
         wavecorr_supported_modes = ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ',
                                     'NRS_AUTOFLAT']
 
         # Open the input
-        with datamodels.open(input) as input_model:
+        with datamodels.open(step_input) as input_model:
 
             # Check for valid exposure type
             exp_type = input_model.meta.exposure.type.upper()
