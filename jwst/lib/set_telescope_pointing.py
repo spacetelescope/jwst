@@ -184,32 +184,30 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
     in the header other than what is required by the standard.
     """
     logger.info('Updating WCS info for file {}'.format(filename))
-    model = Level1bModel(filename)
-    update_wcs(
-        model,
-        default_pa_v3=default_pa_v3,
-        siaf_path=siaf_path,
-        engdb_url=engdb_url,
-        tolerance=tolerance,
-        allow_default=allow_default,
-        reduce_func=reduce_func,
-        **transform_kwargs
-    )
+    with Level1bModel(filename) as model:
+        update_wcs(
+            model,
+            default_pa_v3=default_pa_v3,
+            siaf_path=siaf_path,
+            engdb_url=engdb_url,
+            tolerance=tolerance,
+            allow_default=allow_default,
+            reduce_func=reduce_func,
+            **transform_kwargs
+        )
 
-    try:
-        if model.meta.target.type.lower() == 'moving':
-            update_mt_kwds(model)
-    except AttributeError:
-        pass
+        try:
+            if model.meta.target.type.lower() == 'moving':
+                update_mt_kwds(model)
+        except AttributeError:
+            pass
 
-    model.meta.model_type = None
+        model.meta.model_type = None
 
-    if dry_run:
-        logger.info('Dry run requested; results are not saved.')
-    else:
-        model.save(filename)
-
-    model.close()
+        if dry_run:
+            logger.info('Dry run requested; results are not saved.')
+        else:
+            model.save(filename)
     logger.info('...update completed')
 
 def update_mt_kwds(model):

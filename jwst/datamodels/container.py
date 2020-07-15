@@ -79,6 +79,7 @@ class ModelContainer(model_base.DataModel):
         super().__init__(init=None, asn_exptypes=None, **kwargs)
 
         self._models = []
+        self._iscopy = False
         self.asn_exptypes = asn_exptypes
         self.asn_n_members = asn_n_members
         self._memmap = kwargs.get("memmap", False)
@@ -108,6 +109,7 @@ class ModelContainer(model_base.DataModel):
             self._ctx = self
             self.__class__ = init.__class__
             self._models = init._models
+            self._iscopy = True
         elif is_association(init):
             self.from_asn(init)
         elif isinstance(init, str):
@@ -377,8 +379,9 @@ class ModelContainer(model_base.DataModel):
 
     def close(self):
         """Close all datamodels."""
-        for model in self._models:
-            model.close()
+        if not self._iscopy:
+            for model in self._models:
+                model.close()
 
 
 def make_file_with_index(file_path, idx):

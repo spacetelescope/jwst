@@ -60,9 +60,9 @@ class MultiplyBy2(Step):
 
     def process(self, image):
         with datamodels.ImageModel(image) as dm:
-            with datamodels.ImageModel() as dm2:
-                dm2.data = dm.data * 2
-                return dm2
+            dm2 = datamodels.ImageModel()
+            dm2.data = dm.data * 2
+            return dm2
 
 
 class MyPipeline(Pipeline):
