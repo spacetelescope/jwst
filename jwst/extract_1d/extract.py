@@ -783,7 +783,7 @@ def sanity_check_limits(
 
 
 def compare_start(
-        start_ref: Union[int, float], start_wcs: Union[int, float]
+        aperture_start: Union[int, float], wcs_bb_lower_lim: Union[int, float]
 ) -> Union[int, float]:
     """Compare the start limit from the aperture with the WCS lower limit.
 
@@ -801,11 +801,11 @@ def compare_start(
 
     Parameters
     ----------
-    start_ref : int or float
+    aperture_start : int or float
         xstart or ystart, as specified by the extract1d reference file or the image
         size.
 
-    start_wcs : int or float
+    wcs_bb_lower_lim : int or float
         The lower limit from the WCS bounding box.
 
     Returns
@@ -813,16 +813,14 @@ def compare_start(
     value : int or float
         The start limit, possibly constrained by the WCS start limit.
     """
-    if start_ref >= start_wcs:  # ref is inside WCS limit
-        value = start_ref
+    if aperture_start >= wcs_bb_lower_lim:  # ref is inside WCS limit
+        return aperture_start
     else:  # outside (below) WCS limit
-        value = math.ceil(start_wcs)
-
-    return value
+        return math.ceil(wcs_bb_lower_lim)
 
 
 def compare_stop(
-        stop_ref: Union[int, float], stop_wcs: Union[int, float]
+        aperture_stop: Union[int, float], wcs_bb_upper_lim: Union[int, float]
 ) -> Union[int, float]:
     """Compare the stop limit from the aperture with the WCS upper limit.
 
@@ -838,11 +836,11 @@ def compare_stop(
 
     Parameters
     ----------
-    stop_ref : int or float
+    aperture_stop : int or float
         xstop or ystop, as specified by the extract1d reference file or the image
         size.
 
-    stop_wcs : int or float
+    wcs_bb_upper_lim : int or float
         The upper limit from the WCS bounding box.
 
     Returns
@@ -850,12 +848,10 @@ def compare_stop(
     value : int or float
         The stop limit, possibly constrained by the WCS stop limit.
     """
-    if stop_ref <= stop_wcs:  # ref is inside WCS limit
-        value = stop_ref
+    if aperture_stop <= wcs_bb_upper_lim:  # ref is inside WCS limit
+        return aperture_stop
     else:  # outside (above) WCS limit
-        value = math.floor(stop_wcs)
-
-    return value
+        return math.floor(wcs_bb_upper_lim)
 
 
 def create_poly(coeff: List[float]) -> Union[polynomial.Polynomial1D, None]:
