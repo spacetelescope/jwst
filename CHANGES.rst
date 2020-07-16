@@ -37,6 +37,7 @@ combine_1d
 
 cube_build
 ----------
+- modified NIRSpec blotting find min and max ra and dec for each slice and only invert those values on slice that fall in range [#5144]
 
 - Changed default weighting back to 'msm' until NIRSPEC cube pars ref file contains emsm info [#5134]
 
