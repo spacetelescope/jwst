@@ -476,5 +476,5 @@ def get_envar_as_boolean(name, default=False):
             return value_lowcase in truths
         return value
 
-    log.debug('Environmental "{name}" cannot be found. Using default value of "{default}".')
+    log.debug(f'Environmental "{name}" cannot be found. Using default value of "{default}".')
     return default
