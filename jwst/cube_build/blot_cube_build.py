@@ -122,13 +122,11 @@ class CubeBlot():
         the detector space and creating a blotting image for each input model
         1. Loop over every data model to be blotted and find ra,dec,wavelength
            for every pixel in a valid slice on the detector.
-        2. Using WCS of input  image convert the ra and dec of input model
-           to then tangent plane values: xi,eta.
-        3. Loop over every input model and using the inverse (backwards) transform
+        2. Loop over every input model and using the inverse (backwards) transform
            convert the median sky cube values ra, dec, lambda to the blotted
            x, y detector value (x_cube, y_cube).
 
-        4. For each input model loop over the blotted x,y values and find
+        3. For each input model loop over the blotted x,y values and find
             The x, y detector values that fall within the roi region. We loop
             over the blotted values instead of the detector x, y (the more
             obvious method) because of speed. We can break down the x, y detector
@@ -183,7 +181,6 @@ class CubeBlot():
             y_cube = y_cube[valid_channel]
             flux_cube = flux_cube[valid_channel]
             # ___________________________________________________________________
-
             log.info('Blotting back to %s', model.meta.filename)
             # ______________________________________________________________________________
             # For every detector pixel find the overlapping median cube spaxels.
@@ -200,7 +197,7 @@ class CubeBlot():
         return blot_models
     # ________________________________________________________________________________
 
-    # ________________________________________________________________________________
+
     def blot_overlap_quick(self, model, xcenter, ycenter, xstart,
                            x_cube, y_cube, flux_cube):
 
@@ -221,9 +218,7 @@ class CubeBlot():
         ivalid = np.nonzero(np.absolute(flux_cube))
 
         t0 = time.time()
-        #print('number of points looping over',len(ivalid[0]))
         for ipt in ivalid[0]:
-
             # search xcenter and ycenter seperately. These arrays are smallsh.
             # xcenter size = naxis1 on detector (for MIRI only 1/2 array)
             # ycenter size = naxis2 on detector
@@ -257,26 +252,23 @@ class CubeBlot():
     def blot_images_nirspec(self):
         """ Core blotting routine for NIRSPEC
 
-        This is the main routine for blotting the median sky image back to
-        the detector space and creating a blotting image for each input model
+        This is the main routine for blotting the NIRSPEC median sky image back to
+        the detector space and creating a blotting image for each input model.
+        This routine was split from the MIRI routine because the blotting for NIRSpec
+        needs to be done slice by slice and an error in the inverse mapping (sky to
+        detector) mapped too many values back to the detector. This routine adds
+        a check and first pulls out the min and max ra and dec values in the slice
+        and only inverts the slice values back to the detector.
         1. Loop over every data model to be blotted and find ra,dec,wavelength
            for every pixel in a valid slice on the detector.
-        2. Using WCS of input  image convert the ra and dec of input model
-           to then tangent plane values: xi,eta.
-        3. Loop over every input model and using the inverse (backwards) transform
-           convert the median sky cube values ra, dec, lambda to the blotted
-           x, y detector value (x_cube, y_cube).
+        2. For each slice get the WCS info for the slice. Find the x,y bounding
+           box values and using only the x,y in the slice find the ra,dec, wavelength
+           for the slice. From this information find the min and max ra and dec
+           on the slice. Pull out those values that fall in this range from the
+           median sky. Using this limited set then map back the ra, dec to
+           x,y on detector.
+        3. Blot these inverted x,y values to detector space.
 
-        4. For each input model loop over the blotted x,y values and find
-            The x, y detector values that fall within the roi region. We loop
-            over the blotted values instead of the detector x, y (the more
-            obvious method) because of speed. We can break down the x, y detector
-            pixels into a regular grid represented by an array of xcenters and
-            ycenters. Because we are really intereseted finding all those blotted
-            pixels that fall with the roi of a detector pixel we need to
-            keep track of the blot flux and blot weight as we loop.
-            c. The blotted flux  = the weighted flux determined in
-            step b and stored in blot.data
         """
         blot_models = datamodels.ModelContainer()
 
@@ -339,7 +331,6 @@ class CubeBlot():
                 flux_slice = flux_slice[fuse]
 
                 nn = flux_slice.size
-                #print('number of points looping over', nn)
                 for ipt in range(nn):
                     # search xcenter and ycenter seperately. These arrays are smallsh.
                     # xcenter size = naxis1 on detector
