@@ -2602,7 +2602,7 @@ def do_extract1d(
     output_model : data model
         A new MultiSpecModel containing the extracted spectra.
     """
-              
+
     extract_ref_dict = ref_dict_sanity_check(extract_ref_dict)
 
     if isinstance(input_model, datamodels.SourceModelContainer):
@@ -2668,7 +2668,7 @@ def do_extract1d(
             # The subsequent work on data uses the individual SlitModels, but there are many places where meta
             # attributes are retreived from input_model, so set this to allow that to work.
             input_model = input_model[0]
-              
+
         elif isinstance(input_model, datamodels.MultiSlitModel):  # A simple MultiSlitModel, not in a container
             slits = input_model.slits
 
@@ -2695,7 +2695,7 @@ def do_extract1d(
                     f"SRCTYPE = {source_type}'; correcting for nod/dither offset will only be done for a point source, "
                     f"so apply_nod_offset will be set to False"
                 )
-            
+
             extract_params = get_extract_parameters(
                 extract_ref_dict, slit, slit.name, sp_order, input_model.meta, smoothing_length, bkg_order, apply_nod_offset
             )
@@ -2983,7 +2983,7 @@ def do_extract1d(
                     apcorr.apply(spec.spec_table)
 
                 output_model.spec.append(spec)
-              
+
         elif isinstance(input_model, (datamodels.CubeModel, datamodels.SlitModel)):
             # Replace the default value for slitname with a more accurate value, if possible.
             slit = None
@@ -3186,14 +3186,13 @@ def do_extract1d(
 
     output_model.meta.wcs = None  # See output_model.spec[i].meta.wcs instead.
 
-
     # If the extract1d reference file is an image, explicitly close it.
     if extract_ref_dict is not None and 'ref_model' in extract_ref_dict:
         extract_ref_dict['ref_model'].close()
 
-    if extract_ref_dict is None
-              or 'need_to_set_to_complete' not in extract_ref_dict
-              or extract_ref_dict['need_to_set_to_complete']
+    if (extract_ref_dict is None
+        or 'need_to_set_to_complete' not in extract_ref_dict
+        or extract_ref_dict['need_to_set_to_complete']
     ):
         output_model.meta.cal_step.extract_1d = 'COMPLETE'
 
