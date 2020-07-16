@@ -1103,10 +1103,10 @@ class IFUCubeData():
         log.debug('linear wavelength %d', self.linear_wavelength)
         log.debug('roiw %f ', self.roiw)
         log.debug('output_type %s ',self.output_type)
-        if self.weighting == 'msm': 
+        if self.weighting == 'msm':
             log.debug('weight_power %f ',self.weight_power)
             log.debug('softrad %f ',self.soft_rad)
-        if self.weighting == 'emsm': 
+        if self.weighting == 'emsm':
             log.debug('scalerad %f ',self.scalerad)
 
 # ******************************************************************************
@@ -1201,7 +1201,6 @@ class IFUCubeData():
 
         corner_a = []
         corner_b  = []
-        
         lambda_min = []
         lambda_max = []
 
@@ -1254,9 +1253,6 @@ class IFUCubeData():
 
                     lambda_min.append(lmin)
                     lambda_max.append(lmax)
-# ________________________________________________________________________________
-# find min and max corners to be used if outlier rejected is called (NIRSPEC)
-                    
 # ________________________________________________________________________________
     # done looping over files determine final size of cube
 
