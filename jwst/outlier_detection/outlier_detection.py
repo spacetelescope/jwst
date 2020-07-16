@@ -194,11 +194,10 @@ class OutlierDetection:
             for model in drizzled_models:
                 if save_intermediate_results:
                     log.info("Writing out resampled exposures...")
-                    self.save_model(
-                        model,
-                        output_file=model.meta.filename,
-                        suffix=self.resample_suffix
-                    )
+                    model_output_path = self.make_output_path(
+                        basepath=model.meta.filename,
+                        suffix='outlier_i2d')
+                    model.save(model_output_path)
         else:
             drizzled_models = self.input_models
             for i in range(len(self.input_models)):
@@ -498,7 +497,7 @@ def flag_cr(sci_image, blot_image, **pars):
     log.debug("Pixels in cr_mask:  {}".format(count_cr))
 
     # Update the DQ array in the input image in place
-    np.bitwise_or(sci_image.dq, np.invert(cr_mask) * CRBIT, sci_image.dq)
+    sci_image.dq = np.bitwise_or(sci_image.dq, np.invert(cr_mask) * CRBIT)
 
 
 def abs_deriv(array):

@@ -22,6 +22,11 @@ properties:
         type: string
         fits_keyword: TIMESYS
         blend_table: True
+      time_unit:
+        title: Default unit applicable to all time values
+        type: string
+        default: 's'
+        fits_keyword: TIMEUNIT
       filename:
         title: Name of the file
         type: string

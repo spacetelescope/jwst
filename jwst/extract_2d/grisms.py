@@ -485,8 +485,18 @@ def extract_grism_objects(input_model,
                 new_slit.bunit_err = input_model.meta.bunit_err
                 slits.append(new_slit)
     output_model.slits.extend(slits)
-    del subwcs
-    del new_slit
+    # In the case that there are no spectra to extract deleting the variables
+    # will fail so add the try block.
+    try:
+        del subwcs
+    except UnboundLocalError:
+        pass
+    try:
+        del new_slit
+    except UnboundLocalError:
+        pass
+    #del subwcs
+    #del new_slit
     log.info("Finished extractions")
     return output_model
 

@@ -29,6 +29,15 @@ exposures are shown below:
 | :ref:`white_light <white_light_step>`             |         | |check|      |
 +---------------------------------------------------+---------+--------------+
 
+The logic that decides whether to apply the imaging or spectroscopy steps is based
+on the EXP_TYPE and TSOVISIT keyword values of the input data. Imaging steps are
+applied if either of the following is true:
+
+ - EXP_TYPE = 'NRC_TSIMAGE'
+ - EXP_TYPE = 'MIR_IMAGE' and TSOVISIT = True
+
+The spectroscopy steps will be applied in all other cases.
+
 Inputs
 ------
 

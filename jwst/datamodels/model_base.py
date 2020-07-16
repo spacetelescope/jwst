@@ -25,6 +25,7 @@ from . import fits_support
 from . import properties
 from . import schema as mschema
 from . import validate
+from .util import get_envar_as_boolean
 from ..lib import s3_utils
 
 from .history import HistoryList
@@ -93,12 +94,12 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         """
 
         # Override value of validation parameters if not explicitly set.
-        if not pass_invalid_values:
-            pass_invalid_values = self._get_envar_as_boolean("PASS_INVALID_VALUES",
+        if pass_invalid_values is None:
+            pass_invalid_values = get_envar_as_boolean("PASS_INVALID_VALUES",
                                                             False)
         self._pass_invalid_values = pass_invalid_values
-        if not strict_validation:
-            strict_validation = self._get_envar_as_boolean("STRICT_VALIDATION",
+        if strict_validation is None:
+            strict_validation = get_envar_as_boolean("STRICT_VALIDATION",
                                                           False)
         self._strict_validation = strict_validation
         self._ignore_missing_extensions = ignore_missing_extensions
@@ -173,12 +174,11 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                 else:
                     init_fitsopen = init
 
-                with fits.open(init_fitsopen, memmap=memmap) as hdulist:
-                    asdffile = fits_support.from_fits(hdulist,
-                                                  self._schema,
-                                                  self._ctx,
-                                                  **kwargs)
-                    self._files_to_close.append(hdulist)
+                hdulist = fits.open(init_fitsopen, memmap=memmap)
+                asdffile = fits_support.from_fits(
+                    hdulist, self._schema, self._ctx, **kwargs
+                )
+                self._files_to_close.append(hdulist)
 
             elif file_type == "asdf":
                 asdffile = self.open_asdf(init=init, **kwargs)
@@ -274,6 +274,10 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         return "".join(buf)
 
+    def __del__(self):
+        """Ensure closure of resources when deleted."""
+        self.close()
+
     @property
     def override_handle(self):
         """override_handle identifies in-memory models where a filepath
@@ -311,32 +315,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         for fd in self._files_to_close:
             if fd is not None:
                 fd.close()
-
-    def _get_envar_as_boolean(self, name, default=False):
-        """Interpret an environmental as a boolean flag
-
-        Truth is any numeric value that is not 0 or
-        any of the following case-insensitive strings:
-
-        ('true', 't', 'yes', 'y')
-
-        Parameters
-        ----------
-        name : str
-            The name of the environmental variable to retrieve
-
-        default : bool
-            If the value cannot be determined, use as the default.
-        """
-        truths = ('true', 't', 'yes', 'y')
-        if name in os.environ:
-            value = os.environ[name]
-            try:
-                value = bool(int(value))
-            except ValueError:
-                return value.lower() in truths
-            return value
-        return default
 
     @staticmethod
     def clone(target, source, deepcopy=False, memo=None):

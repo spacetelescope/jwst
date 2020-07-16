@@ -16,6 +16,10 @@ properties:
       time_sys:
         title: principal time system for time-related keywords
         type: string
+      time_unit:
+        title: Default unit applicable to all time values
+        type: string
+        default: 's'
       filename:
         title: Name of the file
         type: string

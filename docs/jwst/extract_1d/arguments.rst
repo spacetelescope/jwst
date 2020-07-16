@@ -55,3 +55,7 @@ The extract_1d step has five step-specific arguments.
   At the time of writing, a nod/dither offset will not be applied if the
   source is extended.  It will also not be applied for wide-field slitless
   spectroscopy data, or NIRSpec fixed-slit, or NIRSpec MOS (MSA) data.
+
+``--apply_apcorr``
+  Switch to select whether or not to apply an APERTURE correction during the
+  Extract1dStep processing. Default is ``True``

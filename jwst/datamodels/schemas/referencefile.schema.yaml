@@ -19,6 +19,11 @@ properties:
         title: principal time system for time-related keywords
         type: string
         fits_keyword: TIMESYS
+      time_unit:
+        title: Default unit applicable to all time values
+        type: string
+        default: 's'
+        fits_keyword: TIMEUNIT
       filename:
         title: Name of the file
         type: string

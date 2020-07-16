@@ -10,10 +10,10 @@ from .. import datamodels
 from .nrm_model import NrmModel
 from . import webb_psf
 from . import leastsqnrm
+from . import utils
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
-
 
 def apply_LG(input_model, filter_model, oversample, rotation):
     """
@@ -53,7 +53,7 @@ def apply_LG(input_model, filter_model, oversample, rotation):
 
     # Set up some params that are needed as input to the LG algorithm:
     #  Search window for rotation fine-tuning
-    rots_deg = np.array(( -1.00, -0.5, 0.0, 0.5, 1.00))
+    rots_deg = np.array((-1.00, -0.5, 0.0, 0.5, 1.00))
 
     #  Search range for relative pixel scales
     relpixscales = np.array((64.2, 64.4, 64.6, 64.8, 65.0, 65.2, 65.4, 65.6, 65.8)) /65.0
@@ -76,6 +76,17 @@ def apply_LG(input_model, filter_model, oversample, rotation):
     # (pixguess is a guess at the pixel scale of the data)
     #  produces a 19x19 image of the fit
     input_data = input_model.data.astype(np.float64)
+    input_dq = input_model.dq
+
+    datamodel_img_model = datamodels.ImageModel(data=input_data, dq=input_dq)
+    box_size = 4
+
+    new_img_model = utils.img_median_replace(datamodel_img_model, box_size)
+
+    input_data = new_img_model.data.copy()
+    input_model.data = input_data.astype(np.float64)
+
+    del datamodel_img_model, new_img_model
 
     subarray = input_model.meta.subarray.name.upper()
     if subarray == 'FULL':

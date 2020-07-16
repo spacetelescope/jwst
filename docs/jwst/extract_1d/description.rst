@@ -27,6 +27,13 @@ arithmetic; "center", i.e. the full value in a pixel will be included if its
 center is within the aperture; or "subsample", which means pixels will be
 subsampled N x N, and the "center" option will be used for each sub-pixel.
 
+An aperture correction will be applied for most spectral modes (unless otherwise
+selected by the user).
+This is is done by creating interpolation functions based on the APCORR reference
+file data and applying the interpolated aperture correction (a multiplicative
+factor between 0 and 1) to the extracted, 1D spectral data (corrected data
+include the "flux", "surf_bright", "error", and "sb_error" columns in the output
+table).
 
 Input
 =====

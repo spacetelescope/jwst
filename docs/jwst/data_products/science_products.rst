@@ -259,9 +259,9 @@ The FITS file structure for a ``calints`` product is as follows:
 +-----+-------------+----------+-----------+-----------------------+
 |     | VAR_RNOISE  | IMAGE    | float32   | ncols x nrows x nints |
 +-----+-------------+----------+-----------+-----------------------+
-|     | AREA*       | IMAGE    |           | ncols x nrows         |
+|     | VAR_FLAT    | IMAGE    | float32   | ncols x nrows x nints |
 +-----+-------------+----------+-----------+-----------------------+
-|     | RELSENS*    | BINTABLE | N/A       | variable              |
+|     | AREA*       | IMAGE    |           | ncols x nrows         |
 +-----+-------------+----------+-----------+-----------------------+
 |     | WAVELENGTH* | IMAGE    | float32   | ncols x nrows         |
 +-----+-------------+----------+-----------+-----------------------+
@@ -280,10 +280,10 @@ The FITS file structure for a ``calints`` product is as follows:
    based on Poisson noise only, for each integration.
  - VAR_RNOISE: 3-D data array containing the variance estimate for each pixel,
    based on read noise only, for each integration.
+ - VAR_FLAT: 2-D data array containing the variance estimate for each pixel,
+   based on uncertainty in the flat-field.
  - AREA: 2-D data array containing pixel area values, added by the :ref:`photom <photom_step>`
    step, for imaging modes.
- - RELSENS: A table of sensitivity values as a function of wavelength, added by the
-   :ref:`photom <photom_step>` step, for some spectroscopic modes.
  - WAVELENGTH: 2-D data array of wavelength values for each pixel, for some spectroscopic modes.
  - ADSF: The data model meta data.
 
@@ -300,27 +300,21 @@ The FITS file structure for a ``cal`` product is as follows:
 +-----+---------------------------+----------+-----------+---------------+
 |  3  | DQ                        | IMAGE    | uint32    | ncols x nrows |
 +-----+---------------------------+----------+-----------+---------------+
-|     | VAR_POISSON               | IMAGE    | float32   | ncols x nrows |
+|  4  | VAR_POISSON               | IMAGE    | float32   | ncols x nrows |
 +-----+---------------------------+----------+-----------+---------------+
-|     | VAR_RNOISE                | IMAGE    | float32   | ncols x nrows |
+|  5  | VAR_RNOISE                | IMAGE    | float32   | ncols x nrows |
++-----+---------------------------+----------+-----------+---------------+
+|  6  | VAR_FLAT                  | IMAGE    | float32   | ncols x nrows |
 +-----+---------------------------+----------+-----------+---------------+
 |     | AREA*                     | IMAGE    | float32   | ncols x nrows |
 +-----+---------------------------+----------+-----------+---------------+
-|     | RELSENS*                  | BINTABLE | N/A       | variable      |
+|     | WAVELENGTH*               | IMAGE    | float32   | ncols x nrows |
 +-----+---------------------------+----------+-----------+---------------+
-|     | RELSENS2D*                | BINTABLE | N/A       | ncols x nrows |
+|     | PATHLOSS_PS*              | IMAGE    | float32   | ncols x nrows |
 +-----+---------------------------+----------+-----------+---------------+
-|     | PATHLOSS_POINTSOURCE*     | IMAGE    | float32   | ncols         |
-+-----+---------------------------+----------+-----------+---------------+
-|     | WAVELENGTH_POINTSOURCE*   | IMAGE    | float32   | ncols         |
-+-----+---------------------------+----------+-----------+---------------+
-|     | PATHLOSS_UNIFORMSOURCE*   | IMAGE    | float32   | ncols         |
-+-----+---------------------------+----------+-----------+---------------+
-|     | WAVELENGTH_UNIFORMSOURCE* | IMAGE    | float32   | ncols         |
+|     | PATHLOSS_UN*              | IMAGE    | float32   | ncols x nrows |
 +-----+---------------------------+----------+-----------+---------------+
 |     | BARSHADOW*                | IMAGE    | float32   | ncols x nrows |
-+-----+---------------------------+----------+-----------+---------------+
-|     | WAVELENGTH*               | IMAGE    | float32   | ncols x nrows |
 +-----+---------------------------+----------+-----------+---------------+
 |     | ASDF                      | BINTABLE | N/A       | variable      |
 +-----+---------------------------+----------+-----------+---------------+
@@ -334,30 +328,22 @@ The FITS file structure for a ``cal`` product is as follows:
    based on Poisson noise only.
  - VAR_RNOISE: 2-D data array containing the variance estimate for each pixel,
    based on read noise only.
+ - VAR_FLAT: 2-D data array containing the variance estimate for each pixel,
+   based on uncertainty in the flat-field.
  - AREA: 2-D data array containing pixel area values, added by the :ref:`photom <photom_step>`
    step, for imaging modes.
- - RELSENS: A table of sensitivity values as a function of wavelength, added by the
-   :ref:`photom <photom_step>` step, for some spectroscopic modes.
- - RELSENS2D: 2-D data array of sensitivity values per pixel, added by the
-   :ref:`photom <photom_step>` step, for IFU spectroscopic modes.
- - PATHLOSS_POINTSOURCE: 1-D data array of point-source pathloss correction factors, added by
-   the :ref:`pathloss <pathloss_step>` step, for some spectroscopic modes.
- - WAVELENGTH_POINTSOURCE: 1-D data array of wavelength values associated with the
-   PATHLOSS_POINTSOURCE correction factors, added by the :ref:`pathloss <pathloss_step>` step,
-   for some spectroscopic modes.
- - PATHLOSS_UNIFORMSOURCE: 1-D data array of uniform-source pathloss correction factors, added by
-   the :ref:`pathloss <pathloss_step>` step, for some spectroscopic modes.
- - WAVELENGTH_UNIFORMSOURCE: 1-D data array of wavelength values associated with the
-   PATHLOSS_UNIFORMSOURCE correction factors, added by the :ref:`pathloss <pathloss_step>` step,
-   for some spectroscopic modes.
- - BARSHADOW: 2-D data array of NIRSpec MSA bar shadow correction factors, added by the
-   :ref:`barshadow <barshadow_step>` step, for NIRSpec MSA exposures only.
  - WAVELENGTH: 2-D data array of wavelength values for each pixel, for some spectroscopic modes.
+ - PATHLOSS_PS: 2-D data array of point-source pathloss correction factors, added by
+   the :ref:`pathloss <pathloss_step>` step, for some spectroscopic modes.
+ - PATHLOSS_UN: 1-D data array of uniform-source pathloss correction factors, added by
+   the :ref:`pathloss <pathloss_step>` step, for some spectroscopic modes.
+ - BARSHADOW: 2-D data array of NIRSpec MSA bar shadow correction factors, added by the
+   :ref:`barshadow <barshadow_step>` step, for NIRSpec MOS exposures only.
  - ADSF: The data model meta data.
 
 For spectroscopic modes that contain data for multiple sources, such as NIRSpec MOS,
 NIRCam WFSS, and NIRISS WFSS, there will be multiple tuples of the SCI, ERR, DQ, VAR_POISSON,
-VAR_RNOISE, RELSENS, etc. extensions, where each tuple contains the data for a given source or
+VAR_RNOISE, etc. extensions, where each tuple contains the data for a given source or
 slit, as created by the :ref:`extract_2d <extract_2d_step>` step. FITS "EXTVER" keywords are
 used in each extension header to segregate the multiple instances of each extension type by
 source.
@@ -425,8 +411,6 @@ The FITS file structure for ``s2d`` products is as follows:
 +-----+-------------+----------+-----------+---------------+
 |  3  | WHT         | IMAGE    | float32   | ncols x nrows |
 +-----+-------------+----------+-----------+---------------+
-|  4  | RELSENS     | BINTABLE | N/A       | variable      |
-+-----+-------------+----------+-----------+---------------+
 |     | HDRTAB*     | BINTABLE | N/A       | variable      |
 +-----+-------------+----------+-----------+---------------+
 |     | ASDF        | BINTABLE | N/A       | variable      |
@@ -437,14 +421,12 @@ The FITS file structure for ``s2d`` products is as follows:
    to a specific output pixel.
  - WHT: 2-D weight image giving the relative weight of the output pixels (effectively a
    relative exposure time map).
- - RELSENS: A table of sensitivity values as a function of wavelength, carried along from the
-   input calibrated product.
  - HDRTAB: A table containing meta data (FITS keyword values) for all of the input images
    that were combined to produce the output image. Only appears when multiple inputs are used.
  - ADSF: The data model meta data.
 
 For exposure-based products that contain spectra for more than one source or slit
-(e.g. NIRSpec MOS) there will be multiple tuples of the SCI, CON, WHT, and RELSENS
+(e.g. NIRSpec MOS) there will be multiple tuples of the SCI, CON, and WHT
 extensions, one set for each source or slit. FITS "EXTVER" keywords are used in each
 extension header to segregate the multiple instances of each extension type by
 source.

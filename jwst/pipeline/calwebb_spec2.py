@@ -5,7 +5,6 @@ import traceback
 
 from .. import datamodels
 from ..assign_wcs.util import NoDataOnDetectorError
-from ..lib.pipe_utils import is_tso
 from ..stpipe import Pipeline
 
 # step imports
@@ -155,7 +154,10 @@ class Spec2Pipeline(Pipeline):
         # The following should be switched to the with context manager
         input = self.open_model(science)
         exp_type = input.meta.exposure.type
-        tso_mode = is_tso(input)
+        if isinstance(input, datamodels.CubeModel):
+            multi_int = True
+        else:
+            multi_int = False
 
         WFSS_TYPES = ["NIS_WFSS", "NRC_WFSS"]
 
@@ -207,7 +209,7 @@ class Spec2Pipeline(Pipeline):
 
             # Setup for saving
             self.bkg_subtract.suffix = 'bsub'
-            if isinstance(input, datamodels.CubeModel):
+            if multi_int:
                 self.bkg_subtract.suffix = 'bsubints'
 
             # Backwards compatibility
@@ -277,7 +279,7 @@ class Spec2Pipeline(Pipeline):
         result.meta.asn.table_name = op.basename(asn_file)
 
         # Setup to save the calibrated exposure at end of step.
-        if tso_mode:
+        if multi_int:
             suffix = 'calints'
         else:
             suffix = 'cal'
@@ -309,7 +311,7 @@ class Spec2Pipeline(Pipeline):
 
         # Extract a 1D spectrum from the 2D/3D data
         self.extract_1d.save_results = self.save_results
-        if tso_mode:
+        if multi_int:
             self.extract_1d.suffix = 'x1dints'
         else:
             self.extract_1d.suffix = 'x1d'
