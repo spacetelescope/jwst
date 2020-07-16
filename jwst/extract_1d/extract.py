@@ -10,7 +10,7 @@ from astropy.modeling import polynomial
 from gwcs import WCS
 
 from .. import datamodels
-from ..datamodels import dqflags
+from ..datamodels import dqflags, DataModel, SlitModel, SpecModel
 
 from ..datamodels.apcorr import (
     MirLrsApcorrModel, MirMrsApcorrModel, NrcWfssApcorrModel, NrsFsApcorrModel, NrsMosApcorrModel, NisWfssApcorrModel
@@ -2401,13 +2401,13 @@ class ImageExtractModel(ExtractBase):
 def run_extract1d(
         input_model: DataModel,
         extract_ref_name: str,
+        apcorr_ref_name: Union[str, None],
         smoothing_length: Union[int, None],
         bkg_order: Union[int, None],
         log_increment: int,
         subtract_background: Union[bool, None],
         apply_nod_offset: Union[bool, None],
         was_source_model: bool = False,
-        apcorr_ref_name: Union[str, None]
 ) -> DataModel:
     """Extract 1-D spectra.
 

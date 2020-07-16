@@ -156,13 +156,13 @@ class Extract1dStep(Step):
                     result = extract.run_extract1d(
                         input_model,
                         extract_ref,
+                        apcorr_ref,
                         self.smoothing_length,
                         self.bkg_order,
                         self.log_increment,
                         self.subtract_background,
                         self.apply_nod_offset,
-                        was_source_model=was_source_model,
-                        apcorr_ref_name=apcorr_ref
+                        was_source_model=was_source_model
                     )
                     # Set the step flag to complete
                     result.meta.cal_step.extract_1d = 'COMPLETE'
