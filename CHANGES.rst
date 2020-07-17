@@ -77,9 +77,11 @@ datamodels
 extract_1d
 ----------
 
-- Rechecks the input model container in run_extract1d to select the correct processing. [#5076]
+- Implement aperture corrections in the Extract1dStep. [#4902]
 
-- Implement aperture correction in the Extract1dStep. [#4902]
+- Recheck the input model container in run_extract1d to select the correct processing. [#5076]
+
+- Rework/refactor many functions for style and readability. [#5079]
 
 extract_2d
 ----------
@@ -246,11 +248,17 @@ rscd
 source_catalog
 --------------
 
+- Add more concentration indices and update step docs. [#4906, #4908]
+
 - Added fallback background estimation method to make background
   estimation moare robust. [#4929]
 
 - Fixed the nearest-neighbor code to handle the case of exactly one
   detected source. [#4929]
+
+- Update abmag error calculation. [#4945]
+
+- Exit gracefully if APCORR ref file is missing. [#4948]
 
 tweakreg
 --------
@@ -425,6 +433,10 @@ source_catalog
   ``DrizProductModel``. [#4552]
 
 - Updated step arguments in the documentation. [#4723]
+
+- Updated to include aperture photometry and aperture corrections. [#4819]
+
+- Rename AB-to-Vega reference file type to ABVEGAOFFSET. [#4872]
 
 srctype
 -------
