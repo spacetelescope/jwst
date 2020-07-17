@@ -1,0 +1,14 @@
+#ASDF 1.0.0
+#ASDF_STANDARD 1.5.0
+%YAML 1.1
+%TAG ! tag:stsci.edu:asdf/
+--- !core/asdf-1.1.0
+asdf_library: !core/software-1.0.0 {author: Space Telescope Science Institute, homepage: 'http://github.com/spacetelescope/asdf',
+  name: asdf, version: 2.6.0}
+parameters:
+  class: jwst.stpipe.tests.steps.ProperPipeline
+  name: ProperPipeline
+  steps:
+    withdefaultsstep:
+      par1: newpar1
+...
