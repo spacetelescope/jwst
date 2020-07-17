@@ -2856,8 +2856,6 @@ def do_extract1d(
             if hasattr(input_model, "name"):
                 slitname = input_model.name
 
-            log.debug(f'slitname={slitname}')
-
             prev_offset = OFFSET_NOT_ASSIGNED_YET
 
             for sp_order in spectral_order_list:
@@ -2984,15 +2982,13 @@ def do_extract1d(
             # Replace the default value for slitname with a more accurate value, if possible.
             slit = None
 
-            # Mext two lines are for NRS_BRIGHTOBJ
-            if hasattr(input_model, "name"):
+            # Next two lines are for NRS_BRIGHTOBJ
+            if input_model.meta.exposure.type == 'NRS_BRIGHTOBJ' and hasattr(input_model, "name"):
                 slitname = input_model.name
 
             # Next 2 lines likely no longer needed, now that SlitModel already contains input_model.name value.
             if input_model.meta.exposure.type == 'NRS_FIXEDSLIT':
                 slitname = input_model.meta.instrument.fixed_slit
-
-            log.debug(f'slitname={slitname}')
 
             if photom_has_been_run:
                 pixel_solid_angle = input_model.meta.photometry.pixelarea_steradians

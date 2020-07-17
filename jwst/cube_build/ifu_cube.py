@@ -1098,15 +1098,20 @@ class IFUCubeData():
 
 
         log.debug('spatial size %d', self.spatial_size)
-        log.debug('spectral size %d', self.spectral_size)
+        if self.spectral_size is not None:
+            log.debug('spectral size %d', self.spectral_size)
         log.debug('spatial roi %d', self.rois)
         log.debug('wave min and max %d %d', self.wavemin, self.wavemax)
         log.debug('linear wavelength %d', self.linear_wavelength)
-        log.debug('roiw %d ', self.roiw)
+        if self.roiw is not None:
+            log.debug('roiw %d ', self.roiw)
         log.debug('output_type %s ',self.output_type)
-        log.debug('weight_power %d ',self.weight_power)
-        log.debug('softrad %d ',self.soft_rad)
-        log.debug('scalerad %d ',self.scalerad)
+        if self.weight_power is not None:
+            log.debug('weight_power %d ',self.weight_power)
+        if self.soft_rad is not None:
+            log.debug('softrad %d ',self.soft_rad)
+        if self.scalerad is not None:
+            log.debug('scalerad %d ',self.scalerad)
 
 # ******************************************************************************
 
