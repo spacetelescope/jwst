@@ -199,6 +199,7 @@ class ProperPipeline(Pipeline):
         'stepwithmodel': StepWithModel,
         'another_stepwithmodel': StepWithModel,
         'stepwithcontainer': StepWithContainer,
+        'withdefaultsstep': WithDefaultsStep
     }
 
     def process(self, *args):
@@ -213,6 +214,8 @@ class ProperPipeline(Pipeline):
         r = self.another_stepwithmodel(r)
         self.stepwithcontainer.suffix = 'swc'
         r = self.stepwithcontainer(r)
+        self.withdefaultsstep.suffix = 'wds'
+        r = self.withdefaultsstep(r)
 
         return r
 
