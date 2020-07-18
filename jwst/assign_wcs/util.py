@@ -504,7 +504,7 @@ def get_object_info(catalog_name=None):
 
 
 def create_grism_bbox(input_model,
-                      reference_file,
+                      reference_files,
                       mmag_extract=99.0,
                       extract_orders=None):
     """Create bounding boxes for each object in the catalog
@@ -521,8 +521,8 @@ def create_grism_bbox(input_model,
     ----------
     input_model : `jwst.datamodels.ImagingModel`
         Data model which holds the grism image
-    reference_file : str
-        Name of wavelengthrange reference file
+    reference_files : dict
+        Dictionary of reference files
     mmag_extract : float
         The faintest magnitude to extract from the catalog
     extract_orders : list
@@ -586,7 +586,7 @@ def create_grism_bbox(input_model,
     sky_to_grism = input_model.meta.wcs.backward_transform
 
     # Get the disperser parameters which have the wave limits
-    with WavelengthrangeModel(reference_file) as f:
+    with WavelengthrangeModel(reference_files['wavelengthrange']) as f:
         if 'WFSS' not in f.meta.exposure.type:
             err_text = "Wavelengthrange reference file not for WFSS"
             log.error(err_text)

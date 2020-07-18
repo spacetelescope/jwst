@@ -24,12 +24,14 @@ class Extract2dStep(Step):
     reference_file_types = ['wavelengthrange']
 
     def process(self, input_model, *args, **kwargs):
-        reffile = self.get_reference_file(input_model, 'wavelengthrange')
-        reference_file_name = reffile if reffile else ""
+        reference_file_names = {}
+        for reftype in self.reference_file_types:
+            reffile = self.get_reference_file(input_model, reftype)
+            reference_file_names[reftype] = reffile if reffile else ""
 
         with datamodels.open(input_model) as dm:
             output_model = extract_2d.extract2d(dm, self.slit_name,
-                                                reference_file=reference_file_name,
+                                                reference_files=reference_file_names,
                                                 extract_orders=self.extract_orders,
                                                 grism_objects=self.grism_objects,
                                                 extract_height=self.extract_height,

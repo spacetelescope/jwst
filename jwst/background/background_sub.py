@@ -225,8 +225,8 @@ def mask_from_source_cat(input_model, wl_range_name):
     shape = input_model.data.shape
     bkg_mask = np.ones(shape, dtype=np.bool)
 
-    reference_file = wl_range_name
-    grism_obj_list = create_grism_bbox(input_model, reference_file)
+    reference_files = {"wavelengthrange": wl_range_name}
+    grism_obj_list = create_grism_bbox(input_model, reference_files)
 
     for obj in grism_obj_list:
         order_bounding = obj.order_bounding

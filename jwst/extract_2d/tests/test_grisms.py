@@ -191,7 +191,7 @@ def tsgrism_inputs(request):
 def test_extract_tso_object_fails_without_xref_yref(tsgrism_inputs, key):
     with pytest.raises(ValueError):
         image_model, refs = tsgrism_inputs(missing_key=key)
-        extract_tso_object(image_model, reference_file=refs)
+        extract_tso_object(image_model, reference_files=refs)
 
 
 @pytest.mark.filterwarnings("ignore: Card is too long")
@@ -208,7 +208,7 @@ def test_create_box_fits():
     imwcs = aswcs(im)
     imwcs.meta.source_catalog = source_catalog
     refs = get_reference_files(im)
-    test_boxes = create_grism_bbox(imwcs, refs['wavelengthrange'],
+    test_boxes = create_grism_bbox(imwcs, refs,
                                    mmag_extract=99.)
 
     assert len(test_boxes) >= 2  # the catalog has 4 objects
@@ -238,7 +238,7 @@ def test_create_box_gwcs():
     imwcs = aswcs(im)
     imwcs.meta.source_catalog = source_catalog
     refs = get_reference_files(im)
-    test_boxes = create_grism_bbox(imwcs, refs['wavelengthrange'],
+    test_boxes = create_grism_bbox(imwcs, refs,
                                    mmag_extract=99.)
     assert len(test_boxes) >= 2  # the catalog has 4 objects
     for sid in [9, 19]:
@@ -280,7 +280,7 @@ def test_create_specific_orders():
     """
     imwcs, refs = setup_image_cat()
     extract_orders = [1]  # just extract the first order
-    test_boxes = create_grism_bbox(imwcs, refs['wavelengthrange'],
+    test_boxes = create_grism_bbox(imwcs, refs,
                                    mmag_extract=99.,
                                    extract_orders=extract_orders)
 
@@ -302,7 +302,7 @@ def test_extract_tso_subarray():
     wcsimage = create_tso_wcsimage(subarray=True)
     refs = get_reference_files(wcsimage)
     outmodel = extract_tso_object(wcsimage,
-                                  reference_file=refs['wavelengthrange'])
+                                  reference_files=refs)
     assert isinstance(outmodel, SlitModel)
     assert outmodel.source_xpos == (outmodel.meta.wcsinfo.siaf_xref_sci - 1)
     assert outmodel.source_ypos == 34
@@ -331,7 +331,7 @@ def test_extract_tso_height():
     refs = get_reference_files(wcsimage)
     outmodel = extract_tso_object(wcsimage,
                                   extract_height=50,
-                                  reference_file=refs['wavelengthrange'])
+                                  reference_files=refs)
     assert isinstance(outmodel, SlitModel)
     assert outmodel.source_xpos == (outmodel.meta.wcsinfo.siaf_xref_sci - 1)
     assert outmodel.source_ypos == 34
@@ -368,7 +368,7 @@ def test_extract_wfss_object():
     wcsimage.meta.source_catalog = source_catalog
     refs = get_reference_files(wcsimage)
     outmodel = extract_grism_objects(wcsimage,
-                                     reference_file=refs['wavelengthrange'],
+                                     reference_files=refs,
                                      compute_wavelength=False)
     assert isinstance(outmodel, MultiSlitModel)
     assert len(outmodel.slits) == 3
