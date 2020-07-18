@@ -114,15 +114,11 @@ to the output cutout.
 Step Arguments
 ==============
 The ``extract_2d`` step has various optional arguments that apply to certain observation
-modes. For NIRSpec observations there are two arguments:
+modes. For NIRSpec observations there is one applicable argument:
 
 ``--slit_name``
   name [string value] of a specific slit region to extract. The default value of None
   will cause all known slits for the instrument mode to be extracted.
-
-``--apply_wavecorr``
-  bool (default is True). Flag indicating whether to apply the NIRSpec wavelength
-  zero-point correction.
 
 For NIRCam and NIRISS WFSS, the ``extract_2d`` step has three optional arguments:
 

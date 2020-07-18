@@ -34,8 +34,9 @@ def run_pipeline(jail, rtdata_module, request):
     args = ["config/calwebb_spec2.cfg", rtdata.input,
             "--steps.assign_wcs.save_results=true",
             "--steps.extract_2d.save_results=true",
-            "--steps.flat_field.save_results=true",
+            "--steps.wavecorr.save_results=true",
             "--steps.srctype.save_results=true",
+            "--steps.flat_field.save_results=true",
             "--steps.pathloss.save_results=true"]
     Step.from_cmdline(args)
 
@@ -44,7 +45,7 @@ def run_pipeline(jail, rtdata_module, request):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix",[
-    "assign_wcs", "extract_2d", "flat_field", "pathloss", "srctype",
+    "assign_wcs", "extract_2d", "wavecorr", "flat_field", "pathloss", "srctype",
     "cal", "s2d", "x1d"])
 def test_nirspec_fs_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
     """Regression test of the calwebb_spec2 pipeline on a
