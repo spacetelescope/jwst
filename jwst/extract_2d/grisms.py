@@ -1,4 +1,4 @@
-#
+
 #  Module for 2d extraction of grism spectra
 #
 
@@ -19,7 +19,7 @@ log.setLevel(logging.DEBUG)
 
 
 def extract_tso_object(input_model,
-                       reference_files=None,
+                       reference_file=None,
                        extract_height=None,
                        extract_orders=None,
                        compute_wavelength=True):
@@ -31,8 +31,8 @@ def extract_tso_object(input_model,
     input_model : `~jwst.datamodels.CubeModel` or `~jwst.datamodels.ImageModel`
         The input TSO data is an instance of a CubeModel (3D) or ImageModel (2D)
 
-    reference_files : dict
-        Needs to include the name of the wavelengthrange reference file
+    reference_file : str
+        Name of the wavelengthrange reference file
 
     extract_height : int
         The extraction height, in total, for the spectrum in the
@@ -73,12 +73,8 @@ def extract_tso_object(input_model,
     https://jwst-docs.stsci.edu/near-infrared-camera/nircam-observing-modes/nircam-time-series-observations/nircam-grism-time-series
     """
 
-    # Check for reference files
-    if not isinstance(reference_files, dict):
-        raise TypeError("Expected a dictionary for reference_files")
-
     # Check for wavelengthrange reference file
-    if 'wavelengthrange' not in reference_files.keys():
+    if reference_file is None:
         raise KeyError("No wavelengthrange reference file specified")
 
     # If an extraction height is not supplied, default to entire
@@ -88,9 +84,9 @@ def extract_tso_object(input_model,
     log.info("Setting extraction height to {}".format(extract_height))
 
     # Get the disperser parameters that have the wave limits
-    with WavelengthrangeModel(reference_files['wavelengthrange']) as f:
+    with WavelengthrangeModel(reference_file) as f:
         if (f.meta.instrument.name != 'NIRCAM'):
-            raise ValueError("Wavelengthrange reference file not for NIRCAM!")
+            raise ValueError("Wavelengthrange reference file not for NIRCam!")
         if (f.meta.exposure.type != 'NRC_TSGRISM'):
             raise ValueError("Wavelengthrange reference file not for TSGRISM")
         wavelengthrange = f.wavelengthrange
@@ -270,7 +266,7 @@ def extract_tso_object(input_model,
 
 def extract_grism_objects(input_model,
                           grism_objects=None,
-                          reference_files=None,
+                          reference_file=None,
                           extract_orders=None,
                           mmag_extract=99.,
                           compute_wavelength=True):
@@ -285,8 +281,8 @@ def extract_grism_objects(input_model,
     grism_objects : list(GrismObject)
         A list of GrismObjects
 
-    reference_files : dict
-        Needs to include the name of the wavelengthrange reference file
+    reference_file : str
+        Name of the wavelengthrange reference file
 
     extract_orders : int
         Spectral orders to extract
@@ -345,18 +341,15 @@ def extract_grism_objects(input_model,
             variable. The cross-dispersion size is taken from the minimum
             bounding box.
     """
-    if reference_files is None:
-        raise TypeError("Expected a dictionary for reference_files")
+    if reference_file is None:
+        raise KeyError("No wavelengthrange reference file specified")
 
     if grism_objects is None:
         # get the wavelengthrange reference file from the input_model
-        if reference_files is None:
-            raise ValueError("Need at least the dictionary of reference files")
-
-        if (not reference_files['wavelengthrange'] or reference_files['wavelengthrange'] == 'N/A'):
+        if (reference_file == 'N/A'):
             raise ValueError("Expected name of wavelengthrange reference file")
         else:
-            grism_objects = util.create_grism_bbox(input_model, reference_files,
+            grism_objects = util.create_grism_bbox(input_model, reference_file,
                                                    extract_orders=extract_orders,
                                                    mmag_extract=mmag_extract)
             log.info("Grism object list created from source catalog: {0:s}"
