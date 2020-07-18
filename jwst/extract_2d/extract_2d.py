@@ -13,7 +13,7 @@ log.setLevel(logging.DEBUG)
 
 def extract2d(input_model,
               slit_name=None,
-              reference_file=None,
+              reference_files={},
               grism_objects=None,
               extract_height=None,
               extract_orders=None,
@@ -26,8 +26,8 @@ def extract2d(input_model,
     input_model : `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
     slit_name : str or int
         Slit name.
-    reference_file : str
-        Reference file name.
+    reference_files : dict
+        Reference files.
     grism_objects : list
         A list of grism objects.
     extract_height: int
@@ -60,13 +60,13 @@ def extract2d(input_model,
             if extract_height is None:
                 extract_height = 64
             output_model = extract_tso_object(input_model,
-                                              reference_file=reference_file,
+                                              reference_files=reference_files,
                                               extract_height=extract_height,
                                               extract_orders=extract_orders)
         else:
             output_model = extract_grism_objects(input_model,
                                                  grism_objects=grism_objects,
-                                                 reference_file=reference_file,
+                                                 reference_files=reference_files,
                                                  extract_orders=extract_orders,
                                                  mmag_extract=mmag_extract)
 
