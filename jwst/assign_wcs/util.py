@@ -498,6 +498,7 @@ def get_object_info(catalog_name=None):
                                  sky_bbox_lr=row['sky_bbox_lr'],
                                  sky_bbox_ul=row['sky_bbox_ul'],
                                  sky_bbox_ur=row['sky_bbox_ur'],
+                                 is_star=row['is_star']
                                  )
                        )
     return objects
@@ -537,7 +538,7 @@ def create_grism_bbox(input_model,
         Cross-dispersion extraction half height in pixels, WFSS mode.
         Overwrites the computed extraction height in ``GrismObject.order_bounding.``
         If ``None``, it's computed from the segementation map,
-        using the min and max wavelegnth for each of the orders that
+        using the min and max wavelength for each of the orders that
         are available.
     wavelength_range : dict, optional
         Pairs of {spectral_order: (wave_min, wave_max)} for each order.
@@ -570,6 +571,7 @@ def create_grism_bbox(input_model,
 
     If ``wfss_extract_half_height`` is specified it is used to compute the extent in
     the cross-dispersion direction, which becomes ``2 * wfss_extract_half_height + 1``.
+    ``wfss_extract_half_height`` can only be applied to point source objects.
 
     """
     instr_name = input_model.meta.instrument.name
@@ -586,7 +588,7 @@ def create_grism_bbox(input_model,
             message = "If reference files are not supplied, ``wavelength_range`` must be provided."
             raise TypeError(message)
     else:
-        # Get the list of extract_orders and lmin, lmax from the ``wavelengthrange11 reference file.
+        # Get the list of extract_orders and lmin, lmax from the ``wavelengthrange`` reference file.
         with WavelengthrangeModel(reference_files['wavelengthrange']) as f:
             if 'WFSS' not in f.meta.exposure.type:
                 err_text = "Wavelengthrange reference file not for WFSS"
@@ -677,7 +679,11 @@ def _create_grism_bbox(input_model, mmag_extract=99.0,
                     xmax = int(np.max(xstack))
                     ymin = int(np.min(ystack))
                     ymax = int(np.max(ystack))
-                    if wfss_extract_half_height is not None:
+
+                    # The ``72`` criteria is a placeholder fof when there's a decision
+                    # on how to populate the ``is_star`` column in the catalog.
+                    # See ``is_star`` property in source_catalog.py
+                    if wfss_extract_half_height is not None and obj.is_star > 72:
                         if input_model.meta.wcsinfo.dispaxis == 2:
                             center = (xmax + xmin) / 2
                             xmin = center - wfss_extract_half_height

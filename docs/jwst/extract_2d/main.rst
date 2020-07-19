@@ -84,7 +84,7 @@ for  wavelength range and the spectral orders are stored in the ``wavelengthrang
 reference file which can be retrieved from CRDS. A user may supply a different
 wavelength range by passing `None` to ``reference_files``. In this case the spectral
 orders to be extracted and their corresponding wavelength range will be taken
-from the ``wavelength_range`` parameter.
+from the ``wavelength_range`` parameter which is a dictionary ``{spectral_order: (lam_min, lam_max)}``.
 
 .. doctest-skip::
 
@@ -105,7 +105,8 @@ Retrieve the wavelengthrange file specific for this mode:
 
 Create a list of grism objects for a specified spectral order with a limited
 minimum magnitude, and a specified half height of the extraction box in
-cross-dispersion direction.
+cross-dispersion direction. The ``wfss_extract_half_height`` parameter applies only to
+point sources.
 
 .. doctest-skip::
 

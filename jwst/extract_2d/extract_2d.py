@@ -15,7 +15,7 @@ def extract2d(input_model,
               slit_name=None,
               reference_files={},
               grism_objects=None,
-              extract_height=None,
+              tsgrism_extract_height=None,
               wfss_extract_half_height=None,
               extract_orders=None,
               mmag_extract=99.):
@@ -32,7 +32,7 @@ def extract2d(input_model,
         Reference files.
     grism_objects : list
         A list of grism objects.
-    extract_height: int
+    tsgrism_extract_height: int
         Cross-dispersion extraction height to use for time series grisms.
         This will override the default which for NRC_TSGRISM is a set
         size of 64 pixels.
@@ -66,11 +66,11 @@ def extract2d(input_model,
         output_model = nrs_extract2d(input_model, slit_name=slit_name)
     elif exp_type in slitless_modes:
         if exp_type == 'NRC_TSGRISM':
-            if extract_height is None:
-                extract_height = 64
+            if tsgrsm_extract_height is None:
+                tsgrism_extract_height = 64
             output_model = extract_tso_object(input_model,
                                               reference_files=reference_files,
-                                              extract_height=extract_height,
+                                              tsgrism_extract_height=tsgrism_extract_height,
                                               extract_orders=extract_orders)
         else:
             output_model = extract_grism_objects(input_model,

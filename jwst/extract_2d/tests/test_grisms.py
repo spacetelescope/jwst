@@ -332,7 +332,7 @@ def test_extract_tso_height():
     wcsimage = create_tso_wcsimage(subarray=False)
     refs = get_reference_files(wcsimage)
     outmodel = extract_tso_object(wcsimage,
-                                  extract_height=50,
+                                  tsgrism_extract_height=50,
                                   reference_files=refs)
     assert isinstance(outmodel, SlitModel)
     assert outmodel.source_xpos == (outmodel.meta.wcsinfo.siaf_xref_sci - 1)
