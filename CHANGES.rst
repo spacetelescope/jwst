@@ -168,6 +168,8 @@ source_catalog
 
 - Use ``gwcs.WCS`` instead of FITS WCS. [#5120]
 
+- Changed the type of column ``is_star`` from float to bool. [#5140]
+
 stpipe
 ------
 
