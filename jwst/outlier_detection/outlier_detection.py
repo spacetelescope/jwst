@@ -3,7 +3,6 @@
 from functools import partial
 import numpy as np
 
-from stsci.image import median
 from astropy.stats import sigma_clip
 from scipy import ndimage
 from drizzle.cdrizzle import tblot
@@ -288,23 +287,15 @@ class OutlierDetection:
                 np.sum(badmask) / len(weight.flat) * 100))
             badmasks.append(badmask)
 
-        # Compute median of stack of images using `badmasks` to remove
-        # low-weight values.  In the future we should use a masked array
-        # and np.median
-        max_images_for_median = 1024
-        if len(resampled_sci) > max_images_for_median:
-            log.info("Generating median from the first {} images".format(max_images_for_median))
-            #median_image = median(resampled_sci[0:max_images_for_median], nlow=nlow, nhigh=nhigh,
-            #                      badmasks=badmasks)
-            median_image = median(resampled_sci[0:max_images_for_median], nlow=nlow, nhigh=nhigh,
-                                  badmasks=badmasks)
-        else:
-            log.info("Generating median from {} images".format(len(resampled_sci)))
-            #median_image = median(resampled_sci, nlow=nlow, nhigh=nhigh,
-            #                      badmasks=badmasks)
-            median_image = np.median(np.dstack(resampled_sci), nlow=nlow, nhigh=nhigh,
-                                  badmasks=badmasks)
+        # Fill resampled_sci array with nan's where mask values are True
+        for f1, f2 in zip(resampled_sci, badmasks):
+            for elem1, elem2 in zip(f1, f2):
+                elem1[elem2] = np.nan
 
+        # Compute median of stack of images with "bad" data replaced with Nan.
+        # using np.nanmedian
+        log.info("Generating median from {} images".format(len(resampled_sci)))
+        median_image = np.nanmedian(resampled_sci, axis = 0)
 
         return median_image
 
