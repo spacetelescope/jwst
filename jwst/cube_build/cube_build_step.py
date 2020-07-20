@@ -289,12 +289,10 @@ class CubeBuildStep (Step):
 
         num_cubes, cube_pars = cubeinfo.number_cubes()
         if not self.single:
-            self.log.info('Number of ifucubes produced by a this run %i',
-                          num_cubes)
+            self.log.info(f'Number of ifucubes produced by this run  = {num_cubes}')
 
         if self.single:
-            self.log.info('Number of single ifucubes produced by a this run %i',
-                          num_cubes)
+            self.log.info(f'Number of single ifucubes produced by a this run = {num_cubes}')
 
         # ModelContainer of ifucubes
         cube_container = datamodels.ModelContainer()

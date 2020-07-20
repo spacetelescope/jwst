@@ -18,7 +18,7 @@ class CubeBlot():
         """Class Blot holds the main varibles for blotting sky cube to detector
 
 
-        Information is pulled out of the median sky Cube created by a previous
+        Information is pulled out of the median sky cube created by a previous
         run of cube_build in single mode and stored in the ClassBlot.These
         variables include the WCS of median sky cube, the weighting parameters
         used to create this median sky image and basic information of the input
@@ -31,7 +31,7 @@ class CubeBlot():
            individual input_models mapped to the full IFU cube imprint on the
            sky.
         input_models: data model
-           The input models used to create the median sky image.
+           The input models used to create the median sky cube.
 
         Returns
         -------
@@ -118,7 +118,7 @@ class CubeBlot():
     def blot_images_miri(self):
         """ Core blotting routine for MIRI
 
-        This is the main routine for blotting the median sky image back to
+        This is the main routine for blotting the MIRI median sky cube back to
         the detector space and creating a blotting image for each input model
         1. Loop over every data model to be blotted and find ra,dec,wavelength
            for every pixel in a valid slice on the detector.
@@ -241,7 +241,7 @@ class CubeBlot():
                 blot_weight[index2d] = blot_weight[index2d] + weight_distance
 
         t1 = time.time()
-        log.debug("Time to blot median image to input model = %.1f s" % (t1-t0,))
+        log.debug(f"Time to blot median image to input model =  {t1-t0:.1f}")
         # done mapping blotted x,y (x_cube, y_cube) to detector
         igood = np.where(blot_weight > 0)
         blot_flux[igood] = blot_flux[igood] / blot_weight[igood]
@@ -252,22 +252,22 @@ class CubeBlot():
     def blot_images_nirspec(self):
         """ Core blotting routine for NIRSPEC
 
-        This is the main routine for blotting the NIRSPEC median sky image back to
+        This is the main routine for blotting the NIRSPEC median sky cube back to
         the detector space and creating a blotting image for each input model.
         This routine was split from the MIRI routine because the blotting for NIRSpec
         needs to be done slice by slice and an error in the inverse mapping (sky to
         detector) mapped too many values back to the detector. This routine adds
         a check and first pulls out the min and max ra and dec values in the slice
         and only inverts the slice values back to the detector.
-        1. Loop over every data model to be blotted and find ra,dec,wavelength
-           for every pixel in a valid slice on the detector.
-        2. For each slice get the WCS info for the slice. Find the x,y bounding
-           box values and using only the x,y in the slice find the ra,dec, wavelength
-           for the slice. From this information find the min and max ra and dec
-           on the slice. Pull out those values that fall in this range from the
-           median sky. Using this limited set then map back the ra, dec to
-           x,y on detector.
-        3. Blot these inverted x,y values to detector space.
+        For each data model loop over the 30 slices and find:
+        a. the x,y bounding box of slice
+        b. the ra, dec, lambda values for the x,y pixels in the slice
+        c. from step b, determine the min and max ra and dec for slice values
+        d. pull out the valid ra, dec and lambda values from the median sky cube that fall within
+           the min and max ra,dec determined in step c
+        e. invert the valid ra,dec, and lambda values for the slice determined in step d to the detector.
+        f. blot the inverted x,y values to the detector plane. This steps finds the determines the overlap
+           of the blotted x,y values with a regular grid setup in the detector plane which is the blotted image.
 
         """
         blot_models = datamodels.ModelContainer()
@@ -278,7 +278,6 @@ class CubeBlot():
             blot_ysize, blot_xsize = blot_flux.shape
             blot_flux = np.ndarray.flatten(blot_flux)
             blot_weight = np.ndarray.flatten(blot_weight)
-            t0 = time.time()
             blot = model.copy()
             blot.err = None
             blot.dq = None
@@ -332,7 +331,7 @@ class CubeBlot():
 
                 nn = flux_slice.size
                 for ipt in range(nn):
-                    # search xcenter and ycenter seperately. These arrays are smallsh.
+                    # search xcenter and ycenter seperately. These arrays are smallish.
                     # xcenter size = naxis1 on detector
                     # ycenter size = naxis2 on detector
                     xdistance = np.absolute(x_slice[ipt] - xcenter)
@@ -353,10 +352,10 @@ class CubeBlot():
                         blot_flux[index2d] = blot_flux[index2d] + weighted_flux
                         blot_weight[index2d] = blot_weight[index2d] + weight_distance
                 ts1 = time.time()
-                log.debug("Time to map 1 slice  = %.1f s" % (ts1-ts0,))
+                log.debug(f"Time to map 1 slice  =  {ts1-ts0:.1f}")
             # done mapping median cube  to this input model
             t1 = time.time()
-            log.debug("Time to blot median image to input model = %.1f s" % (t1-t0,))
+            log.debug(f"Time to blot median image to input model =  {t1-t0:.1f}")
             igood = np.where(blot_weight > 0)
             blot_flux[igood] = blot_flux[igood] / blot_weight[igood]
             blot_flux = blot_flux.reshape((blot_ysize, blot_xsize))
