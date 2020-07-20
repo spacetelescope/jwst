@@ -190,6 +190,7 @@ _calculated_suffixes = set([
     'tweakregstep',
     'assignmtwcsstep',
     'assign_mtwcs',
+    'wavecorrstep',
 ])
 
 

@@ -499,8 +499,8 @@ def flag_cr(sci_image, blot_image, **pars):
     log.debug("Pixels in input DQ: {}".format(count_sci))
     log.debug("Pixels in cr_mask:  {}".format(count_cr))
 
-    # Update the DQ array in the input image in place
-    np.bitwise_or(sci_image.dq, np.invert(cr_mask) * CRBIT, sci_image.dq)
+    # Update the DQ array in the input image.
+    sci_image.dq = np.bitwise_or(sci_image.dq, np.invert(cr_mask) * CRBIT)
 
 
 def abs_deriv(array):

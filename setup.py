@@ -45,11 +45,11 @@ DOCS_REQUIRE = [
 ]
 TESTS_REQUIRE = [
     'ci-watson>=0.3.0',
-    'pytest>=3.9.1',
+    'pytest>=4.6.0',
     'pytest-doctestplus',
     'requests_mock>=1.0',
-    'pytest-openfiles',
-    'pytest-cov>=2.0.0',
+    'pytest-openfiles>=0.5.0',
+    'pytest-cov>=2.9.0',
     'codecov>=1.6.0',
 ]
 AWS_REQUIRE = [

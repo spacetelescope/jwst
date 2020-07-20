@@ -1,6 +1,11 @@
 0.17.0 (unreleased)
 ===================
 
+align_refs
+----------
+
+- Add bad pixel replacement for target and psf images [#4973]
+
 assign_mtwcs
 ------------
 
@@ -18,7 +23,7 @@ assign_wcs
 associations
 ------------
 
-- Update diagrams to change sloper to detector1. [#4986]
+- Update diagrams in documentation to change sloper to detector1. [#4986]
 
 barshadow
 ---------
@@ -28,68 +33,73 @@ barshadow
 combine_1d
 ----------
 
-- Only warn when there are degenerate spectrum in combining [#5037]
-
+- Skip spectra that are degenerate when combining [#5037]
 
 cube_build
 ----------
 
-- changed default weighting back to 'msm' until NIRSPEC cube pars ref file contains emsm info [#5134]
+- Changed default weighting back to 'msm' until NIRSPEC cube pars ref file contains emsm info [#5134]
 
 - Added checks read from cube pars reference file that parameters have valid data [#5134]
  
-- change the name of default types of cubes from ``world`` to ``skyalign`` [#4974]
+- Change the name of default cube type from ``world`` to ``skyalign`` [#4974]
 
-- added ``ifualign`` cubes to be cubes rotated on sky to align with ifu instrument plane [#4974]
+- Add ``ifualign`` cubes to be cubes rotated on sky to align with ifu instrument plane [#4974]
 
-- for MIRI changed ``alpha-beta`` type cubes to ``internal_cal`` [#4974]
+- Change the name of MIRI ``alpha-beta`` cube type to ``internal_cal`` [#4974]
 
-- added ability to make NIRSpec ``internal_cal`` ifu cubes aligned with slicer plane [#4974]
+- Add ability to make NIRSpec ``internal_cal`` ifu cubes aligned with slicer plane [#4974]
 
-- changed default weighting from ``msm`` to ``emsm`` [#4974]
+- Change default weighting from ``msm`` to ``emsm`` [#4974]
 
-- NIRSpec IFU cube built from all wavelengths rather than those defined in cube par ref file [#4974]
+- NIRSpec IFU cubes built from all wavelengths rather than those defined in cube par ref file [#4974]
 
 - Removed wavelength planes that contained only 0 data. These planes are edge cases [#4974]
-
 
 datamodels
 ----------
 
-- Add blend rule for DETECTOR and MODULE. [#4998]
+- Add blend rule for keywords DETECTOR and MODULE. [#4998]
 
-- Added methods ``Model.info`` and ``Model.search``. [#4660]
+- Add methods ``Model.info`` and ``Model.search``. [#4660]
 
-- Trimmed MT_RA, MT_DEC keyword comments to fit within FITS record. [#4994]
+- Trim MT_RA, MT_DEC keyword comments to fit within FITS record. [#4994]
 
 - Add enum list and default value of 'NONE' for ``meta.instrument.lamp_mode`` [#5022]
 
 - Add TIMEUNIT keyword to schemas. [#5109]
 
-- Split ``pathloss`` object into ``pathloss_ps`` and ``pathloss_un``. [#5112]
+- Split ``pathloss`` object into ``pathloss_ps`` and ``pathloss_un`` in schemas. [#5112]
 
-- Added "PERSISTENCE" DQ flag definition. [#5137]
+- Add "PERSISTENCE" DQ flag definition. [#5137]
+
+- Fixed nonsensical premature closing of FITS file of a ``DataModel``. [#4930]
+
+- Added a hash set/check to DataModel I/O to check whether schema traversal is necessary. [#5110]
+
+- Update underlying MultiExposureModel from the SourceModelContainer models. [#5154]
 
 extract_1d
 ----------
 
-- Rechecks the input model container in run_extract1d to select the correct processing. [#5076]
+- Implement aperture corrections in the Extract1dStep. [#4902]
 
-- Implement aperture correction in the Extract1dStep. [#4902]
+- Fix bug in creating a polynomial fit used in background extraction. [#4970]
 
-extract_2d
-----------
+- Recheck the input model container in run_extract1d to select the correct processing [#5076]
+
+- Rework/refactor many functions for style and readability. [#5079]
 
 - Checks subwcs and new_slit variables exist before trying to delete them. [#5093]
 
 - Parameter ``mmag_extract`` is now propagated to the extraction routine. [#5122]
 
-coron
------
+extract_2d
+----------
 
-- Bad pixel replacment & median smoothing for psf images [#4973]
+- Check that ``subwcs`` and ``new_slit`` variables exist before trying to delete them [#5093]
 
-- Fix bug in creating a polynomial fit used in background extraction. [#4970]
+- Move NIRSpec wavecorr routines to the ``wavecorr`` step. [#5133]
 
 master_background
 -----------------
@@ -134,6 +144,9 @@ pipeline
 - Update ``calwebb_tso3`` to do more robust checking of input data type.
   [#5107]
 
+- Update the ``Spec2Pipeline`` to include the new ``wavecorr`` step and put
+  ``srctype`` before ``wavecorr``. [#5133]
+
 photom
 ------
 
@@ -160,6 +173,11 @@ stpipe
 
 - Remove further sloper references. [#4989]
 
+wavecorr
+--------
+
+- Implemented the ``wavecorr`` step by pulling routines from the
+  ``extract_2d`` step. [#5133]
 
 0.16.2 (2020-06-10)
 ===================
@@ -244,11 +262,17 @@ rscd
 source_catalog
 --------------
 
+- Add more concentration indices and update step docs. [#4906, #4908]
+
 - Added fallback background estimation method to make background
   estimation moare robust. [#4929]
 
 - Fixed the nearest-neighbor code to handle the case of exactly one
   detected source. [#4929]
+
+- Update abmag error calculation. [#4945]
+
+- Exit gracefully if APCORR ref file is missing. [#4948]
 
 tweakreg
 --------
@@ -423,6 +447,10 @@ source_catalog
   ``DrizProductModel``. [#4552]
 
 - Updated step arguments in the documentation. [#4723]
+
+- Updated to include aperture photometry and aperture corrections. [#4819]
+
+- Rename AB-to-Vega reference file type to ABVEGAOFFSET. [#4872]
 
 srctype
 -------

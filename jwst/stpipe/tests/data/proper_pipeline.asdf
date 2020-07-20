@@ -1,0 +1,12 @@
+#ASDF 1.0.0
+#ASDF_STANDARD 1.4.0
+%YAML 1.1
+%TAG ! tag:stsci.edu:asdf/
+--- !core/asdf-1.1.0
+parameters:
+  class: jwst.stpipe.tests.steps.ProperPipeline
+  name: ProperPipeline
+  steps:
+    withdefaultsstep:
+      par1: newpar1
+...
