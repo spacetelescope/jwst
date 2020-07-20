@@ -1054,7 +1054,9 @@ class SourceCatalog:
         # TODO: need algorithm for this flag
         #is_star = np.random.randint(2, size=len(self.id))
         #return is_star.astype(bool)
-        return self.null_column
+        #return self.null_column
+        # Setting this column to bool type as in the latest spec
+        return np.ones(len(self.id), dtype=bool)
 
     @lazyproperty
     def _daofind_kernel(self):
