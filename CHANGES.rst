@@ -77,6 +77,8 @@ datamodels
 
 - Added a hash set/check to DataModel I/O to check whether schema traversal is necessary. [#5110]
 
+- Update underlying MultiExposureModel from the SourceModelContainer models. [#5154]
+
 extract_1d
 ----------
 
