@@ -68,15 +68,11 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
     if source_type is not None:
         source_type = source_type.upper()
     if source_type != 'POINT' and source_type != 'EXTENDED':
-        if instrument == 'MIRI':
-            default_source_type = 'EXTENDED'
-        else:
-            default_source_type = 'POINT'
-        log.warning("source_type was '%s', setting it to '%s'.",
-                    source_type, default_source_type)
+        default_source_type = 'EXTENDED'
+        log.warning(f"Source type was '{source_type}'; setting to '{default_source_type}'.")
         source_type = default_source_type
     else:
-        log.info("source_type = %s", source_type)
+        log.info(f"Source type = {source_type}")
 
     # The input units will normally be MJy / sr, but for NIRSpec point-source
     # spectra the units will be MJy.
@@ -490,8 +486,8 @@ def locn_from_wcs(input_model, ra_targ, dec_targ):
         (j, i) = divmod(k, dist2.shape[1])      # y, x coordinates
 
         if i <= 0 or j <= 0 or i >= shape[-1] - 1 or j >= shape[-2] - 1:
-            log.warning("WCS implies the target is at or beyond the edge "
-                        "of the image; this location will not be used.")
+            log.warning("WCS implies the target is beyond the edge of the image")
+            log.warning("This location will not be used")
             locn = None
         else:
             locn = (i, j)                       # x, y coordinates

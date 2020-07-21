@@ -269,7 +269,7 @@ def get_extract_parameters(
         extract_params['bkg_coeff'] = None
 
         if apply_nod_offset is None:
-            extract_params['apply_nod_offset'] = True
+            extract_params['apply_nod_offset'] = False
         else:
             extract_params['apply_nod_offset'] = apply_nod_offset
 
@@ -278,6 +278,7 @@ def get_extract_parameters(
         extract_params['smoothing_length'] = 0  # because no background sub.
         extract_params['bkg_order'] = 0  # because no background sub.
         # Note that extract_params['dispaxis'] is not assigned.  This will be done later, possibly slit by slit.
+
     elif ref_dict['ref_file_type'] == FILE_TYPE_JSON:
         extract_params['ref_file_type'] = ref_dict['ref_file_type']
 
@@ -333,7 +334,7 @@ def get_extract_parameters(
                             extract_params['bkg_order'] = bkg_order
 
                         if apply_nod_offset is None:
-                            extract_params['apply_nod_offset'] = aper.get('apply_nod_offset', True)
+                            extract_params['apply_nod_offset'] = aper.get('apply_nod_offset', False)
                         else:
                             # If the user supplied a value, use that value.
                             extract_params['apply_nod_offset'] = apply_nod_offset
@@ -352,6 +353,7 @@ def get_extract_parameters(
                         extract_params['smoothing_length'] = smoothing_length
 
                     break
+
     elif ref_dict['ref_file_type'] == FILE_TYPE_IMAGE:
         # Note that we will use the supplied image-format extract1d reference file,
         # without regard for the distinction between point source and
@@ -380,11 +382,12 @@ def get_extract_parameters(
                 extract_params['smoothing_length'] = smoothing_length
 
             if apply_nod_offset is None:
-                extract_params['apply_nod_offset'] = True
+                extract_params['apply_nod_offset'] = False
             else:
                 extract_params['apply_nod_offset'] = apply_nod_offset
 
             extract_params['nod_correction'] = 0
+
     else:
         log.error(f"Reference file type {ref_dict['ref_file_type']} not recognized")
 
@@ -415,6 +418,7 @@ def log_initial_parameters(extract_params: dict):
     log.debug(f"initial src_coeff = {extract_params['src_coeff']}")
     log.debug(f"initial bkg_coeff = {extract_params['bkg_coeff']}")
     log.debug(f"bkg_order = {extract_params['bkg_order']}")
+    log.debug(f"apply_nod_offset = {extract_params['apply_nod_offset']}")
 
 
 def get_aperture(
@@ -449,7 +453,7 @@ def get_aperture(
     ap_ref, truncated = update_from_shape(ap_ref, im_shape)
 
     if truncated and verbose:
-        log.warning("Extraction limits extended outside the input image borders; limits have been truncated.")
+        log.warning("Extraction limits extended outside image borders; limits have been truncated.")
 
     if wcs is not None:
         ap_wcs = aperture_from_wcs(wcs, verbose)
@@ -652,14 +656,12 @@ def aperture_from_wcs(wcs: WCS, verbose: bool) -> Union[NamedTuple, None]:
     if got_bounding_box and bounding_box is None:
         if verbose:
             log.warning("wcs.bounding_box is None")
-
         return None
 
     # bounding_box should be a tuple of tuples, each of the latter consisting of (lower, upper) limits.
     if len(bounding_box) < 2:
         if verbose:
             log.warning("wcs.bounding_box has the wrong shape")
-
         return None
 
     # These limits are float, and they are inclusive.
@@ -1208,9 +1210,12 @@ class ExtractBase(abc.ABC):
         else:
             targ_ra = getattr(slit, 'source_ra', None)
             targ_dec = getattr(slit, 'source_dec', None)
+            if targ_ra is None or targ_dec is None:
+                targ_ra = input_model.meta.target.ra
+                targ_dec = input_model.meta.target.dec
 
         if targ_ra is None or targ_dec is None:
-            log.warning("Target RA and Dec could not be determined.")
+            log.warning("Target RA and Dec could not be determined")
             targ_ra = targ_dec = None
 
         return targ_ra, targ_dec
@@ -1261,7 +1266,7 @@ class ExtractBase(abc.ABC):
             middle, middle_wl, locn = locn_info
 
         if middle is not None and verbose:
-            log.debug(f"Spectrum location from WCS used column (or row) {middle}")
+            log.debug(f"Spectrum location from WCS used column/row {middle}")
 
         # Find the nominal extraction location, i.e. the XD location specified in the reference file prior to adding any
         # nod/dither offset.
@@ -1272,11 +1277,11 @@ class ExtractBase(abc.ABC):
             nominal_location = self.nominal_locn(middle, middle_wl)
 
             if verbose:
-                log.debug(f"Target spectrum is at {locn} in the cross-dispersion direction")
+                log.debug(f"Target spectrum is at {locn:.2f} in the cross-dispersion direction")
 
             if nominal_location is not None:
                 if verbose:
-                    log.debug(f"and the nominal XD location of the target spectrum is {nominal_location}")
+                    log.debug(f"and the nominal XD location of the spectrum is {nominal_location:.2f}")
 
                 offset = locn - nominal_location
             else:
@@ -1285,7 +1290,7 @@ class ExtractBase(abc.ABC):
 
         if np.isnan(offset):
             if verbose:
-                log.warning("Nod/dither offset is NaN; setting it to 0.")
+                log.warning("Nod/dither offset is NaN; setting it to 0")
             offset = 0.
 
         self.nod_correction = offset
@@ -1347,8 +1352,7 @@ class ExtractBase(abc.ABC):
         """
         if input_model.meta.exposure.type in WFSS_EXPTYPES:  # WFSS data are not currently supported.
             log.warning(
-                f"For exposure type {input_model.meta.exposure.type}, we currently can't use target coordinates to get "
-                f"location of spectrum."
+                f"Can't use target coordinates to get location of spectrum for exp type {input_model.meta.exposure.type}"
             )
 
             return
@@ -1421,10 +1425,8 @@ class ExtractBase(abc.ABC):
         # location of the target spectrum.
         if locn < lower or locn > upper:
             if verbose:
-                log.warning(
-                    f"WCS implies the target is at {locn}, which is outside the bounding box, so we can't get target "
-                    f"location using the WCS."
-                )
+                log.warning(f"WCS implies the target is at {locn:.2f}, which is outside the bounding box,")
+                log.warning("so we can't get spectrum location using the WCS")
             locn = None
 
         return middle, middle_wl, locn
@@ -1478,8 +1480,8 @@ class ExtractModel(ExtractBase):
                 self.bkg_coeff = None
                 if self.verbosity:
                     log.info(
-                        "Background subtraction will not be done; it was specified in the reference file, but it was "
-                        "overridden by the step parameter."
+                        "Background subtraction was specified in the reference file, "
+                        "but it was overridden by the step parameter."
                     )
 
     def nominal_locn(self, middle: int, middle_wl: float) -> Union[float, None]:
@@ -1589,11 +1591,11 @@ class ExtractModel(ExtractBase):
             self.xstop = min(self.xstop, shape[-1] - 1)  # inclusive limit
 
         if self.src_coeff is None and verbose:
-            log.info(f"Applying nod/dither offset of {self.nod_correction} to {direction}start and {direction}stop")
+            log.info(f"Applying nod/dither offset of {self.nod_correction:.2f} to {direction}start and {direction}stop")
 
         if self.src_coeff is not None or self.bkg_coeff is not None:
             if verbose:
-                log.info(f"Applying nod/dither offset of {self.nod_correction} to polynomial coefficients")
+                log.info(f"Applying nod/dither offset of {self.nod_correction:.2f} to polynomial coefficients")
 
         if self.src_coeff is not None:
             self._apply_nod_corr(self.src_coeff)
@@ -2007,7 +2009,7 @@ class ImageExtractModel(ExtractBase):
 
         if middle_line is None:
             log.warning(
-                f"Can't determine nominal location of target spectrum because middle = {middle} is off the image."
+                f"Can't determine nominal location of spectrum because middle = {middle} is off the image."
             )
 
             return
@@ -2036,7 +2038,7 @@ class ImageExtractModel(ExtractBase):
             return
 
         if verbose:
-            log.info(f"Applying nod/dither offset of {self.nod_correction}")
+            log.info(f"Applying nod/dither offset of {self.nod_correction:.2f}")
 
         # Shift the image in the cross-dispersion direction.
         ref = self.ref_image.data.copy()
@@ -2648,12 +2650,21 @@ def do_extract1d(
         sb_units = 'DN/s'
         log.warning("The photom step has not been run.")
 
+    # apply_nod_offset doesn't apply to WFSS, so turn it off if it's currently on
     if apply_nod_offset:
-        if exp_type in WFSS_EXPTYPES + ['NRS_FIXEDSLIT', 'NRS_MSASPEC']:
+        if exp_type in WFSS_EXPTYPES:
             apply_nod_offset = False
             log.warning(
-                f"Correcting for nod/dither offset is currently not supported for exp_type = "
+                f"Correcting for nod/dither offset is not supported for exp_type = "
                 f"{input_temp.meta.exposure.type}, so apply_nod_offset will be set to False",
+            )
+
+    # Turn apply_nod_offset on for types that should use it by default
+    if apply_nod_offset is None:
+        if exp_type in ['MIR_LRS-FIXEDSLIT', 'MIR_MRS', 'NRS_FIXEDSLIT', 'NRS_IFU', 'NRS_MSASPEC']:
+            apply_nod_offset = True
+            log.info(
+                f"Turning on nod/dither offset for exp_type = {exp_type}"
             )
 
     # Handle inputs that contain one or more slit models
@@ -2668,29 +2679,36 @@ def do_extract1d(
         elif isinstance(input_model, datamodels.MultiSlitModel):  # A simple MultiSlitModel, not in a container
             slits = input_model.slits
 
+        # Save original apply_nod_offset value, because it can get
+        # toggled within the following loop over slits
+        save_apply_nod_offset = apply_nod_offset
+
         for slit in slits:  # Loop over the slits in the input model
             log.info(f'Working on slit {slit.name}')
             slitname = slit.name
             prev_offset = OFFSET_NOT_ASSIGNED_YET
+            apply_nod_offset = save_apply_nod_offset  # restore original value
 
             if np.size(slit.data) <= 0:
                 log.info(f'No data for slit {slit.name}, skipping ...')
                 continue
 
             sp_order = get_spectral_order(slit)
-
             if sp_order == 0 and not prism_mode:
                 log.info("Spectral order 0 is a direct image, skipping ...")
                 continue
 
+            # Turn off apply_nod_offset if the source is not POINT
             source_type = slit.source_type
-
             if source_type != 'POINT':
                 apply_nod_offset = False
-                log.info(
-                    f"SRCTYPE = {source_type}'; correcting for nod/dither offset will only be done for a point source, "
-                    f"so apply_nod_offset will be set to False"
-                )
+                log.info(f"Setting apply_nod_offset to False for source type {source_type}")
+
+            # Turn off apply_nod_offset if working on non-primary NRS fixed slits
+            if exp_type == 'NRS_FIXEDSLIT' and slitname != slit.meta.instrument.fixed_slit:
+                apply_nod_offset = False
+                log.info("Can only compute source location for primary NIRSpec slit, ")
+                log.info("so setting apply_nod_offset to False")
 
             extract_params = get_extract_parameters(
                 extract_ref_dict, slit, slit.name, sp_order, input_model.meta, smoothing_length, bkg_order, apply_nod_offset
@@ -2847,10 +2865,7 @@ def do_extract1d(
 
         if source_type != 'POINT':
             apply_nod_offset = False
-            log.info(
-                f"SRCTYPE = '{source_type}'; correcting for nod/dither offset will only be done for a point source, so "
-                f"apply_nod_offset will be set to False"
-            )
+            log.info(f"Setting apply_nod_offset to False for source type {source_type}")
 
         if isinstance(input_model, datamodels.ImageModel):
             if hasattr(input_model, "name"):
@@ -3589,7 +3604,8 @@ def extract_one_slit(
             offset, locn = extract_model.offset_from_offset(input_model, slit, verbose)
 
             if verbose:
-                log.debug(f"Computed nod/dither offset = {offset}, target location = {locn}.")
+                if offset is not None and locn is not None:
+                    log.debug(f"Computed nod/dither offset={offset:.2f}, target location={locn:.2f}")
 
             if not extract_model.apply_nod_offset:
                 offset = 0.
