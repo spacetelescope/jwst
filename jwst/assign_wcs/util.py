@@ -680,9 +680,6 @@ def _create_grism_bbox(input_model, mmag_extract=99.0,
                     ymin = int(np.min(ystack))
                     ymax = int(np.max(ystack))
 
-                    # The ``72`` criteria is a placeholder fof when there's a decision
-                    # on how to populate the ``is_star`` column in the catalog.
-                    # See ``is_star`` property in source_catalog.py
                     if wfss_extract_half_height is not None and obj.is_star:
                         if input_model.meta.wcsinfo.dispaxis == 2:
                             center = (xmax + xmin) / 2

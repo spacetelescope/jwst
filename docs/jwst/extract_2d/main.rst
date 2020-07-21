@@ -210,8 +210,8 @@ For NIRCam and NIRISS WFSS, the ``extract_2d`` step has three optional arguments
 
 For NIRCam TSGRISM, the ``extract_2d`` step has one optional argument:
 
-``--extract_height``
-  int. The cross-dispersion size (in units of pixels) to extract.
+``--tsgrism_extract_height``
+  int The cross-dispersion size (in units of pixels) to extract.
 
 
 For NIRCam and NIRISS WFSS mode, the ``extract_2d`` step has one optional argument:

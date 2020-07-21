@@ -119,7 +119,7 @@ class SkyObject(namedtuple('SkyObject', ("id",
         Upper left corner of the minimum bounding box
     sky_bbox_ur : `~astropy.coordinates.SkyCoord`
         Upper right corner of the minimum bounding box
-    is_star : float
+    is_star : bool
         Flag indicating if the object is a point source.
     """
 
