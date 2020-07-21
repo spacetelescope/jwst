@@ -263,8 +263,6 @@ class OutlierDetection:
         resampled_sci = [i.data for i in resampled_models]
         resampled_weight = [i.wht for i in resampled_models]
 
-        nlow = self.outlierpars.get('nlow', 0)
-        nhigh = self.outlierpars.get('nhigh', 0)
         maskpt = self.outlierpars.get('maskpt', 0.7)
 
         # Create a mask for each input image, masking out areas where there is
