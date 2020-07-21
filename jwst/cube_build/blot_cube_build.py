@@ -294,7 +294,7 @@ class CubeBlot():
             for ii in range(nslices):
                 ts0 = time.time()
                 # for each slice pull out the blotted values that actually fall on the slice region
-                # used the bounding box of each slice to determine the slice limits
+                # use the bounding box of each slice to determine the slice limits
                 slice_wcs = nirspec.nrs_wcs_set_input(model, ii)
                 x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
                 # using forward transform to limit the ra and dec values to
