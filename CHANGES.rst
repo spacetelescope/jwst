@@ -111,7 +111,7 @@ master_background
 outlier_detection
 -----------------
 
-- Set maximum number of images to median filter to 1024, to account for stimage.median limits. [#5114]
+- Update median filter to use numpy's nanmedian. [#5114]
 
 - Fix outlier_detection bug when saving intermediate results. [#5108]
 

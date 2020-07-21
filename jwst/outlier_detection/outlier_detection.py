@@ -292,8 +292,8 @@ class OutlierDetection:
             for elem1, elem2 in zip(f1, f2):
                 elem1[elem2] = np.nan
 
-        # Compute median of stack of images with "bad" data replaced with Nan.
-        # using np.nanmedian
+        # For a of stack of images with "bad" data replaced with Nan
+        # use np.nanmedian to compute the median.
         log.info("Generating median from {} images".format(len(resampled_sci)))
         median_image = np.nanmedian(resampled_sci, axis = 0)
 
