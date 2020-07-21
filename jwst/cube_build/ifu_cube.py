@@ -20,7 +20,6 @@ from . import cube_cloud
 from . import coord
 
 log = logging.getLogger(__name__)
-log.addHandler(logging.StreamHandler())
 log.setLevel(logging.DEBUG)
 
 
