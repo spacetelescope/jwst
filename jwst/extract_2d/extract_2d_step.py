@@ -17,7 +17,7 @@ class Extract2dStep(Step):
         slit_name = string(default=None)
         extract_orders = int_list(default=None)  # list of orders to extract
         tsgrism_extract_height =  integer(default=None)  # extraction height in pixels, TSGRISM mode
-        wfss_extract_half_height =  integer(default=None)  # extraction half height in pixels, WFSS mode
+        wfss_extract_half_height =  integer(default=5)  # extraction half height in pixels, WFSS mode
         grism_objects = list(default=None)  # list of grism objects to use
         mmag_extract = float(default=99.)  # minimum abmag to extract
     """
