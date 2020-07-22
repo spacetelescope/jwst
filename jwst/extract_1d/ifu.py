@@ -302,7 +302,7 @@ def extract_ifu(input_model, source_type, extract_params):
         locn = locn_from_wcs(input_model, ra_targ, dec_targ)
         if locn is None or np.isnan(locn[0]):
             log.warning("Couldn't determine pixel location from WCS, so "
-                        "nod/dither correction will not be applied.")
+                        "source offset correction will not be applied.")
             x_center = extract_params['x_center']
             y_center = extract_params['y_center']
             if x_center is None:
@@ -632,14 +632,14 @@ def image_extract_ifu(input_model, source_type, extract_params):
                  "based on TARG_RA and TARG_DEC.", locn[0], locn[1])
 
     # Use the centroid of mask_target as the point where the target
-    # would be without any nod/dither correction.
+    # would be without any source position correction.
     (y0, x0) = im_centroid(data, mask_target)
     log.debug("Target location based on reference image is X = %g, Y = %g",
               x0, y0)
 
     if locn is None or np.isnan(locn[0]):
         log.warning("Couldn't determine pixel location from WCS, so "
-                    "nod/dither correction will not be applied.")
+                    "source position correction will not be applied.")
     else:
         (x_center, y_center) = locn
         # Shift the reference image so it will be centered at locn.
@@ -917,7 +917,7 @@ def im_centroid(data, mask_target):
 
 
 def shift_ref_image(mask, delta_y, delta_x, fill=0):
-    """Apply nod/dither offset to target or background for ref image.
+    """Apply source position offset to target or background for ref image.
 
     Parameters
     ----------
