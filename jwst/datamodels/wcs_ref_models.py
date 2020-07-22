@@ -379,7 +379,7 @@ class WavelengthrangeModel(ReferenceFileModel):
     """
     A model for a reference file of type "wavelengthrange".
 
-    The model is used by MIRI, NIRSPEC, NIRCAM, and NIRISS
+    The model is used by MIRI, NIRSPEC, NIRCAM, and NIRISS.
 
 
     Parameters
@@ -427,6 +427,27 @@ class WavelengthrangeModel(ReferenceFileModel):
                 raise AssertionError(errmsg)
             else:
                 warnings.warn(str(errmsg), ValidationWarning)
+
+    def get_wfss_wavelength_range(self, filter, orders):
+        """ Retrieve the wavelength range for a WFSS observation.
+
+        Parameters
+        ----------
+        filter : str
+            Filter for which to retrieve the wavelength range.
+        orders : list
+            List of spectral orders
+
+        Returns
+        -------
+        wave_range : dict
+            Pairs of {order: (wave_min, wave_max)} for each order and the specific filter.
+        """
+        wave_range = {}
+        for order in orders:
+            range_select = [(x[2], x[3]) for x in self.wavelengthrange if (x[0] == order and x[1] == filter)]
+            wave_range[order] = range_select[0]
+        return wave_range
 
 
 class FPAModel(ReferenceFileModel):
