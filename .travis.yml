@@ -70,7 +70,7 @@ jobs:
     - name: Security check
       env:
         PIP_DEPENDENCIES=".[test] bandit"
-        TEST_COMMAND="bandit --exclude 'jwst/*test*' -r jwst scripts"
+        TEST_COMMAND="bandit -r jwst scripts -c .bandit.yaml -ll"
 
   allow_failures:
     - name: Dev dependencies in requirements-dev.txt
