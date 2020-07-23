@@ -20,6 +20,9 @@ assign_wcs
 
 - Improved calculation of bounding boxes in grism images. [#5122]
 
+- Added two new optional parameters to ``utils.cerate_grism_bbox`` - ``wfss_extract_half_height``
+  and ``wavelength_range``. [#5140]
+
 associations
 ------------
 
@@ -41,7 +44,7 @@ cube_build
 - Changed default weighting back to 'msm' until NIRSPEC cube pars ref file contains emsm info [#5134]
 
 - Added checks read from cube pars reference file that parameters have valid data [#5134]
- 
+
 - Change the name of default cube type from ``world`` to ``skyalign`` [#4974]
 
 - Add ``ifualign`` cubes to be cubes rotated on sky to align with ifu instrument plane [#4974]
@@ -100,6 +103,10 @@ extract_2d
 - Check that ``subwcs`` and ``new_slit`` variables exist before trying to delete them [#5093]
 
 - Move NIRSpec wavecorr routines to the ``wavecorr`` step. [#5133]
+
+- Added a new optional integer parameter to extract_2d (``wfss_extract_half_height``)
+  which allows a user to specify the extraction height in the
+  cross-dispersion direction for WFSS mode. [#5140]
 
 master_background
 -----------------
@@ -162,6 +169,8 @@ source_catalog
 --------------
 
 - Use ``gwcs.WCS`` instead of FITS WCS. [#5120]
+
+- Changed the type of column ``is_star`` from float to bool. [#5140]
 
 stpipe
 ------

@@ -20,7 +20,7 @@ log.setLevel(logging.DEBUG)
 
 def extract_tso_object(input_model,
                        reference_files=None,
-                       extract_height=None,
+                       tsgrism_extract_height=None,
                        extract_orders=None,
                        compute_wavelength=True):
     """
@@ -34,7 +34,7 @@ def extract_tso_object(input_model,
     reference_files : dict
         Needs to include the name of the wavelengthrange reference file
 
-    extract_height : int
+    tsgrism_extract_height : int
         The extraction height, in total, for the spectrum in the
         cross-dispersion direction. If this is other than None,
         it will override the team default of 64 pixels. The team
@@ -83,9 +83,9 @@ def extract_tso_object(input_model,
 
     # If an extraction height is not supplied, default to entire
     # cross-dispersion size of the data array
-    if extract_height is None:
-        extract_height = input_model.meta.subarray.ysize
-    log.info("Setting extraction height to {}".format(extract_height))
+    if tsgrism_extract_height is None:
+        tsgrism_extract_height = input_model.meta.subarray.ysize
+    log.info(f"Setting extraction height to {tsgrism_extract_height}")
 
     # Get the disperser parameters that have the wave limits
     with WavelengthrangeModel(reference_files['wavelengthrange']) as f:
@@ -161,17 +161,17 @@ def extract_tso_object(input_model,
         bump = source_ypos - 34
         extract_y_center = source_ypos - bump
 
-        splitheight = int(extract_height / 2)
+        splitheight = int(tsgrism_extract_height / 2)
         below = extract_y_center - splitheight
         if below == 34:
             extract_y_min = 0
             extract_y_max = extract_y_center + splitheight
         elif below < 0:
             extract_y_min = 0
-            extract_y_max = extract_height - 1
+            extract_y_max = tsgrism_extract_height - 1
         else:
             extract_y_min = extract_y_center - 34  # always return source at row 34 in cutout
-            extract_y_max = extract_y_center + extract_height - 34 - 1
+            extract_y_max = extract_y_center + tsgrism_extract_height - 34 - 1
 
         # Check for bad results
         if (extract_y_min > extract_y_max):
@@ -273,7 +273,8 @@ def extract_grism_objects(input_model,
                           reference_files=None,
                           extract_orders=None,
                           mmag_extract=99.,
-                          compute_wavelength=True):
+                          compute_wavelength=True,
+                          wfss_extract_half_height=None):
     """
     Extract 2d boxes around each objects spectra for each order.
 
@@ -299,6 +300,9 @@ def extract_grism_objects(input_model,
         Compute a wavelength array for the datamodel.  Computationally
         expensive, but saves doing it repeatedly later on in pipeline.
 
+    wfss_extract_half_height : int, (optional)
+        Cross-dispersion extraction half height in pixels, WFSS mode.
+        Overwrites the computed extraction height.
 
     Returns
     -------
@@ -358,7 +362,8 @@ def extract_grism_objects(input_model,
         else:
             grism_objects = util.create_grism_bbox(input_model, reference_files,
                                                    extract_orders=extract_orders,
-                                                   mmag_extract=mmag_extract)
+                                                   mmag_extract=mmag_extract,
+                                                   wfss_extract_half_height=wfss_extract_half_height)
             log.info("Grism object list created from source catalog: {0:s}"
                      .format(input_model.meta.source_catalog))
 

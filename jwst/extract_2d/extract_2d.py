@@ -15,7 +15,8 @@ def extract2d(input_model,
               slit_name=None,
               reference_files={},
               grism_objects=None,
-              extract_height=None,
+              tsgrism_extract_height=None,
+              wfss_extract_half_height=None,
               extract_orders=None,
               mmag_extract=99.):
     """
@@ -24,16 +25,24 @@ def extract2d(input_model,
     Parameters
     ----------
     input_model : `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
+        Input data model.
     slit_name : str or int
         Slit name.
     reference_files : dict
         Reference files.
     grism_objects : list
         A list of grism objects.
-    extract_height: int
+    tsgrism_extract_height: int
         Cross-dispersion extraction height to use for time series grisms.
         This will override the default which for NRC_TSGRISM is a set
         size of 64 pixels.
+    wfss_extract_half_height : int
+        Cross-dispersion extraction half height in pixels, WFSS mode.
+        Overwrites the computed extraction height.
+    extract_orders : list
+        A list of spectral orders to be extracted.
+    mmag_extract : float
+        Minimum abmag to extract.
 
     Returns
     -------
@@ -57,18 +66,19 @@ def extract2d(input_model,
         output_model = nrs_extract2d(input_model, slit_name=slit_name)
     elif exp_type in slitless_modes:
         if exp_type == 'NRC_TSGRISM':
-            if extract_height is None:
-                extract_height = 64
+            if tsgrism_extract_height is None:
+                tsgrism_extract_height = 64
             output_model = extract_tso_object(input_model,
                                               reference_files=reference_files,
-                                              extract_height=extract_height,
+                                              tsgrism_extract_height=tsgrism_extract_height,
                                               extract_orders=extract_orders)
         else:
             output_model = extract_grism_objects(input_model,
                                                  grism_objects=grism_objects,
                                                  reference_files=reference_files,
                                                  extract_orders=extract_orders,
-                                                 mmag_extract=mmag_extract)
+                                                 mmag_extract=mmag_extract,
+                                                 wfss_extract_half_height=wfss_extract_half_height)
 
     else:
         log.info(f'EXP_TYPE {exp_type} not supported for extract 2D')
