@@ -64,8 +64,8 @@ jobs:
 
     - name: Build distribution
       env:
-        PIP_DEPENDENCIES=pep517
-        TEST_COMMAND="python -m pep517.build ."
+        PIP_DEPENDENCIES="pep517 twine"
+        TEST_COMMAND="python -m pep517.build .; twine check dist/*"
 
     - name: Security check
       env:
