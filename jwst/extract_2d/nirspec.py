@@ -45,7 +45,7 @@ def nrs_extract2d(input_model, slit_name=None):
     # This model keeps open_slits as an attribute.
     open_slits = slit2msa.slits[:]
     if slit_name is not None:
-        open_slits = [sub for sub in open_slits if sub.name == slit_name]<<<<<<< HEAD
+        open_slits = [sub for sub in open_slits if sub.name == slit_name]
 
     # NIRSpec BRIGHTOBJ (S1600A1 TSO) mode
     if exp_type == 'NRS_BRIGHTOBJ':
