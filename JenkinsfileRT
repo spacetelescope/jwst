@@ -1,6 +1,17 @@
 // [skip ci] and [ci skip] have no effect here.
 if (utils.scm_checkout(['skip_disable':true])) return
 
+def PipInject(String reqs) {
+    def result = []
+    if (reqs.trim().isEmpty()) {
+        return result
+    }
+    for (req in reqs.split('\n')) {
+        result += "pip install $req"
+    }
+    return result
+}
+
 withCredentials([string(
     credentialsId: 'jwst-codecov',
     variable: 'codecov_token')]) {
@@ -51,6 +62,7 @@ bc0.build_cmds = [
     "pip freeze",
     'echo "CRDS_CONTEXT = $(crds list --contexts $CRDS_CONTEXT --mappings | grep pmap)"',
 ]
+bc0.build_cmds = PipInject(env.OVERRIDE_REQUIREMENTS) + bc0.build_cmds
 bc0.test_cmds = [
     "pytest --cov-report=xml --cov -r sxf -n 30 --bigdata --slow \
     --basetemp=${pytest_basetemp} --junit-xml=results.xml --dist=loadscope",
@@ -64,6 +76,7 @@ bc1 = utils.copy(bc0)
 bc1.nodetype = 'macos'
 bc1.name = 'macos-stable-deps'
 bc1.build_cmds = ["pip install -e ."]
+bc1.build_cmds = PipInject(env.OVERRIDE_REQUIREMENTS) + bc1.build_cmds
 bc1.test_cmds = []
 bc1.test_configs = []
 
