@@ -48,6 +48,7 @@ bc0.pip_reqs_files = ['requirements-sdp.txt']
 bc0.build_cmds = [
     "pip install -e .[test,ephem]",
     "pip install pytest-xdist pytest-sugar",
+    "pip freeze",
     'echo "CRDS_CONTEXT = $(crds list --contexts $CRDS_CONTEXT --mappings | grep pmap)"',
 ]
 bc0.test_cmds = [
