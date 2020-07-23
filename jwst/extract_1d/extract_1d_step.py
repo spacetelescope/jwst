@@ -40,20 +40,15 @@ class Extract1dStep(Step):
         If not None, this parameter overrides the value in the
         extract_1d reference file.
 
-    apply_nod_offset : bool or None
-        If True, the source and background positions specified in the
-        reference file (or the default position, if there is no reference
-        file) will be shifted to account for nod and/or dither offset.  If
-        None (the default), the value in the reference file will be used,
-        or it will be set to True if it is not specified in the reference
-        file.  This offset is determined by finding the location in the data
-        corresponding to the target position (keywords TARG_RA and TARG_DEC).
-        For NIRSpec fixed-slit or MOS data, there must be different target
-        coordinates for each slit for which a nod correction might be
-        needed, and this is not implemented yet in extract_1d.
-        It also doesn't make sense to apply a nod/dither offset for an
-        extended target, so this flag can internally be overridden (set to
-        False) for extended targets.
+    use_source_posn : bool or None
+        If True, the source and background extraction positions specified in
+        the extract1d reference file (or the default position, if there is no
+        reference file) will be shifted to account for the computed position
+        of the source in the data.  If None (the default), the values in the
+        reference file will be used. Aperture offset is determined by computing
+        the pixel location of the source based on its RA and Dec. It does not
+        make sense to apply aperture offsets for extended sources, so this
+        parameter can be overriden (set to False) internally by the step.
 
     apply_apcorr : bool
         Switch to select whether or not to apply an APERTURE correction during
@@ -71,10 +66,8 @@ class Extract1dStep(Step):
     # Flag indicating whether the background should be subtracted.
     subtract_background = boolean(default=None)
     # If True, the locations of the target and background regions will be
-    # shifted to correct for the computed nod/dither offset.
-    # Currently this offset is not applied for NIRSpec fixed-slit or
-    # MOS (MSA) data), or for WFSS data.
-    apply_nod_offset = boolean(default=None)
+    # shifted to correct for the computed source location.
+    use_source_posn = boolean(default=None)
     # Turn aperture correction on or off
     apply_apcorr = boolean(default=True)
     """
@@ -161,7 +154,7 @@ class Extract1dStep(Step):
                         self.bkg_order,
                         self.log_increment,
                         self.subtract_background,
-                        self.apply_nod_offset,
+                        self.use_source_posn,
                         was_source_model=was_source_model
                     )
                     # Set the step flag to complete
@@ -194,7 +187,7 @@ class Extract1dStep(Step):
                             self.bkg_order,
                             self.log_increment,
                             self.subtract_background,
-                            self.apply_nod_offset,
+                            self.use_source_posn,
                             was_source_model=was_source_model,
                         )
                         # Set the step flag to complete in each MultiSpecModel
@@ -227,7 +220,7 @@ class Extract1dStep(Step):
                     self.bkg_order,
                     self.log_increment,
                     self.subtract_background,
-                    self.apply_nod_offset,
+                    self.use_source_posn,
                     was_source_model=was_source_model,
                 )
 
@@ -266,7 +259,7 @@ class Extract1dStep(Step):
                 self.bkg_order,
                 self.log_increment,
                 self.subtract_background,
-                self.apply_nod_offset,
+                self.use_source_posn,
                 was_source_model=False,
             )
 

@@ -97,6 +97,9 @@ extract_1d
 
 - Parameter ``mmag_extract`` is now propagated to the extraction routine. [#5122]
 
+- Updated the logic for when and how to use the source position to offset the
+  location of the extraction regions specified in the EXTRACT1D reference file. [#5157]
+
 extract_2d
 ----------
 
