@@ -681,11 +681,11 @@ def _create_grism_bbox(input_model, mmag_extract=99.0,
                     ymax = int(np.max(ystack))
 
                     if wfss_extract_half_height is not None and obj.is_star:
-                        if input_model.meta.wcsinfo.dispaxis == 2:
+                        if input_model.meta.wcsinfo.dispersion_direction == 2:
                             center = (xmax + xmin) / 2
                             xmin = center - wfss_extract_half_height
                             xmax = center + wfss_extract_half_height
-                        elif input_model.meta.wcsinfo.dispaxis == 1:
+                        elif input_model.meta.wcsinfo.dispersion_direction == 1:
                             center = (ymax + ymin) / 2
                             ymin = center - wfss_extract_half_height
                             ymax = center + wfss_extract_half_height
