@@ -2,7 +2,6 @@
 
 from functools import partial
 import numpy as np
-import pdb
 
 from astropy.stats import sigma_clip
 from scipy import ndimage
