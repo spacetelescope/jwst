@@ -65,11 +65,13 @@ We use the following terminology to define the spectral range divisions of MIRI:
   The 3 sub-ranges that a channel is divided into. These are designated as *Short (A)*, *Medium (B)*, and *Long (C)*.
 
 ``Band``
-  For **MIRI**, "band" is one of the 12 contiguous wavelength intervals (four channels times three sub-channels each)
+  For **MIRI**, ``band`` is one of the 12 contiguous wavelength intervals (four channels times three sub-channels each)
   into which the spectral range of the MRS is divided.  Each band has a unique channel/sub-channel combination. For
   example, the shortest wavelength range on MIRI is covered by Band 1-SHORT (aka 1A) and the
   longest is covered by Band 4-LONG (aka 4C).
 
+   For **NIRSpec** we define a *band* as a single grating-filter combination, e.g. G140M-F070LP. The possible grating/filter
+   combinations for NIRSpec are given in the table below.
 
 NIRSpec IFU Disperser and Filter Combinations
 +++++++++++++++++++++++++++++++++++++++++++++
@@ -90,14 +92,16 @@ G395H    F290LP  2.87 - 5.27
 
 * Approximate wavelength ranges are given to aid in explaining  how to build NIRSpec IFU cubes, see the NIRSpec IFU JDOX  for up-to-date information.
  
-For NIRSpec we define a *band* as a single grating-filter combination, e.g. G140M-F070LP.
+
 
 
 Types of Output Cubes
 ---------------------
 The output 3-D spectral cubes consist rectangular cube with three orthogonal axes: two
 spatial and one spectral. Depending on how cube_build is run the spectral axes can be either linear or non-linear.
-If it is non-linear there will be an added binary extension table to the output fits IFU cube. This extension has
+Linear wavelength IFU cubes are constructed from a single band of data, while non-linear wavelength IFU cubes are
+created from more than one band of data. If the IFU cube have a non-linear wavelength dimension
+there will be an added binary extension table to the output fits IFU cube. This extension has
 the label, WCS-TABLE, and contains the wavelength for each of the IFU cube wavelenght planes. This table follows the
 FITs standard described in, *Representations of spectral coordinates in FITS*, Greisen, et al., **A & A**  446, 747-771, 2006. 
 
@@ -111,14 +115,18 @@ varies according to the context in which ``cube_build`` is being run.
 In the case of the ``calwebb_spec2`` pipeline,
 for example, where the input is a single MIRI or NIRSpec IFU exposure, the default output cube will be built from
 all the data in that single exposure. For MIRI this means using the data from both channels (e.g. 1A and 2A) that
-are recorded in a single exposure. For NIRSpec this means using data from the single grating+filter combination
-contained in the exposure. The calwebb_spec2 pipeline calls cube_build with ``output_type=multi``.
+are recorded in a single exposure and the output IFU cube will have a non-linear wavelength dimension.
+For NIRSpec the data  is from the single grating+filter combination
+contained in the exposure and will have a linear wavelength dimension. 
+ The calwebb_spec2 pipeline calls cube_build with ``output_type=multi``.
 
 In the ``calwebb_spec3`` pipeline, on the other hand, where the input can be a collection of data from multiple
 exposures covering multiple bands, the default behavior is to create a set of single-band cubes. For MIRI, for
 example, this can mean separate cubes for bands 1A, 2A, 3A, 4A, 1B, 2B, ..., 3C, 4C, depending on what's included in
 the input. For NIRSpec this may mean multiple cubes, one for each grating+filter combination contained in the
-input collection. The calwebb_spec3 pipeline calls cube_build with ``output_type=band``.
+input collection. The calwebb_spec3 pipeline calls cube_build with ``output_type=band``. These types of IFU cubes will have
+a linear-wavelength dimension. If the user wants to combine all the data together covering several band they can using
+the option ``output_type=mult` and the resulting IFU cubes will have a non-linear wavelength dimension. 
 
 Several ``cube_build`` step arguments are available to allow the user to control exactly what combinations of input
 data are used to construct the output cubes. The IFU cubes are constructed, by default, on the sky with north pointing up
@@ -139,7 +147,7 @@ DQ       3      2 spatial and 1 spectral  integer
 WMAP     3      2 spatial and 1 spectral  integer
 =======  =====  ========================  =========
 
-The SCI image contains the surface brightness of cube spaxels in units of mJy/arcsecond^2. The wavelength dimension of the IFU cube
+The SCI image contains the surface brightness of cube spaxels in units of mJy/steradian. The wavelength dimension of the IFU cube
 can either be linear or non-linear. If the wavelength is non-linear then the IFU cube contain data from more than one band.  A
 table containing the wavelength of each plane is provided and conforms to the  'WAVE_TAB' fits convention. The wavelengths in the table are read in from the cubepar reference file.  The ERR image contains the
 uncertainty on the SCI values, the DQ image contains the data quality flags for each spaxel, and the WMAP image
