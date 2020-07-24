@@ -24,7 +24,7 @@ Assumptions
 -----------
 It is assumed that the ``assign_wcs`` step has been applied to the data, attaching the distortion and pointing
 information to the image(s). It is also assumed that the ``photom`` step has been applied to convert the pixel
-values from units of countrate to surface brightness. This step will only work with MIRI or NIRSpec IFU data.
+values from units of count rate to surface brightness. This step will only work with MIRI or NIRSpec IFU data.
 
 Instrument Information
 ----------------------
@@ -102,7 +102,7 @@ spatial and one spectral. Depending on how cube_build is run the spectral axes c
 Linear wavelength IFU cubes are constructed from a single band of data, while non-linear wavelength IFU cubes are
 created from more than one band of data. If the IFU cube have a non-linear wavelength dimension
 there will be an added binary extension table to the output fits IFU cube. This extension has
-the label, WCS-TABLE, and contains the wavelength for each of the IFU cube wavelenght planes. This table follows the
+the label, WCS-TABLE, and contains the wavelength for each of the IFU cube wavelength planes. This table follows the
 FITs standard described in, *Representations of spectral coordinates in FITS*, Greisen, et al., **A & A**  446, 747-771, 2006. 
 
 The input data to ``cube_build`` can take a variety of forms, including a single file, a data
@@ -126,11 +126,11 @@ example, this can mean separate cubes for bands 1A, 2A, 3A, 4A, 1B, 2B, ..., 3C,
 the input. For NIRSpec this may mean multiple cubes, one for each grating+filter combination contained in the
 input collection. The calwebb_spec3 pipeline calls cube_build with ``output_type=band``. These types of IFU cubes will have
 a linear-wavelength dimension. If the user wants to combine all the data together covering several band they can using
-the option ``output_type=mult` and the resulting IFU cubes will have a non-linear wavelength dimension. 
+the option ``output_type=multi` and the resulting IFU cubes will have a non-linear wavelength dimension. 
 
 Several ``cube_build`` step arguments are available to allow the user to control exactly what combinations of input
 data are used to construct the output cubes. The IFU cubes are constructed, by default, on the sky with north pointing up
-and east to the left. There are also options to change the output coordinate sysetm, see the :ref:`arguments` section for details.
+and east to the left. There are also options to change the output coordinate system, see the :ref:`arguments` section for details.
 
 Output Cube Format
 ------------------
@@ -190,7 +190,7 @@ for each dimension for each band. If the output IFU cube contains more than one 
 output scale corresponds to the channel with the smallest scale. In the case of NIRSpec only gratings of the
 same resolution are combined together in an IFU cube. The default output spatial coordinate system is right ascension-declination.
 There is an option to create IFU cubes in the coordinate system of the NIRSpec or MIRI MIRS local ifu slicer plane (see
-:ref:`arguments`, coord_system='interal_cal'). 
+:ref:`arguments`, coord_system='internal_cal'). 
 
 The pixels on each exposure that are to be  included in the output are mapped to the cube coordinate system. This input-to-output
 pixel mapping is determined via a series of chained mapping transformations derived from the WCS of each input image and the
@@ -223,7 +223,7 @@ weighting
 The best algorithm with which to combine the irregularly-distributed samples of the point cloud to a rectilinear
 data cube is the subject of ongoing study, and depends on both the optical characteristics of the IFU and
 the science goals of a particular observing program.  At present, the default method uses a flux-conserving
-variant of Shepards method in which the value of a given element of the cube is a distance-weighted average
+variant of Shephards method in which the value of a given element of the cube is a distance-weighted average
 of all point-cloud members within a given region of influence.  In order to explain this method we will introduce the follow definitions:
 
 * xdistance = distance between point in the cloud and spaxel center in units of arc seconds along the x axis
@@ -250,7 +250,7 @@ where the default weighting ``weighting=emsm``  is
 
 The *scale factor* = *scale rad/cdelt1*, where *scale rad* is read in from the reference file and varies with wavelength. 
 
-If the  alternative weighting function (set by ``weigthing = msm``) is selected then:
+If the  alternative weighting function (set by ``weighting = msm``) is selected then:
 
 :math:`w_i =\frac{1.0} {\sqrt{({xnormalized}_i^2 + {ynormalized}_i^2 + {znormalized}_i^2)^{p} }}`
 

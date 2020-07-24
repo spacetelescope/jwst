@@ -2,7 +2,7 @@
 
 Step Arguments
 ==============
-The default values for the step agrugments are found either in the cube_build.cfg file or the cube paramater reference file.
+The default values for the step arguments are found either in the cube_build.cfg file or the cube parameter reference file.
 The user can override the default values for a parameter if a step argument exist for the parameter. 
 
 The  step arguments can be used to control the properties of the output IFU cube or to select  subsets of data are used to produce the output cubes. Note that some options will result in multiple cubes being
@@ -76,7 +76,7 @@ The following arguments control the size and sampling characteristics of the out
 
 ``coord_system [string]``
   The default IFU cubes are built on the ra-dec coordinate system (``coord_system=skyalign``). In these cubes north is up 
-  and east is left. There are two other coordinate systems an IFU cube can be bulit on:
+  and east is left. There are two other coordinate systems an IFU cube can be built on:
 
   - ``coord_system=ifualign`` is also on the ra-dec system but the IFU cube is aligned with the instrument IFU plane. 
   - ``coord_system=internal_cal`` is built on the local internal IFU slicer plane. These types of cubes will be useful during commissioning. For both MIRI ad NIRSpec only a single band from a single exposure can be used to create these type of cubes. The spatial dimensions for these cubes are two orthogonal axes, one parallel and the perpendicular to the slices in the FOV. 
