@@ -76,7 +76,6 @@ class IFUCubeData():
 
         self.num_bands = 0
         self.output_name = ''
-        self.this_cube_filenames = []
 
         self.wavemin_user = False # Check for NIRSpec if user has set wavelength limts
         self.wavemax_user = False
@@ -606,7 +605,7 @@ class IFUCubeData():
 # loop over the files that cover the spectral range the cube is for
             for k in range(nfiles):
                 ifile = self.master_table.FileMap[self.instrument][this_par1][this_par2][k]
-                self.this_cube_filenames.append(ifile)
+
                 log.debug("Working on Band defined by: %s %s ", this_par1, this_par2)
                 # --------------------------------------------------------------------------------
                 # POINTCLOUD used for skyalign and IFUalign
@@ -746,7 +745,6 @@ class IFUCubeData():
 
                             for i in range(nslices):
                              #   print('slice and slice map',i ,slicemap[i])
-
                                 slice_wcs = nirspec.nrs_wcs_set_input(input_model, i)
                                 x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box, step=(1, 1), center=True)
                                 detector2slicer = slice_wcs.get_transform('detector','slicer')
@@ -795,13 +793,14 @@ class IFUCubeData():
         # loop over input models
         single_ifucube_container = datamodels.ModelContainer()
         n = len(self.input_models)
+
         log.info("Number of Single IFU cubes to create = %i" % n)
         this_par1 = self.list_par1[0]  # only one channel is used in this approach
 #        this_par2 = None  # not important for this type of mapping
         cube_debug = None
 
         for j in range(n):
-            log.info("Working on next Single IFU Cube = %i" % (j + 1))
+            log.debug("Working on next Single IFU Cube = %i" % (j + 1))
             t0 = time.time()
 # for each new data model create a new spaxel
             total_num = self.naxis1 * self.naxis2 * self.naxis3
@@ -851,7 +850,7 @@ class IFUCubeData():
             ifucube_model = self.setup_final_ifucube_model(j)
 
             t1 = time.time()
-            log.info("Time to Create Single ifucube = %.1f s" % (t1 - t0,))
+            log.debug("Time to Create Single ifucube = %.1f s" % (t1 - t0,))
 # _______________________________________________________________________
             single_ifucube_container.append(ifucube_model)
 
@@ -1034,7 +1033,6 @@ class IFUCubeData():
             self.weight_power = weight_power
 
         # check on valid values
-        #make checks here
 
         found_error = False
         if self.linear_wavelength:
@@ -1097,21 +1095,18 @@ class IFUCubeData():
         #        self.scalerad = None
 
 
-        log.debug('spatial size %d', self.spatial_size)
-        if self.spectral_size is not None:
-            log.debug('spectral size %d', self.spectral_size)
-        log.debug('spatial roi %d', self.rois)
-        log.debug('wave min and max %d %d', self.wavemin, self.wavemax)
+        log.debug('spatial size %f', self.spatial_size)
+        log.debug('spectral size %f', self.spectral_size)
+        log.debug('spatial roi %f', self.rois)
+        log.debug('wave min and max %f %f', self.wavemin, self.wavemax)
         log.debug('linear wavelength %d', self.linear_wavelength)
-        if self.roiw is not None:
-            log.debug('roiw %d ', self.roiw)
+        log.debug('roiw %f ', self.roiw)
         log.debug('output_type %s ',self.output_type)
-        if self.weight_power is not None:
-            log.debug('weight_power %d ',self.weight_power)
-        if self.soft_rad is not None:
-            log.debug('softrad %d ',self.soft_rad)
-        if self.scalerad is not None:
-            log.debug('scalerad %d ',self.scalerad)
+        if self.weighting == 'msm':
+            log.debug('weight_power %f ',self.weight_power)
+            log.debug('softrad %f ',self.soft_rad)
+        if self.weighting == 'emsm':
+            log.debug('scalerad %f ',self.scalerad)
 
 # ******************************************************************************
 
@@ -1205,7 +1200,6 @@ class IFUCubeData():
 
         corner_a = []
         corner_b  = []
-
         lambda_min = []
         lambda_max = []
 
@@ -1219,7 +1213,6 @@ class IFUCubeData():
             n = len(self.master_table.FileMap[self.instrument][this_a][this_b])
             log.debug('number of files %d', n)
             for k in range(n):
-
                 lmin = 0.0
                 lmax = 0.0
 
@@ -1228,6 +1221,7 @@ class IFUCubeData():
 # Open the input data model
 # Find the footprint of the image
                 with datamodels.IFUImageModel(ifile) as input_model:
+
                     if self.instrument == 'NIRSPEC':
                         ch_corners = cube_build_wcs_util.find_corners_NIRSPEC(
                             input_model,
@@ -1418,7 +1412,7 @@ class IFUCubeData():
                 y = np.reshape(y, y.size)
                 x = np.reshape(x, x.size)
 
-                #if self.coord_system == 'skyalign' or self.coord_system == 'ifualign':
+                # if self.coord_system == 'skyalign' or self.coord_system == 'ifualign':
                 ra, dec, wave = input_model.meta.wcs(x, y)
                 valid1 = ~np.isnan(ra)
                 ra = ra[valid1]
@@ -1621,6 +1615,8 @@ class IFUCubeData():
             imin = np.where(iwavemin == np.amin(iwavemin))[0]
             imax = np.where(iwavemax == np.amin(iwavemax))[0]
 
+            #print('in map fov to dq plane',imin,imax)
+
             # for each wavelength plane - find the 2 extreme slices to set the FOV
             for w in range(imin[0], imax[0]):
                 wave_distance = np.absolute(self.zcoord[w] - wave)
@@ -1629,17 +1625,6 @@ class IFUCubeData():
                 # use these points to set the FOV
                 start_region = self.instrument_info.GetStartSlice(this_par1)
                 end_region = self.instrument_info.GetEndSlice(this_par1)
-
-                # if not wavelength dependent
-                # coord1_start = coord1[slice == start_region]
-                # coord2_start = coord2[slice == start_region]
-                # coord1_end = coord1[slice == end_region]
-                # coord2_end = coord2[slice == end_region]
-                # wmin = imin[0]
-                # wmax = imax[0]
-
-                # the while loop should only be excuted 1 time if the slice matching
-                # start_region is located in the data (default mode).
 
                 istart = start_region
                 coord1_start = None
