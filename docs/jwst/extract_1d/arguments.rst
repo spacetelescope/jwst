@@ -1,16 +1,16 @@
 Step Arguments
 ==============
 
-The extract_1d step has five step-specific arguments.
+The ``extract_1d`` step has six step-specific arguments.
 
 ``--smoothing_length``
   If ``smoothing_length`` is greater than 1 (and is an odd integer), the
   background will be smoothed in the dispersion direction with a boxcar of
   this width.  If ``smoothing_length`` is None (the default), the step will
-  attempt to read the value from the reference file.  If a value was
+  attempt to read the value from the EXTRACT1D reference file.  If a value was
   specified in the reference file, that will be used.  Note that in this
   case a different value can be specified for each slit.  If no value was
-  specified either by the user or in the reference file, no background
+  specified either by the user or in the EXTRACT1D reference file, no background
   smoothing will be done.
 
 ``--bkg_order``
@@ -19,7 +19,7 @@ The extract_1d step has five step-specific arguments.
   dispersion is vertical) of the input image, and the fitted curve will be
   subtracted from the target data.  ``bkg_order`` = 0 (the minimum allowed
   value) means to fit a constant.  The user-supplied value (if any)
-  overrides the value in the reference file.  If neither is specified, a
+  overrides the value in the EXTRACT1D reference file.  If neither is specified, a
   value of 0 will be used. If a sufficient number of valid data points is
   unavailable to construct the polynomial fit, the fit will be forced to
   0 for that particular column (or row).
@@ -39,22 +39,23 @@ The extract_1d step has five step-specific arguments.
 
 ``--subtract_background``
   This is a boolean flag to specify whether the background should be
-  subtracted.  If None, the value in the extract_1d reference file (if any)
+  subtracted.  If None, the value in the EXTRACT1D reference file (if any)
   will be used.  If not None, this parameter overrides the value in the
-  extract_1d reference file.
+  reference file.
 
-``--apply_nod_offset``
-  This is a boolean flag to specify whether the target and background positions
-  specified in the reference file should be shifted to account for nod
-  and/or dither offset.  If None (the default), the value in the reference
-  file will be used, or it will be set to True if it is not specified in
-  the reference file.  The offset is determined by finding the location in
-  the data corresponding to the target position (as given by keywords
-  TARG_RA and TARG_DEC).
-
-  At the time of writing, a nod/dither offset will not be applied if the
-  source is extended.  It will also not be applied for wide-field slitless
-  spectroscopy data, or NIRSpec fixed-slit, or NIRSpec MOS (MSA) data.
+``--use_source_posn``
+  This is a boolean flag to specify whether the target and background extraction
+  region locations specified in the EXTRACT1D reference file should be shifted
+  to account for the expected position of the source. If None (the default),
+  the step will make the decision of whether to use the source position based
+  on the observing mode and the source type. The source position will only be
+  used for point sources and for modes where the source could be located
+  off-center due to things like nodding or dithering. If turned on, the sky
+  (RA/Dec) position of the source is used in conjunction with the World
+  Coordinate System (WCS) to compute the x/y source location. For long-slit
+  type modes (e.g. MIRI LRS and NIRSpec fixed-slit and MOS), only the position
+  in the cross-dispersion direction is used to potentially offset the
+  extraction regions in that direction.
 
 ``--apply_apcorr``
   Switch to select whether or not to apply an APERTURE correction during the

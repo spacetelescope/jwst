@@ -68,15 +68,11 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
     if source_type is not None:
         source_type = source_type.upper()
     if source_type != 'POINT' and source_type != 'EXTENDED':
-        if instrument == 'MIRI':
-            default_source_type = 'EXTENDED'
-        else:
-            default_source_type = 'POINT'
-        log.warning("source_type was '%s', setting it to '%s'.",
-                    source_type, default_source_type)
+        default_source_type = 'EXTENDED'
+        log.warning(f"Source type was '{source_type}'; setting to '{default_source_type}'.")
         source_type = default_source_type
     else:
-        log.info("source_type = %s", source_type)
+        log.info(f"Source type = {source_type}")
 
     # The input units will normally be MJy / sr, but for NIRSpec point-source
     # spectra the units will be MJy.
@@ -306,7 +302,7 @@ def extract_ifu(input_model, source_type, extract_params):
         locn = locn_from_wcs(input_model, ra_targ, dec_targ)
         if locn is None or np.isnan(locn[0]):
             log.warning("Couldn't determine pixel location from WCS, so "
-                        "nod/dither correction will not be applied.")
+                        "source offset correction will not be applied.")
             x_center = extract_params['x_center']
             y_center = extract_params['y_center']
             if x_center is None:
@@ -490,8 +486,8 @@ def locn_from_wcs(input_model, ra_targ, dec_targ):
         (j, i) = divmod(k, dist2.shape[1])      # y, x coordinates
 
         if i <= 0 or j <= 0 or i >= shape[-1] - 1 or j >= shape[-2] - 1:
-            log.warning("WCS implies the target is at or beyond the edge "
-                        "of the image; this location will not be used.")
+            log.warning("WCS implies the target is beyond the edge of the image")
+            log.warning("This location will not be used")
             locn = None
         else:
             locn = (i, j)                       # x, y coordinates
@@ -636,14 +632,14 @@ def image_extract_ifu(input_model, source_type, extract_params):
                  "based on TARG_RA and TARG_DEC.", locn[0], locn[1])
 
     # Use the centroid of mask_target as the point where the target
-    # would be without any nod/dither correction.
+    # would be without any source position correction.
     (y0, x0) = im_centroid(data, mask_target)
     log.debug("Target location based on reference image is X = %g, Y = %g",
               x0, y0)
 
     if locn is None or np.isnan(locn[0]):
         log.warning("Couldn't determine pixel location from WCS, so "
-                    "nod/dither correction will not be applied.")
+                    "source position correction will not be applied.")
     else:
         (x_center, y_center) = locn
         # Shift the reference image so it will be centered at locn.
@@ -921,7 +917,7 @@ def im_centroid(data, mask_target):
 
 
 def shift_ref_image(mask, delta_y, delta_x, fill=0):
-    """Apply nod/dither offset to target or background for ref image.
+    """Apply source position offset to target or background for ref image.
 
     Parameters
     ----------

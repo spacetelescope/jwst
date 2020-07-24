@@ -40,6 +40,7 @@ combine_1d
 
 cube_build
 ----------
+- modified NIRSpec blotting to the find min and max ra and dec for each slice and only invert those values on slice that fall in range [#5144]
 
 - Changed default weighting back to 'msm' until NIRSPEC cube pars ref file contains emsm info [#5134]
 
@@ -96,6 +97,9 @@ extract_1d
 - Checks subwcs and new_slit variables exist before trying to delete them. [#5093]
 
 - Parameter ``mmag_extract`` is now propagated to the extraction routine. [#5122]
+
+- Updated the logic for when and how to use the source position to offset the
+  location of the extraction regions specified in the EXTRACT1D reference file. [#5157]
 
 extract_2d
 ----------

@@ -256,6 +256,7 @@ def make_ifu_cube(data_shape, source=None, background=None,
         return (ra, dec, wl)
 
     input_model.meta.wcs = mock_wcs
+    input_model.meta.target.source_type = 'POINT'
 
     return input_model
 
