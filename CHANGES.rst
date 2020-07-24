@@ -184,6 +184,11 @@ stpipe
 
 - Remove further sloper references. [#4989]
 
+transforms
+----------
+
+- Wrap first spherical angle at 360 degrees in ``V23ToSky``. [#5185]
+
 wavecorr
 --------
 
