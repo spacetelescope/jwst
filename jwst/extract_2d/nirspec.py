@@ -28,7 +28,6 @@ def nrs_extract2d(input_model, slit_name=None):
         Slit name.
     """
     exp_type = input_model.meta.exposure.type.upper()
-    lamp_mode = input_model.meta.instrument.lamp_mode.upper()
 
     if hasattr(input_model.meta.cal_step, 'assign_wcs') and input_model.meta.cal_step.assign_wcs == 'SKIPPED':
         log.info("assign_wcs was skipped")

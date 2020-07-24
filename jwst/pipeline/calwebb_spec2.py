@@ -5,7 +5,6 @@ import traceback
 
 from .. import datamodels
 from ..assign_wcs.util import NoDataOnDetectorError
-from ..lib.pipe_utils import is_tso
 from ..lib.exposure_types import (is_nrs_ifu_flatlamp, is_nrs_ifu_lamp,
                                   is_nrs_msaspec_lamp, is_nrs_ifu_linelamp,
                                   is_nrs_autoflat)
