@@ -7,7 +7,7 @@ Cube Building for MIRI data
 -------------------------------
 To run cube_build on a single MIRI exposure (containing channel 1 and 2), but only creating an IFU cube for channel 1::
 
-  strun cube_build.cfg MIRM103-Q0-SHORT_495_cal.fits --ch=1 --band=SHORT
+  strun cube_build.cfg MIRM103-Q0-SHORT_495_cal.fits --ch=1
 
 The output 3D spectral cube will be saved in a file called MIRM103-Q0-SHORT_495_ch1-short_s3d.fits
 
