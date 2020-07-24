@@ -65,7 +65,7 @@ jobs:
     - name: Build distribution
       env:
         PIP_DEPENDENCIES="pep517 twine"
-        TEST_COMMAND="python -m pep517.build .; twine check dist/*"
+        TEST_COMMAND="python -m pep517.build ."
 
     - name: Security check
       env:
@@ -95,6 +95,9 @@ install:
 
 script:
   - $TEST_COMMAND
+  - if [[ ${TEST_COMMAND} =~ ^python ]]; then
+      twine check dist/*;
+    fi
 
 after_success:
   - if [[ ${TEST_COMMAND} =~ ^pytest ]]; then
