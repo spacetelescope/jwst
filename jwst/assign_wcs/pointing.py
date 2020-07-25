@@ -1,7 +1,8 @@
 import numpy as np
 from astropy import units as u
 from astropy import coordinates as coords
-from astropy.modeling import models as astmodels
+from astropy.modeling.models import (Mapping, Identity, Const1D,
+                                     Scale, Shift, Tabular1D)
 from astropy.modeling.models import math as astmath
 from ..datamodels import DataModel
 from gwcs import utils as gwutils
@@ -25,17 +26,19 @@ def v23tosky(input_model):
     sky_rotation = V23ToSky(angles, axes_order=axes, name="v23tosky")
     # The sky rotation expects values in deg.
     # This should be removed when models work with quantities.
-    scale_to_deg = astmodels.Scale(1/3600) & astmodels.Scale(1/3600)
+    scale_to_deg = Scale(1/3600) & Scale(1/3600)
     # The range in the V2V3 system is from -180 to 180
     # In order to get only positive angles on sky we convert
     # the values to the range 0 to 360 before going to sky
     # and convert back to -180 to 180 before going from sky to V2V3.
-    forward = (astmodels.Mapping((0, 0, 1)) |
-               astmodels.Identity(1) & astmodels.Const1D(360) & astmodels.Identity(1) |
-               astmath.ModUfunc() & astmodels.Identity(1))
-    backward = (astmodels.Mapping((0, 0, 1)) |
-                astmodels.Identity(1) & astmodels.Const1D(-180) & astmodels.Identity(1) |
-                astmath.ModUfunc() & astmodels.Identity(1))
+    # "foraward" represents np.mod(x, 360)
+    forward = (Mapping((0, 0, 1)) |
+               Identity(1) & Const1D(360) & Identity(1) |
+               astmath.ModUfunc() & Identity(1))
+    # backward represents np.mod(x-180, 360) - 180
+    backward = (Mapping((0, 0, 0, 0, 1)) |
+                (Identity(1) & Const1D(180) | astmath.SubtractUfunc() ) & Const1D(360) & Identity(2) |
+                 astmath.ModUfunc() & Const1D(180) & Identity(1) | astmath.SubtractUfunc() & Identity(1))
 
     forward.inverse = backward
     return scale_to_deg | forward | sky_rotation
@@ -157,13 +160,13 @@ def fitswcs_transform_from_model(wcsinfo, wavetable=None):
         sp_axis = spectral_axes[0]
         if wavetable is None :
             # Subtract one from CRPIX which is 1-based.
-            spectral_transform = astmodels.Shift(-(wcsinfo['CRPIX'][sp_axis] - 1)) | \
-                astmodels.Scale(wcsinfo['CDELT'][sp_axis]) | \
-                astmodels.Shift(wcsinfo['CRVAL'][sp_axis])
+            spectral_transform = Shift(-(wcsinfo['CRPIX'][sp_axis] - 1)) | \
+                Scale(wcsinfo['CDELT'][sp_axis]) | \
+                Shift(wcsinfo['CRVAL'][sp_axis])
         else :
             # Wave dimension is an array that needs to be converted to a table
             waves = wavetable['wavelength'].flatten()
-            spectral_transform = astmodels.Tabular1D(lookup_table=waves)
+            spectral_transform = Tabular1D(lookup_table=waves)
 
         transform = transform & spectral_transform
 

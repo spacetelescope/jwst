@@ -8,7 +8,7 @@ of the results is verified by the team based on the specwcs reference
 file.
 
 """
-
+import numpy as np
 from numpy.testing import assert_allclose
 from astropy.io import fits
 from gwcs import wcs
@@ -18,6 +18,7 @@ from ...datamodels.image import ImageModel
 
 from ..assign_wcs_step import AssignWcsStep
 from .. import niriss
+from .. import pointing
 
 
 # Allowed settings for niriss
@@ -173,3 +174,14 @@ def test_imaging_distortion():
     assert_allclose(y, wcs_kw['crpix2'])
     assert_allclose(raout, ra)
     assert_allclose(decout, dec)
+
+
+def test_v23tosky():
+    hdul = create_hdul()
+    im = ImageModel(hdul)
+    transform = pointing.v23tosky(im)
+    x = np.linspace(-.5, 1050, 100)
+    y = x
+    x1, y1 = transform.inverse(*transform(x, y))
+    assert_allclose(x1, x)
+    assert_allclose(y1, y)
