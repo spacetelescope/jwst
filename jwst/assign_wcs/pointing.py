@@ -2,6 +2,7 @@ import numpy as np
 from astropy import units as u
 from astropy import coordinates as coords
 from astropy.modeling import models as astmodels
+from astropy.modeling.models import math as astmath
 from ..datamodels import DataModel
 from gwcs import utils as gwutils
 from gwcs import coordinate_frames as cf
@@ -24,8 +25,20 @@ def v23tosky(input_model):
     sky_rotation = V23ToSky(angles, axes_order=axes, name="v23tosky")
     # The sky rotation expects values in deg.
     # This should be removed when models work with quantities.
-    return astmodels.Scale(1/3600) & astmodels.Scale(1/3600) | sky_rotation
+    scale_to_deg = astmodels.Scale(1/3600) & astmodels.Scale(1/3600)
+    # The range in the V2V3 system is from -180 to 180
+    # In order to get only positive angles on sky we convert
+    # the values to the range 0 to 360 before going to sky
+    # and convert back to -180 to 180 before going from sky to V2V3.
+    forward = (astmodels.Mapping((0, 0, 1)) |
+               astmodels.Identity(1) & astmodels.Const1D(360) & astmodels.Identity(1) |
+               astmath.ModUfunc() & astmodels.Identity(1))
+    backward = (astmodels.Mapping((0, 0, 1)) |
+                astmodels.Identity(1) & astmodels.Const1D(-180) & astmodels.Identity(1) |
+                astmath.ModUfunc() & astmodels.Identity(1))
 
+    forward.inverse = backward
+    return scale_to_deg | forward | sky_rotation
 
 def compute_roll_ref(v2_ref, v3_ref, roll_ref, ra_ref, dec_ref, new_v2_ref, new_v3_ref):
     """
