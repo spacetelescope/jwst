@@ -927,8 +927,6 @@ class V23ToSky(Rotation3D):
         h = np.hypot(x, y)
         alpha = np.rad2deg(np.arctan2(y, x))
         delta = np.rad2deg(np.arctan2(z, h))
-
-        alpha = np.mod(alpha, 360.0)
         return alpha, delta
 
     def evaluate(self, v2, v3, angles):
