@@ -184,6 +184,12 @@ stpipe
 
 - Remove further sloper references. [#4989]
 
+transforms
+----------
+
+- Wrap first spherical angle ("RA") at 360 degrees in the forward ``V23ToSky``
+  transformation and to 180 degrees for the inverse transformation ("V2"). [#5195]
+
 wavecorr
 --------
 

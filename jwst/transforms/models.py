@@ -11,6 +11,7 @@ registered with ASDF through entry points.
 
 
 import math
+import numbers
 from collections import namedtuple
 import numpy as np
 from astropy.modeling.core import Model
@@ -593,7 +594,6 @@ class Rotation3D(Model):
         self.inputs = ('x', 'y', 'z')
         self.outputs = ('x', 'y', 'z')
 
-
     @property
     def inverse(self):
         """Inverse rotation."""
@@ -873,10 +873,19 @@ class V23ToSky(Rotation3D):
     angles : list
         A sequence of angles (in deg).
         The angles are [-V2_REF, V3_REF, -ROLL_REF, -DEC_REF, RA_REF].
+
     axes_order : str
         A sequence of characters ('x', 'y', or 'z') corresponding to the
         axis of rotation and matching the order in ``angles``.
         The axes are "zyxyz".
+
+    wrap_lon_at : {360, 180}, optional
+        An **integer number** that specifies the range of the longitude
+        (azimuthal) angle. When ``wrap_lon_at`` is 180, the longitude angle
+        will have a range of ``[-180, 180)`` and when ``wrap_lon_at``
+        is 360 (default), the longitude angle will have a range of
+        ``[0, 360)``.
+
     """
 
     _separable = False
@@ -884,12 +893,13 @@ class V23ToSky(Rotation3D):
     n_inputs = 2
     n_outputs = 2
 
-    def __init__(self, angles, axes_order, name=None):
-        super(V23ToSky, self).__init__(angles, axes_order=axes_order, name=name)
+    def __init__(self, angles, axes_order, wrap_lon_at=360, name=None):
+        super().__init__(angles, axes_order=axes_order, name=name)
         self._inputs = ("v2", "v3")
         """ ("v2", "v3"): Coordinates in the (V2, V3) telescope frame."""
         self._outputs = ("ra", "dec")
         """ ("ra", "dec"): RA, DEC cooridnates in ICRS."""
+        self.wrap_lon_at = wrap_lon_at
 
     @property
     def inputs(self):
@@ -907,6 +917,25 @@ class V23ToSky(Rotation3D):
     def outputs(self, val):
         self._outputs = val
 
+    @property
+    def wrap_lon_at(self):
+        """ An **integer number** that specifies the range of the longitude
+        (azimuthal) angle.
+
+        Allowed values are 180 and 360. When ``wrap_lon_at``
+        is 180, the longitude angle will have a range of ``[-180, 180)`` and
+        when ``wrap_lon_at`` is 360 (default), the longitude angle will have a
+        range of ``[0, 360)``.
+
+        """
+        return self._wrap_lon_at
+
+    @wrap_lon_at.setter
+    def wrap_lon_at(self, wrap_angle):
+        if not (isinstance(wrap_angle, numbers.Integral) and wrap_angle in [180, 360]):
+            raise ValueError("'wrap_lon_at' must be an integer number: 180 or 360")
+        self._wrap_lon_at = wrap_angle
+
     @staticmethod
     def spherical2cartesian(alpha, delta):
         """
@@ -920,20 +949,24 @@ class V23ToSky(Rotation3D):
         return np.array([x, y, z])
 
     @staticmethod
-    def cartesian2spherical(x, y, z):
+    def cartesian2spherical(x, y, z, wrap_lon_at=180):
         """
         Convert cartesian coordinates to spherical coordinates (in deg).
         """
         h = np.hypot(x, y)
-        alpha = np.rad2deg(np.arctan2(y, x))
         delta = np.rad2deg(np.arctan2(z, h))
+        alpha = np.rad2deg(np.arctan2(y, x))
+        alpha[h == 0] *= 0
+
+        if wrap_lon_at != 180:
+            alpha = np.mod(alpha, 360.0)
+
         return alpha, delta
 
     def evaluate(self, v2, v3, angles):
         x, y, z = self.spherical2cartesian(v2, v3)
-        x1, y1, z1 = super(V23ToSky, self).evaluate(x, y, z, angles)
-        ra, dec = self.cartesian2spherical(x1, y1, z1)
-
+        x1, y1, z1 = super().evaluate(x, y, z, angles)
+        ra, dec = self.cartesian2spherical(x1, y1, z1, wrap_lon_at=self._wrap_lon_at)
         return ra, dec
 
     def __call__(self, v2, v3, **kwargs):
@@ -946,6 +979,14 @@ class V23ToSky(Rotation3D):
             outputs = (outputs,)
 
         return self.prepare_outputs(format_info, *outputs)
+
+    @property
+    def inverse(self):
+        return V23ToSky(
+            -self.angles[::-1],
+            axes_order=self.axes_order[::-1],
+            wrap_lon_at=180 if self._wrap_lon_at == 360 else 360
+        )
 
 
 class IdealToV2V3(Model):

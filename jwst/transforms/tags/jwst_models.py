@@ -116,13 +116,14 @@ class V23ToSkyType(JWSTTransformType):
     name = "v23tosky"
     types = [V23ToSky]
     standard = "jwst_pipeline"
-    version = "0.7.0"
+    version = "0.8.0"
 
     @classmethod
     def from_tree_transform(cls, node, ctx):
         angles = node['angles']
         axes_order = node['axes_order']
-        return V23ToSky(angles, axes_order=axes_order)
+        wrap_lon_at = node.get('wrap_lon_at', 360)
+        return V23ToSky(angles, axes_order=axes_order, wrap_lon_at=wrap_lon_at)
 
     @classmethod
     def to_tree_transform(cls, model, ctx):
