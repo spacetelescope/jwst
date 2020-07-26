@@ -31,7 +31,7 @@ def v23tosky(input_model):
     # In order to get only positive angles on sky we convert
     # the values to the range 0 to 360 before going to sky
     # and convert back to -180 to 180 before going from sky to V2V3.
-    # "foraward" represents np.mod(x, 360)
+    # "forward" represents np.mod(x, 360)
     forward = (Mapping((0, 0, 1)) |
                Identity(1) & Const1D(360) & Identity(1) |
                astmath.ModUfunc() & Identity(1))
