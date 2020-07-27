@@ -68,11 +68,10 @@ first for the MIRI  reference file and then for NIRSpec.
 
 These reference files contain tables for each wavelength band giving the spatial
 and spectral size, and the size of the region of interest (ROI) to use to
-construct an IFU cube.  If only one band is used to construct the IFU cube then the *CUBEPAR* and *CUBEPAR_MSM* or *CUBE_EMSM* tables
-are used. These types of cubes will have a linear - wavelength dimension.  
+construct an IFU cube.  If only one band is used to construct the IFU cube then the *CUBEPAR* and *CUBEPAR_MSM* or *CUBE_EMSM* tables are used. These types of cubes will have a linear - wavelength dimension.  
 If more than one wavelength band is used to build the IFU cube then the MULTICHANNEL (MIRI)
 or MULTICHAN (NIRSPEC) tables are used o set the spectral and spatial roi size, and the wavelength dependent weighting function parameters.
- For multi-band IFU cubes  then the final
+For multi-band IFU cubes  then the final
 spatial size will be the smallest one from the list of input bands and these cubes will have a non-linear wavelength dimension. 
 
 
