@@ -280,6 +280,7 @@ def extract_ifu(input_model, source_type, extract_params):
     """
 
     data = input_model.data
+    weightmap = input_model.weightmap
     shape = data.shape
     if len(shape) != 3:
         log.error("Expected a 3-D IFU cube; dimension is %d.", len(shape))
@@ -391,40 +392,51 @@ def extract_ifu(input_model, source_type, extract_params):
     else:
         annulus = None
 
-    # Compute the area of the aperture and possibly also of the annulus.
-    normalization = 1.
-    temp = np.ones(shape[-2:], dtype=np.float64)
-    phot_table = aperture_photometry(temp, aperture,
-                                     method=method, subpixels=subpixels)
-    aperture_area = float(phot_table['aperture_sum'][0])
-    if LooseVersion(photutils.__version__) >= '0.7':
-        log.debug("aperture.area = %g; aperture_area = %g",
-                  aperture.area, aperture_area)
-    else:
-        log.debug("aperture.area() = %g; aperture_area = %g",
-                  aperture.area(), aperture_area)
 
-    if subtract_background and annulus is not None:
-        # Compute the area of the annulus.
-        phot_table = aperture_photometry(temp, annulus,
-                                         method=method, subpixels=subpixels)
-        annulus_area = float(phot_table['aperture_sum'][0])
-        if LooseVersion(photutils.__version__) >= '0.7':
-            log.debug("annulus.area = %g; annulus_area = %g",
-                      annulus.area, annulus_area)
-        else:
-            log.debug("annulus.area() = %g; annulus_area = %g",
-                      annulus.area(), annulus_area)
-        if annulus_area > 0.:
-            normalization = aperture_area / annulus_area
-        else:
-            log.warning("Background annulus has no area, so background "
-                        "subtraction will be turned off.")
-            subtract_background = False
-    del temp
-
-    npixels[:] = aperture_area
     for k in range(shape[0]):
+
+        # Compute the area of the aperture and possibly also of the annulus.
+        # for each wavelength bin (taking into account empty spaxels)
+        normalization = 1.
+        temp = weightmap[k,:,:]
+        temp[temp>1] = 1
+
+        #temp = np.ones(shape[-2:], dtype=np.float64)
+        # aperture_photometry - using weight map
+        phot_table = aperture_photometry(temp, aperture,
+                                         method=method, subpixels=subpixels)
+
+        aperture_area = float(phot_table['aperture_sum'][0])
+        if LooseVersion(photutils.__version__) >= '0.7':
+            log.debug("aperture.area = %g; aperture_area = %g",
+                      aperture.area, aperture_area)
+        else:
+            log.debug("aperture.area() = %g; aperture_area = %g",
+                      aperture.area(), aperture_area)
+
+        if subtract_background and annulus is not None:
+            # Compute the area of the annulus.
+            phot_table = aperture_photometry(temp, annulus,
+                                             method=method, subpixels=subpixels)
+            annulus_area = float(phot_table['aperture_sum'][0])
+                
+            if LooseVersion(photutils.__version__) >= '0.7':
+                log.debug("annulus.area = %g; annulus_area = %g",
+                          annulus.area, annulus_area)
+            else:
+                log.debug("annulus.area() = %g; annulus_area = %g",
+                          annulus.area(), annulus_area)
+            if annulus_area > 0.:
+                normalization = aperture_area / annulus_area
+            else:
+                log.warning("Background annulus has no area, so background "
+                            "subtraction will be turned off.")
+                subtract_background = False
+        del temp
+
+        npixels[k] = aperture_area
+        
+        # aperture_photometry - using data
         phot_table = aperture_photometry(data[k, :, :], aperture,
                                          method=method, subpixels=subpixels)
         temp_flux[k] = float(phot_table['aperture_sum'][0])
