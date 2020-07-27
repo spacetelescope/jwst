@@ -1096,8 +1096,6 @@ class IFUCubeData():
 
 
         log.debug('spatial size %f', self.spatial_size)
-        print('****',self.spatial_size, self.spectral_size,self.rois)
-        exit(0)
         log.debug('spectral size %f', self.spectral_size)
         log.debug('spatial roi %f', self.rois)
         log.debug('wave min and max %f %f', self.wavemin, self.wavemax)
@@ -1109,7 +1107,7 @@ class IFUCubeData():
             log.debug('softrad %f ',self.soft_rad)
         if self.weighting == 'emsm':
             log.debug('scalerad %f ',self.scalerad)
-    print('STTTTTTTOP')
+
 # ******************************************************************************
 
     def setup_ifucube_wcs(self):
