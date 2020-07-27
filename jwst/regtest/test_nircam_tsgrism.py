@@ -84,7 +84,10 @@ def test_nircam_setpointing(_jail, rtdata, fitsdiff_default_kwargs):
     rtdata.output = rtdata.input
 
     # Call the WCS routine, using the ENGDB_Service
-    add_wcs(rtdata.input, siaf_path=siaf_path)
+    try:
+        add_wcs(rtdata.input, siaf_path=siaf_path)
+    except ValueError:
+        pytest.skip('Engineering Database not available.')
 
     rtdata.get_truth("truth/test_nircam_setpointing/jw00721012001_03103_00001-seg001_nrcalong_uncal.fits")
 
