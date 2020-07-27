@@ -122,6 +122,8 @@ master_background
 outlier_detection
 -----------------
 
+- Update median filter to use numpy's nanmedian. [#5114]
+
 - Fix outlier_detection bug when saving intermediate results. [#5108]
 
 pathloss
