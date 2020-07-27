@@ -63,6 +63,8 @@ cube_build
 datamodels
 ----------
 
+- Re-enable FITS-hash by default. [#5191]
+
 - Add blend rule for keywords DETECTOR and MODULE. [#4998]
 
 - Add methods ``Model.info`` and ``Model.search``. [#4660]
@@ -77,9 +79,9 @@ datamodels
 
 - Add "PERSISTENCE" DQ flag definition. [#5137]
 
-- Fixed nonsensical premature closing of FITS file of a ``DataModel``. [#4930]
+- Fix nonsensical premature closing of FITS file of a ``DataModel``. [#4930]
 
-- Added a hash set/check to DataModel I/O to check whether schema traversal is necessary. [#5110]
+- Add a hash set/check to DataModel I/O to check whether schema traversal is necessary. [#5110]
 
 - Update underlying MultiExposureModel from the SourceModelContainer models. [#5154]
 

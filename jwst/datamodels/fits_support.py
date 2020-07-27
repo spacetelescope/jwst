@@ -663,7 +663,7 @@ def _verify_skip_fits_update(skip_fits_update, hdulist, asdf_struct, context):
         All conditions are satisfied for skipping FITS updating.
     """
     if skip_fits_update is None:
-        skip_fits_update = util.get_envar_as_boolean('SKIP_FITS_UPDATE', False)
+        skip_fits_update = util.get_envar_as_boolean('SKIP_FITS_UPDATE', None)
 
     # If skipping has been explicitly disallowed, indicate as such.
     if skip_fits_update is False:
