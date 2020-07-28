@@ -175,6 +175,39 @@ class Spec2Pipeline(Pipeline):
                 if input.meta.source_catalog is None:
                     raise IndexError("No source catalog specified in association or datamodel")
 
+        # ####
+        # Decide on what steps can actually be accomplished based on the
+        # provided input.
+        #
+        # Note: This should all ideally be handled by config files.
+        # When they are all delivered by CRDS, remove this bit-o-code.
+        # ####
+
+        # Decide if image-to-image background subtraction can be done.
+        if not self.bkg_subtract.skip:
+            if exp_type in WFSS_TYPES or len(members_by_type['background']) > 0:
+
+                if exp_type in WFSS_TYPES:
+                    bkg_list = []           # will be overwritten by the step
+                else:
+                    bkg_list = members_by_type['background']
+
+                # Setup for saving
+                self.bkg_subtract.suffix = 'bsub'
+                if multi_int:
+                    self.bkg_subtract.suffix = 'bsubints'
+
+                # Backwards compatibility
+                if self.save_bsub:
+                    self.bkg_subtract.save_results = True
+            else:
+                self.log.debug('Science does not allow direct background subtraction. Skipping "bkg_subtract"')
+                self.bkg_subtract.skip = True
+
+        # ####
+        # Start processing the individual steps.
+        # ####
+        
         assign_wcs_exception = None
         try:
             input = self.assign_wcs(input)
@@ -201,25 +234,8 @@ class Spec2Pipeline(Pipeline):
                 else:
                     raise RuntimeError('Cannot determine WCS.')
 
-        # Do background processing, if necessary
-        if exp_type in WFSS_TYPES or len(members_by_type['background']) > 0:
-
-            if exp_type in WFSS_TYPES:
-                bkg_list = []           # will be overwritten by the step
-            else:
-                bkg_list = members_by_type['background']
-
-            # Setup for saving
-            self.bkg_subtract.suffix = 'bsub'
-            if multi_int:
-                self.bkg_subtract.suffix = 'bsubints'
-
-            # Backwards compatibility
-            if self.save_bsub:
-                self.bkg_subtract.save_results = True
-
-            # Call the background subtraction step
-            input = self.bkg_subtract(input, bkg_list)
+        # Call the background subtraction step
+        input = self.bkg_subtract(input, bkg_list)
 
         # Apply NIRSpec MSA imprint subtraction
         # Technically there should be just one.
