@@ -51,10 +51,10 @@ class ReferenceData:
         40, 50, 60, 70, or 80).
 
     apcorr_filename : str
-        The full path and filenames of the APCORR reference file.
+        The full path filename of the APCORR reference file.
 
     abvegaoffset_filename : str
-        The full path and filenames of the ABVEGAOFFSET reference file.
+        The full path filename of the ABVEGAOFFSET reference file.
 
     Attributes
     ----------
@@ -99,9 +99,7 @@ class ReferenceData:
         """
         Validate the input ``aperture_ee``.
         """
-
         aperture_ee = np.array(aperture_ee).astype(int)
-
         if not np.all(aperture_ee[1:] > aperture_ee[:-1]):
             raise ValueError('aperture_ee values must be strictly '
                              'increasing')
@@ -117,7 +115,6 @@ class ReferenceData:
         Get the encircled energy table for the given instrument
         configuration.
         """
-
         if self.instrument == 'NIRCAM' or self.instrument == 'NIRISS':
             selector = {'filter': self.filtername, 'pupil': self.pupil}
         elif self.instrument == 'MIRI':
@@ -147,7 +144,6 @@ class ReferenceData:
         """
         Get the encircled energy row for the input ``aperture_ee``.
         """
-
         ee_percent = np.round(self._aperture_ee_table['eefraction'] * 100)
         row_mask = (ee_percent == aperture_ee)
         ee_row = self._aperture_ee_table[row_mask]
@@ -169,11 +165,11 @@ class ReferenceData:
         A dictionary containing the aperture parameters (radii, aperture
         corrections, and background annulus inner and outer radii).
         """
-
         if self.apcorr_filename is None:
-            log.warning('APCorrModel reference file was not input. '
-                        'Using fallback aperture sizes without any aperture '
+            log.warning('APCorrModel reference file was not input. Using '
+                        'fallback aperture sizes without any aperture '
                         'corrections.')
+
             params = {'aperture_radii': np.array((1.0, 2.0, 3.0)),
                       'aperture_corrections': np.array((1.0, 1.0, 1.0)),
                       'aperture_ee': np.array((1, 2, 3)),
@@ -221,7 +217,6 @@ class ReferenceData:
 
         The value represents m_AB - m_Vega.
         """
-
         if self.abvegaoffset_filename is None:
             log.warning('ABVEGAOFFSET reference file was not input. '
                         'Catalog Vega magnitudes are not correct.')
@@ -318,7 +313,6 @@ class Background:
             A Background2D object containing the 2D background and
             background RMS noise estimates.
         """
-
         sigma_clip = SigmaClip(sigma=3.)
         bkg_estimator = MedianBackground()
         filter_size = (3, 3)
@@ -381,11 +375,9 @@ def make_kernel(kernel_fwhm):
     kernel : `astropy.convolution.Kernel2D`
         The output smoothing kernel, normalized such that it sums to 1.
     """
-
     sigma = kernel_fwhm * gaussian_fwhm_to_sigma
     kernel = Gaussian2DKernel(sigma)
     kernel.normalize(mode='integral')
-
     return kernel
 
 
@@ -431,7 +423,6 @@ def make_segment_img(data, threshold, npixels=5.0, kernel=None, mask=None,
         A value of zero is reserved for the background.  If no sources
         are found then `None` is returned.
     """
-
     connectivity = 8
     segm = detect_sources(data, threshold, npixels, filter_kernel=kernel,
                           mask=mask, connectivity=connectivity)
@@ -471,7 +462,6 @@ def calc_total_error(model):
     total_error : `~numpy.ndarray`
         The total error array.
     """
-
     # TODO: Until errors are produced for the level 3 drizzle
     # products, the JPWG has decided that the errors should not be
     # populated.
@@ -543,7 +533,6 @@ class SourceCatalog:
         Convert the data and errors from MJy/sr to Jy and convert to
         `~astropy.unit.Quantity` objects.
         """
-
         if self.model.meta.bunit_data != 'MJy/sr':
             raise ValueError('data is expected to be in units of MJy/sr')
         self.model.data *= (1.e6 *
@@ -571,7 +560,6 @@ class SourceCatalog:
         abmag, abmag_err : `~astropy.ndarray`
             The output AB magnitude and error arrays.
         """
-
         # ignore RunTimeWarning if flux or flux_err contains NaNs
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=RuntimeWarning)
@@ -592,7 +580,6 @@ class SourceCatalog:
         A dictionary of the output table column names and descriptions
         for the segment catalog.
         """
-
         desc = OrderedDict()
         desc['id'] = 'Unique source identification number'
         desc['xcentroid'] = 'X pixel value of the source centroid'
@@ -639,7 +626,6 @@ class SourceCatalog:
 
         The values are set as dynamic attributes.
         """
-
         source_props = source_properties(self.model.data.astype(float),
                                          self.segment_img,
                                          error=self.error,
@@ -729,7 +715,6 @@ class SourceCatalog:
         The orientation of the source major axis as the position angle
         in degrees measured East of North.
         """
-
         # NOTE: crpix1 and crpix2 are 1-based values
         skycoord = self.wcs.pixel_to_world(self.model.meta.wcsinfo.crpix1 - 1,
                                            self.model.meta.wcsinfo.crpix2 - 1)
@@ -754,7 +739,6 @@ class SourceCatalog:
         colnames : list of str
             A list of the output column names.
         """
-
         colnames = []
         for aper_ee in self.aperture_ee:
             basename = f'aper{aper_ee}_{name}'
@@ -778,7 +762,6 @@ class SourceCatalog:
         descriptions : list of str
             A list of the output column descriptions.
         """
-
         if name == 'flux':
             ftype = 'Flux'
             ftype2 = 'flux'
@@ -851,7 +834,6 @@ class SourceCatalog:
         A dictionary of the output table column names and descriptions
         for the aperture catalog.
         """
-
         desc = OrderedDict()
         desc['aper_bkg_flux'] = ('The local background value calculated as '
                                  'the sigma-clipped median value in the '
@@ -880,7 +862,6 @@ class SourceCatalog:
         annulus.  The background error is the standard error of the
         median, sqrt(pi / 2N) * std.
         """
-
         bkg_aper = CircularAnnulus(
             self.xypos, self.aperture_params['bkg_aperture_inner_radius'],
             self.aperture_params['bkg_aperture_outer_radius'])
@@ -928,7 +909,6 @@ class SourceCatalog:
 
         The values are set as dynamic attributes.
         """
-
         apertures = [CircularAperture(self.xypos, radius) for radius in
                      self.aperture_params['aperture_radii']]
         aper_phot = aperture_photometry(self.model.data, apertures,
@@ -962,9 +942,7 @@ class SourceCatalog:
         A dictionary of the output table column names and descriptions
         for the additional catalog values.
         """
-
         desc = OrderedDict()
-
         for idx, colname in enumerate(self.ci_colnames):
             desc[colname] = self.ci_colname_descriptions[idx]
 
@@ -993,7 +971,6 @@ class SourceCatalog:
             * the middle and largest aperture radii/EE; idx (1, 2)
             * the smallest and largest aperture radii/EE; idx (0, 2)
         """
-
         # NOTE:  the EE values are always in increasing order
         return ((0, 1), (1, 2), (0, 2))
 
@@ -1002,7 +979,6 @@ class SourceCatalog:
         """
         The column names of the three concentration indices.
         """
-
         return [f'CI_{self.aperture_ee[i]}_{self.aperture_ee[j]}'
                 for (i, j) in self._ci_ee_indices]
 
@@ -1026,7 +1002,6 @@ class SourceCatalog:
             * the middle and largest aperture radii/EE
             * the smallest and largest aperture radii/EE
         """
-
         abmags = [(self.aperture_abmag_colnames[2*i],
                    self.aperture_abmag_colnames[2*j]) for (i, j) in
                   self._ci_ee_indices]
@@ -1037,7 +1012,6 @@ class SourceCatalog:
         """
         Set the concentration indices as dynamic attributes.
         """
-
         for name, value in zip(self.ci_colnames, self.concentration_indices):
             setattr(self, name, value)
         return
@@ -1050,7 +1024,6 @@ class SourceCatalog:
         2020.03.02: The JWST Photometry Working Group has not determined
         the criteria for this flag.
         """
-
         # TODO: need algorithm for this flag
         #is_star = np.random.randint(2, size=len(self.id))
         #return is_star.astype(bool)
@@ -1099,7 +1072,6 @@ class SourceCatalog:
         The cutout size always matches the size of the DAOFind kernel,
         which has odd dimensions.
         """
-
         cutout = []
         for xpeak, ypeak in zip(self._xpeak, self._ypeak):
             cutout.append(extract_array(self.model.data,
@@ -1117,7 +1089,6 @@ class SourceCatalog:
         The cutout size always matches the size of the DAOFind kernel,
         which has odd dimensions.
         """
-
         cutout = []
         for xpeak, ypeak in zip(self._xpeak, self._ypeak):
             cutout.append(extract_array(self._daofind_convolved_data,
@@ -1138,7 +1109,6 @@ class SourceCatalog:
 
         Stars generally have a ``sharpness`` between 0.2 and 1.0.
         """
-
         npixels = self._daofind_kernel.npixels - 1  # exclude the peak pixel
         data_masked = self._daofind_cutout * self._daofind_kernel.mask
         data_peak = self._daofind_cutout[:, self._kernel_ycenter,
@@ -1163,7 +1133,6 @@ class SourceCatalog:
         "Round" objects have a ``roundness`` close to 0, generally
         between -1 and 1.
         """
-
         # set the central (peak) pixel to zero
         cutout = self._daofind_cutout_conv.copy()
         cutout[:, self._kernel_ycenter, self._kernel_xcenter] = 0.0
@@ -1213,7 +1182,6 @@ class SourceCatalog:
         total AB magnitude is used.  Otherwise, its isophotal AB
         magnitude is used.
         """
-
         if len(self._ckdtree_query[1]) == 1:  # only one detected source
             return np.nan
 
@@ -1323,7 +1291,6 @@ class SourceCatalog:
         result : `~astropy.table.Table`
             The formated catalog.
         """
-
         # output formatting requested by the JPWG (2020.02.05)
         for colname in catalog.colnames:
             if colname in ('xcentroid', 'ycentroid') or 'CI_' in colname:
@@ -1356,7 +1323,6 @@ class SourceCatalog:
         """
         The final source catalog.
         """
-
         self.convert_to_jy()
         self.set_segment_properties()
         self.set_aperture_properties()
