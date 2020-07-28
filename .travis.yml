@@ -95,7 +95,7 @@ install:
 
 script:
   - $TEST_COMMAND
-  - if [[ ${TEST_COMMAND} =~ ^python ]]; then
+  - if [[ ${TEST_COMMAND} == *pep517.build* ]]; then
       twine check dist/*;
     fi
 
