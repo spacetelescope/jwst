@@ -201,13 +201,30 @@ class Spec2Pipeline(Pipeline):
                 if self.save_bsub:
                     self.bkg_subtract.save_results = True
             else:
-                self.log.debug('Science does not allow direct background subtraction. Skipping "bkg_subtract"')
+                self.log.debug('Science does not allow direct background subtraction. Skipping "bkg_subtract".')
                 self.bkg_subtract.skip = True
+
+        # Decide on imprint subtraction.
+        imprint = members_by_type['imprint']
+        if not self.imprint_subtract.skip and \
+           exp_type in ['NRS_MSASPEC', 'NRS_IFU'] and \
+           len(imprint) > 0:
+            if len(imprint) > 1:
+                self.log.warning('Wrong number of imprint members')
+            imprint = imprint[0]
+        else:
+            self.log.debug('Science does not allow imprint processing. Skipping "imprint_subtraction".')
+            self.imprint_subtraction.skip = True
+
+        # Apply NIRSpec MSA bad shutter flagging
+        if not self.msa_flagging.skip and exp_type not in ['NRS_MSASPEC', 'NRS_IFU']:
+            self.log.debug('Science does not allow MSA flagging. Skipping "msa_flagging".')
+            self.msa_flagging.skip = True
 
         # ####
         # Start processing the individual steps.
         # ####
-        
+
         assign_wcs_exception = None
         try:
             input = self.assign_wcs(input)
@@ -234,23 +251,9 @@ class Spec2Pipeline(Pipeline):
                 else:
                     raise RuntimeError('Cannot determine WCS.')
 
-        # Call the background subtraction step
         input = self.bkg_subtract(input, bkg_list)
-
-        # Apply NIRSpec MSA imprint subtraction
-        # Technically there should be just one.
-        # We'll just get the first one found
-        imprint = members_by_type['imprint']
-        if exp_type in ['NRS_MSASPEC', 'NRS_IFU'] and \
-           len(imprint) > 0:
-            if len(imprint) > 1:
-                self.log.warning('Wrong number of imprint members')
-            imprint = imprint[0]
-            input = self.imprint_subtract(input, imprint)
-
-        # Apply NIRSpec MSA bad shutter flagging
-        if exp_type in ['NRS_MSASPEC', 'NRS_IFU']:
-            input = self.msa_flagging(input)
+        input = self.imprint_subtract(input, imprint)
+        input = self.msa_flagging(input)
 
         # The order of the next few steps is tricky, depending on mode:
         # WFSS/Grism data need flat_field before extract_2d, but other modes
