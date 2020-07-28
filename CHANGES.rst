@@ -114,6 +114,11 @@ extract_2d
   which allows a user to specify the extraction height in the
   cross-dispersion direction for WFSS mode. [#5140]
 
+fringe
+------
+
+- Update the fringe step to handle 3D inputs for MIRI MRS TSO mode. [#5202]
+
 master_background
 -----------------
 
@@ -159,6 +164,11 @@ pipeline
 
 - Update the ``Spec2Pipeline`` to include the new ``wavecorr`` step and put
   ``srctype`` before ``wavecorr``. [#5133]
+
+- Update the ``Spec2Pipeline`` to skip ``extract_1d`` for IFU data that
+  have not had a cube built (e.g. MIRI MRS TSO), and update the
+  ``calwebb_tso-spec2.cfg`` configuration to turn on the ``fringe`` step
+  and turn off ``cube_build`` for MIRI MRS TSO. [#5202]
 
 photom
 ------
