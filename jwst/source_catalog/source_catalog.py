@@ -64,7 +64,7 @@ class ReferenceData:
 
     abvega_offset : float
         Offset to convert from AB to Vega magnitudes.  The value
-        reprents m_AB - m_Vega.
+        represents m_AB - m_Vega.
     """
 
     def __init__(self, model, aperture_ee=(30, 50, 70),
@@ -219,7 +219,7 @@ class ReferenceData:
         """
         Offset to convert from AB to Vega magnitudes.
 
-        The value reprents m_AB - m_Vega.
+        The value represents m_AB - m_Vega.
         """
 
         if self.abvegaoffset_filename is None:
@@ -515,7 +515,7 @@ class SourceCatalog:
 
     abvega_offset : float
         Offset to convert from AB to Vega magnitudes.  The value
-        reprents m_AB - m_Vega.
+        represents m_AB - m_Vega.
     """
 
     def __init__(self, model, segment_img, error=None, kernel=None,
