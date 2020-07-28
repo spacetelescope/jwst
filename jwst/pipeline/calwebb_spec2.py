@@ -204,22 +204,42 @@ class Spec2Pipeline(Pipeline):
                 self.log.debug('Science does not allow direct background subtraction. Skipping "bkg_subtract".')
                 self.bkg_subtract.skip = True
 
-        # Decide on imprint subtraction.
+        # Check for imprint subtraction.
         imprint = members_by_type['imprint']
-        if not self.imprint_subtract.skip and \
-           exp_type in ['NRS_MSASPEC', 'NRS_IFU'] and \
-           len(imprint) > 0:
-            if len(imprint) > 1:
-                self.log.warning('Wrong number of imprint members')
-            imprint = imprint[0]
-        else:
-            self.log.debug('Science does not allow imprint processing. Skipping "imprint_subtraction".')
-            self.imprint_subtraction.skip = True
+        if not self.imprint_subtract.skip:
+            if exp_type in ['NRS_MSASPEC', 'NRS_IFU'] and \
+               len(imprint) > 0:
+                if len(imprint) > 1:
+                    self.log.warning('Wrong number of imprint members')
+                    imprint = imprint[0]
+            else:
+                self.log.debug('Science does not allow imprint processing. Skipping "imprint_subtraction".')
+                self.imprint_subtraction.skip = True
 
-        # Apply NIRSpec MSA bad shutter flagging
+        # Check for NIRSpec MSA bad shutter flagging.
         if not self.msa_flagging.skip and exp_type not in ['NRS_MSASPEC', 'NRS_IFU']:
             self.log.debug('Science does not allow MSA flagging. Skipping "msa_flagging".')
             self.msa_flagging.skip = True
+
+        # Check for straylight correction for MIRI MRS.
+        if not self.straylight.skip and exp_type != 'MIR_MRS':
+            self.log.debug('Science does not allow stray light correction. Skipping "straylight".')
+            self.straylight.skip = True
+
+        # Apply the fringe correction for MIRI MRS
+        if not self.fringe.skip and exp_type != 'MIR_MRS':
+            self.log.debug('Sicnece does not allow fringe correction. Skipping "fringe".')
+            self.fringe.skip = True
+
+        # Apply pathloss correction to NIRSpec and NIRISS SOSS exposures
+        if not self.pathloss.skip and exp_type not in ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_IFU', 'NIS_SOSS']:
+            self.log.debug('Science does not allow pathloss correction. Skipping "pathloss".')
+            self.pathloss.skip = True
+
+        # Apply barshadow correction to NIRSPEC MSA exposures
+        if not self.barshadow.skip and exp_type != 'NRS_MSASPEC':
+            self.log.debug('Science does not allow barshadow correction. Skipping "barshadow".')
+            self.barshadow.skip = True
 
         # ####
         # Start processing the individual steps.
@@ -276,23 +296,10 @@ class Spec2Pipeline(Pipeline):
                 input = self.srctype(input)
                 input = self.flat_field(input)
 
-        # Apply the straylight correction for MIRI MRS
-        if exp_type == 'MIR_MRS':
-            input = self.straylight(input)
-
-        # Apply the fringe correction for MIRI MRS
-        if exp_type == 'MIR_MRS':
-            input = self.fringe(input)
-
-        # Apply pathloss correction to NIRSpec and NIRISS SOSS exposures
-        if exp_type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_IFU', 'NIS_SOSS']:
-            input = self.pathloss(input)
-
-        # Apply barshadow correction to NIRSPEC MSA exposures
-        if exp_type == 'NRS_MSASPEC':
-            input = self.barshadow(input)
-
-        # Apply flux calibration
+        input = self.straylight(input)
+        input = self.fringe(input)
+        input = self.pathloss(input)
+        input = self.barshadow(input)
         result = self.photom(input)
 
         # Close the input file.  We should really be doing this further up
