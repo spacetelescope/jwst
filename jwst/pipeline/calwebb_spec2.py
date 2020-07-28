@@ -45,6 +45,9 @@ class Spec2Pipeline(Pipeline):
         fail_on_exception = boolean(default=True) # Fail if any product fails.
     """
 
+    # Classify various exposure types.
+    WFSS_TYPES = ["NIS_WFSS", "NRC_WFSS"]
+
     # Define aliases to steps
     step_defs = {
         'bkg_subtract': background_step.BackgroundStep,
@@ -161,8 +164,6 @@ class Spec2Pipeline(Pipeline):
         else:
             multi_int = False
 
-        WFSS_TYPES = ["NIS_WFSS", "NRC_WFSS"]
-
         # Apply WCS info
         # check the datamodel to see if it's
         # a grism image, if so get the catalog
@@ -175,76 +176,11 @@ class Spec2Pipeline(Pipeline):
                 if input.meta.source_catalog is None:
                     raise IndexError("No source catalog specified in association or datamodel")
 
-        # ####
         # Decide on what steps can actually be accomplished based on the
         # provided input.
-        #
-        # Note: This should all ideally be handled by config files.
-        # When they are all delivered by CRDS, remove this bit-o-code.
-        # ####
+        self._step_verification(exp_type, members_by_type, multi_int)
 
-        # Decide if image-to-image background subtraction can be done.
-        if not self.bkg_subtract.skip:
-            if exp_type in WFSS_TYPES or len(members_by_type['background']) > 0:
-
-                if exp_type in WFSS_TYPES:
-                    bkg_list = []           # will be overwritten by the step
-                else:
-                    bkg_list = members_by_type['background']
-
-                # Setup for saving
-                self.bkg_subtract.suffix = 'bsub'
-                if multi_int:
-                    self.bkg_subtract.suffix = 'bsubints'
-
-                # Backwards compatibility
-                if self.save_bsub:
-                    self.bkg_subtract.save_results = True
-            else:
-                self.log.debug('Science does not allow direct background subtraction. Skipping "bkg_subtract".')
-                self.bkg_subtract.skip = True
-
-        # Check for imprint subtraction.
-        imprint = members_by_type['imprint']
-        if not self.imprint_subtract.skip:
-            if exp_type in ['NRS_MSASPEC', 'NRS_IFU'] and \
-               len(imprint) > 0:
-                if len(imprint) > 1:
-                    self.log.warning('Wrong number of imprint members')
-                    imprint = imprint[0]
-            else:
-                self.log.debug('Science does not allow imprint processing. Skipping "imprint_subtraction".')
-                self.imprint_subtraction.skip = True
-
-        # Check for NIRSpec MSA bad shutter flagging.
-        if not self.msa_flagging.skip and exp_type not in ['NRS_MSASPEC', 'NRS_IFU']:
-            self.log.debug('Science does not allow MSA flagging. Skipping "msa_flagging".')
-            self.msa_flagging.skip = True
-
-        # Check for straylight correction for MIRI MRS.
-        if not self.straylight.skip and exp_type != 'MIR_MRS':
-            self.log.debug('Science does not allow stray light correction. Skipping "straylight".')
-            self.straylight.skip = True
-
-        # Apply the fringe correction for MIRI MRS
-        if not self.fringe.skip and exp_type != 'MIR_MRS':
-            self.log.debug('Sicnece does not allow fringe correction. Skipping "fringe".')
-            self.fringe.skip = True
-
-        # Apply pathloss correction to NIRSpec and NIRISS SOSS exposures
-        if not self.pathloss.skip and exp_type not in ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_IFU', 'NIS_SOSS']:
-            self.log.debug('Science does not allow pathloss correction. Skipping "pathloss".')
-            self.pathloss.skip = True
-
-        # Apply barshadow correction to NIRSPEC MSA exposures
-        if not self.barshadow.skip and exp_type != 'NRS_MSASPEC':
-            self.log.debug('Science does not allow barshadow correction. Skipping "barshadow".')
-            self.barshadow.skip = True
-
-        # ####
         # Start processing the individual steps.
-        # ####
-
         assign_wcs_exception = None
         try:
             input = self.assign_wcs(input)
@@ -271,8 +207,8 @@ class Spec2Pipeline(Pipeline):
                 else:
                     raise RuntimeError('Cannot determine WCS.')
 
-        input = self.bkg_subtract(input, bkg_list)
-        input = self.imprint_subtract(input, imprint)
+        input = self.bkg_subtract(input, members_by_type['background'])
+        input = self.imprint_subtract(input, members_by_type['imprint'])
         input = self.msa_flagging(input)
 
         # The order of the next few steps is tricky, depending on mode:
@@ -358,3 +294,70 @@ class Spec2Pipeline(Pipeline):
         )
 
         return result
+
+    def _step_verification(self, exp_type, members_by_type, multi_int):
+        """Verify whether requested steps can operated on the given data
+
+        Thought ideally this would all be controlled through the pipeline
+        parameters, the desire to keep the number of config files down has
+        pushed the logic into code.
+
+        Once step and pipeline parameters are retrieved from CRDS, this
+        logic can be removed.
+        """
+
+        # Check for image-to-image background subtraction can be done.
+        if not self.bkg_subtract.skip:
+            if exp_type in WFSS_TYPES or len(members_by_type['background']) > 0:
+
+                if exp_type in WFSS_TYPES:
+                    members_by_type['background'] = []           # will be overwritten by the step
+
+                # Setup for saving
+                self.bkg_subtract.suffix = 'bsub'
+                if multi_int:
+                    self.bkg_subtract.suffix = 'bsubints'
+
+                # Backwards compatibility
+                if self.save_bsub:
+                    self.bkg_subtract.save_results = True
+            else:
+                self.log.debug('Science does not allow direct background subtraction. Skipping "bkg_subtract".')
+                self.bkg_subtract.skip = True
+
+        # Check for imprint subtraction.
+        imprint = members_by_type['imprint']
+        if not self.imprint_subtract.skip:
+            if exp_type in ['NRS_MSASPEC', 'NRS_IFU'] and \
+               len(imprint) > 0:
+                if len(imprint) > 1:
+                    self.log.warning('Wrong number of imprint members')
+                members_by_type['imprint'] = imprint[0]
+            else:
+                self.log.debug('Science does not allow imprint processing. Skipping "imprint_subtraction".')
+                self.imprint_subtraction.skip = True
+
+        # Check for NIRSpec MSA bad shutter flagging.
+        if not self.msa_flagging.skip and exp_type not in ['NRS_MSASPEC', 'NRS_IFU']:
+            self.log.debug('Science does not allow MSA flagging. Skipping "msa_flagging".')
+            self.msa_flagging.skip = True
+
+        # Check for straylight correction for MIRI MRS.
+        if not self.straylight.skip and exp_type != 'MIR_MRS':
+            self.log.debug('Science does not allow stray light correction. Skipping "straylight".')
+            self.straylight.skip = True
+
+        # Apply the fringe correction for MIRI MRS
+        if not self.fringe.skip and exp_type != 'MIR_MRS':
+            self.log.debug('Sicnece does not allow fringe correction. Skipping "fringe".')
+            self.fringe.skip = True
+
+        # Apply pathloss correction to NIRSpec and NIRISS SOSS exposures
+        if not self.pathloss.skip and exp_type not in ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_IFU', 'NIS_SOSS']:
+            self.log.debug('Science does not allow pathloss correction. Skipping "pathloss".')
+            self.pathloss.skip = True
+
+        # Apply barshadow correction to NIRSPEC MSA exposures
+        if not self.barshadow.skip and exp_type != 'NRS_MSASPEC':
+            self.log.debug('Science does not allow barshadow correction. Skipping "barshadow".')
+            self.barshadow.skip = True
