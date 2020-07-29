@@ -267,6 +267,10 @@ class Spec2Pipeline(Pipeline):
             resampled = calibrated
 
         # Extract a 1D spectrum from the 2D/3D data
+        if exp_type in ['MIR_MRS', 'NRS_IFU'] and self.cube_build.skip:
+            # Skip extract_1d for IFU modes where no cube was built
+            self.extract_1d.skip = True
+
         self.extract_1d.save_results = self.save_results
         if multi_int:
             self.extract_1d.suffix = 'x1dints'
