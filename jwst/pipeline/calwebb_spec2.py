@@ -280,13 +280,6 @@ class Spec2Pipeline(Pipeline):
             # Skip extract_1d for IFU modes where no cube was built
             self.extract_1d.skip = True
 
-        self.extract_1d.save_results = self.save_results
-        if multi_int:
-            self.extract_1d.suffix = 'x1dints'
-        else:
-            self.extract_1d.suffix = 'x1d'
-        x1d = self.extract_1d(resampled)
-
         resampled.close()
         x1d.close()
 
