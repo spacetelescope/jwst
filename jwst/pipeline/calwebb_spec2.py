@@ -27,6 +27,9 @@ from ..resample import resample_spec_step
 
 __all__ = ['Spec2Pipeline']
 
+# Classify various exposure types.
+WFSS_TYPES = ["NIS_WFSS", "NRC_WFSS"]
+
 
 class Spec2Pipeline(Pipeline):
     """
@@ -44,9 +47,6 @@ class Spec2Pipeline(Pipeline):
         save_bsub = boolean(default=False)        # Save background-subracted science
         fail_on_exception = boolean(default=True) # Fail if any product fails.
     """
-
-    # Classify various exposure types.
-    WFSS_TYPES = ["NIS_WFSS", "NRC_WFSS"]
 
     # Define aliases to steps
     step_defs = {
@@ -335,7 +335,7 @@ class Spec2Pipeline(Pipeline):
                 members_by_type['imprint'] = imprint[0]
             else:
                 self.log.debug('Science does not allow imprint processing. Skipping "imprint_subtraction".')
-                self.imprint_subtraction.skip = True
+                self.imprint_subtract.skip = True
 
         # Check for NIRSpec MSA bad shutter flagging.
         if not self.msa_flagging.skip and exp_type not in ['NRS_MSASPEC', 'NRS_IFU']:
