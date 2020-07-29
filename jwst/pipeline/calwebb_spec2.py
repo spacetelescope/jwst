@@ -53,9 +53,6 @@ class Spec2Pipeline(Pipeline):
         fail_on_exception = boolean(default=True) # Fail if any product fails.
     """
 
-    # Classify various exposure types.
-    WFSS_TYPES = ["NIS_WFSS", "NRC_WFSS"]
-
     # Define aliases to steps
     step_defs = {
         'bkg_subtract': background_step.BackgroundStep,
