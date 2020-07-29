@@ -2609,6 +2609,7 @@ def do_extract1d(
         A new MultiSpecModel containing the extracted spectra.
     """
 
+    log.info('in do extract1d')
     extract_ref_dict = ref_dict_sanity_check(extract_ref_dict)
 
     if isinstance(input_model, datamodels.SourceModelContainer):
@@ -2625,6 +2626,7 @@ def do_extract1d(
     # Setup the output model
     output_model = datamodels.MultiSpecModel()
 
+    print('**************** in do_extract1d')
     if hasattr(input_temp, "int_times"):
         output_model.int_times = input_temp.int_times.copy()
 
@@ -2675,6 +2677,7 @@ def do_extract1d(
                 f"Turning on source position correction for exp_type = {exp_type}"
             )
 
+    print('was_source_model',was_source_model)
     # Handle inputs that contain one or more slit models
     if was_source_model or isinstance(input_model, datamodels.MultiSlitModel):
         if was_source_model:   # SourceContainer has a single list of SlitModels

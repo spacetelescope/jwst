@@ -281,6 +281,8 @@ def extract_ifu(input_model, source_type, extract_params):
 
     data = input_model.data
     weightmap = input_model.weightmap
+    print('weightmap',weightmap)
+    exit(0)
     shape = data.shape
     if len(shape) != 3:
         log.error("Expected a 3-D IFU cube; dimension is %d.", len(shape))
@@ -394,7 +396,7 @@ def extract_ifu(input_model, source_type, extract_params):
 
 
     for k in range(shape[0]):
-
+        subtract_background_plane = subtract_background
         # Compute the area of the aperture and possibly also of the annulus.
         # for each wavelength bin (taking into account empty spaxels)
         normalization = 1.
@@ -431,7 +433,7 @@ def extract_ifu(input_model, source_type, extract_params):
             else:
                 log.warning("Background annulus has no area, so background "
                             "subtraction will be turned off.")
-                subtract_background = False
+                subtract_background_plane = False
         del temp
 
         npixels[k] = aperture_area
@@ -440,7 +442,7 @@ def extract_ifu(input_model, source_type, extract_params):
         phot_table = aperture_photometry(data[k, :, :], aperture,
                                          method=method, subpixels=subpixels)
         temp_flux[k] = float(phot_table['aperture_sum'][0])
-        if subtract_background:
+        if subtract_background_plane:
             bkg_table = aperture_photometry(data[k, :, :], annulus,
                                             method=method, subpixels=subpixels)
             background[k] = float(bkg_table['aperture_sum'][0])
@@ -556,7 +558,10 @@ def image_extract_ifu(input_model, source_type, extract_params):
     to extract the entire aperture; a trivially simple JSON extract1d reference file
     would do.  Therefore, we assume that if the user specified a reference
     file in image format, the user actually wanted that extract1d reference file
-    to be used, so we will ignore the requirement in this case.
+    to be used, so we will ignore the requirement in this case.  
+    The IMAGE extract1d reference file should have pixels with avalue of 1 for the 
+    source extraction region, 0 for pixels not to include in source or background,
+    and -1 for the background region.  
 
     Parameters
     ----------
@@ -679,6 +684,10 @@ def image_extract_ifu(input_model, source_type, extract_params):
     # Compute the number of pixels that were added together to get gross.
     normalization = 1.
     temp = np.ones_like(data)
+    #weightmap = input_model.weightmap
+    #temp = weightmap
+    #temp[temp>1] = 1
+
     npixels[:] = (temp * mask_target).sum(axis=2, dtype=np.float64).sum(axis=1)
     if mask_bkg is not None:
         n_bkg[:] = (temp * mask_bkg).sum(axis=2, dtype=np.float64).sum(axis=1)
