@@ -373,6 +373,7 @@ class Spec2Pipeline(Pipeline):
         """
         calibrated = self.extract_2d(calibrated)
         calibrated = self.srctype(calibrated)
+        calibrated = self.wavecorr(calibrated)
 
         # For MOS, and ignoring FS, the calibration process needs to occur
         # twice: Once to calibrate background slits and create a master background.
@@ -381,10 +382,7 @@ class Spec2Pipeline(Pipeline):
         # So, first pass, just do the calibration, both science and background
         # Here, design how to save the science correction information to pass onto
         # the next round.
-        pre_calibrated = self.wavecorr(calibrated)
         pre_calibrated = self.flat_field(pre_calibrated)
-        pre_calibrated = self.straylight(pre_calibrated)
-        pre_calibrated = self.fringe(pre_calibrated)
         pre_calibrated = self.pathloss(pre_calibrated)
         pre_calibrated = self.barshadow(pre_calibrated)
         pre_calibrated = self.photom(pre_calibrated)
@@ -401,6 +399,7 @@ class Spec2Pipeline(Pipeline):
         # The steps are split out here for design purposes.
         # First step is to map the master background into a MultiSlitModel
         # where the science slits are replaced by the master background
+        # Here the broadcasting from 1D to 2D need also occur.
         mb_multislit = map_to_science_slits(master_background, pre_calibrated)
 
         # Now that the master background is pretending to be science,
@@ -410,19 +409,14 @@ class Spec2Pipeline(Pipeline):
         mb_multislit = self.photom(mb_multislit, inverse=True, factors=pre_calibrated)
         mb_multislit = self.barshadow(mb_multislit, inverse=True, factors=pre_calibrated)
         mb_multislit = self.pathloss(mb_multislit, inverse=True, factors=pre_calibrated)
-        mb_multislit = self.fringe(mb_multislit, inverse=True, factors=pre_calibrated)
-        mb_multislit = self.straylight(mb_multislit, inverse=True, factors=pre_calibrated)
         mb_multislit = self.flat_field(mb_multislit, inverse=True, factors=pre_calibrated)
-        mb_multislit = self.wavecorr(mb_multislit, inverse=True, factors=pre_calibrated)
 
         # Now apply the de-calibrated background to the original science
+        # At this point, should just be a slit-to-slit subtraction operation.
         calibrated = apply_master_background(calibrated, mb_multislit)
 
         # Now continue calibration of the science.
-        calibrated = self.wavecorr(calibrated)
         calibrated = self.flat_field(pre_calibrated)
-        calibrated = self.straylight(pre_calibrated)
-        calibrated = self.fringe(pre_calibrated)
         calibrated = self.pathloss(pre_calibrated)
         calibrated = self.barshadow(pre_calibrated)
         calibrated = self.photom(pre_calibrated)
