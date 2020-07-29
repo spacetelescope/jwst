@@ -181,14 +181,13 @@ class Spec2Pipeline(Pipeline):
         self._step_verification(exp_type, members_by_type, multi_int)
 
         # Start processing the individual steps.
+        # `assign_wcs` is the critical step. Without it, processing
+        # cannot proceed.
         assign_wcs_exception = None
         try:
             input = self.assign_wcs(input)
         except Exception as exception:
             assign_wcs_exception = exception
-
-        # If assign_wcs was skipped, abort the rest of processing,
-        # because so many downstream steps depend on the WCS
         if assign_wcs_exception is not None or \
            input.meta.cal_step.assign_wcs != 'COMPLETE':
             message = (
@@ -207,6 +206,7 @@ class Spec2Pipeline(Pipeline):
                 else:
                     raise RuntimeError('Cannot determine WCS.')
 
+        # Steps whose order is the same for all types of input.
         input = self.bkg_subtract(input, members_by_type['background'])
         input = self.imprint_subtract(input, members_by_type['imprint'])
         input = self.msa_flagging(input)
@@ -216,27 +216,13 @@ class Spec2Pipeline(Pipeline):
         # need extract_2d first. Furthermore, NIRSpec MOS and FS need
         # srctype and wavecorr before flat_field.
         if exp_type in ['NRC_WFSS', 'NIS_WFSS', 'NRC_TSGRISM']:
+            input = self._process_grism(input)
             # Apply flat-field correction
-            input = self.flat_field(input)
-            input = self.extract_2d(input)
-            input = self.srctype(input)
+        elif exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ', 'NRS_MSASPEC', 'NRS_LAMP']:
+            input = self._process_nirspec(input)
         else:
-            # Extract 2D sub-windows for NIRSpec slit and MSA
-            if exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ', 'NRS_MSASPEC', 'NRS_LAMP']:
-                input = self.extract_2d(input)
-                input = self.srctype(input)
-                input = self.wavecorr(input)
-                input = self.flat_field(input)
-            else:
-                # Apply flat-field correction
-                input = self.srctype(input)
-                input = self.flat_field(input)
-
-        input = self.straylight(input)
-        input = self.fringe(input)
-        input = self.pathloss(input)
-        input = self.barshadow(input)
-        result = self.photom(input)
+            input = self._process_common(input)
+        result = input
 
         # Close the input file.  We should really be doing this further up
         # passing along result all the way down.
@@ -361,3 +347,49 @@ class Spec2Pipeline(Pipeline):
         if not self.barshadow.skip and exp_type != 'NRS_MSASPEC':
             self.log.debug('Science does not allow barshadow correction. Skipping "barshadow".')
             self.barshadow.skip = True
+
+    def _process_grism(self, input):
+        """WFSS & Grism processing
+
+        WFSS/Grism data need flat_field before extract_2d.
+        """
+        input = self.flat_field(input)
+        input = self.extract_2d(input)
+        input = self.srctype(input)
+        input = self.straylight(input)
+        input = self.fringe(input)
+        input = self.pathloss(input)
+        input = self.barshadow(input)
+        input = self.photom(input)
+
+        return input
+
+    def _process_nirspec(self, input):
+        """Process NIRSpec
+
+        NIRSpec MOS and FS need srctype and wavecorr before flat_field.
+        """
+        input = self.extract_2d(input)
+        input = self.srctype(input)
+        input = self.wavecorr(input)
+        input = self.flat_field(input)
+        input = self.straylight(input)
+        input = self.fringe(input)
+        input = self.pathloss(input)
+        input = self.barshadow(input)
+        input = self.photom(input)
+
+        return input
+
+    def _process_common(self, input):
+        """Common spectral processing"""
+        input = self.srctype(input)
+        input = self.flat_field(input)
+        input = self.straylight(input)
+        input = self.fringe(input)
+        input = self.pathloss(input)
+        input = self.barshadow(input)
+        input = self.photom(input)
+
+        return input
+
