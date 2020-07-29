@@ -91,23 +91,21 @@ class CubeBuildStep (Step):
             self.weighting = self.weighting.lower()
 
         if(self.scale1 != 0.0):
-            self.log.info('Input Scale of axis 1 %f', self.scale1)
+            self.log.info(f'Input Scale of axis 1 {self.scale1}')
         if(self.scale2 != 0.0):
-            self.log.info('Input Scale of axis 2 %f', self.scale2)
+            self.log.info(f'Input Scale of axis 2 {self.scale2}')
         if(self.scalew != 0.0):
-            self.log.info('Input wavelength scale %f  ', self.scalew)
+            self.log.info(f'Input wavelength scale {self.scalew}')
 
         if self.wavemin is not None:
-            self.log.info('Setting minimum wavelength of spectral cube to: %f',
-                          self.wavemin)
+            self.log.info(f'Setting minimum wavelength of spectral cube to: {self.wavemin}')
         if self.wavemax is not None:
-            self.log.info('Setting maximum wavelength of spectral cube to: %f',
-                          self.wavemax)
+            self.log.info(f'Setting maximum wavelength of spectral cube to: {self.wavemax}')
 
         if self.rois != 0.0:
-            self.log.info('Input Spatial ROI size %f', self.rois)
+            self.log.info(f'Input Spatial ROI size {self.rois}')
         if self.roiw != 0.0:
-            self.log.info('Input Wave ROI size %f', self.roiw)
+            self.log.info(f'Input Wave ROI size {self.roiw}')
 
 
         self.debug_file = None
@@ -150,13 +148,12 @@ class CubeBuildStep (Step):
         if self.coord_system == 'ifualign':
             self.interpolation = 'pointcloud'
 
-        self.log.info('Input interpolation: %s', self.interpolation)
-        self.log.info('Coordinate system to use: %s', self.coord_system)
+        self.log.info(f'Input interpolation: {self.interpolation}')
+        self.log.info(f'Coordinate system to use: {self.coord_system}')
         if self.interpolation == 'pointcloud':
-            self.log.info('Weighting method for point cloud: %s',
-                          self.weighting)
+            self.log.info(f'Weighting method for point cloud: {self.weighting}')
             if self.weight_power != 0:
-                self.log.info('Power weighting distance : %f', self.weight_power)
+                self.log.info(f'Power weighting distance: {self.weight_power}')
 
         if self.single:
             self.output_type = 'single'
@@ -223,7 +220,7 @@ class CubeBuildStep (Step):
         resol_filename = None
         if self.weighting == 'miripsf':
             resol_filename = self.get_reference_file(self.input_models[0], 'resol')
-            self.log.info('MIRI resol reference file %s',resol_filename)
+            self.log.info(f'MIRI resol reference file {resol_filename}')
             if resol_filename == 'N/A':
                 self.log.warning('No spectral resolution reference file found')
                 self.log.warning('Run again and turn off miripsf')
