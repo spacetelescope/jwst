@@ -28,6 +28,8 @@ associations
 
 - Update diagrams in documentation to change sloper to detector1. [#4986]
 
+- Update level-3 rules to exclude IFU exposures from ``calwebb_tso3`` associations. [#5202]
+
 barshadow
 ---------
 
