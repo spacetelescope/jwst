@@ -73,7 +73,7 @@ class Spec2Pipeline(Pipeline):
     }
 
     # Main processing
-    def process(self, input):
+    def process(self, data):
         """Entrypoint for this pipeline
 
         Parameters
@@ -91,7 +91,7 @@ class Spec2Pipeline(Pipeline):
         self.extract_1d.save_results = self.save_results
 
         # Retrieve the input(s)
-        asn = self.load_as_level2_asn(input)
+        asn = self.load_as_level2_asn(data)
 
         # Each exposure is a product in the association.
         # Process each exposure.
@@ -156,15 +156,15 @@ class Spec2Pipeline(Pipeline):
 
         # Get the science member. Technically there should only be
         # one. We'll just get the first one found.
-        science = members_by_type['science']
-        if len(science) != 1:
+        science_member = members_by_type['science']
+        if len(science_member) != 1:
             self.log.warning(
                 'Wrong number of science exposures found in {}'.format(
                     exp_product['name']
                 )
             )
             self.log.warning('    Using only first one.')
-        science = science[0]
+        science_member = science_member[0]
 
         self.log.info('Working on input %s ...', science)
         with self.open_model(science) as input:
@@ -224,9 +224,9 @@ class Spec2Pipeline(Pipeline):
                         raise RuntimeError('Cannot determine WCS.')
 
         # Steps whose order is the same for all types of input.
-        input = self.bkg_subtract(input, members_by_type['background'])
-        input = self.imprint_subtract(input, members_by_type['imprint'])
-        input = self.msa_flagging(input)
+        calibrated = self.bkg_subtract(calibrated, members_by_type['background'])
+        calibrated = self.imprint_subtract(calibrated, members_by_type['imprint'])
+        calibrated = self.msa_flagging(calibrated)
 
         # The order of the next few steps is tricky, depending on mode:
         # WFSS/Grism data need flat_field before extract_2d, but other modes
@@ -238,8 +238,7 @@ class Spec2Pipeline(Pipeline):
         elif exp_type in NRS_SLIT_TYPES:
             input = self._process_nirspec_slits(input)
         else:
-            input = self._process_common(input)
-        result = input
+            calibrated = self._process_common(calibrated)
 
         # Setup result metadata for pools, association, and suffix.
         result.meta.asn.pool_name = pool_name
@@ -250,7 +249,7 @@ class Spec2Pipeline(Pipeline):
         # "regular" spectra or cube_build for IFU data. No resampled
         # product is produced for time-series modes.
         if exp_type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'MIR_LRS-FIXEDSLIT'] \
-        and not isinstance(result, datamodels.CubeModel):
+           and not isinstance(calibrated, datamodels.CubeModel):
 
             # Call the resample_spec step for 2D slit data
             result_extra = self.resample_spec(result)
@@ -262,9 +261,9 @@ class Spec2Pipeline(Pipeline):
             # wavelength bands
             result_extra = self.cube_build(result)
             if not self.cube_build.skip:
-                self.save_model(result_extra[0], 's3d')
+                self.save_model(resampled[0], 's3d')
         else:
-            result_extra = result
+            resampled = calibrated
 
         # Extract a 1D spectrum from the 2D/3D data
         if exp_type in ['MIR_MRS', 'NRS_IFU'] and self.cube_build.skip:
@@ -272,15 +271,15 @@ class Spec2Pipeline(Pipeline):
             self.extract_1d.skip = True
         x1d_result = self.extract_1d(result_extra)
 
-        result_extra.close()
-        x1d_result.close()
+        resampled.close()
+        x1d.close()
 
         # That's all folks
         self.log.info(
             'Finished processing product {}'.format(exp_product['name'])
         )
 
-        return result
+        return calibrated
 
     def _step_verification(self, exp_type, members_by_type, multi_int):
         """Verify whether requested steps can operate on the given data
@@ -350,47 +349,48 @@ class Spec2Pipeline(Pipeline):
             self.log.debug('Science data does not allow barshadow correction. Skipping "barshadow".')
             self.barshadow.skip = True
 
-    def _process_grism(self, input):
+    def _process_grism(self, calibrated):
         """WFSS & Grism processing
 
         WFSS/Grism data need flat_field before extract_2d.
         """
-        input = self.flat_field(input)
-        input = self.extract_2d(input)
-        input = self.srctype(input)
-        input = self.straylight(input)
-        input = self.fringe(input)
-        input = self.pathloss(input)
-        input = self.barshadow(input)
-        input = self.photom(input)
+        calibrated = self.flat_field(calibrated)
+        calibrated = self.extract_2d(calibrated)
+        calibrated = self.srctype(calibrated)
+        calibrated = self.straylight(calibrated)
+        calibrated = self.fringe(calibrated)
+        calibrated = self.pathloss(calibrated)
+        calibrated = self.barshadow(calibrated)
+        calibrated = self.photom(calibrated)
 
-        return input
+        return calibrated
 
-    def _process_nirspec_slits(self, input):
+    def _process_nirspec_slits(self, calibrated):
         """Process NIRSpec
 
         NIRSpec MOS and FS need srctype and wavecorr before flat_field.
         """
-        input = self.extract_2d(input)
-        input = self.srctype(input)
-        input = self.wavecorr(input)
-        input = self.flat_field(input)
-        input = self.straylight(input)
-        input = self.fringe(input)
-        input = self.pathloss(input)
-        input = self.barshadow(input)
-        input = self.photom(input)
+        calibrated = self.extract_2d(calibrated)
+        calibrated = self.srctype(calibrated)
+        calibrated = self.wavecorr(calibrated)
+        calibrated = self.flat_field(calibrated)
+        calibrated = self.straylight(calibrated)
+        calibrated = self.fringe(calibrated)
+        calibrated = self.pathloss(calibrated)
+        calibrated = self.barshadow(calibrated)
+        calibrated = self.photom(calibrated)
 
-        return input
+        return calibrated
 
-    def _process_common(self, input):
+    def _process_common(self, calibrated):
         """Common spectral processing"""
-        input = self.srctype(input)
-        input = self.flat_field(input)
-        input = self.straylight(input)
-        input = self.fringe(input)
-        input = self.pathloss(input)
-        input = self.barshadow(input)
-        input = self.photom(input)
+        calibrated = self.srctype(calibrated)
+        calibrated = self.flat_field(calibrated)
+        calibrated = self.straylight(calibrated)
+        calibrated = self.fringe(calibrated)
+        calibrated = self.pathloss(calibrated)
+        calibrated = self.barshadow(calibrated)
+        calibrated = self.photom(calibrated)
 
-        return input
+        return calibrated
+
