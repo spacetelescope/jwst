@@ -345,7 +345,9 @@ def test_miri_cubepars_user_defaults(_jail, miri_cube_pars):
 
 
 def test_miri_cubepars_multiple_bands(_jail, miri_cube_pars):
-    """ Read in the miri cube pars file. Test cube has correct values when multiple bands are used """
+    """Read in the miri cube pars file. Test cube has correct values when
+    multiple bands are used
+    """
 
     instrument_info = instrument_defaults.InstrumentInfo()
     all_channel = []
