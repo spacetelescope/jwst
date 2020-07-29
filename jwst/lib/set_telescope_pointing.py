@@ -10,6 +10,7 @@ from scipy.interpolate import interp1d
 import numpy as np
 
 from ..assign_wcs.util import update_s_region_keyword, calc_rotation_matrix
+from ..assign_wcs.pointing import v23tosky
 from ..datamodels import Level1bModel
 from ..lib.engdb_tools import ENGDB_Service
 from .exposure_types import IMAGING_TYPES, FGS_GUIDE_EXP_TYPES
@@ -530,7 +531,7 @@ def update_s_region(model, siaf):
         "Vertices for aperture {0}: {1}".format(model.meta.aperture.name, vertices)
     )
     # Execute IdealToV2V3, followed by V23ToSky
-    from ..transforms.models import IdealToV2V3, V23ToSky
+    from ..transforms.models import IdealToV2V3
     v2_ref_deg = model.meta.wcsinfo.v2_ref / 3600  # in deg
     v3_ref_deg = model.meta.wcsinfo.v3_ref / 3600  # in deg
     roll_ref = model.meta.wcsinfo.roll_ref
@@ -547,15 +548,12 @@ def update_s_region(model, siaf):
     )
     v2, v3 = idltov23(xvert, yvert)  # in arcsec
 
-    # Convert to deg
-    v2 = v2 / 3600  # in deg
-    v3 = v3 / 3600  # in deg
     angles = [-v2_ref_deg, v3_ref_deg, -roll_ref, -dec_ref, ra_ref]
     axes = "zyxyz"
-    v23tosky = V23ToSky(angles, axes_order=axes)
-    ra_vert, dec_vert = v23tosky(v2, v3)
-    negative_ind = ra_vert < 0
-    ra_vert[negative_ind] = ra_vert[negative_ind] + 360
+    # hardcode wrapping angles for V2 and RA here. Could be made more
+    # flexible if needed.
+    v23tosky_tr = v23tosky(model, wrap_v2_at=180, wrap_lon_at=360)
+    ra_vert, dec_vert = v23tosky_tr(v2, v3)
     # Do not do any sorting, use the vertices in the SIAF order.
     footprint = np.array([ra_vert, dec_vert]).T
     update_s_region_keyword(model, footprint)
