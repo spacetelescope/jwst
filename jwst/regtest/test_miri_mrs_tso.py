@@ -19,7 +19,6 @@ def run_spec2(jail, rtdata_module):
     # Setup the inputs
     file_name = 'jw80600018001_02101_00003_mirifushort_rateints.fits'
     rtdata.get_data(INPUT_PATH + '/' + file_name)
-    file_path = rtdata.input
 
     # Run the pipeline
     args = ["config/calwebb_tso-spec2.cfg", rtdata.input,
