@@ -9,8 +9,7 @@ The ramp fitting step has three optional arguments that can be set by the user:
   for the optional output product.
 
 * ``--int_name``: A string that can be used to override the default name
-  for the per-integration product, in the case that the exposure
-  contains more than one integration.
+  for the per-integration product.
 
 * ``--maximum_cores``: The fraction of available cores that will be
   used for multi-processing in this step. The default value is 'none' which does not use

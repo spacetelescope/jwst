@@ -3,7 +3,6 @@ Various utility functions and data types
 """
 
 import sys
-import warnings
 import os
 from os.path import basename
 
@@ -168,9 +167,9 @@ def open(init=None, memmap=False, **kwargs):
 
     # Log a message about how the model was opened
     if file_name:
-        log.debug('Opening {0} as {1}'.format(file_name, new_class))
+        log.debug(f'Opening {file_name} as {new_class}')
     else:
-        log.debug('Opening as {0}'.format(new_class))
+        log.debug(f'Opening as {new_class}')
 
     # Actually open the model
     model = new_class(init, **kwargs)
@@ -182,8 +181,7 @@ def open(init=None, memmap=False, **kwargs):
     if not has_model_type:
         class_name = new_class.__name__.split('.')[-1]
         if file_name:
-            warnings.warn(f"model_type not found. Opening {file_name} as a {class_name}",
-                NoTypeWarning)
+            log.warning(f"model_type not found. Opening {file_name} as a {class_name}")
         try:
             delattr(model.meta, 'model_type')
         except AttributeError:
