@@ -57,7 +57,8 @@ def test_mirmrs_nodded():
 
     input.meta.exposure.type = 'MIR_MRS'
     input.meta.observation.bkgdtarg = False
-    input.meta.dither.primary_type = 'POINT-SOURCE'
+    input.meta.dither.primary_type = '2-POINT'
+    input.meta.dither.optimized_for = 'POINT-SOURCE'
     input.meta.target.source_type = 'EXTENDED'
 
     output = srctype.set_source_type(input)
