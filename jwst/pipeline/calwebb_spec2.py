@@ -370,7 +370,6 @@ class Spec2Pipeline(Pipeline):
         """
         calibrated = self.extract_2d(calibrated)
         calibrated = self.srctype(calibrated)
-        calibrated = self.wavecorr(calibrated)
 
         # For MOS, and ignoring FS, the calibration process needs to occur
         # twice: Once to calibrate background slits and create a master background.
@@ -379,7 +378,7 @@ class Spec2Pipeline(Pipeline):
         # So, first pass, just do the calibration, both science and background
         # Here, design how to save the science correction information to pass onto
         # the next round.
-        pre_calibrated = self.flat_field(pre_calibrated)
+        pre_calibrated = self.flat_field(calibrated, force_extended)
         pre_calibrated = self.pathloss(pre_calibrated)
         pre_calibrated = self.barshadow(pre_calibrated)
         pre_calibrated = self.photom(pre_calibrated)
@@ -413,10 +412,11 @@ class Spec2Pipeline(Pipeline):
         calibrated = apply_master_background(calibrated, mb_multislit)
 
         # Now continue calibration of the science.
-        calibrated = self.flat_field(pre_calibrated)
-        calibrated = self.pathloss(pre_calibrated)
-        calibrated = self.barshadow(pre_calibrated)
-        calibrated = self.photom(pre_calibrated)
+        calibrated = self.wavecore(calibrated)
+        calibrated = self.flat_field(calibrated)
+        calibrated = self.pathloss(calibrated)
+        calibrated = self.barshadow(calibrated)
+        calibrated = self.photom(calibrated)
 
         return calibrated
 
