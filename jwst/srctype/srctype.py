@@ -40,8 +40,13 @@ def set_source_type(input_model):
                    'NRC_TSGRISM', 'NIS_SOSS', 'NRS_FIXEDSLIT',
                    'NRS_BRIGHTOBJ', 'NRS_IFU']:
 
+        # Get info about the exposure, including whether it's a background
+        # target and the dither pattern type
         bkg_target = input_model.meta.observation.bkgdtarg
-        patttype = input_model.meta.dither.primary_type
+        if exptype == 'MIR_MRS':
+            patttype = input_model.meta.dither.optimized_for
+        else:
+            patttype = input_model.meta.dither.primary_type
 
         # The keyword SRCTYAPT was added in JWSTKD-354 to retain the value
         # given by the user in the APT, while the cal code then sets a value
@@ -69,6 +74,8 @@ def set_source_type(input_model):
             log.info(f'Exposure is a background target; setting SRCTYPE = {src_type}')
 
         elif pipe_utils.is_tso(input_model):
+
+            # Treat all TSO exposures as a point source
             src_type = 'POINT'
             log.info(f'Input is a TSO exposure; setting SRCTYPE = {src_type}')
 
