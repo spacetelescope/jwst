@@ -10,20 +10,21 @@ from ..stpipe import Pipeline
 # step imports
 from ..assign_wcs import assign_wcs_step
 from ..background import background_step
-from ..imprint import imprint_step
-from ..msaflagopen import msaflagopen_step
-from ..extract_2d import extract_2d_step
-from ..wavecorr import wavecorr_step
-from ..flatfield import flat_field_step
-from ..srctype import srctype_step
-from ..straylight import straylight_step
-from ..fringe import fringe_step
-from ..pathloss import pathloss_step
 from ..barshadow import barshadow_step
-from ..photom import photom_step
 from ..cube_build import cube_build_step
 from ..extract_1d import extract_1d_step
+from ..extract_2d import extract_2d_step
+from ..flatfield import flat_field_step
+from ..fringe import fringe_step
+from ..imprint import imprint_step
+from ..master_background import master_background_step
+from ..msaflagopen import msaflagopen_step
+from ..pathloss import pathloss_step
+from ..photom import photom_step
 from ..resample import resample_spec_step
+from ..srctype import srctype_step
+from ..straylight import straylight_step
+from ..wavecorr import wavecorr_step
 
 __all__ = ['Spec2Pipeline']
 
@@ -57,6 +58,7 @@ class Spec2Pipeline(Pipeline):
         'imprint_subtract': imprint_step.ImprintStep,
         'msa_flagging': msaflagopen_step.MSAFlagOpenStep,
         'extract_2d': extract_2d_step.Extract2dStep,
+        'master_background': master_background_step.MasterBackgroundStep,
         'wavecorr': wavecorr_step.WavecorrStep,
         'flat_field': flat_field_step.FlatFieldStep,
         'srctype': srctype_step.SourceTypeStep,
@@ -346,12 +348,12 @@ class Spec2Pipeline(Pipeline):
             self.log.debug('Science data does not allow barshadow correction. Skipping "barshadow".')
             self.barshadow.skip = True
 
-    def _process_grism(self, calibrated):
+    def _process_grism(self, data):
         """WFSS & Grism processing
 
         WFSS/Grism data need flat_field before extract_2d.
         """
-        calibrated = self.flat_field(calibrated)
+        calibrated = self.flat_field(data)
         calibrated = self.extract_2d(calibrated)
         calibrated = self.srctype(calibrated)
         calibrated = self.straylight(calibrated)
@@ -362,26 +364,67 @@ class Spec2Pipeline(Pipeline):
 
         return calibrated
 
-    def _process_nirspec_slits(self, calibrated):
+    def _process_nirspec(self, data):
         """Process NIRSpec
 
         NIRSpec MOS and FS need srctype and wavecorr before flat_field.
         Also have to deal with master background operations.
         """
-        calibrated = self.extract_2d(calibrated)
+        calibrated = self.extract_2d(data)
         calibrated = self.srctype(calibrated)
 
-        # For MOS, and ignoring FS, the calibration process needs to occur
-        # twice: Once to calibrate background slits and create a master background.
-        # Then a second time to calibrate science using the master background.
+        # Master background requires a different order of processing.
+        if False or not self.master_background.skip:
+            calibrated = self_process_nirspec_masterbackground(calibrated)
 
-        # So, first pass, just do the calibration, both science and background
-        # Here, design how to save the science correction information to pass onto
-        # the next round.
-        pre_calibrated = self.flat_field(calibrated, force_extended)
-        pre_calibrated = self.pathloss(pre_calibrated)
-        pre_calibrated = self.barshadow(pre_calibrated)
-        pre_calibrated = self.photom(pre_calibrated)
+        # Now continue calibration of the science.
+        calibrated = self.wavecore(calibrated)
+        calibrated = self.flat_field(calibrated)
+        calibrated = self.pathloss(calibrated)
+        calibrated = self.barshadow(calibrated)
+        calibrated = self.photom(calibrated)
+
+        return calibrated
+
+    def _process_nirspec_masterbackground(self, data):
+        """Prepare and apply the master background subtraction step
+
+        For MOS, and ignoring FS, the calibration process needs to occur
+        twice: Once to calibrate background slits and create a master background.
+        Then a second time to calibrate science using the master background.
+
+        Parameters
+        ----------
+        data : MultiSlitData
+            The data to apply the master background subtraction
+
+        Returns
+        -------
+        msb_subtracted : MultiSlitData
+            The background subtracted data.
+
+        Notes
+        -----
+        The algorithm is as follows:
+
+        - Calibrate all slits
+          - For each step:
+            - Force the source type to be extended source for all slits.
+            - Return the correction array used.
+        - Create the 1D master background
+        - For each slit
+          - Expand out the 1D master background to match the 2D wavelength grid of the slit
+          - Reverse-calibrate the 2D background, using the correction arrays calculated above.
+          - Subtract the background from the input slit data
+        """
+        # First pass: just do the calibration to determine the correction
+        # arrays.
+        pre_calibrated, ff_corrections = self.flat_field(
+            data, force_extended=True, return_corrections=True
+        )
+        pre_calibrated = self.pathloss(pre_calibratedforce_extended=True, return_corrections=True)
+        pre_calibrated = self.barshadow(pre_calibrated, force_extended=True, return_corrections=True)
+        pre_calibrated = self.photom(pre_calibrated, force_extended=True, return_corrections=True)
 
         # At this point, assume that `pre_calibrated` is a modified `MultiSlitModel` that
         # is also carrying the science calibration information along with it.
@@ -411,18 +454,12 @@ class Spec2Pipeline(Pipeline):
         # At this point, should just be a slit-to-slit subtraction operation.
         calibrated = apply_master_background(calibrated, mb_multislit)
 
-        # Now continue calibration of the science.
-        calibrated = self.wavecore(calibrated)
-        calibrated = self.flat_field(calibrated)
-        calibrated = self.pathloss(calibrated)
-        calibrated = self.barshadow(calibrated)
-        calibrated = self.photom(calibrated)
-
         return calibrated
 
-    def _process_common(self, calibrated):
+
+    def _process_common(self, data):
         """Common spectral processing"""
-        calibrated = self.srctype(calibrated)
+        calibrated = self.srctype(data)
         calibrated = self.flat_field(calibrated)
         calibrated = self.straylight(calibrated)
         calibrated = self.fringe(calibrated)
