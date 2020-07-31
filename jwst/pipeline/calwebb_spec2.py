@@ -375,11 +375,11 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.srctype(calibrated)
 
         # Master background requires a different order of processing.
-        if False or not self.master_background.skip:
+        if not self.master_background.skip:
             calibrated = self_process_nirspec_masterbackground(calibrated)
 
         # Now continue calibration of the science.
-        calibrated = self.wavecore(calibrated)
+        calibrated = self.wavecorr(calibrated)
         calibrated = self.flat_field(calibrated)
         calibrated = self.pathloss(calibrated)
         calibrated = self.barshadow(calibrated)
