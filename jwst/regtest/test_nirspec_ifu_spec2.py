@@ -44,6 +44,7 @@ def run_spec2(jail, rtdata_module):
     return rtdata
 
 
+@pytest.mark.slow
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
     'suffix',
