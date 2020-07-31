@@ -107,7 +107,7 @@ class FlatFieldStep(Step):
         output_model, interpolated_flats = flat_field.do_correction(
             input_model,
             **reference_file_models,
-            )
+        )
 
         # Close the input and reference files
         input_model.close()
