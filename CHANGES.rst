@@ -135,6 +135,9 @@ outlier_detection
 
 - Fix outlier_detection bug when saving intermediate results. [#5108]
 
+- Update logic to correctly handle input ``CubeModel``s that have only
+  1 integration. [#5211]
+
 pathloss
 --------
 
@@ -172,6 +175,9 @@ pipeline
   ``calwebb_tso-spec2.cfg`` configuration to turn on the ``fringe`` step
   and turn off ``cube_build`` for MIRI MRS TSO. [#5202]
 
+- Update the ``Coron3Pipeline`` logic to correctly handle inputs that have
+  only 1 integration. [#5211]
+
 photom
 ------
 
@@ -184,6 +190,8 @@ ramp_fitting
 - Add multi-processing capability. [#4815]
 
 - Fix crash when DRPFRMS1 is not set [#5096]
+
+- Update to always create the rateints product, even when NINTS=1. [#5211]
 
 source_catalog
 --------------

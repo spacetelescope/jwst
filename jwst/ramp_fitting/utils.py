@@ -729,8 +729,8 @@ def output_integ(slope_int, dq_int, effintim, var_p3, var_r3, var_both3,
     # Reset the warnings filter to its original state
     warnings.resetwarnings()
 
-
     return cubemod
+
 
 def gls_output_integ( model, slope_int, slope_err_int, dq_int):
     """
