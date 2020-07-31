@@ -392,4 +392,3 @@ class Spec2Pipeline(Pipeline):
         input = self.photom(input)
 
         return input
-

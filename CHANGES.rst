@@ -160,6 +160,8 @@ pipeline
 - Update the ``Spec2Pipeline`` to include the new ``wavecorr`` step and put
   ``srctype`` before ``wavecorr``. [#5133]
 
+- Refactor Spec2Pipeline for execution logic and step flow isolation [#5214] 
+
 photom
 ------
 
