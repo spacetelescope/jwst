@@ -28,6 +28,8 @@ associations
 
 - Update diagrams in documentation to change sloper to detector1. [#4986]
 
+- Update level-3 rules to exclude IFU exposures from ``calwebb_tso3`` associations. [#5202]
+
 barshadow
 ---------
 
@@ -114,6 +116,11 @@ extract_2d
   which allows a user to specify the extraction height in the
   cross-dispersion direction for WFSS mode. [#5140]
 
+fringe
+------
+
+- Update the fringe step to handle 3D inputs for MIRI MRS TSO mode. [#5202]
+
 master_background
 -----------------
 
@@ -127,6 +134,9 @@ outlier_detection
 - Update median filter to use numpy's nanmedian. [#5114]
 
 - Fix outlier_detection bug when saving intermediate results. [#5108]
+
+- Update logic to correctly handle input ``CubeModel``s that have only
+  1 integration. [#5211]
 
 pathloss
 --------
@@ -160,6 +170,14 @@ pipeline
 - Update the ``Spec2Pipeline`` to include the new ``wavecorr`` step and put
   ``srctype`` before ``wavecorr``. [#5133]
 
+- Update the ``Spec2Pipeline`` to skip ``extract_1d`` for IFU data that
+  have not had a cube built (e.g. MIRI MRS TSO), and update the
+  ``calwebb_tso-spec2.cfg`` configuration to turn on the ``fringe`` step
+  and turn off ``cube_build`` for MIRI MRS TSO. [#5202]
+
+- Update the ``Coron3Pipeline`` logic to correctly handle inputs that have
+  only 1 integration. [#5211]
+
 - Refactor Spec2Pipeline for execution logic and step flow isolation [#5214] 
 
 photom
@@ -174,6 +192,8 @@ ramp_fitting
 - Add multi-processing capability. [#4815]
 
 - Fix crash when DRPFRMS1 is not set [#5096]
+
+- Update to always create the rateints product, even when NINTS=1. [#5211]
 
 source_catalog
 --------------

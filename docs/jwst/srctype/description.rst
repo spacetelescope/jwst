@@ -43,9 +43,12 @@ The following choices are used, in order of priority:
 
  - Exposures that are part of a nodded dither pattern, which are assumed
    to only be used with point-like targets, default to a source type
-   of "POINT." Nodded exposures are identified by the "PATTTYPE" keyword
-   either being set to a value of "POINT-SOURCE" (MIRI MRS) or containing
-   the sub-string "NOD" (NIRSpec IFU and Fixed Slit).
+   of "POINT." Nodded exposures are usually identified by the "PATTTYPE"
+   keyword either being set to a value of "POINT-SOURCE" or containing the
+   sub-string "NOD" (NIRSpec IFU and Fixed Slit). For MIRI MRS exposures
+   the keyword "DITHOPFR" (DITHer pattern OPtimized FoR) is used instead of
+   "PATTTYPE". If it has a value of "POINT-SOURCE", the source type is set
+   to "POINT".
 
  - If none of the above conditions apply, and the user did not choose a
    value in the APT, the following table of defaults is used, based on
