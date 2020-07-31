@@ -233,6 +233,9 @@ def get_blended_metadata(input_models, verbose=False):
     else:
         new_table = None
 
+    for model in input_models:
+        model.close()
+
     return new_meta, new_table
 
 
