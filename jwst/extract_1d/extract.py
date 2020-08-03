@@ -2626,7 +2626,6 @@ def do_extract1d(
     # Setup the output model
     output_model = datamodels.MultiSpecModel()
 
-    print('**************** in do_extract1d')
     if hasattr(input_temp, "int_times"):
         output_model.int_times = input_temp.int_times.copy()
 
@@ -2677,7 +2676,6 @@ def do_extract1d(
                 f"Turning on source position correction for exp_type = {exp_type}"
             )
 
-    print('was_source_model',was_source_model)
     # Handle inputs that contain one or more slit models
     if was_source_model or isinstance(input_model, datamodels.MultiSlitModel):
         if was_source_model:   # SourceContainer has a single list of SlitModels
@@ -3213,6 +3211,7 @@ def do_extract1d(
         or extract_ref_dict['need_to_set_to_complete']
     ):
         output_model.meta.cal_step.extract_1d = 'COMPLETE'
+
 
     return output_model
 
