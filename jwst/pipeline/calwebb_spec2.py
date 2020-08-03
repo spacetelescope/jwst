@@ -28,7 +28,9 @@ from ..resample import resample_spec_step
 __all__ = ['Spec2Pipeline']
 
 # Classify various exposure types.
-WFSS_TYPES = ["NIS_WFSS", "NRC_WFSS"]
+NRS_SLIT_TYPES = ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ', 'NRS_MSASPEC', 'NRS_LAMP']
+WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS"]
+GRISM_TYPES = ['NRC_TSGRISM'] + WFSS_TYPES
 
 
 class Spec2Pipeline(Pipeline):
@@ -215,11 +217,11 @@ class Spec2Pipeline(Pipeline):
         # WFSS/Grism data need flat_field before extract_2d, but other modes
         # need extract_2d first. Furthermore, NIRSpec MOS and FS need
         # srctype and wavecorr before flat_field.
-        if exp_type in ['NRC_WFSS', 'NIS_WFSS', 'NRC_TSGRISM']:
+        if exp_type in GRISM_TYPES:
             input = self._process_grism(input)
             # Apply flat-field correction
-        elif exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ', 'NRS_MSASPEC', 'NRS_LAMP']:
-            input = self._process_nirspec(input)
+        elif exp_type in NRS_SLIT_TYPES:
+            input = self._process_nirspec_slits(input)
         else:
             input = self._process_common(input)
         result = input
@@ -286,9 +288,9 @@ class Spec2Pipeline(Pipeline):
         return result
 
     def _step_verification(self, exp_type, members_by_type, multi_int):
-        """Verify whether requested steps can operated on the given data
+        """Verify whether requested steps can operate on the given data
 
-        Thought ideally this would all be controlled through the pipeline
+        Though ideally this would all be controlled through the pipeline
         parameters, the desire to keep the number of config files down has
         pushed the logic into code.
 
@@ -312,7 +314,7 @@ class Spec2Pipeline(Pipeline):
                 if self.save_bsub:
                     self.bkg_subtract.save_results = True
             else:
-                self.log.debug('Science does not allow direct background subtraction. Skipping "bkg_subtract".')
+                self.log.debug('Science data does not allow direct background subtraction. Skipping "bkg_subtract".')
                 self.bkg_subtract.skip = True
 
         # Check for imprint subtraction.
@@ -324,32 +326,32 @@ class Spec2Pipeline(Pipeline):
                     self.log.warning('Wrong number of imprint members')
                 members_by_type['imprint'] = imprint[0]
             else:
-                self.log.debug('Science does not allow imprint processing. Skipping "imprint_subtraction".')
+                self.log.debug('Science data does not allow imprint processing. Skipping "imprint_subtraction".')
                 self.imprint_subtract.skip = True
 
         # Check for NIRSpec MSA bad shutter flagging.
         if not self.msa_flagging.skip and exp_type not in ['NRS_MSASPEC', 'NRS_IFU']:
-            self.log.debug('Science does not allow MSA flagging. Skipping "msa_flagging".')
+            self.log.debug('Science data does not allow MSA flagging. Skipping "msa_flagging".')
             self.msa_flagging.skip = True
 
         # Check for straylight correction for MIRI MRS.
         if not self.straylight.skip and exp_type != 'MIR_MRS':
-            self.log.debug('Science does not allow stray light correction. Skipping "straylight".')
+            self.log.debug('Science data does not allow stray light correction. Skipping "straylight".')
             self.straylight.skip = True
 
         # Apply the fringe correction for MIRI MRS
         if not self.fringe.skip and exp_type != 'MIR_MRS':
-            self.log.debug('Sicnece does not allow fringe correction. Skipping "fringe".')
+            self.log.debug('Science data does not allow fringe correction. Skipping "fringe".')
             self.fringe.skip = True
 
         # Apply pathloss correction to NIRSpec and NIRISS SOSS exposures
         if not self.pathloss.skip and exp_type not in ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_IFU', 'NIS_SOSS']:
-            self.log.debug('Science does not allow pathloss correction. Skipping "pathloss".')
+            self.log.debug('Science data does not allow pathloss correction. Skipping "pathloss".')
             self.pathloss.skip = True
 
         # Apply barshadow correction to NIRSPEC MSA exposures
         if not self.barshadow.skip and exp_type != 'NRS_MSASPEC':
-            self.log.debug('Science does not allow barshadow correction. Skipping "barshadow".')
+            self.log.debug('Science data does not allow barshadow correction. Skipping "barshadow".')
             self.barshadow.skip = True
 
     def _process_grism(self, input):
@@ -368,7 +370,7 @@ class Spec2Pipeline(Pipeline):
 
         return input
 
-    def _process_nirspec(self, input):
+    def _process_nirspec_slits(self, input):
         """Process NIRSpec
 
         NIRSpec MOS and FS need srctype and wavecorr before flat_field.
