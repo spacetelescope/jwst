@@ -81,6 +81,13 @@ class Spec2Pipeline(Pipeline):
         """
         self.log.info('Starting calwebb_spec2 ...')
 
+        # Setup step parameters required by the pipeline.
+        self.resample_spec.save_results = self.save_results
+        self.resample_spec.suffix = 's2d'
+        self.cube_build.output_type = 'multi'
+        self.cube_build.save_results = False
+        self.extract_1d.save_results = self.save_results
+
         # Retrieve the input(s)
         asn = self.load_as_level2_asn(input)
 
@@ -166,6 +173,14 @@ class Spec2Pipeline(Pipeline):
         else:
             multi_int = False
 
+        # Suffixes are dependent on whether the science is multi-integration or not.
+        if multi_int:
+            suffix = 'calints'
+            self.extract_1d.suffix = 'x1dints'
+        else:
+            suffix = 'cal'
+            self.extract_1d.suffix = 'x1d'
+
         # Apply WCS info
         # check the datamodel to see if it's
         # a grism image, if so get the catalog
@@ -230,15 +245,9 @@ class Spec2Pipeline(Pipeline):
         # passing along result all the way down.
         input.close()
 
-        # Record ASN pool and table names in output
+        # Setup result metadata for pools, association, and suffix.
         result.meta.asn.pool_name = pool_name
         result.meta.asn.table_name = op.basename(asn_file)
-
-        # Setup to save the calibrated exposure at end of step.
-        if multi_int:
-            suffix = 'calints'
-        else:
-            suffix = 'cal'
         result.meta.filename = self.make_output_path(suffix=suffix)
 
         # Produce a resampled product, either via resample_spec for
@@ -248,8 +257,6 @@ class Spec2Pipeline(Pipeline):
         and not isinstance(result, datamodels.CubeModel):
 
             # Call the resample_spec step for 2D slit data
-            self.resample_spec.save_results = self.save_results
-            self.resample_spec.suffix = 's2d'
             result_extra = self.resample_spec(result)
 
         elif exp_type in ['MIR_MRS', 'NRS_IFU']:
@@ -257,8 +264,6 @@ class Spec2Pipeline(Pipeline):
             # Call the cube_build step for IFU data;
             # always create a single cube containing multiple
             # wavelength bands
-            self.cube_build.output_type = 'multi'
-            self.cube_build.save_results = False
             result_extra = self.cube_build(result)
             if not self.cube_build.skip:
                 self.save_model(result_extra[0], 's3d')
@@ -269,12 +274,6 @@ class Spec2Pipeline(Pipeline):
         if exp_type in ['MIR_MRS', 'NRS_IFU'] and self.cube_build.skip:
             # Skip extract_1d for IFU modes where no cube was built
             self.extract_1d.skip = True
-
-        self.extract_1d.save_results = self.save_results
-        if multi_int:
-            self.extract_1d.suffix = 'x1dints'
-        else:
-            self.extract_1d.suffix = 'x1d'
         x1d_result = self.extract_1d(result_extra)
 
         result_extra.close()
