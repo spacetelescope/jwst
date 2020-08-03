@@ -165,63 +165,61 @@ class Spec2Pipeline(Pipeline):
         science = science[0]
 
         self.log.info('Working on input %s ...', science)
-        # The following should be switched to the with context manager
-        input = self.open_model(science)
-        exp_type = input.meta.exposure.type
-        if isinstance(input, datamodels.CubeModel):
-            multi_int = True
-        else:
-            multi_int = False
-
-        # Suffixes are dependent on whether the science is multi-integration or not.
-        if multi_int:
-            suffix = 'calints'
-            self.extract_1d.suffix = 'x1dints'
-        else:
-            suffix = 'cal'
-            self.extract_1d.suffix = 'x1d'
-
-        # Apply WCS info
-        # check the datamodel to see if it's
-        # a grism image, if so get the catalog
-        # name from the asn and record it to the meta
-        if exp_type in WFSS_TYPES:
-            try:
-                input.meta.source_catalog = os.path.basename(members_by_type['sourcecat'][0])
-                self.log.info('Using sourcecat file {}'.format(input.meta.source_catalog))
-            except IndexError:
-                if input.meta.source_catalog is None:
-                    raise IndexError("No source catalog specified in association or datamodel")
-
-        # Decide on what steps can actually be accomplished based on the
-        # provided input.
-        self._step_verification(exp_type, members_by_type, multi_int)
-
-        # Start processing the individual steps.
-        # `assign_wcs` is the critical step. Without it, processing
-        # cannot proceed.
-        assign_wcs_exception = None
-        try:
-            input = self.assign_wcs(input)
-        except Exception as exception:
-            assign_wcs_exception = exception
-        if assign_wcs_exception is not None or \
-           input.meta.cal_step.assign_wcs != 'COMPLETE':
-            message = (
-                'Assign_wcs processing was skipped.'
-                '\nAborting remaining processing for this exposure.'
-                '\nNo output product will be created.'
-            )
-            input.close()
-            if self.assign_wcs.skip:
-                self.log.warning(message)
-                return
+        with self.open_model(science) as input:
+            exp_type = input.meta.exposure.type
+            if isinstance(input, datamodels.CubeModel):
+                multi_int = True
             else:
-                self.log.error(message)
-                if assign_wcs_exception is not None:
-                    raise assign_wcs_exception
+                multi_int = False
+
+            # Suffixes are dependent on whether the science is multi-integration or not.
+            if multi_int:
+                suffix = 'calints'
+                self.extract_1d.suffix = 'x1dints'
+            else:
+                suffix = 'cal'
+                self.extract_1d.suffix = 'x1d'
+
+            # Apply WCS info
+            # check the datamodel to see if it's
+            # a grism image, if so get the catalog
+            # name from the asn and record it to the meta
+            if exp_type in WFSS_TYPES:
+                try:
+                    input.meta.source_catalog = os.path.basename(members_by_type['sourcecat'][0])
+                    self.log.info('Using sourcecat file {}'.format(input.meta.source_catalog))
+                except IndexError:
+                    if input.meta.source_catalog is None:
+                        raise IndexError("No source catalog specified in association or datamodel")
+
+            # Decide on what steps can actually be accomplished based on the
+            # provided input.
+            self._step_verification(exp_type, members_by_type, multi_int)
+
+            # Start processing the individual steps.
+            # `assign_wcs` is the critical step. Without it, processing
+            # cannot proceed.
+            assign_wcs_exception = None
+            try:
+                input = self.assign_wcs(input)
+            except Exception as exception:
+                assign_wcs_exception = exception
+            if assign_wcs_exception is not None or \
+               input.meta.cal_step.assign_wcs != 'COMPLETE':
+                message = (
+                    'Assign_wcs processing was skipped.'
+                    '\nAborting remaining processing for this exposure.'
+                    '\nNo output product will be created.'
+                )
+                if self.assign_wcs.skip:
+                    self.log.warning(message)
+                    return
                 else:
-                    raise RuntimeError('Cannot determine WCS.')
+                    self.log.error(message)
+                    if assign_wcs_exception is not None:
+                        raise assign_wcs_exception
+                    else:
+                        raise RuntimeError('Cannot determine WCS.')
 
         # Steps whose order is the same for all types of input.
         input = self.bkg_subtract(input, members_by_type['background'])
@@ -240,10 +238,6 @@ class Spec2Pipeline(Pipeline):
         else:
             input = self._process_common(input)
         result = input
-
-        # Close the input file.  We should really be doing this further up
-        # passing along result all the way down.
-        input.close()
 
         # Setup result metadata for pools, association, and suffix.
         result.meta.asn.pool_name = pool_name
