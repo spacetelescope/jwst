@@ -116,9 +116,8 @@ In the case of the ``calwebb_spec2`` pipeline,
 for example, where the input is a single MIRI or NIRSpec IFU exposure, the default output cube will be built from
 all the data in that single exposure. For MIRI this means using the data from both channels (e.g. 1A and 2A) that
 are recorded in a single exposure and the output IFU cube will have a non-linear wavelength dimension.
-For NIRSpec the data  is from the single grating+filter combination
-contained in the exposure and will have a linear wavelength dimension. 
- The calwebb_spec2 pipeline calls cube_build with ``output_type=multi``.
+For NIRSpec the data  is from the single grating+filter combination contained in the exposure and will have a
+linear wavelength dimension. The calwebb_spec2 pipeline calls cube_build with ``output_type=multi``.
 
 In the ``calwebb_spec3`` pipeline, on the other hand, where the input can be a collection of data from multiple
 exposures covering multiple bands, the default behavior is to create a set of single-band cubes. For MIRI, for
@@ -151,7 +150,8 @@ The SCI image contains the surface brightness of cube spaxels in units of mJy/st
 can either be linear or non-linear. If the wavelength is non-linear then the IFU cube contain data from more than one band.  A
 table containing the wavelength of each plane is provided and conforms to the  'WAVE_TAB' fits convention. The wavelengths in the table are read in from the cubepar reference file.  The ERR image contains the
 uncertainty on the SCI values, the DQ image contains the data quality flags for each spaxel, and the WMAP image
-contains the number of point cloud elements contained in the region of interest of the spaxel.
+contains the number of point cloud elements contained in the region of interest of the spaxel. The data quality flag does not propogate the
+dq flags from previous steps but is defined in the cube build step as: good data (value = 0), non_science (value = 512), do_not_use(value =1), or a combination of non_science and do_not_use (value = 513).  
 
 Output Product Name
 -------------------
