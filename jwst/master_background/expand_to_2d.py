@@ -7,7 +7,7 @@ from .. import datamodels
 from .. assign_wcs import nirspec   # For NIRSpec IFU data
 from .. datamodels import dqflags
 from ..lib.wcs_utils import get_wavelengths
-from .nirspec_corrections import correct_nrs_ifu_bkg
+from .nirspec_utils import correct_nrs_ifu_bkg
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
