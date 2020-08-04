@@ -82,9 +82,7 @@ The MIRI reference table descriptions:
 - **MULTICHANNEL_MSM** table is used for the MSM weighting and  contains the wavelengths and associated region of interest size to use when IFU cubes are created from several bands and the final output is to have an IFU cube of varying spectral scale.
 
 - **CUBEPAR_EMSM** table contains the Exponential Modified Shepard Method (EMSM) weighting values to use for each band.
-- **MULTICHANNEL_EMSM** table is used for the EMSM weighting and contains the wavelengths and associated
-region of interest size to use when IFU cubes are created from several bands
-and the final output is to have an IFU cube of varying spectral scale.
+- **MULTICHANNEL_EMSM** table is used for the EMSM weighting and contains the wavelengths and associated region of interest size to use when IFU cubes are created from several bands and the final output is to have an IFU cube of varying spectral scale.
 
 
 The NIRSPEC reference table descriptions:
