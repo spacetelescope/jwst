@@ -1,12 +1,12 @@
 import logging
 
-log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
-
 from jwst import datamodels
 from ..resample import resample_spec_step
 from ..extract_1d import extract_1d_step
 from ..combine_1d.combine1d import combine_1d_spectra
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 def create_background_from_multislit(input_model):
@@ -47,6 +47,7 @@ def create_background_from_multislit(input_model):
     x1d = extract_1d_step.Extract1dStep.call(resamp)
 
     # Call combine_1d to combine the 1D background spectra
+    log.info('Combining background spectra into master background')
     master_bkg = combine_1d_spectra(x1d, exptime_key='exposure_time')
 
     del bkg_model

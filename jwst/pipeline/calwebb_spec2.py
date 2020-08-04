@@ -27,6 +27,8 @@ from ..srctype import srctype_step
 from ..straylight import straylight_step
 from ..wavecorr import wavecorr_step
 
+from ..master_background import nirspec_utils
+
 __all__ = ['Spec2Pipeline']
 
 # Classify various exposure types.
@@ -378,7 +380,7 @@ class Spec2Pipeline(Pipeline):
 
         # Master background requires a different order of processing.
         if not self.master_background.skip:
-            calibrated = self_process_nirspec_masterbackground(calibrated)
+            calibrated = self._process_nirspec_masterbackground(calibrated)
 
         # Now continue calibration of the science.
         calibrated = self.wavecorr(calibrated)
@@ -435,7 +437,9 @@ class Spec2Pipeline(Pipeline):
         # are split out here for design
 
         # First create the 1D, fully calibrated master background.
-        master_background = create_background_from_multislit(pre_calibrated)
+        master_background = nirspec_utils.create_background_from_multislit(pre_calibrated)
+        if master_background is None:
+            return data
 
         # Now decalibrate the master background for each individual science slit
         # The steps are split out here for design purposes.
@@ -459,7 +463,6 @@ class Spec2Pipeline(Pipeline):
 
         return calibrated
 
-
     def _process_common(self, data):
         """Common spectral processing"""
         calibrated = self.srctype(data)
@@ -471,4 +474,3 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.photom(calibrated)
 
         return calibrated
-
