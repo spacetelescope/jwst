@@ -227,12 +227,12 @@ def wrap_ra(ravalues):
     If exists it makes it difficult to determine
     ra range of IFU cube. So put them all on "one side" of 0/360 border
 
-    Input
-    -----
-    ravalues : numpy.ndarray
-      RA values
+    Parameters
+    ----------
+    input : ravalues
+        RA values numpy.ndarray
 
-    Return
+    Returns
     ------
     a numpy array of ra values all on "same side" of 0/360 border
     """
