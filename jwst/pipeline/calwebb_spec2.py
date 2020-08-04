@@ -235,10 +235,10 @@ class Spec2Pipeline(Pipeline):
         # need extract_2d first. Furthermore, NIRSpec MOS and FS need
         # srctype and wavecorr before flat_field.
         if exp_type in GRISM_TYPES:
-            input = self._process_grism(input)
+            calibrated = self._process_grism(calibrated)
             # Apply flat-field correction
         elif exp_type in NRS_SLIT_TYPES:
-            input = self._process_nirspec_slits(input)
+            calibrated = self._process_nirspec_slits(calibrated)
         else:
             calibrated = self._process_common(calibrated)
 
