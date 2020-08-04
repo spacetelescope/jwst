@@ -178,6 +178,8 @@ pipeline
 - Update the ``Coron3Pipeline`` logic to correctly handle inputs that have
   only 1 integration. [#5211]
 
+- Refactor Spec2Pipeline for execution logic and step flow isolation [#5214] 
+
 photom
 ------
 
