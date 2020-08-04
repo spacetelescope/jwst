@@ -125,7 +125,7 @@ example, this can mean separate cubes for bands 1A, 2A, 3A, 4A, 1B, 2B, ..., 3C,
 the input. For NIRSpec this may mean multiple cubes, one for each grating+filter combination contained in the
 input collection. The calwebb_spec3 pipeline calls cube_build with ``output_type=band``. These types of IFU cubes will have
 a linear-wavelength dimension. If the user wants to combine all the data together covering several band they can using
-the option ``output_type=multi` and the resulting IFU cubes will have a non-linear wavelength dimension. 
+the option ``output_type=multi`` and the resulting IFU cubes will have a non-linear wavelength dimension. 
 
 Several ``cube_build`` step arguments are available to allow the user to control exactly what combinations of input
 data are used to construct the output cubes. The IFU cubes are constructed, by default, on the sky with north pointing up
