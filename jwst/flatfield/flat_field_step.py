@@ -100,7 +100,7 @@ class FlatFieldStep(Step):
                 reference_file_models[reftype] = None
 
         # Do the flat-field correction
-        output_model, interpolated_flats = flat_field.do_correction(
+        output_model, flat_applied = flat_field.do_correction(
             input_model,
             **reference_file_models,
         )
@@ -113,10 +113,10 @@ class FlatFieldStep(Step):
         except AttributeError:
             pass
 
-        if self.save_interpolated_flat and interpolated_flats is not None:
+        if self.save_interpolated_flat and flat_applied is not None:
             self.log.info("Writing interpolated flat field.")
-            self.save_model(interpolated_flats, suffix=self.flat_suffix)
-            interpolated_flats.close()
+            self.save_model(flat_applied, suffix=self.flat_suffix)
+        self.flat_applied = flat_applied
 
         return output_model
 
