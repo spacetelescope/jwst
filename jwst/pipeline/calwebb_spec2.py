@@ -169,53 +169,55 @@ class Spec2Pipeline(Pipeline):
         science_member = science_member[0]
 
         self.log.info('Working on input %s ...', science_member)
-        # The following should be switched to the with context manager
-        science = self.open_model(science_member)
-        exp_type = science.meta.exposure.type
-        if isinstance(science, datamodels.CubeModel):
-            multi_int = True
-        else:
-            multi_int = False
-
-        # Apply WCS info
-        # check the datamodel to see if it's
-        # a grism image, if so get the catalog
-        # name from the asn and record it to the meta
-        if exp_type in WFSS_TYPES:
-            try:
-                science.meta.source_catalog = os.path.basename(members_by_type['sourcecat'][0])
-                self.log.info('Using sourcecat file {}'.format(science.meta.source_catalog))
-            except IndexError:
-                if science.meta.source_catalog is None:
-                    raise IndexError("No source catalog specified in association or datamodel")
-
-        # Decide on what steps can actually be accomplished based on the
-        # provided input.
-        self._step_verification(exp_type, members_by_type, multi_int)
-
-        # Start processing the individual steps.
-        # `assign_wcs` is the critical step. Without it, processing
-        # cannot proceed.
-        assign_wcs_exception = None
-        try:
-            calibrated = self.assign_wcs(science)
-        except Exception as exception:
-            assign_wcs_exception = exception
-        if assign_wcs_exception is not None or \
-           calibrated.meta.cal_step.assign_wcs != 'COMPLETE':
-            message = (
-                'Assign_wcs processing was skipped.'
-                '\nAborting remaining processing for this exposure.'
-                '\nNo output product will be created.'
-            )
-            calibrated.close()
-            if self.assign_wcs.skip:
-                self.log.warning(message)
-                return
+        with self.open_model(science_member) as science:
+            exp_type = science.meta.exposure.type
+            if isinstance(science, datamodels.CubeModel):
+                multi_int = True
             else:
-                self.log.error(message)
-                if assign_wcs_exception is not None:
-                    raise assign_wcs_exception
+                multi_int = False
+
+            # Suffixes are dependent on whether the science is multi-integration or not.
+            if multi_int:
+                suffix = 'calints'
+                self.extract_1d.suffix = 'x1dints'
+            else:
+                suffix = 'cal'
+                self.extract_1d.suffix = 'x1d'
+
+            # Apply WCS info
+            # check the datamodel to see if it's
+            # a grism image, if so get the catalog
+            # name from the asn and record it to the meta
+            if exp_type in WFSS_TYPES:
+                try:
+                    science.meta.source_catalog = os.path.basename(members_by_type['sourcecat'][0])
+                    self.log.info('Using sourcecat file {}'.format(science.meta.source_catalog))
+                except IndexError:
+                    if science.meta.source_catalog is None:
+                        raise IndexError("No source catalog specified in association or datamodel")
+
+            # Decide on what steps can actually be accomplished based on the
+            # provided input.
+            self._step_verification(exp_type, members_by_type, multi_int)
+
+            # Start processing the individual steps.
+            # `assign_wcs` is the critical step. Without it, processing
+            # cannot proceed.
+            assign_wcs_exception = None
+            try:
+                calibrated = self.assign_wcs(science)
+            except Exception as exception:
+                assign_wcs_exception = exception
+            if assign_wcs_exception is not None or \
+               calibrated.meta.cal_step.assign_wcs != 'COMPLETE':
+                message = (
+                    'Assign_wcs processing was skipped.'
+                    '\nAborting remaining processing for this exposure.'
+                    '\nNo output product will be created.'
+                )
+                if self.assign_wcs.skip:
+                    self.log.warning(message)
+                    return
                 else:
                     raise RuntimeError('Cannot determine WCS.')
 
@@ -236,19 +238,9 @@ class Spec2Pipeline(Pipeline):
         else:
             calibrated = self._process_common(calibrated)
 
-        # Close the input file.  We should really be doing this further up
-        # passing along result all the way down.
-        science.close()
-
         # Record ASN pool and table names in output
         calibrated.meta.asn.pool_name = pool_name
         calibrated.meta.asn.table_name = op.basename(asn_file)
-
-        # Setup to save the calibrated exposure at end of step.
-        if multi_int:
-            suffix = 'calints'
-        else:
-            suffix = 'cal'
         calibrated.meta.filename = self.make_output_path(suffix=suffix)
 
         # Produce a resampled product, either via resample_spec for
@@ -258,8 +250,6 @@ class Spec2Pipeline(Pipeline):
            and not isinstance(calibrated, datamodels.CubeModel):
 
             # Call the resample_spec step for 2D slit data
-            self.resample_spec.save_results = self.save_results
-            self.resample_spec.suffix = 's2d'
             resampled = self.resample_spec(calibrated)
 
         elif exp_type in ['MIR_MRS', 'NRS_IFU']:
@@ -267,8 +257,6 @@ class Spec2Pipeline(Pipeline):
             # Call the cube_build step for IFU data;
             # always create a single cube containing multiple
             # wavelength bands
-            self.cube_build.output_type = 'multi'
-            self.cube_build.save_results = False
             resampled = self.cube_build(calibrated)
             if not self.cube_build.skip:
                 self.save_model(resampled[0], 's3d')
@@ -279,6 +267,7 @@ class Spec2Pipeline(Pipeline):
         if exp_type in ['MIR_MRS', 'NRS_IFU'] and self.cube_build.skip:
             # Skip extract_1d for IFU modes where no cube was built
             self.extract_1d.skip = True
+        x1d = self.extract_1d(resampled)
 
         resampled.close()
         x1d.close()
@@ -373,7 +362,7 @@ class Spec2Pipeline(Pipeline):
 
         return calibrated
 
-    def _process_nirspec(self, data):
+    def _process_nirspec_slits(self, data):
         """Process NIRSpec
 
         NIRSpec MOS and FS need srctype and wavecorr before flat_field.
