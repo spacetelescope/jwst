@@ -119,6 +119,8 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
         log.warning("Pixel area (solid angle) is not populated; "
                     "the flux will not be correct.")
         pixel_solid_angle = 1.
+
+    print(input_units_are_megajanskys,pixel_solid_angle)
     if input_units_are_megajanskys:
         # Convert flux from MJy to Jy, and convert background to MJy / sr.
         flux = temp_flux * 1.e6
@@ -163,6 +165,8 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
         apcorr = select_apcorr(input_model)(
             input_model, apcorr_ref_model.apcorr_table, apcorr_ref_model.sizeunit, location=(ra, dec, wl)
         )
+
+        print(apcorr)
         apcorr.apply(spec.spec_table)
 
     output_model.spec.append(spec)
@@ -458,6 +462,7 @@ def extract_ifu(input_model, source_type, extract_params):
         if annulus is not None:
             npixels_annulus[k] = annulus_area
         # aperture_photometry - using data
+
         phot_table = aperture_photometry(data[k, :, :], aperture,
                                          method=method, subpixels=subpixels)
         temp_flux[k] = float(phot_table['aperture_sum'][0])
@@ -466,6 +471,7 @@ def extract_ifu(input_model, source_type, extract_params):
                                             method=method, subpixels=subpixels)
             background[k] = float(bkg_table['aperture_sum'][0])
             temp_flux[k] = temp_flux[k] - background[k] * normalization
+
 
     # Check for NaNs in the wavelength array, flag them in the dq array,
     # and truncate the arrays if NaNs are found at endpoints (unless the
