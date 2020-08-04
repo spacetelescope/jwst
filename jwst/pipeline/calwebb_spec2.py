@@ -376,7 +376,7 @@ class Spec2Pipeline(Pipeline):
 
         # Master background requires a different order of processing.
         if not self.master_background.skip:
-            calibrated = self_process_nirspec_masterbackground(calibrated)
+            calibrated = self._process_nirspec_masterbackground(calibrated)
 
         # Now continue calibration of the science.
         calibrated = self.wavecorr(calibrated)
@@ -434,6 +434,8 @@ class Spec2Pipeline(Pipeline):
 
         # First create the 1D, fully calibrated master background.
         master_background = create_background_from_multislit(pre_calibrated)
+        if master_background is None:
+            return data
 
         # Now decalibrate the master background for each individual science slit
         # The steps are split out here for design purposes.

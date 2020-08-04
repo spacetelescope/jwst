@@ -541,8 +541,7 @@ def combine_1d_spectra(input_model, exptime_key):
         A datamodels.CombinedSpecModel object.
     """
 
-    #log.debug("Using exptime_key = {}.".format(exptime_key))
-    log.info("Using exptime_key = {}.".format(exptime_key))
+    log.debug("Using exptime_key = {}.".format(exptime_key))
 
     exptime_key = check_exptime(exptime_key)
 
