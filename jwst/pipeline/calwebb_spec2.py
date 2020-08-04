@@ -168,10 +168,10 @@ class Spec2Pipeline(Pipeline):
             self.log.warning('    Using only first one.')
         science_member = science_member[0]
 
-        self.log.info('Working on input %s ...', science)
-        with self.open_model(science) as input:
-            exp_type = input.meta.exposure.type
-            if isinstance(input, datamodels.CubeModel):
+        self.log.info('Working on input %s ...', science_member)
+        with self.open_model(science_member) as science:
+            exp_type = science.meta.exposure.type
+            if isinstance(science, datamodels.CubeModel):
                 multi_int = True
             else:
                 multi_int = False
@@ -190,10 +190,10 @@ class Spec2Pipeline(Pipeline):
             # name from the asn and record it to the meta
             if exp_type in WFSS_TYPES:
                 try:
-                    input.meta.source_catalog = os.path.basename(members_by_type['sourcecat'][0])
-                    self.log.info('Using sourcecat file {}'.format(input.meta.source_catalog))
+                    science.meta.source_catalog = os.path.basename(members_by_type['sourcecat'][0])
+                    self.log.info('Using sourcecat file {}'.format(science.meta.source_catalog))
                 except IndexError:
-                    if input.meta.source_catalog is None:
+                    if science.meta.source_catalog is None:
                         raise IndexError("No source catalog specified in association or datamodel")
 
             # Decide on what steps can actually be accomplished based on the
@@ -205,11 +205,11 @@ class Spec2Pipeline(Pipeline):
             # cannot proceed.
             assign_wcs_exception = None
             try:
-                input = self.assign_wcs(input)
+                calibrated = self.assign_wcs(science)
             except Exception as exception:
                 assign_wcs_exception = exception
             if assign_wcs_exception is not None or \
-               input.meta.cal_step.assign_wcs != 'COMPLETE':
+               calibrated.meta.cal_step.assign_wcs != 'COMPLETE':
                 message = (
                     'Assign_wcs processing was skipped.'
                     '\nAborting remaining processing for this exposure.'
@@ -242,10 +242,10 @@ class Spec2Pipeline(Pipeline):
         else:
             calibrated = self._process_common(calibrated)
 
-        # Setup result metadata for pools, association, and suffix.
-        result.meta.asn.pool_name = pool_name
-        result.meta.asn.table_name = op.basename(asn_file)
-        result.meta.filename = self.make_output_path(suffix=suffix)
+        # Record ASN pool and table names in output
+        calibrated.meta.asn.pool_name = pool_name
+        calibrated.meta.asn.table_name = op.basename(asn_file)
+        calibrated.meta.filename = self.make_output_path(suffix=suffix)
 
         # Produce a resampled product, either via resample_spec for
         # "regular" spectra or cube_build for IFU data. No resampled
@@ -254,14 +254,14 @@ class Spec2Pipeline(Pipeline):
            and not isinstance(calibrated, datamodels.CubeModel):
 
             # Call the resample_spec step for 2D slit data
-            result_extra = self.resample_spec(result)
+            resampled = self.resample_spec(calibrated)
 
         elif exp_type in ['MIR_MRS', 'NRS_IFU']:
 
             # Call the cube_build step for IFU data;
             # always create a single cube containing multiple
             # wavelength bands
-            result_extra = self.cube_build(result)
+            resampled = self.cube_build(calibrated)
             if not self.cube_build.skip:
                 self.save_model(resampled[0], 's3d')
         else:
@@ -271,7 +271,7 @@ class Spec2Pipeline(Pipeline):
         if exp_type in ['MIR_MRS', 'NRS_IFU'] and self.cube_build.skip:
             # Skip extract_1d for IFU modes where no cube was built
             self.extract_1d.skip = True
-        x1d_result = self.extract_1d(result_extra)
+        x1d = self.extract_1d(resampled)
 
         resampled.close()
         x1d.close()
@@ -366,7 +366,7 @@ class Spec2Pipeline(Pipeline):
 
         return calibrated
 
-    def _process_nirspec(self, data):
+    def _process_nirspec_slits(self, data):
         """Process NIRSpec
 
         NIRSpec MOS and FS need srctype and wavecorr before flat_field.
