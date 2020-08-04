@@ -53,8 +53,9 @@ def do_correction(input_model, flat=None, fflat=None, sflat=None, dflat=None):
     output_model : data model
         The data model for the flat-fielded science data.
 
-    interpolated_flats : ~jwst.datamodels.MultiSlitModel, ~jwst.datamodels.ImageModel or None
-        Data model containing the interpolated flat fields (NIRSpec data only).
+    flat_applied : ~jwst.datamodels.MultiSlitModel, ~jwst.datamodels.ImageModel
+        Data model containing the interpolated flat fields (NIRSpec data only), or
+        just the input flat.
     """
 
     # Initialize the output model as a copy of the input
@@ -64,12 +65,12 @@ def do_correction(input_model, flat=None, fflat=None, sflat=None, dflat=None):
     # types of data (including NIRSpec imaging).  The test on flat is
     # needed because NIRSpec imaging data are processed by do_flat_field().
     if input_model.meta.instrument.name == 'NIRSPEC' and flat is None:
-        interpolated_flats = do_nirspec_flat_field(output_model, fflat, sflat, dflat)
+        flat_applied = do_nirspec_flat_field(output_model, fflat, sflat, dflat)
     else:
         do_flat_field(output_model, flat)
-        interpolated_flats = None
+        flat_applied = flat
 
-    return output_model, interpolated_flats
+    return output_model, flat_applied
 
 
 #
@@ -570,7 +571,7 @@ def nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_model,
 
 
 def nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
-                dispaxis):
+                dispaxis, interpolate_flat=None):
     """Apply flat-fielding for NIRSpec IFU data, in-place
 
     Parameters
@@ -590,112 +591,26 @@ def nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
     dispaxis : int
         1 means horizontal dispersion, 2 means vertical dispersion.
 
+    interpolated_flat : ~jwst.datamodels.ImageModel or None
+        A pre-computed flat to use directly. If supplied,
+        all other inputs are ignored
+
     Returns
     -------
     ~jwst.datamodels.ImageModel
         The interpolated flat field.
     """
 
-    any_updated = False
-    exposure_type = output_model.meta.exposure.type
-    flat = np.ones_like(output_model.data)
-    flat_dq = np.zeros_like(output_model.dq)
-    flat_err = np.zeros_like(output_model.data)
-
-    try:
-        list_of_wcs = nirspec.nrs_ifu_wcs(output_model)
-    except (KeyError, AttributeError):
-        if output_model.meta.cal_step.assign_wcs == 'COMPLETE':
-            log.error("The input file does not appear to have WCS info.")
-            raise RuntimeError("Problem accessing WCS information.")
-        else:
-            log.error("This mode %s requires WCS information.", exposure_type)
-            raise RuntimeError("The assign_wcs step has not been run.")
-    for (k, ifu_wcs) in enumerate(list_of_wcs):
-
-        # example:  bounding_box = ((1600.5, 2048.5),   # X
-        #                           (1886.5, 1925.5))   # Y
-        truncated = False
-        try:
-            xstart = ifu_wcs.bounding_box[0][0]
-            xstop = ifu_wcs.bounding_box[0][1]
-            ystart = ifu_wcs.bounding_box[1][0]
-            ystop = ifu_wcs.bounding_box[1][1]
-            log.debug("Using ifu_wcs.bounding_box.")
-        except AttributeError:
-            log.info("ifu_wcs.bounding_box not found; using domain instead.")
-            xstart = ifu_wcs.domain[0]['lower']
-            xstop = ifu_wcs.domain[0]['upper']
-            ystart = ifu_wcs.domain[1]['lower']
-            ystop = ifu_wcs.domain[1]['upper']
-
-        if xstart < -0.5:
-            truncated = True
-            log.info("xstart from WCS bounding_box was %g" % xstart)
-            xstart = 0.
-        if ystart < -0.5:
-            truncated = True
-            log.info("ystart from WCS bounding_box was %g" % ystart)
-            ystart = 0.
-        if xstop > 2047.5:
-            truncated = True
-            log.info("xstop from WCS bounding_box was %g" % xstop)
-            xstop = 2047.
-        if ystop > 2047.5:
-            truncated = True
-            log.info("ystop from WCS bounding_box was %g" % ystop)
-            ystop = 2047.
-        if truncated:
-            log.info("WCS bounding_box for stripe %d extended beyond image "
-                     "edges, has been truncated to ...", k)
-            log.info('  xstart=%g, xstop=%g, ystart=%g, ystop=%g',
-                     xstart, xstop, ystart, ystop)
-
-        # Convert these to integers, and add one to the upper limits,
-        # because we want to use these as slice limits.
-        xstart = int(math.ceil(xstart))
-        xstop = int(math.floor(xstop)) + 1
-        ystart = int(math.ceil(ystart))
-        ystop = int(math.floor(ystop)) + 1
-
-        dx = xstop - xstart
-        dy = ystop - ystart
-        ind = np.indices((dy, dx))
-        x = ind[1] + xstart
-        y = ind[0] + ystart
-        coords = ifu_wcs(x, y)
-        wl = coords[2]
-        nan_flag = np.isnan(wl)
-        good_flag = np.logical_not(nan_flag)
-        if wl[good_flag].max() < MICRONS_100:
-            log.warning("Wavelengths in WCS table appear to be in meters")
-        # Set NaNs to a relatively harmless value, but don't modify nan_flag.
-        wl[nan_flag] = 0.
-
-        flat_2d, flat_dq_2d, flat_err_2d = create_flat_field(
-                        wl, f_flat_model, s_flat_model, d_flat_model,
-                        xstart, xstop, ystart, ystop,
-                        exposure_type, dispaxis, None, None)
-        flat_2d[nan_flag] = 1.
-        mask = (flat_2d <= 0.)
-        nbad = mask.sum(dtype=np.intp)
-        if nbad > 0:
-            log.debug("%d flat-field values <= 0", nbad)
-            flat_2d[mask] = 1.
-        del mask
-
-        flat[ystart:ystop, xstart:xstop][good_flag] = flat_2d[good_flag]
-        if flat_dq.dtype == flat_dq_2d.dtype:
-            flat_dq[ystart:ystop, xstart:xstop] |= flat_dq_2d.copy()
-        else:
-            log.warning("flat_dq.dtype = {}  flat_dq_2d.dtype = {}"
-                        .format(flat_dq.dtype, flat_dq_2d.dtype))
-            flat_dq[ystart:ystop, xstart:xstop] |= \
-                flat_dq_2d.astype(flat_dq.dtype).copy()
-        flat_err[ystart:ystop, xstart:xstop][good_flag] = flat_err_2d[good_flag]
-        del nan_flag, good_flag
-
-        any_updated = True
+    if interpolate_flat is not None:
+        log.info(f'Pre-computed flat {interpolated_flat} provided. Using the flat directly')
+        flat = interpolated_flat.data
+        flat_dq = interpolated_flat.dq
+        flat_err = interpolated_flat.err
+        any_update = True
+    else:
+        flat, flat_dq, flat_err, any_updated = flat_for_nirspec_ifu(
+            output_model, f_flat_model, s_flat_model, d_flat_model, dispaxis
+        )
 
     if any_updated:
         output_model.data /= flat
@@ -713,7 +628,7 @@ def nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
         output_model.meta.cal_step.flat_field = 'COMPLETE'
 
         # Create an output model for the interpolated flat fields.
-        interpolated_flats = datamodels.ImageModel(data=flat, dq=flat_dq)
+        interpolated_flats = datamodels.ImageModel(data=flat, dq=flat_dq, err=flat_err)
         interpolated_flats.update(output_model, only="PRIMARY")
     else:
         output_model.meta.cal_step.flat_field = 'SKIPPED'
@@ -1676,3 +1591,135 @@ def interpolate_flat(image_flat, image_dq, image_err, image_wl, wl):
     flat_2d[:, :] = np.where(flat_dq > 0, 1., flat_2d)
 
     return flat_2d.astype(image_flat.dtype), flat_dq, flat_err
+
+
+def flat_for_nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
+                         dispaxis):
+    """Create the interpolated flat for NIRSpec IFU
+
+    Parameters
+    ----------
+    output_model : JWST data model
+        Science data model, modified (flat fielded) in-place.
+
+    f_flat_model : ~jwst.datamodels.NirspecFlatModel, ~jwst.datamodels.NirspecQuadFlatModel, or None
+        Flat field for the fore optics.
+
+    s_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+        Flat field for the spectrograph.
+
+    d_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+        Flat field for the detector.
+
+    dispaxis : int
+        1 means horizontal dispersion, 2 means vertical dispersion.
+
+    Returns
+    -------
+    flat, flat_dq, flat_err, any_updated : numpy.array, numpy.array, numpy.array, bool
+        4-tuple of the interpolated flat correction and whether any slice of the IFU
+        is actually affected.
+    """
+    any_updated = False
+    exposure_type = output_model.meta.exposure.type
+    flat = np.ones_like(output_model.data)
+    flat_dq = np.zeros_like(output_model.dq)
+    flat_err = np.zeros_like(output_model.data)
+
+    try:
+        list_of_wcs = nirspec.nrs_ifu_wcs(output_model)
+    except (KeyError, AttributeError):
+        if output_model.meta.cal_step.assign_wcs == 'COMPLETE':
+            log.error("The input file does not appear to have WCS info.")
+            raise RuntimeError("Problem accessing WCS information.")
+        else:
+            log.error("This mode %s requires WCS information.", exposure_type)
+            raise RuntimeError("The assign_wcs step has not been run.")
+    for (k, ifu_wcs) in enumerate(list_of_wcs):
+
+        # example:  bounding_box = ((1600.5, 2048.5),   # X
+        #                           (1886.5, 1925.5))   # Y
+        truncated = False
+        try:
+            xstart = ifu_wcs.bounding_box[0][0]
+            xstop = ifu_wcs.bounding_box[0][1]
+            ystart = ifu_wcs.bounding_box[1][0]
+            ystop = ifu_wcs.bounding_box[1][1]
+            log.debug("Using ifu_wcs.bounding_box.")
+        except AttributeError:
+            log.info("ifu_wcs.bounding_box not found; using domain instead.")
+            xstart = ifu_wcs.domain[0]['lower']
+            xstop = ifu_wcs.domain[0]['upper']
+            ystart = ifu_wcs.domain[1]['lower']
+            ystop = ifu_wcs.domain[1]['upper']
+
+        if xstart < -0.5:
+            truncated = True
+            log.info("xstart from WCS bounding_box was %g" % xstart)
+            xstart = 0.
+        if ystart < -0.5:
+            truncated = True
+            log.info("ystart from WCS bounding_box was %g" % ystart)
+            ystart = 0.
+        if xstop > 2047.5:
+            truncated = True
+            log.info("xstop from WCS bounding_box was %g" % xstop)
+            xstop = 2047.
+        if ystop > 2047.5:
+            truncated = True
+            log.info("ystop from WCS bounding_box was %g" % ystop)
+            ystop = 2047.
+        if truncated:
+            log.info("WCS bounding_box for stripe %d extended beyond image "
+                     "edges, has been truncated to ...", k)
+            log.info('  xstart=%g, xstop=%g, ystart=%g, ystop=%g',
+                     xstart, xstop, ystart, ystop)
+
+        # Convert these to integers, and add one to the upper limits,
+        # because we want to use these as slice limits.
+        xstart = int(math.ceil(xstart))
+        xstop = int(math.floor(xstop)) + 1
+        ystart = int(math.ceil(ystart))
+        ystop = int(math.floor(ystop)) + 1
+
+        dx = xstop - xstart
+        dy = ystop - ystart
+        ind = np.indices((dy, dx))
+        x = ind[1] + xstart
+        y = ind[0] + ystart
+        coords = ifu_wcs(x, y)
+        wl = coords[2]
+        nan_flag = np.isnan(wl)
+        good_flag = np.logical_not(nan_flag)
+        if wl[good_flag].max() < MICRONS_100:
+            log.warning("Wavelengths in WCS table appear to be in meters")
+        # Set NaNs to a relatively harmless value, but don't modify nan_flag.
+        wl[nan_flag] = 0.
+
+        flat_2d, flat_dq_2d, flat_err_2d = create_flat_field(
+                        wl, f_flat_model, s_flat_model, d_flat_model,
+                        xstart, xstop, ystart, ystop,
+                        exposure_type, dispaxis, None, None)
+        flat_2d[nan_flag] = 1.
+        mask = (flat_2d <= 0.)
+        nbad = mask.sum(dtype=np.intp)
+        if nbad > 0:
+            log.debug("%d flat-field values <= 0", nbad)
+            flat_2d[mask] = 1.
+        del mask
+
+        flat[ystart:ystop, xstart:xstop][good_flag] = flat_2d[good_flag]
+        if flat_dq.dtype == flat_dq_2d.dtype:
+            flat_dq[ystart:ystop, xstart:xstop] |= flat_dq_2d.copy()
+        else:
+            log.warning("flat_dq.dtype = {}  flat_dq_2d.dtype = {}"
+                        .format(flat_dq.dtype, flat_dq_2d.dtype))
+            flat_dq[ystart:ystop, xstart:xstop] |= \
+                flat_dq_2d.astype(flat_dq.dtype).copy()
+        flat_err[ystart:ystop, xstart:xstop][good_flag] = flat_err_2d[good_flag]
+        del nan_flag, good_flag
+
+        any_updated = True
+
+    # That's all folks
+    return flat, flat_dq, flat_err, any_updated
