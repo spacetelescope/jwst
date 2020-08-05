@@ -6,6 +6,7 @@ from . import regtestdata as rt
 from astropy.io.fits.diff import FITSDiff
 
 import jwst.datamodels as dm
+from jwst.flatfield import FlatFieldStep
 from jwst.flatfield.flat_field import nirspec_ifu
 
 # Define artifactory source and truth
@@ -76,3 +77,17 @@ def test_nirspec_ifu_user_supplied_flat(jail, rtdata_module, fitsdiff_default_kw
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
+
+def test_flat_field_step_user_supplied_flat(jail, rtdata_module, fitsdiff_default_kwargs):
+    """Test providing a user-supplied flat field to the FlatFieldStep"""
+    rtdata = rtdata_module
+    data = dm.open(rtdata.get_data('nirspec/ifu/nrs_ifu_nrs1_assign_wcs.fits'))
+    user_supplied_flat = rtdata.get_data('nirspec/ifu/nrs_ifu_nrs1_interpolated_flat.fits')
+
+    data_flat_fielded = FlatFieldStep.call(data, user_supplied_flat=user_supplied_flat)
+    rtdata.output = 'flat_fielded_step_user_supplied.fits'
+    data_flat_fielded.write(rtdata.output)
+
+    rtdata.get_truth(TRUTH_PATH + '/' + 'flat_fielded_step_user_supplied.fits')
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
