@@ -46,7 +46,7 @@ class FlatFieldStep(Step):
 
     spec = """
         save_interpolated_flat = boolean(default=False) # Save interpolated NRS flat
-        user_flat = string(default=None)  # User-supplied flat
+        user_supplied_flat = string(default=None)  # User-supplied flat
     """
 
     reference_file_types = ["flat", "fflat", "sflat", "dflat"]
@@ -81,9 +81,15 @@ class FlatFieldStep(Step):
 
         # Retrieve reference files only if no user-supplied flat is specified
         if self.user_supplied_flat is None:
-            reference_file_models = self._get_references(input_model)
+            reference_file_models = self._get_references(input_model, exposure_type)
         else:
-            reference_file_models['user_supplied_flat'] = self.user_supplied_flat
+            self.log.info(
+                f'User-supplied flat {self.user_supplied_flat} given.'
+                ' Ignoring all flat reference files and flat creation.'
+            )
+            reference_file_models = {
+                'user_supplied_flat': datamodels.open(self.user_supplied_flat)
+            }
 
         # Do the flat-field correction
         output_model, flat_applied = flat_field.do_correction(
@@ -119,13 +125,16 @@ class FlatFieldStep(Step):
         input_model.close()
         return result
 
-    def _get_references(self, data):
+    def _get_references(self, data, exposure_type):
         """Retrieve required CRDS reference files
 
         Parameters
         ----------
         data : DataModel
             The data to base the CRDS lookups on.
+
+        exposure_type : str
+            The exposure type keyword value
 
         Returns
         -------
