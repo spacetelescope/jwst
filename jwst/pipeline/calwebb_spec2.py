@@ -443,7 +443,7 @@ class Spec2Pipeline(Pipeline):
         # First step is to map the master background into a MultiSlitModel
         # where the science slits are replaced by the master background
         # Here the broadcasting from 1D to 2D need also occur.
-        mb_multislit = map_to_science_slits(master_background, pre_calibrated)
+        mb_multislit = nirspec_utils.map_to_science_slits(pre_calibrated, master_background)
 
         # Now that the master background is pretending to be science,
         # walk backwards through the steps to uncalibrate, using the
