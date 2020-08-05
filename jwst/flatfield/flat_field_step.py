@@ -46,6 +46,7 @@ class FlatFieldStep(Step):
 
     spec = """
         save_interpolated_flat = boolean(default=False) # Save interpolated NRS flat
+        user_flat = string(default=None)  # User-supplied flat
     """
 
     reference_file_types = ["flat", "fflat", "sflat", "dflat"]
@@ -78,30 +79,11 @@ class FlatFieldStep(Step):
             self.log.warning("flat fielding will be skipped.")
             return self.skip_step(input_model)
 
-        # Get reference file paths
-        reference_file_names = {}
-        for reftype in self.reference_file_types:
-            reffile = self.get_reference_file(input_model, reftype)
-            reference_file_names[reftype] = reffile if reffile != 'N/A' else None
-
-        # Define mapping between reftype and datamodel type
-        model_type = dict(
-            flat=datamodels.FlatModel,
-            fflat=datamodels.NirspecFlatModel,
-            sflat=datamodels.NirspecFlatModel,
-            dflat=datamodels.NirspecFlatModel,
-            )
-        if exposure_type == "NRS_MSASPEC":
-            model_type["fflat"] = datamodels.NirspecQuadFlatModel
-
-        # Open the relevant reference files as datamodels
-        reference_file_models = {}
-        for reftype, reffile in reference_file_names.items():
-            if reffile is not None:
-                reference_file_models[reftype] = model_type[reftype](reffile)
-                self.log.debug('Using %s reference file: %s', reftype.upper(), reffile)
-            else:
-                reference_file_models[reftype] = None
+        # Retrieve reference files only if no user-supplied flat is specified
+        if self.user_supplied_flat is None:
+            reference_file_models = self._get_references(input_model)
+        else:
+            reference_file_models['user_supplied_flat'] = self.user_supplied_flat
 
         # Do the flat-field correction
         output_model, flat_applied = flat_field.do_correction(
@@ -136,3 +118,44 @@ class FlatFieldStep(Step):
         result.meta.cal_step.flat_field = "SKIPPED"
         input_model.close()
         return result
+
+    def _get_references(self, data):
+        """Retrieve required CRDS reference files
+
+        Parameters
+        ----------
+        data : DataModel
+            The data to base the CRDS lookups on.
+
+        Returns
+        -------
+        reference_file_models : {str: DataModel{,...}}
+            Dictionary matching reference file types to open models
+        """
+
+        # Get reference file paths
+        reference_file_names = {}
+        for reftype in self.reference_file_types:
+            reffile = self.get_reference_file(data, reftype)
+            reference_file_names[reftype] = reffile if reffile != 'N/A' else None
+
+        # Define mapping between reftype and datamodel type
+        model_type = dict(
+            flat=datamodels.FlatModel,
+            fflat=datamodels.NirspecFlatModel,
+            sflat=datamodels.NirspecFlatModel,
+            dflat=datamodels.NirspecFlatModel,
+            )
+        if exposure_type == "NRS_MSASPEC":
+            model_type["fflat"] = datamodels.NirspecQuadFlatModel
+
+        # Open the relevant reference files as datamodels
+        reference_file_models = {}
+        for reftype, reffile in reference_file_names.items():
+            if reffile is not None:
+                reference_file_models[reftype] = model_type[reftype](reffile)
+                self.log.debug('Using %s reference file: %s', reftype.upper(), reffile)
+            else:
+                reference_file_models[reftype] = None
+
+        return reference_file_models

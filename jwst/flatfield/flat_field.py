@@ -27,7 +27,7 @@ HORIZONTAL = 1
 VERTICAL = 2
 
 
-def do_correction(input_model, flat=None, fflat=None, sflat=None, dflat=None):
+def do_correction(input_model, flat=None, fflat=None, sflat=None, dflat=None, user_supplied_flat=None):
     """Flat-field a JWST data model using a flat-field model
 
     Parameters
@@ -48,6 +48,10 @@ def do_correction(input_model, flat=None, fflat=None, sflat=None, dflat=None):
     dflat : ~jwst.datamodels.NirspecFlatModel or None
         Flat field for the detector.  Used only for NIRSpec data.
 
+    user_supplied_flat : ~jwst.datamodels.DataModel
+        If supplied, all other reference flats and flat creation are
+        ignored in favor of the specified flat.
+
     Returns
     -------
     output_model : data model
@@ -65,8 +69,11 @@ def do_correction(input_model, flat=None, fflat=None, sflat=None, dflat=None):
     # types of data (including NIRSpec imaging).  The test on flat is
     # needed because NIRSpec imaging data are processed by do_flat_field().
     if input_model.meta.instrument.name == 'NIRSPEC' and flat is None:
-        flat_applied = do_nirspec_flat_field(output_model, fflat, sflat, dflat)
+        flat_applied = do_nirspec_flat_field(output_model, fflat, sflat, dflat,
+                                             user_supplied_flat=user_supplied_flat)
     else:
+        if user_supplied_flat is not None:
+            flat = user_supplied_flat
         do_flat_field(output_model, flat)
         flat_applied = flat
 
@@ -198,7 +205,7 @@ def apply_flat_field(science, flat):
 # The following functions are for NIRSpec spectrographic data.
 #
 
-def do_nirspec_flat_field(output_model, f_flat_model, s_flat_model, d_flat_model):
+def do_nirspec_flat_field(output_model, f_flat_model, s_flat_model, d_flat_model, user_supplied_flat=None):
     """Apply flat-fielding for NIRSpec data, updating in-place.
 
     Calls one of 3 functions depending on whether the data is 1) NIRSpec IFU,
@@ -217,6 +224,10 @@ def do_nirspec_flat_field(output_model, f_flat_model, s_flat_model, d_flat_model
 
     d_flat_model : ~jwst.datamodels.NirspecFlatModel or None
         Flat field for the detector.
+
+    user_supplied_flat : ~jwst.datamodels.DataModel or None
+        If provided, override all other calculated or reference-file-retrieved
+        flat information and use this data.
 
     Returns
     -------
@@ -258,7 +269,7 @@ def do_nirspec_flat_field(output_model, f_flat_model, s_flat_model, d_flat_model
                 raise RuntimeError("Input is {}; expected IFUImageModel"
                                    .format(type(output_model)))
             return nirspec_ifu(output_model, f_flat_model, s_flat_model,
-                               d_flat_model, dispaxis)
+                               d_flat_model, dispaxis, user_supplied_flat=user_supplied_flat)
     # For datamodels with slits, MSA and Fixed slit modes:
     else:
         return nirspec_fs_msa(output_model, f_flat_model, s_flat_model,
@@ -571,7 +582,7 @@ def nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_model,
 
 
 def nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
-                dispaxis, interpolated_flat=None):
+                dispaxis, user_supplied_flat=None):
     """Apply flat-fielding for NIRSpec IFU data, in-place
 
     Parameters
@@ -591,7 +602,7 @@ def nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
     dispaxis : int
         1 means horizontal dispersion, 2 means vertical dispersion.
 
-    interpolated_flat : ~jwst.datamodels.ImageModel or None
+    user_supplied_flat : ~jwst.datamodels.ImageModel or None
         A pre-computed flat to use directly. If supplied,
         all other inputs are ignored
 
@@ -601,11 +612,11 @@ def nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
         The interpolated flat field.
     """
 
-    if interpolated_flat is not None:
-        log.info(f'Pre-computed flat {interpolated_flat} provided. Using the flat directly')
-        flat = interpolated_flat.data
-        flat_dq = interpolated_flat.dq
-        flat_err = interpolated_flat.err
+    if user_supplied_flat is not None:
+        log.info(f'Pre-computed flat {user_supplied_flat} provided. Using the flat directly')
+        flat = user_supplied_flat.data
+        flat_dq = user_supplied_flat.dq
+        flat_err = user_supplied_flat.err
         any_updated = True
     else:
         flat, flat_dq, flat_err, any_updated = flat_for_nirspec_ifu(
