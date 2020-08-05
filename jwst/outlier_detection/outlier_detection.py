@@ -556,13 +556,16 @@ def gwcs_blot(median_model, blot_img, interp='poly5', sinscl=1.0):
     log.debug("Pixmap shape: {}".format(pixmap[:, :, 0].shape))
     log.debug("Sci shape: {}".format(blot_img.data.shape))
 
-    # median_model_pscale = median_model.meta.wcsinfo.cdelt1
-    # blot_pscale = blot_img.meta.wcsinfo.cdelt1
-
     pix_ratio = 1
     log.info('Blotting {} <-- {}'.format(blot_img.data.shape, median_model.data.shape))
 
     outsci = np.zeros(blot_img.shape, dtype=np.float32)
+
+    # Currently tblot cannot handle nans in the pixmap, so we need to give some
+    # other value.  -1 is not optimal and may have side effects.  But this is
+    # what we've been doing up until now, so more investigation is needed
+    # before a change is made.  Preferably, fix tblot in drizzle.
+    pixmap[np.isnan(pixmap)] = -1
     tblot(median_model.data, pixmap, outsci, scale=pix_ratio, kscale=1.0,
                    interp=interp, exptime=1.0, misval=0.0, sinscl=sinscl)
 

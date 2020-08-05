@@ -76,7 +76,6 @@ def calc_gwcs_pixmap(in_wcs, out_wcs, shape=None):
 
     grid = wcstools.grid_from_bounding_box(bb)
     pixmap = np.dstack(reproject(in_wcs, out_wcs)(grid[0], grid[1]))
-    pixmap[np.isnan(pixmap)] = -1
 
     return pixmap
 
