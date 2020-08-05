@@ -3,6 +3,11 @@ import pytest
 
 from . import regtestdata as rt
 
+from astropy.io.fits.diff import FITSDiff
+
+import jwst.datamodels as dm
+from jwst.flatfield.flat_field import nirspec_ifu
+
 # Define artifactory source and truth
 INPUT_PATH = 'nirspec/ifu'
 TRUTH_PATH = 'truth/test_nirspec_ifu'
@@ -55,3 +60,19 @@ def test_spec2(run_spec2, fitsdiff_default_kwargs, suffix):
     """Regression test matching output files"""
     rt.is_like_truth(run_spec2, fitsdiff_default_kwargs, suffix,
                      truth_path=TRUTH_PATH)
+
+
+def test_nirspec_ifu_predefined_flat(jail, rtdata_module, fitsdiff_default_kwargs):
+    """Test using predefined interpolated flat"""
+    rtdata = rtdata_module
+    data = dm.open(rtdata.get_data('nirspec/ifu/nrs_ifu_nrs1_assign_wcs.fits'))
+    interpolated_flat = dm.open(rtdata.get_data('nirspec/ifu/nrs_ifu_nrs1_interpolated_flat.fits'))
+
+    nirspec_ifu(data, None, None, None, None, interpolated_flat=interpolated_flat)
+    rtdata.output = 'ff_using_interpolated.fits'
+    data.write(rtdata.output)
+
+    rtdata.get_truth(TRUTH_PATH + '/' + 'ff_using_interpolated.fits')
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
+
