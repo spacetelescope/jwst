@@ -193,6 +193,11 @@ ramp_fitting
 
 - Update to always create the rateints product, even when NINTS=1. [#5211]
 
+resample_spec
+-------------
+
+- Fix artifacts in resampled NIRSpec slit data caused by NaNs in the WCS [#5217]
+
 source_catalog
 --------------
 
