@@ -1,12 +1,37 @@
 import logging
 
 from jwst import datamodels
-from ..resample import resample_spec_step
-from ..extract_1d import extract_1d_step
-from ..combine_1d.combine1d import combine_1d_spectra
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
+
+
+def map_to_science_slits(input_model, master_bkg):
+    """Interpolate 1D master background spectrum to the 2D space
+    of each source slitlet in the input MultiSlitModel.
+
+    Parameters
+    ----------
+    input_model : `~jwst.datamodels.MultiSlitModel`
+        The input data model containing all slit instances.
+
+    master_bkg : `~jwst.datamodels.CombinedSpecModel`
+        The 1D master background spectrum.
+
+    Returns
+    -------
+    output_model: `~jwst.datamodels.MultiSlitModel`
+        The output data model containing background signal.
+    """
+    from .expand_to_2d import expand_to_2d
+
+    log.info('Interpolating 1D master background to 2D slitlets')
+
+    # Loop over all input slits, creating 2D master background to
+    # match each 2D slitlet cutout
+    output_model = expand_to_2d(input_model, master_bkg)
+
+    return output_model
 
 
 def create_background_from_multislit(input_model):
@@ -24,6 +49,9 @@ def create_background_from_multislit(input_model):
     master_bkg: `~jwst.datamodels.CombinedSpecModel`
         The 1D master background spectrum created from the inputs.
     """
+    from ..resample import resample_spec_step
+    from ..extract_1d import extract_1d_step
+    from ..combine_1d.combine1d import combine_1d_spectra
 
     log.info('Creating master background from background slitlets')
 
