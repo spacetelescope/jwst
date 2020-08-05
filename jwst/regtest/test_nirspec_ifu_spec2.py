@@ -62,13 +62,13 @@ def test_spec2(run_spec2, fitsdiff_default_kwargs, suffix):
                      truth_path=TRUTH_PATH)
 
 
-def test_nirspec_ifu_predefined_flat(jail, rtdata_module, fitsdiff_default_kwargs):
+def test_nirspec_ifu_user_supplied_flat(jail, rtdata_module, fitsdiff_default_kwargs):
     """Test using predefined interpolated flat"""
     rtdata = rtdata_module
     data = dm.open(rtdata.get_data('nirspec/ifu/nrs_ifu_nrs1_assign_wcs.fits'))
-    interpolated_flat = dm.open(rtdata.get_data('nirspec/ifu/nrs_ifu_nrs1_interpolated_flat.fits'))
+    user_supplied_flat = dm.open(rtdata.get_data('nirspec/ifu/nrs_ifu_nrs1_interpolated_flat.fits'))
 
-    nirspec_ifu(data, None, None, None, None, interpolated_flat=interpolated_flat)
+    nirspec_ifu(data, None, None, None, None, user_supplied_flat=user_supplied_flat)
     rtdata.output = 'ff_using_interpolated.fits'
     data.write(rtdata.output)
 
