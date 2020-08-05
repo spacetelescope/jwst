@@ -114,8 +114,8 @@ class FlatFieldStep(Step):
             pass
 
         if self.save_interpolated_flat and flat_applied is not None:
-            self.log.info("Writing interpolated flat field.")
-            self.save_model(flat_applied, suffix=self.flat_suffix)
+            ff_path = self.save_model(flat_applied, suffix=self.flat_suffix, force=True)
+            self.log.info(f'Interpolated flat written to "{ff_path}".')
         self.flat_applied = flat_applied
 
         return output_model
