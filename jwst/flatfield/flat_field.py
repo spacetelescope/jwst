@@ -571,7 +571,7 @@ def nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_model,
 
 
 def nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
-                dispaxis, interpolate_flat=None):
+                dispaxis, interpolated_flat=None):
     """Apply flat-fielding for NIRSpec IFU data, in-place
 
     Parameters
@@ -601,12 +601,12 @@ def nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
         The interpolated flat field.
     """
 
-    if interpolate_flat is not None:
+    if interpolated_flat is not None:
         log.info(f'Pre-computed flat {interpolated_flat} provided. Using the flat directly')
         flat = interpolated_flat.data
         flat_dq = interpolated_flat.dq
         flat_err = interpolated_flat.err
-        any_update = True
+        any_updated = True
     else:
         flat, flat_dq, flat_err, any_updated = flat_for_nirspec_ifu(
             output_model, f_flat_model, s_flat_model, d_flat_model, dispaxis
