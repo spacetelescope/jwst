@@ -192,6 +192,14 @@ class IFUCubeData():
                         '_single_s3d.fits'
 # ________________________________________________________________________________
             elif self.instrument == 'NIRSPEC':
+
+                # Check to see if the output base name already has a grating/prism
+                # suffix attached. If so, strip it off, and let the following logic
+                # add all necessary grating and filter suffixes.
+                suffix = self.output_name_base[self.output_name_base.rfind('_')+1:]
+                if suffix in ['g140m', 'g235m', 'g395m', 'g140h', 'g235h', 'g395h', 'prism']:
+                    self.output_name_base = self.output_name_base[:self.output_name_base.rfind('_')]
+
                 fg_name = '_'
                 for i in range(len(self.list_par1)):
                     fg_name = fg_name + self.list_par1[i] + '-' + self.list_par2[i]
@@ -1088,18 +1096,18 @@ class IFUCubeData():
             if np.isnan(self.weight_power):
                 self.weight_power = None
 
-        log.debug(f'spatial size {self.spatial_size}')
-        log.debug(f'spectral size {self.spectral_size}')
-        log.debug(f'spatial roi {self.rois}')
-        log.debug(f'wave min and max {self.wavemin} {self.wavemax}')
-        log.debug(f'linear wavelength {self.linear_wavelength}')
-        log.debug(f'roiw {self.roiw}')
+        log.debug(f'spatial size {self.spatial_size:.7f}')
+        log.debug(f'spectral size {self.spectral_size:.7f}')
+        log.debug(f'spatial roi {self.rois:.7f}')
+        log.debug(f'wave min and max {self.wavemin:.7f} {self.wavemax:.7f}')
+        log.debug(f'linear wavelength {self.linear_wavelength:.7f}')
+        log.debug(f'roiw {self.roiw:.7f}')
         log.debug(f'output_type {self.output_type}')
         if self.weighting == 'msm':
-            log.debug(f'weight_power {self.weight_power}')
-            log.debug(f'softrad {self.soft_rad}')
+            log.debug(f'weight_power {self.weight_power:.7f}')
+            log.debug(f'softrad {self.soft_rad:.7f}')
         if self.weighting == 'emsm':
-            log.debug(f'scalerad {self.scalerad}')
+            log.debug(f'scalerad {self.scalerad:.7f}')
 
 # ******************************************************************************
 
