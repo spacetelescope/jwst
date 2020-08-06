@@ -256,7 +256,7 @@ def do_nirspec_flat_field(output_model, f_flat_model, s_flat_model, d_flat_model
             raise RuntimeError("Input is {}; expected SlitModel"
                                .format(type(output_model)))
         return nirspec_brightobj(output_model, f_flat_model, s_flat_model,
-                                 d_flat_model, dispaxis)
+                                 d_flat_model, dispaxis, user_supplied_flat=user_supplied_flat)
 
     # We expect NIRSpec IFU data to be an IFUImageModel, but it's conceivable
     # that the slices have been copied out into a MultiSlitModel, so
@@ -453,7 +453,7 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model,
 
 
 def nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_model,
-                      dispaxis):
+                      dispaxis, user_supplied_flat=None):
     """Apply flat-fielding for NIRSpec BRIGHTOBJ data, in-place
 
     Parameters
@@ -473,112 +473,39 @@ def nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_model,
     dispaxis : int
         1 means horizontal dispersion, 2 means vertical dispersion.
 
+    user_supplied_flat : ~jwst.datamodels.ImageModel or None
+        A pre-computed flat to use directly. If supplied,
+        all other inputs are ignored
+
     Returns
     -------
     ~jwst.datamodels.ImageModel
         The interpolated flat field.
     """
 
-    exposure_type = output_model.meta.exposure.type
-
-    got_wcs = (hasattr(output_model.meta, "wcs") and
-               output_model.meta.wcs is not None)
-
-    # Create an output model for the interpolated flat fields.
-    interpolated_flats = datamodels.ImageModel()
-    interpolated_flats.update(output_model, only="PRIMARY")
-    if got_wcs:
-        interpolated_flats.meta.wcs = output_model.meta.wcs
-
-    slit_name = output_model.name
-
-    # The input may be either 2-D or 3-D; save `shape` for use later
-    shape = output_model.data.shape
-    ysize, xsize = shape[-2:]
-    # pixels with respect to the original image including the slit start values
-
-    xstart = output_model.meta.subarray.xstart - 1 + output_model.xstart -1
-    ystart = output_model.meta.subarray.ystart - 1 + output_model.ystart -1
-    xstop = xstart + xsize
-    ystop = ystart + ysize
-
-    # The wavelength of each pixel in a plane of the data.
-    got_wl_attribute = True
-    try:
-        wl = output_model.wavelength.copy()     # a 2-D array
-    except AttributeError:
-        got_wl_attribute = False
-    if not got_wl_attribute or len(wl) == 0:
-        got_wl_attribute = False
-
-    # There must be either a wavelength array or a meta.wcs.
-    if not got_wl_attribute or np.nanmin(wl) == 0. and np.nanmax(wl) == 0.:
-        log.warning("The wavelength array has not been populated,")
-        if got_wcs:
-            log.warning("so using wcs instead of the wavelength array.")
-            grid = np.indices((ysize, xsize), dtype=np.float64)
-            (ra, dec, wl) = output_model.meta.wcs(grid[1], grid[0])
-            del ra, dec, grid
-        else:
-            log.warning("and there is no 'wcs' attribute,")
-            if output_model.meta.cal_step.assign_wcs == 'COMPLETE':
-                log.warning("assign_wcs has been run, however.")
-            else:
-                log.warning("likely because assign_wcs has not been run.")
-            log.error("Skipping flat_field.")
-            output_model.meta.cal_step.flat_field = 'SKIPPED'
-            return None
+    if user_supplied_flat is not None:
+        log.info(f'Pre-computed flat {user_supplied_flat} provided. Using the flat directly')
+        interpolated_flat = user_supplied_flat
     else:
-        log.debug("Wavelengths are from the wavelength array.")
+        interpolated_flat = flat_for_nirspec_brightobj(
+            output_model, f_flat_model, s_flat_model, d_flat_model, dispaxis
+        )
 
-    nan_mask = np.isnan(wl)
-    good_mask = np.logical_not(nan_mask)
-    sum_nan_mask = nan_mask.sum(dtype=np.intp)
-    sum_good_mask = good_mask.sum(dtype=np.intp)
-    if sum_nan_mask > 0:
-        log.debug("Number of NaNs in wavelength array = %d out of %d",
-                  sum_nan_mask, sum_nan_mask + sum_good_mask)
-        if sum_good_mask < 1:
-            log.warning("(all are NaN)")
-        # Replace NaNs with a relatively harmless but out-of-bounds value.
-        wl[nan_mask] = 0.
-
-    # Combine the three flat fields.  The same flat will be applied to
-    # each plane (integration) in the cube.
-    flat_2d, flat_dq_2d, flat_err_2d = create_flat_field(
-                        wl, f_flat_model, s_flat_model, d_flat_model,
-                        xstart, xstop, ystart, ystop,
-                        exposure_type, dispaxis, slit_name, None)
-    mask = (flat_2d <= 0.)
-    nbad = mask.sum(dtype=np.intp)
-    if nbad > 0:
-        log.debug("%d flat-field values <= 0", nbad)
-        flat_2d[mask] = 1.
-    del mask
-
-    flat_dq_2d = flat_dq_2d.astype(output_model.dq.dtype)
-
-    interpolated_flats.data = flat_2d.copy()
-    interpolated_flats.dq = flat_dq_2d.copy()
-    interpolated_flats.err = np.zeros((ysize, xsize),
-                                      dtype=output_model.err.dtype)
-    interpolated_flats.wavelength = wl.copy()
-
-    output_model.data /= flat_2d
-    output_model.dq |= flat_dq_2d
+    output_model.data /= interpolated_flat.data
+    output_model.dq |= interpolated_flat.dq
 
     # Update the variances and uncertainty array using BASELINE algorithm
-    flat_data_squared = flat_2d**2
+    flat_data_squared = interpolated_flat.data**2
     output_model.var_poisson /= flat_data_squared
     output_model.var_rnoise /= flat_data_squared
-    output_model.var_flat = output_model.data**2 / flat_data_squared * flat_err_2d**2
+    output_model.var_flat = output_model.data**2 / flat_data_squared * interpolated_flat.err**2
     output_model.err = np.sqrt(
         output_model.var_poisson + output_model.var_rnoise + output_model.var_flat
     )
 
     output_model.meta.cal_step.flat_field = 'COMPLETE'
 
-    return interpolated_flats
+    return interpolated_flat
 
 
 def nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
@@ -1734,3 +1661,117 @@ def flat_for_nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
 
     # That's all folks
     return flat, flat_dq, flat_err, any_updated
+
+
+def flat_for_nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_model,
+                         dispaxis):
+    """Create the interpolated flat for NIRSpec IFU
+
+    Parameters
+    ----------
+    output_model : JWST data model
+        Science data model, modified (flat fielded) in-place.
+
+    f_flat_model : ~jwst.datamodels.NirspecFlatModel, ~jwst.datamodels.NirspecQuadFlatModel, or None
+        Flat field for the fore optics.
+
+    s_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+        Flat field for the spectrograph.
+
+    d_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+        Flat field for the detector.
+
+    dispaxis : int
+        1 means horizontal dispersion, 2 means vertical dispersion.
+
+    Returns
+    -------
+    flat, flat_dq, flat_err, any_updated : numpy.array, numpy.array, numpy.array, bool
+        4-tuple of the interpolated flat correction and whether any slice of the IFU
+        is actually affected.
+    """
+
+    exposure_type = output_model.meta.exposure.type
+
+    got_wcs = (hasattr(output_model.meta, "wcs") and
+               output_model.meta.wcs is not None)
+
+    # Create an output model for the interpolated flat fields.
+    interpolated_flats = datamodels.ImageModel()
+    interpolated_flats.update(output_model, only="PRIMARY")
+    if got_wcs:
+        interpolated_flats.meta.wcs = output_model.meta.wcs
+
+    slit_name = output_model.name
+
+    # The input may be either 2-D or 3-D; save `shape` for use later.
+    shape = output_model.data.shape
+    ysize, xsize = shape[-2:]
+    # pixels with respect to the original image
+    xstart = output_model.meta.subarray.xstart - 1
+    ystart = output_model.meta.subarray.ystart - 1
+    xstop = xstart + xsize
+    ystop = ystart + ysize
+
+    # The wavelength of each pixel in a plane of the data.
+    got_wl_attribute = True
+    try:
+        wl = output_model.wavelength.copy()     # a 2-D array
+    except AttributeError:
+        got_wl_attribute = False
+    if not got_wl_attribute or len(wl) == 0:
+        got_wl_attribute = False
+
+    # There must be either a wavelength array or a meta.wcs.
+    if not got_wl_attribute or np.nanmin(wl) == 0. and np.nanmax(wl) == 0.:
+        log.warning("The wavelength array has not been populated,")
+        if got_wcs:
+            log.warning("so using wcs instead of the wavelength array.")
+            grid = np.indices((ysize, xsize), dtype=np.float64)
+            (ra, dec, wl) = output_model.meta.wcs(grid[1], grid[0])
+            del ra, dec, grid
+        else:
+            log.warning("and there is no 'wcs' attribute,")
+            if output_model.meta.cal_step.assign_wcs == 'COMPLETE':
+                log.warning("assign_wcs has been run, however.")
+            else:
+                log.warning("likely because assign_wcs has not been run.")
+            log.error("Skipping flat_field.")
+            output_model.meta.cal_step.flat_field = 'SKIPPED'
+            return None
+    else:
+        log.debug("Wavelengths are from the wavelength array.")
+
+    nan_mask = np.isnan(wl)
+    good_mask = np.logical_not(nan_mask)
+    sum_nan_mask = nan_mask.sum(dtype=np.intp)
+    sum_good_mask = good_mask.sum(dtype=np.intp)
+    if sum_nan_mask > 0:
+        log.debug("Number of NaNs in wavelength array = %d out of %d",
+                  sum_nan_mask, sum_nan_mask + sum_good_mask)
+        if sum_good_mask < 1:
+            log.warning("(all are NaN)")
+        # Replace NaNs with a relatively harmless but out-of-bounds value.
+        wl[nan_mask] = 0.
+
+    # Combine the three flat fields.  The same flat will be applied to
+    # each plane (integration) in the cube.
+    flat_2d, flat_dq_2d, flat_err_2d = create_flat_field(
+                        wl, f_flat_model, s_flat_model, d_flat_model,
+                        xstart, xstop, ystart, ystop,
+                        exposure_type, dispaxis, slit_name, None)
+    mask = (flat_2d <= 0.)
+    nbad = mask.sum(dtype=np.intp)
+    if nbad > 0:
+        log.debug("%d flat-field values <= 0", nbad)
+        flat_2d[mask] = 1.
+    del mask
+
+    flat_dq_2d = flat_dq_2d.astype(output_model.dq.dtype)
+
+    interpolated_flats.data = flat_2d
+    interpolated_flats.dq = flat_dq_2d
+    interpolated_flats.err = flat_err_2d.astype(output_model.err.dtype)
+    interpolated_flats.wavelength = wl
+
+    return interpolated_flats
