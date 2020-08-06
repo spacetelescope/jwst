@@ -83,7 +83,7 @@ def set_source_type(input_model):
 
             # Set all nodded exposures to POINT source type
             src_type = 'POINT'
-            log.info('Exposure is nodded; setting SRCTYPE = {src_type}')
+            log.info(f'Exposure is nodded; setting SRCTYPE = {src_type}')
 
         elif user_type in ['POINT', 'EXTENDED']:
 
