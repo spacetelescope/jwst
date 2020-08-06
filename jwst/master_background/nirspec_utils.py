@@ -6,6 +6,37 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
+def apply_master_background(source_model, bkg_model):
+    """Subtract 2D master background signal from each source
+    slitlet in the input MultiSlitModel.
+
+    Parameters
+    ----------
+    source_model : `~jwst.datamodels.MultiSlitModel`
+        The input data model containing all source slit instances.
+
+    bkg_model : `~jwst.datamodels.MultiSlitModel`
+        The data model containing 2D background slit instances.
+
+    Returns
+    -------
+    output_model: `~jwst.datamodels.MultiSlitModel`
+        The output background-subtracted data model.
+    """
+    from .master_background_step import subtract_2d_background
+
+    log.info('Subtracting master background from each source slitlet')
+
+    # This does a one-to-one subtraction of the data in each background
+    # slit from the data in the corresponding source slit (i.e. the
+    # two MultiSlitModels must have matching numbers of slit instances).
+    # This may be changed in the future to only do the subtraction from
+    # a certain subset of source slits.
+    output_model = subtract_2d_background(source_model, bkg_model)
+
+    return output_model
+
+
 def map_to_science_slits(input_model, master_bkg):
     """Interpolate 1D master background spectrum to the 2D space
     of each source slitlet in the input MultiSlitModel.
