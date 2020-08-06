@@ -456,7 +456,7 @@ class Spec2Pipeline(Pipeline):
 
         # Now apply the de-calibrated background to the original science
         # At this point, should just be a slit-to-slit subtraction operation.
-        calibrated = apply_master_background(calibrated, mb_multislit)
+        calibrated = nirspec_utils.apply_master_background(calibrated, mb_multislit)
 
         return calibrated
 
