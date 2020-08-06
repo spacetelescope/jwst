@@ -273,11 +273,11 @@ def do_nirspec_flat_field(output_model, f_flat_model, s_flat_model, d_flat_model
     # For datamodels with slits, MSA and Fixed slit modes:
     else:
         return nirspec_fs_msa(output_model, f_flat_model, s_flat_model,
-                              d_flat_model, dispaxis)
+                              d_flat_model, dispaxis, user_supplied_flat=user_supplied_flat)
 
 
 def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model,
-                   dispaxis):
+                   dispaxis, user_supplied_flat=None):
     """Apply flat-fielding for NIRSpec fixed slit and MSA data, in-place
 
     Parameters
@@ -296,6 +296,10 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model,
 
     dispaxis : int
         1 means horizontal dispersion, 2 means vertical dispersion.
+
+    user_supplied_flat : ~jwst.datamodels.DataModel or None
+        If provided, override all other calculated or reference-file-retrieved
+        flat information and use this data.
 
     Returns
     -------
@@ -321,119 +325,32 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model,
         else:
             slit_nt = None
 
-        # Create flat and flat dq arrays with default values
-        flat_2d = np.ones_like(slit.data)
-        flat_dq_2d = np.zeros_like(slit.dq)
-
-        # pixels with respect to the original image
-        ysize, xsize = slit.data.shape
-        xstart = slit.xstart - 1
-        ystart = slit.ystart - 1
-        xstop = xstart + xsize
-        ystop = ystart + ysize
-
-        got_wcs = hasattr(slit.meta, "wcs") and slit.meta.wcs is not None
-
-        # Get the wavelength at each pixel in the extracted slit data.
-        # If the wavelength attribute exists and is populated, use it
-        # in preference to the wavelengths returned by the wcs function.
-        got_wl_attribute = True
-        try:
-            wl = slit.wavelength.copy()         # a 2-D array
-        except AttributeError:
-            got_wl_attribute = False
-        if not got_wl_attribute or len(wl) == 0:
-            got_wl_attribute = False
-
-        # The default value is 0, so all 0 values means that the
-        # wavelength attribute was not populated.  We need either a
-        # wavelength array or a meta.wcs.
-        if not got_wl_attribute or np.nanmin(wl) == 0. and np.nanmax(wl) == 0.:
-            got_wl_attribute = False
-            log.warning("The wavelength array for slit %s has not "
-                        "been populated,", slit.name)
-            if got_wcs:
-                bb = slit.meta.wcs.bounding_box
-                grid = grid_from_bounding_box(bb)
-                wl = slit.meta.wcs(*grid)[2]
-                del grid
-            else:
-                log.warning("and this slit does not have a 'wcs' attribute")
-                if output_model.meta.cal_step.assign_wcs == 'COMPLETE':
-                    log.warning("assign_wcs has been run, however.")
-                else:
-                    log.warning("likely because assign_wcs has not been run.")
-                log.error("skipping ...")
-                # Put a dummy flat here as a placeholder
-                dummy_flat = datamodels.SlitModel(data=flat_2d, dq=flat_dq_2d)
-                dummy_flat.name = slit.name
-                dummy_flat.xstart = slit.xstart
-                dummy_flat.xsize = slit.xsize
-                dummy_flat.ystart = slit.ystart
-                dummy_flat.ysize = slit.ysize
-                dummy_flat.wavelength = np.zeros_like(slit.data)
-                flat_slits.append(dummy_flat)
-
-                continue
+        if user_supplied_flat is not None:
+            slit_flat = next(user_supplied_flat.slits)
         else:
-            log.debug("Wavelengths are from the wavelength array.")
+            slit_flat = flat_for_nirspec_slit(
+                slit, f_flat_model, s_flat_model, d_flat_model, dispaxis, exposure_type, slit_nt
+            )
+            if slit_flat is None:
+                log.debug(f'Slit {slit} flat field could not be determined.')
+                continue
 
-        nan_mask = np.isnan(wl)
-        good_mask = np.logical_not(nan_mask)
-        sum_nan_mask = nan_mask.sum(dtype=np.intp)
-        sum_good_mask = good_mask.sum(dtype=np.intp)
-        if sum_nan_mask > 0:
-            log.debug("Number of NaNs in sci wavelength array = %d out of %d",
-                      sum_nan_mask, sum_nan_mask + sum_good_mask)
-            if sum_good_mask < 1:
-                log.warning("(all are NaN)")
-            # Replace NaNs with a relatively harmless but out-of-bounds value.
-            wl[nan_mask] = 0.
-        max_wavelength = np.nanmax(wl)
-        if max_wavelength > 0. and max_wavelength < MICRONS_100:
-            log.warning("Wavelengths in science data appear to be in meters.")
-
-        # Combine the three flat fields for the current subarray.
-        flat_2d, flat_dq_2d, flat_err_2d = create_flat_field(wl,
-                        f_flat_model, s_flat_model, d_flat_model,
-                        xstart, xstop, ystart, ystop,
-                        exposure_type, dispaxis, slit.name, slit_nt)
-
-        # Mask bad flatfield values
-        mask = (flat_2d <= 0.)
-        nbad = mask.sum(dtype=np.intp)
-        if nbad > 0:
-            log.debug("%d flat-field values <= 0", nbad)
-            flat_2d[mask] = 1.
-        del mask
-
-        # Put the computed flat, flat_dq and flat_err into a datamodel
-        new_flat = datamodels.SlitModel(data=flat_2d, dq=flat_dq_2d)
-        new_flat.name = slit.name
-        new_flat.xstart = slit.xstart
-        new_flat.xsize = slit.xsize
-        new_flat.ystart = slit.ystart
-        new_flat.ysize = slit.ysize
-        new_flat.wavelength = wl.copy()
-        # Copy the WCS info from output (same as input).
-        if got_wcs:
-            new_flat.meta.wcs = slit.meta.wcs
-        # Append the SlitDataModel to the list of slits
-        flat_slits.append(new_flat)
+            # Append the SlitDataModel to the list of slits
+            flat_slits.append(slit_flat)
 
         # Now let's apply the correction to science data and error arrays.  Rely
         # on array broadcasting to handle the cubes
-        slit.data /= flat_2d
+        slit.data /= slit_flat.data
 
         # Update the variances using BASELINE algorithm
-        flat_data_squared = flat_2d**2
+        flat_data_squared = slit_flat.data**2
         slit.var_poisson /= flat_data_squared
         slit.var_rnoise /= flat_data_squared
-        slit.var_flat = slit.data**2 / flat_data_squared * flat_err_2d**2
+        slit.var_flat = slit.data**2 / flat_data_squared * slit_flat.err**2
         slit.err = np.sqrt(slit.var_poisson + slit.var_rnoise + slit.var_flat)
 
         # Combine the science and flat DQ arrays
-        slit.dq |= flat_dq_2d
+        slit.dq |= slit_flat.dq
 
         any_updated = True
 
@@ -443,11 +360,14 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model,
         output_model.meta.cal_step.flat_field = 'SKIPPED'
 
     # Create an output model for the interpolated flat fields.
-    interpolated_flats = datamodels.MultiSlitModel()
-    interpolated_flats.update(output_model, only="PRIMARY")
-    interpolated_flats.slits.extend(flat_slits)
+    if user_supplied_flat:
+        interpolated_flat = user_supplied_flat
+    else:
+        interpolated_flat = datamodels.MultiSlitModel()
+        interpolated_flat.update(output_model, only="PRIMARY")
+        interpolated_flat.slits.extend(flat_slits)
 
-    return interpolated_flats
+    return interpolated_flat
 
 
 def nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_model,
@@ -1755,3 +1675,137 @@ def flat_for_nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_
     interpolated_flats.wavelength = wl
 
     return interpolated_flats
+
+
+def flat_for_nirspec_slit(slit, f_flat_model, s_flat_model, d_flat_model,
+                          dispaxis, exposure_type, slit_nt):
+    """Create the interpolated flat for NIRSpec slit data
+
+    Parameters
+    ----------
+    slit : SlitModel
+        A slit to process
+
+    f_flat_model : ~jwst.datamodels.NirspecFlatModel, ~jwst.datamodels.NirspecQuadFlatModel, or None
+        Flat field for the fore optics.
+
+    s_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+        Flat field for the spectrograph.
+
+    d_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+        Flat field for the detector.
+
+    dispaxis : int
+        1 means horizontal dispersion, 2 means vertical dispersion.
+
+    exposure_type : str
+        The exposure type
+
+    slit_nt : namedtuple or None
+        For MOS data (only), this is used to get the quadrant number and
+        the indices of the current shutter in the Y and X directions.
+
+    Returns
+    -------
+    flat : SlitModel or None
+        The calculated flat. If None, no flat field could be determined
+    """
+    # Create flat and flat dq arrays with default values
+    flat_2d = np.ones_like(slit.data)
+    flat_dq_2d = np.zeros_like(slit.dq)
+
+    # pixels with respect to the original image
+    ysize, xsize = slit.data.shape
+    xstart = slit.xstart - 1
+    ystart = slit.ystart - 1
+    xstop = xstart + xsize
+    ystop = ystart + ysize
+
+    got_wcs = hasattr(slit.meta, "wcs") and slit.meta.wcs is not None
+
+    # Get the wavelength at each pixel in the extracted slit data.
+    # If the wavelength attribute exists and is populated, use it
+    # in preference to the wavelengths returned by the wcs function.
+    got_wl_attribute = True
+    try:
+        wl = slit.wavelength.copy()         # a 2-D array
+    except AttributeError:
+        got_wl_attribute = False
+    if not got_wl_attribute or len(wl) == 0:
+        got_wl_attribute = False
+
+    # The default value is 0, so all 0 values means that the
+    # wavelength attribute was not populated.  We need either a
+    # wavelength array or a meta.wcs.
+    if not got_wl_attribute or np.nanmin(wl) == 0. and np.nanmax(wl) == 0.:
+        got_wl_attribute = False
+        log.warning("The wavelength array for slit %s has not "
+                    "been populated,", slit.name)
+        if got_wcs:
+            bb = slit.meta.wcs.bounding_box
+            grid = grid_from_bounding_box(bb)
+            wl = slit.meta.wcs(*grid)[2]
+            del grid
+        else:
+            log.warning("and this slit does not have a 'wcs' attribute")
+            if output_model.meta.cal_step.assign_wcs == 'COMPLETE':
+                log.warning("assign_wcs has been run, however.")
+            else:
+                log.warning("likely because assign_wcs has not been run.")
+            log.error("skipping ...")
+            # Put a dummy flat here as a placeholder
+            dummy_flat = datamodels.SlitModel(data=flat_2d, dq=flat_dq_2d)
+            dummy_flat.name = slit.name
+            dummy_flat.xstart = slit.xstart
+            dummy_flat.xsize = slit.xsize
+            dummy_flat.ystart = slit.ystart
+            dummy_flat.ysize = slit.ysize
+            dummy_flat.wavelength = np.zeros_like(slit.data)
+            flat_slits.append(dummy_flat)
+
+            return
+    else:
+        log.debug("Wavelengths are from the wavelength array.")
+
+    nan_mask = np.isnan(wl)
+    good_mask = np.logical_not(nan_mask)
+    sum_nan_mask = nan_mask.sum(dtype=np.intp)
+    sum_good_mask = good_mask.sum(dtype=np.intp)
+    if sum_nan_mask > 0:
+        log.debug("Number of NaNs in sci wavelength array = %d out of %d",
+                  sum_nan_mask, sum_nan_mask + sum_good_mask)
+        if sum_good_mask < 1:
+            log.warning("(all are NaN)")
+        # Replace NaNs with a relatively harmless but out-of-bounds value.
+        wl[nan_mask] = 0.
+    max_wavelength = np.nanmax(wl)
+    if max_wavelength > 0. and max_wavelength < MICRONS_100:
+        log.warning("Wavelengths in science data appear to be in meters.")
+
+    # Combine the three flat fields for the current subarray.
+    flat_2d, flat_dq_2d, flat_err_2d = create_flat_field(wl,
+                    f_flat_model, s_flat_model, d_flat_model,
+                    xstart, xstop, ystart, ystop,
+                    exposure_type, dispaxis, slit.name, slit_nt)
+
+    # Mask bad flatfield values
+    mask = (flat_2d <= 0.)
+    nbad = mask.sum(dtype=np.intp)
+    if nbad > 0:
+        log.debug("%d flat-field values <= 0", nbad)
+        flat_2d[mask] = 1.
+    del mask
+
+    # Put the computed flat, flat_dq and flat_err into a datamodel
+    new_flat = datamodels.SlitModel(data=flat_2d, dq=flat_dq_2d, err=flat_err_2d)
+    new_flat.name = slit.name
+    new_flat.xstart = slit.xstart
+    new_flat.xsize = slit.xsize
+    new_flat.ystart = slit.ystart
+    new_flat.ysize = slit.ysize
+    new_flat.wavelength = wl.copy()
+    # Copy the WCS info from output (same as input).
+    if got_wcs:
+        new_flat.meta.wcs = slit.meta.wcs
+
+    return new_flat
