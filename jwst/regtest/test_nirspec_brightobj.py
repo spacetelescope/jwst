@@ -3,6 +3,7 @@ import pytest
 
 from astropy.io.fits.diff import FITSDiff
 
+from jwst.flatfield import FlatFieldStep
 from jwst.lib.suffix import replace_suffix
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
@@ -47,5 +48,20 @@ def test_nirspec_brightobj_spec2(run_tso_spec2_pipeline, fitsdiff_default_kwargs
     rtdata.get_truth(os.path.join("truth/test_nirspec_brightobj_spec2", output))
 
     # Compare the results
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
+
+
+def test_flat_field_step_user_supplied_flat(jail, rtdata_module, fitsdiff_default_kwargs):
+    """Test providing a user-supplied flat field to the FlatFieldStep"""
+    rtdata = rtdata_module
+    data = rtdata.get_data('nirspec/tso/nrs2_wavecorr.fits')
+    user_supplied_flat = rtdata.get_data('nirspec/tso/nrs2_interpolatedflat.fits')
+
+    data_flat_fielded = FlatFieldStep.call(data, user_supplied_flat=user_supplied_flat)
+    rtdata.output = 'flat_fielded_step_user_supplied.fits'
+    data_flat_fielded.write(rtdata.output)
+
+    rtdata.get_truth('truth/test_nirspec_brightobj_spec2/flat_fielded_step_user_supplied.fits')
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
