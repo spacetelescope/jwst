@@ -2609,7 +2609,6 @@ def do_extract1d(
         A new MultiSpecModel containing the extracted spectra.
     """
 
-    log.info('in do extract1d')
     extract_ref_dict = ref_dict_sanity_check(extract_ref_dict)
 
     if isinstance(input_model, datamodels.SourceModelContainer):

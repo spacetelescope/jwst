@@ -105,6 +105,8 @@ extract_1d
 - Updated the logic for when and how to use the source position to offset the
   location of the extraction regions specified in the EXTRACT1D reference file. [#5157]
 
+- Fixed the conversion of flux to surface brightness for IFU extended source case [#5201]
+
 extract_2d
 ----------
 
