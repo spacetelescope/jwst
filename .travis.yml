@@ -44,7 +44,7 @@ jobs:
     - name: Documentation build
       env:
         PIP_DEPENDENCIES=.[docs]
-        TEST_COMMAND="make html --directory=docs"
+        TEST_COMMAND="sphinx-build -W docs docs/_build"
       addons:
         apt:
           packages:
