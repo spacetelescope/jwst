@@ -318,7 +318,7 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model,
     # "COMPLETE", otherwise we set "SKIP"
     any_updated = False
 
-    for slit in output_model.slits:
+    for slit_idx, slit in enumerate(output_model.slits):
         log.info("Working on slit %s", slit.name)
         if exposure_type == "NRS_MSASPEC":
             slit_nt = slit                      # includes quadrant info
@@ -326,7 +326,7 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model,
             slit_nt = None
 
         if user_supplied_flat is not None:
-            slit_flat = next(user_supplied_flat.slits)
+            slit_flat = user_supplied_flat.slits[slit_idx]
         else:
             slit_flat = flat_for_nirspec_slit(
                 slit, f_flat_model, s_flat_model, d_flat_model, dispaxis, exposure_type, slit_nt
