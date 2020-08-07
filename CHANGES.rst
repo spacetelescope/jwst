@@ -116,6 +116,11 @@ extract_2d
   which allows a user to specify the extraction height in the
   cross-dispersion direction for WFSS mode. [#5140]
 
+flat_field
+----------
+
+- Implement providing a user-supplied flat field to which overrides all references [#5233]
+
 fringe
 ------
 
