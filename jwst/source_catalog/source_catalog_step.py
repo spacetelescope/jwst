@@ -28,14 +28,14 @@ class SourceCatalogStep(Step):
     """
 
     spec = """
-        bkg_boxsize = float(default=100)      # background mesh box size in pixels
+        bkg_boxsize = integer(default=100)    # background mesh box size in pixels
         kernel_fwhm = float(default=2.0)      # Gaussian kernel FWHM in pixels
         snr_threshold = float(default=3.0)    # SNR threshold above the bkg
-        npixels = float(default=5.0)          # min number of pixels in source
+        npixels = integer(default=5)          # min number of pixels in source
         deblend = boolean(default=False)      # deblend sources?
-        aperture_ee1 = float(default=30)      # aperture encircled energy 1
-        aperture_ee2 = float(default=50)      # aperture encircled energy 2
-        aperture_ee3 = float(default=70)      # aperture encircled energy 3
+        aperture_ee1 = integer(default=30)    # aperture encircled energy 1
+        aperture_ee2 = integer(default=50)    # aperture encircled energy 2
+        aperture_ee3 = integer(default=70)    # aperture encircled energy 3
         ci1_star_threshold = float(default=2.0)  # CI 1 star threshold
         ci2_star_threshold = float(default=1.8)  # CI 2 star threshold
         suffix = string(default='cat')        # Default suffix for output files
