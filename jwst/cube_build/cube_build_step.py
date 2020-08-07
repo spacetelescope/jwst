@@ -157,7 +157,7 @@ class CubeBuildStep (Step):
 
         if self.single:
             self.output_type = 'single'
-            self.log.info('Cube Type: Single cubes ')
+            self.log.info('Cube Type: Single cubes')
             self.coord_system = 'skyalign'
             self.interpolation = 'pointcloud'
 
@@ -286,10 +286,10 @@ class CubeBuildStep (Step):
 
         num_cubes, cube_pars = cubeinfo.number_cubes()
         if not self.single:
-            self.log.info(f'Number of ifucubes produced by this run  = {num_cubes}')
+            self.log.info(f'Number of IFU cubes produced by this run = {num_cubes}')
 
         if self.single:
-            self.log.info(f'Number of single ifucubes produced by a this run = {num_cubes}')
+            self.log.info(f'Number of single IFU cubes produced by a this run = {num_cubes}')
 
         # ModelContainer of ifucubes
         cube_container = datamodels.ModelContainer()

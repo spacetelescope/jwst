@@ -30,6 +30,8 @@ associations
 
 - Update level-3 rules to exclude IFU exposures from ``calwebb_tso3`` associations. [#5202]
 
+- Fix formatting error in Asn_IFUGrating product name construction. [#5231]
+
 barshadow
 ---------
 
@@ -42,7 +44,11 @@ combine_1d
 
 cube_build
 ----------
-- modified NIRSpec blotting to the find min and max ra and dec for each slice and only invert those values on slice that fall in range [#5144]
+
+- Fixed formatting of NIRSpec s3d output product names. [#5231]
+
+- Modified NIRSpec blotting to the find min and max ra and dec for each slice and only
+  invert those values on slice that fall in range [#5144]
 
 - Changed default weighting back to 'msm' until NIRSPEC cube pars ref file contains emsm info [#5134]
 
@@ -135,7 +141,7 @@ outlier_detection
 
 - Fix outlier_detection bug when saving intermediate results. [#5108]
 
-- Update logic to correctly handle input ``CubeModel``s that have only
+- Update logic to correctly handle input ``CubeModel`` that have only
   1 integration. [#5211]
 
 pathloss

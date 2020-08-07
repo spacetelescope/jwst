@@ -587,7 +587,7 @@ class DMSBaseMixin(ACIDMixin):
             of the grating in use.
         """
         grating_id = format_list(self.constraints['grating'].found_values)
-        grating = 't{0:0>3s}'.format(str(grating_id))
+        grating = '{0:0>3s}'.format(str(grating_id))
         return grating
 
 

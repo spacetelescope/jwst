@@ -192,6 +192,14 @@ class IFUCubeData():
                         '_single_s3d.fits'
 # ________________________________________________________________________________
             elif self.instrument == 'NIRSPEC':
+
+                # Check to see if the output base name already has a grating/prism
+                # suffix attached. If so, strip it off, and let the following logic
+                # add all necessary grating and filter suffixes.
+                suffix = self.output_name_base[self.output_name_base.rfind('_')+1:]
+                if suffix in ['g140m', 'g235m', 'g395m', 'g140h', 'g235h', 'g395h', 'prism']:
+                    self.output_name_base = self.output_name_base[:self.output_name_base.rfind('_')]
+
                 fg_name = '_'
                 for i in range(len(self.list_par1)):
                     fg_name = fg_name + self.list_par1[i] + '-' + self.list_par2[i]
