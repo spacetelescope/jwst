@@ -30,8 +30,6 @@ class SourceCatalogStep(Step):
     spec = """
         bkg_boxsize = float(default=100)      # background mesh box size in pixels
         kernel_fwhm = float(default=2.0)      # Gaussian kernel FWHM in pixels
-        kernel_xsize = float(default=None)    # Kernel x size in pixels
-        kernel_ysize = float(default=None)    # Kernel y size in pixels
         snr_threshold = float(default=3.0)    # SNR threshold above the bkg
         npixels = float(default=5.0)          # min number of pixels in source
         deblend = boolean(default=False)      # deblend sources?
@@ -46,11 +44,6 @@ class SourceCatalogStep(Step):
     reference_file_types = ['apcorr', 'abvegaoffset']
 
     def process(self, input_model):
-        if self.kernel_xsize is not None or self.kernel_ysize is not None:
-            warnings.simplefilter('default')
-            warnings.warn('kernel_xsize and kernel_ysize are deprecated and '
-                          'no longer used', DeprecationWarning)
-
         with datamodels.open(input_model) as model:
             try:
                 apcorr_fn = self.get_reference_file(input_model, 'apcorr')
