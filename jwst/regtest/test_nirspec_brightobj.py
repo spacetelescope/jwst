@@ -52,6 +52,7 @@ def test_nirspec_brightobj_spec2(run_tso_spec2_pipeline, fitsdiff_default_kwargs
     assert diff.identical, diff.report()
 
 
+@pytest.mark.bigdata
 def test_flat_field_step_user_supplied_flat(jail, rtdata_module, fitsdiff_default_kwargs):
     """Test providing a user-supplied flat field to the FlatFieldStep"""
     rtdata = rtdata_module
