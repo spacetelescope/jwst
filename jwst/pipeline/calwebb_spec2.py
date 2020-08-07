@@ -219,7 +219,11 @@ class Spec2Pipeline(Pipeline):
                     self.log.warning(message)
                     return
                 else:
-                    raise RuntimeError('Cannot determine WCS.')
+                    self.log.error(message)
+                    if assign_wcs_exception is not None:
+                        raise assign_wcs_exception
+                    else:
+                        raise RuntimeError('Cannot determine WCS.')
 
         # Steps whose order is the same for all types of input.
         calibrated = self.bkg_subtract(calibrated, members_by_type['background'])
