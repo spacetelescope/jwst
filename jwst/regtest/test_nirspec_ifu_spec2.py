@@ -63,6 +63,7 @@ def test_spec2(run_spec2, fitsdiff_default_kwargs, suffix):
                      truth_path=TRUTH_PATH)
 
 
+@pytest.mark.bigdata
 def test_nirspec_ifu_user_supplied_flat(jail, rtdata_module, fitsdiff_default_kwargs):
     """Test using predefined interpolated flat"""
     rtdata = rtdata_module
@@ -78,6 +79,7 @@ def test_nirspec_ifu_user_supplied_flat(jail, rtdata_module, fitsdiff_default_kw
     assert diff.identical, diff.report()
 
 
+@pytest.mark.bigdata
 def test_flat_field_step_user_supplied_flat(jail, rtdata_module, fitsdiff_default_kwargs):
     """Test providing a user-supplied flat field to the FlatFieldStep"""
     rtdata = rtdata_module
