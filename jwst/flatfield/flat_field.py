@@ -1748,10 +1748,7 @@ def flat_for_nirspec_slit(slit, f_flat_model, s_flat_model, d_flat_model,
             del grid
         else:
             log.warning("and this slit does not have a 'wcs' attribute")
-            if output_model.meta.cal_step.assign_wcs == 'COMPLETE':
-                log.warning("assign_wcs has been run, however.")
-            else:
-                log.warning("likely because assign_wcs has not been run.")
+            log.warning("likely because assign_wcs has not been run.")
             log.error("skipping ...")
             # Put a dummy flat here as a placeholder
             dummy_flat = datamodels.SlitModel(data=flat_2d, dq=flat_dq_2d)
@@ -1761,9 +1758,8 @@ def flat_for_nirspec_slit(slit, f_flat_model, s_flat_model, d_flat_model,
             dummy_flat.ystart = slit.ystart
             dummy_flat.ysize = slit.ysize
             dummy_flat.wavelength = np.zeros_like(slit.data)
-            flat_slits.append(dummy_flat)
 
-            return
+            return dummy_flat
     else:
         log.debug("Wavelengths are from the wavelength array.")
 
