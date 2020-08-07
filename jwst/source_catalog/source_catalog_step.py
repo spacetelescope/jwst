@@ -38,6 +38,8 @@ class SourceCatalogStep(Step):
         aperture_ee1 = float(default=30)      # aperture encircled energy 1
         aperture_ee2 = float(default=50)      # aperture encircled energy 2
         aperture_ee3 = float(default=70)      # aperture encircled energy 3
+        ci1_star_threshold = float(default=2.0)  # CI 1 star threshold
+        ci2_star_threshold = float(default=1.8)  # CI 2 star threshold
         suffix = string(default='cat')        # Default suffix for output files
     """
 
@@ -59,7 +61,6 @@ class SourceCatalogStep(Step):
             try:
                 abvegaoffset_fn = self.get_reference_file(input_model,
                                                           'abvegaoffset')
-
             except CrdsLookupError:
                 abvegaoffset_fn = None
             self.log.info('Using ABVEGAOFFSET reference file '
@@ -108,11 +109,14 @@ class SourceCatalogStep(Step):
             # TODO: update when model contains errors
             total_error = calc_total_error(model)
 
+            ci_star_thresholds = (self.ci1_star_threshold,
+                                  self.ci2_star_threshold)
             catobj = SourceCatalog(model, segment_img, error=total_error,
                                    kernel=kernel,
                                    kernel_fwhm=self.kernel_fwhm,
                                    aperture_params=aperture_params,
-                                   abvega_offset=abvega_offset)
+                                   abvega_offset=abvega_offset,
+                                   ci_star_thresholds=ci_star_thresholds)
             catalog = catobj.catalog
 
             if self.save_results:

@@ -483,6 +483,16 @@ class SourceCatalog:
         where sources are marked by different positive integer values.
         A value of zero is reserved for the background.
 
+    ci_star_thresholds : array-like of 2 floats
+        The concentration index thresholds for determining whether
+        a source is a star. The first threshold corresponds to the
+        concentration index calculated from the smallest and middle
+        aperture radii (see ``aperture_params``). The second threshold
+        corresponds to the concentration index calculated from the
+        middle and largest aperture radii. An object is considered
+        extended if both concentration indices are greater than the
+        corresponding thresholds, otherwise it is considered a star.
+
     error : array_like or `~astropy.units.Quantity`, optional
         The total error array corresponding to the input ``data`` array.
         ``error`` is assumed to include *all* sources of error,
@@ -508,14 +518,19 @@ class SourceCatalog:
         represents m_AB - m_Vega.
     """
 
-    def __init__(self, model, segment_img, error=None, kernel=None,
-                 kernel_fwhm=None, aperture_params=None, abvega_offset=0.0):
+    def __init__(self, model, segment_img, ci_star_thresholds, error=None,
+                 kernel=None, kernel_fwhm=None, aperture_params=None,
+                 abvega_offset=0.0):
 
         if not isinstance(model, ImageModel):
             raise ValueError('The input model must be a ImageModel.')
         self.model = model  # background was subtracted in SourceDetection
 
         self.segment_img = segment_img
+        if len(ci_star_thresholds) != 2:
+            raise ValueError('ci_star_thresholds must contain only 2 '
+                             'items')
+        self.ci_star_thresholds = ci_star_thresholds
         self.error = error  # total error array
         self.kernel = kernel
         self.kernel_fwhm = kernel_fwhm
@@ -971,7 +986,7 @@ class SourceCatalog:
             * the middle and largest aperture radii/EE; idx (1, 2)
             * the smallest and largest aperture radii/EE; idx (0, 2)
         """
-        # NOTE:  the EE values are always in increasing order
+        # NOTE: the EE values are always in increasing order
         return ((0, 1), (1, 2), (0, 2))
 
     @lazyproperty
@@ -1019,17 +1034,11 @@ class SourceCatalog:
     @lazyproperty
     def is_star(self):
         """
-        Flag indicating whether the source is a star.
-
-        2020.03.02: The JWST Photometry Working Group has not determined
-        the criteria for this flag.
+        Boolean indicating whether the source is a star.
         """
-        # TODO: need algorithm for this flag
-        #is_star = np.random.randint(2, size=len(self.id))
-        #return is_star.astype(bool)
-        #return self.null_column
-        # Setting this column to bool type as in the latest spec
-        return np.ones(len(self.id), dtype=bool)
+        mask1 = self.concentration_indices[0] > self.ci_star_thresholds[0]
+        mask2 = self.concentration_indices[1] > self.ci_star_thresholds[1]
+        return np.logical_not(np.logical_and(mask1, mask2))
 
     @lazyproperty
     def _daofind_kernel(self):
