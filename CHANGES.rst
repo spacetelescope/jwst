@@ -142,13 +142,14 @@ extract_2d
   which allows a user to specify the extraction height in the
   cross-dispersion direction for WFSS mode. [#5140]
 
-
 flat_field
 ----------
 - For NIRSpec BOTS and ALLSLITS add the slit start corner to the subarray start corner
   when determining what region of the flat_field reference files to extract. [#5269]
 
 - Enable NIRSpec lamp processing in calspec2 pipeline. [#5267]
+
+- Implement providing a user-supplied flat field to which overrides all references [#5233]
 
 fringe
 ------
