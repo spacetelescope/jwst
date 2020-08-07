@@ -69,13 +69,13 @@ class SourceCatalogStep(Step):
                 abvega_offset = refdata.abvega_offset
             except RuntimeError as err:
                 msg = f'{err} Source catalog will not be created.'
-                self.log.warn(msg)
+                self.log.warning(msg)
                 return
 
             coverage_mask = (model.wht == 0)
             if coverage_mask.all():
-                self.log.warn('There are no pixels with non-zero weight. '
-                              'Source catalog will not be created.')
+                self.log.warning('There are no pixels with non-zero weight. '
+                                 'Source catalog will not be created.')
                 return
 
             bkg = Background(model.data, box_size=self.bkg_boxsize,
@@ -94,8 +94,8 @@ class SourceCatalogStep(Step):
                                                mask=coverage_mask,
                                                deblend=self.deblend)
             if segment_img is None:
-                self.log.warn('No sources were found. Source catalog will '
-                              'not be created.')
+                self.log.warning('No sources were found. Source catalog '
+                                 'will not be created.')
                 return
             self.log.info(f'Detected {segment_img.nlabels} sources')
 
