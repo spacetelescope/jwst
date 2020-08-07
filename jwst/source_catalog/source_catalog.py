@@ -136,7 +136,6 @@ class ReferenceData:
         if len(ee_table) == 0:
             raise RuntimeError('APCORR reference file data is missing for '
                                f'{selector}.')
-            return
 
         return ee_table
 
@@ -542,6 +541,8 @@ class SourceCatalog:
         self.column_desc = {}
 
         self.wcs = self.model.meta.wcs
+        self._xpeak = None
+        self._ypeak = None
 
     def convert_to_jy(self):
         """
@@ -1317,6 +1318,9 @@ class SourceCatalog:
 
     @lazyproperty
     def catalog_metadata(self):
+        """
+        The catalog metadata, include package version numbers.
+        """
         meta = {}
         meta['jwst version'] = jwst_version
         meta['numpy version'] = np.__version__
