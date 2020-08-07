@@ -3211,6 +3211,7 @@ def do_extract1d(
     ):
         output_model.meta.cal_step.extract_1d = 'COMPLETE'
 
+
     return output_model
 
 
