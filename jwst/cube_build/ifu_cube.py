@@ -1096,18 +1096,18 @@ class IFUCubeData():
             if np.isnan(self.weight_power):
                 self.weight_power = None
 
-        log.debug(f'spatial size {self.spatial_size:.7f}')
-        log.debug(f'spectral size {self.spectral_size:.7f}')
-        log.debug(f'spatial roi {self.rois:.7f}')
-        log.debug(f'wave min and max {self.wavemin:.7f} {self.wavemax:.7f}')
-        log.debug(f'linear wavelength {self.linear_wavelength:.7f}')
-        log.debug(f'roiw {self.roiw:.7f}')
+        log.debug(f'spatial size {self.spatial_size}')
+        log.debug(f'spectral size {self.spectral_size}')
+        log.debug(f'spatial roi {self.rois}')
+        log.debug(f'wave min and max {self.wavemin} {self.wavemax}')
+        log.debug(f'linear wavelength {self.linear_wavelength}')
+        log.debug(f'roiw {self.roiw}')
         log.debug(f'output_type {self.output_type}')
         if self.weighting == 'msm':
-            log.debug(f'weight_power {self.weight_power:.7f}')
-            log.debug(f'softrad {self.soft_rad:.7f}')
+            log.debug(f'weight_power {self.weight_power}')
+            log.debug(f'softrad {self.soft_rad}')
         if self.weighting == 'emsm':
-            log.debug(f'scalerad {self.scalerad:.7f}')
+            log.debug(f'scalerad {self.scalerad}')
 
 # ******************************************************************************
 
