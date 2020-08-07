@@ -180,6 +180,9 @@ source_catalog
 
 - Changed the type of column ``is_star`` from float to bool. [#5140]
 
+- Implemented algorithm for determining whether a source is a star.
+  [#5234]
+
 stpipe
 ------
 
