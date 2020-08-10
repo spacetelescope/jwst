@@ -4,6 +4,7 @@ import pytest
 from . import regtestdata as rt
 
 from astropy.io.fits.diff import FITSDiff
+import numpy as np
 
 import jwst.datamodels as dm
 from jwst.flatfield import FlatFieldStep
@@ -93,3 +94,16 @@ def test_flat_field_step_user_supplied_flat(jail, rtdata_module, fitsdiff_defaul
     rtdata.get_truth(TRUTH_PATH + '/' + 'flat_fielded_step_user_supplied.fits')
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
+
+
+@pytest.mark.slow
+@pytest.mark.bigdata
+def test_ff_inv(jail, rtdata_module, fitsdiff_default_kwargs):
+    """Test flat field inversion"""
+    rtdata = rtdata_module
+    data = dm.open(rtdata.get_data('nirspec/ifu/nrs_ifu_nrs1_assign_wcs.fits'))
+
+    flatted = FlatFieldStep.call(data)
+    unflatted = FlatFieldStep.call(flatted, inverse=True)
+
+    assert np.allclose(data.data, unflatted.data), 'Inversion failed'

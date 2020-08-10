@@ -453,8 +453,8 @@ def nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_model, di
     return interpolated_flat
 
 
-def nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
-                dispaxis, user_supplied_flat=None):
+def nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model, dispaxis,
+                user_supplied_flat=None, inverse=False):
     """Apply flat-fielding for NIRSpec IFU data, in-place
 
     Parameters
@@ -478,6 +478,9 @@ def nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
         A pre-computed flat to use directly. If supplied,
         all other inputs are ignored
 
+    inverse : boolean
+        Invert the math operations used to apply the flat field.
+
     Returns
     -------
     ~jwst.datamodels.ImageModel
@@ -496,7 +499,10 @@ def nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
         )
 
     if any_updated:
-        output_model.data /= flat
+        if not inverse:
+            output_model.data /= flat
+        else:
+            output_model.data *= flat
         output_model.dq |= flat_dq
 
         # Update the variances and uncertainty array using BASELINE algorithm
