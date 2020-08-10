@@ -27,7 +27,9 @@ HORIZONTAL = 1
 VERTICAL = 2
 
 
-def do_correction(input_model, flat=None, fflat=None, sflat=None, dflat=None, user_supplied_flat=None):
+def do_correction(input_model,
+                  flat=None, fflat=None, sflat=None, dflat=None, user_supplied_flat=None,
+                  inverse=False):
     """Flat-field a JWST data model using a flat-field model
 
     Parameters
@@ -52,6 +54,9 @@ def do_correction(input_model, flat=None, fflat=None, sflat=None, dflat=None, us
         If supplied, all other reference flats and flat creation are
         ignored in favor of the specified flat.
 
+    inverse : boolean
+        Invert the math operations used to apply the flat field.
+
     Returns
     -------
     output_model : data model
@@ -70,11 +75,12 @@ def do_correction(input_model, flat=None, fflat=None, sflat=None, dflat=None, us
     # needed because NIRSpec imaging data are processed by do_flat_field().
     if input_model.meta.instrument.name == 'NIRSPEC' and flat is None:
         flat_applied = do_nirspec_flat_field(output_model, fflat, sflat, dflat,
-                                             user_supplied_flat=user_supplied_flat)
+                                             user_supplied_flat=user_supplied_flat,
+                                             inverse=inverse)
     else:
         if user_supplied_flat is not None:
             flat = user_supplied_flat
-        do_flat_field(output_model, flat)
+        do_flat_field(output_model, flat, inverse=inverse)
         flat_applied = flat
 
     return output_model, flat_applied
@@ -84,7 +90,7 @@ def do_correction(input_model, flat=None, fflat=None, sflat=None, dflat=None, us
 # These functions are for non-NIRSpec flat fielding, or for NIRSpec imaging.
 #
 
-def do_flat_field(output_model, flat_model):
+def do_flat_field(output_model, flat_model, inverse=False):
     """Apply flat-fielding for non-NIRSpec modes, updating the output model.
 
     Parameters
@@ -94,7 +100,12 @@ def do_flat_field(output_model, flat_model):
 
     flat_model : JWST data model
         data model containing flat-field
+
+    inverse : boolean
+        Invert the math operations used to apply the flat field.
     """
+    if inverse:
+        raise NotImplementedError(f'Inversion of the flat field is not implemented for data {output_model}')
 
     if output_model.meta.instrument.name == "NIRSPEC":
         log.debug("Flat field correction for NIRSpec imaging data.")
@@ -205,7 +216,8 @@ def apply_flat_field(science, flat):
 # The following functions are for NIRSpec spectrographic data.
 #
 
-def do_nirspec_flat_field(output_model, f_flat_model, s_flat_model, d_flat_model, user_supplied_flat=None):
+def do_nirspec_flat_field(output_model, f_flat_model, s_flat_model, d_flat_model,
+                          user_supplied_flat=None, inverse=False):
     """Apply flat-fielding for NIRSpec data, updating in-place.
 
     Calls one of 3 functions depending on whether the data is 1) NIRSpec IFU,
@@ -228,6 +240,9 @@ def do_nirspec_flat_field(output_model, f_flat_model, s_flat_model, d_flat_model
     user_supplied_flat : ~jwst.datamodels.DataModel or None
         If provided, override all other calculated or reference-file-retrieved
         flat information and use this data.
+
+    inverse : boolean
+        Invert the math operations used to apply the flat field.
 
     Returns
     -------
@@ -255,8 +270,8 @@ def do_nirspec_flat_field(output_model, f_flat_model, s_flat_model, d_flat_model
                       "don't know how to process it.")
             raise RuntimeError("Input is {}; expected SlitModel"
                                .format(type(output_model)))
-        return nirspec_brightobj(output_model, f_flat_model, s_flat_model,
-                                 d_flat_model, dispaxis, user_supplied_flat=user_supplied_flat)
+        return nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_model, dispaxis,
+                                 user_supplied_flat=user_supplied_flat, inverse=inverse)
 
     # We expect NIRSpec IFU data to be an IFUImageModel, but it's conceivable
     # that the slices have been copied out into a MultiSlitModel, so
@@ -268,16 +283,16 @@ def do_nirspec_flat_field(output_model, f_flat_model, s_flat_model, d_flat_model
                           "don't know how to process it.")
                 raise RuntimeError("Input is {}; expected IFUImageModel"
                                    .format(type(output_model)))
-            return nirspec_ifu(output_model, f_flat_model, s_flat_model,
-                               d_flat_model, dispaxis, user_supplied_flat=user_supplied_flat)
+            return nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model, dispaxis,
+                               user_supplied_flat=user_supplied_flat, inverse=inverse)
     # For datamodels with slits, MSA and Fixed slit modes:
     else:
-        return nirspec_fs_msa(output_model, f_flat_model, s_flat_model,
-                              d_flat_model, dispaxis, user_supplied_flat=user_supplied_flat)
+        return nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispaxis,
+                              user_supplied_flat=user_supplied_flat, inverse=inverse)
 
 
-def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model,
-                   dispaxis, user_supplied_flat=None):
+def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispaxis,
+                   user_supplied_flat=None, inverse=False):
     """Apply flat-fielding for NIRSpec fixed slit and MSA data, in-place
 
     Parameters
@@ -300,6 +315,9 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model,
     user_supplied_flat : ~jwst.datamodels.DataModel or None
         If provided, override all other calculated or reference-file-retrieved
         flat information and use this data.
+
+    inverse : boolean
+        Invert the math operations used to apply the flat field.
 
     Returns
     -------
@@ -340,7 +358,10 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model,
 
         # Now let's apply the correction to science data and error arrays.  Rely
         # on array broadcasting to handle the cubes
-        slit.data /= slit_flat.data
+        if not inverse:
+            slit.data /= slit_flat.data
+        else:
+            slit.data *= slit_flat.data
 
         # Update the variances using BASELINE algorithm
         flat_data_squared = slit_flat.data**2
@@ -1713,6 +1734,7 @@ def flat_for_nirspec_slit(slit, f_flat_model, s_flat_model, d_flat_model,
     # Create flat and flat dq arrays with default values
     flat_2d = np.ones_like(slit.data)
     flat_dq_2d = np.zeros_like(slit.dq)
+    flat_err_2d = np.zeros_like(slit.err)
 
     # pixels with respect to the original image
     ysize, xsize = slit.data.shape
@@ -1750,8 +1772,9 @@ def flat_for_nirspec_slit(slit, f_flat_model, s_flat_model, d_flat_model,
             log.warning("and this slit does not have a 'wcs' attribute")
             log.warning("likely because assign_wcs has not been run.")
             log.error("skipping ...")
+
             # Put a dummy flat here as a placeholder
-            dummy_flat = datamodels.SlitModel(data=flat_2d, dq=flat_dq_2d)
+            dummy_flat = datamodels.SlitModel(data=flat_2d, dq=flat_dq_2d, err=flat_err_2d)
             dummy_flat.name = slit.name
             dummy_flat.xstart = slit.xstart
             dummy_flat.xsize = slit.xsize
