@@ -78,7 +78,7 @@ def test_flat_field_step_user_supplied_flat(jail, rtdata_module, fitsdiff_defaul
 
 @pytest.mark.bigdata
 def test_ff_inv(jail, rtdata_module, fitsdiff_default_kwargs):
-    """Test flat field inversion with MOS"""
+    """Test flat field inversion"""
     rtdata = rtdata_module
     data = dm.open(rtdata.get_data('nirspec/mos/usf_wavecorr.fits'))
 
