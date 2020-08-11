@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from ..stpipe import Step
 from .. import datamodels
 from . import flat_field
