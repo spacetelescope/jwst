@@ -104,9 +104,6 @@ def do_flat_field(output_model, flat_model, inverse=False):
     inverse : boolean
         Invert the math operations used to apply the flat field.
     """
-    if inverse:
-        raise NotImplementedError(f'Inversion of the flat field is not implemented for data {output_model}')
-
     if output_model.meta.instrument.name == "NIRSPEC":
         log.debug("Flat field correction for NIRSpec imaging data.")
     else:
@@ -126,12 +123,12 @@ def do_flat_field(output_model, flat_model, inverse=False):
         # Apply flat to each slit contained in the input
         for slit in output_model.slits:
             log.debug('Applying flat to slit %s' % (slit.name))
-            apply_flat_field(slit, flat_model)
+            apply_flat_field(slit, flat_model, inverse=inverse)
             any_updated = True
 
     # Apply flat to all other models
     else:
-        apply_flat_field(output_model, flat_model)
+        apply_flat_field(output_model, flat_model, inverse=inverse)
         any_updated = True
 
     if any_updated:
@@ -140,7 +137,7 @@ def do_flat_field(output_model, flat_model, inverse=False):
         output_model.meta.cal_step.flat_field = 'SKIPPED'
 
 
-def apply_flat_field(science, flat):
+def apply_flat_field(science, flat, inverse=False):
     """Flat field the data and error arrays.
 
     Extended summary
@@ -157,6 +154,9 @@ def apply_flat_field(science, flat):
 
     flat : JWST data model
         flat field data model
+
+    inverse : boolean
+        Invert the math operations used to apply the flat field.
     """
 
     # Extract subarray from reference data, if necessary
@@ -193,7 +193,10 @@ def apply_flat_field(science, flat):
 
     # Now let's apply the correction to science data and error arrays.  Rely
     # on array broadcasting to handle the cubes
-    science.data /= flat_data
+    if not inverse:
+        science.data /= flat_data
+    else:
+        science.data *= flat_data
 
     # Update the variances using BASELINE algorithm.  For guider data, it has
     # not gone through ramp fitting so there is no Poisson noise or readnoise
