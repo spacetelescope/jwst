@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from ..stpipe import Step
 from .. import datamodels
 from . import flat_field
@@ -87,6 +89,10 @@ class FlatFieldStep(Step):
             reference_file_models = {
                 'user_supplied_flat': datamodels.open(self.user_supplied_flat)
             }
+
+            # Record the user-supplied flat as the FLAT reference type for recording
+            # in the result header.
+            self._reference_files_used.append(('flat', Path(self.user_supplied_flat).name))
 
         # Do the flat-field correction
         output_model, flat_applied = flat_field.do_correction(
