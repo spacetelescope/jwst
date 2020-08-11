@@ -84,7 +84,7 @@ def test_nirspec_ifu_user_supplied_flat(jail, rtdata_module, fitsdiff_default_kw
 def test_flat_field_step_user_supplied_flat(jail, rtdata_module, fitsdiff_default_kwargs):
     """Test providing a user-supplied flat field to the FlatFieldStep"""
     rtdata = rtdata_module
-    data = dm.open(rtdata.get_data('nirspec/ifu/nrs_ifu_nrs1_assign_wcs.fits'))
+    data = rtdata.get_data('nirspec/ifu/nrs_ifu_nrs1_assign_wcs.fits')
     user_supplied_flat = rtdata.get_data('nirspec/ifu/nrs_ifu_nrs1_interpolated_flat.fits')
 
     data_flat_fielded = FlatFieldStep.call(data, user_supplied_flat=user_supplied_flat)
