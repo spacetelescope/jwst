@@ -67,6 +67,7 @@ def multislit_to_container(inputs):
     Returns
     -------
     containers : dict
+        {str: ModelContainer, }
         Returns a dict of ModelContainer instances wherein each
         instance contains ImageModels of slits belonging to the same source.
         The key is the ID of each slit, i.e. ``source_id``.
