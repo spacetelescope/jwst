@@ -191,6 +191,9 @@ pipeline
 
 - Refactor Spec2Pipeline for execution logic and step flow isolation [#5214]
 
+- Update ``Ami3Pipeline`` to only process psf and science members from the
+  input ASN. [#5243]
+
 photom
 ------
 

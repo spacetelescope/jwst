@@ -60,7 +60,7 @@ def multislit_to_container(inputs):
 
     Parameters
     ----------
-    inputs: [MultiSlitModel, ...]
+    inputs : [MultiSlitModel, ...]
         List of MultiSlitModel instances to reformat, or just a
         ModelContainer full of MultiSlitModels.
 
@@ -70,7 +70,7 @@ def multislit_to_container(inputs):
         {str: ModelContainer, }
         Returns a dict of ModelContainer instances wherein each
         instance contains ImageModels of slits belonging to the same source.
-        The key is the ID of each slit, i.e. 11source_id``.
+        The key is the ID of each slit, i.e. ``source_id``.
     """
     containers = exp_to_source(inputs)
     for id in containers:
