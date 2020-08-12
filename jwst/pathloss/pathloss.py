@@ -186,310 +186,14 @@ def do_correction(input_model, pathloss_model):
     log.info(f'Input exposure type is {exp_type}')
     output_model = input_model.copy()
 
-    # NIRSpec MOS data
     if exp_type == 'NRS_MSASPEC':
-        slit_number = 0
-
-        # Loop over all MOS slitlets
-        for slit in output_model.slits:
-            slit_number = slit_number + 1
-            log.info(f'Working on slit {slit_number}')
-            size = slit.data.size
-
-            # Only work on slits with data.size > 0
-            if size > 0:
-
-                # Get centering
-                xcenter, ycenter = get_center(exp_type, slit)
-                # Calculate the 1-d wavelength and pathloss vectors
-                # for the source position
-                # Get the aperture from the reference file that matches the slit
-                nshutters = util.get_num_msa_open_shutters(slit.shutter_state)
-                aperture = get_aperture_from_model(pathloss_model, nshutters)
-                if aperture is not None:
-                    (wavelength_pointsource,
-                     pathloss_pointsource_vector,
-                     is_inside_slitlet) = calculate_pathloss_vector(aperture.pointsource_data,
-                                                                    aperture.pointsource_wcs,
-                                                                    xcenter, ycenter)
-                    (wavelength_uniformsource,
-                     pathloss_uniform_vector,
-                     dummy) = calculate_pathloss_vector(aperture.uniform_data,
-                                                        aperture.uniform_wcs,
-                                                        xcenter, ycenter)
-                    if is_inside_slitlet:
-
-                        # Wavelengths in the reference file are in meters,
-                        # need them to be in microns
-                        wavelength_pointsource *= 1.0e6
-                        wavelength_uniformsource *= 1.0e6
-
-                        wavelength_array = slit.wavelength
-
-                        # Compute the point source pathloss 2D correction
-                        pathloss_2d_ps = interpolate_onto_grid(
-                            wavelength_array,
-                            wavelength_pointsource,
-                            pathloss_pointsource_vector)
-
-                        # Compute the uniform source pathloss 2D correction
-                        pathloss_2d_un = interpolate_onto_grid(
-                            wavelength_array,
-                            wavelength_uniformsource,
-                            pathloss_uniform_vector)
-
-                        # Use the appropriate correction for this slit
-                        if is_pointsource(slit.source_type):
-                            pathloss_2d = pathloss_2d_ps
-                        else:
-                            pathloss_2d = pathloss_2d_un
-
-                        # Apply the pathloss 2D correction and attach to datamodel
-                        slit.data /= pathloss_2d
-                        slit.err /= pathloss_2d
-                        slit.var_poisson /= pathloss_2d**2
-                        slit.var_rnoise /= pathloss_2d**2
-                        if slit.var_flat is not None and np.size(slit.var_flat) > 0:
-                            slit.var_flat /= pathloss_2d**2
-                        slit.pathloss_point = pathloss_2d_ps
-                        slit.pathloss_uniform = pathloss_2d_un
-                    else:
-                        log.warning("Source is outside slit. Skipping "
-                                    f"pathloss correction for slit {slit_number}")
-                else:
-                    log.warning("Cannot find matching pathloss model for slit with"
-                                f"{nshutters} shutters")
-                    log.warning("Skipping pathloss correction for this slit")
-                    continue
-            else:
-                log.warning(f"Slit has data size = {size}")
-                log.warning("Skipping pathloss correction for this slitlet")
-
-        # Set step status to complete
-        output_model.meta.cal_step.pathloss = 'COMPLETE'
-
-    # NIRSpec fixed-slit data
+        do_correction_mos(output_model, pathloss_model)
     elif exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
-        slit_number = 0
-        is_inside_slit = True
-
-        # Loop over all slits contained in the input
-        for slit in output_model.slits:
-            log.info(f'Working on slit {slit.name}')
-            slit_number = slit_number + 1
-
-            # Get centering
-            xcenter, ycenter = get_center(exp_type, slit)
-            # Calculate the 1-d wavelength and pathloss vectors for the source position
-            # Get the aperture from the reference file that matches the slit
-            aperture = get_aperture_from_model(pathloss_model, slit.name)
-
-            if aperture is not None:
-                log.info(f'Using aperture {aperture.name}')
-                (wavelength_pointsource,
-                 pathloss_pointsource_vector,
-                 is_inside_slit) = calculate_pathloss_vector(aperture.pointsource_data,
-                                                             aperture.pointsource_wcs,
-                                                             xcenter, ycenter)
-                (wavelength_uniformsource,
-                 pathloss_uniform_vector,
-                 dummy) = calculate_pathloss_vector(aperture.uniform_data,
-                                                    aperture.uniform_wcs,
-                                                    xcenter, ycenter)
-                if is_inside_slit:
-
-                    # Wavelengths in the reference file are in meters,
-                    # need them to be in microns
-                    wavelength_pointsource *= 1.0e6
-                    wavelength_uniformsource *= 1.0e6
-
-                    wavelength_array = slit.wavelength
-
-                    # Compute the point source pathloss 2D correction
-                    pathloss_2d_ps = interpolate_onto_grid(
-                        wavelength_array,
-                        wavelength_pointsource,
-                        pathloss_pointsource_vector)
-
-                    # Compute the uniform source pathloss 2D correction
-                    pathloss_2d_un = interpolate_onto_grid(
-                        wavelength_array,
-                        wavelength_uniformsource,
-                        pathloss_uniform_vector)
-
-                    # Use the appropriate correction for this slit
-                    if is_pointsource(slit.source_type):
-                        pathloss_2d = pathloss_2d_ps
-                    else:
-                        pathloss_2d = pathloss_2d_un
-
-                    # Apply the pathloss 2D correction and attach to datamodel
-                    slit.data /= pathloss_2d
-                    slit.err /= pathloss_2d
-                    slit.var_poisson /= pathloss_2d**2
-                    slit.var_rnoise /= pathloss_2d**2
-                    if slit.var_flat is not None and np.size(slit.var_flat) > 0:
-                        slit.var_flat /= pathloss_2d**2
-                    slit.pathloss_point = pathloss_2d_ps
-                    slit.pathloss_uniform = pathloss_2d_un
-
-                else:
-                    log.warning('Source is outside slit. Skipping '
-                                f'pathloss correction for slit {slit.name}')
-            else:
-                log.warning(f'Cannot find matching pathloss model for {slit.name}')
-                log.warning('Skipping pathloss correction for this slit')
-                continue
-
-        # Set step status to complete
-        output_model.meta.cal_step.pathloss = 'COMPLETE'
-
-    # NIRSpec IFU
+        do_correction_fixedslit(output_model, pathloss_model)
     elif exp_type == 'NRS_IFU':
-        # IFU targets are always inside slit
-        # Get centering
-        xcenter, ycenter = get_center(exp_type, None)
-        # Calculate the 1-d wavelength and pathloss vectors for the source position
-        aperture = pathloss_model.apertures[0]
-        (wavelength_pointsource,
-         pathloss_pointsource_vector,
-         dummy) = calculate_pathloss_vector(aperture.pointsource_data,
-                                            aperture.pointsource_wcs,
-                                            xcenter, ycenter)
-        (wavelength_uniformsource,
-         pathloss_uniform_vector,
-         dummy) = calculate_pathloss_vector(aperture.uniform_data,
-                                            aperture.uniform_wcs,
-                                            xcenter, ycenter)
-        # Wavelengths in the reference file are in meters;
-        # need them to be in microns
-        wavelength_pointsource *= 1.0e6
-        wavelength_uniformsource *= 1.0e6
-
-        # Create the 2-d wavelength arrays, initialize with NaNs
-        wavelength_array = np.zeros(input_model.shape, dtype=np.float32)
-        wavelength_array.fill(np.nan)
-        for slice in NIRSPEC_IFU_SLICES:
-            slice_wcs = nirspec.nrs_wcs_set_input(input_model, slice)
-            x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
-            ra, dec, wavelength = slice_wcs(x, y)
-            valid = ~np.isnan(wavelength)
-            x = x[valid]
-            y = y[valid]
-            wavelength_array[y.astype(int), x.astype(int)] = wavelength[valid]
-
-        # Compute the point source pathloss 2D correction
-        pathloss_2d_ps = interpolate_onto_grid(
-            wavelength_array,
-            wavelength_pointsource,
-            pathloss_pointsource_vector)
-
-        # Compute the uniform source pathloss 2D correction
-        pathloss_2d_un = interpolate_onto_grid(
-            wavelength_array,
-            wavelength_uniformsource,
-            pathloss_uniform_vector)
-
-        # Use the appropriate correction for the source type
-        if is_pointsource(input_model.meta.target.source_type):
-            pathloss_2d = pathloss_2d_ps
-        else:
-            pathloss_2d = pathloss_2d_un
-
-        # Apply the pathloss 2D correction and attach to datamodel
-        output_model.data /= pathloss_2d
-        output_model.err /= pathloss_2d
-        output_model.var_poisson /= pathloss_2d**2
-        output_model.var_rnoise /= pathloss_2d**2
-        if output_model.var_flat is not None and np.size(output_model.var_flat) > 0:
-            output_model.var_flat /= pathloss_2d**2
-        output_model.pathloss_point = pathloss_2d_ps
-        output_model.pathloss_uniform = pathloss_2d_un
-
-        # This might be useful to other steps
-        output_model.wavelength = wavelength_array
-
-        # Set the step status to complete
-        output_model.meta.cal_step.pathloss = 'COMPLETE'
-
-    # NIRISS SOSS
+        do_correction_ifu(output_model, pathloss_model)
     elif exp_type == 'NIS_SOSS':
-        """NIRISS SOSS pathloss correction is basically a correction for the
-        flux from the 2nd and 3rd order dispersion that falls outside the
-        subarray aperture.  The correction depends on the pupil wheel position
-        and column number (or wavelength).  The simple option is to do the
-        correction by column number, then the only interpolation needed is a
-        1-d interpolation into the pupil wheel position dimension.
-        """
-
-        # Omit correction if this is a TSO observation
-        if input_model.meta.visit.tsovisit:
-            log.warning("NIRISS SOSS TSO observations skip the pathloss step")
-            output_model.meta.cal_step.pathloss = 'SKIPPED'
-            return output_model
-
-        # Get the pupil wheel position
-        pupil_wheel_position = input_model.meta.instrument.pupil_position
-        if pupil_wheel_position is None:
-            log.warning('Unable to get pupil wheel position from PWCPOS keyword '
-                        f'for {input_model.meta.filename}')
-            log.warning("Pathloss correction skipped")
-            output_model.meta.cal_step.pathloss = 'SKIPPED'
-            return output_model
-
-        # Get the aperture from the reference file that matches the subarray
-        subarray = input_model.meta.subarray.name
-        aperture = get_aperture_from_model(pathloss_model, subarray)
-        if aperture is None:
-            log.warning('Unable to get Aperture from reference file '
-                        f'for subarray {subarray}')
-            log.warning("Pathloss correction skipped")
-            output_model.meta.cal_step.pathloss = 'SKIPPED'
-            return output_model
-
-        else:
-            log.info(f'Aperture {aperture.name} selected from reference file')
-
-        # Set up pathloss correction array
-        pathloss_array = aperture.pointsource_data[0]
-        nrows, ncols = pathloss_array.shape
-        _, data_ncols = input_model.data.shape
-        correction = np.ones(data_ncols, dtype=np.float32)
-        crpix1 = aperture.pointsource_wcs.crpix1
-        crval1 = aperture.pointsource_wcs.crval1
-        cdelt1 = aperture.pointsource_wcs.cdelt1
-        pupil_wheel_index = crpix1 + (pupil_wheel_position - crval1) / cdelt1 - 1
-
-        if pupil_wheel_index < 0 or pupil_wheel_index > (ncols - 2):
-            log.warning("Pupil Wheel position outside reference file coverage")
-            log.warning("Setting pathloss correction to 1.0")
-        else:
-            ix = int(pupil_wheel_index)
-            dx = pupil_wheel_index - ix
-            crpix2 = aperture.pointsource_wcs.crpix2
-            crval2 = aperture.pointsource_wcs.crval2
-            cdelt2 = aperture.pointsource_wcs.cdelt2
-            for row in range(data_ncols):
-                row_1indexed = row + 1
-                refrow_index = math.floor(crpix2 + (row_1indexed - crval2) / cdelt2 - 0.5)
-                if refrow_index < 0 or refrow_index > (nrows - 1):
-                    correction[row] = 1.0
-                else:
-                    correction[row] = (1.0 - dx) * pathloss_array[refrow_index, ix] + \
-                                      dx * pathloss_array[refrow_index, ix + 1]
-
-        # Create and apply the 2D correction
-        pathloss_2d = np.broadcast_to(correction, input_model.data.shape)
-        output_model.data /= pathloss_2d
-        output_model.err /= pathloss_2d
-        output_model.var_poisson /= pathloss_2d**2
-        output_model.var_rnoise /= pathloss_2d**2
-        if output_model.var_flat is not None and np.size(output_model.var_flat) > 0:
-            output_model.var_flat /= pathloss_2d**2
-        output_model.pathloss_point = pathloss_2d
-
-        # Set step status to complete
-        output_model.meta.cal_step.pathloss = 'COMPLETE'
+        do_correction_soss(output_model, pathloss_model)
 
     return output_model
 
@@ -575,3 +279,355 @@ def is_pointsource(srctype):
         return True
     else:
         return False
+
+
+def do_correction_mos(data, pathloss):
+    """Path loss correction for NIRSpec MOS
+
+    Data is modified in-place.
+
+    Parameters
+    ----------
+    data : jwst.datamodel.DataModel
+        The NIRSpec MOS data to be corrected.
+
+    pathloss : jwst.datamodel.DataModel
+        The pathloss reference data.
+    """
+    slit_number = 0
+
+    # Loop over all MOS slitlets
+    for slit in data.slits:
+        slit_number = slit_number + 1
+        log.info(f'Working on slit {slit_number}')
+        size = slit.data.size
+
+        # Only work on slits with data.size > 0
+        if size > 0:
+
+            # Get centering
+            xcenter, ycenter = get_center(exp_type, slit)
+            # Calculate the 1-d wavelength and pathloss vectors
+            # for the source position
+            # Get the aperture from the reference file that matches the slit
+            nshutters = util.get_num_msa_open_shutters(slit.shutter_state)
+            aperture = get_aperture_from_model(pathloss_model, nshutters)
+            if aperture is not None:
+                (wavelength_pointsource,
+                 pathloss_pointsource_vector,
+                 is_inside_slitlet) = calculate_pathloss_vector(aperture.pointsource_data,
+                                                                aperture.pointsource_wcs,
+                                                                xcenter, ycenter)
+                (wavelength_uniformsource,
+                 pathloss_uniform_vector,
+                 dummy) = calculate_pathloss_vector(aperture.uniform_data,
+                                                    aperture.uniform_wcs,
+                                                    xcenter, ycenter)
+                if is_inside_slitlet:
+
+                    # Wavelengths in the reference file are in meters,
+                    # need them to be in microns
+                    wavelength_pointsource *= 1.0e6
+                    wavelength_uniformsource *= 1.0e6
+
+                    wavelength_array = slit.wavelength
+
+                    # Compute the point source pathloss 2D correction
+                    pathloss_2d_ps = interpolate_onto_grid(
+                        wavelength_array,
+                        wavelength_pointsource,
+                        pathloss_pointsource_vector)
+
+                    # Compute the uniform source pathloss 2D correction
+                    pathloss_2d_un = interpolate_onto_grid(
+                        wavelength_array,
+                        wavelength_uniformsource,
+                        pathloss_uniform_vector)
+
+                    # Use the appropriate correction for this slit
+                    if is_pointsource(slit.source_type):
+                        pathloss_2d = pathloss_2d_ps
+                    else:
+                        pathloss_2d = pathloss_2d_un
+
+                    # Apply the pathloss 2D correction and attach to datamodel
+                    slit.data /= pathloss_2d
+                    slit.err /= pathloss_2d
+                    slit.var_poisson /= pathloss_2d**2
+                    slit.var_rnoise /= pathloss_2d**2
+                    if slit.var_flat is not None and np.size(slit.var_flat) > 0:
+                        slit.var_flat /= pathloss_2d**2
+                    slit.pathloss_point = pathloss_2d_ps
+                    slit.pathloss_uniform = pathloss_2d_un
+                else:
+                    log.warning("Source is outside slit. Skipping "
+                                f"pathloss correction for slit {slit_number}")
+            else:
+                log.warning("Cannot find matching pathloss model for slit with"
+                            f"{nshutters} shutters")
+                log.warning("Skipping pathloss correction for this slit")
+                continue
+        else:
+            log.warning(f"Slit has data size = {size}")
+            log.warning("Skipping pathloss correction for this slitlet")
+
+    # Set step status to complete
+    data.meta.cal_step.pathloss = 'COMPLETE'
+
+
+def do_correction_fixedslit(data, pathloss):
+    """Path loss correction for NIRSpec fixed-slit modes
+
+    Data is modified in-place.
+
+    Parameters
+    ----------
+    data : jwst.datamodel.DataModel
+        The NIRSpec fixed-slit data to be corrected.
+
+    pathloss : jwst.datamodel.DataModel
+        The pathloss reference data.
+    """
+    slit_number = 0
+    is_inside_slit = True
+
+    # Loop over all slits contained in the input
+    for slit in data.slits:
+        log.info(f'Working on slit {slit.name}')
+        slit_number = slit_number + 1
+
+        # Get centering
+        xcenter, ycenter = get_center(exp_type, slit)
+        # Calculate the 1-d wavelength and pathloss vectors for the source position
+        # Get the aperture from the reference file that matches the slit
+        aperture = get_aperture_from_model(pathloss_model, slit.name)
+
+        if aperture is not None:
+            log.info(f'Using aperture {aperture.name}')
+            (wavelength_pointsource,
+             pathloss_pointsource_vector,
+             is_inside_slit) = calculate_pathloss_vector(aperture.pointsource_data,
+                                                         aperture.pointsource_wcs,
+                                                         xcenter, ycenter)
+            (wavelength_uniformsource,
+             pathloss_uniform_vector,
+             dummy) = calculate_pathloss_vector(aperture.uniform_data,
+                                                aperture.uniform_wcs,
+                                                xcenter, ycenter)
+            if is_inside_slit:
+
+                # Wavelengths in the reference file are in meters,
+                # need them to be in microns
+                wavelength_pointsource *= 1.0e6
+                wavelength_uniformsource *= 1.0e6
+
+                wavelength_array = slit.wavelength
+
+                # Compute the point source pathloss 2D correction
+                pathloss_2d_ps = interpolate_onto_grid(
+                    wavelength_array,
+                    wavelength_pointsource,
+                    pathloss_pointsource_vector)
+
+                # Compute the uniform source pathloss 2D correction
+                pathloss_2d_un = interpolate_onto_grid(
+                    wavelength_array,
+                    wavelength_uniformsource,
+                    pathloss_uniform_vector)
+
+                # Use the appropriate correction for this slit
+                if is_pointsource(slit.source_type):
+                    pathloss_2d = pathloss_2d_ps
+                else:
+                    pathloss_2d = pathloss_2d_un
+
+                # Apply the pathloss 2D correction and attach to datamodel
+                slit.data /= pathloss_2d
+                slit.err /= pathloss_2d
+                slit.var_poisson /= pathloss_2d**2
+                slit.var_rnoise /= pathloss_2d**2
+                if slit.var_flat is not None and np.size(slit.var_flat) > 0:
+                    slit.var_flat /= pathloss_2d**2
+                slit.pathloss_point = pathloss_2d_ps
+                slit.pathloss_uniform = pathloss_2d_un
+
+            else:
+                log.warning('Source is outside slit. Skipping '
+                            f'pathloss correction for slit {slit.name}')
+        else:
+            log.warning(f'Cannot find matching pathloss model for {slit.name}')
+            log.warning('Skipping pathloss correction for this slit')
+            continue
+
+    # Set step status to complete
+    data.meta.cal_step.pathloss = 'COMPLETE'
+
+
+def do_correction_ifu(data, pathloss):
+    """Path loss correction for NIRSpec IFU
+
+    Data is modified in-place.
+
+    Parameters
+    ----------
+    data : jwst.datamodel.DataModel
+        The NIRSpec fixed-slit data to be corrected.
+
+    pathloss : jwst.datamodel.DataModel
+        The pathloss reference data.
+    """
+    # IFU targets are always inside slit
+    # Get centering
+    xcenter, ycenter = get_center(exp_type, None)
+    # Calculate the 1-d wavelength and pathloss vectors for the source position
+    aperture = pathloss_model.apertures[0]
+    (wavelength_pointsource,
+     pathloss_pointsource_vector,
+     dummy) = calculate_pathloss_vector(aperture.pointsource_data,
+                                        aperture.pointsource_wcs,
+                                        xcenter, ycenter)
+    (wavelength_uniformsource,
+     pathloss_uniform_vector,
+     dummy) = calculate_pathloss_vector(aperture.uniform_data,
+                                        aperture.uniform_wcs,
+                                        xcenter, ycenter)
+    # Wavelengths in the reference file are in meters;
+    # need them to be in microns
+    wavelength_pointsource *= 1.0e6
+    wavelength_uniformsource *= 1.0e6
+
+    # Create the 2-d wavelength arrays, initialize with NaNs
+    wavelength_array = np.zeros(data.shape, dtype=np.float32)
+    wavelength_array.fill(np.nan)
+    for slice in NIRSPEC_IFU_SLICES:
+        slice_wcs = nirspec.nrs_wcs_set_input(data, slice)
+        x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
+        ra, dec, wavelength = slice_wcs(x, y)
+        valid = ~np.isnan(wavelength)
+        x = x[valid]
+        y = y[valid]
+        wavelength_array[y.astype(int), x.astype(int)] = wavelength[valid]
+
+    # Compute the point source pathloss 2D correction
+    pathloss_2d_ps = interpolate_onto_grid(
+        wavelength_array,
+        wavelength_pointsource,
+        pathloss_pointsource_vector)
+
+    # Compute the uniform source pathloss 2D correction
+    pathloss_2d_un = interpolate_onto_grid(
+        wavelength_array,
+        wavelength_uniformsource,
+        pathloss_uniform_vector)
+
+    # Use the appropriate correction for the source type
+    if is_pointsource(data.meta.target.source_type):
+        pathloss_2d = pathloss_2d_ps
+    else:
+        pathloss_2d = pathloss_2d_un
+
+    # Apply the pathloss 2D correction and attach to datamodel
+    data.data /= pathloss_2d
+    data.err /= pathloss_2d
+    data.var_poisson /= pathloss_2d**2
+    data.var_rnoise /= pathloss_2d**2
+    if data.var_flat is not None and np.size(data.var_flat) > 0:
+        data.var_flat /= pathloss_2d**2
+    data.pathloss_point = pathloss_2d_ps
+    data.pathloss_uniform = pathloss_2d_un
+
+    # This might be useful to other steps
+    data.wavelength = wavelength_array
+
+    # Set the step status to complete
+    data.meta.cal_step.pathloss = 'COMPLETE'
+
+
+def do_correction_soss(data, pathloss):
+    """Path loss correction for NIRSpec SOSS
+
+    NIRISS SOSS pathloss correction is basically a correction for the
+    flux from the 2nd and 3rd order dispersion that falls outside the
+    subarray aperture.  The correction depends on the pupil wheel position
+    and column number (or wavelength).  The simple option is to do the
+    correction by column number, then the only interpolation needed is a
+    1-d interpolation into the pupil wheel position dimension.
+
+    Data is modified in-place.
+
+    Parameters
+    ----------
+    data : jwst.datamodel.DataModel
+        The NIRSpec SOSS data to be corrected.
+
+    pathloss : jwst.datamodel.DataModel
+        The pathloss reference data.
+    """
+    # Omit correction if this is a TSO observation
+    if data.meta.visit.tsovisit:
+        log.warning("NIRISS SOSS TSO observations skip the pathloss step")
+        data.meta.cal_step.pathloss = 'SKIPPED'
+        return
+
+    # Get the pupil wheel position
+    pupil_wheel_position = data.meta.instrument.pupil_position
+    if pupil_wheel_position is None:
+        log.warning('Unable to get pupil wheel position from PWCPOS keyword '
+                    f'for {data.meta.filename}')
+        log.warning("Pathloss correction skipped")
+        data.meta.cal_step.pathloss = 'SKIPPED'
+        return
+
+    # Get the aperture from the reference file that matches the subarray
+    subarray = data.meta.subarray.name
+    aperture = get_aperture_from_model(pathloss_model, subarray)
+    if aperture is None:
+        log.warning('Unable to get Aperture from reference file '
+                    f'for subarray {subarray}')
+        log.warning("Pathloss correction skipped")
+        data.meta.cal_step.pathloss = 'SKIPPED'
+        return
+
+    else:
+        log.info(f'Aperture {aperture.name} selected from reference file')
+
+    # Set up pathloss correction array
+    pathloss_array = aperture.pointsource_data[0]
+    nrows, ncols = pathloss_array.shape
+    _, data_ncols = data.data.shape
+    correction = np.ones(data_ncols, dtype=np.float32)
+    crpix1 = aperture.pointsource_wcs.crpix1
+    crval1 = aperture.pointsource_wcs.crval1
+    cdelt1 = aperture.pointsource_wcs.cdelt1
+    pupil_wheel_index = crpix1 + (pupil_wheel_position - crval1) / cdelt1 - 1
+
+    if pupil_wheel_index < 0 or pupil_wheel_index > (ncols - 2):
+        log.warning("Pupil Wheel position outside reference file coverage")
+        log.warning("Setting pathloss correction to 1.0")
+    else:
+        ix = int(pupil_wheel_index)
+        dx = pupil_wheel_index - ix
+        crpix2 = aperture.pointsource_wcs.crpix2
+        crval2 = aperture.pointsource_wcs.crval2
+        cdelt2 = aperture.pointsource_wcs.cdelt2
+        for row in range(data_ncols):
+            row_1indexed = row + 1
+            refrow_index = math.floor(crpix2 + (row_1indexed - crval2) / cdelt2 - 0.5)
+            if refrow_index < 0 or refrow_index > (nrows - 1):
+                correction[row] = 1.0
+            else:
+                correction[row] = (1.0 - dx) * pathloss_array[refrow_index, ix] + \
+                                  dx * pathloss_array[refrow_index, ix + 1]
+
+    # Create and apply the 2D correction
+    pathloss_2d = np.broadcast_to(correction, data.data.shape)
+    data.data /= pathloss_2d
+    data.err /= pathloss_2d
+    data.var_poisson /= pathloss_2d**2
+    data.var_rnoise /= pathloss_2d**2
+    if data.var_flat is not None and np.size(data.var_flat) > 0:
+        data.var_flat /= pathloss_2d**2
+    data.pathloss_point = pathloss_2d
+
+    # Set step status to complete
+    data.meta.cal_step.pathloss = 'COMPLETE'
