@@ -43,6 +43,7 @@ class FlatFieldStep(Step):
     spec = """
         save_interpolated_flat = boolean(default=False) # Save interpolated NRS flat
         user_supplied_flat = string(default=None)  # User-supplied flat
+        inverse = boolean(default=False)  # Invert the operation
     """
 
     reference_file_types = ["flat", "fflat", "sflat", "dflat"]
@@ -87,10 +88,17 @@ class FlatFieldStep(Step):
                 'user_supplied_flat': datamodels.open(self.user_supplied_flat)
             }
 
+            # Record the user-supplied flat as the FLAT reference type for recording
+            # in the result header.
+            self._reference_files_used.append(
+                ('flat', reference_file_models['user_supplied_flat'].meta.filename)
+            )
+
         # Do the flat-field correction
         output_model, flat_applied = flat_field.do_correction(
             input_model,
             **reference_file_models,
+            inverse=self.inverse
         )
 
         # Close the input and reference files
@@ -161,6 +169,7 @@ class FlatFieldStep(Step):
                 reference_file_models[reftype] = model_type[reftype](reffile)
                 self.log.debug('Using %s reference file: %s', reftype.upper(), reffile)
             else:
+                self.log.debug('No reference found for type %s', reftype.upper())
                 reference_file_models[reftype] = None
 
         return reference_file_models

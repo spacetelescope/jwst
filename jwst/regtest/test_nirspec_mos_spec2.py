@@ -1,7 +1,10 @@
 import os
 import pytest
-from astropy.io.fits.diff import FITSDiff
 
+from astropy.io.fits.diff import FITSDiff
+import numpy as np
+
+import jwst.datamodels as dm
 from jwst.flatfield import FlatFieldStep
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
@@ -71,3 +74,20 @@ def test_flat_field_step_user_supplied_flat(jail, rtdata_module, fitsdiff_defaul
     rtdata.get_truth('truth/test_nirspec_mos_spec2/flat_fielded_step_user_supplied.fits')
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
+
+
+@pytest.mark.bigdata
+def test_ff_inv(jail, rtdata_module, fitsdiff_default_kwargs):
+    """Test flat field inversion"""
+    rtdata = rtdata_module
+    data = dm.open(rtdata.get_data('nirspec/mos/usf_wavecorr.fits'))
+
+    flatted = FlatFieldStep.call(data)
+    unflatted = FlatFieldStep.call(flatted, inverse=True)
+
+    bad_slits = []
+    for idx, slits in enumerate(zip(data.slits, unflatted.slits)):
+        data_slit, unflatted_slit = slits
+        if not np.allclose(data_slit.data, unflatted_slit.data):
+            bad_slits.append(idx)
+    assert not bad_slits, f'Inversion failed for slits {bad_slits}'
