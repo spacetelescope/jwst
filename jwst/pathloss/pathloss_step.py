@@ -55,4 +55,5 @@ class PathLossStep(Step):
             if pathloss_model:
                 pathloss_model.close()
 
+        self.correction_pars = corrections
         return result

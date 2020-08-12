@@ -372,6 +372,8 @@ def do_correction_mos(data, pathloss, inverse=False, source_type=None, correctio
         slit.pathloss_point = correction.pathloss_point
         slit.pathloss_uniform = correction.pathloss_uniform
 
+        corrections.slit.append(correction)
+
     # Set step status to complete
     data.meta.cal_step.pathloss = 'COMPLETE'
 
