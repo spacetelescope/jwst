@@ -2,7 +2,6 @@
 import logging
 import os.path as op
 
-from .. import datamodels
 from ..stpipe import Pipeline
 
 # step imports
