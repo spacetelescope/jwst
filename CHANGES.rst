@@ -23,6 +23,9 @@ assign_wcs
 - Added two new optional parameters to ``utils.cerate_grism_bbox`` - ``wfss_extract_half_height``
   and ``wavelength_range``. [#5140]
 
+- Shifted the bounding box of a resampled WCS by - 0.5 px to account for the
+  center of the pixel. [#5241]
+
 associations
 ------------
 
@@ -186,7 +189,7 @@ pipeline
 - Update the ``Coron3Pipeline`` logic to correctly handle inputs that have
   only 1 integration. [#5211]
 
-- Refactor Spec2Pipeline for execution logic and step flow isolation [#5214] 
+- Refactor Spec2Pipeline for execution logic and step flow isolation [#5214]
 
 photom
 ------
