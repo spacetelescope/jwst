@@ -59,8 +59,8 @@ class Step():
     # Correction parameters. These store and use whatever information a Step
     # may need to perform its operations without re-calculating, or to use
     # from a previous run of the Step.  The structure is up to each Step.
-    self.correction_pars = None
-    self.use_correction_pars = False
+    correction_pars = None
+    use_correction_pars = False
 
     # Reference types for both command line override
     # definition and reference prefetch

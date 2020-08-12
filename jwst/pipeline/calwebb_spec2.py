@@ -421,10 +421,10 @@ class Spec2Pipeline(Pipeline):
         """
         # First pass: just do the calibration to determine the correction
         # arrays.
-        pre_calibrated, ff_corrections = self.flat_field(data)
-        pre_calibrated = self.pathloss(pre_calibratedforce_extended=True_corrections=True)
-        pre_calibrated = self.barshadow(pre_calibrated, force_extended=True, return_corrections=True)
-        pre_calibrated = self.photom(pre_calibrated, force_extended=True, return_corrections=True)
+        pre_calibrated = self.flat_field(data)
+        pre_calibrated = self.pathloss(pre_calibrated)
+        pre_calibrated = self.barshadow(pre_calibrated)
+        pre_calibrated = self.photom(pre_calibrated)
 
         # At this point, assume that `pre_calibrated` is a modified `MultiSlitModel` that
         # is also carrying the science calibration information along with it.
