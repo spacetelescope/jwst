@@ -178,8 +178,9 @@ def do_correction(input_model, pathloss_model):
 
     Returns
     -------
-    output_model : data model object
-        Corrected science data with pathloss extensions added
+    output_model, corrections : jwst.datamodel.DataModel, jwst.datamodel.datamodel
+        2-tuple of the corrected science data with pathloss extensions added, and a
+        model of the correction arrays.
 
     """
     exp_type = input_model.meta.exposure.type
@@ -187,15 +188,15 @@ def do_correction(input_model, pathloss_model):
     output_model = input_model.copy()
 
     if exp_type == 'NRS_MSASPEC':
-        do_correction_mos(output_model, pathloss_model)
+        corrections = do_correction_mos(output_model, pathloss_model)
     elif exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
-        do_correction_fixedslit(output_model, pathloss_model)
+        corrections = do_correction_fixedslit(output_model, pathloss_model)
     elif exp_type == 'NRS_IFU':
-        do_correction_ifu(output_model, pathloss_model)
+        corrections = do_correction_ifu(output_model, pathloss_model)
     elif exp_type == 'NIS_SOSS':
-        do_correction_soss(output_model, pathloss_model)
+        corrections = do_correction_soss(output_model, pathloss_model)
 
-    return output_model
+    return output_model, corrections
 
 
 def interpolate_onto_grid(wavelength_grid, wavelength_vector, pathloss_vector):
@@ -293,11 +294,19 @@ def do_correction_mos(data, pathloss):
 
     pathloss : jwst.datamodel.DataModel
         The pathloss reference data.
+
+    Returns
+    -------
+    corrections : jwst.datamodel.MultiSlitModel
+        The pathloss corrections applied.
     """
-    slit_number = 0
+    exp_type = data.meta.exposure.type
 
     # Loop over all MOS slitlets
+    corrections = MultiSlitModel()
+    slit_number = 0
     for slit in data.slits:
+        correction = None
         slit_number = slit_number + 1
         log.info(f'Working on slit {slit_number}')
         size = slit.data.size
@@ -311,7 +320,7 @@ def do_correction_mos(data, pathloss):
             # for the source position
             # Get the aperture from the reference file that matches the slit
             nshutters = util.get_num_msa_open_shutters(slit.shutter_state)
-            aperture = get_aperture_from_model(pathloss_model, nshutters)
+            aperture = get_aperture_from_model(pathloss, nshutters)
             if aperture is not None:
                 (wavelength_pointsource,
                  pathloss_pointsource_vector,
@@ -359,6 +368,12 @@ def do_correction_mos(data, pathloss):
                         slit.var_flat /= pathloss_2d**2
                     slit.pathloss_point = pathloss_2d_ps
                     slit.pathloss_uniform = pathloss_2d_un
+
+                    # Save the corrections. The `data` portion is the correction used.
+                    # The individual ones will be saved in the respective attributes.
+                    correction = SlitModel(data=pathloss2d)
+                    correction.pathloss_point = pathloss_2d_ps
+                    correction.pathloss_uniform = pathloss_2d_un
                 else:
                     log.warning("Source is outside slit. Skipping "
                                 f"pathloss correction for slit {slit_number}")
@@ -366,13 +381,16 @@ def do_correction_mos(data, pathloss):
                 log.warning("Cannot find matching pathloss model for slit with"
                             f"{nshutters} shutters")
                 log.warning("Skipping pathloss correction for this slit")
-                continue
         else:
             log.warning(f"Slit has data size = {size}")
             log.warning("Skipping pathloss correction for this slitlet")
 
+        corrections.slit.append(correction)
+
     # Set step status to complete
     data.meta.cal_step.pathloss = 'COMPLETE'
+
+    return corrections
 
 
 def do_correction_fixedslit(data, pathloss):
@@ -388,6 +406,7 @@ def do_correction_fixedslit(data, pathloss):
     pathloss : jwst.datamodel.DataModel
         The pathloss reference data.
     """
+    exp_type = data.meta.exposure.type
     slit_number = 0
     is_inside_slit = True
 
@@ -400,7 +419,7 @@ def do_correction_fixedslit(data, pathloss):
         xcenter, ycenter = get_center(exp_type, slit)
         # Calculate the 1-d wavelength and pathloss vectors for the source position
         # Get the aperture from the reference file that matches the slit
-        aperture = get_aperture_from_model(pathloss_model, slit.name)
+        aperture = get_aperture_from_model(pathloss, slit.name)
 
         if aperture is not None:
             log.info(f'Using aperture {aperture.name}')
@@ -478,9 +497,10 @@ def do_correction_ifu(data, pathloss):
     """
     # IFU targets are always inside slit
     # Get centering
-    xcenter, ycenter = get_center(exp_type, None)
+    xcenter, ycenter = get_center(data.meta.exposure.type, None)
+
     # Calculate the 1-d wavelength and pathloss vectors for the source position
-    aperture = pathloss_model.apertures[0]
+    aperture = pathloss.apertures[0]
     (wavelength_pointsource,
      pathloss_pointsource_vector,
      dummy) = calculate_pathloss_vector(aperture.pointsource_data,
@@ -580,7 +600,7 @@ def do_correction_soss(data, pathloss):
 
     # Get the aperture from the reference file that matches the subarray
     subarray = data.meta.subarray.name
-    aperture = get_aperture_from_model(pathloss_model, subarray)
+    aperture = get_aperture_from_model(pathloss, subarray)
     if aperture is None:
         log.warning('Unable to get Aperture from reference file '
                     f'for subarray {subarray}')

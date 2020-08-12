@@ -39,8 +39,9 @@ class PathLossStep(Step):
             pathloss_model = datamodels.PathlossModel(self.pathloss_name)
 
             # Do the pathloss correction
-            result = pathloss.do_correction(input_model, pathloss_model)
+            result, corrections = pathloss.do_correction(input_model, pathloss_model)
 
             pathloss_model.close()
 
+        self.correction_pars = corrections
         return result
