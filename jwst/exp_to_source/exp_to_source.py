@@ -21,12 +21,12 @@ def exp_to_source(inputs):
 
     Parameters
     ----------
-    inputs: [MultiSlitModel, ...]
+    inputs : [MultiSlitModel, ...]
         List of MultiSlitModel instances to reformat.
 
     Returns
     -------
-    multiexposures: {str: MultiExposureModel[,...]}
+    multiexposures : dict
         Returns a dict of MultiExposureModel instances wherein each
         instance contains slits belonging to the same source.
         The key is the ID of each source, i.e. ``source_id``.
@@ -67,7 +67,6 @@ def multislit_to_container(inputs):
     Returns
     -------
     containers : dict
-        {str: ModelContainer, }
         Returns a dict of ModelContainer instances wherein each
         instance contains ImageModels of slits belonging to the same source.
         The key is the ID of each slit, i.e. ``source_id``.
@@ -80,7 +79,7 @@ def multislit_to_container(inputs):
 
 
 class DefaultOrderedDict(OrderedDict):
-    # Source: http://stackoverflow.com/a/6190500/562769
+    # Source http://stackoverflow.com/a/6190500/562769
     def __init__(self, default_factory=None, *a, **kw):
         if (default_factory is not None and
            not isinstance(default_factory, Callable)):
