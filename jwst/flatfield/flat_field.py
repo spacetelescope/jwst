@@ -18,7 +18,7 @@ log.setLevel(logging.DEBUG)
 
 MICRONS_100 = 1.e-4                     # 100 microns, in meters
 
-# This is for NIRSpec.  
+# This is for NIRSpec.
 FIXED_SLIT_TYPES = ["NRS_LAMP", "NRS_BRIGHTOBJ", "NRS_FIXEDSLIT"]
 NIRSPEC_SPECTRAL_EXPOSURES = ['NRS_BRIGHTOBJ', 'NRS_FIXEDSLIT', 'NRS_IFU', 'NRS_MSASPEC']
 
