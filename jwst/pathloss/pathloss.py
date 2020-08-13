@@ -322,9 +322,10 @@ def do_correction_mos(data, pathloss, correction_pars=None):
         log.info(f'Working on slit {slit_number}')
 
         if correction_pars:
-            correction = correction_pars.slit[slit_number]
+            correction = correction_pars.slits[slit_number]
         else:
             correction = _corrections_for_mos(slit, pathloss, exp_type)
+        corrections.slits.append(correction)
 
         # Apply the correction
         if not correction:
@@ -339,8 +340,6 @@ def do_correction_mos(data, pathloss, correction_pars=None):
             slit.var_flat /= correction.data**2
         slit.pathloss_point = correction.pathloss_point
         slit.pathloss_uniform = correction.pathloss_uniform
-
-        corrections.slits.append(correction)
 
     # Set step status to complete
     data.meta.cal_step.pathloss = 'COMPLETE'

@@ -6,6 +6,7 @@ import numpy as np
 
 import jwst.datamodels as dm
 from jwst.flatfield import FlatFieldStep
+from jwst.pathloss import PathLossStep
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
@@ -89,5 +90,25 @@ def test_ff_inv(jail, rtdata_module, fitsdiff_default_kwargs):
     for idx, slits in enumerate(zip(data.slits, unflatted.slits)):
         data_slit, unflatted_slit = slits
         if not np.allclose(data_slit.data, unflatted_slit.data):
+            bad_slits.append(idx)
+    assert not bad_slits, f'Inversion failed for slits {bad_slits}'
+
+
+@pytest.mark.bigdata
+def test_pathloss_corrpars(jail, rtdata_module):
+    """Test PathLossStep using correction_pars"""
+    rtdata = rtdata_module
+    data = dm.open(rtdata.get_data('nirspec/mos/usf_wavecorr.fits'))
+
+    pls = PathLossStep()
+    corrected = pls.run(data)
+
+    pls.use_correction_pars = True
+    corrected_corrpars = pls.run(data)
+
+    bad_slits = []
+    for idx, slits in enumerate(zip(corrected.slits, corrected_corrpars.slits)):
+        corrected_slit, corrected_corrpars_slit = slits
+        if not np.allclose(corrected_slit.data, corrected_corrpars_slit.data, equal_nan=True):
             bad_slits.append(idx)
     assert not bad_slits, f'Inversion failed for slits {bad_slits}'
