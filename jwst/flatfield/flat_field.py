@@ -74,8 +74,7 @@ def do_correction(input_model,
     # NIRSpec spectrographic data are processed differently from other
     # types of data (including NIRSpec imaging).  The test on flat is
     # needed because NIRSpec imaging data are processed by do_flat_field().
-    if input_model.meta.instrument.name == 'NIRSPEC' and \
-       input_model.meta.exposure.type in NIRSPEC_SPECTRAL_EXPOSURES:
+    if input_model.meta.exposure.type in NIRSPEC_SPECTRAL_EXPOSURES:
         flat_applied = do_nirspec_flat_field(output_model, fflat, sflat, dflat,
                                              user_supplied_flat=user_supplied_flat,
                                              inverse=inverse)
