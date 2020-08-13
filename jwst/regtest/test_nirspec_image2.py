@@ -49,3 +49,21 @@ def test_ff_inv(jail, rtdata_module, fitsdiff_default_kwargs):
     unflatted = FlatFieldStep.call(flatted, inverse=True)
 
     assert np.allclose(data.data, unflatted.data), 'Inversion failed'
+
+
+@pytest.mark.bigdata
+def test_correction_pars(jail, rtdata_module, fitsdiff_default_kwargs):
+    """Test use of correction parameters"""
+    rtdata = rtdata_module
+    data = dm.open(rtdata.get_data('nirspec/imaging/usf_assign_wcs.fits'))
+
+    # First use of FlatFieldStep will store the correction.
+    # The next use will use that correction
+    step = FlatFieldStep()
+    flatted = step.run(data)
+    assert step.correction_pars['flat'] is not None
+
+    step.use_correction_pars = True
+    reflatted = step.run(data)
+
+    assert np.allclose(flatted.data,reflatted.data), 'Re-run with correction parameters failed'

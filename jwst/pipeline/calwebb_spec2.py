@@ -424,12 +424,10 @@ class Spec2Pipeline(Pipeline):
         """
         # First pass: just do the calibration to determine the correction
         # arrays.
-        pre_calibrated, ff_corrections = self.flat_field(
-            data, force_extended=True, return_corrections=True
-        )
-        pre_calibrated = self.pathloss(pre_calibratedforce_extended=True, return_corrections=True)
-        pre_calibrated = self.barshadow(pre_calibrated, force_extended=True, return_corrections=True)
-        pre_calibrated = self.photom(pre_calibrated, force_extended=True, return_corrections=True)
+        pre_calibrated = self.flat_field(data)
+        pre_calibrated = self.pathloss(pre_calibrated)
+        pre_calibrated = self.barshadow(pre_calibrated)
+        pre_calibrated = self.photom(pre_calibrated)
 
         # At this point, assume that `pre_calibrated` is a modified `MultiSlitModel` that
         # is also carrying the science calibration information along with it.
@@ -452,10 +450,28 @@ class Spec2Pipeline(Pipeline):
         # walk backwards through the steps to uncalibrate, using the
         # calibration factors carried in `pre_calibrated`
         # Yes, using kwargs for the steps is invalid, but for design purposes only.
-        mb_multislit = self.photom(mb_multislit, inverse=True, factors=pre_calibrated)
-        mb_multislit = self.barshadow(mb_multislit, inverse=True, factors=pre_calibrated)
-        mb_multislit = self.pathloss(mb_multislit, inverse=True, factors=pre_calibrated)
-        mb_multislit = self.flat_field(mb_multislit, inverse=True, factors=pre_calibrated)
+        self.photom.use_correction_pars = True
+        self.photom.inverse = True
+        self.barshadow.use_correction_pars = True
+        self.barshadow.inverse = True
+        self.pathloss.use_correction_pars = True
+        self.pathloss.inverse = True
+        self.flat_field.use_correction_pars = True
+        self.flat_field.inverse = True
+
+        mb_multislit = self.photom(mb_multislit)
+        mb_multislit = self.barshadow(mb_multislit)
+        mb_multislit = self.pathloss(mb_multislit)
+        mb_multislit = self.flat_field(mb_multislit)
+
+        self.photom.use_correction_pars = False
+        self.photom.inverse = False
+        self.barshadow.use_correction_pars = False
+        self.barshadow.inverse = False
+        self.pathloss.use_correction_pars = False
+        self.pathloss.inverse = False
+        self.flat_field.use_correction_pars = False
+        self.flat_field.inverse = False
 
         # Now apply the de-calibrated background to the original science
         # At this point, should just be a slit-to-slit subtraction operation.

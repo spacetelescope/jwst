@@ -18,8 +18,9 @@ log.setLevel(logging.DEBUG)
 
 MICRONS_100 = 1.e-4                     # 100 microns, in meters
 
-# This is for NIRSpec.  These exposure types are all fixed-slit modes.
+# This is for NIRSpec.
 FIXED_SLIT_TYPES = ["NRS_LAMP", "NRS_BRIGHTOBJ", "NRS_FIXEDSLIT"]
+NIRSPEC_SPECTRAL_EXPOSURES = ['NRS_BRIGHTOBJ', 'NRS_FIXEDSLIT', 'NRS_IFU', 'NRS_MSASPEC']
 
 # Dispersion direction, predominantly horizontal or vertical.  These values
 # are to be compared with keyword DISPAXIS from the input header.
@@ -73,7 +74,7 @@ def do_correction(input_model,
     # NIRSpec spectrographic data are processed differently from other
     # types of data (including NIRSpec imaging).  The test on flat is
     # needed because NIRSpec imaging data are processed by do_flat_field().
-    if input_model.meta.instrument.name == 'NIRSPEC' and flat is None:
+    if input_model.meta.exposure.type in NIRSPEC_SPECTRAL_EXPOSURES:
         flat_applied = do_nirspec_flat_field(output_model, fflat, sflat, dflat,
                                              user_supplied_flat=user_supplied_flat,
                                              inverse=inverse)
@@ -288,6 +289,9 @@ def do_nirspec_flat_field(output_model, f_flat_model, s_flat_model, d_flat_model
                                    .format(type(output_model)))
             return nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model, dispaxis,
                                user_supplied_flat=user_supplied_flat, inverse=inverse)
+        else:
+            raise RuntimeError(f'No flat field algorithm exists for handling data {output_model}')
+
     # For datamodels with slits, MSA and Fixed slit modes:
     else:
         return nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispaxis,
