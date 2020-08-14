@@ -230,6 +230,10 @@ def do_correction(input_model, pathloss_model=None, inverse=False, source_type=N
             log.warning('Use of inversion with NIS_SOSS is not implemented. Skipping')
             data.meta.cal_step.pathloss = 'SKIPPED'
             corrections = None
+        elif source_type is not None:
+            log.warning('Forcing of source type with NIS_SOSS is not implemented. Skipping')
+            data.meta.cal_step.pathloss = 'SKIPPED'
+            corrections = None
         else:
             corrections = do_correction_soss(output_model, pathloss_model)
 
