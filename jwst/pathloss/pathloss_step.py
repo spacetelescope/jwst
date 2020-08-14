@@ -14,7 +14,8 @@ class PathLossStep(Step):
     """
 
     spec = """
-        inverse = boolean(default=False)  # Invert the operation
+        inverse = boolean(default=False)    # Invert the operation
+        source_type = string(default=None)  # Process as specified source type. If not specified, source type will be determined from the data.
     """
 
     reference_file_types = ['pathloss']
@@ -48,7 +49,8 @@ class PathLossStep(Step):
             # Do the pathloss correction
             correction_pars = self.correction_pars if self.use_correction_pars else None
             result, self.correction_pars = pathloss.do_correction(
-                input_model, pathloss_model, inverse=self.inverse, correction_pars=correction_pars
+                input_model, pathloss_model,
+                inverse=self.inverse, source_type=self.source_type, correction_pars=correction_pars
             )
 
             if pathloss_model:

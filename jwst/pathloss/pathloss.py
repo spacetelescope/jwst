@@ -165,7 +165,7 @@ def calculate_pathloss_vector(pathloss_refdata,
         return wavelength, pathloss_vector, is_inside_slitlet
 
 
-def do_correction(input_model, pathloss_model=None, inverse=False, correction_pars=None):
+def do_correction(input_model, pathloss_model=None, inverse=False, source_type=None, correction_pars=None):
     """
     Short Summary
     -------------
@@ -181,6 +181,9 @@ def do_correction(input_model, pathloss_model=None, inverse=False, correction_pa
 
     inverse : boolean
         Invert the math operations used to apply the flat field.
+
+    source_type : str or None
+        Force processing using the specified source type.
 
     correction_pars : dict or None
         Correction parameters to use instead of recalculation.
@@ -202,11 +205,14 @@ def do_correction(input_model, pathloss_model=None, inverse=False, correction_pa
     output_model = input_model.copy()
 
     if exp_type == 'NRS_MSASPEC':
-        corrections = do_correction_mos(output_model, pathloss_model, inverse, correction_pars)
+        corrections = do_correction_mos(output_model, pathloss_model,
+                                        inverse, source_type, correction_pars)
     elif exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
-        corrections = do_correction_fixedslit(output_model, pathloss_model, inverse, correction_pars)
+        corrections = do_correction_fixedslit(output_model, pathloss_model,
+                                              inverse, source_type, correction_pars)
     elif exp_type == 'NRS_IFU':
-        corrections = do_correction_ifu(output_model, pathloss_model, inverse, correction_pars)
+        corrections = do_correction_ifu(output_model, pathloss_model,
+                                        inverse, source_type, correction_pars)
     elif exp_type == 'NIS_SOSS':
         if correction_pars:
             log.warning('Use of correction_pars with NIS_SOSS is not implemented. Skipping')
@@ -214,6 +220,10 @@ def do_correction(input_model, pathloss_model=None, inverse=False, correction_pa
             corrections = None
         elif inverse:
             log.warning('Use of inversion with NIS_SOSS is not implemented. Skipping')
+            data.meta.cal_step.pathloss = 'SKIPPED'
+            corrections = None
+        elif source_type is not None:
+            log.warning('Forcing of source type with NIS_SOSS is not implemented. Skipping')
             data.meta.cal_step.pathloss = 'SKIPPED'
             corrections = None
         else:
@@ -305,7 +315,7 @@ def is_pointsource(srctype):
         return False
 
 
-def do_correction_mos(data, pathloss, inverse=False, correction_pars=None):
+def do_correction_mos(data, pathloss, inverse=False, source_type=None, correction_pars=None):
     """Path loss correction for NIRSpec MOS
 
     Data is modified in-place.
@@ -320,6 +330,9 @@ def do_correction_mos(data, pathloss, inverse=False, correction_pars=None):
 
     inverse : boolean
         Invert the math operations used to apply the flat field.
+
+    source_type : str or None
+        Force processing using the specified source type.
 
     correction_pars : jwst.datamodels.MultiSlitModel or None
         The precomputed pathloss to apply instead of recalculation.
@@ -339,7 +352,7 @@ def do_correction_mos(data, pathloss, inverse=False, correction_pars=None):
         if correction_pars:
             correction = correction_pars.slits[slit_number]
         else:
-            correction = _corrections_for_mos(slit, pathloss, exp_type)
+            correction = _corrections_for_mos(slit, pathloss, exp_type, source_type)
         corrections.slits.append(correction)
 
         # Apply the correction
@@ -566,7 +579,7 @@ def do_correction_soss(data, pathloss):
     data.meta.cal_step.pathloss = 'COMPLETE'
 
 
-def _corrections_for_mos(slit, pathloss, exp_type):
+def _corrections_for_mos(slit, pathloss, exp_type, source_type=None):
     """Calculate the correction arrasy for MOS slit
 
     Parameters
@@ -579,6 +592,9 @@ def _corrections_for_mos(slit, pathloss, exp_type):
 
     exp_type : str
         Exposure type
+
+    source_type : str or None
+        Force processing using the specified source type.
 
     Returns
     -------
@@ -631,7 +647,7 @@ def _corrections_for_mos(slit, pathloss, exp_type):
                     pathloss_uniform_vector)
 
                 # Use the appropriate correction for this slit
-                if is_pointsource(slit.source_type):
+                if is_pointsource(source_type or slit.source_type):
                     pathloss_2d = pathloss_2d_ps
                 else:
                     pathloss_2d = pathloss_2d_un
