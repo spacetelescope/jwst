@@ -735,6 +735,13 @@ class Asn_TSO(AsnMixin_Science):
                 name='exp_type',
                 sources=['exp_type'],
             ),
+            # Don't allow IFU exposures in tso3
+            Constraint(
+                [
+                    Constraint_IFU(),
+                ],
+                reduce=Constraint.notany
+            ),
         ])
 
         super(Asn_TSO, self).__init__(*args, **kwargs)

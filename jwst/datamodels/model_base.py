@@ -90,7 +90,15 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             Defaults to `True`.
 
         kwargs : dict
-            Additional arguments passed to lower level functions.
+            Additional keyword arguments passed to lower level functions. These arguments
+            are generally file format-specific. Arguments of note are:
+
+            - FITS
+
+              skip_fits_update - bool or None
+                  `True` to skip updating the ASDF tree from the FITS headers, if possible.
+                  If `None`, value will be taken from the environmental SKIP_FITS_UPDATE.
+                  Otherwise, the default value is `True`.
         """
 
         # Override value of validation parameters if not explicitly set.

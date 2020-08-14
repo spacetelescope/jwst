@@ -218,12 +218,11 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
                      input_model.meta.exposure.drop_frames1, int_times)
 
         # Populate the rateints output model
-        if number_of_integrations > 1:
-            int_model.data = int_data
-            int_model.dq = int_dq
-            int_model.var_poisson = int_var_poisson
-            int_model.var_rnoise = int_var_rnoise
-            int_model.err = int_err
+        int_model.data = int_data
+        int_model.dq = int_dq
+        int_model.var_poisson = int_var_poisson
+        int_model.var_rnoise = int_var_rnoise
+        int_model.err = int_err
 
         # Populate the optional output model
         if save_opt:
@@ -386,18 +385,17 @@ def create_output_models(input_model, number_of_integrations, save_opt, total_co
                                       err=np.zeros(imshape, dtype=np.float32))
     # ... and add all keys from input
     out_model.update(input_model)
-    # create per integrations model, if this is a multi-integration exposure
-    if number_of_integrations > 1:
-        int_model = datamodels.CubeModel(
-            data=np.zeros((number_of_integrations,) + imshape, dtype=np.float32),
-            dq=np.zeros((number_of_integrations,) + imshape, dtype=np.uint32),
-            var_poisson=np.zeros((number_of_integrations,) + imshape, dtype=np.float32),
-            var_rnoise=np.zeros((number_of_integrations,) + imshape, dtype=np.float32),
-            err=np.zeros((number_of_integrations,) + imshape, dtype=np.float32))
-        int_model.int_times = None
-        int_model.update(input_model)  # ... and add all keys from input
-    else:
-        int_model = None
+
+    # create per integrations model
+    int_model = datamodels.CubeModel(
+        data=np.zeros((number_of_integrations,) + imshape, dtype=np.float32),
+        dq=np.zeros((number_of_integrations,) + imshape, dtype=np.uint32),
+        var_poisson=np.zeros((number_of_integrations,) + imshape, dtype=np.float32),
+        var_rnoise=np.zeros((number_of_integrations,) + imshape, dtype=np.float32),
+        err=np.zeros((number_of_integrations,) + imshape, dtype=np.float32))
+    int_model.int_times = None
+    int_model.update(input_model)  # ... and add all keys from input
+
     # Create model for the optional output
     if save_opt:
         opt_model = datamodels.RampFitOutputModel(
@@ -417,12 +415,13 @@ def create_output_models(input_model, number_of_integrations, save_opt, total_co
         opt_model.update(input_model)  # ... and add all keys from input
     else:
         opt_model = None
+
     return int_model, opt_model, out_model
 
 
 def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d, gain_2d,
-                 weighting, instrume, frame_time,
-           ngroups, group_time, groupgap, nframes, dropframes1, int_times):
+                 weighting, instrume, frame_time, ngroups, group_time, groupgap, nframes,
+                 dropframes1, int_times):
 
     """
     Fit a ramp using ordinary least squares. Calculate the count rate for each
@@ -1039,15 +1038,10 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
     if pixeldq is not None:
         del pixeldq
 
-    # For multiple-integration datasets, will output integration-specific
-    #    results to separate file named <basename> + '_integ.fits'
+    # Output integration-specific results to separate file
     int_times = None
-    if n_int > 1:
-        int_model = utils.output_integ(slope_int, dq_int, effintim,
-                                       var_p3, var_r3, var_both3, int_times)
-    else:
-        int_model = None
-
+    int_model = utils.output_integ(slope_int, dq_int, effintim,
+                                   var_p3, var_r3, var_both3, int_times)
     if opt_res is not None:
         del opt_res
 
@@ -1379,11 +1373,7 @@ def gls_ramp_fit(input_model, buffsize, save_opt,
     #   primary output
     final_pixeldq = dq_compress_final(dq_int, n_int)
 
-    if n_int > 1:
-        int_model = utils.gls_output_integ(input_model, slope_int, slope_err_int, dq_int)
-
-    else:
-        int_model = None
+    int_model = utils.gls_output_integ(input_model, slope_int, slope_err_int, dq_int)
 
     if save_opt: # collect optional results for output
         # Get the zero-point intercepts and the cosmic-ray amplitudes for

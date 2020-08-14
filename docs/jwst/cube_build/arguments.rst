@@ -2,10 +2,11 @@
 
 Step Arguments
 ==============
-As discussed earlier, the input to the ``cube_build`` step can take many forms, containing data from one or more
-wavelength bands for each of the MIRI and NIRSpec IFUs. The following step arguments can be used to control which
-subsets of data are used to produce the output cubes. Note that some options will result in multiple cubes being
-created. For example, if the input data span several bands, but single-band cubes are selected, then a cube for
+The default values for the step arguments are found either in the cube_build.cfg file or the cube parameter reference file.
+The user can override the default values for a parameter if a step argument exist for the parameter. 
+
+The  step arguments can be used to control the properties of the output IFU cube or to select  subsets of data are used to produce the output cubes. Note that some options will result in multiple cubes being
+created. For example, if the input data span several bands, but ``output_type = band``  then a cube for
 each band will be created.
 
 ``channel [string]``
@@ -43,7 +44,7 @@ each band will be created.
   with the options above [band, channel, grating, filter] to fully control the type of IFU
   cubes to make.
 
-  - ``output_type = band`` is the default mode and creates IFU cubes containing only one band
+  - ``output_type = band`` is the default mode for calspec2 and creates IFU cubes containing only one band
     (channel/sub-channel or  grating/filter combination).
 
   - ``output_type = channel`` combines all the MIRI channels in the data or set by the
@@ -52,7 +53,7 @@ each band will be created.
   - ``output_type = grating`` combines all the gratings in the NIRSpec data or set by the
     grating option into a single IFU cube.
 
-  - ``output_type = multi`` combines data  into a single "uber" IFU cube. If in addition,
+  - ``output_type = multi`` combines data  into a single "uber" IFU cube, this the default mode for calspec3. If in addition,
     channel, band, grating, or filter are also set, then only the data set by those
     parameters will be combined into an "uber" cube.
 
@@ -74,8 +75,11 @@ The following arguments control the size and sampling characteristics of the out
   The maximum wavelength, in microns, to use in constructing the IFU cube.
 
 ``coord_system [string]``
-  Options are ra-dec and alpha-beta. The alpha-beta option is a special coordinate system
-  for MIRI data and should only be used by advanced users.
+  The default IFU cubes are built on the ra-dec coordinate system (``coord_system=skyalign``). In these cubes north is up 
+  and east is left. There are two other coordinate systems an IFU cube can be built on:
+
+  - ``coord_system=ifualign`` is also on the ra-dec system but the IFU cube is aligned with the instrument IFU plane. 
+  - ``coord_system=internal_cal`` is built on the local internal IFU slicer plane. These types of cubes will be useful during commissioning. For both MIRI ad NIRSpec only a single band from a single exposure can be used to create these type of cubes. The spatial dimensions for these cubes are two orthogonal axes, one parallel and the perpendicular to the slices in the FOV. 
 
 There are a number of arguments that control how the point cloud values are combined together to produce the final
 flux associated with each output spaxel flux. The first set defines the the  **region of interest**,  which defines the
@@ -89,26 +93,10 @@ The arguments related to region of interest and how the fluxes are combined toge
   The size of the region of interest in the spectral dimension.
 
 
-There are two arguments that control how to interpolate the point cloud values:
-
 ``weighting [string]``
   The type of weighting to use when combining points cloud fluxes to represent the spaxel flux. Allowed values are
-  STANDARD and MIRPSF. This defines how the distances between the point cloud members and spaxel centers are
-  determined. The default value is STANDARD and the distances are determined in the cube output coordinate system.
-  STANDARD is the only option available for NIRSpec. If set to MIRIPSF, the distances are
-  determined in the alpha-beta coordinate system of the point cloud member and are normalized by the PSF and LSF.
-  For more details on how the weight of the point cloud members are used in determining the final spaxel flux see
-  the :ref:`algorithm` section.
+  ``emsm`` and ``msm``. This defines how the point cloud members falling inside the ROI of the spaxel center are weighted	
+  to find the final spaxel flux. 
 
-``weight_power [float]``
-  Controls the weighting of the distances between the point cloud member and spaxel center.
-  The weighting function used for determining the spaxel flux was given in the :ref:`algorithm` description:
-  spaxel flux K =
-  :math:`\frac{ \sum_{i=1}^n Flux_i w_i}{\sum_{i=1}^n w_i}`
-
-  where n = the number of point cloud points within the region of interest of spaxel flux K
-
-  :math:`w_i =1.0 \sqrt{({xnormalized}^2 + {ynormalized}^2 + {znormalized}^2)}^{p}`
-
-  by default currently p=2, but is controlled by the ``weight_power`` argument.
-
+  For more details on how the weighting of the point cloud members are used in determining the final spaxel flux see
+  the :ref:`weighting` section.

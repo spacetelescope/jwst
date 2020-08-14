@@ -50,6 +50,17 @@ def open(init=None, memmap=False, **kwargs):
         Turn memmap of FITS file on or off.  (default: False).  Ignored for
         ASDF files.
 
+    kwargs : dict
+        Additional keyword arguments passed to lower level functions. These arguments
+        are generally file format-specific. Arguments of note are:
+
+        - FITS
+
+           skip_fits_update - bool or None
+              `True` to skip updating the ASDF tree from the FITS headers, if possible.
+              If `None`, value will be taken from the environmental SKIP_FITS_UPDATE.
+              Otherwise, the default value is `True`.
+
     Returns
     -------
     model : DataModel instance
@@ -157,9 +168,9 @@ def open(init=None, memmap=False, **kwargs):
 
     # Log a message about how the model was opened
     if file_name:
-        log.debug('Opening {0} as {1}'.format(file_name, new_class))
+        log.debug(f'Opening {file_name} as {new_class}')
     else:
-        log.debug('Opening as {0}'.format(new_class))
+        log.debug(f'Opening as {new_class}')
 
     # Actually open the model
     model = new_class(init, **kwargs)

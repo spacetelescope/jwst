@@ -114,7 +114,7 @@ Outputs
 
 Result of applying all pipeline steps up through the :ref:`jump <jump_step>` step,
 to produce corrected and CR-flagged 4D ramp data, which will have the same data dimensions
-as the input raw 4D data (ncols x nints x ngroups x nints). Only created when the
+as the input raw 4D data (ncols x nrows x ngroups x nints). Only created when the
 pipeline argument ``--save_calibrated_ramp`` is set to ``True`` (default is ``False``).
 
 2D countrate product
@@ -137,8 +137,7 @@ For MIRI MRS and NIRSpec IFU exposures, the output data model will be
 :Data model: `~jwst.datamodels.CubeModel`
 :File suffix: _rateints
 
-If the input exposure contains more than one integration
-(NINTS>1), a 3D countrate product is created that contains the individual
+A 3D countrate product is created that contains the individual
 results of each integration. The 2D countrate images for each integration are
 stacked along the 3rd axis of the data cubes (ncols x nrows x nints). This
 output file will be of type "_rateints". The 3D "_rateints" product is passed along

@@ -5,10 +5,10 @@ This step determines the mean count rate, in units of counts per second, for
 each pixel by performing a linear fit to the data in the input file.  The fit
 is done using the "ordinary least squares" method.
 The fit is performed independently for each pixel.  There can be up to three
-output files created by the step. The primary output file ("rate"), giving the
-slope at each pixel averaged over all integrations, is always produced.
-If the input exposure contains more than one integration, slope images from each
-integration are stored as a data cube in a second output data product ("rateints").
+output files created by the step. The primary output file ("rate") contains the
+slope at each pixel averaged over all integrations.
+Slope images from each integration are stored as a data cube in a second output
+data product ("rateints").
 A third, optional output product is also available, containing detailed fit
 information for each pixel. The three types of output files are described in
 more detail below.
@@ -86,8 +86,7 @@ written as the primary output product.  In this output product, the
 The 3-D VAR_POISSON and VAR_RNOISE arrays from all integrations are averaged
 into corresponding 2-D output arrays.
 
-If the input exposure contains more than one integration, the slope
-images for each integration are stored as a data cube in a second output data
+The slope images for each integration are stored as a data cube in a second output data
 product (rateints).  Each plane of the 3-D SCI, ERR, DQ, VAR_POISSON, and VAR_RNOISE
 arrays in this product corresponds to the result for a given integration.  In this output
 product, the GROUPDQ data for a given integration is collapsed into 2-D, which

@@ -23,10 +23,17 @@ assign_wcs
 - Added two new optional parameters to ``utils.cerate_grism_bbox`` - ``wfss_extract_half_height``
   and ``wavelength_range``. [#5140]
 
+- Shifted the bounding box of a resampled WCS by - 0.5 px to account for the
+  center of the pixel. [#5241]
+
 associations
 ------------
 
 - Update diagrams in documentation to change sloper to detector1. [#4986]
+
+- Update level-3 rules to exclude IFU exposures from ``calwebb_tso3`` associations. [#5202]
+
+- Fix formatting error in Asn_IFUGrating product name construction. [#5231]
 
 barshadow
 ---------
@@ -40,6 +47,11 @@ combine_1d
 
 cube_build
 ----------
+
+- Fixed formatting of NIRSpec s3d output product names. [#5231]
+
+- Modified NIRSpec blotting to the find min and max ra and dec for each slice and only
+  invert those values on slice that fall in range [#5144]
 
 - Changed default weighting back to 'msm' until NIRSPEC cube pars ref file contains emsm info [#5134]
 
@@ -62,6 +74,8 @@ cube_build
 datamodels
 ----------
 
+- Re-enable FITS-hash by default. [#5191]
+
 - Add blend rule for keywords DETECTOR and MODULE. [#4998]
 
 - Add methods ``Model.info`` and ``Model.search``. [#4660]
@@ -76,9 +90,9 @@ datamodels
 
 - Add "PERSISTENCE" DQ flag definition. [#5137]
 
-- Fixed nonsensical premature closing of FITS file of a ``DataModel``. [#4930]
+- Fix nonsensical premature closing of FITS file of a ``DataModel``. [#4930]
 
-- Added a hash set/check to DataModel I/O to check whether schema traversal is necessary. [#5110]
+- Add a hash set/check to DataModel I/O to check whether schema traversal is necessary. [#5110]
 
 - Update underlying MultiExposureModel from the SourceModelContainer models. [#5154]
 
@@ -100,6 +114,8 @@ extract_1d
 - Updated the logic for when and how to use the source position to offset the
   location of the extraction regions specified in the EXTRACT1D reference file. [#5157]
 
+- Fixed the conversion of flux to surface brightness for IFU extended source case [#5201]
+
 extract_2d
 ----------
 
@@ -111,6 +127,11 @@ extract_2d
   which allows a user to specify the extraction height in the
   cross-dispersion direction for WFSS mode. [#5140]
 
+fringe
+------
+
+- Update the fringe step to handle 3D inputs for MIRI MRS TSO mode. [#5202]
+
 master_background
 -----------------
 
@@ -121,7 +142,12 @@ master_background
 outlier_detection
 -----------------
 
+- Update median filter to use numpy's nanmedian. [#5114]
+
 - Fix outlier_detection bug when saving intermediate results. [#5108]
+
+- Update logic to correctly handle input ``CubeModel`` that have only
+  1 integration. [#5211]
 
 pathloss
 --------
@@ -155,6 +181,19 @@ pipeline
 - Update the ``Spec2Pipeline`` to include the new ``wavecorr`` step and put
   ``srctype`` before ``wavecorr``. [#5133]
 
+- Update the ``Spec2Pipeline`` to skip ``extract_1d`` for IFU data that
+  have not had a cube built (e.g. MIRI MRS TSO), and update the
+  ``calwebb_tso-spec2.cfg`` configuration to turn on the ``fringe`` step
+  and turn off ``cube_build`` for MIRI MRS TSO. [#5202]
+
+- Update the ``Coron3Pipeline`` logic to correctly handle inputs that have
+  only 1 integration. [#5211]
+
+- Refactor Spec2Pipeline for execution logic and step flow isolation [#5214]
+
+- Update ``Ami3Pipeline`` to only process psf and science members from the
+  input ASN. [#5243]
+
 photom
 ------
 
@@ -168,12 +207,22 @@ ramp_fitting
 
 - Fix crash when DRPFRMS1 is not set [#5096]
 
+- Update to always create the rateints product, even when NINTS=1. [#5211]
+
+resample_spec
+-------------
+
+- Fix artifacts in resampled NIRSpec slit data caused by NaNs in the WCS [#5217]
+
 source_catalog
 --------------
 
 - Use ``gwcs.WCS`` instead of FITS WCS. [#5120]
 
 - Changed the type of column ``is_star`` from float to bool. [#5140]
+
+- Implemented algorithm for determining whether a source is a star.
+  [#5234]
 
 stpipe
 ------
@@ -182,6 +231,8 @@ stpipe
   when a pipeline has an association as input. [#5031]
 
 - Remove further sloper references. [#4989]
+
+- Enable prefetch of pars reference files for associations. [#5249]
 
 wavecorr
 --------
