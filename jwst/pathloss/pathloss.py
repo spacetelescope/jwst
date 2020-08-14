@@ -386,11 +386,7 @@ def do_correction_mos(data, pathloss, inverse=False, source_type=None, correctio
     return corrections
 
 
-2<<<<<<< HEAD
 def do_correction_fixedslit(data, pathloss, inverse=False, source_type=None, correction_pars=None):
-=======
-def do_correction_fixedslit(data, pathloss, inverse=False, correction_pars=None):
->>>>>>> 1c834c8f... Implement PathLossInversion for nirspec fixed-slit
     """Path loss correction for NIRSpec fixed-slit modes
 
     Data is modified in-place.
