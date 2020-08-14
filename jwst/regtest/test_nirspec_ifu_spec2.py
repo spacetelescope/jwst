@@ -9,6 +9,7 @@ import numpy as np
 import jwst.datamodels as dm
 from jwst.flatfield import FlatFieldStep
 from jwst.flatfield.flat_field import nirspec_ifu
+from jwst.pathloss import PathLossStep
 
 # Define artifactory source and truth
 INPUT_PATH = 'nirspec/ifu'
@@ -107,3 +108,18 @@ def test_ff_inv(jail, rtdata_module, fitsdiff_default_kwargs):
     unflatted = FlatFieldStep.call(flatted, inverse=True)
 
     assert np.allclose(data.data, unflatted.data), 'Inversion failed'
+
+
+@pytest.mark.bigdata
+def test_pathloss_corrpars(jail, rtdata_module):
+    """Test PathLossStep using correction_pars"""
+    rtdata = rtdata_module
+    data = dm.open(rtdata.get_data('nirspec/ifu/nrs1_flat_field.fits'))
+
+    pls = PathLossStep()
+    corrected = pls.run(data)
+
+    pls.use_correction_pars = True
+    corrected_corrpars = pls.run(data)
+
+    assert np.allclose(corrected.data, corrected_corrpars.data, equal_nan=True)

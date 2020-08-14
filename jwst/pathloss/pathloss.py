@@ -443,6 +443,8 @@ def do_correction_ifu(data, pathloss, correction_pars=None):
     # Set the step status to complete
     data.meta.cal_step.pathloss = 'COMPLETE'
 
+    return correction
+
 
 def do_correction_soss(data, pathloss):
     """Path loss correction for NIRSpec SOSS
