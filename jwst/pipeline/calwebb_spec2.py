@@ -421,6 +421,7 @@ class Spec2Pipeline(Pipeline):
         """
         # First pass: just do the calibration to determine the correction
         # arrays.
+        self.pathloss.source_type = 'EXTENDED'
         pre_calibrated = self.flat_field(data)
         pre_calibrated = self.pathloss(pre_calibrated)
         pre_calibrated = self.barshadow(pre_calibrated)
@@ -447,26 +448,28 @@ class Spec2Pipeline(Pipeline):
         # walk backwards through the steps to uncalibrate, using the
         # calibration factors carried in `pre_calibrated`
         # Yes, using kwargs for the steps is invalid, but for design purposes only.
-        self.photom.use_correction_pars = True
-        self.photom.inverse = True
-        self.barshadow.use_correction_pars = True
-        self.barshadow.inverse = True
+
+        #  self.photom.use_correction_pars = True
+        #  self.photom.inverse = True
+        #  self.barshadow.use_correction_pars = True
+        #  self.barshadow.inverse = True
         self.pathloss.use_correction_pars = True
         self.pathloss.inverse = True
         self.flat_field.use_correction_pars = True
         self.flat_field.inverse = True
 
-        mb_multislit = self.photom(mb_multislit)
-        mb_multislit = self.barshadow(mb_multislit)
+        #  mb_multislit = self.photom(mb_multislit)
+        #  mb_multislit = self.barshadow(mb_multislit)
         mb_multislit = self.pathloss(mb_multislit)
         mb_multislit = self.flat_field(mb_multislit)
 
-        self.photom.use_correction_pars = False
-        self.photom.inverse = False
-        self.barshadow.use_correction_pars = False
-        self.barshadow.inverse = False
+        #  self.photom.use_correction_pars = False
+        #  self.photom.inverse = False
+        #  self.barshadow.use_correction_pars = False
+        #  self.barshadow.inverse = False
         self.pathloss.use_correction_pars = False
         self.pathloss.inverse = False
+        self.pathloss.source_type = None
         self.flat_field.use_correction_pars = False
         self.flat_field.inverse = False
 
