@@ -118,7 +118,7 @@ def _calc_correction(slitlet, barshadow_model, source_type):
 
     # The correction only applies to extended/uniform sources
     correction = datamodels.SlitModel(data=np.ones(slitlet.data.shape))
-    if has_uniform_source(slitlet):
+    if has_uniform_source(slitlet, source_type):
         shutter_status = slitlet.shutter_state
         if len(shutter_status) > 0:
             shadow = create_shadow(shutter_elements, shutter_status)
@@ -511,7 +511,7 @@ def interpolate(rows, columns, array, default=np.nan):
     return correction
 
 
-def has_uniform_source(slitlet):
+def has_uniform_source(slitlet, force_type=None):
     """Determine whether the slitlet contains a uniform source
 
     Parameters:
@@ -519,15 +519,19 @@ def has_uniform_source(slitlet):
     slitlet: slitlet object
         The slitlet being interrogated
 
+    force_type : string or None
+        Source type to force to and decide upon.
+
     Returns:
 
     answer: boolean
         True if the slitlet contains a uniform source
     """
+    source_type = force_type if force_type else slitlet.source_type
 
-    if slitlet.source_type:
+    if source_type:
         # Assume extended, unless explicitly set to POINT
-        if slitlet.source_type.upper() == 'POINT':
+        if source_type.upper() == 'POINT':
             return False
         else:
             return True
