@@ -402,7 +402,7 @@ def do_correction_fixedslit(data, pathloss, correction_pars=None):
     return corrections
 
 
-def do_correction_ifu(data, pathloss):
+def do_correction_ifu(data, pathloss, correction_pars=None):
     """Path loss correction for NIRSpec IFU
 
     Data is modified in-place.
@@ -414,70 +414,31 @@ def do_correction_ifu(data, pathloss):
 
     pathloss : jwst.datamodel.DataModel
         The pathloss reference data.
+
+    correction_pars : jwst.datamodels.MultiSlitModel or None
+        The precomputed pathloss to apply instead of recalculation.
+
+    Returns
+    -------
+    corrections : jwst.datamodel.MultiSlitModel
+        The pathloss corrections applied.
     """
-    # IFU targets are always inside slit
-    # Get centering
-    xcenter, ycenter = get_center(data.meta.exposure.type, None)
-
-    # Calculate the 1-d wavelength and pathloss vectors for the source position
-    aperture = pathloss.apertures[0]
-    (wavelength_pointsource,
-     pathloss_pointsource_vector,
-     dummy) = calculate_pathloss_vector(aperture.pointsource_data,
-                                        aperture.pointsource_wcs,
-                                        xcenter, ycenter)
-    (wavelength_uniformsource,
-     pathloss_uniform_vector,
-     dummy) = calculate_pathloss_vector(aperture.uniform_data,
-                                        aperture.uniform_wcs,
-                                        xcenter, ycenter)
-    # Wavelengths in the reference file are in meters;
-    # need them to be in microns
-    wavelength_pointsource *= 1.0e6
-    wavelength_uniformsource *= 1.0e6
-
-    # Create the 2-d wavelength arrays, initialize with NaNs
-    wavelength_array = np.zeros(data.shape, dtype=np.float32)
-    wavelength_array.fill(np.nan)
-    for slice in NIRSPEC_IFU_SLICES:
-        slice_wcs = nirspec.nrs_wcs_set_input(data, slice)
-        x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
-        ra, dec, wavelength = slice_wcs(x, y)
-        valid = ~np.isnan(wavelength)
-        x = x[valid]
-        y = y[valid]
-        wavelength_array[y.astype(int), x.astype(int)] = wavelength[valid]
-
-    # Compute the point source pathloss 2D correction
-    pathloss_2d_ps = interpolate_onto_grid(
-        wavelength_array,
-        wavelength_pointsource,
-        pathloss_pointsource_vector)
-
-    # Compute the uniform source pathloss 2D correction
-    pathloss_2d_un = interpolate_onto_grid(
-        wavelength_array,
-        wavelength_uniformsource,
-        pathloss_uniform_vector)
-
-    # Use the appropriate correction for the source type
-    if is_pointsource(data.meta.target.source_type):
-        pathloss_2d = pathloss_2d_ps
+    if correction_pars:
+        correction = correction_pars
     else:
-        pathloss_2d = pathloss_2d_un
+        correction = _corrections_for_ifu(data, pathloss)
 
-    # Apply the pathloss 2D correction and attach to datamodel
-    data.data /= pathloss_2d
-    data.err /= pathloss_2d
-    data.var_poisson /= pathloss_2d**2
-    data.var_rnoise /= pathloss_2d**2
+    data.data /= correction.data
+    data.err /= correction.data
+    data.var_poisson /= correction.data**2
+    data.var_rnoise /= correction.data**2
     if data.var_flat is not None and np.size(data.var_flat) > 0:
-        data.var_flat /= pathloss_2d**2
-    data.pathloss_point = pathloss_2d_ps
-    data.pathloss_uniform = pathloss_2d_un
+        data.var_flat /= correction.data**2
+    data.pathloss_point = correction.pathloss_point
+    data.pathloss_uniform = correction.pathloss_uniform
 
     # This might be useful to other steps
-    data.wavelength = wavelength_array
+    data.wavelength = correction.wavelength
 
     # Set the step status to complete
     data.meta.cal_step.pathloss = 'COMPLETE'
@@ -737,5 +698,86 @@ def _corrections_for_fixedslit(slit, pathloss, exp_type):
     else:
         log.warning(f'Cannot find matching pathloss model for {slit.name}')
         log.warning('Skipping pathloss correction for this slit')
+
+    return correction
+
+
+def _corrections_for_ifu(data, pathloss):
+    """Calculate the correction arrasy for MOS slit
+
+    Parameters
+    ----------
+    data : jwst.datamodels.SlitModel
+        The data being operated on.
+
+    pathloss : jwst.datamodels.DataModel
+        The pathloss reference data
+
+    exp_type : str
+        Exposure type
+
+    Returns
+    -------
+    correction : jwst.datamodels.SlitModel
+        The correction arrays
+    """
+
+    # IFU targets are always inside slit
+    # Get centering
+    xcenter, ycenter = get_center(data.meta.exposure.type, None)
+
+    # Calculate the 1-d wavelength and pathloss vectors for the source position
+    aperture = pathloss.apertures[0]
+    (wavelength_pointsource,
+     pathloss_pointsource_vector,
+     dummy) = calculate_pathloss_vector(aperture.pointsource_data,
+                                        aperture.pointsource_wcs,
+                                        xcenter, ycenter)
+    (wavelength_uniformsource,
+     pathloss_uniform_vector,
+     dummy) = calculate_pathloss_vector(aperture.uniform_data,
+                                        aperture.uniform_wcs,
+                                        xcenter, ycenter)
+    # Wavelengths in the reference file are in meters;
+    # need them to be in microns
+    wavelength_pointsource *= 1.0e6
+    wavelength_uniformsource *= 1.0e6
+
+    # Create the 2-d wavelength arrays, initialize with NaNs
+    wavelength_array = np.zeros(data.shape, dtype=np.float32)
+    wavelength_array.fill(np.nan)
+    for slice in NIRSPEC_IFU_SLICES:
+        slice_wcs = nirspec.nrs_wcs_set_input(data, slice)
+        x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
+        ra, dec, wavelength = slice_wcs(x, y)
+        valid = ~np.isnan(wavelength)
+        x = x[valid]
+        y = y[valid]
+        wavelength_array[y.astype(int), x.astype(int)] = wavelength[valid]
+
+    # Compute the point source pathloss 2D correction
+    pathloss_2d_ps = interpolate_onto_grid(
+        wavelength_array,
+        wavelength_pointsource,
+        pathloss_pointsource_vector)
+
+    # Compute the uniform source pathloss 2D correction
+    pathloss_2d_un = interpolate_onto_grid(
+        wavelength_array,
+        wavelength_uniformsource,
+        pathloss_uniform_vector)
+
+    # Use the appropriate correction for the source type
+    if is_pointsource(data.meta.target.source_type):
+        pathloss_2d = pathloss_2d_ps
+    else:
+        pathloss_2d = pathloss_2d_un
+
+    # Save the corrections. The `data` portion is the correction used.
+    # The individual ones will be saved in the respective attributes.
+    correction = type(data)(data=pathloss_2d)
+    correction.pathloss_point = pathloss_2d_ps
+    correction.pathloss_uniform = pathloss_2d_un
+    correction.wavelength = wavelength_array
 
     return correction
