@@ -317,7 +317,7 @@ class Spec2Pipeline(Pipeline):
         imprint = members_by_type['imprint']
         if not self.imprint_subtract.skip:
             if len(imprint) > 0 and (exp_type in ['NRS_MSASPEC', 'NRS_IFU'] or \
-               is_nrs_ifu_flatlamp(input):
+               is_nrs_ifu_flatlamp(input)):
                 if len(imprint) > 1:
                     self.log.warning('Wrong number of imprint members')
                 members_by_type['imprint'] = imprint[0]
