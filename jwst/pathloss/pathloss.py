@@ -165,7 +165,7 @@ def calculate_pathloss_vector(pathloss_refdata,
         return wavelength, pathloss_vector, is_inside_slitlet
 
 
-def do_correction(input_model, pathloss_model=None, correction_pars=None):
+def do_correction(input_model, pathloss_model=None, inverse=False, correction_pars=None):
     """
     Short Summary
     -------------
@@ -178,6 +178,9 @@ def do_correction(input_model, pathloss_model=None, correction_pars=None):
 
     pathloss_model : pathloss model object or None
         pathloss correction data
+
+    inverse : boolean
+        Invert the math operations used to apply the flat field.
 
     correction_pars : dict or None
         Correction parameters to use instead of recalculation.
@@ -199,7 +202,7 @@ def do_correction(input_model, pathloss_model=None, correction_pars=None):
     output_model = input_model.copy()
 
     if exp_type == 'NRS_MSASPEC':
-        corrections = do_correction_mos(output_model, pathloss_model, correction_pars)
+        corrections = do_correction_mos(output_model, pathloss_model, inverse, correction_pars)
     elif exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
         corrections = do_correction_fixedslit(output_model, pathloss_model, correction_pars)
     elif exp_type == 'NRS_IFU':
@@ -298,7 +301,7 @@ def is_pointsource(srctype):
         return False
 
 
-def do_correction_mos(data, pathloss, correction_pars=None):
+def do_correction_mos(data, pathloss, inverse=False, correction_pars=None):
     """Path loss correction for NIRSpec MOS
 
     Data is modified in-place.
@@ -310,6 +313,9 @@ def do_correction_mos(data, pathloss, correction_pars=None):
 
     pathloss : jwst.datamodel.DataModel or None
         The pathloss reference data.
+
+    inverse : boolean
+        Invert the math operations used to apply the flat field.
 
     correction_pars : jwst.datamodels.MultiSlitModel or None
         The precomputed pathloss to apply instead of recalculation.
@@ -337,7 +343,10 @@ def do_correction_mos(data, pathloss, correction_pars=None):
             log.warning(f'No correction provided for slit {slit_number}. Skipping')
             continue
 
-        slit.data /= correction.data
+        if not inverse:
+            slit.data /= correction.data
+        else:
+            slit.data *= correction.data
         slit.err /= correction.data
         slit.var_poisson /= correction.data**2
         slit.var_rnoise /= correction.data**2

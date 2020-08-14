@@ -14,6 +14,7 @@ class PathLossStep(Step):
     """
 
     spec = """
+        inverse = boolean(default=False)  # Invert the operation
     """
 
     reference_file_types = ['pathloss']
@@ -46,7 +47,9 @@ class PathLossStep(Step):
 
             # Do the pathloss correction
             correction_pars = self.correction_pars if self.use_correction_pars else None
-            result, self.correction_pars = pathloss.do_correction(input_model, pathloss_model, correction_pars)
+            result, self.correction_pars = pathloss.do_correction(
+                input_model, pathloss_model, inverse=self.inverse, correction_pars=correction_pars
+            )
 
             if pathloss_model:
                 pathloss_model.close()
