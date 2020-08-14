@@ -232,6 +232,8 @@ stpipe
 
 - Remove further sloper references. [#4989]
 
+- Enable prefetch of pars reference files for associations. [#5249]
+
 wavecorr
 --------
 
