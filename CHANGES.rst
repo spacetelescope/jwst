@@ -181,6 +181,8 @@ outlier_detection
 pathloss
 --------
 
+- Implement inverse of the PathLossStep [#5247]
+
 - Fix bug in NIRSpec IFU data that causes valid pixel dq flags to set to
   NON-SCIENCE in the region of an overlapping bounding box slice [#5047]
 
