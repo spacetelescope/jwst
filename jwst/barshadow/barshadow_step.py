@@ -74,7 +74,8 @@ class BarShadowStep(Step):
                     correction_pars=correction_pars
                 )
 
-                barshadow_model.close()
+                if barshadow_model:
+                    barshadow_model.close()
                 result.meta.cal_step.barshadow = 'COMPLETE'
             else:
                 input_model.meta.cal_step.barshadow = 'SKIPPED'
