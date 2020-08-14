@@ -191,8 +191,8 @@ def do_correction(input_model, pathloss_model=None, correction_pars=None):
     """
     if not pathloss_model and not correction_pars:
         raise RuntimeError(
-            'Neither a PathLossModel nor PathLossStep correction parameters specified.'
-            'One needs to be specified.'
+            'Neither a PathLossModel nor PathLossStep correction parameters given.'
+            ' One needs to be specified.'
         )
     exp_type = input_model.meta.exposure.type
     log.info(f'Input exposure type is {exp_type}')
@@ -205,7 +205,12 @@ def do_correction(input_model, pathloss_model=None, correction_pars=None):
     elif exp_type == 'NRS_IFU':
         corrections = do_correction_ifu(output_model, pathloss_model, correction_pars)
     elif exp_type == 'NIS_SOSS':
-        corrections = do_correction_soss(output_model, pathloss_model, correction_pars)
+        if correction_pars:
+            log.warning('Use of correction_pars with NIS_SOSS is not implemented. Skipping')
+            data.meta.cal_step.pathloss = 'SKIPPED'
+            corrections = None
+        else:
+            corrections = do_correction_soss(output_model, pathloss_model, correction_pars)
 
     return output_model, corrections
 
