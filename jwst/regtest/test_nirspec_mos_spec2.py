@@ -6,6 +6,7 @@ import numpy as np
 
 import jwst.datamodels as dm
 from jwst.flatfield import FlatFieldStep
+from jwst.pathloss import PathLossStep
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
@@ -91,3 +92,62 @@ def test_ff_inv(jail, rtdata_module, fitsdiff_default_kwargs):
         if not np.allclose(data_slit.data, unflatted_slit.data):
             bad_slits.append(idx)
     assert not bad_slits, f'Inversion failed for slits {bad_slits}'
+
+
+@pytest.mark.bigdata
+def test_pathloss_corrpars(jail, rtdata_module):
+    """Test PathLossStep using correction_pars"""
+    rtdata = rtdata_module
+    data = dm.open(rtdata.get_data('nirspec/mos/usf_wavecorr.fits'))
+
+    pls = PathLossStep()
+    corrected = pls.run(data)
+
+    pls.use_correction_pars = True
+    corrected_corrpars = pls.run(data)
+
+    bad_slits = []
+    for idx, slits in enumerate(zip(corrected.slits, corrected_corrpars.slits)):
+        corrected_slit, corrected_corrpars_slit = slits
+        if not np.allclose(corrected_slit.data, corrected_corrpars_slit.data, equal_nan=True):
+            bad_slits.append(idx)
+    assert not bad_slits, f'correction_pars failed for slits {bad_slits}'
+
+
+@pytest.mark.bigdata
+def test_pathloss_inverse(jail, rtdata_module):
+    """Test PathLossStep using inversion"""
+    rtdata = rtdata_module
+    data = dm.open(rtdata.get_data('nirspec/mos/usf_wavecorr.fits'))
+
+    pls = PathLossStep()
+    corrected = pls.run(data)
+
+    pls.inverse = True
+    corrected_inverse = pls.run(corrected)
+
+    bad_slits = []
+    for idx, slits in enumerate(zip(data.slits, corrected_inverse.slits)):
+        data_slit, corrected_inverse_slit = slits
+        non_nan = ~np.isnan(corrected_inverse_slit.data)
+        if not np.allclose(data_slit.data[non_nan], corrected_inverse_slit.data[non_nan]):
+            bad_slits.append(idx)
+    assert not bad_slits, f'Inversion failed for slits {bad_slits}'
+
+
+@pytest.mark.bigdata
+def test_pathloss_source_type(jail, rtdata_module):
+    """Test PathLossStep forcing source type"""
+    rtdata = rtdata_module
+    data = dm.open(rtdata.get_data('nirspec/mos/usf_wavecorr.fits'))
+
+    pls = PathLossStep()
+    pls.source_type = 'extended'
+    pls.run(data)
+
+    bad_slits = []
+    for idx, slit in enumerate(pls.correction_pars.slits):
+        if slit:
+            if not np.allclose(slit.data, slit.pathloss_uniform, equal_nan=True):
+                bad_slits.append(idx)
+    assert not bad_slits, f'Force to uniform failed for slits {bad_slits}'
