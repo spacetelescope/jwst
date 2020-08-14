@@ -123,3 +123,19 @@ def test_pathloss_corrpars(jail, rtdata_module):
     corrected_corrpars = pls.run(data)
 
     assert np.allclose(corrected.data, corrected_corrpars.data, equal_nan=True)
+
+
+@pytest.mark.bigdata
+def test_pathloss_inverse(jail, rtdata_module):
+    """Test PathLossStep using correction_pars"""
+    rtdata = rtdata_module
+    data = dm.open(rtdata.get_data('nirspec/ifu/nrs1_flat_field.fits'))
+
+    pls = PathLossStep()
+    corrected = pls.run(data)
+
+    pls.inverse = True
+    corrected_inverse = pls.run(corrected)
+
+    non_nan = ~np.isnan(corrected_inverse.data)
+    assert np.allclose(corrected.data[non_nan], corrected_inverse.data[non_nan])

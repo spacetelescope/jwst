@@ -206,14 +206,18 @@ def do_correction(input_model, pathloss_model=None, inverse=False, correction_pa
     elif exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
         corrections = do_correction_fixedslit(output_model, pathloss_model, inverse, correction_pars)
     elif exp_type == 'NRS_IFU':
-        corrections = do_correction_ifu(output_model, pathloss_model, correction_pars)
+        corrections = do_correction_ifu(output_model, pathloss_model, inverse, correction_pars)
     elif exp_type == 'NIS_SOSS':
         if correction_pars:
             log.warning('Use of correction_pars with NIS_SOSS is not implemented. Skipping')
             data.meta.cal_step.pathloss = 'SKIPPED'
             corrections = None
+        elif inverse:
+            log.warning('Use of inversion with NIS_SOSS is not implemented. Skipping')
+            data.meta.cal_step.pathloss = 'SKIPPED'
+            corrections = None
         else:
-            corrections = do_correction_soss(output_model, pathloss_model, correction_pars)
+            corrections = do_correction_soss(output_model, pathloss_model)
 
     return output_model, corrections
 
@@ -422,7 +426,7 @@ def do_correction_fixedslit(data, pathloss, inverse=False, correction_pars=None)
     return corrections
 
 
-def do_correction_ifu(data, pathloss, correction_pars=None):
+def do_correction_ifu(data, pathloss, inverse=False, correction_pars=None):
     """Path loss correction for NIRSpec IFU
 
     Data is modified in-place.
@@ -434,6 +438,9 @@ def do_correction_ifu(data, pathloss, correction_pars=None):
 
     pathloss : jwst.datamodel.DataModel
         The pathloss reference data.
+
+    inverse : boolean
+        Invert the math operations used to apply the flat field.
 
     correction_pars : jwst.datamodels.MultiSlitModel or None
         The precomputed pathloss to apply instead of recalculation.
@@ -448,7 +455,10 @@ def do_correction_ifu(data, pathloss, correction_pars=None):
     else:
         correction = _corrections_for_ifu(data, pathloss)
 
-    data.data /= correction.data
+    if not inverse:
+        data.data /= correction.data
+    else:
+        data.data *= correction.data
     data.err /= correction.data
     data.var_poisson /= correction.data**2
     data.var_rnoise /= correction.data**2
