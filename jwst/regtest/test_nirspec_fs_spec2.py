@@ -108,3 +108,21 @@ def test_pathloss_inverse(jail, rtdata_module):
         if not np.allclose(data_slit.data[non_nan], corrected_inverse_slit.data[non_nan]):
             bad_slits.append(idx)
     assert not bad_slits, f'Inversion failed for slits {bad_slits}'
+
+
+@pytest.mark.bigdata
+def test_pathloss_source_type(jail, rtdata_module):
+    """Test PathLossStep forcing source type"""
+    rtdata = rtdata_module
+    data = dm.open(rtdata.get_data('nirspec/fs/nrs1_flat_field.fits'))
+
+    pls = PathLossStep()
+    pls.source_type = 'extended'
+    corrected = pls.run(data)
+
+    bad_slits = []
+    for idx, slit in enumerate(pls.correction_pars.slits):
+        if slit:
+            if not np.allclose(slit.data, slit.pathloss_uniform, equal_nan=True):
+                bad_slits.append(idx)
+    assert not bad_slits, f'Force to uniform failed for slits {bad_slits}'

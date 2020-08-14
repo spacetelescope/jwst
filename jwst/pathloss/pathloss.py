@@ -378,7 +378,7 @@ def do_correction_mos(data, pathloss, inverse=False, source_type=None, correctio
     return corrections
 
 
-def do_correction_fixedslit(data, pathloss, inverse=False, correction_pars=None):
+def do_correction_fixedslit(data, pathloss, inverse=False, source_type=None, correction_pars=None):
     """Path loss correction for NIRSpec fixed-slit modes
 
     Data is modified in-place.
@@ -393,6 +393,9 @@ def do_correction_fixedslit(data, pathloss, inverse=False, correction_pars=None)
 
     inverse : boolean
         Invert the math operations used to apply the flat field.
+
+    source_type : str or None
+        Force processing using the specified source type.
 
     correction_pars : jwst.datamodels.MultiSlitModel or None
         The precomputed pathloss to apply instead of recalculation.
@@ -413,7 +416,7 @@ def do_correction_fixedslit(data, pathloss, inverse=False, correction_pars=None)
         if correction_pars:
             correction = correction_pars.slits[slit_number]
         else:
-            correction = _corrections_for_fixedslit(slit, pathloss, exp_type)
+            correction = _corrections_for_fixedslit(slit, pathloss, exp_type, source_type)
         corrections.slits.append(correction)
 
         # Apply the correction
@@ -439,7 +442,7 @@ def do_correction_fixedslit(data, pathloss, inverse=False, correction_pars=None)
     return corrections
 
 
-def do_correction_ifu(data, pathloss, inverse=False, correction_pars=None):
+def do_correction_ifu(data, pathloss, inverse=False, source_type=None, correction_pars=None):
     """Path loss correction for NIRSpec IFU
 
     Data is modified in-place.
@@ -455,6 +458,9 @@ def do_correction_ifu(data, pathloss, inverse=False, correction_pars=None):
     inverse : boolean
         Invert the math operations used to apply the flat field.
 
+    source_type : str or None
+        Force processing using the specified source type.
+
     correction_pars : jwst.datamodels.MultiSlitModel or None
         The precomputed pathloss to apply instead of recalculation.
 
@@ -466,7 +472,7 @@ def do_correction_ifu(data, pathloss, inverse=False, correction_pars=None):
     if correction_pars:
         correction = correction_pars
     else:
-        correction = _corrections_for_ifu(data, pathloss)
+        correction = _corrections_for_ifu(data, pathloss, source_type)
 
     if not inverse:
         data.data /= correction.data
@@ -668,7 +674,7 @@ def _corrections_for_mos(slit, pathloss, exp_type, source_type=None):
     return correction
 
 
-def _corrections_for_fixedslit(slit, pathloss, exp_type):
+def _corrections_for_fixedslit(slit, pathloss, exp_type, source_type):
     """Calculate the correction arrasy for Fixed-slit slit
 
     Parameters
@@ -681,6 +687,9 @@ def _corrections_for_fixedslit(slit, pathloss, exp_type):
 
     exp_type : str
         Exposure type
+
+    source_type : str or None
+        Force processing using the specified source type.
 
     Returns
     -------
@@ -729,7 +738,7 @@ def _corrections_for_fixedslit(slit, pathloss, exp_type):
                 pathloss_uniform_vector)
 
             # Use the appropriate correction for this slit
-            if is_pointsource(slit.source_type):
+            if is_pointsource(source_type or slit.source_type):
                 pathloss_2d = pathloss_2d_ps
             else:
                 pathloss_2d = pathloss_2d_un
@@ -750,7 +759,7 @@ def _corrections_for_fixedslit(slit, pathloss, exp_type):
     return correction
 
 
-def _corrections_for_ifu(data, pathloss):
+def _corrections_for_ifu(data, pathloss, source_type):
     """Calculate the correction arrasy for MOS slit
 
     Parameters
@@ -761,8 +770,8 @@ def _corrections_for_ifu(data, pathloss):
     pathloss : jwst.datamodels.DataModel
         The pathloss reference data
 
-    exp_type : str
-        Exposure type
+    source_type : str or None
+        Force processing using the specified source type.
 
     Returns
     -------
@@ -816,7 +825,7 @@ def _corrections_for_ifu(data, pathloss):
         pathloss_uniform_vector)
 
     # Use the appropriate correction for the source type
-    if is_pointsource(data.meta.target.source_type):
+    if is_pointsource(source_type or data.meta.target.source_type):
         pathloss_2d = pathloss_2d_ps
     else:
         pathloss_2d = pathloss_2d_un

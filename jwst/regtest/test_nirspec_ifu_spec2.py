@@ -139,3 +139,16 @@ def test_pathloss_inverse(jail, rtdata_module):
 
     non_nan = ~np.isnan(corrected_inverse.data)
     assert np.allclose(corrected.data[non_nan], corrected_inverse.data[non_nan])
+
+
+@pytest.mark.bigdata
+def test_pathloss_source_type(jail, rtdata_module):
+    """Test PathLossStep forcing source type"""
+    rtdata = rtdata_module
+    data = dm.open(rtdata.get_data('nirspec/ifu/nrs1_flat_field.fits'))
+
+    pls = PathLossStep()
+    pls.source_type = 'extended'
+    corrected = pls.run(data)
+
+    assert np.allclose(pls.correction_pars.data, pls.correction_pars.pathloss_uniform, equal_nan=True)
