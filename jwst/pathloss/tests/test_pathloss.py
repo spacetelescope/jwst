@@ -209,7 +209,7 @@ def test_do_correction_msa_slit_size_eq_0():
     pathlossmod = PathlossModel()
     datmod.meta.exposure.type = 'NRS_MSASPEC'
 
-    result = do_correction(datmod, pathlossmod)
+    result, _ = do_correction(datmod, pathlossmod)
     assert(result.meta.cal_step.pathloss == 'COMPLETE')
 
 
@@ -223,7 +223,7 @@ def test_do_correction_fixed_slit_exception():
     pathlossmod = PathlossModel()
     datmod.meta.exposure.type = 'NRS_FIXEDSLIT'
 
-    result = do_correction(datmod, pathlossmod)
+    result, _ = do_correction(datmod, pathlossmod)
     assert(result.meta.cal_step.pathloss == 'COMPLETE')
 
 
@@ -235,7 +235,7 @@ def test_do_correction_nis_soss_tso():
     datmod.meta.exposure.type = 'NIS_SOSS'
     datmod.meta.visit.tsovisit = True
 
-    result = do_correction(datmod, pathlossmod)
+    result, _ = do_correction(datmod, pathlossmod)
     assert(result.meta.cal_step.pathloss == 'SKIPPED')
 
 
@@ -248,7 +248,7 @@ def test_do_correction_nis_soss_pupil_position_is_none():
     datmod.meta.visit.tsovisit = False
     datmod.meta.instrument.pupil_position = None
 
-    result = do_correction(datmod, pathlossmod)
+    result, _ = do_correction(datmod, pathlossmod)
     assert(result.meta.cal_step.pathloss == 'SKIPPED')
 
 def test_do_correction_nis_soss_aperture_is_none():
@@ -264,7 +264,7 @@ def test_do_correction_nis_soss_aperture_is_none():
     datmod.meta.visit.tsovisit = False
     datmod.meta.instrument.pupil_position = 1
 
-    result = do_correction(datmod, pathlossmod)
+    result, _ = do_correction(datmod, pathlossmod)
     assert(result.meta.cal_step.pathloss == 'SKIPPED')
 
 
