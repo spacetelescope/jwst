@@ -226,6 +226,14 @@ def do_correction(input_model, pathloss_model=None, inverse=False, source_type=N
             log.warning('Forcing of source type with NIS_SOSS is not implemented. Skipping')
             output_model.meta.cal_step.pathloss = 'SKIPPED'
             corrections = None
+        elif inverse:
+            log.warning('Use of inversion with NIS_SOSS is not implemented. Skipping')
+            output_model.meta.cal_step.pathloss = 'SKIPPED'
+            corrections = None
+        elif source_type is not None:
+            log.warning('Forcing of source type with NIS_SOSS is not implemented. Skipping')
+            output_model.meta.cal_step.pathloss = 'SKIPPED'
+            corrections = None
         else:
             corrections = do_correction_soss(output_model, pathloss_model)
 
@@ -428,6 +436,15 @@ def do_correction_fixedslit(data, pathloss, inverse=False, source_type=None, cor
             slit.data /= correction.data
         else:
             slit.data *= correction.data
+        slit.err /= correction.data
+        slit.var_poisson /= correction.data**2
+        slit.var_rnoise /= correction.data**2
+        if slit.var_flat is not None and np.size(slit.var_flat) > 0:
+            slit.var_flat /= correction.data**2
+        slit.pathloss_point = correction.pathloss_point
+        slit.pathloss_uniform = correction.pathloss_uniform
+
+        slit.data /= correction.data
         slit.err /= correction.data
         slit.var_poisson /= correction.data**2
         slit.var_rnoise /= correction.data**2

@@ -454,22 +454,22 @@ class Spec2Pipeline(Pipeline):
 
         #  self.photom.use_correction_pars = True
         #  self.photom.inverse = True
-        #  self.barshadow.use_correction_pars = True
-        #  self.barshadow.inverse = True
+        self.barshadow.use_correction_pars = True
+        self.barshadow.inverse = True
         self.pathloss.use_correction_pars = True
         self.pathloss.inverse = True
         self.flat_field.use_correction_pars = True
         self.flat_field.inverse = True
 
         #  mb_multislit = self.photom(mb_multislit)
-        #  mb_multislit = self.barshadow(mb_multislit)
+        mb_multislit = self.barshadow(mb_multislit)
         mb_multislit = self.pathloss(mb_multislit)
         mb_multislit = self.flat_field(mb_multislit)
 
         #  self.photom.use_correction_pars = False
         #  self.photom.inverse = False
-        #  self.barshadow.use_correction_pars = False
-        #  self.barshadow.inverse = False
+        self.barshadow.use_correction_pars = False
+        self.barshadow.inverse = False
         self.pathloss.use_correction_pars = False
         self.pathloss.inverse = False
         self.pathloss.source_type = None
