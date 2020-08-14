@@ -149,6 +149,6 @@ def test_pathloss_source_type(jail, rtdata_module):
 
     pls = PathLossStep()
     pls.source_type = 'extended'
-    corrected = pls.run(data)
+    pls.run(data)
 
     assert np.allclose(pls.correction_pars.data, pls.correction_pars.pathloss_uniform, equal_nan=True)

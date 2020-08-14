@@ -118,7 +118,7 @@ def test_pathloss_source_type(jail, rtdata_module):
 
     pls = PathLossStep()
     pls.source_type = 'extended'
-    corrected = pls.run(data)
+    pls.run(data)
 
     bad_slits = []
     for idx, slit in enumerate(pls.correction_pars.slits):
