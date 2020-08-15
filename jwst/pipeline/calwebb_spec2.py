@@ -5,9 +5,7 @@ import traceback
 
 from .. import datamodels
 from ..assign_wcs.util import NoDataOnDetectorError
-from ..lib.exposure_types import (is_nrs_ifu_flatlamp, is_nrs_ifu_lamp,
-                                  is_nrs_msaspec_lamp, is_nrs_ifu_linelamp,
-                                  is_nrs_autoflat)
+from ..lib.exposure_types import is_nrs_ifu_flatlamp, is_nrs_ifu_linelamp
 from ..stpipe import Pipeline
 
 # step imports
