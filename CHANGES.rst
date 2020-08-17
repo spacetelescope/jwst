@@ -74,6 +74,8 @@ cube_build
 datamodels
 ----------
 
+- Add iscopy to ModelContainer init [#5256]
+
 - Re-enable FITS-hash by default. [#5191]
 
 - Add blend rule for keywords DETECTOR and MODULE. [#4998]
@@ -138,6 +140,11 @@ master_background
 - Fix open files bug [#4995]
 
 - Update to include pathloss corrections to NIRSpec IFU background [#5125]
+
+mrs_imatch
+----------
+
+- MRSIMatchStep to create its ModelContainers with `iscopy=True` [#5256]
 
 outlier_detection
 -----------------
