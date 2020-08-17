@@ -2863,7 +2863,10 @@ def do_extract1d(
         else:
             pixel_solid_angle = 1.  # not needed
 
-        source_type = input_model.meta.target.source_type
+        if isinstance(input_model, datamodels.SlitModel):
+            source_type = input_model.source_type
+        else:
+            source_type = input_model.meta.target.source_type
 
         input_units_are_megajanskys = (
                 photom_has_been_run
@@ -2871,6 +2874,7 @@ def do_extract1d(
                 and (instrument == 'NIRSPEC' or exp_type == 'NIS_SOSS')
         )
 
+        # Turn off use_source_posn if the source is not POINT
         if source_type != 'POINT':
             use_source_posn = False
             log.info(f"Setting use_source_posn to False for source type {source_type}")
@@ -3002,17 +3006,24 @@ def do_extract1d(
                 output_model.spec.append(spec)
 
         elif isinstance(input_model, (datamodels.CubeModel, datamodels.SlitModel)):
+
+            # This branch will be invoked for inputs that are a CubeModel, which typically includes
+            # NIRSpec BrightObj (fixed slit) and NIRISS SOSS modes, as well as inputs that are a
+            # single SlitModel, which typically includes data from a single resampled/combined slit
+            # instance from level-3 processing of NIRSpec fixed slits and MOS modes.
+
             # Replace the default value for slitname with a more accurate value, if possible.
             slit = None
 
-            # Next two lines are for NRS_BRIGHTOBJ
+            # For NRS_BRIGHTOBJ, the slit name comes from the slit model info
             if input_model.meta.exposure.type == 'NRS_BRIGHTOBJ' and hasattr(input_model, "name"):
                 slitname = input_model.name
 
-            # Next 2 lines likely no longer needed, now that SlitModel already contains input_model.name value.
+            # For NRS_FIXEDSLIT, the slit name comes from the FXD_SLIT keyword in the model meta
             if input_model.meta.exposure.type == 'NRS_FIXEDSLIT':
                 slitname = input_model.meta.instrument.fixed_slit
 
+            # Get the pixel solid angle size for use later in converting fluxes
             if photom_has_been_run:
                 pixel_solid_angle = input_model.meta.photometry.pixelarea_steradians
                 if pixel_solid_angle is None:
@@ -3021,9 +3032,8 @@ def do_extract1d(
             else:
                 pixel_solid_angle = 1.  # not needed
 
-            # NRS_BRIGHTOBJ exposures are instances of SlitModel.
+            # Loop over all spectral orders available for extraction
             prev_offset = OFFSET_NOT_ASSIGNED_YET
-
             for sp_order in spectral_order_list:
                 if sp_order == "not set yet":
                     sp_order = get_spectral_order(input_model)
@@ -3064,7 +3074,6 @@ def do_extract1d(
                 shape = input_model.data.shape
 
                 if len(shape) == 3 and shape[0] == 1 or len(shape) == 2:
-                    log.info("Beginning loop, just 1 integration ...")
                     integrations = [-1]
                 else:
                     log.info(f"Beginning loop over {shape[0]} integrations ...")
@@ -3153,7 +3162,9 @@ def do_extract1d(
                     output_model.spec.append(spec)
 
                     if log_increment > 0 and (integ + 1) % log_increment == 0:
-                        if integ == 0:
+                        if integ == -1:
+                            pass
+                        elif integ == 0:
                             if input_model.data.shape[0] == 1:
                                 log.info("1 integration done")
                             else:
@@ -3633,6 +3644,13 @@ def extract_one_slit(
         extract_model.log_extraction_parameters()
 
     extract_model.assign_polynomial_limits(verbose)
+
+    # Log the extraction limits being used
+    log.info("Using extraction limits: "
+             f"xstart={extract_model.xstart}, "
+             f"xstop={extract_model.xstop}, "
+             f"ystart={extract_model.ystart}, "
+             f"ystop={extract_model.ystop}")
 
     ra, dec, wavelength, temp_flux, background, npixels, dq = extract_model.extract(data, wl_array, verbose)
 
