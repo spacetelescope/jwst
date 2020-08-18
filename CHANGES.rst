@@ -96,6 +96,8 @@ datamodels
 
 - Update underlying MultiExposureModel from the SourceModelContainer models. [#5154]
 
+- Add new MIRI LRS dither patterns to PATTTYPE enum list. [#5254]
+
 extract_1d
 ----------
 
