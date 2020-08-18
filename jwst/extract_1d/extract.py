@@ -2865,6 +2865,8 @@ def do_extract1d(
 
         if isinstance(input_model, datamodels.SlitModel):
             source_type = input_model.source_type
+            if source_type is None:
+                source_type = input_model.meta.target.source_type
         else:
             source_type = input_model.meta.target.source_type
 
