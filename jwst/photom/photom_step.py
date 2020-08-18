@@ -14,6 +14,11 @@ class PhotomStep(Step):
         data model
     """
 
+    spec = """
+        inverse = boolean(default=False)    # Invert the operation
+        source_type = string(default=None)  # Process as specified source type.
+    """
+
     reference_file_types = ['photom', 'area']
 
     def process(self, input):
@@ -32,10 +37,19 @@ class PhotomStep(Step):
                              "CubeModel, ImageModel, IFUImageModel or "
                              "MultiSlitModel.")
 
-        # Get the reference file names
-        phot_filename = self.get_reference_file(input_model, 'photom')
+        # Setup reference files and whether previous correction information
+        # should be used.
+        correction_pars = None
+        if self.use_correction_pars and self.correction_pars:
+            self.log.info('Using previously specified correction parameters.')
+            correction_pars = self.correction_pars
+            phot_filename = correction_pars['refs']['photom']
+            area_filename = correction_pars['refs']['area']
+        else:
+            phot_filename = self.get_reference_file(input_model, 'photom')
+            area_filename = self.get_reference_file(input_model, 'area')
+
         self.log.info('Using photom reference file: %s', phot_filename)
-        area_filename = self.get_reference_file(input_model, 'area')
         self.log.info('Using area reference file: %s', area_filename)
 
         # Check for a valid photom reference file
@@ -47,9 +61,11 @@ class PhotomStep(Step):
             return result
 
         # Do the correction
-        phot = photom.DataSet(input_model)
+        phot = photom.DataSet(input_model, correction_pars)
         result = phot.apply_photom(phot_filename, area_filename)
-
         result.meta.cal_step.photom = 'COMPLETE'
+
+        self.correction_pars = phot.correction_pars
+        self.correction_pars['refs'] = {'photom': phot_filename, 'area': area_filename}
 
         return result

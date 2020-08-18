@@ -76,7 +76,7 @@ class DataSet():
     ----------
 
     """
-    def __init__(self, model):
+    def __init__(self, model, correction_pars=None):
         """
         Short Summary
         -------------
@@ -88,25 +88,34 @@ class DataSet():
         model : `~jwst.datamodels.DataModel`
             input Data Model object
 
+        correction_pars : dict
+            Correction meta-data from a previous run.
         """
+        # Setup attributes necessary for calculation.
+        if correction_pars:
+            self.update(correction_pars['dataset'])
+        else:
+            self.instrument = model.meta.instrument.name.upper()
+            self.detector = model.meta.instrument.detector.upper()
+            self.exptype = model.meta.exposure.type.upper()
+            self.filter = None
+            if model.meta.instrument.filter is not None:
+                self.filter = model.meta.instrument.filter.upper()
+            self.pupil = None
+            if model.meta.instrument.pupil is not None:
+                self.pupil = model.meta.instrument.pupil.upper()
+            self.grating = None
+            if model.meta.instrument.grating is not None:
+                self.grating = model.meta.instrument.grating.upper()
+            self.band = None
+            if model.meta.instrument.band is not None:
+                self.band = model.meta.instrument.band.upper()
+            correction_pars = dict()
+        correction_pars['dataset'] = self.attributes
+        self.correction_pars = correction_pars
+
         # Create a copy of the input model
         self.input = model.copy()
-
-        self.instrument = model.meta.instrument.name.upper()
-        self.detector = model.meta.instrument.detector.upper()
-        self.exptype = model.meta.exposure.type.upper()
-        self.filter = None
-        if model.meta.instrument.filter is not None:
-            self.filter = model.meta.instrument.filter.upper()
-        self.pupil = None
-        if model.meta.instrument.pupil is not None:
-            self.pupil = model.meta.instrument.pupil.upper()
-        self.grating = None
-        if model.meta.instrument.grating is not None:
-            self.grating = model.meta.instrument.grating.upper()
-        self.band = None
-        if model.meta.instrument.band is not None:
-            self.band = model.meta.instrument.band.upper()
         self.slitnum = -1
 
         # Let the user know what we're working with
@@ -121,6 +130,35 @@ class DataSet():
             log.info(' grating: %s', self.grating)
         if self.band is not None:
             log.info(' band: %s', self.band)
+
+    @property
+    def attributes(self):
+        """Retrieve DataSet attributes
+
+        Returns
+        -------
+        attributes : dict
+            A dict of `DataSet` attributes, except `input`
+        """
+        attributes = vars(self)
+
+        # Remove some attributes
+        for attribute in ['input', 'correction_pars', 'slitnum']:
+            if attribute in attributes:
+                del attributes[attribute]
+
+        return attributes
+
+    def update(self, attributes):
+        """Set DataSet attributes
+
+        Parameters
+        ----------
+        attributes : dict
+            The attributes to be set on DataSet
+        """
+        for key, value in attributes.items():
+            setattr(self, key, value)
 
     def calc_nirspec(self, ftab, area_fname):
         """
