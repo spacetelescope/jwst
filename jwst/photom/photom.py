@@ -119,9 +119,6 @@ class DataSet():
             self.pupil = None
             if model.meta.instrument.pupil is not None:
                 self.pupil = model.meta.instrument.pupil.upper()
-            self.source_type = source_type
-            if self.source_type is None and model.meta.target.source_type is not None:
-                self.source_type = model.meta.target.source_type.upper()
             self.subarray = None
             if model.meta.subarray.name is not None:
                 self.subarray = model.meta.subarray.name.upper()
@@ -129,10 +126,15 @@ class DataSet():
         correction_pars['dataset'] = self.attributes
         self.correction_pars = correction_pars
 
-        # Create a copy of the input model
-        self.input = model.copy()
+        # Initialize other non-correction pars attributes.
         self.slitnum = -1
         self.inverse = inverse
+        self.source_type = source_type
+        if self.source_type is None and model.meta.target.source_type is not None:
+            self.source_type = model.meta.target.source_type.upper()
+
+        # Create a copy of the input model
+        self.input = model.copy() 
 
         # Let the user know what we're working with
         log.info('Using instrument: %s', self.instrument)
@@ -159,7 +161,7 @@ class DataSet():
         attributes = vars(self)
 
         # Remove some attributes
-        for attribute in ['input', 'correction_pars', 'slitnum', 'inverse']:
+        for attribute in ['correction_pars', 'input', 'inverse', 'slitnum', 'source_type']:
             if attribute in attributes:
                 del attributes[attribute]
 

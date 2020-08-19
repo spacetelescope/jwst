@@ -420,37 +420,32 @@ class Spec2Pipeline(Pipeline):
           - Subtract the background from the input slit data
         """
         # First pass: just do the calibration to determine the correction
-        # arrays.
+        # arrays. However, force all slits to be processed as extended sources.
         self.pathloss.source_type = 'EXTENDED'
+        self.barshadow.source_type = 'EXTENDED'
+        self.photom.source_type = 'EXTENDED'
+
         pre_calibrated = self.flat_field(data)
         pre_calibrated = self.pathloss(pre_calibrated)
         pre_calibrated = self.barshadow(pre_calibrated)
         pre_calibrated = self.photom(pre_calibrated)
 
-        # At this point, assume that `pre_calibrated` is a modified `MultiSlitModel` that
-        # is also carrying the science calibration information along with it.
-        # The next steps may get wrapped into a single master_background_step, but
-        # are split out here for design
-
-        # First create the 1D, fully calibrated master background.
+        # Create the 1D, fully calibrated master background.
         master_background = nirspec_utils.create_background_from_multislit(pre_calibrated)
         if master_background is None:
             return data
 
-        # Now decalibrate the master background for each individual science slit
-        # The steps are split out here for design purposes.
+        # Now decalibrate the master background for each individual science slit.
         # First step is to map the master background into a MultiSlitModel
-        # where the science slits are replaced by the master background
+        # where the science slits are replaced by the master background.
         # Here the broadcasting from 1D to 2D need also occur.
         mb_multislit = nirspec_utils.map_to_science_slits(pre_calibrated, master_background)
 
         # Now that the master background is pretending to be science,
         # walk backwards through the steps to uncalibrate, using the
-        # calibration factors carried in `pre_calibrated`
-        # Yes, using kwargs for the steps is invalid, but for design purposes only.
-
-        #  self.photom.use_correction_pars = True
-        #  self.photom.inverse = True
+        # calibration factors carried from `pre_calibrated`.
+        self.photom.use_correction_pars = True
+        self.photom.inverse = True
         self.barshadow.use_correction_pars = True
         self.barshadow.inverse = True
         self.pathloss.use_correction_pars = True
@@ -458,24 +453,27 @@ class Spec2Pipeline(Pipeline):
         self.flat_field.use_correction_pars = True
         self.flat_field.inverse = True
 
-        #  mb_multislit = self.photom(mb_multislit)
+        mb_multislit = self.photom(mb_multislit)
         mb_multislit = self.barshadow(mb_multislit)
         mb_multislit = self.pathloss(mb_multislit)
         mb_multislit = self.flat_field(mb_multislit)
 
-        #  self.photom.use_correction_pars = False
-        #  self.photom.inverse = False
+        # Now apply the de-calibrated background to the original science
+        # At this point, should just be a slit-to-slit subtraction operation.
+        calibrated = nirspec_utils.apply_master_background(data, mb_multislit)
+
+        # Reset all the step attributes for "normal" processing.
+        self.photom.use_correction_pars = False
+        self.photom.inverse = False
+        self.photom.source_type = None
         self.barshadow.use_correction_pars = False
         self.barshadow.inverse = False
+        self.barshadow.source_type = None
         self.pathloss.use_correction_pars = False
         self.pathloss.inverse = False
         self.pathloss.source_type = None
         self.flat_field.use_correction_pars = False
         self.flat_field.inverse = False
-
-        # Now apply the de-calibrated background to the original science
-        # At this point, should just be a slit-to-slit subtraction operation.
-        calibrated = nirspec_utils.apply_master_background(data, mb_multislit)
 
         return calibrated
 
