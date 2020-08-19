@@ -94,7 +94,7 @@ setup(
         'crds>=7.4.1.3',
         'drizzle>=1.13',
         'gwcs>=0.14.0',
-        'jsonschema>=3.0.1',
+        'jsonschema>=3.0.2',
         'numpy>=1.16',
         'photutils>=0.7',
         'pyparsing>=2.2',
