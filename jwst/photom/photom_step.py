@@ -39,13 +39,13 @@ class PhotomStep(Step):
 
         # Setup reference files and whether previous correction information
         # should be used.
-        correction_pars = None
         if self.use_correction_pars and self.correction_pars:
             self.log.info('Using previously specified correction parameters.')
             correction_pars = self.correction_pars
             phot_filename = correction_pars['refs']['photom']
             area_filename = correction_pars['refs']['area']
         else:
+            correction_pars = None
             phot_filename = self.get_reference_file(input_model, 'photom')
             area_filename = self.get_reference_file(input_model, 'area')
 
@@ -61,7 +61,7 @@ class PhotomStep(Step):
             return result
 
         # Do the correction
-        phot = photom.DataSet(input_model, correction_pars)
+        phot = photom.DataSet(input_model, self.inverse, self.source_type, correction_pars)
         result = phot.apply_photom(phot_filename, area_filename)
         result.meta.cal_step.photom = 'COMPLETE'
 

@@ -76,7 +76,7 @@ class DataSet():
     ----------
 
     """
-    def __init__(self, model, correction_pars=None):
+    def __init__(self, model, inverse=False, source_type=None, correction_pars=None):
         """
         Short Summary
         -------------
@@ -87,6 +87,12 @@ class DataSet():
         ----------
         model : `~jwst.datamodels.DataModel`
             input Data Model object
+
+        inverse : boolean
+            Invert the math operations used to apply the flat field.
+
+        source_type : str or None
+            Force processing using the specified source type.
 
         correction_pars : dict
             Correction meta-data from a previous run.
@@ -113,9 +119,12 @@ class DataSet():
             self.pupil = None
             if model.meta.instrument.pupil is not None:
                 self.pupil = model.meta.instrument.pupil.upper()
-            self.source_type = None
-            if model.meta.target.source_type is not None:
-                self.source_type = model.meta.target.source_type.upper()
+            if source_type is None:
+                self.source_type = None
+                if model.meta.target.source_type is not None:
+                    self.source_type = model.meta.target.source_type.upper()
+            else:
+                self.source_type = source_type
             self.subarray = None
             if model.meta.subarray.name is not None:
                 self.subarray = model.meta.subarray.name.upper()
@@ -126,6 +135,7 @@ class DataSet():
         # Create a copy of the input model
         self.input = model.copy()
         self.slitnum = -1
+        self.inverse = inverse
 
         # Let the user know what we're working with
         log.info('Using instrument: %s', self.instrument)
@@ -147,12 +157,12 @@ class DataSet():
         Returns
         -------
         attributes : dict
-            A dict of `DataSet` attributes, except `input`
+            A dict of `DataSet` attributes.
         """
         attributes = vars(self)
 
         # Remove some attributes
-        for attribute in ['input', 'correction_pars', 'slitnum']:
+        for attribute in ['input', 'correction_pars', 'slitnum', 'inverse']:
             if attribute in attributes:
                 del attributes[attribute]
 
