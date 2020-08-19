@@ -224,7 +224,7 @@ def ifu(input_model, reference_files, slit_y_range=[-.55, .55]):
     is_lamp_exposure = exp_type in ['NRS_LAMP', 'NRS_AUTOWAVE', 'NRS_AUTOFLAT']
 
     if input_model.meta.instrument.filter == 'OPAQUE' or is_lamp_exposure:
-        # If filter is "OPAQUE" or if internal lamp exposure the pipeline stops at the MSA.
+        # If filter is "OPAQUE" or if internal lamp exposure the NIRSPEC WCS pipeline stops at the MSA.
         pipeline = [(det, dms2detector),
                     (sca, det2gwa.rename('detector2gwa')),
                     (gwa, gwa2slit.rename('gwa2slit')),
