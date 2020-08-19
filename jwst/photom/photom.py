@@ -119,12 +119,9 @@ class DataSet():
             self.pupil = None
             if model.meta.instrument.pupil is not None:
                 self.pupil = model.meta.instrument.pupil.upper()
-            if source_type is None:
-                self.source_type = None
-                if model.meta.target.source_type is not None:
-                    self.source_type = model.meta.target.source_type.upper()
-            else:
-                self.source_type = source_type
+            self.source_type = source_type
+            if self.source_type is None and model.meta.target.source_type is not None:
+                self.source_type = model.meta.target.source_type.upper()
             self.subarray = None
             if model.meta.subarray.name is not None:
                 self.subarray = model.meta.subarray.name.upper()
@@ -670,7 +667,7 @@ class DataSet():
             if isinstance(self.input, datamodels.MultiSlitModel):
                 slit = self.input.slits[self.slitnum]
                 if self.exptype == 'NRS_MSASPEC':
-                    srctype = slit.source_type
+                    srctype = self.source_type if self.source_type else slit.source_type
                 else:
                     srctype = self.source_type
                 if srctype is None or srctype.upper() != 'POINT':
