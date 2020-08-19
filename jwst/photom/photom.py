@@ -318,7 +318,7 @@ class DataSet():
                     self.input.meta.bunit_err = 'MJy/sr'
                 else:
                     self.input.meta.bunit_data = 'DN/s'
-                    self.input.meta.bunit_err = '(COUNTS S-1)**2'
+                    self.input.meta.bunit_err = 'DN/s'
 
                 area_model.close()
 
@@ -477,7 +477,7 @@ class DataSet():
                 self.input.meta.bunit_err = 'MJy/sr'
             else:
                 self.input.meta.bunit_data = 'DN/s'
-                self.input.meta.bunit_err = '(COUNTS S-1)**2'
+                self.input.meta.bunit_err = 'DN/s'
 
         return
 
@@ -792,7 +792,7 @@ class DataSet():
                     slit.meta.bunit_err = 'MJy'
             else:
                 self.input.meta.bunit_data = 'DN/s'
-                self.input.meta.bunit_err = '(COUNTS S-1)**2'
+                self.input.meta.bunit_err = 'DN/s'
 
         else:
             if not self.inverse:
@@ -819,7 +819,7 @@ class DataSet():
                 self.input.meta.bunit_err = 'MJy'
         else:
             self.input.meta.bunit_data = 'DN/s'
-            self.input.meta.bunit_err = '(COUNTS S-1)**2'
+            self.input.meta.bunit_err = 'DN/s'
 
         return
 
