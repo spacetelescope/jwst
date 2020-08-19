@@ -10,7 +10,7 @@ from jwst.associations.lib.constraint import (Constraint, AttrConstraint, Simple
 from jwst.associations.lib.utilities import getattr_from_list
 
 
-__all__ = ['Constraint_TargetAcq', 'Constraint_TSO', 'DMSBaseMixin']
+__all__ = ['Constraint_TargetAcq', 'Constraint_TSO', 'Constraint_WFSC', 'DMSBaseMixin']
 
 # Default product name
 PRODUCT_NAME_DEFAULT = 'undefined'
@@ -653,6 +653,25 @@ class Constraint_TSO(Constraint):
                 )
             ],
             name='is_tso'
+        )
+
+
+class Constraint_WFSC(Constraint):
+    """Match on Wave Front Sensing and Control Observations"""
+    def __init__(self, *args, **kwargs):
+        super(Constraint_WFSC, self).__init__(
+            [
+                Constraint(
+                    [
+                        DMSAttrConstraint(
+                            name='wfsc',
+                            sources=['visitype'],
+                            value='.+wfsc.+',
+                            force_unique=True
+                        )
+                    ]
+                )
+            ]
         )
 
 

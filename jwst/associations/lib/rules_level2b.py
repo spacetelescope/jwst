@@ -8,6 +8,7 @@ from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.constraint import (Constraint, SimpleConstraint)
 from jwst.associations.lib.dms_base import (
     Constraint_TSO,
+    Constraint_WFSC,
     format_list
 )
 from jwst.associations.lib.member import Member
@@ -196,6 +197,10 @@ class Asn_Lv2FGS(
                     'fgs_image'
                     '|fgs_focus'
                 ),
+            ),
+            Constraint(
+                [Constraint_WFSC()],
+                reduce=Constraint.notany
             )
         ])
 
@@ -883,16 +888,7 @@ class Asn_Lv2WFSC(
             Constraint_Image_Science(),
             Constraint_Single_Science(self.has_science),
             Constraint_ExtCal(),
-            Constraint(
-                [
-                    DMSAttrConstraint(
-                        name='wfsc',
-                        sources=['visitype'],
-                        value='.+wfsc.+',
-                        force_unique=True
-                    )
-                ]
-            )
+            Constraint_WFSC(),
         ])
 
         # Now check and continue initialization.
