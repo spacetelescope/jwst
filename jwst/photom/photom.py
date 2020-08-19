@@ -95,21 +95,30 @@ class DataSet():
         if correction_pars:
             self.update(correction_pars['dataset'])
         else:
+            self.band = None
+            if model.meta.instrument.band is not None:
+                self.band = model.meta.instrument.band.upper()
             self.instrument = model.meta.instrument.name.upper()
             self.detector = model.meta.instrument.detector.upper()
             self.exptype = model.meta.exposure.type.upper()
             self.filter = None
             if model.meta.instrument.filter is not None:
                 self.filter = model.meta.instrument.filter.upper()
-            self.pupil = None
-            if model.meta.instrument.pupil is not None:
-                self.pupil = model.meta.instrument.pupil.upper()
             self.grating = None
             if model.meta.instrument.grating is not None:
                 self.grating = model.meta.instrument.grating.upper()
-            self.band = None
-            if model.meta.instrument.band is not None:
-                self.band = model.meta.instrument.band.upper()
+            self.order = None
+            if model.meta.wcsinfo.spectral_order is not None:
+                self.order = model.meta.wcsinfo.spectral_order
+            self.pupil = None
+            if model.meta.instrument.pupil is not None:
+                self.pupil = model.meta.instrument.pupil.upper()
+            self.source_type = None
+            if model.meta.target.source_type is not None:
+                self.source_type = model.meta.target.source_type.upper()
+            self.subarray = None
+            if model.meta.subarray.name is not None:
+                self.subarray = model.meta.subarray.name.upper()
             correction_pars = dict()
         correction_pars['dataset'] = self.attributes
         self.correction_pars = correction_pars
@@ -389,9 +398,8 @@ class DataSet():
         if self.detector == 'MIRIMAGE':
 
             # Get the subarray value of the input data model
-            subarray = self.input.meta.subarray.name.upper()
-            log.info(' subarray: %s', subarray)
-            fields_to_match = {'subarray': self.input.meta.subarray.name,
+            log.info(' subarray: %s', self.subarray)
+            fields_to_match = {'subarray': self.subarray,
                                'filter': self.filter}
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
@@ -487,8 +495,7 @@ class DataSet():
                     continue
                 self.photom_io(ftab.phot_table[row])
         elif self.exptype == 'NRC_TSGRISM':
-            order = self.input.meta.wcsinfo.spectral_order
-            fields_to_match = {'filter': self.filter, 'pupil': self.pupil, 'order': order}
+            fields_to_match = {'filter': self.filter, 'pupil': self.pupil, 'order': self.order}
             row = find_row(ftab.phot_table, fields_to_match)
             if row is None:
                 return
@@ -638,10 +645,10 @@ class DataSet():
             conversion = tabdata['photmj']              # unit is MJy
             if isinstance(self.input, datamodels.MultiSlitModel):
                 slit = self.input.slits[self.slitnum]
-                if self.input.meta.exposure.type == 'NRS_MSASPEC':
+                if self.exptype == 'NRS_MSASPEC':
                     srctype = slit.source_type
                 else:
-                    srctype = self.input.meta.target.source_type
+                    srctype = self.source_type
                 if srctype is None or srctype.upper() != 'POINT':
                     if slit.meta.photometry.pixelarea_steradians is None:
                         log.warning("Pixel area is None, so can't convert "
@@ -653,8 +660,7 @@ class DataSet():
                 else:
                     unit_is_surface_brightness = False
             else:
-                srctype = self.input.meta.target.source_type
-                if srctype is None or srctype.upper() != 'POINT':
+                if self.source_type is None or self.source_type != 'POINT':
                     if self.input.meta.photometry.pixelarea_steradians is None:
                         log.warning("Pixel area is None, so can't convert "
                                     "flux to surface brightness!")
@@ -721,11 +727,11 @@ class DataSet():
             # Compute a 2-D grid of conversion factors, as a function of wavelength
             if isinstance(self.input, datamodels.MultiSlitModel):
                 wl_array = get_wavelengths(self.input.slits[self.slitnum],
-                                           self.input.meta.exposure.type,
+                                           self.exptype,
                                            order)
             else:
                 wl_array = get_wavelengths(self.input,
-                                           self.input.meta.exposure.type,
+                                           self.exptype,
                                            order)
 
             wl_array[np.isnan(wl_array)] = -1.
@@ -800,16 +806,13 @@ class DataSet():
             Pixel area reference file name
         """
 
-        # We need the instrument name in order to check for NIRSpec.
-        instrument = self.input.meta.instrument.name.upper()
-
         # Load the pixel area reference file
         if area_fname is not None and area_fname != "N/A":
             pix_area = datamodels.open(area_fname)
 
             # Copy the pixel area data array to the appropriate attribute
             # of the science data model
-            if instrument != 'NIRSPEC':
+            if self.instrument != 'NIRSPEC':
                 if isinstance(self.input, datamodels.MultiSlitModel):
                     # Note that this only copied to the first slit.
                     self.input.slits[0].area = pix_area.data
@@ -824,7 +827,7 @@ class DataSet():
         # Load the average pixel area values from the photom reference file header
         # Don't need to do this for NIRSpec, because pixel areas come from
         # the AREA ref file, which have already been copied using save_area_nirspec
-        if instrument != 'NIRSPEC':
+        if self.instrument != 'NIRSPEC':
             try:
                 area_ster = ftab.meta.photometry.pixelarea_steradians
             except AttributeError:
@@ -868,7 +871,7 @@ class DataSet():
             Pixel area reference file data model
         """
 
-        exp_type = self.input.meta.exposure.type
+        exp_type = self.exptype
         pixarea = pix_area.area_table['pixarea']
         if exp_type == 'NRS_MSASPEC':
             quadrant = pix_area.area_table['quadrant']
