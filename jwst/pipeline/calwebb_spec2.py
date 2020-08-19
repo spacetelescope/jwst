@@ -29,7 +29,8 @@ from ..resample import resample_spec_step
 __all__ = ['Spec2Pipeline']
 
 # Classify various exposure types.
-NRS_SLIT_TYPES = ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ', 'NRS_MSASPEC', 'NRS_LAMP']
+NRS_SLIT_TYPES = ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ', 'NRS_MSASPEC',
+                  'NRS_LAMP', 'NRS_AUTOWAVE', 'NRS_AUTOFLAT']
 WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS"]
 GRISM_TYPES = ['NRC_TSGRISM'] + WFSS_TYPES
 
@@ -324,7 +325,8 @@ class Spec2Pipeline(Pipeline):
                 self.imprint_subtract.skip = True
 
         # Check for NIRSpec MSA bad shutter flagging.
-        if not self.msa_flagging.skip and exp_type not in ['NRS_MSASPEC', 'NRS_IFU']:
+        if not self.msa_flagging.skip and exp_type not in ['NRS_MSASPEC', 'NRS_IFU', 'NRS_LAMP',
+                                                           'NRS_AUTOFLAT', 'NRS_AUTOWAVE']:
             self.log.debug('Science data does not allow MSA flagging. Skipping "msa_flagging".')
             self.msa_flagging.skip = True
 

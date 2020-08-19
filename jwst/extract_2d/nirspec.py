@@ -146,6 +146,7 @@ def set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi):
     output_model.source_id = int(slit.source_id)
     output_model.slit_ymin = slit.ymin
     output_model.slit_ymax = slit.ymax
+    output_model.shutter_id = int(slit.shutter_id)  # for use in wavecorr
     log.debug('slit.ymin {}'.format(slit.ymin))
     if output_model.meta.exposure.type.lower() in ['nrs_msaspec', 'nrs_autoflat'] or \
        output_model.meta.instrument.lamp_mode.upper == 'MSASPEC':
