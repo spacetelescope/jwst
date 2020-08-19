@@ -1526,19 +1526,19 @@ def nrs_wcs_set_input(input_model, slit_name, wavelength_range=None):
     else:
         wrange = wavelength_range
     slit_wcs = copy.deepcopy(wcsobj)
-    slit_wcs.set_transform('sca', 'gwa', wcsobj.pipeline[1][1][1:])
+    slit_wcs.set_transform('sca', 'gwa', wcsobj.pipeline[1].transform[1:])
     # get the open slits from the model
     # Need them to get the slit ymin,ymax
-    g2s = wcsobj.pipeline[2][1]
+    g2s = wcsobj.pipeline[2].transform
     open_slits = g2s.slits
 
     slit_wcs.set_transform('gwa', 'slit_frame', g2s.get_model(slit_name))
     if input_model.meta.exposure.type.lower() == 'nrs_ifu':
         slit_wcs.set_transform('slit_frame', 'slicer',
-                           wcsobj.pipeline[3][1].get_model(slit_name) & Identity(1))
+                           wcsobj.pipeline[3].transform.get_model(slit_name) & Identity(1))
     else:
         slit_wcs.set_transform('slit_frame', 'msa_frame',
-                           wcsobj.pipeline[3][1].get_model(slit_name) & Identity(1))
+                           wcsobj.pipeline[3].transform.get_model(slit_name) & Identity(1))
     slit2detector = slit_wcs.get_transform('slit_frame', 'detector')
 
     if input_model.meta.exposure.type.lower() != 'nrs_ifu':
