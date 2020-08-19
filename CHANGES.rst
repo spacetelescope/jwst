@@ -116,6 +116,8 @@ extract_1d
 
 - Fixed the conversion of flux to surface brightness for IFU extended source case [#5201]
 
+- Fixed bugs in aperture correction for NIRSpec multi-slit modes. [#5260]
+
 extract_2d
 ----------
 

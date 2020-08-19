@@ -2831,7 +2831,8 @@ def do_extract1d(
                     match_kwargs['slit'] = slitname
 
                 apcorr = select_apcorr(input_model)(
-                    input_model, slit.name, apcorr_ref_model.apcorr_table, apcorr_ref_model.sizeunit, **match_kwargs
+                    input_model, apcorr_ref_model.apcorr_table, apcorr_ref_model.sizeunit,
+                    slit_name = slitname, **match_kwargs
                 )
                 apcorr.apply(spec.spec_table)
 
@@ -2997,7 +2998,6 @@ def do_extract1d(
 
                     apcorr = select_apcorr(input_model)(
                         input_model,
-                        slitname,
                         apcorr_ref_model.apcorr_table,
                         apcorr_ref_model.sizeunit,
                         location=(ra, dec, wl)
@@ -3156,7 +3156,8 @@ def do_extract1d(
                             match_kwargs['slit'] = slitname
 
                         apcorr = select_apcorr(input_model)(
-                            input_model, slitname, apcorr_ref_model.apcorr_table, apcorr_ref_model.sizeunit, **match_kwargs
+                            input_model, apcorr_ref_model.apcorr_table, apcorr_ref_model.sizeunit,
+                            slit_name = slitname, **match_kwargs
                         )
                         apcorr.apply(spec.spec_table)
 
