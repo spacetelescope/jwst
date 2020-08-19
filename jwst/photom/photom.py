@@ -303,7 +303,10 @@ class DataSet():
 
                 # Multiply the science data and uncertainty arrays by
                 # the conversion factors
-                self.input.data *= sens2d
+                if not self.inverse:
+                    self.input.data *= sens2d
+                else:
+                    self.input.data /= sens2d
                 self.input.err *= sens2d
                 self.input.var_poisson *= sens2d**2
                 self.input.var_rnoise *= sens2d**2
@@ -311,8 +314,12 @@ class DataSet():
                     self.input.var_flat *= sens2d**2
 
                 # Update BUNIT values for the science data and err
-                self.input.meta.bunit_data = 'MJy/sr'
-                self.input.meta.bunit_err = 'MJy/sr'
+                if not self.inverse:
+                    self.input.meta.bunit_data = 'MJy/sr'
+                    self.input.meta.bunit_err = 'MJy/sr'
+                else:
+                    self.input.meta.bunit_data = 'DN/s'
+                    self.input.meta.bunit_err = '(COUNTS S-1)**2'
 
                 area_model.close()
 
@@ -443,7 +450,10 @@ class DataSet():
 
             # Multiply the science data and uncertainty arrays by the 2D
             # sensitivity factors
-            self.input.data *= sens2d
+            if not self.inverse:
+                self.input.data *= sens2d
+            else:
+                self.input.data /= sens2d
             self.input.err *= sens2d
             self.input.var_poisson *= sens2d**2
             self.input.var_rnoise *= sens2d**2
@@ -463,8 +473,12 @@ class DataSet():
                 conv_factor * MJSR_TO_UJA2
 
             # Update BUNIT values for the science data and err
-            self.input.meta.bunit_data = 'MJy/sr'
-            self.input.meta.bunit_err = 'MJy/sr'
+            if not self.inverse:
+                self.input.meta.bunit_data = 'MJy/sr'
+                self.input.meta.bunit_err = 'MJy/sr'
+            else:
+                self.input.meta.bunit_data = 'DN/s'
+                self.input.meta.bunit_err = '(COUNTS S-1)**2'
 
         return
 
@@ -756,7 +770,10 @@ class DataSet():
         # Apply the conversion to the data and all uncertainty arrays
         if isinstance(self.input, datamodels.MultiSlitModel):
             slit = self.input.slits[self.slitnum]
-            slit.data *= conversion
+            if not self.inverse:
+                slit.data *= conversion
+            else:
+                slit.data /= conversion
             slit.err *= conversion
             if slit.var_poisson is not None and np.size(slit.var_poisson) > 0:
                 slit.var_poisson *= conversion**2
@@ -767,14 +784,22 @@ class DataSet():
             if no_cal is not None:
                 slit.dq[..., no_cal] = np.bitwise_or(slit.dq[..., no_cal],
                                                      dqflags.pixel['DO_NOT_USE'])
-            if unit_is_surface_brightness:
-                slit.meta.bunit_data = 'MJy/sr'
-                slit.meta.bunit_err = 'MJy/sr'
+            if not self.inverse:
+                if unit_is_surface_brightness:
+                    slit.meta.bunit_data = 'MJy/sr'
+                    slit.meta.bunit_err = 'MJy/sr'
+                else:
+                    slit.meta.bunit_data = 'MJy'
+                    slit.meta.bunit_err = 'MJy'
             else:
-                slit.meta.bunit_data = 'MJy'
-                slit.meta.bunit_err = 'MJy'
+                self.input.meta.bunit_data = 'DN/s'
+                self.input.meta.bunit_err = '(COUNTS S-1)**2'
+
         else:
-            self.input.data *= conversion
+            if not self.inverse:
+                self.input.data *= conversion
+            else:
+                self.input.data /= conversion
             self.input.err *= conversion
             if self.input.var_poisson is not None and np.size(self.input.var_poisson) > 0:
                 self.input.var_poisson *= conversion**2
@@ -785,12 +810,17 @@ class DataSet():
             if no_cal is not None:
                 self.input.dq[..., no_cal] = np.bitwise_or(self.input.dq[..., no_cal],
                                                            dqflags.pixel['DO_NOT_USE'])
-        if unit_is_surface_brightness:
-            self.input.meta.bunit_data = 'MJy/sr'
-            self.input.meta.bunit_err = 'MJy/sr'
+
+        if not self.inverse:
+            if unit_is_surface_brightness:
+                self.input.meta.bunit_data = 'MJy/sr'
+                self.input.meta.bunit_err = 'MJy/sr'
+            else:
+                self.input.meta.bunit_data = 'MJy'
+                self.input.meta.bunit_err = 'MJy'
         else:
-            self.input.meta.bunit_data = 'MJy'
-            self.input.meta.bunit_err = 'MJy'
+            self.input.meta.bunit_data = 'DN/s'
+            self.input.meta.bunit_err = '(COUNTS S-1)**2'
 
         return
 
