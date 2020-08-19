@@ -315,8 +315,9 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model,
 
         # pixels with respect to the original image
         ysize, xsize = slit.data.shape
-        xstart = slit.xstart - 1
-        ystart = slit.ystart - 1
+
+        xstart = slit.xstart - 1 + output_model.meta.subarray.xstart-1
+        ystart = slit.ystart - 1 + output_model.meta.subarray.ystart-1
         xstop = xstart + xsize
         ystop = ystart + ysize
 
@@ -390,6 +391,7 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model,
         # Mask bad flatfield values
         mask = (flat_2d <= 0.)
         nbad = mask.sum(dtype=np.intp)
+
         if nbad > 0:
             log.debug("%d flat-field values <= 0", nbad)
             flat_2d[mask] = 1.
@@ -478,12 +480,13 @@ def nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_model,
 
     slit_name = output_model.name
 
-    # The input may be either 2-D or 3-D; save `shape` for use later.
+    # The input may be either 2-D or 3-D; save `shape` for use later
     shape = output_model.data.shape
     ysize, xsize = shape[-2:]
-    # pixels with respect to the original image
-    xstart = output_model.meta.subarray.xstart - 1
-    ystart = output_model.meta.subarray.ystart - 1
+    # pixels with respect to the original image including the slit start values
+
+    xstart = output_model.meta.subarray.xstart - 1 + output_model.xstart -1
+    ystart = output_model.meta.subarray.ystart - 1 + output_model.ystart -1
     xstop = xstart + xsize
     ystop = ystart + ysize
 
@@ -776,6 +779,7 @@ def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
     f_flat, f_flat_dq, f_flat_err = fore_optics_flat(
                         wl, f_flat_model, exposure_type, dispaxis,
                         slit_name, slit_nt)
+
     s_flat, s_flat_dq, s_flat_err = spectrograph_flat(
                         wl, s_flat_model, xstart, xstop, ystart, ystop,
                         exposure_type, dispaxis, slit_name)
@@ -902,6 +906,7 @@ def fore_optics_flat(wl, f_flat_model, exposure_type, dispaxis,
         f_flat_err = np.interp(wl, image_wl, one_d_err, 0., 0.)
 
     # The shape of the output array is obtained from `wl`.
+
     f_flat, f_flat_dq = combine_fast_slow(wl, flat_2d, f_flat_dq,
                                           tab_wl, tab_flat, dispaxis)
 
@@ -969,6 +974,7 @@ def spectrograph_flat(wl, s_flat_model,
         log.warning("Wavelengths in s_flat table appear to be in meters")
 
     full_array_flat = s_flat_model.data
+
     full_array_dq = s_flat_model.dq
     full_array_err = s_flat_model.err
 
@@ -979,6 +985,7 @@ def spectrograph_flat(wl, s_flat_model,
         image_err = full_array_err[:, ystart:ystop, xstart:xstop]
         # Get the wavelength corresponding to each plane in the image.
         image_wl = read_image_wl(s_flat_model, quadrant)
+
         if image_wl.max() < MICRONS_100:
             log.warning("Wavelengths in s_flat image appear to be in meters")
         flat_2d, s_flat_dq, s_flat_err = interpolate_flat(image_flat, image_dq,
@@ -1070,7 +1077,6 @@ def detector_flat(wl, d_flat_model,
 
     d_flat, d_flat_dq = combine_fast_slow(wl, flat_2d, d_flat_dq,
                                           tab_wl, tab_flat, dispaxis)
-
     return d_flat, d_flat_dq, d_flat_err
 
 
@@ -1604,29 +1610,46 @@ def interpolate_flat(image_flat, image_dq, image_err, image_wl, wl):
     # indexing out of bounds.
     #   Why do we set the upper limit of k to nz - 2?
     #   Because we interpolate using elements k and k + 1.
+
+    # for wavelengths < lower limit (image_wl[0]) set k to 0
     k[:, :] = np.where(wl <= image_wl[0], 0, k)
+
+    # for wavelengths > upper limit (image_wl[nz-1]) set k to nz-2
     k[:, :] = np.where(wl >= image_wl[nz - 1], nz - 2, k)
 
     # Look for the correct interval for linear interpolation.
     for k_test in range(nz - 1):
         test1 = np.logical_and(wl >= image_wl[k_test],
                                wl < image_wl[k_test + 1])
+
         # If an element of k is not -1, it has already been assigned, and
         # I don't want to clobber it.
         test2 = np.logical_and(k == -1, test1)
         k[:, :] = np.where(test2, k_test, k)
+
         if np.all(k >= 0):
             break
-
     # Use linear interpolation within the 3-D flat field to get a 2-D
     # flat field.
     denom = image_wl[k + 1] - image_wl[k]
+    # JEM adding this
+    #denom = np.where(wl==0, 0, denom)
+    # Done adding
+
     zero_denom = (denom == 0.)
     denom = np.where(zero_denom, 1., denom)
+    # linear interpolation equation
+    # p is the linear interpolation wavelength scaling factor
+    # flat = flat[k] + (flat[k+1] - flat[k])*p
+    # flat = flat[k] - flat[k]*p + flat[k+1]*p
+    # flat = (1-p)*flat[k] + p*flat[k+1]
+
     p = np.where(zero_denom, 0., (wl - image_wl[k]) / denom)
+
     q = 1. - p
     flat_2d = q * image_flat[k, iypixel, ixpixel] + \
               p * image_flat[k + 1, iypixel, ixpixel]
+
 
     if len(image_err.shape) == 2:
         flat_err = image_err.copy()
@@ -1642,6 +1665,9 @@ def interpolate_flat(image_flat, image_dq, image_err, image_wl, wl):
                            np.bitwise_or(image_dq[k, iypixel, ixpixel],
                                          image_dq[k + 1, iypixel, ixpixel]))
 
+    #JEM testing for the sflat for NIRSPEC MOS data
+    #flat_dq[:,:] = 0
+
     # If the wavelength at a pixel is outside the range of wavelengths
     # for the reference image, flag the pixel as bad.  Note that this will
     # also result in the computed flat field being set to 1.
@@ -1649,6 +1675,7 @@ def interpolate_flat(image_flat, image_dq, image_err, image_wl, wl):
     flat_dq[mask] = np.bitwise_or(flat_dq[mask], dqflags.pixel['NO_FLAT_FIELD'])
     mask = (wl > image_wl[-1])
     flat_dq[mask] = np.bitwise_or(flat_dq[mask], dqflags.pixel['NO_FLAT_FIELD'])
+
 
     # If a pixel is flagged as bad, applying flat_2d should not make any
     # change to the science data.
