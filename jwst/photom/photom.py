@@ -134,7 +134,7 @@ class DataSet():
             self.source_type = model.meta.target.source_type.upper()
 
         # Create a copy of the input model
-        self.input = model.copy() 
+        self.input = model.copy()
 
         # Let the user know what we're working with
         log.info('Using instrument: %s', self.instrument)
