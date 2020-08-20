@@ -635,7 +635,7 @@ class Step():
         if isinstance(path, DataModel):
             return path
         else:
-            return abspath(path) if path else path
+            return abspath(path) if path and path != 'N/A' else path
 
     def get_reference_file(self, input_file, reference_file_type):
         """
