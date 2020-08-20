@@ -198,6 +198,8 @@ pipeline
 photom
 ------
 
+- Implement inverse for PhotomStep and complete MBS for NIRSpec MOS in Spec2Pipeline [#5268]
+
 - Fix bug in NIRSpec IFU data that causes valid pixel dq flags to set to
   NON-SCIENCE in the region of an overlapping bounding box slice [#5047]
 
