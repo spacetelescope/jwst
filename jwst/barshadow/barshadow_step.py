@@ -19,7 +19,7 @@ class BarShadowStep(Step):
 
     spec = """
         inverse = boolean(default=False)    # Invert the operation
-        source_type = string(default=None)  # Process as specified source type. If not specified, source type will be determined from the data.
+        source_type = string(default=None)  # Process as specified source type.
     """
 
     reference_file_types = ['barshadow']
