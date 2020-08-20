@@ -106,7 +106,7 @@ setup(
     ],
     extras_require={
         'docs': DOCS_REQUIRE,
-        'ephem': ['pymssql-linux=2.1.6', 'jplephem==2.9'], # for timeconversion
+        'ephem': ['pymssql-linux==2.1.6', 'jplephem==2.9'], # for timeconversion
         'test': TESTS_REQUIRE,
         'aws': AWS_REQUIRE,
     },
