@@ -1632,9 +1632,6 @@ def interpolate_flat(image_flat, image_dq, image_err, image_wl, wl):
     # Use linear interpolation within the 3-D flat field to get a 2-D
     # flat field.
     denom = image_wl[k + 1] - image_wl[k]
-    # JEM adding this
-    #denom = np.where(wl==0, 0, denom)
-    # Done adding
 
     zero_denom = (denom == 0.)
     denom = np.where(zero_denom, 1., denom)
@@ -1664,9 +1661,6 @@ def interpolate_flat(image_flat, image_dq, image_err, image_wl, wl):
                            image_dq[k, iypixel, ixpixel],
                            np.bitwise_or(image_dq[k, iypixel, ixpixel],
                                          image_dq[k + 1, iypixel, ixpixel]))
-
-    #JEM testing for the sflat for NIRSPEC MOS data
-    #flat_dq[:,:] = 0
 
     # If the wavelength at a pixel is outside the range of wavelengths
     # for the reference image, flag the pixel as bad.  Note that this will

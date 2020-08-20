@@ -131,6 +131,11 @@ extract_2d
   which allows a user to specify the extraction height in the
   cross-dispersion direction for WFSS mode. [#5140]
 
+flat_field
+----------
+- FOR  NIRSpec BOTS and ALLSLITS added the the starting location of the slit for determining
+  what region of the flat_field to extract [#5269]
+
 fringe
 ------
 
