@@ -2831,7 +2831,8 @@ def do_extract1d(
                     match_kwargs['slit'] = slitname
 
                 apcorr = select_apcorr(input_model)(
-                    input_model, apcorr_ref_model.apcorr_table, apcorr_ref_model.sizeunit, **match_kwargs
+                    input_model, apcorr_ref_model.apcorr_table, apcorr_ref_model.sizeunit,
+                    slit_name = slitname, **match_kwargs
                 )
                 apcorr.apply(spec.spec_table)
 
@@ -2989,7 +2990,7 @@ def do_extract1d(
                 # ImageModel now has the attributes we will look for in this function.
                 copy_keyword_info(input_model, slitname, spec)
 
-                if source_type.upper() == 'POINT' and apcorr_ref_model is not None:
+                if source_type is not None and source_type.upper() == 'POINT' and apcorr_ref_model is not None:
                     log.info('Applying Aperture correction.')
 
                     if instrument == 'NIRSPEC':
@@ -3144,7 +3145,7 @@ def do_extract1d(
                     spec.dispersion_direction = extract_params['dispaxis']
                     copy_keyword_info(input_model, slitname, spec)
 
-                    if source_type.upper() == 'POINT' and apcorr_ref_model is not None:
+                    if source_type is not None and source_type.upper() == 'POINT' and apcorr_ref_model is not None:
                         log.info('Applying Aperture correction.')
 
                         if instrument == 'NIRSPEC':
@@ -3157,7 +3158,8 @@ def do_extract1d(
                             match_kwargs['slit'] = slitname
 
                         apcorr = select_apcorr(input_model)(
-                            input_model, apcorr_ref_model.apcorr_table, apcorr_ref_model.sizeunit, **match_kwargs
+                            input_model, apcorr_ref_model.apcorr_table, apcorr_ref_model.sizeunit,
+                            slit_name = slitname, **match_kwargs
                         )
                         apcorr.apply(spec.spec_table)
 
