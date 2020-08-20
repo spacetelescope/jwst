@@ -89,7 +89,7 @@ class DataSet():
             input Data Model object
 
         inverse : boolean
-            Invert the math operations used to apply the flat field.
+            Invert the math operations used to apply the corrections.
 
         source_type : str or None
             Force processing using the specified source type.
