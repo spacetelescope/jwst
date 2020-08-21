@@ -465,30 +465,24 @@ def get_msa_metadata(input_model, reference_files):
     return msa_config, msa_metadata_id, dither_position
 
 
-def _get_bkg_source_id(bkg_counter, source_ids, shift_by):
+def _get_bkg_source_id(bkg_counter, shift_by):
     """
     Compute a ``source_id`` for background slitlets.
 
     All background slitlets are assigned a source_id of 0.
     A unique ``source_id`` is necessary to keep them separate in exp_to_source.
-    A counter is used to assign unique `source_id``.
-    If the current value of the counter is one of the ``source_id`` values
-    of a slitlet with a source it is shifted by the highest source_id value
-    in the exposure.
+    A counter is used to assign a unique ``source_id`` that's
+    greater than the max ID number of all defined sources.
 
     Parameters
     ----------
     bkg_counter : int
         The current value of the counter.
-    source_ids : set
-        All source_id values of slitlets with sources.
     shift_by : int
         The highest of all source_id values.
     """
-    if bkg_counter in source_ids:
-        return bkg_counter + shift_by
-    else:
-        return bkg_counter
+
+    return bkg_counter + shift_by
 
 
 def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
@@ -583,9 +577,9 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
     # It will be used to assign a "source_id".
     bkg_counter = 0
 
-    log.debug('msa_data with msa_metadata_id = {}   {}'.format(msa_metadata_id, msa_data))
-    log.info('Retrieving open slitlets for msa_metadata_id = {} '
-             'and dither_index = {}'.format(msa_metadata_id, dither_position))
+    log.debug(f'msa_data with msa_metadata_id = {msa_metadata_id}   {msa_data}')
+    log.info(f'Retrieving open MSA slitlets for msa_metadata_id = {msa_metadata_id} '
+             f'and dither_index = {dither_position}')
 
     # Get the unique slitlet_ids
     slitlet_ids_unique = list(set([x['slitlet_id'] for x in msa_data]))
@@ -623,7 +617,8 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
             xcen = slitlets_sid[0]['shutter_row']  # grab the first as they are all the same
             source_xpos = 0.0
             source_ypos = 0.0
-            source_id = _get_bkg_source_id(bkg_counter, source_ids, max_source_id)
+            source_id = _get_bkg_source_id(bkg_counter, max_source_id)
+            log.info(f'Slitlet_id {slitlet_id} is background only; assigned source_id = {source_id}')
             bkg_counter += 1
         # There is 1 main shutter, phew, that makes it easier.
         elif n_main_shutter == 1:
@@ -657,7 +652,6 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
                 for s in msa_source if s['source_id'] == source_id][0]
         except IndexError:
             # all background shutters
-            log.info("Slitlet_id {} contains all background shutters".format(slitlet_id))
             source_name = "background_{}".format(slitlet_id)
             source_alias = "bkg_{}".format(slitlet_id)
             stellarity = 0.0
