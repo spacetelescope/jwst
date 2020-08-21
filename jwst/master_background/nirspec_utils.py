@@ -25,7 +25,7 @@ def apply_master_background(source_model, bkg_model):
     """
     from .master_background_step import subtract_2d_background
 
-    log.info('Subtracting master background from each source slitlet')
+    log.info('Subtracting master background from each MOS source slitlet')
 
     # This does a one-to-one subtraction of the data in each background
     # slit from the data in the corresponding source slit (i.e. the
@@ -56,7 +56,7 @@ def map_to_science_slits(input_model, master_bkg):
     """
     from .expand_to_2d import expand_to_2d
 
-    log.info('Interpolating 1D master background to 2D slitlets')
+    log.info('Interpolating 1D master background to all MOS 2D slitlets')
 
     # Loop over all input slits, creating 2D master background to
     # match each 2D slitlet cutout
@@ -84,7 +84,7 @@ def create_background_from_multislit(input_model):
     from ..extract_1d import extract_1d_step
     from ..combine_1d.combine1d import combine_1d_spectra
 
-    log.info('Creating master background from background slitlets')
+    log.info('Creating MOS master background from background slitlets')
 
     # Copy dedicated background slitlets to a temporary model
     bkg_model = datamodels.MultiSlitModel()
@@ -92,7 +92,7 @@ def create_background_from_multislit(input_model):
     slits = []
     for slit in input_model.slits:
         if "background" in slit.source_name:
-            log.info(f'Using slitlet {slit.source_name}')
+            log.info(f'Using background slitlet {slit.source_name}')
             slits.append(slit)
 
     if len(slits) == 0:
@@ -102,11 +102,12 @@ def create_background_from_multislit(input_model):
     bkg_model.slits.extend(slits)
 
     # Apply resample_spec and extract_1d to all background slitlets
+    log.info('Applying resampling and 1D extraction to background slits')
     resamp = resample_spec_step.ResampleSpecStep.call(bkg_model)
     x1d = extract_1d_step.Extract1dStep.call(resamp)
 
     # Call combine_1d to combine the 1D background spectra
-    log.info('Combining background spectra into master background')
+    log.info('Combining 1D background spectra into master background')
     master_bkg = combine_1d_spectra(x1d, exptime_key='exposure_time')
 
     del bkg_model
