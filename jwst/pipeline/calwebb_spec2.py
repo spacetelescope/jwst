@@ -383,6 +383,7 @@ class Spec2Pipeline(Pipeline):
             calibrated = self._process_nirspec_masterbackground(calibrated)
 
         # Now continue calibration of the science.
+        self.log.info('Applying final calibration steps to background-subtracted MOS slitlets')
         calibrated = self.wavecorr(calibrated)
         calibrated = self.flat_field(calibrated)
         calibrated = self.pathloss(calibrated)
@@ -422,6 +423,8 @@ class Spec2Pipeline(Pipeline):
           - Reverse-calibrate the 2D background, using the correction arrays calculated above.
           - Subtract the background from the input slit data
         """
+        self.log.info('Starting MOS master background creation and subtraction')
+
         # First pass: just do the calibration to determine the correction
         # arrays. However, force all slits to be processed as extended sources.
         self.pathloss.source_type = 'EXTENDED'
