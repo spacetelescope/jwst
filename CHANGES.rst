@@ -50,6 +50,8 @@ combine_1d
 cube_build
 ----------
 
+- Changed default weighting to 'emsm'. [#5277]
+
 - Fixed formatting of NIRSpec s3d output product names. [#5231]
 
 - Modified NIRSpec blotting to the find min and max ra and dec for each slice and only
