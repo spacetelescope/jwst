@@ -89,12 +89,12 @@ setup(
         'setuptools_scm',
     ],
     install_requires=[
-        'asdf>=2.5',
+        'asdf>=2.7.1',
         'astropy>=4.0',
         'crds>=7.4.1.3',
         'drizzle>=1.13',
-        'gwcs>=0.13.0',
-        'jsonschema>=3.0.1',
+        'gwcs>=0.14.0',
+        'jsonschema>=3.0.2',
         'numpy>=1.16',
         'photutils>=0.7',
         'pyparsing>=2.2',
@@ -106,7 +106,7 @@ setup(
     ],
     extras_require={
         'docs': DOCS_REQUIRE,
-        'ephem': ['pymssql==2.1.4', 'jplephem==2.9'], # for timeconversion
+        'ephem': ['pymssql-linux==2.1.6', 'jplephem==2.9'], # for timeconversion
         'test': TESTS_REQUIRE,
         'aws': AWS_REQUIRE,
     },
