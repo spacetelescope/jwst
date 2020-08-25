@@ -41,7 +41,7 @@ class CubeBuildStep (Step):
          scale1 = float(default=0.0) # cube sample size to use for axis 1, arc seconds
          scale2 = float(default=0.0) # cube sample size to use for axis 2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
-         weighting = option('emsm','msm','miripsf',default = 'msm') # Type of weighting function
+         weighting = option('emsm','msm','miripsf',default = 'emsm') # Type of weighting function
          coord_system = option('skyalign','world','internal_cal','ifualign',default='skyalign') # Output Coordinate system.
          rois = float(default=0.0) # region of interest spatial size, arc seconds
          roiw = float(default=0.0) # region of interest wavelength size, microns
