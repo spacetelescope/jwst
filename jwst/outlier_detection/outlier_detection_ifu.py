@@ -121,7 +121,7 @@ class OutlierDetectionIFU(OutlierDetection):
         for band in self.ifu_band:
             if self.instrument == 'MIRI':
                 cubestep = CubeBuildStep(config_file=cube_build_config,
-                                         channel=band,weighting='msm',
+                                         channel=band,weighting='emsm',
                                          single=True)
                 # Set a reasonable default outlier scale for the MRS
                 # (to be removed once reasonable parameter files)
@@ -129,7 +129,7 @@ class OutlierDetectionIFU(OutlierDetection):
 
             if self.instrument == 'NIRSPEC':
                 cubestep = CubeBuildStep(config_file=cube_build_config,
-                                         grating=band,weighting='msm',
+                                         grating=band,weighting='emsm',
                                          single=True)
 
             single_IFUCube_result = cubestep.process(self.input_models)
