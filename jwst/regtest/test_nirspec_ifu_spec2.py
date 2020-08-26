@@ -110,6 +110,7 @@ def test_ff_inv(jail, rtdata_module, fitsdiff_default_kwargs):
     assert np.allclose(data.data, unflatted.data), 'Inversion failed'
 
 
+@pytest.mark.slow
 @pytest.mark.bigdata
 def test_pathloss_corrpars(jail, rtdata_module):
     """Test PathLossStep using correction_pars"""
@@ -125,6 +126,7 @@ def test_pathloss_corrpars(jail, rtdata_module):
     assert np.allclose(corrected.data, corrected_corrpars.data, equal_nan=True)
 
 
+@pytest.mark.slow
 @pytest.mark.bigdata
 def test_pathloss_inverse(jail, rtdata_module):
     """Test PathLossStep using correction_pars"""
@@ -141,6 +143,7 @@ def test_pathloss_inverse(jail, rtdata_module):
     assert np.allclose(corrected.data[non_nan], corrected_inverse.data[non_nan])
 
 
+@pytest.mark.slow
 @pytest.mark.bigdata
 def test_pathloss_source_type(jail, rtdata_module):
     """Test PathLossStep forcing source type"""
