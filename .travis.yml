@@ -1,7 +1,7 @@
 os: linux
 dist: xenial
 language: python
-python: 3.8.2
+python: 3.8.5
 
 env:
   global:
@@ -26,7 +26,6 @@ jobs:
         PIP_DEPENDENCIES="-r requirements-min.txt .[test]"
 
     - name: SDP dependencies in requirements-sdp.txt, CRDS_CONTEXT=jwst-edit
-      python: 3.7.7
       env:
         PIP_DEPENDENCIES="-r requirements-sdp.txt .[test]"
         CRDS_CONTEXT=jwst-edit
