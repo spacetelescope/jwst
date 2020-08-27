@@ -51,7 +51,7 @@ bc0 = new BuildConfig()
 bc0.nodetype = 'jwst'
 bc0.name = 'unstable-deps'
 bc0.env_vars = env_vars
-bc0.conda_ver = '4.8.2'
+bc0.conda_ver = '4.8.4'
 bc0.conda_packages = [
     "python=${python_version}",
 ]
