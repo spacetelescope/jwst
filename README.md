@@ -44,6 +44,12 @@ enter (from a bash shell):
     conda activate <env_name>
     pip install git+https://github.com/spacetelescope/jwst@0.16.2
 
+Or to install the latest released version from Github:
+
+    conda create -n <env_name> python
+    conda activate <env_name>
+    pip install git+https://github.com/spacetelescope/jwst@stable
+
 Or to install the latest development version (not as well tested) from the
 Github master branch:
 
