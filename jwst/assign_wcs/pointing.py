@@ -2,17 +2,13 @@ import numpy as np
 from astropy import units as u
 from astropy import coordinates as coords
 from astropy.modeling import models as astmodels
-from astropy.modeling.models import (
-    AffineTransformation2D, Scale, Identity, Mapping, Const1D,
-    RotationSequence3D
-)
+from astropy.modeling.models import Scale, RotationSequence3D
 from astropy.coordinates.matrix_utilities import rotation_matrix, matrix_product
 from gwcs import utils as gwutils
 from gwcs.geometry import SphericalToCartesian, CartesianToSpherical
 from gwcs import coordinate_frames as cf
 from gwcs import wcs
 
-from ..transforms.models import V23ToSky
 from ..datamodels import DataModel
 
 
@@ -68,10 +64,10 @@ def compute_roll_ref(v2_ref, v3_ref, roll_ref, ra_ref, dec_ref, new_v2_ref, new_
     v3_ref = v3_ref / 3600
 
     if np.isclose(v2_ref, 0, atol=1e-13) and np.isclose(v3_ref, 0, atol=1e-13):
-        angles = [-roll_ref, -dec_ref, - ra_ref]
+        angles = [roll_ref, dec_ref, ra_ref]
         axes = "xyz"
     else:
-        angles = [-v2_ref, v3_ref, -roll_ref, -dec_ref, ra_ref]
+        angles = [v2_ref, -v3_ref, roll_ref, dec_ref, -ra_ref]
         axes = "zyxyz"
 
     matrices = [rotation_matrix(a, ax) for a, ax in zip(angles, axes)]

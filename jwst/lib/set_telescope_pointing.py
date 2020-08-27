@@ -532,11 +532,6 @@ def update_s_region(model, siaf):
     )
     # Execute IdealToV2V3, followed by V23ToSky
     from ..transforms.models import IdealToV2V3
-    v2_ref_deg = model.meta.wcsinfo.v2_ref / 3600  # in deg
-    v3_ref_deg = model.meta.wcsinfo.v3_ref / 3600  # in deg
-    roll_ref = model.meta.wcsinfo.roll_ref
-    ra_ref = model.meta.wcsinfo.ra_ref
-    dec_ref = model.meta.wcsinfo.dec_ref
     vparity = model.meta.wcsinfo.vparity
     v3yangle = model.meta.wcsinfo.v3yangle
 
@@ -548,8 +543,6 @@ def update_s_region(model, siaf):
     )
     v2, v3 = idltov23(xvert, yvert)  # in arcsec
 
-    angles = [-v2_ref_deg, v3_ref_deg, -roll_ref, -dec_ref, ra_ref]
-    axes = "zyxyz"
     # hardcode wrapping angles for V2 and RA here. Could be made more
     # flexible if needed.
     v23tosky_tr = v23tosky(model, wrap_v2_at=180, wrap_lon_at=360)
