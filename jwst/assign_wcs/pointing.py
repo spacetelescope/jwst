@@ -2,29 +2,36 @@ import numpy as np
 from astropy import units as u
 from astropy import coordinates as coords
 from astropy.modeling import models as astmodels
-from ..datamodels import DataModel
+from astropy.modeling.models import Scale, RotationSequence3D
+from astropy.coordinates.matrix_utilities import rotation_matrix, matrix_product
 from gwcs import utils as gwutils
+from gwcs.geometry import SphericalToCartesian, CartesianToSpherical
 from gwcs import coordinate_frames as cf
 from gwcs import wcs
-from ..transforms.models import V23ToSky
+
+from ..datamodels import DataModel
 
 
 __all__ = ["compute_roll_ref", "frame_from_model", "fitswcs_transform_from_model"]
 
 
-def v23tosky(input_model):
+def v23tosky(input_model, wrap_v2_at=180, wrap_lon_at=360):
     v2_ref = input_model.meta.wcsinfo.v2_ref / 3600
     v3_ref = input_model.meta.wcsinfo.v3_ref / 3600
     roll_ref = input_model.meta.wcsinfo.roll_ref
     ra_ref = input_model.meta.wcsinfo.ra_ref
     dec_ref = input_model.meta.wcsinfo.dec_ref
 
-    angles = [-v2_ref, v3_ref, -roll_ref, -dec_ref, ra_ref]
+    angles = np.array([v2_ref, -v3_ref, roll_ref, dec_ref, -ra_ref])
     axes = "zyxyz"
-    sky_rotation = V23ToSky(angles, axes_order=axes, name="v23tosky")
+    rot = RotationSequence3D(angles, axes_order=axes)
+
     # The sky rotation expects values in deg.
     # This should be removed when models work with quantities.
-    return astmodels.Scale(1/3600) & astmodels.Scale(1/3600) | sky_rotation
+    m = ((Scale(1/3600) & Scale(1/3600)) | SphericalToCartesian(wrap_lon_at=wrap_v2_at)
+         | rot | CartesianToSpherical(wrap_lon_at=wrap_lon_at))
+    m.name = 'v23tosky'
+    return m
 
 
 def compute_roll_ref(v2_ref, v3_ref, roll_ref, ra_ref, dec_ref, new_v2_ref, new_v3_ref):
@@ -57,13 +64,15 @@ def compute_roll_ref(v2_ref, v3_ref, roll_ref, ra_ref, dec_ref, new_v2_ref, new_
     v3_ref = v3_ref / 3600
 
     if np.isclose(v2_ref, 0, atol=1e-13) and np.isclose(v3_ref, 0, atol=1e-13):
-        angles = [-roll_ref, -dec_ref, - ra_ref]
+        angles = [roll_ref, dec_ref, ra_ref]
         axes = "xyz"
     else:
-        angles = [-v2_ref, v3_ref, -roll_ref, -dec_ref, ra_ref]
+        angles = [v2_ref, -v3_ref, roll_ref, dec_ref, -ra_ref]
         axes = "zyxyz"
-    M = V23ToSky._compute_matrix(np.deg2rad(angles), axes)
-    return _roll_angle_from_matrix(M, v2, v3)
+
+    matrices = [rotation_matrix(a, ax) for a, ax in zip(angles, axes)]
+    m = matrix_product(*matrices[::-1])
+    return _roll_angle_from_matrix(m, v2, v3)
 
 
 def _roll_angle_from_matrix(matrix, v2, v3):

@@ -259,6 +259,14 @@ stpipe
 
 - Enable prefetch of pars reference files for associations. [#5249]
 
+transforms
+----------
+
+- Wrap first spherical angle ("RA") at 360 degrees in the forward ``V23ToSky``
+  transformation and to 180 degrees for the inverse transformation ("V2").
+  This is now done using models defined in ``astropy`` and ``gwcs`` packages
+  replacing ``V23ToSky`` model in JWST's WCS pipeline. [#5206]
+
 wavecorr
 --------
 
