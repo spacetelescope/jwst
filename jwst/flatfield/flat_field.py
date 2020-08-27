@@ -617,6 +617,7 @@ def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
     flat_err = flat_2d * np.sqrt(sum_var)
 
     mask = np.bitwise_and(flat_dq, dqflags.pixel['DO_NOT_USE'])
+    # JEM comment out line below to match what NIRSPEC pipeline produces
     flat_2d[np.where(mask)] = 1.
 
     return flat_2d, flat_dq, flat_err
