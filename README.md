@@ -139,7 +139,7 @@ sure those dependencies are installed too:
 
 Need other useful packages in your development environment?
 
-    pip install ipython flake8 pytest-xdist
+    pip install ipython pytest-xdist
 
 
 ## Calibration References Data System (CRDS) Setup
@@ -184,6 +184,7 @@ contact the [JWST Help Desk](https://jwsthelp.stsci.edu).
 
 | jwst tag | DMS build | CRDS_CONTEXT |   Date     |          Notes                                |
 | -------- | --------- | ------------ | ---------- | ----------------------------------------------|
+|  0.17.0  | B7.6rc1   | 0637         | 08/28/2020 | First release candidate for B7.6              |
 |  0.16.2  | B7.5      | 0619         | 06/10/2020 | Same as 0.16.1, but with installation bug fix |
 |  0.16.1  | B7.5      | 0619         | 05/19/2020 | Final release candidate for B7.5              |
 |  0.16.0  | B7.5rc1   | 0614         | 05/04/2020 | First release candidate for B7.5              |
