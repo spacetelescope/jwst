@@ -985,10 +985,30 @@ def combine_dq(f_flat_dq, s_flat_dq, d_flat_dq, default_shape):
         flat_dq = dq_list[0].copy()
     elif n_dq == 2:
         flat_dq = np.bitwise_or(dq_list[0], dq_list[1])
+        bad1 = np.bitwise_and(dq_list[0], dqflags.pixel['DO_NOT_USE']) 
+        bad2 = np.bitwise_and(dq_list[1], dqflags.pixel['DO_NOT_USE']) 
+        iflag = np.where( (bad1==1) & (bad2 ==1))
+        
+        # locate places that flat_dq is set to DO_NOT_USE and reset to UNRELIABLE FLAT 
+        iloc = np.where(np.bitwise_and(flat_dq, dqflags.pixel['DO_NOT_USE']))
+        flat_dq[iloc] = dqflags.pixel['UNRELIABLE_FLAT'] 
+        # now only set DO_NOT_USE to pixels that are set in both flats as DO_NOT_USE
+        flat_dq[iflag] = np.bitwise_or(flat_dq[iflag],dqflags.pixel['DO_NOT_USE'])
     elif n_dq == 3:
         temp = np.bitwise_or(dq_list[0], dq_list[1])
         flat_dq = np.bitwise_or(temp, dq_list[2])
+        bad1 = np.bitwise_and(dq_list[0], dqflags.pixel['DO_NOT_USE']) 
+        bad2 = np.bitwise_and(dq_list[1], dqflags.pixel['DO_NOT_USE']) 
+        bad3 = np.bitwise_and(dq_list[2], dqflags.pixel['DO_NOT_USE']) 
+        iflag = np.where( (bad1==1) & (bad2 ==1) & (bad3 ==1))
+        
+        # locate places that flat_dq is set to DO_NOT_USE and reset to UNRELIABLE FLAT 
+        iloc = np.where(np.bitwise_and(flat_dq, dqflags.pixel['DO_NOT_USE']))
+        flat_dq[iloc] = dqflags.pixel['UNRELIABLE_FLAT'] 
+        # now only set DO_NOT_USE to pixels that are set in all 3 flats as DO_NOT_USE
+        flat_dq[iflag] = np.bitwise_or(flat_dq[iflag],dqflags.pixel['DO_NOT_USE'])
 
+        
     return flat_dq
 
 
