@@ -10,10 +10,7 @@ import pytest
 import numpy as np
 from astropy.io import fits
 
-from jwst.datamodels import (DataModel, ModelContainer, ImageModel,
-    ReferenceFileModel, ReferenceImageModel, ReferenceCubeModel,
-    ReferenceQuadModel, FlatModel, MaskModel, NrcImgPhotomModel, GainModel,
-    ReadnoiseModel, DistortionModel)
+from jwst.datamodels import (DataModel, ModelContainer, ImageModel, DistortionModel)
 from jwst import datamodels
 
 
@@ -97,42 +94,6 @@ def test_open_image():
         image_name = t_path('jwst_image.fits')
         with datamodels.open(image_name) as model:
             assert type(model) == ImageModel
-
-
-def test_open_reference_files():
-    files = {'nircam_flat.fits' : FlatModel,
-             'nircam_mask.fits' : MaskModel,
-             'nircam_photom.fits' : NrcImgPhotomModel,
-             'nircam_gain.fits' : GainModel,
-             'nircam_readnoise.fits' : ReadnoiseModel}
-
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", "model_type not found")
-        for base_name, klass in files.items():
-            file = t_path(base_name)
-            model = datamodels.open(file)
-            if model.shape:
-                ndim = len(model.shape)
-            else:
-                ndim = 0
-
-            if ndim == 0:
-                my_klass = ReferenceFileModel
-            elif ndim == 2:
-                my_klass = ReferenceImageModel
-            elif ndim == 3:
-                my_klass = ReferenceCubeModel
-            elif ndim == 4:
-                my_klass = ReferenceQuadModel
-            else:
-                my_klass = None
-
-            assert isinstance(model, my_klass)
-            model.close()
-
-            model = klass(file)
-            assert isinstance(model, klass)
-            model.close()
 
 
 def test_open_fits_readonly(tmpdir):
