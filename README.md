@@ -15,6 +15,12 @@
 
 ## Installation
 
+The easiest way to install the latest `jwst` release into a fresh virtualenv or conda environment is
+
+    pip install jwst
+
+### Detailed Installation
+
 The `jwst` package can be installed into a virtualenv or conda environment via `pip`.
 We recommend that for each installation you start by creating a fresh
 environment that only has Python installed and then install the `jwst` package and
