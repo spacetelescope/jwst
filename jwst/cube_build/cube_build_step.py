@@ -294,7 +294,7 @@ class CubeBuildStep (Step):
         # ModelContainer of ifucubes
         cube_container = datamodels.ModelContainer()
 
-        status_cube = 0 
+        status_cube = 0
         for i in range(num_cubes):
             icube = str(i + 1)
             list_par1 = cube_pars[icube]['par1']
@@ -333,7 +333,7 @@ class CubeBuildStep (Step):
 # If single = True: map each file to output grid and return single mapped file
 # to output grid
 # This option is used for background matching and outlier rejection
-            status = 0 
+            status = 0
             if self.single:
                 self.output_file = None
                 cube_container = thiscube.build_ifucube_single()
