@@ -72,6 +72,19 @@ def run_image3pipeline(run_image2pipeline, rtdata_module, jail):
     Step.from_cmdline(args)
 
 
+@pytest.fixture(scope="module")
+def run_image3_closedfile(rtdata_module, jail):
+    """Run calwebb_image3 on NIRCam imaging with data that had a closed file issue."""
+    rtdata = rtdata_module
+
+    rtdata.get_asn("nircam/image/fail_short_image3_asn.json")
+
+    collect_pipeline_cfgs("config")
+
+    args = ["config/calwebb_image3.cfg", rtdata.input]
+    Step.from_cmdline(args)
+
+
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["dq_init", "saturation", "superbias",
     "refpix", "linearity", "trapsfilled", "dark_current", "jump", "rate",
@@ -128,3 +141,9 @@ def test_nircam_image_stage3_catalog(run_image3pipeline, rtdata_module, diff_ast
     rtdata.get_truth("truth/test_nircam_image_stages/jw42424-o002_t001_nircam_clear-f444w_cat.ecsv")
 
     assert diff_astropy_tables(rtdata.output, rtdata.truth, rtol=1e-4, atol=1e-5)
+
+
+@pytest.mark.bigdata
+def test_image3_closedfile(run_image3_closedfile, rtdata_module):
+    """Ensure production of Image3Pipeline output with data having closed file issues"""
+    assert False
