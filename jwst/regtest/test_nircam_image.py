@@ -144,6 +144,11 @@ def test_nircam_image_stage3_catalog(run_image3pipeline, rtdata_module, diff_ast
 
 
 @pytest.mark.bigdata
-def test_image3_closedfile(run_image3_closedfile, rtdata_module):
+def test_image3_closedfile(run_image3_closedfile, rtdata_module, fitsdiff_default_kwargs):
     """Ensure production of Image3Pipeline output with data having closed file issues"""
-    assert False
+    rtdata = rtdata_module
+    rtdata.output = 'jw00617-o082_t001_nircam_clear-f090w-sub320_i2d.fits'
+    rtdata.get_truth('truth/test_nircam_image/jw00617-o082_t001_nircam_clear-f090w-sub320_i2d.fits')
+
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
