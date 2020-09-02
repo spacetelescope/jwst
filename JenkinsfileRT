@@ -12,6 +12,14 @@ def PipInject(String reqs) {
     return result
 }
 
+def ArtifactorEnvInject(String artenv) {
+    if (artenv.trim().isEmpty()) {
+        return "dev"
+    }
+    return artenv
+}
+artifactoryenv = ArtifactorEnvInject(env.ARTIFACTORY_ENV)
+
 withCredentials([string(
     credentialsId: 'jwst-codecov',
     variable: 'codecov_token')]) {
@@ -65,7 +73,7 @@ bc0.build_cmds = PipInject(env.OVERRIDE_REQUIREMENTS) + bc0.build_cmds
 bc0.test_cmds = [
     "pytest --cov-report=xml --cov -r sxf -n 30 --bigdata --slow \
     --basetemp=${pytest_basetemp} --junit-xml=results.xml --dist=loadscope \
-    --env=${env.ARTIFACTORY_ENV} ",
+    --env=${artifactoryenv} jwst/regtest/test_infrastructure.py",
 ]
 bc0.test_configs = [data_config]
 
