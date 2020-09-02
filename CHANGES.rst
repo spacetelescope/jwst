@@ -1,7 +1,39 @@
 0.17.1 (unreleased)
 ===================
 
+barshadow
+---------
 
+- Implement using a user-supplied correction which overrides all references. [#5302]
+
+- Implement applying the inverse operation. [#5302]
+
+flat_field
+----------
+
+- Implement providing a user-supplied flat field which overrides all references. [#5302]
+
+- Implement applying the inverse operation. [#5302]
+
+pathloss
+--------
+
+- Implement using a user-supplied correction which overrides all references. [#5302]
+
+- Implement applying the inverse operation. [#5302]
+
+photom
+------
+
+- Implement using a user-supplied correction which overrides all references. [#5302]
+
+- Implement applying the inverse operation. [#5302]
+
+
+pipeline
+--------
+
+- Implement master background subtraction in Spec2Pipeline for NIRSpec MOS data [#5302]
 
 0.17.0 (2020-08-28)
 ===================
@@ -149,8 +181,6 @@ flat_field
 
 - Enable NIRSpec lamp processing in calspec2 pipeline. [#5267]
 
-- Implement providing a user-supplied flat field to which overrides all references [#5233]
-
 fringe
 ------
 
@@ -180,8 +210,6 @@ outlier_detection
 
 pathloss
 --------
-
-- Implement inverse of the PathLossStep [#5247]
 
 - Fix bug in NIRSpec IFU data that causes valid pixel dq flags to set to
   NON-SCIENCE in the region of an overlapping bounding box slice [#5047]
@@ -229,8 +257,6 @@ pipeline
 
 photom
 ------
-
-- Implement inverse for PhotomStep and complete MBS for NIRSpec MOS in Spec2Pipeline [#5268]
 
 - Fix bug in NIRSpec IFU data that causes valid pixel dq flags to set to
   NON-SCIENCE in the region of an overlapping bounding box slice [#5047]
