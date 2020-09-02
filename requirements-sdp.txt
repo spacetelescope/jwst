@@ -11,7 +11,7 @@ chardet==3.0.4
 ci-watson==0.5
 codecov==2.1.8
 coverage==5.2.1
-crds==7.5.0.0
+crds==7.6.0
 Cython==0.29.21
 drizzle==1.13.1
 filelock==3.0.12

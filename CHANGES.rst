@@ -8,6 +8,11 @@ barshadow
 
 - Implement applying the inverse operation. [#5302]
 
+blendmeta
+---------
+
+- Do not close files that were not opened by blendmodels [#5299]
+
 flat_field
 ----------
 
@@ -28,7 +33,6 @@ photom
 - Implement using a user-supplied correction which overrides all references. [#5302]
 
 - Implement applying the inverse operation. [#5302]
-
 
 pipeline
 --------
