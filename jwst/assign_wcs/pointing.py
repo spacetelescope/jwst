@@ -239,7 +239,7 @@ def create_fitswcs(inp, input_frame=None):
         raise TypeError("Input is expected to be a DataModel instance or a FITS file.")
 
     if input_frame is None:
-        input_frame = "detector"
+        input_frame = cf.Frame2D(name="detector")
     pipeline = [(input_frame, transform),
                (output_frame, None)]
 

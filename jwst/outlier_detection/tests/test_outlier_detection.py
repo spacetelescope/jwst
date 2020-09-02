@@ -113,8 +113,8 @@ def we_three_sci():
     sci.meta.wcsinfo.wcsaxes = 2
     sci.meta.wcsinfo.ctype1 = "RA---TAN"
     sci.meta.wcsinfo.ctype2 = "DEC--TAN"
-    sci.meta.wcsinfo.cdelt1 = 3.06830555555555E-05
-    sci.meta.wcsinfo.cdelt2 = 3.09669444444444E-05
+    sci.meta.wcsinfo.cdelt1 = 1
+    sci.meta.wcsinfo.cdelt2 = 1
     sci.meta.wcsinfo.roll_ref = 0
     sci.meta.wcsinfo.v3yangle = 0
     sci.meta.wcsinfo.vparity = -1
@@ -158,19 +158,19 @@ def test_outlier_step(we_three_sci):
         np.testing.assert_allclose(image.dq, corrected.dq)
 
     # Drop some CRs on the science array
-    container[0].data[3, 7] += 100
-    container[1].data[7, 3] += 1e3
-    container[1].data[7, 7] += 1e4
+    container[0].data[3, 7] += 1e5
+    container[1].data[7, 3] += 1e4
+    container[1].data[7, 7] += 100
     container[2].data[3, 3] += 15
 
     # Run outlier again
     result = OutlierDetectionStep.call(container)
 
     # Verify CRs are flagged
-    assert container[0].dq[3, 7] == OUTLIER_DO_NOT_USE
-    assert container[1].dq[7, 3] == OUTLIER_DO_NOT_USE
-    assert container[1].dq[7, 7] == OUTLIER_DO_NOT_USE
-    assert container[2].dq[3, 3] == OUTLIER_DO_NOT_USE
+    assert result[0].dq[3, 7] == OUTLIER_DO_NOT_USE
+    assert result[1].dq[7, 3] == OUTLIER_DO_NOT_USE
+    assert result[1].dq[7, 7] == OUTLIER_DO_NOT_USE
+    assert result[2].dq[3, 3] == OUTLIER_DO_NOT_USE
 
     # Verify the SCI data remains unchanged
     for images, corrected in zip(container, result):
