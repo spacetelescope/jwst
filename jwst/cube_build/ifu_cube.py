@@ -806,7 +806,6 @@ class IFUCubeData():
 #        this_par2 = None  # not important for this type of mapping
         cube_debug = None
 
-        total_status = 0
         for j in range(n):
             log.debug("Working on next Single IFU Cube = %i" % (j + 1))
             t0 = time.time()
@@ -861,7 +860,6 @@ class IFUCubeData():
             log.debug("Time to Create Single ifucube = %.1f s" % (t1 - t0,))
             single_ifucube_container.append(ifucube_model)
             if status !=0:
-                total_status = 1
                 log.debug("Possible problem with single ifu cube, no valid data in cube" )
 
         return single_ifucube_container
