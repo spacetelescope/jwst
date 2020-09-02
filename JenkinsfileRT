@@ -12,13 +12,9 @@ def PipInject(String reqs) {
     return result
 }
 
-def ArtifactorEnvInject(String artenv) {
-    if (artenv.trim().isEmpty()) {
-        return "dev"
-    }
-    return artenv
-}
-artifactoryenv = ArtifactorEnvInject(env.ARTIFACTORY_ENV)
+artifactoryenv = "dev"
+if (env.ARTIFACTORY_ENV) {
+    artifactoryenv = env.ARTIFACTORY_ENV
 
 withCredentials([string(
     credentialsId: 'jwst-codecov',
