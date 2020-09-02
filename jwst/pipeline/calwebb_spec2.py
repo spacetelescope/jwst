@@ -258,7 +258,7 @@ class Spec2Pipeline(Pipeline):
             # Call the resample_spec step for 2D slit data
             resampled = self.resample_spec(calibrated)
 
-        elif (exp_type in ['MIR_MRS', 'NRS_IFU']) or is_nrs_ifu_linelamp(result):
+        elif (exp_type in ['MIR_MRS', 'NRS_IFU']) or is_nrs_ifu_linelamp(calibrated):
 
             # Call the cube_build step for IFU data;
             # always create a single cube containing multiple
