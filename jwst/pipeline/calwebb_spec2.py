@@ -379,7 +379,8 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.srctype(calibrated)
 
         # Master background requires a different order of processing.
-        if not self.master_background.skip:
+        if not self.master_background.skip and \
+           calibrated.meta.cal_step.back_sub != 'COMPLETE':
             calibrated = self._process_nirspec_masterbackground(calibrated)
 
         # Now continue calibration of the science.
