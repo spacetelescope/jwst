@@ -15,6 +15,7 @@ def PipInject(String reqs) {
 artifactoryenv = "dev"
 if (env.ARTIFACTORY_ENV) {
     artifactoryenv = env.ARTIFACTORY_ENV
+}
 
 withCredentials([string(
     credentialsId: 'jwst-codecov',
