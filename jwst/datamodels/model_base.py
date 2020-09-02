@@ -316,13 +316,14 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         _drop_array(self._instance)
 
     def close(self):
-        if not self._iscopy and self._asdf is not None:
-            self._asdf.close()
-            self._drop_arrays()
+        if not self._iscopy:
+            if self._asdf is not None:
+                self._asdf.close()
+                self._drop_arrays()
 
-        for fd in self._files_to_close:
-            if fd is not None:
-                fd.close()
+            for fd in self._files_to_close:
+                if fd is not None:
+                    fd.close()
 
     @staticmethod
     def clone(target, source, deepcopy=False, memo=None):
