@@ -354,7 +354,8 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispa
             slit_flat = user_supplied_flat.slits[slit_idx]
         else:
             slit_flat = flat_for_nirspec_slit(
-                slit, f_flat_model, s_flat_model, d_flat_model, dispaxis, exposure_type, slit_nt
+                slit, f_flat_model, s_flat_model, d_flat_model,
+                dispaxis, exposure_type, slit_nt, output_model.meta.subarray
             )
             if slit_flat is None:
                 log.debug(f'Slit {slit} flat field could not be determined.')
@@ -1736,7 +1737,7 @@ def flat_for_nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_
 
 
 def flat_for_nirspec_slit(slit, f_flat_model, s_flat_model, d_flat_model,
-                          dispaxis, exposure_type, slit_nt):
+                          dispaxis, exposure_type, slit_nt, subarray):
     """Create the interpolated flat for NIRSpec slit data
 
     Parameters
@@ -1763,6 +1764,9 @@ def flat_for_nirspec_slit(slit, f_flat_model, s_flat_model, d_flat_model,
         For MOS data (only), this is used to get the quadrant number and
         the indices of the current shutter in the Y and X directions.
 
+    subarray : DataModel.meta.subarray
+        The subarray specification
+
     Returns
     -------
     flat : SlitModel or None
@@ -1775,8 +1779,8 @@ def flat_for_nirspec_slit(slit, f_flat_model, s_flat_model, d_flat_model,
 
     # pixels with respect to the original image
     ysize, xsize = slit.data.shape
-    xstart = slit.xstart - 1
-    ystart = slit.ystart - 1
+    xstart = slit.xstart - 1 + subarray.xstart - 1
+    ystart = slit.ystart - 1 + subarray.ystart - 1
     xstop = xstart + xsize
     ystop = ystart + ysize
 
