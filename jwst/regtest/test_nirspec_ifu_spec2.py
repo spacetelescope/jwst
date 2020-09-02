@@ -66,9 +66,8 @@ def test_spec2(run_spec2, fitsdiff_default_kwargs, suffix):
 
 
 @pytest.mark.bigdata
-def test_nirspec_ifu_user_supplied_flat(jail, rtdata_module, fitsdiff_default_kwargs):
+def test_nirspec_ifu_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
     """Test using predefined interpolated flat"""
-    rtdata = rtdata_module
     data = dm.open(rtdata.get_data('nirspec/ifu/nrs_ifu_nrs1_assign_wcs.fits'))
     user_supplied_flat = dm.open(rtdata.get_data('nirspec/ifu/nrs_ifu_nrs1_interpolated_flat.fits'))
 
@@ -82,9 +81,8 @@ def test_nirspec_ifu_user_supplied_flat(jail, rtdata_module, fitsdiff_default_kw
 
 
 @pytest.mark.bigdata
-def test_flat_field_step_user_supplied_flat(jail, rtdata_module, fitsdiff_default_kwargs):
+def test_flat_field_step_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
     """Test providing a user-supplied flat field to the FlatFieldStep"""
-    rtdata = rtdata_module
     data = rtdata.get_data('nirspec/ifu/nrs_ifu_nrs1_assign_wcs.fits')
     user_supplied_flat = rtdata.get_data('nirspec/ifu/nrs_ifu_nrs1_interpolated_flat.fits')
 
@@ -99,9 +97,8 @@ def test_flat_field_step_user_supplied_flat(jail, rtdata_module, fitsdiff_defaul
 
 @pytest.mark.slow
 @pytest.mark.bigdata
-def test_ff_inv(jail, rtdata_module, fitsdiff_default_kwargs):
+def test_ff_inv(rtdata, fitsdiff_default_kwargs):
     """Test flat field inversion"""
-    rtdata = rtdata_module
     data = dm.open(rtdata.get_data('nirspec/ifu/nrs_ifu_nrs1_assign_wcs.fits'))
 
     flatted = FlatFieldStep.call(data)
@@ -112,9 +109,8 @@ def test_ff_inv(jail, rtdata_module, fitsdiff_default_kwargs):
 
 @pytest.mark.slow
 @pytest.mark.bigdata
-def test_pathloss_corrpars(jail, rtdata_module):
+def test_pathloss_corrpars(rtdata):
     """Test PathLossStep using correction_pars"""
-    rtdata = rtdata_module
     data = dm.open(rtdata.get_data('nirspec/ifu/nrs1_flat_field.fits'))
 
     pls = PathLossStep()
@@ -128,9 +124,8 @@ def test_pathloss_corrpars(jail, rtdata_module):
 
 @pytest.mark.slow
 @pytest.mark.bigdata
-def test_pathloss_inverse(jail, rtdata_module):
+def test_pathloss_inverse(rtdata):
     """Test PathLossStep using correction_pars"""
-    rtdata = rtdata_module
     data = dm.open(rtdata.get_data('nirspec/ifu/nrs1_flat_field.fits'))
 
     pls = PathLossStep()
@@ -145,9 +140,8 @@ def test_pathloss_inverse(jail, rtdata_module):
 
 @pytest.mark.slow
 @pytest.mark.bigdata
-def test_pathloss_source_type(jail, rtdata_module):
+def test_pathloss_source_type(rtdata):
     """Test PathLossStep forcing source type"""
-    rtdata = rtdata_module
     data = dm.open(rtdata.get_data('nirspec/ifu/nrs1_flat_field.fits'))
 
     pls = PathLossStep()

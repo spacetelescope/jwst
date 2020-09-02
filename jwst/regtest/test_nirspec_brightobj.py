@@ -55,9 +55,8 @@ def test_nirspec_brightobj_spec2(run_tso_spec2_pipeline, fitsdiff_default_kwargs
 
 
 @pytest.mark.bigdata
-def test_flat_field_step_user_supplied_flat(jail, rtdata_module, fitsdiff_default_kwargs):
+def test_flat_field_step_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
     """Test providing a user-supplied flat field to the FlatFieldStep"""
-    rtdata = rtdata_module
     data = rtdata.get_data('nirspec/tso/nrs2_wavecorr.fits')
     user_supplied_flat = rtdata.get_data('nirspec/tso/nrs2_interpolatedflat.fits')
 
@@ -71,9 +70,8 @@ def test_flat_field_step_user_supplied_flat(jail, rtdata_module, fitsdiff_defaul
 
 
 @pytest.mark.bigdata
-def test_ff_inv(jail, rtdata_module, fitsdiff_default_kwargs):
+def test_ff_inv(rtdata, fitsdiff_default_kwargs):
     """Test flat field inversion"""
-    rtdata = rtdata_module
     data = dm.open(rtdata.get_data('nirspec/tso/nrs2_wavecorr.fits'))
 
     flatted = FlatFieldStep.call(data)

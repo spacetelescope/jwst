@@ -70,9 +70,8 @@ def test_nirspec_fs_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
 
 
 @pytest.mark.bigdata
-def test_pathloss_corrpars(jail, rtdata_module):
+def test_pathloss_corrpars(rtdata):
     """Test PathLossStep using correction_pars"""
-    rtdata = rtdata_module
     data = dm.open(rtdata.get_data('nirspec/fs/nrs1_flat_field.fits'))
 
     pls = PathLossStep()
@@ -90,9 +89,8 @@ def test_pathloss_corrpars(jail, rtdata_module):
 
 
 @pytest.mark.bigdata
-def test_pathloss_inverse(jail, rtdata_module):
+def test_pathloss_inverse(rtdata):
     """Test PathLossStep using inversion"""
-    rtdata = rtdata_module
     data = dm.open(rtdata.get_data('nirspec/fs/nrs1_flat_field.fits'))
 
     pls = PathLossStep()
@@ -111,9 +109,8 @@ def test_pathloss_inverse(jail, rtdata_module):
 
 
 @pytest.mark.bigdata
-def test_pathloss_source_type(jail, rtdata_module):
+def test_pathloss_source_type(rtdata):
     """Test PathLossStep forcing source type"""
-    rtdata = rtdata_module
     data = dm.open(rtdata.get_data('nirspec/fs/nrs1_flat_field.fits'))
 
     pls = PathLossStep()
