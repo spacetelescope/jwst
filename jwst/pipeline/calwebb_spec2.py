@@ -481,6 +481,9 @@ class Spec2Pipeline(Pipeline):
         self.flat_field.use_correction_pars = False
         self.flat_field.inverse = False
 
+        # Mark as completed.
+        calibrated.meta.cal_step.master_background = 'COMPLETED'
+
         return calibrated
 
     def _process_common(self, data):
