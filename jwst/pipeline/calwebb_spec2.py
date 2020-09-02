@@ -482,7 +482,7 @@ class Spec2Pipeline(Pipeline):
         self.flat_field.inverse = False
 
         # Mark as completed.
-        calibrated.meta.cal_step.master_background = 'COMPLETED'
+        calibrated.meta.cal_step.master_background = 'COMPLETE'
 
         return calibrated
 
