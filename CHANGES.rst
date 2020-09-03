@@ -6,6 +6,11 @@ blendmeta
 
 - Do not close files that were not opened by blendmodels [#5299]
 
+outlier_detection
+-----------------
+
+- Fix bug where background was being subtracted on the input data [#4858]
+
 0.17.0 (2020-08-28)
 ===================
 
