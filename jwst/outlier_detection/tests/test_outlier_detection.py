@@ -1,9 +1,6 @@
 import pytest
 import numpy as np
 from scipy.ndimage.filters import gaussian_filter
-from gwcs import wcs
-from gwcs import coordinate_frames as cf
-from astropy.modeling.models import Identity
 
 from jwst.outlier_detection import OutlierDetectionStep
 from jwst.outlier_detection.outlier_detection import flag_cr
@@ -137,12 +134,8 @@ def we_three_sci():
     sci1.meta.background.level = background
 
     # Replace the FITS-type WCS with an Identity WCS
-    # sci1.meta.wcs = create_fitswcs(sci1)
-    input_frame = cf.Frame2D(name="detector")
-    output_frame = cf.CelestialFrame()
-    pipeline = [(input_frame, Identity(n_inputs=2)),
-                (output_frame, None)]
-    sci1.meta.wcs = wcs.WCS(pipeline)
+    sci1.meta.wcs = create_fitswcs(sci1)
+
 
     sci1.err = np.zeros(shape) + sigma
 
