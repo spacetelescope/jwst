@@ -1,15 +1,45 @@
 0.17.1 (unreleased)
 ===================
 
+barshadow
+---------
+
+- Implement using a user-supplied correction which overrides all references. [#5302]
+
+- Implement applying the inverse operation. [#5302]
+
 blendmeta
 ---------
 
 - Do not close files that were not opened by blendmodels [#5299]
 
+flat_field
+----------
+
+- Implement providing a user-supplied flat field which overrides all references. [#5302]
+
+- Implement applying the inverse operation. [#5302]
+
+pathloss
+--------
+
+- Implement using a user-supplied correction which overrides all references. [#5302]
+
+- Implement applying the inverse operation. [#5302]
+
+photom
+------
+
+- Implement using a user-supplied correction which overrides all references. [#5302]
+
+- Implement applying the inverse operation. [#5302]
+
 pipeline
 --------
 
 - Spec3Pipeline check whether master background subtraction has already occurred. [#5308]
+
+- Implement master background subtraction in Spec2Pipeline for NIRSpec MOS data [#5302]
 
 0.17.0 (2020-08-28)
 ===================
@@ -149,7 +179,6 @@ extract_2d
 - Added a new optional integer parameter to extract_2d (``wfss_extract_half_height``)
   which allows a user to specify the extraction height in the
   cross-dispersion direction for WFSS mode. [#5140]
-
 
 flat_field
 ----------
