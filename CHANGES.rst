@@ -6,6 +6,11 @@ blendmeta
 
 - Do not close files that were not opened by blendmodels [#5299]
 
+pipeline
+--------
+
+- Spec3Pipeline check whether master background subtraction has already occurred. [#5308]
+
 0.17.0 (2020-08-28)
 ===================
 
