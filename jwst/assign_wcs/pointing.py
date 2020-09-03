@@ -222,7 +222,6 @@ def create_fitswcs(inp, input_frame=None):
     if isinstance(inp, DataModel):
         wcsinfo = wcsinfo_from_model(inp)
         wavetable = None
-        print(gwutils.get_axes(wcsinfo))
         spatial_axes, spectral_axes, unknown = gwutils.get_axes(wcsinfo)
         if spectral_axes:
             sp_axis = spectral_axes[0]
