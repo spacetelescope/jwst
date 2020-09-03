@@ -65,7 +65,8 @@ class OutlierDetection:
             - resample_suffix
 
         """
-        self.inputs = input_models
+        self.inputs = input_models.copy()
+        del input_models
         self.reffiles = reffiles
 
         self.outlierpars = {}
