@@ -732,7 +732,7 @@ def fore_optics_flat(wl, f_flat_model, exposure_type, dispaxis,
     flat_zero = np.where(f_flat == 0.)
     f_flat_dq[flat_zero] = np.bitwise_or(f_flat_dq[flat_zero],bad_flag)
 
-    # Find all pixels in the flat that have a DQ value of NO_FLAT_FIELD
+    # Find all pixels in the flat that have a DQ value of DO_NOT_USE
     flat_bad = np.bitwise_and(f_flat_dq, dqflags.pixel['DO_NOT_USE'])
 
     # Reset the flat value of all bad pixels to 1.0, so that no
@@ -835,7 +835,7 @@ def spectrograph_flat(wl, s_flat_model,
     flat_zero = np.where(flat_2d == 0.)
     s_flat_dq[flat_zero] = np.bitwise_or(s_flat_dq[flat_zero],bad_flag)
 
-    # Find all pixels in the flat that have a DQ value of NO_FLAT_FIELD
+    # Find all pixels in the flat that have a DQ value of DO_NOT_USE
     flat_bad = np.bitwise_and(s_flat_dq, dqflags.pixel['DO_NOT_USE'])
 
     # Reset the flat value of all bad pixels to 1.0, so that no
@@ -934,7 +934,7 @@ def detector_flat(wl, d_flat_model,
     flat_zero = np.where(flat_2d == 0.)
     d_flat_dq[flat_zero] = np.bitwise_or(d_flat_dq[flat_zero],bad_flag)
 
-    # Find all pixels in the flat that have a DQ value of NO_FLAT_FIELD
+    # Find all pixels in the flat that have a DQ value of DO_NOT_USE
     flat_bad = np.bitwise_and(d_flat_dq, dqflags.pixel['DO_NOT_USE'])
 
     # Reset the flat value of all bad pixels to 1.0, so that no
