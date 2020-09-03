@@ -11,20 +11,23 @@ from ..stpipe import Pipeline
 # step imports
 from ..assign_wcs import assign_wcs_step
 from ..background import background_step
-from ..imprint import imprint_step
-from ..msaflagopen import msaflagopen_step
-from ..extract_2d import extract_2d_step
-from ..wavecorr import wavecorr_step
-from ..flatfield import flat_field_step
-from ..srctype import srctype_step
-from ..straylight import straylight_step
-from ..fringe import fringe_step
-from ..pathloss import pathloss_step
 from ..barshadow import barshadow_step
-from ..photom import photom_step
 from ..cube_build import cube_build_step
 from ..extract_1d import extract_1d_step
+from ..extract_2d import extract_2d_step
+from ..flatfield import flat_field_step
+from ..fringe import fringe_step
+from ..imprint import imprint_step
+from ..master_background import master_background_step
+from ..msaflagopen import msaflagopen_step
+from ..pathloss import pathloss_step
+from ..photom import photom_step
 from ..resample import resample_spec_step
+from ..srctype import srctype_step
+from ..straylight import straylight_step
+from ..wavecorr import wavecorr_step
+
+from ..master_background import nirspec_utils
 
 __all__ = ['Spec2Pipeline']
 
@@ -59,6 +62,7 @@ class Spec2Pipeline(Pipeline):
         'imprint_subtract': imprint_step.ImprintStep,
         'msa_flagging': msaflagopen_step.MSAFlagOpenStep,
         'extract_2d': extract_2d_step.Extract2dStep,
+        'master_background': master_background_step.MasterBackgroundStep,
         'wavecorr': wavecorr_step.WavecorrStep,
         'flat_field': flat_field_step.FlatFieldStep,
         'srctype': srctype_step.SourceTypeStep,
@@ -73,7 +77,7 @@ class Spec2Pipeline(Pipeline):
     }
 
     # Main processing
-    def process(self, input):
+    def process(self, data):
         """Entrypoint for this pipeline
 
         Parameters
@@ -91,7 +95,7 @@ class Spec2Pipeline(Pipeline):
         self.extract_1d.save_results = self.save_results
 
         # Retrieve the input(s)
-        asn = self.load_as_level2_asn(input)
+        asn = self.load_as_level2_asn(data)
 
         # Each exposure is a product in the association.
         # Process each exposure.
@@ -156,20 +160,20 @@ class Spec2Pipeline(Pipeline):
 
         # Get the science member. Technically there should only be
         # one. We'll just get the first one found.
-        science = members_by_type['science']
-        if len(science) != 1:
+        science_member = members_by_type['science']
+        if len(science_member) != 1:
             self.log.warning(
                 'Wrong number of science exposures found in {}'.format(
                     exp_product['name']
                 )
             )
             self.log.warning('    Using only first one.')
-        science = science[0]
+        science_member = science_member[0]
 
-        self.log.info('Working on input %s ...', science)
-        with self.open_model(science) as input:
-            exp_type = input.meta.exposure.type
-            if isinstance(input, datamodels.CubeModel):
+        self.log.info('Working on input %s ...', science_member)
+        with self.open_model(science_member) as science:
+            exp_type = science.meta.exposure.type
+            if isinstance(science, datamodels.CubeModel):
                 multi_int = True
             else:
                 multi_int = False
@@ -188,10 +192,10 @@ class Spec2Pipeline(Pipeline):
             # name from the asn and record it to the meta
             if exp_type in WFSS_TYPES:
                 try:
-                    input.meta.source_catalog = os.path.basename(members_by_type['sourcecat'][0])
-                    self.log.info('Using sourcecat file {}'.format(input.meta.source_catalog))
+                    science.meta.source_catalog = os.path.basename(members_by_type['sourcecat'][0])
+                    self.log.info('Using sourcecat file {}'.format(science.meta.source_catalog))
                 except IndexError:
-                    if input.meta.source_catalog is None:
+                    if science.meta.source_catalog is None:
                         raise IndexError("No source catalog specified in association or datamodel")
 
             # Decide on what steps can actually be accomplished based on the
@@ -203,11 +207,11 @@ class Spec2Pipeline(Pipeline):
             # cannot proceed.
             assign_wcs_exception = None
             try:
-                input = self.assign_wcs(input)
+                calibrated = self.assign_wcs(science)
             except Exception as exception:
                 assign_wcs_exception = exception
             if assign_wcs_exception is not None or \
-               input.meta.cal_step.assign_wcs != 'COMPLETE':
+               calibrated.meta.cal_step.assign_wcs != 'COMPLETE':
                 message = (
                     'Assign_wcs processing was skipped.'
                     '\nAborting remaining processing for this exposure.'
@@ -224,63 +228,62 @@ class Spec2Pipeline(Pipeline):
                         raise RuntimeError('Cannot determine WCS.')
 
         # Steps whose order is the same for all types of input.
-        input = self.bkg_subtract(input, members_by_type['background'])
-        input = self.imprint_subtract(input, members_by_type['imprint'])
-        input = self.msa_flagging(input)
+        calibrated = self.bkg_subtract(calibrated, members_by_type['background'])
+        calibrated = self.imprint_subtract(calibrated, members_by_type['imprint'])
+        calibrated = self.msa_flagging(calibrated)
 
         # The order of the next few steps is tricky, depending on mode:
         # WFSS/Grism data need flat_field before extract_2d, but other modes
         # need extract_2d first. Furthermore, NIRSpec MOS and FS need
         # srctype and wavecorr before flat_field.
         if exp_type in GRISM_TYPES:
-            input = self._process_grism(input)
+            calibrated = self._process_grism(calibrated)
             # Apply flat-field correction
         elif exp_type in NRS_SLIT_TYPES:
-            input = self._process_nirspec_slits(input)
+            calibrated = self._process_nirspec_slits(calibrated)
         else:
-            input = self._process_common(input)
-        result = input
+            calibrated = self._process_common(calibrated)
 
-        # Setup result metadata for pools, association, and suffix.
-        result.meta.asn.pool_name = pool_name
-        result.meta.asn.table_name = op.basename(asn_file)
-        result.meta.filename = self.make_output_path(suffix=suffix)
+        # Record ASN pool and table names in output
+        calibrated.meta.asn.pool_name = pool_name
+        calibrated.meta.asn.table_name = op.basename(asn_file)
+        calibrated.meta.filename = self.make_output_path(suffix=suffix)
 
         # Produce a resampled product, either via resample_spec for
         # "regular" spectra or cube_build for IFU data. No resampled
         # product is produced for time-series modes.
         if exp_type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'MIR_LRS-FIXEDSLIT'] \
-        and not isinstance(result, datamodels.CubeModel):
+           and not isinstance(calibrated, datamodels.CubeModel):
 
             # Call the resample_spec step for 2D slit data
-            result_extra = self.resample_spec(result)
+            resampled = self.resample_spec(calibrated)
 
-        elif (exp_type in ['MIR_MRS', 'NRS_IFU']) or is_nrs_ifu_linelamp(result):
+        elif (exp_type in ['MIR_MRS', 'NRS_IFU']) or is_nrs_ifu_linelamp(calibrated):
 
             # Call the cube_build step for IFU data;
             # always create a single cube containing multiple
             # wavelength bands
-            result_extra = self.cube_build(result)
+            resampled = self.cube_build(calibrated)
             if not self.cube_build.skip:
-                self.save_model(result_extra[0], 's3d')
+                self.save_model(resampled[0], 's3d')
         else:
-            result_extra = result
+            resampled = calibrated
 
         # Extract a 1D spectrum from the 2D/3D data
         if exp_type in ['MIR_MRS', 'NRS_IFU'] and self.cube_build.skip:
             # Skip extract_1d for IFU modes where no cube was built
             self.extract_1d.skip = True
-        x1d_result = self.extract_1d(result_extra)
+        x1d = self.extract_1d(resampled)
 
-        result_extra.close()
-        x1d_result.close()
+        resampled.close()
+        x1d.close()
 
         # That's all folks
         self.log.info(
             'Finished processing product {}'.format(exp_product['name'])
         )
 
-        return result
+        return calibrated
 
     def _step_verification(self, exp_type, members_by_type, multi_int):
         """Verify whether requested steps can operate on the given data
@@ -350,47 +353,148 @@ class Spec2Pipeline(Pipeline):
             self.log.debug('Science data does not allow barshadow correction. Skipping "barshadow".')
             self.barshadow.skip = True
 
-    def _process_grism(self, input):
+    def _process_grism(self, data):
         """WFSS & Grism processing
 
         WFSS/Grism data need flat_field before extract_2d.
         """
-        input = self.flat_field(input)
-        input = self.extract_2d(input)
-        input = self.srctype(input)
-        input = self.straylight(input)
-        input = self.fringe(input)
-        input = self.pathloss(input)
-        input = self.barshadow(input)
-        input = self.photom(input)
+        calibrated = self.flat_field(data)
+        calibrated = self.extract_2d(calibrated)
+        calibrated = self.srctype(calibrated)
+        calibrated = self.straylight(calibrated)
+        calibrated = self.fringe(calibrated)
+        calibrated = self.pathloss(calibrated)
+        calibrated = self.barshadow(calibrated)
+        calibrated = self.photom(calibrated)
 
-        return input
+        return calibrated
 
-    def _process_nirspec_slits(self, input):
+    def _process_nirspec_slits(self, data):
         """Process NIRSpec
 
         NIRSpec MOS and FS need srctype and wavecorr before flat_field.
+        Also have to deal with master background operations.
         """
-        input = self.extract_2d(input)
-        input = self.srctype(input)
-        input = self.wavecorr(input)
-        input = self.flat_field(input)
-        input = self.straylight(input)
-        input = self.fringe(input)
-        input = self.pathloss(input)
-        input = self.barshadow(input)
-        input = self.photom(input)
+        calibrated = self.extract_2d(data)
+        calibrated = self.srctype(calibrated)
 
-        return input
+        # Master background requires a different order of processing.
+        if not self.master_background.skip and \
+           calibrated.meta.cal_step.back_sub != 'COMPLETE':
+            calibrated = self._process_nirspec_masterbackground(calibrated)
 
-    def _process_common(self, input):
+        # Now continue calibration of the science.
+        self.log.info('Applying final calibration steps to background-subtracted MOS slitlets')
+        calibrated = self.wavecorr(calibrated)
+        calibrated = self.flat_field(calibrated)
+        calibrated = self.pathloss(calibrated)
+        calibrated = self.barshadow(calibrated)
+        calibrated = self.photom(calibrated)
+
+        return calibrated
+
+    def _process_nirspec_masterbackground(self, data):
+        """Prepare and apply the master background subtraction step
+
+        For MOS, and ignoring FS, the calibration process needs to occur
+        twice: Once to calibrate background slits and create a master background.
+        Then a second time to calibrate science using the master background.
+
+        Parameters
+        ----------
+        data : MultiSlitData
+            The data to apply the master background subtraction
+
+        Returns
+        -------
+        msb_subtracted : MultiSlitData
+            The background subtracted data.
+
+        Notes
+        -----
+        The algorithm is as follows:
+
+        - Calibrate all slits
+          - For each step:
+            - Force the source type to be extended source for all slits.
+            - Return the correction array used.
+        - Create the 1D master background
+        - For each slit
+          - Expand out the 1D master background to match the 2D wavelength grid of the slit
+          - Reverse-calibrate the 2D background, using the correction arrays calculated above.
+          - Subtract the background from the input slit data
+        """
+        self.log.info('Starting MOS master background creation and subtraction')
+
+        # First pass: just do the calibration to determine the correction
+        # arrays. However, force all slits to be processed as extended sources.
+        self.pathloss.source_type = 'EXTENDED'
+        self.barshadow.source_type = 'EXTENDED'
+        self.photom.source_type = 'EXTENDED'
+
+        pre_calibrated = self.flat_field(data)
+        pre_calibrated = self.pathloss(pre_calibrated)
+        pre_calibrated = self.barshadow(pre_calibrated)
+        pre_calibrated = self.photom(pre_calibrated)
+
+        # Create the 1D, fully calibrated master background.
+        master_background = nirspec_utils.create_background_from_multislit(pre_calibrated)
+        if master_background is None:
+            return data
+
+        # Now decalibrate the master background for each individual science slit.
+        # First step is to map the master background into a MultiSlitModel
+        # where the science slits are replaced by the master background.
+        # Here the broadcasting from 1D to 2D need also occur.
+        mb_multislit = nirspec_utils.map_to_science_slits(pre_calibrated, master_background)
+
+        # Now that the master background is pretending to be science,
+        # walk backwards through the steps to uncalibrate, using the
+        # calibration factors carried from `pre_calibrated`.
+        self.photom.use_correction_pars = True
+        self.photom.inverse = True
+        self.barshadow.use_correction_pars = True
+        self.barshadow.inverse = True
+        self.pathloss.use_correction_pars = True
+        self.pathloss.inverse = True
+        self.flat_field.use_correction_pars = True
+        self.flat_field.inverse = True
+
+        mb_multislit = self.photom(mb_multislit)
+        mb_multislit = self.barshadow(mb_multislit)
+        mb_multislit = self.pathloss(mb_multislit)
+        mb_multislit = self.flat_field(mb_multislit)
+
+        # Now apply the de-calibrated background to the original science
+        # At this point, should just be a slit-to-slit subtraction operation.
+        calibrated = nirspec_utils.apply_master_background(data, mb_multislit)
+
+        # Reset all the step attributes for "normal" processing.
+        self.photom.use_correction_pars = False
+        self.photom.inverse = False
+        self.photom.source_type = None
+        self.barshadow.use_correction_pars = False
+        self.barshadow.inverse = False
+        self.barshadow.source_type = None
+        self.pathloss.use_correction_pars = False
+        self.pathloss.inverse = False
+        self.pathloss.source_type = None
+        self.flat_field.use_correction_pars = False
+        self.flat_field.inverse = False
+
+        # Mark as completed.
+        calibrated.meta.cal_step.master_background = 'COMPLETE'
+
+        return calibrated
+
+    def _process_common(self, data):
         """Common spectral processing"""
-        input = self.srctype(input)
-        input = self.flat_field(input)
-        input = self.straylight(input)
-        input = self.fringe(input)
-        input = self.pathloss(input)
-        input = self.barshadow(input)
-        input = self.photom(input)
+        calibrated = self.srctype(data)
+        calibrated = self.flat_field(calibrated)
+        calibrated = self.straylight(calibrated)
+        calibrated = self.fringe(calibrated)
+        calibrated = self.pathloss(calibrated)
+        calibrated = self.barshadow(calibrated)
+        calibrated = self.photom(calibrated)
 
-        return input
+        return calibrated

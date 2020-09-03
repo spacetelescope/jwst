@@ -7,7 +7,6 @@ from .. import datamodels
 from .. assign_wcs import nirspec   # For NIRSpec IFU data
 from .. datamodels import dqflags
 from ..lib.wcs_utils import get_wavelengths
-from .nirspec_corrections import correct_nrs_ifu_bkg
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -157,6 +156,7 @@ def bkg_for_multislit(input, tab_wavelength, tab_background):
     max_wave = np.amax(tab_wavelength)
 
     for (k, slit) in enumerate(input.slits):
+        log.info(f'Expanding background for slit {slit.name}')
         wl_array = get_wavelengths(slit, input.meta.exposure.type)
         if wl_array is None:
             raise RuntimeError("Can't determine wavelengths for {}"
@@ -248,6 +248,7 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
         wavelength table.
 
     """
+    from .nirspec_utils import correct_nrs_ifu_bkg
 
     background = input.copy()
     background.data[:, :] = 0.

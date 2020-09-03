@@ -42,10 +42,21 @@ __all__ = ["FlatFieldStep"]
 
 class FlatFieldStep(Step):
     """Flat-field a science image using a flatfield reference image.
+
+    Attributes
+    ----------
+    correction_pars : {'flat': DataModel}
+        After the step has successfully run, the flat field applied is
+        stored.
+
+    use_correction_pars : boolean
+        Use the flat stored in `correction_pars`
     """
 
     spec = """
         save_interpolated_flat = boolean(default=False) # Save interpolated NRS flat
+        user_supplied_flat = string(default=None)  # User-supplied flat
+        inverse = boolean(default=False)  # Invert the operation
     """
 
     reference_file_types = ["flat", "fflat", "sflat", "dflat"]
@@ -78,10 +89,94 @@ class FlatFieldStep(Step):
             self.log.warning("flat fielding will be skipped.")
             return self.skip_step(input_model)
 
+        # Retrieve reference files only if no user-supplied flat is specified
+        if self.user_supplied_flat is not None:
+            self.log.info(
+                f'User-supplied flat {self.user_supplied_flat} given.'
+                ' Ignoring all flat reference files and flat creation.'
+            )
+            reference_file_models = {
+                'user_supplied_flat': datamodels.open(self.user_supplied_flat)
+            }
+
+            # Record the user-supplied flat as the FLAT reference type for recording
+            # in the result header.
+            self._reference_files_used.append(
+                ('flat', reference_file_models['user_supplied_flat'].meta.filename)
+            )
+        elif self.use_correction_pars:
+            self.log.info(f'Using flat field from correction pars {self.correction_pars["flat"]}')
+            reference_file_models = {
+                'user_supplied_flat': datamodels.open(self.correction_pars['flat'])
+            }
+
+            # Record the flat as the FLAT reference type for recording
+            # in the result header.
+            self._reference_files_used.append(
+                ('flat', reference_file_models['user_supplied_flat'].meta.filename)
+            )
+        else:
+            reference_file_models = self._get_references(input_model, exposure_type)
+
+        # Do the flat-field correction
+        output_model, flat_applied = flat_field.do_correction(
+            input_model,
+            **reference_file_models,
+            inverse=self.inverse
+        )
+
+        # Close the input and reference files
+        input_model.close()
+        try:
+            for model in reference_file_models.values():
+                model.close()
+        except AttributeError:
+            pass
+
+        if self.save_interpolated_flat and flat_applied is not None:
+            ff_path = self.save_model(flat_applied, suffix=self.flat_suffix, force=True)
+            self.log.info(f'Interpolated flat written to "{ff_path}".')
+
+        if not self.correction_pars:
+            self.correction_pars = {}
+        self.correction_pars['flat'] = flat_applied
+
+        return output_model
+
+    def skip_step(self, input_model):
+        """Set the calibration switch to SKIPPED.
+
+        This method makes a copy of input_model, sets the calibration
+        switch for the flat_field step to SKIPPED in the copy, closes
+        input_model, and returns the copy.
+        """
+
+        result = input_model.copy()
+        result.meta.cal_step.flat_field = "SKIPPED"
+        input_model.close()
+        return result
+
+    def _get_references(self, data, exposure_type):
+        """Retrieve required CRDS reference files
+
+        Parameters
+        ----------
+        data : DataModel
+            The data to base the CRDS lookups on.
+
+        exposure_type : str
+            The exposure type keyword value
+
+        Returns
+        -------
+        reference_file_models : {str: DataModel{,...}}
+            Dictionary matching reference file types to open models
+        """
+
         # Get reference file paths
         reference_file_names = {}
         for reftype in self.reference_file_types:
-            reffile = self.get_reference_file(input_model, reftype)
+            reffile = self.get_reference_file(data, reftype)
             reference_file_names[reftype] = reffile if reffile != 'N/A' else None
 
         # Define mapping between reftype and datamodel type
@@ -101,38 +196,7 @@ class FlatFieldStep(Step):
                 reference_file_models[reftype] = model_type[reftype](reffile)
                 self.log.debug('Using %s reference file: %s', reftype.upper(), reffile)
             else:
+                self.log.debug('No reference found for type %s', reftype.upper())
                 reference_file_models[reftype] = None
 
-        # Do the flat-field correction
-        output_model, interpolated_flats = flat_field.do_correction(
-            input_model,
-            **reference_file_models,
-            )
-
-        # Close the input and reference files
-        input_model.close()
-        try:
-            for model in reference_file_models.values():
-                model.close()
-        except AttributeError:
-            pass
-
-        if self.save_interpolated_flat and interpolated_flats is not None:
-            self.log.info("Writing interpolated flat field.")
-            self.save_model(interpolated_flats, suffix=self.flat_suffix)
-            interpolated_flats.close()
-
-        return output_model
-
-    def skip_step(self, input_model):
-        """Set the calibration switch to SKIPPED.
-
-        This method makes a copy of input_model, sets the calibration
-        switch for the flat_field step to SKIPPED in the copy, closes
-        input_model, and returns the copy.
-        """
-
-        result = input_model.copy()
-        result.meta.cal_step.flat_field = "SKIPPED"
-        input_model.close()
-        return result
+        return reference_file_models
