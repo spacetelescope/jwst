@@ -167,7 +167,8 @@ class MasterBackgroundStep(Step):
             if isinstance(input_data, datamodels.ModelContainer):
                 isub = 0
                 for indata in input_data:
-                    if indata.meta.cal_step.back_sub == 'COMPLETE':
+                    if indata.meta.cal_step.back_sub == 'COMPLETE' or \
+                       indata.meta.cal_step.master_background == 'COMPLETE':
                         do_sub = False
                         isub += 1
 
@@ -185,7 +186,8 @@ class MasterBackgroundStep(Step):
                         "run again and set force_subtract = True.")
             # input data is a single file
             else:
-                if input_data.meta.cal_step.back_sub == 'COMPLETE':
+                if input_data.meta.cal_step.back_sub == 'COMPLETE' or \
+                   input_data.meta.cal_step.master_background == 'COMPLETE':
                     do_sub = False
                     self.log.info(
                         "Not subtracting master background, background was subtracted in calspec2")
