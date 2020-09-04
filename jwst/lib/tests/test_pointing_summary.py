@@ -5,7 +5,6 @@ from pathlib import Path
 import pytest
 
 from astropy.table import Table
-from astropy.time import Time
 from astropy.utils.diff import report_diff_values
 
 import jwst.datamodels as dm
