@@ -65,8 +65,7 @@ class OutlierDetection:
             - resample_suffix
 
         """
-        self.inputs = input_models.copy()
-        del input_models
+        self.inputs = input_models
         self.reffiles = reffiles
 
         self.outlierpars = {}
@@ -351,7 +350,9 @@ class OutlierDetection:
         """
 
         for image, blot in zip(self.input_models, blot_models):
-            flag_cr(image, blot, **self.outlierpars)
+            image_copy = image.copy()
+            flag_cr(image_copy, blot, **self.outlierpars)
+            image.dq = image_copy.dq.copy()
 
         if self.converted:
             # Make sure actual input gets updated with new results
@@ -391,12 +392,13 @@ def flag_cr(sci_image, blot_image, **pars):
     snr1, snr2 = [float(val) for val in pars.get('snr', '5.0 4.0').split()]
     scl1, scl2 = [float(val) for val in pars.get('scale', '1.2 0.7').split()]
 
-    # Get background level if it has been subtracted
-    if (sci_image.meta.background.subtracted is True and
+    # Get background level of science data if it has not been subtracted, so it
+    # can be added into the level of the blotted data, which has been
+    # background-subtracted
+    if (sci_image.meta.background.subtracted is False and
         sci_image.meta.background.level is not None):
         subtracted_background = sci_image.meta.background.level
-        log.debug(f"Including subtracted background ({subtracted_background}) "
-            "back into blotted image")
+        log.debug(f"Adding background level {subtracted_background} to blotted image")
     else:
         # No subtracted background.  Allow user-set value, which defaults to 0
         subtracted_background = backg
@@ -419,7 +421,6 @@ def flag_cr(sci_image, blot_image, **pars):
     #
     # Model the noise and create a CR mask
     diff_noise = np.abs(sci_data - blot_data)
-    # ta = np.sqrt(np.abs(blot_data + subtracted_background) + rn ** 2)
     ta = np.sqrt(np.abs(blot_data + subtracted_background) + err_data ** 2)
     t2 = scl1 * blot_deriv + snr1 * ta
     tmp1 = np.logical_not(np.greater(diff_noise, t2))

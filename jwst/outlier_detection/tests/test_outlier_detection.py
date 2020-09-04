@@ -194,6 +194,5 @@ def test_outlier_step(we_three_sci):
     for r in result:
         assert r.dq[7, 7] == datamodels.dqflags.pixel["GOOD"]
 
-    # Verify CR is flagged (doesn't work now, but should once noise model
-    # is sorted)
-    # assert result[0].dq[12, 12] == OUTLIER_DO_NOT_USE
+    # Verify CR is flagged
+    assert result[0].dq[12, 12] == OUTLIER_DO_NOT_USE
