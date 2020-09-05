@@ -86,17 +86,6 @@ def _roll_angle_from_matrix(matrix, v2, v3):
     return new_roll
 
 
-#def create_fitswcs_transform(input_model):
-    #"""
-
-    #"""
-    #ff = fits_support.to_fits(input_model._instance, input_model._schema)
-    #hdu = fits_support.get_hdu(ff._hdulist, "PRIMARY")
-    #header = hdu.header
-    #transform = gwutils.make_fitswcs_transform(header)
-    #return transform
-
-
 def wcsinfo_from_model(input_model):
     """
     Create a dict {wcs_keyword: array_of_values} pairs from a data model.
@@ -233,7 +222,16 @@ def create_fitswcs(inp, input_frame=None):
         raise TypeError("Input is expected to be a DataModel instance or a FITS file.")
 
     if input_frame is None:
-        input_frame = cf.Frame2D(name="detector")
+        wcsaxes = wcsinfo['WCSAXES']
+        if wcsaxes == 2:
+            input_frame = cf.Frame2D(name="detector")
+        elif wcsaxes == 3:
+            input_frame = cf.CoordinateFrame(name="detector", naxes=3,
+                axes_order=(0, 1, 2), unit=(u.pix, u.pix, u.pix),
+                axes_type=["SPATIAL", "SPATIAL", "SPECTRAL"],
+                axes_names=('x', 'y', 'z'), axis_physical_types=None)
+        else:
+            raise TypeError(f"WCSAXES is expected to be 2 or 3, instead it is {wcsaxes}")
     pipeline = [(input_frame, transform),
                (output_frame, None)]
 
