@@ -20,6 +20,11 @@ flat_field
 
 - Implement applying the inverse operation. [#5302]
 
+outlier_detection
+-----------------
+
+- Fix bug where background was being subtracted on the input data [#4858]
+
 pathloss
 --------
 
@@ -40,6 +45,7 @@ pipeline
 - Spec3Pipeline check whether master background subtraction has already occurred. [#5308]
 
 - Implement master background subtraction in Spec2Pipeline for NIRSpec MOS data [#5302]
+
 
 0.17.0 (2020-08-28)
 ===================
