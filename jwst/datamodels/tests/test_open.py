@@ -10,7 +10,9 @@ import pytest
 import numpy as np
 from astropy.io import fits
 
-from jwst.datamodels import (DataModel, ModelContainer, ImageModel, DistortionModel)
+from jwst.datamodels import (DataModel, ModelContainer, ImageModel,
+    DistortionModel, RampModel, CubeModel, ReferenceFileModel, ReferenceImageModel,
+    ReferenceCubeModel, ReferenceQuadModel)
 from jwst import datamodels
 
 
@@ -94,6 +96,56 @@ def test_open_image():
         image_name = t_path('jwst_image.fits')
         with datamodels.open(image_name) as model:
             assert type(model) == ImageModel
+
+
+def test_open_ramp(tmpdir):
+    """Open 4D data without a DQ as RampModel"""
+    path = str(tmpdir.join("ramp.fits"))
+    shape = (2, 3, 4, 5)
+    with fits.HDUList(fits.PrimaryHDU()) as hdulist:
+        hdulist.append(fits.ImageHDU(data=np.zeros(shape), name="SCI", ver=1))
+        hdulist.writeto(path)
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "model_type not found")
+        with datamodels.open(path) as model:
+            assert isinstance(model, RampModel)
+
+
+def test_open_cube(tmpdir):
+    """Open 3D data as CubeModel"""
+    path = str(tmpdir.join("ramp.fits"))
+    shape = (2, 3, 4)
+    with fits.HDUList(fits.PrimaryHDU()) as hdulist:
+        hdulist.append(fits.ImageHDU(data=np.zeros(shape), name="SCI", ver=1))
+        hdulist.writeto(path)
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "model_type not found")
+        with datamodels.open(path) as model:
+            assert isinstance(model, CubeModel)
+
+
+@pytest.mark.parametrize("model_class, shape", [
+    (ReferenceFileModel, None),
+    (ReferenceImageModel, (10, 10)),
+    (ReferenceCubeModel, (3, 3, 3)),
+    (ReferenceQuadModel, (2, 2, 2, 2)),
+])
+def test_open_reffiles(tmpdir, model_class, shape):
+    """Try opening files with a REFTYPE keyword and different data/dq shapes"""
+    path = str(tmpdir.join("reffile.fits"))
+    with fits.HDUList(fits.PrimaryHDU()) as hdulist:
+        hdulist["PRIMARY"].header.append(("REFTYPE", "foo"))
+        if shape is not None:
+            hdulist.append(fits.ImageHDU(data=np.zeros(shape), name="SCI", ver=1))
+            hdulist.append(fits.ImageHDU(data=np.zeros(shape, dtype=np.uint), name="DQ", ver=1))
+        hdulist.writeto(path)
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "model_type not found")
+        with datamodels.open(path) as model:
+            assert isinstance(model, model_class)
 
 
 def test_open_fits_readonly(tmpdir):
