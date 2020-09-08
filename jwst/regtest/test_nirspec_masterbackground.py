@@ -1,10 +1,32 @@
 import pytest
-from astropy.io.fits.diff import FITSDiff
 
+from astropy.io.fits.diff import FITSDiff
+import numpy as np
+
+import jwst.datamodels as dm
+from jwst.master_background import MasterBackgroundNRSSlitsPipe
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
 pytestmark = pytest.mark.bigdata
+
+
+def test_masterbkg_corrpars(rtdata):
+    """Test for photom correction parameters"""
+    data = dm.open(rtdata.get_data('nirspec/mos/nrs_mos_with_bkgslits_srctype.fits'))
+
+    mbs = MasterBackgroundNRSSlitsPipe()
+    corrected = mbs.run(data)
+
+    mbs.use_correction_pars = True
+    corrected_corrpars = mbs.run(data)
+
+    bad_slits = []
+    for idx, slits in enumerate(zip(corrected.slits, corrected_corrpars.slits)):
+        corrected_slit, corrected_corrpars_slit = slits
+        if not np.allclose(corrected_slit.data, corrected_corrpars_slit.data, equal_nan=True):
+            bad_slits.append(idx)
+    assert not bad_slits, f'correction_pars failed for slits {bad_slits}'
 
 
 def test_nirspec_spec2_mbkg(rtdata, fitsdiff_default_kwargs):
