@@ -8,8 +8,8 @@ from ..photom import photom_step
 from ..stpipe import Pipeline
 
 # Step parameters to generally ignore when copying from the parent steps.
-PARS_TO_IGNORE = ['output_ext', 'output_file', 'output_use_model', 'output_use_index',
-                  'pre_hooks', 'post_hooks', 'save_results', 'suffix']
+GLOBAL_PARS_TO_IGNORE = ['output_ext', 'output_file', 'output_use_model', 'output_use_index',
+                         'inverse', 'pre_hooks', 'post_hooks', 'save_results', 'suffix']
 
 
 class MasterBackgroundNRSSlitsPipe(Pipeline):
@@ -140,9 +140,16 @@ class MasterBackgroundNRSSlitsPipe(Pipeline):
         if not self.parent:
             return
 
-        # Flat field
-        ff_pars = self.parent.flat_field.get_pars(full_spec=False)
-        for par in ['inverse', 'save_interpolated_flat'] + PARS_TO_IGNORE:
-            if par in ff_pars:
-                del ff_pars[par]
-        self.flat_field.update(ff_pars)
+        steps = ['barshadow', 'flat_field', 'pathloss', 'photom']
+        pars_to_ignore = {
+            'barshadow': ['source_type'],
+            'flat_field': ['save_interpolated_flat'],
+            'pathloss': ['source_type'],
+            'photom': ['source_type']
+        }
+
+        for step in steps:
+            pars = getattr(self.parent, step).get_pars()
+            for par in pars_to_ignore[step] + GLOBAL_PARS_TO_IGNORE:
+                del pars[par]
+            getattr(self, step).update(pars)
