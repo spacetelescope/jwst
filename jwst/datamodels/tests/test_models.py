@@ -256,15 +256,18 @@ def test_copy():
             assert dm.meta.observation.obs_id is None
 
 
-def test_stringify():
+def test_stringify(tmpdir):
     im = DataModel()
     assert str(im) == '<DataModel>'
 
     im = ImageModel((10, 100))
     assert str(im) == '<ImageModel(10, 100)>'
 
-    image = os.path.join(ROOT_DIR, "nircam_mask.fits")
-    with MaskModel(image) as im:
+    path = str(tmpdir.join("nircam_mask.fits"))
+    m = MaskModel((2048, 2048))
+    m.save(path)
+    m.close()
+    with MaskModel(path) as im:
         assert str(im) == '<MaskModel(2048, 2048) from nircam_mask.fits>'
 
 
