@@ -1590,7 +1590,7 @@ def fill_mnemonics_chronologically(mnemonics, filled_only=True):
 
     The different set of mnemonics used for observatory orientation
     appear at different cadences. This routine creates a time-ordered dictionary
-    with all the mnemonics for each time found in the engineering. For mnemnonics
+    with all the mnemonics for each time found in the engineering. For mnemonics
     missing for a particular time, the last previous value is used.
 
     Parameters

@@ -57,7 +57,7 @@ def v1_calculate_over_time(obsstart, obsend, **calc_wcs_from_time_kwargs):
 
     Parameters
     ----------
-    obsstart, obbsend : float
+    obsstart, obsend : float
         The MJD start and end time to search for pointings.
 
     calc_wcs_from_time_kwargs : dict
@@ -101,7 +101,7 @@ def simplify_table(v1_table):
 
     Returns
     -------
-    formatted: astorpy.table.Table
+    formatted: astropy.table.Table
         Reformatted table.
     """
     if v1_table['source'].dtype == object:
