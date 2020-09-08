@@ -16,7 +16,7 @@ class AmiAnalyzeStep(Step):
     reference_file_types = ['throughput']
 
     def process(self, input):
-        """^
+        """
         Performs analysis of an AMI mode exposure by applying the LG algorithm.
 
         Parameters
