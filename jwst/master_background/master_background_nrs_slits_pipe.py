@@ -75,7 +75,7 @@ class MasterBackgroundNRSSlitsPipe(Pipeline):
         # UNLESS forcing is enacted.
         if not self.force_subtract and \
            'COMPLETE' in [data.meta.cal_step.back_sub, data.meta.cal_step.master_background]:
-            self.log.info('Background subtraction has already occurred. Skipping')
+            self.log.info('Background subtraction has already occurred. Skipping.')
             data.meta.cal_step.master_background = 'SKIP'
             return data
 
@@ -93,6 +93,8 @@ class MasterBackgroundNRSSlitsPipe(Pipeline):
         # Create the 1D, fully calibrated master background.
         master_background = nirspec_utils.create_background_from_multislit(pre_calibrated)
         if master_background is None:
+            self.log.info('No master background could be calculated. Skipping.')
+            data.meta.cal_step.master_background = 'SKIP'
             return data
 
         # Now decalibrate the master background for each individual science slit.
@@ -119,7 +121,6 @@ class MasterBackgroundNRSSlitsPipe(Pipeline):
         mb_multislit = self.flat_field(mb_multislit)
 
         # Now apply the de-calibrated background to the original science
-        # At this point, should just be a slit-to-slit subtraction operation.
         result = nirspec_utils.apply_master_background(data, mb_multislit)
 
         # Mark as completed.
