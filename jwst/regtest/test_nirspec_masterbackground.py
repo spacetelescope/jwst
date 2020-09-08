@@ -7,6 +7,29 @@ from jwst.stpipe import Step
 pytestmark = pytest.mark.bigdata
 
 
+def test_nirspec_spec2_mbkg(rtdata, fitsdiff_default_kwargs):
+    """Run spec2 with master background"""
+
+    # Get data
+    rtdata.get_data('nirspec/mos/nrs_mos_with_bkgslits_msa.fits')
+    rtdata.get_data('nirspec/mos/nrs_mos_with_bkgslits_rate.fits')
+    collect_pipeline_cfgs('config')
+
+    # Run the pipeline
+    args = [
+        'config/calwebb_spec2.cfg',
+        rtdata.input,
+        '--steps.master_background.skip=false'
+    ]
+    Step.from_cmdline(args)
+
+    # Compare results
+    rtdata.output = "nrs_mos_with_bkgslits_cal.fits"
+    rtdata.get_truth('truth/test_nirspec_mos_mbkg_user/nrs_mos_with_bkgslits_cal.fits')
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
+
+
 def test_nirspec_fs_mbkg_user(rtdata, fitsdiff_default_kwargs):
     """Run a test for NIRSpec FS data with a user-supplied background file."""
 
