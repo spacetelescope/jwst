@@ -6,7 +6,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def apply_master_background(source_model, bkg_model):
+def apply_master_background(source_model, bkg_model, inverse=False):
     """Subtract 2D master background signal from each source
     slitlet in the input MultiSlitModel.
 
@@ -18,6 +18,9 @@ def apply_master_background(source_model, bkg_model):
     bkg_model : `~jwst.datamodels.MultiSlitModel`
         The data model containing 2D background slit instances.
 
+    inverse : boolean
+        Invert the math operations used to apply the background.
+
     Returns
     -------
     output_model: `~jwst.datamodels.MultiSlitModel`
@@ -25,14 +28,21 @@ def apply_master_background(source_model, bkg_model):
     """
     from .master_background_step import subtract_2d_background
 
-    log.info('Subtracting master background from each MOS source slitlet')
+    if inverse:
+        log.info('Adding master background from each MOS source slitlet')
+        bkg = bkg_model.copy()
+        for slit in bkg.slits:
+            slit.data *= -1.0
+    else:
+        log.info('Subtracting master background from each MOS source slitlet')
+        bkg = bkg_model
 
     # This does a one-to-one subtraction of the data in each background
     # slit from the data in the corresponding source slit (i.e. the
     # two MultiSlitModels must have matching numbers of slit instances).
     # This may be changed in the future to only do the subtraction from
     # a certain subset of source slits.
-    output_model = subtract_2d_background(source_model, bkg_model)
+    output_model = subtract_2d_background(source_model, bkg)
 
     return output_model
 

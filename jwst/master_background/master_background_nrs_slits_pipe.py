@@ -35,9 +35,10 @@ class MasterBackgroundNRSSlitsPipe(Pipeline):
     """
 
     spec = """
-        user_background = string(default=None)   # Path to user-supplied master background
-        save_background = boolean(default=False) # Save computed master background
         force_subtract = boolean(default=False)  # Force subtracting master background
+        save_background = boolean(default=False) # Save computed master background
+        user_background = string(default=None)   # Path to user-supplied master background
+        inverse = boolean(default=False)    # Invert the operation
         output_use_model = boolean(default=True)
     """
 
@@ -128,7 +129,7 @@ class MasterBackgroundNRSSlitsPipe(Pipeline):
         mb_multislit = self.flat_field(mb_multislit)
 
         # Now apply the de-calibrated background to the original science
-        result = nirspec_utils.apply_master_background(data, mb_multislit)
+        result = nirspec_utils.apply_master_background(data, mb_multislit, inverse=self.inverse)
 
         # Mark as completed.
         result.meta.cal_step.master_background = 'COMPLETE'
