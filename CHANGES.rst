@@ -70,6 +70,11 @@ pipeline
 
 - Include the per-slit failure traceback in any RuntimeError raised in Spec2Pipeline. [#5315]
 
+scripts
+-------
+
+- Add pointing analysis commands v1_calculate and pointing_summary. [#5311]
+
 ramp_fitting
 ------------
 
