@@ -7,6 +7,10 @@ from ..pathloss import pathloss_step
 from ..photom import photom_step
 from ..stpipe import Pipeline
 
+# Step parameters to generally ignore when copying from the parent steps.
+PARS_TO_IGNORE = ['output_ext', 'output_file', 'output_use_model', 'output_use_index',
+                  'pre_hooks', 'post_hooks', 'save_results', 'suffix']
+
 
 class MasterBackgroundNRSSlitsPipe(Pipeline):
     """Apply master background processing to NIRSpec Slit-like data
@@ -79,6 +83,9 @@ class MasterBackgroundNRSSlitsPipe(Pipeline):
             data.meta.cal_step.master_background = 'SKIP'
             return data
 
+        # Set relevant parameters from the parent version of the steps
+        self.set_step_pars()
+
         # First pass: just do the calibration to determine the correction
         # arrays. However, force all slits to be processed as extended sources.
         self.pathloss.source_type = 'EXTENDED'
@@ -127,3 +134,15 @@ class MasterBackgroundNRSSlitsPipe(Pipeline):
         result.meta.cal_step.master_background = 'COMPLETE'
 
         return result
+
+    def set_step_pars(self):
+        """Set substep parameters from the parents substeps"""
+        if not self.parent:
+            return
+
+        # Flat field
+        ff_pars = self.parent.flat_field.get_pars(full_spec=False)
+        for par in ['inverse', 'save_interpolated_flat'] + PARS_TO_IGNORE:
+            if par in ff_pars:
+                del ff_pars[par]
+        self.flat_field.update(ff_pars)

@@ -1264,6 +1264,17 @@ class Step():
 
         return pars_model
 
+    def update(self, attributes):
+        """Update step attributes
+
+        Parameters
+        ----------
+        attributes : dict
+            Attributes to update
+        """
+        for attribute, value in attributes.items():
+            setattr(self, attribute, value)
+
 
 # #########
 # Utilities
