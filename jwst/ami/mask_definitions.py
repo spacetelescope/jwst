@@ -11,7 +11,6 @@ m = 1.0
 mm = 1.0e-3 * m
 um = 1.0e-6 * m
 
-... resume below in rotdeg
 
 class NRM_mask_definitions():
 
