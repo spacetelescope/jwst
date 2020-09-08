@@ -40,33 +40,35 @@ including tagged releases, DMS builds used in operations, and development versio
 Remember that all conda operations must be done from within a bash shell.
 
 
-### Installing From Github
+### Installing latest releases
 
-You can install various versions of `jwst` directly from the code repo on Github.
-For example, to install a fully tested and tagged release version, such as `jwst 0.16.2`,
-enter (from a bash shell):
+You can install the latest released version via `pip`.  From a bash shell:
+
+    conda create -n <env_name> python
+    conda activate <env_name>
+    pip install jwst
+
+You can also install a specific version (from `jwst 0.17.0` onward):
+
+    conda create -n <env_name> python
+    conda activate <env_name>
+    pip install jwst==0.17.0
+
+Installing specific versions before `jwst 0.17.0` need to be installed from Github:
 
     conda create -n <env_name> python
     conda activate <env_name>
     pip install git+https://github.com/spacetelescope/jwst@0.16.2
 
-Or to install the latest released version from Github:
 
-    conda create -n <env_name> python
-    conda activate <env_name>
-    pip install git+https://github.com/spacetelescope/jwst@stable
+### Installing the development version from Github
 
-Or to install the latest development version (not as well tested) from the
+You can install the latest development version (not as well tested) from the
 Github master branch:
 
     conda create -n <env_name> python
     conda activate <env_name>
     pip install git+https://github.com/spacetelescope/jwst
-
-In either case, you can also install extra dependencies needed for running unit
-and regression tests, if desired, using:
-
-    pip install "jwst[test] @ git+https://github.com/spacetelescope/jwst"
  
 
 ### Installing a DMS Operational Build
