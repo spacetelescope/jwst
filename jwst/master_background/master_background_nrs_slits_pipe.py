@@ -71,6 +71,18 @@ class MasterBackgroundNRSSlitsPipe(Pipeline):
             has already been applied and, if so, the master background step is skipped.
             If set to True, the step logic is bypassed and the master background is subtracted.
 
+        Attributes
+        ----------
+        correction_pars : dict
+            The master background information from a previous invocation of the step.
+            Keys are:
+
+            - "masterbkg_1d": `~jwst.datamodels.CombinedSpecModel`
+                The 1D version of the master background.
+
+            - "masterbkg_2d": `~jwst.datamodels.MultiSlitModel`
+                The 2D slit-based version of the master background.
+
         Returns
         -------
         result : `~jwst.datamodels.MultiSlitModel`
@@ -131,9 +143,13 @@ class MasterBackgroundNRSSlitsPipe(Pipeline):
         # Now apply the de-calibrated background to the original science
         result = nirspec_utils.apply_master_background(data, mb_multislit, inverse=self.inverse)
 
-        # Mark as completed.
+        # Mark as completed and retur
         result.meta.cal_step.master_background = 'COMPLETE'
 
+        self.correction_pars = {
+            'masterbkg_1d': master_background,
+            'masterbkg_2d': mb_multislit
+        }
         return result
 
     def set_step_pars(self):
