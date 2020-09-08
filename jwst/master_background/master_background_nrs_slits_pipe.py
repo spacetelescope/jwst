@@ -56,6 +56,7 @@ class MasterBackgroundNRSSlitsPipe(Pipeline):
         Parameters
         ----------
         data : `~jwst.datamodels.MultiSlitModel`
+            The data to operate on.
 
         user_background : None, string, or `~jwst.datamodels.MultiSpecModel`
             Optional user-supplied master background 1D spectrum, path to file
@@ -95,6 +96,58 @@ class MasterBackgroundNRSSlitsPipe(Pipeline):
             self.log.info('Background subtraction has already occurred. Skipping.')
             data.meta.cal_step.master_background = 'SKIP'
             return data
+
+        if self.use_correction_pars:
+            self.log.info('Using pre-calculated correction parameters.')
+            master_background = self.correction_pars['masterbkg_1d']
+            mb_multislit = self.correction_pars['masterbkg_2d']
+        else:
+            self.log.info('Calculating master background')
+            master_background, mb_multislit = self._calc_master_background(data)
+
+        # Now apply the de-calibrated background to the original science
+        result = nirspec_utils.apply_master_background(data, mb_multislit, inverse=self.inverse)
+
+        # Mark as completed and setup return data
+        result.meta.cal_step.master_background = 'COMPLETE'
+        self.correction_pars = {
+            'masterbkg_1d': master_background,
+            'masterbkg_2d': mb_multislit
+        }
+        return result
+
+    def set_step_pars(self):
+        """Set substep parameters from the parents substeps"""
+        if not self.parent:
+            return
+
+        steps = ['barshadow', 'flat_field', 'pathloss', 'photom']
+        pars_to_ignore = {
+            'barshadow': ['source_type'],
+            'flat_field': ['save_interpolated_flat'],
+            'pathloss': ['source_type'],
+            'photom': ['source_type']
+        }
+
+        for step in steps:
+            pars = getattr(self.parent, step).get_pars()
+            for par in pars_to_ignore[step] + GLOBAL_PARS_TO_IGNORE:
+                del pars[par]
+            getattr(self, step).update(pars)
+
+    def _calc_master_background(self, data):
+        """Calculate master background from background slits
+
+        Parameters
+        ----------
+        data : `~jwst.datamodels.MultiSlitModel`
+            The data to operate on.
+
+        Returns
+        -------
+        masterbkg_1d, masterbkg_2d : `~jwst.datamodels.CombinedSpecModel`, `~jwst.datamodels.MultiSlitModel`
+            The master background in 1d and 2d, multislit formats.
+        """
 
         # Set relevant parameters from the parent version of the steps
         self.set_step_pars()
@@ -140,33 +193,4 @@ class MasterBackgroundNRSSlitsPipe(Pipeline):
         mb_multislit = self.pathloss(mb_multislit)
         mb_multislit = self.flat_field(mb_multislit)
 
-        # Now apply the de-calibrated background to the original science
-        result = nirspec_utils.apply_master_background(data, mb_multislit, inverse=self.inverse)
-
-        # Mark as completed and retur
-        result.meta.cal_step.master_background = 'COMPLETE'
-
-        self.correction_pars = {
-            'masterbkg_1d': master_background,
-            'masterbkg_2d': mb_multislit
-        }
-        return result
-
-    def set_step_pars(self):
-        """Set substep parameters from the parents substeps"""
-        if not self.parent:
-            return
-
-        steps = ['barshadow', 'flat_field', 'pathloss', 'photom']
-        pars_to_ignore = {
-            'barshadow': ['source_type'],
-            'flat_field': ['save_interpolated_flat'],
-            'pathloss': ['source_type'],
-            'photom': ['source_type']
-        }
-
-        for step in steps:
-            pars = getattr(self.parent, step).get_pars()
-            for par in pars_to_ignore[step] + GLOBAL_PARS_TO_IGNORE:
-                del pars[par]
-            getattr(self, step).update(pars)
+        return master_background, mb_multislit
