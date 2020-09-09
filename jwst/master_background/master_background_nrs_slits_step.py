@@ -117,14 +117,14 @@ class MasterBackgroundNRSSlitsStep(Pipeline):
             # Check that a master background was actually determined.
             if master_background is None:
                 self.log.info('No master background could be calculated. Skipping.')
-                data.meta.cal_step.master_background = 'SKIP'
+                self.record_step_status(data, 'master_background', False)
                 return data
 
             # Now apply the de-calibrated background to the original science
             result = nirspec_utils.apply_master_background(data_model, mb_multislit, inverse=self.inverse)
 
             # Mark as completed and setup return data
-            result.meta.cal_step.master_background = 'COMPLETE'
+            self.record_step_status(result, 'master_background', True)
             self.correction_pars = {
                 'masterbkg_1d': master_background,
                 'masterbkg_2d': mb_multislit
