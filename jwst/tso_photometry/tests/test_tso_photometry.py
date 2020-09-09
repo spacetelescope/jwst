@@ -56,11 +56,12 @@ def set_meta(datamodel, sub64p=False):
     """Assign some metadata"""
 
     datamodel.meta.exposure.nints = datamodel.data.shape[0]
-    datamodel.meta.exposure.ngroups = 8
-    datamodel.meta.exposure.group_time = 10.7 * datamodel.meta.exposure.ngroups
+    datamodel.meta.exposure.integration_time = 10.7
     datamodel.meta.exposure.start_time = 58704.62847
 
     datamodel.meta.exposure.integration_start = 5
+    datamodel.meta.exposure.integration_end = (
+        datamodel.meta.exposure.integration_start + datamodel.meta.exposure.nints - 1)
 
     datamodel.meta.instrument.name = 'NIRCAM'
     datamodel.meta.instrument.detector = 'NRCA2'
@@ -229,7 +230,7 @@ def test_tso_phot_4():
                                       radius + 1., radius_inner,
                                       radius_outer)
 
-    int_times = np.array([58704.63293, 58704.641845, 58704.65076,
-                          58704.65968, 58704.6686, 58704.677512,
-                          58704.686428])
+    int_times = np.array([58704.62853, 58704.628655, 58704.62878,
+                          58704.62890, 58704.6290, 58704.6291511,
+                          58704.629275])
     assert np.allclose(catalog['MJD'], int_times, rtol=1.e-8)

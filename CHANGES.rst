@@ -54,6 +54,11 @@ pipeline
 - Include the per-slit failure traceback in any RuntimeError raised in Spec2Pipeline. [#5315]
 
 
+tso_photometry
+--------------
+
+- Fix a bug in the computation of integration time stamps when the INT_TIMES
+  table is not available. [#5318]
 
 0.17.0 (2020-08-28)
 ===================
