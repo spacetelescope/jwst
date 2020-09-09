@@ -14,7 +14,7 @@ GLOBAL_PARS_TO_IGNORE = ['output_ext', 'output_file', 'output_use_model', 'outpu
                          'inverse', 'pre_hooks', 'post_hooks', 'save_results', 'suffix']
 
 
-class MasterBackgroundNRSSlitsPipe(Pipeline):
+class MasterBackgroundNRSSlitsStep(Pipeline):
     """Apply master background processing to NIRSpec Slit-like data
 
     For MOS, and ignoring FS, the calibration process needs to occur

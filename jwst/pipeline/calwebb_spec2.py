@@ -18,7 +18,7 @@ from ..extract_2d import extract_2d_step
 from ..flatfield import flat_field_step
 from ..fringe import fringe_step
 from ..imprint import imprint_step
-from ..master_background import master_background_nrs_slits_pipe
+from ..master_background import master_background_nrs_slits_step
 from ..msaflagopen import msaflagopen_step
 from ..pathloss import pathloss_step
 from ..photom import photom_step
@@ -62,7 +62,7 @@ class Spec2Pipeline(Pipeline):
         'imprint_subtract': imprint_step.ImprintStep,
         'msa_flagging': msaflagopen_step.MSAFlagOpenStep,
         'extract_2d': extract_2d_step.Extract2dStep,
-        'master_background': master_background_nrs_slits_pipe.MasterBackgroundNRSSlitsPipe,
+        'master_background': master_background_nrs_slits_step.MasterBackgroundNRSSlitsStep,
         'wavecorr': wavecorr_step.WavecorrStep,
         'flat_field': flat_field_step.FlatFieldStep,
         'srctype': srctype_step.SourceTypeStep,

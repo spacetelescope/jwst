@@ -4,7 +4,7 @@ from astropy.io.fits.diff import FITSDiff
 import numpy as np
 
 import jwst.datamodels as dm
-from jwst.master_background import MasterBackgroundNRSSlitsPipe
+from jwst.master_background import MasterBackgroundNRSSlitsStep
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
@@ -39,7 +39,7 @@ def test_masterbkg_rerun(rtdata):
     """Test to ensure sequential runs of the step are consistent"""
     data = dm.open(rtdata.get_data('nirspec/mos/nrs_mos_with_bkgslits_srctype.fits'))
 
-    mbs = MasterBackgroundNRSSlitsPipe()
+    mbs = MasterBackgroundNRSSlitsStep()
     corrected = mbs.run(data)
     corrected_again = mbs.run(data)
 
@@ -55,7 +55,7 @@ def test_masterbkg_corrpars(rtdata):
     """Test for correction parameters"""
     data = dm.open(rtdata.get_data('nirspec/mos/nrs_mos_with_bkgslits_srctype.fits'))
 
-    mbs = MasterBackgroundNRSSlitsPipe()
+    mbs = MasterBackgroundNRSSlitsStep()
     corrected = mbs.run(data)
 
     mbs.use_correction_pars = True
