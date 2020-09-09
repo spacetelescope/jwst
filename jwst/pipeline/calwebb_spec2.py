@@ -98,9 +98,9 @@ class Spec2Pipeline(Pipeline):
         asn = self.load_as_level2_asn(data)
 
         # Each exposure is a product in the association.
-        # Process each exposure.
+        # Process each exposure.  Delay reporting failures until the end.
         results = []
-        has_exceptions = False
+        failures = []
         for product in asn['products']:
             self.log.info('Processing product {}'.format(product['name']))
             self.output_file = product['name']
@@ -121,15 +121,13 @@ class Spec2Pipeline(Pipeline):
                 raise exception
             except Exception:
                 traceback.print_exc()
-                has_exceptions = True
+                failures.append(traceback.format_exc())
             else:
                 if result is not None:
                     results.append(result)
 
-        if has_exceptions and self.fail_on_exception:
-            raise RuntimeError(
-                'One or more products failed to process. Failing calibration.'
-            )
+        if len(failures) > 0 and self.fail_on_exception:
+            raise RuntimeError('\n'.join(failures))
 
         # We're done
         self.log.info('Ending calwebb_spec2')
