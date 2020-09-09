@@ -44,7 +44,9 @@ pipeline
 
 - Spec3Pipeline check whether master background subtraction has already occurred. [#5308]
 
-- Implement master background subtraction in Spec2Pipeline for NIRSpec MOS data [#5302]
+- Implement master background subtraction in Spec2Pipeline for NIRSpec MOS data. [#5302]
+
+- Include the per-slit failure traceback in any RuntimeError raised in Spec2Pipeline. [#5315]
 
 
 0.17.0 (2020-08-28)
