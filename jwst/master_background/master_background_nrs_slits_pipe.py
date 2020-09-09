@@ -1,4 +1,5 @@
 """Master Background Pipeline for applying Master Background to NIRSpec Slit-like data"""
+from contextlib import contextmanager
 
 from ..barshadow import barshadow_step
 from .. import datamodels
@@ -107,6 +108,12 @@ class MasterBackgroundNRSSlitsPipe(Pipeline):
                 self.log.info('Calculating master background')
                 master_background, mb_multislit = self._calc_master_background(data_model)
 
+            # Check that a master background was actually determined.
+            if master_background is None:
+                self.log.info('No master background could be calculated. Skipping.')
+                data.meta.cal_step.master_background = 'SKIP'
+                return data
+
             # Now apply the de-calibrated background to the original science
             result = nirspec_utils.apply_master_background(data_model, mb_multislit, inverse=self.inverse)
 
@@ -138,6 +145,15 @@ class MasterBackgroundNRSSlitsPipe(Pipeline):
                 del pars[par]
             getattr(self, step).update(pars)
 
+    @contextmanager
+    def preserve_pars(self):
+        """Ensure no changes to the Step's parameters"""
+        saved_pars = self.get_pars()
+        try:
+            yield saved_pars
+        finally:
+            self.update(saved_pars)
+
     def _calc_master_background(self, data):
         """Calculate master background from background slits
 
@@ -150,52 +166,52 @@ class MasterBackgroundNRSSlitsPipe(Pipeline):
         -------
         masterbkg_1d, masterbkg_2d : `~jwst.datamodels.CombinedSpecModel`, `~jwst.datamodels.MultiSlitModel`
             The master background in 1d and 2d, multislit formats.
+            None is returned when a master background could not be determined.
         """
 
-        # Set relevant parameters from the parent version of the steps
-        self.set_step_pars()
-        saved_pars = self.get_pars()
+        with self.preserve_pars():
 
-        # First pass: just do the calibration to determine the correction
-        # arrays. However, force all slits to be processed as extended sources.
-        self.pathloss.source_type = 'EXTENDED'
-        self.barshadow.source_type = 'EXTENDED'
-        self.photom.source_type = 'EXTENDED'
+            # Set relevant parameters from the parent version of the steps.
+            self.set_step_pars()
 
-        pre_calibrated = self.flat_field(data)
-        pre_calibrated = self.pathloss(pre_calibrated)
-        pre_calibrated = self.barshadow(pre_calibrated)
-        pre_calibrated = self.photom(pre_calibrated)
+            # First pass: just do the calibration to determine the correction
+            # arrays. However, force all slits to be processed as extended sources.
+            self.pathloss.source_type = 'EXTENDED'
+            self.barshadow.source_type = 'EXTENDED'
+            self.photom.source_type = 'EXTENDED'
 
-        # Create the 1D, fully calibrated master background.
-        master_background = nirspec_utils.create_background_from_multislit(pre_calibrated)
-        if master_background is None:
-            self.log.info('No master background could be calculated. Skipping.')
-            data.meta.cal_step.master_background = 'SKIP'
-            return data
+            pre_calibrated = self.flat_field(data)
+            pre_calibrated = self.pathloss(pre_calibrated)
+            pre_calibrated = self.barshadow(pre_calibrated)
+            pre_calibrated = self.photom(pre_calibrated)
 
-        # Now decalibrate the master background for each individual science slit.
-        # First step is to map the master background into a MultiSlitModel
-        # where the science slits are replaced by the master background.
-        # Here the broadcasting from 1D to 2D need also occur.
-        mb_multislit = nirspec_utils.map_to_science_slits(pre_calibrated, master_background)
+            # Create the 1D, fully calibrated master background.
+            master_background = nirspec_utils.create_background_from_multislit(pre_calibrated)
+            if master_background is None:
+                self.log.debug('No master background could be calculated. Returning None')
+                return None, None
 
-        # Now that the master background is pretending to be science,
-        # walk backwards through the steps to uncalibrate, using the
-        # calibration factors carried from `pre_calibrated`.
-        self.photom.use_correction_pars = True
-        self.photom.inverse = True
-        self.barshadow.use_correction_pars = True
-        self.barshadow.inverse = True
-        self.pathloss.use_correction_pars = True
-        self.pathloss.inverse = True
-        self.flat_field.use_correction_pars = True
-        self.flat_field.inverse = True
+            # Now decalibrate the master background for each individual science slit.
+            # First step is to map the master background into a MultiSlitModel
+            # where the science slits are replaced by the master background.
+            # Here the broadcasting from 1D to 2D need also occur.
+            mb_multislit = nirspec_utils.map_to_science_slits(pre_calibrated, master_background)
 
-        mb_multislit = self.photom(mb_multislit)
-        mb_multislit = self.barshadow(mb_multislit)
-        mb_multislit = self.pathloss(mb_multislit)
-        mb_multislit = self.flat_field(mb_multislit)
+            # Now that the master background is pretending to be science,
+            # walk backwards through the steps to uncalibrate, using the
+            # calibration factors carried from `pre_calibrated`.
+            self.photom.use_correction_pars = True
+            self.photom.inverse = True
+            self.barshadow.use_correction_pars = True
+            self.barshadow.inverse = True
+            self.pathloss.use_correction_pars = True
+            self.pathloss.inverse = True
+            self.flat_field.use_correction_pars = True
+            self.flat_field.inverse = True
 
-        self.update(saved_pars)
+            mb_multislit = self.photom(mb_multislit)
+            mb_multislit = self.barshadow(mb_multislit)
+            mb_multislit = self.pathloss(mb_multislit)
+            mb_multislit = self.flat_field(mb_multislit)
+
         return master_background, mb_multislit
