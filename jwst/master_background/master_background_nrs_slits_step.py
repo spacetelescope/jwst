@@ -99,7 +99,7 @@ class MasterBackgroundNRSSlitsStep(Pipeline):
             if not self.force_subtract and \
                'COMPLETE' in [data_model.meta.cal_step.back_sub, data_model.meta.cal_step.master_background]:
                 self.log.info('Background subtraction has already occurred. Skipping.')
-                data.meta.cal_step.master_background = 'SKIP'
+                self.record_step_status(data, 'master_background', False)
                 return data
 
             if self.user_background:
@@ -130,8 +130,8 @@ class MasterBackgroundNRSSlitsStep(Pipeline):
                 'masterbkg_2d': mb_multislit
             }
             if self.save_background:
-                self.save_model(master_background, suffix='mb1d', force=True)
-                self.save_model(mb_multislit, suffix='mb2d', force=True)
+                self.save_model(master_background, suffix='masterbg', force=True)
+                self.save_model(mb_multislit, suffix='masterbg2d', force=True)
 
         return result
 
