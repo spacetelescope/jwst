@@ -10,7 +10,7 @@ from astropy.table import Table
 from numpy.testing import assert_allclose, assert_equal
 from astropy.io.fits import conf
 
-from .regtestdata import RegtestData
+from jwst.regtest.regtestdata import RegtestData
 from jwst.regtest.sdp_pools_source import SDPPoolsSource
 
 
@@ -23,8 +23,12 @@ conf.use_memmap = False
 @pytest.fixture(scope="session")
 def artifactory_repos(pytestconfig):
     """Provides Artifactory inputs_root and results_root"""
-    inputs_root = pytestconfig.getini('inputs_root')[0]
-    results_root = pytestconfig.getini('results_root')[0]
+    try:
+        inputs_root = pytestconfig.getini('inputs_root')[0]
+        results_root = pytestconfig.getini('results_root')[0]
+    except IndexError:
+        inputs_root = "jwst-pipeline"
+        results_root = "jwst-pipeline-results"
     return inputs_root, results_root
 
 
@@ -45,15 +49,18 @@ def pytest_runtest_makereport(item, call):
 def postmortem(request, fixturename):
     """Retrieve a fixture object if a test failed, else return None
     """
-    if request.node.report_setup.passed:
-        try:
-            if request.node.report_call.failed:
-                return request.node.funcargs.get(fixturename, None)
-        # Handle case where `report_call` hasn't been generated yet
-        # because the test hasn't finished running, as in the case of
-        # a user interrupt
-        except AttributeError:
-            return None
+    try:
+        if request.node.report_setup.passed:
+            try:
+                if request.node.report_call.failed:
+                    return request.node.funcargs.get(fixturename, None)
+            # Handle case where `report_call` hasn't been generated yet
+            # because the test hasn't finished running, as in the case of
+            # a user interrupt
+            except AttributeError:
+                return None
+    except AttributeError:
+        return None
 
 
 @pytest.fixture(scope='function', autouse=True)
@@ -296,9 +303,14 @@ def standard_pool(request):
 def pytest_generate_tests(metafunc):
     """Prefetch and parametrize a set of test pools"""
     if 'pool_path' in metafunc.fixturenames:
-        SDPPoolsSource.inputs_root = metafunc.config.getini('inputs_root')[0]
-        SDPPoolsSource.results_root = metafunc.config.getini('results_root')[0]
-        SDPPoolsSource.env = metafunc.config.getoption('env')
+        try:
+            SDPPoolsSource.inputs_root = metafunc.config.getini('inputs_root')[0]
+            SDPPoolsSource.results_root = metafunc.config.getini('results_root')[0]
+            SDPPoolsSource.env = metafunc.config.getoption('env')
+        except IndexError:
+            SDPPoolsSource.inputs_root = "jwst-pipeline"
+            SDPPoolsSource.results_root = "jwst-pipeline-results"
+            SDPPoolsSource.env = "dev"
 
         pools = SDPPoolsSource()
 

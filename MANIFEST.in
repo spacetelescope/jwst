@@ -1,8 +1,0 @@
-recursive-include jwst *.fits
-recursive-include jwst *.inc
-recursive-include jwst *.json
-recursive-include jwst *.txt
-recursive-include jwst *.cfg
-recursive-include jwst *.csv
-recursive-include jwst *.yaml
-recursive-include jwst *.asdf

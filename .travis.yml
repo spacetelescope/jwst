@@ -41,6 +41,11 @@ jobs:
         # Github master until it is released to PyPI
         - pip install git+https://github.com/spacetelescope/stdatamodels
 
+    - name: Test installed package
+      before_script: cd /
+      script:
+        - pytest --pyargs jwst
+
     - name: SDP dependencies in requirements-sdp.txt
       env:
         - CRDS_CONTEXT=jwst-edit
