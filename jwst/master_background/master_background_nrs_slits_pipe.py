@@ -90,7 +90,6 @@ class MasterBackgroundNRSSlitsPipe(Pipeline):
         -------
         result : `~jwst.datamodels.MultiSlitModel`
         """
-
         with datamodels.open(data) as data_model:
             # If some type of background processing had already been done. Abort.
             # UNLESS forcing is enacted.
@@ -102,8 +101,8 @@ class MasterBackgroundNRSSlitsPipe(Pipeline):
 
             if self.user_background:
                 self.log.info(f'Calculating master background from user-supplied background {self.user_background}')
-                with datamodels.open(self.user_background) as user_background:
-                    master_background, mb_multislit = self._calc_master_background(data_model, user_background)
+                user_background = datamodels.open(self.user_background)
+                master_background, mb_multislit = self._calc_master_background(data_model, user_background)
             elif self.use_correction_pars:
                 self.log.info('Using pre-calculated correction parameters.')
                 master_background = self.correction_pars['masterbkg_1d']
@@ -127,6 +126,9 @@ class MasterBackgroundNRSSlitsPipe(Pipeline):
                 'masterbkg_1d': master_background,
                 'masterbkg_2d': mb_multislit
             }
+            if self.save_background:
+                self.save_model(master_background, suffix='mb1d')
+                self.save_model(mb_multislit, suffix='mb2d')
 
         return result
 
