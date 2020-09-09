@@ -60,20 +60,6 @@ class MasterBackgroundNRSSlitsPipe(Pipeline):
         data : `~jwst.datamodels.MultiSlitModel`
             The data to operate on.
 
-        user_background : None, string, or `~jwst.datamodels.MultiSpecModel`
-            Optional user-supplied master background 1D spectrum, path to file
-            or opened datamodel
-
-        save_background : bool, optional
-            Save computed master background.
-
-        force_subtract : bool, optional
-            Optional user-supplied flag that overrides step logic to force subtraction of the
-            master background.
-            Default is False, in which case the step logic determines if the calspec2 background step
-            has already been applied and, if so, the master background step is skipped.
-            If set to True, the step logic is bypassed and the master background is subtracted.
-
         Attributes
         ----------
         correction_pars : dict
@@ -85,6 +71,20 @@ class MasterBackgroundNRSSlitsPipe(Pipeline):
 
             - "masterbkg_2d": `~jwst.datamodels.MultiSlitModel`
                 The 2D slit-based version of the master background.
+
+        force_subtract : bool, optional
+            Optional user-supplied flag that overrides step logic to force subtraction of the
+            master background.
+            Default is False, in which case the step logic determines if the calspec2 background step
+            has already been applied and, if so, the master background step is skipped.
+            If set to True, the step logic is bypassed and the master background is subtracted.
+
+        save_background : bool, optional
+            Save computed master background.
+
+        user_background : None, string, or `~jwst.datamodels.CombinedSpecModel`
+            Optional user-supplied master background 1D spectrum, path to file
+            or opened datamodel
 
         Returns
         -------
@@ -100,7 +100,11 @@ class MasterBackgroundNRSSlitsPipe(Pipeline):
                 data.meta.cal_step.master_background = 'SKIP'
                 return data
 
-            if self.use_correction_pars:
+            if self.user_background:
+                self.log.info(f'Calculating master background from user-supplied background {self.user_background}')
+                with datamodels.open(self.user_background) as user_background:
+                    master_background, mb_multislit = self._calc_master_background(data_model, user_background)
+            elif self.use_correction_pars:
                 self.log.info('Using pre-calculated correction parameters.')
                 master_background = self.correction_pars['masterbkg_1d']
                 mb_multislit = self.correction_pars['masterbkg_2d']
@@ -154,13 +158,17 @@ class MasterBackgroundNRSSlitsPipe(Pipeline):
         finally:
             self.update(saved_pars)
 
-    def _calc_master_background(self, data):
+    def _calc_master_background(self, data, user_background=None):
         """Calculate master background from background slits
 
         Parameters
         ----------
         data : `~jwst.datamodels.MultiSlitModel`
             The data to operate on.
+
+        user_background : None, string, or `~jwst.datamodels.CombinedSpecModel`
+            Optional user-supplied master background 1D spectrum, path to file
+            or opened datamodel
 
         Returns
         -------
@@ -186,7 +194,12 @@ class MasterBackgroundNRSSlitsPipe(Pipeline):
             pre_calibrated = self.photom(pre_calibrated)
 
             # Create the 1D, fully calibrated master background.
-            master_background = nirspec_utils.create_background_from_multislit(pre_calibrated)
+            if user_background:
+                self.log.debug(f'User background provided {user_background}')
+                master_background = user_background
+            else:
+                self.log.debug('Calculating 1D master background')
+                master_background = nirspec_utils.create_background_from_multislit(pre_calibrated)
             if master_background is None:
                 self.log.debug('No master background could be calculated. Returning None')
                 return None, None
