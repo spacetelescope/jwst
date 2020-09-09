@@ -164,8 +164,9 @@ def test_nirspec_mos_mbkg_user(rtdata, fitsdiff_default_kwargs):
 @pytest.mark.parametrize(
     'output_file',
     ['ifu_prism_source_on_NRS1_master_background.fits',
-    'ifu_prism_source_off_NRS1_o001_masterbg.fits'],
-    ids=["on-source", "off-source"]
+     'ifu_prism_source_off_NRS1_o001_masterbg.fits',
+     'ifu_prism_source_on_NRS1_o001_masterbg2d.fits'],
+    ids=["on-source", "off-source", "on-source"]
 )
 def test_nirspec_ifu_mbkg_nod(rtdata, fitsdiff_default_kwargs, output_file):
     """Test NIRSpec IFU prism nodded data."""
