@@ -1,6 +1,7 @@
 """Master Background Pipeline for applying Master Background to NIRSpec Slit-like data"""
 
 from ..barshadow import barshadow_step
+from .. import datamodels
 from ..flatfield import flat_field_step
 from ..master_background import nirspec_utils
 from ..pathloss import pathloss_step
@@ -89,31 +90,33 @@ class MasterBackgroundNRSSlitsPipe(Pipeline):
         result : `~jwst.datamodels.MultiSlitModel`
         """
 
-        # If some type of background processing had already been done. Abort.
-        # UNLESS forcing is enacted.
-        if not self.force_subtract and \
-           'COMPLETE' in [data.meta.cal_step.back_sub, data.meta.cal_step.master_background]:
-            self.log.info('Background subtraction has already occurred. Skipping.')
-            data.meta.cal_step.master_background = 'SKIP'
-            return data
+        with datamodels.open(data) as data_model:
+            # If some type of background processing had already been done. Abort.
+            # UNLESS forcing is enacted.
+            if not self.force_subtract and \
+               'COMPLETE' in [data_model.meta.cal_step.back_sub, data_model.meta.cal_step.master_background]:
+                self.log.info('Background subtraction has already occurred. Skipping.')
+                data.meta.cal_step.master_background = 'SKIP'
+                return data
 
-        if self.use_correction_pars:
-            self.log.info('Using pre-calculated correction parameters.')
-            master_background = self.correction_pars['masterbkg_1d']
-            mb_multislit = self.correction_pars['masterbkg_2d']
-        else:
-            self.log.info('Calculating master background')
-            master_background, mb_multislit = self._calc_master_background(data)
+            if self.use_correction_pars:
+                self.log.info('Using pre-calculated correction parameters.')
+                master_background = self.correction_pars['masterbkg_1d']
+                mb_multislit = self.correction_pars['masterbkg_2d']
+            else:
+                self.log.info('Calculating master background')
+                master_background, mb_multislit = self._calc_master_background(data_model)
 
-        # Now apply the de-calibrated background to the original science
-        result = nirspec_utils.apply_master_background(data, mb_multislit, inverse=self.inverse)
+            # Now apply the de-calibrated background to the original science
+            result = nirspec_utils.apply_master_background(data_model, mb_multislit, inverse=self.inverse)
 
-        # Mark as completed and setup return data
-        result.meta.cal_step.master_background = 'COMPLETE'
-        self.correction_pars = {
-            'masterbkg_1d': master_background,
-            'masterbkg_2d': mb_multislit
-        }
+            # Mark as completed and setup return data
+            result.meta.cal_step.master_background = 'COMPLETE'
+            self.correction_pars = {
+                'masterbkg_1d': master_background,
+                'masterbkg_2d': mb_multislit
+            }
+
         return result
 
     def set_step_pars(self):
@@ -151,6 +154,7 @@ class MasterBackgroundNRSSlitsPipe(Pipeline):
 
         # Set relevant parameters from the parent version of the steps
         self.set_step_pars()
+        saved_pars = self.get_pars()
 
         # First pass: just do the calibration to determine the correction
         # arrays. However, force all slits to be processed as extended sources.
@@ -193,4 +197,5 @@ class MasterBackgroundNRSSlitsPipe(Pipeline):
         mb_multislit = self.pathloss(mb_multislit)
         mb_multislit = self.flat_field(mb_multislit)
 
+        self.update(saved_pars)
         return master_background, mb_multislit

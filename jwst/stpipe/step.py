@@ -1270,10 +1270,23 @@ class Step():
         Parameters
         ----------
         attributes : dict
-            Attributes to update
+            Attributes to update. If a value is another dict,
+            recursively update those attributes.
+
+        Notes
+        -----
+        `attributes` is presumed to have been produced by the
+        `Step.get_pars` method. As such, the "steps" key is treated
+        special in that it is a dict whose keys are the steps assigned
+        directly as attributes to the current step. This is standard
+        practice for `Pipeline`-based steps.
         """
         for attribute, value in attributes.items():
-            setattr(self, attribute, value)
+            if attribute != 'steps':
+                setattr(self, attribute, value)
+            else:
+                for step_name, step_attributes in value.items():
+                    getattr(self, step_name).update(step_attributes)
 
 
 # #########
