@@ -46,6 +46,11 @@ pipeline
 
 - Implement master background subtraction in Spec2Pipeline for NIRSpec MOS data [#5302]
 
+tso_photometry
+--------------
+
+- Fix a bug in the computation of integration time stamps when the INT_TIMES
+  table is not available. [#5318]
 
 0.17.0 (2020-08-28)
 ===================
