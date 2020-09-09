@@ -127,8 +127,8 @@ class MasterBackgroundNRSSlitsPipe(Pipeline):
                 'masterbkg_2d': mb_multislit
             }
             if self.save_background:
-                self.save_model(master_background, suffix='mb1d')
-                self.save_model(mb_multislit, suffix='mb2d')
+                self.save_model(master_background, suffix='mb1d', force=True)
+                self.save_model(mb_multislit, suffix='mb2d', force=True)
 
         return result
 
