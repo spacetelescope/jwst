@@ -52,6 +52,9 @@ class MasterBackgroundNRSSlitsStep(Pipeline):
         'photom': photom_step.PhotomStep,
     }
 
+    # No need to prefetch. This will have been done by the parent step.
+    prefetch_references = False
+
     def process(self, data):
         """Compute and subtract a master background spectrum
 
