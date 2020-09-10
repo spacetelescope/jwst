@@ -62,7 +62,7 @@ class Spec2Pipeline(Pipeline):
         'imprint_subtract': imprint_step.ImprintStep,
         'msa_flagging': msaflagopen_step.MSAFlagOpenStep,
         'extract_2d': extract_2d_step.Extract2dStep,
-        'master_background': master_background_nrs_slits_step.MasterBackgroundNRSSlitsStep,
+        'master_background': master_background_nrs_slits_step.MasterBackgroundNrsSlitsStep,
         'wavecorr': wavecorr_step.WavecorrStep,
         'flat_field': flat_field_step.FlatFieldStep,
         'srctype': srctype_step.SourceTypeStep,

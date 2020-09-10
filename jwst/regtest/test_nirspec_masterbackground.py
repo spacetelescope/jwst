@@ -4,7 +4,7 @@ from astropy.io.fits.diff import FITSDiff
 import numpy as np
 
 import jwst.datamodels as dm
-from jwst.master_background import MasterBackgroundNRSSlitsStep
+from jwst.master_background import MasterBackgroundNrsSlitsStep
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
@@ -39,7 +39,7 @@ def test_masterbkg_rerun(rtdata):
     """Test to ensure sequential runs of the step are consistent"""
     data = dm.open(rtdata.get_data('nirspec/mos/nrs_mos_with_bkgslits_srctype.fits'))
 
-    mbs = MasterBackgroundNRSSlitsStep()
+    mbs = MasterBackgroundNrsSlitsStep()
     corrected = mbs.run(data)
     corrected_again = mbs.run(data)
 
@@ -55,7 +55,7 @@ def test_masterbkg_corrpars(rtdata):
     """Test for correction parameters"""
     data = dm.open(rtdata.get_data('nirspec/mos/nrs_mos_with_bkgslits_srctype.fits'))
 
-    mbs = MasterBackgroundNRSSlitsStep()
+    mbs = MasterBackgroundNrsSlitsStep()
     corrected = mbs.run(data)
 
     mbs.use_correction_pars = True
@@ -77,12 +77,6 @@ def test_nirspec_spec2_mbkg(suffix, run_spec2_mbkg, fitsdiff_default_kwargs):
     """Run spec2 with master background"""
     rtdata = run_spec2_mbkg
     rt.is_like_truth(rtdata, fitsdiff_default_kwargs, suffix, truth_path='truth/test_nirspec_mos_mbkg_user')
-
-    # Compare results
-    #rtdata.output = "nrs_mos_with_bkgslits_cal.fits"
-    #rtdata.get_truth('truth/test_nirspec_mos_mbkg_user/nrs_mos_with_bkgslits_cal.fits')
-    #diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
-    #assert diff.identical, diff.report()
 
 
 def test_nirspec_fs_mbkg_user(rtdata, fitsdiff_default_kwargs):
@@ -166,7 +160,7 @@ def test_nirspec_mos_mbkg_user(rtdata, fitsdiff_default_kwargs):
     ['ifu_prism_source_on_NRS1_master_background.fits',
      'ifu_prism_source_off_NRS1_o001_masterbg1d.fits',
      'ifu_prism_source_on_NRS1_o001_masterbg2d.fits'],
-    ids=["on-source", "off-source", "on-source"]
+    ids=["on-source", "off-source", "on-source2d"]
 )
 def test_nirspec_ifu_mbkg_nod(rtdata, fitsdiff_default_kwargs, output_file):
     """Test NIRSpec IFU prism nodded data."""

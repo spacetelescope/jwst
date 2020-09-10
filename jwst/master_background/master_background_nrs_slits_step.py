@@ -1,20 +1,22 @@
 """Master Background Pipeline for applying Master Background to NIRSpec Slit-like data"""
 from contextlib import contextmanager
 
+from . import nirspec_utils
 from ..barshadow import barshadow_step
 from .. import datamodels
 from ..flatfield import flat_field_step
-from ..master_background import nirspec_utils
 from ..pathloss import pathloss_step
 from ..photom import photom_step
 from ..stpipe import Pipeline
+
+__all__ = ['MasterBackgroundNrsSlitsStep']
 
 # Step parameters to generally ignore when copying from the parent steps.
 GLOBAL_PARS_TO_IGNORE = ['output_ext', 'output_file', 'output_use_model', 'output_use_index',
                          'inverse', 'pre_hooks', 'post_hooks', 'save_results', 'suffix']
 
 
-class MasterBackgroundNRSSlitsStep(Pipeline):
+class MasterBackgroundNrsSlitsStep(Pipeline):
     """Apply master background processing to NIRSpec Slit-like data
 
     For MOS, and ignoring FS, the calibration process needs to occur
