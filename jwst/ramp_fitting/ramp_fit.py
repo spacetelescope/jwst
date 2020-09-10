@@ -223,6 +223,7 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
         int_model.var_poisson = int_var_poisson
         int_model.var_rnoise = int_var_rnoise
         int_model.err = int_err
+        int_model.int_times = int_times
 
         # Populate the optional output model
         if save_opt:
@@ -292,6 +293,7 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
         int_model, opt_model, out_model = create_output_models(input_model,
                             number_of_integrations, save_opt, total_cols, total_rows,
                                                                actual_segments, actual_CRs)
+        int_model.int_times = int_times
 
         # iterate over the number of slices and place the results into the output models
         for resultslice in real_results:
@@ -1039,7 +1041,6 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
         del pixeldq
 
     # Output integration-specific results to separate file
-    int_times = None
     int_model = utils.output_integ(slope_int, dq_int, effintim,
                                    var_p3, var_r3, var_both3, int_times)
     if opt_res is not None:
