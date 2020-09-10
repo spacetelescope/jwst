@@ -71,7 +71,7 @@ def test_masterbkg_corrpars(rtdata):
 
 @pytest.mark.parametrize(
     'suffix',
-    ['cal', 'masterbg', 'masterbg2d']
+    ['cal', 'masterbg1d', 'masterbg2d']
 )
 def test_nirspec_spec2_mbkg(suffix, run_spec2_mbkg, fitsdiff_default_kwargs):
     """Run spec2 with master background"""
@@ -164,7 +164,7 @@ def test_nirspec_mos_mbkg_user(rtdata, fitsdiff_default_kwargs):
 @pytest.mark.parametrize(
     'output_file',
     ['ifu_prism_source_on_NRS1_master_background.fits',
-     'ifu_prism_source_off_NRS1_o001_masterbg.fits',
+     'ifu_prism_source_off_NRS1_o001_masterbg1d.fits',
      'ifu_prism_source_on_NRS1_o001_masterbg2d.fits'],
     ids=["on-source", "off-source", "on-source"]
 )

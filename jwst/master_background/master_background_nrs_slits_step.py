@@ -130,7 +130,7 @@ class MasterBackgroundNRSSlitsStep(Pipeline):
                 'masterbkg_2d': mb_multislit
             }
             if self.save_background:
-                self.save_model(master_background, suffix='masterbg', force=True)
+                self.save_model(master_background, suffix='masterbg1d', force=True)
                 self.save_model(mb_multislit, suffix='masterbg2d', force=True)
 
         return result
