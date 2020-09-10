@@ -2299,8 +2299,8 @@ class IFUCubeData():
                 ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4C'
 
             if self.instrument == 'NIRSPEC':
-                ifucube_model.meta.wcsinfo.cunit1 = 'meters'
-                ifucube_model.meta.wcsinfo.cunit2 = 'meters'
+                ifucube_model.meta.wcsinfo.cunit1 = 'meter'
+                ifucube_model.meta.wcsinfo.cunit2 = 'meter'
                 ifucube_model.meta.wcsinfo.ctype1 = 'NRSLICERX'
                 ifucube_model.meta.wcsinfo.ctype2 = 'NRSSLICERY'
 
