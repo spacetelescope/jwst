@@ -1,12 +1,11 @@
 """Master Background Pipeline for applying Master Background to NIRSpec Slit-like data"""
-from contextlib import contextmanager
-
 from . import nirspec_utils
 from ..barshadow import barshadow_step
 from .. import datamodels
 from ..flatfield import flat_field_step
 from ..pathloss import pathloss_step
 from ..photom import photom_step
+from ..stpipe.step import preserve_step_pars
 from ..stpipe import Pipeline
 
 __all__ = ['MasterBackgroundNrsSlitsStep']
@@ -137,7 +136,7 @@ class MasterBackgroundNrsSlitsStep(Pipeline):
 
         return result
 
-    def set_step_pars(self):
+    def set_pars_from_parent(self):
         """Set substep parameters from the parents substeps"""
         if not self.parent:
             return
@@ -155,15 +154,6 @@ class MasterBackgroundNrsSlitsStep(Pipeline):
             for par in pars_to_ignore[step] + GLOBAL_PARS_TO_IGNORE:
                 del pars[par]
             getattr(self, step).update_pars(pars)
-
-    @contextmanager
-    def preserve_pars(self):
-        """Ensure no changes to the Step's parameters"""
-        saved_pars = self.get_pars()
-        try:
-            yield saved_pars
-        finally:
-            self.update_pars(saved_pars)
 
     def _calc_master_background(self, data, user_background=None):
         """Calculate master background from background slits
@@ -184,10 +174,16 @@ class MasterBackgroundNrsSlitsStep(Pipeline):
             None is returned when a master background could not be determined.
         """
 
-        with self.preserve_pars():
+        # Since the parameters for the substeps are modified during processing,
+        # wrap the processing in a context manager that restores all parameters.
+        with preserve_step_pars(self):
 
-            # Set relevant parameters from the parent version of the steps.
-            self.set_step_pars()
+            # When this step is called from another step/pipeliine,
+            # retrieve the matching substep parameters from the parent.
+            # This permits the substeps to perform similarly to what is
+            # specified in the parent's substeps, such as skipping.
+            # Any parameters that need be changed below are ignored.
+            self.set_pars_from_parent()
 
             # First pass: just do the calibration to determine the correction
             # arrays. However, force all slits to be processed as extended sources.
