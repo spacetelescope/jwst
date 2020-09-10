@@ -154,7 +154,7 @@ class MasterBackgroundNrsSlitsStep(Pipeline):
             pars = getattr(self.parent, step).get_pars()
             for par in pars_to_ignore[step] + GLOBAL_PARS_TO_IGNORE:
                 del pars[par]
-            getattr(self, step).update(pars)
+            getattr(self, step).update_pars(pars)
 
     @contextmanager
     def preserve_pars(self):
@@ -163,7 +163,7 @@ class MasterBackgroundNrsSlitsStep(Pipeline):
         try:
             yield saved_pars
         finally:
-            self.update(saved_pars)
+            self.update_pars(saved_pars)
 
     def _calc_master_background(self, data, user_background=None):
         """Calculate master background from background slits

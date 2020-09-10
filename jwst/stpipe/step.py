@@ -1264,29 +1264,35 @@ class Step():
 
         return pars_model
 
-    def update(self, attributes):
-        """Update step attributes
+    def update_pars(self, parameters):
+        """Update step parameters
 
+        Only existing parameters are updated. Otherwise, new keys
+        found in `parameters` are ignored.
+        
         Parameters
         ----------
-        attributes : dict
-            Attributes to update. If a value is another dict,
-            recursively update those attributes.
+        parameters : dict
+            Parameters to update.
 
         Notes
         -----
-        `attributes` is presumed to have been produced by the
+        `parameters` is presumed to have been produced by the
         `Step.get_pars` method. As such, the "steps" key is treated
         special in that it is a dict whose keys are the steps assigned
-        directly as attributes to the current step. This is standard
+        directly as parameters to the current step. This is standard
         practice for `Pipeline`-based steps.
         """
-        for attribute, value in attributes.items():
-            if attribute != 'steps':
-                setattr(self, attribute, value)
+        existing = self.get_pars().keys()
+        for parameter, value in parameters.items():
+            if parameter in existing:
+                if parameter != 'steps':
+                    setattr(self, parameter, value)
+                else:
+                    for step_name, step_parameters in value.items():
+                        getattr(self, step_name).update_pars(step_parameters)
             else:
-                for step_name, step_attributes in value.items():
-                    getattr(self, step_name).update(step_attributes)
+                self.log.debug(f'Parameter {parameter} is not valid for step {self}. Ignoring.')
 
 
 # #########
