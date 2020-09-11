@@ -173,19 +173,19 @@ def apply_flat_field(science, flat, inverse=False):
         flat_err = sub_flat.err.copy()
         sub_flat.close()
 
-    # Find pixels in the flat that have a value of NaN and add to
-    # DQ to DO_NOT_USE + NO_FLAT_FIELD
+    # Find pixels in the flat that have a value of NaN and set
+    # DQ = DO_NOT_USE + NO_FLAT_FIELD
     bad_flag = dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['NO_FLAT_FIELD']
 
     flat_nan = np.isnan(flat_data)
     flat_dq[flat_nan] = np.bitwise_or(flat_dq[flat_nan],bad_flag)
 
-    # Find pixels in the flat have have a value of zero, and add to
-    # DQ to DO_NOT_USE + NO_FLAT_FIELD
+    # Find pixels in the flat that have a value of zero, and set
+    # DQ = DO_NOT_USE + NO_FLAT_FIELD
     flat_zero = np.where(flat_data == 0.)
     flat_dq[flat_zero] = np.bitwise_or(flat_dq[flat_zero],bad_flag)
 
-    # Find all pixels in the flat that have a DQ value of NO_FLAT_FIELD
+    # Find all pixels in the flat that have a DQ value of DO_NOT_USE
     flat_bad = np.bitwise_and(flat_dq, dqflags.pixel['DO_NOT_USE'])
 
     # Reset the flat value of all bad pixels to 1.0, so that no
@@ -617,7 +617,6 @@ def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
     flat_err = flat_2d * np.sqrt(sum_var)
 
     mask = np.bitwise_and(flat_dq, dqflags.pixel['DO_NOT_USE'])
-    # JEM comment out line below to match what NIRSPEC pipeline produces
     flat_2d[np.where(mask)] = 1.
 
     return flat_2d, flat_dq, flat_err
@@ -722,13 +721,13 @@ def fore_optics_flat(wl, f_flat_model, exposure_type, dispaxis,
                                           tab_wl, tab_flat, dispaxis)
 
     # Find pixels in the flat that have a value of NaN and add to
-    # DQ to DO_NOT_USE + NO_FLAT_FIELD
+    # DQ mask, DO_NOT_USE + NO_FLAT_FIELD
     bad_flag = dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['NO_FLAT_FIELD']
     flat_nan = np.isnan(f_flat)
     f_flat_dq[flat_nan] = np.bitwise_or(f_flat_dq[flat_nan],bad_flag)
 
     # Find pixels in the flat have have a value of zero, and add to
-    # DQ to DO_NOT_USE + NO_FLAT_FIELD
+    # DQ mask,  DO_NOT_USE + NO_FLAT_FIELD
     flat_zero = np.where(f_flat == 0.)
     f_flat_dq[flat_zero] = np.bitwise_or(f_flat_dq[flat_zero],bad_flag)
 
@@ -824,14 +823,14 @@ def spectrograph_flat(wl, s_flat_model,
         s_flat_err = full_array_err[ystart:ystop, xstart:xstop]
 
     # Find pixels in the flat that have a value of NaN and add to
-    # DQ to DO_NOT_USE + NO_FLAT_FIELD
+    # DQ mask, DO_NOT_USE + NO_FLAT_FIELD
     bad_flag = dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['NO_FLAT_FIELD']
 
     flat_nan = np.isnan(flat_2d)
     s_flat_dq[flat_nan] = np.bitwise_or(s_flat_dq[flat_nan],bad_flag)
 
     # Find pixels in the flat have have a value of zero, and add to
-    # DQ to DO_NOT_USE + NO_FLAT_FIELD
+    # DQ mask, DO_NOT_USE + NO_FLAT_FIELD
     flat_zero = np.where(flat_2d == 0.)
     s_flat_dq[flat_zero] = np.bitwise_or(s_flat_dq[flat_zero],bad_flag)
 
@@ -923,14 +922,14 @@ def detector_flat(wl, d_flat_model,
                                                       image_err, image_wl, wl)
 
     # Find pixels in the flat that have a value of NaN and add to
-    # DQ to DO_NOT_USE + NO_FLAT_FIELD
+    # DQ mask, DO_NOT_USE + NO_FLAT_FIELD
     bad_flag = dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['NO_FLAT_FIELD']
 
     flat_nan = np.isnan(flat_2d)
     d_flat_dq[flat_nan] = np.bitwise_or(d_flat_dq[flat_nan],bad_flag)
 
     # Find pixels in the flat have have a value of zero, and add to
-    # DQ to DO_NOT_USE + NO_FLAT_FIELD
+    # DQ mask, DO_NOT_USE + NO_FLAT_FIELD
     flat_zero = np.where(flat_2d == 0.)
     d_flat_dq[flat_zero] = np.bitwise_or(d_flat_dq[flat_zero],bad_flag)
 
