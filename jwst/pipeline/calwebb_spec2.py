@@ -351,6 +351,12 @@ class Spec2Pipeline(Pipeline):
             self.log.debug('Science data does not allow barshadow correction. Skipping "barshadow".')
             self.barshadow.skip = True
 
+        # Apply master background only to NIRSPEC MSA exposures
+        if not self.master_background.skip and exp_type != 'NRS_MSASPEC':
+            self.log.debug('Science data does not allow master background correction. Skipping "master_background".')
+            self.master_background.skip = True
+
+
     def _process_grism(self, data):
         """WFSS & Grism processing
 

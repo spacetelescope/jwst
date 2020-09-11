@@ -35,7 +35,7 @@ class MasterBackgroundNrsSlitsStep(Pipeline):
 
     - Create the 1D master background
     - For each slit
-    
+
       - Expand out the 1D master background to match the 2D wavelength grid of the slit
       - Reverse-calibrate the 2D background, using the correction arrays calculated above.
       - Subtract the background from the input slit data
