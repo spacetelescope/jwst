@@ -26,7 +26,7 @@ def test_int_times():
     model1.meta.visit.tsovisit = True
     slopes, int_model, dum1, dum2 = ramp_fit(model1, 512, False, rnModel, gain, 'OLS', 'optimal', 'none')
     assert(len(int_model.int_times) == nints)
-    
+
 
 def test_one_group_small_buffer_fit_ols():
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=1,gain=1,readnoise=10)
@@ -677,7 +677,6 @@ def setup_small_cube(ngroups=10, nints=1, nrows=2, ncols=2, deltatime=10.,
 def setup_inputs(ngroups=10, readnoise=10, nints=1,
                  nrows=103, ncols=102, nframes=1, grouptime=1.0,gain=1, deltatime=1):
 
-    times = np.array(list(range(ngroups)),dtype=np.float64) * deltatime
     gain = np.ones(shape=(nrows, ncols), dtype=np.float64) * gain
     err = np.ones(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
     data = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.uint32)
