@@ -53,6 +53,10 @@ pipeline
 
 - Include the per-slit failure traceback in any RuntimeError raised in Spec2Pipeline. [#5315]
 
+ramp_fitting
+------------
+
+- Reinstate copying of INT_TIMES table to output rateints product for TSO exposures. [#5321]
 
 tso_photometry
 --------------
