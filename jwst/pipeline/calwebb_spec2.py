@@ -18,7 +18,7 @@ from ..extract_2d import extract_2d_step
 from ..flatfield import flat_field_step
 from ..fringe import fringe_step
 from ..imprint import imprint_step
-from ..master_background import master_background_step
+from ..master_background import master_background_nrs_slits_step
 from ..msaflagopen import msaflagopen_step
 from ..pathloss import pathloss_step
 from ..photom import photom_step
@@ -26,8 +26,6 @@ from ..resample import resample_spec_step
 from ..srctype import srctype_step
 from ..straylight import straylight_step
 from ..wavecorr import wavecorr_step
-
-from ..master_background import nirspec_utils
 
 __all__ = ['Spec2Pipeline']
 
@@ -62,7 +60,7 @@ class Spec2Pipeline(Pipeline):
         'imprint_subtract': imprint_step.ImprintStep,
         'msa_flagging': msaflagopen_step.MSAFlagOpenStep,
         'extract_2d': extract_2d_step.Extract2dStep,
-        'master_background': master_background_step.MasterBackgroundStep,
+        'master_background': master_background_nrs_slits_step.MasterBackgroundNrsSlitsStep,
         'wavecorr': wavecorr_step.WavecorrStep,
         'flat_field': flat_field_step.FlatFieldStep,
         'srctype': srctype_step.SourceTypeStep,
@@ -351,6 +349,12 @@ class Spec2Pipeline(Pipeline):
             self.log.debug('Science data does not allow barshadow correction. Skipping "barshadow".')
             self.barshadow.skip = True
 
+        # Apply master background only to NIRSPEC MSA exposures
+        if not self.master_background.skip and exp_type != 'NRS_MSASPEC':
+            self.log.debug('Science data does not allow master background correction. Skipping "master_background".')
+            self.master_background.skip = True
+
+
     def _process_grism(self, data):
         """WFSS & Grism processing
 
@@ -375,113 +379,12 @@ class Spec2Pipeline(Pipeline):
         """
         calibrated = self.extract_2d(data)
         calibrated = self.srctype(calibrated)
-
-        # Master background requires a different order of processing.
-        if not self.master_background.skip and \
-           calibrated.meta.cal_step.back_sub != 'COMPLETE':
-            calibrated = self._process_nirspec_masterbackground(calibrated)
-
-        # Now continue calibration of the science.
-        self.log.info('Applying final calibration steps to background-subtracted MOS slitlets')
+        calibrated = self.master_background(calibrated)
         calibrated = self.wavecorr(calibrated)
         calibrated = self.flat_field(calibrated)
         calibrated = self.pathloss(calibrated)
         calibrated = self.barshadow(calibrated)
         calibrated = self.photom(calibrated)
-
-        return calibrated
-
-    def _process_nirspec_masterbackground(self, data):
-        """Prepare and apply the master background subtraction step
-
-        For MOS, and ignoring FS, the calibration process needs to occur
-        twice: Once to calibrate background slits and create a master background.
-        Then a second time to calibrate science using the master background.
-
-        Parameters
-        ----------
-        data : MultiSlitData
-            The data to apply the master background subtraction
-
-        Returns
-        -------
-        msb_subtracted : MultiSlitData
-            The background subtracted data.
-
-        Notes
-        -----
-        The algorithm is as follows:
-
-        - Calibrate all slits
-          - For each step:
-            - Force the source type to be extended source for all slits.
-            - Return the correction array used.
-        - Create the 1D master background
-        - For each slit
-          - Expand out the 1D master background to match the 2D wavelength grid of the slit
-          - Reverse-calibrate the 2D background, using the correction arrays calculated above.
-          - Subtract the background from the input slit data
-        """
-        self.log.info('Starting MOS master background creation and subtraction')
-
-        # First pass: just do the calibration to determine the correction
-        # arrays. However, force all slits to be processed as extended sources.
-        self.pathloss.source_type = 'EXTENDED'
-        self.barshadow.source_type = 'EXTENDED'
-        self.photom.source_type = 'EXTENDED'
-
-        pre_calibrated = self.flat_field(data)
-        pre_calibrated = self.pathloss(pre_calibrated)
-        pre_calibrated = self.barshadow(pre_calibrated)
-        pre_calibrated = self.photom(pre_calibrated)
-
-        # Create the 1D, fully calibrated master background.
-        master_background = nirspec_utils.create_background_from_multislit(pre_calibrated)
-        if master_background is None:
-            return data
-
-        # Now decalibrate the master background for each individual science slit.
-        # First step is to map the master background into a MultiSlitModel
-        # where the science slits are replaced by the master background.
-        # Here the broadcasting from 1D to 2D need also occur.
-        mb_multislit = nirspec_utils.map_to_science_slits(pre_calibrated, master_background)
-
-        # Now that the master background is pretending to be science,
-        # walk backwards through the steps to uncalibrate, using the
-        # calibration factors carried from `pre_calibrated`.
-        self.photom.use_correction_pars = True
-        self.photom.inverse = True
-        self.barshadow.use_correction_pars = True
-        self.barshadow.inverse = True
-        self.pathloss.use_correction_pars = True
-        self.pathloss.inverse = True
-        self.flat_field.use_correction_pars = True
-        self.flat_field.inverse = True
-
-        mb_multislit = self.photom(mb_multislit)
-        mb_multislit = self.barshadow(mb_multislit)
-        mb_multislit = self.pathloss(mb_multislit)
-        mb_multislit = self.flat_field(mb_multislit)
-
-        # Now apply the de-calibrated background to the original science
-        # At this point, should just be a slit-to-slit subtraction operation.
-        calibrated = nirspec_utils.apply_master_background(data, mb_multislit)
-
-        # Reset all the step attributes for "normal" processing.
-        self.photom.use_correction_pars = False
-        self.photom.inverse = False
-        self.photom.source_type = None
-        self.barshadow.use_correction_pars = False
-        self.barshadow.inverse = False
-        self.barshadow.source_type = None
-        self.pathloss.use_correction_pars = False
-        self.pathloss.inverse = False
-        self.pathloss.source_type = None
-        self.flat_field.use_correction_pars = False
-        self.flat_field.inverse = False
-
-        # Mark as completed.
-        calibrated.meta.cal_step.master_background = 'COMPLETE'
 
         return calibrated
 

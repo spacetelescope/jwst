@@ -82,15 +82,19 @@ class MasterBackgroundStep(Step):
                     del _
                     result = datamodels.ModelContainer()
                     result.update(input_data)
+                    background_2d_collection = datamodels.ModelContainer()
+                    background_2d_collection.update(input_data)
                     for model in input_data:
                         background_2d = expand_to_2d(model, self.user_background)
                         result.append(subtract_2d_background(model, background_2d))
+                        background_2d_collection.append(background_2d)
                     # Record name of user-supplied master background spectrum
                     for model in result:
                         model.meta.background.master_background_file = basename(self.user_background)
                 # Use user-supplied master background and subtract it
                 else:
                     background_2d = expand_to_2d(input_data, self.user_background)
+                    background_2d_collection = background_2d
                     result = subtract_2d_background(input_data, background_2d)
                     # Record name of user-supplied master background spectrum
                     result.meta.background.master_background_file = basename(self.user_background)
@@ -119,9 +123,12 @@ class MasterBackgroundStep(Step):
 
                     result = datamodels.ModelContainer()
                     result.update(input_data)
+                    background_2d_collection = datamodels.ModelContainer()
+                    background_2d_collection.update(input_data)
                     for model in input_data:
                         background_2d = expand_to_2d(model, master_background)
                         result.append(subtract_2d_background(model, background_2d))
+                        background_2d_collection.append(background_2d)
 
                     input_data.close()
 
@@ -137,7 +144,8 @@ class MasterBackgroundStep(Step):
 
                 # Save the computed background if requested by user
                 if self.save_background:
-                    self.save_model(master_background, suffix='masterbg', asn_id=asn_id)
+                    self.save_model(master_background, suffix='masterbg1d', asn_id=asn_id)
+                    self.save_model(background_2d_collection, suffix='masterbg2d', asn_id=asn_id)
 
             self.record_step_status(result, 'master_background', success=True)
 

@@ -1,6 +1,7 @@
 """
 Step
 """
+from contextlib import contextmanager
 from functools import partial
 import gc
 import inspect
@@ -1264,6 +1265,36 @@ class Step():
 
         return pars_model
 
+    def update_pars(self, parameters):
+        """Update step parameters
+
+        Only existing parameters are updated. Otherwise, new keys
+        found in `parameters` are ignored.
+
+        Parameters
+        ----------
+        parameters : dict
+            Parameters to update.
+
+        Notes
+        -----
+        `parameters` is presumed to have been produced by the
+        `Step.get_pars` method. As such, the "steps" key is treated
+        special in that it is a dict whose keys are the steps assigned
+        directly as parameters to the current step. This is standard
+        practice for `Pipeline`-based steps.
+        """
+        existing = self.get_pars().keys()
+        for parameter, value in parameters.items():
+            if parameter in existing:
+                if parameter != 'steps':
+                    setattr(self, parameter, value)
+                else:
+                    for step_name, step_parameters in value.items():
+                        getattr(self, step_name).update_pars(step_parameters)
+            else:
+                self.log.debug(f'Parameter {parameter} is not valid for step {self}. Ignoring.')
+
 
 # #########
 # Utilities
@@ -1343,3 +1374,24 @@ def get_disable_crds_steppars(default=None):
 
     flag = os.environ.get('STPIPE_DISABLE_CRDS_STEPPARS', '')
     return flag in truths
+
+
+@contextmanager
+def preserve_step_pars(step):
+    """Context manager to preserve step parameters
+
+    Ensure step parameters are not modified during a block
+    of operations. Allows local re-use of a Step instance without
+    having to worry about side-effects on that Step. If used with
+    a `Pipeline`, all substep parameters are also restored.
+
+    Yields
+    ------
+    saved_pars: dict
+        The saved parameters.
+    """
+    saved_pars = step.get_pars()
+    try:
+        yield saved_pars
+    finally:
+        step.update_pars(saved_pars)
