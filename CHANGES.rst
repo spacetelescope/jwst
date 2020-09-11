@@ -20,6 +20,13 @@ flat_field
 
 - Implement applying the inverse operation. [#5302]
 
+master_backround
+----------------
+
+- Create new step `MasterBackgroundNrsSlits` step to handle NIRSpec MOS data in `Spec2Pipeline` [#5317]
+
+- Implement option to save the 2d version of the calculated master background [#5317]
+
 pathloss
 --------
 
