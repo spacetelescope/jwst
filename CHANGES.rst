@@ -21,6 +21,8 @@ cube_build
 flat_field
 ----------
 
+- Update how the flat field reference dq mask is used for NIRSpec MOS data [#5284]
+
 - Implement providing a user-supplied flat field which overrides all references. [#5302]
 
 - Implement applying the inverse operation. [#5302]

@@ -174,19 +174,19 @@ def apply_flat_field(science, flat, inverse=False):
         sub_flat.close()
 
     # Find pixels in the flat that have a value of NaN and set
-    # their DQ to NO_FLAT_FIELD
+    # DQ = DO_NOT_USE + NO_FLAT_FIELD
+    bad_flag = dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['NO_FLAT_FIELD']
+
     flat_nan = np.isnan(flat_data)
-    flat_dq[flat_nan] = np.bitwise_or(flat_dq[flat_nan],
-                                      dqflags.pixel['NO_FLAT_FIELD'])
+    flat_dq[flat_nan] = np.bitwise_or(flat_dq[flat_nan],bad_flag)
 
-    # Find pixels in the flat have have a value of zero, and set
-    # their DQ to NO_FLAT_FIELD
+    # Find pixels in the flat that have a value of zero, and set
+    # DQ = DO_NOT_USE + NO_FLAT_FIELD
     flat_zero = np.where(flat_data == 0.)
-    flat_dq[flat_zero] = np.bitwise_or(flat_dq[flat_zero],
-                                       dqflags.pixel['NO_FLAT_FIELD'])
+    flat_dq[flat_zero] = np.bitwise_or(flat_dq[flat_zero],bad_flag)
 
-    # Find all pixels in the flat that have a DQ value of NO_FLAT_FIELD
-    flat_bad = np.bitwise_and(flat_dq, dqflags.pixel['NO_FLAT_FIELD'])
+    # Find all pixels in the flat that have a DQ value of DO_NOT_USE
+    flat_bad = np.bitwise_and(flat_dq, dqflags.pixel['DO_NOT_USE'])
 
     # Reset the flat value of all bad pixels to 1.0, so that no
     # correction is made
@@ -600,7 +600,6 @@ def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
                         exposure_type, dispaxis, slit_name)
 
     flat_2d = f_flat * s_flat * d_flat
-
     flat_dq = combine_dq(f_flat_dq, s_flat_dq, d_flat_dq,
                          default_shape=flat_2d.shape)
 
@@ -617,9 +616,8 @@ def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
         sum_var += d_flat_err**2 / d_flat**2
     flat_err = flat_2d * np.sqrt(sum_var)
 
-    mask1 = np.bitwise_and(flat_dq, dqflags.pixel['UNRELIABLE_FLAT'])
-    mask2 = np.bitwise_and(flat_dq, dqflags.pixel['NO_FLAT_FIELD'])
-    flat_2d[mask1 + mask2 > 0] = 1.
+    mask = np.bitwise_and(flat_dq, dqflags.pixel['DO_NOT_USE'])
+    flat_2d[np.where(mask)] = 1.
 
     return flat_2d, flat_dq, flat_err
 
@@ -722,6 +720,23 @@ def fore_optics_flat(wl, f_flat_model, exposure_type, dispaxis,
     f_flat, f_flat_dq = combine_fast_slow(wl, flat_2d, f_flat_dq,
                                           tab_wl, tab_flat, dispaxis)
 
+    # Find pixels in the flat that have a value of NaN and add to
+    # DQ mask, DO_NOT_USE + NO_FLAT_FIELD
+    bad_flag = dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['NO_FLAT_FIELD']
+    flat_nan = np.isnan(f_flat)
+    f_flat_dq[flat_nan] = np.bitwise_or(f_flat_dq[flat_nan],bad_flag)
+
+    # Find pixels in the flat have have a value of zero, and add to
+    # DQ mask,  DO_NOT_USE + NO_FLAT_FIELD
+    flat_zero = np.where(f_flat == 0.)
+    f_flat_dq[flat_zero] = np.bitwise_or(f_flat_dq[flat_zero],bad_flag)
+
+    # Find all pixels in the flat that have a DQ value of DO_NOT_USE
+    flat_bad = np.bitwise_and(f_flat_dq, dqflags.pixel['DO_NOT_USE'])
+
+    # Reset the flat value of all bad pixels to 1.0, so that no
+    # correction is made
+    f_flat[np.where(flat_bad)] = 1.0
     return f_flat, f_flat_dq, f_flat_err
 
 
@@ -807,6 +822,25 @@ def spectrograph_flat(wl, s_flat_model,
         s_flat_dq = full_array_dq[ystart:ystop, xstart:xstop]
         s_flat_err = full_array_err[ystart:ystop, xstart:xstop]
 
+    # Find pixels in the flat that have a value of NaN and add to
+    # DQ mask, DO_NOT_USE + NO_FLAT_FIELD
+    bad_flag = dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['NO_FLAT_FIELD']
+
+    flat_nan = np.isnan(flat_2d)
+    s_flat_dq[flat_nan] = np.bitwise_or(s_flat_dq[flat_nan],bad_flag)
+
+    # Find pixels in the flat have have a value of zero, and add to
+    # DQ mask, DO_NOT_USE + NO_FLAT_FIELD
+    flat_zero = np.where(flat_2d == 0.)
+    s_flat_dq[flat_zero] = np.bitwise_or(s_flat_dq[flat_zero],bad_flag)
+
+    # Find all pixels in the flat that have a DQ value of DO_NOT_USE
+    flat_bad = np.bitwise_and(s_flat_dq, dqflags.pixel['DO_NOT_USE'])
+
+    # Reset the flat value of all bad pixels to 1.0, so that no
+    # correction is made
+    flat_2d[np.where(flat_bad)] = 1.0
+
     s_flat, s_flat_dq = combine_fast_slow(wl, flat_2d, s_flat_dq,
                                           tab_wl, tab_flat, dispaxis)
 
@@ -887,6 +921,25 @@ def detector_flat(wl, d_flat_model,
     flat_2d, d_flat_dq, d_flat_err = interpolate_flat(image_flat, image_dq,
                                                       image_err, image_wl, wl)
 
+    # Find pixels in the flat that have a value of NaN and add to
+    # DQ mask, DO_NOT_USE + NO_FLAT_FIELD
+    bad_flag = dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['NO_FLAT_FIELD']
+
+    flat_nan = np.isnan(flat_2d)
+    d_flat_dq[flat_nan] = np.bitwise_or(d_flat_dq[flat_nan],bad_flag)
+
+    # Find pixels in the flat have have a value of zero, and add to
+    # DQ mask, DO_NOT_USE + NO_FLAT_FIELD
+    flat_zero = np.where(flat_2d == 0.)
+    d_flat_dq[flat_zero] = np.bitwise_or(d_flat_dq[flat_zero],bad_flag)
+
+    # Find all pixels in the flat that have a DQ value of DO_NOT_USE
+    flat_bad = np.bitwise_and(d_flat_dq, dqflags.pixel['DO_NOT_USE'])
+
+    # Reset the flat value of all bad pixels to 1.0, so that no
+    # correction is made
+    flat_2d[np.where(flat_bad)] = 1.0
+
     d_flat, d_flat_dq = combine_fast_slow(wl, flat_2d, d_flat_dq,
                                           tab_wl, tab_flat, dispaxis)
     return d_flat, d_flat_dq, d_flat_err
@@ -925,15 +978,34 @@ def combine_dq(f_flat_dq, s_flat_dq, d_flat_dq, default_shape):
     if d_flat_dq is not None:
         dq_list.append(d_flat_dq)
     n_dq = len(dq_list)
-    if n_dq < 1:
-        flat_dq = np.zeros(default_shape, dtype=np.uint32)
-    elif n_dq == 1:
+
+    # When a combination of flats are used the pixel dq flag is set to DO_NOTUSE only
+    # if all flags have DO_NOT_USE for that pixel
+
+    flat_dq = np.zeros(default_shape, dtype=np.uint32)
+    if n_dq == 1:
         flat_dq = dq_list[0].copy()
     elif n_dq == 2:
         flat_dq = np.bitwise_or(dq_list[0], dq_list[1])
+        bad1 = np.bitwise_and(dq_list[0], dqflags.pixel['DO_NOT_USE'])
+        bad2 = np.bitwise_and(dq_list[1], dqflags.pixel['DO_NOT_USE'])
+        iflag = np.where( (bad1==1) & (bad2 ==1))
     elif n_dq == 3:
         temp = np.bitwise_or(dq_list[0], dq_list[1])
         flat_dq = np.bitwise_or(temp, dq_list[2])
+        bad1 = np.bitwise_and(dq_list[0], dqflags.pixel['DO_NOT_USE'])
+        bad2 = np.bitwise_and(dq_list[1], dqflags.pixel['DO_NOT_USE'])
+        bad3 = np.bitwise_and(dq_list[2], dqflags.pixel['DO_NOT_USE'])
+        iflag = np.where( (bad1==1) & (bad2 ==1) & (bad3 ==1))
+
+    # if flats is a combination of 2 or more flats:
+    # only flag DO_NOT_USE if all the flats had do not other
+    # otherwize flat as UNRELIALBLE_FLAT
+    if n_dq >=2:
+        iloc = np.where(np.bitwise_and(flat_dq, dqflags.pixel['DO_NOT_USE']))
+        flat_dq[iloc] = dqflags.pixel['UNRELIABLE_FLAT']
+    # now only set DO_NOT_USE to pixels that are set in both flats as DO_NOT_USE
+        flat_dq[iflag] = np.bitwise_or(flat_dq[iflag],dqflags.pixel['DO_NOT_USE'])
 
     return flat_dq
 
@@ -1205,6 +1277,7 @@ def combine_fast_slow(wl, flat_2d, flat_dq, tab_wl, tab_flat, dispaxis):
                 if temp is None:
                     values[j, i] = 1.
                     combined_dq[j, i] |= dqflags.pixel['NO_FLAT_FIELD']
+                    combined_dq[j, i] |= dqflags.pixel['DO_NOT_USE']
                 else:
                     values[j, i] = temp
 
@@ -1444,9 +1517,9 @@ def interpolate_flat(image_flat, image_dq, image_err, image_wl, wl):
     # Use linear interpolation within the 3-D flat field to get a 2-D
     # flat field.
     denom = image_wl[k + 1] - image_wl[k]
-
     zero_denom = (denom == 0.)
     denom = np.where(zero_denom, 1., denom)
+
     # linear interpolation equation
     # p is the linear interpolation wavelength scaling factor
     # flat = flat[k] + (flat[k+1] - flat[k])*p
@@ -1454,12 +1527,9 @@ def interpolate_flat(image_flat, image_dq, image_err, image_wl, wl):
     # flat = (1-p)*flat[k] + p*flat[k+1]
 
     p = np.where(zero_denom, 0., (wl - image_wl[k]) / denom)
-
     q = 1. - p
     flat_2d = q * image_flat[k, iypixel, ixpixel] + \
               p * image_flat[k + 1, iypixel, ixpixel]
-
-
     if len(image_err.shape) == 2:
         flat_err = image_err.copy()
     else:
@@ -1474,18 +1544,23 @@ def interpolate_flat(image_flat, image_dq, image_err, image_wl, wl):
                            np.bitwise_or(image_dq[k, iypixel, ixpixel],
                                          image_dq[k + 1, iypixel, ixpixel]))
 
+        flat_bad = np.bitwise_and(flat_dq, dqflags.pixel['DO_NOT_USE'])
+        # Reset the flat value of all bad pixels to 1.0, so that no
+        # correction is made
+        flat_2d[np.where(flat_bad)] = 1.0
+
     # If the wavelength at a pixel is outside the range of wavelengths
     # for the reference image, flag the pixel as bad.  Note that this will
     # also result in the computed flat field being set to 1.
     mask = (wl < image_wl[0])
-    flat_dq[mask] = np.bitwise_or(flat_dq[mask], dqflags.pixel['NO_FLAT_FIELD'])
+    flat_dq[mask] = np.bitwise_or(flat_dq[mask], dqflags.pixel['DO_NOT_USE'])
     mask = (wl > image_wl[-1])
-    flat_dq[mask] = np.bitwise_or(flat_dq[mask], dqflags.pixel['NO_FLAT_FIELD'])
-
+    flat_dq[mask] = np.bitwise_or(flat_dq[mask], dqflags.pixel['DO_NOT_USE'])
 
     # If a pixel is flagged as bad, applying flat_2d should not make any
     # change to the science data.
-    flat_2d[:, :] = np.where(flat_dq > 0, 1., flat_2d)
+    flat_bad = np.bitwise_and(flat_dq, dqflags.pixel['DO_NOT_USE'])
+    flat_2d[np.where(flat_bad)] = 1.0
 
     return flat_2d.astype(image_flat.dtype), flat_dq, flat_err
 
