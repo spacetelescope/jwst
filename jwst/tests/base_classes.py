@@ -12,7 +12,6 @@ from ci_watson.artifactory_helpers import (
     get_bigdata,
     get_bigdata_root,
 )
-from .compare_outputs import compare_outputs
 
 from jwst.associations import load_asn
 
@@ -63,27 +62,6 @@ class BaseJWSTTest:
         local_file = get_bigdata(*self.repo_path, *pathargs, docopy=docopy)
         return local_file
 
-    def compare_outputs(self, outputs, raise_error=True, **kwargs):
-
-        # Parse any user-specified kwargs
-        ignore_keywords = kwargs.get('ignore_keywords', self.ignore_keywords)
-        ignore_hdus = kwargs.get('ignore_hdus', self.ignore_hdus)
-        ignore_fields = kwargs.get('ignore_fields', self.ignore_fields)
-        rtol = kwargs.get('rtol', self.rtol)
-        atol = kwargs.get('atol', self.atol)
-
-        compare_kws = dict(ignore_fields=ignore_fields, ignore_hdus=ignore_hdus,
-                        ignore_keywords=ignore_keywords,
-                        rtol=rtol, atol=atol)
-
-        input_path = [self.inputs_root, self.env, self.input_loc, *self.ref_loc]
-
-        return compare_outputs(outputs,
-                               input_path=input_path,
-                               docopy=True,
-                               results_root=self.results_root,
-                               **compare_kws)
-
     def data_glob(self, *pathargs, glob='*'):
         """Retrieve file list matching glob
 
@@ -125,67 +103,6 @@ class BaseJWSTTest:
             for file_path in file_paths
         ]
         return file_paths
-
-
-# Pytest function to support the parameterization of BaseJWSTTestSteps
-def pytest_generate_tests(metafunc):
-    # called once per each test function
-    funcarglist = metafunc.cls.params[metafunc.function.__name__]
-    argnames = sorted(funcarglist[0])
-    idlist = [funcargs['id'] for funcargs in funcarglist]
-    del argnames[argnames.index('id')]
-    metafunc.parametrize(argnames, [[funcargs[name] for name in argnames]
-            for funcargs in funcarglist], ids=idlist)
-
-
-class BaseJWSTTestSteps(BaseJWSTTest):
-
-    params = {'test_steps':[dict(input="",
-                                 test_dir=None,
-                                 step_class=None,
-                                 step_pars=dict(),
-                                 output_truth="",
-                                 output_hdus=[])
-                            ]
-             }
-
-    def test_steps(self, input, test_dir, step_class, step_pars,
-                   output_truth, output_hdus):
-        """
-        Template method for parameterizing all the tests of JWST pipeline
-        processing steps.
-        """
-
-        if test_dir is None:
-            return
-
-        self.test_dir = test_dir
-        self.ref_loc = [self.test_dir, 'truth']
-
-        # can be removed once all truth files have been updated
-        self.ignore_keywords += ['FILENAME']
-
-        input_file = self.get_data(self.test_dir, input)
-        result = step_class.call(input_file, save_results=True, **step_pars)
-
-        output_file = result.meta.filename
-        result.close()
-
-        output_pars = None
-        if isinstance(output_truth, tuple):
-            output_pars = output_truth[1]
-            output_truth = output_truth[0]
-
-        if not output_pars:
-            if output_hdus:
-                output_spec = (output_file, output_truth, output_hdus)
-            else:
-                output_spec = (output_file, output_truth)
-        else:
-            output_spec = {'files':(output_file, output_truth),
-                           'pars':output_pars}
-        outputs = [output_spec]
-        self.compare_outputs(outputs)
 
 
 def raw_from_asn(asn_file):

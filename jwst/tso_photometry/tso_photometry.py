@@ -115,13 +115,14 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
     # initialize the output table
     tbl = QTable(meta=meta)
 
+    # check for the INT_TIMES table extension
     if hasattr(datamodel, 'int_times') and datamodel.int_times is not None:
         nrows = len(datamodel.int_times)
     else:
         nrows = 0
-    if nrows == 0:
-        log.warning("There is no INT_TIMES table in the input file.")
+        log.warning("The INT_TIMES table in the input file is missing or empty.")
 
+    # load the INT_TIMES table data
     if nrows > 0:
         shape = datamodel.data.shape
         if len(shape) == 2:
@@ -131,8 +132,7 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
         int_start = datamodel.meta.exposure.integration_start
         if int_start is None:
             int_start = 1
-            log.warning("INTSTART not found; assuming a value of %d",
-                        int_start)
+            log.warning(f"INTSTART not found; assuming a value of {int_start}")
 
         # Columns of integration numbers & times of integration from the
         # INT_TIMES table.
@@ -146,23 +146,23 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
             del int_num, mid_utc
             nrows = 0                   # flag as bad
         else:
-            log.debug("Times are from the INT_TIMES table.")
+            log.debug("Times are from the INT_TIMES table")
             time_arr = mid_utc[offset: offset + num_integ]
             int_times = Time(time_arr, format='mjd', scale='utc')
 
+    # compute integration time stamps on the fly
     if nrows == 0:
-        log.debug("Times were computed from EXPSTART and TGROUP.")
-
-        dt = (datamodel.meta.exposure.group_time *
-              (datamodel.meta.exposure.ngroups + 1))
-        dt_arr = (np.arange(1, 1 + datamodel.meta.exposure.nints) *
-                  dt - (dt / 2.))
+        log.debug("Times computed from EXPSTART and EFFINTTM")
+        dt = datamodel.meta.exposure.integration_time
+        n_dt = (datamodel.meta.exposure.integration_end -
+                datamodel.meta.exposure.integration_start + 1)
+        dt_arr = (np.arange(1, 1 + n_dt) * dt - (dt / 2.))
         int_dt = TimeDelta(dt_arr, format='sec')
         int_times = (Time(datamodel.meta.exposure.start_time, format='mjd') +
                      int_dt)
 
+    # populate table columns
     tbl['MJD'] = int_times.mjd
-
     tbl['aperture_sum'] = aperture_sum
     tbl['aperture_sum_err'] = aperture_sum_err
 

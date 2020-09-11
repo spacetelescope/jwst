@@ -13,6 +13,11 @@ blendmeta
 
 - Do not close files that were not opened by blendmodels [#5299]
 
+cube_build
+----------
+
+- If every wavelength plane of the IFU cube contains 0 data, cube_build is skipped [#5294]
+
 flat_field
 ----------
 
@@ -26,6 +31,11 @@ master_backround
 - Create new step `MasterBackgroundNrsSlits` step to handle NIRSpec MOS data in `Spec2Pipeline` [#5317]
 
 - Implement option to save the 2d version of the calculated master background [#5317]
+
+outlier_detection
+-----------------
+
+- Fix bug where background was being subtracted on the input data [#4858]
 
 pathloss
 --------
@@ -46,7 +56,20 @@ pipeline
 
 - Spec3Pipeline check whether master background subtraction has already occurred. [#5308]
 
-- Implement master background subtraction in Spec2Pipeline for NIRSpec MOS data [#5302]
+- Implement master background subtraction in Spec2Pipeline for NIRSpec MOS data. [#5302]
+
+- Include the per-slit failure traceback in any RuntimeError raised in Spec2Pipeline. [#5315]
+
+ramp_fitting
+------------
+
+- Reinstate copying of INT_TIMES table to output rateints product for TSO exposures. [#5321]
+
+tso_photometry
+--------------
+
+- Fix a bug in the computation of integration time stamps when the INT_TIMES
+  table is not available. [#5318]
 
 0.17.0 (2020-08-28)
 ===================

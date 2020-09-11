@@ -37,7 +37,7 @@ class OutlierDetectionStep(Step):
 
     Parameters
     -----------
-    user_input : asn file or ModelContainer
+    input_data : asn file or ModelContainer
         Single filename association table, or a datamodels.ModelContainer.
 
     """
@@ -64,9 +64,9 @@ class OutlierDetectionStep(Step):
         search_output_file = boolean(default=False)
     """
 
-    def process(self, user_input):
+    def process(self, input_data):
         """Perform outlier detection processing on input data."""
-        with datamodels.open(user_input) as input_models:
+        with datamodels.open(input_data) as input_models:
             self.input_models = input_models
             if not isinstance(self.input_models, datamodels.ModelContainer):
                 self.input_container = False
