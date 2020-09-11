@@ -27,8 +27,6 @@ from ..srctype import srctype_step
 from ..straylight import straylight_step
 from ..wavecorr import wavecorr_step
 
-from ..master_background import nirspec_utils
-
 __all__ = ['Spec2Pipeline']
 
 # Classify various exposure types.
