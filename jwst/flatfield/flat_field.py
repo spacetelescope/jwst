@@ -979,21 +979,18 @@ def combine_dq(f_flat_dq, s_flat_dq, d_flat_dq, default_shape):
     if d_flat_dq is not None:
         dq_list.append(d_flat_dq)
     n_dq = len(dq_list)
-    if n_dq < 1:
-        flat_dq = np.zeros(default_shape, dtype=np.uint32)
-    elif n_dq == 1:
+
+    # When a combination of flats are used the pixel dq flag is set to DO_NOTUSE only
+    # if all flags have DO_NOT_USE for that pixel
+
+    flat_dq = np.zeros(default_shape, dtype=np.uint32)
+    if n_dq == 1:
         flat_dq = dq_list[0].copy()
     elif n_dq == 2:
         flat_dq = np.bitwise_or(dq_list[0], dq_list[1])
         bad1 = np.bitwise_and(dq_list[0], dqflags.pixel['DO_NOT_USE'])
         bad2 = np.bitwise_and(dq_list[1], dqflags.pixel['DO_NOT_USE'])
         iflag = np.where( (bad1==1) & (bad2 ==1))
-
-        # locate places that flat_dq is set to DO_NOT_USE and reset to UNRELIABLE FLAT
-        iloc = np.where(np.bitwise_and(flat_dq, dqflags.pixel['DO_NOT_USE']))
-        flat_dq[iloc] = dqflags.pixel['UNRELIABLE_FLAT']
-        # now only set DO_NOT_USE to pixels that are set in both flats as DO_NOT_USE
-        flat_dq[iflag] = np.bitwise_or(flat_dq[iflag],dqflags.pixel['DO_NOT_USE'])
     elif n_dq == 3:
         temp = np.bitwise_or(dq_list[0], dq_list[1])
         flat_dq = np.bitwise_or(temp, dq_list[2])
@@ -1002,10 +999,13 @@ def combine_dq(f_flat_dq, s_flat_dq, d_flat_dq, default_shape):
         bad3 = np.bitwise_and(dq_list[2], dqflags.pixel['DO_NOT_USE'])
         iflag = np.where( (bad1==1) & (bad2 ==1) & (bad3 ==1))
 
-        # locate places that flat_dq is set to DO_NOT_USE and reset to UNRELIABLE FLAT
+    # if flats is a combination of 2 or more flats:
+    # only flag DO_NOT_USE if all the flats had do not other
+    # otherwize flat as UNRELIALBLE_FLAT
+    if n_dq >=2:
         iloc = np.where(np.bitwise_and(flat_dq, dqflags.pixel['DO_NOT_USE']))
         flat_dq[iloc] = dqflags.pixel['UNRELIABLE_FLAT']
-        # now only set DO_NOT_USE to pixels that are set in all 3 flats as DO_NOT_USE
+    # now only set DO_NOT_USE to pixels that are set in both flats as DO_NOT_USE
         flat_dq[iflag] = np.bitwise_or(flat_dq[iflag],dqflags.pixel['DO_NOT_USE'])
 
     return flat_dq
