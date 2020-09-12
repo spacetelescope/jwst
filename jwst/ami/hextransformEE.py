@@ -35,7 +35,7 @@ def gfunction(xi, eta, **kwargs):
         if set, use flipped sign of xi in calculation
 
     Returns
-    ------=
+    -------
     g*affine2d.distortphase(xi,eta): 2D complex array
         Fourier transform of one half of a hexagon.
     """
@@ -92,6 +92,11 @@ def hextransform(s=None, c=None, d=None, lam=None, pitch=None, affine2d=None):
         sampling pitch in radians in image plane
 
     affine2d: Affine2d object
+
+    Returns
+    -------
+    hex_complex:
+        complex array analytical transform of a hexagon
 
     """
     if c is None:

@@ -27,9 +27,9 @@ def get_webbpsf_filter(filter_model, specbin=None, trim=False):
         trims below 0.8 and above 1.2 lambda_c (dg - is this right?)
 
     Returns
-    -------
+    ------- 
     spec - 2D float array
-        filter bandpass data: [weight, wavelength_in_microns]
+        filter bandpass data: [weight, wavelength_in_microns] 
     """
     W = 1  # remove confusion - wavelength index
     T = 0  # remove confusion - trans index after reading in...
