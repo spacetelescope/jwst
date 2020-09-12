@@ -3,6 +3,7 @@ import logging
 import numpy as np
 import numpy.linalg as linalg
 from scipy.special import comb, jv
+from uncertainties import unumpy
 from . import hexee
 
 log = logging.getLogger(__name__)
@@ -471,7 +472,7 @@ def weighted_operations(img, model, weights):
     return x, res
 
 
-def matrix_operations(img, model, flux=None):
+def matrix_operations(img, model, flux=None, linfit=False):
     """
     Short Summary
     -------------
@@ -548,7 +549,41 @@ def matrix_operations(img, model, flux=None):
     log.debug('transpose * image data dimensions:%s flatimg * transpose' +
               'dimensions:%s ', np.shape(data_vector), np.shape(inverse))
 
-    return x, res, cond
+    if linfit:
+        try:
+            from linearfit import linearfit
+            # dependent variables
+            M = np.mat(flatimg)
+
+            # photon noise
+            noise = np.sqrt(np.abs(flatimg))
+
+            # this sets the weights of pixels fulfilling condition to zero
+            weights = np.where(np.abs(flatimg)<=1.0, 0.0, 1.0/(noise**2))
+
+            # uniform weight
+            wy = weights
+            S = np.mat(np.diag(wy));
+            # matrix of independent variables
+            C = np.mat(flatmodeltransp)
+
+            # initialize object
+            result = linearfit.LinearFit(M,S,C)
+
+            # do the fit
+            result.fit()
+
+            # delete inverse_covariance_matrix to reduce size of pickled file
+            result.inverse_covariance_matrix = []
+
+            linfit_result = result
+
+        except ImportError:
+            linfit_result = None
+    else:
+        linfit_result = None
+
+    return x, res, cond, linfit_result
 
 
 def multiplyenv(env, fringeterms):
@@ -610,16 +645,27 @@ def tan2visibilities(coeffs):
     amp, delta: 1D float array, 1D float array
         fringe amplitude & phase
     """
-    delta = np.zeros((len(coeffs) - 1) // 2)
-    amp = np.zeros((len(coeffs) - 1) // 2)
-    for q in range((len(coeffs) - 1) // 2):
-        delta[q] = (np.arctan2(coeffs[2 * q + 2], coeffs[2 * q + 1]))
-        amp[q] = np.sqrt(coeffs[2 * q + 2]**2 + coeffs[2 * q + 1]**2)
+    if type(coeffs[0]).__module__ != 'uncertainties.core':
+        # if uncertainties not present, proceed as usual
+        # coefficients of sine terms mulitiplied by 2*pi
+        delta = np.zeros(int((len(coeffs) -1)/2))
+        amp = np.zeros(int((len(coeffs) -1)/2))
+        for q in range(int((len(coeffs) -1)/2)):
+            delta[q] = (np.arctan2(coeffs[2*q+2], coeffs[2*q+1]))
+            amp[q] = np.sqrt(coeffs[2*q+2]**2 + coeffs[2*q+1]**2)
 
-    log.debug('tan2visibilities: shape coeffs:%s shape delta:%s ',
+        log.debug('tan2visibilities: shape coeffs:%s shape delta:%s ',
               np.shape(coeffs), np.shape(delta))
 
-    return amp, delta
+        # returns fringe amplitude & phase
+        return amp, delta
+
+    else:
+        # propagate uncertainties
+        qrange = np.arange(int( (len(coeffs) -1)/2 ))
+        fringephase = unumpy.arctan2(coeffs[2*qrange+2], coeffs[2*qrange+1])
+        fringeamp = unumpy.sqrt(coeffs[2*qrange+2]**2 + coeffs[2*qrange+1]**2)
+        return fringeamp, fringephase
 
 
 def populate_antisymmphasearray(deltaps, N=7):
@@ -648,7 +694,12 @@ def populate_antisymmphasearray(deltaps, N=7):
     arr: 2D float array
         fringe phases between each pair of holes
     """
-    arr = np.zeros((N, N)) # fringe phase array
+    # Initialize fringe phase array
+    if type(deltaps[0]).__module__ != 'uncertainties.core':
+        arr = np.zeros((N,N))
+    else:
+        arr = unumpy.uarray(np.zeros((N,N)),np.zeros((N,N)))
+
     step = 0
     n = N - 1
     for h in range(n):
@@ -680,7 +731,12 @@ def populate_symmamparray(amps, N=7):
     arr: 2D float array
         fringe amplitude array
     """
-    arr = np.zeros((N, N))
+
+    if type(amps[0]).__module__ != 'uncertainties.core':
+        arr = np.zeros((N,N))
+    else:
+        arr = unumpy.uarray(np.zeros((N,N)),np.zeros((N,N)))
+
     step = 0
     n = N - 1
 
@@ -714,9 +770,14 @@ def redundant_cps(deltaps, N=7):
         closure phases
     """
     arr = populate_antisymmphasearray(deltaps, N=N) # fringe phase array
-    cps = np.zeros(int(comb(N, 3)))
-    nn = 0
 
+    if type(deltaps[0]).__module__ != 'uncertainties.core':
+        cps = np.zeros(int(comb(N,3)))
+    else:
+        cps = unumpy.uarray( np.zeros(np.int(comb(N,3))),
+                             np.zeros(np.int(comb(N,3))) )
+
+    nn = 0
     for kk in range(N - 2):
         for ii in range(N - kk - 2):
             for jj in range(N - kk - ii - 2):
@@ -726,8 +787,10 @@ def redundant_cps(deltaps, N=7):
 
             nn += jj + 1
 
-    return cps
-
+    if type(deltaps[0]).__module__ != 'uncertainties.core':
+        return cps
+    else:
+        return cps, arr
 
 def closurephase(deltap, N=7):
     """
@@ -791,7 +854,13 @@ def return_CAs(amps, N=7):
     """
     arr = populate_symmamparray(amps, N=N) # fringe amp array
     nn = 0
-    CAs = np.zeros(int(comb(N, 4)))
+
+    if type(amps[0]).__module__ != 'uncertainties.core':
+        CAs = np.zeros(int(comb(N,4)))
+    else:
+        CAs = unumpy.uarray( np.zeros(np.int(comb(N,4))),
+                             np.zeros(np.int(comb(N,4))) )
+
     for ii in range(N - 3):
         for jj in range(N - ii - 3):
             for kk in range(N - jj - ii - 3):
