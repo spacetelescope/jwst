@@ -36,7 +36,7 @@ class NIRISS:
             filter name
 
         objname: string
-            name of object (DG: can this ge deleted?)
+            name of object
 
         src: string
             spectral type
@@ -66,10 +66,7 @@ class NIRISS:
                       "F480M": 4.8e-6}
         self.lam_w = {"F277W":0.2, "F380M": 0.1, "F430M": 0.0436, "F480M": 0.08} # fractional filter width
 
-        try:
-            self.throughput = utils.trim_webbpsf_filter(self.filt, specbin=self.lam_bin[self.filt])
-        except Exception:
-            self.throughput = utils.tophatfilter(self.lam_c[self.filt], self.lam_w[self.filt], npoints=11)
+        self.throughput = utils.tophatfilter(self.lam_c[self.filt], self.lam_w[self.filt], npoints=11)
 
         # update nominal filter parameters with those of the filter read in and used in the analysis...
         # Weighted mean wavelength in meters, etc, etc "central wavelength" for the filter:

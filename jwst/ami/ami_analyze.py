@@ -48,7 +48,7 @@ def apply_LG_plus(input_model, filter_model, oversample, rotation):
     #   mx, my: dimensionless magnifications
     #   sx, sy: dimensionless shears
     #   x0, y0: offsets in pupil space
-    mx,my,sx,sy,xo,yo, = (1.0,1.0, 0.0,0.0, 0.0,0.0) 
+    mx,my,sx,sy,xo,yo, = (1.0,1.0, 0.0,0.0, 0.0,0.0)
 
     psf_offset_find_rotation = (0.0,0.0)
     psf_offset_ff = None
