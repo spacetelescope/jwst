@@ -24,6 +24,8 @@ class ApCorrBase(abc.ABC):
     apcorr_row_units : str, Optional
         Units for the aperture correction data "row" values (assuming the aperture correction is a 2D array).
         If not given, units will be determined from the input apcorr_table ColDefs if possible.
+    slit_name : str, Optional
+        For MultiSlitModels, the name of the slit being processed.
 
     Raises
     ------
@@ -56,13 +58,14 @@ class ApCorrBase(abc.ABC):
     size_key = None
 
     def __init__(self, input_model: DataModel, apcorr_table: fits.FITS_rec, sizeunit: str,
-                 location: Tuple[float, float, float] = None, **match_kwargs):
+                 location: Tuple[float, float, float] = None, slit_name: str = None, **match_kwargs):
         self.correction = None
 
         self.model = input_model
         self._reference_table = apcorr_table
         self.location = location
         self.apcorr_sizeunits = sizeunit
+        self.slit_name = slit_name
 
         self.match_keys = self._get_match_keys()
         self.match_pars = self._get_match_pars()
@@ -77,10 +80,11 @@ class ApCorrBase(abc.ABC):
         if self.apcorr_sizeunits.startswith('arcsec'):
             if self.location is not None:
                 if isinstance(self.model, MultiSlitModel):
+                    idx = [slit.name for slit in self.model.slits].index(self.slit_name)
                     self.reference[self.size_key] /= compute_scale(
-                        self.model.slits[0].meta.wcs,
+                        self.model.slits[idx].meta.wcs,
                         self.location,
-                        disp_axis=self.model.slits[0].meta.wcsinfo.dispersion_direction
+                        disp_axis=self.model.slits[idx].meta.wcsinfo.dispersion_direction
                     )
                 else:
                     self.reference[self.size_key] /= compute_scale(

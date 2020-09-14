@@ -1,4 +1,79 @@
-0.17.0 (unreleased)
+0.17.1 (unreleased)
+===================
+
+barshadow
+---------
+
+- Implement using a user-supplied correction which overrides all references. [#5302]
+
+- Implement applying the inverse operation. [#5302]
+
+blendmeta
+---------
+
+- Do not close files that were not opened by blendmodels [#5299]
+
+cube_build
+----------
+
+- If every wavelength plane of the IFU cube contains 0 data, cube_build is skipped [#5294]
+
+flat_field
+----------
+
+- Update how the flat field reference dq mask is used for NIRSpec MOS data [#5284]
+
+- Implement providing a user-supplied flat field which overrides all references. [#5302]
+
+- Implement applying the inverse operation. [#5302]
+
+master_backround
+----------------
+
+- Create new step `MasterBackgroundNrsSlits` step to handle NIRSpec MOS data in `Spec2Pipeline` [#5317]
+
+- Implement option to save the 2d version of the calculated master background [#5317]
+
+outlier_detection
+-----------------
+
+- Fix bug where background was being subtracted on the input data [#4858]
+
+pathloss
+--------
+
+- Implement using a user-supplied correction which overrides all references. [#5302]
+
+- Implement applying the inverse operation. [#5302]
+
+photom
+------
+
+- Implement using a user-supplied correction which overrides all references. [#5302]
+
+- Implement applying the inverse operation. [#5302]
+
+pipeline
+--------
+
+- Spec3Pipeline check whether master background subtraction has already occurred. [#5308]
+
+- Implement master background subtraction in Spec2Pipeline for NIRSpec MOS data. [#5302]
+
+- Include the per-slit failure traceback in any RuntimeError raised in Spec2Pipeline. [#5315]
+
+ramp_fitting
+------------
+
+- Reinstate copying of INT_TIMES table to output rateints product for TSO exposures. [#5321]
+
+tso_photometry
+--------------
+
+- Fix a bug in the computation of integration time stamps when the INT_TIMES
+  table is not available. [#5318]
+
+0.17.0 (2020-08-28)
 ===================
 
 align_refs
@@ -23,12 +98,19 @@ assign_wcs
 - Added two new optional parameters to ``utils.cerate_grism_bbox`` - ``wfss_extract_half_height``
   and ``wavelength_range``. [#5140]
 
+- Shifted the bounding box of a resampled WCS by - 0.5 px to account for the
+  center of the pixel. [#5241]
+
+- Enable NIRSpec lamp processing in calspec2 pipeline. [#5267]
+
 associations
 ------------
 
 - Update diagrams in documentation to change sloper to detector1. [#4986]
 
 - Update level-3 rules to exclude IFU exposures from ``calwebb_tso3`` associations. [#5202]
+
+- Fix formatting error in Asn_IFUGrating product name construction. [#5231]
 
 barshadow
 ---------
@@ -42,7 +124,13 @@ combine_1d
 
 cube_build
 ----------
-- modified NIRSpec blotting to the find min and max ra and dec for each slice and only invert those values on slice that fall in range [#5144]
+
+- Changed default weighting to 'emsm'. [#5277]
+
+- Fixed formatting of NIRSpec s3d output product names. [#5231]
+
+- Modified NIRSpec blotting to the find min and max ra and dec for each slice and only
+  invert those values on slice that fall in range [#5144]
 
 - Changed default weighting back to 'msm' until NIRSPEC cube pars ref file contains emsm info [#5134]
 
@@ -64,6 +152,8 @@ cube_build
 
 datamodels
 ----------
+
+- Add iscopy to ModelContainer init [#5256]
 
 - Re-enable FITS-hash by default. [#5191]
 
@@ -87,6 +177,8 @@ datamodels
 
 - Update underlying MultiExposureModel from the SourceModelContainer models. [#5154]
 
+- Add new MIRI LRS dither patterns to PATTTYPE enum list. [#5254]
+
 extract_1d
 ----------
 
@@ -105,6 +197,10 @@ extract_1d
 - Updated the logic for when and how to use the source position to offset the
   location of the extraction regions specified in the EXTRACT1D reference file. [#5157]
 
+- Fixed the conversion of flux to surface brightness for IFU extended source case [#5201]
+
+- Fixed bugs in aperture correction for NIRSpec multi-slit modes. [#5260]
+
 extract_2d
 ----------
 
@@ -115,6 +211,13 @@ extract_2d
 - Added a new optional integer parameter to extract_2d (``wfss_extract_half_height``)
   which allows a user to specify the extraction height in the
   cross-dispersion direction for WFSS mode. [#5140]
+
+flat_field
+----------
+- For NIRSpec BOTS and ALLSLITS add the slit start corner to the subarray start corner
+  when determining what region of the flat_field reference files to extract. [#5269]
+
+- Enable NIRSpec lamp processing in calspec2 pipeline. [#5267]
 
 fringe
 ------
@@ -128,6 +231,11 @@ master_background
 
 - Update to include pathloss corrections to NIRSpec IFU background [#5125]
 
+mrs_imatch
+----------
+
+- MRSIMatchStep to create its ModelContainers with `iscopy=True` [#5256]
+
 outlier_detection
 -----------------
 
@@ -135,7 +243,7 @@ outlier_detection
 
 - Fix outlier_detection bug when saving intermediate results. [#5108]
 
-- Update logic to correctly handle input ``CubeModel``s that have only
+- Update logic to correctly handle input ``CubeModel`` that have only
   1 integration. [#5211]
 
 pathloss
@@ -178,7 +286,12 @@ pipeline
 - Update the ``Coron3Pipeline`` logic to correctly handle inputs that have
   only 1 integration. [#5211]
 
-- Refactor Spec2Pipeline for execution logic and step flow isolation [#5214] 
+- Refactor Spec2Pipeline for execution logic and step flow isolation [#5214]
+
+- Update ``Ami3Pipeline`` to only process psf and science members from the
+  input ASN. [#5243]
+
+- Enable NIRSpec lamp processing in calspec2 pipeline. [#5267]
 
 photom
 ------
@@ -207,6 +320,9 @@ source_catalog
 
 - Changed the type of column ``is_star`` from float to bool. [#5140]
 
+- Implemented algorithm for determining whether a source is a star.
+  [#5234]
+
 stpipe
 ------
 
@@ -214,6 +330,16 @@ stpipe
   when a pipeline has an association as input. [#5031]
 
 - Remove further sloper references. [#4989]
+
+- Enable prefetch of pars reference files for associations. [#5249]
+
+transforms
+----------
+
+- Wrap first spherical angle ("RA") at 360 degrees in the forward ``V23ToSky``
+  transformation and to 180 degrees for the inverse transformation ("V2").
+  This is now done using models defined in ``astropy`` and ``gwcs`` packages
+  replacing ``V23ToSky`` model in JWST's WCS pipeline. [#5206]
 
 wavecorr
 --------

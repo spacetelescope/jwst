@@ -41,7 +41,7 @@ class CubeBuildStep (Step):
          scale1 = float(default=0.0) # cube sample size to use for axis 1, arc seconds
          scale2 = float(default=0.0) # cube sample size to use for axis 2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
-         weighting = option('emsm','msm','miripsf',default = 'msm') # Type of weighting function
+         weighting = option('emsm','msm','miripsf',default = 'emsm') # Type of weighting function
          coord_system = option('skyalign','world','internal_cal','ifualign',default='skyalign') # Output Coordinate system.
          rois = float(default=0.0) # region of interest spatial size, arc seconds
          roiw = float(default=0.0) # region of interest wavelength size, microns
@@ -157,7 +157,7 @@ class CubeBuildStep (Step):
 
         if self.single:
             self.output_type = 'single'
-            self.log.info('Cube Type: Single cubes ')
+            self.log.info('Cube Type: Single cubes')
             self.coord_system = 'skyalign'
             self.interpolation = 'pointcloud'
 
@@ -286,14 +286,15 @@ class CubeBuildStep (Step):
 
         num_cubes, cube_pars = cubeinfo.number_cubes()
         if not self.single:
-            self.log.info(f'Number of ifucubes produced by this run  = {num_cubes}')
+            self.log.info(f'Number of IFU cubes produced by this run = {num_cubes}')
 
         if self.single:
-            self.log.info(f'Number of single ifucubes produced by a this run = {num_cubes}')
+            self.log.info(f'Number of single IFU cubes produced by a this run = {num_cubes}')
 
         # ModelContainer of ifucubes
         cube_container = datamodels.ModelContainer()
 
+        status_cube = 0
         for i in range(num_cubes):
             icube = str(i + 1)
             list_par1 = cube_pars[icube]['par1']
@@ -332,6 +333,7 @@ class CubeBuildStep (Step):
 # If single = True: map each file to output grid and return single mapped file
 # to output grid
 # This option is used for background matching and outlier rejection
+            status = 0
             if self.single:
                 self.output_file = None
                 cube_container = thiscube.build_ifucube_single()
@@ -340,13 +342,24 @@ class CubeBuildStep (Step):
 
 # Else standard IFU cube building
             else:
-                result = thiscube.build_ifucube()
+                cube_result  = thiscube.build_ifucube()
+                result, status = cube_result
                 cube_container.append(result)
+
             if self.debug_file is not None:
                 self.debug_file.close()
+
+            # check if cube_build failed
+            # **************************
+            if status == 1:
+                status_cube = 1
+
         for cube in cube_container:
             footprint = cube.meta.wcs.footprint(axis_type="spatial")
             update_s_region_keyword(cube, footprint)
+
+        if status_cube ==1:
+            self.skip = True
 
         return cube_container
 # ******************************************************************************

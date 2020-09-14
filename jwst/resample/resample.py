@@ -126,7 +126,9 @@ class ResampleData:
                                             kernel=self.drizpars['kernel'],
                                             fillval=self.drizpars['fillval'])
 
-            for n, img in enumerate(exposure):
+            for n, img_exp in enumerate(exposure):
+                # Make a copy as this is operated on in-place below
+                img = img_exp.copy()
                 exposure_times['start'].append(img.meta.exposure.start_time)
                 exposure_times['end'].append(img.meta.exposure.end_time)
 

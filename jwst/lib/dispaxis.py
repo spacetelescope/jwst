@@ -103,7 +103,7 @@ def get_dispersion_direction(exposure_type, grating="ANY", filter_wh="ANY",
         "NRC_TSGRISM": (exposure_type, "ANY", "ANY", pupil),
         "NRC_TSIMAGE": None,
         # NIRSpec
-        "NRS_AUTOFLAT": None,
+        "NRS_AUTOFLAT": 1,
         "NRS_AUTOWAVE": 1,
         "NRS_BRIGHTOBJ": 1,
         "NRS_CONFIRM": None,

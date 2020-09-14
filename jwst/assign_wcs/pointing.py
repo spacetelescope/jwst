@@ -2,29 +2,36 @@ import numpy as np
 from astropy import units as u
 from astropy import coordinates as coords
 from astropy.modeling import models as astmodels
-from ..datamodels import DataModel
+from astropy.modeling.models import Scale, RotationSequence3D
+from astropy.coordinates.matrix_utilities import rotation_matrix, matrix_product
 from gwcs import utils as gwutils
+from gwcs.geometry import SphericalToCartesian, CartesianToSpherical
 from gwcs import coordinate_frames as cf
 from gwcs import wcs
-from ..transforms.models import V23ToSky
+
+from ..datamodels import DataModel
 
 
 __all__ = ["compute_roll_ref", "frame_from_model", "fitswcs_transform_from_model"]
 
 
-def v23tosky(input_model):
+def v23tosky(input_model, wrap_v2_at=180, wrap_lon_at=360):
     v2_ref = input_model.meta.wcsinfo.v2_ref / 3600
     v3_ref = input_model.meta.wcsinfo.v3_ref / 3600
     roll_ref = input_model.meta.wcsinfo.roll_ref
     ra_ref = input_model.meta.wcsinfo.ra_ref
     dec_ref = input_model.meta.wcsinfo.dec_ref
 
-    angles = [-v2_ref, v3_ref, -roll_ref, -dec_ref, ra_ref]
+    angles = np.array([v2_ref, -v3_ref, roll_ref, dec_ref, -ra_ref])
     axes = "zyxyz"
-    sky_rotation = V23ToSky(angles, axes_order=axes, name="v23tosky")
+    rot = RotationSequence3D(angles, axes_order=axes)
+
     # The sky rotation expects values in deg.
     # This should be removed when models work with quantities.
-    return astmodels.Scale(1/3600) & astmodels.Scale(1/3600) | sky_rotation
+    m = ((Scale(1/3600) & Scale(1/3600)) | SphericalToCartesian(wrap_lon_at=wrap_v2_at)
+         | rot | CartesianToSpherical(wrap_lon_at=wrap_lon_at))
+    m.name = 'v23tosky'
+    return m
 
 
 def compute_roll_ref(v2_ref, v3_ref, roll_ref, ra_ref, dec_ref, new_v2_ref, new_v3_ref):
@@ -57,13 +64,15 @@ def compute_roll_ref(v2_ref, v3_ref, roll_ref, ra_ref, dec_ref, new_v2_ref, new_
     v3_ref = v3_ref / 3600
 
     if np.isclose(v2_ref, 0, atol=1e-13) and np.isclose(v3_ref, 0, atol=1e-13):
-        angles = [-roll_ref, -dec_ref, - ra_ref]
+        angles = [roll_ref, dec_ref, ra_ref]
         axes = "xyz"
     else:
-        angles = [-v2_ref, v3_ref, -roll_ref, -dec_ref, ra_ref]
+        angles = [v2_ref, -v3_ref, roll_ref, dec_ref, -ra_ref]
         axes = "zyxyz"
-    M = V23ToSky._compute_matrix(np.deg2rad(angles), axes)
-    return _roll_angle_from_matrix(M, v2, v3)
+
+    matrices = [rotation_matrix(a, ax) for a, ax in zip(angles, axes)]
+    m = matrix_product(*matrices[::-1])
+    return _roll_angle_from_matrix(m, v2, v3)
 
 
 def _roll_angle_from_matrix(matrix, v2, v3):
@@ -75,17 +84,6 @@ def _roll_angle_from_matrix(matrix, v2, v3):
     if new_roll < 0:
         new_roll += 360
     return new_roll
-
-
-#def create_fitswcs_transform(input_model):
-    #"""
-
-    #"""
-    #ff = fits_support.to_fits(input_model._instance, input_model._schema)
-    #hdu = fits_support.get_hdu(ff._hdulist, "PRIMARY")
-    #header = hdu.header
-    #transform = gwutils.make_fitswcs_transform(header)
-    #return transform
 
 
 def wcsinfo_from_model(input_model):
@@ -214,19 +212,26 @@ def create_fitswcs(inp, input_frame=None):
         wcsinfo = wcsinfo_from_model(inp)
         wavetable = None
         spatial_axes, spectral_axes, unknown = gwutils.get_axes(wcsinfo)
-        sp_axis = spectral_axes[0]
-        if wcsinfo['CTYPE'][sp_axis] == 'WAVE-TAB':
-            wavetable = inp.wavetable
-        transform = fitswcs_transform_from_model(wcsinfo, wavetable)
+        if spectral_axes:
+            sp_axis = spectral_axes[0]
+            if wcsinfo['CTYPE'][sp_axis] == 'WAVE-TAB':
+                wavetable = inp.wavetable
+        transform = fitswcs_transform_from_model(wcsinfo, wavetable=wavetable)
         output_frame = frame_from_model(wcsinfo)
-    #elif isinstance(inp, str):
-        #transform = create_fitswcs_transform(inp)
-        #output_frame = frame_from_fits(inp)
     else:
         raise TypeError("Input is expected to be a DataModel instance or a FITS file.")
 
     if input_frame is None:
-        input_frame = "detector"
+        wcsaxes = wcsinfo['WCSAXES']
+        if wcsaxes == 2:
+            input_frame = cf.Frame2D(name="detector")
+        elif wcsaxes == 3:
+            input_frame = cf.CoordinateFrame(name="detector", naxes=3,
+                axes_order=(0, 1, 2), unit=(u.pix, u.pix, u.pix),
+                axes_type=["SPATIAL", "SPATIAL", "SPECTRAL"],
+                axes_names=('x', 'y', 'z'), axis_physical_types=None)
+        else:
+            raise TypeError(f"WCSAXES is expected to be 2 or 3, instead it is {wcsaxes}")
     pipeline = [(input_frame, transform),
                (output_frame, None)]
 

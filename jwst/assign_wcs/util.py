@@ -231,6 +231,7 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
 
     prj = astmodels.Pix2Sky_TAN()
 
+
     if transform is None:
         transform = []
         wcsinfo = pointing.wcsinfo_from_model(refmodel)
@@ -258,19 +259,14 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
 
     out_frame = refmodel.meta.wcs.output_frame
     input_frame = dmodels[0].meta.wcs.input_frame
-    wnew = wcs_from_fiducial(fiducial, coordinate_frame=out_frame, projection=prj, transform=transform)
-    # temporary fix before gwcs 0.14 is released
-    # wnew = wcs_from_fiducial(fiducial, coordinate_frame=out_frame, projection=prj,
-    #                          transform=transform, input_frame=input_frame)
-    pipe = wnew.pipeline[:]
-    pipe[0] = (input_frame, pipe[0][1])
-    wnew = WCS(pipe)
+    wnew = wcs_from_fiducial(fiducial, coordinate_frame=out_frame, projection=prj,
+                             transform=transform, input_frame=input_frame)
 
     footprints = [w.footprint().T for w in wcslist]
     domain_bounds = np.hstack([wnew.backward_transform(*f) for f in footprints])
 
     for axs in domain_bounds:
-        axs -= axs.min()
+        axs -= (axs.min()  + .5)
 
     bounding_box = []
     for axis in out_frame.axes_order:
@@ -417,7 +413,7 @@ def subarray_transform(input_model):
         return subarray2full
 
 
-def not_implemented_mode(input_model):
+def not_implemented_mode(input_model, ref, slit_y_range=None):
     """
     Return ``None`` if assign_wcs has not been implemented for a mode.
     """

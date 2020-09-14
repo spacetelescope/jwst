@@ -61,6 +61,7 @@ SUFFIXES_TO_DISCARD = ['functionwrapper', 'systemcall']
 # Calculated suffixes.
 # This is produced by the `find_suffixes` function below
 _calculated_suffixes = set([
+    'masterbackgroundnrsslitsstep',
     'ami3pipeline',
     'whitelightstep',
     'ami_average',

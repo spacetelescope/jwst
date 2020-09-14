@@ -186,9 +186,11 @@ def get_blended_metadata(input_models, verbose=False):
         input_models = [input_models]
 
     # Turn input filenames into a set of metadata objects
+    close_models = False
     if isinstance(input_models[0], str):
         # convert `input_models` to a list of datamodels
         input_models = [datamodels.open(i) for i in input_models]
+        close_models = True
 
     num_files = len(input_models)
 
@@ -233,8 +235,9 @@ def get_blended_metadata(input_models, verbose=False):
     else:
         new_table = None
 
-    for model in input_models:
-        model.close()
+    if close_models:
+        for model in input_models:
+            model.close()
 
     return new_meta, new_table
 

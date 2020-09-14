@@ -19,7 +19,6 @@ def get_transforms_data():
     transforms_schemas = [os.path.join('schemas', s) for s in transforms_schemas]
     return transforms_schemas
 
-
 NAME = 'jwst'
 SCRIPTS = [s for s in glob('scripts/*') if basename(s) != '__pycache__']
 PACKAGE_DATA = {
@@ -34,57 +33,15 @@ PACKAGE_DATA = {
         '*.asdf'
     ]
 }
-DOCS_REQUIRE = [
-    'matplotlib',
-    'sphinx',
-    'sphinx-automodapi',
-    'sphinx-rtd-theme',
-    'stsci-rtd-theme',
-    'sphinx-astropy',
-    'sphinx-asdf',
-]
-TESTS_REQUIRE = [
-    'ci-watson>=0.3.0',
-    'pytest>=4.6.0',
-    'pytest-doctestplus',
-    'requests_mock>=1.0',
-    'pytest-openfiles>=0.5.0',
-    'pytest-cov>=2.9.0',
-    'codecov>=1.6.0',
-]
-AWS_REQUIRE = [
-    'stsci-aws-utils>=0.1.2'
-]
-ENTRY_POINTS = dict(asdf_extensions=['jwst_pipeline = jwst.transforms.jwextension:JWSTExtension',
-                                     'jwst_datamodel = jwst.datamodels.extension:DataModelExtension'])
-
-transforms_schemas = get_transforms_data()
-PACKAGE_DATA['jwst.transforms'] = transforms_schemas
+PACKAGE_DATA['jwst.transforms'] = get_transforms_data()
 
 setup(
-    name=NAME,
     use_scm_version=True,
-    author='JWST Pipeline developers',
-    description='Python library for science observations from the James Webb Space Telescope',
-    long_description=('The JWST Data Reduction Pipeline is a Python '
-                      'software suite that automatically processes the '
-                      'data taken by the JWST instruments NIRCam, NIRSpec, '
-                      'NIRISS, MIRI, and FGS to remove instrumental signatures '
-                      'from the observations.'),
-    url='https://github.com/spacetelescope/jwst',
-    license='BSD',
-    classifiers=[
-        'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: BSD License',
-        'Operating System :: OS Independent',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: C',
-        'Topic :: Software Development :: Libraries :: Python Modules',
-    ],
-    python_requires='>=3.6',
+    setup_requires=['setuptools_scm'],
     scripts=SCRIPTS,
     packages=find_packages(),
     package_data=PACKAGE_DATA,
+
     setup_requires=[
         'setuptools_scm',
     ],

@@ -192,6 +192,14 @@ class IFUCubeData():
                         '_single_s3d.fits'
 # ________________________________________________________________________________
             elif self.instrument == 'NIRSPEC':
+
+                # Check to see if the output base name already has a grating/prism
+                # suffix attached. If so, strip it off, and let the following logic
+                # add all necessary grating and filter suffixes.
+                suffix = self.output_name_base[self.output_name_base.rfind('_')+1:]
+                if suffix in ['g140m', 'g235m', 'g395m', 'g140h', 'g235h', 'g395h', 'prism']:
+                    self.output_name_base = self.output_name_base[:self.output_name_base.rfind('_')]
+
                 fg_name = '_'
                 for i in range(len(self.list_par1)):
                     fg_name = fg_name + self.list_par1[i] + '-' + self.list_par2[i]
@@ -771,12 +779,12 @@ class IFUCubeData():
         self.set_final_dq_flags()
         t1 = time.time()
         log.info("Time to find Cube Flux = %.1f s" % (t1 - t0,))
-
-        ifucube_model = self.setup_final_ifucube_model(0)
+        # result consist of ifu_cube and status
+        result  = self.setup_final_ifucube_model(0)
 # _______________________________________________________________________
 # shove Flux and iflux in the  final IFU cube
 
-        return ifucube_model
+        return result
 # ********************************************************************************
 
     def build_ifucube_single(self):
@@ -789,7 +797,6 @@ class IFUCubeData():
         system
 
         """
-
         # loop over input models
         single_ifucube_container = datamodels.ModelContainer()
         n = len(self.input_models)
@@ -845,14 +852,15 @@ class IFUCubeData():
 # shove Flux and iflux in the  final ifucube
             self.find_spaxel_flux()
 
-            #now determine Cube Spaxel flux
-
-            ifucube_model = self.setup_final_ifucube_model(j)
-
+            # determine Cube Spaxel flux
+            status = 0
+            result = self.setup_final_ifucube_model(j)
+            ifucube_model, status = result
             t1 = time.time()
             log.debug("Time to Create Single ifucube = %.1f s" % (t1 - t0,))
-# _______________________________________________________________________
             single_ifucube_container.append(ifucube_model)
+            if status !=0:
+                log.debug("Possible problem with single ifu cube, no valid data in cube" )
 
         return single_ifucube_container
 # **************************************************************************
@@ -2040,6 +2048,7 @@ class IFUCubeData():
 
         """
 
+        status = 0
         # loop over the wavelength planes to confirm each plane has some data
         # for initial or final planes that do not have any data - eliminated them
         # from the IFUcube
@@ -2080,9 +2089,16 @@ class IFUCubeData():
                     break;
                 k = k -1
 
-            if (remove_start+remove_final) > 0:
+            remove_total = remove_start + remove_final
+            if remove_total >= self.naxis3:
+                log.error('All the wavelength planes have zero data, check input data')
+                # status of 1 sets up failure of IFU cube building
+                # the input to cube_build  is returned instead of an zero filled ifucube
+                status = 1
+
+            if (remove_total > 0 and remove_total < self.naxis3) :
                 log.info('Number of wavelength planes removed with no data: %i',
-                         remove_start+remove_final)
+                         remove_total)
 
                 temp_flux = temp_flux[remove_start:self.naxis3-remove_final,:,:]
                 temp_wmap = temp_wmap[remove_start:self.naxis3-remove_final,:,:]
@@ -2296,8 +2312,12 @@ class IFUCubeData():
                                                (0, naxis3 - 1))
 
         ifucube_model.meta.cal_step.cube_build = 'COMPLETE'
+        # problem with cube_build - contains only 0 data
+        if status == 1:
+            ifucube_model.meta.cal_step.cube_build = 'SKIPPED'
 
-        return ifucube_model
+        result = (ifucube_model,status)
+        return result
 # ********************************************************************************
 
     def blend_output_metadata(self, IFUCube):

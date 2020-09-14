@@ -50,6 +50,10 @@ class ModelContainer(model_base.DataModel):
 
        - asn_n_members: Open only the first N qualifying members.
 
+    iscopy : bool
+        Presume this model is a copy. Members will not be closed
+        when the model is closed/garbage-collected.
+
     Examples
     --------
     >>> container = ModelContainer('example_asn.json')
@@ -74,12 +78,12 @@ class ModelContainer(model_base.DataModel):
     # does not describe the data contents of the container.
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/container.schema"
 
-    def __init__(self, init=None, asn_exptypes=None, asn_n_members=None, **kwargs):
+    def __init__(self, init=None, asn_exptypes=None, asn_n_members=None, iscopy=False, **kwargs):
 
         super().__init__(init=None, asn_exptypes=None, **kwargs)
 
         self._models = []
-        self._iscopy = False
+        self._iscopy = iscopy
         self.asn_exptypes = asn_exptypes
         self.asn_n_members = asn_n_members
         self._memmap = kwargs.get("memmap", False)

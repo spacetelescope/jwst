@@ -23,10 +23,6 @@ def test_ifu_2d():
                           radius=radius,
                           inner_bkg=inner_bkg, outer_bkg=outer_bkg)
 
-    ref_image_2d = make_ref_image(data_shape[-2:],      # 2-D ref image
-                                  x_center=x_center, y_center=y_center,
-                                  radius=radius,
-                                  inner_bkg=inner_bkg, outer_bkg=outer_bkg)
 
     # Create a reference dictionary to specify the extraction parameters.
     # This will serve as the "truth" for comparison with the results of
@@ -46,6 +42,11 @@ def test_ifu_2d():
     truth = extract.do_extract1d(input, ref_dict, smoothing_length=0,
                                  bkg_order=0, log_increment=50,
                                  subtract_background=True)
+
+    ref_image_2d = make_ref_image(data_shape[-2:],      # 2-D ref image
+                                  x_center=x_center, y_center=y_center,
+                                  radius=radius,
+                                  inner_bkg=inner_bkg, outer_bkg=outer_bkg)
 
     ref_dict_2d = {"ref_file_type": extract.FILE_TYPE_IMAGE,
                    "ref_model": ref_image_2d}
@@ -74,7 +75,7 @@ def test_ifu_2d():
     """
     assert np.allclose(wavelength, true_wl, rtol=1.e-14, atol=1.e-14)
 
-    assert np.allclose(flux, true_flux, rtol=0.05)
+    assert np.allclose(flux, true_flux, rtol=0.06)
 
     assert np.allclose(background, true_bkg, rtol=0.1)
 
@@ -212,6 +213,7 @@ def make_ifu_cube(data_shape, source=None, background=None,
     """
 
     data = np.zeros(data_shape, dtype=np.float32)
+    weightmap = np.zeros(data_shape, dtype=np.float32)
     r_2 = radius**2
     if inner_bkg is not None and outer_bkg is not None:
         create_background = True
@@ -229,12 +231,14 @@ def make_ifu_cube(data_shape, source=None, background=None,
             dist_2 = (float(i) - x_center)**2 + (float(j) - y_center)**2
             if dist_2 <= r_2:
                 data[:, j, i] = source + bkg
+                weightmap[:, j, i] = 1
             if create_background:
                 if dist_2 > inner_2 and dist_2 <= outer_2:
                     data[:, j, i] = bkg
+                    weightmap[:, j, i] = 1
 
     dq = np.zeros(data_shape, dtype=np.uint32)
-    input_model = datamodels.IFUCubeModel(data=data, dq=dq)
+    input_model = datamodels.IFUCubeModel(data=data, dq=dq, weightmap=weightmap)
     # Populate the BUNIT keyword so that in ifu.py the net will be moved
     # to the flux column.
     input_model.meta.bunit_data = 'MJy/sr'

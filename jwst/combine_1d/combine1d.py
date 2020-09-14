@@ -185,7 +185,10 @@ class OutputSpectrumModel:
         self.count = np.zeros(nelem, dtype=np.float64)
 
         n_nan = 0                                       # initial value
+        ninputs = 0
         for in_spec in input_spectra:
+            ninputs += 1
+            log.info(f'Accumulating data from input spectrum {ninputs}')
             # Get the pixel numbers in the output corresponding to the
             # wavelengths of the current input spectrum.
             out_pixel = self.wcs.invert(in_spec.right_ascension,
