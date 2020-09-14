@@ -41,4 +41,34 @@ setup(
     scripts=SCRIPTS,
     packages=find_packages(),
     package_data=PACKAGE_DATA,
+
+    setup_requires=[
+        'setuptools_scm',
+    ],
+    install_requires=[
+        'asdf>=2.5',
+        'astropy>=4.0',
+        'crds>=7.4.1.3',
+        'drizzle>=1.13',
+        'gwcs>=0.13.0',
+        'jsonschema>=3.0.1',
+        'numpy>=1.16',
+        'photutils>=0.7',
+        'poppy>=0.9.1',
+        'pyparsing>=2.2',
+        'requests>=2.22',
+        'scipy>=1.1.0',
+        'spherical-geometry>=1.2.2',
+        'stsci.image>=2.3.3',
+        'tweakwcs>=0.6.4',
+        'uncertainties>=3.1.4',
+    ],
+    extras_require={
+        'docs': DOCS_REQUIRE,
+        'ephem': ['pymssql==2.1.4', 'jplephem==2.9'], # for timeconversion
+        'test': TESTS_REQUIRE,
+        'aws': AWS_REQUIRE,
+    },
+    tests_require=TESTS_REQUIRE,
+    entry_points=ENTRY_POINTS,
 )
