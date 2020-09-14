@@ -1,6 +1,12 @@
 0.17.1 (unreleased)
 ===================
 
+associations
+------------
+
+- Add product name override to the `IFUGratingBkg` class, to prevent the default
+  "clear" suffix showing up in NIRSpec IFU product names. [#5326]
+
 barshadow
 ---------
 
@@ -17,6 +23,8 @@ cube_build
 ----------
 
 - If every wavelength plane of the IFU cube contains 0 data, cube_build is skipped [#5294]
+
+- Remove "clear" suffix from MIRI MRS product name templates [#5326]
 
 flat_field
 ----------
