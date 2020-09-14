@@ -163,6 +163,18 @@ class IFUCubeData():
             newname = self.output_name_base + '_s3d.fits'
         else:
             if self.instrument == 'MIRI':
+
+                # Check to see if the output base name already contains the
+                # field "clear", which sometimes shows up in IFU product
+                # names created by the ASN rules. If so, strip it off, so
+                # that the remaining suffixes created below form the entire
+                # list of optical elements in the final output name.
+                suffix = self.output_name_base[self.output_name_base.rfind('_')+1:]
+                if suffix in ['clear']:
+                    self.output_name_base = self.output_name_base[:self.output_name_base.rfind('_')]
+
+                # Now compose the appropriate list of optical element suffix names
+                # based on MRS channel and sub-channel
                 channels = []
                 for ch in self.list_par1:
                     if ch not in channels:
