@@ -177,7 +177,7 @@ class NIRISS:
         Data and parameters from input data model
         """
         # The info4oif_dict will get pickled to disk when we write txt files of results.
-        # That way we don't drag in objects like InstrumentData into code that reads text results
+        # That way we don't drag in objects like instrument_data into code that reads text results
         # and writes oifits files - a simple built-in dictionary is the only object used in this transfer.
         self.telname = "JWST"
 
@@ -193,12 +193,9 @@ class NIRISS:
 
         return input_model.data
 
-
     def reset_nwav(self, nwav):
         """
-        Short Summary
-        ------------
-        rather than calling InstrumentData in the niriss example just to reset just call this routine
+        Reset self.nwav
 
         Parameters
         ----------

@@ -24,7 +24,7 @@ class FringeFitter:
 
         Parameters
         ----------
-        instrument_data - InstrumentData.NIRISS object
+        instrument_data - jwst.ami.instrument_data.NIRISS object
             Information on the mask geometry (namely # holes), instrument,
             wavelength obs mode.
 
@@ -186,7 +186,7 @@ class Calibrate:
             first path is the target.  One or more calibrators follow.
             This parameter used to be the parameter 'paths'.
 
-        instrument_data - InstrumentData.NIRISS object
+        instrument_data - jwst.ami.instrument_data.NIRISS object
             Information on the mask geometry (namely # holes), instrument,
             wavelength obs mode.
 

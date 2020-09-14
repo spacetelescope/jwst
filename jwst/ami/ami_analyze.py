@@ -5,8 +5,8 @@
 import logging
 import numpy as np
 
-from . import find_affine2d_parameters as FAP
-from . import InstrumentData
+from .find_affine2d_parameters import find_rotation
+from . import instrument_data
 from . import nrm_core
 
 from astropy import units as u
@@ -64,11 +64,11 @@ def apply_LG_plus(input_model, filter_model, oversample, rotation):
     filt = "F430M"
     rotsearch_d = np.arange(-3, 3.1, 1)
 
-    affine2d = FAP.find_rotation(data[:,:], psf_offset_find_rotation, rotsearch_d,
+    affine2d = find_rotation(data[:,:], psf_offset_find_rotation, rotsearch_d,
                    mx, my, sx, sy, xo, yo,
                    PIXELSCALE_r, dim, bandpass, oversample, holeshape)
 
-    niriss = InstrumentData.NIRISS(filt, bandpass=bandpass, affine2d=affine2d)
+    niriss = instrument_data.NIRISS(filt, bandpass=bandpass, affine2d=affine2d)
 
     ff_t = nrm_core.FringeFitter(niriss, psf_offset_ff=psf_offset_ff,
                 oversample=oversample)
