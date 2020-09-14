@@ -814,11 +814,11 @@ def closurephase(deltap, N=7):
     # p is a triangular matrix set up to calculate closure phases
     if N == 7:
         p = np.array([deltap[:6], deltap[6:11], deltap[11:15],
-                deltap[15:18], deltap[18:20], deltap[20:]])
+                deltap[15:18], deltap[18:20], deltap[20:]], dtype=object)
     elif N == 10:
         p = np.array([deltap[:9], deltap[9:17], deltap[17:24],
                 deltap[24:30], deltap[30:35], deltap[35:39],
-                deltap[39:42], deltap[42:44], deltap[44:]])
+                deltap[39:42], deltap[42:44], deltap[44:]], dtype=object)
     else:
         log.critical('invalid hole number: %s', N)
 
