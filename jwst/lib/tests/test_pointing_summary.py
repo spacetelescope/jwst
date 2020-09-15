@@ -62,7 +62,6 @@ def test_calc_deltas(engdb, data_path):
     """Test `calc_deltas` basic running"""
     model = dm.ImageModel(data_path)
     deltas = ps.calc_deltas([model])
-
     truth = Table.read(DATA_PATH / 'calc_deltas_truth.ecsv')
 
     assert report_diff_values(truth, deltas, fileobj=sys.stderr)
