@@ -52,7 +52,7 @@ You can also install a specific version (from `jwst 0.17.0` onward):
 
     conda create -n <env_name> python
     conda activate <env_name>
-    pip install jwst==0.17.0
+    pip install jwst==0.17.1
 
 Installing specific versions before `jwst 0.17.0` need to be installed from Github:
 
@@ -192,6 +192,7 @@ contact the [JWST Help Desk](https://jwsthelp.stsci.edu).
 
 | jwst tag | DMS build | CRDS_CONTEXT |   Date     |          Notes                                |
 | -------- | --------- | ------------ | ---------- | ----------------------------------------------|
+|  0.17.1  | B7.6rc2   | 0641         | 09/15/2020 | Second release candidate for B7.6             |
 |  0.17.0  | B7.6rc1   | 0637         | 08/28/2020 | First release candidate for B7.6              |
 |  0.16.2  | B7.5      | 0619         | 06/10/2020 | Same as 0.16.1, but with installation bug fix |
 |  0.16.1  | B7.5      | 0619         | 05/19/2020 | Final release candidate for B7.5              |
