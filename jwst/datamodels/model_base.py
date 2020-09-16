@@ -5,6 +5,7 @@ Data model class heirarchy
 import copy
 import datetime
 import os
+from pathlib import PurePath
 import sys
 import warnings
 
@@ -170,7 +171,9 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             asdffile = fits_support.from_fits(init, self._schema, self._ctx,
                                               **kwargs)
 
-        elif isinstance(init, (str, bytes)):
+        elif isinstance(init, (str, bytes, PurePath)):
+            if isinstance(init, PurePath):
+                init = str(init)
             if isinstance(init, bytes):
                 init = init.decode(sys.getfilesystemencoding())
             file_type = filetype.check(init)

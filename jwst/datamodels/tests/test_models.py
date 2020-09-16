@@ -1,5 +1,6 @@
 import os
 from os import path as op
+from pathlib import Path
 import shutil
 import tempfile
 import warnings
@@ -82,6 +83,15 @@ def make_models(tmpdir_factory):
         'just_fits': path_just_fits,
         'model': path_model
     }
+
+
+def test_init_from_pathlib(make_models):
+    """Test initializing model from a PurePath object"""
+    path = Path(make_models['model'])
+    model = ImageModel(path)
+
+    # Test is basically, did we open the model?
+    assert isinstance(model, ImageModel)
 
 
 @pytest.mark.parametrize(

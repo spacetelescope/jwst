@@ -4,6 +4,7 @@ Test datamodel.open
 
 import os
 import os.path
+from pathlib import Path, PurePath
 import warnings
 
 import pytest
@@ -14,6 +15,17 @@ from jwst.datamodels import (DataModel, ModelContainer, ImageModel,
     DistortionModel, RampModel, CubeModel, ReferenceFileModel, ReferenceImageModel,
     ReferenceCubeModel, ReferenceQuadModel)
 from jwst import datamodels
+
+
+def test_open_from_pathlib():
+    """Test opening a PurePath object"""
+    path = Path(t_path('test.fits'))
+    assert isinstance(path, PurePath)
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "model_type not found")
+        with datamodels.open(path) as model:
+            assert isinstance(model, DataModel)
 
 
 def test_open_fits():
