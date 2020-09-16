@@ -12,6 +12,11 @@ env:
     - TEST_COMMAND="pytest --cov-report=xml --cov=./"
     - PIP_DEPENDENCIES=.[test]
 
+cache:
+  - pip
+  - directories:
+    - /tmp/crds_cache
+
 jobs:
   # Don't wait for allowed failures
   fast_finish: true
