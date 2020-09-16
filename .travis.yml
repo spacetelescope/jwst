@@ -24,6 +24,9 @@ jobs:
       env:
         GEN_MIN_DEPS=true
         PIP_DEPENDENCIES="-r requirements-min.txt .[test]"
+      install:
+        - pip install -U pip certifi
+        - pip install $PIP_DEPENDENCIES
 
     - name: SDP dependencies in requirements-sdp.txt, CRDS_CONTEXT=jwst-edit
       env:
