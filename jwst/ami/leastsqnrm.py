@@ -1,13 +1,20 @@
 
 import logging
+
 import numpy as np
 import numpy.linalg as linalg
 from scipy.special import comb, jv
-from uncertainties import unumpy
+try:
+    from uncertainties import unumpy
+except ImportError:
+    pass
+
 from . import hexee
 
+
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+log.addHandler(logging.NullHandler())
+
 
 def flip(holearray):
     """
