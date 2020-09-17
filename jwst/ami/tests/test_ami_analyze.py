@@ -1,19 +1,19 @@
 """
-
 Unit tests for ami_analyze
-
 """
 import numpy as np
 import math
 
+import pytest
+
 from jwst import datamodels
 from jwst.ami import utils, leastsqnrm, hexee, webb_psf
-from jwst.ami.leastsqnrm import hexpb, ffc, ffs, return_CAs
+from jwst.ami.leastsqnrm import hexpb, ffc, ffs, closure_amplitudes
 from jwst.ami.leastsqnrm import closurephase, redundant_cps
 from jwst.ami.leastsqnrm import populate_symmamparray
 from jwst.ami.leastsqnrm import populate_antisymmphasearray
 from jwst.ami.leastsqnrm import tan2visibilities, model_array
-from jwst.ami.analyticnrm2 import interf, PSF, phasor, ASFhex
+from jwst.ami.analyticnrm2 import interf, psf, phasor, asf_hex
 
 from numpy.testing import assert_allclose
 
@@ -411,18 +411,18 @@ def test_leastsqnrm_ffs():
         delattr( ffs, kk )
 
 
-def test_leastsqnrm_return_CAs():
-    ''' Test of return_CAs in leastsqnrm module.
+def test_leastsqnrm_closure_amplitudes():
+    ''' Test of closure_amplitudes() in leastsqnrm module.
         Calculate the closure amplitudes.
     '''
     amps = np.array([ 0.1, 0.2, 0.3, 1.0, 0.9, 0.5 ,1.1, 0.7, 0.1, 1.0 ])
 
-    N = 5 # number of holes
+    n = 5 # number of holes
 
-    CAs = return_CAs(amps, N=N)
+    cas = closure_amplitudes(amps, n=n)
 
-    true_CAs = np.array([ 0.7, 0.04545455, 0.3030303, 6.66666667, 18.])
-    assert_allclose( CAs, true_CAs, atol=1E-7 )
+    true_cas = np.array([0.7, 0.04545455, 0.3030303, 6.66666667, 18.])
+    assert_allclose(cas, true_cas, atol=1E-7)
 
 
 def test_leastsqnrm_closurephase():
@@ -430,13 +430,13 @@ def test_leastsqnrm_closurephase():
          Calculate closure phases between each pair of holes.
     '''
 
-    N = 7 # number of holes
+    n = 7 # number of holes
     deltap = np.array([ 0.1, -0.2,  0.3, 0.2, 0.05,
                        -0.7, -0.05, 0.7, 0.1, 0.02,
                        -0.5, -0.05, 0.7, 0.1, 0.3,
                         0.4, -0.2, -0.3, 0.2, 0.5, 0.3 ])
 
-    cps = closurephase( deltap, N=N )
+    cps = closurephase(deltap, n=n)
 
     true_cps = np.array([ 0.25,  0.5,  0.0,  0.07 , 0.3,
                          -0.8,   0.55, 0.03, 0.75, -0.35,
@@ -448,13 +448,13 @@ def test_leastsqnrm_redundant_cps():
     ''' Test of redundant_cps in leastsqnrm module.
         Calculate closure phases for each set of 3 holes.
     '''
-    N = 7 # number of holes
+    n = 7 # number of holes
     deltaps = np.array([ 0.1, -0.2,  0.3, 0.2, 0.05,
                        -0.7, -0.05, 0.7, 0.1, 0.02,
                        -0.5, -0.05, 0.7, 0.1, 0.3,
                         0.4, -0.2, -0.3, 0.2, 0.5, 0.3 ])
 
-    cps = redundant_cps( deltaps, N=N )
+    cps = redundant_cps(deltaps, n=n)
 
     true_cps = np.array([ 0.25,   0.5,   0.0,  0.07, 0.3,
                          -0.55,   0.3,  -0.15, 0.8,  0.5,
@@ -463,7 +463,7 @@ def test_leastsqnrm_redundant_cps():
                            0.48,  0.9,   0.28, 1.1,  0.82,
                           -0.35, -0.35, -0.65, 0.8,  0.9,
                            0.1,   0.8,   1.2,  0.4,  0.0 ])
-    assert_allclose( cps, true_cps, atol=1E-8 )
+    assert_allclose(cps, true_cps, atol=1E-8)
 
 
 def test_leastsqnrm_populate_symmamparray():
@@ -471,16 +471,16 @@ def test_leastsqnrm_populate_symmamparray():
         Populate the symmetric fringe amplitude array.
     '''
     amps = np.array([ 0.1, 0.2,  0.3, 0.2, 0.05, 0.7, 0.3, 0.1, 0.2, 0.8 ])
-    N = 5
+    n = 5
 
-    arr = populate_symmamparray( amps, N=N )
+    arr = populate_symmamparray(amps, n=n)
 
     true_arr = np.array([[0.0, 0.1,  0.2,  0.3,  0.2 ],
                          [0.1, 0.0,  0.05, 0.7,  0.3 ],
                          [0.2, 0.05, 0.0,  0.1,  0.2 ],
                          [0.3, 0.7,  0.1,  0.0,  0.8 ],
                          [0.2, 0.3,  0.2,  0.8,  0.0 ]])
-    assert_allclose( arr, true_arr, atol=1E-8 )
+    assert_allclose(arr, true_arr, atol=1E-8)
 
 
 def test_leastsqnrm_populate_antisymmphasearray():
@@ -488,16 +488,16 @@ def test_leastsqnrm_populate_antisymmphasearray():
         Populate the antisymmetric fringe phase array.
     '''
     deltaps = np.array([ 0.1, 0.2,  0.3, 0.2, 0.05, 0.7, 0.3, 0.1, 0.2, 0.8 ])
-    N = 5
+    n = 5
 
-    arr = populate_antisymmphasearray( deltaps, N=N )
+    arr = populate_antisymmphasearray(deltaps, n=n)
 
     true_arr = np.array([[0.0, 0.1,  0.2,  0.3,  0.2 ],
                          [-0.1, 0.0,  0.05, 0.7,  0.3 ],
                          [-0.2, -0.05, 0.0,  0.1,  0.2 ],
                          [-0.3, -0.7,  -0.1,  0.0,  0.8 ],
                          [-0.2, -0.3,  -0.2,  -0.8,  0.0 ]])
-    assert_allclose( arr, true_arr, atol=1E-8 )
+    assert_allclose(arr, true_arr, atol=1E-8)
 
 
 def test_leastsqnrm_tan2visibilities():
@@ -600,14 +600,15 @@ def test_hexee_glimit():
 #---------------------------------------------------------------
 # analyticnrm2 module tests:
 #
-def test_analyticnrm2_PSF():
-    ''' Test of PSF() in the analyticnrm2 module '''
+def test_analyticnrm2_psf(setup_sf):
+    ''' Test of psf() in the analyticnrm2 module '''
 
-    pixel, fov, oversample, ctrs, d, lam, phi, centering = setup_SF()
+    pixel, fov, oversample, ctrs, d, lam, phi, psf_offset = setup_sf
 
     shape = "hex"
 
-    psf =  PSF( pixel, fov, oversample, ctrs, d, lam, phi, centering = centering, shape = shape)
+    computed_psf = psf(pixel, fov, oversample, ctrs, d, lam, phi,
+        psf_offset, shape=shape)
 
     true_psf = np.array(
         [[ 0.55676539, 5.13790691, 9.32707852, 7.95659204, 3.05720862, 0.87093812],
@@ -618,15 +619,15 @@ def test_analyticnrm2_PSF():
          [ 0.87093812, 3.05720862, 7.95659204, 9.32707852, 5.13790691, 0.55676539]]
          )
 
-    assert_allclose(psf, true_psf, atol=1E-7 )
+    assert_allclose(computed_psf, true_psf, atol=1E-7 )
 
 
-def test_analyticnrm2_ASFhex():
-    ''' Test of ASFhex() in the analyticnrm2 module FOR HEX '''
+def test_analyticnrm2_asf_hex(setup_sf):
+    ''' Test of asf_hex() in the analyticnrm2 module FOR HEX '''
 
-    pixel, fov, oversample, ctrs, d, lam, phi, centering = setup_SF()
+    pixel, fov, oversample, ctrs, d, lam, phi, centering = setup_sf
 
-    asf = ASFhex(pixel, fov, oversample, ctrs, d, lam, phi, centering)
+    asf = asf_hex(pixel, fov, oversample, ctrs, d, lam, phi, centering)
 
     true_asf = np.array(
         [[ 0.74611461-0.00885311j, 2.14239062+0.74031707j, 2.7532696 +1.32158428j,
@@ -646,7 +647,7 @@ def test_analyticnrm2_ASFhex():
     assert_allclose(asf, true_asf, atol=1E-7 )
 
 
-def test_analyticnrm2_interf():
+def test_analyticnrm2_interf(setup_sf):
     ''' Test of interf() in the analyticnrm2 module '''
 
     ASIZE = 4
@@ -662,7 +663,7 @@ def test_analyticnrm2_interf():
     for kk in list( (interf.__dict__).keys()):
         delattr( interf, kk )
 
-    pixel, fov, oversample, ctrs, d, lam, phi, centering = setup_SF()
+    pixel, fov, oversample, ctrs, d, lam, phi, centering = setup_sf
 
     interf.lam = lam
     interf.offx = 0.5
@@ -756,11 +757,13 @@ def test_webb_psf():
 
     assert_allclose( band, true_band, atol=1E-7 )
 
+
 #---------------------------------------------------------------
 # utility functions:
-#
 
-def setup_SF():
+
+@pytest.fixture
+def setup_sf():
     ''' Initialize values for these parameters needed for the analyticnrm2 tests.
 
         Returns

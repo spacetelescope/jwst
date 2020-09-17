@@ -5,7 +5,7 @@
 import logging
 import numpy as np
 
-from . import LG_Model
+from . import lg_model
 from . import utils
 
 log = logging.getLogger(__name__)
@@ -100,7 +100,7 @@ def find_rotation(imagedata, psf_offset, rotdegs, mx, my, sx, sy, xo, yo,
     crosscorr_rots = []
 
     for (rot,aff) in zip(rotdegs,affine2d_list):
-        jw = LG_Model.NRM_Model(mask='jwst', holeshape=holeshape, over=over, affine2d=aff)
+        jw = lg_model.NrmModel(mask='jwst', holeshape=holeshape, over=over, affine2d=aff)
 
         jw.set_pixelscale(pixel)
         # psf_offset in data coords & pixels.  Does it get rotated?  Second order errors poss.

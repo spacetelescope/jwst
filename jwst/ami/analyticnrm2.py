@@ -1,5 +1,4 @@
-#! /usr/bin/env  python
-# Heritage mathematia nb from Alex & Laurent
+# Heritage mathematica nb from Alex & Laurent
 # Python by Alex Greenbaum & Anand Sivaramakrishnan Jan 2013
 # updated May 2013 to include hexagonal envelope
 
@@ -8,12 +7,13 @@ import numpy as np
 import scipy.special
 from . import leastsqnrm
 from . import utils
-from . import hextransformEE
+from . import hextransformee
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+log.addHandler(logging.NullHandler())
 
-def Jinc(x, y):
+
+def jinc(x, y):
     """
     Short Summary
     -------------
@@ -27,11 +27,11 @@ def Jinc(x, y):
     Returns
     -------
     jinc_2d: float array
-        2d Jinc at the given coordinates, with NaNs replaced by pi/4.
+        2d jinc at the given coordinates, with NaNs replaced by pi/4.
     """
-    R = (Jinc.d / Jinc.lam) * Jinc.pitch *  \
-           np.sqrt((x - Jinc.offx)*(x - Jinc.offx) + \
-           (y - Jinc.offy)*(y - Jinc.offy))
+    R = (jinc.d / jinc.lam) * jinc.pitch *  \
+           np.sqrt((x - jinc.offx)*(x - jinc.offx) + \
+           (y - jinc.offy)*(y - jinc.offy))
 
     jinc_2d = leastsqnrm.replacenan(scipy.special.jv(1, np.pi * R)/(2.0 * R))
 
@@ -348,9 +348,9 @@ def model_array(ctrs, lam, oversample, pitch, fov, d, psf_offset=(0, 0),
 
     # calculate primary beam envelope (non-negative real)
     if shape=='circ':
-        asf_pb = ASF(   pitch, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d)
+        asf_pb = asf(   pitch, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d)
     elif shape=='hex':
-        asf_pb = ASFhex(pitch, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d)
+        asf_pb = asf_hex(pitch, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d)
     else:
         raise KeyError("Must provide a valid hole shape. Current supported shapes are" \
                 " 'circ' and 'hex'.")
@@ -379,7 +379,7 @@ def model_array(ctrs, lam, oversample, pitch, fov, d, psf_offset=(0, 0),
 
     return primary_beam, ffmodel
 
-def ASF(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d):
+def asf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d):
     """
     Short Summary
     -------------
@@ -423,14 +423,14 @@ def ASF(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d):
     pitch = detpixel/float(oversample)
     ImCtr =  image_center(fov, oversample, psf_offset)
 
-    return np.fromfunction(Jinc, (oversample*fov,oversample*fov),
+    return np.fromfunction(jinc, (oversample*fov,oversample*fov),
                            c=ImCtr,
                            D=d,
                            lam=lam,
                            pitch=pitch,
                            affine2d=affine2d)
 
-def ASFfringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d):
+def asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d):
     """
     Short Summary
     -------------
@@ -479,7 +479,7 @@ def ASFfringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d):
                            pitch=pitch,
                            affine2d=affine2d)
 
-def ASFhex(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d):
+def asf_hex(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d):
     """
     Short Summary
     -------------
@@ -524,7 +524,7 @@ def ASFhex(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d):
 
     ImCtr =  image_center(fov, oversample, psf_offset)
 
-    return hextransformEE.hextransform(
+    return hextransformee.hextransform(
                            s=(oversample*fov,oversample*fov),
                            c=ImCtr,
                            d=d,
@@ -532,7 +532,7 @@ def ASFhex(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d):
                            pitch=pitch,
                            affine2d=affine2d)
 
-def PSF(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d,
+def psf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d,
         shape='circ'):
     """
     Short Summary
@@ -577,17 +577,17 @@ def PSF(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d,
 
     # Now deal with primary beam shapes...
     if shape == 'circ':
-        asf_fringe = ASFfringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d)
-        asf = ASF(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d) * asf_fringe
+        asf_fringe = asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d)
+        asf = asf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d) * asf_fringe
     elif shape == 'circonly':
-        asf = ASF(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d)
+        asf = asf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d)
     elif shape == 'hex':
-        asf_fringe = ASFfringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d)
-        asf = ASFhex(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d) * asf_fringe
+        asf_fringe = asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d)
+        asf = asf_hex(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d) * asf_fringe
     elif shape == 'hexonly':
-        asf = ASFhex(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d)
+        asf = asf_hex(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d)
     elif shape == 'fringeonly':
-        asf_fringe = ASFfringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d)
+        asf_fringe = asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d)
     else:
         raise ValueError(
             "pupil shape %s not supported - choices: 'circonly', 'circ', 'hexonly', 'hex', 'fringeonly'"\

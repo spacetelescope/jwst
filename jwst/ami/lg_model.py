@@ -1,9 +1,5 @@
-#
 # A module for conveniently manipulating an 'NRM object' using the
 # Lacour-Greenbaum algorithm. First written by Alexandra Greenbaum in 2014.
-#
-#
-
 import logging
 import numpy as np
 from astropy.io import fits
@@ -12,8 +8,9 @@ from . import leastsqnrm as leastsqnrm
 from . import analyticnrm2
 from . import utils
 
+
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+log.addHandler(logging.NullHandler())
 
 
 # define phi at the center of F430M band:
@@ -28,7 +25,7 @@ mm = 1.0e-3 * m
 um = 1.0e-6 * m
 mas = 1.0e-3 / (60*60*180/np.pi)  # in radians
 
-class NRM_Model:
+class NrmModel:
     '''
     A class for conveniently dealing with an "NRM object" This should be able
     to take an NRM_mask_definitions object for mask geometry.
@@ -175,7 +172,7 @@ class NRM_Model:
 
         self.chooseholes = chooseholes
 
-        # affine2d property not to be changed in NRM_Model - create a new
+        # affine2d property not to be changed in NrmModel - create a new
         #     instance instead
         # Save affine deformation of pupil object or create a no-deformation
         #     object.
@@ -428,8 +425,8 @@ class NRM_Model:
         self.fringepistons = utils.fringes2pistons(self.fringephase,
                                                    len(self.ctrs))
         self.redundant_cps = leastsqnrm.redundant_cps(self.fringephase,
-                                                      N=self.N)
-        self.redundant_cas = leastsqnrm.return_CAs(self.fringeamp, N=self.N)
+                                                      n=self.N)
+        self.redundant_cas = leastsqnrm.closure_amplitudes(self.fringeamp, n=self.N)
 
     def create_modelpsf(self):
         """

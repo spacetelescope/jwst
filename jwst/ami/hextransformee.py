@@ -1,7 +1,4 @@
-#
 #  Module for calculation of the hexagon-aperture PSFs
-#
-
 import numpy as np
 
 def gfunction(xi, eta, **kwargs):
