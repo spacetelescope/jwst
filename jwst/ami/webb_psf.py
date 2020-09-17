@@ -6,7 +6,7 @@ from . import utils
 from . import nrm_consts
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+log.addHandler(logging.NullHandler())
 
 
 def get_webbpsf_filter(filter_model, specbin=None, trim=False):

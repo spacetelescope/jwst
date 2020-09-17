@@ -7,7 +7,7 @@ import numpy as np
 import numpy.fft as fft
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+log.addHandler(logging.NullHandler())
 
 
 class Affine2d():
@@ -381,7 +381,7 @@ def avoidhexsingularity(rotation):
     Short Summary
     -------------
     Avoid rotation of exact multiples of 15 degrees to avoid NaN's in
-    hextransformEE()
+    hextransformee()
 
     Parameters
     ----------
@@ -439,7 +439,7 @@ def centerpoint(s):
     Short Summary
     -------------
     Calculate center of image, accounting for odd/even pixel size;
-    used for Jinc() and hex transform functions.
+    used for jinc() and hex transform functions.
 
     Parameters
     ----------
@@ -551,12 +551,12 @@ def find_centroid(a, thresh):
     Calculate mean of phase slopes over mask
     Normalize phase slopes to reflect image centroid location in pixels
 
-    XY conventions meshed to LG_Model conventions:
+    XY conventions meshed to lg_model conventions:
     if you simulate a psf with pixel_offset = ( (0.2, 0.4), ) then blind
         application  centroid = utils.find_centroid()
 
     returns the image centroid (0.40036, 0.2000093) pixels in image space. To
-    use this in LG_Model, nrm_core,... you will want to calculate the new image
+    use this in lg_model, nrm_core,... you will want to calculate the new image
     center using:
     image_center = utils.centerpoint(s) + np.array((centroid[1], centroid[0])
     and everything holds together sensibly looking at DS9 images of a.

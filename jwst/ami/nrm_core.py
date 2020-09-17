@@ -10,7 +10,7 @@ from scipy.special import comb
 from scipy.stats import mstats
 from .. import datamodels
 
-from . import LG_Model
+from . import lg_model
 from . import utils
 
 
@@ -80,7 +80,7 @@ class FringeFitter:
 
         self.scidata = self.instrument_data.read_data_model( input_model )
 
-        nrm = LG_Model.NRM_Model(mask=self.instrument_data.mask,
+        nrm = lg_model.NrmModel(mask=self.instrument_data.mask,
                     pixscale=self.instrument_data.pscale_rad,
                     holeshape=self.instrument_data.holeshape,
                     affine2d=self.instrument_data.affine2d,

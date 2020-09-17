@@ -1,4 +1,3 @@
-
 import logging
 
 import numpy as np
@@ -675,7 +674,7 @@ def tan2visibilities(coeffs):
         return fringeamp, fringephase
 
 
-def populate_antisymmphasearray(deltaps, N=7):
+def populate_antisymmphasearray(deltaps, n=7):
     """
     Short Summary
     -------------
@@ -693,7 +692,7 @@ def populate_antisymmphasearray(deltaps, N=7):
     deltaps: 1D float array
         pistons between each pair of holes
 
-    N: integer
+    n: integer
         number of holes
 
     Returns
@@ -703,12 +702,12 @@ def populate_antisymmphasearray(deltaps, N=7):
     """
     # Initialize fringe phase array
     if type(deltaps[0]).__module__ != 'uncertainties.core':
-        arr = np.zeros((N,N))
+        arr = np.zeros((n, n))
     else:
-        arr = unumpy.uarray(np.zeros((N,N)),np.zeros((N,N)))
+        arr = unumpy.uarray(np.zeros((n, n)), np.zeros((n, n)))
 
     step = 0
-    n = N - 1
+    n = n - 1
     for h in range(n):
         arr[h, h+1:] = deltaps[step:step+n]
         step += n
@@ -719,7 +718,7 @@ def populate_antisymmphasearray(deltaps, N=7):
     return arr
 
 
-def populate_symmamparray(amps, N=7):
+def populate_symmamparray(amps, n=7):
     """
     Short Summary
     -------------
@@ -730,7 +729,7 @@ def populate_symmamparray(amps, N=7):
     amps: 1D float array
         fringe visibility between each pair of holes
 
-    N: integer
+    n: integer
         number of holes
 
     Returns
@@ -740,12 +739,12 @@ def populate_symmamparray(amps, N=7):
     """
 
     if type(amps[0]).__module__ != 'uncertainties.core':
-        arr = np.zeros((N,N))
+        arr = np.zeros((n, n))
     else:
-        arr = unumpy.uarray(np.zeros((N,N)),np.zeros((N,N)))
+        arr = unumpy.uarray(np.zeros((n, n)),np.zeros((n, n)))
 
     step = 0
-    n = N - 1
+    n = n - 1
 
     for h in range(n):
         arr[h, h + 1:] = amps[step:step + n]
@@ -757,7 +756,7 @@ def populate_symmamparray(amps, N=7):
     return arr
 
 
-def redundant_cps(deltaps, N=7):
+def redundant_cps(deltaps, n=7):
     """
     Short Summary
     -------------
@@ -768,7 +767,7 @@ def redundant_cps(deltaps, N=7):
     deltaps: 1D float array
         pistons between each pair of holes
 
-    N: integer
+    n: integer
         number of holes
 
     Returns
@@ -776,18 +775,18 @@ def redundant_cps(deltaps, N=7):
     cps: 1D float array
         closure phases
     """
-    arr = populate_antisymmphasearray(deltaps, N=N) # fringe phase array
+    arr = populate_antisymmphasearray(deltaps, n=n) # fringe phase array
 
     if type(deltaps[0]).__module__ != 'uncertainties.core':
-        cps = np.zeros(int(comb(N,3)))
+        cps = np.zeros(int(comb(n, 3)))
     else:
-        cps = unumpy.uarray( np.zeros(np.int(comb(N,3))),
-                             np.zeros(np.int(comb(N,3))) )
+        cps = unumpy.uarray( np.zeros(np.int(comb(n, 3))),
+                             np.zeros(np.int(comb(n, 3))) )
 
     nn = 0
-    for kk in range(N - 2):
-        for ii in range(N - kk - 2):
-            for jj in range(N - kk - ii - 2):
+    for kk in range(n - 2):
+        for ii in range(n - kk - 2):
+            for jj in range(n - kk - ii - 2):
                 cps[nn + jj] = arr[kk, ii + kk + 1] \
                        + arr[ii + kk + 1, jj + ii + kk + 2] \
                        + arr[jj + ii + kk + 2, kk]
@@ -799,7 +798,8 @@ def redundant_cps(deltaps, N=7):
     else:
         return cps, arr
 
-def closurephase(deltap, N=7):
+
+def closurephase(deltap, n=7):
     """
     Short Summary
     -------------
@@ -810,7 +810,7 @@ def closurephase(deltap, N=7):
     deltap: 1D float array
         pistons between each pair of holes
 
-    N: integer
+    n: integer
         number of holes in the mask; 7 and 10 holes available (JWST & GPI))
 
     Returns
@@ -819,28 +819,28 @@ def closurephase(deltap, N=7):
         closure phases
     """
     # p is a triangular matrix set up to calculate closure phases
-    if N == 7:
+    if n == 7:
         p = np.array([deltap[:6], deltap[6:11], deltap[11:15],
                 deltap[15:18], deltap[18:20], deltap[20:]], dtype=object)
-    elif N == 10:
+    elif n == 10:
         p = np.array([deltap[:9], deltap[9:17], deltap[17:24],
                 deltap[24:30], deltap[30:35], deltap[35:39],
                 deltap[39:42], deltap[42:44], deltap[44:]], dtype=object)
     else:
-        log.critical('invalid hole number: %s', N)
+        log.critical('invalid hole number: %s', n)
 
     # calculates closure phases for general N-hole mask (with p-array set
     #     up properly above)
-    cps = np.zeros((N - 1) * (N - 2) // 2)
-    for j1 in range(N - 2):
-        for j2 in range(N - 2 - j1):
-            cps[int(j1 * ((N + (N - 3) - j1) / 2.0)) + j2] = \
+    cps = np.zeros((n - 1) * (n - 2) // 2)
+    for j1 in range(n - 2):
+        for j2 in range(n - 2 - j1):
+            cps[int(j1 * ((n + (n - 3) - j1) / 2.0)) + j2] = \
                 p[j1][0] + p[j1 + 1][j2] - p[j1][j2 + 1]
 
     return cps
 
 
-def return_CAs(amps, N=7):
+def closure_amplitudes(amps, n=7):
     """
     Short Summary
     -------------
@@ -859,23 +859,23 @@ def return_CAs(amps, N=7):
     CAs: 1D float array
         closure amplitudes
     """
-    arr = populate_symmamparray(amps, N=N) # fringe amp array
+    arr = populate_symmamparray(amps, n=n) # fringe amp array
     nn = 0
 
     if type(amps[0]).__module__ != 'uncertainties.core':
-        CAs = np.zeros(int(comb(N,4)))
+        cas = np.zeros(int(comb(n, 4)))
     else:
-        CAs = unumpy.uarray( np.zeros(np.int(comb(N,4))),
-                             np.zeros(np.int(comb(N,4))) )
+        cas = unumpy.uarray(np.zeros(np.int(comb(n, 4))),
+                            np.zeros(np.int(comb(n, 4))))
 
-    for ii in range(N - 3):
-        for jj in range(N - ii - 3):
-            for kk in range(N - jj - ii - 3):
-                for ll in range(N - jj - ii - kk - 3):
-                    CAs[nn + ll] = arr[ii, jj + ii + 1] \
+    for ii in range(n - 3):
+        for jj in range(n - ii - 3):
+            for kk in range(n - jj - ii - 3):
+                for ll in range(n - jj - ii - kk - 3):
+                    cas[nn + ll] = arr[ii, jj + ii + 1] \
                            * arr[ll + ii + jj + kk + 3, kk + jj + ii + 2] \
                            / (arr[ii, kk + ii + jj + 2] * \
                               arr[jj + ii + 1, ll + ii + jj + kk + 3])
                 nn = nn + ll + 1
 
-    return CAs
+    return cas

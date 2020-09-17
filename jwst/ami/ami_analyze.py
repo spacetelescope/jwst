@@ -11,8 +11,9 @@ from . import nrm_core
 
 from astropy import units as u
 
+
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+log.addHandler(logging.NullHandler())
 
 
 def apply_LG_plus(input_model, filter_model, oversample, rotation):
