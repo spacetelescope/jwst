@@ -28,18 +28,4 @@ class Level1bModel(DataModel):
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/level1b.schema"
 
     def __init__(self, init=None, **kwargs):
-        super(Level1bModel, self).__init__(init=init, **kwargs)
-
-        # zeroframe is a lower dimensional array than
-        # the science data. However, its dimensions are not
-        # consecutive with data, so the default model
-        # creates a wrongly shaped array. If data is given
-        # use the appropriate dimensions.
-        #
-        # TODO: Hacky. Need solution which involves schema
-        # specification and embedded in DataModel.
-        #if 'zeroframe' not in self.instance and \
-        #   'data' in self.instance and \
-        #   len(self.data.shape) == 4:
-        #    nints, ngroups, ny, nx = self.data.shape
-        #    self.zeroframe = np.zeros((nints, ny, nx))
+        super().__init__(init=init, **kwargs)
