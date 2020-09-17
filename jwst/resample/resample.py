@@ -44,6 +44,9 @@ class ResampleData:
 
         output : str
             filename for output
+
+        pars : dict
+            `drizpars` parameters
         """
         self.input_models = input_models
         self.drizpars = pars
@@ -54,6 +57,14 @@ class ResampleData:
         # Define output WCS based on all inputs, including a reference WCS
         self.output_wcs = resample_utils.make_output_wcs(self.input_models)
         log.debug('Output mosaic size: {}'.format(self.output_wcs.data_size))
+        if pars['max_pixels']:
+            size = self.output_wcs.data_size[0]
+            for x in self.output_wcs.data_size[1:]:
+                size *= x
+            if size > pars['max_pixels']:
+                raise RuntimeError(
+                    f'Combined image size {size} greater than allowed max_pixels {pars["max_pixels"]}'
+                )
         self.blank_output = datamodels.ImageModel(self.output_wcs.data_size)
 
         # update meta data and wcs
