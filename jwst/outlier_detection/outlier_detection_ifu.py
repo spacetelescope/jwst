@@ -141,7 +141,7 @@ class OutlierDetectionIFU(OutlierDetection):
                 )
 
                 if save_intermediate_results:
-                    log.info("Writing out resampled IFU cubes...")
+                    log.info("Writing out (single) IFU cube {}".format(model.meta.filename))
                     model.save(model.meta.filename)
 
             # Initialize intermediate products used in the outlier detection

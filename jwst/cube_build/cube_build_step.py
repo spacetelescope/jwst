@@ -288,9 +288,6 @@ class CubeBuildStep (Step):
         if not self.single:
             self.log.info(f'Number of IFU cubes produced by this run = {num_cubes}')
 
-        if self.single:
-            self.log.info(f'Number of single IFU cubes produced by a this run = {num_cubes}')
-
         # ModelContainer of ifucubes
         cube_container = datamodels.ModelContainer()
 
@@ -357,7 +354,7 @@ class CubeBuildStep (Step):
         for cube in cube_container:
             footprint = cube.meta.wcs.footprint(axis_type="spatial")
             update_s_region_keyword(cube, footprint)
-
+            print('file used to create singe cube',cube.meta.filename)
         if status_cube ==1:
             self.skip = True
 

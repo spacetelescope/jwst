@@ -625,6 +625,10 @@ class IFUCubeData():
 # loop over the files that cover the spectral range the cube is for
             for k in range(nfiles):
                 ifile = self.master_table.FileMap[self.instrument][this_par1][this_par2][k]
+                # set up ifile_ref to be first file used to copy in basic header info
+                # to ifucube meta data
+                if i == 0 and k ==0:
+                    ifile_ref = ifile
 
                 log.debug(f"Working on Band defined by: {this_par1} {this_par2}")
                 # --------------------------------------------------------------------------------
@@ -638,18 +642,28 @@ class IFUCubeData():
 
                     coord1, coord2, wave, flux, err, slice_no, rois_pixel, roiw_pixel, weight_pixel,\
                         softrad_pixel, scalerad_pixel, alpha_det, beta_det = pixelresult
+                    # check that there is valid data returned
+                    # If all the data is flagged as DO_NOT_USE - not common then log warning and skip data
+                    nn = wave.size
+                    no_data = False
+                    if nn == 0:
+                        no_data = True
+
                     t1 = time.time()
-                    log.info("Time to transform pixels to output frame = %.1f s" % (t1 - t0,))
+                    log.debug("Time to transform pixels to output frame = %.1f s" % (t1 - t0,))
 
                     # If setting the DQ plane of the IFU
-                    if self.skip_dqflagging:
+                    if self.skip_dqflagging or no_data:
                         log.info("Skipping setting DQ flagging")
                     else:
                         t0 = time.time()
                         roiw_ave = np.mean(roiw_pixel)
                         self.map_fov_to_dqplane(this_par1, coord1, coord2, wave, roiw_ave, slice_no)
                         t1 = time.time()
-                        log.info("Time to set initial dq values = %.1f s" % (t1 - t0,))
+                        log.debug("Time to set initial dq values = %.1f s" % (t1 - t0,))
+
+                    if no_data:
+                        log.warning(f'No valid data found on file {ifile.meta.filename}')
                     if self.weighting == 'msm' or self.weighting == 'emsm':
                         t0 = time.time()
                         cube_cloud.match_det2cube_msm(self.naxis1, self.naxis2, self.naxis3,
@@ -792,7 +806,7 @@ class IFUCubeData():
         t1 = time.time()
         log.info("Time to find Cube Flux = %.1f s" % (t1 - t0,))
         # result consist of ifu_cube and status
-        result  = self.setup_final_ifucube_model(0)
+        result  = self.setup_final_ifucube_model(ifile_ref)
 # _______________________________________________________________________
 # shove Flux and iflux in the  final IFU cube
 
@@ -811,69 +825,73 @@ class IFUCubeData():
         """
         # loop over input models
         single_ifucube_container = datamodels.ModelContainer()
-        n = len(self.input_models)
 
-        log.info("Number of Single IFU cubes to create = %i" % n)
-        this_par1 = self.list_par1[0]  # only one channel is used in this approach
-#        this_par2 = None  # not important for this type of mapping
-        cube_debug = None
+        number_bands = len(self.list_par1)
+        this_par1 = self.list_par1[0] # single IFUcube only have a single channel
+        j = 0
+        for i in range(number_bands):
+            this_par2 = self.list_par2[i]
+            nfiles = len(self.master_table.FileMap[self.instrument][this_par1][this_par2])
+# ________________________________________________________________________________
+# loop over the files that cover the spectral range the cube is for
+            for k in range(nfiles):
+                ifile = self.master_table.FileMap[self.instrument][this_par1][this_par2][k]
+                cube_debug = None
+                log.debug("Working on next Single IFU Cube = %i" % (j + 1))
+                t0 = time.time()
+                # for each new data model create a new spaxel
+                total_num = self.naxis1 * self.naxis2 * self.naxis3
+                self.spaxel_flux = np.zeros(total_num)
+                self.spaxel_weight = np.zeros(total_num)
+                self.spaxel_iflux = np.zeros(total_num)
+                self.spaxel_dq = np.zeros((self.naxis3, self.naxis2 * self.naxis1), dtype=np.uint32)
+                self.spaxel_var = np.zeros(total_num)
 
-        for j in range(n):
-            log.debug("Working on next Single IFU Cube = %i" % (j + 1))
-            t0 = time.time()
-# for each new data model create a new spaxel
-            total_num = self.naxis1 * self.naxis2 * self.naxis3
-            self.spaxel_flux = np.zeros(total_num)
-            self.spaxel_weight = np.zeros(total_num)
-            self.spaxel_iflux = np.zeros(total_num)
-            self.spaxel_dq = np.zeros((self.naxis3, self.naxis2 * self.naxis1), dtype=np.uint32)
-            self.spaxel_var = np.zeros(total_num)
+                subtract_background = False
 
-            subtract_background = False
+                pixelresult = self.map_detector_to_outputframe(this_par1,
+                                                               subtract_background,
+                                                               ifile)
 
-            pixelresult = self.map_detector_to_outputframe(this_par1,
-                                                           subtract_background,
-                                                           self.input_models[j])
+                coord1, coord2, wave, flux, err, slice_no, rois_pixel, roiw_pixel, weight_pixel, \
+                    softrad_pixel, scalerad_pixel, alpha_det, beta_det = pixelresult
 
-            coord1, coord2, wave, flux, err, slice_no, rois_pixel, roiw_pixel, weight_pixel, \
-                softrad_pixel, scalerad_pixel, alpha_det, beta_det = pixelresult
-
-            cube_cloud.match_det2cube_msm(self.naxis1,
-                                          self.naxis2,
-                                          self.naxis3,
-                                          self.cdelt1, self.cdelt2,
-                                          self.cdelt3_normal,
-                                          self.xcenters,
-                                          self.ycenters,
-                                          self.zcoord,
-                                          self.spaxel_flux,
-                                          self.spaxel_weight,
-                                          self.spaxel_iflux,
-                                          self.spaxel_var,
-                                          flux,
-                                          err,
-                                          coord1, coord2, wave,
-                                          self.weighting,
-                                          rois_pixel, roiw_pixel,
-                                          weight_pixel,
-                                          softrad_pixel,
-                                          scalerad_pixel,
-                                          cube_debug,
-                                          self.debug_file)
+                cube_cloud.match_det2cube_msm(self.naxis1,
+                                              self.naxis2,
+                                              self.naxis3,
+                                              self.cdelt1, self.cdelt2,
+                                              self.cdelt3_normal,
+                                              self.xcenters,
+                                              self.ycenters,
+                                              self.zcoord,
+                                              self.spaxel_flux,
+                                              self.spaxel_weight,
+                                              self.spaxel_iflux,
+                                              self.spaxel_var,
+                                              flux,
+                                              err,
+                                              coord1, coord2, wave,
+                                              self.weighting,
+                                              rois_pixel, roiw_pixel,
+                                              weight_pixel,
+                                              softrad_pixel,
+                                              scalerad_pixel,
+                                              cube_debug,
+                                              self.debug_file)
 # _______________________________________________________________________
 # shove Flux and iflux in the  final ifucube
-            self.find_spaxel_flux()
+                self.find_spaxel_flux()
 
             # determine Cube Spaxel flux
-            status = 0
-            result = self.setup_final_ifucube_model(j)
-            ifucube_model, status = result
-            t1 = time.time()
-            log.debug("Time to Create Single ifucube = %.1f s" % (t1 - t0,))
-            single_ifucube_container.append(ifucube_model)
-            if status !=0:
-                log.debug("Possible problem with single ifu cube, no valid data in cube" )
-
+                status = 0
+                result = self.setup_final_ifucube_model(ifile)
+                ifucube_model, status = result
+                t1 = time.time()
+                log.debug("Time to Create Single ifucube = %.1f s" % (t1 - t0,))
+                single_ifucube_container.append(ifucube_model)
+                if status !=0:
+                    log.debug("Possible problem with single ifu cube, no valid data in cube" )
+                j = j + 1
         return single_ifucube_container
 # **************************************************************************
 
@@ -1216,7 +1234,7 @@ class IFUCubeData():
         lambda_max = []
 
         self.num_bands = len(self.list_par1)
-        log.info('Number of bands in cube: %i', self.num_bands)
+        log.debug('Number of bands in cube: %i', self.num_bands)
 
         for i in range(self.num_bands):
             this_a = parameter1[i]
@@ -2052,7 +2070,7 @@ class IFUCubeData():
 
 # ********************************************************************************
 
-    def setup_final_ifucube_model(self, j):
+    def setup_final_ifucube_model(self, model_ref):
 
         """ Set up the final meta WCS info of IFUCube along with other fits keywords
 
@@ -2151,7 +2169,7 @@ class IFUCubeData():
                                                     weightmap=idata,
                                                     wavetable=alldata)
 
-        ifucube_model.update(self.input_models[j])
+        ifucube_model.update(model_ref)
         ifucube_model.meta.filename = self.output_name
 
         ifucube_model.data = temp_flux
@@ -2167,9 +2185,10 @@ class IFUCubeData():
             ifucube_model.meta.model_type = saved_model_type
 # ______________________________________________________________________
         if self.output_type == 'single':
-            with datamodels.open(self.input_models[j]) as input:
+            with datamodels.open(model_ref) as input:
                 # define the cubename for each single
-                filename = self.input_filenames[j]
+                #filename = self.input_filenames[j]
+                filename = input.meta.filename
                 indx = filename.rfind('.fits')
                 self.output_name_base = filename[:indx]
                 self.output_file = None
@@ -2187,7 +2206,7 @@ class IFUCubeData():
             outchannel = "".join(set(outchannel))
             outchannel = "".join(sorted(outchannel))
             ifucube_model.meta.instrument.channel = outchannel
-            log.info(f'IFUChannel {ifucube_model.meta.instrument.channel}')
+            #log.info(f'IFUChannel {ifucube_model.meta.instrument.channel}')
 # ______________________________________________________________________
         ifucube_model.meta.wcsinfo.crval1 = self.crval1
         ifucube_model.meta.wcsinfo.crval2 = self.crval2
@@ -2253,7 +2272,7 @@ class IFUCubeData():
         # if non-linear wavelengths then this will be None
         ifucube_model.meta.ifu.weight_power = self.weight_power
 
-        with datamodels.open(self.input_models[j]) as input:
+        with datamodels.open(model_ref) as input:
             ifucube_model.meta.bunit_data = input.meta.bunit_data
             ifucube_model.meta.bunit_err = input.meta.bunit_err
 
