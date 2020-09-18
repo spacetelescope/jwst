@@ -18,5 +18,4 @@ install:
   - pip install crds==7.6.0
 
 script:
-  - time python -c "import crds; crds.client.api.dump_mappings('jwst_0641.pmap')"
-  - time python -c "import crds; crds.client.api.dump_references('jwst_0641.pmap', ['jwst_miri_dark_0050.fits'])"
+  - traceroute jwst-crds.stsci.edu
