@@ -2187,7 +2187,6 @@ class IFUCubeData():
         if self.output_type == 'single':
             with datamodels.open(model_ref) as input:
                 # define the cubename for each single
-                #filename = self.input_filenames[j]
                 filename = input.meta.filename
                 indx = filename.rfind('.fits')
                 self.output_name_base = filename[:indx]
@@ -2206,7 +2205,6 @@ class IFUCubeData():
             outchannel = "".join(set(outchannel))
             outchannel = "".join(sorted(outchannel))
             ifucube_model.meta.instrument.channel = outchannel
-            #log.info(f'IFUChannel {ifucube_model.meta.instrument.channel}')
 # ______________________________________________________________________
         ifucube_model.meta.wcsinfo.crval1 = self.crval1
         ifucube_model.meta.wcsinfo.crval2 = self.crval2
