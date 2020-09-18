@@ -6,6 +6,8 @@ import sys
 import warnings
 import os
 from os.path import basename
+import psutil
+from psutil._common import bytes2human
 
 import numpy as np
 from astropy.io import fits
@@ -488,3 +490,67 @@ def get_envar_as_boolean(name, default=False):
 
     log.debug(f'Environmental "{name}" cannot be found. Using default value of "{default}".')
     return default
+
+
+def check_memory_allocation(shape, allowed=100, model_type=None, include_swap=True):
+    """Check if a DataModel can be instantiated
+
+    Parameters
+    ----------
+    shape : tuple
+        The desired shape of the model.
+
+    allowed : number or None
+        Percentage of memory allowed to be allocated.
+        If None, no check is made and will always return True.
+
+    model_type : DataModel or None
+        The desired model to instantiate.
+        If None, `open` will be used to guess at a model type depending on shape.
+
+    include_swap : bool
+        Include available swap in the calculation.
+
+    Returns
+    -------
+    can_instantiate, required_memory : bool, number
+        True if the model can be instantiated and the predicted memory footprint.
+    """
+    # Create the unit shape
+    unit_shape = (1,) * len(shape)
+
+    # Create the unit model.
+    if model_type:
+        unit_model = model_type(unit_shape)
+    else:
+        unit_model = open(unit_shape)
+
+    # Size of the primary array.
+    primary_array_name = unit_model.get_primary_array_name()
+    primary_array = getattr(unit_model, primary_array_name)
+    size = primary_array.nbytes
+    for dimension in shape:
+        size *= dimension
+
+    # Get available memory
+    vm_stats = psutil.virtual_memory()
+    available = vm_stats.available
+    if include_swap:
+        swap = psutil.swap_memory()
+        available += swap.total
+
+    log.debug(f'Model size {bytes2human(size)} available system memory {bytes2human(available)}')
+
+    if size > available:
+        log.warning(
+            f'Model {model_type} shape {shape} requires {bytes2human(size)} which is more than'
+            f' system available {bytes2human(available)}'
+        )
+
+    if allowed and size > (allowed / 100.0 * available):
+        log.debug(
+            f'Model size greater than allowed memory {bytes2human(allowed / 100.0 * available)}'
+        )
+        return False, size
+
+    return True, size

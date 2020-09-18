@@ -1,6 +1,7 @@
 import logging
 from collections import OrderedDict
 import numpy as np
+from psutil._common import bytes2human
 
 from .. import datamodels
 
@@ -57,14 +58,14 @@ class ResampleData:
         # Define output WCS based on all inputs, including a reference WCS
         self.output_wcs = resample_utils.make_output_wcs(self.input_models)
         log.debug('Output mosaic size: {}'.format(self.output_wcs.data_size))
-        if pars['max_pixels']:
-            size = self.output_wcs.data_size[0]
-            for x in self.output_wcs.data_size[1:]:
-                size *= x
-            if size > pars['max_pixels']:
-                raise RuntimeError(
-                    f'Combined image size {size} greater than allowed max_pixels {pars["max_pixels"]}'
-                )
+        can_allocate, required_memory = datamodels.check_memory_allocation(
+            self.output_wcs.data_size, pars['allowed_memory'], datamodels.ImageModel
+        )
+        if not can_allocate:
+            raise RuntimeError(
+                f'Combined ImageModel size {size} requires {bytes2human(required_memory)}'
+                f'\nUsing {pars["allowed_memory"]}% cannot allocate the model.'
+            )
         self.blank_output = datamodels.ImageModel(self.output_wcs.data_size)
 
         # update meta data and wcs
