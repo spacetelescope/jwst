@@ -10,11 +10,6 @@ env:
     - CRDS_CLIENT_RETRY_COUNT=3
     - CRDS_CLIENT_RETRY_DELAY_SECONDS=20
 
-addons:
-  apt:
-    packages:
-      - traceroute
-
 jobs:
   include:
     - name: Time CRDS downloads
@@ -23,4 +18,5 @@ install:
   - pip install crds==7.6.0
 
 script:
-  - traceroute jwst-crds.stsci.edu
+  - time python -c "import crds; crds.client.api.dump_mappings('jwst_0641.pmap')"
+  - time python -c "import crds; crds.client.api.dump_references('jwst_0641.pmap', ['jwst_miri_dark_0050.fits'])"
