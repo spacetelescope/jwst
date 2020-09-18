@@ -9,7 +9,6 @@ env:
     - CRDS_PATH=/tmp/crds_cache
     - CRDS_CLIENT_RETRY_COUNT=3
     - CRDS_CLIENT_RETRY_DELAY_SECONDS=20
-    - TEST_COMMAND="pytest --cov-report=xml --cov=./"
     - PIP_DEPENDENCIES=.[test]
 
 jobs:
@@ -17,33 +16,38 @@ jobs:
   fast_finish: true
 
   include:
-    - name: Latest dependency versions
+    - name: Latest dependency versions w/coverage
+      script:
+        - pytest --cov-report=xml --cov=./
+      after_success:
+        - codecov -F unit
 
     - name: Oldest dependency versions
       python: 3.6.10
+      before_install:
+        - pip install . --no-deps
+        - minimum_deps
       env:
-        GEN_MIN_DEPS=true
         PIP_DEPENDENCIES="-r requirements-min.txt .[test]"
 
     - name: SDP dependencies in requirements-sdp.txt, CRDS_CONTEXT=jwst-edit
       env:
         PIP_DEPENDENCIES="-r requirements-sdp.txt .[test]"
         CRDS_CONTEXT=jwst-edit
-        TEST_COMMAND=pytest
 
     - name: Dev dependencies in requirements-dev.txt
       env:
         PIP_DEPENDENCIES="-r requirements-dev.txt .[test]"
-        TEST_COMMAND=pytest
 
     - name: Warnings treated as Exceptions
-      env:
-        TEST_COMMAND="pytest -W error"
+      script:
+        - pytest -W error
 
     - name: Documentation build
       env:
         PIP_DEPENDENCIES=.[docs]
-        TEST_COMMAND="sphinx-build -W docs docs/_build"
+      script:
+        - sphinx-build -W docs docs/_build
       addons:
         apt:
           packages:
@@ -52,53 +56,40 @@ jobs:
             - graphviz
 
     - name: Code style check
-      env:
-        PIP_DEPENDENCIES=flake8
-        TEST_COMMAND=flake8
+      script:
+        - flake8
 
     - name: Verify install_requires in setup.py
       env:
         PIP_DEPENDENCIES=.
-        TEST_COMMAND=verify_install_requires
+      script:
+        - verify_install_requires
 
     - name: Build distribution
       env:
         PIP_DEPENDENCIES="pep517 twine"
-        TEST_COMMAND="python -m pep517.build ."
+      script:
+        - python -m pep517.check .
+        - python -m pep517.build .
+        - twine check dist/*
 
     - name: Security check
       env:
         PIP_DEPENDENCIES=".[test] bandit"
-        TEST_COMMAND="bandit -r jwst scripts -c .bandit.yaml -ll"
+      script:
+        - bandit -r jwst scripts -c .bandit.yaml -ll
 
   allow_failures:
     - name: Dev dependencies in requirements-dev.txt
       env:
         PIP_DEPENDENCIES="-r requirements-dev.txt .[test]"
-        TEST_COMMAND=pytest
 
     - name: Warnings treated as Exceptions
-      env:
-        TEST_COMMAND="pytest -W error"
-
-before_install:
-  # For the case where we want to build with the minimum versions allowed by
-  # setup.py
-  - if [[ ${GEN_MIN_DEPS} = "true" ]]; then
-      pip install . --no-deps;
-      minimum_deps;
-    fi
+      script:
+        - pytest -W error
 
 install:
   - pip install $PIP_DEPENDENCIES
 
 script:
-  - $TEST_COMMAND
-  - if [[ ${TEST_COMMAND} == *pep517.build* ]]; then
-      twine check dist/*;
-    fi
-
-after_success:
-  - if [[ ${TEST_COMMAND} =~ ^pytest ]]; then
-      codecov -F unit;
-    fi
+  - pytest
