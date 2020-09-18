@@ -10,6 +10,11 @@ env:
     - CRDS_CLIENT_RETRY_COUNT=3
     - CRDS_CLIENT_RETRY_DELAY_SECONDS=20
 
+addons:
+  apt:
+    packages:
+      - traceroute
+
 jobs:
   include:
     - name: Time CRDS downloads
