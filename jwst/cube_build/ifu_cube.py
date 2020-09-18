@@ -644,10 +644,10 @@ class IFUCubeData():
                         softrad_pixel, scalerad_pixel, alpha_det, beta_det = pixelresult
                     # check that there is valid data returned
                     # If all the data is flagged as DO_NOT_USE - not common then log warning and skip data
-                    nn = wave.size
-                    no_data = False
-                    if nn == 0:
+                    if wave.size == 0:
                         no_data = True
+                    else:
+                        no_data = False
 
                     t1 = time.time()
                     log.debug("Time to transform pixels to output frame = %.1f s" % (t1 - t0,))

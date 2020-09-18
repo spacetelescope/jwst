@@ -101,7 +101,7 @@ class CubeBlot():
         """ Prints the basic paramters of the blot image and median sky cube
         """
         log.info('Information on Blotting')
-        log.info('Working with instrument %s ', self.instrument)
+        log.info('Working with instrument %s', self.instrument)
         log.info('shape of sky cube %f %f %f',
                  self.median_skycube.data.shape[2],
                  self.median_skycube.data.shape[1],
