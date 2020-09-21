@@ -6,8 +6,11 @@ import sys
 import warnings
 import os
 from os.path import basename
+from platform import system as platform_system
+from plistlib import loads as plist_loads
 import psutil
 from psutil._common import bytes2human
+from subprocess import run
 
 import numpy as np
 from astropy.io import fits
@@ -533,12 +536,7 @@ def check_memory_allocation(shape, allowed=100, model_type=None, include_swap=Tr
         size *= dimension
 
     # Get available memory
-    vm_stats = psutil.virtual_memory()
-    available = vm_stats.available
-    if include_swap:
-        swap = psutil.swap_memory()
-        available += swap.total
-
+    available = get_available_memory(include_swap=include_swap)
     log.debug(f'Model size {bytes2human(size)} available system memory {bytes2human(available)}')
 
     if size > available:
@@ -554,3 +552,90 @@ def check_memory_allocation(shape, allowed=100, model_type=None, include_swap=Tr
         return False, size
 
     return True, size
+
+
+def get_available_memory(include_swap=True):
+    """Retrieve available memory
+
+    Parameters
+    ----------
+    include_swap : bool
+        Include available swap in the calculation.
+
+    Returns
+    -------
+    available : number
+        The amount available.
+    """
+    system = platform_system()
+
+    # Apple MacOS
+    log.debug(f'Running OS is "{system}"')
+    if system in ['Darwin']:
+        return get_available_memory_darwin(include_swap=include_swap)
+
+    # Default to Linux-like:
+    return get_available_memory_linux(include_swap=include_swap)
+
+
+def get_available_memory_linux(include_swap=True):
+    """Get memory for a Linux system
+
+    Presume that the swap space as reported is accurate at the time of
+    the query and that any subsequent allocation will be held the value.
+
+    Parameters
+    ----------
+    include_swap : bool
+        Include available swap in the calculation.
+
+    Returns
+    -------
+    available : number
+        The amount available.
+    """
+    vm_stats = psutil.virtual_memory()
+    available = vm_stats.available
+    if include_swap:
+        swap = psutil.swap_memory()
+        available += swap.total
+    return available
+
+
+def get_available_memory_darwin(include_swap=True):
+    """Get the available memory on an Apple MacOS-like system
+
+    For Darwin, swap space is dynamic and will attempt to use the whole of the
+    boot partition.
+
+    If the system has been configured to use swap from other sources besides
+    the boot partition, that available space will not be included.
+
+    Parameters
+    ----------
+    include_swap : bool
+        Include available swap in the calculation.
+
+    Returns
+    -------
+    available : number
+        The amount available.
+    """
+    vm_stats = psutil.virtual_memory()
+    available = vm_stats.available
+    if include_swap:
+
+        # Attempt to determine amount of free disk space on the boot partition.
+        run_info = run(['/usr/sbin/bless', '--getBoot', '--plist'], capture_output=True)
+        boot_volume = plist_loads(run_info.stdout)['Boot Volume']
+        partitions = psutil.disk_partitions()
+        for partition in partitions:
+            if partition.device == boot_volume:
+                swap = psutil.disk_usage(partition.mountpoint).free
+                break
+        else:
+            log.warn('Cannot determine available swap space.')
+            swap = 0
+        available += swap
+
+    return available
