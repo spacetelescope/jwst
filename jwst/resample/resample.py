@@ -58,13 +58,13 @@ class ResampleData:
         # Define output WCS based on all inputs, including a reference WCS
         self.output_wcs = resample_utils.make_output_wcs(self.input_models)
         log.debug('Output mosaic size: {}'.format(self.output_wcs.data_size))
-        can_allocate, required_memory = datamodels.check_memory_allocation(
+        can_allocate, required_memory = datamodels.util.check_memory_allocation(
             self.output_wcs.data_size, pars['allowed_memory'], datamodels.ImageModel
         )
         if not can_allocate:
             raise RuntimeError(
-                f'Combined ImageModel size {size} requires {bytes2human(required_memory)}'
-                f'\nUsing {pars["allowed_memory"]}% cannot allocate the model.'
+                f'Combined ImageModel size {self.output_wcs.data_size} requires {bytes2human(required_memory)}'
+                f'\nUsing {pars["allowed_memory"]}% of free memory, the model cannot be instantiated.'
             )
         self.blank_output = datamodels.ImageModel(self.output_wcs.data_size)
 
