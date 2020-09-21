@@ -41,21 +41,23 @@ class CubeBlot():
         # Pull out the needed information from the Median IFUCube
         self.median_skycube = median_model
         self.instrument = median_model.meta.instrument.name
-        self.detector = median_model.meta.instrument.detector
 
         # basic information about the type of data
         self.grating = None
         self.filter = None
         self.subchannel = None
         self.channel = None
+        self.par_median = None
 
         if self.instrument == 'MIRI':
             self.channel = median_model.meta.instrument.channel
             self.subchannel = median_model.meta.instrument.band.lower()
+            self.par_median = self.channel
+
         elif self.instrument == 'NIRSPEC':
             self.grating = median_model.meta.instrument.grating
             self.filter = median_model.meta.instrument.filter
-
+            self.par_median = self.grating
         # ________________________________________________________________
         # set up x,y,z of Median Cube
         # Median cube shoud have linear wavelength
@@ -80,23 +82,31 @@ class CubeBlot():
         self.cube_wave = self.cube_wave[good_data]
         self.cube_flux = self.cube_flux[good_data]
 
-        # initialize blotted images to be original input images
-        self.input_models = input_models
+        # initialize blotted images to be original input images valid for the Median Image
+        # read channel (MIRI) or grating (NIRSpec) value that the Median Image covers
+        # only use input models in this range
+        self.input_models  = []
+        for model in input_models:
+            if self.instrument == 'MIRI':
+                par = model.meta.instrument.channel
+            if self.instrument == 'NIRSPEC':
+                par = model.meta.instrument.grating
 
+            found = par.find(self.par_median)
+            if found > -1:
+                self.input_models.append(model)
     # **********************************************************************
 
     def blot_info(self):
         """ Prints the basic paramters of the blot image and median sky cube
         """
         log.info('Information on Blotting')
-        log.info('Working with instrument %s %s', self.instrument,
-                 self.detector)
+        log.info('Working with instrument %s', self.instrument)
         log.info('shape of sky cube %f %f %f',
                  self.median_skycube.data.shape[2],
                  self.median_skycube.data.shape[1],
                  self.median_skycube.data.shape[0])
 
-        log.info('Instrument %s ', self.instrument)
         if self.instrument == 'MIRI':
             log.info('Channel %s', self.channel)
             log.info('Sub-channel %s', self.subchannel)
