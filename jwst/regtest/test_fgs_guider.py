@@ -36,3 +36,14 @@ def test_fgs_guider(run_guider_pipelines, fitsdiff_default_kwargs, suffix):
     """Regression for FGS Guider data"""
     rt.is_like_truth(run_guider_pipelines, fitsdiff_default_kwargs, suffix,
                      'truth/fgs/test_fgs_guider', is_suffix=True)
+
+
+@pytest.mark.bigdata
+def test_fgs_toobig(rtdata, fitsdiff_default_kwargs, caplog):
+    """Test for the situation where the combined mosaic is too large"""
+    rtdata.get_asn('fgs/image3/image3_asn.json')
+
+    collect_pipeline_cfgs('config')
+    args = ['config/calwebb_image3.cfg', rtdata.input]
+    Step.from_cmdline(args)
+    assert 'model cannot be instantiated' in caplog.text
