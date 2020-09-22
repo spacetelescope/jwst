@@ -522,10 +522,13 @@ def check_memory_allocation(shape, allowed=100, model_type=None, include_swap=Tr
     Examples
     --------
     >>> check_memory_allocation((1, 1))
-        (True, 4)
+        (True...
 
     >>> check_memory_allocation((1e10, 1e10))
-        (False, 4e+20)
+        (False...
+
+    >>> check_memory_allocation((1e10, 1e10), allowed=None)
+        (True...
 
     >>> with_swap = get_available_memory(True)
     >>> without_swap = get_available_memory(False)
