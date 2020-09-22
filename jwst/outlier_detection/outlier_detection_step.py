@@ -62,7 +62,6 @@ class OutlierDetectionStep(Step):
         good_bits = string(default="~DO_NOT_USE")  # DQ flags to allow
         scale_detection = boolean(default=False)
         search_output_file = boolean(default=False)
-        max_pixels = integer(default=10000000000)  # Maximum number of pixels in combined image. 0 for no restriction.
         allowed_memory = integer(default=100)  # Percentage of memory to use for the combined image.
     """
 
@@ -106,7 +105,6 @@ class OutlierDetectionStep(Step):
                 'snr': self.snr,
                 'scale': self.scale,
                 'backg': self.backg,
-                'max_pixels' : int(self.max_pixels),
                 'allowed_memory' : self.allowed_memory,
                 'save_intermediate_results': self.save_intermediate_results,
                 'resample_data': self.resample_data,
