@@ -15,6 +15,35 @@ from jwst.datamodels import (DataModel, ModelContainer, ImageModel,
     DistortionModel, RampModel, CubeModel, ReferenceFileModel, ReferenceImageModel,
     ReferenceCubeModel, ReferenceQuadModel)
 from jwst import datamodels
+from jwst.datamodels import util
+
+# Define artificial memory size
+MEMORY = 100  # 100 bytes
+
+@pytest.mark.parametrize(
+    'dim, allowed, include_swap, result',
+    [
+        (MEMORY // 2, 100, True, True),    # Fit within memory and swap
+        (MEMORY // 2, 100, False, False),  # Does not fit without swap
+        (MEMORY, 100, True, False),        # Does not fit at all
+        (MEMORY, None, True, True),        # Check disabled
+        (MEMORY // 2, 10, True, False),    # Does not fit in restricted memory
+    ]
+)
+def test_check_memory_allocation(monkeypatch, dim, allowed, include_swap, result):
+    """Check environmental control over memory check"""
+
+    def mock_get_available_memory(include_swap=True):
+        avaliable = MEMORY
+        if include_swap:
+            avaliable *= 2
+        return avaliable
+    monkeypatch.setattr(util, 'get_available_memory', mock_get_available_memory)
+
+    can_allocate, required = util.check_memory_allocation(
+        (dim, 1), allowed=allowed, include_swap=include_swap
+    )
+    assert can_allocate is result
 
 
 def test_open_from_pathlib():

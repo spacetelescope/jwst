@@ -518,29 +518,6 @@ def check_memory_allocation(shape, allowed=100, model_type=None, include_swap=Tr
     -------
     can_instantiate, required_memory : bool, number
         True if the model can be instantiated and the predicted memory footprint.
-
-    Examples
-    --------
-    >>> check_memory_allocation((1, 1))
-        (True...
-
-    >>> check_memory_allocation((1e10, 1e10))
-        (False...
-
-    >>> check_memory_allocation((1e10, 1e10), allowed=None)
-        (True...
-
-    >>> with_swap = get_available_memory(True)
-    >>> without_swap = get_available_memory(False)
-    >>> dim_size = int((with_swap / 4)**0.5) - 100
-    >>> check_memory_allocation((dim_size, dim_size), allowed=100)
-        (True,...
-
-    >>> check_memory_allocation((dim_size, dim_size), allowed=1)
-        (False,...
-
-    >>> check_memory_allocation((dim_size, dim_size), allowed=100, include_swap=False)
-        (False,...
     """
     # Create the unit shape
     unit_shape = (1,) * len(shape)
