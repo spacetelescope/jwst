@@ -1,7 +1,11 @@
 0.17.2 (unreleased)
 ===================
 
+extract_1d
+----------
 
+- Fixed bug invovling the determination of source RA/Dec for resampled Slit
+  data. [#5353]
 
 
 
