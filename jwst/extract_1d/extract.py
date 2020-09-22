@@ -1204,16 +1204,26 @@ class ExtractBase(abc.ABC):
         targ_dec : float or None
             The declination of the target, or None
         """
-        if slit is None:
-            targ_ra = input_model.meta.target.ra
-            targ_dec = input_model.meta.target.dec
-        else:
+        targ_ra = None
+        targ_dec = None
+
+        if slit is not None:
+            # If we've been passed a slit object, get the RA/Dec
+            # from the slit source attributes
             targ_ra = getattr(slit, 'source_ra', None)
             targ_dec = getattr(slit, 'source_dec', None)
-            if targ_ra is None or targ_dec is None:
-                targ_ra = input_model.meta.target.ra
-                targ_dec = input_model.meta.target.dec
+        elif isinstance(input_model, datamodels.SlitModel):
+            # If the input model is a single SlitModel, again
+            # get the coords from the slit source attributes
+            targ_ra = getattr(input_model, 'source_ra', None)
+            targ_dec = getattr(input_model, 'source_dec', None)
 
+        if targ_ra is None or targ_dec is None:
+            # Otherwise get it from the generic target coords
+            targ_ra = input_model.meta.target.ra
+            targ_dec = input_model.meta.target.dec
+
+        # Issue a warning if none of the methods succeeded
         if targ_ra is None or targ_dec is None:
             log.warning("Target RA and Dec could not be determined")
             targ_ra = targ_dec = None
@@ -2170,11 +2180,11 @@ class ImageExtractModel(ExtractBase):
         if self.subtract_background is not None:
             if not self.subtract_background:
                 if verbose and mask_bkg is not None:
-                        log.info("Background subtraction was turned off - skipping it.")
+                    log.info("Background subtraction was turned off - skipping it.")
                 mask_bkg = None
             else:
                 if verbose and mask_bkg is None:
-                        log.info("Skipping background subtraction because background regions are not defined.")
+                    log.info("Skipping background subtraction because background regions are not defined.")
 
         # Extract the background.
         if mask_bkg is not None:
@@ -3225,7 +3235,6 @@ def do_extract1d(
         or extract_ref_dict['need_to_set_to_complete']
     ):
         output_model.meta.cal_step.extract_1d = 'COMPLETE'
-
 
     return output_model
 
