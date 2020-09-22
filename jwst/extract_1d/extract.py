@@ -1204,15 +1204,23 @@ class ExtractBase(abc.ABC):
         targ_dec : float or None
             The declination of the target, or None
         """
-        if slit is None:
-            targ_ra = input_model.meta.target.ra
-            targ_dec = input_model.meta.target.dec
-        else:
+        if slit is not None:
+            # If we've been passed a slit object, get the RA/Dec
+            # from the slit source attributes
             targ_ra = getattr(slit, 'source_ra', None)
             targ_dec = getattr(slit, 'source_dec', None)
             if targ_ra is None or targ_dec is None:
                 targ_ra = input_model.meta.target.ra
                 targ_dec = input_model.meta.target.dec
+        elif isinstance(input_model, datamodels.SlitModel):
+            # If the input model is a single SlitModel, again
+            # get the coords from the slit source attributes
+            targ_ra = getattr(input_model, 'source_ra', None)
+            targ_dec = getattr(input_model, 'source_dec', None)
+        else:
+            # Otherwise get it from the generic target coords
+            targ_ra = input_model.meta.target.ra
+            targ_dec = input_model.meta.target.dec
 
         if targ_ra is None or targ_dec is None:
             log.warning("Target RA and Dec could not be determined")
