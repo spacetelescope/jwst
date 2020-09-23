@@ -7,15 +7,14 @@ import warnings
 import os
 from os.path import basename
 from platform import system as platform_system
-from plistlib import loads as plist_loads
 import psutil
-from psutil._common import bytes2human
-from subprocess import run
+import traceback
 
 import numpy as np
 from astropy.io import fits
 
 from ..lib import s3_utils
+from ..lib.basic_utils import bytes2human
 
 import logging
 log = logging.getLogger(__name__)
@@ -634,15 +633,12 @@ def get_available_memory_darwin(include_swap=True):
     if include_swap:
 
         # Attempt to determine amount of free disk space on the boot partition.
-        run_info = run(['/usr/sbin/bless', '--getBoot', '--plist'], capture_output=True)
-        boot_volume = plist_loads(run_info.stdout)['Boot Volume']
-        partitions = psutil.disk_partitions()
-        for partition in partitions:
-            if partition.device == boot_volume:
-                swap = psutil.disk_usage(partition.mountpoint).free
-                break
-        else:
-            log.warn('Cannot determine available swap space.')
+        try:
+            swap = psutil.disk_usage('/private/var/vm').free
+        except FileNotFoundError as exception:
+            log.warn('Cannot determine available swap space.'
+                     f'Reason:\n'
+                     f'{"".join(traceback.format_exception(exception))}')
             swap = 0
         available += swap
 
