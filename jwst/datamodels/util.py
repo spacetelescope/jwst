@@ -522,7 +522,7 @@ def check_memory_allocation(shape, allowed=None, model_type=None, include_swap=T
     """
     # Determine desired allowed amount.
     if allowed is None:
-        allowed = os.environ.get('ALLOWED_MEMORY', None)
+        allowed = os.environ.get('DMODEL_ALLOWED_MEMORY', None)
         if allowed is not None:
             allowed = int(allowed)
 

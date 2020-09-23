@@ -45,9 +45,9 @@ def test_check_memory_allocation_env(monkeypatch, mock_get_available_memory,
                                      allowed_env, allowed_explicit, result):
     """Check environmental control over memory check"""
     if allowed_env is None:
-        monkeypatch.delenv('ALLOWED_MEMORY', raising=False)
+        monkeypatch.delenv('DMODEL_ALLOWED_MEMORY', raising=False)
     else:
-        monkeypatch.setenv('ALLOWED_MEMORY', allowed_env)
+        monkeypatch.setenv('DMODEL_ALLOWED_MEMORY', allowed_env)
 
     # Allocate amount that would fit at 100% + swap.
     can_allocate, required = util.check_memory_allocation(
