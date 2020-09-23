@@ -43,7 +43,7 @@ def test_fgs_toobig(rtdata, fitsdiff_default_kwargs, caplog, monkeypatch):
     """Test for the situation where the combined mosaic is too large"""
 
     # Set the environment to not allow the resultant too-large image.
-    monkeypatch.setenv('DMODEL_ALLOWED_MEMORY', 100)
+    monkeypatch.setenv('DMODEL_ALLOWED_MEMORY', 1.0)
 
     rtdata.get_asn('fgs/image3/image3_asn.json')
 

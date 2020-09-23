@@ -504,9 +504,10 @@ def check_memory_allocation(shape, allowed=None, model_type=None, include_swap=T
         The desired shape of the model.
 
     allowed : number or None
-        Percentage of memory allowed to be allocated.
-        If None, the environmental variable `ALLOWED_MEMORY`
+        Fraction of memory allowed to be allocated.
+        If None, the environmental variable `DMODEL_ALLOWED_MEMORY`
         is retrieved. If undefined, then no check is performed.
+        `1.0` would be all available memory. `0.5` would be half available memory.
 
     model_type : DataModel or None
         The desired model to instantiate.
@@ -524,7 +525,7 @@ def check_memory_allocation(shape, allowed=None, model_type=None, include_swap=T
     if allowed is None:
         allowed = os.environ.get('DMODEL_ALLOWED_MEMORY', None)
         if allowed is not None:
-            allowed = int(allowed)
+            allowed = float(allowed)
 
     # Create the unit shape
     unit_shape = (1,) * len(shape)
@@ -552,9 +553,9 @@ def check_memory_allocation(shape, allowed=None, model_type=None, include_swap=T
             f' system available {bytes2human(available)}'
         )
 
-    if allowed and size > (allowed / 100.0 * available):
+    if allowed and size > (allowed * available):
         log.debug(
-            f'Model size greater than allowed memory {bytes2human(allowed / 100.0 * available)}'
+            f'Model size greater than allowed memory {bytes2human(allowed * available)}'
         )
         return False, size
 
