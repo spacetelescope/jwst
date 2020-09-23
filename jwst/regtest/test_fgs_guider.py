@@ -1,10 +1,6 @@
 """Regression tests for FGS Guidestar in ID and FINEGUIDE modes"""
-import os
-
 import pytest
-from astropy.io.fits.diff import FITSDiff
 
-from jwst.lib.suffix import replace_suffix
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.resample.resample import OutputTooLargeError
 from jwst.stpipe import Step
