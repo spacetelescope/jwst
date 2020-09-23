@@ -166,15 +166,9 @@ class OutlierDetectionStep(Step):
 
             # Set up outlier detection, then do detection
             step = detection_step(self.input_models, reffiles=reffiles, **pars)
-            try:
-                step.do_detection()
-            except OutputTooLargeError as exception:
-                self.log.error(f'{exception}')
-                state = 'SKIP'
-                self.skip = True
-            else:
-                state = 'COMPLETE'
+            step.do_detection()
 
+            state = 'COMPLETE'
             if self.input_container:
                 for model in self.input_models:
                     model.meta.cal_step.outlier_detection = state

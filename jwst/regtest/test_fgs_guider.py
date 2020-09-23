@@ -6,6 +6,7 @@ from astropy.io.fits.diff import FITSDiff
 
 from jwst.lib.suffix import replace_suffix
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
+from jwst.resample.resample import OutputTooLargeError
 from jwst.stpipe import Step
 
 from . import regtestdata as rt
@@ -43,11 +44,11 @@ def test_fgs_toobig(rtdata, fitsdiff_default_kwargs, caplog, monkeypatch):
     """Test for the situation where the combined mosaic is too large"""
 
     # Set the environment to not allow the resultant too-large image.
-    monkeypatch.setenv('DMODEL_ALLOWED_MEMORY', 1.0)
+    monkeypatch.setenv('DMODEL_ALLOWED_MEMORY', "0.9")
 
     rtdata.get_asn('fgs/image3/image3_asn.json')
 
     collect_pipeline_cfgs('config')
     args = ['config/calwebb_image3.cfg', rtdata.input]
-    Step.from_cmdline(args)
-    assert 'model cannot be instantiated' in caplog.text
+    with pytest.raises(OutputTooLargeError):
+        Step.from_cmdline(args)

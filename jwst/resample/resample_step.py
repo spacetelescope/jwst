@@ -72,12 +72,7 @@ class ResampleStep(Step):
 
         # Call the resampling routine
         kwargs['allowed_memory'] = self.allowed_memory
-        try:
-            resamp = resample.ResampleData(input_models, **kwargs)
-        except resample.OutputTooLargeError as exception:
-            self.log.error(f'{exception}')
-            self.skip = True
-            return input_models
+        resamp = resample.ResampleData(input_models, **kwargs)
         resamp.do_drizzle()
 
         for model in resamp.output_models:
