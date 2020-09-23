@@ -1,12 +1,11 @@
 import logging
 from collections import OrderedDict
 import numpy as np
-from psutil._common import bytes2human
-
-from .. import datamodels
 
 from . import gwcs_drizzle
 from . import resample_utils
+from .. import datamodels
+from ..lib.basic_utils import bytes2human
 from ..model_blender import blendmeta
 
 log = logging.getLogger(__name__)
@@ -16,7 +15,7 @@ __all__ = ["OutputTooLargeError", "ResampleData"]
 
 
 class OutputTooLargeError(RuntimeError):
-    """Raised when the output is too large for in-memory instanitation"""
+    """Raised when the output is too large for in-memory instantiation"""
 
 
 class ResampleData:
