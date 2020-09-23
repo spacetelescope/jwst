@@ -20,6 +20,42 @@ from jwst.datamodels import util
 # Define artificial memory size
 MEMORY = 100  # 100 bytes
 
+
+@pytest.fixture
+def mock_get_available_memory(monkeypatch):
+    def mock(include_swap=True):
+        avaliable = MEMORY
+        if include_swap:
+            avaliable *= 2
+        return avaliable
+    monkeypatch.setattr(util, 'get_available_memory', mock)
+
+
+@pytest.mark.parametrize(
+    'allowed_env, allowed_explicit, result',
+    [
+        (None, None, True),  # Perform no check.
+        (10, None, False),   # Force too little memory.
+        (10, 100, True),     # Explicit overrides environment.
+        (100, 10, False),    # Explicit overrides environment.
+        (None, 10, False),   # Explicit overrides environment.
+    ]
+)
+def test_check_memory_allocation_env(monkeypatch, mock_get_available_memory,
+                                     allowed_env, allowed_explicit, result):
+    """Check environmental control over memory check"""
+    if allowed_env is None:
+        monkeypatch.delenv('ALLOWED_MEMORY', raising=False)
+    else:
+        monkeypatch.setenv('ALLOWED_MEMORY', allowed_env)
+
+    # Allocate amount that would fit at 100% + swap.
+    can_allocate, required = util.check_memory_allocation(
+        (MEMORY // 2, 1), allowed=allowed_explicit,
+    )
+    assert can_allocate is result
+
+
 @pytest.mark.parametrize(
     'dim, allowed, include_swap, result',
     [
@@ -30,16 +66,8 @@ MEMORY = 100  # 100 bytes
         (MEMORY // 2, 10, True, False),    # Does not fit in restricted memory
     ]
 )
-def test_check_memory_allocation(monkeypatch, dim, allowed, include_swap, result):
-    """Check environmental control over memory check"""
-
-    def mock_get_available_memory(include_swap=True):
-        avaliable = MEMORY
-        if include_swap:
-            avaliable *= 2
-        return avaliable
-    monkeypatch.setattr(util, 'get_available_memory', mock_get_available_memory)
-
+def test_check_memory_allocation(mock_get_available_memory, dim, allowed, include_swap, result):
+    """Check general operation of check_memory_allocation"""
     can_allocate, required = util.check_memory_allocation(
         (dim, 1), allowed=allowed, include_swap=include_swap
     )
