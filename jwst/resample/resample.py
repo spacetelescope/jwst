@@ -12,7 +12,11 @@ from ..model_blender import blendmeta
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-__all__ = ["ResampleData"]
+__all__ = ["OutputTooLargeError", "ResampleData"]
+
+
+class OutputTooLargeError(RuntimeError):
+    """Raised when the output is too large for in-memory instanitation"""
 
 
 class ResampleData:
@@ -62,9 +66,9 @@ class ResampleData:
             self.output_wcs.data_size, pars['allowed_memory'], datamodels.ImageModel
         )
         if not can_allocate:
-            raise RuntimeError(
+            raise OutputTooLargeError(
                 f'Combined ImageModel size {self.output_wcs.data_size} requires {bytes2human(required_memory)}'
-                f'\nUsing {pars["allowed_memory"]}% of free memory, the model cannot be instantiated.'
+                f'\nModel cannot be instantiated.'
             )
         self.blank_output = datamodels.ImageModel(self.output_wcs.data_size)
 

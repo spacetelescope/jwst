@@ -2,11 +2,11 @@ import logging
 
 import numpy as np
 
+from . import resample
 from ..stpipe import Step
 from ..extern.configobj.validate import Validator
 from ..extern.configobj.configobj import ConfigObj
 from .. import datamodels
-from . import resample
 from ..assign_wcs import util
 
 log = logging.getLogger(__name__)
@@ -74,7 +74,7 @@ class ResampleStep(Step):
         kwargs['allowed_memory'] = self.allowed_memory
         try:
             resamp = resample.ResampleData(input_models, **kwargs)
-        except RuntimeError as exception:
+        except resample.OutputTooLargeError as exception:
             self.log.error(f'{exception}')
             self.skip = True
             return input_models

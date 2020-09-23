@@ -8,6 +8,7 @@ from . import outlier_detection
 from . import outlier_detection_scaled
 from . import outlier_detection_ifu
 from . import outlier_detection_spec
+from ..resample.resample import OutputTooLargeError
 
 # Categorize all supported versions of outlier_detection
 outlier_registry = {'imaging': outlier_detection.OutlierDetection,
@@ -167,7 +168,7 @@ class OutlierDetectionStep(Step):
             step = detection_step(self.input_models, reffiles=reffiles, **pars)
             try:
                 step.do_detection()
-            except RuntimeError as exception:
+            except OutputTooLargeError as exception:
                 self.log.error(f'{exception}')
                 state = 'SKIP'
                 self.skip = True
