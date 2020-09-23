@@ -62,7 +62,7 @@ class OutlierDetectionStep(Step):
         good_bits = string(default="~DO_NOT_USE")  # DQ flags to allow
         scale_detection = boolean(default=False)
         search_output_file = boolean(default=False)
-        allowed_memory = integer(default=None)  # Percentage of memory to use for the combined image.
+        allowed_memory = float(default=None)  # Fraction of memory to use for the combined image.
     """
 
     def process(self, input_data):

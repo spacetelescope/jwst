@@ -36,7 +36,7 @@ class ResampleStep(Step):
         weight_type = option('exptime', default='exptime')
         single = boolean(default=False)
         blendheaders = boolean(default=True)
-        allowed_memory = integer(default=None)  # Percentage of memory to use for the combined image.
+        allowed_memory = float(default=None)  # Fraction of memory to use for the combined image.
     """
 
     reference_file_types = ['drizpars']
