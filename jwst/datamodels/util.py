@@ -525,7 +525,7 @@ def check_memory_allocation(shape, allowed=None, model_type=None, include_swap=T
         allowed = os.environ.get('ALLOWED_MEMORY', None)
         if allowed is not None:
             allowed = int(allowed)
-            
+
     # Create the unit shape
     unit_shape = (1,) * len(shape)
 

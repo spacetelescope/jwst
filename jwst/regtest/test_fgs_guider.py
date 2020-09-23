@@ -39,8 +39,12 @@ def test_fgs_guider(run_guider_pipelines, fitsdiff_default_kwargs, suffix):
 
 
 @pytest.mark.bigdata
-def test_fgs_toobig(rtdata, fitsdiff_default_kwargs, caplog):
+def test_fgs_toobig(rtdata, fitsdiff_default_kwargs, caplog, monkeypatch):
     """Test for the situation where the combined mosaic is too large"""
+
+    # Set the environment ALLOWED_MEMORY to not allow the resultant too-large image.
+    monkeypatch.setenv('ALLOWED_MEMORY', 100)
+
     rtdata.get_asn('fgs/image3/image3_asn.json')
 
     collect_pipeline_cfgs('config')
