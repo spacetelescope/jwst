@@ -495,7 +495,7 @@ def get_envar_as_boolean(name, default=False):
     return default
 
 
-def check_memory_allocation(shape, allowed=100, model_type=None, include_swap=True):
+def check_memory_allocation(shape, allowed=None, model_type=None, include_swap=True):
     """Check if a DataModel can be instantiated
 
     Parameters
@@ -505,7 +505,8 @@ def check_memory_allocation(shape, allowed=100, model_type=None, include_swap=Tr
 
     allowed : number or None
         Percentage of memory allowed to be allocated.
-        If None, no check is made and will always return True.
+        If None, the environmental variable `ALLOWED_MEMORY`
+        is retrieved. If undefined, then no check is performed.
 
     model_type : DataModel or None
         The desired model to instantiate.
@@ -519,6 +520,12 @@ def check_memory_allocation(shape, allowed=100, model_type=None, include_swap=Tr
     can_instantiate, required_memory : bool, number
         True if the model can be instantiated and the predicted memory footprint.
     """
+    # Determine desired allowed amount.
+    if allowed is None:
+        allowed = os.environ.get('ALLOWED_MEMORY', None)
+        if allowed is not None:
+            allowed = int(allowed)
+            
     # Create the unit shape
     unit_shape = (1,) * len(shape)
 
