@@ -44,8 +44,7 @@ class RampFitStep (Step):
 
         with datamodels.RampModel(input) as input_model:
             max_cores = self.maximum_cores
-            readnoise_filename = self.get_reference_file(input_model,
-                                                          'readnoise')
+            readnoise_filename = self.get_reference_file(input_model, 'readnoise')
             gain_filename = self.get_reference_file(input_model, 'gain')
 
             log.info('Using READNOISE reference file: %s', readnoise_filename)
@@ -89,7 +88,10 @@ class RampFitStep (Step):
 
         if out_model is not None:
             out_model.meta.cal_step.ramp_fit = 'COMPLETE'
-            if input_model.meta.exposure.type in ('NRS_IFU', 'MIR_MRS'):
+            if (input_model.meta.exposure.type in ['NRS_IFU', 'MIR_MRS']) or (
+                input_model.meta.exposure.type in ['NRS_AUTOWAVE', 'NRS_LAMP'] and
+                    input_model.meta.instrument.lamp_mode == 'IFU'):
+
                 out_model = datamodels.IFUImageModel(out_model)
 
         if int_model is not None:

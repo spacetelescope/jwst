@@ -20,7 +20,7 @@ MICRONS_100 = 1.e-4                     # 100 microns, in meters
 
 # This is for NIRSpec.
 FIXED_SLIT_TYPES = ["NRS_LAMP", "NRS_BRIGHTOBJ", "NRS_FIXEDSLIT"]
-NIRSPEC_SPECTRAL_EXPOSURES = ['NRS_BRIGHTOBJ', 'NRS_FIXEDSLIT', 'NRS_IFU', 'NRS_MSASPEC']
+NIRSPEC_SPECTRAL_EXPOSURES = ['NRS_AUTOWAVE', 'NRS_BRIGHTOBJ', 'NRS_FIXEDSLIT', 'NRS_IFU', 'NRS_MSASPEC']
 
 # Dispersion direction, predominantly horizontal or vertical.  These values
 # are to be compared with keyword DISPAXIS from the input header.
@@ -281,7 +281,8 @@ def do_nirspec_flat_field(output_model, f_flat_model, s_flat_model, d_flat_model
     # that the slices have been copied out into a MultiSlitModel, so
     # check for that case.
     if not hasattr(output_model, "slits"):
-        if exposure_type == "NRS_IFU":
+        if exposure_type == "NRS_IFU" or (
+            exposure_type == "NRS_AUTOWAVE" and output_model.meta.instrument.lamp_mode == 'IFU'):
             if not isinstance(output_model, datamodels.IFUImageModel):
                 log.error("NIRSpec IFU data is not an IFUImageModel; "
                           "don't know how to process it.")
