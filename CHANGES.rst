@@ -7,6 +7,17 @@ extract_1d
 - Fixed bug invovling the determination of source RA/Dec for resampled Slit
   data. [#5353]
 
+flatfield
+---------
+
+- Fixed bug in sending NIRSpec AUTOWAVE exposures to the spectroscopic
+  processing branch. [#5356]
+
+ramp_fitting
+------------
+
+- Update to store output as an `IFUImageModel` for NIRSpec AUTOWAVE exposures
+  using the IFU mode. [#5356]
 
 
 0.17.1 (2020-09-15)
