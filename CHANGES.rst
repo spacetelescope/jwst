@@ -64,6 +64,8 @@ outlier_detection
 
 - Fix bug where background was being subtracted on the input data [#4858]
 
+- Implement memory check in resample to prevent huge arrays [#5354]
+
 pathloss
 --------
 
@@ -96,6 +98,11 @@ ramp_fitting
 ------------
 
 - Reinstate copying of INT_TIMES table to output rateints product for TSO exposures. [#5321]
+
+resample
+--------
+
+- Implement memory check in resample to prevent huge arrays [#5354]
 
 tso_photometry
 --------------
