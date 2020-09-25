@@ -2,16 +2,20 @@ import logging
 from collections import OrderedDict
 import numpy as np
 
-from .. import datamodels
-
 from . import gwcs_drizzle
 from . import resample_utils
+from .. import datamodels
+from ..lib.basic_utils import bytes2human
 from ..model_blender import blendmeta
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-__all__ = ["ResampleData"]
+__all__ = ["OutputTooLargeError", "ResampleData"]
+
+
+class OutputTooLargeError(RuntimeError):
+    """Raised when the output is too large for in-memory instantiation"""
 
 
 class ResampleData:
@@ -44,6 +48,9 @@ class ResampleData:
 
         output : str
             filename for output
+
+        pars : dict
+            `drizpars` parameters
         """
         self.input_models = input_models
         self.drizpars = pars
@@ -54,6 +61,14 @@ class ResampleData:
         # Define output WCS based on all inputs, including a reference WCS
         self.output_wcs = resample_utils.make_output_wcs(self.input_models)
         log.debug('Output mosaic size: {}'.format(self.output_wcs.data_size))
+        can_allocate, required_memory = datamodels.util.check_memory_allocation(
+            self.output_wcs.data_size, pars['allowed_memory'], datamodels.ImageModel
+        )
+        if not can_allocate:
+            raise OutputTooLargeError(
+                f'Combined ImageModel size {self.output_wcs.data_size} requires {bytes2human(required_memory)}'
+                f'\nModel cannot be instantiated.'
+            )
         self.blank_output = datamodels.ImageModel(self.output_wcs.data_size)
 
         # update meta data and wcs

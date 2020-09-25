@@ -6,11 +6,15 @@ import sys
 import warnings
 import os
 from os.path import basename
+from platform import system as platform_system
+import psutil
+import traceback
 
 import numpy as np
 from astropy.io import fits
 
 from ..lib import s3_utils
+from ..lib.basic_utils import bytes2human
 
 import logging
 log = logging.getLogger(__name__)
@@ -488,3 +492,154 @@ def get_envar_as_boolean(name, default=False):
 
     log.debug(f'Environmental "{name}" cannot be found. Using default value of "{default}".')
     return default
+
+
+def check_memory_allocation(shape, allowed=None, model_type=None, include_swap=True):
+    """Check if a DataModel can be instantiated
+
+    Parameters
+    ----------
+    shape : tuple
+        The desired shape of the model.
+
+    allowed : number or None
+        Fraction of memory allowed to be allocated.
+        If None, the environmental variable `DMODEL_ALLOWED_MEMORY`
+        is retrieved. If undefined, then no check is performed.
+        `1.0` would be all available memory. `0.5` would be half available memory.
+
+    model_type : DataModel or None
+        The desired model to instantiate.
+        If None, `open` will be used to guess at a model type depending on shape.
+
+    include_swap : bool
+        Include available swap in the calculation.
+
+    Returns
+    -------
+    can_instantiate, required_memory : bool, number
+        True if the model can be instantiated and the predicted memory footprint.
+    """
+    # Determine desired allowed amount.
+    if allowed is None:
+        allowed = os.environ.get('DMODEL_ALLOWED_MEMORY', None)
+        if allowed is not None:
+            allowed = float(allowed)
+
+    # Create the unit shape
+    unit_shape = (1,) * len(shape)
+
+    # Create the unit model.
+    if model_type:
+        unit_model = model_type(unit_shape)
+    else:
+        unit_model = open(unit_shape)
+
+    # Size of the primary array.
+    primary_array_name = unit_model.get_primary_array_name()
+    primary_array = getattr(unit_model, primary_array_name)
+    size = primary_array.nbytes
+    for dimension in shape:
+        size *= dimension
+
+    # Get available memory
+    available = get_available_memory(include_swap=include_swap)
+    log.debug(f'Model size {bytes2human(size)} available system memory {bytes2human(available)}')
+
+    if size > available:
+        log.warning(
+            f'Model {model_type} shape {shape} requires {bytes2human(size)} which is more than'
+            f' system available {bytes2human(available)}'
+        )
+
+    if allowed and size > (allowed * available):
+        log.debug(
+            f'Model size greater than allowed memory {bytes2human(allowed * available)}'
+        )
+        return False, size
+
+    return True, size
+
+
+def get_available_memory(include_swap=True):
+    """Retrieve available memory
+
+    Parameters
+    ----------
+    include_swap : bool
+        Include available swap in the calculation.
+
+    Returns
+    -------
+    available : number
+        The amount available.
+    """
+    system = platform_system()
+
+    # Apple MacOS
+    log.debug(f'Running OS is "{system}"')
+    if system in ['Darwin']:
+        return get_available_memory_darwin(include_swap=include_swap)
+
+    # Default to Linux-like:
+    return get_available_memory_linux(include_swap=include_swap)
+
+
+def get_available_memory_linux(include_swap=True):
+    """Get memory for a Linux system
+
+    Presume that the swap space as reported is accurate at the time of
+    the query and that any subsequent allocation will be held the value.
+
+    Parameters
+    ----------
+    include_swap : bool
+        Include available swap in the calculation.
+
+    Returns
+    -------
+    available : number
+        The amount available.
+    """
+    vm_stats = psutil.virtual_memory()
+    available = vm_stats.available
+    if include_swap:
+        swap = psutil.swap_memory()
+        available += swap.total
+    return available
+
+
+def get_available_memory_darwin(include_swap=True):
+    """Get the available memory on an Apple MacOS-like system
+
+    For Darwin, swap space is dynamic and will attempt to use the whole of the
+    boot partition.
+
+    If the system has been configured to use swap from other sources besides
+    the boot partition, that available space will not be included.
+
+    Parameters
+    ----------
+    include_swap : bool
+        Include available swap in the calculation.
+
+    Returns
+    -------
+    available : number
+        The amount available.
+    """
+    vm_stats = psutil.virtual_memory()
+    available = vm_stats.available
+    if include_swap:
+
+        # Attempt to determine amount of free disk space on the boot partition.
+        try:
+            swap = psutil.disk_usage('/private/var/vm').free
+        except FileNotFoundError as exception:
+            log.warn('Cannot determine available swap space.'
+                     f'Reason:\n'
+                     f'{"".join(traceback.format_exception(exception))}')
+            swap = 0
+        available += swap
+
+    return available

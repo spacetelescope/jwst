@@ -62,6 +62,7 @@ class OutlierDetectionStep(Step):
         good_bits = string(default="~DO_NOT_USE")  # DQ flags to allow
         scale_detection = boolean(default=False)
         search_output_file = boolean(default=False)
+        allowed_memory = float(default=None)  # Fraction of memory to use for the combined image.
     """
 
     def process(self, input_data):
@@ -104,6 +105,7 @@ class OutlierDetectionStep(Step):
                 'snr': self.snr,
                 'scale': self.scale,
                 'backg': self.backg,
+                'allowed_memory' : self.allowed_memory,
                 'save_intermediate_results': self.save_intermediate_results,
                 'resample_data': self.resample_data,
                 'good_bits': self.good_bits,
@@ -165,11 +167,12 @@ class OutlierDetectionStep(Step):
             step = detection_step(self.input_models, reffiles=reffiles, **pars)
             step.do_detection()
 
+            state = 'COMPLETE'
             if self.input_container:
                 for model in self.input_models:
-                    model.meta.cal_step.outlier_detection = 'COMPLETE'
+                    model.meta.cal_step.outlier_detection = state
             else:
-                self.input_models.meta.cal_step.outlier_detection = 'COMPLETE'
+                self.input_models.meta.cal_step.outlier_detection = state
 
             return self.input_models
 
