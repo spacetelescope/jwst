@@ -85,9 +85,12 @@ class Pipeline(Step):
 
     @property
     def _unskipped_steps(self):
-        """Return a list of the unskipped Step objects launched by `self`."""
+        """Return a list of the unskipped Step objects launched by `self`.
+
+        Steps are also excluded if `Step.prefetch_references` is False.
+        """
         return [getattr(self, name) for name in self.step_defs
-                if not getattr(self, name).skip]
+                if (not getattr(self, name).skip and getattr(self, name).prefetch_references)]
 
     def get_ref_override(self, reference_file_type):
         """Return any override for `reference_file_type` for any of the steps in
