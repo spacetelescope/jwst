@@ -5,9 +5,10 @@ import numpy as np
 from numpy.testing import assert_allclose
 import pytest
 
-from jwst.stpipe import Step, Pipeline, LinearPipeline
 from jwst import datamodels
-# TODO: Test system call steps
+from jwst.stpipe import Step, Pipeline, LinearPipeline, crds_client
+
+from .steps import PipeWithReference, StepWithReference
 
 
 def library_function():
@@ -134,6 +135,46 @@ class MyLinearPipeline(LinearPipeline):
         ('multiply2', MultiplyBy2),
         ('multiply3', MultiplyBy2)
         ]
+
+
+def test_prefetch(_jail, monkeypatch):
+    """Test prefetching"""
+
+    # Setup mock to crds to flag if the call was made.
+    class MockGetRef:
+        called = False
+
+        def mock(self, dataset_model, reference_file_types, observatory=None):
+            if 'flat' in reference_file_types:
+                self.called = True
+            result = {
+                reftype: 'N/A'
+                for reftype in reference_file_types
+            }
+            return result
+        __call__ = mock
+    mock_get_ref = MockGetRef()
+    monkeypatch.setattr(crds_client, 'get_multiple_reference_paths', mock_get_ref)
+
+    # Create some data
+    model = datamodels.ImageModel((19, 19))
+    model.meta.instrument.name = "NIRCAM"
+    model.meta.instrument.detector = 'NRCA1'
+    model.meta.instrument.filter = "F070W"
+    model.meta.instrument.pupil = 'CLEAR'
+    model.meta.observation.date = "2019-01-01"
+    model.meta.observation.time = "00:00:00"
+
+    # Run the pipeline with prefetch set.
+    StepWithReference.prefetch_references = True
+    PipeWithReference.call(model)
+    assert mock_get_ref.called
+
+    # Now run with prefetch unset.
+    mock_get_ref.called = False
+    StepWithReference.prefetch_references = False
+    PipeWithReference.call(model)
+    assert not mock_get_ref.called
 
 
 def test_partial_pipeline(_jail):

@@ -105,6 +105,11 @@ scripts
 
 - Add pointing analysis commands v1_calculate and pointing_summary. [#5311]
 
+stpipe
+------
+
+- Do not attempt prefetch on pipelines that are set to not allow prefetch. [#5363]
+
 ramp_fitting
 ------------
 

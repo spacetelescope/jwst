@@ -5,6 +5,28 @@ from jwst.datamodels import (
     ModelContainer,
 )
 
+class StepWithReference(Step):
+    """Step that refers to a reference file"""
+
+    reference_file_types = ['flat']
+
+    def process(self, data):
+        return data
+
+
+class PipeWithReference(Pipeline):
+    """Pipeline calling step with reference"""
+
+    spec = """
+    """
+
+    step_defs = {'step_with_reference': StepWithReference}
+
+    def process(self, data):
+        result = self.step_with_reference(data)
+
+        return result
+
 
 class AnotherDummyStep(Step):
     """
