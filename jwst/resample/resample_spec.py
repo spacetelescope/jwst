@@ -390,7 +390,7 @@ class ResampleSpecData:
             output_model.meta.resample.weight_type = self.drizpars['weight_type']
             output_model.meta.resample.pointings = pointings
 
-            # Update mutlislit slit info on the output_model. This is needed
+            # Update slit info on the output_model. This is needed
             # because model.slit attributes are not in model.meta, so the
             # normal update() method doesn't work with them.
             for attr in ['name', 'xstart', 'xsize', 'ystart', 'ysize',
