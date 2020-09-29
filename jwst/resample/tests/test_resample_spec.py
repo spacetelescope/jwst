@@ -1,19 +1,17 @@
-import numpy as np
+from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
 
-from ...datamodels import ImageModel
+from jwst.datamodels import ImageModel
 from jwst.assign_wcs import AssignWcsStep
 from jwst.extract_2d import Extract2dStep
 from jwst.resample import ResampleSpecStep
 
-from gwcs.wcstools import grid_from_bounding_box
-
 
 def test_spatial_transform_nirspec():
     wcsinfo = {
-        'dec_ref': -0.00601415671349804,
-        'ra_ref': -0.02073605215697509,
-        'roll_ref': -0.0,
+        'dec_ref': 40,
+        'ra_ref': 100,
+        'roll_ref': 0,
         'v2_ref': -453.5134,
         'v3_ref': -373.4826,
         'v3yangle': 0.0,
@@ -60,34 +58,32 @@ def test_spatial_transform_nirspec():
         'type': 'NRS_FIXEDSLIT',
         'zero_frame': False}
 
-    im = ImageModel()
-    im.data = np.random.rand(2048, 2048)
-    im.error = np.random.rand(2048, 2048)
-    im.dq = np.random.rand(2048, 2048)
+    im = ImageModel((2048, 2048))
 
-    im.meta.wcsinfo._instance.update(wcsinfo)
-    im.meta.instrument._instance.update(instrument)
-    im.meta.observation._instance.update(observation)
-    im.meta.exposure._instance.update(exposure)
-    im.meta.subarray._instance.update(subarray)
-    im.meta.filename = 'test.fits'
+    im.meta.wcsinfo = wcsinfo
+    im.meta.instrument = instrument
+    im.meta.observation = observation
+    im.meta.exposure = exposure
+    im.meta.subarray = subarray
+
     im = AssignWcsStep.call(im)
     im = Extract2dStep.call(im)
     im = ResampleSpecStep.call(im)
 
     for slit in im.slits:
-        x, y =grid_from_bounding_box(slit.meta.wcs.bounding_box)
+        x, y = grid_from_bounding_box(slit.meta.wcs.bounding_box)
         ra, dec, lam = slit.meta.wcs(x, y)
+        xp, yp = slit.meta.wcs.invert(ra, dec, lam)
 
-        ra1 = np.where(ra < 0, 360 + ra, ra)
-        assert_allclose(slit.meta.wcs.invert(ra, dec, lam), slit.meta.wcs.invert(ra1, dec, lam))
+        assert_allclose(x, xp, atol=1e-8)
+        assert_allclose(y, yp, atol=1e-8)
 
 
 def test_spatial_transform_miri():
     wcsinfo = {
-        'dec_ref': -0.00601415671349804,
-        'ra_ref': -0.02073605215697509,
-        'roll_ref': -0.0,
+        'dec_ref': 40,
+        'ra_ref': 100,
+        'roll_ref': 0.0,
         'v2_ref': -453.5134,
         'v3_ref': -373.4826,
         'v3yangle': 0.0,
@@ -130,20 +126,19 @@ def test_spatial_transform_miri():
         'type': 'MIR_LRS-SLITLESS',
         'zero_frame': False}
 
-    im = ImageModel()
-    im.data = np.random.rand(416, 72)
-    im.error = np.random.rand(416, 72)
-    im.dq = np.random.rand(416, 72)
+    im = ImageModel((416, 72))
 
-    im.meta.wcsinfo._instance.update(wcsinfo)
-    im.meta.instrument._instance.update(instrument)
-    im.meta.observation._instance.update(observation)
-    im.meta.exposure._instance.update(exposure)
-    im.meta.subarray._instance.update(subarray)
+    im.meta.wcsinfo = wcsinfo
+    im.meta.instrument = instrument
+    im.meta.observation = observation
+    im.meta.exposure = exposure
+    im.meta.subarray = subarray
 
-    out = AssignWcsStep.call(im)
-    out = ResampleSpecStep.call(out)
-    x, y =grid_from_bounding_box(out.meta.wcs.bounding_box)
-    ra, dec, lam = out.meta.wcs(x, y)
-    ra1 = np.where(ra < 0, 360 + ra, ra)
-    assert_allclose(out.meta.wcs.invert(ra, dec, lam), out.meta.wcs.invert(ra1, dec, lam))
+    im = AssignWcsStep.call(im)
+    im = ResampleSpecStep.call(im)
+
+    x, y = grid_from_bounding_box(im.meta.wcs.bounding_box)
+    ra, dec, lam = im.meta.wcs(x, y)
+    xp, yp = im.meta.wcs.invert(ra, dec, lam)
+    assert_allclose(x, xp, atol=1e-8)
+    assert_allclose(y, yp, atol=1e-8)
