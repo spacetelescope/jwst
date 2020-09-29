@@ -331,8 +331,8 @@ class TestMethods:
         np.testing.assert_allclose(slopes[0].data[50, 50], cds_slope, 1e-6)
         #expect SATURATED
         assert slopes[0].dq[50, 51] == 2 # is there a better way to do this test?
-        #expect SATURATED since 1st group is Saturated
-        assert slopes[0].dq[50, 52] == 2 # is there a better way to do this test?
+        #expect SATURATED and DO_NOT_USE, because 1st group is Saturated
+        assert slopes[0].dq[50, 52] == 3 # is there a better way to do this test?
 
     def test_four_groups_oneCR_orphangroupatend_fit(self, method):
         model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=4,gain=1,readnoise=10)
