@@ -194,9 +194,11 @@ def test_dq_subarray():
     ref_data.meta.subarray.xsize = fullxsize
     ref_data.meta.subarray.ystart = 1
     ref_data.meta.subarray.ysize = fullysize
-
-    # Filter out validation warnings from ref_data
-    warnings.filterwarnings("ignore", category=ValidationWarning)
+    ref_data.meta.description = "foo"
+    ref_data.meta.reftype = "mask"
+    ref_data.meta.author = "pytest"
+    ref_data.meta.pedigree = "foo"
+    ref_data.meta.useafter = "2000-01-01T00:00:00"
 
     # run correction step
     outfile = do_dqinit(im, ref_data)

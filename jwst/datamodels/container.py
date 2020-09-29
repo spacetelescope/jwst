@@ -1,7 +1,6 @@
 import copy
 from collections import OrderedDict
 import os.path as op
-import warnings
 import re
 import logging
 
