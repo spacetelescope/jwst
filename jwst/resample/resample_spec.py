@@ -213,7 +213,7 @@ class ResampleSpecData:
             wavelength_array = np.flip(wavelength_array,axis=None)
 
         pix_to_wavelength = Tabular1D(lookup_table=wavelength_array,
-                                      bounds_error=False, fill_value=None, name='pix2wavelength')
+                                      bounds_error=False, name='pix2wavelength')
 
         # Tabular models need an inverse explicitly defined.
         # If the wavelength array is decending instead of ascending, both
@@ -227,7 +227,7 @@ class ResampleSpecData:
             lookup_table = lookup_table[::-1]
         pix_to_wavelength.inverse = Tabular1D(points=points,
                                               lookup_table=lookup_table,
-                                              bounds_error=False, fill_value=None, name='wavelength2pix')
+                                              bounds_error=False, name='wavelength2pix')
 
         # For the input mapping, duplicate the spatial coordinate
         mapping = Mapping((spatial_axis, spatial_axis, spectral_axis))
@@ -390,7 +390,9 @@ class ResampleSpecData:
             output_model.meta.resample.weight_type = self.drizpars['weight_type']
             output_model.meta.resample.pointings = pointings
 
-            # Update mutlislit slit info on the output_model
+            # Update mutlislit slit info on the output_model. This is needed
+            # because model.slit attributes are not in model.meta, so the
+            # normal update() method doesn't work with them.
             for attr in ['name', 'xstart', 'xsize', 'ystart', 'ysize',
                          'slitlet_id', 'source_id', 'source_name', 'source_alias',
                          'stellarity', 'source_type', 'source_xpos', 'source_ypos',
@@ -400,7 +402,8 @@ class ResampleSpecData:
                 except AttributeError:
                     pass
                 else:
-                    setattr(output_model, attr, val)
+                    if val is not None:
+                        setattr(output_model, attr, val)
 
             self.output_models.append(output_model)
 
