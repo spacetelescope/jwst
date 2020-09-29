@@ -982,8 +982,8 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
 
     # Clean up ramps that are SAT on their initial groups; set ramp parameters
     #   for variances and slope so they will not contribute
-    var_p3, var_both3, slope_int = utils.fix_sat_ramps( sat_0th_group_int,
-                                           var_p3, var_both3, slope_int)
+    var_p3, var_both3, slope_int, dq_int = utils.fix_sat_ramps(
+        sat_0th_group_int, var_p3, var_both3, slope_int, dq_int)
 
     if sat_0th_group_int is not None:
         del sat_0th_group_int

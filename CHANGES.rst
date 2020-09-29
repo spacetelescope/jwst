@@ -19,6 +19,8 @@ ramp_fitting
 - Update to store output as an `IFUImageModel` for NIRSpec AUTOWAVE exposures
   using the IFU mode. [#5356]
 
+- Update to add 'DO_NOT_USE' DQ flag to pixels with all groups flagged as
+  saturated. [#5367]
 
 0.17.1 (2020-09-15)
 ===================
