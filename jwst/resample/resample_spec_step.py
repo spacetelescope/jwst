@@ -110,7 +110,8 @@ class ResampleSpecStep(ResampleStep):
             # Everything resampled to single output model
             if len(drizzled_models) == 1:
                 result.slits.append(drizzled_models[0])
-                result.slits[-1].meta.bunit_data = container[0].meta.bunit_data
+                if container[0].meta.bunit_data is not None:
+                    result.slits[0].meta.bunit_data = container[0].meta.bunit_data
             else:
                 # When each input is resampled to its own output
                 for model in drizzled_models:
