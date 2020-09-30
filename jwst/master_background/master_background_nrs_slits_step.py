@@ -116,6 +116,16 @@ class MasterBackgroundNrsSlitsStep(Pipeline):
                 master_background = self.correction_pars['masterbkg_1d']
                 mb_multislit = self.correction_pars['masterbkg_2d']
             else:
+                num_bkg, num_src = self._classify_slits(data_model)
+                if num_bkg == 0:
+                    self.log.warning('No background slits available for creating master background. Skipping')
+                    self.record_step_status(data, 'master_background', False)
+                    return data
+                elif num_src == 0:
+                    self.log.warning('No source slits for applying master background. Skipping')
+                    self.record_step_status(data, 'master_background', False)
+                    return data
+
                 self.log.info('Calculating master background')
                 master_background, mb_multislit = self._calc_master_background(data_model)
 
@@ -158,6 +168,31 @@ class MasterBackgroundNrsSlitsStep(Pipeline):
             for par in pars_to_ignore[step] + GLOBAL_PARS_TO_IGNORE:
                 del pars[par]
             getattr(self, step).update_pars(pars)
+
+    def _classify_slits(self, data):
+        """Determine how many Slits are background and source types
+
+        Parameters
+        ----------
+        data : ~jwst.datamodels.MultiSlitModel`
+            The data to operate on.
+
+        Returns
+        -------
+        num_bkg, num_src : int, int
+            The number of background slits and the number of source slits.
+        """
+
+        # Loop over all the Slit instances in the input data model and
+        # count how many are background vs source.
+        num_bkg = num_src = 0
+        for slit in data.slits:
+            if "background" in slit.source_name:
+                num_bkg+=1
+            else:
+                num_src+=1
+
+        return num_bkg, num_src
 
     def _calc_master_background(self, data, user_background=None):
         """Calculate master background from background slits
