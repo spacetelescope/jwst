@@ -6,9 +6,11 @@ import pytest
 
 from astropy.io import fits
 
+import crds
+from jwst import datamodels
+
 from .. import Step
 from ..import crds_client
-import crds
 
 TMP_DIR = None
 TMP_FITS = None
@@ -32,6 +34,17 @@ class CrdsStep(Step):
         with datamodels.open(input_file) as dm:
             self.ref_filename = self.get_reference_file(dm, 'flat')
         return datamodels.DataModel()
+
+
+def test_steppars_error_supression(_jail, caplog):
+    """Test supression of CRDS errors while retrieving step parameters"""
+    model = datamodels.ImageModel((10, 10))
+    model.save('image.fits')
+
+    args = ['jwst.stpipe.tests.steps.WithDefaultsStep', 'image.fits']
+    Step.from_cmdline(args)
+
+    assert 'pars-withdefaultsstep' not in caplog.text
 
 
 def test_crds_step():
