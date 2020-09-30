@@ -1,6 +1,15 @@
 0.17.2 (unreleased)
 ===================
 
+cube_build
+----------
+
+- When making SINGLE type cubes for outlier detection or mrs_imatch data not in the 
+  appropriate channel/grating is skipped [#5347]
+
+- If outlier detection has flagged all the data on a input file as DO_NOT_USE, then
+  skip the file in creating an ifucube [*5347]
+
 extract_1d
 ----------
 
@@ -13,6 +22,20 @@ flatfield
 - Fixed bug in sending NIRSpec AUTOWAVE exposures to the spectroscopic
   processing branch. [#5356]
 
+- Updated branch logic to handle NRS_LAMP exposures as spectroscopic. [#5370]
+
+master_background
+-----------------
+
+- Update the NIRSpec MOS master background logic to only proceed with processing
+  after verifying that there are both background and source slits available in
+  the input dataset. [#5370]
+
+outlier_detection
+-----------------
+
+- Implement memory check in resample to prevent huge arrays [#5354]
+
 ramp_fitting
 ------------
 
@@ -21,6 +44,11 @@ ramp_fitting
 
 - Update to add 'DO_NOT_USE' DQ flag to pixels with all groups flagged as
   saturated. [#5367]
+
+resample
+--------
+
+- Implement memory check in resample to prevent huge arrays [#5354]
 
 0.17.1 (2020-09-15)
 ===================
@@ -46,12 +74,6 @@ blendmeta
 cube_build
 ----------
 
-- When making SINGLE type cubes for outlier detection or mrs_imatch data not in the 
-  appropriate channel/grating is skipped [#5347]
-
-- If outlier detection has flagged all the data on a input file as DO_NOT_USE, then
-  skip the file in creating an ifucube [*5347]
-
 - If every wavelength plane of the IFU cube contains 0 data, cube_build is skipped [#5294]
 
 - Remove "clear" suffix from MIRI MRS product name templates [#5326]
@@ -76,8 +98,6 @@ outlier_detection
 -----------------
 
 - Fix bug where background was being subtracted on the input data [#4858]
-
-- Implement memory check in resample to prevent huge arrays [#5354]
 
 pathloss
 --------
@@ -116,11 +136,6 @@ ramp_fitting
 ------------
 
 - Reinstate copying of INT_TIMES table to output rateints product for TSO exposures. [#5321]
-
-resample
---------
-
-- Implement memory check in resample to prevent huge arrays [#5354]
 
 tso_photometry
 --------------
