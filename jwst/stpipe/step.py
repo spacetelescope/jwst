@@ -732,10 +732,22 @@ class Step():
         logger.debug(f'Retrieving step {pars_model.meta.reftype.upper()} parameters from CRDS')
         exceptions = crds_client.get_exceptions_module()
         try:
-            ref_file = crds_client.get_reference_file(dataset,
-                                                      pars_model.meta.reftype,
-                                                      observatory=observatory,
-                                                      asn_exptypes=['science'])
+
+            # ###
+            # NOTE: Currently, the CRDS database is sparsely populated with respect to
+            # all the possible step parameter reftypes. As such, under normal usage,
+            # it is expected to not find a requested reftype. As such, suppress CRDS errors
+            # unless debugging is in effect.
+            #
+            # The `-3` is the CRDS indicator to not log anything except FATAL.
+            # See `crds.core.log`
+            # ###
+            crds_log_level = -3 if logger.getEffectiveLevel() > log.logging.DEBUG else log.logging.DEBUG
+            with crds_client.log.reduced_verbosity(crds_log_level, log.logging.FATAL):
+                ref_file = crds_client.get_reference_file(dataset,
+                                                          pars_model.meta.reftype,
+                                                          observatory=observatory,
+                                                          asn_exptypes=['science'])
         except (AttributeError, exceptions.CrdsError, exceptions.CrdsLookupError):
             logger.debug(f'{pars_model.meta.reftype.upper()}: No parameters found')
             return config_parser.ConfigObj()

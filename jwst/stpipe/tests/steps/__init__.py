@@ -11,6 +11,7 @@ class StepWithReference(Step):
     reference_file_types = ['flat']
 
     def process(self, data):
+        self.log.debug(f'Finding flat for {data}')
         return data
 
 
