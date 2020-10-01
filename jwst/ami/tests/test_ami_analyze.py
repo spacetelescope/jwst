@@ -1,5 +1,7 @@
 """
+
 Unit tests for ami_analyze
+
 """
 import numpy as np
 import math
@@ -603,48 +605,53 @@ def test_hexee_glimit():
 def test_analyticnrm2_psf(setup_sf):
     ''' Test of psf() in the analyticnrm2 module '''
 
-    pixel, fov, oversample, ctrs, d, lam, phi, psf_offset = setup_sf
-
+    pixel, fov, oversample, ctrs, d, lam, phi, psf_offset, aff_obj = setup_sf
     shape = "hex"
 
     computed_psf = psf(pixel, fov, oversample, ctrs, d, lam, phi,
-        psf_offset, shape=shape)
+        psf_offset, aff_obj, shape=shape)
 
     true_psf = np.array(
-        [[ 0.55676539, 5.13790691, 9.32707852, 7.95659204, 3.05720862, 0.87093812],
-         [ 2.883065, 13.4868413, 22.44612867, 20.24062814, 9.2865436, 0.8260206 ],
-         [ 4.66981271, 19.68183766, 33.25399012, 32.22248535, 17.64512595, 3.49243422],
-         [ 3.49243422, 17.64512595, 32.22248535, 33.25399012, 19.68183766, 4.66981271],
-         [ 0.8260206, 9.2865436, 20.24062814, 22.44612867, 13.4868413, 2.883065 ],
-         [ 0.87093812, 3.05720862, 7.95659204, 9.32707852, 5.13790691, 0.55676539]]
-         )
+         [[ 1.14249135,  0.65831385,  0.45119464,  0.66864436,  1.10501352,  2.04851966],
+          [ 2.2221824,   0.62716999,  0.87062628,  1.97855142,  1.72666739,  0.28363866],
+          [ 4.37562298,  2.64951632,  6.40126821, 12.22910105, 13.17326852,  7.49323549],
+          [ 5.93942383,  4.58894785, 12.68235611, 24.87843624, 29.17900067, 20.64525322],
+          [ 5.38441424,  3.73680387, 13.26524812, 28.96518165, 36.75,       28.96518165],
+          [ 3.98599305,  1.08124031,  7.38628086, 20.64525322, 29.17900067, 24.87843625]]
+          )
 
-    assert_allclose(computed_psf, true_psf, atol=1E-7 )
+    assert_allclose(computed_psf, true_psf, atol=1E-7)
 
 
 def test_analyticnrm2_asf_hex(setup_sf):
     ''' Test of asf_hex() in the analyticnrm2 module FOR HEX '''
 
-    pixel, fov, oversample, ctrs, d, lam, phi, centering = setup_sf
+    pixel, fov, oversample, ctrs, d, lam, phi, psf_offset, aff_obj = setup_sf
 
-    asf = asf_hex(pixel, fov, oversample, ctrs, d, lam, phi, centering)
+    asf = asf_hex(pixel, fov, oversample, ctrs, d, lam, phi, psf_offset, aff_obj)
 
     true_asf = np.array(
-        [[ 0.74611461-0.00885311j, 2.14239062+0.74031707j, 2.7532696 +1.32158428j,
-           2.35075667+1.55901736j, 1.09507456+1.3630922j, -0.53224117+0.7665882j ],
-         [ 1.69794671-0.00647795j, 3.6397516 +0.48892695j, 4.66263759+0.840202j,
-           4.39936028+0.9414124j,  2.95391668+0.74894583j, 0.85814396+0.29934852j],
-         [ 2.16095243+0.00986439j, 4.43309812+0.17169358j, 5.75956679+0.28527278j,
-           5.66797969+0.31063092j, 4.19436059+0.22905275j, 1.86810611+0.05112528j],
-         [ 1.86810611-0.05112528j, 4.19436059-0.22905275j, 5.66797969-0.31063092j,
-           5.75956679-0.28527278j, 4.43309812-0.17169358j, 2.16095243-0.00986439j],
-         [ 0.85814396-0.29934852j, 2.95391668-0.74894583j, 4.39936028-0.9414124j,
-           4.66263759-0.840202j,   3.6397516 -0.48892695j, 1.69794671+0.00647795j],
-         [-0.53224117-0.7665882j,  1.09507456-1.3630922j,  2.35075667-1.55901736j,
-           2.7532696 -1.32158428j, 2.14239062-0.74031707j, 0.74611461+0.00885311j]]
+        [[0.82125698+7.84095011e-16j, 0.83091456+2.48343013e-14j,
+          0.83785899-2.49800181e-16j, 0.84204421-1.80411242e-16j,
+          0.8434424 -2.91433544e-16j, 0.84204424-1.24900090e-16j ],
+         [0.83091447+4.09394740e-16j, 0.84064761+1.38777878e-15j,
+          0.8476463 +1.29063427e-15j, 0.85186417-6.17561557e-16j,
+          0.85327325+2.98372438e-16j, 0.85186418+1.90125693e-15j ], 
+         [0.83785894+1.68268177e-16j, 0.84764629+1.07552856e-16j,
+          0.8546839 +6.38378239e-16j, 0.8589252 -1.65145675e-15j,
+          0.8603421 -9.29811783e-16j, 0.8589252 +1.15185639e-15j ],
+         [0.84204421-6.59194921e-17j, 0.85186417-6.70470623e-16j,
+          0.8589252 +8.91214186e-16j, 0.86318061-3.46944695e-16j,
+          0.86460222+2.08166817e-17j, 0.86318061-5.34294831e-16j ],
+         [0.84344243+2.28983499e-16j, 0.85327326+2.98719383e-15j,
+          0.8603421 +5.02722863e-15j, 0.86460222+5.48866508e-15j,
+          0.8660254 +0.00000000e+00j, 0.86460222+5.29611077e-15j ],
+         [0.84204425-1.48492330e-15j, 0.85186418+6.03683770e-16j,
+          0.8589252 +5.68989300e-16j, 0.86318061+2.77555756e-16j,
+          0.86460222-1.72431514e-15j, 0.86318061-5.54070678e-15j]]
     )
 
-    assert_allclose(asf, true_asf, atol=1E-7 )
+    assert_allclose(asf, true_asf, atol=1E-7)   
 
 
 def test_analyticnrm2_interf(setup_sf):
@@ -663,7 +670,9 @@ def test_analyticnrm2_interf(setup_sf):
     for kk in list( (interf.__dict__).keys()):
         delattr( interf, kk )
 
-    pixel, fov, oversample, ctrs, d, lam, phi, centering = setup_sf
+    pixel, fov, oversample, ctrs, d, lam, phi, centering, aff_obj = setup_sf
+
+    pitch = pixel / float(oversample)
 
     interf.lam = lam
     interf.offx = 0.5
@@ -673,20 +682,23 @@ def test_analyticnrm2_interf(setup_sf):
     interf.phi = phi
     interf.pitch = pixel / float(oversample)
 
-    interference = interf(kx, ky)
+    c = (ASIZE/2., ASIZE/2)
+    interf.c = (ASIZE/2., ASIZE/2)
+
+    interference = interf(kx, ky, ctrs=ctrs, phi=phi, lam=lam, pitch=pitch, c=c, affine2d=aff_obj)
 
     true_interference = np.array(
-       [[6.65604548+0.32967559j, 6.55020282-0.35898074j,
-         5.10088264-1.09153011j, 2.74363797-1.81957549j ],
-        [6.55020282+0.35898074j, 6.65604548-0.32967559j,
-         5.40614218-0.97418068j, 3.21342278-1.5424603j ],
-        [4.86319369+0.26557752j, 5.14000033-0.19907186j,
-         4.23407392-0.56876212j, 2.50871764-0.86690377j ],
-        [2.18032216+0.05966983j, 2.52211181-0.01151302j,
-         1.98827833+0.00758561j, 0.87949091+0.01043571j]]
+        [[2.6870043 +1.24219632j, 4.01721904+0.66189711j, 4.2132531 +0.21372447j,
+          3.18675131-0.03818252j],
+         [3.8517604 +1.53442862j, 5.71582424+0.84829672j, 6.24380079+0.2201634j,
+          5.25470657-0.31113349j],
+         [4.02194801+1.32112798j, 6.1888738 +0.66733046j, 7.+0.j,
+          6.1888738 -0.66733046j],
+         [3.07194559+0.75829976j, 5.25470657+0.31113349j, 6.24380079-0.2201634j,
+          5.71582424-0.84829672j]]
         )
 
-    assert_allclose(interference, true_interference, atol=1E-7 )
+    assert_allclose(interference, true_interference, atol=1E-7)
 
 
 def test_analyticnrm2_phasor():
@@ -707,17 +719,19 @@ def test_analyticnrm2_phasor():
     phi = 0.0
     pitch = 1.0375012775744072e-07
 
-    result = phasor( kx, ky, hx, hy, lam, phi, pitch )
+    aff_obj = utils.Affine2d(rotradccw=0.4)
+
+    result = phasor( kx, ky, hx, hy, lam, phi, pitch, aff_obj )
 
     true_result = np.array(
-      [[ 1. -0.j, 0.99982567-0.01867173j, 0.99930273-0.03733694j,
-         0.99843138-0.05598914j ],
-       [ 0.75320598+0.65778473j, 0.76535665+0.6436064j, 0.77724047+0.62920367j,
-         0.78885329+0.61458156j ],
-       [ 0.1346385+0.99089478j, 0.15311675+0.98820811j, 0.1715416+0.98517688j,
-         0.18990665+0.98180215j ],
-       [-0.55038493+0.83491103j, -0.53469975+0.84504211j, -0.51882814+0.85487856j,
-        -0.50277564+0.86441695j ]]
+      [[ 1.  +0.j, 0.96578202+0.25935515j, 0.86546981+0.50096108j,
+         0.70592834+0.70828326j ],
+       [ 0.78476644+0.61979161j, 0.59716716+0.80211681j, 0.36870018+0.92954837j,
+         0.11500085+0.99336539j ],
+       [ 0.23171672+0.97278331j, -0.02850852+0.99959355j, -0.28678275+0.95799564j,
+        -0.52543073+0.85083638j ],
+       [-0.42107943+0.90702377j, -0.64191223+0.76677812j, -0.81881514+0.57405728j,
+        -0.93968165+0.34205027j]]
       )
 
     assert_allclose( result, true_result, atol=1E-7 )
@@ -761,7 +775,6 @@ def test_webb_psf():
 #---------------------------------------------------------------
 # utility functions:
 
-
 @pytest.fixture
 def setup_sf():
     ''' Initialize values for these parameters needed for the analyticnrm2 tests.
@@ -793,6 +806,10 @@ def setup_sf():
             if set to 'PIXELCENTERED' or unspecified, the offsets will be set to
             (0.5,0.5); if set to 'PIXELCORNER', the offsets will be set to
             (0.0,0.0).
+
+        aff : Affine2d object
+            Affine2d object
+
     '''
     pixel = 3.1125038327232215e-07
     fov = 2
@@ -809,8 +826,9 @@ def setup_sf():
     lam =  2.3965000082171173e-06
     phi = np.zeros(7, dtype=np.float32)
     centering = (0.5, 0.5)
+    aff_obj = utils.Affine2d(rotradccw=0.4)
 
-    return pixel, fov, oversample, ctrs, d, lam, phi, centering
+    return pixel, fov, oversample, ctrs, d, lam, phi, centering, aff_obj
 
 
 def setup_hexee():
