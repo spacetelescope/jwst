@@ -102,7 +102,7 @@ def apply_zero_point_correction(slit, reffile):
                                                  aperture_name, dispersion)
     ## TODO: set a DQ flag to a TBD value for pixels where dq_lam == 0.
     ## The only purpose of dq_lam is to set that flag.
-    slit.wavelength = lam - corr
+    slit.wavelength = lam - corr * 10 ** 6
 
 
 def compute_zero_point_correction(lam, freference, source_xpos, aperture_name, dispersion):
@@ -138,12 +138,12 @@ def compute_zero_point_correction(lam, freference, source_xpos, aperture_name, d
                 offset_model = ap.zero_point_offset.copy()
                 # TODO: implement variance
                 #variance = ap.variance.copy()
-                width = ap.width
+                # width = ap.width
                 break
         else:
             log.info(f'No wavelength zero-point correction found for slit {aperture_name}')
 
-    deltax = source_xpos * width
+    deltax = source_xpos
     lam = lam.copy()
     l = lam[~np.isnan(lam)]
     offset_model.bounds_error = False
@@ -157,7 +157,7 @@ def compute_zero_point_correction(lam, freference, source_xpos, aperture_name, d
     return lambda_cor, lam
 
 
-def compute_dispersion(wcs):
+def compute_dispersion(wcs, xpix=None, ypix=None):
     """
     Compute the pixel dispersion.
 
@@ -165,6 +165,11 @@ def compute_dispersion(wcs):
     ----------
     wcs : `~gwcs.wcs.WCS`
         The WCS object for this slit.
+    xpix : ndarray, float, optional
+    ypix : ndarray, float, optional
+        Compute the dispersion at the x, y pixels.
+        If not provided the dispersion is computed on a
+        grid based on ``wcs.bounding_box``.
 
     Returns
     -------
@@ -172,7 +177,8 @@ def compute_dispersion(wcs):
         The pixel dispersion [in m].
 
     """
-    xpix, ypix = wcstools.grid_from_bounding_box(wcs.bounding_box, step=(1, 1))
+    if xpix is None or ypix is None:
+        xpix, ypix = wcstools.grid_from_bounding_box(wcs.bounding_box, step=(1, 1))
     xleft = xpix - 0.5
     xright = xpix + 0.5
     _, _, lamright = wcs(xright, ypix)

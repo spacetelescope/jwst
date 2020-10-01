@@ -1947,6 +1947,15 @@ properties:
                 type: string
                 fits_keyword: R_V2V3
                 blend_table: True
+          wavecorr:
+            title: Zero point wavelength correction for Nirspec MOS and FS mode
+            type: object
+            properties:
+              name:
+                title: Zero point wavelength correction reference file name
+                type: string
+                fits_keyword: R_WAVCOR
+                blend_table: True
           wavelengthrange:
             title: Wavelength Range reference file information
             type: object
@@ -1986,7 +1995,7 @@ properties:
             fits_keyword: S_WCS
             blend_table: True
           assign_mtwcs:
-            title: Assign Moving Target World Coordinate System 
+            title: Assign Moving Target World Coordinate System
             type: string
             fits_keyword: S_MTWCS
             blend_table: True
