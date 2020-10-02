@@ -213,7 +213,8 @@ class ResampleSpecData:
             wavelength_array = np.flip(wavelength_array,axis=None)
 
         pix_to_wavelength = Tabular1D(lookup_table=wavelength_array,
-                                      bounds_error=False, name='pix2wavelength')
+                                      bounds_error=False, fill_value=None,
+                                      name='pix2wavelength')
 
         # Tabular models need an inverse explicitly defined.
         # If the wavelength array is decending instead of ascending, both
@@ -227,7 +228,8 @@ class ResampleSpecData:
             lookup_table = lookup_table[::-1]
         pix_to_wavelength.inverse = Tabular1D(points=points,
                                               lookup_table=lookup_table,
-                                              bounds_error=False, name='wavelength2pix')
+                                              bounds_error=False, fill_value=None,
+                                              name='wavelength2pix')
 
         # For the input mapping, duplicate the spatial coordinate
         mapping = Mapping((spatial_axis, spatial_axis, spectral_axis))
