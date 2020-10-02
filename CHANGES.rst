@@ -10,6 +10,11 @@ cube_build
 - If outlier detection has flagged all the data on a input file as DO_NOT_USE, then
   skip the file in creating an ifucube [*5347]
 
+datamodels
+----------
+
+- Skip serializing `None` in datamodels to be compatible with `asdf>=2.8` [#5371]
+
 extract_1d
 ----------
 

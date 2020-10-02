@@ -1,7 +1,6 @@
 import copy
 from collections import OrderedDict
 import os.path as op
-import warnings
 import re
 import logging
 
@@ -348,12 +347,6 @@ class ModelContainer(model_base.DataModel):
                                              ''.join(params[3:6]), params[6]]))
                 model.meta.group_id = group_id
             except TypeError:
-                params_dict = dict(zip(unique_exposure_parameters, params))
-                bad_params = {'meta.observation.'+k:v for k, v in params_dict.items() if not v}
-                warnings.warn(
-                    'Cannot determine grouping of exposures: '
-                    '{}'.format(bad_params)
-                    )
                 model.meta.group_id = 'exposure{0:04d}'.format(i + 1)
 
     @property
