@@ -2,8 +2,8 @@
 import re
 
 
-def deprecation_helper(new_class,
-                       message='"{old_class}" is deprecated and will be removed. Use {new_class}'):
+def deprecate_class(new_class,
+                    message='"{old_class}" is deprecated and will be removed. Use {new_class}'):
     """Deprecate a class in favor of another class
 
     Parameters

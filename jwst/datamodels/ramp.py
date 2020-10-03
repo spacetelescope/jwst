@@ -1,7 +1,7 @@
 import warnings
 
 from .model_base import DataModel
-from ..lib.basic_utils import deprecation_helper
+from ..lib.basic_utils import deprecate_class
 
 __all__ = ['RampModel']
 
@@ -46,6 +46,6 @@ class RampModel(DataModel):
 
 
 
-@deprecation_helper(RampModel)
+@deprecate_class(RampModel)
 class MIRIRampModel:
     pass
