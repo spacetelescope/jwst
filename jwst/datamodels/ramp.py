@@ -45,7 +45,6 @@ class RampModel(DataModel):
         self.err = self.err
 
 
-
 @deprecate_class(RampModel)
 class MIRIRampModel:
     pass
