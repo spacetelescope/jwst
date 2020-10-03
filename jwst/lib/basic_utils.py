@@ -2,6 +2,43 @@
 import re
 
 
+def deprecation_helper(new_class,
+                       message='"{old_class}" is deprecated and will be removed. Use {new_class}'):
+    """Deprecate a class in favor of another class
+
+    Parameters
+    ----------
+    new_class : class
+        The class/object that should be used instead
+
+    message : str
+        The deprecation warning message
+    """
+
+    # Implement the inner decorator
+    def inner(old_class):
+
+        def init(self, *args, **kwargs):
+
+            """New init for the new class to print the message"""
+            import warnings
+            warnings.simplefilter('default')
+            warnings.warn(message.format(old_class=old_class.__name__, new_class=new_class.__name__),
+                          category=DeprecationWarning)
+            new_class.__init__(self, *args, **kwargs)
+
+        # Create the class
+        deprecated = type(
+            old_class.__name__,
+            (new_class,),
+            {'__init__': init}
+        )
+
+        return deprecated
+
+    return inner
+
+
 def bytes2human(n):
     """Convert bytes to human-readable format
 

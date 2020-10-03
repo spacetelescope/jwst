@@ -1,7 +1,7 @@
 import warnings
 
 from .model_base import DataModel
-
+from ..lib.basic_utils import deprecation_helper
 
 __all__ = ['RampModel']
 
@@ -45,8 +45,7 @@ class RampModel(DataModel):
         self.err = self.err
 
 
-def MIRIRampModel(*args, **kwargs):
-    warnings.simplefilter('default')
-    warnings.warn(message="MIRIRampModel is deprecated and will be removed.  "
-        "Use RampModel.", category=DeprecationWarning)
-    return RampModel(*args, **kwargs)
+
+@deprecation_helper(RampModel)
+class MIRIRampModel:
+    pass
