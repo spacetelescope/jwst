@@ -578,14 +578,18 @@ def psf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d,
     # Now deal with primary beam shapes...
     if shape == 'circ':
         asf_fringe = asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d)
-        asf = asf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d) * asf_fringe
+        asf_2d = asf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d) * asf_fringe
+
     elif shape == 'circonly':
-        asf = asf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d)
+        asf_2d = asf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d)
+
     elif shape == 'hex':
         asf_fringe = asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d)
-        asf = asf_hex(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d) * asf_fringe
+        asf_2d = asf_hex(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d) * asf_fringe
+
     elif shape == 'hexonly':
-        asf = asf_hex(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d)
+        asf_2d = asf_hex(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d)
+
     elif shape == 'fringeonly':
         asf_fringe = asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d)
     else:
@@ -593,4 +597,4 @@ def psf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d,
             "pupil shape %s not supported - choices: 'circonly', 'circ', 'hexonly', 'hex', 'fringeonly'"\
             % shape)
 
-    return  (asf*asf.conj()).real
+    return  (asf_2d * asf_2d.conj()).real
