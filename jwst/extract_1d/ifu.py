@@ -11,6 +11,7 @@ from .apply_apcorr import select_apcorr
 from .. import datamodels
 from ..datamodels import dqflags
 from . import spec_wcs
+from scipy.interpolate import interp1d
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -19,6 +20,7 @@ log.setLevel(logging.DEBUG)
 # (if any) is JSON or IMAGE.
 FILE_TYPE_JSON = "JSON"
 FILE_TYPE_IMAGE = "IMAGE"
+FILE_TYPE_TABLE = "TABLE"
 
 # This is to prevent calling offset_from_offset multiple times for
 # multi-integration data.
@@ -93,8 +95,12 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
                      "the source is extended.")
         extract_params['subtract_background'] = subtract_background
 
+    print('extract_params',extract_params, extract_params['ref_file_type'])
     if extract_params:
-        if extract_params['ref_file_type'] == FILE_TYPE_JSON:
+        if extract_params['ref_file_type'] == FILE_TYPE_TABLE:
+            (ra, dec, wavelength, temp_flux, background, npixels, dq, npixels_bkg) = \
+                    extract_ifu(input_model, source_type, extract_params)
+        elif extract_params['ref_file_type'] == FILE_TYPE_JSON:
             (ra, dec, wavelength, temp_flux, background, npixels, dq, npixels_bkg) = \
                     extract_ifu(input_model, source_type, extract_params)
         else:                                   # FILE_TYPE_IMAGE
@@ -196,8 +202,7 @@ def get_extract_parameters(ref_dict, slitname):
 
     extract_params = {}
 
-    if ('ref_file_type' not in ref_dict or
-        ref_dict['ref_file_type'] == FILE_TYPE_JSON):
+    if (ref_dict['ref_file_type'] == FILE_TYPE_JSON):
             extract_params['ref_file_type'] = FILE_TYPE_JSON
             for aper in ref_dict['apertures']:
                 if 'id' in aper and aper['id'] != "dummy" and \
@@ -219,6 +224,59 @@ def get_extract_parameters(ref_dict, slitname):
                         # theta is in degrees (converted to radians later)
                         extract_params['theta'] = aper.get('theta', 0.)
                     break
+
+
+    elif ref_dict['ref_file_type'] == FILE_TYPE_TABLE:
+        extract_params['ref_file_type'] = FILE_TYPE_TABLE
+        with ref_dict['ref_model'] as ptab:
+
+            for tabdata in ptab.extract1d_params:
+                id = tabdata['id']
+                region_type = tabdata['region_type']
+                subtract_background = tabdata['subtract_background']
+                method = tabdata['method']
+                subpixels =tabdata['subpixels']
+
+            # test one way to read in file - it works but still the wavelength do not
+            # have values after decimal
+            # data = ptab.extract1d_table
+            # wavelength = data["wavelength"]
+            # print(type(wavelength))
+            # wavelength.astype(float)
+            # print(wavelength)
+            for tabdata in ptab.extract1d_table:
+                nelem_wl = int(tabdata['nelem_wl'][0]) #it is read in as an array same size as wavelength ???
+                wavelength = tabdata['wavelength']
+                radius = tabdata['radius']
+                inner_bkg = tabdata['inner_bkg']
+                outer_bkg = tabdata['outer_bkg']
+                axis_ratio = tabdata['axis_ratio']
+                axis_pa = tabdata['axis_pa']
+                wavelength  = wavelength[0:nelem_wl-1]
+                radius  = radius[0:nelem_wl-1]
+                inner_bkg = inner_bkg[0:nelem_wl-1]
+                outer_bkg = outer_bkg[0:nelem_wl-1]
+                axis_ratio = axis_ratio[0:nelem_wl-1]
+                axis_pa = axis_pa[0:nelem_wl-1]
+
+                print(wavelength[0:100])
+                print(wavelength[2300:])
+
+        print('type of nelem_wl',type(nelem_wl))
+        extract_params['subtract_background'] = bool(subtract_background)
+        extract_params['method'] = method
+        extract_params['subpixels'] = subpixels
+        extract_params['nelem_wl'] = nelem_wl
+        extract_params['wavelength'] = wavelength
+        extract_params['radius'] = radius
+        extract_params['inner_bkg'] = inner_bkg
+        extract_params['outer_bkg'] = outer_bkg
+        extract_params['axis_ratio'] = axis_ratio
+        extract_params['axis_pa'] = axis_pa
+
+        print('size of wavelength',type(wavelength),wavelength.shape)
+        print('read information from extract reference file',id,region_type,
+              bool(subtract_background),method, subpixels)
 
     elif ref_dict['ref_file_type'] == FILE_TYPE_IMAGE:
         extract_params['ref_file_type'] = FILE_TYPE_IMAGE
@@ -318,16 +376,10 @@ def extract_ifu(input_model, source_type, extract_params):
         if locn is None or np.isnan(locn[0]):
             log.warning("Couldn't determine pixel location from WCS, so "
                         "source offset correction will not be applied.")
-            x_center = extract_params['x_center']
-            y_center = extract_params['y_center']
-            if x_center is None:
-                x_center = float(shape[-1]) / 2.
-            else:
-                x_center = float(x_center)
-            if y_center is None:
-                y_center = float(shape[-2]) / 2.
-            else:
-                y_center = float(y_center)
+            
+            x_center = float(shape[-1]) / 2.
+            y_center = float(shape[-2]) / 2.
+
         else:
             (x_center, y_center) = locn
             log.info("Using x_center = %g, y_center = %g, based on "
@@ -339,11 +391,39 @@ def extract_ifu(input_model, source_type, extract_params):
 
     subtract_background = extract_params['subtract_background']
 
+    print('extract params',subpixels,subtract_background)
+
     smaller_axis = float(min(shape[-2], shape[-1]))     # for defaults
     radius = None
     inner_bkg = None
     outer_bkg = None
+    # pull wavelength plane out of input data.
+    # using extract 1d wavelength, interpolate the radius, inner_bkg, outer_bkg to match input wavelength
 
+    # testing 
+    x0 = float(shape[2]) / 2.
+    y0 = float(shape[1]) / 2.
+    # find the wavelength array for the IFU cube 
+    (ra, dec, wavelength) = get_coordinates(input_model, x0, y0)
+    print('wavelength ifu', wavelength.shape)
+    print(wavelength[0], wavelength[-1])
+    # interpolate the extraction parameters to the wavelength of the IFU cube
+    if source_type == 'POINT':
+        wave_extract = extract_params['wavelength']
+        inner_bkg = extract_params['inner_bkg']
+        outer_bkg = extract_params['outer_bkg']
+        radius = extract_params['radius']
+        axis_pa = extract_params['axis_pa']
+        print('size of extract values',wave_extract.size, radius.size)
+        frad = interp1d(wave_extract,radius)
+        print('wavelength table',wave_extract[0],wave_extract[-1])
+        new_radius = frad(wavelength)
+
+        print('new_radius',new_radius)
+    
+
+
+    
     if source_type == 'EXTENDED':
         # Ignore any input parameters, and extract the whole image.
         width = float(shape[-1])
