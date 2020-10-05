@@ -16,11 +16,9 @@ def deprecate_class(new_class,
     """
 
     # Implement the inner decorator
-    def inner(old_class):
+    def _decorator(old_class):
 
         def init(self, *args, **kwargs):
-
-            """New init for the new class to print the message"""
             import warnings
             warnings.simplefilter('default')
             warnings.warn(message.format(old_class=old_class.__name__, new_class=new_class.__name__),
@@ -31,12 +29,15 @@ def deprecate_class(new_class,
         deprecated = type(
             old_class.__name__,
             (new_class,),
-            {'__init__': init}
+            {'__doc__': old_class.__doc__,
+             '__init__': init,
+             '__module__': old_class.__module__,
+             '__name__': old_class.__name__}
         )
 
         return deprecated
 
-    return inner
+    return _decorator
 
 
 def bytes2human(n):

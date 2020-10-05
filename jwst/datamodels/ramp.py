@@ -45,4 +45,7 @@ class RampModel(DataModel):
 
 @deprecate_class(RampModel)
 class MIRIRampModel:
-    pass
+    """A data model for 4D MIRI ramps.
+
+    This model has been deprecated. Please use `RampModel` instead.
+    """
