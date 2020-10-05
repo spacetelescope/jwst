@@ -25,10 +25,10 @@ allOf:
       title: wavelength varying extraction parameters
       fits_hdu: X1D
       datatype:
-      - name: nelem_wl
-        datatype: int16
       - name: wavelength
         datatype: float32
+      - name: nelem_wl
+        datatype: int16
       - name: radius
         datatype: float32
       - name: inner_bkg
