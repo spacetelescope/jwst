@@ -245,7 +245,7 @@ def get_extract_parameters(ref_dict, slitname):
             # wavelength.astype(float)
             # print(wavelength)
             for tabdata in ptab.extract1d_table:
-                nelem_wl = int(tabdata['nelem_wl'][0]) #it is read in as an array same size as wavelength ???
+                nelem_wl = int(tabdata['nelem_wl']) #it is read in as an array same size as wavelength ???
                 wavelength = tabdata['wavelength']
                 radius = tabdata['radius']
                 inner_bkg = tabdata['inner_bkg']
