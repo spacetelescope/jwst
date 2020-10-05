@@ -4,7 +4,7 @@
 ami
 ---
 
-- Update code and unit tests to use new ami algorithm [#5377, 5312, 5323]
+- Update code and unit tests to use new ami analyze algorithm [#5377, 5312, 5323]
 
 cube_build
 ----------
