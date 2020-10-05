@@ -1,5 +1,3 @@
-import warnings
-
 from .model_base import DataModel
 from ..lib.basic_utils import deprecate_class
 
