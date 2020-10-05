@@ -13,11 +13,11 @@ from stdatamodels.ndmodel import MetaNode
 
 from .. import datamodels
 from ..datamodels import dqflags, SlitModel, SpecModel
-
 from ..datamodels.apcorr import (
-    MirLrsApcorrModel, MirMrsApcorrModel, NrcWfssApcorrModel, NrsFsApcorrModel, NrsMosApcorrModel, NisWfssApcorrModel
+    MirLrsApcorrModel, MirMrsApcorrModel, NrcWfssApcorrModel, NrsFsApcorrModel,
+    NrsMosApcorrModel, NrsIfuApcorrModel, NisWfssApcorrModel
 )
-
+from ..datamodels.ndmodel import MetaNode
 from ..assign_wcs import niriss         # for specifying spectral order number
 from ..assign_wcs.util import wcs_bbox_from_shape
 from ..lib import pipe_utils
@@ -35,9 +35,10 @@ WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_WFSS', 'NRC_GRISM']
 """Exposure types to be regarded as wide-field slitless spectroscopy."""
 
 # These values are used to indicate whether the input extract1d reference file
-# (if any) is JSON or IMAGE.
+# (if any) is JSON, IMAGE or ASDF (added for IFU data) 
 FILE_TYPE_JSON = "JSON"
 FILE_TYPE_IMAGE = "IMAGE"
+FILE_TYPE_ASDF = "ASDF"
 FILE_TYPE_OTHER = "N/A"
 
 # This is to prevent calling offset_from_offset multiple times for multi-integration data.
@@ -98,14 +99,14 @@ class InvalidSpectralOrderNumberError(Extract1dError):
     pass
 
 
-def open_extract1d_ref(refname: str) -> dict:
+def open_extract1d_ref(refname: str, exptype: str) -> dict:
     """Open the extract1d reference file.
 
     Parameters
     ----------
     refname : str
         The name of the extract1d reference file.  This file is expected to be
-        either a JSON file giving extraction information, or a file
+        either a JSON or ASDF file giving extraction information, or a file
         containing one or more images that are to be used as masks that
         define the extraction region and optionally background regions.
 
@@ -115,13 +116,24 @@ def open_extract1d_ref(refname: str) -> dict:
         If the extract1d reference file is in JSON format, ref_dict will be the
         dictionary returned by json.load(), except that the file type
         ('JSON') will also be included with key 'ref_file_type'.
+        If the extract1d reference file is in asdf format, the ref_dict will
+        be a containing two keys: ref_dict['ref_file_type'] = 'ASDF'
+        and ref_dict['ref_model'].
         If the reference file is an image, ref_dict will be a
         dictionary with two keys:  ref_dict['ref_file_type'] = 'IMAGE'
         and ref_dict['ref_model'].  The latter will be the open file
         handle for the jwst.datamodels object for the extract1d file.
     """
+
     if refname == "N/A":
         ref_dict = None
+
+    elif exptype == 'MIR_MRS' or exptype == 'NRS_IFU':
+        # read in asdf file
+        extract_model = datamodels.IFUExtract1dModel(refname)
+        ref_dict = {}
+        ref_dict['ref_file_type']= FILE_TYPE_ASDF
+        ref_dict['ref_model'] = extract_model
     else:
         # Try reading the file as JSON.
         fd = open(refname)
@@ -177,7 +189,6 @@ def open_apcorr_ref(refname: str, exptype: str) -> DataModel:
     }
 
     apcorr_model = apcorr_model_map[exptype]
-
     return apcorr_model(refname)
 
 
@@ -2509,7 +2520,7 @@ def run_extract1d(
 
     """
     # Read and interpret the extract1d reference file.
-    ref_dict = open_extract1d_ref(extract_ref_name)
+    ref_dict = open_extract1d_ref(extract_ref_name, input_model.meta.exposure.type)
 
     apcorr_ref_model = None
 
