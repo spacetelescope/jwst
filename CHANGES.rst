@@ -1,6 +1,11 @@
 0.17.2 (unreleased)
 ===================
 
+ami
+---
+
+- Update code and unit tests to use new ami algorithm [#5377, 5312, 5323]
+
 cube_build
 ----------
 
