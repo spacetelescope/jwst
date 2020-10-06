@@ -95,7 +95,7 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
                      "the source is extended.")
         extract_params['subtract_background'] = subtract_background
 
-    print('extract_params',extract_params, extract_params['ref_file_type'])
+    #print('extract_params',extract_params, extract_params['ref_file_type'])
     if extract_params:
         if extract_params['ref_file_type'] == FILE_TYPE_TABLE:
             (ra, dec, wavelength, temp_flux, background, npixels, dq, npixels_bkg) = \
@@ -126,7 +126,6 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
                     "the flux will not be correct.")
         pixel_solid_angle = 1.
 
-    print(input_units_are_megajanskys,pixel_solid_angle)
     if input_units_are_megajanskys:
         # Convert flux from MJy to Jy, and convert background to MJy / sr.
         flux = temp_flux * 1.e6
@@ -172,7 +171,6 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
             input_model, apcorr_ref_model.apcorr_table, apcorr_ref_model.sizeunit, location=(ra, dec, wl)
         )
 
-        print(apcorr)
         apcorr.apply(spec.spec_table)
 
     output_model.spec.append(spec)
@@ -236,33 +234,16 @@ def get_extract_parameters(ref_dict, slitname):
                 subtract_background = tabdata['subtract_background']
                 method = tabdata['method']
                 subpixels =tabdata['subpixels']
+            
+            data = ptab.extract1d_table
+            wavelength = data["wavelength"]
+            nelem_wl = data['nelem_wl']
+            radius = data["radius"]
+            inner_bkg = data["inner_bkg"]
+            outer_bkg = data["outer_bkg"]
+            axis_ratio = data["axis_ratio"]
+            axis_pa = data["axis_pa"]
 
-            # test one way to read in file - it works but still the wavelength do not
-            # have values after decimal
-            # data = ptab.extract1d_table
-            # wavelength = data["wavelength"]
-            # print(type(wavelength))
-            # wavelength.astype(float)
-            # print(wavelength)
-            for tabdata in ptab.extract1d_table:
-                nelem_wl = int(tabdata['nelem_wl']) #it is read in as an array same size as wavelength ???
-                wavelength = tabdata['wavelength']
-                radius = tabdata['radius']
-                inner_bkg = tabdata['inner_bkg']
-                outer_bkg = tabdata['outer_bkg']
-                axis_ratio = tabdata['axis_ratio']
-                axis_pa = tabdata['axis_pa']
-                wavelength  = wavelength[0:nelem_wl-1]
-                radius  = radius[0:nelem_wl-1]
-                inner_bkg = inner_bkg[0:nelem_wl-1]
-                outer_bkg = outer_bkg[0:nelem_wl-1]
-                axis_ratio = axis_ratio[0:nelem_wl-1]
-                axis_pa = axis_pa[0:nelem_wl-1]
-
-                print(wavelength[0:100])
-                print(wavelength[2300:])
-
-        print('type of nelem_wl',type(nelem_wl))
         extract_params['subtract_background'] = bool(subtract_background)
         extract_params['method'] = method
         extract_params['subpixels'] = subpixels
@@ -274,9 +255,8 @@ def get_extract_parameters(ref_dict, slitname):
         extract_params['axis_ratio'] = axis_ratio
         extract_params['axis_pa'] = axis_pa
 
-        print('size of wavelength',type(wavelength),wavelength.shape)
-        print('read information from extract reference file',id,region_type,
-              bool(subtract_background),method, subpixels)
+        #print('read information from extract reference file',id,region_type,
+        #      bool(subtract_background),method, subpixels)
 
     elif ref_dict['ref_file_type'] == FILE_TYPE_IMAGE:
         extract_params['ref_file_type'] = FILE_TYPE_IMAGE
@@ -391,40 +371,55 @@ def extract_ifu(input_model, source_type, extract_params):
 
     subtract_background = extract_params['subtract_background']
 
-    print('extract params',subpixels,subtract_background)
+    #print('extract params',subpixels,subtract_background)
 
     smaller_axis = float(min(shape[-2], shape[-1]))     # for defaults
     radius = None
     inner_bkg = None
     outer_bkg = None
+    width = None
+    height = None
+    theta = None
     # pull wavelength plane out of input data.
     # using extract 1d wavelength, interpolate the radius, inner_bkg, outer_bkg to match input wavelength
 
-    # testing 
+    # find the wavelength plane of the IFU cube 
     x0 = float(shape[2]) / 2.
     y0 = float(shape[1]) / 2.
     # find the wavelength array for the IFU cube 
     (ra, dec, wavelength) = get_coordinates(input_model, x0, y0)
-    print('wavelength ifu', wavelength.shape)
-    print(wavelength[0], wavelength[-1])
+
+    print('wavelength endpoints ifu cube',wavelength[0], wavelength[-1])
     # interpolate the extraction parameters to the wavelength of the IFU cube
     if source_type == 'POINT':
-        wave_extract = extract_params['wavelength']
-        inner_bkg = extract_params['inner_bkg']
-        outer_bkg = extract_params['outer_bkg']
-        radius = extract_params['radius']
-        axis_pa = extract_params['axis_pa']
-        print('size of extract values',wave_extract.size, radius.size)
-        frad = interp1d(wave_extract,radius)
+        wave_extract = extract_params['wavelength'].flatten()
+        inner_bkg = extract_params['inner_bkg'].flatten()
+        outer_bkg = extract_params['outer_bkg'].flatten()
+        radius = extract_params['radius'].flatten()
+        axis_pa = extract_params['axis_pa'].flatten()
         print('wavelength table',wave_extract[0],wave_extract[-1])
-        new_radius = frad(wavelength)
+        frad = interp1d(wave_extract, radius, bounds_error=False, fill_value="extrapolate")
+        radius_match = frad(wavelength)
 
-        print('new_radius',new_radius)
-    
+        finner = interp1d(wave_extract, inner_bkg, bounds_error=False, fill_value="extrapolate")
+        inner_bkg_match = finner(wavelength)
 
+        fouter = interp1d(wave_extract, outer_bkg, bounds_error=False, fill_value="extrapolate")
+        outer_bkg_match = fouter(wavelength)
 
-    
-    if source_type == 'EXTENDED':
+    #    radius = extract_params['radius']
+    #    if radius is None:
+    #        radius = smaller_axis / 4.
+    #    if subtract_background:
+    #        inner_bkg = extract_params['inner_bkg']
+    #        if inner_bkg is None:
+    #            inner_bkg = radius
+    #        outer_bkg = extract_params['outer_bkg']
+    #        if outer_bkg is None:
+    #            outer_bkg = min(inner_bkg * math.sqrt(2.),
+    #                            smaller_axis / 2. - 1.)
+
+    elif  source_type == 'EXTENDED':
         # Ignore any input parameters, and extract the whole image.
         width = float(shape[-1])
         height = float(shape[-2])
@@ -432,34 +427,12 @@ def extract_ifu(input_model, source_type, extract_params):
         y_center = height / 2. - 0.5
         theta = 0.
         subtract_background = False
-    else:
-        radius = extract_params['radius']
-        if radius is None:
-            radius = smaller_axis / 4.
-        if subtract_background:
-            inner_bkg = extract_params['inner_bkg']
-            if inner_bkg is None:
-                inner_bkg = radius
-            outer_bkg = extract_params['outer_bkg']
-            if outer_bkg is None:
-                outer_bkg = min(inner_bkg * math.sqrt(2.),
-                                smaller_axis / 2. - 1.)
-            if inner_bkg <= 0. or outer_bkg <= 0. or inner_bkg >= outer_bkg:
-                log.debug("Turning background subtraction off, due to "
-                          "the values of inner_bkg and outer_bkg.")
-                subtract_background = False
-        width = None
-        height = None
-        theta = None
+    
 
     log.debug("IFU 1-D extraction parameters:")
     log.debug("  x_center = %s", str(x_center))
     log.debug("  y_center = %s", str(y_center))
     if source_type == 'POINT':
-        log.debug("  radius = %s", str(radius))
-        log.debug("  subtract_background = %s", str(subtract_background))
-        log.debug("  inner_bkg = %s", str(inner_bkg))
-        log.debug("  outer_bkg = %s", str(outer_bkg))
         log.debug("  method = %s", method)
         if method == "subpixel":
             log.debug("  subpixels = %s", str(subpixels))
@@ -472,22 +445,34 @@ def extract_ifu(input_model, source_type, extract_params):
         if method == "subpixel":
             log.debug("  subpixels = %s", str(subpixels))
 
-    x0 = float(shape[2]) / 2.
-    y0 = float(shape[1]) / 2.
-    (ra, dec, wavelength) = get_coordinates(input_model, x0, y0)
 
     position = (x_center, y_center)
-    if source_type == 'POINT':
-        aperture = CircularAperture(position, r=radius)
-    else:
-        aperture = RectangularAperture(position, width, height, theta)
 
-    if subtract_background and inner_bkg is not None and outer_bkg is not None:
-        annulus = CircularAnnulus(position, r_in=inner_bkg, r_out=outer_bkg)
-    else:
+    # get aperture for extended it will not change with wavelength
+    if source_type == 'EXTENDED':
+        aperture = RectangularAperture(position, width, height, theta)
         annulus = None
 
     for k in range(shape[0]):
+        inner_bkg = None
+        outer_bkg = None
+        
+        if source_type == 'POINT':
+            radius = radius_match[k]
+            aperture = CircularAperture(position, r=radius)
+
+            inner_bkg = inner_bkg_match[k]
+            outer_bkg = outer_bkg_match[k]
+            if inner_bkg <= 0. or outer_bkg <= 0. or inner_bkg >= outer_bkg:
+                log.debug("Turning background subtraction off, due to "
+                          "the values of inner_bkg and outer_bkg.")
+                subtract_background = False
+
+        if subtract_background and inner_bkg is not None and outer_bkg is not None:
+            annulus = CircularAnnulus(position, r_in=inner_bkg, r_out=outer_bkg)
+        else:
+            annulus = None
+
         subtract_background_plane = subtract_background
         # Compute the area of the aperture and possibly also of the annulus.
         # for each wavelength bin (taking into account empty spaxels)

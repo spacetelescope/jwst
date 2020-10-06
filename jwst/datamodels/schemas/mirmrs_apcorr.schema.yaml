@@ -13,32 +13,26 @@ allOf:
       title: Aperture correction factors table
       fits_hdu: APCORR
       datatype:
+      - name: channel
+        datatype: [ascii,10]
+      - name: band
+        datatype: [ascii,10]
+      - name: nelem_radius
+        datatype: int16
+      - name: nelem_wl
+        datatype: int16
       - name: wavelength
         datatype: float32
         ndim: 1
-      - name: nelem_wl
-        datatype: int16
       - name: radius
         datatype: float32
-        ndim: 1
+        ndim: 2
       - name: apcorr
         datatype: float32
-        ndim: 1
+        ndim: 2
       - name: apcorr_err
         datatype: float32
-        ndim: 1
-      - name: inner_bkg
-        datatype: float32
-        ndim: 1
-      - name: outer_bkg
-        datatype: float32
-        ndim: 1
-      - name: axis_ratio
-        datatype: float32
-        ndim: 1
-      - name: axis_pa
-        datatype: float32
-        ndim: 1
+        ndim: 2
     sizeunit:
       title: Units for the SIZE or RADIUS column in the APCORR table
       fits_hdu: APCORR

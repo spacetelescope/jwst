@@ -39,7 +39,7 @@ class ApCorrBase(abc.ABC):
     match_pars = {
         'MIRI': {
             'LRS': {'subarray': ['name']},
-            'MRS': {'instrument': []},  # Only one row is available for this mode; no selection criteria
+            'MRS': {'instrument': ['channel','band']},  # Only one row is available for this mode; no selection criteria
         },
         'NIRSPEC': {
             'IFU': {'instrument': ['filter', 'grating']},
@@ -71,8 +71,8 @@ class ApCorrBase(abc.ABC):
         self.match_keys = self._get_match_keys()
         self.match_pars = self._get_match_pars()
         self.match_pars.update(match_kwargs)
-
         self.reference = self._reduce_reftable()
+
         self._convert_size_units()
         self.apcorr_func = self.approximate()
 
@@ -126,10 +126,13 @@ class ApCorrBase(abc.ABC):
     def _reduce_reftable(self) -> fits.FITS_record:
         """Reduce full reference table to a single matched row."""
         table = self._reference_table.copy()
-
         for key, value in self.match_pars.items():
+
             if isinstance(value, str):  # Not all files will have the same format as input model metadata values.
-                table = table[table[key].upper() == value.upper()]
+                if table[key] == 'ANY':
+                    table = table
+                else:
+                    table = table[table[key].upper() == value.upper()]                    
             else:
                 table = table[table[key] == value]
 
@@ -248,11 +251,12 @@ class ApCorrRadial(ApCorrBase):
 
     def approximate(self):
         """Generate an approximate function for interpolating apcorr values to input wavelength and radius."""
-        wavelength = self.reference['wavelength'][:self.reference['nelem_wl']]
-        size = self.reference['radius'][:self.reference['nelem_wl']]
-        apcorr = self.reference['apcorr'][:self.reference['nelem_wl']]
-
-        return interp2d(size, wavelength, apcorr)
+        wavelength = self.reference['wavelength']
+        size = self.reference['radius']
+        apcorr = self.reference['apcorr']
+        #size = size[0:3,0]
+        print('in apcorr radial',wavelength.shape,size.shape,apcorr.shape)
+        return interp2d(wavelength,size, apcorr)
 
 
 class ApCorr(ApCorrBase):
