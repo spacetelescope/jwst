@@ -21,6 +21,21 @@ from jwst.datamodels import util
 MEMORY = 100  # 100 bytes
 
 
+def test_mirirampmodel_deprecation(_jail):
+    """Test that a deprecated MIRIRampModel can be opened"""
+
+    # Create a MIRIRampModel, working around the deprecation.
+    model = datamodels.RampModel((1, 1, 10, 10))
+    model.save('ramp.fits')
+    hduls = fits.open('ramp.fits', mode='update')
+    hduls[0].header['datamodl'] = 'MIRIRampModel'
+    hduls.close()
+
+    # Test it.
+    miri_ramp = datamodels.open('ramp.fits')
+    assert isinstance(miri_ramp, datamodels.RampModel)
+
+
 @pytest.fixture
 def mock_get_available_memory(monkeypatch):
     def mock(include_swap=True):

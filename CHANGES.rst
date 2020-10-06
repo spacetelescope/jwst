@@ -15,6 +15,8 @@ datamodels
 
 - Skip serializing `None` in datamodels to be compatible with `asdf>=2.8` [#5371]
 
+- Implement full class deprecator decorator and use for MIRIRampModel [#5382]
+
 extract_1d
 ----------
 
