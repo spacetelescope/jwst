@@ -38,8 +38,8 @@ class CrdsStep(Step):
 
 def test_steppars_error_supression(_jail, caplog):
     """Test supression of CRDS errors while retrieving step parameters"""
-    model = datamodels.ImageModel((10, 10))
-    model.save('image.fits')
+    with datamodels.ImageModel((10, 10)) as model:
+        model.save('image.fits')
 
     args = ['jwst.stpipe.tests.steps.WithDefaultsStep', 'image.fits']
     Step.from_cmdline(args)
