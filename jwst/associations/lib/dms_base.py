@@ -32,7 +32,6 @@ ACQ_EXP_TYPES = (
     'nrs_taconfirm',
     'nrs_tacq',
     'nrs_taslit',
-    'nrs_verify',
     'nrs_wata',
 )
 
