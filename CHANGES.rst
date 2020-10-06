@@ -1,6 +1,13 @@
 0.17.2 (unreleased)
 ===================
 
+associations
+------------
+
+- Do not allow target acqs to be considered TSO [#5385]
+
+  Also added "NRS_VERIFY" to the target acq exposure list.
+
 cube_build
 ----------
 

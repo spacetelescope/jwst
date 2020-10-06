@@ -358,6 +358,10 @@ class DMSBaseMixin(ACIDMixin):
         if item['pntgtype'] != 'science':
             return False
 
+        # Target acquisitions are never TSO
+        if item['exp_type'] in ACQ_EXP_TYPES:
+            return False
+
         # Setup exposure list
         all_exp_types = TSO_EXP_TYPES.copy()
         if other_exp_types:
