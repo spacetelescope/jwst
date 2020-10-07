@@ -4,7 +4,14 @@
 ami
 ---
 
-- Update code and unit tests to use new ami analyze algorithm [#5377, 5312, 5323]
+- Update code and unit tests to use new ami analyze algorithm [#5390]
+
+associations
+------------
+
+- Do not allow target acqs to be considered TSO [#5385]
+
+  Also added "NRS_VERIFY" to the target acq exposure list.
 
 cube_build
 ----------
@@ -19,6 +26,8 @@ datamodels
 ----------
 
 - Skip serializing `None` in datamodels to be compatible with `asdf>=2.8` [#5371]
+
+- Implement full class deprecator decorator and use for MIRIRampModel [#5382]
 
 extract_1d
 ----------
