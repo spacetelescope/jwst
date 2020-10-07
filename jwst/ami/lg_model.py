@@ -230,7 +230,7 @@ class NrmModel:
         # accumulate polychromatic oversampled psf in the object
 
         for w, l in bandpass:  # w: wavelength's weight, l: lambda (wavelength)
-            self.psf_over += w * analyticnrm2.PSF(self.pixel,  # det pixel, rad
+            self.psf_over += w * analyticnrm2.psf(self.pixel,  # det pixel, rad
                                                   fov,   # in detpix number
                                                   over,
                                                   self.ctrs,
