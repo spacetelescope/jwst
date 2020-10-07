@@ -1,6 +1,11 @@
 0.17.2 (unreleased)
 ===================
 
+ami
+---
+
+- Update code and unit tests to use new ami analyze algorithm [#5390]
+
 associations
 ------------
 
