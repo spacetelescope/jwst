@@ -70,7 +70,7 @@ group = {'GOOD':       pixel['GOOD'],
 def interpret_bit_flags(bit_flags, flip_bits=None):
     """Converts input bit flags to a single integer value (bit mask) or `None`.
 
-    Wraps `astropy.nddate.bitmask.interpret_bit_flags`, allowing the JWST
+    Wraps `astropy.nddata.bitmask.interpret_bit_flags`, allowing the JWST
     bit mnemonics to be used in place of integers.
 
     Parameters
