@@ -63,6 +63,10 @@ def test_verify_detector1(run_detector1, rtdata_module, fitsdiff_default_kwargs,
     assert diff.identical, diff.report()
 
 
+@pytest.mark.xfail(
+    reason='Insufficient coverage: CRDS-380',
+    run=False
+)
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
     'suffix', [
