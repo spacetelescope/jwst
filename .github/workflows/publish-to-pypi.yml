@@ -1,0 +1,26 @@
+name: Publish to PyPI
+
+on:
+  release:
+    types: [released]
+
+jobs:
+  build:
+      name: Publish release to PyPI
+      env:
+        PYPI_USERNAME_STSCI_MAINTAINER: ${{ secrets.PYPI_USERNAME_STSCI_MAINTAINER }}
+        PYPI_PASSWORD_STSCI_MAINTAINER: ${{ secrets.PYPI_PASSWORD_STSCI_MAINTAINER }}
+        PYPI_USERNAME_OVERRIDE: ${{ secrets.PYPI_USERNAME_OVERRIDE }}
+        PYPI_PASSWORD_OVERRIDE: ${{ secrets.PYPI_PASSWORD_OVERRIDE }}
+        PYPI_TEST: ${{ secrets.PYPI_TEST }}
+        INDEX_URL_OVERRIDE: ${{ secrets.INDEX_URL_OVERRIDE }}
+      runs-on: ubuntu-latest
+      steps:
+
+          # Check out the commit containing this workflow file.
+          - name: checkout repo
+            uses: actions/checkout@v2
+         
+          - name: custom action
+            uses: spacetelescope/action-publish_to_pypi@master
+            id: custom_action_0

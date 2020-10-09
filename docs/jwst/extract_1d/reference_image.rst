@@ -1,9 +1,10 @@
 Reference Image Format
 ======================
-An alternative reference format, an image, is also supported.  There are
-no files of this type in CRDS (there would be a conflict with the current
-JSON-format reference files), but a user can create a file in this format
-and specify that it be used as an override for the default reference file.
+An alternative EXTRACT1D reference format, an image, is also supported.
+There are currently no files of this type in CRDS (there would be a conflict
+with the current JSON-format reference files), but a user can create a file
+in this format and specify that it be used as an override for the default
+EXTRACT1D reference file.
 
 This format is a `~jwst.datamodels.MultiExtract1dImageModel`, which is
 loosely based on `~jwst.datamodels.MultiSlitModel`.  The file should

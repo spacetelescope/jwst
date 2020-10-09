@@ -1,4 +1,5 @@
 # To generate this file:
 #
 #     pip install -e .[test]
-#     pip freeze | grep -v jwst.git > requirements-sdp.txt
+#     pip install pytest-xdist
+#     pip freeze | grep -v jwst.git >> requirements-sdp.txt

@@ -1,6 +1,6 @@
-from copy import copy
 import os
 from os import path as op
+from pathlib import Path
 import shutil
 import tempfile
 import warnings
@@ -17,6 +17,7 @@ from jwst.datamodels import (DataModel, ImageModel, MaskModel, QuadModel,
                              MultiSlitModel, ModelContainer, SlitModel,
                              SlitDataModel, IFUImageModel, ABVegaOffsetModel)
 from jwst import datamodels
+from jwst.datamodels.util import get_envar_as_boolean
 from jwst.lib.file_utils import pushdir
 
 
@@ -47,6 +48,98 @@ def setup():
 
 def teardown():
     shutil.rmtree(TMP_DIR)
+
+
+@pytest.fixture
+def jail_environ():
+    """Lock changes to the environment"""
+    original = os.environ.copy()
+    try:
+        yield
+    finally:
+        os.environ = original
+
+
+@pytest.fixture(scope='module')
+def make_models(tmpdir_factory):
+    """Create basic models
+
+    Returns
+    -------
+    path_just_fits, path_model : (str, str)
+        `path_just_fits` is a FITS file of `DataModel` without the ASDF extension.
+        `path_model` is a FITS file of `DataModel` with the ASDF extension.
+    """
+    path = tmpdir_factory.mktemp('skip_fits_update')
+    path_just_fits = str(path / 'just_fits.fits')
+    path_model = str(path / 'model.fits')
+    primary_hdu = fits.PrimaryHDU()
+    primary_hdu.header['exp_type'] = 'NRC_IMAGE'
+    hduls = fits.HDUList([primary_hdu])
+    hduls.writeto(path_just_fits)
+    model = DataModel(hduls)
+    model.save(path_model)
+    return {
+        'just_fits': path_just_fits,
+        'model': path_model
+    }
+
+
+def test_init_from_pathlib(make_models):
+    """Test initializing model from a PurePath object"""
+    path = Path(make_models['model'])
+    model = ImageModel(path)
+
+    # Test is basically, did we open the model?
+    assert isinstance(model, ImageModel)
+
+
+@pytest.mark.parametrize(
+    'which_file, skip_fits_update, expected_exp_type',
+    [
+        ('just_fits', None,  'FGS_DARK'),
+        ('just_fits', False, 'FGS_DARK'),
+        ('just_fits', True,  'FGS_DARK'),
+        ('model',     None,  'FGS_DARK'),
+        ('model',     False, 'FGS_DARK'),
+        ('model',     True,  'NRC_IMAGE')
+    ]
+)
+@pytest.mark.parametrize(
+    'open_func',
+    [DataModel, datamodels.open]
+)
+@pytest.mark.parametrize(
+    'use_env',
+    [False, True]
+)
+def test_skip_fits_update(jail_environ,
+                          use_env,
+                          make_models,
+                          open_func,
+                          which_file,
+                          skip_fits_update,
+                          expected_exp_type):
+    """Test skip_fits_update setting"""
+    # Setup the FITS file, modifying a header value
+    path = make_models[which_file]
+    hduls = fits.open(path)
+    hduls[0].header['exp_type'] = 'FGS_DARK'
+
+    # Decide how to skip. If using the environmental,
+    # set that and pass None to the open function.
+    try:
+        del os.environ['SKIP_FITS_UPDATE']
+    except KeyError:
+        # No need to worry, environmental doesn't exist anyways
+        pass
+    if use_env:
+        if skip_fits_update is not None:
+            os.environ['SKIP_FITS_UPDATE'] = str(skip_fits_update)
+            skip_fits_update = None
+
+    model = open_func(hduls, skip_fits_update=skip_fits_update)
+    assert model.meta.exposure.type == expected_exp_type
 
 
 def test_set_shape():
@@ -173,16 +266,19 @@ def test_copy():
             assert dm.meta.observation.obs_id is None
 
 
-def test_stringify():
+def test_stringify(tmpdir):
     im = DataModel()
     assert str(im) == '<DataModel>'
 
     im = ImageModel((10, 100))
     assert str(im) == '<ImageModel(10, 100)>'
 
-    image = os.path.join(ROOT_DIR, "nircam_mask.fits")
-    with MaskModel(image) as im:
-        assert str(im) ==  '<MaskModel(2048, 2048) from nircam_mask.fits>'
+    path = str(tmpdir.join("nircam_mask.fits"))
+    m = MaskModel((2048, 2048))
+    m.save(path)
+    m.close()
+    with MaskModel(path) as im:
+        assert str(im) == '<MaskModel(2048, 2048) from nircam_mask.fits>'
 
 
 def test_section():
@@ -258,7 +354,7 @@ def test_default_value_anyof_schema():
 
 
 def test_imagemodel():
-    dims = (10,10)
+    dims = (10, 10)
     with ImageModel(dims) as dm:
         assert dm.data.shape == dims
         assert dm.err.shape == dims
@@ -279,10 +375,10 @@ def test_multislit():
         slit.data = np.random.rand(5, 5)
         slit.dm = np.random.rand(5, 5)
         slit.err = np.random.rand(5, 5)
-        assert slit.wavelength.shape == (0,0)
-        assert slit.pathloss_point.shape == (0,0)
-        assert slit.pathloss_uniform.shape == (0,0)
-        assert slit.barshadow.shape == (0,0)
+        assert slit.wavelength.shape == (0, 0)
+        assert slit.pathloss_point.shape == (0, 0)
+        assert slit.pathloss_uniform.shape == (0, 0)
+        assert slit.barshadow.shape == (0, 0)
 
 
 def test_secondary_shapes():
@@ -405,9 +501,9 @@ def test_initialize_arrays_with_arglist():
 def test_open_asdf_model(init):
     # Open an empty asdf file, pass extra arguments
     with DataModel(init=init, ignore_version_mismatch=False,
-                                ignore_unrecognized_tag=True) as model:
-        assert model._asdf._ignore_version_mismatch == False
-        assert model._asdf._ignore_unrecognized_tag == True
+                   ignore_unrecognized_tag=True) as model:
+        assert not model._asdf._ignore_version_mismatch
+        assert model._asdf._ignore_unrecognized_tag
 
 
 def test_open_asdf_model_s3(s3_root_dir):
@@ -617,12 +713,17 @@ def test_hasattr():
 
 
 def test_validate_on_read():
+    """ Test for proper validation error
+
+    Note: The FITS file is opened separately in order to properly close
+    the file.
+    """
     schema = ImageModel((10, 10))._schema.copy()
     schema['properties']['meta']['properties']['calibration_software_version']['fits_required'] = True
 
-    with pytest.raises(jsonschema.ValidationError):
-        with ImageModel(FITS_FILE, schema=schema, strict_validation=True):
-            pass
+    with fits.open(FITS_FILE) as hduls:
+        with pytest.raises(jsonschema.ValidationError):
+            ImageModel(hduls, schema=schema, strict_validation=True)
 
 
 def test_validate_required_field():
@@ -708,22 +809,6 @@ def test_abvega_offset_model():
     model.close()
 
 
-@pytest.fixture(scope='module')
-def empty_model():
-    """Create an empy model"""
-    return DataModel()
-
-
-@pytest.fixture(scope='module')
-def jail_environ():
-    """Lock cheanges to the environment"""
-    original = copy(os.environ)
-    try:
-        yield
-    finally:
-        os.environ = original
-
-
 @pytest.mark.parametrize(
     'case, default, expected', [
         (None, False, False),
@@ -766,7 +851,7 @@ def jail_environ():
         ('YES', True, True),
     ]
 )
-def test_get_envar_as_boolean(case, default, expected, jail_environ, empty_model):
+def test_get_envar_as_boolean(case, default, expected, jail_environ):
     """Test various options to a boolean environmental variable"""
     var = '__TEST_GET_ENVAR_AS_BOOLEAN'
     if case is None:
@@ -777,7 +862,7 @@ def test_get_envar_as_boolean(case, default, expected, jail_environ, empty_model
     else:
         os.environ[var] = case
 
-    value = empty_model._get_envar_as_boolean(var, default=default)
+    value = get_envar_as_boolean(var, default=default)
     assert value == expected
 
 
@@ -806,3 +891,17 @@ def test_getarray_noinit_noinit():
     except AttributeError:
         pass
     assert 'area' not in model.instance
+
+
+@pytest.mark.parametrize("filename", ["null.fits", "null.asdf"])
+def test_skip_serializing_null(tmpdir, filename):
+    """Make sure that None is not written out to the ASDF tree"""
+    path = str(tmpdir.join(filename))
+    with DataModel() as model:
+        model.meta.telescope = None
+        model.save(path)
+
+    with DataModel(path) as model:
+        # Make sure that 'telescope' is not in the tree
+        with pytest.raises(KeyError):
+            assert model.meta["telescope"] is None

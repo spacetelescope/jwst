@@ -43,6 +43,7 @@ from crds.core import config, exceptions, heavy_client, log
 from crds.core import crds_cache_locking
 
 from ..lib import s3_utils
+from ..datamodels import open as dm_open
 
 def get_exceptions_module():
     """Provide external indirect access to the crds.core.exceptions module to
@@ -82,6 +83,9 @@ def get_multiple_reference_paths(dataset_model, reference_file_types, observator
     Returns best references dict { filetype : filepath or "N/A", ... }
     """
     log.set_log_time(True)
+    if dataset_model.meta.model_type == 'ModelContainer':
+        first_exposure = get_first_science_exposure(dataset_model)
+        dataset_model = dm_open(first_exposure)
     data_dict = _get_data_dict(dataset_model)
     if observatory is None:
         observatory = dataset_model.meta.telescope or 'jwst'
@@ -89,6 +93,14 @@ def get_multiple_reference_paths(dataset_model, reference_file_types, observator
     refpaths = _get_refpaths(data_dict, tuple(reference_file_types), observatory)
     return refpaths
 
+def get_first_science_exposure(dataset_model):
+    for exposure in dataset_model.meta.asn_table.products[0].members:
+        if exposure.exptype == 'science':
+            first_exposure = exposure.expname
+            break
+    else:
+        first_exposure = dataset_model.meta.asn_table.products[0].members[0].expname
+    return first_exposure
 
 def _get_data_dict(dataset_model):
     """Return the data models header dictionary based on open data

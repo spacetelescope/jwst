@@ -1,0 +1,58 @@
+# %ECSV 0.9
+# ---
+# datatype:
+# - {name: exposure, datatype: object}
+# - {name: target.ra, unit: deg, datatype: float64}
+# - {name: target.dec, unit: deg, datatype: float64}
+# - {name: v1.ra, unit: deg, datatype: float64}
+# - {name: v1.dec, unit: deg, datatype: float64}
+# - {name: refpoint.ra, unit: deg, datatype: float64}
+# - {name: refpoint.dec, unit: deg, datatype: float64}
+# - {name: delta_v1, datatype: float64}
+# - {name: delta_refpoint, datatype: float64}
+# meta: !!omap
+# - __serialized_columns__:
+#     refpoint:
+#       __class__: astropy.coordinates.sky_coordinate.SkyCoord
+#       dec: !astropy.table.SerializedColumn
+#         __class__: astropy.coordinates.angles.Latitude
+#         unit: &id001 !astropy.units.Unit {unit: deg}
+#         value: !astropy.table.SerializedColumn {name: refpoint.dec}
+#       frame: icrs
+#       ra: !astropy.table.SerializedColumn
+#         __class__: astropy.coordinates.angles.Longitude
+#         unit: *id001
+#         value: !astropy.table.SerializedColumn {name: refpoint.ra}
+#         wrap_angle: &id002 !astropy.coordinates.Angle
+#           unit: *id001
+#           value: 360.0
+#       representation_type: spherical
+#     target:
+#       __class__: astropy.coordinates.sky_coordinate.SkyCoord
+#       dec: !astropy.table.SerializedColumn
+#         __class__: astropy.coordinates.angles.Latitude
+#         unit: *id001
+#         value: !astropy.table.SerializedColumn {name: target.dec}
+#       frame: icrs
+#       ra: !astropy.table.SerializedColumn
+#         __class__: astropy.coordinates.angles.Longitude
+#         unit: *id001
+#         value: !astropy.table.SerializedColumn {name: target.ra}
+#         wrap_angle: *id002
+#       representation_type: spherical
+#     v1:
+#       __class__: astropy.coordinates.sky_coordinate.SkyCoord
+#       dec: !astropy.table.SerializedColumn
+#         __class__: astropy.coordinates.angles.Latitude
+#         unit: *id001
+#         value: !astropy.table.SerializedColumn {name: v1.dec}
+#       frame: icrs
+#       ra: !astropy.table.SerializedColumn
+#         __class__: astropy.coordinates.angles.Longitude
+#         unit: *id001
+#         value: !astropy.table.SerializedColumn {name: v1.ra}
+#         wrap_angle: *id002
+#       representation_type: spherical
+# schema: astropy-2.0
+exposure target.ra target.dec v1.ra v1.dec refpoint.ra refpoint.dec delta_v1 delta_refpoint
+"<ImageModel from data.fits>" 90.75541666666666 -66.56055555555554 91.08142004561715 -66.60547868904696 90.70377653291781 -66.59540223936895 0.13712727164010646 0.04044314761499765

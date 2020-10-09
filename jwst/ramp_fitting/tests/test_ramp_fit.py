@@ -12,6 +12,22 @@ from jwst.datamodels import GainModel, ReadnoiseModel
 # expected to fail.  Needs fixing, but the fix is not clear
 # to me. [KDG - 19 Dec 2018]
 
+def test_int_times():
+    # Test whether int_times table gets copied to output when it should
+    nints = 5
+    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=3, nints=nints, nrows=2, ncols=2)
+
+    # Set TSOVISIT false, in which case the int_times table should come back with zero length
+    model1.meta.visit.tsovisit = False
+    slopes, int_model, dum1, dum2 = ramp_fit(model1, 512, False, rnModel, gain, 'OLS', 'optimal', 'none')
+    assert(len(int_model.int_times) == 0)
+
+    # Set TSOVISIT true, in which case the int_times table should come back with length nints
+    model1.meta.visit.tsovisit = True
+    slopes, int_model, dum1, dum2 = ramp_fit(model1, 512, False, rnModel, gain, 'OLS', 'optimal', 'none')
+    assert(len(int_model.int_times) == nints)
+
+
 def test_one_group_small_buffer_fit_ols():
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=1,gain=1,readnoise=10)
     model1.data[0, 0, 50, 50] = 10.0
@@ -314,9 +330,9 @@ class TestMethods:
         cds_slope = (model1.data[0,1,50,50] - model1.data[0,0,50,50])
         np.testing.assert_allclose(slopes[0].data[50, 50], cds_slope, 1e-6)
         #expect SATURATED
-        assert slopes[0].dq[50, 51] == 2 # is there a better way to do this test?
-        #expect SATURATED since 1st group is Saturated
-        assert slopes[0].dq[50, 52] == 2 # is there a better way to do this test?
+        assert slopes[0].dq[50, 51] == dqflags.pixel['SATURATED']
+        #expect SATURATED and DO_NOT_USE, because 1st group is Saturated
+        assert slopes[0].dq[50, 52] == dqflags.pixel['SATURATED'] + dqflags.pixel['DO_NOT_USE']
 
     def test_four_groups_oneCR_orphangroupatend_fit(self, method):
         model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=4,gain=1,readnoise=10)
@@ -661,14 +677,14 @@ def setup_small_cube(ngroups=10, nints=1, nrows=2, ncols=2, deltatime=10.,
 def setup_inputs(ngroups=10, readnoise=10, nints=1,
                  nrows=103, ncols=102, nframes=1, grouptime=1.0,gain=1, deltatime=1):
 
-    times = np.array(list(range(ngroups)),dtype=np.float64) * deltatime
     gain = np.ones(shape=(nrows, ncols), dtype=np.float64) * gain
     err = np.ones(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
     data = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.uint32)
     pixdq = np.zeros(shape=(nrows, ncols), dtype= np.float64)
     read_noise = np.full((nrows, ncols), readnoise, dtype=np.float64)
     gdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.int32)
-    model1 = RampModel(data=data, err=err, pixeldq=pixdq, groupdq=gdq, times=times)
+    int_times = np.zeros((nints,7))
+    model1 = RampModel(data=data, err=err, pixeldq=pixdq, groupdq=gdq, int_times=int_times)
     model1.meta.instrument.name='MIRI'
     model1.meta.instrument.detector='MIRIMAGE'
     model1.meta.instrument.filter='F480M'

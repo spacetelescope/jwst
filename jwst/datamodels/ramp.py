@@ -1,7 +1,5 @@
-import warnings
-
 from .model_base import DataModel
-
+from ..lib.basic_utils import deprecate_class
 
 __all__ = ['RampModel']
 
@@ -45,8 +43,9 @@ class RampModel(DataModel):
         self.err = self.err
 
 
-def MIRIRampModel(*args, **kwargs):
-    warnings.simplefilter('default')
-    warnings.warn(message="MIRIRampModel is deprecated and will be removed.  "
-        "Use RampModel.", category=DeprecationWarning)
-    return RampModel(*args, **kwargs)
+@deprecate_class(RampModel)
+class MIRIRampModel:
+    """A data model for 4D MIRI ramps.
+
+    This model has been deprecated. Please use `RampModel` instead.
+    """

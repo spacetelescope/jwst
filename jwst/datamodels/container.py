@@ -1,7 +1,6 @@
 import copy
 from collections import OrderedDict
 import os.path as op
-import warnings
 import re
 import logging
 
@@ -50,6 +49,10 @@ class ModelContainer(model_base.DataModel):
 
        - asn_n_members: Open only the first N qualifying members.
 
+    iscopy : bool
+        Presume this model is a copy. Members will not be closed
+        when the model is closed/garbage-collected.
+
     Examples
     --------
     >>> container = ModelContainer('example_asn.json')
@@ -74,11 +77,12 @@ class ModelContainer(model_base.DataModel):
     # does not describe the data contents of the container.
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/container.schema"
 
-    def __init__(self, init=None, asn_exptypes=None, asn_n_members=None, **kwargs):
+    def __init__(self, init=None, asn_exptypes=None, asn_n_members=None, iscopy=False, **kwargs):
 
         super().__init__(init=None, asn_exptypes=None, **kwargs)
 
         self._models = []
+        self._iscopy = iscopy
         self.asn_exptypes = asn_exptypes
         self.asn_n_members = asn_n_members
         self._memmap = kwargs.get("memmap", False)
@@ -108,6 +112,7 @@ class ModelContainer(model_base.DataModel):
             self._ctx = self
             self.__class__ = init.__class__
             self._models = init._models
+            self._iscopy = True
         elif is_association(init):
             self.from_asn(init)
         elif isinstance(init, str):
@@ -342,12 +347,6 @@ class ModelContainer(model_base.DataModel):
                                              ''.join(params[3:6]), params[6]]))
                 model.meta.group_id = group_id
             except TypeError:
-                params_dict = dict(zip(unique_exposure_parameters, params))
-                bad_params = {'meta.observation.'+k:v for k, v in params_dict.items() if not v}
-                warnings.warn(
-                    'Cannot determine grouping of exposures: '
-                    '{}'.format(bad_params)
-                    )
                 model.meta.group_id = 'exposure{0:04d}'.format(i + 1)
 
     @property
@@ -377,8 +376,9 @@ class ModelContainer(model_base.DataModel):
 
     def close(self):
         """Close all datamodels."""
-        for model in self._models:
-            model.close()
+        if not self._iscopy:
+            for model in self._models:
+                model.close()
 
 
 def make_file_with_index(file_path, idx):

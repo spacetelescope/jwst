@@ -43,6 +43,21 @@ class SourceModelContainer(ModelContainer):
             self._models = models
             self._multiexposure = init
 
+
+    @property
+    def multiexposure(self):
+        """Return the MultiExposureModel that is being wrapped
+
+        The result will be updated with any new data in the
+        container.
+        """
+        # Reapply models back to the exposures
+        for exposure, model in zip(self._multiexposure.exposures, self._models):
+            exposure._instance.update(model._instance)
+
+        return self._multiexposure
+
+
     def save(self,
              path=None,
              dir_path=None,
@@ -51,10 +66,10 @@ class SourceModelContainer(ModelContainer):
         """Save out the container as a MultiExposureModel"""
 
         if save_model_func is None:
-            self._multiexposure.save(
+            self.multiexposure.save(
                 path=path,
                 dir_path=dir_path,
                 *args, **kwargs
             )
         else:
-            save_model_func(self._multiexposure, output_file=path)
+            save_model_func(self.multiexposure, output_file=path)

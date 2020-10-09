@@ -8,7 +8,6 @@ __all__ = ["AmiAnalyzeStep"]
 class AmiAnalyzeStep(Step):
     """Performs analysis of an AMI mode exposure by applying the LG algorithm.
     """
-
     spec = """
         oversample = integer(default=3, min=1)  # Oversampling factor
         rotation = float(default=0.0)           # Rotation initial guess [deg]
@@ -30,7 +29,6 @@ class AmiAnalyzeStep(Step):
         result: AmiLgModel object
             AMI image to which the LG fringe detection has been applied
         """
-
         # Retrieve the parameter values
         oversample = self.oversample
         rotate = self.rotation
@@ -45,6 +43,7 @@ class AmiAnalyzeStep(Step):
                 # Get the name of the filter throughput reference file to use
                 throughput_reffile = self.get_reference_file(input_model,
                                        'throughput')
+
                 self.log.info('Using filter throughput reference file %s',
                                throughput_reffile)
 
@@ -58,9 +57,8 @@ class AmiAnalyzeStep(Step):
                 # Open the filter throughput reference file
                 throughput_model = datamodels.ThroughputModel(throughput_reffile)
 
-                # Do the LG analysis on the input image
-                result = ami_analyze.apply_LG(input_model, throughput_model,
-                                              oversample, rotate)
+                result = ami_analyze.apply_LG_plus(input_model, throughput_model,
+                                             oversample, rotate)
 
                 # Close the reference file and update the step status
                 throughput_model.close()

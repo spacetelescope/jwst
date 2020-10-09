@@ -1003,8 +1003,10 @@ properties:
              [5-POINT-SMALL-GRID, 9-POINT-SMALL-GRID,
               # MIRI imaging
               4-POINT-SETS, CYCLING, GAUSSIAN, REULEAUX, WFSC,
-              # MIRI LRS
-              2PIXEL-SLITLESS-SCAN-SHORT, ALONG-SLIT-NOD, MAPPING,
+              # MIRI LRS slit
+              7PIX-5PIX-SLIT-SCAN, ALONG-SLIT-NOD, MAPPING,
+              # MIRI LRS sliteless
+              2PIXEL-SLITLESS-SCAN-SHORT, EXTENDED-FLAT-SLITLESS,
               # MIRI MRS
               2-POINT, 4-POINT, EXTENDED-SOURCE, POINT-SOURCE,
               # NIRCam
@@ -2236,6 +2238,11 @@ properties:
             title: Image Alignment via Astronomical Sources
             type: string
             fits_keyword: S_TWKREG
+            blend_table: True
+          wavecorr:
+            title: NIRSpec wavelength correction
+            type: string
+            fits_keyword: S_WAVCOR
             blend_table: True
           wfs_combine:
             title: Wavefront Sensing Combination

@@ -68,7 +68,7 @@ def run_image3(run_image2, rtdata_module):
         "--steps.tweakreg.snr_threshold=200",
         "--steps.tweakreg.use2dhist=False",
         "--steps.tweakreg.minobj=4",
-        "--steps.source_catalog.snr_threshold=20",
+        "--steps.source_catalog.snr_threshold=10",
         ]
     Step.from_cmdline(args)
 

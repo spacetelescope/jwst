@@ -15,6 +15,12 @@
 
 ## Installation
 
+The easiest way to install the latest `jwst` release into a fresh virtualenv or conda environment is
+
+    pip install jwst
+
+### Detailed Installation
+
 The `jwst` package can be installed into a virtualenv or conda environment via `pip`.
 We recommend that for each installation you start by creating a fresh
 environment that only has Python installed and then install the `jwst` package and
@@ -34,27 +40,35 @@ including tagged releases, DMS builds used in operations, and development versio
 Remember that all conda operations must be done from within a bash shell.
 
 
-### Installing From Github
+### Installing latest releases
 
-You can install various versions of `jwst` directly from the code repo on Github.
-For example, to install a fully tested and tagged release version, such as `jwst 0.16.2`,
-enter (from a bash shell):
+You can install the latest released version via `pip`.  From a bash shell:
+
+    conda create -n <env_name> python
+    conda activate <env_name>
+    pip install jwst
+
+You can also install a specific version (from `jwst 0.17.0` onward):
+
+    conda create -n <env_name> python
+    conda activate <env_name>
+    pip install jwst==0.17.1
+
+Installing specific versions before `jwst 0.17.0` need to be installed from Github:
 
     conda create -n <env_name> python
     conda activate <env_name>
     pip install git+https://github.com/spacetelescope/jwst@0.16.2
 
-Or to install the latest development version (not as well tested) from the
+
+### Installing the development version from Github
+
+You can install the latest development version (not as well tested) from the
 Github master branch:
 
     conda create -n <env_name> python
     conda activate <env_name>
     pip install git+https://github.com/spacetelescope/jwst
-
-In either case, you can also install extra dependencies needed for running unit
-and regression tests, if desired, using:
-
-    pip install "jwst[test] @ git+https://github.com/spacetelescope/jwst"
  
 
 ### Installing a DMS Operational Build
@@ -133,7 +147,7 @@ sure those dependencies are installed too:
 
 Need other useful packages in your development environment?
 
-    pip install ipython flake8 pytest-xdist
+    pip install ipython pytest-xdist
 
 
 ## Calibration References Data System (CRDS) Setup
@@ -178,6 +192,8 @@ contact the [JWST Help Desk](https://jwsthelp.stsci.edu).
 
 | jwst tag | DMS build | CRDS_CONTEXT |   Date     |          Notes                                |
 | -------- | --------- | ------------ | ---------- | ----------------------------------------------|
+|  0.17.1  | B7.6      | 0641         | 09/15/2020 | Final release candidate for B7.6              |
+|  0.17.0  | B7.6rc1   | 0637         | 08/28/2020 | First release candidate for B7.6              |
 |  0.16.2  | B7.5      | 0619         | 06/10/2020 | Same as 0.16.1, but with installation bug fix |
 |  0.16.1  | B7.5      | 0619         | 05/19/2020 | Final release candidate for B7.5              |
 |  0.16.0  | B7.5rc1   | 0614         | 05/04/2020 | First release candidate for B7.5              |

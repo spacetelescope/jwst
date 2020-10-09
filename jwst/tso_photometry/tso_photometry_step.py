@@ -60,6 +60,8 @@ class TSOPhotometryStep(Step):
             self.log.debug(f'radius = {radius}')
             self.log.debug(f'radius_inner = {radius_inner}')
             self.log.debug(f'radius_outer = {radius_outer}')
+            self.log.debug(f'xcenter = {xcenter}')
+            self.log.debug(f'ycenter = {ycenter}')
 
             # Compute the aperture photometry
             catalog = tso_aperture_photometry(model, xcenter, ycenter,

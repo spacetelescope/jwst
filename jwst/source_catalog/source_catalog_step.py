@@ -28,27 +28,22 @@ class SourceCatalogStep(Step):
     """
 
     spec = """
-        bkg_boxsize = float(default=100)      # background mesh box size in pixels
+        bkg_boxsize = integer(default=100)    # background mesh box size in pixels
         kernel_fwhm = float(default=2.0)      # Gaussian kernel FWHM in pixels
-        kernel_xsize = float(default=None)    # Kernel x size in pixels
-        kernel_ysize = float(default=None)    # Kernel y size in pixels
         snr_threshold = float(default=3.0)    # SNR threshold above the bkg
-        npixels = float(default=5.0)          # min number of pixels in source
+        npixels = integer(default=5)          # min number of pixels in source
         deblend = boolean(default=False)      # deblend sources?
-        aperture_ee1 = float(default=30)      # aperture encircled energy 1
-        aperture_ee2 = float(default=50)      # aperture encircled energy 2
-        aperture_ee3 = float(default=70)      # aperture encircled energy 3
+        aperture_ee1 = integer(default=30)    # aperture encircled energy 1
+        aperture_ee2 = integer(default=50)    # aperture encircled energy 2
+        aperture_ee3 = integer(default=70)    # aperture encircled energy 3
+        ci1_star_threshold = float(default=2.0)  # CI 1 star threshold
+        ci2_star_threshold = float(default=1.8)  # CI 2 star threshold
         suffix = string(default='cat')        # Default suffix for output files
     """
 
     reference_file_types = ['apcorr', 'abvegaoffset']
 
     def process(self, input_model):
-        if self.kernel_xsize is not None or self.kernel_ysize is not None:
-            warnings.simplefilter('default')
-            warnings.warn('kernel_xsize and kernel_ysize are deprecated and '
-                          'no longer used', DeprecationWarning)
-
         with datamodels.open(input_model) as model:
             try:
                 apcorr_fn = self.get_reference_file(input_model, 'apcorr')
@@ -59,7 +54,6 @@ class SourceCatalogStep(Step):
             try:
                 abvegaoffset_fn = self.get_reference_file(input_model,
                                                           'abvegaoffset')
-
             except CrdsLookupError:
                 abvegaoffset_fn = None
             self.log.info('Using ABVEGAOFFSET reference file '
@@ -75,13 +69,13 @@ class SourceCatalogStep(Step):
                 abvega_offset = refdata.abvega_offset
             except RuntimeError as err:
                 msg = f'{err} Source catalog will not be created.'
-                self.log.warn(msg)
+                self.log.warning(msg)
                 return
 
             coverage_mask = (model.wht == 0)
             if coverage_mask.all():
-                self.log.warn('There are no pixels with non-zero weight. '
-                              'Source catalog will not be created.')
+                self.log.warning('There are no pixels with non-zero weight. '
+                                 'Source catalog will not be created.')
                 return
 
             bkg = Background(model.data, box_size=self.bkg_boxsize,
@@ -100,19 +94,22 @@ class SourceCatalogStep(Step):
                                                mask=coverage_mask,
                                                deblend=self.deblend)
             if segment_img is None:
-                self.log.warn('No sources were found. Source catalog will '
-                              'not be created.')
+                self.log.warning('No sources were found. Source catalog '
+                                 'will not be created.')
                 return
             self.log.info(f'Detected {segment_img.nlabels} sources')
 
             # TODO: update when model contains errors
             total_error = calc_total_error(model)
 
+            ci_star_thresholds = (self.ci1_star_threshold,
+                                  self.ci2_star_threshold)
             catobj = SourceCatalog(model, segment_img, error=total_error,
                                    kernel=kernel,
                                    kernel_fwhm=self.kernel_fwhm,
                                    aperture_params=aperture_params,
-                                   abvega_offset=abvega_offset)
+                                   abvega_offset=abvega_offset,
+                                   ci_star_thresholds=ci_star_thresholds)
             catalog = catobj.catalog
 
             if self.save_results:

@@ -312,3 +312,49 @@ returns a dictionary of of the instance at the model._extra_fits node.
 
 `_instance` can be used at any node in the tree to return a dictionary
 of rest of the tree structure at that node.
+
+Environmental Variables
+-----------------------
+
+There are a number of environmental variables that affect how models are read.
+
+PASS_INVALID_VALUES
+  Used by `~jwst.datamodels.DataModel` when instantiating
+  a model from a file. If ``True``, values that do not validate the schema will
+  still be added to the metadata. If ``False``, they will be set to ``None``.
+  Default is ``False``.
+
+STRICT_VALIDATION
+  Used by `~jwst.datamodels.DataModel` when instantiating a model from a file.
+  If ``True``, schema validation errors will generate an exception.
+  If ``False``, they will generate a warning.
+  Default is ``False``.
+
+SKIP_FITS_UPDATE
+  Used by `~jwst.datamodels.DataModel` when instantiating a
+  model from a FITS file. When ``False``, models opened from FITS files will
+  proceed and load the FITS header values into the model. When ``True`` and the
+  FITS file has an ASDF extension, the loading/validation of the FITS header
+  will be skipped, loading the model only from the ASDF extension. If not
+  defined, the instantiation routines will determine whether the loading/validation
+  of the FITS header can be skipped or not.
+
+DMODEL_ALLOWED_MEMORY
+  Implemented by the utility function
+  `jwst.datamodels.util.check_memory_allocation` and used by
+  `~jwst.outlier_detection.OutlierDetectionStep` and
+  `~jwst.resample.ResampleStep`. When defined, determines how much of currently
+  available memory should be used to instantiated an output resampled image. If
+  not defined, no check is made.
+
+  Examples would be: ``1.0`` would allow all available memory to be used. ``0.5``
+  would allow only half the available memory to be used.
+
+For flag or boolean variables, any value in ``('true', 't', 'yes', 'y')`` or a
+non-zero number, will evaluate as ``True``. Any value in ``('false', 'f', 'no',
+'n', '0')`` will evaluate as ``False``. The values are case-insensitive.
+
+All of the environmental variables have equivalent function arguments in the API
+for the relevant code. The environment variables are used only if explicit
+values had not been used in a script. In other words, values in code override
+environmental variables.

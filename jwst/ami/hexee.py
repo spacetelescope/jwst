@@ -1,4 +1,3 @@
-#
 # Python implementation: anand@stsci.edu 6 Mar 2013
 # Algorithm: eelliott@stsci.edu -  Applied Optics, Vol 44, No. 8 10 March 2005
 # Sabatke et al.
@@ -10,12 +9,12 @@
 #     ---   -> xi
 # hex(xi,eta) = g(xi,eta) + g(-xi,eta)
 #
-
 import logging
 import numpy as np
 
+
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+log.addHandler(logging.NullHandler())
 
 
 def g_eeAG(xi, eta, **kwargs):

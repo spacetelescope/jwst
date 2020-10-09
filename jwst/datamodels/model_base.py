@@ -5,6 +5,7 @@ Data model class heirarchy
 import copy
 import datetime
 import os
+from pathlib import PurePath
 import sys
 import warnings
 
@@ -16,8 +17,15 @@ from astropy.wcs import WCS
 
 import asdf
 from asdf import AsdfFile
-from asdf import yamlutil
+from asdf import yamlutil, treeutil
 from asdf import schema as asdf_schema
+
+try:
+    from asdf.treeutil import RemoveNode
+except ImportError:
+    # Prior to asdf 2.8, None was used to indicate
+    # that a node should be removed.
+    RemoveNode = None
 
 from . import ndmodel
 from . import filetype
@@ -25,6 +33,7 @@ from . import fits_support
 from . import properties
 from . import schema as mschema
 from . import validate
+from .util import get_envar_as_boolean
 from ..lib import s3_utils
 
 from .history import HistoryList
@@ -89,16 +98,24 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             Defaults to `True`.
 
         kwargs : dict
-            Additional arguments passed to lower level functions.
+            Additional keyword arguments passed to lower level functions. These arguments
+            are generally file format-specific. Arguments of note are:
+
+            - FITS
+
+              skip_fits_update - bool or None
+                  `True` to skip updating the ASDF tree from the FITS headers, if possible.
+                  If `None`, value will be taken from the environmental SKIP_FITS_UPDATE.
+                  Otherwise, the default value is `True`.
         """
 
         # Override value of validation parameters if not explicitly set.
-        if not pass_invalid_values:
-            pass_invalid_values = self._get_envar_as_boolean("PASS_INVALID_VALUES",
+        if pass_invalid_values is None:
+            pass_invalid_values = get_envar_as_boolean("PASS_INVALID_VALUES",
                                                             False)
         self._pass_invalid_values = pass_invalid_values
-        if not strict_validation:
-            strict_validation = self._get_envar_as_boolean("STRICT_VALIDATION",
+        if strict_validation is None:
+            strict_validation = get_envar_as_boolean("STRICT_VALIDATION",
                                                           False)
         self._strict_validation = strict_validation
         self._ignore_missing_extensions = ignore_missing_extensions
@@ -161,7 +178,9 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             asdffile = fits_support.from_fits(init, self._schema, self._ctx,
                                               **kwargs)
 
-        elif isinstance(init, (str, bytes)):
+        elif isinstance(init, (str, bytes, PurePath)):
+            if isinstance(init, PurePath):
+                init = str(init)
             if isinstance(init, bytes):
                 init = init.decode(sys.getfilesystemencoding())
             file_type = filetype.check(init)
@@ -173,12 +192,11 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                 else:
                     init_fitsopen = init
 
-                with fits.open(init_fitsopen, memmap=memmap) as hdulist:
-                    asdffile = fits_support.from_fits(hdulist,
-                                                  self._schema,
-                                                  self._ctx,
-                                                  **kwargs)
-                    self._files_to_close.append(hdulist)
+                hdulist = fits.open(init_fitsopen, memmap=memmap)
+                asdffile = fits_support.from_fits(
+                    hdulist, self._schema, self._ctx, **kwargs
+                )
+                self._files_to_close.append(hdulist)
 
             elif file_type == "asdf":
                 asdffile = self.open_asdf(init=init, **kwargs)
@@ -274,6 +292,10 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         return "".join(buf)
 
+    def __del__(self):
+        """Ensure closure of resources when deleted."""
+        self.close()
+
     @property
     def override_handle(self):
         """override_handle identifies in-memory models where a filepath
@@ -304,39 +326,14 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         _drop_array(self._instance)
 
     def close(self):
-        if not self._iscopy and self._asdf is not None:
-            self._asdf.close()
-            self._drop_arrays()
+        if not self._iscopy:
+            if self._asdf is not None:
+                self._asdf.close()
+                self._drop_arrays()
 
-        for fd in self._files_to_close:
-            if fd is not None:
-                fd.close()
-
-    def _get_envar_as_boolean(self, name, default=False):
-        """Interpret an environmental as a boolean flag
-
-        Truth is any numeric value that is not 0 or
-        any of the following case-insensitive strings:
-
-        ('true', 't', 'yes', 'y')
-
-        Parameters
-        ----------
-        name : str
-            The name of the environmental variable to retrieve
-
-        default : bool
-            If the value cannot be determined, use as the default.
-        """
-        truths = ('true', 't', 'yes', 'y')
-        if name in os.environ:
-            value = os.environ[name]
-            try:
-                value = bool(int(value))
-            except ValueError:
-                return value.lower() in truths
-            return value
-        return default
+            for fd in self._files_to_close:
+                if fd is not None:
+                    fd.close()
 
     @staticmethod
     def clone(target, source, deepcopy=False, memo=None):
@@ -448,6 +445,15 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         # Enforce model_type to be the actual type of model being saved.
         self.meta.model_type = self._model_type
+
+        # Remove None nodes from the tree:
+        def _remove_none(node):
+            if node is None:
+                return RemoveNode
+            else:
+                return node
+
+        self._instance = treeutil.walk_and_modify(self._instance, _remove_none)
 
     def save(self, path, dir_path=None, *args, **kwargs):
         """

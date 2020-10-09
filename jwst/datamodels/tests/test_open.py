@@ -4,6 +4,7 @@ Test datamodel.open
 
 import os
 import os.path
+from pathlib import Path, PurePath
 import warnings
 
 import pytest
@@ -11,10 +12,92 @@ import numpy as np
 from astropy.io import fits
 
 from jwst.datamodels import (DataModel, ModelContainer, ImageModel,
-    ReferenceFileModel, ReferenceImageModel, ReferenceCubeModel,
-    ReferenceQuadModel, FlatModel, MaskModel, NrcImgPhotomModel, GainModel,
-    ReadnoiseModel, DistortionModel)
+    DistortionModel, RampModel, CubeModel, ReferenceFileModel, ReferenceImageModel,
+    ReferenceCubeModel, ReferenceQuadModel)
 from jwst import datamodels
+from jwst.datamodels import util
+
+# Define artificial memory size
+MEMORY = 100  # 100 bytes
+
+
+def test_mirirampmodel_deprecation(_jail):
+    """Test that a deprecated MIRIRampModel can be opened"""
+
+    # Create a MIRIRampModel, working around the deprecation.
+    model = datamodels.RampModel((1, 1, 10, 10))
+    model.save('ramp.fits')
+    hduls = fits.open('ramp.fits', mode='update')
+    hduls[0].header['datamodl'] = 'MIRIRampModel'
+    hduls.close()
+
+    # Test it.
+    miri_ramp = datamodels.open('ramp.fits')
+    assert isinstance(miri_ramp, datamodels.RampModel)
+
+
+@pytest.fixture
+def mock_get_available_memory(monkeypatch):
+    def mock(include_swap=True):
+        avaliable = MEMORY
+        if include_swap:
+            avaliable *= 2
+        return avaliable
+    monkeypatch.setattr(util, 'get_available_memory', mock)
+
+
+@pytest.mark.parametrize(
+    'allowed_env, allowed_explicit, result',
+    [
+        (None, None, True),  # Perform no check.
+        (0.1, None, False),  # Force too little memory.
+        (0.1, 1.0, True),    # Explicit overrides environment.
+        (1.0, 0.1, False),   # Explicit overrides environment.
+        (None, 0.1, False),  # Explicit overrides environment.
+    ]
+)
+def test_check_memory_allocation_env(monkeypatch, mock_get_available_memory,
+                                     allowed_env, allowed_explicit, result):
+    """Check environmental control over memory check"""
+    if allowed_env is None:
+        monkeypatch.delenv('DMODEL_ALLOWED_MEMORY', raising=False)
+    else:
+        monkeypatch.setenv('DMODEL_ALLOWED_MEMORY', allowed_env)
+
+    # Allocate amount that would fit at 100% + swap.
+    can_allocate, required = util.check_memory_allocation(
+        (MEMORY // 2, 1), allowed=allowed_explicit,
+    )
+    assert can_allocate is result
+
+
+@pytest.mark.parametrize(
+    'dim, allowed, include_swap, result',
+    [
+        (MEMORY // 2, 1.0, True, True),    # Fit within memory and swap
+        (MEMORY // 2, 1.0, False, False),  # Does not fit without swap
+        (MEMORY, 1.0, True, False),        # Does not fit at all
+        (MEMORY, None, True, True),        # Check disabled
+        (MEMORY // 2, 0.1, True, False),   # Does not fit in restricted memory
+    ]
+)
+def test_check_memory_allocation(mock_get_available_memory, dim, allowed, include_swap, result):
+    """Check general operation of check_memory_allocation"""
+    can_allocate, required = util.check_memory_allocation(
+        (dim, 1), allowed=allowed, include_swap=include_swap
+    )
+    assert can_allocate is result
+
+
+def test_open_from_pathlib():
+    """Test opening a PurePath object"""
+    path = Path(t_path('test.fits'))
+    assert isinstance(path, PurePath)
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "model_type not found")
+        with datamodels.open(path) as model:
+            assert isinstance(model, DataModel)
 
 
 def test_open_fits():
@@ -99,40 +182,54 @@ def test_open_image():
             assert type(model) == ImageModel
 
 
-def test_open_reference_files():
-    files = {'nircam_flat.fits' : FlatModel,
-             'nircam_mask.fits' : MaskModel,
-             'nircam_photom.fits' : NrcImgPhotomModel,
-             'nircam_gain.fits' : GainModel,
-             'nircam_readnoise.fits' : ReadnoiseModel}
+def test_open_ramp(tmpdir):
+    """Open 4D data without a DQ as RampModel"""
+    path = str(tmpdir.join("ramp.fits"))
+    shape = (2, 3, 4, 5)
+    with fits.HDUList(fits.PrimaryHDU()) as hdulist:
+        hdulist.append(fits.ImageHDU(data=np.zeros(shape), name="SCI", ver=1))
+        hdulist.writeto(path)
 
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", "model_type not found")
-        for base_name, klass in files.items():
-            file = t_path(base_name)
-            model = datamodels.open(file)
-            if model.shape:
-                ndim = len(model.shape)
-            else:
-                ndim = 0
+        with datamodels.open(path) as model:
+            assert isinstance(model, RampModel)
 
-            if ndim == 0:
-                my_klass = ReferenceFileModel
-            elif ndim == 2:
-                my_klass = ReferenceImageModel
-            elif ndim == 3:
-                my_klass = ReferenceCubeModel
-            elif ndim == 4:
-                my_klass = ReferenceQuadModel
-            else:
-                my_klass = None
 
-            assert isinstance(model, my_klass)
-            model.close()
+def test_open_cube(tmpdir):
+    """Open 3D data as CubeModel"""
+    path = str(tmpdir.join("ramp.fits"))
+    shape = (2, 3, 4)
+    with fits.HDUList(fits.PrimaryHDU()) as hdulist:
+        hdulist.append(fits.ImageHDU(data=np.zeros(shape), name="SCI", ver=1))
+        hdulist.writeto(path)
 
-            model = klass(file)
-            assert isinstance(model, klass)
-            model.close()
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "model_type not found")
+        with datamodels.open(path) as model:
+            assert isinstance(model, CubeModel)
+
+
+@pytest.mark.parametrize("model_class, shape", [
+    (ReferenceFileModel, None),
+    (ReferenceImageModel, (10, 10)),
+    (ReferenceCubeModel, (3, 3, 3)),
+    (ReferenceQuadModel, (2, 2, 2, 2)),
+])
+def test_open_reffiles(tmpdir, model_class, shape):
+    """Try opening files with a REFTYPE keyword and different data/dq shapes"""
+    path = str(tmpdir.join("reffile.fits"))
+    with fits.HDUList(fits.PrimaryHDU()) as hdulist:
+        hdulist["PRIMARY"].header.append(("REFTYPE", "foo"))
+        if shape is not None:
+            hdulist.append(fits.ImageHDU(data=np.zeros(shape), name="SCI", ver=1))
+            hdulist.append(fits.ImageHDU(data=np.zeros(shape, dtype=np.uint), name="DQ", ver=1))
+        hdulist.writeto(path)
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "model_type not found")
+        with datamodels.open(path) as model:
+            assert isinstance(model, model_class)
 
 
 def test_open_fits_readonly(tmpdir):

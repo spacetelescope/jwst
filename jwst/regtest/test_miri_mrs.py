@@ -102,6 +102,7 @@ def run_spec3_multi(jail, rtdata_module):
     return rt.run_step_from_dict(rtdata_module, **step_params)
 
 
+@pytest.mark.slow
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
     'suffix',
@@ -114,6 +115,7 @@ def test_spec2(run_spec2, fitsdiff_default_kwargs, suffix):
                      truth_path=TRUTH_PATH)
 
 
+@pytest.mark.slow
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
     'output',
@@ -135,6 +137,7 @@ def test_spec3(run_spec3, fitsdiff_default_kwargs, output):
     )
 
 
+@pytest.mark.slow
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
     'output',
@@ -160,6 +163,7 @@ def test_spec3_multi(run_spec3_multi, fitsdiff_default_kwargs, output):
     )
 
 
+@pytest.mark.slow
 @pytest.mark.bigdata
 def test_miri_mrs_wcs(run_spec2, fitsdiff_default_kwargs):
     rtdata, asn_path = run_spec2

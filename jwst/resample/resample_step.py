@@ -2,11 +2,11 @@ import logging
 
 import numpy as np
 
+from . import resample
 from ..stpipe import Step
 from ..extern.configobj.validate import Validator
 from ..extern.configobj.configobj import ConfigObj
 from .. import datamodels
-from . import resample
 from ..assign_wcs import util
 
 log = logging.getLogger(__name__)
@@ -36,6 +36,7 @@ class ResampleStep(Step):
         weight_type = option('exptime', default='exptime')
         single = boolean(default=False)
         blendheaders = boolean(default=True)
+        allowed_memory = float(default=None)  # Fraction of memory to use for the combined image.
     """
 
     reference_file_types = ['drizpars']
@@ -70,11 +71,12 @@ class ResampleStep(Step):
             kwargs = self._set_spec_defaults()
 
         # Call the resampling routine
+        kwargs['allowed_memory'] = self.allowed_memory
         resamp = resample.ResampleData(input_models, **kwargs)
         resamp.do_drizzle()
 
         for model in resamp.output_models:
-            model.meta.cal_step.resample = "COMPLETE"
+            model.meta.cal_step.resample = 'COMPLETE'
             util.update_s_region_imaging(model)
             model.meta.asn.pool_name = input_models.meta.pool_name
             model.meta.asn.table_name = input_models.meta.table_name
