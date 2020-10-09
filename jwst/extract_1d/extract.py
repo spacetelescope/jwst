@@ -1,4 +1,4 @@
-import abc
+extimport abc
 import logging
 import copy
 import json
@@ -127,7 +127,6 @@ def open_extract1d_ref(refname: str, exptype: str) -> dict:
 
     if refname == "N/A":
         ref_dict = None
-
     elif exptype == 'MIR_MRS' or exptype == 'NRS_IFU':
         # read in asdf file
         extract_model = datamodels.IFUExtract1dModel(refname)
