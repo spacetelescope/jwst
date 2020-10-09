@@ -6,7 +6,7 @@ associations
 
 - Do not allow target acqs to be considered TSO [#5385]
 
-  Also added "NRS_VERIFY" to the target acq exposure list.
+- Add NRS_VERIFY to the list of target acq/confirmation images [#5395]
 
 cube_build
 ----------
@@ -23,6 +23,8 @@ datamodels
 - Skip serializing `None` in datamodels to be compatible with `asdf>=2.8` [#5371]
 
 - Implement full class deprecator decorator and use for MIRIRampModel [#5382]
+
+- Add NRS_VERIFY to the core schema as an allowed EXP_TYPE [#5395]
 
 extract_1d
 ----------
