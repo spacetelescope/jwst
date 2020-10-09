@@ -99,7 +99,7 @@ def do_correction(input_model, ref_model):
     # Save the saturation flags in the output GROUPDQ array
     output_model.groupdq = groupdq
 
-    n_sat = len(np.where(np.any(np.any(groupdq, axis=0), axis=0))[0])
+    n_sat = np.any(np.any(np.bitwise_and(groupdq, sat_flag), axis=0), axis=0).sum()
     log.info(f'Detected {n_sat} saturated pixels')
 
     # Save the NO_SAT_CHECK flags in the output PIXELDQ array
