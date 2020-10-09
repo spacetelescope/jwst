@@ -1,4 +1,7 @@
 """ Replace bad pixels and align psf image with target image."""
+
+from jwst.datamodels.dqflags import interpret_bit_flags
+
 from ..stpipe import Step
 from .. import datamodels
 from . import imageregistration
@@ -15,7 +18,8 @@ class AlignRefsStep(Step):
     """
 
     spec = """
-        median_box_length = integer(default=4,min=0) # box size for the median filter
+        median_box_length = integer(default=3,min=0) # box size for the median filter
+        bad_bits = string(default="DO_NOT_USE") # the DQ bit values of bad pixels
     """
 
     reference_file_types = ['psfmask']
@@ -44,11 +48,17 @@ class AlignRefsStep(Step):
             # Retrieve the box size for the filter
             box_size = self.median_box_length
 
+            # Get the bit value of bad pixels. A value of 0 treats all pixels as good.
+            bad_bitvalue = self.bad_bits
+            bad_bitvalue = interpret_bit_flags(bad_bitvalue)
+            if bad_bitvalue is None:
+                bad_bitvalue = 0
+
             # Replace bad pixels in the psf images
-            psf_model = median_replace_img(psf_model, box_size)
+            psf_model = median_replace_img(psf_model, box_size, bad_bitvalue)
 
             # Replace bad pixels in the target images
-            target_model = median_replace_img(target_model, box_size)
+            target_model = median_replace_img(target_model, box_size, bad_bitvalue)
 
             # Call the alignment routine
             result = imageregistration.align_models(target_model, psf_model,
