@@ -39,13 +39,10 @@ def run_image2(run_detector1, rtdata_module):
     rtdata.input = replace_suffix(ROOT, 'rate') + '.fits'
 
     args = [
-        'config/calwebb_image2.cfg', rtdata.input,
+        'jwst.pipeline.Image2Pipeline', rtdata.input,
         '--steps.assign_wcs.save_results=true',
-        '--steps.flat_field.skip=true',           # NOTE: Remove once CRDS coverage is complete
         '--steps.flat_field.save_results=true',
-        '--steps.photom.skip=true',               # NOTE: Remove once CRDS coverage is complete
         '--steps.photom.save_results=true',
-        '--steps.resample.skip=true'
     ]
     Step.from_cmdline(args)
 
@@ -71,9 +68,7 @@ def test_verify_detector1(run_detector1, rtdata_module, fitsdiff_default_kwargs,
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
     'suffix', [
-        "rate",
-        # "flat_field",  #  Currently removed due to insufficient CRDS coverage
-        "cal",
+        'assing_wcs', 'flat_field', 'cal',
     ])
 def test_verify_image2(run_image2, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Test results of the detector1 and image2 processing"""
