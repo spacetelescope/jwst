@@ -195,7 +195,7 @@ def test_nans_in_mask(setup_nrc_cube):
     ngroups = 5
     nrows = 2048
     ncols = 2048
-    huge_num = 100000.
+    ATOD_LIMIT = 65535.
 
     data, satmap = setup_nrc_cube(ngroups, nrows, ncols)
 
@@ -213,11 +213,11 @@ def test_nans_in_mask(setup_nrc_cube):
     correct_for_NaN(satmap.data, satmap.dq)
     output = do_correction(data, satmap)
 
-    # Check that NaN reference value gets reset to HUGE_NUM
+    # Check that NaN reference value gets reset to ATOD_LIMIT
     # Check that reference DQ is set to NO_SAT_CHECK
     # Check that output GROUPDQ is not flagged as saturated
     # Check that output PIXELDQ is set to NO_SAT_CHECK
-    assert satmap.data[500, 500] == huge_num
+    assert satmap.data[500, 500] == ATOD_LIMIT
     assert satmap.dq[500, 500] == dqflags.pixel['NO_SAT_CHECK']
     assert np.all(output.groupdq[0, :, 500, 500] != dqflags.group['SATURATED'])
     assert output.pixeldq[500, 500] == dqflags.pixel['NO_SAT_CHECK']

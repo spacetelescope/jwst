@@ -3,13 +3,21 @@ Description
 
 The ``saturation`` step flags saturated pixel values. It loops over all
 integrations within an exposure, examining each one group-by-group, comparing the
-pixel values in the SCI array with defined saturation thresholds for each pixel.
+pixel values in the SCI array against pixel-by-pixel thresholds stored in a
+saturation reference file.
 When it finds a pixel value in a given group that is above the threshold, it
 sets the "SATURATED" flag in the corresponding location of the "GROUPDQ"
 array in the science exposure. It also flags all subsequent groups for that
 pixel as saturated. For example, if there are 10 groups in an integration and
 group 7 is the first one to cross the saturation threshold for a given pixel,
 then groups 7 through 10 will all be flagged for that pixel.
+
+Pixels with thresholds set to NaN or flagged as "NO_SAT_CHECK" in the saturation
+reference file have their thresholds set to the 16-bit A-to-D converter limit
+of 65535 and hence will only be flagged as saturated if the pixel reaches that
+hard limit in at least one group. The "NO_SAT_CHECK" flag is propagated to the
+PIXELDQ array in the output science data to indicate which pixels fall into
+this category.
 
 NIRSpec data acquired using the "IRS2" readout pattern require special
 handling in this step, due to the extra reference pixel values that are interleaved
@@ -36,10 +44,6 @@ extra entries for these pixels. The step-by-step process is as follows:
 - For each group in the input science data, set the "SATURATION" flag in the
   "GROUPDQ" array if the pixel value is greater than or equal to the saturation
   threshold from the reference file
-
-Note that pixels set to NaN or flagged as "NO_SAT_CHECK" in the saturation
-reference file do not receive any saturation checking by this step. They are
-simply flagged as "NO_SAT_CHECK" in the output science data.
 
 Subarrays
 =========
