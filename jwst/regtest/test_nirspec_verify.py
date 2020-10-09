@@ -1,9 +1,7 @@
 import pytest
 
 from astropy.io.fits.diff import FITSDiff
-import numpy as np
 
-import jwst.datamodels as dm
 from jwst.lib.suffix import replace_suffix
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
