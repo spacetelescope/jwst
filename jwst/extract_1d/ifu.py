@@ -377,7 +377,6 @@ def extract_ifu(input_model, source_type, extract_params):
                      "TARG_RA and TARG_DEC.", x_center, y_center)
 
     method = extract_params['method']
-    # subpixels is only needed if method = 'subpixel'.
     subpixels = extract_params['subpixels']
     subtract_background = extract_params['subtract_background']
 
@@ -397,7 +396,6 @@ def extract_ifu(input_model, source_type, extract_params):
     # find the wavelength array for the IFU cube 
     (ra, dec, wavelength) = get_coordinates(input_model, x0, y0)
 
-    #print('wavelength endpoints ifu cube',wavelength[0], wavelength[-1])
     # interpolate the extraction parameters to the wavelength of the IFU cube
     if source_type == 'POINT':
         wave_extract = extract_params['wavelength'].flatten()
