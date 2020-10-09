@@ -7,7 +7,7 @@ from stdatamodels import DataModel
 
 from ..assign_wcs.util import compute_scale
 from ..datamodels import MultiSlitModel
-
+import numpy as np
 
 class ApCorrBase(abc.ABC):
     """Base class for aperture correction classes.
@@ -132,7 +132,7 @@ class ApCorrBase(abc.ABC):
                 if table[key] == 'ANY':
                     table = table
                 else:
-                    table = table[table[key].upper() == value.upper()]                    
+                    table = table[table[key].upper() == value.upper()]
             else:
                 table = table[table[key] == value]
 
@@ -246,17 +246,170 @@ class ApCorrRadial(ApCorrBase):
     """Aperture correction class used with spectral data produced from an extraction aperture radius."""
     size_key = 'radius'
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+ match_pars = {
+        'MIRI': {
+            'MRS': {'instrument': ['channel','band']},  # Only one row is available for this mode; no selection criteria
+        },
+        'NIRSPEC': {
+            'IFU': {'instrument': ['filter', 'grating']},
+        }
+    }
 
-    def approximate(self):
-        """Generate an approximate function for interpolating apcorr values to input wavelength and radius."""
-        wavelength = self.reference['wavelength']
-        size = self.reference['radius']
-        apcorr = self.reference['apcorr']
-        #size = size[0:3,0]
-        print('in apcorr radial',wavelength.shape,size.shape,apcorr.shape)
-        return interp2d(wavelength,size, apcorr)
+    size_key = None
+
+    def __init__(self, input_model: DataModel, apcorr_table,
+                 location: Tuple[float, float, float] = None):
+
+        self.correction = None
+        self._reference_table = apcorr_table
+        self.model = input_model
+        self.location = location
+        instrument = self.model.meta.instrument.name.upper()
+
+        self.match_keys = self.get_match_keys()
+        self.match_pars = self.get_match_pars()
+        self.reference = self.reduce_reftable(instrument)
+        self.apcorr_sizeunits = self.reference.radius_units
+        self._convert_size_units()
+        self.apcorr_func = self.approximate()
+
+def _convert_size_units(self):
+        """If the SIZE or Radius column is in units of arcseconds, convert to pixels."""
+        if self.apcorr_sizeunits.startswith('arcsec'):
+            # compute_scale returns scale in degrees
+            if self.location is not None:
+                scale_degrees =  compute_scale(
+                    self.model.meta.wcs,
+                    self.location,
+                    disp_axis=self.model.meta.wcsinfo.dispersion_direction)
+                scale_arcsec = scale_degrees*3600.00
+                self.reference.radius /= scale_arcsec
+            else:
+                raise ValueError(
+                    'If the size column for the input APCORR reference file is in units with arcseconds, a location '
+                    '(RA, DEC, wavelength) must be provided in order to compute a pixel scale to convert arcseconds to '
+                    'pixels.'
+                )
+
+    def get_match_keys(self) -> dict:
+        """Get column keys needed for reducing the reference table based on input."""
+        instrument = self.model.meta.instrument.name.upper()
+        exptype = self.model.meta.exposure.type.upper()
+
+        relevant_pars = self.match_pars[instrument]
+        for key in relevant_pars.keys():
+            if key in exptype:
+                return relevant_pars[key]
+
+    def get_match_pars(self) -> dict:
+        """Get meta parameters required for reference table row-selection."""
+        match_pars = {}
+
+        for node, keys in self.match_keys.items():
+            meta_node = self.model.meta[node]
+            for key in keys:
+                match_pars[key if key != 'name' else node] = getattr(meta_node, key)
+        return match_pars
+def reduce_reftable(self, instrument):
+        """Find the correct table for channel/band or filter/grating."""
+
+        tabletype =''
+        set_multiple = False
+        for key, value in self.match_pars.items():
+            tabletype = tabletype + '_' + value.lower()
+
+            if value.lower() == 'multiple':
+                set_multiple  = True
+
+        if set_multiple or instrument == 'MIRI':
+            tabletype = '_multiple_multiple'
+
+        # need a better way to do this- but for now to get things working
+        # I was trying to do something like
+        # table = self_reference_table.'apcorr_table'+ tabletype - but that did not work
+        if tabletype == '_multiple_multiple':
+            table = self._reference_table.apcorr_table
+        elif tabletype == '_clear_prism':
+            table = self._reference_table.apcorr_table_clear_prism
+        elif tabletype == '_f070lp_g140h':
+            table = self._reference_table.apcorr_table_f070lp_g140h
+        elif tabletype == '_f070lp_g140m':
+            table = self._reference_table.apcorr_table_f070lp_g140m
+        elif tabletype == '_f100lp_g140h':
+            table = self._reference_table.apcorr_table_f100lp_g140h
+        elif tabletype == '_f100lp_g140m':
+            table = self._reference_table.apcorr_table_f100lp_g140m
+        elif tabletype == '_f170lp_g235h':
+            table = self._reference_table.apcorr_table_f290lp_g395h
+        elif tabletype == '_f170lp_g235m':
+            table = self._reference_table.apcorr_table_f290lp_g395m
+        elif tabletype == '_f290lp_g395h':
+            table = self._reference_table.apcorr_table_f290lp_g395h
+        elif tabletype == '_f290lp_g395h':
+            table = self._reference_table.apcorr_table_f290lp_g395m
+
+        return table
+def approximate(self):
+        # the wavelength and extraction radius is need to interpolate apcor.
+        # This is done in find apcorr_func
+        pass
+
+
+    def apply(self, spec_table: fits.FITS_rec):
+        """Apply interpolated aperture correction value to source-related extraction results in-place.
+
+        Parameters
+        ----------
+        spec_table : `~fits.FITS_rec`
+            Table of aperture corrections values from apcorr reference file.
+
+        """
+        cols_to_correct = ('flux', 'surf_bright', 'error', 'sb_error')
+
+        for i, row in enumerate(spec_table):
+            correction = self.apcorr_correction[i]
+            for col in cols_to_correct:
+                row[col] *= correction
+
+def match_wavelengths(self, wavelength_ifu):
+        # given the ifu wavelength value - redefine the apcor func and radius to this wavelength
+        # apcor reference data
+        self.wavelength = self.reference.wavelength.flatten()
+        self.size = self.reference.radius
+        self.apcorr = self.reference.apcorr
+
+        dim = self.apcorr.shape[0]
+        size_match = np.zeros((dim, wavelength_ifu.shape[0]))
+        apcorr_match  = np.zeros((dim, wavelength_ifu.shape[0]))
+        self.apcorr_correction= [] # set up here defined in find_apcor_func
+        # loop over each radius dependent plane and interpolate to ifu wavelength
+        for i in range (dim):
+            radi = self.size[i,:]
+            frad = interp1d(self.wavelength, radi, bounds_error=False, fill_value="extrapolate")
+            radius_match = frad(wavelength_ifu)
+            size_match[i,:] = radius_match
+
+            appi = self.apcorr[i,:]
+            fap = interp1d(self.wavelength, appi, bounds_error=False, fill_value="extrapolate")
+            ap_match = fap(wavelength_ifu)
+            apcorr_match[i,:] = ap_match
+
+        self.apcorr = apcorr_match
+        self.size = size_match
+
+
+    def find_apcorr_func(self, iwave, radius_ifu):
+        # at ifu wavelength plane (iwave), the extraction radius is radius_ifu
+        # pull out the radius values (self.size)  to use in the apcor ref file for this iwave
+        # self.size and self.apcorr have already been interpolated in wavelength to match the
+        # the ifu wavelength range.
+
+        radius_apcor = self.size[:,iwave]
+        temparray=self.apcorr[:,iwave]
+        fap=interp1d(radius_apcor,temparray,fill_value="extrapolate")
+        correction=fap(radius_ifu)
+        self.apcorr_correction.append(correction)
+        return
 
 
 class ApCorr(ApCorrBase):

@@ -8,6 +8,8 @@ from photutils import CircularAperture, CircularAnnulus, \
                       RectangularAperture, aperture_photometry
 
 from .apply_apcorr import select_apcorr
+from ..assign_wcs.util import compute_scale
+
 from .. import datamodels
 from ..datamodels import dqflags
 from . import spec_wcs
@@ -95,10 +97,9 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
                      "the source is extended.")
         extract_params['subtract_background'] = subtract_background
 
-    #print('extract_params',extract_params, extract_params['ref_file_type'])
     if extract_params:
         if extract_params['ref_file_type'] == FILE_TYPE_TABLE:
-            (ra, dec, wavelength, temp_flux, background, npixels, dq, npixels_bkg) = \
+            (ra, dec, wavelength, temp_flux, background, npixels, dq, npixels_bkg, radius_match) = \
                     extract_ifu(input_model, source_type, extract_params)
         elif extract_params['ref_file_type'] == FILE_TYPE_JSON:
             (ra, dec, wavelength, temp_flux, background, npixels, dq, npixels_bkg) = \
@@ -171,6 +172,14 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
             input_model, apcorr_ref_model.apcorr_table, apcorr_ref_model.sizeunit, location=(ra, dec, wl)
         )
 
+        # determine apcor function to use at each wavelength - Move this in to apply_apcorr but
+        # does not work for method approximate because as input we need to know the wavelength and radius
+        # of the extract location we are at. 
+        for i, wave in enumerate(wavelength):
+            radius = radius_match[i]
+            func = apcorr.find_apcorr_func(wave,radius)
+
+
         apcorr.apply(spec.spec_table)
 
     output_model.spec.append(spec)
@@ -179,6 +188,7 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
     output_model.meta.wcs = None
 
     return output_model
+
 
 
 def get_extract_parameters(ref_dict, slitname):
@@ -353,6 +363,7 @@ def extract_ifu(input_model, source_type, extract_params):
         ra_targ = input_model.meta.target.ra
         dec_targ = input_model.meta.target.dec
         locn = locn_from_wcs(input_model, ra_targ, dec_targ)
+        
         if locn is None or np.isnan(locn[0]):
             log.warning("Couldn't determine pixel location from WCS, so "
                         "source offset correction will not be applied.")
@@ -368,10 +379,7 @@ def extract_ifu(input_model, source_type, extract_params):
     method = extract_params['method']
     # subpixels is only needed if method = 'subpixel'.
     subpixels = extract_params['subpixels']
-
     subtract_background = extract_params['subtract_background']
-
-    #print('extract params',subpixels,subtract_background)
 
     smaller_axis = float(min(shape[-2], shape[-1]))     # for defaults
     radius = None
@@ -389,7 +397,7 @@ def extract_ifu(input_model, source_type, extract_params):
     # find the wavelength array for the IFU cube 
     (ra, dec, wavelength) = get_coordinates(input_model, x0, y0)
 
-    print('wavelength endpoints ifu cube',wavelength[0], wavelength[-1])
+    #print('wavelength endpoints ifu cube',wavelength[0], wavelength[-1])
     # interpolate the extraction parameters to the wavelength of the IFU cube
     if source_type == 'POINT':
         wave_extract = extract_params['wavelength'].flatten()
@@ -397,27 +405,31 @@ def extract_ifu(input_model, source_type, extract_params):
         outer_bkg = extract_params['outer_bkg'].flatten()
         radius = extract_params['radius'].flatten()
         axis_pa = extract_params['axis_pa'].flatten()
-        print('wavelength table',wave_extract[0],wave_extract[-1])
+
         frad = interp1d(wave_extract, radius, bounds_error=False, fill_value="extrapolate")
         radius_match = frad(wavelength)
+        # radius_match is in arc seconds - need to convert to pixels
+        
+        # QUESTION should I compute the scale at each wavelength since radius varies with wavelength
+        # FIX LATER - probably for point locn is not NONE but for my test data it was (I forced EXTENDED = POINT)
+        if locn is None:
+            locn_use = (input_model.meta.wcsinfo.crval1, input_model.meta.wcsinfo.crval2,wavelength[0])
+        else:
+            locn_use = locn
+        scale_degrees =  compute_scale(
+            input_model.meta.wcs,
+            locn_use,
+            disp_axis=input_model.meta.wcsinfo.dispersion_direction)
+
+        scale_arcsec = scale_degrees*3600.00
+
+        radius_match /= scale_arcsec
 
         finner = interp1d(wave_extract, inner_bkg, bounds_error=False, fill_value="extrapolate")
-        inner_bkg_match = finner(wavelength)
+        inner_bkg_match = finner(wavelength)/scale_arcsec
 
         fouter = interp1d(wave_extract, outer_bkg, bounds_error=False, fill_value="extrapolate")
-        outer_bkg_match = fouter(wavelength)
-
-    #    radius = extract_params['radius']
-    #    if radius is None:
-    #        radius = smaller_axis / 4.
-    #    if subtract_background:
-    #        inner_bkg = extract_params['inner_bkg']
-    #        if inner_bkg is None:
-    #            inner_bkg = radius
-    #        outer_bkg = extract_params['outer_bkg']
-    #        if outer_bkg is None:
-    #            outer_bkg = min(inner_bkg * math.sqrt(2.),
-    #                            smaller_axis / 2. - 1.)
+        outer_bkg_match = fouter(wavelength)/scale_arcsec
 
     elif  source_type == 'EXTENDED':
         # Ignore any input parameters, and extract the whole image.
@@ -445,7 +457,6 @@ def extract_ifu(input_model, source_type, extract_params):
         if method == "subpixel":
             log.debug("  subpixels = %s", str(subpixels))
 
-
     position = (x_center, y_center)
 
     # get aperture for extended it will not change with wavelength
@@ -458,7 +469,7 @@ def extract_ifu(input_model, source_type, extract_params):
         outer_bkg = None
         
         if source_type == 'POINT':
-            radius = radius_match[k]
+            radius = radius_match[k] # this radius has been converted to pixels
             aperture = CircularAperture(position, r=radius)
 
             inner_bkg = inner_bkg_match[k]
@@ -544,7 +555,7 @@ def extract_ifu(input_model, source_type, extract_params):
     (wavelength, temp_flux, background, npixels, dq, npixels_annulus) = \
         nans_in_wavelength(wavelength, temp_flux, background, npixels, dq, npixels_annulus)
 
-    return (ra, dec, wavelength, temp_flux, background, npixels, dq, npixels_annulus)
+    return (ra, dec, wavelength, temp_flux, background, npixels, dq, npixels_annulus, radius_match)
 
 
 def locn_from_wcs(input_model, ra_targ, dec_targ):
