@@ -8,7 +8,7 @@ import pytest
 import numpy as np
 
 from jwst.saturation import SaturationStep
-from jwst.saturation.saturation import do_correction, ATOD_LIMIT
+from jwst.saturation.saturation import do_correction
 from jwst.datamodels import RampModel, SaturationModel, dqflags
 
 
@@ -131,7 +131,7 @@ def test_subarray_extraction(setup_miri_cube):
     # Check that pixel was flagged 'NO_SAT_CHECK' and that original
     # DQ flag persists (i.e. did not get overwritten)
     assert(output.pixeldq[84, 100] ==
-        dqflags.pixel['NO_SAT_CHECK']) + dqflags.pixel['NONLINEAR']
+           dqflags.pixel['NO_SAT_CHECK'] + dqflags.pixel['NONLINEAR'])
 
 
 def test_dq_propagation(setup_nrc_cube):
@@ -218,11 +218,9 @@ def test_nans_in_mask(setup_nrc_cube):
     # Run the pipeline
     output = do_correction(data, satmap)
 
-    # Check that NaN reference value gets reset to ATOD_LIMIT
-    # Check that reference DQ is set to NO_SAT_CHECK
     # Check that output GROUPDQ is not flagged as saturated
-    # Check that output PIXELDQ is set to NO_SAT_CHECK
     assert np.all(output.groupdq[0, :, 5, 5] != dqflags.group['SATURATED'])
+    # Check that output PIXELDQ is set to NO_SAT_CHECK
     assert output.pixeldq[5, 5] == dqflags.pixel['NO_SAT_CHECK']
 
 
@@ -247,10 +245,10 @@ def test_full_step(setup_nrc_cube):
     output = SaturationStep.call(data)
 
     # Check that correct pixel and group 3+ are flagged as saturated
-    # Check that other pixel and groups are not flagged
     assert dqflags.group['SATURATED'] == np.max(output.groupdq[0, :, 5, 5])
-    assert np.all(output.groupdq[0, :3, 5, 5] != dqflags.group['SATURATED'])
     assert np.all(output.groupdq[0, 3:, 5, 5] == dqflags.group['SATURATED'])
+    # Check that other pixel and groups are not flagged
+    assert np.all(output.groupdq[0, :3, 5, 5] != dqflags.group['SATURATED'])
     assert np.all(output.groupdq[0, :, 10, 10] != dqflags.group['SATURATED'])
 
 
