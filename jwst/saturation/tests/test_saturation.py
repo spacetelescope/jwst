@@ -8,7 +8,7 @@ import pytest
 import numpy as np
 
 from jwst.saturation import SaturationStep
-from jwst.saturation.saturation import do_correction, correct_for_NaN
+from jwst.saturation.saturation import do_correction, ATOD_LIMIT
 from jwst.datamodels import RampModel, SaturationModel, dqflags
 
 
@@ -18,28 +18,28 @@ def test_basic_saturation_flagging(setup_nrc_cube):
 
     # Create inputs, data, and saturation maps
     ngroups = 5
-    nrows = 2048
-    ncols = 2048
+    nrows = 20
+    ncols = 20
     satvalue = 60000
 
     data, satmap = setup_nrc_cube(ngroups, nrows, ncols)
 
     # Add ramp values up to the saturation limit
-    data.data[0, 0, 500, 500] = 0
-    data.data[0, 1, 500, 500] = 20000
-    data.data[0, 2, 500, 500] = 40000
-    data.data[0, 3, 500, 500] = 60000   # Signal reaches saturation limit
-    data.data[0, 4, 500, 500] = 62000
+    data.data[0, 0, 5, 5] = 0
+    data.data[0, 1, 5, 5] = 20000
+    data.data[0, 2, 5, 5] = 40000
+    data.data[0, 3, 5, 5] = 60000   # Signal reaches saturation limit
+    data.data[0, 4, 5, 5] = 62000
 
     # Set saturation value in the saturation model
-    satmap.data[500, 500] = satvalue
+    satmap.data[5, 5] = satvalue
 
     # Run the pipeline
     output = do_correction(data, satmap)
 
     # Make sure that groups with signal > saturation limit get flagged
-    satindex = np.argmax(output.data[0, :, 500, 500] == satvalue)
-    assert np.all(output.groupdq[0, satindex:, 500, 500] == dqflags.group['SATURATED'])
+    satindex = np.argmax(output.data[0, :, 5, 5] == satvalue)
+    assert np.all(output.groupdq[0, satindex:, 5, 5] == dqflags.group['SATURATED'])
 
 
 def test_signal_fluctuation_flagging(setup_nrc_cube):
@@ -49,28 +49,28 @@ def test_signal_fluctuation_flagging(setup_nrc_cube):
 
     # Create inputs, data, and saturation maps
     ngroups = 5
-    nrows = 2048
-    ncols = 2048
+    nrows = 20
+    ncols = 20
     satvalue = 60000
 
     data, satmap = setup_nrc_cube(ngroups, nrows, ncols)
 
     # Add ramp values up to the saturation limit
-    data.data[0, 0, 500, 500] = 0
-    data.data[0, 1, 500, 500] = 20000
-    data.data[0, 2, 500, 500] = 40000
-    data.data[0, 3, 500, 500] = 60000   # Signal reaches saturation limit
-    data.data[0, 4, 500, 500] = 40000   # Signal drops below saturation limit
+    data.data[0, 0, 5, 5] = 0
+    data.data[0, 1, 5, 5] = 20000
+    data.data[0, 2, 5, 5] = 40000
+    data.data[0, 3, 5, 5] = 60000   # Signal reaches saturation limit
+    data.data[0, 4, 5, 5] = 40000   # Signal drops below saturation limit
 
     # Set saturation value in the saturation model
-    satmap.data[500, 500] = satvalue
+    satmap.data[5, 5] = satvalue
 
     # Run the pipeline
     output = do_correction(data, satmap)
 
     # Make sure that all groups after first saturated group are flagged
-    satindex = np.argmax(output.data[0, :, 500, 500] == satvalue)
-    assert np.all(output.groupdq[0, satindex:, 500, 500] == dqflags.group['SATURATED'])
+    satindex = np.argmax(output.data[0, :, 5, 5] == satvalue)
+    assert np.all(output.groupdq[0, satindex:, 5, 5] == dqflags.group['SATURATED'])
 
 
 def test_all_groups_saturated(setup_nrc_cube):
@@ -78,27 +78,27 @@ def test_all_groups_saturated(setup_nrc_cube):
 
     # Create inputs, data, and saturation maps
     ngroups = 5
-    nrows = 2048
-    ncols = 2048
+    nrows = 20
+    ncols = 20
     satvalue = 60000
 
     data, satmap = setup_nrc_cube(ngroups, nrows, ncols)
 
     # Add ramp values at or above saturation limit
-    data.data[0, 0, 500, 500] = 60000
-    data.data[0, 1, 500, 500] = 62000
-    data.data[0, 2, 500, 500] = 62000
-    data.data[0, 3, 500, 500] = 60000
-    data.data[0, 4, 500, 500] = 62000
+    data.data[0, 0, 5, 5] = 60000
+    data.data[0, 1, 5, 5] = 62000
+    data.data[0, 2, 5, 5] = 62000
+    data.data[0, 3, 5, 5] = 60000
+    data.data[0, 4, 5, 5] = 62000
 
     # Set saturation value in the saturation model
-    satmap.data[500, 500] = satvalue
+    satmap.data[5, 5] = satvalue
 
     # Run the pipeline
     output = do_correction(data, satmap)
 
     # Make sure all groups are flagged
-    assert np.all(output.groupdq[0, :, 500, 500] == dqflags.group['SATURATED'])
+    assert np.all(output.groupdq[0, :, 5, 5] == dqflags.group['SATURATED'])
 
 
 def test_subarray_extraction(setup_miri_cube):
@@ -114,10 +114,11 @@ def test_subarray_extraction(setup_miri_cube):
 
     # Place DQ flags in DQ array that would be in subarray
     # MASK1550 file has colstart=1, rowstart=467
-    satmap.dq[542, 100:105] = 1
+    satmap.dq[542, 100:105] = dqflags.pixel['DO_NOT_USE']
 
-    # Test a value of NaN in the reference file
+    # Test a value of NaN in the reference file with an existing DQ flag
     satmap.data[550, 100] = np.nan
+    satmap.dq[550, 100] = dqflags.pixel['NONLINEAR']
 
     # Run the pipeline
     output = do_correction(data, satmap)
@@ -127,8 +128,10 @@ def test_subarray_extraction(setup_miri_cube):
     assert(output.pixeldq[76, 104] == dqflags.pixel['DO_NOT_USE'])
 
     # Pixel 84, 100 in subarray maps to 550, 100 in reference file
-    # Check that pixel was flagged 'NO_SAT_CHECK'
-    assert(output.pixeldq[84, 100] == dqflags.pixel['NO_SAT_CHECK'])
+    # Check that pixel was flagged 'NO_SAT_CHECK' and that original
+    # DQ flag persists (i.e. did not get overwritten)
+    assert(output.pixeldq[84, 100] ==
+        dqflags.pixel['NO_SAT_CHECK']) + dqflags.pixel['NONLINEAR']
 
 
 def test_dq_propagation(setup_nrc_cube):
@@ -136,8 +139,8 @@ def test_dq_propagation(setup_nrc_cube):
 
     # Create inputs, data, and saturation maps
     ngroups = 5
-    nrows = 2048
-    ncols = 2048
+    nrows = 20
+    ncols = 20
     dqval1 = 5
     dqval2 = 10
 
@@ -160,30 +163,34 @@ def test_no_sat_check(setup_nrc_cube):
 
     # Create inputs, data, and saturation maps
     ngroups = 5
-    nrows = 2048
-    ncols = 2048
+    nrows = 20
+    ncols = 20
     satvalue = 60000
 
     data, satmap = setup_nrc_cube(ngroups, nrows, ncols)
 
     # Add ramp values up to the saturation limit
-    data.data[0, 0, 500, 500] = 0
-    data.data[0, 1, 500, 500] = 20000
-    data.data[0, 2, 500, 500] = 40000
-    data.data[0, 3, 500, 500] = 60000
-    data.data[0, 4, 500, 500] = 62000   # Signal reaches saturation limit
+    data.data[0, 0, 5, 5] = 0
+    data.data[0, 1, 5, 5] = 20000
+    data.data[0, 2, 5, 5] = 40000
+    data.data[0, 3, 5, 5] = 60000
+    data.data[0, 4, 5, 5] = 62000   # Signal reaches saturation limit
 
     # Set saturation value in the saturation model & DQ value for NO_SAT_CHECK
-    satmap.data[500, 500] = satvalue
-    satmap.dq[500, 500] = dqflags.pixel['NO_SAT_CHECK']
+    satmap.data[5, 5] = satvalue
+    satmap.dq[5, 5] = dqflags.pixel['NO_SAT_CHECK']
+
+    # Also set an existing DQ flag in input science data
+    data.pixeldq[5, 5] = dqflags.pixel['RC']
 
     # Run the pipeline
     output = do_correction(data, satmap)
 
     # Make sure output GROUPDQ does not get flagged as saturated
-    # Make sure PIXELDQ is set to NO_SAT_CHECK
-    assert np.all(output.groupdq[0, :, 500, 500] != dqflags.group['SATURATED'])
-    assert output.pixeldq[500, 500] == dqflags.pixel['NO_SAT_CHECK']
+    # Make sure PIXELDQ is set to NO_SAT_CHECK and original flag
+    assert np.all(output.groupdq[0, :, 5, 5] != dqflags.group['SATURATED'])
+    assert output.pixeldq[5, 5] == (dqflags.pixel['NO_SAT_CHECK'] +
+                                    dqflags.pixel['RC'])
 
 
 def test_nans_in_mask(setup_nrc_cube):
@@ -193,34 +200,30 @@ def test_nans_in_mask(setup_nrc_cube):
 
     # Create inputs, data, and saturation maps
     ngroups = 5
-    nrows = 2048
-    ncols = 2048
-    ATOD_LIMIT = 65535.
+    nrows = 20
+    ncols = 20
 
     data, satmap = setup_nrc_cube(ngroups, nrows, ncols)
 
     # Add ramp values up to the saturation limit
-    data.data[0, 0, 500, 500] = 0
-    data.data[0, 1, 500, 500] = 20000
-    data.data[0, 2, 500, 500] = 40000
-    data.data[0, 3, 500, 500] = 60000
-    data.data[0, 4, 500, 500] = 62000
+    data.data[0, 0, 5, 5] = 0
+    data.data[0, 1, 5, 5] = 20000
+    data.data[0, 2, 5, 5] = 40000
+    data.data[0, 3, 5, 5] = 60000
+    data.data[0, 4, 5, 5] = 62000
 
     # Set saturation value for pixel to NaN
-    satmap.data[500, 500] = np.nan
+    satmap.data[5, 5] = np.nan
 
     # Run the pipeline
-    correct_for_NaN(satmap.data, satmap.dq)
     output = do_correction(data, satmap)
 
     # Check that NaN reference value gets reset to ATOD_LIMIT
     # Check that reference DQ is set to NO_SAT_CHECK
     # Check that output GROUPDQ is not flagged as saturated
     # Check that output PIXELDQ is set to NO_SAT_CHECK
-    assert satmap.data[500, 500] == ATOD_LIMIT
-    assert satmap.dq[500, 500] == dqflags.pixel['NO_SAT_CHECK']
-    assert np.all(output.groupdq[0, :, 500, 500] != dqflags.group['SATURATED'])
-    assert output.pixeldq[500, 500] == dqflags.pixel['NO_SAT_CHECK']
+    assert np.all(output.groupdq[0, :, 5, 5] != dqflags.group['SATURATED'])
+    assert output.pixeldq[5, 5] == dqflags.pixel['NO_SAT_CHECK']
 
 
 def test_full_step(setup_nrc_cube):
@@ -228,27 +231,27 @@ def test_full_step(setup_nrc_cube):
 
     # Create inputs, data, and saturation maps
     ngroups = 5
-    nrows = 2048
-    ncols = 2048
+    nrows = 20
+    ncols = 20
 
     data, satmap = setup_nrc_cube(ngroups, nrows, ncols)
 
     # Add ramp values up to the saturation limit
-    data.data[0, 0, 500, 500] = 0
-    data.data[0, 1, 500, 500] = 20000
-    data.data[0, 2, 500, 500] = 40000
-    data.data[0, 3, 500, 500] = 70000   # Signal reaches saturation limit
-    data.data[0, 4, 500, 500] = 73000
+    data.data[0, 0, 5, 5] = 0
+    data.data[0, 1, 5, 5] = 20000
+    data.data[0, 2, 5, 5] = 40000
+    data.data[0, 3, 5, 5] = 70000   # Signal reaches saturation limit
+    data.data[0, 4, 5, 5] = 73000
 
     # Run the pipeline
     output = SaturationStep.call(data)
 
     # Check that correct pixel and group 3+ are flagged as saturated
     # Check that other pixel and groups are not flagged
-    assert dqflags.group['SATURATED'] == np.max(output.groupdq[0, :, 500, 500])
-    assert np.all(output.groupdq[0, 3:, 500, 500] == dqflags.group['SATURATED'])
-    assert np.all(output.groupdq[0, :3, 500, 500] != dqflags.group['SATURATED'])
-    assert np.all(output.groupdq[0, :, 100, 100] != dqflags.group['SATURATED'])
+    assert dqflags.group['SATURATED'] == np.max(output.groupdq[0, :, 5, 5])
+    assert np.all(output.groupdq[0, :3, 5, 5] != dqflags.group['SATURATED'])
+    assert np.all(output.groupdq[0, 3:, 5, 5] == dqflags.group['SATURATED'])
+    assert np.all(output.groupdq[0, :, 10, 10] != dqflags.group['SATURATED'])
 
 
 @pytest.fixture(scope='function')
