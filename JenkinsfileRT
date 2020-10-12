@@ -19,7 +19,7 @@ if (env.ARTIFACTORY_ENV) {
 
 pytest_args = ""
 if (env.PYTEST_ARGS) {
-    test_items = env.PYTEST_ARGS
+    pytest_args = env.PYTEST_ARGS
 }
 
 withCredentials([string(
