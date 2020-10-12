@@ -18,7 +18,7 @@ def MultiLineToArray(String reqs) {
         return result
     }
     for (req in reqs.split('\n')) {
-        result += $req
+        result += req
     }
     return result
 }
