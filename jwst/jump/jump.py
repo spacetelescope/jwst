@@ -145,8 +145,6 @@ def detect_jumps (input_model, gain_model, readnoise_model,
             # save the neighbors to be flagged that will be in the next slice
             previous_row_above_gdq = row_above_gdq.copy()
             k += 1
-        pool.terminate()
-        pool.close()
         elapsed = time.time() - start
 
     elapsed = time.time() - start
