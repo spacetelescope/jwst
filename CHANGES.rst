@@ -71,6 +71,13 @@ resample
 
 - Implement memory check in resample to prevent huge arrays [#5354]
 
+saturation
+----------
+
+- Set saturation threshold to A-to-D limit of 65535 for pixels flagged with
+  NO_SAT_CHECK in the saturation reference file, instead of skipping any
+  test of those pixels. [#5394]
+
 0.17.1 (2020-09-15)
 ===================
 
