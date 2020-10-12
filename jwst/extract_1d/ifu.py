@@ -172,13 +172,13 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
             input_model, apcorr_ref_model.apcorr_table, apcorr_ref_model.sizeunit, location=(ra, dec, wl)
         )
 
-        # determine apcor function to use at each wavelength - Move this in to apply_apcorr but
-        # does not work for method approximate because as input we need to know the wavelength and radius
-        # of the extract location we are at. 
+        # determine apcor function and apcor radiius to use at each wavelength
+        apcorr.match_wavelengths(wavelength)
+
+        # at each IFU wavelength we have the extraction radius defined by radius_match
         for i, wave in enumerate(wavelength):
             radius = radius_match[i] # the extraction radius size in pixels 
-            print('ifu radius extraction match',radius_match[i])
-            func = apcorr.find_apcorr_func(wave,radius)
+            apcorr.find_apcorr_func(i,wavelength,radius)
 
 
         apcorr.apply(spec.spec_table)
@@ -408,13 +408,13 @@ def extract_ifu(input_model, source_type, extract_params):
         frad = interp1d(wave_extract, radius, bounds_error=False, fill_value="extrapolate")
         radius_match = frad(wavelength)
         # radius_match is in arc seconds - need to convert to pixels
-        
         # QUESTION should I compute the scale at each wavelength since radius varies with wavelength
         # FIX LATER - probably for point locn is not NONE but for my test data it was (I forced EXTENDED = POINT)
         if locn is None:
             locn_use = (input_model.meta.wcsinfo.crval1, input_model.meta.wcsinfo.crval2,wavelength[0])
         else:
             locn_use = locn
+
         scale_degrees =  compute_scale(
             input_model.meta.wcs,
             locn_use,
@@ -424,7 +424,6 @@ def extract_ifu(input_model, source_type, extract_params):
 
         radius_match /= scale_arcsec
 
-        print('radius match',radius_match)
         finner = interp1d(wave_extract, inner_bkg, bounds_error=False, fill_value="extrapolate")
         inner_bkg_match = finner(wavelength)/scale_arcsec
 

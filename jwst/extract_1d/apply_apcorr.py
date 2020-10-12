@@ -78,6 +78,7 @@ class ApCorrBase(abc.ABC):
     def _convert_size_units(self):
         """If the SIZE or Radius column is in units of arcseconds, convert to pixels."""
         if self.apcorr_sizeunits.startswith('arcsec'):
+            # compute_scale returns scale in degrees
             if self.location is not None:
                 if isinstance(self.model, MultiSlitModel):
                     idx = [slit.name for slit in self.model.slits].index(self.slit_name)
@@ -141,7 +142,6 @@ class ApCorrBase(abc.ABC):
 
         if len(table) != 1:
             raise ValueError('Could not resolve APCORR reference for input.')
-        #print('Apcor read in radius ',table['radius'])
         return table[0]
 
     @abc.abstractmethod
@@ -358,7 +358,7 @@ class ApCorrRadial(ApCorrBase):
         # the wavelength and extraction radius is need to interpolate apcor.
         # This is done in find apcorr_func
         pass
-
+    
 
     def apply(self, spec_table: fits.FITS_rec):
         """Apply interpolated aperture correction value to source-related extraction results in-place.
