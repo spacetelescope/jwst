@@ -246,8 +246,8 @@ def test_two_group_integration(generate_miri_reffiles, max_cores, setup_inputs):
                               override_readnoise=override_readnoise, maximum_cores=max_cores)
     assert(out_model.meta.cal_step.jump == 'SKIPPED')
 
-@pytest.mark.parametrize("max_cores", MAXIMUM_CORES)
-def test_four_group_integration(generate_miri_reffiles, max_cores, setup_inputs):
+
+def test_four_group_integration(generate_miri_reffiles, setup_inputs):
     override_gain, override_readnoise = generate_miri_reffiles
     grouptime = 3.0
     ingain = 6
@@ -256,14 +256,14 @@ def test_four_group_integration(generate_miri_reffiles, max_cores, setup_inputs)
     xsize = 103
     ysize = 102
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
-        nrows=ysize, ncols=xsize,
-        gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
+                                                          nrows=ysize, ncols=xsize,
+                                                          gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
     out_model = JumpStep.call(model1, override_gain=override_gain,
-                              override_readnoise=override_readnoise, maximum_cores=max_cores)
+                              override_readnoise=override_readnoise, maximum_cores='none')
     assert(out_model.meta.cal_step.jump == 'SKIPPED')
 
-@pytest.mark.parametrize("max_cores", MAXIMUM_CORES)
-def test_five_group_integration(generate_miri_reffiles, max_cores, setup_inputs):
+
+def test_five_group_integration(generate_miri_reffiles, setup_inputs):
     override_gain, override_readnoise = generate_miri_reffiles
     grouptime = 3.0
     ingain = 6
@@ -272,8 +272,8 @@ def test_five_group_integration(generate_miri_reffiles, max_cores, setup_inputs)
     xsize = 103
     ysize = 102
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
-                                                              nrows=ysize, ncols=xsize,
-                                                              gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
+                                                          nrows=ysize, ncols=xsize,
+                                                          gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
     out_model = JumpStep.call(model1, override_gain=override_gain,
-                                  override_readnoise=override_readnoise, maximum_cores=max_cores)
+                                  override_readnoise=override_readnoise, maximum_cores='none')
     assert (out_model.meta.cal_step.jump == 'COMPLETE')
