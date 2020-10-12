@@ -72,7 +72,6 @@ class ApCorrBase(abc.ABC):
         self.match_pars = self._get_match_pars()
         self.match_pars.update(match_kwargs)
         self.reference = self._reduce_reftable()
-
         self._convert_size_units()
         self.apcorr_func = self.approximate()
 
@@ -82,17 +81,20 @@ class ApCorrBase(abc.ABC):
             if self.location is not None:
                 if isinstance(self.model, MultiSlitModel):
                     idx = [slit.name for slit in self.model.slits].index(self.slit_name)
-                    self.reference[self.size_key] /= compute_scale(
+                    scale_degrees =  compute_scale(
                         self.model.slits[idx].meta.wcs,
                         self.location,
-                        disp_axis=self.model.slits[idx].meta.wcsinfo.dispersion_direction
-                    )
+                        disp_axis=self.model.slits[idx].meta.wcsinfo.dispersion_direction)
+                    scale_arcsec = scale_degrees*3600.00
+                    self.reference[self.size_key] /= scale_arcsec
                 else:
-                    self.reference[self.size_key] /= compute_scale(
+                    scale_degrees =  compute_scale(
                         self.model.meta.wcs,
                         self.location,
-                        disp_axis=self.model.meta.wcsinfo.dispersion_direction
-                    )
+                        disp_axis=self.model.meta.wcsinfo.dispersion_direction)
+                    scale_arcsec = scale_degrees*3600.00
+                    self.reference[self.size_key] /= scale_arcsec 
+                    
             else:
                 raise ValueError(
                     'If the size column for the input APCORR reference file is in units with arcseconds, a location '
@@ -126,6 +128,7 @@ class ApCorrBase(abc.ABC):
     def _reduce_reftable(self) -> fits.FITS_record:
         """Reduce full reference table to a single matched row."""
         table = self._reference_table.copy()
+
         for key, value in self.match_pars.items():
 
             if isinstance(value, str):  # Not all files will have the same format as input model metadata values.
@@ -138,7 +141,7 @@ class ApCorrBase(abc.ABC):
 
         if len(table) != 1:
             raise ValueError('Could not resolve APCORR reference for input.')
-
+        #print('Apcor read in radius ',table['radius'])
         return table[0]
 
     @abc.abstractmethod
@@ -273,7 +276,7 @@ class ApCorrRadial(ApCorrBase):
         self._convert_size_units()
         self.apcorr_func = self.approximate()
 
-def _convert_size_units(self):
+    def _convert_size_units(self):
         """If the SIZE or Radius column is in units of arcseconds, convert to pixels."""
         if self.apcorr_sizeunits.startswith('arcsec'):
             # compute_scale returns scale in degrees
@@ -310,7 +313,8 @@ def _convert_size_units(self):
             for key in keys:
                 match_pars[key if key != 'name' else node] = getattr(meta_node, key)
         return match_pars
-def reduce_reftable(self, instrument):
+
+    def reduce_reftable(self, instrument):
         """Find the correct table for channel/band or filter/grating."""
 
         tabletype =''
@@ -349,7 +353,8 @@ def reduce_reftable(self, instrument):
             table = self._reference_table.apcorr_table_f290lp_g395m
 
         return table
-def approximate(self):
+
+    def approximate(self):
         # the wavelength and extraction radius is need to interpolate apcor.
         # This is done in find apcorr_func
         pass
@@ -371,7 +376,8 @@ def approximate(self):
             for col in cols_to_correct:
                 row[col] *= correction
 
-def match_wavelengths(self, wavelength_ifu):
+
+    def match_wavelengths(self, wavelength_ifu):
         # given the ifu wavelength value - redefine the apcor func and radius to this wavelength
         # apcor reference data
         self.wavelength = self.reference.wavelength.flatten()
@@ -410,7 +416,6 @@ def match_wavelengths(self, wavelength_ifu):
         correction=fap(radius_ifu)
         self.apcorr_correction.append(correction)
         return
-
 
 class ApCorr(ApCorrBase):
     """'Default' Aperture correction class for use with most spectroscopic modes."""
@@ -454,4 +459,8 @@ def select_apcorr(input_model: DataModel) -> Union[Type[ApCorr], Type[ApCorrPhas
         return ApCorr
 
     if input_model.meta.instrument.name == 'NIRSPEC':
-        return ApCorrPhase
+        if input_model.meta.exposure.type.upper() == 'NRS_IFU':
+            return ApCorrRadial
+        else:
+            return ApCorrPhase
+

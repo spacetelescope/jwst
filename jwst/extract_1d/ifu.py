@@ -176,7 +176,8 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
         # does not work for method approximate because as input we need to know the wavelength and radius
         # of the extract location we are at. 
         for i, wave in enumerate(wavelength):
-            radius = radius_match[i]
+            radius = radius_match[i] # the extraction radius size in pixels 
+            print('ifu radius extraction match',radius_match[i])
             func = apcorr.find_apcorr_func(wave,radius)
 
 
@@ -423,6 +424,7 @@ def extract_ifu(input_model, source_type, extract_params):
 
         radius_match /= scale_arcsec
 
+        print('radius match',radius_match)
         finner = interp1d(wave_extract, inner_bkg, bounds_error=False, fill_value="extrapolate")
         inner_bkg_match = finner(wavelength)/scale_arcsec
 
