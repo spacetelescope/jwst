@@ -26,10 +26,10 @@ def median_fill_value(input_array, input_dq_array, bsize, bad_bitvalue, xc, yc):
         The sum of all of the DQ bit values to consider bad. Setting to 0
         will treat all pixels as good.
 
-    xc: scalar
+    xc : scalar
         x position of the data extraction
 
-    yc: scalar
+    yc : scalar
         y position of the data extraction
 
     Returns
