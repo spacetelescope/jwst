@@ -178,8 +178,12 @@ class ResampleSpecData:
                 # estimate the spatial sampling
                 fitter = LinearLSQFitter()
                 fit_model = Linear1D()
-                pix_to_xtan = fitter(fit_model, np.arange(x_tan_array.shape[0]), x_tan_array)
-                pix_to_ytan = fitter(fit_model, np.arange(y_tan_array.shape[0]), y_tan_array)
+                xstop = x_tan_array.shape[0] / self.pscale_ratio
+                xstep = 1 / self.pscale_ratio
+                ystop = y_tan_array.shape[0] / self.pscale_ratio
+                ystep = 1 / self.pscale_ratio
+                pix_to_xtan = fitter(fit_model, np.arange(0, xstop, xstep), x_tan_array)
+                pix_to_ytan = fitter(fit_model, np.arange(0, ystop, ystep), y_tan_array)
 
             # append all ra and dec values to use later to find min and max
             # ra and dec
@@ -211,16 +215,20 @@ class ResampleSpecData:
         all_dec = np.hstack(all_dec_slit)
         all_wave = np.hstack(all_wavelength)
         all_wave = all_wave[~np.isnan(all_wave)]
-        all_wave = np.sort(all_wave,axis=None)
+        all_wave = np.sort(all_wave, axis=None)
         # Tabular interpolation model, pixels -> lambda
         wavelength_array = np.unique(all_wave)
         # Check if the data is MIRI LRS FIXED Slit. If it is then
         # the wavelength array needs to be flipped so that the resampled
         # dispersion direction matches the disperion direction on the detector.
-        if self.input_models[0].meta.exposure.type == 'MIR_LRS-FIXEDSLIT' :
-            wavelength_array = np.flip(wavelength_array,axis=None)
+        if self.input_models[0].meta.exposure.type == 'MIR_LRS-FIXEDSLIT':
+            wavelength_array = np.flip(wavelength_array, axis=None)
 
-        pix_to_wavelength = Tabular1D(lookup_table=wavelength_array,
+        step = 1 / self.pscale_ratio
+        stop = wavelength_array.shape[0] / self.pscale_ratio
+        points = np.arange(0, stop, step)
+        pix_to_wavelength = Tabular1D(points=points,
+                                      lookup_table=wavelength_array,
                                       bounds_error=False, fill_value=None,
                                       name='pix2wavelength')
 
@@ -229,7 +237,7 @@ class ResampleSpecData:
         # points and lookup_table need to be reversed in the inverse transform
         # for scipy.interpolate to work properly
         points = wavelength_array
-        lookup_table = np.arange(wavelength_array.shape[0])
+        lookup_table = np.arange(0, stop, step)
 
         if not np.all(np.diff(wavelength_array) > 0):
             points = points[::-1]
@@ -305,15 +313,14 @@ class ResampleSpecData:
 
         # compute the output array size in WCS axes order, i.e. (x, y)
         output_array_size = [0, 0]
-        output_array_size[spectral_axis] = len(wavelength_array)
-        output_array_size[spatial_axis] = x_size
+        output_array_size[spectral_axis] = np.int(np.ceil(len(wavelength_array) / self.pscale_ratio))
+        output_array_size[spatial_axis] = np.int(np.ceil(x_size / self.pscale_ratio))
         # turn the size into a numpy shape in (y, x) order
         self.data_size = tuple(output_array_size[::-1])
         bounding_box = resample_utils.wcs_bbox_from_shape(self.data_size)
         output_wcs.bounding_box = bounding_box
 
         return output_wcs
-
 
     def blend_output_metadata(self, output_model):
         """Create new output metadata based on blending all input metadata."""

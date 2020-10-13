@@ -189,14 +189,13 @@ class ResampleStep(Step):
 
         return kwargs
 
-    @classmethod
-    def _set_spec_defaults(cls):
+    def _set_spec_defaults(self):
         """NIRSpec currently has no default drizpars reference file, so default
         drizzle parameters are not set properly.  This method sets them.
 
         Remove this class method when a drizpars reffile is delivered.
         """
-        configspec = cls.load_spec_file()
+        configspec = self.load_spec_file()
         config = ConfigObj(configspec=configspec)
         if config.validate(Validator()):
             kwargs = config.dict()
@@ -212,9 +211,11 @@ class ResampleStep(Step):
             kwargs['fillval'] = 'INDEF'
         if kwargs['weight_type'] is None:
             kwargs['weight_type'] = 'exptime'
+        kwargs['pscale_ratio'] = self.pixel_scale_ratio
+        kwargs.pop('pixel_scale_ratio')
 
         for k,v in kwargs.items():
-            if k in ['pixfrac', 'kernel', 'fillval', 'weight_type']:
+            if k in ['pixfrac', 'kernel', 'fillval', 'weight_type', 'pscale_ratio']:
                 log.info('  setting: %s=%s', k, repr(v))
 
         return kwargs
