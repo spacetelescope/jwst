@@ -683,7 +683,7 @@ def setup_inputs(ngroups=10, readnoise=10, nints=1,
     pixdq = np.zeros(shape=(nrows, ncols), dtype= np.float64)
     read_noise = np.full((nrows, ncols), readnoise, dtype=np.float64)
     gdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.int32)
-    int_times = np.zeros((nints,7))
+    int_times = np.zeros((nints,))
     model1 = RampModel(data=data, err=err, pixeldq=pixdq, groupdq=gdq, int_times=int_times)
     model1.meta.instrument.name='MIRI'
     model1.meta.instrument.detector='MIRIMAGE'
