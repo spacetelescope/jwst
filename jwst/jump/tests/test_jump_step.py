@@ -245,3 +245,35 @@ def test_two_group_integration(generate_miri_reffiles, max_cores, setup_inputs):
     out_model = JumpStep.call(model1, override_gain=override_gain,
                               override_readnoise=override_readnoise, maximum_cores=max_cores)
     assert(out_model.meta.cal_step.jump == 'SKIPPED')
+
+
+def test_four_group_integration(generate_miri_reffiles, setup_inputs):
+    override_gain, override_readnoise = generate_miri_reffiles
+    grouptime = 3.0
+    ingain = 6
+    inreadnoise = np.float64(7)
+    ngroups = 4
+    xsize = 103
+    ysize = 102
+    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
+                                                          nrows=ysize, ncols=xsize,
+                                                          gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
+    out_model = JumpStep.call(model1, override_gain=override_gain,
+                              override_readnoise=override_readnoise, maximum_cores='none')
+    assert(out_model.meta.cal_step.jump == 'SKIPPED')
+
+
+def test_five_group_integration(generate_miri_reffiles, setup_inputs):
+    override_gain, override_readnoise = generate_miri_reffiles
+    grouptime = 3.0
+    ingain = 6
+    inreadnoise = np.float64(7)
+    ngroups = 5
+    xsize = 103
+    ysize = 102
+    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
+                                                          nrows=ysize, ncols=xsize,
+                                                          gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
+    out_model = JumpStep.call(model1, override_gain=override_gain,
+                                  override_readnoise=override_readnoise, maximum_cores='none')
+    assert (out_model.meta.cal_step.jump == 'COMPLETE')

@@ -112,9 +112,8 @@ def find_crs(data, group_dq, read_noise, rej_threshold, nframes, flag_4_neighbor
         all_ratios[integration] = ratio
 
         # get the rows and columns of pixels of all pixels
-        # This seems like an obtuse way to set row and column.
         row, col = np.where(number_sat_groups >= 0)
-        # Get the group index for each pixel of the largest non-saturated group, assuming the indicies are sorted.
+        # Get the group index for each pixel of the largest non-saturated group, assuming the indices are sorted.
         # 2 is subtracted from ngroups because we are using differences and there is one less difference than the
         # number of groups.
         # This is a 2-D array.
@@ -125,7 +124,6 @@ def find_crs(data, group_dq, read_noise, rej_threshold, nframes, flag_4_neighbor
         # Reshape the list of max indicies to be a 2-day array
         max_index1 = np.reshape(max_index1d, (nrows, ncols))
 
-        #Is this redundant? Are r and c different than row and column?
         r, c = np.indices(max_index1.shape)
         # Get the row and column indices of pixels whose largest non-saturated ratio is above the threshold
         row1, col1 = np.where(ratio[r, c, max_index1] > rej_threshold)
@@ -174,8 +172,6 @@ def find_crs(data, group_dq, read_noise, rej_threshold, nframes, flag_4_neighbor
             if not new_CR_found:  # the while loop ran at least one time
                 median_slopes[integration, row1[j], col1[j]] = pixel_med_diff
 
-        # Next pixel with an outlier (j loop)
-    # Next integration (integration loop)
     if flag_4_neighbors: # We need to flag the neighbors of jumps
 
         cr_int, cr_group, cr_row, cr_col = np.where(np.bitwise_and(gdq, dqflags.group['JUMP_DET']))

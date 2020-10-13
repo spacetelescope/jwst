@@ -13,8 +13,8 @@ or residual non-linearities or noise can lead to the false detection of jumps in
 due to departure from linearity.
 
 The ``jump`` step will automatically skip execution if the input data contain fewer
-than 3 groups per integration, because it's impossible to detect jumps with
-only 1 or 2 groups.
+than 5 groups per integration, because the baseline algorthim requires four first
+differences to work.
 
 Algorithm
 ---------

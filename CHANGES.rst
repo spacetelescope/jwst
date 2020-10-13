@@ -45,6 +45,12 @@ flatfield
 
 - Updated branch logic to handle NRS_LAMP exposures as spectroscopic. [#5370]
 
+jump
+----
+
+- Fixed bug in the minimum number of groups per integration for the jump
+  detection step by changing it from 3 to 5. [#5376]
+
 master_background
 -----------------
 
@@ -115,8 +121,8 @@ flat_field
 
 - Implement applying the inverse operation. [#5302]
 
-master_backround
-----------------
+master_background
+-----------------
 
 - Create new step `MasterBackgroundNrsSlits` step to handle NIRSpec MOS data in `Spec2Pipeline` [#5317]
 
