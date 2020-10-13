@@ -34,6 +34,7 @@ class ResampleStep(Step):
         kernel = string(default='square')
         fillval = string(default='INDEF')
         weight_type = option('exptime', default='exptime')
+        pixel_scale_ratio = float(default=1.0) # Ratio in pixel scale between input and output images
         single = boolean(default=False)
         blendheaders = boolean(default=True)
         allowed_memory = float(default=None)  # Fraction of memory to use for the combined image.
@@ -70,8 +71,9 @@ class ResampleStep(Step):
             self.log.info("No NIRSpec DIRZPARS reffile")
             kwargs = self._set_spec_defaults()
 
-        # Call the resampling routine
         kwargs['allowed_memory'] = self.allowed_memory
+
+        # Call the resampling routine
         resamp = resample.ResampleData(input_models, **kwargs)
         resamp.do_drizzle()
 
@@ -144,7 +146,8 @@ class ResampleStep(Step):
             pixfrac=self.pixfrac,
             kernel=self.kernel,
             fillval=self.fillval,
-            wht_type=self.weight_type
+            wht_type=self.weight_type,
+            pscale_ratio=self.pixel_scale_ratio,
             )
 
         # For parameters that are set in drizpars table but not set by the

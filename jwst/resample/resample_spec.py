@@ -17,7 +17,6 @@ from . import gwcs_drizzle
 from . import resample_utils
 from ..model_blender import blendmeta
 
-CRBIT = np.uint32(datamodels.dqflags.pixel['JUMP_DET'])
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -45,7 +44,9 @@ class ResampleSpecData:
          (eventually) a record of metadata from all input models.
     """
 
-    def __init__(self, input_models, output=None, **pars):
+    def __init__(self, input_models, output=None, single=False,
+        blendheaders=False, pixfrac=1.0, kernel="square", fillval=0,
+        weight_type="exptime", good_bits=0, pscale_ratio=1.0, **kwargs):
         """
         Parameters
         ----------
@@ -59,8 +60,15 @@ class ResampleSpecData:
         if output is None:
             output = input_models.meta.resample.output
 
-        self.drizpars = pars
-        self.pscale_ratio = 1.
+        self.pscale_ratio = pscale_ratio
+        self.single = single
+        self.blendheaders = blendheaders
+        self.pixfrac = pixfrac
+        self.kernel = kernel
+        self.fillval = fillval
+        self.weight_type = weight_type
+        self.good_bits = good_bits
+
         self.blank_output = None
 
         # Define output WCS based on all inputs, including a reference WCS
@@ -325,7 +333,7 @@ class ResampleSpecData:
 
         # Look for input configuration parameter telling the code to run
         # in single-drizzle mode (mosaic all detectors in a single observation?)
-        if self.drizpars['single']:
+        if self.single:
             driz_outputs = ['{0}_resamp.fits'.format(g) for g in self.input_models.group_names]
             model_groups = self.input_models.models_grouped
             group_exptime = []
@@ -351,7 +359,7 @@ class ResampleSpecData:
             output_model.meta.wcs.bounding_box = bb
             output_model.meta.filename = obs_product
 
-            if self.drizpars['blendheaders']:
+            if self.blendheaders:
                 self.blend_output_metadata(output_model)
 
             exposure_times = {'start': [], 'end': []}
@@ -361,17 +369,17 @@ class ResampleSpecData:
             # Initialize the output with the wcs
             driz = gwcs_drizzle.GWCSDrizzle(output_model,
                                 outwcs=outwcs,
-                                single=self.drizpars['single'],
-                                pixfrac=self.drizpars['pixfrac'],
-                                kernel=self.drizpars['kernel'],
-                                fillval=self.drizpars['fillval'])
+                                single=self.single,
+                                pixfrac=self.pixfrac,
+                                kernel=self.kernel,
+                                fillval=self.fillval)
 
             for n, img in enumerate(group):
                 exposure_times['start'].append(img.meta.exposure.start_time)
                 exposure_times['end'].append(img.meta.exposure.end_time)
                 inwht = resample_utils.build_driz_weight(img,
-                    weight_type=self.drizpars['weight_type'],
-                    good_bits=self.drizpars['good_bits'])
+                    weight_type=self.weight_type,
+                    good_bits=self.good_bits)
 
                 if hasattr(img, 'name'):
                     log.info('Resampling slit {} {}'.format(img.name, self.data_size))
@@ -381,7 +389,6 @@ class ResampleSpecData:
                 in_wcs = img.meta.wcs
                 driz.add_image(img.data, in_wcs, inwht=inwht,
                                expin=img.meta.exposure.exposure_time,
-                               pscale_ratio=self.pscale_ratio,
                                xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
 
             # Update some basic exposure time values based on all the inputs
@@ -389,7 +396,7 @@ class ResampleSpecData:
             output_model.meta.exposure.start_time = min(exposure_times['start'])
             output_model.meta.exposure.end_time = max(exposure_times['end'])
             output_model.meta.resample.product_exposure_time = texptime
-            output_model.meta.resample.weight_type = self.drizpars['weight_type']
+            output_model.meta.resample.weight_type = self.weight_type
             output_model.meta.resample.pointings = pointings
 
             # Update slit info on the output_model. This is needed

@@ -196,13 +196,10 @@ class GWCSDrizzle:
         wt_scl = 1.0  # hard-coded for JWST count-rate data
         self.increment_id()
 
-        dodrizzle(insci, inwcs, inwht, self.outwcs,
-                            self.outsci, self.outwht, self.outcon,
-                            expin, in_units, wt_scl,
-                            pscale_ratio=pscale_ratio, uniqid=self.uniqid,
-                            xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax,
-                            pixfrac=self.pixfrac, kernel=self.kernel,
-                            fillval=self.fillval)
+        dodrizzle(insci, inwcs, inwht, self.outwcs, self.outsci, self.outwht,
+                  self.outcon, expin, in_units, wt_scl, uniqid=self.uniqid,
+                  xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax,
+                  pixfrac=self.pixfrac, kernel=self.kernel, fillval=self.fillval)
 
     def blot_image(self, blotwcs, interp='poly5', sinscl=1.0):
         """
@@ -258,11 +255,8 @@ class GWCSDrizzle:
         self.uniqid += 1
 
 
-def dodrizzle(insci, input_wcs, inwht,
-              output_wcs, outsci, outwht, outcon,
-              expin, in_units, wt_scl,
-              pscale_ratio=1.0, uniqid=1,
-              xmin=0, xmax=0, ymin=0, ymax=0,
+def dodrizzle(insci, input_wcs, inwht, output_wcs, outsci, outwht, outcon,
+              expin, in_units, wt_scl, uniqid=1, xmin=0, xmax=0, ymin=0, ymax=0,
               pixfrac=1.0, kernel='square', fillval="INDEF"):
     """
     Low level routine for performing 'drizzle' operation on one image.
@@ -313,12 +307,6 @@ def dodrizzle(insci, input_wcs, inwht,
 
     wt_scl : float
         A scaling factor applied to the pixel by pixel weighting.
-
-    wcslin_pscale : float, optional
-        The pixel scale of the input image. Conceptually, this is the
-        linear dimension of a side of a pixel in the input image, but it
-        is not limited to this and can be set to change how the drizzling
-        algorithm operates.
 
     uniqid : int, optional
         The id number of the input image. Should be one the first time
@@ -445,7 +433,6 @@ def dodrizzle(insci, input_wcs, inwht,
         uniqid=uniqid,
         xmin=xmin, xmax=xmax,
         ymin=ymin, ymax=ymax,
-        scale=pscale_ratio,
         pixfrac=pixfrac,
         kernel=kernel,
         in_units=in_units,
