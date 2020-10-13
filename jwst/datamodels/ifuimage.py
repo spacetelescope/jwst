@@ -23,9 +23,6 @@ class IFUImageModel(DataModel):
     zeroframe : numpy float32 array
          Zeroframe array
 
-    area : numpy float32 array
-         Pixel area map array
-
     var_poisson : numpy float32 array
          variance due to poisson noise
 
@@ -35,8 +32,14 @@ class IFUImageModel(DataModel):
     wavelength : numpy float32 array
          wavelength
 
-    pathloss : numpy float32 array
-         pathloss correction
+    pathloss_point : numpy float32 array
+         pathloss correction for point source
+
+    pathloss_uniform : numpy float32 array
+         pathloss correction for uniform source
+
+    area : numpy float32 array
+         Pixel area map array
     """
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/ifuimage.schema"
 
@@ -47,12 +50,16 @@ class IFUImageModel(DataModel):
             self.data = init.data
             self.dq = init.dq
             self.err = init.err
-            if init.hasattr('area'):
-                self.area = init.area
             if init.hasattr('var_poisson'):
                 self.var_poisson = init.var_poisson
             if init.hasattr('var_rnoise'):
                 self.var_rnoise = init.var_rnoise
+            if init.hasattr('area'):
+                self.area = init.area
+            if init.hasattr('pathloss_point'):
+                self.pathloss_point = init.pathloss_point
+            if init.hasattr('pathloss_uniform'):
+                self.pathloss_uniform = init.pathloss_uniform
             return
 
         super(IFUImageModel, self).__init__(init=init, **kwargs)

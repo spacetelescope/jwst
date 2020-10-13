@@ -3,7 +3,6 @@
 from functools import partial
 import numpy as np
 
-from stsci.image import median
 from astropy.stats import sigma_clip
 from scipy import ndimage
 from drizzle.cdrizzle import tblot
@@ -194,11 +193,10 @@ class OutlierDetection:
             for model in drizzled_models:
                 if save_intermediate_results:
                     log.info("Writing out resampled exposures...")
-                    self.save_model(
-                        model,
-                        output_file=model.meta.filename,
-                        suffix=self.resample_suffix
-                    )
+                    model_output_path = self.make_output_path(
+                        basepath=model.meta.filename,
+                        suffix='outlier_i2d')
+                    model.save(model_output_path)
         else:
             drizzled_models = self.input_models
             for i in range(len(self.input_models)):
@@ -262,11 +260,9 @@ class OutlierDetection:
         - type of combination: fixed to 'median'
         - 'minmed' not implemented as an option
         """
-        resampled_sci = [i.data for i in resampled_models]
+        resampled_sci = [i.data.copy() for i in resampled_models]
         resampled_weight = [i.wht for i in resampled_models]
 
-        nlow = self.outlierpars.get('nlow', 0)
-        nhigh = self.outlierpars.get('nhigh', 0)
         maskpt = self.outlierpars.get('maskpt', 0.7)
 
         # Create a mask for each input image, masking out areas where there is
@@ -289,11 +285,17 @@ class OutlierDetection:
                 np.sum(badmask) / len(weight.flat) * 100))
             badmasks.append(badmask)
 
-        # Compute median of stack of images using `badmasks` to remove
-        # low-weight values.  In the future we should use a masked array
-        # and np.median
-        median_image = median(resampled_sci, nlow=nlow, nhigh=nhigh,
-                              badmasks=badmasks)
+        # Fill resampled_sci array with nan's where mask values are True
+        #pdb.set_trace()
+        for f1, f2 in zip(resampled_sci, badmasks):
+            for elem1, elem2 in zip(f1, f2):
+                elem1[elem2] = np.nan
+
+        # For a of stack of images with "bad" data replaced with Nan
+        # use np.nanmedian to compute the median.
+        log.info("Generating median from {} images".format(len(resampled_sci)))
+        median_image = np.nanmedian(resampled_sci, axis = 0)
+        del resampled_sci
 
         return median_image
 
@@ -348,7 +350,9 @@ class OutlierDetection:
         """
 
         for image, blot in zip(self.input_models, blot_models):
-            flag_cr(image, blot, **self.outlierpars)
+            image_copy = image.copy()
+            flag_cr(image_copy, blot, **self.outlierpars)
+            image.dq = image_copy.dq.copy()
 
         if self.converted:
             # Make sure actual input gets updated with new results
@@ -388,12 +392,13 @@ def flag_cr(sci_image, blot_image, **pars):
     snr1, snr2 = [float(val) for val in pars.get('snr', '5.0 4.0').split()]
     scl1, scl2 = [float(val) for val in pars.get('scale', '1.2 0.7').split()]
 
-    # Get background level if it has been subtracted
-    if (sci_image.meta.background.subtracted is True and
+    # Get background level of science data if it has not been subtracted, so it
+    # can be added into the level of the blotted data, which has been
+    # background-subtracted
+    if (sci_image.meta.background.subtracted is False and
         sci_image.meta.background.level is not None):
         subtracted_background = sci_image.meta.background.level
-        log.debug(f"Including subtracted background ({subtracted_background}) "
-            "back into blotted image")
+        log.debug(f"Adding background level {subtracted_background} to blotted image")
     else:
         # No subtracted background.  Allow user-set value, which defaults to 0
         subtracted_background = backg
@@ -416,17 +421,14 @@ def flag_cr(sci_image, blot_image, **pars):
     #
     # Model the noise and create a CR mask
     diff_noise = np.abs(sci_data - blot_data)
-    # ta = np.sqrt(np.abs(blot_data + subtracted_background) + rn ** 2)
     ta = np.sqrt(np.abs(blot_data + subtracted_background) + err_data ** 2)
     t2 = scl1 * blot_deriv + snr1 * ta
-
     tmp1 = np.logical_not(np.greater(diff_noise, t2))
 
     # Convolve mask with 3x3 kernel
     kernel = np.ones((3, 3), dtype=np.uint8)
     tmp2 = np.zeros(tmp1.shape, dtype=np.int32)
     ndimage.convolve(tmp1, kernel, output=tmp2, mode='nearest', cval=0)
-
     #
     #
     #    COMPUTATION PART II
@@ -497,8 +499,8 @@ def flag_cr(sci_image, blot_image, **pars):
     log.debug("Pixels in input DQ: {}".format(count_sci))
     log.debug("Pixels in cr_mask:  {}".format(count_cr))
 
-    # Update the DQ array in the input image in place
-    np.bitwise_or(sci_image.dq, np.invert(cr_mask) * CRBIT, sci_image.dq)
+    # Update the DQ array in the input image.
+    sci_image.dq = np.bitwise_or(sci_image.dq, np.invert(cr_mask) * CRBIT)
 
 
 def abs_deriv(array):
@@ -556,13 +558,16 @@ def gwcs_blot(median_model, blot_img, interp='poly5', sinscl=1.0):
     log.debug("Pixmap shape: {}".format(pixmap[:, :, 0].shape))
     log.debug("Sci shape: {}".format(blot_img.data.shape))
 
-    # median_model_pscale = median_model.meta.wcsinfo.cdelt1
-    # blot_pscale = blot_img.meta.wcsinfo.cdelt1
-
     pix_ratio = 1
     log.info('Blotting {} <-- {}'.format(blot_img.data.shape, median_model.data.shape))
 
     outsci = np.zeros(blot_img.shape, dtype=np.float32)
+
+    # Currently tblot cannot handle nans in the pixmap, so we need to give some
+    # other value.  -1 is not optimal and may have side effects.  But this is
+    # what we've been doing up until now, so more investigation is needed
+    # before a change is made.  Preferably, fix tblot in drizzle.
+    pixmap[np.isnan(pixmap)] = -1
     tblot(median_model.data, pixmap, outsci, scale=pix_ratio, kscale=1.0,
                    interp=interp, exptime=1.0, misval=0.0, sinscl=sinscl)
 

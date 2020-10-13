@@ -7,6 +7,7 @@ import photutils
 from photutils import CircularAperture, CircularAnnulus, \
                       RectangularAperture, aperture_photometry
 
+from .apply_apcorr import select_apcorr
 from .. import datamodels
 from ..datamodels import dqflags
 from . import spec_wcs
@@ -14,7 +15,7 @@ from . import spec_wcs
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-# These values are used to indicate whether the input reference file
+# These values are used to indicate whether the input extract1d reference file
 # (if any) is JSON or IMAGE.
 FILE_TYPE_JSON = "JSON"
 FILE_TYPE_IMAGE = "IMAGE"
@@ -27,7 +28,8 @@ OFFSET_NOT_ASSIGNED_YET = "not assigned yet"
 # between the target and any point in the image; used by locn_from_wcs().
 HUGE_DIST = 1.e10
 
-def ifu_extract1d(input_model, ref_dict, source_type, subtract_background):
+
+def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcorr_ref_model=None):
     """Extract a 1-D spectrum from an IFU cube.
 
     Parameters
@@ -36,7 +38,7 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background):
         The input model.
 
     ref_dict : dict
-        The contents of the reference file.
+        The contents of the extract1d reference file.
 
     source_type : string
         "POINT" or "EXTENDED"
@@ -46,6 +48,9 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background):
         If None, the value in the extract_1d reference file will be used.
         If not None, this parameter overrides the value in the
         extract_1d reference file.
+
+    apcorr_ref_model : ~.fits.FITS_rec or None
+        Aperture correction table.
 
     Returns
     -------
@@ -63,15 +68,11 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background):
     if source_type is not None:
         source_type = source_type.upper()
     if source_type != 'POINT' and source_type != 'EXTENDED':
-        if instrument == 'MIRI':
-            default_source_type = 'EXTENDED'
-        else:
-            default_source_type = 'POINT'
-        log.warning("source_type was '%s', setting it to '%s'.",
-                    source_type, default_source_type)
+        default_source_type = 'EXTENDED'
+        log.warning(f"Source type was '{source_type}'; setting to '{default_source_type}'.")
         source_type = default_source_type
     else:
-        log.info("source_type = %s", source_type)
+        log.info(f"Source type = {source_type}")
 
     # The input units will normally be MJy / sr, but for NIRSpec point-source
     # spectra the units will be MJy.
@@ -94,26 +95,32 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background):
 
     if extract_params:
         if extract_params['ref_file_type'] == FILE_TYPE_JSON:
-            (ra, dec, wavelength, temp_flux, background, npixels, dq) = \
+            (ra, dec, wavelength, temp_flux, background, npixels, dq, npixels_bkg) = \
                     extract_ifu(input_model, source_type, extract_params)
         else:                                   # FILE_TYPE_IMAGE
-            (ra, dec, wavelength, temp_flux, background, npixels, dq) = \
+            (ra, dec, wavelength, temp_flux, background, npixels, dq, npixels_bkg) = \
                     image_extract_ifu(input_model, source_type, extract_params)
     else:
         log.critical('Missing extraction parameters.')
         raise ValueError('Missing extraction parameters.')
 
-    # Convert the sum to an average, for surface brightness.
     npixels_temp = np.where(npixels > 0., npixels, 1.)
+    npixels_bkg_temp = np.where(npixels_bkg > 0., npixels_bkg, 1.)
+
+    # Convert the sum to an average, for surface brightness.
     surf_bright = temp_flux / npixels_temp
-    background /= npixels_temp
+    background /= npixels_bkg_temp
+
     del npixels_temp
+    del npixels_bkg_temp
 
     pixel_solid_angle = input_model.meta.photometry.pixelarea_steradians
     if pixel_solid_angle is None:
         log.warning("Pixel area (solid angle) is not populated; "
                     "the flux will not be correct.")
         pixel_solid_angle = 1.
+
+    print(input_units_are_megajanskys,pixel_solid_angle)
     if input_units_are_megajanskys:
         # Convert flux from MJy to Jy, and convert background to MJy / sr.
         flux = temp_flux * 1.e6
@@ -146,6 +153,22 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background):
     spec.slit_dec = dec
     if slitname is not None and slitname != "ANY":
         spec.name = slitname
+
+    if source_type == 'POINT' and apcorr_ref_model is not None:
+        log.info('Applying Aperture correction.')
+
+        if instrument == 'NIRSPEC':
+            wl = np.median(wavelength)
+        else:
+            wl = wavelength.min()
+
+        apcorr = select_apcorr(input_model)(
+            input_model, apcorr_ref_model.apcorr_table, apcorr_ref_model.sizeunit, location=(ra, dec, wl)
+        )
+
+        print(apcorr)
+        apcorr.apply(spec.spec_table)
+
     output_model.spec.append(spec)
 
     # See output_model.spec[0].meta.wcs instead.
@@ -160,7 +183,7 @@ def get_extract_parameters(ref_dict, slitname):
     Parameters
     ----------
     ref_dict : dict
-        The contents of the reference file.
+        The contents of the extract1d reference file.
 
     slitname : str
         The name of the slit, or "ANY".
@@ -214,7 +237,7 @@ def get_extract_parameters(ref_dict, slitname):
     else:
         log.error("Reference file type %s not recognized",
                   ref_dict['ref_file_type'])
-        raise RuntimeError("Reference file must be JSON or a FITS image.")
+        raise RuntimeError("extract1d reference file must be JSON or a FITS image.")
 
     return extract_params
 
@@ -262,9 +285,15 @@ def extract_ifu(input_model, source_type, extract_params):
 
     dq : ndarray, 1-D, uint32
         The data quality array.
+
+    npixels_annulus : ndarray, 1-D, float64
+        For each slice, this is the number of pixels that were added
+        together to get `temp_flux` for an annulus region.
     """
 
     data = input_model.data
+    weightmap = input_model.weightmap
+
     shape = data.shape
     if len(shape) != 3:
         log.error("Expected a 3-D IFU cube; dimension is %d.", len(shape))
@@ -276,6 +305,7 @@ def extract_ifu(input_model, source_type, extract_params):
     temp_flux = np.zeros(shape[0], dtype=np.float64)
     background = np.zeros(shape[0], dtype=np.float64)
     npixels = np.ones(shape[0], dtype=np.float64)
+    npixels_annulus = np.ones(shape[0], dtype=np.float64)
 
     dq = np.zeros(shape[0], dtype=np.uint32)
 
@@ -287,7 +317,7 @@ def extract_ifu(input_model, source_type, extract_params):
         locn = locn_from_wcs(input_model, ra_targ, dec_targ)
         if locn is None or np.isnan(locn[0]):
             log.warning("Couldn't determine pixel location from WCS, so "
-                        "nod/dither correction will not be applied.")
+                        "source offset correction will not be applied.")
             x_center = extract_params['x_center']
             y_center = extract_params['y_center']
             if x_center is None:
@@ -308,6 +338,7 @@ def extract_ifu(input_model, source_type, extract_params):
     subpixels = extract_params['subpixels']
 
     subtract_background = extract_params['subtract_background']
+
     smaller_axis = float(min(shape[-2], shape[-1]))     # for defaults
     radius = None
     inner_bkg = None
@@ -376,56 +407,79 @@ def extract_ifu(input_model, source_type, extract_params):
     else:
         annulus = None
 
-    # Compute the area of the aperture and possibly also of the annulus.
-    normalization = 1.
-    temp = np.ones(shape[-2:], dtype=np.float64)
-    phot_table = aperture_photometry(temp, aperture,
-                                     method=method, subpixels=subpixels)
-    aperture_area = float(phot_table['aperture_sum'][0])
-    if LooseVersion(photutils.__version__) >= '0.7':
-        log.debug("aperture.area = %g; aperture_area = %g",
-                  aperture.area, aperture_area)
-    else:
-        log.debug("aperture.area() = %g; aperture_area = %g",
-                  aperture.area(), aperture_area)
-
-    if subtract_background and annulus is not None:
-        # Compute the area of the annulus.
-        phot_table = aperture_photometry(temp, annulus,
-                                         method=method, subpixels=subpixels)
-        annulus_area = float(phot_table['aperture_sum'][0])
-        if LooseVersion(photutils.__version__) >= '0.7':
-            log.debug("annulus.area = %g; annulus_area = %g",
-                      annulus.area, annulus_area)
-        else:
-            log.debug("annulus.area() = %g; annulus_area = %g",
-                      annulus.area(), annulus_area)
-        if annulus_area > 0.:
-            normalization = aperture_area / annulus_area
-        else:
-            log.warning("Background annulus has no area, so background "
-                        "subtraction will be turned off.")
-            subtract_background = False
-    del temp
-
-    npixels[:] = aperture_area
     for k in range(shape[0]):
+        subtract_background_plane = subtract_background
+        # Compute the area of the aperture and possibly also of the annulus.
+        # for each wavelength bin (taking into account empty spaxels)
+        normalization = 1.
+        temp = weightmap[k,:,:]
+        temp[temp>1] = 1
+        aperture_area = 0
+        annulus_area = 0
+
+        # aperture_photometry - using weight map
+        phot_table = aperture_photometry(temp, aperture,
+                                         method=method, subpixels=subpixels)
+
+        aperture_area = float(phot_table['aperture_sum'][0])
+
+        if LooseVersion(photutils.__version__) >= '0.7':
+            log.debug("aperture.area = %g; aperture_area = %g",
+                      aperture.area, aperture_area)
+        else:
+            log.debug("aperture.area() = %g; aperture_area = %g",
+                      aperture.area(), aperture_area)
+
+        if(aperture_area ==0 and aperture.area > 0):
+            aperture_area = aperture.area
+
+        if subtract_background and annulus is not None:
+            # Compute the area of the annulus.
+            phot_table = aperture_photometry(temp, annulus,
+                                             method=method, subpixels=subpixels)
+            annulus_area = float(phot_table['aperture_sum'][0])
+
+            if LooseVersion(photutils.__version__) >= '0.7':
+                log.debug("annulus.area = %g; annulus_area = %g",
+                          annulus.area, annulus_area)
+            else:
+                log.debug("annulus.area() = %g; annulus_area = %g",
+                          annulus.area(), annulus_area)
+
+            if(annulus_area ==0 and annulus.area > 0):
+                annulus_area = annulus.area
+
+            if annulus_area > 0.:
+                normalization = aperture_area / annulus_area
+            else:
+                log.warning("Background annulus has no area, so background "
+                            "subtraction will be turned off. %g" ,k)
+                subtract_background_plane = False
+        del temp
+
+        npixels[k] = aperture_area
+        npixels_annulus[k] = 0.0
+        if annulus is not None:
+            npixels_annulus[k] = annulus_area
+        # aperture_photometry - using data
+
         phot_table = aperture_photometry(data[k, :, :], aperture,
                                          method=method, subpixels=subpixels)
         temp_flux[k] = float(phot_table['aperture_sum'][0])
-        if subtract_background:
+        if subtract_background_plane:
             bkg_table = aperture_photometry(data[k, :, :], annulus,
                                             method=method, subpixels=subpixels)
             background[k] = float(bkg_table['aperture_sum'][0])
             temp_flux[k] = temp_flux[k] - background[k] * normalization
 
+
     # Check for NaNs in the wavelength array, flag them in the dq array,
     # and truncate the arrays if NaNs are found at endpoints (unless the
     # entire array is NaN).
-    (wavelength, temp_flux, background, npixels, dq) = \
-        nans_in_wavelength(wavelength, temp_flux, background, npixels, dq)
+    (wavelength, temp_flux, background, npixels, dq, npixels_annulus) = \
+        nans_in_wavelength(wavelength, temp_flux, background, npixels, dq, npixels_annulus)
 
-    return (ra, dec, wavelength, temp_flux, background, npixels, dq)
+    return (ra, dec, wavelength, temp_flux, background, npixels, dq, npixels_annulus)
 
 
 def locn_from_wcs(input_model, ra_targ, dec_targ):
@@ -471,8 +525,8 @@ def locn_from_wcs(input_model, ra_targ, dec_targ):
         (j, i) = divmod(k, dist2.shape[1])      # y, x coordinates
 
         if i <= 0 or j <= 0 or i >= shape[-1] - 1 or j >= shape[-2] - 1:
-            log.warning("WCS implies the target is at or beyond the edge "
-                        "of the image; this location will not be used.")
+            log.warning("WCS implies the target is beyond the edge of the image")
+            log.warning("This location will not be used")
             locn = None
         else:
             locn = (i, j)                       # x, y coordinates
@@ -519,17 +573,20 @@ def celestial_to_cartesian(ra, dec):
 
 
 def image_extract_ifu(input_model, source_type, extract_params):
-    """Extraction using a reference image.
+    """Extraction using a extract1d reference image.
 
     Extended summary
     ----------------
     One of the requirements for this step is that for an extended target,
     the entire aperture is supposed to be extracted (with no background
-    subtraction).  It doesn't make any sense to use an image reference file
-    to extract the entire aperture; a trivially simple JSON reference file
+    subtraction).  It doesn't make any sense to use an image extract1d reference file
+    to extract the entire aperture; a trivially simple JSON extract1d reference file
     would do.  Therefore, we assume that if the user specified a reference
-    file in image format, the user actually wanted that reference file
+    file in image format, the user actually wanted that extract1d reference file
     to be used, so we will ignore the requirement in this case.
+    The IMAGE extract1d reference file should have pixels with avalue of 1 for the
+    source extraction region, 0 for pixels not to include in source or background,
+    and -1 for the background region.
 
     Parameters
     ----------
@@ -573,6 +630,10 @@ def image_extract_ifu(input_model, source_type, extract_params):
 
     dq : ndarray, 1-D, uint32
         The data quality array.
+
+    n_bkg : ndarray, 1-D, float64
+        For each slice, this is the number of pixels that were added
+        together to get background.
     """
 
     data = input_model.data
@@ -617,14 +678,14 @@ def image_extract_ifu(input_model, source_type, extract_params):
                  "based on TARG_RA and TARG_DEC.", locn[0], locn[1])
 
     # Use the centroid of mask_target as the point where the target
-    # would be without any nod/dither correction.
+    # would be without any source position correction.
     (y0, x0) = im_centroid(data, mask_target)
     log.debug("Target location based on reference image is X = %g, Y = %g",
               x0, y0)
 
     if locn is None or np.isnan(locn[0]):
         log.warning("Couldn't determine pixel location from WCS, so "
-                    "nod/dither correction will not be applied.")
+                    "source position correction will not be applied.")
     else:
         (x_center, y_center) = locn
         # Shift the reference image so it will be centered at locn.
@@ -651,19 +712,23 @@ def image_extract_ifu(input_model, source_type, extract_params):
 
     # Compute the number of pixels that were added together to get gross.
     normalization = 1.
-    temp = np.ones_like(data)
+
+    weightmap = input_model.weightmap
+    temp = weightmap
+    temp[temp>1] = 1
     npixels[:] = (temp * mask_target).sum(axis=2, dtype=np.float64).sum(axis=1)
+
     if mask_bkg is not None:
         n_bkg[:] = (temp * mask_bkg).sum(axis=2, dtype=np.float64).sum(axis=1)
         n_bkg = np.where(n_bkg <= 0., 1., n_bkg)
         normalization = npixels / n_bkg
     del temp
 
+
     # Extract the background.
     if mask_bkg is not None:
         background = (data * mask_bkg).sum(axis=2, dtype=np.float64).sum(axis=1)
-        background *= normalization
-        temp_flux = gross - background
+        temp_flux = gross - background * normalization
     else:
         background = np.zeros_like(gross)
         temp_flux = gross.copy()
@@ -686,10 +751,10 @@ def image_extract_ifu(input_model, source_type, extract_params):
     # Check for NaNs in the wavelength array, flag them in the dq array,
     # and truncate the arrays if NaNs are found at endpoints (unless the
     # entire array is NaN).
-    (wavelength, temp_flux, background, npixels, dq) = \
-        nans_in_wavelength(wavelength, temp_flux, background, npixels, dq)
+    (wavelength, temp_flux, background, npixels, dq, n_bkg) = \
+        nans_in_wavelength(wavelength, temp_flux, background, npixels, dq, n_bkg)
 
-    return (ra, dec, wavelength, temp_flux, background, npixels, dq)
+    return (ra, dec, wavelength, temp_flux, background, npixels, dq, n_bkg)
 
 
 def get_coordinates(input_model, x0, y0):
@@ -702,8 +767,8 @@ def get_coordinates(input_model, x0, y0):
 
     x0, y0 : float
         The pixel number at which the coordinates should be determined.
-        If the reference file is JSON format, this point will be the
-        nominal center of the image.  For an image reference file this
+        If the extract1d reference file is JSON format, this point will be the
+        nominal center of the image.  For an image extract1d reference file this
         will be the centroid of the pixels that were flagged as source.
 
     Returns
@@ -741,7 +806,7 @@ def get_coordinates(input_model, x0, y0):
     return (ra, dec, wavelength)
 
 
-def nans_in_wavelength(wavelength, flux, background, npixels, dq):
+def nans_in_wavelength(wavelength, flux, background, npixels, dq, npixels_annulus):
     """Check for NaNs in the wavelength array.
 
     If NaNs are found in the wavelength array, flag them in the dq array,
@@ -767,6 +832,10 @@ def nans_in_wavelength(wavelength, flux, background, npixels, dq):
     dq : ndarray, 1-D, uint32
         The data quality array.
 
+    npixels_annulus : ndarray, 1-D, float64
+        For each slice, this is the number of pixels that were added
+        together to get `flux` for the annulus region
+
     Returns
     -------
     wavelength : ndarray, 1-D, float64
@@ -778,19 +847,21 @@ def nans_in_wavelength(wavelength, flux, background, npixels, dq):
     npixels : ndarray, 1-D, float64
 
     dq : ndarray, 1-D, uint32
+
+    npixels_annulus : ndarray, 1-D, float64
     """
 
     nelem = np.size(wavelength)
     if nelem == 0:
         log.warning("Output arrays are empty!")
-        return (wavelength, flux, background, npixels, dq)
+        return (wavelength, flux, background, npixels, dq, npixels_annulus)
 
     nan_mask = np.isnan(wavelength)
     n_nan = nan_mask.sum(dtype=np.intp)
     if n_nan == nelem:
         log.warning("Wavelength array is all NaN!")
         dq = np.bitwise_or(dq[:], dqflags.pixel['DO_NOT_USE'])
-        return (wavelength, flux, background, npixels, dq)
+        return (wavelength, flux, background, npixels, dq, npixels_annulus)
 
     if n_nan > 0:
         log.warning("%d NaNs in wavelength array.", n_nan)
@@ -805,11 +876,12 @@ def nans_in_wavelength(wavelength, flux, background, npixels, dq):
                 flux = flux[slc]
                 background = background[slc]
                 npixels = npixels[slc]
+                npixels_annulus = npixels_annulus[slc]
                 dq = dq[slc]
                 log.info("Output arrays have been trimmed by %d elements",
                          n_trimmed)
 
-    return (wavelength, flux, background, npixels, dq)
+    return (wavelength, flux, background, npixels, dq, npixels_annulus)
 
 
 def separate_target_and_background(ref):
@@ -902,13 +974,13 @@ def im_centroid(data, mask_target):
 
 
 def shift_ref_image(mask, delta_y, delta_x, fill=0):
-    """Apply nod/dither offset to target or background for ref image.
+    """Apply source position offset to target or background for ref image.
 
     Parameters
     ----------
     mask : ndarray, 2-D or 3-D
         This is either the target mask or the background mask, which was
-        created from an image reference file.
+        created from an image extract1d reference file.
         It is assumed that all pixels in the science data are good.  If
         that is not correct, `shift_ref_image` may be called with a data
         quality array as the first argument, in order to obtain a shifted

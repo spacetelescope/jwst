@@ -4,13 +4,13 @@ from astropy import units as u
 from astropy import wcs
 from asdf.tests import helpers
 
-from .. import pointing
-from ...transforms import models
-from ...datamodels import ImageModel, fits_support
+from jwst.assign_wcs import pointing
+from jwst.transforms import models
+from jwst.datamodels import ImageModel, CubeModel, fits_support
 
 
-
-def _create_model_2d():
+@pytest.fixture
+def create_model_2d():
     im = ImageModel()
     im.meta.wcsinfo.crpix1 = 2.5
     im.meta.wcsinfo.crpix2 = 3
@@ -28,8 +28,23 @@ def _create_model_2d():
     return im
 
 
-def _create_model_3d():
-    im = _create_model_2d()
+@pytest.fixture
+def create_model_3d():
+    im = CubeModel()
+    im.meta.wcsinfo.crpix1 = 2.5
+    im.meta.wcsinfo.crpix2 = 3
+    im.meta.wcsinfo.crval1 = 5.6
+    im.meta.wcsinfo.crval2 = -72.3
+    im.meta.wcsinfo.wcsaxes = 2
+    im.meta.wcsinfo.cunit1 = 'deg'
+    im.meta.wcsinfo.cunit2 = 'deg'
+    im.meta.wcsinfo.ctype1 = 'RA---TAN'
+    im.meta.wcsinfo.ctype2 = 'DEC--TAN'
+    im.meta.wcsinfo.pc1_1 = 1.
+    im.meta.wcsinfo.pc1_2 = 0
+    im.meta.wcsinfo.pc2_1 = 0.
+    im.meta.wcsinfo.pc2_2 = 1.
+
     im.meta.wcsinfo.crpix3 = 1
     im.meta.wcsinfo.crval3 = 100
     im.meta.wcsinfo.wcsaxes = 3
@@ -83,12 +98,13 @@ def test_v23_to_sky():
     assert_allclose(radec, expected_ra_dec, atol=1e-10)
 
 
-def test_frame_from_model(tmpdir):
+def test_frame_from_model_3d(tmpdir, create_model_3d):
     """ Tests creating a frame from a data model. """
     # Test CompositeFrame initialization (celestial and spectral)
-    im = _create_model_3d()
+    im = create_model_3d
     frame = pointing.frame_from_model(im)
     radec, lam = frame.coordinates(1, 2, 3)
+
     assert_allclose(radec.spherical.lon.value, 1)
     assert_allclose(radec.spherical.lat.value, 2)
     u.allclose(lam, 3 * u.um)
@@ -97,25 +113,30 @@ def test_frame_from_model(tmpdir):
     im.meta.wcsinfo.ctype1 = 'ALPHA1A'
     im.meta.wcsinfo.ctype2 = 'BETA1A'
     frame = pointing.frame_from_model(im)
+
     assert frame.frames[1].name == 'ALPHA1A_BETA1A'
     assert frame.frames[1].axes_names == ('ALPHA1A', 'BETA1A')
 
     tree = {'frame': frame}
     helpers.assert_roundtrip_tree(tree, tmpdir)
 
+
+def test_frame_from_model_2d(tmpdir, create_model_2d):
+    """ Tests creating a frame from a data model. """
     # Test 2D spatial custom frame
-    im = _create_model_2d()
+    im = create_model_2d
     frame = pointing.frame_from_model(im)
+
     assert frame.name == "sky"
     assert frame.axes_names == ("RA", "DEC")
+
     tree = {'frame': frame}
     helpers.assert_roundtrip_tree(tree, tmpdir)
 
 
-@pytest.mark.filterwarnings("ignore: The WCS transformation has more axes")
-def test_create_fits_wcs(tmpdir):
-    """ Test GWCS vs FITS WCS results. """
-    im = _create_model_3d()
+def test_create_fitswcs(tmpdir, create_model_3d):
+    """GWCS from create_fitswcs function and astropy.wcs give same result"""
+    im = create_model_3d
     w3d = pointing.create_fitswcs(im)
     gra, gdec, glam = w3d(1, 1, 1)
 
@@ -124,6 +145,8 @@ def test_create_fits_wcs(tmpdir):
     w = wcs.WCS(hdu.header)
     wcel = w.sub(['celestial'])
     ra, dec = wcel.all_pix2world(1, 1, 0)
+
+    # Check that astropy.wcs.WCS and gwcs.WCS give same result
     assert_allclose((ra, dec), (gra, gdec))
 
     # test serialization

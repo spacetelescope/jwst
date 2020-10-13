@@ -512,6 +512,22 @@ class Asn_IFUGratingBkg(AsnMixin_AuxData, AsnMixin_BkgScience):
         # Check and continue initialization.
         super(Asn_IFUGratingBkg, self).__init__(*args, **kwargs)
 
+    @property
+    def dms_product_name(self):
+        """Define product name."""
+        target = self._get_target()
+
+        instrument = self._get_instrument()
+
+        product_name = 'jw{}-{}_{}_{}_{}'.format(
+            self.data['program'],
+            self.acid.id,
+            target,
+            instrument,
+            self._get_grating()
+        )
+        return product_name.lower()
+
 @RegistryMarker.rule
 class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_BkgScience):
 
@@ -734,6 +750,13 @@ class Asn_TSO(AsnMixin_Science):
             DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
+            ),
+            # Don't allow IFU exposures in tso3
+            Constraint(
+                [
+                    Constraint_IFU(),
+                ],
+                reduce=Constraint.notany
             ),
         ])
 

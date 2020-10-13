@@ -76,7 +76,7 @@ class DataSet():
     ----------
 
     """
-    def __init__(self, model):
+    def __init__(self, model, inverse=False, source_type=None, correction_pars=None):
         """
         Short Summary
         -------------
@@ -88,26 +88,53 @@ class DataSet():
         model : `~jwst.datamodels.DataModel`
             input Data Model object
 
+        inverse : boolean
+            Invert the math operations used to apply the corrections.
+
+        source_type : str or None
+            Force processing using the specified source type.
+
+        correction_pars : dict
+            Correction meta-data from a previous run.
         """
+        # Setup attributes necessary for calculation.
+        if correction_pars:
+            self.update(correction_pars['dataset'])
+        else:
+            self.band = None
+            if model.meta.instrument.band is not None:
+                self.band = model.meta.instrument.band.upper()
+            self.instrument = model.meta.instrument.name.upper()
+            self.detector = model.meta.instrument.detector.upper()
+            self.exptype = model.meta.exposure.type.upper()
+            self.filter = None
+            if model.meta.instrument.filter is not None:
+                self.filter = model.meta.instrument.filter.upper()
+            self.grating = None
+            if model.meta.instrument.grating is not None:
+                self.grating = model.meta.instrument.grating.upper()
+            self.order = None
+            if model.meta.get('wcsinfo.spectral_order') is not None:
+                self.order = model.meta.wcsinfo.spectral_order
+            self.pupil = None
+            if model.meta.instrument.pupil is not None:
+                self.pupil = model.meta.instrument.pupil.upper()
+            self.subarray = None
+            if model.meta.subarray.name is not None:
+                self.subarray = model.meta.subarray.name.upper()
+            correction_pars = dict()
+        correction_pars['dataset'] = self.attributes
+        self.correction_pars = correction_pars
+
+        # Initialize other non-correction pars attributes.
+        self.slitnum = -1
+        self.inverse = inverse
+        self.source_type = source_type
+        if self.source_type is None and model.meta.target.source_type is not None:
+            self.source_type = model.meta.target.source_type.upper()
+
         # Create a copy of the input model
         self.input = model.copy()
-
-        self.instrument = model.meta.instrument.name.upper()
-        self.detector = model.meta.instrument.detector.upper()
-        self.exptype = model.meta.exposure.type.upper()
-        self.filter = None
-        if model.meta.instrument.filter is not None:
-            self.filter = model.meta.instrument.filter.upper()
-        self.pupil = None
-        if model.meta.instrument.pupil is not None:
-            self.pupil = model.meta.instrument.pupil.upper()
-        self.grating = None
-        if model.meta.instrument.grating is not None:
-            self.grating = model.meta.instrument.grating.upper()
-        self.band = None
-        if model.meta.instrument.band is not None:
-            self.band = model.meta.instrument.band.upper()
-        self.slitnum = -1
 
         # Let the user know what we're working with
         log.info('Using instrument: %s', self.instrument)
@@ -121,6 +148,35 @@ class DataSet():
             log.info(' grating: %s', self.grating)
         if self.band is not None:
             log.info(' band: %s', self.band)
+
+    @property
+    def attributes(self):
+        """Retrieve DataSet attributes
+
+        Returns
+        -------
+        attributes : dict
+            A dict of `DataSet` attributes.
+        """
+        attributes = vars(self)
+
+        # Remove some attributes
+        for attribute in ['correction_pars', 'input', 'inverse', 'slitnum', 'source_type']:
+            if attribute in attributes:
+                del attributes[attribute]
+
+        return attributes
+
+    def update(self, attributes):
+        """Set DataSet attributes
+
+        Parameters
+        ----------
+        attributes : dict
+            The attributes to be set on DataSet
+        """
+        for key, value in attributes.items():
+            setattr(self, key, value)
 
     def calc_nirspec(self, ftab, area_fname):
         """
@@ -195,7 +251,6 @@ class DataSet():
 
                 # Get the conversion factor from the PHOTMJ column
                 conv_factor = tabdata['photmj']
-
                 # Populate the photometry keywords
                 self.input.meta.photometry.conversion_megajanskys = \
                     conv_factor
@@ -234,13 +289,10 @@ class DataSet():
                 # Compute relative sensitivity for each pixel based
                 # on its wavelength
                 sens2d = np.interp(wave2d, waves, relresps)
-
                 # Include the scalar conversion factor
                 sens2d *= conv_factor
-
                 # Divide by pixel area
                 sens2d /= area2d
-
                 # Reset NON_SCIENCE pixels to 1 in sens2d array and flag
                 # them in the science data DQ array
                 where_dq = \
@@ -250,7 +302,10 @@ class DataSet():
 
                 # Multiply the science data and uncertainty arrays by
                 # the conversion factors
-                self.input.data *= sens2d
+                if not self.inverse:
+                    self.input.data *= sens2d
+                else:
+                    self.input.data /= sens2d
                 self.input.err *= sens2d
                 self.input.var_poisson *= sens2d**2
                 self.input.var_rnoise *= sens2d**2
@@ -258,8 +313,12 @@ class DataSet():
                     self.input.var_flat *= sens2d**2
 
                 # Update BUNIT values for the science data and err
-                self.input.meta.bunit_data = 'MJy/sr'
-                self.input.meta.bunit_err = 'MJy/sr'
+                if not self.inverse:
+                    self.input.meta.bunit_data = 'MJy/sr'
+                    self.input.meta.bunit_err = 'MJy/sr'
+                else:
+                    self.input.meta.bunit_data = 'DN/s'
+                    self.input.meta.bunit_err = 'DN/s'
 
                 area_model.close()
 
@@ -355,9 +414,8 @@ class DataSet():
         if self.detector == 'MIRIMAGE':
 
             # Get the subarray value of the input data model
-            subarray = self.input.meta.subarray.name.upper()
-            log.info(' subarray: %s', subarray)
-            fields_to_match = {'subarray': self.input.meta.subarray.name,
+            log.info(' subarray: %s', self.subarray)
+            fields_to_match = {'subarray': self.subarray,
                                'filter': self.filter}
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
@@ -391,7 +449,10 @@ class DataSet():
 
             # Multiply the science data and uncertainty arrays by the 2D
             # sensitivity factors
-            self.input.data *= sens2d
+            if not self.inverse:
+                self.input.data *= sens2d
+            else:
+                self.input.data /= sens2d
             self.input.err *= sens2d
             self.input.var_poisson *= sens2d**2
             self.input.var_rnoise *= sens2d**2
@@ -411,8 +472,12 @@ class DataSet():
                 conv_factor * MJSR_TO_UJA2
 
             # Update BUNIT values for the science data and err
-            self.input.meta.bunit_data = 'MJy/sr'
-            self.input.meta.bunit_err = 'MJy/sr'
+            if not self.inverse:
+                self.input.meta.bunit_data = 'MJy/sr'
+                self.input.meta.bunit_err = 'MJy/sr'
+            else:
+                self.input.meta.bunit_data = 'DN/s'
+                self.input.meta.bunit_err = 'DN/s'
 
         return
 
@@ -453,8 +518,7 @@ class DataSet():
                     continue
                 self.photom_io(ftab.phot_table[row])
         elif self.exptype == 'NRC_TSGRISM':
-            order = self.input.meta.wcsinfo.spectral_order
-            fields_to_match = {'filter': self.filter, 'pupil': self.pupil, 'order': order}
+            fields_to_match = {'filter': self.filter, 'pupil': self.pupil, 'order': self.order}
             row = find_row(ftab.phot_table, fields_to_match)
             if row is None:
                 return
@@ -541,31 +605,28 @@ class DataSet():
 
             # Get the world coords for all pixels in this slice
             coords = ifu_wcs(x, y)
-
-            # Pull out the wavelengths only
+            dq = dqmap[y.astype(int),x.astype(int)]
             wl = coords[2]
-            nan_flag = np.isnan(wl)
-            good_flag = np.logical_not(nan_flag)
-            if wl[good_flag].max() < microns_100:
+            # pull out the valid wavelengths and reset other array to not include
+            # nan values
+            valid = ~np.isnan(wl)
+            wl = wl[valid]
+            dq = dq[valid]
+            x = x[valid]
+            y = y[valid]
+            dq[:] = 0
+
+            if wl.max() < microns_100:
                 log.info("Wavelengths in WCS table appear to be in meters")
 
-            # Set NaNs to a harmless value, but don't modify nan_flag.
-            wl[nan_flag] = 0.
-
-            # Mark pixels with no wavelength as non-science
-            dq = np.zeros_like(wl)
-            dq[nan_flag] = dqflags.pixel['NON_SCIENCE']
             dqmap[y.astype(int), x.astype(int)] = dq
-
             # Insert the wavelength values for this slice into the
             # whole image array
             wave2d[y.astype(int), x.astype(int)] = wl
-
             # Insert the pixel area value for this slice into the
             # whole image array
             ar = np.ones_like(wl)
-            ar[:, :] = area_data[np.where(area_data['slice_id'] == k)]['pixarea'][0]
-            ar[nan_flag] = 1.
+            ar[:] = area_data[np.where(area_data['slice_id'] == k)]['pixarea'][0]
             area2d[y.astype(int), x.astype(int)] = ar
 
         return wave2d, area2d, dqmap
@@ -607,10 +668,10 @@ class DataSet():
             conversion = tabdata['photmj']              # unit is MJy
             if isinstance(self.input, datamodels.MultiSlitModel):
                 slit = self.input.slits[self.slitnum]
-                if self.input.meta.exposure.type == 'NRS_MSASPEC':
-                    srctype = slit.source_type
+                if self.exptype == 'NRS_MSASPEC':
+                    srctype = self.source_type if self.source_type else slit.source_type
                 else:
-                    srctype = self.input.meta.target.source_type
+                    srctype = self.source_type
                 if srctype is None or srctype.upper() != 'POINT':
                     if slit.meta.photometry.pixelarea_steradians is None:
                         log.warning("Pixel area is None, so can't convert "
@@ -622,8 +683,7 @@ class DataSet():
                 else:
                     unit_is_surface_brightness = False
             else:
-                srctype = self.input.meta.target.source_type
-                if srctype is None or srctype.upper() != 'POINT':
+                if self.source_type is None or self.source_type != 'POINT':
                     if self.input.meta.photometry.pixelarea_steradians is None:
                         log.warning("Pixel area is None, so can't convert "
                                     "flux to surface brightness!")
@@ -690,11 +750,11 @@ class DataSet():
             # Compute a 2-D grid of conversion factors, as a function of wavelength
             if isinstance(self.input, datamodels.MultiSlitModel):
                 wl_array = get_wavelengths(self.input.slits[self.slitnum],
-                                           self.input.meta.exposure.type,
+                                           self.exptype,
                                            order)
             else:
                 wl_array = get_wavelengths(self.input,
-                                           self.input.meta.exposure.type,
+                                           self.exptype,
                                            order)
 
             wl_array[np.isnan(wl_array)] = -1.
@@ -709,7 +769,10 @@ class DataSet():
         # Apply the conversion to the data and all uncertainty arrays
         if isinstance(self.input, datamodels.MultiSlitModel):
             slit = self.input.slits[self.slitnum]
-            slit.data *= conversion
+            if not self.inverse:
+                slit.data *= conversion
+            else:
+                slit.data /= conversion
             slit.err *= conversion
             if slit.var_poisson is not None and np.size(slit.var_poisson) > 0:
                 slit.var_poisson *= conversion**2
@@ -720,14 +783,22 @@ class DataSet():
             if no_cal is not None:
                 slit.dq[..., no_cal] = np.bitwise_or(slit.dq[..., no_cal],
                                                      dqflags.pixel['DO_NOT_USE'])
-            if unit_is_surface_brightness:
-                slit.meta.bunit_data = 'MJy/sr'
-                slit.meta.bunit_err = 'MJy/sr'
+            if not self.inverse:
+                if unit_is_surface_brightness:
+                    slit.meta.bunit_data = 'MJy/sr'
+                    slit.meta.bunit_err = 'MJy/sr'
+                else:
+                    slit.meta.bunit_data = 'MJy'
+                    slit.meta.bunit_err = 'MJy'
             else:
-                slit.meta.bunit_data = 'MJy'
-                slit.meta.bunit_err = 'MJy'
+                self.input.meta.bunit_data = 'DN/s'
+                self.input.meta.bunit_err = 'DN/s'
+
         else:
-            self.input.data *= conversion
+            if not self.inverse:
+                self.input.data *= conversion
+            else:
+                self.input.data /= conversion
             self.input.err *= conversion
             if self.input.var_poisson is not None and np.size(self.input.var_poisson) > 0:
                 self.input.var_poisson *= conversion**2
@@ -738,12 +809,17 @@ class DataSet():
             if no_cal is not None:
                 self.input.dq[..., no_cal] = np.bitwise_or(self.input.dq[..., no_cal],
                                                            dqflags.pixel['DO_NOT_USE'])
-        if unit_is_surface_brightness:
-            self.input.meta.bunit_data = 'MJy/sr'
-            self.input.meta.bunit_err = 'MJy/sr'
+
+        if not self.inverse:
+            if unit_is_surface_brightness:
+                self.input.meta.bunit_data = 'MJy/sr'
+                self.input.meta.bunit_err = 'MJy/sr'
+            else:
+                self.input.meta.bunit_data = 'MJy'
+                self.input.meta.bunit_err = 'MJy'
         else:
-            self.input.meta.bunit_data = 'MJy'
-            self.input.meta.bunit_err = 'MJy'
+            self.input.meta.bunit_data = 'DN/s'
+            self.input.meta.bunit_err = 'DN/s'
 
         return
 
@@ -769,16 +845,13 @@ class DataSet():
             Pixel area reference file name
         """
 
-        # We need the instrument name in order to check for NIRSpec.
-        instrument = self.input.meta.instrument.name.upper()
-
         # Load the pixel area reference file
         if area_fname is not None and area_fname != "N/A":
             pix_area = datamodels.open(area_fname)
 
             # Copy the pixel area data array to the appropriate attribute
             # of the science data model
-            if instrument != 'NIRSPEC':
+            if self.instrument != 'NIRSPEC':
                 if isinstance(self.input, datamodels.MultiSlitModel):
                     # Note that this only copied to the first slit.
                     self.input.slits[0].area = pix_area.data
@@ -793,7 +866,7 @@ class DataSet():
         # Load the average pixel area values from the photom reference file header
         # Don't need to do this for NIRSpec, because pixel areas come from
         # the AREA ref file, which have already been copied using save_area_nirspec
-        if instrument != 'NIRSPEC':
+        if self.instrument != 'NIRSPEC':
             try:
                 area_ster = ftab.meta.photometry.pixelarea_steradians
             except AttributeError:
@@ -837,7 +910,7 @@ class DataSet():
             Pixel area reference file data model
         """
 
-        exp_type = self.input.meta.exposure.type
+        exp_type = self.exptype
         pixarea = pix_area.area_table['pixarea']
         if exp_type == 'NRS_MSASPEC':
             quadrant = pix_area.area_table['quadrant']

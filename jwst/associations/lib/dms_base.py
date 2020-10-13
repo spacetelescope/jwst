@@ -10,7 +10,7 @@ from jwst.associations.lib.constraint import (Constraint, AttrConstraint, Simple
 from jwst.associations.lib.utilities import getattr_from_list
 
 
-__all__ = ['Constraint_TargetAcq', 'Constraint_TSO', 'DMSBaseMixin']
+__all__ = ['Constraint_TargetAcq', 'Constraint_TSO', 'Constraint_WFSC', 'DMSBaseMixin']
 
 # Default product name
 PRODUCT_NAME_DEFAULT = 'undefined'
@@ -32,6 +32,7 @@ ACQ_EXP_TYPES = (
     'nrs_taconfirm',
     'nrs_tacq',
     'nrs_taslit',
+    'nrs_verify',
     'nrs_wata',
 )
 
@@ -358,6 +359,10 @@ class DMSBaseMixin(ACIDMixin):
         if item['pntgtype'] != 'science':
             return False
 
+        # Target acquisitions are never TSO
+        if item['exp_type'] in ACQ_EXP_TYPES:
+            return False
+
         # Setup exposure list
         all_exp_types = TSO_EXP_TYPES.copy()
         if other_exp_types:
@@ -587,7 +592,7 @@ class DMSBaseMixin(ACIDMixin):
             of the grating in use.
         """
         grating_id = format_list(self.constraints['grating'].found_values)
-        grating = 't{0:0>3s}'.format(str(grating_id))
+        grating = '{0:0>3s}'.format(str(grating_id))
         return grating
 
 
@@ -653,6 +658,25 @@ class Constraint_TSO(Constraint):
                 )
             ],
             name='is_tso'
+        )
+
+
+class Constraint_WFSC(Constraint):
+    """Match on Wave Front Sensing and Control Observations"""
+    def __init__(self, *args, **kwargs):
+        super(Constraint_WFSC, self).__init__(
+            [
+                Constraint(
+                    [
+                        DMSAttrConstraint(
+                            name='wfsc',
+                            sources=['visitype'],
+                            value='.+wfsc.+',
+                            force_unique=True
+                        )
+                    ]
+                )
+            ]
         )
 
 

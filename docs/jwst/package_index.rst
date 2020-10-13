@@ -62,6 +62,7 @@ Package Index
    transforms/index.rst
    tso_photometry/index.rst
    tweakreg/index.rst
+   wavecorr/index.rst
    wfs_combine/index.rst
    white_light/index.rst
    wiimatch/index.rst

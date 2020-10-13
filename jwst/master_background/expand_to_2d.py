@@ -156,6 +156,7 @@ def bkg_for_multislit(input, tab_wavelength, tab_background):
     max_wave = np.amax(tab_wavelength)
 
     for (k, slit) in enumerate(input.slits):
+        log.info(f'Expanding background for slit {slit.name}')
         wl_array = get_wavelengths(slit, input.meta.exposure.type)
         if wl_array is None:
             raise RuntimeError("Can't determine wavelengths for {}"
@@ -247,6 +248,7 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
         wavelength table.
 
     """
+    from .nirspec_utils import correct_nrs_ifu_bkg
 
     background = input.copy()
     background.data[:, :] = 0.
@@ -275,6 +277,11 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
                                         tab_background, left=0., right=0.)
             background.data[y.astype(int), x.astype(int)] = bkg_surf_bright.copy()
 
+        # If the science target is a point source, apply pathloss corrections
+        # to the background to make it match the calibrated science data
+        if input.meta.target.source_type == 'POINT':
+            background = correct_nrs_ifu_bkg(background)
+
     elif input.meta.instrument.name.upper() == "MIRI":
         shape = input.data.shape
         grid = np.indices(shape, dtype=np.float64)
@@ -292,8 +299,8 @@ def bkg_for_ifu_image(input, tab_wavelength, tab_background):
         bkg_surf_bright = np.interp(wl_array, tab_wavelength, tab_background,
                                     left=0., right=0.)
         background.data[:, :] = bkg_surf_bright.copy()
+
     else:
-        raise RuntimeError("Exposure type {} is not supported."
-                           .format(input.meta.exposure.type))
+        raise RuntimeError(f'Exposure type {input.meta.exposure.type} is not supported.')
 
     return background

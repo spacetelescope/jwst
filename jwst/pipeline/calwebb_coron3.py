@@ -44,12 +44,12 @@ class Coron3Pipeline(Pipeline):
 
     prefetch_references = False
 
-    def process(self, input):
+    def process(self, user_input):
         """Primary method for performing pipeline."""
         self.log.info('Starting calwebb_coron3 ...')
 
         # Load the input association table
-        asn = self.load_as_level3_asn(input)
+        asn = self.load_as_level3_asn(user_input)
         acid = asn.get('asn_id', '')
 
         # We assume there's one final product defined by the association
@@ -60,6 +60,11 @@ class Coron3Pipeline(Pipeline):
         self.outlier_detection.suffix = f'{acid}_crfints'
         self.outlier_detection.save_results = self.save_results
         self.resample.blendheaders = False
+
+        # Save the original outlier_detection.skip setting from the
+        # input, because it may get toggled off within loops for
+        # processing individual inputs
+        skip_outlier_detection = self.outlier_detection.skip
 
         # Construct lists of all the PSF and science target members
         psf_files = [m['expname'] for m in prod['members']
@@ -91,11 +96,14 @@ class Coron3Pipeline(Pipeline):
             psf_input.close()
 
         # Perform outlier detection on the PSFs.
-        if not self.outlier_detection.skip:
+        if not skip_outlier_detection:
             for model in psf_models:
                 self.outlier_detection(model)
+                # step may have been skipped for this model;
+                # turn back on for next model
+                self.outlier_detection.skip = False
         else:
-            self.log.info('Outlier detection for PSF\'s - Step skipped')
+            self.log.info('Outlier detection skipped for PSF\'s')
 
         # Stack all the PSF images into a single CubeModel
         psf_stack = self.stack_refs(psf_models)
@@ -111,7 +119,11 @@ class Coron3Pipeline(Pipeline):
             with datamodels.open(target_file) as target:
 
                 # Remove outliers from the target.
-                target = self.outlier_detection(target)
+                if not skip_outlier_detection:
+                    target = self.outlier_detection(target)
+                    # step may have been skipped for this model;
+                    # turn back on for next model
+                    self.outlier_detection.skip = False
 
                 # Call align_refs
                 psf_aligned = self.align_refs(target, psf_stack)
@@ -152,7 +164,7 @@ class Coron3Pipeline(Pipeline):
 
         try:
             result.meta.asn.pool_name = asn['asn_pool']
-            result.meta.asn.table_name = op.basename(input)
+            result.meta.asn.table_name = op.basename(user_input)
         except AttributeError:
             self.log.debug(f'Cannot set association information on final result {result}')
 

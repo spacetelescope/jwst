@@ -91,7 +91,7 @@ def reproject(wcs1, wcs2):
     return _reproject
 
 
-def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray]) -> float:
+def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray], disp_axis: int = None) -> float:
     """Compute scaling transform.
 
     Parameters
@@ -100,24 +100,38 @@ def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray]) -> float:
         Reference WCS object from which to compute a scaling factor.
 
     fiducial : tuple
-        Input fiducial of (RA, DEC) used in calculating reference points.
+        Input fiducial of (RA, DEC) or (RA, DEC, Wavelength) used in calculating reference points.
+
+    disp_axis : int
+        Dispersion axis integer. Assumes the same convention as `wcsinfo.dispersion_direction`
 
     Returns
     -------
     scale : float
-        Scaling factor for x and y.
+        Scaling factor for x and y or cross-dispersion direction.
 
     """
-    if len(fiducial) != 2:
-        raise ValueError(f'Input fiducial must contain only (RA, DEC); Instead recieved: {fiducial}')
+    spectral = 'SPECTRAL' in wcs.output_frame.axes_type
+
+    if spectral and disp_axis is None:
+        raise ValueError('If input WCS is spectral, a disp_axis must be given')
 
     crpix = np.array(wcs.invert(*fiducial))
-    crpix_with_offsets = np.vstack((crpix, crpix + (1, 0), crpix + (0, 1))).T
+
+    delta = np.zeros_like(crpix)
+    spatial_idx = np.where(np.array(wcs.output_frame.axes_type) == 'SPATIAL')[0]
+    delta[spatial_idx[0]] = 1
+
+    crpix_with_offsets = np.vstack((crpix, crpix + delta, crpix + np.roll(delta, 1))).T
     crval_with_offsets = wcs(*crpix_with_offsets)
 
-    coords = SkyCoord(ra=crval_with_offsets[0], dec=crval_with_offsets[1], unit="deg")
+    coords = SkyCoord(ra=crval_with_offsets[spatial_idx[0]], dec=crval_with_offsets[spatial_idx[1]], unit="deg")
     xscale = np.abs(coords[0].separation(coords[1]).value)
     yscale = np.abs(coords[0].separation(coords[2]).value)
+
+    if spectral:  # Assuming scale doesn't change with wavelength
+        # Assuming disp_axis is consistent with DataModel.meta.wcsinfo.dispersion.direction
+        return yscale if disp_axis == 1 else xscale
 
     return np.sqrt(xscale * yscale)
 
@@ -217,6 +231,7 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
 
     prj = astmodels.Pix2Sky_TAN()
 
+
     if transform is None:
         transform = []
         wcsinfo = pointing.wcsinfo_from_model(refmodel)
@@ -243,13 +258,15 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
             transform = functools.reduce(lambda x, y: x | y, transform)
 
     out_frame = refmodel.meta.wcs.output_frame
-    wnew = wcs_from_fiducial(fiducial, coordinate_frame=out_frame, projection=prj, transform=transform)
+    input_frame = dmodels[0].meta.wcs.input_frame
+    wnew = wcs_from_fiducial(fiducial, coordinate_frame=out_frame, projection=prj,
+                             transform=transform, input_frame=input_frame)
 
     footprints = [w.footprint().T for w in wcslist]
     domain_bounds = np.hstack([wnew.backward_transform(*f) for f in footprints])
 
     for axs in domain_bounds:
-        axs -= axs.min()
+        axs -= (axs.min()  + .5)
 
     bounding_box = []
     for axis in out_frame.axes_order:
@@ -396,7 +413,7 @@ def subarray_transform(input_model):
         return subarray2full
 
 
-def not_implemented_mode(input_model):
+def not_implemented_mode(input_model, ref, slit_y_range=None):
     """
     Return ``None`` if assign_wcs has not been implemented for a mode.
     """
@@ -477,15 +494,18 @@ def get_object_info(catalog_name=None):
                                  sky_bbox_lr=row['sky_bbox_lr'],
                                  sky_bbox_ul=row['sky_bbox_ul'],
                                  sky_bbox_ur=row['sky_bbox_ur'],
+                                 is_star=row['is_star']
                                  )
                        )
     return objects
 
 
 def create_grism_bbox(input_model,
-                      reference_files,
+                      reference_files=None,
                       mmag_extract=99.0,
-                      extract_orders=None):
+                      extract_orders=None,
+                      wfss_extract_half_height=None,
+                      wavelength_range=None):
     """Create bounding boxes for each object in the catalog
 
     The sky coordinates in the catalog image are first related
@@ -500,19 +520,32 @@ def create_grism_bbox(input_model,
     ----------
     input_model : `jwst.datamodels.ImagingModel`
         Data model which holds the grism image
-    reference_files : dict
-        Dictionary of reference files
-    mmag_extract : float
-        The faintest magnitude to extract from the catalog
-    extract_orders : list
+    reference_files : dict, optional
+        Dictionary of reference file names.
+        If ``None``, ``wavelength_range`` must be supplied to specify
+        the orders and corresponding wavelength ranges to be used in extraction.
+    mmag_extract : float, optional
+        The faintest magnitude to extract from the catalog.
+    extract_orders : list, optional
         The list of orders to extract, if specified this will
-        override the orders listed in the wavelengthrange reference file
+        override the orders listed in the wavelengthrange reference file.
+        If ``None``, the default one in the wavelengthrange reference file is used.
+    wfss_extract_half_height : int, optional
+        Cross-dispersion extraction half height in pixels, WFSS mode.
+        Overwrites the computed extraction height in ``GrismObject.order_bounding.``
+        If ``None``, it's computed from the segementation map,
+        using the min and max wavelength for each of the orders that
+        are available.
+    wavelength_range : dict, optional
+        Pairs of {spectral_order: (wave_min, wave_max)} for each order.
+        If ``None``, the default one in the wavelengthrange reference file is used.
 
     Returns
     -------
-    A list of GrismObject(s) for every source in the catalog
-    Each grism object contains information about it's
-    spectral extent
+    grism_objects : list
+        A list of GrismObject(s) for every source in the catalog.
+        Each grism object contains information about its
+        spectral extent.
 
     Notes
     -----
@@ -526,18 +559,17 @@ def create_grism_bbox(input_model,
     the on-detector portion of the bounding box)
 
     Bounding box dispersion direction is dependent on the filter and
-    module for NIRCAM and changes for GRISMR, but is consistent for
-    GRISMC, see https://jwst-
-    docs.stsci.edu/display/JTI/NIRCam+Wide+Field+Slitless+Spectroscopy
+    module for NIRCAM and changes for GRISMR, but is consistent for GRISMC,
+    see https://jwst-docs.stsci.edu/display/JTI/NIRCam+Wide+Field+Slitless+Spectroscopy
 
-    NIRISS only has one detector, but GRISMC disperses along rows and
+    NIRISS has one detector.  GRISMC disperses along rows and
     GRISMR disperses along columns.
 
-    """
-    if not isinstance(mmag_extract, (int, float)):
-        raise TypeError(f"Expected mmag_extract to be a number, got {mmag_extract}")
-    log.info("Extracting objects < abmag = {0}".format(mmag_extract))
+    If ``wfss_extract_half_height`` is specified it is used to compute the extent in
+    the cross-dispersion direction, which becomes ``2 * wfss_extract_half_height + 1``.
+    ``wfss_extract_half_height`` can only be applied to point source objects.
 
+    """
     instr_name = input_model.meta.instrument.name
     if instr_name == "NIRCAM":
         filter_name = input_model.meta.instrument.filter
@@ -546,48 +578,54 @@ def create_grism_bbox(input_model,
     else:
         raise ValueError("create_grism_object works with NIRCAM and NIRISS WFSS exposures only.")
 
+    if reference_files is None:
+        # Get the list of extract_orders and lmin, lmax from wavelength_range.
+        if wavelength_range is None:
+            message = "If reference files are not supplied, ``wavelength_range`` must be provided."
+            raise TypeError(message)
+    else:
+        # Get the list of extract_orders and lmin, lmax from the ``wavelengthrange`` reference file.
+        with WavelengthrangeModel(reference_files['wavelengthrange']) as f:
+            if 'WFSS' not in f.meta.exposure.type:
+                err_text = "Wavelengthrange reference file not for WFSS"
+                log.error(err_text)
+                raise ValueError(err_text)
+            ref_extract_orders = f.extract_orders
+            if extract_orders is None:
+                #ref_extract_orders = extract_orders
+                extract_orders = [x[1] for x in ref_extract_orders if x[0] == filter_name].pop()
+
+            wavelength_range = f.get_wfss_wavelength_range(filter_name, extract_orders)
+
+
+    if not isinstance(mmag_extract, (int, float)):
+        raise TypeError(f"Expected mmag_extract to be a number, got {mmag_extract}")
+    log.info("Extracting objects < abmag = {0}".format(mmag_extract))
+
     # extract the catalog objects
     if input_model.meta.source_catalog is None:
-        err_text = "No source catalog listed in datamodel"
+        err_text = "No source catalog listed in datamodel."
         log.error(err_text)
         raise ValueError(err_text)
 
-    log.info("Getting objects from {}".format(input_model.meta.source_catalog))
+    log.info(f"Getting objects from {input_model.meta.source_catalog}")
+
+    return _create_grism_bbox(input_model, mmag_extract, wfss_extract_half_height, wavelength_range)
+
+
+def _create_grism_bbox(input_model, mmag_extract=99.0,
+                       wfss_extract_half_height=None, wavelength_range=None):
+
+    log.debug(f'Extracting with wavelength_range {wavelength_range}')
 
     # this contains the pure information from the catalog with no translations
     skyobject_list = get_object_info(input_model.meta.source_catalog)
-
     # get the imaging transform to record the center of the object in the image
     # here, image is in the imaging reference frame, before going through the
     # dispersion coefficients
 
     sky_to_detector = input_model.meta.wcs.get_transform('world', 'detector')
-    sky_to_grism = input_model.meta.wcs.get_transform('world', 'grism_detector')
-
-    # Get the disperser parameters which have the wave limits
-    with WavelengthrangeModel(reference_files['wavelengthrange']) as f:
-        if 'WFSS' not in f.meta.exposure.type:
-            err_text = "Wavelengthrange reference file not for WFSS"
-            log.error(err_text)
-            raise ValueError(err_text)
-        wavelengthrange = f.wavelengthrange
-        ref_extract_orders = f.extract_orders
-
-    # this supports the user override and overriding the WFSS order extraction
-    # when called from the pipeline only the first order is extracted
-    if extract_orders is None:
-        log.info("Using default order extraction from reference file")
-        extract_orders = ref_extract_orders
-        available_orders = [x[1] for x in extract_orders if x[0] == filter_name].pop()
-    else:
-        if isinstance(extract_orders, list):
-            if not all(isinstance(item, int) for item in extract_orders):
-                raise TypeError("Expected extract_orders to be a list of ints")
-        else:
-            err_text = 'Expected extract_orders to be a list of integers'
-            log.error(err_text)
-            raise TypeError(err_text)
-        available_orders = extract_orders
+    sky_to_grism = input_model.meta.wcs.backward_transform
 
     grism_objects = []  # the return list of GrismObjects
     for obj in skyobject_list:
@@ -605,33 +643,50 @@ def create_grism_bbox(input_model,
                 order_bounding = {}
                 waverange = {}
                 partial_order = {}
-                for order in available_orders:
-                    range_select = [(x[2], x[3]) for x in wavelengthrange if (x[0] == order and x[1] == filter_name)]
+                for order in wavelength_range:
+                    # range_select = [(x[2], x[3]) for x in wavelengthrange if (x[0] == order and x[1] == filter_name)]
                     # The orders of the bounding box in the non-dispersed image
                     # drive the extraction extent. The location of the min and
                     # max wavelengths for each order are used to get the
                     # location of the +/- sides of the bounding box in the
                     # grism image
-                    lmin, lmax = range_select.pop()
-                    xmin, ymin, _, _, _ = sky_to_grism(obj.sky_bbox_ll.ra.value,
-                                                       obj.sky_bbox_ll.dec.value,
-                                                       lmin, order)
-                    xmax, ymax, _, _, _ = sky_to_grism(obj.sky_bbox_ur.ra.value,
-                                                       obj.sky_bbox_ur.dec.value,
-                                                       lmax, order)
+                    lmin, lmax = wavelength_range[order]
+                    ra = np.array([obj.sky_bbox_ll.ra.value, obj.sky_bbox_lr.ra.value,
+                                   obj.sky_bbox_ul.ra.value, obj.sky_bbox_ur.ra.value])
+                    dec = np.array([obj.sky_bbox_ll.dec.value, obj.sky_bbox_lr.dec.value,
+                                   obj.sky_bbox_ul.dec.value, obj.sky_bbox_ur.dec.value])
+                    x1, y1, _, _, _ = sky_to_grism(ra, dec, [lmin] * 4, [order]*4)
+                    x2, y2, _, _, _ = sky_to_grism(ra, dec, [lmax] * 4, [order]*4)
 
-                    # Make sure that we have the correct box corners tagged
-                    # as the min and max extents for the grism, the dispersion
-                    # direction changes with grism and detector
-                    if xmax < xmin:
-                        xmin, xmax = xmax, xmin
-                    if ymax < ymin:
-                        ymin, ymax = ymax, ymin
+                    xstack = np.hstack([x1, x2])
+                    ystack = np.hstack([y1, y2])
 
-                    xmin = int(xmin)
-                    xmax = int(xmax)
-                    ymin = int(ymin)
-                    ymax = int(ymax)
+                    # Subarrays are only allowed in nircam tsgrism mode. The polynomial transforms
+                    # only work with the full frame coordinates. The code here is called during extract_2d,
+                    # and is creating bounding boxes which should be in the full frame coordinates, it just
+                    # uses the input catalog and the magnitude to limit the objects that need bounding boxes.
+
+                    # Tsgrism is always supposed to have the source object at the same pixel, and that is
+                    # hardcoded into the transforms. At least a while ago, the 2d extraction for tsgrism mode
+                    # didn't call this bounding box code. So I think it's safe to leave the subarray
+                    # subtraction out, i.e. do not subtract x/ystart.
+
+                    xmin = int(np.min(xstack))
+                    xmax = int(np.max(xstack))
+                    ymin = int(np.min(ystack))
+                    ymax = int(np.max(ystack))
+
+                    if wfss_extract_half_height is not None and obj.is_star:
+                        if input_model.meta.wcsinfo.dispersion_direction == 2:
+                            center = (xmax + xmin) / 2
+                            xmin = center - wfss_extract_half_height
+                            xmax = center + wfss_extract_half_height
+                        elif input_model.meta.wcsinfo.dispersion_direction == 1:
+                            center = (ymax + ymin) / 2
+                            ymin = center - wfss_extract_half_height
+                            ymax = center + wfss_extract_half_height
+                        else:
+                            raise ValueError("Cannot determine dispersion direction.")
 
                     # don't add objects and orders which are entirely
                     # off the detector partial_order marks partial

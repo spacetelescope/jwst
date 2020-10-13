@@ -323,7 +323,7 @@ def import_objects(package, line):
     local_variables = {}
     global_variables = {'__package__':package}
     try:
-        exec(line, global_variables, local_variables)
+        exec(line, global_variables, local_variables) # nosec
     except ImportError:
         pass
 

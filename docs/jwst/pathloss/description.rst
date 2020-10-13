@@ -37,12 +37,13 @@ for both point source and uniform source data types.
 For the uniform source pathloss calculation, there is no dependence on position
 in the aperture/slit.
 
-Once the 1-D correction arrays have been computed, the appropriate form of the
-correction (point or uniform) is interpolated, as a function of wavelength, into
-the 2-D space of the slit or IFU data and divided into the SCI and ERR arrays of the
-science data.
-The 2-D correction array is also attached to the datamodel (extension "PATHLOSS")
-as a record of what was applied.
+Once the 1-D correction arrays have been computed, both forms of the correction
+(point and uniform) are interpolated, as a function of wavelength, into
+the 2-D space of the slit or IFU data and attached to the output data model
+(extensions "PATHLOSS_PS" and "PATHLOSS_UN") as a record of what was computed.
+The form of the 2-D correction (point or uniform) that's appropriate for the
+data is divided into the SCI and ERR arrays and propagated into the variance
+arrays of the science data.
 
 NIRISS
 ++++++
@@ -57,8 +58,8 @@ The algorithm calculates the correction for each column by simply interpolating
 along the Pupil Wheel position dimension of the reference file using linear
 interpolation.  The 1-D vector of correction vs. column number is interpolated,
 as a function of wavelength, into the 2-D space of the science image and divided
-into the SCI and ERR arrays.
-The 2-D correction array is also attached to the datamodel (extension "PATHLOSS")
+into the SCI and ERR arrays and propagated into the variance arrays.
+The 2-D correction array is also attached to the datamodel (extension "PATHLOSS_PS")
 as a record of what was applied.
 
 Error Propagation

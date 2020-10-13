@@ -1,22 +1,47 @@
 import pytest
 import numpy as np
-from astropy.io import fits
 
 from jwst.ramp_fitting.ramp_fit import ramp_fit
 from jwst.datamodels import dqflags
 from jwst.datamodels import RampModel
 from jwst.datamodels import GainModel, ReadnoiseModel
 
+
 # single group intergrations fail in the GLS fitting
 # so, keep the two method test separate and mark GLS test as
 # expected to fail.  Needs fixing, but the fix is not clear
 # to me. [KDG - 19 Dec 2018]
+
+def test_int_times():
+    # Test whether int_times table gets copied to output when it should
+    nints = 5
+    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=3, nints=nints, nrows=2, ncols=2)
+
+    # Set TSOVISIT false, in which case the int_times table should come back with zero length
+    model1.meta.visit.tsovisit = False
+    slopes, int_model, dum1, dum2 = ramp_fit(model1, 512, False, rnModel, gain, 'OLS', 'optimal', 'none')
+    assert(len(int_model.int_times) == 0)
+
+    # Set TSOVISIT true, in which case the int_times table should come back with length nints
+    model1.meta.visit.tsovisit = True
+    slopes, int_model, dum1, dum2 = ramp_fit(model1, 512, False, rnModel, gain, 'OLS', 'optimal', 'none')
+    assert(len(int_model.int_times) == nints)
+
 
 def test_one_group_small_buffer_fit_ols():
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=1,gain=1,readnoise=10)
     model1.data[0, 0, 50, 50] = 10.0
     slopes = ramp_fit(model1, 512, True, rnModel, gain, 'OLS', 'optimal', 'none')
     np.testing.assert_allclose(slopes[0].data[50, 50],10.0, 1e-6)
+
+
+def test_drop_frames1_not_set():
+    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=1,gain=1,readnoise=10)
+    model1.data[0, 0, 50, 50] = 10.0
+    model1.meta.exposure.drop_frames1 = None
+    slopes = ramp_fit(model1, 512, True, rnModel, gain, 'OLS', 'optimal', 'none')
+    np.testing.assert_allclose(slopes[0].data[50, 50],10.0, 1e-6)
+
 
 @pytest.mark.skip(reason="GLS code does not [yet] handle single group integrations.")
 def test_one_group_small_buffer_fit_gls():
@@ -25,12 +50,14 @@ def test_one_group_small_buffer_fit_gls():
     slopes = ramp_fit(model1, 512, True, rnModel, gain, 'GLS', 'optimal', 'none')
     np.testing.assert_allclose(slopes[0].data[50, 50],10.0, 1e-6)
 
+
 def test_one_group_two_ints_fit_ols():
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=1,gain=1,readnoise=10,nints=2)
     model1.data[0, 0, 50, 50] = 10.0
     model1.data[1, 0, 50, 50] = 12.0
     slopes = ramp_fit(model1, 1024*30000., True, rnModel, gain, 'OLS', 'optimal', 'none')
     np.testing.assert_allclose(slopes[0].data[50, 50],11.0, 1e-6)
+
 
 @pytest.mark.skip(reason="GLS does not correctly combine the slopes for integrations into the exposure slope.")
 def test_gls_vs_ols_two_ints_ols():
@@ -47,6 +74,8 @@ def test_gls_vs_ols_two_ints_ols():
     slopes_gls = ramp_fit(model1, 1024 * 30000., True, rnModel, gain, 'GLS', 'optimal', 'none')
     np.testing.assert_allclose(slopes_gls[0].data[50, 50], 150.0, 1e-6)
 
+
+@pytest.mark.skip(reason="Jenkins environment does not correctly handle multi-processing.")
 def test_multiprocessing():
     nrows =100
     ncols =100
@@ -54,8 +83,8 @@ def test_multiprocessing():
     nints = 3
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups, gain=1, readnoise=10, nints=nints,
                                                           nrows=nrows,
-                                                          ncols = ncols)
-    delta_plane1 = np.zeros((nrows,ncols),dtype=np.float64)
+                                                          ncols=ncols)
+    delta_plane1 = np.zeros((nrows, ncols), dtype=np.float64)
     delta_plane2 = np.zeros((nrows, ncols), dtype=np.float64)
     delta_vec = np.asarray([x/50.0 for x in range(nrows)])
     for i in range(ncols):
@@ -67,26 +96,16 @@ def test_multiprocessing():
         model1.data[1, j + 1, :, :] = model1.data[1, j, :, :] + delta_plane1 + delta_plane2
         model1.data[2, j + 1, :, :] = model1.data[2, j, :, :] + delta_plane1 + delta_plane2
     model1.data = np.round(model1.data + np.random.normal(0, 5, (nints, ngroups, ncols, nrows)))
-    hdu = fits.PrimaryHDU(model1.data)
-    hdu1 = fits.HDUList(hdu)
-    hdu1.writeto('model1.fits', overwrite=True)
+
     slopes, int_model, opt_model, gls_opt_model = ramp_fit(model1, 1024 * 30000., False, rnModel, gain, 'GLS',
                                                            'optimal', 'none')
-
     slopes_multi, int_model_multi, opt_model_multi, gls_opt_model_multi = ramp_fit(model1,
                                 1024 * 30000., False, rnModel, gain, 'GLS', 'optimal', 'half')
-    hdu = fits.PrimaryHDU(slopes.data)
-    hdu1 = fits.HDUList(hdu)
-    hdu1.writeto('out_reg.fits', overwrite=True)
-    hdu = fits.PrimaryHDU(slopes_multi.data)
-    hdu1 = fits.HDUList(hdu)
-    hdu1.writeto('out_multi.fits', overwrite=True)
-    hdu = fits.PrimaryHDU(slopes_multi.data - slopes.data)
-    hdu1 = fits.HDUList(hdu)
-    hdu1.writeto('diff_int.fits', overwrite=True)
-    np.testing.assert_allclose(slopes.data, slopes_multi.data, rtol = 1e-5)
 
-#@pytest.mark.skip(reason="Skip for Travis testing")
+    np.testing.assert_allclose(slopes.data, slopes_multi.data, rtol=1e-5)
+
+
+@pytest.mark.skip(reason="Jenkins environment does not correctly handle multi-processing.")
 def test_multiprocessing2():
     nrows =100
     ncols =100
@@ -94,8 +113,8 @@ def test_multiprocessing2():
     nints = 1
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups, gain=1, readnoise=10, nints=nints,
                                                           nrows=nrows,
-                                                          ncols = ncols)
-    delta_plane1 = np.zeros((nrows,ncols),dtype=np.float64)
+                                                          ncols=ncols)
+    delta_plane1 = np.zeros((nrows, ncols), dtype=np.float64)
     delta_plane2 = np.zeros((nrows, ncols), dtype=np.float64)
     delta_vec = np.asarray([x/50.0 for x in range(nrows)])
     for i in range(ncols):
@@ -105,30 +124,13 @@ def test_multiprocessing2():
     for j in range(ngroups-1):
         model1.data[0, j+1, :, :] = model1.data[0, j, :, :] + delta_plane1 + delta_plane2
     model1.data = np.round(model1.data + np.random.normal(0, 5, (nints, ngroups, ncols, nrows)))
-    hdu = fits.PrimaryHDU(model1.data)
-    hdu1 = fits.HDUList(hdu)
-    hdu1.writeto('model1.fits', overwrite=True)
+
     slopes, int_model, opt_model, gls_opt_model = ramp_fit(model1, 1024 * 30000., True, rnModel, gain, 'GLS',
                                                            'optimal', 'none')
-
     slopes_multi, int_model_multi, opt_model_multi, gls_opt_model_multi = ramp_fit(model1,
                                     1024 * 30000., True, rnModel, gain, 'GLS', 'optimal', 'half')
-    hdu = fits.PrimaryHDU(slopes.data)
-    hdu1 = fits.HDUList(hdu)
-    hdu1.writeto('out_reg.fits', overwrite=True)
-    hdu = fits.PrimaryHDU(slopes_multi.data)
-    hdu1 = fits.HDUList(hdu)
-    hdu1.writeto('out_multi.fits', overwrite=True)
-    hdu = fits.PrimaryHDU(slopes_multi.data - slopes.data)
-    hdu1 = fits.HDUList(hdu)
-    hdu1.writeto('diff_int.fits', overwrite=True)
-    hdu = fits.PrimaryHDU(slopes_multi.data /slopes.data)
-    hdu1 = fits.HDUList(hdu)
-    hdu1.writeto('ratio_difference.fits', overwrite=True)
-    np.testing.assert_allclose(slopes.data, slopes_multi.data, rtol = 1e-5)
-#    hdu = fits.PrimaryHDU(model1.data)
-#    hdu1 = fits.HDUList(hdu)
-#    hdu1.writeto('testdata.fits',overwrite=True)
+
+    np.testing.assert_allclose(slopes.data, slopes_multi.data, rtol=1e-5)
 
 
 @pytest.mark.xfail(reason="GLS code does not [yet] handle single group integrations.")
@@ -143,7 +145,6 @@ def test_one_group_two_ints_fit_gls():
 # that both can use the parameterized 'method'
 
 @pytest.mark.parametrize("method", ['OLS', 'GLS']) #don't do GLS to see if it causes hang
-#@pytest.mark.parametrize("method", ['OLS'])
 class TestMethods:
 
     def test_nocrs_noflux(self, method):
@@ -329,9 +330,9 @@ class TestMethods:
         cds_slope = (model1.data[0,1,50,50] - model1.data[0,0,50,50])
         np.testing.assert_allclose(slopes[0].data[50, 50], cds_slope, 1e-6)
         #expect SATURATED
-        assert slopes[0].dq[50, 51] == 2 # is there a better way to do this test?
-        #expect SATURATED since 1st group is Saturated
-        assert slopes[0].dq[50, 52] == 2 # is there a better way to do this test?
+        assert slopes[0].dq[50, 51] == dqflags.pixel['SATURATED']
+        #expect SATURATED and DO_NOT_USE, because 1st group is Saturated
+        assert slopes[0].dq[50, 52] == dqflags.pixel['SATURATED'] + dqflags.pixel['DO_NOT_USE']
 
     def test_four_groups_oneCR_orphangroupatend_fit(self, method):
         model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=4,gain=1,readnoise=10)
@@ -676,14 +677,14 @@ def setup_small_cube(ngroups=10, nints=1, nrows=2, ncols=2, deltatime=10.,
 def setup_inputs(ngroups=10, readnoise=10, nints=1,
                  nrows=103, ncols=102, nframes=1, grouptime=1.0,gain=1, deltatime=1):
 
-    times = np.array(list(range(ngroups)),dtype=np.float64) * deltatime
     gain = np.ones(shape=(nrows, ncols), dtype=np.float64) * gain
     err = np.ones(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
     data = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.uint32)
     pixdq = np.zeros(shape=(nrows, ncols), dtype= np.float64)
     read_noise = np.full((nrows, ncols), readnoise, dtype=np.float64)
     gdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.int32)
-    model1 = RampModel(data=data, err=err, pixeldq=pixdq, groupdq=gdq, times=times)
+    int_times = np.zeros((nints,))
+    model1 = RampModel(data=data, err=err, pixeldq=pixdq, groupdq=gdq, int_times=int_times)
     model1.meta.instrument.name='MIRI'
     model1.meta.instrument.detector='MIRIMAGE'
     model1.meta.instrument.filter='F480M'

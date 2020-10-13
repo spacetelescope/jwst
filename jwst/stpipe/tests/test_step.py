@@ -14,7 +14,7 @@ from jwst.stpipe import Step, crds_client
 from jwst.stpipe import cmdline
 from jwst.stpipe.config_parser import ValidationError
 
-from .steps import EmptyPipeline, MakeListPipeline, MakeListStep
+from .steps import EmptyPipeline, MakeListPipeline, MakeListStep, ProperPipeline
 from .util import t_path
 
 from crds.core.exceptions import CrdsLookupError
@@ -716,3 +716,17 @@ def test_search_attr():
 def test_print_configspec():
     step = Step()
     step.print_configspec()
+
+
+def test_call_with_config(caplog, _jail):
+    """Test call using a config file with substeps
+
+    In particular, from JP-1482, there was a case where a substep parameter
+    was not being overridden. Test for that case.
+    """
+    cfg = t_path(join('data', 'proper_pipeline.asdf'))
+    model = t_path(join('data', 'flat.fits'))
+
+    ProperPipeline.call(model, config_file=cfg)
+
+    assert "'par1': 'newpar1'" in caplog.text

@@ -57,6 +57,12 @@ semimajor and semiminor axis lengths, orientation of the major axis,
 and sky coordinates at corners of the minimal bounding box enclosing
 the source.
 
+.. Note::
+
+   Errors are only created when an image has an error extension.  Products
+   created from the resampling step currently do not have an error extension 
+   and the error columns are currently filled with a value of nan. 
+
 Source Catalog Table
 ^^^^^^^^^^^^^^^^^^^^
 

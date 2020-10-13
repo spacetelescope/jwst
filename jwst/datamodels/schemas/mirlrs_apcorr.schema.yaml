@@ -31,3 +31,7 @@ allOf:
       - name: apcorr_err
         datatype: float32
         ndim: 2
+    sizeunit:
+      title: Units for the SIZE or RADIUS column in the APCORR table
+      fits_hdu: APCORR
+      fits_keyword: SIZEUNIT

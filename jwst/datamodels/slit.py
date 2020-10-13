@@ -20,24 +20,26 @@ class SlitDataModel(DataModel):
     err : numpy float32 array
          Error array
 
-    wavelength : numpy float32 array
-         Wavelength array, corrected for zero-point
-
-    barshadow : numpy float32 array
-         Bar shadow correction
-
-    area : numpy float32 array
-         Pixel area map array
-
     var_poisson : numpy float32 array
          variance due to poisson noise
 
     var_rnoise : numpy float32 array
          variance due to read noise
 
-    pathloss : numpy float32 array
-         pathloss array
+    wavelength : numpy float32 array
+         Wavelength array, corrected for zero-point
 
+    barshadow : numpy float32 array
+         Bar shadow correction
+
+    pathloss_point : numpy float32 array
+         pathloss array for point source
+
+    pathloss_uniform : numpy float32 array
+         pathloss array for uniform source
+
+    area : numpy float32 array
+         Pixel area map array
     """
 
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/slitdata.schema"
@@ -49,12 +51,12 @@ class SlitDataModel(DataModel):
             self.dq = init.dq
             self.err = init.err
             self.area = init.area
-            if init.hasattr('wavelength'):
-                self.wavelength = init.wavelength
             if init.hasattr('var_poisson'):
                 self.var_poisson = init.var_poisson
             if init.hasattr('var_rnoise'):
                 self.var_rnoise = init.var_rnoise
+            if init.hasattr('wavelength'):
+                self.wavelength = init.wavelength
             for key in kwargs:
                 setattr(self, key, kwargs[key])
 
@@ -84,27 +86,29 @@ class SlitModel(DataModel):
     err : numpy float32 array
          Error array
 
-    wavelength : numpy float32 array
-         Wavelength array, corrected for zero-point
-
-    barshadow : numpy float32 array
-         Bar shadow correction
-
-    area : numpy float32 array
-         Pixel area map array
-
     var_poisson : numpy float32 array
          variance due to poisson noise
 
     var_rnoise : numpy float32 array
          variance due to read noise
 
-    pathloss : numpy float32 array
-         pathloss array
+    wavelength : numpy float32 array
+         Wavelength array, corrected for zero-point
+
+    barshadow : numpy float32 array
+         Bar shadow correction
+
+    pathloss_point : numpy float32 array
+         pathloss array for point source
+
+    pathloss_uniform : numpy float32 array
+         pathloss array for uniform source
+
+    area : numpy float32 array
+         Pixel area map array
 
     int_times : numpy table
          table of times for each integration
-
     """
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/slit.schema"
 
@@ -116,12 +120,12 @@ class SlitModel(DataModel):
             self.dq = init.dq
             self.err = init.err
             self.area = init.area
-            if init.hasattr('wavelength'):
-                self.wavelength = init.wavelength
             if init.hasattr('var_poisson'):
                 self.var_poisson = init.var_poisson
             if init.hasattr('var_rnoise'):
                 self.var_rnoise = init.var_rnoise
+            if init.hasattr('wavelength'):
+                self.wavelength = init.wavelength
             if init.hasattr('int_times'):
                 self.int_times = init.int_times
             if init.meta.hasattr('wcs'):

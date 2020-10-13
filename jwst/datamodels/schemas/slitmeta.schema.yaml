@@ -35,6 +35,11 @@ properties:
     default: 0
     fits_keyword: SLITID
     fits_hdu: SCI
+  shutter_id:
+    title: Shutter ID
+    type: integer
+    fits_keyword: SHUTTRID
+    fits_hdu: SCI
   source_id:
     title: Source ID
     type: integer

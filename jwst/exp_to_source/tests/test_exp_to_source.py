@@ -14,14 +14,9 @@ def run_exp_to_source():
         for f in helpers.INPUT_FILES
     ]
     outputs = exp_to_source(inputs)
-    return inputs, outputs
-
-
-@pytest.fixture(scope='module')
-def run_multislit_to_container():
-    inputs = ModelContainer([MultiSlitModel(f) for f in helpers.INPUT_FILES])
-    outputs = multislit_to_container(inputs)
-    return inputs, outputs
+    yield inputs, outputs
+    for model in inputs:
+        model.close()
 
 
 def test_model_structure(run_exp_to_source):
@@ -46,23 +41,37 @@ def test_model_roundtrip(tmpdir, run_exp_to_source):
         outputs[output].save(file_path)
         files.append(file_path)
     for file_path in files:
-        multiexposure_model = MultiExposureModel(file_path)
-        assert len(multiexposure_model.exposures) == 3
-        exp_files = set()
-        for exposure in multiexposure_model.exposures:
-            exp_files.add(exposure.meta.filename)
-        assert len(exp_files) == len(multiexposure_model.exposures)
-        assert multiexposure_model.meta.filename not in exp_files
+        with MultiExposureModel(file_path) as multiexposure_model:
+            assert len(multiexposure_model.exposures) == 3
+            exp_files = set()
+            for exposure in multiexposure_model.exposures:
+                exp_files.add(exposure.meta.filename)
+            assert len(exp_files) == len(multiexposure_model.exposures)
+            assert multiexposure_model.meta.filename not in exp_files
 
 
-def test_container_structure(run_multislit_to_container):
-    inputs, outputs = run_multislit_to_container
-    assert len(inputs) == 3
+def test_container_structure():
+    """Test for container usage."""
+
+    # Setup input
+    inputs = [MultiSlitModel(f) for f in helpers.INPUT_FILES]
+    container = ModelContainer(inputs)
+
+    # Make the source-based containers
+    outputs = multislit_to_container(container)
+
+    # See what we got.
+    assert len(container) == 3
     assert len(outputs) == 5
-    for i, model in enumerate(inputs):
+    for i, model in enumerate(container):
         for slit in model.slits:
             exposure = outputs[str(slit.source_id)][i]
             assert (exposure.data == slit.data).all()
             assert np.array_equal(exposure.data, slit.data)
             assert exposure.meta.filename == model.meta.filename
             assert exposure.meta.wcs.pipeline == slit.meta.wcs.pipeline
+
+    # Closeout
+    container.close()
+    for model in inputs:
+        model.close()

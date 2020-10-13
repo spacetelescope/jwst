@@ -17,8 +17,7 @@ class TSOPhotometryStep(Step):
     Parameters
     -----------
     input : str or `CubeModel`
-        A filename for either a FITS image or and association table or a
-        `CubeModel`.
+        Filename for a FITS image or association table, or a `CubeModel`.
     """
 
     spec = """
@@ -28,39 +27,48 @@ class TSOPhotometryStep(Step):
     reference_file_types = ['tsophot']
 
     def process(self, input_data):
+
+        # Open the input as a CubeModel
         with CubeModel(input_data) as model:
 
+            # Need the FITS WCS CRPIX1/2 values for setting the
+            # photometry aperture location
             if model.meta.wcsinfo.crpix1 is None:
                 raise ValueError('CRPIX1 is missing.')
-
             if model.meta.wcsinfo.crpix2 is None:
                 raise ValueError('CRPIX2 is missing.')
 
             xcenter = model.meta.wcsinfo.crpix1 - 1    # 1-based origin
             ycenter = model.meta.wcsinfo.crpix2 - 1    # 1-based origin
 
+            # Get the tsophot reference file
             tsophot_filename = self.get_reference_file(model, 'tsophot')
-            self.log.debug('Reference file name = {}'.format(tsophot_filename))
+            self.log.debug(f'Reference file name = {tsophot_filename}')
             if tsophot_filename == 'N/A':
                 self.log.warning('No TSOPHOT reference file found;')
                 self.log.warning('the tso_photometry step will be skipped.')
                 return None
 
+            # Retrieve aperture info from the reference file
             pupil_name = 'ANY'
             if model.meta.instrument.pupil is not None:
                 pupil_name = model.meta.instrument.pupil
 
             (radius, radius_inner, radius_outer) = get_ref_data(
                         tsophot_filename, pupil=pupil_name)
-            self.log.debug('Using reference file {}'.format(tsophot_filename))
-            self.log.debug('radius = {}'.format(radius))
-            self.log.debug('radius_inner = {}'.format(radius_inner))
-            self.log.debug('radius_outer = {}'.format(radius_outer))
 
+            self.log.debug(f'radius = {radius}')
+            self.log.debug(f'radius_inner = {radius_inner}')
+            self.log.debug(f'radius_outer = {radius_outer}')
+            self.log.debug(f'xcenter = {xcenter}')
+            self.log.debug(f'ycenter = {ycenter}')
+
+            # Compute the aperture photometry
             catalog = tso_aperture_photometry(model, xcenter, ycenter,
                                               radius, radius_inner,
                                               radius_outer)
 
+            # Save the photometry in an output catalog
             if self.save_catalog:
                 old_suffixes = ['calints', 'crfints']
                 output_dir = self.search_attr('output_dir')
@@ -70,8 +78,7 @@ class TSOPhotometryStep(Step):
                                                   output_dir=output_dir)
                 catalog.write(cat_filepath, format='ascii.ecsv',
                               overwrite=True)
-                self.log.info('Wrote TSO photometry catalog: {0}'.
-                              format(cat_filepath))
+                self.log.info(f'Wrote TSO photometry catalog: {cat_filepath}')
 
         return catalog
 

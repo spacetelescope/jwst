@@ -53,9 +53,11 @@ The instrument mode abbreviations used in the table are as follows:
 +-----------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
 | :ref:`extract_2d <extract_2d_step>`\ :sup:`1` | |c| | |c| |     |     |     |     |      | |c|  |  |c|   | |c| |
 +-----------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
-| :ref:`flat_field <flatfield_step>`\ :sup:`1`  | |c| | |c| | |c| | |c| | |c| | |c| |  |c| | |c|  |  |c|   | |c| |
+| :ref:`srctype <srctype_step>`\ :sup:`1`       | |c| | |c| | |c| | |c| | |c| | |c| |  |c| |      |        | |c| |
 +-----------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
-| :ref:`srctype <srctype_step>`                 | |c| | |c| | |c| | |c| | |c| | |c| |  |c| |      |        | |c| |
+| :ref:`wavecorr <wavecorr_step>`               | |c| | |c| |     |     |     |     |      |      |        |     |
++-----------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
+| :ref:`flat_field <flatfield_step>`\ :sup:`1`  | |c| | |c| | |c| | |c| | |c| | |c| |  |c| | |c|  |  |c|   | |c| |
 +-----------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
 | :ref:`straylight <straylight_step>`           |     |     |     |     |     | |c| |      |      |        |     |
 +-----------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
@@ -74,10 +76,11 @@ The instrument mode abbreviations used in the table are as follows:
 | :ref:`extract_1d <extract_1d_step>`           | |c| | |c| | |c| | |c| | |c| | |c| |  |c| | |c|  |  |c|   | |c| |
 +-----------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
 
-:sup:`1`\ Note that for NIRISS and NIRCam WFSS, as well as NIRCam TSO grism exposures,
-the order of the :ref:`extract_2d <extract_2d_step>` and :ref:`flat_field <flatfield_step>`
-steps is reversed: :ref:`flat_field <flatfield_step>` is performed first, then
-:ref:`extract_2d <extract_2d_step>`.
+:sup:`1`\ The exact order of the :ref:`extract_2d <extract_2d_step>`, :ref:`srctype <srctype_step>`,
+and :ref:`flat_field <flatfield_step>` steps depends on the observing mode.
+For NIRISS and NIRCam WFSS, as well as NIRCam TSO grism exposures, the order is
+flat_field followed by extract_2d (no wavecorr or srctype).
+For all other modes the order is extract_2d, srctype, wavecorr, and flat_field.
 
 The :ref:`resample_spec <resample_step>` step produces a resampled/rectified product for
 non-IFU modes of some spectroscopic exposures. If the :ref:`resample_spec <resample_step>` step
@@ -171,7 +174,7 @@ the output type will consist of either a single slit model or a mutli-slit model
 The multi-slit model is simply an array of multiple slit models, each one
 containing the data and relevant meta data for a particular extracted slit or
 source. A `~jwst.datamodels.MultiSlitModel` product will contain multiple
-tuples of SCI, ERR, DQ, WAVELENGTH, RELSENS, etc. arrays; one for each of the
+tuples of SCI, ERR, DQ, WAVELENGTH, etc. arrays; one for each of the
 extracted slits/sources.
 
 2D resampled data

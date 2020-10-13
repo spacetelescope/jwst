@@ -16,11 +16,11 @@ associations
 cube_build
 ----------
 
-- When making SINGLE type cubes for outlier detection or mrs_imatch data not in the
+- When making SINGLE type cubes for outlier detection or mrs_imatch data not in the 
   appropriate channel/grating is skipped [#5347]
 
 - If outlier detection has flagged all the data on a input file as DO_NOT_USE, then
-  skip the file in creating an ifucube [#5347]
+  skip the file in creating an ifucube [*5347]
 
 datamodels
 ----------
@@ -34,7 +34,7 @@ datamodels
 extract_1d
 ----------
 
-- Fixed bug involving the determination of source RA/Dec for resampled Slit
+- Fixed bug invovling the determination of source RA/Dec for resampled Slit
   data. [#5353]
 
 flatfield
@@ -46,10 +46,10 @@ flatfield
 - Updated branch logic to handle NRS_LAMP exposures as spectroscopic. [#5370]
 
 jump
----------
+----
 
--- Fixed bug in the minimum number of frames for the jump detection step by
-   changing it from 3 to 5. [#5376]
+- Fixed bug in the minimum number of groups per integration for the jump
+  detection step by changing it from 3 to 5. [#5376]
 
 master_background
 -----------------
@@ -122,7 +122,7 @@ flat_field
 - Implement applying the inverse operation. [#5302]
 
 master_background
-----------------
+-----------------
 
 - Create new step `MasterBackgroundNrsSlits` step to handle NIRSpec MOS data in `Spec2Pipeline` [#5317]
 

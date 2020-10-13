@@ -64,7 +64,7 @@ class TestLevel3Spec(BasePoolRule):
             'o003',
             'spec3',
             r'jw99009-o003_spec3_\d{3}_asn',
-            'jw99009-o003_t002_nirspec_tg235h',
+            'jw99009-o003_t002_nirspec_g235h',
             set(('science', 'target_acquisition', 'autowave'))
         ),
     ]

@@ -6,13 +6,15 @@ import numpy as np
 import logging
 from gwcs import wcstools
 
+from jwst import datamodels
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 SLITRATIO = 1.15     # Ratio of slit spacing to slit height
 
 
-def do_correction(input_model, barshadow_model):
+def do_correction(input_model, barshadow_model=None, inverse=False, source_type=None, correction_pars=None):
     """Do the Bar Shadow Correction
 
     Parameters
@@ -23,10 +25,20 @@ def do_correction(input_model, barshadow_model):
     barshadow_model : `~jwst.datamodels.BarshadowModel`
         bar shadow data model from reference file
 
+    inverse : boolean
+        Invert the math operations used to apply the flat field.
+
+    source_type : str or None
+        Force processing using the specified source type.
+
+    correction_pars : dict or None
+        Correction parameters to use instead of recalculation.
+
     Returns
     -------
-    output_model : `~jwst.datamodels.MultiSlitModel`
-        Science data model with correction applied and barshadow extensions added
+    output_model, corrections : `~jwst.datamodels.MultiSlitModel`, jwst.datamodels.DataModel
+        Science data model with correction applied and barshadow extensions added,
+        and a model of the correction arrays.
     """
 
     # Input is a MultiSlitModel science data model.
@@ -47,6 +59,56 @@ def do_correction(input_model, barshadow_model):
     # Create output as a copy of the input science data model
     output_model = input_model.copy()
 
+    # Loop over all the slits in the input model
+    corrections = datamodels.MultiSlitModel()
+    for slit_idx, slitlet in enumerate(output_model.slits):
+        slitlet_number = slitlet.slitlet_id
+        log.info('Working on slitlet %d' % slitlet_number)
+
+        if correction_pars:
+            correction = correction_pars.slits[slit_idx]
+        else:
+            correction = _calc_correction(slitlet, barshadow_model, source_type)
+        corrections.slits.append(correction)
+
+        # Apply the correction by dividing into the science and uncertainty arrays:
+        #     var_poission and var_rnoise are divided by correction**2,
+        #     because they're variance, while err is standard deviation
+        if not inverse:
+            slitlet.data /= correction.data
+        else:
+            slitlet.data *= correction.data
+        slitlet.err /= correction.data
+        slitlet.var_poisson /= correction.data**2
+        slitlet.var_rnoise /= correction.data**2
+        if slitlet.var_flat is not None and np.size(slitlet.var_flat) > 0:
+            slitlet.var_flat /= correction.data**2
+        slitlet.barshadow = correction.data
+
+    return output_model, corrections
+
+
+def _calc_correction(slitlet, barshadow_model, source_type):
+    """Calculate the barshadow correction for a slitlet
+
+    Parameters
+    ----------
+    slitlet : jwst.datamodels.SlitModel
+        The slitlet to calculate for.
+
+    barshadow_model : `~jwst.datamodels.BarshadowModel`
+        bar shadow data model from reference file
+
+    source_type : str or None
+        Force processing using the specified source type.
+
+    Returns
+    -------
+    correction : jwst.datamodels.SlitModel
+        The correction to be applied
+    """
+    slitlet_number = slitlet.slitlet_id
+
     # Create the pieces that are put together to make the barshadow model
     shutter_elements = create_shutter_elements(barshadow_model)
     w0 = barshadow_model.crval1
@@ -54,71 +116,48 @@ def do_correction(input_model, barshadow_model):
     y_increment = barshadow_model.cdelt2
     shutter_height = 1.0 / y_increment
 
-    # Loop over all the slits in the input model
-    for slitlet in output_model.slits:
-        slitlet_number = slitlet.slitlet_id
-        log.info('Working on slitlet %d' % slitlet_number)
+    # The correction only applies to extended/uniform sources
+    correction = datamodels.SlitModel(data=np.ones(slitlet.data.shape))
+    if has_uniform_source(slitlet, source_type):
+        shutter_status = slitlet.shutter_state
+        if len(shutter_status) > 0:
+            shadow = create_shadow(shutter_elements, shutter_status)
 
-        # The correction only applies to extended/uniform sources
-        if has_uniform_source(slitlet):
-            shutter_status = slitlet.shutter_state
-            if len(shutter_status) > 0:
-                shadow = create_shadow(shutter_elements, shutter_status)
+            # For each pixel in the slit subarray,
+            # make a grid of indices for pixels in the subarray
+            x, y = wcstools.grid_from_bounding_box(slitlet.meta.wcs.bounding_box, step=(1, 1))
 
-                # For each pixel in the slit subarray,
-                # make a grid of indices for pixels in the subarray
-                x, y = wcstools.grid_from_bounding_box(slitlet.meta.wcs.bounding_box, step=(1, 1))
+            # Create the transformation from slit_frame to detector
+            det2slit = slitlet.meta.wcs.get_transform('detector', 'slit_frame')
 
-                # Create the transformation from slit_frame to detector
-                det2slit = slitlet.meta.wcs.get_transform('detector', 'slit_frame')
+            # Use this transformation to calculate x, y, and wavelength
+            xslit, yslit, wavelength = det2slit(x, y)
 
-                # Use this transformation to calculate x, y, and wavelength
-                xslit, yslit, wavelength = det2slit(x, y)
+            # The returned y values are scaled to where the slit height is 1
+            # (i.e. a slit goes from -0.5 to 0.5).  The barshadow array is scaled
+            # so that the separation between the slit centers is 1,
+            # i.e. slit height + interslit bar
+            yslit = yslit / SLITRATIO
 
-                # The returned y values are scaled to where the slit height is 1
-                # (i.e. a slit goes from -0.5 to 0.5).  The barshadow array is scaled
-                # so that the separation between the slit centers is 1,
-                # i.e. slit height + interslit bar
-                yslit = yslit / SLITRATIO
+            # Convert the Y and wavelength to a pixel location in the  bar shadow array
+            index_of_fiducial = shutter_status.find('x')
 
-                # Convert the Y and wavelength to a pixel location in the  bar shadow array
-                index_of_fiducial = shutter_status.find('x')
+            # The shutters go downwards, i.e. the first shutter in shutter_status corresponds to
+            # the last in the shadow array.  So the center of the first shutter referred to in
+            # shutter_status has an index of shadow.shape[0] - shutter_height.  Each subsequent
+            # shutter center has an index shutter_height greater.
+            index_of_fiducial_in_array = shadow.shape[0] - shutter_height * (1 + index_of_fiducial)
+            yrow = index_of_fiducial_in_array + yslit * shutter_height
+            wcol = (wavelength - w0)/wave_increment
 
-                # The shutters go downwards, i.e. the first shutter in shutter_status corresponds to
-                # the last in the shadow array.  So the center of the first shutter referred to in
-                # shutter_status has an index of shadow.shape[0] - shutter_height.  Each subsequent
-                # shutter center has an index shutter_height greater.
-                index_of_fiducial_in_array = shadow.shape[0] - shutter_height * (1 + index_of_fiducial)
-                yrow = index_of_fiducial_in_array - yslit * shutter_height
-                wcol = (wavelength - w0)/wave_increment
-
-                # Interpolate the bar shadow correction for non-Nan pixels
-                correction = interpolate(yrow, wcol, shadow)
-
-                # Add the correction array to the datamodel
-                slitlet.barshadow = correction
-
-                # Apply the correction by dividing into the science and uncertainty arrays:
-                #     var_poission and var_rnoise are divided by correction**2,
-                #     because they're variance, while err is standard deviation
-                slitlet.data /= correction
-                slitlet.err /= correction
-                slitlet.var_poisson /= correction**2
-                slitlet.var_rnoise /= correction**2
-                if slitlet.var_flat is not None and np.size(slitlet.var_flat) > 0:
-                    slitlet.var_flat /= correction**2
-            else:
-                log.info("Slitlet %d has zero length, correction skipped" % slitlet_number)
-
-                # Put an array of ones in a correction extension
-                slitlet.barshadow = np.ones(slitlet.data.shape)
+            # Interpolate the bar shadow correction for non-Nan pixels
+            correction.data = interpolate(yrow, wcol, shadow)
         else:
-            log.info("Bar shadow correction skipped for slitlet %d (source not uniform)" % slitlet_number)
+            log.info("Slitlet %d has zero length, correction skipped" % slitlet_number)
+    else:
+        log.info("Bar shadow correction skipped for slitlet %d (source not uniform)" % slitlet_number)
 
-            # Put an array of ones in a correction extension
-            slitlet.barshadow = np.ones(slitlet.data.shape)
-
-    return output_model
+    return correction
 
 
 def create_shutter_elements(barshadow_model):
@@ -472,7 +511,7 @@ def interpolate(rows, columns, array, default=np.nan):
     return correction
 
 
-def has_uniform_source(slitlet):
+def has_uniform_source(slitlet, force_type=None):
     """Determine whether the slitlet contains a uniform source
 
     Parameters:
@@ -480,15 +519,19 @@ def has_uniform_source(slitlet):
     slitlet: slitlet object
         The slitlet being interrogated
 
+    force_type : string or None
+        Source type to force to and decide upon.
+
     Returns:
 
     answer: boolean
         True if the slitlet contains a uniform source
     """
+    source_type = force_type if force_type else slitlet.source_type
 
-    if slitlet.source_type:
+    if source_type:
         # Assume extended, unless explicitly set to POINT
-        if slitlet.source_type.upper() == 'POINT':
+        if source_type.upper() == 'POINT':
             return False
         else:
             return True

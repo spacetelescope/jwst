@@ -106,7 +106,7 @@ class CubeData():
         instrument_info = instrument_defaults.InstrumentInfo()
 # -------------------------------------------------------------------------------
 # Read the cube pars reference file
-        log.info('Reading  cube parameter file %s', self.par_filename)
+        log.info('Reading cube parameter file %s', self.par_filename)
         cube_build_io_util.read_cubepars(self.par_filename,
                                          self.instrument,
                                          self.weighting,
@@ -117,7 +117,7 @@ class CubeData():
                                          instrument_info)
 # -------------------------------------------------------------------------------
 # Read the miri resolution reference file
-        if(self.weighting == 'miripsf'):
+        if self.weighting == 'miripsf':
             log.info('Reading default MIRI cube resolution file %s',
                      self.resol_filename)
             cube_build_io_util.read_resolution_file(self.resol_filename,
@@ -213,9 +213,9 @@ class CubeData():
                                 self.all_channel.append(valid_channel[i])
                                 self.all_subchannel.append(valid_subchannel[j])
 
-            log.info('The desired cubes covers the MIRI Channels: %s',
+            log.info('The desired cubes cover the MIRI Channels: %s',
                      self.all_channel)
-            log.info('The desired cubes covers the MIRI subchannels: %s',
+            log.info('The desired cubes cover the MIRI subchannels: %s',
                      self.all_subchannel)
 
             number_channels = len(self.all_channel)
@@ -294,10 +294,10 @@ class CubeData():
                 if self.output_type == 'multi':
                     log.info('Output IFUcube are constructed from all the data ')
                 if self.single:
-                    log.info(' Single = true, creating a set of single exposures mapped' +
+                    log.info('Single = true, creating a set of single exposures mapped' +
                           ' to output IFUCube coordinate system')
                 if self.output_type == 'user':
-                    log.info(' The user has selected the type of IFU cube to make')
+                    log.info('The user has selected the type of IFU cube to make')
 
                 num_cubes = 1
                 cube_pars['1'] = {}
@@ -354,10 +354,10 @@ class CubeData():
                 if self.output_type == 'multi':
                     log.info('Output IFUcube are constructed from all the data ')
                 if self.single:
-                    log.info(' Single = true, creating a set of single exposures mappe' +
+                    log.info('Single = true, creating a set of single exposures' +
                           ' mapped to output IFUCube coordinate system')
                 if self.output_type == 'user':
-                    log.info(' The user has selected the type of IFU cube to make')
+                    log.info('The user has selected the type of IFU cube to make')
 
                 num_cubes = 1
                 cube_pars['1'] = {}

@@ -127,8 +127,8 @@ def test_call_cube_build(_jail, miri_cube_pars, miri_image):
 
     assert step.pars_input['channel'] == ['1']
     assert step.interpolation == 'pointcloud'
-    assert step.weighting == 'msm'
-    assert step.coord_system == 'world'
+    assert step.weighting == 'emsm'
+    assert step.coord_system == 'skyalign'
 
     # Set Assign WCS has been run but the user input to channels is wrong
     miri_image.meta.cal_step.assign_wcs = 'COMPLETE'
