@@ -45,6 +45,11 @@ flatfield
 
 - Updated branch logic to handle NRS_LAMP exposures as spectroscopic. [#5370]
 
+jump
+----
+
+- Various rework to reduce memory usage and increase readability. [#5404]
+
 master_background
 -----------------
 
