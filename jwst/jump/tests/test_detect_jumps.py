@@ -506,7 +506,7 @@ def test_proc(setup_inputs):
     ngroups = 10
 
     model1, gdq, rnModel, pixdq, err, gain = \
-        setup_inputs( ngroups=ngroups, nrows=5, ncols=6, nints=2, gain=ingain, readnoise=inreadnoise,
+        setup_inputs( ngroups=ngroups, nrows=25, ncols=6, nints=2, gain=ingain, readnoise=inreadnoise,
                       deltatime=grouptime )
 
     model1.data[0, 0, 2, 3] = 15.0
@@ -520,11 +520,11 @@ def test_proc(setup_inputs):
     model1.data[0, 8, 2, 3] = 170.0
     model1.data[0, 9, 2, 3] = 180.0
 
-    out_model_a = detect_jumps( model1, gain, rnModel, 4.0, 'half', 200, 4, True )
-    out_model_b = detect_jumps( model1, gain, rnModel, 4.0, None, 200, 4, True )
+    out_model_a = detect_jumps( model1, gain, rnModel, 4.0, None, 200, 4, True )
+    out_model_b = detect_jumps( model1, gain, rnModel, 4.0, 'half', 200, 4, True )
     assert( out_model_a.groupdq == out_model_b.groupdq ).all()
 
-    out_model_c = detect_jumps( model1, gain, rnModel, 4.0, 'All', 200, 4, True )
+    out_model_c = detect_jumps( model1, gain, rnModel, 4.0, 'all', 200, 4, True )
     assert( out_model_a.groupdq == out_model_c.groupdq ).all()
 
 
@@ -538,7 +538,7 @@ def test_adjacent_CRs( setup_inputs ):
     inreadnoise = np.float64(7)
     ngroups = 10
     model1, gdq, rnModel, pixdq, err, gain = \
-        setup_inputs( ngroups=ngroups, nrows=5, ncols=6, gain=ingain,
+        setup_inputs( ngroups=ngroups, nrows=15, ncols=6, gain=ingain,
                       readnoise=inreadnoise, deltatime=grouptime )
 
     # Populate arrays for 1st CR, centered at (x=2, y=3)
@@ -611,13 +611,14 @@ def setup_inputs():
 
         pixdq = np.zeros(shape=(nrows, ncols), dtype=np.float64)
         read_noise = np.full((nrows, ncols), readnoise, dtype=np.float64)
-        gdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.uint32)
         if subarray:
             data = np.zeros(shape=(nints, ngroups, 20, 20), dtype=np.float64)
             err = np.ones(shape=(nints, ngroups, 20, 20), dtype=np.float64)
+            gdq = np.zeros(shape=(nints, ngroups, 20, 20), dtype=np.uint32)
         else:
             data = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
             err = np.ones(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
+            gdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.uint32)
         model1 = RampModel(data=data, err=err, pixeldq=pixdq, groupdq=gdq, times=times)
         model1.meta.instrument.name = 'MIRI'
         model1.meta.instrument.detector = 'MIRIMAGE'
