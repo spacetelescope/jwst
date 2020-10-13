@@ -1,5 +1,189 @@
-0.17.0 (unreleased)
+0.17.2 (unreleased)
 ===================
+
+ami
+---
+
+- Update code and unit tests to use new ami analyze algorithm [#5390]
+
+associations
+------------
+
+- Do not allow target acqs to be considered TSO [#5385]
+
+- Add NRS_VERIFY to the list of target acq/confirmation images [#5395]
+
+cube_build
+----------
+
+- When making SINGLE type cubes for outlier detection or mrs_imatch data not in the
+  appropriate channel/grating is skipped [#5347]
+
+- If outlier detection has flagged all the data on a input file as DO_NOT_USE, then
+  skip the file in creating an ifucube [#5347]
+
+datamodels
+----------
+
+- Skip serializing `None` in datamodels to be compatible with `asdf>=2.8` [#5371]
+
+- Implement full class deprecator decorator and use for MIRIRampModel [#5382]
+
+- Add NRS_VERIFY to the core schema as an allowed EXP_TYPE [#5395]
+
+extract_1d
+----------
+
+- Fixed bug involving the determination of source RA/Dec for resampled Slit
+  data. [#5353]
+
+flatfield
+---------
+
+- Fixed bug in sending NIRSpec AUTOWAVE exposures to the spectroscopic
+  processing branch. [#5356]
+
+- Updated branch logic to handle NRS_LAMP exposures as spectroscopic. [#5370]
+
+jump
+---------
+
+-- Fixed bug in the minimum number of frames for the jump detection step by
+   changing it from 3 to 5. [#5376]
+
+master_background
+-----------------
+
+- Update the NIRSpec MOS master background logic to only proceed with processing
+  after verifying that there are both background and source slits available in
+  the input dataset. [#5370]
+
+outlier_detection
+-----------------
+
+- Implement memory check in resample to prevent huge arrays [#5354]
+
+ramp_fitting
+------------
+
+- Update to store output as an `IFUImageModel` for NIRSpec AUTOWAVE exposures
+  using the IFU mode. [#5356]
+
+- Update to add 'DO_NOT_USE' DQ flag to pixels with all groups flagged as
+  saturated. [#5367]
+
+resample
+--------
+
+- Implement memory check in resample to prevent huge arrays [#5354]
+
+saturation
+----------
+
+- Set saturation threshold to A-to-D limit of 65535 for pixels flagged with
+  NO_SAT_CHECK in the saturation reference file, instead of skipping any
+  test of those pixels. [#5394]
+
+0.17.1 (2020-09-15)
+===================
+
+associations
+------------
+
+- Add product name override to the `IFUGratingBkg` class, to prevent the default
+  "clear" suffix showing up in NIRSpec IFU product names. [#5326]
+
+barshadow
+---------
+
+- Implement using a user-supplied correction which overrides all references. [#5302]
+
+- Implement applying the inverse operation. [#5302]
+
+blendmeta
+---------
+
+- Do not close files that were not opened by blendmodels [#5299]
+
+cube_build
+----------
+
+- If every wavelength plane of the IFU cube contains 0 data, cube_build is skipped [#5294]
+
+- Remove "clear" suffix from MIRI MRS product name templates [#5326]
+
+flat_field
+----------
+
+- Update how the flat field reference dq mask is used for NIRSpec MOS data [#5284]
+
+- Implement providing a user-supplied flat field which overrides all references. [#5302]
+
+- Implement applying the inverse operation. [#5302]
+
+master_background
+----------------
+
+- Create new step `MasterBackgroundNrsSlits` step to handle NIRSpec MOS data in `Spec2Pipeline` [#5317]
+
+- Implement option to save the 2d version of the calculated master background [#5317]
+
+outlier_detection
+-----------------
+
+- Fix bug where background was being subtracted on the input data [#4858]
+
+pathloss
+--------
+
+- Implement using a user-supplied correction which overrides all references. [#5302]
+
+- Implement applying the inverse operation. [#5302]
+
+photom
+------
+
+- Implement using a user-supplied correction which overrides all references. [#5302]
+
+- Implement applying the inverse operation. [#5302]
+
+pipeline
+--------
+
+- Spec3Pipeline check whether master background subtraction has already occurred. [#5308]
+
+- Implement master background subtraction in Spec2Pipeline for NIRSpec MOS data. [#5302]
+
+- Include the per-slit failure traceback in any RuntimeError raised in Spec2Pipeline. [#5315]
+
+scripts
+-------
+
+- Add pointing analysis commands v1_calculate and pointing_summary. [#5311]
+
+stpipe
+------
+
+- Do not attempt prefetch on pipelines that are set to not allow prefetch. [#5363]
+
+ramp_fitting
+------------
+
+- Reinstate copying of INT_TIMES table to output rateints product for TSO exposures. [#5321]
+
+tso_photometry
+--------------
+
+- Fix a bug in the computation of integration time stamps when the INT_TIMES
+  table is not available. [#5318]
+
+0.17.0 (2020-08-28)
+===================
+
+align_refs
+----------
+
+- Add bad pixel replacement for target and psf images [#4973]
 
 assign_mtwcs
 ------------
@@ -11,41 +195,175 @@ assign_wcs
 
 - Enabled ``filteroffset`` correction for NIRISS and NIRCAM imaging modes. [#5018, #5027]
 
+- Pass an optional ``input_frame`` parameter in ``assign_wcs.util.wcs_from_footprintss``. [#5120]
+
+- Improved calculation of bounding boxes in grism images. [#5122]
+
+- Added two new optional parameters to ``utils.cerate_grism_bbox`` - ``wfss_extract_half_height``
+  and ``wavelength_range``. [#5140]
+
+- Shifted the bounding box of a resampled WCS by - 0.5 px to account for the
+  center of the pixel. [#5241]
+
+- Enable NIRSpec lamp processing in calspec2 pipeline. [#5267]
+
 associations
 ------------
 
-- Update diagrams to change sloper to detector1. [#4986]
+- Update diagrams in documentation to change sloper to detector1. [#4986]
+
+- Update level-3 rules to exclude IFU exposures from ``calwebb_tso3`` associations. [#5202]
+
+- Fix formatting error in Asn_IFUGrating product name construction. [#5231]
+
+barshadow
+---------
+
+- Correct bar shadow parity bug for yslit. [#5095]
 
 combine_1d
 ----------
 
-- Only warn when there are degenerate spectrum in combining [#5037]
+- Skip spectra that are degenerate when combining [#5037]
+
+cube_build
+----------
+
+- Changed default weighting to 'emsm'. [#5277]
+
+- Fixed formatting of NIRSpec s3d output product names. [#5231]
+
+- Modified NIRSpec blotting to the find min and max ra and dec for each slice and only
+  invert those values on slice that fall in range [#5144]
+
+- Changed default weighting back to 'msm' until NIRSPEC cube pars ref file contains emsm info [#5134]
+
+- Added checks read from cube pars reference file that parameters have valid data [#5134]
+
+- Change the name of default cube type from ``world`` to ``skyalign`` [#4974]
+
+- Add ``ifualign`` cubes to be cubes rotated on sky to align with ifu instrument plane [#4974]
+
+- Change the name of MIRI ``alpha-beta`` cube type to ``internal_cal`` [#4974]
+
+- Add ability to make NIRSpec ``internal_cal`` ifu cubes aligned with slicer plane [#4974]
+
+- Change default weighting from ``msm`` to ``emsm`` [#4974]
+
+- NIRSpec IFU cubes built from all wavelengths rather than those defined in cube par ref file [#4974]
+
+- Removed wavelength planes that contained only 0 data. These planes are edge cases [#4974]
 
 datamodels
 ----------
 
-- Add blend rule for DETECTOR and MODULE. [#4998]
+- Add iscopy to ModelContainer init [#5256]
 
-- Added methods ``Model.info`` and ``Model.search``. [#4660]
+- Re-enable FITS-hash by default. [#5191]
 
-- Trimmed MT_RA, MT_DEC keyword comments to fit within FITS record. [#4994]
+- Add blend rule for keywords DETECTOR and MODULE. [#4998]
+
+- Add methods ``Model.info`` and ``Model.search``. [#4660]
+
+- Trim MT_RA, MT_DEC keyword comments to fit within FITS record. [#4994]
 
 - Add enum list and default value of 'NONE' for ``meta.instrument.lamp_mode`` [#5022]
+
+- Add TIMEUNIT keyword to schemas. [#5109]
+
+- Split ``pathloss`` object into ``pathloss_ps`` and ``pathloss_un`` in schemas. [#5112]
+
+- Add "PERSISTENCE" DQ flag definition. [#5137]
+
+- Fix nonsensical premature closing of FITS file of a ``DataModel``. [#4930]
+
+- Add a hash set/check to DataModel I/O to check whether schema traversal is necessary. [#5110]
+
+- Update underlying MultiExposureModel from the SourceModelContainer models. [#5154]
+
+- Add new MIRI LRS dither patterns to PATTTYPE enum list. [#5254]
 
 extract_1d
 ----------
 
-coron
------
-
-- Bad pixel replacment & median smoothing for psf images [#4973]
+- Implement aperture corrections in the Extract1dStep. [#4902]
 
 - Fix bug in creating a polynomial fit used in background extraction. [#4970]
+
+- Recheck the input model container in run_extract1d to select the correct processing [#5076]
+
+- Rework/refactor many functions for style and readability. [#5079]
+
+- Checks subwcs and new_slit variables exist before trying to delete them. [#5093]
+
+- Parameter ``mmag_extract`` is now propagated to the extraction routine. [#5122]
+
+- Updated the logic for when and how to use the source position to offset the
+  location of the extraction regions specified in the EXTRACT1D reference file. [#5157]
+
+- Fixed the conversion of flux to surface brightness for IFU extended source case [#5201]
+
+- Fixed bugs in aperture correction for NIRSpec multi-slit modes. [#5260]
+
+extract_2d
+----------
+
+- Check that ``subwcs`` and ``new_slit`` variables exist before trying to delete them [#5093]
+
+- Move NIRSpec wavecorr routines to the ``wavecorr`` step. [#5133]
+
+- Added a new optional integer parameter to extract_2d (``wfss_extract_half_height``)
+  which allows a user to specify the extraction height in the
+  cross-dispersion direction for WFSS mode. [#5140]
+
+flat_field
+----------
+- For NIRSpec BOTS and ALLSLITS add the slit start corner to the subarray start corner
+  when determining what region of the flat_field reference files to extract. [#5269]
+
+- Enable NIRSpec lamp processing in calspec2 pipeline. [#5267]
+
+fringe
+------
+
+- Update the fringe step to handle 3D inputs for MIRI MRS TSO mode. [#5202]
 
 master_background
 -----------------
 
 - Fix open files bug [#4995]
+
+- Update to include pathloss corrections to NIRSpec IFU background [#5125]
+
+mrs_imatch
+----------
+
+- MRSIMatchStep to create its ModelContainers with `iscopy=True` [#5256]
+
+outlier_detection
+-----------------
+
+- Update median filter to use numpy's nanmedian. [#5114]
+
+- Fix outlier_detection bug when saving intermediate results. [#5108]
+
+- Update logic to correctly handle input ``CubeModel`` that have only
+  1 integration. [#5211]
+
+pathloss
+--------
+
+- Fix bug in NIRSpec IFU data that causes valid pixel dq flags to set to
+  NON-SCIENCE in the region of an overlapping bounding box slice [#5047]
+
+- Update to save both point source and uniform source 2D pathloss correction
+  arrays to output. [#5112]
+
+persistence
+-----------
+
+- Flag pixels with high persistence using "PERSISTENCE" DQ flag instead
+  of "DO_NOT_USE". [#5137]
 
 pipeline
 --------
@@ -58,10 +376,56 @@ pipeline
 - Fix open files bug in ``get_config_from_reference`` class method, and in
   ``Spec2Pipeline``, ``Spec3Pipeline`` and ``tso3``. [#4995]
 
+- Update ``calwebb_tso3`` to do more robust checking of input data type.
+  [#5107]
+
+- Update the ``Spec2Pipeline`` to include the new ``wavecorr`` step and put
+  ``srctype`` before ``wavecorr``. [#5133]
+
+- Update the ``Spec2Pipeline`` to skip ``extract_1d`` for IFU data that
+  have not had a cube built (e.g. MIRI MRS TSO), and update the
+  ``calwebb_tso-spec2.cfg`` configuration to turn on the ``fringe`` step
+  and turn off ``cube_build`` for MIRI MRS TSO. [#5202]
+
+- Update the ``Coron3Pipeline`` logic to correctly handle inputs that have
+  only 1 integration. [#5211]
+
+- Refactor Spec2Pipeline for execution logic and step flow isolation [#5214]
+
+- Update ``Ami3Pipeline`` to only process psf and science members from the
+  input ASN. [#5243]
+
+- Enable NIRSpec lamp processing in calspec2 pipeline. [#5267]
+
+photom
+------
+
+- Fix bug in NIRSpec IFU data that causes valid pixel dq flags to set to
+  NON-SCIENCE in the region of an overlapping bounding box slice [#5047]
+
 ramp_fitting
 ------------
 
 - Add multi-processing capability. [#4815]
+
+- Fix crash when DRPFRMS1 is not set [#5096]
+
+- Update to always create the rateints product, even when NINTS=1. [#5211]
+
+resample_spec
+-------------
+
+- Fix artifacts in resampled NIRSpec slit data caused by NaNs in the WCS [#5217]
+
+source_catalog
+--------------
+
+- Use ``gwcs.WCS`` instead of FITS WCS. [#5120]
+
+- Changed the type of column ``is_star`` from float to bool. [#5140]
+
+- Implemented algorithm for determining whether a source is a star.
+  [#5234]
 
 stpipe
 ------
@@ -71,6 +435,21 @@ stpipe
 
 - Remove further sloper references. [#4989]
 
+- Enable prefetch of pars reference files for associations. [#5249]
+
+transforms
+----------
+
+- Wrap first spherical angle ("RA") at 360 degrees in the forward ``V23ToSky``
+  transformation and to 180 degrees for the inverse transformation ("V2").
+  This is now done using models defined in ``astropy`` and ``gwcs`` packages
+  replacing ``V23ToSky`` model in JWST's WCS pipeline. [#5206]
+
+wavecorr
+--------
+
+- Implemented the ``wavecorr`` step by pulling routines from the
+  ``extract_2d`` step. [#5133]
 
 0.16.2 (2020-06-10)
 ===================
@@ -116,6 +495,11 @@ datamodels
 - Populate meta.asn.table_name when an association is loaded into a
   ``ModelContainer``. [#4873]
 
+extract_1d
+----------
+
+- Add aperture correction in extract_1d processing. [#4902]
+
 lib
 ---
 
@@ -150,11 +534,17 @@ rscd
 source_catalog
 --------------
 
+- Add more concentration indices and update step docs. [#4906, #4908]
+
 - Added fallback background estimation method to make background
   estimation moare robust. [#4929]
 
 - Fixed the nearest-neighbor code to handle the case of exactly one
   detected source. [#4929]
+
+- Update abmag error calculation. [#4945]
+
+- Exit gracefully if APCORR ref file is missing. [#4948]
 
 tweakreg
 --------
@@ -329,6 +719,10 @@ source_catalog
   ``DrizProductModel``. [#4552]
 
 - Updated step arguments in the documentation. [#4723]
+
+- Updated to include aperture photometry and aperture corrections. [#4819]
+
+- Rename AB-to-Vega reference file type to ABVEGAOFFSET. [#4872]
 
 srctype
 -------
@@ -746,6 +1140,8 @@ associations
 
 barshadow
 ---------
+
+- Update barshadow position [#3897]
 
 - Unit tests were added. [#3930]
 
