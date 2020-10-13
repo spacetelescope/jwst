@@ -2064,10 +2064,12 @@ imprint
 
 ipc
 ---
+
 - Updated the docstrings [#2822]
 
 jump
 ----
+
  - Updated twopoint_difference.py to not use groups with groupdq set to DO_NOT_USE [#3495]
 
 jwpsf
