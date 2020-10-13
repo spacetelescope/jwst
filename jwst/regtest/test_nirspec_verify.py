@@ -34,13 +34,26 @@ def run_detector1(rtdata_module):
 def run_image2(run_detector1, rtdata_module):
     """Run NRS_VERIFY through image2"""
     rtdata = rtdata_module
+
+    # Get some predefined references due to insufficient coverage
+    # from CRDS.
+    refs = ['jwst_nirspec_fpa_0005.asdf', 'jwst_nirspec_flat_0061.fits', 'jwst_nirspec_area_0001.fits']
+    for ref in refs:
+        rtdata.get_data('nirspec/imaging/' + ref)
+
     rtdata.input = replace_suffix(ROOT, 'rate') + '.fits'
 
     args = [
         'jwst.pipeline.Image2Pipeline', rtdata.input,
         '--steps.assign_wcs.save_results=true',
+        '--steps.assign_wcs.override_fpa=jwst_nirspec_fpa_0005.asdf',
         '--steps.flat_field.save_results=true',
+        '--steps.flat_field.override_flat=jwst_nirspec_flat_0061.fits',
+        '--steps.flat_field.override_sflat=N/A',
+        '--steps.flat_field.override_fflat=N/A',
+        '--steps.flat_field.override_dflat=N/A',
         '--steps.photom.save_results=true',
+        '--steps.photom.override_area=jwst_nirspec_area_0001.fits',
     ]
     Step.from_cmdline(args)
 
@@ -63,14 +76,10 @@ def test_verify_detector1(run_detector1, rtdata_module, fitsdiff_default_kwargs,
     assert diff.identical, diff.report()
 
 
-@pytest.mark.xfail(
-    reason='Insufficient coverage: CRDS-380',
-    run=False
-)
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
     'suffix', [
-        'assing_wcs', 'flat_field', 'cal',
+        'assign_wcs', 'flat_field', 'cal',
     ])
 def test_verify_image2(run_image2, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Test results of the detector1 and image2 processing"""
