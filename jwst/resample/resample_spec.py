@@ -121,7 +121,10 @@ class ResampleSpecData:
             spatial_axis = spectral_axis ^ 1
 
             # Compute the wavelength array, trimming NaNs from the ends
+            # In many cases, a whole slice is NaNs, so ignore those warnings
+            warnings.simplefilter("ignore")
             wavelength_array = np.nanmedian(lam, axis=spectral_axis)
+            warnings.resetwarnings()
             wavelength_array = wavelength_array[~np.isnan(wavelength_array)]
 
             # We need to estimate the spatial sampling to use for the output WCS.
@@ -292,8 +295,9 @@ class ResampleSpecData:
         x_max = np.amax(x_tan_all)
         x_size = int(np.ceil((x_max - x_min)/np.absolute(pix_to_xtan.slope)))
 
-        if len(self.input_models) == 1: # single model use size of x_tan_array
-                                        # to be consistent with method before
+        # single model use size of x_tan_array
+        # to be consistent with method before
+        if len(self.input_models) == 1:
             x_size = len(x_tan_array)
 
         # define the output wcs
@@ -311,10 +315,12 @@ class ResampleSpecData:
 
         output_wcs = WCS(pipeline)
 
+        # import ipdb; ipdb.set_trace()
+
         # compute the output array size in WCS axes order, i.e. (x, y)
         output_array_size = [0, 0]
-        output_array_size[spectral_axis] = np.int(np.ceil(len(wavelength_array) / self.pscale_ratio))
-        output_array_size[spatial_axis] = np.int(np.ceil(x_size / self.pscale_ratio))
+        output_array_size[spectral_axis] = int(np.ceil(len(wavelength_array) / self.pscale_ratio))
+        output_array_size[spatial_axis] = int(np.ceil(x_size / self.pscale_ratio))
         # turn the size into a numpy shape in (y, x) order
         self.data_size = tuple(output_array_size[::-1])
         bounding_box = resample_utils.wcs_bbox_from_shape(self.data_size)

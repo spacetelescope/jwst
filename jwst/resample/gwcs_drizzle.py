@@ -376,11 +376,10 @@ def dodrizzle(insci, input_wcs, inwht, output_wcs, outsci, outwht, outcon,
     else:
         expscale = expin
 
-    # Add input weight image if it was not passed in
-
     if (insci.dtype > np.float32):
         insci = insci.astype(np.float32)
 
+    # Add input weight image if it was not passed in
     if inwht is None:
         inwht = np.ones_like(insci)
 
@@ -411,13 +410,11 @@ def dodrizzle(insci, input_wcs, inwht, output_wcs, outsci, outwht, outcon,
     # Compute the mapping between the input and output pixel coordinates
     # for use in drizzle.cdrizzle.tdriz
     pixmap = resample_utils.calc_gwcs_pixmap(input_wcs, output_wcs, insci.shape)
-    # pixmap[np.isnan(pixmap)] = -10
-    # print("Number of NaNs: ", len(np.isnan(pixmap)) / 2)
     # inwht[np.isnan(pixmap[:,:,0])] = 0.
 
-    log.debug("Pixmap shape: {}".format(pixmap[:,:,0].shape))
-    log.debug("Input Sci shape: {}".format(insci.shape))
-    log.debug("Output Sci shape: {}".format(outsci.shape))
+    log.debug(f"Pixmap shape: {pixmap[:,:,0].shape}")
+    log.debug(f"Input Sci shape: {insci.shape}")
+    log.debug(f"Output Sci shape: {outsci.shape}")
 
     # y_mid = pixmap.shape[0] // 2
     # x_mid = pixmap.shape[1] // 2
@@ -426,7 +423,7 @@ def dodrizzle(insci, input_wcs, inwht, output_wcs, outsci, outwht, outcon,
     # print("insci: ", insci)
 
     # Call 'drizzle' to perform image combination
-    log.info('Drizzling {} --> {}'.format(insci.shape, outsci.shape))
+    log.info(f"Drizzling {insci.shape} --> {outsci.shape}")
     _vers, nmiss, nskip = cdrizzle.tdriz(
         insci, inwht, pixmap,
         outsci, outwht, outcon,
