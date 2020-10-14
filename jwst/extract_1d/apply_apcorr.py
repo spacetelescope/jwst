@@ -358,7 +358,6 @@ class ApCorrRadial(ApCorrBase):
         # the wavelength and extraction radius is need to interpolate apcor.
         # This is done in find apcorr_func
         pass
-    
 
     def apply(self, spec_table: fits.FITS_rec):
         """Apply interpolated aperture correction value to source-related extraction results in-place.
