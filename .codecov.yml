@@ -1,14 +1,23 @@
 coverage:
   status:
     project:
-      default: off
+      default:
+        target: auto
+        threshold: 0.1%
+        flags:
+          - unit
+          - nightly
       unit:
-        flags: unit
+        target: auto
+        flags:
+          - unit
       nightly:
-        flags: nightly
+        target: auto
+        flags:
+          - nightly
 
 flags:
   unit:
-    joined: true
+    carryforward: false
   nightly:
-    joined: false
+    carryforward: true
