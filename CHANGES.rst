@@ -6,6 +6,11 @@ ami
 
 - Update code and unit tests to use new ami analyze algorithm [#5390]
 
+assign_wcs
+----------
+
+- Add nrs_verify to the NIRSpec exposure list [#5403]
+
 associations
 ------------
 
