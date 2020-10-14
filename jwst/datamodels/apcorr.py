@@ -89,15 +89,14 @@ class MirMrsApcorrModel(ReferenceFileModel):
         of instrument mode parameters and aperture correction
         factors associated with those modes.
 
-        - wavelength: float32 1D array
+        - channel: str[10]
+        - band: str[10]
+        - nelem_radius: int16
         - nelem_wl: int16
-        - radius: float32 1D array
-        - apcorr: float32 1D array
-        - apcorr_err: float32 1D array
-        - inner_bkg: float32 1D array
-        - outer_bkg: float32 1D array
-        - axis_ratio: float32 1D array
-        - axis_pa: float32 1D array
+        - wavelength: float32 1D array
+        - radius: float32 2D array
+        - apcorr: float32 2D array
+        - apcorr_err: float32 2D array
 
     """
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/mirmrs_apcorr.schema"
