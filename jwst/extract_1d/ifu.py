@@ -338,6 +338,9 @@ def extract_ifu(input_model, source_type, extract_params):
     npixels_annulus : ndarray, 1-D, float64
         For each slice, this is the number of pixels that were added
         together to get `temp_flux` for an annulus region.
+
+    radius_match: ndarray,1-D, float64
+        The size of the extract radius in pixels used at each wavelength of the IFU cube
     """
 
     data = input_model.data
@@ -408,12 +411,13 @@ def extract_ifu(input_model, source_type, extract_params):
         frad = interp1d(wave_extract, radius, bounds_error=False, fill_value="extrapolate")
         radius_match = frad(wavelength)
         # radius_match is in arc seconds - need to convert to pixels
-        # QUESTION should I compute the scale at each wavelength since radius varies with wavelength
-        # FIX LATER - probably for point locn is not NONE but for my test data it was (I forced EXTENDED = POINT)
+        # the spatial scale is the same for all wavelengths do we only need to call compute_scale once. 
+        # DAVID LAW IS this a correct statement. 
+        # also I don't think locn will be NONE every for POINT Source data - is that also TRUE?
         if locn is None:
-            locn_use = (input_model.meta.wcsinfo.crval1, input_model.meta.wcsinfo.crval2,wavelength[0])
+            locn_use = (input_model.meta.wcsinfo.crval1, input_model.meta.wcsinfo.crval2, wavelength[0])
         else:
-            locn_use = locn
+            locn_use = (ra_targ, dec_targ, wavelength[0])
 
         scale_degrees =  compute_scale(
             input_model.meta.wcs,
