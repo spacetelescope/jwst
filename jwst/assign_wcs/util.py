@@ -107,7 +107,7 @@ def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray],
         Dispersion axis integer. Assumes the same convention as `wcsinfo.dispersion_direction`
 
     pscale_ratio : int
-        Ratio of input pixel scale to output pixel scale.
+        Ratio of input to output pixel scale
 
     Returns
     -------
@@ -221,7 +221,7 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
         Bounding_box of the new WCS.
         If not supplied it is computed from the bounding_box of all inputs.
     pscale_ratio : float, optional
-        A scale representing the ratio of pixel scale of input to output.
+        Ratio of input to output pixel scale.
     """
     bb = bounding_box
     wcslist = [im.meta.wcs for im in dmodels]

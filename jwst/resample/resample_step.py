@@ -34,7 +34,7 @@ class ResampleStep(Step):
         kernel = string(default='square')
         fillval = string(default='INDEF')
         weight_type = option('exptime', default='exptime')
-        pixel_scale_ratio = float(default=1.0) # Ratio in pixel scale between input and output images
+        pixel_scale_ratio = float(default=1.0) # Ratio of input to output pixel scale
         single = boolean(default=False)
         blendheaders = boolean(default=True)
         allowed_memory = float(default=None)  # Fraction of memory to use for the combined image.

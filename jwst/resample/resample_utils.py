@@ -21,8 +21,7 @@ def make_output_wcs(input_models, pscale_ratio=1.0):
         Each datamodel must have a ~gwcs.WCS object.
 
     pscale_ratio : float, optional
-        Ratio of input pixel scale to output pixel scale. Default is 1.0, i.e.
-        no scaling.
+        Ratio of input to output pixel scale.
 
     Returns
     -------
@@ -40,7 +39,7 @@ def make_output_wcs(input_models, pscale_ratio=1.0):
         output_wcs = wcs_from_footprints(input_models, pscale_ratio=pscale_ratio)
         output_wcs.data_size = shape_from_bounding_box(output_wcs.bounding_box)
     else:
-        raise RuntimeError("Input WCS needs 2 axes in in output frame."
+        raise RuntimeError("Output WCS needs 2 spatial axes. "
             f"{wcslist[0]} has {naxes}.")
 
     # Check that the output data shape has no zero length dimensions
