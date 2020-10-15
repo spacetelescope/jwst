@@ -113,8 +113,7 @@ class GWCSDrizzle:
         elif out_units != "cps":
             raise ValueError("Illegal value for out_units: %s" % out_units)
 
-    def add_image(self, insci, inwcs, inwht=None,
-                  xmin=0, xmax=0, ymin=0, ymax=0, pscale_ratio=1.0,
+    def add_image(self, insci, inwcs, inwht=None, xmin=0, xmax=0, ymin=0, ymax=0,
                   expin=1.0, in_units="cps", wt_scl=1.0):
         """
         Combine an input image with the output drizzled image.
