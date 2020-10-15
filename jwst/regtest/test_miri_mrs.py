@@ -201,7 +201,8 @@ def run_cube_build_single_output(rtdata_module):
 
     args = [
         'jwst.cube_build.CubeBuildStep',
-        rtdata.input
+        rtdata.input,
+        '--save_results=true'
     ]
     Step.from_cmdline(args)
 
@@ -211,14 +212,12 @@ def run_cube_build_single_output(rtdata_module):
 @pytest.mark.bigdata
 @pytest.mark.slow
 @pytest.mark.parametrize(
-    'suffix',
-    ['cube_build',]
+    'output',
+    ['outtest_ch1-short_s3d.fits', 'outtest_ch2-short_s3d.fits']
 )
-def test_cube_build_single_output(run_cube_build_single_output, suffix, **fitsdiff_default_kwargs):
+def test_cube_build_single_output(run_cube_build_single_output, output, fitsdiff_default_kwargs):
     """Test just running cube build and ensure that output happens"""
     rtdata = run_cube_build_single_output
-    output = replace_suffix(
-            Path(rtdata.input).stem, suffix) + '.fits'
     rtdata.output = output
 
     # Get the truth files
