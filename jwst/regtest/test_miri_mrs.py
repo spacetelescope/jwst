@@ -1,12 +1,17 @@
 """Regression tests for MIRI MRS modes"""
 from pathlib import Path
+
 import pytest
 
+from astropy.io.fits.diff import FITSDiff
+from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
+
+from jwst import datamodels
 from jwst.associations import load_asn
 from jwst.lib.suffix import replace_suffix
-from jwst import datamodels
-from gwcs.wcstools import grid_from_bounding_box
+from jwst.stpipe import Step
+
 from . import regtestdata as rt
 
 # Define artifactory source and truth
@@ -186,3 +191,39 @@ def test_miri_mrs_wcs(run_spec2, fitsdiff_default_kwargs):
         xtruth, ytruth = im_truth.meta.wcs.backward_transform(ratruth, dectruth, lamtruth)
         assert_allclose(xtest, xtruth)
         assert_allclose(ytest, ytruth)
+
+
+@pytest.fixture(scope='module')
+def run_cube_build_single_output(rtdata_module):
+    """Run cube_build on multiple inputs but single output"""
+    rtdata = rtdata_module
+    rtdata.get_asn('miri/mrs/two_spec3_asn.json')
+
+    args = [
+        'jwst.cube_build.CubeBuildStep',
+        rtdata.input
+    ]
+    Step.from_cmdline(args)
+
+    return rtdata
+
+
+@pytest.mark.bigdata
+@pytest.mark.slow
+@pytest.mark.parametrize(
+    'suffix',
+    ['cube_build',]
+)
+def test_cube_build_single_output(run_cube_build_single_output, suffix, **fitsdiff_default_kwargs):
+    """Test just running cube build and ensure that output happens"""
+    rtdata = run_cube_build_single_output
+    output = replace_suffix(
+            Path(rtdata.input).stem, suffix) + '.fits'
+    rtdata.output = output
+
+    # Get the truth files
+    rtdata.get_truth('truth/test_miri_mrs/' +  output)
+
+    # Compare the results
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
