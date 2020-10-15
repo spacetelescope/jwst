@@ -1,7 +1,5 @@
 from distutils.version import LooseVersion
 import logging
-import math
-
 import numpy as np
 import photutils
 from photutils import CircularAperture, CircularAnnulus, \
@@ -19,7 +17,9 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 # These values are used to indicate whether the input extract1d reference file
-# (if any) is JSON or IMAGE.
+# (if any) is JSON, IMAGE or TABLE
+# TODO 1. decide if IFU extract_1d ref file is a fits or asdf, then remove either FILE_TYPE_JSON or FILE_TYPE_TABLE
+# 2. NIRSpec to supply new extract1d and apcor ref files.
 FILE_TYPE_JSON = "JSON"
 FILE_TYPE_IMAGE = "IMAGE"
 FILE_TYPE_TABLE = "TABLE"
@@ -98,6 +98,7 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
         extract_params['subtract_background'] = subtract_background
 
     if extract_params:
+#TODO clean up after deciding if using FILE_TYPE_TABLE or FILE_TYPE_JSON
         if extract_params['ref_file_type'] == FILE_TYPE_TABLE:
             (ra, dec, wavelength, temp_flux, background, npixels, dq, npixels_bkg, radius_match) = \
                     extract_ifu(input_model, source_type, extract_params)
@@ -175,9 +176,9 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
         # determine apcor function and apcor radiius to use at each wavelength
         apcorr.match_wavelengths(wavelength)
 
-        # at each IFU wavelength we have the extraction radius defined by radius_match
+        # at each IFU wavelength we have the extraction radius defined by radius_match (radius size in pixels)
         for i, wave in enumerate(wavelength):
-            radius = radius_match[i] # the extraction radius size in pixels 
+            radius = radius_match[i]
             apcorr.find_apcorr_func(i,wavelength,radius)
 
         apcorr.apply(spec.spec_table)
@@ -188,7 +189,6 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
     output_model.meta.wcs = None
 
     return output_model
-
 
 
 def get_extract_parameters(ref_dict, slitname):
@@ -209,7 +209,7 @@ def get_extract_parameters(ref_dict, slitname):
     """
 
     extract_params = {}
-
+#TODO clean up after deciding if using FILE_TYPE_TABLE or FILE_TYPE_JSON
     if (ref_dict['ref_file_type'] == FILE_TYPE_JSON):
             extract_params['ref_file_type'] = FILE_TYPE_JSON
             for aper in ref_dict['apertures']:
@@ -233,18 +233,17 @@ def get_extract_parameters(ref_dict, slitname):
                         extract_params['theta'] = aper.get('theta', 0.)
                     break
 
-
     elif ref_dict['ref_file_type'] == FILE_TYPE_TABLE:
         extract_params['ref_file_type'] = FILE_TYPE_TABLE
         with ref_dict['ref_model'] as ptab:
 
             for tabdata in ptab.extract1d_params:
-                id = tabdata['id']
+                # id = tabdata['id'] not used yet - maybe REMOVE
                 region_type = tabdata['region_type']
                 subtract_background = tabdata['subtract_background']
                 method = tabdata['method']
                 subpixels =tabdata['subpixels']
-            
+
             data = ptab.extract1d_table
             wavelength = data["wavelength"]
             nelem_wl = data['nelem_wl']
@@ -264,9 +263,6 @@ def get_extract_parameters(ref_dict, slitname):
         extract_params['outer_bkg'] = outer_bkg
         extract_params['axis_ratio'] = axis_ratio
         extract_params['axis_pa'] = axis_pa
-
-        #print('read information from extract reference file',id,region_type,
-        #      bool(subtract_background),method, subpixels)
 
     elif ref_dict['ref_file_type'] == FILE_TYPE_IMAGE:
         extract_params['ref_file_type'] = FILE_TYPE_IMAGE
@@ -366,11 +362,11 @@ def extract_ifu(input_model, source_type, extract_params):
         ra_targ = input_model.meta.target.ra
         dec_targ = input_model.meta.target.dec
         locn = locn_from_wcs(input_model, ra_targ, dec_targ)
-        
+
         if locn is None or np.isnan(locn[0]):
             log.warning("Couldn't determine pixel location from WCS, so "
                         "source offset correction will not be applied.")
-            
+
             x_center = float(shape[-1]) / 2.
             y_center = float(shape[-2]) / 2.
 
@@ -383,7 +379,6 @@ def extract_ifu(input_model, source_type, extract_params):
     subpixels = extract_params['subpixels']
     subtract_background = extract_params['subtract_background']
 
-    smaller_axis = float(min(shape[-2], shape[-1]))     # for defaults
     radius = None
     inner_bkg = None
     outer_bkg = None
@@ -393,26 +388,25 @@ def extract_ifu(input_model, source_type, extract_params):
     # pull wavelength plane out of input data.
     # using extract 1d wavelength, interpolate the radius, inner_bkg, outer_bkg to match input wavelength
 
-    # find the wavelength plane of the IFU cube 
+    # find the wavelength array of the IFU cube
     x0 = float(shape[2]) / 2.
     y0 = float(shape[1]) / 2.
-    # find the wavelength array for the IFU cube 
     (ra, dec, wavelength) = get_coordinates(input_model, x0, y0)
 
     # interpolate the extraction parameters to the wavelength of the IFU cube
+    radius_match = None
     if source_type == 'POINT':
         wave_extract = extract_params['wavelength'].flatten()
         inner_bkg = extract_params['inner_bkg'].flatten()
         outer_bkg = extract_params['outer_bkg'].flatten()
         radius = extract_params['radius'].flatten()
-        axis_pa = extract_params['axis_pa'].flatten()
 
         frad = interp1d(wave_extract, radius, bounds_error=False, fill_value="extrapolate")
         radius_match = frad(wavelength)
         # radius_match is in arc seconds - need to convert to pixels
-        # the spatial scale is the same for all wavelengths do we only need to call compute_scale once. 
-        # DAVID LAW IS this a correct statement. 
-        
+        # the spatial scale is the same for all wavelengths do we only need to call compute_scale once.
+        # DAVID LAW IS this a correct statement ?
+
         if locn is None:
             locn_use = (input_model.meta.wcsinfo.crval1, input_model.meta.wcsinfo.crval2, wavelength[0])
         else:
@@ -438,10 +432,8 @@ def extract_ifu(input_model, source_type, extract_params):
         height = float(shape[-2])
         x_center = width / 2. - 0.5
         y_center = height / 2. - 0.5
-        radius_match = None
         theta = 0.
         subtract_background = False
-    
 
     log.debug("IFU 1-D extraction parameters:")
     log.debug("  x_center = %s", str(x_center))
@@ -469,7 +461,7 @@ def extract_ifu(input_model, source_type, extract_params):
     for k in range(shape[0]):
         inner_bkg = None
         outer_bkg = None
-        
+
         if source_type == 'POINT':
             radius = radius_match[k] # this radius has been converted to pixels
             aperture = CircularAperture(position, r=radius)
@@ -548,7 +540,6 @@ def extract_ifu(input_model, source_type, extract_params):
                                             method=method, subpixels=subpixels)
             background[k] = float(bkg_table['aperture_sum'][0])
             temp_flux[k] = temp_flux[k] - background[k] * normalization
-
 
     # Check for NaNs in the wavelength array, flag them in the dq array,
     # and truncate the arrays if NaNs are found at endpoints (unless the
