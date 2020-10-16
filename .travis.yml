@@ -41,8 +41,10 @@ jobs:
         # Github master until it is released to PyPI
         - pip install git+https://github.com/spacetelescope/stdatamodels
 
-    - name: Test installed package
+    - name: Installed package with --pyargs
       before_script: cd /
+      install:
+        - pip install .[test]
       script:
         - pytest --pyargs jwst
 

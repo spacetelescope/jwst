@@ -11,6 +11,7 @@ package_data = {
         '*.inc',
         '*.cfg',
         '*.csv', '**/*.csv','**/**/*.csv','**/**/**/*.csv',
+        '*.ecsv', '**/*.ecsv',
         '*.yaml',
         '*.json', '**/*.json','**/**/*.json','**/**/**/*.json',
         '*.asdf',
