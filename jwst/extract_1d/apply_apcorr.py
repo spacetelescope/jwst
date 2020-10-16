@@ -94,8 +94,7 @@ class ApCorrBase(abc.ABC):
                         self.location,
                         disp_axis=self.model.meta.wcsinfo.dispersion_direction)
                     scale_arcsec = scale_degrees*3600.00
-                    self.reference[self.size_key] /= scale_arcsec 
-                    
+                    self.reference[self.size_key] /= scale_arcsec
             else:
                 raise ValueError(
                     'If the size column for the input APCORR reference file is in units with arcseconds, a location '
