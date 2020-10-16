@@ -74,7 +74,8 @@ def make_models(tmpdir_factory):
     path_just_fits = str(path / 'just_fits.fits')
     path_model = str(path / 'model.fits')
     primary_hdu = fits.PrimaryHDU()
-    primary_hdu.header['exp_type'] = 'NRC_IMAGE'
+    primary_hdu.header['EXP_TYPE'] = 'NRC_IMAGE'
+    primary_hdu.header['DATAMODL'] = "DataModel"
     hduls = fits.HDUList([primary_hdu])
     hduls.writeto(path_just_fits)
     model = DataModel(hduls)
