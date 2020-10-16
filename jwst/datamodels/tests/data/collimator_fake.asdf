@@ -1,10 +1,10 @@
 #ASDF 1.0.0
-#ASDF_STANDARD 1.2.0
+#ASDF_STANDARD 1.5.0
 %YAML 1.1
 %TAG ! tag:stsci.edu:asdf/
 --- !core/asdf-1.1.0
 asdf_library: !core/software-1.0.0 {author: Space Telescope Science Institute, homepage: 'http://github.com/spacetelescope/asdf',
-  name: asdf, version: 2.1.0.dev1406}
+  name: asdf, version: 2.7.1}
 history:
   entries:
   - !core/history_entry-1.0.0
@@ -15,10 +15,10 @@ history:
   extensions:
   - !core/extension_metadata-1.0.0
     extension_class: astropy.io.misc.asdf.extension.AstropyAsdfExtension
-    software: {name: astropy, version: 3.1.dev21950}
+    software: !core/software-1.0.0 {name: astropy, version: 4.0.1.post1}
   - !core/extension_metadata-1.0.0
     extension_class: asdf.extension.BuiltinExtension
-    software: {name: asdf, version: 2.1.0.dev1406}
+    software: !core/software-1.0.0 {name: asdf, version: 2.7.1}
 meta:
   author: p_FM2_08F_fitCOL_back.py.py v. 1.0
   date: '2017-07-11T13:02:23.370'
@@ -33,7 +33,7 @@ meta:
   telescope: JWST
   title: NIRSPEC COLLIMATOR file
   useafter: '2016-02-04T09:35:22'
-model: !transform/concatenate-1.1.0
+model: !transform/concatenate-1.2.0
   forward:
   - !transform/shift-1.2.0 {offset: 1.0}
   - !transform/shift-1.2.0 {offset: 2.0}

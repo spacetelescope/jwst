@@ -21,18 +21,19 @@ from jwst.datamodels import util
 MEMORY = 100  # 100 bytes
 
 
-def test_mirirampmodel_deprecation(_jail):
+def test_mirirampmodel_deprecation(tmpdir):
     """Test that a deprecated MIRIRampModel can be opened"""
-
+    path = str(tmpdir.join("ramp.fits"))
     # Create a MIRIRampModel, working around the deprecation.
     model = datamodels.RampModel((1, 1, 10, 10))
-    model.save('ramp.fits')
-    hduls = fits.open('ramp.fits', mode='update')
+    model.save(path)
+    hduls = fits.open(path, mode='update')
     hduls[0].header['datamodl'] = 'MIRIRampModel'
     hduls.close()
 
     # Test it.
-    miri_ramp = datamodels.open('ramp.fits')
+    with pytest.warns(DeprecationWarning):
+        miri_ramp = datamodels.open(path)
     assert isinstance(miri_ramp, datamodels.RampModel)
 
 
@@ -62,7 +63,7 @@ def test_check_memory_allocation_env(monkeypatch, mock_get_available_memory,
     if allowed_env is None:
         monkeypatch.delenv('DMODEL_ALLOWED_MEMORY', raising=False)
     else:
-        monkeypatch.setenv('DMODEL_ALLOWED_MEMORY', allowed_env)
+        monkeypatch.setenv('DMODEL_ALLOWED_MEMORY', str(allowed_env))
 
     # Allocate amount that would fit at 100% + swap.
     can_allocate, required = util.check_memory_allocation(
