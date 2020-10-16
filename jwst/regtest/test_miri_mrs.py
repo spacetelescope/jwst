@@ -1,12 +1,15 @@
 """Regression tests for MIRI MRS modes"""
 from pathlib import Path
+
 import pytest
 
+from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
+
+from jwst import datamodels
 from jwst.associations import load_asn
 from jwst.lib.suffix import replace_suffix
-from jwst import datamodels
-from gwcs.wcstools import grid_from_bounding_box
+
 from . import regtestdata as rt
 
 # Define artifactory source and truth
