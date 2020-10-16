@@ -14,8 +14,8 @@ class MirMrsExtract1dModel(ReferenceFileModel):
         - id: ascii
         - region_type: ascii
         - subtract_background: bool 
-        - method: ascii 
-        - subpixels: int16 
+        - method: ascii
+        - subpixels: int16
     extract1d_table : numpy table
         extract1d parameters for varying wavelengths
         A table-like object containing extract 1d parameters
@@ -30,5 +30,3 @@ class MirMrsExtract1dModel(ReferenceFileModel):
 
     """
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/mirmrs_extract1d.schema"
-
-
