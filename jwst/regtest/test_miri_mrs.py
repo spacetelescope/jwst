@@ -3,14 +3,12 @@ from pathlib import Path
 
 import pytest
 
-from astropy.io.fits.diff import FITSDiff
 from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
 
 from jwst import datamodels
 from jwst.associations import load_asn
 from jwst.lib.suffix import replace_suffix
-from jwst.stpipe import Step
 
 from . import regtestdata as rt
 
