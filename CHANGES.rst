@@ -27,6 +27,8 @@ cube_build
 - If outlier detection has flagged all the data on a input file as DO_NOT_USE, then
   skip the file in creating an ifucube [*5347]
 
+- Refactor DataTypes handling of ModelContainer. [#5409]
+
 datamodels
 ----------
 
@@ -35,6 +37,8 @@ datamodels
 - Implement full class deprecator decorator and use for MIRIRampModel [#5382]
 
 - Add NRS_VERIFY to the core schema as an allowed EXP_TYPE [#5395]
+
+- Remove logging from DataModel.close [#5413]
 
 extract_1d
 ----------

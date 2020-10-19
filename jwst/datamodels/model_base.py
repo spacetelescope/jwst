@@ -4,9 +4,11 @@ Data model class heirarchy
 
 import copy
 import datetime
+import logging
 import os
 from pathlib import PurePath
 import sys
+import traceback
 import warnings
 
 import numpy as np
@@ -37,6 +39,9 @@ from .util import get_envar_as_boolean
 from ..lib import s3_utils
 
 from .history import HistoryList
+
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 
 class DataModel(properties.ObjectNode, ndmodel.NDModel):
@@ -333,6 +338,12 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
             for fd in self._files_to_close:
                 if fd is not None:
+
+                    # Logging is normally disabled since this method is called
+                    # from __del__, which does not guarantee that logging
+                    # is available.
+                    # log_with_traceback(f'{__name__}: {self}: Closing {fd}')
+
                     fd.close()
 
     @staticmethod
@@ -1107,3 +1118,30 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         if attribute in self.instance:
             return getattr(self, attribute)
         raise AttributeError(f'{self} has no attribute "{attribute}"')
+
+
+def log_with_traceback(message):
+    """Log with optional stack traceback
+
+    If the logging level is anything less than `logging.DEBUG`,
+    add the current stack traceback to the `logging.DEBUG` message.
+
+    Parameters
+    ----------
+    message : str
+        The basic message to be logged.
+    """
+    if logger.getEffectiveLevel() < logging.DEBUG:
+
+        # Attempt not to log things that occur while handling
+        # and exception.
+        exec_type, exec_value, exec_tb = sys.exc_info()
+        if exec_type is None:
+            stack = ''.join(traceback.format_stack())
+            message = (
+                '\n#############\n'
+                f'{message}\n'
+                f'{stack}'
+                '\n#############\n'
+            )
+    logger.debug(message)
