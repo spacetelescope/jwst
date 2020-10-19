@@ -324,7 +324,7 @@ def test_flagging_of_CRs_across_slice_boundaries(setup_inputs):
         model.data[1, 8, yincrement, 25] = 170.0
         model.data[1, 9, yincrement, 25] = 180.0
         out_model = detect_jumps(model, gain, rnoise, 4.0,  max_cores, 200, 4, True)
-    
+
         # check that the neighbors of the CR on the last row were flagged
         assert 4 == out_model.groupdq[0, 5, yincrement-1, 5]
         assert 4 == out_model.groupdq[0, 5, yincrement-1, 6]
@@ -766,7 +766,7 @@ def setup_inputs():
             shape = (nints, ngroups, 20, 20)
         else:
             shape=(nints, ngroups, nrows, ncols)
-        
+
         model = RampModel(shape)
         model.meta.instrument.name = 'MIRI'
         model.meta.instrument.detector = 'MIRIMAGE'
@@ -784,7 +784,7 @@ def setup_inputs():
         model.meta.exposure.group_time = deltatime
         model.meta.exposure.nframes = nframes
         model.meta.exposure.groupgap = 0
-        
+
         gain_model = GainModel((nrows, ncols))
         gain_model.data += gain
         gain_model.meta.instrument.name = 'MIRI'
