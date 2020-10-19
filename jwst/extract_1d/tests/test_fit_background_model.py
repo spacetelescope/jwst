@@ -38,7 +38,7 @@ def test_fit_background_mean(inputs_constant):
     image, x, j, bkglim, bkg_fit, bkg_order = inputs_constant
     bkg_fit = "mean"
 
-    (bkg_model, npts) = extract1d._fit_background_model(*inputs_constant)
+    (bkg_model, npts) = extract1d._fit_background_model(image, x, j, bkglim, bkg_fit, bkg_order)
 
     assert math.isclose(bkg_model(0.), 22.0, rel_tol=1.e-8, abs_tol=1.e-8)
     assert math.isclose(bkg_model(8.), 22.0, rel_tol=1.e-8, abs_tol=1.e-8)
@@ -50,7 +50,7 @@ def test_fit_background_median(inputs_constant):
     image, x, j, bkglim, bkg_fit, bkg_order = inputs_constant
     bkg_fit = "median"
 
-    (bkg_model, npts) = extract1d._fit_background_model(*inputs_constant)
+    (bkg_model, npts) = extract1d._fit_background_model(image, x, j, bkglim, bkg_fit, bkg_order)
 
     assert math.isclose(bkg_model(0.), 22.0, rel_tol=1.e-8, abs_tol=1.e-8)
     assert math.isclose(bkg_model(8.), 22.0, rel_tol=1.e-8, abs_tol=1.e-8)
