@@ -1,20 +1,33 @@
 Step Arguments
 ==============
 
-The ``extract_1d`` step has six step-specific arguments.
+The ``extract_1d`` step has the following step-specific arguments.
 
 ``--smoothing_length``
   If ``smoothing_length`` is greater than 1 (and is an odd integer), the
-  background will be smoothed in the dispersion direction with a boxcar of
-  this width.  If ``smoothing_length`` is None (the default), the step will
-  attempt to read the value from the EXTRACT1D reference file.  If a value was
-  specified in the reference file, that will be used.  Note that in this
-  case a different value can be specified for each slit.  If no value was
-  specified either by the user or in the EXTRACT1D reference file, no background
-  smoothing will be done.
+  image data used to perform background extraction will be smoothed in the
+  dispersion direction with a boxcar of this width.  If ``smoothing_length``
+  is None (the default), the step will attempt to read the value from the
+  EXTRACT1D reference file.  If a value is specified in the reference file,
+  that value will be used.  Note that by specifying this parameter in the
+  EXTRACT1D reference file a different value can be designated for each slit.
+  If no value is specified either by the user or in the EXTRACT1D reference
+  file, no background smoothing is done.
+
+``--bkg_fit``
+  The type of fit to perform to the background data in each image column
+  (or row, if the dispersion is vertical). There are three allowed values:
+  "poly" (the default), "mean", and "median". If set to "poly", the background
+  values for each pixel within all background regions in a given column (or
+  row) will be fit with a polynomial of order "bkg_order" (see below).
+  Values of "mean" and "median" compute the simple average and median,
+  respectively, of the background region values in each column (or row).
+  This parameter can also be specified in the EXTRACT1D reference file. If
+  specified in the reference file and given as an argument to the step by
+  the user, the user-supplied value takes precedence.
 
 ``--bkg_order``
-  This is the order of a polynomial function to be fit to the background
+  The order of a polynomial function to be fit to the background
   regions.  The fit is done independently for each column (or row, if the
   dispersion is vertical) of the input image, and the fitted curve will be
   subtracted from the target data.  ``bkg_order`` = 0 (the minimum allowed
@@ -22,7 +35,8 @@ The ``extract_1d`` step has six step-specific arguments.
   overrides the value in the EXTRACT1D reference file.  If neither is specified, a
   value of 0 will be used. If a sufficient number of valid data points is
   unavailable to construct the polynomial fit, the fit will be forced to
-  0 for that particular column (or row).
+  0 for that particular column (or row). If "bkg_fit" is not "poly", this
+  parameter will be ignored.
 
 ``--log_increment``
   Most log messages are suppressed while looping over integrations, i.e. when

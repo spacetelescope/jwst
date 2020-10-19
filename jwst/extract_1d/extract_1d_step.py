@@ -16,9 +16,15 @@ class Extract1dStep(Step):
         with a boxcar function of this width along the dispersion
         direction.  This should be an odd integer.
 
+    bkg_fit : str
+        A string indicating the type of fitting to be applied to
+        background values in each column (or row, if the dispersion is
+        vertical). Allowed values are `poly`, `mean`, and `median`.
+        Default is `poly`.
+
     bkg_order : int or None
         If not None, a polynomial with order `bkg_order` will be fit to
-        each column (or row if the dispersion direction is horizontal)
+        each column (or row, if the dispersion direction is vertical)
         of the background region or regions.  For a given column (row),
         one polynomial will be fit to all background regions.  The
         polynomial will be evaluated at each pixel of the source
@@ -56,20 +62,13 @@ class Extract1dStep(Step):
     """
 
     spec = """
-    # Boxcar smoothing width for background regions.
-    smoothing_length = integer(default=None)
-    # Order of polynomial fit to one column (or row if the dispersion
-    # direction is vertical) of background regions.
-    bkg_order = integer(default=None, min=0)
-    # Log a progress message when processing multi-integration data.
-    log_increment = integer(default=50)
-    # Flag indicating whether the background should be subtracted.
-    subtract_background = boolean(default=None)
-    # If True, the locations of the target and background regions will be
-    # shifted to correct for the computed source location.
-    use_source_posn = boolean(default=None)
-    # Turn aperture correction on or off
-    apply_apcorr = boolean(default=True)
+    smoothing_length = integer(default=None)  # background smoothing size (boxcar width)
+    bkg_fit = option("poly", "mean", "median", default="poly")  # background fitting type
+    bkg_order = integer(default=None, min=0)  # order of background polynomial fit
+    log_increment = integer(default=50)  # increment for multi-integration log messages
+    subtract_background = boolean(default=None)  # subtract background?
+    use_source_posn = boolean(default=None)  # use source coords to center extractions?
+    apply_apcorr = boolean(default=True)  # apply aperture corrections?
     """
 
     reference_file_types = ['extract1d', 'apcorr']
@@ -151,6 +150,7 @@ class Extract1dStep(Step):
                         extract_ref,
                         apcorr_ref,
                         self.smoothing_length,
+                        self.bkg_fit,
                         self.bkg_order,
                         self.log_increment,
                         self.subtract_background,
@@ -184,6 +184,7 @@ class Extract1dStep(Step):
                             extract_ref,
                             apcorr_ref,
                             self.smoothing_length,
+                            self.bkg_fit,
                             self.bkg_order,
                             self.log_increment,
                             self.subtract_background,
@@ -217,6 +218,7 @@ class Extract1dStep(Step):
                     extract_ref,
                     apcorr_ref,
                     self.smoothing_length,
+                    self.bkg_fit,
                     self.bkg_order,
                     self.log_increment,
                     self.subtract_background,
@@ -256,6 +258,7 @@ class Extract1dStep(Step):
                 extract_ref,
                 apcorr_ref,
                 self.smoothing_length,
+                self.bkg_fit,
                 self.bkg_order,
                 self.log_increment,
                 self.subtract_background,
