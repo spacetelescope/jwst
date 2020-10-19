@@ -338,7 +338,12 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
             for fd in self._files_to_close:
                 if fd is not None:
-                    log_with_traceback(f'{__name__}: {self}: Closing {fd}')
+
+                    # Logging is normally disabled since this method is called
+                    # from __del__, which does not guarantee that logging
+                    # is available.
+                    # log_with_traceback(f'{__name__}: {self}: Closing {fd}')
+
                     fd.close()
 
     @staticmethod

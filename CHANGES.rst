@@ -38,6 +38,8 @@ datamodels
 
 - Add NRS_VERIFY to the core schema as an allowed EXP_TYPE [#5395]
 
+- Remove logging from DataModel.close [#5413]
+
 extract_1d
 ----------
 
