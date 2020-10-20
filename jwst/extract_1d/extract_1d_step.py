@@ -62,7 +62,7 @@ class Extract1dStep(Step):
     """
 
     spec = """
-    smoothing_length = integer(default=None)  # background smoothing size (boxcar width)
+    smoothing_length = integer(default=None)  # background smoothing size
     bkg_fit = option("poly", "mean", "median", default="poly")  # background fitting type
     bkg_order = integer(default=None, min=0)  # order of background polynomial fit
     log_increment = integer(default=50)  # increment for multi-integration log messages
