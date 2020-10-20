@@ -37,6 +37,12 @@ extract_1d
 - Fixed bug invovling the determination of source RA/Dec for resampled Slit
   data. [#5353]
 
+- Updated to use an EXTRACT1D reference file for NIRCam TSGRISM exposures;
+  added step param "bkg_fit" to allow for mean and median options in background
+  computation, in addition to the existing polynomial fit; fixed bug in
+  background computation that was preventing background subtraction from
+  ever happening. [#5414]
+
 flatfield
 ---------
 
