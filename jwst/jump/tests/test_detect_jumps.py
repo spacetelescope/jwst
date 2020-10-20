@@ -34,10 +34,12 @@ def test_nocrs_noflux_badgain_pixel(setup_inputs):
     gain.data[7, 7] = -10  # bad gain
     gain.data[17, 17] = np.nan  # bad gain
     out_model = detect_jumps(model, gain, rnoise, 4.0,  1, 200, 4, True)
-    assert np.bitwise_and(out_model.pixeldq[7, 7], NO_GAIN_VALUE)
-    assert np.bitwise_and(out_model.pixeldq[7, 7], DO_NOT_USE)
-    assert np.bitwise_and(out_model.pixeldq[17, 17], NO_GAIN_VALUE)
-    assert np.bitwise_and(out_model.pixeldq[17, 17], DO_NOT_USE)
+
+    # 2 bits are set for each pixel, so use bitwise_and to check is set
+    assert np.bitwise_and(out_model.pixeldq[7, 7], NO_GAIN_VALUE) == NO_GAIN_VALUE
+    assert np.bitwise_and(out_model.pixeldq[7, 7], DO_NOT_USE) == DO_NOT_USE
+    assert np.bitwise_and(out_model.pixeldq[17, 17], NO_GAIN_VALUE) == NO_GAIN_VALUE
+    assert np.bitwise_and(out_model.pixeldq[17, 17], DO_NOT_USE) == DO_NOT_USE
 
 
 def test_nocrs_noflux_subarray(setup_inputs):
