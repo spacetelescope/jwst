@@ -277,7 +277,9 @@ def get_extract_parameters(
         extract_params['src_coeff'] = None
         extract_params['bkg_coeff'] = None  # no background sub.
         extract_params['smoothing_length'] = 0  # because no background sub.
+        extract_params['bkg_fit'] = None  # because no background sub.
         extract_params['bkg_order'] = 0  # because no background sub.
+        extract_params['subtract_background'] = False
 
         if use_source_posn is None:
             extract_params['use_source_posn'] = False
@@ -322,7 +324,9 @@ def get_extract_parameters(
                         shape = input_model.data.shape
                         extract_params['src_coeff'] = None
                         extract_params['bkg_coeff'] = None
+                        extract_params['bkg_fit'] = None
                         extract_params['bkg_order'] = 0
+                        extract_params['subtract_background'] = False
                         extract_params['use_source_posn'] = False
                         extract_params['xstart'] = 0
                         extract_params['xstop'] = shape[-1] - 1
@@ -337,6 +341,9 @@ def get_extract_parameters(
                         if extract_params['bkg_coeff'] is not None:
                             extract_params['subtract_background'] = True
                             extract_params['bkg_fit'] = aper.get('bkg_fit', 'poly')
+                        else:
+                            extract_params['bkg_fit'] = None
+                            extract_params['subtract_background'] = False
                         extract_params['independent_var'] = aper.get('independent_var', 'pixel').lower()
 
                         if bkg_order is None:
