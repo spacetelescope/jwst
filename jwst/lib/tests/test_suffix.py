@@ -25,7 +25,8 @@ def test_suffix_existence(enable_logging):
         to_add=(calculated_suffixes, s.SUFFIXES_TO_ADD),
         to_remove=(s.SUFFIXES_TO_DISCARD, )
     )
-    assert set(found_suffixes) == set(s.KNOW_SUFFIXES)
+    diff = set(found_suffixes).symmetric_difference(s.KNOW_SUFFIXES)
+    assert not diff, f'Suffixes unaccounted for:\n{diff}'
 
 
 @pytest.mark.parametrize(
