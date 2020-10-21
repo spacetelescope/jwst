@@ -74,26 +74,35 @@ def do_correction(input_model, ref_model):
     sat_dq[np.isnan(sat_thresh)] |= NO_SAT_CHECK
     sat_thresh[np.isnan(sat_thresh)] = ATOD_LIMIT
 
-    # Loop over integrations and groups, checking for pixel values
-    # that are above the saturation threshold
     flagarray = np.zeros(ramp_array.shape[-2:], dtype=groupdq.dtype)
+    flaglowarray = np.zeros(ramp_array.shape[-2:], dtype=groupdq.dtype)
     for ints in range(nints):
         for group in range(ngroups):
-            # Update the 4D groupdq array with the saturation flag. The
-            # flag is set in the current group and all following groups.
+            # Update the 4D groupdq array with the saturation flag.
             if is_irs2_format:
                 sci_temp = x_irs2.from_irs2(ramp_array[ints, group, :, :],
-                                            irs2_mask,
-                                            detector)
+                                            irs2_mask, detector)
+                # check for high saturation
                 flag_temp = np.where(sci_temp >= sat_thresh, SATURATED, 0)
-                # Copy flag_temp into flagarray.
+                # check for low saturation
+                flaglow_temp = np.where(sci_temp <= 0, SATURATED, 0)
+                # Copy temps into flagarrays.
                 x_irs2.to_irs2(flagarray, flag_temp, irs2_mask, detector)
-
+                x_irs2.to_irs2(flaglowarray, flaglow_temp, irs2_mask, detector)
             else:
+                # check for high saturation
                 flagarray[:, :] = np.where(ramp_array[ints, group, :, :] >= sat_thresh,
                                            SATURATED, 0)
+                # check for low saturation
+                flaglowarray[:, :] = np.where(ramp_array[ints, group, :, :] <= 0,
+                                              SATURATED, 0)
+            # for high saturation, the flag is set in the current plane
+            # and all following planes.
             np.bitwise_or(groupdq[ints, group:, :, :], flagarray,
                           groupdq[ints, group:, :, :])
+            # for low saturation, the flag is only set of the current plane
+            np.bitwise_or(groupdq[ints, group, :, :], flaglowarray,
+                          groupdq[ints, group, :, :])
 
     # Save the saturation flags in the output GROUPDQ array
     output_model.groupdq = groupdq

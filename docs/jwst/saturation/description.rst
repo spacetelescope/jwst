@@ -1,16 +1,24 @@
 Description
 ============
 
-The ``saturation`` step flags saturated pixel values. It loops over all
-integrations within an exposure, examining each one group-by-group, comparing the
-pixel values in the SCI array against pixel-by-pixel thresholds stored in a
-saturation reference file.
-When it finds a pixel value in a given group that is above the threshold, it
-sets the "SATURATED" flag in the corresponding location of the "GROUPDQ"
-array in the science exposure. It also flags all subsequent groups for that
-pixel as saturated. For example, if there are 10 groups in an integration and
-group 7 is the first one to cross the saturation threshold for a given pixel,
-then groups 7 through 10 will all be flagged for that pixel.
+The ``saturation`` step flags saturated pixel values.  Pixels values are flagged
+as saturated if the the pixel value is larger than the defined saturation
+threshold (high saturation)  or if it has a value of 0 or lower (low
+saturation). High saturation can be due to saturating the detector (hard
+saturation) or going above the valid Analog-to-Digital (A/D) converter range
+(A/D saturation). Low saturation is due to going below the valid A/D converter
+range (A/D floor).
+
+This step loops over all integrations within an exposure, examining each one
+group-by-group, comparing the pixel values in the SCI array with defined
+saturation thresholds for each pixel. When it finds a pixel value in a given
+group that is zero or negative (low saturation) or above the saturation
+threshold (high saturation), it sets the "SATURATED" flag in the corresponding
+location of the "GROUPDQ" array in the science exposure. For the high saturation
+case, it also flags all subsequent groups for that pixel as saturated. For
+example, if there are 10 groups in an integration and group 7 is the first one
+to cross the saturation threshold for a given pixel, then groups 7 through 10
+will all be flagged for that pixel.
 
 Pixels with thresholds set to NaN or flagged as "NO_SAT_CHECK" in the saturation
 reference file have their thresholds set to the 16-bit A-to-D converter limit

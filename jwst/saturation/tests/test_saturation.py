@@ -42,6 +42,70 @@ def test_basic_saturation_flagging(setup_nrc_cube):
     assert np.all(output.groupdq[0, satindex:, 5, 5] == dqflags.group['SATURATED'])
 
 
+def test_low_saturation_flagging(setup_nrc_cube):
+    """Check that the saturation flag is set when a pixel value is zero or
+    negative."""
+
+    # Create inputs, data, and saturation maps
+    ngroups = 5
+    nrows = 2048
+    ncols = 2048
+    satvalue = 60000
+
+    data, satmap = setup_nrc_cube(ngroups, nrows, ncols)
+
+    # Add ramp values up to the saturation limit
+    data.data[0, 0, 5, 5] = 0  # Signal at bottom rail - low saturation
+    data.data[0, 1, 5, 5] = 0  # Signal at bottom rail - low saturation
+    data.data[0, 2, 5, 5] = 20
+    data.data[0, 3, 5, 5] = 40
+    data.data[0, 4, 5, 5] = 60
+
+    # frames that should be flagged as saturation (low)
+    satindxs = [0, 1]
+
+    # Set saturation value in the saturation model
+    satmap.data[500, 500] = satvalue
+
+    # Run the pipeline
+    output = do_correction(data, satmap)
+
+    # Check if the right frames are flagged as saturated
+    assert np.all(output.groupdq[0, satindxs, 5, 5] == dqflags.group['SATURATED'])
+
+
+def test_low_and_high_saturation_flagging(setup_nrc_cube):
+    """Check that the saturation flag is set when a pixel value is zero or
+    negative and when the pixel is above the high saturation threshold."""
+
+    # Create inputs, data, and saturation maps
+    ngroups = 5
+    nrows = 2048
+    ncols = 2048
+    satvalue = 60000
+
+    data, satmap = setup_nrc_cube(ngroups, nrows, ncols)
+
+    # Add ramp values up to the saturation limit
+    data.data[0, 0, 5, 5] = 0  # Signal at bottom rail - low saturation
+    data.data[0, 1, 5, 5] = 0  # Signal at bottom rail - low saturation
+    data.data[0, 2, 5, 5] = 20
+    data.data[0, 3, 5, 5] = 40
+    data.data[0, 4, 5, 5] = 61000  # Signal above the saturation threshold
+
+    # frames that should be flagged as saturation (low)
+    satindxs = [0, 1, 4]
+
+    # Set saturation value in the saturation model
+    satmap.data[500, 500] = satvalue
+
+    # Run the pipeline
+    output = do_correction(data, satmap)
+
+    # Check if the right frames are flagged as saturated
+    assert np.all(output.groupdq[0, satindxs, 500, 500] == dqflags.group['SATURATED'])
+
+
 def test_signal_fluctuation_flagging(setup_nrc_cube):
     '''Check that once a pixel is flagged as saturated in a group, all
        subsequent groups should also be flagged as saturated, even if the
@@ -56,7 +120,7 @@ def test_signal_fluctuation_flagging(setup_nrc_cube):
     data, satmap = setup_nrc_cube(ngroups, nrows, ncols)
 
     # Add ramp values up to the saturation limit
-    data.data[0, 0, 5, 5] = 0
+    data.data[0, 0, 5, 5] = 10
     data.data[0, 1, 5, 5] = 20000
     data.data[0, 2, 5, 5] = 40000
     data.data[0, 3, 5, 5] = 60000   # Signal reaches saturation limit
@@ -170,7 +234,7 @@ def test_no_sat_check(setup_nrc_cube):
     data, satmap = setup_nrc_cube(ngroups, nrows, ncols)
 
     # Add ramp values up to the saturation limit
-    data.data[0, 0, 5, 5] = 0
+    data.data[0, 0, 5, 5] = 10
     data.data[0, 1, 5, 5] = 20000
     data.data[0, 2, 5, 5] = 40000
     data.data[0, 3, 5, 5] = 60000
@@ -206,7 +270,7 @@ def test_nans_in_mask(setup_nrc_cube):
     data, satmap = setup_nrc_cube(ngroups, nrows, ncols)
 
     # Add ramp values up to the saturation limit
-    data.data[0, 0, 5, 5] = 0
+    data.data[0, 0, 5, 5] = 10
     data.data[0, 1, 5, 5] = 20000
     data.data[0, 2, 5, 5] = 40000
     data.data[0, 3, 5, 5] = 60000
@@ -234,8 +298,12 @@ def test_full_step(setup_nrc_cube):
 
     data, satmap = setup_nrc_cube(ngroups, nrows, ncols)
 
+    # set the entire array to a small non-zero value to avoid labeling
+    # almost everthing as low saturated
+    data.data[:, :, :, :] = 1
+
     # Add ramp values up to the saturation limit
-    data.data[0, 0, 5, 5] = 0
+    data.data[0, 0, 5, 5] = 10
     data.data[0, 1, 5, 5] = 20000
     data.data[0, 2, 5, 5] = 40000
     data.data[0, 3, 5, 5] = 70000   # Signal reaches saturation limit
