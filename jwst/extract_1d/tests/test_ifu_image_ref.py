@@ -15,6 +15,7 @@ inner_bkg = 11.5
 outer_bkg = 16.5
 method = "exact"
 
+
 def test_ifu_2d():
     """Test 1"""
 
@@ -22,7 +23,6 @@ def test_ifu_2d():
                           x_center=x_center, y_center=y_center,
                           radius=radius,
                           inner_bkg=inner_bkg, outer_bkg=outer_bkg)
-
 
     # Create a reference dictionary to specify the extraction parameters.
     # This will serve as the "truth" for comparison with the results of
@@ -105,13 +105,13 @@ def test_ifu_3d():
                                   inner_bkg=inner_bkg, outer_bkg=outer_bkg)
 
     ref_dict_2d = {"ref_file_type": extract.FILE_TYPE_IMAGE,
-                "ref_model": ref_image_2d}
+                   "ref_model": ref_image_2d}
     truth = extract.do_extract1d(input, ref_dict_2d, smoothing_length=0,
                                  bkg_order=0, log_increment=50,
                                  subtract_background=True)
 
     ref_dict_3d = {"ref_file_type": extract.FILE_TYPE_IMAGE,
-                "ref_model": ref_image_3d}
+                   "ref_model": ref_image_3d}
     output = extract.do_extract1d(input, ref_dict_3d, smoothing_length=0,
                                   bkg_order=0, log_increment=50,
                                   subtract_background=True)
@@ -269,8 +269,8 @@ def make_ifu_cube(data_shape, source=None, background=None,
 # "user-supplied" background data for the tests above.
 
 def make_ref_image(shape,
-                  x_center=None, y_center=None,
-                  radius=None, inner_bkg=None, outer_bkg=None):
+                   x_center=None, y_center=None,
+                   radius=None, inner_bkg=None, outer_bkg=None):
 
     """Create an image reference file for testing.
 

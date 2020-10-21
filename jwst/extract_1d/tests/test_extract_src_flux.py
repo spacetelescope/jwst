@@ -7,6 +7,7 @@ import numpy as np
 
 from jwst.extract_1d import extract1d
 
+
 def test_extract_src_flux():
 
     shape = (9, 5)
