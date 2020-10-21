@@ -53,7 +53,6 @@ def run_spec3(jail, rtdata_module):
 @pytest.fixture(scope='module')
 def run_spec3_multi(jail, rtdata_module):
     """Run the Spec3Pipeline on multi channel/multi filter data"""
-    rtdata = rtdata_module
 
     step_params = {
         'input_path': INPUT_PATH + '/' + 'ifushort_set2_asn3.json',
