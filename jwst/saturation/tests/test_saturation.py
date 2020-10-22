@@ -48,8 +48,8 @@ def test_low_saturation_flagging(setup_nrc_cube):
 
     # Create inputs, data, and saturation maps
     ngroups = 5
-    nrows = 2048
-    ncols = 2048
+    nrows = 20
+    ncols = 20
     satvalue = 60000
 
     data, satmap = setup_nrc_cube(ngroups, nrows, ncols)
@@ -65,7 +65,7 @@ def test_low_saturation_flagging(setup_nrc_cube):
     satindxs = [0, 1]
 
     # Set saturation value in the saturation model
-    satmap.data[500, 500] = satvalue
+    satmap.data[5, 5] = satvalue
 
     # Run the pipeline
     output = do_correction(data, satmap)
@@ -80,8 +80,8 @@ def test_low_and_high_saturation_flagging(setup_nrc_cube):
 
     # Create inputs, data, and saturation maps
     ngroups = 5
-    nrows = 2048
-    ncols = 2048
+    nrows = 20
+    ncols = 20
     satvalue = 60000
 
     data, satmap = setup_nrc_cube(ngroups, nrows, ncols)
@@ -97,7 +97,7 @@ def test_low_and_high_saturation_flagging(setup_nrc_cube):
     satindxs = [0, 1, 4]
 
     # Set saturation value in the saturation model
-    satmap.data[500, 500] = satvalue
+    satmap.data[5, 5] = satvalue
 
     # Run the pipeline
     output = do_correction(data, satmap)
