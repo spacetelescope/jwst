@@ -415,7 +415,7 @@ pipeline
 - Enable NIRSpec lamp processing in calspec2 pipeline. [#5267]
 
 - Update ``Image3Pipeline`` to allow sky subtraction when input contains
-  only one image (group). [5423]
+  only one image (group). [#5423]
 
 photom
 ------
