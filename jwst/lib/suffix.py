@@ -54,7 +54,8 @@ SUFFIXES_TO_ADD = [
 
 # Suffixes that are discovered but should not be considered.
 # Used by `find_suffixes` to remove undesired values it has found.
-SUFFIXES_TO_DISCARD = ['engdblogstep', 'functionwrapper', 'pipeline', 'step', 'systemcall']
+SUFFIXES_TO_DISCARD = ['engdblogstep', 'functionwrapper', 'pipeline',
+                       'step', 'systemcall', 'testlinearpipeline']
 
 
 # Calculated suffixes.
