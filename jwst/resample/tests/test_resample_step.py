@@ -10,7 +10,9 @@ from jwst.resample import ResampleSpecStep, ResampleStep
 
 @pytest.fixture
 def nirspec_rate():
-    wcsinfo = {
+    shape = (2048, 2048)
+    im = ImageModel(shape)
+    im.meta.wcsinfo = {
         'dec_ref': 40,
         'ra_ref': 100,
         'roll_ref': 0,
@@ -18,8 +20,7 @@ def nirspec_rate():
         'v3_ref': -373.4826,
         'v3yangle': 0.0,
         'vparity': -1}
-
-    instrument = {
+    im.meta.instrument = {
         'detector': 'NRS1',
         'filter': 'CLEAR',
         'grating': 'PRISM',
@@ -27,8 +28,7 @@ def nirspec_rate():
         'gwa_tilt': 37.0610,
         'gwa_xtilt': 0.0001,
         'gwa_ytilt': 0.0001}
-
-    subarray = {
+    im.meta.subarray = {
         'fastaxis': 1,
         'name': 'SUBS200A1',
         'slowaxis': 2,
@@ -36,12 +36,10 @@ def nirspec_rate():
         'xstart': 1,
         'ysize': 416,
         'ystart': 529}
-
-    observation = {
+    im.meta.observation = {
         'date': '2016-09-05',
         'time': '8:59:37'}
-
-    exposure = {
+    im.meta.exposure = {
         'duration': 11.805952,
         'end_time': 58119.85416,
         'exposure_time': 11.776,
@@ -60,20 +58,16 @@ def nirspec_rate():
         'type': 'NRS_FIXEDSLIT',
         'zero_frame': False}
 
-    im = ImageModel((2048, 2048))
-
-    im.meta.wcsinfo = wcsinfo
-    im.meta.instrument = instrument
-    im.meta.observation = observation
-    im.meta.exposure = exposure
-    im.meta.subarray = subarray
-
     return im
 
 
 @pytest.fixture
 def miri_rate():
-    wcsinfo = {
+    xsize = 72
+    ysize = 416
+    im = ImageModel((ysize, xsize))
+    im.data += 5.
+    im.meta.wcsinfo = {
         'dec_ref': 40,
         'ra_ref': 100,
         'roll_ref': 0.0,
@@ -81,26 +75,22 @@ def miri_rate():
         'v3_ref': -373.4826,
         'v3yangle': 0.0,
         'vparity': -1}
-
-    instrument = {
+    im.meta.instrument = {
         'detector': 'MIRIMAGE',
         'filter': 'P750L',
         'name': 'MIRI'}
-
-    observation = {
+    im.meta.observation = {
         'date': '2019-01-01',
         'time': '17:00:00'}
-
-    subarray = {
+    im.meta.subarray = {
         'fastaxis': 1,
         'name': 'SLITLESSPRISM',
         'slowaxis': 2,
-        'xsize': 72,
+        'xsize': xsize,
         'xstart': 1,
-        'ysize': 416,
+        'ysize': ysize,
         'ystart': 529}
-
-    exposure = {
+    im.meta.exposure = {
         'duration': 11.805952,
         'end_time': 58119.85416,
         'exposure_time': 11.776,
@@ -119,21 +109,16 @@ def miri_rate():
         'type': 'MIR_LRS-SLITLESS',
         'zero_frame': False}
 
-    im = ImageModel((416, 72))
-    im.data += 5.
-
-    im.meta.wcsinfo = wcsinfo
-    im.meta.instrument = instrument
-    im.meta.observation = observation
-    im.meta.exposure = exposure
-    im.meta.subarray = subarray
-
     return im
 
 
 @pytest.fixture
 def nircam_rate():
-    wcsinfo = {
+    xsize = 204
+    ysize = 204
+    im = ImageModel((ysize, xsize))
+    im.data += 5.
+    im.meta.wcsinfo = {
         'ctype1': 'RA---TAN',
         'ctype2': 'DEC--TAN',
         'dec_ref': 11.99875540218638,
@@ -144,7 +129,7 @@ def nircam_rate():
         'v3yangle': -0.07385127,
         'vparity': -1,
         'wcsaxes': 2}
-    instrument = {
+    im.meta.instrument = {
         'channel': 'LONG',
         'detector': 'NRCALONG',
         'filter': 'F444W',
@@ -152,15 +137,15 @@ def nircam_rate():
         'module': 'A',
         'name': 'NIRCAM',
         'pupil': 'CLEAR'}
-    subarray = {
+    im.meta.subarray = {
         'fastaxis': -1,
         'name': 'FULL',
         'slowaxis': 2,
-        'xsize': 2048,
+        'xsize': xsize,
         'xstart': 1,
-        'ysize': 2048,
+        'ysize': ysize,
         'ystart': 1}
-    observation = {
+    im.meta.observation = {
         'activity_id': '01',
         'date': '2021-10-25',
         'exposure_number': '00001',
@@ -173,7 +158,7 @@ def nircam_rate():
         'visit_group': '01',
         'visit_id': '42424001001',
         'visit_number': '001'}
-    exposure = {
+    im.meta.exposure = {
         'duration': 161.05155,
         'end_time': 59512.70899968495,
         'exposure_time': 150.31478,
@@ -191,15 +176,10 @@ def nircam_rate():
         'sample_time': 10,
         'start_time': 59512.70725993055,
         'type': 'NRC_IMAGE'}
-
-    im = ImageModel((2048, 2048))
-    im.data += 5.
-
-    im.meta.wcsinfo = wcsinfo
-    im.meta.instrument = instrument
-    im.meta.observation = observation
-    im.meta.exposure = exposure
-    im.meta.subarray = subarray
+    im.meta.photometry = {
+        'pixelarea_steradians': 1e-13,
+        'pixelarea_arcsecsq': 4e-3,
+    }
 
     return im
 
@@ -225,6 +205,7 @@ def test_miri_wcs_roundtrip(miri_rate):
     x, y = grid_from_bounding_box(im.meta.wcs.bounding_box)
     ra, dec, lam = im.meta.wcs(x, y)
     xp, yp = im.meta.wcs.invert(ra, dec, lam)
+
     assert_allclose(x, xp, atol=1e-8)
     assert_allclose(y, yp, atol=1e-8)
 
@@ -234,6 +215,7 @@ def test_pixel_scale_ratio_spec(miri_rate, ratio):
     im = AssignWcsStep.call(miri_rate)
     result1 = ResampleSpecStep.call(im)
     result2 = ResampleSpecStep.call(im, pixel_scale_ratio=ratio)
+
     assert_allclose(np.array(result1.data.shape), np.array(result2.data.shape) * ratio, rtol=1, atol=1)
 
 
@@ -242,7 +224,14 @@ def test_pixel_scale_ratio_imaging(nircam_rate, ratio):
     im = AssignWcsStep.call(nircam_rate)
     result1 = ResampleStep.call(im)
     result2 = ResampleStep.call(im, pixel_scale_ratio=ratio)
+
     assert_allclose(np.array(result1.data.shape), np.array(result2.data.shape) * ratio, rtol=1, atol=1)
-    e1 = 50
-    e2 = int(50 / ratio)
-    assert np.mean(result1.data[e1:-e1,e1:-e1]) == np.mean(result2.data[e2:-e2,e2:-e2])
+
+    # Avoid edge effects; make sure data values are identical for surface brightness data
+    assert np.mean(result1.data[10:-10,10:-10]) == np.mean(result2.data[10:-10,10:-10])
+
+    # Make sure the photometry keywords describing the solid angle of a pixel
+    # are updated
+    area1 = result1.meta.photometry.pixelarea_steradians
+    area2 = result2.meta.photometry.pixelarea_steradians
+    assert_allclose(area1 * ratio**2, area2, rtol=1e-6)

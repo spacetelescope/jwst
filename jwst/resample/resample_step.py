@@ -84,6 +84,7 @@ class ResampleStep(Step):
             model.meta.asn.table_name = input_models.meta.table_name
             if hasattr(model.meta, "bunit_err") and model.meta.bunit_err is not None:
                 del model.meta.bunit_err
+            self.update_phot_keywords(model)
 
         if len(resamp.output_models) == 1:
             result = resamp.output_models[0]
@@ -91,6 +92,13 @@ class ResampleStep(Step):
             result = resamp.output_models
 
         return result
+
+    def update_phot_keywords(self, model):
+        """Update pixel scale keywords"""
+        if model.meta.photometry.pixelarea_steradians is not None:
+            model.meta.photometry.pixelarea_steradians *= self.pixel_scale_ratio**2
+        if model.meta.photometry.pixelarea_arcsecsq is not None:
+            model.meta.photometry.pixelarea_arcsecsq *= self.pixel_scale_ratio**2
 
     def get_drizpars(self, ref_filename, input_models):
         """
