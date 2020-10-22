@@ -23,7 +23,7 @@ KNOWN_STEPS = set([
     'RSCD_Step', 'RampFitStep', 'RefPixStep', 'ResampleSpecStep', 'ResampleStep', 'ResetStep',
     'SaturationStep', 'SkyMatchStep', 'SourceCatalogStep', 'SourceTypeStep', 'Spec2Pipeline', 'Spec3Pipeline',
     'StackRefsStep', 'StraylightStep', 'SubtractImagesStep', 'SuperBiasStep',
-    'TSOPhotometryStep', 'TestLinearPipeline', 'Tso3Pipeline', 'TweakRegStep',
+    'TSOPhotometryStep', 'Tso3Pipeline', 'TweakRegStep',
     'WavecorrStep', 'WfsCombineStep', 'WhiteLightStep',
 ])
 
