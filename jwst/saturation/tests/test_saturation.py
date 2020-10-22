@@ -103,7 +103,7 @@ def test_low_and_high_saturation_flagging(setup_nrc_cube):
     output = do_correction(data, satmap)
 
     # Check if the right frames are flagged as saturated
-    assert np.all(output.groupdq[0, satindxs, 500, 500] == dqflags.group['SATURATED'])
+    assert np.all(output.groupdq[0, satindxs, 5, 5] == dqflags.group['SATURATED'])
 
 
 def test_signal_fluctuation_flagging(setup_nrc_cube):
