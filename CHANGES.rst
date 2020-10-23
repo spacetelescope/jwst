@@ -21,7 +21,7 @@ associations
 cube_build
 ----------
 
-- When making SINGLE type cubes for outlier detection or mrs_imatch data not in the 
+- When making SINGLE type cubes for outlier detection or mrs_imatch data not in the
   appropriate channel/grating is skipped [#5347]
 
 - If outlier detection has flagged all the data on a input file as DO_NOT_USE, then
@@ -79,6 +79,13 @@ outlier_detection
 -----------------
 
 - Implement memory check in resample to prevent huge arrays [#5354]
+
+pipeline
+--------
+
+- Update ``Image3Pipeline`` to allow sky subtraction when input contains
+  only one image (group). [#5423]
+
 
 ramp_fitting
 ------------

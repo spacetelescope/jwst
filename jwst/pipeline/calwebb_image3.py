@@ -85,6 +85,13 @@ class Image3Pipeline(Pipeline):
                 input_models = self.skymatch(input_models)
                 input_models = self.outlier_detection(input_models)
 
+            elif self.skymatch.skymethod == 'match':
+                self.log.warning("Turning 'skymatch' step off for a single "
+                                 "input image when 'skymethod' is 'match'")
+
+            else:
+                input_models = self.skymatch(input_models)
+
             result = self.resample(input_models)
             if isinstance(result, datamodels.ImageModel) and result.meta.cal_step.resample == 'COMPLETE':
                 self.source_catalog(result)
