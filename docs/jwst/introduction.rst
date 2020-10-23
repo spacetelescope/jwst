@@ -162,7 +162,7 @@ step instance directly.
 
 The ``call`` method creates a new instance of the class and runs the pipeline or
 step. Optional parameter settings can be specified by supplying a configuration file,
-or via keyword. Examples are shown on the :ref:`Execute via call()<call-examples>` page.
+or via keyword. Examples are shown on the :ref:`Execute via call()<call_examples>` page.
 ::
 
  from jwst.pipeline import Detector1Pipeline
@@ -174,7 +174,7 @@ or via keyword. Examples are shown on the :ref:`Execute via call()<call-examples
 
 Another way to call the pipeline is by calling the instance of the pipeline directly.
 First create an instance, then set any desired parameter
-values and finally, execute. Examples are shown on the :ref:`Execute via run()<run-examples>` page.
+values and finally, execute. Examples are shown on the :ref:`Execute via run()<run_examples>` page.
 ::
 
  pipe = Detector1Pipeline()
@@ -182,7 +182,7 @@ values and finally, execute. Examples are shown on the :ref:`Execute via run()<r
  result = pipe('jw00017001001_01101_00001_nrca1_uncal.fits')
 
 A functionally identical way to execute the pipeline or step is to use the ``run``
-method. Examples are shown on the :ref:`Execute via run()<run-examples>` page.
+method. Examples are shown on the :ref:`Execute via run()<run_examples>` page.
 ::
 
  pipe = Detector1Pipeline()

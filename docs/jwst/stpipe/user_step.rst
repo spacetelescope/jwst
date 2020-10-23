@@ -236,7 +236,7 @@ They are equivalent::
     output = mystep(input)
 
 call()
-`````
+``````
 
 If one has all the configuration in a configuration file or can pass the
 arguments directly to the step, one can use the `call()` method, which creates a new

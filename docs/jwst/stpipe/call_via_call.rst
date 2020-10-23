@@ -1,7 +1,7 @@
-.. _call-examples
+.. _call_examples:
 
-Calling a pipeline or pipeline step via call()
-==============================================
+Executing a pipeline or pipeline step via call()
+================================================
 
 The ``call`` method will create an instance and run a pipeline or pipeline step
 in a single call.
@@ -31,9 +31,11 @@ When running a pipeline, parameter values can also be supplied in the call to ``
 parameter names:
 
 ::
+
  result = Detector1Pipeline.call("jw00017001001_01101_00001_nrca1_uncal.fits", config_file='calwebb_detector1.cfg', steps={"jump":{"rejection_threshold": 200}})
 
 When running a single step with ``call``, parameter values can be supplied more simply:
 
 ::
+
  result = JumpStep.call("jw00017001001_01101_00001_nrca1_uncal.fits", rejection_threshold=200)
