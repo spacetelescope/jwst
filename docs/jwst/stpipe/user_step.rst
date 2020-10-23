@@ -205,6 +205,7 @@ Retrieval of ``Step`` parameters from CRDS can be completely disabled by
 using the ``--disable-crds-steppars`` command-line switch, or setting the
 environmental variable ``STPIPE_DISABLE_CRDS_STEPPARS`` to ``true``.
 
+.. _run_step_from_python:
 
 Running a Step in Python
 ------------------------
@@ -224,19 +225,25 @@ very useful if one wants to setup the step's attributes first, then run it::
     mystep.override_sflat = ‘sflat.fits’
     output = mystep.run(input)
 
-Using the `.run()` method is the same as calling the instance or class directly.
+`input` in this case can be a fits file containing the appropriate data, or the output
+of a previously run step/pipeline, which is an instance of a particular :ref:`datamodel<datamodels>`.
+
+Unlike in the use of ``call``, a configuration file supplied whle instantiating ``run()`` will be ignored.
+
+Using the ``.run()`` method is the same as calling the instance or class directly.
 They are equivalent::
 
     output = mystep(input)
 
 call()
-``````
+`````
 
 If one has all the configuration in a configuration file or can pass the
-arguments directly to the step, one can use call(), which creates a new
-instance of the class every time you use the `call()` method.  So::
+arguments directly to the step, one can use the `call()` method, which creates a new
+instance of the class every time you call it.  So::
 
-    output = mystep.call(input)
+    from jwst.jump import JumpStep
+    output = JumpStep.call(input)
 
 makes a new instance of `FlatFieldStep` and then runs. Because it is a new
 instance, it ignores any attributes of `mystep` that one may have set earlier,
