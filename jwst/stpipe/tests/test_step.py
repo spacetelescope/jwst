@@ -655,7 +655,8 @@ def test_step_from_commandline_par_precedence(command_line_pars, command_line_co
 
         reference_file_map[reference_type] = str(reference_path)
 
-    def mock_get_reference_file(dataset, reference_file_type, observatory=None, asn_exptypes=None):
+    def mock_get_reference_file(dataset, reference_file_type, observatory=None,
+                                asn_exptypes=None, extra_pars=None):
         if reference_file_type in reference_file_map:
             return reference_file_map[reference_file_type]
         else:
