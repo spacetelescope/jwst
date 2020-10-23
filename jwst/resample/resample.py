@@ -1,5 +1,4 @@
 import logging
-from collections import OrderedDict
 import numpy as np
 
 from . import gwcs_drizzle
@@ -39,7 +38,9 @@ class ResampleData:
       5. Updates output data model with output arrays from drizzle, including
          (eventually) a record of metadata from all input models.
     """
-    def __init__(self, input_models, output=None, **pars):
+    def __init__(self, input_models, output=None, single=False, blendheaders=True,
+        pixfrac=1.0, kernel="square", fillval="INDEF", weight_type="exptime",
+        good_bits=0, pscale_ratio=1.0, **kwargs):
         """
         Parameters
         ----------
@@ -49,20 +50,30 @@ class ResampleData:
         output : str
             filename for output
 
-        pars : dict
-            `drizpars` parameters
+        kwargs : dict
+            Other parameters
         """
         self.input_models = input_models
-        self.drizpars = pars
+
+        self.pscale_ratio = pscale_ratio
+        self.single = single
+        self.blendheaders = blendheaders
+        self.pixfrac = pixfrac
+        self.kernel = kernel
+        self.fillval = fillval
+        self.weight_type = weight_type
+        self.good_bits = good_bits
+
         if output is None:
             output = input_models.meta.resample.output
         self.output_filename = output
 
         # Define output WCS based on all inputs, including a reference WCS
-        self.output_wcs = resample_utils.make_output_wcs(self.input_models)
+        self.output_wcs = resample_utils.make_output_wcs(self.input_models,
+                                                        pscale_ratio=self.pscale_ratio)
         log.debug('Output mosaic size: {}'.format(self.output_wcs.data_size))
         can_allocate, required_memory = datamodels.util.check_memory_allocation(
-            self.output_wcs.data_size, pars['allowed_memory'], datamodels.ImageModel
+            self.output_wcs.data_size, kwargs['allowed_memory'], datamodels.ImageModel
         )
         if not can_allocate:
             raise OutputTooLargeError(
@@ -101,14 +112,9 @@ class ResampleData:
     def do_drizzle(self):
         """ Perform drizzling operation on input images's to create a new output
         """
-        # Set up information about what outputs we need to create: single or final
-        # Key: value from metadata for output/observation name
-        # Value: full filename for output file
-        driz_outputs = OrderedDict()
-
         # Look for input configuration parameter telling the code to run
         # in single-drizzle mode (mosaic all detectors in a single observation)
-        if self.drizpars['single']:
+        if self.single:
             driz_outputs = self.input_models.group_names
             exposures = self.input_models.models_grouped
             group_exptime = []
@@ -129,17 +135,18 @@ class ResampleData:
             output_model = self.blank_output.copy()
             output_model.meta.filename = obs_product
 
-            if self.drizpars['blendheaders']:
+            if self.blendheaders:
                 self.blend_output_metadata(output_model)
 
             exposure_times = {'start': [], 'end': []}
 
             # Initialize the output with the wcs
             driz = gwcs_drizzle.GWCSDrizzle(output_model,
-                                            single=self.drizpars['single'],
-                                            pixfrac=self.drizpars['pixfrac'],
-                                            kernel=self.drizpars['kernel'],
-                                            fillval=self.drizpars['fillval'])
+                                            single=self.single,
+                                            pixfrac=self.pixfrac,
+                                            kernel=self.kernel,
+                                            fillval=self.fillval,
+                                            wt_scl=self.weight_type)
 
             for n, img_exp in enumerate(exposure):
                 # Make a copy as this is operated on in-place below
@@ -152,22 +159,18 @@ class ResampleData:
                 if not img.meta.background.subtracted and blevel is not None:
                     img.data -= blevel
 
-                outwcs_pscale = output_model.meta.wcsinfo.cdelt1
-                wcslin_pscale = img.meta.wcsinfo.cdelt1
-
                 inwht = resample_utils.build_driz_weight(img,
-                    weight_type=self.drizpars['weight_type'],
-                    good_bits=self.drizpars['good_bits'])
+                    weight_type=self.weight_type,
+                    good_bits=self.good_bits)
                 driz.add_image(img.data, img.meta.wcs, inwht=inwht,
-                        expin=img.meta.exposure.exposure_time,
-                        pscale_ratio=outwcs_pscale / wcslin_pscale)
+                    expin=img.meta.exposure.exposure_time)
 
             # Update some basic exposure time values based on all the inputs
             output_model.meta.exposure.exposure_time = texptime
             output_model.meta.exposure.start_time = min(exposure_times['start'])
             output_model.meta.exposure.end_time = max(exposure_times['end'])
             output_model.meta.resample.product_exposure_time = texptime
-            output_model.meta.resample.weight_type = self.drizpars['weight_type']
+            output_model.meta.resample.weight_type = self.weight_type
             output_model.meta.resample.pointings = pointings
 
             self.update_fits_wcs(output_model)

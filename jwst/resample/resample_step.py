@@ -34,6 +34,7 @@ class ResampleStep(Step):
         kernel = string(default='square')
         fillval = string(default='INDEF')
         weight_type = option('exptime', default='exptime')
+        pixel_scale_ratio = float(default=1.0) # Ratio of input to output pixel scale
         single = boolean(default=False)
         blendheaders = boolean(default=True)
         allowed_memory = float(default=None)  # Fraction of memory to use for the combined image.
@@ -70,8 +71,9 @@ class ResampleStep(Step):
             self.log.info("No NIRSpec DIRZPARS reffile")
             kwargs = self._set_spec_defaults()
 
-        # Call the resampling routine
         kwargs['allowed_memory'] = self.allowed_memory
+
+        # Call the resampling routine
         resamp = resample.ResampleData(input_models, **kwargs)
         resamp.do_drizzle()
 
@@ -82,6 +84,7 @@ class ResampleStep(Step):
             model.meta.asn.table_name = input_models.meta.table_name
             if hasattr(model.meta, "bunit_err") and model.meta.bunit_err is not None:
                 del model.meta.bunit_err
+            self.update_phot_keywords(model)
 
         if len(resamp.output_models) == 1:
             result = resamp.output_models[0]
@@ -89,6 +92,13 @@ class ResampleStep(Step):
             result = resamp.output_models
 
         return result
+
+    def update_phot_keywords(self, model):
+        """Update pixel scale keywords"""
+        if model.meta.photometry.pixelarea_steradians is not None:
+            model.meta.photometry.pixelarea_steradians *= self.pixel_scale_ratio**2
+        if model.meta.photometry.pixelarea_arcsecsq is not None:
+            model.meta.photometry.pixelarea_arcsecsq *= self.pixel_scale_ratio**2
 
     def get_drizpars(self, ref_filename, input_models):
         """
@@ -144,7 +154,8 @@ class ResampleStep(Step):
             pixfrac=self.pixfrac,
             kernel=self.kernel,
             fillval=self.fillval,
-            wht_type=self.weight_type
+            wht_type=self.weight_type,
+            pscale_ratio=self.pixel_scale_ratio,
             )
 
         # For parameters that are set in drizpars table but not set by the
@@ -186,14 +197,13 @@ class ResampleStep(Step):
 
         return kwargs
 
-    @classmethod
-    def _set_spec_defaults(cls):
+    def _set_spec_defaults(self):
         """NIRSpec currently has no default drizpars reference file, so default
         drizzle parameters are not set properly.  This method sets them.
 
         Remove this class method when a drizpars reffile is delivered.
         """
-        configspec = cls.load_spec_file()
+        configspec = self.load_spec_file()
         config = ConfigObj(configspec=configspec)
         if config.validate(Validator()):
             kwargs = config.dict()
@@ -209,9 +219,11 @@ class ResampleStep(Step):
             kwargs['fillval'] = 'INDEF'
         if kwargs['weight_type'] is None:
             kwargs['weight_type'] = 'exptime'
+        kwargs['pscale_ratio'] = self.pixel_scale_ratio
+        kwargs.pop('pixel_scale_ratio')
 
         for k,v in kwargs.items():
-            if k in ['pixfrac', 'kernel', 'fillval', 'weight_type']:
+            if k in ['pixfrac', 'kernel', 'fillval', 'weight_type', 'pscale_ratio']:
                 log.info('  setting: %s=%s', k, repr(v))
 
         return kwargs

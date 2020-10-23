@@ -91,7 +91,8 @@ def reproject(wcs1, wcs2):
     return _reproject
 
 
-def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray], disp_axis: int = None) -> float:
+def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray],
+                  disp_axis: int = None, pscale_ratio: float = None) -> float:
     """Compute scaling transform.
 
     Parameters
@@ -104,6 +105,9 @@ def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray], disp_axis: int =
 
     disp_axis : int
         Dispersion axis integer. Assumes the same convention as `wcsinfo.dispersion_direction`
+
+    pscale_ratio : int
+        Ratio of input to output pixel scale
 
     Returns
     -------
@@ -129,7 +133,12 @@ def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray], disp_axis: int =
     xscale = np.abs(coords[0].separation(coords[1]).value)
     yscale = np.abs(coords[0].separation(coords[2]).value)
 
-    if spectral:  # Assuming scale doesn't change with wavelength
+    if pscale_ratio is not None:
+        xscale = xscale * pscale_ratio
+        yscale = yscale * pscale_ratio
+
+    if spectral:
+        # Assuming scale doesn't change with wavelength
         # Assuming disp_axis is consistent with DataModel.meta.wcsinfo.dispersion.direction
         return yscale if disp_axis == 1 else xscale
 
@@ -179,7 +188,8 @@ def calc_rotation_matrix(roll_ref: float, v3i_yang: float, vparity: int = 1) -> 
     return [pc1_1, pc1_2, pc2_1, pc2_2]
 
 
-def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=None):
+def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=None,
+                        pscale_ratio=None):
     """
     Create a WCS from a list of input data models.
 
@@ -210,6 +220,8 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
     bounding_box : tuple, optional
         Bounding_box of the new WCS.
         If not supplied it is computed from the bounding_box of all inputs.
+    pscale_ratio : float, optional
+        Ratio of input to output pixel scale.
     """
     bb = bounding_box
     wcslist = [im.meta.wcs for im in dmodels]
@@ -237,13 +249,14 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
         wcsinfo = pointing.wcsinfo_from_model(refmodel)
         sky_axes, spec, other = gwutils.get_axes(wcsinfo)
 
-        # Need to put the rotation matrix (List[float, float, float, float]) returned from calc_rotation_matrix into the
-        # correct shape for constructing the transformation
+        # Need to put the rotation matrix (List[float, float, float, float])
+        # returned from calc_rotation_matrix into the correct shape for
+        # constructing the transformation
+        roll_ref = np.deg2rad(refmodel.meta.wcsinfo.roll_ref)
+        v3yangle = np.deg2rad(refmodel.meta.wcsinfo.v3yangle)
+        vparity = refmodel.meta.wcsinfo.vparity
         pc = np.reshape(
-            calc_rotation_matrix(
-                np.deg2rad(refmodel.meta.wcsinfo.roll_ref),
-                np.deg2rad(refmodel.meta.wcsinfo.v3yangle),
-                vparity=refmodel.meta.wcsinfo.vparity),
+            calc_rotation_matrix(roll_ref, v3yangle, vparity=vparity),
             (2, 2)
         )
 
@@ -251,7 +264,8 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
         transform.append(rotation)
 
         if sky_axes:
-            scale = compute_scale(refmodel.meta.wcs, ref_fiducial)
+            scale = compute_scale(refmodel.meta.wcs, ref_fiducial,
+                                  pscale_ratio=pscale_ratio)
             transform.append(astmodels.Scale(scale) & astmodels.Scale(scale))
 
         if transform:
@@ -268,19 +282,19 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
     for axs in domain_bounds:
         axs -= (axs.min()  + .5)
 
-    bounding_box = []
+    output_bounding_box = []
     for axis in out_frame.axes_order:
         axis_min, axis_max = domain_bounds[axis].min(), domain_bounds[axis].max()
-        bounding_box.append((axis_min, axis_max))
+        output_bounding_box.append((axis_min, axis_max))
 
-    bounding_box = tuple(bounding_box)
-    ax1, ax2 = np.array(bounding_box)[sky_axes]
+    output_bounding_box = tuple(output_bounding_box)
+    ax1, ax2 = np.array(output_bounding_box)[sky_axes]
     offset1 = (ax1[1] - ax1[0]) / 2
     offset2 = (ax2[1] - ax2[0]) / 2
     offsets = astmodels.Shift(-offset1) & astmodels.Shift(-offset2)
 
     wnew.insert_transform('detector', offsets, after=True)
-    wnew.bounding_box = bounding_box
+    wnew.bounding_box = output_bounding_box
 
     return wnew
 

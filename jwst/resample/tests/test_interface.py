@@ -1,7 +1,7 @@
 import pytest
 
-from ... import datamodels
-from .. import ResampleSpecStep, ResampleStep
+from jwst import datamodels
+from jwst.resample import ResampleSpecStep, ResampleStep
 
 
 @pytest.mark.parametrize('resample_class', [ResampleSpecStep, ResampleStep])

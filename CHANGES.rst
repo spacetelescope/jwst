@@ -101,6 +101,8 @@ resample
 
 - Implement memory check in resample to prevent huge arrays [#5354]
 
+- Add ``pixel_scale_ratio`` parameter to allow finer output grid. [#5389]
+
 saturation
 ----------
 

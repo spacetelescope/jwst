@@ -7,6 +7,10 @@ from ..exp_to_source import multislit_to_container
 from ..assign_wcs.util import update_s_region_spectral
 
 
+# Force use of all DQ flagged data except for DO_NOT_USE and NON_SCIENCE
+GOOD_BITS = '~DO_NOT_USE+NON_SCIENCE'
+
+
 class ResampleSpecStep(ResampleStep):
     """
     ResampleSpecStep: Resample input data onto a regular grid using the
@@ -52,6 +56,9 @@ class ResampleSpecStep(ResampleStep):
             self.log.info("No NIRSpec DIRZPARS reffile")
             kwargs = self._set_spec_defaults()
             kwargs['blendheaders'] = self.blendheaders
+
+        # Update user-supplied kwargs
+        kwargs['allowed_memory'] = self.allowed_memory
 
         # Call resampling
         self.drizpars = kwargs

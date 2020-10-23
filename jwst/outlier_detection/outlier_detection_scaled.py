@@ -53,8 +53,7 @@ class OutlierDetectionScaled(OutlierDetection):
             Dictionary of datamodels.  Keys are reffile_types.
 
         """
-        OutlierDetection.__init__(self, input_models,
-                                  reffiles=reffiles, **pars)
+        super().__init__(self, input_models, reffiles=reffiles, **pars)
 
     def do_detection(self):
         """Flag outlier pixels in DQ of input images."""

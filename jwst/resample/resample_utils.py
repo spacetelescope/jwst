@@ -6,19 +6,22 @@ from astropy import wcs as fitswcs
 from astropy.modeling import Model
 from gwcs import WCS, wcstools
 
+from jwst.assign_wcs.util import wcs_from_footprints, wcs_bbox_from_shape
 from jwst.datamodels.dqflags import interpret_bit_flags
-
-from ..assign_wcs.util import wcs_from_footprints, wcs_bbox_from_shape
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def make_output_wcs(input_models):
+def make_output_wcs(input_models, pscale_ratio=1.0):
     """ Generate output WCS here based on footprints of all input WCS objects
     Parameters
     ----------
-    wcslist : list of gwcs.WCS objects
+    input_models : list of `~jwst.datamodel.DataModel`
+        Each datamodel must have a ~gwcs.WCS object.
+
+    pscale_ratio : float, optional
+        Ratio of input to output pixel scale.
 
     Returns
     -------
@@ -26,25 +29,18 @@ def make_output_wcs(input_models):
         WCS object, with defined domain, covering entire set of input frames
 
     """
-
-    # The API needing input_models instead of just wcslist is because
-    # currently the domain is not defined in any of imaging modes for NIRCam
-    # NIRISS or MIRI
-    #
-    # TODO: change the API to take wcslist instead of input_models and
-    #       remove the following block
     wcslist = [i.meta.wcs for i in input_models]
     for w, i in zip(wcslist, input_models):
         if w.bounding_box is None:
             w.bounding_box = wcs_bbox_from_shape(i.data.shape)
     naxes = wcslist[0].output_frame.naxes
 
-    if naxes == 3:
-        # THIS BLOCK CURRENTLY ISN"T USED BY resample_spec
-        pass
-    elif naxes == 2:
-        output_wcs = wcs_from_footprints(input_models)
+    if naxes == 2:
+        output_wcs = wcs_from_footprints(input_models, pscale_ratio=pscale_ratio)
         output_wcs.data_size = shape_from_bounding_box(output_wcs.bounding_box)
+    else:
+        raise RuntimeError("Output WCS needs 2 spatial axes. "
+            f"{wcslist[0]} has {naxes}.")
 
     # Check that the output data shape has no zero length dimensions
     if not np.product(output_wcs.data_size):
