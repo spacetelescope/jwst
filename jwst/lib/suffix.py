@@ -26,8 +26,6 @@ import logging
 from os import (listdir, path)
 import re
 
-from jwst.stpipe.utilities import all_steps
-
 __all__ = ['remove_suffix']
 
 # Configure logging
@@ -272,6 +270,7 @@ def find_suffixes():
     a static list.
     """
     from jwst.stpipe import Step
+    from jwst.stpipe.utilities import all_steps
 
     jwst = import_module('jwst')
     jwst_fpath = path.split(jwst.__file__)[0]
