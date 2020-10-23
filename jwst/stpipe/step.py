@@ -722,6 +722,14 @@ class Step():
         logger = log.delegator.log
         pars_model = cls.get_pars_model()
 
+        # If the dataset is not an operable DataModel, log as such and return
+        # an empty config object
+        try:
+            model = dm_open(dataset)
+        except (IOError, TypeError, ValueError):
+            logger.warning(f'Input dataset is not a DataModel.')
+            disable = True
+
         # Check if retrieval should be attempted.
         if disable is None:
             disable = get_disable_crds_steppars()
@@ -733,7 +741,7 @@ class Step():
         logger.debug(f'Retrieving step {pars_model.meta.reftype.upper()} parameters from CRDS')
         exceptions = crds_client.get_exceptions_module()
         try:
-            ref_file = crds_client.get_reference_file(dataset,
+            ref_file = crds_client.get_reference_file(model,
                                                       pars_model.meta.reftype,
                                                       observatory=observatory,
                                                       asn_exptypes=['science'])
