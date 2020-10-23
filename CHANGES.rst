@@ -80,6 +80,13 @@ outlier_detection
 
 - Implement memory check in resample to prevent huge arrays [#5354]
 
+pipeline
+--------
+
+- Update ``Image3Pipeline`` to allow sky subtraction when input contains
+  only one image (group). [#5423]
+
+
 ramp_fitting
 ------------
 
@@ -413,9 +420,6 @@ pipeline
   input ASN. [#5243]
 
 - Enable NIRSpec lamp processing in calspec2 pipeline. [#5267]
-
-- Update ``Image3Pipeline`` to allow sky subtraction when input contains
-  only one image (group). [#5423]
 
 photom
 ------
