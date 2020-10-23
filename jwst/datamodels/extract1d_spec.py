@@ -29,4 +29,4 @@ class MirMrsExtract1dModel(ReferenceFileModel):
         - axis_pa: float32 1D array
 
     """
-    schema_url = "http://stsci.edu/schemas/jwst_datamodel/mirmrs_extract1d.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/mirmrs_extract1d_asdf.schema"

@@ -1,0 +1,54 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/mirmrs_extract1d_asdf.schema"
+title: Default MIRI MRS extract 1d data model
+allOf:
+- $ref: referencefile.schema
+- type: object
+  properties:
+    meta:
+      type: object
+      properties:
+        id:
+          type: string
+        region_type:
+          type: string
+        subtract_background:
+          type: boolean
+        method:
+          type: string
+        subpixels:
+          type: integer
+        wavelength_units:
+          type: string
+        radius_units:
+          type: string
+        inner_bkg_units:
+          type: string
+        outer_bkg_units:
+          type: string
+        axis_pa_units:
+          type: string
+        axis_pa_units:
+          type: string
+  properties:
+    data:
+      type: object
+      properties:
+        wavelength:
+          datatype: float32
+        radius:
+          datatype: float32
+        inner_bgk:
+          datatype: float32
+        outer_bgk:
+          datatype: float32
+        axis_ratio:
+          datatype: float32
+        axis_pa:
+          datatype: float32
+
+
+
+
