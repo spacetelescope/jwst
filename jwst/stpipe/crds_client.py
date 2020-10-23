@@ -65,28 +65,43 @@ def get_refpaths_from_filename(filename, reference_file_types, observatory=None)
     return refpaths
 
 
-def get_multiple_reference_paths(dataset_model, reference_file_types, observatory=None):
+def get_multiple_reference_paths(dataset_model, reference_file_types, observatory=None, extra_pars=None):
     """Aligns JWST pipeline requirements with CRDS library top level interfaces.
 
-    `dataset_model` is an open data model.
+    Parameters
+    ----------
+    dataset_model : DataModel
+        The model whose attributes will be used as the CRDS lookup parameters.
 
-    `reference_file_types` is a list of reference file type name strings.
+    reference_file_types : [str[,...]]
+        Thelist of reference file type name strings.
 
-    If `observatory` is not None,  it should be a string naming the
-    telescope and valid for CRDS, e.g. 'jwst' or 'hst'.
+    observatory : str or None
+        If `observatory` is not None,  it should be a string naming the
+        telescope and valid for CRDS, e.g. 'jwst' or 'hst'.
 
-    If `observatory` is None,  the data_model.telescope value will be
-    fetched and used if it is not None.
+        If `observatory` is None,  the data_model.telescope value will be
+        fetched and used if it is not None.
 
-    If both of the above fail,  observatory defaults to 'jwst'.
+        If both of the above fail,  observatory defaults to 'jwst'.
 
-    Returns best references dict { filetype : filepath or "N/A", ... }
+    extra_pars : dict or None
+        Other parameters to add to the lookup parameters. If keys match
+        those in the `dataset_model`, these will override what is in
+        the dataset.
+
+    Returns
+    -------
+    best_refs : dict
+        Returns best references dict { filetype : filepath or "N/A", ... }
     """
     log.set_log_time(True)
     if dataset_model.meta.model_type == 'ModelContainer':
         first_exposure = get_first_science_exposure(dataset_model)
         dataset_model = dm_open(first_exposure)
     data_dict = _get_data_dict(dataset_model)
+    if extra_pars is not None:
+        data_dict.update(extra_pars)
     if observatory is None:
         observatory = dataset_model.meta.telescope or 'jwst'
     observatory = observatory.lower()
@@ -148,7 +163,8 @@ def check_reference_open(refpath):
     return refpath
 
 
-def get_reference_file(dataset, reference_file_type, observatory=None, asn_exptypes=None):
+def get_reference_file(dataset, reference_file_type, observatory=None,
+                       asn_exptypes=None, extra_pars=None):
     """
     Gets a reference file from CRDS as a readable file-like object.
     The actual file may be optionally overridden.
@@ -171,6 +187,11 @@ def get_reference_file(dataset, reference_file_type, observatory=None, asn_expty
         List of exposure types from an association file to read.
         None read all the given files. Passed to
         `jwst.datamodels.open`
+
+    extra_pars : dict or None
+        Other parameters to add to the lookup parameters. If keys match
+        those in the `dataset_model`, these will override what is in
+        the dataset.
 
     Returns
     -------

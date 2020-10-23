@@ -714,6 +714,14 @@ class Step():
         step_parameters : configobj
             The parameters as retrieved from CRDS. If there is an issue, log as such
             and return an empty config obj.
+
+        Notes
+        -----
+        The CRDS lookup normally uses `META.INSTRUMENT.NAME` as the primary key, to distinguish
+        references at the instrument `imap` level. However, the step parameter reference files
+        are all grouped in a pseudo-instrument "CALPARS". As such, the instrument name is set to
+        "CALPARS". If an rmap requires knowledge of the original instrument, this is located
+        in the key "CALPARS_INSTRUMENT".
         """
 
         # Get the root logger, since the following operations
@@ -728,6 +736,10 @@ class Step():
             logger.info(f'{pars_model.meta.reftype.upper()}: CRDS parameter reference retrieval disabled.')
             return config_parser.ConfigObj()
 
+        # Reassign and remember the instrument.
+        extra_pars = {'calpars_instrument': dataset.meta.instrument.name,
+                      'meta.instrument.name': 'calpars'}
+
         # Retrieve step parameters from CRDS
         logger.debug(f'Retrieving step {pars_model.meta.reftype.upper()} parameters from CRDS')
         exceptions = crds_client.get_exceptions_module()
@@ -735,7 +747,8 @@ class Step():
             ref_file = crds_client.get_reference_file(dataset,
                                                       pars_model.meta.reftype,
                                                       observatory=observatory,
-                                                      asn_exptypes=['science'])
+                                                      asn_exptypes=['science'],
+                                                      extra_pars=extra_pars)
         except (AttributeError, exceptions.CrdsError, exceptions.CrdsLookupError):
             logger.debug(f'{pars_model.meta.reftype.upper()}: No parameters found')
             return config_parser.ConfigObj()
