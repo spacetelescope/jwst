@@ -174,7 +174,8 @@ or via keyword. Examples are shown on the :ref:`Execute via call()<call_examples
 
 Another way to call the pipeline is by calling the instance of the pipeline directly.
 First create an instance, then set any desired parameter
-values and finally, execute. Examples are shown on the :ref:`Execute via run()<run_examples>` page.
+values and finally, execute. In this case, do not instatiate the pipeline
+with a configuration file. Examples are shown on the :ref:`Execute via run()<run_examples>` page.
 ::
 
  pipe = Detector1Pipeline()

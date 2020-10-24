@@ -5,7 +5,9 @@ Executing a pipeline or pipeline step directly, or via run()
 
 When calling a pipeline or step instance directly, or using the ``run`` method,
 you can specify individual parameter values manually. In this case, configuration
-files are not used (and will be ignored if provided).
+files are not used. If you use ``run`` after instatiating with a configuration
+file (as is done when using the :ref:`call<call_examples>` method), the
+configuration file will be ignored.
 
 ::
 
