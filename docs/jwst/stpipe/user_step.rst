@@ -228,7 +228,7 @@ very useful if one wants to setup the step's attributes first, then run it::
 `input` in this case can be a fits file containing the appropriate data, or the output
 of a previously run step/pipeline, which is an instance of a particular :ref:`datamodel<datamodels>`.
 
-Unlike in the use of ``call``, a configuration file supplied whle instantiating ``run()`` will be ignored.
+Unlike in the use of ``call``, a configuration file supplied while instantiating ``run()`` will be ignored.
 
 Using the ``.run()`` method is the same as calling the instance or class directly.
 They are equivalent::

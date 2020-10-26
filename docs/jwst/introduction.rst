@@ -162,7 +162,7 @@ step instance directly.
 
 The ``call`` method creates a new instance of the class and runs the pipeline or
 step. Optional parameter settings can be specified by supplying a configuration file,
-or via keyword. Examples are shown on the :ref:`Execute via call()<call_examples>` page.
+or via keyword arguments. Examples are shown on the :ref:`Execute via call()<call_examples>` page.
 ::
 
  from jwst.pipeline import Detector1Pipeline
