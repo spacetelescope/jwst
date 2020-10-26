@@ -192,6 +192,7 @@ class Pipeline(Step):
 
 
         log.log.debug('Retrieving all substep parameters from CRDS')
+        #
         # Iterate over the steps in the pipeline
         with dm_open(dataset, asn_n_members=1) as model:
             for cal_step in cls.step_defs.keys():
@@ -199,29 +200,23 @@ class Pipeline(Step):
                 refcfg['steps'][cal_step] = cal_step_class.get_config_from_reference(
                     model, observatory=observatory
                 )
-
-            # Reassign and remember the instrument.
-            instrument = model.meta.instrument.name
-            extra_pars = {'calpars_instrument': instrument,
-                          'meta.instrument.name': 'calpars'}
-
-            # Now merge any config parameters from the step cfg file
-            log.log.debug(f'Retrieving pipeline {pars_model.meta.reftype.upper()} parameters from CRDS')
-            exceptions = crds_client.get_exceptions_module()
-            try:
-                ref_file = crds_client.get_reference_file(model,
-                                                          pars_model.meta.reftype,
-                                                          observatory=observatory,
-                                                          asn_exptypes=['science'],
-                                                          extra_pars=extra_pars)
-            except (AttributeError, exceptions.CrdsError, exceptions.CrdsLookupError):
-                log.log.debug(f'{pars_model.meta.reftype.upper()}: No parameters found')
+        #
+        # Now merge any config parameters from the step cfg file
+        log.log.debug(f'Retrieving pipeline {pars_model.meta.reftype.upper()} parameters from CRDS')
+        exceptions = crds_client.get_exceptions_module()
+        try:
+            ref_file = crds_client.get_reference_file(model,
+                                                      pars_model.meta.reftype,
+                                                      observatory=observatory,
+                                                      asn_exptypes=['science'])
+        except (AttributeError, exceptions.CrdsError, exceptions.CrdsLookupError):
+            log.log.debug(f'{pars_model.meta.reftype.upper()}: No parameters found')
+        else:
+            if ref_file != 'N/A':
+                log.log.info(f'{pars_model.meta.reftype.upper()} parameters found: {ref_file}')
+                refcfg = cls.merge_pipeline_config(refcfg, ref_file)
             else:
-                if ref_file != 'N/A':
-                    log.log.info(f'{pars_model.meta.reftype.upper()} parameters found: {ref_file}')
-                    refcfg = cls.merge_pipeline_config(refcfg, ref_file)
-                else:
-                    log.log.debug(f'No {pars_model.meta.reftype.upper()} reference files found.')
+                log.log.debug(f'No {pars_model.meta.reftype.upper()} reference files found.')
 
         return refcfg
 
