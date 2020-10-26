@@ -37,7 +37,7 @@ team and any other ground subsystem that needs access to them.
 Information about all the reference files used by the Calibration Pipeline can be found at
 :ref:`reference_file_information`,
 as well as in the documentation for each Calibration Step that uses a reference file.
- 
+
 CRDS
 ====
 
@@ -157,7 +157,12 @@ Running From Within Python
 ==========================
 
 You can execute a pipeline or a step from within python by using the
-``call`` method of the class:
+``call`` or ``run`` methods of the class, or by calling the pipeline or
+step instance directly.
+
+The ``call`` method creates a new instance of the class and runs the pipeline or
+step. Optional parameter settings can be specified by supplying a configuration file,
+or via keyword arguments. Examples are shown on the :ref:`Execute via call()<call_examples>` page.
 ::
 
  from jwst.pipeline import Detector1Pipeline
@@ -166,12 +171,27 @@ You can execute a pipeline or a step from within python by using the
  from jwst.linearity import LinearityStep
  result = LinearityStep.call('jw00001001001_01101_00001_mirimage_uncal.fits')
 
-The easiest way to use optional arguments when calling a pipeline from
-within python is to set those parameters in the pipeline configuration file and
-then supply the file as a keyword argument:
+
+Another way to call the pipeline is by calling the instance of the pipeline directly.
+First create an instance, then set any desired parameter
+values and finally, execute. In this case, do not instatiate the pipeline
+with a configuration file. Examples are shown on the :ref:`Execute via run()<run_examples>` page.
 ::
 
- Detector1Pipeline.call('jw00017001001_01101_00001_nrca1_uncal.fits', config_file='calwebb_detector1.cfg')
+ pipe = Detector1Pipeline()
+ pipe.jump.rejection_threshold = 5
+ result = pipe('jw00017001001_01101_00001_nrca1_uncal.fits')
+
+A functionally identical way to execute the pipeline or step is to use the ``run``
+method. Examples are shown on the :ref:`Execute via run()<run_examples>` page.
+::
+
+ pipe = Detector1Pipeline()
+ pipe.jump.rejection_threshold = 5
+ result = pipe.run('jw00017001001_01101_00001_nrca1_uncal.fits')
+
+For more details on the different ways to run a pipeline step, see
+the :ref:`Configuring a Step<configuring-a-step>` page.
 
 
 .. _intro_file_conventions:
@@ -315,7 +335,7 @@ suffix of the step is always appended to any given name.
 You can also specify a particular file name for saving the end result of
 the entire pipeline using the ``--output_file`` argument also
 ::
-   
+
     $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
         --output_file='stage1_processed'
 
