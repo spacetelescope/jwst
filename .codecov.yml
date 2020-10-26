@@ -4,9 +4,6 @@ coverage:
       default:
         target: auto
         threshold: 0.1%
-        flags:
-          - unit
-          - nightly
       unit:
         target: auto
         flags:
