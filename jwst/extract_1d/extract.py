@@ -3071,6 +3071,8 @@ def do_extract1d(
                 output_model.spec.append(spec)
 
         elif isinstance(input_model, (datamodels.CubeModel, datamodels.SlitModel)):
+            # SOSS uses this branch in both calspec2 and caltso3, where in both cases
+            # the input is a single CubeModel, because caltso3 loops over exposures
 
             # This branch will be invoked for inputs that are a CubeModel, which typically includes
             # NIRSpec BrightObj (fixed slit) and NIRISS SOSS modes, as well as inputs that are a
@@ -3106,6 +3108,8 @@ def do_extract1d(
                     if sp_order == 0 and not prism_mode:
                         log.info("Spectral order 0 is a direct image, skipping ...")
                         continue
+
+                log.info(f'Processing spectral order {sp_order}')
 
                 extract_params = get_extract_parameters(
                     extract_ref_dict,
@@ -3711,21 +3715,27 @@ def extract_one_slit(
 
     extract_model.assign_polynomial_limits(verbose)
 
-    # Log the extraction limits being used
-    log.info("Using extraction limits: ")
-    if extract_model.src_coeff is not None:
-        # Because src_coeff was specified, that will be used instead of xstart/xstop (or ystart/ystop).
-        if extract_model.dispaxis == HORIZONTAL:
-            # Only print xstart/xstop, because ystart/ystop are not used
-            log.info(f"xstart={extract_model.xstart}, "
-                     f"xstop={extract_model.xstop}, and src_coeff")
+    # Log the extraction limits being used; verbose flag is used to
+    # turn off logging for loops over multiple integrations
+    if verbose:
+        log.info("Using extraction limits: ")
+        if extract_model.src_coeff is not None:
+            # Because src_coeff was specified, that will be used instead of xstart/xstop (or ystart/ystop).
+            if extract_model.dispaxis == HORIZONTAL:
+                # Only print xstart/xstop, because ystart/ystop are not used
+                log.info(f"xstart={extract_model.xstart}, "
+                         f"xstop={extract_model.xstop}, and src_coeff")
+            else:
+                # Only print ystart/ystop, because xstart/xstop are not used
+                log.info(f"ystart={extract_model.ystart}, "
+                         f"ystop={extract_model.ystop}, and src_coeff")
         else:
-            # Only print ystart/ystop, because xstart/xstop are not used
-            log.info(f"ystart={extract_model.ystart}, "
-                     f"ystop={extract_model.ystop}, and src_coeff")
+            # No src_coeff, so print all xstart/xstop and ystart/ystop values
+            log.info(f"xstart={extract_model.xstart}, xstop={extract_model.xstop}, "
+                     f"ystart={extract_model.ystart}, ystop={extract_model.ystop}")
 
-    if extract_params['subtract_background']:
-        log.info("with background subtraction")
+        if extract_params['subtract_background']:
+            log.info("with background subtraction")
 
     ra, dec, wavelength, temp_flux, background, npixels, dq = extract_model.extract(data, wl_array, verbose)
 
