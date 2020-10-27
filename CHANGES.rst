@@ -4,7 +4,9 @@
 ami
 ---
 
-- Update code and unit tests to use new ami analyze algorithm [#5390]
+- Update code and unit tests to use new ami_analyze algorithms [#5390]
+
+- Update ami_analyze to extract a SUB80 subarray from full-frame images [#5437]
 
 assign_wcs
 ----------
