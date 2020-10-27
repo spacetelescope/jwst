@@ -257,3 +257,12 @@ def t_path(partial_path):
     """Construction the full path for test files"""
     test_dir = os.path.join(os.path.dirname(__file__), 'data')
     return os.path.join(test_dir, partial_path)
+
+
+def test_open_asdf_datamodel_class(tmpdir):
+    path = str(tmpdir.join("image_model.asdf"))
+    model = ImageModel((10, 10))
+    model.save(path)
+
+    with datamodels.open(path) as m:
+        assert isinstance(m, ImageModel)

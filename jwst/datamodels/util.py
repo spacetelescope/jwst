@@ -20,6 +20,8 @@ import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
+import asdf
+
 
 class NoTypeWarning(Warning):
     pass
@@ -112,8 +114,15 @@ def open(init=None, memmap=False, **kwargs):
             return container.ModelContainer(init, **kwargs)
 
         elif file_type == "asdf":
-            # Read the file as asdf, no need for a special class
-            return model_base.DataModel(init, **kwargs)
+            asdffile = asdf.open(init, **kwargs)
+
+            # Detect model type, then get defined model, and call it.
+            new_class = _class_from_model_type(asdffile)
+            if new_class is None:
+                # No model class found, so return generic DataModel.
+                return model_base.DataModel(asdffile, **kwargs)
+
+            return new_class(asdffile)
 
     elif isinstance(init, tuple):
         for item in init:
@@ -195,15 +204,22 @@ def open(init=None, memmap=False, **kwargs):
     return model
 
 
-def _class_from_model_type(hdulist):
+def _class_from_model_type(header):
     """
     Get the model type from the primary header, lookup to get class
     """
     from . import _defined_models as defined_models
 
-    if hdulist:
-        primary = hdulist[0]
-        model_type = primary.header.get('DATAMODL')
+    if header:
+        if isinstance(header, fits.hdu.hdulist.HDUList):
+            primary = header[0]
+            model_type = primary.header.get('DATAMODL')
+        elif isinstance(header, asdf.AsdfFile):
+            tree = header.tree
+            if 'meta' in tree and 'model_type' in tree['meta']:
+                model_type = tree['meta']['model_type']
+            else:
+                model_type = None
 
         if model_type is None:
             new_class = None
