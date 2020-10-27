@@ -38,7 +38,7 @@ from . import Step
 from . import crds_client
 from . import log
 from .step import get_disable_crds_steppars
-from ..datamodels import open as dm_open
+from .. import datamodels
 from ..lib.class_property import ClassInstanceMethod
 
 
@@ -194,19 +194,25 @@ class Pipeline(Step):
         log.log.debug('Retrieving all substep parameters from CRDS')
 
         # Iterate over the steps in the pipeline
-        with dm_open(dataset, asn_n_members=1) as model:
+        with datamodels.open(dataset, asn_n_members=1) as model:
             for cal_step in cls.step_defs.keys():
                 cal_step_class = cls.step_defs[cal_step]
                 refcfg['steps'][cal_step] = cal_step_class.get_config_from_reference(
                     model, observatory=observatory
                 )
 
+
+            # Reassign and remember the instrument.
+            if isinstance(model, datamodels.ModelContainer):
+                instrument = model[0].meta.instrument.name
+            else:
+                instrument = model.meta.instrument.name
+            extra_pars = {'calpars_instrument': instrument,
+                          'meta.instrument.name': 'calpars'}
+
             # Now merge any config parameters from the step cfg file
             log.log.debug(f'Retrieving pipeline {pars_model.meta.reftype.upper()} parameters from CRDS')
             exceptions = crds_client.get_exceptions_module()
-            instrument = model.meta.instrument.name
-            extra_pars = {'calpars_instrument': instrument,
-                          'meta.instrument.name': 'calpars'}
             try:
                 ref_file = crds_client.get_reference_file(model,
                                                           pars_model.meta.reftype,

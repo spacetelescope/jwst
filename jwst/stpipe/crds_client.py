@@ -205,10 +205,12 @@ def get_reference_file(dataset, reference_file_type, observatory=None,
         from jwst import datamodels
         with datamodels.open(dataset, asn_exptypes=asn_exptypes) as model:
             return get_multiple_reference_paths(
-                model, [reference_file_type], observatory, extra_pars)[reference_file_type]
+                model, [reference_file_type],
+                observatory=observatory, extra_pars=extra_pars)[reference_file_type]
     else:
         return get_multiple_reference_paths(
-            dataset, [reference_file_type], observatory, extra_pars)[reference_file_type]
+            dataset, [reference_file_type],
+            observatory=observatory, extra_pars=extra_pars)[reference_file_type]
 
 
 def get_override_name(reference_file_type):

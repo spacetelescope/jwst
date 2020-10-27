@@ -144,7 +144,7 @@ def test_prefetch(_jail, monkeypatch):
     class MockGetRef:
         called = False
 
-        def mock(self, dataset_model, reference_file_types, observatory=None):
+        def mock(self, dataset_model, reference_file_types, observatory=None, extra_pars=None):
             if 'flat' in reference_file_types:
                 self.called = True
             result = {
