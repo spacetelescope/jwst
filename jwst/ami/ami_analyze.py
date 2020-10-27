@@ -42,6 +42,21 @@ def apply_LG_plus(input_model, filter_model, oversample, rotation):
         Fringe analysis data
 
     """
+
+    # If the input data were taken in full-frame mode, extract a region
+    # equivalent to the SUB80 subarray mode to make execution time acceptable.
+    if input_model.meta.subarray.name.upper() == 'FULL':
+        log.info("Extracting 80x80 subarray from full-frame data")
+        xstart = 1045
+        ystart = 1
+        xsize = 80
+        ysize = 80
+        xstop = xstart + xsize - 1
+        ystop = ystart + ysize - 1
+        input_model.data = input_model.data[ystart-1:ystop, xstart-1:xstop]
+        input_model.dq = input_model.dq[ystart-1:ystop, xstart-1:xstop]
+        input_model.err = input_model.err[ystart-1:ystop, xstart-1:xstop]
+
     data = input_model.data
     dim = data.shape[1]
 
