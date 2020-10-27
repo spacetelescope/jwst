@@ -114,7 +114,11 @@ def open(init=None, memmap=False, **kwargs):
             return container.ModelContainer(init, **kwargs)
 
         elif file_type == "asdf":
-            asdffile = asdf.open(init, **kwargs)
+            # Add a case statement here.
+            if s3_utils.is_s3_uri(init):
+                asdffile = asdf.open(s3_utils.get_object(init), **kwargs)
+            else:
+                asdffile = asdf.open(init, **kwargs)
 
             # Detect model type, then get defined model, and call it.
             new_class = _class_from_model_type(asdffile)
@@ -204,18 +208,18 @@ def open(init=None, memmap=False, **kwargs):
     return model
 
 
-def _class_from_model_type(header):
+def _class_from_model_type(init): 
     """
     Get the model type from the primary header, lookup to get class
     """
     from . import _defined_models as defined_models
 
-    if header:
-        if isinstance(header, fits.hdu.hdulist.HDUList):
-            primary = header[0]
+    if init:
+        if isinstance(init, fits.hdu.hdulist.HDUList):
+            primary = init[0]
             model_type = primary.header.get('DATAMODL')
-        elif isinstance(header, asdf.AsdfFile):
-            tree = header.tree
+        elif isinstance(init, asdf.AsdfFile):
+            tree = init.tree
             if 'meta' in tree and 'model_type' in tree['meta']:
                 model_type = tree['meta']['model_type']
             else:
