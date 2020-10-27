@@ -208,7 +208,7 @@ def open(init=None, memmap=False, **kwargs):
     return model
 
 
-def _class_from_model_type(init): 
+def _class_from_model_type(init):
     """
     Get the model type from the primary header, lookup to get class
     """
