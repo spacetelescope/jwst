@@ -380,8 +380,6 @@ def match(images, skymethod='global+match', match_down=True, subtract=False):
 
 
 def _apply_sky(images, sky_deltas, do_global, do_skysub, show_old):
-    img_type = ['Image', 'Group']
-
     for img, sky in zip(images, sky_deltas):
         is_group = not isinstance(img, SkyImage)
 
@@ -396,7 +394,7 @@ def _apply_sky(images, sky_deltas, do_global, do_skysub, show_old):
             valid = sky is not None
             if not valid:
                 log.warning("   *  {:s} ID={}: Unable to compute sky value"
-                            .format(img_type[is_group], img.id))
+                            .format('Group' if is_group else 'Image', img.id))
                 sky = 0.0
 
         if is_group:
