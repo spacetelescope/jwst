@@ -171,12 +171,12 @@ def load_local_pkg(fpath):
 
     Parameters
     ----------
-    fpath: string
+    fpath : string
         File path to the package to load.
 
     Returns
     -------
-    generator
+    modules : generator
         `module` for each module found in the package.
     """
     package_fpath, package = path.split(fpath)
@@ -209,14 +209,14 @@ def folder_traverse(folder_path, basename_regex='.+', path_exclude_regex='^$'):
 
     Parameters
     ----------
-    folder_path: str
+    folder_path : str
         The folder to traverse
 
-    basename_regex: str
+    basename_regex : str
         Regular expression that must match
         the `basename` part of the file path.
 
-    path_exclude_regex: str
+    path_exclude_regex : str
         Regular expression to exclude a path.
 
     Returns
