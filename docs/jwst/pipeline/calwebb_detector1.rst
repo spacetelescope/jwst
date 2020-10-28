@@ -48,7 +48,7 @@ the steps are applied in a different order than for Near-IR (NIR) instrument exp
 +--------------------------------------------+---------+-----------------------------------------+---------+
 | :ref:`linearity <linearity_step>`          | |check| | :ref:`linearity <linearity_step>`       | |check| |
 +--------------------------------------------+---------+-----------------------------------------+---------+
-| :ref:`persistence <persistence_step>` [2]_ |         | :ref:`rscd <rscd_step>`                 | |check| |
+| :ref:`persistence <persistence_step>` [2]_ |         | :ref:`rscd <rscd_step>`                 |         |
 +--------------------------------------------+---------+-----------------------------------------+---------+
 | :ref:`dark_current <dark_current_step>`    | |check| | :ref:`dark_current <dark_current_step>` | |check| |
 +--------------------------------------------+---------+-----------------------------------------+---------+
