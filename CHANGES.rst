@@ -115,6 +115,13 @@ saturation
   NO_SAT_CHECK in the saturation reference file, instead of skipping any
   test of those pixels. [#5394]
 
+skymatch
+--------
+
+- Fix a bug in ``skymatch`` that would result in a crash when ``skymethod``
+  contains ``'global'`` and the *single image group*'s sky cannot be computed
+  (e.g., because all pixels are flagged as "bad"). [#5440]
+
 0.17.1 (2020-09-15)
 ===================
 

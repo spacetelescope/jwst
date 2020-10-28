@@ -359,9 +359,7 @@ def match(images, skymethod='global+match', match_down=True, subtract=False):
             log.info(" ")
             if minsky is None:
                 log.warning("   Unable to compute \"global\" sky value")
-                sky_deltas = len(sky_deltas) * [None]
-            else:
-                sky_deltas = len(sky_deltas) * [minsky]
+            sky_deltas = len(sky_deltas) * [minsky]
             log.info("   \"Global\" sky value correction: {} "
                      "[not converted]".format(minsky))
 
@@ -382,24 +380,26 @@ def match(images, skymethod='global+match', match_down=True, subtract=False):
 
 
 def _apply_sky(images, sky_deltas, do_global, do_skysub, show_old):
+    img_type = ['Image', 'Group']
+
     for img, sky in zip(images, sky_deltas):
-        img_type = 'Image' if isinstance(img, SkyImage) else 'Group'
+        is_group = not isinstance(img, SkyImage)
 
         if do_global:
             if sky is None:
-                valid = img.is_sky_valid
+                valid = img[0].is_sky_valid if is_group else img.is_sky_valid
                 sky = 0.0
             else:
                 valid = True
 
         else:
-            valid = sky is None
-            if valid:
+            valid = sky is not None
+            if not valid:
                 log.warning("   *  {:s} ID={}: Unable to compute sky value"
-                            .format(img_type, img.id))
+                            .format(img_type[is_group], img.id))
                 sky = 0.0
 
-        if img_type == 'Group':
+        if is_group:
             # apply sky change:
             old_img_sky = [im.sky for im in img]
             if do_skysub:
