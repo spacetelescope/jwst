@@ -43,7 +43,7 @@ datamodels
 extract_1d
 ----------
 
-- Fixed bug invovling the determination of source RA/Dec for resampled Slit
+- Fixed bug involving the determination of source RA/Dec for resampled Slit
   data. [#5353]
 
 - Updated to use an EXTRACT1D reference file for NIRCam TSGRISM exposures;
@@ -51,6 +51,9 @@ extract_1d
   computation, in addition to the existing polynomial fit; fixed bug in
   background computation that was preventing background subtraction from
   ever happening. [#5414]
+
+- Fixed bug involving the processing of WFSS observations when there's only
+  one spectrum instance for a given source. [#5439]
 
 flatfield
 ---------
