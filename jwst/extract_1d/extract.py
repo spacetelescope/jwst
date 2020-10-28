@@ -2730,7 +2730,12 @@ def do_extract1d(
     # Handle inputs that contain one or more slit models
     if was_source_model or isinstance(input_model, datamodels.MultiSlitModel):
         if was_source_model:   # SourceContainer has a single list of SlitModels
-            slits = input_model
+            if isinstance(input_model, datamodels.SlitModel):
+                # If input is a single SlitModel, as opposed to a list of SlitModels,
+                # put it into a list so that it's iterable later on
+                slits = [input_model]
+            else:
+                slits = input_model
 
             # The subsequent work on data uses the individual SlitModels, but there are many places where meta
             # attributes are retreived from input_model, so set this to allow that to work.
