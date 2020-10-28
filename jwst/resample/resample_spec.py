@@ -73,6 +73,7 @@ class ResampleSpecData:
 
         # Define output WCS based on all inputs, including a reference WCS
         self.output_wcs = self.build_interpolated_output_wcs()
+        print(self.output_wcs.__repr__)
         self.blank_output = datamodels.SlitModel(self.data_size)
         self.blank_output.update(self.input_models[0], only="PRIMARY")
         self.blank_output.update(self.input_models[0], only="SCI")
@@ -157,15 +158,18 @@ class ResampleSpecData:
                 ra_center_pt = np.nanmean(ra_center)
                 dec_center_pt = np.nanmean(dec_center)
 
-                # ra and dec this converted to tangent projection
-                tan = Pix2Sky_TAN()
-                native2celestial = RotateNative2Celestial(ra_center_pt, dec_center_pt, 180)
-                undist2sky1 = tan | native2celestial
-                # Filter out RuntimeWarnings due to computed NaNs in the WCS
-                warnings.simplefilter("ignore")
-                # at this center of slit find x,y tangent proction - x_tan, y_tan
-                x_tan, y_tan = undist2sky1.inverse(ra, dec)
-                warnings.resetwarnings()
+                if model.meta.wcs.output_frame.name == 'world':
+                    # ra and dec this converted to tangent projection
+                    tan = Pix2Sky_TAN()
+                    native2celestial = RotateNative2Celestial(ra_center_pt, dec_center_pt, 180)
+                    undist2sky1 = tan | native2celestial
+                    # Filter out RuntimeWarnings due to computed NaNs in the WCS
+                    warnings.simplefilter("ignore")
+                    # at this center of slit find x,y tangent proction - x_tan, y_tan
+                    x_tan, y_tan = undist2sky1.inverse(ra, dec)
+                    warnings.resetwarnings()
+                else:
+                    x_tan, y_tan = ra, dec
 
                 # pull out data from center
                 if spectral_axis == 0:
@@ -289,8 +293,11 @@ class ResampleSpecData:
         native2celestial = RotateNative2Celestial(ra_center_final, dec_center_final, 180)
         undist2sky = tan | native2celestial
 
-        # find the spatial size of the output - same in x,y
-        x_tan_all, y_tan_all = undist2sky.inverse(all_ra, all_dec)
+        if model.meta.wcs.output_frame.name == 'world':
+            # find the spatial size of the output - same in x,y
+            x_tan_all, y_tan_all = undist2sky.inverse(all_ra, all_dec)
+        else:
+            x_tan_all, y_tan_all = all_ra, all_dec
         x_min = np.amin(x_tan_all)
         x_max = np.amax(x_tan_all)
         x_size = int(np.ceil((x_max - x_min)/np.absolute(pix_to_xtan.slope)))
@@ -301,11 +308,17 @@ class ResampleSpecData:
             x_size = len(x_tan_array)
 
         # define the output wcs
-        transform = mapping | (pix_to_xtan & pix_to_ytan | undist2sky) & pix_to_wavelength
+        if model.meta.wcs.output_frame.name == 'world':
+            transform = mapping | (pix_to_xtan & pix_to_ytan | undist2sky) & pix_to_wavelength
+        else:
+            transform = mapping | (pix_to_xtan & pix_to_ytan) & pix_to_wavelength
 
         det = cf.Frame2D(name='detector', axes_order=(0, 1))
-        sky = cf.CelestialFrame(name='sky', axes_order=(0, 1),
-                                reference_frame=coord.ICRS())
+        if model.meta.wcs.output_frame.name == 'world':
+            sky = cf.CelestialFrame(name='sky', axes_order=(0, 1),
+                                    reference_frame=coord.ICRS())
+        else:
+            sky = cf.Frame2D(name='sky', axes_order=(0, 1))
         spec = cf.SpectralFrame(name='spectral', axes_order=(2,),
                                 unit=(u.micron,), axes_names=('wavelength',))
         world = cf.CompositeFrame([sky, spec], name='world')

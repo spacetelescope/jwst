@@ -5,7 +5,7 @@ import traceback
 
 from .. import datamodels
 from ..assign_wcs.util import NoDataOnDetectorError
-from ..lib.exposure_types import is_nrs_ifu_flatlamp, is_nrs_ifu_linelamp
+from ..lib.exposure_types import is_nrs_ifu_flatlamp, is_nrs_ifu_linelamp, is_nrs_slit_linelamp
 from ..stpipe import Pipeline
 
 # step imports
@@ -252,6 +252,11 @@ class Spec2Pipeline(Pipeline):
            and not isinstance(calibrated, datamodels.CubeModel):
 
             # Call the resample_spec step for 2D slit data
+            resampled = self.resample_spec(calibrated)
+
+        elif is_nrs_slit_linelamp(calibrated):
+
+            # Call resample_spec for NRS 2D line lamp slit data
             resampled = self.resample_spec(calibrated)
 
         elif (exp_type in ['MIR_MRS', 'NRS_IFU']) or is_nrs_ifu_linelamp(calibrated):

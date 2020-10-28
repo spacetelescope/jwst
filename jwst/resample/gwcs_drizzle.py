@@ -9,7 +9,6 @@ import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-
 class GWCSDrizzle:
     """
     Combine images using the drizzle algorithm
