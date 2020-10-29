@@ -19,7 +19,7 @@ log.setLevel(logging.DEBUG)
 MICRONS_100 = 1.e-4                     # 100 microns, in meters
 
 # This is for NIRSpec.
-FIXED_SLIT_TYPES = ["NRS_LAMP", "NRS_BRIGHTOBJ", "NRS_FIXEDSLIT"]
+FIXED_SLIT_TYPES = ["NRS_LAMP", "NRS_AUTOWAVE", "NRS_BRIGHTOBJ", "NRS_FIXEDSLIT"]
 NIRSPEC_SPECTRAL_EXPOSURES = ['NRS_AUTOWAVE', 'NRS_BRIGHTOBJ', 'NRS_FIXEDSLIT', 'NRS_IFU', 'NRS_LAMP', 'NRS_MSASPEC']
 
 # Dispersion direction, predominantly horizontal or vertical.  These values
@@ -282,7 +282,7 @@ def do_nirspec_flat_field(output_model, f_flat_model, s_flat_model, d_flat_model
     # check for that case.
     if not hasattr(output_model, "slits"):
         if exposure_type == "NRS_IFU" or (
-            exposure_type == "NRS_AUTOWAVE" and output_model.meta.instrument.lamp_mode == 'IFU'):
+            exposure_type in ["NRS_AUTOWAVE", "NRS_LAMP"] and output_model.meta.instrument.lamp_mode == 'IFU'):
             if not isinstance(output_model, datamodels.IFUImageModel):
                 log.error("NIRSpec IFU data is not an IFUImageModel; "
                           "don't know how to process it.")
@@ -1116,7 +1116,7 @@ def read_flat_table(flat_model, exposure_type, slit_name=None, quadrant=None):
     row = None
     # Note that it's only for fixed-slit data that we need to select the
     # row based on the slit name.
-    if exposure_type in FIXED_SLIT_TYPES and slit_col is not None:
+    if exposure_type in FIXED_SLIT_TYPES and slit_col is not None and slit_name is not None:
         slit_name_lc = slit_name.lower()
         for i in range(nrows):
             # Note:  The .strip() is a workaround.  As of the time of
