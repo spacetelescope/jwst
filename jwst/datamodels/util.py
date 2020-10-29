@@ -10,6 +10,8 @@ from platform import system as platform_system
 import psutil
 import traceback
 
+import asdf
+
 import numpy as np
 from astropy.io import fits
 
@@ -20,7 +22,6 @@ import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-import asdf
 
 
 class NoTypeWarning(Warning):
@@ -114,7 +115,6 @@ def open(init=None, memmap=False, **kwargs):
             return container.ModelContainer(init, **kwargs)
 
         elif file_type == "asdf":
-            # Add a case statement here.
             if s3_utils.is_s3_uri(init):
                 asdffile = asdf.open(s3_utils.get_object(init), **kwargs)
             else:
@@ -211,6 +211,14 @@ def open(init=None, memmap=False, **kwargs):
 def _class_from_model_type(init):
     """
     Get the model type from the primary header, lookup to get class
+
+    Parameter
+    ---------
+    init: AsdfFile or HDUList
+
+    Return
+    ------
+    new_class: str or None
     """
     from . import _defined_models as defined_models
 
