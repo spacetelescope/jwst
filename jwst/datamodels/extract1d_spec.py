@@ -1,17 +1,16 @@
 from .reference import ReferenceFileModel
 
-__all__ = ['MirMrsExtract1dModel']
+__all__ = ['IFUExtract1dModel']
 
 
-class MirMrsExtract1dModel(ReferenceFileModel):
+class IFUExtract1dModel(ReferenceFileModel):
     """
-    A data model for MIRI MRS extract 1d reference files.
+    A data model for IFU MIRI and NIRSpec extract 1d reference files.
 
     Parameters
     __________
     extract1d_params : numpy table
         Basic extract 1D parameters
-        - id: ascii
         - region_type: ascii
         - subtract_background: bool 
         - method: ascii
@@ -21,7 +20,6 @@ class MirMrsExtract1dModel(ReferenceFileModel):
         A table-like object containing extract 1d parameters
         based on wavelength
         - wavelength: float32 1D array
-        - nelem_wl: int16
         - radius: float32 1D array
         - inner_bkg: float32 1D array
         - outer_bkg: float32 1D array
@@ -29,4 +27,6 @@ class MirMrsExtract1dModel(ReferenceFileModel):
         - axis_pa: float32 1D array
 
     """
-    schema_url = "http://stsci.edu/schemas/jwst_datamodel/mirmrs_extract1d_asdf.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/ifuextract1d.schema"
+
+
