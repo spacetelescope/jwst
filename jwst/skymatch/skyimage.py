@@ -183,7 +183,6 @@ class SkyImage:
     def sky(self, sky):
         self._sky = sky
 
-
     @property
     def is_sky_valid(self):
         """
