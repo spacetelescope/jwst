@@ -1145,6 +1145,9 @@ def get_pointing(obsstart, obsend, engdb_url=None,
     mnemonics = get_mnemonics(obsstart, obsend, tolerance, engdb_url=engdb_url)
     reduced = reduce_func(mnemonics)
 
+    logger.debug(f'Memonics found:\n{mnemonics}')
+    logger.info(f'Reduced set of pointings:\n{reduced}')
+
     return reduced
 
 
