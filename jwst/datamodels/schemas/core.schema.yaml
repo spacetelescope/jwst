@@ -387,8 +387,9 @@ properties:
             blend_table: True
             blend_rule: multi
           module:
-            title: 'NIRCam module: A or B'
+            title: 'NIRCam module: A, B, or MULTIPLE'
             type: string
+            enum: [A, B, MULTIPLE]
             fits_keyword: MODULE
             blend_table: True
             blend_rule: multi
@@ -594,7 +595,7 @@ properties:
               FGS_ACQ1, FGS_ACQ2, FGS_FINEGUIDE, FGS_ID-IMAGE, FGS_ID-STACK, FGS_TRACK,
               # MIRI
               MIR_4QPM, MIR_CORONCAL, MIR_DARKALL, MIR_DARKIMG, MIR_DARKMRS,
-              MIR_FLATALL, MIR_FLATIMAGE, MIR_FLATIMAGE-EXT, MIR_FLATMRS, MIR_FLATMRS-EXT,
+              MIR_FLATIMAGE, MIR_FLATIMAGE-EXT, MIR_FLATMRS, MIR_FLATMRS-EXT,
               MIR_IMAGE, MIR_LRS-FIXEDSLIT, MIR_LRS-SLITLESS, MIR_LYOT, MIR_MRS,
               MIR_TACONFIRM, MIR_TACQ,
               # NIRISS
@@ -1477,51 +1478,6 @@ properties:
             title: Guide star annual parallax
             type: number
             fits_keyword: GS_PARA
-            blend_table: True
-          gs_jmag:
-            title: Guide star NIR J magnitude
-            type: number
-            fits_keyword: GS_JMAG
-            blend_table: True
-          gs_ujmag:
-            title: Guide star NIR J magnitude uncertainy
-            type: number
-            fits_keyword: GS_UJMAG
-            blend_table: True
-          gs_srcjm:
-            title: Guide star NIR J magnitude source
-            type: string
-            fits_keyword: GS_SRCJM
-            blend_table: True
-          gs_hmag:
-            title: Guide star NIR H magnitude
-            type: number
-            fits_keyword: GS_HMAG
-            blend_table: True
-          gs_uhmag:
-            title: Guide star NIR H magnitude uncertainy
-            type: number
-            fits_keyword: GS_UHMAG
-            blend_table: True
-          gs_srchm:
-            title: Guide star NIR H magnitude source
-            type: string
-            fits_keyword: GS_SRCHM
-            blend_table: True
-          gs_kmag:
-            title: Guide star NIR K magnitude
-            type: number
-            fits_keyword: GS_KMAG
-            blend_table: True
-          gs_ukmag:
-            title: Guide star NIR K magnitude uncertainy
-            type: number
-            fits_keyword: GS_UKMAG
-            blend_table: True
-          gs_srckm:
-            title: Guide star NIR K magnitude source
-            type: string
-            fits_keyword: GS_SRCKM
             blend_table: True
       ref_file:
         title: Reference file information
