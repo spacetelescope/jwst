@@ -42,6 +42,9 @@ datamodels
 
 - Remove logging from DataModel.close [#5413]
 
+- Updated keyword schemas for EXP_TYPE and MODULE, to keep in sync with the
+  JWST Keyword Dictionary [#5452]
+
 extract_1d
 ----------
 
