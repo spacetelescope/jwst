@@ -259,10 +259,22 @@ def t_path(partial_path):
     return os.path.join(test_dir, partial_path)
 
 
-def test_open_asdf_datamodel_class(tmpdir):
-    path = str(tmpdir.join("image_model.asdf"))
+@pytest.mark.parametrize("suffix", ["asdf", "fits"])
+def test_open_asdf_datamodel_class(tmpdir, suffix):
+    path = str(tmpdir.join(f"image_model.{suffix}"))
     model = ImageModel((10, 10))
     model.save(path)
 
     with datamodels.open(path) as m:
         assert isinstance(m, ImageModel)
+
+
+@pytest.mark.parametrize("suffix", ["asdf", "fits"])
+def test_open_asdf_no_datamodel_class(tmpdir, suffix):
+    path = str(tmpdir.join(f"no_model.{suffix}"))
+    # model = DataModel()
+    with DataModel() as dm:
+        dm.save(path)
+
+    with datamodels.open(path) as m:
+        assert isinstance(m, DataModel)
