@@ -227,10 +227,9 @@ def _class_from_model_type(init):
             primary = init[0]
             model_type = primary.header.get('DATAMODL')
         elif isinstance(init, asdf.AsdfFile):
-            tree = init.tree
-            if 'meta' in tree and 'model_type' in tree['meta']:
-                model_type = tree['meta']['model_type']
-            else:
+            try:
+                model_type = init.tree['meta']['model_type']
+            except KeyError:
                 model_type = None
 
         if model_type is None:
