@@ -290,5 +290,3 @@ def test_open_asdf(tmpdir):
 
     with datamodels.open(path) as m:
         assert isinstance(m, DataModel)
-
-
