@@ -283,7 +283,7 @@ def test_open_asdf_no_datamodel_class(tmpdir, suffix):
 
 
 def test_open_asdf(tmpdir):
-    path = str(tmpdir.join(f"straight_asdf.asdf"))
+    path = str(tmpdir.join("straight_asdf.asdf"))
     tree = {"foo": 42, "bar": 13, "seq": np.arange(100)}
     with asdf.AsdfFile(tree) as af:
         af.write_to(path)
