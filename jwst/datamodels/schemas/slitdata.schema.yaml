@@ -48,7 +48,9 @@ allOf:
       default: 0
       datatype: int32
 - $ref: variance.schema
+- $ref: flatcorr.schema
 - $ref: pathlosscorr.schema
+- $ref: photomcorr.schema
 - $ref: slitmeta.schema
 - $ref: bunit.schema
 - $ref: photometry.schema

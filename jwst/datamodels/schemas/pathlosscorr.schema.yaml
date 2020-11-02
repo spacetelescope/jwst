@@ -10,7 +10,7 @@ properties:
     ndim: 2
     datatype: float32
   pathloss_uniform:
-    title: Pathloss uniformsource correction
+    title: Pathloss uniform source correction
     fits_hdu: PATHLOSS_UN
     ndim: 2
     datatype: float32
