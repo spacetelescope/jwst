@@ -10,6 +10,8 @@ from platform import system as platform_system
 import psutil
 import traceback
 
+import asdf
+
 import numpy as np
 from astropy.io import fits
 
@@ -19,6 +21,7 @@ from ..lib.basic_utils import bytes2human
 import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
+
 
 
 class NoTypeWarning(Warning):
@@ -112,8 +115,18 @@ def open(init=None, memmap=False, **kwargs):
             return container.ModelContainer(init, **kwargs)
 
         elif file_type == "asdf":
-            # Read the file as asdf, no need for a special class
-            return model_base.DataModel(init, **kwargs)
+            if s3_utils.is_s3_uri(init):
+                asdffile = asdf.open(s3_utils.get_object(init), **kwargs)
+            else:
+                asdffile = asdf.open(init, **kwargs)
+
+            # Detect model type, then get defined model, and call it.
+            new_class = _class_from_model_type(asdffile)
+            if new_class is None:
+                # No model class found, so return generic DataModel.
+                return model_base.DataModel(asdffile, **kwargs)
+
+            return new_class(asdffile)
 
     elif isinstance(init, tuple):
         for item in init:
@@ -195,15 +208,29 @@ def open(init=None, memmap=False, **kwargs):
     return model
 
 
-def _class_from_model_type(hdulist):
+def _class_from_model_type(init):
     """
     Get the model type from the primary header, lookup to get class
+
+    Parameter
+    ---------
+    init: AsdfFile or HDUList
+
+    Return
+    ------
+    new_class: str or None
     """
     from . import _defined_models as defined_models
 
-    if hdulist:
-        primary = hdulist[0]
-        model_type = primary.header.get('DATAMODL')
+    if init:
+        if isinstance(init, fits.hdu.hdulist.HDUList):
+            primary = init[0]
+            model_type = primary.header.get('DATAMODL')
+        elif isinstance(init, asdf.AsdfFile):
+            try:
+                model_type = init.tree['meta']['model_type']
+            except KeyError:
+                model_type = None
 
         if model_type is None:
             new_class = None

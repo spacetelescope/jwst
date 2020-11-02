@@ -17,6 +17,8 @@ from jwst.datamodels import (DataModel, ModelContainer, ImageModel,
 from jwst import datamodels
 from jwst.datamodels import util
 
+import asdf
+
 # Define artificial memory size
 MEMORY = 100  # 100 bytes
 
@@ -273,3 +275,34 @@ def t_path(partial_path):
     """Construction the full path for test files"""
     test_dir = os.path.join(os.path.dirname(__file__), 'data')
     return os.path.join(test_dir, partial_path)
+
+
+@pytest.mark.parametrize("suffix", ["asdf", "fits"])
+def test_open_asdf_datamodel_class(tmpdir, suffix):
+    path = str(tmpdir.join(f"image_model.{suffix}"))
+    model = ImageModel((10, 10))
+    model.save(path)
+
+    with datamodels.open(path) as m:
+        assert isinstance(m, ImageModel)
+
+
+@pytest.mark.parametrize("suffix", ["asdf", "fits"])
+def test_open_asdf_no_datamodel_class(tmpdir, suffix):
+    path = str(tmpdir.join(f"no_model.{suffix}"))
+    # model = DataModel()
+    with DataModel() as dm:
+        dm.save(path)
+
+    with datamodels.open(path) as m:
+        assert isinstance(m, DataModel)
+
+
+def test_open_asdf(tmpdir):
+    path = str(tmpdir.join("straight_asdf.asdf"))
+    tree = {"foo": 42, "bar": 13, "seq": np.arange(100)}
+    with asdf.AsdfFile(tree) as af:
+        af.write_to(path)
+
+    with datamodels.open(path) as m:
+        assert isinstance(m, DataModel)
