@@ -45,6 +45,8 @@ datamodels
 - Updated keyword schemas for EXP_TYPE and MODULE, to keep in sync with the
   JWST Keyword Dictionary [#5452]
 
+- Added flatfield and photom correction arrays to slit data models [#5460]
+
 extract_1d
 ----------
 
