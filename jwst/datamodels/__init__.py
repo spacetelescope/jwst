@@ -1,8 +1,8 @@
 from astropy.io import registry
 
-from . import ndmodel
+from stdatamodels import ndmodel
 
-from .model_base import DataModel
+from .model_base import JwstDataModel, DataModel
 from .abvega_offset import ABVegaOffsetModel
 from .amilg import AmiLgModel
 from .apcorr import FgsImgApcorrModel, MirImgApcorrModel
@@ -85,7 +85,7 @@ from .util import open
 
 __all__ = [
     'open',
-    'DataModel',
+    'DataModel', 'JwstDataModel',
     'ABVegaOffsetModel',
     'AmiLgModel',
     'FgsImgApcorrModel', 'MirImgApcorrModel', 'NrcImgApcorrModel', 'NisImgApcorrModel',
@@ -142,10 +142,10 @@ __all__ = [
 try:
     _defined_models
 except NameError:
-    with registry.delay_doc_updates(DataModel):
-        registry.register_reader('datamodel', DataModel, ndmodel.read)
-        registry.register_writer('datamodel', DataModel, ndmodel.write)
-        registry.register_identifier('datamodel', DataModel, ndmodel.identify)
+    with registry.delay_doc_updates(JwstDataModel):
+        registry.register_reader('datamodel', JwstDataModel, ndmodel.read)
+        registry.register_writer('datamodel', JwstDataModel, ndmodel.write)
+        registry.register_identifier('datamodel', JwstDataModel, ndmodel.identify)
 
 _all_models = __all__[1:]
 _local_dict = locals()

@@ -3,14 +3,15 @@ from copy import deepcopy
 from asdf import schema as asdf_schema
 from asdf import treeutil, AsdfFile
 
-from .model_base import DataModel
+from .model_base import JwstDataModel
 from .image import ImageModel
 from .slit import SlitModel, SlitDataModel
+
 
 __all__ = ['MultiExposureModel']
 
 
-class MultiExposureModel(DataModel):
+class MultiExposureModel(JwstDataModel):
     """
     A data model for multi-slit images derived from
     numerous exposures. The intent is that all slits

@@ -29,6 +29,7 @@
 
 import numpy as np
 from numpy import ma
+from stdatamodels import DataModel
 
 from .. import datamodels
 
@@ -174,7 +175,7 @@ def metablender(input_models, spec):
 
     # Read in data
     for model in input_models:
-        if not isinstance(model, datamodels.DataModel):
+        if not isinstance(model, DataModel):
             if not isinstance(model, str):
                 raise TypeError(
                     "Each entry in the headers list must be either a " +

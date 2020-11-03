@@ -16,7 +16,7 @@ from ..transforms.models import (NirissSOSSModel,
                                  NIRISSBackwardGrismDispersion,
                                  NIRISSForwardColumnGrismDispersion)
 from ..datamodels import ImageModel, NIRISSGrismModel, DistortionModel
-from ..lib import s3_utils
+from stdatamodels import s3_utils
 from ..lib.reffile_utils import find_row
 
 log = logging.getLogger(__name__)

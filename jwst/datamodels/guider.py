@@ -1,9 +1,10 @@
-from .model_base import DataModel
+from .model_base import JwstDataModel
+
 
 __all__ = ['GuiderRawModel', 'GuiderCalModel']
 
 
-class GuiderRawModel(DataModel):
+class GuiderRawModel(JwstDataModel):
     """
     A data model for Guide Star pipeline raw data files
 
@@ -45,7 +46,7 @@ class GuiderRawModel(DataModel):
         self.err = self.err
 
 
-class GuiderCalModel(DataModel):
+class GuiderCalModel(JwstDataModel):
     """
     A data model for Guide Star pipeline calibrated files
 

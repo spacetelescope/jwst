@@ -1,9 +1,10 @@
-from .model_base import DataModel
+from .model_base import JwstDataModel
+
 
 __all__ = ['GLS_RampFitModel']
 
 
-class GLS_RampFitModel(DataModel):
+class GLS_RampFitModel(JwstDataModel):
     """
     A data model for the optional output of the ramp fitting step
     for the GLS algorithm.

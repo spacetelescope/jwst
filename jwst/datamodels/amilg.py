@@ -1,9 +1,10 @@
-from .model_base import DataModel
+from .model_base import JwstDataModel
+
 
 __all__ = ['AmiLgModel']
 
 
-class AmiLgModel(DataModel):
+class AmiLgModel(JwstDataModel):
     """
     A data model for AMI LG analysis results.
 

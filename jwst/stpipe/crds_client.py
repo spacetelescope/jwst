@@ -41,8 +41,8 @@ import re
 import crds
 from crds.core import config, exceptions, heavy_client, log
 from crds.core import crds_cache_locking
+from stdatamodels import s3_utils
 
-from ..lib import s3_utils
 from ..datamodels import open as dm_open
 
 def get_exceptions_module():

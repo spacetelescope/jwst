@@ -1,11 +1,11 @@
+from .model_base import JwstDataModel
 from .image import ImageModel
-from .model_base import DataModel
 
 
 __all__ = ['IFUImageModel']
 
 
-class IFUImageModel(DataModel):
+class IFUImageModel(JwstDataModel):
     """
     A data model for 2D IFU images.
 

@@ -16,7 +16,7 @@ from .util import (not_implemented_mode, subarray_transform,
 from ..datamodels import (DistortionModel, FilteroffsetModel,
                           DistortionMRSModel, WavelengthrangeModel,
                           RegionsModel, SpecwcsModel)
-from ..lib import s3_utils
+from stdatamodels import s3_utils
 
 
 log = logging.getLogger(__name__)

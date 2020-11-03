@@ -1,9 +1,10 @@
-from .model_base import DataModel
+from .model_base import JwstDataModel
+
 
 __all__ = ['CubeModel']
 
 
-class CubeModel(DataModel):
+class CubeModel(JwstDataModel):
     """
     A data model for 3D image cubes.
 

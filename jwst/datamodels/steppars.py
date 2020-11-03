@@ -1,9 +1,11 @@
 """Step parameters model"""
 from copy import copy
 
-from .model_base import DataModel
+from .model_base import JwstDataModel
+
 
 __all__ = ['StepParsModel']
+
 
 DEFAULT_META = {
     'date': 'SPECIFY DATE',
@@ -20,7 +22,7 @@ DEFAULT_META = {
 }
 
 
-class StepParsModel(DataModel):
+class StepParsModel(JwstDataModel):
     """
     A data model for `Step` parameters.
     """

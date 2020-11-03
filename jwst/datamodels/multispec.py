@@ -1,11 +1,11 @@
-from . import model_base
+from .model_base import JwstDataModel
 from .spec import SpecModel
 
 
 __all__ = ['MultiSpecModel']
 
 
-class MultiSpecModel(model_base.DataModel):
+class MultiSpecModel(JwstDataModel):
     """
     A data model for multi-spec images.
 

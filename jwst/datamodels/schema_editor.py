@@ -59,7 +59,7 @@ from asdf import reference
 from asdf import treeutil
 from asdf.extension import get_default_resolver
 
-from . import model_base
+from . import JwstDataModel
 
 
 def enquote(value):
@@ -440,7 +440,7 @@ class Model_db:
         if exclude is None:
             exclude = []
 
-        source_file = os.path.abspath(inspect.getfile(model_base.DataModel))
+        source_file = os.path.abspath(inspect.getfile(JwstDataModel))
         self.base_url = os.path.join(os.path.dirname(source_file),
                                      'schemas', '')
         self.schema_files = []

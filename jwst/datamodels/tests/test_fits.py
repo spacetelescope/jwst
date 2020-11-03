@@ -9,7 +9,7 @@ from numpy.testing import assert_array_equal
 
 from asdf import schema as mschema
 
-from .. import DataModel, ImageModel, RampModel
+from jwst.datamodels import JwstDataModel, ImageModel, RampModel
 from ..util import open
 
 ROOT_DIR = None
@@ -117,7 +117,7 @@ def test_from_scratch():
 
 
 def test_delete():
-    with DataModel(FITS_FILE) as dm:
+    with JwstDataModel(FITS_FILE) as dm:
         dm.meta.instrument.name = 'NIRCAM'
         assert dm.meta.instrument.name == 'NIRCAM'
         del dm.meta.instrument.name
@@ -131,7 +131,7 @@ def test_delete():
 
 
 # def test_date_obs():
-#     with DataModel(FITS_FILE) as dm:
+#     with JwstDataModel(FITS_FILE) as dm:
 #         assert dm.meta.observation.date.microsecond == 314592
 
 
@@ -160,7 +160,7 @@ def test_fits_without_sci():
         [fits.PrimaryHDU(),
          fits.ImageHDU(name='COEFFS', data=np.array([0.0], np.float32))])
 
-    with DataModel(fits, schema=schema) as dm:
+    with JwstDataModel(fits, schema=schema) as dm:
         assert_array_equal(dm.coeffs, [0.0])
 
 
@@ -173,13 +173,13 @@ def test_extra_fits():
 
     assert os.path.exists(path)
 
-    with DataModel(path) as dm:
+    with JwstDataModel(path) as dm:
         assert 'BITPIX' not in _header_to_dict(dm.extra_fits.PRIMARY.header)
         assert _header_to_dict(dm.extra_fits.PRIMARY.header)['SCIYSTRT'] == 705
         dm2 = dm.copy()
         dm2.to_fits(TMP_FITS, overwrite=True)
 
-    with DataModel(TMP_FITS) as dm:
+    with JwstDataModel(TMP_FITS) as dm:
         assert 'BITPIX' not in _header_to_dict(dm.extra_fits.PRIMARY.header)
         assert _header_to_dict(dm.extra_fits.PRIMARY.header)['SCIYSTRT'] == 705
 
@@ -283,7 +283,7 @@ def test_table_with_metadata():
         ]
     }
 
-    class FluxModel(DataModel):
+    class FluxModel(JwstDataModel):
         def __init__(self, init=None, flux_table=None, **kwargs):
             super(FluxModel, self).__init__(init=init, schema=schema, **kwargs)
 
@@ -367,7 +367,7 @@ def test_replace_table():
                         ('DECAY_FREQ', np.float32),
                         ('TAU', np.float32)])
 
-    m = DataModel(schema=schema_narrow)
+    m = JwstDataModel(schema=schema_narrow)
     m.data = x
     m.to_fits(TMP_FITS, overwrite=True)
 
@@ -376,7 +376,7 @@ def test_replace_table():
         assert hdulist[1].data.dtype[1].str == '>f4'
         assert hdulist[1].header['TFORM2'] == 'E'
 
-    with DataModel(TMP_FITS, schema=schema_wide) as m:
+    with JwstDataModel(TMP_FITS, schema=schema_wide) as m:
         m.to_fits(TMP_FITS2, overwrite=True)
 
     with fits.open(TMP_FITS2, memmap=False) as hdulist:
@@ -406,7 +406,7 @@ def test_table_with_unsigned_int():
         }
     }
 
-    with DataModel(schema=schema) as dm:
+    with JwstDataModel(schema=schema) as dm:
 
         float64_info = np.finfo(np.float64)
         float64_arr = np.random.uniform(size=(10,))
@@ -440,7 +440,7 @@ def test_table_with_unsigned_int():
 
     # Confirm that the data loads from the file intact (converting the signed ints back to
     # the appropriate uint32 values).
-    with DataModel(TMP_FITS, schema=schema) as dm2:
+    with JwstDataModel(TMP_FITS, schema=schema) as dm2:
         assert_table_correct(dm2)
 
 
@@ -449,7 +449,7 @@ def test_metadata_from_fits():
 
     mask = np.array([[0, 1], [2, 3]])
     fits.ImageHDU(data=mask, name='DQ').writeto(TMP_FITS, overwrite=True)
-    with DataModel(init=TMP_FITS) as dm:
+    with JwstDataModel(init=TMP_FITS) as dm:
         dm.save(TMP_FITS2)
 
     with fits.open(TMP_FITS2, memmap=False) as hdulist:
@@ -465,5 +465,5 @@ def test_metadata_from_fits():
 #     hdulist[0].header['SUBSTRT1'] = 42.7
 #     hdulist.writeto(TMP_FITS, overwrite=True)
 
-#     with DataModel(TMP_FITS) as dm:
+#     with JwstDataModel(TMP_FITS) as dm:
 #         assert dm.meta.subarray.xstart == 42.7

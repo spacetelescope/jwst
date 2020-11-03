@@ -1,13 +1,14 @@
 import warnings
 
-from .model_base import DataModel
+from stdatamodels.validate import ValidationWarning
+
+from .model_base import JwstDataModel
 from .dynamicdq import dynamic_mask
-from .validate import ValidationWarning
 
 __all__ = ['ReferenceFileModel']
 
 
-class ReferenceFileModel(DataModel):
+class ReferenceFileModel(JwstDataModel):
     """
     A data model for reference tables
 

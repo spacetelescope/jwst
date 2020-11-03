@@ -10,8 +10,9 @@ import warnings
 import pytest
 import numpy as np
 from astropy.io import fits
+from stdatamodels import DataModel
 
-from jwst.datamodels import (DataModel, ModelContainer, ImageModel,
+from jwst.datamodels import (JwstDataModel, ModelContainer, ImageModel,
     DistortionModel, RampModel, CubeModel, ReferenceFileModel, ReferenceImageModel,
     ReferenceCubeModel, ReferenceQuadModel)
 from jwst import datamodels
@@ -100,7 +101,7 @@ def test_open_from_pathlib():
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", "model_type not found")
         with datamodels.open(path) as model:
-            assert isinstance(model, DataModel)
+            assert isinstance(model, JwstDataModel)
 
 
 def test_open_fits():
@@ -110,27 +111,27 @@ def test_open_fits():
         warnings.filterwarnings("ignore", "model_type not found")
         fits_file = t_path('test.fits')
         with datamodels.open(fits_file) as model:
-            assert isinstance(model, DataModel)
+            assert isinstance(model, JwstDataModel)
 
 
 def test_open_fits_s3(s3_root_dir):
     """Test opening a model from a FITS file on S3"""
     path = str(s3_root_dir.join("test.fits"))
-    with DataModel() as dm:
+    with JwstDataModel() as dm:
         dm.save(path)
 
     with datamodels.open("s3://test-s3-data/test.fits") as m:
-        assert isinstance(m, DataModel)
+        assert isinstance(m, JwstDataModel)
 
 
 def test_open_asdf_s3(s3_root_dir):
     """Test opening a model from an ASDF file on S3"""
     path = str(s3_root_dir.join("test.asdf"))
-    with DataModel() as dm:
+    with JwstDataModel() as dm:
         dm.save(path)
 
     with datamodels.open("s3://test-s3-data/test.asdf") as m:
-        assert isinstance(m, DataModel)
+        assert isinstance(m, JwstDataModel)
 
 
 def test_open_association():

@@ -2,10 +2,13 @@ import warnings
 import sys
 import traceback
 
+from stdatamodels.validate import ValidationWarning
+
 from .reference import ReferenceFileModel
-from .validate import ValidationWarning
+
 
 __all__ = ['TsoPhotModel']
+
 
 class TsoPhotModel(ReferenceFileModel):
     """

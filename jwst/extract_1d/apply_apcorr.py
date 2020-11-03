@@ -3,9 +3,10 @@ import abc
 from typing import Tuple, Union, Type
 from scipy.interpolate import interp2d, interp1d
 from astropy.io import fits
+from stdatamodels import DataModel
 
 from ..assign_wcs.util import compute_scale
-from ..datamodels import DataModel, MultiSlitModel
+from ..datamodels import MultiSlitModel
 
 
 class ApCorrBase(abc.ABC):

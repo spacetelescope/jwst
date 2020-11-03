@@ -1,9 +1,10 @@
-from .model_base import DataModel
+from .model_base import JwstDataModel
+
 
 __all__ = ['Level1bModel']
 
 
-class Level1bModel(DataModel):
+class Level1bModel(JwstDataModel):
     """
     A data model for raw 4D ramps level-1b products.
 
@@ -26,6 +27,3 @@ class Level1bModel(DataModel):
 
     """
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/level1b.schema"
-
-    def __init__(self, init=None, **kwargs):
-        super().__init__(init=init, **kwargs)
