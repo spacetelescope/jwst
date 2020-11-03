@@ -70,6 +70,11 @@ flatfield
 
 - Updated branch logic to handle NRS_LAMP exposures as spectroscopic. [#5370]
 
+- Updated NIRSpec fixed-slit processing to compute and save correction
+  values for both point and uniform sources in the primary slit when it
+  contains a point source, in order to support master background corrections.
+  [#5462]
+
 jump
 ----
 
