@@ -355,7 +355,7 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispa
         if user_supplied_flat is not None:
             slit_flat = user_supplied_flat.slits[slit_idx]
         else:
-            if exposure_type in "NRS_FIXEDSLIT":
+            if exposure_type == "NRS_FIXEDSLIT":
                 # For fixed-slit exposures, if this is the primary slit
                 # and it contains a point source, compute the flat-field
                 # corrections for both uniform (without wavecorr) and point
