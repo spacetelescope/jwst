@@ -6,7 +6,7 @@ from ..assign_wcs import niriss
 WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_WFSS', 'NRC_GRISM', 'NRC_TSGRISM']
 
 
-def get_wavelengths(model, exp_type="", order=None):
+def get_wavelengths(model, exp_type="", order=None, use_wavecorr=None):
     """Read or compute wavelengths.
 
     Parameters
@@ -21,6 +21,10 @@ def get_wavelengths(model, exp_type="", order=None):
 
     order : int
         Spectral order number, for NIRISS SOSS only.
+
+    use_wavecorr : bool
+        Use the corrected wavelengths in the wavelength attribute or
+        recompute uncorrected wavelengths from the WCS?
 
     Returns
     -------
@@ -38,6 +42,15 @@ def get_wavelengths(model, exp_type="", order=None):
         np.nanmin(wl_array) == 0. and np.nanmax(wl_array) == 0.):
             got_wavelength = False
             wl_array = None
+
+    # If we've been asked to use the corrected wavelengths stored in
+    # the wavelength array, return those wavelengths. Otherwise, the
+    # results computed from the WCS object (below) will be returned.
+    if use_wavecorr is not None:
+        if use_wavecorr:
+            return wl_array
+        else:
+            got_wavelength = False  # force wl computation below
 
     # If no existing wavelength array, compute one
     if hasattr(model.meta, "wcs") and not got_wavelength:
