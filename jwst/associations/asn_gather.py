@@ -1,8 +1,10 @@
 """asn_gather: Copy or Move data that is listed in an association"""
+from pathlib import Path
+
 __all__ = ['asn_gather']
 
 
-def asn_gather(asn_path, destination=None, exp_types=None, copy=True, recurse=False, member_root=None):
+def asn_gather(source_asn_path, destination=None, exp_types=None, copy=True, recurse=False, member_root=None):
     """Copy/Move members of an association from one location to another
 
     The association is copied into the destination, re-written such that the member
@@ -14,7 +16,7 @@ def asn_gather(asn_path, destination=None, exp_types=None, copy=True, recurse=Fa
 
     Parameters
     ----------
-    asn_path : str, pathlib.Path, Association, or dict-like
+    source_asn_path : str, pathlib.Path, Association, or dict-like
         The association to gather.
 
     destination : str, pathlib.Path, or None
@@ -40,9 +42,31 @@ def asn_gather(asn_path, destination=None, exp_types=None, copy=True, recurse=Fa
 
     Returns
     -------
-    asn : Association
-        The association
+    dest_asn : pathlib.Path
+        The association.
     """
+    from .load_as_asn import LoadAsAssociation
+
+    if destination is None:
+        dest_folder = Path('./')
+    else:
+        dest_folder = Path(destination)
+
+    # Open the source association
+    dest_asn = LoadAsAssociation.load(source_asn_path)
+
+    # Copy the members
+
+    # Create the new association.
+
+    # Save new association.
+    dest_path = dest_folder / source_asn_path.name
+    _, serialized = dest_asn.dump()
+    with open(dest_path, 'w') as fh:
+        fh.write(serialized)
+
+    # That's all folks
+    return dest_path
 
 
 def from_cmdline():
