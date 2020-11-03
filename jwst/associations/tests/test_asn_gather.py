@@ -35,8 +35,7 @@ def source_folder(tmp_path_factory):
 def gather(source_folder, tmp_path_factory):
     """Do the actual gathering"""
     dest_folder = tmp_path_factory.mktemp('asn_gather_dest')
-    with pushdir(dest_folder):
-        asn_path = asnpkg.asn_gather(source_folder / PRIMARY_PATH)
+    asn_path = asnpkg.asn_gather(source_folder / PRIMARY_PATH, destination=dest_folder)
 
     return dest_folder, asn_path, source_folder
 
@@ -52,7 +51,7 @@ def test_all_members(gather):
     dest_folder, asn_path, source_folder = gather
 
     source_asn = LoadAsAssociation.load(source_folder / PRIMARY_PATH)
-    asn = LoadAsAssociation.load(dest_folder / PRIMARY_PATH)
+    asn = LoadAsAssociation.load(asn_path)
 
     assert len(source_asn['products']) == len(asn['products'])
     for source_product, product in zip(source_asn['products'], asn['products']):
@@ -60,4 +59,4 @@ def test_all_members(gather):
 
 
 def test_copy(gather):
-    """Test that members copied"""
+    """Test that members are copied"""
