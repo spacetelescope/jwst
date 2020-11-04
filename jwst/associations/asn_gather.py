@@ -1,10 +1,12 @@
 """asn_gather: Copy or Move data that is listed in an association"""
 from pathlib import Path
+import subprocess
 
 __all__ = ['asn_gather']
 
 
-def asn_gather(source_asn_path, destination=None, exp_types=None, copy=True, recurse=False, member_root=None):
+def asn_gather(source_asn_path, destination=None, exp_types=None, copy=True,
+               recurse=False, member_root=None, shellcmd='rsync -Pur --no-perms --chmod=ugo=rwX'):
     """Copy/Move members of an association from one location to another
 
     The association is copied into the destination, re-written such that the member
@@ -16,7 +18,7 @@ def asn_gather(source_asn_path, destination=None, exp_types=None, copy=True, rec
 
     Parameters
     ----------
-    source_asn_path : str, pathlib.Path, Association, or dict-like
+    source_asn_path : str, pathlib.Path
         The association to gather.
 
     destination : str, pathlib.Path, or None
@@ -25,7 +27,7 @@ def asn_gather(source_asn_path, destination=None, exp_types=None, copy=True, rec
 
     exp_types : [str[,...]] or None
         List of exposure types to gather.
-        If None, all are copied.
+        If None, all are gathered.
 
     copy : bool
         Copy the members to the destination. Otherwise, just copy
@@ -46,18 +48,36 @@ def asn_gather(source_asn_path, destination=None, exp_types=None, copy=True, rec
         The association.
     """
     from .load_as_asn import LoadAsAssociation
+    from . import Association
 
+    source_asn_path = Path(source_asn_path)
+    source_folder = source_asn_path.parent
     if destination is None:
         dest_folder = Path('./')
     else:
         dest_folder = Path(destination)
 
-    # Open the source association
+    # Create the associations
+    source_asn = LoadAsAssociation.load(source_asn_path)
     dest_asn = LoadAsAssociation.load(source_asn_path)
 
-    # Copy the members
+    # Create the new association
+    dest_asn['products'] = []
+    for src_product in source_asn['products']:
+        members = [
+            {'expname': src_member['expname'], 'exptype': src_member['exptype']}
+            for src_member in src_product['members']
+            if exp_types is None or src_member['exptype'] in exp_types
+        ]
+        if members:
+            product = {
+                'name': src_product['name'],
+                'members': members
+            }
+            dest_asn['products'].append(product)
 
-    # Create the new association.
+    if not dest_asn['products']:
+        raise RuntimeError('No products could be gathered.')
 
     # Save new association.
     dest_path = dest_folder / source_asn_path.name

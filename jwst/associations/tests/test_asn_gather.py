@@ -60,3 +60,11 @@ def test_all_members(gather):
 
 def test_copy(gather):
     """Test that members are copied"""
+    dest_folder, asn_path, source_folder = gather
+
+    asn = LoadAsAssociation.load(asn_path)
+
+    for product in asn['products']:
+        for member in product['members']:
+            path = Path(dest_folder / member['expname'])
+            assert path.exists(), f'File does not exist {path}'
