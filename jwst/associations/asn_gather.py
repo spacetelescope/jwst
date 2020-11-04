@@ -29,19 +29,6 @@ def asn_gather(source_asn_path, destination=None, exp_types=None, copy=True,
         List of exposure types to gather.
         If None, all are gathered.
 
-    copy : bool
-        Copy the members to the destination. Otherwise, just copy
-        the association itself with the members pointing to the original
-        location.
-
-    recurse : bool
-        If members appear to come from other associations, attempt
-        to gather.
-
-    member_root : str, pathlib.Path, or None
-        The folder where the members are found.
-        If None, the folder path of the requested association is used.
-
     Returns
     -------
     dest_asn : pathlib.Path
@@ -65,7 +52,8 @@ def asn_gather(source_asn_path, destination=None, exp_types=None, copy=True,
     dest_asn['products'] = []
     for src_product in source_asn['products']:
         members = [
-            {'expname': src_member['expname'], 'exptype': src_member['exptype']}
+            {'expname': src_member['expname'],
+             'exptype': src_member['exptype']}
             for src_member in src_product['members']
             if exp_types is None or src_member['exptype'] in exp_types
         ]
@@ -78,6 +66,19 @@ def asn_gather(source_asn_path, destination=None, exp_types=None, copy=True,
 
     if not dest_asn['products']:
         raise RuntimeError('No products could be gathered.')
+
+    # Copy the members.
+    shellcmd_args = shellcmd.split(' ')
+    src_folder = source_asn_path.parent
+    for product in dest_asn['products']:
+        for member in product['members']:
+            src_path = Path(member['expname'])
+            if str(src_path.parent).startswith('.'):
+                src_path = src_folder / src_path
+            dest_path = dest_folder / src_path.name
+            process_args = shellcmd_args + [str(src_path), str(dest_path)]
+            subprocess.run(process_args, check=True)
+            member['expname'] = dest_path.name
 
     # Save new association.
     dest_path = dest_folder / source_asn_path.name
