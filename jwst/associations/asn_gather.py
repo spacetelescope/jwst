@@ -6,7 +6,7 @@ __all__ = ['asn_gather']
 
 
 def asn_gather(source_asn_path, destination=None, exp_types=None, copy=True,
-               recurse=False, member_root=None, shellcmd='rsync -Pur --no-perms --chmod=ugo=rwX'):
+               recurse=False, member_root=None, shellcmd='rsync -ur --no-perms --chmod=ugo=rwX'):
     """Copy/Move members of an association from one location to another
 
     The association is copied into the destination, re-written such that the member
