@@ -95,12 +95,19 @@ outlier_detection
 
 - Implement memory check in resample to prevent huge arrays [#5354]
 
+photom
+------
+
+- Updated NIRSpec fixed-slit processing to compute and save correction
+  values for both point and uniform sources in the primary slit when it
+  contains a point source, in order to support master background corrections.
+  [#5463]
+
 pipeline
 --------
 
 - Update ``Image3Pipeline`` to allow sky subtraction when input contains
   only one image (group). [#5423]
-
 
 ramp_fitting
 ------------
