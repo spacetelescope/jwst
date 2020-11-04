@@ -355,34 +355,37 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispa
         if user_supplied_flat is not None:
             slit_flat = user_supplied_flat.slits[slit_idx]
         else:
-            if exposure_type == "NRS_FIXEDSLIT":
+            if exposure_type == "NRS_FIXEDSLIT" and \
+               slit.name == primary_slit and slit.source_type.upper() == "POINT":
+
                 # For fixed-slit exposures, if this is the primary slit
                 # and it contains a point source, compute the flat-field
                 # corrections for both uniform (without wavecorr) and point
                 # source (with wavecorr) modes, applying only the point
                 # source version to the data.
-                if slit.name == primary_slit and slit.source_type.upper() == "POINT":
-                    # Compute a flat appropriate for a uniform source, which means
-                    # NOT using corrected wavelengths
-                    slit_flat = flat_for_nirspec_slit(
-                        slit, f_flat_model, s_flat_model, d_flat_model,
-                        dispaxis, exposure_type, slit_nt, output_model.meta.subarray,
-                        use_wavecorr=False
-                    )
 
-                    # Store the result
-                    slit.flatfield_uniform = slit_flat.data
+                # First compute a flat appropriate for a uniform source,
+                # which means NOT using corrected wavelengths
+                slit_flat = flat_for_nirspec_slit(
+                    slit, f_flat_model, s_flat_model, d_flat_model,
+                    dispaxis, exposure_type, slit_nt, output_model.meta.subarray,
+                    use_wavecorr=False
+                )
 
-                    # Compute a flat appropriate for a point source, which means
-                    # using corrected wavelengths
-                    slit_flat = flat_for_nirspec_slit(
-                        slit, f_flat_model, s_flat_model, d_flat_model,
-                        dispaxis, exposure_type, slit_nt, output_model.meta.subarray,
-                        use_wavecorr=True
-                    )
+                # Store the result for uniform source
+                slit.flatfield_uniform = slit_flat.data
 
-                    # Store the result
-                    slit.flatfield_point = slit_flat.data
+                # Now compute a flat appropriate for a point source,
+                # which means using corrected wavelengths
+                slit_flat = flat_for_nirspec_slit(
+                    slit, f_flat_model, s_flat_model, d_flat_model,
+                    dispaxis, exposure_type, slit_nt, output_model.meta.subarray,
+                    use_wavecorr=True
+                )
+
+                # Store the result for point source; this will be
+                # the version actually applied to the data below.
+                slit.flatfield_point = slit_flat.data
 
             else:
                 # Build the flat for this slit the normal way, without any
