@@ -384,20 +384,20 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispa
                     # Store the result
                     slit.flatfield_point = slit_flat.data
 
-                else:
-                    # Build the flat for this slit the normal way, without any
-                    # specification for whether we want to use corrected wavelengths
-                    slit_flat = flat_for_nirspec_slit(
-                        slit, f_flat_model, s_flat_model, d_flat_model,
-                        dispaxis, exposure_type, slit_nt, output_model.meta.subarray,
-                        use_wavecorr=None
-                    )
-                    if slit_flat is None:
-                        log.debug(f'Slit {slit} flat field could not be determined.')
-                        continue
+            else:
+                # Build the flat for this slit the normal way, without any
+                # specification for whether we want to use corrected wavelengths
+                slit_flat = flat_for_nirspec_slit(
+                    slit, f_flat_model, s_flat_model, d_flat_model,
+                    dispaxis, exposure_type, slit_nt, output_model.meta.subarray,
+                    use_wavecorr=None
+                )
+                if slit_flat is None:
+                    log.debug(f'Slit {slit} flat field could not be determined.')
+                    continue
 
-                # Append the SlitDataModel to the list of slits
-                flat_slits.append(slit_flat)
+            # Append the SlitDataModel to the list of slits
+            flat_slits.append(slit_flat)
 
         # Now let's apply the correction to science data and error arrays.  Rely
         # on array broadcasting to handle the cubes
