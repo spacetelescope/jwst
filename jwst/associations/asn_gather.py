@@ -5,8 +5,8 @@ import subprocess
 __all__ = ['asn_gather']
 
 
-def asn_gather(source_asn_path, destination=None, exp_types=None, copy=True,
-               recurse=False, member_root=None, shellcmd='rsync -ur --no-perms --chmod=ugo=rwX'):
+def asn_gather(source_asn_path, destination=None, exp_types=None,
+               shellcmd='rsync -ur --no-perms --chmod=ugo=rwX'):
     """Copy/Move members of an association from one location to another
 
     The association is copied into the destination, re-written such that the member
@@ -28,6 +28,10 @@ def asn_gather(source_asn_path, destination=None, exp_types=None, copy=True,
     exp_types : [str[,...]] or None
         List of exposure types to gather.
         If None, all are gathered.
+
+    shellcmd : str
+        The shell command to use to do the copying of the
+        individual members.
 
     Returns
     -------
@@ -92,3 +96,26 @@ def asn_gather(source_asn_path, destination=None, exp_types=None, copy=True,
 
 def from_cmdline():
     """Collect asn_gather arguments from the commandline"""
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description='Gather an association to a new location'
+    )
+
+    parser.add_argument(
+        src_asn_path,
+        help='Association to gather'
+    )
+    parser.add_argument(
+        destination, default='./'
+        help='Folder to copy the association to. Default: %(default)s)'
+    )
+    parser.add_argument(
+        '-t', '--exp-types', default=None,
+        action='append'
+        help='Exposure types to gather. If not specified, all exposure types are used.'
+    )
+    parser.add_argument(
+        '-c', '--cmd',g
+        help='Shell command to use to perform the copy. Specify as a single string.'
+    )
