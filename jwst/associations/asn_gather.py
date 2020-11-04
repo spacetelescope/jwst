@@ -1,12 +1,7 @@
-<<<<<<< HEAD
 """asn_gather: Copy data that is listed in an association"""
 import logging
 from pathlib import Path
 import subprocess
-=======
-"""asn_gather: Copy or Move data that is listed in an association"""
-from pathlib import Path
->>>>>>> e3627bc1 (Justfy what paths are what)
 
 __all__ = ['asn_gather']
 
