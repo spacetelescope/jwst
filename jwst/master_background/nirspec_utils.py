@@ -161,6 +161,85 @@ def correct_nrs_ifu_bkg(input_model):
         return input_model
 
     # Apply the corrections
-    input_model.data *= (pl_point / pl_uniform)
+    input_model.data *= (pl_uniform / pl_point)
+
+    return input_model
+
+
+def correct_nrs_fs_bkg(input_model, primary_slit):
+    """Apply point source vs. uniform source corrections
+    to a NIRSpec Fixed-Slit 2D master background array.
+
+    Parameters
+    ----------
+    input_model : `~jwst.datamodels.SlitModel`
+        The input background data.
+
+    primary_slit : bool
+        Is this the primary slit in the exposure?
+
+    Returns
+    -------
+    input_model : `~jwst.datamodels.SlitModel`
+        An updated (in place) version of the input with the data
+        replaced by the corrected 2D background.
+    """
+
+    log.info('Applying point source updates to FS background')
+
+    # Try to load the appropriate pathloss correction arrays
+    try:
+        pl_point = input_model.getarray_noinit('pathloss_point')
+    except AttributeError:
+        log.warning('pathloss_point array not found in input')
+        log.warning('Skipping background updates')
+        return input_model
+
+    try:
+        pl_uniform = input_model.getarray_noinit('pathloss_uniform')
+    except AttributeError:
+        log.warning('pathloss_uniform array not found in input')
+        log.warning('Skipping background updates')
+        return input_model
+
+    if primary_slit:
+        # If processing the primary slit, we also need flatfield and
+        # photom correction arrays
+        try:
+            ff_point = input_model.getarray_noinit('flatfield_point')
+        except AttributeError:
+            log.warning('flatfield_point array not found in input')
+            log.warning('Skipping background updates')
+            return input_model
+
+        try:
+            ff_uniform = input_model.getarray_noinit('flatfield_uniform')
+        except AttributeError:
+            log.warning('flatfield_uniform array not found in input')
+            log.warning('Skipping background updates')
+            return input_model
+
+        try:
+            ph_point = input_model.getarray_noinit('photom_point')
+        except AttributeError:
+            log.warning('photom_point array not found in input')
+            log.warning('Skipping background updates')
+            return input_model
+
+        try:
+            ph_uniform = input_model.getarray_noinit('photom_uniform')
+        except AttributeError:
+            log.warning('photom_uniform array not found in input')
+            log.warning('Skipping background updates')
+            return input_model
+
+        # Apply the corrections for the primary slit
+        input_model.data *= (pl_uniform / pl_point) * \
+                            (ff_uniform / ff_point) * \
+                            (ph_point / ph_uniform)
+
+    else:
+        # Apply the corrections for secondary slits
+        input_model.data *= (pl_uniform / pl_point)
 
     return input_model

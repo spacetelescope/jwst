@@ -150,6 +150,7 @@ def bkg_for_multislit(input, tab_wavelength, tab_background):
         A copy of `input` but with the data replaced by the background,
         "expanded" from 1-D to 2-D.
     """
+    from .nirspec_utils import correct_nrs_fs_bkg
 
     background = input.copy()
     min_wave = np.amin(tab_wavelength)
@@ -159,17 +160,18 @@ def bkg_for_multislit(input, tab_wavelength, tab_background):
         log.info(f'Expanding background for slit {slit.name}')
         wl_array = get_wavelengths(slit, input.meta.exposure.type)
         if wl_array is None:
-            raise RuntimeError("Can't determine wavelengths for {}"
-                               .format(type(slit)))
+            raise RuntimeError(f"Can't determine wavelengths for {type(slit)}")
 
         # Wherever the wavelength is NaN, the background surface brightness
         # should to be set to 0.  We replace NaN elements in wl_array with
         # -1, so that np.interp will detect that those values are out of range
         # (note the `left` argument to np.interp) and set the output to 0.
         wl_array[np.isnan(wl_array)] = -1.
+
         # flag values outside of background wavelength table
         mask_limit = (wl_array > max_wave) | (wl_array < min_wave)
         wl_array[mask_limit] = -1
+
         # bkg_surf_bright will be a 2-D array, because wl_array is 2-D.
         bkg_surf_bright = np.interp(wl_array, tab_wavelength, tab_background,
                                     left=0., right=0.)
@@ -177,6 +179,17 @@ def bkg_for_multislit(input, tab_wavelength, tab_background):
         background.slits[k].data[:] = bkg_surf_bright.copy()
         background.slits[k].dq[mask_limit] = np.bitwise_or(background.slits[k].dq[mask_limit],
                                                            dqflags.pixel['DO_NOT_USE'])
+
+        # NIRSpec fixed slits need corrections applied to the 2D background
+        # if the slit contains a point source, in order to make the master bkg
+        # match the calibrated science data in the slit
+        if input.meta.exposure.type == 'NRS_FIXEDSLIT' and slit.source_type.upper() == 'POINT':
+            if slit.name == input.meta.instrument.fixed_slit:
+                # The primary slit receives special corrections
+                background.slits[k] = correct_nrs_fs_bkg(background.slits[k], primary_slit=True)
+            else:
+                # Secondary slits receive more limited corrections
+                background.slits[k] = correct_nrs_fs_bkg(background.slits[k], primary_slit=False)
 
     return background
 
