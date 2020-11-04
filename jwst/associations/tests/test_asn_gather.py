@@ -21,9 +21,17 @@ def source_folder(tmp_path_factory):
         'primary_3.txt',
         'primary_4.txt',
     ]
-    primary = asn_from_list(primary_members, product_name=PRIMARY_NAME)
+
     source_folder = tmp_path_factory.mktemp('asn_gather_source')
     with pushdir(source_folder):
+
+        # Create all the files
+        for member in primary_members:
+            with open(member, 'w') as fh:
+                fh.write(member)
+
+        # Create the association
+        primary = asn_from_list(primary_members, product_name=PRIMARY_NAME)
         _, serialized = primary.dump()
         with open(PRIMARY_PATH, 'w') as fh:
             fh.write(serialized)
