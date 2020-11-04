@@ -424,7 +424,7 @@ class Step():
 
             if len(self._reference_files_used):
                 for result in results:
-                    if isinstance(result, datamodels.DataModel):
+                    if isinstance(result, DataModel):
                         for ref_name, filename in self._reference_files_used:
                             if hasattr(result.meta.ref_file, ref_name):
                                 getattr(result.meta.ref_file, ref_name).name = filename

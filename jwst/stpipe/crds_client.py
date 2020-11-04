@@ -155,7 +155,7 @@ def get_reference_file(dataset, reference_file_type, observatory=None, asn_expty
 
     Parameters
     ----------
-    dataset : jwst.datamodels.ModelBase instance
+    dataset : stdatamodels.DataModel instance
         A model of the input file.  Metadata on this input file will
         be used by the CRDS "bestref" algorithm to obtain a reference
         file.
