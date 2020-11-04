@@ -322,7 +322,6 @@ class DataSet():
 
                 area_model.close()
 
-
     def calc_niriss(self, ftab):
         """
         Extended Summary
@@ -605,7 +604,7 @@ class DataSet():
 
             # Get the world coords for all pixels in this slice
             coords = ifu_wcs(x, y)
-            dq = dqmap[y.astype(int),x.astype(int)]
+            dq = dqmap[y.astype(int), x.astype(int)]
             wl = coords[2]
             # pull out the valid wavelengths and reset other array to not include
             # nan values
@@ -749,22 +748,37 @@ class DataSet():
 
             # Compute a 2-D grid of conversion factors, as a function of wavelength
             if isinstance(self.input, datamodels.MultiSlitModel):
-                wl_array = get_wavelengths(self.input.slits[self.slitnum],
-                                           self.exptype,
-                                           order)
+
+                # The NIRSpec fixed-slit primary slit needs special handling if
+                # it contains a point source
+                if self.exptype.upper() == 'NRS_FIXEDSLIT' and \
+                   self.input.slits[self.slitnum].name == self.input.meta.instrument.fixed_slit and \
+                   self.input.slits[self.slitnum].source_type.upper() == 'POINT':
+
+                    # First, compute 2D array of photom correction values using
+                    # uncorrected wavelengths, which is appropriate for a uniform source
+                    conversion, no_cal = self.create_2d_conversion(self.input.slits[self.slitnum],
+                                                                   self.exptype, conversion,
+                                                                   waves, relresps, order,
+                                                                   use_wavecorr=False)
+                    slit.photom_uniform = conversion  # store the result
+
+                    # Now repeat the process using corrected wavelength values,
+                    # which is appropriate for a point source. This is the version of
+                    # the correction that will actually get applied to the data below.
+                    conversion, no_cal = self.create_2d_conversion(self.input.slits[self.slitnum],
+                                                                   self.exptype, conversion,
+                                                                   waves, relresps, order,
+                                                                   use_wavecorr=True)
+                    slit.photom_point = conversion  # store the result
+
+                else:
+                    conversion, no_cal = self.create_2d_conversion(self.input.slits[self.slitnum],
+                                                                   self.exptype, conversion,
+                                                                   waves, relresps, order)
             else:
-                wl_array = get_wavelengths(self.input,
-                                           self.exptype,
-                                           order)
-
-            wl_array[np.isnan(wl_array)] = -1.
-            conv_2d = np.interp(wl_array, waves, relresps, left=np.NaN, right=np.NaN)
-            no_cal = np.isnan(conv_2d)
-
-            # Combine the scalar and 2-D conversions
-            # NOTE: the data are now multiplied by the 2-D conversion
-            conversion = conversion * conv_2d
-            conversion[no_cal] = 0.
+                conversion, no_cal = self.create_2d_conversion(self.input, self.exptype, conversion,
+                                                               waves, relresps, order)
 
         # Apply the conversion to the data and all uncertainty arrays
         if isinstance(self.input, datamodels.MultiSlitModel):
@@ -822,6 +836,55 @@ class DataSet():
             self.input.meta.bunit_err = 'DN/s'
 
         return
+
+    def create_2d_conversion(self, model, exptype, conversion, waves, relresps,
+                             order, use_wavecorr=None):
+        """
+        Create a 2D array of photometric conversion values based on
+        wavelengths per pixel and response as a function of wavelength.
+
+        Parameters
+        ----------
+        model : `~jwst.datamodels.DataModel`
+            Input data model containing the necessary wavelength information
+        exptype : str
+            Exposure type of the input
+        conversion : float
+            Initial scalar photometric conversion value
+        waves : float
+            1D wavelength vector on which relative response values are
+            sampled
+        relresps : float
+            1D photometric response values, as a function of waves
+        order : int
+            Spectral order number
+        use_wavecorr : bool or None
+            Flag indicating whether or not to use corrected wavelengths.
+            Typically only used for NIRSpec fixed-slit data.
+
+        Returns
+        -------
+        conversion : float
+            2D array of computed photometric conversion values
+        no_cal : int
+            2D mask indicating where no conversion is available
+        """
+
+        # Get the 2D wavelength array corresponding to the input
+        # image pixel values
+        wl_array = get_wavelengths(model, exptype, order, use_wavecorr)
+        wl_array[np.isnan(wl_array)] = -1.
+
+        # Interpolate the photometric response values onto the
+        # 2D wavelength grid
+        conv_2d = np.interp(wl_array, waves, relresps, left=np.NaN, right=np.NaN)
+
+        # Combine the scalar and 2D conversion factors
+        conversion = conversion * conv_2d
+        no_cal = np.isnan(conv_2d)
+        conversion[no_cal] = 0.
+
+        return conversion, no_cal
 
     def save_area_info(self, ftab, area_fname):
         """
@@ -893,7 +956,6 @@ class DataSet():
             else:
                 self.input.meta.photometry.pixelarea_arcsecsq = area_a2
                 self.input.meta.photometry.pixelarea_steradians = area_ster
-
 
     def save_area_nirspec(self, pix_area):
         """
@@ -1017,7 +1079,6 @@ class DataSet():
 
         # Load the pixel area reference file, if it exists, and attach the
         # reference data to the science model
-        #if area_fname != 'N/A':
         self.save_area_info(ftab, area_fname)
 
         if self.instrument == 'NIRISS':
