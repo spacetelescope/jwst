@@ -1,6 +1,5 @@
-from .container import ModelContainer
-from .multiexposure import MultiExposureModel
-from .slit import SlitModel
+from . import ModelContainer, MultiExposureModel, SlitModel
+
 
 __all__ = ['SourceModelContainer']
 
