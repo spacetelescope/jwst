@@ -184,12 +184,8 @@ def bkg_for_multislit(input, tab_wavelength, tab_background):
         # if the slit contains a point source, in order to make the master bkg
         # match the calibrated science data in the slit
         if input.meta.exposure.type == 'NRS_FIXEDSLIT' and slit.source_type.upper() == 'POINT':
-            if slit.name == input.meta.instrument.fixed_slit:
-                # The primary slit receives special corrections
-                background.slits[k] = correct_nrs_fs_bkg(background.slits[k], primary_slit=True)
-            else:
-                # Secondary slits receive more limited corrections
-                background.slits[k] = correct_nrs_fs_bkg(background.slits[k], primary_slit=False)
+            primary = True if slit.name == input.meta.instrument.fixed_slit else False
+            background.slits[k] = correct_nrs_fs_bkg(background.slits[k], primary)
 
     return background
 
