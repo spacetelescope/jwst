@@ -12,8 +12,9 @@ import numpy as np
 from numpy.testing import assert_allclose
 from astropy.io import fits
 from stdatamodels.util import get_envar_as_boolean
+from stdatamodels import DataModel
 
-from jwst.datamodels import (DataModel, JwstDataModel, ImageModel, MaskModel, QuadModel,
+from jwst.datamodels import (JwstDataModel, ImageModel, MaskModel, QuadModel,
                              MultiSlitModel, ModelContainer, SlitModel,
                              SlitDataModel, IFUImageModel, ABVegaOffsetModel)
 from jwst import datamodels
@@ -59,7 +60,7 @@ def jail_environ():
         os.environ = original
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture
 def make_models(tmpdir_factory):
     """Create basic models
 
