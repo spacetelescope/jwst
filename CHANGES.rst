@@ -47,6 +47,9 @@ datamodels
 
 - Added flatfield and photom correction arrays to slit data models [#5460]
 
+- Move core ``jwst.datamodels`` code to ``stdatamodels`` package and add it as
+  an install dependency [#5433]
+
 extract_1d
 ----------
 
