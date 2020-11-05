@@ -3,6 +3,7 @@ from astropy.io import fits
 from astropy import wcs
 from astropy.wcs import InvalidTransformError
 from jwst import datamodels
+from jwst.datamodels.schema import walk_schema
 
 
 wcslib_kw_to_remove = ['LONPOLE', 'LATPOLE', 'MJD-OBS', 'DATE-OBS']
@@ -32,11 +33,42 @@ def move_wcs(files, remove_asdf=False):
         f.close()
 
 
+def _build_schema2fits_dict(schema):
+    """
+    Utility function to create a dict that maps metadata attributes to their
+    FITS keyword and FITS HDU locations (if any).
+
+    Parameters
+    ----------
+    schema : JSON schema fragment
+        The schema in which to search.
+
+    Returns
+    -------
+    results : dict
+        Dictionary with schema metadata path as keys and a tuple of FITS
+        keyword and FITS HDU as values.
+
+    """
+    def build_schema_dict(subschema, path, combiner, ctx, recurse):
+        if len(path) and path[0] == 'extra_fits':
+            return True
+        kw = subschema.get('fits_keyword')
+        hdu = subschema.get('fits_hdu')
+        if kw is not None:
+            results['.'.join(path)] = (kw, hdu)
+
+    results = {}
+    walk_schema(schema, build_schema_dict, results)
+
+    return results
+
+
 def _collect_wcs_keywords(f):
     # Get keywords to go in SCI header from the datamodels schema
     dm = datamodels.open(f, pass_invalid_values=True)
     stsci_wcs_kw = []
-    for k, v in datamodels.schema.build_schema2fits_dict(dm.meta._schema).items():
+    for k, v in _build_schema2fits_dict(dm.meta._schema).items():
         if v[1] == 'SCI':
             if v[0] != 'WCSAXES':
                 stsci_wcs_kw.append(v[0])

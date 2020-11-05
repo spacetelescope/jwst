@@ -5,7 +5,7 @@ from astropy.table import Table
 import numpy as np
 
 from jwst.datamodels import ImageModel
-from jwst.datamodels.schema import build_fits_dict
+from jwst.datamodels.schema import walk_schema
 
 from .. import blendmeta
 
@@ -104,6 +104,36 @@ def test_blendmeta(blend):
 
     for attr in input_values:
         assert newmeta[attr] == output_values[attr]
+
+
+def build_fits_dict(schema):
+    """
+    Utility function to create a dict that maps FITS keywords to their
+    metadata attribute in a input schema.
+
+    Parameters
+    ----------
+    schema : JSON schema fragment
+        The schema in which to search.
+
+    Returns
+    -------
+    results : dict
+        Dictionary with FITS keywords as keys and schema metadata
+        attributes as values
+
+    """
+    def build_fits_dict(subschema, path, combiner, ctx, recurse):
+        if len(path) and path[0] == 'extra_fits':
+            return True
+        kw = subschema.get('fits_keyword')
+        if kw is not None:
+            results[kw] = '.'.join(path)
+
+    results = {}
+    walk_schema(schema, build_fits_dict, results)
+
+    return results
 
 
 def test_blendtab(blend):
