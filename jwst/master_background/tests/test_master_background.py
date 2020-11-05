@@ -145,3 +145,5 @@ def test_split_container(tmp_path):
 
     assert sci[0].meta.filename == "foo.fits"
     assert bkg[0].meta.filename == "bar.fits"
+    assert len(sci) == 1
+    assert len(bkg) == 1

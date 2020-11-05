@@ -7,14 +7,9 @@ class JwstDataModel(_DataModel):
 
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/core.schema"
 
-    def __del__(self):
-        pass
 
-
+# We may want to deprecate DataModel
 # @deprecate_class(JwstDataModel)
 class DataModel(_DataModel):
 
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/core.schema"
-
-    def __del__(self):
-        pass
