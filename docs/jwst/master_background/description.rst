@@ -301,7 +301,7 @@ even if the secondary slits contain point sources, no wavelength correction can
 be applied, and therefore again the flat-field and photometric calibrations are
 the same as for background spectra. This means only the pathloss correction
 difference between uniform and point sources needs to be accounted for in the
-seconday slits.
+secondary slits.
 
 So if the primary slit (as given by the FXD_SLIT keyword) contains a point source
 (as given by the SRCTYPE keyword) the corrections applied to the 2-D master background
@@ -312,7 +312,7 @@ for that slit are:
                  &* [pathloss(uniform) / pathloss(point)]\\
                  &* [photom(point) / photom(uniform)]
 
-For seconday slits that contain a point source, the corrections applied to the
+For secondary slits that contain a point source, the corrections applied to the
 2-D master background are simply:
 
 .. math::
