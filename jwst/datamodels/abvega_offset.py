@@ -1,6 +1,6 @@
 import warnings
 
-from .validate import ValidationWarning
+from stdatamodels.validate import ValidationWarning
 from .reference import ReferenceFileModel
 
 __all__ = ['ABVegaOffsetModel']
@@ -40,9 +40,6 @@ class ABVegaOffsetModel(ReferenceFileModel):
     """
 
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/abvegaoffset.schema"
-
-    def __init__(self, init=None, **kwargs):
-        super(ABVegaOffsetModel, self).__init__(init=init, **kwargs)
 
     def validate(self):
         super(ABVegaOffsetModel, self).validate()

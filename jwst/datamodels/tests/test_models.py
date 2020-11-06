@@ -1,6 +1,5 @@
 import os
 from os import path as op
-from pathlib import Path
 import shutil
 import tempfile
 import warnings
@@ -12,12 +11,13 @@ from astropy.time import Time
 import numpy as np
 from numpy.testing import assert_allclose
 from astropy.io import fits
+from stdatamodels.util import get_envar_as_boolean
+from stdatamodels import DataModel
 
-from jwst.datamodels import (DataModel, ImageModel, MaskModel, QuadModel,
+from jwst.datamodels import (JwstDataModel, ImageModel, MaskModel, QuadModel,
                              MultiSlitModel, ModelContainer, SlitModel,
                              SlitDataModel, IFUImageModel, ABVegaOffsetModel)
 from jwst import datamodels
-from jwst.datamodels.util import get_envar_as_boolean
 from jwst.lib.file_utils import pushdir
 
 
@@ -60,25 +60,25 @@ def jail_environ():
         os.environ = original
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture
 def make_models(tmpdir_factory):
     """Create basic models
 
     Returns
     -------
     path_just_fits, path_model : (str, str)
-        `path_just_fits` is a FITS file of `DataModel` without the ASDF extension.
-        `path_model` is a FITS file of `DataModel` with the ASDF extension.
+        `path_just_fits` is a FITS file of `JwstDataModel` without the ASDF extension.
+        `path_model` is a FITS file of `JwstDataModel` with the ASDF extension.
     """
     path = tmpdir_factory.mktemp('skip_fits_update')
     path_just_fits = str(path / 'just_fits.fits')
     path_model = str(path / 'model.fits')
     primary_hdu = fits.PrimaryHDU()
     primary_hdu.header['EXP_TYPE'] = 'NRC_IMAGE'
-    primary_hdu.header['DATAMODL'] = "DataModel"
+    primary_hdu.header['DATAMODL'] = "JwstDataModel"
     hduls = fits.HDUList([primary_hdu])
     hduls.writeto(path_just_fits)
-    model = DataModel(hduls)
+    model = JwstDataModel(hduls)
     model.save(path_model)
     return {
         'just_fits': path_just_fits,
@@ -86,13 +86,15 @@ def make_models(tmpdir_factory):
     }
 
 
-def test_init_from_pathlib(make_models):
+def test_init_from_pathlib(tmp_path):
     """Test initializing model from a PurePath object"""
-    path = Path(make_models['model'])
-    model = ImageModel(path)
+    path = tmp_path / "pathlib.fits"
+    model1 = DataModel()
+    model1.save(path)
 
-    # Test is basically, did we open the model?
-    assert isinstance(model, ImageModel)
+    with DataModel(path) as model:
+        # Test is basically, did we open the model?
+        assert isinstance(model, DataModel)
 
 
 @pytest.mark.parametrize(
@@ -108,7 +110,7 @@ def test_init_from_pathlib(make_models):
 )
 @pytest.mark.parametrize(
     'open_func',
-    [DataModel, datamodels.open]
+    [JwstDataModel, datamodels.open]
 )
 @pytest.mark.parametrize(
     'use_env',
@@ -181,13 +183,13 @@ def delete_array():
 
 
 def test_subarray():
-    with DataModel(FITS_FILE) as dm:
+    with JwstDataModel(FITS_FILE) as dm:
         dm.meta.subarray.xstart
 
 
 def roundtrip(func):
     def _create_source():
-        dm = DataModel(FITS_FILE)
+        dm = JwstDataModel(FITS_FILE)
 
         assert dm.meta.instrument.name == 'MIRI'
 
@@ -212,11 +214,11 @@ def roundtrip(func):
 @roundtrip
 def test_from_fits_write(dm):
     dm.to_fits(TMP_FITS, overwrite=True)
-    return DataModel.from_fits(TMP_FITS)
+    return JwstDataModel.from_fits(TMP_FITS)
 
 
 def test_delete():
-    with DataModel() as dm:
+    with JwstDataModel() as dm:
         dm.meta.instrument.name = 'NIRCAM'
         assert dm.meta.instrument.name == 'NIRCAM'
         del dm.meta.instrument.name
@@ -268,8 +270,8 @@ def test_copy():
 
 
 def test_stringify(tmpdir):
-    im = DataModel()
-    assert str(im) == '<DataModel>'
+    im = JwstDataModel()
+    assert str(im) == '<JwstDataModel>'
 
     im = ImageModel((10, 100))
     assert str(im) == '<ImageModel(10, 100)>'
@@ -323,7 +325,7 @@ def test_set_array2():
 
 def test_base_model_has_no_arrays():
     with pytest.raises(AttributeError):
-        with DataModel() as dm:
+        with JwstDataModel() as dm:
             dm.data
 
 
@@ -333,8 +335,8 @@ def test_array_type():
 
 
 def test_copy_model():
-    with DataModel() as dm:
-        with DataModel(dm) as dm2:
+    with JwstDataModel() as dm:
+        with JwstDataModel(dm) as dm2:
             assert hasattr(dm2, 'meta')
 
 
@@ -466,7 +468,7 @@ def test_multislit_copy():
 def test_model_with_nonstandard_primary_array():
     ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
-    class NonstandardPrimaryArrayModel(DataModel):
+    class NonstandardPrimaryArrayModel(JwstDataModel):
         schema_url = os.path.join(
             ROOT_DIR, "nonstandard_primary_array.schema.yaml")
 
@@ -501,7 +503,7 @@ def test_initialize_arrays_with_arglist():
 @pytest.mark.parametrize("init", [None, ASDF_FILE])
 def test_open_asdf_model(init):
     # Open an empty asdf file, pass extra arguments
-    with DataModel(init=init, ignore_version_mismatch=False,
+    with JwstDataModel(init=init, ignore_version_mismatch=False,
                    ignore_unrecognized_tag=True) as model:
         assert not model._asdf._ignore_version_mismatch
         assert model._asdf._ignore_unrecognized_tag
@@ -509,20 +511,20 @@ def test_open_asdf_model(init):
 
 def test_open_asdf_model_s3(s3_root_dir):
     path = str(s3_root_dir.join("test.asdf"))
-    with DataModel() as dm:
+    with JwstDataModel() as dm:
         dm.save(path)
 
-    model = DataModel("s3://test-s3-data/test.asdf")
-    assert isinstance(model, DataModel)
+    model = JwstDataModel("s3://test-s3-data/test.asdf")
+    assert isinstance(model, JwstDataModel)
 
 
 def test_open_fits_model_s3(s3_root_dir):
     path = str(s3_root_dir.join("test.fits"))
-    with DataModel() as dm:
+    with JwstDataModel() as dm:
         dm.save(path)
 
-    model = DataModel("s3://test-s3-data/test.fits")
-    assert isinstance(model, DataModel)
+    model = JwstDataModel("s3://test-s3-data/test.fits")
+    assert isinstance(model, JwstDataModel)
 
 
 def test_image_with_extra_keyword_to_multislit():
@@ -657,7 +659,7 @@ def test_modelcontainer_iteration(container):
 
 
 def test_modelcontainer_indexing(container):
-    assert isinstance(container[0], DataModel)
+    assert isinstance(container[0], JwstDataModel)
 
 
 def test_modelcontainer_group1(container):
@@ -708,7 +710,7 @@ def test_object_node_iterator():
 
 
 def test_hasattr():
-    model = DataModel()
+    model = JwstDataModel()
     assert model.meta.hasattr('date')
     assert not model.meta.hasattr('filename')
 
@@ -796,7 +798,7 @@ def test_ifuimage():
 
 def test_datamodel_raises_filenotfound():
     with pytest.raises(FileNotFoundError):
-        DataModel(init='file_does_not_exist.fits')
+        JwstDataModel(init='file_does_not_exist.fits')
 
 
 def test_abvega_offset_model():
@@ -898,11 +900,11 @@ def test_getarray_noinit_noinit():
 def test_skip_serializing_null(tmpdir, filename):
     """Make sure that None is not written out to the ASDF tree"""
     path = str(tmpdir.join(filename))
-    with DataModel() as model:
+    with JwstDataModel() as model:
         model.meta.telescope = None
         model.save(path)
 
-    with DataModel(path) as model:
+    with JwstDataModel(path) as model:
         # Make sure that 'telescope' is not in the tree
         with pytest.raises(KeyError):
             assert model.meta["telescope"] is None

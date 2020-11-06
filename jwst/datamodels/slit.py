@@ -1,11 +1,11 @@
-from .model_base import DataModel
+from .model_base import JwstDataModel
 from .image import ImageModel
 
 
 __all__ = ['SlitModel', 'SlitDataModel']
 
 
-class SlitDataModel(DataModel):
+class SlitDataModel(JwstDataModel):
     """
     A data model for 2D slit images.
 
@@ -83,7 +83,7 @@ class SlitDataModel(DataModel):
                     setattr(self, key, kwargs[key])
 
 
-class SlitModel(DataModel):
+class SlitModel(JwstDataModel):
     """
     A data model for 2D images.
 

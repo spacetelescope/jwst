@@ -1,5 +1,7 @@
 import warnings
+
 from .multislit import MultiSlitModel
+
 
 __all__ = ['MultiProductModel']
 

@@ -9,7 +9,7 @@ from gwcs.geometry import SphericalToCartesian, CartesianToSpherical
 from gwcs import coordinate_frames as cf
 from gwcs import wcs
 
-from ..datamodels import DataModel
+from stdatamodels import DataModel
 
 
 __all__ = ["compute_roll_ref", "frame_from_model", "fitswcs_transform_from_model"]
@@ -92,7 +92,7 @@ def wcsinfo_from_model(input_model):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.model_base.DataModel`
+    input_model : `~stdatamodels.DataModel`
         The input data model
 
     """
@@ -165,7 +165,7 @@ def frame_from_model(wcsinfo):
 
     Parameters
     ----------
-    wcsinfo : `~jwst.datamodels.model_base.DataModel` or dict
+    wcsinfo : `~stdatamodels.DataModel` or dict
         Either one of the JWST data moels or a dict with model.meta.wcsinfo.
 
     Returns

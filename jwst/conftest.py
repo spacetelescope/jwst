@@ -6,7 +6,7 @@ import pytest
 from jwst.associations import (AssociationRegistry, AssociationPool)
 from jwst.associations.tests.helpers import t_path
 from jwst.lib.tests import helpers as lib_helpers
-from jwst.lib import s3_utils
+from stdatamodels import s3_utils
 
 
 @pytest.fixture(scope='session')

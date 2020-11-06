@@ -6,26 +6,26 @@ import shutil
 import tempfile
 import warnings
 
+import asdf
+from asdf import schema as mschema
 import pytest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
-
 import jsonschema
 from astropy.io import fits
 from astropy.modeling import models
 from astropy import time
+from stdatamodels import validate
+from stdatamodels.util import gentle_asarray
+from stdatamodels.schema import merge_property_trees, build_docstring
+from stdatamodels import DataModel
 
-from .. import util, validate
-from .. import _defined_models as defined_models
-from .. import (DataModel, ImageModel, RampModel, MaskModel, MultiSlitModel,
+from jwst.datamodels import util
+from jwst.datamodels import _defined_models as defined_models
+from jwst.datamodels import (JwstDataModel, ImageModel, RampModel, MaskModel, MultiSlitModel,
     AsnModel, CollimatorModel, SourceModelContainer, MultiExposureModel,
     DrizProductModel, MultiProductModel, MIRIRampModel)
-from ..schema import merge_property_trees, build_docstring
 
-from ..extension import URL_PREFIX
-
-import asdf
-from asdf import schema as mschema
 
 FITS_FILE = None
 MASK_FILE = None
@@ -54,14 +54,14 @@ def teardown():
 
 def test_choice():
     with pytest.raises(jsonschema.ValidationError):
-        with DataModel(FITS_FILE, strict_validation=True) as dm:
+        with JwstDataModel(FITS_FILE, strict_validation=True) as dm:
             assert dm.meta.instrument.name == 'MIRI'
             dm.meta.instrument.name = 'FOO'
 
 
 def test_set_na_ra():
     with pytest.raises(jsonschema.ValidationError):
-        with DataModel(FITS_FILE, strict_validation=True) as dm:
+        with JwstDataModel(FITS_FILE, strict_validation=True) as dm:
             # Setting an invalid value should raise a ValueError
             dm.meta.target.ra = "FOO"
 
@@ -76,8 +76,7 @@ def test_date2():
 
 TRANSFORMATION_SCHEMA = {
     "allOf": [
-        mschema.load_schema(os.path.join(URL_PREFIX, "image.schema"),
-            resolver=asdf.AsdfFile().resolver,
+        mschema.load_schema("http://stsci.edu/schemas/jwst_datamodel/core.schema",
             resolve_references=True),
         {
             "type": "object",
@@ -114,18 +113,16 @@ TRANSFORMATION_SCHEMA = {
 
 def test_list():
     with pytest.raises(jsonschema.ValidationError):
-        with ImageModel((50, 50), schema=TRANSFORMATION_SCHEMA,
-                        strict_validation=True) as dm:
+        with JwstDataModel(schema=TRANSFORMATION_SCHEMA,
+                           strict_validation=True) as dm:
             dm.meta.transformations = []
             dm.meta.transformations.item(transformation="SIN", coeff=2.0)
 
 
 def test_list2():
     with pytest.raises(jsonschema.ValidationError):
-        with ImageModel(
-            (50, 50),
-            schema=TRANSFORMATION_SCHEMA,
-            strict_validation=True) as dm:
+        with JwstDataModel(schema=TRANSFORMATION_SCHEMA,
+                           strict_validation=True) as dm:
             dm.meta.transformations = []
             dm.meta.transformations.append({'transformation': 'FOO', 'coeff': 2.0})
 
@@ -221,33 +218,33 @@ def test_invalid_fits():
         os.remove(TMP_FITS)
 
 def test_ad_hoc_json():
-    with DataModel() as dm:
+    with JwstDataModel() as dm:
         dm.meta.foo = {'a': 42, 'b': ['a', 'b', 'c']}
 
         dm.save(TMP_ASDF)
 
-    with DataModel(TMP_ASDF) as dm2:
+    with JwstDataModel(TMP_ASDF) as dm2:
         assert dm2.meta.foo == {'a': 42, 'b': ['a', 'b', 'c']}
 
 
 def test_ad_hoc_fits():
-    with DataModel() as dm:
+    with JwstDataModel() as dm:
         dm.meta.foo = {'a': 42, 'b': ['a', 'b', 'c']}
 
         dm.to_fits(TMP_FITS, overwrite=True)
 
-    with DataModel.from_fits(TMP_FITS) as dm2:
+    with JwstDataModel.from_fits(TMP_FITS) as dm2:
         assert dm2.meta.foo == {'a': 42, 'b': ['a', 'b', 'c']}
 
 
 def test_find_fits_keyword():
-    with DataModel() as x:
+    with JwstDataModel() as x:
         assert x.find_fits_keyword('DATE-OBS') == \
           ['meta.observation.date']
 
 
 def test_search_schema():
-    with DataModel() as x:
+    with JwstDataModel() as x:
         results = x.search_schema('target')
 
     results = [x[0] for x in results]
@@ -256,7 +253,7 @@ def test_search_schema():
 
 
 def test_dictionary_like():
-    with DataModel(strict_validation=True) as x:
+    with JwstDataModel(strict_validation=True) as x:
         x.meta.origin = 'FOO'
         assert x['meta.origin'] == 'FOO'
 
@@ -268,7 +265,7 @@ def test_dictionary_like():
 
 
 def test_to_flat_dict():
-    with DataModel() as x:
+    with JwstDataModel() as x:
         x.meta.origin = 'FOO'
         assert x['meta.origin'] == 'FOO'
 
@@ -280,8 +277,7 @@ def test_to_flat_dict():
 def test_table_array_shape_ndim():
     table_schema = {
         "allOf": [
-            mschema.load_schema(os.path.join(URL_PREFIX, "image.schema"),
-                resolver=asdf.AsdfFile().resolver,
+            mschema.load_schema("http://stsci.edu/schemas/jwst_datamodel/core.schema",
                 resolve_references=True),
             {
                 "type": "object",
@@ -376,12 +372,10 @@ def test_table_array_convert():
     Test that structured arrays are converted when necessary, and
     reused as views when not.
     """
-    from jwst.datamodels import util
 
     table_schema = {
         "allOf": [
-            mschema.load_schema(os.path.join(URL_PREFIX, "image.schema"),
-                resolver=asdf.AsdfFile().resolver,
+            mschema.load_schema("http://stsci.edu/schemas/jwst_datamodel/core.schema",
                 resolve_references=True),
             {
                 "type": "object",
@@ -407,14 +401,14 @@ def test_table_array_convert():
         dtype=[('f0', '?'), ('my_int', '=i2'), ('my_string', 'S64')]
     )
 
-    x = util.gentle_asarray(
+    x = gentle_asarray(
         table,
         dtype=[('f0', '?'), ('my_int', '=i2'), ('my_string', 'S64')]
     )
 
     assert x is table
 
-    with DataModel(schema=table_schema) as x:
+    with JwstDataModel(schema=table_schema) as x:
         x.table = table
         assert x.table is not table
 
@@ -423,7 +417,7 @@ def test_table_array_convert():
         dtype=[('f0', '?'), ('my_int', '=i2'), ('my_string', 'S3')]
     )
 
-    with DataModel(schema=table_schema) as x:
+    with JwstDataModel(schema=table_schema) as x:
         x.table = table
         assert x.table is not table
         assert x.table['my_string'][0] != table['my_string'][0]
@@ -437,8 +431,7 @@ def test_mask_model():
 def test_data_array():
     data_array_schema = {
         "allOf": [
-            mschema.load_schema(os.path.join(URL_PREFIX, "core.schema"),
-                resolver=asdf.AsdfFile().resolver,
+            mschema.load_schema("http://stsci.edu/schemas/jwst_datamodel/core.schema",
                 resolve_references=True),
             {
                 "type": "object",
@@ -475,7 +468,7 @@ def test_data_array():
     array2 = np.random.rand(5, 5)
     array3 = np.random.rand(5, 5)
 
-    with DataModel(schema=data_array_schema) as x:
+    with JwstDataModel(schema=data_array_schema) as x:
         x.arr.append(x.arr.item())
         x.arr[0].data = array1
         assert len(x.arr) == 1
@@ -488,7 +481,7 @@ def test_data_array():
         assert len(x.arr) == 2
         x.to_fits(TMP_FITS, overwrite=True)
 
-    with DataModel(TMP_FITS, schema=data_array_schema) as x:
+    with JwstDataModel(TMP_FITS, schema=data_array_schema) as x:
         assert len(x.arr) == 2
         assert_array_almost_equal(x.arr[0].data, array1)
         assert_array_almost_equal(x.arr[1].data, array3)
@@ -549,7 +542,7 @@ def test_implicit_creation_lower_dimensionality():
 
 
 def test_add_schema_entry():
-    with DataModel(strict_validation=True) as dm:
+    with JwstDataModel(strict_validation=True) as dm:
         dm.add_schema_entry('meta.foo.bar', {'enum': ['foo', 'bar', 'baz']})
         dm.meta.foo.bar
         dm.meta.foo.bar = 'bar'
@@ -695,7 +688,7 @@ def test_all_datamodels_init(model):
 
 
 def test_datamodel_schema_entry_points():
-    """Test that entry points for DataModelExtension works as expected"""
+    """Test that entry points for JwstDataModelExtension works as expected"""
     resolver = asdf.AsdfFile().resolver
     mschema.load_schema('http://stsci.edu/schemas/jwst_datamodel/image.schema',
         resolver=resolver, resolve_references=True)

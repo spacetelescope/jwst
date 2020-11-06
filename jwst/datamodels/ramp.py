@@ -1,10 +1,10 @@
-from .model_base import DataModel
+from .model_base import JwstDataModel
 from ..lib.basic_utils import deprecate_class
 
 __all__ = ['RampModel']
 
 
-class RampModel(DataModel):
+class RampModel(JwstDataModel):
     """
     A data model for 4D ramps.
 

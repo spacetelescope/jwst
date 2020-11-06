@@ -3,11 +3,10 @@ import pytest
 
 from astropy.table import Table
 import numpy as np
+from stdatamodels.schema import walk_schema
 
 from jwst.datamodels import ImageModel
-from jwst.datamodels.schema import walk_schema
-
-from .. import blendmeta
+from jwst.model_blender import blendmeta
 
 
 # Setup various input meta data

@@ -8,10 +8,10 @@ import numpy as np
 from datetime import time
 from astropy.io import fits
 from astropy.time import Time
+from stdatamodels import schema as dm_schema
+from stdatamodels import properties
 
 from jwst import __version__
-from .. import datamodels
-from ..datamodels import schema as dm_schema
 from . import blender
 
 # Version of rules file format supported by this version of the code
@@ -438,7 +438,7 @@ def interpret_entry(line, hdr):
     section_name = None
 
     # Parse the line
-    if isinstance(hdr[attr], datamodels.properties.ObjectNode):
+    if isinstance(hdr[attr], properties.ObjectNode):
         section_name = attr
         # Datamodel sections are just parent Nodes for each attribute
         keys = hdr[section_name].instance.keys()

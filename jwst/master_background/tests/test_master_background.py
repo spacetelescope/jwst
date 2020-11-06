@@ -8,7 +8,10 @@ from jwst import datamodels
 from jwst.assign_wcs import AssignWcsStep
 from jwst.master_background import MasterBackgroundStep
 from jwst.master_background.create_master_bkg import create_background
-from jwst.master_background.master_background_step import copy_background_to_surf_bright
+from jwst.master_background.master_background_step import (
+    copy_background_to_surf_bright,
+    split_container,
+)
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 
 
@@ -111,3 +114,36 @@ def test_copy_background_to_surf_bright():
     assert (newdata.spec[0].spec_table['surf_bright'] == background).all()
     assert (newdata.spec[0].spec_table['sb_error'] == berror).all()
     assert (newdata.spec[0].spec_table['background'] == 0).all()
+
+
+def test_split_container(tmp_path):
+    path1 = tmp_path / "foo.fits"
+    path2 = tmp_path / "bar.fits"
+    im1 = datamodels.ImageModel()
+    im1.save(path1)
+    im2 = datamodels.ImageModel()
+    im2.save(path2)
+    container = datamodels.ModelContainer([im1, im2])
+    container.meta.asn_table = {
+        "products": [
+            {
+                "members": [
+                    {
+                        "expname": f"{path1}",
+                        "exptype": "science"
+                    },
+                    {
+                        "expname": f"{path2}",
+                        "exptype": "background"
+                    },
+                ]
+            }
+        ]
+    }
+
+    sci, bkg = split_container(container)
+
+    assert sci[0].meta.filename == "foo.fits"
+    assert bkg[0].meta.filename == "bar.fits"
+    assert len(sci) == 1
+    assert len(bkg) == 1

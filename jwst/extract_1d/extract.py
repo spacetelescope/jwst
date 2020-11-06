@@ -8,15 +8,16 @@ import numpy as np
 from typing import Union, Tuple, NamedTuple, List
 from astropy.modeling import polynomial
 from gwcs import WCS
+from stdatamodels import DataModel
+from stdatamodels.ndmodel import MetaNode
 
 from .. import datamodels
-from ..datamodels import dqflags, DataModel, SlitModel, SpecModel
+from ..datamodels import dqflags, SlitModel, SpecModel
 
 from ..datamodels.apcorr import (
     MirLrsApcorrModel, MirMrsApcorrModel, NrcWfssApcorrModel, NrsFsApcorrModel, NrsMosApcorrModel, NisWfssApcorrModel
 )
 
-from ..datamodels.ndmodel import MetaNode
 from ..assign_wcs import niriss         # for specifying spectral order number
 from ..assign_wcs.util import wcs_bbox_from_shape
 from ..lib import pipe_utils
@@ -142,7 +143,7 @@ def open_extract1d_ref(refname: str) -> dict:
     return ref_dict
 
 
-def open_apcorr_ref(refname: str, exptype: str) -> datamodels.DataModel:
+def open_apcorr_ref(refname: str, exptype: str) -> DataModel:
     """Determine the appropriate DataModel class to use when opening the input APCORR reference file.
 
     Parameters

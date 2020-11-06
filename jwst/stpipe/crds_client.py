@@ -41,8 +41,8 @@ import re
 import crds
 from crds.core import config, exceptions, heavy_client, log
 from crds.core import crds_cache_locking
+from stdatamodels import s3_utils
 
-from ..lib import s3_utils
 from ..datamodels import open as dm_open
 
 def get_exceptions_module():
@@ -155,7 +155,7 @@ def get_reference_file(dataset, reference_file_type, observatory=None, asn_expty
 
     Parameters
     ----------
-    dataset : jwst.datamodels.ModelBase instance
+    dataset : stdatamodels.DataModel instance
         A model of the input file.  Metadata on this input file will
         be used by the CRDS "bestref" algorithm to obtain a reference
         file.

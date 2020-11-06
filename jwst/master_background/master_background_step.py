@@ -1,5 +1,7 @@
 from os.path import basename
 import numpy as np
+from stdatamodels.properties import merge_tree
+
 from ..stpipe import Step
 from .. import datamodels
 from ..combine_1d.combine1d import combine_1d_spectra
@@ -233,9 +235,7 @@ def split_container(container):
     science.meta.asn_table = {}
     science.meta.pool_name = container.meta.pool_name
     science.meta.table_name = container.meta.table_name
-    datamodels.model_base.properties.merge_tree(
-        science.meta.asn_table._instance, asn
-    )
+    merge_tree(science.meta.asn_table._instance, asn)
     # Prune the background members from the table
     for p in science.meta.asn_table.instance['products']:
         p['members'] = [m for m in p['members'] if m['exptype'].lower() != 'background']

@@ -1,14 +1,14 @@
 """Test input directory usage and input defaults"""
 
 from os import path
-
 import pytest
-from .steps import StepWithModel
-from .util import t_path
 
 from jwst.stpipe import Step
-from jwst.datamodels import (DataModel, ModelContainer)
+from jwst.datamodels import JwstDataModel, ModelContainer
 from jwst import datamodels
+
+from .steps import StepWithModel
+from .util import t_path
 
 
 def test_default_input_with_container(mk_tmp_dirs):
@@ -37,7 +37,7 @@ def test_default_input_with_new_model():
 
     step = StepWithModel()
 
-    model = DataModel()
+    model = JwstDataModel()
     step.run(model)
 
     assert step._input_filename is None

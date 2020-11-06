@@ -1,9 +1,10 @@
-from .model_base import DataModel
+from .model_base import JwstDataModel
+
 
 __all__ = ['QuadModel']
 
 
-class QuadModel(DataModel):
+class QuadModel(JwstDataModel):
     """
     A data model for 4D image arrays.
 

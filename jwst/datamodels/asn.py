@@ -1,10 +1,12 @@
 import os
-from .model_base import DataModel
+
+from .model_base import JwstDataModel
+
 
 __all__ = ['AsnModel']
 
 
-class AsnModel(DataModel):
+class AsnModel(JwstDataModel):
     """
     A data model for association tables.
     """

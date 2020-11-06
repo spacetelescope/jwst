@@ -36,15 +36,15 @@ import os.path
 import textwrap
 
 from asdf import open as asdf_open
-
 from asdf import ValidationError as AsdfValidationError
+from stdatamodels import DataModel
+from stdatamodels import s3_utils
 
 from ..extern.configobj.configobj import (
     ConfigObj, Section, flatten_errors, get_extra_values)
 from ..extern.configobj.validate import Validator, ValidateError, VdtTypeError
 
-from ..datamodels import DataModel, StepParsModel
-from ..lib import s3_utils
+from ..datamodels import StepParsModel
 
 from . import utilities
 

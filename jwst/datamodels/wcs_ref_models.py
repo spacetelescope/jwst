@@ -2,8 +2,8 @@ import numpy as np
 import warnings
 from astropy.modeling.core import Model
 from astropy import units as u
+from stdatamodels.validate import ValidationWarning
 
-from .validate import ValidationWarning
 from .reference import ReferenceFileModel
 
 __all__ = ['DistortionModel', 'DistortionMRSModel', 'SpecwcsModel', 'RegionsModel',

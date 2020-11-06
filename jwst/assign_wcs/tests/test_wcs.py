@@ -2,11 +2,12 @@ import pytest
 from numpy.testing import assert_allclose
 from astropy import units as u
 from astropy import wcs
+from astropy.io import fits
 from asdf.tests import helpers
 
 from jwst.assign_wcs import pointing
 from jwst.transforms import models
-from jwst.datamodels import ImageModel, CubeModel, fits_support
+from jwst.datamodels import ImageModel, CubeModel
 
 
 @pytest.fixture
@@ -140,9 +141,11 @@ def test_create_fitswcs(tmpdir, create_model_3d):
     w3d = pointing.create_fitswcs(im)
     gra, gdec, glam = w3d(1, 1, 1)
 
-    ff = fits_support.to_fits(im._instance, im._schema)
-    hdu = fits_support.get_hdu(ff._hdulist, "SCI")
-    w = wcs.WCS(hdu.header)
+    path = str(tmpdir.join("fitswcs.fits"))
+    im.save(path)
+    with fits.open(path) as hdulist:
+        hdu = hdulist["SCI"]
+        w = wcs.WCS(hdu.header)
     wcel = w.sub(['celestial'])
     ra, dec = wcel.all_pix2world(1, 1, 0)
 

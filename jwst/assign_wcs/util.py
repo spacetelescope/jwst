@@ -17,11 +17,13 @@ from typing import Union, List
 from gwcs import WCS
 from gwcs.wcstools import wcs_from_fiducial, grid_from_bounding_box
 from gwcs import utils as gwutils
+from stdatamodels import DataModel
 
 from . import pointing
 from ..lib.catalog_utils import SkyObject
 from ..transforms.models import GrismObject
-from ..datamodels import WavelengthrangeModel, DataModel
+from ..datamodels import WavelengthrangeModel
+
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

@@ -1,10 +1,10 @@
-from .model_base import DataModel
+from .model_base import JwstDataModel
 
 
 __all__ = ['RampFitOutputModel']
 
 
-class RampFitOutputModel(DataModel):
+class RampFitOutputModel(JwstDataModel):
     """
     A data model for the optional output of the ramp fitting step.
 

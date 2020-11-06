@@ -24,6 +24,7 @@ try:
     DISCOURAGED_TYPES = (fits.HDUList,)
 except ImportError:
     DISCOURAGED_TYPES = None
+from stdatamodels import DataModel
 
 from . import config_parser
 from . import crds_client
@@ -33,7 +34,7 @@ from .. import __version_commit__, __version__
 from ..associations.load_as_asn import (LoadAsAssociation, LoadAsLevel2Asn)
 from ..associations.lib.format_template import FormatTemplate
 from ..associations.lib.update_path import update_key_value
-from ..datamodels import (DataModel, ModelContainer, StepParsModel)
+from ..datamodels import (ModelContainer, StepParsModel)
 from ..datamodels import open as dm_open
 from ..lib.class_property import ClassInstanceMethod
 from ..lib.suffix import remove_suffix
@@ -423,7 +424,7 @@ class Step():
 
             if len(self._reference_files_used):
                 for result in results:
-                    if isinstance(result, datamodels.DataModel):
+                    if isinstance(result, DataModel):
                         for ref_name, filename in self._reference_files_used:
                             if hasattr(result.meta.ref_file, ref_name):
                                 getattr(result.meta.ref_file, ref_name).name = filename
@@ -434,7 +435,7 @@ class Step():
 
             # Mark versions
             for result in results:
-                if isinstance(result, datamodels.DataModel):
+                if isinstance(result, DataModel):
                     result.meta.calibration_software_revision = __version_commit__ or 'RELEASE'
                     result.meta.calibration_software_version = __version__
 

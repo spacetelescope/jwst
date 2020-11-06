@@ -3,9 +3,9 @@ import pytest
 
 import numpy as np
 
-from .. import pipe_utils
-from ... import datamodels
-from ...associations.lib import dms_base
+from jwst.lib import pipe_utils
+from jwst import datamodels
+from jwst.associations.lib import dms_base
 
 all_exp_types = dms_base.IMAGE2_NONSCIENCE_EXP_TYPES + \
             dms_base.IMAGE2_SCIENCE_EXP_TYPES + \
@@ -28,7 +28,7 @@ exp_types.extend([
 )
 def test_is_tso_from_exptype(exp_type, expected):
     """Test is_tso integrity based on exp_type"""
-    model = datamodels.DataModel()
+    model = datamodels.JwstDataModel()
     model.meta.exposure.type = exp_type.upper()
     assert pipe_utils.is_tso(model) is expected
 
@@ -42,7 +42,7 @@ def test_is_tso_from_exptype(exp_type, expected):
 )
 def test_is_tso_from_tsoflag(tsovisit, expected):
     """Test is_tso integrity based on the TSO flag"""
-    model = datamodels.DataModel()
+    model = datamodels.JwstDataModel()
     model.meta.visit.tsovisit = tsovisit
     assert pipe_utils.is_tso(model) is expected
 

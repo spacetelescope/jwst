@@ -6,12 +6,13 @@ import logging
 
 from asdf import AsdfFile
 from astropy.io import fits
+from stdatamodels import DataModel, properties
 
 from ..associations import (
     AssociationNotValidError,
     load_asn)
 
-from . import model_base
+from .model_base import JwstDataModel
 from .util import open as datamodel_open
 from .util import is_association
 
@@ -23,7 +24,7 @@ __all__ = ['ModelContainer']
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-class ModelContainer(model_base.DataModel):
+class ModelContainer(JwstDataModel):
     """
     A container for holding DataModels.
 
@@ -93,7 +94,7 @@ class ModelContainer(model_base.DataModel):
         elif isinstance(init, fits.HDUList):
             self._models.append([datamodel_open(init, memmap=self._memmap)])
         elif isinstance(init, list):
-            if all(isinstance(x, (str, fits.HDUList, model_base.DataModel)) for x in init):
+            if all(isinstance(x, (str, fits.HDUList, DataModel)) for x in init):
                 # Try opening the list as datamodels
                 try:
                     init = [datamodel_open(m, memmap=self._memmap) for m in init]
@@ -164,7 +165,7 @@ class ModelContainer(model_base.DataModel):
         result._schema = result._schema
         result._ctx = result
         for m in self._models:
-            if isinstance(m, model_base.DataModel):
+            if isinstance(m, DataModel):
                 result.append(m.copy())
             else:
                 result.append(m)
@@ -234,7 +235,7 @@ class ModelContainer(model_base.DataModel):
 
         # Pull the whole association table into meta.asn_table
         self.meta.asn_table = {}
-        model_base.properties.merge_tree(
+        properties.merge_tree(
             self.meta.asn_table._instance, asn_data
         )
 

@@ -304,7 +304,7 @@ class Pipeline(Step):
         Parameters
         ----------
         model :  `DataModel`
-            Only a `DataModel` instnace is allowed.
+            Only a `DataModel` instance is allowed.
             Cannot be a filename, ModelContainer, etc.
         """
         ovr_refs = {

@@ -1,4 +1,4 @@
-from . import model_base
+from .model_base import JwstDataModel
 from .image import ImageModel
 from .slit import SlitModel, SlitDataModel
 
@@ -7,7 +7,7 @@ __all__ = ['MultiSlitModel']
 
 
 
-class MultiSlitModel(model_base.DataModel):
+class MultiSlitModel(JwstDataModel):
     """
     A data model for multi-slit images.
 

@@ -37,6 +37,9 @@ jobs:
       install:
         - pip install -U pip certifi
         - pip install $PIP_DEPENDENCIES
+        # Since there is no version of stdatamodels on PyPI, install from
+        # Github master until it is released to PyPI
+        - pip install git+https://github.com/spacetelescope/stdatamodels
 
     - name: SDP dependencies in requirements-sdp.txt, CRDS_CONTEXT=jwst-edit
       env:

@@ -1,10 +1,11 @@
-import warnings
+from stdatamodels.validate import ValidationWarning
+import numpy as np
 import pytest
+import warnings
+
 from jwst.dq_init import DQInitStep
 from jwst.dq_init.dq_initialization import do_dqinit
 from jwst.datamodels import MaskModel, GuiderRawModel, RampModel, dqflags
-from jwst.datamodels.validate import ValidationWarning
-import numpy as np
 
 
 # Set parameters for multiple runs of data
