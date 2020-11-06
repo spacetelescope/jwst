@@ -106,11 +106,7 @@ def open_extract1d_ref(refname: str, exptype: str) -> dict:
     ----------
     refname : str
         The name of the extract1d reference file.  This file is expected to be
-<<<<<<< HEAD
-        either a JSON or ASDF file giving extraction information, or a file
-=======
         a JSON file or ASDF file  giving extraction information, or a file
->>>>>>> updates for using apcor ref asdf file
         containing one or more images that are to be used as masks that
         define the extraction region and optionally background regions.
 
@@ -122,11 +118,7 @@ def open_extract1d_ref(refname: str, exptype: str) -> dict:
         ('JSON') will also be included with key 'ref_file_type'.
         If the extract1d reference file is in asdf format, the ref_dict will
         be a containing two keys: ref_dict['ref_file_type'] = 'ASDF'
-<<<<<<< HEAD
         and ref_dict['ref_model'].
-=======
-        and ref_dict['ref_model'].  
->>>>>>> updates for using apcor ref asdf file
         If the reference file is an image, ref_dict will be a
         dictionary with two keys:  ref_dict['ref_file_type'] = 'IMAGE'
         and ref_dict['ref_model'].  The latter will be the open file
