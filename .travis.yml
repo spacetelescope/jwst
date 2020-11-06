@@ -9,7 +9,6 @@ env:
     - CRDS_PATH=/tmp/crds_cache
     - CRDS_CLIENT_RETRY_COUNT=3
     - CRDS_CLIENT_RETRY_DELAY_SECONDS=20
-    - PIP_DEPENDENCIES=.[test]
 
 cache:
   - pip
@@ -21,6 +20,9 @@ jobs:
   fast_finish: true
 
   include:
+    - name: Python 3.9
+      python: 3.9.0
+
     - name: Latest dependency versions w/coverage
       script:
         - pytest --cov-report=xml --cov=./
@@ -32,31 +34,30 @@ jobs:
       before_install:
         - pip install . --no-deps
         - minimum_deps
-      env:
-        PIP_DEPENDENCIES="-r requirements-min.txt .[test]"
       install:
         - pip install -U pip certifi
-        - pip install $PIP_DEPENDENCIES
+        - pip install -r requirements-min.txt -e .[test]
         # Since there is no version of stdatamodels on PyPI, install from
         # Github master until it is released to PyPI
         - pip install git+https://github.com/spacetelescope/stdatamodels
 
-    - name: SDP dependencies in requirements-sdp.txt, CRDS_CONTEXT=jwst-edit
+    - name: SDP dependencies in requirements-sdp.txt
       env:
-        PIP_DEPENDENCIES="-r requirements-sdp.txt .[test]"
-        CRDS_CONTEXT=jwst-edit
+        - CRDS_CONTEXT=jwst-edit
+      install:
+        - pip install -r requirements-sdp.txt -e .[test]
 
     - name: Dev dependencies in requirements-dev.txt
-      env:
-        PIP_DEPENDENCIES="-r requirements-dev.txt .[test]"
+      install:
+        - pip install -r requirements-dev.txt -e .[test]
 
     - name: Warnings treated as Exceptions
       script:
         - pytest -W error
 
     - name: Documentation build
-      env:
-        PIP_DEPENDENCIES=.[docs]
+      install:
+        - pip install -e .[docs]
       script:
         - sphinx-build -W docs docs/_build
       addons:
@@ -71,36 +72,36 @@ jobs:
         - flake8
 
     - name: Verify install_requires in setup.py
-      env:
-        PIP_DEPENDENCIES=.
+      install:
+        - pip install -e .
       script:
         - verify_install_requires
 
     - name: Build distribution
-      env:
-        PIP_DEPENDENCIES="pep517 twine"
+      install:
+        - pip install pep517 twine
       script:
         - python -m pep517.check .
         - python -m pep517.build .
         - twine check dist/*
 
     - name: Security check
-      env:
-        PIP_DEPENDENCIES=".[test] bandit"
+      install:
+        - pip install bandit
       script:
         - bandit -r jwst scripts -c .bandit.yaml -ll
 
   allow_failures:
     - name: Dev dependencies in requirements-dev.txt
-      env:
-        PIP_DEPENDENCIES="-r requirements-dev.txt .[test]"
+      install:
+        - pip install -r requirements-dev.txt -e .[test]
 
     - name: Warnings treated as Exceptions
       script:
         - pytest -W error
 
 install:
-  - pip install $PIP_DEPENDENCIES
+  - pip install -e .[test]
 
 script:
   - pytest
