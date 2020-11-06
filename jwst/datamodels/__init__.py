@@ -9,7 +9,7 @@ from .apcorr import FgsImgApcorrModel, MirImgApcorrModel
 from .apcorr import NrcImgApcorrModel, NisImgApcorrModel
 from .apcorr import MirLrsApcorrModel, MirMrsApcorrModel
 from .apcorr import NrcWfssApcorrModel, NisWfssApcorrModel
-from .apcorr import NrsMosApcorrModel, NrsFsApcorrModel
+from .apcorr import NrsMosApcorrModel, NrsIfuApcorrModel, NrsFsApcorrModel
 from .asn import AsnModel
 from .barshadow import BarshadowModel
 from .combinedspec import CombinedSpecModel

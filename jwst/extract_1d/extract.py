@@ -106,7 +106,11 @@ def open_extract1d_ref(refname: str, exptype: str) -> dict:
     ----------
     refname : str
         The name of the extract1d reference file.  This file is expected to be
+<<<<<<< HEAD
         either a JSON or ASDF file giving extraction information, or a file
+=======
+        a JSON file or ASDF file  giving extraction information, or a file
+>>>>>>> updates for using apcor ref asdf file
         containing one or more images that are to be used as masks that
         define the extraction region and optionally background regions.
 
@@ -118,7 +122,11 @@ def open_extract1d_ref(refname: str, exptype: str) -> dict:
         ('JSON') will also be included with key 'ref_file_type'.
         If the extract1d reference file is in asdf format, the ref_dict will
         be a containing two keys: ref_dict['ref_file_type'] = 'ASDF'
+<<<<<<< HEAD
         and ref_dict['ref_model'].
+=======
+        and ref_dict['ref_model'].  
+>>>>>>> updates for using apcor ref asdf file
         If the reference file is an image, ref_dict will be a
         dictionary with two keys:  ref_dict['ref_file_type'] = 'IMAGE'
         and ref_dict['ref_model'].  The latter will be the open file
@@ -183,7 +191,7 @@ def open_apcorr_ref(refname: str, exptype: str) -> DataModel:
         'NIS_WFSS': NisWfssApcorrModel,
         'NRS_BRIGHTOBJ': NrsFsApcorrModel,
         'NRS_FIXEDSLIT': NrsFsApcorrModel,
-        'NRS_IFU': NrsMosApcorrModel,
+        'NRS_IFU': NrsIfuApcorrModel,
         'NRS_MSASPEC': NrsMosApcorrModel
     }
 
@@ -2623,6 +2631,8 @@ def do_extract1d(
         to specify whether the parameters are those that could be read
         from a JSON-format reference file
         (i.e. ref_dict['ref_file_type'] = "JSON")
+        from a asdf-format reference file
+        (i.e. ref_dict['ref_file_type'] = "ASDF")
         or parameters relevant for a reference image
         (i.e. ref_dict['ref_file_type'] = "IMAGE").
 
@@ -2659,7 +2669,7 @@ def do_extract1d(
         obtained by iterating over a SourceModelContainer.  The default
         is False.
 
-    apcorr_ref_model : `~fits.FITS_rec` or None
+    apcorr_ref_model : `~fits.FITS_rec`, datamodel or  None
         Table of aperture correction values from the APCORR reference file.
 
     Returns

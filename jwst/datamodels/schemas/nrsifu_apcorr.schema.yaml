@@ -1,0 +1,201 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/asdf/asdf-schema-1.0.0"
+id: "http://stsci.edu/schemas/jwst_datamodel/nrsifu_apcorr.schema"
+title: NRS Ifu aperture correction data model
+allOf:
+- $ref: referencefile.schema
+- $ref: keyword_exptype.schema
+- $ref: keyword_pexptype.schema
+- type: object
+  properties:
+    apcorr_table:
+      type: object
+      properties:
+          grating:
+            type: string
+          filter:
+            type: string
+          wavelength:
+            datatype: float32
+          wavelength_units:
+            type: string
+          radius:
+            datatype: float32
+          radius_units: 
+            type: string
+          apcorr:
+            datatype: float32
+          apcorr_err:
+            datatype: float32
+    apcorr_table_clear_prism:
+      type: object
+      properties:
+          grating:
+            type: string
+          filter:
+            type: string
+          wavelength:
+            datatype: float32
+          wavelength_units:
+            type: string
+          radius:
+            datatype: float32
+          radius_units: 
+            type: string
+          apcorr:
+            datatype: float32
+          apcorr_err:
+            datatype: float32
+    apcorr_table_f070lp_g140h:
+      type: object
+      properties:
+          grating:
+            type: string
+          filter:
+            type: string
+          wavelength:
+            datatype: float32
+          wavelength_units:
+            type: string
+          radius:
+            datatype: float32
+          radius_units: 
+            type: string
+          apcorr:
+            datatype: float32
+          apcorr_err:
+            datatype: float32
+    apcorr_table_f070lp_g140m:
+      type: object
+      properties:
+          grating:
+            type: string
+          filter:
+            type: string
+          wavelength:
+            datatype: float32
+          wavelength_units:
+            type: string
+          radius:
+            datatype: float32
+          radius_units: 
+            type: string
+          apcorr:
+            datatype: float32
+          apcorr_err:
+            datatype: float32
+    apcorr_table_f100lp_g140h:
+      type: object
+      properties:
+          grating:
+            type: string
+          filter:
+            type: string
+          wavelength:
+            datatype: float32
+          wavelength_units:
+            type: string
+          radius:
+            datatype: float32
+          radius_units: 
+            type: string
+          apcorr:
+            datatype: float32
+          apcorr_err:
+            datatype: float32
+    apcorr_table_f100lp_g140m:
+      type: object
+      properties:
+          grating:
+            type: string
+          filter:
+            type: string
+          wavelength:
+            datatype: float32
+          wavelength_units:
+            type: string
+          radius:
+            datatype: float32
+          radius_units: 
+            type: string
+          apcorr:
+            datatype: float32
+          apcorr_err:
+            datatype: float32
+    apcorr_table_f170lp_g235h:
+      type: object
+      properties:
+          grating:
+            type: string
+          filter:
+            type: string
+          wavelength:
+            datatype: float32
+          wavelength_units:
+            type: string
+          radius:
+            datatype: float32
+          radius_units: 
+            type: string
+          apcorr:
+            datatype: float32
+          apcorr_err:
+            datatype: float32
+    apcorr_table_f170lp_g235m:
+      type: object
+      properties:
+          grating:
+            type: string
+          filter:
+            type: string
+          wavelength:
+            datatype: float32
+          wavelength_units:
+            type: string
+          radius:
+            datatype: float32
+          radius_units: 
+            type: string
+          apcorr:
+            datatype: float32
+          apcorr_err:
+            datatype: float32
+    apcorr_table_f290lp_g395h:
+      type: object
+      properties:
+          grating:
+            type: string
+          filter:
+            type: string
+          wavelength:
+            datatype: float32
+          wavelength_units:
+            type: string
+          radius:
+            datatype: float32
+          radius_units: 
+            type: string
+          apcorr:
+            datatype: float32
+          apcorr_err:
+            datatype: float32
+    apcorr_table_f290lp_g395h:
+      type: object
+      properties:
+          grating:
+            type: string
+          filter:
+            type: string
+          wavelength:
+            datatype: float32
+          wavelength_units:
+            type: string
+          radius:
+            datatype: float32
+          radius_units: 
+            type: string
+          apcorr:
+            datatype: float32
+          apcorr_err:
+            datatype: float32
