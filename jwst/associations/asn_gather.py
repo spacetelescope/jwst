@@ -1,12 +1,19 @@
 """asn_gather: Copy or Move data that is listed in an association"""
+import logging
 from pathlib import Path
 import subprocess
 
 __all__ = ['asn_gather']
 
 
-def asn_gather(source_asn_path, destination=None, exp_types=None,
-               shellcmd='rsync -ur --no-perms --chmod=ugo=rwX'):
+# Configure logging
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
+LogLevels = [logging.WARNING, logging.INFO, logging.DEBUG]
+
+
+def asn_gather(association, destination=None, exp_types=None,
+               shellcmd='rsync -urv --no-perms --chmod=ugo=rwX'):
     """Copy/Move members of an association from one location to another
 
     The association is copied into the destination, re-written such that the member
@@ -18,7 +25,7 @@ def asn_gather(source_asn_path, destination=None, exp_types=None,
 
     Parameters
     ----------
-    source_asn_path : str, pathlib.Path
+    association : str, pathlib.Path
         The association to gather.
 
     destination : str, pathlib.Path, or None
@@ -41,7 +48,7 @@ def asn_gather(source_asn_path, destination=None, exp_types=None,
     from .load_as_asn import LoadAsAssociation
     from . import Association
 
-    source_asn_path = Path(source_asn_path)
+    source_asn_path = Path(association)
     source_folder = source_asn_path.parent
     if destination is None:
         dest_folder = Path('./')
@@ -77,16 +84,22 @@ def asn_gather(source_asn_path, destination=None, exp_types=None,
     for product in dest_asn['products']:
         for member in product['members']:
             src_path = Path(member['expname'])
+            logger.info(f'*** Copying member {src_path.name}')
             if str(src_path.parent).startswith('.'):
                 src_path = src_folder / src_path
             dest_path = dest_folder / src_path.name
             process_args = shellcmd_args + [str(src_path), str(dest_path)]
-            subprocess.run(process_args, check=True)
+            logger.debug(f'Shell command in use: {process_args}')
+            result = subprocess.run(process_args, capture_output=True, check=True)
+            logger.debug(result.stdout.decode())
+            logger.debug(result.stderr.decode())
+            logger.info('...done')
             member['expname'] = dest_path.name
 
     # Save new association.
     dest_path = dest_folder / source_asn_path.name
     _, serialized = dest_asn.dump()
+    logger.info(f'Copying the association file itself {dest_path}')
     with open(dest_path, 'w') as fh:
         fh.write(serialized)
 
@@ -94,8 +107,17 @@ def asn_gather(source_asn_path, destination=None, exp_types=None,
     return dest_path
 
 
-def from_cmdline():
-    """Collect asn_gather arguments from the commandline"""
+def from_cmdline(args=None):
+    """Collect asn_gather arguments from the commandline
+
+    Parameters
+    ----------
+    args : [str[,...]]
+        List of arguments to parse
+
+    Returns : dict
+        Dict of the arguments and their values.
+    """
     import argparse
 
     parser = argparse.ArgumentParser(
@@ -103,19 +125,36 @@ def from_cmdline():
     )
 
     parser.add_argument(
-        src_asn_path,
-        help='Association to gather'
+        'association',
+        help='Association to gather.'
     )
     parser.add_argument(
-        destination, default='./'
-        help='Folder to copy the association to. Default: %(default)s)'
+        'destination',
+        help='Folder to copy the association to.'
     )
     parser.add_argument(
-        '-t', '--exp-types', default=None,
-        action='append'
+        '-t', '--exp-types', default=None, dest='exp_types',
+        action='append',
         help='Exposure types to gather. If not specified, all exposure types are used.'
     )
     parser.add_argument(
-        '-c', '--cmd',g
-        help='Shell command to use to perform the copy. Specify as a single string.'
+        '-v', '--verbose', action='count', default=0,
+        help='Increase verbosity. Specifying multiple times adds more output.'
     )
+    parser.add_argument(
+        '-c', '--cmd', dest='shellcmd',
+        default='rsync -urv --no-perms --chmod=ugo=rwX',
+        help=('Shell command to use to perform the copy. Specify as a single string. '
+              'Default: "%(default)s"')
+    )
+
+    parsed = parser.parse_args(args)
+
+    # Set output detail.
+    level = LogLevels[min(len(LogLevels)-1, parsed.verbose)]
+    logger.setLevel(level)
+
+    # That's all folks.
+    gather_args = vars(parsed)
+    del gather_args['verbose']
+    return gather_args

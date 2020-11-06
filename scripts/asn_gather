@@ -4,6 +4,6 @@
 
 from jwst.associations import asn_gather
 
-if __name__ == 'main':
-    path, kwargs = asn_gather.from_cmdline()
-    asn_gather.asn_gather(path, **kwargs)
+if __name__ == '__main__':
+    kwargs = asn_gather.from_cmdline()
+    asn_gather.asn_gather(**kwargs)
