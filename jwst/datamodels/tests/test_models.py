@@ -3,7 +3,6 @@ from os import path as op
 import shutil
 import tempfile
 import warnings
-import jsonschema
 
 import pytest
 from astropy.table import Table
@@ -284,12 +283,6 @@ def test_stringify(tmpdir):
         assert str(im) == '<MaskModel(2048, 2048) from nircam_mask.fits>'
 
 
-def test_section():
-    with QuadModel((5, 35, 40, 32)) as dm:
-        section = dm.get_section('data')[3:4, 1:3]
-        assert section.shape == (1, 2, 40, 32)
-
-
 def test_init_with_array():
     array = np.empty((50, 50))
     with datamodels.open(array) as dm:
@@ -426,7 +419,7 @@ def test_multislit_metadata():
 def test_multislit_metadata2():
     with MultiSlitModel() as ms:
         ms.slits.append(ms.slits.item())
-        for key, val in ms.iteritems():
+        for key, val in ms.items():
             assert isinstance(val, (bytes, str, int, float, bool, Time))
 
 
@@ -713,32 +706,6 @@ def test_hasattr():
     model = JwstDataModel()
     assert model.meta.hasattr('date')
     assert not model.meta.hasattr('filename')
-
-
-def test_validate_on_read():
-    """ Test for proper validation error
-
-    Note: The FITS file is opened separately in order to properly close
-    the file.
-    """
-    schema = ImageModel((10, 10))._schema.copy()
-    schema['properties']['meta']['properties']['calibration_software_version']['fits_required'] = True
-
-    with fits.open(FITS_FILE) as hduls:
-        with pytest.raises(jsonschema.ValidationError):
-            ImageModel(hduls, schema=schema, strict_validation=True)
-
-
-def test_validate_required_field():
-    im = ImageModel((10, 10), strict_validation=True)
-    schema = im.meta._schema
-    schema['properties']['telescope']['fits_required'] = True
-
-    with pytest.raises(jsonschema.ValidationError):
-        im.validate_required_fields()
-
-    im.meta.telescope = 'JWST'
-    im.validate_required_fields()
 
 
 def test_multislit_model():
