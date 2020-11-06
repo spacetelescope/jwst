@@ -163,8 +163,8 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
             wl = wavelength.min()
 
         apcorr = select_apcorr(input_model)(
-            input_model, 
-            apcorr_ref_model, 
+            input_model,
+            apcorr_ref_model,
             location=(ra, dec, wl)
         )
 

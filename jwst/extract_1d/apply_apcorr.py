@@ -6,13 +6,10 @@ from astropy.io import fits
 from stdatamodels import DataModel
 
 from ..assign_wcs.util import compute_scale
-<<<<<<< HEAD
 from ..datamodels import MultiSlitModel
 import numpy as np
-=======
-from ..datamodels import DataModel, MultiSlitModel,MirMrsApcorrModel, NrsIfuApcorrModel
+from ..datamodels import DataModel, MultiSlitModel
 
->>>>>>> updates for using apcor ref asdf file
 
 class ApCorrBase(abc.ABC):
     """Base class for aperture correction classes.
@@ -253,11 +250,7 @@ class ApCorrRadial(ApCorrBase):
     """Aperture correction class used with spectral data produced from an extraction aperture radius."""
     size_key = 'radius'
 
-<<<<<<< HEAD
- match_pars = {
-=======
     match_pars = {
->>>>>>> updates for using apcor ref asdf file
         'MIRI': {
             'MRS': {'instrument': ['channel','band']},  # Only one row is available for this mode; no selection criteria
         },
@@ -277,16 +270,9 @@ class ApCorrRadial(ApCorrBase):
         self.location = location
         instrument = self.model.meta.instrument.name.upper()
 
-<<<<<<< HEAD
         self.match_keys = self.get_match_keys()
         self.match_pars = self.get_match_pars()
         self.reference = self.reduce_reftable(instrument)
-=======
-        self.match_keys = self._get_match_keys()
-        self.match_pars = self._get_match_pars()
-        self.reference = self._reduce_reftable(instrument)
-        
->>>>>>> updates for using apcor ref asdf file
         self.apcorr_sizeunits = self.reference.radius_units
         self._convert_size_units()
         self.apcorr_func = self.approximate()
@@ -309,11 +295,7 @@ class ApCorrRadial(ApCorrBase):
                     'pixels.'
                 )
 
-<<<<<<< HEAD
     def get_match_keys(self) -> dict:
-=======
-    def _get_match_keys(self) -> dict:
->>>>>>> updates for using apcor ref asdf file
         """Get column keys needed for reducing the reference table based on input."""
         instrument = self.model.meta.instrument.name.upper()
         exptype = self.model.meta.exposure.type.upper()
@@ -323,17 +305,12 @@ class ApCorrRadial(ApCorrBase):
             if key in exptype:
                 return relevant_pars[key]
 
-<<<<<<< HEAD
     def get_match_pars(self) -> dict:
-=======
-    def _get_match_pars(self) -> dict:
->>>>>>> updates for using apcor ref asdf file
         """Get meta parameters required for reference table row-selection."""
         match_pars = {}
 
         for node, keys in self.match_keys.items():
             meta_node = self.model.meta[node]
-<<<<<<< HEAD
             for key in keys:
                 match_pars[key if key != 'name' else node] = getattr(meta_node, key)
         return match_pars
@@ -341,26 +318,10 @@ class ApCorrRadial(ApCorrBase):
     def reduce_reftable(self, instrument):
         """Find the correct table for channel/band or filter/grating."""
 
-=======
-            
-            for key in keys:
-                match_pars[key if key != 'name' else node] = getattr(meta_node, key)
-        
-        return match_pars
-
-    def _reduce_reftable(self, instrument):
-        """Find the correct table for channel/band or filter/grating."""
-        
->>>>>>> updates for using apcor ref asdf file
         tabletype =''
         set_multiple = False
         for key, value in self.match_pars.items():
             tabletype = tabletype + '_' + value.lower()
-<<<<<<< HEAD
-
-=======
-            
->>>>>>> updates for using apcor ref asdf file
             if value.lower() == 'multiple':
                 set_multiple  = True
 
@@ -368,11 +329,7 @@ class ApCorrRadial(ApCorrBase):
             tabletype = '_multiple_multiple'
 
         # need a better way to do this- but for now to get things working
-<<<<<<< HEAD
         # I was trying to do something like
-=======
-        # I was trying to do something like 
->>>>>>> updates for using apcor ref asdf file
         # table = self_reference_table.'apcorr_table'+ tabletype - but that did not work
         if tabletype == '_multiple_multiple':
             table = self._reference_table.apcorr_table
@@ -396,20 +353,14 @@ class ApCorrRadial(ApCorrBase):
             table = self._reference_table.apcorr_table_f290lp_g395m
 
         return table
-<<<<<<< HEAD
-=======
 
->>>>>>> updates for using apcor ref asdf file
 
     def approximate(self):
         # the wavelength and extraction radius is need to interpolate apcor.
         # This is done in find apcorr_func
         pass
 
-<<<<<<< HEAD
-=======
 
->>>>>>> updates for using apcor ref asdf file
     def apply(self, spec_table: fits.FITS_rec):
         """Apply interpolated aperture correction value to source-related extraction results in-place.
 
@@ -454,20 +405,11 @@ class ApCorrRadial(ApCorrBase):
         self.size = size_match
 
 
-<<<<<<< HEAD
     def find_apcorr_func(self, iwave, radius_ifu):
         # at ifu wavelength plane (iwave), the extraction radius is radius_ifu
         # pull out the radius values (self.size)  to use in the apcor ref file for this iwave
         # self.size and self.apcorr have already been interpolated in wavelength to match the
         # the ifu wavelength range.
-=======
-
-    def find_apcorr_func(self, iwave, radius_ifu):
-        # at ifu wavelength plane (iwave), the extraction radius is radius_ifu
-        # pull out the radius values (self.size)  to use in the apcor ref file for this iwave
-        # self.size and self.apcorr have already been interpolated in wavelength to match the 
-        # the ifu wavelength range. 
->>>>>>> updates for using apcor ref asdf file
 
         radius_apcor = self.size[:,iwave]
         temparray=self.apcorr[:,iwave]
@@ -476,10 +418,6 @@ class ApCorrRadial(ApCorrBase):
         self.apcorr_correction.append(correction)
         return
 
-<<<<<<< HEAD
-=======
-
->>>>>>> updates for using apcor ref asdf file
 class ApCorr(ApCorrBase):
     """'Default' Aperture correction class for use with most spectroscopic modes."""
     size_key = 'size'
