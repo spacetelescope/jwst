@@ -91,7 +91,7 @@ __all__ = [
     'AmiLgModel',
     'FgsImgApcorrModel', 'MirImgApcorrModel', 'NrcImgApcorrModel', 'NisImgApcorrModel',
     'MirLrsApcorrModel', 'MirMrsApcorrModel', 'NrcWfssApcorrModel', 'NisWfssApcorrModel',
-    'NrsMosApcorrModel', 'NrsFsApcorrModel',
+    'NrsMosApcorrModel', 'NrsFsApcorrModel','NrsIfuApcorrModel',
     'AsnModel',
     'BarshadowModel', 'CameraModel', 'CollimatorModel',
     'CombinedSpecModel', 'ContrastModel', 'CubeModel',
