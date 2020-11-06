@@ -50,9 +50,8 @@ def test_id_from_xy():
     """Test id from x y location of shutter"""
 
     # First row of msaoper.json
-    data = {"Q": 1,"x": 1,"y": 1,"state": "closed","TA state": "closed",
-            "Internal state": "normal",
-            "Vignetted": "yes"}
+    data = {"Q": 1, "x": 1, "y": 1, "state": "closed", "TA state": "closed",
+            "Internal state": "normal", "Vignetted": "yes"}
 
     shutters_per_row = 365
 
@@ -80,9 +79,9 @@ def test_get_failed_open_shutters():
     # get_failed_open_shutters returns 3 flaggable states
     # state, Internal state, and TA state.
     for shutter in result:
-        assert shutter['state'] == 'open' or \
-                shutter['Internal state'] == 'open' or \
-                shutter['TA state'] == 'open'
+        assert shutter['state'] == 'open' \
+               or shutter['Internal state'] == 'open' \
+               or shutter['TA state'] == 'open'
 
 
 def test_create_slitlets():
