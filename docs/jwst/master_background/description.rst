@@ -14,9 +14,8 @@ performed on the input images, based on the value of the S_BKDSUB keyword. If S_
 set to "COMPLETE", the master background step is skipped. If the :ref:`calwebb_spec2 <calwebb_spec2>`
 background step was not applied, the master background step will proceed.
 The user can override this logic, if desired, by setting the step argument ``--force_subtract``
-to ``True``, in which case master
-background subtraction will be applied regardless of the value of S_BKDSUB (see
-:ref:`msb_step_args`).
+to ``True``, in which case master background subtraction will be applied regardless of the
+value of S_BKDSUB (see :ref:`msb_step_args`).
 
 Upon successful completion of the step, the S_MSBSUB keyword is set to "COMPLETE" in the
 output product. The background-subtracted results are returned as a new data model, leaving
@@ -37,7 +36,7 @@ The master background signal will be subtracted from all input members designate
 need to be :ref:`cal <cal>` products created from individual exposures by the
 :ref:`calwebb_spec2 <calwebb_spec2>` pipeline.
 
-There are two main observing scenarios that are supported by this step: nodded point sources
+There are two main observing scenarios that are supported by this step: nodded exposures of point sources
 and off-source background exposures of extended targets. A third type of operation is performed
 for NIRSpec MOS observations that include background slits. The details for each mode are explained
 below.
@@ -184,12 +183,23 @@ NIRSpec MOS with Background Slits
 NIRSpec MOS exposures that have one or more slits defined as background require
 unique processing. The background slits take the place of both nodded and off-target
 background exposures, because the background can be measured directly from the spectra
-resulting from those slits. In this observing scenario, all source and background
-slits are processed through all of the :ref:`calwebb_spec2 <calwebb_spec2>` steps,
-resulting in extracted spectra for the sources and backgrounds. The master_background
-step then combines the background spectra into a master background spectrum and
-performs background subtraction on all of the source slit data, the same as the
-other observing scenarios.
+contained in those slits. Because the background spectra come from the same exposure
+as the source spectra, the master background processing is applied within the
+:ref:`calwebb_spec2 <calwebb_spec2>` pipeline as each individual exposure is
+calibrated, rather than during :ref:`calwebb_spec3 <calwebb_spec3>` processing.
+In this scenario, all source and background slits are first partially calibrated up through
+the :ref:`extract_2d <extract_2d_step>` and :ref:`srctype <srctype_step>` steps of
+:ref:`calwebb_spec2 <calwebb_spec2>` to produce 2D cutouts for each slit. At this
+point the `master_background` step is applied, which completes the remaining calibration
+steps for all of the background slits, resulting in multiple 1D extracted background
+spectra. The background spectra are combined (as with other observing modes) to
+create a 1D master background spectrum, and then the master background spectrum is
+interpolated back into the 2D space of each source slit and subtracted. The
+background-subtracted source slits then have all of their remaining
+:ref:`calwebb_spec2 <calwebb_spec2>` calibration steps applied.
+
+Note that special corrections are applied to the 2D master background data before
+being subtracted from each source slit, as explained in detail below.
 
 Creating the 1-D Master Background Spectrum
 -------------------------------------------
@@ -259,7 +269,7 @@ calibration:
   is created from data that had corrections for a uniform source applied to it and hence
   there's a mismatch relative to the point source data.
 
-The 2-D background that's initially created from the 1-D master background is essenentially
+The 2-D background that's initially created from the 1-D master background is essentially
 a perfectly calibrated background signal. However, due to the effects mentioned above, the
 actual background signal contained within a calibrated point source slit (or IFU image) is not
 perfect (e.g. it still has the bar shadow effects in it). So all of these effects need to be
@@ -271,16 +281,58 @@ For the NIRSpec IFU mode, the only effect that needs to be accounted for is the 
 between point source and uniform source pathloss corrections, because no wavelength or
 bar shadow corrections are applied to IFU data. The 2-D background generated from the
 master background spectrum must have the uniform source pathloss correction removed from
-it and the point source pathloss correction imposed on it, so the operation performed on
-the 2-D background is:
+it and the point source pathloss correction applied to it, so the operation performed on
+the IFU 2-D background is:
 
 .. math::
- bkg(corr) = bkg * pathloss(point) / pathloss(uniform)
-
-NIRSpec MOS Mode
-^^^^^^^^^^^^^^^^
-**Not yet implemented**
+ bkg(corr) = bkg * pathloss(uniform) / pathloss(point)
 
 NIRSpec Fixed-Slit Mode
 ^^^^^^^^^^^^^^^^^^^^^^^
-**Not yet implemented**
+NIRSpec fixed slit data receive flat-field, pathloss, and photometric calibrations,
+all of which are wavelength-dependent, and the pathloss correction is also source
+type dependent. Fixed slit data do not receive a bar shadow correction. Only slits
+containing a point source can have a wavelength correction applied, to account for
+source centering within the slit, hence slits containing uniform sources receive
+the same flat-field and photometric calibrations as background spectra and
+therefore don't require corrections for those two calibrations. Furthermore, the
+source position in the slit is only known for the primary slit in an exposure, so
+even if the secondary slits contain point sources, no wavelength correction can
+be applied, and therefore again the flat-field and photometric calibrations are
+the same as for background spectra. This means only the pathloss correction
+difference between uniform and point sources needs to be accounted for in the
+secondary slits.
+
+So if the primary slit (as given by the FXD_SLIT keyword) contains a point source
+(as given by the SRCTYPE keyword) the corrections applied to the 2-D master background
+for that slit are:
+
+.. math::
+ bkg(corr) = bkg &* [flatfield(uniform) / flatfield(point)]\\
+                 &* [pathloss(uniform) / pathloss(point)]\\
+                 &* [photom(point) / photom(uniform)]
+
+For secondary slits that contain a point source, the corrections applied to the
+2-D master background are simply:
+
+.. math::
+ bkg(corr) = bkg * pathloss(uniform) / pathloss(point)
+
+NIRSpec MOS Mode
+^^^^^^^^^^^^^^^^
+Because the master background is subtracted from only partially calibrated slit
+data, the number of correction terms is reduced relative to that for fixed slits.
+At the time the 2D master background is subtracted from each source slit, those
+source slits have not yet received any calibrations that are specific to point
+sources and hence the background signal in the source slits has effects in it
+characteristic of uniform source data. Therefore the fully-calibrated 2D
+master background signal needs to have those uniform source effects imposed on it
+(e.g. impose the uniform source flat-field pattern or the bar shadow pattern
+into the background data),
+so that it matches the actual background signal in each slit before being
+subtracted. The corrections applied to the 2D master background for MOS slits are:
+
+.. math::
+ bkg(corr) = bkg &* flatfield(uniform) * pathloss(uniform)\\
+                 &* barshadow(uniform) / photom(uniform)
+
