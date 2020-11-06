@@ -17,12 +17,10 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 # These values are used to indicate whether the input extract1d reference file
-# (if any) is JSON, IMAGE or ASDF
-# 1. IFU extract_1d ref file is asdf
-# 2. NIRSpec to supply new extract1d and apcor ref files.
-FILE_TYPE_JSON = "JSON"
-FILE_TYPE_IMAGE = "IMAGE"
+# (if any) is ASDF (default) or IMAGE
+
 FILE_TYPE_ASDF = "ASDF"
+FILE_TYPE_IMAGE = "IMAGE"
 
 # This is to prevent calling offset_from_offset multiple times for
 # multi-integration data.
@@ -53,7 +51,7 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
         If not None, this parameter overrides the value in the
         extract_1d reference file.
 
-    apcorr_ref_model : ~.fits.FITS_rec or None
+    apcorr_ref_model : apcorr datamodel or None
         Aperture correction table.
 
     Returns
@@ -98,13 +96,9 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
         extract_params['subtract_background'] = subtract_background
 
     if extract_params:
-#TODO clean up after deciding if using FILE_TYPE_TABLE or FILE_TYPE_JSON
         if extract_params['ref_file_type'] == FILE_TYPE_ASDF:
             (ra, dec, wavelength, temp_flux, background, npixels, dq, npixels_bkg, radius_match) = \
                     extract_ifu(input_model, source_type, extract_params)
-       # elif extract_params['ref_file_type'] == FILE_TYPE_JSON:
-       #     (ra, dec, wavelength, temp_flux, background, npixels, dq, npixels_bkg) = \
-       #             extract_ifu(input_model, source_type, extract_params)
         else:                                   # FILE_TYPE_IMAGE
             (ra, dec, wavelength, temp_flux, background, npixels, dq, npixels_bkg) = \
                     image_extract_ifu(input_model, source_type, extract_params)
@@ -138,7 +132,6 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
         flux = temp_flux * pixel_solid_angle * 1.e6
         # surf_bright and background were computed above
     del temp_flux
-
     error = np.zeros_like(flux)
     sb_error = np.zeros_like(flux)
     berror = np.zeros_like(flux)
@@ -170,16 +163,18 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
             wl = wavelength.min()
 
         apcorr = select_apcorr(input_model)(
-            input_model, apcorr_ref_model.apcorr_table, apcorr_ref_model.sizeunit, location=(ra, dec, wl)
+            input_model, 
+            apcorr_ref_model, 
+            location=(ra, dec, wl)
         )
 
-        # determine apcor function and apcor radiius to use at each wavelength
+        # determine apcor function and apcor radius to use at each wavelength
         apcorr.match_wavelengths(wavelength)
 
         # at each IFU wavelength we have the extraction radius defined by radius_match (radius size in pixels)
-        for i, wave in enumerate(wavelength):
+        for i  in range(wavelength.size):
             radius = radius_match[i]
-            apcorr.find_apcorr_func(i,wavelength,radius)
+            apcorr.find_apcorr_func(i, radius)
 
         apcorr.apply(spec.spec_table)
 
@@ -209,6 +204,7 @@ def get_extract_parameters(ref_dict, slitname):
     """
 
     extract_params = {}
+<<<<<<< HEAD
 #TODO clean up after deciding if using FILE_TYPE_TABLE or FILE_TYPE_JSON
     if (ref_dict['ref_file_type'] == FILE_TYPE_JSON):
             extract_params['ref_file_type'] = FILE_TYPE_JSON
@@ -234,6 +230,9 @@ def get_extract_parameters(ref_dict, slitname):
                     break
 
     elif ref_dict['ref_file_type'] == FILE_TYPE_ASDF:
+=======
+    if ref_dict['ref_file_type'] == FILE_TYPE_ASDF:
+>>>>>>> updates for using apcor ref asdf file
         extract_params['ref_file_type'] = FILE_TYPE_ASDF
         refmodel = ref_dict['ref_model']
         region_type = refmodel.meta.region_type 
@@ -254,7 +253,6 @@ def get_extract_parameters(ref_dict, slitname):
         extract_params['radius'] = radius
         extract_params['inner_bkg'] = inner_bkg
         extract_params['outer_bkg'] = outer_bkg
-
 
     elif ref_dict['ref_file_type'] == FILE_TYPE_IMAGE:
         extract_params['ref_file_type'] = FILE_TYPE_IMAGE
@@ -783,7 +781,6 @@ def image_extract_ifu(input_model, source_type, extract_params):
         n_bkg = np.where(n_bkg <= 0., 1., n_bkg)
         normalization = npixels / n_bkg
     del temp
-
 
     # Extract the background.
     if mask_bkg is not None:

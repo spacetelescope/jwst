@@ -5,11 +5,17 @@ id: "http://stsci.edu/schemas/jwst_datamodel/mirmrs_apcorr.schema"
 title: MIRI MRS aperture correction data model
 allOf:
 - $ref: referencefile.schema
+- $ref: keyword_exptype.schema
+- $ref: keyword_pexptype.schema
 - type: object
   properties:
     apcorr_table:
       type: object
       properties:
+          channel:
+            type: string
+          band:
+            type: string
           wavelength:
             datatype: float32
           wavelength_units:
