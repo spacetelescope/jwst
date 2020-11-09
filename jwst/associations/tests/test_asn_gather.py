@@ -51,7 +51,7 @@ def gather(source_folder, tmp_path_factory, request):
 
     dest_folder = tmp_path_factory.mktemp('asn_gather_dest')
     asn_path = asn_gather.asn_gather(source_folder / PRIMARY_NAME, destination=dest_folder,
-                                     exp_types=exp_types)
+                                     exp_types=exp_types, exclude_types=excludes)
 
     return dest_folder, asn_path, source_folder, exp_types, excludes
 

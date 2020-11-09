@@ -12,7 +12,7 @@ logger.addHandler(logging.NullHandler())
 LogLevels = [logging.WARNING, logging.INFO, logging.DEBUG]
 
 
-def asn_gather(association, destination=None, exp_types=None,
+def asn_gather(association, destination=None, exp_types=None, exclude_types=None,
                shellcmd='rsync -urv --no-perms --chmod=ugo=rwX'):
     """Copy/Move members of an association from one location to another
 
@@ -36,6 +36,9 @@ def asn_gather(association, destination=None, exp_types=None,
         List of exposure types to gather.
         If None, all are gathered.
 
+    exclude_types : [str[,...]] or None
+        List of exposure types to exclude.
+
     shellcmd : str
         The shell command to use to do the copying of the
         individual members.
@@ -48,6 +51,7 @@ def asn_gather(association, destination=None, exp_types=None,
     from .load_as_asn import LoadAsAssociation
     from . import Association
 
+    exclude_types = exclude_types if exclude_types is not None else []
     source_asn_path = Path(association)
     source_folder = source_asn_path.parent
     if destination is None:
@@ -66,7 +70,8 @@ def asn_gather(association, destination=None, exp_types=None,
             {'expname': src_member['expname'],
              'exptype': src_member['exptype']}
             for src_member in src_product['members']
-            if exp_types is None or src_member['exptype'] in exp_types
+            if src_member['exptype'] not in exclude_types and \
+            (exp_types is None or src_member['exptype'] in exp_types)
         ]
         if members:
             product = {
