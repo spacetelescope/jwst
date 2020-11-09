@@ -91,9 +91,8 @@ def asn_gather(association, destination=None, exp_types=None, exclude_types=None
             dest_path = dest_folder / src_path.name
             process_args = shellcmd_args + [str(src_path), str(dest_path)]
             logger.debug(f'Shell command in use: {process_args}')
-            result = subprocess.run(process_args, capture_output=True, check=True)
+            result = subprocess.run(process_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True)
             logger.debug(result.stdout.decode())
-            logger.debug(result.stderr.decode())
             logger.info('...done')
             member['expname'] = dest_path.name
 
