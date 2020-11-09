@@ -14,6 +14,8 @@ assign_wcs
 associations
 ------------
 
+- Add utility asn_gather [#5468]
+
 - Do not allow target acqs to be considered TSO [#5385]
 
 - Add NRS_VERIFY to the list of target acq/confirmation images [#5395]
