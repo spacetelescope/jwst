@@ -3,7 +3,7 @@ import pytest
 
 from pathlib import Path
 
-from jwst import associations as asnpkg
+from jwst.associations import asn_gather
 from jwst.associations.asn_from_list import asn_from_list
 from jwst.associations.load_as_asn import LoadAsAssociation
 from jwst.lib.file_utils import pushdir
@@ -43,7 +43,7 @@ def source_folder(tmp_path_factory):
 def gather(source_folder, tmp_path_factory):
     """Do the actual gathering"""
     dest_folder = tmp_path_factory.mktemp('asn_gather_dest')
-    asn_path = asnpkg.asn_gather(source_folder / PRIMARY_PATH, destination=dest_folder)
+    asn_path = asn_gather.asn_gather(source_folder / PRIMARY_PATH, destination=dest_folder)
 
     return dest_folder, asn_path, source_folder
 
