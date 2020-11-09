@@ -1,39 +1,24 @@
 %YAML 1.1
 ---
-$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+$schema: "http://stsci.edu/schemas/asdf/asdf-schema-1.0.0"
 id: "http://stsci.edu/schemas/jwst_datamodel/mirmrs_apcorr.schema"
 title: MIRI MRS aperture correction data model
 allOf:
 - $ref: referencefile.schema
-- $ref: keyword_exptype.schema
-- $ref: keyword_pexptype.schema
 - type: object
   properties:
     apcorr_table:
-      title: Aperture correction factors table
-      fits_hdu: APCORR
-      datatype:
-      - name: channel
-        datatype: [ascii,10]
-      - name: band
-        datatype: [ascii,10]
-      - name: nelem_radius
-        datatype: int16
-      - name: nelem_wl
-        datatype: int16
-      - name: wavelength
-        datatype: float32
-        ndim: 1
-      - name: radius
-        datatype: float32
-        ndim: 2
-      - name: apcorr
-        datatype: float32
-        ndim: 2
-      - name: apcorr_err
-        datatype: float32
-        ndim: 2
-    sizeunit:
-      title: Units for the SIZE or RADIUS column in the APCORR table
-      fits_hdu: APCORR
-      fits_keyword: SIZEUNIT
+      type: object
+      properties:
+          wavelength:
+            datatype: float32
+          wavelength_units:
+            type: string
+          radius:
+            datatype: float32
+          radius_units: 
+            type: string
+          apcorr:
+            datatype: float32
+          apcorr_err:
+            datatype: float32

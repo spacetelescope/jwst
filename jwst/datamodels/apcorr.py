@@ -89,10 +89,6 @@ class MirMrsApcorrModel(ReferenceFileModel):
         of instrument mode parameters and aperture correction
         factors associated with those modes.
 
-        - channel: str[10]
-        - band: str[10]
-        - nelem_radius: int16
-        - nelem_wl: int16
         - wavelength: float32 1D array
         - radius: float32 2D array
         - apcorr: float32 2D array
