@@ -40,11 +40,9 @@ class ApCorrBase(abc.ABC):
     """
     match_pars = {
         'MIRI': {
-            'LRS': {'subarray': ['name']},
-            'MRS': {'instrument': ['channel','band']},  # Only one row is available for this mode; no selection criteria
+            'LRS': {'subarray': ['name']}
         },
         'NIRSPEC': {
-            'IFU': {'instrument': ['filter', 'grating']},
             'MSASPEC': {'instrument': ['filter', 'grating']},
             'FIXEDSLIT': {'instrument': ['filter', 'grating']},  # Slit is also required; passed in as init arg
             'BRIGHTOBJ': {'instrument': ['filter', 'grating']}
@@ -134,10 +132,7 @@ class ApCorrBase(abc.ABC):
         for key, value in self.match_pars.items():
 
             if isinstance(value, str):  # Not all files will have the same format as input model metadata values.
-                if table[key] == 'ANY':
-                    table = table
-                else:
-                    table = table[table[key].upper() == value.upper()]
+                table = table[table[key].upper() == value.upper()]
             else:
                 table = table[table[key] == value]
 
@@ -276,6 +271,7 @@ class ApCorrRadial(ApCorrBase):
         self.apcorr_sizeunits = self.reference.radius_units
         self._convert_size_units()
         self.apcorr_func = self.approximate()
+
 
     def _convert_size_units(self):
         """If the SIZE or Radius column is in units of arcseconds, convert to pixels."""
