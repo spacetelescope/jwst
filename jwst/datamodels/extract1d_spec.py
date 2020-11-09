@@ -12,7 +12,7 @@ class IFUExtract1dModel(ReferenceFileModel):
     extract1d_params : numpy table
         Basic extract 1D parameters
         - region_type: ascii
-        - subtract_background: bool 
+        - subtract_background: bool
         - method: ascii
         - subpixels: int16
     extract1d_table : numpy table
@@ -28,5 +28,3 @@ class IFUExtract1dModel(ReferenceFileModel):
 
     """
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/ifuextract1d.schema"
-
-
