@@ -38,11 +38,7 @@ WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_WFSS', 'NRC_GRISM']
 # (if any) is JSON, IMAGE or ASDF (added for IFU data) 
 FILE_TYPE_JSON = "JSON"
 FILE_TYPE_IMAGE = "IMAGE"
-<<<<<<< HEAD
 FILE_TYPE_ASDF = "ASDF"
-=======
-FILE_TYPE_TABLE = "TABLE"
->>>>>>> more flake8 fixes
 FILE_TYPE_OTHER = "N/A"
 
 # This is to prevent calling offset_from_offset multiple times for multi-integration data.
@@ -131,16 +127,9 @@ def open_extract1d_ref(refname: str, exptype: str) -> dict:
 
     if refname == "N/A":
         ref_dict = None
-<<<<<<< HEAD
     elif exptype == 'MIR_MRS' or exptype == 'NRS_IFU':
         # read in asdf file
         extract_model = datamodels.IFUExtract1dModel(refname)
-=======
-
-    elif exptype == 'MIR_MRS': #TODO ADD NIRSPEC CASE
-        # read in the extract1d mirmrextract1d data model
-        extract_model = datamodels.MirMrsExtract1dModel(refname)
->>>>>>> more flake8 fixes
         ref_dict = {}
         ref_dict['ref_file_type']= FILE_TYPE_ASDF
         ref_dict['ref_model'] = extract_model

@@ -17,12 +17,12 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 # These values are used to indicate whether the input extract1d reference file
-# (if any) is JSON, IMAGE or TABLE
-# TODO 1. decide if IFU extract_1d ref file is a fits or asdf, then remove either FILE_TYPE_JSON or FILE_TYPE_TABLE
+# (if any) is JSON, IMAGE or ASDF
+# 1. IFU extract_1d ref file is asdf
 # 2. NIRSpec to supply new extract1d and apcor ref files.
 FILE_TYPE_JSON = "JSON"
 FILE_TYPE_IMAGE = "IMAGE"
-FILE_TYPE_TABLE = "TABLE"
+FILE_TYPE_ASDF = "ASDF"
 
 # This is to prevent calling offset_from_offset multiple times for
 # multi-integration data.
@@ -99,12 +99,12 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
 
     if extract_params:
 #TODO clean up after deciding if using FILE_TYPE_TABLE or FILE_TYPE_JSON
-        if extract_params['ref_file_type'] == FILE_TYPE_TABLE:
+        if extract_params['ref_file_type'] == FILE_TYPE_ASDF:
             (ra, dec, wavelength, temp_flux, background, npixels, dq, npixels_bkg, radius_match) = \
                     extract_ifu(input_model, source_type, extract_params)
-        elif extract_params['ref_file_type'] == FILE_TYPE_JSON:
-            (ra, dec, wavelength, temp_flux, background, npixels, dq, npixels_bkg) = \
-                    extract_ifu(input_model, source_type, extract_params)
+       # elif extract_params['ref_file_type'] == FILE_TYPE_JSON:
+       #     (ra, dec, wavelength, temp_flux, background, npixels, dq, npixels_bkg) = \
+       #             extract_ifu(input_model, source_type, extract_params)
         else:                                   # FILE_TYPE_IMAGE
             (ra, dec, wavelength, temp_flux, background, npixels, dq, npixels_bkg) = \
                     image_extract_ifu(input_model, source_type, extract_params)
@@ -233,36 +233,28 @@ def get_extract_parameters(ref_dict, slitname):
                         extract_params['theta'] = aper.get('theta', 0.)
                     break
 
-    elif ref_dict['ref_file_type'] == FILE_TYPE_TABLE:
-        extract_params['ref_file_type'] = FILE_TYPE_TABLE
-        with ref_dict['ref_model'] as ptab:
+    elif ref_dict['ref_file_type'] == FILE_TYPE_ASDF:
+        extract_params['ref_file_type'] = FILE_TYPE_ASDF
+        refmodel = ref_dict['ref_model']
+        region_type = refmodel.meta.region_type 
+        subtract_background = refmodel.meta.subtract_background
+        method = refmodel.meta.method
+        subpixels =refmodel.meta.subpixels
 
-            for tabdata in ptab.extract1d_params:
-                # id = tabdata['id'] not used yet - maybe REMOVE
-                region_type = tabdata['region_type']
-                subtract_background = tabdata['subtract_background']
-                method = tabdata['method']
-                subpixels =tabdata['subpixels']
-
-            data = ptab.extract1d_table
-            wavelength = data["wavelength"]
-            nelem_wl = data['nelem_wl']
-            radius = data["radius"]
-            inner_bkg = data["inner_bkg"]
-            outer_bkg = data["outer_bkg"]
-            axis_ratio = data["axis_ratio"]
-            axis_pa = data["axis_pa"]
+        data = refmodel.data
+        wavelength = data.wavelength
+        radius = data.radius
+        inner_bkg = data.inner_bgk
+        outer_bkg = data.outer_bgk
 
         extract_params['subtract_background'] = bool(subtract_background)
         extract_params['method'] = method
         extract_params['subpixels'] = subpixels
-        extract_params['nelem_wl'] = nelem_wl
         extract_params['wavelength'] = wavelength
         extract_params['radius'] = radius
         extract_params['inner_bkg'] = inner_bkg
         extract_params['outer_bkg'] = outer_bkg
-        extract_params['axis_ratio'] = axis_ratio
-        extract_params['axis_pa'] = axis_pa
+
 
     elif ref_dict['ref_file_type'] == FILE_TYPE_IMAGE:
         extract_params['ref_file_type'] = FILE_TYPE_IMAGE
