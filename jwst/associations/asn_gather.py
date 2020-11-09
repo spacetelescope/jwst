@@ -1,4 +1,4 @@
-"""asn_gather: Copy or Move data that is listed in an association"""
+"""asn_gather: Copy data that is listed in an association"""
 import logging
 from pathlib import Path
 import subprocess
@@ -14,14 +14,10 @@ LogLevels = [logging.WARNING, logging.INFO, logging.DEBUG]
 
 def asn_gather(association, destination=None, exp_types=None, exclude_types=None,
                shellcmd='rsync -urv --no-perms --chmod=ugo=rwX'):
-    """Copy/Move members of an association from one location to another
+    """Copy members of an association from one location to another
 
     The association is copied into the destination, re-written such that the member
-    list points to the new location of the members. If `copy` is `False`, the member
-    list will simply point back to the original location of the members.
-
-    If members cannot be copied, warnings will be generated and the member information
-    in the copied association will be left untouched.
+    list points to the new location of the members.
 
     Parameters
     ----------
@@ -46,7 +42,7 @@ def asn_gather(association, destination=None, exp_types=None, exclude_types=None
     Returns
     -------
     dest_asn : pathlib.Path
-        The association.
+        The copied association.
     """
     from .load_as_asn import LoadAsAssociation
     from . import Association

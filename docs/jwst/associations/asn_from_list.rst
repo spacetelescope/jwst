@@ -122,9 +122,12 @@ API
 ---
 
 There are two programmatic entry points: The
-:class:`~jwst.associations.asn_from_list.Main` is the highest level
+:py:class:`~jwst.associations.asn_from_list.Main` is the highest level
 entry and is what is instantiated when the command line
 ``asn_from_list`` is used. ``Main`` handles the command line interface.
 
-:func:`~jwst.associations.asn_from_list.asn_from_list` is the main
+:py:func:`~jwst.associations.asn_from_list.asn_from_list` is the main
 mid-level entry point.
+
+
+.. automodapi:: jwst.associations.asn_from_list
