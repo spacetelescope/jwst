@@ -16,22 +16,22 @@ PRIMARY_NAME = PRIMARY_STEM + '_asn.json'
 def source_folder(tmp_path_factory):
     """Create a set of source associations"""
     primary_members = [
-        'primary_1.txt',
-        'primary_2.txt',
-        'primary_3.txt',
-        'primary_4.txt',
+        ('sci_1.txt', 'science'),
+        ('sci_2.txt', 'science'),
+        ('bkg_1.txt', 'background'),
+        ('imprint_1.txt', 'imprint'),
     ]
 
     source_folder = tmp_path_factory.mktemp('asn_gather_source')
     with pushdir(source_folder):
 
         # Create all the files
-        for member in primary_members:
-            with open(member, 'w') as fh:
-                fh.write(member)
+        for expname, exptype in primary_members:
+            with open(expname, 'w') as fh:
+                fh.write(expname)
 
         # Create the association
-        primary = asn_from_list(primary_members, product_name=PRIMARY_STEM)
+        primary = asn_from_list(primary_members, product_name=PRIMARY_STEM, with_exptype=True)
         _, serialized = primary.dump()
         with open(PRIMARY_NAME, 'w') as fh:
             fh.write(serialized)
