@@ -9,8 +9,8 @@ from jwst.associations.load_as_asn import LoadAsAssociation
 from jwst.lib.file_utils import pushdir
 
 # Testing constants
-PRIMARY_NAME = 'primary'
-PRIMARY_PATH = PRIMARY_NAME + '_asn.json'
+PRIMARY_STEM = 'primary'
+PRIMARY_NAME = PRIMARY_STEM + '_asn.json'
 
 @pytest.fixture(scope='module')
 def source_folder(tmp_path_factory):
@@ -31,9 +31,9 @@ def source_folder(tmp_path_factory):
                 fh.write(member)
 
         # Create the association
-        primary = asn_from_list(primary_members, product_name=PRIMARY_NAME)
+        primary = asn_from_list(primary_members, product_name=PRIMARY_STEM)
         _, serialized = primary.dump()
-        with open(PRIMARY_PATH, 'w') as fh:
+        with open(PRIMARY_NAME, 'w') as fh:
             fh.write(serialized)
 
     return source_folder
@@ -43,7 +43,7 @@ def source_folder(tmp_path_factory):
 def gather(source_folder, tmp_path_factory):
     """Do the actual gathering"""
     dest_folder = tmp_path_factory.mktemp('asn_gather_dest')
-    asn_path = asn_gather.asn_gather(source_folder / PRIMARY_PATH, destination=dest_folder)
+    asn_path = asn_gather.asn_gather(source_folder / PRIMARY_NAME, destination=dest_folder)
 
     return dest_folder, asn_path, source_folder
 
@@ -58,7 +58,7 @@ def test_all_members(gather):
     """Test to ensure all members are accounted for"""
     dest_folder, asn_path, source_folder = gather
 
-    source_asn = LoadAsAssociation.load(source_folder / PRIMARY_PATH)
+    source_asn = LoadAsAssociation.load(source_folder / PRIMARY_NAME)
     asn = LoadAsAssociation.load(asn_path)
 
     assert len(source_asn['products']) == len(asn['products'])
