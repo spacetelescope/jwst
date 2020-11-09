@@ -143,6 +143,11 @@ def from_cmdline(args=None):
         help='Exposure types to gather. If not specified, all exposure types are used.'
     )
     parser.add_argument(
+        '-x', '--exclude-types', default=None, dest='exclude_types',
+        action='append',
+        help='Exposure types to exclude.'
+    )
+    parser.add_argument(
         '-v', '--verbose', action='count', default=0,
         help='Increase verbosity. Specifying multiple times adds more output.'
     )
