@@ -39,36 +39,57 @@ def source_folder(tmp_path_factory):
     return source_folder
 
 
-@pytest.fixture(scope='module')
-def gather(source_folder, tmp_path_factory):
+@pytest.fixture(scope='module',
+                params = [
+                    (None, None),
+                    (['science'], None),
+                    (None, 'science')
+                ])
+def gather(source_folder, tmp_path_factory, request):
     """Do the actual gathering"""
-    dest_folder = tmp_path_factory.mktemp('asn_gather_dest')
-    asn_path = asn_gather.asn_gather(source_folder / PRIMARY_NAME, destination=dest_folder)
+    exp_types, excludes = request.param
 
-    return dest_folder, asn_path, source_folder
+    dest_folder = tmp_path_factory.mktemp('asn_gather_dest')
+    asn_path = asn_gather.asn_gather(source_folder / PRIMARY_NAME, destination=dest_folder,
+                                     exp_types=exp_types)
+
+    return dest_folder, asn_path, source_folder, exp_types, excludes
 
 
 def test_ispath(gather):
     """Test that an association is generated"""
-    dest_folder, asn_path, source_folder = gather
+    dest_folder, asn_path, source_folder, exptypes, excludes = gather
 
     assert isinstance(asn_path, Path), f'Return a Path: {asn_path}'
 
 def test_all_members(gather):
     """Test to ensure all members are accounted for"""
-    dest_folder, asn_path, source_folder = gather
+    dest_folder, asn_path, source_folder, exptypes, excludes = gather
 
     source_asn = LoadAsAssociation.load(source_folder / PRIMARY_NAME)
     asn = LoadAsAssociation.load(asn_path)
 
+    excludes = [] if excludes is None else excludes
+    if exptypes is None:
+        exptypes = {
+            member['exptype']
+            for source_product in source_asn['products']
+            for member in source_product['members']
+        }
+
     assert len(source_asn['products']) == len(asn['products'])
     for source_product, product in zip(source_asn['products'], asn['products']):
-        assert len(source_product['members']) == len(product['members'])
+        expected = [
+            member
+            for member in source_product['members']
+            if member['exptype'] in exptypes and member['exptype'] not in excludes
+        ]
+        assert len(expected) == len(product['members'])
 
 
 def test_copy(gather):
     """Test that members are copied"""
-    dest_folder, asn_path, source_folder = gather
+    dest_folder, asn_path, source_folder, exptypes, excludes = gather
 
     asn = LoadAsAssociation.load(asn_path)
 
