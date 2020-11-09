@@ -6,7 +6,7 @@ from astropy.io import fits
 from astropy.table import Table
 
 from jwst.datamodels import DataModel
-from jwst.extract_1d.apply_apcorr import ApCorr, ApCorrRadial, ApCorrPhase, select_apcorr
+from jwst.extract_1d.apply_apcorr import ApCorr, ApCorrPhase, select_apcorr
 
 data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data'))
 NIR_TEST_FILES = {
@@ -111,7 +111,6 @@ def apcorr_instance(inputs):
 
 def test_select_apcorr(inputs):
     dm, _ = inputs
-    
     apcorr_cls = select_apcorr(dm)
 
     if dm.meta.instrument.name == 'NIRSPEC':

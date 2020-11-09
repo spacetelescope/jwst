@@ -207,7 +207,7 @@ def get_extract_parameters(ref_dict, slitname):
     if ref_dict['ref_file_type'] == FILE_TYPE_ASDF:
         extract_params['ref_file_type'] = FILE_TYPE_ASDF
         refmodel = ref_dict['ref_model']
-        region_type = refmodel.meta.region_type 
+        #region_type = refmodel.meta.region_type
         subtract_background = refmodel.meta.subtract_background
         method = refmodel.meta.method
         subpixels =refmodel.meta.subpixels

@@ -2,7 +2,6 @@ import pytest
 import numpy as np
 import os
 
-from astropy.table import Table
 from jwst.datamodels import IFUImageModel, NrsIfuApcorrModel, MirMrsApcorrModel
 from jwst.extract_1d.apply_apcorr import ApCorr, ApCorrRadial, select_apcorr
 
@@ -81,9 +80,7 @@ def inputs_nirspec():
     return dm, table
 
 
-
 def test_select_apcorr():
-    
     dm,table = inputs_miri()
     apcorr_cls = select_apcorr(dm)
 
@@ -95,7 +92,6 @@ def test_select_apcorr():
     if dm.meta.instrument.name == 'NIRSPEC':
         if dm.meta.exposure.type.upper() == 'NRS_IFU' :
             assert apcorr_cls == ApCorrRadial
-
 
 
 def test_table_type():
@@ -113,7 +109,7 @@ def test_table_type():
 #def test_table_wave(inputs):
 #    dm, table = inputs
 #    dummy_wave = np.zeros(100) + 0.5
-
+#
 #    if dm.meta.instrument.name == 'MIRI':
 #        assert table.wavelength == dummy_wave
 
