@@ -8,6 +8,25 @@ from ..lib.constraint import (
 )
 
 
+def test_sc_get_all_attr():
+    """Get attribute value of a simple constraint"""
+    name = 'my_sc'
+    sc = SimpleConstraint(name=name, value='my_value')
+    assert sc.get_all_attr('name') == [name]
+
+
+def test_constraint_get_all_attr():
+    """Get attribute value of all constraints in a constraint"""
+    names = ['sc1', 'sc2']
+    constraints = [
+        SimpleConstraint(name=name)
+        for name in names
+    ]
+    c = Constraint(constraints)
+
+    assert c.get_all_attr('name') == names
+
+
 def test_simpleconstraint_reprocess_match():
     """Test options for reprocessing"""
     sc = SimpleConstraint(

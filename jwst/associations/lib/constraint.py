@@ -5,6 +5,7 @@ from copy import deepcopy
 from itertools import chain
 import logging
 import re
+import typing
 
 from .process_list import ProcessList
 from .utilities import (
@@ -82,6 +83,26 @@ class SimpleConstraintABC(abc.ABC):
     def copy(self):
         """Copy ourselves"""
         return deepcopy(self)
+
+    def get_all_attr(self, attribute: str) -> typing.List[object]:
+        """Return the specified attribute
+
+        This method is meant to be overridden by classes
+        that need to traverse a list of constraints.
+
+        Parameters
+        ----------
+        attribute : str
+            The attribute to retrieve
+
+        Returns
+        -------
+        [value] : [object]
+            The value of the attribute in a list.
+        """
+        value = getattr(self, attribute)
+        values = [value] if value is not None else []
+        return values
 
     # Make iterable to work with `Constraint`.
     # Since this is a leaf, simple return ourselves.
@@ -477,7 +498,7 @@ class AttrConstraint(SimpleConstraintABC):
 
 
 class Constraint:
-    """Constraint that is made up of SimpleConstraint
+    """Constraint that is made up of SimpleConstraints
 
     Parameters
     ----------
@@ -691,6 +712,34 @@ class Constraint:
         """True if none of the constraints match"""
         match, to_reprocess = Constraint.any(item, constraints)
         return not match, to_reprocess
+
+    def get_all_attr(self, attribute: str) -> typing.List[object]:
+        """Return the specified attribute
+
+        This method is meant to be overridden by classes
+        that need to traverse a list of constraints.
+
+        Parameters
+        ----------
+        attribute : str
+            The attribute to retrieve
+
+        Returns
+        -------
+        [value] : [object[,...]]
+            The values of the attribute in a list.
+
+        Raises
+        ------
+        AttributeError
+            If the attribute is not found.
+        """
+        value = getattr(self, attribute)
+        values = [value] if value is not None else []
+        for constraint in self.constraints:
+            values.extend(constraint.get_all_attr(attribute))
+
+        return values
 
     # Make iterable
     def __iter__(self):
