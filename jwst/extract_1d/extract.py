@@ -17,7 +17,7 @@ from ..datamodels.apcorr import (
     MirLrsApcorrModel, MirMrsApcorrModel, NrcWfssApcorrModel, NrsFsApcorrModel,
     NrsMosApcorrModel, NrsIfuApcorrModel, NisWfssApcorrModel
 )
-from ..datamodels.ndmodel import MetaNode
+
 from ..assign_wcs import niriss         # for specifying spectral order number
 from ..assign_wcs.util import wcs_bbox_from_shape
 from ..lib import pipe_utils
@@ -35,7 +35,7 @@ WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_WFSS', 'NRC_GRISM']
 """Exposure types to be regarded as wide-field slitless spectroscopy."""
 
 # These values are used to indicate whether the input extract1d reference file
-# (if any) is JSON, IMAGE or ASDF (added for IFU data) 
+# (if any) is JSON, IMAGE or ASDF (added for IFU data)
 FILE_TYPE_JSON = "JSON"
 FILE_TYPE_IMAGE = "IMAGE"
 FILE_TYPE_ASDF = "ASDF"
