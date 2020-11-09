@@ -204,35 +204,7 @@ def get_extract_parameters(ref_dict, slitname):
     """
 
     extract_params = {}
-<<<<<<< HEAD
-#TODO clean up after deciding if using FILE_TYPE_TABLE or FILE_TYPE_JSON
-    if (ref_dict['ref_file_type'] == FILE_TYPE_JSON):
-            extract_params['ref_file_type'] = FILE_TYPE_JSON
-            for aper in ref_dict['apertures']:
-                if 'id' in aper and aper['id'] != "dummy" and \
-                   (aper['id'] == slitname or aper['id'] == "ANY" or
-                    slitname == "ANY"):
-                    region_type = aper.get("region_type", "target")
-                    if region_type == "target":
-                        extract_params['x_center'] = aper.get('x_center')
-                        extract_params['y_center'] = aper.get('y_center')
-                        extract_params['method'] = aper.get('method', 'exact')
-                        extract_params['subpixels'] = aper.get('subpixels', 5)
-                        extract_params['radius'] = aper.get('radius')
-                        extract_params['subtract_background'] = \
-                              aper.get('subtract_background', False)
-                        extract_params['inner_bkg'] = aper.get('inner_bkg')
-                        extract_params['outer_bkg'] = aper.get('outer_bkg')
-                        extract_params['width'] = aper.get('width')
-                        extract_params['height'] = aper.get('height')
-                        # theta is in degrees (converted to radians later)
-                        extract_params['theta'] = aper.get('theta', 0.)
-                    break
-
-    elif ref_dict['ref_file_type'] == FILE_TYPE_ASDF:
-=======
     if ref_dict['ref_file_type'] == FILE_TYPE_ASDF:
->>>>>>> updates for using apcor ref asdf file
         extract_params['ref_file_type'] = FILE_TYPE_ASDF
         refmodel = ref_dict['ref_model']
         region_type = refmodel.meta.region_type 
