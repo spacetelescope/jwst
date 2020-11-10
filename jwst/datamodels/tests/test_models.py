@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 
 from jwst.associations.asn_from_list import asn_from_list
-from jwst.datamodels import (JwstDataModel, ImageModel, QuadModel,
+from jwst.datamodels import (JwstDataModel, ImageModel,
                              MultiSlitModel, ModelContainer, SlitModel,
                              SlitDataModel, IFUImageModel, ABVegaOffsetModel)
 from jwst import datamodels
@@ -93,36 +93,6 @@ def test_skip_fits_update(jail_environ,
 
     with datamodels.open(hduls, skip_fits_update=skip_fits_update) as model:
         assert model.meta.exposure.type == expected_exp_type
-
-
-def test_open_none():
-    with datamodels.open() as model:
-        assert isinstance(model, JwstDataModel)
-
-
-def test_open_shape():
-    with datamodels.open((50, 50)) as model:
-        assert isinstance(model, ImageModel)
-        assert model.shape == (50, 50)
-
-
-def test_open_fits_no_model_type(tmp_path):
-    # Convert path to string, as datamodels.open() doesn't know how to
-    # open this pathlib object
-    path = str(tmp_path / "quad.fits")
-    hdulist = fits.HDUList(fits.PrimaryHDU())
-    data = np.zeros((5, 35, 40, 32))
-    hdulist.append(fits.ImageHDU(data=data, name="SCI", ver=1))
-    hdulist.append(fits.ImageHDU(data=data, name="ERR", ver=1))
-    hdulist.append(fits.ImageHDU(data=data, name="DQ", ver=1))
-    hdulist.writeto(path)
-
-    with pytest.warns(datamodels.util.NoTypeWarning) as record:
-        with datamodels.open(path) as dm:
-            assert isinstance(dm, QuadModel)
-            assert len(record) == 1
-            assert "model_type not found" in record[0].message.args[0]
-            assert "as a QuadModel" in record[0].message.args[0]
 
 
 def test_imagemodel():
