@@ -2,54 +2,27 @@
 
 from datetime import datetime
 import os
-import shutil
-import tempfile
 import warnings
 
-import asdf
 from asdf import schema as mschema
 import pytest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 import jsonschema
 from astropy.io import fits
-from astropy.modeling import models
 from astropy import time
 from stdatamodels import validate
 from stdatamodels.util import gentle_asarray
-from stdatamodels.schema import merge_property_trees, build_docstring
-from stdatamodels import DataModel
 
 from jwst.datamodels import util
 from jwst.datamodels import _defined_models as defined_models
-from jwst.datamodels import (JwstDataModel, ImageModel, RampModel, MaskModel, MultiSlitModel,
-    AsnModel, CollimatorModel, SourceModelContainer, MultiExposureModel,
+from jwst.datamodels import (JwstDataModel, ImageModel, MaskModel, MultiSlitModel,
+    AsnModel, SourceModelContainer, MultiExposureModel,
     DrizProductModel, MultiProductModel, MIRIRampModel)
 
 
-FITS_FILE = None
-MASK_FILE = None
-TMP_FITS = None
-TMP_FITS2 = None
-TMP_YAML = None
-TMP_ASDF = None
-TMP_DIR = None
-
-def setup():
-    global FITS_FILE, MASK_FILE, TMP_DIR, TMP_FITS, TMP_YAML, TMP_ASDF, TMP_FITS2
-    ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
-    FITS_FILE = os.path.join(ROOT_DIR, 'test.fits')
-    MASK_FILE = os.path.join(ROOT_DIR, 'mask.fits')
-
-    TMP_DIR = tempfile.mkdtemp()
-    TMP_FITS = os.path.join(TMP_DIR, 'tmp.fits')
-    TMP_FITS2 = os.path.join(TMP_DIR, 'tmp2.fits')
-    TMP_YAML = os.path.join(TMP_DIR, 'tmp.yaml')
-    TMP_ASDF = os.path.join(TMP_DIR, 'tmp.asdf')
-
-
-def teardown():
-    shutil.rmtree(TMP_DIR)
+ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
+FITS_FILE = os.path.join(ROOT_DIR, 'test.fits')
 
 
 def test_choice():
@@ -127,59 +100,52 @@ def test_list2():
             dm.meta.transformations.append({'transformation': 'FOO', 'coeff': 2.0})
 
 
-def test_invalid_fits():
-    hdulist = fits.open(FITS_FILE)
-    header = hdulist[0].header
-    header['INSTRUME'] = 'FOO'
-
-    if os.path.exists(TMP_FITS):
-        os.remove(TMP_FITS)
-
-    hdulist.writeto(TMP_FITS)
-    hdulist.close()
+def test_invalid_fits(tmp_path):
+    path = str(tmp_path / "invalid.fits")
+    with fits.open(FITS_FILE) as hdulist:
+        header = hdulist[0].header
+        header['INSTRUME'] = 'FOO'
+        hdulist.writeto(path)
 
     with pytest.raises(validate.ValidationWarning):
         with warnings.catch_warnings():
             os.environ['PASS_INVALID_VALUES'] = '0'
             os.environ['STRICT_VALIDATION'] = '0'
             warnings.simplefilter('error')
-            model = util.open(TMP_FITS)
-            model.close()
+            with util.open(path):
+                pass
 
     with pytest.raises(jsonschema.ValidationError):
         os.environ['STRICT_VALIDATION'] = '1'
-        model = util.open(TMP_FITS)
-        model.close()
+        with util.open(path):
+            pass
 
     # Check that specifying an argument does not get
     # overridden by the environmental.
     with pytest.raises(jsonschema.ValidationError):
         os.environ['STRICT_VALIDATION'] = '0'
-        model = util.open(TMP_FITS, strict_validation=True)
-        model.close()
+        with util.open(path, strict_validation=True):
+            pass
 
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
         os.environ['PASS_INVALID_VALUES'] = '0'
         os.environ['STRICT_VALIDATION'] = '0'
-        model = util.open(TMP_FITS, pass_invalid_values=True)
-        assert model.meta.instrument.name == 'FOO'
-        model.close()
+        with util.open(path, pass_invalid_values=True) as model:
+            assert model.meta.instrument.name == 'FOO'
 
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
         os.environ['PASS_INVALID_VALUES'] = '0'
         os.environ['STRICT_VALIDATION'] = '0'
-        model = util.open(TMP_FITS)
-        assert model.meta.instrument.name is None
-        model.close()
+        with util.open(path) as model:
+            assert model.meta.instrument.name is None
 
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
         os.environ['PASS_INVALID_VALUES'] = '1'
-        model = util.open(TMP_FITS)
-        assert model.meta.instrument.name == 'FOO'
-        model.close()
+        with util.open(path) as model:
+            assert model.meta.instrument.name == 'FOO'
 
     del os.environ['PASS_INVALID_VALUES']
     del os.environ['STRICT_VALIDATION']
@@ -187,184 +153,22 @@ def test_invalid_fits():
     with pytest.raises(validate.ValidationWarning):
         with warnings.catch_warnings():
             warnings.simplefilter('error')
-            model = util.open(TMP_FITS,
-                              pass_invalid_values=False,
-                              strict_validation=False)
-            model.close()
+            with util.open(path, pass_invalid_values=False, strict_validation=False):
+                pass
 
     with pytest.raises(jsonschema.ValidationError):
-        model = util.open(TMP_FITS,
-                          pass_invalid_values=False,
-                          strict_validation=True)
-        model.close()
+        with util.open(path, pass_invalid_values=False, strict_validation=True):
+            pass
 
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
-        model = util.open(TMP_FITS,
-                          pass_invalid_values=False,
-                          strict_validation=False)
-        assert model.meta.instrument.name is None
-        model.close()
+        with util.open(path, pass_invalid_values=False, strict_validation=False) as model:
+            assert model.meta.instrument.name is None
 
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
-        model = util.open(TMP_FITS,
-                          pass_invalid_values=True,
-                          strict_validation=False)
-        assert model.meta.instrument.name == 'FOO'
-        model.close()
-
-    if os.path.exists(TMP_FITS):
-        os.remove(TMP_FITS)
-
-def test_ad_hoc_json():
-    with JwstDataModel() as dm:
-        dm.meta.foo = {'a': 42, 'b': ['a', 'b', 'c']}
-
-        dm.save(TMP_ASDF)
-
-    with JwstDataModel(TMP_ASDF) as dm2:
-        assert dm2.meta.foo == {'a': 42, 'b': ['a', 'b', 'c']}
-
-
-def test_ad_hoc_fits():
-    with JwstDataModel() as dm:
-        dm.meta.foo = {'a': 42, 'b': ['a', 'b', 'c']}
-
-        dm.to_fits(TMP_FITS, overwrite=True)
-
-    with JwstDataModel.from_fits(TMP_FITS) as dm2:
-        assert dm2.meta.foo == {'a': 42, 'b': ['a', 'b', 'c']}
-
-
-def test_find_fits_keyword():
-    with JwstDataModel() as x:
-        assert x.find_fits_keyword('DATE-OBS') == \
-          ['meta.observation.date']
-
-
-def test_search_schema():
-    with JwstDataModel() as x:
-        results = x.search_schema('target')
-
-    results = [x[0] for x in results]
-    assert 'meta.target' in results
-    assert 'meta.target.ra' in results
-
-
-def test_dictionary_like():
-    with JwstDataModel(strict_validation=True) as x:
-        x.meta.origin = 'FOO'
-        assert x['meta.origin'] == 'FOO'
-
-        with pytest.raises(jsonschema.ValidationError):
-            x['meta.subarray.xsize'] = 'FOO'
-
-        with pytest.raises(KeyError):
-            x['meta.FOO.BAR.BAZ']
-
-
-def test_to_flat_dict():
-    with JwstDataModel() as x:
-        x.meta.origin = 'FOO'
-        assert x['meta.origin'] == 'FOO'
-
-        d = x.to_flat_dict()
-
-        assert d['meta.origin'] == 'FOO'
-
-
-def test_table_array_shape_ndim():
-    table_schema = {
-        "allOf": [
-            mschema.load_schema("http://stsci.edu/schemas/jwst_datamodel/core.schema",
-                resolve_references=True),
-            {
-                "type": "object",
-                "properties": {
-                    "table": {
-                        'title': 'A structured table',
-                        'fits_hdu': 'table',
-                        'datatype': [
-                            'bool8',
-                            {'datatype': 'int16',
-                             'name': 'my_int'},
-                            {'datatype': 'float32',
-                             'name': 'my_float1',
-                             'shape': [3, 2]},
-                            {'datatype': 'float32',
-                             'name': 'my_float2',
-                             'ndim': 2},
-                            {'datatype': 'float32',
-                             'name': 'my_float3'},
-                            {'datatype': 'float32',
-                             'name': 'my_float4'},
-                            {'datatype': 'float32',
-                             'name': 'my_float5'},
-                            {'datatype': ['ascii', 64],
-                             'name': 'my_string'}
-                        ]
-                    }
-                }
-            }
-        ]
-    }
-
-    with DataModel(schema=table_schema) as x:
-        x.table = [
-            (
-                True,
-                42,
-                [[37.5, 38.0], [39.0, 40.0], [41.0, 42.0]],
-                [[37.5, 38.0], [39.0, 40.0], [41.0, 42.0]],
-                [[37.5, 38.0], [39.0, 40.0], [41.0, 42.0]],
-                [37.5, 38.0],
-                37.5,
-                'STRING'
-            )
-        ]
-        assert x.table.dtype == [
-            ('f0', '?'),
-            ('my_int', '=i2'),
-            ('my_float1', '=f4', (3, 2)),
-            ('my_float2', '=f4', (3, 2)),
-            ('my_float3', '=f4', (3, 2)),
-            ('my_float4', '=f4', (2,)),
-            ('my_float5', '=f4'),
-            ('my_string', 'S64')
-        ]
-
-        x.to_fits(TMP_FITS, overwrite=True)
-
-    with DataModel(TMP_FITS, schema=table_schema) as x:
-        assert x.table.dtype == [
-            ('f0', '?'),
-            ('my_int', '=i2'),
-            ('my_float1', '=f4', (3, 2)),
-            ('my_float2', '=f4', (3, 2)),
-            ('my_float3', '=f4', (3, 2)),
-            ('my_float4', '=f4', (2,)),
-            ('my_float5', '=f4'),
-            ('my_string', 'S64')
-        ]
-
-    table_schema['allOf'][1]['properties']['table']['datatype'][3]['ndim'] = 3
-    with DataModel(schema=table_schema) as x:
-        with pytest.raises(ValueError) as e:
-            x.table = [
-                (
-                    True,
-                    42,
-                    [[37.5, 38.0], [39.0, 40.0], [41.0, 42.0]],
-                    [[37.5, 38.0], [39.0, 40.0], [41.0, 42.0]],
-                    [[37.5, 38.0], [39.0, 40.0], [41.0, 42.0]],
-                    [37.5, 38.0],
-                    37.5,
-                    'STRING'
-                )
-            ]
-
-        assert str(e.value).startswith("Array has wrong number of dimensions.")
+        with util.open(path, pass_invalid_values=True, strict_validation=False) as model:
+            assert model.meta.instrument.name == 'FOO'
 
 
 def test_table_array_convert():
@@ -424,11 +228,12 @@ def test_table_array_convert():
 
 
 def test_mask_model():
-    with MaskModel(MASK_FILE) as dm:
+    with MaskModel((10, 10)) as dm:
         assert dm.dq.dtype == np.uint32
 
 
-def test_data_array():
+def test_data_array(tmp_path):
+    path = str(tmp_path / "data_array.fits")
     data_array_schema = {
         "allOf": [
             mschema.load_schema("http://stsci.edu/schemas/jwst_datamodel/core.schema",
@@ -479,9 +284,9 @@ def test_data_array():
         x.arr[2].data = array3
         del x.arr[1]
         assert len(x.arr) == 2
-        x.to_fits(TMP_FITS, overwrite=True)
+        x.save(path)
 
-    with JwstDataModel(TMP_FITS, schema=data_array_schema) as x:
+    with JwstDataModel(path, schema=data_array_schema) as x:
         assert len(x.arr) == 2
         assert_array_almost_equal(x.arr[0].data, array1)
         assert_array_almost_equal(x.arr[1].data, array3)
@@ -500,10 +305,10 @@ def test_data_array():
         assert len(x.arr) == 3
         del x.arr[1]
         assert len(x.arr) == 2
-        x.to_fits(TMP_FITS2, overwrite=True)
+        x.save(path)
 
     from astropy.io import fits
-    with fits.open(TMP_FITS2) as hdulist:
+    with fits.open(path) as hdulist:
         x = set()
         for hdu in hdulist:
             x.add((hdu.header.get('EXTNAME'),
@@ -536,24 +341,6 @@ def test_multislit_model():
         assert_array_equal(ms.slits[0].data, array2)
 
 
-def test_implicit_creation_lower_dimensionality():
-    with RampModel(np.zeros((10, 20, 30, 40))) as rm:
-        assert rm.pixeldq.shape == (30, 40)
-
-
-def test_add_schema_entry():
-    with JwstDataModel(strict_validation=True) as dm:
-        dm.add_schema_entry('meta.foo.bar', {'enum': ['foo', 'bar', 'baz']})
-        dm.meta.foo.bar
-        dm.meta.foo.bar = 'bar'
-        try:
-            dm.meta.foo.bar = 'what?'
-        except jsonschema.ValidationError:
-            pass
-        else:
-            assert False
-
-
 def test_table_size_zero():
     with AsnModel() as dm:
         assert len(dm.asn_table) == 0
@@ -583,8 +370,8 @@ def test_copy_multslit():
     assert output.slits[0].data[330, 330] == -1
 
 
-def test_multislit_move_from_fits():
-    from astropy.io import fits
+def test_multislit_move_from_fits(tmp_path):
+    path = tmp_path / "multislit_move.fits"
 
     hdulist = fits.HDUList()
     hdulist.append(fits.PrimaryHDU())
@@ -593,83 +380,19 @@ def test_multislit_move_from_fits():
         hdu.ver = i + 1
         hdulist.append(hdu)
 
-    hdulist.writeto(TMP_FITS, overwrite=True)
+    hdulist.writeto(path)
 
     n = MultiSlitModel()
-    with MultiSlitModel(TMP_FITS) as m:
+    with MultiSlitModel(path) as m:
         n.slits.append(m.slits[2])
 
         assert len(n.slits) == 1
-
-
-def test_validate_transform():
-    """
-    Tests that custom types, like transform, can be validated.
-    """
-    m = CollimatorModel(model=models.Shift(1) & models.Shift(2),
-                        strict_validation=True)
-    m.meta.description = "Test validate a WCS reference file."
-    m.meta.author = "ND"
-    m.meta.pedigree = "GROUND"
-    m.meta.useafter = "2018/06/18"
-    m.meta.reftype = "collimator"
-    m.validate()
-
-
-def test_validate_transform_from_file():
-    """
-    Tests that custom types, like transform, can be validated.
-    """
-    fname = os.path.join(os.path.dirname(__file__), 'data', 'collimator_fake.asdf')
-    with CollimatorModel(fname, strict_validation=True) as m:
-        m.validate()
 
 
 def test_multislit_append_string():
     with pytest.raises(jsonschema.ValidationError):
         m = MultiSlitModel(strict_validation=True)
         m.slits.append('junk')
-
-
-@pytest.mark.parametrize('combiner', ['anyOf', 'oneOf'])
-def test_merge_property_trees(combiner):
-
-    s = {
-         'type': 'object',
-         'properties': {
-             'foobar': {
-                 combiner: [
-                     {
-                         'type': 'array',
-                         'items': [ {'type': 'string'}, {'type': 'number'} ],
-                         'minItems': 2,
-                         'maxItems': 2,
-                     },
-                     {
-                         'type': 'array',
-                         'items': [
-                             {'type': 'number'},
-                             {'type': 'string'},
-                             {'type': 'number'}
-                         ],
-                         'minItems': 3,
-                         'maxItems': 3,
-                     }
-                 ]
-             }
-         }
-    }
-
-    # Make sure that merge_property_trees does not destructively modify schemas
-    f = merge_property_trees(s)
-    assert f == s
-
-
-def test_schema_docstring():
-    template = "{fits_hdu} {title}"
-    docstring = build_docstring(ImageModel, template).split("\n")
-    for i, hdu in enumerate(('SCI', 'DQ', 'ERR', 'ZEROFRAME')):
-        assert docstring[i].startswith(hdu)
 
 
 @pytest.mark.parametrize("model", [v for v in defined_models.values()])
@@ -689,6 +412,5 @@ def test_all_datamodels_init(model):
 
 def test_datamodel_schema_entry_points():
     """Test that entry points for JwstDataModelExtension works as expected"""
-    resolver = asdf.AsdfFile().resolver
     mschema.load_schema('http://stsci.edu/schemas/jwst_datamodel/image.schema',
-        resolver=resolver, resolve_references=True)
+        resolve_references=True)
