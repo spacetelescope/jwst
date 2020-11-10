@@ -1,6 +1,5 @@
 import pytest
 import numpy as np
-import os
 
 from jwst.datamodels import IFUImageModel, NrsIfuApcorrModel, MirMrsApcorrModel
 from jwst.extract_1d.apply_apcorr import ApCorrRadial, select_apcorr
