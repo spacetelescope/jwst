@@ -4,10 +4,11 @@ import warnings
 from astropy.io import fits
 from astropy.table import Table
 from astropy.time import Time
-from numpy.testing import assert_allclose
+from numpy.testing import assert_allclose, assert_array_equal
 import numpy as np
 import pytest
 
+from jwst.associations.asn_from_list import asn_from_list
 from jwst.datamodels import (JwstDataModel, ImageModel, QuadModel,
                              MultiSlitModel, ModelContainer, SlitModel,
                              SlitDataModel, IFUImageModel, ABVegaOffsetModel)
@@ -31,7 +32,7 @@ def jail_environ():
 
 
 @pytest.fixture
-def make_models(tmpdir_factory):
+def make_models(tmp_path):
     """Create basic models
 
     Returns
@@ -40,9 +41,8 @@ def make_models(tmpdir_factory):
         `path_just_fits` is a FITS file of `JwstDataModel` without the ASDF extension.
         `path_model` is a FITS file of `JwstDataModel` with the ASDF extension.
     """
-    path = tmpdir_factory.mktemp('skip_fits_update')
-    path_just_fits = str(path / 'just_fits.fits')
-    path_model = str(path / 'model.fits')
+    path_just_fits = tmp_path / 'just_fits.fits'
+    path_model = tmp_path / 'model.fits'
     primary_hdu = fits.PrimaryHDU()
     primary_hdu.header['EXP_TYPE'] = 'NRC_IMAGE'
     primary_hdu.header['DATAMODL'] = "JwstDataModel"
@@ -56,8 +56,7 @@ def make_models(tmpdir_factory):
     }
 
 
-@pytest.mark.parametrize(
-    'which_file, skip_fits_update, expected_exp_type',
+@pytest.mark.parametrize('which_file, skip_fits_update, expected_exp_type',
     [
         ('just_fits', None,  'FGS_DARK'),
         ('just_fits', False, 'FGS_DARK'),
@@ -67,18 +66,10 @@ def make_models(tmpdir_factory):
         ('model',     True,  'NRC_IMAGE')
     ]
 )
-@pytest.mark.parametrize(
-    'open_func',
-    [JwstDataModel, datamodels.open]
-)
-@pytest.mark.parametrize(
-    'use_env',
-    [False, True]
-)
+@pytest.mark.parametrize('use_env', [False, True])
 def test_skip_fits_update(jail_environ,
                           use_env,
                           make_models,
-                          open_func,
                           which_file,
                           skip_fits_update,
                           expected_exp_type):
@@ -100,56 +91,53 @@ def test_skip_fits_update(jail_environ,
             os.environ['SKIP_FITS_UPDATE'] = str(skip_fits_update)
             skip_fits_update = None
 
-    model = open_func(hduls, skip_fits_update=skip_fits_update)
-    assert model.meta.exposure.type == expected_exp_type
+    with datamodels.open(hduls, skip_fits_update=skip_fits_update) as model:
+        assert model.meta.exposure.type == expected_exp_type
 
 
-def test_subarray():
-    with JwstDataModel(FITS_FILE) as dm:
-        dm.meta.subarray.xstart
+def test_open_none():
+    with datamodels.open() as model:
+        assert isinstance(model, JwstDataModel)
 
 
+def test_open_shape():
+    with datamodels.open((50, 50)) as model:
+        assert isinstance(model, ImageModel)
+        assert model.shape == (50, 50)
 
-def test_open():
-    with datamodels.open():
-        pass
 
-    with datamodels.open((50, 50)):
-        pass
+def test_open_fits_no_model_type(tmp_path):
+    # Convert path to string, as datamodels.open() doesn't know how to
+    # open this pathlib object
+    path = str(tmp_path / "quad.fits")
+    hdulist = fits.HDUList(fits.PrimaryHDU())
+    data = np.zeros((5, 35, 40, 32))
+    hdulist.append(fits.ImageHDU(data=data, name="SCI", ver=1))
+    hdulist.append(fits.ImageHDU(data=data, name="ERR", ver=1))
+    hdulist.append(fits.ImageHDU(data=data, name="DQ", ver=1))
+    hdulist.writeto(path)
 
-    with pytest.warns(datamodels.util.NoTypeWarning):
-        with datamodels.open(FITS_FILE) as dm:
+    with pytest.warns(datamodels.util.NoTypeWarning) as record:
+        with datamodels.open(path) as dm:
             assert isinstance(dm, QuadModel)
-
-
-def test_open_warning():
-    with warnings.catch_warnings(record=True) as warners:
-        # Cause all warnings to always be triggered.
-        warnings.simplefilter("always")
-        with datamodels.open(FITS_FILE) as model:
-            pass
-
-        class_name = model.__class__.__name__
-        j = None
-        for i, w in enumerate(warners):
-            if class_name in str(w.message):
-                j = i
-        assert j is not None
+            assert len(record) == 1
+            assert "model_type not found" in record[0].message.args[0]
+            assert "as a QuadModel" in record[0].message.args[0]
 
 
 def test_imagemodel():
-    dims = (10, 10)
-    with ImageModel(dims) as dm:
-        assert dm.data.shape == dims
-        assert dm.err.shape == dims
-        assert dm.dq.shape == dims
+    shape = (10, 10)
+    with ImageModel(shape) as dm:
+        assert dm.data.shape == shape
+        assert dm.err.shape == shape
+        assert dm.dq.shape == shape
         assert dm.data.mean() == 0.0
         assert dm.err.mean() == 0.0
         assert dm.dq.mean() == 0.0
-        assert dm.zeroframe.shape == dims
-        assert dm.area.shape == dims
-        assert dm.pathloss_point.shape == dims
-        assert dm.pathloss_uniform.shape == dims
+        assert dm.zeroframe.shape == shape
+        assert dm.area.shape == shape
+        assert dm.pathloss_point.shape == shape
+        assert dm.pathloss_uniform.shape == shape
 
 
 def test_multislit():
@@ -235,22 +223,14 @@ def test_model_with_nonstandard_primary_array():
     class NonstandardPrimaryArrayModel(JwstDataModel):
         schema_url = os.path.join(ROOT_DIR, "nonstandard_primary_array.schema.yaml")
 
-        def __init__(self, init=None, wavelength=None, alpha=None, **kwargs):
-            super(NonstandardPrimaryArrayModel, self).__init__(init=init, **kwargs)
-
-            if wavelength is not None:
-                self.wavelength = wavelength
-
-            if alpha is not None:
-                self.alpha = alpha
-
         # The wavelength array is the primary array.
         # Try commenting this function out and the problem goes away.
         def get_primary_array_name(self):
             return 'wavelength'
 
-    m = NonstandardPrimaryArrayModel()
-    list(m.keys())
+    m = NonstandardPrimaryArrayModel((10,))
+    assert 'wavelength' in list(m.keys())
+    assert m.wavelength.sum() == 0
 
 
 def test_image_with_extra_keyword_to_multislit(tmp_path):
@@ -279,33 +259,31 @@ def test_image_with_extra_keyword_to_multislit(tmp_path):
 
 
 @pytest.fixture
-def datamodel_for_update(tmpdir):
+def datamodel_for_update(tmp_path):
     """Provide ImageModel with one keyword each defined in PRIMARY and SCI
     extensions from the schema, and one each not in the schema"""
-    tmpfile = str(tmpdir.join("old.fits"))
+    path = tmp_path / "old.fits"
     with ImageModel((5, 5)) as im:
         # Add schema keywords, one to each extension
         im.meta.telescope = "JWST"
         im.meta.wcsinfo.crval1 = 5
 
-        im.save(tmpfile)
+        im.save(path)
     # Add non-schema keywords that will get dumped in the extra_fits attribute
-    with fits.open(tmpfile, mode="update") as hdulist:
+    with fits.open(path, mode="update") as hdulist:
         hdulist["PRIMARY"].header["FOO"] = "BAR"
         hdulist["SCI"].header["BAZ"] = "BUZ"
 
-    return tmpfile
+    return path
 
 
 @pytest.mark.parametrize("extra_fits", [True, False])
 @pytest.mark.parametrize("only", [None, "PRIMARY", "SCI"])
-def test_update_from_datamodel(tmpdir, datamodel_for_update, only, extra_fits):
+def test_update_from_datamodel(tmp_path, datamodel_for_update, only, extra_fits):
     """Test update method does not update from extra_fits unless asked"""
-    tmpfile = datamodel_for_update
-
-    newtmpfile = str(tmpdir.join("new.fits"))
+    path = tmp_path / "new.fits"
     with ImageModel((5, 5)) as newim:
-        with ImageModel(tmpfile) as oldim:
+        with ImageModel(datamodel_for_update) as oldim:
 
             # Verify the fixture returns keywords we expect
             assert oldim.meta.telescope == "JWST"
@@ -314,9 +292,9 @@ def test_update_from_datamodel(tmpdir, datamodel_for_update, only, extra_fits):
             assert oldim.extra_fits.SCI.header == [['BAZ', 'BUZ', '']]
 
             newim.update(oldim, only=only, extra_fits=extra_fits)
-        newim.save(newtmpfile)
+        newim.save(path)
 
-    with fits.open(newtmpfile) as hdulist:
+    with fits.open(path) as hdulist:
         if extra_fits:
             if only == "PRIMARY":
                 assert "TELESCOP" in hdulist["PRIMARY"].header
@@ -349,15 +327,15 @@ def test_update_from_datamodel(tmpdir, datamodel_for_update, only, extra_fits):
                 assert "CRVAL1" in hdulist["SCI"].header
 
 
-def test_update_from_dict(tmpdir):
+def test_update_from_dict(tmp_path):
     """Test update method from a dictionary"""
-    tmpfile = str(tmpdir.join("update.fits"))
+    path = tmp_path / "update.fits"
     with ImageModel((5, 5)) as im:
         update_dict = dict(meta=dict(telescope="JWST", wcsinfo=dict(crval1=5)))
         im.update(update_dict)
-        im.save(tmpfile)
+        im.save(path)
 
-    with fits.open(tmpfile) as hdulist:
+    with fits.open(path) as hdulist:
         assert "TELESCOP" in hdulist[0].header
         assert "CRVAL1" in hdulist[1].header
 
@@ -422,12 +400,13 @@ def test_modelcontainer_group_names(container):
     assert len(container.group_names) == 2
 
 
-def test_modelcontainer_error_from_asn(tmpdir):
-    from jwst.associations.asn_from_list import asn_from_list
-
+def test_modelcontainer_error_from_asn(tmp_path):
     asn = asn_from_list(["foo.fits"], product_name="foo_out")
     name, serialized = asn.dump(format="json")
-    path = str(tmpdir.join(name))
+    # The following Path object needs to be stringified because
+    # datamodels.open() doesn't deal with pathlib objects when they are
+    # .json files
+    path = str(tmp_path / name)
     with open(path, "w") as f:
         f.write(serialized)
 
@@ -437,10 +416,10 @@ def test_modelcontainer_error_from_asn(tmpdir):
 
 
 def test_multislit_model():
-    data = np.arange(24, dtype=np.float32).reshape((6, 4))
-    err = np.arange(24, dtype=np.float32).reshape((6, 4)) + 2
-    wav = np.arange(24, dtype=np.float32).reshape((6, 4)) + 3
-    dq = np.arange(24, dtype=np.uint32).reshape((6, 4)) + 1
+    data = np.arange(24).reshape((6, 4))
+    err = np.arange(24).reshape((6, 4)) + 2
+    wav = np.arange(24).reshape((6, 4)) + 3
+    dq = np.arange(24).reshape((6, 4)) + 1
     s0 = SlitDataModel(data=data, err=err, dq=dq, wavelength=wav)
     s1 = SlitDataModel(data=data+1, err=err+1, dq=dq+1, wavelength=wav+1)
 
@@ -480,12 +459,12 @@ def test_slit_from_image():
 
 
 def test_ifuimage():
-    data = np.arange(24, dtype=np.float32).reshape((6, 4))
+    data = np.arange(24).reshape((6, 4))
     im = ImageModel(data=data, err=data/2, dq=data)
     ifuimage = IFUImageModel(im)
-    assert_allclose(im.data, ifuimage.data)
-    assert_allclose(im.err, ifuimage.err)
-    assert_allclose(im.dq, ifuimage.dq)
+    assert_array_equal(im.data, ifuimage.data)
+    assert_array_equal(im.err, ifuimage.err)
+    assert_array_equal(im.dq, ifuimage.dq)
 
     im = ImageModel(ifuimage)
     assert type(im) == ImageModel
