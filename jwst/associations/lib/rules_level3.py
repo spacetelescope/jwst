@@ -404,6 +404,7 @@ class Asn_IFU(AsnMixin_Spectrum):
         )
         return product_name.lower()
 
+
 @RegistryMarker.rule
 class Asn_IFUGrating(AsnMixin_Spectrum):
     """Level 3 IFU gratings Association
@@ -442,14 +443,15 @@ class Asn_IFUGrating(AsnMixin_Spectrum):
                     name='opt_elem',
                     sources=['grating'],
                     force_unique=True,)
-                        ]),
-            ])
+            ]),
+        ])
+
         # Check and continue initialization.
         super(Asn_IFUGrating, self).__init__(*args, **kwargs)
 
 
 @RegistryMarker.rule
-class Asn_IFUGratingBkg(AsnMixin_AuxData, AsnMixin_BkgScience):
+class Asn_IFUGratingBkg(AsnMixin_AuxData, AsnMixin_Science):
 
     """Level 3 Spectral Association
 
@@ -514,7 +516,7 @@ class Asn_IFUGratingBkg(AsnMixin_AuxData, AsnMixin_BkgScience):
         return product_name.lower()
 
 @RegistryMarker.rule
-class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_BkgScience):
+class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_Science):
 
     """Level 3 Spectral Association
 
