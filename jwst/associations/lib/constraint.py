@@ -753,6 +753,7 @@ class Constraint:
             if name in dups:
                 result[name].append(constraint)
 
+        # Turn off the defaultdict factory.
         result.default_factory = None
         return result
 
