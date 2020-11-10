@@ -8,7 +8,6 @@ from stdatamodels import DataModel
 from ..assign_wcs.util import compute_scale
 from ..datamodels import MultiSlitModel
 import numpy as np
-from ..datamodels import DataModel, MultiSlitModel
 
 
 class ApCorrBase(abc.ABC):
