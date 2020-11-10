@@ -1,5 +1,6 @@
 """Constraints
 """
+from __future__ import annotations
 import abc
 from copy import deepcopy
 from itertools import chain
@@ -84,7 +85,22 @@ class SimpleConstraintABC(abc.ABC):
         """Copy ourselves"""
         return deepcopy(self)
 
-    def get_all_attr(self, attribute: str) -> typing.List[object]:
+    @property
+    def dup_names(self) -> dict[str, list[typing.Union[SimpleConstraint, Constraint]]]:
+        """Return dictionary of constraints with duplicate names
+
+        This method is meant to be overridden by classes
+        that need to traverse a list of constraints.
+
+        Returns
+        -------
+        dups : {str: [constraint[,...]][,...]}
+            Returns a mapping between the duplicated name
+            and all the constraints that define that name.
+        """
+        return {}
+
+    def get_all_attr(self, attribute: str) -> list[tuple[SimpleConstraint, typing.Any]]:
         """Return the specified attribute
 
         This method is meant to be overridden by classes
@@ -97,12 +113,14 @@ class SimpleConstraintABC(abc.ABC):
 
         Returns
         -------
-        [value] : [object]
-            The value of the attribute in a list.
+        [(self, value)] : [(SimpleConstraint, object)]
+            The value of the attribute in a tuple. If there is no attribute,
+            an empty tuple is returned.
         """
         value = getattr(self, attribute)
-        values = [value] if value is not None else []
-        return values
+        if value is not None:
+            return [(self, value)]
+        return []
 
     # Make iterable to work with `Constraint`.
     # Since this is a leaf, simple return ourselves.
@@ -713,7 +731,23 @@ class Constraint:
         match, to_reprocess = Constraint.any(item, constraints)
         return not match, to_reprocess
 
-    def get_all_attr(self, attribute: str) -> typing.List[object]:
+    @property
+    def dup_names(self) -> dict[str, list[typing.Union[SimpleConstraint, Constraint]]]:
+        """Return dictionary of constraints with duplicate names
+
+        This method is meant to be overridden by classes
+        that need to traverse a list of constraints.
+
+        Returns
+        -------
+        dups : {str: [constraint[,...]][,...]}
+            Returns a mapping between the duplicated name
+            and all the constraints that define that name.
+        """
+        attrs = self.get_all_attr('name')
+
+
+    def get_all_attr(self, attribute: str) -> list[tuple[typing.Union[SimpleConstraint, Constraint], typing.Any]]:
         """Return the specified attribute
 
         This method is meant to be overridden by classes
@@ -726,20 +760,23 @@ class Constraint:
 
         Returns
         -------
-        [value] : [object[,...]]
-            The values of the attribute in a list.
+        result : [(SimpleConstraint or Constraint, object)[,...]]
+            The list of values of the attribute in a tuple. If there is no attribute,
+            an empty tuple is returned.
 
         Raises
         ------
         AttributeError
             If the attribute is not found.
         """
+        result = []
         value = getattr(self, attribute)
-        values = [value] if value is not None else []
+        if value is not None:
+            result = [(self, value)]
         for constraint in self.constraints:
-            values.extend(constraint.get_all_attr(attribute))
+            result.extend(constraint.get_all_attr(attribute))
 
-        return values
+        return result
 
     # Make iterable
     def __iter__(self):

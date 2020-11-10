@@ -44,7 +44,7 @@ def test_sc_get_all_attr():
     """Get attribute value of a simple constraint"""
     name = 'my_sc'
     sc = SimpleConstraint(name=name, value='my_value')
-    assert sc.get_all_attr('name') == [name]
+    assert sc.get_all_attr('name') == [(sc, name)]
 
 
 def test_constraint_get_all_attr():
@@ -54,9 +54,15 @@ def test_constraint_get_all_attr():
         SimpleConstraint(name=name)
         for name in names
     ]
-    c = Constraint(constraints)
+    c = Constraint(constraints, name='c1')
 
-    assert c.get_all_attr('name') == names
+    expected = [
+        (constraint, constraint.name)
+        for constraint in constraints
+    ]
+    expected.append((c, 'c1'))
+    result = c.get_all_attr('name')
+    assert set(result) == set(expected)
 
 
 def test_simpleconstraint_reprocess_match():
