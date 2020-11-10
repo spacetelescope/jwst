@@ -8,6 +8,38 @@ from ..lib.constraint import (
 )
 
 
+def test_sc_dup_names():
+    """Test that SimpleConstraint returns an empty dict"""
+    sc = SimpleConstraint('sc_name')
+    dups = sc.dup_names
+    assert not len(dups)
+
+class TestDupNames:
+    """Test duplicate names in Constraint"""
+
+    # Sub constraints
+    sc1 = SimpleConstraint(name='sc1')
+    sc2 = SimpleConstraint(name='sc2')
+    c1 = Constraint([sc1, sc2], name='c1')
+    c2 = Constraint([sc1, sc1], name='c2')
+    c3 = Constraint([sc1, sc2], name='sc1')
+
+    @pytest.mark.parametrize(
+        'constraints, expected', [
+            ([sc1], {}),
+            ([sc1, sc2], {}),
+            ([sc1, sc1], {'sc1': [sc1, sc1]}),
+            ([c1], {}),
+            ([c2], {'sc1': [sc1, sc1]}),
+            ([c3], {'sc1': [sc1, c3]}),
+        ]
+    )
+    def test_dups(self, constraints, expected):
+        c = Constraint(constraints)
+        dups = c.dup_names
+        assert dups == expected
+
+
 def test_sc_get_all_attr():
     """Get attribute value of a simple constraint"""
     name = 'my_sc'
