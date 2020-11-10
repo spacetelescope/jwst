@@ -10,7 +10,7 @@ from ..lib.constraint import (
 
 def test_sc_dup_names():
     """Test that SimpleConstraint returns an empty dict"""
-    sc = SimpleConstraint('sc_name')
+    sc = SimpleConstraint(name='sc_name')
     dups = sc.dup_names
     assert not len(dups)
 
@@ -37,7 +37,9 @@ class TestDupNames:
     def test_dups(self, constraints, expected):
         c = Constraint(constraints)
         dups = c.dup_names
-        assert dups == expected
+        assert set(dups.keys()) == set(expected.keys())
+        for name, constraints in dups.items():
+            assert set(dups[name]) == set(expected[name])
 
 
 def test_sc_get_all_attr():

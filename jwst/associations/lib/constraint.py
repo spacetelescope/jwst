@@ -2,6 +2,7 @@
 """
 from __future__ import annotations
 import abc
+import collections
 from copy import deepcopy
 from itertools import chain
 import logging
@@ -745,7 +746,15 @@ class Constraint:
             and all the constraints that define that name.
         """
         attrs = self.get_all_attr('name')
+        constraints, names = zip(*attrs)
+        dups = [name for name, count in collections.Counter(names).items() if count > 1]
+        result = collections.defaultdict(list)
+        for name, constraint in zip(names, constraints):
+            if name in dups:
+                result[name].append(constraint)
 
+        result.default_factory = None
+        return result
 
     def get_all_attr(self, attribute: str) -> list[tuple[typing.Union[SimpleConstraint, Constraint], typing.Any]]:
         """Return the specified attribute
