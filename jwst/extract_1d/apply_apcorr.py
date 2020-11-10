@@ -460,7 +460,3 @@ def select_apcorr(input_model: DataModel) -> Union[Type[ApCorr], Type[ApCorrPhas
             return ApCorrRadial
         else:
             return ApCorrPhase
-<<<<<<< HEAD
-
-=======
->>>>>>> updates for using apcor ref asdf file
