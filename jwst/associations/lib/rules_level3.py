@@ -438,12 +438,11 @@ class Asn_IFUGrating(AsnMixin_Spectrum):
                 ],
                 reduce=Constraint.notany
             ),
-            Constraint([
-                DMSAttrConstraint(
+            DMSAttrConstraint(
                     name='opt_elem',
                     sources=['grating'],
-                    force_unique=True,)
-            ]),
+                    force_unique=True,
+            )
         ])
 
         # Check and continue initialization.
