@@ -73,7 +73,6 @@ class ResampleSpecData:
 
         # Define output WCS based on all inputs, including a reference WCS
         self.output_wcs = self.build_interpolated_output_wcs()
-        print(self.output_wcs.__repr__)
         self.blank_output = datamodels.SlitModel(self.data_size)
         self.blank_output.update(self.input_models[0], only="PRIMARY")
         self.blank_output.update(self.input_models[0], only="SCI")

@@ -338,35 +338,35 @@ def slitlets_wcs(input_model, reference_files, open_slits_id):
 
     is_lamp_exposure = exp_type in ['NRS_LAMP', 'NRS_AUTOWAVE', 'NRS_AUTOFLAT']
 
-#    if input_model.meta.instrument.filter == 'OPAQUE' or is_lamp_exposure:
-#        # convert to microns if the pipeline ends earlier
-#        msa_pipeline = [(det, dms2detector),
-#                        (sca, det2gwa),
-#                        (gwa, gwa2slit),
-#                        (slit_frame, slit2msa),
-#                        (msa_frame, None)]
-#    else:
-    # MSA to OTEIP transform
-    msa2oteip = msa_to_oteip(reference_files)
-    msa2oteip.name = "msa2oteip"
+    if input_model.meta.instrument.filter == 'OPAQUE' or is_lamp_exposure:
+        # convert to microns if the pipeline ends earlier
+        msa_pipeline = [(det, dms2detector),
+                        (sca, det2gwa),
+                        (gwa, gwa2slit),
+                        (slit_frame, slit2msa),
+                        (msa_frame, None)]
+    else:
+        # MSA to OTEIP transform
+        msa2oteip = msa_to_oteip(reference_files)
+        msa2oteip.name = "msa2oteip"
 
-    # OTEIP to V2,V3 transform
-    # This includes a wavelength unit conversion from meters to microns.
-    oteip2v23 = oteip_to_v23(reference_files)
-    oteip2v23.name = "oteip2v23"
+        # OTEIP to V2,V3 transform
+        # This includes a wavelength unit conversion from meters to microns.
+        oteip2v23 = oteip_to_v23(reference_files)
+        oteip2v23.name = "oteip2v23"
 
-    # V2, V3 to sky
-    tel2sky = pointing.v23tosky(input_model) & Identity(1)
-    tel2sky.name = "v2v3_to_sky"
+        # V2, V3 to sky
+        tel2sky = pointing.v23tosky(input_model) & Identity(1)
+        tel2sky.name = "v2v3_to_sky"
 
-    msa_pipeline = [(det, dms2detector),
-                    (sca, det2gwa),
-                    (gwa, gwa2slit),
-                    (slit_frame, slit2msa),
-                    (msa_frame, msa2oteip),
-                    (oteip, oteip2v23),
-                    (v2v3, tel2sky),
-                    (world, None)]
+        msa_pipeline = [(det, dms2detector),
+                        (sca, det2gwa),
+                        (gwa, gwa2slit),
+                        (slit_frame, slit2msa),
+                        (msa_frame, msa2oteip),
+                        (oteip, oteip2v23),
+                        (v2v3, tel2sky),
+                        (world, None)]
 
     return msa_pipeline
 
@@ -983,7 +983,8 @@ def gwa_to_slit(open_slits, input_model, disperser,
     # The wavelength units up to this point are
     # meters as required by the pipeline but the desired output wavelength units is microns.
     # So we are going to Scale the spectral units by 1e6 (meters -> microns)
-    if input_model.meta.instrument.filter == 'OPAQUE':
+    is_lamp_exposure = input_model.meta.exposure.type in ['NRS_LAMP', 'NRS_AUTOWAVE', 'NRS_AUTOFLAT']
+    if input_model.meta.instrument.filter == 'OPAQUE' or is_lamp_exposure:
         lgreq = lgreq | Scale(1e6)
 
     msa = MSAModel(reference_files['msa'])

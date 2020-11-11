@@ -419,9 +419,10 @@ def dodrizzle(insci, input_wcs, inwht, output_wcs, outsci, outwht, outcon,
     # print("x slice: ", pixmap[y_mid,:,0])
     # print("y slice: ", pixmap[:,x_mid,1])
     # print("insci: ", insci)
-
     # Call 'drizzle' to perform image combination
+
     log.info(f"Drizzling {insci.shape} --> {outsci.shape}")
+
     _vers, nmiss, nskip = cdrizzle.tdriz(
         insci, inwht, pixmap,
         outsci, outwht, outcon,
@@ -435,5 +436,4 @@ def dodrizzle(insci, input_wcs, inwht, output_wcs, outsci, outwht, outcon,
         wtscale=wt_scl,
         fillstr=fillval
         )
-
     return _vers, nmiss, nskip

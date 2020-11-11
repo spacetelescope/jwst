@@ -4,6 +4,7 @@ import warnings
 import numpy as np
 from astropy import wcs as fitswcs
 from astropy.modeling import Model
+from astropy.modeling.models import Mapping
 from gwcs import WCS, wcstools
 
 from jwst.assign_wcs.util import wcs_from_footprints, wcs_bbox_from_shape
@@ -108,7 +109,11 @@ def reproject(wcs1, wcs2):
     if isinstance(wcs2, fitswcs.WCS):
         backward_transform = wcs2.all_world2pix
     elif isinstance(wcs2, WCS):
-        backward_transform = wcs2.backward_transform
+        if wcs1.output_frame.name == 'msa_frame':
+            print("Custom transform for NRS Lamp exposure")
+            backward_transform = Mapping((2, 1)) | wcs2.backward_transform[2] & wcs2.backward_transform[1]
+        else:
+            backward_transform = wcs2.backward_transform
     elif issubclass(wcs2, Model):
         backward_transform = wcs2.inverse
     else:
