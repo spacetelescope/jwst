@@ -450,7 +450,7 @@ class Asn_IFUGrating(AsnMixin_Spectrum):
 
 
 @RegistryMarker.rule
-class Asn_IFUGratingBkg(AsnMixin_AuxData, AsnMixin_Science):
+class Asn_IFUGratingBkg(AsnMixin_AuxData, AsnMixin_Spectrum):
 
     """Level 3 Spectral Association
 
@@ -506,7 +506,7 @@ class Asn_IFUGratingBkg(AsnMixin_AuxData, AsnMixin_Science):
         return product_name.lower()
 
 @RegistryMarker.rule
-class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_Science):
+class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_Spectrum):
 
     """Level 3 Spectral Association
 

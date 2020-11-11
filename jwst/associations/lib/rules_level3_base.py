@@ -881,7 +881,8 @@ class AsnMixin_Spectrum(AsnMixin_Science):
         self.data['asn_type'] = 'spec3'
         super(AsnMixin_Spectrum, self)._init_hook(item)
 
-class AsnMixin_AuxData(AsnMixin_Science):
+
+class AsnMixin_AuxData:
     """Process special and non-science exposures as science.
     """
     def get_exposure_type(self, item, default='science'):
@@ -905,9 +906,3 @@ class AsnMixin_AuxData(AsnMixin_Science):
         if exp_type in NEVER_CHANGE:
             return exp_type
         return 'science'
-
-    def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
-
-        self.data['asn_type'] = 'spec3'
-        super(AsnMixin_AuxData, self)._init_hook(item)
