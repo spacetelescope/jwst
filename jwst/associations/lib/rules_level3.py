@@ -470,31 +470,22 @@ class Asn_IFUGratingBkg(AsnMixin_AuxData, AsnMixin_Science):
                 ],
                 reduce=Constraint.notany
             ),
-            Constraint(
-                [
-                    DMSAttrConstraint(
-                        name='bkgdtarg',
-                        sources=['bkgdtarg'],
-                        value=['T'],)
-                ],
-                reduce=Constraint.any
-                ),
-            Constraint(
-                [
-                    DMSAttrConstraint(
-                        name='allowed_bkgdtarg',
-                        sources=['exp_type'],
-                        value=['nrs_ifu'],)
-                ],
-                reduce=Constraint.any
-                ),
-            Constraint([
-                DMSAttrConstraint(
-                    name='grating',
-                    sources=['grating'],
-                    force_unique=True,)
-                        ]),
-                ])
+            DMSAttrConstraint(
+                name='bkgdtarg',
+                sources=['bkgdtarg'],
+                value=['T'],
+            ),
+            DMSAttrConstraint(
+                name='allowed_bkgdtarg',
+                sources=['exp_type'],
+                value=['nrs_ifu'],
+            ),
+            DMSAttrConstraint(
+                name='grating',
+                sources=['grating'],
+                force_unique=True,
+            ),
+        ])
 
         # Check and continue initialization.
         super(Asn_IFUGratingBkg, self).__init__(*args, **kwargs)
