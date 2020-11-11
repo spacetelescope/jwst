@@ -1,8 +1,5 @@
-# Licensed under a 3-clause BSD style license - see LICENSE.rst
-
 from datetime import datetime
 import os
-import warnings
 
 from asdf import schema as mschema
 from astropy import time
@@ -22,7 +19,7 @@ from jwst.datamodels import (JwstDataModel, ImageModel, MaskModel, MultiSlitMode
 
 def test_strict_validation_enum():
     with JwstDataModel(strict_validation=True) as dm:
-        assert dm.meta.instrument.name == None
+        assert dm.meta.instrument.name is None
         with pytest.raises(jsonschema.ValidationError):
             # FOO is not in the allowed enumerated values
             dm.meta.instrument.name = 'FOO'

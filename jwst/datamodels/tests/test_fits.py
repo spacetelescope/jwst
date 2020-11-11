@@ -1,5 +1,3 @@
-import os
-
 from asdf import schema as mschema
 from astropy.io import fits
 from numpy.testing import assert_array_equal
