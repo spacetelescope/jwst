@@ -1,6 +1,7 @@
 import os
 
 from asdf import schema as mschema
+from astropy.io import fits
 from numpy.testing import assert_array_equal
 import numpy as np
 import pytest
@@ -8,10 +9,19 @@ import pytest
 from jwst.datamodels import JwstDataModel, RampModel
 
 
-@pytest.fixture(scope="module")
-def fits_file():
-    data_dir = os.path.join(os.path.dirname(__file__), 'data')
-    path = os.path.join(data_dir, 'test.fits')
+@pytest.fixture
+def fits_file(tmp_path):
+    path = str(tmp_path / "miri_ramp.fits")
+    hdulist = fits.HDUList()
+    hdulist.append(fits.PrimaryHDU())
+    data = np.zeros((5, 35, 40, 32))
+    image = fits.ImageHDU(data=data, name="SCI", ver=1)
+    hdulist.append(image)
+    header = hdulist[0].header
+    # header["DATAMODL"] = "JwstDataModel"
+    # Add invalid keyword
+    header["INSTRUME"] = "MIRI"
+    hdulist.writeto(path)
     return path
 
 
@@ -21,7 +31,7 @@ def test_from_fits(fits_file):
         assert dm.shape == (5, 35, 40, 32)
 
 
-def test_delete():
+def test_delete(fits_file):
     with JwstDataModel() as dm:
         dm.meta.instrument.name = 'NIRCAM'
         assert dm.meta.instrument.name == 'NIRCAM'
@@ -30,7 +40,6 @@ def test_delete():
 
 
 def test_fits_without_sci():
-    from astropy.io import fits
     schema = {
         "allOf": [
             mschema.load_schema("http://stsci.edu/schemas/jwst_datamodel/core.schema",
@@ -48,11 +57,11 @@ def test_fits_without_sci():
         ]
     }
 
-    fits = fits.HDUList(
-        [fits.PrimaryHDU(),
-         fits.ImageHDU(name='COEFFS', data=np.array([0.0], np.float32))])
+    hdulist = fits.HDUList()
+    hdulist.append(fits.PrimaryHDU())
+    hdulist.append(fits.ImageHDU(name='COEFFS', data=np.array([0.0], np.float32)))
 
-    with JwstDataModel(fits, schema=schema) as dm:
+    with JwstDataModel(hdulist, schema=schema) as dm:
         assert_array_equal(dm.coeffs, [0.0])
 
 

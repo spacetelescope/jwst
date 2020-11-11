@@ -20,26 +20,23 @@ from jwst.datamodels import (JwstDataModel, ImageModel, MaskModel, MultiSlitMode
     DrizProductModel, MultiProductModel, MIRIRampModel)
 
 
-ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
-FITS_FILE = os.path.join(ROOT_DIR, 'test.fits')
-
-
-def test_choice():
-    with pytest.raises(jsonschema.ValidationError):
-        with JwstDataModel(FITS_FILE, strict_validation=True) as dm:
-            assert dm.meta.instrument.name == 'MIRI'
+def test_strict_validation_enum():
+    with JwstDataModel(strict_validation=True) as dm:
+        assert dm.meta.instrument.name == None
+        with pytest.raises(jsonschema.ValidationError):
+            # FOO is not in the allowed enumerated values
             dm.meta.instrument.name = 'FOO'
 
 
-def test_set_na_ra():
-    with pytest.raises(jsonschema.ValidationError):
-        with JwstDataModel(FITS_FILE, strict_validation=True) as dm:
-            # Setting an invalid value should raise a ValueError
+def test_strict_validation_type():
+    with JwstDataModel(strict_validation=True) as dm:
+        with pytest.raises(jsonschema.ValidationError):
+            # Schema requires a float
             dm.meta.target.ra = "FOO"
 
 
-def test_date2():
-    with ImageModel((50, 50), strict_validation=True) as dm:
+def test_strict_validation_date():
+    with JwstDataModel(strict_validation=True) as dm:
         time_obj = time.Time(dm.meta.date)
         assert isinstance(time_obj, time.Time)
         date_obj = datetime.strptime(dm.meta.date, '%Y-%m-%dT%H:%M:%S.%f')
@@ -84,90 +81,86 @@ TRANSFORMATION_SCHEMA = {
 
 
 def test_list():
-    with pytest.raises(jsonschema.ValidationError):
-        with JwstDataModel(schema=TRANSFORMATION_SCHEMA,
-                           strict_validation=True) as dm:
-            dm.meta.transformations = []
+    with JwstDataModel(schema=TRANSFORMATION_SCHEMA,
+                       strict_validation=True) as dm:
+        dm.meta.transformations = []
+        with pytest.raises(jsonschema.ValidationError):
             dm.meta.transformations.item(transformation="SIN", coeff=2.0)
 
 
 def test_list2():
-    with pytest.raises(jsonschema.ValidationError):
-        with JwstDataModel(schema=TRANSFORMATION_SCHEMA,
-                           strict_validation=True) as dm:
-            dm.meta.transformations = []
+    with JwstDataModel(schema=TRANSFORMATION_SCHEMA,
+                       strict_validation=True) as dm:
+        dm.meta.transformations = []
+        with pytest.raises(jsonschema.ValidationError):
             dm.meta.transformations.append({'transformation': 'FOO', 'coeff': 2.0})
 
 
 def test_invalid_fits(tmp_path):
     path = str(tmp_path / "invalid.fits")
-    with fits.open(FITS_FILE) as hdulist:
-        header = hdulist[0].header
-        header['INSTRUME'] = 'FOO'
-        hdulist.writeto(path)
 
-    with pytest.raises(validate.ValidationWarning):
-        with warnings.catch_warnings():
-            os.environ['PASS_INVALID_VALUES'] = '0'
-            os.environ['STRICT_VALIDATION'] = '0'
-            warnings.simplefilter('error')
-            with util.open(path):
-                pass
+    hdulist = fits.HDUList()
+    hdulist.append(fits.PrimaryHDU())
+    header = hdulist[0].header
+    header["DATAMODL"] = "JwstDataModel"
+    # Add invalid keyword
+    header["INSTRUME"] = "FOO"
+    hdulist.writeto(path)
 
+    os.environ['PASS_INVALID_VALUES'] = '0'
+    os.environ['STRICT_VALIDATION'] = '0'
+    with pytest.warns(validate.ValidationWarning):
+        with util.open(path):
+            pass
+
+    os.environ['STRICT_VALIDATION'] = '1'
     with pytest.raises(jsonschema.ValidationError):
-        os.environ['STRICT_VALIDATION'] = '1'
         with util.open(path):
             pass
 
     # Check that specifying an argument does not get
     # overridden by the environmental.
+    os.environ['STRICT_VALIDATION'] = '0'
     with pytest.raises(jsonschema.ValidationError):
-        os.environ['STRICT_VALIDATION'] = '0'
         with util.open(path, strict_validation=True):
             pass
 
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore')
-        os.environ['PASS_INVALID_VALUES'] = '0'
-        os.environ['STRICT_VALIDATION'] = '0'
+    os.environ['PASS_INVALID_VALUES'] = '0'
+    os.environ['STRICT_VALIDATION'] = '0'
+    with pytest.warns(validate.ValidationWarning):
         with util.open(path, pass_invalid_values=True) as model:
             assert model.meta.instrument.name == 'FOO'
 
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore')
-        os.environ['PASS_INVALID_VALUES'] = '0'
-        os.environ['STRICT_VALIDATION'] = '0'
+    os.environ['PASS_INVALID_VALUES'] = '0'
+    os.environ['STRICT_VALIDATION'] = '0'
+    with pytest.warns(validate.ValidationWarning):
         with util.open(path) as model:
             assert model.meta.instrument.name is None
 
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore')
-        os.environ['PASS_INVALID_VALUES'] = '1'
+    os.environ['PASS_INVALID_VALUES'] = '1'
+    with pytest.warns(validate.ValidationWarning):
         with util.open(path) as model:
             assert model.meta.instrument.name == 'FOO'
 
     del os.environ['PASS_INVALID_VALUES']
     del os.environ['STRICT_VALIDATION']
 
-    with pytest.raises(validate.ValidationWarning):
-        with warnings.catch_warnings():
-            warnings.simplefilter('error')
-            with util.open(path, pass_invalid_values=False, strict_validation=False):
-                pass
+    with pytest.warns(validate.ValidationWarning):
+        with util.open(path, pass_invalid_values=False, strict_validation=False):
+            pass
 
     with pytest.raises(jsonschema.ValidationError):
         with util.open(path, pass_invalid_values=False, strict_validation=True):
             pass
 
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore')
+    with pytest.warns(validate.ValidationWarning):
         with util.open(path, pass_invalid_values=False, strict_validation=False) as model:
             assert model.meta.instrument.name is None
 
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore')
+    with pytest.warns(validate.ValidationWarning):
         with util.open(path, pass_invalid_values=True, strict_validation=False) as model:
-            assert model.meta.instrument.name == 'FOO'
+            pass
+    assert model.meta.instrument.name == 'FOO'
 
 
 def test_mask_model():
