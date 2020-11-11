@@ -5,14 +5,13 @@ import os
 import warnings
 
 from asdf import schema as mschema
-import pytest
-import numpy as np
-from numpy.testing import assert_array_equal, assert_array_almost_equal
-import jsonschema
-from astropy.io import fits
 from astropy import time
+from astropy.io import fits
+from numpy.testing import assert_array_equal, assert_array_almost_equal
 from stdatamodels import validate
-from stdatamodels.util import gentle_asarray
+import jsonschema
+import numpy as np
+import pytest
 
 from jwst.datamodels import util
 from jwst.datamodels import _defined_models as defined_models
@@ -169,62 +168,6 @@ def test_invalid_fits(tmp_path):
         warnings.simplefilter('ignore')
         with util.open(path, pass_invalid_values=True, strict_validation=False) as model:
             assert model.meta.instrument.name == 'FOO'
-
-
-def test_table_array_convert():
-    """
-    Test that structured arrays are converted when necessary, and
-    reused as views when not.
-    """
-
-    table_schema = {
-        "allOf": [
-            mschema.load_schema("http://stsci.edu/schemas/jwst_datamodel/core.schema",
-                resolve_references=True),
-            {
-                "type": "object",
-                "properties": {
-                    "table": {
-                        'title': 'A structured table',
-                        'fits_hdu': 'table',
-                        'datatype': [
-                            'bool8',
-                            {'datatype': 'int16',
-                             'name': 'my_int'},
-                            {'datatype': ['ascii', 64],
-                             'name': 'my_string'}
-                        ]
-                    }
-                }
-            }
-        ]
-    }
-
-    table = np.array(
-        [(42, 32000, 'foo')],
-        dtype=[('f0', '?'), ('my_int', '=i2'), ('my_string', 'S64')]
-    )
-
-    x = gentle_asarray(
-        table,
-        dtype=[('f0', '?'), ('my_int', '=i2'), ('my_string', 'S64')]
-    )
-
-    assert x is table
-
-    with JwstDataModel(schema=table_schema) as x:
-        x.table = table
-        assert x.table is not table
-
-    table = np.array(
-        [(42, 32000, 'foo')],
-        dtype=[('f0', '?'), ('my_int', '=i2'), ('my_string', 'S3')]
-    )
-
-    with JwstDataModel(schema=table_schema) as x:
-        x.table = table
-        assert x.table is not table
-        assert x.table['my_string'][0] != table['my_string'][0]
 
 
 def test_mask_model():

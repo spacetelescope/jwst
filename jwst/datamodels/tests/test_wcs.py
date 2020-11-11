@@ -5,15 +5,14 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal
 import pytest
 
-from ..wcs_ref_models import FilteroffsetModel
-from .. import ImageModel
+from jwst.datamodels import FilteroffsetModel, ImageModel
 
 
 
 FITS_FILE = os.path.join(os.path.dirname(__file__), 'data', 'sip.fits')
 
 
-def test_wcs(tmpdir):
+def test_get_fits_wcs(tmpdir):
     with ImageModel(FITS_FILE) as dm:
 
         # Refer to the data array to initialize it.
@@ -73,11 +72,10 @@ def test_wcs_ref_models():
               ]
     with FilteroffsetModel(filters=filters, instrument='NIRCAM', strict_validation=True) as fo:
         fo.filters == filters
-        with pytest.raises(ValueError) as e:
+        with pytest.raises(ValueError, match="Model.meta is missing values for"
+                           "['description', 'reftype', 'author', 'pedigree',"
+                           "'useafter']"):
             fo.validate()
-            assert str(e.value()) == ("Model.meta is missing values for "
-                                     "['description', 'reftype', 'author', 'pedigree',"
-                                     "'useafter']")
 
     filters = [{'filter': 'F090W', 'pupil': 'GRISMR',
                 'row_offset': 1, 'column_offset': 1},
@@ -92,10 +90,9 @@ def test_wcs_ref_models():
         fo.meta.pedigree = "GROUND"
         fo.meta.useafter = "2019-12-01"
 
-        with pytest.raises(ValueError) as e:
+        with pytest.raises(ValueError, match="Expected meta.instrument.channel for "
+                           "instrument NIRCAM to be one of "):
             fo.validate()
-            assert str(e.value()) == ("Expected meta.instrument.channel for instrument NIRCAM to be one of "
-                                      "['SHORT', 'LONG']")
         fo.meta.instrument.channel = 'SHORT'
-        fo.meta.instrument.module="A"
+        fo.meta.instrument.module = "A"
         fo.validate()
