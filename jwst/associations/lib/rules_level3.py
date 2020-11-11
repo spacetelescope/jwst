@@ -510,29 +510,22 @@ class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_Spectrum):
                 ],
                 reduce=Constraint.notany
             ),
-            Constraint(
-                [
-                    DMSAttrConstraint(
-                        name='bkgdtarg',
-                        sources=['bkgdtarg'],
-                        value=['T'],)
-                ],
-                reduce=Constraint.any
-                ),
-            Constraint(
-                [
-                    DMSAttrConstraint(
-                        name='allowed_bkgdtarg',
-                        sources=['exp_type'],
-                        value=['mir_mrs','mir_lrs-fixedslit',
-                               'nrs_fixedslit'],)
-                ],
-                reduce=Constraint.any
-                ),
+            DMSAttrConstraint(
+                name='bkgdtarg',
+                sources=['bkgdtarg'],
+                value=['T'],
+            ),
+            DMSAttrConstraint(
+                name='allowed_bkgdtarg',
+                sources=['exp_type'],
+                value=['mir_mrs','mir_lrs-fixedslit',
+                       'nrs_fixedslit'],
+            )
         ])
 
         # Check and continue initialization.
         super(Asn_Lv3SpecAux, self).__init__(*args, **kwargs)
+
 
 @RegistryMarker.rule
 class Asn_Coron(AsnMixin_Science):
