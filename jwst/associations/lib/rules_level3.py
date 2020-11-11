@@ -567,7 +567,7 @@ class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_BkgScience):
                 ],
                 reduce=Constraint.any
                 ),
-                ])
+        ])
 
         # Check and continue initialization.
         super(Asn_Lv3SpecAux, self).__init__(*args, **kwargs)
