@@ -520,7 +520,8 @@ class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_Spectrum):
                 sources=['exp_type'],
                 value=['mir_mrs','mir_lrs-fixedslit',
                        'nrs_fixedslit'],
-            )
+            ),
+            Constraint_Optical_Path(),
         ])
 
         # Check and continue initialization.
