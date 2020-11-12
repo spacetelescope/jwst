@@ -86,16 +86,18 @@ standards = [
 # #####
 # Tests
 # #####
+def generate_id(value):
+    """Generate test ids based on the parametrized input"""
+    return value.pool_root
+
+
 class TestAgainstStandards(BaseJWSTTest):
     """Generate tests and compare with standard results"""
     input_loc = 'associations'
     test_dir = 'standards'
     ref_loc = [test_dir, 'truth']
 
-    @pytest.mark.parametrize(
-        'standard_pars',
-        standards,
-    )
+    @pytest.mark.parametrize('standard_pars', standards, ids=generate_id)
     def test_against_standard(self, standard_pars):
         """Compare a generated association against a standard
         Success is when no other AssertionError occurs.

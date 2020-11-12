@@ -1,7 +1,8 @@
 from datetime import datetime
-import os
 import copy
 import json
+import os
+from pathlib import Path
 
 import getpass
 import pytest
@@ -307,4 +308,9 @@ def pytest_generate_tests(metafunc):
         except Exception:
             pool_paths = []
 
-        metafunc.parametrize('pool_path', pool_paths)
+        ids = [
+            Path(pool_path).stem
+            for pool_path in pool_paths
+        ]
+
+        metafunc.parametrize('pool_path', pool_paths, ids=ids)
