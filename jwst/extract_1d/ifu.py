@@ -215,8 +215,8 @@ def get_extract_parameters(ref_dict, slitname):
         data = refmodel.data
         wavelength = data.wavelength
         radius = data.radius
-        inner_bkg = data.inner_bgk
-        outer_bkg = data.outer_bgk
+        inner_bkg = data.inner_bkg
+        outer_bkg = data.outer_bkg
 
         extract_params['subtract_background'] = bool(subtract_background)
         extract_params['method'] = method
