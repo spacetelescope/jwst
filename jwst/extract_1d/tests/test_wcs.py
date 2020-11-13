@@ -21,5 +21,5 @@ def test_spec_wcs_monotonic():
 def test_spec_wcs_nonmonotonic():
     wave = np.array([1.2, 3.5, 0.1, 5.6, 3.4])
     wcsobj = spec_wcs.create_spectral_wcs(1.2, 23, wave)
-    with pytest.raises(NotImplementedError):
+    with pytest.raises((NotImplementedError, ValueError)):
         wcsobj.invert(1.8)
