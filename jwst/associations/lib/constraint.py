@@ -1,6 +1,5 @@
 """Constraints
 """
-from __future__ import annotations
 import abc
 import collections
 from copy import deepcopy
@@ -87,7 +86,7 @@ class SimpleConstraintABC(abc.ABC):
         return deepcopy(self)
 
     @property
-    def dup_names(self) -> dict[str, list[typing.Union[SimpleConstraint, Constraint]]]:
+    def dup_names(self): #  -> dict[str, list[typing.Union[SimpleConstraint, Constraint]]]
         """Return dictionary of constraints with duplicate names
 
         This method is meant to be overridden by classes
@@ -101,7 +100,7 @@ class SimpleConstraintABC(abc.ABC):
         """
         return {}
 
-    def get_all_attr(self, attribute: str) -> list[tuple[SimpleConstraint, typing.Any]]:
+    def get_all_attr(self, attribute: str): # -> list[tuple[SimpleConstraint, typing.Any]]:
         """Return the specified attribute
 
         This method is meant to be overridden by classes
@@ -733,7 +732,7 @@ class Constraint:
         return not match, to_reprocess
 
     @property
-    def dup_names(self) -> dict[str, list[typing.Union[SimpleConstraint, Constraint]]]:
+    def dup_names(self): # -> dict[str, list[typing.Union[SimpleConstraint, Constraint]]]:
         """Return dictionary of constraints with duplicate names
 
         This method is meant to be overridden by classes
@@ -757,7 +756,7 @@ class Constraint:
         result.default_factory = None
         return result
 
-    def get_all_attr(self, attribute: str) -> list[tuple[typing.Union[SimpleConstraint, Constraint], typing.Any]]:
+    def get_all_attr(self, attribute: str): # -> list[tuple[typing.Union[SimpleConstraint, Constraint], typing.Any]]:
         """Return the specified attribute
 
         This method is meant to be overridden by classes
