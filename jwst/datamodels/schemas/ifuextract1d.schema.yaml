@@ -32,11 +32,11 @@ allOf:
           datatype: float32
         radius_units:
           type: string
-        inner_bgk:
+        inner_bkg:
           datatype: float32
         inner_bkg_units:
           type: string
-        outer_bgk:
+        outer_bkg:
           datatype: float32
         outer_bkg_units:
           type: string
