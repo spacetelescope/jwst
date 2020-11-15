@@ -1,7 +1,7 @@
 os: linux
 dist: xenial
 language: python
-python: 3.8.5
+python: 3.8.6
 
 env:
   global:
@@ -30,7 +30,7 @@ jobs:
         - codecov -F unit
 
     - name: Oldest dependency versions
-      python: 3.6.10
+      python: 3.7.9
       before_install:
         - pip install . --no-deps
         - minimum_deps
