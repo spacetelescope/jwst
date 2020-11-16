@@ -110,7 +110,7 @@ def reproject(wcs1, wcs2):
         backward_transform = wcs2.all_world2pix
     elif isinstance(wcs2, WCS):
         if wcs1.output_frame.name == 'msa_frame':
-            print("Custom transform for NRS Lamp exposure")
+            log.info("Custom transform for NRS Lamp exposure")
             backward_transform = Mapping((2, 1)) | wcs2.backward_transform[2] & wcs2.backward_transform[1]
         else:
             backward_transform = wcs2.backward_transform
