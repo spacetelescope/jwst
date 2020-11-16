@@ -6,6 +6,8 @@ from jwst.datamodels import JwstDataModel
 
 
 def test_data_array(tmp_path):
+    """Test lots of things
+    """
     path = str(tmp_path / "data_array.fits")
     data_array_schema = {
         "allOf": [

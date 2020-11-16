@@ -75,7 +75,7 @@ def test_multislit_from_image():
             assert ms.slits[0].data.shape == (64, 64)
 
 
-def test_multislit_from_saved_image(tmp_path):
+def test_multislit_from_saved_imagemodel(tmp_path):
     path = tmp_path / "multislit_from_image.fits"
     with ImageModel((64, 64)) as im:
         im.save(path)
@@ -97,8 +97,8 @@ def test_multislit_metadata():
         with ImageModel((64, 64)) as im:
             ms.slits.append(ms.slits.item())
             ms.slits[-1].data = im.data
-        im = ms.slits[0]
-        im.name = "FOO"
+        slit = ms.slits[0]
+        slit.name = "FOO"
         assert ms.slits[0].name == "FOO"
 
 
@@ -121,7 +121,6 @@ def test_multislit_copy(tmp_path):
         output = input.copy()
         assert len(output.slits) == 4
 
-    from astropy.io import fits
     with fits.open(path, memmap=False) as hdulist:
         assert len(hdulist) == 6
 
