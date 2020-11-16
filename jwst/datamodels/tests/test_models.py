@@ -9,11 +9,14 @@ import numpy as np
 import pytest
 
 from jwst.associations.asn_from_list import asn_from_list
-from jwst.datamodels import (JwstDataModel, ImageModel,
+from jwst.datamodels import (JwstDataModel, ImageModel, MaskModel, AsnModel,
                              MultiSlitModel, ModelContainer, SlitModel,
+                             MultiExposureModel, SourceModelContainer,
+                             DrizProductModel, MultiProductModel, MIRIRampModel,
                              SlitDataModel, IFUImageModel, ABVegaOffsetModel)
 from jwst import datamodels
 from jwst.lib.file_utils import pushdir
+from jwst.datamodels import _defined_models as defined_models
 
 
 ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
@@ -93,6 +96,11 @@ def test_skip_fits_update(jail_environ,
 
     with datamodels.open(hduls, skip_fits_update=skip_fits_update) as model:
         assert model.meta.exposure.type == expected_exp_type
+
+
+def test_asnmodel_table_size_zero():
+    with AsnModel() as dm:
+        assert len(dm.asn_table) == 0
 
 
 def test_imagemodel():
@@ -310,6 +318,11 @@ def test_update_from_dict(tmp_path):
         assert "CRVAL1" in hdulist[1].header
 
 
+def test_mask_model():
+    with MaskModel((10, 10)) as dm:
+        assert dm.dq.dtype == np.uint32
+
+
 @pytest.fixture
 def container():
     warnings.simplefilter("ignore")
@@ -448,3 +461,18 @@ def test_abvega_offset_model():
         assert isinstance(model.abvega_offset, Table)
         assert model.abvega_offset.colnames == ['filter', 'pupil', 'abvega_offset']
         model.validate()
+
+
+@pytest.mark.parametrize("model", [v for v in defined_models.values()])
+def test_all_datamodels_init(model):
+    """
+    Test that all current datamodels can be initialized.
+    """
+    if model is SourceModelContainer:
+        # SourceModelContainer cannot have init=None
+        model(MultiExposureModel())
+    elif model in (DrizProductModel, MultiProductModel, MIRIRampModel):
+        with pytest.warns(DeprecationWarning):
+            model()
+    else:
+        model()
