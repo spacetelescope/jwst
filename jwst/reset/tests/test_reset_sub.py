@@ -4,13 +4,11 @@ Unit tests for reset anomaly correction
 
 import pytest
 import numpy as np
-from numpy.testing import assert_allclose
 
 from jwst.reset.reset_sub import (
     do_correction as resetcorr
     )
 from jwst.datamodels import RampModel, ResetModel, dqflags
-
 
 
 
@@ -39,11 +37,11 @@ def test_correction(make_rampmodel, make_resetmodel):
 
     # set up test array
     test = make_rampmodel(nints, ngroups, ysize, xsize)
-    # populate test data  = first 12 groups = 0, 11 
+    # populate test data  = first 12 groups = 0, 11
     for i in range(0, refgroups):
         test.data[0, i, :, :] = 0
 
-    # next groups =  12,13,14,15 = 
+    # next groups =  12,13,14,15
     for i in range(refgroups, ngroups):
         test.data[0, i, :, :] = i
 
@@ -201,7 +199,7 @@ def make_rampmodel():
 @pytest.fixture(scope='function')
 def make_resetmodel():
     '''Make MIRI Reset model for testing'''
-    
+
     def _reset(ngroups, ysize, xsize):
         # create the data and groupdq arrays
         nints = 2
@@ -219,7 +217,5 @@ def make_resetmodel():
         reset.meta.pedigree = 'Dummy'
         reset.meta.useafter = '2015-10-01T00:00:00'
         return reset
-    
+
     return _reset
-
-
