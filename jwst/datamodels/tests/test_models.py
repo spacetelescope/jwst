@@ -3,7 +3,6 @@ import warnings
 
 from astropy.io import fits
 from astropy.table import Table
-from astropy.time import Time
 from numpy.testing import assert_allclose, assert_array_equal
 import numpy as np
 import pytest
@@ -116,85 +115,6 @@ def test_imagemodel():
         assert dm.area.shape == shape
         assert dm.pathloss_point.shape == shape
         assert dm.pathloss_uniform.shape == shape
-
-
-def test_multislit():
-    with MultiSlitModel() as dm:
-        dm.slits.append(dm.slits.item())
-        slit = dm.slits[-1]
-        slit.data = np.random.rand(5, 5)
-        slit.dm = np.random.rand(5, 5)
-        slit.err = np.random.rand(5, 5)
-        assert slit.wavelength.shape == (0, 0)
-        assert slit.pathloss_point.shape == (0, 0)
-        assert slit.pathloss_uniform.shape == (0, 0)
-        assert slit.barshadow.shape == (0, 0)
-
-
-def test_multislit_from_image():
-    with ImageModel((64, 64)) as im:
-        with MultiSlitModel(im) as ms:
-            assert len(ms.slits) == 1
-            assert ms.slits[0].data.shape == (64, 64)
-
-
-def test_multislit_from_saved_image(tmp_path):
-    path = tmp_path / "multislit_from_image.fits"
-    with ImageModel((64, 64)) as im:
-        im.save(path)
-
-    with MultiSlitModel(path) as ms:
-        assert len(ms.slits) == 1
-        assert ms.slits[0].data.shape == (64, 64)
-
-        for i, slit in enumerate(ms.slits):
-            assert slit.data is ms.slits[i].data
-
-        ms2 = ms.copy()
-        ms2.slits = ms.slits
-        assert len(ms2.slits) == 1
-
-
-def test_multislit_metadata():
-    with MultiSlitModel() as ms:
-        with ImageModel((64, 64)) as im:
-            ms.slits.append(ms.slits.item())
-            ms.slits[-1].data = im.data
-        im = ms.slits[0]
-        im.name = "FOO"
-        assert ms.slits[0].name == "FOO"
-
-
-def test_multislit_metadata2():
-    with MultiSlitModel() as ms:
-        ms.slits.append(ms.slits.item())
-        for key, val in ms.items():
-            assert isinstance(val, (bytes, str, int, float, bool, Time))
-
-
-def test_multislit_copy(tmp_path):
-    path = tmp_path / "multislit.fits"
-    with MultiSlitModel() as input:
-        for i in range(4):
-            input.slits.append(input.slits.item(data=np.empty((50, 50))))
-
-        assert len(input.slits) == 4
-        input.save(path)
-
-        output = input.copy()
-        assert len(output.slits) == 4
-
-    from astropy.io import fits
-    with fits.open(path, memmap=False) as hdulist:
-        assert len(hdulist) == 6
-
-    with MultiSlitModel(path) as model:
-        for i, slit in enumerate(model.slits):
-            pass
-        assert i+1 == 4
-
-        output = model.copy()
-        assert len(output.slits) == 4
 
 
 def test_model_with_nonstandard_primary_array():
