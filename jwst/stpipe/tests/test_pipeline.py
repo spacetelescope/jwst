@@ -21,6 +21,10 @@ class FlatField(Step):
     """
     An example flat-fielding Step.
     """
+    spec = """
+        threshold = float(default=0.0)  # The threshold below which to remove
+        multiplier = float(default=1.0) # Multiply by this number
+    """
 
     # Load the spec from a file
 
@@ -192,8 +196,8 @@ def test_partial_pipeline(_jail):
 
 def test_pipeline_commandline(_jail):
     args = [
-        abspath(join(dirname(__file__), 'steps', 'python_pipeline.cfg')),
-        '--steps.flat_field.threshold=47'
+        join(dirname(__file__), 'steps', 'python_pipeline.cfg'),
+        '--steps.flat_field.threshold=47',
         ]
 
     pipe = Step.from_cmdline(args)
@@ -207,13 +211,8 @@ def test_pipeline_commandline(_jail):
 def test_pipeline_commandline_class(_jail):
     args = [
         'jwst.stpipe.tests.test_pipeline.MyPipeline',
-        '--logcfg={0}'.format(
-            abspath(join(dirname(__file__), 'steps', 'log.cfg'))),
-        # The file_name parameters are *required*
-        '--science_filename={0}'.format(
-            abspath(join(dirname(__file__), 'data', 'science.fits'))),
-        '--output_filename={0}'.format(
-            'output.fits'),
+        f"--science_filename={join(dirname(__file__), 'data', 'science.fits')}",
+        '--output_filename=output.fits',
         '--steps.flat_field.threshold=47'
         ]
 
