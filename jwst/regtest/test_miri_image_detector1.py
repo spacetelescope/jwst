@@ -17,6 +17,7 @@ def run_pipeline(jail, rtdata_module):
             "--steps.dq_init.save_results=True",
             "--steps.lastframe.save_results=True",
             "--steps.firstframe.save_results=True",
+            "--steps.reset.save_results=True",
             "--steps.saturation.save_results=True",
             "--steps.rscd.save_results=True",
             "--steps.linearity.save_results=True",
@@ -33,7 +34,7 @@ def run_pipeline(jail, rtdata_module):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("output", ['rate', 'rateints', 'linearity', 'rscd',
-                                    'dq_init', 'firstframe', 'lastframe',
+                                    'dq_init', 'firstframe', 'lastframe','reset',
                                     'saturation', 'dark_current', 'refpix',
                                     'jump', 'fitopt'])
 def test_miri_image_detector1(run_pipeline, request, fitsdiff_default_kwargs, output):
