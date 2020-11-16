@@ -3,28 +3,37 @@ from setuptools import setup, find_packages
 from glob import glob
 
 
-scripts = [s for s in glob('scripts/*') if basename(s) != '__pycache__']
+scripts = [s for s in glob("scripts/*") if basename(s) != "__pycache__"]
+# package_data values are glob patterns relative to each specific subpackage.
 package_data = {
-    '': [
-        '*.fits', '**/*.fits','**/**/*.fits','**/**/**/*.fits',
-        '*.txt',
-        '*.inc',
-        '*.cfg',
-        '*.csv', '**/*.csv','**/**/*.csv','**/**/**/*.csv',
-        '*.ecsv', '**/*.ecsv',
-        '*.yaml',
-        '*.json', '**/*.json','**/**/*.json','**/**/**/*.json',
-        '*.asdf',
-        '*.ecsv',
-        '*.prop', '**/*.prop','**/**/*.prop','**/**/**/*.prop',
-        '*.db', '**/*.db','**/**/*.db','**/**/**/*.db',
+    "": [
+        "*.asdf",
+        "*.cfg",
+        "tests/data/*.csv",
+        "tests/data/*.ecsv",
+        "tests/data/*.fits",
+        "tests/data/**/*.fits",
+        "*.json",
+        "tests/data/*.json",
+        "tests/data/**/*.json",
+        "tests/data/*.txt",
+        "*.yaml",
     ],
-    "jwst.transforms": ['*.yaml', '**/*.yaml', '**/**/*.yaml', '**/**/**/*.yaml'],
+    "jwst.fits_generator": [
+        "templates/*.inc",
+        "templates/*.txt",
+        "tests/okfile/*.prop",
+    ],
+    "jwst.lib": ["tests/data/siaf.db"],
+    # Include the rules .py files in associations test data
+    "jwst.associations": ["tests/data/*.py"],
+    # Include the transforms schemas
+    "jwst.transforms": ["schemas/stsci.edu/jwst_pipeline/*.yaml"],
 }
 
 setup(
     use_scm_version=True,
-    setup_requires=['setuptools_scm'],
+    setup_requires=["setuptools_scm"],
     scripts=scripts,
     packages=find_packages(),
     package_data=package_data,

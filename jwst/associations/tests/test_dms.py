@@ -7,7 +7,7 @@ from .helpers import (
     t_path
 )
 
-from .. import AssociationRegistry
+from jwst.associations import AssociationRegistry
 
 
 @pytest.fixture(scope='module')
