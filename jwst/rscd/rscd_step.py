@@ -3,12 +3,12 @@ from .. import datamodels
 from . import rscd_sub
 
 
-__all__ = ["RSCD_Step"]
+__all__ = ["RscdStep"]
 
 
-class RSCD_Step(Step):
+class RscdStep(Step):
     """
-    RSCD_Step: Performs an RSCD correction to MIRI data.
+    RscdStep: Performs an RSCD correction to MIRI data.
     Baseline version flags the first N groups as 'DO_NOT_USE' in
     the 2nd and later integrations in a copy of the input
     science data model.
