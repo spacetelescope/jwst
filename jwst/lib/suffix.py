@@ -125,7 +125,7 @@ _calculated_suffixes = set([
     'cubeskymatchstep',
     'i2d',
     'group_scale',
-    'rscd_step',
+    'rscdstep',
     'stackrefsstep',
     'flat_field',
     'guidercdsstep',
