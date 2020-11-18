@@ -12,6 +12,7 @@ assign_wcs
 ----------
 
 - Add nrs_verify to the NIRSpec exposure list [#5403]
+- Enable resample_spec for NIRSpec line lamp exposures [#5484]
 
 associations
 ------------
@@ -113,6 +114,7 @@ pipeline
 
 - Update ``Image3Pipeline`` to allow sky subtraction when input contains
   only one image (group). [#5423]
+- Enable resample_spec for NIRSpec line lamp exposures in Spec2Pipeline [#5484]
 
 ramp_fitting
 ------------
@@ -129,6 +131,7 @@ resample
 - Implement memory check in resample to prevent huge arrays [#5354]
 
 - Add ``pixel_scale_ratio`` parameter to allow finer output grid. [#5389]
+- Enable resample_spec for NIRSpec line lamp exposures [#5484]
 
 saturation
 ----------
