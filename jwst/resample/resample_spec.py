@@ -158,16 +158,18 @@ class ResampleSpecData:
                 dec_center_pt = np.nanmean(dec_center)
 
                 if model.meta.wcs.output_frame.name == 'world':
-                    # ra and dec this converted to tangent projection
+                    # convert ra and dec to tangent projection
                     tan = Pix2Sky_TAN()
                     native2celestial = RotateNative2Celestial(ra_center_pt, dec_center_pt, 180)
                     undist2sky1 = tan | native2celestial
                     # Filter out RuntimeWarnings due to computed NaNs in the WCS
                     warnings.simplefilter("ignore")
-                    # at this center of slit find x,y tangent proction - x_tan, y_tan
+                    # at this center of slit find x,y tangent projection - x_tan, y_tan
                     x_tan, y_tan = undist2sky1.inverse(ra, dec)
                     warnings.resetwarnings()
                 else:
+                    # for msa frame, no need to do tangent plane projections
+                    # but we still use the same variables
                     x_tan, y_tan = ra, dec
 
                 # pull out data from center
