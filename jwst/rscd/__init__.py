@@ -1,3 +1,3 @@
-from .rscd_step import RSCD_Step
+from .rscd_step import RscdStep
 
-__all__ = ['RSCD_Step']
+__all__ = ['RscdStep']

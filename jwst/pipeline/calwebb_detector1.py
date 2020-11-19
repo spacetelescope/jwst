@@ -47,7 +47,7 @@ class Detector1Pipeline(Pipeline):
                  'ipc': ipc_step.IPCStep,
                  'superbias': superbias_step.SuperBiasStep,
                  'refpix': refpix_step.RefPixStep,
-                 'rscd': rscd_step.RSCD_Step,
+                 'rscd': rscd_step.RscdStep,
                  'firstframe': firstframe_step.FirstFrameStep,
                  'lastframe': lastframe_step.LastFrameStep,
                  'linearity': linearity_step.LinearityStep,

@@ -55,7 +55,7 @@ SUFFIXES_TO_ADD = [
 
 # Suffixes that are discovered but should not be considered.
 # Used by `find_suffixes` to remove undesired values it has found.
-SUFFIXES_TO_DISCARD = ['functionwrapper', 'systemcall']
+SUFFIXES_TO_DISCARD = ['functionwrapper', 'systemcall','rscd_step']
 
 
 # Calculated suffixes.
@@ -125,7 +125,7 @@ _calculated_suffixes = set([
     'cubeskymatchstep',
     'i2d',
     'group_scale',
-    'rscd_step',
+    'rscdstep',
     'stackrefsstep',
     'flat_field',
     'guidercdsstep',

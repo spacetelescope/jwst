@@ -1,14 +1,15 @@
 from ..stpipe import Step
 from .. import datamodels
 from . import rscd_sub
+from ..lib.basic_utils import deprecate_class
 
 
-__all__ = ["RSCD_Step"]
+__all__ = ["RscdStep"]
 
 
-class RSCD_Step(Step):
+class RscdStep(Step):
     """
-    RSCD_Step: Performs an RSCD correction to MIRI data.
+    RscdStep: Performs an RSCD correction to MIRI data.
     Baseline version flags the first N groups as 'DO_NOT_USE' in
     the 2nd and later integrations in a copy of the input
     science data model.
@@ -61,3 +62,16 @@ class RSCD_Step(Step):
                 result.meta.cal_step.rscd = 'SKIPPED'
 
         return result
+
+
+@deprecate_class(RscdStep)
+class RSCD_Step:
+    """
+    RscdStep: Performs an RSCD correction to MIRI data.
+    Baseline version flags the first N groups as 'DO_NOT_USE' in
+    the 2nd and later integrations in a copy of the input
+    science data model.
+    Enhanced version is not ready nor enabled.
+
+    This class has been deprecated. Please use `RscdStep` instead.
+    """
