@@ -144,6 +144,12 @@ skymatch
   contains ``'global'`` and the *single image group*'s sky cannot be computed
   (e.g., because all pixels are flagged as "bad"). [#5440]
 
+tweakreg
+--------
+
+- Add support for the new ``fitgeom`` mode: ``'rshift'`` that can fit only
+  for shifts and a rotation. [#5475]
+
 0.17.1 (2020-09-15)
 ===================
 
