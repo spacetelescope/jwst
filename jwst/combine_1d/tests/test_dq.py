@@ -4,7 +4,7 @@ Test DQ operations in Combine1dStep
 import numpy as np
 
 from jwst import datamodels
-from jwst.combine_1d import Combine1dStep, combine1d
+from jwst.combine_1d import Combine1dStep
 
 
 def test_dq():
