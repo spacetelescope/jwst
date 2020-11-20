@@ -34,7 +34,6 @@ from importlib import import_module
 import inspect
 import logging
 import os
-from os import path
 import re
 import sys
 
@@ -149,7 +148,7 @@ def all_steps():
     from jwst.stpipe import Step
 
     jwst = import_module('jwst')
-    jwst_fpath = path.split(jwst.__file__)[0]
+    jwst_fpath = os.path.split(jwst.__file__)[0]
 
     steps = {}
     for module in load_local_pkg(jwst_fpath):
@@ -179,7 +178,7 @@ def load_local_pkg(fpath):
     generator
         `module` for each module found in the package.
     """
-    package_fpath, package = path.split(fpath)
+    package_fpath, package = os.path.split(fpath)
     package_fpath_len = len(package_fpath) + 1
     sys_path = copy(sys.path)
     sys.path.insert(0, package_fpath)
@@ -187,9 +186,9 @@ def load_local_pkg(fpath):
         for module_fpath in folder_traverse(
             fpath, basename_regex=r'[^_].+\.py$', path_exclude_regex='tests'
         ):
-            folder_path, fname = path.split(module_fpath[package_fpath_len:])
+            folder_path, fname = os.path.split(module_fpath[package_fpath_len:])
             module_path = folder_path.split('/')
-            module_path.append(path.splitext(fname)[0])
+            module_path.append(os.path.splitext(fname)[0])
             module_path = '.'.join(module_path)
             try:
                 module = import_module(module_path)
@@ -231,4 +230,4 @@ def folder_traverse(folder_path, basename_regex='.+', path_exclude_regex='^$'):
             continue
         for file in files:
             if basename_regex.match(file):
-                yield path.join(root, file)
+                yield os.path.join(root, file)
