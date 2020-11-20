@@ -115,6 +115,11 @@ saturation
   NO_SAT_CHECK in the saturation reference file, instead of skipping any
   test of those pixels. [#5394]
 
+set_telescope_pointing
+----------------------
+
+- Add logging of the found quaternion information [#5495]
+
 skymatch
 --------
 
