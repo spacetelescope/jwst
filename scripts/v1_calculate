@@ -14,7 +14,7 @@ import jwst.lib.set_telescope_pointing as stp
 log_handler = logging.StreamHandler()
 logger = logging.getLogger('jwst')
 logger.addHandler(log_handler)
-LogLevels = [logging.WARNING, logging.INFO, logging.DEBUG]
+LOGLEVELS = [logging.WARNING, logging.INFO, logging.DEBUG]
 
 # Available reduce functions
 REDUCE_FUNCS_MAPPING = {
@@ -63,7 +63,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Set output detail.
-    level = LogLevels[min(len(LogLevels)-1, args.verbose)]
+    level = LOGLEVELS[min(len(LOGLEVELS)-1, args.verbose)]
     logger.setLevel(level)
 
     # Determine whether the sources are time specifications or a file list.
