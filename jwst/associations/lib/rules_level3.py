@@ -404,6 +404,7 @@ class Asn_IFU(AsnMixin_Spectrum):
         )
         return product_name.lower()
 
+
 @RegistryMarker.rule
 class Asn_IFUGrating(AsnMixin_Spectrum):
     """Level 3 IFU gratings Association
@@ -437,34 +438,19 @@ class Asn_IFUGrating(AsnMixin_Spectrum):
                 ],
                 reduce=Constraint.notany
             ),
-            Constraint([
-                DMSAttrConstraint(
-                    name='grating',
+            DMSAttrConstraint(
+                    name='opt_elem',
                     sources=['grating'],
-                    force_unique=True,)
-                        ]),
-            ])
+                    force_unique=True,
+            )
+        ])
+
         # Check and continue initialization.
         super(Asn_IFUGrating, self).__init__(*args, **kwargs)
 
-    @property
-    def dms_product_name(self):
-        """Define product name."""
-        target = self._get_target()
-
-        instrument = self._get_instrument()
-
-        product_name = 'jw{}-{}_{}_{}_{}'.format(
-            self.data['program'],
-            self.acid.id,
-            target,
-            instrument,
-            self._get_grating()
-        )
-        return product_name.lower()
 
 @RegistryMarker.rule
-class Asn_IFUGratingBkg(AsnMixin_AuxData, AsnMixin_BkgScience):
+class Asn_IFUGratingBkg(AsnMixin_AuxData, AsnMixin_Spectrum):
 
     """Level 3 Spectral Association
 
@@ -483,53 +469,29 @@ class Asn_IFUGratingBkg(AsnMixin_AuxData, AsnMixin_BkgScience):
                 ],
                 reduce=Constraint.notany
             ),
-            Constraint(
-                [
-                    DMSAttrConstraint(
-                        name='bkgdtarg',
-                        sources=['bkgdtarg'],
-                        value=['T'],)
-                ],
-                reduce=Constraint.any
-                ),
-            Constraint(
-                [
-                    DMSAttrConstraint(
-                        name='allowed_bkgdtarg',
-                        sources=['exp_type'],
-                        value=['nrs_ifu'],)
-                ],
-                reduce=Constraint.any
-                ),
-            Constraint([
-                DMSAttrConstraint(
-                    name='grating',
-                    sources=['grating'],
-                    force_unique=True,)
-                        ]),
-                ])
+            DMSAttrConstraint(
+                name='bkgdtarg',
+                sources=['bkgdtarg'],
+                value=['T'],
+            ),
+            DMSAttrConstraint(
+                name='allowed_bkgdtarg',
+                sources=['exp_type'],
+                value=['nrs_ifu'],
+            ),
+            DMSAttrConstraint(
+                name='opt_elem',
+                sources=['grating'],
+                force_unique=True,
+            ),
+        ])
 
         # Check and continue initialization.
         super(Asn_IFUGratingBkg, self).__init__(*args, **kwargs)
 
-    @property
-    def dms_product_name(self):
-        """Define product name."""
-        target = self._get_target()
-
-        instrument = self._get_instrument()
-
-        product_name = 'jw{}-{}_{}_{}_{}'.format(
-            self.data['program'],
-            self.acid.id,
-            target,
-            instrument,
-            self._get_grating()
-        )
-        return product_name.lower()
 
 @RegistryMarker.rule
-class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_BkgScience):
+class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_Spectrum):
 
     """Level 3 Spectral Association
 
@@ -548,29 +510,23 @@ class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_BkgScience):
                 ],
                 reduce=Constraint.notany
             ),
-            Constraint(
-                [
-                    DMSAttrConstraint(
-                        name='bkgdtarg',
-                        sources=['bkgdtarg'],
-                        value=['T'],)
-                ],
-                reduce=Constraint.any
-                ),
-            Constraint(
-                [
-                    DMSAttrConstraint(
-                        name='allowed_bkgdtarg',
-                        sources=['exp_type'],
-                        value=['mir_mrs','mir_lrs-fixedslit',
-                               'nrs_fixedslit'],)
-                ],
-                reduce=Constraint.any
-                ),
+            DMSAttrConstraint(
+                name='bkgdtarg',
+                sources=['bkgdtarg'],
+                value=['T'],
+            ),
+            DMSAttrConstraint(
+                name='allowed_bkgdtarg',
+                sources=['exp_type'],
+                value=['mir_mrs','mir_lrs-fixedslit',
+                       'nrs_fixedslit'],
+            ),
+            Constraint_Optical_Path(),
         ])
 
         # Check and continue initialization.
         super(Asn_Lv3SpecAux, self).__init__(*args, **kwargs)
+
 
 @RegistryMarker.rule
 class Asn_Coron(AsnMixin_Science):

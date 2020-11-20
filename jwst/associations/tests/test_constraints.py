@@ -8,6 +8,65 @@ from ..lib.constraint import (
 )
 
 
+def test_sc_dup_names():
+    """Test that SimpleConstraint returns an empty dict"""
+    sc = SimpleConstraint(name='sc_name')
+    dups = sc.dup_names
+    assert not len(dups)
+
+class TestDupNames:
+    """Test duplicate names in Constraint"""
+
+    # Sub constraints
+    sc1 = SimpleConstraint(name='sc1')
+    sc2 = SimpleConstraint(name='sc2')
+    c1 = Constraint([sc1, sc2], name='c1')
+    c2 = Constraint([sc1, sc1], name='c2')
+    c3 = Constraint([sc1, sc2], name='sc1')
+
+    @pytest.mark.parametrize(
+        'constraints, expected', [
+            ([sc1], {}),
+            ([sc1, sc2], {}),
+            ([sc1, sc1], {'sc1': [sc1, sc1]}),
+            ([c1], {}),
+            ([c2], {'sc1': [sc1, sc1]}),
+            ([c3], {'sc1': [sc1, c3]}),
+        ]
+    )
+    def test_dups(self, constraints, expected):
+        c = Constraint(constraints)
+        dups = c.dup_names
+        assert set(dups.keys()) == set(expected.keys())
+        for name, constraints in dups.items():
+            assert set(dups[name]) == set(expected[name])
+
+
+def test_sc_get_all_attr():
+    """Get attribute value of a simple constraint"""
+    name = 'my_sc'
+    sc = SimpleConstraint(name=name, value='my_value')
+    assert sc.get_all_attr('name') == [(sc, name)]
+
+
+def test_constraint_get_all_attr():
+    """Get attribute value of all constraints in a constraint"""
+    names = ['sc1', 'sc2']
+    constraints = [
+        SimpleConstraint(name=name)
+        for name in names
+    ]
+    c = Constraint(constraints, name='c1')
+
+    expected = [
+        (constraint, constraint.name)
+        for constraint in constraints
+    ]
+    expected.append((c, 'c1'))
+    result = c.get_all_attr('name')
+    assert set(result) == set(expected)
+
+
 def test_simpleconstraint_reprocess_match():
     """Test options for reprocessing"""
     sc = SimpleConstraint(
