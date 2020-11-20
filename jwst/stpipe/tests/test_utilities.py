@@ -20,7 +20,7 @@ KNOWN_STEPS = set([
     'MRSIMatchStep', 'MSAFlagOpenStep', 'MasterBackgroundNrsSlitsStep', 'MasterBackgroundStep',
     'OutlierDetectionScaledStep', 'OutlierDetectionStackStep', 'OutlierDetectionStep',
     'PathLossStep', 'PersistenceStep', 'PhotomStep',
-    'RSCD_Step', 'RampFitStep', 'RefPixStep', 'ResampleSpecStep', 'ResampleStep', 'ResetStep',
+    'RscdStep', 'RSCD_Step', 'RampFitStep', 'RefPixStep', 'ResampleSpecStep', 'ResampleStep', 'ResetStep',
     'SaturationStep', 'SkyMatchStep', 'SourceCatalogStep', 'SourceTypeStep', 'Spec2Pipeline', 'Spec3Pipeline',
     'StackRefsStep', 'StraylightStep', 'SubtractImagesStep', 'SuperBiasStep',
     'TSOPhotometryStep', 'Tso3Pipeline', 'TweakRegStep',
