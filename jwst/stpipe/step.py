@@ -727,7 +727,7 @@ class Step():
         try:
             model = dm_open(dataset)
         except (IOError, TypeError, ValueError):
-            logger.warning(f'Input dataset is not a DataModel.')
+            logger.warning('Input dataset is not a DataModel.')
             disable = True
 
         # Check if retrieval should be attempted.
