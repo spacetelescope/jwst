@@ -144,6 +144,11 @@ skymatch
   contains ``'global'`` and the *single image group*'s sky cannot be computed
   (e.g., because all pixels are flagged as "bad"). [#5440]
 
+stpipe
+------
+
+- Implement utility function all_steps and fix crds reference file retrieval for non-datamodels [#5492]
+
 tweakreg
 --------
 
