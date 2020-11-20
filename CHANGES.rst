@@ -16,6 +16,8 @@ assign_wcs
 associations
 ------------
 
+- Asn_Lv3SpecAux: Add optical element constraint [#5479]
+
 - Add utility asn_gather [#5468]
 
 - Do not allow target acqs to be considered TSO [#5385]
