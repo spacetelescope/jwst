@@ -247,8 +247,68 @@ Image2Pipeline.
      -
      -
      -
-   * - NRS_WATA
-     - target_acquisition
+   * - NRS_AUTOFLAT
+     - nrs_autoflat
+     - n/a
+     - YES
+   * - NRS_AUTOWAVE
+     - nrs_autowave
+     - n/a
+     - YES
+   * - NRS_BRIGHTOBJ
+     - science
+     - n/a
+     - YES
+   * - NRS_CONFIRM
+     - science
+     - n/a
+     - YES
+   * - NRS_DARK
+     - dark
+     - n/a
+     - NO
+   * - NRS_FIXEDSLIT
+     - background
+     - BACKGROUND
+     - YES
+   * - NRS_FIXEDSLIT
+     - science
+     - n/a
+     - YES
+   * - NRS_FOCUS
+     - science
+     - n/a
+     - YES
+   * - NRS_IFU
+     - background
+     - BACKGROUND
+     - YES
+   * - NRS_IFU
+     - imprint
+     - IMPRINT
+     - YES
+   * - NRS_IFU
+     - science
+     - n/a
+     - YES
+   * - NRS_IMAGE
+     - science
+     - n/a
+     - YES
+   * - NRS_LAMP
+     - science
+     - n/a
+     - YES<sup>1</sup>
+   * - NRS_MIMF
+     - science
+     - n/a
+     - YES
+   * - NRS_MSASPEC
+     - imprint
+     - IMPRINT
+     - YES
+   * - NRS_MSASPEC
+     - science
      - n/a
      - YES
    * - NRS_MSATA
@@ -259,74 +319,14 @@ Image2Pipeline.
      - target_acquisition
      - n/a
      - YES
-   * - NRS_CONFIRM
-     - science
-     - n/a
-     - YES
-   * - NRS_FIXEDSLIT
-     - science
-     - n/a
-     - YES
-   * - NRS_FIXEDSLIT
-     - background
-     - BACKGROUND
-     - YES
-   * - NRS_AUTOWAVE
-     - nrs_autowave
-     - n/a
-     - YES
-   * - NRS_IFU
-     - science
-     - n/a
-     - YES
-   * - NRS_IFU
-     - imprint
-     - IMPRINT
-     - YES
-   * - NRS_IFU
-     - background
-     - BACKGROUND
-     - YES
-   * - NRS_IMAGE
-     - science
-     - n/a
-     - YES
-   * - NRS_MSASPEC
-     - science
-     - n/a
-     - YES
-   * - NRS_MSASPEC
-     - imprint
-     - IMPRINT
-     - YES
-   * - NRS_AUTOFLAT
-     - nrs_autoflat
-     - n/a
-     - YES
-   * - NRS_FOCUS
-     - science
-     - n/a
-     - YES
-   * - NRS_DARK
-     - dark
-     - n/a
-     - NO
-   * - NRS_LAMP
-     - science
-     - n/a
-     - YES<sup>1</sup>
-   * - NRS_BRIGHTOBJ
-     - science
-     - n/a
-     - YES
-   * - NRS_MIMF
-     - science
-     - n/a
-     - YES
    * - NRS_VERIFY
      - science
      - n/a
      - YES<sup>1</sup>
+   * - NRS_WATA
+     - target_acquisition
+     - n/a
+     - YES
 
 History
 -------
