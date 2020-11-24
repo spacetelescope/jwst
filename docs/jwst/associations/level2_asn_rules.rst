@@ -15,6 +15,54 @@ Image2Pipeline.
      - Association Exposure Type
      - Specials
      - Level2b?
+   * - FGS_ACQ1
+     - tracking
+     - n/a
+     - NO
+   * - FGS_ACQ2
+     - tracking
+     - n/a
+     - NO
+   * - FGS_DARK
+     - dark
+     - n/a
+     - NO
+   * - FGS_FINEGUIDE
+     - tracking
+     - n/a
+     - NO
+   * - FGS_FOCUS
+     - science
+     - n/a
+     - YES
+   * - FGS_ID-IMAGE
+     - tracking
+     - n/a
+     - NO
+   * - FGS_ID-STACK
+     - tracking
+     - n/a
+     - NO
+   * - FGS_IMAGE
+     - science
+     - n/a
+     - YES
+   * - FGS_INTFLAT
+     - flat
+     - n/a
+     - NO
+   * - FGS_SKYFLAT
+     - flat
+     - n/a
+     - NO
+   * - FGS_TRACK
+     - tracking
+     - n/a
+     - NO
+   * -
+     -
+     -
+     - 
    * - MIR_4QPM
      - psf
      - PSF
@@ -91,6 +139,54 @@ Image2Pipeline.
      - target_acquisition
      - n/a
      - YES
+   * -
+     -
+     -
+     - 
+   * - NIS_IMAGE
+     - science
+     - n/a
+     - YES
+   * - NIS_WFSS
+     - science
+     - n/a
+     - YES
+   * - NIS_TACQ
+     - target_acquisition
+     - n/a
+     - YES
+   * - NIS_TACONFIRM
+     - target_acquisition
+     - n/a
+     - YES
+   * - NIS_SOSS
+     - science
+     - n/a
+     - YES
+   * - NIS_AMI
+     - science
+     - n/a
+     - YES
+   * - NIS_AMI
+     - psf
+     - PSF
+     - YES
+   * - NIS_FOCUS
+     - science
+     - n/a
+     - YES
+   * - NIS_DARK
+     - science
+     - n/a
+     - NO
+   * - NIS_LAMP
+     - science
+     - n/a
+     - NO
+   * - NIS_EXTCAL
+     - science
+     - n/a
+     - NO
    * -
      -
      -
@@ -231,102 +327,6 @@ Image2Pipeline.
      - science
      - n/a
      - YES<sup>1</sup>
-   * -
-     -
-     -
-     - 
-   * - NIS_IMAGE
-     - science
-     - n/a
-     - YES
-   * - NIS_WFSS
-     - science
-     - n/a
-     - YES
-   * - NIS_TACQ
-     - target_acquisition
-     - n/a
-     - YES
-   * - NIS_TACONFIRM
-     - target_acquisition
-     - n/a
-     - YES
-   * - NIS_SOSS
-     - science
-     - n/a
-     - YES
-   * - NIS_AMI
-     - science
-     - n/a
-     - YES
-   * - NIS_AMI
-     - psf
-     - PSF
-     - YES
-   * - NIS_FOCUS
-     - science
-     - n/a
-     - YES
-   * - NIS_DARK
-     - science
-     - n/a
-     - NO
-   * - NIS_LAMP
-     - science
-     - n/a
-     - NO
-   * - NIS_EXTCAL
-     - science
-     - n/a
-     - NO
-   * -
-     -
-     -
-     - 
-   * - FGS_IMAGE
-     - science
-     - n/a
-     - YES
-   * - FGS_FOCUS
-     - science
-     - n/a
-     - YES
-   * - FGS_SKYFLAT
-     - flat
-     - n/a
-     - NO
-   * - FGS_INTFLAT
-     - flat
-     - n/a
-     - NO
-   * - FGS_DARK
-     - dark
-     - n/a
-     - NO
-   * - FGS_ID-STACK
-     - tracking
-     - n/a
-     - NO
-   * - FGS_ID-IMAGE
-     - tracking
-     - n/a
-     - NO
-   * - FGS_ACQ1
-     - tracking
-     - n/a
-     - NO
-   * - FGS_ACQ2
-     - tracking
-     - n/a
-     - NO
-   * - FGS_TRACK
-     - tracking
-     - n/a
-     - NO
-   * - FGS_FINEGUIDE
-     - tracking
-     - n/a
-     - NO
 
 History
 -------
