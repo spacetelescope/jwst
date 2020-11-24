@@ -12,53 +12,53 @@ Image2Pipeline.
    :header-rows: 1
 
    * - EXP_TYPE
-     - Association Exposure Type
+     - Member Exposure Type
      - Specials
-     - Level2b?
+     - Association Type
    * - FGS_ACQ1
      - tracking
-     - n/a
-     - NO
+     - N/A
+     - N/A
    * - FGS_ACQ2
      - tracking
-     - n/a
-     - NO
+     - N/A
+     - N/A
    * - FGS_DARK
      - dark
-     - n/a
-     - NO
+     - N/A
+     - N/A
    * - FGS_FINEGUIDE
      - tracking
-     - n/a
-     - NO
+     - N/A
+     - N/A
    * - FGS_FOCUS
      - science
-     - n/a
-     - YES
+     - N/A
+     - image2
    * - FGS_ID-IMAGE
      - tracking
-     - n/a
-     - NO
+     - N/A
+     - N/A
    * - FGS_ID-STACK
      - tracking
-     - n/a
-     - NO
+     - N/A
+     - N/A
    * - FGS_IMAGE
      - science
-     - n/a
-     - YES
+     - N/A
+     - image2
    * - FGS_INTFLAT
      - flat
-     - n/a
-     - NO
+     - N/A
+     - N/A
    * - FGS_SKYFLAT
      - flat
-     - n/a
-     - NO
+     - N/A
+     - N/A
    * - FGS_TRACK
      - tracking
-     - n/a
-     - NO
+     - N/A
+     - N/A
    * -
      -
      -
@@ -66,79 +66,79 @@ Image2Pipeline.
    * - MIR_4QPM
      - psf
      - PSF
-     - YES
+     - image2
    * - MIR_4QPM
      - science
-     - n/a
-     - YES
+     - N/A
+     - image2
    * - MIR_CORONCAL
      - science
-     - n/a
-     - YES
+     - N/A
+     - image2
    * - MIR_DARKIMG
      - dark
-     - n/a
-     - NO
+     - N/A
+     - N/A
    * - MIR_DARKMRS
      - dark
-     - n/a
-     - NO
+     - N/A
+     - N/A
    * - MIR_FLATIMAGE
      - flat
-     - n/a
-     - NO
+     - N/A
+     - N/A
    * - MIR_FLATIMAGE-EXT
      - flat
-     - n/a
-     - NO
+     - N/A
+     - N/A
    * - MIR_FLATMRS
      - flat
-     - n/a
-     - NO
+     - N/A
+     - N/A
    * - MIR_FLATMRS-EXT
      - flat
-     - n/a
-     - NO
+     - N/A
+     - N/A
    * - MIR_IMAGE
      - science
-     - n/a
-     - YES
+     - N/A
+     - image2
    * - MIR_LRS-FIXEDSLIT
      - background
      - BACKGROUND
-     - YES
+     - spec2
    * - MIR_LRS-FIXEDSLIT
      - science
-     - n/a
-     - YES
+     - N/A
+     - spec2
    * - MIR_LRS-SLITLESS
      - background
      - BACKGROUND
-     - YES
+     - spec2
    * - MIR_LRS-SLITLESS
      - science
-     - n/a
-     - YES
+     - N/A
+     - spec2
    * - MIR_LYOT
      - psf
      - PSF
-     - YES
+     - image2
    * - MIR_LYOT
      - science
-     - n/a
-     - YES
+     - N/A
+     - image2
    * - MIR_MRS
      - background
      - BACKGROUND
-     - YES
+     - spec2
    * - MIR_MRS
      - science
-     - n/a
-     - YES
+     - N/A
+     - spec2
    * - MIR_TACQ
      - target_acquisition
-     - n/a
-     - YES
+     - N/A
+     - image2
    * -
      -
      -
@@ -146,47 +146,47 @@ Image2Pipeline.
    * - NIS_AMI
      - psf
      - PSF
-     - YES
+     - image2
    * - NIS_AMI
      - science
-     - n/a
-     - YES
+     - N/A
+     - image2
    * - NIS_DARK
      - science
-     - n/a
-     - NO
+     - N/A
+     - N/A
    * - NIS_EXTCAL
      - science
-     - n/a
-     - NO
+     - N/A
+     - N/A
    * - NIS_FOCUS
      - science
-     - n/a
-     - YES
+     - N/A
+     - image2
    * - NIS_IMAGE
      - science
-     - n/a
-     - YES
+     - N/A
+     - images
    * - NIS_LAMP
      - science
-     - n/a
-     - NO
+     - N/A
+     - N/A
    * - NIS_SOSS
      - science
-     - n/a
-     - YES
+     - N/A
+     - spec2
    * - NIS_TACONFIRM
      - target_acquisition
-     - n/a
-     - YES
+     - N/A
+     - image2
    * - NIS_TACQ
      - target_acquisition
-     - n/a
-     - YES
+     - N/A
+     - image2
    * - NIS_WFSS
      - science
-     - n/a
-     - YES
+     - N/A
+     - spec2
    * -
      -
      -
@@ -194,139 +194,160 @@ Image2Pipeline.
    * - NRC_CORON
      - psf
      - PSF
-     - YES
+     - image2
    * - NRC_CORON
      - science
-     - n/a
-     - YES
+     - N/A
+     - image2
    * - NRC_DARK
      - dark
-     - n/a
-     - NO
+     - N/A
+     - N/A
    * - NRC_FLAT
      - flat
-     - n/a
-     - NO
+     - N/A
+     - N/A
    * - NRC_FOCUS
      - science
-     - n/a/
-     - YES
-   * - NRC_GRISM
+     - N/A/
+     - image2
+   * - NRC_GRISM [#f1]_
      - science
-     - n/a
-     - YES
+     - N/A
+     - spec2
    * - NRC_IMAGE
      - science
-     - n/a
-     - YES
+     - N/A
+     - image2
    * - NRC_LED
      - science
-     - n/a
-     - NO
+     - N/A
+     - N/A
    * - NRC_TACONFIRM
      - target_acquisition
-     - n/a
-     - YES
+     - N/A
+     - image2
    * - NRC_TACQ
      - target_acquisition
-     - n/a
-     - YES
+     - N/A
+     - image2
    * - NRC_TSGRISM
      - science
-     - n/a
-     - YES
+     - N/A
+     - tso-spec2
    * - NRC_TSIMAGE
      - science
-     - n/a
-     - YES
+     - N/A
+     - tso-image2
    * - NRC_WFSS
      - science
-     - n/a
-     - YES
+     - N/A
+     - spec2
    * -
      -
      -
      -
    * - NRS_AUTOFLAT
      - nrs_autoflat
-     - n/a
-     - YES
+     - N/A
+     - image2
    * - NRS_AUTOWAVE
      - nrs_autowave
-     - n/a
-     - YES
+     - N/A
+     - image2
    * - NRS_BRIGHTOBJ
      - science
-     - n/a
-     - YES
+     - N/A
+     - spec2
    * - NRS_CONFIRM
      - science
-     - n/a
-     - YES
+     - N/A
+     - image2
    * - NRS_DARK
      - dark
-     - n/a
-     - NO
+     - N/A
+     - N/A
    * - NRS_FIXEDSLIT
      - background
      - BACKGROUND
-     - YES
+     - spec2
    * - NRS_FIXEDSLIT
      - science
-     - n/a
-     - YES
+     - N/A
+     - spec2
    * - NRS_FOCUS
      - science
-     - n/a
-     - YES
+     - N/A
+     - image2
    * - NRS_IFU
      - background
      - BACKGROUND
-     - YES
+     - spec2
    * - NRS_IFU
      - imprint
      - IMPRINT
-     - YES
+     - spec2
    * - NRS_IFU
      - science
-     - n/a
-     - YES
+     - N/A
+     - spec2
    * - NRS_IMAGE
      - science
-     - n/a
-     - YES
+     - N/A
+     - image2
    * - NRS_LAMP
      - science
-     - n/a
-     - YES<sup>1</sup>
+     - N/A
+     - nrslamp-spec2
    * - NRS_MIMF
      - science
-     - n/a
-     - YES
+     - N/A
+     - wfs-image2
    * - NRS_MSASPEC
      - imprint
      - IMPRINT
-     - YES
+     - spec2
    * - NRS_MSASPEC
      - science
-     - n/a
-     - YES
+     - N/A
+     - spec2
    * - NRS_MSATA
      - target_acquisition
-     - n/a
-     - YES
+     - N/A
+     - image2
    * - NRS_TACONFIRM
      - target_acquisition
-     - n/a
-     - YES
+     - N/A
+     - image2
    * - NRS_VERIFY
      - science
-     - n/a
-     - YES<sup>1</sup>
+     - N/A
+     - image2
    * - NRS_WATA
      - target_acquisition
-     - n/a
-     - YES
+     - N/A
+     - image2
+
+Footnotes
+---------
+
+.. [#f1] Deprecated.
+
+Notes
+-----
+
+Column definitions
+
+- EXP_TYPE : The exposure type.
+- Member Exposure Type: How the association generator will classify the exposure.
+- Specials : The association rule modifications to handle the exposure.
+- Association Type : :ref:`Association type <asn-jwst-association-types>` created.
+
+More about Specials: Though exposures that are not directly science, such as
+backgrounds, are primarily used to be applied to their associated science, they
+are also often calibrated as if they were science products themselves. In these
+situations, a special association rule is created to produce the necessary
+associations.
 
 History
 -------
