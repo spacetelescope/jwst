@@ -15,71 +15,7 @@ Image2Pipeline.
      - Association Exposure Type
      - Specials
      - Level2b?
-   * - NRC_IMAGE
-     - science
-     - n/a
-     - YES
-   * - NRC_GRISM/NRC_WFSS
-     - science
-     - n/a
-     - YES
-   * - NRC_TACQ
-     - target_acquisition
-     - n/a
-     - YES
-   * - NRC_TACONFIRM
-     - target_acquisition
-     - n/a
-     - YES
-   * - NRC_CORON
-     - science
-     - n/a
-     - YES
-   * - NRC_CORON
-     - psf
-     - PSF
-     - YES
-   * - NRC_TSIMAGE
-     - science
-     - n/a
-     - YES
-   * - NRC_TSGRISM
-     - science
-     - n/a
-     - YES
-   * - NRC_FOCUS
-     - science
-     - n/a/
-     - YES
-   * - NRC_DARK
-     - dark
-     - n/a
-     - NO
-   * - NRC_FLAT
-     - flat
-     - n/a
-     - NO
-   * - NRC_LED
-     - science
-     - n/a
-     - NO
-   * -
-     -
-     -
-     -
-   * - MIR_IMAGE
-     - science
-     - n/a
-     - YES
-   * - MIR_TACQ
-     - target_acquisition
-     - n/a
-     - YES
-   * - MIR_LYOT
-     - science
-     - n/a
-     - YES
-   * - MIR_LYOT
+   * - MIR_4QPM
      - psf
      - PSF
      - YES
@@ -87,33 +23,9 @@ Image2Pipeline.
      - science
      - n/a
      - YES
-   * - MIR_4QPM
-     - psf
-     - PSF
-     - YES
-   * - MIR_LRS-FIXEDSLIT
+   * - MIR_CORONCAL
      - science
      - n/a
-     - YES
-   * - MIR_LRS-FIXEDSLIT
-     - background
-     - BACKGROUND
-     - YES
-   * - MIR_LRS-SLITLESS
-     - science
-     - n/a
-     - YES
-   * - MIR_LRS-SLITLESS
-     - background
-     - BACKGROUND
-     - YES
-   * - MIR_MRS
-     - science
-     - n/a
-     - YES
-   * - MIR_MRS
-     - background
-     - BACKGROUND
      - YES
    * - MIR_DARKIMG
      - dark
@@ -139,14 +51,106 @@ Image2Pipeline.
      - flat
      - n/a
      - NO
-   * - MIR_CORONCAL
+   * - MIR_IMAGE
      - science
+     - n/a
+     - YES
+   * - MIR_LRS-FIXEDSLIT
+     - background
+     - BACKGROUND
+     - YES
+   * - MIR_LRS-FIXEDSLIT
+     - science
+     - n/a
+     - YES
+   * - MIR_LRS-SLITLESS
+     - background
+     - BACKGROUND
+     - YES
+   * - MIR_LRS-SLITLESS
+     - science
+     - n/a
+     - YES
+   * - MIR_LYOT
+     - psf
+     - PSF
+     - YES
+   * - MIR_LYOT
+     - science
+     - n/a
+     - YES
+   * - MIR_MRS
+     - background
+     - BACKGROUND
+     - YES
+   * - MIR_MRS
+     - science
+     - n/a
+     - YES
+   * - MIR_TACQ
+     - target_acquisition
      - n/a
      - YES
    * -
      -
      -
      - 
+   * - NRC_CORON
+     - psf
+     - PSF
+     - YES
+   * - NRC_CORON
+     - science
+     - n/a
+     - YES
+   * - NRC_DARK
+     - dark
+     - n/a
+     - NO
+   * - NRC_FLAT
+     - flat
+     - n/a
+     - NO
+   * - NRC_FOCUS
+     - science
+     - n/a/
+     - YES
+   * - NRC_GRISM
+     - science
+     - n/a
+     - YES
+   * - NRC_IMAGE
+     - science
+     - n/a
+     - YES
+   * - NRC_LED
+     - science
+     - n/a
+     - NO
+   * - NRC_TACONFIRM
+     - target_acquisition
+     - n/a
+     - YES
+   * - NRC_TACQ
+     - target_acquisition
+     - n/a
+     - YES
+   * - NRC_TSGRISM
+     - science
+     - n/a
+     - YES
+   * - NRC_TSIMAGE
+     - science
+     - n/a
+     - YES
+   * - NRC_WFSS
+     - science
+     - n/a
+     - YES
+   * -
+     -
+     -
+     -
    * - NRS_WATA
      - target_acquisition
      - n/a
