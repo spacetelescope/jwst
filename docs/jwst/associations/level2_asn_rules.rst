@@ -143,35 +143,11 @@ Image2Pipeline.
      -
      -
      - 
-   * - NIS_IMAGE
-     - science
-     - n/a
-     - YES
-   * - NIS_WFSS
-     - science
-     - n/a
-     - YES
-   * - NIS_TACQ
-     - target_acquisition
-     - n/a
-     - YES
-   * - NIS_TACONFIRM
-     - target_acquisition
-     - n/a
-     - YES
-   * - NIS_SOSS
-     - science
-     - n/a
-     - YES
-   * - NIS_AMI
-     - science
-     - n/a
-     - YES
    * - NIS_AMI
      - psf
      - PSF
      - YES
-   * - NIS_FOCUS
+   * - NIS_AMI
      - science
      - n/a
      - YES
@@ -179,14 +155,38 @@ Image2Pipeline.
      - science
      - n/a
      - NO
-   * - NIS_LAMP
-     - science
-     - n/a
-     - NO
    * - NIS_EXTCAL
      - science
      - n/a
      - NO
+   * - NIS_FOCUS
+     - science
+     - n/a
+     - YES
+   * - NIS_IMAGE
+     - science
+     - n/a
+     - YES
+   * - NIS_LAMP
+     - science
+     - n/a
+     - NO
+   * - NIS_SOSS
+     - science
+     - n/a
+     - YES
+   * - NIS_TACONFIRM
+     - target_acquisition
+     - n/a
+     - YES
+   * - NIS_TACQ
+     - target_acquisition
+     - n/a
+     - YES
+   * - NIS_WFSS
+     - science
+     - n/a
+     - YES
    * -
      -
      -
