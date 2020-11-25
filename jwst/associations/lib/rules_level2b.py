@@ -450,6 +450,10 @@ class Asn_Lv2NRSLAMPSpectral(
                 name='opmode',
                 sources=['opmode'],
             ),
+            DMSAttrConstraint(
+                name='lamp',
+                sources=['lamp'],
+            ),
             Constraint(
                 [
                     DMSAttrConstraint(
