@@ -439,22 +439,16 @@ class Asn_Lv2NRSLAMPSpectral(
             Constraint(
                 [
                     DMSAttrConstraint(
-                        name='opt_elem2',
                         sources=['grating'],
                         value='mirror'
                     ),
-                    DMSAttrConstraint(
-                        name='exp_type',
-                        sources=['exp_type'],
-                        value='.*_dark$'
-                    )
                 ],
                 reduce=Constraint.notany
             ),
             DMSAttrConstraint(
-                name='instrument',
-                sources=['instrume'],
-                value='nirspec'
+                name='exp_type',
+                sources=['exp_type'],
+                value='nrs_autoflat|nrs_autowave|nrs_lamp'
             ),
             DMSAttrConstraint(
                 name='opt_elem',
