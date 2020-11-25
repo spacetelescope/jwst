@@ -436,15 +436,6 @@ class Asn_Lv2NRSLAMPSpectral(
         self.constraints = Constraint([
             Constraint_Base(),
             Constraint_Single_Science(self.has_science),
-            Constraint(
-                [
-                    DMSAttrConstraint(
-                        sources=['grating'],
-                        value='mirror'
-                    ),
-                ],
-                reduce=Constraint.notany
-            ),
             DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
@@ -454,6 +445,16 @@ class Asn_Lv2NRSLAMPSpectral(
                 name='opt_elem',
                 sources=['filter'],
                 value='opaque'
+            ),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        sources=['grating', 'opmode'],
+                        value='mirror|grating-only',
+                        force_unique=False
+                    ),
+                ],
+                reduce=Constraint.notany
             ),
         ])
 
