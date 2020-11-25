@@ -295,7 +295,7 @@ Image2Pipeline.
      - science
      - N/A
      - image2
-   * - NRS_LAMP
+   * - NRS_LAMP [#f2]_
      - science
      - N/A
      - nrslamp-spec2
@@ -332,6 +332,7 @@ Footnotes
 ---------
 
 .. [#f1] Deprecated.
+.. [#f2] Association creation is heavily dependent upon other parameters such as ``LAMP``, ``OPMODE``, and ``GRATING``.
 
 Notes
 -----
