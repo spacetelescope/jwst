@@ -446,6 +446,10 @@ class Asn_Lv2NRSLAMPSpectral(
                 sources=['filter'],
                 value='opaque'
             ),
+            DMSAttrConstraint(
+                name='opmode',
+                sources=['opmode'],
+            ),
             Constraint(
                 [
                     DMSAttrConstraint(
