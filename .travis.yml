@@ -37,9 +37,6 @@ jobs:
       install:
         - pip install -U pip certifi
         - pip install -r requirements-min.txt -e .[test]
-        # Since there is no version of stdatamodels on PyPI, install from
-        # Github master until it is released to PyPI
-        - pip install git+https://github.com/spacetelescope/stdatamodels
 
     - name: Installed package with --pyargs
       before_script: cd /
