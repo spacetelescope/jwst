@@ -1,6 +1,12 @@
 [run]
 branch = True
 source = jwst
+omit =
+    setup.py
+    docs/*
+    jwst/tests/base_classes.py
+    jwst/**/test*
+    jwst/extern/**/*
 
 [report]
 exclude_lines =
@@ -10,10 +16,8 @@ exclude_lines =
     if __name__ == .__main__.:
 ignore_errors = True
 omit =
-    conftest.py
     setup.py
     docs/*
-    jwst/conftest.py
-    jwst/tests*
+    jwst/tests/base_classes.py
     jwst/**/test*
-    jwst/extern/*
+    jwst/extern/**/*
