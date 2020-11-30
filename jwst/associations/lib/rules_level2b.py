@@ -457,8 +457,8 @@ class Asn_Lv2NRSLAMPSpectral(
             Constraint(
                 [
                     DMSAttrConstraint(
-                        sources=['grating', 'opmode'],
-                        value='mirror|grating-only',
+                        sources=['grating', 'opmode', 'lamp'],
+                        value='mirror|grating-only|nolamp',
                         force_unique=False
                     ),
                 ],
