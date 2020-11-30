@@ -35,3 +35,4 @@ scripts/launch.json
 */.ipynb_checkpoints/*.ipynb
 htmlcov
 requirements-min.txt
+.tox/
