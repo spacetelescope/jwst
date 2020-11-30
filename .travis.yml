@@ -22,49 +22,31 @@ jobs:
   include:
     - name: Python 3.9
       python: 3.9.0
+      env: TOXENV=py39
 
     - name: Latest dependency versions w/coverage
-      script:
-        - pytest --cov-report=xml --cov=./
-      after_success:
-        - codecov -F unit
+      env: TOXENV=coverage
 
     - name: Oldest dependency versions
       python: 3.7.9
-      before_install:
-        - pip install . --no-deps
-        - minimum_deps
-      install:
-        - pip install -U pip certifi
-        - pip install -r requirements-min.txt -e .[test]
+      env: TOXENV=old-deps
 
     - name: Installed package with --pyargs
-      before_script: cd /
-      install:
-        - pip install .[test]
-      script:
-        - pytest --pyargs jwst
+      env: TOXENV=packaged
 
     - name: SDP dependencies in requirements-sdp.txt
       env:
         - CRDS_CONTEXT=jwst-edit
-      install:
-        - pip install -r requirements-sdp.txt -e .[test]
+        - TOXENV=sdp
 
     - name: Dev dependencies in requirements-dev.txt
-      install:
-        - pip install -r requirements-dev.txt
-        - pip install -e .[test]
+      env: TOXENV=dev
 
     - name: Warnings treated as Exceptions
-      script:
-        - pytest -W error
+      env: TOXENV=warnings
 
     - name: Documentation build
-      install:
-        - pip install -e .[docs]
-      script:
-        - sphinx-build -W docs docs/_build
+      env: TOXENV=docs
       addons:
         apt:
           packages:
@@ -73,41 +55,26 @@ jobs:
             - graphviz
 
     - name: Code style check
-      script:
-        - flake8
+      env: TOXENV=style
 
     - name: Verify install_requires in setup.py
-      install:
-        - pip install -e .
-      script:
-        - verify_install_requires
+      env: TOXENV=verify-install-requires
 
     - name: Build distribution
-      install:
-        - pip install pep517 twine
-      script:
-        - python -m pep517.check .
-        - python -m pep517.build .
-        - twine check dist/*
+      env: TOXENV=dist
 
     - name: Security check
-      install:
-        - pip install "bandit>=1.7"
-      script:
-        - bandit -r jwst scripts -c .bandit.yaml -ll
+      env: TOXENV=security
 
   allow_failures:
     - name: Dev dependencies in requirements-dev.txt
-      install:
-        - pip install -r requirements-dev.txt
-        - pip install -e .[test]
+      env: TOXENV=dev
 
     - name: Warnings treated as Exceptions
-      script:
-        - pytest -W error
+      env: TOXENV=warnings
 
 install:
-  - pip install -e .[test]
+  - pip install tox
 
 script:
-  - pytest
+  - tox
