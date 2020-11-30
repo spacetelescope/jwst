@@ -61,7 +61,7 @@ jobs:
       env: TOXENV=verify-install-requires
 
     - name: Build distribution
-      env: TOXENV=dist
+      env: TOXENV=twine
 
     - name: Security check
       env: TOXENV=security
