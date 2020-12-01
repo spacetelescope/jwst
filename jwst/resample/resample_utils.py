@@ -170,4 +170,3 @@ def build_mask(dqarr, bitvalue):
 def is_sky_like(frame):
     # Differentiate between sky-like and cartesian frames
     return u.Unit("deg") in frame.unit or u.Unit("arcsec") in frame.unit
-

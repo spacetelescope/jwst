@@ -452,4 +452,3 @@ def find_dispersion_axis(refmodel):
     dispaxis = refmodel.meta.wcsinfo.dispersion_direction
     # Change from 1 --> X and 2 --> Y to 0 --> X and 1 --> Y.
     return dispaxis - 1
-
