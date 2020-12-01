@@ -140,6 +140,10 @@ def from_cmdline(args=None):
         help='Folder to copy the association to.'
     )
     parser.add_argument(
+        '-s', '--source', dest='source_folder',
+        help='Folder where the members currently reside. Default is the folder where the association resides.'
+    )
+    parser.add_argument(
         '-t', '--exp-types', default=None, dest='exp_types',
         action='append',
         help='Exposure types to gather. If not specified, all exposure types are used.'
