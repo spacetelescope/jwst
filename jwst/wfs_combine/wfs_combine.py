@@ -139,8 +139,8 @@ class DataSet():
             # 1a. create image to smooth by first setting bad DQ pixels equal
             #     to mean of good pixels
             data_1 = self.input_1.data.astype(np.float64)
-            wh_bad_1 = np.where(np.bitwise_and(self.input_1.dq, dqflags.pixel['DO_NOT_USE']) == 1)
-            wh_good_1 = np.where(np.bitwise_and(self.input_1.dq, dqflags.pixel['DO_NOT_USE']) == 0)
+            wh_bad_1 = np.where(np.bitwise_and(self.input_1.dq, dqflags.pixel['DO_NOT_USE']))
+            wh_good_1 = np.where(np.logical_not(np.bitwise_and(self.input_1.dq, dqflags.pixel['DO_NOT_USE'])))
 
             data_1[wh_bad_1] = data_1[wh_good_1].mean()
 
@@ -323,10 +323,10 @@ class DataSet():
         err_data_1 = im_1_a.err.copy()
         err_data_2 = im_2_a.err.copy()
 
-        bad1 = np.bitwise_and(dq_data_1, dqflags.pixel['DO_NOT_USE']) = 1
-        good1 = np.bitwise_and(dq_data_1, dqflags.pixel['DO_NOT_USE']) = 0
-        bad2 = np.bitwise_and(dq_data_2, dqflags.pixel['DO_NOT_USE']) = 1
-        good2 = np.bitwise_and(dq_data_2, dqflags.pixel['DO_NOT_USE']) = 0
+        bad1 = np.bitwise_and(dq_data_1, dqflags.pixel['DO_NOT_USE'])
+        good1 = np.logical_not(np.bitwise_and(dq_data_1, dqflags.pixel['DO_NOT_USE']))
+        bad2 = np.bitwise_and(dq_data_2, dqflags.pixel['DO_NOT_USE'])
+        good2 = np.logical_not(np.bitwise_and(dq_data_2, dqflags.pixel['DO_NOT_USE']))
 
         wh_1_bad_2_good = bad1 & good2
         wh_1_bad_2_bad =  bad1 & bad2
@@ -440,7 +440,7 @@ def interp_array(sci_data, dq_data):
     """
 
 
-    wh_bad_dq = np.where(np.bitwise_and(dq_data, dqflags.pixel['DO_NOT_USE']) == 1)
+    wh_bad_dq = np.where(np.bitwise_and(dq_data, dqflags.pixel['DO_NOT_USE']))
     num_bad_dq = len(wh_bad_dq[0])
 
     # Create array of locations of bad DQ pixels
