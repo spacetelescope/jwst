@@ -723,12 +723,18 @@ class Asn_Lv2NRSFSS(
 ):
     """Level2b NIRSpec Fixed-slit Association
 
+    Notes
+    -----
     Characteristics:
         - Association type: ``spec2``
         - Pipeline: ``calwebb_spec2``
         - Spectral-based NIRSpec fixed-slit single target science exposures
         - Single science exposure
         - Handle along-the-slit background nodding
+
+    Association includes both the background and science exposures of the nodding.
+    The identified science exposure is fixed by the nod, pattern, and exposure number
+    to prevent other science exposures being included.
     """
 
     def __init__(self, *args, **kwargs):
@@ -737,29 +743,20 @@ class Asn_Lv2NRSFSS(
         self.constraints = Constraint([
             Constraint_Base(),
             Constraint_Mode(),
+            DMSAttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value='nrs_fixedslit'
+            ),
             Constraint(
                 [
-                    Constraint(
-                        [
-                            DMSAttrConstraint(
-                                name='exp_type',
-                                sources=['exp_type'],
-                                value='nrs_fixedslit'
-                            ),
-                            SimpleConstraint(
-                                value='science',
-                                test=lambda value, item: self.get_exposure_type(item) != value,
-                                force_unique=False
-                            )
-                        ]
+                    SimpleConstraint(
+                        value='science',
+                        test=lambda value, item: self.get_exposure_type(item) != value,
+                        force_unique=False
                     ),
                     Constraint(
                         [
-                            DMSAttrConstraint(
-                                name='exp_type',
-                                sources=['exp_type'],
-                                value='nrs_fixedslit'
-                            ),
                             DMSAttrConstraint(
                                 name='expspcin',
                                 sources=['expspcin'],
