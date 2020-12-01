@@ -61,7 +61,7 @@ def make_datamodel():
 
 def test_white_light_with_int_tables(make_datamodel):
     data = make_datamodel
-    result = white_light(data)
+    result = white_light(data,None,None)
 
     int_start = data.meta.exposure.integration_start
 
@@ -89,7 +89,7 @@ def test_white_light_with_expstart(make_datamodel):
     # and TGROUP
     data.meta.exposure.integration_end = 4
 
-    result = white_light(data)
+    result = white_light(data,None,None)
 
     dt_arr = np.zeros(1, dtype=np.float64)
     dt = (data.meta.exposure.group_time *
