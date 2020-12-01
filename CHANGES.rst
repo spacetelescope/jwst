@@ -162,6 +162,12 @@ tweakreg
 - Add support for the new ``fitgeom`` mode: ``'rshift'`` that can fit only
   for shifts and a rotation. [#5475]
 
+white_light
+-----------
+
+- Add support for step parameters ``min_wavelength`` and ``max_wavelength`` to modify
+  the wavelength region over which the flux integration is calculated. [#5501]
+
 0.17.1 (2020-09-15)
 ===================
 

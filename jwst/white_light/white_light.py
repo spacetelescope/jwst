@@ -50,10 +50,11 @@ def white_light(input, min_wave=None, max_wave=None):
         high_cutoff = max_wave
 
     for i in range(ntables):
-        wavelength_mask = np.where((input.spec[i].spec_table['WAVELENGTH']>=low_cutoff)&
-                            (input.spec[i].spec_table['WAVELENGTH']<=high_cutoff))[0]
+        wave_mask = np.where(
+            (input.spec[i].spec_table['WAVELENGTH']>=low_cutoff) &
+            (input.spec[i].spec_table['WAVELENGTH']<=high_cutoff))[0]
 
-        fluxsums.append(np.nansum(input.spec[i].spec_table['FLUX'][wavelength_mask]))
+        fluxsums.append(np.nansum(input.spec[i].spec_table['FLUX'][wave_mask]))
 
     # Populate meta data for the output table
     tbl_meta = OrderedDict()
