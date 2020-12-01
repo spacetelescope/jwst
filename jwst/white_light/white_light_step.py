@@ -14,8 +14,8 @@ class WhiteLightStep(Step):
     """
 
     spec = """
-    min_wavelength     = float(default=3.)      # Default wavelength minimum for integration
-    max_wavelength     = float(default=3.5)      # Default wavelength maximum for integration
+    min_wavelength     = float(default=None)      # Default wavelength minimum for integration
+    max_wavelength     = float(default=None)      # Default wavelength maximum for integration
     output_ext         = string(default='.ecsv')  # Default type of output
     suffix             = string(default='whtlt')  # Default suffix for output files
     """
