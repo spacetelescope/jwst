@@ -14,6 +14,8 @@ class WhiteLightStep(Step):
     """
 
     spec = """
+    min_wavelength     = float(default=3.)      # Default wavelength minimum for integration
+    max_wavelength     = float(default=3.5)      # Default wavelength maximum for integration
     output_ext         = string(default='.ecsv')  # Default type of output
     suffix             = string(default='whtlt')  # Default suffix for output files
     """
@@ -24,7 +26,7 @@ class WhiteLightStep(Step):
         with datamodels.open(input) as input_model:
 
             # Call the white light curve generation routine
-            result = white_light(input_model)
+            result = white_light(input_model,self.min_wavelength,self.max_wavelength)
 
             # Write the output catalog
             if self.save_results:
