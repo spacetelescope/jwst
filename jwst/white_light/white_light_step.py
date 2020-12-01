@@ -26,7 +26,7 @@ class WhiteLightStep(Step):
         with datamodels.open(input) as input_model:
 
             # Call the white light curve generation routine
-            result = white_light(input_model,self.min_wavelength,self.max_wavelength)
+            result = white_light(input_model, self.min_wavelength, self.max_wavelength)
 
             # Write the output catalog
             if self.save_results:
