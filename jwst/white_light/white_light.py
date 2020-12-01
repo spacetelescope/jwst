@@ -9,7 +9,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def white_light(input,min_wave,max_wave):
+def white_light(input,min_wave=None,max_wave=None):
 
     ntables = len(input.spec)
     fluxsums = []
