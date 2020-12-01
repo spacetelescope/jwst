@@ -157,7 +157,7 @@ class ResampleSpecData:
                 ra_center_pt = np.nanmean(ra_center)
                 dec_center_pt = np.nanmean(dec_center)
 
-                if model.meta.wcs.output_frame.name == 'world':
+                if resample_utils.is_sky_like(model.meta.wcs.output_frame):
                     # convert ra and dec to tangent projection
                     tan = Pix2Sky_TAN()
                     native2celestial = RotateNative2Celestial(ra_center_pt, dec_center_pt, 180)
@@ -168,7 +168,7 @@ class ResampleSpecData:
                     x_tan, y_tan = undist2sky1.inverse(ra, dec)
                     warnings.resetwarnings()
                 else:
-                    # for msa frame, no need to do tangent plane projections
+                    # for non sky-like output frames, no need to do tangent plane projections
                     # but we still use the same variables
                     x_tan, y_tan = ra, dec
 
@@ -291,14 +291,13 @@ class ResampleSpecData:
             ra_center_final = ra_center_pt
             dec_center_final = dec_center_pt
 
-        native2celestial = RotateNative2Celestial(ra_center_final, dec_center_final, 180)
-        undist2sky = tan | native2celestial
-
-        if model.meta.wcs.output_frame.name == 'world':
+        if resample_utils.is_sky_like(model.meta.wcs.output_frame):
+            native2celestial = RotateNative2Celestial(ra_center_final, dec_center_final, 180)
+            undist2sky = tan | native2celestial
             # find the spatial size of the output - same in x,y
-            x_tan_all, y_tan_all = undist2sky.inverse(all_ra, all_dec)
+            x_tan_all, _ = undist2sky.inverse(all_ra, all_dec)
         else:
-            x_tan_all, y_tan_all = all_ra, all_dec
+            x_tan_all, _ = all_ra, all_dec
         x_min = np.amin(x_tan_all)
         x_max = np.amax(x_tan_all)
         x_size = int(np.ceil((x_max - x_min)/np.absolute(pix_to_xtan.slope)))
@@ -309,17 +308,17 @@ class ResampleSpecData:
             x_size = len(x_tan_array)
 
         # define the output wcs
-        if model.meta.wcs.output_frame.name == 'world':
+        if resample_utils.is_sky_like(model.meta.wcs.output_frame):
             transform = mapping | (pix_to_xtan & pix_to_ytan | undist2sky) & pix_to_wavelength
         else:
             transform = mapping | (pix_to_xtan & pix_to_ytan) & pix_to_wavelength
 
         det = cf.Frame2D(name='detector', axes_order=(0, 1))
-        if model.meta.wcs.output_frame.name == 'world':
+        if resample_utils.is_sky_like(model.meta.wcs.output_frame):
             sky = cf.CelestialFrame(name='sky', axes_order=(0, 1),
                                     reference_frame=coord.ICRS())
         else:
-            sky = cf.Frame2D(name='sky', axes_order=(0, 1))
+            sky = cf.Frame2D(name=f'resampled_{model.meta.wcs.output_frame.name}', axes_order=(0, 1))
         spec = cf.SpectralFrame(name='spectral', axes_order=(2,),
                                 unit=(u.micron,), axes_names=('wavelength',))
         world = cf.CompositeFrame([sky, spec], name='world')
@@ -453,3 +452,4 @@ def find_dispersion_axis(refmodel):
     dispaxis = refmodel.meta.wcsinfo.dispersion_direction
     # Change from 1 --> X and 2 --> Y to 0 --> X and 1 --> Y.
     return dispaxis - 1
+

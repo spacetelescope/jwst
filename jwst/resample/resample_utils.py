@@ -5,6 +5,7 @@ import numpy as np
 from astropy import wcs as fitswcs
 from astropy.modeling import Model
 from astropy.modeling.models import Mapping
+from astropy import units as u
 from gwcs import WCS, wcstools
 
 from jwst.assign_wcs.util import wcs_from_footprints, wcs_bbox_from_shape
@@ -109,7 +110,7 @@ def reproject(wcs1, wcs2):
     if isinstance(wcs2, fitswcs.WCS):
         backward_transform = wcs2.all_world2pix
     elif isinstance(wcs2, WCS):
-        if wcs1.output_frame.name == 'msa_frame':
+        if not is_sky_like(wcs1.output_frame):
             # nirspec lamps: simplify backward transformation by omitting the msa_x (it's constant)
             # and just using the wavelength lookup table [1] and linear msa_y transformation [2]
             log.info("Custom transform for NRS Lamp exposure")
@@ -165,3 +166,8 @@ def build_mask(dqarr, bitvalue):
     if bitvalue is None:
         return (np.ones(dqarr.shape, dtype=np.uint8))
     return np.logical_not(np.bitwise_and(dqarr, ~bitvalue)).astype(np.uint8)
+
+def is_sky_like(frame):
+    # Differentiate between sky-like and cartesian frames
+    return u.Unit("deg") in frame.unit or u.Unit("arcsec") in frame.unit
+
