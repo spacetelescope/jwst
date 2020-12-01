@@ -71,8 +71,7 @@ def asn_gather(association, destination=None, exp_types=None, exclude_types=None
     dest_asn['products'] = []
     for src_product in source_asn['products']:
         members = [
-            {'expname': src_member['expname'],
-             'exptype': src_member['exptype']}
+            src_member
             for src_member in src_product['members']
             if src_member['exptype'] not in exclude_types and \
             (exp_types is None or src_member['exptype'] in exp_types)
