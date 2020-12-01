@@ -148,19 +148,3 @@ class TestSDPPools(SDPPoolsSource):
                 pytest.xfail(special['xfail'])
             else:
                 raise
-
-    def test_asns_by_pool(self, sdp_pool):
-        """Test a command-line specified pool"""
-        if sdp_pool:
-            pool_path = Path(self.test_dir) / 'pools' / (sdp_pool + '.csv')
-            self.test_against_standard(pool_path, True)
-        else:
-            pytest.skip('No SDP pool specified using `--sdp-pool` command-line option.')
-
-    def test_dup_products_by_pool(self, sdp_pool):
-        """Test for duplicate product names for a specific pool"""
-        if sdp_pool:
-            pool_path = Path(self.test_dir) / 'pools' / (sdp_pool + '.csv')
-            self.test_dup_product_names(pool_path)
-        else:
-            pytest.skip('No SDP pool specified using `--sdp-pool` command-line option.')
