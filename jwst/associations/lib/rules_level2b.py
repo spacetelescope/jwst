@@ -11,6 +11,7 @@ from jwst.associations.lib.dms_base import (
     Constraint_WFSC,
     format_list,
     item_getattr,
+    nrsfss_valid_detector,
 )
 from jwst.associations.lib.member import Member
 from jwst.associations.lib.process_list import ProcessList
@@ -39,35 +40,6 @@ __all__ = [
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
-
-# Define the valid optical paths vs detector for NIRSpect Fixed-slit Science
-# Tuples are (SLIT, GRATING, FILTER, DETECTOR)
-# All A-slits are represented by SLIT == 'a'.
-NRS_FSS_VALID_OPTICAL_PATHS = (
-    ('a', 'prism', 'clear',  'nrs1'),
-    ('a', 'g395h', 'f290lp', 'nrs1'),
-    ('a', 'g395h', 'f290lp', 'nrs2'),
-    ('a', 'g235h', 'f170lp', 'nrs1'),
-    ('a', 'g235h', 'f170lp', 'nrs2'),
-    ('a', 'g140h', 'f100lp', 'nrs1'),
-    ('a', 'g140h', 'f100lp', 'nrs2'),
-    ('a', 'g140h', 'f070lp', 'nrs1'),
-    ('a', 'g395m', 'f290lp', 'nrs1'),
-    ('a', 'g235m', 'f170lp', 'nrs1'),
-    ('a', 'g140m', 'f100lp', 'nrs1'),
-    ('a', 'g140m', 'f070lp', 'nrs1'),
-    ('s200b1', 'prism', 'clear',  'nrs2'),
-    ('s200b1', 'g395h', 'f290lp', 'nrs2'),
-    ('s200b1', 'g235h', 'f170lp', 'nrs2'),
-    ('s200b1', 'g140h', 'f100lp', 'nrs2'),
-    ('s200b1', 'g140h', 'f070lp', 'nrs1'),
-    ('s200b1', 'g140h', 'f070lp', 'nrs2'),
-    ('s200b1', 'g395m', 'f290lp', 'nrs2'),
-    ('s200b1', 'g235m', 'f170lp', 'nrs2'),
-    ('s200b1', 'g140m', 'f100lp', 'nrs2'),
-    ('s200b1', 'g140m', 'f070lp', 'nrs1'),
-    ('s200b1', 'g140m', 'f070lp', 'nrs2'),
-)
 
 
 # --------------------------------
@@ -763,7 +735,7 @@ class Asn_Lv2NRSFSS(
             ),
             SimpleConstraint(
                 value=True,
-                test=lambda value, item: self.valid_detector(item),
+                test=lambda value, item: nrsfss_valid_detector(item),
                 force_unique=False
             ),
             Constraint(
@@ -801,22 +773,6 @@ class Asn_Lv2NRSFSS(
 
         # Now check and continue initialization.
         super(Asn_Lv2NRSFSS, self).__init__(*args, **kwargs)
-
-    def valid_detector(self, item):
-        """Check that a grating/filter combo can appear on the detector"""
-        try:
-            _, detector = item_getattr(item, ['detector'])
-            _, filter = item_getattr(item, ['filter'])
-            _, grating = item_getattr(item, ['grating'])
-            _, slit = item_getattr(item, ['fxd_slit'])
-        except KeyError:
-            return False
-
-        # Reduce all A slits to just 'a'.
-        if slit != 's200b1':
-            slit = 'a'
-
-        return (slit, grating, filter, detector) in NRS_FSS_VALID_OPTICAL_PATHS
 
 
 @RegistryMarker.rule
