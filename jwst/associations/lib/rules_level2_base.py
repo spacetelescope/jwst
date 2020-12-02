@@ -43,6 +43,7 @@ __all__ = [
     '_EMPTY',
     'ASN_SCHEMA',
     'AsnMixin_Lv2Image',
+    'AsnMixin_Lv2Nod',
     'AsnMixin_Lv2Special',
     'AsnMixin_Lv2Spectral',
     'Constraint_Base',
@@ -911,6 +912,40 @@ class AsnMixin_Lv2Image:
 
         super(AsnMixin_Lv2Image, self)._init_hook(item)
         self.data['asn_type'] = 'image2'
+
+
+class AsnMixin_Lv2Nod:
+    """Associations that need to create nodding associations
+
+    For some spectragraphic modes, background spectra are taken by
+    nodding between different slits, or internal slit positions.
+    The main associations rules will collect all the exposures of all the nods
+    into a single association. Then, on finalization, this one association
+    is split out into many associations, where each nod is, in turn, treated
+    as science, and the other nods are treated as background.
+    """
+    def finalize(self):
+        """Finalize association
+
+        For some spectragraphic modes, background spectra and taken by
+        nodding between different slits, or internal slit positions.
+        The main associations rules will collect all the exposures of all the nods
+        into a single association. Then, on finalization, this one association
+        is split out into many associations, where each nod is, in turn, treated
+        as science, and the other nods are treated as background.
+
+        Returns
+        -------
+        associations: [association[, ...]] or None
+            List of fully-qualified associations that this association
+            represents.
+            `None` if a complete association cannot be produced.
+
+        """
+        if self.is_valid:
+            return self.make_nod_asns()
+        else:
+            return None
 
 
 class AsnMixin_Lv2Special:

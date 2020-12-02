@@ -686,6 +686,7 @@ class Asn_Lv2WFSS(
 
 @RegistryMarker.rule
 class Asn_Lv2NRSMSA(
+        AsnMixin_Lv2Nod,
         AsnMixin_Lv2Spectral,
         DMSLevel2bBase
 ):
@@ -726,28 +727,10 @@ class Asn_Lv2NRSMSA(
         # Now check and continue initialization.
         super(Asn_Lv2NRSMSA, self).__init__(*args, **kwargs)
 
-    def finalize(self):
-        """Finalize assocation
-
-        For NRS MSA, finalization means creating new associations for
-        background nods.
-
-        Returns
-        -------
-        associations: [association[, ...]] or None
-            List of fully-qualified associations that this association
-            represents.
-            `None` if a complete association cannot be produced.
-
-        """
-        if self.is_valid:
-            return self.make_nod_asns()
-        else:
-            return None
-
 
 @RegistryMarker.rule
 class Asn_Lv2NRSFSS(
+        AsnMixin_Lv2Nod,
         AsnMixin_Lv2Spectral,
         DMSLevel2bBase
 ):
@@ -819,22 +802,6 @@ class Asn_Lv2NRSFSS(
         # Now check and continue initialization.
         super(Asn_Lv2NRSFSS, self).__init__(*args, **kwargs)
 
-    def finalize(self):
-        """Finalize assocation
-
-        For NRS Fixed-slit, finalization means creating new associations for
-        background nods.
-
-        Returns
-        -------
-        associations: [association[, ...]] or None
-            List of fully-qualified associations that this association
-            represents.
-            `None` if a complete association cannot be produced.
-
-        """
-        return self.make_nod_asns()
-
     def valid_detector(self, item):
         """Check that a grating/filter combo can appear on the detector"""
         try:
@@ -854,6 +821,7 @@ class Asn_Lv2NRSFSS(
 
 @RegistryMarker.rule
 class Asn_Lv2NRSIFUNod(
+        AsnMixin_Lv2Nod,
         AsnMixin_Lv2Spectral,
         DMSLevel2bBase
 ):
@@ -896,23 +864,6 @@ class Asn_Lv2NRSIFUNod(
 
         # Now check and continue initialization.
         super(Asn_Lv2NRSIFUNod, self).__init__(*args, **kwargs)
-
-    def finalize(self):
-        """Finalize assocation
-
-        Finalization means creating new associations for
-        background nods.
-
-        Returns
-        -------
-        associations: [association[, ...]] or None
-            List of fully-qualified associations that this association
-            represents.
-            `None` if a complete association cannot be produced.
-
-        """
-        nodded_asns = self.make_nod_asns()
-        return nodded_asns
 
 
 @RegistryMarker.rule
