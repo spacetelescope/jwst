@@ -15,79 +15,8 @@ inner_bkg = 11.5
 outer_bkg = 16.5
 method = "exact"
 
-
-def test_ifu_2d():
-    """Test 1"""
-
-    input = make_ifu_cube(data_shape, source=5., background=3.7,
-                          x_center=x_center, y_center=y_center,
-                          radius=radius,
-                          inner_bkg=inner_bkg, outer_bkg=outer_bkg)
-
-    # Create a reference dictionary to specify the extraction parameters.
-    # This will serve as the "truth" for comparison with the results of
-    # using a reference image.
-    ref_dict = {"ref_file_type": extract.FILE_TYPE_JSON,
-                "apertures": [{"id": "ANY",
-                               "x_center": x_center,
-                               "y_center": y_center,
-                               "radius": radius,
-                               "subtract_background": True,
-                               "inner_bkg": inner_bkg,
-                               "outer_bkg": outer_bkg,
-                               "method": method
-                              }
-                             ]
-               }
-    truth = extract.do_extract1d(input, ref_dict, smoothing_length=0,
-                                 bkg_order=0, log_increment=50,
-                                 subtract_background=True)
-
-    ref_image_2d = make_ref_image(data_shape[-2:],      # 2-D ref image
-                                  x_center=x_center, y_center=y_center,
-                                  radius=radius,
-                                  inner_bkg=inner_bkg, outer_bkg=outer_bkg)
-
-    ref_dict_2d = {"ref_file_type": extract.FILE_TYPE_IMAGE,
-                   "ref_model": ref_image_2d}
-    output = extract.do_extract1d(input, ref_dict_2d, smoothing_length=0,
-                                  bkg_order=0, log_increment=50,
-                                  subtract_background=True)
-
-    true_wl = truth.spec[0].spec_table['wavelength']
-    true_flux = truth.spec[0].spec_table['flux']
-    true_bkg = truth.spec[0].spec_table['background']
-
-    wavelength = output.spec[0].spec_table['wavelength']
-    flux = output.spec[0].spec_table['flux']
-    background = output.spec[0].spec_table['background']
-
-    """The wavelengths should agree exactly, because they were computed
-    in the same way for both `output` and `truth`.
-    The source is 5 per pixel, and since the radius is 11.5, the sum of
-    all those values is 2077.378; this is the flux (actually net, but net
-    was moved to flux).  The IFU cube was made by assigning values to the
-    nearest pixels, however, resulting in jagged edges to the disk and
-    background annulus.  With a radius of 11.5 (circumference = 72.26) and
-    outer background radius of 16.5 (circumference = 103.67), differences
-    of order 150 between an exact computation and nearest pixel are not
-    unreasonable.
-    """
-    assert np.allclose(wavelength, true_wl, rtol=1.e-14, atol=1.e-14)
-
-    assert np.allclose(flux, true_flux, rtol=0.06)
-
-    assert np.allclose(background, true_bkg, rtol=0.1)
-
-    input.close()
-    truth.close()
-    output.close()
-    del ref_dict_2d
-    ref_image_2d.close()
-
-
 def test_ifu_3d():
-    """Test 2"""
+    """Test 1"""
 
     input = make_ifu_cube(data_shape, source=5., background=3.7,
                           x_center=x_center, y_center=y_center,
@@ -139,67 +68,6 @@ def test_ifu_3d():
     del ref_dict_2d, ref_dict_3d
     ref_image_2d.close()
     ref_image_3d.close()
-
-
-def test_ifu_no_background():
-    """Test 3"""
-
-    # There is a background ...
-    input = make_ifu_cube(data_shape, source=5., background=3.7,
-                          x_center=x_center, y_center=y_center,
-                          radius=radius,
-                          inner_bkg=inner_bkg, outer_bkg=outer_bkg)
-
-    # ... but turn off background subtraction anyway.
-    ref_image_2d = make_ref_image(data_shape[-2:],      # 2-D ref image
-                                  x_center=x_center, y_center=y_center,
-                                  radius=radius,
-                                  inner_bkg=None, outer_bkg=None)
-
-    # Create a reference dictionary to specify the extraction parameters.
-    # This will serve as the "truth" for comparison with the results of
-    # using a reference image.
-    ref_dict = {"ref_file_type": extract.FILE_TYPE_JSON,
-                "apertures": [{"id": "ANY",
-                               "x_center": x_center,
-                               "y_center": y_center,
-                               "radius": radius,
-                               "subtract_background": True,
-                               "method": method
-                              }
-                             ]
-               }
-    # Set background subtraction to False, overriding what was specified
-    # in the reference dictionary.
-    truth = extract.do_extract1d(input, ref_dict, smoothing_length=0,
-                                 bkg_order=0, log_increment=50,
-                                 subtract_background=False)
-
-    ref_dict_2d = {"ref_file_type": extract.FILE_TYPE_IMAGE,
-                   "ref_model": ref_image_2d}
-    output = extract.do_extract1d(input, ref_dict_2d, smoothing_length=0,
-                                  bkg_order=0, log_increment=50,
-                                  subtract_background=False)
-
-    true_wl = truth.spec[0].spec_table['wavelength']
-    true_flux = truth.spec[0].spec_table['flux']
-    true_bkg = truth.spec[0].spec_table['background']
-
-    wavelength = output.spec[0].spec_table['wavelength']
-    flux = output.spec[0].spec_table['flux']
-    background = output.spec[0].spec_table['background']
-
-    assert np.allclose(wavelength, true_wl, rtol=1.e-14, atol=1.e-14)
-
-    assert np.allclose(flux, true_flux, rtol=0.03)
-
-    assert np.allclose(background, true_bkg, atol=1.)
-
-    input.close()
-    truth.close()
-    output.close()
-    del ref_dict_2d
-    ref_image_2d.close()
 
 
 def make_ifu_cube(data_shape, source=None, background=None,

@@ -1,23 +1,25 @@
 from distutils.version import LooseVersion
 import logging
-import math
-
 import numpy as np
 import photutils
 from photutils import CircularAperture, CircularAnnulus, \
                       RectangularAperture, aperture_photometry
 
 from .apply_apcorr import select_apcorr
+from ..assign_wcs.util import compute_scale
+
 from .. import datamodels
 from ..datamodels import dqflags
 from . import spec_wcs
+from scipy.interpolate import interp1d
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 # These values are used to indicate whether the input extract1d reference file
-# (if any) is JSON or IMAGE.
-FILE_TYPE_JSON = "JSON"
+# (if any) is ASDF (default) or IMAGE
+
+FILE_TYPE_ASDF = "ASDF"
 FILE_TYPE_IMAGE = "IMAGE"
 
 # This is to prevent calling offset_from_offset multiple times for
@@ -49,7 +51,7 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
         If not None, this parameter overrides the value in the
         extract_1d reference file.
 
-    apcorr_ref_model : ~.fits.FITS_rec or None
+    apcorr_ref_model : apcorr datamodel or None
         Aperture correction table.
 
     Returns
@@ -94,8 +96,8 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
         extract_params['subtract_background'] = subtract_background
 
     if extract_params:
-        if extract_params['ref_file_type'] == FILE_TYPE_JSON:
-            (ra, dec, wavelength, temp_flux, background, npixels, dq, npixels_bkg) = \
+        if extract_params['ref_file_type'] == FILE_TYPE_ASDF:
+            (ra, dec, wavelength, temp_flux, background, npixels, dq, npixels_bkg, radius_match) = \
                     extract_ifu(input_model, source_type, extract_params)
         else:                                   # FILE_TYPE_IMAGE
             (ra, dec, wavelength, temp_flux, background, npixels, dq, npixels_bkg) = \
@@ -120,7 +122,6 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
                     "the flux will not be correct.")
         pixel_solid_angle = 1.
 
-    print(input_units_are_megajanskys,pixel_solid_angle)
     if input_units_are_megajanskys:
         # Convert flux from MJy to Jy, and convert background to MJy / sr.
         flux = temp_flux * 1.e6
@@ -131,7 +132,6 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
         flux = temp_flux * pixel_solid_angle * 1.e6
         # surf_bright and background were computed above
     del temp_flux
-
     error = np.zeros_like(flux)
     sb_error = np.zeros_like(flux)
     berror = np.zeros_like(flux)
@@ -163,10 +163,19 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
             wl = wavelength.min()
 
         apcorr = select_apcorr(input_model)(
-            input_model, apcorr_ref_model.apcorr_table, apcorr_ref_model.sizeunit, location=(ra, dec, wl)
+            input_model,
+            apcorr_ref_model,
+            location=(ra, dec, wl)
         )
 
-        print(apcorr)
+        # determine apcor function and apcor radius to use at each wavelength
+        apcorr.match_wavelengths(wavelength)
+
+        # at each IFU wavelength we have the extraction radius defined by radius_match (radius size in pixels)
+        for i  in range(wavelength.size):
+            radius = radius_match[i]
+            apcorr.find_apcorr_func(i, radius)
+
         apcorr.apply(spec.spec_table)
 
     output_model.spec.append(spec)
@@ -195,30 +204,27 @@ def get_extract_parameters(ref_dict, slitname):
     """
 
     extract_params = {}
+    if ref_dict['ref_file_type'] == FILE_TYPE_ASDF:
+        extract_params['ref_file_type'] = FILE_TYPE_ASDF
+        refmodel = ref_dict['ref_model']
+        #region_type = refmodel.meta.region_type
+        subtract_background = refmodel.meta.subtract_background
+        method = refmodel.meta.method
+        subpixels =refmodel.meta.subpixels
 
-    if ('ref_file_type' not in ref_dict or
-        ref_dict['ref_file_type'] == FILE_TYPE_JSON):
-            extract_params['ref_file_type'] = FILE_TYPE_JSON
-            for aper in ref_dict['apertures']:
-                if 'id' in aper and aper['id'] != "dummy" and \
-                   (aper['id'] == slitname or aper['id'] == "ANY" or
-                    slitname == "ANY"):
-                    region_type = aper.get("region_type", "target")
-                    if region_type == "target":
-                        extract_params['x_center'] = aper.get('x_center')
-                        extract_params['y_center'] = aper.get('y_center')
-                        extract_params['method'] = aper.get('method', 'exact')
-                        extract_params['subpixels'] = aper.get('subpixels', 5)
-                        extract_params['radius'] = aper.get('radius')
-                        extract_params['subtract_background'] = \
-                              aper.get('subtract_background', False)
-                        extract_params['inner_bkg'] = aper.get('inner_bkg')
-                        extract_params['outer_bkg'] = aper.get('outer_bkg')
-                        extract_params['width'] = aper.get('width')
-                        extract_params['height'] = aper.get('height')
-                        # theta is in degrees (converted to radians later)
-                        extract_params['theta'] = aper.get('theta', 0.)
-                    break
+        data = refmodel.data
+        wavelength = data.wavelength
+        radius = data.radius
+        inner_bkg = data.inner_bkg
+        outer_bkg = data.outer_bkg
+
+        extract_params['subtract_background'] = bool(subtract_background)
+        extract_params['method'] = method
+        extract_params['subpixels'] = subpixels
+        extract_params['wavelength'] = wavelength
+        extract_params['radius'] = radius
+        extract_params['inner_bkg'] = inner_bkg
+        extract_params['outer_bkg'] = outer_bkg
 
     elif ref_dict['ref_file_type'] == FILE_TYPE_IMAGE:
         extract_params['ref_file_type'] = FILE_TYPE_IMAGE
@@ -289,6 +295,9 @@ def extract_ifu(input_model, source_type, extract_params):
     npixels_annulus : ndarray, 1-D, float64
         For each slice, this is the number of pixels that were added
         together to get `temp_flux` for an annulus region.
+
+    radius_match: ndarray,1-D, float64
+        The size of the extract radius in pixels used at each wavelength of the IFU cube
     """
 
     data = input_model.data
@@ -315,36 +324,71 @@ def extract_ifu(input_model, source_type, extract_params):
         ra_targ = input_model.meta.target.ra
         dec_targ = input_model.meta.target.dec
         locn = locn_from_wcs(input_model, ra_targ, dec_targ)
+
         if locn is None or np.isnan(locn[0]):
             log.warning("Couldn't determine pixel location from WCS, so "
                         "source offset correction will not be applied.")
-            x_center = extract_params['x_center']
-            y_center = extract_params['y_center']
-            if x_center is None:
-                x_center = float(shape[-1]) / 2.
-            else:
-                x_center = float(x_center)
-            if y_center is None:
-                y_center = float(shape[-2]) / 2.
-            else:
-                y_center = float(y_center)
+
+            x_center = float(shape[-1]) / 2.
+            y_center = float(shape[-2]) / 2.
+
         else:
             (x_center, y_center) = locn
             log.info("Using x_center = %g, y_center = %g, based on "
                      "TARG_RA and TARG_DEC.", x_center, y_center)
 
     method = extract_params['method']
-    # subpixels is only needed if method = 'subpixel'.
     subpixels = extract_params['subpixels']
-
     subtract_background = extract_params['subtract_background']
 
-    smaller_axis = float(min(shape[-2], shape[-1]))     # for defaults
     radius = None
     inner_bkg = None
     outer_bkg = None
+    width = None
+    height = None
+    theta = None
+    # pull wavelength plane out of input data.
+    # using extract 1d wavelength, interpolate the radius, inner_bkg, outer_bkg to match input wavelength
 
-    if source_type == 'EXTENDED':
+    # find the wavelength array of the IFU cube
+    x0 = float(shape[2]) / 2.
+    y0 = float(shape[1]) / 2.
+    (ra, dec, wavelength) = get_coordinates(input_model, x0, y0)
+
+    # interpolate the extraction parameters to the wavelength of the IFU cube
+    radius_match = None
+    if source_type == 'POINT':
+        wave_extract = extract_params['wavelength'].flatten()
+        inner_bkg = extract_params['inner_bkg'].flatten()
+        outer_bkg = extract_params['outer_bkg'].flatten()
+        radius = extract_params['radius'].flatten()
+
+        frad = interp1d(wave_extract, radius, bounds_error=False, fill_value="extrapolate")
+        radius_match = frad(wavelength)
+        # radius_match is in arc seconds - need to convert to pixels
+        # the spatial scale is the same for all wavelengths do we only need to call compute_scale once.
+        # DAVID LAW IS this a correct statement ?
+
+        if locn is None:
+            locn_use = (input_model.meta.wcsinfo.crval1, input_model.meta.wcsinfo.crval2, wavelength[0])
+        else:
+            locn_use = (ra_targ, dec_targ, wavelength[0])
+
+        scale_degrees =  compute_scale(
+            input_model.meta.wcs,
+            locn_use,
+            disp_axis=input_model.meta.wcsinfo.dispersion_direction)
+
+        scale_arcsec = scale_degrees*3600.00
+        radius_match /= scale_arcsec
+
+        finner = interp1d(wave_extract, inner_bkg, bounds_error=False, fill_value="extrapolate")
+        inner_bkg_match = finner(wavelength)/scale_arcsec
+
+        fouter = interp1d(wave_extract, outer_bkg, bounds_error=False, fill_value="extrapolate")
+        outer_bkg_match = fouter(wavelength)/scale_arcsec
+
+    elif  source_type == 'EXTENDED':
         # Ignore any input parameters, and extract the whole image.
         width = float(shape[-1])
         height = float(shape[-2])
@@ -352,34 +396,11 @@ def extract_ifu(input_model, source_type, extract_params):
         y_center = height / 2. - 0.5
         theta = 0.
         subtract_background = False
-    else:
-        radius = extract_params['radius']
-        if radius is None:
-            radius = smaller_axis / 4.
-        if subtract_background:
-            inner_bkg = extract_params['inner_bkg']
-            if inner_bkg is None:
-                inner_bkg = radius
-            outer_bkg = extract_params['outer_bkg']
-            if outer_bkg is None:
-                outer_bkg = min(inner_bkg * math.sqrt(2.),
-                                smaller_axis / 2. - 1.)
-            if inner_bkg <= 0. or outer_bkg <= 0. or inner_bkg >= outer_bkg:
-                log.debug("Turning background subtraction off, due to "
-                          "the values of inner_bkg and outer_bkg.")
-                subtract_background = False
-        width = None
-        height = None
-        theta = None
 
     log.debug("IFU 1-D extraction parameters:")
     log.debug("  x_center = %s", str(x_center))
     log.debug("  y_center = %s", str(y_center))
     if source_type == 'POINT':
-        log.debug("  radius = %s", str(radius))
-        log.debug("  subtract_background = %s", str(subtract_background))
-        log.debug("  inner_bkg = %s", str(inner_bkg))
-        log.debug("  outer_bkg = %s", str(outer_bkg))
         log.debug("  method = %s", method)
         if method == "subpixel":
             log.debug("  subpixels = %s", str(subpixels))
@@ -392,22 +413,32 @@ def extract_ifu(input_model, source_type, extract_params):
         if method == "subpixel":
             log.debug("  subpixels = %s", str(subpixels))
 
-    x0 = float(shape[2]) / 2.
-    y0 = float(shape[1]) / 2.
-    (ra, dec, wavelength) = get_coordinates(input_model, x0, y0)
-
     position = (x_center, y_center)
-    if source_type == 'POINT':
-        aperture = CircularAperture(position, r=radius)
-    else:
-        aperture = RectangularAperture(position, width, height, theta)
 
-    if subtract_background and inner_bkg is not None and outer_bkg is not None:
-        annulus = CircularAnnulus(position, r_in=inner_bkg, r_out=outer_bkg)
-    else:
+    # get aperture for extended it will not change with wavelength
+    if source_type == 'EXTENDED':
+        aperture = RectangularAperture(position, width, height, theta)
         annulus = None
 
     for k in range(shape[0]):
+        inner_bkg = None
+        outer_bkg = None
+
+        if source_type == 'POINT':
+            radius = radius_match[k] # this radius has been converted to pixels
+            aperture = CircularAperture(position, r=radius)
+            inner_bkg = inner_bkg_match[k]
+            outer_bkg = outer_bkg_match[k]
+            if inner_bkg <= 0. or outer_bkg <= 0. or inner_bkg >= outer_bkg:
+                log.debug("Turning background subtraction off, due to "
+                          "the values of inner_bkg and outer_bkg.")
+                subtract_background = False
+
+        if subtract_background and inner_bkg is not None and outer_bkg is not None:
+            annulus = CircularAnnulus(position, r_in=inner_bkg, r_out=outer_bkg)
+        else:
+            annulus = None
+
         subtract_background_plane = subtract_background
         # Compute the area of the aperture and possibly also of the annulus.
         # for each wavelength bin (taking into account empty spaxels)
@@ -472,14 +503,13 @@ def extract_ifu(input_model, source_type, extract_params):
             background[k] = float(bkg_table['aperture_sum'][0])
             temp_flux[k] = temp_flux[k] - background[k] * normalization
 
-
     # Check for NaNs in the wavelength array, flag them in the dq array,
     # and truncate the arrays if NaNs are found at endpoints (unless the
     # entire array is NaN).
     (wavelength, temp_flux, background, npixels, dq, npixels_annulus) = \
         nans_in_wavelength(wavelength, temp_flux, background, npixels, dq, npixels_annulus)
 
-    return (ra, dec, wavelength, temp_flux, background, npixels, dq, npixels_annulus)
+    return (ra, dec, wavelength, temp_flux, background, npixels, dq, npixels_annulus, radius_match)
 
 
 def locn_from_wcs(input_model, ra_targ, dec_targ):
@@ -723,7 +753,6 @@ def image_extract_ifu(input_model, source_type, extract_params):
         n_bkg = np.where(n_bkg <= 0., 1., n_bkg)
         normalization = npixels / n_bkg
     del temp
-
 
     # Extract the background.
     if mask_bkg is not None:
