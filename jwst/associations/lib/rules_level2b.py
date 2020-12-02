@@ -797,25 +797,21 @@ class Asn_Lv2NRSIFUNod(
         self.constraints = Constraint([
             Constraint_Base(),
             Constraint_Mode(),
-            Constraint(
-                [
-                    DMSAttrConstraint(
-                        name='exp_type',
-                        sources=['exp_type'],
-                        value='nrs_ifu'
-                    ),
-                    DMSAttrConstraint(
-                        name='expspcin',
-                        sources=['expspcin'],
-                    ),
-                    DMSAttrConstraint(
-                        name='patttype',
-                        sources=['patttype'],
-                        value=['2-point-nod|4-point-nod'],
-                        force_unique=True
-                    )
-                ]
+            DMSAttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value='nrs_ifu'
             ),
+            DMSAttrConstraint(
+                name='expspcin',
+                sources=['expspcin'],
+            ),
+            DMSAttrConstraint(
+                name='patttype',
+                sources=['patttype'],
+                value=['2-point-nod|4-point-nod'],
+                force_unique=True
+            )
         ])
 
         # Now check and continue initialization.
