@@ -64,11 +64,11 @@ class Asn_NRSFSS(AsnMixin_Spectrum):
                 ),
                 force_unique=False
             ),
-            # SimpleConstraint(
-            #     value=True,
-            #     test=lambda value, item: nrsfss_valid_detector(item),
-            #     force_unique=False
-            # ),
+            SimpleConstraint(
+                value=True,
+                test=lambda value, item: nrsfss_valid_detector(item),
+                force_unique=False
+            ),
             Constraint_Optical_Path(),
             Constraint_Target(association=self),
         ])
