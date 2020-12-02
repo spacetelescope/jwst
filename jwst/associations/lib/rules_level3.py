@@ -3,7 +3,7 @@
 import logging
 
 from jwst.associations.registry import RegistryMarker
-from jwst.associations.lib.dms_base import (Constraint_TargetAcq, Constraint_TSO)
+from jwst.associations.lib.dms_base import (Constraint_TargetAcq, Constraint_TSO, nrsfss_valid_detector)
 from jwst.associations.lib.process_list import ProcessList
 from jwst.associations.lib.rules_level3_base import *
 from jwst.associations.lib.rules_level3_base import (
@@ -35,6 +35,52 @@ logger.addHandler(logging.NullHandler())
 # --------------------------------
 # Start of the User-level rules
 # --------------------------------
+@RegistryMarker.rule
+class Asn_NRSFSS(AsnMixin_Spectrum):
+    """Level 3 NIRSpec Fixed-slit Science
+
+    Characteristics:
+        - Association type: ``spec3``
+        - Pipeline: ``calwebb_spec3``
+        - NIRSpec Fixed-slit Science
+        - Non-TSO
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup for checking.
+        self.constraints = Constraint([
+            Constraint(
+                [Constraint_TSO()],
+                reduce=Constraint.notany
+            ),
+            DMSAttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value=(
+                    'nrs_autoflat'
+                    '|nrs_autowave'
+                    '|nrs_fixedslit'
+                ),
+                force_unique=False
+            ),
+            # SimpleConstraint(
+            #     value=True,
+            #     test=lambda value, item: nrsfss_valid_detector(item),
+            #     force_unique=False
+            # ),
+            Constraint_Optical_Path(),
+            Constraint_Target(association=self),
+        ])
+
+        # Check and continue initialization.
+        super(Asn_NRSFSS, self).__init__(*args, **kwargs)
+
+    @property
+    def dms_product_name(self):
+        return dms_product_name_sources(self)
+
+
 @RegistryMarker.rule
 class Asn_Image(AsnMixin_Science):
     """Level 3 Science Image Association
@@ -299,6 +345,7 @@ class Asn_SlitlessSpectral(AsnMixin_Spectrum):
         # Check and continue initialization.
         super(Asn_SlitlessSpectral, self).__init__(*args, **kwargs)
 
+
 @RegistryMarker.rule
 class Asn_SpectralSource(AsnMixin_Spectrum):
     """Level 3 slit-like, multi-object spectrographic Association
@@ -329,7 +376,6 @@ class Asn_SpectralSource(AsnMixin_Spectrum):
                             'nrc_wfss'
                             '|nrs_autoflat'
                             '|nrs_autowave'
-                            '|nrs_fixedslit'
                         ),
                         force_unique=False
                     ),
