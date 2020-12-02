@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 from ..stpipe import Step
 from .. import datamodels
+from ..lib.exposure_types import IMAGING_TYPES
 import logging
 from .assign_wcs import load_wcs
 from .util import MSAFileError
@@ -41,6 +42,12 @@ class AssignWcsStep(Step):
     """
 
     spec = """
+        sip_approx = boolean(default=True)  # enables SIP approximation for imaging modes.
+        sip_max_pix_error = float(default=0.25)  # max err for SIP fit, forward.
+        sip_degree = integer(max=6, default=None)  # degree for forward SIP fit, None to use best fit.
+        sip_max_inv_pix_error = float(default=0.25)  # max err for SIP fit, inverse.
+        sip_inv_degree = integer(max=6, default=None)  # degree for inverse SIP fit, None to use best fit.
+        sip_npoints = integer(default=32)  #  number of points for SIP
         slit_y_low = float(default=-.55)  # The lower edge of a slit.
         slit_y_high = float(default=.55)  # The upper edge of a slit.
 
@@ -83,5 +90,44 @@ class AssignWcsStep(Step):
             slit_y_range = [self.slit_y_low, self.slit_y_high]
             result = load_wcs(input_model, reference_file_names, slit_y_range)
 
+        if not (result.meta.exposure.type.lower() in IMAGING_TYPES and self.sip_approx):
+            return result
+
+        # fit sip approx., degree is chosen by best fit
+        try:
+            fit_sip_hdr = result.meta.wcs.to_fits_sip(None, self.sip_max_pix_error,
+                          self.sip_degree, self.sip_max_inv_pix_error, self.sip_inv_degree,
+                          self.sip_npoints)
+        except ValueError:
+            return result
+
+        # if a polynomial was fit (not just linear terms), but the
+        # best fit > 6th degree, fit a 6th degree instead.
+        # and give up if that doesn't work.
+        if 'SIP' in fit_sip_hdr['ctype1'] and (fit_sip_hdr['a_order'] > 6 or fit_sip_hdr.get('ap_order', 1) > 6):
+            fwd_deg = min(fit_sip_hdr['a_order'], 6)
+            inv_deg = min(fit_sip_hdr.get('ap_order', 1), 6)
+            try:
+                fit_sip_hdr = result.meta.wcs.to_fits_sip(None, self.sip_max_pix_error,
+                              fwd_deg, self.sip_max_inv_pix_error, inv_deg, self.sip_npoints)
+            except ValueError:
+                return result
+
+        # maintain convention of lowercase keys
+        fit_sip_hdr = {k.lower(): v for k, v in fit_sip_hdr.items()}
+
+        # update meta.wcs_info with fit keywords except for naxis*
+        for key in ['naxis1', 'naxis2']:
+            del fit_sip_hdr[key]
+
+        # update meta.wcs_info with fit keywords
+        result.meta.wcsinfo.instance.update(fit_sip_hdr)
+
+        # delete naxis, cdelt, pc from wcsinfo
+        rm_keys = ['naxis', 'cdelt1', 'cdelt2',
+                    'pc1_1','pc1_2', 'pc2_1', 'pc2_2']
+        for key in rm_keys:
+            if key in result.meta.wcsinfo.instance:
+                del result.meta.wcsinfo.instance[key]
 
         return result

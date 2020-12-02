@@ -22,6 +22,12 @@ input frame ``detector`` to a frame ``v2v3``. This part of the WCS pipeline may 
 intermediate coordinate frames. The basic WCS keywords are used to create
 the transform from frame ``v2v3`` to frame ``world``.
 
+For image display with software like DS9 that relies on specific WCS information, a SIP-based
+approximation to the WCS is fit. The results are FITS keywords stored in
+``model.meta.wcsinfo``. This is not an exact fit, but is accurate to ~0.25 pixel and is sufficient
+for display purposes. This step, which occurs for imaging modes early, is performed by default but
+can be switched off, and parameters controlling the fit can also be adjusted. 
+
 
 
 Basic WCS keywords and the transform from ``v2v3`` to ``world``
