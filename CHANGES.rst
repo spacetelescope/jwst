@@ -162,6 +162,11 @@ tweakreg
 - Add support for the new ``fitgeom`` mode: ``'rshift'`` that can fit only
   for shifts and a rotation. [#5475]
 
+wfs_combine
+-----------
+
+- Add checking for bad pixels by using DO_NOT_USE rather than DQ>0. [#5500]
+
 white_light
 -----------
 
