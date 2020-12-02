@@ -165,8 +165,13 @@ tweakreg
 wfs_combine
 -----------
 
-- Add checking for bad pixels using DO_NOT_USE rather than !=0.
+- Add checking for bad pixels by using DO_NOT_USE rather than DQ>0. [#5500]
 
+white_light
+-----------
+
+- Add support for step parameters ``min_wavelength`` and ``max_wavelength`` to modify
+  the wavelength region over which the flux integration is calculated. [#5501]
 
 0.17.1 (2020-09-15)
 ===================
