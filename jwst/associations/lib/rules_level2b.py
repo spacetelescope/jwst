@@ -12,6 +12,7 @@ from jwst.associations.lib.dms_base import (
     format_list,
     item_getattr,
     nrsfss_valid_detector,
+    nrsifu_valid_detector,
 )
 from jwst.associations.lib.member import Member
 from jwst.associations.lib.process_list import ProcessList
@@ -801,6 +802,11 @@ class Asn_Lv2NRSIFUNod(
                 name='exp_type',
                 sources=['exp_type'],
                 value='nrs_ifu'
+            ),
+            SimpleConstraint(
+                value=True,
+                test=lambda value, item: nrsifu_valid_detector(item),
+                force_unique=False
             ),
             DMSAttrConstraint(
                 name='expspcin',

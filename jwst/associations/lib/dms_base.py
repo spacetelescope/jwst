@@ -849,3 +849,29 @@ def nrsfss_valid_detector(item):
         slit = 'a'
 
     return (slit, grating, filter, detector) in NRS_FSS_VALID_OPTICAL_PATHS
+
+
+def nrsifu_valid_detector(item):
+    """Check that a grating/filter combo can appear on the detector"""
+    try:
+        _, detector = item_getattr(item, ['detector'])
+        _, filter = item_getattr(item, ['filter'])
+        _, grating = item_getattr(item, ['grating'])
+    except KeyError:
+        return False
+
+    # Just a checklist of paths:
+    if grating in ['g395h', 'g235h']:
+        return True
+    elif grating in ['g395m', 'g235m', 'g140m'] and detector == 'nrs1':
+        return True
+    elif grating == 'prism' and filter == 'clear' and detector == 'nrs1':
+        return True
+    elif grating == 'g140h':
+        if filter == 'f100lp':
+            return True
+        elif filter == 'f070lp' and detector == 'nrs1':
+            return True
+
+    # Nothing has matched. Not valid.
+    return False
