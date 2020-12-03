@@ -56,6 +56,11 @@ datamodels
 
 extract_1d
 ----------
+- For IFU data (NIRSpec and MIRI) the extraction radius is now a varying size 
+  based on wavelength. The apcorr correction if a function of wavelength and
+  radius size. Fixes a bug in units conversion for applying the apcorr correction.
+  The units are now correctly converted from arcseconds to pixels. Added an
+  new method to apply the apcorr correction for IFU data. 
 
 - Fixed bug involving the determination of source RA/Dec for resampled Slit
   data. [#5353]
