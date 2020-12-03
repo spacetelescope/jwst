@@ -474,14 +474,14 @@ class Asn_NRSIFU(AsnMixin_Spectrum):
                 ),
                 force_unique=False
             ),
+            DMSAttrConstraint(
+                name='patttype',
+                sources=['patttype'],
+                required=True
+            ),
             Constraint(
                 [
                     Constraint_TSO(),
-                    DMSAttrConstraint(
-                        name='patttype',
-                        sources=['patttype'],
-                        value=['none'],
-                    )
                 ],
                 reduce=Constraint.notany
             ),
