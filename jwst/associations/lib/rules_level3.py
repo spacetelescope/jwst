@@ -16,6 +16,7 @@ __all__ = [
     'Asn_ACQ_Reprocess',
     'Asn_Coron',
     'Asn_NRSIFU',
+    'Asn_NRSIFUBackground',
     'Asn_Lv3SpecAux',
     'Asn_Image',
     'Asn_MIRMRS',
@@ -496,7 +497,7 @@ class Asn_NRSIFU(AsnMixin_Spectrum):
 
 
 @RegistryMarker.rule
-class Asn_IFUGratingBkg(AsnMixin_AuxData, AsnMixin_Spectrum):
+class Asn_NRSIFUBackground(AsnMixin_AuxData, AsnMixin_Spectrum):
 
     """Level 3 Spectral Association
 
@@ -533,7 +534,7 @@ class Asn_IFUGratingBkg(AsnMixin_AuxData, AsnMixin_Spectrum):
         ])
 
         # Check and continue initialization.
-        super(Asn_IFUGratingBkg, self).__init__(*args, **kwargs)
+        super(Asn_NRSIFUBackground, self).__init__(*args, **kwargs)
 
 
 @RegistryMarker.rule
