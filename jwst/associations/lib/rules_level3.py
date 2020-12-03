@@ -15,7 +15,7 @@ __all__ = [
     'Asn_AMI',
     'Asn_ACQ_Reprocess',
     'Asn_Coron',
-    'Asn_IFUGrating',
+    'Asn_NRSIFU',
     'Asn_Lv3SpecAux',
     'Asn_Image',
     'Asn_MIRMRS',
@@ -452,15 +452,8 @@ class Asn_MIRMRS(AsnMixin_Spectrum):
 
 
 @RegistryMarker.rule
-class Asn_IFUGrating(AsnMixin_Spectrum):
+class Asn_NRSIFU(AsnMixin_Spectrum):
     """Level 3 IFU gratings Association
-
-    Note: This is here to split the associations based on the gratings
-          used in the observation. In principle these observations can
-          (and maybe should) be combined but to reduce processing time
-          they are separated. To return to the original behavior just
-          remove this class and the different gratings will appear in
-          the same association.
 
     Characteristics:
         - Association type: ``spec3``
@@ -472,7 +465,15 @@ class Asn_IFUGrating(AsnMixin_Spectrum):
         # Setup for checking.
         self.constraints = Constraint([
             Constraint_Target(association=self),
-            Constraint_IFU(),
+            DMSAttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value=(
+                    'nrs_autowave'
+                    '|nrs_ifu'
+                ),
+                force_unique=False
+            ),
             Constraint(
                 [
                     Constraint_TSO(),
@@ -487,12 +488,11 @@ class Asn_IFUGrating(AsnMixin_Spectrum):
             DMSAttrConstraint(
                     name='opt_elem',
                     sources=['grating'],
-                    force_unique=True,
             )
         ])
 
         # Check and continue initialization.
-        super(Asn_IFUGrating, self).__init__(*args, **kwargs)
+        super(Asn_NRSIFU, self).__init__(*args, **kwargs)
 
 
 @RegistryMarker.rule
