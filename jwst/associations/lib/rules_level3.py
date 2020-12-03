@@ -12,21 +12,21 @@ from jwst.associations.lib.rules_level3_base import (
 )
 
 __all__ = [
-    'Asn_ACQ_Reprocess',
-    'Asn_AMI',
-    'Asn_Coron',
-    'Asn_Image',
+    'Asn_Lv3ACQ_Reprocess',
+    'Asn_Lv3AMI',
+    'Asn_Lv3Coron',
+    'Asn_Lv3Image',
     'Asn_Lv3SpecAux',
-    'Asn_MIRMRS',
-    'Asn_NRSFSS',
-    'Asn_NRSIFU',
-    'Asn_NRSIFUBackground',
-    'Asn_SlitlessSpectral',
-    'Asn_SpectralSource',
-    'Asn_SpectralTarget',
-    'Asn_TSO',
-    'Asn_WFSCMB',
-    'Asn_WFSS_NIS',
+    'Asn_Lv3MIRMRS',
+    'Asn_Lv3NRSFSS',
+    'Asn_Lv3NRSIFU',
+    'Asn_Lv3NRSIFUBackground',
+    'Asn_Lv3SlitlessSpectral',
+    'Asn_Lv3SpectralSource',
+    'Asn_Lv3SpectralTarget',
+    'Asn_Lv3TSO',
+    'Asn_Lv3WFSCMB',
+    'Asn_Lv3WFSSNIS',
 ]
 
 # Configure logging
@@ -38,7 +38,7 @@ logger.addHandler(logging.NullHandler())
 # Start of the User-level rules
 # --------------------------------
 @RegistryMarker.rule
-class Asn_ACQ_Reprocess(DMS_Level3_Base):
+class Asn_Lv3ACQ_Reprocess(DMS_Level3_Base):
     """Level 3 Gather Target Acquisitions
 
     Characteristics:
@@ -66,11 +66,11 @@ class Asn_ACQ_Reprocess(DMS_Level3_Base):
             )
         ])
 
-        super(Asn_ACQ_Reprocess, self).__init__(*args, **kwargs)
+        super(Asn_Lv3ACQ_Reprocess, self).__init__(*args, **kwargs)
 
 
 @RegistryMarker.rule
-class Asn_AMI(AsnMixin_Science):
+class Asn_Lv3AMI(AsnMixin_Science):
     """Level 3 Aperture Mask Interferometry Association
 
     Characteristics:
@@ -117,17 +117,17 @@ class Asn_AMI(AsnMixin_Science):
         })
 
         # Check and continue initialization.
-        super(Asn_AMI, self).__init__(*args, **kwargs)
+        super(Asn_Lv3AMI, self).__init__(*args, **kwargs)
 
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
 
         self.data['asn_type'] = 'ami3'
-        super(Asn_AMI, self)._init_hook(item)
+        super(Asn_Lv3AMI, self)._init_hook(item)
 
 
 @RegistryMarker.rule
-class Asn_Coron(AsnMixin_Science):
+class Asn_Lv3Coron(AsnMixin_Science):
     """Level 3 Coronography Association
 
     Characteristics:
@@ -179,17 +179,17 @@ class Asn_Coron(AsnMixin_Science):
         })
 
         # Check and continue initialization.
-        super(Asn_Coron, self).__init__(*args, **kwargs)
+        super(Asn_Lv3Coron, self).__init__(*args, **kwargs)
 
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
 
         self.data['asn_type'] = 'coron3'
-        super(Asn_Coron, self)._init_hook(item)
+        super(Asn_Lv3Coron, self)._init_hook(item)
 
 
 @RegistryMarker.rule
-class Asn_Image(AsnMixin_Science):
+class Asn_Lv3Image(AsnMixin_Science):
     """Level 3 Science Image Association
 
     Characteristics:
@@ -219,13 +219,13 @@ class Asn_Image(AsnMixin_Science):
         ])
 
         # Now check and continue initialization.
-        super(Asn_Image, self).__init__(*args, **kwargs)
+        super(Asn_Lv3Image, self).__init__(*args, **kwargs)
 
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
 
         self.data['asn_type'] = 'image3'
-        super(Asn_Image, self)._init_hook(item)
+        super(Asn_Lv3Image, self)._init_hook(item)
 
 
 @RegistryMarker.rule
@@ -267,7 +267,7 @@ class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_Spectrum):
 
 
 @RegistryMarker.rule
-class Asn_MIRMRS(AsnMixin_Spectrum):
+class Asn_Lv3MIRMRS(AsnMixin_Spectrum):
     """Level 3 MIRI MRS Association
 
     Characteristics:
@@ -306,7 +306,7 @@ class Asn_MIRMRS(AsnMixin_Spectrum):
         ])
 
         # Check and continue initialization.
-        super(Asn_MIRMRS, self).__init__(*args, **kwargs)
+        super(Asn_Lv3MIRMRS, self).__init__(*args, **kwargs)
 
     @property
     def dms_product_name(self):
@@ -325,7 +325,7 @@ class Asn_MIRMRS(AsnMixin_Spectrum):
 
 
 @RegistryMarker.rule
-class Asn_NRSFSS(AsnMixin_Spectrum):
+class Asn_Lv3NRSFSS(AsnMixin_Spectrum):
     """Level 3 NIRSpec Fixed-slit Science
 
     Characteristics:
@@ -363,7 +363,7 @@ class Asn_NRSFSS(AsnMixin_Spectrum):
         ])
 
         # Check and continue initialization.
-        super(Asn_NRSFSS, self).__init__(*args, **kwargs)
+        super(Asn_Lv3NRSFSS, self).__init__(*args, **kwargs)
 
     @property
     def dms_product_name(self):
@@ -371,7 +371,7 @@ class Asn_NRSFSS(AsnMixin_Spectrum):
 
 
 @RegistryMarker.rule
-class Asn_NRSIFU(AsnMixin_Spectrum):
+class Asn_Lv3NRSIFU(AsnMixin_Spectrum):
     """Level 3 IFU gratings Association
 
     Characteristics:
@@ -416,11 +416,11 @@ class Asn_NRSIFU(AsnMixin_Spectrum):
         ])
 
         # Check and continue initialization.
-        super(Asn_NRSIFU, self).__init__(*args, **kwargs)
+        super(Asn_Lv3NRSIFU, self).__init__(*args, **kwargs)
 
 
 @RegistryMarker.rule
-class Asn_NRSIFUBackground(AsnMixin_AuxData, AsnMixin_Spectrum):
+class Asn_Lv3NRSIFUBackground(AsnMixin_AuxData, AsnMixin_Spectrum):
 
     """Level 3 Spectral Association
 
@@ -462,11 +462,11 @@ class Asn_NRSIFUBackground(AsnMixin_AuxData, AsnMixin_Spectrum):
         ])
 
         # Check and continue initialization.
-        super(Asn_NRSIFUBackground, self).__init__(*args, **kwargs)
+        super(Asn_Lv3NRSIFUBackground, self).__init__(*args, **kwargs)
 
 
 @RegistryMarker.rule
-class Asn_SlitlessSpectral(AsnMixin_Spectrum):
+class Asn_Lv3SlitlessSpectral(AsnMixin_Spectrum):
     """Level 3 slitless, target-based or single-object spectrographic Association
 
     Characteristics:
@@ -522,11 +522,11 @@ class Asn_SlitlessSpectral(AsnMixin_Spectrum):
         ])
 
         # Check and continue initialization.
-        super(Asn_SlitlessSpectral, self).__init__(*args, **kwargs)
+        super(Asn_Lv3SlitlessSpectral, self).__init__(*args, **kwargs)
 
 
 @RegistryMarker.rule
-class Asn_SpectralSource(AsnMixin_Spectrum):
+class Asn_Lv3SpectralSource(AsnMixin_Spectrum):
     """Level 3 slit-like, multi-object spectrographic Association
 
     Characteristics:
@@ -565,7 +565,7 @@ class Asn_SpectralSource(AsnMixin_Spectrum):
         ])
 
         # Check and continue initialization.
-        super(Asn_SpectralSource, self).__init__(*args, **kwargs)
+        super(Asn_Lv3SpectralSource, self).__init__(*args, **kwargs)
 
     @property
     def dms_product_name(self):
@@ -573,7 +573,7 @@ class Asn_SpectralSource(AsnMixin_Spectrum):
 
 
 @RegistryMarker.rule
-class Asn_SpectralTarget(AsnMixin_Spectrum):
+class Asn_Lv3SpectralTarget(AsnMixin_Spectrum):
     """Level 3 slit-like, target-based or single-object spectrographic Association
 
     Characteristics:
@@ -615,7 +615,7 @@ class Asn_SpectralTarget(AsnMixin_Spectrum):
         ])
 
         # Check and continue initialization.
-        super(Asn_SpectralTarget, self).__init__(*args, **kwargs)
+        super(Asn_Lv3SpectralTarget, self).__init__(*args, **kwargs)
 
     def finalize(self):
         """Finalize assocation
@@ -638,7 +638,7 @@ class Asn_SpectralTarget(AsnMixin_Spectrum):
 
 
 @RegistryMarker.rule
-class Asn_TSO(AsnMixin_Science):
+class Asn_Lv3TSO(AsnMixin_Science):
     """Level 3 Time-Series Association
 
     Characteristics:
@@ -666,17 +666,17 @@ class Asn_TSO(AsnMixin_Science):
             ),
         ])
 
-        super(Asn_TSO, self).__init__(*args, **kwargs)
+        super(Asn_Lv3TSO, self).__init__(*args, **kwargs)
 
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
 
         self.data['asn_type'] = 'tso3'
-        super(Asn_TSO, self)._init_hook(item)
+        super(Asn_Lv3TSO, self)._init_hook(item)
 
 
 @RegistryMarker.rule
-class Asn_WFSCMB(AsnMixin_Science):
+class Asn_Lv3WFSCMB(AsnMixin_Science):
     """Level 3 Wavefront Control & Sensing Association
 
     For coarse and fine phasing, dither pairs need to
@@ -723,13 +723,13 @@ class Asn_WFSCMB(AsnMixin_Science):
             }
         })
 
-        super(Asn_WFSCMB, self).__init__(*args, **kwargs)
+        super(Asn_Lv3WFSCMB, self).__init__(*args, **kwargs)
 
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
 
         self.data['asn_type'] = 'wfs-image3'
-        super(Asn_WFSCMB, self)._init_hook(item)
+        super(Asn_Lv3WFSCMB, self)._init_hook(item)
 
     @property
     def dms_product_name(self):
@@ -777,7 +777,7 @@ class Asn_WFSCMB(AsnMixin_Science):
 
 
 @RegistryMarker.rule
-class Asn_WFSS_NIS(AsnMixin_Spectrum):
+class Asn_Lv3WFSSNIS(AsnMixin_Spectrum):
     """Level 3 WFSS/Grism Association
 
     Characteristics:
@@ -809,7 +809,7 @@ class Asn_WFSS_NIS(AsnMixin_Spectrum):
         ])
 
         # Check and continue initialization.
-        super(Asn_WFSS_NIS, self).__init__(*args, **kwargs)
+        super(Asn_Lv3WFSSNIS, self).__init__(*args, **kwargs)
 
     @property
     def dms_product_name(self):
