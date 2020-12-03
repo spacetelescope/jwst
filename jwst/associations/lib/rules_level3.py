@@ -3,7 +3,7 @@
 import logging
 
 from jwst.associations.registry import RegistryMarker
-from jwst.associations.lib.dms_base import (Constraint_TargetAcq, Constraint_TSO, nrsfss_valid_detector)
+from jwst.associations.lib.dms_base import (Constraint_TargetAcq, Constraint_TSO, nrsfss_valid_detector, nrsifu_valid_detector)
 from jwst.associations.lib.process_list import ProcessList
 from jwst.associations.lib.rules_level3_base import *
 from jwst.associations.lib.rules_level3_base import (
@@ -475,6 +475,11 @@ class Asn_NRSIFU(AsnMixin_Spectrum):
                 ),
                 force_unique=False
             ),
+            SimpleConstraint(
+                value=True,
+                test=lambda value, item: nrsifu_valid_detector(item),
+                force_unique=False
+            ),
             DMSAttrConstraint(
                 name='patttype',
                 sources=['patttype'],
@@ -525,6 +530,11 @@ class Asn_NRSIFUBackground(AsnMixin_AuxData, AsnMixin_Spectrum):
                 name='allowed_bkgdtarg',
                 sources=['exp_type'],
                 value=['nrs_ifu'],
+            ),
+            SimpleConstraint(
+                value=True,
+                test=lambda value, item: nrsifu_valid_detector(item),
+                force_unique=False
             ),
             DMSAttrConstraint(
                 name='opt_elem',
