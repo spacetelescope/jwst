@@ -16,9 +16,9 @@ __all__ = [
     'Asn_ACQ_Reprocess',
     'Asn_Coron',
     'Asn_IFUGrating',
-    'Asn_IFU',
     'Asn_Lv3SpecAux',
     'Asn_Image',
+    'Asn_MIRMRS',
     'Asn_SpectralSource',
     'Asn_SpectralTarget',
     'Asn_SlitlessSpectral',
@@ -394,20 +394,31 @@ class Asn_SpectralSource(AsnMixin_Spectrum):
 
 
 @RegistryMarker.rule
-class Asn_IFU(AsnMixin_Spectrum):
-    """Level 3 IFU Association
+class Asn_MIRMRS(AsnMixin_Spectrum):
+    """Level 3 MIRI MRS Association
 
     Characteristics:
         - Association type: ``spec3``
         - Pipeline: ``calwebb_spec3``
+        - Just MIRI MRS
         - optical path determined by calibration
+        - Cannot be TSO
+        - Must have pattern type defined
     """
 
     def __init__(self, *args, **kwargs):
         # Setup for checking.
         self.constraints = Constraint([
             Constraint_Target(association=self),
-            Constraint_IFU(),
+            DMSAttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value=(
+                    'mir_mrs'
+                    '|mir_flatmrs'
+                ),
+                force_unique=False
+            ),
             Constraint(
                 [
                     Constraint_TSO(),
@@ -419,21 +430,10 @@ class Asn_IFU(AsnMixin_Spectrum):
                 ],
                 reduce=Constraint.notany
             ),
-            # The instrument constraint was addded to force nirspec observations
-            # to be processed in the IFUGrating class and should be removed if
-            # that class is deleted.
-            Constraint([
-                DMSAttrConstraint(
-                    name='instrument',
-                    sources=['instrume'],
-                    value=['nirspec'],
-                    )
-                ],
-                       reduce=Constraint.notany
-                      ),
-                ])
+        ])
+
         # Check and continue initialization.
-        super(Asn_IFU, self).__init__(*args, **kwargs)
+        super(Asn_MIRMRS, self).__init__(*args, **kwargs)
 
     @property
     def dms_product_name(self):
