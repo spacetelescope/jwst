@@ -12,17 +12,18 @@ from jwst.associations.lib.rules_level3_base import (
 )
 
 __all__ = [
-    'Asn_AMI',
     'Asn_ACQ_Reprocess',
+    'Asn_AMI',
     'Asn_Coron',
+    'Asn_Image',
+    'Asn_Lv3SpecAux',
+    'Asn_MIRMRS',
+    'Asn_NRSFSS',
     'Asn_NRSIFU',
     'Asn_NRSIFUBackground',
-    'Asn_Lv3SpecAux',
-    'Asn_Image',
-    'Asn_MIRMRS',
+    'Asn_SlitlessSpectral',
     'Asn_SpectralSource',
     'Asn_SpectralTarget',
-    'Asn_SlitlessSpectral',
     'Asn_TSO',
     'Asn_WFSCMB',
     'Asn_WFSS_NIS',
@@ -36,6 +37,293 @@ logger.addHandler(logging.NullHandler())
 # --------------------------------
 # Start of the User-level rules
 # --------------------------------
+@RegistryMarker.rule
+class Asn_ACQ_Reprocess(DMS_Level3_Base):
+    """Level 3 Gather Target Acquisitions
+
+    Characteristics:
+        - Association type: Not applicable
+        - Pipeline: Not applicable
+        - Used to populate other related associations
+
+    Notes
+    -----
+    For first loop, simply send acquisitions and confirms back.
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup for checking.
+        self.constraints = Constraint([
+            Constraint_TargetAcq(),
+            SimpleConstraint(
+                name='force_fail',
+                test=lambda x, y: False,
+                value='anything but None',
+                reprocess_on_fail=True,
+                work_over=ProcessList.NONSCIENCE,
+                reprocess_rules=[]
+            )
+        ])
+
+        super(Asn_ACQ_Reprocess, self).__init__(*args, **kwargs)
+
+
+@RegistryMarker.rule
+class Asn_AMI(AsnMixin_Science):
+    """Level 3 Aperture Mask Interferometry Association
+
+    Characteristics:
+        - Association type: ``ami3``
+        - Pipeline: ``calwebb_ami3``
+        - Gather science and related PSF exposures
+
+    Notes
+    -----
+    AMI is nearly completely defined by the association candidates
+    produced by APT.
+    Tracking Issues:
+
+        - `github #310 <https://github.com/STScI-JWST/jwst/issues/310>`_
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup for checking.
+        self.constraints = Constraint([
+            Constraint_Optical_Path(),
+            DMSAttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value=(
+                    'nis_ami'
+                ),
+            ),
+            DMSAttrConstraint(
+                name='target',
+                sources=['targetid'],
+                onlyif=lambda item: self.get_exposure_type(item) == 'science',
+                force_reprocess=ProcessList.EXISTING,
+                only_on_match=True,
+            ),
+        ])
+
+        # PSF is required
+        self.validity.update({
+            'has_psf': {
+                'validated': False,
+                'check': lambda entry: entry['exptype'] == 'psf'
+            }
+        })
+
+        # Check and continue initialization.
+        super(Asn_AMI, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        self.data['asn_type'] = 'ami3'
+        super(Asn_AMI, self)._init_hook(item)
+
+
+@RegistryMarker.rule
+class Asn_Coron(AsnMixin_Science):
+    """Level 3 Coronography Association
+
+    Characteristics:
+        - Association type: ``coron3``
+        - Pipeline: ``calwebb_coron3``
+        - Gather science and related PSF exposures
+
+    Notes
+    -----
+    Coronography is nearly completely defined by the association candidates
+    produced by APT.
+    Tracking Issues:
+
+        - `github #311 <https://github.com/STScI-JWST/jwst/issues/311>`_
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup for checking.
+        self.constraints = Constraint(
+            [
+                Constraint_Optical_Path(),
+                DMSAttrConstraint(
+                    name='exp_type',
+                    sources=['exp_type'],
+                    value=(
+                        'nrc_coron'
+                        '|mir_lyot'
+                        '|mir_4qpm'
+                    ),
+                ),
+                DMSAttrConstraint(
+                    name='target',
+                    sources=['targetid'],
+                    onlyif=lambda item: self.get_exposure_type(item) == 'science',
+                    force_reprocess=ProcessList.EXISTING,
+                    only_on_match=True,
+                ),
+            ],
+            name='asn_coron'
+        )
+
+        # PSF is required
+        self.validity.update({
+            'has_psf': {
+                'validated': False,
+                'check': lambda entry: entry['exptype'] == 'psf'
+            }
+        })
+
+        # Check and continue initialization.
+        super(Asn_Coron, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        self.data['asn_type'] = 'coron3'
+        super(Asn_Coron, self)._init_hook(item)
+
+
+@RegistryMarker.rule
+class Asn_Image(AsnMixin_Science):
+    """Level 3 Science Image Association
+
+    Characteristics:
+        - Association type: ``image3``
+        - Pipeline: ``calwebb_image3``
+        - Non-TSO
+        - Non-WFS&C
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup constraints
+        self.constraints = Constraint([
+            Constraint_Optical_Path(),
+            Constraint_Target(association=self),
+            Constraint_Image(),
+            DMSAttrConstraint(
+                name='wfsvisit',
+                sources=['visitype'],
+                value='((?!wfsc).)*',
+                required=False
+            ),
+            Constraint(
+                [Constraint_TSO()],
+                reduce=Constraint.notany
+            )
+        ])
+
+        # Now check and continue initialization.
+        super(Asn_Image, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        self.data['asn_type'] = 'image3'
+        super(Asn_Image, self)._init_hook(item)
+
+
+@RegistryMarker.rule
+class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_Spectrum):
+
+    """Level 3 Spectral Association
+
+    Characteristics:
+        - Association type: ``spec3``
+        - Pipeline: ``calwebb_spec3``
+    """
+    def __init__(self, *args, **kwargs):
+
+        # Setup for checking.
+        self.constraints = Constraint([
+            Constraint_Target(association=self),
+            Constraint(
+                [
+                    Constraint_TSO(),
+                ],
+                reduce=Constraint.notany
+            ),
+            DMSAttrConstraint(
+                name='bkgdtarg',
+                sources=['bkgdtarg'],
+                value=['T'],
+            ),
+            DMSAttrConstraint(
+                name='allowed_bkgdtarg',
+                sources=['exp_type'],
+                value=['mir_mrs','mir_lrs-fixedslit',
+                       'nrs_fixedslit'],
+            ),
+            Constraint_Optical_Path(),
+        ])
+
+        # Check and continue initialization.
+        super(Asn_Lv3SpecAux, self).__init__(*args, **kwargs)
+
+
+@RegistryMarker.rule
+class Asn_MIRMRS(AsnMixin_Spectrum):
+    """Level 3 MIRI MRS Association
+
+    Characteristics:
+        - Association type: ``spec3``
+        - Pipeline: ``calwebb_spec3``
+        - Just MIRI MRS
+        - optical path determined by calibration
+        - Cannot be TSO
+        - Must have pattern type defined
+    """
+
+    def __init__(self, *args, **kwargs):
+        # Setup for checking.
+        self.constraints = Constraint([
+            Constraint_Target(association=self),
+            DMSAttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value=(
+                    'mir_mrs'
+                    '|mir_flatmrs'
+                ),
+                force_unique=False
+            ),
+            Constraint(
+                [
+                    Constraint_TSO(),
+                    DMSAttrConstraint(
+                        name='patttype',
+                        sources=['patttype'],
+                        value=['none'],
+                    )
+                ],
+                reduce=Constraint.notany
+            ),
+        ])
+
+        # Check and continue initialization.
+        super(Asn_MIRMRS, self).__init__(*args, **kwargs)
+
+    @property
+    def dms_product_name(self):
+        """Define product name."""
+        target = self._get_target()
+
+        instrument = self._get_instrument()
+
+        product_name = 'jw{}-{}_{}_{}'.format(
+            self.data['program'],
+            self.acid.id,
+            target,
+            instrument
+        )
+        return product_name.lower()
+
+
 @RegistryMarker.rule
 class Asn_NRSFSS(AsnMixin_Spectrum):
     """Level 3 NIRSpec Fixed-slit Science
@@ -83,209 +371,99 @@ class Asn_NRSFSS(AsnMixin_Spectrum):
 
 
 @RegistryMarker.rule
-class Asn_Image(AsnMixin_Science):
-    """Level 3 Science Image Association
-
-    Characteristics:
-        - Association type: ``image3``
-        - Pipeline: ``calwebb_image3``
-        - Non-TSO
-        - Non-WFS&C
-    """
-
-    def __init__(self, *args, **kwargs):
-
-        # Setup constraints
-        self.constraints = Constraint([
-            Constraint_Optical_Path(),
-            Constraint_Target(association=self),
-            Constraint_Image(),
-            DMSAttrConstraint(
-                name='wfsvisit',
-                sources=['visitype'],
-                value='((?!wfsc).)*',
-                required=False
-            ),
-            Constraint(
-                [Constraint_TSO()],
-                reduce=Constraint.notany
-            )
-        ])
-
-        # Now check and continue initialization.
-        super(Asn_Image, self).__init__(*args, **kwargs)
-
-    def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
-
-        self.data['asn_type'] = 'image3'
-        super(Asn_Image, self)._init_hook(item)
-
-
-@RegistryMarker.rule
-class Asn_WFSCMB(AsnMixin_Science):
-    """Level 3 Wavefront Control & Sensing Association
-
-    For coarse and fine phasing, dither pairs need to
-    be associated to be combined.  The optical path
-    is assumed to be equivalent within an activity.
-
-    Characteristics:
-        - Association type: ``wfs-image3``
-        - Pipeline: ``calwebb_wfs-image3``
-        - Coarse and fine phasing dithers
-    """
-
-    def __init__(self, *args, **kwargs):
-
-        # Setup constraints
-        self.constraints = Constraint([
-            Constraint_Optical_Path(),
-            Constraint_Target(association=self),
-            Constraint_Image(),
-            DMSAttrConstraint(
-                name='patttype',
-                sources=['patttype'],
-                value='wfsc'
-            ),
-            DMSAttrConstraint(
-                name='detector',
-                sources=['detector']
-            ),
-            DMSAttrConstraint(
-                name='obs_id',
-                sources=['obs_id']
-            ),
-            DMSAttrConstraint(
-                name='act_id',
-                sources=['act_id']
-            )
-        ])
-
-        # Only valid if two members exist.
-        self.validity.update({
-            'has_pair': {
-                'validated': False,
-                'check': self._has_pair
-            }
-        })
-
-        super(Asn_WFSCMB, self).__init__(*args, **kwargs)
-
-    def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
-
-        self.data['asn_type'] = 'wfs-image3'
-        super(Asn_WFSCMB, self)._init_hook(item)
-
-    @property
-    def dms_product_name(self):
-        """Define product name
-
-        Modification is to append the `expspcin` value
-        after the calibration suffix.
-        """
-        product_name_format = '{existing}-{detector}_{suffix}-{expspcin}'
-
-        existing = super().dms_product_name
-
-        product_name = format_product(
-            product_name_format,
-            existing=existing,
-            detector=self.constraints['detector'].value,
-            expspcin=self.constraints['act_id'].value
-        )
-
-        return product_name.lower()
-
-    def _has_pair(self, entry=None):
-        """Check if current product has two members
-
-        If `entry` is given, it is counted as one of the
-        members. If not, the existing member list is only
-        accounted for.
-
-        Parameters
-        ----------
-        entry : dict or None
-            New entry to add to member list.
-
-        Returns
-        -------
-        bool
-            True if there are two members.
-        """
-        if entry is None:
-            count = 2
-        else:
-            count = 1
-
-        return len(self.current_product['members']) == count
-
-
-@RegistryMarker.rule
-class Asn_SpectralTarget(AsnMixin_Spectrum):
-    """Level 3 slit-like, target-based or single-object spectrographic Association
+class Asn_NRSIFU(AsnMixin_Spectrum):
+    """Level 3 IFU gratings Association
 
     Characteristics:
         - Association type: ``spec3``
         - Pipeline: ``calwebb_spec3``
-        - Single target
-        - Non-TSO
+        - optical path determined by calibration
     """
 
     def __init__(self, *args, **kwargs):
-
         # Setup for checking.
         self.constraints = Constraint([
-            Constraint(
-                [Constraint_TSO()],
-                reduce=Constraint.notany
-            ),
-            Constraint_Optical_Path(),
             Constraint_Target(association=self),
             DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
                 value=(
-                    'mir_lrs-fixedslit'
-                    '|nis_soss'
+                    'nrs_autowave'
+                    '|nrs_ifu'
                 ),
                 force_unique=False
             ),
+            SimpleConstraint(
+                value=True,
+                test=lambda value, item: nrsifu_valid_detector(item),
+                force_unique=False
+            ),
+            DMSAttrConstraint(
+                name='patttype',
+                sources=['patttype'],
+                required=True
+            ),
             Constraint(
                 [
-                    DMSAttrConstraint(
-                        name='patttype_spectarg',
-                        sources=['patttype'],
-                        value=['2-point-nod|4-point-nod|along-slit-nod'],
-                    ),
+                    Constraint_TSO(),
                 ],
-                reduce=Constraint.any
+                reduce=Constraint.notany
+            ),
+            DMSAttrConstraint(
+                    name='opt_elem',
+                    sources=['grating'],
             )
         ])
 
         # Check and continue initialization.
-        super(Asn_SpectralTarget, self).__init__(*args, **kwargs)
+        super(Asn_NRSIFU, self).__init__(*args, **kwargs)
 
-    def finalize(self):
-        """Finalize assocation
 
-        For NRS Fixed-slit, finalization means creating new members for the
-        background nods.
+@RegistryMarker.rule
+class Asn_NRSIFUBackground(AsnMixin_AuxData, AsnMixin_Spectrum):
 
-        Returns
-        -------
-        associations: [association[, ...]] or None
-            List of fully-qualified associations that this association
-            represents.
-            `None` if a complete association cannot be produced.
+    """Level 3 Spectral Association
 
-        """
-        if self.is_valid:
-            return self.make_fixedslit_bkg()
+    Characteristics:
+        - Association type: ``spec3``
+        - Pipeline: ``calwebb_spec3``
+    """
+    def __init__(self, *args, **kwargs):
 
-        return None
+        # Setup for checking.
+        self.constraints = Constraint([
+            Constraint_Target(association=self),
+            Constraint(
+                [
+                    Constraint_TSO(),
+                ],
+                reduce=Constraint.notany
+            ),
+            DMSAttrConstraint(
+                name='bkgdtarg',
+                sources=['bkgdtarg'],
+                value=['T'],
+            ),
+            DMSAttrConstraint(
+                name='allowed_bkgdtarg',
+                sources=['exp_type'],
+                value=['nrs_ifu'],
+            ),
+            SimpleConstraint(
+                value=True,
+                test=lambda value, item: nrsifu_valid_detector(item),
+                force_unique=False
+            ),
+            DMSAttrConstraint(
+                name='opt_elem',
+                sources=['grating'],
+                force_unique=True,
+            ),
+        ])
+
+        # Check and continue initialization.
+        super(Asn_NRSIFUBackground, self).__init__(*args, **kwargs)
+
 
 @RegistryMarker.rule
 class Asn_SlitlessSpectral(AsnMixin_Spectrum):
@@ -395,353 +573,68 @@ class Asn_SpectralSource(AsnMixin_Spectrum):
 
 
 @RegistryMarker.rule
-class Asn_MIRMRS(AsnMixin_Spectrum):
-    """Level 3 MIRI MRS Association
+class Asn_SpectralTarget(AsnMixin_Spectrum):
+    """Level 3 slit-like, target-based or single-object spectrographic Association
 
     Characteristics:
         - Association type: ``spec3``
         - Pipeline: ``calwebb_spec3``
-        - Just MIRI MRS
-        - optical path determined by calibration
-        - Cannot be TSO
-        - Must have pattern type defined
+        - Single target
+        - Non-TSO
     """
 
     def __init__(self, *args, **kwargs):
+
         # Setup for checking.
         self.constraints = Constraint([
+            Constraint(
+                [Constraint_TSO()],
+                reduce=Constraint.notany
+            ),
+            Constraint_Optical_Path(),
             Constraint_Target(association=self),
             DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
                 value=(
-                    'mir_mrs'
-                    '|mir_flatmrs'
+                    'mir_lrs-fixedslit'
+                    '|nis_soss'
                 ),
                 force_unique=False
             ),
             Constraint(
                 [
-                    Constraint_TSO(),
                     DMSAttrConstraint(
-                        name='patttype',
+                        name='patttype_spectarg',
                         sources=['patttype'],
-                        value=['none'],
-                    )
+                        value=['2-point-nod|4-point-nod|along-slit-nod'],
+                    ),
                 ],
-                reduce=Constraint.notany
-            ),
-        ])
-
-        # Check and continue initialization.
-        super(Asn_MIRMRS, self).__init__(*args, **kwargs)
-
-    @property
-    def dms_product_name(self):
-        """Define product name."""
-        target = self._get_target()
-
-        instrument = self._get_instrument()
-
-        product_name = 'jw{}-{}_{}_{}'.format(
-            self.data['program'],
-            self.acid.id,
-            target,
-            instrument
-        )
-        return product_name.lower()
-
-
-@RegistryMarker.rule
-class Asn_NRSIFU(AsnMixin_Spectrum):
-    """Level 3 IFU gratings Association
-
-    Characteristics:
-        - Association type: ``spec3``
-        - Pipeline: ``calwebb_spec3``
-        - optical path determined by calibration
-    """
-
-    def __init__(self, *args, **kwargs):
-        # Setup for checking.
-        self.constraints = Constraint([
-            Constraint_Target(association=self),
-            DMSAttrConstraint(
-                name='exp_type',
-                sources=['exp_type'],
-                value=(
-                    'nrs_autowave'
-                    '|nrs_ifu'
-                ),
-                force_unique=False
-            ),
-            SimpleConstraint(
-                value=True,
-                test=lambda value, item: nrsifu_valid_detector(item),
-                force_unique=False
-            ),
-            DMSAttrConstraint(
-                name='patttype',
-                sources=['patttype'],
-                required=True
-            ),
-            Constraint(
-                [
-                    Constraint_TSO(),
-                ],
-                reduce=Constraint.notany
-            ),
-            DMSAttrConstraint(
-                    name='opt_elem',
-                    sources=['grating'],
+                reduce=Constraint.any
             )
         ])
 
         # Check and continue initialization.
-        super(Asn_NRSIFU, self).__init__(*args, **kwargs)
+        super(Asn_SpectralTarget, self).__init__(*args, **kwargs)
 
+    def finalize(self):
+        """Finalize assocation
 
-@RegistryMarker.rule
-class Asn_NRSIFUBackground(AsnMixin_AuxData, AsnMixin_Spectrum):
+        For NRS Fixed-slit, finalization means creating new members for the
+        background nods.
 
-    """Level 3 Spectral Association
+        Returns
+        -------
+        associations: [association[, ...]] or None
+            List of fully-qualified associations that this association
+            represents.
+            `None` if a complete association cannot be produced.
 
-    Characteristics:
-        - Association type: ``spec3``
-        - Pipeline: ``calwebb_spec3``
-    """
-    def __init__(self, *args, **kwargs):
+        """
+        if self.is_valid:
+            return self.make_fixedslit_bkg()
 
-        # Setup for checking.
-        self.constraints = Constraint([
-            Constraint_Target(association=self),
-            Constraint(
-                [
-                    Constraint_TSO(),
-                ],
-                reduce=Constraint.notany
-            ),
-            DMSAttrConstraint(
-                name='bkgdtarg',
-                sources=['bkgdtarg'],
-                value=['T'],
-            ),
-            DMSAttrConstraint(
-                name='allowed_bkgdtarg',
-                sources=['exp_type'],
-                value=['nrs_ifu'],
-            ),
-            SimpleConstraint(
-                value=True,
-                test=lambda value, item: nrsifu_valid_detector(item),
-                force_unique=False
-            ),
-            DMSAttrConstraint(
-                name='opt_elem',
-                sources=['grating'],
-                force_unique=True,
-            ),
-        ])
-
-        # Check and continue initialization.
-        super(Asn_NRSIFUBackground, self).__init__(*args, **kwargs)
-
-
-@RegistryMarker.rule
-class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_Spectrum):
-
-    """Level 3 Spectral Association
-
-    Characteristics:
-        - Association type: ``spec3``
-        - Pipeline: ``calwebb_spec3``
-    """
-    def __init__(self, *args, **kwargs):
-
-        # Setup for checking.
-        self.constraints = Constraint([
-            Constraint_Target(association=self),
-            Constraint(
-                [
-                    Constraint_TSO(),
-                ],
-                reduce=Constraint.notany
-            ),
-            DMSAttrConstraint(
-                name='bkgdtarg',
-                sources=['bkgdtarg'],
-                value=['T'],
-            ),
-            DMSAttrConstraint(
-                name='allowed_bkgdtarg',
-                sources=['exp_type'],
-                value=['mir_mrs','mir_lrs-fixedslit',
-                       'nrs_fixedslit'],
-            ),
-            Constraint_Optical_Path(),
-        ])
-
-        # Check and continue initialization.
-        super(Asn_Lv3SpecAux, self).__init__(*args, **kwargs)
-
-
-@RegistryMarker.rule
-class Asn_Coron(AsnMixin_Science):
-    """Level 3 Coronography Association
-
-    Characteristics:
-        - Association type: ``coron3``
-        - Pipeline: ``calwebb_coron3``
-        - Gather science and related PSF exposures
-
-    Notes
-    -----
-    Coronography is nearly completely defined by the association candidates
-    produced by APT.
-    Tracking Issues:
-
-        - `github #311 <https://github.com/STScI-JWST/jwst/issues/311>`_
-    """
-
-    def __init__(self, *args, **kwargs):
-
-        # Setup for checking.
-        self.constraints = Constraint(
-            [
-                Constraint_Optical_Path(),
-                DMSAttrConstraint(
-                    name='exp_type',
-                    sources=['exp_type'],
-                    value=(
-                        'nrc_coron'
-                        '|mir_lyot'
-                        '|mir_4qpm'
-                    ),
-                ),
-                DMSAttrConstraint(
-                    name='target',
-                    sources=['targetid'],
-                    onlyif=lambda item: self.get_exposure_type(item) == 'science',
-                    force_reprocess=ProcessList.EXISTING,
-                    only_on_match=True,
-                ),
-            ],
-            name='asn_coron'
-        )
-
-        # PSF is required
-        self.validity.update({
-            'has_psf': {
-                'validated': False,
-                'check': lambda entry: entry['exptype'] == 'psf'
-            }
-        })
-
-        # Check and continue initialization.
-        super(Asn_Coron, self).__init__(*args, **kwargs)
-
-    def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
-
-        self.data['asn_type'] = 'coron3'
-        super(Asn_Coron, self)._init_hook(item)
-
-
-@RegistryMarker.rule
-class Asn_AMI(AsnMixin_Science):
-    """Level 3 Aperture Mask Interferometry Association
-
-    Characteristics:
-        - Association type: ``ami3``
-        - Pipeline: ``calwebb_ami3``
-        - Gather science and related PSF exposures
-
-    Notes
-    -----
-    AMI is nearly completely defined by the association candidates
-    produced by APT.
-    Tracking Issues:
-
-        - `github #310 <https://github.com/STScI-JWST/jwst/issues/310>`_
-    """
-
-    def __init__(self, *args, **kwargs):
-
-        # Setup for checking.
-        self.constraints = Constraint([
-            Constraint_Optical_Path(),
-            DMSAttrConstraint(
-                name='exp_type',
-                sources=['exp_type'],
-                value=(
-                    'nis_ami'
-                ),
-            ),
-            DMSAttrConstraint(
-                name='target',
-                sources=['targetid'],
-                onlyif=lambda item: self.get_exposure_type(item) == 'science',
-                force_reprocess=ProcessList.EXISTING,
-                only_on_match=True,
-            ),
-        ])
-
-        # PSF is required
-        self.validity.update({
-            'has_psf': {
-                'validated': False,
-                'check': lambda entry: entry['exptype'] == 'psf'
-            }
-        })
-
-        # Check and continue initialization.
-        super(Asn_AMI, self).__init__(*args, **kwargs)
-
-    def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
-
-        self.data['asn_type'] = 'ami3'
-        super(Asn_AMI, self)._init_hook(item)
-
-
-@RegistryMarker.rule
-class Asn_WFSS_NIS(AsnMixin_Spectrum):
-    """Level 3 WFSS/Grism Association
-
-    Characteristics:
-        - Association type: ``spec3``
-        - Pipeline: ``calwebb_spec3``
-        - Gather all grism exposures
-    """
-
-    def __init__(self, *args, **kwargs):
-
-        # Setup for checking.
-        self.constraints = Constraint([
-            Constraint_Target(association=self),
-            DMSAttrConstraint(
-                name='exp_type',
-                sources=['exp_type'],
-                value='nis_wfss',
-            ),
-            DMSAttrConstraint(
-                name='opt_elem',
-                sources=['filter'],
-                value='gr150r|gr150c',
-                force_unique=False,
-            ),
-            DMSAttrConstraint(
-                name='opt_elem2',
-                sources=['pupil'],
-            ),
-        ])
-
-        # Check and continue initialization.
-        super(Asn_WFSS_NIS, self).__init__(*args, **kwargs)
-
-    @property
-    def dms_product_name(self):
-        return dms_product_name_sources(self)
+        return None
 
 
 @RegistryMarker.rule
@@ -783,32 +676,141 @@ class Asn_TSO(AsnMixin_Science):
 
 
 @RegistryMarker.rule
-class Asn_ACQ_Reprocess(DMS_Level3_Base):
-    """Level 3 Gather Target Acquisitions
+class Asn_WFSCMB(AsnMixin_Science):
+    """Level 3 Wavefront Control & Sensing Association
+
+    For coarse and fine phasing, dither pairs need to
+    be associated to be combined.  The optical path
+    is assumed to be equivalent within an activity.
 
     Characteristics:
-        - Association type: Not applicable
-        - Pipeline: Not applicable
-        - Used to populate other related associations
+        - Association type: ``wfs-image3``
+        - Pipeline: ``calwebb_wfs-image3``
+        - Coarse and fine phasing dithers
+    """
 
-    Notes
-    -----
-    For first loop, simply send acquisitions and confirms back.
+    def __init__(self, *args, **kwargs):
+
+        # Setup constraints
+        self.constraints = Constraint([
+            Constraint_Optical_Path(),
+            Constraint_Target(association=self),
+            Constraint_Image(),
+            DMSAttrConstraint(
+                name='patttype',
+                sources=['patttype'],
+                value='wfsc'
+            ),
+            DMSAttrConstraint(
+                name='detector',
+                sources=['detector']
+            ),
+            DMSAttrConstraint(
+                name='obs_id',
+                sources=['obs_id']
+            ),
+            DMSAttrConstraint(
+                name='act_id',
+                sources=['act_id']
+            )
+        ])
+
+        # Only valid if two members exist.
+        self.validity.update({
+            'has_pair': {
+                'validated': False,
+                'check': self._has_pair
+            }
+        })
+
+        super(Asn_WFSCMB, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        self.data['asn_type'] = 'wfs-image3'
+        super(Asn_WFSCMB, self)._init_hook(item)
+
+    @property
+    def dms_product_name(self):
+        """Define product name
+
+        Modification is to append the `expspcin` value
+        after the calibration suffix.
+        """
+        product_name_format = '{existing}-{detector}_{suffix}-{expspcin}'
+
+        existing = super().dms_product_name
+
+        product_name = format_product(
+            product_name_format,
+            existing=existing,
+            detector=self.constraints['detector'].value,
+            expspcin=self.constraints['act_id'].value
+        )
+
+        return product_name.lower()
+
+    def _has_pair(self, entry=None):
+        """Check if current product has two members
+
+        If `entry` is given, it is counted as one of the
+        members. If not, the existing member list is only
+        accounted for.
+
+        Parameters
+        ----------
+        entry : dict or None
+            New entry to add to member list.
+
+        Returns
+        -------
+        bool
+            True if there are two members.
+        """
+        if entry is None:
+            count = 2
+        else:
+            count = 1
+
+        return len(self.current_product['members']) == count
+
+
+@RegistryMarker.rule
+class Asn_WFSS_NIS(AsnMixin_Spectrum):
+    """Level 3 WFSS/Grism Association
+
+    Characteristics:
+        - Association type: ``spec3``
+        - Pipeline: ``calwebb_spec3``
+        - Gather all grism exposures
     """
 
     def __init__(self, *args, **kwargs):
 
         # Setup for checking.
         self.constraints = Constraint([
-            Constraint_TargetAcq(),
-            SimpleConstraint(
-                name='force_fail',
-                test=lambda x, y: False,
-                value='anything but None',
-                reprocess_on_fail=True,
-                work_over=ProcessList.NONSCIENCE,
-                reprocess_rules=[]
-            )
+            Constraint_Target(association=self),
+            DMSAttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value='nis_wfss',
+            ),
+            DMSAttrConstraint(
+                name='opt_elem',
+                sources=['filter'],
+                value='gr150r|gr150c',
+                force_unique=False,
+            ),
+            DMSAttrConstraint(
+                name='opt_elem2',
+                sources=['pupil'],
+            ),
         ])
 
-        super(Asn_ACQ_Reprocess, self).__init__(*args, **kwargs)
+        # Check and continue initialization.
+        super(Asn_WFSS_NIS, self).__init__(*args, **kwargs)
+
+    @property
+    def dms_product_name(self):
+        return dms_product_name_sources(self)
