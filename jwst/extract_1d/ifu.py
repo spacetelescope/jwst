@@ -367,7 +367,6 @@ def extract_ifu(input_model, source_type, extract_params):
         radius_match = frad(wavelength)
         # radius_match is in arc seconds - need to convert to pixels
         # the spatial scale is the same for all wavelengths do we only need to call compute_scale once.
-        # DAVID LAW IS this a correct statement ?
 
         if locn is None:
             locn_use = (input_model.meta.wcsinfo.crval1, input_model.meta.wcsinfo.crval2, wavelength[0])
