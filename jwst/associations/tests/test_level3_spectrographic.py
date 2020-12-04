@@ -39,8 +39,14 @@ class TestLevel3Spec(BasePoolRule):
     ]
 
     valid_rules = [
-        'Asn_Image',
+        'Asn_Lv3Image',
     ]
+
+
+def nirspec_params_id(fixture_value):
+    """Give fixture parameters ids"""
+    cid, asn_type, asn_name, product_name, exptypes = fixture_value
+    return asn_name
 
 
 @pytest.fixture(
@@ -67,7 +73,7 @@ class TestLevel3Spec(BasePoolRule):
             'jw99009-o003_t002_nirspec_g235h',
             set(('science', 'target_acquisition', 'autowave'))
         ),
-    ]
+    ], ids=nirspec_params_id
 )
 def nirspec_params(request):
     cid, asn_type, asn_name, product_name, exptypes = request.param
