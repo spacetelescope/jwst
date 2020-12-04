@@ -21,7 +21,7 @@ BLUR_SIZE = 10  # size of gaussian kernel for convolution
 N_SIZE = 2  # size of neighborhood in create_griddata_array
 
 
-class DataSet():
+class DataSet:
     """
     Two dithered input wavefront sensing images to be combined
 
