@@ -31,45 +31,47 @@ class interp1d_picklable(object):
     def __setstate__(self, state):
         self.f = interp1d(state[0], state[1], **state[2])
 
-def comprehension_flatten( aList ):
-        return list(y for x in aList for y in x)
 
 def helper(vars):
-    x0s,y0s,f,order,C,ID,extrapolate_SED, xoffset, yoffset = vars # in this case ID is dummy number
-    p = dispersed_pixel(x0s,y0s,f,order,C,ID,extrapolate_SED=extrapolate_SED,xoffset=xoffset,yoffset=yoffset)
-    xs, ys, areas, lams, counts,ID = p
+    # parse the input list of vars; ID is a dummy number here
+    x0s, y0s, flux, order, config, ID, extrapolate_SED, xoffset, yoffset = vars
+
+    # use the list of vars to compute dispersed attributes for the pixel
+    p = dispersed_pixel(x0s, y0s, flux, order, config, ID,
+                        extrapolate_SED=extrapolate_SED, xoffset=xoffset, yoffset=yoffset)
+
+    # unpack the results
+    xs, ys, areas, lams, counts, ID = p
     IDs = [ID] * len(xs)
 
-    pp = np.array([xs, ys, areas, lams, counts,IDs])
+    # return results as numpy array
+    pp = np.array([xs, ys, areas, lams, counts, IDs])
     return pp
 
+
 class observation():
-    # This class defines an actual observations. It is tied to a single flt and a single config file
+    # This class defines an actual observation. It is tied to a single image and a single config file
     
-    def __init__(self,direct_images,segmentation_data,config,mod="A",order="+1",plot=0,max_split=100,SED_file=None,extrapolate_SED=False,max_cpu=10,ID=0,SBE_save=None, boundaries=[], renormalize=True):
-        """direct_images: List of file name containing direct imaging data
+    def __init__(self, direct_images, segmentation_data, config, mod="A", order="+1",
+                 plot=0, max_split=100, SED_file=None, extrapolate_SED=False, max_cpu=1,
+                 ID=0, SBE_save=None, boundaries=[], renormalize=True):
+
+        """
+        direct_images: List of file name(s) containing direct imaging data
         segmentation_data: an array of the size of the direct images, containing 0 and 1's, 0 being pixels to ignore
         config: The path and name of a GRISMCONF NIRCAM configuration file
         mod: Module, A or B
         order: The name of the spectral order to simulate, +1 or +2 for NIRCAM
         max_split: Number of chunks to compute instead of trying everything at once.
-        SED_file: Name of HDF5 file containing datasets matching the ID in the segmentation file and each consisting of a [[lambda],[flux]] array.
+        SED_file: Name of HDF5 file containing datasets matching the ID in the segmentation file
+                  and each consisting of a [[lambda],[flux]] array.
         SBE_save: If set to a path, HDF5 containing simulated stamps for all obsjects will be saved.
         boundaries: a tuple containing the coordinates of the FOV within the larger seed image.
         """
 
-        # This loads all the info from the configuration file for this grism mode
-        # Things like the name of the POM mask file, the dispersion coeffs, etc.
-        self.C = grismconf.Config(config)
-            
-        # Obvisouly can't ever do plotting within the pipeline code
-        #if plot:
-        #    import matplotlib.pyplot as plt
-        #    plt.ion()
-        #    plt.clf()
-        #    x = np.arange(self.C.WMIN,self.C.WMAX,(self.C.WMAX,self.C.WMIN)/100.)
-        #    plt.plot(x,self.C.SENS[order](x))
-
+        # This loads all the info from the configuration file for this grism mode;
+        # things like the name of the POM mask file, the dispersion coeffs, etc.
+        self.Cfg = grismconf.Config(config)
         self.ID = ID
         self.IDs = []
         self.dir_image_names = direct_images
@@ -85,10 +87,10 @@ class observation():
         self.renormalize = renormalize
 
         # Current NIRCAM config files DO have POM defined, so this branch is used
-        if self.C.POM is not None:
-            #print("Using POM mask",self.C.POM)
-            log.info("Using POM mask", self.C.POM)
-            with fits.open(self.C.POM) as fin:
+        if self.Cfg.POM is not None:
+            #print("Using POM mask",self.Cfg.POM)
+            log.info("Using POM mask", self.Cfg.POM)
+            with fits.open(self.Cfg.POM) as fin:
                 self.POM_mask = fin[1].data
                 self.POM_mask01 = fin[1].data * 1. # A version of the mask that only contains 0-1 values. Pixels with labels/values>10000 are set to 1.
                 self.POM_mask01[self.POM_mask01>=10000] = 1.
@@ -108,12 +110,12 @@ class observation():
                         self.POM_transmission[indx] = interp1d_picklable(w,t,bounds_error=False,fill_value=0.)
 
         if len(boundaries)!=4:           
-            xpad = (np.shape(segmentation_data)[1]-self.C.NAXIS[0])//2
-            ypad = (np.shape(segmentation_data)[0]-self.C.NAXIS[1])//2
+            xpad = (np.shape(segmentation_data)[1]-self.Cfg.NAXIS[0])//2
+            ypad = (np.shape(segmentation_data)[0]-self.Cfg.NAXIS[1])//2
             self.xstart = 0 + xpad
-            self.xend = xpad + self.C.NAXIS[0]-1
+            self.xend = xpad + self.Cfg.NAXIS[0]-1
             self.ystart = 0 + ypad
-            self.yend = ypad + self.C.NAXIS[1]-1
+            self.yend = ypad + self.Cfg.NAXIS[1]-1
             #print("No boundaries passed. Assuming symmetrical padding of {} {} pixels and a final size of {} {} .".format(xpad,ypad,self.xend+1-self.xstart,self.yend+1-self.ystart))
             log.info("No boundaries passed. Assuming symmetrical padding of {} {} pixels and a final size of {} {} .".format(xpad,ypad,self.xend+1-self.xstart,self.yend+1-self.ystart))
         else:
@@ -139,10 +141,10 @@ class observation():
         and with the detector FOV starting at the same pixel locations as the input seg map."""
 
         if self.POM_mask is None:
-            x0 = int(self.xstart+self.C.XRANGE[self.C.orders[0]][0] + 0.5)
-            x1 = int(self.xend+self.C.XRANGE[self.C.orders[0]][1] + 0.5)
-            y0 = int(self.ystart+self.C.YRANGE[self.C.orders[0]][0] + 0.5)
-            y1 = int(self.yend+self.C.YRANGE[self.C.orders[0]][1] + 0.5)
+            x0 = int(self.xstart+self.Cfg.XRANGE[self.Cfg.orders[0]][0] + 0.5)
+            x1 = int(self.xend+self.Cfg.XRANGE[self.Cfg.orders[0]][1] + 0.5)
+            y0 = int(self.ystart+self.Cfg.YRANGE[self.Cfg.orders[0]][0] + 0.5)
+            y1 = int(self.yend+self.Cfg.YRANGE[self.Cfg.orders[0]][1] + 0.5)
 
             if x0<0: x0 = 0
             if y0<0: y0 = 0
@@ -373,21 +375,21 @@ class observation():
         We assume no field dependence in the cross dispersion direction and create a full 2D image by tiling a single dispersed row or column"""
 
         # Create a fake object, line in middle of detector
-        C = self.C
+        Cfg = self.Cfg
         naxis = [self.xend-self.xstart+1 ,self.yend-self.ystart+1] 
         xpos,ypos = naxis[0]//2,naxis[1]//2
 
         # Find out if this an x-direction or y-direction dispersion
-        dydx = np.array(C.DISPXY(self.order,1000,1000,1))-np.array(C.DISPXY(self.order,1000,1000,0))
+        dydx = np.array(Cfg.DISPXY(self.order,1000,1000,1))-np.array(Cfg.DISPXY(self.order,1000,1000,0))
         if np.abs(dydx[0])>np.abs(dydx[1]):
             print("disperse_background_1D: x-direction")
             direction = "x"
-            xs = np.arange(self.C.XRANGE[self.order][0]+0,self.C.XRANGE[self.order][1]+naxis[0])
+            xs = np.arange(self.Cfg.XRANGE[self.order][0]+0,self.Cfg.XRANGE[self.order][1]+naxis[0])
             ys = np.zeros(np.shape(xs))+ypos
         else:
             print("disperse_background_1D: y-direction")
             direction = "y"
-            ys = np.arange(self.C.YRANGE[self.order][0]+0,self.C.YRANGE[self.order][1]+naxis[0])
+            ys = np.arange(self.Cfg.YRANGE[self.order][0]+0,self.Cfg.YRANGE[self.order][1]+naxis[0])
             xs = np.zeros(np.shape(ys))+xpos
 
         print(xpos,ypos)
@@ -412,7 +414,7 @@ class observation():
             ID = 1
             xs0 = [xs[i],xs[i]+1,xs[i]+1,xs[i]]
             ys0 = [ys[i],ys[i],ys[i]+1,ys[i]+1]
-            pars.append([xs0,ys0,f,self.order,C,ID,False,self.xstart,self.ystart])
+            pars.append([xs0,ys0,f,self.order,Cfg,ID,False,self.xstart,self.ystart])
 
 
         #from multiprocessing import Pool
@@ -466,7 +468,7 @@ class observation():
         from multiprocessing import Pool
         import time
 
-        #print(" dispersing object %d" % c)
+        print(" dispersing object %d" % c)
         log.info(" dispersing object %d" % c)
 
         # We won't use SED file in pipeline, so this gets skipped
@@ -485,9 +487,9 @@ class observation():
 
                     # trim input spectrum 
                     try:
-                        ok = (lams>self.C.WRANGE["+1"][0]) & (lams<self.C.WRANGE["+1"][1])
+                        ok = (lams>self.Cfg.WRANGE["+1"][0]) & (lams<self.Cfg.WRANGE["+1"][1])
                     except:
-                        ok = (lams>self.C.WRANGE["A"][0]) & (lams<self.C.WRANGE["A"][1])
+                        ok = (lams>self.Cfg.WRANGE["A"][0]) & (lams<self.Cfg.WRANGE["A"][1])
                     lams = lams[ok]
                     fffs = fffs[ok]
 
@@ -505,7 +507,7 @@ class observation():
                     f = [lams,fffs]
                     xs0 = [self.xs[c][i],self.xs[c][i]+1,self.xs[c][i]+1,self.xs[c][i]]
                     ys0 = [self.ys[c][i],self.ys[c][i],self.ys[c][i]+1,self.ys[c][i]+1]
-                    pars.append([xs0,ys0,f,self.order,self.C,ID,self.extrapolate_SED,self.xstart,self.ystart])
+                    pars.append([xs0,ys0,f,self.order,self.Cfg,ID,self.extrapolate_SED,self.xstart,self.ystart])
         else:
             # This is the branch we'll use in pipeline
             # No spectrum passed
@@ -539,7 +541,7 @@ class observation():
                     flxs = flxs * POM_value
 
                 f = [lams,flxs]
-                pars.append([xs0,ys0,f,self.order,self.C,ID,self.extrapolate_SED,self.xstart,self.ystart])
+                pars.append([xs0,ys0,f,self.order,self.Cfg,ID,self.extrapolate_SED,self.xstart,self.ystart])
                 # now have full pars list for all pixels for this object
 
 
