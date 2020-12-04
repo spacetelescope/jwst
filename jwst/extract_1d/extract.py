@@ -117,7 +117,7 @@ def open_extract1d_ref(refname: str, exptype: str) -> dict:
         dictionary returned by json.load(), except that the file type
         ('JSON') will also be included with key 'ref_file_type'.
         If the extract1d reference file is in asdf format, the ref_dict will
-        be a containing two keys: ref_dict['ref_file_type'] = 'ASDF'
+        be a dictionary  containing two keys: ref_dict['ref_file_type'] = 'ASDF'
         and ref_dict['ref_model'].
         If the reference file is an image, ref_dict will be a
         dictionary with two keys:  ref_dict['ref_file_type'] = 'IMAGE'
@@ -127,12 +127,13 @@ def open_extract1d_ref(refname: str, exptype: str) -> dict:
 
     if refname == "N/A":
         ref_dict = None
-    elif exptype == 'MIR_MRS' or exptype == 'NRS_IFU':
+    elif exptype in['MIR_MRS',  'NRS_IFU']:
         # read in asdf file
-        extract_model = datamodels.IFUExtract1dModel(refname)
+        extract_model = datamodels.Extract1dIFUModel(refname)
         ref_dict = {}
         ref_dict['ref_file_type']= FILE_TYPE_ASDF
         ref_dict['ref_model'] = extract_model
+
     else:
         # Try reading the file as JSON.
         fd = open(refname)

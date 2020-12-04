@@ -242,35 +242,21 @@ class ApCorrPhase(ApCorrBase):
 
 class ApCorrRadial(ApCorrBase):
     """Aperture correction class used with spectral data produced from an extraction aperture radius."""
-    size_key = 'radius'
-
-    match_pars = {
-        'MIRI': {
-            'MRS': {'instrument': ['channel','band']},  # Only one row is available for this mode; no selection criteria
-        },
-        'NIRSPEC': {
-            'IFU': {'instrument': ['filter', 'grating']},
-        }
-    }
-
-    size_key = None
 
     def __init__(self, input_model: DataModel, apcorr_table,
                  location: Tuple[float, float, float] = None):
 
         self.correction = None
-        self._reference_table = apcorr_table
         self.model = input_model
         self.location = location
-        instrument = self.model.meta.instrument.name.upper()
-
-        self.match_keys = self.get_match_keys()
-        self.match_pars = self.get_match_pars()
-        self.reference = self.reduce_reftable(instrument)
+        self.reference = apcorr_table.apcorr_table
         self.apcorr_sizeunits = self.reference.radius_units
         self._convert_size_units()
-        self.apcorr_func = self.approximate()
 
+
+    def approximate(self):
+        # Base class needs this. For ApCorrRadial this is done in find_apcorr_func
+        pass
 
     def _convert_size_units(self):
         """If the SIZE or Radius column is in units of arcseconds, convert to pixels."""
@@ -289,71 +275,6 @@ class ApCorrRadial(ApCorrBase):
                     '(RA, DEC, wavelength) must be provided in order to compute a pixel scale to convert arcseconds to '
                     'pixels.'
                 )
-
-    def get_match_keys(self) -> dict:
-        """Get column keys needed for reducing the reference table based on input."""
-        instrument = self.model.meta.instrument.name.upper()
-        exptype = self.model.meta.exposure.type.upper()
-
-        relevant_pars = self.match_pars[instrument]
-        for key in relevant_pars.keys():
-            if key in exptype:
-                return relevant_pars[key]
-
-    def get_match_pars(self) -> dict:
-        """Get meta parameters required for reference table row-selection."""
-        match_pars = {}
-
-        for node, keys in self.match_keys.items():
-            meta_node = self.model.meta[node]
-            for key in keys:
-                match_pars[key if key != 'name' else node] = getattr(meta_node, key)
-        return match_pars
-
-    def reduce_reftable(self, instrument):
-        """Find the correct table for channel/band or filter/grating."""
-
-        tabletype =''
-        set_multiple = False
-        for key, value in self.match_pars.items():
-            tabletype = tabletype + '_' + value.lower()
-            if value.lower() == 'multiple':
-                set_multiple  = True
-
-        if set_multiple or instrument == 'MIRI':
-            tabletype = '_multiple_multiple'
-
-        # need a better way to do this- but for now to get things working
-        # I was trying to do something like
-        # table = self_reference_table.'apcorr_table'+ tabletype - but that did not work
-        if tabletype == '_multiple_multiple':
-            table = self._reference_table.apcorr_table
-        elif tabletype == '_clear_prism':
-            table = self._reference_table.apcorr_table_clear_prism
-        elif tabletype == '_f070lp_g140h':
-            table = self._reference_table.apcorr_table_f070lp_g140h
-        elif tabletype == '_f070lp_g140m':
-            table = self._reference_table.apcorr_table_f070lp_g140m
-        elif tabletype == '_f100lp_g140h':
-            table = self._reference_table.apcorr_table_f100lp_g140h
-        elif tabletype == '_f100lp_g140m':
-            table = self._reference_table.apcorr_table_f100lp_g140m
-        elif tabletype == '_f170lp_g235h':
-            table = self._reference_table.apcorr_table_f290lp_g395h
-        elif tabletype == '_f170lp_g235m':
-            table = self._reference_table.apcorr_table_f290lp_g395m
-        elif tabletype == '_f290lp_g395h':
-            table = self._reference_table.apcorr_table_f290lp_g395h
-        elif tabletype == '_f290lp_g395h':
-            table = self._reference_table.apcorr_table_f290lp_g395m
-
-        return table
-
-
-    def approximate(self):
-        # the wavelength and extraction radius is need to interpolate apcor.
-        # This is done in find apcorr_func
-        pass
 
 
     def apply(self, spec_table: fits.FITS_rec):

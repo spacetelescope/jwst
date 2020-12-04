@@ -40,26 +40,12 @@ def dummy_nirspec_ref(tmpdir_factory):
     refap['apcorr_table']['filter'] =  'ANY'
     refap['apcorr_table']['grating'] =  'ANY'
 
-    refap['apcorr_table_clear_prism'] = {}
-    refap['apcorr_table_clear_prism']['wavelength'] =  dummy_wave.copy()
-    refap['apcorr_table_clear_prism']['radius'] =  dummy_radius.copy()
-    refap['apcorr_table_clear_prism']['apcorr'] =  dummy_apcorr.copy()
-    refap['apcorr_table_clear_prism']['apcorr_err'] =  dummy_apcorr_error.copy()
-    refap['apcorr_table_clear_prism']['wavelength_units'] =  'microns'
-    refap['apcorr_table_clear_prism']['radius_units'] =  'arcseconds'
-    refap['apcorr_table_clear_prism']['filter'] =  'clear'
-    refap['apcorr_table_clear_prism']['grating'] =  'prism'
 
     ff = AsdfFile(refap)
     ff.set_array_storage(refap['apcorr_table']['wavelength'],'inline')
     ff.set_array_storage(refap['apcorr_table']['radius'],'inline')
     ff.set_array_storage(refap['apcorr_table']['apcorr'],'inline')
     ff.set_array_storage(refap['apcorr_table']['apcorr_err'],'inline')
-
-    ff.set_array_storage(refap['apcorr_table_clear_prism']['wavelength'],'inline')
-    ff.set_array_storage(refap['apcorr_table_clear_prism']['radius'],'inline')
-    ff.set_array_storage(refap['apcorr_table_clear_prism']['apcorr'],'inline')
-    ff.set_array_storage(refap['apcorr_table_clear_prism']['apcorr_err'],'inline')
 
     ff.write_to(filename)
     return filename
@@ -115,8 +101,8 @@ def miri_cube():
     exptype = 'MIR_MRS'
     model.meta.instrument.name = instrument
     model.meta.exposure.type = exptype
-    model.meta.channel = '1'
-    model.meta.band = 'SHORT'
+    model.meta.instrument.channel = '1'
+    model.meta.instrument.band = 'SHORT'
     return model
 
 @pytest.fixture
@@ -126,8 +112,8 @@ def nirspec_cube():
     exptype = 'NRS_IFU'
     model.meta.instrument.name = instrument
     model.meta.exposure.type = exptype
-    model.meta.filter = 'CLEAR'
-    model.meta.prism = 'PRISM'
+    model.meta.instrument.filter = 'CLEAR'
+    model.meta.instrument.prism = 'PRISM'
     return model
 
 def test_select_apcorr_miri(miri_cube):
@@ -157,10 +143,9 @@ def test_table_type_nirspec(_jail, dummy_nirspec_ref, nirspec_cube):
 
     dummy_wave = np.zeros(100) + 0.5
     apcorr_model = NrsIfuApcorrModel(dummy_nirspec_ref)
-    # select the apcorr_table_clear_prism
-    table = apcorr_model.apcorr_table_clear_prism
+    table = apcorr_model.apcorr_table
     apcorr_model.close()
 
-    assert table.filter == 'clear'
-    assert table.grating == 'prism'
+    assert table.filter == 'ANY'
+    assert table.grating == 'ANY'
     assert np.all(table.wavelength == dummy_wave)

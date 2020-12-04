@@ -1,9 +1,9 @@
 from .reference import ReferenceFileModel
 
-__all__ = ['IFUExtract1dModel']
+__all__ = ['Extract1dIFUModel']
 
 
-class IFUExtract1dModel(ReferenceFileModel):
+class Extract1dIFUModel(ReferenceFileModel):
     """
     A data model for IFU MIRI and NIRSpec extract 1d reference files.
 
@@ -27,4 +27,4 @@ class IFUExtract1dModel(ReferenceFileModel):
         - axis_pa: float32 1D array
 
     """
-    schema_url = "http://stsci.edu/schemas/jwst_datamodel/ifuextract1d.schema"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/extract1difu.schema"

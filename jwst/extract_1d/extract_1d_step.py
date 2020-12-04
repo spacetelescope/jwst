@@ -119,13 +119,17 @@ class Extract1dStep(Step):
             input_model.meta.cal_step.extract_1d = 'SKIPPED'
             return input_model
 
-        # Do the extraction
+
+        #______________________________________________________________________
+        # Do the extraction for ModelContainer - this might only be WFSS data
         if isinstance(input_model, datamodels.ModelContainer):
 
-            # This is the branch MRS and WFSS data take
+            # This is the branch  WFSS data take
             if len(input_model) > 1:
                 self.log.debug(f"Input contains {len(input_model)} items")
-
+                
+                #--------------------------------------------------------------
+                # Data is WFSS 
                 if input_model[0].meta.exposure.type in extract.WFSS_EXPTYPES:
 
                     # For WFSS level-3, the input is a single entry of a
@@ -159,12 +163,10 @@ class Extract1dStep(Step):
                     )
                     # Set the step flag to complete
                     result.meta.cal_step.extract_1d = 'COMPLETE'
-
+                    
+                #--------------------------------------------------------------
+                # Data is a ModelContainer but is not WFSS
                 else:
-
-                    # For MRS, the input is a container with a list of multiple
-                    # IFUCubeModels. Work on one model at a time, creating
-                    # separate outputs for each.
                     result = datamodels.ModelContainer()
                     for model in input_model:
                         # Get the reference file names
@@ -179,6 +181,7 @@ class Extract1dStep(Step):
                         else:
                             self.log.info(f'Using APCORR file {apcorr_ref}')
 
+                        
                         temp = extract.run_extract1d(
                             model,
                             extract_ref,
@@ -190,12 +193,13 @@ class Extract1dStep(Step):
                             self.subtract_background,
                             self.use_source_posn,
                             was_source_model=was_source_model,
-                        )
+                            )
                         # Set the step flag to complete in each MultiSpecModel
                         temp.meta.cal_step.extract_1d = 'COMPLETE'
                         result.append(temp)
                         del temp
-
+            # ------------------------------------------------------------------------
+            # Still in ModelContainer type, but only 1 model
             elif len(input_model) == 1:
                 if input_model[0].meta.exposure.type in extract.WFSS_EXPTYPES:
                     extract_ref = 'N/A'
@@ -233,10 +237,9 @@ class Extract1dStep(Step):
                 self.log.error('extract_1d will be skipped.')
                 return input_model
 
+        #______________________________________________________________________
+        # Data that is not a ModelContainer (IFUCube and other single models)
         else:
-
-            # Input is a single model, resulting in a single output.
-
             # Get the reference file names
             if input_model.meta.exposure.type in extract.WFSS_EXPTYPES:
                 extract_ref = 'N/A'
