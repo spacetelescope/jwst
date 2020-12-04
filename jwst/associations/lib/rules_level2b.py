@@ -9,7 +9,10 @@ from jwst.associations.lib.constraint import (Constraint, SimpleConstraint)
 from jwst.associations.lib.dms_base import (
     Constraint_TSO,
     Constraint_WFSC,
-    format_list
+    format_list,
+    item_getattr,
+    nrsfss_valid_detector,
+    nrsifu_valid_detector,
 )
 from jwst.associations.lib.member import Member
 from jwst.associations.lib.process_list import ProcessList
@@ -656,6 +659,7 @@ class Asn_Lv2WFSS(
 
 @RegistryMarker.rule
 class Asn_Lv2NRSMSA(
+        AsnMixin_Lv2Nod,
         AsnMixin_Lv2Spectral,
         DMSLevel2bBase
 ):
@@ -696,39 +700,27 @@ class Asn_Lv2NRSMSA(
         # Now check and continue initialization.
         super(Asn_Lv2NRSMSA, self).__init__(*args, **kwargs)
 
-    def finalize(self):
-        """Finalize assocation
-
-        For NRS MSA, finalization means creating new associations for
-        background nods.
-
-        Returns
-        -------
-        associations: [association[, ...]] or None
-            List of fully-qualified associations that this association
-            represents.
-            `None` if a complete association cannot be produced.
-
-        """
-        if self.is_valid:
-            return self.make_nod_asns()
-        else:
-            return None
-
 
 @RegistryMarker.rule
 class Asn_Lv2NRSFSS(
+        AsnMixin_Lv2Nod,
         AsnMixin_Lv2Spectral,
         DMSLevel2bBase
 ):
     """Level2b NIRSpec Fixed-slit Association
 
+    Notes
+    -----
     Characteristics:
         - Association type: ``spec2``
         - Pipeline: ``calwebb_spec2``
         - Spectral-based NIRSpec fixed-slit single target science exposures
         - Single science exposure
         - Handle along-the-slit background nodding
+
+    Association includes both the background and science exposures of the nodding.
+    The identified science exposure is fixed by the nod, pattern, and exposure number
+    to prevent other science exposures being included.
     """
 
     def __init__(self, *args, **kwargs):
@@ -737,29 +729,25 @@ class Asn_Lv2NRSFSS(
         self.constraints = Constraint([
             Constraint_Base(),
             Constraint_Mode(),
+            DMSAttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value='nrs_fixedslit'
+            ),
+            SimpleConstraint(
+                value=True,
+                test=lambda value, item: nrsfss_valid_detector(item),
+                force_unique=False
+            ),
             Constraint(
                 [
-                    Constraint(
-                        [
-                            DMSAttrConstraint(
-                                name='exp_type',
-                                sources=['exp_type'],
-                                value='nrs_fixedslit'
-                            ),
-                            SimpleConstraint(
-                                value='science',
-                                test=lambda value, item: self.get_exposure_type(item) != value,
-                                force_unique=False
-                            )
-                        ]
+                    SimpleConstraint(
+                        value='science',
+                        test=lambda value, item: self.get_exposure_type(item) != value,
+                        force_unique=False
                     ),
                     Constraint(
                         [
-                            DMSAttrConstraint(
-                                name='exp_type',
-                                sources=['exp_type'],
-                                value='nrs_fixedslit'
-                            ),
                             DMSAttrConstraint(
                                 name='expspcin',
                                 sources=['expspcin'],
@@ -787,25 +775,10 @@ class Asn_Lv2NRSFSS(
         # Now check and continue initialization.
         super(Asn_Lv2NRSFSS, self).__init__(*args, **kwargs)
 
-    def finalize(self):
-        """Finalize assocation
-
-        For NRS Fixed-slit, finalization means creating new associations for
-        background nods.
-
-        Returns
-        -------
-        associations: [association[, ...]] or None
-            List of fully-qualified associations that this association
-            represents.
-            `None` if a complete association cannot be produced.
-
-        """
-        return self.make_nod_asns()
-
 
 @RegistryMarker.rule
 class Asn_Lv2NRSIFUNod(
+        AsnMixin_Lv2Nod,
         AsnMixin_Lv2Spectral,
         DMSLevel2bBase
 ):
@@ -825,46 +798,30 @@ class Asn_Lv2NRSIFUNod(
         self.constraints = Constraint([
             Constraint_Base(),
             Constraint_Mode(),
-            Constraint(
-                [
-                    DMSAttrConstraint(
-                        name='exp_type',
-                        sources=['exp_type'],
-                        value='nrs_ifu'
-                    ),
-                    DMSAttrConstraint(
-                        name='expspcin',
-                        sources=['expspcin'],
-                    ),
-                    DMSAttrConstraint(
-                        name='patttype',
-                        sources=['patttype'],
-                        value=['2-point-nod|4-point-nod'],
-                        force_unique=True
-                    )
-                ]
+            DMSAttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value='nrs_ifu'
             ),
+            SimpleConstraint(
+                value=True,
+                test=lambda value, item: nrsifu_valid_detector(item),
+                force_unique=False
+            ),
+            DMSAttrConstraint(
+                name='expspcin',
+                sources=['expspcin'],
+            ),
+            DMSAttrConstraint(
+                name='patttype',
+                sources=['patttype'],
+                value=['2-point-nod|4-point-nod'],
+                force_unique=True
+            )
         ])
 
         # Now check and continue initialization.
         super(Asn_Lv2NRSIFUNod, self).__init__(*args, **kwargs)
-
-    def finalize(self):
-        """Finalize assocation
-
-        Finalization means creating new associations for
-        background nods.
-
-        Returns
-        -------
-        associations: [association[, ...]] or None
-            List of fully-qualified associations that this association
-            represents.
-            `None` if a complete association cannot be produced.
-
-        """
-        nodded_asns = self.make_nod_asns()
-        return nodded_asns
 
 
 @RegistryMarker.rule

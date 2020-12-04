@@ -16,6 +16,8 @@ assign_wcs
 associations
 ------------
 
+- Restrict association creation based on optical path for NIRSpec Fixed-slit and IFU [#5504]
+
 - Asn_Lv3SpecAux: Add optical element constraint [#5479]
 
 - Add utility asn_gather [#5468]
