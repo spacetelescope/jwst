@@ -1,5 +1,4 @@
 import os
-import sys
 from glob import glob
 import numpy.ctypeslib as npct
 import numpy as np
@@ -12,8 +11,7 @@ so_file = glob(os.path.join(this_path,'polyclip_c*.so'))
 if len(so_file) >= 1:
     so_file = so_file[0]
 else:
-    print("WARNING: Cannot find polyclip_c*.so library")
-    sys.exit()
+    print("ERROR: Cannot find polyclip_c*.so library")
 polyclip = ctypes.cdll.LoadLibrary(so_file)
 
 array_1d_int_l = npct.ndpointer(dtype=np.int32, ndim=1, flags='CONTIGUOUS')
@@ -49,4 +47,3 @@ polyclip.polyclip_multi4.argtypes = [array_1d_int_l, # l
                                         array_1d_double_areas, # areas
                                         array_1d_double_index # output index
                                         ]
-
