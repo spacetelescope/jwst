@@ -270,20 +270,20 @@ class observation():
                 try:
                     # convert pivlam from Angstroms to microns
                     pivlam = fits.getval(dir_image_name, 'PHOTPLAM') / 10000.
-                except:
+                except KeyError:
                     print("ERROR: unable to find PHOTPLAM keyword in {}".format(dir_image_name))
                     return
 
                 try:
-                    photflam = fits.getval(dir_image_name,'photflam')
-                except:
+                    photflam = fits.getval(dir_image_name, 'photflam')
+                except KeyError:
                     print("ERROR: unable to find PHOTFLAM keyword in {}".format(dir_image_name))
                     return
 
                 print(f"Loaded {dir_image_name} wavelength: {pivlam} micron")
             try:
                 dimage = fits.open(dir_image_name)[1].data
-            except:
+            except IndexError:
                 dimage = fits.open(dir_image_name)[0].data
 
             # If we do not use an SED file then we use photometry to get fluxes
