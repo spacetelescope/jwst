@@ -341,9 +341,8 @@ class AttrConstraint(SimpleConstraintABC):
         the specified `ProcessList` work over state.
 
     force_unique : bool
-        If the initial value of `value` is None,
-        `value` will be set to the first source.
-        Otherwise, this will be left as None.
+        If the initial value is `None` or a list of possible values,
+        the constraint will be modified to be the value first matched.
 
     invalid_values : [str[,...]]
         List of values that are invalid in an item.

@@ -436,30 +436,33 @@ class Asn_Lv2NRSLAMPSpectral(
         self.constraints = Constraint([
             Constraint_Base(),
             Constraint_Single_Science(self.has_science),
-            Constraint(
-                [
-                    DMSAttrConstraint(
-                        name='opt_elem2',
-                        sources=['grating'],
-                        value='mirror'
-                    ),
-                    DMSAttrConstraint(
-                        name='exp_type',
-                        sources=['exp_type'],
-                        value='.*_dark$'
-                    )
-                ],
-                reduce=Constraint.notany
-            ),
             DMSAttrConstraint(
-                name='instrument',
-                sources=['instrume'],
-                value='nirspec'
+                name='exp_type',
+                sources=['exp_type'],
+                value='nrs_autoflat|nrs_autowave|nrs_lamp'
             ),
             DMSAttrConstraint(
                 name='opt_elem',
                 sources=['filter'],
                 value='opaque'
+            ),
+            DMSAttrConstraint(
+                name='opmode',
+                sources=['opmode'],
+            ),
+            DMSAttrConstraint(
+                name='lamp',
+                sources=['lamp'],
+            ),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        sources=['grating', 'opmode', 'lamp'],
+                        value='mirror|grating-only|nolamp',
+                        force_unique=False
+                    ),
+                ],
+                reduce=Constraint.notany
             ),
         ])
 

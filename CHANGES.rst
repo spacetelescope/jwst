@@ -16,6 +16,9 @@ assign_wcs
 associations
 ------------
 
+- Add further constraints to rule Asn_Lv2NRSLAMPSpectral such that associations
+  are created only when LAMP is on and OPMODE indicates a valid optical path. [#5496]
+
 - Restrict association creation based on optical path for NIRSpec Fixed-slit and IFU [#5504]
 
 - Asn_Lv3SpecAux: Add optical element constraint [#5479]
