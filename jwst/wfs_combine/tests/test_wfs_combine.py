@@ -15,7 +15,6 @@ SATURATED = datamodels.dqflags.pixel["SATURATED"]
 def wfs_association(tmp_path_factory):
     tmp_path = tmp_path_factory.mktemp("wfs")
     im1 = datamodels.ImageModel((10, 10))
-    im1.data += 5
 
     im1.meta.wcsinfo = {
         'dec_ref': 11.99875540218638,
@@ -42,7 +41,6 @@ def wfs_association(tmp_path_factory):
     im1 = AssignWcsStep.call(im1)
 
     im2 = im1.copy()
-    im2.data += 10
 
     path1 = str(tmp_path / "image1_cal.fits")
     path2 = str(tmp_path / "image2_cal.fits")
@@ -80,6 +78,7 @@ def test_create_combined(_jail, wfs_association,
     data1, data2, dq1, dq2, result_data, result_dq):
     path_asn, path1, path2 = wfs_association
 
+    # Populate data and DQ array at [5, 5] with what is to be tested
     with datamodels.open(path1) as im1, datamodels.open(path2) as im2:
         # Populate some data and DQ flags for the test
         im1.data[5, 5] = data1
@@ -92,7 +91,6 @@ def test_create_combined(_jail, wfs_association,
 
     result = WfsCombineStep.call(path_asn, do_refine=False)
 
-    # Mean should be ~2 except where there are DQ flags set to DO_NOT_USE
-
+    # Check that results are as expected
     assert result.data[5, 5] == result_data
     assert result.dq[5, 5] == result_dq
