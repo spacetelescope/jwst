@@ -60,9 +60,11 @@ class WfsCombineStep(Step):
                 self.save_model(
                     output_model, suffix='wfscmb', output_file=outfile, format=False
                 )
-            # Short-circuit the auto-saving if run from strun, as this returns
-            # a model
-            self.save_results = False
 
+        # Short-circuit auto-save of returned model if run from strun, as it is
+        # already done above.  Ideally we would use self.output_use_model,
+        # self.suffix and output_model.meta.filename, but self.save_model(format=False)
+        # also needs to be there, and that is not stored as a class/instance attr.
+        self.save_results = False
         # Return the output so it can be tested.  Assumes there is only one product.
         return output_model
