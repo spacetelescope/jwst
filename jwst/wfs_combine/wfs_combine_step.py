@@ -56,8 +56,13 @@ class WfsCombineStep(Step):
             output_model.meta.asn.table_name = os.path.basename(input_table)
 
             # Save the output file
-            self.save_model(
-                output_model, suffix='wfscmb', output_file=outfile, format=False
-            )
+            if self.save_results:
+                self.save_model(
+                    output_model, suffix='wfscmb', output_file=outfile, format=False
+                )
+            # Short-circuit the auto-saving if run from strun, as this returns
+            # a model
+            self.save_results = False
 
+        # Return the output so it can be tested.  Assumes there is only one product.
         return output_model
