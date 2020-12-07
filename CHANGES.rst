@@ -170,7 +170,7 @@ tweakreg
 wfs_combine
 -----------
 
-- Add checking for bad pixels by using DO_NOT_USE rather than DQ>0. [#5500]
+- Add checking for bad pixels by using DO_NOT_USE rather than DQ>0. [#5500, #5519]
 
 white_light
 -----------

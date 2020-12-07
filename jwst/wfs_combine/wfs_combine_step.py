@@ -1,5 +1,4 @@
-#! /usr/bin/env python
-import os.path as op
+import os
 
 from ..stpipe import Step
 from . import wfs_combine
@@ -47,14 +46,25 @@ class WfsCombineStep(Step):
             # Do the processing
             output_model = wfs.do_all()
 
+            # The DataSet class does not close its resources.  Do that here.
+            wfs.input_1.close()
+            wfs.input_2.close()
+
             # Update necessary meta info in the output
             output_model.meta.cal_step.wfs_combine = 'COMPLETE'
             output_model.meta.asn.pool_name = asn_table['asn_pool']
-            output_model.meta.asn.table_name = op.basename(input_table)
+            output_model.meta.asn.table_name = os.path.basename(input_table)
 
             # Save the output file
-            self.save_model(
-                output_model, suffix='wfscmb', output_file=outfile, format=False
-            )
+            if self.save_results:
+                self.save_model(
+                    output_model, suffix='wfscmb', output_file=outfile, format=False
+                )
 
-        return None
+        # Short-circuit auto-save of returned model if run from strun, as it is
+        # already done above.  Ideally we would use self.output_use_model,
+        # self.suffix and output_model.meta.filename, but self.save_model(format=False)
+        # also needs to be there, and that is not stored as a class/instance attr.
+        self.save_results = False
+        # Return the output so it can be tested.  Assumes there is only one product.
+        return output_model
