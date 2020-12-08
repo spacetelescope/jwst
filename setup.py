@@ -29,6 +29,8 @@ package_data = {
     "jwst.associations": ["tests/data/*.py"],
     # Include the transforms schemas
     "jwst.transforms": ["schemas/stsci.edu/jwst_pipeline/*.yaml"],
+    # Include C extensions
+    "jwst.grism_lib": ["*.c"],
 }
 
 setup(
