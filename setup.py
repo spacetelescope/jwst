@@ -1,5 +1,5 @@
 from os.path import basename
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages, Extension
 from glob import glob
 
 
@@ -37,4 +37,5 @@ setup(
     scripts=scripts,
     packages=find_packages(),
     package_data=package_data,
+    ext_modules=[Extension('jwst.grism_lib.polyclip_c', ['jwst/grism_lib/polyclip_c.c'])],
 )
