@@ -34,3 +34,4 @@ scripts/launch.json
 htmlcov
 requirements-min.txt
 .tox/
+.tmp/

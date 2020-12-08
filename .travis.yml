@@ -25,14 +25,14 @@ jobs:
       env: TOXENV=py39
 
     - name: Latest dependency versions w/coverage
-      env: TOXENV=coverage
+      env: TOXENV=test-cov
+      script:
+        - tox
+        - codecov -F unit
 
     - name: Oldest dependency versions
       python: 3.7.9
-      env: TOXENV=old-deps
-
-    - name: Installed package with --pyargs
-      env: TOXENV=packaged
+      env: TOXENV=oldestdeps
 
     - name: SDP dependencies in requirements-sdp.txt
       env:
@@ -40,7 +40,7 @@ jobs:
         - TOXENV=sdp
 
     - name: Dev dependencies in requirements-dev.txt
-      env: TOXENV=dev
+      env: TOXENV=devdeps
 
     - name: Warnings treated as Exceptions
       env: TOXENV=warnings
@@ -68,7 +68,7 @@ jobs:
 
   allow_failures:
     - name: Dev dependencies in requirements-dev.txt
-      env: TOXENV=dev
+      env: TOXENV=devdeps
 
     - name: Warnings treated as Exceptions
       env: TOXENV=warnings
