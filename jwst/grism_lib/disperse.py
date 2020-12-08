@@ -55,8 +55,12 @@ def dispersed_pixel(x0s, y0s, f0, order, C, ID, oversample_factor=2, extrapolate
         #f = lambda x: f0[1][0]
         def f(x): return f0[1][0]
 
+    # Retrieve sensitivity calibration reference data for the spectral order
+    # Old aXe style Config ref file. Needs updating
+    # to use JWST photom spectral flux calibration curves
     sens = C.SENS[order]
 
+    # Mean x/y of input pixel list
     x0 = np.mean(x0s)
     y0 = np.mean(y0s)
 
@@ -64,12 +68,15 @@ def dispersed_pixel(x0s, y0s, f0, order, C, ID, oversample_factor=2, extrapolate
     dy0s = [t-y0 for t in y0s]
 
     # Figuring out a few things about size of order, dispersion and wavelengths to use
+    # Old aXe style Config info. Needs updating to use WCS waverange info.
     wmin = C.WRANGE[order][0]
     wmax = C.WRANGE[order][1]
 
+    # Old aXe style Config info. Need to update.
     t0 = C.INVDISPL(order, x0+xoffset, y0+yoffset, wmin)
     t1 = C.INVDISPL(order, x0+xoffset, y0+yoffset, wmax)
 
+    # Old aXe style Config info. Need to update.
     dx0 = C.DISPX(order, x0+xoffset, y0+yoffset, t0) - C.DISPX(order, x0+xoffset, y0+yoffset, t1)
     dx1 = C.DISPY(order, x0+xoffset, y0+yoffset, t0) - C.DISPY(order, x0+xoffset, y0+yoffset, t1)
 
@@ -85,10 +92,12 @@ def dispersed_pixel(x0s, y0s, f0, order, C, ID, oversample_factor=2, extrapolate
 
     lambdas = np.arange(wmin, wmax + dlam, dlam)
 
+    # Old aXe style Config info. Need to update.
     dS = C.INVDISPL(order, x0 + xoffset, y0 + yoffset, lambdas)
 
     m = len(lambdas)
 
+    # Old aXe style Config info. Need to update.
     dXs = C.DISPX(order, x0 + xoffset, y0 + yoffset, dS)
     dYs = C.DISPY(order, x0 + xoffset, y0 + yoffset, dS)
 
