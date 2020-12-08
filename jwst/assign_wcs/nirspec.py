@@ -983,7 +983,8 @@ def gwa_to_slit(open_slits, input_model, disperser,
     # The wavelength units up to this point are
     # meters as required by the pipeline but the desired output wavelength units is microns.
     # So we are going to Scale the spectral units by 1e6 (meters -> microns)
-    if input_model.meta.instrument.filter == 'OPAQUE':
+    is_lamp_exposure = input_model.meta.exposure.type in ['NRS_LAMP', 'NRS_AUTOWAVE', 'NRS_AUTOFLAT']
+    if input_model.meta.instrument.filter == 'OPAQUE' or is_lamp_exposure:
         lgreq = lgreq | Scale(1e6)
 
     msa = MSAModel(reference_files['msa'])
