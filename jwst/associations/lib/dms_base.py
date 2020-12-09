@@ -129,6 +129,35 @@ TSO_EXP_TYPES = [
     'nrs_brightobj'
 ]
 
+# Define the valid optical paths vs detector for NIRSpect Fixed-slit Science
+# Tuples are (SLIT, GRATING, FILTER, DETECTOR)
+# All A-slits are represented by SLIT == 'a'.
+NRS_FSS_VALID_OPTICAL_PATHS = (
+    ('a', 'prism', 'clear',  'nrs1'),
+    ('a', 'g395h', 'f290lp', 'nrs1'),
+    ('a', 'g395h', 'f290lp', 'nrs2'),
+    ('a', 'g235h', 'f170lp', 'nrs1'),
+    ('a', 'g235h', 'f170lp', 'nrs2'),
+    ('a', 'g140h', 'f100lp', 'nrs1'),
+    ('a', 'g140h', 'f100lp', 'nrs2'),
+    ('a', 'g140h', 'f070lp', 'nrs1'),
+    ('a', 'g395m', 'f290lp', 'nrs1'),
+    ('a', 'g235m', 'f170lp', 'nrs1'),
+    ('a', 'g140m', 'f100lp', 'nrs1'),
+    ('a', 'g140m', 'f070lp', 'nrs1'),
+    ('s200b1', 'prism', 'clear',  'nrs2'),
+    ('s200b1', 'g395h', 'f290lp', 'nrs2'),
+    ('s200b1', 'g235h', 'f170lp', 'nrs2'),
+    ('s200b1', 'g140h', 'f100lp', 'nrs2'),
+    ('s200b1', 'g140h', 'f070lp', 'nrs1'),
+    ('s200b1', 'g140h', 'f070lp', 'nrs2'),
+    ('s200b1', 'g395m', 'f290lp', 'nrs2'),
+    ('s200b1', 'g235m', 'f170lp', 'nrs2'),
+    ('s200b1', 'g140m', 'f100lp', 'nrs2'),
+    ('s200b1', 'g140m', 'f070lp', 'nrs1'),
+    ('s200b1', 'g140m', 'f070lp', 'nrs2'),
+)
+
 # Key that uniquely identfies members.
 MEMBER_KEY = 'expname'
 
@@ -803,3 +832,46 @@ def item_getattr(item, attributes, association=None):
         attributes,
         invalid_values=invalid_values
     )
+
+
+def nrsfss_valid_detector(item):
+    """Check that a grating/filter combo can appear on the detector"""
+    try:
+        _, detector = item_getattr(item, ['detector'])
+        _, filter = item_getattr(item, ['filter'])
+        _, grating = item_getattr(item, ['grating'])
+        _, slit = item_getattr(item, ['fxd_slit'])
+    except KeyError:
+        return False
+
+    # Reduce all A slits to just 'a'.
+    if slit != 's200b1':
+        slit = 'a'
+
+    return (slit, grating, filter, detector) in NRS_FSS_VALID_OPTICAL_PATHS
+
+
+def nrsifu_valid_detector(item):
+    """Check that a grating/filter combo can appear on the detector"""
+    try:
+        _, detector = item_getattr(item, ['detector'])
+        _, filter = item_getattr(item, ['filter'])
+        _, grating = item_getattr(item, ['grating'])
+    except KeyError:
+        return False
+
+    # Just a checklist of paths:
+    if grating in ['g395h', 'g235h']:
+        return True
+    elif grating in ['g395m', 'g235m', 'g140m'] and detector == 'nrs1':
+        return True
+    elif grating == 'prism' and filter == 'clear' and detector == 'nrs1':
+        return True
+    elif grating == 'g140h':
+        if filter == 'f100lp':
+            return True
+        elif filter == 'f070lp' and detector == 'nrs1':
+            return True
+
+    # Nothing has matched. Not valid.
+    return False

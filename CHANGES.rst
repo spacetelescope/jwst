@@ -13,8 +13,17 @@ assign_wcs
 
 - Add nrs_verify to the NIRSpec exposure list [#5403]
 
+- Enable resample_spec for NIRSpec line lamp exposures [#5484]
+
 associations
 ------------
+
+- Add new dither keyword subpxpts to constraints [#5525]
+
+- Add further constraints to rule Asn_Lv2NRSLAMPSpectral such that associations
+  are created only when LAMP is on and OPMODE indicates a valid optical path. [#5496]
+
+- Restrict association creation based on optical path for NIRSpec Fixed-slit and IFU [#5504]
 
 - Asn_Lv3SpecAux: Add optical element constraint [#5479]
 
@@ -115,6 +124,7 @@ pipeline
 
 - Update ``Image3Pipeline`` to allow sky subtraction when input contains
   only one image (group). [#5423]
+- Enable resample_spec for NIRSpec line lamp exposures in Spec2Pipeline [#5484]
 
 ramp_fitting
 ------------
@@ -131,6 +141,7 @@ resample
 - Implement memory check in resample to prevent huge arrays [#5354]
 
 - Add ``pixel_scale_ratio`` parameter to allow finer output grid. [#5389]
+- Enable resample_spec for NIRSpec line lamp exposures [#5484]
 
 saturation
 ----------
@@ -161,6 +172,17 @@ tweakreg
 
 - Add support for the new ``fitgeom`` mode: ``'rshift'`` that can fit only
   for shifts and a rotation. [#5475]
+
+wfs_combine
+-----------
+
+- Add checking for bad pixels by using DO_NOT_USE rather than DQ>0. [#5500, #5519]
+
+white_light
+-----------
+
+- Add support for step parameters ``min_wavelength`` and ``max_wavelength`` to modify
+  the wavelength region over which the flux integration is calculated. [#5501]
 
 0.17.1 (2020-09-15)
 ===================
