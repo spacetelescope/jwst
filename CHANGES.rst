@@ -12,10 +12,13 @@ assign_wcs
 ----------
 
 - Add nrs_verify to the NIRSpec exposure list [#5403]
+
 - Enable resample_spec for NIRSpec line lamp exposures [#5484]
 
 associations
 ------------
+
+- Add new dither keyword subpxpts to constraints [#5525]
 
 - Add further constraints to rule Asn_Lv2NRSLAMPSpectral such that associations
   are created only when LAMP is on and OPMODE indicates a valid optical path. [#5496]

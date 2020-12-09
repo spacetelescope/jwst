@@ -760,8 +760,8 @@ class Asn_Lv2NRSFSS(
                                 sources=['numdthpt'],
                             ),
                             DMSAttrConstraint(
-                                name='subpxpns',
-                                sources=['subpxpns'],
+                                name='subpxpts',
+                                sources=['subpxpns', 'subpxpts'],
                             ),
                             SimpleConstraint(
                                 value='science',
