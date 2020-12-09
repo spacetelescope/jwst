@@ -148,7 +148,7 @@ mode are marked as "N/A" in the TSOVISIT column.
 +---------------------+----------+-------------------+-----------------------+------------------+
 | | MIR_LRS-SLITLESS  | True     | calwebb_tso1      | calwebb_tso-spec2     | calwebb_tso3     |
 +                     +----------+-------------------+-----------------------+------------------+
-|                     | False    | calwebb_detector1 | calwebb_spec2         | calwebb_spec3    |
+|                     | False    | calwebb_detector1 | calwebb_spec2         | N/A              |
 +---------------------+----------+-------------------+-----------------------+------------------+
 | | MIR_MRS           | N/A      | calwebb_detector1 | calwebb_spec2         | calwebb_spec3    |
 +---------------------+----------+-------------------+-----------------------+------------------+
@@ -202,8 +202,9 @@ mode are marked as "N/A" in the TSOVISIT column.
 +---------------------+----------+-------------------+-----------------------+------------------+
 | | NRS_DARK          | N/A      | calwebb_dark      | N/A                   | N/A              |
 +---------------------+----------+-------------------+-----------------------+------------------+
-| | NRS_AUTOWAVE      | N/A      | calwebb_detector1 | N/A                   | N/A              |
+| | NRS_AUTOWAVE      | N/A      | calwebb_detector1 | calwebb_nrslamp-spec2 | N/A              |
 | | NRS_AUTOFLAT      |          |                   |                       |                  |
+| | NRS_LAMP          |          |                   |                       |                  |
 +---------------------+----------+-------------------+-----------------------+------------------+
 | | NRS_IMAGE         | N/A      | calwebb_detector1 | calwebb_image2        | N/A              |
 | | NRS_WATA          |          |                   |                       |                  |
@@ -212,8 +213,6 @@ mode are marked as "N/A" in the TSOVISIT column.
 | | NRS_CONFIRM       |          |                   |                       |                  |
 | | NRS_FOCUS         |          |                   |                       |                  |
 | | NRS_MIMF          |          |                   |                       |                  |
-+---------------------+----------+-------------------+-----------------------+------------------+
-| | NRS_LAMP          | N/A      | calwebb_detector1 | calwebb_nrslamp-spec2 | N/A              |
 +---------------------+----------+-------------------+-----------------------+------------------+
 | | NRS_FIXEDSLIT     | N/A      | calwebb_detector1 | calwebb_spec2         | calwebb_spec3    |
 | | NRS_IFU           |          |                   |                       |                  |
