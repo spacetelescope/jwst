@@ -89,7 +89,7 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
                 'pixels.  Background calculated as the mean in a '
                 'circular annulus with r_inner={1} pixels and '
                 'r_outer={2} pixels.'.format(radius, radius_inner,
-                                                radius_outer))
+                                             radius_outer))
         for i in np.arange(nimg):
             aper_sum, aper_sum_err = phot_aper.do_photometry(
                 datamodel.data[i, :, :], error=datamodel.err[i, :, :])
@@ -130,7 +130,8 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
         nrows = len(datamodel.int_times)
     else:
         nrows = 0
-        log.warning("The INT_TIMES table in the input file is missing or empty.")
+        log.warning("The INT_TIMES table in the input file is missing or "
+                    "empty.")
 
     # load the INT_TIMES table data
     if nrows > 0:
