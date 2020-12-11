@@ -308,8 +308,9 @@ class Config(object):
         return  poly.DPOLY[self._DISPX_polyname[order]](self._DISPX_data[order],x0,y0,t)
 
     def DISPY(self,order,x0,y0,t):
-        """Returns the x offset (y'-y) wrt to t, where x0,y0 is the 
-        position on the detector, y'-y is the difference between direct and grism image y-coordinates and 0<t<1
+        """Returns the y offset (y'-y) wrt to t, where x0,y0 is the
+        position on the detector, y'-y is the difference between direct and grism image
+        y-coordinates and 0<t<1
         
         Parameters
         ----------

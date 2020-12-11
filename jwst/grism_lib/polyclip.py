@@ -1,11 +1,13 @@
 import os
+from glob import glob
 import numpy.ctypeslib as npct
 import numpy as np
 import ctypes
 from ctypes import c_int
 
 this_path = os.path.split(__file__)[0]
-so_file = os.path.join(this_path, 'polyclip_c.cpython-39-darwin.so')
+#so_file = os.path.join(this_path, 'polyclip_c.cpython-39-darwin.so')
+so_file = glob(os.path.join(this_path, 'polyclip_c*.so'))[0]
 polyclip = ctypes.cdll.LoadLibrary(so_file)
 
 array_1d_int_l = npct.ndpointer(dtype=np.int32, ndim=1, flags='CONTIGUOUS')
