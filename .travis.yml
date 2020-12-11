@@ -25,10 +25,7 @@ jobs:
       env: TOXENV=py39
 
     - name: Latest dependency versions w/coverage
-      env: TOXENV=test-cov
-      script:
-        - tox
-        - codecov -F unit
+      env: TOXENV=test-cov-report
 
     - name: Oldest dependency versions
       python: 3.7.9
@@ -37,7 +34,7 @@ jobs:
     - name: SDP dependencies in requirements-sdp.txt
       env:
         - CRDS_CONTEXT=jwst-edit
-        - TOXENV=sdp
+        - TOXENV=sdpdeps
 
     - name: Dev dependencies in requirements-dev.txt
       env: TOXENV=devdeps
