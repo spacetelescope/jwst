@@ -6,6 +6,7 @@ import logging
 import numpy as np
 from astropy.table import QTable
 from astropy.time import Time, TimeDelta
+import astropy.units as u
 import photutils
 from photutils import CircularAperture, CircularAnnulus
 
@@ -58,6 +59,15 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
         phot_aper = CircularAperture((xcenter, ycenter), r=radius)
         bkg_aper = CircularAnnulus((xcenter, ycenter), r_in=radius_inner,
                                    r_out=radius_outer)
+
+    # convert the input data and errors from MJy/sr to Jy
+    if datamodel.meta.bunit_data != 'MJy/sr':
+        raise ValueError('data is expected to be in units of MJy/sr')
+    factor = 1.e6 * datamodel.meta.photometry.pixelarea_steradians
+    datamodel.data *= factor
+    datamodel.err *= factor
+    datamodel.meta.bunit_data = 'Jy'
+    datamodel.meta.bunit_err = 'Jy'
 
     aperture_sum = []
     aperture_sum_err = []
@@ -162,13 +172,14 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
                      int_dt)
 
     # populate table columns
+    unit = u.Unit(datamodel.meta.bunit_data)
     tbl['MJD'] = int_times.mjd
-    tbl['aperture_sum'] = aperture_sum
-    tbl['aperture_sum_err'] = aperture_sum_err
+    tbl['aperture_sum'] = aperture_sum << unit
+    tbl['aperture_sum_err'] = aperture_sum_err << unit
 
     if not sub64p_wlp8:
-        tbl['annulus_sum'] = annulus_sum
-        tbl['annulus_sum_err'] = annulus_sum_err
+        tbl['annulus_sum'] = annulus_sum << unit
+        tbl['annulus_sum_err'] = annulus_sum_err << unit
 
         if LooseVersion(photutils.__version__) >= '0.7':
             annulus_mean = annulus_sum / bkg_aper.area
@@ -183,24 +194,24 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
             aperture_bkg = annulus_mean * phot_aper.area()
             aperture_bkg_err = annulus_mean_err * phot_aper.area()
 
-        tbl['annulus_mean'] = annulus_mean
-        tbl['annulus_mean_err'] = annulus_mean_err
+        tbl['annulus_mean'] = annulus_mean << unit
+        tbl['annulus_mean_err'] = annulus_mean_err << unit
 
-        tbl['aperture_bkg'] = aperture_bkg
-        tbl['aperture_bkg_err'] = aperture_bkg_err
+        tbl['aperture_bkg'] = aperture_bkg << unit
+        tbl['aperture_bkg_err'] = aperture_bkg_err << unit
 
         net_aperture_sum = aperture_sum - aperture_bkg
         net_aperture_sum_err = np.sqrt(aperture_sum_err ** 2 +
                                        aperture_bkg_err ** 2)
-        tbl['net_aperture_sum'] = net_aperture_sum
-        tbl['net_aperture_sum_err'] = net_aperture_sum_err
+        tbl['net_aperture_sum'] = net_aperture_sum << unit
+        tbl['net_aperture_sum_err'] = net_aperture_sum_err << unit
     else:
         colnames = ['annulus_sum', 'annulus_sum_err', 'annulus_mean',
                     'annulus_mean_err', 'aperture_bkg', 'aperture_bkg_err']
         for col in colnames:
             tbl[col] = np.full(nimg, np.nan)
 
-        tbl['net_aperture_sum'] = aperture_sum
-        tbl['net_aperture_sum_err'] = aperture_sum_err
+        tbl['net_aperture_sum'] = aperture_sum << unit
+        tbl['net_aperture_sum_err'] = aperture_sum_err << unit
 
     return tbl
