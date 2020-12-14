@@ -63,6 +63,9 @@ datamodels
 - Move core ``jwst.datamodels`` code to ``stdatamodels`` package and add it as
   an install dependency [#5433]
 
+- Update schemas to include new allowed SUBARRAY values for FGS ASIC tuning
+  modes [#5531]
+
 extract_1d
 ----------
 
