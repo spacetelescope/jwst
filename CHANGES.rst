@@ -156,6 +156,12 @@ stpipe
 
 - Implement utility function all_steps and fix crds reference file retrieval for non-datamodels [#5492]
 
+tso_photometry
+--------------
+
+- Place aperture using header keywords XREF_SCI and YREF_SCI instead of
+  CRPIX1 and CRPIX2
+
 tweakreg
 --------
 
