@@ -1,6 +1,7 @@
 import math
 
 import numpy as np
+import pytest
 
 from jwst import datamodels
 from jwst.tso_photometry.tso_photometry import tso_aperture_photometry
@@ -240,3 +241,22 @@ def test_tso_phot_4():
                           58704.62890, 58704.6290, 58704.6291511,
                           58704.629275])
     assert np.allclose(catalog['MJD'], int_times, rtol=1.e-8)
+
+
+def test_tso_phot_5():
+
+    global shape, xcenter, ycenter
+
+    value = 17.
+    background = 0.8
+    radius = 5.
+    radius_inner = 8.
+    radius_outer = 11.
+    data = mk_data_array(shape, value, background, xcenter, ycenter, radius)
+    datamodel = datamodels.CubeModel(data)
+    set_meta(datamodel, sub64p=False)
+    datamodel.meta.bunit_data = 'MJy'  # unexpected data unit
+
+    with pytest.raises(ValueError):
+        tso_aperture_photometry(datamodel, xcenter, ycenter, radius + 1., radius_inner,
+                                radius_outer)
