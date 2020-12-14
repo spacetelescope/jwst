@@ -38,12 +38,14 @@ def test_niriss_wfss():
         for asn in asns
     }
 
-    # Ensure catalog name is correct in the spec2 associations
-    source_cat = asn_by_type['image3']['products'][0]['name']
-    source_cat += '_cat.ecsv'
+    # Ensure catalog and segmentation map names are correct in the spec2 associations
+    l3name = asn_by_type['image3']['products'][0]['name']
+    source_cat = l3name + '_cat.ecsv'
+    segmap = l3name + '_seg.fits'
     for product in asn_by_type['spec2']['products']:
         members_by_type = {
             member['exptype']: member
             for member in product['members']
         }
         assert members_by_type['sourcecat']['expname'] == source_cat
+        assert members_by_type['segmap']['expname'] == segmap
