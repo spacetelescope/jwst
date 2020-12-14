@@ -75,6 +75,12 @@ def set_meta(datamodel, sub64p=False):
         datamodel.meta.instrument.pupil = 'CLEAR'
         datamodel.meta.subarray.name = 'FULL'
 
+    datamodel.meta.bunit_data = 'MJy/sr'
+    datamodel.meta.bunit_err = 'MJy/sr'
+    # NOTE: this is a dummy value that leaves the mock test data values
+    # unchanged during the unit conversion in tso_photometry.
+    datamodel.meta.photometry.pixelarea_steradians = 1.0e-6
+
     datamodel.meta.wcs = dummy_wcs
 
 
@@ -135,17 +141,17 @@ def test_tso_phot_1():
     assert math.isclose(catalog.meta['xcenter'], xcenter, abs_tol=0.01)
     assert math.isclose(catalog.meta['ycenter'], ycenter, abs_tol=0.01)
 
-    assert np.allclose(catalog['aperture_sum'], 1263.4778, rtol=1.e-7)
-    assert np.allclose(catalog['aperture_sum_err'], 0., atol=1.e-7)
-    assert np.allclose(catalog['net_aperture_sum'], 1173., rtol=1.e-7)
-    assert np.allclose(catalog['annulus_sum'], 143.256627, rtol=1.e-7)
-    assert np.allclose(catalog['annulus_sum_err'], 0., atol=1.e-7)
-    assert np.allclose(catalog['annulus_mean'], background, rtol=1.e-7)
+    assert np.allclose(catalog['aperture_sum'].value, 1263.4778, rtol=1.e-7)
+    assert np.allclose(catalog['aperture_sum_err'].value, 0., atol=1.e-7)
+    assert np.allclose(catalog['net_aperture_sum'].value, 1173., rtol=1.e-7)
+    assert np.allclose(catalog['annulus_sum'].value, 143.256627, rtol=1.e-7)
+    assert np.allclose(catalog['annulus_sum_err'].value, 0., atol=1.e-7)
+    assert np.allclose(catalog['annulus_mean'].value, background, rtol=1.e-7)
 
-    assert np.allclose(catalog['annulus_mean'], 0.8, rtol=1.e-6)
-    assert np.allclose(catalog['annulus_mean_err'], 0., rtol=1.e-7)
-    assert np.allclose(catalog['net_aperture_sum'], 1173., rtol=1.e-7)
-    assert np.allclose(catalog['net_aperture_sum_err'], 0., atol=1.e-7)
+    assert np.allclose(catalog['annulus_mean'].value, 0.8, rtol=1.e-6)
+    assert np.allclose(catalog['annulus_mean_err'].value, 0., rtol=1.e-7)
+    assert np.allclose(catalog['net_aperture_sum'].value, 1173., rtol=1.e-7)
+    assert np.allclose(catalog['net_aperture_sum_err'].value, 0., atol=1.e-7)
 
 
 def test_tso_phot_2():
@@ -176,10 +182,10 @@ def test_tso_phot_2():
     assert math.isclose(catalog.meta['xcenter'], xcenter, abs_tol=0.01)
     assert math.isclose(catalog.meta['ycenter'], ycenter, abs_tol=0.01)
 
-    assert np.allclose(catalog['aperture_sum'],
+    assert np.allclose(catalog['aperture_sum'].value,
                        (value + background) * shape[-1] * shape[-2],
                        rtol=1.e-6)
-    assert np.allclose(catalog['aperture_sum_err'], 0., atol=1.e-7)
+    assert np.allclose(catalog['aperture_sum_err'].value, 0., atol=1.e-7)
 
 
 def test_tso_phot_3():
