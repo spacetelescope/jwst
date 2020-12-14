@@ -228,6 +228,8 @@ assign_wcs
 associations
 ------------
 
+- Asn_Lv2WFSS: Add segmentation map exposure to Level2 WFSS associations [#5532]
+
 - Add new dither keyword subpxpts to constraints [#5525]
 
 - Add further constraints to rule Asn_Lv2NRSLAMPSpectral such that associations
