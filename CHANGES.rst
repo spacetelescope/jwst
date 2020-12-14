@@ -160,7 +160,7 @@ tso_photometry
 --------------
 
 - Place aperture using header keywords XREF_SCI and YREF_SCI instead of
-  CRPIX1 and CRPIX2
+  CRPIX1 and CRPIX2 [#5533]
 
 tweakreg
 --------
