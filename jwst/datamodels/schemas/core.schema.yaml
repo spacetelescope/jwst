@@ -897,7 +897,10 @@ properties:
                  [8X8, 32X32, 128X128, 2048X64,
                   SUB128CNTR, SUB128DIAG, SUB128LL,
                   SUB32CNTR, SUB32DIAG, SUB32LL,
-                  SUB8CNTR, SUB8DIAG, SUB8LL]
+                  SUB8CNTR, SUB8DIAG, SUB8LL,
+                  SUBIDSTRIPCENTER, SUBIDSTRIPLL,
+                  SUBTUNE32CENTERG1, SUBTUNE32CENTERG2,
+                  SUBTUNE32LLG1, SUBTUNE32LLG2]
               # MIRI
               - enum:
                  [BRIGHTSKY, MASK1065, MASK1140, MASK1550, MASKLYOT,
