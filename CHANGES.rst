@@ -176,6 +176,8 @@ tso_photometry
 - Place aperture using header keywords XREF_SCI and YREF_SCI instead of
   CRPIX1 and CRPIX2 [#5533]
 
+- Fixed the flux units in the output photometry catalog. [#5529]
+
 tweakreg
 --------
 

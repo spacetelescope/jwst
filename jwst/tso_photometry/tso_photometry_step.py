@@ -37,6 +37,10 @@ class TSOPhotometryStep(Step):
                 raise ValueError('XREF_SCI is missing.')
             if model.meta.wcsinfo.siaf_yref_sci is None:
                 raise ValueError('YREF_SCI is missing.')
+            if model.meta.bunit_data is None:
+                raise ValueError('BUNIT for data array is missing.')
+            if model.meta.bunit_err is None:
+                raise ValueError('BUNIT for error array is missing.')
 
             xcenter = model.meta.wcsinfo.siaf_xref_sci - 1    # 1-based origin
             ycenter = model.meta.wcsinfo.siaf_yref_sci - 1    # 1-based origin
