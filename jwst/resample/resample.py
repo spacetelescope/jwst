@@ -1,4 +1,6 @@
 import logging
+import re
+
 import numpy as np
 
 from . import gwcs_drizzle
@@ -181,6 +183,16 @@ class ResampleData:
         """
         Update FITS WCS keywords of the resampled image.
         """
+        # Delete any SIP-related keywords first
+        pattern = r"(cd[123]_[123]|ap?_|bp?_)"
+        regex = re.compile(pattern)
+        # Make a copy so we don't delete keys in the model while iterating
+        wcsinfo = model.meta.wcsinfo.instance.copy()
+        for item in wcsinfo:
+            if regex.match(item):
+                del model.meta.wcsinfo.instance[item]
+
+        # Write new PC-matrix-based WCS based on GWCS model
         transform = model.meta.wcs.forward_transform
         model.meta.wcsinfo.crpix1 = -transform[0].offset.value + 1
         model.meta.wcsinfo.crpix2 = -transform[1].offset.value + 1
@@ -194,3 +206,5 @@ class ResampleData:
         model.meta.wcsinfo.pc1_2 = transform[2].matrix.value[0][1]
         model.meta.wcsinfo.pc2_1 = transform[2].matrix.value[1][0]
         model.meta.wcsinfo.pc2_2 = transform[2].matrix.value[1][1]
+        model.meta.wcsinfo.ctype1 = "RA---TAN"
+        model.meta.wcsinfo.ctype2 = "DEC--TAN"
