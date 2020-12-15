@@ -24,8 +24,9 @@ def do_correction(input_model, ref_model):
     """
     Short Summary
     -------------
-    Apply saturation flagging based on threshold values stored in the
-    saturation reference file.
+    Apply flagging for saturation based on threshold values stored in the
+    saturation reference file and A/D floor based on testing for 0 DN values.
+    For A/D floor flagged groups, the DO_NOT_USE flag is also set.
 
     Parameters
     ----------
@@ -38,7 +39,7 @@ def do_correction(input_model, ref_model):
     Returns
     -------
     output_model : `~jwst.datamodels.RampModel`
-        Data model with saturation flags set in GROUPDQ array
+        Data model with saturation and A/D floor flags set in GROUPDQ array
     """
 
     ramp_array = input_model.data
@@ -87,7 +88,7 @@ def do_correction(input_model, ref_model):
                 # check for high saturation
                 flag_temp = np.where(sci_temp >= sat_thresh, SATURATED, 0)
                 # check for low saturation
-                flaglow_temp = np.where(sci_temp <= 0, AD_FLOOR, 0)
+                flaglow_temp = np.where(sci_temp <= 0, AD_FLOOR | DONOTUSE, 0)
                 # Copy temps into flagarrays.
                 x_irs2.to_irs2(flagarray, flag_temp, irs2_mask, detector)
                 x_irs2.to_irs2(flaglowarray, flaglow_temp, irs2_mask, detector)
@@ -97,7 +98,7 @@ def do_correction(input_model, ref_model):
                                            SATURATED, 0)
                 # check for low saturation
                 flaglowarray[:, :] = np.where(ramp_array[ints, group, :, :] <= 0,
-                                              AD_FLOOR, 0)
+                                              AD_FLOOR | DONOTUSE, 0)
             # for high saturation, the flag is set in the current plane
             # and all following planes.
             np.bitwise_or(groupdq[ints, group:, :, :], flagarray,

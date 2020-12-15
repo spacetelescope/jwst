@@ -71,7 +71,8 @@ def test_ad_floor_flagging(setup_nrc_cube):
     output = do_correction(data, satmap)
 
     # Check if the right frames are flagged as saturated
-    assert np.all(output.groupdq[0, satindxs, 5, 5] == dqflags.group['AD_FLOOR'])
+    assert np.all(output.groupdq[0, satindxs, 5, 5]
+                  == dqflags.group['DO_NOT_USE'] | dqflags.group['AD_FLOOR'])
 
 
 def test_ad_floor_and_saturation_flagging(setup_nrc_cube):
@@ -105,7 +106,8 @@ def test_ad_floor_and_saturation_flagging(setup_nrc_cube):
     output = do_correction(data, satmap)
 
     # Check if the right frames are flagged as ad_floor
-    assert np.all(output.groupdq[0, floorindxs, 5, 5] == dqflags.group['AD_FLOOR'])
+    assert np.all(output.groupdq[0, floorindxs, 5, 5]
+                  == dqflags.group['DO_NOT_USE'] | dqflags.group['AD_FLOOR'])
     # Check if the right frames are flagged as saturated
     assert np.all(output.groupdq[0, satindxs, 5, 5] == dqflags.group['SATURATED'])
 
