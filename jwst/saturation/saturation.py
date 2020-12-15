@@ -13,7 +13,9 @@ import numpy as np
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+DONOTUSE = dqflags.pixel['DO_NOT_USE']
 SATURATED = dqflags.pixel['SATURATED']
+AD_FLOOR = dqflags.pixel['AD_FLOOR']
 NO_SAT_CHECK = dqflags.pixel['NO_SAT_CHECK']
 ATOD_LIMIT = 65535.  # Hard DN limit of 16-bit A-to-D converter
 
@@ -85,7 +87,7 @@ def do_correction(input_model, ref_model):
                 # check for high saturation
                 flag_temp = np.where(sci_temp >= sat_thresh, SATURATED, 0)
                 # check for low saturation
-                flaglow_temp = np.where(sci_temp <= 0, SATURATED, 0)
+                flaglow_temp = np.where(sci_temp <= 0, AD_FLOOR, 0)
                 # Copy temps into flagarrays.
                 x_irs2.to_irs2(flagarray, flag_temp, irs2_mask, detector)
                 x_irs2.to_irs2(flaglowarray, flaglow_temp, irs2_mask, detector)
@@ -95,7 +97,7 @@ def do_correction(input_model, ref_model):
                                            SATURATED, 0)
                 # check for low saturation
                 flaglowarray[:, :] = np.where(ramp_array[ints, group, :, :] <= 0,
-                                              SATURATED, 0)
+                                              AD_FLOOR, 0)
             # for high saturation, the flag is set in the current plane
             # and all following planes.
             np.bitwise_or(groupdq[ints, group:, :, :], flagarray,
@@ -109,6 +111,8 @@ def do_correction(input_model, ref_model):
 
     n_sat = np.any(np.any(np.bitwise_and(groupdq, SATURATED), axis=0), axis=0).sum()
     log.info(f'Detected {n_sat} saturated pixels')
+    n_floor = np.any(np.any(np.bitwise_and(groupdq, AD_FLOOR), axis=0), axis=0).sum()
+    log.info(f'Detected {n_floor} AD FLOOR pixels')
 
     # Save the NO_SAT_CHECK flags in the output PIXELDQ array
     if is_irs2_format:

@@ -42,8 +42,8 @@ def test_basic_saturation_flagging(setup_nrc_cube):
     assert np.all(output.groupdq[0, satindex:, 5, 5] == dqflags.group['SATURATED'])
 
 
-def test_low_saturation_flagging(setup_nrc_cube):
-    """Check that the saturation flag is set when a pixel value is zero or
+def test_ad_floor_flagging(setup_nrc_cube):
+    """Check that the ad_floor flag is set when a pixel value is zero or
     negative."""
 
     # Create inputs, data, and saturation maps
@@ -71,12 +71,12 @@ def test_low_saturation_flagging(setup_nrc_cube):
     output = do_correction(data, satmap)
 
     # Check if the right frames are flagged as saturated
-    assert np.all(output.groupdq[0, satindxs, 5, 5] == dqflags.group['SATURATED'])
+    assert np.all(output.groupdq[0, satindxs, 5, 5] == dqflags.group['AD_FLOOR'])
 
 
-def test_low_and_high_saturation_flagging(setup_nrc_cube):
-    """Check that the saturation flag is set when a pixel value is zero or
-    negative and when the pixel is above the high saturation threshold."""
+def test_ad_floor_and_saturation_flagging(setup_nrc_cube):
+    """Check that the ad_floor flag is set when a pixel value is zero or
+    negative and the saturation flag when the pixel is above the saturation threshold."""
 
     # Create inputs, data, and saturation maps
     ngroups = 5
@@ -93,8 +93,10 @@ def test_low_and_high_saturation_flagging(setup_nrc_cube):
     data.data[0, 3, 5, 5] = 40
     data.data[0, 4, 5, 5] = 61000  # Signal above the saturation threshold
 
-    # frames that should be flagged as saturation (low)
-    satindxs = [0, 1, 4]
+    # framest hat should be flagged as ad_floor
+    floorindxs = [0, 1]
+    # frames that should be flagged as saturation
+    satindxs = [4]
 
     # Set saturation value in the saturation model
     satmap.data[5, 5] = satvalue
@@ -102,6 +104,8 @@ def test_low_and_high_saturation_flagging(setup_nrc_cube):
     # Run the pipeline
     output = do_correction(data, satmap)
 
+    # Check if the right frames are flagged as ad_floor
+    assert np.all(output.groupdq[0, floorindxs, 5, 5] == dqflags.group['AD_FLOOR'])
     # Check if the right frames are flagged as saturated
     assert np.all(output.groupdq[0, satindxs, 5, 5] == dqflags.group['SATURATED'])
 
