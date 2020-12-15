@@ -92,7 +92,7 @@ jobs:
 
     - name: Security check
       install:
-        - pip install bandit
+        - pip install "bandit>=1.7"
       script:
         - bandit -r jwst scripts -c .bandit.yaml -ll
 

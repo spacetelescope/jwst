@@ -63,6 +63,9 @@ datamodels
 - Move core ``jwst.datamodels`` code to ``stdatamodels`` package and add it as
   an install dependency [#5433]
 
+- Update schemas to include new allowed SUBARRAY values for FGS ASIC tuning
+  modes [#5531]
+
 extract_1d
 ----------
 
@@ -166,6 +169,14 @@ stpipe
 ------
 
 - Implement utility function all_steps and fix crds reference file retrieval for non-datamodels [#5492]
+
+tso_photometry
+--------------
+
+- Place aperture using header keywords XREF_SCI and YREF_SCI instead of
+  CRPIX1 and CRPIX2 [#5533]
+
+- Fixed the flux units in the output photometry catalog. [#5529]
 
 tweakreg
 --------

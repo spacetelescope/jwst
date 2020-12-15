@@ -2,6 +2,3 @@ exclude_dirs:
   - jwst/*test*
   - jwst/**/*test*
   - jwst/fits_generator
-
-skips:
-  - B322
