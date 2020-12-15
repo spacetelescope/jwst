@@ -184,13 +184,13 @@ class ResampleData:
         Update FITS WCS keywords of the resampled image.
         """
         # Delete any SIP-related keywords first
-        pattern = r"(cd[123]_[123]|ap?_|bp?_)"
+        pattern = r"^(cd[12]_[12]|[ab]p?_\d_\d|[ab]p?_order)$"
         regex = re.compile(pattern)
-        # Make a copy so we don't delete keys in the model while iterating
-        wcsinfo = model.meta.wcsinfo.instance.copy()
-        for item in wcsinfo:
-            if regex.match(item):
-                del model.meta.wcsinfo.instance[item]
+
+        keys = list(model.meta.wcsinfo.instance.keys())
+        for key in keys:
+            if regex.match(key):
+                del model.meta.wcsinfo.instance[key]
 
         # Write new PC-matrix-based WCS based on GWCS model
         transform = model.meta.wcs.forward_transform
