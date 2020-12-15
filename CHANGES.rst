@@ -15,6 +15,8 @@ assign_wcs
 
 - Enable resample_spec for NIRSpec line lamp exposures [#5484]
 
+- Added SIP approximation to WCS for imaging modes. FITS WCS keywords added to meta.wcsinfo. [#5507]
+
 associations
 ------------
 

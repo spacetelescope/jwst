@@ -212,7 +212,7 @@ def test_miri_wcs_roundtrip(miri_rate):
 
 @pytest.mark.parametrize("ratio", [0.5, 0.7, 1.0])
 def test_pixel_scale_ratio_spec(miri_rate, ratio):
-    im = AssignWcsStep.call(miri_rate)
+    im = AssignWcsStep.call(miri_rate, sip_approx=False)
     result1 = ResampleSpecStep.call(im)
     result2 = ResampleSpecStep.call(im, pixel_scale_ratio=ratio)
 
@@ -221,7 +221,7 @@ def test_pixel_scale_ratio_spec(miri_rate, ratio):
 
 @pytest.mark.parametrize("ratio", [0.5, 0.7, 1.0])
 def test_pixel_scale_ratio_imaging(nircam_rate, ratio):
-    im = AssignWcsStep.call(nircam_rate)
+    im = AssignWcsStep.call(nircam_rate, sip_approx=False)
     result1 = ResampleStep.call(im)
     result2 = ResampleStep.call(im, pixel_scale_ratio=ratio)
 

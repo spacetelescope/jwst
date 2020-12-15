@@ -38,7 +38,7 @@ def wfs_association(tmp_path_factory):
     im1.meta.exposure = {
         'type': 'NRC_IMAGE'}
 
-    im1 = AssignWcsStep.call(im1)
+    im1 = AssignWcsStep.call(im1, sip_approx=False)
 
     im2 = im1.copy()
 
