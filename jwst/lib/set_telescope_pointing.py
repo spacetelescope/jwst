@@ -592,8 +592,12 @@ def calc_wcs_over_time(obsstart, obsend, engdb_url=None, tolerance=60, reduce_fu
     vinfos = list()
 
     # Calculate WCS
-    pointings = get_pointing(obsstart, obsend, engdb_url=engdb_url,
+    try:
+        pointings = get_pointing(obsstart, obsend, engdb_url=engdb_url,
                              tolerance=tolerance, reduce_func=reduce_func)
+    except ValueError:
+        logger.warning("Cannot get valid engineering mnemonics from engineering database")
+        raise
     if not isinstance(pointings, list):
         pointings = [pointings]
     for pointing in pointings:
@@ -1546,17 +1550,41 @@ def pointing_from_average(mnemonics):
         eng_param.obstime.unix
         for eng_param in mnemonics['SA_ZATTEST1']
     ]
-    obstime = Time(np.average(times), format='unix')
-
+    goodtimes = []
+    for this_time in times:
+        if this_time != 0.0:
+            goodtimes.append(this_time)
+    if len(goodtimes) > 0:
+        obstime = Time(np.average(goodtimes), format='unix')
+    else:
+        raise ValueError("No valid times in range")
     # Get averages for all the mnemonics.
     mnemonic_averages = {}
+    zero_mnemonics = []
     for mnemonic in mnemonics:
         values = [
             eng_param.value
             for eng_param in mnemonics[mnemonic]
         ]
-        mnemonic_averages[mnemonic] = np.average(values)
-
+        # Weed out mnemonic entries that are zero
+        # 'SA_ZADUCMDX' and 'SA_ZADUCMDY' can be zero
+        if mnemonic not in ['SA_ZADUCMDX', 'SA_ZADUCMDY']:
+            good_mnemonic = []
+            for this_value in values:
+                if this_value != 0.0:
+                    good_mnemonic.append(this_value)
+            if len(good_mnemonic) > 0:
+                mnemonic_averages[mnemonic] = np.average(good_mnemonic)
+            else:
+                zero_mnemonics.append(mnemonic)
+        else:
+            mnemonic_averages[mnemonic] = np.average(values)
+    # Raise exception if there are mnemonics with only zeros in the time range
+    if len(zero_mnemonics):
+        logger.warning("The following engineering mnemonics only contained zeros in the requested time interval:")
+        badmnemonicsstring = ' '.join(zero_mnemonics)
+        logger.info(badmnemonicsstring)
+        raise ValueError("Bad telemetry values")
     # Fill out the pointing matrices.
     q = np.array([
         mnemonic_averages['SA_ZATTEST1'],
