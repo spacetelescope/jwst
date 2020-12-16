@@ -130,6 +130,10 @@ resample
 
 - Add ``pixel_scale_ratio`` parameter to allow finer output grid. [#5389]
 
+reset
+-----
+- Turn the step back on for the calwebb_detector1 pipeline [#5485]
+
 saturation
 ----------
 
