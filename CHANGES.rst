@@ -17,6 +17,8 @@ assign_wcs
 
 - Added SIP approximation to WCS for imaging modes. FITS WCS keywords added to meta.wcsinfo. [#5507]
 
+- Fix bug where subarray bounding boxes were 1 pixel too small. [#5543]
+
 associations
 ------------
 

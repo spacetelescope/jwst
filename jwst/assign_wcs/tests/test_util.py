@@ -101,4 +101,4 @@ def test_bounding_box_from_subarray():
     im.meta.subarray.ystart = 6
     im.meta.subarray.xsize = 400
     im.meta.subarray.ysize = 600
-    assert bounding_box_from_subarray(im) == ((-.5, 598.5), (-.5, 398.5))
+    assert bounding_box_from_subarray(im) == ((-.5, 599.5), (-.5, 399.5))
