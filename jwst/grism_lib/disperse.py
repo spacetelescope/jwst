@@ -3,9 +3,9 @@ import numpy as np
 from .polyclip import polyclip
 
 
-def dispersed_pixel(x0s, y0s, f0, order, C, ID, oversample_factor=2, extrapolate_SED=False, xoffset=0, yoffset=0):
+def dispersed_pixel(x0s, y0s, f0, order, wmin, wmax, wcs, ID, oversample_factor=2, extrapolate_SED=False, xoffset=0, yoffset=0):
     """This function take a list of pixels and disperses them using the information contained
-    in a GRISMCONF file, and returns a list of pixel and fluxes.
+    in the grism image WCS object and returns a list of pixels and fluxes.
 
     Parameters
     ----------
@@ -15,8 +15,11 @@ def dispersed_pixel(x0s, y0s, f0, order, C, ID, oversample_factor=2, extrapolate
         A list of n y-coordinates.
     f0: list
         A list of n flux (flam) for each of the pixels contained in x0s,y0s.
-    order: str
-        The name of the spectral order to disperse.
+        The entries in the list are wavelength and flux.
+    order: int
+        The spectral order to disperse.
+    wcs: WCS object
+        The WCS object of grism image.
     ID: int
         The ID of the object this is for.
     oversample_factor: int
@@ -45,64 +48,69 @@ def dispersed_pixel(x0s, y0s, f0, order, C, ID, oversample_factor=2, extrapolate
     ID: array
         A list containing the ID. Returned for bookkeeping convenience.
     """
+
+    # Setup the transform we need from the input WCS object
+    img_to_grism = wcs.get_transform('detector', 'grism_detector')
+
     if len(f0[0]) > 1:
-        #print("f0:",f0,len(f0[0]),len(f0[1]))
+        #print("f0:", f0, len(f0[0]), len(f0[1]))
         if extrapolate_SED is False:
             f = interp1d(f0[0], f0[1], fill_value=0., bounds_error=False)
         else:
             f = interp1d(f0[0], f0[1], fill_value="extrapolate", bounds_error=False)
     else:
+        #print("f0: is not > 1")
         #f = lambda x: f0[1][0]
         def f(x): return f0[1][0]
 
-    # Retrieve sensitivity calibration reference data for the spectral order
-    # Old aXe style Config ref file. Needs updating
-    # to use JWST photom spectral flux calibration curves
-    sens = C.SENS[order]
+    #print("x0s:", x0s)
+    #print("y0s:", y0s)
+    #print("f0:", f0)
 
-    # Mean x/y of input pixel list
+    # Mean x/y of input pixel coords
     x0 = np.mean(x0s)
     y0 = np.mean(y0s)
+    #print("x0, y0:", x0, y0)
 
+    # deltas relative to mean x/y coords
+    # typcially results in a list like -0.5, +0.5, +0.5, -0.5 when the input
+    # simply brackets a single pixel
     dx0s = [t-x0 for t in x0s]
     dy0s = [t-y0 for t in y0s]
+    #print("dx0s:", dx0s)
+    #print("dy0s:", dy0s)
 
-    # Figuring out a few things about size of order, dispersion and wavelengths to use
-    # Old aXe style Config info. Needs updating to use WCS waverange info.
-    wmin = C.WRANGE[order][0]
-    wmax = C.WRANGE[order][1]
+    # Get the x/y positions corresponding to wmin and wmax
+    xwmin, ywmin, _, _, _ = img_to_grism(x0, y0, wmin, order)
+    xwmax, ywmax, _, _, _ = img_to_grism(x0, y0, wmax, order)
+    #print("xwmin, ywmin:", xwmin, ywmin)
+    #print("xwmax, ywmax:", xwmax, ywmax)
+    dxw = xwmax - xwmin
+    dyw = ywmax - ywmin
 
-    # Old aXe style Config info. Need to update.
-    t0 = C.INVDISPL(order, x0+xoffset, y0+yoffset, wmin)
-    t1 = C.INVDISPL(order, x0+xoffset, y0+yoffset, wmax)
-
-    # Old aXe style Config info. Need to update.
-    dx0 = C.DISPX(order, x0+xoffset, y0+yoffset, t0) - C.DISPX(order, x0+xoffset, y0+yoffset, t1)
-    dx1 = C.DISPY(order, x0+xoffset, y0+yoffset, t0) - C.DISPY(order, x0+xoffset, y0+yoffset, t1)
-
-    dw = np.abs((wmax - wmin) / (dx1 - dx0))
+    # Compute the delta-wave per pixel
+    dw = np.abs((wmax - wmin) / (dyw - dxw))
+    #print("dw:", dw)
 
     # Use a natural wavelength scale or the wavelength scale of the input SED/spectrum,
     # whichever is smaller, divided by oversampling requested
     input_dlam = np.median(f0[0][1:] - f0[0][:-1])
     if input_dlam < dw:
+        #print("input_dlam is < dw")
         dlam = input_dlam / oversample_factor
     else:
+        #print("use computed dw")
         dlam = dw / oversample_factor
 
     lambdas = np.arange(wmin, wmax + dlam, dlam)
+    n_lam = len(lambdas)
+    #print("n_lam:", n_lam)
 
-    # Old aXe style Config info. Need to update.
-    dS = C.INVDISPL(order, x0 + xoffset, y0 + yoffset, lambdas)
-
-    m = len(lambdas)
-
-    # Old aXe style Config info. Need to update.
-    dXs = C.DISPX(order, x0 + xoffset, y0 + yoffset, dS)
-    dYs = C.DISPY(order, x0 + xoffset, y0 + yoffset, dS)
-
-    x0s = x0 + dXs
-    y0s = y0 + dYs
+    # Compute lists of x/y positions in the grism image for
+    # the set of desired wavelengths
+    x0s, y0s, _, _, _ = img_to_grism([x0]*n_lam, [y0]*n_lam, lambdas, [order]*n_lam)
+    #print("x0s:", x0s)
+    #print("y0s:", y0s)
 
     padding = 1
     left = x0s.astype(np.int32) - padding
@@ -115,20 +123,18 @@ def dispersed_pixel(x0s, y0s, f0, order, C, ID, oversample_factor=2, extrapolate
 
     lams = np.array([[ll, 0, 0, 0] for ll in lambdas], dtype=np.float32).transpose().ravel()
 
-    poly_inds = np.arange(0, (m+1)*4, 4, dtype=np.int32)
-
+    poly_inds = np.arange(0, (n_lam+1)*4, 4, dtype=np.int32)
     n_poly = len(x0s)
-
     n = len(lams)  # number of pixels we are "dropping", e.g. number of wav bins
-
-    n = 2 * n
+    n *= 2
 
     index = np.zeros(n, dtype=np.int32)
     x = np.zeros(n, dtype=np.int32)
     y = np.zeros(n, dtype=np.int32)
     areas = np.zeros(n, dtype=np.float32)
     nclip_poly = np.array([0], np.int32)
-    polyclip.polyclip_multi4(left, right, bottom, top, px, py, n_poly, poly_inds, x, y, nclip_poly, areas, index)
+    polyclip.polyclip_multi4(left, right, bottom, top, px, py, n_poly, poly_inds,
+                             x, y, nclip_poly, areas, index)
 
     xs = x[0:nclip_poly[0]]
     ys = y[0:nclip_poly[0]]
@@ -142,4 +148,7 @@ def dispersed_pixel(x0s, y0s, f0, order, C, ID, oversample_factor=2, extrapolate
     if len(xs[vg]) == 0:
         return np.array([0]), np.array([0]), np.array([0]), np.array([0]), np.array([0]), 0
 
+    #print("xs:", xs[vg])
+    #print("ys:", ys[vg])
+    #print("areas:", areas[vg])
     return xs[vg], ys[vg], areas[vg], lams[vg], counts[vg], ID

@@ -6,6 +6,7 @@ from scipy import sparse
 from scipy.interpolate import interp1d
 from jwst.grism_lib import grismconf
 from jwst.grism_lib.disperse import dispersed_pixel
+from jwst import datamodels
 
 import logging
 
@@ -35,10 +36,10 @@ class interp1d_picklable(object):
 
 def helper(vars):
     # parse the input list of vars; ID is a dummy number here
-    x0s, y0s, flux, order, config, ID, extrapolate_SED, xoffset, yoffset = vars
+    x0s, y0s, flux, order, wmin, wmax, wcs, ID, extrapolate_SED, xoffset, yoffset = vars
 
     # use the list of vars to compute dispersed attributes for the pixel
-    p = dispersed_pixel(x0s, y0s, flux, order, config, ID,
+    p = dispersed_pixel(x0s, y0s, flux, order, wmin, wmax, wcs, ID,
                         extrapolate_SED=extrapolate_SED, xoffset=xoffset, yoffset=yoffset)
 
     # unpack the results
@@ -53,7 +54,7 @@ def helper(vars):
 class observation():
     # This class defines an actual observation. It is tied to a single image and a single config file
 
-    def __init__(self, direct_images, segmentation_data, config, mod="A", order="+1",
+    def __init__(self, direct_images, segmentation_data, config, wcs, mod="A", order=1,
                  max_split=100, SED_file=None, extrapolate_SED=False, max_cpu=8,
                  ID=0, SBE_save=None, boundaries=[], renormalize=True):
 
@@ -63,7 +64,7 @@ class observation():
             pixels with no source signal and an integer source number for pixels with signal
         config: Full path name of a NIRCam GRISMCONF configuration file
         mod: NIRCam Module: A or B
-        order: The name of the spectral order to simulate, +1 or +2 for NIRCAM
+        order: The spectral order to simulate, +1 or +2 for NIRCAM
         max_split: Number of chunks to compute instead of trying everything at once.
         SED_file: Name of HDF5 file containing datasets matching the ID in the segmentation file
                   and each consisting of a [[lambda],[flux]] array.
@@ -78,6 +79,7 @@ class observation():
         # This loads all the info from the configuration file for this grism mode;
         # things like the name of the POM mask file, the dispersion coeffs, etc.
         self.Cfg = grismconf.Config(config)
+        self.wcs = wcs
         self.ID = ID
         self.IDs = []
         self.dir_image_names = direct_images
@@ -91,6 +93,14 @@ class observation():
         self.POM_mask = None
         self.POM_mask01 = None
         self.renormalize = renormalize
+
+        # Get the wavelength range for the grism image
+        wr_ref = datamodels.WavelengthrangeModel('/grp/crds/jwst/references/jwst/jwst_nircam_wavelengthrange_0003.asdf')
+        wavelength_range = wr_ref.get_wfss_wavelength_range('F444W', [self.order])
+        self.wmin = wavelength_range[self.order][0]
+        self.wmax = wavelength_range[self.order][1]
+        wr_ref.close()
+        print("wmin, wmax:", self.wmin, self.wmax)
 
         # Current NIRCAM config files DO have POM defined, so this branch is used
         if self.Cfg.POM is not None:
@@ -240,7 +250,6 @@ class observation():
             all_IDs = np.array(list(set(np.ravel(self.seg))))
             all_IDs = all_IDs[all_IDs > 0]
             print(f"We have {len(all_IDs)} objects")
-            #log.info(f"We have {len(all_IDs)} objects")
             for ID in all_IDs:
                 ys, xs = np.nonzero(self.seg == ID)
                 if (len(xs) > 0) & (len(ys) > 0):
@@ -337,6 +346,9 @@ class observation():
         self.simulated_image = np.zeros(self.dims, np.float)
 
         for i in range(len(self.IDs)):
+            #if i != 70:
+            #    continue
+
             if self.cache:
                 self.cached_object[i] = {}
                 self.cached_object[i]['x'] = []
@@ -485,15 +497,33 @@ class observation():
         pars = []  # initialize params for this object
 
         # Loop over all pixels in list for object "c"
+        print("len(xs):", len(self.xs[c]))
         for i in range(len(self.xs[c])):
+
             # Here "i" and "ID" are just indexes into the pixel list for the object
             # being processed, as opposed to the ID number of the object itself
             ID = i
+
+            # xs0, ys0 form a 2x2 grid of pixel indexes surrounding the direct image
+            # pixel index
             xs0 = [self.xs[c][i], self.xs[c][i]+1, self.xs[c][i]+1, self.xs[c][i]]
             ys0 = [self.ys[c][i], self.ys[c][i], self.ys[c][i]+1, self.ys[c][i]+1]
-            lams = np.array(list(self.fs.keys()))  # these are the wavelengths previously stored in flux list
-            flxs = np.array([self.fs[lam][c][i] for lam in self.fs.keys()])  # these are the direct image pixel fluxes
-            ok = flxs != 0  # We avoid any pixel containing pure 0's
+
+            # "lams" is the list of wavelengths previously stored in flux list
+            # and correspond to the central wavelengths of the filters used in
+            # the input direct image(s). For the simple case of 1 combined direct image,
+            # this contains a single value (e.g. 4.44 for F444W).
+            lams = np.array(list(self.fs.keys()))
+            #print("lams:", lams)
+
+            # "flxs" is the list of pixel values ("fluxes") from the direct image(s).
+            # For the simple case of 1 combined direct image, this contains a
+            # a single value (just like "lams").
+            flxs = np.array([self.fs[lam][c][i] for lam in self.fs.keys()])
+            #print("flxs:", flxs)
+
+            # Only include data for pixels with non-zero fluxes
+            ok = flxs != 0
             if len(flxs[ok]) == 0:
                 continue
             flxs = flxs[ok]
@@ -502,19 +532,22 @@ class observation():
             flxs = flxs[ok]  # list of good fluxes for this pixel
             lams = lams[ok]  # list of wavelengths for this pixel
 
+            # Apply POM mask correction to the fluxes
             if self.POM_mask is not None:
                 POM_value = self.POM_mask[self.ys[c][i], self.xs[c][i]]
             else:
                 POM_value = 1.
+            #print("POM_value:", POM_value)
             if POM_value > 1:
-                # print("Applying additional transmission of :",self.xs[c][i],self.ys[c][i],POM_value)
+                print("Applying additional transmission of:", self.xs[c][i], self.ys[c][i], POM_value)
                 trans = self.POM_transmission[POM_value](lams)
                 flxs = flxs * trans
             else:
                 flxs = flxs * POM_value
 
             f = [lams, flxs]
-            pars.append([xs0, ys0, f, self.order, self.Cfg, ID, self.extrapolate_SED, self.xstart, self.ystart])
+            pars.append([xs0, ys0, f, self.order, self.wmin, self.wmax, self.wcs, ID,
+                         self.extrapolate_SED, self.xstart, self.ystart])
             # now have full pars list for all pixels for this object
 
         time1 = time.time()
