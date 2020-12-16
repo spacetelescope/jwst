@@ -81,6 +81,12 @@ extract_1d
 - Fixed bug involving the processing of WFSS observations when there's only
   one spectrum instance for a given source. [#5439]
 
+fits_generator
+--------------
+
+- Addressed deprecated get_children method of XML parser.  Changed type of PATTSIZE from
+  float to string in templates. [#5536]
+
 flatfield
 ---------
 
