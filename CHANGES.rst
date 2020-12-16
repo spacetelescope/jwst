@@ -143,6 +143,7 @@ set_telescope_pointing
 ----------------------
 
 - Add logging of the found quaternion information [#5495]
+- Handle cases where engineering database's pointing mnemonics are all zero over the requested time range [#5540]
 
 skymatch
 --------
