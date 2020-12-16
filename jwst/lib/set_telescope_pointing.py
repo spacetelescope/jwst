@@ -595,8 +595,8 @@ def calc_wcs_over_time(obsstart, obsend, engdb_url=None, tolerance=60, reduce_fu
     try:
         pointings = get_pointing(obsstart, obsend, engdb_url=engdb_url,
                              tolerance=tolerance, reduce_func=reduce_func)
-    except ValueError as exception:
-        logger.warning("Cannot get engineering mnemonics from engineering database")
+    except ValueError:
+        logger.warning("Cannot get valid engineering mnemonics from engineering database")
         raise
     if not isinstance(pointings, list):
         pointings = [pointings]
