@@ -212,7 +212,7 @@ def test_miri_wcs_roundtrip(miri_rate):
 
 @pytest.mark.parametrize("ratio", [0.5, 0.7, 1.0])
 def test_pixel_scale_ratio_spec(miri_rate, ratio):
-    im = AssignWcsStep.call(miri_rate)
+    im = AssignWcsStep.call(miri_rate, sip_approx=False)
     result1 = ResampleSpecStep.call(im)
     result2 = ResampleSpecStep.call(im, pixel_scale_ratio=ratio)
 
@@ -221,7 +221,7 @@ def test_pixel_scale_ratio_spec(miri_rate, ratio):
 
 @pytest.mark.parametrize("ratio", [0.5, 0.7, 1.0])
 def test_pixel_scale_ratio_imaging(nircam_rate, ratio):
-    im = AssignWcsStep.call(nircam_rate)
+    im = AssignWcsStep.call(nircam_rate, sip_approx=False)
     result1 = ResampleStep.call(im)
     result2 = ResampleStep.call(im, pixel_scale_ratio=ratio)
 
@@ -235,3 +235,23 @@ def test_pixel_scale_ratio_imaging(nircam_rate, ratio):
     area1 = result1.meta.photometry.pixelarea_steradians
     area2 = result2.meta.photometry.pixelarea_steradians
     assert_allclose(area1 * ratio**2, area2, rtol=1e-6)
+
+
+def test_sip_coeffs_do_not_propagate(nircam_rate):
+    im = AssignWcsStep.call(nircam_rate, sip_degree=2)
+
+    # Check some SIP keywords produced above
+    assert im.meta.wcsinfo.cd1_1 is not None
+    assert im.meta.wcsinfo.ctype1 == "RA---TAN-SIP"
+
+    # Make sure no PC matrix stuff is there
+    assert im.meta.wcsinfo.pc1_1 is None
+
+    result = ResampleStep.call(im)
+
+    # Verify that SIP-related keywords do not propagate to resampled output
+    assert result.meta.wcsinfo.cd1_1 is None
+    assert result.meta.wcsinfo.ctype1 == "RA---TAN"
+
+    # Make sure we have a PC matrix
+    assert result.meta.wcsinfo.pc1_1 is not None
