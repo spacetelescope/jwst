@@ -78,6 +78,9 @@ datamodels
 - Update Moving Target CHEBY table extension schema for changes to column
   definitions in the JWSTKD and SDP [#5558]
 
+- Update distortion reference file schema to have ``meta.instrument.channel``
+  keyword [#5553]
+
 extract_1d
 ----------
 
