@@ -16,7 +16,8 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-def apply_LG_plus(input_model, filter_model, oversample, rotation):
+def apply_LG_plus(input_model, filter_model, oversample, rotation,
+                  psf_offset_find_rotation, rotsearch_parameters):
     """
     Short Summary
     -------------
@@ -66,9 +67,7 @@ def apply_LG_plus(input_model, filter_model, oversample, rotation):
     #   x0, y0: offsets in pupil space
     mx,my,sx,sy,xo,yo, = (1.0,1.0, 0.0,0.0, 0.0,0.0)
 
-    psf_offset_find_rotation = (0.0,0.0)
     psf_offset_ff = None
-    rotsearch_d = None
 
     lamc = 4.3e-6
     oversample = 11
@@ -78,7 +77,7 @@ def apply_LG_plus(input_model, filter_model, oversample, rotation):
     PIXELSCALE_r = pixelscale_as * arcsec2rad
     holeshape = 'hex'
     filt = "F430M"
-    rotsearch_d = np.arange(-3, 3.1, 1)
+    rotsearch_d = np.arange(rotsearch_parameters[0], rotsearch_parameters[1], rotsearch_parameters[2])
 
     affine2d = find_rotation(data[:,:], psf_offset_find_rotation, rotsearch_d,
                    mx, my, sx, sy, xo, yo,
