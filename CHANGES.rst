@@ -166,6 +166,7 @@ saturation
 - Set saturation threshold to A-to-D limit of 65535 for pixels flagged with
   NO_SAT_CHECK in the saturation reference file, instead of skipping any
   test of those pixels. [#5394]
+- Flag groups values below A/D floor (0 DN) (#5422)
 
 set_telescope_pointing
 ----------------------
