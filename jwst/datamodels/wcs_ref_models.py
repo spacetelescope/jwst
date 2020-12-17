@@ -1,5 +1,7 @@
-import numpy as np
+import traceback
 import warnings
+
+import numpy as np
 from astropy.modeling.core import Model
 from astropy import units as u
 from stdatamodels.validate import ValidationWarning
@@ -74,11 +76,11 @@ class DistortionModel(_SimpleModel):
                 assert self.meta.instrument.module is not None
                 assert self.meta.instrument.channel is not None
                 assert self.meta.instrument.p_pupil is not None
-        except AssertionError as errmsg:
+        except AssertionError:
             if self._strict_validation:
-                raise AssertionError(errmsg)
+                raise
             else:
-                warnings.warn(str(errmsg), ValidationWarning)
+                warnings.warn(traceback.format_exc(), ValidationWarning)
 
 class DistortionMRSModel(ReferenceFileModel):
     """
