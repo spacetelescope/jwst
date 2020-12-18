@@ -455,23 +455,31 @@ def update_wcs_from_telem(
             raise
         else:
             logger.warning(
-                'Cannot retrieve telescope pointing.'
+                'Cannot retrieve valid telescope pointing.'
                 ' Default pointing parameters will be used.'
                 '\nException is {}'.format(exception)
             )
+            logger.info("Setting ENGQLPTG keyword to PLANNED")
+            model.meta.visit.pointing_engdb_quality = "PLANNED"
     else:
         # compute relevant WCS information
         logger.info('Successful read of engineering quaternions:')
         logger.info('\tPointing = {}'.format(pointing))
+        model.meta.visit.pointing_engdb_quality = "CALCULATED"
         try:
             wcsinfo, vinfo = calc_wcs(pointing, siaf, **transform_kwargs)
+            logger.info("Setting ENGQLPTG keyword to CALCULATED")
         except Exception as e:
             logger.warning(
                 'WCS calculation has failed and will be skipped.'
                 'Default pointing parameters will be used.'
                 '\nException is {}'.format(e)
             )
-
+            if not allow_default:
+                raise
+            else:
+                logger.info("Setting ENGQLPTG keyword to PLANNED")
+                model.meta.visit.pointing_engdb_quality = "PLANNED"
     logger.info('Aperture WCS info: {}'.format(wcsinfo))
     logger.info('V1 WCS info: {}'.format(vinfo))
 

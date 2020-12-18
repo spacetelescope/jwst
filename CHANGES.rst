@@ -72,6 +72,8 @@ datamodels
 - Update schemas to include new allowed SUBARRAY values for FGS ASIC tuning
   modes [#5531]
 
+- Add meta.visit.pointing_engdb_quality entry to correspond to ENGQLPTG keyword [#5556]
+
 - Update Moving Target CHEBY table extension schema for changes to column
   definitions in the JWSTKD and SDP [#5558]
 
@@ -178,6 +180,8 @@ set_telescope_pointing
 
 - Add logging of the found quaternion information [#5495]
 - Handle cases where engineering database's pointing mnemonics are all zero over the requested time range [#5540]
+- Set value of keyword ENGQLPTG to CALCULATED or PLANNED depending on whether pointing telemetry was used to
+  update the WCS [#5556]
 
 skymatch
 --------

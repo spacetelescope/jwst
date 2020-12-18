@@ -246,6 +246,12 @@ properties:
             enum: [OK, SUSPECT]
             fits_keyword: ENG_QUAL
             blend_table: True
+          pointing_engdb_quality:
+            title: Quality of pointing information from EngDB
+            type: string
+            enum: [CALCULATED, PLANNED]
+            fits_keyword: ENGQLPTG
+            blend_table: True
           type:
             title: Visit type
             type: string
