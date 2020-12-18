@@ -50,15 +50,15 @@ class _SimpleModel(ReferenceFileModel):
         raise NotImplementedError("FITS format is not supported for this file.")
 
     def validate(self):
-        super(_SimpleModel, self).validate()
+        super().validate()
         try:
             assert isinstance(self.model, Model)
             assert self.meta.instrument.name in ["NIRCAM", "NIRSPEC", "MIRI", "TFI", "FGS", "NIRISS"]
-        except AssertionError as errmsg:
+        except AssertionError:
             if self._strict_validation:
-                raise AssertionError(errmsg)
+                raise
             else:
-                warnings.warn(str(errmsg), ValidationWarning)
+                warnings.warn(traceback.format_exc(), ValidationWarning)
 
 class DistortionModel(_SimpleModel):
     """
@@ -68,7 +68,7 @@ class DistortionModel(_SimpleModel):
     reftype = "distortion"
 
     def validate(self):
-        super(DistortionModel, self).validate()
+        super().validate()
         try:
             assert isinstance(self.meta.input_units, (str, u.NamedUnit))
             assert isinstance(self.meta.output_units, (str, u.NamedUnit))
@@ -92,7 +92,7 @@ class DistortionMRSModel(ReferenceFileModel):
     def __init__(self, init=None, x_model=None, y_model=None, alpha_model=None, beta_model=None,
                  bzero=None, bdel=None, input_units=None, output_units=None, **kwargs):
 
-        super(DistortionMRSModel, self).__init__(init=init, **kwargs)
+        super().__init__(init=init, **kwargs)
 
         if x_model is not None:
             self.x_model = x_model
@@ -129,7 +129,7 @@ class DistortionMRSModel(ReferenceFileModel):
         raise NotImplementedError("FITS format is not supported for this file.")
 
     def validate(self):
-        super(DistortionMRSModel, self).validate()
+        super().validate()
         try:
             assert isinstance(self.meta.input_units, (str, u.NamedUnit))
             assert isinstance(self.meta.output_units, (str, u.NamedUnit))
@@ -144,11 +144,12 @@ class DistortionMRSModel(ReferenceFileModel):
             assert all([isinstance(m, Model) for m in self.beta_model])
             assert len(self.abv2v3_model.model) == 2
             assert len(self.abv2v3_model.channel_band) == 2
-        except AssertionError as errmsg:
+        except AssertionError:
             if self._strict_validation:
-                raise AssertionError(errmsg)
+                raise
             else:
-                warnings.warn(str(errmsg), ValidationWarning)
+                warnings.warn(traceback.format_exc(), ValidationWarning)
+
 
 class SpecwcsModel(_SimpleModel):
     """
@@ -164,7 +165,7 @@ class SpecwcsModel(_SimpleModel):
     reftype = "specwcs"
 
     def validate(self):
-        super(SpecwcsModel, self).validate()
+        super().validate()
         try:
             assert isinstance(self.meta.input_units, (str, u.NamedUnit))
             assert isinstance(self.meta.output_units, (str, u.NamedUnit))
@@ -174,11 +175,12 @@ class SpecwcsModel(_SimpleModel):
                                                  "TFI",
                                                  "FGS",
                                                  "NIRISS"]
-        except AssertionError as errmsg:
+        except AssertionError:
             if self._strict_validation:
-                raise AssertionError(errmsg)
+                raise
             else:
-                warnings.warn(str(errmsg), ValidationWarning)
+                warnings.warn(traceback.format_exc(), ValidationWarning)
+
 
 class NIRCAMGrismModel(ReferenceFileModel):
     """
@@ -218,7 +220,7 @@ class NIRCAMGrismModel(ReferenceFileModel):
                        invdispy=None,
                        orders=None,
                        **kwargs):
-        super(NIRCAMGrismModel, self).__init__(init=init, **kwargs)
+        super().__init__(init=init, **kwargs)
 
         if init is None:
             self.populate_meta()
@@ -243,18 +245,18 @@ class NIRCAMGrismModel(ReferenceFileModel):
         self.meta.reftype = self.reftype
 
     def validate(self):
-        super(NIRCAMGrismModel, self).validate()
+        super().validate()
         try:
             assert isinstance(self.meta.input_units, (str, u.NamedUnit))
             assert isinstance(self.meta.output_units, (str, u.NamedUnit))
             assert self.meta.instrument.name == "NIRCAM"
             assert self.meta.exposure.type == "NRC_WFSS"
             assert self.meta.reftype == self.reftype
-        except AssertionError as errmsg:
+        except AssertionError:
             if self._strict_validation:
-                raise AssertionError(errmsg)
+                raise
             else:
-                warnings.warn(str(errmsg), ValidationWarning)
+                warnings.warn(traceback.format_exc(), ValidationWarning)
 
     def to_fits(self):
         raise NotImplementedError("FITS format is not supported for this file.")
@@ -295,7 +297,7 @@ class NIRISSGrismModel(ReferenceFileModel):
                        orders=None,
                        fwcpos_ref=None,
                        **kwargs):
-        super(NIRISSGrismModel, self).__init__(init=init, **kwargs)
+        super().__init__(init=init, **kwargs)
 
         if init is None:
             self.populate_meta()
@@ -327,11 +329,11 @@ class NIRISSGrismModel(ReferenceFileModel):
             assert self.meta.exposure.type == "NIS_WFSS"
             assert self.meta.instrument.detector == "NIS"
             assert self.meta.reftype == self.reftype
-        except AssertionError as errmsg:
+        except AssertionError:
             if self._strict_validation:
-                raise AssertionError(errmsg)
+                raise
             else:
-                warnings.warn(str(errmsg), ValidationWarning)
+                warnings.warn(traceback.format_exc(), ValidationWarning)
 
     def to_fits(self):
         raise NotImplementedError("FITS format is not supported for this file.")
@@ -345,7 +347,7 @@ class RegionsModel(ReferenceFileModel):
     reftype = "regions"
 
     def __init__(self, init=None, regions=None, **kwargs):
-        super(RegionsModel, self).__init__(init=init, **kwargs)
+        super().__init__(init=init, **kwargs)
         if regions is not None:
             self.regions = regions
         if init is None:
@@ -362,7 +364,7 @@ class RegionsModel(ReferenceFileModel):
         raise NotImplementedError("FITS format is not supported for this file.")
 
     def validate(self):
-        super(RegionsModel, self).validate()
+        super().validate()
         try:
             assert isinstance(self.regions, np.ndarray)
             assert self.meta.instrument.name == "MIRI"
@@ -370,11 +372,11 @@ class RegionsModel(ReferenceFileModel):
             assert self.meta.instrument.channel in ("12", "34", "1", "2", "3", "4")
             assert self.meta.instrument.band in ("SHORT", "LONG")
             assert self.meta.instrument.detector in ("MIRIFUSHORT", "MIRIFULONG")
-        except AssertionError as errmsg:
+        except AssertionError:
             if self._strict_validation:
-                raise AssertionError(errmsg)
+                raise
             else:
-                warnings.warn(str(errmsg), ValidationWarning)
+                warnings.warn(traceback.format_exc(), ValidationWarning)
 
 
 class WavelengthrangeModel(ReferenceFileModel):
@@ -402,7 +404,7 @@ class WavelengthrangeModel(ReferenceFileModel):
     def __init__(self, init=None, wrange_selector=None, wrange=None,
                  order=None, extract_orders=None, wunits=None, **kwargs):
 
-        super(WavelengthrangeModel, self).__init__(init=init, **kwargs)
+        super().__init__(init=init, **kwargs)
         if wrange_selector is not None:
             self.waverange_selector = wrange_selector
         if wrange is not None:
@@ -421,14 +423,14 @@ class WavelengthrangeModel(ReferenceFileModel):
         raise NotImplementedError("FITS format is not supported for this file")
 
     def validate(self):
-        super(WavelengthrangeModel, self).validate()
+        super().validate()
         try:
             assert self.meta.instrument.name in ("MIRI", "NIRSPEC", "NIRCAM", "NIRISS")
-        except AssertionError as errmsg:
+        except AssertionError:
             if self._strict_validation:
-                raise AssertionError(errmsg)
+                raise
             else:
-                warnings.warn(str(errmsg), ValidationWarning)
+                warnings.warn(traceback.format_exc(), ValidationWarning)
 
     def get_wfss_wavelength_range(self, filter, orders):
         """ Retrieve the wavelength range for a WFSS observation.
@@ -461,7 +463,7 @@ class FPAModel(ReferenceFileModel):
 
     def __init__(self, init=None, nrs1_model=None, nrs2_model=None, **kwargs):
 
-        super(FPAModel, self).__init__(init=init, **kwargs)
+        super().__init__(init=init, **kwargs)
         if nrs1_model is not None:
             self.nrs1_model = nrs1_model
         if nrs2_model is not None:
@@ -484,15 +486,15 @@ class FPAModel(ReferenceFileModel):
         raise NotImplementedError("FITS format is not supported for this file.")
 
     def validate(self):
-        super(FPAModel, self).validate()
+        super().validate()
         try:
             assert isinstance(self.nrs1_model, Model)
             assert isinstance(self.nrs2_model, Model)
-        except AssertionError as errmsg:
+        except AssertionError:
             if self._strict_validation:
-                raise AssertionError(errmsg)
+                raise
             else:
-                warnings.warn(str(errmsg), ValidationWarning)
+                warnings.warn(traceback.format_exc(), ValidationWarning)
 
 
 class IFUPostModel(ReferenceFileModel):
@@ -519,7 +521,7 @@ class IFUPostModel(ReferenceFileModel):
 
     def __init__(self, init=None, slice_models=None, **kwargs):
 
-        super(IFUPostModel, self).__init__(init=init, **kwargs)
+        super().__init__(init=init, **kwargs)
         if slice_models is not None:
             if len(slice_models) != 30:
                 raise ValueError("Expected 30 slice models, got {0}".format(len(slice_models)))
@@ -542,7 +544,7 @@ class IFUPostModel(ReferenceFileModel):
         raise NotImplementedError("FITS format is not supported for this file.")
 
     def validate(self):
-        super(IFUPostModel, self).validate()
+        super().validate()
 
 
 class IFUSlicerModel(ReferenceFileModel):
@@ -554,7 +556,7 @@ class IFUSlicerModel(ReferenceFileModel):
 
     def __init__(self, init=None, model=None, data=None, **kwargs):
 
-        super(IFUSlicerModel, self).__init__(init=init, **kwargs)
+        super().__init__(init=init, **kwargs)
         if model is not None:
             self.model = model
         if data is not None:
@@ -575,7 +577,7 @@ class IFUSlicerModel(ReferenceFileModel):
         raise NotImplementedError("FITS format is not supported for this file.")
 
     def validate(self):
-        super(IFUSlicerModel, self).validate()
+        super().validate()
 
 
 class MSAModel(ReferenceFileModel):
@@ -586,7 +588,7 @@ class MSAModel(ReferenceFileModel):
     reftype = "msa"
 
     def __init__(self, init=None, models=None, data=None, **kwargs):
-        super(MSAModel, self).__init__(init=init, **kwargs)
+        super().__init__(init=init, **kwargs)
         if models is not None and data is not None:
             self.Q1 = {'model': models['Q1'], 'data': data['Q1']}
             self.Q2 = {'model': models['Q2'], 'data': data['Q2']}
@@ -611,7 +613,7 @@ class MSAModel(ReferenceFileModel):
         raise NotImplementedError("FITS format is not supported for this file.")
 
     def validate(self):
-        super(MSAModel, self).validate()
+        super().validate()
 
 
 class DisperserModel(ReferenceFileModel):
@@ -625,7 +627,7 @@ class DisperserModel(ReferenceFileModel):
                  kcoef=None, lcoef=None, tcoef=None, pref=None, tref=None,
                  theta_x=None, theta_y=None,theta_z=None,
                  groovedensity=None, **kwargs):
-        super(DisperserModel, self).__init__(init=init, **kwargs)
+        super().__init__(init=init, **kwargs)
         if groovedensity is not None:
             self.groovedensity = groovedensity
         if angle is not None:
@@ -672,15 +674,15 @@ class DisperserModel(ReferenceFileModel):
         raise NotImplementedError("FITS format is not supported for this file.")
 
     def validate(self):
-        super(DisperserModel, self).validate()
+        super().validate()
         try:
             assert self.meta.instrument.grating in ["G140H", "G140M", "G235H", "G235M",
                                                     "G395H", "G395M", "MIRROR", "PRISM"]
-        except AssertionError as errmsg:
+        except AssertionError:
             if self._strict_validation:
-                raise AssertionError(errmsg)
+                raise
             else:
-                warnings.warn(str(errmsg), ValidationWarning)
+                warnings.warn(traceback.format_exc(), ValidationWarning)
 
 
 class FilteroffsetModel(ReferenceFileModel):
@@ -691,7 +693,7 @@ class FilteroffsetModel(ReferenceFileModel):
     reftype = "filteroffset"
 
     def __init__(self, init=None, filters=None, instrument=None, **kwargs):
-        super(FilteroffsetModel, self).__init__(init, **kwargs)
+        super().__init__(init, **kwargs)
         if filters is not None:
             self.filters = filters
             if instrument is None or instrument not in ("NIRCAM", "MIRI", "NIRISS"):
@@ -714,7 +716,7 @@ class FilteroffsetModel(ReferenceFileModel):
             raise ValueError(f"Unsupported instrument: {self.meta.instrument.name}")
 
     def validate(self):
-        super(FilteroffsetModel, self).validate()
+        super().validate()
 
         instrument_name = self.meta.instrument.name
         nircam_channels = ["SHORT", "LONG"]
@@ -811,15 +813,15 @@ class FOREModel(_SimpleModel):
         self.meta.reftype = self.reftype
 
     def validate(self):
-        super(FOREModel, self).validate()
+        super().validate()
         try:
             assert self.meta.instrument.filter in ["CLEAR", "F070LP", "F100LP", "F110W",
                                                    "F140X", "F170LP", "F290LP"]
-        except AssertionError as errmsg:
+        except AssertionError:
             if self._strict_validation:
-                raise AssertionError(errmsg)
+                raise
             else:
-                warnings.warn(str(errmsg), ValidationWarning)
+                warnings.warn(traceback.format_exc(), ValidationWarning)
 
 
 class WaveCorrModel(ReferenceFileModel):
@@ -828,7 +830,7 @@ class WaveCorrModel(ReferenceFileModel):
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/wavecorr.schema"
 
     def __init__(self, init=None, apertures=None, **kwargs):
-        super(WaveCorrModel, self).__init__(init, **kwargs)
+        super().__init__(init, **kwargs)
         if apertures is not None:
             self.apertures = apertures
         if init is None:
@@ -845,12 +847,12 @@ class WaveCorrModel(ReferenceFileModel):
         self.meta.reftype = self.reftype
 
     def validate(self):
-        super(WaveCorrModel, self).validate()
+        super().validate()
         try:
             assert self.aperture_names is not None
             assert self.apertures is not None
-        except AssertionError as errmsg:
+        except AssertionError:
             if self._strict_validation:
-                raise AssertionError(errmsg)
+                raise
             else:
-                warnings.warn(str(errmsg), ValidationWarning)
+                warnings.warn(traceback.format_exc(), ValidationWarning)
