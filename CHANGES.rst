@@ -3,6 +3,7 @@
 
 ami
 ---
+- Update code to use two new input parameters: psf_offset,rotation_search [#5548]
 
 - Update code and unit tests to use new ami_analyze algorithms [#5390]
 
