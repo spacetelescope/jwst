@@ -19,6 +19,8 @@ assign_wcs
 
 - Fix bug where subarray bounding boxes were 1 pixel too small. [#5543]
 
+- Mark Nirspec slits which project on less than one pixel as invalid. [#5554]
+
 associations
 ------------
 
@@ -71,6 +73,9 @@ datamodels
   modes [#5531]
 
 - Add meta.visit.pointing_engdb_quality entry to correspond to ENGQLPTG keyword [#5556]
+
+- Update Moving Target CHEBY table extension schema for changes to column
+  definitions in the JWSTKD and SDP [#5558]
 
 extract_1d
 ----------

@@ -1599,7 +1599,9 @@ def validate_open_slits(input_model, open_slits, reference_files):
     def _is_valid_slit(domain):
         xlow, xhigh = domain[0]
         ylow, yhigh = domain[1]
-        if xlow >= 2048 or ylow >= 2048 or xhigh <= 0 or yhigh <= 0:
+        if (xlow >= 2048 or ylow >= 2048 or
+            xhigh <= 0 or yhigh <= 0 or
+            xhigh - xlow < 1  or yhigh - ylow < 1):
             return False
         else:
             return True
