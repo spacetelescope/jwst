@@ -11,8 +11,8 @@ class AmiAnalyzeStep(Step):
     spec = """
         oversample = integer(default=3, min=1)  # Oversampling factor
         rotation = float(default=0.0)           # Rotation initial guess [deg]
-        set_psf_offset_find_rotation = string(default='0.0 0.0') # Psf offset values to use to create the model array
-        set_rotsearch_d = string(default='-3 3.1 1.') # Set of values to use for the rotation search
+        psf_offset = string(default='0.0 0.0') # Psf offset values to use to create the model array
+        rotation_search = string(default='-3 3.1 1.') # Set of values to use for the rotation search
     """
 
     reference_file_types = ['throughput']
@@ -36,15 +36,12 @@ class AmiAnalyzeStep(Step):
         rotate = self.rotation
 
         # pull out parameters that are strings and change to floats
-
-        psf_offset = self.set_psf_offset_find_rotation.split(' ')
-        psf_offset_find_rotation = (float(psf_offset[0]), float(psf_offset[1]))
-        rotsearch = self.set_rotsearch_d.split(' ')
-        rotsearch_parameters= [float(rotsearch[0]), float(rotsearch[1]), float(rotsearch[2])]
+        psf_offset = [float(a) for a in self.psf_offset.split()]
+        rotsearch_parameters = [float(a) for a in self.rotation_search.split()]
 
         self.log.info(f'Oversampling factor =  {oversample}')
         self.log.info(f'Initial rotation guess = {rotate} deg')
-        self.log.info(f'Initial values to use for psf offset = {psf_offset_find_rotation}')
+        self.log.info(f'Initial values to use for psf offset = {psf_offset}')
         self.log.info(f'Initial values to use for rotation search {rotsearch_parameters}')
 
         # Open the input data model
@@ -71,7 +68,7 @@ class AmiAnalyzeStep(Step):
 
                 result = ami_analyze.apply_LG_plus(input_model, throughput_model,
                                                    oversample, rotate,
-                                                   psf_offset_find_rotation,
+                                                   psf_offset,
                                                    rotsearch_parameters)
 
                 # Close the reference file and update the step status

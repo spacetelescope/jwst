@@ -17,7 +17,7 @@ log.addHandler(logging.NullHandler())
 
 
 def apply_LG_plus(input_model, filter_model, oversample, rotation,
-                  psf_offset_find_rotation, rotsearch_parameters):
+                  psf_offset, rotsearch_parameters):
     """
     Short Summary
     -------------
@@ -79,7 +79,7 @@ def apply_LG_plus(input_model, filter_model, oversample, rotation,
     filt = "F430M"
     rotsearch_d = np.arange(rotsearch_parameters[0], rotsearch_parameters[1], rotsearch_parameters[2])
 
-    affine2d = find_rotation(data[:,:], psf_offset_find_rotation, rotsearch_d,
+    affine2d = find_rotation(data[:,:], psf_offset, rotsearch_d,
                    mx, my, sx, sy, xo, yo,
                    PIXELSCALE_r, dim, bandpass, oversample, holeshape)
 
