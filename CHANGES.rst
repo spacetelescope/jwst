@@ -72,6 +72,9 @@ datamodels
 - Update schemas to include new allowed SUBARRAY values for FGS ASIC tuning
   modes [#5531]
 
+- Update Moving Target CHEBY table extension schema for changes to column
+  definitions in the JWSTKD and SDP [#5558]
+
 extract_1d
 ----------
 
