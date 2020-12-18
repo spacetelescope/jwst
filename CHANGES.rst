@@ -19,6 +19,8 @@ assign_wcs
 
 - Fix bug where subarray bounding boxes were 1 pixel too small. [#5543]
 
+- Mark Nirspec slits which project on less than one pixel as invalid. [#5554]
+
 associations
 ------------
 
