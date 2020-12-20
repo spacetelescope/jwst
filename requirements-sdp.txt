@@ -19,7 +19,7 @@ drizzle==1.13.1
 execnet==1.7.1
 filelock==3.0.12
 flake8==3.8.4
-gwcs==0.16.0
+gwcs==0.16.1
 idna==2.10
 iniconfig==1.1.1
 jsonschema==3.2.0
