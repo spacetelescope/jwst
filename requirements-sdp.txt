@@ -12,7 +12,7 @@ chardet==3.0.4
 ci-watson==0.5
 codecov==2.1.10
 coverage==5.3
-crds==10.2
+crds==10.3.1
 cycler==0.10.0
 Cython==0.29.21
 drizzle==1.13.1
