@@ -1,7 +1,7 @@
 os: linux
 dist: xenial
 language: python
-python: 3.8.6
+python: 3.9.0
 
 env:
   global:
@@ -20,18 +20,15 @@ jobs:
   fast_finish: true
 
   include:
-    - name: Python 3.9
-      python: 3.9.0
-      env: TOXENV=py39
-
     - name: Latest dependency versions w/coverage
-      env: TOXENV=test-cov-report
+      env: TOXENV=py39-cov-report
 
     - name: Oldest dependency versions
       python: 3.7.9
       env: TOXENV=py37-oldestdeps-cov-report
 
     - name: SDP dependencies in requirements-sdp.txt
+      python: 3.8.6
       env:
         - CRDS_CONTEXT=jwst-edit
         - TOXENV=sdpdeps
