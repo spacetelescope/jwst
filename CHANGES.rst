@@ -1,7 +1,11 @@
 0.18.1 (unreleased)
 ===================
 
+skymatch
+--------
 
+- Fixed a bug due to which sky matching may fail under certain circumstances
+  such as using 'mode' statistics on a single pixel (after sigma-clipping). [#5567]
 
 
 0.18.0 (2020-12-21)
