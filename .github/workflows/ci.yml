@@ -1,0 +1,137 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - '*'
+  pull_request:
+
+env:
+  CRDS_SERVER_URL: https://jwst-crds.stsci.edu
+  CRDS_PATH: /tmp/crds_cache
+  CRDS_CLIENT_RETRY_COUNT: 3
+  CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
+
+jobs:
+  tox:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Latest dependency versions w/coverage
+            runs-on: ubuntu-latest
+            python-version: 3.9
+            toxenv: py39-cov-report
+
+          - name: Oldest dependency versions
+            runs-on: ubuntu-latest
+            python-version: 3.7
+            toxenv: py37-oldestdeps-cov-report
+
+          - name: SDP dependencies in requirements-sdp.txt
+            runs-on: ubuntu-latest
+            python-version: 3.8
+            toxenv: sdpdeps
+            env:
+              CRDS_CONTEXT: jwst-edit
+
+          - name: Verify install_requires in setup.py
+            runs-on: ubuntu-latest
+            python-version: 3.9
+            toxenv: verify-install-requires
+
+          - name: Build distribution
+            runs-on: ubuntu-latest
+            python-version: 3.9
+            toxenv: twine
+
+          - name: Code style check
+            runs-on: ubuntu-latest
+            python-version: 3.9
+            toxenv: style
+
+          - name: Security audit
+            runs-on: ubuntu-latest
+            python-version: 3.9
+            toxenv: security
+
+          - name: macOS
+            runs-on: macos-latest
+            python-version: 3.9
+            toxenv: py39
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install tox
+        run: |
+          python -m pip install --upgrade pip
+          pip install tox
+      - name: Run tox
+        run: tox -e ${{ matrix.toxenv }}
+
+  # Kept in a separate job because it needs extra system dependencies
+  # that can't be installed by tox.
+  build-docs:
+    name: Build documentation and check warnings
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install system packages
+        run: |
+          sudo apt-get install graphviz texlive-latex-extra dvipng
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Install tox
+        run: |
+          python -m pip install --upgrade pip
+          pip install tox
+      - name: Run tox
+        run: tox -e docs
+
+  # A matrix of jobs with allowed failures
+  allowed_failures:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: (Allowed Failure) Dev dependencies in requirements-dev.txt
+            runs-on: ubuntu-latest
+            python-version: 3.9
+            toxenv: devdeps
+
+          - name: (Allowed Failure) Warnings treated as Exceptions
+            runs-on: ubuntu-latest
+            python-version: 3.9
+            toxenv: warnings
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install tox
+        run: |
+          python -m pip install --upgrade pip
+          pip install tox
+      - name: Run tox
+        run: tox -e ${{ matrix.toxenv }}
