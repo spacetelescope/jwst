@@ -107,17 +107,20 @@ jobs:
   allowed_failures:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.runs-on }}
+    continue-on-error: ${{ matrix.allowed-failure }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - name: (Allowed Failure) Dev dependencies in requirements-dev.txt
             runs-on: ubuntu-latest
+            allowed-failure: true
             python-version: 3.9
             toxenv: devdeps
 
           - name: (Allowed Failure) Warnings treated as Exceptions
             runs-on: ubuntu-latest
+            allowed-failure: true
             python-version: 3.9
             toxenv: warnings
     steps:
