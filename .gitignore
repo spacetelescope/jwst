@@ -16,8 +16,6 @@ docs/fits_generator/source/templates.rst
 docs/jwst_git/
 docs/_build/
 docs/api/
-RELIC-INFO
-relic/
 *.wpr
 *wpu
 .pytest_cache
@@ -35,3 +33,5 @@ scripts/launch.json
 */.ipynb_checkpoints/*.ipynb
 htmlcov
 requirements-min.txt
+.tox/
+.tmp/
