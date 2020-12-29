@@ -90,9 +90,9 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/crds_cache
-          key: crds_cache
+          key: crds_cache-v1
           restore-keys: |
-            crds_cache
+            crds_cache-v1
       - name: Install tox
         run: |
           pip install tox
