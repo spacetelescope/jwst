@@ -95,7 +95,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/crds_cache
-          key: crds-cache-${{ matrix.toxenv }}-${{ steps.crds-context.outputs.pmap }}
+          key: crds-${{ matrix.toxenv }}-${{ steps.crds-context.outputs.pmap }}
       - name: Install tox
         run: |
           pip install tox
