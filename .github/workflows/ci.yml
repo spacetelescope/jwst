@@ -10,7 +10,7 @@ on:
 
 env:
   CRDS_SERVER_URL: https://jwst-crds.stsci.edu
-  CRDS_PATH: ~/crds_cache
+  CRDS_PATH: /tmp/crds_cache
   CRDS_CLIENT_RETRY_COUNT: 3
   CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
 
@@ -83,16 +83,19 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
-          key: ${{ runner.os }}-pip-${{ hashFiles('setup.cfg') }}-${{ hashFiles('**/requirement-sdp.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('setup.cfg') }}-${{ hashFiles('**/requirements-sdp.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
+      - name: Get CRDS context
+        id: crds-context
+        run: |
+          pip install crds
+          echo "::set-output name=pmap::$(crds list --resolve-contexts --contexts)"
       - name: CRDS cache
         uses: actions/cache@v2
         with:
-          path: ~/crds_cache
-          key: crds_cache-v1
-          restore-keys: |
-            crds_cache-v1
+          path: /tmp/crds_cache
+          key: crds-cache-${{ matrix.toxenv }}-${{ steps.crds-context.outputs.pmap }}
       - name: Install tox
         run: |
           pip install tox
@@ -127,7 +130,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
-          key: ${{ runner.os }}-pip-${{ hashFiles('setup.cfg') }}-${{ hashFiles('**/requirement-sdp.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('setup.cfg') }}-${{ hashFiles('**/requirements-sdp.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
       - name: Install tox
