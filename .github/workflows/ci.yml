@@ -90,7 +90,7 @@ jobs:
         id: crds-context
         run: |
           pip install crds
-          echo "::set-output name=pmap::$(crds list --resolve-contexts --contexts)"
+          echo "::set-output name=pmap::$(crds list --resolve-contexts --contexts | cut -f 1 -d ".")"
       - name: Restore CRDS cache
         uses: actions/cache@v2
         with:
