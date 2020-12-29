@@ -8,7 +8,8 @@ dist/
 *.pyc
 *.egg-info/
 *.so
-.coverage
+.coverage*
+coverage*
 */version.py
 docs/*/source/*.txt.rst
 docs/generated
