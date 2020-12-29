@@ -10,7 +10,7 @@ on:
 
 env:
   CRDS_SERVER_URL: https://jwst-crds.stsci.edu
-  CRDS_PATH: /tmp/crds_cache
+  CRDS_PATH: ~/crds_cache
   CRDS_CLIENT_RETRY_COUNT: 3
   CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
 
@@ -89,7 +89,7 @@ jobs:
       - name: CRDS cache
         uses: actions/cache@v2
         with:
-          path: /tmp/crds_cache
+          path: ~/crds_cache
           key: crds_cache
           restore-keys: |
             crds_cache
