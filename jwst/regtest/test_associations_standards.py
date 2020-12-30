@@ -80,6 +80,7 @@ standards = [
     MakePars('pool_026_mir_image_tso'),
     MakePars('pool_027_nirspec_ifu_nods'),
     MakePars('pool_028_mir_lrsfs_nods'),
+    MakePars('pool_029_mir_lrsfs_nonod'),
 ]
 
 
