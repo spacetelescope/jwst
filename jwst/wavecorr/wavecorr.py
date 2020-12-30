@@ -102,6 +102,8 @@ def apply_zero_point_correction(slit, reffile):
                                                  aperture_name, dispersion)
     ## TODO: set a DQ flag to a TBD value for pixels where dq_lam == 0.
     ## The only purpose of dq_lam is to set that flag.
+    
+    # Wavelength is in um, the correction is computed in meters.
     slit.wavelength = lam - corr * 10 ** 6
 
 
