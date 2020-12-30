@@ -362,6 +362,11 @@ class Asn_Lv2MIRLRSFixedSlitNod(
                 sources=['patttype'],
                 value=['along-slit-nod'],
             ),
+            SimpleConstraint(
+                value=True,
+                test=lambda value, item: self.acid.type != 'background',
+                force_unique=False
+            ),
             Constraint(
                 [
                     Constraint(
