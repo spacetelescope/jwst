@@ -39,6 +39,11 @@ jobs:
             env:
               CRDS_CONTEXT: jwst-edit
 
+          - name: Installed package with --pyargs
+            os: ubuntu-latest
+            python-version: 3.9
+            toxenv: pyargs
+
           - name: Verify install_requires in setup.py
             os: ubuntu-latest
             python-version: 3.9
