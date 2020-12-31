@@ -1,6 +1,14 @@
 0.18.1 (unreleased)
 ===================
 
+pipeline
+--------
+
+- Removed all unnecessary parameter settings from cfg files for all steps
+  and pipelines, and removed references to step config files from most
+  pipeline modules (only kept those that are necessary for intended
+  functionality). [#5574]
+
 skymatch
 --------
 
