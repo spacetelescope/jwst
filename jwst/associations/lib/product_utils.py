@@ -4,7 +4,7 @@ from collections import defaultdict, Counter
 import copy
 import logging
 
-from .diff import compare_membership
+from .diff import compare_product_membership
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -81,24 +81,23 @@ def prune_duplicate_associations(asns):
     pruned: [Association[,...]]
         Pruned list of associations
     """
-    asns = sort_by_candidate(asns)
+    ordered_asns = sort_by_candidate(asns)
     pruned = list()
-    breakpoint()
     while True:
         try:
-            original = asns.pop()
+            original = ordered_asns.pop()
         except IndexError:
             break
         pruned.append(original)
         to_prune = list()
-        for asn in asns:
+        for asn in ordered_asns:
             try:
-                compare_membership(original, asn)
-            except AssertionError as exception:
+                compare_product_membership(original['products'][0], asn['products'][0])
+            except AssertionError:
                 continue
             to_prune.append(asn)
         for prune in to_prune:
-            asn.remove(prune)
+            ordered_asns.remove(prune)
 
     return pruned
 
