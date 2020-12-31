@@ -73,6 +73,11 @@ jobs:
             os: macos-latest
             python-version: 3.9
             toxenv: py39
+
+          - name: Windows
+            os: windows-latest
+            python-version: 3.9
+            toxenv: py39
     steps:
       - name: Install system packages
         if: ${{ contains(matrix.toxenv,'docs') }}
