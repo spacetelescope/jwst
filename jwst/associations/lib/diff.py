@@ -303,10 +303,10 @@ def compare_product_membership(left, right):
     if len(right['members']) != len(left['members']):
         diffs.append(MemberMismatchError(
             'Product Member length differs:'
-            ' Left Product #{left_idx} len {left_len} !=  '
-            ' Right Product #{right_idx} len {right_len}'
-            ''.format(left_idx=left_idx, left_len=len(left['members']),
-                      right_idx=right_idx, right_len=len(right['members']))
+            ' Left Product {left_product_name} len {left_len} !=  '
+            ' Right Product {right_product_name} len {right_len}'
+            ''.format(left_product_name=left['name'], left_len=len(left['members']),
+                      right_product_name=right['name'], right_len=len(right['members']))
         ))
 
     members_right = copy(right['members'])
