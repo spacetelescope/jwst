@@ -64,21 +64,11 @@ jobs:
             python-version: 3.9
             toxenv: security
 
-          - name: Build documentation and check warnings
-            os: ubuntu-latest
-            python-version: 3.9
-            toxenv: docs
-
           - name: macOS
             os: macos-latest
             python-version: 3.9
             toxenv: py39
     steps:
-      - name: Install system packages
-        if: ${{ contains(matrix.toxenv,'docs') }}
-        run: |
-          sudo apt-get install graphviz texlive-latex-extra dvipng
-
       - name: Checkout code
         uses: actions/checkout@v2
         with:
