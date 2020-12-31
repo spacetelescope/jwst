@@ -233,7 +233,7 @@ class Asn_Lv2Spec(
             Constraint_Base(),
             Constraint_Mode(),
             Constraint_Spectral_Science(
-                exclude_exp_types=['nis_wfss', 'nrc_wfss', 'nrs_msaspec']
+                exclude_exp_types=['nis_wfss', 'nrc_wfss', 'nrs_fixedslit', 'nrs_msaspec']
             ),
             Constraint(
                 [
