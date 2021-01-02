@@ -72,6 +72,7 @@ class Image2Pipeline(Pipeline):
             if isinstance(result, datamodels.CubeModel):
                 suffix = 'calints'
             result.meta.filename = self.make_output_path(suffix=suffix)
+            result.meta.filetype = 'calibrated'
             results.append(result)
 
         self.log.info('... ending calwebb_image2')

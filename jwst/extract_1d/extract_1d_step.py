@@ -159,6 +159,7 @@ class Extract1dStep(Step):
                     )
                     # Set the step flag to complete
                     result.meta.cal_step.extract_1d = 'COMPLETE'
+                    result.meta.filetype = '1d spectrum'
 
                 else:
 
@@ -193,6 +194,7 @@ class Extract1dStep(Step):
                         )
                         # Set the step flag to complete in each MultiSpecModel
                         temp.meta.cal_step.extract_1d = 'COMPLETE'
+                        temp.meta.filetype = '1d spectrum'
                         result.append(temp)
                         del temp
 
@@ -228,6 +230,7 @@ class Extract1dStep(Step):
 
                 # Set the step flag to complete
                 result.meta.cal_step.extract_1d = 'COMPLETE'
+                result.meta.filetype = '1d spectrum'
             else:
                 self.log.error('Input model is empty;')
                 self.log.error('extract_1d will be skipped.')
@@ -268,6 +271,7 @@ class Extract1dStep(Step):
 
             # Set the step flag to complete
             result.meta.cal_step.extract_1d = 'COMPLETE'
+            result.meta.filetype = '1d spectrum'
 
         input_model.close()
 
