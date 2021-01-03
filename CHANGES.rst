@@ -20,6 +20,8 @@ assign_wcs
 associations
 ------------
 
+- Update MIRI LRS-Fixedslit ALONG-SLIT-NOD backgrounds strategies [#5584]
+
 - Add new dither keyword subpxpts to constraints [#5525]
 
 - Add further constraints to rule Asn_Lv2NRSLAMPSpectral such that associations
