@@ -15,6 +15,9 @@ skymatch
 - Fixed a bug due to which sky matching may fail under certain circumstances
   such as using 'mode' statistics on a single pixel (after sigma-clipping). [#5567]
 
+wavecorr
+--------
+- Fixed bugs in wavecorr. [#5570]
 
 0.18.0 (2020-12-21)
 ===================
