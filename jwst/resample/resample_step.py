@@ -85,6 +85,7 @@ class ResampleStep(Step):
             if hasattr(model.meta, "bunit_err") and model.meta.bunit_err is not None:
                 del model.meta.bunit_err
             self.update_phot_keywords(model)
+            model.meta.filetype = 'resampled'
 
         if len(resamp.output_models) == 1:
             result = resamp.output_models[0]

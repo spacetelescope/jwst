@@ -354,7 +354,8 @@ class CubeBuildStep (Step):
         for cube in cube_container:
             footprint = cube.meta.wcs.footprint(axis_type="spatial")
             update_s_region_keyword(cube, footprint)
-        if status_cube ==1:
+            cube.meta.filetype = '3d ifu cube'
+        if status_cube == 1:
             self.skip = True
 
         return cube_container

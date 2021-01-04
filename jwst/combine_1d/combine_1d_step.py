@@ -24,5 +24,6 @@ class Combine1dStep(Step):
         with datamodels.open(input_file) as input_model:
             result = combine1d.combine_1d_spectra(input_model,
                                                   self.exptime_key)
+        result.meta.filetype = '1d combined spectrum'
 
         return result

@@ -43,6 +43,7 @@ __all__ = [
     '_EMPTY',
     'ASN_SCHEMA',
     'AsnMixin_Lv2Image',
+    'AsnMixin_Lv2Nod',
     'AsnMixin_Lv2Special',
     'AsnMixin_Lv2Spectral',
     'Constraint_Base',
@@ -695,6 +696,23 @@ class Constraint_Base(Constraint):
         ])
 
 
+class Constraint_ExtCal(Constraint):
+    """Remove any nis_extcals from the associations, they
+       are NOT to receive level-2b or level-3 processing!"""
+
+    def __init__(self):
+        super(Constraint_ExtCal, self).__init__(
+            [
+                DMSAttrConstraint(
+                    name='exp_type',
+                    sources=['exp_type'],
+                    value='nis_extcal'
+                )
+            ],
+            reduce=Constraint.notany
+        )
+
+
 class Constraint_Mode(Constraint):
     """Select on instrument and optical path"""
     def __init__(self):
@@ -883,22 +901,6 @@ class Constraint_Target(DMSAttrConstraint):
             sources=['targetid'],
         )
 
-class Constraint_ExtCal(Constraint):
-    """Remove any nis_extcals from the associations, they
-       are NOT to receive level-2b or level-3 processing!"""
-
-    def __init__(self):
-        super(Constraint_ExtCal, self).__init__(
-            [
-                DMSAttrConstraint(
-                    name='exp_type',
-                    sources=['exp_type'],
-                    value='nis_extcal'
-                )
-            ],
-            reduce=Constraint.notany
-        )
-
 # ---------------------------------------------
 # Mixins to define the broad category of rules.
 # ---------------------------------------------
@@ -912,14 +914,38 @@ class AsnMixin_Lv2Image:
         self.data['asn_type'] = 'image2'
 
 
-class AsnMixin_Lv2Spectral(DMSLevel2bBase):
-    """Level 2 Spectral association base"""
+class AsnMixin_Lv2Nod:
+    """Associations that need to create nodding associations
 
-    def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
+    For some spectragraphic modes, background spectra are taken by
+    nodding between different slits, or internal slit positions.
+    The main associations rules will collect all the exposures of all the nods
+    into a single association. Then, on finalization, this one association
+    is split out into many associations, where each nod is, in turn, treated
+    as science, and the other nods are treated as background.
+    """
+    def finalize(self):
+        """Finalize association
 
-        super(AsnMixin_Lv2Spectral, self)._init_hook(item)
-        self.data['asn_type'] = 'spec2'
+        For some spectragraphic modes, background spectra and taken by
+        nodding between different slits, or internal slit positions.
+        The main associations rules will collect all the exposures of all the nods
+        into a single association. Then, on finalization, this one association
+        is split out into many associations, where each nod is, in turn, treated
+        as science, and the other nods are treated as background.
+
+        Returns
+        -------
+        associations: [association[, ...]] or None
+            List of fully-qualified associations that this association
+            represents.
+            `None` if a complete association cannot be produced.
+
+        """
+        if self.is_valid:
+            return self.make_nod_asns()
+        else:
+            return None
 
 
 class AsnMixin_Lv2Special:
@@ -940,3 +966,13 @@ class AsnMixin_Lv2Special:
             Always returns as science
         """
         return 'science'
+
+
+class AsnMixin_Lv2Spectral(DMSLevel2bBase):
+    """Level 2 Spectral association base"""
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        super(AsnMixin_Lv2Spectral, self)._init_hook(item)
+        self.data['asn_type'] = 'spec2'

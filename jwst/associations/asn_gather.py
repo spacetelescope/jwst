@@ -13,6 +13,7 @@ LogLevels = [logging.WARNING, logging.INFO, logging.DEBUG]
 
 
 def asn_gather(association, destination=None, exp_types=None, exclude_types=None,
+               source_folder=None,
                shellcmd='rsync -urv --no-perms --chmod=ugo=rwX'):
     """Copy members of an association from one location to another
 
@@ -35,6 +36,10 @@ def asn_gather(association, destination=None, exp_types=None, exclude_types=None
     exclude_types : [str[,...]] or None
         List of exposure types to exclude.
 
+    source_folder : str or None
+       Folder where the members originate from.
+       If None, the folder of the association is presumed. 
+
     shellcmd : str
         The shell command to use to do the copying of the
         individual members.
@@ -49,7 +54,10 @@ def asn_gather(association, destination=None, exp_types=None, exclude_types=None
 
     exclude_types = exclude_types if exclude_types is not None else []
     source_asn_path = Path(association)
-    source_folder = source_asn_path.parent
+    if source_folder is None:
+        source_folder = source_asn_path.parent
+    else:
+        source_folder = Path(source_folder)
     if destination is None:
         dest_folder = Path('./')
     else:
@@ -63,8 +71,7 @@ def asn_gather(association, destination=None, exp_types=None, exclude_types=None
     dest_asn['products'] = []
     for src_product in source_asn['products']:
         members = [
-            {'expname': src_member['expname'],
-             'exptype': src_member['exptype']}
+            src_member
             for src_member in src_product['members']
             if src_member['exptype'] not in exclude_types and \
             (exp_types is None or src_member['exptype'] in exp_types)
@@ -81,13 +88,12 @@ def asn_gather(association, destination=None, exp_types=None, exclude_types=None
 
     # Copy the members.
     shellcmd_args = shellcmd.split(' ')
-    src_folder = source_asn_path.parent
     for product in dest_asn['products']:
         for member in product['members']:
             src_path = Path(member['expname'])
             logger.info(f'*** Copying member {src_path.name}')
             if str(src_path.parent).startswith('.'):
-                src_path = src_folder / src_path
+                src_path = source_folder / src_path
             dest_path = dest_folder / src_path.name
             process_args = shellcmd_args + [str(src_path), str(dest_path)]
             logger.debug(f'Shell command in use: {process_args}')
@@ -131,6 +137,10 @@ def from_cmdline(args=None):
     parser.add_argument(
         'destination',
         help='Folder to copy the association to.'
+    )
+    parser.add_argument(
+        '-s', '--source', dest='source_folder',
+        help='Folder where the members currently reside. Default is the folder where the association resides.'
     )
     parser.add_argument(
         '-t', '--exp-types', default=None, dest='exp_types',

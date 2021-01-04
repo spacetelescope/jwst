@@ -132,18 +132,3 @@ class TestAgainstStandards(BaseJWSTTest):
                 pytest.xfail(standard_pars.xfail)
             else:
                 raise
-
-    def test_specified_standard_pool(self, standard_pool):
-        """Test against a standard pool specified from the command-line"""
-        if standard_pool:
-            for standard_pars in standards:
-                if standard_pars.pool_root == standard_pool:
-                    break
-            else:
-                assert False, f'Pool "{standard_pool}" specified by `--standard_pool` is not in test set.'
-
-            # Add debugging since this is doing only a specific file.
-            standard_pars.main_args.append('-D')
-            self.test_against_standard(standard_pars)
-        else:
-            pytest.skip('No standard pool specified using `--standard_pool` command-line option.')
