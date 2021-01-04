@@ -37,6 +37,7 @@ from .level1b import Level1bModel
 from .linearity import LinearityModel
 from .mask import MaskModel
 from .ramp import MIRIRampModel
+from .multicombinedspec import MultiCombinedSpecModel
 from .multiexposure import MultiExposureModel
 from .multiextract1d import MultiExtract1dImageModel
 from .multiprod import MultiProductModel

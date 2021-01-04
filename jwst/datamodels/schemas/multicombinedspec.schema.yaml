@@ -1,0 +1,41 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/multicombinedspec.schema"
+allOf:
+- $ref: core.schema
+- $ref: int_times.schema
+- type: object
+  properties:
+    spec:
+      type: array
+      title: An array of spectra
+      items:
+        type: object
+        properties:
+          spec_table:
+            title: Combined, extracted spectral data table
+            fits_hdu: COMBINE1D
+            datatype:
+            - name: WAVELENGTH
+              datatype: float64
+            - name: FLUX
+              datatype: float64
+            - name: ERROR
+              datatype: float64
+            - name: SURF_BRIGHT
+              datatype: float64
+            - name: SB_ERROR
+              datatype: float64
+            - name: DQ
+              datatype: uint32
+            - name: WEIGHT
+              datatype: float64
+            - name: N_INPUT
+              datatype: float64
+          spectral_order:
+            title: Spectral order number
+            type: integer
+            default: 1
+            fits_keyword: SPORDER
+            fits_hdu: COMBINE1D
