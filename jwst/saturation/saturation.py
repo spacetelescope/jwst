@@ -13,7 +13,9 @@ import numpy as np
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+DONOTUSE = dqflags.pixel['DO_NOT_USE']
 SATURATED = dqflags.pixel['SATURATED']
+AD_FLOOR = dqflags.pixel['AD_FLOOR']
 NO_SAT_CHECK = dqflags.pixel['NO_SAT_CHECK']
 ATOD_LIMIT = 65535.  # Hard DN limit of 16-bit A-to-D converter
 
@@ -22,8 +24,9 @@ def do_correction(input_model, ref_model):
     """
     Short Summary
     -------------
-    Apply saturation flagging based on threshold values stored in the
-    saturation reference file.
+    Apply flagging for saturation based on threshold values stored in the
+    saturation reference file and A/D floor based on testing for 0 DN values.
+    For A/D floor flagged groups, the DO_NOT_USE flag is also set.
 
     Parameters
     ----------
@@ -36,7 +39,8 @@ def do_correction(input_model, ref_model):
     Returns
     -------
     output_model : `~jwst.datamodels.RampModel`
-        Data model with saturation flags set in GROUPDQ array
+        Data model with saturation, A/D floor, and do not use flags set in
+        the GROUPDQ array
     """
 
     ramp_array = input_model.data
@@ -74,32 +78,43 @@ def do_correction(input_model, ref_model):
     sat_dq[np.isnan(sat_thresh)] |= NO_SAT_CHECK
     sat_thresh[np.isnan(sat_thresh)] = ATOD_LIMIT
 
-    # Loop over integrations and groups, checking for pixel values
-    # that are above the saturation threshold
     flagarray = np.zeros(ramp_array.shape[-2:], dtype=groupdq.dtype)
+    flaglowarray = np.zeros(ramp_array.shape[-2:], dtype=groupdq.dtype)
     for ints in range(nints):
         for group in range(ngroups):
-            # Update the 4D groupdq array with the saturation flag. The
-            # flag is set in the current group and all following groups.
+            # Update the 4D groupdq array with the saturation flag.
             if is_irs2_format:
                 sci_temp = x_irs2.from_irs2(ramp_array[ints, group, :, :],
-                                            irs2_mask,
-                                            detector)
+                                            irs2_mask, detector)
+                # check for saturation
                 flag_temp = np.where(sci_temp >= sat_thresh, SATURATED, 0)
-                # Copy flag_temp into flagarray.
+                # check for A/D floor
+                flaglow_temp = np.where(sci_temp <= 0, AD_FLOOR | DONOTUSE, 0)
+                # Copy temps into flagarrays.
                 x_irs2.to_irs2(flagarray, flag_temp, irs2_mask, detector)
-
+                x_irs2.to_irs2(flaglowarray, flaglow_temp, irs2_mask, detector)
             else:
+                # check for saturation
                 flagarray[:, :] = np.where(ramp_array[ints, group, :, :] >= sat_thresh,
                                            SATURATED, 0)
+                # check for A/D floor
+                flaglowarray[:, :] = np.where(ramp_array[ints, group, :, :] <= 0,
+                                              AD_FLOOR | DONOTUSE, 0)
+            # for saturation, the flag is set in the current plane
+            # and all following planes.
             np.bitwise_or(groupdq[ints, group:, :, :], flagarray,
                           groupdq[ints, group:, :, :])
+            # for A/D floor, the flag is only set of the current plane
+            np.bitwise_or(groupdq[ints, group, :, :], flaglowarray,
+                          groupdq[ints, group, :, :])
 
-    # Save the saturation flags in the output GROUPDQ array
+    # Save the flags in the output GROUPDQ array
     output_model.groupdq = groupdq
 
     n_sat = np.any(np.any(np.bitwise_and(groupdq, SATURATED), axis=0), axis=0).sum()
     log.info(f'Detected {n_sat} saturated pixels')
+    n_floor = np.any(np.any(np.bitwise_and(groupdq, AD_FLOOR), axis=0), axis=0).sum()
+    log.info(f'Detected {n_floor} A/D floor pixels')
 
     # Save the NO_SAT_CHECK flags in the output PIXELDQ array
     if is_irs2_format:

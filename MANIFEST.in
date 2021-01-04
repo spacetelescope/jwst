@@ -1,0 +1,15 @@
+include README.md
+include CHANGES.rst
+include setup.cfg
+include LICENSE
+include pyproject.toml
+
+recursive-include jwst *.c
+recursive-include docs *
+recursive-include scripts *
+
+prune build
+prune docs/_build
+prune docs/api
+
+global-exclude *.pyc *.o

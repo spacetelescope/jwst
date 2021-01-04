@@ -246,6 +246,12 @@ properties:
             enum: [OK, SUSPECT]
             fits_keyword: ENG_QUAL
             blend_table: True
+          pointing_engdb_quality:
+            title: Quality of pointing information from EngDB
+            type: string
+            enum: [CALCULATED, PLANNED]
+            fits_keyword: ENGQLPTG
+            blend_table: True
           type:
             title: Visit type
             type: string
@@ -897,7 +903,10 @@ properties:
                  [8X8, 32X32, 128X128, 2048X64,
                   SUB128CNTR, SUB128DIAG, SUB128LL,
                   SUB32CNTR, SUB32DIAG, SUB32LL,
-                  SUB8CNTR, SUB8DIAG, SUB8LL]
+                  SUB8CNTR, SUB8DIAG, SUB8LL,
+                  SUBIDSTRIPCENTER, SUBIDSTRIPLL,
+                  SUBTUNE32CENTERG1, SUBTUNE32CENTERG2,
+                  SUBTUNE32LLG1, SUBTUNE32LLG2]
               # MIRI
               - enum:
                  [BRIGHTSKY, MASK1065, MASK1140, MASK1550, MASKLYOT,
@@ -1938,6 +1947,15 @@ properties:
                 type: string
                 fits_keyword: R_V2V3
                 blend_table: True
+          wavecorr:
+            title: Zero point wavelength correction for Nirspec MOS and FS mode
+            type: object
+            properties:
+              name:
+                title: Zero point wavelength correction reference file name
+                type: string
+                fits_keyword: R_WAVCOR
+                blend_table: True
           wavelengthrange:
             title: Wavelength Range reference file information
             type: object
@@ -1977,7 +1995,7 @@ properties:
             fits_keyword: S_WCS
             blend_table: True
           assign_mtwcs:
-            title: Assign Moving Target World Coordinate System 
+            title: Assign Moving Target World Coordinate System
             type: string
             fits_keyword: S_MTWCS
             blend_table: True

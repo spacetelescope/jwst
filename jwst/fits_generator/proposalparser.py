@@ -32,25 +32,25 @@ def get_detectors(filename):
     ObservationNum = 0
     detectors = []
     ProposalNum = filename.split('.')[0]
-    for observation in proposal.getchildren():
+    for observation in proposal:
         ObservationNum = ObservationNum + 1
         VisitNum = 0
-        for visit in observation.getchildren():
+        for visit in observation:
             VisitNum = VisitNum + 1
             VisitGroupNum = 0
-            for visitgroup in visit.getchildren():
+            for visitgroup in visit:
                 VisitGroupNum = VisitGroupNum + 1
                 ParallelSequenceIDNum = 0
-                for parallelsequenceid in visitgroup.getchildren():
+                for parallelsequenceid in visitgroup:
                     ParallelSequenceIDNum = ParallelSequenceIDNum + 1
                     ActivityNum = 0
-                    for activity in parallelsequenceid.getchildren():
+                    for activity in parallelsequenceid:
                         ActivityNum = ActivityNum + 1
                         ExposureNum = 0
-                        for exposure in activity.getchildren():
+                        for exposure in activity:
                             ExposureNum = ExposureNum + 1
                             DetectorNum = 0
-                            for detector in exposure.getchildren():
+                            for detector in exposure:
                                 subarray = detector.find('subarray').text
                                 base = detector.find('base').text
                                 exp_type = detector.find('exp_type').text

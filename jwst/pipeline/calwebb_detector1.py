@@ -15,6 +15,7 @@ from ..firstframe import firstframe_step
 from ..lastframe import lastframe_step
 from ..linearity import linearity_step
 from ..dark_current import dark_current_step
+from ..reset import reset_step
 from ..persistence import persistence_step
 from ..jump import jump_step
 from ..ramp_fitting import ramp_fit_step
@@ -52,6 +53,7 @@ class Detector1Pipeline(Pipeline):
                  'lastframe': lastframe_step.LastFrameStep,
                  'linearity': linearity_step.LinearityStep,
                  'dark_current': dark_current_step.DarkCurrentStep,
+                 'reset': reset_step.ResetStep,
                  'persistence': persistence_step.PersistenceStep,
                  'jump': jump_step.JumpStep,
                  'ramp_fit': ramp_fit_step.RampFitStep,
@@ -82,6 +84,7 @@ class Detector1Pipeline(Pipeline):
             result = self.ipc(result)
             result = self.firstframe(result)
             result = self.lastframe(result)
+            result = self.reset(result)
             result = self.linearity(result)
             result = self.rscd(result)
             result = self.dark_current(result)
@@ -114,6 +117,7 @@ class Detector1Pipeline(Pipeline):
 
         # save the corrected ramp data, if requested
         if self.save_calibrated_ramp:
+            result.meta.filetype = 'calibrated ramp'
             self.save_model(result, 'ramp')
 
         # apply the ramp_fit step
@@ -136,10 +140,12 @@ class Detector1Pipeline(Pipeline):
         if ints_model is not None:
             self.gain_scale.suffix = 'gain_scaleints'
             ints_model = self.gain_scale(ints_model)
+            ints_model.meta.filetype = 'countrate'
             self.save_model(ints_model, 'rateints')
 
         # setup output_file for saving
         self.setup_output(result)
+        result.meta.filetype = 'countrate'
 
         log.info('... ending calwebb_detector1')
 

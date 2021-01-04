@@ -75,6 +75,7 @@ class ResampleSpecStep(ResampleStep):
 
         # Update ASNTABLE in output
         result.meta.asn.table_name = input_models[0].meta.asn.table_name
+        result.meta.filetype = 'resampled'
 
         return result
 
