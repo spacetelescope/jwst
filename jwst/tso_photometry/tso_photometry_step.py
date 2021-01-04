@@ -42,7 +42,6 @@ class TSOPhotometryStep(Step):
             if model.meta.bunit_err is None:
                 raise ValueError('BUNIT for error array is missing.')
 
-
             xcenter = model.meta.wcsinfo.siaf_xref_sci - 1    # 1-based origin
             ycenter = model.meta.wcsinfo.siaf_yref_sci - 1    # 1-based origin
 
