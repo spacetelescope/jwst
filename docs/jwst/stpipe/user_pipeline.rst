@@ -164,41 +164,6 @@ instance to run it.
 
     pipe()
 
-
-.. _running-partial-pipelines:
-
-Running partial Pipelines
-=========================
-
-There are two kinds of pipelines available:
-
-1) Flexible pipelines are written in Python and may contain looping,
-conditionals and steps with more than one input or output.
-
-2) Linear pipelines have a strict linear progression of steps and only have
-one input and output.
-
-Linear pipelines have a feature that allows only a part of the
-pipeline to be run.  This is done through two additional configuration
-parameters: ``start_step`` and ``end_step``.  ``start_step`` specifies
-the first step to run.  ``end_step`` specifies the last step to run.
-Like all other configuration parameters, they may be either specified
-in the Pipeline configuration file, or overridden at the commandline.
-
-When ``start_step`` and ``end_step`` indicate that only part of the
-pipeline will be run, the results of each step will be cached in the
-current working directory.  This allows the pipeline to pick up where
-it left off later.
-
-.. note::
-    In the present implementation, all this caching happens in the
-    current working directory -- we probably want a more sane way to
-    manage these files going forward.
-
-Each step may also be skipped by setting its configuration parameter
-`skip` to True (either in the configuration file or at the command
-line).
-
 Caching details
 ---------------
 

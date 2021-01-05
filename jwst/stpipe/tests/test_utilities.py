@@ -16,7 +16,7 @@ KNOWN_STEPS = set([
     'IPCStep', 'Image2Pipeline', 'Image3Pipeline', 'ImprintStep',
     'JumpStep',
     'KlipStep',
-    'LastFrameStep', 'LinearPipeline', 'LinearityStep',
+    'LastFrameStep', 'LinearityStep',
     'MRSIMatchStep', 'MSAFlagOpenStep', 'MasterBackgroundNrsSlitsStep', 'MasterBackgroundStep',
     'OutlierDetectionScaledStep', 'OutlierDetectionStackStep', 'OutlierDetectionStep',
     'PathLossStep', 'PersistenceStep', 'PhotomStep',

@@ -6,7 +6,7 @@ from numpy.testing import assert_allclose
 import pytest
 
 from jwst import datamodels
-from jwst.stpipe import Step, Pipeline, LinearPipeline, crds_client
+from jwst.stpipe import Step, Pipeline, crds_client
 
 from .steps import PipeWithReference, StepWithReference
 
@@ -133,14 +133,6 @@ def test_pipeline_python(_jail):
     pipe.run()
 
 
-class MyLinearPipeline(LinearPipeline):
-    pipeline_steps = [
-        ('multiply', MultiplyBy2),
-        ('multiply2', MultiplyBy2),
-        ('multiply3', MultiplyBy2)
-        ]
-
-
 def test_prefetch(_jail, monkeypatch):
     """Test prefetching"""
 
@@ -179,19 +171,6 @@ def test_prefetch(_jail, monkeypatch):
     StepWithReference.prefetch_references = False
     PipeWithReference.call(model)
     assert not mock_get_ref.called
-
-
-def test_partial_pipeline(_jail):
-    pipe = MyLinearPipeline()
-
-    pipe.end_step = 'multiply2'
-    result = pipe.run(abspath(join(dirname(__file__), 'data', 'science.fits')))
-
-    pipe.start_step = 'multiply3'
-    pipe.end_step = None
-    result = pipe.run(abspath(join(dirname(__file__), 'data', 'science.fits')))
-
-    assert_allclose(np.sum(result.data), 9969.82514685, rtol=1e-4)
 
 
 def test_pipeline_commandline(_jail):
