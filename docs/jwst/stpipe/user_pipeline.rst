@@ -59,8 +59,6 @@ script (just as with a regular step):
 .. code-block:: python
 
     > stspec stpipe.test.test_pipeline.TestPipeline
-    start_step = string(default=None)# Start the pipeline at this step
-    end_step = string(default=None)# End the pipeline right before this step
     science_filename = input_file()  # The input science filename
     flat_filename = input_file()     # The input flat filename
     skip = bool(default=False)   # Skip this step
@@ -74,11 +72,6 @@ script (just as with a regular step):
     multiplier = float(default=1.0)# Multiply by this number
     skip = bool(default=False)   # Skip this step
     config_file = string(default=None)
-
-Note that there are some additional optional configuration keys
-(``start_step`` and ``end_step``) for controlling when the pipeline
-starts and stops.  This is covered in the section
-:ref:`running-partial-pipelines`.
 
 For each Step’s section, the parameters for that step may either be
 specified inline, or specified by referencing an external
