@@ -20,7 +20,29 @@ env:
   CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
 
 jobs:
+  output-commit-message:
+    name: Output commit message
+    runs-on: ubuntu-latest
+    outputs:
+      message: ${{ steps.get-commit-message.outputs.message }}
+    steps:
+      - name: Checkout code (pull request)
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 1
+      - name: Checkout code (other events)
+        if: github.event_name != 'pull_request'
+        uses: actions/checkout@v2
+        with:
+          fetch_depth: 1
+      - id: get-commit-message
+        name: Get commit message
+        run: echo "::set-output name=message::$(git log -1 --format=%B)"
   tox:
+    needs: output-commit-message
+    if: github.event_name != 'pull_request' || contains(needs.output-commit-message.outputs.message, '[ci skip]') == false && contains(needs.output-commit-message.outputs.message, '[skip ci]') == false
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     strategy:
