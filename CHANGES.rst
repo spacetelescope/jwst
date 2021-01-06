@@ -61,6 +61,12 @@ associations
 
 - Add NRS_VERIFY to the list of target acq/confirmation images [#5395]
 
+combine1d
+---------
+
+- Output FITS now contains separate combine1d extensions for each spectral
+  order present in the data [#5204]
+
 cube_build
 ----------
 
