@@ -2,17 +2,21 @@ import logging
 
 import numpy as np
 
+from . import resample
 from ..stpipe import Step
 from ..extern.configobj.validate import Validator
 from ..extern.configobj.configobj import ConfigObj
 from .. import datamodels
-from . import resample
 from ..assign_wcs import util
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 __all__ = ["ResampleStep"]
+
+
+# Force use of all DQ flagged data except for DO_NOT_USE and NON_SCIENCE
+GOOD_BITS = '~DO_NOT_USE+NON_SCIENCE'
 
 
 class ResampleStep(Step):
@@ -26,13 +30,14 @@ class ResampleStep(Step):
     """
 
     spec = """
-        pixfrac = float(default=None)
-        kernel = string(default=None)
-        fillval = string(default=None)
-        weight_type = option('exptime', default=None)
-        good_bits = integer(min=0, default=4)
+        pixfrac = float(default=1.0)
+        kernel = string(default='square')
+        fillval = string(default='INDEF')
+        weight_type = option('exptime', default='exptime')
+        pixel_scale_ratio = float(default=1.0) # Ratio of input to output pixel scale
         single = boolean(default=False)
         blendheaders = boolean(default=True)
+        allowed_memory = float(default=None)  # Fraction of memory to use for the combined image.
     """
 
     reference_file_types = ['drizpars']
@@ -66,15 +71,21 @@ class ResampleStep(Step):
             self.log.info("No NIRSpec DIRZPARS reffile")
             kwargs = self._set_spec_defaults()
 
+        kwargs['allowed_memory'] = self.allowed_memory
+
         # Call the resampling routine
         resamp = resample.ResampleData(input_models, **kwargs)
         resamp.do_drizzle()
 
         for model in resamp.output_models:
-            model.meta.cal_step.resample = "COMPLETE"
+            model.meta.cal_step.resample = 'COMPLETE'
             util.update_s_region_imaging(model)
             model.meta.asn.pool_name = input_models.meta.pool_name
             model.meta.asn.table_name = input_models.meta.table_name
+            if hasattr(model.meta, "bunit_err") and model.meta.bunit_err is not None:
+                del model.meta.bunit_err
+            self.update_phot_keywords(model)
+            model.meta.filetype = 'resampled'
 
         if len(resamp.output_models) == 1:
             result = resamp.output_models[0]
@@ -82,6 +93,13 @@ class ResampleStep(Step):
             result = resamp.output_models
 
         return result
+
+    def update_phot_keywords(self, model):
+        """Update pixel scale keywords"""
+        if model.meta.photometry.pixelarea_steradians is not None:
+            model.meta.photometry.pixelarea_steradians *= self.pixel_scale_ratio**2
+        if model.meta.photometry.pixelarea_arcsecsq is not None:
+            model.meta.photometry.pixelarea_arcsecsq *= self.pixel_scale_ratio**2
 
     def get_drizpars(self, ref_filename, input_models):
         """
@@ -100,7 +118,8 @@ class ResampleStep(Step):
         used a resample.cfg file or run ResampleStep using command line args,
         then these will overwerite the defaults pulled from the reference file.
         """
-        drizpars_table = datamodels.DrizParsModel(ref_filename).data
+        with datamodels.DrizParsModel(ref_filename) as drpt:
+            drizpars_table = drpt.data
 
         num_groups = len(input_models.group_names)
         filtname = input_models[0].meta.instrument.filter
@@ -136,7 +155,8 @@ class ResampleStep(Step):
             pixfrac=self.pixfrac,
             kernel=self.kernel,
             fillval=self.fillval,
-            wht_type=self.weight_type
+            wht_type=self.weight_type,
+            pscale_ratio=self.pixel_scale_ratio,
             )
 
         # For parameters that are set in drizpars table but not set by the
@@ -160,7 +180,7 @@ class ResampleStep(Step):
         all_drizpars['weight_type'] = all_drizpars.pop('wht_type')
 
         kwargs = dict(
-            good_bits=self.good_bits,
+            good_bits=GOOD_BITS,
             single=self.single,
             blendheaders=self.blendheaders
             )
@@ -178,17 +198,19 @@ class ResampleStep(Step):
 
         return kwargs
 
-    @classmethod
-    def _set_spec_defaults(cls):
+    def _set_spec_defaults(self):
         """NIRSpec currently has no default drizpars reference file, so default
         drizzle parameters are not set properly.  This method sets them.
 
         Remove this class method when a drizpars reffile is delivered.
         """
-        configspec = cls.load_spec_file()
+        configspec = self.load_spec_file()
         config = ConfigObj(configspec=configspec)
         if config.validate(Validator()):
             kwargs = config.dict()
+
+        # Force definition of good bits
+        kwargs['good_bits'] = GOOD_BITS
 
         if kwargs['pixfrac'] is None:
             kwargs['pixfrac'] = 1.0
@@ -198,9 +220,11 @@ class ResampleStep(Step):
             kwargs['fillval'] = 'INDEF'
         if kwargs['weight_type'] is None:
             kwargs['weight_type'] = 'exptime'
+        kwargs['pscale_ratio'] = self.pixel_scale_ratio
+        kwargs.pop('pixel_scale_ratio')
 
         for k,v in kwargs.items():
-            if k in ['pixfrac', 'kernel', 'fillval', 'weight_type']:
+            if k in ['pixfrac', 'kernel', 'fillval', 'weight_type', 'pscale_ratio']:
                 log.info('  setting: %s=%s', k, repr(v))
 
         return kwargs

@@ -198,7 +198,7 @@ def load_configuration(config_file):
             pass
         try:
             value = logging._checkLevel(value)
-        except:
+        except ValueError:
             raise validate.VdtTypeError(value)
         return value
 

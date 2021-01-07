@@ -1,3 +1,5 @@
+.. _extract_1d_step:
+
 ==================
 Extract 1D Spectra
 ==================
@@ -6,7 +8,8 @@ Extract 1D Spectra
    :maxdepth: 2
 
    description.rst
-   reference_files.rst
    arguments.rst
+   reference_files.rst
+   reference_image.rst
 
 .. automodapi:: jwst.extract_1d

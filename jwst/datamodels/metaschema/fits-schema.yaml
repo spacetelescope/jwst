@@ -1,13 +1,13 @@
 %YAML 1.1
 ---
-$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+$schema: "http://json-schema.org/draft-04/schema"
 id: "http://stsci.edu/schemas/fits-schema/fits-schema"
 description: |
   A metaschema extending ASDF's YAML schema to support things specific
   to converting models to and from FITS files.
 
 allOf:
-  - $ref: "http://stsci.edu/schemas/asdf-schema/0.1.0/asdf-schema"
+  - $ref: "http://stsci.edu/schemas/asdf/asdf-schema-1.0.0"
   - type: object
     properties:
       fits_keyword:
@@ -17,4 +17,3 @@ allOf:
         anyOf:
           - type: string
           - type: integer
-...

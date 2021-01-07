@@ -25,7 +25,7 @@ class TestLevel3WFS(helpers.BasePoolRule):
     ]
 
     valid_rules = [
-        'Asn_WFSCMB',
+        'Asn_Lv3WFSCMB',
     ]
 
 

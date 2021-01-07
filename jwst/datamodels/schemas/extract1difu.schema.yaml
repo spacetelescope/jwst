@@ -1,0 +1,48 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/asdf/asdf-schema-1.0.0"
+id: "http://stsci.edu/schemas/jwst_datamodel/extract1difu.schema"
+title: Default IFU Data extract 1d data model
+allOf:
+- $ref: referencefile.schema
+- $ref: keyword_exptype.schema
+- $ref: keyword_pexptype.schema
+- type: object
+  properties:
+    meta:
+      type: object
+      properties:
+        region_type:
+          type: string
+        subtract_background:
+          type: boolean
+        method:
+          type: string
+        subpixels:
+          type: integer
+  properties:
+    data:
+      type: object
+      properties:
+        wavelength:
+          datatype: float32
+        wavelength_units:
+          type: string
+        radius:
+          datatype: float32
+        radius_units:
+          type: string
+        inner_bkg:
+          datatype: float32
+        inner_bkg_units:
+          type: string
+        outer_bkg:
+          datatype: float32
+        outer_bkg_units:
+          type: string
+        axis_ratio:
+          datatype: float32
+        axis_pa:
+          datatype: float32
+        axis_pa_units:
+          type: string

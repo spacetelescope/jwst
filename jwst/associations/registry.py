@@ -22,7 +22,6 @@ from .exceptions import (
     AssociationNotValidError
 )
 from .lib.callback_registry import CallbackRegistry
-from .lib.constraint import ConstraintTrue
 
 __all__ = [
     'AssociationRegistry',
@@ -57,24 +56,6 @@ class AssociationRegistry(dict):
     include_bases : bool
         If True, include base classes not considered
         rules.
-
-    Attributes
-    ----------
-    rule_set : {rule [, ...]}
-        The rules in the registry.
-
-    Methods
-    -------
-    match(item)
-        Return associations where `item` matches any of the rules.
-
-    validate(association)
-        Determine whether an association is valid, or complete,
-        according to any of the rules in the registry.
-
-    load(serialized)
-        Create an association from a serialized form.
-
 
     Notes
     -----
@@ -226,7 +207,7 @@ class AssociationRegistry(dict):
             first=True,
             **kwargs
     ):
-        """Marshall a previously serialized association
+        """Load a previously serialized association
 
         Parameters
         ----------
@@ -539,19 +520,3 @@ def get_marked(module, predicate=None, include_bases=False):
                     yield sub_name, sub_obj
             else:
                 yield name, obj
-
-
-# ##########
-# Unit Tests
-# ##########
-def test_import_from_file():
-    from copy import deepcopy
-    from pytest import raises as pytest_raises
-    from tempfile import NamedTemporaryFile
-
-    current_path = deepcopy(sys.path)
-    with NamedTemporaryFile() as junk_fh:
-        junk_path = junk_fh.name
-        with pytest_raises(ImportError):
-            module = import_from_file(junk_path)
-        assert current_path == sys.path

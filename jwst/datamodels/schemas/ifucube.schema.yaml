@@ -1,8 +1,12 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/ifucube.schema"
 allOf:
-- $ref: core.schema.yaml
-- $ref: bunit.schema.yaml
-- $ref: photometry.schema.yaml
-- $ref: wcsinfo.schema.yaml
+- $ref: core.schema
+- $ref: bunit.schema
+- $ref: photometry.schema
+- $ref: wcsinfo.schema
 - type: object
   properties:
     meta:
@@ -76,14 +80,11 @@ allOf:
       title: Wavelength value for slices
       fits_hdu: WCS-TABLE
       datatype:
-      - name: nelem
-        datatype: int16
       - name: wavelength
         datatype: float32
-        shape: [10420]
+        ndim: 2
     wavedim:
       title: Wavetable dimension
       type: string
       fits_keyword: TDIM2
       fits_hdu: WCS-TABLE
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

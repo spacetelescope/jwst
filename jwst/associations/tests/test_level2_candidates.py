@@ -21,12 +21,12 @@ from ..main import Main
         # Basic observation ACIDs
         (
             ['-i', 'o001'],
-            1
+            10
         ),
         # Whole program
         (
             [],
-            7
+            70
         ),
         # Discovered only
         (
@@ -36,7 +36,7 @@ from ..main import Main
         # Candidates only
         (
             ['--all-candidates'],
-            7
+            70
         ),
     ]
 )

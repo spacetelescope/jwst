@@ -1,5 +1,6 @@
 import os.path as op
 
+import numpy as np
 from astropy.table import vstack
 
 from ..stpipe import Pipeline
@@ -9,6 +10,8 @@ from ..outlier_detection import outlier_detection_step
 from ..tso_photometry import tso_photometry_step
 from ..extract_1d import extract_1d_step
 from ..white_light import white_light_step
+
+from ..lib.pipe_utils import is_tso
 
 __all__ = ['Tso3Pipeline']
 
@@ -37,7 +40,6 @@ class Tso3Pipeline(Pipeline):
                  'extract_1d': extract_1d_step.Extract1dStep,
                  'white_light': white_light_step.WhiteLightStep
                  }
-    image_exptypes = ['NRC_TSIMAGE']
     reference_file_types = ['gain', 'readnoise']
 
     def process(self, input):
@@ -51,48 +53,66 @@ class Tso3Pipeline(Pipeline):
         """
 
         self.log.info('Starting calwebb_tso3...')
-        input_models = datamodels.open(input)
+        asn_exptypes = ['science']
+
+        input_models = datamodels.open(input, asn_exptypes=asn_exptypes)
+
+        # Sanity check the input data
+        input_tsovisit = is_tso(input_models[0])
+        if not input_tsovisit:
+            self.log.error('INPUT DATA ARE NOT TSO MODE. ABORTING PROCESSING.')
+            return
 
         if self.output_file is None:
             self.output_file = input_models.meta.asn_table.products[0].name
         self.asn_id = input_models.meta.asn_table.asn_id
 
-        input_exptype = None
         # Input may consist of multiple exposures, so loop over each of them
+        input_exptype = None
         for cube in input_models:
             if input_exptype is None:
                 input_exptype = cube.meta.exposure.type
-            # Convert CubeModel into ModelContainer of 2-D DataModels
-            input_2dmodels = datamodels.ModelContainer()
-            for i in range(cube.data.shape[0]):
-                # convert each plane of data cube into it own array
-                # for outlier detection...
-                image = datamodels.ImageModel(data=cube.data[i],
-                                              err=cube.err[i], dq=cube.dq[i])
-                image.update(cube)
-                image.meta.wcs = cube.meta.wcs
-                input_2dmodels.append(image)
 
+            # Can't do outlier detection if there isn't a stack of images
+            if len(cube.data.shape) < 3:
+                self.log.warning('Input data are 2D; skipping outlier_detection')
+                break
+
+            # Perform regular outlier detection
             if not self.scale_detection:
-                msg = "Performing outlier detection on input images..."
-                self.log.info(msg)
+
+                # Convert CubeModel into ModelContainer of 2-D DataModels to
+                # use as input to outlier detection step
+                input_2dmodels = datamodels.ModelContainer()
+                for i in range(cube.data.shape[0]):
+                    # convert each plane of data cube into its own array
+                    image = datamodels.ImageModel(data=cube.data[i],
+                                                  err=cube.err[i], dq=cube.dq[i])
+                    image.update(cube)
+                    image.meta.wcs = cube.meta.wcs
+                    input_2dmodels.append(image)
+
+                self.log.info("Performing outlier detection on input images ...")
                 input_2dmodels = self.outlier_detection(input_2dmodels)
 
                 # Transfer updated DQ values to original input observation
                 for i in range(cube.data.shape[0]):
                     # Update DQ arrays with those from outlier_detection step
-                    cube.dq[i] = input_2dmodels[i].dq
+                    cube.dq[i] = np.bitwise_or(cube.dq[i], input_2dmodels[i].dq)
+
                 cube.meta.cal_step.outlier_detection = \
                     input_2dmodels[0].meta.cal_step.outlier_detection
 
+                del input_2dmodels
+
             else:
-                msg = "Performing scaled outlier detection on input images..."
-                self.log.info(msg)
+                self.log.info("Performing scaled outlier detection on input images ...")
                 self.outlier_detection.scale_detection = True
                 cube = self.outlier_detection(cube)
 
+        # Save crfints products
         if input_models[0].meta.cal_step.outlier_detection == 'COMPLETE':
-            self.log.info("Writing Level 2c cubes with updated DQ arrays...")
+            self.log.info("Saving crfints products with updated DQ arrays ...")
             for cube in input_models:
                 # preserve output filename
                 original_filename = cube.meta.filename
@@ -103,49 +123,64 @@ class Tso3Pipeline(Pipeline):
                 cube.meta.filename = original_filename
 
         # Create final photometry results as a single output
-        # regardless of how many members there may be...
+        # regardless of how many input members there may be
         phot_result_list = []
-        if input_exptype in self.image_exptypes:
+
+        # Imaging
+        if (input_exptype == 'NRC_TSIMAGE' or
+            (input_exptype == 'MIR_IMAGE' and input_tsovisit)):
+
             # Create name for extracted photometry (Level 3) product
             phot_tab_suffix = 'phot'
 
             for cube in input_models:
                 # Extract Photometry from imaging data
                 phot_result_list.append(self.tso_photometry(cube))
+
+        # Spectroscopy
         else:
             # Create name for extracted white-light (Level 3) product
             phot_tab_suffix = 'whtlt'
 
-            # Working with spectroscopic TSO data...
+            # Working with spectroscopic TSO data;
             # define output for x1d (level 3) products
             x1d_result = datamodels.MultiSpecModel()
-            # TODO: check to make sure the following line is working
-            x1d_result.update(input_models[0])
+            x1d_result.update(input_models[0], only="PRIMARY")
+
+            # Remove source_type from the output model, if it exists, to prevent
+            # the creation of an empty SCI extension just for that keyword.
+            x1d_result.meta.target.source_type = None
 
             # For each exposure in the TSO...
             for cube in input_models:
                 # Process spectroscopic TSO data
                 # extract 1D
-                self.log.info("Extracting 1-D spectra...")
+                self.log.info("Extracting 1-D spectra ...")
                 result = self.extract_1d(cube)
                 x1d_result.spec.extend(result.spec)
 
                 # perform white-light photometry on 1d extracted data
-                self.log.info("Performing white-light photometry...")
+                self.log.info("Performing white-light photometry ...")
                 phot_result_list.append(self.white_light(result))
 
             # Update some metadata from the association
-            x1d_result.meta.asn.pool_name = \
-                input_models.meta.asn_table.asn_pool
+            x1d_result.meta.asn.pool_name = input_models.meta.asn_table.asn_pool
             x1d_result.meta.asn.table_name = op.basename(input)
 
             # Save the final x1d Multispec model
             self.save_model(x1d_result, suffix='x1dints')
 
-        phot_results = vstack(phot_result_list)
-        phot_tab_name = self.make_output_path(suffix=phot_tab_suffix, ext='ecsv')
-        self.log.info("Writing Level 3 photometry catalog {}...".format(
-                      phot_tab_name))
-        phot_results.write(phot_tab_name, format='ascii.ecsv')
+        input_models.close()
 
+        if len(phot_result_list) == 1 and phot_result_list[0] is None:
+            self.log.info("Could not create a photometric catalog for data")
+        else:
+            phot_results = vstack(phot_result_list)
+            phot_results.meta['number_of_integrations'] = len(phot_results)
+            phot_tab_name = self.make_output_path(suffix=phot_tab_suffix, ext='ecsv')
+            self.log.info(f"Writing Level 3 photometry catalog {phot_tab_name}")
+            phot_results.write(phot_tab_name, format='ascii.ecsv', overwrite=True)
+
+        # All done. Nothing to return, because all products have
+        # been created here.
         return

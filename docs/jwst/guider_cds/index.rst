@@ -1,3 +1,5 @@
+.. _guider_cds_step:
+
 =======================
 Guider CDS Processing
 =======================

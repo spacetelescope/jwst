@@ -1,7 +1,14 @@
-title: MIRI imager photometric flux conversion data model
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/mirimg_photom.schema"
+title: MIRI imaging photometric flux conversion data model
 allOf:
-- $ref: photom.schema.yaml
-- $ref: keyword_pixelarea.schema.yaml
+- $ref: referencefile.schema
+- $ref: keyword_exptype.schema
+- $ref: keyword_pexptype.schema
+- $ref: keyword_band.schema
+- $ref: keyword_pixelarea.schema
 - type: object
   properties:
     phot_table:
@@ -16,12 +23,3 @@ allOf:
         datatype: float32
       - name: uncertainty
         datatype: float32
-      - name: nelem
-        datatype: int16
-      - name: wavelength
-        shape: [500]
-        datatype: float32
-      - name: relresponse
-        shape: [500]
-        datatype: float32
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

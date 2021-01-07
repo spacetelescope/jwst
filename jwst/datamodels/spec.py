@@ -1,20 +1,18 @@
-from .model_base import DataModel
+from .model_base import JwstDataModel
 
 
 __all__ = ['SpecModel']
 
 
-class SpecModel(DataModel):
+class SpecModel(JwstDataModel):
     """
     A data model for 1D spectra.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
-
-    spec_table : numpy array
+    __________
+    spec_table : numpy table
+        Extracted spectral data table
         A table with at least four columns:  wavelength, flux, an error
         estimate for the flux, and data quality flags.
     """
-    schema_url = "spec.schema.yaml"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/spec.schema"

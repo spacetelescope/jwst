@@ -1,3 +1,5 @@
+.. _srctype_step:
+
 ===================================
 Source Type (SRCTYPE) Determination
 ===================================

@@ -9,17 +9,14 @@ class MaskModel(ReferenceFileModel):
     A data model for 2D masks.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    dq : numpy uint32 array
+         The mask
 
-    dq : numpy array
-        The data quality array.
-
-    dq_def : numpy array
-        The data quality definitions table.
+    dq_def : numpy table
+         DQ flag definitions
     """
-    schema_url = "mask.schema.yaml"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/mask.schema"
 
     def __init__(self, init=None, **kwargs):
         super(MaskModel, self).__init__(init=init, **kwargs)

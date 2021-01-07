@@ -10,23 +10,20 @@ class LastFrameModel(ReferenceFileModel):
     A data model for Last frame correction reference files.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    data : numpy float32 array
+         Last Frame Correction array
 
-    data : numpy array
-        The science data.
+    dq : numpy uint32 array
+         2-D data quality array
 
-    dq : numpy array
-        The data quality array.
+    err : numpy float32 array
+         Error array
 
-    err : numpy array
-        The error array.
-
-    dq_def : numpy array
-        The data quality definitions table.
+    dq_def : numpy table
+         DQ flag definitions
     """
-    schema_url = "lastframe.schema.yaml"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/lastframe.schema"
 
     def __init__(self, init=None, **kwargs):
         super(LastFrameModel, self).__init__(init=init, **kwargs)

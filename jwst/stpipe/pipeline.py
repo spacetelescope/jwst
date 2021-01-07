@@ -28,15 +28,19 @@
 # DAMAGE.
 """
 Pipeline
-
 """
 from os.path import dirname, join
 
-from ..extern.configobj.configobj import Section
+from ..extern.configobj.configobj import Section, ConfigObj
 
 from . import config_parser
 from . import Step
 from . import crds_client
+from . import log
+from .step import get_disable_crds_steppars
+from ..datamodels import open as dm_open
+from ..lib.class_property import ClassInstanceMethod
+
 
 class Pipeline(Step):
     """
@@ -70,21 +74,23 @@ class Pipeline(Step):
 
             setattr(self, key, new_step)
 
-        self.reference_file_types = self._collect_active_reftypes()
-
-    def _collect_active_reftypes(self):
+    @property
+    def reference_file_types(self):
         """Collect the list of all reftypes for child Steps that are not skipped.
-        Overridden reftypes are included but handled normally later by the Pipeline
-        version of the get_ref_override() method defined below.
+        Overridden reftypes are included but handled normally later by the
+        Pipeline version of the get_ref_override() method defined below.
         """
         return [reftype for step in self._unskipped_steps
                 for reftype in step.reference_file_types]
 
     @property
     def _unskipped_steps(self):
-        """Return a list of the unskipped Step objects launched by `self`."""
+        """Return a list of the unskipped Step objects launched by `self`.
+
+        Steps are also excluded if `Step.prefetch_references` is False.
+        """
         return [getattr(self, name) for name in self.step_defs
-                if not getattr(self, name).skip]
+                if (not getattr(self, name).skip and getattr(self, name).prefetch_references)]
 
     def get_ref_override(self, reference_file_type):
         """Return any override for `reference_file_type` for any of the steps in
@@ -146,6 +152,102 @@ class Pipeline(Step):
 
         return spec
 
+    @classmethod
+    def get_config_from_reference(cls, dataset, observatory=None, disable=None):
+        """Retrieve step parameters from reference database
+
+        Parameters
+        ----------
+        cls : `jwst.stpipe.step.Step`
+            Either a class or instance of a class derived
+            from `Step`.
+
+        dataset : `jwst.datamodels.ModelBase`
+            A model of the input file.  Metadata on this input file will
+            be used by the CRDS "bestref" algorithm to obtain a reference
+            file.
+
+        observatory : str
+            telescope name used with CRDS,  e.g. 'jwst'.
+
+        disable: bool or None
+            Do not retrieve parameters from CRDS. If None, check global settings.
+
+        Returns
+        -------
+        step_parameters : configobj
+            The parameters as retrieved from CRDS. If there is an issue, log as such
+            and return an empty config obj.
+        """
+        pars_model = cls.get_pars_model()
+        refcfg = ConfigObj()
+        refcfg['steps'] = Section(refcfg, refcfg.depth + 1, refcfg.main, name="steps")
+
+        # Check if retrieval should be attempted.
+        if disable is None:
+            disable = get_disable_crds_steppars()
+        if disable:
+            log.log.debug(f'{pars_model.meta.reftype.upper()}: CRDS parameter reference retrieval disabled.')
+            return refcfg
+
+
+        log.log.debug('Retrieving all substep parameters from CRDS')
+        #
+        # Iterate over the steps in the pipeline
+        with dm_open(dataset, asn_n_members=1) as model:
+            for cal_step in cls.step_defs.keys():
+                cal_step_class = cls.step_defs[cal_step]
+                refcfg['steps'][cal_step] = cal_step_class.get_config_from_reference(
+                    model, observatory=observatory
+                )
+        #
+        # Now merge any config parameters from the step cfg file
+        log.log.debug(f'Retrieving pipeline {pars_model.meta.reftype.upper()} parameters from CRDS')
+        exceptions = crds_client.get_exceptions_module()
+        try:
+            ref_file = crds_client.get_reference_file(model,
+                                                      pars_model.meta.reftype,
+                                                      observatory=observatory,
+                                                      asn_exptypes=['science'])
+        except (AttributeError, exceptions.CrdsError, exceptions.CrdsLookupError):
+            log.log.debug(f'{pars_model.meta.reftype.upper()}: No parameters found')
+        else:
+            if ref_file != 'N/A':
+                log.log.info(f'{pars_model.meta.reftype.upper()} parameters found: {ref_file}')
+                refcfg = cls.merge_pipeline_config(refcfg, ref_file)
+            else:
+                log.log.debug(f'No {pars_model.meta.reftype.upper()} reference files found.')
+
+        return refcfg
+
+    @classmethod
+    def merge_pipeline_config(cls, refcfg, ref_file):
+        """
+        Merge the config parameters from a pipeline config reference file into the
+        config obtained from each step
+
+        Parameters
+        ----------
+        cls : jwst.stpipe.pipeline.Pipeline class
+            The pipeline class
+
+        refcfg : ConfigObj object
+            The ConfigObj created from crds cfg files from each of the steps
+            in the pipeline
+
+        ref_file : string
+            The name of the pipeline crds step config file
+
+        Returns
+        -------
+        ConfigObj of the merged parameters, with those from the pipeline cfg having
+        precedence over those from the individual steps
+        """
+
+        pipeline_cfg = config_parser.load_config_file(ref_file)
+        config_parser.merge_config(refcfg, pipeline_cfg)
+        return refcfg
+
     def set_input_filename(self, path):
         self._input_filename = path
         for key in self.step_defs:
@@ -160,11 +262,14 @@ class Pipeline(Step):
 
         input_file:  filename, model container, or model
 
-        returns:  None
+        Returns
+        -------
+        None
         """
         from .. import datamodels
         try:
-            with datamodels.open(input_file) as model:
+            with datamodels.open(input_file, asn_n_members=1,
+                                asn_exptypes=["science"]) as model:
                 self._precache_references_opened(model)
         except (ValueError, TypeError, IOError):
             self.log.info(
@@ -196,7 +301,11 @@ class Pipeline(Step):
 
         Verify that all CRDS and overridden reference files are readable.
 
-        model:  An open Model object;  not a filename, ModelContainer, etc.
+        Parameters
+        ----------
+        model :  `DataModel`
+            Only a `DataModel` instance is allowed.
+            Cannot be a filename, ModelContainer, etc.
         """
         ovr_refs = {
             reftype: self.get_ref_override(reftype)
@@ -206,7 +315,7 @@ class Pipeline(Step):
 
         fetch_types = sorted(set(self.reference_file_types) - set(ovr_refs.keys()))
 
-        self.log.info("Prefetching reference files for dataset: " + repr(model.meta.filename) + 
+        self.log.info("Prefetching reference files for dataset: " + repr(model.meta.filename) +
                       " reftypes = " + repr(fetch_types))
         crds_refs = crds_client.get_multiple_reference_paths(model, fetch_types)
 
@@ -214,7 +323,7 @@ class Pipeline(Step):
 
         for (reftype, refpath) in sorted(ref_path_map.items()):
             how = "Override" if reftype in ovr_refs else "Prefetch"
-            self.log.info("{0} for {1} reference file is '{2}'.".format(how, reftype.upper(), refpath))
+            self.log.info(f"{how} for {reftype.upper()} reference file is '{refpath}'.")
             crds_client.check_reference_open(refpath)
 
     @classmethod
@@ -234,3 +343,36 @@ class Pipeline(Step):
             return False
         else:
             return True
+
+    @ClassInstanceMethod
+    def get_pars(pipeline, full_spec=True):
+        """Retrieve the configuration parameters of a pipeline
+
+        The pipeline, and all referenced substeps, parameters
+        are retrieved.
+
+        Parameters
+        ----------
+        step : `Pipeline`-derived class or instance
+
+        full_spec : bool
+            Return all parameters, including parent-specified parameters.
+            If `False`, return only parameters specific to the class/instance.
+
+        Returns
+        -------
+        pars : dict
+            Keys are the parameters and values are the values.
+        """
+        pars = super().get_pars(full_spec=full_spec)
+        pars['steps'] = {}
+        for step_name, step_class in pipeline.step_defs.items():
+
+            # If a step has already been instantiated, get its parameters
+            # from the instantiation. Otherwise, retrieve from the class
+            # itself.
+            try:
+                pars['steps'][step_name] = getattr(pipeline, step_name).get_pars(full_spec=full_spec)
+            except AttributeError:
+                pars['steps'][step_name] = step_class.get_pars(full_spec=full_spec)
+        return pars

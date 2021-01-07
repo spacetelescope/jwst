@@ -15,6 +15,7 @@ from ..firstframe import firstframe_step
 from ..lastframe import lastframe_step
 from ..linearity import linearity_step
 from ..dark_current import dark_current_step
+from ..reset import reset_step
 from ..persistence import persistence_step
 from ..jump import jump_step
 from ..ramp_fitting import ramp_fit_step
@@ -47,11 +48,12 @@ class Detector1Pipeline(Pipeline):
                  'ipc': ipc_step.IPCStep,
                  'superbias': superbias_step.SuperBiasStep,
                  'refpix': refpix_step.RefPixStep,
-                 'rscd': rscd_step.RSCD_Step,
+                 'rscd': rscd_step.RscdStep,
                  'firstframe': firstframe_step.FirstFrameStep,
                  'lastframe': lastframe_step.LastFrameStep,
                  'linearity': linearity_step.LinearityStep,
                  'dark_current': dark_current_step.DarkCurrentStep,
+                 'reset': reset_step.ResetStep,
                  'persistence': persistence_step.PersistenceStep,
                  'jump': jump_step.JumpStep,
                  'ramp_fit': ramp_fit_step.RampFitStep,
@@ -76,45 +78,47 @@ class Detector1Pipeline(Pipeline):
             # the steps are in a different order than NIR
             log.debug('Processing a MIRI exposure')
 
-            input = self.group_scale(input)
-            input = self.dq_init(input)
-            input = self.saturation(input)
-            input = self.ipc(input)
-            input = self.firstframe(input)
-            input = self.lastframe(input)
-            input = self.linearity(input)
-            input = self.rscd(input)
-            input = self.dark_current(input)
-            input = self.refpix(input)
+            result = self.group_scale(input)
+            result = self.dq_init(result)
+            result = self.saturation(result)
+            result = self.ipc(result)
+            result = self.firstframe(result)
+            result = self.lastframe(result)
+            result = self.reset(result)
+            result = self.linearity(result)
+            result = self.rscd(result)
+            result = self.dark_current(result)
+            result = self.refpix(result)
 
             # skip until MIRI team has figured out an algorithm
-            #input = self.persistence(input)
+            #result = self.persistence(result)
 
         else:
 
             # process Near-IR exposures
             log.debug('Processing a Near-IR exposure')
 
-            input = self.group_scale(input)
-            input = self.dq_init(input)
-            input = self.saturation(input)
-            input = self.ipc(input)
-            input = self.superbias(input)
-            input = self.refpix(input)
-            input = self.linearity(input)
+            result = self.group_scale(input)
+            result = self.dq_init(result)
+            result = self.saturation(result)
+            result = self.ipc(result)
+            result = self.superbias(result)
+            result = self.refpix(result)
+            result = self.linearity(result)
 
             # skip persistence for NIRSpec
-            if input.meta.instrument.name != 'NIRSPEC':
-                input = self.persistence(input)
+            if result.meta.instrument.name != 'NIRSPEC':
+                result = self.persistence(result)
 
-            input = self.dark_current(input)
+            result = self.dark_current(result)
 
         # apply the jump step
-        input = self.jump(input)
+        result = self.jump(result)
 
         # save the corrected ramp data, if requested
         if self.save_calibrated_ramp:
-            self.save_model(input, 'ramp')
+            result.meta.filetype = 'calibrated ramp'
+            self.save_model(result, 'ramp')
 
         # apply the ramp_fit step
         # This explicit test on self.ramp_fit.skip is a temporary workaround
@@ -122,28 +126,30 @@ class Detector1Pipeline(Pipeline):
         # objects, but when the step is skipped due to `skip = True` in a
         # cfg file, only the input is returned when the step is invoked.
         if self.ramp_fit.skip:
-            input = self.ramp_fit(input)
+            result = self.ramp_fit(result)
             ints_model = None
         else:
-            input, ints_model = self.ramp_fit(input)
+            result, ints_model = self.ramp_fit(result)
 
         # apply the gain_scale step to the exposure-level product
         self.gain_scale.suffix = 'gain_scale'
-        input = self.gain_scale(input)
+        result = self.gain_scale(result)
 
         # apply the gain scale step to the multi-integration product,
         # if it exists, and then save it
         if ints_model is not None:
             self.gain_scale.suffix = 'gain_scaleints'
             ints_model = self.gain_scale(ints_model)
+            ints_model.meta.filetype = 'countrate'
             self.save_model(ints_model, 'rateints')
 
         # setup output_file for saving
-        self.setup_output(input)
+        self.setup_output(result)
+        result.meta.filetype = 'countrate'
 
         log.info('... ending calwebb_detector1')
 
-        return input
+        return result
 
     def setup_output(self, input):
         # Determine the proper file name suffix to use later

@@ -1,0 +1,94 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/guider_meta.schema"
+type: object
+properties:
+  meta:
+    type: object
+    properties:
+      detector_id:
+        title: FGS detector used for guiding
+        type: string
+        fits_keyword: DETECTID
+        fits_hdu: FGS Centroid Packet
+      guide_star_state:
+        title: "Guide star state: track or fine_guide"
+        type: string
+        fits_keyword: GUIDESTA
+        fits_hdu: FGS Centroid Packet
+      numrefst:
+        title: Number of reference stars
+        type: integer
+        fits_keyword: NUMREFST
+        fits_hdu: Flight Reference Stars
+      ddc_field_point:
+        title: Differential Distortion Compensation field point
+        type: string
+        fits_keyword: DDCFLDPT
+        fits_hdu: Pointing
+      pointing_time:
+        title: UTC time at start of pointing table
+        type: string
+        fits_keyword: POINTTIM
+        fits_hdu: Pointing
+      ra_ddc:
+        title: "[deg] RA of DDC field point"
+        type: number
+        fits_keyword: RA_DDC
+        fits_hdu: Pointing
+      dec_ddc:
+        title: "[deg] Dec of DDC field point"
+        type: number
+        fits_keyword: DEC_DDC
+        fits_hdu: Pointing
+      position_angle:
+        title: "[deg] Position angle of aperture used"
+        type: number
+        fits_keyword: PA_APER
+        fits_hdu: Pointing
+      ra_v1:
+        title: "[deg] RA of telescope V1 axis"
+        type: number
+        fits_keyword: RA_V1
+        fits_hdu: Pointing
+      dec_v1:
+        title: "[deg] Dec of telescope V1 axis"
+        type: number
+        fits_keyword: DEC_V1
+        fits_hdu: Pointing
+      pa_v3:
+        title: "[deg] Position angle of V3 axis at V1"
+        type: number
+        fits_keyword: PA_V3
+        fits_hdu: Pointing
+      ra_j1:
+        title: "[deg] RA of telescope J1 axis"
+        type: number
+        fits_keyword: RA_J1
+        fits_hdu: Pointing
+      dec_j1:
+        title: "[deg] Dec of telescope J1 axis"
+        type: number
+        fits_keyword: DEC_J1
+        fits_hdu: Pointing
+      pa_j3:
+        title: "[deg] Position angle of J3 axis at J1"
+        type: number
+        fits_keyword: PA_J3
+        fits_hdu: Pointing
+      jitter_average:
+        title: Average jitter over duration of data
+        type: number
+        fits_keyword: JITTRAVG
+        fits_hdu: Pointing
+      jitter_max:
+        title: Maximum jitter over duration of data
+        type: number
+        fits_keyword: JITTRMAX
+        fits_hdu: Pointing
+      jitter_min:
+        title: Minimum jitter over duration of data
+        type: number
+        fits_keyword: JITTRMIN
+        fits_hdu: Pointing

@@ -35,7 +35,7 @@
 #  subarray, omit the refpix step.
 #
 #  For MIRI subarray exposures, omit the refpix step.
-# 
+
 
 import numpy as np
 from scipy import stats
@@ -226,17 +226,17 @@ class Dataset():
     def get_pixeldq(self):
         """Get the properly sized version of the pixeldq array from the
         input model.
-        
+
         Parameters
         ----------
         None
-        
+
         Returns
         -------
         pixeldq : NDArray
             numpy array for the pixeldq data with the full shape of the detector
 
-        """ 
+        """
         if self.is_subarray:
             # deal with subarrays
             if self.detector[:3] == 'MIR':
@@ -251,20 +251,17 @@ class Dataset():
 
     def get_group(self, integration, group):
         """Get a properly sized copy of the array for each group
-        
+
         Parameters
         ----------
         integration : int
-            Index of the integration from the input model from which to extract 
+            Index of the integration from the input model from which to extract
             the group array
 
         group : int
             Index of the group, within the integration, from which to extract
             the group array
-
         """
-                        
-
         if self.group is None:
             self.group = np.zeros(self.full_shape, dtype=self.input_model.data.dtype)
         if self.is_subarray:
@@ -274,22 +271,23 @@ class Dataset():
 
     def restore_group(self, integration, group):
         """Replace input model data with processed group array
-        
+
         Parameters
         ----------
         integration : int
-            Index of the integration from the input model which needs to be  
+            Index of the integration from the input model which needs to be
             updated with the newly processed group array
 
         group : int
-            Index of the group, within the integration, which needs to be 
+            Index of the group, within the integration, which needs to be
             updated with the newly processed group array
 
-        """        
+        """
         if self.is_subarray:
             self.input_model.data[integration, group] = self.group[self.rowstart:self.rowstop, self.colstart:self.colstop]
         else:
             self.input_model.data[integration, group] = self.group.copy()
+
 
 class NIRDataset(Dataset):
     """Generic NIR detector Class.
@@ -790,8 +788,9 @@ class NIRDataset(Dataset):
         First read of each integration is NOT subtracted, as the signal is removed
         in the superbias subtraction step"""
         #
-        #  First transform to detector coordinates
-        #
+        #  First transform pixeldq array to detector coordinates
+        self.DMS_to_detector_dq()
+
         for integration in range(self.nints):
             for group in range(self.ngroups):
                 #
@@ -823,8 +822,10 @@ class NIRDataset(Dataset):
         #  First transform to detector coordinates
         #
         refdq = dqflags.pixel['REFERENCE_PIXEL']
-
-        self.DMS_to_detector(0,0)
+        #
+        # This transforms the pixeldq array from DMS to detector coordinates,
+        # only needs to be done once
+        self.DMS_to_detector_dq()
         # Determined refpix indices to use on each group
         refpixindices = np.where(np.bitwise_and(self.pixeldq, refdq) == refdq)
         nrefpixels = len(refpixindices[0])
@@ -857,11 +858,11 @@ class NIRDataset(Dataset):
                 self.DMS_to_detector(integration, group)
                 thisgroup = self.group
 
-                if self.odd_even_columns:                        
+                if self.odd_even_columns:
                     evenrefpixvalue = self.sigma_clip(thisgroup[evenrefpixindices],
                                                       self.pixeldq[evenrefpixindices])
                     oddrefpixvalue = self.sigma_clip(thisgroup[oddrefpixindices],
-                                                      self.pixeldq[oddrefpixindices])                    
+                                                      self.pixeldq[oddrefpixindices])
                     thisgroup[:, 0::2] -= evenrefpixvalue
                     thisgroup[:, 1::2] -= oddrefpixvalue
                 else:
@@ -872,7 +873,7 @@ class NIRDataset(Dataset):
                 #  Now transform back from detector to DMS coordinates.
                 self.detector_to_DMS(integration, group)
         log.setLevel(logging.INFO)
-        return 
+        return
 
 
 class NRS1Dataset(NIRDataset):
@@ -883,13 +884,16 @@ class NRS1Dataset(NIRDataset):
         # NRS1 is just flipped over the line X=Y
         self.get_group(integration, group)
         self.group = np.swapaxes(self.group, 0, 1)
-        self.pixeldq = np.swapaxes(self.pixeldq, 0, 1)
 
     def detector_to_DMS(self, integration, group):
         #
         # Just flip back
         self.group = np.swapaxes(self.group, 0, 1)
         self.restore_group(integration, group)
+
+    def DMS_to_detector_dq(self):
+        # pixeldq only has to be done once
+        self.pixeldq = np.swapaxes(self.pixeldq, 0, 1)
 
 class NRS2Dataset(NIRDataset):
     """NRS2 Data"""
@@ -899,6 +903,9 @@ class NRS2Dataset(NIRDataset):
         # NRS2 is flipped over the line Y=X, then rotated 180 degrees
         self.get_group(integration, group)
         self.group = np.swapaxes(self.group, 0, 1)[::-1, ::-1]
+
+    def DMS_to_detector_dq(self):
+        # pixeldq only has to be done once
         self.pixeldq = np.swapaxes(self.pixeldq, 0, 1)[::-1, ::-1]
 
     def detector_to_DMS(self, integration, group):
@@ -915,6 +922,9 @@ class NRCA1Dataset(NIRDataset):
         # NRCA1 is just flipped in X
         self.get_group(integration, group)
         self.group = self.group[:, ::-1]
+
+    def DMS_to_detector_dq(self):
+        # pixeldq only has to be done once
         self.pixeldq = self.pixeldq[:, ::-1]
 
     def detector_to_DMS(self, integration, group):
@@ -931,6 +941,9 @@ class NRCA2Dataset(NIRDataset):
         # NRCA2 is just flipped in Y
         self.get_group(integration, group)
         self.group = self.group[::-1]
+
+    def DMS_to_detector_dq(self):
+        # pixeldq only has to be done once
         self.pixeldq = self.pixeldq[::-1]
 
     def detector_to_DMS(self, integration, group):
@@ -947,6 +960,9 @@ class NRCA3Dataset(NIRDataset):
         # NRCA3 is just flipped in X
         self.get_group(integration, group)
         self.group = self.group[:, ::-1]
+
+    def DMS_to_detector_dq(self):
+        # pixeldq only has to be done once
         self.pixeldq = self.pixeldq[:, ::-1]
 
     def detector_to_DMS(self, integration, group):
@@ -963,6 +979,9 @@ class NRCA4Dataset(NIRDataset):
         # NRCA4 is just flipped in Y
         self.get_group(integration, group)
         self.group = self.group[::-1]
+
+    def DMS_to_detector_dq(self):
+        # pixeldq only has to be done once
         self.pixeldq = self.pixeldq[::-1]
 
     def detector_to_DMS(self, integration, group):
@@ -979,6 +998,9 @@ class NRCALONGDataset(NIRDataset):
         # NRCALONG is just flipped in X
         self.get_group(integration, group)
         self.group = self.group[:, ::-1]
+
+    def DMS_to_detector_dq(self):
+        # pixeldq only has to be done once
         self.pixeldq = self.pixeldq[:, ::-1]
 
     def detector_to_DMS(self, integration, group):
@@ -995,6 +1017,9 @@ class NRCB1Dataset(NIRDataset):
         # NRCB1 is just flipped in Y
         self.get_group(integration, group)
         self.group = self.group[::-1]
+
+    def DMS_to_detector_dq(self):
+        # pixeldq only has to be done once
         self.pixeldq = self.pixeldq[::-1]
 
     def detector_to_DMS(self, integration, group):
@@ -1011,6 +1036,9 @@ class NRCB2Dataset(NIRDataset):
         # NRCB2 is just flipped in X
         self.get_group(integration, group)
         self.group = self.group[:, ::-1]
+
+    def DMS_to_detector_dq(self):
+        # pixeldq only has to be done once
         self.pixeldq = self.pixeldq[:, ::-1]
 
     def detector_to_DMS(self, integration, group):
@@ -1028,6 +1056,9 @@ class NRCB3Dataset(NIRDataset):
         # NRCB3 is just flipped in Y
         self.get_group(integration, group)
         self.group = self.group[::-1]
+
+    def DMS_to_detector_dq(self):
+        # pixeldq only has to be done once
         self.pixeldq = self.pixeldq[::-1]
 
     def detector_to_DMS(self, integration, group):
@@ -1044,6 +1075,9 @@ class NRCB4Dataset(NIRDataset):
         # NRCB4 is just flipped in X
         self.get_group(integration, group)
         self.group = self.group[:, ::-1]
+
+    def DMS_to_detector_dq(self):
+        # pixeldq only has to be done once
         self.pixeldq = self.pixeldq[:, ::-1]
 
     def detector_to_DMS(self, integration, group):
@@ -1060,6 +1094,9 @@ class NRCBLONGDataset(NIRDataset):
         # NRCBLONG is just flipped in Y
         self.get_group(integration, group)
         self.group = self.group[::-1]
+
+    def DMS_to_detector_dq(self):
+        # pixeldq only has to be done once
         self.pixeldq = self.pixeldq[::-1]
 
     def detector_to_DMS(self, integration, group):
@@ -1077,6 +1114,9 @@ class NIRISSDataset(NIRDataset):
         # X=Y
         self.get_group(integration, group)
         self.group = np.swapaxes(self.group[::-1, ::-1], 0, 1)
+
+    def DMS_to_detector_dq(self):
+        # pixeldq only has to be done once
         self.pixeldq = np.swapaxes(self.pixeldq[::-1, ::-1], 0, 1)
 
     def detector_to_DMS(self, integration, group):
@@ -1093,6 +1133,9 @@ class GUIDER1Dataset(NIRDataset):
         # GUIDER1 is flipped in X and Y
         self.get_group(integration, group)
         self.group = self.group[::-1, ::-1]
+
+    def DMS_to_detector_dq(self):
+        # pixeldq only has to be done once
         self.pixeldq = self.pixeldq[::-1, ::-1]
 
     def detector_to_DMS(self, integration, group):
@@ -1109,6 +1152,9 @@ class GUIDER2Dataset(NIRDataset):
         # GUIDER2 is just flipped in X
         self.get_group(integration, group)
         self.group = self.group[:, ::-1]
+
+    def DMS_to_detector_dq(self):
+        # pixeldq only has to be done once
         self.pixeldq = self.pixeldq[:, ::-1]
 
     def detector_to_DMS(self, integration, group):
@@ -1670,7 +1716,7 @@ def correct_model(input_model, odd_even_columns,
                                    side_smoothing_length,
                                    side_gain,
                                    odd_even_rows)
-                                   
+
     if input_dataset is None:
         status = SUBARRAY_DOESNTFIT
         return status

@@ -1,3 +1,7 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/asdf/asdf-schema-1.0.0"
+id: "http://stsci.edu/schemas/jwst_datamodel/ifupost.schema"
 title: Nirspec IFUPOST reference file model
 definitions:
   slice_transforms:
@@ -6,33 +10,33 @@ definitions:
       The Nirspec IFUPOST transform for one slice.
     properties:
       linear:
-        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
         description: |
           The linear part of the transform per slice.
           It has an analytical inverse.
       xpoly:
-        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
         description: |
           The forward polynomial in X.
           The backward polynomial should be assigned when creating the model.
       xpoly_distortion:
-        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
         description: |
           The wavelength dependent distortion polynomial in X.
           The backward polynomial is assigned as inverse.
       ypoly:
-        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
         description: |
           The forward polynomial in Y.
           The backward polynomial should be assigned when creating the model.
       ypoly_distortion:
-        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
         description: |
           The wavelength dependent distortion polynomial in X.
           The backward polynomial is assigned as inverse.
 allOf:
-- $ref: referencefile.schema.yaml
-- $ref: keyword_exptype.schema.yaml
+- $ref: referencefile.schema
+- $ref: keyword_exptype.schema
 - type: object
   properties:
     slice_0:

@@ -4,65 +4,107 @@ At its basic level this step flat-fields an input science data set by dividing
 by a flat-field reference image. In particular, the SCI array from the
 flat-field reference file is divided into both the SCI and ERR arrays of the
 science data set, and the flat-field DQ array is combined with the science DQ
-array using a bit-wise OR operation.
+array using a bitwise OR operation. Details for particular modes are given
+in the sections below.
 
-Non-NIRSpec Data
-----------------
-MultiSlit data models are handled as follows. First, if the
-flat-field reference file supplied to the step is also in the form of a
-MultiSlit model, it searches the reference file for slits with names that
-match the slits in the science exposure (e.g. 'S1600A1' or 'S200B1'). When it
-finds a match, it uses the flat-field data for that slit to correct the
-particular slit data in the science exposure. If, on the other hand, the
-flat-field consists of a single image model, the region corresponding to each
-slit in the science data is extracted on-the-fly from the flat-field data and
-applied to the corresponding slit in the science data.
+Upon completion of the step, the step status keyword "S_FLAT" gets set
+to "COMPLETE" in the output science data.
 
-Multiple-integration datasets (the _rateints.fits products from the ramp_fit
-step) are handled by applying the flat-field to each integration.
+Imaging and Non-NIRSpec Spectroscopic Data
+------------------------------------------
+Simple imaging data, usually in the form of an ImageModel, and many
+spectroscopic modes, use a straight-forward approach that involves applying
+a single flat-field reference file to the science image. The spectroscopic
+modes included in this category are NIRCam WFSS and Time-Series Grism,
+NIRISS WFSS and SOSS, MIRI MRS and LRS. All of these modes are processed
+as follows:
 
-NIRSpec imaging data are corrected the same as non-NIRSpec data,
-i.e. they will just be divided by a flat-field reference image.
+- If the science data have been taken using a subarray and the flat-field
+  reference file is a full-frame image, extract the corresponding subarray
+  region from the flat-field data.
 
-For pixels whose DQ is NO_FLAT_FIELD in the reference file, the flat
-value is reset to 1.0. Similarly, for pixels whose flat value is NaN, the flat
-value is reset to 1.0 and DQ value in the output science data is set to
-NO_FLAT_FIELD. In both cases, the effect is that no flat-field is applied.
+- Find pixels that have a value of NaN or zero in the FLAT reference file
+  SCI array and set their DQ values to "NO_FLAT_FIELD."
 
-If any part of the input data model gets flat-fielded (e.g. at least one
-slit of a MultiSlit model), the status keyword S_FLAT will be set to
-COMPLETE in the output science data.
+- Reset the values of pixels in the flat that have DQ="NO_FLAT_FIELD" to
+  1.0, so that they have no effect when applied to the science data.
+
+- Apply the flat by dividing it into the science exposure SCI and ERR arrays.
+
+- Propagate the FLAT reference file DQ values into the science exposure
+  DQ array using a bitwise OR operation.
+
+Multi-integration datasets ("_rateints.fits" products), which are common
+for modes like NIRCam Time-Series Grism, NIRISS SOSS, and MIRI LRS Slitless,
+are handled by applying the above flat-field procedures to each integration.
 
 NIRSpec Spectroscopic Data
 --------------------------
 Flat-fielding of NIRSpec spectrographic data differs from other modes
-in that the flat field array that will be
-divided into the SCI and ERR arrays of the input science data set is not
-read directly from CRDS.  This is because the flat field varies with
-wavelength, and the wavelength of light that falls on any given pixel
-depends on mode and on which slit or slits are open.  The flat-field array
+in that the flat-field array that will be applied to the science data
+is not read directly from CRDS.  This is because the flat-field varies with
+wavelength and the wavelength of light that falls on any given pixel
+depends on the mode and which slits are open.  The flat-field array
 that is divided into the SCI and ERR arrays is constructed on-the-fly
 by extracting the relevant section from the reference files, and then --
 for each pixel -- interpolating to the appropriate wavelength for that
-pixel.  See the Reference File section for further details.  There is
-an option to save the on-the-fly flat field to a file.
+pixel.  This interpolation requires knowledge of the dispersion direction,
+which is read from keyword "DISPAXIS."  See the Reference File section for
+further details.
 
-NIRSpec NRS_BRIGHTOBJ data are processed much like other NIRSpec
-spectrographic data, except that NRS_BRIGHTOBJ data are in a CubeModel,
-rather than a MultiSlitModel or ImageModel (used for IFU data).  A 2-D
-flat field image will be constructed on-the-fly as usual, but this image
-will be divided into each plane of the 3-D science data and error array,
-resulting in an output CubeModel.
+For NIRSpec Fixed-Slit and MOS exposures, an on-the-fly flat-field is
+constructed to match each of the slits/slitlets contained in the science
+exposure. For NIRSpec IFU exposures, a single full-frame flat-field is
+constructed, which is applied to the entire science image.
 
-When this step is called with NIRSpec imaging data as input, the data will be
-flat-fielded as described in the section for non-NIRSpec data.
+NIRSpec NRS_BRIGHTOBJ data are processed just like NIRSpec Fixed-Slit
+data, except that NRS_BRIGHTOBJ data are stored in a CubeModel,
+rather than a MultiSlitModel.  A 2-D flat-field image is constructed
+on-the-fly as usual, but this image is then divided into each plane of
+the 3-D SCI and ERR arrays.
 
-Subarrays
----------
-This step handles input science exposures that were taken in subarray modes in
-a flexible way. If the reference data arrays are the same size as the science
-data, they will be applied directly. If there is a mismatch, the routine will
-extract a matching subarray from the reference file data arrays and apply them
-to the science data. Hence full-frame reference files can be
-used for both full-frame and subarray science exposures, or subarray-dependent
-reference files can be provided if desired.
+In all cases, there is a step option that allows for saving the
+on-the-fly flat field to a file, if desired.
+
+NIRSpec Fixed-Slit Primary Slit
+-------------------------------
+The primary slit in a NIRSpec fixed-slit exposure receives special handling.
+If the primary slit, as given by the "FXD_SLIT" keyword value, contains a
+point source, as given by the "SRCTYPE" keyword, it is necessary to know the
+flatfield conversion factors for both a point source and a uniform source
+for use later in the :ref:`master background <master_background_step>` step
+in Stage 3 processing. The point source version of the flatfield correction
+is applied to the slit data, but that correction is not appropriate for the
+background signal contained in the slit, and hence corrections must be
+applied later in the :ref:`master background <master_background_step>` step.
+
+So in this case the `flatfield` step will compute 2D arrays of conversion
+factors that are appropriate for a uniform source and for a point source,
+and store those correction factors in the "FLATFIELD_UN" and "FLATFIELD_PS"
+extensions, respectively, of the output data product. The point source
+correction array is also applied to the slit data.
+
+Note that this special handling is only needed when the slit contains a
+point source, because in that case corrections to the wavelength grid are
+applied by the :ref:`wavecorr <wavecorr_step>` step to account for any
+source mis-centering in the slit and the flatfield conversion factors are
+wavelength-dependent. A uniform source does not require wavelength corrections
+and hence the flatfield conversions will differ for point and uniform
+sources. Any secondary slits that may be included in a fixed-slit exposure
+do not have source centering information available, so the
+:ref:`wavecorr <wavecorr_step>` step is not applied, and hence there's no
+difference between the point source and uniform source flatfield
+conversions for those slits.
+
+Error Propagation
+-----------------
+The VAR_POISSON and VAR_RNOISE variance arrays of the science exposure
+are divided by the square of the flat-field value for each pixel.
+A flat-field variance array, VAR_FLAT, is created from the science exposure
+and flat-field reference file data using the following formula:
+
+.. math::
+   VAR\_FLAT = ( SCI_{science}^{2} / SCI_{flat}^{2} ) * ERR_{flat}^{2}
+
+The total ERR array in the science exposure is updated as the square root
+of the quadratic sum of VAR_POISSON, VAR_RNOISE, and VAR_FLAT.

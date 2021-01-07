@@ -86,7 +86,7 @@ class BasePoolRule():
                 ppars.path + ': n_asns not expected {} {}'.format(len(asns), ppars.n_asns)
             for asn, candidates in zip(asns, ppars.candidates):
                 assert set(asn.candidates) == set(candidates)
-            file_regex = re.compile('.+_(?P<suffix>.+)\..+')
+            file_regex = re.compile(r'.+_(?P<suffix>.+)\..+')
             for asn in asns:
                 for product in asn['products']:
                     for member in product['members']:
@@ -96,15 +96,6 @@ class BasePoolRule():
                                 ppars.path + ': No suffix match for {}'.format(member['expname'])
                             assert match.groupdict()['suffix'] in ppars.valid_suffixes, \
                                 ppars.path + ': Suffix {} not valid'.format(match.groupdict()['suffix'])
-
-
-@pytest.fixture(scope='session')
-def full_pool_rules(request):
-    pool_fname = t_path('data/mega_pool.csv')
-    pool = AssociationPool.read(pool_fname)
-    rules = AssociationRegistry()
-
-    return (pool, rules, pool_fname)
 
 
 def make_megapool():

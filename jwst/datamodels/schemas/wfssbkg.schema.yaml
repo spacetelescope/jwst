@@ -1,10 +1,14 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/wfssbkg.schema"
 allOf:
-- $ref: referencefile.schema.yaml
-- $ref: keyword_exptype.schema.yaml
-- $ref: keyword_filter.schema.yaml
-- $ref: keyword_pupil.schema.yaml
-- $ref: subarray.schema.yaml
-- $ref: bunit.schema.yaml
+- $ref: referencefile.schema
+- $ref: keyword_exptype.schema
+- $ref: keyword_filter.schema
+- $ref: keyword_pupil.schema
+- $ref: subarray.schema
+- $ref: bunit.schema
 - type: object
   properties:
     data:
@@ -23,6 +27,4 @@ allOf:
       fits_hdu: ERR
       default: 0.0
       datatype: float32
-    dq_def:
-      $ref: dq_def.schema.yaml
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema
+- $ref: dq_def.schema

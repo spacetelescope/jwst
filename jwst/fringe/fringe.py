@@ -61,14 +61,12 @@ def apply_fringe(input_model, fringe):
     # Initialize the output model as a copy of the input
     output_model = input_model.copy()
 
-    fringe_data = fringe.data
-    # fringe_dq = fringe.dq
-
     # Fringe-correct data and error arrays, applying correction only
-    #    to pixels having good reference values
-    good_pix = np.isfinite(fringe_data)
-    output_model.data[good_pix] /= fringe_data[good_pix]
-    output_model.err[good_pix] /= fringe_data[good_pix]
+    # to pixels having good calibration values
+    fringe_data = fringe.data
+    fringe_data[np.isnan(fringe_data)] = 1.0
+    output_model.data /= fringe_data
+    output_model.err /= fringe_data
 
 ### 05/22/14: For now, commenting out the following updating of the output
 ###    DQ based on the DQ of the reference file. This is done now because the
@@ -77,12 +75,11 @@ def apply_fringe(input_model, fringe):
 ###    will be logged for now. This behavior may be changed later.
 ###
     # set DQ flag for bad pixels in the fringe
-#       dq_mask = fringe_dq * 0
-#       dq_mask[np.where(fringe_dq != 0)] = dqflags.pixel['DEAD']
+#   dq_mask = fringe.dq * 0
+#   dq_mask[np.where(fringe.dq != 0)] = dqflags.pixel['DEAD']
 
     # update DQ array based on fringe's DQ values
-#       output_model.dq = np.bitwise_or(output_model.dq, dq_mask)
-    log.info('The DQ values in the reference file will NOT be used to update the\
-    DQ values in the output DQ array.')
+#   output_model.dq = np.bitwise_or(output_model.dq, dq_mask)
+    log.info('DQ values in the reference file NOT used to update the output DQ.')
 
     return output_model

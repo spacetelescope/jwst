@@ -1,6 +1,10 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/extract1dimage.schema"
 title: 1-D extraction regions array
 allOf:
-- $ref: subarray.schema.yaml
+- $ref: subarray.schema
 - type: object
   properties:
     data:
@@ -11,14 +15,14 @@ allOf:
     name:
       title: Name of the slit
       type: string
-      fits_keyword: SLTNAME 
+      fits_keyword: SLTNAME
       fits_hdu: SCI
     spectral_order:
       title: Spectral order number
       type: integer
       fits_keyword: SPORDER
       fits_hdu: SCI
-    dispersion_axis:
+    dispersion_direction:
       title: Dispersion direction
       type: integer
       fits_keyword: DISPAXIS
@@ -28,4 +32,3 @@ allOf:
       type: integer
       fits_keyword: SMOOTH_L
       fits_hdu: SCI
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

@@ -9,7 +9,7 @@ description: |
   It maps spectral orderto to transform
 
 allOf:
-  - $ref: ../asdf/transform/transform-1.1.0
+  - $ref: "tag:stsci.edu:asdf/transform/transform-1.1.0"
   - type: object
     properties:
       spectral_orders:
@@ -23,5 +23,5 @@ allOf:
           A compound model transferring pixel to worlds coordinates.
         type: array
         items:
-          $ref: ../asdf/transform/transform-1.1.0
+          $ref: "tag:stsci.edu:asdf/transform/transform-1.1.0"
     required: [spectral_orders, models]

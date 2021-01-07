@@ -1,3 +1,5 @@
+.. _skymatch_step:
+
 ========
 SkyMatch
 ========
@@ -16,4 +18,3 @@ SkyMatch
    region
 
 .. automodapi:: jwst.skymatch
-

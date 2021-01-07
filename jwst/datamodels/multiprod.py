@@ -1,44 +1,13 @@
-from . import model_base
-from .drizproduct import DrizProductModel
+import warnings
+
+from .multislit import MultiSlitModel
+
 
 __all__ = ['MultiProductModel']
 
 
-class MultiProductModel(model_base.DataModel):
-    """
-    A data model for multi-DrizProduct images.
-
-    This model has a special member `products` that can be used to
-    deal with each DrizProduct at a time.  It behaves like a list::
-
-       >>> from . import DrizProductModel
-       >>> multiprod_model = MultiProductModel()
-       >>> multiprod_model.products.append(DrizProductModel())
-       >>> multiprod_model.products[0] # doctest: +SKIP
-       <DrizProductModel>
-
-    If `init` is a file name or an `DrizProductModel` instance, an empty
-    `DrizProductModel` will be created and assigned to attribute `products[0]`,
-    and the `data`, `wht`, `con`, and `relsens` attributes from the
-    input file or `DrizProductModel` will be copied to the first element of
-    `products`.
-
-    Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
-    """
-    schema_url = "multiproduct.schema.yaml"
-
-    def __init__(self, init=None, **kwargs):
-        if isinstance(init, DrizProductModel):
-            super(MultiProductModel, self).__init__(init=None, **kwargs)
-            self.update(init)
-            self.products.append(self.products.item())
-            self.products[0].data = init.data
-            self.products[0].wht = init.wht
-            self.products[0].con = init.con
-            self.products[0].relsens = init.relsens
-            return
-
-        super(MultiProductModel, self).__init__(init=init, **kwargs)
+def MultiProductModel(*args, **kwargs):
+    warnings.simplefilter('default')
+    warnings.warn(message="MultiProductModel is deprecated and will be removed.  "
+        "Use MultiSlitModel.", category=DeprecationWarning)
+    return MultiSlitModel(*args, **kwargs)

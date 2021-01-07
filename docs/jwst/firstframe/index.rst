@@ -1,3 +1,5 @@
+.. _firstframe_step:
+
 ======================
 First Frame Correction
 ======================
@@ -6,7 +8,7 @@ First Frame Correction
    :maxdepth: 2
 
    description.rst
-   reference_files.rst
    arguments.rst
+   reference_files.rst
 
 .. automodapi:: jwst.firstframe

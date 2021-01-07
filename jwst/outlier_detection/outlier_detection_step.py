@@ -32,12 +32,12 @@ __all__ = ["OutlierDetectionStep"]
 class OutlierDetectionStep(Step):
     """Flag outlier bad pixels and cosmic rays in DQ array of each input image.
 
-    Input images can listed in an input association file or already opened
+    Input images can be listed in an input association file or already opened
     with a ModelContainer.  DQ arrays are modified in place.
 
     Parameters
     -----------
-    input : asn file or ModelContainer
+    input_data : asn file or ModelContainer
         Single filename association table, or a datamodels.ModelContainer.
 
     """
@@ -59,14 +59,15 @@ class OutlierDetectionStep(Step):
         backg = float(default=0.0)
         save_intermediate_results = boolean(default=False)
         resample_data = boolean(default=True)
-        good_bits = integer(default=4)
+        good_bits = string(default="~DO_NOT_USE")  # DQ flags to allow
         scale_detection = boolean(default=False)
         search_output_file = boolean(default=False)
+        allowed_memory = float(default=None)  # Fraction of memory to use for the combined image.
     """
 
-    def process(self, input):
+    def process(self, input_data):
         """Perform outlier detection processing on input data."""
-        with datamodels.open(input) as input_models:
+        with datamodels.open(input_data) as input_models:
             self.input_models = input_models
             if not isinstance(self.input_models, datamodels.ModelContainer):
                 self.input_container = False
@@ -85,6 +86,7 @@ class OutlierDetectionStep(Step):
                 _make_output_path = self.search_attr(
                     '_make_output_path', parent_first=True
                 )
+
                 self._make_output_path = partial(
                     _make_output_path,
                     asn_id=asn_id
@@ -103,6 +105,7 @@ class OutlierDetectionStep(Step):
                 'snr': self.snr,
                 'scale': self.scale,
                 'backg': self.backg,
+                'allowed_memory' : self.allowed_memory,
                 'save_intermediate_results': self.save_intermediate_results,
                 'resample_data': self.resample_data,
                 'good_bits': self.good_bits,
@@ -144,32 +147,34 @@ class OutlierDetectionStep(Step):
                 detection_step = outlier_registry['ifu']
                 pars['resample_suffix'] = 's3d'
             else:
-                self.log.error("Outlier detection failed for \
-                                unknown/unsupported exposure type: {}".format(
-                                exptype))
+                self.log.error("Outlier detection failed for unknown/unsupported ",
+                               f"exposure type: {exptype}")
                 self.valid_input = False
 
             if not self.valid_input:
-                result = input_models
-                for input in result:
-                    input.meta.cal_step.outlier_detection = "SKIPPED"
-                    self.skip = True
-                return result
+                if self.input_container:
+                    for model in self.input_models:
+                        model.meta.cal_step.outlier_detection = "SKIPPED"
+                else:
+                    self.input_models.meta.cal_step.outlier_detection = "SKIPPED"
+                self.skip = True
+                return self.input_models
 
-            self.log.debug("Using {} class for outlier_detection".format(
-                           detection_step.__name__))
-
+            self.log.debug(f"Using {detection_step.__name__} class for outlier_detection")
             reffiles = {}
 
             # Set up outlier detection, then do detection
             step = detection_step(self.input_models, reffiles=reffiles, **pars)
             step.do_detection()
 
+            state = 'COMPLETE'
             if self.input_container:
                 for model in self.input_models:
-                    model.meta.cal_step.outlier_detection = 'COMPLETE'
+                    model.meta.cal_step.outlier_detection = state
+                    model.meta.filetype = 'cosmic-ray flagged'
             else:
-                self.input_models.meta.cal_step.outlier_detection = 'COMPLETE'
+                self.input_models.meta.cal_step.outlier_detection = state
+                self.input_models.meta.filetype = 'cosmic-ray flagged'
 
             return self.input_models
 
@@ -202,9 +207,9 @@ class OutlierDetectionStep(Step):
             reffiles = [self.get_reference_file(self.input_models, reftype)]
             length = 1
 
-        self.log.debug("Using {} reffile(s):".format(reftype.upper()))
+        self.log.debug("Using {reftype.upper()} reffile(s):")
         for r in set(reffiles):
-            self.log.debug("    {}".format(r))
+            self.log.debug("    {r}")
 
         # Check if all the ref files are the same.  If so build it by reading
         # the reference file just once.
@@ -226,30 +231,28 @@ class OutlierDetectionStep(Step):
         """Check to see whether input is the expected ModelContainer object."""
         ninputs = len(self.input_models)
         if not isinstance(self.input_models, datamodels.ModelContainer):
-            self.log.warning("Input is not a ModelContainer.")
-            self.log.warning("Outlier detection step will be skipped.")
+            self.log.warning("Input is not a ModelContainer")
+            self.log.warning("Outlier detection step will be skipped")
             self.valid_input = False
         elif ninputs < 2:
-            self.log.warning("Input only contains %d exposures." % (ninputs))
-            self.log.warning("Outlier detection step will be skipped.")
+            self.log.warning(f"Input only contains {ninputs} exposure")
+            self.log.warning("Outlier detection step will be skipped")
             self.valid_input = False
         else:
             self.valid_input = True
-            self.log.info("Performing outlier detection on %d inputs" %
-                          (ninputs))
+            self.log.info(f"Performing outlier detection on {ninputs} inputs")
 
     def _check_input_cube(self):
         """Check to see whether input is the expected CubeModel object."""
         ninputs = self.input_models.shape[0]
         if not isinstance(self.input_models, datamodels.CubeModel):
-            self.log.warning("Input is not the expected CubeModel.")
-            self.log.warning("Outlier detection step will be skipped.")
+            self.log.warning("Input is not the expected CubeModel")
+            self.log.warning("Outlier detection step will be skipped")
             self.valid_input = False
         elif ninputs < 2:
-            self.log.warning("Input only contains %d exposures." % (ninputs))
-            self.log.warning("Outlier detection step will be skipped.")
+            self.log.warning(f"Input only contains {ninputs} integration")
+            self.log.warning("Outlier detection step will be skipped")
             self.valid_input = False
         else:
             self.valid_input = True
-            self.log.info("Performing outlier detection with %d inputs" %
-                          (ninputs))
+            self.log.info(f"Performing outlier detection with {ninputs} inputs")

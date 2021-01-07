@@ -5,11 +5,13 @@
 from collections import OrderedDict
 
 import numpy as np
+from datetime import time
 from astropy.io import fits
+from astropy.time import Time
+from stdatamodels import schema as dm_schema
+from stdatamodels import properties
 
 from jwst import __version__
-from .. import datamodels
-from ..datamodels import schema as dm_schema
 from . import blender
 
 # Version of rules file format supported by this version of the code
@@ -81,6 +83,39 @@ def last(items):
         return items[-1]
     return None
 
+def mindate(items):
+    """Return the minimum date from a list of date strings in yyyy-mm-dd format."""
+    time_list = Time(items, format="iso", in_subfmt="date", out_subfmt="date")
+    return str(time_list.min())
+
+def maxdate(items):
+    """Return the maximum date from a list of date strings in yyyy-mm-dd format."""
+    time_list = Time(items, format="iso", in_subfmt="date", out_subfmt="date")
+    return str(time_list.max())
+
+def mindatetime(items):
+    """Return the minimum datetime from a list of datetime strings in ISO-8601 format."""
+    time_list = Time(items, format="isot")
+    return str(time_list.min())
+
+def maxdatetime(items):
+    """Return the maximum datetime from a list of datetime strings in ISO-8601 format."""
+    time_list = Time(items, format="isot")
+    return str(time_list.max())
+
+def mintime(items):
+    times = [_isotime(time_str) for time_str in items]
+    return min(times).isoformat()
+
+def maxtime(items):
+    times = [_isotime(time_str) for time_str in items]
+    return max(times).isoformat()
+
+def _isotime(time_str):
+    hms = [float(i) for i in time_str.split(':')]
+    sec_ms = hms[2] - int(hms[2])
+    isotime = time(int(hms[0]), int(hms[1]), int(hms[2]), int(sec_ms * 1000000))
+    return isotime
 
 # translation dictionary for function entries from rules files
 blender_funcs = {'first': first,
@@ -94,7 +129,13 @@ blender_funcs = {'first': first,
                  'sum': np.sum,
                  'max': np.max,
                  'min': np.min,
-                 'stddev': np.std}
+                 'stddev': np.std,
+                 'mintime': mintime,
+                 'maxtime': maxtime,
+                 'mindate': mindate,
+                 'maxdate': maxdate,
+                 'mindatetime': mindatetime,
+                 'maxdatetime': maxdatetime}
 
 
 # Classes for managing keyword rules
@@ -324,7 +365,7 @@ def _build_schema_rules_dict(schema):
 
     Returns
     -------
-    results : dict
+    results : OrderedDict
         Dictionary with schema attributes as keys and blend rules
         as values
 
@@ -339,17 +380,31 @@ def _build_schema_rules_dict(schema):
             attr = '.'.join(path)
             if subschema.get('properties'):
                 return # Ignore ObjectNodes
+
+            # Get blending info
             kwrule = subschema.get('blend_rule')
-            kwtab = subschema.get('blend_table', False)
+            kwtab = subschema.get('blend_table')
             kwname = subschema.get('fits_keyword', attr)
-            results[attr] = []
-            if kwrule is not None:
-                results[attr].append({attr: {'rule': kwrule}})
-            else:
-                # default 'first' if nothing specified in schema for attr
-                results[attr].append({attr: {'rule': 'first'}})
+
+            # If rules had already been set, only modify
+            # the rules if there are explicit settings.
+            rule_spec = None
+            result = results.get(attr, [])
+            if kwrule:
+                rule_spec = {attr: {'rule': kwrule}}
+            elif not results.get(attr):
+                rule_spec = {attr: {'rule': 'first'}}
+            if rule_spec:
+                result.append(rule_spec)
+
+            # Add keyword to table if specified.
             if kwtab:
-                results[attr].append({attr: kwname})
+                result.append({attr: kwname})
+
+            # Add the results back.
+            if len(result):
+                results[attr] = result
+
         else:
             return
 
@@ -383,7 +438,7 @@ def interpret_entry(line, hdr):
     section_name = None
 
     # Parse the line
-    if isinstance(hdr[attr], datamodels.properties.ObjectNode):
+    if isinstance(hdr[attr], properties.ObjectNode):
         section_name = attr
         # Datamodel sections are just parent Nodes for each attribute
         keys = hdr[section_name].instance.keys()

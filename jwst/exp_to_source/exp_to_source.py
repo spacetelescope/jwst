@@ -1,14 +1,19 @@
-"""exp_to_source: Reformat Level2b MSA data to be source-based.
+"""exp_to_source: Reformat Level2b multi-source data to be source-based.
 """
-from collections import OrderedDict, Callable
+import logging
+
+from collections import OrderedDict
+from collections.abc import Callable
 
 from ..datamodels import (
     MultiExposureModel,
-    SourceModelContainer
-)
-from ..datamodels.properties import merge_tree
+    SourceModelContainer)
+from stdatamodels.properties import merge_tree
 
 __all__ = ['exp_to_source', 'multislit_to_container']
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 def exp_to_source(inputs):
@@ -16,24 +21,33 @@ def exp_to_source(inputs):
 
     Parameters
     ----------
-    inputs: [MultiSlitModel, ...]
+    inputs : [MultiSlitModel, ...]
         List of MultiSlitModel instances to reformat.
 
     Returns
     -------
-    {str: MultiExposureModel, }
+    multiexposures : dict
         Returns a dict of MultiExposureModel instances wherein each
         instance contains slits belonging to the same source.
-        The key is the name of each source.
+        The key is the ID of each source, i.e. ``source_id``.
     """
     result = DefaultOrderedDict(MultiExposureModel)
+
     for exposure in inputs:
+        log.info(f'Reorganizing data from exposure {exposure.meta.filename}')
+
         for slit in exposure.slits:
-            result[slit.name].exposures.append(slit)
-            merge_tree(
-                result[slit.name].exposures[-1].meta.instance,
-                exposure.meta.instance
-            )
+            log.debug(f'Copying source {slit.source_id}')
+            result_slit = result[str(slit.source_id)]
+            result_slit.exposures.append(slit)
+            merge_tree(result_slit.exposures[-1].meta.instance, exposure.meta.instance)
+
+            if result_slit.meta.instrument.name is None:
+                result_slit.update(exposure)
+
+            result_slit.meta.filename = None  # Resulting merged data doesn't come from one file
+
+        exposure.close()
 
     # Turn off the default factory
     result.default_factory = None
@@ -46,16 +60,16 @@ def multislit_to_container(inputs):
 
     Parameters
     ----------
-    inputs: [MultiSlitModel, ...]
+    inputs : [MultiSlitModel, ...]
         List of MultiSlitModel instances to reformat, or just a
         ModelContainer full of MultiSlitModels.
 
     Returns
     -------
-    {str: ModelContainer, }
+    containers : dict
         Returns a dict of ModelContainer instances wherein each
         instance contains ImageModels of slits belonging to the same source.
-        The key is the name of each slit.
+        The key is the ID of each slit, i.e. ``source_id``.
     """
     containers = exp_to_source(inputs)
     for id in containers:
@@ -65,7 +79,7 @@ def multislit_to_container(inputs):
 
 
 class DefaultOrderedDict(OrderedDict):
-    # Source: http://stackoverflow.com/a/6190500/562769
+    # Source http://stackoverflow.com/a/6190500/562769
     def __init__(self, default_factory=None, *a, **kw):
         if (default_factory is not None and
            not isinstance(default_factory, Callable)):

@@ -96,7 +96,8 @@ class LoadAsAssociation(dict):
             )
             asn.filename = DEFAULT_NAME
         else:
-            asn = cls(pure_asn)
+            asn = rule()
+            asn.update(pure_asn)
             asn.filename = obj
 
         return asn
@@ -135,6 +136,17 @@ class LoadAsLevel2Asn(LoadAsAssociation):
         product_name_func = cls.model_product_name
         if basename is not None:
             product_name_func = partial(cls.name_with_index, basename)
+
+        # if the input string is a FITS file create an asn and return
+        if isinstance(obj, str):
+            file_name, file_ext = os_path.splitext(obj)
+
+            if file_ext == '.fits':
+                items = [(obj, 'science')]
+                asn = asn_from_list(items, product_name=file_name,
+                                    rule=DMSLevel2bBase, with_exptype=True,
+                                    meta={"asn_pool":"singleton"})
+                return asn
 
         asn = super(LoadAsLevel2Asn, cls).load(
             obj,

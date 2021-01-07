@@ -1,10 +1,11 @@
-#
+
 #  Module for 2d saturation
 #
 import logging
 
 from ..datamodels import dqflags
 from ..lib import reffile_utils
+from ..lib import pipe_utils
 from . import x_irs2
 
 import numpy as np
@@ -12,122 +13,116 @@ import numpy as np
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-HUGE_NUM = 100000.
+DONOTUSE = dqflags.pixel['DO_NOT_USE']
+SATURATED = dqflags.pixel['SATURATED']
+AD_FLOOR = dqflags.pixel['AD_FLOOR']
+NO_SAT_CHECK = dqflags.pixel['NO_SAT_CHECK']
+ATOD_LIMIT = 65535.  # Hard DN limit of 16-bit A-to-D converter
+
 
 def do_correction(input_model, ref_model):
     """
     Short Summary
     -------------
-    Execute all tasks for saturation, including using a saturation reference
-    file.
+    Apply flagging for saturation based on threshold values stored in the
+    saturation reference file and A/D floor based on testing for 0 DN values.
+    For A/D floor flagged groups, the DO_NOT_USE flag is also set.
 
     Parameters
     ----------
-    input_model: data model object
+    input_model : `~jwst.datamodels.RampModel`
         The input science data to be corrected
 
-    ref_model: data model object
-        Saturation reference file mode object
+    ref_model : `~jwst.datamodels.SaturationModel`
+        Saturation reference file data model
 
     Returns
     -------
-    output_model: data model object
-        object having GROUPDQ array saturation flags set
+    output_model : `~jwst.datamodels.RampModel`
+        Data model with saturation, A/D floor, and do not use flags set in
+        the GROUPDQ array
     """
 
-    ramparr = input_model.data
-    # Was IRS2 readout used?
-    is_irs2_format = x_irs2.is_irs2(input_model)
+    ramp_array = input_model.data
+    nints = ramp_array.shape[0]
+    ngroups = ramp_array.shape[1]
+    detector = input_model.meta.instrument.detector
+
+    # If NIRSpec IRS2 readout mode was used, create a mask
+    # of the appropriate size
+    is_irs2_format = pipe_utils.is_irs2(input_model)
     if is_irs2_format:
         irs2_mask = x_irs2.make_mask(input_model)
 
-   # Create the output model as a copy of the input
+    # Create the output model as a copy of the input
     output_model = input_model.copy()
     groupdq = output_model.groupdq
 
-    # Extract subarray from reference file, if necessary
+    # Extract subarray from saturation reference file, if necessary
     if reffile_utils.ref_matches_sci(input_model, ref_model):
-        satmask = ref_model.data
-        dqmask = ref_model.dq
+        sat_thresh = ref_model.data
+        sat_dq = ref_model.dq
     else:
         log.info('Extracting reference file subarray to match science data')
         ref_sub_model = reffile_utils.get_subarray_model(input_model, ref_model)
-        satmask = ref_sub_model.data.copy()
-        dqmask = ref_sub_model.dq.copy()
+        sat_thresh = ref_sub_model.data.copy()
+        sat_dq = ref_sub_model.dq.copy()
         ref_sub_model.close()
 
-    # For pixels flagged in reference file as NO_SAT_CHECK, set the dq mask
-    #   and saturation mask
-    wh_sat = np.bitwise_and(dqmask, dqflags.pixel['NO_SAT_CHECK'])
-    dqmask[wh_sat == dqflags.pixel['NO_SAT_CHECK']] = dqflags.pixel['NO_SAT_CHECK']
-    satmask[wh_sat == dqflags.pixel['NO_SAT_CHECK']] = HUGE_NUM
-    # Correct saturation values for NaNs in the ref file
-    correct_for_NaN(satmask, dqmask)
+    # For pixels flagged in reference file as NO_SAT_CHECK,
+    # set the saturation check threshold to the A-to-D converter limit.
+    sat_thresh[np.bitwise_and(sat_dq, NO_SAT_CHECK) == NO_SAT_CHECK] = ATOD_LIMIT
 
-    dq_flag = dqflags.group['SATURATED']
+    # Also reset NaN values in the saturation threshold array to the
+    # A-to-D limit and flag them with NO_SAT_CHECK
+    sat_dq[np.isnan(sat_thresh)] |= NO_SAT_CHECK
+    sat_thresh[np.isnan(sat_thresh)] = ATOD_LIMIT
 
-    nints = ramparr.shape[0]
-    ngroups = ramparr.shape[1]
-
-    detector = input_model.meta.instrument.detector
-    flagarray = np.zeros(ramparr.shape[-2:], dtype=groupdq.dtype)
+    flagarray = np.zeros(ramp_array.shape[-2:], dtype=groupdq.dtype)
+    flaglowarray = np.zeros(ramp_array.shape[-2:], dtype=groupdq.dtype)
     for ints in range(nints):
-        for plane in range(ngroups):
-            # Update the 4D groupdq array with the saturation flag. The
-            # flag is set in the current plane and all following planes.
+        for group in range(ngroups):
+            # Update the 4D groupdq array with the saturation flag.
             if is_irs2_format:
-                sci_temp = x_irs2.from_irs2(ramparr[ints, plane, :, :],
+                sci_temp = x_irs2.from_irs2(ramp_array[ints, group, :, :],
                                             irs2_mask, detector)
-                flag_temp = np.where(sci_temp >= satmask, dq_flag, 0)
-                # Copy flag_temp into flagarray.
+                # check for saturation
+                flag_temp = np.where(sci_temp >= sat_thresh, SATURATED, 0)
+                # check for A/D floor
+                flaglow_temp = np.where(sci_temp <= 0, AD_FLOOR | DONOTUSE, 0)
+                # Copy temps into flagarrays.
                 x_irs2.to_irs2(flagarray, flag_temp, irs2_mask, detector)
+                x_irs2.to_irs2(flaglowarray, flaglow_temp, irs2_mask, detector)
             else:
-                flagarray[:, :] = np.where(ramparr[ints, plane, :, :] >= satmask,
-                                          dq_flag, 0)
-            np.bitwise_or(groupdq[ints, plane:, :, :], flagarray,
-                          groupdq[ints, plane:, :, :])
+                # check for saturation
+                flagarray[:, :] = np.where(ramp_array[ints, group, :, :] >= sat_thresh,
+                                           SATURATED, 0)
+                # check for A/D floor
+                flaglowarray[:, :] = np.where(ramp_array[ints, group, :, :] <= 0,
+                                              AD_FLOOR | DONOTUSE, 0)
+            # for saturation, the flag is set in the current plane
+            # and all following planes.
+            np.bitwise_or(groupdq[ints, group:, :, :], flagarray,
+                          groupdq[ints, group:, :, :])
+            # for A/D floor, the flag is only set of the current plane
+            np.bitwise_or(groupdq[ints, group, :, :], flaglowarray,
+                          groupdq[ints, group, :, :])
 
+    # Save the flags in the output GROUPDQ array
     output_model.groupdq = groupdq
+
+    n_sat = np.any(np.any(np.bitwise_and(groupdq, SATURATED), axis=0), axis=0).sum()
+    log.info(f'Detected {n_sat} saturated pixels')
+    n_floor = np.any(np.any(np.bitwise_and(groupdq, AD_FLOOR), axis=0), axis=0).sum()
+    log.info(f'Detected {n_floor} A/D floor pixels')
+
+    # Save the NO_SAT_CHECK flags in the output PIXELDQ array
     if is_irs2_format:
         pixeldq_temp = x_irs2.from_irs2(output_model.pixeldq, irs2_mask,
                                         detector)
-        pixeldq_temp = np.bitwise_or(pixeldq_temp, dqmask)
+        pixeldq_temp = np.bitwise_or(pixeldq_temp, sat_dq)
         x_irs2.to_irs2(output_model.pixeldq, pixeldq_temp, irs2_mask, detector)
     else:
-        output_model.pixeldq = np.bitwise_or(output_model.pixeldq, dqmask)
+        output_model.pixeldq = np.bitwise_or(output_model.pixeldq, sat_dq)
 
     return output_model
-
-
-def correct_for_NaN(satmask, dqmask):
-    """
-    Short Summary
-    -------------
-    If there are NaNs in the saturation values in the reference file, reset
-    them to a very high value such that the comparison never results in a
-    positive (saturated) result for the associated pixels in the science data.
-    Also reset the associated dqmask values to indicate that, effectively,
-    no saturation check will be done for those pixels.
-
-    Parameters
-    ----------
-    satmask: 2-d array
-        Subarray of saturation thresholds, from the saturation reference
-        file.  This may be modified in-place.
-
-    dqmask: ndarray, same shape as `satmask`
-        The DQ array from the saturation reference file, used to update
-        the PIXELDQ array in the output.  This may be modified in-place.
-    """
-    # If there are NaNs as the saturation values, update those values
-    #     to ensure there will not be saturation.
-    wh_nan = np.isnan(satmask)
-
-    if np.any(wh_nan):
-        satmask[wh_nan] = HUGE_NUM
-        dqmask[wh_nan] |= dqflags.pixel['NO_SAT_CHECK']
-
-        log.info("Unflagged pixels having saturation values set to NaN were"
-                 " detected in the ref file; for those affected pixels no"
-                 " saturation check will be made.")
-

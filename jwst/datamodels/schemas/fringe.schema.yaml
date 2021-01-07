@@ -1,6 +1,10 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/fringe.schema"
 allOf:
-- $ref: referencefile.schema.yaml
-- $ref: keyword_band.schema.yaml
+- $ref: referencefile.schema
+- $ref: keyword_band.schema
 - type: object
   properties:
     data:
@@ -19,6 +23,4 @@ allOf:
       fits_hdu: ERR
       default: 0.0
       datatype: float32
-    dq_def:
-      $ref: dq_def.schema.yaml
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema
+- $ref: dq_def.schema

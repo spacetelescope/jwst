@@ -1,0 +1,108 @@
+// [skip ci] and [ci skip] have no effect here.
+if (utils.scm_checkout(['skip_disable':true])) return
+
+def PipInject(String reqs) {
+    def result = []
+    if (reqs.trim().isEmpty()) {
+        return result
+    }
+    for (req in reqs.split('\n')) {
+        result += "pip install $req"
+    }
+    return result
+}
+
+def MultiLineToArray(String reqs) {
+    def result = []
+    if (reqs.trim().isEmpty()) {
+        return result
+    }
+    for (req in reqs.split('\n')) {
+        result += req
+    }
+    return result
+}
+
+artifactoryenv = "dev"
+if (env.ARTIFACTORY_ENV) {
+    artifactoryenv = env.ARTIFACTORY_ENV
+}
+
+pytest_args = ""
+if (env.PYTEST_ARGS) {
+    pytest_args = env.PYTEST_ARGS
+}
+
+withCredentials([string(
+    credentialsId: 'jwst-codecov',
+    variable: 'codecov_token')]) {
+
+jobconfig = new JobConfig()
+jobconfig.enable_env_publication = false
+jobconfig.publish_env_on_success_only = true
+jobconfig.publish_env_filter = "spacetelescope/master"
+
+// Define python version for conda
+python_version = "3.8"
+
+// pip related setup
+def pip_index = "https://bytesalad.stsci.edu/artifactory/api/pypi/datb-pypi-virtual/simple"
+def pip_install_args = "--index-url ${pip_index} --progress-bar=off"
+
+// Define environement variables needed for the regression tests
+env_vars = [
+    "TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory",
+    "CRDS_CONTEXT=jwst-edit",
+    "ENG_BASE_URL=http://twjwdmsemwebag.stsci.edu/JWDMSEngFqAccSide1/TlmMnemonicDataSrv.svc/",
+]
+if (env.ENV_VARS) {
+    env_vars.addAll(MultiLineToArray(env.ENV_VARS))
+}
+
+// Set pytest basetemp output directory
+pytest_basetemp = "test_outputs"
+
+// Configure artifactory ingest
+data_config = new DataConfig()
+data_config.server_id = 'bytesalad'
+data_config.root = '${PYTEST_BASETEMP}'
+data_config.match_prefix = '(.*)_result' // .json is appended automatically
+
+
+// Build and test with dependencies specified in requirements-dev.txt
+bc0 = new BuildConfig()
+bc0.nodetype = 'jwst'
+bc0.name = 'unstable-deps'
+bc0.env_vars = env_vars
+bc0.conda_ver = '4.8.4'
+bc0.conda_packages = [
+    "python=${python_version}",
+]
+bc0.pip_reqs_files = ['requirements-dev.txt']
+bc0.build_cmds = [
+    "pip install -e .[test,ephem]",
+    "pip install pytest-xdist pytest-sugar",
+    "pip freeze",
+    'echo "CRDS_CONTEXT = $(crds list --contexts $CRDS_CONTEXT --mappings | grep pmap)"',
+]
+bc0.build_cmds = PipInject(env.OVERRIDE_REQUIREMENTS) + bc0.build_cmds
+bc0.test_cmds = [
+    "pytest -r sxf -n 30 --bigdata --slow \
+    --basetemp=${pytest_basetemp} --junit-xml=results.xml --dist=loadscope \
+    --env=${artifactoryenv} ${pytest_args}",
+]
+bc0.test_configs = [data_config]
+
+// macos-specific buildconfig to cause the creation of counterparts to the linux
+// environment dumps. Packages in a mininmal conda environment differ by OS
+// which is why this is needed.
+bc1 = utils.copy(bc0)
+bc1.nodetype = 'macos'
+bc1.name = 'macos-unstable-deps'
+bc1.build_cmds = ["pip install -e ."]
+bc1.build_cmds = PipInject(env.OVERRIDE_REQUIREMENTS) + bc1.build_cmds
+bc1.test_cmds = []
+bc1.test_configs = []
+
+utils.run([jobconfig, bc0, bc1])
+}  // withCredentials

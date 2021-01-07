@@ -1,3 +1,5 @@
+.. _jump_step:
+
 ==============
 Jump Detection
 ==============
@@ -5,7 +7,8 @@ Jump Detection
 .. toctree::
    :maxdepth: 2
 
-   main.rst
+   description.rst
+   arguments.rst
    reference_files.rst
 
 .. automodapi:: jwst.jump

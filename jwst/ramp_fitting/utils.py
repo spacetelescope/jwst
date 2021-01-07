@@ -2,6 +2,7 @@
 #
 # utils.py: utility functions
 import logging
+import warnings
 import numpy as np
 
 from .. import datamodels
@@ -226,7 +227,7 @@ class OptRes:
             max_cr = max(max_cr, max_cr_int)
 
         # Allocate compressed array based on max number of crs
-        cr_com = np.zeros((n_int,) + (max_cr,) + imshape, dtype=np.int16)
+        cr_com = np.zeros((n_int,) + (max_cr,) + imshape, dtype=np.float32)
 
         # Loop over integrations and groups: for those pix having a cr, add
         #    the magnitude to the compressed array
@@ -247,10 +248,14 @@ class OptRes:
                         end_cr[y, x] += 1
 
         max_num_crs = end_cr.max()
-        self.cr_mag_seg = cr_com [:,:max_num_crs,:,:]
+        if max_num_crs == 0:
+            max_num_crs = 1
+            self.cr_mag_seg = np.zeros(shape=(n_int, 1, imshape[0], imshape[1] ))
+        else:
+            self.cr_mag_seg = cr_com [:,:max_num_crs,:,:]
 
 
-    def output_optional(self, model, effintim):
+    def output_optional(self, effintim):
         """
         These results are the cosmic ray magnitudes in the
         segment-specific results for the count rates, y-intercept,
@@ -278,8 +283,15 @@ class OptRes:
         self.var_p_seg[self.var_p_seg > 0.4 * LARGE_VARIANCE ] = 0.
         self.var_r_seg[self.var_r_seg > 0.4 * LARGE_VARIANCE ] = 0.
 
+        # Suppress, then re-enable, arithmetic warnings
+        warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
+        warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
+        # Tiny 'weights' values correspond to non-existent segments, so set to 0.
+        self.weights[1./self.weights > 0.4 * LARGE_VARIANCE ] = 0.
+        warnings.resetwarnings()
+
         rfo_model = \
-        datamodels.RampFitOutputModel(\
+        datamodels.RampFitOutputModel(
             slope=self.slope_seg.astype(np.float32) / effintim,
             sigslope=self.sigslope_seg.astype(np.float32),
             var_poisson=self.var_p_seg.astype(np.float32),
@@ -290,12 +302,11 @@ class OptRes:
             weights=self.weights.astype(np.float32),
             crmag=self.cr_mag_seg)
 
-        rfo_model.meta.filename = model.meta.filename
 
         return rfo_model
 
 
-    def print_full(self):
+    def print_full(self):# pragma: no cover
         """
         Diagnostic function for printing optional output arrays; most
         useful for tiny datasets
@@ -534,7 +545,7 @@ def calc_slope_vars(rn_sect, gain_sect, gdq_sect, group_time, max_seg):
         del wh_good
 
         # Locate any CRs that appear before the first SAT group...
-        wh_cr = np.where( gdq_2d_nan[i_read, :] == dqflags.group['JUMP_DET'])
+        wh_cr = np.where( gdq_2d_nan[i_read, :].astype(np.int32) & dqflags.group['JUMP_DET'] > 0 )
 
         # ... but not on final read:
         if (len(wh_cr[0]) > 0 and (i_read < nreads-1) ):
@@ -572,7 +583,13 @@ def calc_slope_vars(rn_sect, gain_sect, gdq_sect, group_time, max_seg):
     #   and ngroups is the number of groups in the segment.
     #   Here the denominator of this quantity will be computed, which will be
     #   later multiplied by the estimated median slope.
+
+    # Suppress, then re-enable, harmless arithmetic warnings, as NaN will be
+    #   checked for and handled later
+    warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
+    warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
     den_p3 = 1./(group_time * gain_1d.reshape(imshape) * segs_beg_3_m1 )
+    warnings.resetwarnings()
 
     # For a segment, the variance due to readnoise noise
     # = 12 * readnoise**2 /(ngroups_seg**3. - ngroups_seg)/( tgroup **2.)
@@ -589,9 +606,15 @@ def calc_slope_vars(rn_sect, gain_sect, gdq_sect, group_time, max_seg):
     #   be compared to the plane of (near) zeros resulting from the reset. For
     #   longer segments, this value is overwritten below.
     den_r3 = num_r3.copy() * 0. + 1./6
-    wh_seg_pos = np.where (segs_beg_3 > 1)
+    wh_seg_pos = np.where(segs_beg_3 > 1)
+
+    # Suppress, then, re-enable harmless arithmetic warnings, as NaN will be
+    #   checked for and handled later
+    warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
+    warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
     den_r3[ wh_seg_pos ] = 1./(segs_beg_3[ wh_seg_pos ] **3. -
                                segs_beg_3[ wh_seg_pos ]) # overwrite where segs>1
+    warnings.resetwarnings()
 
     return ( den_r3, den_p3, num_r3, segs_beg_3 )
 
@@ -645,12 +668,13 @@ def calc_pedestal(num_int, slope_int, firstf_int, dq_first, nframes, groupgap,
     return ped
 
 
-def output_integ(model, slope_int, dq_int, effintim, var_p3, var_r3, var_both3,
+def output_integ(slope_int, dq_int, effintim, var_p3, var_r3, var_both3,
                  int_times):
     """
-    Construct the output integration-specific results. Any variance values that
-    are a large fraction of the default value LARGE_VARIANCE correspond to
-    non-existent segments, so will be set to 0 here before output.
+    For the OLS algorithm, construct the output integration-specific results.
+    Any variance values that are a large fraction of the default value
+    LARGE_VARIANCE correspond to non-existent segments, so will be set to 0
+    here before output.
 
     Parameters
     ----------
@@ -686,8 +710,13 @@ def output_integ(model, slope_int, dq_int, effintim, var_p3, var_r3, var_both3,
     cubemod : Data Model object
 
     """
+    # Suppress harmless arithmetic warnings for now
+    warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
+    warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
+
     var_p3[ var_p3 > 0.4 * LARGE_VARIANCE ] = 0.
     var_r3[ var_r3 > 0.4 * LARGE_VARIANCE ] = 0.
+    var_both3[ var_both3 > 0.4 * LARGE_VARIANCE ] = 0.
 
     cubemod = datamodels.CubeModel()
     cubemod.data = slope_int / effintim
@@ -697,14 +726,48 @@ def output_integ(model, slope_int, dq_int, effintim, var_p3, var_r3, var_both3,
     cubemod.var_rnoise = var_r3
     cubemod.int_times = int_times
 
-    cubemod.update(model) # keys from input needed for photom step
+    # Reset the warnings filter to its original state
+    warnings.resetwarnings()
 
     return cubemod
 
 
+def gls_output_integ( model, slope_int, slope_err_int, dq_int):
+    """
+    For the GLS algorithm, construct the output integration-specific results.
+    Parameters
+    ----------
+    model : instance of Data Model
+        DM object for input
+    slope_int : float, 3D array
+        Data cube of weighted slopes for each integration
+    slope_err_int : float, 3D array
+        Data cube of slope errors for each integration
+    dq_int : int, 3D array
+        Data cube of DQ arrays for each integration
+    Returns
+    -------
+    cubemod : Data Model object
+    """
+    # Suppress harmless arithmetic warnings for now
+    warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
+    warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
+
+    cubemod = datamodels.CubeModel()
+    cubemod.data = slope_int
+    cubemod.err = slope_err_int
+    cubemod.dq = dq_int
+
+    # Reset the warnings filter to its original state
+    warnings.resetwarnings()
+
+    cubemod.update(model) # keys from input needed for photom step
+
+    return cubemod
+
 def gls_output_optional(model, intercept_int, intercept_err_int,
                         pedestal_int,
-                        ampl_int, ampl_err_int):
+                        ampl_int, ampl_err_int):# pragma: no cover
     """Construct the optional results for the GLS algorithm.
 
     Extended Summary
@@ -756,7 +819,7 @@ def gls_output_optional(model, intercept_int, intercept_err_int,
 
 
 def gls_pedestal(first_group, slope_int, s_mask,
-                 frame_time, nframes_used):
+                 frame_time, nframes_used):# pragma: no cover
 
     """Calculate the pedestal for the GLS case.
 
@@ -957,7 +1020,7 @@ def get_dataset_info(model):
            ngroups, group_time
 
 
-def get_more_info(model):
+def get_more_info(model):# pragma: no cover
     """Get information used by GLS algorithm.
 
     Parameters
@@ -989,7 +1052,7 @@ def get_more_info(model):
     return (group_time, nframes_used, saturated_flag, jump_flag)
 
 
-def get_max_num_cr(gdq_cube, jump_flag):
+def get_max_num_cr(gdq_cube, jump_flag): # pragma: no cover
     """
     Find the maximum number of cosmic-ray hits in any one pixel.
 
@@ -1034,7 +1097,9 @@ def reset_bad_gain(pdq, gain):
         pixleldq array of input model, reset to NO_GAIN_VALUE and DO_NOT_USE
         for pixels in the gain array that are either non-positive or NaN.
     """
-    wh_g = np.where( gain <= 0.)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "invalid value.*", RuntimeWarning)
+        wh_g = np.where( gain <= 0.)
     if len(wh_g[0]) > 0:
         pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['NO_GAIN_VALUE'] )
         pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['DO_NOT_USE'] )
@@ -1083,7 +1148,7 @@ def get_ref_subs(model, readnoise_model, gain_model, nframes):
         gain_2d = reffile_utils.get_subarray_data(model, gain_model)
 
     if reffile_utils.ref_matches_sci(model, readnoise_model):
-        readnoise_2d = readnoise_model.data
+        readnoise_2d = readnoise_model.data.copy()
     else:
         log.info('Extracting readnoise subarray to match science data')
         readnoise_2d = reffile_utils.get_subarray_data(model, readnoise_model)
@@ -1134,31 +1199,30 @@ def remove_bad_singles( segs_beg_3 ):
 
                 slice_1 = segs_beg_3[ii_1,:,:]
 
-                # Find ramps of a single-group segment and another segment 
+                # Find ramps of a single-group segment and another segment
                 #    either earlier or later
-                wh_y_all, wh_x_all = np.where((slice_0 == 1) & (slice_1 > 0))
+                wh_y, wh_x = np.where((slice_0 == 1) & (slice_1 > 0))
 
-                if (len( wh_y_all) == 0):
+                if (len(wh_y) == 0):
                    # Are none, so go to next pair of segments to check
                     continue
 
                 # Remove the 1-group segment
-                segs_beg_3[ii_0:-1, wh_y_all, wh_x_all] = \
-                           segs_beg_3[ii_0+1:, wh_y_all, wh_x_all] 
+                segs_beg_3[ii_0:-1, wh_y, wh_x] = segs_beg_3[ii_0+1:, wh_y, wh_x]
 
                 # Zero the last segment entry for the ramp, which would otherwise
                 #   remain non-zero due to the shift
-                segs_beg_3[-1, wh_y_all, wh_x_all] = 0
+                segs_beg_3[-1, wh_y, wh_x] = 0
 
-                del wh_y_all, wh_x_all
+                del wh_y, wh_x
 
-                tot_num_single_grp_ramps = len( np.where((segs_beg_3 == 1) & 
+                tot_num_single_grp_ramps = len( np.where((segs_beg_3 == 1) &
                            (segs_beg_3.sum(axis=0) > 1))[0])
 
     return segs_beg_3
 
 
-def fix_sat_ramps( sat_0th_group_int, var_p3, var_both3, slope_int):
+def fix_sat_ramps(sat_0th_group_int, var_p3, var_both3, slope_int, dq_int):
     """
     For ramps within an integration that are saturated on the initial group,
     reset the integration-specific variances and slope so they will have no
@@ -1181,7 +1245,10 @@ def fix_sat_ramps( sat_0th_group_int, var_p3, var_both3, slope_int):
 
     slope_int : float, 3D array
         Cube of integration-specific slopes. Some ramps may be saturated in the
-        initial group
+        initial group.
+
+    dq_int : uint32, 3D array
+        Cube of integration-specific DQ flags.
 
     Returns
     -------
@@ -1201,17 +1268,107 @@ def fix_sat_ramps( sat_0th_group_int, var_p3, var_both3, slope_int):
         Cube of integration-specific slopes; for ramps that are saturated in
         the initial group, this variance has been reset to a huge value to
         minimize the ramps contribution.
+
+    dq_int : uint32, 3D array
+        Cube of integration-specific DQ flags. For ramps that are saturated in
+        the initial group, the flag 'DO_NOT_USE' is added.
     """
-    where_all_groups_sat = np.where( sat_0th_group_int != 0)
-    num_of_sats = len(where_all_groups_sat[0])
+    var_p3[sat_0th_group_int > 0] = LARGE_VARIANCE
+    var_both3[sat_0th_group_int > 0] = LARGE_VARIANCE
+    slope_int[sat_0th_group_int > 0] = 0.
+    dq_int[sat_0th_group_int > 0] = np.bitwise_or(
+        dq_int[sat_0th_group_int > 0], dqflags.pixel['DO_NOT_USE'])
 
-    for ii_sat in range(num_of_sats):
-        ii_integ = where_all_groups_sat[0][ii_sat]
-        ii_y = where_all_groups_sat[1][ii_sat]
-        ii_x = where_all_groups_sat[2][ii_sat]
+    return var_p3, var_both3, slope_int, dq_int
 
-        var_p3[ ii_integ, ii_y, ii_x ] = LARGE_VARIANCE
-        var_both3[ ii_integ, ii_y, ii_x ] = LARGE_VARIANCE
-        slope_int[ ii_integ, ii_y, ii_x ] = 0.
 
-    return var_p3, var_both3, slope_int
+def do_all_sat( pixeldq, groupdq, imshape, n_int, save_opt):
+    """
+    For an input exposure where all groups in all integrations are saturated,
+    the DQ in the primary and integration-specific output products are updated,
+    and the other arrays in all output products are populated with zeros.
+
+    Parameters
+    ----------
+    model : instance of Data Model
+       DM object for input
+
+    imshape : (int, int) tuple
+       shape of 2D image
+
+    n_int : int
+       number of integrations
+
+    save_opt : boolean
+       save optional fitting results
+
+    Returns
+    -------
+    new_model : Data Model object
+        DM object containing a rate image averaged over all integrations in
+        the exposure
+
+    int_model : Data Model object or None
+        DM object containing rate images for each integration in the exposure
+
+    opt_model : RampFitOutputModel object or None
+        DM object containing optional OLS-specific ramp fitting data for the
+        exposure
+    """
+    # Create model for the primary output. Flag all pixels in the pixiel DQ
+    #   extension as SATURATED and DO_NOT_USE.
+    pixeldq = np.bitwise_or(pixeldq, dqflags.group['SATURATED'] )
+    pixeldq = np.bitwise_or(pixeldq, dqflags.group['DO_NOT_USE'] )
+
+    new_model = datamodels.ImageModel(data = np.zeros(imshape, dtype=np.float32),
+        dq = pixeldq,
+        var_poisson = np.zeros(imshape, dtype=np.float32),
+        var_rnoise = np.zeros(imshape, dtype=np.float32),
+        err = np.zeros(imshape, dtype=np.float32) )
+
+
+    # Create model for the integration-specific output. The 3D group DQ created
+    #   is based on the 4D group DQ of the model, and all pixels in all
+    #   integrations will be flagged here as DO_NOT_USE (they are already flagged
+    #   as SATURATED). The INT_TIMES extension will be left as None.
+    if n_int > 1:
+        m_sh = groupdq.shape  # (integ, grps/integ, y, x )
+        groupdq_3d = np.zeros((m_sh[0], m_sh[2], m_sh[3]), dtype=np.uint32)
+
+        for ii in range(n_int): # add SAT flag to existing groupdq in each slice
+            groupdq_3d[ii,:,:] = np.bitwise_or.reduce( groupdq[ii,:,:,:],
+                                                       axis=0)
+
+        groupdq_3d = np.bitwise_or( groupdq_3d, dqflags.group['DO_NOT_USE'] )
+        int_model = datamodels.CubeModel(
+            data = np.zeros((n_int,) + imshape, dtype=np.float32),
+            dq = groupdq_3d,
+            var_poisson = np.zeros((n_int,) + imshape, dtype=np.float32),
+            var_rnoise =  np.zeros((n_int,) + imshape, dtype=np.float32),
+            int_times = None,
+            err =  np.zeros((n_int,) + imshape, dtype=np.float32))
+
+    else:
+        int_model = None
+
+    # Create model for the optional output
+    if save_opt:
+        new_arr = np.zeros((n_int,)+(1,)+ imshape, dtype=np.float32)
+
+        opt_model = datamodels.RampFitOutputModel(
+            slope = new_arr,
+            sigslope = new_arr,
+            var_poisson =new_arr,
+            var_rnoise = new_arr,
+            yint = new_arr,
+            sigyint = new_arr,
+            pedestal = np.zeros((n_int,)+ imshape,dtype=np.float32),
+            weights = new_arr,
+            crmag = new_arr)
+
+    else:
+        opt_model = None
+
+    log.info('All groups of all integrations are saturated.')
+
+    return new_model, int_model, opt_model

@@ -8,7 +8,8 @@ from astropy.time import Time, TimeDelta
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-def white_light(input):
+
+def white_light(input, min_wave=None, max_wave=None):
 
     ntables = len(input.spec)
     fluxsums = []
@@ -36,13 +37,24 @@ def white_light(input):
         else:
             ntables_order[norders - 1] += 1
 
-    nints = max(ntables_order)
     log.debug("norders = %d, sporders = %s, ntables_order = %s",
               norders, str(sporders), str(ntables_order))
 
-    # Compute the flux sum for each integration in the input
+    # Create a wavelength mask, using cutoffs if specified, then
+    # compute the flux sum for each integration in the input.
+    low_cutoff = -1.
+    high_cutoff = 1.e10
+    if min_wave is not None:
+        low_cutoff = min_wave
+    if max_wave is not None:
+        high_cutoff = max_wave
+
     for i in range(ntables):
-        fluxsums.append(input.spec[i].spec_table['FLUX'].sum())
+        wave_mask = np.where(
+            (input.spec[i].spec_table['WAVELENGTH']>=low_cutoff) &
+            (input.spec[i].spec_table['WAVELENGTH']<=high_cutoff))[0]
+
+        fluxsums.append(np.nansum(input.spec[i].spec_table['FLUX'][wave_mask]))
 
     # Populate meta data for the output table
     tbl_meta = OrderedDict()
@@ -53,7 +65,6 @@ def white_light(input):
     tbl_meta['filter'] = input.meta.instrument.filter
     tbl_meta['pupil'] = input.meta.instrument.pupil
     tbl_meta['target_name'] = input.meta.target.catalog_name
-    tbl_meta['number_of_integrations'] = nints
 
     # Create the output table
     tbl = QTable(meta=tbl_meta)

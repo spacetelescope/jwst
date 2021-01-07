@@ -40,7 +40,7 @@ class Image2Pipeline(Pipeline):
         }
 
     # List of normal imaging exp_types
-    image_exptypes = ['MIR_IMAGE', 'NRC_IMAGE', 'NIS_IMAGE']
+    image_exptypes = ['MIR_IMAGE', 'NRC_IMAGE', 'NIS_IMAGE', 'FGS_IMAGE']
 
     def process(self, input):
 
@@ -56,6 +56,11 @@ class Image2Pipeline(Pipeline):
             self.log.info('Processing product {}'.format(product['name']))
             if self.save_results:
                 self.output_file = product['name']
+            try:
+                getattr(asn, 'filename')
+            except AttributeError:
+                asn.filename = "singleton"
+
             result = self.process_exposure_product(
                 product,
                 asn['asn_pool'],
@@ -67,6 +72,7 @@ class Image2Pipeline(Pipeline):
             if isinstance(result, datamodels.CubeModel):
                 suffix = 'calints'
             result.meta.filename = self.make_output_path(suffix=suffix)
+            result.meta.filetype = 'calibrated'
             results.append(result)
 
         self.log.info('... ending calwebb_image2')
@@ -145,8 +151,11 @@ class Image2Pipeline(Pipeline):
         input = self.photom(input)
 
         # Resample individual exposures, but only if it's one of the
-        # regular science image types.
-        if input.meta.exposure.type.upper() in self.image_exptypes:
+        # regular 2D science image types
+        if input.meta.exposure.type.upper() in self.image_exptypes and \
+        len(input.data.shape) == 2:
+            self.resample.save_results = self.save_results
+            self.resample.suffix = 'i2d'
             self.resample(input)
 
         # That's all folks

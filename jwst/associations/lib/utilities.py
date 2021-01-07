@@ -1,8 +1,39 @@
 """General Utilities"""
-
 from ast import literal_eval
+from functools import wraps
+import logging
 
 from numpy.ma import masked
+
+# Configure logging
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
+
+
+def return_on_exception(exceptions=(Exception,), default=None):
+    """Decorator to force functions raising exceptions to return a value
+
+    Parameters
+    ----------
+    exceptions: (Exception(,...))
+        Tuple of exceptions to catch
+
+    default: obj
+        The value to return when a specified exception occurs
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except exceptions as err:
+                logger.debug(
+                    'Caught exception %s in function %s, forcing return value of %s',
+                    err, func, default
+                )
+                return default
+        return wrapper
+    return decorator
 
 
 def evaluate(value):
@@ -69,6 +100,20 @@ def getattr_from_list(adict, attributes, invalid_values=None):
                 continue
     else:
         raise KeyError('Object has no attributes in {}'.format(attributes))
+
+
+@return_on_exception(exceptions=(KeyError,), default=None)
+def getattr_from_list_nofail(*args, **kwargs):
+    """Call getattr_from_list without allows exceptions.
+
+    If the specified exceptions are caught, return `default`
+    instead.
+
+    Parameters
+    ----------
+    See `getattr_from_list`
+    """
+    return getattr_from_list(*args, **kwargs)
 
 
 def is_iterable(obj):

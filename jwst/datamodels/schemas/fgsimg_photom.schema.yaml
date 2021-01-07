@@ -1,0 +1,20 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/fgsimg_photom.schema"
+title: FGS photometric flux conversion data model
+allOf:
+- $ref: referencefile.schema
+- $ref: keyword_exptype.schema
+- $ref: keyword_pexptype.schema
+- $ref: keyword_pixelarea.schema
+- type: object
+  properties:
+    phot_table:
+      title: Photometric flux conversion factors table
+      fits_hdu: PHOTOM
+      datatype:
+      - name: photmjsr
+        datatype: float32
+      - name: uncertainty
+        datatype: float32

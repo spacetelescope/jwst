@@ -1,48 +1,29 @@
-from .model_base import DataModel
+from .model_base import JwstDataModel
+
 
 __all__ = ['Level1bModel']
 
 
-class Level1bModel(DataModel):
+class Level1bModel(JwstDataModel):
     """
     A data model for raw 4D ramps level-1b products.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    data : numpy uint16 array
+         The science data
 
-    data : numpy array
-        The science data
+    zeroframe : numpy uint16 array
+         Zeroframe array
 
-    zeroframe : numpy array
-        The zero-frame data
+    refout : numpy uint16 array
+         Reference Output
 
-    refout : numpy array
-        The MIRI reference output data
+    group : numpy table
+         group parameters table
 
-    group : table
-        The group parameters table
-
-    int_times : table
-        The int_times table
+    int_times : numpy table
+         table of times for each integration
 
     """
-    schema_url = "level1b.schema.yaml"
-
-    def __init__(self, init=None, **kwargs):
-        super(Level1bModel, self).__init__(init=init, **kwargs)
-
-        # zeroframe is a lower dimensional array than
-        # the science data. However, its dimensions are not
-        # consecutive with data, so the default model
-        # creates a wrongly shaped array. If data is given
-        # use the appropriate dimensions.
-        #
-        # TODO: Hacky. Need solution which involves schema
-        # specification and embedded in DataModel.
-        #if 'zeroframe' not in self.instance and \
-        #   'data' in self.instance and \
-        #   len(self.data.shape) == 4:
-        #    nints, ngroups, ny, nx = self.data.shape
-        #    self.zeroframe = np.zeros((nints, ny, nx))
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/level1b.schema"

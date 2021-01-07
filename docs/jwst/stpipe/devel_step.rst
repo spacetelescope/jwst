@@ -81,7 +81,7 @@ file, or within the code itself. See `calwebb_dark` for an example
 of specifying in the configuration.
 
 For an example where the suffix can only be determined at runtime, see
-`calwebb_sloper`. For an example of a pipeline that returns many
+`calwebb_detector1`. For an example of a pipeline that returns many
 results, see `calwebb_spec2`.
 
 The Python class
@@ -337,6 +337,6 @@ For example::
 
     > ExampleStep
 
-    > ExampleStep --config-file=example_step.cfg
+    > ExampleStep --config-file=example_step.asdf
 
     > ExampleStep --parameter1=42.0 input_file.fits

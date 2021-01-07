@@ -1,14 +1,16 @@
 import os
-from .model_base import DataModel
+
+from .model_base import JwstDataModel
+
 
 __all__ = ['AsnModel']
 
 
-class AsnModel(DataModel):
+class AsnModel(JwstDataModel):
     """
     A data model for association tables.
     """
-    schema_url = "asn.schema.yaml"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/asn.schema"
     supported_formats = ['yaml', 'json', 'fits']
 
     def __init__(self, init=None, **kwargs):

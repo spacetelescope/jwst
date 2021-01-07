@@ -1,3 +1,5 @@
+.. _extract_2d_step:
+
 ==================
 Extract 2D Spectra
 ==================

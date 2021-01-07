@@ -1,6 +1,5 @@
 import numpy as np
 
-from jwst.datamodels.miri_ramp import MIRIRampModel
 from jwst.datamodels import RampModel
 from jwst.datamodels import dqflags
 from jwst.firstframe.firstframe_sub import do_correction
@@ -8,7 +7,7 @@ from jwst.firstframe import FirstFrameStep
 
 
 def test_firstframe_set_groupdq():
-    """ 
+    """
     Test if the firstframe code set the groupdq flag on the first
     group to 'do_not_use' for 5 integrations
     """
@@ -24,7 +23,7 @@ def test_firstframe_set_groupdq():
     groupdq = np.zeros(csize, dtype=int)
 
     # create a JWST datamodel for MIRI data
-    dm_ramp = MIRIRampModel(data=data, groupdq=groupdq)
+    dm_ramp = RampModel(data=data, groupdq=groupdq)
 
     # run the first frame correction step
     dm_ramp_firstframe = do_correction(dm_ramp)
@@ -32,7 +31,7 @@ def test_firstframe_set_groupdq():
     # check that the difference in the groupdq flags is equal to
     #   the 'do_not_use' flag
     dq_diff = dm_ramp_firstframe.groupdq[0, 0, :, :] - dm_ramp.groupdq[0, 0, :, :]
-    
+
     np.testing.assert_array_equal(np.full((ysize, xsize),
                                           dqflags.group['DO_NOT_USE'],
                                           dtype=int),
@@ -52,8 +51,8 @@ def test_firstframe_set_groupdq():
 
 
 def test_firstframe_single_group():
-    """ 
-    Test that the firstframe code does nothing when passed a single 
+    """
+    Test that the firstframe code does nothing when passed a single
     group integration
     """
 
@@ -68,7 +67,7 @@ def test_firstframe_single_group():
     groupdq = np.zeros(csize, dtype=int)
 
     # create a JWST datamodel for MIRI data
-    dm_ramp = MIRIRampModel(data=data, groupdq=groupdq)
+    dm_ramp = RampModel(data=data, groupdq=groupdq)
 
     # run the first frame correction step
     dm_ramp_firstframe = do_correction(dm_ramp)
@@ -77,7 +76,7 @@ def test_firstframe_single_group():
     #   the 'do_not_use' flag
 
     dq_diff = dm_ramp_firstframe.groupdq[0, 0, :, :] - dm_ramp.groupdq[0, 0, :, :]
-    
+
     np.testing.assert_array_equal(np.full((ysize, xsize),
                                           0,
                                           dtype=int),
@@ -87,7 +86,7 @@ def test_firstframe_single_group():
 
 
 def test_firstframe_add1_groupdq():
-    """ 
+    """
     Test if the firstframe code set the groupdq flag on the first
     group to 'do_not_use' by adding 1 to the flag, not overwritting to 1
     """
@@ -103,7 +102,7 @@ def test_firstframe_add1_groupdq():
     groupdq = np.zeros(csize, dtype=int)
 
     # create a JWST datamodel for MIRI data
-    dm_ramp = MIRIRampModel(data=data, groupdq=groupdq)
+    dm_ramp = RampModel(data=data, groupdq=groupdq)
 
     # set a flag in the groupdq, first frame
     dm_ramp.groupdq[0, 0, 500:510, 500:510] = 4
@@ -116,7 +115,7 @@ def test_firstframe_add1_groupdq():
 
 
 def test_firstframe_3groups():
-    """ 
+    """
     Test if the firstframe code set the groupdq flag on the first
     group to 'do_not_use' or left it as is, which it should do for 3 frames
     """
@@ -132,7 +131,7 @@ def test_firstframe_3groups():
     groupdq = np.zeros(csize, dtype=int)
 
     # create a JWST datamodel for MIRI data
-    dm_ramp = MIRIRampModel(data=data, groupdq=groupdq)
+    dm_ramp = RampModel(data=data, groupdq=groupdq)
 
     # run the first frame correction step
     dm_ramp_firstframe = do_correction(dm_ramp)
@@ -141,7 +140,7 @@ def test_firstframe_3groups():
 
     #  0 since the step should not run if frames 3 or fewer
     dq_diff = dm_ramp_firstframe.groupdq[0, 0, :, :] - dm_ramp.groupdq[0, 0, :, :]
-    
+
     np.testing.assert_array_equal(np.full((ysize, xsize),
                                           0,
                                           dtype=int),
@@ -216,4 +215,3 @@ def test_miri():
                                   dq_diff,
                                   err_msg='Diff in groupdq flags is not '
                                           + 'equal to DO_NOT_USE')
-

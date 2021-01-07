@@ -4,20 +4,32 @@ Various utility functions and data types
 
 import sys
 import warnings
+import os
 from os.path import basename
+from platform import system as platform_system
+import psutil
+import traceback
+import logging
+
+import asdf
 
 import numpy as np
 from astropy.io import fits
+from stdatamodels import filetype
+from stdatamodels import s3_utils
 
-import logging
+from ..lib.basic_utils import bytes2human
+
+
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 log.addHandler(logging.NullHandler())
+
+
 
 class NoTypeWarning(Warning):
     pass
 
-def open(init=None, extensions=None, **kwargs):
+def open(init=None, memmap=False, **kwargs):
     """
     Creates a DataModel from a number of different types
 
@@ -42,9 +54,20 @@ def open(init=None, extensions=None, **kwargs):
 
         - dict: The object model tree for the data model
 
-    extensions : list of AsdfExtension
-        A list of extensions to the ASDF to support when reading
-        and writing ASDF files.
+    memmap : bool
+        Turn memmap of FITS file on or off.  (default: False).  Ignored for
+        ASDF files.
+
+    kwargs : dict
+        Additional keyword arguments passed to lower level functions. These arguments
+        are generally file format-specific. Arguments of note are:
+
+        - FITS
+
+           skip_fits_update - bool or None
+              `True` to skip updating the ASDF tree from the FITS headers, if possible.
+              If `None`, value will be taken from the environmental SKIP_FITS_UPDATE.
+              Otherwise, the default value is `True`.
 
     Returns
     -------
@@ -52,7 +75,6 @@ def open(init=None, extensions=None, **kwargs):
     """
 
     from . import model_base
-    from . import filetype
 
     # Initialize variables used to select model class
 
@@ -65,9 +87,9 @@ def open(init=None, extensions=None, **kwargs):
     # all special cases return a model if they match
 
     if init is None:
-        return model_base.DataModel(None)
+        return model_base.JwstDataModel(None)
 
-    elif isinstance(init, model_base.DataModel):
+    elif isinstance(init, model_base.JwstDataModel):
         # Copy the object so it knows not to close here
         return init.__class__(init)
 
@@ -82,19 +104,30 @@ def open(init=None, extensions=None, **kwargs):
         file_type = filetype.check(init)
 
         if file_type == "fits":
-            hdulist = fits.open(init)
+            if s3_utils.is_s3_uri(init):
+                hdulist = fits.open(s3_utils.get_object(init))
+            else:
+                hdulist = fits.open(init, memmap=memmap)
             file_to_close = hdulist
 
         elif file_type == "asn":
             # Read the file as an association / model container
             from . import container
-            return container.ModelContainer(init, extensions=extensions,
-                                            **kwargs)
+            return container.ModelContainer(init, **kwargs)
 
         elif file_type == "asdf":
-            # Read the file as asdf, no need for a special class
-            return model_base.DataModel(init, extensions=extensions,
-                                        **kwargs)
+            if s3_utils.is_s3_uri(init):
+                asdffile = asdf.open(s3_utils.get_object(init), **kwargs)
+            else:
+                asdffile = asdf.open(init, **kwargs)
+
+            # Detect model type, then get defined model, and call it.
+            new_class = _class_from_model_type(asdffile)
+            if new_class is None:
+                # No model class found, so return generic DataModel.
+                return model_base.JwstDataModel(asdffile, **kwargs)
+
+            return new_class(asdffile)
 
     elif isinstance(init, tuple):
         for item in init:
@@ -107,6 +140,10 @@ def open(init=None, extensions=None, **kwargs):
 
     elif isinstance(init, fits.HDUList):
         hdulist = init
+
+    elif is_association(init) or isinstance(init, list):
+        from . import container
+        return container.ModelContainer(init, **kwargs)
 
     # If we have it, determine the shape from the science hdu
     if hdulist:
@@ -148,12 +185,12 @@ def open(init=None, extensions=None, **kwargs):
 
     # Log a message about how the model was opened
     if file_name:
-        log.debug('Opening {0} as {1}'.format(file_name, new_class))
+        log.debug(f'Opening {file_name} as {new_class}')
     else:
-        log.debug('Opening as {0}'.format(new_class))
+        log.debug(f'Opening as {new_class}')
 
     # Actually open the model
-    model = new_class(init, extensions=extensions, **kwargs)
+    model = new_class(init, **kwargs)
 
     # Close the hdulist if we opened it
     if file_to_close is not None:
@@ -162,10 +199,8 @@ def open(init=None, extensions=None, **kwargs):
     if not has_model_type:
         class_name = new_class.__name__.split('.')[-1]
         if file_name:
-            errmsg = \
-                "model_type not found. Opening {} as a {}".format(file_name, class_name)
-            warnings.warn(errmsg, NoTypeWarning)
-
+            warnings.warn(f"model_type not found. Opening {file_name} as a {class_name}",
+                NoTypeWarning)
         try:
             delattr(model.meta, 'model_type')
         except AttributeError:
@@ -174,15 +209,29 @@ def open(init=None, extensions=None, **kwargs):
     return model
 
 
-def _class_from_model_type(hdulist):
+def _class_from_model_type(init):
     """
     Get the model type from the primary header, lookup to get class
+
+    Parameter
+    ---------
+    init: AsdfFile or HDUList
+
+    Return
+    ------
+    new_class: str or None
     """
     from . import _defined_models as defined_models
 
-    if hdulist:
-        primary = hdulist[0]
-        model_type = primary.header.get('DATAMODL')
+    if init:
+        if isinstance(init, fits.hdu.hdulist.HDUList):
+            primary = init[0]
+            model_type = primary.header.get('DATAMODL')
+        elif isinstance(init, asdf.AsdfFile):
+            try:
+                model_type = init.tree['meta']['model_type']
+            except KeyError:
+                model_type = None
 
         if model_type is None:
             new_class = None
@@ -205,17 +254,8 @@ def _class_from_ramp_type(hdulist, shape):
             try:
                 hdulist['DQ']
             except KeyError:
-                # It's a RampModel or MIRIRampModel
-                try:
-                    hdulist['REFOUT']
-                except KeyError:
-                    # It's a RampModel
-                    from . import ramp
-                    new_class = ramp.RampModel
-                else:
-                    # It's a MIRIRampModel
-                    from . import miri_ramp
-                    new_class = miri_ramp.MIRIRampModel
+                from . import ramp
+                new_class = ramp.RampModel
             else:
                 new_class = None
         else:
@@ -259,7 +299,7 @@ def _class_from_shape(hdulist, shape):
     """
     if len(shape) == 0:
         from . import model_base
-        new_class = model_base.DataModel
+        new_class = model_base.JwstDataModel
     elif len(shape) == 4:
         from . import quad
         new_class = quad.QuadModel
@@ -301,119 +341,162 @@ def to_camelcase(token):
     return ''.join(x.capitalize() for x in token.split('_-'))
 
 
-def gentle_asarray(a, dtype):
+def is_association(asn_data):
     """
-    Performs an asarray that doesn't cause a copy if the byteorder is
-    different.  It also ignores column name differences -- the
-    resulting array will have the column names from the given dtype.
+    Test if an object is an association by checking for required fields
     """
-    out_dtype = np.dtype(dtype)
-    if isinstance(a, np.ndarray):
-        in_dtype = a.dtype
-        # Non-table array
-        if in_dtype.fields is None and out_dtype.fields is None:
-            if np.can_cast(in_dtype, out_dtype, 'equiv'):
-                return a
-            else:
-                return np.asanyarray(a, dtype=out_dtype)
-        elif in_dtype.fields is not None and out_dtype.fields is not None:
-            if in_dtype == out_dtype:
-                return a
-            in_names = {n.lower() for n in in_dtype.names}
-            out_names = {n.lower() for n in out_dtype.names}
-            if in_names == out_names:
-                # Change the dtype name to match the fits record names
-                # as the mismatch causes case insensitive access to fail
-                out_dtype.names = in_dtype.names
-            else:
-                raise ValueError(
-                    "Column names don't match schema. "
-                    "Schema has {0}. Data has {1}".format(
-                        str(out_names.difference(in_names)),
-                        str(in_names.difference(out_names))))
-
-            new_dtype = []
-            for i in range(len(out_dtype.fields)):
-                in_type = in_dtype[i]
-                out_type = out_dtype[i]
-                if in_type.subdtype is None:
-                    type_str = in_type.str
-                else:
-                    type_str = in_type.subdtype[0].str
-                if np.can_cast(in_type, out_type, 'equiv'):
-                    new_dtype.append(
-                        (out_dtype.names[i],
-                         type_str,
-                         in_type.shape))
-                else:
-                    return np.asanyarray(a, dtype=out_dtype)
-            return a.view(dtype=np.dtype(new_dtype))
-        else:
-            return np.asanyarray(a, dtype=out_dtype)
-    else:
-        try:
-            a = np.asarray(a, dtype=out_dtype)
-        except:
-            raise ValueError("Can't convert {0!s} to ndarray".format(type(a)))
-        return a
-
-def get_short_doc(schema):
-    title = schema.get('title', None)
-    description = schema.get('description', None)
-    if description is None:
-        description = title or ''
-    else:
-        if title is not None:
-            description = title + '\n\n' + description
-    return description.partition('\n')[0]
+    if isinstance(asn_data, dict):
+        if 'asn_id' in asn_data and 'asn_pool' in asn_data:
+            return True
+    return False
 
 
-def ensure_ascii(s):
-    if isinstance(s, bytes):
-        s = s.decode('ascii')
-    return s
-
-
-def create_history_entry(description, software=None):
-    """
-    Create a HistoryEntry object.
+def check_memory_allocation(shape, allowed=None, model_type=None, include_swap=True):
+    """Check if a DataModel can be instantiated
 
     Parameters
     ----------
-    description : str
-        Description of the change.
-    software : dict or list of dict
-        A description of the software used.  It should not include
-        asdf itself, as that is automatically notated in the
-        `asdf_library` entry.
+    shape : tuple
+        The desired shape of the model.
 
-        Each dict must have the following keys:
+    allowed : number or None
+        Fraction of memory allowed to be allocated.
+        If None, the environmental variable `DMODEL_ALLOWED_MEMORY`
+        is retrieved. If undefined, then no check is performed.
+        `1.0` would be all available memory. `0.5` would be half available memory.
 
-        ``name``: The name of the software
-        ``author``: The author or institution that produced the software
-        ``homepage``: A URI to the homepage of the software
-        ``version``: The version of the software
+    model_type : DataModel or None
+        The desired model to instantiate.
+        If None, `open` will be used to guess at a model type depending on shape.
 
-    Examples
-    --------
-    >>> soft = {'name': 'jwreftools', 'author': 'STSCI', \
-                'homepage': 'https://github.com/spacetelescope/jwreftools', 'version': "0.7"}
-    >>> entry = create_history_entry(description="HISTORY of this file", software=soft)
+    include_swap : bool
+        Include available swap in the calculation.
 
+    Returns
+    -------
+    can_instantiate, required_memory : bool, number
+        True if the model can be instantiated and the predicted memory footprint.
     """
-    from asdf.tags.core import Software, HistoryEntry
-    import datetime
+    # Determine desired allowed amount.
+    if allowed is None:
+        allowed = os.environ.get('DMODEL_ALLOWED_MEMORY', None)
+        if allowed is not None:
+            allowed = float(allowed)
 
-    if isinstance(software, list):
-            software = [Software(x) for x in software]
-    elif software is not None:
-        software = Software(software)
+    # Create the unit shape
+    unit_shape = (1,) * len(shape)
 
-    entry = HistoryEntry({
-        'description': description,
-        'time': datetime.datetime.utcnow()
-    })
+    # Create the unit model.
+    if model_type:
+        unit_model = model_type(unit_shape)
+    else:
+        unit_model = open(unit_shape)
 
-    if software is not None:
-        entry['software'] = software
-    return entry
+    # Size of the primary array.
+    primary_array_name = unit_model.get_primary_array_name()
+    primary_array = getattr(unit_model, primary_array_name)
+    size = primary_array.nbytes
+    for dimension in shape:
+        size *= dimension
+
+    # Get available memory
+    available = get_available_memory(include_swap=include_swap)
+    log.debug(f'Model size {bytes2human(size)} available system memory {bytes2human(available)}')
+
+    if size > available:
+        log.warning(
+            f'Model {model_type} shape {shape} requires {bytes2human(size)} which is more than'
+            f' system available {bytes2human(available)}'
+        )
+
+    if allowed and size > (allowed * available):
+        log.debug(
+            f'Model size greater than allowed memory {bytes2human(allowed * available)}'
+        )
+        return False, size
+
+    return True, size
+
+
+def get_available_memory(include_swap=True):
+    """Retrieve available memory
+
+    Parameters
+    ----------
+    include_swap : bool
+        Include available swap in the calculation.
+
+    Returns
+    -------
+    available : number
+        The amount available.
+    """
+    system = platform_system()
+
+    # Apple MacOS
+    log.debug(f'Running OS is "{system}"')
+    if system in ['Darwin']:
+        return get_available_memory_darwin(include_swap=include_swap)
+
+    # Default to Linux-like:
+    return get_available_memory_linux(include_swap=include_swap)
+
+
+def get_available_memory_linux(include_swap=True):
+    """Get memory for a Linux system
+
+    Presume that the swap space as reported is accurate at the time of
+    the query and that any subsequent allocation will be held the value.
+
+    Parameters
+    ----------
+    include_swap : bool
+        Include available swap in the calculation.
+
+    Returns
+    -------
+    available : number
+        The amount available.
+    """
+    vm_stats = psutil.virtual_memory()
+    available = vm_stats.available
+    if include_swap:
+        swap = psutil.swap_memory()
+        available += swap.total
+    return available
+
+
+def get_available_memory_darwin(include_swap=True):
+    """Get the available memory on an Apple MacOS-like system
+
+    For Darwin, swap space is dynamic and will attempt to use the whole of the
+    boot partition.
+
+    If the system has been configured to use swap from other sources besides
+    the boot partition, that available space will not be included.
+
+    Parameters
+    ----------
+    include_swap : bool
+        Include available swap in the calculation.
+
+    Returns
+    -------
+    available : number
+        The amount available.
+    """
+    vm_stats = psutil.virtual_memory()
+    available = vm_stats.available
+    if include_swap:
+
+        # Attempt to determine amount of free disk space on the boot partition.
+        try:
+            swap = psutil.disk_usage('/private/var/vm').free
+        except FileNotFoundError as exception:
+            log.warn('Cannot determine available swap space.'
+                     f'Reason:\n'
+                     f'{"".join(traceback.format_exception(exception))}')
+            swap = 0
+        available += swap
+
+    return available

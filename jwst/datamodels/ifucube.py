@@ -1,35 +1,31 @@
-from .model_base import DataModel
+from .model_base import JwstDataModel
 
 
 __all__ = ['IFUCubeModel']
 
 
-class IFUCubeModel(DataModel):
+class IFUCubeModel(JwstDataModel):
     """
     A data model for 3D IFU  cubes.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    data : numpy float32 array
+         The science data
 
-    data: numpy array
-        The science data.  3-D.
+    dq : numpy uint32 array
+         Data quality array
 
-    dq: numpy array
-        The data quality array.  3-D.
+    err : numpy float32 array
+         Error array
 
-    err: numpy array
-        The error array.  3-D
+    weightmap : numpy float32 array
+         Weight map of coverage
 
-    weightmap: numpy array
-        The weight map array.  3-D
-
-    wavetable:  1-D table
-        Optional table of  wavelengths of IFUCube slices
-
+    wavetable : numpy table
+         Wavelength value for slices
     """
-    schema_url = "ifucube.schema.yaml"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/ifucube.schema"
 
     def __init__(self, init=None, **kwargs):
         super(IFUCubeModel, self).__init__(init=init, **kwargs)

@@ -1,49 +1,43 @@
-from .model_base import DataModel
+from .model_base import JwstDataModel
 
 
 __all__ = ['CubeModel']
 
 
-class CubeModel(DataModel):
+class CubeModel(JwstDataModel):
     """
     A data model for 3D image cubes.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    data : numpy float32 array
+         The science data
 
-    data : numpy array
-        The science data.  3-D.
+    dq : numpy uint32 array
+         Data quality array
 
-    dq : numpy array
-        The data quality array.  3-D.
+    err : numpy float32 array
+         Error array
 
-    err : numpy array
-        The error array.  3-D
+    zeroframe : numpy float32 array
+         Zero frame array
 
-    zeroframe: numpy array
-        The zero-frame array.  3-D
+    area : numpy float32 array
+         Pixel area map array
 
-    relsens: numpy array
-        The relative sensitivity array.
+    int_times : numpy table
+         table of times for each integration
 
-    int_times : table
-        The int_times table
+    wavelength : numpy float32 array
+         Wavelength array
 
-    area: numpy array
-        The pixel area array.  2-D
+    var_poisson : numpy float32 array
+         Integration-specific variances of slope due to Poisson noise
 
-    wavelength: numpy array
-        The wavelength array.  2-D
-
-    var_poisson: numpy array
-        The variance due to Poisson noise array.  3-D
-
-    var_rnoise: numpy array
-        The variance due to read noise array.  3-D
+    var_rnoise : numpy float32 array
+         Integration-specific variances of slope due to read noise
     """
-    schema_url = "cube.schema.yaml"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/cube.schema"
 
     def __init__(self, init=None, **kwargs):
 
@@ -53,3 +47,25 @@ class CubeModel(DataModel):
         self.dq = self.dq
         self.err = self.err
 
+    def to_container(self):
+        """Convert to a ModelContainer of ImageModels for each plane"""
+        from jwst.datamodels import ImageModel, ModelContainer
+
+        container = ModelContainer()
+        for plane in range(self.shape[0]):
+            image = ImageModel()
+            for attribute in [
+                    'data', 'dq', 'err', 'zeroframe', 'area',
+                    'var_poisson', 'var_rnoise', 'var_flat'
+            ]:
+                try:
+                    setattr(image, attribute, self.getarray_noinit(attribute)[plane])
+                except AttributeError:
+                    pass
+            image.update(self)
+            try:
+                image.meta.wcs = self.meta.wcs
+            except AttributeError:
+                pass
+            container.append(image)
+        return container

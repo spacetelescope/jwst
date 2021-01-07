@@ -1,11 +1,11 @@
-from . import model_base
+from .model_base import JwstDataModel
 from .spec import SpecModel
 
 
 __all__ = ['MultiSpecModel']
 
 
-class MultiSpecModel(model_base.DataModel):
+class MultiSpecModel(JwstDataModel):
     """
     A data model for multi-spec images.
 
@@ -25,9 +25,12 @@ class MultiSpecModel(model_base.DataModel):
     to the `spec` attribute by using its `append` method.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    int_times : numpy table
+         table of times for each integration
+
+    spec.items.spec_table : numpy table
+         Extracted spectral data table
 
     Examples
     --------
@@ -43,7 +46,7 @@ class MultiSpecModel(model_base.DataModel):
     ...     spec = datamodels.SpecModel(spec_table=otab)
     ...     output_model.spec.append(spec)
     """
-    schema_url = "multispec.schema.yaml"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/multispec.schema"
 
     def __init__(self, init=None, **kwargs):
 

@@ -77,12 +77,6 @@ def guider_cds(model):
     else:  # FINEGUIDE, ACQ1, ACQ2, or TRACK
         new_model.data = slope_int_cube / grp_time
 
-    # copy all meta data from input to output model
-    new_model.update(model)
-
-    # Update BUNIT to reflect count rate
-    new_model.meta.bunit_data = 'DN/s'
-
     # Add all table extensions to be carried over to output
     if len(model.planned_star_table):
         new_model.planned_star_table = model.planned_star_table
@@ -94,6 +88,12 @@ def guider_cds(model):
         new_model.centroid_table = model.centroid_table
     if len(model.track_sub_table):
         new_model.track_sub_table = model.track_sub_table
+
+    # copy all meta data from input to output model
+    new_model.update(model)
+
+    # Update BUNIT to reflect count rate
+    new_model.meta.bunit_data = 'DN/s'
 
     return new_model
 

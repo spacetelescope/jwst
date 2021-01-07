@@ -1,25 +1,29 @@
-import numpy as np
+import logging
+import warnings
 
+import numpy as np
 from astropy import wcs as fitswcs
-from astropy.coordinates import SkyCoord
-from astropy.modeling.models import Scale, AffineTransformation2D
 from astropy.modeling import Model
+from astropy.modeling.models import Mapping
+from astropy import units as u
 from gwcs import WCS, wcstools
 
-from stsci.tools.bitmask import interpret_bit_flags
+from jwst.assign_wcs.util import wcs_from_footprints, wcs_bbox_from_shape
+from jwst.datamodels.dqflags import interpret_bit_flags
 
-from ..assign_wcs.util import wcs_from_footprints, bounding_box_from_shape
-
-import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def make_output_wcs(input_models):
+def make_output_wcs(input_models, pscale_ratio=1.0):
     """ Generate output WCS here based on footprints of all input WCS objects
     Parameters
     ----------
-    wcslist : list of gwcs.WCS objects
+    input_models : list of `~jwst.datamodel.DataModel`
+        Each datamodel must have a ~gwcs.WCS object.
+
+    pscale_ratio : float, optional
+        Ratio of input to output pixel scale.
 
     Returns
     -------
@@ -27,25 +31,18 @@ def make_output_wcs(input_models):
         WCS object, with defined domain, covering entire set of input frames
 
     """
-
-    # The API needing input_models instead of just wcslist is because
-    # currently the domain is not defined in any of imaging modes for NIRCam
-    # NIRISS or MIRI
-    #
-    # TODO: change the API to take wcslist instead of input_models and
-    #       remove the following block
     wcslist = [i.meta.wcs for i in input_models]
     for w, i in zip(wcslist, input_models):
         if w.bounding_box is None:
-            w.bounding_box = bounding_box_from_shape(i.data.shape)
+            w.bounding_box = wcs_bbox_from_shape(i.data.shape)
     naxes = wcslist[0].output_frame.naxes
 
-    if naxes == 3:
-        # THIS BLOCK CURRENTLY ISN"T USED BY resample_spec
-        pass
-    elif naxes == 2:
-        output_wcs = wcs_from_footprints(input_models)
+    if naxes == 2:
+        output_wcs = wcs_from_footprints(input_models, pscale_ratio=pscale_ratio)
         output_wcs.data_size = shape_from_bounding_box(output_wcs.bounding_box)
+    else:
+        raise RuntimeError("Output WCS needs 2 spatial axes. "
+            f"{wcslist[0]} has {naxes}.")
 
     # Check that the output data shape has no zero length dimensions
     if not np.product(output_wcs.data_size):
@@ -53,36 +50,6 @@ def make_output_wcs(input_models):
                          "{}".format(output_wcs.data_size))
 
     return output_wcs
-
-
-def compute_output_transform(refwcs, filename, fiducial):
-    """Compute a simple FITS-type WCS transform
-    """
-    x0, y0 = refwcs.backward_transform(*fiducial)
-    x1 = x0 + 1
-    y1 = y0 + 1
-    ra0, dec0 = refwcs(x0, y0)
-    ra_xdir, dec_xdir = refwcs(x1, y0)
-    ra_ydir, dec_ydir = refwcs(x0, y1)
-
-    position0 = SkyCoord(ra=ra0, dec=dec0, unit='deg')
-    position_xdir = SkyCoord(ra=ra_xdir, dec=dec_xdir, unit='deg')
-    position_ydir = SkyCoord(ra=ra_ydir, dec=dec_ydir, unit='deg')
-    offset_xdir = position0.spherical_offsets_to(position_xdir)
-    offset_ydir = position0.spherical_offsets_to(position_ydir)
-
-    xscale = np.abs(position0.separation(position_xdir).value)
-    yscale = np.abs(position0.separation(position_ydir).value)
-    scale = np.sqrt(xscale * yscale)
-
-    c00 = offset_xdir[0].value / scale
-    c01 = offset_xdir[1].value / scale
-    c10 = offset_ydir[0].value / scale
-    c11 = offset_ydir[1].value / scale
-    pc_matrix = AffineTransformation2D(matrix=[[c00, c01], [c10, c11]])
-    cdelt = Scale(scale) & Scale(scale)
-
-    return pc_matrix | cdelt
 
 
 def shape_from_bounding_box(bounding_box):
@@ -99,14 +66,15 @@ def calc_gwcs_pixmap(in_wcs, out_wcs, shape=None):
     """ Return a pixel grid map from input frame to output frame.
     """
     if shape:
-        bb = bounding_box_from_shape(shape)
+        bb = wcs_bbox_from_shape(shape)
         log.debug("Bounding box from data shape: {}".format(bb))
     else:
         bb = in_wcs.bounding_box
         log.debug("Bounding box from WCS: {}".format(in_wcs.bounding_box))
 
-    grid = wcstools.grid_from_bounding_box(bb, step=(1, 1))
+    grid = wcstools.grid_from_bounding_box(bb)
     pixmap = np.dstack(reproject(in_wcs, out_wcs)(grid[0], grid[1]))
+
     return pixmap
 
 
@@ -142,7 +110,13 @@ def reproject(wcs1, wcs2):
     if isinstance(wcs2, fitswcs.WCS):
         backward_transform = wcs2.all_world2pix
     elif isinstance(wcs2, WCS):
-        backward_transform = wcs2.backward_transform
+        if not is_sky_like(wcs1.output_frame):
+            # nirspec lamps: simplify backward transformation by omitting the msa_x (it's constant)
+            # and just using the wavelength lookup table [1] and linear msa_y transformation [2]
+            log.info("Custom transform for NRS Lamp exposure")
+            backward_transform = Mapping((2, 1)) | wcs2.backward_transform[2] & wcs2.backward_transform[1]
+        else:
+            backward_transform = wcs2.backward_transform
     elif issubclass(wcs2, Model):
         backward_transform = wcs2.inverse
     else:
@@ -154,7 +128,10 @@ def reproject(wcs1, wcs2):
         flat_sky = []
         for axis in sky:
             flat_sky.append(axis.flatten())
+        # Filter out RuntimeWarnings due to computed NaNs in the WCS
+        warnings.simplefilter("ignore")
         det = backward_transform(*tuple(flat_sky))
+        warnings.resetwarnings()
         det_reshaped = []
         for axis in det:
             det_reshaped.append(axis.reshape(x.shape))
@@ -189,3 +166,7 @@ def build_mask(dqarr, bitvalue):
     if bitvalue is None:
         return (np.ones(dqarr.shape, dtype=np.uint8))
     return np.logical_not(np.bitwise_and(dqarr, ~bitvalue)).astype(np.uint8)
+
+def is_sky_like(frame):
+    # Differentiate between sky-like and cartesian frames
+    return u.Unit("deg") in frame.unit or u.Unit("arcsec") in frame.unit

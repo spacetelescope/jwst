@@ -1,6 +1,10 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/nirspec_quad_flat.schema"
 allOf:
-- $ref: referencefile.schema.yaml
-- $ref: subarray.schema.yaml
+- $ref: referencefile.schema
+- $ref: subarray.schema
 - type: object
   properties:
     quadrants:
@@ -44,6 +48,4 @@ allOf:
             - name: data
               shape: [130000]
               datatype: float32
-    dq_def:   
-      $ref: dq_def.schema.yaml
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema
+- $ref: dq_def.schema

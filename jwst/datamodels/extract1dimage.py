@@ -1,17 +1,16 @@
-from .model_base import DataModel
+from .model_base import JwstDataModel
+
 
 __all__ = ['Extract1dImageModel']
 
-class Extract1dImageModel(DataModel):
+
+class Extract1dImageModel(JwstDataModel):
     """
     A data model for the extract_1d reference image array.
 
     Parameters
-    ----------
-    init: any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
-
-    data: numpy array
-        An array of values that define the extraction regions.
+    __________
+    data : numpy float32 array
+         1-D extraction regions array
     """
-    schema_url = "extract1dimage.schema.yaml"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/extract1dimage.schema"

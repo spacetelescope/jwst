@@ -1,8 +1,7 @@
 #! /usr/bin/env python
 
-from ..stpipe import Step, cmdline
+from ..stpipe import Step
 from .. import datamodels
-from ..gain_scale import gain_scale
 from . import ramp_fit
 
 import logging
@@ -24,6 +23,7 @@ class RampFitStep (Step):
         int_name = string(default='')
         save_opt = boolean(default=False) # Save optional output
         opt_name = string(default='')
+        maximum_cores = option('none', 'quarter', 'half', 'all', default='none') # max number of processes to create
     """
 
     # Prior to 04/26/17, the following were also in the spec above:
@@ -32,7 +32,10 @@ class RampFitStep (Step):
     #      # 'unweighted' or 'optimal'
     # As of 04/26/17, the only allowed algorithm is 'ols', and the
     #      only allowed weighting is 'optimal'.
+
     algorithm = 'ols'      # Only algorithm allowed for Build 7.1
+#    algorithm = 'gls'       # 032520
+
     weighting = 'optimal'  # Only weighting allowed for Build 7.1
 
     reference_file_types = ['readnoise', 'gain']
@@ -40,9 +43,8 @@ class RampFitStep (Step):
     def process(self, input):
 
         with datamodels.RampModel(input) as input_model:
-
-            readnoise_filename = self.get_reference_file(input_model,
-                                                          'readnoise')
+            max_cores = self.maximum_cores
+            readnoise_filename = self.get_reference_file(input_model, 'readnoise')
             gain_filename = self.get_reference_file(input_model, 'gain')
 
             log.info('Using READNOISE reference file: %s', readnoise_filename)
@@ -68,7 +70,7 @@ class RampFitStep (Step):
             out_model, int_model, opt_model, gls_opt_model = ramp_fit.ramp_fit(
                 input_model, buffsize,
                 self.save_opt, readnoise_model, gain_model, self.algorithm,
-                self.weighting
+                self.weighting, max_cores
             )
 
             readnoise_model.close()
@@ -84,11 +86,15 @@ class RampFitStep (Step):
                 gls_opt_model, 'fitoptgls', output_file=self.opt_name
             )
 
-        out_model.meta.cal_step.ramp_fit = 'COMPLETE'
+        if out_model is not None:
+            out_model.meta.cal_step.ramp_fit = 'COMPLETE'
+            if (input_model.meta.exposure.type in ['NRS_IFU', 'MIR_MRS']) or (
+                input_model.meta.exposure.type in ['NRS_AUTOWAVE', 'NRS_LAMP'] and
+                    input_model.meta.instrument.lamp_mode == 'IFU'):
+
+                out_model = datamodels.IFUImageModel(out_model)
+
         if int_model is not None:
             int_model.meta.cal_step.ramp_fit = 'COMPLETE'
-
-        if input_model.meta.exposure.type in ('NRS_IFU', 'MIR_MRS'):
-            out_model = datamodels.IFUImageModel(out_model)
 
         return out_model, int_model

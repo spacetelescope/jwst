@@ -5,10 +5,10 @@ import numpy as np
 from os import path as os_path
 from asdf.tags.core import ndarray
 
-from . import validate
-from . import properties
-from . import schema as mschema
-from . import (ImageModel, IFUImageModel, DataModel)
+from stdatamodels import validate
+from stdatamodels import properties
+from stdatamodels import schema as mschema
+from . import (ImageModel, IFUImageModel)
 
 from ..pipeline import (GuiderPipeline, DarkPipeline, Ami3Pipeline,
                         Tso3Pipeline, Coron3Pipeline,
@@ -31,9 +31,8 @@ def main(instrument, mode, level):
     """
     Main procedure for make_header
     """
-    im = DataModel()
     cls = get_class(instrument, mode)
-    im = cls(im.instance)
+    im = cls()
 
     defaults = set_default_values(im, instrument, mode, level)
     pipeline = choose_pipeline(defaults)
@@ -297,7 +296,7 @@ def get_shape(im, defaults):
     Get the shape of the image
     """
     shape = im.shape
-    if shape[0] == 0:
+    if not shape or shape[0] == 0:
         xsize = defaults['meta.subarray.xsize']
         ysize = defaults['meta.subarray.ysize']
         shape = (xsize, ysize)
@@ -323,7 +322,7 @@ def import_objects(package, line):
     local_variables = {}
     global_variables = {'__package__':package}
     try:
-        exec(line, global_variables, local_variables)
+        exec(line, global_variables, local_variables) # nosec
     except ImportError:
         pass
 
@@ -534,10 +533,11 @@ def set_pipeline_defaults(im, defaults):
         defaults.update(exposure_deltas)
 
     shape = im.shape
-    if shape[0] != 0:
-        defaults['meta.subarray.xsize'] = shape[0]
-    if shape[1] != 0:
-        defaults['meta.subarray.ysize'] = shape[1]
+    if shape:
+        if shape[0] != 0:
+            defaults['meta.subarray.xsize'] = shape[0]
+        if shape[1] != 0:
+            defaults['meta.subarray.ysize'] = shape[1]
 
 def set_standard_defaults(im, defaults, instrument, mode, level):
     """
@@ -709,7 +709,7 @@ def validate_value(im, name, value):
     schema = get_subschema(im, name)
     if schema:
         try:
-            validate._check_value(value, schema)
+            validate._check_value(value, schema, im)
         except jsonschema.ValidationError:
             valid = False
     return valid

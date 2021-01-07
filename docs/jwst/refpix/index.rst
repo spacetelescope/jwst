@@ -1,3 +1,5 @@
+.. _refpix_step:
+
 ==========================
 Reference Pixel Correction
 ==========================
@@ -6,7 +8,7 @@ Reference Pixel Correction
    :maxdepth: 2
 
    description.rst
-   reference_files.rst
    arguments.rst
+   reference_files.rst
 
 .. automodapi:: jwst.refpix

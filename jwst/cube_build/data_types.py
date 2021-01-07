@@ -83,24 +83,19 @@ class DataTypes():
             self.output_name = self.build_product_name(self.filenames[0])
 
         elif isinstance(input_try, datamodels.ModelContainer):
-            # print('this is a model container type or association read in a ModelContainer')
             self.output_name = 'Temp'
             if not single:  # find the name of the output file from the association
-                with datamodels.ModelContainer(input_try) as input_model:
-                    self.output_name = input_model.meta.asn_table.products[0].name
-            for i in range(len(input_try)):
+                self.output_name = input_try.meta.asn_table.products[0].name
+            for model in input_try:
                 # check if input data is an IFUImageModel
-                if not isinstance(input_try[i], datamodels.IFUImageModel):
-                    serror = str(type(input_try[i]))
+                if not isinstance(model, datamodels.IFUImageModel):
                     raise NotIFUImageModel(
-                        "Input data is not a IFUImageModel, instead it is %s", serror)
-
-                model = datamodels.IFUImageModel(input_try[i])
-                self.input_models.append(model)
+                        f"Input data is not a IFUImageModel, instead it is {model}")
                 self.filenames.append(model.meta.filename)
+            self.input_models = input_try
 
         else:
-            raise TypeError
+            raise TypeError("Failed to process file type {}".format(type(input_try)))
 
 # if the user has set the output name - strip out *.fits
 # later suffixes will be added to this name to designate the

@@ -1,32 +1,34 @@
-from .dictwithattrs import DictWithAttributes
+"""Association Member"""
+from collections import UserDict
+from copy import copy
 
 
-class Member(DictWithAttributes):
-    """Create a new member.
-
-    Create a member based on a dict, remapping
-    attributes as necessary.
+class Member(UserDict):
+    """Member of an association
 
     Parameters
-    ---------
-    initial_params : dict
-        Initiial dict of key/values to populate the member.
+    ----------
+    initialdata: Dict-like or Member
+        Initialization data. Any type of initialization that
+        `collections.UserDict` allows or `Member` itself.
 
-    member_map : {input_param: member_param,}
-        A dict where the keys are names of in input key names
-        and the values are the names of the member key names.
+    item: obj
+        The item to initialize with. This will override
+        any `Member.item` given in `initialdata`.
 
-    Notes
-    -----
-    If a map is given, and an input_param does not appear in the map, it
-    is simply copyied using the same key.
+    Attributes
+    ----------
+    item: obj
+        The original item that created this member.
     """
-    def __init__(self, initial_params=None, member_map=None):
-        if initial_params is None:
-            initial_params = {}
-        if member_map is None:
-            super(Member, self).__init__(initial_params)
+    def __init__(self, initialdata=None, item=None):
+        self.item = None
+
+        if isinstance(initialdata, Member):
+            self.data = copy(initialdata.data)
+            self.item = copy(initialdata.item)
         else:
-            super(Member, self).__init__()
-            for key, value in initial_params.items():
-                self.__setitem__(member_map.get(key, key), value)
+            super(Member, self).__init__(initialdata)
+
+        if item is not None:
+            self.item = copy(item)

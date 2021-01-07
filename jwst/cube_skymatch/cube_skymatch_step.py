@@ -11,16 +11,14 @@ import numpy as np
 from ..stpipe import Step
 from .. import datamodels
 
-try:
-    from stsci.tools.bitmask import bitfield_to_boolean_mask
-    from stsci.tools.bitmask import interpret_bit_flags
-except ImportError:
-    from stsci.tools.bitmask import bitmask2mask as bitfield_to_boolean_mask
-    from stsci.tools.bitmask import interpret_bits_value as interpret_bit_flags
+from astropy.nddata.bitmask import (
+    bitfield_to_boolean_mask,
+    interpret_bit_flags,
+)
 
 #LOCAL:
-from . skymatch import match
-from . skycube import SkyCube
+from .skymatch import match
+from .skycube import SkyCube
 from ..skymatch.skystatistics import SkyStats
 
 __all__ = ['CubeSkyMatchStep']
@@ -52,8 +50,8 @@ class CubeSkyMatchStep(Step):
     reference_file_types = []
 
     def process(self, input1, input2):
-        cube_models = datamodels.ModelContainer(input1, persist=False)
-        models2d = datamodels.ModelContainer(input2, persist=False)
+        cube_models = datamodels.ModelContainer(input1)
+        models2d = datamodels.ModelContainer(input2)
         dqbits = interpret_bit_flags(self.dqbits)
 
         # set sky stattistics:
@@ -313,4 +311,3 @@ def _find_channel_bkg_index(model2d, channel):
         if m.channel == channel:
             index = k
     return index
-

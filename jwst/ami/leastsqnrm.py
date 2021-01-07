@@ -1,12 +1,15 @@
-
 import logging
+
 import numpy as np
 import numpy.linalg as linalg
 from scipy.special import comb, jv
+
 from . import hexee
 
+
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+log.addHandler(logging.NullHandler())
+
 
 def flip(holearray):
     """
@@ -150,7 +153,7 @@ def cos2deltapistons(coeffs):
 
     Returns
     -------
-    delta: 1D float array 
+    delta: 1D float array
         cosine of piston differences
     """
     asize = int((len(coeffs) -1)/2)
@@ -471,7 +474,7 @@ def weighted_operations(img, model, weights):
     return x, res
 
 
-def matrix_operations(img, model, flux=None):
+def matrix_operations(img, model, flux=None, linfit=False):
     """
     Short Summary
     -------------
@@ -545,10 +548,44 @@ def matrix_operations(img, model, flux=None):
               flatimg.sum(), np.shape(flatmodel))
     log.debug('flat image dimensions:%s model transpose dimensions:%s ',
               np.shape(flatimg), np.shape(flatmodeltransp))
-    log.debug('transpose * image data dimensions:%s flatimg * transpose'+ 
+    log.debug('transpose * image data dimensions:%s flatimg * transpose' +
               'dimensions:%s ', np.shape(data_vector), np.shape(inverse))
 
-    return x, res, cond
+    if linfit:
+        try:
+            from linearfit import linearfit
+            # dependent variables
+            M = np.mat(flatimg)
+
+            # photon noise
+            noise = np.sqrt(np.abs(flatimg))
+
+            # this sets the weights of pixels fulfilling condition to zero
+            weights = np.where(np.abs(flatimg)<=1.0, 0.0, 1.0/(noise**2))
+
+            # uniform weight
+            wy = weights
+            S = np.mat(np.diag(wy));
+            # matrix of independent variables
+            C = np.mat(flatmodeltransp)
+
+            # initialize object
+            result = linearfit.LinearFit(M,S,C)
+
+            # do the fit
+            result.fit()
+
+            # delete inverse_covariance_matrix to reduce size of pickled file
+            result.inverse_covariance_matrix = []
+
+            linfit_result = result
+
+        except ImportError:
+            linfit_result = None
+    else:
+        linfit_result = None
+
+    return x, res, cond, linfit_result
 
 
 def multiplyenv(env, fringeterms):
@@ -610,19 +647,20 @@ def tan2visibilities(coeffs):
     amp, delta: 1D float array, 1D float array
         fringe amplitude & phase
     """
-    delta = np.zeros((len(coeffs) - 1) // 2)
-    amp = np.zeros((len(coeffs) - 1) // 2)
-    for q in range((len(coeffs) - 1) // 2):
-        delta[q] = (np.arctan2(coeffs[2 * q + 2], coeffs[2 * q + 1]))
-        amp[q] = np.sqrt(coeffs[2 * q + 2]**2 + coeffs[2 * q + 1]**2)
+    delta = np.zeros(int((len(coeffs) -1)/2))
+    amp = np.zeros(int((len(coeffs) -1)/2))
+    for q in range(int((len(coeffs) -1)/2)):
+        delta[q] = (np.arctan2(coeffs[2*q+2], coeffs[2*q+1]))
+        amp[q] = np.sqrt(coeffs[2*q+2]**2 + coeffs[2*q+1]**2)
 
-    log.debug('tan2visibilities: shape coeffs:%s shape delta:%s ',
-              np.shape(coeffs), np.shape(delta))
+    log.debug(f"tan2visibilities: shape coeffs:{np.shape(coeffs)} "
+        f"shape delta:{np.shape(delta)}")
 
+    # returns fringe amplitude & phase
     return amp, delta
 
 
-def populate_antisymmphasearray(deltaps, N=7):
+def populate_antisymmphasearray(deltaps, n=7):
     """
     Short Summary
     -------------
@@ -640,7 +678,7 @@ def populate_antisymmphasearray(deltaps, N=7):
     deltaps: 1D float array
         pistons between each pair of holes
 
-    N: integer
+    n: integer
         number of holes
 
     Returns
@@ -648,9 +686,11 @@ def populate_antisymmphasearray(deltaps, N=7):
     arr: 2D float array
         fringe phases between each pair of holes
     """
-    arr = np.zeros((N, N)) # fringe phase array
+    # Initialize fringe phase array
+    arr = np.zeros((n, n))
+
     step = 0
-    n = N - 1
+    n = n - 1
     for h in range(n):
         arr[h, h+1:] = deltaps[step:step+n]
         step += n
@@ -661,7 +701,7 @@ def populate_antisymmphasearray(deltaps, N=7):
     return arr
 
 
-def populate_symmamparray(amps, N=7):
+def populate_symmamparray(amps, n=7):
     """
     Short Summary
     -------------
@@ -672,7 +712,7 @@ def populate_symmamparray(amps, N=7):
     amps: 1D float array
         fringe visibility between each pair of holes
 
-    N: integer
+    n: integer
         number of holes
 
     Returns
@@ -680,9 +720,10 @@ def populate_symmamparray(amps, N=7):
     arr: 2D float array
         fringe amplitude array
     """
-    arr = np.zeros((N, N))
+    arr = np.zeros((n, n))
+
     step = 0
-    n = N - 1
+    n = n - 1
 
     for h in range(n):
         arr[h, h + 1:] = amps[step:step + n]
@@ -694,7 +735,7 @@ def populate_symmamparray(amps, N=7):
     return arr
 
 
-def redundant_cps(deltaps, N=7):
+def redundant_cps(deltaps, n=7):
     """
     Short Summary
     -------------
@@ -705,7 +746,7 @@ def redundant_cps(deltaps, N=7):
     deltaps: 1D float array
         pistons between each pair of holes
 
-    N: integer
+    n: integer
         number of holes
 
     Returns
@@ -713,13 +754,14 @@ def redundant_cps(deltaps, N=7):
     cps: 1D float array
         closure phases
     """
-    arr = populate_antisymmphasearray(deltaps, N=N) # fringe phase array
-    cps = np.zeros(int(comb(N, 3)))
-    nn = 0
+    arr = populate_antisymmphasearray(deltaps, n=n) # fringe phase array
 
-    for kk in range(N - 2):
-        for ii in range(N - kk - 2):
-            for jj in range(N - kk - ii - 2):
+    cps = np.zeros(int(comb(n, 3)))
+
+    nn = 0
+    for kk in range(n - 2):
+        for ii in range(n - kk - 2):
+            for jj in range(n - kk - ii - 2):
                 cps[nn + jj] = arr[kk, ii + kk + 1] \
                        + arr[ii + kk + 1, jj + ii + kk + 2] \
                        + arr[jj + ii + kk + 2, kk]
@@ -729,7 +771,7 @@ def redundant_cps(deltaps, N=7):
     return cps
 
 
-def closurephase(deltap, N=7):
+def closurephase(deltap, n=7):
     """
     Short Summary
     -------------
@@ -740,7 +782,7 @@ def closurephase(deltap, N=7):
     deltap: 1D float array
         pistons between each pair of holes
 
-    N: integer
+    n: integer
         number of holes in the mask; 7 and 10 holes available (JWST & GPI))
 
     Returns
@@ -749,28 +791,28 @@ def closurephase(deltap, N=7):
         closure phases
     """
     # p is a triangular matrix set up to calculate closure phases
-    if N == 7:
+    if n == 7:
         p = np.array([deltap[:6], deltap[6:11], deltap[11:15],
-                deltap[15:18], deltap[18:20], deltap[20:]])
-    elif N == 10:
+                deltap[15:18], deltap[18:20], deltap[20:]], dtype=object)
+    elif n == 10:
         p = np.array([deltap[:9], deltap[9:17], deltap[17:24],
                 deltap[24:30], deltap[30:35], deltap[35:39],
-                deltap[39:42], deltap[42:44], deltap[44:]])
+                deltap[39:42], deltap[42:44], deltap[44:]], dtype=object)
     else:
-        log.critical('invalid hole number: %s', N)
+        log.critical('invalid hole number: %s', n)
 
     # calculates closure phases for general N-hole mask (with p-array set
     #     up properly above)
-    cps = np.zeros((N - 1) * (N - 2) // 2)
-    for j1 in range(N - 2):
-        for j2 in range(N - 2 - j1):
-            cps[int(j1 * ((N + (N - 3) - j1) / 2.0)) + j2] = \
+    cps = np.zeros((n - 1) * (n - 2) // 2)
+    for j1 in range(n - 2):
+        for j2 in range(n - 2 - j1):
+            cps[int(j1 * ((n + (n - 3) - j1) / 2.0)) + j2] = \
                 p[j1][0] + p[j1 + 1][j2] - p[j1][j2 + 1]
 
     return cps
 
 
-def return_CAs(amps, N=7):
+def closure_amplitudes(amps, n=7):
     """
     Short Summary
     -------------
@@ -789,17 +831,19 @@ def return_CAs(amps, N=7):
     CAs: 1D float array
         closure amplitudes
     """
-    arr = populate_symmamparray(amps, N=N) # fringe amp array
+    arr = populate_symmamparray(amps, n=n) # fringe amp array
     nn = 0
-    CAs = np.zeros(int(comb(N, 4)))
-    for ii in range(N - 3):
-        for jj in range(N - ii - 3):
-            for kk in range(N - jj - ii - 3):
-                for ll in range(N - jj - ii - kk - 3):
-                    CAs[nn + ll] = arr[ii, jj + ii + 1] \
+
+    cas = np.zeros(int(comb(n, 4)))
+
+    for ii in range(n - 3):
+        for jj in range(n - ii - 3):
+            for kk in range(n - jj - ii - 3):
+                for ll in range(n - jj - ii - kk - 3):
+                    cas[nn + ll] = arr[ii, jj + ii + 1] \
                            * arr[ll + ii + jj + kk + 3, kk + jj + ii + 2] \
                            / (arr[ii, kk + ii + jj + 2] * \
                               arr[jj + ii + 1, ll + ii + jj + kk + 3])
                 nn = nn + ll + 1
 
-    return CAs
+    return cas

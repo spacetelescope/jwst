@@ -1,25 +1,27 @@
 #
-#  Module for applying the LG algorithm to an AMI exposure
+#  Module for applying the LG-PLUS algorithm to an AMI exposure
 #
 
 import logging
-import warnings
 import numpy as np
-from .. import datamodels
 
-from .NRM_Model import NRM_Model
-from . import webb_psf
-from . import leastsqnrm
+from .find_affine2d_parameters import find_rotation
+from . import instrument_data
+from . import nrm_core
+
+from astropy import units as u
+
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+log.addHandler(logging.NullHandler())
 
 
-def apply_LG(input_model, filter_model, oversample, rotation):
+def apply_LG_plus(input_model, filter_model, oversample, rotation,
+                  psf_offset, rotsearch_parameters):
     """
     Short Summary
     -------------
-    Applies the LG fringe detection algorithm to an AMI image
+    Applies the image plane algorithm to an AMI image
 
     Parameters
     ----------
@@ -39,73 +41,54 @@ def apply_LG(input_model, filter_model, oversample, rotation):
     -------
     output_model: Fringe model object
         Fringe analysis data
+
     """
-    # Supress harmless arithmetic warnings for now
-    warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
-    warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
 
-    # Report the FILTER value for this image
-    log.info('Filter: %s', input_model.meta.instrument.filter)
-
-    # Load the filter throughput data from the reference file
-    bindown = 6
-    band = webb_psf.get_webbpsf_filter(filter_model, specbin=bindown)
-
-    # Set up some params that are needed as input to the LG algorithm:
-    #  Search window for rotation fine-tuning
-    rots_deg = np.array((-0.5, -0.25, 0.0, 0.25, 0.5))
-    #  Search range for relative pixel scales
-    relpixscales = np.array((63.0, 63.25, 63.75, 64.0, 64.25)) / 63.75
-
-    # Convert initial rotation guess from degrees to radians
-    rotation = rotation * np.pi / 180.0
-
-    # Instantiate the NRM model object
-    jwnrm = NRM_Model(mask='JWST', holeshape='hex',
-                pixscale=leastsqnrm.mas2rad(63.52554816773347),
-                rotate=rotation, rotlist_deg=rots_deg,
-                scallist=relpixscales)
-
-    # Load the filter bandpass data into the NRM model
-    jwnrm.bandpass = band
-    # Set the oversampling factor in the NRM model
-    jwnrm.over = oversample
-
-    # Now fit the data in the science exposure
-    # (pixguess is a guess at the pixel scale of the data)
-    #  produces a 19x19 image of the fit
-
-    subarray = input_model.meta.subarray.name.upper()
-    if subarray == 'FULL':
-        # Instead of using the FULL subarray, extract the same region (size and
-        #   location) as used by SUB80 to make execution time acceptable
-        xstart = 1045 # / Starting pixel in axis 1 direction
-        ystart = 1    # / Starting pixel in axis 2 direction
-        xsize = 80    # / Number of pixels in axis 1 direction
-        ysize = 80    # / Number of pixels in axis 2 direction
+    # If the input data were taken in full-frame mode, extract a region
+    # equivalent to the SUB80 subarray mode to make execution time acceptable.
+    if input_model.meta.subarray.name.upper() == 'FULL':
+        log.info("Extracting 80x80 subarray from full-frame data")
+        xstart = 1045
+        ystart = 1
+        xsize = 80
+        ysize = 80
         xstop = xstart + xsize - 1
         ystop = ystart + ysize - 1
+        input_model.data = input_model.data[ystart-1:ystop, xstart-1:xstop]
+        input_model.dq = input_model.dq[ystart-1:ystop, xstart-1:xstop]
+        input_model.err = input_model.err[ystart-1:ystop, xstart-1:xstop]
 
-        jwnrm.fit_image(input_model.data[ ystart-1:ystop, xstart-1:xstop ],
-                        pixguess=jwnrm.pixel)
-    else:
-        jwnrm.fit_image(input_model.data, pixguess=jwnrm.pixel)
+    data = input_model.data
+    dim = data.shape[1]
 
-    # Construct model image from fitted PSF
-    jwnrm.create_modelpsf()
+    # Set transformation parameters:
+    #   mx, my: dimensionless magnifications
+    #   sx, sy: dimensionless shears
+    #   x0, y0: offsets in pupil space
+    mx,my,sx,sy,xo,yo, = (1.0,1.0, 0.0,0.0, 0.0,0.0)
 
-    # Reset the warnings filter to its original state
-    warnings.resetwarnings()
+    psf_offset_ff = None
 
-    # Store fit results in output model
-    output_model = datamodels.AmiLgModel(fit_image=jwnrm.modelpsf,
-                resid_image=jwnrm.residual,
-                closure_amp_table=np.asarray(jwnrm.redundant_cas),
-                closure_phase_table=np.asarray(jwnrm.redundant_cps),
-                fringe_amp_table=np.asarray(jwnrm.fringeamp),
-                fringe_phase_table=np.asarray(jwnrm.fringephase),
-                pupil_phase_table=np.asarray(jwnrm.piston),
-                solns_table=np.asarray(jwnrm.soln))
+    lamc = 4.3e-6
+    oversample = 11
+    bandpass = np.array([(1.0, lamc),])
+    pixelscale_as = 0.0656
+    arcsec2rad = u.arcsec.to(u.rad)
+    PIXELSCALE_r = pixelscale_as * arcsec2rad
+    holeshape = 'hex'
+    filt = "F430M"
+    rotsearch_d = np.arange(rotsearch_parameters[0], rotsearch_parameters[1], rotsearch_parameters[2])
+
+    affine2d = find_rotation(data[:,:], psf_offset, rotsearch_d,
+                   mx, my, sx, sy, xo, yo,
+                   PIXELSCALE_r, dim, bandpass, oversample, holeshape)
+
+    niriss = instrument_data.NIRISS(filt, bandpass=bandpass, affine2d=affine2d)
+
+    ff_t = nrm_core.FringeFitter(niriss, psf_offset_ff=psf_offset_ff,
+                oversample=oversample)
+
+    output_model = ff_t.fit_fringes_all(input_model)
 
     # Copy header keywords from input to output
     output_model.update(input_model)

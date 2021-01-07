@@ -25,8 +25,6 @@ import numpy as np
 
 __all__ = ['Region', 'Edge', 'Polygon']
 __taskname__ = 'region'
-__version__ = '0.9.3'
-__vdate__ = '07-April-2017'
 __author__ = 'Nadezhda Dencheva, Mihai Cara'
 
 

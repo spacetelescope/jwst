@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 """
 JWST pipeline step for image intensity matching for MIRI images.
 
@@ -12,7 +11,7 @@ import numpy as np
 from .. stpipe import Step
 from .. import datamodels
 from .. wiimatch.match import match_lsq
-
+from astropy.stats import sigma_clipped_stats as sigclip
 
 __all__ = ['MRSIMatchStep', 'apply_background_2d']
 
@@ -33,14 +32,14 @@ class MRSIMatchStep(Step):
     reference_file_types = []
 
     def process(self, images):
-        all_models2d = datamodels.ModelContainer(images, persist=True)
+        all_models2d = datamodels.ModelContainer(images)
 
         chm = {}
 
         for m in all_models2d:
             ch = m.meta.instrument.channel
             if ch not in chm:
-                chm[ch] = datamodels.ModelContainer()
+                chm[ch] = datamodels.ModelContainer(iscopy=True)
             chm[ch].append(m)
 
         # check that channel combinations are reasonable, in particular that
@@ -91,7 +90,10 @@ class MRSIMatchStep(Step):
 
         # set step completion status in the input images
         for m in all_models2d:
-            m.meta.cal_step.mrs_imatch = 'COMPLETE'
+            if m.meta.cal_step.mrs_imatch == 'SKIPPED':
+                self.log.info('Background can not be determined, skipping mrs_imatch')
+            else:
+                m.meta.cal_step.mrs_imatch = 'COMPLETE'
 
         return images
 
@@ -238,9 +240,12 @@ def _get_2d_pixgrid(model2d, channel):
     # cannot use WCS domain to find the range of pixel indices that
     # belong to a given channel. Therefore, for now we have this hardcoded
     # in this function.
+    # Channel 1 and 4 are on the left-side of the detector
+    # Channel 2 and 3 are on the right_side of the detector
+
     y, x = np.indices((1024, 512))
 
-    if channel in ['1', '3']:
+    if channel in ['1', '4']:
         return (x + 4, y)
     else:
         return (x + 516, y)
@@ -254,6 +259,7 @@ def _match_models(models, channel, degree, center=None, center_cs='image'):
     cbs.channel = str(channel)
     cbs.band = 'ALL'
     cbs.single = True
+    cbs.weighting = 'EMSM'
     cube_models = cbs.process(models)
     if len(cube_models) != len(models):
         raise RuntimeError("The number of generated cube models does not "
@@ -311,6 +317,39 @@ def _match_models(models, channel, degree, center=None, center_cs='image'):
         image_data.append(cm.data)
         sigma_data.append(sigmas)
 
+    # leaving in below commented out lines for
+    # Mihia to de-bug step  when coefficients are NAN
+    #mask_array = np.asarray(mask_data)
+    #image_array = np.asarray(image_data)
+    #sigma_array = np.asarray(sigma_data)
+    #test_data = image_array[mask_array>0]
+    #test_sigma = sigma_array[mask_array>0]
+    #if np.isnan(test_data).any():
+    #    print('a nan exists in test data')
+    #if np.isnan(sigma_data).any():
+    #    print('a nan exists in sigma data')
+
+    # MRS fields of view are small compared to source sizes,
+    # and undersampling produces significant differences
+    # in overlap regions between exposures.
+    # Therefore use sigma-clipping to detect and remove sources
+    # (and unmasked outliers) prior to doing the background matching.
+    # Loop over input exposures
+    for image, mask in zip(image_data, mask_data):
+        # Do statistics wavelength by wavelength
+        for thisimg, thismask in zip(image, mask):
+            # Avoid bug in sigma_clipped_stats (fixed in astropy 4.0.2) which
+            # fails on all-zero arrays passed when mask_value=0
+            if not np.any(thisimg):
+                themed = 0.
+                clipsig = 0.
+            else:
+                # Sigma clipped statistics, ignoring zeros where no data
+                _, themed, clipsig = sigclip(thisimg, mask_value=0.)
+            # Reject beyond 3 sigma
+            reject = np.where(np.abs(thisimg - themed) > 3 * clipsig)
+            thismask[reject] = 0
+
     bkg_poly_coef, mat, _, _, effc, cs = match_lsq(
         images=image_data,
         masks=mask_data,
@@ -334,17 +373,23 @@ def _match_models(models, channel, degree, center=None, center_cs='image'):
     # if requested:
     ##### model.meta.instrument.channel
 
-    # set 2D models' background meta info:
-    for im, poly in zip(models, bkg_poly_coef):
-        im.meta.background.subtracted = False
-        im.meta.background.polynomial_info.append(
-            {
+    if np.isnan(bkg_poly_coef).any():
+        bkg_poly_coef = None
+        for im in models:
+            im.meta.cal_step.mrs_imatch = 'SKIPPED'
+            im.meta.background.subtracted = False
+    else:
+        # set 2D models' background meta info:
+        for im, poly in zip(models, bkg_poly_coef):
+            im.meta.background.subtracted = False
+            im.meta.background.polynomial_info.append(
+                {
                 'degree': degree,
                 'refpoint': center,
                 'coefficients': poly.ravel().tolist(),
                 'channel': channel
-            }
-        )
+                }
+            )
 
     return models
 
@@ -361,4 +406,3 @@ def _find_channel_bkg_index(model2d, channel):
         if m.channel == channel:
             index = k
     return index
-

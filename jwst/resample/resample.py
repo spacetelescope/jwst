@@ -1,17 +1,22 @@
 import logging
-from collections import OrderedDict
-import numpy as np
+import re
 
-from .. import datamodels
+import numpy as np
 
 from . import gwcs_drizzle
 from . import resample_utils
+from .. import datamodels
+from ..lib.basic_utils import bytes2human
 from ..model_blender import blendmeta
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-__all__ = ["ResampleData"]
+__all__ = ["OutputTooLargeError", "ResampleData"]
+
+
+class OutputTooLargeError(RuntimeError):
+    """Raised when the output is too large for in-memory instantiation"""
 
 
 class ResampleData:
@@ -35,7 +40,9 @@ class ResampleData:
       5. Updates output data model with output arrays from drizzle, including
          (eventually) a record of metadata from all input models.
     """
-    def __init__(self, input_models, output=None, **pars):
+    def __init__(self, input_models, output=None, single=False, blendheaders=True,
+        pixfrac=1.0, kernel="square", fillval="INDEF", weight_type="exptime",
+        good_bits=0, pscale_ratio=1.0, **kwargs):
         """
         Parameters
         ----------
@@ -44,20 +51,42 @@ class ResampleData:
 
         output : str
             filename for output
+
+        kwargs : dict
+            Other parameters
         """
         self.input_models = input_models
-        self.drizpars = pars
+
+        self.pscale_ratio = pscale_ratio
+        self.single = single
+        self.blendheaders = blendheaders
+        self.pixfrac = pixfrac
+        self.kernel = kernel
+        self.fillval = fillval
+        self.weight_type = weight_type
+        self.good_bits = good_bits
+
         if output is None:
             output = input_models.meta.resample.output
         self.output_filename = output
 
         # Define output WCS based on all inputs, including a reference WCS
-        self.output_wcs = resample_utils.make_output_wcs(self.input_models)
+        self.output_wcs = resample_utils.make_output_wcs(self.input_models,
+                                                        pscale_ratio=self.pscale_ratio)
         log.debug('Output mosaic size: {}'.format(self.output_wcs.data_size))
-        self.blank_output = datamodels.DrizProductModel(self.output_wcs.data_size)
+        can_allocate, required_memory = datamodels.util.check_memory_allocation(
+            self.output_wcs.data_size, kwargs['allowed_memory'], datamodels.ImageModel
+        )
+        if not can_allocate:
+            raise OutputTooLargeError(
+                f'Combined ImageModel size {self.output_wcs.data_size} requires {bytes2human(required_memory)}'
+                f'\nModel cannot be instantiated.'
+            )
+        self.blank_output = datamodels.ImageModel(self.output_wcs.data_size)
 
         # update meta data and wcs
-        self.blank_output.update(input_models[0])
+        self.blank_output.update(input_models[0], only='PRIMARY')
+        self.blank_output.update(input_models[0], only='SCI')
         self.blank_output.meta.wcs = self.output_wcs
 
         self.output_models = datamodels.ModelContainer()
@@ -85,14 +114,9 @@ class ResampleData:
     def do_drizzle(self):
         """ Perform drizzling operation on input images's to create a new output
         """
-        # Set up information about what outputs we need to create: single or final
-        # Key: value from metadata for output/observation name
-        # Value: full filename for output file
-        driz_outputs = OrderedDict()
-
         # Look for input configuration parameter telling the code to run
         # in single-drizzle mode (mosaic all detectors in a single observation)
-        if self.drizpars['single']:
+        if self.single:
             driz_outputs = self.input_models.group_names
             exposures = self.input_models.models_grouped
             group_exptime = []
@@ -112,22 +136,23 @@ class ResampleData:
                                                    group_exptime):
             output_model = self.blank_output.copy()
             output_model.meta.filename = obs_product
-            saved_model_type = output_model.meta.model_type
 
-            if self.drizpars['blendheaders']:
+            if self.blendheaders:
                 self.blend_output_metadata(output_model)
-                output_model.meta.model_type = saved_model_type
 
             exposure_times = {'start': [], 'end': []}
 
             # Initialize the output with the wcs
             driz = gwcs_drizzle.GWCSDrizzle(output_model,
-                                            single=self.drizpars['single'],
-                                            pixfrac=self.drizpars['pixfrac'],
-                                            kernel=self.drizpars['kernel'],
-                                            fillval=self.drizpars['fillval'])
+                                            single=self.single,
+                                            pixfrac=self.pixfrac,
+                                            kernel=self.kernel,
+                                            fillval=self.fillval,
+                                            wt_scl=self.weight_type)
 
-            for n, img in enumerate(exposure):
+            for n, img_exp in enumerate(exposure):
+                # Make a copy as this is operated on in-place below
+                img = img_exp.copy()
                 exposure_times['start'].append(img.meta.exposure.start_time)
                 exposure_times['end'].append(img.meta.exposure.end_time)
 
@@ -136,22 +161,18 @@ class ResampleData:
                 if not img.meta.background.subtracted and blevel is not None:
                     img.data -= blevel
 
-                outwcs_pscale = output_model.meta.wcsinfo.cdelt1
-                wcslin_pscale = img.meta.wcsinfo.cdelt1
-
                 inwht = resample_utils.build_driz_weight(img,
-                    weight_type=self.drizpars['weight_type'],
-                    good_bits=self.drizpars['good_bits'])
+                    weight_type=self.weight_type,
+                    good_bits=self.good_bits)
                 driz.add_image(img.data, img.meta.wcs, inwht=inwht,
-                        expin=img.meta.exposure.exposure_time,
-                        pscale_ratio=outwcs_pscale / wcslin_pscale)
+                    expin=img.meta.exposure.exposure_time)
 
             # Update some basic exposure time values based on all the inputs
             output_model.meta.exposure.exposure_time = texptime
             output_model.meta.exposure.start_time = min(exposure_times['start'])
             output_model.meta.exposure.end_time = max(exposure_times['end'])
             output_model.meta.resample.product_exposure_time = texptime
-            output_model.meta.resample.weight_type = self.drizpars['weight_type']
+            output_model.meta.resample.weight_type = self.weight_type
             output_model.meta.resample.pointings = pointings
 
             self.update_fits_wcs(output_model)
@@ -162,6 +183,16 @@ class ResampleData:
         """
         Update FITS WCS keywords of the resampled image.
         """
+        # Delete any SIP-related keywords first
+        pattern = r"^(cd[12]_[12]|[ab]p?_\d_\d|[ab]p?_order)$"
+        regex = re.compile(pattern)
+
+        keys = list(model.meta.wcsinfo.instance.keys())
+        for key in keys:
+            if regex.match(key):
+                del model.meta.wcsinfo.instance[key]
+
+        # Write new PC-matrix-based WCS based on GWCS model
         transform = model.meta.wcs.forward_transform
         model.meta.wcsinfo.crpix1 = -transform[0].offset.value + 1
         model.meta.wcsinfo.crpix2 = -transform[1].offset.value + 1
@@ -175,3 +206,5 @@ class ResampleData:
         model.meta.wcsinfo.pc1_2 = transform[2].matrix.value[0][1]
         model.meta.wcsinfo.pc2_1 = transform[2].matrix.value[1][0]
         model.meta.wcsinfo.pc2_2 = transform[2].matrix.value[1][1]
+        model.meta.wcsinfo.ctype1 = "RA---TAN"
+        model.meta.wcsinfo.ctype2 = "DEC--TAN"

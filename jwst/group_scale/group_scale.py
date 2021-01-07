@@ -44,6 +44,7 @@ def do_correction(input_model):
     # Create output as a copy of the input science data model
     output_model = input_model.copy()
 
+    log.info('NFRAMES={}, FRMDIVSR={}'.format(nframes, frame_divisor))
     log.info('Rescaling all groups by {}/{}'.format(frame_divisor, nframes))
 
     # Apply the rescaling to the entire data array

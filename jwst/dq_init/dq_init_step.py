@@ -12,8 +12,6 @@ class DQInitStep(Step):
     """Initialize the Data Quality extension from the
     mask reference file.
 
-    Extended summary
-    ----------------
     The dq_init step initializes the pixeldq attribute of the
     input datamodel using the MASK reference file.  For some
     FGS exp_types, initalize the dq attribute of the input model
@@ -56,7 +54,7 @@ class DQInitStep(Step):
                 self.log.info("Input opened as GuiderRawModel")
             except (TypeError, ValueError):
                 self.log.error("Unexpected or unknown input model type")
-        except:
+        except Exception:
             self.log.error("Can't open input")
             raise
 

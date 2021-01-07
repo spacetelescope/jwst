@@ -110,11 +110,6 @@ the `format` keyword argument::
 
    Unlike ``astropy.io.fits``, `save` always clobbers the output file.
 
-It also accepts a writable file-like object (opened in binary mode).
-In that case, a format must be specified::
-
-    with open("myimage.fits", "wb") as fd:
-        im.save(fd, format="fits")
 
 Copying a model
 ---------------
@@ -139,14 +134,85 @@ nothing more sophisticated.
 
 To get to the history::
 
-    model.history
+    entries = model.history
+    for entry in entries:
+      pass
 
-To add an entry to the history::
+To add an entry to the history, first create the entry by calling
+`util.create_history_entry` and appending the entry to the model
+history::
 
-    model.history.append("Processed through the frobulator step")
+    entry =  util.create_history_entry("Processed through the frobulator step")
+    model.history.append(entry)
 
 These history entries are stored in ``HISTORY`` keywords when saving
-to FITS format.
+to FITS format. As an option, history entries can contain a dictionary
+with a description of the software used. The dictionary must have the
+following keys:
+
+  ``name``: The name of the software
+  ``author``: The author or institution that produced the software
+  ``homepage``: A URI to the homepage of the software
+  ``version``: The version of the software
+
+The calling sequence to create  a history entry with the software
+description is::
+
+  entry =  util.create_history_entry(description, software=software_dict)
+
+where the second argument is the dictionary with the keywords
+mentioned.
+
+Looking at the contents of a model
+----------------------------------
+
+Use ``model.info()`` to look at the contents of a data model. It renders
+the underlying ASDF tree starting at the root or a specified ``node``.
+The number of displayed rows is controlled by the ``max_row`` argument::
+
+  im.info()
+  root.tree (AsdfObject)
+  ├─asdf_library (Software)
+  │ ├─author (str): Space Telescope Science Institute
+  │ ├─homepage (str): http://github.com/spacetelescope/asdf
+  │ ├─name (str): asdf
+  │ └─version (str): 2.5.2a1.dev12+g12aa460
+  ├─history (dict)
+  │ └─extensions (list) ...
+  ├─data (ndarray): shape=(2048, 2048), dtype=float32
+  ├─dq (ndarray): shape=(2048, 2048), dtype=uint32
+  ├─err (ndarray): shape=(2048, 2048), dtype=float32
+  ├─meta (dict)
+  │ ├─aperture (dict) ...
+  │ ├─bunit_data (str): DN/s
+  │ ├─bunit_err (str): DN/s
+  │ ├─cal_step (dict) ...
+  │ ├─calibration_software_revision (str): 3bfd782b
+  │ ├─calibration_software_version (str): 0.14.3a1.dev133+g3bfd782b.d20200216
+  │ ├─coordinates (dict) ...
+  │ └─28 not shown
+  ├─var_poisson (ndarray): shape=(2048, 2048), dtype=float32
+  ├─var_rnoise (ndarray): shape=(2048, 2048), dtype=float32
+  └─extra_fits (dict) ...
+  Some nodes not shown.
+
+
+Searching a model
+-----------------
+
+``model.search()`` can be used to search the ASDF tree by ``key`` or
+``value``::
+
+  im.search(key='filter')
+
+  root.tree (AsdfObject)
+  └─meta (dict)
+  ├─instrument (dict)
+  │ └─filter (str): F170LP
+  └─ref_file (dict)
+    └─filteroffset (dict)
+
+
 
 Converting from ``astropy.io.fits``
 ===================================
@@ -208,7 +274,7 @@ There is a convenience method, `find_fits_keyword` to find where a
 FITS keyword is used in the metadata tree::
 
     >>> from jwst.datamodels import DataModel
-    # First, create a model of the desired type
+    >>> # First, create a model of the desired type
     >>> model = DataModel()
     >>> model.find_fits_keyword('DATE-OBS')
     [u'meta.observation.date']
@@ -246,3 +312,49 @@ returns a dictionary of of the instance at the model._extra_fits node.
 
 `_instance` can be used at any node in the tree to return a dictionary
 of rest of the tree structure at that node.
+
+Environmental Variables
+-----------------------
+
+There are a number of environmental variables that affect how models are read.
+
+PASS_INVALID_VALUES
+  Used by `~jwst.datamodels.DataModel` when instantiating
+  a model from a file. If ``True``, values that do not validate the schema will
+  still be added to the metadata. If ``False``, they will be set to ``None``.
+  Default is ``False``.
+
+STRICT_VALIDATION
+  Used by `~jwst.datamodels.DataModel` when instantiating a model from a file.
+  If ``True``, schema validation errors will generate an exception.
+  If ``False``, they will generate a warning.
+  Default is ``False``.
+
+SKIP_FITS_UPDATE
+  Used by `~jwst.datamodels.DataModel` when instantiating a
+  model from a FITS file. When ``False``, models opened from FITS files will
+  proceed and load the FITS header values into the model. When ``True`` and the
+  FITS file has an ASDF extension, the loading/validation of the FITS header
+  will be skipped, loading the model only from the ASDF extension. If not
+  defined, the instantiation routines will determine whether the loading/validation
+  of the FITS header can be skipped or not.
+
+DMODEL_ALLOWED_MEMORY
+  Implemented by the utility function
+  `jwst.datamodels.util.check_memory_allocation` and used by
+  `~jwst.outlier_detection.OutlierDetectionStep` and
+  `~jwst.resample.ResampleStep`. When defined, determines how much of currently
+  available memory should be used to instantiated an output resampled image. If
+  not defined, no check is made.
+
+  Examples would be: ``1.0`` would allow all available memory to be used. ``0.5``
+  would allow only half the available memory to be used.
+
+For flag or boolean variables, any value in ``('true', 't', 'yes', 'y')`` or a
+non-zero number, will evaluate as ``True``. Any value in ``('false', 'f', 'no',
+'n', '0')`` will evaluate as ``False``. The values are case-insensitive.
+
+All of the environmental variables have equivalent function arguments in the API
+for the relevant code. The environment variables are used only if explicit
+values had not been used in a script. In other words, values in code override
+environmental variables.

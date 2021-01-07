@@ -20,14 +20,11 @@ Hence, to update `KNOW_SUFFIXES`, update both `SUFFIXES_TO_ADD` and
 `SUFFIXES_TO_DISCARD` as necessary, then use the output of
 `find_suffixes`.
 """
-from copy import copy
 from importlib import import_module
-from inspect import (getmembers, isclass)
 import itertools
 import logging
-from os import (listdir, path, walk)
+from os import (listdir, path)
 import re
-import sys
 
 __all__ = ['remove_suffix']
 
@@ -41,7 +38,7 @@ logger.addHandler(logging.NullHandler())
 SUFFIXES_TO_ADD = [
     'ami', 'amiavg', 'aminorm',
     'blot', 'bsub', 'bsubints',
-    'cal', 'calints', 'cat', 'crf', 'crfints',
+    'c1d', 'cal', 'calints', 'cat', 'crf', 'crfints',
     'dark',
     'i2d',
     'median',
@@ -55,137 +52,143 @@ SUFFIXES_TO_ADD = [
 
 # Suffixes that are discovered but should not be considered.
 # Used by `find_suffixes` to remove undesired values it has found.
-SUFFIXES_TO_DISCARD = ['functionwrapper', 'systemcall']
+SUFFIXES_TO_DISCARD = ['engdblogstep', 'functionwrapper', 'pipeline', 'rscd_step', 'step', 'systemcall', 'testlinearpipeline']
 
 
 # Calculated suffixes.
-# This is produces by the `find_suffixes` function.
+# This is produced by the `find_suffixes` function below
 _calculated_suffixes = set([
-    'spec2nrslamp',
-    'linearpipeline',
-    'spec3pipeline',
-    'outlierdetectionstackstep',
-    'subtract_images',
-    'stackrefs',
-    'pathlossstep',
-    'guidercdsstep',
-    'pipeline',
-    'engdblogstep',
-    'dqinitstep',
-    'linearity',
-    'resamplespecstep',
-    'i2d',
-    'step',
-    'combine_1d',
-    'detector1pipeline',
-    'groupscalestep',
-    'resamplestep',
-    'assign_wcs',
-    'tweakreg',
-    'resetstep',
-    'klip',
-    'straylightstep',
-    'wfscombine',
-    'rscd_step',
-    'functionwrapper',
-    'saturation',
-    'lastframestep',
-    'photomstep',
-    'outlier_detection_scaled',
-    'extract_2d',
-    'fringe',
-    'sourcecatalogstep',
-    'ami_analyze',
-    'firstframestep',
-    'guidercds',
-    'assignwcsstep',
-    'dq_init',
-    'imprintstep',
-    'outlier_detection',
-    'superbias',
-    'cubeskymatchstep',
-    'tso3pipeline',
-    'group_scale',
-    's2d',
-    'coron3pipeline',
-    'image2pipeline',
-    'alignrefsstep',
-    'saturationstep',
-    'reset',
-    'refpix',
-    'hlspstep',
-    'combine1dstep',
-    'darkpipeline',
-    'rscd',
-    'extract_1d',
-    'firstframe',
-    'skymatchstep',
-    'pathloss',
-    'tweakregstep',
-    'persistence',
-    'dark',
-    'amiaveragestep',
-    'barshadowstep',
-    'cubebuildstep',
-    'outlierdetectionscaledstep',
-    'imprint',
-    'flat_field',
-    'source_catalog',
-    'msaflagopenstep',
-    'ami_average',
-    'gainscalestep',
-    'alignrefs',
-    'cube_build',
-    'mrsimatchstep',
-    'flatfieldstep',
-    'testlinearpipeline',
-    'systemcall',
-    'ipc',
-    'photom',
-    'straylight',
-    'white_light',
-    'sourcetypestep',
-    'wfscombinestep',
-    'background',
-    'linearitystep',
-    'jump',
-    'amianalyzestep',
-    'rampfit',
-    'superbiasstep',
-    'gain_scale',
-    'fringestep',
-    'mrs_imatch',
-    'extract1dstep',
-    'aminormalizestep',
-    'backgroundstep',
+    'masterbackgroundnrsslitsstep',
     'ami3pipeline',
-    'darkcurrentstep',
-    'jumpstep',
-    'extract2dstep',
-    'klipstep',
-    'subtractimagesstep',
-    'emissionstep',
-    'srctype',
-    'dark_current',
-    'tsophotometrystep',
-    'guiderpipeline',
-    'ipcstep',
-    'rampfitstep',
-    'lastframe',
-    'resample',
-    'resample_spec',
-    'emission',
-    'persistencestep',
-    'image3pipeline',
-    'refpixstep',
-    'skymatch',
-    'stackrefsstep',
     'whitelightstep',
-    'hlsp',
-    'outlierdetectionstep',
-    'engdblog',
+    'ami_average',
+    'spec3pipeline',
+    'wfscombine',
+    'fringe',
+    'resamplestep',
+    'resample_spec',
+    'saturationstep',
+    'firstframestep',
+    'testlinearpipeline',
+    'cat',
+    'systemcall',
+    'alignrefsstep',
+    'functionwrapper',
+    'darkcurrentstep',
+    'imprintstep',
+    'source_catalog',
+    'straylight',
+    'amiaveragestep',
+    'ami_normalize',
+    'jumpstep',
+    'resample',
+    'sourcetypestep',
     'spec2pipeline',
-    'ami_normalize'
+    'tweakreg',
+    'msaflagopenstep',
+    'outlierdetectionstep',
+    'saturation',
+    'pathloss',
+    'groupscalestep',
+    'rampfit',
+    'lastframe',
+    'darkpipeline',
+    'image2pipeline',
+    'outlierdetectionstackstep',
+    'tso3pipeline',
+    'straylightstep',
+    'sourcecatalogstep',
+    'dark_current',
+    'subtract_images',
+    'mrs_imatch',
+    'assignwcsstep',
+    'skymatch',
+    'extract_2d',
+    'cubebuildstep',
+    'spec2nrslamp',
+    'ipc',
+    'refpix',
+    'image3pipeline',
+    'superbiasstep',
+    'hlspstep',
+    'reset',
+    's2d',
+    'ami_analyze',
+    'subtractimagesstep',
+    'flatfieldstep',
+    'tsophotometrystep',
+    'combine_1d',
+    'step',
+    'cubeskymatchstep',
+    'i2d',
+    'group_scale',
+    'rscdstep',
+    'stackrefsstep',
+    'flat_field',
+    'guidercdsstep',
+    'mrsimatchstep',
+    'align_refs',
+    'dqinitstep',
+    'outlierdetectionscaledstep',
+    'superbias',
+    'assign_wcs',
+    'guidercds',
+    'firstframe',
+    'masterbackgroundstep',
+    'master_background',
+    'skymatchstep',
+    'white_light',
+    'persistencestep',
+    'amianalyzestep',
+    'backgroundstep',
+    'photomstep',
+    'background',
+    'photom',
+    'extract_1d',
+    'cube_build',
+    'wfscombinestep',
+    'lastframestep',
+    'aminormalizestep',
+    'linearity',
+    'rscd',
+    'rampfitstep',
+    'linearpipeline',
+    'pipeline',
+    'engdblog',
+    'resamplespecstep',
+    'persistence',
+    'klip',
+    'dq_init',
+    'barshadowstep',
+    'klipstep',
+    'linearitystep',
+    'hlsp',
+    'pathlossstep',
+    'refpixstep',
+    'gainscalestep',
+    'extract2dstep',
+    'detector1pipeline',
+    'fringestep',
+    'dark',
+    'whtlt',
+    'guiderpipeline',
+    'stackrefs',
+    'imprint',
+    'coron3pipeline',
+    'resetstep',
+    'combine1dstep',
+    'outlier_detection_scaled',
+    'srctype',
+    'outlier_detection',
+    'engdblogstep',
+    'gain_scale',
+    'ipcstep',
+    'jump',
+    'extract1dstep',
+    'tweakregstep',
+    'assignmtwcsstep',
+    'assign_mtwcs',
+    'wavecorrstep',
 ])
 
 
@@ -267,8 +270,7 @@ def find_suffixes():
     a static list.
     """
     from jwst.stpipe import Step
-
-    suffixes = set()
+    from jwst.stpipe.utilities import all_steps
 
     jwst = import_module('jwst')
     jwst_fpath = path.split(jwst.__file__)[0]
@@ -276,12 +278,10 @@ def find_suffixes():
     # First traverse the code base and find all
     # `Step` classes. The default suffix is the
     # class name.
-    for module in load_local_pkg(jwst_fpath):
-        for klass_name, klass in getmembers(
-            module,
-            lambda o: isclass(o) and issubclass(o, Step)
-        ):
-            suffixes.add(klass_name.lower())
+    suffixes = set(
+        klass_name.lower()
+        for klass_name, klass in all_steps().items()
+    )
 
     # Instantiate Steps/Pipelines from their configuration files.
     # Different names and suffixes can be defined in this way.
@@ -293,8 +293,8 @@ def find_suffixes():
                 step = Step.from_config_file(
                     path.join(config_path, config_file)
                 )
-            except Exception as exception:
-                pass
+            except Exception as err:
+                logger.debug(f'Configuration {config_file} failed: {str(err)}')
             else:
                 suffixes.add(step.name.lower())
                 if step.suffix is not None:
@@ -302,74 +302,6 @@ def find_suffixes():
 
     # That's all folks
     return list(suffixes)
-
-
-def load_local_pkg(fpath):
-    """Generator producing all modules under fpath
-
-    Parameters
-    ----------
-    fpath: string
-        File path to the package to load.
-
-    Returns
-    -------
-    generator
-        `module` for each module found in the package.
-    """
-    package_fpath, package = path.split(fpath)
-    package_fpath_len = len(package_fpath) + 1
-    sys_path = copy(sys.path)
-    sys.path.insert(0, package_fpath)
-    try:
-        for module_fpath in folder_traverse(
-            fpath, basename_regex='[^_].+\.py$', path_exclude_regex='tests'
-        ):
-            folder_path, fname = path.split(module_fpath[package_fpath_len:])
-            module_path = folder_path.split('/')
-            module_path.append(path.splitext(fname)[0])
-            module_path = '.'.join(module_path)
-            try:
-                module = import_module(module_path)
-            except Exception:
-                logging.debug('Cannot load module "{}"'.format(module_path))
-            else:
-                yield module
-    except Exception as exception:
-        logging.debug('Exception occurred: "{}'.format(exception))
-    finally:
-        sys.path = sys_path
-
-
-def folder_traverse(folder_path, basename_regex='.+', path_exclude_regex='^$'):
-    """Generator of full file paths for all files
-    in a folder.
-
-    Parameters
-    ----------
-    folder_path: str
-        The folder to traverse
-
-    basename_regex: str
-        Regular expression that must match
-        the `basename` part of the file path.
-
-    path_exclude_regex: str
-        Regular expression to exclude a path.
-
-    Returns
-    -------
-    generator
-        A generator, return the next file.
-    """
-    basename_regex = re.compile(basename_regex)
-    path_exclude_regex = re.compile(path_exclude_regex)
-    for root, dirs, files in walk(folder_path):
-        if path_exclude_regex.search(root):
-            continue
-        for file in files:
-            if basename_regex.match(file):
-                yield path.join(root, file)
 
 
 # --------------------------------------------------

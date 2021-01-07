@@ -1,7 +1,12 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/guider_cal.schema"
 allOf:
-- $ref: core.schema.yaml
-- $ref: bunit.schema.yaml
-- $ref: wcsinfo.schema.yaml
+- $ref: core.schema
+- $ref: guider_meta.schema
+- $ref: bunit.schema
+- $ref: wcsinfo.schema
 - type: object
   properties:
     data:
@@ -21,7 +26,7 @@ allOf:
       default: 0
       ndim: 2
       datatype: uint32
-    planned_star_table: 
+    planned_star_table:
       title: Planned reference star table
       fits_hdu: Planned Reference Stars
       datatype:
@@ -45,7 +50,7 @@ allOf:
         datatype: float64
       - name: count_rate_uncert
         datatype: float64
-    flight_star_table: 
+    flight_star_table:
       title: Flight reference star table
       fits_hdu: Flight Reference Stars
       datatype:
@@ -84,14 +89,14 @@ allOf:
       - name: delta_j3_pa
         datatype: float64
       - name: HGA_motion
-        datatype: int16
-    centroid_table: 
+        datatype: [ascii, 16]
+    centroid_table:
       title: Centroid packet table
       fits_hdu: FGS Centroid Packet
       datatype:
-      - name: observatory_time   
+      - name: observatory_time
         datatype: [ascii, 23]
-      - name: centroid_time   
+      - name: centroid_time
         datatype: [ascii, 23]
       - name: guide_star_position_x
         datatype: float64
@@ -127,7 +132,7 @@ allOf:
       title: Track subarray data table
       fits_hdu: Track subarray table
       datatype:
-      - name: observatory_time   
+      - name: observatory_time
         datatype: [ascii, 23]
       - name: x_corner
         datatype: float64
@@ -137,4 +142,3 @@ allOf:
         datatype: int32
       - name: y_size
         datatype: int32
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

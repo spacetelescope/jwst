@@ -1,3 +1,5 @@
+.. _background_step:
+
 ============================
 Background Image Subtraction
 ============================

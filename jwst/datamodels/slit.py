@@ -1,34 +1,60 @@
-from .model_base import DataModel
+from .model_base import JwstDataModel
 from .image import ImageModel
 
 
 __all__ = ['SlitModel', 'SlitDataModel']
 
 
-class SlitDataModel(DataModel):
+class SlitDataModel(JwstDataModel):
     """
-    A data model for 2D images.
+    A data model for 2D slit images.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    data : numpy float32 array
+         The science data
 
-    data : numpy array
-        The science data.
+    dq : numpy uint32 array
+         Data quality array
 
-    dq : numpy array
-        The data quality array.
+    err : numpy float32 array
+         Error array
 
-    err : numpy array
-        The error array.
+    var_poisson : numpy float32 array
+         variance due to poisson noise
 
-    relsens : numpy array
-        The relative sensitivity table.
+    var_rnoise : numpy float32 array
+         variance due to read noise
 
+    wavelength : numpy float32 array
+         Wavelength array, corrected for zero-point
+
+    barshadow : numpy float32 array
+         Bar shadow correction
+
+    flatfield_point : numpy float32 array
+         flatfield array for point source
+
+    flatfield_uniform : numpy float32 array
+         flatfield array for uniform source
+
+    pathloss_point : numpy float32 array
+         pathloss array for point source
+
+    pathloss_uniform : numpy float32 array
+         pathloss array for uniform source
+
+    photom_point : numpy float32 array
+         photom array for point source
+
+    photom_uniform : numpy float32 array
+         photom array for uniform source
+
+    area : numpy float32 array
+         Pixel area map array
     """
 
-    schema_url = "slitdata.schema.yaml"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/slitdata.schema"
 
     def __init__(self, init=None, **kwargs):
         if isinstance(init, (SlitModel, ImageModel)):
@@ -36,14 +62,13 @@ class SlitDataModel(DataModel):
             self.data = init.data
             self.dq = init.dq
             self.err = init.err
-            self.relsens = init.relsens
             self.area = init.area
-            if init.hasattr('wavelength'):
-                self.wavelength = init.wavelength
             if init.hasattr('var_poisson'):
                 self.var_poisson = init.var_poisson
             if init.hasattr('var_rnoise'):
                 self.var_rnoise = init.var_rnoise
+            if init.hasattr('wavelength'):
+                self.wavelength = init.wavelength
             for key in kwargs:
                 setattr(self, key, kwargs[key])
 
@@ -58,32 +83,58 @@ class SlitDataModel(DataModel):
                     setattr(self, key, kwargs[key])
 
 
-class SlitModel(DataModel):
+class SlitModel(JwstDataModel):
     """
     A data model for 2D images.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    data : numpy float32 array
+         The science data
 
-    data : numpy array
-        The science data.
+    dq : numpy uint32 array
+         Data quality array
 
-    dq : numpy array
-        The data quality array.
+    err : numpy float32 array
+         Error array
 
-    err : numpy array
-        The error array.
+    var_poisson : numpy float32 array
+         variance due to poisson noise
 
-    relsens : numpy array
-        The relative sensitivity table.
+    var_rnoise : numpy float32 array
+         variance due to read noise
 
-    int_times : table
-        The int_times table
+    wavelength : numpy float32 array
+         Wavelength array, corrected for zero-point
 
+    barshadow : numpy float32 array
+         Bar shadow correction
+
+    flatfield_point : numpy float32 array
+         flatfield array for point source
+
+    flatfield_uniform : numpy float32 array
+         flatfield array for uniform source
+
+    pathloss_point : numpy float32 array
+         pathloss array for point source
+
+    pathloss_uniform : numpy float32 array
+         pathloss array for uniform source
+
+    photom_point : numpy float32 array
+         photom array for point source
+
+    photom_uniform : numpy float32 array
+         photom array for uniform source
+
+    area : numpy float32 array
+         Pixel area map array
+
+    int_times : numpy table
+         table of times for each integration
     """
-    schema_url = "slit.schema.yaml"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/slit.schema"
 
     def __init__(self, init=None, **kwargs):
         if isinstance(init, (SlitModel, ImageModel)):
@@ -92,14 +143,13 @@ class SlitModel(DataModel):
             self.data = init.data
             self.dq = init.dq
             self.err = init.err
-            self.relsens = init.relsens
             self.area = init.area
-            if init.hasattr('wavelength'):
-                self.wavelength = init.wavelength
             if init.hasattr('var_poisson'):
                 self.var_poisson = init.var_poisson
             if init.hasattr('var_rnoise'):
                 self.var_rnoise = init.var_rnoise
+            if init.hasattr('wavelength'):
+                self.wavelength = init.wavelength
             if init.hasattr('int_times'):
                 self.int_times = init.int_times
             if init.meta.hasattr('wcs'):

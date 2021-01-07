@@ -1,6 +1,7 @@
 from .reference import ReferenceFileModel
 from .dynamicdq import dynamic_mask
 
+
 __all__ = ['DarkModel']
 
 
@@ -9,23 +10,20 @@ class DarkModel(ReferenceFileModel):
     A data model for dark reference files.
 
     Parameters
-    ----------
-    init : any
-        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+    __________
+    data : numpy float32 array
+         Dark current array
 
-    data : numpy array
-        The science data.
+    dq : numpy uint16 array
+         2-D data quality array for all planes
 
-    dq : numpy array
-        The data quality array.
+    err : numpy float32 array
+         Error array
 
-    err : numpy array
-        The error array.
-
-    dq_def : numpy array
-        The data quality definitions table.
+    dq_def : numpy table
+         DQ flag definitions
     """
-    schema_url = "dark.schema.yaml"
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/dark.schema"
 
     def __init__(self, init=None, **kwargs):
         super(DarkModel, self).__init__(init=init, **kwargs)

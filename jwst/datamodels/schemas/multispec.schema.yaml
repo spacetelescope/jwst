@@ -1,9 +1,12 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/multispec.schema"
 allOf:
-- $ref: core.schema.yaml
+- $ref: core.schema
+- $ref: int_times.schema
 - type: object
   properties:
-    int_times:
-      $ref: int_times.schema.yaml
     spec:
       type: array
       title: An array of spectra
@@ -11,25 +14,7 @@ allOf:
         type: object
         properties:
           spec_table:
-            title: Extracted spectral data table
-            fits_hdu: EXTRACT1D
-            datatype:
-            - name: WAVELENGTH
-              datatype: float64
-            - name: FLUX
-              datatype: float64
-            - name: ERROR
-              datatype: float64
-            - name: DQ
-              datatype: int32
-            - name: NET
-              datatype: float64
-            - name: NERROR
-              datatype: float64
-            - name: BACKGROUND
-              datatype: float64
-            - name: BERROR
-              datatype: float64
+            $ref: spectable.schema
           name:
             title: Name of the slit
             type: string
@@ -63,7 +48,7 @@ allOf:
             fits_keyword: STLARITY
             fits_hdu: EXTRACT1D
           source_type:
-            title: Source type (point/extended)
+            title: Source type used for calibration
             type: string
             fits_keyword: SRCTYPE
             fits_hdu: EXTRACT1D
@@ -78,6 +63,16 @@ allOf:
             type: number
             default: 0.0
             fits_keyword: SRCYPOS
+            fits_hdu: EXTRACT1D
+          source_ra:
+            title: Right Ascension of the source
+            type: number
+            fits_keyword: SRCRA
+            fits_hdu: EXTRACT1D
+          source_dec:
+            title: Declination of the source
+            type: number
+            fits_keyword: SRCDEC
             fits_hdu: EXTRACT1D
           shutter_state:
             title: All (open and close) shutters in a slit
@@ -103,39 +98,55 @@ allOf:
             default: 1
             fits_keyword: SPORDER
             fits_hdu: EXTRACT1D
+          dispersion_direction:
+            title: Dispersion direction
+            type: integer
+            fits_keyword: DISPAXIS
+            fits_hdu: EXTRACT1D
           int_num:
             title: Integration number
             type: integer
             fits_keyword: INT_NUM
             fits_hdu: EXTRACT1D
-          start_utc:
-            title: "UTC at start of integration [MJD]"
-            type: number
-            fits_keyword: STRT_UTC
+          time_sys:
+            title: "principal time system for time-related keywords"
+            type: string
+            default: "UTC"
+            fits_keyword: TIMESYS
             fits_hdu: EXTRACT1D
-          mid_utc:
-            title: "UTC at middle of integration [MJD]"
-            type: number
-            fits_keyword: MID_UTC
+          time_unit:
+            title: Default unit applicable to all time values
+            type: string
+            default: 's'
+            fits_keyword: TIMEUNIT
             fits_hdu: EXTRACT1D
-          end_utc:
-            title: "UTC at end of integration [MJD]"
+          start_time_mjd:
+            title: "[d] integration start time in MJD"
             type: number
-            fits_keyword: END_UTC
+            fits_keyword: MJD-BEG
+            fits_hdu: EXTRACT1D
+          mid_time_mjd:
+            title: "[d] integration mid-point in MJD"
+            type: number
+            fits_keyword: MJD-AVG
+            fits_hdu: EXTRACT1D
+          end_time_mjd:
+            title: "[d] integration end time in MJD"
+            type: number
+            fits_keyword: MJD-END
             fits_hdu: EXTRACT1D
           start_tdb:
             title: "TDB at start of integration [MJD]"
             type: number
-            fits_keyword: STRT_TDB
+            fits_keyword: TDB-BEG
             fits_hdu: EXTRACT1D
           mid_tdb:
             title: "TDB at middle of integration [MJD]"
             type: number
-            fits_keyword: MID_TDB
+            fits_keyword: TDB-MID
             fits_hdu: EXTRACT1D
           end_tdb:
             title: "TDB at end of integration [MJD]"
             type: number
-            fits_keyword: END_TDB
+            fits_keyword: TDB-END
             fits_hdu: EXTRACT1D
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

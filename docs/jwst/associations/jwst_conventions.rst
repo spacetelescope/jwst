@@ -52,15 +52,15 @@ Level 3 pipeline module to use to process this association.
 
 The current association types are:
 
-  * ``image2``: Intended for ``calwebb_image2`` processing
-  * ``image3``: Intended for ``calwebb_image3`` processing
-  * ``ami3``: Intended for ``calwebb_ami3`` processing
-  * ``coron3``: Intended for ``calwebb_coron3`` processing
-  * ``tso-image2``: Intended for ``calwebb_tso_image2`` processing
-  * ``tso-spec2``: Intended for ``calwebb_tso_spec2`` processing
-  * ``tso3``: Intended for ``calwebb_tso3`` processing
-  * ``spec2``: Intended for ``calwebb_spec2`` processing
-  * ``spec3``: Intended for ``calwebb_spec3`` processing
-  * ``nrslamp-spec2``: Intended for ``calwebb_nrslamp_spec2`` processing
-  * ``wfs-image2``: Intended for ``calwebb_wfs_image2`` processing
-  * ``wfs-image3``: Wave front sensing data, used by ``calwebb_wfs-image3``
+  * ``ami3``: Intended for ``calwebb_ami3.cfg`` processing
+  * ``coron3``: Intended for ``calwebb_coron3.cfg`` processing
+  * ``image2``: Intended for ``calwebb_image2.cfg`` processing
+  * ``image3``: Intended for ``calwebb_image3.cfg`` processing
+  * ``nrslamp-spec2``: Intended for ``calwebb_nrslamp-spec2.cfg`` processing
+  * ``spec2``: Intended for ``calwebb_spec2.cfg`` processing
+  * ``spec3``: Intended for ``calwebb_spec3.cfg`` processing
+  * ``tso3``: Intended for ``calwebb_tso3.cfg`` processing
+  * ``tso-image2``: Intended for ``calwebb_tso-image2.cfg`` processing
+  * ``tso-spec2``: Intended for ``calwebb_tso-spec2.cfg`` processing
+  * ``wfs-image2``: Intended for ``calwebb_wfs-image2.cfg`` processing
+  * ``wfs-image3``: Intended for ``calwebb_wfs-image3.cfg`` processing

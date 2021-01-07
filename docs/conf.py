@@ -15,17 +15,20 @@ import datetime
 import importlib
 import sys
 import os
+from distutils.version import LooseVersion
+from configparser import ConfigParser
+
 import sphinx
 import stsci_rtd_theme
+import sphinx_astropy
+
 
 def setup(app):
-    app.add_stylesheet("stsci.css")
+    try:
+        app.add_css_file("stsci.css")
+    except AttributeError:
+        app.add_stylesheet("stsci.css")
 
-from distutils.version import LooseVersion
-try:
-    from ConfigParser import ConfigParser
-except ImportError:
-    from configparser import ConfigParser
 conf = ConfigParser()
 
 
@@ -41,7 +44,7 @@ conf.read([os.path.join(os.path.dirname(__file__), '..', 'setup.cfg')])
 setup_cfg = dict(conf.items('metadata'))
 
 # If your documentation needs a minimal Sphinx version, state it here.
-needs_sphinx = '1.3'
+#needs_sphinx = '1.3'
 
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
@@ -91,6 +94,8 @@ extensions = [
     'sphinx_automodapi.automodsumm',
     'sphinx_automodapi.autodoc_enhancements',
     'sphinx_automodapi.smart_resolver',
+    'sphinx_astropy.ext.doctest',
+    'sphinx_asdf',
     ]
 
 
@@ -120,11 +125,12 @@ master_doc = 'index'
 # thus need to ignore those warning. This can be removed once the patch gets
 # released in upstream Sphinx (https://github.com/sphinx-doc/sphinx/pull/1843).
 # Suppress the warnings requires Sphinx v1.4.2
+
 suppress_warnings = ['app.add_directive', ]
 
 
 # General information about the project
-project = setup_cfg['package_name']
+project = setup_cfg['name']
 author = setup_cfg['author']
 copyright = '{0}, {1}'.format(datetime.datetime.now().year, author)
 
@@ -133,7 +139,7 @@ copyright = '{0}, {1}'.format(datetime.datetime.now().year, author)
 # built documents.
 #
 # The short X.Y version.
-package = importlib.import_module(setup_cfg['package_name'])
+package = importlib.import_module(setup_cfg['name'])
 try:
     version = package.__version__.split('-', 1)[0]
     # The full version, including alpha/beta/rc tags.
@@ -202,7 +208,7 @@ graphviz_dot_args = [
 # show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = 'default'
 
 # A list of ignored prefixes for module index sorting.
 # modindex_common_prefix = []
@@ -210,6 +216,11 @@ pygments_style = 'sphinx'
 # If true, keep warnings as "system message" paragraphs in the built documents.
 # keep_warnings = False
 
+# Mapping for links to the ASDF Standard in ASDF schema documentation
+asdf_schema_reference_mappings = [
+    ('tag:stsci.edu:asdf',
+     'http://asdf-standard.readthedocs.io/en/latest/generated/stsci.edu/asdf/'),
+]
 
 # -- Options for HTML output ----------------------------------------------
 

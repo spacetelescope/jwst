@@ -4,48 +4,40 @@ Introduction
 This document provides instructions on running the JWST Science Calibration
 Pipeline (referred to as "the pipeline") and individual pipeline steps.
 
-Pipeline modules are available for detector-level (stage 1) processing of
-data from all observing modes, stage 2 processing for imaging and
-spectroscopic modes, and stage 3 processing for imaging, spectroscopic,
+Multiple pipeline modules are used for different stages of processing and for
+different JWST observing modes. The modules are broken into 3 stages:
+
+ - Stage 1: Detector-level corrections and ramp fitting for individual exposures
+ - Stage 2: Instrument-mode calibrations for individual exposures
+ - Stage 3: Combining data from multiple exposures within an observation
+
+Stage 1 corrections are applied nearly universally for all instruments and modes.
+Stage 2 is divided into separate modules for imaging and spectroscopic modes.
+Stage 3 is divided into five separate modules for imaging, spectroscopic,
 coronagraphic, Aperture Masking Interferometry (AMI), and Time Series
-Observations (TSO).
+Observation (TSO) modes.
 
-Stage 1 processing consists of detector-level
-corrections that must be performed on a group-by-group basis
-before ramp fitting is applied. The output of stage 1 processing
-is a countrate image per exposure or per integration for some modes.
-Details of this pipeline can be found at :ref:`stage1-flow`.
-
-Stage 2 processing consists of additional corrections and
-calibrations to produce fully calibrated exposures. The details
-differ for imaging and spectroscopic exposures, and there are some
-corrections that are unique to certain instruments or modes.
-Details are at :ref:`stage2-imaging-flow`
-and :ref:`stage2-spectroscopic-flow`.
-
-Stage 3 processing consists of routines that work with multiple exposures
-and in most cases produce some kind of combined product.
-There are dedicated (and unique) pipeline modules for stage 3 processing of
-imaging, spectroscopic, coronagraphic, AMI, and TSO observations. Details
-of each are available at
-:ref:`stage3-imaging-flow`,
-:ref:`stage3-spectroscopic-flow`,
-:ref:`stage3-coron-flow`,
-:ref:`stage3-ami-flow`, and
-:ref:`stage3-tso-flow`.
-
+Details of all the pipeline modules can be found at :ref:`pipeline-modules`.
 The remainder of this document discusses pipeline configuration files and
 gives examples of running pipelines as a whole or in individual steps.
 
 Reference Files
 ===============
 
-Many pipeline steps rely on the use of a set of reference files essential to ensure the correct and accurate process of the data. The reference files are instrument-specific, and are periodically updated as the data process evolves and the understanding of the instruments improves. They are created, tested and validated by the JWST Instrument Teams. They ensure all the files are in the correct format and have all required header keywords. The files are then delivered to the Reference Data for Calibration and Tools (ReDCaT) Management Team. The result of this process is the files being ingested into CRDS (the JWST Calibration Reference Data System), and made available to the pipeline team and any other ground-subsystem that needs access to them.
+Many pipeline steps rely on the use of reference files that contain different types of
+calibration data or information necessary for processing the data. The reference files are
+instrument-specific and are periodically updated as the data processing evolves and the
+understanding of the instruments improves. They are created, tested, and validated by the
+JWST Instrument Teams. They ensure all the files are in the correct format and have all
+required header keywords. The files are then delivered to the Reference Data for Calibration
+and Tools (ReDCaT) Management Team. The result of this process is the files being ingested
+into the JWST Calibration Reference Data System (CRDS), and made available to the pipeline
+team and any other ground subsystem that needs access to them.
 
 Information about all the reference files used by the Calibration Pipeline can be found at
-:ref:`reference-file-formats-documentation`
-as well as in the documentation for the Calibration Step using them.
- 
+:ref:`reference_file_information`,
+as well as in the documentation for each Calibration Step that uses a reference file.
+
 CRDS
 ====
 
@@ -60,7 +52,7 @@ desired project mapping version, e.g.
 
 $ export CRDS_CONTEXT='jwst_0421.pmap'
 
-The current storage location for all JWST CRDS reference files is:
+Within STScI, the current storage location for all JWST CRDS reference files is:
 ::
 
 /grp/crds/jwst/references/jwst/
@@ -70,16 +62,18 @@ a header keyword in the output data file. The keyword names use the syntax
 "R_<ref>", where <ref> corresponds to a 6-character version of the reference
 file type, such as ``R_DARK``, ``R_LINEAR``, and ``R_PHOTOM``.
 
+.. _strun_command_line:
+
 Running From the Command Line
 =============================
 Individual steps and pipelines (consisting of a series of steps) can be run
 from the command line using the ``strun`` command:
 ::
 
-    $ strun <class_name or cfg_file> <input_file>
+    $ strun <class_name or configuration_file> <input_file>
 
 The first argument to ``strun`` must be either the python class name of the
-step or pipeline to be run, or the name of a configuration (.cfg) file for the
+step or pipeline to be run, or the name of a configuration (.asdf or .cfg) file for the
 desired step or pipeline (see `Configuration Files`_ below for more details).
 The second argument to ``strun`` is the name of the input data file to be processed.
 
@@ -91,17 +85,14 @@ referencing their class names is done as follows:
   $ strun jwst.dq_init.DQInitStep jw00017001001_01101_00001_nrca1_uncal.fits
 
 When a pipeline or step is executed in this manner (i.e. by referencing the
-class name), it will be run using all default parameter values. The same thing
-can be accomplished by using the default configuration file corresponding to
-each:
-::
+class name), it will be run using a CRDS-supplied configuration merged with
+default values
 
-  $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
-  $ strun dq_init.cfg jw00017001001_01101_00001_nrca1_uncal.fits
-
-If you want to use non-default parameter values, you can specify them as
+If you want to use non-default parameter
+values, you can specify them as
 keyword arguments on the command line or set them in the appropriate
-cfg file.
+configuration file.
+
 To specify parameter values for an individual step when running a pipeline
 use the syntax ``--steps.<step_name>.<parameter>=value``.
 For example, to override the default selection of a dark current reference
@@ -120,46 +111,30 @@ step by using the '-h' (help) argument to strun:
     $ strun dq_init.cfg -h
     $ strun jwst.pipeline.Detector1Pipeline -h
 
-If you want to consistently override the default values of certain arguments
-and don't want to specify them on the command line every time you
-execute ``strun``, you can specify them in the configuration (.cfg) file for
-the pipeline or the individual step.
-For example, to always run ``Detector1Pipeline`` using the override in the
-previous example, you could edit your ``calwebb_detector1.cfg`` file to
-contain the following:
+JWST automatic processing uses configuration files to determine the
+pipeline/step parameters to use. To retrieve these files, use the
+``collect_pipeline_cfgs`` command. The general form of the command is:
 ::
 
- name = "Detector1Pipeline"
- class = "jwst.pipeline.Detector1Pipeline"
+$ collect_pipeline_cfgs <dir>
 
-    [steps]
-      [[dark_current]]
-        override_dark = 'my_dark.fits'
-
-Note that simply removing the entry for a step from a pipeline cfg file will
-**NOT** cause that step to be skipped when you run the pipeline (it will simply
-run the step with all default parameters). In order to skip a step you must
-use the ``skip = True`` argument for that step (see `Skip`_ below).
-
-Alternatively, you can specify arguments for individual steps within the
-step's configuration file and then reference those step cfg files in the pipeline
-cfg file, such as:
+Where ``<dir>`` is the destination directory. If the directory does not exist,
+it will be created. For example, to place the configuration files in the current
+working directory, use:
 ::
 
- name = "Detector1Pipeline"
- class = "jwst.pipeline.Detector1Pipeline"
+$ collect_pipeline_cfgs .
 
-    [steps]
-      [[dark_current]]
-        config_file = my_dark_current.cfg
-
-where ``my_dark_current.cfg`` contains:
+To use a configuration, specify the desired file in place of the ``class_name``
+specification in the ``strun`` command. For example, to run the
+``Detector1Pipeline`` using the ``calwebb_detector1.cfg`` configuration file, use
+the following:
 ::
 
- name = "dark_current"
- class = "jwst.dark_current.DarkCurrentStep"
- override_dark = 'my_dark.fits'
+$ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
 
+These configuration files can be edited as needed, or created completely from
+scratch. For more information, see the `Configuration Files`_ file section below.
 
 Exit Status
 -----------
@@ -170,16 +145,24 @@ Exit Status
 - 64: No science data found
 
 The "No science data found" condition is returned by the ``assign_wcs`` step of
-``calwebb_spec2`` when, after successfully determining the WCS solution for a
-file, the WCS indicates that no science data will be found. This condition is
-most often found with NIRSpec's NRS2 detector. There are certain optical and MSA
-configurations in which dispersion will not cross to the NRS2 detector.
+``calwebb_spec2.cfg`` pipeline when, after successfully determining the WCS
+solution for a file, the WCS indicates that no science data will be found. This
+condition most often occurs with NIRSpec's NRS2 detector: There are certain
+optical and MSA configurations in which dispersion will not cross to the NRS2
+detector.
+
+.. _run_from_python:
 
 Running From Within Python
 ==========================
 
 You can execute a pipeline or a step from within python by using the
-``call`` method of the class:
+``call`` or ``run`` methods of the class, or by calling the pipeline or
+step instance directly.
+
+The ``call`` method creates a new instance of the class and runs the pipeline or
+step. Optional parameter settings can be specified by supplying a configuration file,
+or via keyword arguments. Examples are shown on the :ref:`Execute via call()<call_examples>` page.
 ::
 
  from jwst.pipeline import Detector1Pipeline
@@ -188,12 +171,27 @@ You can execute a pipeline or a step from within python by using the
  from jwst.linearity import LinearityStep
  result = LinearityStep.call('jw00001001001_01101_00001_mirimage_uncal.fits')
 
-The easiest way to use optional arguments when calling a pipeline from
-within python is to set those parameters in the pipeline cfg file and
-then supply the cfg file as a keyword argument:
+
+Another way to call the pipeline is by calling the instance of the pipeline directly.
+First create an instance, then set any desired parameter
+values and finally, execute. In this case, do not instatiate the pipeline
+with a configuration file. Examples are shown on the :ref:`Execute via run()<run_examples>` page.
 ::
 
- Detector1Pipeline.call('jw00017001001_01101_00001_nrca1_uncal.fits', config_file='calwebb_detector1.cfg')
+ pipe = Detector1Pipeline()
+ pipe.jump.rejection_threshold = 5
+ result = pipe('jw00017001001_01101_00001_nrca1_uncal.fits')
+
+A functionally identical way to execute the pipeline or step is to use the ``run``
+method. Examples are shown on the :ref:`Execute via run()<run_examples>` page.
+::
+
+ pipe = Detector1Pipeline()
+ pipe.jump.rejection_threshold = 5
+ result = pipe.run('jw00017001001_01101_00001_nrca1_uncal.fits')
+
+For more details on the different ways to run a pipeline step, see
+the :ref:`Configuring a Step<configuring-a-step>` page.
 
 
 .. _intro_file_conventions:
@@ -245,7 +243,7 @@ Output File and Associations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Stage 2 pipelines can take an individual file or an :ref:`association
-<associations>` as input. Nearly all Stage 3 pipelines require an associaiton as
+<associations>` as input. Nearly all Stage 3 pipelines require an association as
 input. Normally, the output file is defined in each association's "product name"
 which defines the basename that will be used for output file naming.
 
@@ -337,7 +335,7 @@ suffix of the step is always appended to any given name.
 You can also specify a particular file name for saving the end result of
 the entire pipeline using the ``--output_file`` argument also
 ::
-   
+
     $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
         --output_file='stage1_processed'
 
@@ -391,6 +389,18 @@ Alternatively you can specify the ``skip`` argument on the command line:
 Logging Configuration
 ---------------------
 
+The name of a file in which to save log information, as well as the desired
+level of logging messages, can be specified in an optional configuration file
+"stpipe-log.cfg". This file must be in the same directory in which you run the
+pipeline in order for it to be used. If this file does not exist, the default
+logging mechanism is STDOUT, with a level of INFO. An example of the contents
+of the stpipe-log.cfg file is:
+::
+
+    [*]
+    handler = file:pipeline.log
+    level = INFO
+
 If there's no ``stpipe-log.cfg`` file in the working directory, which specifies
 how to handle process log information, the default is to display log messages
 to stdout. If you want log information saved to a file, you can specify the
@@ -416,60 +426,63 @@ logging level designations of ``DEBUG``, ``INFO``, ``WARNING``, ``ERROR``, and
 ``CRITICAL``. Only messages at or above the specified level
 will be displayed.
 
+.. note::
+
+   Setting up ``stpipe-log.cfg`` can lead to confusion, especially if it is
+   forgotten about. If one has not run a pipeline in awhile, and then sees no
+   logging information, most likely it is because ``stpipe-log.cfg`` is
+   present. Consider using a different name and specifying it explicitly on the
+   command line.
+
+.. _`Configuration Files`:
 
 Configuration Files
 ===================
 
-Configuration (.cfg) files can be used to specify parameter values
-when running a pipeline or individual steps, as well as for
-specifying logging options.
+Configuration files can be used to specify parameter values when running a
+pipeline or individual steps. For JWST, configuration files are retrieved from
+CRDS, just as with other reference files. If there is no match between a step,
+the input data, and CRDS, the coded defaults are used. These values can be
+overridden either by the command line options, as previously described, and by a
+local configuration file. See :ref:`Parameter Precedence` for a full description of
+how a parameter gets its final value.
 
-You can use the ``collect_pipeline_cfgs`` task to get copies of all the cfg
-files currently in use by the jwst pipeline software. The task takes a single
-argument, which is the name of the directory to which you want the cfg files
-copied. Use '.' to specify the current working directory, e.g.
+.. note::
+
+   Retrieval of ``Step`` parameters from CRDS can be completely disabled by
+   using the ``--disable-crds-steppars`` command-line switch, or setting the
+   environmental variable ``STPIPE_DISABLE_CRDS_STEPPARS`` to ``true``.
+
+A configuration file should be used when there are parameters a user wishes to
+change from the default/CRDS version for a custom run of the step. To create a
+configuration file add ``--save-parameters <filename.asdf>`` to the command:
 ::
 
- $ collect_pipeline_cfgs .
+$ strun <step.class> <required-input-files> --save-parameters <filename.asdf>
 
-Each step and pipeline has their own cfg file, which are used to specify
-relevant parameter values. For each step in a pipeline, the pipeline cfg file
-specifies either the step's arguments or the cfg file containing the step's
-arguments.
-
-The name of a file in which to save log information, as well as the desired
-level of logging messages, can be specified in an optional configuration file
-"stpipe-log.cfg". This file must be in the same directory in which you run the
-pipeline in order for it to be used. If this file does not exist, the default
-logging mechanism is STDOUT, with a level of INFO. An example of the contents
-of the stpipe-log.cfg file is:
+For example, to save the parameters used for a run of the ``calwebb_image2.cfg`` pipeline, use:
 ::
 
-    [*]
-    handler = file:pipeline.log
-    level = INFO
+$ collect_pipeline_cfgs .
+$ strun calwebb_image2.cfg jw82500001003_02101_00001_NRCALONG_rate.fits --save-parameters my_image2.asdf
 
-which specifies that all log messages will be directed to a file called
-"pipeline.log" and messages at a severity level of INFO and above will be
-recorded.
-
-For a given step, the step's cfg file specifies parameters and their default
-values; it includes parameters that are typically not changed between runs.
-Parameters that are usually reset for each run are not included in the cfg file,
-but instead specified on the command line. An example of a cfg file for the
-jump detection step is:
+Once saved, the file can be edited, removing parameters that should be left
+at their default/CRDS values, and setting the remaining parameters to the
+desired values. Once modified, the new configuration file can be used:
 ::
 
-    name = "jump"
-    class = "jwst.jump.JumpStep"
-    rejection_threshold = 4.0
+$ strun my_image2.asdf jw82500001003_02101_00001_NRCALONG_rate.fits
 
-You can list all of the parameters for this step using:
-::
+Note that the parameter values will reflect whatever was set on the
+command-line, through a specified local configuration file, and what was
+retrieved from CRDS. In short, the values will be those actually used in the
+running of the step.
 
- $ strun jump.cfg -h
+For more information about and editing of configuration files, see
+:ref:`config_asdf_files`. Note that the older :ref:`config_cfg_files` format is
+still an option, understanding that this format will be deprecated.
 
-which gives the usage, the positional arguments, and the optional arguments.
+
 More information on configuration files can be found in the ``stpipe`` User's
 Guide at :ref:`stpipe-user-steps`.
 
@@ -508,11 +521,12 @@ Calibrated image                               cal
 Calibrated per integration images              calints
 CR-flagged image                               crf
 CR-flagged per integration images              crfints
-1D extracted spectrum                          x1d
-1D extracted spectra per integration           x1dints
 Resampled 2D image                             i2d
 Resampled 2D spectrum                          s2d
 Resampled 3D IFU cube                          s3d
+1D extracted spectrum                          x1d
+1D extracted spectra per integration           x1dints
+1D combined spectrum                           c1d
 Source catalog                                 cat
 Time Series photometric catalog                phot
 Time Series white-light catalog                whtlt
@@ -532,3 +546,7 @@ User's Guide at :ref:`stpipe-user-steps`.
 
 More detailed information on writing pipelines can be found
 in the ``stpipe`` Developer's Guide at :ref:`stpipe-devel-steps`.
+
+If you have questions or concerns regarding the software, please open an issue
+at https://github.com/spacetelescope/jwst/issues or contact
+the `JWST Help Desk <https://jwsthelp.stsci.edu>`_.

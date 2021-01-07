@@ -1,12 +1,15 @@
-include RELIC-INFO
-recursive-include relic *.* *.py
-recursive-include jwst *.fits
-recursive-include jwst *.inc
-recursive-include jwst *.json
-recursive-include jwst *.txt
-recursive-include jwst *.cfg
-recursive-include jwst *.csv
-recursive-include jwst *.yaml
-recursive-include jwst *.asdf
-prune relic/relic/__pycache__
-prune relic/.git
+include README.md
+include CHANGES.rst
+include setup.cfg
+include LICENSE
+include pyproject.toml
+
+recursive-include jwst *.c
+recursive-include docs *
+recursive-include scripts *
+
+prune build
+prune docs/_build
+prune docs/api
+
+global-exclude *.pyc *.o

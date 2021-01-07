@@ -1,0 +1,7 @@
+git+https://github.com/spacetelescope/asdf
+git+https://github.com/astropy/astropy
+git+https://github.com/spacetelescope/crds
+git+https://github.com/spacetelescope/gwcs
+git+https://github.com/astropy/photutils
+git+https://github.com/spacetelescope/stdatamodels
+git+https://github.com/spacetelescope/tweakwcs

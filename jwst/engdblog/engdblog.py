@@ -52,7 +52,7 @@ class EngDBLogStep(Step):
         for mnemonic in mnemonics:
             try:
                 values = edb.get_values(mnemonic, stime, etime)
-            except:
+            except Exception:
                 self.log.info(
                     'Cannot retrieve info for {}'.format(
                         mnemonic

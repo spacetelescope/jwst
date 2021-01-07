@@ -1,13 +1,17 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/asdf/asdf-schema-1.0.0"
+id: "http://stsci.edu/schemas/jwst_datamodel/fore.schema"
 title: NirSpec filter dependent FORE reference file model
 allOf:
-- $ref: referencefile.schema.yaml
-- $ref: keyword_exptype.schema.yaml
-- $ref: keyword_filter.schema.yaml
-- $ref: keyword_pexptype.schema.yaml
+- $ref: referencefile.schema
+- $ref: keyword_exptype.schema
+- $ref: keyword_filter.schema
+- $ref: keyword_pexptype.schema
 - type: object
   properties:
     model:
-      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
     meta:
       type: object
       properties:

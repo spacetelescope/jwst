@@ -1,0 +1,138 @@
+# %ECSV 0.9
+# ---
+# datatype:
+# - {name: id, datatype: int64}
+# - {name: xcentroid, unit: pix, datatype: float64}
+# - {name: ycentroid, unit: pix, datatype: float64}
+# - {name: sky_centroid.ra, unit: deg, datatype: float64}
+# - {name: sky_centroid.dec, unit: deg, datatype: float64}
+# - {name: area, unit: pix2, datatype: float64}
+# - {name: source_sum, datatype: float32}
+# - {name: source_sum_err, datatype: float32}
+# - {name: semimajor_axis_sigma, unit: pix, datatype: float64}
+# - {name: semiminor_axis_sigma, unit: pix, datatype: float64}
+# - {name: orientation, unit: deg, datatype: float64}
+# - {name: sky_bbox_ll.ra, unit: deg, datatype: float64}
+# - {name: sky_bbox_ll.dec, unit: deg, datatype: float64}
+# - {name: sky_bbox_ul.ra, unit: deg, datatype: float64}
+# - {name: sky_bbox_ul.dec, unit: deg, datatype: float64}
+# - {name: sky_bbox_lr.ra, unit: deg, datatype: float64}
+# - {name: sky_bbox_lr.dec, unit: deg, datatype: float64}
+# - {name: sky_bbox_ur.ra, unit: deg, datatype: float64}
+# - {name: sky_bbox_ur.dec, unit: deg, datatype: float64}
+# - {name: orientation_sky, unit: deg, datatype: float64}
+# - {name: isophotal_abmag, datatype: float64}
+# - {name: isophotal_abmag_err, datatype: float32}
+# - {name: is_star, datatype: bool}
+# meta: !!omap
+# - __serialized_columns__:
+#     area:
+#       __class__: astropy.units.quantity.Quantity
+#       unit: !astropy.units.Unit {unit: pix2}
+#       value: !astropy.table.SerializedColumn {name: area}
+#     orientation:
+#       __class__: astropy.units.quantity.Quantity
+#       unit: &id001 !astropy.units.Unit {unit: deg}
+#       value: !astropy.table.SerializedColumn {name: orientation}
+#     orientation_sky:
+#       __class__: astropy.units.quantity.Quantity
+#       unit: *id001
+#       value: !astropy.table.SerializedColumn {name: orientation_sky}
+#     semimajor_axis_sigma:
+#       __class__: astropy.units.quantity.Quantity
+#       unit: &id002 !astropy.units.Unit {unit: pix}
+#       value: !astropy.table.SerializedColumn {name: semimajor_axis_sigma}
+#     semiminor_axis_sigma:
+#       __class__: astropy.units.quantity.Quantity
+#       unit: *id002
+#       value: !astropy.table.SerializedColumn {name: semiminor_axis_sigma}
+#     sky_bbox_ll:
+#       __class__: astropy.coordinates.sky_coordinate.SkyCoord
+#       dec: !astropy.table.SerializedColumn
+#         __class__: astropy.coordinates.angles.Latitude
+#         unit: *id001
+#         value: !astropy.table.SerializedColumn {name: sky_bbox_ll.dec}
+#       frame: icrs
+#       ra: !astropy.table.SerializedColumn
+#         __class__: astropy.coordinates.angles.Longitude
+#         unit: *id001
+#         value: !astropy.table.SerializedColumn {name: sky_bbox_ll.ra}
+#         wrap_angle: &id003 !astropy.coordinates.Angle
+#           unit: *id001
+#           value: 360.0
+#       representation_type: spherical
+#     sky_bbox_lr:
+#       __class__: astropy.coordinates.sky_coordinate.SkyCoord
+#       dec: !astropy.table.SerializedColumn
+#         __class__: astropy.coordinates.angles.Latitude
+#         unit: *id001
+#         value: !astropy.table.SerializedColumn {name: sky_bbox_lr.dec}
+#       frame: icrs
+#       ra: !astropy.table.SerializedColumn
+#         __class__: astropy.coordinates.angles.Longitude
+#         unit: *id001
+#         value: !astropy.table.SerializedColumn {name: sky_bbox_lr.ra}
+#         wrap_angle: *id003
+#       representation_type: spherical
+#     sky_bbox_ul:
+#       __class__: astropy.coordinates.sky_coordinate.SkyCoord
+#       dec: !astropy.table.SerializedColumn
+#         __class__: astropy.coordinates.angles.Latitude
+#         unit: *id001
+#         value: !astropy.table.SerializedColumn {name: sky_bbox_ul.dec}
+#       frame: icrs
+#       ra: !astropy.table.SerializedColumn
+#         __class__: astropy.coordinates.angles.Longitude
+#         unit: *id001
+#         value: !astropy.table.SerializedColumn {name: sky_bbox_ul.ra}
+#         wrap_angle: *id003
+#       representation_type: spherical
+#     sky_bbox_ur:
+#       __class__: astropy.coordinates.sky_coordinate.SkyCoord
+#       dec: !astropy.table.SerializedColumn
+#         __class__: astropy.coordinates.angles.Latitude
+#         unit: *id001
+#         value: !astropy.table.SerializedColumn {name: sky_bbox_ur.dec}
+#       frame: icrs
+#       ra: !astropy.table.SerializedColumn
+#         __class__: astropy.coordinates.angles.Longitude
+#         unit: *id001
+#         value: !astropy.table.SerializedColumn {name: sky_bbox_ur.ra}
+#         wrap_angle: *id003
+#       representation_type: spherical
+#     sky_centroid:
+#       __class__: astropy.coordinates.sky_coordinate.SkyCoord
+#       dec: !astropy.table.SerializedColumn
+#         __class__: astropy.coordinates.angles.Latitude
+#         unit: *id001
+#         value: !astropy.table.SerializedColumn {name: sky_centroid.dec}
+#       frame: icrs
+#       ra: !astropy.table.SerializedColumn
+#         __class__: astropy.coordinates.angles.Longitude
+#         unit: *id001
+#         value: !astropy.table.SerializedColumn {name: sky_centroid.ra}
+#         wrap_angle: *id003
+#       representation_type: spherical
+#     xcentroid:
+#       __class__: astropy.units.quantity.Quantity
+#       unit: *id002
+#       value: !astropy.table.SerializedColumn {name: xcentroid}
+#     ycentroid:
+#       __class__: astropy.units.quantity.Quantity
+#       unit: *id002
+#       value: !astropy.table.SerializedColumn {name: ycentroid}
+# schema: astropy-2.0
+id xcentroid ycentroid sky_centroid.ra sky_centroid.dec area source_sum source_sum_err semimajor_axis_sigma semiminor_axis_sigma orientation sky_bbox_ll.ra sky_bbox_ll.dec sky_bbox_ul.ra sky_bbox_ul.dec sky_bbox_lr.ra sky_bbox_lr.dec sky_bbox_ur.ra sky_bbox_ur.dec orientation_sky isophotal_abmag isophotal_abmag_err is_star
+2 1777.652238481037 170.01540474826263 53.14666557034219 -27.80713677752155 75.0 728.18805 2.9282207 1.5637714124328412 1.4929967724271964 5.940707967484156 53.14677076477291 -27.80722012009914 53.14677277145135 -27.80705602898487 53.14654402563116 -27.80721795051216 53.14654603265186 -27.807053859401304 276.553125629852 20.394437789916992 0.004366008 True
+3 252.0518174088754 276.8019135457481 53.17813554840662 -27.805487142968335 117.0 1621.8623 4.3626847 1.6801889279565265 1.6497992805681438 19.14707952799964 53.17826922515514 -27.805603303521906 53.17827183728369 -27.805384514766672 53.178001263967154 -27.805600800209078 53.178003876634996 -27.805382011458658 289.7594971903675 19.525012969970703 0.0029205466 True
+4 643.0723319287848 417.31178148916507 53.17010646964325 -27.8028497833051 280.0 4258.8887 7.0671167 2.461319256973988 2.152392199285991 35.88685081396852 53.17030184339177 -27.803012297634876 53.17030578554253 -27.8026841147135 53.16991021740034 -27.803008616299795 53.16991416073337 -27.80268043338929 306.49926847633634 18.476806640625 0.0018016493 True
+5 1417.531894932707 492.41428444926436 53.154160088002925 -27.801329515078113 82.0 888.5071 3.2326427 1.5562466346904271 1.5248720425496312 62.53305521981559 53.15426271366552 -27.801420100900092 53.154264930622695 -27.80123777730775 53.154056598026685 -27.80141813968739 53.15405881532954 -27.801235816098387 333.1454728821834 20.178394317626953 0.0039502187 True
+6 898.1842483772159 572.6762074165443 53.16488230729776 -27.799967592026217 71.0 701.4707 2.8737204 1.5350814604446115 1.5069651029430233 22.06033368686893 53.16497793745488 -27.80004464540492 53.164979916516195 -27.799880554016063 53.164771824228474 -27.80004270009537 53.164773803600895 -27.799878608709413 292.67275134923676 20.43502426147461 0.0044479435 True
+7 1664.8708168979729 771.5796601377733 53.1491241829551 -27.79619107199459 495.0 4499.5234 7.281689 4.850819840446321 2.9875303061197664 50.13857925695791 53.14937601966624 -27.79645021249613 53.14938224979269 -27.79593970665105 53.148860754375946 -27.79644529076707 53.148866986921874 -27.795934784945942 320.75099691932576 18.417131423950195 0.0017570734 True
+8 909.3774770478124 846.3965150490142 53.164711802400916 -27.79497484277898 525.0 4295.563 7.1194897 6.150708510299438 2.6201295799595816 30.065188573891902 53.165077647997656 -27.795195222194288 53.16508292484445 -27.794757645145687 53.16433567351178 -27.795188218179046 53.164340953344905 -27.794750641158455 300.67760623625975 18.467496871948242 0.0017995051 True
+9 760.0359250737387 896.5277660547616 53.1678007859726 -27.79408985177003 394.0 4275.4414 7.091114 3.6200074372612208 2.9091040001647914 59.81258257723251 53.16801529490195 -27.794311191411477 53.16802055988096 -27.793873614251932 53.167582479852115 -27.79430711537124 53.16758774657314 -27.793869538227856 330.4250002396003 18.47259521484375 0.0018007682 True
+10 1630.6398830001635 954.2351697156321 53.14987032844738 -27.792867569559274 637.0 4376.4854 7.195395 6.044184850060784 3.501745496092742 -44.47763195308704 53.150179083885334 -27.793139204908666 53.15018575477463 -27.7925922343171 53.14956078432862 -27.793133302185645 53.14956745832853 -27.792586331624793 226.13478570928078 18.447233200073242 0.0017850627 True
+12 696.0317809369261 1120.962505235542 53.16916911610735 -27.790010288292695 269.0 4284.7803 7.0874114 2.05921142190919 1.971117312379195 -10.619269958297016 53.16938431564473 -27.79016662181529 53.16938826009954 -27.789838438907058 53.16897212650251 -27.790162743962878 53.16897607220153 -27.789834561066137 259.9931477040708 18.470226287841797 0.0017959051 True
+13 1649.3014787565387 1270.1882947459778 53.149556003668955 -27.787103328648882 119.0 1423.157 4.089281 1.7124384845131582 1.6333584658208218 -87.16812908347546 53.149694909000125 -27.78720837812683 53.149697578192736 -27.786989589901044 53.14940638495254 -27.787205622864793 53.14940905472573 -27.786986834644736 183.44428857889235 19.666915893554688 0.0031197404 True
+14 393.02885253782154 1519.6334833425683 53.17550079091264 -27.78280017245148 108.0 1475.5532 4.161495 1.6220370524105396 1.5626668601631437 10.113303127956819 53.175634000421354 -27.78291326023978 53.17563661730799 -27.78269447152458 53.175366095213974 -27.782910751822794 53.1753687126397 -27.782691963112452 280.72572079032466 19.62765884399414 0.0030620962 True
+16 1788.340490201925 1833.725937701364 53.14681619292639 -27.77680132197374 73.0 715.05206 2.9015453 1.5648961495697575 1.4691802475320686 5.8617803259429575 53.146914998472845 -27.776879325287652 53.14691700437362 -27.776715234169785 53.14670892949899 -27.776877353188635 53.146710935710736 -27.77671326207387 276.4741979883108 20.414203643798828 0.004405711 True

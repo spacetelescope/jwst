@@ -29,6 +29,7 @@
 
 import numpy as np
 from numpy import ma
+from stdatamodels import DataModel
 
 from .. import datamodels
 
@@ -174,7 +175,7 @@ def metablender(input_models, spec):
 
     # Read in data
     for model in input_models:
-        if not isinstance(model, datamodels.DataModel):
+        if not isinstance(model, DataModel):
             if not isinstance(model, str):
                 raise TypeError(
                     "Each entry in the headers list must be either a " +
@@ -221,10 +222,11 @@ def metablender(input_models, spec):
                 result = mapping.agg_func(data[i])
             if result is not None:
                 results[mapping.dst_name] = result
-        
+
     # Aggregate data into table
     dtype = []
     arrays = []
+
     # Use Numpy to "guess" a data type for each of the columns
     for i, mapping in enumerate(mappings):
         if mapping.agg_func is None:

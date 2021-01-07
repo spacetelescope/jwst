@@ -6,99 +6,160 @@ import numpy as np
 import logging
 from gwcs import wcstools
 
+from jwst import datamodels
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 SLITRATIO = 1.15     # Ratio of slit spacing to slit height
 
-def do_correction(input_model, barshadow_model):
+
+def do_correction(input_model, barshadow_model=None, inverse=False, source_type=None, correction_pars=None):
     """Do the Bar Shadow Correction
 
     Parameters
     ----------
-    input_model: MultiSlitModel datamodel object
+    input_model : `~jwst.datamodels.MultiSlitModel`
         science data model to be corrected
 
-    barshadow_model: BarshadowModel datamodel object
-        bar shadow datamodel from reference file
+    barshadow_model : `~jwst.datamodels.BarshadowModel`
+        bar shadow data model from reference file
+
+    inverse : boolean
+        Invert the math operations used to apply the flat field.
+
+    source_type : str or None
+        Force processing using the specified source type.
+
+    correction_pars : dict or None
+        Correction parameters to use instead of recalculation.
 
     Returns
     -------
-    output_model: MultiSlitModel datamodel object
-        Science datamodel with bar shadow extensions added
-
+    output_model, corrections : `~jwst.datamodels.MultiSlitModel`, jwst.datamodels.DataModel
+        Science data model with correction applied and barshadow extensions added,
+        and a model of the correction arrays.
     """
-#
-# Input is a MultiSlitModel science data model 
-# A MultislitModel has a member .slits that behaves like
-# a list of Slits, each of which has several data arrays and
-# keyword metadata items associated 
-#
-# At this point we're going to have to assume that a Slit is composed
-# of a set of slit[].nshutters in a vertical line
-#
-# Reference file information is a 1x1 ref file and a 1x3 ref file
-# Both the 1x1 and 1x3 ref files are 1001 pixel high and go from
-# -1 to 1 in their Y value WCS.  
-# 
-# 
-    exp_type = input_model.meta.exposure.type
-    log.info(exp_type)
+
+    # Input is a MultiSlitModel science data model.
+    # A MultislitModel has a member ".slits" that behaves like
+    # a list of Slits, each of which has several data arrays and
+    # keyword metadata items associated.
     #
+    # At this point we're going to have to assume that a Slit is composed
+    # of a set of slit[].nshutters in a vertical line.
+    #
+    # Reference file information is a 1x1 ref file and a 1x3 ref file.
+    # Both the 1x1 and 1x3 ref files are 1001 pixels high and go from
+    # -1 to 1 in their Y value WCS.
+
+    exp_type = input_model.meta.exposure.type
+    log.debug('EXP_TYPE = %s' % exp_type)
+
+    # Create output as a copy of the input science data model
+    output_model = input_model.copy()
+
+    # Loop over all the slits in the input model
+    corrections = datamodels.MultiSlitModel()
+    for slit_idx, slitlet in enumerate(output_model.slits):
+        slitlet_number = slitlet.slitlet_id
+        log.info('Working on slitlet %d' % slitlet_number)
+
+        if correction_pars:
+            correction = correction_pars.slits[slit_idx]
+        else:
+            correction = _calc_correction(slitlet, barshadow_model, source_type)
+        corrections.slits.append(correction)
+
+        # Apply the correction by dividing into the science and uncertainty arrays:
+        #     var_poission and var_rnoise are divided by correction**2,
+        #     because they're variance, while err is standard deviation
+        if not inverse:
+            slitlet.data /= correction.data
+        else:
+            slitlet.data *= correction.data
+        slitlet.err /= correction.data
+        slitlet.var_poisson /= correction.data**2
+        slitlet.var_rnoise /= correction.data**2
+        if slitlet.var_flat is not None and np.size(slitlet.var_flat) > 0:
+            slitlet.var_flat /= correction.data**2
+        slitlet.barshadow = correction.data
+
+    return output_model, corrections
+
+
+def _calc_correction(slitlet, barshadow_model, source_type):
+    """Calculate the barshadow correction for a slitlet
+
+    Parameters
+    ----------
+    slitlet : jwst.datamodels.SlitModel
+        The slitlet to calculate for.
+
+    barshadow_model : `~jwst.datamodels.BarshadowModel`
+        bar shadow data model from reference file
+
+    source_type : str or None
+        Force processing using the specified source type.
+
+    Returns
+    -------
+    correction : jwst.datamodels.SlitModel
+        The correction to be applied
+    """
+    slitlet_number = slitlet.slitlet_id
+
     # Create the pieces that are put together to make the barshadow model
     shutter_elements = create_shutter_elements(barshadow_model)
     w0 = barshadow_model.crval1
     wave_increment = barshadow_model.cdelt1
     y_increment = barshadow_model.cdelt2
     shutter_height = 1.0 / y_increment
-    # For each slitlet
-    for slitlet in input_model.slits:
-        slitlet_number = slitlet.slitlet_id
-        log.info('Working on slitlet %d' % slitlet_number)
-        if has_uniform_source(slitlet):
-            shutter_status = slitlet.shutter_state
-            if len(shutter_status) > 0:
-                shadow = create_shadow(shutter_elements, shutter_status)
-                #
-                # For each pixel in the slit subarray
-                #   Make a grid of indices for pixels in the subarray
-                x, y = wcstools.grid_from_bounding_box(slitlet.meta.wcs.bounding_box, step=(1,1))
-                #   Create the transformation from slit_frame to detector
-                det2slit = slitlet.meta.wcs.get_transform('detector', 'slit_frame')
-                #   Use this transformation to calculate x, y and wavelength
-                xslit, yslit, wavelength = det2slit(x, y)
-                #   The returned y values are scaled to where the slit height is 1
-                # (i.e. a slit goes from -0.5 to 0.5).  The barshadow array is scaled
-                # so that the separation between the slit centers is 1, i.e. slit height
-                # + interslit bar
-                yslit = yslit / SLITRATIO
-                #   Convert the Y and wavelength to a pixel location
-                #   in the  bar shadow array
-                index_of_fiducial = shutter_status.find('x')
-                #
-                # The shutters go downwards, i.e. the first shutter in shutter_status corresponds to
-                # the last in the shadow array.  So the center of the first shutter referred to in
-                # shutter_status has an index of shadow.shape[0] - shutter_height.  Each subsequent
-                # shutter center has an index shutter_height greater.
-                index_of_fiducial_in_array = shadow.shape[0] - shutter_height * (1 + index_of_fiducial)
-                yrow = index_of_fiducial_in_array - yslit * shutter_height
-                wcol = (wavelength - w0)/wave_increment
-                # Interpolate the bar shadow correction for non-Nan pixels
-                correction = interpolate(yrow, wcol, shadow)
-                # Add the correction array and variance to the datamodel
-                slitlet.barshadow = correction
-            else:
-                log.info("Slitlet %d has zero length, correction skipped" % slitlet_number)
-                #
-                # Put an array of ones in a correction extension
-                slitlet.barshadow = np.ones(slitlet.data.shape)
+
+    # The correction only applies to extended/uniform sources
+    correction = datamodels.SlitModel(data=np.ones(slitlet.data.shape))
+    if has_uniform_source(slitlet, source_type):
+        shutter_status = slitlet.shutter_state
+        if len(shutter_status) > 0:
+            shadow = create_shadow(shutter_elements, shutter_status)
+
+            # For each pixel in the slit subarray,
+            # make a grid of indices for pixels in the subarray
+            x, y = wcstools.grid_from_bounding_box(slitlet.meta.wcs.bounding_box, step=(1, 1))
+
+            # Create the transformation from slit_frame to detector
+            det2slit = slitlet.meta.wcs.get_transform('detector', 'slit_frame')
+
+            # Use this transformation to calculate x, y, and wavelength
+            xslit, yslit, wavelength = det2slit(x, y)
+
+            # The returned y values are scaled to where the slit height is 1
+            # (i.e. a slit goes from -0.5 to 0.5).  The barshadow array is scaled
+            # so that the separation between the slit centers is 1,
+            # i.e. slit height + interslit bar
+            yslit = yslit / SLITRATIO
+
+            # Convert the Y and wavelength to a pixel location in the  bar shadow array
+            index_of_fiducial = shutter_status.find('x')
+
+            # The shutters go downwards, i.e. the first shutter in shutter_status corresponds to
+            # the last in the shadow array.  So the center of the first shutter referred to in
+            # shutter_status has an index of shadow.shape[0] - shutter_height.  Each subsequent
+            # shutter center has an index shutter_height greater.
+            index_of_fiducial_in_array = shadow.shape[0] - shutter_height * (1 + index_of_fiducial)
+            yrow = index_of_fiducial_in_array + yslit * shutter_height
+            wcol = (wavelength - w0)/wave_increment
+
+            # Interpolate the bar shadow correction for non-Nan pixels
+            correction.data = interpolate(yrow, wcol, shadow)
         else:
-            log.info("Bar shadow correction skipped for slitlet %d (source not uniform)" % slitlet_number)
-            #
-            # Put an array of ones in a correction extension
-            slitlet.barshadow = np.ones(slitlet.data.shape)
-    return input_model
-    
+            log.info("Slitlet %d has zero length, correction skipped" % slitlet_number)
+    else:
+        log.info("Bar shadow correction skipped for slitlet %d (source not uniform)" % slitlet_number)
+
+    return correction
+
+
 def create_shutter_elements(barshadow_model):
     """Create the pieces that will be put together to make the barshadow
     array for the slitlets.  The pieces are:
@@ -141,9 +202,10 @@ def create_shutter_elements(barshadow_model):
     shutter_elements['closed_open'] = create_closed_open(shadow1x1)
     shutter_elements['closed_closed'] = create_closed_closed()
     shutter_elements['last'] = create_last(shadow1x1)
+
     return shutter_elements
-#
-#
+
+
 def create_first(shadow1x1):
     """Create the first half shutter in the bar shadow array.
     Use rows 1-501 in the shadow1x1 array
@@ -159,6 +221,7 @@ def create_first(shadow1x1):
     """
     return shadow1x1[:501, :]
 
+
 def create_open_open(shadow1x3):
     """Create the two half shutters obtained from two open shutters
     Use rows 1-501 in the shadow1x3 array
@@ -173,6 +236,7 @@ def create_open_open(shadow1x3):
     The array to use as shutter_elements['open_open']
     """
     return shadow1x3[:501, :]
+
 
 def create_open_closed(shadow1x1):
     """Create the two half shutters obtained from one open and
@@ -190,6 +254,7 @@ def create_open_closed(shadow1x1):
     """
     return shadow1x1[500:, :]
 
+
 def create_closed_open(shadow1x1):
     """Create the two half shutters obtained from one closed and
     one open shutter
@@ -206,6 +271,7 @@ def create_closed_open(shadow1x1):
     """
     return shadow1x1[:501, :]
 
+
 def create_closed_closed():
     """Create the two half shutters obtained from two closed shutters
     Uses 0.01 somewhat arbitrarily, although this case shouldn't occur
@@ -220,7 +286,8 @@ def create_closed_closed():
 
     The array to use as shutter_elements['closed_closed']
     """
-    return 0.01*np.ones(500)
+    return 0.01 * np.ones((501, 101))
+
 
 def create_last(shadow1x1):
     """Create the last half shutter in the bar shadow array.
@@ -240,7 +307,7 @@ def create_last(shadow1x1):
 
 def create_shadow(shutter_elements, shutter_status):
     """Create a bar shadow reference array on the fly from the shutter
-    elements dictionary. 
+    elements dictionary.
 
     Parameters:
 
@@ -277,6 +344,7 @@ def create_shadow(shutter_elements, shutter_status):
     shadow = add_last_half_shutter(shadow, shutter_elements['last'], first_row)
     return shadow
 
+
 def create_empty_shadow_array(nshutters):
     """Create the empty bar shadow array.
 
@@ -299,6 +367,7 @@ def create_empty_shadow_array(nshutters):
     empty_shadow = np.zeros((nrows, ncolumns))
     return empty_shadow
 
+
 def add_first_half_shutter(shadow, shadow_element):
     """Add the first half shutter to the shadow array
 
@@ -318,6 +387,7 @@ def add_first_half_shutter(shadow, shadow_element):
     """
     shadow[0:501, :] = shadow_element[:, :]
     return shadow
+
 
 def add_next_shutter(shadow, shadow_element, first_row):
     """Add a single internal shutter and advance the last row by 501
@@ -347,6 +417,7 @@ def add_next_shutter(shadow, shadow_element, first_row):
     last_row = first_row + shadow_element.shape[0] - 1
     shadow[first_row:last_row, :] = shadow_element[1:, :]
     return shadow
+
 
 def add_last_half_shutter(shadow, shadow_element, first_row):
     """Add the last half shutter from the 1x1 array.  The last half shutter
@@ -378,6 +449,7 @@ def add_last_half_shutter(shadow, shadow_element, first_row):
     shadow[first_row:last_row, :] = shadow_element[1:, :]
     return shadow
 
+
 def interpolate(rows, columns, array, default=np.nan):
     """Interpolate row and column vectors in array
 
@@ -408,7 +480,7 @@ def interpolate(rows, columns, array, default=np.nan):
     # Extend the boundary of array by 1 row and column to handle end cases
     augmented_array = np.ones((nrows_out+1, ncols_out+1))
     augmented_array[:nrows_out, :ncols_out] = array
-    augmented_array[nrows_out,:ncols_out] = array[nrows_out-1, :]
+    augmented_array[nrows_out, :ncols_out] = array[nrows_out-1, :]
     augmented_array[:nrows_out, ncols_out] = array[:, ncols_out-1]
     augmented_array[nrows_out, ncols_out] = array[nrows_out-1, ncols_out-1]
     for row in range(nrows):
@@ -430,7 +502,7 @@ def interpolate(rows, columns, array, default=np.nan):
                 iy = int(array_row)
                 a11 = augmented_array[iy, ix]
                 a12 = augmented_array[iy, ix+1]
-                a21 = augmented_array[iy+1, ix+1]
+                a21 = augmented_array[iy+1, ix]
                 a22 = augmented_array[iy+1, ix+1]
                 dx = array_column - ix
                 dy = array_row - iy
@@ -438,7 +510,8 @@ def interpolate(rows, columns, array, default=np.nan):
                     a21*(1.0-dx)*dy + a22*dx*dy
     return correction
 
-def has_uniform_source(slitlet):
+
+def has_uniform_source(slitlet, force_type=None):
     """Determine whether the slitlet contains a uniform source
 
     Parameters:
@@ -446,13 +519,23 @@ def has_uniform_source(slitlet):
     slitlet: slitlet object
         The slitlet being interrogated
 
+    force_type : string or None
+        Source type to force to and decide upon.
+
     Returns:
 
     answer: boolean
         True if the slitlet contains a uniform source
     """
+    source_type = force_type if force_type else slitlet.source_type
 
-    if slitlet.stellarity > 0.75:
-        return False
+    if source_type:
+        # Assume extended, unless explicitly set to POINT
+        if source_type.upper() == 'POINT':
+            return False
+        else:
+            return True
     else:
+        # If there's no source type info, default to EXTENDED
+        log.info('SRCTYPE not set for slitlet %d; assuming EXTENDED' % slitlet.slitlet_id)
         return True

@@ -1,3 +1,7 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/keyword_preadpatt.schema"
 type: object
 properties:
   meta:
@@ -14,6 +18,6 @@ properties:
                  FASTGRPAVG|FGS|FGS60|FGS8370|FGS840|FGSRAPID|\
                  FINEGUIDE|ID|MEDIUM2|MEDIUM8|NIS|NISRAPID|\
                  NRS|NRSIRS2|NRSN16R4|NRSN32R8|NRSN8R2|NRSRAPID|\
-                 NRSIRS2RAPID|NRSSLOW|RAPID|SHALLOW2|SHALLOW4|\
-                 SLOW|TRACK|ANY|N/A)\\s*\\|\\s*)+$"
+                 NRSIRS2RAPID|NRSRAPIDD1|NRSRAPIDD2|NRSRAPIDD6|NRSSLOW|RAPID|\
+                 SHALLOW2|SHALLOW4|SLOW|TRACK|ANY|N/A)\\s*\\|\\s*)+$"
             fits_keyword: P_READPA

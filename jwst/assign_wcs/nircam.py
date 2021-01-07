@@ -2,16 +2,20 @@ import logging
 
 from astropy import coordinates as coord
 from astropy import units as u
-from astropy.modeling.models import Identity, Const1D, Mapping
+from astropy.modeling.models import Identity, Const1D, Mapping, Shift
 import gwcs.coordinate_frames as cf
 
+import asdf
+
 from . import pointing
-from .util import not_implemented_mode, subarray_transform, velocity_correction
-from ..datamodels import (ImageModel, NIRCAMGrismModel, DistortionModel,
-                          CubeModel)
+from .util import (not_implemented_mode, subarray_transform, velocity_correction,
+                   transform_bbox_from_shape, bounding_box_from_subarray)
+from ..datamodels import (ImageModel, NIRCAMGrismModel, DistortionModel)
 from ..transforms.models import (NIRCAMForwardRowGrismDispersion,
                                  NIRCAMForwardColumnGrismDispersion,
                                  NIRCAMBackwardGrismDispersion)
+from ..lib.reffile_utils import find_row
+
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -37,6 +41,8 @@ def create_pipeline(input_model, reference_files):
         The pipeline list that is returned is suitable for
         input into  gwcs.wcs.WCS to create a GWCS object.
     """
+
+    log.debug(f'reference files used in NIRCAM WCS pipeline: {reference_files}')
     exp_type = input_model.meta.exposure.type.lower()
     pipeline = exp_type2transform[exp_type](input_model, reference_files)
 
@@ -70,11 +76,12 @@ def imaging(input_model, reference_files):
     v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.arcsec, u.arcsec))
     world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
 
+    distortion = imaging_distortion(input_model, reference_files)
     subarray2full = subarray_transform(input_model)
-    imdistortion = imaging_distortion(input_model, reference_files)
-    distortion = subarray2full | imdistortion
-    distortion.bounding_box = imdistortion.bounding_box
-    del imdistortion.bounding_box
+    if subarray2full is not None:
+        distortion = subarray2full | distortion
+        distortion.bounding_box = bounding_box_from_subarray(input_model)
+
     tel2sky = pointing.v23tosky(input_model)
     pipeline = [(detector, distortion),
                 (v2v3, tel2sky),
@@ -103,27 +110,29 @@ def imaging_distortion(input_model, reference_files):
     transform = dist.model
 
     try:
-        bb = transform.bounding_box
+        transform.bounding_box
     except NotImplementedError:
-        shape = input_model.data.shape
-        # Note: Since bounding_box is attached to the model here
-        # it's in reverse order.
-        """
-        A CubeModel is always treated as a stack (in dimension 1)
-        of 2D images, as opposed to actual 3D data. In this case
-        the bounding box is set to the 2nd and 3rd dimension.
-        """
-        if isinstance(input_model, CubeModel):
-            bb = ((-0.5, shape[1] - 0.5),
-                  (-0.5, shape[2] - 0.5))
-        elif isinstance(input_model, ImageModel):
-            bb = ((-0.5, shape[0] - 0.5),
-                  (-0.5, shape[1] - 0.5))
-        else:
-            raise TypeError("Input is not an ImageModel or CubeModel")
-
-        transform.bounding_box = bb
+        # Check if the transform in the reference file has a ``bounding_box``.
+        # If not set a ``bounding_box`` equal to the size of the image.
+        transform.bounding_box = transform_bbox_from_shape(input_model.data.shape)
     dist.close()
+
+    # Add an offset for the filter
+    if reference_files['filteroffset'] is not None:
+        obsfilter = input_model.meta.instrument.filter
+        obspupil = input_model.meta.instrument.pupil
+        with asdf.open(reference_files['filteroffset']) as filter_offset:
+            filters = filter_offset.tree['filters']
+
+        match_keys = {'filter': obsfilter, 'pupil': obspupil}
+        row = find_row(filters, match_keys)
+        if row is not None:
+            col_offset = row.get('col_offset', 'N/A')
+            row_offset = row.get('row_offset', 'N/A')
+
+            if col_offset != 'N/A' and row_offset != 'N/A':
+                transform = Shift(col_offset) & Shift(row_offset) | transform
+
     return transform
 
 
@@ -153,10 +162,6 @@ def tsgrism(input_model, reference_files):
 
     TSGRISM is only slated to work with GRISMR and Mod A
     """
-
-    # The input is the grism image
-    if not isinstance(input_model, CubeModel):
-        raise TypeError('The input data model must be a CubeModel.')
 
     # make sure this is a grism image
     if "NRC_TSGRISM" != input_model.meta.exposure.type:
@@ -208,13 +213,21 @@ def tsgrism(input_model, reference_files):
     # input into the forward transform is x,y,x0,y0,order
     # where x,y is the pixel location in the grism image
     # and x0,y0 is the source location in the "direct" image
-    # For this mode, the source is always at crpix1,crpis2
-    # discussion with nadia that wcsinfo might not be available
+    # For this mode, the source is always at crpix1 x crpix2, which
+    # are stored in keywords XREF_SCI, YREF_SCI.
+    # Discussion with nadia that wcsinfo might not be available
     # here but crpix info could be in wcs.source_location or similar
     # TSGRISM mode places the sources at crpix, and all subarrays
     # begin at 0,0, so no need to translate the crpix to full frame
     # because they already are in full frame coordinates.
-    xc, yc = (input_model.meta.wcsinfo.crpix1, input_model.meta.wcsinfo.crpix2)
+    xc, yc = (input_model.meta.wcsinfo.siaf_xref_sci, input_model.meta.wcsinfo.siaf_yref_sci)
+
+    if xc is None:
+        raise ValueError('XREF_SCI is missing.')
+
+    if yc is None:
+        raise ValueError('YREF_SCI is missing.')
+
     xcenter = Const1D(xc)
     xcenter.inverse = Const1D(xc)
     ycenter = Const1D(yc)
@@ -227,10 +240,15 @@ def tsgrism(input_model, reference_files):
 
     # x, y, order in goes to transform to full array location and order
     # get the shift to full frame coordinates
-    sub2full = subarray_transform(input_model) & Identity(1)
-    sub2direct = (sub2full | Mapping((0, 1, 0, 1, 2)) |
-                  (Identity(2) & xcenter & ycenter & Identity(1)) |
-                  det2det)
+    sub_trans = subarray_transform(input_model)
+    if sub_trans is not None:
+        sub2direct = (sub_trans & Identity(1) | Mapping((0, 1, 0, 1, 2)) |
+                      (Identity(2) & xcenter & ycenter & Identity(1)) |
+                      det2det)
+    else:
+        sub2direct = (Mapping((0, 1, 0, 1, 2)) |
+                      (Identity(2) & xcenter & ycenter & Identity(1)) |
+                      det2det)
 
     # take us from full frame detector to v2v3
     distortion = imaging_distortion(input_model, reference_files) & Identity(2)
@@ -391,4 +409,5 @@ exp_type2transform = {'nrc_image': imaging,
                       'nrc_led': not_implemented_mode,
                       'nrc_dark': not_implemented_mode,
                       'nrc_flat': not_implemented_mode,
+                      'nrc_grism': not_implemented_mode,
                       }

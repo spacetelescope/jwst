@@ -1,3 +1,5 @@
+.. _lastframe_step:
+
 =====================
 Last Frame Correction
 =====================
@@ -6,7 +8,7 @@ Last Frame Correction
    :maxdepth: 2
 
    description.rst
-   reference_files.rst
    arguments.rst
+   reference_files.rst
 
 .. automodapi:: jwst.lastframe

@@ -1,118 +1,104 @@
 """test_associations: Test of general Association functionality."""
+import os
 import re
 
 import pytest
 
-from .helpers import full_pool_rules
-from ..main import Main
+from jwst.associations.tests.helpers import combine_pools, t_path
+
+from jwst.associations import AssociationPool
+from jwst.associations.main import Main
 
 
-@pytest.mark.slow
-def test_script(full_pool_rules):
-    pool, rules, pool_fname = full_pool_rules
-
-    ref_rule_set = {
-        'discover_Asn_SpectralTarget', 'discover_Asn_Coron',
-        'candidate_Asn_Lv2Image', 'candidate_Asn_Lv2WFSS_NIS',
-        'candidate_Asn_Lv2Spec', 'candidate_Asn_SpectralSource',
-        'discover_Asn_SpectralSource', 'candidate_Asn_SpectralTarget',
-        'discover_Asn_AMI', 'discover_Asn_Image',
-        'candidate_Asn_Image', 'candidate_Asn_Lv2ImageTSO',
-        'candidate_Asn_Lv2SpecTSO', 'candidate_Asn_Lv2FGS',
-        'candidate_Asn_AMI', 'candidate_Asn_IFU',
-        'candidate_Asn_Lv2WFSC', 'candidate_Asn_TSO',
-        'candidate_Asn_Lv2ImageSpecial', 'discover_Asn_IFU',
-        'candidate_Asn_Lv2SpecSpecial', 'candidate_Asn_Coron',
-        'candidate_Asn_Lv2ImageNonScience'
-    }
-
-    generated = Main([pool_fname, '--dry-run'])
-    asns = generated.associations
-    assert len(asns) == 284
-    assert len(generated.orphaned) == 203
-    found_rules = set(
-        asn['asn_rule']
-        for asn in asns
-    )
-    assert ref_rule_set == found_rules
+# Basic pool
+POOL_PATH = 'pool_018_all_exptypes.csv'
 
 
-@pytest.mark.slow
-def test_asn_candidates(full_pool_rules):
-    pool, rules, pool_fname = full_pool_rules
+@pytest.fixture(scope='module')
+def pool():
+    """Retreive pool path"""
+    pool_path = t_path(os.path.join('data', POOL_PATH))
+    pool = combine_pools(pool_path)
 
-    generated = Main([pool_fname, '--dry-run', '-i', 'o001'])
-    assert len(generated.associations) == 1
-    generated = Main([pool_fname, '--dry-run', '-i', 'o001', 'o002'])
-    assert len(generated.associations) == 2
+    return pool
 
 
-def test_toomanyoptions(full_pool_rules):
-    pool, rules, pool_fname = full_pool_rules
+@pytest.fixture(scope='module')
+def all_candidates(pool):
+    """"Retrieve the all exposure pool"""
+    all_candidates = Main(['--dry-run', '--all-candidates'], pool=pool)
+    return all_candidates
 
-    with pytest.raises(SystemExit):
-        generated = Main([
-            pool_fname,
+
+@pytest.mark.parametrize(
+    'args',
+    [
+        [
             '--dry-run',
             '--discover',
             '--all-candidates',
             '-i', 'o001',
-        ])
-    with pytest.raises(SystemExit):
-        generated = Main([
-            pool_fname,
+        ],
+        [
             '--dry-run',
             '--discover',
             '--all-candidates',
-        ])
-    with pytest.raises(SystemExit):
-        generated = Main([
-            pool_fname,
+        ],
+        [
             '--dry-run',
             '--discover',
             '-i', 'o001',
-        ])
-    with pytest.raises(SystemExit):
-        generated = Main([
-            pool_fname,
+        ],
+        [
             '--dry-run',
             '--all-candidates',
             '-i', 'o001',
-        ])
-
-
-@pytest.mark.xfail(
-    reason='Need to further investigate',
-    run=False
+        ]
+    ]
 )
-def test_discovered(full_pool_rules):
-    pool, rules, pool_fname = full_pool_rules
+def test_toomanyoptions(args):
+    """Test argument parsing for failures"""
+    pool = AssociationPool()
 
-    full = Main([pool_fname, '--dry-run'])
-    candidates = Main([pool_fname, '--dry-run', '--all-candidates'])
-    discovered = Main([pool_fname, '--dry-run', '--discover'])
-    assert len(full.associations) == len(candidates.associations) + len(discovered.associations)
+    with pytest.raises(SystemExit):
+        Main(args, pool=pool)
 
 
-@pytest.mark.slow
-def test_version_id(full_pool_rules):
-    pool, rules, pool_fname = full_pool_rules
+@pytest.mark.parametrize(
+    'case', [
+        (None, 60),  # Don't re-run, just compare to the generator fixture results
+        (['-i', 'o001'], 2),
+        (['-i', 'o001', 'o002'], 3),
+        (['-i', 'c1001'], 1),
+        (['-i', 'o001', 'c1001'], 3),
+        (['-i', 'c1001', 'c1002'], 2),
+    ]
+)
+def test_asn_candidates(pool, all_candidates, case):
+    """Test candidate selection option"""
+    args, n_expected = case
 
-    generated = Main([pool_fname, '--dry-run', '-i', 'o001', '--version-id'])
-    regex = re.compile('\d{3}t\d{6}')
+    if args:
+        generated = Main(['--dry-run'] + args, pool=pool)
+        n_actual = len(generated.associations)
+    else:
+        n_actual = len(all_candidates.associations)
+
+    assert n_actual == n_expected
+
+
+@pytest.mark.parametrize(
+    'version_id, expected', [
+        ('', r'\d{3}t\d{6}'),
+        ('mytestid', r'mytestid'),
+    ]
+)
+def test_generate_version_id(version_id, expected, pool):
+    """Check that an association has been given the appropriate version id"""
+    regex = re.compile(expected)
+    args = ['--dry-run', '-i', 'o001', '--version-id']
+    if version_id:
+        args.append(version_id)
+    generated = Main(args, pool=pool)
     for asn in generated.associations:
         assert regex.search(asn.asn_name)
-
-    version_id = 'mytestid'
-    generated = Main([pool_fname, '--dry-run', '-i', 'o001', '--version-id', version_id])
-    for asn in generated.associations:
-        assert version_id in asn.asn_name
-
-
-@pytest.mark.slow
-def test_pool_as_parameter(full_pool_rules):
-    pool, rules, pool_fname = full_pool_rules
-
-    full = Main([pool_fname, '--dry-run'])
-    full_as_param = Main(['--dry-run'], pool=pool)
-    assert len(full.associations) == len(full_as_param.associations)

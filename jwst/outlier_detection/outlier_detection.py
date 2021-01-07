@@ -3,20 +3,22 @@
 from functools import partial
 import numpy as np
 
-from stsci.image import median
-from astropy.stats import sigma_clipped_stats
+from astropy.stats import sigma_clip
 from scipy import ndimage
+from drizzle.cdrizzle import tblot
 
 from .. import datamodels
-from ..resample import resample, gwcs_blot
-from ..resample.resample_utils import build_driz_weight
+from ..resample import resample
+from ..resample.resample_utils import build_driz_weight, calc_gwcs_pixmap
 from ..stpipe.step import Step
 
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-CRBIT = np.uint32(datamodels.dqflags.pixel['JUMP_DET'])
+CRBIT = np.uint32(
+    datamodels.dqflags.pixel['DO_NOT_USE'] + datamodels.dqflags.pixel['OUTLIER']
+)
 
 
 __all__ = ["OutlierDetection", "flag_cr", "abs_deriv"]
@@ -191,11 +193,10 @@ class OutlierDetection:
             for model in drizzled_models:
                 if save_intermediate_results:
                     log.info("Writing out resampled exposures...")
-                    self.save_model(
-                        model,
-                        output_file=model.meta.filename,
-                        suffix=self.resample_suffix
-                    )
+                    model_output_path = self.make_output_path(
+                        basepath=model.meta.filename,
+                        suffix='outlier_i2d')
+                    model.save(model_output_path)
         else:
             drizzled_models = self.input_models
             for i in range(len(self.input_models)):
@@ -258,33 +259,43 @@ class OutlierDetection:
         following ways:
         - type of combination: fixed to 'median'
         - 'minmed' not implemented as an option
-        - does not use buffers to try to minimize memory usage
-        - `astropy.stats.sigma_clipped_stats` replaces `stsci.imagestats.ImageStats`
-        - `stsci.image.median` replaces `stsci.image.numcombine.numCombine`
         """
-        resampled_sci = [i.data for i in resampled_models]
-        resampled_wht = [i.wht for i in resampled_models]
+        resampled_sci = [i.data.copy() for i in resampled_models]
+        resampled_weight = [i.wht for i in resampled_models]
 
-        nlow = self.outlierpars.get('nlow', 0)
-        nhigh = self.outlierpars.get('nhigh', 0)
         maskpt = self.outlierpars.get('maskpt', 0.7)
 
+        # Create a mask for each input image, masking out areas where there is
+        # no data or the data has very low weight
         badmasks = []
-        for w in resampled_wht:
-            mean_weight, _, _ = sigma_clipped_stats(w,
-                                                    sigma=3.0, mask_value=0.)
+        for weight in resampled_weight:
+            # Create boolean masks for weight being zero or NaN
+            mask_zero_weight = np.equal(weight, 0.)
+            mask_nans = np.isnan(weight)
+            # Combine the masks
+            weight_masked = np.ma.array(weight, mask=np.logical_or(
+                mask_zero_weight, mask_nans))
+            # Sigma-clip the unmasked data
+            weight_masked = sigma_clip(weight_masked, sigma=3, maxiters=5)
+            mean_weight = np.mean(weight_masked)
+            # Mask pixels where weight falls below maskpt percent
             weight_threshold = mean_weight * maskpt
-            # Mask pixels were weight falls below
-            #   MASKPT percent of the mean weight
-            mask = np.less(w, weight_threshold)
-            log.debug("Number of pixels with low weight: {}".format(
-                np.sum(mask)))
-            badmasks.append(mask)
+            badmask = np.less(weight, weight_threshold)
+            log.debug("Percentage of pixels with low weight: {}".format(
+                np.sum(badmask) / len(weight.flat) * 100))
+            badmasks.append(badmask)
 
-        # Compute median of stack os images using BADMASKS to remove low weight
-        # values
-        median_image = median(resampled_sci, nlow=nlow, nhigh=nhigh,
-                              badmasks=badmasks)
+        # Fill resampled_sci array with nan's where mask values are True
+        #pdb.set_trace()
+        for f1, f2 in zip(resampled_sci, badmasks):
+            for elem1, elem2 in zip(f1, f2):
+                elem1[elem2] = np.nan
+
+        # For a of stack of images with "bad" data replaced with Nan
+        # use np.nanmedian to compute the median.
+        log.info("Generating median from {} images".format(len(resampled_sci)))
+        median_image = np.nanmedian(resampled_sci, axis = 0)
+        del resampled_sci
 
         return median_image
 
@@ -297,7 +308,6 @@ class OutlierDetection:
         blot_models = datamodels.ModelContainer()
 
         log.info("Blotting median...")
-        blot = gwcs_blot.GWCSBlot(median_model)
 
         for model in self.input_models:
             blotted_median = model.copy()
@@ -309,7 +319,7 @@ class OutlierDetection:
             blotted_median.err = None
             blotted_median.dq = None
             # apply blot to re-create model.data from median image
-            blotted_median.data = blot.extract_image(model, interp=interp,
+            blotted_median.data = gwcs_blot(median_model, model, interp=interp,
                                                      sinscl=sinscl)
             blot_models.append(blotted_median)
 
@@ -340,7 +350,9 @@ class OutlierDetection:
         """
 
         for image, blot in zip(self.input_models, blot_models):
-            flag_cr(image, blot, **self.outlierpars)
+            image_copy = image.copy()
+            flag_cr(image_copy, blot, **self.outlierpars)
+            image.dq = image_copy.dq.copy()
 
         if self.converted:
             # Make sure actual input gets updated with new results
@@ -349,7 +361,7 @@ class OutlierDetection:
 
 
 def flag_cr(sci_image, blot_image, **pars):
-    """Masks outliers in science image.
+    """Masks outliers in science image by updating DQ in-place
 
     Mask blemishes in dithered data by comparing a science image
     with a model image and the derivative of the model image.
@@ -380,11 +392,15 @@ def flag_cr(sci_image, blot_image, **pars):
     snr1, snr2 = [float(val) for val in pars.get('snr', '5.0 4.0').split()]
     scl1, scl2 = [float(val) for val in pars.get('scale', '1.2 0.7').split()]
 
-    if not sci_image.meta.background.subtracted:
-        # Include background back into blotted image for comparison
+    # Get background level of science data if it has not been subtracted, so it
+    # can be added into the level of the blotted data, which has been
+    # background-subtracted
+    if (sci_image.meta.background.subtracted is False and
+        sci_image.meta.background.level is not None):
         subtracted_background = sci_image.meta.background.level
-        log.debug("Subtracted background: {}".format(subtracted_background))
-    if subtracted_background is None:
+        log.debug(f"Adding background level {subtracted_background} to blotted image")
+    else:
+        # No subtracted background.  Allow user-set value, which defaults to 0
         subtracted_background = backg
 
     exptime = sci_image.meta.exposure.exposure_time
@@ -405,17 +421,14 @@ def flag_cr(sci_image, blot_image, **pars):
     #
     # Model the noise and create a CR mask
     diff_noise = np.abs(sci_data - blot_data)
-    # ta = np.sqrt(np.abs(blot_data + subtracted_background) + rn ** 2)
     ta = np.sqrt(np.abs(blot_data + subtracted_background) + err_data ** 2)
     t2 = scl1 * blot_deriv + snr1 * ta
-
     tmp1 = np.logical_not(np.greater(diff_noise, t2))
 
     # Convolve mask with 3x3 kernel
     kernel = np.ones((3, 3), dtype=np.uint8)
     tmp2 = np.zeros(tmp1.shape, dtype=np.int32)
     ndimage.convolve(tmp1, kernel, output=tmp2, mode='nearest', cval=0)
-
     #
     #
     #    COMPUTATION PART II
@@ -486,8 +499,8 @@ def flag_cr(sci_image, blot_image, **pars):
     log.debug("Pixels in input DQ: {}".format(count_sci))
     log.debug("Pixels in cr_mask:  {}".format(count_cr))
 
-    # Update the DQ array in the input image in place
-    np.bitwise_or(sci_image.dq, np.invert(cr_mask) * CRBIT, sci_image.dq)
+    # Update the DQ array in the input image.
+    sci_image.dq = np.bitwise_or(sci_image.dq, np.invert(cr_mask) * CRBIT)
 
 
 def abs_deriv(array):
@@ -513,3 +526,49 @@ def _absolute_subtract(array, tmp, out):
     out = np.maximum(tmp, out)
     tmp = tmp * 0.
     return tmp, out
+
+
+def gwcs_blot(median_model, blot_img, interp='poly5', sinscl=1.0):
+    """
+    Resample the output/resampled image to recreate an input image based on
+    the input image's world coordinate system
+
+    Parameters
+    ----------
+    median_model : ~jwst.datamodels.DataModel
+
+    blot_img : datamodel
+        Datamodel containing header and WCS to define the 'blotted' image
+
+    interp : str, optional
+        The type of interpolation used in the resampling. The
+        possible values are "nearest" (nearest neighbor interpolation),
+        "linear" (bilinear interpolation), "poly3" (cubic polynomial
+        interpolation), "poly5" (quintic polynomial interpolation),
+        "sinc" (sinc interpolation), "lan3" (3rd order Lanczos
+        interpolation), and "lan5" (5th order Lanczos interpolation).
+
+    sincscl : float, optional
+        The scaling factor for sinc interpolation.
+    """
+    blot_wcs = blot_img.meta.wcs
+
+    # Compute the mapping between the input and output pixel coordinates
+    pixmap = calc_gwcs_pixmap(blot_wcs, median_model.meta.wcs, blot_img.data.shape)
+    log.debug("Pixmap shape: {}".format(pixmap[:, :, 0].shape))
+    log.debug("Sci shape: {}".format(blot_img.data.shape))
+
+    pix_ratio = 1
+    log.info('Blotting {} <-- {}'.format(blot_img.data.shape, median_model.data.shape))
+
+    outsci = np.zeros(blot_img.shape, dtype=np.float32)
+
+    # Currently tblot cannot handle nans in the pixmap, so we need to give some
+    # other value.  -1 is not optimal and may have side effects.  But this is
+    # what we've been doing up until now, so more investigation is needed
+    # before a change is made.  Preferably, fix tblot in drizzle.
+    pixmap[np.isnan(pixmap)] = -1
+    tblot(median_model.data, pixmap, outsci, scale=pix_ratio, kscale=1.0,
+                   interp=interp, exptime=1.0, misval=0.0, sinscl=sinscl)
+
+    return outsci

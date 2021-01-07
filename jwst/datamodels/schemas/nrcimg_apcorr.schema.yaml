@@ -1,0 +1,29 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/nrcimg_apcorr.schema"
+title: NIRCam imaging aperture correction data model
+allOf:
+- $ref: referencefile.schema
+- $ref: keyword_exptype.schema
+- $ref: keyword_pexptype.schema
+- type: object
+  properties:
+    apcorr_table:
+      title: Aperture correction factors table
+      fits_hdu: APCORR
+      datatype:
+      - name: filter
+        datatype: [ascii, 12]
+      - name: pupil
+        datatype: [ascii, 15]
+      - name: eefraction
+        datatype: float32
+      - name: radius
+        datatype: float32
+      - name: apcorr
+        datatype: float32
+      - name: skyin
+        datatype: float32
+      - name: skyout
+        datatype: float32

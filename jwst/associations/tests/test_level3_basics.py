@@ -22,7 +22,7 @@ def test_meta():
     assert data['asn_type'] == 'image3'
     assert data['asn_id'] == 'a3001'
     assert data['asn_pool'] == 'pool_002_image_miri'
-    assert data['asn_rule'] == 'Asn_Image'
+    assert data['asn_rule'] == 'Asn_Lv3Image'
     assert data['degraded_status'] == 'No known degraded exposures in association.'
     assert data['version_id'] is None
     assert data['constraints'] is not None
@@ -47,9 +47,11 @@ def test_targacq(pool_file):
     asns = generate(pool, rules)
     assert len(asns) > 0
     for asn in asns:
-        for product in asn['products']:
-            exptypes = [
-                member['exptype'].lower()
-                for member in product['members']
-            ]
-            assert 'target_acquistion' in exptypes
+        # Ignore reprocessed asn's with only science
+        if not asn['asn_rule'] in ["Asn_Lv3SpecAux", "Asn_Lv3NRSIFUBackground"]:
+            for product in asn['products']:
+                exptypes = [
+                    member['exptype'].lower()
+                    for member in product['members']
+                    ]
+                assert 'target_acquisition' in exptypes

@@ -1,13 +1,15 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/core.schema"
 type: object
 properties:
   meta:
     type: object
     properties:
       date:
-        anyOf:
-          - $ref: http://stsci.edu/schemas/asdf/time/time-1.0.0
-          - type: string
-        title: "[yyyy-mm-ddThh:mm:ss.ss] UTC date file created"
+        title: "UTC date file created"
+        type: string
         fits_keyword: DATE
         blend_table: True
       origin:
@@ -20,6 +22,11 @@ properties:
         type: string
         fits_keyword: TIMESYS
         blend_table: True
+      time_unit:
+        title: Default unit applicable to all time values
+        type: string
+        default: 's'
+        fits_keyword: TIMEUNIT
       filename:
         title: Name of the file
         type: string
@@ -138,37 +145,33 @@ properties:
         type: object
         properties:
           date:
-            anyOf:
-              - $ref: http://stsci.edu/schemas/asdf/time/time-1.0.0
-              - type: string
             title: "[yyyy-mm-dd] UTC date at start of exposure"
+            type: string
             fits_keyword: DATE-OBS
             blend_table: True
-            blend_rule: first
+            blend_rule: mindate
           time:
             title: "[hh:mm:ss.sss] UTC time at start of exposure"
             type: string
             fits_keyword: TIME-OBS
             blend_table: True
-            blend_rule: first
+            blend_rule: mintime
           date_beg:
             type: string
-            title: "Date-time start of data acquisition"
+            title: "Date-time start of exposure"
             fits_keyword: DATE-BEG
             blend_table: True
-            blend_rule: first
+            # Despite what the title might lead you to believe, this keyword
+            # actually contains a full datetime string.
+            blend_rule: mindatetime
           date_end:
             type: string
-            title: "[yyyy-mm-dd] UTC date at end of exposure"
+            title: "Date-time end of exposure"
             fits_keyword: DATE-END
             blend_table: True
-            blend_rule: last
-          time_end:
-            title: "[hh:mm:ss.sss] UTC time at end of exposure"
-            type: string
-            fits_keyword: TIME-END
-            blend_table: True
-            blend_rule: last
+            # Despite what the title might lead you to believe, this keyword
+            # actually contains a full datetime string.
+            blend_rule: maxdatetime
           obs_id:
             title: Programmatic observation identifier
             type: string
@@ -229,6 +232,10 @@ properties:
             type: string
             fits_keyword: OBSLABEL
             blend_table: True
+          observation_folder:
+            title: Name of the APT observation folder
+            type: string
+            fits_keyword: OBSFOLDR
       visit:
         title: Visit information
         type: object
@@ -238,6 +245,12 @@ properties:
             type: string
             enum: [OK, SUSPECT]
             fits_keyword: ENG_QUAL
+            blend_table: True
+          pointing_engdb_quality:
+            title: Quality of pointing information from EngDB
+            type: string
+            enum: [CALCULATED, PLANNED]
+            fits_keyword: ENGQLPTG
             blend_table: True
           type:
             title: Visit type
@@ -348,11 +361,18 @@ properties:
             type: number
             fits_keyword: PROP_DEC
             blend_table: True
-          source_type:
-            title: Advised source type (point/extended)
+          source_type_apt:
+            title: Source type from APT (point/extended)
             type: string
-            fits_keyword: SRCTYPE
+            enum: [EXTENDED, POINT, UNKNOWN]
+            fits_keyword: SRCTYAPT
             blend_table: True
+          source_type:
+            title: Source type used for calibration
+            type: string
+            enum: [EXTENDED, POINT, UNKNOWN]
+            fits_keyword: SRCTYPE
+            fits_hdu: SCI
       instrument:
         title: Instrument configuration information
         type: object
@@ -368,16 +388,19 @@ properties:
             type: string
             enum: [NRCA1, NRCA2, NRCA3, NRCA4, NRCALONG, NRCB1, NRCB2, NRCB3, NRCB4,
               NRCBLONG, NRS1, NRS2, ANY, MIRIMAGE, MIRIFULONG, MIRIFUSHORT,
-              NIS, GUIDER1, GUIDER2, N/A]
+              NIS, GUIDER1, GUIDER2, N/A, MULTIPLE]
             fits_keyword: DETECTOR
             blend_table: True
+            blend_rule: multi
           module:
-            title: 'NIRCam module: A or B'
+            title: 'NIRCam module: A, B, or MULTIPLE'
             type: string
+            enum: [A, B, MULTIPLE]
             fits_keyword: MODULE
             blend_table: True
+            blend_rule: multi
           channel:
-            title: 'NIRCam channel: long or short'
+            title: Instrument channel
             type: string
             # Values grouped by instrument:
             anyOf:
@@ -437,6 +460,7 @@ properties:
           fixed_slit:
             title: Name of fixed slit aperture used
             type: string
+            enum: [S200A1, S200A2, S200B1, S400A1, S1600A1, NONE]
             fits_keyword: FXD_SLIT
             blend_table: True
           focus_position:
@@ -458,10 +482,20 @@ properties:
           coronagraph:
             title: coronagraph mask used
             type: string
-            enum: [4QPM, 4QPM_1065, 4QPM_1140, 4QPM_1550,
-                   LYOT, LYOT_2300,
-                   MASK210R, MASKSWB, MASK335R, MASK430R, MASKLWB,
-                   NONE]
+            anyOf:
+              # MIRI
+              - enum:
+                  [4QPM, 4QPM_1065, 4QPM_1140, 4QPM_1550,
+                   LYOT, LYOT_2300]
+              # NIRCam
+              - enum:
+                  [MASKA210R, MASKA335R, MASKA430R, MASKALWB, MASKASWB]
+              # All
+              - enum:
+                  [NONE]
+              # Obsolete NIRCam
+              - enum:
+                  [MASK210R, MASK335R, MASK430R, MASKLWB, MASKSWB]
             fits_keyword: CORONMSK
             blend_table: True
           msa_state:
@@ -489,6 +523,13 @@ properties:
             title: Internal lamp state
             type: string
             fits_keyword: LAMP
+            blend_table: True
+          lamp_mode:
+            title: Lamp operating mode
+            type: string
+            default: 'NONE'
+            enum: [BRIGHTOBJ, FIXEDSLIT, GRATING-ONLY, IFU, MSASPEC, 'NONE']
+            fits_keyword: OPMODE
             blend_table: True
           gwa_xtilt:
             title: Grating Y tilt angle relative to mirror
@@ -560,53 +601,102 @@ properties:
               FGS_ACQ1, FGS_ACQ2, FGS_FINEGUIDE, FGS_ID-IMAGE, FGS_ID-STACK, FGS_TRACK,
               # MIRI
               MIR_4QPM, MIR_CORONCAL, MIR_DARKALL, MIR_DARKIMG, MIR_DARKMRS,
-              MIR_FLATALL, MIR_FLATIMAGE, MIR_FLATIMAGE-EXT, MIR_FLATMRS, MIR_FLATMRS-EXT,
-              MIR_IMAGE, MIR_LRS-FIXEDSLIT, MIR_LRS-SLITLESS, MIR_LYOT, MIR_MRS, MIR_TACQ,
+              MIR_FLATIMAGE, MIR_FLATIMAGE-EXT, MIR_FLATMRS, MIR_FLATMRS-EXT,
+              MIR_IMAGE, MIR_LRS-FIXEDSLIT, MIR_LRS-SLITLESS, MIR_LYOT, MIR_MRS,
+              MIR_TACONFIRM, MIR_TACQ,
               # NIRISS
               NIS_AMI, NIS_DARK, NIS_EXTCAL, NIS_FOCUS, NIS_IMAGE, NIS_LAMP,
               NIS_SOSS, NIS_TACQ, NIS_TACONFIRM, NIS_WFSS,
               # NIRCam
-              NRC_CORON, NRC_DARK, NRC_FLAT, NRC_FOCUS, NRC_IMAGE, NRC_WFSS,
+              NRC_CORON, NRC_DARK, NRC_FLAT, NRC_FOCUS, NRC_GRISM, NRC_IMAGE, NRC_WFSS,
               NRC_LED, NRC_WFSC, NRC_TACONFIRM, NRC_TACQ, NRC_TSGRISM, NRC_TSIMAGE,
               # NIRSpec
               NRS_AUTOFLAT, NRS_AUTOWAVE, NRS_BRIGHTOBJ, NRS_CONFIRM, NRS_DARK,
               NRS_FIXEDSLIT, NRS_FOCUS, NRS_IFU, NRS_IMAGE, NRS_LAMP, NRS_MIMF,
-              NRS_MSASPEC, NRS_MSATA, NRS_TACONFIRM, NRS_TACQ, NRS_TASLIT, NRS_WATA,
+              NRS_MSASPEC, NRS_MSATA, NRS_TACONFIRM, NRS_TACQ, NRS_TASLIT,
+              NRS_VERIFY, NRS_WATA,
               # Misc
               N/A, ANY]
             fits_keyword: EXP_TYPE
             blend_table: True
           start_time:
-            allOf:
-              - type: number
-              - fits_keyword: EXPSTART
-                title: UTC exposure start time
-                blend_table: True
-                blend_rule: first
+            title: UTC exposure start time
+            type: number
+            fits_keyword: EXPSTART
+            blend_table: True
+            blend_rule: min
+          start_time_mjd:
+            title: "[d] exposure start time in MJD"
+            type: number
+            fits_keyword: MJD-BEG
+            fits_hdu: SCI
+            blend_table: True
+            blend_rule: min
           mid_time:
-            allOf:
-              - type: number
-              - fits_keyword: EXPMID
-                title: UTC exposure mid time
-                blend_table: True
-                blend_rule: mean
+            title: UTC exposure mid time
+            type: number
+            fits_keyword: EXPMID
+            blend_table: True
+            blend_rule: mean
+          mid_time_mjd:
+            title: "[d] exposure mid-point in MJD"
+            type: number
+            fits_keyword: MJD-AVG
+            fits_hdu: SCI
+            blend_table: True
+            blend_rule: mean
           end_time:
-            allOf:
-              - type: number
-                title: UTC exposure end time
-                fits_keyword: EXPEND
-                blend_table: True
-                blend_rule: last
+            title: UTC exposure end time
+            type: number
+            fits_keyword: EXPEND
+            blend_table: True
+            blend_rule: max
+          end_time_mjd:
+            title: "[d] exposure end time in MJD"
+            type: number
+            fits_keyword: MJD-END
+            fits_hdu: SCI
+            blend_table: True
+            blend_rule: max
+          start_time_tdb:
+            title: "[d] TDB time of exposure start in MJD"
+            type: number
+            fits_keyword: TDB-BEG
+            fits_hdu: SCI
+            blend_table: True
+            blend_rule: min
+          mid_time_tdb:
+            title: "[d] TDB time of exposure mid-point in MJD"
+            type: number
+            fits_keyword: TDB-MID
+            fits_hdu: SCI
+            blend_table: True
+            blend_rule: mean
+          end_time_tdb:
+            title: "[d] TDB time of exposure end in MJD"
+            type: number
+            fits_keyword: TDB-END
+            fits_hdu: SCI
+            blend_table: True
+            blend_rule: max
+          start_time_eng:
+            title: UTC exposure start time from engineering data
+            type: string
+            fits_keyword: EXPSTENG
+          osf_file:
+            title: Observatory Status File name covering this exposure
+            type: string
+            fits_keyword: OSF_FILE
           readpatt:
             title: Readout pattern
             type: string
-            enum: [ACQ1, ACQ2, BRIGHT1, BRIGHT2,
-              DEEP2, DEEP8, FAST, FASTGRPAVG,
+            enum: [ACQ1, ACQ2, BRIGHT1, BRIGHT2, DEEP2, DEEP8, FAST,
+              FASTGRPAVG, FASTGRPAVG8, FASTGRPAVG16, FASTGRPAVG32, FASTGRPAVG64,
               FGS, FGS60, FGS8370, FGS840, FGSRAPID, FINEGUIDE,
               ID, MEDIUM2, MEDIUM8, NIS, NISRAPID,
               NRS, NRSIRS2, NRSN16R4, NRSN32R8, NRSN8R2,
-              NRSRAPID, NRSIRS2RAPID, NRSSLOW, RAPID,
-              SHALLOW2, SHALLOW4, SLOW, TRACK, ANY, N/A]
+              NRSRAPID, NRSIRS2RAPID, NRSRAPIDD1, NRSRAPIDD2, NRSRAPIDD6,
+              NRSSLOW, RAPID, SHALLOW2, SHALLOW4, SLOW, TRACK, ANY, N/A]
             fits_keyword: READPATT
             blend_table: True
           segment_number:
@@ -652,6 +742,16 @@ properties:
             title: Number of frames per group
             type: integer
             fits_keyword: NFRAMES
+            blend_table: True
+          miri_fsw_ngroups:
+            title: MIRI flight system number of groups
+            type: integer
+            fits_keyword: MIRNGRPS
+            blend_table: True
+          miri_fsw_nframes:
+            title: MIRI flight system number of frames
+            type: integer
+            fits_keyword: MIRNFRMS
             blend_table: True
           frame_divisor:
             title: Divisor applied to frame-averaged groups
@@ -704,10 +804,24 @@ properties:
             fits_keyword: EFFEXPTM
             blend_rule: sum
             blend_table: True
+          effective_exposure_time:
+            title: "[s] Effective exposure time"
+            type: number
+            fits_keyword: XPOSURE
+            fits_hdu: SCI
+            blend_rule: sum
+            blend_table: True
           duration:
             title: "[s] Total duration of exposure"
             type: number
             fits_keyword: DURATION
+            blend_rule: sum
+            blend_table: True
+          elapsed_exposure_time:
+            title: "[s] Total elapsed exposure time"
+            type: number
+            fits_keyword: TELAPSE
+            fits_hdu: SCI
             blend_rule: sum
             blend_table: True
           nresets_at_start:
@@ -751,7 +865,7 @@ properties:
             fits_keyword: NRS_REF
             blend_table: True
           clock_adjust_rate:
-            title: Spacecraft Clock Time Adjust RATE
+            title: "[ms/s] Spacecraft Clock Time Adjust RATE"
             type: number
             fits_keyword: SCTARATE
             blend_table: True
@@ -789,7 +903,10 @@ properties:
                  [8X8, 32X32, 128X128, 2048X64,
                   SUB128CNTR, SUB128DIAG, SUB128LL,
                   SUB32CNTR, SUB32DIAG, SUB32LL,
-                  SUB8CNTR, SUB8DIAG, SUB8LL]
+                  SUB8CNTR, SUB8DIAG, SUB8LL,
+                  SUBIDSTRIPCENTER, SUBIDSTRIPLL,
+                  SUBTUNE32CENTERG1, SUBTUNE32CENTERG2,
+                  SUBTUNE32LLG1, SUBTUNE32LLG2]
               # MIRI
               - enum:
                  [BRIGHTSKY, MASK1065, MASK1140, MASK1550, MASKLYOT,
@@ -892,8 +1009,31 @@ properties:
           primary_type:
             title: Primary dither pattern type
             type: string
-            enum: [CYCLING, EXTENDED_TARGET, FULL, FULL-TIGHT, GAUSSIAN,
-              INTRAMODULE, INTRASCA, NONE, POINT_SOURCE, REULEAUX, WFSC]
+            enum:
+              # MIRI coron
+             [5-POINT-SMALL-GRID, 9-POINT-SMALL-GRID,
+              # MIRI imaging
+              4-POINT-SETS, CYCLING, GAUSSIAN, REULEAUX, WFSC,
+              # MIRI LRS slit
+              7PIX-5PIX-SLIT-SCAN, ALONG-SLIT-NOD, MAPPING,
+              # MIRI LRS sliteless
+              2PIXEL-SLITLESS-SCAN-SHORT, EXTENDED-FLAT-SLITLESS,
+              # MIRI MRS
+              2-POINT, 4-POINT, EXTENDED-SOURCE, POINT-SOURCE,
+              # NIRCam
+              FULL, FULLBOX, FULL-TIGHT,
+              INTRAMODULE, INTRAMODULEBOX, INTRAMODULEX, INTRASCA,
+              SUBARRAY-DITHER,
+              # NIRISS
+              AMI, IMAGING, MIMF, PARALLEL, WFSS,
+              # NIRSpec FS, IFU, and MOS
+              2-POINT-WITH-NIRCAM-SIZE1, 2-POINT-WITH-NIRCAM-SIZE2, 2-POINT-WITH-NIRCAM-SIZE3,
+              3-POINT-WITH-NIRCAM-SIZE1, 3-POINT-WITH-NIRCAM-SIZE2, 3-POINT-WITH-NIRCAM-SIZE3,
+              2-POINT-NOD, 3-POINT-NOD, 5-POINT-NOD,
+              # NIRSpec IFU
+              4-POINT-NOD, 4-POINT-DITHER, CYCLING, SPARSE-CYCLING,
+              # Misc
+              N/A, NONE, ANY]
             fits_keyword: PATTTYPE
             blend_table: True
           position_number:
@@ -901,7 +1041,7 @@ properties:
             type: integer
             fits_keyword: PATT_NUM
             blend_table: True
-          starting_point:
+          pattern_start:
             title: Starting point in pattern
             type: integer
             fits_keyword: PATTSTRT
@@ -911,15 +1051,14 @@ properties:
             type: integer
             fits_keyword: NUMDTHPT
             blend_table: True
-          pattern_size:
-            title: "[arcsec] Primary dither pattern size"
-            type: number
-            fits_keyword: PATTSIZE
+          dither_points:
+            title: Total number of points in image dither pattern
+            fits_keyword: NRIMDTPT
             blend_table: True
-          subpixel_type:
-            title: Subpixel dither type
+          pattern_size:
+            title: "Primary dither pattern size"
             type: string
-            fits_keyword: SUBPXTYP
+            fits_keyword: PATTSIZE
             blend_table: True
           subpixel_number:
             title: Subpixel pattern number
@@ -934,7 +1073,6 @@ properties:
           subpixel_dither_pattern:
             title: subpixel dither pattern
             type: string
-            enum: [BOTH, SPATIAL, SPECTRAL, NONE]
             fits_keyword: SUBPXPAT
             blend_table: True
           spectral_position_number:
@@ -977,11 +1115,6 @@ properties:
             type: number
             fits_keyword: SPTOFFST
             blend_table: True
-          slitlet_points:
-            title: Number of slitlet offsets in spectral direction
-            type: integer
-            fits_keyword: SLIT_OFF
-            blend_table: True
           x_offset:
             title: x offset from pattern starting position
             type: number
@@ -992,6 +1125,39 @@ properties:
             type: number
             fits_keyword: YOFFSET
             blend_table: True
+          starting_set:
+            title: Starting 4-point set number
+            type: integer
+            enum: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+            fits_keyword: DSETSTRT
+          number_of_sets:
+            title: Total number of 4-point sets
+            type: integer
+            enum: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+            fits_keyword: NUMDSETS
+          direction:
+            title: Direction of dither pattern offsets
+            type: string
+            enum: [NEGATIVE, POSITIVE, NONE]
+            fits_keyword: DITHDIRC
+          optimized_for:
+            title: Dither pattern optimization
+            type: string
+            enum: ["POINT-SOURCE", "EXTENDED-SOURCE", NONE]
+            fits_keyword: DITHOPFR
+          sparse_points:
+            title: Sparse cycling dither points
+            type: string
+            fits_keyword: DITHPNTS
+          primary_channel:
+            title: MRS primary channel
+            type: string
+            enum: [ALL, CHANNEL1, CHANNEL2, CHANNEL3, CHANNEL4]
+            fits_keyword: MRSPRCHN
+          dither_points:
+            title: Total number of points in primary dither pattern
+            type: string
+            fits_keyword: NDITHPTS
       ephemeris:
         title: JWST ephemeris information
         type: object
@@ -1307,70 +1473,20 @@ properties:
             type: string
             fits_keyword: GS_EPOCH
             blend_table: True
-          gs_jmag:
-            title: Guide star NIR J magnitude
+          gs_mura:
+            title: Guide star IRCS right ascension proper motion
             type: number
-            fits_keyword: GS_JMAG
-            blend_table: True
-          gs_hmag:
-            title: Guide star NIR H magnitude
-            type: number
-            fits_keyword: GS_HMAG
-            blend_table: True
-          gs_kmag:
-            title: Guide star NIR K magnitude
-            type: number
-            fits_keyword: GS_KMAG
-            blend_table: True
-          gs_jitter_rms:
-            title: "[arcsec] RMS jitter over the exposure"
-            type: number
-            fits_keyword: JITTERMS
+            fits_keyword: GS_MURA
             blend_table: True
           gs_mudec:
             title: Guide star IRCS declination proper motion
             type: number
             fits_keyword: GS_MUDEC
             blend_table: True
-          gs_mura:
-            title: Guide star IRCS right ascension proper motion
-            type: number
-            fits_keyword: GS_MURA
-            blend_table: True
           gs_para:
             title: Guide star annual parallax
             type: number
             fits_keyword: GS_PARA
-            blend_table: True
-          gs_srcjm:
-            title: Guide star NIR J magnitude source
-            type: string
-            fits_keyword: GS_SRCJM
-            blend_table: True
-          gs_srchm:
-            title: Guide star NIR H magnitude source
-            type: string
-            fits_keyword: GS_SRCHM
-            blend_table: True
-          gs_srckm:
-            title: Guide star NIR K magnitude source
-            type: string
-            fits_keyword: GS_SRCKM
-            blend_table: True
-          gs_ujmag:
-            title: Guide star NIR J magnitude uncertainy
-            type: number
-            fits_keyword: GS_UJMAG
-            blend_table: True
-          gs_uhmag:
-            title: Guide star NIR H magnitude uncertainy
-            type: number
-            fits_keyword: GS_UHMAG
-            blend_table: True
-          gs_ukmag:
-            title: Guide star NIR K magnitude uncertainy
-            type: number
-            fits_keyword: GS_UKMAG
             blend_table: True
       ref_file:
         title: Reference file information
@@ -1831,6 +1947,15 @@ properties:
                 type: string
                 fits_keyword: R_V2V3
                 blend_table: True
+          wavecorr:
+            title: Zero point wavelength correction for Nirspec MOS and FS mode
+            type: object
+            properties:
+              name:
+                title: Zero point wavelength correction reference file name
+                type: string
+                fits_keyword: R_WAVCOR
+                blend_table: True
           wavelengthrange:
             title: Wavelength Range reference file information
             type: object
@@ -1868,6 +1993,11 @@ properties:
             title: Assign World Coordinate System
             type: string
             fits_keyword: S_WCS
+            blend_table: True
+          assign_mtwcs:
+            title: Assign Moving Target World Coordinate System
+            type: string
+            fits_keyword: S_MTWCS
             blend_table: True
           back_sub:
             title: Background subtraction
@@ -1979,6 +2109,11 @@ properties:
             type: string
             fits_keyword: S_LINEAR
             blend_table: True
+          master_background:
+            title: Master Background Subtraction
+            type: string
+            fits_keyword: S_MSBSUB
+            blend_table: True
           mrs_imatch:
             title: MIRI MRS background matching
             type: string
@@ -2079,6 +2214,11 @@ properties:
             type: string
             fits_keyword: S_TWKREG
             blend_table: True
+          wavecorr:
+            title: NIRSpec wavelength correction
+            type: string
+            fits_keyword: S_WAVCOR
+            blend_table: True
           wfs_combine:
             title: Wavefront Sensing Combination
             type: string
@@ -2089,6 +2229,31 @@ properties:
             type: string
             fits_keyword: S_WHTLIT
             blend_table: True
+      tweakreg_catalog:
+        title: Tweakreg catalog filename
+        type: string
+        fits_keyword: TCATFILE
+      source_catalog:
+        title: Source catalog filename
+        type: string
+        fits_keyword: SCATFILE
+      resample:
+        title: Resample Parameters
+        type: object
+        properties:
+          pointings:
+            title: "Number of groups/pointings included in resampled product"
+            type: integer
+            fits_keyword: NDRIZ
+          product_exposure_time:
+            title: "[s] Total exposure time for product"
+            type: number
+            fits_keyword: TEXPTIME
+          weight_type:
+            title: Type of drizzle weighting to use in resampling input
+            type: string
+            enum: [exptime, error]
+            fits_keyword: RESWHT
       background:
         title: Background information
         type: object
@@ -2127,4 +2292,7 @@ properties:
                 channel:
                   title: Channel ID
                   type: string
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema
+          master_background_file:
+            title: Master background file used
+            type: string
+            fits_keyword: MASTERBG

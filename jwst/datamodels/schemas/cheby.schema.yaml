@@ -1,0 +1,60 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/cheby.schema"
+type: object
+properties:
+  cheby_coefficents:
+    title: table of polynomial coefficients for moving targets
+    fits_hdu: CHEBY
+    datatype:
+    - name: target_name
+      datatype: [ascii, 31]
+    - name: program
+      datatype: int32
+    - name: visit_id
+      datatype: [ascii, 11]
+    - name: constraint_scenario
+      datatype: [ascii, 30]
+    - name: start_time
+      datatype: [ascii, 30]
+    - name: end_time
+      datatype: [ascii, 30]
+    - name: degree
+      datatype: float64
+    - name: x00
+      datatype: float64
+    - name: y00
+      datatype: float64
+    - name: z00
+      datatype: float64
+    - name: x01
+      datatype: float64
+    - name: y01
+      datatype: float64
+    - name: z01
+      datatype: float64
+    - name: x02
+      datatype: float64
+    - name: y02
+      datatype: float64
+    - name: z02
+      datatype: float64
+    - name: x03
+      datatype: float64
+    - name: y03
+      datatype: float64
+    - name: z03
+      datatype: float64
+    - name: x04
+      datatype: float64
+    - name: y04
+      datatype: float64
+    - name: z04
+      datatype: float64
+    - name: x05
+      datatype: float64
+    - name: y05
+      datatype: float64
+    - name: z05
+      datatype: float64

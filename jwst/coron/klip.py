@@ -43,14 +43,12 @@ def klip(target_model, refs_model, truncate):
     for i in range(target_model.data.shape[0]):
 
         # Load the target data array and flatten it from 2-D to 1-D
-        target = target_model.data[i]
-        target = target.astype(np.float64)
+        target = target_model.data[i].astype(np.float64)
         tshape = target.shape
         target = target.reshape(-1)
 
         # Load the reference psf arrays and flatten them from 3-D to 2-D
-        refs = refs_model.data[i]
-        refs = refs.astype(np.float64)
+        refs = refs_model.data[i].astype(np.float64)
         rshape = refs.shape
         nrefs = rshape[0]
         refs = refs.reshape(nrefs, rshape[1] * rshape[2])
@@ -69,8 +67,8 @@ def klip(target_model, refs_model, truncate):
         psfimg = np.dot(klvect.T, np.dot(target, klvect.T))
 
         # Subtract the PSF fit from the target image
-        outimg = target - np.mean(target, dtype=np.float64)
-        outimg = outimg - psfimg
+        outimg = target - target.mean()
+        outimg -= psfimg
 
         # Unflatten the PSF and subtracted target images from 1-D to 2-D
         # and copy them to the output models

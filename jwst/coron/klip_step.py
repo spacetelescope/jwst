@@ -33,7 +33,7 @@ class KlipStep(Step):
             refs_model = datamodels.open(psfrefs)
 
             # Call the KLIP routine
-            (psf_sub, psf_fit) = klip.klip(target_model, refs_model, truncate)
+            psf_sub, psf_fit = klip.klip(target_model, refs_model, truncate)
 
         # Update the step completion status
         psf_sub.meta.cal_step.klip = 'COMPLETE'

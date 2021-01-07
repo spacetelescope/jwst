@@ -1,0 +1,85 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/steppars.schema"
+type: object
+properties:
+  meta:
+    type: object
+    properties:
+      date:
+        title: Date this file was created (UTC)
+        type: string
+      origin:
+        title: Organization responsible for creating file
+        type: string
+      time_sys:
+        title: principal time system for time-related keywords
+        type: string
+      time_unit:
+        title: Default unit applicable to all time values
+        type: string
+        default: 's'
+      filename:
+        title: Name of the file
+        type: string
+      filetype:
+        title: Type of data in the file
+        type: string
+      model_type:
+        title: Type of data model
+        type: string
+      telescope:
+        title: Telescope used to acquire the data
+        type: string
+        default: JWST
+      reftype:
+        title: Reference file type
+        type: string
+        default: pars-step
+      pedigree:
+        title: The pedigree of the reference file
+        type: string
+        default: SPECIFY pedigree such as "GROUND"
+      description:
+        title: Description of the reference file
+        type: string
+        default: Parameters for calibration step SPECIFY
+      author:
+        title: Author of the reference file
+        type: string
+        default: SPECIFY AUTHOR
+      useafter:
+        title: Use after date of the reference file
+        type: string
+        default: SPECIFY
+      instrument:
+        title: Instrument configuration information
+        type: object
+        properties:
+          name:
+            title: Instrument used to acquire the data
+            type: string
+            enum: [NIRCAM, NIRSPEC, MIRI, TFI, FGS, NIRISS, ANY, N/A]
+          detector:
+            title: Name of detector used to acquire the data
+            type: string
+            enum: [NRCA1, NRCA2, NRCA3, NRCA4, NRCALONG, NRCB1, NRCB2, NRCB3, NRCB4,
+              NRCBLONG, NRS1, NRS2, ANY, MIRIMAGE, MIRIFULONG, MIRIFUSHORT,
+              NIS, GUIDER1, GUIDER2, N/A]
+            description: Detector name.
+        required: [name]
+    required: [date, reftype, pedigree, description, author, instrument]
+  parameters:
+    type: object
+    properties:
+      class:
+        title: Fully qualified Step class
+        type: string
+        default: jwst.stpipe.Step
+      name:
+        title: Nickname for the Step
+        type: string
+        default: step
+    required: [class, name]
+required: [meta, parameters]

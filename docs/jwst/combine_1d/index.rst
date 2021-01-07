@@ -1,3 +1,5 @@
+.. _combine_1d_step:
+
 ==================
 Combine 1D Spectra
 ==================

@@ -1,9 +1,13 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/asdf/asdf-schema-1.0.0"
+id: "http://stsci.edu/schemas/jwst_datamodel/distortion_mrs.schema"
 title: Distortion data model for MIRI MRS reference data
 allOf:
-- $ref: referencefile.schema.yaml
-- $ref: keyword_band.schema.yaml
-- $ref: keyword_channel.schema.yaml
-- $ref: keyword_exptype.schema.yaml
+- $ref: referencefile.schema
+- $ref: keyword_band.schema
+- $ref: keyword_channel.schema
+- $ref: keyword_exptype.schema
 - type: object
   properties:
     slices:
@@ -15,7 +19,7 @@ allOf:
     x_model:
       type: array
       items:
-        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
       description: |
         Transform from (alpha, beta) to detector x coordinate.
         The transform is a Polynomial as a function of alpha and lambda.
@@ -24,7 +28,7 @@ allOf:
     y_model:
       type: array
       items:
-        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
       description: |
         Transform from (alpha, beta) to detector y coordinate.
         The transform is a Polynomial as a function of alpha and lambda.
@@ -33,7 +37,7 @@ allOf:
     alpha_model:
       type: array
       items:
-        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
       description: |
         Transform from detector (x, y) coordinates to alpha coordinate
         in a subchannel cube. The transform is a Polynomial as a function of x and y.
@@ -41,7 +45,7 @@ allOf:
     beta_model:
       type: array
       items:
-        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
       description: |
         Transform from detector (x, y) coordinates to a beta coordinate
         in a subchannel cube.
@@ -87,7 +91,7 @@ allOf:
         model:
           type: array
           items:
-            $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+            $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
     meta:
       type: object
       properties:

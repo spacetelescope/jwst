@@ -1,3 +1,7 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/photometry.schema"
 type: object
 properties:
   meta:
@@ -31,4 +35,3 @@ properties:
             fits_keyword: PIXAR_A2
             fits_hdu: SCI
             blend_table: True
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema

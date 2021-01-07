@@ -1,14 +1,10 @@
 Step Arguments
 ==============
 
-The flat_field step has one step-specific argument, and it is only
+The ``flat_field`` step has one step-specific argument, and it is only
 relevant for NIRSpec data.
 
-*  ``--flat_suffix``
-
-``flat_suffix`` is a string, the suffix to use when constructing the
-name of on optional output file for on-the-fly flat fields.  If
-``flat_suffix`` is specified (and if the input data are NIRSpec),
-the extracted and interpolated flat fields will be saved to a file with
-this suffix.  The default (if ``flat_suffix`` was not specified) is to
-not write this optional output file.
+``--save_interpolated_flat``
+  is a boolean that indicates whether to save to a file the NIRSpec
+  flat field that was constructed on-the-fly by the step.
+  The default is False (do not save).

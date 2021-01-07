@@ -39,7 +39,7 @@ from astropy.time import Time
 
 # LOCAL
 from . import util
-from . import __version__
+from jwst import __version__
 
 bool = __builtins__['bool']
 str = __builtins__['str']

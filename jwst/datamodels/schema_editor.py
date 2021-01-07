@@ -42,33 +42,34 @@
 # line. Options that are not set are assumed to be false. To list the
 # options, invoke the script with --help on the command line.
 
+import argparse
+from collections import OrderedDict
+import datetime
+import inspect
 import os
+import os.path
 import re
 import sys
-import os.path
-import inspect
-import datetime
-import argparse
 from urllib.parse import urlparse
-from collections import OrderedDict
+import yaml
 
 from asdf import schema as aschema
-from asdf import resolver as aresolver
 from asdf import generic_io
 from asdf import reference
 from asdf import treeutil
+from asdf.extension import get_default_resolver
 
-from . import model_base
+from . import JwstDataModel
 
 
 def enquote(value):
-     """
-     Put quote marks around value if it contains special characters
-     """
-     if re.search(r'[^a-zA-Z0-9_ \t\v\(\)]', value):
-         value = re.sub("'", "''", value)
-         value = "'" + value + "'"
-     return value
+    """
+    Put quote marks around value if it contains special characters
+    """
+    if re.search(r'[^a-zA-Z0-9_ \t\v\(\)]', value):
+        value = re.sub("'", "''", value)
+        value = "'" + value + "'"
+    return value
 
 def is_long_line(prefix, value, sep, max_length=80):
     """
@@ -210,7 +211,7 @@ class Keyword_db:
                    If blank, use the current directory
         """
 
-        directory = self.find_directory(directory, "JWSTDP")
+        directory = self.find_directory(directory)
         if directory is None:
             raise ValueError("Cannot locate keyword database directory")
 
@@ -244,7 +245,7 @@ class Keyword_db:
                     this_subschema = this_schema[name]
 
                     if "properties" not in this_subschema:
-                         raise ValueError(error_msg + name)
+                        raise ValueError(error_msg + name)
 
                     if ("allOf" in this_subschema["properties"] or
                         "allOf" in other_subschema["properties"]):
@@ -335,30 +336,19 @@ class Keyword_db:
         return keyword_dict
 
 
-    def find_directory(self, directory, prefix):
+    def find_directory(self, directory):
         """
-        Find a directory with a given prefix in the specified directory
+        Return full path to requested directory
+
+        Notes
+        -----
+        There was originally some functionality involving a prefix.
+        This functionality has been removed.
         """
         if len(directory) == 0:
             directory = os.getcwd()
 
-        directory_path = os.path.split(directory)
-        if directory_path[1].startswith(prefix):
-            chosen_dir = directory
-
-        else:
-            chosen_dir = None
-            for subdirectory in os.listdir(directory):
-                if os.path.isdir(subdirectory) and subdirectory.startswith(prefix):
-                    if chosen_dir is None:
-                        chosen_dir = subdirectory
-                    elif subdirectory > chosen_dir:
-                        # Naming convention means that more recent directories
-                        # have names later in alphabetical order
-                        chosen_dir = subdirectory
-
-        if chosen_dir is not None:
-            chosen_dir = os.path.join(os.path.abspath(chosen_dir), "")
+        chosen_dir = os.path.join(os.path.abspath(directory), "")
 
         return chosen_dir
 
@@ -380,8 +370,8 @@ class Keyword_db:
 
 
         def merge_enums(merged_subschema, dictionary):
-           merged_subschema["enum"] = list(set(merged_subschema["enum"]) |
-                                              set(dictionary["enum"]))
+            merged_subschema["enum"] = list(set(merged_subschema["enum"]) |
+                                            set(dictionary["enum"]))
 
         merged_subschema = OrderedDict()
         for dictionary in schema:
@@ -396,7 +386,7 @@ class Keyword_db:
         """
         Resolve urls in the schema
         """
-        resolver = aresolver.default_url_mapping
+        resolver = get_default_resolver()
 
         def resolve_refs(node, json_id):
             if json_id is None:
@@ -429,18 +419,39 @@ class Keyword_db:
 
 
 class Model_db:
-    def __init__(self):
-        """
-        Load the list of datamodels schema files from the schema directory
-        """
-        source_file = os.path.abspath(inspect.getfile(model_base.DataModel))
+    """
+    Load the list of datamodels schema files from the schema directory
+
+    Parameters
+    ----------
+    exclude: None or [str[,...]]
+        List of `DataModel` schemas to ignore.
+
+    Attributes
+    ----------
+    base_url: str
+        The location of the `DataModel` schemas
+
+    schema_files: [str[...]]
+        The schema files loaded.
+    """
+
+    def __init__(self, exclude=None):
+        if exclude is None:
+            exclude = []
+
+        source_file = os.path.abspath(inspect.getfile(JwstDataModel))
         self.base_url = os.path.join(os.path.dirname(source_file),
                                      'schemas', '')
         self.schema_files = []
 
         for filename in os.listdir(self.base_url):
-            if filename.endswith(".yaml"):
+            if filename.endswith(".yaml") and filename not in exclude:
                 self.schema_files.append(filename)
+
+
+    def __len__(self):
+        return len(self.schema_files)
 
 
     def __iter__(self):
@@ -480,25 +491,24 @@ class Options:
          files to match information in the keyword database. You have control
          over which changes are made when the editor is run.
 
-         Before starting, download the keyword database files from
+         Before starting, refer to the process document found at:
+         https://innerspace.stsci.edu/display/SCSB/Keyword+Dictionary+JSON+vs.+YAML+Comparison+Process
 
-         https://iwjwdmsdauiwebv.stsci.edu/portal/Mashup/Clients/jwkeywords/
 
-         and unpack them. Then run this script. First it will ask you for
-         the name of the directory containing the keyword database and the
-         output directory you want the changed model schemas written to.
-         Then it will ask you what kind of changes you wish to make to the
-         schema files. (Additions to the schema, deletions, and so on.)
-         Then it will determine the differences, display them one at a time,
-         and ask if you want to make the change. If you say yes, the change
-         will be made to the schema. Finally, it will create a new subdirectory
-         in the output directory whose name starts with "schemas" and write
-         all modified schemas to that directory. It will also write the options
-         to a file in  your home directory so that the next time the script
-         is run it will not ask you about the same changes twice. It is a
-         text file, you can edit it or delete it. You are seeing the message
-         because no options file was found in your home directory. If one
-         is found, this message  will not be displayed.
+         Retrieve the JWST Keyword Database as described. Then run this script.
+         First it will ask you for the name of the directory containing the
+         keyword database and the output directory you want the changed model
+         schemas written to. Then it will ask you what kind of changes you wish
+         to make to the schema files. (Additions to the schema, deletions, and
+         so on.) Then it will determine the differences, display them one at a
+         time, and ask if you want to make the change. If you say yes, the
+         change will be made to the schema. Finally, it will create a new
+         subdirectory in the output directory whose name starts with "schemas"
+         and write all modified schemas to that directory.
+
+         If schema are modified, and keywords are omitted, a file
+         `aaa_omitted_keywords.yaml` will be created. This file can be used as
+         the input to the `--omit_file` option
 
          The first two inputs are the names of the input and output directories.
          If you leave them blank, this script will use the current directory.
@@ -506,21 +516,28 @@ class Options:
          Each question has a default answer which will be displayed as a
          capital letter (Y or N). If you hit return, the script will use
          the default value.
+
         """
 
     run_script = "do you want to continue running the editor"
 
+    # Command line options. 2 or 3-tuple where:
+    #    - name: Parameter name and full option name
+    #    - help: The help text
+    #    - Create a short option. If not present or True, a single character option,
+    #      based on the first character of the name, is created.
     prompts = (
-               ("input", "directory name containing keyword database"),
-               ("output", "directory name model schemas will be written to"),
-               ("add", "fields in the keyword db but not in the model to the model") ,
-               ("delete", "fields in the model but not in the keyword db from the model") ,
-               ("edit", "fields found in both to match the values in the keyword db") ,
-               ("rename", "fields in the model to match the names in the keyword db") ,
-               ("list", "changes without making them"),
-               ("query", "for approval of changes before they are made"),
-               ("omit", "")
-            )
+        ("input", "directory name containing keyword database"),
+        ("output", "directory name model schemas will be written to"),
+        ("add", "fields that exist in the keyword db but are not in the model schemas"),
+        ("delete", "fields in the model but not in the keyword db from the model"),
+        ("edit", "fields found in both to match the values in the keyword db"),
+        ("rename", "fields in the model to match the names in the keyword db"),
+        ("list", "changes without making them"),
+        ("query", "for approval of changes before they are made"),
+        ("omit_file", "containing the list of parameters to omit", False),
+        ("exclude_file", "containing the list of DataModel schema to exclude from the comparison", False)
+    )
 
 
     def __init__(self, filename=None):
@@ -601,7 +618,7 @@ class Options:
         Save the object's fields into a dictionary
         """
         parameters = {}
-        for name, prompt in self.prompts:
+        for name, prompt, *abbrev in self.prompts:
             parameters[name] = getattr(editor, name)
 
         return parameters
@@ -616,14 +633,18 @@ class Options:
         for prompt in self.prompts:
             if prompt[1]:
                 name = prompt[0]
-                help_text = " ".join(prompt)
+                help_text = " ".join(prompt[:2])
                 full = "--" + name
-                abbrev = full[1:3]
+                if len(prompt) > 2 and not prompt[2]:
+                    option_names = (full,)
+                else:
+                    abbrev = full[1:3]
+                    option_names = (abbrev, full)
                 if isinstance(parameters[name], bool):
-                    parser.add_argument(abbrev, full, help=help_text,
+                    parser.add_argument(*option_names, help=help_text,
                                         action="store_true")
                 else:
-                    parser.add_argument(abbrev, full, help=help_text)
+                    parser.add_argument(*option_names, help=help_text)
 
         args = parser.parse_args()
 
@@ -671,7 +692,7 @@ class Options:
         for prompt in self.prompts:
             if prompt[1]:
                 default_choice = parameters[prompt[0]]
-                choice = self.query_user(" ".join(prompt), default_choice)
+                choice = self.query_user(" ".join(prompt[:2]), default_choice)
                 self.type_check(parameters, prompt[0], choice)
                 parameters[prompt[0]] = choice
         return parameters
@@ -842,6 +863,10 @@ class Schema_editor:
         self.output = ""
         self.log = ""
         self.omit = set()
+        self.omit_file = ''
+        self.exclude = []
+        self.exclude_file = ''
+        self.model_db = None
 
         # Set attributes from keywds
         for name, value in keywds.items():
@@ -936,12 +961,36 @@ class Schema_editor:
             if not self.options.get(self):
                 return
 
+        # If an omit file was specified, add the contents to the omit set.
+        if self.omit_file:
+            with open(self.omit_file) as fh:
+                self.omit.update(yaml.safe_load(fh))
+
+        # If an exclude file was specified, add the list of `DataModel` schema
+        # to the exclusion list.
+        if self.exclude_file:
+            with open(self.exclude_file) as fh:
+                self.exclude.extend(yaml.safe_load(fh))
+
         # Set output file for messages depending on list,
         # so output can be captured to a file
         if self.query or self.log == "":
             self.fd = sys.stdout
         else:
             self.fd = open(self.log, "w")
+
+        # Is anything going to be done?
+        if not any((
+                self.add, self.delete, self.edit, self.rename,
+        )):
+            raise RuntimeError(
+                'No operation has been requested. Set at least one of:\n'
+                '\tadd, delete, edit, or rename'
+            )
+
+        # If not listing, get the output directory setup.
+        if not self.list:
+            output_dir = self.dated_directory(self.output, "schemas")
 
         # Parse the keyword database files
         keyword_db = Keyword_db(self.input)
@@ -951,14 +1000,14 @@ class Schema_editor:
         # Loop over the model schema files, updating them from the keyword db
 
         fits_dict = {}
-        model_db = Model_db()
+        model_db = Model_db(exclude=self.exclude)
+        self.model_db = model_db
         for schema_file in model_db:
             model_path = []
             model_schema = model_db.read(schema_file)
             self.match_fits_keywords(schema_file, model_schema, keyword_schema,
                                      keyword_dict, fits_dict, model_path)
 
-        first = True
         for schema_file in model_db:
             self.current_file_name = schema_file
             self.current_file_changed = False
@@ -970,9 +1019,6 @@ class Schema_editor:
 
             if self.current_file_changed:
                 # current_file_changed is set in report_and_query
-                if first:
-                    first = False
-                    output_dir = self.dated_directory(self.output, "schemas")
                 schema_file = os.path.join(output_dir, schema_file)
                 model_db.save(schema_file, model_schema)
 
@@ -983,11 +1029,14 @@ class Schema_editor:
                            keyword_dict, fits_dict)
 
         if self.current_file_changed:
-            if first:
-                first = False
-                output_dir = self.dated_directory(self.output, "schemas")
             schema_file = os.path.join(output_dir, schema_file)
             model_db.save(schema_file, model_schema)
+
+        # Save the list of omitted parameters
+        if not self.list and self.omit:
+            omit_path = os.path.join(output_dir, 'aaa_omitted_keywords.yaml')
+            with open(omit_path, 'w') as fh:
+                yaml.safe_dump(list(self.omit), fh)
 
         # Write the opject attributes back to disk
         if self.options is not None:

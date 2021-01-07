@@ -2,16 +2,17 @@ from ..stpipe import Step
 from .. import datamodels
 from . import ami_analyze
 
+__all__ = ["AmiAnalyzeStep"]
+
 
 class AmiAnalyzeStep(Step):
+    """Performs analysis of an AMI mode exposure by applying the LG algorithm.
     """
-    AmiAnalyzeStep: Performs analysis of an AMI mode exposure by
-    applying the LG algorithm.
-    """
-
     spec = """
         oversample = integer(default=3, min=1)  # Oversampling factor
         rotation = float(default=0.0)           # Rotation initial guess [deg]
+        psf_offset = string(default='0.0 0.0') # Psf offset values to use to create the model array
+        rotation_search = string(default='-3 3.1 1.') # Rotation search parameters: start, stop, step
     """
 
     reference_file_types = ['throughput']
@@ -30,39 +31,52 @@ class AmiAnalyzeStep(Step):
         result: AmiLgModel object
             AMI image to which the LG fringe detection has been applied
         """
-
         # Retrieve the parameter values
         oversample = self.oversample
         rotate = self.rotation
-        self.log.info('Oversampling factor = %d', oversample)
-        self.log.info('Initial rotation guess = %g deg', rotate)
+
+        # pull out parameters that are strings and change to floats
+        psf_offset = [float(a) for a in self.psf_offset.split()]
+        rotsearch_parameters = [float(a) for a in self.rotation_search.split()]
+
+        self.log.info(f'Oversampling factor =  {oversample}')
+        self.log.info(f'Initial rotation guess = {rotate} deg')
+        self.log.info(f'Initial values to use for psf offset = {psf_offset}')
+        self.log.info(f'Initial values to use for rotation search {rotsearch_parameters}')
 
         # Open the input data model
-        with datamodels.ImageModel(input) as input_model:
+        try:
+            with datamodels.ImageModel(input) as input_model:
+                if len(input_model.data.shape) != 2:
+                    raise RuntimeError("Only 2D ImageModel data can be processed.")
+                # Get the name of the filter throughput reference file to use
+                throughput_reffile = self.get_reference_file(input_model,
+                                       'throughput')
 
-            # Get the name of the filter throughput reference file to use
-            self.filter_ref_name = self.get_reference_file(input_model,
-                                   'throughput')
-            self.log.info('Using filter throughput reference file %s',
-                           self.filter_ref_name)
+                self.log.info('Using filter throughput reference file %s',
+                               throughput_reffile)
 
-            # Check for a valid reference file
-            if self.filter_ref_name == 'N/A':
-                self.log.warning('No THROUGHPUT reference file found')
-                self.log.warning('AMI analyze step will be skipped')
-                result = input_model.copy()
-                result.meta.cal_step.ami_analyze = 'SKIPPED'
-                return result
+                # Check for a valid reference file
+                if throughput_reffile == 'N/A':
+                    self.log.warning('No THROUGHPUT reference file found')
+                    self.log.warning('AMI analyze step will be skipped')
+                    raise RuntimeError("No throughput reference file found. "
+                                       "ami_analyze cannot continue.")
 
-            # Open the filter throughput reference file
-            filter_model = datamodels.ThroughputModel(self.filter_ref_name)
+                # Open the filter throughput reference file
+                throughput_model = datamodels.ThroughputModel(throughput_reffile)
 
-            # Do the LG analysis on the input image
-            result = ami_analyze.apply_LG(input_model, filter_model,
-                                          oversample, rotate)
+                result = ami_analyze.apply_LG_plus(input_model, throughput_model,
+                                                   oversample, rotate,
+                                                   psf_offset,
+                                                   rotsearch_parameters)
 
-            # Close the reference file and update the step status
-            filter_model.close()
-            result.meta.cal_step.ami_analyze = 'COMPLETE'
+                # Close the reference file and update the step status
+                throughput_model.close()
+                result.meta.cal_step.ami_analyze = 'COMPLETE'
 
-        return result
+            return result
+
+        # If _calints CubeModel input, handle as RuntimeError
+        except ValueError as err:
+            raise RuntimeError("Only 2D ImageModel data can be processed.") from err

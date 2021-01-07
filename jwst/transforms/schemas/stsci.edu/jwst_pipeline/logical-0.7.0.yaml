@@ -17,7 +17,7 @@ examples:
           value: .nan
 
 allOf:
-  - $ref: ../asdf/transform/transform-1.1.0
+  - $ref: "tag:stsci.edu:asdf/transform/transform-1.1.0"
   - type: object
     properties:
       condition:
@@ -30,11 +30,11 @@ allOf:
           A number or ndarray to compare to using the condition.
           If ndarray then the input array, compareto and value should have the same shape.
         anyOf:
-          - $ref: ../asdf/core/ndarray-1.0.0
+          - $ref: "tag:stsci.edu:asdf/core/ndarray-1.0.0"
           - type: number
       value:
         description: |
           Value to substitute where condition is True.
         anyOf:
-          - $ref: ../asdf/core/ndarray-1.0.0
+          - $ref: "tag:stsci.edu:asdf/core/ndarray-1.0.0"
           - type: number

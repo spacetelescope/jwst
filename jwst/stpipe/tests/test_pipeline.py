@@ -1,4 +1,3 @@
-import os
 from os.path import dirname, join, abspath
 import sys
 
@@ -6,8 +5,10 @@ import numpy as np
 from numpy.testing import assert_allclose
 import pytest
 
-from .. import Step, Pipeline, LinearPipeline
-# TODO: Test system call steps
+from jwst import datamodels
+from jwst.stpipe import Step, Pipeline, LinearPipeline, crds_client
+
+from .steps import PipeWithReference, StepWithReference
 
 
 def library_function():
@@ -20,12 +21,14 @@ class FlatField(Step):
     """
     An example flat-fielding Step.
     """
+    spec = """
+        threshold = float(default=0.0)  # The threshold below which to remove
+        multiplier = float(default=1.0) # Multiply by this number
+    """
 
     # Load the spec from a file
 
     def process(self, science, flat):
-        from ... import datamodels
-
         self.log.info("Removing flat field")
         self.log.info("Threshold: {0}".format(self.threshold))
         library_function()
@@ -40,8 +43,6 @@ class Combine(Step):
     """
 
     def process(self, images):
-        from ... import datamodels
-
         combined = np.zeros((50, 50))
         for image in images:
             combined += image.data
@@ -63,12 +64,10 @@ class MultiplyBy2(Step):
     """
 
     def process(self, image):
-        from ... import datamodels
-
         with datamodels.ImageModel(image) as dm:
-            with datamodels.ImageModel() as dm2:
-                dm2.data = dm.data * 2
-                return dm2
+            dm2 = datamodels.ImageModel()
+            dm2.data = dm.data * 2
+            return dm2
 
 
 class MyPipeline(Pipeline):
@@ -89,8 +88,6 @@ class MyPipeline(Pipeline):
     """
 
     def process(self, *args):
-        from ... import datamodels
-
         science = datamodels.open(self.science_filename)
         if self.flat_filename is None:
             self.flat_filename = join(dirname(__file__), "data/flat.fits")
@@ -101,10 +98,12 @@ class MyPipeline(Pipeline):
         self.display(combined)
         dm = datamodels.ImageModel(combined)
         dm.save(self.output_filename)
+        science.close()
+        flat.close()
         return dm
 
 
-def test_pipeline():
+def test_pipeline(_jail):
     pipeline_fn = join(dirname(__file__), 'steps', 'python_pipeline.cfg')
     pipe = Step.from_config_file(pipeline_fn)
     pipe.output_filename = "output.fits"
@@ -113,10 +112,9 @@ def test_pipeline():
     assert pipe.flat_field.multiplier == 2.0
 
     pipe.run()
-    os.remove(pipe.output_filename)
 
 
-def test_pipeline_python():
+def test_pipeline_python(_jail):
     steps = {
         'flat_field': {'threshold': 42.0}
         }
@@ -133,7 +131,6 @@ def test_pipeline_python():
     assert pipe.flat_field.multiplier == 1.0
 
     pipe.run()
-    os.remove(pipe.output_filename)
 
 
 class MyLinearPipeline(LinearPipeline):
@@ -144,7 +141,47 @@ class MyLinearPipeline(LinearPipeline):
         ]
 
 
-def test_partial_pipeline():
+def test_prefetch(_jail, monkeypatch):
+    """Test prefetching"""
+
+    # Setup mock to crds to flag if the call was made.
+    class MockGetRef:
+        called = False
+
+        def mock(self, dataset_model, reference_file_types, observatory=None):
+            if 'flat' in reference_file_types:
+                self.called = True
+            result = {
+                reftype: 'N/A'
+                for reftype in reference_file_types
+            }
+            return result
+        __call__ = mock
+    mock_get_ref = MockGetRef()
+    monkeypatch.setattr(crds_client, 'get_multiple_reference_paths', mock_get_ref)
+
+    # Create some data
+    model = datamodels.ImageModel((19, 19))
+    model.meta.instrument.name = "NIRCAM"
+    model.meta.instrument.detector = 'NRCA1'
+    model.meta.instrument.filter = "F070W"
+    model.meta.instrument.pupil = 'CLEAR'
+    model.meta.observation.date = "2019-01-01"
+    model.meta.observation.time = "00:00:00"
+
+    # Run the pipeline with prefetch set.
+    StepWithReference.prefetch_references = True
+    PipeWithReference.call(model)
+    assert mock_get_ref.called
+
+    # Now run with prefetch unset.
+    mock_get_ref.called = False
+    StepWithReference.prefetch_references = False
+    PipeWithReference.call(model)
+    assert not mock_get_ref.called
+
+
+def test_partial_pipeline(_jail):
     pipe = MyLinearPipeline()
 
     pipe.end_step = 'multiply2'
@@ -155,12 +192,12 @@ def test_partial_pipeline():
     result = pipe.run(abspath(join(dirname(__file__), 'data', 'science.fits')))
 
     assert_allclose(np.sum(result.data), 9969.82514685, rtol=1e-4)
-    os.remove('stpipe.MyLinearPipeline.fits')
 
-def test_pipeline_commandline():
+
+def test_pipeline_commandline(_jail):
     args = [
-        abspath(join(dirname(__file__), 'steps', 'python_pipeline.cfg')),
-        '--steps.flat_field.threshold=47'
+        join(dirname(__file__), 'steps', 'python_pipeline.cfg'),
+        '--steps.flat_field.threshold=47',
         ]
 
     pipe = Step.from_cmdline(args)
@@ -169,19 +206,13 @@ def test_pipeline_commandline():
     assert pipe.flat_field.multiplier == 2.0
 
     pipe.run()
-    os.remove(pipe.output_filename)
 
 
-def test_pipeline_commandline_class():
+def test_pipeline_commandline_class(_jail):
     args = [
         'jwst.stpipe.tests.test_pipeline.MyPipeline',
-        '--logcfg={0}'.format(
-            abspath(join(dirname(__file__), 'steps', 'log.cfg'))),
-        # The file_name parameters are *required*
-        '--science_filename={0}'.format(
-            abspath(join(dirname(__file__), 'data', 'science.fits'))),
-        '--output_filename={0}'.format(
-            'output.fits'),
+        f"--science_filename={join(dirname(__file__), 'data', 'science.fits')}",
+        '--output_filename=output.fits',
         '--steps.flat_field.threshold=47'
         ]
 
@@ -191,7 +222,6 @@ def test_pipeline_commandline_class():
     assert pipe.flat_field.multiplier == 1.0
 
     pipe.run()
-    os.remove(pipe.output_filename)
 
 
 def test_pipeline_commandline_invalid_args():

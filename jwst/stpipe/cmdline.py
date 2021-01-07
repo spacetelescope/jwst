@@ -10,12 +10,11 @@ from . import config_parser
 from . import log
 from . import Step
 from . import utilities
-
+from .step import get_disable_crds_steppars
 
 built_in_configuration_parameters = [
     'debug', 'logcfg', 'verbose'
     ]
-
 
 def _print_important_message(header, message, no_wrap=None):
     print(u'-' * 70)
@@ -111,7 +110,6 @@ class FromCommandLine(str):
     """
     pass
 
-
 def _override_config_from_args(config, args):
     """
     Overrides any configuration values in `config` with values from the
@@ -182,6 +180,14 @@ def just_the_step_from_cmdline(args, cls=None):
     parser1.add_argument(
         "--debug", action="store_true",
         help="When an exception occurs, invoke the Python debugger, pdb")
+    parser1.add_argument(
+        '--save-parameters', type=str,
+        help='Save step parameters to specified file.'
+    )
+    parser1.add_argument(
+        '--disable-crds-steppars', action='store_true',
+        help='Disable retrieval of step parameter references files from CRDS'
+    )
     known, _ = parser1.parse_known_args(args)
 
     try:
@@ -223,11 +229,20 @@ def just_the_step_from_cmdline(args, cls=None):
 
     debug_on_exception = known.debug
 
+    # Determine whether CRDS should be queried for step parameters
+    disable_crds_steppars = get_disable_crds_steppars(known.disable_crds_steppars)
+
+    # This creates a config object from the spec file of the step class merged with
+    # the spec files of the superclasses of the step class and adds arguments for
+    # all of the expected reference files
+
+    # load_spec_file is a method of both Step and Pipeline
     spec = step_class.load_spec_file(preserve_comments=True)
 
     parser2 = _build_arg_parser_from_spec(spec, step_class, parent=parser1)
 
     args = parser2.parse_args(args)
+
     if cls is None:
         del args.cfg_file_or_class
     else:
@@ -235,11 +250,34 @@ def just_the_step_from_cmdline(args, cls=None):
     del args.logcfg
     del args.verbose
     del args.debug
+    del args.save_parameters
+    del args.disable_crds_steppars
     positional = args.args
     del args.args
 
+    if len(positional):
+        input_file = positional[0]
+        if args.input_dir:
+            input_file = args.input_dir + '/' + input_file
+
+        # Attempt to retrieve Step parameters from CRDS
+        try:
+            parameter_cfg = step_class.get_config_from_reference(input_file, disable=disable_crds_steppars)
+        except (FileNotFoundError, OSError):
+            log.log.warning("Unable to open input file, cannot get parameters from CRDS")
+        else:
+            if config:
+                config_parser.merge_config(parameter_cfg, config)
+            config = parameter_cfg
+    else:
+        log.log.info("No input file specified, unable to retrieve parameters from CRDS")
+    #
+    # This updates config (a ConfigObj) with the values from the command line arguments
+    # Config is empty if class specified, otherwise contains values from config file specified
+    # on command line
     _override_config_from_args(config, args)
 
+    # This is where the step is instantiated
     try:
         step = step_class.from_config_section(
             config, name=name, config_file=config_file)
@@ -257,6 +295,17 @@ def just_the_step_from_cmdline(args, cls=None):
 
     log.log.info("Hostname: {0}".format(os.uname()[1]))
     log.log.info("OS: {0}".format(os.uname()[0]))
+
+    # If initialized from a StepParsModel, remember that.
+    try:
+        step._pars_model = config.get_pars_model()
+    except AttributeError:
+        pass
+
+    # Save the step configuration
+    if known.save_parameters:
+        step.get_pars_model().save(known.save_parameters)
+        log.log.info(f"Step/Pipeline parameters saved to '{known.save_parameters}'")
 
     return step, step_class, positional, debug_on_exception
 
@@ -296,11 +345,9 @@ def step_from_cmdline(args, cls=None):
         else:
             step.run(*positional)
     except Exception as e:
-        import traceback
-        lines = traceback.format_exc()
         _print_important_message(
-            "ERROR RUNNING STEP {0!r}:".format(step_class.__name__),
-            str(e), lines)
+            "ERROR RUNNING STEP {0!r}:".format(step_class.__name__), str(e)
+        )
 
         if debug_on_exception:
             import pdb

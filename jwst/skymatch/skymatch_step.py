@@ -14,17 +14,15 @@ import logging
 from ..stpipe import Step
 from .. import datamodels
 
-try:
-    from stsci.tools.bitmask import bitfield_to_boolean_mask
-    from stsci.tools.bitmask import interpret_bit_flags
-except ImportError:
-    from stsci.tools.bitmask import bitmask2mask as bitfield_to_boolean_mask
-    from stsci.tools.bitmask import interpret_bits_value as interpret_bit_flags
+from astropy.nddata.bitmask import (
+    bitfield_to_boolean_mask,
+    interpret_bit_flags,
+)
 
 #LOCAL:
-from . skymatch import match
-from . skyimage import SkyImage, SkyGroup
-from . skystatistics import SkyStats
+from .skymatch import match
+from .skyimage import SkyImage, SkyGroup
+from .skystatistics import SkyStats
 
 __all__ = ['SkyMatchStep']
 
@@ -199,4 +197,3 @@ class SkyMatchStep(Step):
     def _set_sky_background(self, image, sky):
         image.meta.background.level = sky
         image.meta.background.subtracted = self.subtract
-

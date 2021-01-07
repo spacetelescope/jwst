@@ -1,3 +1,5 @@
+.. _white_light_step:
+
 ============================
 White Light Curve Generation
 ============================
@@ -6,7 +8,7 @@ White Light Curve Generation
    :maxdepth: 2
 
    description.rst
-   reference_files.rst
    arguments.rst
+   reference_files.rst
 
 .. automodapi:: jwst.white_light

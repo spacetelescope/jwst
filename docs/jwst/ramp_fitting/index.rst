@@ -1,3 +1,5 @@
+.. _ramp_fitting_step:
+
 ============
 Ramp Fitting
 ============
@@ -5,7 +7,8 @@ Ramp Fitting
 .. toctree::
    :maxdepth: 2
 
-   main.rst
+   description.rst
+   arguments.rst
    reference_files.rst
 
 

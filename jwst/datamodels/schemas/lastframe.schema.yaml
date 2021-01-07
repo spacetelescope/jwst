@@ -1,6 +1,10 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/lastframe.schema"
 title: Last Frame Correction data model
 allOf:
-- $ref: referencefile.schema.yaml
+- $ref: referencefile.schema
 - type: object
   properties:
     data:
@@ -21,6 +25,4 @@ allOf:
       default: 0.0
       ndim: 2
       datatype: float32
-    dq_def:
-      $ref: dq_def.schema.yaml
-$schema: http://stsci.edu/schemas/fits-schema/fits-schema
+- $ref: dq_def.schema

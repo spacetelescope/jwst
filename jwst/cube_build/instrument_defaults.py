@@ -20,28 +20,33 @@ class InstrumentInfo():
         self.multich_wroi = []
         self.multich_power = []
         self.multich_softrad = []
+        self.multich_scalerad = []
 
         self.prism_wavelength = []
         self.prism_sroi = []
         self.prism_wroi = []
         self.prism_power = []
         self.prism_softrad = []
+        self.prism_scalerad = []
 
         self.med_wavelength = []
         self.med_sroi = []
         self.med_wroi = []
         self.med_power = []
         self.med_softrad = []
+        self.med_scalerad = []
 
         self.high_wavelength = []
         self.high_sroi = []
         self.high_wroi = []
         self.high_power = []
         self.high_softrad = []
-#_______________________________________________________________________
+        self.high_scalerad = []
+# _______________________________________________________________________
         # This is basic information on the MIRI channels
         # information that will not change:
-        #   number of slices, starting slice number, ending # slice number and default scales
+        # number of slices, starting slice number,
+        # ending # slice number and default scales
         self.Info = {}
         self.Info['psf_alpha_cuttoff'] = None
         self.Info['psf_alpha_a_short'] = None
@@ -53,7 +58,7 @@ class InstrumentInfo():
         self.Info['psf_beta_b_short'] = None
         self.Info['psf_beta_a_long'] = None
         self.Info['psf_beta_b_long'] = None
-#________________________________________________________________________________
+# _____________________________________________________________________
 # channel 1 parameters
         self.Info['1'] = {}
         self.Info['1']['nslices'] = 21
@@ -71,6 +76,7 @@ class InstrumentInfo():
         self.Info['1']['short']['wavemin'] = None
         self.Info['1']['short']['wavemax'] = None
         self.Info['1']['short']['softrad'] = None
+        self.Info['1']['short']['scalerad'] = None
         self.Info['1']['short']['msm_power'] = None
         self.Info['1']['short']['rp_wave_cuttoff'] = None
         self.Info['1']['short']['rp_a_low'] = None
@@ -92,6 +98,7 @@ class InstrumentInfo():
         self.Info['1']['medium']['wavemin'] = None
         self.Info['1']['medium']['wavemax'] = None
         self.Info['1']['medium']['softrad'] = None
+        self.Info['1']['medium']['scalerad'] = None
         self.Info['1']['medium']['msm_power'] = None
         self.Info['1']['medium']['rp_wave_cuttoff'] = None
         self.Info['1']['medium']['rp_a_low'] = None
@@ -113,6 +120,7 @@ class InstrumentInfo():
         self.Info['1']['long']['wavemin'] = None
         self.Info['1']['long']['wavemax'] = None
         self.Info['1']['long']['softrad'] = None
+        self.Info['1']['long']['scalerad'] = None
         self.Info['1']['long']['msm_power'] = None
         self.Info['1']['long']['rp_wave_cuttoff'] = None
         self.Info['1']['long']['rp_a_low'] = None
@@ -124,7 +132,7 @@ class InstrumentInfo():
         self.Info['1']['long']['rp_a_ave'] = None
         self.Info['1']['long']['rp_b_ave'] = None
         self.Info['1']['long']['rp_c_ave'] = None
-#________________________________________________________________________________
+# _______________________________________________________________________
 # channel 2 parameters
         self.Info['2'] = {}
         self.Info['2']['nslices'] = 17
@@ -142,6 +150,7 @@ class InstrumentInfo():
         self.Info['2']['short']['wavemin'] = None
         self.Info['2']['short']['wavemax'] = None
         self.Info['2']['short']['softrad'] = None
+        self.Info['2']['short']['scalerad'] = None
         self.Info['2']['short']['msm_power'] = None
         self.Info['2']['short']['rp_wave_cuttoff'] = None
         self.Info['2']['short']['rp_a_low'] = None
@@ -163,6 +172,7 @@ class InstrumentInfo():
         self.Info['2']['medium']['wavemin'] = None
         self.Info['2']['medium']['wavemax'] = None
         self.Info['2']['medium']['softrad'] = None
+        self.Info['2']['medium']['scalerad'] = None
         self.Info['2']['medium']['msm_power'] = None
         self.Info['2']['medium']['rp_wave_cuttoff'] = None
         self.Info['2']['medium']['rp_a_low'] = None
@@ -184,6 +194,7 @@ class InstrumentInfo():
         self.Info['2']['long']['wavemin'] = None
         self.Info['2']['long']['wavemax'] = None
         self.Info['2']['long']['softrad'] = None
+        self.Info['2']['long']['scalerad'] = None
         self.Info['2']['long']['msm_power'] = None
         self.Info['2']['long']['rp_wave_cuttoff'] = None
         self.Info['2']['long']['rp_a_low'] = None
@@ -195,7 +206,7 @@ class InstrumentInfo():
         self.Info['2']['long']['rp_a_ave'] = None
         self.Info['2']['long']['rp_b_ave'] = None
         self.Info['2']['long']['rp_c_ave'] = None
-#________________________________________________________________________________
+# ________________________________________________________________
 # channel 3 parameters
         self.Info['3'] = {}
         self.Info['3']['nslices'] = 16
@@ -213,6 +224,7 @@ class InstrumentInfo():
         self.Info['3']['short']['wavemin'] = None
         self.Info['3']['short']['wavemax'] = None
         self.Info['3']['short']['softrad'] = None
+        self.Info['3']['short']['scalerad'] = None
         self.Info['3']['short']['msm_power'] = None
         self.Info['3']['short']['rp_wave_cuttoff'] = None
         self.Info['3']['short']['rp_a_low'] = None
@@ -234,6 +246,7 @@ class InstrumentInfo():
         self.Info['3']['medium']['wavemin'] = None
         self.Info['3']['medium']['wavemax'] = None
         self.Info['3']['medium']['softrad'] = None
+        self.Info['3']['medium']['scalerad'] = None
         self.Info['3']['medium']['msm_power'] = None
         self.Info['3']['medium']['rp_wave_cuttoff'] = None
         self.Info['3']['medium']['rp_a_low'] = None
@@ -255,6 +268,7 @@ class InstrumentInfo():
         self.Info['3']['long']['wavemin'] = None
         self.Info['3']['long']['wavemax'] = None
         self.Info['3']['long']['softrad'] = None
+        self.Info['3']['long']['scalerad'] = None
         self.Info['3']['long']['msm_power'] = None
         self.Info['3']['long']['rp_wave_cuttoff'] = None
         self.Info['3']['long']['rp_a_low'] = None
@@ -266,7 +280,7 @@ class InstrumentInfo():
         self.Info['3']['long']['rp_a_ave'] = None
         self.Info['3']['long']['rp_b_ave'] = None
         self.Info['3']['long']['rp_c_ave'] = None
-#________________________________________________________________________________
+# _________________________________________________________________
 # channel 4 parameters
         self.Info['4'] = {}
         self.Info['4']['nslices'] = 12
@@ -284,6 +298,7 @@ class InstrumentInfo():
         self.Info['4']['short']['wavemin'] = None
         self.Info['4']['short']['wavemax'] = None
         self.Info['4']['short']['softrad'] = None
+        self.Info['4']['short']['scalerad'] = None
         self.Info['4']['short']['msm_power'] = None
         self.Info['4']['short']['rp_wave_cuttoff'] = None
         self.Info['4']['short']['rp_a_low'] = None
@@ -305,6 +320,7 @@ class InstrumentInfo():
         self.Info['4']['medium']['wavemin'] = None
         self.Info['4']['medium']['wavemax'] = None
         self.Info['4']['medium']['softrad'] = None
+        self.Info['4']['medium']['scalerad'] = None
         self.Info['4']['medium']['msm_power'] = None
         self.Info['4']['medium']['rp_wave_cuttoff'] = None
         self.Info['4']['medium']['rp_a_low'] = None
@@ -326,6 +342,7 @@ class InstrumentInfo():
         self.Info['4']['long']['wavemin'] = None
         self.Info['4']['long']['wavemax'] = None
         self.Info['4']['long']['softrad'] = None
+        self.Info['4']['long']['scalerad'] = None
         self.Info['4']['long']['msm_power'] = None
         self.Info['4']['long']['rp_wave_cuttoff'] = None
         self.Info['4']['long']['rp_a_low'] = None
@@ -338,8 +355,8 @@ class InstrumentInfo():
         self.Info['4']['long']['rp_b_ave'] = None
         self.Info['4']['long']['rp_c_ave'] = None
 
-#################################################################################
-#NIRSPEC Paramters
+# ####################################################################
+# NIRSPEC Paramters
         self.Info['prism'] = {}
         self.Info['prism']['clear'] = {}
         self.Info['prism']['clear']['nslices'] = 30
@@ -352,6 +369,7 @@ class InstrumentInfo():
         self.Info['prism']['clear']['wavemax'] = None
         self.Info['prism']['clear']['softrad'] = None
         self.Info['prism']['clear']['msm_power'] = None
+        self.Info['prism']['clear']['scalerad'] = None
 
         self.Info['g140m'] = {}
         self.Info['g140m']['f070lp'] = {}
@@ -365,6 +383,7 @@ class InstrumentInfo():
         self.Info['g140m']['f070lp']['wavemax'] = None
         self.Info['g140m']['f070lp']['softrad'] = None
         self.Info['g140m']['f070lp']['msm_power'] = None
+        self.Info['g140m']['f070lp']['scalerad'] = None
 
         self.Info['g140m']['f100lp'] = {}
         self.Info['g140m']['f100lp']['nslices'] = 30
@@ -377,6 +396,7 @@ class InstrumentInfo():
         self.Info['g140m']['f100lp']['wavemax'] = None
         self.Info['g140m']['f100lp']['softrad'] = None
         self.Info['g140m']['f100lp']['msm_power'] = None
+        self.Info['g140m']['f100lp']['scalerad'] = None
 
         self.Info['g235m'] = {}
         self.Info['g235m']['f170lp'] = {}
@@ -390,6 +410,7 @@ class InstrumentInfo():
         self.Info['g235m']['f170lp']['wavemax'] = None
         self.Info['g235m']['f170lp']['softrad'] = None
         self.Info['g235m']['f170lp']['msm_power'] = None
+        self.Info['g235m']['f170lp']['scalerad'] = None
 
         self.Info['g395m'] = {}
         self.Info['g395m']['f290lp'] = {}
@@ -403,7 +424,7 @@ class InstrumentInfo():
         self.Info['g395m']['f290lp']['wavemax'] = None
         self.Info['g395m']['f290lp']['softrad'] = None
         self.Info['g395m']['f290lp']['msm_power'] = None
-
+        self.Info['g395m']['f290lp']['scalerad'] = None
 
         self.Info['g140h'] = {}
         self.Info['g140h']['f070lp'] = {}
@@ -417,6 +438,7 @@ class InstrumentInfo():
         self.Info['g140h']['f070lp']['wavemax'] = None
         self.Info['g140h']['f070lp']['softrad'] = None
         self.Info['g140h']['f070lp']['msm_power'] = None
+        self.Info['g140h']['f070lp']['scalerad'] = None
 
         self.Info['g140h']['f100lp'] = {}
         self.Info['g140h']['f100lp']['nslices'] = 30
@@ -429,6 +451,7 @@ class InstrumentInfo():
         self.Info['g140h']['f100lp']['wavemax'] = None
         self.Info['g140h']['f100lp']['softrad'] = None
         self.Info['g140h']['f100lp']['msm_power'] = None
+        self.Info['g140h']['f100lp']['scalerad'] = None
 
         self.Info['g235h'] = {}
         self.Info['g235h']['f170lp'] = {}
@@ -442,6 +465,7 @@ class InstrumentInfo():
         self.Info['g235h']['f170lp']['wavemax'] = None
         self.Info['g235h']['f170lp']['softrad'] = None
         self.Info['g235h']['f170lp']['msm_power'] = None
+        self.Info['g235h']['f170lp']['scalerad'] = None
 
         self.Info['g395h'] = {}
         self.Info['g395h']['f290lp'] = {}
@@ -455,8 +479,9 @@ class InstrumentInfo():
         self.Info['g395h']['f290lp']['wavemax'] = None
         self.Info['g395h']['f290lp']['softrad'] = None
         self.Info['g395h']['f290lp']['msm_power'] = None
+        self.Info['g395h']['f290lp']['scalerad'] = None
 
-#********************************************************************************
+# ******************************************************************
 # Functions
 
     def SetMultiChannelTable(self, wave, sroi, wroi, power, softrad):
@@ -465,6 +490,15 @@ class InstrumentInfo():
         self.multich_wroi.append(wroi)
         self.multich_power.append(power)
         self.multich_softrad.append(softrad)
+        self.multich_scalerad.append(None)
+
+    def SetMultiChannelEMSMTable(self, wave, sroi, wroi, scalerad):
+        self.multich_wavelength.append(wave)
+        self.multich_sroi.append(sroi)
+        self.multich_wroi.append(wroi)
+        self.multich_scalerad.append(scalerad)
+        self.multich_power.append(None)
+        self.multich_softrad.append(None)
 
     def SetPrismTable(self, wave, sroi, wroi, power, softrad):
         self.prism_wavelength.append(wave)
@@ -472,6 +506,7 @@ class InstrumentInfo():
         self.prism_wroi.append(wroi)
         self.prism_power.append(power)
         self.prism_softrad.append(softrad)
+        self.prism_scalerad.append(None)
 
     def SetMedTable(self, wave, sroi, wroi, power, softrad):
         self.med_wavelength.append(wave)
@@ -479,6 +514,7 @@ class InstrumentInfo():
         self.med_wroi.append(wroi)
         self.med_power.append(power)
         self.med_softrad.append(softrad)
+        self.med_scalerad.append(None)
 
     def SetHighTable(self, wave, sroi, wroi, power, softrad):
         self.high_wavelength.append(wave)
@@ -486,6 +522,49 @@ class InstrumentInfo():
         self.high_wroi.append(wroi)
         self.high_power.append(power)
         self.high_softrad.append(softrad)
+        self.high_scalerad.append(None)
+
+    def SetPrismEMSMTable(self, wave, sroi, wroi, scalerad):
+        self.prism_wavelength.append(wave)
+        self.prism_sroi.append(sroi)
+        self.prism_wroi.append(wroi)
+        self.prism_scalerad.append(scalerad)
+        self.prism_power.append(None)
+        self.prism_softrad.append(None)
+
+    def SetMedEMSMTable(self, wave, sroi, wroi, scalerad):
+        self.med_wavelength.append(wave)
+        self.med_sroi.append(sroi)
+        self.med_wroi.append(wroi)
+        self.med_scalerad.append(scalerad)
+        self.med_power.append(None)
+        self.med_softrad.append(None)
+
+    def SetHighEMSMTable(self, wave, sroi, wroi, scalerad):
+        self.high_wavelength.append(wave)
+        self.high_sroi.append(sroi)
+        self.high_wroi.append(wroi)
+        self.high_scalerad.append(scalerad)
+        self.high_softrad.append(None)
+        self.high_power.append(None)
+
+    def SetXSliceLimits(self, x1, x2, parameter1):
+        self.Info[parameter1]['xstart'] = x1
+        self.Info[parameter1]['xend'] = x2
+
+    def SetMSM(self, parameter1, parameter2, sroi, wroi, power, softrad):
+        self.Info[parameter1][parameter2]['sroi'] = sroi
+        self.Info[parameter1][parameter2]['wroi'] = wroi
+        self.Info[parameter1][parameter2]['msm_power'] = power
+        self.Info[parameter1][parameter2]['softrad'] = softrad
+        self.Info[parameter1][parameter2]['scalerad'] = None
+
+    def SetEMSM(self, parameter1, parameter2, sroi, wroi, scalerad):
+        self.Info[parameter1][parameter2]['sroi'] = sroi
+        self.Info[parameter1][parameter2]['wroi'] = wroi
+        self.Info[parameter1][parameter2]['msm_power'] = None
+        self.Info[parameter1][parameter2]['softrad'] = None
+        self.Info[parameter1][parameter2]['scalerad'] = scalerad
 
     def SetSpatialSize(self, value, parameter1, parameter2=None):
         if parameter2 is None:
@@ -494,7 +573,6 @@ class InstrumentInfo():
         else:
             self.Info[parameter1][parameter2]['ascale'] = value
             self.Info[parameter1][parameter2]['bscale'] = value
-
 
     def SetSpectralStep(self, value, parameter1, parameter2):
         self.Info[parameter1][parameter2]['wscale'] = value
@@ -516,6 +594,9 @@ class InstrumentInfo():
 
     def SetSoftRad(self, value, parameter1, parameter2):
         self.Info[parameter1][parameter2]['softrad'] = value
+
+    def SetScaleRad(self, value, parameter1, parameter2):
+        self.Info[parameter1][parameter2]['scalerad'] = value
 
     def Set_RP_Wave_Cutoff(self, table_wave_center, this_channel, this_band):
         self.Info[this_channel][this_band]['rp_wave_cuttoff'] = table_wave_center
@@ -550,7 +631,8 @@ class InstrumentInfo():
         self.Info['psf_beta_b_short'] = b_short
         self.Info['psf_beta_a_long'] = a_long
         self.Info['psf_beta_b_long'] = b_long
-#______________________________________________________________________
+# ______________________________________________________________________
+
     def Get_RP_ave_Wave(self, this_channel, this_band):
         w = self.Info[this_channel][this_band]['rp_wave_cuttoff']
         a = self.Info[this_channel][this_band]['rp_a_ave']
@@ -601,18 +683,23 @@ class InstrumentInfo():
         softrad = self.Info[parameter1][parameter2]['softrad']
         return softrad
 
+    def GetScaleRad(self, parameter1, parameter2):
+        scalerad = self.Info[parameter1][parameter2]['scalerad']
+        return scalerad
+
     def GetScale(self, parameter1, parameter2):
         scale = (self.Info[parameter1][parameter2]['ascale'],
                  self.Info[parameter1][parameter2]['bscale'],
                  self.Info[parameter1][parameter2]['wscale'])
         return scale
 
-    def Get_multichannel_table(self):
+    def Get_multichannel_table(self, weighting):
         table = (self.multich_wavelength,
                  self.multich_sroi,
                  self.multich_wroi,
                  self.multich_power,
-                 self.multich_softrad)
+                 self.multich_softrad,
+                 self.multich_scalerad)
         return table
 
     def Get_prism_table(self):
@@ -620,7 +707,8 @@ class InstrumentInfo():
                  self.prism_sroi,
                  self.prism_wroi,
                  self.prism_power,
-                 self.prism_softrad)
+                 self.prism_softrad,
+                 self.prism_scalerad)
         return table
 
     def Get_med_table(self):
@@ -628,7 +716,8 @@ class InstrumentInfo():
                  self.med_sroi,
                  self.med_wroi,
                  self.med_power,
-                 self.med_softrad)
+                 self.med_softrad,
+                 self.med_scalerad)
         return table
 
     def Get_high_table(self):
@@ -636,9 +725,9 @@ class InstrumentInfo():
                  self.high_sroi,
                  self.high_wroi,
                  self.high_power,
-                 self.high_softrad)
+                 self.high_softrad,
+                 self.high_scalerad)
         return table
-
 
     def GetMIRISliceEndPts(self, parameter1):
         slice_xstart = self.Info[parameter1]['xstart']

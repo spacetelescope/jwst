@@ -1,10 +1,13 @@
 from collections import OrderedDict
+from distutils.version import LooseVersion
 
 import logging
 
 import numpy as np
 from astropy.table import QTable
 from astropy.time import Time, TimeDelta
+import astropy.units as u
+import photutils
 from photutils import CircularAperture, CircularAnnulus
 
 from ..datamodels import CubeModel
@@ -57,6 +60,15 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
         bkg_aper = CircularAnnulus((xcenter, ycenter), r_in=radius_inner,
                                    r_out=radius_outer)
 
+    # convert the input data and errors from MJy/sr to Jy
+    if datamodel.meta.bunit_data != 'MJy/sr':
+        raise ValueError('data is expected to be in units of MJy/sr')
+    factor = 1.e6 * datamodel.meta.photometry.pixelarea_steradians
+    datamodel.data *= factor
+    datamodel.err *= factor
+    datamodel.meta.bunit_data = 'Jy'
+    datamodel.meta.bunit_err = 'Jy'
+
     aperture_sum = []
     aperture_sum_err = []
     annulus_sum = []
@@ -66,7 +78,7 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
 
     if sub64p_wlp8:
         info = ('Photometry measured as the sum of all values in the '
-               'subarray.  No background subtraction was performed.')
+                'subarray.  No background subtraction was performed.')
 
         for i in np.arange(nimg):
             aperture_sum.append(np.sum(datamodel.data[i, :, :]))
@@ -77,7 +89,7 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
                 'pixels.  Background calculated as the mean in a '
                 'circular annulus with r_inner={1} pixels and '
                 'r_outer={2} pixels.'.format(radius, radius_inner,
-                                                radius_outer))
+                                             radius_outer))
         for i in np.arange(nimg):
             aper_sum, aper_sum_err = phot_aper.do_photometry(
                 datamodel.data[i, :, :], error=datamodel.err[i, :, :])
@@ -113,13 +125,15 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
     # initialize the output table
     tbl = QTable(meta=meta)
 
+    # check for the INT_TIMES table extension
     if hasattr(datamodel, 'int_times') and datamodel.int_times is not None:
         nrows = len(datamodel.int_times)
     else:
         nrows = 0
-    if nrows == 0:
-        log.warning("There is no INT_TIMES table in the input file.")
+        log.warning("The INT_TIMES table in the input file is missing or "
+                    "empty.")
 
+    # load the INT_TIMES table data
     if nrows > 0:
         shape = datamodel.data.shape
         if len(shape) == 2:
@@ -129,8 +143,7 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
         int_start = datamodel.meta.exposure.integration_start
         if int_start is None:
             int_start = 1
-            log.warning("INTSTART not found; assuming a value of %d",
-                        int_start)
+            log.warning(f"INTSTART not found; assuming a value of {int_start}")
 
         # Columns of integration numbers & times of integration from the
         # INT_TIMES table.
@@ -144,51 +157,62 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
             del int_num, mid_utc
             nrows = 0                   # flag as bad
         else:
-            log.debug("Times are from the INT_TIMES table.")
+            log.debug("Times are from the INT_TIMES table")
             time_arr = mid_utc[offset: offset + num_integ]
             int_times = Time(time_arr, format='mjd', scale='utc')
-    else:
-        log.debug("Times were computed from EXPSTART and TGROUP.")
 
-        dt = (datamodel.meta.exposure.group_time *
-              (datamodel.meta.exposure.ngroups + 1))
-        dt_arr = (np.arange(1, 1 + datamodel.meta.exposure.nints) *
-                  dt - (dt / 2.))
+    # compute integration time stamps on the fly
+    if nrows == 0:
+        log.debug("Times computed from EXPSTART and EFFINTTM")
+        dt = datamodel.meta.exposure.integration_time
+        n_dt = (datamodel.meta.exposure.integration_end -
+                datamodel.meta.exposure.integration_start + 1)
+        dt_arr = (np.arange(1, 1 + n_dt) * dt - (dt / 2.))
         int_dt = TimeDelta(dt_arr, format='sec')
         int_times = (Time(datamodel.meta.exposure.start_time, format='mjd') +
                      int_dt)
 
+    # populate table columns
+    unit = u.Unit(datamodel.meta.bunit_data)
     tbl['MJD'] = int_times.mjd
-
-    tbl['aperture_sum'] = aperture_sum
-    tbl['aperture_sum_err'] = aperture_sum_err
+    tbl['aperture_sum'] = aperture_sum << unit
+    tbl['aperture_sum_err'] = aperture_sum_err << unit
 
     if not sub64p_wlp8:
-        tbl['annulus_sum'] = annulus_sum
-        tbl['annulus_sum_err'] = annulus_sum_err
+        tbl['annulus_sum'] = annulus_sum << unit
+        tbl['annulus_sum_err'] = annulus_sum_err << unit
 
-        annulus_mean = annulus_sum / bkg_aper.area()
-        annulus_mean_err = annulus_sum_err / bkg_aper.area()
-        tbl['annulus_mean'] = annulus_mean
-        tbl['annulus_mean_err'] = annulus_mean_err
+        if LooseVersion(photutils.__version__) >= '0.7':
+            annulus_mean = annulus_sum / bkg_aper.area
+            annulus_mean_err = annulus_sum_err / bkg_aper.area
 
-        aperture_bkg = annulus_mean * phot_aper.area()
-        aperture_bkg_err = annulus_mean_err * phot_aper.area()
-        tbl['aperture_bkg'] = aperture_bkg
-        tbl['aperture_bkg_err'] = aperture_bkg_err
+            aperture_bkg = annulus_mean * phot_aper.area
+            aperture_bkg_err = annulus_mean_err * phot_aper.area
+        else:
+            annulus_mean = annulus_sum / bkg_aper.area()
+            annulus_mean_err = annulus_sum_err / bkg_aper.area()
+
+            aperture_bkg = annulus_mean * phot_aper.area()
+            aperture_bkg_err = annulus_mean_err * phot_aper.area()
+
+        tbl['annulus_mean'] = annulus_mean << unit
+        tbl['annulus_mean_err'] = annulus_mean_err << unit
+
+        tbl['aperture_bkg'] = aperture_bkg << unit
+        tbl['aperture_bkg_err'] = aperture_bkg_err << unit
 
         net_aperture_sum = aperture_sum - aperture_bkg
         net_aperture_sum_err = np.sqrt(aperture_sum_err ** 2 +
                                        aperture_bkg_err ** 2)
-        tbl['net_aperture_sum'] = net_aperture_sum
-        tbl['net_aperture_sum_err'] = net_aperture_sum_err
+        tbl['net_aperture_sum'] = net_aperture_sum << unit
+        tbl['net_aperture_sum_err'] = net_aperture_sum_err << unit
     else:
         colnames = ['annulus_sum', 'annulus_sum_err', 'annulus_mean',
                     'annulus_mean_err', 'aperture_bkg', 'aperture_bkg_err']
         for col in colnames:
             tbl[col] = np.full(nimg, np.nan)
 
-        tbl['net_aperture_sum'] = aperture_sum
-        tbl['net_aperture_sum_err'] = aperture_sum_err
+        tbl['net_aperture_sum'] = aperture_sum << unit
+        tbl['net_aperture_sum_err'] = aperture_sum_err << unit
 
     return tbl

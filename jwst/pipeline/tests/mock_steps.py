@@ -88,7 +88,6 @@ class MockResampleStep(Step):
         resampled.data = model.data
         resampled.wht = model.err
         resampled.con = model.dq
-        resampled.relsens = model.relsens
         resampled.meta = model.meta
 
         # That's all folks

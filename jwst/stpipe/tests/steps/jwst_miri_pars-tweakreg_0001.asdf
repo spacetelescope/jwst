@@ -1,0 +1,48 @@
+#ASDF 1.0.0
+#ASDF_STANDARD 1.3.0
+%YAML 1.1
+%TAG ! tag:stsci.edu:asdf/
+--- !core/asdf-1.1.0
+asdf_library: !core/software-1.0.0 {author: Space Telescope Science Institute, homepage: 'http://github.com/spacetelescope/asdf',
+  name: asdf, version: 2.3.3}
+history:
+  entries:
+  - !core/history_entry-1.0.0 {description: Baseline configuration file., time: !!timestamp '2019-07-18
+      20:01:09'}
+  - !core/history_entry-1.0.0 {description: Update kernal size for MIRI.,
+    time: !!timestamp '2019-07-18 20:01:10'}
+  extensions:
+  - !core/extension_metadata-1.0.0
+    extension_class: asdf.extension.BuiltinExtension
+    software: {name: asdf, version: 2.3.3}
+meta:
+  author: Karl Gordon
+  date: '2019-02-30T01:02:03.456'
+  description: Tweakreg params for MIRI imaging
+  exposure: {type: MIR_IMAGE}
+  instrument: {detector: MIRIMAGE, name: MIRI}
+  pedigree: GROUND
+  reftype: pars-tweakreg
+  telescope: JWST
+  title: MIRI imager tweakreg parameters
+  useafter: '2019-10-11T00:00:00'
+parameters:
+  class: jwst.tweakreg.TweakRegStep
+  brightest: 100
+  catalog_format: ecsv
+  enforce_user_order: false
+  expand_refcat: false
+  fitgeometry: general
+  kernel_fwhm: 3.2
+  minobj: 15
+  nclip: 3
+  save_catalogs: false
+  searchrad: 1.0
+  separation: 0.5
+  sigma: 3.0
+  snr_threshold: 10.0
+  tolerance: 1.0
+  use2dhist: true
+  xoffset: 0.0
+  yoffset: 0.0
+...
