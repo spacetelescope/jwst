@@ -9,7 +9,7 @@ from .apcorr import FgsImgApcorrModel, MirImgApcorrModel
 from .apcorr import NrcImgApcorrModel, NisImgApcorrModel
 from .apcorr import MirLrsApcorrModel, MirMrsApcorrModel
 from .apcorr import NrcWfssApcorrModel, NisWfssApcorrModel
-from .apcorr import NrsMosApcorrModel, NrsFsApcorrModel
+from .apcorr import NrsMosApcorrModel, NrsIfuApcorrModel, NrsFsApcorrModel
 from .asn import AsnModel
 from .barshadow import BarshadowModel
 from .combinedspec import CombinedSpecModel
@@ -21,6 +21,7 @@ from .darkMIRI import DarkMIRIModel
 from .drizpars import DrizParsModel
 from .drizproduct import DrizProductModel
 from .extract1dimage import Extract1dImageModel
+from .extract1d_spec import Extract1dIFUModel
 from .flat import FlatModel
 from .fringe import FringeModel
 from .gain import GainModel
@@ -91,7 +92,7 @@ __all__ = [
     'AmiLgModel',
     'FgsImgApcorrModel', 'MirImgApcorrModel', 'NrcImgApcorrModel', 'NisImgApcorrModel',
     'MirLrsApcorrModel', 'MirMrsApcorrModel', 'NrcWfssApcorrModel', 'NisWfssApcorrModel',
-    'NrsMosApcorrModel', 'NrsFsApcorrModel',
+    'NrsMosApcorrModel', 'NrsFsApcorrModel','NrsIfuApcorrModel',
     'AsnModel',
     'BarshadowModel', 'CameraModel', 'CollimatorModel',
     'CombinedSpecModel', 'ContrastModel', 'CubeModel',
@@ -100,6 +101,7 @@ __all__ = [
     'DrizParsModel',
     'DrizProductModel',
     'Extract1dImageModel',
+    'Extract1dIFUModel',
     'FilteroffsetModel',
     'FlatModel', 'NirspecFlatModel', 'NirspecQuadFlatModel',
     'FOREModel', 'FPAModel',

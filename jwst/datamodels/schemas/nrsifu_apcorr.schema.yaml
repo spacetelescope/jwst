@@ -1,8 +1,8 @@
 %YAML 1.1
 ---
 $schema: "http://stsci.edu/schemas/asdf/asdf-schema-1.0.0"
-id: "http://stsci.edu/schemas/jwst_datamodel/mirmrs_apcorr.schema"
-title: MIRI MRS aperture correction data model
+id: "http://stsci.edu/schemas/jwst_datamodel/nrsifu_apcorr.schema"
+title: NRS Ifu aperture correction data model
 allOf:
 - $ref: referencefile.schema
 - $ref: keyword_exptype.schema
@@ -12,9 +12,9 @@ allOf:
     apcorr_table:
       type: object
       properties:
-          channel:
+          grating:
             type: string
-          band:
+          filter:
             type: string
           wavelength:
             datatype: float32
