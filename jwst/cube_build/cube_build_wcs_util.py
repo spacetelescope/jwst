@@ -154,7 +154,13 @@ def find_corners_NIRSPEC(input, this_channel, instrument_info, coord_system):
             valid = np.logical_and(np.isfinite(coord1), np.isfinite(coord2))
             coord1 = coord1[valid]
             coord2 = coord2[valid]
-            lam = lam[valid] * 1.0e6
+
+            #TODO - fix kludge after figure out how to determine what the units
+            # for wavelength are coming out of detector2slicer.
+            #print(input.meta.wcs.output_frame.unit[2])
+            lmax = np.nanmax(lam.flatten())
+            if lmax < 0.0001:
+                lam = lam[valid] * 1.0e6
             coord1 = coord1.flatten()
             coord2 = coord2.flatten()
             lam = lam.flatten()
