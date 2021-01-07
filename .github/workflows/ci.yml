@@ -23,14 +23,19 @@ jobs:
   cancel_ci:
     name: Mandatory checks before CI
     runs-on: ubuntu-latest
+    outputs:
+      run_next: ${{ steps.skip_ci_step.outputs.run_next }}
     steps:
     - name: Failure means CI is skipped on purpose
       uses: pllim/action-skip-ci@main
+      id: skip_ci_step
       with:
+        NO_FAIL: true
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     # This should only run if we did not skip CI
     - name: Cancel Previous Runs
       uses: styfle/cancel-workflow-action@ce17749
+      if: steps.skip_ci_step.outputs.run_next == 'true'
       with:
         access_token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -40,6 +45,7 @@ jobs:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     needs: cancel_ci
+    if: needs.cancel_ci.outputs.run_next == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -159,6 +165,7 @@ jobs:
   #   name: ${{ matrix.name }}
   #   runs-on: ${{ matrix.os }}
   #   needs: cancel_ci
+  #   if: needs.cancel_ci.outputs.run_next == 'true'
   #   continue-on-error: ${{ matrix.allowed-failure }}
   #   strategy:
   #     fail-fast: false
