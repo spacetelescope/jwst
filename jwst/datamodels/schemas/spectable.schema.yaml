@@ -1,0 +1,25 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/spectable.schema"
+title: Extracted spectral data table
+fits_hdu: EXTRACT1D
+datatype:
+- name: WAVELENGTH
+  datatype: float64
+- name: FLUX
+  datatype: float64
+- name: ERROR
+  datatype: float64
+- name: SURF_BRIGHT
+  datatype: float64
+- name: SB_ERROR
+  datatype: float64
+- name: DQ
+  datatype: uint32
+- name: BACKGROUND
+  datatype: float64
+- name: BERROR
+  datatype: float64
+- name: NPIXELS
+  datatype: float64

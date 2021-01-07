@@ -33,5 +33,5 @@ class TestLevel3Image(BasePoolRule):
     ]
 
     valid_rules = [
-        'Asn_Image',
+        'Asn_Lv3Image',
     ]

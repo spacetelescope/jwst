@@ -11,7 +11,7 @@ This step is intended to be used for aperture photometry with time-series
 exposures.  Only direct images should be used, not spectra.
 
 The target is assumed to have been placed at the aperture reference location,
-which is stored in the CRPIX1 and CRPIX2 FITS keywords
+which is stored in the XREF_SCI and YREF_SCI FITS keywords
 (note that these are 1-indexed values). Hence the step uses those keyword
 values as the target location within the image.
 
@@ -23,8 +23,8 @@ If the input file was *not* averaged over integrations (i.e. a _calints
 product), and if the file contains an INT_TIMES table extension, the times
 listed in the output table from this step will be extracted from column
 'int_mid_MJD_UTC' of the INT_TIMES extension.  Otherwise,
-the times will be computed from the exposure start time, the group time,
-and the number of groups in an integration.  In either case, the times are
+the times will be computed from the exposure start time, the integration time,
+and the number of integrations.  In either case, the times are
 Modified Julian Date, time scale UTC.
 
 The output table contains these fields:

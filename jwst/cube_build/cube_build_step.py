@@ -45,7 +45,7 @@ class CubeBuildStep (Step):
          coord_system = option('skyalign','world','internal_cal','ifualign',default='skyalign') # Output Coordinate system.
          rois = float(default=0.0) # region of interest spatial size, arc seconds
          roiw = float(default=0.0) # region of interest wavelength size, microns
-         weight_power = float(default=0.0) # Weighting option to use for Modified Shepard Method
+         weight_power = float(default=2.0) # Weighting option to use for Modified Shepard Method
          wavemin = float(default=None)  # Minimum wavelength to be used in the IFUCube
          wavemax = float(default=None)  # Maximum wavelength to be used in the IFUCube
          single = boolean(default=false) # Internal pipeline option used by mrs_imatch & outlier detection
@@ -354,7 +354,8 @@ class CubeBuildStep (Step):
         for cube in cube_container:
             footprint = cube.meta.wcs.footprint(axis_type="spatial")
             update_s_region_keyword(cube, footprint)
-        if status_cube ==1:
+            cube.meta.filetype = '3d ifu cube'
+        if status_cube == 1:
             self.skip = True
 
         return cube_container

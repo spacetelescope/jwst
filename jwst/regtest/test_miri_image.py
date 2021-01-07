@@ -24,6 +24,7 @@ def run_detector1(rtdata_module):
         "--steps.rscd.save_results=True",
         "--steps.lastframe.save_results=True",
         "--steps.firstframe.save_results=True",
+        "--steps.reset.save_results=True",
         "--steps.linearity.save_results=True",
         "--steps.dark_current.save_results=True",
         "--steps.jump.rejection_threshold=200",
@@ -75,7 +76,7 @@ def run_image3(run_image2, rtdata_module):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["dq_init", "saturation", "refpix", "rscd",
-    "firstframe", "lastframe", "linearity", "dark_current", "ramp", "rate",
+    "firstframe", "lastframe", "reset", "linearity", "dark_current", "ramp", "rate",
     "rateints"])
 def test_miri_image_detector1(run_detector1, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Regression test of detector1 pipeline performed on MIRI data."""

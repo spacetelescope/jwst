@@ -1,0 +1,23 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/multicombinedspec.schema"
+allOf:
+- $ref: core.schema
+- $ref: int_times.schema
+- type: object
+  properties:
+    spec:
+      type: array
+      title: An array of spectra
+      items:
+        type: object
+        properties:
+          spec_table:
+            $ref: combinedspectable.schema
+          spectral_order:
+            title: Spectral order number
+            type: integer
+            default: 1
+            fits_keyword: SPORDER
+            fits_hdu: COMBINE1D

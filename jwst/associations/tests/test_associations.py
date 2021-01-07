@@ -33,7 +33,7 @@ def test_read_assoc_defs_fromdefault():
     assert len(rules) >= 3
     rule_names = helpers.get_rule_names(rules)
     assert 'DMS_Level3_Base' not in rules
-    valid_rules = ['Asn_Image', 'Asn_WFSCMB']
+    valid_rules = ['Asn_Lv3Image', 'Asn_Lv3WFSCMB']
     for rule in valid_rules:
         assert rule in rule_names
 

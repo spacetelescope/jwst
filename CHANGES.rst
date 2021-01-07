@@ -1,8 +1,30 @@
-0.17.2 (unreleased)
+0.18.1 (unreleased)
+===================
+
+pipeline
+--------
+
+- Removed all unnecessary parameter settings from cfg files for all steps
+  and pipelines, and removed references to step config files from most
+  pipeline modules (only kept those that are necessary for intended
+  functionality). [#5574]
+
+skymatch
+--------
+
+- Fixed a bug due to which sky matching may fail under certain circumstances
+  such as using 'mode' statistics on a single pixel (after sigma-clipping). [#5567]
+
+wavecorr
+--------
+- Fixed bugs in wavecorr. [#5570]
+
+0.18.0 (2020-12-21)
 ===================
 
 ami
 ---
+- Update code to use two new input parameters: psf_offset,rotation_search [#5548]
 
 - Update code and unit tests to use new ami_analyze algorithms [#5390]
 
@@ -13,8 +35,23 @@ assign_wcs
 
 - Add nrs_verify to the NIRSpec exposure list [#5403]
 
+- Enable resample_spec for NIRSpec line lamp exposures [#5484]
+
+- Added SIP approximation to WCS for imaging modes. FITS WCS keywords added to meta.wcsinfo. [#5507]
+
+- Fix bug where subarray bounding boxes were 1 pixel too small. [#5543]
+
+- Mark Nirspec slits which project on less than one pixel as invalid. [#5554]
+
 associations
 ------------
+
+- Add new dither keyword subpxpts to constraints [#5525]
+
+- Add further constraints to rule Asn_Lv2NRSLAMPSpectral such that associations
+  are created only when LAMP is on and OPMODE indicates a valid optical path. [#5496]
+
+- Restrict association creation based on optical path for NIRSpec Fixed-slit and IFU [#5504]
 
 - Asn_Lv3SpecAux: Add optical element constraint [#5479]
 
@@ -23,6 +60,12 @@ associations
 - Do not allow target acqs to be considered TSO [#5385]
 
 - Add NRS_VERIFY to the list of target acq/confirmation images [#5395]
+
+combine1d
+---------
+
+- Output FITS now contains separate combine1d extensions for each spectral
+  order present in the data [#5204]
 
 cube_build
 ----------
@@ -54,6 +97,17 @@ datamodels
 - Move core ``jwst.datamodels`` code to ``stdatamodels`` package and add it as
   an install dependency [#5433]
 
+- Update schemas to include new allowed SUBARRAY values for FGS ASIC tuning
+  modes [#5531]
+
+- Add meta.visit.pointing_engdb_quality entry to correspond to ENGQLPTG keyword [#5556]
+
+- Update Moving Target CHEBY table extension schema for changes to column
+  definitions in the JWSTKD and SDP [#5558]
+
+- Update distortion reference file schema to have ``meta.instrument.channel``
+  keyword [#5553]
+
 extract_1d
 ----------
 - For IFU data (NIRSpec and MIRI) the extraction radius is now a varying size 
@@ -73,6 +127,12 @@ extract_1d
 
 - Fixed bug involving the processing of WFSS observations when there's only
   one spectrum instance for a given source. [#5439]
+
+fits_generator
+--------------
+
+- Addressed deprecated get_children method of XML parser.  Changed type of PATTSIZE from
+  float to string in templates. [#5536]
 
 flatfield
 ---------
@@ -120,6 +180,7 @@ pipeline
 
 - Update ``Image3Pipeline`` to allow sky subtraction when input contains
   only one image (group). [#5423]
+- Enable resample_spec for NIRSpec line lamp exposures in Spec2Pipeline [#5484]
 
 ramp_fitting
 ------------
@@ -136,6 +197,11 @@ resample
 - Implement memory check in resample to prevent huge arrays [#5354]
 
 - Add ``pixel_scale_ratio`` parameter to allow finer output grid. [#5389]
+- Enable resample_spec for NIRSpec line lamp exposures [#5484]
+
+reset
+-----
+- Turn the step back on for the calwebb_detector1 pipeline [#5485]
 
 saturation
 ----------
@@ -143,11 +209,15 @@ saturation
 - Set saturation threshold to A-to-D limit of 65535 for pixels flagged with
   NO_SAT_CHECK in the saturation reference file, instead of skipping any
   test of those pixels. [#5394]
+- Flag groups values below A/D floor (0 DN) (#5422)
 
 set_telescope_pointing
 ----------------------
 
 - Add logging of the found quaternion information [#5495]
+- Handle cases where engineering database's pointing mnemonics are all zero over the requested time range [#5540]
+- Set value of keyword ENGQLPTG to CALCULATED or PLANNED depending on whether pointing telemetry was used to
+  update the WCS [#5556]
 
 skymatch
 --------
@@ -161,11 +231,24 @@ stpipe
 
 - Implement utility function all_steps and fix crds reference file retrieval for non-datamodels [#5492]
 
+tso_photometry
+--------------
+
+- Place aperture using header keywords XREF_SCI and YREF_SCI instead of
+  CRPIX1 and CRPIX2 [#5533]
+
+- Fixed the flux units in the output photometry catalog. [#5529]
+
 tweakreg
 --------
 
 - Add support for the new ``fitgeom`` mode: ``'rshift'`` that can fit only
   for shifts and a rotation. [#5475]
+
+wfs_combine
+-----------
+
+- Add checking for bad pixels by using DO_NOT_USE rather than DQ>0. [#5500, #5519]
 
 white_light
 -----------

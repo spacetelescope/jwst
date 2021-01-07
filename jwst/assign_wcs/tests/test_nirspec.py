@@ -104,7 +104,7 @@ def create_nirspec_mos_file(grating='G235M', filt='F170LP'):
     image[0].header['PATT_NUM'] = 1
 
     msa_status_file = get_file_path('SPCB-GD-A.msa.fits.gz')
-    image[0].header['MSACONFG'] = msa_status_file
+    image[0].header['MSAMETFL'] = msa_status_file
     return image
 
 
