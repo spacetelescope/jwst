@@ -78,37 +78,3 @@ class OutlierDetectionScaledStep(Step):
             self.input_models.meta.cal_step.outlier_detection = 'COMPLETE'
 
             return self.input_models
-
-    def _build_reffile_container(self, reftype):
-        """Return a ModelContainer of reference file models.
-
-        Parameters
-        ----------
-        input_models: ModelContainer
-            the science data, ImageModels in a ModelContainer
-
-        reftype: string
-            type of reference file
-
-        Returns
-        -------
-        a ModelContainer with corresponding reference files for
-            each input model
-
-        """
-        reffile_to_model = {'gain': datamodels.GainModel,
-                            'readnoise': datamodels.ReadnoiseModel}
-        reffile_model = reffile_to_model[reftype]
-
-        reffiles = [self.input_models.meta.ref_file.instance[reftype]['name']]
-
-        self.log.debug("Using {} reffile(s):".format(reftype.upper()))
-        for r in set(reffiles):
-            self.log.debug("    {}".format(r))
-
-        # Use get_reference_file method to insure latest reference file
-        # always gets used...especially since only one name will ever be needed
-        ref_list = [reffile_model(self.get_reference_file(
-                                  self.input_models, reftype))]
-
-        return datamodels.ModelContainer(ref_list)
