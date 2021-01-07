@@ -127,9 +127,9 @@ class Extract1dStep(Step):
             # This is the branch  WFSS data take
             if len(input_model) > 1:
                 self.log.debug(f"Input contains {len(input_model)} items")
-                
+
                 #--------------------------------------------------------------
-                # Data is WFSS 
+                # Data is WFSS
                 if input_model[0].meta.exposure.type in extract.WFSS_EXPTYPES:
 
                     # For WFSS level-3, the input is a single entry of a
@@ -163,7 +163,7 @@ class Extract1dStep(Step):
                     )
                     # Set the step flag to complete
                     result.meta.cal_step.extract_1d = 'COMPLETE'
-                    
+
                 #--------------------------------------------------------------
                 # Data is a ModelContainer but is not WFSS
                     result.meta.filetype = '1d spectrum'
@@ -182,7 +182,6 @@ class Extract1dStep(Step):
                         else:
                             self.log.info(f'Using APCORR file {apcorr_ref}')
 
-                        
                         temp = extract.run_extract1d(
                             model,
                             extract_ref,
