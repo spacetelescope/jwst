@@ -26,7 +26,7 @@ jobs:
     outputs:
       run_next: ${{ steps.skip_ci_step.outputs.run_next }}
     steps:
-    - name: Failure means CI is skipped on purpose
+    - name: Set output for skip CI
       uses: pllim/action-skip-ci@main
       id: skip_ci_step
       with:
@@ -160,7 +160,7 @@ jobs:
           file: ./coverage.xml
           flags: unit
 
-  # # A matrix of jobs with allowed failures.  Not enabled for now.
+  # # A matrix of jobs with allowed failures. Not enabled for now.
   # allowed_failures:
   #   name: ${{ matrix.name }}
   #   runs-on: ${{ matrix.os }}
