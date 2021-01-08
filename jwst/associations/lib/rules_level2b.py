@@ -252,7 +252,7 @@ class Asn_Lv2Spec(
                     DMSAttrConstraint(
                         name='patttype',
                         sources=['patttype'],
-                        value=['2-point-nod|4-point-nod'],
+                        value=['2-point-nod|4-point-nod|along-slit-nod'],
                     )
                 ],
                 reduce=Constraint.notany
@@ -361,11 +361,6 @@ class Asn_Lv2MIRLRSFixedSlitNod(
                 name='patttype',
                 sources=['patttype'],
                 value=['along-slit-nod'],
-            ),
-            SimpleConstraint(
-                value=True,
-                test=lambda value, item: self.acid.type != 'background',
-                force_unique=False
             ),
             Constraint(
                 [
