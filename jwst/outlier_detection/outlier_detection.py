@@ -186,6 +186,7 @@ class OutlierDetection:
         if pars['resample_data']:
             # Start by creating resampled/mosaic images for
             # each group of exposures
+            print('********at this point')
             sdriz = resample.ResampleData(self.input_models, single=True,
                                           blendheaders=False, **pars)
             sdriz.do_drizzle()
