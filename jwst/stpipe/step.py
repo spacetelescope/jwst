@@ -1,6 +1,7 @@
 """
 Step
 """
+import abc
 from contextlib import contextmanager
 from functools import partial
 import gc
@@ -35,11 +36,10 @@ from ..associations.load_as_asn import (LoadAsAssociation, LoadAsLevel2Asn)
 from ..associations.lib.format_template import FormatTemplate
 from ..associations.lib.update_path import update_key_value
 from ..datamodels import (ModelContainer, StepParsModel)
-from ..datamodels import open as dm_open
 from ..lib.class_property import ClassInstanceMethod
 from ..lib.suffix import remove_suffix
 
-class Step():
+class Step(abc.ABC):
     """
     Step
     """
@@ -348,7 +348,6 @@ class Step():
         the running of each step.  The real work that is unique to
         each step type is done in the `process` method.
         """
-        from .. import datamodels
         gc.collect()
 
         # Make generic log messages go to this step's logger
@@ -416,7 +415,7 @@ class Step():
 
             # Update meta information
             if not isinstance(
-                    step_result, (list, tuple, datamodels.ModelContainer)
+                    step_result, (list, tuple, ModelContainer)
             ):
                 results = [step_result]
             else:
@@ -430,7 +429,7 @@ class Step():
                                 getattr(result.meta.ref_file, ref_name).name = filename
                         result.meta.ref_file.crds.sw_version = crds_client.get_svn_version()
                         result.meta.ref_file.crds.context_used = \
-                            crds_client.get_context_used(result.meta.telescope)
+                            crds_client.get_context_used(result.crds_observatory)
                 self._reference_files_used = []
 
             # Mark versions
@@ -681,8 +680,12 @@ class Step():
             else:
                 return ""
         else:
-            reference_name = crds_client.get_reference_file(
-                input_file, reference_file_type)
+            with self.open_model(input_file) as model:
+                reference_name = crds_client.get_reference_file(
+                    model.get_crds_parameters(),
+                    reference_file_type,
+                    model.crds_observatory,
+                )
             if reference_name != "N/A":
                 hdr_name = "crds://" + basename(reference_name)
             else:
@@ -692,7 +695,7 @@ class Step():
         return crds_client.check_reference_open(reference_name)
 
     @classmethod
-    def get_config_from_reference(cls, dataset, observatory=None, disable=None):
+    def get_config_from_reference(cls, dataset, disable=None):
         """Retrieve step parameters from reference database
 
         Parameters
@@ -704,9 +707,6 @@ class Step():
             A model of the input file.  Metadata on this input file will
             be used by the CRDS "bestref" algorithm to obtain a reference
             file.
-        observatory : str
-            telescope name used with CRDS,  e.g. 'jwst'.
-
         disable: bool or None
             Do not retrieve parameters from CRDS. If None, check global settings.
 
@@ -725,7 +725,7 @@ class Step():
         # If the dataset is not an operable DataModel, log as such and return
         # an empty config object
         try:
-            model = dm_open(dataset)
+            model = cls.datamodels_open(dataset)
         except (IOError, TypeError, ValueError):
             logger.warning('Input dataset is not a DataModel.')
             disable = True
@@ -739,13 +739,11 @@ class Step():
 
         # Retrieve step parameters from CRDS
         logger.debug(f'Retrieving step {pars_model.meta.reftype.upper()} parameters from CRDS')
-        exceptions = crds_client.get_exceptions_module()
         try:
-            ref_file = crds_client.get_reference_file(model,
+            ref_file = crds_client.get_reference_file(model.get_crds_parameters(),
                                                       pars_model.meta.reftype,
-                                                      observatory=observatory,
-                                                      asn_exptypes=['science'])
-        except (AttributeError, exceptions.CrdsError, exceptions.CrdsLookupError):
+                                                      model.crds_observatory)
+        except (AttributeError, crds_client.CrdsError):
             logger.debug(f'{pars_model.meta.reftype.upper()}: No parameters found')
             return config_parser.ConfigObj()
         if ref_file != 'N/A':
@@ -765,7 +763,7 @@ class Step():
             return config_parser.ConfigObj()
 
     @classmethod
-    def reference_uri_to_cache_path(cls, reference_uri):
+    def reference_uri_to_cache_path(cls, reference_uri, observatory):
         """Convert an abstract CRDS reference URI to an absolute file path in the CRDS
         cache.  Reference URI's are typically output to dataset headers to record the
         reference files used.
@@ -776,7 +774,7 @@ class Step():
         The CRDS cache is typically located relative to env var CRDS_PATH
         with default value /grp/crds/cache.   See also https://jwst-crds.stsci.edu
         """
-        return crds_client.reference_uri_to_cache_path(reference_uri)
+        return crds_client.reference_uri_to_cache_path(reference_uri, observatory)
 
     def set_primary_input(self, obj, exclusive=True):
         """
@@ -1062,7 +1060,14 @@ class Step():
                 self.log.debug("An error has occurred: %s", error)
         gc.collect()
 
-    def open_model(self, obj):
+    @abc.abstractclassmethod
+    def datamodels_open(cls, init, **kwargs):
+        """
+        Wrapper around observatory-specific datamodels.open function.
+        """
+        pass
+
+    def open_model(self, init, **kwargs):
         """Open a datamodel
 
         Primarily a wrapper around `DataModel.open` to
@@ -1070,7 +1075,7 @@ class Step():
 
         Parameters
         ----------
-        obj : object
+        init : object
             The object to open
 
         Returns
@@ -1078,7 +1083,7 @@ class Step():
         datamodel : DataModel
             Object opened as a datamodel
         """
-        return dm_open(self.make_input_path(obj))
+        return self.datamodels_open(self.make_input_path(init), **kwargs)
 
     def make_input_path(self, file_path):
         """Create an input path for a given file path

@@ -104,7 +104,7 @@ class MyPipeline(Pipeline):
 
 def test_pipeline(_jail):
     pipeline_fn = join(dirname(__file__), 'steps', 'python_pipeline.cfg')
-    pipe = Step.from_config_file(pipeline_fn)
+    pipe = Pipeline.from_config_file(pipeline_fn)
     pipe.output_filename = "output.fits"
 
     assert pipe.flat_field.threshold == 42.0
@@ -139,7 +139,7 @@ def test_prefetch(_jail, monkeypatch):
     class MockGetRef:
         called = False
 
-        def mock(self, dataset_model, reference_file_types, observatory=None):
+        def mock(self, parameters, reference_file_types, observatory):
             if 'flat' in reference_file_types:
                 self.called = True
             result = {

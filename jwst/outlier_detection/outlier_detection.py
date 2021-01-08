@@ -10,7 +10,7 @@ from drizzle.cdrizzle import tblot
 from .. import datamodels
 from ..resample import resample
 from ..resample.resample_utils import build_driz_weight, calc_gwcs_pixmap
-from ..stpipe.step import Step
+from ..stpipe import Step
 
 import logging
 log = logging.getLogger(__name__)

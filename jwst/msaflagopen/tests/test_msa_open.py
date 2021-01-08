@@ -15,7 +15,7 @@ from jwst.msaflagopen.msaflag_open import (
 from jwst.msaflagopen import MSAFlagOpenStep
 from jwst.assign_wcs.tests import data
 from jwst.transforms.models import Slit
-from jwst.stpipe.step import Step
+from jwst.stpipe import Step
 
 
 MSA_FAILED_OPEN = dqflags.pixel["MSA_FAILED_OPEN"]
