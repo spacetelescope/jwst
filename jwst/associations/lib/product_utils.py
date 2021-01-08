@@ -4,11 +4,8 @@ from collections import defaultdict, Counter
 import copy
 import logging
 
-from .diff import compare_product_membership
-
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
-
 
 def sort_by_candidate(asns):
     """Sort associations by candidate
@@ -32,7 +29,6 @@ def sort_by_candidate(asns):
     If this changes, a comparision function will need be implemented
     """
     return sorted(asns, key=lambda asn: asn['asn_id'])
-
 
 def get_product_names(asns):
     """Return product names from associations and flag duplicates
@@ -62,45 +58,6 @@ def get_product_names(asns):
         )
 
     return set(product_names), dups
-
-
-def prune_duplicate_associations(asns):
-    """Remove duplicate associations in favor of lower level versions
-
-    For Level 3 associations, multiple associations with the same membership, but different
-    levels, can be created. Remove duplicate associations of higher level.
-
-    The assumption is that there is only one product per association, before merging.
-
-    Parameters
-    ----------
-    asns: [Association[,...]]
-        Associations to prune
-
-    Returns
-    pruned: [Association[,...]]
-        Pruned list of associations
-    """
-    ordered_asns = sort_by_candidate(asns)
-    pruned = list()
-    while True:
-        try:
-            original = ordered_asns.pop()
-        except IndexError:
-            break
-        pruned.append(original)
-        to_prune = list()
-        for asn in ordered_asns:
-            try:
-                compare_product_membership(original['products'][0], asn['products'][0])
-            except AssertionError:
-                continue
-            to_prune.append(asn)
-        for prune in to_prune:
-            ordered_asns.remove(prune)
-
-    return pruned
-
 
 def prune_duplicate_products(asns):
     """Remove duplicate products in favor of higher level versions
