@@ -72,7 +72,7 @@ class CubeData():
 
         Read in necessary reference data:
         * cube parameter reference file
-        * if miripsf weighting paramter is set then read in resolution file
+        * if miripsf weighting parameter is set then read in resolution file
 
         This routine fills in the instrument_info dictionary, which holds the
         default spatial and spectral size of the output cube, as well as,
@@ -428,6 +428,6 @@ class ErrorNoGratings(Exception):
 
 
 class ErrorMissingParameter(Exception):
-    """ Raises Exception if the proived grating but not filter or vice versa
+    """ Raises Exception if provided grating but not filter or vice versa
     """
     pass

@@ -1,6 +1,12 @@
 0.18.1 (unreleased)
 ===================
 
+cube_build
+----------
+
+- Tweaked pixel wavelength preselection range to avoid truncation at the ends
+of the cubes.
+
 pipeline
 --------
 
