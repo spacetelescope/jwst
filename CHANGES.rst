@@ -1,11 +1,31 @@
-0.18.1 (unreleased)
+0.18.1 (2021-01-08)
 ===================
+
+combine1d
+---------
+
+- Output FITS now contains separate combine1d extensions for each spectral
+  order present in the data [#5204]
 
 cube_build
 ----------
 
 - Tweaked pixel wavelength preselection range to avoid truncation at the ends
 of the cubes. [#5598]
+
+datamodels
+----------
+
+- Fix missing CHANNEL entry in distortion reffile schema. [#5553]
+
+extract_1d
+----------
+
+- For IFU data (NIRSpec and MIRI) the extraction radius is now a varying size 
+  based on wavelength. The apcorr correction is a function of wavelength and
+  radius size. Fixes a bug in units conversion for applying the apcorr correction.
+  The units are now correctly converted from arcseconds to pixels. Added an
+  new method to apply the apcorr correction for IFU data. [#5506]
 
 pipeline
 --------
@@ -72,12 +92,6 @@ associations
 
 - Add NRS_VERIFY to the list of target acq/confirmation images [#5395]
 
-combine1d
----------
-
-- Output FITS now contains separate combine1d extensions for each spectral
-  order present in the data [#5204]
-
 cube_build
 ----------
 
@@ -121,11 +135,6 @@ datamodels
 
 extract_1d
 ----------
-- For IFU data (NIRSpec and MIRI) the extraction radius is now a varying size 
-  based on wavelength. The apcorr correction is a function of wavelength and
-  radius size. Fixes a bug in units conversion for applying the apcorr correction.
-  The units are now correctly converted from arcseconds to pixels. Added an
-  new method to apply the apcorr correction for IFU data. 
 
 - Fixed bug involving the determination of source RA/Dec for resampled Slit
   data. [#5353]
