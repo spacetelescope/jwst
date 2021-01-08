@@ -47,6 +47,8 @@ logger.addHandler(logging.NullHandler())
 NON_STEPS = [
     'EngDBLogStep',
     'FunctionWrapper',
+    'JwstPipeline',
+    'JwstStep',
     'Pipeline',
     'Step',
     'SystemCall',
@@ -167,7 +169,7 @@ def all_steps():
     steps : dict
         Key is the classname, value is the class
     """
-    from jwst.stpipe import Step
+    from jwst.stpipe.step import Step
 
     jwst = import_module('jwst')
     jwst_fpath = os.path.split(jwst.__file__)[0]

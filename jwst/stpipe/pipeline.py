@@ -34,12 +34,11 @@ from os.path import dirname, join
 from ..extern.configobj.configobj import Section, ConfigObj
 
 from . import config_parser
-from . import Step
 from . import crds_client
 from . import log
-from .step import get_disable_crds_steppars
-from ..datamodels import open as dm_open
+from .step import get_disable_crds_steppars, Step
 from ..lib.class_property import ClassInstanceMethod
+from ..datamodels import ModelContainer
 
 
 class Pipeline(Step):
@@ -153,7 +152,7 @@ class Pipeline(Step):
         return spec
 
     @classmethod
-    def get_config_from_reference(cls, dataset, observatory=None, disable=None):
+    def get_config_from_reference(cls, dataset, disable=None):
         """Retrieve step parameters from reference database
 
         Parameters
@@ -166,9 +165,6 @@ class Pipeline(Step):
             A model of the input file.  Metadata on this input file will
             be used by the CRDS "bestref" algorithm to obtain a reference
             file.
-
-        observatory : str
-            telescope name used with CRDS,  e.g. 'jwst'.
 
         disable: bool or None
             Do not retrieve parameters from CRDS. If None, check global settings.
@@ -194,29 +190,25 @@ class Pipeline(Step):
         log.log.debug('Retrieving all substep parameters from CRDS')
         #
         # Iterate over the steps in the pipeline
-        with dm_open(dataset, asn_n_members=1) as model:
+        with cls.datamodels_open(dataset, asn_n_members=1) as model:
             for cal_step in cls.step_defs.keys():
                 cal_step_class = cls.step_defs[cal_step]
-                refcfg['steps'][cal_step] = cal_step_class.get_config_from_reference(
-                    model, observatory=observatory
-                )
-        #
-        # Now merge any config parameters from the step cfg file
-        log.log.debug(f'Retrieving pipeline {pars_model.meta.reftype.upper()} parameters from CRDS')
-        exceptions = crds_client.get_exceptions_module()
-        try:
-            ref_file = crds_client.get_reference_file(model,
-                                                      pars_model.meta.reftype,
-                                                      observatory=observatory,
-                                                      asn_exptypes=['science'])
-        except (AttributeError, exceptions.CrdsError, exceptions.CrdsLookupError):
-            log.log.debug(f'{pars_model.meta.reftype.upper()}: No parameters found')
-        else:
-            if ref_file != 'N/A':
-                log.log.info(f'{pars_model.meta.reftype.upper()} parameters found: {ref_file}')
-                refcfg = cls.merge_pipeline_config(refcfg, ref_file)
+                refcfg['steps'][cal_step] = cal_step_class.get_config_from_reference(model)
+            #
+            # Now merge any config parameters from the step cfg file
+            log.log.debug(f'Retrieving pipeline {pars_model.meta.reftype.upper()} parameters from CRDS')
+            try:
+                ref_file = crds_client.get_reference_file(model.get_crds_parameters(),
+                                                        pars_model.meta.reftype,
+                                                        model.crds_observatory)
+            except (AttributeError, crds_client.CrdsError):
+                log.log.debug(f'{pars_model.meta.reftype.upper()}: No parameters found')
             else:
-                log.log.debug(f'No {pars_model.meta.reftype.upper()} reference files found.')
+                if ref_file != 'N/A':
+                    log.log.info(f'{pars_model.meta.reftype.upper()} parameters found: {ref_file}')
+                    refcfg = cls.merge_pipeline_config(refcfg, ref_file)
+                else:
+                    log.log.debug(f'No {pars_model.meta.reftype.upper()} reference files found.')
 
         return refcfg
 
@@ -266,9 +258,8 @@ class Pipeline(Step):
         -------
         None
         """
-        from .. import datamodels
         try:
-            with datamodels.open(input_file, asn_n_members=1,
+            with self.open_model(input_file, asn_n_members=1,
                                 asn_exptypes=["science"]) as model:
                 self._precache_references_opened(model)
         except (ValueError, TypeError, IOError):
@@ -317,7 +308,7 @@ class Pipeline(Step):
 
         self.log.info("Prefetching reference files for dataset: " + repr(model.meta.filename) +
                       " reftypes = " + repr(fetch_types))
-        crds_refs = crds_client.get_multiple_reference_paths(model, fetch_types)
+        crds_refs = crds_client.get_multiple_reference_paths(model.get_crds_parameters(), fetch_types, model.crds_observatory)
 
         ref_path_map = dict(list(crds_refs.items()) + list(ovr_refs.items()))
 
@@ -332,8 +323,7 @@ class Pipeline(Step):
         loads as an association.
         """
         from ..associations import load_asn
-        from .. import datamodels
-        if isinstance(input_file, datamodels.ModelContainer):
+        if isinstance(input_file, ModelContainer):
             return True
 
         try:

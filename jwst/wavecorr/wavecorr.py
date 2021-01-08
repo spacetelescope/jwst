@@ -266,7 +266,7 @@ def get_msa_model(input_model):
     from .. import assign_wcs
     from .. datamodels import MSAModel
     step = assign_wcs.AssignWcsStep()
-    msa = MSAModel(step.reference_uri_to_cache_path(msa_ref))
+    msa = MSAModel(step.reference_uri_to_cache_path(msa_ref, "jwst"))
     return msa
 
 

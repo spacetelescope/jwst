@@ -8,9 +8,8 @@ import textwrap
 
 from . import config_parser
 from . import log
-from . import Step
 from . import utilities
-from .step import get_disable_crds_steppars
+from .step import get_disable_crds_steppars, Step
 
 built_in_configuration_parameters = [
     'debug', 'logcfg', 'verbose'
