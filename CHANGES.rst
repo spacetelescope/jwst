@@ -10,8 +10,7 @@ combine1d
 cube_build
 ----------
 
-- Tweaked pixel wavelength preselection range to avoid truncation at the ends
-of the cubes. [#5598]
+- Tweaked pixel wavelength preselection range to avoid truncation at the ends of the cubes. [#5598]
 
 datamodels
 ----------
