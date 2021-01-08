@@ -4,7 +4,7 @@ import os
 from os import path
 import shutil
 
-from ..step import Step
+from .. import Step
 
 data_fn = 'flat.fits'
 data_fn_path = path.join(path.dirname(__file__), 'data', data_fn)
@@ -16,22 +16,22 @@ def test_make_output_path():
 
     step = Step()
     output_path = step.make_output_path('junk_uncal.fits')
-    assert output_path == 'junk_step.fits'
+    assert output_path == 'junk_jwststep.fits'
 
     output_path = step.make_output_path('junk_uncal.fits', idx=1)
-    assert output_path == 'junk_1_step.fits'
+    assert output_path == 'junk_1_jwststep.fits'
 
     step.output_ext = '.asdf'
     output_path = step.make_output_path('junk_uncal')
-    assert output_path == 'junk_step.asdf'
+    assert output_path == 'junk_jwststep.asdf'
 
     output_path = step.make_output_path('junk_uncal.fits', ext='asdf')
-    assert output_path == 'junk_step.asdf'
+    assert output_path == 'junk_jwststep.asdf'
 
     step.output_dir = '/junk'
     step.output_ext = None
     output_path = step.make_output_path('junk_uncal.fits')
-    assert output_path == path.join(step.output_dir, 'junk_step.fits')
+    assert output_path == path.join(step.output_dir, 'junk_jwststep.fits')
 
 
 def test_save_step_default(mk_tmp_dirs):
