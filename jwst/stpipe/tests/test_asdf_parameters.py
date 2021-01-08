@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from jwst.stpipe.config_parser import ValidationError
-from jwst.stpipe.step import Step
+from jwst.stpipe import Step
 
 from .steps import MakeListStep, MakeListPipeline
 from .util import t_path

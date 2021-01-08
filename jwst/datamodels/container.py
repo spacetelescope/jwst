@@ -381,6 +381,50 @@ class ModelContainer(JwstDataModel):
             for model in self._models:
                 model.close()
 
+    @property
+    def crds_observatory(self):
+        """
+        Get the CRDS observatory for this container.  Used when selecting
+        step/pipeline parameter files when the container is a pipeline input.
+
+        Returns
+        -------
+        str
+        """
+        # Eventually ModelContainer will also be used for Roman, but this
+        # will work for now:
+        return "jwst"
+
+    def get_crds_parameters(self):
+        """
+        Get CRDS parameters for this container.  Used when selecting
+        step/pipeline parameter files when the container is a pipeline input.
+
+        Returns
+        -------
+        dict
+        """
+        with self._open_first_science_exposure() as model:
+            return model.get_crds_parameters()
+
+    def _open_first_science_exposure(self):
+        """
+        Open first model with exptype SCIENCE, or the first model
+        if none exists.
+
+        Returns
+        -------
+        stdatamodels.DataModel
+        """
+        for exposure in self.meta.asn_table.products[0].members:
+            if exposure.exptype.upper() == "SCIENCE":
+                first_exposure = exposure.expname
+                break
+        else:
+            first_exposure = self.meta.asn_table.products[0].members[0].expname
+
+        return datamodel_open(first_exposure)
+
 
 def make_file_with_index(file_path, idx):
     """Append an index to a filename
