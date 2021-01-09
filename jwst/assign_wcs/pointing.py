@@ -2,7 +2,7 @@ import numpy as np
 from astropy import units as u
 from astropy import coordinates as coords
 from astropy.modeling import models as astmodels
-from astropy.modeling.models import Scale, RotationSequence3D
+from astropy.modeling.models import Scale, Identity, RotationSequence3D
 from astropy.coordinates.matrix_utilities import rotation_matrix, matrix_product
 from gwcs import utils as gwutils
 from gwcs.geometry import SphericalToCartesian, CartesianToSpherical
@@ -237,3 +237,89 @@ def create_fitswcs(inp, input_frame=None):
 
     wcsobj = wcs.WCS(pipeline)
     return wcsobj
+
+
+def va_corr_model(datamodel, **kwargs):
+    """
+    Create transformation that accounts for differential velocity aberration (scale).
+
+    Parameters
+    ----------
+
+    datamodel : `~stdatamodels.DataModel`, None
+        A full data model. If ``datamodel`` is `None`, all optional parameters
+        must be provided (``v2_ref``, ``v3_ref``, and ``va_scale`` - see below).
+
+    Other Parameters
+    ----------------
+
+    v2_ref : float
+        Can be provided *only when* ``datamodel`` is `None`.
+
+    v3_ref : float
+        Can be provided *only when* ``datamodel`` is `None`.
+
+    va_scale : float
+        Ratio of the apparent plate scale to the true plate scale.
+        Can be provided *only when* ``datamodel`` is `None`.
+
+    Returns
+    -------
+    va_corr : astropy.modeling.CompoundModel, None
+        A 2D compound model that corrects DVA. If input model does not contain
+        enough information to compute correction then `None` will be returned.
+
+    """
+    if datamodel is None:
+        try:
+            v2_ref = float(kwargs['v2_ref'])
+            v3_ref = float(kwargs['v3_ref'])
+            va_scale = float(kwargs['va_scale'])
+        except KeyError:
+            raise KeyError(
+                "'v2_ref', 'v3_ref', and 'va_scale' are all required when "
+                "'datamodel' is set to None."
+            )
+        except ValueError:
+            raise TypeError(
+                "'v2_ref', 'v3_ref', and 'va_scale' must be numbers."
+            )
+
+    else:
+        if kwargs:
+            raise ValueError(
+                "'v2_ref', 'v3_ref', and 'va_scale' cannot be provided when "
+                "'datamodel' is not None."
+            )
+        try:
+            va_scale = float(datamodel.meta.velocity_aberration.scale_factor)
+            v2_ref = float(datamodel.meta.wcsinfo.v2_ref)
+            v3_ref = float(datamodel.meta.wcsinfo.v3_ref)
+        except (AttributeError, TypeError):
+            return None
+
+    s2c = SphericalToCartesian(name='s2c', wrap_lon_at=180)
+    c2s = CartesianToSpherical(name='c2s', wrap_lon_at=180)
+
+    unit_conv = Scale(1.0 / 3600.0, name='arcsec_to_deg_1D')
+    unit_conv = unit_conv & unit_conv
+    unit_conv.name = 'arcsec_to_deg_2D'
+
+    va_scale_corr = (Identity(1, name='I_1D') &
+                     Scale(va_scale, name='va_scale_1Dy') &
+                     Scale(va_scale, name='va_scale_1Dz'))
+    va_scale_corr.name = 'va_scale_2D'
+
+    rot = RotationSequence3D(
+        [v2_ref / 3600.0, -v3_ref / 3600.0],
+        'zy',
+        name='det_to_optic_axis'
+    )
+
+    va_corr = (
+        unit_conv | s2c | rot | va_scale_corr |
+        rot.inverse | c2s | unit_conv.inverse
+    )
+    va_corr.name = 'VA_Correction'
+
+    return va_corr

@@ -112,6 +112,11 @@ def imaging_distortion(input_model, reference_files):
     with DistortionModel(reference_files['distortion']) as dist:
         distortion = dist.model
 
+    # Apply differential velocity aberration (DVA) correction:
+    va_corr = pointing.va_corr_model(input_model)
+    if va_corr is not None:
+        distortion |= va_corr
+
     # Check if the transform in the reference file has a ``bounding_box``.
     # If not set a ``bounding_box`` equal to the size of the image.
     try:
@@ -195,6 +200,11 @@ def lrs_distortion(input_model, reference_files):
     # full array to v2v3 transform for the ordinary imager
     with DistortionModel(reference_files['distortion']) as dist:
         distortion = dist.model
+
+    # Apply differential velocity aberration (DVA) correction:
+    va_corr = pointing.va_corr_model(input_model)
+    if va_corr is not None:
+        distortion |= va_corr
 
     # Combine models to create subarray to v2v3 distortion
     if subarray2full is not None:
@@ -484,6 +494,8 @@ def abl_to_v2v3l(input_model, reference_files):
     # used to read the wavelength range
     channels = [c + band for c in channel]
 
+    va_corr = pointing.va_corr_model(input_model)
+
     with DistortionMRSModel(reference_files['distortion']) as dist:
         v23 = dict(zip(dist.abv2v3_model.channel_band, dist.abv2v3_model.model))
 
@@ -500,6 +512,11 @@ def abl_to_v2v3l(input_model, reference_files):
         ident1 = models.Identity(1, name='identity_lam')
         ident1._inputs = ('lam',)
         chan_v23 = v23[c]
+
+        # Apply differential velocity aberration (DVA) correction:
+        if va_corr is not None:
+            chan_v23 |= va_corr
+
         v23chan_backward = chan_v23.inverse
         del chan_v23.inverse
         v23_spatial = chan_v23

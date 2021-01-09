@@ -93,7 +93,6 @@ def imaging_distortion(input_model, reference_files):
     """
     Create the "detector" to "v2v3" transform for imaging mode.
 
-
     Parameters
     ----------
     input_model : `~jwst.datamodel.DataModel`
@@ -132,6 +131,11 @@ def imaging_distortion(input_model, reference_files):
 
             if col_offset != 'N/A' and row_offset != 'N/A':
                 transform = Shift(col_offset) & Shift(row_offset) | transform
+
+    # Apply differential velocity aberration (DVA) correction:
+    va_corr = pointing.va_corr_model(input_model)
+    if va_corr is not None:
+        transform |= va_corr
 
     return transform
 

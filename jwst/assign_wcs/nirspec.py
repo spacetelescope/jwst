@@ -125,6 +125,11 @@ def imaging(input_model, reference_files):
         with OTEModel(reference_files['ote']) as f:
             oteip2v23 = f.model
 
+        # Apply differential velocity aberration (DVA) correction:
+        va_corr = pointing.va_corr_model(input_model)
+        if va_corr is not None:
+            oteip2v23 |= va_corr
+
         # V2, V3 to world (RA, DEC) transform
         tel2sky = pointing.v23tosky(input_model)
 
@@ -236,7 +241,7 @@ def ifu(input_model, reference_files, slit_y_range=[-.55, .55]):
         msa2oteip = ifu_msa_to_oteip(reference_files)
         # OTEIP to V2,V3 transform
         # This includes a wavelength unit conversion from meters to microns.
-        oteip2v23 = oteip_to_v23(reference_files)
+        oteip2v23 = oteip_to_v23(reference_files, input_model)
 
         # V2, V3 to sky
         tel2sky = pointing.v23tosky(input_model) & Identity(1)
@@ -352,7 +357,7 @@ def slitlets_wcs(input_model, reference_files, open_slits_id):
 
         # OTEIP to V2,V3 transform
         # This includes a wavelength unit conversion from meters to microns.
-        oteip2v23 = oteip_to_v23(reference_files)
+        oteip2v23 = oteip_to_v23(reference_files, input_model)
         oteip2v23.name = "oteip2v23"
 
         # V2, V3 to sky
@@ -1382,7 +1387,7 @@ def msa_to_oteip(reference_files):
     return msa2fore_mapping | (fore & Identity(1))
 
 
-def oteip_to_v23(reference_files):
+def oteip_to_v23(reference_files, input_model):
     """
     Transform from ``oteip`` frame to ``v2v3`` frame.
 
@@ -1399,6 +1404,12 @@ def oteip_to_v23(reference_files):
     """
     with OTEModel(reference_files['ote']) as f:
         ote = f.model
+
+    # Apply differential velocity aberration (DVA) correction:
+    va_corr = pointing.va_corr_model(input_model)
+    if va_corr is not None:
+        ote |= va_corr
+
     fore2ote_mapping = Identity(3, name='fore2ote_mapping')
     fore2ote_mapping.inverse = Mapping((0, 1, 2, 2))
     # Create the transform to v2/v3/lambda.  The wavelength units up to this point are

@@ -89,6 +89,11 @@ def imaging_distortion(input_model, reference_files):
     dist = DistortionModel(reference_files['distortion'])
     transform = dist.model
 
+    # Apply differential velocity aberration (DVA) correction:
+    va_corr = pointing.va_corr_model(input_model)
+    if va_corr is not None:
+        transform |= va_corr
+
     # Check if the transform in the reference file has a ``bounding_box``.
     # If not set a ``bounding_box`` equal to the size of the image.
     try:

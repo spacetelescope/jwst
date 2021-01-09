@@ -255,6 +255,12 @@ def imaging_distortion(input_model, reference_files):
     """
     dist = DistortionModel(reference_files['distortion'])
     distortion = dist.model
+
+    # Apply differential velocity aberration (DVA) correction:
+    va_corr = pointing.va_corr_model(input_model)
+    if va_corr is not None:
+        distortion |= va_corr
+
     try:
         # Check if the model has a bounding box.
         distortion.bounding_box
