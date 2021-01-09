@@ -186,7 +186,6 @@ class OutlierDetection:
         if pars['resample_data']:
             # Start by creating resampled/mosaic images for
             # each group of exposures
-            print('********at this point')
             sdriz = resample.ResampleData(self.input_models, single=True,
                                           blendheaders=False, **pars)
             sdriz.do_drizzle()
@@ -407,7 +406,7 @@ def flag_cr(sci_image, blot_image, **pars):
     exptime = sci_image.meta.exposure.exposure_time
 
     sci_data = sci_image.data * exptime
-    blot_data = blot_image.data * exptime
+    blot_data = (blot_image.data +subtracted_background) * exptime
     blot_deriv = abs_deriv(blot_data)
 
     err_data = np.nan_to_num(sci_image.err)
@@ -422,7 +421,8 @@ def flag_cr(sci_image, blot_image, **pars):
     #
     # Model the noise and create a CR mask
     diff_noise = np.abs(sci_data - blot_data)
-    ta = np.sqrt(np.abs(blot_data + subtracted_background) + err_data ** 2)
+    #ta = np.sqrt(np.abs(blot_data + subtracted_background) + err_data ** 2)
+    ta = np.sqrt(np.abs(blot_data) + err_data ** 2)
     t2 = scl1 * blot_deriv + snr1 * ta
     tmp1 = np.logical_not(np.greater(diff_noise, t2))
 
