@@ -35,7 +35,7 @@ from ..extern.configobj.configobj import Section, ConfigObj
 
 from . import config_parser
 from . import crds_client
-from . import log
+from .log import log
 from .step import get_disable_crds_steppars, Step
 from ..lib.class_property import ClassInstanceMethod
 from ..datamodels import ModelContainer
@@ -183,11 +183,11 @@ class Pipeline(Step):
         if disable is None:
             disable = get_disable_crds_steppars()
         if disable:
-            log.log.debug(f'{pars_model.meta.reftype.upper()}: CRDS parameter reference retrieval disabled.')
+            log.debug(f'{pars_model.meta.reftype.upper()}: CRDS parameter reference retrieval disabled.')
             return refcfg
 
 
-        log.log.debug('Retrieving all substep parameters from CRDS')
+        log.debug('Retrieving all substep parameters from CRDS')
         #
         # Iterate over the steps in the pipeline
         with cls.datamodels_open(dataset, asn_n_members=1) as model:
@@ -196,19 +196,19 @@ class Pipeline(Step):
                 refcfg['steps'][cal_step] = cal_step_class.get_config_from_reference(model)
             #
             # Now merge any config parameters from the step cfg file
-            log.log.debug(f'Retrieving pipeline {pars_model.meta.reftype.upper()} parameters from CRDS')
+            log.debug(f'Retrieving pipeline {pars_model.meta.reftype.upper()} parameters from CRDS')
             try:
                 ref_file = crds_client.get_reference_file(model.get_crds_parameters(),
                                                         pars_model.meta.reftype,
                                                         model.crds_observatory)
             except (AttributeError, crds_client.CrdsError):
-                log.log.debug(f'{pars_model.meta.reftype.upper()}: No parameters found')
+                log.debug(f'{pars_model.meta.reftype.upper()}: No parameters found')
             else:
                 if ref_file != 'N/A':
-                    log.log.info(f'{pars_model.meta.reftype.upper()} parameters found: {ref_file}')
+                    log.info(f'{pars_model.meta.reftype.upper()} parameters found: {ref_file}')
                     refcfg = cls.merge_pipeline_config(refcfg, ref_file)
                 else:
-                    log.log.debug(f'No {pars_model.meta.reftype.upper()} reference files found.')
+                    log.debug(f'No {pars_model.meta.reftype.upper()} reference files found.')
 
         return refcfg
 
