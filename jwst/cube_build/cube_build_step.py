@@ -391,10 +391,10 @@ class CubeBuildStep (Step):
 # For MIRI we can set the channel.
 # If channel is  set to 'all' then let the determine_band_coverage figure out
 # which channels are covered by the data.
-        if self.channel == 'all':
-            self.channel = ''
 
-        if self.channel:  # self.channel is false if it is empty
+        if self.channel == 'all':
+            self.pars_input['channel'].append('all')
+        else: # user has set value
             if not self.single:
                 self.output_type = 'user'
             channellist = self.channel.split(',')
@@ -418,9 +418,8 @@ class CubeBuildStep (Step):
 # are covered by the data
 
         if self.subchannel == 'all':
-            self.subchannel = ''
-
-        if self.subchannel:  # not empty it has been set
+            self.pars_input['subchannel'].append('all')
+        else:  # user has set value
             if not self.single:
                 self.output_type = 'user'
             subchannellist = self.subchannel.split(',')
@@ -443,8 +442,8 @@ class CubeBuildStep (Step):
 # covered by the data.
 
         if self.filter == 'all':
-            self.filter = ''
-        if self.filter:
+            self.pars_input['filter'].append('all')
+        else:   # User has set value
             if not self.single:
                 self.output_type = 'user'
             filterlist = self.filter.split(',')
@@ -466,9 +465,8 @@ class CubeBuildStep (Step):
 # If set to all then let the determine_band_coverage figure out what gratings are
 # covered by the data
         if self.grating == 'all':
-            self.grating = ''
-
-        if self.grating:
+            self.pars_input['grating'].append('all')
+        else:    # user has set value
             if not self.single:
                 self.output_type = 'user'
             gratinglist = self.grating.split(',')
