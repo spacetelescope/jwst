@@ -1,4 +1,5 @@
-""" Map the detector pixels to the cube coordinate system
+""" Map the detector pixels to the cube coordinate system.
+This is where the weight functions are used.
 """
 import numpy as np
 import logging
@@ -30,6 +31,12 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
     For each spaxel the coord1,coord1 and wave point cloud members are weighed
     according to modified shepard method of inverse weighting based on the
     distance between the point cloud member and the spaxel center.
+
+    Note that this routine does NOT build the cube by looping over spaxels and
+    looking for pixels that contribute to those spaxels.  The runtime is significantly
+    better to instead loop over pixels, and look for spaxels that they contribute to.
+    This way we can just keep a running sum of the weighted fluxes in a 1-d representation
+    of the output cube, which can be normalized by the weights at the end.
 
     Parameters
     ----------
@@ -84,7 +91,7 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
     Returns
     -------
     spaxel_flux, spaxel_weight, spaxel_ifux, and spaxel_var updated with the information
-    from the detector pixels that fall within the roi if the spaxel center.
+    from the detector pixels that fall within the roi of the spaxel center.
     """
     nplane = naxis1 * naxis2
 
@@ -106,6 +113,7 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
         indexr = np.where(radius <= rois_pixel[ipt])
         indexz = np.where(abs(zcoord - wave[ipt]) <= roiw_pixel[ipt])
 
+        # Find the cube spectral planes that this input point will contribute to
         if len(indexz[0]) > 0:
             d1 = np.array(coord1[ipt] - xcenters[indexr]) / cdelt1
             d2 = np.array(coord2[ipt] - ycenters[indexr]) / cdelt2
@@ -121,6 +129,7 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
             dxy_matrix = np.tile(dxy[np.newaxis].T, [1, d3.shape[0]])
             d3_matrix = np.tile(d3 * d3, [dxy_matrix.shape[0], 1])
 
+            # wdistance is now the spatial distance squared plus the spectral distance squared
             wdistance = dxy_matrix + d3_matrix
             if weighting_type == 'msm':
                 weight_distance = np.power(np.sqrt(wdistance), weight_pixel[ipt])
@@ -133,11 +142,14 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
             weighted_flux = weight_distance * flux[ipt]
             weighted_var = (weight_distance * err[ipt]) * (weight_distance * err[ipt])
 
+            # Identify all of the cube spaxels (ordered in a 1d vector) that this input point contributes to
             icube_index = [iz * nplane + ir for iz in indexz[0] for ir in indexr[0]]
 
             if cube_debug in icube_index:
                 log.info('cube_debug %i %d %d',ipt,flux[ipt],weight_distance[icube_index.index(cube_debug)])
 
+            # Add the weighted flux and variance to running 1d cubes, along with the weights
+            # (for later normalization), and point count (for information)
             spaxel_flux[icube_index] = spaxel_flux[icube_index] + weighted_flux
             spaxel_weight[icube_index] = spaxel_weight[icube_index] + weight_distance
             spaxel_iflux[icube_index] = spaxel_iflux[icube_index] + 1

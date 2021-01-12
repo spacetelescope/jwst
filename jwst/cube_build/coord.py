@@ -137,7 +137,7 @@ def v2v32radec_estimate(ra_ref, dec_ref, roll_ref, v2_ref, v3_ref, v2, v3):
 
     This routine is used for debugging purposes. It is not actually used
     in the cube_build step for routine IFU cube building.
-    The conversion from V2,V3 to ra,dec is handled more accuarately by
+    The conversion from V2,V3 to ra,dec is handled more accurately by
     the transforms provided by assign_wcs.
 
     Parameters
@@ -193,7 +193,7 @@ def radec2v2v3_estimate(ra_ref, dec_ref, roll_ref, v2_ref, v3_ref, ra, dec):
 
     This routine is used for debugging purposes. It is not actually used
     in the cube_build step for routine IFU cube building.
-    The conversion from Ra,Dec to V2,V3 is handled more accuarately by
+    The conversion from Ra,Dec to V2,V3 is handled more accurately by
     the transforms provided by assign_wcs.
 
     Parameters

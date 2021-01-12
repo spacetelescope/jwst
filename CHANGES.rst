@@ -14,6 +14,11 @@ combine1d
 - Output FITS now contains separate combine1d extensions for each spectral
   order present in the data [#5204]
 
+cube_build
+----------
+
+- Tweaked pixel wavelength preselection range to avoid truncation at the ends of the cubes. [#5598]
+
 datamodels
 ----------
 
