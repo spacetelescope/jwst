@@ -1535,8 +1535,12 @@ class IFUCubeData():
             # of interest would have them fall within one of the cube spectral planes
             # Note that the cube lambda refer to the spaxel midpoints, so we must account for both
             # the spaxel width and the ROI size
-            min_wave_tolerance = self.crval3 - np.absolute(self.zcoord[1] - self.zcoord[0]) / 2. - self.roiw
-            max_wave_tolerance = self.zcoord[-1] + np.absolute(self.zcoord[-1] - self.zcoord[-2]) / 2. + self.roiw
+            if self.linear_wavelength:
+                min_wave_tolerance = self.crval3 - np.absolute(self.zcoord[1] - self.zcoord[0]) / 2. - self.roiw
+                max_wave_tolerance = self.zcoord[-1] + np.absolute(self.zcoord[-1] - self.zcoord[-2]) / 2. + self.roiw
+            else:
+                min_wave_tolerance = self.crval3 - np.absolute(self.zcoord[1] - self.zcoord[0]) / 2. - np.max(self.roiw_table)
+                max_wave_tolerance = self.zcoord[-1] + np.absolute(self.zcoord[-1] - self.zcoord[-2]) / 2. + np.max(self.roiw_table)
 
             valid_min = np.where(wave >= min_wave_tolerance)
             not_mapped_low = wave.size - len(valid_min[0])
