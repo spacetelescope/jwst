@@ -168,7 +168,7 @@ class CubeBuildStep (Step):
         self.pars_input['filter'] = []
         self.pars_input['grating'] = []
 
-        # including values in pars_input that could get updated in cube_build_step.py 
+        # including values in pars_input that could get updated in cube_build_step.py
         self.pars_input['output_type'] = self.output_type
         self.pars_input['coord_system'] = self.coord_system
 
