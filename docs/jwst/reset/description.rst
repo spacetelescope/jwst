@@ -8,7 +8,7 @@ resetting the detectors is the RSCD effect (see :ref:`rscd <rscd_step>`).
 
 Assumptions
 -----------
-The reset correction is a MIRI-specific correction it will not be applied to data from  other instruments. 
+The reset correction is a MIRI-specific correction. It will not be applied to data from  other instruments. 
 
 
 
@@ -25,7 +25,7 @@ on the other hand, is the appearance of
 significant extra spatial structure in these initial
 groups, before fading out in later groups.
 
-The reset anomaly effect fades out by ~group 15 for full array data. It takes a few more frames
+The reset anomaly effect fades out by ~group 15 for full array data. It takes a few more groups
 for the effect to fade away on subarray data. The time constant of the effect seems to be closely
 related to the group number and not time since reset.
 
@@ -44,11 +44,11 @@ correction for the first N groups, where N is defined by the reset
 correction reference file.
 
 The format of the reset reference file is NCols X NRows X NGroups X NInts.
-The current implementation uses a reset anomaly reference file for
-full array data  containing a correction for the first 15 groups for
-integrations 1 and all higher integrations. The reference file
-was determined so that the correction is forced to be zero on the last
-group for each integration.  For each integration in the input science data,
+For full frame data, the current implementation uses a reset anomaly reference file,
+which contains a correction for the first 15 groups for
+all integrations.  The reference file contains two corrections: one for the first integration
+and a second one for all other integrations. The correction 
+was determined so that the correction is forced to be zero on group 15.  For each integration in the input science data,
 the reset corrections are subtracted, group-by-group, integration-by-
 integration. If the input science data contains more groups than the
 reset correction, then correction for those groups is zero. If the
