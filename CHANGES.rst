@@ -1,8 +1,11 @@
 0.18.2 (unreleased)
 ===================
 
+set_telescope_pointing
+----------------------
 
-
+- Updated to populate XREF_SCI, YREF_SCI keywords for all TSO exposures,
+  not just NRC_TSGRISM mode. [#5616]
 
 
 0.18.1 (2021-01-08)
