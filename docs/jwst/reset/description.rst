@@ -31,7 +31,7 @@ related to the group number and not time since reset.
 
 For multiple integration data, the reset anomaly also varies in amplitude
 for the first few integrations before settling down to a relatively
-constant correction for integrations greater than second for full array
+constant correction for integrations greater than the second integration for full array
 data. Because of the shorter readout time, the subarray data requires a few
 more integrations before the effect is relatively stable from integration
 to integration.
