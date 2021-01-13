@@ -155,16 +155,6 @@ class CubeBuildStep (Step):
             if self.weight_power != 0:
                 self.log.info(f'Power weighting distance: {self.weight_power}')
 
-        if self.single:
-            self.output_type = 'single'
-            self.log.info('Cube Type: Single cubes')
-            self.coord_system = 'skyalign'
-            self.interpolation = 'pointcloud'
-
-            # Don't allow anything but msm or emsm weightings
-            if ((self.weighting != 'msm')and(self.weighting != 'emsm')):
-                self.weighting = 'emsm'
-
 # ________________________________________________________________________________
 # read input parameters - Channel, Band (Subchannel), Grating, Filter
 # ________________________________________________________________________________
@@ -177,9 +167,25 @@ class CubeBuildStep (Step):
 
         self.pars_input['filter'] = []
         self.pars_input['grating'] = []
+
+        # including values in pars_input that could get updated in cube_build_step.py
+        self.pars_input['output_type'] = self.output_type
+        self.pars_input['coord_system'] = self.coord_system
+
+        if self.single:
+            self.pars_input['output_type'] = 'single'
+            self.log.info('Cube Type: Single cubes')
+            self.pars_input['coord_system'] = 'skyalign'
+            self.interpolation = 'pointcloud'
+
+            # Don't allow anything but msm or emsm weightings
+            if ((self.weighting != 'msm')and(self.weighting != 'emsm')):
+                self.weighting = 'emsm'
+
+
 # read_user_input:
 # see if options channel, band,grating filter are set on the command lines
-# if they are then self.output_type = 'user' and fill in  par_input with values
+# if they are then self.pars_input['output_type'] = 'user' and fill in  par_input with values
         self.read_user_input()
 # ________________________________________________________________________________
 # DataTypes: Read in the input data - 4 formats are allowed:
@@ -235,7 +241,7 @@ class CubeBuildStep (Step):
             'filter': self.pars_input['filter'],
             'weighting': self.weighting,
             'single': self.single,
-            'output_type': self.output_type}
+            'output_type': self.pars_input['output_type']}
 
 # shove the input parameters in to pars_cube to pull out ifu_cube.py
 # these parameters are related to the building a single ifucube_model
@@ -247,7 +253,7 @@ class CubeBuildStep (Step):
             'interpolation': self.interpolation,
             'weighting': self.weighting,
             'weight_power': self.weight_power,
-            'coord_system': self.coord_system,
+            'coord_system': self.pars_input['coord_system'],
             'rois': self.rois,
             'roiw': self.roiw,
             'wavemin': self.wavemin,
@@ -279,7 +285,7 @@ class CubeBuildStep (Step):
         master_table = result['master_table']
 # ________________________________________________________________________________
 # How many and what type of cubes will be made.
-# send self.output_type, all_channel, all_subchannel, all_grating, all_filter
+# send self.pars_input['output_type'], all_channel, all_subchannel, all_grating, all_filter
 # return number of cubes and for each cube the fill in
 # list_pars1 (valid channel or grating) and
 # list_pars2 (value subchannel or filter)
@@ -301,7 +307,7 @@ class CubeBuildStep (Step):
                 self.input_filenames,
                 self.input_models,
                 self.output_name_base,
-                self.output_type,
+                self.pars_input['output_type'],
                 instrument,
                 list_par1,
                 list_par2,
@@ -391,12 +397,12 @@ class CubeBuildStep (Step):
 # For MIRI we can set the channel.
 # If channel is  set to 'all' then let the determine_band_coverage figure out
 # which channels are covered by the data.
-        if self.channel == 'all':
-            self.channel = ''
 
-        if self.channel:  # self.channel is false if it is empty
+        if self.channel == 'all':
+            self.pars_input['channel'].append('all')
+        else: # user has set value
             if not self.single:
-                self.output_type = 'user'
+                self.pars_input['output_type'] = 'user'
             channellist = self.channel.split(',')
             user_clen = len(channellist)
             for j in range(user_clen):
@@ -418,11 +424,10 @@ class CubeBuildStep (Step):
 # are covered by the data
 
         if self.subchannel == 'all':
-            self.subchannel = ''
-
-        if self.subchannel:  # not empty it has been set
+            self.pars_input['subchannel'].append('all')
+        else:  # user has set value
             if not self.single:
-                self.output_type = 'user'
+                self.pars_input['output_type'] = 'user'
             subchannellist = self.subchannel.split(',')
             user_blen = len(subchannellist)
             for j in range(user_blen):
@@ -443,10 +448,10 @@ class CubeBuildStep (Step):
 # covered by the data.
 
         if self.filter == 'all':
-            self.filter = ''
-        if self.filter:
+            self.pars_input['filter'].append('all')
+        else:   # User has set value
             if not self.single:
-                self.output_type = 'user'
+                self.pars_input['output_type'] = 'user'
             filterlist = self.filter.split(',')
             user_flen = len(filterlist)
             for j in range(user_flen):
@@ -466,11 +471,10 @@ class CubeBuildStep (Step):
 # If set to all then let the determine_band_coverage figure out what gratings are
 # covered by the data
         if self.grating == 'all':
-            self.grating = ''
-
-        if self.grating:
+            self.pars_input['grating'].append('all')
+        else:    # user has set value
             if not self.single:
-                self.output_type = 'user'
+                self.pars_input['output_type'] = 'user'
             gratinglist = self.grating.split(',')
             user_glen = len(gratinglist)
             for j in range(user_glen):
