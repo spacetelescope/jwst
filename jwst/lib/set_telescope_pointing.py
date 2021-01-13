@@ -1494,14 +1494,14 @@ def populate_model_from_siaf(model, siaf):
     siaf : namedtuple
         The WCS keywords read in from the SIAF.
     """
-    # If not an imaging mode, update the pointing only.
+    # Update values from the SIAF for all exposures.
     model.meta.wcsinfo.v2_ref = siaf.v2_ref
     model.meta.wcsinfo.v3_ref = siaf.v3_ref
     model.meta.wcsinfo.v3yangle = siaf.v3yangle
     model.meta.wcsinfo.vparity = siaf.vparity
+
+    # For imaging modes, also update the basic FITS WCS keywords
     if model.meta.exposure.type.lower() in TYPES_TO_UPDATE:
-        # For imaging modes update the pointing and
-        # the FITS WCS keywords.
         logger.info('Setting basic FITS WCS keywords for imaging')
         model.meta.wcsinfo.ctype1 = 'RA---TAN'
         model.meta.wcsinfo.ctype2 = 'DEC--TAN'
@@ -1513,8 +1513,12 @@ def populate_model_from_siaf(model, siaf):
         model.meta.wcsinfo.cdelt1 = siaf.cdelt1 / 3600  # in deg
         model.meta.wcsinfo.cdelt2 = siaf.cdelt2 / 3600  # in deg
         model.meta.coordinates.reference_frame = "ICRS"
-    elif model.meta.exposure.type.lower() == 'nrc_tsgrism':
-        logger.info('NRC_TSGRISM:')
+
+    # For TSO exposures, also populate XREF_SCI/YREF_SCI keywords,
+    # which are used by the Cal pipeline to determine the
+    # location of the source
+    if model.meta.visit.tsovisit:
+        logger.info('TSO exposure:')
         logger.info(' setting xref_sci to {}'.format(siaf.crpix1))
         logger.info(' setting yref_sci to {}'.format(siaf.crpix2))
         model.meta.wcsinfo.siaf_xref_sci = siaf.crpix1
