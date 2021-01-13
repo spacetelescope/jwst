@@ -6,6 +6,12 @@ cube_build
 - Do not allow varibles defined in spec (part of the cube_build_step class) to be changed, to allow
   calspec2 to loop over a list of files and run the pipeline. [#5603]
 
+datamodels
+----------
+
+- Updated schemas for new keywords CROWDFLD, PRIDTYPE, PRIDTPTS, PATTNPTS, SMGRDPAT,
+  changed name of SUBPXPNS to SUBPXPTS, and new allowed values for PATTTYPE. [#5618]
+
 set_telescope_pointing
 ----------------------
 
