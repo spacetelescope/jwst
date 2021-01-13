@@ -1,7 +1,13 @@
 0.18.2 (unreleased)
 ===================
 
+flat_field
+----------
+- Added DO_NOT_USE to pixels flagged as NON_SCIENCE for non-nirspec data [#5601]
 
+outlier_detection
+-----------------
+- Account for the background subtracted data in the blot image for determining the noise image used in flagging outliers [#5601] 
 
 
 
