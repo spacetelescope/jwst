@@ -74,23 +74,23 @@ EXPTYPE_MAP = {
 
 # Coronographic exposures
 CORON_EXP_TYPES = [
-    'mir_lyot',
     'mir_4qpm',
+    'mir_lyot',
     'nrc_coron'
 ]
 
 # Exposures that get Level2b processing
 IMAGE2_SCIENCE_EXP_TYPES = [
+    'fgs_image',
+    'mir_4qpm',
     'mir_image',
     'mir_lyot',
-    'mir_4qpm',
     'nis_ami',
     'nis_image',
-    'nrc_image',
     'nrc_coron',
-    'nrc_tsimage',
+    'nrc_image',
     'nrs_mimf',
-    'fgs_image',
+    'nrc_tsimage',
 ]
 
 IMAGE2_NONSCIENCE_EXP_TYPES = [
@@ -103,23 +103,23 @@ IMAGE2_NONSCIENCE_EXP_TYPES = [
 IMAGE2_NONSCIENCE_EXP_TYPES.extend(ACQ_EXP_TYPES)
 
 SPEC2_SCIENCE_EXP_TYPES = [
-    'nrc_tsgrism',
-    'nrc_wfss',
     'mir_lrs-fixedslit',
     'mir_lrs-slitless',
     'mir_mrs',
+    'nis_soss',
+    'nis_wfss',
+    'nrc_tsgrism',
+    'nrc_wfss',
     'nrs_fixedslit',
     'nrs_ifu',
     'nrs_msaspec',
     'nrs_brightobj',
-    'nis_soss',
-    'nis_wfss',
 ]
 
 SPECIAL_EXPOSURE_MODIFIERS = {
-    'psf': ['is_psf'],
+    'background': ['bkgdtarg'],
     'imprint': ['is_imprt'],
-    'background': ['bkgdtarg']
+    'psf': ['is_psf'],
 }
 
 # Exposures that are always TSO

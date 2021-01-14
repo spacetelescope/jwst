@@ -1,18 +1,37 @@
 0.18.2 (unreleased)
 ===================
 
-flat_field
-----------
-- Added DO_NOT_USE to pixels flagged as NON_SCIENCE for non-nirspec data [#5601]
 
 outlier_detection
 -----------------
 - Account for the background subtracted data in the blot image for determining the noise image used in flagging outliers [#5601] 
-=======
+
+associations
+------------
+
+- Update MIRI LRS-Fixedslit ALONG-SLIT-NOD backgrounds strategies [#5620]
+
 cube_build
 ----------
+
 - Do not allow varibles defined in spec (part of the cube_build_step class) to be changed, to allow
   calspec2 to loop over a list of files and run the pipeline. [#5603]
+
+datamodels
+----------
+
+- Updated schemas for new keywords CROWDFLD, PRIDTYPE, PRIDTPTS, PATTNPTS, SMGRDPAT,
+  changed name of SUBPXPNS to SUBPXPTS, and new allowed values for PATTTYPE. [#5618]
+  
+flat_field
+----------
+
+- Added DO_NOT_USE to pixels flagged as NON_SCIENCE for non-nirspec data [#5601]
+
+outlier_detection
+-----------------
+
+- Account for the background subtracted data in the blot image for determining the noise image used in flagging outliers [#5601] 
 
 set_telescope_pointing
 ----------------------
