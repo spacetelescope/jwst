@@ -1,11 +1,6 @@
 0.18.2 (unreleased)
 ===================
 
-
-outlier_detection
------------------
-- Account for the background subtracted data in the blot image for determining the noise image used in flagging outliers [#5601] 
-
 associations
 ------------
 
