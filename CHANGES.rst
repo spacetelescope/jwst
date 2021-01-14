@@ -8,8 +8,17 @@ flat_field
 outlier_detection
 -----------------
 - Account for the background subtracted data in the blot image for determining the noise image used in flagging outliers [#5601] 
+=======
+cube_build
+----------
+- Do not allow varibles defined in spec (part of the cube_build_step class) to be changed, to allow
+  calspec2 to loop over a list of files and run the pipeline. [#5603]
 
+set_telescope_pointing
+----------------------
 
+- Updated to populate XREF_SCI, YREF_SCI keywords for all TSO exposures,
+  not just NRC_TSGRISM mode. [#5616]
 
 0.18.1 (2021-01-08)
 ===================
