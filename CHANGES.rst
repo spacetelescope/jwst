@@ -1,8 +1,14 @@
 0.18.2 (unreleased)
 ===================
 
+associations
+------------
+
+- Update MIRI LRS-Fixedslit ALONG-SLIT-NOD backgrounds strategies [#5620]
+
 cube_build
 ----------
+
 - Do not allow varibles defined in spec (part of the cube_build_step class) to be changed, to allow
   calspec2 to loop over a list of files and run the pipeline. [#5603]
 
@@ -95,8 +101,6 @@ assign_wcs
 
 associations
 ------------
-
-- Update MIRI LRS-Fixedslit ALONG-SLIT-NOD backgrounds strategies [#5584]
 
 - Add new dither keyword subpxpts to constraints [#5525]
 
