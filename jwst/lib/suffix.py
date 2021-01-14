@@ -267,7 +267,7 @@ def find_suffixes():
     is worth doing dynamically or only as a utility to update
     a static list.
     """
-    from jwst.stpipe.step import Step
+    from jwst.stpipe import Step
     from jwst.stpipe.utilities import all_steps
 
     jwst = import_module('jwst')
