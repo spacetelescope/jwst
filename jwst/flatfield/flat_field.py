@@ -215,6 +215,11 @@ def apply_flat_field(science, flat, inverse=False):
     # Combine the science and flat DQ arrays
     science.dq = np.bitwise_or(science.dq, flat_dq)
 
+    # Find all pixels in the flat that have a DQ value of NON_SCIENCE
+    # add the DO_NOT_USE flag to these pixels. We don't want to use these pixels
+    # in futher steps
+    flag_nonsci = np.bitwise_and(science.dq, dqflags.pixel['NON_SCIENCE']).astype(np.bool)
+    science.dq[flag_nonsci] = np.bitwise_or(science.dq[flag_nonsci], dqflags.pixel['DO_NOT_USE'])
 
 #
 # The following functions are for NIRSpec spectrographic data.
