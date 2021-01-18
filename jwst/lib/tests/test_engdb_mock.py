@@ -158,7 +158,7 @@ def test_mocker_alive(db_cache):
     'mnemonic, count',
     [
         (GOOD_MNEMONIC, 1),
-        ('CAL', 40),
+        ('CAL', 14),
         ('', 2100),
     ]
 )
