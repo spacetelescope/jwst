@@ -4,6 +4,8 @@
 associations
 ------------
 
+- JWSTDMS-410 Asn_Lv2NRSLAMPSpectral: Break out the negative cases [#5635]
+
 - Update MIRI LRS-Fixedslit ALONG-SLIT-NOD backgrounds strategies [#5620]
 
 cube_build
