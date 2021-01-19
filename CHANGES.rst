@@ -1,4 +1,4 @@
-0.18.2 (unreleased)
+0.18.2 (2021-01-19)
 ===================
 
 associations
@@ -11,8 +11,9 @@ associations
 cube_build
 ----------
 
-- Do not allow varibles defined in spec (part of the cube_build_step class) to be changed, to allow
-  calspec2 to loop over a list of files and run the pipeline. [#5603]
+- Do not allow varibles defined in spec (part of the cube_build_step class) to
+  be changed, to allow calspec2 to loop over a list of files and run the
+  pipeline. [#5603]
 
 datamodels
 ----------
@@ -23,12 +24,13 @@ datamodels
 flat_field
 ----------
 
-- Added DO_NOT_USE to pixels flagged as NON_SCIENCE for non-nirspec data [#5601]
+- Added DO_NOT_USE to pixels flagged as NON_SCIENCE for non-NIRSpec data [#5601]
 
 outlier_detection
 -----------------
 
-- Account for the background subtracted data in the blot image for determining the noise image used in flagging outliers [#5601] 
+- Account for the background subtracted data in the blot image for determining
+  the noise image used in flagging outliers [#5601]
 
 set_telescope_pointing
 ----------------------
@@ -48,7 +50,8 @@ combine1d
 cube_build
 ----------
 
-- Tweaked pixel wavelength preselection range to avoid truncation at the ends of the cubes. [#5598]
+- Tweaked pixel wavelength preselection range to avoid truncation at the ends
+  of the cubes. [#5598]
 
 datamodels
 ----------
