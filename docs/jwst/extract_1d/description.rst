@@ -239,20 +239,22 @@ direction perpendicular to dispersion.
 
 Extraction for 3D IFU Data
 --------------------------
-For IFU cube data, 1D extraction is contolled by a different set of EXTRACT1D
+For IFU cube data, 1D extraction is controlled by a different set of EXTRACT1D
 reference file parameters.
 Note that for an extended source, anything specified in the reference file
 or step arguments will be ignored; the entire image will be
 extracted, and no background subtraction will be done.
 
 For point sources a circular extraction aperture is used, along with an optional
-circular annulus for background extraction and subtraction. The parameters
-``x_center``, ``y_center``, and ``radius`` specify the location and size of the
-source aperture, all of which are given in units of pixels.
-The parameters ``inner_background`` and ``outer_background`` are used to
-specify the limits of an annular background aperture. All radius-related
-parameters can be floating-point values and appropriate partial-pixel scaling
-will be used in the extraction process.
+circular annulus for background extraction and subtraction. The size of the extraction
+region and the background annulus size varies with wavelength. 
+The extraction related vectors are found in the asdf extract1d reference file.
+For each element in the ``wavelength`` vector there are three size components: ``radius``, ``inner_bkg``, and
+``outer_bkg``. The radius vector sets the extraction size; while ``inner_bkg`` and ``outer_bkg`` specify the
+limits of an annular background aperture.
+The extraction size parameters are given in units of arcseconds and converted to units of pixels
+in the extraction process. 
+
 
 The region of overlap between an aperture and a pixel can be calculated by
 one of three different methods, specified by the ``method`` parameter:  "exact"
@@ -260,4 +262,4 @@ one of three different methods, specified by the ``method`` parameter:  "exact"
 in a pixel will be included if its center is within the aperture; or "subsample",
 which means pixels will be subsampled N x N and the "center" option will be used
 for each sub-pixel. When ``method`` is "subsample", the parameter ``subpixels``
-is used to set the resampling value. The default value is 5.
+is used to set the resampling value. The default value is 10.
