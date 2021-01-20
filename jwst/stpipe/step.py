@@ -27,6 +27,7 @@ except ImportError:
     DISCOURAGED_TYPES = None
 from stdatamodels import DataModel
 
+from .class_property import ClassInstanceMethod
 from . import config_parser
 from . import crds_client
 from . import log
@@ -34,8 +35,8 @@ from . import utilities
 from .format_template import FormatTemplate
 
 from ..datamodels import (ModelContainer, StepParsModel)
-from ..lib.class_property import ClassInstanceMethod
 from ..lib.suffix import remove_suffix
+
 
 class Step(abc.ABC):
     """
