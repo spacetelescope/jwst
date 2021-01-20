@@ -33,11 +33,12 @@ from os.path import dirname, join
 
 from ..extern.configobj.configobj import Section, ConfigObj
 
+from .class_property import ClassInstanceMethod
 from . import config_parser
 from . import crds_client
 from .log import log
 from .step import get_disable_crds_steppars, Step
-from ..lib.class_property import ClassInstanceMethod
+
 from ..datamodels import ModelContainer
 
 
