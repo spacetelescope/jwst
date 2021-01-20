@@ -565,8 +565,8 @@ def combine_1d_spectra(input_model, exptime_key):
 
     for order in input_spectra:
         output_spectra[order] = OutputSpectrumModel()
-        output_spectra[order].assign_wavelengths(input_spectra[spectral_order])
-        output_spectra[order].accumulate_sums(input_spectra[spectral_order])
+        output_spectra[order].assign_wavelengths(input_spectra[order])
+        output_spectra[order].accumulate_sums(input_spectra[order])
         output_spectra[order].compute_combination()
 
     for order in input_spectra:
