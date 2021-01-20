@@ -10,6 +10,7 @@ from ..datamodels import ModelContainer
 from . import crds_client
 from .step import Step
 from .pipeline import Pipeline
+from ..lib.suffix import remove_suffix
 
 
 class JwstStep(Step):
@@ -104,6 +105,9 @@ class JwstStep(Step):
             datamodel.meta.cal_step._instance[cal_step] = status
 
         # TODO: standardize cal_step naming to point to the offical step name
+
+    def remove_suffix(self, name):
+        return remove_suffix(name)
 
 
 # JwstPipeline needs to inherit from Pipeline, but also
