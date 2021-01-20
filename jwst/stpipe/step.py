@@ -33,7 +33,6 @@ from . import log
 from . import utilities
 from .format_template import FormatTemplate
 
-from .. import __version_commit__, __version__
 from ..datamodels import (ModelContainer, StepParsModel)
 from ..lib.class_property import ClassInstanceMethod
 from ..lib.suffix import remove_suffix
@@ -423,22 +422,13 @@ class Step(abc.ABC):
             else:
                 results = step_result
 
-            if len(self._reference_files_used):
-                for result in results:
-                    if isinstance(result, DataModel):
-                        for ref_name, filename in self._reference_files_used:
-                            if hasattr(result.meta.ref_file, ref_name):
-                                getattr(result.meta.ref_file, ref_name).name = filename
-                        result.meta.ref_file.crds.sw_version = crds_client.get_svn_version()
-                        result.meta.ref_file.crds.context_used = \
-                            crds_client.get_context_used(result.crds_observatory)
-                self._reference_files_used = []
-
-            # Mark versions
+            # The finalize_result hook allows subclasses to add
+            # metadata (like the cal code package version) before
+            # the result is saved.
             for result in results:
-                if isinstance(result, DataModel):
-                    result.meta.calibration_software_revision = __version_commit__ or 'RELEASE'
-                    result.meta.calibration_software_version = __version__
+                self.finalize_result(result, self._reference_files_used)
+
+            self._reference_files_used = []
 
             # Save the output file if one was specified
             if not self.skip and self.save_results:
@@ -480,6 +470,22 @@ class Step(abc.ABC):
         return step_result
 
     __call__ = run
+
+    def finalize_result(self, result, reference_files_used):
+        """
+        Hook that allows subclasses to set mission-specific metadata on each
+        step result before that result is saved.
+
+        Parameters
+        ----------
+        result : stdatamodels.DataModel or jwst.datamodels.ModelContainer
+            One step result (potentially of many).
+
+        reference_files_used : list of tuple
+            List of reference files used when running the step, each
+            a tuple in the form (str reference type, str reference URI).
+        """
+        pass
 
     def prefetch(self, *args):
         """Prefetch reference files,  nominally called when
@@ -1139,33 +1145,6 @@ class Step(abc.ABC):
                 # Not a file-checkable object. Ignore.
                 pass
 
-    def record_step_status(self, datamodel, cal_step, success=True):
-        """Record whether or not a step completed in meta.cal_step
-
-        Parameters
-        ----------
-        datamodel : `~jwst.datamodels.Datamodel` instance
-            This is the datamodel or container of datamodels to modify in place
-
-        cal_step : str
-            The attribute in meta.cal_step for recording the status of the step
-
-        success : bool
-            If True, then 'COMPLETE' is recorded.  If False, then 'SKIPPED'
-        """
-        if success:
-            status = 'COMPLETE'
-        else:
-            status = 'SKIPPED'
-            self.skip = True
-
-        if isinstance(datamodel, ModelContainer):
-            for model in datamodel:
-                model.meta.cal_step._instance[cal_step] = status
-        else:
-            datamodel.meta.cal_step._instance[cal_step] = status
-
-        # TODO: standardize cal_step naming to point to the offical step name
 
     @ClassInstanceMethod
     def get_pars(step, full_spec=True):
