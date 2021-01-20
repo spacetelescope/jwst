@@ -1,9 +1,15 @@
 """
 JWST-specific Step and Pipeline base classes.
 """
+from stdatamodels import DataModel
+
+from .. import __version_commit__, __version__
+from .. import datamodels
+from ..datamodels import ModelContainer
+
+from . import crds_client
 from .step import Step
 from .pipeline import Pipeline
-from .. import datamodels
 
 
 class JwstStep(Step):
@@ -58,6 +64,46 @@ class JwstStep(Step):
         asn = LoadAsAssociation.load(obj)
         update_key_value(asn, 'expname', (), mod_func=self.make_input_path)
         return asn
+
+    def finalize_result(self, result, reference_files_used):
+        if isinstance(result, DataModel):
+            result.meta.calibration_software_revision = __version_commit__ or 'RELEASE'
+            result.meta.calibration_software_version = __version__
+
+            if len(reference_files_used) > 0:
+                for ref_name, filename in reference_files_used:
+                    if hasattr(result.meta.ref_file, ref_name):
+                        getattr(result.meta.ref_file, ref_name).name = filename
+                result.meta.ref_file.crds.sw_version = crds_client.get_svn_version()
+                result.meta.ref_file.crds.context_used = crds_client.get_context_used(result.crds_observatory)
+
+    def record_step_status(self, datamodel, cal_step, success=True):
+        """Record whether or not a step completed in meta.cal_step
+
+        Parameters
+        ----------
+        datamodel : `~jwst.datamodels.JwstDataModel` instance
+            This is the datamodel or container of datamodels to modify in place
+
+        cal_step : str
+            The attribute in meta.cal_step for recording the status of the step
+
+        success : bool
+            If True, then 'COMPLETE' is recorded.  If False, then 'SKIPPED'
+        """
+        if success:
+            status = 'COMPLETE'
+        else:
+            status = 'SKIPPED'
+            self.skip = True
+
+        if isinstance(datamodel, ModelContainer):
+            for model in datamodel:
+                model.meta.cal_step._instance[cal_step] = status
+        else:
+            datamodel.meta.cal_step._instance[cal_step] = status
+
+        # TODO: standardize cal_step naming to point to the offical step name
 
 
 # JwstPipeline needs to inherit from Pipeline, but also
