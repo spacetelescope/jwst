@@ -16,6 +16,12 @@ associations
 
 - Update MIRI LRS-Fixedslit ALONG-SLIT-NOD backgrounds strategies [#5620]
 
+combine1d
+---------
+
+- Fixed code error in combine1d, creating extensions per spectral order
+  with the same input data [#5644]
+
 cube_build
 ----------
 
