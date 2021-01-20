@@ -1,6 +1,6 @@
 """FormatTemplate
 
-Format template string allowing partial formatiing.
+Format template string allowing partial formatting.
 """
 from collections import defaultdict
 from string import Formatter
