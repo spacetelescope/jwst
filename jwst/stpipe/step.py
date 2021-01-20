@@ -35,7 +35,6 @@ from . import utilities
 from .format_template import FormatTemplate
 
 from ..datamodels import (ModelContainer, StepParsModel)
-from ..lib.suffix import remove_suffix
 
 
 class Step(abc.ABC):
@@ -487,6 +486,25 @@ class Step(abc.ABC):
             a tuple in the form (str reference type, str reference URI).
         """
         pass
+
+    def remove_suffix(name):
+        """
+        Remove a known Step filename suffix from a filename
+        (if present).
+
+        Parameters
+        ----------
+        name : str
+            Filename.
+
+        Returns
+        -------
+        str
+            Filename with any known suffix removed.
+        str
+            Separator that delimited the original suffix.
+        """
+        return name
 
     def prefetch(self, *args):
         """Prefetch reference files,  nominally called when
@@ -990,7 +1008,7 @@ class Step(abc.ABC):
             default_name_format = '{basename}{components}{suffix_sep}{suffix}.{ext}'
             suffix_sep = None
             if suffix is not None:
-                basename, suffix_sep = remove_suffix(basename)
+                basename, suffix_sep = step.remove_suffix(basename)
             if suffix_sep is None:
                 suffix_sep = separator
         else:
