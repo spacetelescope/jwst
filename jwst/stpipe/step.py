@@ -501,7 +501,7 @@ class Step(abc.ABC):
         str
             Separator that delimited the original suffix.
         """
-        return name
+        return name, "_"
 
     def prefetch(self, *args):
         """Prefetch reference files,  nominally called when
