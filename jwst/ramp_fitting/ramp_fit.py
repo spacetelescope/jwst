@@ -2940,12 +2940,12 @@ def calc_num_seg(gdq, n_int):
     """
     max_cr = 0  # max number of CRS for all integrations
 
-    # For all 2d pixels, get max number of CRs along their ramps
-    # to use as a surrogate for the number of semiramps along the ramps
+    # For all 2d pixels, get max number of CRs or DO_NOT_USE flags along their
+    # ramps, to use as a surrogate for the number of semiramps along the ramps
     for nint in range(n_int):  # loop over integrations
-        gdq_cr = np.bitwise_and( gdq[nint, :, :, :], dqflags.group['JUMP_DET'])
-        temp_max_cr = int((gdq_cr.sum(axis=0)).max()/dqflags.group['JUMP_DET'])
-        max_cr = max( max_cr, temp_max_cr )
+        gdq_cr = np.bitwise_and(gdq[nint], dqflags.group['JUMP_DET'] | dqflags.group['DO_NOT_USE'])
+        temp_max_cr = int((gdq_cr.sum(axis=0)).max())
+        max_cr = max(max_cr, temp_max_cr)
 
     # Do not want to return a value > the number of groups, which can occur if
     #  this is a MIRI dataset in which the first or last group was flagged as
