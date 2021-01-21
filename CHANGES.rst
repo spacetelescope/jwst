@@ -1,8 +1,11 @@
 0.18.3 (unreleased)
 ===================
 
+ramp_fitting
+------------
 
-
+- Fix a bug in estimating the max number of segments that will be needed
+  to fit any pixel [#5653]
 
 
 
