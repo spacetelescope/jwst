@@ -93,7 +93,7 @@ def white_light(input, min_wave=None, max_wave=None):
         int_num = input.int_times['integration_number']         # one indexed
         mid_utc = input.int_times['int_mid_MJD_UTC']
         offset = int_start - int_num[0]
-        if offset < 0 or int_end >= int_num[-1]:
+        if offset < 0 or int_end > int_num[-1]:
             log.warning("Range of integration numbers in science data extends "
                         "outside the range in INT_TIMES table.")
             log.warning("Can't use INT_TIMES table.")
