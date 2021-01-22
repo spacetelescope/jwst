@@ -1,12 +1,17 @@
 0.18.3 (unreleased)
 ===================
 
+ramp_fitting
+------------
+
+- Fix a bug in estimating the max number of segments that will be needed
+  to fit any pixel [#5653]
+
 white_light
 -----------
 
 - Fixed error causing multi-segment data to reject int_times
   for MJDs [#5566]
-
 
 
 0.18.2 (2021-01-19)
