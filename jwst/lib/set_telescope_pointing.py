@@ -12,8 +12,10 @@ import numpy as np
 
 from ..assign_wcs.util import update_s_region_keyword, calc_rotation_matrix
 from ..assign_wcs.pointing import v23tosky
+from ..associations.lib.dms_base import TSO_EXP_TYPES
 from ..datamodels import Level1bModel
 from ..lib.engdb_tools import ENGDB_Service
+from ..lib.pipe_utils import is_tso
 from .exposure_types import IMAGING_TYPES, FGS_GUIDE_EXP_TYPES
 
 TYPES_TO_UPDATE = set(list(IMAGING_TYPES) + FGS_GUIDE_EXP_TYPES)
@@ -1516,8 +1518,12 @@ def populate_model_from_siaf(model, siaf):
 
     # For TSO exposures, also populate XREF_SCI/YREF_SCI keywords,
     # which are used by the Cal pipeline to determine the
-    # location of the source
-    if model.meta.visit.tsovisit:
+    # location of the source.
+    # Note that we use a combination of the is_tso function and
+    # a check on EXP_TYPE, because there are rare corner cases
+    # where EXP_TIME=NRC_TSGRISM, TSOVISIT=False, NINTS=1, which
+    # normally return False, but we want to treat it as TSO anyway.
+    if is_tso(model) or model.meta.exposure.type.lower() in TSO_EXP_TYPES:
         logger.info('TSO exposure:')
         logger.info(' setting xref_sci to {}'.format(siaf.crpix1))
         logger.info(' setting yref_sci to {}'.format(siaf.crpix2))
