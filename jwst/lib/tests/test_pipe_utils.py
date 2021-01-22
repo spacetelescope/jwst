@@ -54,12 +54,16 @@ def test_is_tso_nrcgrism_nints1():
     model.meta.exposure.type = "NRC_TSGRISM"
     model.meta.visit.tsovisit = False
     model.meta.exposure.nints = 10
-    assert pipe_utils.is_tso(model) is True
 
+    # with NINTS>1, should be True
+    assert pipe_utils.is_tso(model)
+
+    # with NINTS=1, should be False
     model.meta.exposure.nints = 1
-    assert pipe_utils.is_tso(model) is False
+    assert not pipe_utils.is_tso(model)
 
-    assert (is_tso(model) or model.meta.exposure.type.lower() in dms_base.TSO_EXP_TYPES) is True
+    # with hardwired TSO EXP_TYPE's, should always be True
+    assert (is_tso(model) or model.meta.exposure.type.lower() in dms_base.TSO_EXP_TYPES)
 
 
 def test_is_irs2_1():
