@@ -12,7 +12,6 @@ import numpy as np
 
 from ..assign_wcs.util import update_s_region_keyword, calc_rotation_matrix
 from ..assign_wcs.pointing import v23tosky
-from ..associations.lib.dms_base import TSO_EXP_TYPES
 from ..datamodels import Level1bModel
 from ..lib.engdb_tools import ENGDB_Service
 from ..lib.pipe_utils import is_tso
@@ -1523,7 +1522,7 @@ def populate_model_from_siaf(model, siaf):
     # a check on EXP_TYPE, because there are rare corner cases
     # where EXP_TIME=NRC_TSGRISM, TSOVISIT=False, NINTS=1, which
     # normally return False, but we want to treat it as TSO anyway.
-    if is_tso(model) or model.meta.exposure.type.lower() in TSO_EXP_TYPES:
+    if is_tso(model) or model.meta.exposure.type.lower() in ['nrc_tsimage', 'nrc_tsgrism']:
         logger.info('TSO exposure:')
         logger.info(' setting xref_sci to {}'.format(siaf.crpix1))
         logger.info(' setting yref_sci to {}'.format(siaf.crpix2))
