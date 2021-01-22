@@ -1,8 +1,11 @@
 0.18.3 (unreleased)
 ===================
 
+white_light
+-----------
 
-
+- Fixed error causing multi-segment data to reject int_times
+  for MJDs [#5566]
 
 
 
