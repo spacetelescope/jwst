@@ -719,13 +719,14 @@ def setup_small_cube(ngroups=10, nints=1, nrows=2, ncols=2, deltatime=10.,
 def setup_inputs(ngroups=10, readnoise=10, nints=1,
                  nrows=103, ncols=102, nframes=1, grouptime=1.0,gain=1, deltatime=1):
 
+    data = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float32)
+    err = np.ones(shape=(nints, ngroups, nrows, ncols), dtype=np.float32)
+    pixdq = np.zeros(shape=(nrows, ncols), dtype= np.uint32)
+    gdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.uint8)
     gain = np.ones(shape=(nrows, ncols), dtype=np.float64) * gain
-    err = np.ones(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
-    data = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.uint32)
-    pixdq = np.zeros(shape=(nrows, ncols), dtype= np.float64)
-    read_noise = np.full((nrows, ncols), readnoise, dtype=np.float64)
-    gdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.int32)
+    read_noise = np.full((nrows, ncols), readnoise, dtype=np.float32)
     int_times = np.zeros((nints,))
+
     model1 = RampModel(data=data, err=err, pixeldq=pixdq, groupdq=gdq, int_times=int_times)
     model1.meta.instrument.name='MIRI'
     model1.meta.instrument.detector='MIRIMAGE'
@@ -764,13 +765,14 @@ def setup_subarray_inputs(ngroups=10, readnoise=10, nints=1,
                  subxsize=1024, subysize=1032, nframes=1,
                  grouptime=1.0,gain=1, deltatime=1):
 
-    times = np.array(list(range(ngroups)),dtype=np.float64) * deltatime
+    data = np.zeros(shape=(nints, ngroups, subysize, subxsize), dtype=np.float32)
+    err = np.ones(shape=(nints, ngroups, nrows, ncols), dtype=np.float32)
+    pixdq = np.zeros(shape=(subysize, subxsize), dtype= np.uint32)
+    gdq = np.zeros(shape=(nints, ngroups, subysize, subxsize), dtype=np.uint8)
     gain = np.ones(shape=(nrows, ncols), dtype=np.float64) * gain
-    err = np.ones(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
-    data = np.zeros(shape=(nints, ngroups, subysize, subxsize), dtype=np.float64)
-    pixdq = np.zeros(shape=(subysize, subxsize), dtype= np.float64)
-    read_noise = np.full((nrows, ncols), readnoise, dtype=np.float64)
-    gdq = np.zeros(shape=(nints, ngroups, subysize, subxsize), dtype=np.int32)
+    read_noise = np.full((nrows, ncols), readnoise, dtype=np.float32)
+    times = np.array(list(range(ngroups)),dtype=np.float64) * deltatime
+
     model1 = RampModel(data=data, err=err, pixeldq=pixdq, groupdq=gdq, times=times)
     model1.meta.instrument.name='MIRI'
     model1.meta.instrument.detector='MIRIMAGE'

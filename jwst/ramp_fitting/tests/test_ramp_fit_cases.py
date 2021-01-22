@@ -613,7 +613,7 @@ def create_mod_arrays(ngroups, nints, nrows, ncols, deltatime, gain, readnoise):
     gain = np.ones(shape=(nrows, ncols), dtype=np.float32) * gain
     err = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float32)
     data = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float32)
-    pixdq = np.zeros(shape=(nrows, ncols), dtype=np.int32)
+    pixdq = np.zeros(shape=(nrows, ncols), dtype=np.uint32)
     read_noise = np.full((nrows, ncols), readnoise, dtype=np.float32)
     gdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.uint8)
 
