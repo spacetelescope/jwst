@@ -7,6 +7,13 @@ ramp_fitting
 - Fix a bug in estimating the max number of segments that will be needed
   to fit any pixel [#5653]
 
+set_telescope_pointing
+----------------------
+
+- Update the check in set_telescope_pointing that determines whether an
+  exposure is TSO mode to always consider hardwired TSO EXP_TYPEs as TSO,
+  regardless of TSOVISIT and NINTS settings. [#5657]
+
 white_light
 -----------
 
@@ -57,8 +64,8 @@ outlier_detection
 set_telescope_pointing
 ----------------------
 
-- Updated to populate XREF_SCI, YREF_SCI keywords for all TSO exposures,
-  not just NRC_TSGRISM mode. [#5616]
+- Updated to populate XREF_SCI, YREF_SCI keywords for all exposures with
+  TSOVISIT=True, not just NRC_TSGRISM mode. [#5616]
 
 0.18.1 (2021-01-08)
 ===================
