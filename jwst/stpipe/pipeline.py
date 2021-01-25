@@ -33,7 +33,6 @@ from os.path import dirname, join
 
 from ..extern.configobj.configobj import Section, ConfigObj
 
-from .class_property import ClassInstanceMethod
 from . import config_parser
 from . import crds_client
 from .log import log
@@ -176,7 +175,7 @@ class Pipeline(Step):
             The parameters as retrieved from CRDS. If there is an issue, log as such
             and return an empty config obj.
         """
-        pars_model = cls.get_pars_model()
+        reftype = cls.get_pars_reftype()
         refcfg = ConfigObj()
         refcfg['steps'] = Section(refcfg, refcfg.depth + 1, refcfg.main, name="steps")
 
@@ -184,7 +183,7 @@ class Pipeline(Step):
         if disable is None:
             disable = get_disable_crds_steppars()
         if disable:
-            log.debug(f'{pars_model.meta.reftype.upper()}: CRDS parameter reference retrieval disabled.')
+            log.debug(f'{reftype.upper()}: CRDS parameter reference retrieval disabled.')
             return refcfg
 
 
@@ -197,19 +196,19 @@ class Pipeline(Step):
                 refcfg['steps'][cal_step] = cal_step_class.get_config_from_reference(model)
             #
             # Now merge any config parameters from the step cfg file
-            log.debug(f'Retrieving pipeline {pars_model.meta.reftype.upper()} parameters from CRDS')
+            log.debug(f'Retrieving pipeline {reftype.upper()} parameters from CRDS')
             try:
                 ref_file = crds_client.get_reference_file(model.get_crds_parameters(),
-                                                        pars_model.meta.reftype,
+                                                        reftype,
                                                         model.crds_observatory)
             except (AttributeError, crds_client.CrdsError):
-                log.debug(f'{pars_model.meta.reftype.upper()}: No parameters found')
+                log.debug(f'{reftype.upper()}: No parameters found')
             else:
                 if ref_file != 'N/A':
-                    log.info(f'{pars_model.meta.reftype.upper()} parameters found: {ref_file}')
+                    log.info(f'{reftype.upper()} parameters found: {ref_file}')
                     refcfg = cls.merge_pipeline_config(refcfg, ref_file)
                 else:
-                    log.debug(f'No {pars_model.meta.reftype.upper()} reference files found.')
+                    log.debug(f'No {reftype.upper()} reference files found.')
 
         return refcfg
 
@@ -335,20 +334,18 @@ class Pipeline(Step):
         else:
             return True
 
-    @ClassInstanceMethod
-    def get_pars(pipeline, full_spec=True):
+    def get_pars(self, full_spec=True):
         """Retrieve the configuration parameters of a pipeline
 
-        The pipeline, and all referenced substeps, parameters
-        are retrieved.
+        Parameters are retrieved for the pipeline and all of its
+        component steps.
 
         Parameters
         ----------
-        step : `Pipeline`-derived class or instance
-
         full_spec : bool
             Return all parameters, including parent-specified parameters.
-            If `False`, return only parameters specific to the class/instance.
+            If `False`, return only parameters specific to the pipeline
+            and steps.
 
         Returns
         -------
@@ -357,13 +354,6 @@ class Pipeline(Step):
         """
         pars = super().get_pars(full_spec=full_spec)
         pars['steps'] = {}
-        for step_name, step_class in pipeline.step_defs.items():
-
-            # If a step has already been instantiated, get its parameters
-            # from the instantiation. Otherwise, retrieve from the class
-            # itself.
-            try:
-                pars['steps'][step_name] = getattr(pipeline, step_name).get_pars(full_spec=full_spec)
-            except AttributeError:
-                pars['steps'][step_name] = step_class.get_pars(full_spec=full_spec)
+        for step_name, step_class in self.step_defs.items():
+            pars['steps'][step_name] = getattr(self, step_name).get_pars(full_spec=full_spec)
         return pars
