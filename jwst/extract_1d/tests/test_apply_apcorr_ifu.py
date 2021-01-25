@@ -8,7 +8,6 @@ from jwst.extract_1d.apply_apcorr import ApCorrRadial, select_apcorr
 
 @pytest.fixture(scope='module')
 def dummy_nirspec_ref(tmpdir_factory):
-
     """ Generate a dummy apcorr ref file """
     filename = tmpdir_factory.mktemp('dummy_apcorr')
     filename = str(filename.join('dummy_nirspec_apcorr.asdf'))
@@ -50,9 +49,9 @@ def dummy_nirspec_ref(tmpdir_factory):
     ff.write_to(filename)
     return filename
 
+
 @pytest.fixture(scope='module')
 def dummy_miri_ref(tmpdir_factory):
-
     """ Generate a dummy apcorr ref file """
     filename = tmpdir_factory.mktemp('dummy_apcorr')
     filename = str(filename.join('dummy_miri_apcorr.asdf'))
@@ -105,6 +104,7 @@ def miri_cube():
     model.meta.instrument.band = 'SHORT'
     return model
 
+
 @pytest.fixture
 def nirspec_cube():
     model = IFUCubeModel((15,10,10))
@@ -116,10 +116,12 @@ def nirspec_cube():
     model.meta.instrument.prism = 'PRISM'
     return model
 
+
 def test_select_apcorr_miri(miri_cube):
 
     apcorr_cls = select_apcorr(miri_cube)
     assert apcorr_cls == ApCorrRadial
+
 
 def test_select_apcorr_nirspec(nirspec_cube):
 
@@ -128,24 +130,20 @@ def test_select_apcorr_nirspec(nirspec_cube):
 
 
 def test_table_type_miri(_jail, dummy_miri_ref, miri_cube):
-
     dummy_wave = np.zeros(100) + 0.5
-    apcorr_model = MirMrsApcorrModel(dummy_miri_ref)
-    table = apcorr_model.apcorr_table
-    apcorr_model.close()
+    with MirMrsApcorrModel(dummy_miri_ref) as apcorr_model:
+        table = apcorr_model.apcorr_table
 
-    assert table.channel == 'ANY'
-    assert table.band == 'ANY'
-    assert np.all(table.wavelength == dummy_wave)
+        assert table.channel == 'ANY'
+        assert table.band == 'ANY'
+        assert np.all(table.wavelength == dummy_wave)
 
 
 def test_table_type_nirspec(_jail, dummy_nirspec_ref, nirspec_cube):
-
     dummy_wave = np.zeros(100) + 0.5
-    apcorr_model = NrsIfuApcorrModel(dummy_nirspec_ref)
-    table = apcorr_model.apcorr_table
-    apcorr_model.close()
+    with NrsIfuApcorrModel(dummy_nirspec_ref) as apcorr_model:
+        table = apcorr_model.apcorr_table
 
-    assert table.filter == 'ANY'
-    assert table.grating == 'ANY'
-    assert np.all(table.wavelength == dummy_wave)
+        assert table.filter == 'ANY'
+        assert table.grating == 'ANY'
+        assert np.all(table.wavelength == dummy_wave)
