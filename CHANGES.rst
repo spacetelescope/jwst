@@ -1,5 +1,11 @@
-0.18.3 (unreleased)
+0.18.3 (2021-01-25)
 ===================
+
+combine1d
+---------
+
+- Fixed code error in combine1d, creating extensions per spectral order
+  with the same input data [#5644]
 
 ramp_fitting
 ------------
@@ -30,12 +36,6 @@ associations
 - JWSTDMS-410 Asn_Lv2NRSLAMPSpectral: Break out the negative cases [#5635]
 
 - Update MIRI LRS-Fixedslit ALONG-SLIT-NOD backgrounds strategies [#5620]
-
-combine1d
----------
-
-- Fixed code error in combine1d, creating extensions per spectral order
-  with the same input data [#5644]
 
 cube_build
 ----------
