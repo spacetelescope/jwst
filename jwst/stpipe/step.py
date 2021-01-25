@@ -27,7 +27,6 @@ except ImportError:
     DISCOURAGED_TYPES = None
 from stdatamodels import DataModel
 
-from .class_property import ClassInstanceMethod
 from . import config_parser
 from . import crds_client
 from . import log
@@ -69,6 +68,17 @@ class Step(abc.ABC):
     # Set to False in subclasses to skip prefetch,
     # but by default attempt to prefetch
     prefetch_references = True
+
+    @classmethod
+    def get_pars_reftype(cls):
+        """
+        Get the CRDS reftype for this step's pars reference.
+
+        Returns
+        -------
+        str
+        """
+        return f"pars-{cls.__name__.lower()}"
 
     @classmethod
     def merge_config(cls, config, config_file):
@@ -553,7 +563,7 @@ class Step(abc.ABC):
         a new instance but simply runs the existing instance of the `Step`
         class.
         """
-        logger_name = cls.get_pars_model().instance['parameters']['name']
+        logger_name = cls.__name__
         log_cls = log.getLogger(logger_name)
         if len(args) > 0:
             filename = args[0]
@@ -744,7 +754,7 @@ class Step(abc.ABC):
         # Get the root logger, since the following operations
         # are happening in the surrounding architecture.
         logger = log.delegator.log
-        pars_model = cls.get_pars_model()
+        reftype = cls.get_pars_reftype()
 
         # If the dataset is not an operable DataModel, log as such and return
         # an empty config object
@@ -758,20 +768,20 @@ class Step(abc.ABC):
         if disable is None:
             disable = get_disable_crds_steppars()
         if disable:
-            logger.info(f'{pars_model.meta.reftype.upper()}: CRDS parameter reference retrieval disabled.')
+            logger.info(f'{reftype.upper()}: CRDS parameter reference retrieval disabled.')
             return config_parser.ConfigObj()
 
         # Retrieve step parameters from CRDS
-        logger.debug(f'Retrieving step {pars_model.meta.reftype.upper()} parameters from CRDS')
+        logger.debug(f'Retrieving step {reftype.upper()} parameters from CRDS')
         try:
             ref_file = crds_client.get_reference_file(model.get_crds_parameters(),
-                                                      pars_model.meta.reftype,
+                                                      reftype,
                                                       model.crds_observatory)
         except (AttributeError, crds_client.CrdsError):
-            logger.debug(f'{pars_model.meta.reftype.upper()}: No parameters found')
+            logger.debug(f'{reftype.upper()}: No parameters found')
             return config_parser.ConfigObj()
         if ref_file != 'N/A':
-            logger.info(f'{pars_model.meta.reftype.upper()} parameters found: {ref_file}')
+            logger.info(f'{reftype.upper()} parameters found: {ref_file}')
             ref = config_parser.load_config_file(ref_file)
 
             ref_pars = {
@@ -779,11 +789,11 @@ class Step(abc.ABC):
                 for par, value in ref.items()
                 if par not in ['class', 'name']
             }
-            logger.info(f'{pars_model.meta.reftype.upper()} parameters are {ref_pars}')
+            logger.info(f'{reftype.upper()} parameters are {ref_pars}')
 
             return ref
         else:
-            logger.debug(f'No {pars_model.meta.reftype.upper()} reference files found.')
+            logger.debug(f'No {reftype.upper()} reference files found.')
             return config_parser.ConfigObj()
 
     @classmethod
@@ -1161,23 +1171,18 @@ class Step(abc.ABC):
                 # Not a file-checkable object. Ignore.
                 pass
 
-
-    @ClassInstanceMethod
-    def get_pars(step, full_spec=True):
+    def get_pars(self, full_spec=True):
         """Retrieve the configuration parameters of a step
 
         Parameters
         ----------
-        step : `Step`-derived class or instance
-            The class or instance to retrieve the parameters for.
-
         full_spec : bool
             Return all parameters, including parent-specified parameters.
-            If `False`, return only parameters specific to the class/instance.
+            If `False`, return only parameters specific to the step.
 
         Returns
         -------
-        pars : dict
+        dict
             Keys are the parameters and values are the values.
         """
         from . import cmdline
@@ -1186,13 +1191,13 @@ class Step(abc.ABC):
             spec_file_func = config_parser.get_merged_spec_file
         else:
             spec_file_func = config_parser.load_spec_file
-        spec = spec_file_func(step)
+        spec = spec_file_func(self)
         if spec is None:
             return {}
         instance_pars = {}
         for key in spec:
-            if hasattr(step, key):
-                value = getattr(step, key)
+            if hasattr(self, key):
+                value = getattr(self, key)
                 if not isinstance(value, property):
                     instance_pars[key] = value
         pars = config_parser.config_from_dict(instance_pars, spec, allow_missing=True)
@@ -1206,35 +1211,29 @@ class Step(abc.ABC):
                 pars_dict[key] = value
         return pars_dict
 
-    @ClassInstanceMethod
-    def get_pars_model(step, full_spec=True):
+    def get_pars_model(self, full_spec=True):
         """Return Step parameters as StepParsModel
 
         Parameters
         ----------
-        step : `Step`-derived class or instance
-            The `Step` or `Step` instance to retrieve the parameters model for.
-
         full_spec : bool
             Return all parameters, including parent-specified parameters.
-            If `False`, return only parameters specific to the class/instance.
+            If `False`, return only parameters specific to the step.
 
         Returns
         -------
-        model : `StepParsModel`
-            The `StepParsModel`.
+        StepParsModel
         """
         pars_model = StepParsModel()
-        pars_model.parameters.instance.update(step.get_pars(full_spec=full_spec))
+        pars_model.parameters.instance.update(self.get_pars(full_spec=full_spec))
 
         # Update class and name.
-        full_class_name = _full_class_name(step)
+        full_class_name = _full_class_name(self)
         pars_model.parameters.instance.update({
             'class': full_class_name,
-            'name': getattr(step, 'name', full_class_name.split('.')[-1])
+            'name': self.name,
         })
-        pars_model.meta.reftype = 'pars-' + pars_model.parameters.name.lower()
-
+        pars_model.meta.reftype = self.get_pars_reftype()
         return pars_model
 
     def update_pars(self, parameters):
