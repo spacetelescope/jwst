@@ -88,22 +88,18 @@ def test_parameters_from_crds_fail():
 
 
 @pytest.mark.parametrize(
-    'cfg_file, expected',
+    'cfg_file, expected_reftype',
     [
-        ('local_class.cfg', 'TestLocallyInstalledStepClass'),
-        ('jwst_generic_pars-makeliststep_0002.asdf', 'jwst_generic_pars-makeliststep_0002'),
+        ('local_class.cfg', 'pars-dummystep'),
+        ('jwst_generic_pars-makeliststep_0002.asdf', 'pars-makeliststep'),
     ]
 )
-def test_reftype(cfg_file, expected):
-    """Test that reftype is produce as expected"""
+def test_reftype(cfg_file, expected_reftype):
+    """Test that reftype is produced as expected"""
     step = Step.from_config_file(t_path(join('steps', cfg_file)))
-    assert step.get_pars_model().meta.reftype == 'pars-' + expected.lower()
-
-
-def test_noproperty_pars():
-    """Ensure that property parameters are excluded"""
-    pars = Step.get_pars()
-    assert pars['input_dir'] is None
+    assert step.__class__.get_pars_reftype() == expected_reftype
+    assert step.get_pars_reftype() == expected_reftype
+    assert step.get_pars_model().meta.reftype == expected_reftype
 
 
 def test_saving_pars(tmpdir):
@@ -126,31 +122,6 @@ def test_saving_pars(tmpdir):
 @pytest.mark.parametrize(
     'step_obj, full_spec, expected',
     [
-        # #############################################
-        # Test `get_pars_model` with `full_spec = True`
-        # #############################################
-        #
-        # Step Class with mix of required and optional parameters
-        (MakeListStep, True,
-         {'class': 'jwst.stpipe.tests.steps.MakeListStep',
-          'name': 'MakeListStep',
-          'pre_hooks': [],
-          'post_hooks': [],
-          'output_file': None,
-          'output_dir': None,
-          'output_ext': '.fits',
-          'output_use_model': False,
-          'output_use_index': True,
-          'save_results': False,
-          'skip': False,
-          'suffix': None,
-          'search_output_file': True,
-          'input_dir': None,
-          'par3': False,
-          'par1': 'float() # Control the frobulization',
-          'par2': 'string() # Reticulate the splines'}
-        ),
-        # Instance with parameters set
         (MakeListStep(par1=0., par2='from args'), True,
          {'class': 'jwst.stpipe.tests.steps.MakeListStep',
           'name': 'MakeListStep',
@@ -170,19 +141,6 @@ def test_saving_pars(tmpdir):
           'par2': 'from args',
           'par3': False}
         ),
-        # ##############################################
-        # Test `get_pars_model` with `full_spec = False`
-        # ##############################################
-        #
-        # Step Class with mix of required and optional parameters
-        (MakeListStep, False,
-         {'class': 'jwst.stpipe.tests.steps.MakeListStep',
-          'name': 'MakeListStep',
-          'par3': False,
-          'par1': 'float() # Control the frobulization',
-          'par2': 'string() # Reticulate the splines'}
-        ),
-        # Instance with parameters set
         (MakeListStep(par1=0., par2='from args'), False,
          {'class': 'jwst.stpipe.tests.steps.MakeListStep',
           'name': 'MakeListStep',
@@ -200,29 +158,11 @@ def test_getpars_model(step_obj, full_spec, expected):
 @pytest.mark.parametrize(
     'step_obj, full_spec, expected',
     [
-        # #######################################
-        # Test `get_pars` with `full_spec = True`
-        # #######################################
-        #
-        # Step Class with mix of required and optional parameters
-        (MakeListStep, True, {
-            'pre_hooks': [],
-            'post_hooks': [],
-            'output_file': None,
-            'output_dir': None,
-            'output_ext': '.fits',
-            'output_use_model': False,
-            'output_use_index': True,
-            'save_results': False,
-            'skip': False,
-            'suffix': None,
-            'search_output_file': True,
-            'input_dir': None,
-            'par3': False,
-            'par1': 'float() # Control the frobulization',
-            'par2': 'string() # Reticulate the splines'
-        }),
-        # Instance with parameters set
+        # #############################################
+        # Test with `full_spec = True`
+        # #############################################
+
+        # Mix of required and optional parameters
         (MakeListStep(par1=0., par2='from args'), True, {
             'pre_hooks': [],
             'post_hooks': [],
@@ -241,43 +181,7 @@ def test_getpars_model(step_obj, full_spec, expected):
             'par3': False
         }),
         #
-        # Pipeline Class with sub-step with mix of required and optional parameters
-        #
-        (MakeListPipeline, True, {
-            'pre_hooks': [],
-            'post_hooks': [],
-            'output_file': None,
-            'output_dir': None,
-            'output_ext': '.fits',
-            'output_use_model': False,
-            'output_use_index': True,
-            'save_results': False,
-            'skip': False,
-            'suffix': None,
-            'search_output_file': True,
-            'input_dir': None,
-            'par1': 'Name the atomizer',
-            'steps': {
-                'make_list': {'pre_hooks': [],
-                              'post_hooks': [],
-                              'output_file': None,
-                              'output_dir': None,
-                              'output_ext': '.fits',
-                              'output_use_model': False,
-                              'output_use_index': True,
-                              'save_results': False,
-                              'skip': False,
-                              'suffix': None,
-                              'search_output_file': True,
-                              'input_dir': None,
-                              'par3': False,
-                              'par1': 'float() # Control the frobulization',
-                              'par2': 'string() # Reticulate the splines'
-                }
-            }
-        }),
-        #
-        # Pipeline Instance with all parameters set
+        # All parameters set
         #
         (MakeListPipeline(
             par1='Instantiated', steps={'make_list': {'par1': 0., 'par2': 'sub-instantiated'}}
@@ -316,26 +220,7 @@ def test_getpars_model(step_obj, full_spec, expected):
             }
         }),
         #
-        # Pipeline class without any sub-steps
-        #
-        (EmptyPipeline, True, {
-            'pre_hooks': [],
-            'post_hooks': [],
-            'output_file': None,
-            'output_dir': None,
-            'output_ext': '.fits',
-            'output_use_model': False,
-            'output_use_index': True,
-            'save_results': False,
-            'skip': False,
-            'suffix': None,
-            'search_output_file': True,
-            'input_dir': None,
-            'par1': 'Name the atomizer',
-            'steps': {}
-        }),
-        #
-        # Pipeline instance without any sub-steps
+        # Pipeline without any sub-steps
         #
         (EmptyPipeline(par1='Instantiated'), True, {
             'pre_hooks': [],
@@ -354,40 +239,16 @@ def test_getpars_model(step_obj, full_spec, expected):
             'steps': {}
         }),
         # ######################################
-        # Test `get_pars` with `full_spec=False`
+        # Test with `full_spec=False`
         # ######################################
-        #
-        # Step Class with mix of required and optional parameters
-        #
-        (MakeListStep, False, {
-            'par3': False,
-            'par1': 'float() # Control the frobulization',
-            'par2': 'string() # Reticulate the splines'
-        }),
-        #
-        # Instance with parameters set
-        #
+
+        # Mix of required and optional parameters
         (MakeListStep(par1=0., par2='from args'), False, {
             'par1': 0.0,
             'par2': 'from args',
             'par3': False
         }),
-        #
-        # Pipeline Class with sub-step with mix of required and optional parameters
-        #
-        (MakeListPipeline, False, {
-            'par1': 'Name the atomizer',
-            'steps': {
-                'make_list': {
-                    'par3': False,
-                    'par1': 'float() # Control the frobulization',
-                    'par2': 'string() # Reticulate the splines'
-                }
-            }
-        }),
-        #
-        # Pipeline Instance with all parameters set
-        #
+        # Pipeline with all parameters set
         (MakeListPipeline(
             par1='Instantiated', steps={'make_list': {'par1': 0., 'par2': 'sub-instantiated'}}
         ), False, {
@@ -400,16 +261,7 @@ def test_getpars_model(step_obj, full_spec, expected):
                 }
             }
         }),
-        #
-        # Pipeline class without any sub-steps
-        #
-        (EmptyPipeline, False, {
-            'par1': 'Name the atomizer',
-            'steps': {}
-        }),
-        #
-        # Pipeline instance without any sub-steps
-        #
+        # Pipeline without any sub-steps
         (EmptyPipeline(par1='Instantiated'), False, {
             'par1': 'Instantiated',
             'steps': {}
@@ -417,7 +269,7 @@ def test_getpars_model(step_obj, full_spec, expected):
     ]
 )
 def test_getpars(step_obj, full_spec, expected):
-    """Test retreiving of configuration parameters"""
+    """Test retrieving of configuration parameters"""
     assert step_obj.get_pars(full_spec=full_spec) == expected
 
 
