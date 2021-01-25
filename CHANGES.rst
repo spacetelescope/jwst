@@ -1,6 +1,9 @@
 0.18.3 (2021-01-25)
 ===================
 
+- Update documentation introduction to include installation and CRDS setup
+  instructions. [#5659]
+
 combine1d
 ---------
 
