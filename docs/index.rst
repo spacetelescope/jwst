@@ -18,7 +18,7 @@ installed into a fresh virtualenv or conda environment using pip:
    pip install jwst
 
 Installation details (via conda)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------
 
 The ``jwst`` package should be installed into a virtualenv or conda
 environment via ``pip``. We recommend that for each installation you
@@ -42,8 +42,22 @@ In a bash-compatible shell:
    conda activate <env_name>
    pip install jwst
 
-For more detailed instructions and alternate installation methods see
-`our Github README <https://github.com/spacetelescope/jwst>`_.
+For more detailed instructions and alternate installation methods see the
+`Github README <https://github.com/spacetelescope/jwst>`_.
+
+
+Calibration References Data System (CRDS) Setup
+-----------------------------------------------
+
+CRDS is the system that manages the reference files needed to run the
+pipeline. Inside the STScI network, the pipeline works with default CRDS
+setup with no modifications. To run the pipeline outside the STScI
+network, CRDS must be configured by setting two environment variables:
+
+::
+
+   export CRDS_PATH=$HOME/crds_cache
+   export CRDS_SERVER_URL=https://jwst-crds.stsci.edu
 
 
 ===========
