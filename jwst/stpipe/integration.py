@@ -1,6 +1,14 @@
 """
 Entry point implementations.
 """
+import sys
+
+from asdf.resource import DirectoryResourceMapping
+
+if sys.version_info < (3, 9):
+    import importlib_resources
+else:
+    import importlib.resources as importlib_resources
 
 
 def get_steps():
@@ -89,4 +97,20 @@ def get_steps():
         ("jwst.step.WavecorrStep", None, False),
         ("jwst.step.WfsCombineStep", None, False),
         ("jwst.step.WhiteLightStep", None, False),
+    ]
+
+
+def get_resource_mappings():
+    """
+    Get the resource mapping instances for the stpipe schemas.
+
+    Returns
+    -------
+    list of collections.abc.Mapping
+    """
+    from . import resources
+    resources_root = importlib_resources.files(resources)
+
+    return [
+        DirectoryResourceMapping(resources_root / "schemas", "asdf://stsci.edu/stpipe/schemas", recursive=True),
     ]

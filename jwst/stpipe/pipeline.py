@@ -175,7 +175,7 @@ class Pipeline(Step):
             The parameters as retrieved from CRDS. If there is an issue, log as such
             and return an empty config obj.
         """
-        reftype = cls.get_pars_reftype()
+        reftype = cls.get_config_reftype()
         refcfg = ConfigObj()
         refcfg['steps'] = Section(refcfg, refcfg.depth + 1, refcfg.main, name="steps")
 

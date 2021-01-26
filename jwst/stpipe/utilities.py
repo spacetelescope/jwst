@@ -255,3 +255,25 @@ def folder_traverse(folder_path, basename_regex='.+', path_exclude_regex='^$'):
         for file in files:
             if basename_regex.match(file):
                 yield os.path.join(root, file)
+
+
+def get_fully_qualified_class_name(cls_or_obj):
+    """
+    Return an object's fully-qualified class name.
+
+    Parameters
+    ----------
+    cls_or_obj : type or object
+
+    Returns
+    -------
+    str
+        For type input, the fully-qualified name of the type.
+        For other input, the fully-qualified name of the input's class.
+    """
+    cls = cls_or_obj if inspect.isclass(cls_or_obj) else cls_or_obj.__class__
+    module = cls.__module__
+    if module is None or module == str.__class__.__module__:
+        return cls.__name__  # Avoid reporting __builtin__
+    else:
+        return module + '.' + cls.__name__
