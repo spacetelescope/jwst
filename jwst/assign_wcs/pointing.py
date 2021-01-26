@@ -2,7 +2,7 @@ import numpy as np
 from astropy import units as u
 from astropy import coordinates as coords
 from astropy.modeling import models as astmodels
-from astropy.modeling.models import Scale, Identity, RotationSequence3D
+from astropy.modeling.models import Shift, Scale, Identity, RotationSequence3D
 from astropy.coordinates.matrix_utilities import rotation_matrix, matrix_product
 from gwcs import utils as gwutils
 from gwcs.geometry import SphericalToCartesian, CartesianToSpherical
@@ -239,7 +239,7 @@ def create_fitswcs(inp, input_frame=None):
     return wcsobj
 
 
-def va_corr_model(datamodel, **kwargs):
+def va_corr_model(datamodel, fast_corr=True, **kwargs):
     """
     Create transformation that accounts for differential velocity aberration (scale).
 
@@ -249,6 +249,11 @@ def va_corr_model(datamodel, **kwargs):
     datamodel : `~stdatamodels.DataModel`, None
         A full data model. If ``datamodel`` is `None`, all optional parameters
         must be provided (``v2_ref``, ``v3_ref``, and ``va_scale`` - see below).
+
+    fast_corr : bool, optional
+        Indicates whether to implement linear approximation by which coordinates
+        in the tangent plane are approximated by angles ``v2`` and ``v3``.
+        This correction is faster than full scale correction in a tangent plane.
 
     Other Parameters
     ----------------
@@ -298,28 +303,43 @@ def va_corr_model(datamodel, **kwargs):
         except (AttributeError, TypeError):
             return None
 
-    s2c = SphericalToCartesian(name='s2c', wrap_lon_at=180)
-    c2s = CartesianToSpherical(name='c2s', wrap_lon_at=180)
+    if fast_corr:
+        v2_shift = (1 - va_scale) * v2_ref
+        v3_shift = (1 - va_scale) * v3_ref
 
-    unit_conv = Scale(1.0 / 3600.0, name='arcsec_to_deg_1D')
-    unit_conv = unit_conv & unit_conv
-    unit_conv.name = 'arcsec_to_deg_2D'
+        #  NOTE: it is assumed that v2, v3 angles are small enough so that
+        #  for expected scale factors the issue of angle wrapping (180 degrees)
+        #  can be neglected.
+        va_corr = (
+            (Scale(va_scale, name='va_scale_v2') & Scale(va_scale, name='va_scale_v3')) |
+            (Shift(v2_shift, name='va_v2_shift') & Shift(v3_shift, name='va_v3_shift'))
+        )
 
-    va_scale_corr = (Identity(1, name='I_1D') &
-                     Scale(va_scale, name='va_scale_1Dy') &
-                     Scale(va_scale, name='va_scale_1Dz'))
-    va_scale_corr.name = 'va_scale_2D'
+    else:
 
-    rot = RotationSequence3D(
-        [v2_ref / 3600.0, -v3_ref / 3600.0],
-        'zy',
-        name='det_to_optic_axis'
-    )
+        s2c = SphericalToCartesian(name='s2c', wrap_lon_at=180)
+        c2s = CartesianToSpherical(name='c2s', wrap_lon_at=180)
 
-    va_corr = (
-        unit_conv | s2c | rot | va_scale_corr |
-        rot.inverse | c2s | unit_conv.inverse
-    )
+        unit_conv = Scale(1.0 / 3600.0, name='arcsec_to_deg_1D')
+        unit_conv = unit_conv & unit_conv
+        unit_conv.name = 'arcsec_to_deg_2D'
+
+        va_scale_corr = (Identity(1, name='I_1D') &
+                         Scale(va_scale, name='va_scale_1Dy') &
+                         Scale(va_scale, name='va_scale_1Dz'))
+        va_scale_corr.name = 'va_scale_2D'
+
+        rot = RotationSequence3D(
+            [v2_ref / 3600.0, -v3_ref / 3600.0],
+            'zy',
+            name='det_to_optic_axis'
+        )
+
+        va_corr = (
+            unit_conv | s2c | rot | va_scale_corr |
+            rot.inverse | c2s | unit_conv.inverse
+        )
+
     va_corr.name = 'VA_Correction'
 
     return va_corr
