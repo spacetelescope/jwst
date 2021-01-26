@@ -157,7 +157,7 @@ The weighting for a sample :math:`i` is given as:
 where :math:`i_{midpoint}` is the the sample number of the midpoint of the sequence, and
 :math:`P` is the exponent applied to weights, determined by the value of :math:`S`. Fixsen
 et al. 2000 found that defining a small number of P values to apply to values of S was
-sufficient, while we interpolate between these reference values. They are given as:
+sufficient; they are given as:
 
 +-------------------+------------------------+----------+
 | Minimum S         | Maximum S              | P        |
