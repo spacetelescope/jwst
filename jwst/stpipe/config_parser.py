@@ -44,9 +44,8 @@ from ..extern.configobj.configobj import (
     ConfigObj, Section, flatten_errors, get_extra_values)
 from ..extern.configobj.validate import Validator, ValidateError, VdtTypeError
 
-from ..datamodels import StepParsModel
-
 from . import utilities
+from .config import StepConfig
 
 
 # Configure logger
@@ -140,13 +139,11 @@ def _load_config_file_filesystem(config_file):
     if not os.path.isfile(config_file):
         raise ValueError("Config file {0} not found.".format(config_file))
     try:
-        cfg = asdf_open(config_file)
+        with asdf_open(config_file) as asdf_file:
+            return _config_obj_from_asdf(asdf_file)
     except (AsdfValidationError, ValueError):
         logger.debug('Config file did not parse as ASDF. Trying as ConfigObj: %s', config_file)
         return ConfigObj(config_file, raise_errors=True)
-
-    # Seems to be ASDF. Create the configobj from that.
-    return _config_obj_from_asdf(cfg)
 
 
 def _load_config_file_s3(config_file):
@@ -155,21 +152,25 @@ def _load_config_file_s3(config_file):
 
     content = s3_utils.get_object(config_file)
     try:
-        cfg = asdf_open(content)
+        with asdf_open(content) as asdf_file:
+            return _config_obj_from_asdf(asdf_file)
     except (AsdfValidationError, ValueError):
         logger.debug('Config file did not parse as ASDF. Trying as ConfigObj: %s', config_file)
         content.seek(0)
         return ConfigObj(content, raise_errors=True)
 
-    # Seems to be ASDF. Create the configobj from that.
-    return _config_obj_from_asdf(cfg)
+
+def _config_obj_from_asdf(asdf_file):
+    config = StepConfig.from_asdf(asdf_file)
+    return _config_obj_from_step_config(config)
 
 
-def _config_obj_from_asdf(cfg):
+def _config_obj_from_step_config(config):
     configobj = ConfigObj()
-    configobj.merge(cfg['parameters'])
-    configobj.pars_model = StepParsModel(cfg)
-    cfg.close()
+    configobj.merge(config.parameters)
+    configobj.merge({"class": config.class_name, "name": config.name})
+    if len(config.steps) > 0:
+        configobj.merge({"steps": { s.name: _config_obj_from_step_config(s) for s in config.steps }})
     return configobj
 
 

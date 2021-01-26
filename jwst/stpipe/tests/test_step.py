@@ -12,16 +12,15 @@ from jwst.extern.configobj.configobj import ConfigObj
 from jwst.refpix import RefPixStep
 from jwst.stpipe import Step, crds_client
 from jwst.stpipe import cmdline
+from jwst.stpipe.config import StepConfig
 from jwst.stpipe.config_parser import ValidationError
 
 from .steps import EmptyPipeline, MakeListPipeline, MakeListStep, ProperPipeline, AnotherDummyStep
 from .util import t_path
 
+import asdf
 from crds.core.exceptions import CrdsLookupError
 
-
-ParsModelWithPar3 = datamodels.StepParsModel(t_path(join('steps','jwst_generic_pars-makeliststep_0002.asdf')))
-ParsModelWithPar3.parameters.instance.update({'par3': False})
 
 REFPIXSTEP_CRDS_MIRI_PARS = {
     'class': jwst.refpix.refpix_step.RefPixStep,
@@ -97,9 +96,8 @@ def test_parameters_from_crds_fail():
 def test_reftype(cfg_file, expected_reftype):
     """Test that reftype is produced as expected"""
     step = Step.from_config_file(t_path(join('steps', cfg_file)))
-    assert step.__class__.get_pars_reftype() == expected_reftype
-    assert step.get_pars_reftype() == expected_reftype
-    assert step.get_pars_model().meta.reftype == expected_reftype
+    assert step.__class__.get_config_reftype() == expected_reftype
+    assert step.get_config_reftype() == expected_reftype
 
 
 def test_saving_pars(tmpdir):
@@ -113,46 +111,50 @@ def test_saving_pars(tmpdir):
     ])
     assert saved_path.check()
 
-    with datamodels.StepParsModel(str(saved_path)) as saved:
-        assert saved.parameters == ParsModelWithPar3.parameters
+    with asdf.open(t_path(join('steps','jwst_generic_pars-makeliststep_0002.asdf'))) as af:
+        original_config = StepConfig.from_asdf(af)
+        original_config.parameters["par3"] = False
+
+    with asdf.open(str(saved_path)) as af:
+        config = StepConfig.from_asdf(af)
+        assert config.parameters == original_config.parameters
 
     step.closeout()
 
 
 @pytest.mark.parametrize(
-    'step_obj, full_spec, expected',
+    'step_obj, expected',
     [
-        (MakeListStep(par1=0., par2='from args'), True,
-         {'class': 'jwst.stpipe.tests.steps.MakeListStep',
-          'name': 'MakeListStep',
-          'pre_hooks': [],
-          'post_hooks': [],
-          'output_file': None,
-          'output_dir': None,
-          'output_ext': '.fits',
-          'output_use_model': False,
-          'output_use_index': True,
-          'save_results': False,
-          'skip': False,
-          'suffix': None,
-          'search_output_file': True,
-          'input_dir': '',
-          'par1': 0.0,
-          'par2': 'from args',
-          'par3': False}
-        ),
-        (MakeListStep(par1=0., par2='from args'), False,
-         {'class': 'jwst.stpipe.tests.steps.MakeListStep',
-          'name': 'MakeListStep',
-          'par1': 0.0,
-          'par2': 'from args',
-          'par3': False}
+        (
+            MakeListStep(par1=0., par2='from args'),
+            StepConfig(
+                'jwst.stpipe.tests.steps.MakeListStep',
+                'MakeListStep',
+                {
+                    'pre_hooks': [],
+                    'post_hooks': [],
+                    'output_file': None,
+                    'output_dir': None,
+                    'output_ext': '.fits',
+                    'output_use_model': False,
+                    'output_use_index': True,
+                    'save_results': False,
+                    'skip': False,
+                    'suffix': None,
+                    'search_output_file': True,
+                    'input_dir': '',
+                    'par1': 0.0,
+                    'par2': 'from args',
+                    'par3': False,
+                },
+                []
+            ),
         ),
     ]
 )
-def test_getpars_model(step_obj, full_spec, expected):
-    """Test retreiving of configuration parameters"""
-    assert step_obj.get_pars_model(full_spec=full_spec).parameters.instance == expected
+def test_export_config(step_obj, expected):
+    """Test retrieving of configuration parameters"""
+    assert step_obj.export_config() == expected
 
 
 @pytest.mark.parametrize(
@@ -528,13 +530,9 @@ def test_step_from_commandline_par_precedence(command_line_pars, command_line_co
     reference_file_map = {}
     if reference_pars:
         reference_path = tmp_path/f"{reference_type}.asdf"
-        parameters = {
-            "class": class_name,
-            "name": config_name,
-        }
-        parameters.update(reference_pars)
-        model = datamodels.StepParsModel({"parameters": parameters})
-        model.save(reference_path)
+        reference_config = StepConfig(class_name, config_name, reference_pars, [])
+        with reference_config.to_asdf() as af:
+            af.write_to(reference_path)
 
         reference_file_map[reference_type] = str(reference_path)
 
