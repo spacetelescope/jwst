@@ -134,7 +134,10 @@ integration, or overall (for the entire dataset), respectively.
 Segment-specific Computations:
 ------------------------------
 The slope of each segment is calculated using the least-squares method with optimal
-weighting. The variance of the slope of a segment due to read noise is:
+weighting, as described by Fixsen et al. 2000, PASP, 112, 1350; Regan 2007, JWST-STScI-001212.
+
+
+The variance of the slope of a segment due to read noise is:
 
 .. math::  
    var^R_{s} = \frac{12 \ R^2 }{ (ngroups_{s}^3 - ngroups_{s})(tgroup^2) } \,,
