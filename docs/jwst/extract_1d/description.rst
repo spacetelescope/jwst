@@ -131,10 +131,16 @@ and ``ystop``. If ``dispaxis=2``, the rolls are reversed.
 If ``extract_width`` is also given, that takes priority over ``ystart`` and
 ``ystop`` (for ``dispaxis=1``) for the extraction width, but ``ystart`` and
 ``ystop`` will still be used to define the centering of the extraction region
-in the cross-dispersion direction.
-Any of these parameters will be modified internally by the step code if the
+in the cross-dispersion direction. For point source data, if ``use_source_posn`` = True or None (default) 
+then the ``xstart`` and ``xstop`` values (dispaxis = 2) are shifted to account
+for the expected location of the source. If disaxis=1, then the ``ystart`` and ``ystop`` values
+are modified. The offset amount is internally calculated. If it is not desired to apply this
+offset, then set``use_source_posn`` = False. 
+Any of the extraction location parameters will be modified internally by the step code if the
 extraction region would extend outside the limits of the input image or outside
 the domain specified by the WCS.
+
+
 
 A more flexible way to specify the source extraction region is via the ``src_coeff``
 parameter. ``src_coeff`` is specified as a list of lists of floating-point
@@ -240,10 +246,11 @@ direction perpendicular to dispersion.
 Extraction for 3D IFU Data
 --------------------------
 For IFU cube data, 1D extraction is controlled by a different set of EXTRACT1D
-reference file parameters.
-Note that for an extended source, anything specified in the reference file
+reference file parameters.  The extraction location for IFU point source data is either
+the RA/DEC target location indicated by the header or the center of the cube if the header
+target location is undefined. For extended source data, anything specified in the reference file
 or step arguments will be ignored; the entire image will be
-extracted, and no background subtraction will be done.
+extracted, and no background subtraction will be done. For IFU data the ``use_source_posn `` option is not used. 
 
 For point sources a circular extraction aperture is used, along with an optional
 circular annulus for background extraction and subtraction. The size of the extraction
@@ -251,10 +258,10 @@ region and the background annulus size varies with wavelength.
 The extraction related vectors are found in the asdf extract1d reference file.
 For each element in the ``wavelength`` vector there are three size components: ``radius``, ``inner_bkg``, and
 ``outer_bkg``. The radius vector sets the extraction size; while ``inner_bkg`` and ``outer_bkg`` specify the
-limits of an annular background aperture.
+limits of an annular background aperture. There are two additional vectors in the reference file, ``axis_ratio``
+and ``axis_pa``, which are placeholders for possible future functionality.
 The extraction size parameters are given in units of arcseconds and converted to units of pixels
 in the extraction process. 
-
 
 The region of overlap between an aperture and a pixel can be calculated by
 one of three different methods, specified by the ``method`` parameter:  "exact"

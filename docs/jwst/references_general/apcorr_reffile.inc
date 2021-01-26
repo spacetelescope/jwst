@@ -259,7 +259,10 @@ and "nelem_size" entries are read from each array.
 IFU APCORR Reference File ASDF Format
 +++++++++++++++++++++++++++++++++++++
 For IFU data the APCORR reference files are in ASDF format. The aperture correction
-varies with wavelength and the contents of the files are shown below.
+varies with wavelength and the contents of the files are shown below. The radius,
+aperture correction and error are all 2D arrays. Currently the 2nd dimension does
+not add information, but in the future it could be used to provide different aperture
+corrections for different radii. 
 
 :Data model: `~jwst.datamodels.MirMrsApcorrModel`
 
@@ -268,11 +271,11 @@ varies with wavelength and the contents of the files are shown below.
 +============+=======+=============+===========+============+==========+
 | MIRI       | MRS   | wavelength  | float     | 1D array   | micron   |
 +            +       +-------------+-----------+------------+----------+
-|            |       | radius      | float     | 1D array   | arcsec   |
+|            |       | radius      | float     | 2D array   | arcsec   |
 +            +       +-------------+-----------+------------+----------+
-|            |       | apcorr      | float     | 1D array   | unitless |
+|            |       | apcorr      | float     | 2D array   | unitless |
 +            +       +-------------+-----------+------------+----------+
-|            |       | apcorr_err  | float     | 1D array   | unitless |
+|            |       | apcorr_err  | float     | 2D array   | unitless |
 +------------+-------+-------------+-----------+------------+----------+
 
 :Data model: `~jwst.datamodels.NRSIFUApcorrModel`
@@ -286,9 +289,9 @@ varies with wavelength and the contents of the files are shown below.
 +            +       +-------------+-----------+------------+----------+
 |            |       | wavelength  | float     | 1D array   | micron   |
 +            +       +-------------+-----------+------------+----------+
-|            |       | radius      | float     | 1D array   | arcsec   |
+|            |       | radius      | float     | 2D array   | arcsec   |
 +            +       +-------------+-----------+------------+----------+
-|            |       | apcorr      | float     | 1D array   | unitless |
+|            |       | apcorr      | float     | 2D array   | unitless |
 +            +       +-------------+-----------+------------+----------+
-|            |       | apcorr_err  | float     | 1D array   | unitless |
+|            |       | apcorr_err  | float     | 2D array   | unitless |
 +------------+-------+-------------+-----------+------------+----------+
