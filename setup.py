@@ -29,6 +29,7 @@ package_data = {
     "jwst.associations": ["tests/data/*.py"],
     # Include the transforms schemas
     "jwst.transforms": ["schemas/stsci.edu/jwst_pipeline/*.yaml"],
+    "jwst.stpipe.resources": ["schemas/*.yaml"],
 }
 
 setup(

@@ -27,7 +27,9 @@ parameters:
   class: jwst.stpipe.tests.steps.MakeListStep
   name: jwst_generic_pars-makeliststep_0002
   input_dir: ''
+  output_dir: null
   output_ext: .fits
+  output_file: null
   output_use_index: true
   output_use_model: false
   par1: 42.0
@@ -38,4 +40,5 @@ parameters:
   save_results: false
   search_output_file: true
   skip: false
+  suffix: null
 ...

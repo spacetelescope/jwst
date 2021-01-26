@@ -5,7 +5,6 @@ import abc
 from contextlib import contextmanager
 from functools import partial
 import gc
-import inspect
 import os
 from os.path import (
     abspath,
@@ -27,13 +26,14 @@ except ImportError:
     DISCOURAGED_TYPES = None
 from stdatamodels import DataModel
 
+from . import config
 from . import config_parser
 from . import crds_client
 from . import log
 from . import utilities
 from .format_template import FormatTemplate
 
-from ..datamodels import (ModelContainer, StepParsModel)
+from ..datamodels import ModelContainer
 
 
 class Step(abc.ABC):
@@ -73,9 +73,9 @@ class Step(abc.ABC):
     prefetch_references = True
 
     @classmethod
-    def get_pars_reftype(cls):
+    def get_config_reftype(cls):
         """
-        Get the CRDS reftype for this step's pars reference.
+        Get the CRDS reftype for this step's config reference.
 
         Returns
         -------
@@ -290,7 +290,6 @@ class Step(abc.ABC):
             Additional parameters to set.  These will be set as member
             variables on the new Step instance.
         """
-        self._pars_model = None
         self._reference_files_used = []
         self._input_filename = None
         self._input_dir = None
@@ -757,7 +756,7 @@ class Step(abc.ABC):
         # Get the root logger, since the following operations
         # are happening in the surrounding architecture.
         logger = log.delegator.log
-        reftype = cls.get_pars_reftype()
+        reftype = cls.get_config_reftype()
 
         # If the dataset is not an operable DataModel, log as such and return
         # an empty config object
@@ -1201,8 +1200,7 @@ class Step(abc.ABC):
         for key in spec:
             if hasattr(self, key):
                 value = getattr(self, key)
-                if not isinstance(value, property):
-                    instance_pars[key] = value
+                instance_pars[key] = value
         pars = config_parser.config_from_dict(instance_pars, spec, allow_missing=True)
 
         # Convert the config to a pure dict.
@@ -1214,30 +1212,15 @@ class Step(abc.ABC):
                 pars_dict[key] = value
         return pars_dict
 
-    def get_pars_model(self, full_spec=True):
-        """Return Step parameters as StepParsModel
-
-        Parameters
-        ----------
-        full_spec : bool
-            Return all parameters, including parent-specified parameters.
-            If `False`, return only parameters specific to the step.
+    def export_config(self):
+        """
+        Export this step's parameters to a StepConfig object.
 
         Returns
         -------
-        StepParsModel
+        stpipe.config.StepConfig
         """
-        pars_model = StepParsModel()
-        pars_model.parameters.instance.update(self.get_pars(full_spec=full_spec))
-
-        # Update class and name.
-        full_class_name = _full_class_name(self)
-        pars_model.parameters.instance.update({
-            'class': full_class_name,
-            'name': self.name,
-        })
-        pars_model.meta.reftype = self.get_pars_reftype()
-        return pars_model
+        return config.export_config(self)
 
     def update_pars(self, parameters):
         """Update step parameters
@@ -1273,25 +1256,6 @@ class Step(abc.ABC):
 # #########
 # Utilities
 # #########
-def _full_class_name(obj):
-    """Return the fully qualified class name
-
-    Parameters
-    ----------
-    obj : object
-        The object in question. Can be a class
-
-    Returns
-    class_name : str
-        The full name
-    """
-    cls = obj if inspect.isclass(obj) else obj.__class__
-    module = cls.__module__
-    if module is None or module == str.__class__.__module__:
-        return cls.__name__  # Avoid reporting __builtin__
-    else:
-        return module + '.' + cls.__name__
-
 
 def _get_suffix(suffix, step=None, default_suffix=None):
     """Retrieve either specified or pipeline-supplied suffix

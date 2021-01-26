@@ -295,15 +295,10 @@ def just_the_step_from_cmdline(args, cls=None):
     log.log.info("Hostname: {0}".format(os.uname()[1]))
     log.log.info("OS: {0}".format(os.uname()[0]))
 
-    # If initialized from a StepParsModel, remember that.
-    try:
-        step._pars_model = config.get_pars_model()
-    except AttributeError:
-        pass
-
     # Save the step configuration
     if known.save_parameters:
-        step.get_pars_model().save(known.save_parameters)
+        with step.export_config().to_asdf(include_metadata=True) as asdf_file:
+            asdf_file.write_to(known.save_parameters)
         log.log.info(f"Step/Pipeline parameters saved to '{known.save_parameters}'")
 
     return step, step_class, positional, debug_on_exception
