@@ -4,7 +4,7 @@
 datamodels
 ----------
 
-- Updated keyword_readpatt, core, preadpadd schemas for new MIRI detector
+- Updated keyword_readpatt, core, preadpatt schemas for new MIRI detector
   readout patterns 'FASTR1', 'FASTR100' and 'SLOWR1' [#5667]
 
 
