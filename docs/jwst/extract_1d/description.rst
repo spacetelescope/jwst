@@ -246,11 +246,10 @@ direction perpendicular to dispersion.
 Extraction for 3D IFU Data
 --------------------------
 For IFU cube data, 1D extraction is controlled by a different set of EXTRACT1D
-reference file parameters.  The extraction location for IFU point source data is either
 the RA/DEC target location indicated by the header or the center of the cube if the header
 target location is undefined. For extended source data, anything specified in the reference file
 or step arguments will be ignored; the entire image will be
-extracted, and no background subtraction will be done. For IFU data the ``use_source_posn `` option is not used. 
+extracted, and no background subtraction will be done. For IFU data the ``use_source_posn`` option is not used. 
 
 For point sources a circular extraction aperture is used, along with an optional
 circular annulus for background extraction and subtraction. The size of the extraction
