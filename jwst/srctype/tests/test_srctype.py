@@ -164,7 +164,7 @@ def test_nrs_fixedslit():
     input = datamodels.MultiSlitModel()
     input.meta.exposure.type = "NRS_FIXEDSLIT"
     input.meta.instrument.fixed_slit = "S200A1"
-    input.meta.target.source_type = 'EXTENDED'
+    input.meta.target.source_type = 'POINT'
 
     slits = [{'name':'S200A2'},
              {'name':'S200A1'},
@@ -176,7 +176,7 @@ def test_nrs_fixedslit():
     result = srctype.set_source_type(input)
 
     assert result.slits[0].source_type == 'EXTENDED'
-    assert result.slits[1].source_type == 'EXTENDED'
+    assert result.slits[1].source_type == 'POINT'
     assert result.slits[2].source_type == 'EXTENDED'
 
 @pytest.mark.parametrize("exptype", ["NRS_BRIGHTOBJ", "NRC_TSGRISM", "NIS_SOSS",
