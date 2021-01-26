@@ -1,7 +1,11 @@
 0.18.4 (unreleased)
 ===================
 
+datamodels
+----------
 
+- Updated keyword_readpatt schema for new MIRI detector readout patterns 'FASTR1',
+  'FASTR100' and 'SLOWR1' [#5667]
 
 
 
