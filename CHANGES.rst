@@ -1,8 +1,15 @@
 0.18.4 (unreleased)
 ===================
 
+lib
+---
 
+- Make EngDB_Value public for JSDP use [#5663]
 
+set_telescope_pointing
+----------------------
+
+- Make get_wcs_values_from_siaf public for JSDP use [#5663]
 
 
 0.18.3 (2021-01-25)
