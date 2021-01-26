@@ -17,6 +17,10 @@ ramp_fitting
 
 - Update documentation to define optimal weighting algorithm [#5682]
 
+- Update code in ``set_velocity_aberration.py`` functions based on Colin Cox
+  suggestions (simplify DVA scale computation and improve offset
+  computation). [#5666]
+
 set_telescope_pointing
 ----------------------
 
@@ -83,7 +87,7 @@ datamodels
 
 - Updated schemas for new keywords CROWDFLD, PRIDTYPE, PRIDTPTS, PATTNPTS, SMGRDPAT,
   changed name of SUBPXPNS to SUBPXPTS, and new allowed values for PATTTYPE. [#5618]
-  
+
 flat_field
 ----------
 
@@ -124,7 +128,7 @@ datamodels
 extract_1d
 ----------
 
-- For IFU data (NIRSpec and MIRI) the extraction radius is now a varying size 
+- For IFU data (NIRSpec and MIRI) the extraction radius is now a varying size
   based on wavelength. The apcorr correction is a function of wavelength and
   radius size. Fixes a bug in units conversion for applying the apcorr correction.
   The units are now correctly converted from arcseconds to pixels. Added an
