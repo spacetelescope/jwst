@@ -1,7 +1,11 @@
 0.18.4 (unreleased)
 ===================
 
+srctype
+-------
 
+- Changed default SRCTYPE for non-primary NIRSpec slits in a FIXEDSLIT
+  exposure to 'EXTENDED' rather than 'POINT' [#5668]
 
 
 
