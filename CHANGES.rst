@@ -17,6 +17,12 @@ set_telescope_pointing
 
 - Make get_wcs_values_from_siaf public for JSDP use [#5663]
 
+srctype
+-------
+
+- Changed default SRCTYPE for non-primary NIRSpec slits in a FIXEDSLIT
+  exposure to 'EXTENDED' rather than 'POINT' [#5668]
+
 
 0.18.3 (2021-01-25)
 ===================
