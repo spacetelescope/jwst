@@ -1,7 +1,10 @@
 0.18.4 (unreleased)
 ===================
 
+ramp_fitting
+------------
 
+- Update documentation to define optimal weighting algorithm [#5300]
 
 
 
