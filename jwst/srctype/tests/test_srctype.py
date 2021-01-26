@@ -175,9 +175,9 @@ def test_nrs_fixedslit():
 
     result = srctype.set_source_type(input)
 
-    assert(result.slits[0].source_type == 'POINT')
+    assert(result.slits[0].source_type == 'EXTENDED')
     assert(result.slits[1].source_type == 'EXTENDED')
-    assert(result.slits[2].source_type == 'POINT')
+    assert(result.slits[2].source_type == 'EXTENDED')
 
 @pytest.mark.parametrize("exptype", ["NRS_BRIGHTOBJ", "NRC_TSGRISM", "NIS_SOSS",
     "MIR_LRS-SLITLESS"])
