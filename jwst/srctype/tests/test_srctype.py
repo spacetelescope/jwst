@@ -154,9 +154,9 @@ def test_nrs_msaspec():
 
     result = srctype.set_source_type(input)
 
-    assert(result.slits[0].source_type == 'POINT')
-    assert(result.slits[1].source_type == 'POINT')
-    assert(result.slits[2].source_type == 'EXTENDED')
+    assert result.slits[0].source_type == 'POINT'
+    assert result.slits[1].source_type == 'POINT'
+    assert result.slits[2].source_type == 'EXTENDED'
 
 def test_nrs_fixedslit():
     """Test for when exposure type is NRS_FIXEDSLIT
@@ -175,9 +175,9 @@ def test_nrs_fixedslit():
 
     result = srctype.set_source_type(input)
 
-    assert(result.slits[0].source_type == 'EXTENDED')
-    assert(result.slits[1].source_type == 'EXTENDED')
-    assert(result.slits[2].source_type == 'EXTENDED')
+    assert result.slits[0].source_type == 'EXTENDED'
+    assert result.slits[1].source_type == 'EXTENDED'
+    assert result.slits[2].source_type == 'EXTENDED'
 
 @pytest.mark.parametrize("exptype", ["NRS_BRIGHTOBJ", "NRC_TSGRISM", "NIS_SOSS",
     "MIR_LRS-SLITLESS"])
@@ -192,7 +192,7 @@ def test_tso_types(exptype):
 
     result = srctype.set_source_type(input)
 
-    assert(result.meta.target.source_type == "POINT")
+    assert result.meta.target.source_type == "POINT"
 
 def test_exptype_is_none():
     """ Test for when exposure type is None.
