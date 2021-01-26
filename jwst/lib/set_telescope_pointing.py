@@ -301,7 +301,7 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, eng
     if aperture_name != "UNKNOWN":
         logger.info("Updating WCS for aperture {}".format(aperture_name))
         useafter = model.meta.observation.date
-        siaf = _get_wcs_values_from_siaf(aperture_name, useafter, siaf_path)
+        siaf = get_wcs_values_from_siaf(aperture_name, useafter, siaf_path)
         populate_model_from_siaf(model, siaf)
     else:
         logger.warning("Aperture name is set to 'UNKNOWN'. "
@@ -1234,7 +1234,7 @@ def _roll_angle_from_matrix(matrix, v2, v3):
     return new_roll
 
 
-def _get_wcs_values_from_siaf(aperture_name, useafter, prd_db_filepath=None):
+def get_wcs_values_from_siaf(aperture_name, useafter, prd_db_filepath=None):
     """
     Query the SIAF database file and get WCS values.
 
