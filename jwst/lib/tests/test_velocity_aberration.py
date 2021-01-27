@@ -27,7 +27,7 @@ def test_compute_va_effects_zero_velocity():
     scale_factor, va_ra, va_dec = compute_va_effects(0.0, 0.0, 0.0, *GOOD_POS)
     assert scale_factor == 1.0
     assert va_ra == GOOD_POS[0]
-    assert va_dec ==  GOOD_POS[1]
+    assert va_dec == GOOD_POS[1]
 
 
 def test_velocity_aberration_script(tmpdir):
@@ -45,6 +45,6 @@ def test_velocity_aberration_script(tmpdir):
     subprocess.check_call(["set_velocity_aberration.py", path])
 
     with fits.open(path) as hdulist_in:
-        assert isclose(hdulist_in[0].header['VA_RA'], GOOD_APPARENT_RA)
-        assert isclose(hdulist_in[0].header['VA_DEC'], GOOD_APPARENT_DEC)
-        assert isclose(hdulist_in['SCI'].header['VA_SCALE'], GOOD_SCALE_FACTOR)
+        assert isclose(hdulist_in[0].header['VA_RA'], GOOD_APPARENT_RA, rtol=0, atol=1e-7)
+        assert isclose(hdulist_in[0].header['VA_DEC'], GOOD_APPARENT_DEC, rtol=0, atol=1e-7)
+        assert isclose(hdulist_in['SCI'].header['VA_SCALE'], GOOD_SCALE_FACTOR, rtol=0, atol=1e-7)

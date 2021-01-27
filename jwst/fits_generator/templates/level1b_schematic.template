@@ -294,8 +294,8 @@ CD2_1              partial of second axis coordinate with respect to X
 CD2_2              partial of second axis coordinate with respect to Y
 
 / Velocity aberration correction
-VA_RA             [deg] Velocity aberration apparent reference RA
-VA_DEC            [deg] Velocity aberration apparent reference Dec
+VA_RA             [deg] Velocity aberrated apparent reference RA
+VA_DEC            [deg] Velocity aberrated apparent reference Dec
 VA_SCALE          Velocity aberration scale factor
 
 END

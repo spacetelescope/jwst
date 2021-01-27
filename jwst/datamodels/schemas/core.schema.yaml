@@ -1294,12 +1294,12 @@ properties:
         type: object
         properties:
           va_ra_ref:
-            title: "[deg] Velocity aberration apparent reference RA"
+            title: "[deg] Velocity aberrated apparent reference RA"
             type: number
             fits_keyword: VA_RA
             blend_table: True
           va_dec_ref:
-            title: "[dec] Velocity aberration apparent reference Dec"
+            title: "[deg] Velocity aberrated apparent reference Dec"
             type: number
             fits_keyword: VA_DEC
             blend_table: True

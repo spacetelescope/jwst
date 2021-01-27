@@ -31,7 +31,7 @@ logger.addHandler(logging.NullHandler())
 SPEED_OF_LIGHT = speed_of_light / 1000  # km / s
 
 
-def compute_va_effects(velocity_x, velocity_y, velocity_z, targ_ra, targ_dec):
+def compute_va_effects(velocity_x, velocity_y, velocity_z, ra, dec):
     """ Computes constant scale factor due to velocity aberration as well as
     corrected ``RA`` and ``DEC`` values.
 
@@ -43,7 +43,7 @@ def compute_va_effects(velocity_x, velocity_y, velocity_z, targ_ra, targ_dec):
         vernal equinox, y toward right ascension 90 degrees and declination
         0, z toward the north celestial pole.
 
-    targ_ra, targ_dec: float
+    ra, dec: float
         The right ascension and declination of the target (or some other
         point, such as the center of a detector) in the barycentric coordinate
         system.  The equator and equinox should be the same as the coordinate
@@ -57,18 +57,19 @@ def compute_va_effects(velocity_x, velocity_y, velocity_z, targ_ra, targ_dec):
         of starlight" due to the velocity of JWST with respect to the Sun.
 
     apparent_ra: float
-        Aparent star position in the moving telescope frame.
+        Apparent star position in the moving telescope frame.
 
     apparent_dec: float
-        Aparent star position in the moving telescope frame.
+        Apparent star position in the moving telescope frame.
 
     """
     beta = np.array([velocity_x, velocity_y, velocity_z]) / SPEED_OF_LIGHT
-    beta2 = np.dot(beta, beta)
+    beta2 = np.dot(beta, beta)  # |beta|^2
     if beta2 == 0.0:
-        return 1.0, targ_ra, targ_dec
+        logger.warning('Observatory speed is zero. Setting VA scale to 1.0')
+        return 1.0, ra, dec
 
-    u = np.asanyarray(SphericalToCartesian()(targ_ra, targ_dec))
+    u = np.asanyarray(SphericalToCartesian()(ra, dec))
     beta_u =  np.dot(beta, u)
     igamma = np.sqrt(1.0 - beta2)  # inverse of usual gamma
     scale_factor = (1.0 + beta_u) / igamma
@@ -89,23 +90,21 @@ def add_dva(filename):
 
     It presumes all the accessed keywords are present (see first block).
     """
-    hdulist = fits.open(filename, 'update')
+    hdulist = fits.open(filename, mode='update')
     pheader = hdulist[0].header
     sheader = hdulist['SCI'].header
-    jwst_dx = float(pheader['JWST_DX'])
-    jwst_dy = float(pheader['JWST_DY'])
-    jwst_dz = float(pheader['JWST_DZ'])
-    ra_ref = float(sheader['RA_REF'])
-    dec_ref = float(sheader['DEC_REF'])
 
     # compute the velocity aberration information
     scale_factor, apparent_ra, apparent_dec = compute_va_effects(
-        jwst_dx, jwst_dy, jwst_dz, ra_ref, dec_ref
+        velocity_x=pheader['JWST_DX'],
+        velocity_y=pheader['JWST_DY'],
+        velocity_z=pheader['JWST_DZ'],
+        ra=sheader['RA_REF'],
+        dec=sheader['DEC_REF']
     )
 
     # update header
     pheader['VA_RA'] = apparent_ra
     pheader['VA_DEC'] = apparent_dec
     sheader['VA_SCALE'] = scale_factor
-    hdulist.flush()
     hdulist.close()

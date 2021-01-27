@@ -18,11 +18,12 @@ ramp_fitting
 - Update documentation to define optimal weighting algorithm [#5682]
 
 - Update code in ``set_velocity_aberration.py`` functions based on Colin Cox
-  suggestions (simplify DVA scale computation and improve offset
-  computation). [#5666]
-
-set_telescope_pointing
-----------------------
+  suggestions: simplify DVA scale computation and improve apparent ``RA`` and
+  ``DEC`` aberrated position computation. Also, attributes ``ra_offset`` and
+  ``dec_offset`` of ``datamodel.meta.velocity_aberration`` have been renamed to
+  ``va_ra_ref`` and ``va_dec_ref`` and their corresponding FITS keywords
+  have been renamed from ``DVA_RA`` and ``DVA_DEC`` to
+  ``VA_RA`` and ``VA_DEC``. [#5666]
 
 - Make get_wcs_values_from_siaf public for JSDP use [#5669]
 
