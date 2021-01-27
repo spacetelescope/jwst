@@ -15,7 +15,7 @@ lib
 ramp_fitting
 ------------
 
-- Update documentation to define optimal weighting algorithm [#5676]
+- Update documentation to define optimal weighting algorithm [#5682]
 
 set_telescope_pointing
 ----------------------
