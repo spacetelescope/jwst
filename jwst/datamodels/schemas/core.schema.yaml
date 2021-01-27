@@ -1293,15 +1293,15 @@ properties:
         title: Velocity aberration correction information
         type: object
         properties:
-          ra_offset:
-            title: "[rad] Velocity aberration correction RA offset"
+          va_ra_ref:
+            title: "[deg] Velocity aberration apparent reference RA"
             type: number
-            fits_keyword: DVA_RA
+            fits_keyword: VA_RA
             blend_table: True
-          dec_offset:
-            title: "[rad] Velocity aberration correction Dec offset"
+          va_dec_ref:
+            title: "[dec] Velocity aberration apparent reference Dec"
             type: number
-            fits_keyword: DVA_DEC
+            fits_keyword: VA_DEC
             blend_table: True
       time:
         title: Time information
