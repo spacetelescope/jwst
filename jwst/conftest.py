@@ -87,7 +87,10 @@ class TestDescriptionPlugin:
         self.desc = None
 
     def pytest_runtest_protocol(self, item):
-        self.desc = inspect.getdoc(item.obj)
+        try:
+            self.desc = inspect.getdoc(item.obj)
+        except AttributeError:
+            self.desc = None
 
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_runtest_logstart(self, nodeid, location):
