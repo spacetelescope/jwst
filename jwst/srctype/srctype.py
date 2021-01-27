@@ -115,7 +115,7 @@ def set_source_type(input_model):
             # determined above to only the primary slit (the one in which
             # the target is located). Set all other slits to the default
             # value, which for NRS_FIXEDSLIT is 'POINT'.
-            default_type = 'POINT'
+            default_type = 'EXTENDED'
             primary_slit = input_model.meta.instrument.fixed_slit
             log.debug(f' primary_slit = {primary_slit}')
             for slit in input_model.slits:

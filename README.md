@@ -1,8 +1,8 @@
 # JWST Calibration Pipeline
 
+[![Build Status](https://github.com/spacetelescope/jwst/workflows/CI/badge.svg?branch=master)](https://github.com/spacetelescope/jwst/actions)
+[![codecov](https://codecov.io/gh/spacetelescope/jwst/branch/master/graph/badge.svg?token=Utf5Zs9g7z)](https://codecov.io/gh/spacetelescope/jwst)
 [![Documentation Status](https://readthedocs.org/projects/jwst-pipeline/badge/?version=latest)](http://jwst-pipeline.readthedocs.io/en/latest/?badge=latest)
-[![Build Status](https://travis-ci.org/spacetelescope/jwst.svg?branch=master)](https://travis-ci.org/spacetelescope/jwst)
-[![codecov](https://codecov.io/gh/spacetelescope/jwst/branch/master/graph/badge.svg)](https://codecov.io/gh/spacetelescope/jwst)
 [![Powered by STScI Badge](https://img.shields.io/badge/powered%20by-STScI-blue.svg?colorA=707170&colorB=3e8ddd&style=flat)](http://www.stsci.edu)
 [![Powered by Astropy Badge](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](http://www.astropy.org/)
 
@@ -52,7 +52,7 @@ You can also install a specific version (from `jwst 0.17.0` onward):
 
     conda create -n <env_name> python
     conda activate <env_name>
-    pip install jwst==0.18.0
+    pip install jwst==0.18.3
 
 Installing specific versions before `jwst 0.17.0` need to be installed from Github:
 
@@ -192,6 +192,9 @@ contact the [JWST Help Desk](https://jwsthelp.stsci.edu).
 
 | jwst tag | DMS build | CRDS_CONTEXT |   Date     |          Notes                                |
 | -------- | --------- | ------------ | ---------- | ----------------------------------------------|
+|  0.18.3  | B7.7      | 0670         | 01/25/2021 | Final release candidate for B7.7              |
+|  0.18.2  | B7.7rc3   | 0668         | 01/19/2021 | Third release candidate for B7.7              |
+|  0.18.1  | B7.7rc2   | 0664         | 01/08/2021 | Second release candidate for B7.7             |
 |  0.18.0  | B7.7rc1   | 0645         | 12/21/2020 | First release candidate for B7.7              |
 |  0.17.1  | B7.6      | 0641         | 09/15/2020 | Final release candidate for B7.6              |
 |  0.17.0  | B7.6rc1   | 0637         | 08/28/2020 | First release candidate for B7.6              |

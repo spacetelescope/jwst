@@ -2520,7 +2520,10 @@ def run_extract1d(
 
     """
     # Read and interpret the extract1d reference file.
-    ref_dict = open_extract1d_ref(extract_ref_name, input_model.meta.exposure.type)
+    try:
+        ref_dict = open_extract1d_ref(extract_ref_name, input_model.meta.exposure.type)
+    except AttributeError:  # Input is a ModelContainer of some type
+        ref_dict = open_extract1d_ref(extract_ref_name, input_model[0].meta.exposure.type)
 
     apcorr_ref_model = None
 

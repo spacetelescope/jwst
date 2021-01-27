@@ -1,5 +1,129 @@
-0.18.1 (unreleased)
+0.18.4 (unreleased)
 ===================
+
+datamodels
+----------
+
+- Updated keyword_readpatt, core, preadpatt schemas for new MIRI detector
+  readout patterns 'FASTR1', 'FASTR100' and 'SLOWR1' [#5667]
+
+lib
+---
+
+- Make EngDB_Value public for JSDP use [#5663]
+
+set_telescope_pointing
+----------------------
+
+- Make get_wcs_values_from_siaf public for JSDP use [#5663]
+
+srctype
+-------
+
+- Changed default SRCTYPE for non-primary NIRSpec slits in a FIXEDSLIT
+  exposure to 'EXTENDED' rather than 'POINT' [#5668]
+
+
+0.18.3 (2021-01-25)
+===================
+
+- Update documentation introduction to include installation and CRDS setup
+  instructions. [#5659]
+
+combine1d
+---------
+
+- Fixed code error in combine1d, creating extensions per spectral order
+  with the same input data [#5644]
+
+ramp_fitting
+------------
+
+- Fix a bug in estimating the max number of segments that will be needed
+  to fit any pixel [#5653]
+
+set_telescope_pointing
+----------------------
+
+- Update the check in set_telescope_pointing that determines whether an
+  exposure is TSO mode to always consider hardwired TSO EXP_TYPEs as TSO,
+  regardless of TSOVISIT and NINTS settings. [#5657]
+
+white_light
+-----------
+
+- Fixed error causing multi-segment data to reject int_times
+  for MJDs [#5566]
+
+
+0.18.2 (2021-01-19)
+===================
+
+associations
+------------
+
+- JWSTDMS-410 Asn_Lv2NRSLAMPSpectral: Break out the negative cases [#5635]
+
+- Update MIRI LRS-Fixedslit ALONG-SLIT-NOD backgrounds strategies [#5620]
+
+cube_build
+----------
+
+- Do not allow varibles defined in spec (part of the cube_build_step class) to
+  be changed, to allow calspec2 to loop over a list of files and run the
+  pipeline. [#5603]
+
+datamodels
+----------
+
+- Updated schemas for new keywords CROWDFLD, PRIDTYPE, PRIDTPTS, PATTNPTS, SMGRDPAT,
+  changed name of SUBPXPNS to SUBPXPTS, and new allowed values for PATTTYPE. [#5618]
+  
+flat_field
+----------
+
+- Added DO_NOT_USE to pixels flagged as NON_SCIENCE for non-NIRSpec data [#5601]
+
+outlier_detection
+-----------------
+
+- Account for the background subtracted data in the blot image for determining
+  the noise image used in flagging outliers [#5601]
+
+set_telescope_pointing
+----------------------
+
+- Updated to populate XREF_SCI, YREF_SCI keywords for all exposures with
+  TSOVISIT=True, not just NRC_TSGRISM mode. [#5616]
+
+0.18.1 (2021-01-08)
+===================
+
+combine1d
+---------
+
+- Output FITS now contains separate combine1d extensions for each spectral
+  order present in the data [#5204]
+
+cube_build
+----------
+
+- Tweaked pixel wavelength preselection range to avoid truncation at the ends
+  of the cubes. [#5598]
+
+datamodels
+----------
+
+- Fix missing CHANNEL entry in distortion reffile schema. [#5553]
+
+extract_1d
+----------
+
+- For IFU data (NIRSpec and MIRI) the extraction radius is now a varying size 
+  based on wavelength. The apcorr correction is a function of wavelength and
+  radius size. Fixes a bug in units conversion for applying the apcorr correction.
+  The units are now correctly converted from arcseconds to pixels. Added an
+  new method to apply the apcorr correction for IFU data. [#5506]
 
 pipeline
 --------
@@ -14,6 +138,11 @@ skymatch
 
 - Fixed a bug due to which sky matching may fail under certain circumstances
   such as using 'mode' statistics on a single pixel (after sigma-clipping). [#5567]
+
+stpipe
+------
+
+- Removed unused LinearPipeline class. [#5590]
 
 wavecorr
 --------
@@ -61,12 +190,6 @@ associations
 
 - Add NRS_VERIFY to the list of target acq/confirmation images [#5395]
 
-combine1d
----------
-
-- Output FITS now contains separate combine1d extensions for each spectral
-  order present in the data [#5204]
-
 cube_build
 ----------
 
@@ -110,11 +233,6 @@ datamodels
 
 extract_1d
 ----------
-- For IFU data (NIRSpec and MIRI) the extraction radius is now a varying size 
-  based on wavelength. The apcorr correction is a function of wavelength and
-  radius size. Fixes a bug in units conversion for applying the apcorr correction.
-  The units are now correctly converted from arcseconds to pixels. Added an
-  new method to apply the apcorr correction for IFU data. 
 
 - Fixed bug involving the determination of source RA/Dec for resampled Slit
   data. [#5353]

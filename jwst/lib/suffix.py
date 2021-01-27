@@ -52,7 +52,7 @@ SUFFIXES_TO_ADD = [
 
 # Suffixes that are discovered but should not be considered.
 # Used by `find_suffixes` to remove undesired values it has found.
-SUFFIXES_TO_DISCARD = ['engdblogstep', 'functionwrapper', 'pipeline', 'rscd_step', 'step', 'systemcall', 'testlinearpipeline']
+SUFFIXES_TO_DISCARD = ['engdblogstep', 'functionwrapper', 'pipeline', 'rscd_step', 'step', 'systemcall']
 
 
 # Calculated suffixes.
@@ -69,7 +69,6 @@ _calculated_suffixes = set([
     'resample_spec',
     'saturationstep',
     'firstframestep',
-    'testlinearpipeline',
     'cat',
     'systemcall',
     'alignrefsstep',
@@ -152,7 +151,6 @@ _calculated_suffixes = set([
     'linearity',
     'rscd',
     'rampfitstep',
-    'linearpipeline',
     'pipeline',
     'engdblog',
     'resamplespecstep',

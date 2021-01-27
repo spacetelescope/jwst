@@ -48,7 +48,6 @@ NON_STEPS = [
     'Pipeline',
     'Step',
     'SystemCall',
-    'TestLinearPipeline',
 ]
 
 

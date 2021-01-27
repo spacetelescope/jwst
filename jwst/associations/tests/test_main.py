@@ -66,7 +66,7 @@ def test_toomanyoptions(args):
 
 @pytest.mark.parametrize(
     'case', [
-        (None, 60),  # Don't re-run, just compare to the generator fixture results
+        (None, 59),  # Don't re-run, just compare to the generator fixture results
         (['-i', 'o001'], 2),
         (['-i', 'o001', 'o002'], 3),
         (['-i', 'c1001'], 1),

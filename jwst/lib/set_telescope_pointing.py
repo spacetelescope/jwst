@@ -14,6 +14,7 @@ from ..assign_wcs.util import update_s_region_keyword, calc_rotation_matrix
 from ..assign_wcs.pointing import v23tosky
 from ..datamodels import Level1bModel
 from ..lib.engdb_tools import ENGDB_Service
+from ..lib.pipe_utils import is_tso
 from .exposure_types import IMAGING_TYPES, FGS_GUIDE_EXP_TYPES
 
 TYPES_TO_UPDATE = set(list(IMAGING_TYPES) + FGS_GUIDE_EXP_TYPES)
@@ -300,7 +301,7 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, eng
     if aperture_name != "UNKNOWN":
         logger.info("Updating WCS for aperture {}".format(aperture_name))
         useafter = model.meta.observation.date
-        siaf = _get_wcs_values_from_siaf(aperture_name, useafter, siaf_path)
+        siaf = get_wcs_values_from_siaf(aperture_name, useafter, siaf_path)
         populate_model_from_siaf(model, siaf)
     else:
         logger.warning("Aperture name is set to 'UNKNOWN'. "
@@ -1233,7 +1234,7 @@ def _roll_angle_from_matrix(matrix, v2, v3):
     return new_roll
 
 
-def _get_wcs_values_from_siaf(aperture_name, useafter, prd_db_filepath=None):
+def get_wcs_values_from_siaf(aperture_name, useafter, prd_db_filepath=None):
     """
     Query the SIAF database file and get WCS values.
 
@@ -1494,14 +1495,14 @@ def populate_model_from_siaf(model, siaf):
     siaf : namedtuple
         The WCS keywords read in from the SIAF.
     """
-    # If not an imaging mode, update the pointing only.
+    # Update values from the SIAF for all exposures.
     model.meta.wcsinfo.v2_ref = siaf.v2_ref
     model.meta.wcsinfo.v3_ref = siaf.v3_ref
     model.meta.wcsinfo.v3yangle = siaf.v3yangle
     model.meta.wcsinfo.vparity = siaf.vparity
+
+    # For imaging modes, also update the basic FITS WCS keywords
     if model.meta.exposure.type.lower() in TYPES_TO_UPDATE:
-        # For imaging modes update the pointing and
-        # the FITS WCS keywords.
         logger.info('Setting basic FITS WCS keywords for imaging')
         model.meta.wcsinfo.ctype1 = 'RA---TAN'
         model.meta.wcsinfo.ctype2 = 'DEC--TAN'
@@ -1513,8 +1514,16 @@ def populate_model_from_siaf(model, siaf):
         model.meta.wcsinfo.cdelt1 = siaf.cdelt1 / 3600  # in deg
         model.meta.wcsinfo.cdelt2 = siaf.cdelt2 / 3600  # in deg
         model.meta.coordinates.reference_frame = "ICRS"
-    elif model.meta.exposure.type.lower() == 'nrc_tsgrism':
-        logger.info('NRC_TSGRISM:')
+
+    # For TSO exposures, also populate XREF_SCI/YREF_SCI keywords,
+    # which are used by the Cal pipeline to determine the
+    # location of the source.
+    # Note that we use a combination of the is_tso function and
+    # a check on EXP_TYPE, because there are rare corner cases
+    # where EXP_TIME=NRC_TSGRISM, TSOVISIT=False, NINTS=1, which
+    # normally return False, but we want to treat it as TSO anyway.
+    if is_tso(model) or model.meta.exposure.type.lower() in ['nrc_tsimage', 'nrc_tsgrism']:
+        logger.info('TSO exposure:')
         logger.info(' setting xref_sci to {}'.format(siaf.crpix1))
         logger.info(' setting yref_sci to {}'.format(siaf.crpix2))
         model.meta.wcsinfo.siaf_xref_sci = siaf.crpix1

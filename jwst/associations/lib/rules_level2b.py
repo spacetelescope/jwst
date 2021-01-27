@@ -252,7 +252,7 @@ class Asn_Lv2Spec(
                     DMSAttrConstraint(
                         name='patttype',
                         sources=['patttype'],
-                        value=['2-point-nod|4-point-nod|along-slit-nod'],
+                        value=['2-point-nod|4-point-nod'],
                     )
                 ],
                 reduce=Constraint.notany
@@ -362,6 +362,11 @@ class Asn_Lv2MIRLRSFixedSlitNod(
                 sources=['patttype'],
                 value=['along-slit-nod'],
             ),
+            SimpleConstraint(
+                value=True,
+                test=lambda value, item: self.acid.type != 'background',
+                force_unique=False
+            ),
             Constraint(
                 [
                     Constraint(
@@ -457,9 +462,19 @@ class Asn_Lv2NRSLAMPSpectral(
             Constraint(
                 [
                     DMSAttrConstraint(
-                        sources=['grating', 'opmode', 'lamp'],
-                        value='mirror|grating-only|nolamp',
-                        force_unique=False
+                        sources=['grating'],
+                        value='mirror',
+                        force_unique=False,
+                    ),
+                    DMSAttrConstraint(
+                        sources=['opmode'],
+                        value='grating-only',
+                        force_unique=False,
+                    ),
+                    DMSAttrConstraint(
+                        sources=['lamp'],
+                        value='nolamp',
+                        force_unique=False,
                     ),
                 ],
                 reduce=Constraint.notany

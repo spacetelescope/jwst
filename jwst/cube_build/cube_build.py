@@ -72,7 +72,7 @@ class CubeData():
 
         Read in necessary reference data:
         * cube parameter reference file
-        * if miripsf weighting paramter is set then read in resolution file
+        * if miripsf weighting parameter is set then read in resolution file
 
         This routine fills in the instrument_info dictionary, which holds the
         default spatial and spectral size of the output cube, as well as,
@@ -184,8 +184,19 @@ class CubeData():
             nsubchannels = len(valid_subchannel)
             # _______________________________________________________________________________
             # for MIRI we can set the channel and subchannel
+            # check if default of 'all' should be used or if the user has set option
+            # if default 'all' is used then we read in the data to figure which channels &
+            # sub channels we need to use
+
             user_clen = len(self.channel)
             user_slen = len(self.subchannel)
+
+            if user_clen == 1 and self.channel[0]  == 'all':
+                user_clen = 0
+
+            if user_slen == 1 and  self.subchannel[0] =='all':
+                user_slen =0
+
             # _______________________________________________________________________________
             for i in range(nchannels):
                 for j in range(nsubchannels):
@@ -239,6 +250,12 @@ class CubeData():
 
             user_glen = len(self.grating)
             user_flen = len(self.filter)
+            if user_glen == 1 and self.grating[0]  == 'all':
+                user_glen = 0
+
+            if user_flen == 1 and  self.filter[0] =='all':
+                user_flen =0
+
             # check if input filter or grating has been set
             if user_glen == 0 and user_flen != 0:
                 raise ErrorMissingParameter("Filter specified, but Grating was not")
@@ -428,6 +445,6 @@ class ErrorNoGratings(Exception):
 
 
 class ErrorMissingParameter(Exception):
-    """ Raises Exception if the proived grating but not filter or vice versa
+    """ Raises Exception if provided grating but not filter or vice versa
     """
     pass

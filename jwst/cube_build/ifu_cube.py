@@ -1,4 +1,6 @@
 """ Work horse routines used for building ifu spectral cubes
+(including the main loop over files and the construction of
+final spaxel fluxes)
 """
 
 import time
@@ -132,7 +134,7 @@ class IFUCubeData():
           Interpolation = area was selected for when input data is more than
           one file or model
         AreaInterpolation
-          If Inputerpolate = area then no user selected value can be set for
+          If Interpolation = area then no user selected value can be set for
           beta dimension of the output cube
         """
         num1 = len(self.list_par1)
@@ -352,6 +354,7 @@ class IFUCubeData():
             self.zcoord = np.zeros(self.naxis3)
             # CRPIX3 for FITS is 1 (center of first pixel)
             # CRVAL3 then is lambda_min + self.cdelt3/ 2.0, which is also zcoord[0]
+            # Note that these are all values at the center of a spaxel
             self.crval3 = self.lambda_min + self.cdelt3 / 2.0
             self.crpix3 = 1.0
             zstart = self.lambda_min + self.cdelt3 / 2.0
@@ -579,7 +582,7 @@ class IFUCubeData():
         spaxel_dec = None
         spaxel_wave = None
 # ______________________________________________________________________________
-# Only preformed if weighting = MIRIPSF, first convert xi,eta cube to
+# Only performed if weighting = MIRIPSF, first convert xi,eta cube to
 # v2,v3,wave. This information if past to cube_cloud and for each
 # input_model the v2,v3, wave is converted to alpha,beta in detector plane
 # ra,dec, wave is independent of input_model
@@ -1352,8 +1355,8 @@ class IFUCubeData():
 
         Return the coordinates of all the detector pixel in the output frame.
         In addition, an array of pixel fluxes and weighing parameters are
-        detemined. The pixel flux and weighing parameters are use later in
-        the processto find the final flux of a cube spaxel based on the pixel
+        determined. The pixel flux and weighing parameters are used later in
+        the process to find the final flux of a cube spaxel based on the pixel
         fluxes and pixel weighing parameters that fall within the roi of
         spaxel center
 
@@ -1521,14 +1524,25 @@ class IFUCubeData():
                 slice_no = slice_det[valid_data]
 # ______________________________________________________________________________
 # The following is for both MIRI and NIRSPEC
-# grab the flux and DQ values for these pixles
+# grab the flux and DQ values for these pixels
             flux_all = input_model.data[y, x]
             err_all = input_model.err[y, x]
             dq_all = input_model.dq[y, x]
             valid2 = np.isfinite(flux_all)
 
-            min_wave_tolerance = self.crval3 - np.absolute(self.zcoord[1] - self.zcoord[0])
-            max_wave_tolerance = self.zcoord[-1] + np.absolute(self.zcoord[-1] - self.zcoord[-2])
+            # Pre-select only data within a given wavelength range
+            # This range is defined to include all pixels for which the chosen wavelength region
+            # of interest would have them fall within one of the cube spectral planes
+            # Note that the cube lambda refer to the spaxel midpoints, so we must account for both
+            # the spaxel width and the ROI size
+            if self.linear_wavelength:
+                min_wave_tolerance = self.crval3 - np.absolute(self.zcoord[1] - self.zcoord[0]) / 2 - self.roiw
+                max_wave_tolerance = (self.zcoord[-1] + np.absolute(self.zcoord[-1] - self.zcoord[-2]) / 2
+                                      + self.roiw)
+            else:
+                min_wave_tolerance = self.crval3 - np.absolute(self.zcoord[1] - self.zcoord[0]) / 2 - np.max(self.roiw_table)
+                max_wave_tolerance = (self.zcoord[-1] + np.absolute(self.zcoord[-1] - self.zcoord[-2]) / 2
+                                      + np.max(self.roiw_table))
 
             valid_min = np.where(wave >= min_wave_tolerance)
             not_mapped_low = wave.size - len(valid_min[0])
@@ -1624,7 +1638,7 @@ class IFUCubeData():
         """
 
         # MIRI mapping:
-        # The FOV is roughtly the same for all the wavelength ranges.
+        # The FOV is roughly the same for all the wavelength ranges.
         # The offset in the slices makes the calculation of the four corners
         # of the FOV more complicated. So we only use the two slices at
         # the edges of the FOV to define the 4 corners.
@@ -1960,8 +1974,11 @@ class IFUCubeData():
             self.spaxel_flux[good] = self.spaxel_flux[good] / self.spaxel_weight[good]
             self.spaxel_var[good] = self.spaxel_var[good] / (self.spaxel_weight[good] * self.spaxel_weight[good])
         elif self.interpolation == 'pointcloud':
+            # Don't apply any normalization if no points contributed to a spaxel (i.e., don't divide by zero)
             good = self.spaxel_iflux > 0
+            # Normalize the weighted sum of pixel fluxes by the sum of the weights
             self.spaxel_flux[good] = self.spaxel_flux[good] / self.spaxel_weight[good]
+            # Normalize the variance by the square of the weights
             self.spaxel_var[good] = self.spaxel_var[good] / (self.spaxel_weight[good] * self.spaxel_weight[good])
 # ********************************************************************************
 
@@ -2082,6 +2099,7 @@ class IFUCubeData():
         # loop over the wavelength planes to confirm each plane has some data
         # for initial or final planes that do not have any data - eliminated them
         # from the IFUcube
+        # Rearrange values from 1d vectors into 3d cubes
         temp_flux = self.spaxel_flux.reshape((self.naxis3,
                                               self.naxis2, self.naxis1))
         temp_wmap = self.spaxel_iflux.reshape((self.naxis3,

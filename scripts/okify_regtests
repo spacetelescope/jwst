@@ -15,6 +15,8 @@ from glob import glob
 import shutil
 
 import asdf
+from colorama import Fore
+from getch import getch
 
 
 ARTIFACTORY_REPO = "jwst-pipeline-results"
@@ -96,7 +98,7 @@ def main():
 
     # Create and chdir to a temporary directory to store specfiles
     with tempfile.TemporaryDirectory() as tmpdir:
-        print(f"Downloading test okify artifacts to local directory {tmpdir}")
+        print(f"Downloading test logs to {tmpdir}")
         with pushd(tmpdir):
             # Retreive all the okify specfiles for failed tests.
             specfiles, asdffiles = artifactory_get_build_artifacts(build, name)
@@ -123,23 +125,32 @@ def main():
 
                 test_number = i + 1
 
-                print(f" {test_name} ".center(TERMINAL_WIDTH, "—"))
+                print(f"{Fore.RED}" +
+                      (f" {test_name} ".center(TERMINAL_WIDTH, "—")) +
+                      f"{Fore.RESET}")
                 print(traceback)
-                print("—" * TERMINAL_WIDTH)
-                print(f"OK: {remote_results}")
-                print(f"--> {truth_remote}")
-                print(f"[ test {test_number} of {number_failed_tests} ]".center(TERMINAL_WIDTH, "—"))
+                print(f"{Fore.RED}" + ("—" * TERMINAL_WIDTH) + f"{Fore.RESET}")
+                print(f"{Fore.GREEN}OK: {remote_results}")
+                print(f"--> {truth_remote}{Fore.RESET}")
+                print(f"{Fore.RED}" +
+                      (f"[ test {test_number} of {number_failed_tests} ]".center(TERMINAL_WIDTH, "—")) +
+                      f"{Fore.RESET}")
 
                 # Ask if user wants to okify this test
                 while True:
-                    result = input("Enter 'o' to okify, 's' to skip: ")
-                    if result not in ['o', 's']:
-                        print(f"Unrecognized command '{result}', try again")
+                    print(f"{Fore.GREEN}'o' to okify{Fore.RESET}, "
+                          f"{Fore.CYAN}'s' to skip{Fore.RESET}, "
+                          f"{Fore.MAGENTA}'q' to quit{Fore.RESET}: ")
+                    # Get the keyboard character input without pressing return
+                    result = getch()
+                    if result not in ['o', 's', 'q']:
+                        print(f"Unrecognized command, try again")
                     else:
                         break
-
-                if result == 's':
-                    print("Skipping\n")
+                if result == 'q':
+                    break
+                elif result == 's':
+                    pass
                 else:
                     artifactory_copy(os.path.abspath(specfile), dry_run=args.dry_run)
                     print("")

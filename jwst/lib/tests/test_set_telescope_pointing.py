@@ -445,6 +445,7 @@ def test_tsgrism_siaf_values(eng_db_ngas, data_file_nosiaf):
         model.meta.aperture.name = "NRCA5_GRISM256_F444W"
         model.meta.observation.date = '1/1/2017'
         model.meta.exposure.type = "NRC_TSGRISM"
+        model.meta.visit.tsovisit = True
         stp.update_wcs(model, siaf_path=siaf_db)
         assert model.meta.wcsinfo.siaf_xref_sci == 887
         assert model.meta.wcsinfo.siaf_yref_sci == 35
