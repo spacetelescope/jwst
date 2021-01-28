@@ -9,7 +9,8 @@ from .apply_apcorr import select_apcorr
 from ..assign_wcs.util import compute_scale
 
 from .. import datamodels
-from ..datamodels import dqflags
+from ..datamodels import dqflags, SpecModel
+
 from . import spec_wcs
 from scipy.interpolate import interp1d
 
@@ -97,10 +98,11 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
 
     if extract_params:
         if extract_params['ref_file_type'] == FILE_TYPE_ASDF:
-            (ra, dec, wavelength, temp_flux, background, npixels, dq, npixels_bkg, radius_match) = \
+            (ra, dec, wavelength, temp_flux, background, npixels, dq, npixels_bkg,
+             radius_match, x_center, y_center) = \
                     extract_ifu(input_model, source_type, extract_params)
         else:                                   # FILE_TYPE_IMAGE
-            (ra, dec, wavelength, temp_flux, background, npixels, dq, npixels_bkg) = \
+            (ra, dec, wavelength, temp_flux, background, npixels, dq, npixels_bkg, x_center, y_center) = \
                     image_extract_ifu(input_model, source_type, extract_params)
     else:
         log.critical('Missing extraction parameters.')
@@ -154,6 +156,7 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
     if slitname is not None and slitname != "ANY":
         spec.name = slitname
 
+    copy_keyword_info_ifu(source_type, x_center, y_center, slitname, spec)
     if source_type == 'POINT' and apcorr_ref_model is not None:
         log.info('Applying Aperture correction.')
 
@@ -298,6 +301,9 @@ def extract_ifu(input_model, source_type, extract_params):
 
     radius_match: ndarray,1-D, float64
         The size of the extract radius in pixels used at each wavelength of the IFU cube
+
+    x_center, y_center : float
+        The x and y center of the extraction region
     """
 
     data = input_model.data
@@ -508,7 +514,8 @@ def extract_ifu(input_model, source_type, extract_params):
     (wavelength, temp_flux, background, npixels, dq, npixels_annulus) = \
         nans_in_wavelength(wavelength, temp_flux, background, npixels, dq, npixels_annulus)
 
-    return (ra, dec, wavelength, temp_flux, background, npixels, dq, npixels_annulus, radius_match)
+    return (ra, dec, wavelength, temp_flux, background, npixels, dq,
+            npixels_annulus, radius_match, x_center, y_center)
 
 
 def locn_from_wcs(input_model, ra_targ, dec_targ):
@@ -663,6 +670,9 @@ def image_extract_ifu(input_model, source_type, extract_params):
     n_bkg : ndarray, 1-D, float64
         For each slice, this is the number of pixels that were added
         together to get background.
+
+    x_center, y_center : float
+        The x and y center of the extraction region
     """
 
     data = input_model.data
@@ -702,6 +712,8 @@ def image_extract_ifu(input_model, source_type, extract_params):
     ra_targ = input_model.meta.target.ra
     dec_targ = input_model.meta.target.dec
     locn = locn_from_wcs(input_model, ra_targ, dec_targ)
+    x_center = None
+    y_center = None
     if locn is not None:
         log.info("Target location is x_center = %g, y_center = %g, "
                  "based on TARG_RA and TARG_DEC.", locn[0], locn[1])
@@ -1064,3 +1076,26 @@ def shift_ref_image(mask, delta_y, delta_x, fill=0):
     temp[..., oslice_y, oslice_x] = mask[..., islice_y, islice_x]
 
     return temp
+
+
+def copy_keyword_info_ifu( source_type, x_center, y_center, slitname , spec: SpecModel):
+    """Copy metadata from the input IFU cube to the output spectrum.
+
+    Parameters
+    ----------
+    input_model : An IFUCubeM object
+        Metadata will be copied from the input IFUcube to output `spec`.
+
+    slitname : str or None
+        The name of the slit.
+
+    spec : One element of MultiSpecModel.spec
+        Metadata attributes will be updated in-place.
+
+    """
+    if slitname is not None and slitname != "ANY":
+        spec.name = slitname
+
+    spec.source_type = source_type
+    spec.extr_x = x_center
+    spec.extr_y = y_center

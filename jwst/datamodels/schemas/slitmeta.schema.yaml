@@ -79,6 +79,18 @@ properties:
     default: 0.0
     fits_keyword: SRCYPOS
     fits_hdu: SCI
+  extr_x:
+    title: X center of extraction region
+    type: number
+    default: 0.0
+    fits_keyword: EXTR_X
+    fits_hdu: SCI
+  extr_y:
+    title: Y center of extraction region
+    type: number
+    default: 0.0
+    fits_keyword: EXTR_Y
+    fits_hdu: SCI
   shutter_state:
     title: All (open and closed) shutters in a slit
     type: string
