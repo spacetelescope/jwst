@@ -147,7 +147,7 @@ The signal-to-noise ratio :math:`S` used for weighting selection is calculated f
 last sample as:
 
 .. math::
-    S = \frac{data \times gain} { \sqrt{(read\_noise)^2} + (data \times gain) } \,,
+    S = \frac{data \times gain} { \sqrt{(read\_noise)^2 + (data \times gain) } } \,,
 
 The weighting for a sample :math:`i` is given as:
 
