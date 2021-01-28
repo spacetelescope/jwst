@@ -94,7 +94,7 @@ class TestDescriptionPlugin:
 
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_runtest_logstart(self, nodeid, location):
-        if self.terminal_reporter.verbosity == 0:
+        if self.terminal_reporter.verbosity <= 1:
             yield
         else:
             self.terminal_reporter.write('\n')
