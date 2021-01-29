@@ -98,6 +98,7 @@ class TestDescriptionPlugin:
         # When run as `pytest` or `pytest -v`, no change in behavior
         if self.terminal_reporter.verbosity <= 1:
             yield
+        # When run as `pytest -vv`, `pytest -vvv`, etc, print the test docstring
         else:
             self.terminal_reporter.write('\n')
             yield
