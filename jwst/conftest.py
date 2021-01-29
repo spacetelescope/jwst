@@ -95,6 +95,7 @@ class TestDescriptionPlugin:
 
     @pytest.hookimpl(hookwrapper=True, tryfirst=True)
     def pytest_runtest_logstart(self, nodeid, location):
+        # When run as `pytest` or `pytest -v`, no change in behavior
         if self.terminal_reporter.verbosity <= 1:
             yield
         else:
