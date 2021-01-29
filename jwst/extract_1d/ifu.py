@@ -156,7 +156,10 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
     if slitname is not None and slitname != "ANY":
         spec.name = slitname
 
-    copy_keyword_info_ifu(source_type, x_center, y_center, slitname, spec)
+    spec.source_type = source_type
+    spec.extraction_x = x_center
+    spec.extraction_y = y_center
+        
     if source_type == 'POINT' and apcorr_ref_model is not None:
         log.info('Applying Aperture correction.')
 
@@ -1078,24 +1081,3 @@ def shift_ref_image(mask, delta_y, delta_x, fill=0):
     return temp
 
 
-def copy_keyword_info_ifu( source_type, x_center, y_center, slitname , spec: SpecModel):
-    """Copy metadata from the input IFU cube to the output spectrum.
-
-    Parameters
-    ----------
-    input_model : An IFUCubeM object
-        Metadata will be copied from the input IFUcube to output `spec`.
-
-    slitname : str or None
-        The name of the slit.
-
-    spec : One element of MultiSpecModel.spec
-        Metadata attributes will be updated in-place.
-
-    """
-    if slitname is not None and slitname != "ANY":
-        spec.name = slitname
-
-    spec.source_type = source_type
-    spec.extr_x = x_center
-    spec.extr_y = y_center
