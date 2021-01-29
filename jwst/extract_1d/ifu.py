@@ -9,7 +9,7 @@ from .apply_apcorr import select_apcorr
 from ..assign_wcs.util import compute_scale
 
 from .. import datamodels
-from ..datamodels import dqflags, SpecModel
+from ..datamodels import dqflags
 
 from . import spec_wcs
 from scipy.interpolate import interp1d
