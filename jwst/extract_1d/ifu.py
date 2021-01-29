@@ -159,7 +159,7 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
     spec.source_type = source_type
     spec.extraction_x = x_center
     spec.extraction_y = y_center
-        
+
     if source_type == 'POINT' and apcorr_ref_model is not None:
         log.info('Applying Aperture correction.')
 
@@ -1079,5 +1079,3 @@ def shift_ref_image(mask, delta_y, delta_x, fill=0):
     temp[..., oslice_y, oslice_x] = mask[..., islice_y, islice_x]
 
     return temp
-
-
