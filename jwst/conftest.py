@@ -88,6 +88,7 @@ class TestDescriptionPlugin:
 
     def pytest_runtest_protocol(self, item):
         try:
+            # Get the docstring for the test
             self.desc = inspect.getdoc(item.obj)
         except AttributeError:
             self.desc = None
