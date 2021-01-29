@@ -82,7 +82,7 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
     input_units_are_megajanskys = (source_type == 'POINT' and instrument == 'NIRSPEC')
 
     output_model = datamodels.MultiSpecModel()
-    output_model.update(input_model)
+    output_model.update(input_model, only="PRIMARY")
 
     slitname = input_model.meta.exposure.type
     if slitname is None:
@@ -159,8 +159,7 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
     spec.source_type = source_type
     spec.extraction_x = x_center
     spec.extraction_y = y_center
-    print('parameters',spec.source_type,spec.extraction_x, spec.extraction_y)
-          
+
     if source_type == 'POINT' and apcorr_ref_model is not None:
         log.info('Applying Aperture correction.')
 
