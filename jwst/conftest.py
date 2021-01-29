@@ -81,6 +81,12 @@ def pytest_configure(config):
     config.pluginmanager.register(TestDescriptionPlugin(terminal_reporter), 'testdescription')
 
 class TestDescriptionPlugin:
+    """
+    TestDescriptionPlugin: When pytests are run with the -vv or -vvv options, this plug-in 
+    prints the docstring for the test. Otherwise, when run as a simple pytest or with the 
+    -v option, there is no change in behavior. This plug-in was added to support JWST 
+    instrument team testing and reporting for the JWST calibration pipeline. 
+    """    
 
     def __init__(self, terminal_reporter):
         self.terminal_reporter = terminal_reporter
