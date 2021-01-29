@@ -102,7 +102,8 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
              radius_match, x_center, y_center) = \
                     extract_ifu(input_model, source_type, extract_params)
         else:                                   # FILE_TYPE_IMAGE
-            (ra, dec, wavelength, temp_flux, background, npixels, dq, npixels_bkg, x_center, y_center) = \
+            (ra, dec, wavelength, temp_flux, background, npixels, dq, npixels_bkg,
+             x_center, y_center) = \
                     image_extract_ifu(input_model, source_type, extract_params)
     else:
         log.critical('Missing extraction parameters.')
@@ -797,7 +798,7 @@ def image_extract_ifu(input_model, source_type, extract_params):
     (wavelength, temp_flux, background, npixels, dq, n_bkg) = \
         nans_in_wavelength(wavelength, temp_flux, background, npixels, dq, n_bkg)
 
-    return (ra, dec, wavelength, temp_flux, background, npixels, dq, n_bkg)
+    return (ra, dec, wavelength, temp_flux, background, npixels, dq, n_bkg, x_center, y_center)
 
 
 def get_coordinates(input_model, x0, y0):
