@@ -131,11 +131,13 @@ and ``ystop``. If ``dispaxis=2``, the rolls are reversed.
 If ``extract_width`` is also given, that takes priority over ``ystart`` and
 ``ystop`` (for ``dispaxis=1``) for the extraction width, but ``ystart`` and
 ``ystop`` will still be used to define the centering of the extraction region
-in the cross-dispersion direction. For point source data, if ``use_source_posn`` = True or None (default) 
+in the cross-dispersion direction. For point source data, 
 then the ``xstart`` and ``xstop`` values (dispaxis = 2) are shifted to account
 for the expected location of the source. If disaxis=1, then the ``ystart`` and ``ystop`` values
 are modified. The offset amount is internally calculated. If it is not desired to apply this
-offset, then set``use_source_posn`` = False. 
+offset, then set ``use_source_posn`` = False. If the ``use_source_posn`` parameter is None (default),
+the value in the ``extract_1d`` reference file will be used or if it is not set in the reference file it will be 
+internally set to True for point source data according to table given in :ref:`srctype <srctype_step>`.
 Any of the extraction location parameters will be modified internally by the step code if the
 extraction region would extend outside the limits of the input image or outside
 the domain specified by the WCS.
