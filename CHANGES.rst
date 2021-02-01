@@ -7,6 +7,14 @@ datamodels
 - Updated keyword_readpatt, core, preadpatt schemas for new MIRI detector
   readout patterns 'FASTR1', 'FASTR100' and 'SLOWR1' [#5670]
 
+- Added extr_x and extr_y to multispec datamodel. These values are center
+  of extraction region for IFU data [#5685]
+
+extract_1d
+----------
+
+- Adding writing SRCTYPE, EXTR_X, and EXTR_Y to extracted spec for IFU data [#5685]
+
 lib
 ---
 
