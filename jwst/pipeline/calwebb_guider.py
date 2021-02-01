@@ -22,6 +22,8 @@ class GuiderPipeline(Pipeline):
     Included steps are: dq_init, guider_cds, and flat_field.
     """
 
+    class_alias = "calwebb_guider"
+
     # Define aliases to steps
     step_defs = {'dq_init': dq_init_step.DQInitStep,
                  'guider_cds': guider_cds_step.GuiderCdsStep,

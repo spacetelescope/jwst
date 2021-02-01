@@ -37,6 +37,8 @@ class Detector1Pipeline(Pipeline):
     ramp_fit, and gain_scale.
     """
 
+    class_alias = "calwebb_detector1"
+
     spec = """
         save_calibrated_ramp = boolean(default=False)
     """

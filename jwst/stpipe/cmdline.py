@@ -38,7 +38,7 @@ def _get_config_and_class(identifier):
             config, config_file=config_file)
     else:
         try:
-            step_class = utilities.import_class(identifier, Step)
+            step_class = utilities.import_class(utilities.resolve_step_class_alias(identifier), Step)
         except (ImportError, AttributeError, TypeError):
             raise ValueError(
                 '{0!r} is not a path to a config file or a Python Step '
