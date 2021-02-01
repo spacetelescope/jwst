@@ -137,7 +137,7 @@ for the expected location of the source. If disaxis=1, then the ``ystart`` and `
 are modified. The offset amount is internally calculated. If it is not desired to apply this
 offset, then set ``use_source_posn`` = False. If the ``use_source_posn`` parameter is None (default),
 the value in the ``extract_1d`` reference file will be used or if it is not set in the reference file it will be 
-internally set to True for point source data according to table given in :ref:`srctype <srctype_step>`.
+internally set to True for point source data according to table given in :ref:`srctype <srctype_table>`.
 Any of the extraction location parameters will be modified internally by the step code if the
 extraction region would extend outside the limits of the input image or outside
 the domain specified by the WCS.
