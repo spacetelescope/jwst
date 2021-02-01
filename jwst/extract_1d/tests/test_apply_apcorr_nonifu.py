@@ -5,12 +5,12 @@ import os
 from astropy.io import fits
 from astropy.table import Table
 
-from jwst.datamodels import JwstDataModel
-from jwst.extract_1d.apply_apcorr import ApCorr, ApCorrRadial, ApCorrPhase, select_apcorr
+from jwst.datamodels import DataModel
+from jwst.extract_1d.apply_apcorr import ApCorr, ApCorrPhase, select_apcorr
 
 data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'data'))
 NIR_TEST_FILES = {
-    'ISU/MSASPEC': os.path.join(data_dir, 'jwst_nirspec_apcorr_ifu_dummy.fits'),
+    'MSASPEC': os.path.join(data_dir, 'jwst_nirspec_apcorr_msa_dummy.fits'),
     'FIXEDSLIT/BRIGHTOBJ': os.path.join(data_dir, 'jwst_nirspec_apcorr_fs_dummy.fits')
 }
 
@@ -20,13 +20,11 @@ NIR_TEST_FILES = {
     params=[
         ('MIRI', 'MIR_LRS-FIXEDSLIT'),
         ('MIRI', 'MIR_LRS-SLITLESS'),
-        ('MIRI', 'MIR_MRS'),
         ('NIRCAM', 'NRC_GRISM'),
         ('NIRCAM', 'NRC_WFSS'),
         ('NIRISS', 'NIS_WFSS'),
         ('NIRSPEC', 'NRS_BRIGHTOBJ'),
         ('NIRSPEC', 'NRS_FIXEDSLIT'),
-        ('NIRSPEC', 'NRS_IFU'),
         ('NIRSPEC', 'NRS_MSASPEC')
     ]
 )
@@ -35,7 +33,7 @@ def inputs(request):
 
     instrument, exptype = request.param
 
-    dm = JwstDataModel()
+    dm = DataModel()
     dm.meta.instrument.name = instrument
     dm.meta.exposure.type = exptype
 
@@ -52,15 +50,6 @@ def inputs(request):
                     'apcorr': np.full((2, 4, 4), 0.5)
                 }
             )
-        if 'MRS' in exptype:
-            table = Table(
-                {
-                    'wavelength': [np.arange(12), ],
-                    'radius': [np.arange(12), ],
-                    'nelem_wl': [10, ],
-                    'apcorr': np.full((1, 12), 0.5)
-                }
-            )
 
     if instrument == 'NIRSPEC':  # Too complicated to come up with silly example data; using "dummy" ref file
         dm.meta.instrument.filter = 'CLEAR'
@@ -70,7 +59,7 @@ def inputs(request):
             dm.meta.instrument.fixed_slit = 'S200A1'
             table = Table.read(NIR_TEST_FILES['FIXEDSLIT/BRIGHTOBJ'], format='fits')[:2]
         else:
-            table = Table.read(NIR_TEST_FILES['ISU/MSASPEC'], format='fits')[:2]
+            table = Table.read(NIR_TEST_FILES['MSASPEC'], format='fits')[:2]
 
         table['APCORR'] = table['APCORR'].reshape((len(table), 3, 2048, 3))  # Reshape test data to expected shape
 
@@ -122,13 +111,10 @@ def apcorr_instance(inputs):
 
 def test_select_apcorr(inputs):
     dm, _ = inputs
-
     apcorr_cls = select_apcorr(dm)
 
     if dm.meta.instrument.name == 'NIRSPEC':
-        assert apcorr_cls == ApCorrPhase
-    elif 'MRS' in dm.meta.exposure.type:
-        assert apcorr_cls == ApCorrRadial
+            assert apcorr_cls == ApCorrPhase
     else:
         assert apcorr_cls == ApCorr
 
@@ -137,10 +123,7 @@ class TestApCorr:
 
     def test_match_parameters(self, apcorr_instance):
         if apcorr_instance.model.meta.instrument.name == 'MIRI':
-            if 'MRS' in apcorr_instance.model.meta.exposure.type:
-                assert apcorr_instance.match_pars == {}
-            else:
-                assert apcorr_instance.match_pars == {'subarray': 'FULL'}
+            assert apcorr_instance.match_pars == {'subarray': 'FULL'}
 
         if apcorr_instance.model.meta.instrument.name == 'NIRSPEC':
             if 'FIXEDSLIT' in apcorr_instance.model.meta.exposure.type:

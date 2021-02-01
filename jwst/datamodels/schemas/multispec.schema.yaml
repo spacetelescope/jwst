@@ -14,27 +14,7 @@ allOf:
         type: object
         properties:
           spec_table:
-            title: Extracted spectral data table
-            fits_hdu: EXTRACT1D
-            datatype:
-            - name: WAVELENGTH
-              datatype: float64
-            - name: FLUX
-              datatype: float64
-            - name: ERROR
-              datatype: float64
-            - name: SURF_BRIGHT
-              datatype: float64
-            - name: SB_ERROR
-              datatype: float64
-            - name: DQ
-              datatype: uint32
-            - name: BACKGROUND
-              datatype: float64
-            - name: BERROR
-              datatype: float64
-            - name: NPIXELS
-              datatype: float64
+            $ref: spectable.schema
           name:
             title: Name of the slit
             type: string
@@ -93,6 +73,16 @@ allOf:
             title: Declination of the source
             type: number
             fits_keyword: SRCDEC
+            fits_hdu: EXTRACT1D
+          extraction_x:
+            title: X center of extraction region
+            type: number
+            fits_keyword: EXTR_X
+            fits_hdu: EXTRACT1D
+          extraction_y:
+            title: Y center of extraction region
+            type: number
+            fits_keyword: EXTR_Y
             fits_hdu: EXTRACT1D
           shutter_state:
             title: All (open and close) shutters in a slit

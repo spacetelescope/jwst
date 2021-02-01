@@ -1,13 +1,13 @@
 SIMPLE  = T        data conform to FITS standard
 BITPIX  = 0        bits per data value
-NAXIS   = 0        number of data array dimensions 
+NAXIS   = 0        number of data array dimensions
 EXTEND  = T        file may contain standard extensions
 NEXTEND            number of standard extensions
-                                                                    
+
 TELESCOP= 'JWST'   telescope used to acquire data
 INSTRUME           identifier for instrument used to acquire data
 RADESYS = 'ICRS'   reference frame of equatorial or ecliptic coordinates
-                                                                    
+
 DATE    =          [yyyy-mm-ddThh:mm:ss.ssssss] UTC date of file
 ORIGIN  = 'STScI'  institution responsible for creating FITS file
 FILENAME           name of file
@@ -17,7 +17,7 @@ DPSW_VER           data processing software version number
 / Observation identifiers
 DATE-OBS           [yyyy-mm-ddThh:mm:ss.ssssss] UTC date of end of exposure
 OBS_ID             full programmatic observation ID for exposure
-PROGRAM            program id 
+PROGRAM            program id
 OBSERVTN           observation id
 VISIT              visit id
 SEQGROUP           sequence group id
@@ -47,7 +47,7 @@ OBSTYPE            observation type - imaging or spectroscopic
 OBSMODE            observation mode
 
 / Visit information
-VISITYPE           type of visit (prime or parallel) 
+VISITYPE           type of visit (prime or parallel)
 EXPCOUNT           count of the exposures in visit
 NEXPOSUR           total number of exposures in visit
 INTARGET           T if at least one exposure in visit is internally targeted
@@ -64,7 +64,7 @@ TARG_DEC           target RA uncertainty computed at time of exposure
 TARDCUNC           target Dec uncertainty computed at time of exposure
 
 / Exposure times
-EXPSTART           [Modified Julian Date] UTC exposure start time 
+EXPSTART           [Modified Julian Date] UTC exposure start time
 EXPMID             [Modified Julian Date] UTC exposure mid time
 EXPEND             [Modified Julian Date] UTC exposure end time
 
@@ -100,7 +100,7 @@ FILTER             name of the filter element used
 PILIN              pupil imaging lens in optical path: T/F
 
 / target acquisition parameters (NIRCam coronagraph imaging only)
-CORONMSK           coronagraph mask used 
+CORONMSK           coronagraph mask used
 TACQNAME           target acquisition file name
 
 / MIRI configuration (MIRI only)
@@ -137,7 +137,7 @@ MONOIMAG           monochromatic image (T/F)
 PUPIL              pupil used in exposure
 WAVRANGE           wavelength range requested in the exposure specification
 FLTSUITE           internal flat suite (PFLAT, LFLAT)
-CORONPOS           occulting spot number 
+CORONPOS           occulting spot number
 FOCUSPOS           focus position for TFI
 
 / FGS configuration (FGS only)
@@ -169,8 +169,8 @@ FASTEP2            requested focus actuator 2 starting steps
 FAUNIT2            requested focus actuator 2 starting units
 FAPHASE2           requested focus actuator 2 starting phase
 FA2VALUE           requested focus actuator 2 position value
-FASTEP3            requested focus actuator 3 starting steps 
-FAUNIT3            requested focus actuator 3 starting units 
+FASTEP3            requested focus actuator 3 starting steps
+FAUNIT3            requested focus actuator 3 starting units
 FAPHASE3           requested focus actuator 3 starting phase
 FA3VALUE           requested focus actuator 3 position value
 
@@ -183,7 +183,7 @@ FOCUSPOS           requested FGS focus position
 
 / JWST ephemeris information
 EPH_TIME           [sec] UTC time from ephemeris start time
-JWST_X             [km] X spatial coordinate of JWST 
+JWST_X             [km] X spatial coordinate of JWST
 JWST_Y             [km] Y spatial coordinate of JWST
 JWST_Z             [km] Z spatial coordinate of JWST
 JWST_DX            [km/sec] X component of JWST velocity vector
@@ -199,12 +199,12 @@ DEC_V1             [deg] Dec of telescope V1 axis
 PATTTYPE          primary dither pattern type
 PATT_NUM          position number within primary dither pattern
 NUMDTHPT          total number of points in primary dither pattern
-PATTSIZE          [arcsec] primary dither pattern size 
+PATTSIZE          [arcsec] primary dither pattern size
 SUBPXTYP          subpixel dithering pattern type
 SUBPXNUM          subpixel sampling pattern number
 SUBPXPNS          total number of points in subpixel dither pattern
-XOFFSET           [arcsec] x offset from pattern starting position 
-YOFFSET           [arcsec] y offset from pattern starting position 
+XOFFSET           [arcsec] x offset from pattern starting position
+YOFFSET           [arcsec] y offset from pattern starting position
 
 / MIRI imaging dither pattern (MIRI imaging only)
 PATTTYPE          primary dither pattern type
@@ -214,8 +214,8 @@ NUMDTHPT          total number of points in primary dither pattern
 PATTSIZE          primary dither pattern size
 SUBPIXEL          subpixel sampling performed (T/F)
 SUBPXNUM          subpixel sampling pattern number
-XOFFSET           [arcsec] x offset from pattern starting position 
-YOFFSET           [arcsec] y offset from pattern starting position 
+XOFFSET           [arcsec] x offset from pattern starting position
+YOFFSET           [arcsec] y offset from pattern starting position
 
 / MIRI LRS dither pattern (MIRI LRS only)
 PATTTYPE          dither pattern type
@@ -223,30 +223,30 @@ PATT_NUM          position number within dither pattern
 NUMDTHPT          total number of points in dither pattern
 SPEC_NUM          position number within spectral steps
 SPECNSTP          total number of steps in the spectral direction
-SPECSTEP          [arcsec] distance between steps in the spectral direction 
-SPCOFFST          [arcsec] spectral offset from pattern starting position 
+SPECSTEP          [arcsec] distance between steps in the spectral direction
+SPCOFFST          [arcsec] spectral offset from pattern starting position
 SPAT_NUM          position number within spatial steps
 SPATNSTP          total number of steps in the spatial direction
-SPATSTEP          [arcsec] distance between steps in the spatial direction 
-SPTOFFST          [arcsec] spatial offset from pattern starting position 
+SPATSTEP          [arcsec] distance between steps in the spatial direction
+SPTOFFST          [arcsec] spatial offset from pattern starting position
 
 / NIRSpec FSS dither pattern (NIRSpec FSS only)
 PATT_NUM          position number within primary pattern
 NUMDTHPT          total number of points in primary dither pattern
-PATTSIZE          [arcsec] primary dither pattern size 
+PATTSIZE          [arcsec] primary dither pattern size
 SUBPXPAT          subpixel dither pattern
 SUBPXNUM          subpixel sampling pattern number
 SUBPXPNS          total number of points in subpixel dither pattern
-XOFFSET           [arcsec] x offset from pattern starting position 
-YOFFSET           [arcsec] y offset from pattern starting position 
+XOFFSET           [arcsec] x offset from pattern starting position
+YOFFSET           [arcsec] y offset from pattern starting position
 
 / NIRSpec IFU dither pattern (NIRSpec IFU only)
 PATT_NUM          position number within dither pattern
 NUMDTHPT          total number of points in dither pattern
 SLIT_OFF          number of slitlet offsets in the spectral direction
 SUBPXTYP          type of sub-pixel offset
-SPEC_OFF          [arcsec] spectral offset from IFU aperture center 
-SPAT_OFF          [arcsec] spatial offset from IFU aperture center 
+SPEC_OFF          [arcsec] spectral offset from IFU aperture center
+SPAT_OFF          [arcsec] spatial offset from IFU aperture center
 
 / Time related keywords
 
@@ -294,9 +294,9 @@ CD2_1              partial of second axis coordinate with respect to X
 CD2_2              partial of second axis coordinate with respect to Y
 
 / Velocity aberration correction
-DVA_RA            [radians] velocity aberration correction RA offset
-DVA_DEC           [radians] velocity aberration correction Dec offset
-VA_SCALE          velocity aberration scale factor
+VA_RA             [deg] Velocity aberrated apparent reference RA
+VA_DEC            [deg] Velocity aberrated apparent reference Dec
+VA_SCALE          Velocity aberration scale factor
 
 END
 

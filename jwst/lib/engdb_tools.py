@@ -37,7 +37,7 @@ __all__ = [
 ]
 
 # Define the returned value tuple.
-_EngDB_Value = namedtuple('EngDB_Value', ['obstime', 'value'])
+EngDB_Value = namedtuple('EngDB_Value', ['obstime', 'value'])
 
 
 class _Value_Collection():
@@ -67,7 +67,7 @@ class _Value_Collection():
         if zip:
             self.collection = []
         else:
-            self.collection = _EngDB_Value([], [])
+            self.collection = EngDB_Value([], [])
 
     def append(self, obstime, value):
         """Append value to collection
@@ -89,7 +89,7 @@ class _Value_Collection():
             obstime = Time(obstime / 1000., format='unix')
             if self._zip:
                 self.collection.append(
-                    _EngDB_Value(obstime, value)
+                    EngDB_Value(obstime, value)
                 )
             else:
                 self.collection.obstime.append(obstime)

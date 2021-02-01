@@ -59,8 +59,6 @@ script (just as with a regular step):
 .. code-block:: python
 
     > stspec stpipe.test.test_pipeline.TestPipeline
-    start_step = string(default=None)# Start the pipeline at this step
-    end_step = string(default=None)# End the pipeline right before this step
     science_filename = input_file()  # The input science filename
     flat_filename = input_file()     # The input flat filename
     skip = bool(default=False)   # Skip this step
@@ -74,11 +72,6 @@ script (just as with a regular step):
     multiplier = float(default=1.0)# Multiply by this number
     skip = bool(default=False)   # Skip this step
     config_file = string(default=None)
-
-Note that there are some additional optional configuration keys
-(``start_step`` and ``end_step``) for controlling when the pipeline
-starts and stops.  This is covered in the section
-:ref:`running-partial-pipelines`.
 
 For each Step’s section, the parameters for that step may either be
 specified inline, or specified by referencing an external
@@ -163,41 +156,6 @@ Once the pipeline has been configured (as above), just call the
 instance to run it.
 
     pipe()
-
-
-.. _running-partial-pipelines:
-
-Running partial Pipelines
-=========================
-
-There are two kinds of pipelines available:
-
-1) Flexible pipelines are written in Python and may contain looping,
-conditionals and steps with more than one input or output.
-
-2) Linear pipelines have a strict linear progression of steps and only have
-one input and output.
-
-Linear pipelines have a feature that allows only a part of the
-pipeline to be run.  This is done through two additional configuration
-parameters: ``start_step`` and ``end_step``.  ``start_step`` specifies
-the first step to run.  ``end_step`` specifies the last step to run.
-Like all other configuration parameters, they may be either specified
-in the Pipeline configuration file, or overridden at the commandline.
-
-When ``start_step`` and ``end_step`` indicate that only part of the
-pipeline will be run, the results of each step will be cached in the
-current working directory.  This allows the pipeline to pick up where
-it left off later.
-
-.. note::
-    In the present implementation, all this caching happens in the
-    current working directory -- we probably want a more sane way to
-    manage these files going forward.
-
-Each step may also be skipped by setting its configuration parameter
-`skip` to True (either in the configuration file or at the command
-line).
 
 Caching details
 ---------------

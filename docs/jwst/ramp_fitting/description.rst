@@ -131,10 +131,53 @@ is the following: the type of noise (when appropriate) will appear as the supers
 and the form of the data will appear as the subscript: ‘s’, ‘i’, ‘o’ for segment,
 integration, or overall (for the entire dataset), respectively.
 
+Optimal Weighting Algorithm
+---------------------------
+The slope of each segment is calculated using the least-squares method with optimal
+weighting, as described by Fixsen et al. 2000, PASP, 112, 1350; Regan 2007,
+JWST-STScI-001212. Optimal weighting determines the relative weighting of each sample
+when calculating the least-squares fit to the ramp. When the data have low signal-to-noise
+ratio :math:`S`, the data are read noise dominated and equal weighting of samples is the
+best approach. In the high signal-to-noise regime, data are Poisson-noise dominated and
+the least-squares fit is calculated with the first and last samples. In most practical
+cases, the data will fall somewhere in between, where the weighting is scaled between the
+two extremes.
+
+The signal-to-noise ratio :math:`S` used for weighting selection is calculated from the
+last sample as:
+
+.. math::
+    S = \frac{data \times gain} { \sqrt{(read\_noise)^2 + (data \times gain) } } \,,
+
+The weighting for a sample :math:`i` is given as:
+
+.. math::
+    w_i = (i - i_{midpoint})^P \,,
+
+where :math:`i_{midpoint}` is the the sample number of the midpoint of the sequence, and
+:math:`P` is the exponent applied to weights, determined by the value of :math:`S`. Fixsen
+et al. 2000 found that defining a small number of P values to apply to values of S was
+sufficient; they are given as:
+
++-------------------+------------------------+----------+
+| Minimum S         | Maximum S              | P        |
++===================+========================+==========+
+| 0                 | 5                      | 0        |
++-------------------+------------------------+----------+
+| 5                 | 10                     | 0.4      |
++-------------------+------------------------+----------+
+| 10                | 20                     | 1        |
++-------------------+------------------------+----------+
+| 20                | 50                     | 3        |
++-------------------+------------------------+----------+
+| 50                | 100                    | 6        |
++-------------------+------------------------+----------+
+| 100               |                        | 10       |
++-------------------+------------------------+----------+
+
 Segment-specific Computations:
 ------------------------------
-The slope of each segment is calculated using the least-squares method with optimal
-weighting. The variance of the slope of a segment due to read noise is:
+The variance of the slope of a segment due to read noise is:
 
 .. math::  
    var^R_{s} = \frac{12 \ R^2 }{ (ngroups_{s}^3 - ngroups_{s})(tgroup^2) } \,,

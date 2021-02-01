@@ -244,6 +244,7 @@ class Spec2Pipeline(Pipeline):
         calibrated.meta.asn.pool_name = pool_name
         calibrated.meta.asn.table_name = op.basename(asn_file)
         calibrated.meta.filename = self.make_output_path(suffix=suffix)
+        calibrated.meta.filetype = 'calibrated'
 
         # Produce a resampled product, either via resample_spec for
         # "regular" spectra or cube_build for IFU data. No resampled

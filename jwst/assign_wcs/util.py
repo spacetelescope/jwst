@@ -830,10 +830,9 @@ def bounding_box_from_subarray(input_model):
     bb_yend = -0.5
 
     if input_model.meta.subarray.xsize is not None:
-        # Implicitely there's bb_xstart + 0.5 and xsize -1 - 0.5
-        bb_xend = input_model.meta.subarray.xsize - 1 - 0.5
+        bb_xend = input_model.meta.subarray.xsize - 0.5
     if input_model.meta.subarray.ysize is not None:
-        bb_yend = input_model.meta.subarray.ysize - 1 - 0.5
+        bb_yend = input_model.meta.subarray.ysize - 0.5
 
     bbox = ((bb_ystart, bb_yend), (bb_xstart, bb_xend))
     return bbox

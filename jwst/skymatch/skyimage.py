@@ -454,11 +454,11 @@ None, optional
 
         # Calculate sky
         try:
-
             skyval, npix = self._skystat(data)
-
         except ValueError:
+            return (None, 0, 0.0)
 
+        if not np.isfinite(skyval):
             return (None, 0, 0.0)
 
         if delta:

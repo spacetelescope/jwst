@@ -2,16 +2,16 @@ import pytest
 from astropy.io.fits.diff import FITSDiff
 from astropy.table import Table, setdiff
 
+from jwst.lib.set_telescope_pointing import add_wcs
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
 
 @pytest.fixture(scope="module")
 def run_pipelines(jail, rtdata_module):
-    """Run stage 2 and 3 pipelines on NIRCam TSIMG data."""
+    """Run stage 2 and 3 pipelines on NIRCam TSO image data."""
 
     rtdata = rtdata_module
-
     collect_pipeline_cfgs("config")
 
     # Run the calwebb_tso-image2 pipeline on each of the 2 inputs
@@ -60,3 +60,28 @@ def test_nircam_tsimage_stage3_phot(run_pipelines):
 
     # setdiff returns a table of length zero if there is no difference
     assert len(setdiff(table, table_truth)) == 0
+
+
+@pytest.mark.bigdata
+def test_nircam_setpointing(_jail, rtdata, fitsdiff_default_kwargs):
+    """
+    Regression test of the set_telescope_pointing script on a level-1b
+    NIRCam TSO imaging file.
+    """
+    # Get SIAF PRD database file
+    siaf_path = rtdata.get_data("common/prd.db")
+    rtdata.get_data("nircam/tsimg/jw00312006001_02102_00001-seg001_nrcb1_uncal.fits")
+    # The add_wcs function overwrites its input, so output = input
+    rtdata.output = rtdata.input
+
+    # Call the WCS routine, using the ENGDB_Service
+    try:
+        add_wcs(rtdata.input, siaf_path=siaf_path)
+    except ValueError:
+        pytest.skip('Engineering Database not available.')
+
+    rtdata.get_truth("truth/test_nircam_setpointing/jw00312006001_02102_00001-seg001_nrcb1_uncal.fits")
+
+    fitsdiff_default_kwargs['rtol'] = 1e-6
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()

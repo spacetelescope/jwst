@@ -9,7 +9,7 @@ from .apcorr import FgsImgApcorrModel, MirImgApcorrModel
 from .apcorr import NrcImgApcorrModel, NisImgApcorrModel
 from .apcorr import MirLrsApcorrModel, MirMrsApcorrModel
 from .apcorr import NrcWfssApcorrModel, NisWfssApcorrModel
-from .apcorr import NrsMosApcorrModel, NrsFsApcorrModel
+from .apcorr import NrsMosApcorrModel, NrsIfuApcorrModel, NrsFsApcorrModel
 from .asn import AsnModel
 from .barshadow import BarshadowModel
 from .combinedspec import CombinedSpecModel
@@ -21,6 +21,7 @@ from .darkMIRI import DarkMIRIModel
 from .drizpars import DrizParsModel
 from .drizproduct import DrizProductModel
 from .extract1dimage import Extract1dImageModel
+from .extract1d_spec import Extract1dIFUModel
 from .flat import FlatModel
 from .fringe import FringeModel
 from .gain import GainModel
@@ -37,6 +38,7 @@ from .level1b import Level1bModel
 from .linearity import LinearityModel
 from .mask import MaskModel
 from .ramp import MIRIRampModel
+from .multicombinedspec import MultiCombinedSpecModel
 from .multiexposure import MultiExposureModel
 from .multiextract1d import MultiExtract1dImageModel
 from .multiprod import MultiProductModel
@@ -90,7 +92,7 @@ __all__ = [
     'AmiLgModel',
     'FgsImgApcorrModel', 'MirImgApcorrModel', 'NrcImgApcorrModel', 'NisImgApcorrModel',
     'MirLrsApcorrModel', 'MirMrsApcorrModel', 'NrcWfssApcorrModel', 'NisWfssApcorrModel',
-    'NrsMosApcorrModel', 'NrsFsApcorrModel',
+    'NrsMosApcorrModel', 'NrsFsApcorrModel','NrsIfuApcorrModel',
     'AsnModel',
     'BarshadowModel', 'CameraModel', 'CollimatorModel',
     'CombinedSpecModel', 'ContrastModel', 'CubeModel',
@@ -99,6 +101,7 @@ __all__ = [
     'DrizParsModel',
     'DrizProductModel',
     'Extract1dImageModel',
+    'Extract1dIFUModel',
     'FilteroffsetModel',
     'FlatModel', 'NirspecFlatModel', 'NirspecQuadFlatModel',
     'FOREModel', 'FPAModel',
@@ -109,7 +112,8 @@ __all__ = [
     'IFUFOREModel', 'IFUImageModel', 'IFUPostModel', 'IFUSlicerModel',
     'ImageModel', 'IPCModel', 'IRS2Model', 'LastFrameModel', 'Level1bModel',
     'LinearityModel', 'MaskModel', 'ModelContainer', 'MSAModel',
-    'MultiExposureModel', 'MultiExtract1dImageModel', 'MultiSlitModel',
+    'MultiCombinedSpecModel','MultiExposureModel',
+    'MultiExtract1dImageModel', 'MultiSlitModel',
     'MultiProductModel',
     'MultiSpecModel', 'OTEModel',
     'NIRCAMGrismModel','NIRISSGrismModel',

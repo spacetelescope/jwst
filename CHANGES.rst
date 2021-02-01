@@ -1,8 +1,177 @@
-0.17.2 (unreleased)
+0.18.4 (unreleased)
+===================
+
+datamodels
+----------
+
+- Updated keyword_readpatt, core, preadpatt schemas for new MIRI detector
+  readout patterns 'FASTR1', 'FASTR100' and 'SLOWR1' [#5670]
+
+- Added extr_x and extr_y to multispec datamodel. These values are center
+  of extraction region for IFU data [#5685]
+
+extract_1d
+----------
+
+- Adding writing SRCTYPE, EXTR_X, and EXTR_Y to extracted spec for IFU data [#5685]
+
+lib
+---
+
+- Make EngDB_Value public for JSDP use [#5669]
+
+ramp_fitting
+------------
+
+- Update documentation to define optimal weighting algorithm [#5682]
+
+- Update code in ``set_velocity_aberration.py`` functions based on Colin Cox
+  suggestions: simplify DVA scale computation and improve apparent ``RA`` and
+  ``DEC`` aberrated position computation. Also, attributes ``ra_offset`` and
+  ``dec_offset`` of ``datamodel.meta.velocity_aberration`` have been renamed to
+  ``va_ra_ref`` and ``va_dec_ref`` and their corresponding FITS keywords
+  have been renamed from ``DVA_RA`` and ``DVA_DEC`` to
+  ``VA_RA`` and ``VA_DEC``. [#5666]
+
+- Make get_wcs_values_from_siaf public for JSDP use [#5669]
+
+srctype
+-------
+
+- Changed default SRCTYPE for non-primary NIRSpec slits in a FIXEDSLIT
+  exposure to 'EXTENDED' rather than 'POINT' [#5671]
+
+
+0.18.3 (2021-01-25)
+===================
+
+- Update documentation introduction to include installation and CRDS setup
+  instructions. [#5659]
+
+combine1d
+---------
+
+- Fixed code error in combine1d, creating extensions per spectral order
+  with the same input data [#5644]
+
+ramp_fitting
+------------
+
+- Fix a bug in estimating the max number of segments that will be needed
+  to fit any pixel [#5653]
+
+set_telescope_pointing
+----------------------
+
+- Update the check in set_telescope_pointing that determines whether an
+  exposure is TSO mode to always consider hardwired TSO EXP_TYPEs as TSO,
+  regardless of TSOVISIT and NINTS settings. [#5657]
+
+white_light
+-----------
+
+- Fixed error causing multi-segment data to reject int_times
+  for MJDs [#5566]
+
+
+0.18.2 (2021-01-19)
+===================
+
+associations
+------------
+
+- JWSTDMS-410 Asn_Lv2NRSLAMPSpectral: Break out the negative cases [#5635]
+
+- Update MIRI LRS-Fixedslit ALONG-SLIT-NOD backgrounds strategies [#5620]
+
+cube_build
+----------
+
+- Do not allow varibles defined in spec (part of the cube_build_step class) to
+  be changed, to allow calspec2 to loop over a list of files and run the
+  pipeline. [#5603]
+
+datamodels
+----------
+
+- Updated schemas for new keywords CROWDFLD, PRIDTYPE, PRIDTPTS, PATTNPTS, SMGRDPAT,
+  changed name of SUBPXPNS to SUBPXPTS, and new allowed values for PATTTYPE. [#5618]
+
+flat_field
+----------
+
+- Added DO_NOT_USE to pixels flagged as NON_SCIENCE for non-NIRSpec data [#5601]
+
+outlier_detection
+-----------------
+
+- Account for the background subtracted data in the blot image for determining
+  the noise image used in flagging outliers [#5601]
+
+set_telescope_pointing
+----------------------
+
+- Updated to populate XREF_SCI, YREF_SCI keywords for all exposures with
+  TSOVISIT=True, not just NRC_TSGRISM mode. [#5616]
+
+0.18.1 (2021-01-08)
+===================
+
+combine1d
+---------
+
+- Output FITS now contains separate combine1d extensions for each spectral
+  order present in the data [#5204]
+
+cube_build
+----------
+
+- Tweaked pixel wavelength preselection range to avoid truncation at the ends
+  of the cubes. [#5598]
+
+datamodels
+----------
+
+- Fix missing CHANNEL entry in distortion reffile schema. [#5553]
+
+extract_1d
+----------
+
+- For IFU data (NIRSpec and MIRI) the extraction radius is now a varying size
+  based on wavelength. The apcorr correction is a function of wavelength and
+  radius size. Fixes a bug in units conversion for applying the apcorr correction.
+  The units are now correctly converted from arcseconds to pixels. Added an
+  new method to apply the apcorr correction for IFU data. [#5506]
+
+pipeline
+--------
+
+- Removed all unnecessary parameter settings from cfg files for all steps
+  and pipelines, and removed references to step config files from most
+  pipeline modules (only kept those that are necessary for intended
+  functionality). [#5574]
+
+skymatch
+--------
+
+- Fixed a bug due to which sky matching may fail under certain circumstances
+  such as using 'mode' statistics on a single pixel (after sigma-clipping). [#5567]
+
+stpipe
+------
+
+- Removed unused LinearPipeline class. [#5590]
+
+wavecorr
+--------
+- Fixed bugs in wavecorr. [#5570]
+
+0.18.0 (2020-12-21)
 ===================
 
 ami
 ---
+- Update code to use two new input parameters: psf_offset,rotation_search [#5548]
 
 - Update code and unit tests to use new ami_analyze algorithms [#5390]
 
@@ -16,6 +185,10 @@ assign_wcs
 - Enable resample_spec for NIRSpec line lamp exposures [#5484]
 
 - Added SIP approximation to WCS for imaging modes. FITS WCS keywords added to meta.wcsinfo. [#5507]
+
+- Fix bug where subarray bounding boxes were 1 pixel too small. [#5543]
+
+- Mark Nirspec slits which project on less than one pixel as invalid. [#5554]
 
 associations
 ------------
@@ -68,6 +241,14 @@ datamodels
 - Update schemas to include new allowed SUBARRAY values for FGS ASIC tuning
   modes [#5531]
 
+- Add meta.visit.pointing_engdb_quality entry to correspond to ENGQLPTG keyword [#5556]
+
+- Update Moving Target CHEBY table extension schema for changes to column
+  definitions in the JWSTKD and SDP [#5558]
+
+- Update distortion reference file schema to have ``meta.instrument.channel``
+  keyword [#5553]
+
 extract_1d
 ----------
 
@@ -82,6 +263,12 @@ extract_1d
 
 - Fixed bug involving the processing of WFSS observations when there's only
   one spectrum instance for a given source. [#5439]
+
+fits_generator
+--------------
+
+- Addressed deprecated get_children method of XML parser.  Changed type of PATTSIZE from
+  float to string in templates. [#5536]
 
 flatfield
 ---------
@@ -158,11 +345,15 @@ saturation
 - Set saturation threshold to A-to-D limit of 65535 for pixels flagged with
   NO_SAT_CHECK in the saturation reference file, instead of skipping any
   test of those pixels. [#5394]
+- Flag groups values below A/D floor (0 DN) (#5422)
 
 set_telescope_pointing
 ----------------------
 
 - Add logging of the found quaternion information [#5495]
+- Handle cases where engineering database's pointing mnemonics are all zero over the requested time range [#5540]
+- Set value of keyword ENGQLPTG to CALCULATED or PLANNED depending on whether pointing telemetry was used to
+  update the WCS [#5556]
 
 skymatch
 --------

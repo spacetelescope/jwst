@@ -21,13 +21,13 @@ def test_dq():
     BAD_PIX = 5
     spec1.spec_table['FLUX'][BAD_PIX] = 1.0
     result = Combine1dStep.call(ms)
-    assert np.isclose(result.spec_table['FLUX'][BAD_PIX], 0.5)
+    assert np.isclose(result.spec[0].spec_table['FLUX'][BAD_PIX], 0.5)
 
     # Now mark that pixel bad.
     # Result should not just contain the second spectrum value.
     spec1.spec_table['DQ'][BAD_PIX] = datamodels.dqflags.pixel['DO_NOT_USE']
     result_dq = Combine1dStep.call(ms)
-    assert np.isclose(result_dq.spec_table['FLUX'][BAD_PIX], spec2.spec_table['FLUX'][BAD_PIX])
+    assert np.isclose(result_dq.spec[0].spec_table['FLUX'][BAD_PIX], spec2.spec_table['FLUX'][BAD_PIX])
 
 
 def create_spec_model(npoints=10, flux=1e-9, wave_range=(11, 13)):

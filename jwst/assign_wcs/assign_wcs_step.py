@@ -13,6 +13,9 @@ log.setLevel(logging.DEBUG)
 __all__ = ["AssignWcsStep"]
 
 
+_MAX_SIP_DEGREE = 6
+
+
 class AssignWcsStep(Step):
     """
     AssignWcsStep: Create a gWCS object and store it in ``Model.meta``.
@@ -94,24 +97,22 @@ class AssignWcsStep(Step):
             return result
 
         # fit sip approx., degree is chosen by best fit
+        sip_degree = range(1, _MAX_SIP_DEGREE) if self.sip_degree is None else self.sip_degree
+        sip_inv_degree = range(1, _MAX_SIP_DEGREE) if self.sip_inv_degree is None else self.sip_inv_degree
+        crpix = [result.meta.wcsinfo.crpix1, result.meta.wcsinfo.crpix2]
+        crpix = None if None in crpix else crpix
         try:
-            fit_sip_hdr = result.meta.wcs.to_fits_sip(None, self.sip_max_pix_error,
-                          self.sip_degree, self.sip_max_inv_pix_error, self.sip_inv_degree,
-                          self.sip_npoints)
+            fit_sip_hdr = result.meta.wcs.to_fits_sip(
+                max_pix_error=self.sip_max_pix_error,
+                degree=sip_degree,
+                max_inv_pix_error=self.sip_max_inv_pix_error,
+                inv_degree=sip_inv_degree,
+                npoints=self.sip_npoints,
+                crpix=crpix
+            )
+
         except ValueError:
             return result
-
-        # if a polynomial was fit (not just linear terms), but the
-        # best fit > 6th degree, fit a 6th degree instead.
-        # and give up if that doesn't work.
-        if 'SIP' in fit_sip_hdr['ctype1'] and (fit_sip_hdr['a_order'] > 6 or fit_sip_hdr.get('ap_order', 1) > 6):
-            fwd_deg = min(fit_sip_hdr['a_order'], 6)
-            inv_deg = min(fit_sip_hdr.get('ap_order', 1), 6)
-            try:
-                fit_sip_hdr = result.meta.wcs.to_fits_sip(None, self.sip_max_pix_error,
-                              fwd_deg, self.sip_max_inv_pix_error, inv_deg, self.sip_npoints)
-            except ValueError:
-                return result
 
         # maintain convention of lowercase keys
         fit_sip_hdr = {k.lower(): v for k, v in fit_sip_hdr.items()}
