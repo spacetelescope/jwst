@@ -26,22 +26,30 @@ def INVPOLY11(e, x, y, d):
 	return (d - e[0,0] - x*e[0,1] - y*e[0,2])/(e[1,0] + x*e[1,1] + y*e[1,2])
 
 def POLY12(e, x, y, t):
-	return e[0,0] + x*e[0,1] + y*e[0,2] + x**2*e[0,3] + x*y*e[0,4] + y**2*e[0,5] + t*(e[1,0] + x*e[1,1] + y*e[1,2] + x**2*e[1,3] + x*y*e[1,4] + y**2*e[1,5])
+	return e[0,0] + x*e[0,1] + y*e[0,2] + x**2*e[0,3] + x*y*e[0,4] + y**2*e[0,5] \
+               + t*(e[1,0] + x*e[1,1] + y*e[1,2] + x**2*e[1,3] + x*y*e[1,4] + y**2*e[1,5])
 
 def DPOLY12(e, x, y, t):
 	return e[1,0] + x*e[1,1] + y*e[1,2] + x**2*e[1,3] + x*y*e[1,4] + y**2*e[1,5] 
 
 def INVPOLY12(e, x, y, d):
-	return (d - e[0,0] - x*e[0,1] - y*e[0,2] - x**2*e[0,3] - x*y*e[0,4] - y**2*e[0,5])/(e[1,0] + x*e[1,1] + y*e[1,2] + x**2*e[1,3] + x*y*e[1,4] + y**2*e[1,5])
+	return (d - e[0,0] - x*e[0,1] - y*e[0,2] - x**2*e[0,3] - x*y*e[0,4] \
+                 - y**2*e[0,5])/(e[1,0] + x*e[1,1] + y*e[1,2] + x**2*e[1,3] + x*y*e[1,4] + y**2*e[1,5])
 
 def POLY13(e, x, y, t):
-	return e[0,0] + x*e[0,1] + y*e[0,2] + x**2*e[0,3] + x*y*e[0,4] + y**2*e[0,5] + x**3*e[0,6] + x**2*y*e[0,7] + x*y**2*e[0,8] + y**3*e[0,9] + t*(e[1,0] + x*e[1,1] + y*e[1,2] + x**2*e[1,3] + x*y*e[1,4] + y**2*e[1,5] + x**3*e[1,6] + x**2*y*e[1,7] + x*y**2*e[1,8] + y**3*e[1,9])
+	return e[0,0] + x*e[0,1] + y*e[0,2] + x**2*e[0,3] + x*y*e[0,4] + y**2*e[0,5] \
+               + x**3*e[0,6] + x**2*y*e[0,7] + x*y**2*e[0,8] + y**3*e[0,9] + t*(e[1,0] \
+               + x*e[1,1] + y*e[1,2] + x**2*e[1,3] + x*y*e[1,4] + y**2*e[1,5] + x**3*e[1,6] \
+               + x**2*y*e[1,7] + x*y**2*e[1,8] + y**3*e[1,9])
 
 def DPOLY13(e, x, y, t):
-	return e[1,0] + x*e[1,1] + y*e[1,2] + x**2*e[1,3] + x*y*e[1,4] + y**2*e[1,5] + x**3*e[1,6] + x**2*y*e[1,7] + x*y**2*e[1,8] + y**3*e[1,9]
+	return e[1,0] + x*e[1,1] + y*e[1,2] + x**2*e[1,3] + x*y*e[1,4] + y**2*e[1,5] \
+               + x**3*e[1,6] + x**2*y*e[1,7] + x*y**2*e[1,8] + y**3*e[1,9]
 
 def INVPOLY13(e, x, y, d):
-	return (d - e[0,0] - x*e[0,1] - y*e[0,2] - x**2*e[0,3] - x*y*e[0,4] - y**2*e[0,5] - x**3*e[0,6] - x**2*y*e[0,7] - x*y**2*e[0,8] - y**3*e[0,9])/(e[1,0] + x*e[1,1] + y*e[1,2] + x**2*e[1,3] + x*y*e[1,4] + y**2*e[1,5] + x**3*e[1,6] + x**2*y*e[1,7] + x*y**2*e[1,8] + y**3*e[1,9])
+	return (d - e[0,0] - x*e[0,1] - y*e[0,2] - x**2*e[0,3] - x*y*e[0,4] - y**2*e[0,5] \
+                - x**3*e[0,6] - x**2*y*e[0,7] - x*y**2*e[0,8] - y**3*e[0,9])/(e[1,0] + x*e[1,1] \
+                + y*e[1,2] + x**2*e[1,3] + x*y*e[1,4] + y**2*e[1,5] + x**3*e[1,6] + x**2*y*e[1,7] + x*y**2*e[1,8] + y**3*e[1,9])
 
 def POLY20(e, x, y, t):
 	return e[0,0] + t*e[1,0] + t**2*e[2,0]
@@ -72,7 +80,7 @@ POLY = {}
 DPOLY = {}
 INVPOLY = {}
 
-# A Dictionaty containing the functions we know, labeled by the size of the parameter array e
+# A Dictionary containing the functions we know, labeled by the size of the parameter array e
 POLY[(2,1)] = POLY10
 POLY[(2,3)] = POLY11
 POLY[(2,6)] = POLY12
@@ -101,16 +109,3 @@ INVPOLY[(2,10)] = INVPOLY12
 
 def npol(m):
 	return int((m + 1)**2/2. + (m + 1)/2.)
-
-def test(n, m):
-	e = np.random.rand(n+1, npol(m))
-	x = 100.
-	y = 100.
-
-	d = POLY[(n, m)](e, x, y, 0.)
-	print("d:", d)
-	t = INVPOLY[(n, m)](e, x, y, d)
-	print("t:",t)
-
-if __name__=="__main__":
-	test(1, 0)
