@@ -44,6 +44,7 @@ class AnotherDummyStep(Step):
     [foo]
 
     """
+    class_alias = "stpipe_dummy"
 
     reference_file_types = ['flat_field']
 

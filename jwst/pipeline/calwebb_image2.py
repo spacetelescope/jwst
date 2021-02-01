@@ -26,6 +26,8 @@ class Image2Pipeline(Pipeline):
     background_subtraction, assign_wcs, flat_field, photom and resample.
     """
 
+    class_alias = "calwebb_image2"
+
     spec = """
         save_bsub = boolean(default=False) # Save background-subracted science
     """

@@ -14,7 +14,7 @@ from jwst.stpipe import Step, crds_client
 from jwst.stpipe import cmdline
 from jwst.stpipe.config_parser import ValidationError
 
-from .steps import EmptyPipeline, MakeListPipeline, MakeListStep, ProperPipeline
+from .steps import EmptyPipeline, MakeListPipeline, MakeListStep, ProperPipeline, AnotherDummyStep
 from .util import t_path
 
 from crds.core.exceptions import CrdsLookupError
@@ -519,6 +519,37 @@ def test_step_from_commandline_class():
     assert step.par1 == 58.
     assert step.par2 == 'hij klm'
     assert step.par3 is False
+
+    step.run(1, 2)
+
+
+def test_step_from_commandline_class_alias(mock_stpipe_entry_points):
+    args = [
+        'stpipe_dummy', '--par1=58', '--par2=hij klm'
+    ]
+
+    step = Step.from_cmdline(args)
+
+    assert isinstance(step, AnotherDummyStep)
+
+    assert step.par1 == 58.
+    assert step.par2 == 'hij klm'
+    assert step.par3 is False
+
+    step.run(1, 2)
+
+
+def test_step_from_commandline_config_class_alias(mock_stpipe_entry_points):
+    args = [
+        abspath(join(dirname(__file__), 'steps', 'dummy_with_alias.cfg')),
+        '--par1=58', '--par2=hij klm'
+    ]
+
+    step = Step.from_cmdline(args)
+
+    assert step.par1 == 58.
+    assert step.par2 == 'hij klm'
+    assert step.par3 is True
 
     step.run(1, 2)
 

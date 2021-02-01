@@ -43,6 +43,8 @@ class Spec3Pipeline(Pipeline):
     1-D spectral combination (combine_1d)
     """
 
+    class_alias = "calwebb_spec3"
+
     spec = """
     """
 

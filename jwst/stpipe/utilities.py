@@ -37,6 +37,8 @@ import os
 import re
 import sys
 
+from . import entry_points
+
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -49,6 +51,27 @@ NON_STEPS = [
     'Step',
     'SystemCall',
 ]
+
+
+def resolve_step_class_alias(name):
+    """
+    If the input is a recognized alias, return the
+    corresponding fully-qualified class name.  Otherwise
+    return the input unmodified.
+
+    Parameters
+    ----------
+    name : str
+
+    Returns
+    -------
+    str
+    """
+    for info in entry_points.get_steps():
+        if info.class_alias is not None and name == info.class_alias:
+            return info.class_name
+
+    return name
 
 
 def import_class(full_name, subclassof=object, config_file=None):

@@ -1,34 +1,25 @@
 """Test utility funcs"""
-from jwst.stpipe.utilities import all_steps
+from jwst.stpipe.utilities import all_steps, resolve_step_class_alias
+import jwst.pipeline
+import jwst.step
 
 
-# Snapshot of known steps
-KNOWN_STEPS = set([
-    'AlignRefsStep','Ami3Pipeline', 'AmiAnalyzeStep', 'AmiAverageStep',
-    'AmiNormalizeStep', 'AssignMTWcsStep', 'AssignWcsStep',
-    'BackgroundStep', 'BarShadowStep',
-    'Combine1dStep', 'Coron3Pipeline', 'CubeBuildStep', 'CubeSkyMatchStep',
-    'DQInitStep', 'DarkCurrentStep', 'DarkPipeline', 'Detector1Pipeline',
-    'Extract1dStep', 'Extract2dStep',
-    'FirstFrameStep', 'FlatFieldStep', 'FringeStep',
-    'GainScaleStep', 'GroupScaleStep', 'GuiderCdsStep', 'GuiderPipeline',
-    'HlspStep',
-    'IPCStep', 'Image2Pipeline', 'Image3Pipeline', 'ImprintStep',
-    'JumpStep',
-    'KlipStep',
-    'LastFrameStep', 'LinearityStep',
-    'MRSIMatchStep', 'MSAFlagOpenStep', 'MasterBackgroundNrsSlitsStep', 'MasterBackgroundStep',
-    'OutlierDetectionScaledStep', 'OutlierDetectionStackStep', 'OutlierDetectionStep',
-    'PathLossStep', 'PersistenceStep', 'PhotomStep',
-    'RscdStep', 'RSCD_Step', 'RampFitStep', 'RefPixStep', 'ResampleSpecStep', 'ResampleStep', 'ResetStep',
-    'SaturationStep', 'SkyMatchStep', 'SourceCatalogStep', 'SourceTypeStep', 'Spec2Pipeline', 'Spec3Pipeline',
-    'StackRefsStep', 'StraylightStep', 'SubtractImagesStep', 'SuperBiasStep',
-    'TSOPhotometryStep', 'Tso3Pipeline', 'TweakRegStep',
-    'WavecorrStep', 'WfsCombineStep', 'WhiteLightStep',
-])
+# All steps available to users should be represented in one
+# of these two modules:
+KNOWN_STEPS = set(jwst.pipeline.__all__ + jwst.step.__all__)
+
 
 def test_all_steps():
     """Test finding all defined steps and pipelines"""
     found_steps = all_steps()
     diff = KNOWN_STEPS.symmetric_difference(found_steps)
     assert not diff, f'Steps not accounted for. Confirm and check suffix and CRDS calpars.\n{diff}'
+
+
+def test_resolve_step_class_alias():
+    for class_name in jwst.pipeline.__all__:
+        pipeline_class = getattr(jwst.pipeline, class_name)
+        full_class_name = f"jwst.pipeline.{class_name}"
+        if pipeline_class.class_alias is not None:
+            assert resolve_step_class_alias(pipeline_class.class_alias) == full_class_name
+        assert resolve_step_class_alias(full_class_name) == full_class_name

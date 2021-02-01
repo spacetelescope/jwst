@@ -29,6 +29,8 @@ class Coron3Pipeline(Pipeline):
 
     """
 
+    class_alias = "calwebb_coron3"
+
     spec = """
         suffix = string(default='i2d')
     """

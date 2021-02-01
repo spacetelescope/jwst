@@ -26,6 +26,8 @@ class Image3Pipeline(Pipeline):
         source_catalog
     """
 
+    class_alias = "calwebb_image3"
+
     spec = """
     """
 
