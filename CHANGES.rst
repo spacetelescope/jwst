@@ -14,6 +14,7 @@ extract_1d
 ----------
 
 - Adding writing SRCTYPE, EXTR_X, and EXTR_Y to extracted spec for IFU data [#5685]
+- Only update the output x1d data using the PRIMARY input data. Prevents SCI data in x1d data [#5694]
 
 lib
 ---
