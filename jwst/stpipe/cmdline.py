@@ -297,8 +297,7 @@ def just_the_step_from_cmdline(args, cls=None):
 
     # Save the step configuration
     if known.save_parameters:
-        with step.export_config().to_asdf(include_metadata=True) as asdf_file:
-            asdf_file.write_to(known.save_parameters)
+        step.export_config(known.save_parameters, include_metadata=True)
         log.log.info(f"Step/Pipeline parameters saved to '{known.save_parameters}'")
 
     return step, step_class, positional, debug_on_exception

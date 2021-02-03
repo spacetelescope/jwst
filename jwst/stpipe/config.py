@@ -11,8 +11,8 @@ from .utilities import get_fully_qualified_class_name
 import asdf
 
 
-_CONFIG_SCHEMA_URI = "asdf://stsci.edu/stpipe/schemas/step_config-1.0.0"
-_LEGACY_CONFIG_SCHEMA_URI = "asdf://stsci.edu/stpipe/schemas/step_config-0.1.0"
+_CONFIG_SCHEMA_URI = "http://stsci.edu/schemas/stpipe/step_config-1.0.0"
+_LEGACY_CONFIG_SCHEMA_URI = "http://stsci.edu/schemas/stpipe/step_config-0.1.0"
 
 # The config schema validates that this substring is not present:
 _TEMPLATE_PLACEHOLDER = "<SPECIFY>"
@@ -105,13 +105,15 @@ class StepConfig:
         -------
         asdf.AsdfFile
         """
-        result = asdf.AsdfFile(self._to_tree(), custom_schema=_CONFIG_SCHEMA_URI)
+        result = asdf.AsdfFile(self._to_tree())
 
         if include_metadata:
             meta = deepcopy(_META_TEMPLATE)
             meta["date"] = meta["date"].replace(_TEMPLATE_PLACEHOLDER, datetime.utcnow().replace(microsecond=0).isoformat())
             meta["description"] = meta["description"].replace(_TEMPLATE_PLACEHOLDER, self.class_name)
             result["meta"] = meta
+
+        _validate_asdf(result, _CONFIG_SCHEMA_URI)
 
         return result
 
