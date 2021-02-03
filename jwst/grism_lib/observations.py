@@ -4,7 +4,6 @@ from multiprocessing import Pool
 from astropy.io import fits
 from scipy import sparse
 from scipy.interpolate import interp1d
-from jwst.grism_lib import grismconf
 from jwst.grism_lib.disperse import dispersed_pixel
 from jwst import datamodels
 
@@ -78,7 +77,6 @@ class observation():
 
         # This loads all the info from the configuration file for this grism mode;
         # things like the name of the POM mask file, the dispersion coeffs, etc.
-        self.Cfg = grismconf.Config(config)
         self.wcs = wcs
         self.ID = ID
         self.IDs = []
@@ -102,37 +100,14 @@ class observation():
         wr_ref.close()
         print("wmin, wmax:", self.wmin, self.wmax)
 
-        # Current NIRCAM config files DO have POM defined, so this branch is used
-        if self.Cfg.POM is not None:
-            print(f"Using POM mask {self.Cfg.POM}")
-            with fits.open(self.Cfg.POM) as fin:
-                self.POM_mask = fin[1].data
-                # POM_mask01 is a version of the mask that only contains 0-1 values.
-                # Pixels with labels/values > 10000 are set to 1.
-                self.POM_mask01 = fin[1].data * 1.
-                self.POM_mask01[self.POM_mask01 >= 10000] = 1.
-                self.Pxstart = int(fin[1].header["NOMXSTRT"])
-                self.Pxend = int(fin[1].header["NOMXEND"])
-                self.Pystart = int(fin[1].header["NOMYSTRT"])
-                self.Pyend = int(fin[1].header["NOMYEND"])
-
-                if len(fin) > 2:
-                    print("Loading extra optical element transmission curves from POM file")
-                    #log.info("Loading extra optical element transmission curves from POM file")
-                    self.POM_transmission = {}
-                    for i in range(2, len(fin)):
-                        w = fin[i].data["Wavelength"]
-                        t = fin[i].data["Transmission"]
-                        indx = int(fin[i].header["POMINDX"])
-                        self.POM_transmission[indx] = interp1d_picklable(w, t, bounds_error=False, fill_value=0.)
-
         if len(boundaries) != 4:
-            xpad = (np.shape(segmentation_data)[1] - self.Cfg.NAXIS[0])//2
-            ypad = (np.shape(segmentation_data)[0] - self.Cfg.NAXIS[1])//2
+            self.NAXIS = [2048, 2048]
+            xpad = (np.shape(segmentation_data)[1] - self.NAXIS[0])//2
+            ypad = (np.shape(segmentation_data)[0] - self.NAXIS[1])//2
             self.xstart = 0 + xpad
-            self.xend = xpad + self.Cfg.NAXIS[0] - 1
+            self.xend = xpad + self.NAXIS[0] - 1
             self.ystart = 0 + ypad
-            self.yend = ypad + self.Cfg.NAXIS[1] - 1
+            self.yend = ypad + self.NAXIS[1] - 1
             print(f"No boundaries passed. Assuming symmetrical padding of {xpad} {ypad} pixels")
             print(f"and a final size of {self.xend+1-self.xstart} {self.yend+1-self.ystart}.")
         else:
@@ -144,95 +119,11 @@ class observation():
             print("Warning: SED Extrapolation turned on.")
 
         # Apply the POM mask
-        self.apply_POM()
+        #self.apply_POM()
 
         # Create pixel lists for ALL sources labeled in segmentation map
         self.create_pixel_list()
 
-    def apply_POM(self):
-        """
-        Account for the finite size of the POM and remove pixels in segmentation files
-        that should not be dispersed.
-        If a POM mask array was loaded, then we make sure it is modified to have the
-        same size as the input seg map and with the detector FOV starting at the same pixel
-        locations as the input seg map.
-        """
-
-        # No POM mask specified?
-        if self.POM_mask is None:
-            x0 = int(self.xstart + self.Cfg.XRANGE[self.Cfg.orders[0]][0] + 0.5)
-            x1 = int(self.xend + self.Cfg.XRANGE[self.Cfg.orders[0]][1] + 0.5)
-            y0 = int(self.ystart + self.Cfg.YRANGE[self.Cfg.orders[0]][0] + 0.5)
-            y1 = int(self.yend + self.Cfg.YRANGE[self.Cfg.orders[0]][1] + 0.5)
-
-            if x0 < 0:
-                x0 = 0
-            if y0 < 0:
-                y0 = 0
-            ymax, xmax = np.shape(self.seg)
-            if x0 + 1 > xmax:
-                x0 = xmax - 1
-            if y0 + 1 > ymax:
-                y0 = ymax - 1
-
-            print("POM footprint applied: [{}:{},{}:{}]".format(x0, x1, y0, y1))
-            print("Pixels outside of this region of the input data ([{},{}]) will not be dispersed.".format(xmax, ymax))
-            self.seg[:, :x0 + 1] = 0
-            self.seg[:, x1:] = 0
-            self.seg[:y0 + 1, :] = 0
-            self.seg[y1:, :] = 0
-
-        # POM mask was specified
-        else:
-            self.Pxstart - self.xstart
-            self.Pystart - self.ystart
-
-            ys1, xs1 = np.shape(self.POM_mask)
-            ys2, xs2 = np.shape(self.seg)
-
-            #print("xstart ettc:", self.xstart, self.xend, self.ystart, self.yend)
-            #print("POM start etc:", self.Pxstart, self.Pxend, self.Pystart, self.Pyend)
-            #print(self.Pystart - self.ystart, self.yend - self.ystart,
-            #      self.Pxstart - self.xstart + 1, self.xend - self.xstart + 1)
-            if (xs1 > xs2) or (ys1 > ys2):
-                print(f"Warning: The input seg map is smaller ({xs2},{ys2}) than the POM mask ({xs1},{ys1}) for this mode")
-                raise Exception("Invalid seg map size.")
-
-            # Create a new POM mask that is the size of the input seg and data arrays
-            # Compute the offset between where the detector is in the original POM mask and the input sef file
-            xoff = self.xstart - self.Pxstart
-            yoff = self.ystart - self.Pystart
-
-            if (xoff < 0) or (yoff < 0):
-                print("Warning: the input seg map and POM mask are not compatible.")
-                print("The seg map needs a larger border around the detector FOV than the POM mask.")
-                print(f"seg map detector FOV starts at {self.xstart} {self.ystart}")
-                print(f"POM mask detector FOV starts at {self.Pxstart} {self.Pystart}")
-                raise Exception("Invalid seg map size.")
-
-            POM = np.zeros(np.shape(self.seg))
-            POM[yoff:yoff+ys1, xoff:xoff+xs1] = self.POM_mask
-            self.POM_mask = POM*1
-
-            POM[POM > 1] = 1
-            self.POM_mask01 = POM * 1
-
-            self.Pxstart = self.xstart
-            self.Pxend = self.xend
-            self.Pystart = self.ystart
-            self.Pyend = self.ystart
-
-            # We apply the POM mask to the seg file, but only as a mask, removing pixels getting no signal.
-            # We keep the POM mask with its orginal values otherwise
-            # to be able to account for partial transmission later on.
-
-            #print("POM size:",np.shape(POM))
-            #print("seg size:",np.shape(self.seg))
-            #fits.writeto("seg_org.fits",self.seg,overwrite=True)
-            self.seg = self.seg * self.POM_mask01
-            #fits.writeto("POM_msk.fits",self.POM_mask,overwrite=True)
-            #fits.writeto("POM.fits",self.POM_mask01 ,overwrite=True)
-            #fits.writeto("seg_msk.fits",self.seg,overwrite=True)
 
     def create_pixel_list(self):
         # Create a list of pixels to dispersed, grouped per object ID
