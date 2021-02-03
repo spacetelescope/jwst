@@ -1,7 +1,7 @@
 %YAML 1.1
 ---
 $schema: http://stsci.edu/schemas/yaml-schema/draft-01
-id: asdf://stsci.edu/stpipe/schemas/step_config-1.0.0
+id: http://stsci.edu/schemas/stpipe/step_config-1.0.0
 title: Calibration pipeline Step config file
 description: >
   File containing saved configuration for an stpipe Step

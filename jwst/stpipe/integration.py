@@ -1,14 +1,10 @@
 """
 Entry point implementations.
 """
-import sys
+import os
 
-from asdf.resource import DirectoryResourceMapping
-
-if sys.version_info < (3, 9):
-    import importlib_resources
-else:
-    import importlib.resources as importlib_resources
+from asdf.extension import AsdfExtension
+from asdf import util
 
 
 def get_steps():
@@ -100,17 +96,28 @@ def get_steps():
     ]
 
 
-def get_resource_mappings():
-    """
-    Get the resource mapping instances for the stpipe schemas.
+SCHEMAS_PATH = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "resources", "schemas")
+)
 
-    Returns
-    -------
-    list of collections.abc.Mapping
-    """
-    from . import resources
-    resources_root = importlib_resources.files(resources)
 
-    return [
-        DirectoryResourceMapping(resources_root / "schemas", "asdf://stsci.edu/stpipe/schemas", recursive=True),
-    ]
+class StpipeExtension(AsdfExtension):
+    """
+    ASDF extension providing access to the stpipe schemas.  This
+    class is registered with the asdf_extensions entry point.
+    """
+    @property
+    def types(self):
+        # Required by the ABC but unused here
+        return []
+
+    @property
+    def tag_mapping(self):
+        # Required by the ABC but unused here
+        return []
+
+    @property
+    def url_mapping(self):
+        return [
+            ("http://stsci.edu/schemas/stpipe", util.filepath_to_url(SCHEMAS_PATH) + "/{url_suffix}.yaml"),
+        ]

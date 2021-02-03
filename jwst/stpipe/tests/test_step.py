@@ -133,14 +133,11 @@ def test_saving_pars(tmpdir):
                 {
                     'pre_hooks': [],
                     'post_hooks': [],
-                    'output_file': None,
-                    'output_dir': None,
                     'output_ext': '.fits',
                     'output_use_model': False,
                     'output_use_index': True,
                     'save_results': False,
                     'skip': False,
-                    'suffix': None,
                     'search_output_file': True,
                     'input_dir': '',
                     'par1': 0.0,
@@ -152,9 +149,13 @@ def test_saving_pars(tmpdir):
         ),
     ]
 )
-def test_export_config(step_obj, expected):
+def test_export_config(step_obj, expected, tmp_path):
     """Test retrieving of configuration parameters"""
-    assert step_obj.export_config() == expected
+    config_path = tmp_path / "config.asdf"
+    step_obj.export_config(config_path)
+
+    with asdf.open(config_path) as af:
+        assert StepConfig.from_asdf(af) == expected
 
 
 @pytest.mark.parametrize(

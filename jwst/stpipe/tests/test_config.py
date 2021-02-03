@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import pytest
 import asdf
 
-from jwst.stpipe.config import export_config, StepConfig
+from jwst.stpipe.config import export_config, StepConfig, _validate_asdf
 
 from .steps import MakeListPipeline, WithDefaultsStep
 
@@ -45,8 +45,8 @@ def test_step_config_to_asdf(config):
     assert asdf_file["steps"] == [s.to_asdf().tree for s in config.steps]
     assert "meta" not in asdf_file
     # No validation errors:
-    with asdf.AsdfFile(asdf_file.tree, custom_schema="asdf://stsci.edu/stpipe/schemas/step_config-1.0.0") as af:
-        af.validate()
+    with asdf.AsdfFile(asdf_file.tree) as af:
+        _validate_asdf(af, "http://stsci.edu/schemas/stpipe/step_config-1.0.0")
 
     # With metadata
     asdf_file = config.to_asdf(include_metadata=True)
@@ -65,14 +65,14 @@ def test_step_config_to_asdf(config):
     assert asdf_file["meta"]["telescope"] == "<SPECIFY>"
     assert asdf_file["meta"]["useafter"] == "<SPECIFY>"
     # No validation errors against the simple schema:
-    with asdf.AsdfFile(asdf_file.tree, custom_schema="asdf://stsci.edu/stpipe/schemas/step_config-1.0.0") as af:
-        af.validate()
+    with asdf.AsdfFile(asdf_file.tree) as af:
+        _validate_asdf(af, "http://stsci.edu/schemas/stpipe/step_config-1.0.0")
 
     # Expect failures from the metadata schema while <SPECIFY>
     # is still present:
     with pytest.raises(asdf.ValidationError):
-        with asdf.AsdfFile(asdf_file.tree, custom_schema="asdf://stsci.edu/stpipe/schemas/step_config_with_metadata-1.0.0") as af:
-            af.validate()
+        with asdf.AsdfFile(asdf_file.tree) as af:
+            _validate_asdf(af, "http://stsci.edu/schemas/stpipe/step_config_with_metadata-1.0.0")
 
     asdf_file["meta"]["author"] = "Yours Truly"
     asdf_file["meta"]["instrument"]["name"] = "EYEBALLS"
@@ -82,8 +82,8 @@ def test_step_config_to_asdf(config):
     asdf_file["meta"]["telescope"] = "BINOCULARS"
     asdf_file["meta"]["useafter"] = "2020-11-20T00:00:00"
     # No validation errors now:
-    with asdf.AsdfFile(asdf_file.tree, custom_schema="asdf://stsci.edu/stpipe/schemas/step_config_with_metadata-1.0.0") as af:
-        af.validate()
+    with asdf.AsdfFile(asdf_file.tree) as af:
+        _validate_asdf(af, "http://stsci.edu/schemas/stpipe/step_config_with_metadata-1.0.0")
 
 
 def test_step_config_from_asdf(config):
@@ -109,7 +109,7 @@ def test_step_config_from_legacy_asdf(config):
 
     parameters["steps"] = steps
 
-    asdf_file = asdf.AsdfFile({"parameters": parameters}, custom_schema="asdf://stsci.edu/stpipe/schemas/step_config-0.1.0")
+    asdf_file = asdf.AsdfFile({"parameters": parameters}, custom_schema="http://stsci.edu/schemas/stpipe/step_config-0.1.0")
 
     # We lose the step class names so the configs won't be equal:
     legacy_config = StepConfig.from_asdf(asdf_file)

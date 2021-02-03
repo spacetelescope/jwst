@@ -1212,15 +1212,17 @@ class Step(abc.ABC):
                 pars_dict[key] = value
         return pars_dict
 
-    def export_config(self):
+    def export_config(self, filename, include_metadata=False):
         """
-        Export this step's parameters to a StepConfig object.
+        Export this step's parameters to an ASDF config file.
 
-        Returns
-        -------
-        stpipe.config.StepConfig
+        Parameters
+        ----------
+        filename : str or pathlib.PurePath
+            Path to config file.
         """
-        return config.export_config(self)
+        with config.export_config(self).to_asdf(include_metadata=include_metadata) as af:
+            af.write_to(filename)
 
     def update_pars(self, parameters):
         """Update step parameters
