@@ -12,6 +12,10 @@ def get_steps():
     Returns
     -------
     list of tuple (str, str, bool)
+        The first element each tuple is a fully-qualified Step
+        subclass name.  The second element is an optional class
+        alias.  The third element indicates that the class
+        is a subclass of Pipeline.
     """
     # Unit tests ensure that this list is kept in sync with the actual
     # class definitions.  We need to avoid importing jwst.pipeline and
