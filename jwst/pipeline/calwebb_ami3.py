@@ -26,6 +26,8 @@ class Ami3Pipeline(Pipeline):
     ami_normalize (normalize results by reference target)
     """
 
+    class_alias = "calwebb_ami3"
+
     spec = """
         save_averages = boolean(default=False)
     """

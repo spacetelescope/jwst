@@ -57,6 +57,9 @@ class Step():
     search_output_file = boolean(default=True)       # Use outputfile define in parent step
     input_dir          = string(default=None)        # Input directory
     """
+    # Nickname used to refer to this class in lieu of the fully-qualified class
+    # name.  Must be globally unique!
+    class_alias = None
 
     # Correction parameters. These store and use whatever information a Step
     # may need to perform its operations without re-calculating, or to use
@@ -166,7 +169,7 @@ class Step():
     @classmethod
     def _parse_class_and_name(cls, config, parent=None, name=None, config_file=None):
         if 'class' in config:
-            step_class = utilities.import_class(config['class'],
+            step_class = utilities.import_class(utilities.resolve_step_class_alias(config['class']),
                                                 config_file=config_file)
             if not issubclass(step_class, cls):
                 raise TypeError(

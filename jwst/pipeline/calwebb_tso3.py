@@ -29,6 +29,8 @@ class Tso3Pipeline(Pipeline):
         * white_light
     """
 
+    class_alias = "calwebb_tso3"
+
     spec = """
         scale_detection = boolean(default=False)
     """

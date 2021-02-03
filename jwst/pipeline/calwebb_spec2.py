@@ -48,6 +48,8 @@ class Spec2Pipeline(Pipeline):
     resample_spec, cube_build, and extract_1d.
     """
 
+    class_alias = "calwebb_spec2"
+
     spec = """
         save_bsub = boolean(default=False)        # Save background-subracted science
         fail_on_exception = boolean(default=True) # Fail if any product fails.

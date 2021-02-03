@@ -2697,7 +2697,7 @@ def do_extract1d(
     if hasattr(input_temp, "int_times"):
         output_model.int_times = input_temp.int_times.copy()
 
-    output_model.update(input_temp)
+    output_model.update(input_temp,only='PRIMARY')
 
     spec_dtype = datamodels.SpecModel().spec_table.dtype  # This data type is used for creating an output table.
 

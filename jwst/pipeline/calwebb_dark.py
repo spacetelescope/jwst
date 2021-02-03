@@ -33,6 +33,8 @@ class DarkPipeline(Pipeline):
 
     """
 
+    class_alias = "calwebb_dark"
+
     # Define aliases to steps
     step_defs = {'group_scale': group_scale_step.GroupScaleStep,
                  'dq_init': dq_init_step.DQInitStep,
