@@ -33,7 +33,7 @@ import sys
 import jwst.saturation as saturation
 from jwst.saturation import saturation_step
 
-from jwst.stpipe import cmdline
+from stpipe import cmdline
 
 if __name__ == '__main__':
     if '--version' in sys.argv:

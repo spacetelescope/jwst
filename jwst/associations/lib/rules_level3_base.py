@@ -38,7 +38,7 @@ from jwst.associations.lib.dms_base import (
     IMAGE2_NONSCIENCE_EXP_TYPES,
     SPEC2_SCIENCE_EXP_TYPES,
 )
-from jwst.stpipe.format_template import FormatTemplate
+from stpipe.format_template import FormatTemplate
 from jwst.associations.lib.member import Member
 from jwst.associations.lib.product_utils import prune_duplicate_associations
 

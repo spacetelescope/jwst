@@ -4,8 +4,10 @@ import sys
 import numpy as np
 import pytest
 
+from stpipe import crds_client
+
 from jwst import datamodels
-from jwst.stpipe import Step, Pipeline, crds_client
+from jwst.stpipe import Step, Pipeline
 
 from .steps import PipeWithReference, StepWithReference
 

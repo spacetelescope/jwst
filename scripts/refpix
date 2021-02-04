@@ -33,7 +33,7 @@ import sys
 from jwst import refpix
 from jwst.refpix import refpix_step
 
-from jwst.stpipe import cmdline
+from stpipe import cmdline
 
 if __name__ == '__main__':
     if '--version' in sys.argv:

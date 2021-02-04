@@ -6,8 +6,9 @@ import pytest
 
 from astropy.io import fits
 
+from stpipe import crds_client
+
 from .. import Step
-from ..import crds_client
 import crds
 
 TMP_DIR = None

@@ -7,9 +7,9 @@ from stdatamodels import DataModel
 from .. import __version_commit__, __version__
 from .. import datamodels
 
-from . import crds_client
-from .step import Step
-from .pipeline import Pipeline
+from stpipe import crds_client
+from stpipe import Step
+from stpipe import Pipeline
 from ..lib.suffix import remove_suffix
 
 
