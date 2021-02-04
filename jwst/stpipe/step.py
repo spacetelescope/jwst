@@ -757,7 +757,7 @@ class Step:
         # If the dataset is not an operable DataModel, log as such and return
         # an empty config object
         try:
-            model = cls.datamodels_open(dataset)
+            model = cls._datamodels_open(dataset)
         except (IOError, TypeError, ValueError):
             logger.warning('Input dataset is not a DataModel.')
             disable = True
@@ -1093,11 +1093,11 @@ class Step:
         gc.collect()
 
     @classmethod
-    def datamodels_open(cls, init, **kwargs):
+    def _datamodels_open(cls, init, **kwargs):
         """
         Wrapper around observatory-specific datamodels.open function.
         """
-        raise NotImplementedError(f"{cls.__name__} does not implement datamodels_open")
+        raise NotImplementedError(f"{cls.__name__} does not implement _datamodels_open")
 
     def open_model(self, init, **kwargs):
         """Open a datamodel
@@ -1118,9 +1118,9 @@ class Step:
         # Use the parent method if available, since this step
         # might be a hook that doesn't implement datamodels_open.
         if self.parent is None:
-            datamodels_open = self.datamodels_open
+            datamodels_open = self._datamodels_open
         else:
-            datamodels_open = self.parent.datamodels_open
+            datamodels_open = self.parent._datamodels_open
 
         return datamodels_open(self.make_input_path(init), **kwargs)
 

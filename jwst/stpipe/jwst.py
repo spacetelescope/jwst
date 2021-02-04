@@ -15,7 +15,7 @@ from ..lib.suffix import remove_suffix
 
 class JwstStep(Step):
     @classmethod
-    def datamodels_open(cls, init, **kwargs):
+    def _datamodels_open(cls, init, **kwargs):
         return datamodels.open(init, **kwargs)
 
     def load_as_level2_asn(self, obj):
