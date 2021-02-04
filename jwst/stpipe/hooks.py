@@ -31,7 +31,7 @@ Pre- and post-hooks
 """
 import types
 
-from . import Step
+from .step import Step
 from . import utilities
 
 def hook_from_string(step, type, num, command):

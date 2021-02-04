@@ -1,7 +1,6 @@
 """
 Step
 """
-import abc
 from collections.abc import Sequence
 from contextlib import contextmanager
 from functools import partial
@@ -35,7 +34,7 @@ from . import utilities
 from .format_template import FormatTemplate
 
 
-class Step(abc.ABC):
+class Step:
     """
     Step
     """
@@ -1093,12 +1092,12 @@ class Step(abc.ABC):
                 self.log.debug("An error has occurred: %s", error)
         gc.collect()
 
-    @abc.abstractclassmethod
+    @classmethod
     def datamodels_open(cls, init, **kwargs):
         """
         Wrapper around observatory-specific datamodels.open function.
         """
-        pass
+        raise NotImplementedError(f"{cls.__name__} does not implement datamodels_open")
 
     def open_model(self, init, **kwargs):
         """Open a datamodel
@@ -1116,7 +1115,14 @@ class Step(abc.ABC):
         datamodel : DataModel
             Object opened as a datamodel
         """
-        return self.datamodels_open(self.make_input_path(init), **kwargs)
+        # Use the parent method if available, since this step
+        # might be a hook that doesn't implement datamodels_open.
+        if self.parent is None:
+            datamodels_open = self.datamodels_open
+        else:
+            datamodels_open = self.parent.datamodels_open
+
+        return datamodels_open(self.make_input_path(init), **kwargs)
 
     def make_input_path(self, file_path):
         """Create an input path for a given file path
