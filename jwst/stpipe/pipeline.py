@@ -29,6 +29,7 @@
 """
 Pipeline
 """
+from collections.abc import Sequence
 from os.path import dirname, join
 
 from ..extern.configobj.configobj import Section, ConfigObj
@@ -37,8 +38,6 @@ from . import config_parser
 from . import crds_client
 from .log import log
 from .step import get_disable_crds_steppars, Step
-
-from ..datamodels import ModelContainer
 
 
 class Pipeline(Step):
@@ -278,7 +277,7 @@ class Pipeline(Step):
 
         No garbage collection.
         """
-        if self._is_container(model_or_container):
+        if isinstance(model_or_container, Sequence):
             # recurse on each contained model
             for contained_model in model_or_container:
                 self._precache_references_opened(contained_model)
@@ -296,7 +295,7 @@ class Pipeline(Step):
         ----------
         model :  `DataModel`
             Only a `DataModel` instance is allowed.
-            Cannot be a filename, ModelContainer, etc.
+            Cannot be a filename, Sequence, etc.
         """
         ovr_refs = {
             reftype: self.get_ref_override(reftype)
@@ -316,23 +315,6 @@ class Pipeline(Step):
             how = "Override" if reftype in ovr_refs else "Prefetch"
             self.log.info(f"{how} for {reftype.upper()} reference file is '{refpath}'.")
             crds_client.check_reference_open(refpath)
-
-    @classmethod
-    def _is_container(cls, input_file):
-        """Return True IFF `input_file` is a ModelContainer or successfully
-        loads as an association.
-        """
-        from ..associations import load_asn
-        if isinstance(input_file, ModelContainer):
-            return True
-
-        try:
-            with open(input_file, 'r') as input_file_fh:
-                load_asn(input_file_fh)
-        except Exception:
-            return False
-        else:
-            return True
 
     def get_pars(self, full_spec=True):
         """Retrieve the configuration parameters of a pipeline
