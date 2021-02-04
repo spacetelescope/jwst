@@ -113,7 +113,7 @@ def imaging_distortion(input_model, reference_files):
         distortion = dist.model
 
     # Apply differential velocity aberration (DVA) correction:
-    va_corr = pointing.va_corr_model(input_model, fast_corr=True)
+    va_corr = pointing.va_corr_model(input_model)
     if va_corr is not None:
         distortion |= va_corr
 
@@ -202,7 +202,7 @@ def lrs_distortion(input_model, reference_files):
         distortion = dist.model
 
     # Apply differential velocity aberration (DVA) correction:
-    va_corr = pointing.va_corr_model(input_model, fast_corr=True)
+    va_corr = pointing.va_corr_model(input_model)
     if va_corr is not None:
         distortion |= va_corr
 
@@ -494,7 +494,7 @@ def abl_to_v2v3l(input_model, reference_files):
     # used to read the wavelength range
     channels = [c + band for c in channel]
 
-    va_corr = pointing.va_corr_model(input_model, fast_corr=True)
+    va_corr = pointing.va_corr_model(input_model)
 
     with DistortionMRSModel(reference_files['distortion']) as dist:
         v23 = dict(zip(dist.abv2v3_model.channel_band, dist.abv2v3_model.model))

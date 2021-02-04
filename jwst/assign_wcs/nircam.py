@@ -133,7 +133,7 @@ def imaging_distortion(input_model, reference_files):
                 transform = Shift(col_offset) & Shift(row_offset) | transform
 
     # Apply differential velocity aberration (DVA) correction:
-    va_corr = pointing.va_corr_model(input_model, fast_corr=True)
+    va_corr = pointing.va_corr_model(input_model)
     if va_corr is not None:
         transform |= va_corr
 

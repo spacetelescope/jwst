@@ -126,7 +126,7 @@ def imaging(input_model, reference_files):
             oteip2v23 = f.model
 
         # Apply differential velocity aberration (DVA) correction:
-        va_corr = pointing.va_corr_model(input_model, fast_corr=True)
+        va_corr = pointing.va_corr_model(input_model)
         if va_corr is not None:
             oteip2v23 |= va_corr
 
@@ -1406,7 +1406,7 @@ def oteip_to_v23(reference_files, input_model):
         ote = f.model
 
     # Apply differential velocity aberration (DVA) correction:
-    va_corr = pointing.va_corr_model(input_model, fast_corr=True)
+    va_corr = pointing.va_corr_model(input_model)
     if va_corr is not None:
         ote |= va_corr
 
