@@ -1,4 +1,5 @@
-from jwst.stpipe.entry_points import get_steps
+from stpipe.entry_points import get_steps
+
 import jwst.pipeline
 import jwst.step
 import jwst

@@ -6,14 +6,18 @@ from os.path import (
 )
 
 import pytest
+
+from stpipe import crds_client
+from stpipe.extern.configobj.configobj import ConfigObj
+from stpipe import crds_client
+from stpipe import cmdline
+from stpipe.config import StepConfig
+from stpipe.config_parser import ValidationError
+
 import jwst
 from jwst import datamodels
-from jwst.extern.configobj.configobj import ConfigObj
 from jwst.refpix import RefPixStep
-from jwst.stpipe import Step, crds_client
-from jwst.stpipe import cmdline
-from jwst.stpipe.config import StepConfig
-from jwst.stpipe.config_parser import ValidationError
+from jwst.stpipe import Step
 
 from .steps import EmptyPipeline, MakeListPipeline, MakeListStep, ProperPipeline, AnotherDummyStep
 from .util import t_path

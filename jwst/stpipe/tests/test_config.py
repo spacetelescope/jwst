@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import pytest
 import asdf
 
-from jwst.stpipe.config import export_config, StepConfig, _validate_asdf
+from stpipe.config import export_config, StepConfig, _validate_asdf
 
 from .steps import MakeListPipeline, WithDefaultsStep
 

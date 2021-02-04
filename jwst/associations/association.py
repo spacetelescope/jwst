@@ -14,7 +14,7 @@ from .lib.constraint import (
     Constraint,
     meets_conditions
 )
-from ..stpipe.format_template import FormatTemplate
+from stpipe.format_template import FormatTemplate
 from .lib.ioregistry import IORegistry
 
 __all__ = ['Association']
