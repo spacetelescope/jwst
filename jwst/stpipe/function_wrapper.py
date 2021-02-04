@@ -29,7 +29,7 @@
 """
 A Step whose only purpose is to wrap an ordinary function.
 """
-from . import Step
+from .step import Step
 
 
 class FunctionWrapper(Step):
