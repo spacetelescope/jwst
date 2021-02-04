@@ -29,7 +29,7 @@
 import os
 import subprocess
 
-from . import Step
+from .step import Step
 
 
 class SystemCall(Step):
