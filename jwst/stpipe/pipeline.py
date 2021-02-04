@@ -189,7 +189,7 @@ class Pipeline(Step):
         log.debug('Retrieving all substep parameters from CRDS')
         #
         # Iterate over the steps in the pipeline
-        with cls.datamodels_open(dataset, asn_n_members=1) as model:
+        with cls._datamodels_open(dataset, asn_n_members=1) as model:
             for cal_step in cls.step_defs.keys():
                 cal_step_class = cls.step_defs[cal_step]
                 refcfg['steps'][cal_step] = cal_step_class.get_config_from_reference(model)
