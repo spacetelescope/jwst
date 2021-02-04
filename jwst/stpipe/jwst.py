@@ -1,11 +1,11 @@
 """
 JWST-specific Step and Pipeline base classes.
 """
+from collections.abc import Sequence
 from stdatamodels import DataModel
 
 from .. import __version_commit__, __version__
 from .. import datamodels
-from ..datamodels import ModelContainer
 
 from . import crds_client
 from .step import Step
@@ -98,7 +98,7 @@ class JwstStep(Step):
             status = 'SKIPPED'
             self.skip = True
 
-        if isinstance(datamodel, ModelContainer):
+        if isinstance(datamodel, Sequence):
             for model in datamodel:
                 model.meta.cal_step._instance[cal_step] = status
         else:
