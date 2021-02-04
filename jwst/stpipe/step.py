@@ -2,6 +2,7 @@
 Step
 """
 import abc
+from collections.abc import Sequence
 from contextlib import contextmanager
 from functools import partial
 import gc
@@ -32,8 +33,6 @@ from . import crds_client
 from . import log
 from . import utilities
 from .format_template import FormatTemplate
-
-from ..datamodels import ModelContainer
 
 
 class Step(abc.ABC):
@@ -424,9 +423,7 @@ class Step(abc.ABC):
                     step_result = hook_results
 
             # Update meta information
-            if not isinstance(
-                    step_result, (list, tuple, ModelContainer)
-            ):
+            if not isinstance(step_result, Sequence):
                 results = [step_result]
             else:
                 results = step_result
@@ -487,7 +484,7 @@ class Step(abc.ABC):
 
         Parameters
         ----------
-        result : stdatamodels.DataModel or jwst.datamodels.ModelContainer
+        result : stdatamodels.DataModel or collections.abc.Sequence
             One step result (potentially of many).
 
         reference_files_used : list of tuple
@@ -899,7 +896,7 @@ class Step(abc.ABC):
            not output_file:
             return
 
-        if isinstance(model, ModelContainer):
+        if isinstance(model, Sequence):
             save_model_func = partial(
                 self.save_model,
                 suffix=suffix,
