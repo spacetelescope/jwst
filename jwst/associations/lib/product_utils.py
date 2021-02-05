@@ -15,12 +15,12 @@ def sort_by_candidate(asns):
 
     Parameters
     ----------
-    asns: [Association[,...]]
+    asns : [Association[,...]]
         List of associations
 
     Returns
     -------
-    sorted_by_candidate: [Associations[,...]]
+    sorted_by_candidate : [Associations[,...]]
         New list of the associations sorted.
 
     Notes
@@ -39,11 +39,11 @@ def get_product_names(asns):
 
     Parameters
     ----------
-    asns: [`Association`[, ...]]
+    asns : [`Association`[, ...]]
 
     Returns
     -------
-    product_names, duplicates: set(str[, ...]), [str[,...]]
+    product_names, duplicates : set(str[, ...]), [str[,...]]
         2-tuple consisting of the set of product names and the list of duplicates.
     """
     product_names = [
@@ -67,19 +67,23 @@ def get_product_names(asns):
 def prune_duplicate_associations(asns):
     """Remove duplicate associations in favor of lower level versions
 
-    For Level 3 associations, multiple associations with the same membership, but different
-    levels, can be created. Remove duplicate associations of higher level.
+    Main use case: For Level 3 associations, multiple associations with the
+    same membership, but different levels, can be created. Remove duplicate
+    associations of higher level.
 
-    The assumption is that there is only one product per association, before merging.
+    The assumption is that there is only one product per association, before
+    merging.
 
     Parameters
     ----------
-    asns: [Association[,...]]
+    asns : [Association[,...]]
         Associations to prune
 
     Returns
-    pruned: [Association[,...]]
+    -------
+    pruned : [Association[,...]]
         Pruned list of associations
+
     """
     ordered_asns = sort_by_candidate(asns)
     pruned = list()
@@ -105,11 +109,8 @@ def prune_duplicate_associations(asns):
 def prune_duplicate_products(asns):
     """Remove duplicate products in favor of higher level versions
 
-    For Level 2 associations, since the products are always just the input
-    exposures, different candidates can be created for each exposure. Remove
-    those associations of lesser candidates.
-
-    The assumption is that there is only one product per association, before merging
+    The assumption is that there is only one product per association, before
+    merging
 
     Parameters
     ----------
@@ -119,6 +120,7 @@ def prune_duplicate_products(asns):
     Returns
     pruned: [Association[,...]]
         Pruned list of associations
+
     """
     product_names, dups = get_product_names(asns)
     if not dups:
