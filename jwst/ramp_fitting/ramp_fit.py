@@ -2895,7 +2895,9 @@ def fit_2_group(slope_s, intercept_s, variance_s, sig_intercept_s,
     if (len(wh_sat1[0]) > 0):
         data0_slice = data[0, :, :].reshape(npix)
         slope_s[wh_sat1] = data0_slice[wh_sat1]
-        variance_s[wh_sat1] = 0.
+        # set variance non-zero because calling function uses variance=0 to
+        # throw out bad results; this is not bad
+        variance_s[wh_sat1] = 1.
         sig_slope_s[wh_sat1] = 0.
         intercept_s[wh_sat1] = 0.
         sig_intercept_s[wh_sat1] = 0.
