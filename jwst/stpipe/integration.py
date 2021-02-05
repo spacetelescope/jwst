@@ -90,4 +90,3 @@ def get_steps():
         ("jwst.step.WfsCombineStep", None, False),
         ("jwst.step.WhiteLightStep", None, False),
     ]
-

@@ -7,7 +7,6 @@ from os.path import (
 
 import pytest
 
-from stpipe import crds_client
 from stpipe.extern.configobj.configobj import ConfigObj
 from stpipe import crds_client
 from stpipe import cmdline
