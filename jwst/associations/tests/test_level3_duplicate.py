@@ -22,7 +22,10 @@ def test_duplicate_names():
     rules = registry_level3_only(global_constraints=constrain_all_candidates)
 
     with pytest.warns(RuntimeWarning):
-        generate(pool, rules)
+        asns = generate(pool, rules)
+
+    # There should only be one association left.
+    assert len(asns) == 1
 
 
 
