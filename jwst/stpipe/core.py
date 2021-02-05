@@ -113,7 +113,5 @@ class JwstStep(Step):
 # JwstPipeline needs to inherit from Pipeline, but also
 # be a subclass of JwstStep so that it will pass checks
 # when constructing a pipeline using JwstStep class methods.
-# It's important that Pipeline occur first so that it
-# takes precedence in the resolution order.
 class JwstPipeline(Pipeline, JwstStep):
     pass
