@@ -4,7 +4,6 @@ import stpipe
 
 from jwst import datamodels
 from jwst.ami import AmiAnalyzeStep
-import jwst
 
 
 def test_ami_analyze_calints_fail():
