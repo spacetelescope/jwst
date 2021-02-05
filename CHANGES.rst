@@ -46,6 +46,11 @@ srctype
 - Changed default SRCTYPE for non-primary NIRSpec slits in a FIXEDSLIT
   exposure to 'EXTENDED' rather than 'POINT' [#5671]
 
+stpipe
+------
+
+- Make jwst.stpipe independent of the rest of the jwst package and move
+  core code to spacetelescope/stpipe. [#5695, #5720]
 
 0.18.3 (2021-01-25)
 ===================
