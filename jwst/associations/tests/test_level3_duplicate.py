@@ -11,19 +11,19 @@ from .. import (AssociationPool, generate)
 from ..main import (Main, constrain_on_candidates)
 
 
-def test_duplicate_names():
-    """Ensure errors are generated for duplicate names
-
+def test_duplicate_names(caplog):
+    """
     For Level 3 association, there should be no association
-    with the same product name. Generation should generate
-    an `AssociationDuplicateProductName` error in this situation.
+    with the same product name. Generation should produce
+    log messages indicating when duplicate names have been found.
     """
     pool = AssociationPool.read(t_path('data/jw00632_dups.csv'))
     constrain_all_candidates = constrain_on_candidates(None)
     rules = registry_level3_only(global_constraints=constrain_all_candidates)
 
-    with pytest.raises(AssociationDuplicateProductName):
-        asns = generate(pool, rules)
+    generate(pool, rules)
+
+    assert 'duplicate product names' in caplog.text
 
 
 def test_duplicate_generate():
