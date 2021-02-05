@@ -25,11 +25,6 @@ lib
 
 - Make EngDB_Value public for JSDP use [#5669]
 
-ramp_fitting
-------------
-
-- Update documentation to define optimal weighting algorithm [#5682]
-
 - Update code in ``set_velocity_aberration.py`` functions based on Colin Cox
   suggestions: simplify DVA scale computation and improve apparent ``RA`` and
   ``DEC`` aberrated position computation. Also, attributes ``ra_offset`` and
@@ -39,6 +34,15 @@ ramp_fitting
   ``VA_RA`` and ``VA_DEC``. [#5666]
 
 - Make get_wcs_values_from_siaf public for JSDP use [#5669]
+
+ramp_fitting
+------------
+
+- Fixed bug in handling NGROUPS=2 exposures for pixels that saturate in group 2.
+  Proper slope, err, and other quantities are now computed from the good data
+  in group 1. [#5700]
+
+- Update documentation to define optimal weighting algorithm [#5682]
 
 srctype
 -------
