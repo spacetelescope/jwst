@@ -11,7 +11,7 @@ from .. import (AssociationPool, generate)
 from ..main import (Main, constrain_on_candidates)
 
 
-def test_duplicate_names(caplog):
+def test_duplicate_names():
     """
     For Level 3 association, there should be no association
     with the same product name. Generation should produce
@@ -21,9 +21,9 @@ def test_duplicate_names(caplog):
     constrain_all_candidates = constrain_on_candidates(None)
     rules = registry_level3_only(global_constraints=constrain_all_candidates)
 
-    generate(pool, rules)
+    with pytest.warns(RuntimeWarning):
+        generate(pool, rules)
 
-    assert 'duplicate product names' in caplog.text
 
 
 def test_duplicate_generate():

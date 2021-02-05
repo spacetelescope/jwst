@@ -3,6 +3,7 @@
 from collections import defaultdict, Counter
 import copy
 import logging
+import warnings
 
 from .diff import compare_product_membership
 
@@ -125,6 +126,10 @@ def prune_duplicate_products(asns):
     product_names, dups = get_product_names(asns)
     if not dups:
         return asns
+
+    warnings.warn(f'Duplicate associations do exist: {dups}'
+                  '\nPruning to leave only one of any duplicate.',
+                  RuntimeWarning)
 
     pruned = copy.copy(asns)
     to_prune = defaultdict(list)
