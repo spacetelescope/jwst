@@ -5,6 +5,7 @@ import copy
 import logging
 import warnings
 
+from .. import config
 from .diff import compare_product_membership
 
 logger = logging.getLogger(__name__)
@@ -127,9 +128,11 @@ def prune_duplicate_products(asns):
     if not dups:
         return asns
 
-    warnings.warn(f'Duplicate associations do exist: {dups}'
-                  '\nPruning to leave only one of any duplicate.',
-                  RuntimeWarning)
+    warnings.warn(f'Duplicate associations exist: {dups}', RuntimeWarning)
+    if config.DEBUG:
+        warnings.warn('Duplicate associations will have "dupXXX" prepended to their names, where "XXX" is a 3-digit sequence.')
+    else:
+        warnings.warn('Duplicates will be removed, leaving only one of each.', RuntimeWarning)
 
     pruned = copy.copy(asns)
     to_prune = defaultdict(list)
@@ -138,9 +141,15 @@ def prune_duplicate_products(asns):
         if product_name in dups:
             to_prune[product_name].append(asn)
 
+    dup_count = 0
     for product_name, asns_to_prune in to_prune.items():
         asns_to_prune = sort_by_candidate(asns_to_prune)
         for asn in asns_to_prune[1:]:
-            pruned.remove(asn)
+            if config.DEBUG:
+                dup_count += 1
+                product_name = f'dup{dup_count:03d}_' + asn['products'][0]['name']
+                asn['products'][0]['name'] = product_name
+            else:
+                pruned.remove(asn)
 
     return pruned
