@@ -18,21 +18,45 @@ class FileTable():
         self.FileMap['MIRI']['1']['short'] = []
         self.FileMap['MIRI']['1']['medium'] = []
         self.FileMap['MIRI']['1']['long'] = []
+        self.FileMap['MIRI']['1']['short-medium'] = []
+        self.FileMap['MIRI']['1']['short-long'] = []
+        self.FileMap['MIRI']['1']['medium-short'] = []
+        self.FileMap['MIRI']['1']['medium-long'] = []
+        self.FileMap['MIRI']['1']['long-short'] = []
+        self.FileMap['MIRI']['1']['long-medium'] = []
 
         self.FileMap['MIRI']['2'] = {}
         self.FileMap['MIRI']['2']['short'] = []
         self.FileMap['MIRI']['2']['medium'] = []
         self.FileMap['MIRI']['2']['long'] = []
+        self.FileMap['MIRI']['2']['short-medium'] = []
+        self.FileMap['MIRI']['2']['short-long'] = []
+        self.FileMap['MIRI']['2']['medium-short'] = []
+        self.FileMap['MIRI']['2']['medium-long'] = []
+        self.FileMap['MIRI']['2']['long-short'] = []
+        self.FileMap['MIRI']['2']['long-medium'] = []
 
         self.FileMap['MIRI']['3'] = {}
         self.FileMap['MIRI']['3']['short'] = []
         self.FileMap['MIRI']['3']['medium'] = []
         self.FileMap['MIRI']['3']['long'] = []
+        self.FileMap['MIRI']['3']['short-medium'] = []
+        self.FileMap['MIRI']['3']['short-long'] = []
+        self.FileMap['MIRI']['3']['medium-short'] = []
+        self.FileMap['MIRI']['3']['medium-long'] = []
+        self.FileMap['MIRI']['3']['long-short'] = []
+        self.FileMap['MIRI']['3']['long-medium'] = []
 
         self.FileMap['MIRI']['4'] = {}
         self.FileMap['MIRI']['4']['short'] = []
         self.FileMap['MIRI']['4']['medium'] = []
         self.FileMap['MIRI']['4']['long'] = []
+        self.FileMap['MIRI']['4']['short-medium'] = []
+        self.FileMap['MIRI']['4']['short-long'] = []
+        self.FileMap['MIRI']['4']['medium-short'] = []
+        self.FileMap['MIRI']['4']['medium-long'] = []
+        self.FileMap['MIRI']['4']['long-short'] = []
+        self.FileMap['MIRI']['4']['long-medium'] = []
 
         self.FileMap['NIRSPEC'] = {}
         self.FileMap['NIRSPEC']['prism'] = {}

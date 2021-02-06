@@ -1,6 +1,11 @@
 0.18.4 (unreleased)
 ===================
 
+cube_build
+----------
+
+- Added support for cross-dichroic configurations
+
 datamodels
 ----------
 

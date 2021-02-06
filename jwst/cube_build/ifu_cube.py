@@ -2345,6 +2345,84 @@ class IFUCubeData():
                 ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4C'
                 ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4C'
 
+            if self.list_par1[0] == '1' and self.list_par2[0] == 'short-medium':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL1A'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE1A'
+            if self.list_par1[0] == '2' and self.list_par2[0] == 'short-medium':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL2B'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE2B'
+            if self.list_par1[0] == '3' and self.list_par2[0] == 'short-medium':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL3B'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE3B'
+            if self.list_par1[0] == '4' and self.list_par2[0] == 'short-medium':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4A'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4A'
+
+            if self.list_par1[0] == '1' and self.list_par2[0] == 'short-long':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL1A'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE1A'
+            if self.list_par1[0] == '2' and self.list_par2[0] == 'short-long':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL2C'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE2C'
+            if self.list_par1[0] == '3' and self.list_par2[0] == 'short-long':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL3C'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE3C'
+            if self.list_par1[0] == '4' and self.list_par2[0] == 'short-long':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4A'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4A'
+
+            if self.list_par1[0] == '1' and self.list_par2[0] == 'medium-short':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL1B'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE1B'
+            if self.list_par1[0] == '2' and self.list_par2[0] == 'medium-short':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL2A'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE2A'
+            if self.list_par1[0] == '3' and self.list_par2[0] == 'medium-short':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL3A'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE3A'
+            if self.list_par1[0] == '4' and self.list_par2[0] == 'medium-short':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4B'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4B'
+
+            if self.list_par1[0] == '1' and self.list_par2[0] == 'medium-long':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL1B'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE1B'
+            if self.list_par1[0] == '2' and self.list_par2[0] == 'medium-long':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL2C'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE2C'
+            if self.list_par1[0] == '3' and self.list_par2[0] == 'medium-long':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL3C'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE3C'
+            if self.list_par1[0] == '4' and self.list_par2[0] == 'medium-long':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4B'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4B'
+
+            if self.list_par1[0] == '1' and self.list_par2[0] == 'long-short':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL1C'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE1C'
+            if self.list_par1[0] == '2' and self.list_par2[0] == 'long-short':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL2A'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE2A'
+            if self.list_par1[0] == '3' and self.list_par2[0] == 'long-short':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL3A'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE3A'
+            if self.list_par1[0] == '4' and self.list_par2[0] == 'long-short':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4C'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4C'
+
+            if self.list_par1[0] == '1' and self.list_par2[0] == 'long-medium':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL1C'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE1C'
+            if self.list_par1[0] == '2' and self.list_par2[0] == 'long-medium':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL2B'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE2B'
+            if self.list_par1[0] == '3' and self.list_par2[0] == 'long-medium':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL3B'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE3B'
+            if self.list_par1[0] == '4' and self.list_par2[0] == 'long-medium':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4C'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4C'
+
             if self.instrument == 'NIRSPEC':
                 ifucube_model.meta.wcsinfo.cunit1 = 'meter'
                 ifucube_model.meta.wcsinfo.cunit2 = 'meter'
