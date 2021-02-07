@@ -2,6 +2,7 @@
 import inspect
 from os import path
 import pytest
+import re
 
 from .helpers import (
     t_path
@@ -31,7 +32,9 @@ def test_asn_name(dms_asns):
     """Test for generating an associaton name"""
     asns, _ = dms_asns
     asn = asns[0]
-    assert asn.asn_name == 'jwnoprogram-a3001_none_002_asn'
+
+    regex = re.compile(r'jwnoprogram-a3001_none_\d\d\d_asn')
+    assert regex.match(asn.asn_name)
 
 
 def test_asn_name_override(dms_asns):
