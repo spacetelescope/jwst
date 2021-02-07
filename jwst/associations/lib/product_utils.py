@@ -147,8 +147,7 @@ def prune_duplicate_products(asns):
         for asn in asns_to_prune[1:]:
             if config.DEBUG:
                 dup_count += 1
-                product_name = f'dup{dup_count:03d}_' + asn['products'][0]['name']
-                asn['products'][0]['name'] = product_name
+                asn.asn_name = f'dup{dup_count:03d}_{asn.asn_name}'
             else:
                 pruned.remove(asn)
 
