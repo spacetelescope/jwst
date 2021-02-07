@@ -27,6 +27,21 @@ def dms_asns(dms_registry):
     return result
 
 
+def test_asn_name(dms_asns):
+    """Test for generating an associaton name"""
+    asns, _ = dms_asns
+    asn = asns[0]
+    assert asn.asn_name == 'jwnoprogram-a3001_none_002_asn'
+
+
+def test_asn_name_override(dms_asns):
+    """Test for generating an associaton name"""
+    asns, _ = dms_asns
+    asn = asns[0]
+    asn.asn_name = 'new_name'
+    assert asn.asn_name == 'new_name'
+
+
 def test_registry(dms_registry):
     """Test basic registry creation and usage"""
     assert len(dms_registry) == 1
