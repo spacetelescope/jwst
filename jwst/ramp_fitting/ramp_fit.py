@@ -747,6 +747,10 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
             median_diffs_2d[ rlo:rhi, : ] += nan_med
 
             # Calculate the slope of each segment
+            # note that the name "opt_res", which stands for "optional results",
+            # is deceiving; this in fact contains all the per-integration and
+            # per-segment results that will eventually be used to compute the
+            # final slopes, sigmas, etc. for the main (non-optional) products
             t_dq_cube, inv_var, opt_res, f_max_seg, num_seg = \
                  calc_slope(data_sect, gdq_sect, frame_time, opt_res, save_opt,
                             rn_sect, gain_sect, max_seg, ngroups, weighting,
@@ -1744,7 +1748,10 @@ def calc_slope(data_sect, gdq_sect, frame_time, opt_res, save_opt, rn_sect,
         integration time
 
     opt_res : OptRes object
-        contains quantities related to fitting for optional output
+        Contains all quantities derived from fitting all segments in all
+        pixels in all integrations, which will eventually be used to compute
+        per-integration and per-exposure quantities for all pixels. It's
+        also used to populate the optional product, when requested.
 
     save_opt : boolean
        save optional fitting results
@@ -1780,7 +1787,8 @@ def calc_slope(data_sect, gdq_sect, frame_time, opt_res, save_opt, rn_sect,
         values of 1/variance for good pixels
 
     opt_res : OptRes object
-        contains quantities related to fitting for optional output
+        contains all quantities related to fitting for use in computing final
+        slopes, variances, etc. and is used to populate the optional output
 
     f_max_seg : int
         actual maximum number of segments within a ramp, updated here based on
@@ -1943,7 +1951,8 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
         numbers of segments for good pixels
 
     opt_res : OptRes object
-        optional fitting results to output
+        all fitting quantities, used to compute final results
+        and to populate optional output product
 
     save_opt : boolean
        save optional fitting results
@@ -1981,6 +1990,7 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
 
     ramp_mask_sum = mask_2d_init.sum(axis=0)
 
+    # Compute fit quantities for the next segment of all pixels
     # Each returned array below is 1D, for all npix pixels for current segment
     slope, intercept, variance, sig_intercept, sig_slope = fit_lines(data_sect,
               mask_2d, rn_sect, gain_sect, ngroups, weighting)
@@ -2895,7 +2905,9 @@ def fit_2_group(slope_s, intercept_s, variance_s, sig_intercept_s,
     if (len(wh_sat1[0]) > 0):
         data0_slice = data[0, :, :].reshape(npix)
         slope_s[wh_sat1] = data0_slice[wh_sat1]
-        variance_s[wh_sat1] = 0.
+        # set variance non-zero because calling function uses variance=0 to
+        # throw out bad results; this is not bad
+        variance_s[wh_sat1] = 1.
         sig_slope_s[wh_sat1] = 0.
         intercept_s[wh_sat1] = 0.
         sig_intercept_s[wh_sat1] = 0.

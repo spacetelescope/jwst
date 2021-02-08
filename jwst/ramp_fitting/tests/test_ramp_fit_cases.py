@@ -44,8 +44,8 @@ def test_pix_0():
     o_true = [1.0117551, 4.874572, 0.0020202, 0.00647973,
               15.911023, 27.789335, 4.882449, 13841.038 ]
 
-    assert_pri( p_true, new_mod )
-    assert_opt( o_true, opt_mod )
+    assert_pri( p_true, new_mod, 0 )
+    assert_opt( o_true, opt_mod, 0 )
 
 
 def test_pix_1():
@@ -77,8 +77,8 @@ def test_pix_1():
     o_true = [ 1.9, 56.870003, 0.02636364, 1.0691562, -3., 56.870003,
               -3.999998, 0.83321977]
 
-    assert_pri( p_true, new_mod )
-    assert_opt( o_true, opt_mod )
+    assert_pri( p_true, new_mod, 0 )
+    assert_opt( o_true, opt_mod, 0 )
 
 
 def test_pix_2():
@@ -114,8 +114,8 @@ def test_pix_2():
               [ 12.712313, 0.83321977, 0.83321977],   # weights
              ]
 
-    assert_pri( p_true, new_mod )
-    assert_opt( o_true, opt_mod )
+    assert_pri( p_true, new_mod, 0 )
+    assert_opt( o_true, opt_mod, 0 )
 
 
 def test_pix_3():
@@ -151,8 +151,8 @@ def test_pix_3():
               [ 4.2576841e+03, 8.458062e-01],
              ]
 
-    assert_pri( p_true, new_mod )
-    assert_opt( o_true, opt_mod )
+    assert_pri( p_true, new_mod, 0 )
+    assert_opt( o_true, opt_mod, 0 )
 
 
 def test_pix_4():
@@ -180,8 +180,8 @@ def test_pix_4():
     # Set truth values for OPTIONAL results:
     o_true = [ 1.5, 0., 0.02727273, 1.0691562, 0., 0., 0., 0.8318386]
 
-    assert_pri( p_true, new_mod )
-    assert_opt( o_true, opt_mod )
+    assert_pri( p_true, new_mod, 0 )
+    assert_opt( o_true, opt_mod, 0 )
 
 
 def test_pix_5():
@@ -218,8 +218,8 @@ def test_pix_5():
               [ 78.34764, 855.78046 ]
              ]
 
-    assert_pri( p_true, new_mod )
-    assert_opt( o_true, opt_mod )
+    assert_pri( p_true, new_mod, 0 )
+    assert_opt( o_true, opt_mod, 0 )
 
 
 def test_pix_6():
@@ -255,8 +255,8 @@ def test_pix_6():
               [ 8.4580624e-01, 2.0433204e+03 ]
              ]
 
-    assert_pri( p_true, new_mod )
-    assert_opt( o_true, opt_mod )
+    assert_pri( p_true, new_mod, 0 )
+    assert_opt( o_true, opt_mod, 0 )
 
 
 def test_pix_7():
@@ -284,8 +284,8 @@ def test_pix_7():
     o_true = [ 1.0757396, 6.450687, 0.0025974, 0.01272805, 14.504951,
                27.842508, 4.2426033, 4257.684 ]
 
-    assert_pri( p_true, new_mod )
-    assert_opt( o_true, opt_mod )
+    assert_pri( p_true, new_mod, 0 )
+    assert_opt( o_true, opt_mod, 0 )
 
 
 def test_pix_8():
@@ -314,8 +314,8 @@ def test_pix_8():
     o_true = [ 1.0101178, 12.385354, 0.00363636, 0.03054732, 16.508228,
                 40.81897, 4.898822, 855.78046 ]
 
-    assert_pri( p_true, new_mod )
-    assert_opt( o_true, opt_mod )
+    assert_pri( p_true, new_mod, 0 )
+    assert_opt( o_true, opt_mod, 0 )
 
 
 def test_pix_9():
@@ -352,8 +352,8 @@ def test_pix_9():
               [ 0.84580624, 297.23172, 0.84580624]
              ]
 
-    assert_pri( p_true, new_mod )
-    assert_opt( o_true, opt_mod )
+    assert_pri( p_true, new_mod, 0 )
+    assert_opt( o_true, opt_mod, 0 )
 
 
 def test_pix_10():
@@ -390,8 +390,8 @@ def test_pix_10():
               [ 0.84580624, 13.091425, 297.23172 ]
              ]
 
-    assert_pri( p_true, new_mod )
-    assert_opt( o_true, opt_mod )
+    assert_pri( p_true, new_mod, 0 )
+    assert_opt( o_true, opt_mod, 0 )
 
 
 def test_pix_11():
@@ -419,8 +419,61 @@ def test_pix_11():
     o_true = [1., 56.870003, 0.01818182, 1.0691562, 15., 56.870003, 5.,
               0.84580624 ]
 
-    assert_pri( p_true, new_mod )
-    assert_opt( o_true, opt_mod )
+    assert_pri( p_true, new_mod, 0 )
+    assert_opt( o_true, opt_mod, 0 )
+
+
+def test_pix_12():
+    """
+    CASE NGROUPS=2: the segment has a good 1st group and a saturated 2nd group,
+      so is a single group. Group 1's data will be used in the 'fit'.
+    """
+
+    ngroups, nints, nrows, ncols, deltatime, gain, readnoise = set_scalars()
+    ngroups = 2
+    nints = 1
+    ncols = 2
+    RampMod, RnMod, GMod, pixdq, groupdq, err = create_mod_arrays( ngroups,
+                           nints, nrows, ncols, deltatime, gain, readnoise )
+
+    # Populate pixel-specific SCI and GROUPDQ arrays
+    RampMod.data[0,:,0,0] = np.array([ 15., 59025.], dtype=np.float32)
+    RampMod.groupdq[0,:,0,0] = np.array([0, 2])
+    RampMod.data[0,:,0,1] = np.array([ 61000., 61000.], dtype=np.float32)
+    RampMod.groupdq[0,:,0,1] = np.array([2, 2])
+
+    # call ramp_fit
+    new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit( RampMod, 1024*300., True,
+                                                RnMod, GMod, 'OLS', 'optimal', 'none')
+    # Set truth values for PRIMARY results for pixel 1:
+    # slope, dq, err, var_p, var_r
+    # slope = group1 / deltatime = 15 / 10 = 1.5
+    # dq = 2 (saturation) because group2 is saturated, but DO_NOT_USE is *not* set
+    p_true = [1.5, 2, 1.047105, 0.027273, 1.069156]
+
+    # Set truth values for OPTIONAL results:
+    # slope, sig_slope, var_p, var_r, yint, sig_yint, pedestal, weights
+    # slope = group1 / deltatime = 15 / 10 = 1.5
+    # sig_slope, yint, sig_yint, and pedestal are all zero, because only 1 good group
+    o_true = [1.5, 0., 0.027273, 1.069156, 0., 0., 0., 0.831839]
+
+    assert_pri( p_true, new_mod, 0 )
+    assert_opt( o_true, opt_mod, 0 )
+
+    # Set truth values for PRIMARY results for pixel 2:
+    # slope, dq, err, var_p, var_r
+    # slope = zero, because no good data
+    # dq = 3 (saturation + do_not_use) because both groups are saturated
+    p_true = [0., 3, 0., 0., 0.]
+
+    # Set truth values for OPTIONAL results:
+    # slope, sig_slope, var_p, var_r, yint, sig_yint, pedestal, weights
+    # all values zero, because no good data
+    o_true = [0., 0., 0., 0., 0., 0., 0., 0.]
+
+    assert_pri( p_true, new_mod, 1 )
+    assert_opt( o_true, opt_mod, 1 )
+
 
 #-------------- start of MIRI tests: all have only a single segment-----
 def test_miri_0():
@@ -448,8 +501,8 @@ def test_miri_0():
     o_true = [1.025854, 6.450687, 0.0025974, 0.01272805, 26.439266, 27.842508,
               14.74146, 4257.684]
 
-    assert_pri( p_true, new_mod )
-    assert_opt( o_true, opt_mod )
+    assert_pri( p_true, new_mod, 0 )
+    assert_opt( o_true, opt_mod, 0 )
 
 
 def test_miri_1():
@@ -478,8 +531,8 @@ def test_miri_1():
     o_true = [ 1.1996487, 6.450687, 0.0025974, 0.01272805, 126.110214,
                27.842508, 113.00351, 4257.684 ]
 
-    assert_pri( p_true, new_mod )
-    assert_opt( o_true, opt_mod )
+    assert_pri( p_true, new_mod, 0 )
+    assert_opt( o_true, opt_mod, 0 )
 
 
 def test_miri_2():
@@ -508,8 +561,8 @@ def test_miri_2():
     o_true = [ 1.025854, 6.450687, 0.0025974, 0.01272805, 26.439266, 27.842508,
                14.74146, 4257.684]
 
-    assert_pri( p_true, new_mod )
-    assert_opt( o_true, opt_mod )
+    assert_pri( p_true, new_mod, 0 )
+    assert_opt( o_true, opt_mod, 0 )
 
 
 def test_miri_3():
@@ -538,26 +591,26 @@ def test_miri_3():
     o_true = [ 1.025854, 6.450687, 0.0025974, 0.01272805, 26.439266,
               27.842508, 14.74146, 4257.684]
 
-    assert_pri( p_true, new_mod )
-    assert_opt( o_true, opt_mod )
+    assert_pri( p_true, new_mod, 0 )
+    assert_opt( o_true, opt_mod, 0 )
 
 
-def assert_pri( p_true, new_mod ):
+def assert_pri( p_true, new_mod, pix ):
     """
     Compare true and fit values of primary output for extensions
     SCI, DQ, ERR, VAR_POISSSON, VAR_RNOISE.
     """
 
-    npt.assert_allclose( new_mod.data,        p_true[0], atol=2E-5, rtol=2e-5 )
-    npt.assert_allclose( new_mod.dq,          p_true[1], atol=1E-1 )
-    npt.assert_allclose( new_mod.err,         p_true[2], atol=2E-5, rtol=2e-5 )
-    npt.assert_allclose( new_mod.var_poisson, p_true[3], atol=2E-5, rtol=2e-5 )
-    npt.assert_allclose( new_mod.var_rnoise,  p_true[4], atol=2E-5, rtol=2e-5 )
+    npt.assert_allclose( new_mod.data[0,pix],        p_true[0], atol=2E-5, rtol=2e-5 )
+    npt.assert_allclose( new_mod.dq[0,pix],          p_true[1], atol=1E-1 )
+    npt.assert_allclose( new_mod.err[0,pix],         p_true[2], atol=2E-5, rtol=2e-5 )
+    npt.assert_allclose( new_mod.var_poisson[0,pix], p_true[3], atol=2E-5, rtol=2e-5 )
+    npt.assert_allclose( new_mod.var_rnoise[0,pix],  p_true[4], atol=2E-5, rtol=2e-5 )
 
     return None
 
 
-def assert_opt( o_true, opt_mod ):
+def assert_opt( o_true, opt_mod, pix ):
     """
     Compare true and fit values of optional output for extensions SLOPE,
     SIGSLOPE, VAR_POISSSON, VAR_RNOISE, YINT, SIGYINT, PEDESTAL, and WEIGHTS.
@@ -565,14 +618,14 @@ def assert_opt( o_true, opt_mod ):
     [0,:,0,0]
     """
 
-    opt_slope = opt_mod.slope[0,:,0,0]
-    opt_sigslope = opt_mod.sigslope[0,:,0,0]
-    opt_var_poisson = opt_mod.var_poisson[0,:,0,0]
-    opt_var_rnoise = opt_mod.var_rnoise[0,:,0,0]
-    opt_yint = opt_mod.yint[0,:,0,0]
-    opt_sigyint = opt_mod.sigyint[0,:,0,0]
-    opt_pedestal = opt_mod.pedestal[:,0,0]
-    opt_weights = opt_mod.weights[0,:,0,0]
+    opt_slope = opt_mod.slope[0,:,0,pix]
+    opt_sigslope = opt_mod.sigslope[0,:,0,pix]
+    opt_var_poisson = opt_mod.var_poisson[0,:,0,pix]
+    opt_var_rnoise = opt_mod.var_rnoise[0,:,0,pix]
+    opt_yint = opt_mod.yint[0,:,0,pix]
+    opt_sigyint = opt_mod.sigyint[0,:,0,pix]
+    opt_pedestal = opt_mod.pedestal[:,0,pix]
+    opt_weights = opt_mod.weights[0,:,0,pix]
 
     npt.assert_allclose( opt_slope, o_true[0], atol=2E-5, rtol=2e-5 )
     npt.assert_allclose( opt_sigslope, o_true[1], atol=2E-5, rtol=2e-5 )
