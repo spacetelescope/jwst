@@ -19,6 +19,8 @@ datatype:
   datatype: uint32
 - name: BACKGROUND
   datatype: float64
+- name: BACKGROUND_SIGCLIP
+  datatype: float64
 - name: BERROR
   datatype: float64
 - name: NPIXELS
