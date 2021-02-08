@@ -18,6 +18,7 @@ from gwcs import WCS
 from gwcs.wcstools import wcs_from_fiducial, grid_from_bounding_box
 from gwcs import utils as gwutils
 from stdatamodels import DataModel
+from stpipe.exceptions import StpipeExitException
 
 from . import pointing
 from ..lib.catalog_utils import SkyObject
@@ -40,9 +41,7 @@ class MSAFileError(Exception):
         super(MSAFileError, self).__init__(message)
 
 
-# This exception must subclass SystemExit and specify return code
-# 64 so that code calling strun can handle the situation accordingly.
-class NoDataOnDetectorError(SystemExit):
+class NoDataOnDetectorError(StpipeExitException):
     """WCS solution indicates no data on detector
 
     When WCS solutions are available, the solutions indicate that no data
@@ -56,16 +55,11 @@ class NoDataOnDetectorError(SystemExit):
     """
 
     def __init__(self, message=None):
-        super().__init__(64)
         if message is None:
             message = 'WCS solution indicate that no science is in the data.'
-        self._message = message
-
-    def __repr__(self):
-        return f"NoDataOnDetectorError({repr(self._message)})"
-
-    def __str__(self):
-        return self._message
+        # The first argument instructs stpipe CLI tools to exit with status
+        # 64 when this exception is raised.
+        super().__init__(64, message)
 
 
 def _domain_to_bounding_box(domain):
