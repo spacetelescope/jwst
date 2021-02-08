@@ -18,7 +18,6 @@ from gwcs import WCS
 from gwcs.wcstools import wcs_from_fiducial, grid_from_bounding_box
 from gwcs import utils as gwutils
 from stdatamodels import DataModel
-from stpipe.exceptions import NoDataOnDetectorError
 
 from . import pointing
 from ..lib.catalog_utils import SkyObject
@@ -39,6 +38,34 @@ class MSAFileError(Exception):
 
     def __init__(self, message):
         super(MSAFileError, self).__init__(message)
+
+
+# This exception must subclass SystemExit and specify return code
+# 64 so that code calling strun can handle the situation accordingly.
+class NoDataOnDetectorError(SystemExit):
+    """WCS solution indicates no data on detector
+
+    When WCS solutions are available, the solutions indicate that no data
+    will be present, raise this exception.
+
+    Specific example is for NIRSpec and the NRS2 detector. For various
+    configurations of the MSA, it is possible that no dispersed spectra will
+    appear on NRS2. This is not a failure of calibration, but needs to be
+    called out in order for the calling architecture to be aware of this.
+
+    """
+
+    def __init__(self, message=None):
+        super().__init__(64)
+        if message is None:
+            message = 'WCS solution indicate that no science is in the data.'
+        self._message = message
+
+    def __repr__(self):
+        return f"NoDataOnDetectorError({repr(self._message)})"
+
+    def __str__(self):
+        return self._message
 
 
 def _domain_to_bounding_box(domain):
