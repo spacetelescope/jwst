@@ -1,6 +1,11 @@
 0.18.4 (unreleased)
 ===================
 
+associations
+------------
+
+- Warn about duplicate product names and do not write duplicate associations [#5721]
+
 datamodels
 ----------
 
