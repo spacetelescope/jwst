@@ -12,7 +12,7 @@ from jwst import datamodels
 from jwst.assign_wcs import AssignWcsStep
 from jwst.background import BackgroundStep
 from jwst.background.tests import data as data_directory
-from jwst.stpipe.step import Step
+from jwst.stpipe import Step
 from jwst.background.background_sub import robust_mean, mask_from_source_cat, no_NaN
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 

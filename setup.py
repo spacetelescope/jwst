@@ -31,6 +31,7 @@ package_data = {
     "jwst.transforms": ["schemas/stsci.edu/jwst_pipeline/*.yaml"],
     # Include C extensions
     "jwst.grism_lib": ["*.c"],
+    "jwst.stpipe.resources": ["schemas/*.yaml"],
 }
 
 setup(

@@ -1,11 +1,12 @@
 """Master Background Pipeline for applying Master Background to NIRSpec Slit-like data"""
+from stpipe.step import preserve_step_pars
+
 from . import nirspec_utils
 from ..barshadow import barshadow_step
 from .. import datamodels
 from ..flatfield import flat_field_step
 from ..pathloss import pathloss_step
 from ..photom import photom_step
-from ..stpipe.step import preserve_step_pars
 from ..stpipe import Pipeline
 
 __all__ = ['MasterBackgroundNrsSlitsStep']

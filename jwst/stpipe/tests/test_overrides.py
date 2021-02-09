@@ -3,12 +3,13 @@
 import numpy as np
 import pytest
 
+from stpipe.config_parser import ValidationError
+
 from jwst.datamodels import RampModel
 from jwst.datamodels.mask import MaskModel
 
 from jwst.dq_init import DQInitStep
 
-from jwst.stpipe.config_parser import ValidationError
 
 # Tests derived from example code from Jira JP-345
 # Tests are for override functionality only,  not DQ init.

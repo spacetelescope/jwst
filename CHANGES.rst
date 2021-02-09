@@ -1,6 +1,11 @@
 0.18.4 (unreleased)
 ===================
 
+associations
+------------
+
+- Warn about duplicate product names and do not write duplicate associations [#5721]
+
 datamodels
 ----------
 
@@ -10,21 +15,22 @@ datamodels
 - Added extr_x and extr_y to multispec datamodel. These values are center
   of extraction region for IFU data [#5685]
 
+- Added '1LOS' to PATTTYPE enum list in core.schema datamodel [#5728]
+
 extract_1d
 ----------
 
 - Adding writing SRCTYPE, EXTR_X, and EXTR_Y to extracted spec for IFU data [#5685]
+
 - Only update the output x1d data using the PRIMARY input data. Prevents SCI data in x1d data [#5694]
+
+- Fixed bug in background region fitting for image columns/rows that have zero weight
+  for all pixels [#5696]
 
 lib
 ---
 
 - Make EngDB_Value public for JSDP use [#5669]
-
-ramp_fitting
-------------
-
-- Update documentation to define optimal weighting algorithm [#5682]
 
 - Update code in ``set_velocity_aberration.py`` functions based on Colin Cox
   suggestions: simplify DVA scale computation and improve apparent ``RA`` and
@@ -36,12 +42,26 @@ ramp_fitting
 
 - Make get_wcs_values_from_siaf public for JSDP use [#5669]
 
+ramp_fitting
+------------
+
+- Fixed bug in handling NGROUPS=2 exposures for pixels that saturate in group 2.
+  Proper slope, err, and other quantities are now computed from the good data
+  in group 1. [#5700]
+
+- Update documentation to define optimal weighting algorithm [#5682]
+
 srctype
 -------
 
 - Changed default SRCTYPE for non-primary NIRSpec slits in a FIXEDSLIT
   exposure to 'EXTENDED' rather than 'POINT' [#5671]
 
+stpipe
+------
+
+- Make jwst.stpipe independent of the rest of the jwst package and move
+  core code to spacetelescope/stpipe. [#5695, #5720]
 
 0.18.3 (2021-01-25)
 ===================
