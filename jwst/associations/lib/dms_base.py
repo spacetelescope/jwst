@@ -190,6 +190,7 @@ class DMSBaseMixin(ACIDMixin):
         super(DMSBaseMixin, self).__init__(*args, **kwargs)
 
         self._acid = None
+        self._asn_name = None
         self.sequence = None
         if 'degraded_status' not in self.data:
             self.data['degraded_status'] = _DEGRADED_STATUS_OK
@@ -234,6 +235,17 @@ class DMSBaseMixin(ACIDMixin):
 
     @property
     def asn_name(self):
+        """The association name
+
+        The name that identifies this association. When dumped,
+        will form the basis for the suggested file name.
+
+        Typically, it is generated based on the current state of
+        the association, but can be overridden.
+        """
+        if self._asn_name:
+            return self._asn_name
+
         program = self.data['program']
         version_id = self.version_id
         asn_type = self.data['asn_type']
@@ -255,6 +267,11 @@ class DMSBaseMixin(ACIDMixin):
                 sequence=sequence,
             )
         return name.lower()
+
+    @asn_name.setter
+    def asn_name(self, name):
+        """Override calculated association name"""
+        self._asn_name = name
 
     @property
     def current_product(self):
