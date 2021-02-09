@@ -10,6 +10,8 @@ datamodels
 - Added extr_x and extr_y to multispec datamodel. These values are center
   of extraction region for IFU data [#5685]
 
+- Added '1LOS' to PATTTYPE enum list in core.schema datamodel [#5728]
+
 extract_1d
 ----------
 
