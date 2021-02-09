@@ -118,7 +118,10 @@ class SourceCatalogStep(Step):
                               overwrite=True)
                 model.meta.source_catalog = os.path.basename(cat_filepath)
                 self.log.info(f'Wrote source catalog: {cat_filepath}')
-                self.save_model(datamodels.ImageModel(segment_img.data), suffix='segm')
+
+                segm_model = datamodels.ImageModel(segment_img.data)
+                segm_model.update(model, only="PRIMARY")
+                self.save_model(segm_model, suffix='segm')
                 self.log.info(f'Wrote segmentation image.')
 
         return catalog
