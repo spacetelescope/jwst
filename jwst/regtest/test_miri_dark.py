@@ -13,8 +13,7 @@ from jwst.stpipe import Step
 def test_miri_dark_pipeline(exposure, _jail, rtdata, fitsdiff_default_kwargs):
     rtdata.get_data(f"miri/image/{exposure}_uncal.fits")
 
-    collect_pipeline_cfgs("config")
-    args = ["config/calwebb_dark.cfg", rtdata.input]
+    args = ["jwst.pipeline.DarkPipeline", rtdata.input]
     Step.from_cmdline(args)
     rtdata.output = f"{exposure}_dark.fits"
 
