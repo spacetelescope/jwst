@@ -122,6 +122,7 @@ class SourceCatalogStep(Step):
                 segm_model = datamodels.ImageModel(segment_img.data)
                 segm_model.update(model, only="PRIMARY")
                 self.save_model(segm_model, suffix='segm')
-                self.log.info('Wrote segmentation map to segm.fits.')
+                model.meta.segmentation_map = segm_model.meta.filename
+                self.log.info(f'Wrote segmentation map: {segm_model.meta.filename}')
 
         return catalog
