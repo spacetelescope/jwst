@@ -1068,7 +1068,7 @@ properties:
               # NIRCam
               FULL, FULLBOX, FULL-TIGHT,
               INTRAMODULE, INTRAMODULEBOX, INTRAMODULEX, INTRASCA,
-              SUBARRAY-DITHER, WFSC,F
+              SUBARRAY-DITHER, WFSC,
 
               # NIRISS
               AMI, IMAGING, MIMF, WFSS,
