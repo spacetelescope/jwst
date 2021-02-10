@@ -18,8 +18,8 @@ routine processing of JWST data, there are some different uses of terminology to
 different levels or stages of processing and products. For those who are interested or
 need to know, the table below gives high-level translations between those naming conventions.
 
-+---------------------------------+-------------------------------------+------------------------------------+
-| Data Processing Levels          | User Data Product Stages            | MAST/CAOM Data Levels              |
++----------------------------------+-------------------------------------+------------------------------------+
+| Data Processing Levels           | User Data Product Stages            | MAST/CAOM Data Levels              |
 +==================================+=====================================+====================================+
 | N/A                              | N/A                                 | -1 = Planned, but not yet executed |
 +----------------------------------+-------------------------------------+------------------------------------+
