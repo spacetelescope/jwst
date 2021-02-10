@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+if [[ "${CRDS_CONTEXT}" ]]; then
+    echo $(crds list --contexts ${CRDS_CONTEXT} --resolve-contexts)
+else
+    crds list --operational-context
+fi

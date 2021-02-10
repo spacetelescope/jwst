@@ -54,8 +54,6 @@ jobs:
             os: ubuntu-latest
             python-version: 3.8
             toxenv: sdpdeps
-            env:
-              CRDS_CONTEXT: jwst-edit
 
           - name: Installed package with --pyargs
             os: ubuntu-latest
