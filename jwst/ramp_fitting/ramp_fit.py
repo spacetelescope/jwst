@@ -36,6 +36,81 @@ JUMP_DET = dqflags.group['JUMP_DET']
 BUFSIZE = 1024 * 300000  # 300Mb cache size for data section
 
 
+class RampInput:
+    """
+    Captures the input model data needed for ramp fitting.
+    """
+    def __init__(self, input_model):
+        self.data           = input_model.data
+        self.err            = input_model.err
+        self.groupdq        = input_model.groupdq
+        self.pixeldq        = input_model.pixeldq
+        self.instrume       = input_model.meta.instrument.name
+        self.frame_time     = input_model.meta.exposure.frame_time
+        self.ngroups        = input_model.meta.exposure.ngroups
+        self.group_time     = input_model.meta.exposure.group_time
+        self.groupgap       = input_model.meta.exposure.groupgap
+        self.nframes        = input_model.meta.exposure.nframes
+        self.dropframes1    = input_model.meta.exposure.drop_frames1
+
+    def get_info(self):
+        return (self.data, self.err, self.groupdq, self.pixeldq, self.instrume, self.frame_time,\
+                self.ngroups, self.group_time, self.groupgap, self.nframes, self.dropframes1)
+
+
+class RampOut:
+    """
+    Captures the output model data computed during ramp fitting.
+    """
+    def __init__(self, out_model):
+        self.data = out_model.data
+        self.dq = out_model.dq
+        self.var_poisson = out_model.var_poisson
+        self.var_rnoise = out_model.var_rnoise
+        self.err = out_model.err
+
+    def get_info(self):
+        return (self.data, self.dq, self.var_poisson, self.var_rnoise, self.err)
+
+
+class RampInt:
+    """
+    Captures the integration data computed during ramp fitting.
+    """
+    def __init__(self, int_data, int_dq, int_var_poisson, int_var_rnoise, int_err, int_int_times):
+        self.data = int_data
+        self.dq = int_dq
+        self.var_poisson = int_var_poisson
+        self.var_rnoise = int_var_rnoise
+        self.err = int_err
+        self.int_times = int_int_times
+
+    def get_info(self):
+        return (self.data, self.dq, self.var_poisson, self.var_rnoise, self.err, self.int_times)
+
+
+class RampOpt:
+    """
+    Captures the optional data computed during ramp fitting.
+    """
+    def __init__(self, opt_slope, opt_sigslope, opt_var_poisson, opt_var_rnoise,
+                 opt_yint, opt_sigyint, opt_pedestal, opt_weights, opt_crmag):
+        self.slope = opt_slope
+        self.sigslope = opt_sigslope
+        self.var_poisson = opt_var_poisson
+        self.var_rnoise = opt_var_rnoise
+        self.yint = opt_yint
+        self.sigyint = opt_sigyint
+        self.pedestal = opt_pedestal
+        self.weights = opt_weights
+        self.crmag = opt_crmag
+
+    def get_info(self):
+        return (self.slope, self.sigslope, self.var_poisson, self.var_rnoise, self.yint,\
+               self.sigyint, self.pedestal, self.weights, self.crmag)
+
+
+
 def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
              algorithm, weighting, max_cores):
     """
@@ -209,40 +284,34 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
                                             number_of_integrations, save_opt, total_cols, total_rows,
                                             max_segments, max_CRs)
 
-        out_model.data, out_model.dq, out_model.var_poisson, out_model.var_rnoise, out_model.err,\
-        int_data, int_dq, int_var_poisson, int_var_rnoise, int_err,\
-        dummy, opt_slope, opt_sigslope, opt_var_poisson, opt_var_rnoise, \
-        opt_yint, opt_sigyint, opt_pedestal, opt_weights, opt_crmag,\
-        actual_segments, actual_CRs = \
-        ols_ramp_fit(input_model.data, input_model.err, input_model.groupdq, input_model.pixeldq,
-                     buffsize, save_opt, readnoise_2d, gain_2d, weighting,
-                     input_model.meta.instrument.name, input_model.meta.exposure.frame_time,
-                     input_model.meta.exposure.ngroups, input_model.meta.exposure.group_time,
-                     input_model.meta.exposure.groupgap, input_model.meta.exposure.nframes,
-                     input_model.meta.exposure.drop_frames1, int_times)
-
+        # HERE: refactoring
+        ramp_input =  RampInput(input_model)
+        ramp_out, ramp_int, ramp_opt, actual_segments, actual_CRs =\
+            ols_ramp_fit(ramp_input, buffsize, save_opt, readnoise_2d, gain_2d, weighting, int_times)
+        
         # Populate the rateints output model
-        int_model.data = int_data
-        int_model.dq = int_dq
-        int_model.var_poisson = int_var_poisson
-        int_model.var_rnoise = int_var_rnoise
-        int_model.err = int_err
-        int_model.int_times = int_times
+        int_model.data = ramp_int.data
+        int_model.dq = ramp_int.dq
+        int_model.var_poisson = ramp_int.var_poisson
+        int_model.var_rnoise = ramp_int.var_rnoise
+        int_model.err = ramp_int.err
+        int_model.int_times = ramp_int.int_times
 
         # Populate the optional output model
         if save_opt:
-            opt_model.slope = opt_slope
-            opt_model.sigslope = opt_sigslope
-            opt_model.var_poisson = opt_var_poisson
-            opt_model.var_rnoise = opt_var_rnoise
-            opt_model.yint = opt_yint
-            opt_model.sigyint = opt_sigyint
-            opt_model.pedestal = opt_pedestal
-            opt_model.weights = opt_weights
-            opt_model.crmag = opt_crmag
+            opt_model.slope = ramp_opt.slope
+            opt_model.sigslope = ramp_opt.sigslope
+            opt_model.var_poisson = ramp_opt.var_poisson
+            opt_model.var_rnoise = ramp_opt.var_rnoise
+            opt_model.yint = ramp_opt.yint
+            opt_model.sigyint = ramp_opt.sigyint
+            opt_model.pedestal = ramp_opt.pedestal
+            opt_model.weights = ramp_opt.weights
+            opt_model.crmag = ramp_opt.crmag
 
         return out_model, int_model, opt_model
 
+    '''
     # Call ramp fitting for multi-processor (multiple data slices) case
     else:
         log.debug(f'number of processes being used is {number_slices}')
@@ -350,6 +419,7 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
             k = k + 1
 
         return out_model, int_model, opt_model
+    '''
 
 
 def create_output_models(input_model, number_of_integrations, save_opt, total_cols, total_rows,
@@ -425,10 +495,7 @@ def create_output_models(input_model, number_of_integrations, save_opt, total_co
     return int_model, opt_model, out_model
 
 
-def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d, gain_2d,
-                 weighting, instrume, frame_time, ngroups, group_time, groupgap, nframes,
-                 dropframes1, int_times):
-
+def ols_ramp_fit(ramp_input, buffsize, save_opt, readnoise_2d, gain_2d, weighting, int_times):
     """
     Fit a ramp using ordinary least squares. Calculate the count rate for each
     pixel in all data cube sections and all integrations, equal to the weighted
@@ -437,11 +504,9 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
 
     Parameters
     ----------
-    data : The input 4-D array with ramp data (num_integrations, num_groups, num_rows, num_cols)
-        The input ramp data
-    err : The input 4-D error that matches the ramp data
-    groupdq : The input 4-D group DQ flags
-    inpixeldq : The input 2-D pixel DQ flags
+    ramp_input: RampInput
+        Contains the data image information needed to compute the ramp fitting.
+
     buffsize : int
         The working buffer size
     save_opt : Boolean
@@ -452,65 +517,17 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
         The gain of each pixel
     weighting : string
         'optimal' is the only valid value
-    instrume : string
-        Instrument name
-    frame_time : float32
-        The time to read one frame.
-    ngroups : int
-        The number of groups in each integration
-    group_time : float32
-        The time to read one group.
-    groupgap : int
-        The number of frames that are not included in the group average
-    nframes : int
-        The number of frames that are included in the group average
-    dropframes1 :
-        The number of frames dropped at the beginning of every integration
     int_times : None
         Not used
 
     Returns
     -------
-    new_model.data : 2-D float32
-        The output final rate of each pixel
-    new_model.dq : 2-D DQflag
-        The output pixel dq for each pixel
-    new_model.var_poisson : 2-D float32
-        The variance in each pixel due to Poisson noise
-    new_model.var_rnoise : 2-D float32
-        The variance in each piel due to read noise
-    new_model.err : 2-D float32
-        The output total variance for each pixel
-    int_data : 3-D float32
-        The rate for each pixel in each integration
-    int_dq : 3-D float32
-        The pixel dq flag for each integration
-    int_var_poisson : 3-D float32
-        The variance of the rate for each integration due to Poisson noise
-    int_var_rnoise : 3-D float32
-        The variance of the rate for each integration due to read noise
-    int_err : 3-D float32
-        The total variance of the rate for each integration
-    int_int_times : 3-D
-        The total time for each integration
-    opt_slope : 4-D float32
-        The rate of each segment in each integration
-    opt_sigslope : 4-D float32
-        The total variance of the rate for each pixel in each segment of each integration
-    opt_var_poisson : 4-D float32
-        The Poisson variance of the rate for each pixel in each segment of each integration
-    opt_var_rnoise : 4-D float32
-        The read noise variance of the rate for each pixel in each segment of each integration
-    opt_yint : 4-D float32
-        The y-intercept for each pixel in each segment of each integration
-    opt_sigyint : 4-D float32
-        The variance for each pixel in each segment of each integration
-    opt_pedestal : 4-D float32
-        The zero point for each pixel in each segment of each integration
-    opt_weights : 4-D float32
-        The weight of each pixel to use in combining the segments
-    opt_crmag : 4-D float32
-        The magnitude of each CR in each integration
+    ramp_out: RampOut
+        The computed ramp fitting model data
+    ramp_int: RampInt
+        The computed ramp fitting integration data
+    ramp_opt: RampOpt
+        The computed ramp fitting optional data
     actual_segments : int
         The actual maximum number of segments in any integration
     actual_CRs : int
@@ -518,11 +535,11 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
     """
     tstart = time.time()
 
+    data, err, groupdq, inpixeldq, instrume, frame_time,\
+    ngroups, group_time, groupgap, nframes, dropframes1 = ramp_input.get_info()
+
     # Get needed sizes and shapes
-    n_int = data.shape[0]
-    nreads = data.shape[1]
-    nrows = data.shape[2]
-    ncols = data.shape[3]
+    n_int, nreads, nrows, ncols = data.shape[:4]
     imshape = (nrows, ncols)
     cubeshape = (nreads,) + imshape
     # Save original shapes for writing to log file, as these may change for MIRI
@@ -1117,6 +1134,7 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
             var_poisson=var_p2.astype(np.float32),
             var_rnoise=var_r2.astype(np.float32),
             err=err_tot.astype(np.float32))
+    ramp_out = RampOut(new_model)
 
     if int_model is not None:
         int_data = int_model.data.copy()
@@ -1132,6 +1150,8 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
         int_var_rnoise = None
         int_err = None
         int_int_times = None
+    ramp_int = RampInt(int_data, int_dq, int_var_poisson, int_var_rnoise, int_err, int_int_times)
+
     if opt_model is not None:
         opt_slope = opt_model.slope.copy()
         opt_sigslope = opt_model.sigslope.copy()
@@ -1156,11 +1176,11 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
         opt_crmag = None
         actual_segments = 0
         actual_CRs = 0
+    ramp_opt = RampOpt(opt_slope, opt_sigslope, opt_var_poisson, opt_var_rnoise,\
+                       opt_yint, opt_sigyint, opt_pedestal, opt_weights, opt_crmag)
 
-    return new_model.data, new_model.dq, new_model.var_poisson, new_model.var_rnoise, new_model.err, \
-            int_data, int_dq, int_var_poisson, int_var_rnoise, int_err, int_int_times, \
-            opt_slope, opt_sigslope, opt_var_poisson, opt_var_rnoise, opt_yint, opt_sigyint, \
-            opt_pedestal, opt_weights, opt_crmag, actual_segments, actual_CRs
+    return ramp_out, ramp_int, ramp_opt, actual_segments, actual_CRs
+    # END ols_ramp_fit
 
 
 def gls_ramp_fit(input_model, buffsize, save_opt,
