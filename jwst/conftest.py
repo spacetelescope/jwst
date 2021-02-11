@@ -4,10 +4,12 @@ import tempfile
 import pytest
 import inspect
 
+from crds.client.api import get_mapping_names, get_default_context
+from stdatamodels import s3_utils
+
 from jwst.associations import (AssociationRegistry, AssociationPool)
 from jwst.associations.tests.helpers import t_path
 from jwst.lib.tests import helpers as lib_helpers
-from stdatamodels import s3_utils
 
 
 @pytest.fixture(scope='session')
@@ -75,10 +77,12 @@ def jail(request, tmpdir_factory):
     yield newpath
     os.chdir(old_dir)
 
+
 @pytest.mark.trylast
 def pytest_configure(config):
     terminal_reporter = config.pluginmanager.getplugin('terminalreporter')
     config.pluginmanager.register(TestDescriptionPlugin(terminal_reporter), 'testdescription')
+
 
 class TestDescriptionPlugin:
     """Pytest plugin to print the test docstring when `pytest -vv` is used.
@@ -108,3 +112,17 @@ class TestDescriptionPlugin:
             yield
             if self.desc:
                     self.terminal_reporter.write(f'\n{self.desc} ')
+
+
+def get_crds_context():
+    """Return the in-use CRDS_CONTEXT for pytest report header"""
+    if "CRDS_CONTEXT" in os.environ:
+        pmap = [a for a in get_mapping_names(os.getenv("CRDS_CONTEXT")) if "pmap" in a][0]
+    else:
+        pmap = get_default_context()
+    return pmap
+
+
+def pytest_report_header(config):
+    """Add CRDS_CONTEXT to pytest report header"""
+    return f"crds_context: {get_crds_context()}"

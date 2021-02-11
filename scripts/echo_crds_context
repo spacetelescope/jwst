@@ -1,7 +1,6 @@
-#!/usr/bin/env bash
+#!/usr/bin/env python
 
-if [[ "${CRDS_CONTEXT}" ]]; then
-    echo $(crds list --contexts ${CRDS_CONTEXT} --resolve-contexts)
-else
-    crds list --operational-context
-fi
+from jwst.conftest import get_crds_context
+
+if __name__ == "__main__":
+    print(get_crds_context())
