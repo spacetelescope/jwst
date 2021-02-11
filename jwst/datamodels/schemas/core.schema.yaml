@@ -2324,7 +2324,7 @@ properties:
           weight_type:
             title: Type of drizzle weighting to use in resampling input
             type: string
-            enum: [exptime, error]
+            enum: [exptime, ivm]
             fits_keyword: RESWHT
       background:
         title: Background information

@@ -41,7 +41,7 @@ class ResampleData:
          (eventually) a record of metadata from all input models.
     """
     def __init__(self, input_models, output=None, single=False, blendheaders=True,
-        pixfrac=1.0, kernel="square", fillval="INDEF", weight_type="exptime",
+        pixfrac=1.0, kernel="square", fillval="INDEF", weight_type="ivm",
         good_bits=0, pscale_ratio=1.0, **kwargs):
         """
         Parameters
@@ -147,8 +147,7 @@ class ResampleData:
                                             single=self.single,
                                             pixfrac=self.pixfrac,
                                             kernel=self.kernel,
-                                            fillval=self.fillval,
-                                            wt_scl=self.weight_type)
+                                            fillval=self.fillval)
 
             for n, img_exp in enumerate(exposure):
                 # Make a copy as this is operated on in-place below

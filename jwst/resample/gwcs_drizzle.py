@@ -1,7 +1,6 @@
 import numpy as np
 
 from drizzle import util
-from drizzle import doblot
 from drizzle import cdrizzle
 from . import resample_utils
 
@@ -198,34 +197,6 @@ class GWCSDrizzle:
                   self.outcon, expin, in_units, wt_scl, uniqid=self.uniqid,
                   xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax,
                   pixfrac=self.pixfrac, kernel=self.kernel, fillval=self.fillval)
-
-    def blot_image(self, blotwcs, interp='poly5', sinscl=1.0):
-        """
-        Resample the output image using an input world coordinate system.
-
-        Parameters
-        ----------
-
-        blotwcs : wcs
-            The world coordinate system to resample on.
-
-        interp : str, optional
-            The type of interpolation used in the resampling. The
-            possible values are "nearest" (nearest neighbor interpolation),
-            "linear" (bilinear interpolation), "poly3" (cubic polynomial
-            interpolation), "poly5" (quintic polynomial interpolation),
-            "sinc" (sinc interpolation), "lan3" (3rd order Lanczos
-            interpolation), and "lan5" (5th order Lanczos interpolation).
-
-        sincscl : float, optional
-            The scaling factor for sinc interpolation.
-        """
-
-        util.set_pscale(blotwcs)
-        self.outsci = doblot.doblot(self.outsci, self.outwcs, blotwcs,
-                                    1.0, interp=interp, sinscl=sinscl)
-
-        self.outwcs = blotwcs
 
     def increment_id(self):
         """

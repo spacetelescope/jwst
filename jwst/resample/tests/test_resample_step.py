@@ -10,8 +10,11 @@ from jwst.resample import ResampleSpecStep, ResampleStep
 
 @pytest.fixture
 def nirspec_rate():
-    shape = (2048, 2048)
+    ysize = 2048
+    xsize = 2048
+    shape = (ysize, xsize)
     im = ImageModel(shape)
+    im.var_rnoise = np.random.random(shape)
     im.meta.wcsinfo = {
         'dec_ref': 40,
         'ra_ref': 100,
@@ -65,8 +68,10 @@ def nirspec_rate():
 def miri_rate():
     xsize = 72
     ysize = 416
-    im = ImageModel((ysize, xsize))
-    im.data += 5.
+    shape = (ysize, xsize)
+    im = ImageModel(shape)
+    im.data += 5
+    im.var_rnoise = np.random.random(shape)
     im.meta.wcsinfo = {
         'dec_ref': 40,
         'ra_ref': 100,
@@ -116,8 +121,10 @@ def miri_rate():
 def nircam_rate():
     xsize = 204
     ysize = 204
-    im = ImageModel((ysize, xsize))
-    im.data += 5.
+    shape = (ysize, xsize)
+    im = ImageModel(shape)
+    im.data += 5
+    im.var_rnoise = np.random.random(shape)
     im.meta.wcsinfo = {
         'ctype1': 'RA---TAN',
         'ctype2': 'DEC--TAN',
@@ -235,6 +242,16 @@ def test_pixel_scale_ratio_imaging(nircam_rate, ratio):
     area1 = result1.meta.photometry.pixelarea_steradians
     area2 = result2.meta.photometry.pixelarea_steradians
     assert_allclose(area1 * ratio**2, area2, rtol=1e-6)
+
+
+def test_weight_type(nircam_rate):
+    """Check that weight_type of exptime and ivm work"""
+    im = AssignWcsStep.call(nircam_rate, sip_approx=False)
+    result1 = ResampleStep.call(im, weight_type="ivm")
+    result2 = ResampleStep.call(im, weight_type="exptime")
+
+    assert_allclose(result1.data, result2.data)
+    assert_allclose(result1.wht, result2.wht)
 
 
 def test_sip_coeffs_do_not_propagate(nircam_rate):
