@@ -44,6 +44,12 @@ ramp_fitting
 
 - Update documentation to define optimal weighting algorithm [#5682]
 
+source_catalog
+--------------
+
+- Added the segmentation map as an output data file, with
+  suffix "segm". [#5730]
+
 srctype
 -------
 
