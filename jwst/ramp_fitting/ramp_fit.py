@@ -288,6 +288,10 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
         ramp_input =  RampInput(input_model)
         ramp_out, ramp_int, ramp_opt, actual_segments, actual_CRs =\
             ols_ramp_fit(ramp_input, buffsize, save_opt, readnoise_2d, gain_2d, weighting, int_times)
+
+        # Populate output model
+        out_model.data, out_model.dq, out_model.var_poisson, out_model.var_rnoise, out_model.err =\
+            ramp_out.get_info()
         
         # Populate the rateints output model
         int_model.data = ramp_int.data
