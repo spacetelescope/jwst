@@ -656,10 +656,8 @@ def ols_ramp_fit(ramp_input, buffsize, save_opt, readnoise_2d, gain_2d, weightin
             actual_segments = 0
             actual_CRs = 0
 
-        return new_model.data, new_model.dq, new_model.var_poisson, new_model.var_rnoise, new_model.err, \
-           int_model.data, int_model.dq, int_model.var_poisson, int_model.var_rnoise, int_model.err, int_model.int_times, \
-           opt_model.slope, opt_model.sigslope, opt_model.var_poisson, opt_model.var_rnoise, opt_model.yint, opt_model.sigyint, \
-           opt_model.pedestal, opt_model.weights, opt_model.crmag, actual_segments, actual_CRs
+        ramp_out = RampOut(new_model)
+        return ramp_out, int_model, opt_model, actual_segments, actual_CRs
 
     # Get max number of segments fit in all integrations
     max_seg, num_CRs = calc_num_seg(gdq_cube, n_int)
