@@ -292,7 +292,7 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
         # Populate output model
         out_model.data, out_model.dq, out_model.var_poisson, out_model.var_rnoise, out_model.err =\
             ramp_out.get_info()
-        
+
         # Populate the rateints output model
         int_model.data = ramp_int.data
         int_model.dq = ramp_int.dq
