@@ -148,8 +148,8 @@ def test_nircam_image_stage3_segmap(run_image3pipeline, rtdata_module, fitsdiff_
     rtdata.output = "jw42424-o002_t001_nircam_clear-f444w_segm.fits"
     rtdata.get_truth("truth/test_nircam_image_stages/jw42424-o002_t001_nircam_clear-f444w_segm.fits")
 
-    assert FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
-
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
 
 @pytest.mark.bigdata
 def test_image3_closedfile(run_image3_closedfile, rtdata, fitsdiff_default_kwargs):
