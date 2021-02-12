@@ -23,6 +23,7 @@ datamodels
 
 - Added '1LOS' to PATTTYPE enum list in core.schema datamodel [#5728]
 
+- Added 'IMAGE' to OPMODE enum list [#5745]
 
 extract_1d
 ----------
