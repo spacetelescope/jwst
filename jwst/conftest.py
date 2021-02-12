@@ -5,7 +5,6 @@ import pytest
 import inspect
 
 from stdatamodels import s3_utils
-from stpipe.crds_client import get_context_used
 
 from jwst.associations import (AssociationRegistry, AssociationPool)
 from jwst.associations.tests.helpers import t_path
@@ -112,8 +111,3 @@ class TestDescriptionPlugin:
             yield
             if self.desc:
                     self.terminal_reporter.write(f'\n{self.desc} ')
-
-
-def pytest_report_header(config):
-    """Add CRDS_CONTEXT to pytest report header"""
-    return f"crds_context: {get_context_used('jwst')}"
