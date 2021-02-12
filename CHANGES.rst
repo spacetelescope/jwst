@@ -15,7 +15,11 @@ datamodels
 - Added extr_x and extr_y to multispec datamodel. These values are center
   of extraction region for IFU data [#5685]
 
+- Added segmentation map output file name to core schema keywords, under
+  keyword 'SEGMFILE' [#5730]
+
 - Added '1LOS' to PATTTYPE enum list in core.schema datamodel [#5728]
+
 
 extract_1d
 ----------
@@ -50,6 +54,12 @@ ramp_fitting
   in group 1. [#5700]
 
 - Update documentation to define optimal weighting algorithm [#5682]
+
+source_catalog
+--------------
+
+- Added the segmentation map as an output data file, with
+  suffix "segm". [#5730]
 
 srctype
 -------

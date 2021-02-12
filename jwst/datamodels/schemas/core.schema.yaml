@@ -2305,6 +2305,10 @@ properties:
         title: Source catalog filename
         type: string
         fits_keyword: SCATFILE
+      segmentation_map:
+        title: Segmentation map filename
+        type: string
+        fits_keyword: SEGMFILE
       resample:
         title: Resample Parameters
         type: object
