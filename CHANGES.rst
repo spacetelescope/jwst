@@ -6,6 +6,9 @@ associations
 
 - Warn about duplicate product names and do not write duplicate associations [#5721]
 
+- Added new Lvl2 rule, Asn_Lv2NRSLAMPImage, to run Image2 pipeline for NRSLAMP
+  exposures with OPMODE=image [#5740]
+
 datamodels
 ----------
 
