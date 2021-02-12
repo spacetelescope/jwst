@@ -1,5 +1,3 @@
-import datetime
-
 from astropy.time import Time
 from stdatamodels import DataModel as _DataModel
 
