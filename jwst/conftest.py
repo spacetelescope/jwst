@@ -4,8 +4,8 @@ import tempfile
 import pytest
 import inspect
 
-from crds.client.api import get_mapping_names, get_default_context
 from stdatamodels import s3_utils
+from stpipe.crds_client import get_context_used
 
 from jwst.associations import (AssociationRegistry, AssociationPool)
 from jwst.associations.tests.helpers import t_path
@@ -114,15 +114,6 @@ class TestDescriptionPlugin:
                     self.terminal_reporter.write(f'\n{self.desc} ')
 
 
-def get_crds_context():
-    """Return the in-use CRDS_CONTEXT for pytest report header"""
-    if "CRDS_CONTEXT" in os.environ:
-        pmap = [a for a in get_mapping_names(os.getenv("CRDS_CONTEXT")) if "pmap" in a][0]
-    else:
-        pmap = get_default_context()
-    return pmap
-
-
 def pytest_report_header(config):
     """Add CRDS_CONTEXT to pytest report header"""
-    return f"crds_context: {get_crds_context()}"
+    return f"crds_context: {get_context_used('jwst')}"
