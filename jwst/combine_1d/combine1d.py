@@ -18,7 +18,7 @@ class InputSpectrumModel:
         wavelength
         flux
         error
-        surf_bright
+        background
         sb_error
         dq
         nelem
@@ -53,12 +53,12 @@ class InputSpectrumModel:
         self.flux = spec.spec_table.field("flux").copy()
         self.error = spec.spec_table.field("error").copy()
         try:
-            self.surf_bright = spec.spec_table.field("surf_bright").copy()
+            self.background = spec.spec_table.field("background").copy()
             self.sb_error = spec.spec_table.field("sb_error").copy()
         except KeyError:
-            self.surf_bright = np.zeros_like(self.flux)
+            self.background = np.zeros_like(self.flux)
             self.sb_error = np.zeros_like(self.flux)
-            log.warning("There is no SURF_BRIGHT column in the input.")
+            log.warning("There is no BACKGROUND column in the input.")
         self.dq = spec.spec_table.field("dq").copy()
         self.nelem = self.wavelength.shape[0]
         self.unit_weight = False        # may be reset below
@@ -88,7 +88,7 @@ class InputSpectrumModel:
         self.wavelength = None
         self.flux = None
         self.error = None
-        self.surf_bright = None
+        self.background = None
         self.sb_error = None
         self.dq = None
         self.nelem = 0
@@ -104,7 +104,7 @@ class OutputSpectrumModel:
         wavelength
         flux
         error
-        surf_bright
+        background
         sb_error
         dq
         weight
@@ -118,7 +118,7 @@ class OutputSpectrumModel:
         self.wavelength = None
         self.flux = None
         self.error = None
-        self.surf_bright = None
+        self.background = None
         self.sb_error = None
         self.dq = None
         self.weight = None
@@ -182,7 +182,7 @@ class OutputSpectrumModel:
 
         self.flux = np.zeros(nelem, dtype=np.float64)
         self.error = np.zeros(nelem, dtype=np.float64)
-        self.surf_bright = np.zeros(nelem, dtype=np.float64)
+        self.background = np.zeros(nelem, dtype=np.float64)
         self.sb_error = np.zeros(nelem, dtype=np.float64)
         self.dq = np.zeros(nelem, dtype=dq_dtype)
         self.weight = np.zeros(nelem, dtype=np.float64)
@@ -215,7 +215,7 @@ class OutputSpectrumModel:
                 self.dq[k] |= in_spec.dq[i]
                 self.flux[k] += in_spec.flux[i] * weight
                 self.error[k] += (in_spec.error[i] * weight)**2
-                self.surf_bright[k] += (in_spec.surf_bright[i] * weight)
+                self.background[k] += (in_spec.background[i] * weight)
                 self.sb_error[k] += (in_spec.sb_error[i] * weight)**2
                 self.weight[k] += weight
                 self.count[k] += 1.
@@ -235,7 +235,7 @@ class OutputSpectrumModel:
             self.wavelength = self.wavelength[index]
             self.flux = self.flux[index]
             self.error = self.error[index]
-            self.surf_bright = self.surf_bright[index]
+            self.background = self.background[index]
             self.sb_error = self.sb_error[index]
             self.dq = self.dq[index]
             self.weight = self.weight[index]
@@ -249,7 +249,7 @@ class OutputSpectrumModel:
 
         if not self.normalized:
             sum_weight = np.where(self.weight > 0., self.weight, 1.)
-            self.surf_bright /= sum_weight
+            self.background /= sum_weight
             self.flux /= sum_weight
             self.error = np.sqrt(self.error / sum_weight)
             self.sb_error = np.sqrt(self.sb_error / sum_weight)
@@ -274,7 +274,7 @@ class OutputSpectrumModel:
         data = np.array(list(zip(self.wavelength,
                                  self.flux,
                                  self.error,
-                                 self.surf_bright,
+                                 self.background,
                                  self.sb_error,
                                  self.dq,
                                  self.weight,
@@ -287,7 +287,7 @@ class OutputSpectrumModel:
         self.wavelength = None
         self.flux = None
         self.error = None
-        self.surf_bright = None
+        self.background = None
         self.sb_error = None
         self.dq = None
         self.weight = None

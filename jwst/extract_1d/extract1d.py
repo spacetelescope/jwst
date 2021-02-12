@@ -24,7 +24,7 @@ log.setLevel(logging.DEBUG)
 
 def extract1d(image, lambdas, disp_range,
               p_src, p_bkg=None, independent_var="wavelength",
-              smoothing_length=0, bkg_fit="poly", bkg_order=0, weights=None):
+              smoothing_length=0, bkg_fit="poly", bkg_order=0, bkg_sigma_clip=0, weights=None):
     """Extract the spectrum, optionally subtracting background.
 
     Parameters:
@@ -70,6 +70,9 @@ def extract1d(image, lambdas, disp_range,
         by column, will be used.
         This argument must be positive or zero, and it is only used if
         background regions have been specified and if `bkg_fit` is `poly`.
+
+    bkg_sigma_clip : float
+        Sigma clipping value to use on extracted background to remove noise
 
     weights : function or None
         If not None, this computes the weights for the source extraction

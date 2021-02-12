@@ -106,15 +106,15 @@ class MasterBackgroundStep(Step):
                     input_data, background_data = split_container(input_data)
                     asn_id = input_data.meta.asn_table.asn_id
 
-                    for model in background_data:
+                    #for model in background_data:
                         # Check if the background members are nodded x1d extractions.
                         # Use "bkgdtarg == False" so we don't also get None cases
                         # for simulated data that didn't bother populating this
                         # keyword
-                        if model.meta.observation.bkgdtarg == False:
-                            self.log.debug("Copying BACKGROUND column "
-                                           "to SURF_BRIGHT")
-                            copy_background_to_surf_bright(model)
+                        #if model.meta.observation.bkgdtarg == False:
+                        #    self.log.debug("Copying BACKGROUND column "
+                        #                   "to SURF_BRIGHT")
+                        #    copy_background_to_surf_bright(model)
 
                     master_background = combine_1d_spectra(
                         background_data,
