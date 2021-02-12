@@ -10,6 +10,9 @@ datamodels
 - Added extr_x and extr_y to multispec datamodel. These values are center
   of extraction region for IFU data [#5685]
 
+- Added segmentation map output file name to core schema keywords, under
+  keyword 'SEGMFILE' [#5730]
+
 extract_1d
 ----------
 
