@@ -4,7 +4,7 @@
 cube_build
 ----------
 
-- Added support for cross-dichroic configurations
+- Added support for cross-dichroic configurations [#5722]
 
 datamodels
 ----------
