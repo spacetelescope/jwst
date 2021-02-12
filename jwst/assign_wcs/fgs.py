@@ -61,6 +61,7 @@ def imaging(input_model, reference_files):
     # Create coordinate frames for the ``imaging`` mode.
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
     v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.arcsec, u.arcsec))
+    v2v3vacorr = cf.Frame2D(name='v2v3vacorr', axes_order=(0, 1), unit=(u.arcsec, u.arcsec))
     world = cf.CelestialFrame(name='world', reference_frame=coord.ICRS())
 
     # Create the v2v3 to sky transform.
@@ -76,8 +77,12 @@ def imaging(input_model, reference_files):
         distortion = subarray2full | distortion
         distortion.bounding_box = bounding_box_from_subarray(input_model)
 
+    # Compute differential velocity aberration (DVA) correction:
+    va_corr = pointing.va_corr_model(input_model)
+
     pipeline = [(detector, distortion),
-                (v2v3, tel2sky),
+                (v2v3, va_corr),
+                (v2v3vacorr, tel2sky),
                 (world, None)]
     return pipeline
 
@@ -88,11 +93,6 @@ def imaging_distortion(input_model, reference_files):
     """
     dist = DistortionModel(reference_files['distortion'])
     transform = dist.model
-
-    # Apply differential velocity aberration (DVA) correction:
-    va_corr = pointing.va_corr_model(input_model)
-    if va_corr is not None:
-        transform |= va_corr
 
     # Check if the transform in the reference file has a ``bounding_box``.
     # If not set a ``bounding_box`` equal to the size of the image.

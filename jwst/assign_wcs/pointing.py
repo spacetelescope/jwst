@@ -2,7 +2,7 @@ import numpy as np
 from astropy import units as u
 from astropy import coordinates as coords
 from astropy.modeling import models as astmodels
-from astropy.modeling.models import Shift, Scale, RotationSequence3D
+from astropy.modeling.models import Shift, Scale, RotationSequence3D, Identity
 from astropy.coordinates.matrix_utilities import rotation_matrix, matrix_product
 from gwcs import utils as gwutils
 from gwcs.geometry import SphericalToCartesian, CartesianToSpherical
@@ -265,9 +265,10 @@ def va_corr_model(datamodel, **kwargs):
 
     Returns
     -------
-    va_corr : astropy.modeling.CompoundModel, None
+    va_corr : astropy.modeling.CompoundModel, astropy.modeling.models.Identity
         A 2D compound model that corrects DVA. If input model does not contain
-        enough information to compute correction then `None` will be returned.
+        enough information to compute correction then
+        `astropy.modeling.models.Identity` will be returned.
 
     """
     if datamodel is None:
@@ -296,7 +297,7 @@ def va_corr_model(datamodel, **kwargs):
             v2_ref = float(datamodel.meta.wcsinfo.v2_ref)
             v3_ref = float(datamodel.meta.wcsinfo.v3_ref)
         except (AttributeError, TypeError):
-            return None
+            return Identity(2)
 
     v2_shift = (1 - va_scale) * v2_ref
     v3_shift = (1 - va_scale) * v3_ref

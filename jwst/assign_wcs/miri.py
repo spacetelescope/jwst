@@ -67,6 +67,7 @@ def imaging(input_model, reference_files):
     # Create the Frames
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
     v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.arcsec, u.arcsec))
+    v2v3vacorr = cf.Frame2D(name='v2v3vacorr', axes_order=(0, 1), unit=(u.arcsec, u.arcsec))
     world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
 
     # Create the transforms
@@ -85,11 +86,15 @@ def imaging(input_model, reference_files):
             bb = ((-0.5, shape[0] - 0.5), (3.5, shape[1] - 4.5))
             distortion.bounding_box = bb
 
+    # Compute differential velocity aberration (DVA) correction:
+    va_corr = pointing.va_corr_model(input_model)
+
     tel2sky = pointing.v23tosky(input_model)
 
     # Create the pipeline
     pipeline = [(detector, distortion),
-                (v2v3, tel2sky),
+                (v2v3, va_corr),
+                (v2v3vacorr, tel2sky),
                 (world, None)
                 ]
 
@@ -111,11 +116,6 @@ def imaging_distortion(input_model, reference_files):
     # Read in the distortion.
     with DistortionModel(reference_files['distortion']) as dist:
         distortion = dist.model
-
-    # Apply differential velocity aberration (DVA) correction:
-    va_corr = pointing.va_corr_model(input_model)
-    if va_corr is not None:
-        distortion |= va_corr
 
     # Check if the transform in the reference file has a ``bounding_box``.
     # If not set a ``bounding_box`` equal to the size of the image.
@@ -164,8 +164,17 @@ def lrs(input_model, reference_files):
     # v2v3 spatial component
     v2v3_spatial = cf.Frame2D(name='v2v3_spatial', axes_order=(0, 1), unit=(u.arcsec, u.arcsec),
                               axes_names=('v2', 'v3'))
+    v2v3vacorr_spatial = cf.Frame2D(
+        name='v2v3vacorr_spatial',
+        axes_order=(0, 1),
+        unit=(u.arcsec, u.arcsec),
+        axes_names=('v2', 'v3')
+    )
+
     # v2v3 spatial+spectra
     v2v3 = cf.CompositeFrame([v2v3_spatial, spec], name='v2v3')
+    v2v3vacorr = cf.CompositeFrame([v2v3vacorr_spatial, spec], name='v2v3vacorr')
+
     # 'icrs' frame which is the spatial sky component
     icrs = cf.CelestialFrame(name='icrs', reference_frame=coord.ICRS(),
                              axes_order=(0, 1), unit=(u.deg, u.deg), axes_names=('RA', 'DEC'))
@@ -177,9 +186,13 @@ def lrs(input_model, reference_files):
     v2v3tosky = pointing.v23tosky(input_model)
     teltosky = v2v3tosky & models.Identity(1)
 
+    # Compute differential velocity aberration (DVA) correction:
+    va_corr = pointing.va_corr_model(input_model) & models.Identity(1)
+
     # Put the transforms together into a single pipeline
     pipeline = [(detector, dettotel),
-                (v2v3, teltosky),
+                (v2v3, va_corr),
+                (v2v3vacorr, teltosky),
                 (world, None)]
 
     return pipeline
@@ -200,11 +213,6 @@ def lrs_distortion(input_model, reference_files):
     # full array to v2v3 transform for the ordinary imager
     with DistortionModel(reference_files['distortion']) as dist:
         distortion = dist.model
-
-    # Apply differential velocity aberration (DVA) correction:
-    va_corr = pointing.va_corr_model(input_model)
-    if va_corr is not None:
-        distortion |= va_corr
 
     # Combine models to create subarray to v2v3 distortion
     if subarray2full is not None:
@@ -373,8 +381,13 @@ def ifu(input_model, reference_files):
     miri_focal = cf.CompositeFrame([alpha_beta, spec_local], name='alpha_beta')
     v23_spatial = cf.Frame2D(name='V2_V3_spatial', axes_order=(0, 1),
                              unit=(u.arcsec, u.arcsec), axes_names=('v2', 'v3'))
-    spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,), axes_names=('lambda',))
+    v2v3vacorr_spatial = cf.Frame2D(name='V2_V3_vacorr_spatial', axes_order=(0, 1),
+                                    unit=(u.arcsec, u.arcsec), axes_names=('v2', 'v3'))
+
+    spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,),
+                            axes_names=('lambda',))
     v2v3 = cf.CompositeFrame([v23_spatial, spec], name='v2v3')
+    v2v3vacorr = cf.CompositeFrame([v2v3vacorr_spatial, spec], name='v2v3vacorr')
     icrs = cf.CelestialFrame(name='icrs', reference_frame=coord.ICRS(),
                              axes_order=(0, 1), unit=(u.deg, u.deg), axes_names=('RA', 'DEC'))
     world = cf.CompositeFrame([icrs, spec], name='world')
@@ -384,6 +397,9 @@ def ifu(input_model, reference_files):
         "detector_to_abl")
     abl2v2v3l = (abl_to_v2v3l(input_model, reference_files)).rename("abl_to_v2v3l")
 
+    # Compute differential velocity aberration (DVA) correction:
+    va_corr = pointing.va_corr_model(input_model) & models.Identity(1)
+
     tel2sky = pointing.v23tosky(input_model) & models.Identity(1)
 
     # Put the transforms together into a single transform
@@ -391,7 +407,8 @@ def ifu(input_model, reference_files):
     det2abl.bounding_box = ((-0.5, shape[0] - 0.5), (-0.5, shape[1] - 0.5))
     pipeline = [(detector, det2abl),
                 (miri_focal, abl2v2v3l),
-                (v2v3, tel2sky),
+                (v2v3, va_corr),
+                (v2v3vacorr, tel2sky),
                 (world, None)]
     return pipeline
 
@@ -494,8 +511,6 @@ def abl_to_v2v3l(input_model, reference_files):
     # used to read the wavelength range
     channels = [c + band for c in channel]
 
-    va_corr = pointing.va_corr_model(input_model)
-
     with DistortionMRSModel(reference_files['distortion']) as dist:
         v23 = dict(zip(dist.abv2v3_model.channel_band, dist.abv2v3_model.model))
 
@@ -512,10 +527,6 @@ def abl_to_v2v3l(input_model, reference_files):
         ident1 = models.Identity(1, name='identity_lam')
         ident1._inputs = ('lam',)
         chan_v23 = v23[c]
-
-        # Apply differential velocity aberration (DVA) correction:
-        if va_corr is not None:
-            chan_v23 |= va_corr
 
         v23chan_backward = chan_v23.inverse
         del chan_v23.inverse

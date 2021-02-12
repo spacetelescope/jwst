@@ -74,6 +74,7 @@ def imaging(input_model, reference_files):
     """
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
     v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.arcsec, u.arcsec))
+    v2v3vacorr = cf.Frame2D(name='v2v3vacorr', axes_order=(0, 1), unit=(u.arcsec, u.arcsec))
     world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
 
     distortion = imaging_distortion(input_model, reference_files)
@@ -82,9 +83,13 @@ def imaging(input_model, reference_files):
         distortion = subarray2full | distortion
         distortion.bounding_box = bounding_box_from_subarray(input_model)
 
+    # Compute differential velocity aberration (DVA) correction:
+    va_corr = pointing.va_corr_model(input_model)
+
     tel2sky = pointing.v23tosky(input_model)
     pipeline = [(detector, distortion),
-                (v2v3, tel2sky),
+                (v2v3, va_corr),
+                (v2v3vacorr, tel2sky),
                 (world, None)]
     return pipeline
 
@@ -132,11 +137,6 @@ def imaging_distortion(input_model, reference_files):
             if col_offset != 'N/A' and row_offset != 'N/A':
                 transform = Shift(col_offset) & Shift(row_offset) | transform
 
-    # Apply differential velocity aberration (DVA) correction:
-    va_corr = pointing.va_corr_model(input_model)
-    if va_corr is not None:
-        transform |= va_corr
-
     return transform
 
 
@@ -180,6 +180,7 @@ def tsgrism(input_model, reference_files):
     gdetector = cf.Frame2D(name='grism_detector', axes_order=(0, 1), unit=(u.pix, u.pix))
     detector = cf.Frame2D(name='full_detector', axes_order=(0, 1), unit=(u.pix, u.pix))
     v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.deg, u.deg))
+    v2v3vacorr = cf.Frame2D(name='v2v3vacorr', axes_order=(0, 1), unit=(u.deg, u.deg))
     world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
 
     # translate the x,y detector-in to x,y detector out coordinates
@@ -257,6 +258,9 @@ def tsgrism(input_model, reference_files):
     # take us from full frame detector to v2v3
     distortion = imaging_distortion(input_model, reference_files) & Identity(2)
 
+    # Compute differential velocity aberration (DVA) correction:
+    va_corr = pointing.va_corr_model(input_model) & Identity(2)
+
     # v2v3 to the sky
     # remap the tel2sky inverse as well since we can feed it the values of
     # crval1, crval2 which correspond to crpix1, crpix2. This leaves
@@ -269,7 +273,8 @@ def tsgrism(input_model, reference_files):
 
     pipeline = [(gdetector, sub2direct),
                 (detector, distortion),
-                (v2v3, tel2sky),
+                (v2v3, va_corr),
+                (v2v3vacorr, tel2sky),
                 (world, None)]
 
     return pipeline

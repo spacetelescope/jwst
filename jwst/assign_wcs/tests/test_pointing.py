@@ -3,6 +3,7 @@ import numpy as np
 
 from jwst.assign_wcs import pointing
 from jwst.datamodels.image import ImageModel
+from astropy.modeling.models import Identity
 
 from .test_nircam import create_hdul
 
@@ -39,7 +40,7 @@ def test_va_corr_valid_args():
 
 def test_va_corr_noop_missing_meta_values():
     dm = create_imaging_datamodel(v2_ref=None, v3_ref=None, va_scale=None)
-    assert pointing.va_corr_model(dm) is None
+    assert isinstance(pointing.va_corr_model(dm), Identity)
 
 
 def test_va_corr_valid_match():
