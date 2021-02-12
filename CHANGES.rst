@@ -1,6 +1,11 @@
 0.18.4 (unreleased)
 ===================
 
+associations
+------------
+
+- Warn about duplicate product names and do not write duplicate associations [#5721]
+
 datamodels
 ----------
 
@@ -12,6 +17,9 @@ datamodels
 
 - Added segmentation map output file name to core schema keywords, under
   keyword 'SEGMFILE' [#5730]
+
+- Added '1LOS' to PATTTYPE enum list in core.schema datamodel [#5728]
+
 
 extract_1d
 ----------

@@ -4,10 +4,11 @@ import tempfile
 import pytest
 import inspect
 
+from stdatamodels import s3_utils
+
 from jwst.associations import (AssociationRegistry, AssociationPool)
 from jwst.associations.tests.helpers import t_path
 from jwst.lib.tests import helpers as lib_helpers
-from stdatamodels import s3_utils
 
 
 @pytest.fixture(scope='session')
@@ -75,10 +76,12 @@ def jail(request, tmpdir_factory):
     yield newpath
     os.chdir(old_dir)
 
+
 @pytest.mark.trylast
 def pytest_configure(config):
     terminal_reporter = config.pluginmanager.getplugin('terminalreporter')
     config.pluginmanager.register(TestDescriptionPlugin(terminal_reporter), 'testdescription')
+
 
 class TestDescriptionPlugin:
     """Pytest plugin to print the test docstring when `pytest -vv` is used.
