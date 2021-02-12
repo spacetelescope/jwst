@@ -296,10 +296,10 @@ def extract_ifu(input_model, source_type, extract_params):
         the solid angle of a pixel will give the flux for a point source.
 
     background : ndarray, 1-D
-        For point source data, the background array is the count rate that was subtracted 
+        For point source data, the background array is the count rate that was subtracted
         from the total source data values to get `temp_flux`. This background is determined
         for annulus region. For extended source data, the background array is the sigma clipped
-        extracted region. 
+        extracted region.
 
     npixels : ndarray, 1-D, float64
         For each slice, this is the number of pixels that were added
@@ -658,12 +658,12 @@ def image_extract_ifu(input_model, source_type, extract_params):
     and -1 for the background region.
     For SRCTYPE=POINT the source extraction region is defined by pixels in the ref
     image = 1 and the background region is defiend by pixels in the ref image with
-    -1. 
+    -1.
     For SRCTYPE=EXTENDED the extraction region is defined by pixels in the ref image
-    =  1 (only the source region is used). The default procedure of using the extract 1d 
-    asdf reference files extracts the entire region for EXTENDED source data. However, 
+    =  1 (only the source region is used). The default procedure of using the extract 1d
+    asdf reference files extracts the entire region for EXTENDED source data. However,
     if the user supplies the reference image it is assumed they have defined a specific
-    region to be extracted instead of the entire field. At each wavelenght bin sigma 
+    region to be extracted instead of the entire field. At each wavelenght bin sigma
     clipping is performed on the extration region and is store in the background column of
     spec table to be used in masterbackground subtraction. In the extended source case
     pixels flagged as background (-1) in the reference image are ignored.
@@ -790,17 +790,17 @@ def image_extract_ifu(input_model, source_type, extract_params):
     # First add up the values along the x direction, then add up the
     # values along the y direction.
     gross = (data * mask_target).sum(axis=2, dtype=np.float64).sum(axis=1)
-    
+
     # Compute the number of pixels that were added together to get gross.
     normalization = 1.
 
     weightmap = input_model.weightmap
     temp = weightmap
     temp[temp>1] = 1
-    npixels[:] = (temp * mask_target).sum(axis=2, dtype=np.float64).sum(axis=1)    
+    npixels[:] = (temp * mask_target).sum(axis=2, dtype=np.float64).sum(axis=1)
     bkg_sigma_clip =  extract_params['bkg_sigma_clip']
 
-    # Point Souce data 1. extract background and subtract 2. do not 
+    # Point Souce data 1. extract background and subtract 2. do not
     if source_type == 'POINT':
         if subtract_background and mask_bkg is not None:
             n_bkg[:] = (temp * mask_bkg).sum(axis=2, dtype=np.float64).sum(axis=1)
@@ -813,9 +813,9 @@ def image_extract_ifu(input_model, source_type, extract_params):
             temp_flux = gross.copy()
     else:
         temp_flux = (data * mask_target).sum(axis=2, dtype=np.float64).sum(axis=1)
-        
+
     # Extended source data, sigma clip outliers of extraction region is performed
-    # at each wavelength plane. 
+    # at each wavelength plane.
         (background, n_bkg)= sigma_clip_extended_region(data, mask_target, temp, bkg_sigma_clip)
 
     del temp
@@ -1009,7 +1009,7 @@ def separate_target_and_background(ref):
         mask_bkg = np.where(ref == -1., 1., 0.)
     else:
         mask_bkg = None
-     
+
     return (mask_target, mask_bkg)
 
 
@@ -1135,33 +1135,33 @@ def sigma_clip_extended_region(data, mask_targ, wmap, sigma_clip):
         Input data array to perform extraction from
 
     mask_targ : ndarray, 2-D or 3-D
-        Mask of pixels defining the extended source region. A value of 1 indicated 
-        pixel is in the extraction region. 
+        Mask of pixels defining the extended source region. A value of 1 indicated
+        pixel is in the extraction region.
     wmap: ndarray, 3-D
-       weight map for IFU 
+       weight map for IFU
     sigma_clip : float
         outlier sigma clipping parameter
 
     Returns
     -------
     temp : ndarray, same type and shape as `mask_bkg`
-        A copy of `mask_bkg`, but outliers flagged as 0 
+        A copy of `mask_bkg`, but outliers flagged as 0
     """
     shape = data.shape
     shape_ref = mask_targ.shape
     n_bkg = np.ones(shape[0], dtype=np.float64)
 
     sigma_clip_region=  np.zeros(shape[0], dtype=np.float64)
-    
+
     # for each wavelength plane mark outliers as 0 in mask_bkg
     for k in range(shape[0]): #  looping over wavelength
         if len(shape_ref) == 2:
             extract_region = mask_targ.copy()
         else:
-            extract_region = mask_targ[k, :, :].copy() 
+            extract_region = mask_targ[k, :, :].copy()
         data_plane = data[k, :, :]
         # pull out extract source region to determined stats on for sigma clipping
-        extract_data = data_plane[extract_region  ==1 ] 
+        extract_data = data_plane[extract_region  ==1]
         st = stats.sigma_clipped_stats(extract_data, sigma=3, maxiters = 5)
         # st returns: mean, median, std dev
         low = st[0]  - sigma_clip*st[2]

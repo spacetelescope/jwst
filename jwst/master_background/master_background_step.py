@@ -106,16 +106,6 @@ class MasterBackgroundStep(Step):
                     input_data, background_data = split_container(input_data)
                     asn_id = input_data.meta.asn_table.asn_id
 
-                    #for model in background_data:
-                        # Check if the background members are nodded x1d extractions.
-                        # Use "bkgdtarg == False" so we don't also get None cases
-                        # for simulated data that didn't bother populating this
-                        # keyword
-                        #if model.meta.observation.bkgdtarg == False:
-                        #    self.log.debug("Copying BACKGROUND column "
-                        #                   "to SURF_BRIGHT")
-                        #    copy_background_to_surf_bright(model)
-
                     master_background = combine_1d_spectra(
                         background_data,
                         exptime_key='exposure_time',
@@ -205,17 +195,6 @@ class MasterBackgroundStep(Step):
                         "run again and set force_subtract = True.")
 
         return do_sub
-
-
-def copy_background_to_surf_bright(spectrum):
-    """Copy the background column to the surf_bright column in a MultiSpecModel in-place"""
-    for spec in spectrum.spec:
-        spec.spec_table['SURF_BRIGHT'][:] = spec.spec_table['BACKGROUND'].copy()
-        spec.spec_table['SB_ERROR'][:] = spec.spec_table['BERROR'].copy()
-        # Zero out the background column for safety
-        spec.spec_table['BACKGROUND'][:] = 0
-        # Set BERROR to dummy val of 0.0, as in extract_1d currently
-        spec.spec_table['BERROR'][:] = 0.
 
 
 def split_container(container):
