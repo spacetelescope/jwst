@@ -3,3 +3,5 @@
 #     pip install -e .[test]
 #     pip install pytest-xdist
 #     pip freeze | grep -v jwst.git >> requirements-sdp.txt
+
+numpy==1.19.4
