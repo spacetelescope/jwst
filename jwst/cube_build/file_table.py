@@ -81,6 +81,9 @@ class FileTable():
 
         self.FileMap['NIRSPEC']['g395h'] = {}
         self.FileMap['NIRSPEC']['g395h']['f290lp'] = []
+
+        self.FileMap['NIRSPEC']['any']= {}
+        self.FileMap['NIRSPEC']['any']['opaque'] = []
 # ********************************************************************************
 
     def set_file_table(self,
@@ -135,7 +138,9 @@ class FileTable():
                 elif instrument == 'NIRSPEC':
                     fwa = input_model.meta.instrument.filter.lower()
                     gwa = input_model.meta.instrument.grating.lower()
-
+                    fwa.strip()
+                    if fwa == 'opaque':
+                        gwa = 'any'
                     self.FileMap['NIRSPEC'][gwa][fwa].append(input_model)
                 else:
                     pass

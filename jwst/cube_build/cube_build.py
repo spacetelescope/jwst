@@ -243,9 +243,9 @@ class CubeData():
         if self.instrument == 'NIRSPEC':
             # 1 to 1 mapping valid_gwa[i] -> valid_fwa[i]
             valid_gwa = ['g140m', 'g140h', 'g140m', 'g140h', 'g235m',
-                         'g235h', 'g395m', 'g395h', 'prism']
+                         'g235h', 'g395m', 'g395h', 'prism','any']
             valid_fwa = ['f070lp', 'f070lp', 'f100lp', 'f100lp', 'f170lp',
-                        'f170lp', 'f290lp', 'f290lp', 'clear']
+                         'f170lp', 'f290lp', 'f290lp', 'clear','opaque']
 
             nbands = len(valid_fwa)
 

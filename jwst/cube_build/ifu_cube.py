@@ -925,6 +925,12 @@ class IFUCubeData():
         minwave = np.zeros(number_bands)
         maxwave = np.zeros(number_bands)
 
+        if self.coord_system == 'internal_cal' and self.instrument == 'NIRSPEC':
+            if self.list_par1[0] == 'any' and self.list_par2[0] == 'opaque':
+                self.spaxel_size = 0.1
+                self.spectral_size = 0.005
+                return
+        
         for i in range(number_bands):
             if self.instrument == 'MIRI':
                 par1 = self.list_par1[i]
