@@ -423,6 +423,45 @@ class Asn_Lv2MIRLRSFixedSlitNod(
 
 
 @RegistryMarker.rule
+class Asn_Lv2NRSLAMPImage(
+        AsnMixin_Lv2Image,
+        AsnMixin_Lv2Special,
+        DMSLevel2bBase
+):
+    """Level2b NIRSpec image Lamp Calibrations Association
+
+    Characteristics:
+        - Association type: ``image2``
+        - Pipeline: ``calwebb_image2``
+        - Image-based calibration exposures
+        - Single science exposure
+    """
+
+    def __init__(self, *args, **kwargs):
+        # Setup constraints
+        self.constraints = Constraint([
+            Constraint_Base(),
+            Constraint_Single_Science(self.has_science),
+            DMSAttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value='nrs_lamp'
+            ),
+            DMSAttrConstraint(
+                sources=['grating'],
+                value='mirror'
+            ),
+            DMSAttrConstraint(
+                sources=['opmode'],
+                value='image',
+                required=False
+            ),
+        ])
+
+        super(Asn_Lv2NRSLAMPImage, self).__init__(*args, **kwargs)
+
+
+@RegistryMarker.rule
 class Asn_Lv2NRSLAMPSpectral(
         AsnMixin_Lv2Special,
         DMSLevel2bBase
