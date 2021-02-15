@@ -51,6 +51,8 @@ def dispersed_pixel(x0s, y0s, f0, order, wmin, wmax, wcs, ID, oversample_factor=
 
     # Setup the transform we need from the input WCS object
     img_to_grism = wcs.get_transform('detector', 'grism_detector')
+    offset_x = 863.0
+    offset_y = 2.0
 
     if len(f0[0]) > 1:
         #print("f0:", f0, len(f0[0]), len(f0[1]))
@@ -81,8 +83,10 @@ def dispersed_pixel(x0s, y0s, f0, order, wmin, wmax, wcs, ID, oversample_factor=
     #print("dy0s:", dy0s)
 
     # Get the x/y positions corresponding to wmin and wmax
-    xwmin, ywmin, _, _, _ = img_to_grism(x0, y0, wmin, order)
-    xwmax, ywmax, _, _, _ = img_to_grism(x0, y0, wmax, order)
+    #xwmin, ywmin, _, _, _ = img_to_grism(x0, y0, wmin, order)
+    #xwmax, ywmax, _, _, _ = img_to_grism(x0, y0, wmax, order)
+    xwmin, ywmin = img_to_grism(x0+offset_x, y0+offset_y, wmin, order)
+    xwmax, ywmax = img_to_grism(x0+offset_x, y0+offset_y, wmax, order)
     #print("xwmin, ywmin:", xwmin, ywmin)
     #print("xwmax, ywmax:", xwmax, ywmax)
     dxw = xwmax - xwmin
@@ -108,7 +112,8 @@ def dispersed_pixel(x0s, y0s, f0, order, wmin, wmax, wcs, ID, oversample_factor=
 
     # Compute lists of x/y positions in the grism image for
     # the set of desired wavelengths
-    x0s, y0s, _, _, _ = img_to_grism([x0]*n_lam, [y0]*n_lam, lambdas, [order]*n_lam)
+    #x0s, y0s, _, _, _ = img_to_grism([x0]*n_lam, [y0]*n_lam, lambdas, [order]*n_lam)
+    x0s, y0s = img_to_grism([x0+offset_x]*n_lam, [y0+offset_y]*n_lam, lambdas, [order]*n_lam)
     #print("x0s:", x0s)
     #print("y0s:", y0s)
 

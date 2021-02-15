@@ -5,11 +5,10 @@ import numpy as np
 import ctypes
 from ctypes import c_int
 
-from . import polyclip_c
-#this_path = os.path.split(__file__)[0]
-#so_file = os.path.join(this_path, 'polyclip_c.cpython-39-darwin.so')
-#so_file = glob(os.path.join(this_path, 'polyclip_c*.so'))[0]
-#polyclip = ctypes.cdll.LoadLibrary(so_file)
+#from . import polyclip_c
+this_path = os.path.split(__file__)[0]
+so_file = glob(os.path.join(this_path, 'polyclip_c*.so'))[0]
+polyclip = ctypes.cdll.LoadLibrary(so_file)
 
 array_1d_int_l = npct.ndpointer(dtype=np.int32, ndim=1, flags='CONTIGUOUS')
 array_1d_int_r = npct.ndpointer(dtype=np.int32, ndim=1, flags='CONTIGUOUS')

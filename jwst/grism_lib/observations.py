@@ -53,7 +53,7 @@ def helper(vars):
 class observation():
     # This class defines an actual observation. It is tied to a single image and a single config file
 
-    def __init__(self, direct_images, segmentation_data, config, wcs, mod="A", order=1,
+    def __init__(self, direct_images, segmentation_data, wr_ref, config, wcs, mod="A", order=1,
                  max_split=100, SED_file=None, extrapolate_SED=False, max_cpu=8,
                  ID=0, SBE_save=None, boundaries=[], renormalize=True):
 
@@ -93,11 +93,12 @@ class observation():
         self.renormalize = renormalize
 
         # Get the wavelength range for the grism image
-        wr_ref = datamodels.WavelengthrangeModel('/grp/crds/jwst/references/jwst/jwst_nircam_wavelengthrange_0003.asdf')
-        wavelength_range = wr_ref.get_wfss_wavelength_range('F444W', [self.order])
+        #wr_ref = datamodels.WavelengthrangeModel('/grp/crds/jwst/references/jwst/jwst_nircam_wavelengthrange_0003.asdf')
+        #wavelength_range = wr_ref.get_wfss_wavelength_range('F444W', [self.order])
+        wavelength_range = wr_ref.get_wfss_wavelength_range('F356W', [self.order])
         self.wmin = wavelength_range[self.order][0]
         self.wmax = wavelength_range[self.order][1]
-        wr_ref.close()
+        #wr_ref.close()
         print("wmin, wmax:", self.wmin, self.wmax)
 
         if len(boundaries) != 4:
