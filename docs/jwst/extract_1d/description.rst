@@ -133,11 +133,13 @@ If ``extract_width`` is also given, that takes priority over ``ystart`` and
 ``ystop`` will still be used to define the centering of the extraction region
 in the cross-dispersion direction. For point source data, 
 then the ``xstart`` and ``xstop`` values (dispaxis = 2) are shifted to account
-for the expected location of the source. If disaxis=1, then the ``ystart`` and ``ystop`` values
+for the expected location of the source. If dispaxis=1, then the ``ystart`` and ``ystop`` values
 are modified. The offset amount is internally calculated. If it is not desired to apply this
 offset, then set ``use_source_posn`` = False. If the ``use_source_posn`` parameter is None (default),
-the value in the ``extract_1d`` reference file will be used or if it is not set in the reference file it will be 
-internally set to True for point source data according to table given in :ref:`srctype <srctype_table>`.
+the values of ``xstart/xstop`` or ``ystart/ystop`` in the ``extract_1d`` reference file will be used
+to determine the center position of the extraction aperture. If these values are not set in the reference file
+the ``use_source_posn``  will be 
+internally set to True for point source data according to the table given in :ref:`srctype <srctype_table>`.
 Any of the extraction location parameters will be modified internally by the step code if the
 extraction region would extend outside the limits of the input image or outside
 the domain specified by the WCS.
@@ -248,6 +250,8 @@ direction perpendicular to dispersion.
 Extraction for 3D IFU Data
 --------------------------
 For IFU cube data, 1D extraction is controlled by a different set of EXTRACT1D
+reference file parameters. For point source data the center of the extraction region is
+set by 
 the RA/DEC target location indicated by the header or the center of the cube if the header
 target location is undefined. For extended source data, anything specified in the reference file
 or step arguments will be ignored; the entire image will be
