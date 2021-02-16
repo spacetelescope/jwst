@@ -54,7 +54,7 @@ outlier_detection
 -----------------
 
 - Remove hard-coded MRS outlier detection values now that a parameter reference
-  file exists. [#XX]
+  file exists. [#5753]
 
 ramp_fitting
 ------------
