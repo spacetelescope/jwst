@@ -653,7 +653,7 @@ class Asn_Lv2WFSS(
         )
         members.append(
             Member({
-                'expname': lv3_direct_image_root + '_seg.fits',
+                'expname': lv3_direct_image_root + '_segm.fits',
                 'exptype': 'segmap'
             })
         )
