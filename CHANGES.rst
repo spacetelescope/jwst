@@ -71,6 +71,10 @@ srctype
 - Changed default SRCTYPE for non-primary NIRSpec slits in a FIXEDSLIT
   exposure to 'EXTENDED' rather than 'POINT' [#5671]
 
+- Changed logic for handling NIRSpec MOS exposures to blank out the "global"
+  value of SRCTYPE, to ensure that only the individual slit-specific values
+  of SRCTYPE get used downstream. [#5754]
+
 stpipe
 ------
 
