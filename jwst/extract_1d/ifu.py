@@ -531,10 +531,11 @@ def extract_ifu(input_model, source_type, extract_params):
             # pull out the data where weight map => 1. We do not want to use
             # the edge data that is zero to define the statistics on clipping
             bkg_stat_data = bkg_data[temp == 1]
-            st = stats.sigma_clipped_stats(bkg_stat_data, sigma=3, maxiters = 5)
-            # st returns: mean, median, std dev
-            low = st[0]  - bkg_sigma_clip*st[2]
-            high = st[0]  + bkg_sigma_clip*st[2]
+
+            bkg_mean, _, bkg_stddev = stats.sigma_clipped_stats(bkg_stat_data,
+                                                                sigma=bkg_sigma_clip, maxiters = 5)
+            low = bkg_mean - bkg_sigma_clip * bkg_stddev
+            high = bkg_mean + bkg_sigma_clip * bkg_stddev
 
             # set up the mask to flag data that should not be used in aperture photometry
             maskclip = np.logical_or(bkg_data < low, bkg_data>high)
@@ -1126,12 +1127,11 @@ def shift_ref_image(mask, delta_y, delta_x, fill=0):
     return temp
 
 def sigma_clip_extended_region(data, mask_targ, wmap, sigma_clip):
-    """ Convert 2D back mask to 3D and flag pixels identified as outliers with 0
-        For each wavelength plane perform sigma clipping of extracted region
+    """ sigma clip the extraction region
 
     Parameters
     ----------
-    data: 3-D
+    data: ndarray, 3-D
         Input data array to perform extraction from
 
     mask_targ : ndarray, 2-D or 3-D
@@ -1144,8 +1144,8 @@ def sigma_clip_extended_region(data, mask_targ, wmap, sigma_clip):
 
     Returns
     -------
-    temp : ndarray, same type and shape as `mask_bkg`
-        A copy of `mask_bkg`, but outliers flagged as 0
+    sigma_clip_region : ndarray, 1-D. Summed extracted region with sigma clipping for each wavelength plane
+    n_bkg : ndarray, 1-D, sum of pixels used in sigma clipped extracted region
     """
     shape = data.shape
     shape_ref = mask_targ.shape
@@ -1162,10 +1162,10 @@ def sigma_clip_extended_region(data, mask_targ, wmap, sigma_clip):
         data_plane = data[k, :, :]
         # pull out extract source region to determined stats on for sigma clipping
         extract_data = data_plane[extract_region  ==1]
-        st = stats.sigma_clipped_stats(extract_data, sigma=3, maxiters = 5)
-        # st returns: mean, median, std dev
-        low = st[0]  - sigma_clip*st[2]
-        high = st[0]  + sigma_clip*st[2]
+        ext_mean, _, ext_stddev = stats.sigma_clipped_stats(extract_data,
+                                                                sigma=sigma_clip, maxiters = 5)
+        low = ext_mean - sigma_clip * ext_stddev
+        high = ext_mean + sigma_clip * ext_stddev
 
         # set up the mask to flag data that should not be used
         maskclip = np.logical_or(data_plane < low, data_plane > high) # flag outliers
