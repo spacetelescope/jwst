@@ -50,6 +50,12 @@ lib
 
 - Make get_wcs_values_from_siaf public for JSDP use [#5669]
 
+outlier_detection
+-----------------
+
+- Remove hard-coded MRS outlier detection values now that a parameter reference
+  file exists. [#XX]
+
 ramp_fitting
 ------------
 
