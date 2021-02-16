@@ -2,10 +2,11 @@ import logging
 
 import numpy as np
 
+from stpipe.extern.configobj.validate import Validator
+from stpipe.extern.configobj.configobj import ConfigObj
+
 from . import resample
 from ..stpipe import Step
-from ..extern.configobj.validate import Validator
-from ..extern.configobj.configobj import ConfigObj
 from .. import datamodels
 from ..assign_wcs import util
 
