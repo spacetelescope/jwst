@@ -63,6 +63,7 @@ class InputSpectrumModel:
         self.unit_weight = False        # may be reset below
         self.right_ascension = np.zeros_like(self.wavelength)
         self.declination = np.zeros_like(self.wavelength)
+        self.source_id = spec.source_id
 
         self.weight = np.ones_like(self.wavelength)
         if exptime_key == "integration_time":
@@ -94,6 +95,7 @@ class InputSpectrumModel:
         self.unit_weight = False
         self.right_ascension = None
         self.declination = None
+        self.source_id = None
 
 
 class OutputSpectrumModel:
@@ -122,6 +124,7 @@ class OutputSpectrumModel:
         self.count = None
         self.wcs = None
         self.normalized = False
+        self.source_id = None
 
     def assign_wavelengths(self, input_spectra):
         """Create an array of wavelengths to use for the output spectrum.
@@ -290,6 +293,7 @@ class OutputSpectrumModel:
         self.count = None
         self.wcs = None
         self.normalized = False
+        self.source_id = None
 
 
 def count_input(input_spectra):
@@ -569,15 +573,13 @@ def combine_1d_spectra(input_model, exptime_key):
         output_spectra[order].accumulate_sums(input_spectra[order])
         output_spectra[order].compute_combination()
 
-    for order in input_spectra:
-        for in_spec in input_spectra[order]:
-            in_spec.close()
-
     output_model = datamodels.MultiCombinedSpecModel()
 
     for order in output_spectra:
         output_order = output_spectra[order].create_output_data()
         output_order.spectral_order = order
+        output_order.source_id = int(input_spectra[order][0].source_id)
+        log.warning(f"Assign SID {input_spectra[order][0].source_id} to {output_order.source_id}")
         output_model.spec.append(output_order)
 
     # Copy one of the input headers to output.
@@ -590,7 +592,15 @@ def combine_1d_spectra(input_model, exptime_key):
     output_model.meta.wcs = output_spectra[list(output_spectra)[0]].wcs
     output_model.meta.cal_step.combine_1d = 'COMPLETE'
 
+    for order in input_spectra:
+        for in_spec in input_spectra[order]:
+            in_spec.close()
+
     for order in output_spectra:
         output_spectra[order].close()
+
+    log.warning(f"Assign SID {input_spectra[order][0].source_id} to {output_order.source_id}")
+    for s in output_model.spec:
+        log.warning(f"spec SID is {s.source_id}")
 
     return output_model
