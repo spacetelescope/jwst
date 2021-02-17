@@ -146,6 +146,12 @@ ramp_fitting
 
 - Update documentation to define optimal weighting algorithm [#5682]
 
+resample
+--------
+
+- Make inverse variance ``weight_type="ivm"`` the default weighting scheme for
+  multiple exposures resampled into a single output. [#5738]
+
 source_catalog
 --------------
 
