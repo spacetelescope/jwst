@@ -1,6 +1,11 @@
 0.18.4 (unreleased)
 ===================
 
+assign_mtwcs
+------------
+
+- Fixed a bug which caused the step to fail with ``MultiSlitModel`` input. [#JP-1907]
+
 associations
 ------------
 
