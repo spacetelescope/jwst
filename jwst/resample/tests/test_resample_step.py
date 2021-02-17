@@ -3,7 +3,7 @@ from numpy.testing import assert_allclose
 import numpy as np
 import pytest
 
-from jwst.datamodels import ImageModel
+from jwst.datamodels import ImageModel, ModelContainer
 from jwst.assign_wcs import AssignWcsStep
 from jwst.extract_2d import Extract2dStep
 from jwst.resample import ResampleSpecStep, ResampleStep
@@ -14,7 +14,6 @@ def nirspec_rate():
     xsize = 2048
     shape = (ysize, xsize)
     im = ImageModel(shape)
-    im.var_rnoise = np.random.random(shape)
     im.meta.wcsinfo = {
         'dec_ref': 40,
         'ra_ref': 100,
@@ -123,8 +122,6 @@ def nircam_rate():
     ysize = 204
     shape = (ysize, xsize)
     im = ImageModel(shape)
-    im.data += 5
-    im.var_rnoise = np.random.random(shape)
     im.meta.wcsinfo = {
         'ctype1': 'RA---TAN',
         'ctype2': 'DEC--TAN',
@@ -229,6 +226,7 @@ def test_pixel_scale_ratio_spec(miri_rate, ratio):
 @pytest.mark.parametrize("ratio", [0.5, 0.7, 1.0])
 def test_pixel_scale_ratio_imaging(nircam_rate, ratio):
     im = AssignWcsStep.call(nircam_rate, sip_approx=False)
+    im.data += 5
     result1 = ResampleStep.call(im)
     result2 = ResampleStep.call(im, pixel_scale_ratio=ratio)
 
@@ -244,14 +242,35 @@ def test_pixel_scale_ratio_imaging(nircam_rate, ratio):
     assert_allclose(area1 * ratio**2, area2, rtol=1e-6)
 
 
-def test_weight_type(nircam_rate):
+def test_weight_type(nircam_rate, _jail):
     """Check that weight_type of exptime and ivm work"""
-    im = AssignWcsStep.call(nircam_rate, sip_approx=False)
-    result1 = ResampleStep.call(im, weight_type="ivm")
-    result2 = ResampleStep.call(im, weight_type="exptime")
+    im1 = AssignWcsStep.call(nircam_rate, sip_approx=False)
+    im2 = im1.copy()
+    im3 = im1.copy()
+    im1.data += 10
+    im2.data += 5
+    im3.data += 5
+    im1.var_rnoise += (1 / 10)
+    im2.var_rnoise += (1 / 5)
+    im3.var_rnoise += (1 / 5)
+    im2.meta.observation.sequence_id = "2"
+    im3.meta.observation.sequence_id = "3"
 
-    assert_allclose(result1.data, result2.data)
-    assert_allclose(result1.wht, result2.wht)
+    c = ModelContainer([im1, im2, im3])
+    assert len(c.group_names) == 3
+
+    result1 = ResampleStep.call(c, weight_type="ivm", blendheaders=False, save_results=True)
+
+    # assert_allclose(result1.data, result2.data)
+    # assert_allclose(result1.wht, result2.wht)
+    assert_allclose(result1.data[100:105, 100:105], 7.5, rtol=1e-2)
+    assert_allclose(result1.wht[100:105, 100:105], 20, rtol=1e-2)
+
+    result2 = ResampleStep.call(c, weight_type="exptime", blendheaders=False)
+
+    assert_allclose(result2.data[100:105, 100:105], 7.5, rtol=1e-2)
+    assert_allclose(result2.wht[100:105, 100:105], 20, rtol=1e-2)
+
 
 
 def test_sip_coeffs_do_not_propagate(nircam_rate):

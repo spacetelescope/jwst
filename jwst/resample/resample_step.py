@@ -34,7 +34,7 @@ class ResampleStep(Step):
         pixfrac = float(default=1.0)
         kernel = string(default='square')
         fillval = string(default='INDEF')
-        weight_type = option('exptime', 'ivm', default='ivm')
+        weight_type = option('ivm', 'exptime', default='ivm')
         pixel_scale_ratio = float(default=1.0) # Ratio of input to output pixel scale
         single = boolean(default=False)
         blendheaders = boolean(default=True)
@@ -68,7 +68,7 @@ class ResampleStep(Step):
             self.log.info('Drizpars reference file: {}'.format(ref_filename))
             kwargs = self.get_drizpars(ref_filename, input_models)
         else:
-            # Deal with NIRSpec which currently has no default drizpars reffile
+            # Deal with FGS which currently has no default drizpars reffile
             self.log.info("No NIRSpec DIRZPARS reffile")
             kwargs = self._set_spec_defaults()
 
@@ -113,7 +113,6 @@ class ResampleStep(Step):
         pixfrac = float(default=None)
         kernel = string(default=None)
         fillval = string(default=None)
-        weight_type = option('exptime', default=None)
 
         Once the defaults are set from the reference file, if the user has
         used a resample.cfg file or run ResampleStep using command line args,

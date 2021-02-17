@@ -12,9 +12,8 @@ class GWCSDrizzle:
     """
     Combine images using the drizzle algorithm
     """
-    def __init__(self, product, outwcs=None, single=False,
-                 wt_scl="exptime", pixfrac=1.0, kernel="square",
-                 fillval="INDEF"):
+    def __init__(self, product, outwcs=None, single=False, wt_scl=None,
+                 pixfrac=1.0, kernel="square", fillval="INDEF"):
         """
         Create a new Drizzle output object and set the drizzle parameters.
 
@@ -33,9 +32,9 @@ class GWCSDrizzle:
 
         wt_scl : str, optional
             How each input image should be scaled. The choices are `exptime`
-            which scales each image by its exposure time, `expsq` which scales
-            each image by the exposure time squared, or an empty string, which
-            allows each input image to be scaled individually.
+            which scales each image by its exposure time or `expsq` which scales
+            each image by the exposure time squared.  If not set, then each
+            input image is scaled by its own weight map.
 
         pixfrac : float, optional
             The fraction of a pixel that the pixel flux is confined to. The
@@ -63,7 +62,10 @@ class GWCSDrizzle:
         self.outexptime = 0.0
         self.uniqid = 0
 
-        self.wt_scl = wt_scl
+        if wt_scl is None:
+            self.wt_scl = ""
+        else:
+            self.wt_scl = wt_scl
         self.kernel = kernel
         self.fillval = fillval
         self.pixfrac = pixfrac
@@ -89,22 +91,13 @@ class GWCSDrizzle:
             self.outcon = np.reshape(self.outcon, (1,
                                      self.outcon.shape[0],
                                      self.outcon.shape[1]))
-
-        elif self.outcon.ndim == 3:
-            pass
-
-        else:
+        elif self.outcon.ndim != 3:
             raise ValueError("Drizzle context image has wrong dimensions: \
                 {0}".format(product))
 
         # Check field values
         if not self.outwcs:
             raise ValueError("Either an existing file or wcs must be supplied")
-
-        if util.is_blank(self.wt_scl):
-            self.wt_scl = ''
-        elif self.wt_scl != "exptime" and self.wt_scl != "expsq":
-            raise ValueError("Illegal value for wt_scl: %s" % self.wt_scl)
 
         if out_units == "counts":
             np.divide(self.outsci, self.outexptime, self.outsci)
