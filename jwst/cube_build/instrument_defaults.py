@@ -977,7 +977,7 @@ class InstrumentInfo():
         self.Info['g395m']['opaque']['wscale'] = 0.00179
         self.Info['g395m']['opaque']['ascale'] = 0.1
         self.Info['g395m']['opaque']['bscale'] = 0.1
-        
+
         self.Info['g140h'] = {}
         self.Info['g140h']['f070lp'] = {}
         self.Info['g140h']['f070lp']['nslices'] = 30
@@ -1010,7 +1010,7 @@ class InstrumentInfo():
         self.Info['g140h']['opaque']['wscale'] = 0.000235
         self.Info['g140h']['opaque']['ascale'] = 0.1
         self.Info['g140h']['opaque']['bscale'] = 0.1
-        
+
         self.Info['g235h'] = {}
         self.Info['g235h']['f170lp'] = {}
         self.Info['g235h']['f170lp']['nslices'] = 30
@@ -1030,7 +1030,7 @@ class InstrumentInfo():
         self.Info['g235h']['opaque']['wscale'] = 0.000396
         self.Info['g235h']['opaque']['ascale'] = 0.1
         self.Info['g235h']['opaque']['bscale'] = 0.1
-        
+
         self.Info['g395h'] = {}
         self.Info['g395h']['f290lp'] = {}
         self.Info['g395h']['f290lp']['nslices'] = 30
