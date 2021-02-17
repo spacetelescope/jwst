@@ -1,5 +1,7 @@
 """Test utility funcs"""
-from jwst.stpipe.utilities import all_steps, resolve_step_class_alias
+from stpipe.utilities import resolve_step_class_alias
+
+from jwst.stpipe.utilities import all_steps
 import jwst.pipeline
 import jwst.step
 

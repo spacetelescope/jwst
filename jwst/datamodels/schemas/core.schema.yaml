@@ -532,7 +532,7 @@ properties:
             title: Lamp operating mode
             type: string
             default: 'NONE'
-            enum: [BRIGHTOBJ, FIXEDSLIT, GRATING-ONLY, IFU, MSASPEC, 'NONE']
+            enum: [BRIGHTOBJ, FIXEDSLIT, GRATING-ONLY, IFU, MSASPEC, IMAGE, 'NONE']
             fits_keyword: OPMODE
             blend_table: True
           gwa_xtilt:
@@ -1068,7 +1068,7 @@ properties:
               # NIRCam
               FULL, FULLBOX, FULL-TIGHT,
               INTRAMODULE, INTRAMODULEBOX, INTRAMODULEX, INTRASCA,
-              SUBARRAY-DITHER, WFSC,
+              SUBARRAY-DITHER, WFSC, 1LOS,
 
               # NIRISS
               AMI, IMAGING, MIMF, WFSS,
@@ -2305,6 +2305,10 @@ properties:
         title: Source catalog filename
         type: string
         fits_keyword: SCATFILE
+      segmentation_map:
+        title: Segmentation map filename
+        type: string
+        fits_keyword: SEGMFILE
       resample:
         title: Resample Parameters
         type: object

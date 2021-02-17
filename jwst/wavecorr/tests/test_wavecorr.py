@@ -42,7 +42,7 @@ def test_wavecorr():
 
     ra, dec, lam = slit.meta.wcs(x, y)
     ref_name = im_wave.meta.ref_file.wavecorr.name
-    freference = datamodels.WaveCorrModel(WavecorrStep.reference_uri_to_cache_path(ref_name))
+    freference = datamodels.WaveCorrModel(WavecorrStep.reference_uri_to_cache_path(ref_name, im.crds_observatory))
     zero_point1 = wavecorr.compute_zero_point_correction(lam, freference, source_xpos1, 'MOS', dispersion)
     zero_point2 = wavecorr.compute_zero_point_correction(lam, freference, source_xpos2, 'MOS', dispersion)
     diff_correction = np.abs(zero_point1[1] - zero_point2[1])

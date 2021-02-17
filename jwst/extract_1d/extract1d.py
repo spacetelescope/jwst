@@ -21,6 +21,7 @@ __author__ = 'Mihai Cara'
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+
 def extract1d(image, lambdas, disp_range,
               p_src, p_bkg=None, independent_var="wavelength",
               smoothing_length=0, bkg_fit="poly", bkg_order=0, weights=None):
@@ -195,7 +196,7 @@ def extract1d(image, lambdas, disp_range,
         temp_image = image
 
     #################################################
-    ##         Perform spectral extraction:        ##
+    #          Perform spectral extraction:         #
     #################################################
 
     bkg_model = None
@@ -220,13 +221,13 @@ def extract1d(image, lambdas, disp_range,
 
             if bkg_npts == 0:
                 bkg_model = None
-                log.warning("Not enough valid pixels to determine background "
-                             "for lambda={} (column {:d})".format(lam, x))
+                log.warning(f"Not enough valid pixels to determine background "
+                            f"for lambda={lam:.6f} (column {x:d})")
 
             elif len(bkg_model) < bkg_order:
                 log.warning(f"Not enough valid pixels to determine background "
-                            f"with the required order for lambda={lam} "
-                            f"(column {x}).\n"
+                            f"with the required order for lambda={lam:.6f} "
+                            f"(column {x:d})\n"
                             f"Lowering background order to {len(bkg_model)}")
 
         # Extract the source, and optionally subtract background using the
@@ -247,6 +248,7 @@ def extract1d(image, lambdas, disp_range,
         continue
 
     return (countrate, background, npixels)
+
 
 def bxcar(image, smoothing_length):
     """Smooth with a 1-D interval, along the last axis.
@@ -352,11 +354,11 @@ def _extract_src_flux(image, x, j, lam, srclim, weights, bkgmodel):
     npts = good.sum()
 
     if npts == 0:
-        return (np.nan, 0.0, 0.0, 0.0) # src total flux, bkg, area, total weight
+        return (np.nan, 0.0, 0.0, 0.0)  # src total flux, bkg, area, total weight
 
     # filter-out bad values:
-    #TODO: in the future we may need to develop a way of interpolating
-    #      over missing values either from a model or from adjacent columns
+    # TODO: in the future we may need to develop a way of interpolating
+    #       over missing values either from a model or from adjacent columns
     val = val[good]
     area = area[good]
     y = y[good]
@@ -452,6 +454,9 @@ def _fit_background_model(image, x, j, bkglim, bkg_fit, bkg_order):
     wht = wht[good]
     y = y[good]
 
+    if wht.sum() == 0:
+        return models.Polynomial1D(0), 0
+
     # Compute the fit
     if bkg_fit == 'poly':
 
@@ -464,13 +469,13 @@ def _fit_background_model(image, x, j, bkglim, bkg_fit, bkg_order):
 
         # Compute the mean of the (good) background values
         # only use values with weight=1
-        bkg_model = models.Polynomial1D(degree=0, c0=np.mean(val[wht==1]))
+        bkg_model = models.Polynomial1D(degree=0, c0=np.mean(val[wht == 1]))
 
     elif bkg_fit == 'median':
 
         # Compute the median of the (good) background values
         # only use values with weight=1
-        bkg_model = models.Polynomial1D(degree=0, c0=np.median(val[wht==1]))
+        bkg_model = models.Polynomial1D(degree=0, c0=np.median(val[wht == 1]))
 
     return bkg_model, npts
 
@@ -523,8 +528,8 @@ def _extract_colpix(image_data, x, j, limits):
 
     # These are the extraction limits in image pixel coordinates:
     intervals = []
-    for l in limits:
-        intervals.append([l[0][j], l[1][j]])
+    for lim in limits:
+        intervals.append([lim[0][j], lim[1][j]])
 
     if len(intervals) == 0:
         return ([], [], [])
@@ -536,9 +541,8 @@ def _extract_colpix(image_data, x, j, limits):
     ns = image_data.shape[0] - 1
     ns12 = ns + 0.5
 
-    npts = sum(map(lambda x: min(ns, int(math.floor(x[1] + 0.5))) - \
-                   max(0, int(math.floor(x[0] + 0.5))) + 1,
-                   intervals))
+    npts = sum(map(lambda x: min(ns, int(math.floor(x[1] + 0.5))) -
+                   max(0, int(math.floor(x[0] + 0.5))) + 1, intervals))
     npts = max(npts, 1)
 
     # pre-allocate data arrays:
@@ -582,7 +586,7 @@ def _extract_colpix(image_data, x, j, limits):
 
         k += ii2 - ii1 + 1
 
-    return (y, val, wht) # pixel coordinate, value, wheight=fractional pixel area
+    return (y, val, wht)  # pixel coordinate, value, wheight=fractional pixel area
 
 
 def _coalesce_bounds(segments):

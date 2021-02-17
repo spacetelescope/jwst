@@ -146,6 +146,10 @@ def set_source_type(input_model):
 
             log.info(f'source_id={slit.source_id}, stellarity={stellarity:.4f}, type={slit.source_type}')
 
+        # Remove the global target source type, so that it never mistakenly
+        # gets used for MOS data, which should always use slit-specific values
+        input_model.meta.target.source_type = None
+
     # Set all TSO exposures to POINT
     elif pipe_utils.is_tso(input_model):
         src_type = 'POINT'

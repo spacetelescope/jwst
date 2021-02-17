@@ -17,6 +17,7 @@ import numpy as np
 from astropy.io import fits
 from stdatamodels import filetype
 from stdatamodels import s3_utils
+from stdatamodels.model_base import _FileReference
 
 from ..lib.basic_utils import bytes2human
 
@@ -194,7 +195,9 @@ def open(init=None, memmap=False, **kwargs):
 
     # Close the hdulist if we opened it
     if file_to_close is not None:
-        model._files_to_close.append(file_to_close)
+        # TODO: We need a better solution than messing with DataModel
+        # internals.
+        model._file_references.append(_FileReference(file_to_close))
 
     if not has_model_type:
         class_name = new_class.__name__.split('.')[-1]

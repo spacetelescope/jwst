@@ -1,5 +1,6 @@
 import copy
 from collections import OrderedDict
+from collections.abc import Sequence
 import os.path as op
 import re
 import logging
@@ -7,10 +8,6 @@ import logging
 from asdf import AsdfFile
 from astropy.io import fits
 from stdatamodels import DataModel, properties
-
-from ..associations import (
-    AssociationNotValidError,
-    load_asn)
 
 from .model_base import JwstDataModel
 from .util import open as datamodel_open
@@ -24,7 +21,7 @@ __all__ = ['ModelContainer']
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-class ModelContainer(JwstDataModel):
+class ModelContainer(JwstDataModel, Sequence):
     """
     A container for holding DataModels.
 
@@ -180,6 +177,8 @@ class ModelContainer(JwstDataModel):
         filepath : str
             The path to an association file.
         """
+        # Prevent circular import:
+        from ..associations import AssociationNotValidError, load_asn
 
         filepath = op.abspath(op.expanduser(op.expandvars(filepath)))
         try:
@@ -380,6 +379,50 @@ class ModelContainer(JwstDataModel):
         if not self._iscopy:
             for model in self._models:
                 model.close()
+
+    @property
+    def crds_observatory(self):
+        """
+        Get the CRDS observatory for this container.  Used when selecting
+        step/pipeline parameter files when the container is a pipeline input.
+
+        Returns
+        -------
+        str
+        """
+        # Eventually ModelContainer will also be used for Roman, but this
+        # will work for now:
+        return "jwst"
+
+    def get_crds_parameters(self):
+        """
+        Get CRDS parameters for this container.  Used when selecting
+        step/pipeline parameter files when the container is a pipeline input.
+
+        Returns
+        -------
+        dict
+        """
+        with self._open_first_science_exposure() as model:
+            return model.get_crds_parameters()
+
+    def _open_first_science_exposure(self):
+        """
+        Open first model with exptype SCIENCE, or the first model
+        if none exists.
+
+        Returns
+        -------
+        stdatamodels.DataModel
+        """
+        for exposure in self.meta.asn_table.products[0].members:
+            if exposure.exptype.upper() == "SCIENCE":
+                first_exposure = exposure.expname
+                break
+        else:
+            first_exposure = self.meta.asn_table.products[0].members[0].expname
+
+        return datamodel_open(first_exposure)
 
 
 def make_file_with_index(file_path, idx):

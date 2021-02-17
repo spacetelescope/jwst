@@ -1,8 +1,9 @@
 import pytest
 
+import stpipe
+
 from jwst import datamodels
 from jwst.ami import AmiAnalyzeStep
-import jwst
 
 
 def test_ami_analyze_calints_fail():
@@ -37,7 +38,7 @@ def test_ami_analyze_no_reffile_fail(monkeypatch):
 
     def mockreturn(input_model, reftype, observatory=None, asn_exptypes=None):
         return("N/A")
-    monkeypatch.setattr(jwst.stpipe.crds_client, 'get_reference_file', mockreturn)
+    monkeypatch.setattr(stpipe.crds_client, 'get_reference_file', mockreturn)
 
     with pytest.raises(RuntimeError):
         AmiAnalyzeStep.call(model)

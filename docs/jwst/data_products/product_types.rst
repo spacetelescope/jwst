@@ -15,11 +15,11 @@ Stage 0 and Stage 1 Data Products
 +====================+=======================+============================+=======+======+=========+========================================+
 | N/A                |                       | :ref:`uncal <uncal>`       |   0   | Exp  | DN      | Uncalibrated 4-D exposure data         |
 +--------------------+-----------------------+----------------------------+-------+------+---------+----------------------------------------+
-| calwebb_dark       | :ref:`uncal <uncal>`  | :ref:`dark <dark>`         |   1   | Exp  | DN      | 4-D corrected dark data                |
+| calwebb_dark       | :ref:`uncal <uncal>`  | :ref:`dark <dark>`         |   1   | Exp  | DN      | 4-D corrected dark exposure data       |
 +--------------------+-----------------------+----------------------------+-------+------+---------+----------------------------------------+
 | calwebb_detector1  | :ref:`uncal <uncal>`  | :ref:`trapsfilled <trfld>` |   1   | Exp  | N/A     | Charge trap state data                 |
 |                    |                       +----------------------------+       |      +---------+----------------------------------------+
-|                    |                       | :ref:`rateints <rateints>` |       |      | DN/s    | 3-D countrate data (per integration)   |
+| calwebb_tso1       |                       | :ref:`rateints <rateints>` |       |      | DN/s    | 3-D countrate data (per integration)   |
 |                    |                       +----------------------------+       |      |         +----------------------------------------+
 |                    |                       | :ref:`rate <rate>`         |       |      |         | 2-D countrate data (per exposure)      |
 |                    |                       +----------------------------+       |      +---------+----------------------------------------+

@@ -18,29 +18,36 @@ routine processing of JWST data, there are some different uses of terminology to
 different levels or stages of processing and products. For those who are interested or
 need to know, the table below gives high-level translations between those naming conventions.
 
-+--------------------------------+-------------------------------------+------------------------------------+
-| Data Processing Levels         | User Data Product Stages            | MAST/CAOM Data Levels              |
-+================================+=====================================+====================================+
-| N/A                            | N/A                                 | -1 = Planned, but not yet executed |
-+--------------------------------+-------------------------------------+------------------------------------+
-| Level 0 = Science telemetry    | Not available to users              | Not available to users             |
-+--------------------------------+-------------------------------------+------------------------------------+
-| Level 0.5 = POD files          | Not available to users              | Not available to users             |
-+--------------------------------+-------------------------------------+------------------------------------+
-| Level 1a = Original FITS file  | Stage 0 = Original FITS file        | 0 = raw                            |
-+--------------------------------+-------------------------------------+------------------------------------+
-| Level 1b = Uncal FITS file     | Stage 0 = Fully-populated FITS file | 1 = uncalibrated                   |
-+--------------------------------+-------------------------------------+------------------------------------+
-| Level 2a = Countrate exposure  | Stage 1 = Countrate FITS file       | 2 = calibrated                     |
-+--------------------------------+-------------------------------------+------------------------------------+
-| Level 2b = Calibrated exposure | Stage 2 = Calibrated exposure       | 2 = calibrated                     |
-|                                |                                     |                                    |
-| Level 2c = CR-flagged exposure |                                     |                                    |
-+--------------------------------+-------------------------------------+------------------------------------+
-| Level 3 = Combined data        | Stage 3 = Combined data             | 3 = Science product                |
-+--------------------------------+-------------------------------------+------------------------------------+
-| Level 4 = Analysis results     | Stage 4 = High-level product        | 4 = Contributed product            |
-+--------------------------------+-------------------------------------+------------------------------------+
++----------------------------------+-------------------------------------+------------------------------------+
+| Data Processing Levels           | User Data Product Stages            | MAST/CAOM Data Levels              |
++==================================+=====================================+====================================+
+| N/A                              | N/A                                 | -1 = Planned, but not yet executed |
++----------------------------------+-------------------------------------+------------------------------------+
+| Level 0 = Science telemetry      | Not available to users              | Not available to users             |
++----------------------------------+-------------------------------------+------------------------------------+
+| Level 0.5 = POD files            | Not available to users              | Not available to users             |
++----------------------------------+-------------------------------------+------------------------------------+
+| Level 1a = Original FITS file    | Stage 0 = Original FITS file        | 0 = raw                            |
++----------------------------------+-------------------------------------+------------------------------------+
+| Level 1b = Uncal FITS file       | Stage 0 = Fully-populated FITS file | 1 = uncalibrated                   |
++----------------------------------+-------------------------------------+------------------------------------+
+| Level 2a = Countrate exposure    | Stage 1 = Countrate FITS file       | 2 = calibrated                     |
++----------------------------------+-------------------------------------+------------------------------------+
+| Level 2b = Calibrated exposure   | Stage 2 = Calibrated exposure       | 2 = calibrated                     |
+|                                  |                                     |                                    |
+| \*Level 2c = CR-flagged exposure |                                     |                                    |
++----------------------------------+-------------------------------------+------------------------------------+
+| Level 3 = Combined data          | Stage 3 = Combined data             | 3 = Science product                |
++----------------------------------+-------------------------------------+------------------------------------+
+| Level 4 = Analysis results       | Stage 4 = High-level product        | 4 = Contributed product            |
++----------------------------------+-------------------------------------+------------------------------------+
+
+\*Note that Level 2c files are intermediate files produced during pipeline Stage 3 processing,
+and are not final products (as opposed to all the other product types that are listed here).
+Therefore, Level 2c files are not a final product of any pipeline stage, but are produced
+within the pipeline Stage 3 processing. Level 2c files (identified by the 'crf' extension)
+are in the same format as Level 2b products, with the difference being that their data quality
+flags have been updated after running outlier detection in pipeline Stage 3 processing.
 
 Throughout this document, we will use the "Stage" terminology to refer to data products.
 Stage 0, 1, and 2 products are always files containing the data from a single exposure and a
