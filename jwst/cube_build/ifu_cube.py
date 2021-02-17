@@ -405,10 +405,8 @@ class IFUCubeData():
 
         range_b = self.b_max - self.b_min
         if self.instrument == 'MIRI':
-            self.cdelt1 = self.cdelt2 # make cubes square
+            #self.cdelt1 = self.cdelt2 # make cubes same scaling. MIRI EC team requested this removed (2/16/21)
             along_cdelt = self.cdelt1
-            #n1a = int(math.ceil(math.fabs(self.a_min) / along_cdelt))
-            #n1b = int(math.ceil(math.fabs(self.a_max) / along_cdelt))
 
             n1a = math.ceil(alimit / along_cdelt)
             n1b = math.ceil(alimit / along_cdelt)
@@ -895,8 +893,50 @@ class IFUCubeData():
                     log.debug("Possible problem with single ifu cube, no valid data in cube" )
                 j = j + 1
         return single_ifucube_container
-# **************************************************************************
 
+
+# **************************************************************************
+    def determine_cube_parameters_internal(self):
+        """Determine the spatial and spectral ifu size for coord_system = internal_cal
+
+        """
+
+        #____________________________________________________________
+        # internal_cal is for only 1 file and weighting= area
+        # no msm or emsm  information is needed
+        par1 = self.list_par1[0]
+        par2 = self.list_par2[0]
+        print('par1, par2', par1,par2)
+
+        a_scale, b_scale, w_scale = self.instrument_info.GetScale(par1,
+                                                                      par2)
+        self.spatial_size = a_scale
+        if self.scale1 != 0:
+            self.spatial_size = self.scale1
+
+        min_wave = self.instrument_info.GetWaveMin(par1, par2)
+        max_wave = self.instrument_info.GetWaveMax(par1, par2)
+        if self.wavemin is None:
+            self.wavemin = min_wave
+        else:
+            self.wavemin = np.float64(self.wavemin)
+            self.wavemin_user = True
+
+        if self.wavemax is None:
+            self.wavemax = max_wave
+        else:
+            self.wavemax = np.float64(self.wavemax)
+            self.wavemax_user = True
+
+        if self.scalew != 0:
+            self.spectral_size = self.scalew
+            self.linear_wavelength = True
+        else:
+            self.spectral_size = w_scale
+            self.linear_wavelength = True
+
+
+# **************************************************************************
     def determine_cube_parameters(self):
         """Determine the spatial and wavelength roi size to use for
         selecting point cloud elements around the spaxel centeres.
@@ -925,12 +965,7 @@ class IFUCubeData():
         minwave = np.zeros(number_bands)
         maxwave = np.zeros(number_bands)
 
-        if self.coord_system == 'internal_cal' and self.instrument == 'NIRSPEC':
-            if self.list_par1[0] == 'any' and self.list_par2[0] == 'opaque':
-                self.spaxel_size = 0.1
-                self.spectral_size = 0.005
-                return
-        
+        #____________________________________________________________
         for i in range(number_bands):
             if self.instrument == 'MIRI':
                 par1 = self.list_par1[i]
@@ -939,19 +974,16 @@ class IFUCubeData():
                 par1 = self.list_par1[i]
                 par2 = self.list_par2[i]
 
-            # pull out the values from the cube pars reference file
-            roiw[i] = self.instrument_info.GetWaveRoi(par1, par2)
-            rois[i] = self.instrument_info.GetSpatialRoi(par1, par2)
-
             a_scale, b_scale, w_scale = self.instrument_info.GetScale(par1,
                                                                       par2)
             spaxelsize[i] = a_scale
             spectralsize[i] = w_scale
-
             minwave[i] = self.instrument_info.GetWaveMin(par1, par2)
             maxwave[i] = self.instrument_info.GetWaveMax(par1, par2)
-            # values will be set to NONE if cube pars table does not contain them
 
+            # pull out the values from the cube pars reference file
+            roiw[i] = self.instrument_info.GetWaveRoi(par1, par2)
+            rois[i] = self.instrument_info.GetSpatialRoi(par1, par2)
             power[i] = self.instrument_info.GetMSMPower(par1, par2)
             softrad[i] = self.instrument_info.GetSoftRad(par1, par2)
             scalerad[i] = self.instrument_info.GetScaleRad(par1, par2)

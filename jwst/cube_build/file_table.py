@@ -61,29 +61,34 @@ class FileTable():
         self.FileMap['NIRSPEC'] = {}
         self.FileMap['NIRSPEC']['prism'] = {}
         self.FileMap['NIRSPEC']['prism']['clear'] = []
+        self.FileMap['NIRSPEC']['prism']['opaque'] = []
 
         self.FileMap['NIRSPEC']['g140m'] = {}
         self.FileMap['NIRSPEC']['g140m']['f070lp'] = []
         self.FileMap['NIRSPEC']['g140m']['f100lp'] = []
+        self.FileMap['NIRSPEC']['g140m']['opaque'] = []
 
         self.FileMap['NIRSPEC']['g140h'] = {}
         self.FileMap['NIRSPEC']['g140h']['f070lp'] = []
         self.FileMap['NIRSPEC']['g140h']['f100lp'] = []
+        self.FileMap['NIRSPEC']['g140h']['opaque'] = []
 
         self.FileMap['NIRSPEC']['g235m'] = {}
         self.FileMap['NIRSPEC']['g235m']['f170lp'] = []
+        self.FileMap['NIRSPEC']['g235m']['opaque'] = []
 
         self.FileMap['NIRSPEC']['g235h'] = {}
         self.FileMap['NIRSPEC']['g235h']['f170lp'] = []
+        self.FileMap['NIRSPEC']['g235h']['opaque'] = []
 
         self.FileMap['NIRSPEC']['g395m'] = {}
         self.FileMap['NIRSPEC']['g395m']['f290lp'] = []
+        self.FileMap['NIRSPEC']['g395m']['opaque'] = []
 
         self.FileMap['NIRSPEC']['g395h'] = {}
         self.FileMap['NIRSPEC']['g395h']['f290lp'] = []
+        self.FileMap['NIRSPEC']['g395h']['opaque'] = []
 
-        self.FileMap['NIRSPEC']['any']= {}
-        self.FileMap['NIRSPEC']['any']['opaque'] = []
 # ********************************************************************************
 
     def set_file_table(self,
@@ -138,9 +143,10 @@ class FileTable():
                 elif instrument == 'NIRSPEC':
                     fwa = input_model.meta.instrument.filter.lower()
                     gwa = input_model.meta.instrument.grating.lower()
-                    fwa.strip()
-                    if fwa == 'opaque':
-                        gwa = 'any'
+                    #print('remove this - force to work with existing cube par table')
+                    #if fwa == 'opaque':
+                    #    fwa = 'f170lp'
+
                     self.FileMap['NIRSPEC'][gwa][fwa].append(input_model)
                 else:
                     pass
