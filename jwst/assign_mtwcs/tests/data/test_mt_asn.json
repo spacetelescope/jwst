@@ -1,0 +1,27 @@
+{
+    "asn_type": "None",
+    "asn_rule": "DMS_Level3_Base",
+    "version_id": null,
+    "code_version": "0.18.4.dev60+gc759a6b0.d20210216",
+    "degraded_status": "No known degraded exposures in association.",
+    "program": "noprogram",
+    "constraints": "No constraints",
+    "asn_id": "a3001",
+    "target": "none",
+    "asn_pool": "none",
+    "products": [
+        {
+            "name": "l3_mt_results",
+            "members": [
+                {
+                    "expname": "test1_cal.fits",
+                    "exptype": "science"
+                },
+                {
+                    "expname": "test1_cal.fits",
+                    "exptype": "science"
+                }
+            ]
+        }
+    ]
+}
