@@ -178,7 +178,8 @@ class CubeData():
 # loop over the file names
         if self.instrument == 'MIRI':
             valid_channel = ['1', '2', '3', '4']
-            valid_subchannel = ['short', 'medium', 'long']
+            valid_subchannel = ['short', 'medium', 'long', 'short-medium', 'short-long',
+                                'medium-short', 'medium-long', 'long-short', 'long-medium']
 
             nchannels = len(valid_channel)
             nsubchannels = len(valid_subchannel)

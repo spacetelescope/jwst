@@ -9,6 +9,11 @@ associations
 - Added new Lvl2 rule, Asn_Lv2NRSLAMPImage, to run Image2 pipeline for NRSLAMP
   exposures with OPMODE=image [#5740]
 
+cube_build
+----------
+
+- Added support for cross-dichroic configurations [#5722]
+
 datamodels
 ----------
 
