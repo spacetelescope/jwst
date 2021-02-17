@@ -9,8 +9,8 @@ associations
 - Added new Lvl2 rule, Asn_Lv2NRSLAMPImage, to run Image2 pipeline for NRSLAMP
   exposures with OPMODE=image [#5740]
 
-combine1d
----------
+combine_1d
+----------
 
 - Pull source_id from input x1d headers (from source_catalog) to populate
   c1d output headers [#5759]

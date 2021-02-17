@@ -18,6 +18,5 @@ allOf:
     source_id:
       title: Source ID
       type: integer
-      default: 0
       fits_keyword: SOURCEID
       fits_hdu: COMBINE1D
