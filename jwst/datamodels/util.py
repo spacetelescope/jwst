@@ -26,7 +26,6 @@ log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
 
-
 class NoTypeWarning(Warning):
     pass
 

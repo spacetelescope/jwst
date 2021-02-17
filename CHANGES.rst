@@ -84,7 +84,7 @@ stpipe
 ------
 
 - Make jwst.stpipe independent of the rest of the jwst package and move
-  core code to spacetelescope/stpipe. [#5695, #5720]
+  core code to spacetelescope/stpipe. [#5695, #5720, #5752]
 
 0.18.3 (2021-01-25)
 ===================
