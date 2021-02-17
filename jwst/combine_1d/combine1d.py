@@ -26,6 +26,7 @@ class InputSpectrumModel:
         unit_weight
         right_ascension
         declination
+        source_id
     """
 
     def __init__(self, ms, spec, exptime_key):
@@ -578,8 +579,7 @@ def combine_1d_spectra(input_model, exptime_key):
     for order in output_spectra:
         output_order = output_spectra[order].create_output_data()
         output_order.spectral_order = order
-        output_order.source_id = int(input_spectra[order][0].source_id)
-        log.warning(f"Assign SID {input_spectra[order][0].source_id} to {output_order.source_id}")
+        output_order.source_id = input_spectra[order][0].source_id
         output_model.spec.append(output_order)
 
     # Copy one of the input headers to output.
@@ -598,9 +598,5 @@ def combine_1d_spectra(input_model, exptime_key):
 
     for order in output_spectra:
         output_spectra[order].close()
-
-    log.warning(f"Assign SID {input_spectra[order][0].source_id} to {output_order.source_id}")
-    for s in output_model.spec:
-        log.warning(f"spec SID is {s.source_id}")
 
     return output_model

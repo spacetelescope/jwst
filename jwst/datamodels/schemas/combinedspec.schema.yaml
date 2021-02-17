@@ -9,15 +9,15 @@ allOf:
   properties:
     spec_table:
       $ref: combinedspectable.schema
-    source_id:
-      title: Source ID
-      type: integer
-      default: 0
-      fits_keyword: SOURCEID
-      fits_hdu: COMBINE1D
     spectral_order:
       title: Spectral order number
       type: integer
       default: 1
       fits_keyword: SPORDER
+      fits_hdu: COMBINE1D
+    source_id:
+      title: Source ID
+      type: integer
+      default: 0
+      fits_keyword: SOURCEID
       fits_hdu: COMBINE1D
