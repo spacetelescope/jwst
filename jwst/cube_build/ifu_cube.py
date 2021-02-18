@@ -698,10 +698,9 @@ class IFUCubeData():
 
                             alpha_resol = self.instrument_info.Get_psf_alpha_parameters()
                             beta_resol = self.instrument_info.Get_psf_beta_parameters()
-
-                            worldtov23 = input_model.meta.wcs.get_transform("world", "v2v3")
-                            v2ab_transform = input_model.meta.wcs.get_transform('v2v3',
-                                                                                'alpha_beta')
+                            wcsobj = input_model.meta.wcs
+                            worldtov23 = wcsobj.get_transform(wcsobj.output_frame.name, "v2v3")
+                            v2ab_transform = wcsobj.get_transform('v2v3', 'alpha_beta')
 
                             spaxel_v2, spaxel_v3, zl = worldtov23(spaxel_ra,
                                                                   spaxel_dec,
@@ -1203,7 +1202,7 @@ class IFUCubeData():
                     lam_med = np.median(lam)
                     # pick two alpha, beta values to determine rotation angle
                     # values in arc seconds
-                    alpha_beta2world = input_model.meta.wcs.get_transform('alpha_beta','world')
+                    alpha_beta2world = input_model.meta.wcs.get_transform('alpha_beta', input_model.meta.wcs.output_frame.name)
 
                     temp_ra1, temp_dec1, lam_temp = alpha_beta2world(0, 0, lam_med)
                     temp_ra2, temp_dec2, lam_temp = alpha_beta2world(0, 2, lam_med)
@@ -1219,7 +1218,7 @@ class IFUCubeData():
 
                     # pick two along sice, across slice  values to determine rotation angle
                     # values in meters
-                    slicer2world = slice_wcs.get_transform('slicer','world')
+                    slicer2world = slice_wcs.get_transform('slicer', slice_wcs.output_frame.name)
                     temp_ra1, temp_dec1, lam_temp = slicer2world(0, 0, lam_med)
                     temp_ra2, temp_dec2, lam_temp = slicer2world(0, 0.005, lam_med)
                 # ________________________________________________________________________________
