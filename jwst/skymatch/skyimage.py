@@ -122,7 +122,7 @@ class SkyImage:
             if image is None:
                 raise ValueError("'mask' must be None when 'image' is None")
 
-            self.mask = np.asanyarray(mask, dtype=np.bool)
+            self.mask = np.asanyarray(mask, dtype=bool)
 
             if self.mask.shape != image.shape:
                 raise ValueError("'mask' must have the same shape as 'image'.")

@@ -88,7 +88,7 @@ class CubeSkyMatchStep(Step):
                     cm.dq,
                     self._dqbits,
                     good_mask_value=0,
-                    dtype=np.bool
+                    dtype=bool
                 )
                 weights[dq] = 0.0
 

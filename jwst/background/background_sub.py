@@ -144,7 +144,7 @@ def subtract_wfss_bkg(input_model, bkg_filename, wl_range_name):
     if got_catalog:
         bkg_mask = mask_from_source_cat(input_model, wl_range_name)
     else:
-        bkg_mask = np.ones(input_model.data.shape, dtype=np.bool)
+        bkg_mask = np.ones(input_model.data.shape, dtype=bool)
 
     # Compute the mean values of science image and background reference
     # image, including only regions where there are no identified sources.
@@ -223,7 +223,7 @@ def mask_from_source_cat(input_model, wl_range_name):
     """
 
     shape = input_model.data.shape
-    bkg_mask = np.ones(shape, dtype=np.bool)
+    bkg_mask = np.ones(shape, dtype=bool)
 
     reference_files = {"wavelengthrange": wl_range_name}
     grism_obj_list = create_grism_bbox(input_model, reference_files)

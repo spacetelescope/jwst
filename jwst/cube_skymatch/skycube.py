@@ -179,7 +179,7 @@ class SkyCube():
     def weights(self, weights):
         if weights is None:
             self._weights = np.ones_like(self.data, dtype=np.float)
-            self._mask = np.ones_like(self.data, dtype=np.bool)
+            self._mask = np.ones_like(self.data, dtype=bool)
         else:
             if weights.shape != self.data.shape:
                 raise ValueError("Weight map must have the same shape as "

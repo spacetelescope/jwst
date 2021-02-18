@@ -531,7 +531,7 @@ def calc_slope_vars(rn_sect, gain_sect, gdq_sect, group_time, max_seg):
 
     # Counter of semiramp for each pixel
     sr_index = np.zeros( npix, dtype=np.uint8 )
-    pix_not_done = np.ones( npix, dtype=np.bool)  # initialize to True
+    pix_not_done = np.ones( npix, dtype=bool)  # initialize to True
 
     i_read = 0
     # Loop over reads for all pixels to get segments (segments per pixel)

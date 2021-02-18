@@ -193,7 +193,7 @@ c_{1,0,\\ldots}^2,\\ldots).
     # check that the number of good pixel mask arrays matches the numbers
     # of input images, and if 'masks' is None - set all of them to True:
     if masks is None:
-        masks = [np.ones_like(images[0], dtype=np.bool) for i in images]
+        masks = [np.ones_like(images[0], dtype=bool) for i in images]
 
     else:
         if len(masks) != nimages:
