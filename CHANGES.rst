@@ -1,6 +1,17 @@
 0.18.4 (unreleased)
 ===================
 
+assign_mtwcs
+------------
+
+- Fixed a bug which caused the step to fail with ``MultiSlitModel`` input. [#JP-1907]
+
+assign_wcs
+----------
+
+- Added velocity aberration-corrected frame ``'v2v3vacorr'`` to the WCS
+  pipeline which takes into account DVA effects. [#5602]
+
 associations
 ------------
 
@@ -8,6 +19,17 @@ associations
 
 - Added new Lvl2 rule, Asn_Lv2NRSLAMPImage, to run Image2 pipeline for NRSLAMP
   exposures with OPMODE=image [#5740]
+
+combine_1d
+----------
+
+- Pull source_id from input x1d headers (from source_catalog) to populate
+  c1d output headers [#5759]
+
+cube_build
+----------
+
+- Added support for cross-dichroic configurations [#5722]
 
 datamodels
 ----------
@@ -24,6 +46,9 @@ datamodels
 - Added '1LOS' to PATTTYPE enum list in core.schema datamodel [#5728]
 
 - Added 'IMAGE' to OPMODE enum list [#5745]
+
+- Added source_id to combinedspec and multicombinedspec schemas to populate
+  combine1d output headers [#5759]
 
 extract_1d
 ----------
@@ -56,6 +81,12 @@ outlier_detection
 - Remove hard-coded MRS outlier detection values now that a parameter reference
   file exists. [#5753]
 
+photom
+------
+
+- Fixed handling of NIRSpec IFU extended source data, so that the flux
+  calibration gets converted to surface brightness [#5761]
+
 ramp_fitting
 ------------
 
@@ -77,11 +108,15 @@ srctype
 - Changed default SRCTYPE for non-primary NIRSpec slits in a FIXEDSLIT
   exposure to 'EXTENDED' rather than 'POINT' [#5671]
 
+- Changed logic for handling NIRSpec MOS exposures to blank out the "global"
+  value of SRCTYPE, to ensure that only the individual slit-specific values
+  of SRCTYPE get used downstream. [#5754]
+
 stpipe
 ------
 
 - Make jwst.stpipe independent of the rest of the jwst package and move
-  core code to spacetelescope/stpipe. [#5695, #5720]
+  core code to spacetelescope/stpipe. [#5695, #5720, #5752]
 
 0.18.3 (2021-01-25)
 ===================
@@ -233,6 +268,8 @@ assign_wcs
 
 associations
 ------------
+
+- Asn_Lv2WFSS: Add segmentation map exposure to Level2 WFSS associations [#5532]
 
 - Add new dither keyword subpxpts to constraints [#5525]
 

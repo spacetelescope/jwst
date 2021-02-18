@@ -110,8 +110,8 @@ def imaging(input_model, reference_files):
     gwa2msa.inverse = col.inverse | dircos2unitless.inverse | rotation.inverse | gwa_through
 
     # Create coordinate frames in the NIRSPEC WCS pipeline
-    # "detector", "gwa", "msa", "oteip", "v2v3", "world"
-    det, sca, gwa, msa_frame, oteip, v2v3, world = create_imaging_frames()
+    # "detector", "gwa", "msa", "oteip", "v2v3", "v2v3vacorr", "world"
+    det, sca, gwa, msa_frame, oteip, v2v3, v2v3vacorr, world = create_imaging_frames()
     if input_model.meta.instrument.filter != 'OPAQUE':
         # MSA to OTEIP transform
         msa2ote = msa_to_oteip(reference_files)
@@ -125,6 +125,13 @@ def imaging(input_model, reference_files):
         with OTEModel(reference_files['ote']) as f:
             oteip2v23 = f.model
 
+        # Compute differential velocity aberration (DVA) correction:
+        va_corr = pointing.dva_corr_model(
+            va_scale=input_model.meta.velocity_aberration.scale_factor,
+            v2_ref=input_model.meta.wcsinfo.v2_ref,
+            v3_ref=input_model.meta.wcsinfo.v3_ref
+        )
+
         # V2, V3 to world (RA, DEC) transform
         tel2sky = pointing.v23tosky(input_model)
 
@@ -133,11 +140,12 @@ def imaging(input_model, reference_files):
                             (gwa, gwa2msa),
                             (msa_frame, msa2oteip),
                             (oteip, oteip2v23),
-                            (v2v3, tel2sky),
+                            (v2v3, va_corr),
+                            (v2v3vacorr, tel2sky),
                             (world, None)]
     else:
         # convert to microns if the pipeline ends earlier
-        gwa2msa = (gwa2msa | Identity(2) & Scale(10**6)).rename('gwa2msa')
+        gwa2msa = (gwa2msa | Identity(2) & Scale(1e6)).rename('gwa2msa')
         imaging_pipeline = [(det, dms2detector),
                             (sca, det2gwa),
                             (gwa, gwa2msa),
@@ -217,7 +225,7 @@ def ifu(input_model, reference_files, slit_y_range=[-.55, .55]):
     # SLICER to MSA Entrance
     slicer2msa = slicer_to_msa(reference_files)
 
-    det, sca, gwa, slit_frame, msa_frame, oteip, v2v3, world = create_frames()
+    det, sca, gwa, slit_frame, msa_frame, oteip, v2v3, v2v3vacorr, world = create_frames()
 
     exp_type = input_model.meta.exposure.type.upper()
 
@@ -236,7 +244,14 @@ def ifu(input_model, reference_files, slit_y_range=[-.55, .55]):
         msa2oteip = ifu_msa_to_oteip(reference_files)
         # OTEIP to V2,V3 transform
         # This includes a wavelength unit conversion from meters to microns.
-        oteip2v23 = oteip_to_v23(reference_files)
+        oteip2v23 = oteip_to_v23(reference_files, input_model)
+
+        # Compute differential velocity aberration (DVA) correction:
+        va_corr = pointing.dva_corr_model(
+            va_scale=input_model.meta.velocity_aberration.scale_factor,
+            v2_ref=input_model.meta.wcsinfo.v2_ref,
+            v3_ref=input_model.meta.wcsinfo.v3_ref
+        ) & Identity(1)
 
         # V2, V3 to sky
         tel2sky = pointing.v23tosky(input_model) & Identity(1)
@@ -255,7 +270,8 @@ def ifu(input_model, reference_files, slit_y_range=[-.55, .55]):
                     ('slicer', slicer2msa),
                     (msa_frame, msa2oteip.rename('msa2oteip')),
                     (oteip, oteip2v23.rename('oteip2v23')),
-                    (v2v3, tel2sky),
+                    (v2v3, va_corr),
+                    (v2v3vacorr, tel2sky),
                     (world, None)]
 
     return pipeline
@@ -331,8 +347,8 @@ def slitlets_wcs(input_model, reference_files, open_slits_id):
     slit2msa.name = "slit2msa"
 
     # Create coordinate frames in the NIRSPEC WCS pipeline"
-    # "detector", "gwa", "slit_frame", "msa_frame", "oteip", "v2v3", "world"
-    det, sca, gwa, slit_frame, msa_frame, oteip, v2v3, world = create_frames()
+    # "detector", "gwa", "slit_frame", "msa_frame", "oteip", "v2v3", "v2v3vacorr", "world"
+    det, sca, gwa, slit_frame, msa_frame, oteip, v2v3, v2v3vacorr, world = create_frames()
 
     exp_type = input_model.meta.exposure.type.upper()
 
@@ -352,8 +368,15 @@ def slitlets_wcs(input_model, reference_files, open_slits_id):
 
         # OTEIP to V2,V3 transform
         # This includes a wavelength unit conversion from meters to microns.
-        oteip2v23 = oteip_to_v23(reference_files)
+        oteip2v23 = oteip_to_v23(reference_files, input_model)
         oteip2v23.name = "oteip2v23"
+
+        # Compute differential velocity aberration (DVA) correction:
+        va_corr = pointing.dva_corr_model(
+            va_scale=input_model.meta.velocity_aberration.scale_factor,
+            v2_ref=input_model.meta.wcsinfo.v2_ref,
+            v3_ref=input_model.meta.wcsinfo.v3_ref
+        ) & Identity(1)
 
         # V2, V3 to sky
         tel2sky = pointing.v23tosky(input_model) & Identity(1)
@@ -365,7 +388,8 @@ def slitlets_wcs(input_model, reference_files, open_slits_id):
                         (slit_frame, slit2msa),
                         (msa_frame, msa2oteip),
                         (oteip, oteip2v23),
-                        (v2v3, tel2sky),
+                        (v2v3, va_corr),
+                        (v2v3vacorr, tel2sky),
                         (world, None)]
 
     return msa_pipeline
@@ -1382,7 +1406,7 @@ def msa_to_oteip(reference_files):
     return msa2fore_mapping | (fore & Identity(1))
 
 
-def oteip_to_v23(reference_files):
+def oteip_to_v23(reference_files, input_model):
     """
     Transform from ``oteip`` frame to ``v2v3`` frame.
 
@@ -1399,6 +1423,7 @@ def oteip_to_v23(reference_files):
     """
     with OTEModel(reference_files['ote']) as f:
         ote = f.model
+
     fore2ote_mapping = Identity(3, name='fore2ote_mapping')
     fore2ote_mapping.inverse = Mapping((0, 1, 2, 2))
     # Create the transform to v2/v3/lambda.  The wavelength units up to this point are
@@ -1428,39 +1453,44 @@ def create_frames():
     sky = cf.CelestialFrame(name='sky', axes_order=(0, 1), reference_frame=coord.ICRS())
     v2v3_spatial = cf.Frame2D(name='v2v3_spatial', axes_order=(0, 1), unit=(u.arcsec, u.arcsec),
                              axes_names=('V2', 'V3'))
+    v2v3vacorr_spatial = cf.Frame2D(name='v2v3vacorr_spatial', axes_order=(0, 1),
+                                    unit=(u.arcsec, u.arcsec), axes_names=('V2', 'V3'))
 
     # The oteip_to_v23 incorporates a scale to convert the spectral units from
     # meters to microns.  So the v2v3 output frame will be in u.deg, u.deg, u.micron
     spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,),
                             axes_names=('wavelength',))
     v2v3 = cf.CompositeFrame([v2v3_spatial, spec], name='v2v3')
+    v2v3vacorr = cf.CompositeFrame([v2v3vacorr_spatial, spec], name='v2v3vacorr')
     slit_frame = cf.CompositeFrame([slit_spatial, spec], name='slit_frame')
     msa_frame = cf.CompositeFrame([msa_spatial, spec], name='msa_frame')
     oteip_spatial = cf.Frame2D(name='oteip', axes_order=(0, 1), unit=(u.deg, u.deg),
                                axes_names=('X_OTEIP', 'Y_OTEIP'))
     oteip = cf.CompositeFrame([oteip_spatial, spec], name='oteip')
     world = cf.CompositeFrame([sky, spec], name='world')
-    return det, sca, gwa, slit_frame, msa_frame, oteip, v2v3, world
+    return det, sca, gwa, slit_frame, msa_frame, oteip, v2v3, v2v3vacorr, world
 
 
 def create_imaging_frames():
     """
     Create the coordinate frames in the NIRSPEC WCS pipeline.
-    These are
-    "detector", "gwa", "msa_frame", "oteip", "v2v3", "world".
+    These are: "detector", "gwa", "msa_frame", "oteip", "v2v3", "v2v3vacorr",
+               and "world".
     """
     det = cf.Frame2D(name='detector', axes_order=(0, 1))
     sca = cf.Frame2D(name='sca', axes_order=(0, 1))
     gwa = cf.Frame2D(name="gwa", axes_order=(0, 1), unit=(u.rad, u.rad),
-                      axes_names=('alpha_in', 'beta_in'))
+                     axes_names=('alpha_in', 'beta_in'))
     msa = cf.Frame2D(name='msa', axes_order=(0, 1), unit=(u.m, u.m),
-                             axes_names=('x_msa', 'y_msa'))
+                     axes_names=('x_msa', 'y_msa'))
     v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.arcsec, u.arcsec),
-                              axes_names=('v2', 'v3'))
+                      axes_names=('v2', 'v3'))
+    v2v3vacorr = cf.Frame2D(name='v2v3vacorr', axes_order=(0, 1), unit=(u.arcsec, u.arcsec),
+                            axes_names=('v2', 'v3'))
     oteip = cf.Frame2D(name='oteip', axes_order=(0, 1), unit=(u.deg, u.deg),
-                               axes_names=('x_oteip', 'y_oteip'))
+                       axes_names=('x_oteip', 'y_oteip'))
     world = cf.CelestialFrame(name='world', axes_order=(0, 1), reference_frame=coord.ICRS())
-    return det, sca, gwa, msa, oteip, v2v3, world
+    return det, sca, gwa, msa, oteip, v2v3, v2v3vacorr, world
 
 
 def get_slit_location_model(slitdata):

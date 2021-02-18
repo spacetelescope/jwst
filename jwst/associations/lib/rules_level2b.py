@@ -637,7 +637,7 @@ class Asn_Lv2WFSS(
             for idx in sorted(direct_idxs, reverse=True)
         ))
 
-        # Add the Level3 catalog and direct image members
+        # Add the Level3 catalog, direct image, and segmentation map members
         lv3_direct_image_root = DMS_Level3_Base._dms_product_name(self)
         members.append(
             Member({
@@ -649,6 +649,12 @@ class Asn_Lv2WFSS(
             Member({
                 'expname': lv3_direct_image_root + '_cat.ecsv',
                 'exptype': 'sourcecat'
+            })
+        )
+        members.append(
+            Member({
+                'expname': lv3_direct_image_root + '_segm.fits',
+                'exptype': 'segmap'
             })
         )
 

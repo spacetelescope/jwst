@@ -1,0 +1,1515 @@
+SIMPLE  =                    T / conforms to FITS standard                      BITPIX  =                    8 / array data type                                NAXIS   =                    0 / number of array dimensions                     EXTEND  =                    T                                                  DATE    = '2021-02-17T01:44:58.271' / UTC date file created                     ORIGIN  = 'STSCI   '           / Organization responsible for creating file     TIMESYS = 'UTC     '           / principal time system for time-related keywordsTIMEUNIT= 's       '           / Default unit applicable to all time values     FILENAME= 'test1_cal.fits'     / Name of the file                               FILETYPE= 'uncalibrated'       / Type of data in the file                       SDP_VER = '2020_3b '           / Data processing software version number        PRD_VER = 'PRDOPSSOC-031'      / S&OC PRD version number used in data processingCAL_VER = '0.17.1  '           / Calibration software version number            CAL_VCS = 'RELEASE '           / Calibration software version control sys numberDATAMODL= 'MultiSlitModel'     / Type of data model                             TELESCOP= 'JWST    '           / Telescope used to acquire the data             HGA_MOVE=                    F / High Gain Antenna moved during data collection PWFSEET =     59242.6831387037 / Previous WFS exposure end time                 NWFSEST =                  0.0 / Next WFS exposure start time                                                                                                           Association information                                                                                                                                 ASNPOOL = 'jw00636_20210129t021306_pool' / Name of the ASN pool                 ASNTABLE= 'jw00636-o019_20210129t021306_spec2_001_asn.json' / Name of the ASN ta                                                                                        Program information                                                                                                                                     TITLE   = 'NIRSpec OTB Moving Targets Testing' / Proposal title                 PI_NAME = 'Stansberry, John A.' / Principal investigator name                   CATEGORY= 'ENG     '           / Program category                                                                                                                       Observation identifiers                                                                                                                                 DATE-OBS= '2021-01-29'         / [yyyy-mm-dd] UTC date at start of exposure     TIME-OBS= '00:21:23.407'       / [hh:mm:ss.sss] UTC time at start of exposure   DATE-BEG= '2021-01-29T00:21:23.407' / Date-time start of exposure               DATE-END= '2021-01-29T00:24:35.041' / Date-time end of exposure                 OBS_ID  = 'V00636019001P0000000004101' / Programmatic observation identifier    VISIT_ID= '00636019001'        / Visit identifier                               PROGRAM = '00636   '           / Program number                                 OBSERVTN= '019     '           / Observation number                             VISIT   = '001     '           / Visit number                                   VISITGRP= '04      '           / Visit group identifier                         SEQ_ID  = '1       '           / Parallel sequence identifier                   ACT_ID  = '01      '           / Activity identifier                            EXPOSURE= '1       '           / Exposure request number                        BKGDTARG=                    F / Background target                              TEMPLATE= 'NIRSpec Fixed Slit Spectroscopy' / Observation template used         OBSLABEL= 'Medium-rate target, fixed slit with TA and dithers SOR7-nOPS10-OTB' /OBSFOLDR= 'SOR7-nOPS10-OTB'    / Name of the APT observation folder                                                                                                     Visit information                                                                                                                                       ENG_QUAL= 'SUSPECT '           / Engineering data quality indicator from EngDB  VISITYPE= 'PRIME_TARGETED_MOVING' / Visit type                                  VSTSTART= '2021-01-28 23:21:47.7760000' / UTC visit start time                  VISITSTA= 'SUCCESSFUL'         / Status of a visit                              NEXPOSUR=                    6 / Total number of planned exposures in visit     INTARGET=                    F / At least one exposure in visit is internal     TARGOOPP=                    F / Visit scheduled as target of opportunity       TSOVISIT=                    F / Time Series Observation visit indicator        EXP_ONLY=                    F / Special commanding without SI configuration                                                                                            Target information                                                                                                                                      TARGPROP= '2000CN80-JAN2021-MEDIUM' / Proposer's name for the target            TARGNAME= '148202 (2000 CN80)' / Standard astronomical catalog name for target  TARGTYPE= 'MOVING  '           / Type of target (fixed, moving, generic)        TARG_RA =                  0.0 / Target RA at mid time of exposure              TARG_DEC=                  0.0 / Target Dec at mid time of exposure             SRCTYAPT= 'UNKNOWN '           / Source type from APT (point/extended)                                                                                                  Instrument configuration information                                                                                                                    INSTRUME= 'NIRSPEC '           / Instrument used to acquire the data            DETECTOR= 'NRS1    '           / Name of detector used to acquire the data      FILTER  = 'F100LP  '           / Name of the filter element used                GRATING = 'G140M   '           / Name of the grating element used               FXD_SLIT= 'S200A2  '           / Name of fixed slit aperture used               FOCUSPOS=                    3 / Focus position                                 LAMP    = 'NONE    '           / Internal lamp state                            OPMODE  = 'NONE    '           / Lamp operating mode                            GWA_XTIL=          0.338891834 / Grating Y tilt angle relative to mirror        GWA_YTIL=          0.197386354 / Grating X tilt angle relative to mirror        GWA_XP_V=          169.7847944 / GWA X-position/tilt sensor calib               GWA_YP_V=           98.8905508 / GWA Y-position/tilt sensor calib               GWA_PXAV=          169.7847944 / GWA REC avg X-pos/tilt sensor calib            GWA_PYAV=           98.8905508 / GWA REC avg Y-pos/tilt sensor calib            GWA_TILT=    698.1257000000001 / [K] GWA TILT (avg/calib) temperature                                                                                                   Exposure parameters                                                                                                                                     EXPCOUNT=                    3 / Running count of exposures in visit            EXPRIPAR= 'PRIME   '           / Prime or parallel exposure                     EXP_TYPE= 'NRS_FIXEDSLIT'      / Type of data in the exposure                   EXPSTART=    59243.01485424768 / UTC exposure start time                        EXPMID  =    59243.01596324074 / UTC exposure mid time                          EXPEND  =    59243.01707223379 / UTC exposure end time                          OSF_FILE= '2021029T014113167_001_osf.xml' / Observatory Status File name coverinREADPATT= 'NRS     '           / Readout pattern                                NINTS   =                    3 / Number of integrations in exposure             NGROUPS =                   10 / Number of groups in integration                NFRAMES =                    4 / Number of frames per group                     FRMDIVSR=                    4 / Divisor applied to frame-averaged groups       GROUPGAP=                    0 / Number of frames dropped between groups        DRPFRMS1=                    0 / Frames dropped at start of each integration    DRPFRMS3=                    0 / Frames dropped at end of each integration      NSAMPLES=                    1 / Number of A/D samples per pixel                TSAMPLE =                 10.0 / [us] Time between samples                      TFRAME  =                1.558 / [s] Time between frames                        TGROUP  =                6.232 / [s] Time between groups                        EFFINTTM=                62.32 / [s] Effective integration time                 EFFEXPTM=               186.96 / [s] Effective exposure time                    DURATION=              191.695 / [s] Total duration of exposure                 NRSTSTRT=                    1 / Number of resets at start of exposure          NRESETS =                    1 / Number of resets between integrations          ZEROFRAM=                    F / Zero frame was downlinked separately           DATAPROB=                    F / Science telemetry indicated a problem          SCA_NUM =                  491 / Sensor Chip Assembly number                    DATAMODE=                   51 / post-processing method used in FPAP            SCTARATE=                  0.0 / [ms/s] Spacecraft Clock Time Adjust RATE       GAINFACT=                 1.95 / Gain scale factor                                                                                                                      Subarray parameters                                                                                                                                     SUBARRAY= 'SUBS200A2'          / Subarray used                                  SUBSTRT1=                    1 / Starting pixel in axis 1 direction             SUBSTRT2=                 1018 / Starting pixel in axis 2 direction             SUBSIZE1=                 2048 / Number of pixels in axis 1 direction           SUBSIZE2=                   64 / Number of pixels in axis 2 direction           FASTAXIS=                    2 / Fast readout axis direction                    SLOWAXIS=                    1 / Slow readout axis direction                                                                                                            Dither information                                                                                                                                      PATTTYPE= '2-POINT-NOD'        / Primary dither pattern type                    PATT_NUM=                    1 / Position number in primary pattern             NUMDTHPT=                    2 / Total number of points in pattern              PATTSIZE= 'NONE    '           / Primary dither pattern size                    SUBPXPTS=                    2 / Number of points in subpixel dither pattern    XOFFSET = 1.29171229029667E-06 / x offset from pattern starting position        YOFFSET =   0.9222011264966339 / y offset from pattern starting position                                                                                                JWST ephemeris information                                                                                                                              REFFRAME= 'EME2000 '           / Ephemeris reference frame                      EPH_TYPE= 'Predicted'          / Definitive or Predicted                        EPH_TIME=    59243.01527777778 / UTC time of position and velocity vectors in epJWST_X  =    -912123.634832004 / [km] X spatial coordinate of JWST              JWST_Y  =     646636.464806898 / [km] Y spatial coordinate of JWST              JWST_Z  =     502759.460964288 / [km] Z spatial coordinate of JWST              JWST_DX =   -0.429977329281453 / [km/s] X component of JWST velocity            JWST_DY =   -0.342023689239514 / [km/s] Y component of JWST velocity            JWST_DZ =   -0.193746848592066 / [km/s] Z component of JWST velocity                                                                                                    Aperture information                                                                                                                                    APERNAME= 'NRS_S200A2_SLIT'    / PRD science aperture used                      PPS_APER= 'NRS_S200A2_SLIT'    / original AperName supplied by PPS                                                                                                      Time information                                                                                                                                        BARTDELT=   -246.7135066632181 / Barycentric time correction                    BSTRTIME=    59243.01199876728 / Barycentric exposure start time                BENDTIME=    59243.01421657539 / Barycentric exposure end time                  BMIDTIME=    59243.01310767133 / Barycentric exposure mid time                  HELIDELT=   -243.3001834200695 / Heliocentric time correction                   HSTRTIME=    59243.01203827334 / Heliocentric exposure start time               HENDTIME=    59243.01425608153 / Heliocentric exposure end time                 HMIDTIME=    59243.01314717743 / Heliocentric exposure mid time                                                                                                         Guide star information                                                                                                                                  GS_ORDER=                    1 / index of guide star within list of selected guiGSSTRTTM= '2021-01-28 23:54:09.4620000' / UTC time when guide star activity starGSENDTIM= '2021-01-29 00:02:52.7750000' / UTC time when guide star activity compGDSTARID= 'S1YT003943'         / guide star identifier                          GS_RA   =    60.05940023383657 / guide star right ascension                     GS_DEC  =    -9.58977259290638 / guide star declination                         GS_URA  = 0.000107307898846248 / guide star right ascension uncertainty         GS_UDEC = 6.57823125026577E-05 / guide star declination uncertainty             GS_MAG  =    14.94336128234863 / guide star magnitude in FGS detector           GS_UMAG =  0.01395030599087477 / guide star magnitude uncertainty               PCS_MODE= 'MOVING  '           / Pointing Control System mode                   VISITEND= '2021-01-29 00:45:17.6530000' / Observatory UTC time when the visit co                                                                                        Reference file information                                                                                                                                                                                                                      CRDS parameters                                                                                                                                         CRDS_VER= '7.6.0   '           / Version of CRDS file selection software used   CRDS_CTX= 'jwst_0641.pmap'     / CRDS context (.pmap) used to select ref files                                                                                          Pixel area reference file information                                                                                                                   R_AREA  = 'crds://jwst_nirspec_area_0024.fits' / Pixel area reference file name                                                                                         Nirspec Camera reference file information                                                                                                               R_CAMERA= 'crds://jwst_nirspec_camera_0004.asdf' / Nirspec Camera reference file                                                                                        Nirspec Collimator reference file information                                                                                                           R_COLLIM= 'crds://jwst_nirspec_collimator_0004.asdf' / Nirspec Collimator refere                                                                                        Dark reference file information                                                                                                                         R_DARK  = 'crds://jwst_nirspec_dark_0136.fits' / Dark reference file name                                                                                               Disperser reference file information                                                                                                                    R_DISPER= 'crds://jwst_nirspec_disperser_0032.asdf' / Disperser reference file n                                                                                        Distortion reference file information                                                                                                                   R_DISTOR= 'N/A     '           / Distortion reference file name                                                                                                         Filter Offset reference file information                                                                                                                R_FILOFF= 'N/A     '           / Filter Offset reference file name                                                                                                      Flat reference file information                                                                                                                         R_FLAT  = 'N/A     '           / Flat reference file name                                                                                                               DFlat reference file information                                                                                                                        R_DFLAT = 'crds://jwst_nirspec_dflat_0001.fits' / DFlat reference file name                                                                                             FFlat reference file information                                                                                                                        R_FFLAT = 'crds://jwst_nirspec_fflat_0014.fits' / FFlat reference file name                                                                                             SFlat reference file information                                                                                                                        R_SFLAT = 'crds://jwst_nirspec_sflat_0019.fits' / SFlat reference file name                                                                                             Nirspec FORE Model reference file information                                                                                                           R_FORE  = 'crds://jwst_nirspec_fore_0023.asdf' / Nirspec FORE Model reference fi                                                                                        Nirspec FPA Model reference file information                                                                                                            R_FPA   = 'crds://jwst_nirspec_fpa_0005.asdf' / Nirspec FPA Model reference file                                                                                        Gain reference file information                                                                                                                         R_GAIN  = 'crds://jwst_nirspec_gain_0021.fits' / Gain reference file name                                                                                               IFU fore reference file information                                                                                                                     R_IFUFOR= 'N/A     '           / ifufore reference file name                                                                                                            IFU post reference file information                                                                                                                     R_IFUPOS= 'N/A     '           / ifupost reference file name                                                                                                            IFU slicer reference file information                                                                                                                   R_IFUSLI= 'N/A     '           / ifuslicer reference file name                                                                                                          Linearity reference file information                                                                                                                    R_LINEAR= 'crds://jwst_nirspec_linearity_0024.fits' / Linearity reference file n                                                                                        Mask reference file information                                                                                                                         R_MASK  = 'crds://jwst_nirspec_mask_0024.fits' / Mask reference file name                                                                                               Nirspec MSA Model reference file information                                                                                                            R_MSA   = 'crds://jwst_nirspec_msa_0005.asdf' / Nirspec MSA Model reference file                                                                                        Nirspec OTE Model reference file information                                                                                                            R_OTE   = 'crds://jwst_nirspec_ote_0005.asdf' / Nirspec OTE Model reference file                                                                                        Pathloss reference file information                                                                                                                     R_PTHLOS= 'crds://jwst_nirspec_pathloss_0001.fits' / Pathloss reference file nam                                                                                        Photometric reference file information                                                                                                                  R_PHOTOM= 'crds://jwst_nirspec_photom_0014.fits' / Photometric reference file na                                                                                        Read noise reference file information                                                                                                                   R_READNO= 'crds://jwst_nirspec_readnoise_0036.fits' / Read noise reference file                                                                                         Regions reference file information                                                                                                                      R_REGION= 'N/A     '           / Regions reference file name                                                                                                            Saturation reference file information                                                                                                                   R_SATURA= 'crds://jwst_nirspec_saturation_0024.fits' / Saturation reference file                                                                                        Spectral distortion reference file information                                                                                                          R_SPCWCS= 'N/A     '           / Spectral distortion reference file name                                                                                                Superbias reference file information                                                                                                                    R_SUPERB= 'crds://jwst_nirspec_superbias_0100.fits' / Superbias reference file n                                                                                        Wavelength Range reference file information                                                                                                             R_WAVRAN= 'crds://jwst_nirspec_wavelengthrange_0004.asdf' / Wavelength Range ref                                                                                        Calibration step information                                                                                                                            S_WCS   = 'COMPLETE'           / Assign World Coordinate System                 S_BKDSUB= 'SKIPPED '           / Background subtraction                         S_DARK  = 'SKIPPED '           / Dark Subtraction                               S_DQINIT= 'COMPLETE'           / Data Quality Initialization                    S_EXTR2D= 'COMPLETE'           / 2-D Spectral Extraction                        S_FLAT  = 'COMPLETE'           / Flat Field Correction                          S_GANSCL= 'COMPLETE'           / Gain Scale Correction                          S_GRPSCL= 'SKIPPED '           / Group Scale Correction                         S_JUMP  = 'COMPLETE'           / Jump Detection                                 S_LINEAR= 'COMPLETE'           / Linearity Correction                           S_PTHLOS= 'COMPLETE'           / Pathloss Correction                            S_PHOTOM= 'COMPLETE'           / Photometric Calibration                        S_RAMP  = 'COMPLETE'           / Ramp Fitting                                   S_REFPIX= 'SKIPPED '           / Reference Pixel Correction                     S_SATURA= 'COMPLETE'           / Saturation Checking                            S_SRCTYP= 'COMPLETE'           / Source Type Determination                      S_SUPERB= 'COMPLETE'           / Superbias Subtraction                          S_WAVCOR= 'COMPLETE'           / NIRSpec wavelength correction                  END                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             XTENSION= 'IMAGE   '           / Image extension                                BITPIX  =                  -32 / array data type                                NAXIS   =                    2 / number of array dimensions                     NAXIS1  =                    5                                                  NAXIS2  =                    2                                                  PCOUNT  =                    0 / number of parameters                           GCOUNT  =                    1 / number of groups                               EXTNAME = 'SCI     '           / extension name                                 SRCTYPE = 'POINT   '           / Source type used for calibration               MJD-BEG =    59243.01485424768 / [d] exposure start time in MJD                 MJD-AVG =    59243.01596324074 / [d] exposure mid-point in MJD                  MJD-END =    59243.01707223379 / [d] exposure end time in MJD                   TDB-BEG =                  0.0 / [d] TDB time of exposure start in MJD          TDB-MID =                  0.0 / [d] TDB time of exposure mid-point in MJD      TDB-END =                  0.0 / [d] TDB time of exposure end in MJD            XPOSURE =               186.96 / [s] Effective exposure time                    TELAPSE =              191.695 / [s] Total elapsed exposure time                EXTVER  =                    1 / extension value                                SLTNAME = 'S200A2  '           / Name of the slit                               SLTSTRT1=                  471 / Starting pixel in x direction                  SLTSIZE1=                 1466 / Number of pixels in x direction                SLTSTRT2=                    1 / Starting pixel in y direction                  SLTSIZE2=                   49 / Number of pixels in y direction                SHUTTRID=                    1 / Shutter ID                                     SOURCEID=                    2 / Source ID                                      SRCXPOS =                  0.0 / Source position in slit (x-axis)               SRCYPOS =                  0.0 / Source position in slit (y-axis)               BUNIT   = 'MJy     '           / physical units of the array values                                                                                                     Photometry information                                                                                                                                  PHOTMJSR=                  1.0 / Flux density (MJy/steradian) producing 1 cps   PHOTUJA2=    23.50443053909789 / Flux density (uJy/arcsec2) producing 1 cps     PIXAR_SR= 2.35044305390978E-11 / Nominal pixel area in steradians               PIXAR_A2=                  1.0 / Nominal pixel area in arcsec^2                                                                                                         Information about the coordinates in the file                                                                                                           RADESYS = 'ICRS    '           / Name of the coordinate reference frame                                                                                                 Aperture information                                                                                                                                    PA_APER =   -152.7004035437526 / [deg] Position angle of aperture used                                                                                                  Spacecraft pointing information                                                                                                                         RA_V1   =    60.22034802641313 / [deg] RA of telescope V1 axis                  DEC_V1  =   -9.478327322105516 / [deg] Dec of telescope V1 axis                 PA_V3   =    68.45080632538969 / [deg] Position angle of telescope V3 axis                                                                                              Velocity aberration correction information                                                                                                              VA_SCALE=    0.999998428112548 / Velocity aberration scale factor                                                                                                       WCS parameters                                                                                                                                          S_REGION= 'POLYGON ICRS  60.124512198 -9.610025493 60.124939035 -9.609210113 &' CONTINUE  '60.124890208 -9.609185890 60.124463333 -9.610001282&'                CONTINUE  '' / spatial extent of the observation                                WAVSTART=              9.7E-07 / lower bound of the default wavelength range    WAVEND  =             1.89E-06 / upper bound of the default wavelength range    DISPAXIS=                    1 / Dispersion direction                           SPORDER =                   -1 / Spectral order number                          V2_REF  =           314.984863 / [arcsec] Telescope v2 coordinate of the referenV3_REF  =          -489.450562 / [arcsec] Telescope v3 coordinate of the referenVPARITY =                   -1 / Relative sense of rotation between Ideal xy andV3I_YANG=         138.83282471 / [deg] Angle from V3 axis to Ideal y axis       RA_REF  =    60.12468755167287 / [deg] Right ascension of the reference point   DEC_REF =   -9.609631770034195 / [deg] Declination of the reference point       ROLL_REF=    68.46699352943511 / [deg] V3 roll angle at the ref point (N over E)VELOSYS =             24060.23 / [m/s] Radial velocity wrt Barycenter           SPECSYS = 'BARYCENT'           / Spectral reference frame                       MT_RA   =                  0.0 / [deg] Moving target RA at exposure mid-point   MT_DEC  =                  0.0 / [deg] Moving target Dec at exposure mid-point  END                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             XTENSION= 'IMAGE   '           / Image extension                                BITPIX  =                   32 / array data type                                NAXIS   =                    2 / number of array dimensions                     NAXIS1  =                    5                                                  NAXIS2  =                    2                                                  PCOUNT  =                    0 / number of parameters                           GCOUNT  =                    1 / number of groups                               BSCALE  =                    1                                                  BZERO   =           2147483648                                                  EXTNAME = 'DQ      '           / extension name                                 EXTVER  =                    1 / extension value                                END                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             Ç  Ç  Ç  Ç  Ç  Ç  Ç  Ç  Ç  Ç                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          XTENSION= 'IMAGE   '           / Image extension                                BITPIX  =                  -32 / array data type                                NAXIS   =                    2 / number of array dimensions                     NAXIS1  =                    5                                                  NAXIS2  =                    2                                                  PCOUNT  =                    0 / number of parameters                           GCOUNT  =                    1 / number of groups                               EXTNAME = 'ERR     '           / extension name                                 EXTVER  =                    1 / extension value                                BUNIT   = 'MJy     '           / physical units of the array values             END                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             XTENSION= 'IMAGE   '           / Image extension                                BITPIX  =                  -32 / array data type                                NAXIS   =                    2 / number of array dimensions                     NAXIS1  =                    5                                                  NAXIS2  =                    2                                                  PCOUNT  =                    0 / number of parameters                           GCOUNT  =                    1 / number of groups                               EXTNAME = 'WAVELENGTH'         / extension name                                 EXTVER  =                    1 / extension value                                END                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             XTENSION= 'IMAGE   '           / Image extension                                BITPIX  =                  -32 / array data type                                NAXIS   =                    2 / number of array dimensions                     NAXIS1  =                    5                                                  NAXIS2  =                    2                                                  PCOUNT  =                    0 / number of parameters                           GCOUNT  =                    1 / number of groups                               EXTNAME = 'VAR_POISSON'        / extension name                                 EXTVER  =                    1 / extension value                                END                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             XTENSION= 'IMAGE   '           / Image extension                                BITPIX  =                  -32 / array data type                                NAXIS   =                    2 / number of array dimensions                     NAXIS1  =                    5                                                  NAXIS2  =                    2                                                  PCOUNT  =                    0 / number of parameters                           GCOUNT  =                    1 / number of groups                               EXTNAME = 'VAR_RNOISE'         / extension name                                 EXTVER  =                    1 / extension value                                END                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             XTENSION= 'IMAGE   '           / Image extension                                BITPIX  =                  -32 / array data type                                NAXIS   =                    2 / number of array dimensions                     NAXIS1  =                    5                                                  NAXIS2  =                    2                                                  PCOUNT  =                    0 / number of parameters                           GCOUNT  =                    1 / number of groups                               EXTNAME = 'VAR_FLAT'           / extension name                                 EXTVER  =                    1 / extension value                                END                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             XTENSION= 'IMAGE   '           / Image extension                                BITPIX  =                  -32 / array data type                                NAXIS   =                    2 / number of array dimensions                     NAXIS1  =                    5                                                  NAXIS2  =                    2                                                  PCOUNT  =                    0 / number of parameters                           GCOUNT  =                    1 / number of groups                               EXTNAME = 'PATHLOSS_PS'        / extension name                                 EXTVER  =                    1 / extension value                                END                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             XTENSION= 'IMAGE   '           / Image extension                                BITPIX  =                  -32 / array data type                                NAXIS   =                    2 / number of array dimensions                     NAXIS1  =                    5                                                  NAXIS2  =                    2                                                  PCOUNT  =                    0 / number of parameters                           GCOUNT  =                    1 / number of groups                               EXTNAME = 'PATHLOSS_UN'        / extension name                                 EXTVER  =                    1 / extension value                                END                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             XTENSION= 'BINTABLE'           / binary table extension                         BITPIX  =                    8 / array data type                                NAXIS   =                    2 / number of array dimensions                     NAXIS1  =                94887 / length of dimension 1                          NAXIS2  =                    1 / length of dimension 2                          PCOUNT  =                    0 / number of group parameters                     GCOUNT  =                    1 / number of groups                               TFIELDS =                    1 / number of table fields                         TTYPE1  = 'ASDF_METADATA'                                                       TFORM1  = '94887B  '                                                            EXTNAME = 'ASDF    '           / extension name                                 END                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             #ASDF 1.0.0
+#ASDF_STANDARD 1.5.0
+%YAML 1.1
+%TAG ! tag:stsci.edu:asdf/
+--- !core/asdf-1.1.0
+asdf_library: !core/software-1.0.0 {author: Space Telescope Science Institute, homepage: 'http://github.com/spacetelescope/asdf',
+  name: asdf, version: 2.7.2}
+history:
+  extensions:
+  - !core/extension_metadata-1.0.0
+    extension_class: astropy.io.misc.asdf.extension.AstropyAsdfExtension
+    software: !core/software-1.0.0 {name: astropy, version: 4.3.dev525+g3fba04ce6}
+  - !core/extension_metadata-1.0.0
+    extension_class: jwst.transforms.jwextension.JWSTExtension
+    software: !core/software-1.0.0 {name: jwst, version: 0.18.4.dev60+gc759a6b0.d20210216}
+  - !core/extension_metadata-1.0.0
+    extension_class: asdf.extension.BuiltinExtension
+    software: !core/software-1.0.0 {name: asdf, version: 2.7.2}
+  - !core/extension_metadata-1.0.0
+    extension_class: astropy.io.misc.asdf.extension.AstropyExtension
+    software: !core/software-1.0.0 {name: astropy, version: 4.3.dev525+g3fba04ce6}
+  - !core/extension_metadata-1.0.0
+    extension_class: gwcs.extension.GWCSExtension
+    software: !core/software-1.0.0 {name: gwcs, version: 0.16.1}
+_fits_hash: 18424970cf6f2f790646a7a20614687c9126ff93ab3284532cfe35653e47d253
+meta:
+  aperture: {name: NRS_S200A2_SLIT, position_angle: -152.7004035437526, pps_name: NRS_S200A2_SLIT}
+  asn: {pool_name: jw00636_20210129t021306_pool, table_name: jw00636-o019_20210129t021306_spec2_001_asn.json}
+  bunit_data: MJy
+  bunit_err: MJy
+  cal_step: {assign_wcs: COMPLETE, back_sub: SKIPPED, dark_sub: SKIPPED, dq_init: COMPLETE,
+    extract_2d: COMPLETE, flat_field: COMPLETE, gain_scale: COMPLETE, group_scale: SKIPPED,
+    jump: COMPLETE, linearity: COMPLETE, pathloss: COMPLETE, photom: COMPLETE, ramp_fit: COMPLETE,
+    refpix: SKIPPED, saturation: COMPLETE, srctype: COMPLETE, superbias: COMPLETE,
+    wavecorr: COMPLETE}
+  calibration_software_revision: RELEASE
+  calibration_software_version: 0.17.1
+  coordinates: {reference_frame: ICRS}
+  data_processing_software_version: 2020_3b
+  date: '2021-02-17T01:44:58.271'
+  dither: {pattern_size: NONE, position_number: 1, primary_type: 2-POINT-NOD, subpixel_dither_pattern: SPATIAL,
+    subpixel_total_points: 2, total_points: 2, x_offset: 1.29171229029667e-06, y_offset: 0.9222011264966339}
+  ephemeris: {reference_frame: EME2000, spatial_x: -912123.634832004, spatial_y: 646636.464806898,
+    spatial_z: 502759.460964288, time: 59243.01527777778, type: Predicted, velocity_x: -0.429977329281453,
+    velocity_y: -0.342023689239514, velocity_z: -0.193746848592066}
+  exposure: {clock_adjust_rate: 0.0, count: 3, data_problem: false, datamode: 51,
+    drop_frames1: 0, drop_frames3: 0, duration: 191.695, effective_exposure_time: 186.96,
+    elapsed_exposure_time: 191.695, end_time: 59243.01707223379, end_time_mjd: 59243.01707223379,
+    end_time_tdb: 0.0, exposure_time: 186.96, frame_divisor: 4, frame_time: 1.558,
+    gain_factor: 1.95, group_time: 6.232, groupgap: 0, integration_time: 62.32, mid_time: 59243.01596324074,
+    mid_time_mjd: 59243.01596324074, mid_time_tdb: 0.0, nframes: 4, ngroups: 10, nints: 3,
+    nresets_at_start: 1, nresets_between_ints: 1, nsamples: 1, osf_file: 2021029T014113167_001_osf.xml,
+    prime_parallel: PRIME, readpatt: NRS, sample_time: 10.0, sca_num: 491, start_time: 59243.01485424768,
+    start_time_mjd: 59243.01485424768, start_time_tdb: 0.0, type: NRS_FIXEDSLIT, zero_frame: false}
+  filename: test1_cal.fits
+  filetype: uncalibrated
+  guidestar: {gs_dec: -9.58977259290638, gs_id: S1YT003943, gs_mag: 14.94336128234863,
+    gs_order: 1, gs_pcs_mode: MOVING, gs_ra: 60.05940023383657, gs_start_time: '2021-01-28
+      23:54:09.4620000', gs_stop_time: '2021-01-29 00:02:52.7750000', gs_udec: 6.57823125026577e-05,
+    gs_umag: 0.01395030599087477, gs_ura: 0.000107307898846248, visit_end_time: '2021-01-29
+      00:45:17.6530000'}
+  hga_move: false
+  instrument: {detector: NRS1, filter: F100LP, fixed_slit: S200A2, focus_position: 3,
+    grating: G140M, gwa_pxav: 169.7847944, gwa_pyav: 98.8905508, gwa_tilt: 698.1257,
+    gwa_xp_v: 169.7847944, gwa_xtilt: 0.338891834, gwa_yp_v: 98.8905508, gwa_ytilt: 0.197386354,
+    lamp_mode: NONE, lamp_state: NONE, name: NIRSPEC}
+  model_type: MultiSlitModel
+  nwfsest: 0.0
+  observation: {activity_id: '01', bkgdtarg: false, date: '2021-01-29', date_beg: '2021-01-29T00:21:23.407',
+    date_end: '2021-01-29T00:24:35.041', exposure_number: '1', obs_id: V00636019001P0000000004101,
+    observation_folder: SOR7-nOPS10-OTB, observation_label: 'Medium-rate target, fixed
+      slit with TA and dithers SOR7-nOPS10-OTB', observation_number: 019, program_number: '00636',
+    sequence_id: '1', template: NIRSpec Fixed Slit Spectroscopy, time: '00:21:23.407',
+    visit_group: '04', visit_id: 00636019001, visit_number: '001'}
+  origin: STSCI
+  pointing: {dec_v1: -9.478327322105516, pa_v3: 68.45080632538969, ra_v1: 60.22034802641313}
+  prd_software_version: PRDOPSSOC-031
+  program: {category: ENG, pi_name: 'Stansberry, John A.', title: NIRSpec OTB Moving
+      Targets Testing}
+  pwfseet: 59242.6831387037
+  ref_file:
+    area: {name: 'crds://jwst_nirspec_area_0024.fits'}
+    camera: {name: 'crds://jwst_nirspec_camera_0004.asdf'}
+    collimator: {name: 'crds://jwst_nirspec_collimator_0004.asdf'}
+    crds: {context_used: jwst_0641.pmap, sw_version: 7.6.0}
+    dark: {name: 'crds://jwst_nirspec_dark_0136.fits'}
+    dflat: {name: 'crds://jwst_nirspec_dflat_0001.fits'}
+    disperser: {name: 'crds://jwst_nirspec_disperser_0032.asdf'}
+    distortion: {name: N/A}
+    fflat: {name: 'crds://jwst_nirspec_fflat_0014.fits'}
+    filteroffset: {name: N/A}
+    flat: {name: N/A}
+    fore: {name: 'crds://jwst_nirspec_fore_0023.asdf'}
+    fpa: {name: 'crds://jwst_nirspec_fpa_0005.asdf'}
+    gain: {name: 'crds://jwst_nirspec_gain_0021.fits'}
+    ifufore: {name: N/A}
+    ifupost: {name: N/A}
+    ifuslicer: {name: N/A}
+    linearity: {name: 'crds://jwst_nirspec_linearity_0024.fits'}
+    mask: {name: 'crds://jwst_nirspec_mask_0024.fits'}
+    msa: {name: 'crds://jwst_nirspec_msa_0005.asdf'}
+    ote: {name: 'crds://jwst_nirspec_ote_0005.asdf'}
+    pathloss: {name: 'crds://jwst_nirspec_pathloss_0001.fits'}
+    photom: {name: 'crds://jwst_nirspec_photom_0014.fits'}
+    readnoise: {name: 'crds://jwst_nirspec_readnoise_0036.fits'}
+    regions: {name: N/A}
+    saturation: {name: 'crds://jwst_nirspec_saturation_0024.fits'}
+    sflat: {name: 'crds://jwst_nirspec_sflat_0019.fits'}
+    specwcs: {name: N/A}
+    superbias: {name: 'crds://jwst_nirspec_superbias_0100.fits'}
+    wavelengthrange: {name: 'crds://jwst_nirspec_wavelengthrange_0004.asdf'}
+  subarray: {fastaxis: 2, name: SUBS200A2, slowaxis: 1, xsize: 2048, xstart: 1, ysize: 64,
+    ystart: 1018}
+  target: {catalog_name: 148202 (2000 CN80), dec: 0.0, proposer_name: 2000CN80-JAN2021-MEDIUM,
+    ra: 0.0, source_type: POINT, source_type_apt: UNKNOWN, type: MOVING}
+  telescope: JWST
+  time: {barycentric_correction: -246.7135066632181, barycentric_expend: 59243.01421657539,
+    barycentric_expmid: 59243.01310767133, barycentric_expstart: 59243.01199876728,
+    heliocentric_correction: -243.3001834200695, heliocentric_expend: 59243.01425608153,
+    heliocentric_expmid: 59243.01314717743, heliocentric_expstart: 59243.01203827334}
+  time_sys: UTC
+  time_unit: s
+  velocity_aberration: {dec_offset: -9.2160444206149e-07, ra_offset: 6.84983670869474e-07,
+    scale_factor: 0.999998428112548}
+  visit: {engineering_quality: SUSPECT, exp_only: false, internal_target: false, start_time: '2021-01-28
+      23:21:47.7760000', status: SUCCESSFUL, too_visit: false, total_exposures: 6,
+    tsovisit: false, type: PRIME_TARGETED_MOVING}
+  wcsinfo: {dec_ref: -9.609631770034195, dispersion_direction: 1, mt_dec: 0.0, mt_ra: 0.0,
+    ra_ref: 60.12468755167287, roll_ref: 68.46699352943511, s_region: POLYGON ICRS  60.124512198
+      -9.610025493 60.124939035 -9.609210113 60.124890208 -9.609185890 60.124463333
+      -9.610001282, specsys: BARYCENT, spectral_order: -1, v2_ref: 314.984863, v3_ref: -489.450562,
+    v3yangle: 138.83282471, velosys: 24060.23, vparity: -1, waverange_end: 1.89e-06,
+    waverange_start: 9.7e-07}
+slits:
+- !core/asdf-1.1.0
+  data: !core/ndarray-1.0.0
+    source: fits:SCI,1
+    datatype: float32
+    byteorder: big
+    shape: [2, 5]
+  dq: !core/ndarray-1.0.0
+    source: fits:DQ,1
+    datatype: uint32
+    byteorder: big
+    shape: [2, 5]
+  err: !core/ndarray-1.0.0
+    source: fits:ERR,1
+    datatype: float32
+    byteorder: big
+    shape: [2, 5]
+  int_times: !core/ndarray-1.0.0
+    source: 0
+    datatype:
+    - {byteorder: little, datatype: int32, name: integration_number}
+    - {byteorder: little, datatype: float64, name: int_start_MJD_UTC}
+    - {byteorder: little, datatype: float64, name: int_mid_MJD_UTC}
+    - {byteorder: little, datatype: float64, name: int_end_MJD_UTC}
+    - {byteorder: little, datatype: float64, name: int_start_BJD_TDB}
+    - {byteorder: little, datatype: float64, name: int_mid_BJD_TDB}
+    - {byteorder: little, datatype: float64, name: int_end_BJD_TDB}
+    byteorder: big
+    shape: [0]
+  meta:
+    aperture: {name: NRS_S200A2_SLIT, position_angle: -152.7004035437526, pps_name: NRS_S200A2_SLIT}
+    asn: {pool_name: jw00636_20210129t021306_pool, table_name: jw00636-o019_20210129t021306_spec2_001_asn.json}
+    bunit_data: MJy
+    bunit_err: MJy
+    cal_step: {assign_wcs: COMPLETE, back_sub: SKIPPED, dark_sub: SKIPPED, dq_init: COMPLETE,
+      extract_2d: COMPLETE, flat_field: COMPLETE, gain_scale: COMPLETE, group_scale: SKIPPED,
+      jump: COMPLETE, linearity: COMPLETE, pathloss: COMPLETE, photom: COMPLETE, ramp_fit: COMPLETE,
+      refpix: SKIPPED, saturation: COMPLETE, srctype: COMPLETE, superbias: COMPLETE,
+      wavecorr: COMPLETE}
+    calibration_software_revision: RELEASE
+    calibration_software_version: 0.17.1
+    coordinates: {reference_frame: ICRS}
+    data_processing_software_version: 2020_3b
+    date: '2021-01-29T02:16:05.438'
+    dither: {pattern_size: NONE, position_number: 1, primary_type: 2-POINT-NOD, subpixel_dither_pattern: SPATIAL,
+      subpixel_total_points: 2, total_points: 2, x_offset: 1.29171229029667e-06, y_offset: 0.9222011264966339}
+    ephemeris: {reference_frame: EME2000, spatial_x: -912123.634832004, spatial_y: 646636.464806898,
+      spatial_z: 502759.460964288, time: 59243.01527777778, type: Predicted, velocity_x: -0.429977329281453,
+      velocity_y: -0.342023689239514, velocity_z: -0.193746848592066}
+    exposure: {clock_adjust_rate: 0.0, count: 3, data_problem: false, datamode: 51,
+      drop_frames1: 0, drop_frames3: 0, duration: 191.695, effective_exposure_time: 186.96,
+      elapsed_exposure_time: 191.695, end_time: 59243.01707223379, end_time_mjd: 59243.01707223379,
+      end_time_tdb: 0.0, exposure_time: 186.96, frame_divisor: 4, frame_time: 1.558,
+      gain_factor: 1.95, group_time: 6.232, groupgap: 0, integration_time: 62.32,
+      mid_time: 59243.01596324074, mid_time_mjd: 59243.01596324074, mid_time_tdb: 0.0,
+      nframes: 4, ngroups: 10, nints: 3, nresets_at_start: 1, nresets_between_ints: 1,
+      nsamples: 1, osf_file: 2021029T014113167_001_osf.xml, prime_parallel: PRIME,
+      readpatt: NRS, sample_time: 10.0, sca_num: 491, start_time: 59243.01485424768,
+      start_time_mjd: 59243.01485424768, start_time_tdb: 0.0, type: NRS_FIXEDSLIT,
+      zero_frame: false}
+    filename: jw00636019001_04101_00001_nrs1_cal.fits
+    filetype: uncalibrated
+    group_id: jw00636019001_04101_1
+    guidestar: {gs_dec: -9.58977259290638, gs_id: S1YT003943, gs_mag: 14.94336128234863,
+      gs_order: 1, gs_pcs_mode: MOVING, gs_ra: 60.05940023383657, gs_start_time: '2021-01-28
+        23:54:09.4620000', gs_stop_time: '2021-01-29 00:02:52.7750000', gs_udec: 6.57823125026577e-05,
+      gs_umag: 0.01395030599087477, gs_ura: 0.000107307898846248, visit_end_time: '2021-01-29
+        00:45:17.6530000'}
+    hga_move: false
+    instrument: {detector: NRS1, filter: F100LP, fixed_slit: S200A2, focus_position: 3,
+      grating: G140M, gwa_pxav: 169.7847944, gwa_pyav: 98.8905508, gwa_tilt: 698.1257,
+      gwa_xp_v: 169.7847944, gwa_xtilt: 0.338891834, gwa_yp_v: 98.8905508, gwa_ytilt: 0.197386354,
+      lamp_mode: NONE, lamp_state: NONE, name: NIRSPEC}
+    model_type: MultiSlitModel
+    nwfsest: 0.0
+    observation: {activity_id: '01', bkgdtarg: false, date: '2021-01-29', date_beg: '2021-01-29T00:21:23.407',
+      date_end: '2021-01-29T00:24:35.041', exposure_number: '1', obs_id: V00636019001P0000000004101,
+      observation_folder: SOR7-nOPS10-OTB, observation_label: 'Medium-rate target,
+        fixed slit with TA and dithers SOR7-nOPS10-OTB', observation_number: 019,
+      program_number: '00636', sequence_id: '1', template: NIRSpec Fixed Slit Spectroscopy,
+      time: '00:21:23.407', visit_group: '04', visit_id: 00636019001, visit_number: '001'}
+    origin: STSCI
+    photometry: {conversion_megajanskys: 1.0, conversion_microjanskys: 23.50443053909789,
+      pixelarea_arcsecsq: 1.0, pixelarea_steradians: 2.3504430539097885e-11}
+    pointing: {dec_v1: -9.478327322105516, pa_v3: 68.45080632538969, ra_v1: 60.22034802641313}
+    prd_software_version: PRDOPSSOC-031
+    program: {category: ENG, pi_name: 'Stansberry, John A.', title: NIRSpec OTB Moving
+        Targets Testing}
+    pwfseet: 59242.6831387037
+    ref_file:
+      area: {name: 'crds://jwst_nirspec_area_0024.fits'}
+      camera: {name: 'crds://jwst_nirspec_camera_0004.asdf'}
+      collimator: {name: 'crds://jwst_nirspec_collimator_0004.asdf'}
+      crds: {context_used: jwst_0641.pmap, sw_version: 7.6.0}
+      dark: {name: 'crds://jwst_nirspec_dark_0136.fits'}
+      dflat: {name: 'crds://jwst_nirspec_dflat_0001.fits'}
+      disperser: {name: 'crds://jwst_nirspec_disperser_0032.asdf'}
+      distortion: {name: N/A}
+      fflat: {name: 'crds://jwst_nirspec_fflat_0014.fits'}
+      filteroffset: {name: N/A}
+      flat: {name: N/A}
+      fore: {name: 'crds://jwst_nirspec_fore_0023.asdf'}
+      fpa: {name: 'crds://jwst_nirspec_fpa_0005.asdf'}
+      gain: {name: 'crds://jwst_nirspec_gain_0021.fits'}
+      ifufore: {name: N/A}
+      ifupost: {name: N/A}
+      ifuslicer: {name: N/A}
+      linearity: {name: 'crds://jwst_nirspec_linearity_0024.fits'}
+      mask: {name: 'crds://jwst_nirspec_mask_0024.fits'}
+      msa: {name: 'crds://jwst_nirspec_msa_0005.asdf'}
+      ote: {name: 'crds://jwst_nirspec_ote_0005.asdf'}
+      pathloss: {name: 'crds://jwst_nirspec_pathloss_0001.fits'}
+      photom: {name: 'crds://jwst_nirspec_photom_0014.fits'}
+      readnoise: {name: 'crds://jwst_nirspec_readnoise_0036.fits'}
+      regions: {name: N/A}
+      saturation: {name: 'crds://jwst_nirspec_saturation_0024.fits'}
+      sflat: {name: 'crds://jwst_nirspec_sflat_0019.fits'}
+      specwcs: {name: N/A}
+      superbias: {name: 'crds://jwst_nirspec_superbias_0100.fits'}
+      wavelengthrange: {name: 'crds://jwst_nirspec_wavelengthrange_0004.asdf'}
+    subarray: {fastaxis: 2, name: SUBS200A2, slowaxis: 1, xsize: 2048, xstart: 1,
+      ysize: 64, ystart: 1018}
+    target: {catalog_name: 148202 (2000 CN80), dec: 0.0, proposer_name: 2000CN80-JAN2021-MEDIUM,
+      ra: 0.0, source_type: POINT, source_type_apt: UNKNOWN, type: MOVING}
+    telescope: JWST
+    time: {barycentric_correction: -246.7135066632181, barycentric_expend: 59243.01421657539,
+      barycentric_expmid: 59243.01310767133, barycentric_expstart: 59243.01199876728,
+      heliocentric_correction: -243.3001834200695, heliocentric_expend: 59243.01425608153,
+      heliocentric_expmid: 59243.01314717743, heliocentric_expstart: 59243.01203827334}
+    time_sys: UTC
+    time_unit: s
+    velocity_aberration: {dec_offset: -9.2160444206149e-07, ra_offset: 6.84983670869474e-07,
+      scale_factor: 0.999998428112548}
+    visit: {engineering_quality: SUSPECT, exp_only: false, internal_target: false,
+      start_time: '2021-01-28 23:21:47.7760000', status: SUCCESSFUL, too_visit: false,
+      total_exposures: 6, tsovisit: false, type: PRIME_TARGETED_MOVING}
+    wcs: !<tag:stsci.edu:gwcs/wcs-1.1.0>
+      name: ''
+      steps:
+      - !<tag:stsci.edu:gwcs/step-1.1.0>
+        frame: !<tag:stsci.edu:gwcs/frame2d-1.0.0>
+          axes_names: [x, y]
+          axes_order: [0, 1]
+          axis_physical_types: ['custom:x', 'custom:y']
+          name: detector
+          unit: [!unit/unit-1.0.0 'pixel', !unit/unit-1.0.0 'pixel']
+        transform: !transform/compose-1.2.0
+          bounding_box:
+          - [-0.5, 48.5]
+          - [-0.5, 1465.5]
+          forward:
+          - !transform/concatenate-1.2.0
+            forward:
+            - !transform/shift-1.2.0 {offset: 470.0}
+            - !transform/shift-1.2.0 {offset: 0.0}
+          - !transform/compose-1.2.0
+            forward:
+            - !transform/concatenate-1.2.0
+              forward:
+              - !transform/shift-1.2.0 {offset: 0.0}
+              - !transform/shift-1.2.0 {offset: 1017.0}
+            - !transform/identity-1.2.0 {n_dims: 2}
+          name: dms2sca
+      - !<tag:stsci.edu:gwcs/step-1.1.0>
+        frame: !<tag:stsci.edu:gwcs/frame2d-1.0.0>
+          axes_names: [x, y]
+          axes_order: [0, 1]
+          axis_physical_types: ['custom:x', 'custom:y']
+          name: sca
+          unit: [!unit/unit-1.0.0 'pixel', !unit/unit-1.0.0 'pixel']
+        transform: !transform/compose-1.2.0
+          forward:
+          - !transform/compose-1.2.0
+            forward:
+            - !transform/compose-1.2.0
+              forward:
+              - !transform/compose-1.2.0
+                forward:
+                - !transform/affine-1.2.0
+                  matrix: !core/ndarray-1.0.0
+                    source: 1
+                    datatype: float64
+                    byteorder: little
+                    shape: [2, 2]
+                  name: fpa_affine_d2s
+                  translation: !core/ndarray-1.0.0
+                    source: 2
+                    datatype: float64
+                    byteorder: little
+                    shape: [2]
+                - !transform/concatenate-1.2.0
+                  forward:
+                  - !transform/shift-1.2.0 {name: fpa_x_d2s, offset: -0.0381708371805}
+                  - !transform/shift-1.2.0 {name: fpa_y_d2s, offset: -0.018423}
+              - !transform/compose-1.2.0
+                forward:
+                - !transform/compose-1.2.0
+                  forward:
+                  - !transform/compose-1.2.0
+                    forward:
+                    - !transform/remap_axes-1.2.0
+                      inverse: !transform/identity-1.2.0 {n_dims: 2}
+                      mapping: [0, 1, 0, 1]
+                      name: camera_inmap
+                    - !transform/concatenate-1.2.0
+                      forward:
+                      - !transform/polynomial-1.2.0
+                        coefficients: !core/ndarray-1.0.0
+                          source: 3
+                          datatype: float64
+                          byteorder: little
+                          shape: [6, 6]
+                        domain:
+                        - &id001 [-1, 1]
+                        - *id001
+                        inverse: !transform/polynomial-1.2.0
+                          coefficients: !core/ndarray-1.0.0
+                            source: 4
+                            datatype: float64
+                            byteorder: little
+                            shape: [6, 6]
+                          domain:
+                          - *id001
+                          - *id001
+                          name: camera_x_backward
+                          window:
+                          - *id001
+                          - *id001
+                        name: camera_x_forward
+                        window:
+                        - *id001
+                        - *id001
+                      - !transform/polynomial-1.2.0
+                        coefficients: !core/ndarray-1.0.0
+                          source: 5
+                          datatype: float64
+                          byteorder: little
+                          shape: [6, 6]
+                        domain:
+                        - *id001
+                        - *id001
+                        inverse: !transform/polynomial-1.2.0
+                          coefficients: !core/ndarray-1.0.0
+                            source: 6
+                            datatype: float64
+                            byteorder: little
+                            shape: [6, 6]
+                          domain:
+                          - *id001
+                          - *id001
+                          name: camera_y_backward
+                          window:
+                          - *id001
+                          - *id001
+                        name: camera_y_forward
+                        window:
+                        - *id001
+                        - *id001
+                  - !transform/identity-1.2.0
+                    inverse: !transform/remap_axes-1.2.0
+                      mapping: [0, 1, 0, 1]
+                    n_dims: 2
+                    name: camera_outmap
+                - !transform/compose-1.2.0
+                  forward:
+                  - !transform/compose-1.2.0
+                    forward:
+                    - !transform/concatenate-1.2.0
+                      forward:
+                      - !transform/shift-1.2.0 {name: camera_xincen_d2s, offset: 2.38656283331e-06}
+                      - !transform/shift-1.2.0 {name: camera_yincen_d2s, offset: -0.000218347262797}
+                    - !transform/affine-1.2.0
+                      matrix: !core/ndarray-1.0.0
+                        source: 7
+                        datatype: float64
+                        byteorder: little
+                        shape: [2, 2]
+                      name: camera_affine_d2s
+                      translation: !core/ndarray-1.0.0
+                        source: 8
+                        datatype: float64
+                        byteorder: little
+                        shape: [2]
+                  - !transform/concatenate-1.2.0
+                    forward:
+                    - !transform/shift-1.2.0 {name: camera_xoutcen_d2s, offset: 0.000143898033}
+                    - !transform/shift-1.2.0 {name: camera_youtcen_d2s, offset: 0.293606022006}
+            - !<tag:stsci.edu:jwst_pipeline/coords-0.7.0> {model_type: unitless2directional,
+              name: unitless2directional_cosines}
+          - !<tag:stsci.edu:jwst_pipeline/rotation_sequence-0.7.0>
+            angles: [0.03609854088388889, 0.008432762044167758, -0.4222653784972223,
+              -4.2]
+            axes_order: xyzy
+            name: rotation
+          inverse: !transform/compose-1.2.0
+            forward:
+            - !<tag:stsci.edu:jwst_pipeline/rotation_sequence-0.7.0>
+              angles: [4.2, 0.4222653784972223, -0.008432762044167758, -0.03609854088388889]
+              axes_order: yzyx
+            - !transform/compose-1.2.0
+              forward:
+              - !<tag:stsci.edu:jwst_pipeline/coords-0.7.0> {model_type: directional2unitless}
+              - !transform/compose-1.2.0
+                forward:
+                - !transform/compose-1.2.0
+                  forward:
+                  - !transform/compose-1.2.0
+                    forward:
+                    - !transform/concatenate-1.2.0
+                      forward:
+                      - !transform/shift-1.2.0 {name: camera_xoutcen_d2s, offset: -0.000143898033}
+                      - !transform/shift-1.2.0 {name: camera_youtcen_d2s, offset: -0.293606022006}
+                    - !transform/compose-1.2.0
+                      forward:
+                      - !transform/affine-1.2.0
+                        matrix: !core/ndarray-1.0.0
+                          source: 9
+                          datatype: float64
+                          byteorder: little
+                          shape: [2, 2]
+                        translation: !core/ndarray-1.0.0
+                          source: 10
+                          datatype: float64
+                          byteorder: little
+                          shape: [2]
+                      - !transform/concatenate-1.2.0
+                        forward:
+                        - !transform/shift-1.2.0 {name: camera_xincen_d2s, offset: -2.38656283331e-06}
+                        - !transform/shift-1.2.0 {name: camera_yincen_d2s, offset: 0.000218347262797}
+                  - !transform/compose-1.2.0
+                    forward:
+                    - !transform/remap_axes-1.2.0
+                      mapping: [0, 1, 0, 1]
+                    - !transform/compose-1.2.0
+                      forward:
+                      - !transform/concatenate-1.2.0
+                        forward:
+                        - !transform/polynomial-1.2.0
+                          coefficients: !core/ndarray-1.0.0
+                            source: 11
+                            datatype: float64
+                            byteorder: little
+                            shape: [6, 6]
+                          domain:
+                          - *id001
+                          - *id001
+                          name: camera_x_backward
+                          window:
+                          - *id001
+                          - *id001
+                        - !transform/polynomial-1.2.0
+                          coefficients: !core/ndarray-1.0.0
+                            source: 12
+                            datatype: float64
+                            byteorder: little
+                            shape: [6, 6]
+                          domain:
+                          - *id001
+                          - *id001
+                          name: camera_y_backward
+                          window:
+                          - *id001
+                          - *id001
+                      - !transform/identity-1.2.0 {n_dims: 2}
+                - !transform/compose-1.2.0
+                  forward:
+                  - !transform/concatenate-1.2.0
+                    forward:
+                    - !transform/shift-1.2.0 {name: fpa_x_s2d, offset: 0.0381708371805}
+                    - !transform/shift-1.2.0 {name: fpa_y_s2d, offset: 0.018423}
+                  - !transform/affine-1.2.0
+                    matrix: !core/ndarray-1.0.0
+                      source: 13
+                      datatype: float64
+                      byteorder: little
+                      shape: [2, 2]
+                    name: fpa_affine_s2d
+                    translation: !core/ndarray-1.0.0
+                      source: 14
+                      datatype: float64
+                      byteorder: little
+                      shape: [2]
+      - !<tag:stsci.edu:gwcs/step-1.1.0>
+        frame: !<tag:stsci.edu:gwcs/frame2d-1.0.0>
+          axes_names: [alpha_in, beta_in]
+          axes_order: [0, 1]
+          axis_physical_types: ['custom:alpha_in', 'custom:beta_in']
+          name: gwa
+          unit: [!unit/unit-1.0.0 'rad', !unit/unit-1.0.0 'rad']
+        transform: !transform/compose-1.2.0
+          forward:
+          - !transform/compose-1.2.0
+            forward:
+            - !transform/compose-1.2.0
+              forward:
+              - !transform/compose-1.2.0
+                forward:
+                - !transform/compose-1.2.0
+                  forward:
+                  - !transform/compose-1.2.0
+                    forward:
+                    - !transform/compose-1.2.0
+                      forward:
+                      - !transform/remap_axes-1.2.0
+                        mapping: [0, 1, 0, 1]
+                        n_inputs: 3
+                      - !transform/concatenate-1.2.0
+                        forward:
+                        - !transform/concatenate-1.2.0
+                          forward:
+                          - !transform/multiply-1.2.0
+                            forward:
+                            - !transform/constant-1.4.0 {dimensions: 1, value: 0.0}
+                            - !transform/identity-1.2.0 {}
+                          - !transform/multiply-1.2.0
+                            forward:
+                            - !transform/constant-1.4.0 {dimensions: 1, value: -1.0}
+                            - !transform/identity-1.2.0 {}
+                        - !transform/identity-1.2.0 {n_dims: 2}
+                    - !transform/concatenate-1.2.0
+                      forward:
+                      - !transform/concatenate-1.2.0
+                        forward:
+                        - !transform/identity-1.2.0 {}
+                        - !transform/tabular-1.2.0
+                          bounding_box: [-0.2845023696996731, -0.28248135100697386]
+                          bounds_error: false
+                          fill_value: .nan
+                          lookup_table: !core/ndarray-1.0.0
+                            source: 15
+                            datatype: float64
+                            byteorder: little
+                            shape: [1000]
+                          name: tabular
+                          points:
+                          - !core/ndarray-1.0.0
+                            source: 16
+                            datatype: float64
+                            byteorder: little
+                            shape: [1000]
+                      - !transform/identity-1.2.0 {n_dims: 2}
+                  - !transform/remap_axes-1.2.0
+                    mapping: [0, 1, 0, 1, 2, 3]
+                - !transform/concatenate-1.2.0
+                  forward:
+                  - !transform/concatenate-1.2.0
+                    forward:
+                    - !transform/identity-1.2.0 {n_dims: 2}
+                    - !transform/compose-1.2.0
+                      forward:
+                      - !transform/compose-1.2.0
+                        forward:
+                        - !transform/compose-1.2.0
+                          forward:
+                          - !transform/concatenate-1.2.0
+                            forward:
+                            - !transform/scale-1.2.0 {factor: 8.070000330917537e-05}
+                            - !transform/scale-1.2.0 {factor: 0.0012670699506998062}
+                          - !transform/concatenate-1.2.0
+                            forward:
+                            - !transform/shift-1.2.0 {offset: 0.034664418548345566}
+                            - !transform/shift-1.2.0 {offset: -0.001256604678928852}
+                        - !transform/compose-1.2.0
+                          forward:
+                          - !transform/rotate2d-1.2.0 {angle: 0.0, name: msa_slit_rot}
+                          - !transform/concatenate-1.2.0
+                            forward:
+                            - !transform/shift-1.2.0 {name: msa_slit_x, offset: 0.0}
+                            - !transform/shift-1.2.0 {name: msa_slit_y, offset: 0.0}
+                      - !transform/compose-1.2.0
+                        forward:
+                        - !transform/compose-1.2.0
+                          forward:
+                          - !transform/compose-1.2.0
+                            forward:
+                            - !transform/compose-1.2.0
+                              forward:
+                              - !transform/concatenate-1.2.0
+                                forward:
+                                - !transform/shift-1.2.0 {name: collimator_xoutcen_d2s,
+                                  offset: -5.526841e-06}
+                                - !transform/shift-1.2.0 {name: collimator_youtcen_d2s,
+                                  offset: 0.000346042594}
+                              - !transform/compose-1.2.0
+                                forward:
+                                - !transform/affine-1.2.0
+                                  matrix: !core/ndarray-1.0.0
+                                    source: 17
+                                    datatype: float64
+                                    byteorder: little
+                                    shape: [2, 2]
+                                  translation: !core/ndarray-1.0.0
+                                    source: 18
+                                    datatype: float64
+                                    byteorder: little
+                                    shape: [2]
+                                - !transform/concatenate-1.2.0
+                                  forward:
+                                  - !transform/shift-1.2.0 {name: collimator_xincen_d2s,
+                                    offset: -0.000143900694035}
+                                  - !transform/shift-1.2.0 {name: collimator_yincen_d2s,
+                                    offset: -0.293605933112}
+                            - !transform/compose-1.2.0
+                              forward:
+                              - !transform/remap_axes-1.2.0
+                                mapping: [0, 1, 0, 1]
+                              - !transform/compose-1.2.0
+                                forward:
+                                - !transform/concatenate-1.2.0
+                                  forward:
+                                  - !transform/polynomial-1.2.0
+                                    coefficients: !core/ndarray-1.0.0
+                                      source: 19
+                                      datatype: float64
+                                      byteorder: little
+                                      shape: [6, 6]
+                                    domain:
+                                    - *id001
+                                    - *id001
+                                    name: collimator_x_backward
+                                    window:
+                                    - *id001
+                                    - *id001
+                                  - !transform/polynomial-1.2.0
+                                    coefficients: !core/ndarray-1.0.0
+                                      source: 20
+                                      datatype: float64
+                                      byteorder: little
+                                      shape: [6, 6]
+                                    domain:
+                                    - *id001
+                                    - *id001
+                                    name: collimator_y_backward
+                                    window:
+                                    - *id001
+                                    - *id001
+                                - !transform/identity-1.2.0 {n_dims: 2}
+                          - !<tag:stsci.edu:jwst_pipeline/coords-0.7.0> {model_type: unitless2directional,
+                            name: unitless2directional_cosines}
+                        - !<tag:stsci.edu:jwst_pipeline/rotation_sequence-0.7.0>
+                          angles: [0.03609854088388889, 0.008432762044167758, -0.4222653784972223,
+                            -4.2]
+                          axes_order: xyzy
+                          name: rotation
+                  - !transform/identity-1.2.0 {n_dims: 2}
+              - !transform/remap_axes-1.2.0
+                mapping: [0, 1, 2, 3, 5]
+                n_inputs: 7
+            - !transform/concatenate-1.2.0
+              forward:
+              - !transform/identity-1.2.0 {n_dims: 2}
+              - !transform/compose-1.2.0
+                forward:
+                - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.7.0> {groove_density: 95397.1,
+                  name: lambda_from_gratingeq, order: -1.0, output: wavelength}
+                - !transform/multiply-1.2.0
+                  forward:
+                  - !transform/identity-1.2.0 {}
+                  - !transform/constant-1.4.0 {dimensions: 1, name: velocity_correction,
+                    value: 0.9999197501520529}
+          - !transform/compose-1.2.0
+            forward:
+            - !transform/compose-1.2.0
+              forward:
+              - !transform/compose-1.2.0
+                forward:
+                - !transform/remap_axes-1.2.0
+                  mapping: [0, 1, 2, 1]
+                - !transform/concatenate-1.2.0
+                  forward:
+                  - !transform/identity-1.2.0 {n_dims: 3}
+                  - !transform/compose-1.2.0
+                    forward:
+                    - !transform/compose-1.2.0
+                      forward:
+                      - !<tag:stsci.edu:jwst_pipeline/logical-0.7.0> {compareto: 0.55,
+                        condition: GT, value: .nan}
+                      - !<tag:stsci.edu:jwst_pipeline/logical-0.7.0> {compareto: -0.55,
+                        condition: LT, value: .nan}
+                    - !transform/scale-1.2.0 {factor: 0.0}
+              - !transform/remap_axes-1.2.0
+                mapping: [0, 1, 3, 2, 3]
+            - !transform/concatenate-1.2.0
+              forward:
+              - !transform/concatenate-1.2.0
+                forward:
+                - !transform/identity-1.2.0 {}
+                - !transform/add-1.2.0
+                  forward:
+                  - !transform/remap_axes-1.2.0
+                    mapping: [0]
+                    n_inputs: 2
+                  - !transform/remap_axes-1.2.0
+                    mapping: [1]
+              - !transform/add-1.2.0
+                forward:
+                - !transform/remap_axes-1.2.0
+                  mapping: [0]
+                  n_inputs: 2
+                - !transform/remap_axes-1.2.0
+                  mapping: [1]
+          inverse: !transform/compose-1.2.0
+            forward:
+            - !transform/compose-1.2.0
+              forward:
+              - !transform/concatenate-1.2.0
+                forward:
+                - !transform/compose-1.2.0
+                  forward:
+                  - !transform/compose-1.2.0
+                    forward:
+                    - !transform/compose-1.2.0
+                      forward:
+                      - !transform/concatenate-1.2.0
+                        forward:
+                        - !transform/scale-1.2.0 {factor: 8.070000330917537e-05}
+                        - !transform/scale-1.2.0 {factor: 0.0012670699506998062}
+                      - !transform/concatenate-1.2.0
+                        forward:
+                        - !transform/shift-1.2.0 {offset: 0.034664418548345566}
+                        - !transform/shift-1.2.0 {offset: -0.001256604678928852}
+                    - !transform/compose-1.2.0
+                      forward:
+                      - !transform/rotate2d-1.2.0 {angle: 0.0, name: msa_slit_rot}
+                      - !transform/concatenate-1.2.0
+                        forward:
+                        - !transform/shift-1.2.0 {name: msa_slit_x, offset: 0.0}
+                        - !transform/shift-1.2.0 {name: msa_slit_y, offset: 0.0}
+                  - !transform/compose-1.2.0
+                    forward:
+                    - !transform/compose-1.2.0
+                      forward:
+                      - !transform/compose-1.2.0
+                        forward:
+                        - !transform/compose-1.2.0
+                          forward:
+                          - !transform/concatenate-1.2.0
+                            forward:
+                            - !transform/shift-1.2.0 {name: collimator_xoutcen_d2s,
+                              offset: -5.526841e-06}
+                            - !transform/shift-1.2.0 {name: collimator_youtcen_d2s,
+                              offset: 0.000346042594}
+                          - !transform/compose-1.2.0
+                            forward:
+                            - !transform/affine-1.2.0
+                              matrix: !core/ndarray-1.0.0
+                                source: 21
+                                datatype: float64
+                                byteorder: little
+                                shape: [2, 2]
+                              translation: !core/ndarray-1.0.0
+                                source: 22
+                                datatype: float64
+                                byteorder: little
+                                shape: [2]
+                            - !transform/concatenate-1.2.0
+                              forward:
+                              - !transform/shift-1.2.0 {name: collimator_xincen_d2s,
+                                offset: -0.000143900694035}
+                              - !transform/shift-1.2.0 {name: collimator_yincen_d2s,
+                                offset: -0.293605933112}
+                        - !transform/compose-1.2.0
+                          forward:
+                          - !transform/remap_axes-1.2.0
+                            mapping: [0, 1, 0, 1]
+                          - !transform/compose-1.2.0
+                            forward:
+                            - !transform/concatenate-1.2.0
+                              forward:
+                              - !transform/polynomial-1.2.0
+                                coefficients: !core/ndarray-1.0.0
+                                  source: 23
+                                  datatype: float64
+                                  byteorder: little
+                                  shape: [6, 6]
+                                domain:
+                                - *id001
+                                - *id001
+                                name: collimator_x_backward
+                                window:
+                                - *id001
+                                - *id001
+                              - !transform/polynomial-1.2.0
+                                coefficients: !core/ndarray-1.0.0
+                                  source: 24
+                                  datatype: float64
+                                  byteorder: little
+                                  shape: [6, 6]
+                                domain:
+                                - *id001
+                                - *id001
+                                name: collimator_y_backward
+                                window:
+                                - *id001
+                                - *id001
+                            - !transform/identity-1.2.0 {n_dims: 2}
+                      - !<tag:stsci.edu:jwst_pipeline/coords-0.7.0> {model_type: unitless2directional,
+                        name: unitless2directional_cosines}
+                    - !<tag:stsci.edu:jwst_pipeline/rotation_sequence-0.7.0>
+                      angles: [0.03609854088388889, 0.008432762044167758, -0.4222653784972223,
+                        -4.2]
+                      axes_order: xyzy
+                      name: rotation
+                - !transform/identity-1.2.0 {}
+              - !transform/remap_axes-1.2.0
+                mapping: [3, 0, 1, 2]
+            - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.7.0> {groove_density: 95397.1,
+              name: alpha_from_greq, order: -1.0, output: angle}
+      - !<tag:stsci.edu:gwcs/step-1.1.0>
+        frame: !<tag:stsci.edu:gwcs/composite_frame-1.0.0>
+          frames:
+          - !<tag:stsci.edu:gwcs/frame2d-1.0.0>
+            axes_names: [x_slit, y_slit]
+            axes_order: [0, 1]
+            axis_physical_types: ['custom:x_slit', 'custom:y_slit']
+            name: slit_spatial
+            unit: [!unit/unit-1.0.0 '', !unit/unit-1.0.0 '']
+          - &id002 !<tag:stsci.edu:gwcs/spectral_frame-1.0.0>
+            axes_names: [wavelength]
+            axes_order: [2]
+            axis_physical_types: [em.wl]
+            name: spectral
+            unit: [!unit/unit-1.0.0 'um']
+          name: slit_frame
+        transform: !transform/concatenate-1.2.0
+          forward:
+          - !transform/compose-1.2.0
+            forward:
+            - !transform/compose-1.2.0
+              forward:
+              - !transform/concatenate-1.2.0
+                forward:
+                - !transform/scale-1.2.0 {factor: 8.070000330917537e-05}
+                - !transform/scale-1.2.0 {factor: 0.0012670699506998062}
+              - !transform/concatenate-1.2.0
+                forward:
+                - !transform/shift-1.2.0 {offset: 0.034664418548345566}
+                - !transform/shift-1.2.0 {offset: -0.001256604678928852}
+            - !transform/compose-1.2.0
+              forward:
+              - !transform/rotate2d-1.2.0 {angle: 0.0, name: msa_slit_rot}
+              - !transform/concatenate-1.2.0
+                forward:
+                - !transform/shift-1.2.0 {name: msa_slit_x, offset: 0.0}
+                - !transform/shift-1.2.0 {name: msa_slit_y, offset: 0.0}
+          - !transform/identity-1.2.0 {}
+      - !<tag:stsci.edu:gwcs/step-1.1.0>
+        frame: !<tag:stsci.edu:gwcs/composite_frame-1.0.0>
+          frames:
+          - !<tag:stsci.edu:gwcs/frame2d-1.0.0>
+            axes_names: [x_msa, y_msa]
+            axes_order: [0, 1]
+            axis_physical_types: ['custom:x_msa', 'custom:y_msa']
+            name: msa_spatial
+            unit: [!unit/unit-1.0.0 'm', !unit/unit-1.0.0 'm']
+          - *id002
+          name: msa_frame
+        transform: !transform/compose-1.2.0
+          forward:
+          - !transform/remap_axes-1.2.0
+            inverse: &id003 !transform/identity-1.2.0 {n_dims: 3}
+            mapping: [0, 1, 2, 2]
+            name: msa2fore_mapping
+          - !transform/concatenate-1.2.0
+            forward:
+            - !transform/compose-1.2.0
+              forward:
+              - !transform/compose-1.2.0
+                forward:
+                - !transform/compose-1.2.0
+                  forward:
+                  - !transform/remap_axes-1.2.0
+                    inverse: !transform/identity-1.2.0 {n_dims: 2}
+                    mapping: [0, 1, 2, 0, 1, 2]
+                    name: fore_inmap
+                  - !transform/concatenate-1.2.0
+                    forward:
+                    - !transform/add-1.2.0
+                      forward:
+                      - !transform/compose-1.2.0
+                        forward:
+                        - !transform/remap_axes-1.2.0
+                          mapping: [0, 1]
+                          n_inputs: 3
+                        - !transform/polynomial-1.2.0
+                          coefficients: !core/ndarray-1.0.0
+                            source: 25
+                            datatype: float64
+                            byteorder: little
+                            shape: [6, 6]
+                          domain:
+                          - *id001
+                          - *id001
+                          name: fore_x_forw
+                          window:
+                          - *id001
+                          - *id001
+                      - !transform/multiply-1.2.0
+                        forward:
+                        - !transform/compose-1.2.0
+                          forward:
+                          - !transform/remap_axes-1.2.0
+                            mapping: [0, 1]
+                            n_inputs: 3
+                          - !transform/polynomial-1.2.0
+                            coefficients: !core/ndarray-1.0.0
+                              source: 26
+                              datatype: float64
+                              byteorder: little
+                              shape: [6, 6]
+                            domain:
+                            - *id001
+                            - *id001
+                            name: fore_x_forwdist
+                            window:
+                            - *id001
+                            - *id001
+                        - !transform/compose-1.2.0
+                          forward:
+                          - !transform/remap_axes-1.2.0
+                            mapping: [2]
+                          - !transform/identity-1.2.0 {}
+                    - !transform/add-1.2.0
+                      forward:
+                      - !transform/compose-1.2.0
+                        forward:
+                        - !transform/remap_axes-1.2.0
+                          mapping: [0, 1]
+                          n_inputs: 3
+                        - !transform/polynomial-1.2.0
+                          coefficients: !core/ndarray-1.0.0
+                            source: 27
+                            datatype: float64
+                            byteorder: little
+                            shape: [6, 6]
+                          domain:
+                          - *id001
+                          - *id001
+                          name: fore_y_forw
+                          window:
+                          - *id001
+                          - *id001
+                      - !transform/multiply-1.2.0
+                        forward:
+                        - !transform/compose-1.2.0
+                          forward:
+                          - !transform/remap_axes-1.2.0
+                            mapping: [0, 1]
+                            n_inputs: 3
+                          - !transform/polynomial-1.2.0
+                            coefficients: !core/ndarray-1.0.0
+                              source: 28
+                              datatype: float64
+                              byteorder: little
+                              shape: [6, 6]
+                            domain:
+                            - *id001
+                            - *id001
+                            name: fore_y_forwdist
+                            window:
+                            - *id001
+                            - *id001
+                        - !transform/compose-1.2.0
+                          forward:
+                          - !transform/remap_axes-1.2.0
+                            mapping: [2]
+                          - !transform/identity-1.2.0 {}
+                - !transform/identity-1.2.0
+                  inverse: !transform/remap_axes-1.2.0
+                    mapping: [0, 1, 2, 0, 1, 2]
+                  n_dims: 2
+                  name: fore_outmap
+              - !transform/compose-1.2.0
+                forward:
+                - !transform/compose-1.2.0
+                  forward:
+                  - !transform/concatenate-1.2.0
+                    forward:
+                    - !transform/shift-1.2.0 {name: fore_xincen_d2s, offset: -5.52684591413e-06}
+                    - !transform/shift-1.2.0 {name: fore_yincen_d2s, offset: 0.000346028872881}
+                  - !transform/affine-1.2.0
+                    matrix: !core/ndarray-1.0.0
+                      source: 29
+                      datatype: float64
+                      byteorder: little
+                      shape: [2, 2]
+                    name: fore_affine_d2s
+                    translation: !core/ndarray-1.0.0
+                      source: 30
+                      datatype: float64
+                      byteorder: little
+                      shape: [2]
+                - !transform/concatenate-1.2.0
+                  forward:
+                  - !transform/shift-1.2.0 {name: fore_xoutcen_d2s, offset: -2.27962e-07}
+                  - !transform/shift-1.2.0 {name: fore_youtcen_d2s, offset: -2.6094e-07}
+            - !transform/identity-1.2.0 {}
+          inverse: !transform/compose-1.2.0
+            forward:
+            - !transform/concatenate-1.2.0
+              forward:
+              - !transform/compose-1.2.0
+                forward:
+                - !transform/concatenate-1.2.0
+                  forward:
+                  - !transform/compose-1.2.0
+                    forward:
+                    - !transform/concatenate-1.2.0
+                      forward:
+                      - !transform/shift-1.2.0 {name: fore_xoutcen_d2s, offset: 2.27962e-07}
+                      - !transform/shift-1.2.0 {name: fore_youtcen_d2s, offset: 2.6094e-07}
+                    - !transform/compose-1.2.0
+                      forward:
+                      - !transform/affine-1.2.0
+                        matrix: !core/ndarray-1.0.0
+                          source: 31
+                          datatype: float64
+                          byteorder: little
+                          shape: [2, 2]
+                        translation: !core/ndarray-1.0.0
+                          source: 32
+                          datatype: float64
+                          byteorder: little
+                          shape: [2]
+                      - !transform/concatenate-1.2.0
+                        forward:
+                        - !transform/shift-1.2.0 {name: fore_xincen_d2s, offset: 5.52684591413e-06}
+                        - !transform/shift-1.2.0 {name: fore_yincen_d2s, offset: -0.000346028872881}
+                  - !transform/identity-1.2.0 {}
+                - !transform/compose-1.2.0
+                  forward:
+                  - !transform/remap_axes-1.2.0
+                    mapping: [0, 1, 2, 0, 1, 2]
+                  - !transform/compose-1.2.0
+                    forward:
+                    - !transform/concatenate-1.2.0
+                      forward:
+                      - !transform/add-1.2.0
+                        forward:
+                        - !transform/compose-1.2.0
+                          forward:
+                          - !transform/remap_axes-1.2.0
+                            mapping: [0, 1]
+                            n_inputs: 3
+                          - !transform/polynomial-1.2.0
+                            coefficients: !core/ndarray-1.0.0
+                              source: 33
+                              datatype: float64
+                              byteorder: little
+                              shape: [6, 6]
+                            domain:
+                            - *id001
+                            - *id001
+                            name: fore_x_back
+                            window:
+                            - *id001
+                            - *id001
+                        - !transform/multiply-1.2.0
+                          forward:
+                          - !transform/compose-1.2.0
+                            forward:
+                            - !transform/remap_axes-1.2.0
+                              mapping: [0, 1]
+                              n_inputs: 3
+                            - !transform/polynomial-1.2.0
+                              coefficients: !core/ndarray-1.0.0
+                                source: 34
+                                datatype: float64
+                                byteorder: little
+                                shape: [6, 6]
+                              domain:
+                              - *id001
+                              - *id001
+                              name: fore_x_backdist
+                              window:
+                              - *id001
+                              - *id001
+                          - !transform/compose-1.2.0
+                            forward:
+                            - !transform/remap_axes-1.2.0
+                              mapping: [2]
+                            - !transform/identity-1.2.0 {}
+                      - !transform/add-1.2.0
+                        forward:
+                        - !transform/compose-1.2.0
+                          forward:
+                          - !transform/remap_axes-1.2.0
+                            mapping: [0, 1]
+                            n_inputs: 3
+                          - !transform/polynomial-1.2.0
+                            coefficients: !core/ndarray-1.0.0
+                              source: 35
+                              datatype: float64
+                              byteorder: little
+                              shape: [6, 6]
+                            domain:
+                            - *id001
+                            - *id001
+                            name: fore_y_back
+                            window:
+                            - *id001
+                            - *id001
+                        - !transform/multiply-1.2.0
+                          forward:
+                          - !transform/compose-1.2.0
+                            forward:
+                            - !transform/remap_axes-1.2.0
+                              mapping: [0, 1]
+                              n_inputs: 3
+                            - !transform/polynomial-1.2.0
+                              coefficients: !core/ndarray-1.0.0
+                                source: 36
+                                datatype: float64
+                                byteorder: little
+                                shape: [6, 6]
+                              domain:
+                              - *id001
+                              - *id001
+                              name: fore_y_backdist
+                              window:
+                              - *id001
+                              - *id001
+                          - !transform/compose-1.2.0
+                            forward:
+                            - !transform/remap_axes-1.2.0
+                              mapping: [2]
+                            - !transform/identity-1.2.0 {}
+                    - !transform/identity-1.2.0 {n_dims: 2}
+              - !transform/identity-1.2.0 {}
+            - *id003
+          name: msa2oteip
+      - !<tag:stsci.edu:gwcs/step-1.1.0>
+        frame: !<tag:stsci.edu:gwcs/composite_frame-1.0.0>
+          frames:
+          - !<tag:stsci.edu:gwcs/frame2d-1.0.0>
+            axes_names: [X_OTEIP, Y_OTEIP]
+            axes_order: [0, 1]
+            axis_physical_types: ['custom:X_OTEIP', 'custom:Y_OTEIP']
+            name: oteip
+            unit: [!unit/unit-1.0.0 'deg', !unit/unit-1.0.0 'deg']
+          - *id002
+          name: oteip
+        transform: !transform/compose-1.2.0
+          forward:
+          - !transform/identity-1.2.0
+            inverse: &id004 !transform/remap_axes-1.2.0
+              mapping: [0, 1, 2, 2]
+            n_dims: 3
+            name: fore2ote_mapping
+          - !transform/concatenate-1.2.0
+            forward:
+            - !transform/compose-1.2.0
+              forward:
+              - !transform/compose-1.2.0
+                forward:
+                - !transform/compose-1.2.0
+                  forward:
+                  - !transform/compose-1.2.0
+                    forward:
+                    - !transform/remap_axes-1.2.0
+                      inverse: !transform/identity-1.2.0 {n_dims: 2}
+                      mapping: [0, 1, 0, 1]
+                      name: ote_inmap
+                    - !transform/concatenate-1.2.0
+                      forward:
+                      - !transform/polynomial-1.2.0
+                        coefficients: !core/ndarray-1.0.0
+                          source: 37
+                          datatype: float64
+                          byteorder: little
+                          shape: [6, 6]
+                        domain:
+                        - *id001
+                        - *id001
+                        inverse: !transform/polynomial-1.2.0
+                          coefficients: !core/ndarray-1.0.0
+                            source: 38
+                            datatype: float64
+                            byteorder: little
+                            shape: [6, 6]
+                          domain:
+                          - *id001
+                          - *id001
+                          name: ote_x_back
+                          window:
+                          - *id001
+                          - *id001
+                        name: ote_x_forw
+                        window:
+                        - *id001
+                        - *id001
+                      - !transform/polynomial-1.2.0
+                        coefficients: !core/ndarray-1.0.0
+                          source: 39
+                          datatype: float64
+                          byteorder: little
+                          shape: [6, 6]
+                        domain:
+                        - *id001
+                        - *id001
+                        inverse: !transform/polynomial-1.2.0
+                          coefficients: !core/ndarray-1.0.0
+                            source: 40
+                            datatype: float64
+                            byteorder: little
+                            shape: [6, 6]
+                          domain:
+                          - *id001
+                          - *id001
+                          name: ote_y_backw
+                          window:
+                          - *id001
+                          - *id001
+                        name: ote_y_forw
+                        window:
+                        - *id001
+                        - *id001
+                  - !transform/identity-1.2.0
+                    inverse: !transform/remap_axes-1.2.0
+                      mapping: [0, 1, 0, 1]
+                    n_dims: 2
+                    name: ote_outmap
+                - !transform/compose-1.2.0
+                  forward:
+                  - !transform/compose-1.2.0
+                    forward:
+                    - !transform/concatenate-1.2.0
+                      forward:
+                      - !transform/shift-1.2.0 {name: ote_xincen_d2s, offset: 5.18289805611e-07}
+                      - !transform/shift-1.2.0 {name: ote_yincen_d2s, offset: 1.92704532397e-09}
+                    - !transform/affine-1.2.0
+                      matrix: !core/ndarray-1.0.0
+                        source: 41
+                        datatype: float64
+                        byteorder: little
+                        shape: [2, 2]
+                      name: ote_affine_d2s
+                      translation: !core/ndarray-1.0.0
+                        source: 42
+                        datatype: float64
+                        byteorder: little
+                        shape: [2]
+                  - !transform/concatenate-1.2.0
+                    forward:
+                    - !transform/shift-1.2.0 {name: ote_xoutcen_d2s, offset: 0.10539}
+                    - !transform/shift-1.2.0 {name: ote_youtcen_d2s, offset: -0.11913000025}
+              - !transform/concatenate-1.2.0
+                forward:
+                - !transform/scale-1.2.0 {factor: 3600.0}
+                - !transform/scale-1.2.0 {factor: 3600.0}
+            - !transform/scale-1.2.0 {factor: 1000000.0}
+          inverse: !transform/compose-1.2.0
+            forward:
+            - !transform/concatenate-1.2.0
+              forward:
+              - !transform/compose-1.2.0
+                forward:
+                - !transform/concatenate-1.2.0
+                  forward:
+                  - !transform/scale-1.2.0 {factor: 0.0002777777777777778}
+                  - !transform/scale-1.2.0 {factor: 0.0002777777777777778}
+                - !transform/compose-1.2.0
+                  forward:
+                  - !transform/compose-1.2.0
+                    forward:
+                    - !transform/concatenate-1.2.0
+                      forward:
+                      - !transform/shift-1.2.0 {name: ote_xoutcen_d2s, offset: -0.10539}
+                      - !transform/shift-1.2.0 {name: ote_youtcen_d2s, offset: 0.11913000025}
+                    - !transform/compose-1.2.0
+                      forward:
+                      - !transform/affine-1.2.0
+                        matrix: !core/ndarray-1.0.0
+                          source: 43
+                          datatype: float64
+                          byteorder: little
+                          shape: [2, 2]
+                        translation: !core/ndarray-1.0.0
+                          source: 44
+                          datatype: float64
+                          byteorder: little
+                          shape: [2]
+                      - !transform/concatenate-1.2.0
+                        forward:
+                        - !transform/shift-1.2.0 {name: ote_xincen_d2s, offset: -5.18289805611e-07}
+                        - !transform/shift-1.2.0 {name: ote_yincen_d2s, offset: -1.92704532397e-09}
+                  - !transform/compose-1.2.0
+                    forward:
+                    - !transform/remap_axes-1.2.0
+                      mapping: [0, 1, 0, 1]
+                    - !transform/compose-1.2.0
+                      forward:
+                      - !transform/concatenate-1.2.0
+                        forward:
+                        - !transform/polynomial-1.2.0
+                          coefficients: !core/ndarray-1.0.0
+                            source: 45
+                            datatype: float64
+                            byteorder: little
+                            shape: [6, 6]
+                          domain:
+                          - *id001
+                          - *id001
+                          name: ote_x_back
+                          window:
+                          - *id001
+                          - *id001
+                        - !transform/polynomial-1.2.0
+                          coefficients: !core/ndarray-1.0.0
+                            source: 46
+                            datatype: float64
+                            byteorder: little
+                            shape: [6, 6]
+                          domain:
+                          - *id001
+                          - *id001
+                          name: ote_y_backw
+                          window:
+                          - *id001
+                          - *id001
+                      - !transform/identity-1.2.0 {n_dims: 2}
+              - !transform/scale-1.2.0 {factor: 1.0e-06}
+            - *id004
+          name: oteip2v23
+      - !<tag:stsci.edu:gwcs/step-1.1.0>
+        frame: !<tag:stsci.edu:gwcs/composite_frame-1.0.0>
+          frames:
+          - !<tag:stsci.edu:gwcs/frame2d-1.0.0>
+            axes_names: [V2, V3]
+            axes_order: [0, 1]
+            axis_physical_types: ['custom:V2', 'custom:V3']
+            name: v2v3_spatial
+            unit: [!unit/unit-1.0.0 'arcsec', !unit/unit-1.0.0 'arcsec']
+          - *id002
+          name: v2v3
+        transform: !transform/concatenate-1.2.0
+          forward:
+          - !transform/compose-1.2.0
+            forward:
+            - !transform/compose-1.2.0
+              forward:
+              - !transform/compose-1.2.0
+                forward:
+                - !transform/concatenate-1.2.0
+                  forward:
+                  - !transform/scale-1.2.0 {factor: 0.0002777777777777778}
+                  - !transform/scale-1.2.0 {factor: 0.0002777777777777778}
+                - !<tag:stsci.edu:gwcs/spherical_cartesian-1.1.0> {transform_type: spherical_to_cartesian,
+                  wrap_lon_at: 180}
+              - !transform/rotate_sequence_3d-1.0.0
+                angles: [0.08749579527777779, 0.13595848944444444, 68.46699352943511,
+                  -9.609631770034195, -60.12468755167287]
+                axes_order: zyxyz
+                rotation_type: cartesian
+            - !<tag:stsci.edu:gwcs/spherical_cartesian-1.1.0> {transform_type: cartesian_to_spherical}
+          - !transform/identity-1.2.0 {}
+          name: v2v3_to_sky
+      - !<tag:stsci.edu:gwcs/step-1.1.0>
+        frame: !<tag:stsci.edu:gwcs/composite_frame-1.0.0>
+          frames:
+          - !<tag:stsci.edu:gwcs/celestial_frame-1.0.0>
+            axes_names: [lon, lat]
+            axes_order: [0, 1]
+            axis_physical_types: [pos.eq.ra, pos.eq.dec]
+            name: sky
+            reference_frame: !<tag:astropy.org:astropy/coordinates/frames/icrs-1.1.0>
+              frame_attributes: {}
+            unit: [!unit/unit-1.0.0 'deg', !unit/unit-1.0.0 'deg']
+          - *id002
+          name: world
+    wcsinfo: {dec_ref: -9.609631770034195, dispersion_direction: 1, mt_dec: 0.0, mt_ra: 0.0,
+      ra_ref: 60.12468755167287, roll_ref: 68.46699352943511, s_region: POLYGON ICRS  60.124512198
+        -9.610025493 60.124939035 -9.609210113 60.124890208 -9.609185890 60.124463333
+        -9.610001282, specsys: BARYCENT, spectral_order: -1, v2_ref: 314.984863, v3_ref: -489.450562,
+      v3yangle: 138.83282471, velosys: 24060.23, vparity: -1, waverange_end: 1.89e-06,
+      waverange_start: 9.7e-07}
+  name: S200A2
+  pathloss_point: !core/ndarray-1.0.0
+    source: fits:PATHLOSS_PS,1
+    datatype: float32
+    byteorder: big
+    shape: [2, 5]
+  pathloss_uniform: !core/ndarray-1.0.0
+    source: fits:PATHLOSS_UN,1
+    datatype: float32
+    byteorder: big
+    shape: [2, 5]
+  shutter_id: 1
+  slit_ymax: 0.55
+  slit_ymin: -0.55
+  source_id: 2
+  source_type: POINT
+  source_xpos: 0.0
+  source_ypos: 0.0
+  var_flat: !core/ndarray-1.0.0
+    source: fits:VAR_FLAT,1
+    datatype: float32
+    byteorder: big
+    shape: [2, 5]
+  var_poisson: !core/ndarray-1.0.0
+    source: fits:VAR_POISSON,1
+    datatype: float32
+    byteorder: big
+    shape: [2, 5]
+  var_rnoise: !core/ndarray-1.0.0
+    source: fits:VAR_RNOISE,1
+    datatype: float32
+    byteorder: big
+    shape: [2, 5]
+  wavelength: !core/ndarray-1.0.0
+    source: fits:WAVELENGTH,1
+    datatype: float32
+    byteorder: big
+    shape: [2, 5]
+  xsize: 1466
+  xstart: 471
+  ysize: 49
+  ystart: 1
+...
+”BLK 0                                ‘åŸè ≤ÈÄ	òÏ¯B~”BLK 0                                ˘–µ¢*%ﬂ†^êöäH\¨?´Ãî÷ﬂÚ>                ?´Ãî÷ﬂÚ>”BLK 0                             JÁ6‰K˘øy“u.#H•                ”BLK 0                             ò™\†èèZæS
+ú¢ÆpbÁ0A?u˛~©Å?ΩÕxóπÉøßEÑKƒZÆøSïh‡∂-6¿`ig8à
+]@A\◊æ	?sÔv»Ù¯Í?.a:<ÃÎ@¬2Å›”·¿“°j4¥<@        ÿ*iÔ∞k?J«é^›≈?—ŸX∂Ä˚øƒ™£«2S¿                ÅC8]Ô@KÄΩ∞Ã¿´öÕ9>¿                        7üˇpt‹?˜êrì‹?                                9„IÕj¿                                        ”BLK 0                              'Q|9D‡øjΩàØ˜üWœ€B[Aø‰xœÒN”Äø4ƒV_»ú?gÂoæ‰¿Æ?4¨Tö’π5@)ºèôWAv¿ng!cªÌÔ?≥ î`›ŸÍø’VI|óa¿Ç£[≥@2@c¨ê6Îm¿        ˙¡@¡ƒÇCøgÓr%™2∫øŒƒ%:.˜?T3†dœ'2@                Â ˜fDt¿˚±¬÷0G7@¿+ªÖ“UK¿                        çﬂyv—†ø¢ØNƒ7/¿                                ≠íÎMåÃg@                                        ”BLK 0                             Óô=0ˆM—ÇÔœ‹ VıEÏÌ/6?⁄]h#´‡Ô?ÛıÀ˝π5Ò?Kï™
+˘@@\÷›öC¿·Wæƒ2.ã@˚L˜gY}øŸyôΩc<sø—%gÌ7·•?HR˜éó<‰ø‚∑‚Rd¿         Ê~ô—?€!@5˛÷@2M˛63¿ Îüct¯`¿                æÂvé¢?{Ÿ#I—@Íø…%ù}Ju@                        ∂†tùÑ¿,)*i¿                                ∏é∞É*D¿                                        ”BLK 0                             /ÇÍlı:V3JÖ¸Ï ¸[xfZá6øˇ}ç∂?§¸üñ'dÒøÉ±u§öGø?î’À‰%G@ÀoI/ì¿ﬂëUDπã~?§a±ÏÚBÇøió“∏≤? °HJÔhÊ?f[†j¿        kc– â—øçÔ036œ¿OöìÅZB@ëV≈´ˆIT@                ∆Èá°GN∫ø]>Ï<˘?[Ps} X¿                        œÀì1ﬂF@B†òîy~e@                                íYØΩ≈€F@                                        ”BLK 0                                Õœˆ3Ë‹‘QòwbSˇy¯≥x· @≠xJ¢‰ü(?Õwr>'øıÑcI≈@”BLK 0                             JÁ6‰K˘øy“u.#H•                ”BLK 0                                ÷±‰ùÂ‚´Âìf∂∂÷"PI∏áÒ[8“?Ã◊Ìïa$Óæ:~eqΩsÏ>Ω4 °÷2—?”BLK 0                             [Ò‡ëÏ7ÈC•~¥;≈-       Ä       Ä”BLK 0                              'Q|9D‡øjΩàØ˜üWœ€B[Aø‰xœÒN”Äø4ƒV_»ú?gÂoæ‰¿Æ?4¨Tö’π5@)ºèôWAv¿ng!cªÌÔ?≥ î`›ŸÍø’VI|óa¿Ç£[≥@2@c¨ê6Îm¿        ˙¡@¡ƒÇCøgÓr%™2∫øŒƒ%:.˜?T3†dœ'2@                Â ˜fDt¿˚±¬÷0G7@¿+ªÖ“UK¿                        çﬂyv—†ø¢ØNƒ7/¿                                ≠íÎMåÃg@                                        ”BLK 0                             /ÇÍlı:V3JÖ¸Ï ¸[xfZá6øˇ}ç∂?§¸üñ'dÒøÉ±u§öGø?î’À‰%G@ÀoI/ì¿ﬂëUDπã~?§a±ÏÚBÇøió“∏≤? °HJÔhÊ?f[†j¿        kc– â—øçÔ036œ¿OöìÅZB@ëV≈´ˆIT@                ∆Èá°GN∫ø]>Ï<˘?[Ps} X¿                        œÀì1ﬂF@B†òîy~e@                                íYØΩ≈€F@                                        ”BLK 0                                Uûsnüé∞¸&üiÈ‰‡€«q«q Î@                «q«q Î@”BLK 0                             JÁ6‰K˘øy“u.#H•                ”BLK 0              @      @      @πÔF•ˇ¢ï|«üåòöôôôôô·ø
+ôrlîê·øyòK?èá·øÈó$ä~·øYó˝‰Ñu·ø»ñ÷∑l·ø8ñØäzc·ø®ïà]uZ·øïa0pQ·øáî:kH·ø˜ì÷e?·øfìÏ®`6·ø÷í≈{[-·øFíûNV$·øµëw!Q·ø%ëPÙK·øïê)«F	·øêöA ·øtè€l<˜‡ø‰é¥?7Ó‡øTéç2Â‡ø√çfÂ,‹‡ø3ç?∏'”‡ø£åã" ‡øåÒ]¡‡øÇã 0∏‡øÚä£Ø‡øaä|÷¶‡ø—âU©ù‡øAâ.|î‡ø∞àO˛ä‡ø à‡!˘Å‡øêáπÙÛx‡øˇÜí«Óo‡øoÜköÈf‡øﬂÖDm‰]‡øNÖ@ﬂT‡øæÑˆ⁄K‡ø.ÑœÂ‘B‡øùÉ®∏œ9‡øÉÅã 0‡ø}ÇZ^≈'‡øÏÅ31¿‡ø\Åª‡øÃÄÂ÷µ‡ø;Äæ©∞‡øVˇ.˘Vıﬂø6˛‡ûL„ﬂø˝íDB—ﬂøÙ˚DÍ7øﬂø‘˙ˆè-≠ﬂø≥˘®5#õﬂøí¯Z€âﬂør˜ÅwﬂøQˆæ&eﬂø0ıpÃ˘RﬂøÙ"rÔ@ﬂøÔÚ‘Â.ﬂøŒÒÜΩ⁄ﬂøÆ8c–
+ﬂøçÔÍ∆¯ﬁølÓúÆªÊﬁøLÌNT±‘ﬁø+Ï ˙¶¬ﬁø
+Î≤üú∞ﬁøÍÈdEíûﬁø…ËÎáåﬁø®Á»ê}zﬁøàÊz6shﬁøgÂ,‹hVﬁøF‰ﬁÅ^Dﬁø&„ê'T2ﬁø‚BÕI ﬁøÂ‡Ùr?ﬁøƒﬂ¶5¸›ø£ﬁXæ*Í›øÉ›
+d ÿ›øb‹º	∆›øB€nØ¥›ø!⁄ U¢›ø Ÿ“˙ˆè›ø‡◊Ñ†Ï}›øø÷6F‚k›øû’ËÎ◊Y›ø~‘öëÕG›ø]”L7√5›ø<“˛‹∏#›ø—∞ÇÆ›ø˚œb(§ˇ‹ø⁄ŒŒôÌ‹ø∫Õ∆sè€‹øôÃxÖ…‹øxÀ*øz∑‹øX ‹dp•‹ø7…é
+fì‹ø»@∞[Å‹øˆ∆ÚUQo‹ø’≈§˚F]‹ø¥ƒV°<K‹øî√G29‹øs¬∫Ï''‹øR¡lí‹ø2¿8‹øø–›Ò€øΩÇÉ˛ﬁ€ø–º4)ÙÃ€øØªÊŒÈ∫€øé∫òtﬂ®€ønπJ’ñ€øM∏¸ø Ñ€ø-∑Æe¿r€ø∂`∂`€øÏ¥±´N€øÀ≥ƒV°<€ø™≤v¸ñ*€øä±(¢å€øi∞⁄GÇ€øHØåÌwÙ⁄ø(Æ>ìm‚⁄ø≠8c–⁄øÊ´¢ﬁXæ⁄ø∆™TÑN¨⁄ø•©*Dö⁄øÑ®∏œ9à⁄ødßju/v⁄øC¶%d⁄ø"•Œ¿R⁄ø§Äf@⁄ø·¢2.⁄ø¿°‰±˚⁄ø††ñWÒ	⁄øüH˝Ê˜Ÿø^û˙¢‹ÂŸø>ù¨H“”Ÿøú^Ó«¡Ÿø¸öîΩØŸø‹ô¬9≥ùŸøªòtﬂ®ãŸøöó&ÖûyŸøzñÿ*îgŸøYïä–âUŸø8î<vCŸøìÓu1Ÿø¯ë†¡jŸø÷êRg`Ÿø∂èV˚ÿøñé∂≤KÈÿøtçhXA◊ÿøTå˛6≈ÿø4ãÃ£,≥ÿøä~I"°ÿøÚà0Ôèÿø“á‚î}ÿø±Üî:kÿøêÖF‡¯XÿøpÑ¯ÖÓFÿøOÉ™+‰4ÿø.Ç\—Ÿ"ÿøÅwœÿøÌ¿≈˛◊øÃ~r¬∫Ï◊ø¨}$h∞⁄◊øã|÷¶»◊øj{à≥õ∂◊øJz:Yë§◊ø)yÏ˛Üí◊øxû§|Ä◊øËvPJrn◊ø«ug\◊ø¶t¥ï]J◊øÜsf;S8◊øer·H&◊øDq Ü>◊ø$p|,4◊øo.“)÷ø‚m‡wﬁ÷ø¬líÃ÷ø°kD√
+∫÷øÄjˆh ®÷ø`i®ˆï÷ø@hZ¥ÎÉ÷øgZ·q÷ø˛eæˇ÷_÷øﬁdp•ÃM÷øºc"K¬;÷øúb‘∑)÷ø|aÜñ≠÷øZ`8<£÷ø:_Í·òÛ’ø^úáé·’ø˘\N-Ñœ’øÿ[ ”yΩ’ø∏Z≤xo´’øóYdeô’øvXƒZá’øVW»iPu’ø5VzFc’øU,µ;Q’øÙSﬁZ1?’ø”Rê '-’ø≤QB¶’øíPÙK	’øqO¶Ò˜‘øPNXó˝‰‘ø0M
+=Û“‘øLº‚Ë¿‘øÓJnàﬁÆ‘øŒI .‘ú‘ø≠H“”…ä‘øåGÑyøx‘ølF6µf‘øKEËƒ™T‘ø*Döj†B‘ø
+CLñ0‘øÈA˛µã‘ø»@∞[Å‘ø®?bw˙”øà>ßlË”øf=∆Lb÷”øF<xÚWƒ”ø&;*òM≤”ø:‹=C†”ø‰8é„8é”øƒ7@â.|”ø£6Ú.$j”øÇ5§‘X”øb4VzF”øA3 4”ø 2∫≈˙!”ø 1lk”øﬂ/Ê˝“øæ.–∂€Î“øû-Ç\—Ÿ“ø},4««“ø\+Êßºµ“ø<*òM≤£“ø)JÛßë“ø˙'¸òù“ø⁄&Æ>ìm“øπ%`‰à[“øò$ä~I“øx#ƒ/t7“øW"v’i%“ø6!({_“ø ⁄ U“øıå∆JÔ—ø‘>l@›—ø¥6À—øì¢∑+π—øsT]!ß—øRï—ø1∏®É—øjNq—øÙ˜^—øœŒôÌL—øØÄ?„:—øé2Âÿ(—øm‰äŒ—øMñ0ƒ—ø,H÷πÚ–ø˙{Ø‡–øÎ¨!•Œ–ø ^«öº–ø©
+mê™–øâ	¬Üò–øht∏{Ü–øH&^qt–ø'ÿgb–øä©\P–øÊ<OR>–ø≈ÓÙG,–ø§†ö=–øÑ R@3–ø∆˛ÃQÏœøÑ¸k=»œøD˙œb(§œø¯3ÆÄœø¿ıó˘˛[œøÄÛ˚DÍ7œø>Ò_ê’œø¸Ó√€¿ÔŒøºÏ''¨ÀŒøzÍãróßŒø8ËÔΩÇÉŒø¯ÂS	n_Œø∂„∑TY;Œøv·†DŒø4ﬂÎ/ÛÕøÚ‹„6œÕø≤⁄GÇ´Õøpÿ´ÕÒÜÕø.÷›bÕøÓ”sd»>Õø¨—◊Ø≥Õøjœ;˚ûˆÃø*ÕüFä“ÃøË íuÆÃø¶»g›`äÃøf∆À(LfÃø$ƒ/t7BÃø‚¡ìø"Ãø¢ø˜
+˙Àø`Ω[V˘’Àø ªø°‰±Àøﬁ∏#ÌœçÀøú∂á8ªiÀø\¥ÎÉ¶EÀø≤Oœë!ÀøÿØ≥}˝ øò≠fhŸ øV´{±Sµ ø©ﬂ¸>ë ø‘¶CH*m øí§ßìI øP¢ﬂ % ø†o*Ï  øŒù”u◊‹…øåõ7¡¬∏…øLôõÆî…ø
+óˇWôp…ø»îc£ÑL…øàí«Óo(…øFê+:[…øéèÖF‡»øƒãÛ–1º»øÇâWò»øBáªgt»ø Ö≥ÛO»øæÇÉ˛ﬁ+»ø~ÄÁI »ø<~Kïµ„«ø˙{Ø‡†ø«ø∫y,åõ«øxwwwww«ø6u€¬bS«øˆr?N/«ø¥p£Y9«ørn•$Á∆ø2lk√∆øiœ;˚û∆ø∞g3áÊz∆øneó“—V∆ø,c˚Ω2∆øÏ`_i®∆ø™^√¥ìÍ≈øh\' ∆≈ø(ZãKj¢≈øÊWÔñU~≈ø§US‚@Z≈ødS∑-,6≈ø"Qy≈ø‡NƒÓƒø†L„Ó…ƒø^JG[Ÿ•ƒøH´¶ƒÅƒø‹EÚØ]ƒøöCs=õ9ƒøZA◊àÜƒø?;‘qÒ√ø÷<ü]Õ√øñ:kH©√øT8g∂3Ö√ø6Àa√ø“3/M
+=√øê1ìòı√øN/˜„‡Ù¬ø-[/Ã–¬øÃ*øz∑¨¬øä(#∆¢à¬øJ&áéd¬ø$Î\y@¬ø∆!O®d¬øÜ≥ÛO¯¡øD?;‘¡ø{ä&∞¡ø¬ﬂ’å¡øÄC!˝g¡ø@ßlËC¡ø˛∏”¡øºoø˚¿ø|”N™◊¿ø:7öï≥¿ø¯õÂÄè¿ø∏ˇ0lk¿øvc|WG¿ø4««B#¿øËˇU&\˛øød˚Ω2∂øø‡ˆÂS	nøø`Ú≠Íﬂ%øø‹ÌuÅ∂›æøXÈ=çïæøÿ‰ØcMæøT‡ÕE:æø‘€ï‹ΩΩøP◊]sÁtΩøÃ“%
+æ,ΩøLŒÌ†î‰ºø»…µ7kúºøD≈}ŒATºøƒ¿Eeºø@º¸Ó√ªøº∑’í≈{ªø<≥ù)ú3ªø∏Æe¿rÎ∫ø4™-WI£∫ø¥•ıÌ[∫ø0°ΩÑˆ∫ø¨úÖÕ πø,òM≤£Çπø®ìIz:πø$è›ﬂPÚ∏ø§ä•v'™∏ø Üm˛a∏ø†Å5§‘∏ø}˝:´—∑øòx≈—Åâ∑øtçhXA∑øîoUˇ.˘∂økñ±∂øêfÂ,‹h∂øb≠√≤ ∂øà]uZâÿµøY=Ò_êµøÑTà6Hµø PÕ µøÄKïµ„∑¥ø¸F]L∫o¥øxB%„ê'¥ø¯=Ìygﬂ≥øt9µ>ó≥øÙ4}ßO≥øp0E>Î≥øÏ+’¡æ≤øl'’kòv≤øË"ùo.≤ødeôEÊ±ø‰-0û±ø`ı∆ÚU±ø‹Ω]…±ø\ÖÙü≈∞øÿMãv}∞øT"M5∞ø®˝πqG⁄Øø†ÙIüÙIØøòÎŸÃ°πÆøò‚i˙N)ÆøêŸ˘'¸ò≠øê–âU©≠øà«ÉVx¨øÄæ©∞Ë´øÄµ9ﬁ∞W´øx¨…^«™øp£Y97™øpöÈf∏¶©ø`ëyîe©ø`à	¬Ü®ø`ôÔøıßø`v)meßøPmπJ’¶øPdIx«D¶øP[Ÿ•t¥•ø@Ri”!$•ø@I˘ œì§ø@@â.|§ø07\)s£ø0.©â÷‚¢ø0%9∑ÉR¢ø …‰0¬°ø Yﬁ1°ø 
+È?ã°†øym8†ø 6Àüø ﬁ1ë%·ùø ÃQÏ¿úø ∫qG⁄üõø ®ë¢4öø‡ï±˝é^ôø‡É—XÈ=òø‡qÒ≥Cóø¿_û¸ïø¿M1j¯€îø¿;Q≈Rªìø†)q ≠öíø†ë{zëø†±÷aYêø Á°cxqéø √·-0åø ü!–·Óâø¿zaÜñ≠áø¿V°<KlÖø¿2·Úˇ*ÉøÄ!©¥ÈÄø ’¡æ“P}ø çA+<Œxø E¡ó•Ktø ˘Åíoø iÅ·åfø ≤uá[ø  NZ
+Bø  NZ
+B? ∞uá[? iÅ·åf? ˘Åío?ÄD¡ó•Kt? çA+<Œx? ’¡æ“P}?Ä!©¥ÈÄ?¿2·Úˇ*É?¿V°<KlÖ?¿zaÜñ≠á? ü!–·Óâ? √·-0å? Á°cxqé?†±÷aYê?†ë{zë?†)q ≠öí?¿;Q≈Rªì?¿M1j¯€î?¿_û¸ï?‡qÒ≥Có?‡É—XÈ=ò?‡ï±˝é^ô? ®ë¢4ö? ∫qG⁄üõ? ÃQÏ¿ú? ﬁ1ë%·ù? 6Àü?ym8†? 
+È?ã°†? Yﬁ1°? …‰0¬°? %9∑ÉR¢?0.©â÷‚¢?07\)s£?0@â.|§?@I˘ œì§?@Ri”!$•?@[Ÿ•t¥•?PdIx«D¶?PmπJ’¶?Pv)meß?`ôÔøıß?`à	¬Ü®?`ëyîe©?pöÈf∏¶©?p£Y97™?p¨…^«™?Äµ9ﬁ∞W´?Äæ©∞Ë´?Ä«ÉVx¨?ê–âU©≠?êŸ˘'¸ò≠?ê‚i˙N)Æ?†ÎŸÃ°πÆ?†ÙIüÙIØ?†˝πqG⁄Ø?X"M5∞?ÿMãv}∞?XÖÙü≈∞?‡Ω]…±?`ı∆ÚU±?‡-0û±?heôEÊ±?Ë"ùo.≤?h'’kòv≤?+’¡æ≤?p0E>Î≥?4}ßO≥?p9µ>ó≥?¯=Ìygﬂ≥?xB%„ê'¥?¯F]L∫o¥?ÄKïµ„∑¥? PÕ µ?ÄTà6Hµ?Y=Ò_êµ?à]uZâÿµ?b≠√≤ ∂?êfÂ,‹h∂?kñ±∂?êoUˇ.˘∂?tçhXA∑?òx≈—Åâ∑?}˝:´—∑?†Å5§‘∏? Üm˛a∏?†ä•v'™∏?(è›ﬂPÚ∏?®ìIz:π?(òM≤£Çπ?∞úÖÕ π?0°ΩÑˆ∫?∞•ıÌ[∫?8™-WI£∫?∏Æe¿rÎ∫?8≥ù)ú3ª?¿∑’í≈{ª?@º¸Ó√ª?¿¿Eeº?H≈}ŒATº?»…µ7kúº?HŒÌ†î‰º?–“%
+æ,Ω?P◊]sÁtΩ?–€ï‹ΩΩ?P‡ÕE:æ?ÿ‰ØcMæ?XÈ=çïæ?ÿÌuÅ∂›æ?`Ú≠Íﬂ%ø?‡ˆÂS	nø?`˚Ω2∂ø?ËˇU&\˛ø?4««B#¿?tc|WG¿?∏ˇ0lk¿?¯õÂÄè¿?87öï≥¿?|”N™◊¿?ºoø˚¿?¸∏”¡?@ßlËC¡?ÄC!˝g¡?¿ﬂ’å¡?{ä&∞¡?D?;‘¡?Ñ≥ÛO¯¡?»!O®d¬?$Î\y@¬?H&áéd¬?å(#∆¢à¬?Ã*øz∑¨¬?-[/Ã–¬?P/˜„‡Ù¬?ê1ìòı√?–3/M
+=√?6Àa√?T8g∂3Ö√?î:kH©√?ÿ<ü]Õ√??;‘qÒ√?XA◊àÜƒ?òCs=õ9ƒ?‹EÚØ]ƒ?H´¶ƒÅƒ?\JG[Ÿ•ƒ?†L„Ó…ƒ?‡NƒÓƒ? Qy≈?dS∑-,6≈?§US‚@Z≈?‰WÔñU~≈?(ZãKj¢≈?h\' ∆≈?®^√¥ìÍ≈?Ï`_i®∆?,c˚Ω2∆?leó“—V∆?∞g3áÊz∆?iœ;˚û∆?0lk√∆?tn•$Á∆?¥p£Y9«?Ùr?N/«?8u€¬bS«?xwwwww«?∏y,åõ«?¸{Ø‡†ø«?<~Kïµ„«?|ÄÁI »?¿ÇÉ˛ﬁ+»? Ö≥ÛO»?@áªgt»?ÑâWò»?ƒãÛ–1º»?éèÖF‡»?Dê+:[…?àí«Óo(…?»îc£ÑL…?óˇWôp…?LôõÆî…?åõ7¡¬∏…?Ãù”u◊‹…?†o*Ï  ?P¢ﬂ % ?ê§ßìI ?‘¶CH*m ?©ﬂ¸>ë ?T´{±Sµ ?ò≠fhŸ ?ÿØ≥}˝ ?≤Oœë!À?\¥ÎÉ¶EÀ?ú∂á8ªiÀ?‹∏#ÌœçÀ? ªø°‰±À?`Ω[V˘’À?†ø˜
+˙À?‰¡ìø"Ã?$ƒ/t7BÃ?d∆À(LfÃ?®»g›`äÃ?Ë íuÆÃ?(ÕüFä“Ã?lœ;˚ûˆÃ?¨—◊Ø≥Õ?Ï”sd»>Õ?0÷›bÕ?pÿ´ÕÒÜÕ?∞⁄GÇ´Õ?Ù‹„6œÕ?4ﬂÎ/ÛÕ?t·†DŒ?¥„∑TY;Œ?¯ÂS	n_Œ?8ËÔΩÇÉŒ?xÍãróßŒ?ºÏ''¨ÀŒ?¸Ó√€¿ÔŒ?<Ò_ê’œ?ÄÛ˚DÍ7œ?¿ıó˘˛[œ? ¯3ÆÄœ?D˙œb(§œ?Ñ¸k=»œ?ƒ˛ÃQÏœ?Ñ R@3–?§†ö=–?ƒÓÙG,–?Ê<OR>–?ä©\P–?&ÿgb–?H&^qt–?ht∏{Ü–?à	¬Üò–?™
+mê™–? ^«öº–?Í¨!•Œ–?˙{Ø‡–?,H÷πÚ–?Lñ0ƒ—?n‰äŒ—?é2Âÿ(—?ÆÄ?„:—?–ŒôÌL—?Ù˜^—?jNq—?2∏®É—?Rï—?rT]!ß—?í¢∑+π—?¥6À—?‘>l@›—?Ùå∆JÔ—? ⁄ U“?6!({_“?V"v’i%“?x#ƒ/t7“?ò$ä~I“?∏%`‰à[“?⁄&Æ>ìm“?˙'¸òù“?)JÛßë“?<*òM≤£“?\+Êßºµ“?|,4««“?û-Ç\—Ÿ“?æ.–∂€Î“?ﬁ/Ê˝“? 1lk”? 2∫≈˙!”?@3 4”?b4VzF”?Ç5§‘X”?¢6Ú.$j”?ƒ7@â.|”?‰8é„8é”?:‹=C†”?&;*òM≤”?F<xÚWƒ”?f=∆Lb÷”?à>ßlË”?®?bw˙”?»@∞[Å‘?ÍA˛µã‘?
+CLñ0‘?*Döj†B‘?JEËƒ™T‘?lF6µf‘?åGÑyøx‘?¨H“”…ä‘?ŒI .‘ú‘?ÓJnàﬁÆ‘?Lº‚Ë¿‘?0M
+=Û“‘?PNXó˝‰‘?pO¶Ò˜‘?íPÙK	’?≤QB¶’?“Rê '-’?ÙSﬁZ1?’?U,µ;Q’?4VzFc’?VW»iPu’?vXƒZá’?ñYdeô’?∏Z≤xo´’?ÿ[ ”yΩ’?¯\N-Ñœ’?^úáé·’?:_Í·òÛ’?Z`8<£÷?|aÜñ≠÷?úb‘∑)÷?ºc"K¬;÷?ﬁdp•ÃM÷?˛eæˇ÷_÷?gZ·q÷?@hZ¥ÎÉ÷?`i®ˆï÷?Äjˆh ®÷?¢kD√
+∫÷?¬líÃ÷?‚m‡wﬁ÷?o.“)÷?$p|,4◊?Dq Ü>◊?dr·H&◊?Üsf;S8◊?¶t¥ï]J◊?∆ug\◊?ËvPJrn◊?xû§|Ä◊?(yÏ˛Üí◊?Jz:Yë§◊?j{à≥õ∂◊?ä|÷¶»◊?¨}$h∞⁄◊?Ã~r¬∫Ï◊?Ï¿≈˛◊?Åwœÿ?.Ç\—Ÿ"ÿ?NÉ™+‰4ÿ?pÑ¯ÖÓFÿ?êÖF‡¯Xÿ?∞Üî:kÿ?“á‚î}ÿ?Úà0Ôèÿ?ä~I"°ÿ?4ãÃ£,≥ÿ?Tå˛6≈ÿ?tçhXA◊ÿ?ñé∂≤KÈÿ?∂èV˚ÿ?÷êRg`Ÿ?¯ë†¡jŸ?ìÓu1Ÿ?8î<vCŸ?Zïä–âUŸ?zñÿ*îgŸ?öó&ÖûyŸ?∫òtﬂ®ãŸ?‹ô¬9≥ùŸ?¸öîΩØŸ?ú^Ó«¡Ÿ?>ù¨H“”Ÿ?^û˙¢‹ÂŸ?~üH˝Ê˜Ÿ?††ñWÒ	⁄?¿°‰±˚⁄?‡¢2.⁄?§Äf@⁄?"•Œ¿R⁄?B¶%d⁄?dßju/v⁄?Ñ®∏œ9à⁄?§©*Dö⁄?∆™TÑN¨⁄?Ê´¢ﬁXæ⁄?≠8c–⁄?(Æ>ìm‚⁄?HØåÌwÙ⁄?h∞⁄GÇ€?ä±(¢å€?™≤v¸ñ*€? ≥ƒV°<€?Ï¥±´N€?∂`∂`€?,∑Æe¿r€?N∏¸ø Ñ€?nπJ’ñ€?é∫òtﬂ®€?∞ªÊŒÈ∫€?–º4)ÙÃ€?ΩÇÉ˛ﬁ€?ø–›Ò€?2¿8‹?R¡lí‹?r¬∫Ï''‹?î√G29‹?¥ƒV°<K‹?‘≈§˚F]‹?ˆ∆ÚUQo‹?»@∞[Å‹?6…é
+fì‹?X ‹dp•‹?xÀ*øz∑‹?òÃxÖ…‹?∏Õ∆sè€‹?‹ŒŒôÌ‹?¸œb(§ˇ‹?—∞ÇÆ›?<“˛‹∏#›?\”L7√5›?|‘öëÕG›?ú’ËÎ◊Y›?¿÷6F‚k›?‡◊Ñ†Ï}›? Ÿ“˙ˆè›? ⁄ U¢›?@€nØ¥›?`‹º	∆›?Ñ›
+d ÿ›?§ﬁXæ*Í›?ƒﬂ¶5¸›?‰‡Ùr?ﬁ?‚BÕI ﬁ?$„ê'T2ﬁ?H‰ﬁÅ^Dﬁ?hÂ,‹hVﬁ?àÊz6shﬁ?®Á»ê}zﬁ?»ËÎáåﬁ?ËÈdEíûﬁ?Î≤üú∞ﬁ?,Ï ˙¶¬ﬁ?LÌNT±‘ﬁ?lÓúÆªÊﬁ?åÔÍ∆¯ﬁ?¨8c–
+ﬂ?–ÒÜΩ⁄ﬂ?Ú‘Â.ﬂ?Ù"rÔ@ﬂ?0ıpÃ˘Rﬂ?Pˆæ&eﬂ?p˜Åwﬂ?î¯Z€âﬂ?¥˘®5#õﬂ?‘˙ˆè-≠ﬂ?Ù˚DÍ7øﬂ?˝íDB—ﬂ?4˛‡ûL„ﬂ?Tˇ.˘Vıﬂ?<Äæ©∞‡?ÃÄÂ÷µ‡?\Åª‡?ÏÅ31¿‡?|ÇZ^≈'‡?ÉÅã 0‡?ûÉ®∏œ9‡?.ÑœÂ‘B‡?æÑˆ⁄K‡?NÖ@ﬂT‡?ﬁÖDm‰]‡?nÜköÈf‡? áí«Óo‡?êáπÙÛx‡? à‡!˘Å‡?∞àO˛ä‡?@â.|î‡?–âU©ù‡?bä|÷¶‡?Úä£Ø‡?Çã 0∏‡?åÒ]¡‡?¢åã" ‡?2ç?∏'”‡?ƒçfÂ,‹‡?Téç2Â‡?‰é¥?7Ó‡?tè€l<˜‡?êöA ·?îê)«F	·?&ëPÙK·?∂ëw!Q·?FíûNV$·?÷í≈{[-·?fìÏ®`6·?ˆì÷e?·?Üî:kH·?ïa0pQ·?®ïà]uZ·?8ñØäzc·?»ñ÷∑l·?Xó˝‰Ñu·?Ëó$ä~·?zòK?èá·?
+ôrlîê·?öôôôôô·?”BLK 0              @      @      @î†ã∏°T“Ã}@¢⁄É{ß_mI5“øÑ°Ú@5“øW%∑v85“øÙ2b˚/5“ø^ Ä'5“øêÎ∂5“øåñ`â5“øVÀ	5“øÏâ≤í5“øP“Z˝4“ø|§úÙ4“ø| ™ Ï4“øEÊP•„4“ø‹U˜)€4“øFOùÆ“4“øz“B3 4“øﬂÁ∑¡4“øSvå<π4“ø˙ñ0¡∞4“øoA‘E®4“ø¥uw ü4“øÀ3Oó4“ø≥{º”é4“ølM^XÜ4“ø˙®ˇ‹}4“ø[é†au4“øã˝@Êl4“øëˆ‡jd4“øjyÄÔ[4“øÜtS4“øúæ¯J4“øÚ<\}B4“øÁ˘:4“ø"óÜ14“ø˙ÿ3)4“ø® –è 4“ø.Úk4“øãMô4“ø¿2¢4“øŒ°<¢˛3“ø≤ö÷&ˆ3“øqp´Ì3“ø*	0Â3“øv¿°¥‹3“ø¬‡99‘3“øÊä—ΩÀ3“øÂæhB√3“ø¬|ˇ∆∫3“øwƒïK≤3“ø	ñ+–©3“øwÒ¿T°3“ø¡÷UŸò3“øÁEÍ]ê3“øÌ>~‚á3“ø–¡g3“øëŒ§Îv3“ø0e7pn3“øØÖ…Ùe3“ø0[y]3“øJdÏ˝T3“øf"}ÇL3“ødjD3“øB<ùã;3“øò,33“ø§}ªî*3“ø'ÌI"3“øãÊ◊ù3“ø‘ie"3“øˇvÚ¶3“ø+ 3“øˇ.∞˜2“ø◊Ÿñ4Ô2“øí"πÊ2“ø3Õ¨=ﬁ2“ø∏7¬’2“ø"Ë¿FÕ2“øvDJÀƒ2“ø≠*”Oº2“øÃö[‘≥2“ø“î„X´2“øøk›¢2“øî&Úaö2“øUæxÊë2“ø˚ﬂ˛jâ2“øåãÑÔÄ2“ø¡	tx2“øjÄé¯o2“ø∏…}g2“øÒúñ_2“ø˙ÜV2“ø&·ú
+N2“ø!RèE2“ø	M°=2“ø›—"ò42“øü‡£,2“øLy$°#2“øÈõ§%2“ørH$™2“øÓ~£.
+2“øT?"≥2“ø¨â†7˘1“øı]º1“ø*ºõ@Ë1“øT§≈ﬂ1“ømïI◊1“øuŒŒ1“øqòåR∆1“ø]®◊Ω1“ø<BÇ[µ1“øf¸ﬂ¨1“ø‘vd§1“øåKÔËõ1“ø:hmì1“ø‹X‡Òä1“ør.XvÇ1“ø˝çœ˙y1“ø{wFq1“øÚÍºi1“ø^Ë2à`1“ø¬o®X1“øÅëO1“ølíG1“øµAö>1“ø˜y61“ø.*Ì¢-1“ø`Ì_'%1“øå:“´1“ø≤D01“øœrµ¥1“øÎ]&91“ø¸“ñΩ˙0“ø“BÚ0“ø[v∆È0“ønÂJ·0“ø Tœÿ0“ø2¬S–0“ø„/ÿ«0“øù\ø0“ø„	·∂0“ø2veÆ0“ø˘
+‚È•0“øÌmMnù0“ø‡Z∏Úî0“ø–—"wå0“ø«“å˚É0“øπ]ˆ{0“ø¨r_s0“ø•»àj0“øõ:0b0“øìÌóëY0“øå*ˇQ0“øäÒeöH0“øçBÃ@0“øì2£70“øöÇó'/0“ø®q¸´&0“øπÍ`00“ø–Ìƒ¥0“øÎz(90“øíãΩ0“ø73ÓA¸/“øf^P∆Û/“øõ≤JÎ/“øŸRœ‚/“øtS⁄/“øio‘◊—/“ø¡L4\…/“ø¥ì‡¿/“øá•Úd∏/“øˆ QÈØ/“øs&Ømß/“ø¯µÚû/“øàœivñ/“ø&s∆˙ç/“øÃ†"Ö/“ø~X~}/“ø?öŸát/“ø
+f4l/“ø„ªéêc/“øÀõË[/“ø¿BôR/“ø¡˘öJ/“ø“wÛ°A/“øÛK&9/“ø#£™0/“øc.˙.(/“ø≥‘P≥/“øß7/“øÉø¸ª/“øR@/“øô“¶ƒ˝.“ø?+˚Hı.“ø¯OÕÏ.“ø≈z¢Q‰.“ø¢qı’€.“øìÚGZ”.“øö˝ôﬁ .“ø¥íÎb¬.“ø„±<Áπ.“ø([çk±.“øé›Ô®.“øK-t†.“øvì|¯ó.“øeÀ|è.“ø√¿á.“øë¶gÖ~.“øqµ	v.“ømém.“øîNe.“ø¨¢öñ\.“øÚ:ÊT.“øQ]1üK.“ø…	|#C.“ø]@∆ß:.“ø,2.“ø‘KY∞).“øπ ¢4!.“øπÍ∏.“ø◊h2=.“ø‹y¡.“øiŸ¿Eˇ-“ø‹` ˆ-“øprMNÓ-“ø"ì“Â-“øÒ3ÿV›-“ø‡„€‘-“øÌa_Ã-“ø‚§„√-“øi0Ëgª-“ø÷+Ï≤-“øgkmp™-“øXØÙ°-“øËŒxô-“ø›œ1˝ê-“øÙZrÅà-“ø.p≤Ä-“øãÚâw-“ø91o-“øØÏoíf-“øx*Æ^-“øfÚÎöU-“øyD)M-“ø∞ f£D-“øá¢'<-“øìwﬁ´3-“ø;Ú0+-“ø˜T¥"-“ø
+Üè8-“ø*ü…º-“øsBA	-“ø‰o<≈ -“øÅ'uI¯,“øEi≠ÕÔ,“ø35ÂQÁ,“øHã÷ﬁ,“øékSZ÷,“ø˚’âﬁÕ,“øí øb≈,“øXIıÊº,“øER*k¥,“øbÂ^Ô´,“ø≠ìs£,“ø"™∆˜ö,“ø«€˘{í,“øóó, ä,“øò›^ÑÅ,“ø∆≠êy,“ø%¬åp,“ø±ÏÚh,“øn[#ï_,“ø[TSW,“øz◊ÇùN,“ø ‰±!F,“øH|‡•=,“ø˚ù*5,“øﬁI<Æ,,“øÛi2$,“ø<@ñ∂,“ø∫ä¬:,“øj_Óæ
+,“øLæC,“øfßD«˘+“ø≥oKÒ+“ø8ôœË+“øÔü¬S‡+“ø›±Î◊◊+“øN\œ+“ø[t<‡∆+“øÓ$ddæ+“ø∂_ãËµ+“ø∏$≤l≠+“øÓsÿ§+“øcM˛tú+“ø±#˘ì+“øÒûH}ã+“ømÉ+“øfëÖz+“ø˘•¥	r+“ø«º◊çi+“ø–]˙a+“øâñX+“øì>>P+“øO~_ûG+“øJHÄ"?+“øÄú†¶6+“øız¿*.+“øß„ﬂÆ%+“øò÷˛2+“ø«S∑+“ø5[;;+“øﬂÏXø+“øœvC˚*“ø¸Æí«Ú*“ølﬂÆKÍ*“øö œ·*“øﬂÂSŸ*“ø=Æ ÿ–*“ø∞\»*“øhÎ4‡ø*“øcYNd∑*“øûQgËÆ*“ø ‘l¶*“ø„‡óù*“øÌwØtï*“ø;ô∆¯å*“øŒD›|Ñ*“øßzÛ |*“øƒ:	Ös*“ø*Ö	k*“øÿY3çb*“ø»∏GZ*“ø¢[ïQ*“øÖoI*“øRÇù@*“øbõî!8*“øæ≠¶•/*“ødJ∏)'*“øRq…≠*“øä"⁄1*“ø^Íµ*“ø›#˙9*“ø¯s	æ¸)“ø\NBÙ)“ø≥&∆Î)“ø¢4J„)“øUBŒ⁄)“øÔOR“)“ø“¨[÷…)“ø≈gZ¡)“øâgsﬁ∏)“øYî~b∞)“øzKâÊß)“øËåìjü)“øßXùÓñ)“ø¥Æ¶ré)“øèØˆÖ)“øƒ˘∑z})“ø»Óø˛t)“øn«Çl)“ø¬wŒd)“øπ’ä[)“ø*€S)“ø£“‡íJ)“øîÊB)“ø‹¬Íö9)“øx
+Ô1)“øg‹Ú¢()“ø´8ˆ& )“øG˘™)“ø6ê˚.)“ø}ã˝≤)“øˇ6˛(“ø! ªı(“ø[ª ?Ì(“øˇﬂ √‰(“ø¸é G‹(“øP»ˇ ”(“ø¸ã˛NÀ(“ø⁄¸“¬(“øc≤˙V∫(“ø"¯⁄±(“ø5ı^©(“øßyÒ‚†(“ør{Ìfò(“øöÈÍè(“ø‰ná(“ø¸æﬁÚ~(“ø;Íÿvv(“ø”ü“˙m(“øÕﬂÀ~e(“ø!™ƒ](“ø‘˛ºÜT(“øË›¥
+L(“øZG¨éC(“ø,;£;(“ø[πôñ2(“øÌ¡è*(“ø‡TÖû!(“ø3rz"(“øÂo¶(“ø˝Kc*(“øuWÆˇ'“øPOJ2˜'“øç =∂Ó'“ø/|/:Ê'“ø6b!æ›'“øõ“B’'“øiÕ∆Ã'“øùRÙIƒ'“ø3b‰Õª'“ø1¸”Q≥'“øì √’™'“ø_œ±Y¢'“øå†›ô'“ø$Ãçaë'“ø${Âà'“øàÚgiÄ'“øXUTÌw'“øêB@qo'“ø/∫+ıf'“ø9ºy^'“ø≠H˝U'“øã_ÎÄM'“ø” ’E'“øÜ,æà<'“ø§‚¶4'“ø1#èê+'“ø$Óv#'“øâC^ò'“øX#E'“øïç+†	'“øAÇ$'“øY˜ß¯&“ø‡
+‹+&“ø‘û¿ØÁ&“ø;Ω§3ﬂ&“øfà∑÷&“øSôk;Œ&“øWNø≈&“ø,ü0CΩ&“ø¡q«¥&“øÀŒÛJ¨&“øB∂‘Œ£&“ø.(µRõ&“øç$ï÷í&“ø]´tZä&“ø°ºSﬁÅ&“ø[X2by&“øÜ~Êp&“ø&/Óih&“ø<jÀÌ_&“ø∆/®qW&“ø«ÑıN&“ø<Z`yF&“ø*ø;˝=&“øãÆÅ5&“øh(Ò-&“øπ,Àà$&“øÑª§&“ø∆‘}ê&“øÄxV&“ø≥¶.ò&“øb_˙%“øã¢›üÒ%“ø*p¥#È%“øG»äß‡%“ø›™`+ÿ%“øÔ6Øœ%“ø}3«%“øáëﬂ∂æ%“øû≥:∂%“ø5áæ≠%“øìVZB•%“øê-∆ú%“ø9ˇIî%“ø˙–Õã%“øE¢QÉ%“øys’z%“øÓ{CYr%“øÈf›i%“ø`‹‚`a%“øZ‹±‰X%“ø“fÄhP%“øÕ{NÏG%“øKp?%“øJEÈÛ6%“øÕ˘µw.%“ø–8Ç˚%%“øZN%“øeV%“ø˜4‰Ü%“øûÆ
+%“ø§ëxé˚$“ø¡BÛ$“øhñÍ$“øë´”‚$“øA…õùŸ$“øxqc!—$“ø6§*•»$“ø}aÒ(¿$“øL©∑¨∑$“ø°{}0Ø$“øÄÿB¥¶$“øÁø8û$“ø⁄1Ãªï$“øT.ê?ç$“øZµS√Ñ$“øÈ∆G|$“øcŸ s$“ø´âõNk$“øﬁ:]“b$“øõvVZ$“øÁ<ﬂŸQ$“øΩçü]I$“ø"i_·@$“øœe8$“øñø›Ë/$“ø¢:úl'$“øA@Z$“øn–t$“ø+Î‘˜$“øwêë{$“øR¿Mˇ¸#“ø¬z	ÉÙ#“øæøƒÏ#“øNèä„#“øqÈ9€#“ø$ŒÛë“#“øj=≠ #“øC7fô¡#“øØªπ#“øØ ÷†∞#“øDdé$®#“ømàE®ü#“ø)7¸+ó#“ø~p≤Øé#“øe4h3Ü#“øÊÇ∑}#“ø˘[“:u#“ø®øÜæl#“øÍ≠:Bd#“ø≈&Ó≈[#“ø5*°IS#“øB∏SÕJ#“ø‰–QB#“ø"t∑‘9#“øˆ°hX1#“øfZ‹(#“øsù…_ #“øky„#“øV√(g#“ø0¶◊Í#“ø¶Ün˛"“ø∏4Úı"“øhé·uÌ"“øµõé˘‰"“øû3;}‹"“ø&VÁ ‘"“øJìÑÀ"“ø;>√"“øo˝Ëã∫"“øpJì≤"“ø"=ì©"“øTÑÊ°"“ø3qèöò"“ø∑Ë7ê"“øŸÍﬂ°á"“øüwá%"“øè.©v"“ø1’,n"“ø∂]{∞e"“ø!4]"“ø˜V∆∑T"“øå#k;L"“ø≈zøC"“ø¢\≥B;"“ø$…V∆2"“øL¿˘I*"“øBúÕ!"“øèN>Q"“ø®Âﬂ‘"“øiÅX"“ø“≥!‹ˇ!“ø‡Í¡_˜!“øó¨a„Ó!“ø¯¯ gÊ!“ø˛œüÍ›!“ø≤1>n’!“ø‹ÒÃ!“øïyuƒ!“øøñ˘ª!“ø#≥|≥!“ø:O ´!“øÕ€ÍÉ¢!“ø(Üö!“ø0ø ãë!“øÊ ªâ!“øGÕTíÄ!“øU$Óx!“øáôo!“øzrg!“øîi∑†^!“øZÎN$V!“ø”˜ÂßM!“ø˜é|+E!“øÕ∞Ø<!“øT]®24!“øãî=∂+!“ørV“9#!“ø
+£fΩ!“øVz˙@!“øT‹çƒ	!“ø… H!“øh@≥À¯ “ø}BEO “øHœ÷“Á “ø∆ÊgVﬂ “ø˚à¯Ÿ÷ “ø„µà]Œ “ø~m·≈ “ø—ØßdΩ “ø€|6Ë¥ “øò‘ƒk¨ “ø∑RÔ£ “ø;$‡rõ “ø!mˆí “øæû˘yä “ø¨Ö˝Å “øDÅy “øÁfúq “øg'àh “øüL±` “øì;èW “øA]ƒO “ø´5MñF “ø–ò’> “ø±Ü]ù5 “øPˇ‰ - “ø©l§$ “øøêÚ' “øî©x´ “ø$M˛. “øs{É≤ “øÇ46˙“øPxåπÒ“øŸF=È“ø&†ì¿‡“ø1ÑDÿ“ø¸Úò«œ“øàÏK«“ø‘púŒæ“ø‰R∂“ø¥û’≠“øF>Y•“øùÌù‹ú“ø∂'`î“øëÏõ„ã“ø0<gÉ“øîòÍz“øº{nr“ø®kíÒi“ø\Êua“ø”Îä¯X“ø||P“øóÅˇG“ø‡<¸Ç?“øsmv7“øÕ(â.“øÔni&“øŸ?‚ê“øéõZ“øÇ“ó“øNÛI“ø\Ô¿û˚“ø7v7"Û“ø⁄á≠•Í“øI$#)‚“øÖKò¨Ÿ“øã˝0—“ø]:Å≥»“ø¸ı6¿“øhTh∫∑“ø†1€=Ø“ø®ôM¡¶“ø{åøDû“ø
+1»ï“øë¢Kç“ø—•œÑ“ø„√ÇR|“ø¬lÚ’s“øs†aYk“øÙ^–‹b“øG®>`Z“øk|¨„Q“øa€gI“ø*≈ÜÍ@“ø≈9Ûm8“ø09_Ò/“øs√ t'“øâÿ5¯“øqx†{“ø/£
+ˇ“ø¬XtÇ“ø)ô›˝“øfdFâÙ“øy∫ÆÏ“øcõê„“ø$~€“øº˝‰ñ““ø*K “øsã±ù¡“øê"!π“øâD|§∞“ø\Ò‡'®“ø)E´ü“øàÎ®.ó“øÍ8≤é“ø#o5Ü“ø6t—∏}“ø(b3<u“øÚ⁄îøl“øúﬁıBd“ømV∆[“øÄÜ∂IS“øΩ*ÕJ“øŸYuPB“ø”‘”9“ø©X2W1“øc(ê⁄(“ø˘ÇÌ] “øohJ·“ø≈ÿ¶d“ø¸”Ë“øZ^k˛“økπÓı“ø„rÌ“øü-nı‰“ø<ﬂ«x‹“øº!¸”“ø„yÀ“øe5“√“øê*Ü∫“øùzÅ	≤“øëmÿå©“øiÎ.°“ø&ÙÑìò“ø…á⁄ê“øO¶/öá“øøOÑ“øÑÿ†v“øSC,$n“øvçße“øÉb“*]“øy¬$ÆT“øT≠v1L“ø#»¥C“ø #8;“øeØiª2“øË≈π>*“øXg	¬!“ø±ìXE“øˆJß»“ø(çıK“øEZCœˇ“øM≤êR˜“øDï›’Ó“ø%*YÊ“ø˘˚u‹›“ø∑¡_’“øfé„Ã“ø(Wfƒ“øåL°Èª“ø¸Íl≥“øs64™“ø—˚|s¢“øL≈ˆô“øX'zë“øáçT˝à“øß~õÄÄ“øª˙·x“øæ(áo“ø∑ìm
+g“ø°∞≤ç^“øÉX˜V“øTã;îM“øIE“øÿë¬ö<“øåe4“ø2ƒG°+“ø–≠â$#“øc"Àß“øÓ!+“øq¨LÆ	“øÎ¡å1“ø\bÃ¥¯“ø≈ç8“ø'DJªÁ“øÖÖà>ﬂ“øÿQ∆¡÷“ø)©EŒ“ørã@»≈“ø≥¯|KΩ“øÚ∏Œ¥“ø,tÙQ¨“øaÇ/’£“øìjXõ“ø√?§€í“øÌÓ›^ä“ø)‚Å“ø=ÓOey“øa>àËp“øÖ¿kh“ø•˜Ó_“øƒp.rW“ø‰ÏdıN“øÙöxF“ø%Ü–˚=“øD£5“øhK:-“øä~nÖ$“ø∞<¢“ø◊Ö’ã“øZ“ø/π:í“ø^£l˙“øëûòÒ“ø œÈ“ø§ˇû‡“øJ∫/"ÿ“øè[_•œ“ø€áé(«“ø-?Ω´æ“øÜÅÎ.∂“øÊN≤≠“øLßF5•“ø∫äs∏ú“ø2˘ü;î“ø∞ÚÀæã“ø7w˜AÉ“ø∆Ü"≈z“ø`!MHr“øGwÀi“ø±˜†Na“øi3 —X“ø,˙ÚTP“ø˝KÿG“ø÷(C[?“ø∫êjﬁ6“øÆÉëa.“øÆ∏‰%“øΩ
+ﬁg“ø◊ûÎ“øˇΩ(n“ø5hMÒ“øzùqt˚“ø“]ï˜Ú“ø4©∏zÍ“øß€˝·“ø-·˝ÄŸ“ø√Õ—“øiEAá»“ø Hb
+¿“øÍ’Çç∑“ø≈Ó¢Ø“ø≥í¬ì¶“ø∂¡·û“ø { öï“øÚ¿ç“ø/ë<†Ñ“ø~ÏY#|“øÁ“v¶s“øbDì)k“øÒ@Ø¨b“øô» /Z“øT€Â≤Q“ø)y 6I“ø¢π@“øV4<8“ø0ïMø/“øa_fB'“ø≠¥~≈“øïñH“øë ÆÀ“ø(˜ƒN“øŸx€—¸“ø¶ÖÒTÙ“øãÿÎ“øè@[„“øØÓ0ﬁ⁄“øÁ'Ea““ø@ÏX‰…“ø¥;lg¡“øDÍ∏“øÒ{ëm∞“øøl£ß“ø™Ë¥sü“ø≥Ô≈ˆñ“ø€Å÷yé“ø&üÊ¸Ö“øçGˆ}“ø{u“øø9Ül“øáÉ"	d“øuX0å[“øÅ∏=S“ø±£JíJ“øWB“øvcò9“ø®n1“øÀøyû(“ø≠bÑ! “ø≥êé§“ø€Iò'“ø*é°™“øü]™-˛“ø8∏≤∞ı“ø˘ù∫3Ì“ø·¬∂‰“øÌ
+…9‹“ø%íœº”“øÅ§’?À“ø
+B€¬¬“ø∑j‡E∫“øèÂ»±“øê]ÈK©“øª'ÌŒ†“ø}Qò“øë]Û‘è“ø<…ıWá“ø¿˜⁄~“øB˘]v“ø?O˙‡m“øõÁ˙ce“ø"˚Ê\“ø÷π˙iT“øπÛ˘ÏK“ø«∏¯oC“ø	˜Ú:“ør‰Ùu2“øKÚ¯)“ø€<Ô{!“ø÷πÎ˛“ø¬ÁÅ“ø_U„“øÎsﬁáˇ“ø©Ÿ
+˜“øõR”çÓ“øæÕÊ“ø^∆ì›“øö4ø’“øVñ∑ôÃ“øFÉØƒ“øh˚¶üª“øø˛ù"≥“øMçî•™“øßä(¢“øLÄ´ô“ø2|u.ë“øñ7j±à“ø2~^4Ä“ø PR∑w“ø≠E:o“øLï8Ωf“øƒ+@^“øu√U“ø`ëFM“øÑ¶ˇ»D“ø„FK<“øxr‡Œ3“øL)–Q+“øZkø‘"“ø°8ÆW“ø(ëú⁄“øÁtä]	“øÂ„w‡ “øﬁdc¯“øïcQÊÔ“øJt=iÁ“ø:)Ïﬁ“øk7o÷“ø‹È˛ÒÕ“øâ'Èt≈“øw“˜º“ø•Dºz¥“ø$•˝´“ø¡éçÄ£“ø≥Ñuõ“ø„]Üí“øUD	ä“ø™*åÅ“øÕy“ø;{ˆëp“ø∏¥€h“ø}y¿ó_“øÄ…§W“ø…§àùN“øYl F“ø,˝N£=“øFz1&5“øßÇ©,“ø”BLK 0                                im≠ÀπÑªÙöÈØ<öÛa≥— I.˘?!äßîù6ø8HQÙÆ7?ü!2ü]˙?”BLK 0                             [Ò‡ëÏ7ÈC•~¥;≈-       Ä       Ä”BLK 0                             >1Mp˛W~÷˜°hÂ([ë6•YI⁄‹i?Qøt√Uá•?'6Cá¬¬?Ø’¡©fQÃ?H°Ú)AY∞øe`Õ^Á;’øÅS$º*Ô?∂:E˘œ?≤ø«•≈˘E—øSß˘∫¡¶˜øP??$ŒRˆø        î∫‚≈©Cæø>´jc&ıøS\Æƒ2ü¿ª…*sA¿                m
+Í¬°õŒøYT¡êB¿wû"Œ]Ö¿                        ˇZ≥&Áøª˝üêu/¿                                ê‡[”"î¿                                        ”BLK 0                             )±± TâôÜ˘Æ>tLÕ~f„cœføö¥´yÀwÚ?*å˜—+˘?µdeí∆¢@ö%‚è~"@Nìì™î@¸J˜|ªôø⁄M‰{àÿœøîõ–ˇ≈—ÙøÊÚ~w›¿Û Åo]¿        TÕ∫I∞?≠›ó›Ë?ß8)aÍÛ?»ÖMënÄÚ?                g5G˙/≤? É4‹ÌÀ»?Î]åÂán©ø                        tùKp ¿Açéﬁw∑¿                                ç;⁄3>ˆø                                        ”BLK 0                                im≠ÀπÑªÙöÈØ<öÛa≥— I.˘?!äßîù6ø8HQÙÆ7?ü!2ü]˙?”BLK 0                             [Ò‡ëÏ7ÈC•~¥;≈-       Ä       Ä”BLK 0                             >1Mp˛W~÷˜°hÂ([ë6•YI⁄‹i?Qøt√Uá•?'6Cá¬¬?Ø’¡©fQÃ?H°Ú)AY∞øe`Õ^Á;’øÅS$º*Ô?∂:E˘œ?≤ø«•≈˘E—øSß˘∫¡¶˜øP??$ŒRˆø        î∫‚≈©Cæø>´jc&ıøS\Æƒ2ü¿ª…*sA¿                m
+Í¬°õŒøYT¡êB¿wû"Œ]Ö¿                        ˇZ≥&Áøª˝üêu/¿                                ê‡[”"î¿                                        ”BLK 0                             )±± TâôÜ˘Æ>tLÕ~f„cœføö¥´yÀwÚ?*å˜—+˘?µdeí∆¢@ö%‚è~"@Nìì™î@¸J˜|ªôø⁄M‰{àÿœøîõ–ˇ≈—ÙøÊÚ~w›¿Û Åo]¿        TÕ∫I∞?≠›ó›Ë?ß8)aÍÛ?»ÖMënÄÚ?                g5G˙/≤? É4‹ÌÀ»?Î]åÂán©ø                        tùKp ¿Açéﬁw∑¿                                ç;⁄3>ˆø                                        ”BLK 0                             Ù$FD›„Ø˚!Ÿn/$ãÖê≤ÊÁ∫xh>wh(W	Y?ø¬ñ2Ä2ø òY%p≥Døgt[öeG?bLMn$<ø˝Z˜∏Á˛Ô?≥√À¢˙¿øc^Íﬂ¿!‡?}÷>H∞q@S‚sµ¿        01»´ÉJøS‹ÙÊ Ωbøê˜.ÒÉ?€p≠éoˆq?                åï9y ÙÁ?lÛø@`ŸÈ‰‹˝"¿                         ]@™YÉÇ?¡≥AÃÛEáø                                R•·«˜=¿                                        ”BLK 0                             Xû> &õLÑè']üáBUwjaáÖÅøOﬂ¿ˆyÉr?¥;=o!òøWñîå?1zÒ
+2¿Òîº◊Z_§¿ÃäÎïP?@è˝?Ù¿íJ<ñZﬂZ@ÙÆh›Ä¬o@Vp™{Cw¶@        bﬂŒ«1éø:Ú<M(¿‹»ÛQá@ ‡}˙ŸÃ≤@                h†PT(•`@”ÿ¡5µ9s@2—Z∞Ú∞¿                        m◊@K€:¿πé/©xU≤@                                ãÊ}ÛeIú¿                                        ”BLK 0                             ﬂÎ¸éí˚±·bíé‡Î=ΩëR	ê⁄æMçvπ3˛Ô?¶a6÷ß«ø˛√Z'—?è=≈à€¥@ßFUΩ’	¿∆uˆR”?'=e
+2øÏR≈.cøÂ∂s]ƒ›v?ˇä¨Ñ±ë?        ∫LG“ÁN¥ø¸'ÈI2‡?@
+‘\	@<1shA ¿                ‰sñ'&JøPëèﬁÁ }?µÒbQ_bø                        æ∏Dë‡æ‡?;s>Pz¿                                Fø¡[$”ç?                                        ”BLK 0                             :Fº¬$ßSÓ.¬«kÊÔ∂ÿfó@UûÁHV@@ZVbõ3¿¥∫H•∏W@©†wj£
+y@ã®˚ìSzÇ¿ªZ®éÑ?è§Äø´Œ€<«µ!¿¯¯w⁄ı/¿+°˝@⁄ˆ¢@        ù‚èßá,¿@ßF˛~[@ﬁxDs7èx@æ!"oÿ≥è¿                ª¶AÕ3@J÷|t%Z
+@òáéõ®@                        5$*'àT@| √t'Uí@                                ˇéÊŸèö¿                                        ”BLK 0                                œ¬ï∂5¬î÷¡uô•\#Ãud‹ØçÛ?ág◊c‰qÒ?PÆ÷ö#-Òø¢‹≠áÙ€Û?”BLK 0                             JÁ6‰K˘øy“u.#H•                ”BLK 0                                 ]Oo”ˆ¶µØS®®Á“ñ‘Oè›?
+nbW˜Ÿønñ)ëŸ?˙uﬂ œ›?”BLK 0                             [Ò‡ëÏ7ÈC•~¥;≈-       Ä       Ä”BLK 0                             ÕX$Ù"ë…’MC∂(k0÷p—L—◊≠hæ—∂g´Zø/ûﬂ÷à71?^´:j™J?0Bå]Œ*øÚ˘y<©Øjø∞£˛å ?Á}u Q˙¿?¿È˝ñó›ø«W78Üƒ¿=≥ÕoS@        5ëÅiˇJ?øGog-ÿg?≈›”'Çø¡∑d®I°ø                {˛ÑmÍ†Áø!2KÅ¿æk’P#!@                        hdãq)"áø√‚’vå„ïø                                éaŸ¬/T@                                        ”BLK 0                             ~lú+ˆá"ïAT⁄ÍiÔÚ°CœÅ?MäÂiüˇ=ø+8¸Áƒàø°ë»qπ¡ıøwg8†'5@Ÿ´U‹ m•@%O∆2Âù?¿F≠º«ÔH¿bümLÈ;¿ÑwMZÖùA@∂8◊Ó∆i¨¿        Ôß†∏Çµø`2^∆óa'@,áüÅ‰%¿™¢≤€w≤¿                ØÙåK}<@¿6≥Äã¡}2¿æ9uH@„§@                        \”&»ÙΩ9@ÿô<>≤¿                                x1yuï?é@                                        ”BLK 0                             êe‰°«õCÜÃ‘ÿ=≥ûC„yô⁄>«í?ßË ?À`nıä™«?ˇüö…øÚtce8¿*”P{3˚ﬂ?êﬂm†‚÷ø†ç⁄∆†”.?⁄?∞Ì©Âe?`/é6xgøÂkΩÛ”†ø        EÖl%ZO¥?T:´ÚÆ1›øˆ|è‘¿˛ßNq…˙@                }XÀ≈™P?Ë˜*¬Á%yø
+ö(t$õø                        Kº“u Âø_Å◊ÒS@                                ú	gwñ≤ïø                                        ”BLK 0                             Ë#ßã° ΩÍOg0Aø„Kπ’ó#¿ˆ†l˛"¬@¿¨Ÿ
+ÚkÉ@’W˘ûÃ?¿Íe2!HÍD¿<¿ÊàI¿uKE]ôtøºÄ‘´9ø¢øb2Öﬁy!@¨:å¡Ã,@´`–±“¢¿        í≤'®ÆÂ@F:+ˆ7¿™íKâ$@9∆d]õÇ¿                mn"ﬁì*¿"∂üpëå¿àÑáºß¿                        `I5UÖA¿ô<é¥2Ïü¿                                `ﬁ©°=◊ö@                                        ”BLK 0                             `Õ±˛S≤AÊ™ö\]Itá $>Âô=«NÅ1"]S?Ò^8ÍÒq?˛3p∆˘øÓ˛#§?%ø Ç`F¯Wb?ß˙äà
+ ?}Ê{O_îø¥Á˛_íøÏ≤XÓ˘<I? T5∆∂√v?        ˜©7ß?•äø‡ﬁŸ*ÓÃG?}ƒês2? ◊Jf¬íø                Òs£WŸ~íøÿäl≤5£G?˛◊/Œàø                        ∫™.Dm/;? ÑA¸¶îÉø                                 `R}B?                                        ”BLK 0                             g√∆√z‰ÕPt¶~t%«e–≤•^¿ùΩÈêÕ‡]Sø◊Œ|ærø+Î[*±$øî.≠m∏<øˇE<˛ºObø-ùå€ÌˇÔ?Åc}ÁfTî?∏ª⁄^tŒí?H⁄ñ•∆K? K∆rø        ˇÓù·õä?øäÕãc4? ‘â$BE? §Sk8¿í?                ˛£ÿ/Ωí?ôÿ7æ˜:M?ˇe$°∑å?                        VÉ¨’~"I? lÖœëÉ?                                êÜ£*<?                                        ”BLK 0                             ≈•€+xÚ‚#üZÜŒÔÑáòu÷
+>˛≈ı" ?ÊÔda∫_éøß€$ãõkíøÉ*µ´∂g;?  ≤	ßG?ó,≤ﬂéTS?ù.Ω˙%Âëø ¡i§F?(Ænµ§YC?¯ÕØ÷X?        ,ï`%∆Ét?{ zü∑âíø`˛<#?ˇÁvØjAá?                 ∂a¡Bø^Üúdî‡C?ˇ6\hø                        ~Ü-vπ&,ø Ï© •¯Å?                                ÄÆ‰Ë?                                        ”BLK 0                             &Te*¢˝3á¯‚Ñ˜Û˙Z¬ïÇ’æø∞≈¶‰ˇÔ??*!QWé?6y%$v í?V∑f_jN?ˇÌ˘Vd3?ØqTSøeO†—«ÿë?ÅƒCÊ√Â7?∞ˆﬂ÷J?pè"≠MXø        Y;‡&G©tø°M´=ïπí?∑⁄Y‹M? 8ı‚Ë,Éø                B ≤w[ü%ø≈9 û«¢J? çØõéh?                        *vƒH2ø 8!Óø                                  ˚â.˛¸æ                                        ”BLK 0                                d£J?F[W˝ì]ÛŒ0ÛÜlz◊ﬂ€ø˚N;¸—ŸYølÙxÕ◊Yøíıó‚€?”BLK 0                             JÁ6‰K˘øy“u.#H•                ”BLK 0                                Ä.<;MΩ2œëP$I∞ùôZ-^¿¢FÅøw÷h—*Åø‚{ŒZæ\@”BLK 0                             [Ò‡ëÏ7ÈC•~¥;≈-       Ä       Ä”BLK 0                             g√∆√z‰ÕPt¶~t%«e–≤•^¿ùΩÈêÕ‡]Sø◊Œ|ærø+Î[*±$øî.≠m∏<øˇE<˛ºObø-ùå€ÌˇÔ?Åc}ÁfTî?∏ª⁄^tŒí?H⁄ñ•∆K? K∆rø        ˇÓù·õä?øäÕãc4? ‘â$BE? §Sk8¿í?                ˛£ÿ/Ωí?ôÿ7æ˜:M?ˇe$°∑å?                        VÉ¨’~"I? lÖœëÉ?                                êÜ£*<?                                        ”BLK 0                             &Te*¢˝3á¯‚Ñ˜Û˙Z¬ïÇ’æø∞≈¶‰ˇÔ??*!QWé?6y%$v í?V∑f_jN?ˇÌ˘Vd3?ØqTSøeO†—«ÿë?ÅƒCÊ√Â7?∞ˆﬂ÷J?pè"≠MXø        Y;‡&G©tø°M´=ïπí?∑⁄Y‹M? 8ı‚Ë,Éø                B ≤w[ü%ø≈9 û«¢J? çØõéh?                        *vƒH2ø 8!Óø                                  ˚â.˛¸æ                                                                                                                                                                                                 

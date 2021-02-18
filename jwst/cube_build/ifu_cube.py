@@ -698,10 +698,9 @@ class IFUCubeData():
 
                             alpha_resol = self.instrument_info.Get_psf_alpha_parameters()
                             beta_resol = self.instrument_info.Get_psf_beta_parameters()
-
-                            worldtov23 = input_model.meta.wcs.get_transform("world", "v2v3")
-                            v2ab_transform = input_model.meta.wcs.get_transform('v2v3',
-                                                                                'alpha_beta')
+                            wcsobj = input_model.meta.wcs
+                            worldtov23 = wcsobj.get_transform(wcsobj.output_frame.name, "v2v3")
+                            v2ab_transform = wcsobj.get_transform('v2v3', 'alpha_beta')
 
                             spaxel_v2, spaxel_v3, zl = worldtov23(spaxel_ra,
                                                                   spaxel_dec,
@@ -1203,7 +1202,7 @@ class IFUCubeData():
                     lam_med = np.median(lam)
                     # pick two alpha, beta values to determine rotation angle
                     # values in arc seconds
-                    alpha_beta2world = input_model.meta.wcs.get_transform('alpha_beta','world')
+                    alpha_beta2world = input_model.meta.wcs.get_transform('alpha_beta', input_model.meta.wcs.output_frame.name)
 
                     temp_ra1, temp_dec1, lam_temp = alpha_beta2world(0, 0, lam_med)
                     temp_ra2, temp_dec2, lam_temp = alpha_beta2world(0, 2, lam_med)
@@ -1219,7 +1218,7 @@ class IFUCubeData():
 
                     # pick two along sice, across slice  values to determine rotation angle
                     # values in meters
-                    slicer2world = slice_wcs.get_transform('slicer','world')
+                    slicer2world = slice_wcs.get_transform('slicer', slice_wcs.output_frame.name)
                     temp_ra1, temp_dec1, lam_temp = slicer2world(0, 0, lam_med)
                     temp_ra2, temp_dec2, lam_temp = slicer2world(0, 0.005, lam_med)
                 # ________________________________________________________________________________
@@ -2342,6 +2341,84 @@ class IFUCubeData():
                 ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL3C'
                 ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE3C'
             if self.list_par1[0] == '4' and self.list_par2[0] == 'long':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4C'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4C'
+
+            if self.list_par1[0] == '1' and self.list_par2[0] == 'short-medium':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL1A'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE1A'
+            if self.list_par1[0] == '2' and self.list_par2[0] == 'short-medium':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL2B'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE2B'
+            if self.list_par1[0] == '3' and self.list_par2[0] == 'short-medium':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL3B'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE3B'
+            if self.list_par1[0] == '4' and self.list_par2[0] == 'short-medium':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4A'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4A'
+
+            if self.list_par1[0] == '1' and self.list_par2[0] == 'short-long':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL1A'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE1A'
+            if self.list_par1[0] == '2' and self.list_par2[0] == 'short-long':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL2C'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE2C'
+            if self.list_par1[0] == '3' and self.list_par2[0] == 'short-long':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL3C'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE3C'
+            if self.list_par1[0] == '4' and self.list_par2[0] == 'short-long':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4A'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4A'
+
+            if self.list_par1[0] == '1' and self.list_par2[0] == 'medium-short':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL1B'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE1B'
+            if self.list_par1[0] == '2' and self.list_par2[0] == 'medium-short':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL2A'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE2A'
+            if self.list_par1[0] == '3' and self.list_par2[0] == 'medium-short':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL3A'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE3A'
+            if self.list_par1[0] == '4' and self.list_par2[0] == 'medium-short':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4B'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4B'
+
+            if self.list_par1[0] == '1' and self.list_par2[0] == 'medium-long':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL1B'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE1B'
+            if self.list_par1[0] == '2' and self.list_par2[0] == 'medium-long':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL2C'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE2C'
+            if self.list_par1[0] == '3' and self.list_par2[0] == 'medium-long':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL3C'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE3C'
+            if self.list_par1[0] == '4' and self.list_par2[0] == 'medium-long':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4B'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4B'
+
+            if self.list_par1[0] == '1' and self.list_par2[0] == 'long-short':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL1C'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE1C'
+            if self.list_par1[0] == '2' and self.list_par2[0] == 'long-short':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL2A'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE2A'
+            if self.list_par1[0] == '3' and self.list_par2[0] == 'long-short':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL3A'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE3A'
+            if self.list_par1[0] == '4' and self.list_par2[0] == 'long-short':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4C'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4C'
+
+            if self.list_par1[0] == '1' and self.list_par2[0] == 'long-medium':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL1C'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE1C'
+            if self.list_par1[0] == '2' and self.list_par2[0] == 'long-medium':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL2B'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE2B'
+            if self.list_par1[0] == '3' and self.list_par2[0] == 'long-medium':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL3B'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE3B'
+            if self.list_par1[0] == '4' and self.list_par2[0] == 'long-medium':
                 ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4C'
                 ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4C'
 
