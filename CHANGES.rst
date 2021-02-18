@@ -69,6 +69,12 @@ lib
 
 - Make get_wcs_values_from_siaf public for JSDP use [#5669]
 
+photom
+------
+
+- Fixed handling of NIRSpec IFU extended source data, so that the flux
+  calibration gets converted to surface brightness [#5761]
+
 ramp_fitting
 ------------
 
