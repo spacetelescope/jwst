@@ -143,10 +143,6 @@ class FileTable():
                 elif instrument == 'NIRSPEC':
                     fwa = input_model.meta.instrument.filter.lower()
                     gwa = input_model.meta.instrument.grating.lower()
-                    #print('remove this - force to work with existing cube par table')
-                    #if fwa == 'opaque':
-                    #    fwa = 'f170lp'
-
                     self.FileMap['NIRSPEC'][gwa][fwa].append(input_model)
                 else:
                     pass

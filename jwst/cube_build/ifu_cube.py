@@ -906,7 +906,6 @@ class IFUCubeData():
         # no msm or emsm  information is needed
         par1 = self.list_par1[0]
         par2 = self.list_par2[0]
-        print('par1, par2', par1,par2)
 
         a_scale, b_scale, w_scale = self.instrument_info.GetScale(par1,
                                                                       par2)
