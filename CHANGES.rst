@@ -35,6 +35,11 @@ extract_1d
 - Fixed bug in background region fitting for image columns/rows that have zero weight
   for all pixels [#5696]
 
+group_scale
+-----------
+
+- Fix premature model closing in group_scale_step [#5692]
+
 lib
 ---
 
