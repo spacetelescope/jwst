@@ -1,7 +1,6 @@
 import pytest
 from astropy.io.fits.diff import FITSDiff
 from numpy.testing import assert_allclose
-from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from gwcs.wcstools import grid_from_bounding_box
 from jwst.stpipe import Step
 from jwst import datamodels
@@ -35,7 +34,7 @@ def run_image2(run_detector1, rtdata_module):
     """Run image2 pipeline on the _rate file, saving intermediate products"""
     rtdata = rtdata_module
     rtdata.input = 'det_image_1_MIRIMAGE_F770Wexp1_5stars_rate.fits'
-    args = ["config/calwebb_image2.cfg", rtdata.input,
+    args = ["jwst.pipeline.Image2Pipeline", rtdata.input,
             "--steps.assign_wcs.save_results=True",
             "--steps.flat_field.save_results=True"
             ]
@@ -51,7 +50,7 @@ def run_image2(run_detector1, rtdata_module):
     ]
     for rate_file in rate_files:
         rtdata.get_data(rate_file)
-        args = ["config/calwebb_image2.cfg", rtdata.input,
+        args = ["jwst.pipeline.Image2Pipeline", rtdata.input,
                 "--steps.resample.skip=True"]
         Step.from_cmdline(args)
 
