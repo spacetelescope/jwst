@@ -6,6 +6,12 @@ assign_mtwcs
 
 - Fixed a bug which caused the step to fail with ``MultiSlitModel`` input. [#JP-1907]
 
+assign_wcs
+----------
+
+- Added velocity aberration-corrected frame ``'v2v3vacorr'`` to the WCS
+  pipeline which takes into account DVA effects. [#5602]
+
 associations
 ------------
 

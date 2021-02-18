@@ -24,11 +24,11 @@ from .. import nircam
 # Allowed settings for nircam
 tsgrism_filters = ['F277W', 'F444W', 'F322W2', 'F356W']
 
-nircam_wfss_frames = ['grism_detector', 'detector', 'v2v3', 'world']
+nircam_wfss_frames = ['grism_detector', 'detector', 'v2v3', 'v2v3vacorr', 'world']
 
-nircam_tsgrism_frames = ['grism_detector', 'full_detector', 'v2v3', 'world']
+nircam_tsgrism_frames = ['grism_detector', 'full_detector', 'v2v3', 'v2v3vacorr', 'world']
 
-nircam_imaging_frames = ['detector', 'v2v3', 'world']
+nircam_imaging_frames = ['detector', 'v2v3', 'v2v3vacorr', 'world']
 
 
 # Default wcs information

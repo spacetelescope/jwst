@@ -222,9 +222,17 @@ def imaging(input_model, reference_files):
     """
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
     v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.arcsec, u.arcsec))
+    v2v3vacorr = cf.Frame2D(name='v2v3vacorr', axes_order=(0, 1), unit=(u.arcsec, u.arcsec))
     world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
 
     distortion = imaging_distortion(input_model, reference_files)
+
+    # Compute differential velocity aberration (DVA) correction:
+    va_corr = pointing.dva_corr_model(
+        va_scale=input_model.meta.velocity_aberration.scale_factor,
+        v2_ref=input_model.meta.wcsinfo.v2_ref,
+        v3_ref=input_model.meta.wcsinfo.v3_ref
+    )
 
     subarray2full = subarray_transform(input_model)
     if subarray2full is not None:
@@ -233,7 +241,8 @@ def imaging(input_model, reference_files):
 
     tel2sky = pointing.v23tosky(input_model)
     pipeline = [(detector, distortion),
-                (v2v3, tel2sky),
+                (v2v3, va_corr),
+                (v2v3vacorr, tel2sky),
                 (world, None)]
     return pipeline
 
@@ -255,6 +264,7 @@ def imaging_distortion(input_model, reference_files):
     """
     dist = DistortionModel(reference_files['distortion'])
     distortion = dist.model
+
     try:
         # Check if the model has a bounding box.
         distortion.bounding_box
