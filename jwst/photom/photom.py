@@ -235,6 +235,8 @@ class DataSet():
             row = find_row(ftab.phot_table, fields_to_match)
             if row is None:
                 return
+
+            # MSA (MOS) data
             if (isinstance(self.input, datamodels.MultiSlitModel) and
                 self.exptype == 'NRS_MSASPEC'):
 
@@ -249,18 +251,34 @@ class DataSet():
             else:
                 tabdata = ftab.phot_table[row]
 
-                # Get the conversion factor from the PHOTMJ column
+                # Get the scalar conversion factor from the PHOTMJ column;
+                # Note that this is the conversion to flux units, which is
+                # appropriate for a POINT source
                 conv_factor = tabdata['photmj']
+                unit_is_surface_brightness = False
+
+                # Figure out if the calibration needs to be converted to surface
+                # brightness units, which is done if the source is extended.
+                if self.source_type is None or self.source_type.upper() != 'POINT':
+                    if self.input.meta.photometry.pixelarea_steradians is None:
+                        log.warning("Pixel area is None, so can't convert "
+                                    "flux to surface brightness!")
+                    else:
+                        log.debug("Converting conversion factor from flux "
+                                  "to surface brightness")
+                        conv_factor /= self.input.meta.photometry.pixelarea_steradians
+                        unit_is_surface_brightness = True
+
                 # Populate the photometry keywords
+                log.info(f'PHOTMJSR value: {conv_factor:.6g}')
                 self.input.meta.photometry.conversion_megajanskys = \
                     conv_factor
                 self.input.meta.photometry.conversion_microjanskys = \
                     conv_factor * MJSR_TO_UJA2
 
-                # Get the length of the relative response arrays in
-                # this table row.  If the nelem column is not present,
-                # we'll use the entire wavelength and relresponse
-                # arrays.
+                # Get the length of the relative response arrays in this table row.
+                # If the nelem column is not present, we'll use the entire wavelength
+                # and relresponse arrays.
                 try:
                     nelem = tabdata['nelem']
                 except KeyError:
@@ -272,8 +290,7 @@ class DataSet():
                     waves = waves[:nelem]
                     relresps = relresps[:nelem]
 
-                # Convert wavelengths from meters to microns,
-                # if necessary
+                # Convert wavelengths from meters to microns, if necessary
                 microns_100 = 1.e-4    # 100 microns, in meters
                 if waves.max() > 0. and waves.max() < microns_100:
                     waves *= 1.e+6
@@ -282,26 +299,21 @@ class DataSet():
                 area_model = datamodels.open(area_fname)
                 area_data = area_model.area_table
 
-                # Compute 2D wavelength and pixel area arrays for the
-                # whole image
+                # Compute 2D wavelength and pixel area arrays for the whole image
                 wave2d, area2d, dqmap = self.calc_nrs_ifu_sens2d(area_data)
 
                 # Compute relative sensitivity for each pixel based
                 # on its wavelength
                 sens2d = np.interp(wave2d, waves, relresps)
-                # Include the scalar conversion factor
-                sens2d *= conv_factor
-                # Divide by pixel area
-                sens2d /= area2d
+                sens2d *= conv_factor  # include the scalar conversion factor
+                sens2d /= area2d  # divide by pixel area
                 # Reset NON_SCIENCE pixels to 1 in sens2d array and flag
                 # them in the science data DQ array
-                where_dq = \
-                    np.bitwise_and(dqmap, dqflags.pixel['NON_SCIENCE'])
+                where_dq = np.bitwise_and(dqmap, dqflags.pixel['NON_SCIENCE'])
                 sens2d[where_dq > 0] = 1.
                 self.input.dq = np.bitwise_or(self.input.dq, dqmap)
 
-                # Multiply the science data and uncertainty arrays by
-                # the conversion factors
+                # Multiply the science data and uncertainty arrays by the conversion factors
                 if not self.inverse:
                     self.input.data *= sens2d
                 else:
@@ -314,8 +326,12 @@ class DataSet():
 
                 # Update BUNIT values for the science data and err
                 if not self.inverse:
-                    self.input.meta.bunit_data = 'MJy/sr'
-                    self.input.meta.bunit_err = 'MJy/sr'
+                    if unit_is_surface_brightness:
+                        self.input.meta.bunit_data = 'MJy/sr'
+                        self.input.meta.bunit_err = 'MJy/sr'
+                    else:
+                        self.input.meta.bunit_data = 'MJy'
+                        self.input.meta.bunit_err = 'MJy'
                 else:
                     self.input.meta.bunit_data = 'DN/s'
                     self.input.meta.bunit_err = 'DN/s'
@@ -361,7 +377,7 @@ class DataSet():
 
                 # Get the spectral order number for this slit
                 order = slit.meta.wcsinfo.spectral_order
-                log.info("Working on slit: {} order: {}".format(slit.name, order))
+                log.info(f"Working on slit {slit.name}, order {order}")
 
                 fields_to_match = {'filter': self.filter, 'pupil': self.pupil, 'order': order}
                 row = find_row(ftab.phot_table, fields_to_match)
@@ -694,7 +710,7 @@ class DataSet():
                     unit_is_surface_brightness = False
 
         # Store the conversion factor in the meta data
-        log.info('PHOTMJSR value: %g', conversion)
+        log.info(f'PHOTMJSR value: {conversion:.6g}')
         if isinstance(self.input, datamodels.MultiSlitModel):
             self.input.slits[self.slitnum].meta.photometry.conversion_megajanskys = \
                 conversion
