@@ -128,7 +128,7 @@ def test_one_CR(generate_miri_reffiles, max_cores, setup_inputs):
     grouptime = 3.0
     deltaDN = 5
     ingain = 6
-    inreadnoise = np.float64(7)
+    inreadnoise = 7
     ngroups = 100
     CR_fraction = 3
     xsize = 103
@@ -165,7 +165,7 @@ def test_nircam(generate_nircam_reffiles, setup_inputs, max_cores):
     grouptime = 3.0
     deltaDN = 5
     ingain = 6
-    inreadnoise = np.float64(7)
+    inreadnoise = 7
     ngroups = 100
     CR_fraction = 5
     nrows = 20
@@ -200,7 +200,7 @@ def test_two_CRs(generate_miri_reffiles, max_cores, setup_inputs):
     grouptime = 3.0
     deltaDN = 5
     ingain = 6
-    inreadnoise = np.float64(7)
+    inreadnoise = 7
     ngroups = 100
     CR_fraction = 5
     xsize = 103
@@ -235,7 +235,7 @@ def test_two_group_integration(generate_miri_reffiles, max_cores, setup_inputs):
     override_gain, override_readnoise = generate_miri_reffiles
     grouptime = 3.0
     ingain = 6
-    inreadnoise = np.float64(7)
+    inreadnoise = 7
     ngroups = 2
     xsize = 103
     ysize = 102
@@ -251,7 +251,7 @@ def test_four_group_integration(generate_miri_reffiles, setup_inputs):
     override_gain, override_readnoise = generate_miri_reffiles
     grouptime = 3.0
     ingain = 6
-    inreadnoise = np.float64(7)
+    inreadnoise = 7
     ngroups = 4
     xsize = 103
     ysize = 102
@@ -267,7 +267,7 @@ def test_five_group_integration(generate_miri_reffiles, setup_inputs):
     override_gain, override_readnoise = generate_miri_reffiles
     grouptime = 3.0
     ingain = 6
-    inreadnoise = np.float64(7)
+    inreadnoise = 7
     ngroups = 5
     xsize = 103
     ysize = 102

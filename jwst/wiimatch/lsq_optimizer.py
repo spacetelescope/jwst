@@ -120,12 +120,12 @@ def build_lsq_eqs(images, masks, sigmas, degree, center=None,
     Examples
     --------
     >>> import numpy as np
-    >>> im1 = np.zeros((5, 5, 4), dtype=np.float)
+    >>> im1 = np.zeros((5, 5, 4), dtype=float)
     >>> cbg = 1.32 * np.ones_like(im1)
-    >>> ind = np.indices(im1.shape, dtype=np.float)
+    >>> ind = np.indices(im1.shape, dtype=float)
     >>> im3 = cbg + 0.15 * ind[0] + 0.62 * ind[1] + 0.74 * ind[2]
     >>> mask = np.ones_like(im1, dtype=np.int8)
-    >>> sigma = np.ones_like(im1, dtype=np.float)
+    >>> sigma = np.ones_like(im1, dtype=float)
     >>> a, b, ca, ef, cs = build_lsq_eqs([im1, im3],
     ... [mask, mask], [sigma, sigma], degree=(1,1,1), center=(0,0,0))
     >>> print(a)
@@ -199,8 +199,8 @@ def build_lsq_eqs(images, masks, sigmas, degree, center=None,
     )
 
     # allocate array for the coefficients of the system of equations (a*x=b):
-    a = np.zeros((sys_eq_array_size, sys_eq_array_size), dtype=np.float)
-    b = np.zeros(sys_eq_array_size, dtype=np.float)
+    a = np.zeros((sys_eq_array_size, sys_eq_array_size), dtype=float)
+    b = np.zeros(sys_eq_array_size, dtype=float)
 
     for i in range(sys_eq_array_size):
         # decompose first (row, or eq) flat index into "original" indices:
@@ -302,12 +302,12 @@ def pinv_solve(matrix, free_term, nimages, tol=None):
     --------
     >>> from jwst.wiimatch.lsq_optimizer import build_lsq_eqs, pinv_solve
     >>> import numpy as np
-    >>> im1 = np.zeros((5, 5, 4), dtype=np.float)
+    >>> im1 = np.zeros((5, 5, 4), dtype=float)
     >>> cbg = 1.32 * np.ones_like(im1)
-    >>> ind = np.indices(im1.shape, dtype=np.float)
+    >>> ind = np.indices(im1.shape, dtype=float)
     >>> im3 = cbg + 0.15 * ind[0] + 0.62 * ind[1] + 0.74 * ind[2]
     >>> mask = np.ones_like(im1, dtype=np.int8)
-    >>> sigma = np.ones_like(im1, dtype=np.float)
+    >>> sigma = np.ones_like(im1, dtype=float)
     >>> a, b, _, _, _ = build_lsq_eqs([im1, im3], [mask, mask],
     ... [sigma, sigma], degree=(1,1,1), center=(0,0,0))
     >>> pinv_solve(a, b, 2) # doctest: +FLOAT_CMP
@@ -363,12 +363,12 @@ def rlu_solve(matrix, free_term, nimages):
     --------
     >>> from jwst.wiimatch.lsq_optimizer import build_lsq_eqs, rlu_solve
     >>> import numpy as np
-    >>> im1 = np.zeros((5, 5, 4), dtype=np.float)
+    >>> im1 = np.zeros((5, 5, 4), dtype=float)
     >>> cbg = 1.32 * np.ones_like(im1)
-    >>> ind = np.indices(im1.shape, dtype=np.float)
+    >>> ind = np.indices(im1.shape, dtype=float)
     >>> im3 = cbg + 0.15 * ind[0] + 0.62 * ind[1] + 0.74 * ind[2]
     >>> mask = np.ones_like(im1, dtype=np.int8)
-    >>> sigma = np.ones_like(im1, dtype=np.float)
+    >>> sigma = np.ones_like(im1, dtype=float)
     >>> a, b, _, _, _ = build_lsq_eqs([im1, im3], [mask, mask],
     ... [sigma, sigma], degree=(1, 1, 1), center=(0, 0, 0))
     >>> rlu_solve(a, b, 2)   # doctest: +FLOAT_CMP
@@ -382,7 +382,7 @@ def rlu_solve(matrix, free_term, nimages):
     """
     drop =  free_term.size // nimages
     if nimages <= 1:
-        return np.zeros((1, drop), dtype=np.float)
+        return np.zeros((1, drop), dtype=float)
     from scipy import linalg
     rmat = matrix[drop:, drop:]
     v = linalg.lu_solve(linalg.lu_factor(rmat),
@@ -415,7 +415,7 @@ def _image_pixel_sum(image_l, image_m, mask_l, mask_m,
 
         return np.sum((image_l[cmask] - image_m[cmask]) /
                       (sigma2_l[cmask] + sigma2_m[cmask]),
-                      dtype=np.float)
+                      dtype=float)
 
     if len(coord_arrays) != len(p):
         raise ValueError("Lengths of the list of pixel index arrays and "
@@ -431,7 +431,7 @@ def _image_pixel_sum(image_l, image_m, mask_l, mask_m,
 
     return np.sum(i[cmask] * (image_l[cmask] - image_m[cmask]) /
                   (sigma2_l[cmask] + sigma2_m[cmask]),
-                  dtype=np.float)
+                  dtype=float)
 
 
 def _sigma_pixel_sum(mask_l, mask_m, sigma2_l, sigma2_m,
@@ -453,7 +453,7 @@ def _sigma_pixel_sum(mask_l, mask_m, sigma2_l, sigma2_m,
                              "must be None as well.")
 
         return np.sum(1.0 / (sigma2_l[cmask] + sigma2_m[cmask]),
-                      dtype=np.float)
+                      dtype=float)
 
     if len(coord_arrays) != len(p) or len(p) != len(pp):
         raise ValueError("Lengths of the list of pixel index arrays and "
@@ -469,4 +469,4 @@ def _sigma_pixel_sum(mask_l, mask_m, sigma2_l, sigma2_m,
         i *= c**(ip + ipp)
 
     return np.sum(i[cmask] / (sigma2_l[cmask] + sigma2_m[cmask]),
-                  dtype=np.float)
+                  dtype=float)

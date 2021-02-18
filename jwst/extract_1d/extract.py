@@ -2206,14 +2206,14 @@ class ImageExtractModel(ExtractBase):
         (mask_target, mask_bkg) = self.separate_target_and_background(ref)
 
         # This is the number of pixels in the cross-dispersion direction, in the target extraction region.
-        n_target = mask_target.sum(axis=axis, dtype=np.float)
+        n_target = mask_target.sum(axis=axis, dtype=float)
 
         # Extract the data.
-        gross = (data * mask_target).sum(axis=axis, dtype=np.float)
+        gross = (data * mask_target).sum(axis=axis, dtype=float)
 
         # Compute the number of pixels that were added together to get gross.
         temp = np.ones_like(data)
-        npixels = (temp * mask_target).sum(axis=axis, dtype=np.float)
+        npixels = (temp * mask_target).sum(axis=axis, dtype=float)
 
         if self.subtract_background is not None:
             if not self.subtract_background:
@@ -2226,10 +2226,10 @@ class ImageExtractModel(ExtractBase):
 
         # Extract the background.
         if mask_bkg is not None:
-            n_bkg = mask_bkg.sum(axis=axis, dtype=np.float)
+            n_bkg = mask_bkg.sum(axis=axis, dtype=float)
             n_bkg = np.where(n_bkg == 0., -1., n_bkg)  # -1 is used as a flag, and also to avoid dividing by zero.
 
-            background = (data * mask_bkg).sum(axis=axis, dtype=np.float)
+            background = (data * mask_bkg).sum(axis=axis, dtype=float)
 
             scalefactor = n_target / n_bkg
             scalefactor = np.where(n_bkg > 0., scalefactor, 0.)
@@ -2261,9 +2261,9 @@ class ImageExtractModel(ExtractBase):
         # Used for computing the celestial coordinates and the 1-D array of wavelengths.
         flag = (mask_target > 0.)
         grid = np.indices(shape)
-        masked_grid = flag.astype(np.float) * grid[axis]
+        masked_grid = flag.astype(float) * grid[axis]
         g_sum = masked_grid.sum(axis=axis)
-        f_sum = flag.sum(axis=axis, dtype=np.float)
+        f_sum = flag.sum(axis=axis, dtype=float)
         f_sum_zero = np.where(f_sum <= 0.)
         f_sum[f_sum_zero] = 1.  # to avoid dividing by zero
 
@@ -2277,11 +2277,11 @@ class ImageExtractModel(ExtractBase):
         # Near the left and right edges, there might not be any non-zero values in mask_target, so a slice will be
         # extracted from both x_array and y_array in order to exclude pixels that are not within the extraction region.
         if self.dispaxis == HORIZONTAL:
-            x_array = np.arange(shape[1], dtype=np.float)
+            x_array = np.arange(shape[1], dtype=float)
             y_array = spectral_trace
         else:
             x_array = spectral_trace
-            y_array = np.arange(shape[0], dtype=np.float)
+            y_array = np.arange(shape[0], dtype=float)
 
         # Trim off the ends, if there's no data there.
         # Save trim_slc.
@@ -2355,9 +2355,9 @@ class ImageExtractModel(ExtractBase):
 
         if wavelength is None:
             if self.dispaxis == HORIZONTAL:
-                wavelength = np.arange(shape[1], dtype=np.float)
+                wavelength = np.arange(shape[1], dtype=float)
             else:
-                wavelength = np.arange(shape[0], dtype=np.float)
+                wavelength = np.arange(shape[0], dtype=float)
 
             wavelength = wavelength[trim_slc]
 

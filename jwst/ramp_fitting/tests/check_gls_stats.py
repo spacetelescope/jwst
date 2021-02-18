@@ -23,7 +23,7 @@ def setup_inputs(ngroups=10, readnoise=10, nints=1,
         gain = np.ones(shape=(nrows, ncols), dtype=np.float64) * gain
         err = np.ones(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
         data = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
-        pixdq = np.zeros(shape=(nrows, ncols), dtype= np.float64)
+        pixdq = np.zeros(shape=(nrows, ncols), dtype=np.float64)
         read_noise = np.full((nrows, ncols), readnoise, dtype=np.float64)
         gdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.int32)
         model1 = RampModel(data=data, err=err, pixeldq=pixdq, groupdq=gdq, times=times)

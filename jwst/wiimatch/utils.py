@@ -128,7 +128,7 @@ def create_coordinate_arrays(image_shape, center=None, image2world=None,
             raise ValueError("'center_cs' cannot be 'world' when 'image2world'"
                              " is not defined.")
 
-    ind = np.indices(image_shape, dtype=np.float)[::-1]
+    ind = np.indices(image_shape, dtype=float)[::-1]
 
     if image2world is None:
         coord_system = 'image'

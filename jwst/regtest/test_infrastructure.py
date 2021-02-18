@@ -43,7 +43,7 @@ def two_tables(tmpdir):
     """Return identical astropy tables written to 2 .ecsv file paths"""
     path1 = str(tmpdir.join("catalog1.ecsv"))
     path2 = str(tmpdir.join("catalog2.ecsv"))
-    a = np.array([1, 4, 5], dtype=np.float)
+    a = np.array([1, 4, 5], dtype=float)
     b = [2.0, 5.0, 8.5]
     c = ['x', 'y', 'z']
     d = [10, 20, 30] * u.m / u.s
