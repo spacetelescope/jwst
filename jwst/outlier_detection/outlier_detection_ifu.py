@@ -123,9 +123,6 @@ class OutlierDetectionIFU(OutlierDetection):
                 cubestep = CubeBuildStep(config_file=cube_build_config,
                                          channel=band,weighting='emsm',
                                          single=True)
-                # Set a reasonable default outlier scale for the MRS
-                # (to be removed once reasonable parameter files)
-                self.outlierpars['scale'] = '2.4 2.4'
 
             if self.instrument == 'NIRSPEC':
                 cubestep = CubeBuildStep(config_file=cube_build_config,
