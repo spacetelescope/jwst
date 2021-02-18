@@ -81,7 +81,7 @@ def make_tweakreg_catalog(model, kernel_fwhm, snr_threshold, sharplo=0.2,
     if sources:
         catalog = sources[columns]
     else:
-        catalog = Table(names=columns, dtype=(np.int_, float_, float_,
-                                              float_))
+        catalog = Table(names=columns, dtype=(np.int_, np.float_, np.float_,
+                                              np.float_))
 
     return catalog
