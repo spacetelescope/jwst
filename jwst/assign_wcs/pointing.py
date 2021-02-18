@@ -12,7 +12,8 @@ from gwcs import wcs
 from stdatamodels import DataModel
 
 
-__all__ = ["compute_roll_ref", "frame_from_model", "fitswcs_transform_from_model"]
+__all__ = ["compute_roll_ref", "frame_from_model", "fitswcs_transform_from_model",
+           "dva_corr_model"]
 
 
 def v23tosky(input_model, wrap_v2_at=180, wrap_lon_at=360):
@@ -239,108 +240,56 @@ def create_fitswcs(inp, input_frame=None):
     return wcsobj
 
 
-def va_corr_model(datamodel, **kwargs):
+def dva_corr_model(va_scale, v2_ref, v3_ref):
     """
-    Create transformation that accounts for differential velocity aberration (scale).
+    Create transformation that accounts for differential velocity aberration
+    (scale).
 
     Parameters
     ----------
+    va_scale : float, None
+        Ratio of the apparent plate scale to the true plate scale. When
+        ``va_scale`` is `None`, it is assumed to be identical to ``1`` and
+        an ``astropy.modeling.models.Identity`` model will be returned.
 
-    datamodel : `~stdatamodels.DataModel`, None
-        A full data model. If ``datamodel`` is `None`, all optional parameters
-        must be provided (``v2_ref``, ``v3_ref``, and ``va_scale`` - see below).
+    v2_ref : float, None
+        Telescope ``v2`` coordinate of the reference point in ``arcsec``. When
+        ``v2_ref`` is `None`, it is assumed to be identical to ``0``.
 
-    Other Parameters
-    ----------------
-
-    v2_ref : float
-        Can be provided *only when* ``datamodel`` is `None`.
-
-    v3_ref : float
-        Can be provided *only when* ``datamodel`` is `None`.
-
-    va_scale : float
-        Ratio of the apparent plate scale to the true plate scale.
-        Can be provided *only when* ``datamodel`` is `None`.
+    v3_ref : float, None
+        Telescope ``v3`` coordinate of the reference point in ``arcsec``. When
+        ``v3_ref`` is `None`, it is assumed to be identical to ``0``.
 
     Returns
     -------
     va_corr : astropy.modeling.CompoundModel, astropy.modeling.models.Identity
-        A 2D compound model that corrects DVA. If input model does not contain
-        enough information to compute correction then
-        `astropy.modeling.models.Identity` will be returned.
+        A 2D compound model that corrects DVA. If ``va_scale`` is `None` or 1
+        then `astropy.modeling.models.Identity` will be returned.
 
     """
-    if datamodel is None:
-        try:
-            v2_ref = float(kwargs['v2_ref'])
-            v3_ref = float(kwargs['v3_ref'])
-            va_scale = float(kwargs['va_scale'])
-        except KeyError:
-            raise KeyError(
-                "'v2_ref', 'v3_ref', and 'va_scale' are all required when "
-                "'datamodel' is set to None."
-            )
-        except ValueError:
-            raise TypeError(
-                "'v2_ref', 'v3_ref', and 'va_scale' must be numbers."
-            )
+    if va_scale is None or va_scale == 1:
+        return Identity(2)
 
-    else:
-        if kwargs:
-            raise ValueError(
-                "'v2_ref', 'v3_ref', and 'va_scale' cannot be provided when "
-                "'datamodel' is not None."
-            )
-        try:
-            va_scale = float(datamodel.meta.velocity_aberration.scale_factor)
-            v2_ref = float(datamodel.meta.wcsinfo.v2_ref)
-            v3_ref = float(datamodel.meta.wcsinfo.v3_ref)
-        except (AttributeError, TypeError):
-            return Identity(2)
+    if va_scale <= 0:
+        raise ValueError("'Velocity aberration scale must be a positive number.")
 
+    va_corr = Scale(va_scale, name='dva_scale_v2') & Scale(va_scale, name='dva_scale_v3')
+
+    if v2_ref is None:
+        v2_ref = 0
+
+    if v3_ref is None:
+        v3_ref = 0
+
+    if v2_ref == 0 and v3_ref == 0:
+        return va_corr
+
+    # NOTE: it is assumed that v2, v3 angles and va scale are small enough
+    # so that for expected scale factors the issue of angle wrapping
+    # (180 degrees) can be neglected.
     v2_shift = (1 - va_scale) * v2_ref
     v3_shift = (1 - va_scale) * v3_ref
 
-    #  NOTE: it is assumed that v2, v3 angles are small enough so that
-    #  for expected scale factors the issue of angle wrapping (180 degrees)
-    #  can be neglected.
-    va_corr = (
-        (Scale(va_scale, name='va_scale_v2') & Scale(va_scale, name='va_scale_v3')) |
-        (Shift(v2_shift, name='va_v2_shift') & Shift(v3_shift, name='va_v3_shift'))
-    )
-
-    # INFO: Code below does not assume small angle approximation and performs
-    # complete computations (Euler rotations and tangent plane projection).
-    # This code may be useful if VA code will be used with instruments further
-    # away from the optical axis (velocity is assumed parallel to the optical
-    # axis).
-    #
-    # from astropy.modeling.models import Identity
-    #
-    # s2c = SphericalToCartesian(name='s2c', wrap_lon_at=180)
-    # c2s = CartesianToSpherical(name='c2s', wrap_lon_at=180)
-    #
-    # unit_conv = Scale(1.0 / 3600.0, name='arcsec_to_deg_1D')
-    # unit_conv = unit_conv & unit_conv
-    # unit_conv.name = 'arcsec_to_deg_2D'
-    #
-    # va_scale_corr = (Identity(1, name='I_1D') &
-    #                  Scale(va_scale, name='va_scale_1Dy') &
-    #                  Scale(va_scale, name='va_scale_1Dz'))
-    # va_scale_corr.name = 'va_scale_2D'
-    #
-    # rot = RotationSequence3D(
-    #     [v2_ref / 3600.0, -v3_ref / 3600.0],
-    #     'zy',
-    #     name='det_to_optic_axis'
-    # )
-    #
-    # va_corr = (
-    #     unit_conv | s2c | rot | va_scale_corr |
-    #     rot.inverse | c2s | unit_conv.inverse
-    # )
-
-    va_corr.name = 'VA_Correction'
-
+    va_corr |= Shift(v2_shift, name='dva_v2_shift') & Shift(v3_shift, name='dva_v3_shift')
+    va_corr.name = 'DVA_Correction'
     return va_corr

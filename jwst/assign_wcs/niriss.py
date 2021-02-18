@@ -228,7 +228,11 @@ def imaging(input_model, reference_files):
     distortion = imaging_distortion(input_model, reference_files)
 
     # Compute differential velocity aberration (DVA) correction:
-    va_corr = pointing.va_corr_model(input_model)
+    va_corr = pointing.dva_corr_model(
+        va_scale=input_model.meta.velocity_aberration.scale_factor,
+        v2_ref=input_model.meta.wcsinfo.v2_ref,
+        v3_ref=input_model.meta.wcsinfo.v3_ref
+    )
 
     subarray2full = subarray_transform(input_model)
     if subarray2full is not None:

@@ -2,65 +2,34 @@ import pytest
 import numpy as np
 
 from jwst.assign_wcs import pointing
-from jwst.datamodels.image import ImageModel
 from astropy.modeling.models import Identity
 
-from .test_nircam import create_hdul
+
+def test_dva_corr_noop_missing_meta_values():
+    assert isinstance(pointing.dva_corr_model(va_scale=None, v2_ref=1, v3_ref=1), Identity)
+    assert isinstance(pointing.dva_corr_model(va_scale=1, v2_ref=2, v3_ref=3), Identity)
 
 
-def create_imaging_datamodel(v2_ref, v3_ref, va_scale):
-    hdul = create_hdul()
-    datamodel = ImageModel(hdul)
-    datamodel.meta.velocity_aberration.scale_factor = va_scale
-    datamodel.meta.wcsinfo.v2_ref = v2_ref
-    datamodel.meta.wcsinfo.v3_ref = v3_ref
-    return datamodel
+def test_dva_corr_valid_match():
+    m = pointing.dva_corr_model(va_scale=1.001, v2_ref=-380, v3_ref=-770)
+    assert np.allclose(m(1, 10), (380 * 0.001 + 1.001, 770 * 0.001 + 10.01))
 
 
-def test_va_corr_valid_args():
-    v2_ref = -380
-    v3_ref = -770
-    va_scale = 1.001
-    dm = create_imaging_datamodel(v2_ref=v2_ref, v3_ref=v3_ref, va_scale=va_scale)
+def test_dva_corr_valid_match_no_shifts():
+    scale = 1.001
+    m = pointing.dva_corr_model(va_scale=scale, v2_ref=0, v3_ref=0)
+    assert np.allclose(m(1, 10), (scale, 10 * scale))
 
-    with pytest.raises(KeyError) as e:
-        pointing.va_corr_model(None, v2_ref=v2_ref)
-    assert str(e.value.args[0]) ==  ("'v2_ref', 'v3_ref', and 'va_scale' are all "
-                                     "required when 'datamodel' is set to None.")
-
-    with pytest.raises(TypeError) as e:
-        pointing.va_corr_model(None, v2_ref='I', v3_ref='II', va_scale='III')
-    assert str(e.value.args[0]) ==  "'v2_ref', 'v3_ref', and 'va_scale' must be numbers."
-
-    with pytest.raises(ValueError) as e:
-        pointing.va_corr_model(dm, v2_ref=v2_ref, v3_ref=v3_ref, va_scale=va_scale)
-    assert str(e.value.args[0]) ==  ("'v2_ref', 'v3_ref', and 'va_scale' cannot be "
-                                     "provided when 'datamodel' is not None.")
+    m = pointing.dva_corr_model(va_scale=scale, v2_ref=None, v3_ref=None)
+    assert np.allclose(m(1, 10), (scale, 10 * scale))
 
 
-def test_va_corr_noop_missing_meta_values():
-    dm = create_imaging_datamodel(v2_ref=None, v3_ref=None, va_scale=None)
-    assert isinstance(pointing.va_corr_model(dm), Identity)
-
-
-def test_va_corr_valid_match():
-    v2_ref = -380
-    v3_ref = -770
-    va_scale = 1.001
-    dm1 = create_imaging_datamodel(v2_ref=v2_ref, v3_ref=v3_ref, va_scale=va_scale)
-    m1 = pointing.va_corr_model(dm1)
-    m2 = pointing.va_corr_model(None, v2_ref=v2_ref, v3_ref=v3_ref, va_scale=va_scale)
-    assert np.allclose(m1(1, 10), m2(1, 10))
-
-
-def test_va_corr_inverse():
+def test_dva_corr_inverse():
     v2_ref = -380
     v3_ref = -770
     va_scale = 1.001
     test_v2 = 2300
     test_v3 = 5600
-    fdm = create_imaging_datamodel(v2_ref=v2_ref, v3_ref=v3_ref, va_scale=va_scale)
-    idm = create_imaging_datamodel(v2_ref=v2_ref, v3_ref=v3_ref, va_scale=1 / va_scale)
-    fm = pointing.va_corr_model(fdm)
-    im = pointing.va_corr_model(idm)
+    fm = pointing.dva_corr_model(va_scale=va_scale, v2_ref=v2_ref, v3_ref=v3_ref)
+    im = pointing.dva_corr_model(va_scale=1 / va_scale, v2_ref=v2_ref, v3_ref=v3_ref)
     assert np.allclose(im(*fm(test_v2, test_v3)), (test_v2, test_v3))

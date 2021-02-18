@@ -126,7 +126,11 @@ def imaging(input_model, reference_files):
             oteip2v23 = f.model
 
         # Compute differential velocity aberration (DVA) correction:
-        va_corr = pointing.va_corr_model(input_model)
+        va_corr = pointing.dva_corr_model(
+            va_scale=input_model.meta.velocity_aberration.scale_factor,
+            v2_ref=input_model.meta.wcsinfo.v2_ref,
+            v3_ref=input_model.meta.wcsinfo.v3_ref
+        )
 
         # V2, V3 to world (RA, DEC) transform
         tel2sky = pointing.v23tosky(input_model)
@@ -243,7 +247,11 @@ def ifu(input_model, reference_files, slit_y_range=[-.55, .55]):
         oteip2v23 = oteip_to_v23(reference_files, input_model)
 
         # Compute differential velocity aberration (DVA) correction:
-        va_corr = pointing.va_corr_model(input_model) & Identity(1)
+        va_corr = pointing.dva_corr_model(
+            va_scale=input_model.meta.velocity_aberration.scale_factor,
+            v2_ref=input_model.meta.wcsinfo.v2_ref,
+            v3_ref=input_model.meta.wcsinfo.v3_ref
+        ) & Identity(1)
 
         # V2, V3 to sky
         tel2sky = pointing.v23tosky(input_model) & Identity(1)
@@ -364,7 +372,11 @@ def slitlets_wcs(input_model, reference_files, open_slits_id):
         oteip2v23.name = "oteip2v23"
 
         # Compute differential velocity aberration (DVA) correction:
-        va_corr = pointing.va_corr_model(input_model) & Identity(1)
+        va_corr = pointing.dva_corr_model(
+            va_scale=input_model.meta.velocity_aberration.scale_factor,
+            v2_ref=input_model.meta.wcsinfo.v2_ref,
+            v3_ref=input_model.meta.wcsinfo.v3_ref
+        ) & Identity(1)
 
         # V2, V3 to sky
         tel2sky = pointing.v23tosky(input_model) & Identity(1)

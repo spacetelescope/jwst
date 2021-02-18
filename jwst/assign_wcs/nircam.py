@@ -84,7 +84,11 @@ def imaging(input_model, reference_files):
         distortion.bounding_box = bounding_box_from_subarray(input_model)
 
     # Compute differential velocity aberration (DVA) correction:
-    va_corr = pointing.va_corr_model(input_model)
+    va_corr = pointing.dva_corr_model(
+        va_scale=input_model.meta.velocity_aberration.scale_factor,
+        v2_ref=input_model.meta.wcsinfo.v2_ref,
+        v3_ref=input_model.meta.wcsinfo.v3_ref
+    )
 
     tel2sky = pointing.v23tosky(input_model)
     pipeline = [(detector, distortion),
@@ -259,7 +263,11 @@ def tsgrism(input_model, reference_files):
     distortion = imaging_distortion(input_model, reference_files) & Identity(2)
 
     # Compute differential velocity aberration (DVA) correction:
-    va_corr = pointing.va_corr_model(input_model) & Identity(2)
+    va_corr = pointing.dva_corr_model(
+        va_scale=input_model.meta.velocity_aberration.scale_factor,
+        v2_ref=input_model.meta.wcsinfo.v2_ref,
+        v3_ref=input_model.meta.wcsinfo.v3_ref
+    ) & Identity(2)
 
     # v2v3 to the sky
     # remap the tel2sky inverse as well since we can feed it the values of

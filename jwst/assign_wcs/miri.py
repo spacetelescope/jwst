@@ -87,7 +87,11 @@ def imaging(input_model, reference_files):
             distortion.bounding_box = bb
 
     # Compute differential velocity aberration (DVA) correction:
-    va_corr = pointing.va_corr_model(input_model)
+    va_corr = pointing.dva_corr_model(
+        va_scale=input_model.meta.velocity_aberration.scale_factor,
+        v2_ref=input_model.meta.wcsinfo.v2_ref,
+        v3_ref=input_model.meta.wcsinfo.v3_ref
+    )
 
     tel2sky = pointing.v23tosky(input_model)
 
@@ -187,7 +191,11 @@ def lrs(input_model, reference_files):
     teltosky = v2v3tosky & models.Identity(1)
 
     # Compute differential velocity aberration (DVA) correction:
-    va_corr = pointing.va_corr_model(input_model) & models.Identity(1)
+    va_corr = pointing.dva_corr_model(
+        va_scale=input_model.meta.velocity_aberration.scale_factor,
+        v2_ref=input_model.meta.wcsinfo.v2_ref,
+        v3_ref=input_model.meta.wcsinfo.v3_ref
+    ) & models.Identity(1)
 
     # Put the transforms together into a single pipeline
     pipeline = [(detector, dettotel),
@@ -398,7 +406,11 @@ def ifu(input_model, reference_files):
     abl2v2v3l = (abl_to_v2v3l(input_model, reference_files)).rename("abl_to_v2v3l")
 
     # Compute differential velocity aberration (DVA) correction:
-    va_corr = pointing.va_corr_model(input_model) & models.Identity(1)
+    va_corr = pointing.dva_corr_model(
+        va_scale=input_model.meta.velocity_aberration.scale_factor,
+        v2_ref=input_model.meta.wcsinfo.v2_ref,
+        v3_ref=input_model.meta.wcsinfo.v3_ref
+    ) & models.Identity(1)
 
     tel2sky = pointing.v23tosky(input_model) & models.Identity(1)
 
