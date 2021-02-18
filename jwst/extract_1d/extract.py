@@ -2296,8 +2296,8 @@ class ImageExtractModel(ExtractBase):
             y_array = y_array[trim_slc]
 
         if got_wavelength:
-            indx = np.around(x_array).astype(np.int)
-            indy = np.around(y_array).astype(np.int)
+            indx = np.around(x_array).astype(int)
+            indy = np.around(y_array).astype(int)
             indx = np.where(indx < 0, 0, indx)
             indx = np.where(indx >= shape[1], shape[1] - 1, indx)
             indy = np.where(indy < 0, 0, indy)

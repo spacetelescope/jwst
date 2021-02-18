@@ -384,7 +384,7 @@ def create_photom_nrs_fs(min_wl=1.0, max_wl=5.0, min_r=8.0, max_r=9.0):
     #  4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9, 5.0]
     photmj = np.linspace(3.1, 3.1 + (nrows - 1.) * 0.1, nrows)
     uncertainty = np.zeros(nrows, dtype=np.float32)
-    nelem = np.zeros(nrows, np.int32) + nx
+    nelem = np.zeros(nrows, dtype=np.int32) + nx
     x = np.linspace(min_wl, max_wl, nx, dtype=np.float32).reshape(1, nx)
     wavelength = np.zeros((nrows, nx), dtype=np.float32)
     wavelength[:] = x.copy()
@@ -445,7 +445,7 @@ def create_photom_nrs_msa(min_wl=1.0, max_wl=5.0, min_r=8.0, max_r=9.0):
     # [3.1, 3.2, 3.3, 3.4]
     photmj = np.linspace(3.1, 3.1 + (nrows - 1.) * 0.1, nrows)
     uncertainty = np.zeros(nrows, dtype=np.float32)
-    nelem = np.zeros(nrows, np.int32) + nx
+    nelem = np.zeros(nrows, dtype=np.int32) + nx
     x = np.linspace(min_wl, max_wl, nx, dtype=np.float32).reshape(1, nx)
     wavelength = np.zeros((nrows, nx), dtype=np.float32)
     wavelength[:] = x.copy()
@@ -506,7 +506,7 @@ def create_photom_niriss_wfss(min_wl=1.0, max_wl=5.0, min_r=8.0, max_r=9.0):
     # [3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8]
     photmjsr = np.linspace(3.1, 3.1 + (nrows - 1.) * 0.1, nrows)
     uncertainty = np.zeros(nrows, dtype=np.float32)
-    nelem = np.zeros(nrows, np.int32) + nx
+    nelem = np.zeros(nrows, dtype=np.int32) + nx
     x = np.linspace(min_wl, max_wl, nx, dtype=np.float32).reshape(1, nx)
     wavelength = np.zeros((nrows, nx), dtype=np.float32)
     wavelength[:] = x.copy()
@@ -560,7 +560,7 @@ def create_photom_niriss_soss(min_r=8.0, max_r=9.0):
     # [3.1, 3.2]
     photmj = np.linspace(3.1, 3.1 + (nrows - 1.) * 0.1, nrows)
     uncertainty = np.zeros(nrows, dtype=np.float32)
-    nelem = np.zeros(nrows, np.int32) + nx
+    nelem = np.zeros(nrows, dtype=np.int32) + nx
     wavelength = np.zeros((nrows, nx), dtype=np.float32)
     wavelength[0, :] = np.linspace(0.9, 2.8, nx, dtype=np.float32)
     wavelength[1, :] = np.linspace(0.6, 1.4, nx, dtype=np.float32)
@@ -692,7 +692,7 @@ def create_photom_miri_lrs(min_wl=5.0, max_wl=10.0, min_r=8.0, max_r=9.0):
     # [3.1, 3.2, 3.3]
     photmjsr = np.linspace(3.1, 3.1 + (nrows - 1.) * 0.1, nrows)
     uncertainty = np.zeros(nrows, dtype=np.float32)
-    nelem = np.zeros(nrows, np.int32) + nx
+    nelem = np.zeros(nrows, dtype=np.int32) + nx
     x = np.linspace(min_wl, max_wl, nx, dtype=np.float32).reshape(1, nx)
     wavelength = np.zeros((nrows, nx), dtype=np.float32)
     wavelength[:] = x.copy()
@@ -833,7 +833,7 @@ def create_photom_nircam_wfss(min_wl=2.4, max_wl=5.0, min_r=8.0, max_r=9.0):
     # [3.1, 3.2, 3.3, 3.4, 3.5]
     photmjsr = np.linspace(3.1, 3.1 + (nrows - 1.) * 0.1, nrows)
     uncertainty = np.zeros(nrows, dtype=np.float32)
-    nelem = np.zeros(nrows, np.int32) + nx
+    nelem = np.zeros(nrows, dtype=np.int32) + nx
     x = np.linspace(min_wl, max_wl, nx, dtype=np.float32).reshape(1, nx)
     wavelength = np.zeros((nrows, nx), dtype=np.float32)
     wavelength[:] = x.copy()

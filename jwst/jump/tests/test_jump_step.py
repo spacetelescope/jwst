@@ -141,7 +141,7 @@ def test_one_CR(generate_miri_reffiles, max_cores, setup_inputs):
     first_CR_group_locs = [x for x in range(1,89) if x % 5 == 0]
     CR_locs = [x for x in range(xsize*ysize) if x % CR_fraction == 0]
     CR_x_locs = [x % ysize for x in CR_locs]
-    CR_y_locs = [np.int(x / xsize) for x in CR_locs]
+    CR_y_locs = [int(x / xsize) for x in CR_locs]
     CR_pool = cycle(first_CR_group_locs)
     for i in range(len(CR_x_locs)):
         CR_group = next(CR_pool)
@@ -177,7 +177,7 @@ def test_nircam(generate_nircam_reffiles, setup_inputs, max_cores):
     first_CR_group_locs = [x for x in range(1,89) if x % 5 == 0]
     CR_locs = [x for x in range(nrows*ncols) if x % CR_fraction == 0]
     CR_x_locs = [x % ncols for x in CR_locs]
-    CR_y_locs = [np.int(x / nrows) for x in CR_locs]
+    CR_y_locs = [int(x / nrows) for x in CR_locs]
     CR_pool = cycle(first_CR_group_locs)
     for i in range(len(CR_x_locs)):
         CR_group = next(CR_pool)
@@ -213,7 +213,7 @@ def test_two_CRs(generate_miri_reffiles, max_cores, setup_inputs):
     first_CR_group_locs = [x for x in range(1,89) if x % 5 == 0]
     CR_locs = [x for x in range(xsize*ysize) if x % CR_fraction == 0]
     CR_x_locs = [x % ysize for x in CR_locs]
-    CR_y_locs = [np.int(x / xsize) for x in CR_locs]
+    CR_y_locs = [int(x / xsize) for x in CR_locs]
     CR_pool = cycle(first_CR_group_locs)
     for i in range(len(CR_x_locs)):
         CR_group = next(CR_pool)
