@@ -14,6 +14,12 @@ associations
 - Added new Lvl2 rule, Asn_Lv2NRSLAMPImage, to run Image2 pipeline for NRSLAMP
   exposures with OPMODE=image [#5740]
 
+combine_1d
+----------
+
+- Pull source_id from input x1d headers (from source_catalog) to populate
+  c1d output headers [#5759]
+
 cube_build
 ----------
 
@@ -34,6 +40,9 @@ datamodels
 - Added '1LOS' to PATTTYPE enum list in core.schema datamodel [#5728]
 
 - Added 'IMAGE' to OPMODE enum list [#5745]
+
+- Added source_id to combinedspec and multicombinedspec schemas to populate
+  combine1d output headers [#5759]
 
 extract_1d
 ----------
