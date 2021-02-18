@@ -1451,10 +1451,10 @@ def create_frames():
     slit_spatial = cf.Frame2D(name='slit_spatial', axes_order=(0, 1), unit=("", ""),
                              axes_names=('x_slit', 'y_slit'))
     sky = cf.CelestialFrame(name='sky', axes_order=(0, 1), reference_frame=coord.ICRS())
-    v2v3_spatial = cf.Frame2D(name='v2v3_spatial', axes_order=(0, 1), unit=(u.arcsec, u.arcsec),
-                             axes_names=('V2', 'V3'))
+    v2v3_spatial = cf.Frame2D(name='v2v3_spatial', axes_order=(0, 1),
+                              unit=(u.arcsec, u.arcsec), axes_names=('v2', 'v3'))
     v2v3vacorr_spatial = cf.Frame2D(name='v2v3vacorr_spatial', axes_order=(0, 1),
-                                    unit=(u.arcsec, u.arcsec), axes_names=('V2', 'V3'))
+                                    unit=(u.arcsec, u.arcsec), axes_names=('v2', 'v3'))
 
     # The oteip_to_v23 incorporates a scale to convert the spectral units from
     # meters to microns.  So the v2v3 output frame will be in u.deg, u.deg, u.micron
@@ -1485,8 +1485,8 @@ def create_imaging_frames():
                      axes_names=('x_msa', 'y_msa'))
     v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.arcsec, u.arcsec),
                       axes_names=('v2', 'v3'))
-    v2v3vacorr = cf.Frame2D(name='v2v3vacorr', axes_order=(0, 1), unit=(u.arcsec, u.arcsec),
-                            axes_names=('v2', 'v3'))
+    v2v3vacorr = cf.Frame2D(name='v2v3vacorr', axes_order=(0, 1),
+                            unit=(u.arcsec, u.arcsec), axes_names=('v2', 'v3'))
     oteip = cf.Frame2D(name='oteip', axes_order=(0, 1), unit=(u.deg, u.deg),
                        axes_names=('x_oteip', 'y_oteip'))
     world = cf.CelestialFrame(name='world', axes_order=(0, 1), reference_frame=coord.ICRS())
