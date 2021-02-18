@@ -11,7 +11,7 @@ datatype:
   datatype: float64
 - name: ERROR
   datatype: float64
-- name: BACKGROUND
+- name: SURF_BRIGHT
   datatype: float64
 - name: SB_ERROR
   datatype: float64

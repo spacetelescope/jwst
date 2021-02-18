@@ -148,12 +148,11 @@ def user_bkg_spec_a():
                               dtype=np.float64)
     flux = np.zeros_like(wavelength)
     error = np.ones_like(wavelength)
-    surf_bright = np.ones_like(wavelength)
+    surf_bright = np.linspace(13., 25., num=25, endpoint=True, retstep=False,
+                              dtype=np.float64)
     sb_error = np.ones_like(wavelength)
     dq = np.zeros(wavelength.shape, dtype=np.uint32)
-
-    background = np.linspace(13., 25., num=25, endpoint=True, retstep=False,
-                              dtype=np.float64)
+    background = np.ones_like(wavelength)
     berror = np.ones_like(wavelength)
     # The npixels column should no longer be used.  Set it to a large value
     # to make it more obvious in case it actually is still used.
@@ -192,11 +191,11 @@ def user_bkg_spec_b():
                               dtype=np.float64)[::-1]
     flux = np.zeros_like(wavelength)
     error = np.ones_like(wavelength)
-    surf_bright = np.ones_like(wavelength)
+    surf_bright = np.linspace(13., 25., num=25, endpoint=True, retstep=False,
+                              dtype=np.float64)[::-1]
     sb_error = np.ones_like(wavelength)
     dq = np.zeros(wavelength.shape, dtype=np.uint32)
-    background = np.linspace(13., 25., num=25, endpoint=True, retstep=False,
-                              dtype=np.float64)[::-1]
+    background = np.ones_like(wavelength)
     berror = np.ones_like(wavelength)
     npixels = np.ones_like(wavelength)
     otab = np.array(list(zip(wavelength, flux, error,
@@ -224,13 +223,13 @@ def user_bkg_spec_c():
                               dtype=np.float64)
     flux = np.zeros_like(wavelength)
     error = np.ones_like(wavelength)
-    background = np.linspace(13., 25., num=25, endpoint=True, retstep=False,
+    surf_bright = np.linspace(13., 25., num=25, endpoint=True, retstep=False,
                               dtype=np.float64)
     sb_error = np.ones_like(wavelength)
     dq = np.zeros(wavelength.shape, dtype=np.uint32)
     weight = np.ones_like(wavelength)
     n_input = np.ones_like(wavelength)                  # yes, float64
-    data = np.array(list(zip(wavelength, flux, error, background,
+    data = np.array(list(zip(wavelength, flux, error, surf_bright,
                              sb_error, dq, weight, n_input)),
                     dtype=spec_table_dtype)
     m_bkg_spec = datamodels.CombinedSpecModel(spec_table=data)
