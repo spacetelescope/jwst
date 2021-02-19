@@ -69,6 +69,7 @@ def compare_asn_files(left_paths, right_paths):
         If there are differences. The message will contain
         all the differences.
     """
+    __tracebackhide__ = True
     # Read in all the associations, separating out the products into separate associations.
     left_asns = []
     for path in left_paths:
@@ -113,6 +114,7 @@ def compare_asn_lists(left_asns, right_asns):
         If there are differences. The message will contain
         all the differences.
     """
+    __tracebackhide__ = True
     diffs = MultiDiffError()
 
     # Ensure that product names are unique
