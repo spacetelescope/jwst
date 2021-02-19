@@ -73,8 +73,10 @@ def imaging(input_model, reference_files):
     and uses the "distortion" reference file.
     """
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.arcsec, u.arcsec))
-    v2v3vacorr = cf.Frame2D(name='v2v3vacorr', axes_order=(0, 1), unit=(u.arcsec, u.arcsec))
+    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), axes_names=('v2', 'v3'),
+                      unit=(u.arcsec, u.arcsec))
+    v2v3vacorr = cf.Frame2D(name='v2v3vacorr', axes_order=(0, 1),
+                            axes_names=('v2', 'v3'), unit=(u.arcsec, u.arcsec))
     world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
 
     distortion = imaging_distortion(input_model, reference_files)
@@ -183,8 +185,10 @@ def tsgrism(input_model, reference_files):
 
     gdetector = cf.Frame2D(name='grism_detector', axes_order=(0, 1), unit=(u.pix, u.pix))
     detector = cf.Frame2D(name='full_detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.deg, u.deg))
-    v2v3vacorr = cf.Frame2D(name='v2v3vacorr', axes_order=(0, 1), unit=(u.deg, u.deg))
+    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), axes_names=('v2', 'v3'),
+                      unit=(u.arcsec, u.arcsec))
+    v2v3vacorr = cf.Frame2D(name='v2v3vacorr', axes_order=(0, 1),
+                            axes_names=('v2', 'v3'), unit=(u.arcsec, u.arcsec))
     world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
 
     # translate the x,y detector-in to x,y detector out coordinates

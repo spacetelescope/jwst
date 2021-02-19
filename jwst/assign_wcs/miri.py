@@ -66,8 +66,10 @@ def imaging(input_model, reference_files):
 
     # Create the Frames
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.arcsec, u.arcsec))
-    v2v3vacorr = cf.Frame2D(name='v2v3vacorr', axes_order=(0, 1), unit=(u.arcsec, u.arcsec))
+    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), axes_names=('v2', 'v3'),
+                      unit=(u.arcsec, u.arcsec))
+    v2v3vacorr = cf.Frame2D(name='v2v3vacorr', axes_order=(0, 1),
+                            axes_names=('v2', 'v3'), unit=(u.arcsec, u.arcsec))
     world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
 
     # Create the transforms
@@ -387,9 +389,9 @@ def ifu(input_model, reference_files):
     spec_local = cf.SpectralFrame(name='alpha_beta_spectral', axes_order=(2,),
                                   unit=(u.micron,), axes_names=('lambda',))
     miri_focal = cf.CompositeFrame([alpha_beta, spec_local], name='alpha_beta')
-    v23_spatial = cf.Frame2D(name='V2_V3_spatial', axes_order=(0, 1),
+    v23_spatial = cf.Frame2D(name='v2v3_spatial', axes_order=(0, 1),
                              unit=(u.arcsec, u.arcsec), axes_names=('v2', 'v3'))
-    v2v3vacorr_spatial = cf.Frame2D(name='V2_V3_vacorr_spatial', axes_order=(0, 1),
+    v2v3vacorr_spatial = cf.Frame2D(name='v2v3vacorr_spatial', axes_order=(0, 1),
                                     unit=(u.arcsec, u.arcsec), axes_names=('v2', 'v3'))
 
     spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,),

@@ -12,6 +12,15 @@ assign_wcs
 - Added velocity aberration-corrected frame ``'v2v3vacorr'`` to the WCS
   pipeline which takes into account DVA effects. [#5602]
 
+- Renamed MIRI frame ``'V2_V3_spatial'`` to ``'v2v3_spatial'`` and
+  ``'V2_V3_vacorr_spatial'`` to ``'v2v3vacorr_spatial'``. Added axes names
+  to the ``'v2v3'`` frame for ``nircam``, ``niriss``, ``miri``, and ``fgs``.
+  Renamed axes for ``nirspec`` from ``V2`` and ``V3`` to
+  ``v2`` and ``v3``. [#5765]
+
+- Changed units of the ``'v2v3'`` frame for ``nircam`` from ``u.deg`` to
+  ``u.arcsec`` [#5765]
+
 associations
 ------------
 
