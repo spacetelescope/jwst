@@ -23,8 +23,7 @@ def do_correction(model):
     Parameters
     ----------
     model: data model object
-        science data to be corrected. Model is modified in place
-        but also returned.
+        science data to be corrected. Model is modified in place.
     """
 
     # Get the meta data values that we need
