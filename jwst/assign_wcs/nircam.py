@@ -349,9 +349,11 @@ def wfss(input_model, reference_files):
             raise ValueError('The input exposure is not a NIRCAM grism')
 
     # Create the empty detector as a 2D coordinate frame in pixel units
-    gdetector = cf.Frame2D(name='grism_detector',
-                           axes_order=(0, 1),
-                           unit=(u.pix, u.pix))
+    gdetector = cf.Frame2D(name='grism_detector', axes_order=(0, 1),
+                           axes_names=('x_grism', 'y_grism'), unit=(u.pix, u.pix))
+    spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,),
+                            axes_names=('wavelength',))
+
 
     # translate the x,y detector-in to x,y detector out coordinates
     # Get the disperser parameters which are defined as a model for each
@@ -413,10 +415,28 @@ def wfss(input_model, reference_files):
     world = image_pipeline.pop()
     for cframe, trans in image_pipeline:
         trans = trans & (Identity(2))
-        imagepipe.append((cframe, trans))
-    imagepipe.append((world))
+        spatial_and_spectral = cf.CompositeFrame([cframe, spec])
+        imagepipe.append((spatial_and_spectral, trans))
+
+    # Output frame is Celestial + Spectral
+    imagepipe.append((cf.CompositeFrame([world[0], spec], None)]))
     grism_pipeline.extend(imagepipe)
     return grism_pipeline
+
+
+def create_coord_frames():
+    gdetector = cf.Frame2D(name='grism_detector', axes_order=(0, 1), unit=(u.pix, u.pix))
+    detector = cf.Frame2D(name='image_detector', axes_order=(0, 1), unit=(u.pix, u.pix))
+    v2v3_spatial = cf.Frame2D(name='v2v3_spatial', axes_order=(0, 1), unit=(u.deg, u.deg))
+    sky_frame = cf.CelestialFrame(reference_frame=coord.ICRS(), name='icrs')
+    spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,),
+                            axes_names=('wavelength',))
+    frames = {'grism_detector': gdetector,
+              'detector': detector,
+              'v2v3': cf.CompositeFrame([v2v3_spatial, spec], name='v2v3'),
+              'world': cf.CompositeFrame([sky_frame, spec], name='world')
+              }
+     return frames
 
 
 exp_type2transform = {'nrc_image': imaging,
