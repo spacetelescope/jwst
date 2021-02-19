@@ -31,8 +31,8 @@ class GWCSDrizzle:
             provided, the WCS is taken from product.
 
         wt_scl : str, optional
-            How each input image should be scaled. The choices are `exptime`
-            which scales each image by its exposure time or `expsq` which scales
+            How each input image should be scaled. The choices are `exptime`,
+            which scales each image by its exposure time, or `expsq`, which scales
             each image by the exposure time squared.  If not set, then each
             input image is scaled by its own weight map.
 

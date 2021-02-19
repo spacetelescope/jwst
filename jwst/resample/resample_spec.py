@@ -414,6 +414,7 @@ class ResampleSpecData:
 
                 in_wcs = img.meta.wcs
                 driz.add_image(img.data, in_wcs, inwht=inwht,
+                               expin=img.meta.exposure.exposure_time,
                                xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
 
             # Update some basic exposure time values based on all the inputs

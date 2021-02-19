@@ -163,7 +163,8 @@ class ResampleData:
                 inwht = resample_utils.build_driz_weight(img,
                     weight_type=self.weight_type,
                     good_bits=self.good_bits)
-                driz.add_image(img.data, img.meta.wcs, inwht=inwht)
+                driz.add_image(img.data, img.meta.wcs, inwht=inwht,
+                               expin=img.meta.exposure.exposure_time)
 
             # Update some basic exposure time values based on all the inputs
             output_model.meta.exposure.exposure_time = texptime

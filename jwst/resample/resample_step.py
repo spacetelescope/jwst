@@ -68,8 +68,8 @@ class ResampleStep(Step):
             self.log.info('Drizpars reference file: {}'.format(ref_filename))
             kwargs = self.get_drizpars(ref_filename, input_models)
         else:
-            # Deal with FGS which currently has no default drizpars reffile
-            self.log.info("No NIRSpec DIRZPARS reffile")
+            # If there is no drizpars reffile
+            self.log.info("No DIRZPARS reffile")
             kwargs = self._set_spec_defaults()
 
         kwargs['allowed_memory'] = self.allowed_memory
