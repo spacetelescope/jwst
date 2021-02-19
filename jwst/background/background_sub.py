@@ -144,7 +144,7 @@ def subtract_wfss_bkg(input_model, bkg_filename, wl_range_name):
     if got_catalog:
         bkg_mask = mask_from_source_cat(input_model, wl_range_name)
     else:
-        bkg_mask = np.ones(input_model.data.shape, dtype=np.bool)
+        bkg_mask = np.ones(input_model.data.shape, dtype=bool)
 
     # Compute the mean values of science image and background reference
     # image, including only regions where there are no identified sources.
@@ -166,7 +166,7 @@ def subtract_wfss_bkg(input_model, bkg_filename, wl_range_name):
         subtract_this = (sci_mean / bkg_mean) * bkg_ref.data
         result.data = input_model.data - subtract_this
         log.debug("Average of values subtracted = {}"
-                  .format(subtract_this.mean(dtype=np.float)))
+                  .format(subtract_this.mean(dtype=float)))
     else:
         log.warning("Background file has zero mean; "
                     "nothing will be subtracted.")
@@ -223,7 +223,7 @@ def mask_from_source_cat(input_model, wl_range_name):
     """
 
     shape = input_model.data.shape
-    bkg_mask = np.ones(shape, dtype=np.bool)
+    bkg_mask = np.ones(shape, dtype=bool)
 
     reference_files = {"wavelengthrange": wl_range_name}
     grism_obj_list = create_grism_bbox(input_model, reference_files)
@@ -270,6 +270,6 @@ def robust_mean(x, lowlim=25., highlim=75.):
 
     limits = np.percentile(x, (lowlim, highlim))
     mask = np.logical_and(x >= limits[0], x <= limits[1])
-    mean_value = x[mask].mean(dtype=np.float)
+    mean_value = x[mask].mean(dtype=float)
 
     return mean_value

@@ -728,7 +728,7 @@ def _shutter_id_to_str(open_shutters, ycen):
     for i in open_shutters:
         all_shutters[all_shutters == i] = 1
     all_shutters[all_shutters != 1] = 0
-    all_shutters = all_shutters.astype(np.str)
+    all_shutters = all_shutters.astype(str)
     all_shutters[cen_ind] = 'x'
     return "".join(all_shutters)
 

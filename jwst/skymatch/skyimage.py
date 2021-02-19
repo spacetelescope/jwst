@@ -122,7 +122,7 @@ class SkyImage:
             if image is None:
                 raise ValueError("'mask' must be None when 'image' is None")
 
-            self.mask = np.asanyarray(mask, dtype=np.bool)
+            self.mask = np.asanyarray(mask, dtype=bool)
 
             if self.mask.shape != image.shape:
                 raise ValueError("'mask' must have the same shape as 'image'.")
@@ -254,15 +254,15 @@ class SkyImage:
             nintx = max(2, int(np.ceil((nx + 1.0) / stepsize)))
             ninty = max(2, int(np.ceil((ny + 1.0) / stepsize)))
 
-        xs = np.linspace(-0.5, nx - 0.5, nintx, dtype=np.float)
-        ys = np.linspace(-0.5, ny - 0.5, ninty, dtype=np.float)[1:-1]
+        xs = np.linspace(-0.5, nx - 0.5, nintx, dtype=float)
+        ys = np.linspace(-0.5, ny - 0.5, ninty, dtype=float)[1:-1]
         nptx = xs.size
         npty = ys.size
 
         npts = 2 * (nptx + npty)
 
-        borderx = np.empty((npts + 1,), dtype=np.float)
-        bordery = np.empty((npts + 1,), dtype=np.float)
+        borderx = np.empty((npts + 1,), dtype=float)
+        bordery = np.empty((npts + 1,), dtype=float)
 
         # "bottom" points:
         borderx[:nptx] = xs

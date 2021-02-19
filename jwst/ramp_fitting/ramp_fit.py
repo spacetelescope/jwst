@@ -2006,7 +2006,7 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
 
     # Create array to set when each good pixel is classified for the current
     #   semiramp (to enable unclassified pixels to have their arrays updated)
-    got_case = np.zeros((asize1*asize2), dtype=np.bool)
+    got_case = np.zeros((asize1*asize2), dtype=bool)
 
     # CASE A) Long enough (semiramp has >2 groups), at end of ramp
     #    - set start to -1 to designate all fitting done

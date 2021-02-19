@@ -10,7 +10,8 @@ def test_fourier_imshift():
     """ Test of fourier_imshift() in imageregistration.py """
 
     image = np.zeros((5,5), dtype=np.float32)
-    image[1:4,1:4] += 1.; image[2,2] += 2.
+    image[1:4,1:4] += 1.
+    image[2,2] += 2.
     shift = [1.2, 0.6]
     result = imageregistration.fourier_imshift( image, shift)
 
@@ -26,11 +27,12 @@ def test_fourier_imshift():
 def test_shift_subtract():
     """ Test of shift_subtract() in imageregistration.py """
 
-    target = np.arange((15), dtype = np.float32)
-    target = target.reshape((3,5))
+    target = np.arange((15), dtype=np.float32).reshape((3, 5))
     reference = target +.1
     reference[1,0] -= 0.2; reference[2,0] += 2.3
-    mask = target * 0 + 1; mask[1,1]= 0 ; mask[1,2]= 0
+    mask = target * 0 + 1
+    mask[1,1]= 0
+    mask[1,2]= 0
     params = (0.2,-0.3,1)
 
     result = imageregistration.shift_subtract(params, reference, target, mask)
@@ -46,11 +48,13 @@ def test_shift_subtract():
 def test_align_fourierLSQ():
     """ Test of align_fourierLSQ() in imageregistration.py """
 
-    target = np.arange((15), dtype = np.float32)
-    target = target.reshape((3,5))
+    target = np.arange((15), dtype=np.float32).reshape((3, 5))
     reference = target +.1
-    reference[1,0] -= 0.2; reference[2,0] += 2.3
-    mask = target * 0 + 1; mask[1,1]= 0 ; mask[1,2]= 0
+    reference[1,0] -= 0.2
+    reference[2,0] += 2.3
+    mask = target * 0 + 1
+    mask[1,1]= 0
+    mask[1,2]= 0
 
     shifts = imageregistration.align_fourierLSQ( reference, target, mask )
     truth = np.array([-0.0899215, -0.01831958, 0.96733475])
@@ -61,7 +65,7 @@ def test_align_fourierLSQ():
 def test_align_array():
     """ Test of align_array() in imageregistration.py """
 
-    temp = np.arange((15), dtype = np.float32); temp = temp.reshape((3,5))
+    temp = np.arange((15), dtype=np.float32).reshape((3, 5))
     targ = np.zeros((3,3,5))
     targ[:] = temp
     targ[0,1,1] += 0.3; targ[0,2,1] += 0.7; targ[0,0,3] -= 0.5; targ[0,1,2] -= 1.3
@@ -102,7 +106,7 @@ def test_align_array():
 def test_align_models():
     """ Test of align_models() in imageregistration.py """
 
-    temp = np.arange((15), dtype = np.float32); temp = temp.reshape((3,5))
+    temp = np.arange((15), dtype=np.float32).reshape((3, 5))
     targ = np.zeros((3,3,5))
     targ[:] = temp
     targ[0,1,1] += 0.3; targ[0,2,1] += 0.7; targ[0,0,3] -= 0.5; targ[0,1,2] -= 1.3
@@ -141,8 +145,7 @@ def test_align_models():
 def test_KLT():
     """ Test of KarhunenLoeveTransform() in klip.py """
 
-    temp = np.arange((15), dtype = np.float32)
-    temp = temp.reshape((3,5))
+    temp = np.arange((15), dtype=np.float32).reshape((3, 5))
     refs = np.zeros((3,3,5))
     refs[:] = temp
     refs[0,1,1] += 0.3; refs[0,2,1] += 0.7; refs[0,0,3] -= 0.5; refs[0,1,2] -= 1.3

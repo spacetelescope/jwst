@@ -199,7 +199,7 @@ def make_mask(input_model, n=None, r=None):
     # Number of normal pixels per amplifier output.
     n_output = (irs2_nx - refout) // 4 - k * n_ref
 
-    irs2_mask = np.ones(irs2_nx, dtype=np.bool)
+    irs2_mask = np.ones(irs2_nx, dtype=bool)
     irs2_mask[0:refout] = False
 
     # Check that the locations of interspersed reference pixels is
@@ -212,7 +212,7 @@ def make_mask(input_model, n=None, r=None):
     else:
         # Set the flags for each readout direction separately.
         nelem = (irs2_nx - refout) // 4         # number of elements per output
-        temp = np.ones(nelem, dtype=np.bool)
+        temp = np.ones(nelem, dtype=bool)
         for i in range(n_norm // 2, nelem + 1, n_norm + n_ref):
             temp[i:i + n_ref] = False
         j = refout

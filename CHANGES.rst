@@ -101,6 +101,12 @@ photom
 - Fixed handling of NIRSpec IFU extended source data, so that the flux
   calibration gets converted to surface brightness [#5761]
 
+pipeline
+--------
+
+- Remove references to Numpy globals ``np.int``, ``np.float``, ``np.bool`` and
+  ``np.str`` in the package. [#5769]
+
 ramp_fitting
 ------------
 

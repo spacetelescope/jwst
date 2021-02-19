@@ -456,7 +456,7 @@ def flag_cr(sci_image, blot_image, **pars):
     # recast cr_mask to int for manipulations below; will recast to
     # Bool at end
     cr_mask_orig_bool = cr_mask.copy()
-    cr_mask = cr_mask_orig_bool.astype(np.int8)
+    cr_mask = cr_mask_orig_bool.astype(np.uint8)
 
     # make radial convolution kernel and convolve it with original cr_mask
     cr_grow_kernel = np.ones((grow, grow))
