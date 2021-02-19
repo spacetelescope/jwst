@@ -9,7 +9,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def do_correction(input_model):
+def do_correction(model):
     """
     Short Summary
     -------------
@@ -22,34 +22,26 @@ def do_correction(input_model):
 
     Parameters
     ----------
-    input_model: data model object
-        science data to be corrected
-
-    Returns
-    -------
-    output_model: data model object
-        rescaled science data
-
+    model: data model object
+        science data to be corrected. Model is modified in place
+        but also returned.
     """
 
     # Get the meta data values that we need
-    nframes = input_model.meta.exposure.nframes
-    frame_divisor = input_model.meta.exposure.frame_divisor
+    nframes = model.meta.exposure.nframes
+    frame_divisor = model.meta.exposure.frame_divisor
     if (nframes is None) or (frame_divisor is None):
         log.warning('Necessary meta data not found')
         log.warning('Step will be skipped')
-        input_model.meta.cal_step.group_scale = 'SKIPPED'
-        return input_model
-
-    # Create output as a copy of the input science data model
-    output_model = input_model.copy()
+        model.meta.cal_step.group_scale = 'SKIPPED'
+        return
 
     log.info('NFRAMES={}, FRMDIVSR={}'.format(nframes, frame_divisor))
     log.info('Rescaling all groups by {}/{}'.format(frame_divisor, nframes))
 
     # Apply the rescaling to the entire data array
     scale = float(frame_divisor) / nframes
-    output_model.data *= scale
-    output_model.meta.cal_step.group_scale = 'COMPLETE'
+    model.data *= scale
+    model.meta.cal_step.group_scale = 'COMPLETE'
 
-    return output_model
+    return

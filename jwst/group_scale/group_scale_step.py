@@ -52,6 +52,6 @@ class GroupScaleStep(Step):
                 return result
 
             # Do the scaling
-            result = group_scale.do_correction(result)
+            group_scale.do_correction(result)
 
         return result

@@ -14,9 +14,9 @@ def test_nframes_or_frame_divisor_is_none(make_rampmodel):
     Here I am just setting nframes=None
     """
     datmod = make_rampmodel(2, None, 4, 2048, 2048)
-    output = do_correction(datmod)
+    do_correction(datmod)
 
-    assert(output.meta.cal_step.group_scale == 'SKIPPED')
+    assert(datmod.meta.cal_step.group_scale == 'SKIPPED')
 
 
 def test_nframes_equal_frame_divisor(make_rampmodel):
