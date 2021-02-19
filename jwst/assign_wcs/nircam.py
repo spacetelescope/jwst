@@ -183,13 +183,7 @@ def tsgrism(input_model, reference_files):
     if input_model.meta.instrument.pupil != "GRISMR":
         raise ValueError('NRC_TSGRIM mode only supports GRISMR')
 
-    gdetector = cf.Frame2D(name='grism_detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    detector = cf.Frame2D(name='full_detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), axes_names=('v2', 'v3'),
-                      unit=(u.arcsec, u.arcsec))
-    v2v3vacorr = cf.Frame2D(name='v2v3vacorr', axes_order=(0, 1),
-                            axes_names=('v2', 'v3'), unit=(u.arcsec, u.arcsec))
-    world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
+    frames = create_coord_frames()
 
     # translate the x,y detector-in to x,y detector out coordinates
     # Get the disperser parameters which are defined as a model for each
@@ -283,11 +277,11 @@ def tsgrism(input_model, reference_files):
     newinverse = Mapping((0, 1, 0, 1)) | setra & setdec & Identity(2) | t2skyinverse
     tel2sky.inverse = newinverse
 
-    pipeline = [(gdetector, sub2direct),
-                (detector, distortion),
-                (v2v3, va_corr),
-                (v2v3vacorr, tel2sky),
-                (world, None)]
+    pipeline = [(frames['grism_detector'], sub2direct),
+                (frames['direct_image'], distortion),
+                (frames['v2v3'], va_corr),
+                (frames['v2v3vacorr'], tel2sky),
+                (frames['world'], None)]
 
     return pipeline
 
@@ -415,25 +409,31 @@ def wfss(input_model, reference_files):
     world = image_pipeline.pop()
     for cframe, trans in image_pipeline:
         trans = trans & (Identity(2))
-        spatial_and_spectral = cf.CompositeFrame([cframe, spec])
+        spatial_and_spectral = cf.CompositeFrame([cframe, spec],
+                                                  name=cframe.name + '_spec')
         imagepipe.append((spatial_and_spectral, trans))
 
     # Output frame is Celestial + Spectral
-    imagepipe.append((cf.CompositeFrame([world[0], spec], None)]))
+    imagepipe.append((cf.CompositeFrame([world[0], spec], None)))
     grism_pipeline.extend(imagepipe)
     return grism_pipeline
 
 
 def create_coord_frames():
     gdetector = cf.Frame2D(name='grism_detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    detector = cf.Frame2D(name='image_detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    v2v3_spatial = cf.Frame2D(name='v2v3_spatial', axes_order=(0, 1), unit=(u.deg, u.deg))
+    detector = cf.Frame2D(name='full_detector', axes_order=(0, 1),
+                          axes_names=('dx', 'dy'), unit=(u.pix, u.pix))
+    v2v3_spatial = cf.Frame2D(name='v2v3_spatial', axes_order=(0, 1),
+                              axes_names=('v2', 'v3'), unit=(u.deg, u.deg))
+    v2v3vacorr_spatial = cf.Frame2D(name='v2v3vacorr_spatial', axes_order=(0, 1),
+                                    axes_names=('v2', 'v3'), unit=(u.arcsec, u.arcsec))
     sky_frame = cf.CelestialFrame(reference_frame=coord.ICRS(), name='icrs')
     spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,),
                             axes_names=('wavelength',))
     frames = {'grism_detector': gdetector,
-              'detector': detector,
+              'direct_image': cf.CompositeFrame([detector, spec], name='direct_image'),
               'v2v3': cf.CompositeFrame([v2v3_spatial, spec], name='v2v3'),
+              'v2v3vacorr': cf.CompositeFrame([v2v3vacorr_spatial, spec], name='v2v3vacorr'),
               'world': cf.CompositeFrame([sky_frame, spec], name='world')
               }
     return frames
