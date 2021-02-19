@@ -436,7 +436,8 @@ def create_coord_frames():
               'v2v3': cf.CompositeFrame([v2v3_spatial, spec], name='v2v3'),
               'world': cf.CompositeFrame([sky_frame, spec], name='world')
               }
-     return frames
+    return frames
+
 
 
 exp_type2transform = {'nrc_image': imaging,
