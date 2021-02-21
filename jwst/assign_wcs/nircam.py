@@ -406,15 +406,18 @@ def wfss(input_model, reference_files):
 
     # pass the x0,y0, wave, order, through the pipeline
     imagepipe = []
-    world = image_pipeline.pop()
+    world = image_pipeline.pop()[0]
+    world.name = 'sky'
     for cframe, trans in image_pipeline:
         trans = trans & (Identity(2))
+        name = cframe.name
+        cframe.name = name + 'spatial'
         spatial_and_spectral = cf.CompositeFrame([cframe, spec],
-                                                  name=cframe.name + '_spec')
+                                                  name=name)
         imagepipe.append((spatial_and_spectral, trans))
 
     # Output frame is Celestial + Spectral
-    imagepipe.append((cf.CompositeFrame([world[0], spec], None)))
+    imagepipe.append((cf.CompositeFrame([world, spec], name='world'), None))
     grism_pipeline.extend(imagepipe)
     return grism_pipeline
 
