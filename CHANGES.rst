@@ -212,6 +212,8 @@ photom
 pipeline
 --------
 
+- Empty remaining cfg files of any content [#5766]
+
 - Remove references to Numpy globals ``np.int``, ``np.float``, ``np.bool`` and
   ``np.str`` in the package. [#5769]
 
