@@ -166,6 +166,14 @@ class Asn_Lv3Coron(AsnMixin_Science):
                     force_reprocess=ProcessList.EXISTING,
                     only_on_match=True,
                 ),
+                Constraint(
+                    [DMSAttrConstraint(
+                        name='bkgdtarg',
+                        sources=['bkgdtarg'],
+                        force_unique=False,
+                    )],
+                    reduce=Constraint.notany
+                ),
             ],
             name='asn_coron'
         )
