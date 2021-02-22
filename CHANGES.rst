@@ -78,12 +78,11 @@ extract_1d
 - For extended source IFU data determine the background using sigma clipping of entire extended region [#5743]
 
 
+
 group_scale
 -----------
 
 - Fix premature model closing in group_scale_step [#5692]
-
-- For IFU extended source data store the sigma clipped extracted region in the background col of x1d [#5743]
 
 
 lib

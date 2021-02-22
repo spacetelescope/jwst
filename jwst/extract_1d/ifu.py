@@ -441,7 +441,7 @@ def extract_ifu(input_model, source_type, extract_params):
         aperture = RectangularAperture(position, width, height, theta)
         annulus = None
 
-    for k in range(shape[0]): #  looping over wavelength
+    for k in range(shape[0]):  #  looping over wavelength
         inner_bkg = None
         outer_bkg = None
 
@@ -464,13 +464,13 @@ def extract_ifu(input_model, source_type, extract_params):
         # Compute the area of the aperture and possibly also of the annulus.
         # for each wavelength bin (taking into account empty spaxels)
         normalization = 1.
-        temp = weightmap[k,:,:]
-        temp[temp>1] = 1
+        temp_weightmap = weightmap[k,:,:]
+        temp_weightmap[temp_weightmap>1] = 1
         aperture_area = 0
         annulus_area = 0
 
         # aperture_photometry - using weight map
-        phot_table = aperture_photometry(temp, aperture,
+        phot_table = aperture_photometry(temp_weightmap, aperture,
                                          method=method, subpixels=subpixels)
 
         aperture_area = float(phot_table['aperture_sum'][0])
@@ -487,7 +487,7 @@ def extract_ifu(input_model, source_type, extract_params):
 
         if subtract_background and annulus is not None:
             # Compute the area of the annulus.
-            phot_table = aperture_photometry(temp, annulus,
+            phot_table = aperture_photometry(temp_weightmap, annulus,
                                              method=method, subpixels=subpixels)
             annulus_area = float(phot_table['aperture_sum'][0])
 
@@ -530,7 +530,7 @@ def extract_ifu(input_model, source_type, extract_params):
             bkg_data = data[k, :, :]
             # pull out the data where weight map => 1. We do not want to use
             # the edge data that is zero to define the statistics on clipping
-            bkg_stat_data = bkg_data[temp == 1]
+            bkg_stat_data = bkg_data[temp_weightmap == 1]
 
             bkg_mean, _, bkg_stddev = stats.sigma_clipped_stats(bkg_stat_data,
                                                                 sigma=bkg_sigma_clip, maxiters = 5)
@@ -543,11 +543,11 @@ def extract_ifu(input_model, source_type, extract_params):
             bkg_table = aperture_photometry(bkg_data, aperture,mask=maskclip,
                                              method=method, subpixels=subpixels)
             background[k] = float(bkg_table['aperture_sum'][0])
-            phot_table = aperture_photometry(temp, aperture, mask=maskclip,
+            phot_table = aperture_photometry(temp_weightmap, aperture, mask=maskclip,
                                              method=method, subpixels=subpixels)
             npixels_bkg[k] = float(phot_table['aperture_sum'][0])
 
-        del temp
+        del temp_weightmap
         # done looping over wavelength bins
     # Check for NaNs in the wavelength array, flag them in the dq array,
     # and truncate the arrays if NaNs are found at endpoints (unless the
@@ -796,15 +796,15 @@ def image_extract_ifu(input_model, source_type, extract_params):
     normalization = 1.
 
     weightmap = input_model.weightmap
-    temp = weightmap
-    temp[temp>1] = 1
-    npixels[:] = (temp * mask_target).sum(axis=2, dtype=np.float64).sum(axis=1)
+    temp_weightmap = weightmap
+    temp_weightmap[temp_weightmap>1] = 1
+    npixels[:] = (temp_weightmap * mask_target).sum(axis=2, dtype=np.float64).sum(axis=1)
     bkg_sigma_clip =  extract_params['bkg_sigma_clip']
 
     # Point Souce data 1. extract background and subtract 2. do not
     if source_type == 'POINT':
         if subtract_background and mask_bkg is not None:
-            n_bkg[:] = (temp * mask_bkg).sum(axis=2, dtype=np.float64).sum(axis=1)
+            n_bkg[:] = (temp_weightmap * mask_bkg).sum(axis=2, dtype=np.float64).sum(axis=1)
             n_bkg[:] = np.where(n_bkg <= 0., 1., n_bkg)
             normalization = npixels / n_bkg
             background = (data * mask_bkg).sum(axis=2, dtype=np.float64).sum(axis=1)
@@ -817,9 +817,9 @@ def image_extract_ifu(input_model, source_type, extract_params):
 
     # Extended source data, sigma clip outliers of extraction region is performed
     # at each wavelength plane.
-        (background, n_bkg)= sigma_clip_extended_region(data, mask_target, temp, bkg_sigma_clip)
+        (background, n_bkg)= sigma_clip_extended_region(data, mask_target, temp_weightmap, bkg_sigma_clip)
 
-    del temp
+    del temp_weightmap
 
 
     # Compute the ra, dec, and wavelength at the pixels of a column through
@@ -1131,13 +1131,13 @@ def sigma_clip_extended_region(data, mask_targ, wmap, sigma_clip):
 
     Parameters
     ----------
-    data: ndarray, 3-D
+    data : ndarray, 3-D
         Input data array to perform extraction from
 
     mask_targ : ndarray, 2-D or 3-D
         Mask of pixels defining the extended source region. A value of 1 indicated
         pixel is in the extraction region.
-    wmap: ndarray, 3-D
+    wmap : ndarray, 3-D
        weight map for IFU
     sigma_clip : float
         outlier sigma clipping parameter

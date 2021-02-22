@@ -70,7 +70,7 @@ class Extract1dStep(Step):
     smoothing_length = integer(default=None)  # background smoothing size
     bkg_fit = option("poly", "mean", "median", default="poly")  # background fitting type
     bkg_order = integer(default=None, min=0)  # order of background polynomial fit
-    bkg_sigma_clip = float(default=3.0) # sigma clipping size for background
+    bkg_sigma_clip = float(default=3.0)  # background sigma clipping threshold
     log_increment = integer(default=50)  # increment for multi-integration log messages
     subtract_background = boolean(default=None)  # subtract background?
     use_source_posn = boolean(default=None)  # use source coords to center extractions?

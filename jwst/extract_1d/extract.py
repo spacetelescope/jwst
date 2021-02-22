@@ -2650,7 +2650,7 @@ def do_extract1d(
         Polynomial order for fitting to each column (or row, if the
         dispersion is vertical) of background.
 
-    bkg_sigma_clip: float
+    bkg_sigma_clip : float
         Sigma clipping value to use on background to remove noise/outliers
 
     log_increment : int
