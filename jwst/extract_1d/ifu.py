@@ -313,7 +313,7 @@ def extract_ifu(input_model, source_type, extract_params):
         together to get `temp_flux` for an annulus region or for extended source
         data it is the number of pixels used to determine the background
 
-    radius_match: ndarray,1-D, float64
+    radius_match : ndarray,1-D, float64
         The size of the extract radius in pixels used at each wavelength of the IFU cube
 
     x_center, y_center : float
