@@ -143,13 +143,17 @@ def build_driz_weight(model, weight_type=None, good_bits=None):
     """Create a weight map for use by drizzle
     """
     dqmask = build_mask(model.dq, good_bits)
-    exptime = model.meta.exposure.exposure_time
 
     if weight_type == 'ivm':
-        with np.errstate(divide="ignore", invalid="ignore"):
-            result = 1 / model.var_rnoise * dqmask
-        result[~np.isfinite(result)] = 0
+        if model.hasattr("var_rnoise"):
+            with np.errstate(divide="ignore", invalid="ignore"):
+                inv_variance = model.var_rnoise**-1
+            inv_variance[~np.isfinite(inv_variance)] = 1
+        else:
+            inv_variance = 1.0
+        result = inv_variance * dqmask
     elif weight_type == 'exptime':
+        exptime = model.meta.exposure.exposure_time
         result = exptime * dqmask
     else:
         result = np.ones(model.data.shape, dtype=model.data.dtype)
