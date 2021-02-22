@@ -29,6 +29,7 @@ associations
 - Added new Lvl2 rule, Asn_Lv2NRSLAMPImage, to run Image2 pipeline for NRSLAMP
   exposures with OPMODE=image [#5740]
 
+
 combine_1d
 ----------
 
@@ -39,6 +40,11 @@ cube_build
 ----------
 
 - Added support for cross-dichroic configurations [#5722]
+
+- Added infrastructure to support NIRSpec opaque + grating options to build lamp mode data [#5757]
+  
+- When building MIRI internal_cal type cubes removed the requirement that cdelt1=cdelt2 [#5757]
+
 
 datamodels
 ----------
