@@ -1,6 +1,11 @@
 1.0.1 (unreleased)
 ==================
 
+assign_wcs
+----------
+
+- Added spectral frames to the output WCS frame of TSO and WFSS observations. [#5771]
+
 associations
 ------------
 
@@ -51,7 +56,7 @@ cube_build
 - Added support for cross-dichroic configurations [#5722]
 
 - Added infrastructure to support NIRSpec opaque + grating options to build lamp mode data [#5757]
-  
+
 - When building MIRI internal_cal type cubes removed the requirement that cdelt1=cdelt2 [#5757]
 
 
