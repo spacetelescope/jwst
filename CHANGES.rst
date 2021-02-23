@@ -11,6 +11,8 @@ associations
 
 - Ignore duplicate product names while handling Level 2 associations [#5780]
 
+- Constraint added to Asn_Lv3Coron to remove background exposures [#5781]
+
 
 1.0.0 (2021-02-22)
 ==================
