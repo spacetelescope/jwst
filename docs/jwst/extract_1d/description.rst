@@ -131,10 +131,20 @@ and ``ystop``. If ``dispaxis=2``, the rolls are reversed.
 If ``extract_width`` is also given, that takes priority over ``ystart`` and
 ``ystop`` (for ``dispaxis=1``) for the extraction width, but ``ystart`` and
 ``ystop`` will still be used to define the centering of the extraction region
-in the cross-dispersion direction.
-Any of these parameters will be modified internally by the step code if the
+in the cross-dispersion direction. For point source data, 
+then the ``xstart`` and ``xstop`` values (dispaxis = 2) are shifted to account
+for the expected location of the source. If dispaxis=1, then the ``ystart`` and ``ystop`` values
+are modified. The offset amount is internally calculated. If it is not desired to apply this
+offset, then set ``use_source_posn`` = False. If the ``use_source_posn`` parameter is None (default),
+the values of ``xstart/xstop`` or ``ystart/ystop`` in the ``extract_1d`` reference file will be used
+to determine the center position of the extraction aperture. If these values are not set in the reference file
+the ``use_source_posn``  will be 
+internally set to True for point source data according to the table given in :ref:`srctype <srctype_table>`.
+Any of the extraction location parameters will be modified internally by the step code if the
 extraction region would extend outside the limits of the input image or outside
 the domain specified by the WCS.
+
+
 
 A more flexible way to specify the source extraction region is via the ``src_coeff``
 parameter. ``src_coeff`` is specified as a list of lists of floating-point
@@ -239,20 +249,23 @@ direction perpendicular to dispersion.
 
 Extraction for 3D IFU Data
 --------------------------
-For IFU cube data, 1D extraction is contolled by a different set of EXTRACT1D
-reference file parameters.
-Note that for an extended source, anything specified in the reference file
-or step arguments will be ignored; the entire image will be
-extracted, and no background subtraction will be done.
+For IFU cube data, 1D extraction is controlled by a different set of EXTRACT1D
+reference file parameters. The ``use_source_posn`` parameter is not used when extracting spectra from an IFU cube.
+Instead, for point source data, the extraction aperture is centered at the RA/DEC target location
+indicated by the header. If the target location is undefined in the header, then the extraction
+region is the  center of the IFU cube. For extended source data, anything specified in the reference file
+or step arguments will be ignored; the entire image will be extracted, and no background subtraction will be done. 
 
 For point sources a circular extraction aperture is used, along with an optional
-circular annulus for background extraction and subtraction. The parameters
-``x_center``, ``y_center``, and ``radius`` specify the location and size of the
-source aperture, all of which are given in units of pixels.
-The parameters ``inner_background`` and ``outer_background`` are used to
-specify the limits of an annular background aperture. All radius-related
-parameters can be floating-point values and appropriate partial-pixel scaling
-will be used in the extraction process.
+circular annulus for background extraction and subtraction. The size of the extraction
+region and the background annulus size varies with wavelength. 
+The extraction related vectors are found in the asdf extract1d reference file.
+For each element in the ``wavelength`` vector there are three size components: ``radius``, ``inner_bkg``, and
+``outer_bkg``. The radius vector sets the extraction size; while ``inner_bkg`` and ``outer_bkg`` specify the
+limits of an annular background aperture. There are two additional vectors in the reference file, ``axis_ratio``
+and ``axis_pa``, which are placeholders for possible future functionality.
+The extraction size parameters are given in units of arcseconds and converted to units of pixels
+in the extraction process. 
 
 The region of overlap between an aperture and a pixel can be calculated by
 one of three different methods, specified by the ``method`` parameter:  "exact"
@@ -260,4 +273,4 @@ one of three different methods, specified by the ``method`` parameter:  "exact"
 in a pixel will be included if its center is within the aperture; or "subsample",
 which means pixels will be subsampled N x N and the "center" option will be used
 for each sub-pixel. When ``method`` is "subsample", the parameter ``subpixels``
-is used to set the resampling value. The default value is 5.
+is used to set the resampling value. The default value is 10.
