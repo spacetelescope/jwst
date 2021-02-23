@@ -1,11 +1,10 @@
 1.0.1 (unreleased)
 ==================
 
+associations
+------------
 
-
-
-
-
+- Ignore duplicate product names while handling Level 2 associations [#5780]
 
 
 1.0.0 (2021-02-22)
