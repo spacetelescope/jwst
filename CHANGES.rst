@@ -91,10 +91,15 @@ extract_1d
 - Fixed bug in background region fitting for image columns/rows that have zero weight
   for all pixels [#5696]
 
+- For extended source IFU data determine the background using sigma clipping of entire extended region [#5743]
+
+
+
 group_scale
 -----------
 
 - Fix premature model closing in group_scale_step [#5692]
+
 
 lib
 ---
@@ -111,6 +116,7 @@ lib
 
 - Make get_wcs_values_from_siaf public for JSDP use [#5669]
 
+
 outlier_detection
 -----------------
 
@@ -123,11 +129,13 @@ photom
 - Fixed handling of NIRSpec IFU extended source data, so that the flux
   calibration gets converted to surface brightness [#5761]
 
+
 pipeline
 --------
 
 - Remove references to Numpy globals ``np.int``, ``np.float``, ``np.bool`` and
   ``np.str`` in the package. [#5769]
+
 
 ramp_fitting
 ------------

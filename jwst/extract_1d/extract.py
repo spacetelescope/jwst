@@ -273,8 +273,8 @@ def get_extract_parameters(
         assigned if `ref_dict` is None.  For a reference image, the key
         'ref_image' gives the (open) image model.
     """
-    extract_params = {'match': NO_MATCH}  # initial value
 
+    extract_params = {'match': NO_MATCH}  # initial value
     if ref_dict is None:
         # There is no extract1d reference file; use "reasonable" default values.
         extract_params['ref_file_type'] = FILE_TYPE_OTHER
@@ -1016,6 +1016,7 @@ class ExtractBase(abc.ABC):
         `poly`.
         This argument must be positive or zero, and it is only used if
         background regions have been specified.
+
 
     subtract_background : bool or None
         A flag that indicates whether the background should be subtracted.
@@ -2459,6 +2460,7 @@ def run_extract1d(
         smoothing_length: Union[int, None],
         bkg_fit: str,
         bkg_order: Union[int, None],
+        bkg_sigma_clip: float,
         log_increment: int,
         subtract_background: Union[bool, None],
         use_source_posn: Union[bool, None],
@@ -2487,6 +2489,9 @@ def run_extract1d(
         Polynomial order for fitting to each column (or row, if the
         dispersion is vertical) of background. Only used if `bkg_fit`
         is `poly`.
+
+    bkg_sigma_clip : float
+        Sigma clipping value to use on background to remove noise/outliers
 
     log_increment : int
         if `log_increment` is greater than 0 and the input data are
@@ -2546,6 +2551,7 @@ def run_extract1d(
         smoothing_length,
         bkg_fit,
         bkg_order,
+        bkg_sigma_clip,
         log_increment,
         subtract_background,
         use_source_posn,
@@ -2604,6 +2610,7 @@ def do_extract1d(
         smoothing_length: Union[int, None] = None,
         bkg_fit: str = "poly",
         bkg_order: Union[int, None] = None,
+        bkg_sigma_clip: float = 0,
         log_increment: int = 50,
         subtract_background: Union[int, None] = None,
         use_source_posn: Union[bool, None] = None,
@@ -2642,6 +2649,9 @@ def do_extract1d(
     bkg_order : int or None
         Polynomial order for fitting to each column (or row, if the
         dispersion is vertical) of background.
+
+    bkg_sigma_clip : float
+        Sigma clipping value to use on background to remove noise/outliers
 
     log_increment : int
         if `log_increment` is greater than 0 and the input data are
@@ -3211,10 +3221,10 @@ def do_extract1d(
                     error = np.zeros_like(flux)
                     sb_error = np.zeros_like(flux)
                     berror = np.zeros_like(flux)
-
                     otab = np.array(
                         list(
-                            zip(wavelength, flux, error, surf_bright, sb_error, dq, background, berror, npixels)
+                            zip(wavelength, flux, error, surf_bright, sb_error, dq, background,
+                                berror, npixels)
                         ),
                         dtype=spec_dtype
                     )
@@ -3288,7 +3298,8 @@ def do_extract1d(
                 source_type = "UNKNOWN"
 
             output_model = ifu.ifu_extract1d(
-                input_model, extract_ref_dict, source_type, subtract_background, apcorr_ref_model
+                input_model, extract_ref_dict, source_type, subtract_background,
+                bkg_sigma_clip, apcorr_ref_model
             )
 
         else:
