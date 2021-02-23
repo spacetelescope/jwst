@@ -367,9 +367,10 @@ def wfss(input_model, reference_files):
             raise ValueError('The input exposure is not NIRISS grism')
 
     # Create the empty detector as a 2D coordinate frame in pixel units
-    gdetector = cf.Frame2D(name='grism_detector',
-                           axes_order=(0, 1),
-                           unit=(u.pix, u.pix))
+    gdetector = cf.Frame2D(name='grism_detector', axes_order=(0, 1),
+                           axes_names=('x_grism', 'y_grism'), unit=(u.pix, u.pix))
+    spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,),
+                            axes_names=('wavelength',))
 
     # translate the x,y detector-in to x,y detector out coordinates
     # Get the disperser parameters which are defined as a model for each
@@ -445,11 +446,15 @@ def wfss(input_model, reference_files):
     # so the user doesn't have to
 
     imagepipe = []
-    world = image_pipeline.pop()
+    world = image_pipeline.pop()[0]
+    world.name = 'sky'
     for cframe, trans in image_pipeline:
         trans = trans & (Identity(2))
-        imagepipe.append((cframe, trans))
-    imagepipe.append((world))
+        name = cframe.name
+        cframe.name = name + 'spatial'
+        spatial_and_spectral = cf.CompositeFrame([cframe, spec], name=name)
+        imagepipe.append((spatial_and_spectral, trans))
+    imagepipe.append((cf.CompositeFrame([world, spec], name='world'), None))
     grism_pipeline.extend(imagepipe)
 
     return grism_pipeline

@@ -27,10 +27,10 @@ Keyword    Data Model Name           Instruments
 EXP_TYPE   model.meta.exposure.type  All
 =========  ========================  ===========
 
-APCORR Reference File Format
-++++++++++++++++++++++++++++
-APCORR reference files are FITS format.
-The APCORR reference file contains tabular data
+NON-IFU APCORR Reference File Format
+++++++++++++++++++++++++++++++++++++
+APCORR reference files for non-IFU data are in FITS format.
+The FITS APCORR reference file contains tabular data
 in a BINTABLE extension with EXTNAME = 'APCORR'.
 The FITS primary HDU does not contain a data array.
 The contents of the table extension varies for different
@@ -92,29 +92,6 @@ instrument modes, as shown in the tables below.
 |            |       | apcorr_err  | float     | 2D array   | unitless |
 +------------+-------+-------------+-----------+------------+----------+
 
-:Data model: `~jwst.datamodels.MirMrsApcorrModel`
-
-+------------+-------+-------------+-----------+------------+----------+
-| Instrument | Mode  | Column name | Data type | Dimensions | Units    |
-+============+=======+=============+===========+============+==========+
-| MIRI       | MRS   | wavelength  | float     | 1D array   | micron   |
-+            +       +-------------+-----------+------------+----------+
-|            |       | nelem_wl    | integer   | scalar     | N/A      |
-+            +       +-------------+-----------+------------+----------+
-|            |       | radius      | float     | 1D array   | arcsec   |
-+            +       +-------------+-----------+------------+----------+
-|            |       | apcorr      | float     | 1D array   | unitless |
-+            +       +-------------+-----------+------------+----------+
-|            |       | apcorr_err  | float     | 1D array   | unitless |
-+            +       +-------------+-----------+------------+----------+
-|            |       | inner_bkg   | float     | 1D array   | N/A      |
-+            +       +-------------+-----------+------------+----------+
-|            |       | outer_bkg   | float     | 1D array   | N/A      |
-+            +       +-------------+-----------+------------+----------+
-|            |       | axis_ratio  | float     | 1D array   | unitless |
-+            +       +-------------+-----------+------------+----------+
-|            |       | axis_pa     | float     | 1D array   | N/A      |
-+------------+-------+-------------+-----------+------------+----------+
 
 :Data model: `~jwst.datamodels.NrcImgApcorrModel`
 
@@ -233,9 +210,9 @@ instrument modes, as shown in the tables below.
 +============+=======+=============+===========+============+==========+
 | NIRSpec    | MOS   | filter      | string    | 12         | N/A      |
 +            +       +-------------+-----------+------------+----------+
-|            | and   | grating     | string    | 15         | N/A      |
+|            |       | grating     | string    | 15         | N/A      |
 +            +       +-------------+-----------+------------+----------+
-|            | IFU   | wavelength  | float     | 1D array   | micron   |
+|            |       | wavelength  | float     | 1D array   | micron   |
 +            +       +-------------+-----------+------------+----------+
 |            |       | nelem_wl    | integer   | scalar     | N/A      |
 +            +       +-------------+-----------+------------+----------+
@@ -263,7 +240,6 @@ The row selection criteria for each instrument+mode are:
 * MIRI:
    - Image: Filter and Subarray
    - LRS: Subarray
-   - MRS: None (table contains a single row)
 * NIRCam:
    - Image: Filter and Pupil
    - WFSS: Filter and Pupil
@@ -271,10 +247,51 @@ The row selection criteria for each instrument+mode are:
    - Image: Filter and Pupil
    - WFSS: Filter and Pupil
 * NIRSpec:
-   - IFU and MOS: Filter and Grating
+   - MOS: Filter and Grating
    - Fixed Slits: Filter, Grating, and Slit name
 
 Note: Spectroscopic mode reference files contain the "nelem_wl" and "nelem_size"
 entries, which indicate to the pipeline step how many valid elements are contained
 in the "wavelength" and "size" arrays, respectively. Only the first "nelem_wl"
 and "nelem_size" entries are read from each array.
+
+
+IFU APCORR Reference File ASDF Format
++++++++++++++++++++++++++++++++++++++
+For IFU data the APCORR reference files are in ASDF format. The aperture correction
+varies with wavelength and the contents of the files are shown below. The radius,
+aperture correction and error are all 2D arrays. Currently the 2nd dimension does
+not add information, but in the future it could be used to provide different aperture
+corrections for different radii. 
+
+:Data model: `~jwst.datamodels.MirMrsApcorrModel`
+
++------------+-------+-------------+-----------+------------+----------+
+| Instrument | Mode  | Column name | Data type | Dimensions | Units    |
++============+=======+=============+===========+============+==========+
+| MIRI       | MRS   | wavelength  | float     | 1D array   | micron   |
++            +       +-------------+-----------+------------+----------+
+|            |       | radius      | float     | 2D array   | arcsec   |
++            +       +-------------+-----------+------------+----------+
+|            |       | apcorr      | float     | 2D array   | unitless |
++            +       +-------------+-----------+------------+----------+
+|            |       | apcorr_err  | float     | 2D array   | unitless |
++------------+-------+-------------+-----------+------------+----------+
+
+:Data model: `~jwst.datamodels.NRSIFUApcorrModel`
+
++------------+-------+-------------+-----------+------------+----------+
+| Instrument | Mode  | Column name | Data type | Dimensions | Units    |
++============+=======+=============+===========+============+==========+
+| NIRSpec    | MOS   | filter      | string    | 12         | N/A      |
++            +       +-------------+-----------+------------+----------+
+|            |       | grating     | string    | 15         | N/A      |
++            +       +-------------+-----------+------------+----------+
+|            |       | wavelength  | float     | 1D array   | micron   |
++            +       +-------------+-----------+------------+----------+
+|            |       | radius      | float     | 2D array   | arcsec   |
++            +       +-------------+-----------+------------+----------+
+|            |       | apcorr      | float     | 2D array   | unitless |
++            +       +-------------+-----------+------------+----------+
+|            |       | apcorr_err  | float     | 2D array   | unitless |
++------------+-------+-------------+-----------+------------+----------+

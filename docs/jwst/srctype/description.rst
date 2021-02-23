@@ -54,6 +54,8 @@ The following choices are used, in order of priority:
    value in the APT, the following table of defaults is used, based on
    the "EXP_TYPE" keyword value:
 
+.. _srctype_table:
+
 +-------------------+------------------------+----------+
 | EXP_TYPE          | Exposure Type          | SRCTYPE  |
 +===================+========================+==========+
