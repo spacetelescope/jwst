@@ -2490,7 +2490,7 @@ def run_extract1d(
         dispersion is vertical) of background. Only used if `bkg_fit`
         is `poly`.
 
-    bkg_sigma_clip: float
+    bkg_sigma_clip : float
         Sigma clipping value to use on background to remove noise/outliers
 
     log_increment : int

@@ -528,7 +528,7 @@ def extract_ifu(input_model, source_type, extract_params):
         # Extended source data - background determined from sigma clipping
         if source_type == 'EXTENDED':
             bkg_data = data[k, :, :]
-            # pull out the data where weight map => 1. We do not want to use
+            # pull out the data with coverage in IFU cube. We do not want to use
             # the edge data that is zero to define the statistics on clipping
             bkg_stat_data = bkg_data[temp_weightmap == 1]
 
