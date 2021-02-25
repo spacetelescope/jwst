@@ -725,9 +725,9 @@ def ramp_fit_first_pass(
         n_int, nrows, data, groupdq, inpixeldq, cubeshape, imshape, gain_2d, readnoise_2d,
         save_opt, group_time, weighting, ngroups, nreads, nframes, groupgap, frame_time):
     """
-    Calculate effective integration time (once EFFINTIM has been populated accessible, will 
-    use that instead), and other keywords that will needed if the pedestal calculation is 
-    requested. Note 'nframes' is the number of given by the NFRAMES keyword, and is the 
+    Calculate effective integration time (once EFFINTIM has been populated accessible, will
+    use that instead), and other keywords that will needed if the pedestal calculation is
+    requested. Note 'nframes' is the number of given by the NFRAMES keyword, and is the
     number of frames averaged on-board for a group, i.e., it does not include the groupgap.
 
     HERE
@@ -1032,7 +1032,7 @@ def ramp_fit_second_pass(
     var_r4 : 4-D variance based on read noise
     var_both4 : 4-D array for combined variance due to both Poisson and read noise
     var_both3 : 3-D array for combined variance due to both Poisson and read noise
-    inv_var_both4 : 1 / var_both4 
+    inv_var_both4 : 1 / var_both4
     s_inv_var_p3 : 1 / var_p3, summed over integrations
     s_inv_var_r3 : 1 / var_r3, summed over integrations
     s_inv_var_both3 : 1 / var_both3, summed over integrations
