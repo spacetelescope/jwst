@@ -13,6 +13,12 @@ associations
 
 - Constraint added to Asn_Lv3Coron to remove background exposures [#5781]
 
+resample
+--------
+
+- Make inverse variance ``weight_type="ivm"`` the default weighting scheme for
+  multiple exposures resampled into a single output. [#5738]
+
 
 1.0.0 (2021-02-22)
 ==================
@@ -145,12 +151,6 @@ ramp_fitting
   in group 1. [#5700]
 
 - Update documentation to define optimal weighting algorithm [#5682]
-
-resample
---------
-
-- Make inverse variance ``weight_type="ivm"`` the default weighting scheme for
-  multiple exposures resampled into a single output. [#5738]
 
 source_catalog
 --------------
