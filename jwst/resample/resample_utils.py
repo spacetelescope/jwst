@@ -150,15 +150,19 @@ def build_driz_weight(model, weight_type=None, good_bits=None):
                 inv_variance = model.var_rnoise**-1
             inv_variance[~np.isfinite(inv_variance)] = 1
         else:
+            warnings.warn("var_rnoise array not available.  Setting drizzle weight map to 1",
+                RuntimeWarning)
             inv_variance = 1.0
         result = inv_variance * dqmask
     elif weight_type == 'exptime':
         exptime = model.meta.exposure.exposure_time
         result = exptime * dqmask
     else:
+        warnings.warn("weight_type set to None.  Setting drizzle weight map to 1",
+            RuntimeWarning)
         result = np.ones(model.data.shape, dtype=model.data.dtype)
 
-    return result
+    return result.astype(np.float32)
 
 
 def build_mask(dqarr, bitvalue):

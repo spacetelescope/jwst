@@ -1,7 +1,7 @@
 """Test various utility functions"""
-import pytest
-
+from numpy.testing import assert_array_equal
 import numpy as np
+import pytest
 
 from jwst.datamodels import SlitModel, ImageModel, dqflags
 from jwst.resample.resample_spec import find_dispersion_axis
@@ -44,37 +44,32 @@ def test_build_mask(dq, bitvalues, expected):
         Expected mask array
     """
     result = build_mask(dq, bitvalues)
-    np.testing.assert_array_equal(result, expected)
+    assert_array_equal(result, expected)
 
 
-@pytest.mark.parametrize("weight_type, expected_value", [
-    ("ivm", 0.1),
-    ("exptime", 10),
-    (None, 1.0),
-    ]
-)
-def test_build_driz_weight(weight_type, expected_value):
+@pytest.mark.parametrize("weight_type", ["ivm", "exptime"])
+def test_build_driz_weight(weight_type):
     """Check that correct weight map is returned of different weight types"""
     model = ImageModel((10, 10))
     model.dq[0] = DO_NOT_USE
     model.meta.exposure.exposure_time = 10.0
-    model.var_rnoise += 10.0
+    model.var_rnoise += 0.1
 
     weight_map = build_driz_weight(model, weight_type=weight_type, good_bits="GOOD")
-    np.testing.assert_array_equal(weight_map[0], 0)
-    np.testing.assert_array_equal(weight_map[1:], expected_value)
+    assert_array_equal(weight_map[0], 0)
+    assert_array_equal(weight_map[1:], 10.0)
     assert weight_map.dtype == np.float32
 
 
-@pytest.mark.parametrize("weight_type", ["ivm", "exptime"])
+@pytest.mark.parametrize("weight_type", ["ivm", None])
 def test_build_driz_weight_zeros(weight_type):
-    """Check that zero or not finite weight maps raise an error"""
+    """Check that zero or not finite weight maps get set to 1"""
     model = ImageModel((10, 10))
-    model.var_rnoise += 0
-    model.meta.exposure.exposure_time = 0.0
 
-    with pytest.raises(ValueError):
-        build_driz_weight(model, weight_type=weight_type)
+    with pytest.warns(RuntimeWarning):
+        weight_map = build_driz_weight(model, weight_type=weight_type)
+
+    assert_array_equal(weight_map, 1)
 
 
 def test_find_dispersion_axis():
