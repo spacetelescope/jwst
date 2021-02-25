@@ -110,7 +110,7 @@ class OutlierDetection:
                                               dq=self.inputs.dq[i])
                 image.meta = self.inputs.meta
                 image.wht = build_driz_weight(image,
-                                              weight_type='exptime',
+                                              weight_type='ivm',
                                               good_bits=bits)
                 self.input_models.append(image)
             self.converted = True
@@ -202,7 +202,7 @@ class OutlierDetection:
             for i in range(len(self.input_models)):
                 drizzled_models[i].wht = build_driz_weight(
                     self.input_models[i],
-                    weight_type='exptime',
+                    weight_type='ivm',
                     good_bits=pars['good_bits'])
 
         # Initialize intermediate products used in the outlier detection

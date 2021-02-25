@@ -28,7 +28,7 @@ class OutlierDetectionStackStep(Step):
     """
 
     spec = """
-        weight_type = option('exptime','error',None,default='exptime')
+        weight_type = option('ivm','exptime',default='ivm')
         pixfrac = float(default=1.0)
         kernel = string(default='square') # drizzle kernel
         fillval = string(default='INDEF')

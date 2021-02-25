@@ -34,7 +34,7 @@ class ResampleStep(Step):
         pixfrac = float(default=1.0)
         kernel = string(default='square')
         fillval = string(default='INDEF')
-        weight_type = option('exptime', default='exptime')
+        weight_type = option('ivm', 'exptime', default='ivm')
         pixel_scale_ratio = float(default=1.0) # Ratio of input to output pixel scale
         single = boolean(default=False)
         blendheaders = boolean(default=True)
@@ -68,8 +68,8 @@ class ResampleStep(Step):
             self.log.info('Drizpars reference file: {}'.format(ref_filename))
             kwargs = self.get_drizpars(ref_filename, input_models)
         else:
-            # Deal with NIRSpec which currently has no default drizpars reffile
-            self.log.info("No NIRSpec DIRZPARS reffile")
+            # If there is no drizpars reffile
+            self.log.info("No DIRZPARS reffile")
             kwargs = self._set_spec_defaults()
 
         kwargs['allowed_memory'] = self.allowed_memory
@@ -113,7 +113,6 @@ class ResampleStep(Step):
         pixfrac = float(default=None)
         kernel = string(default=None)
         fillval = string(default=None)
-        weight_type = option('exptime', default=None)
 
         Once the defaults are set from the reference file, if the user has
         used a resample.cfg file or run ResampleStep using command line args,
@@ -148,15 +147,13 @@ class ResampleStep(Step):
             self.log.error("No row found in %s matching input data.", ref_filename)
             raise ValueError
 
-        # Define the keys to pull from drizpars reffile table.  Note the
-        # step param 'weight_type' is 'wht_type' in the FITS binary table.
+        # Define the keys to pull from drizpars reffile table.
         # All values should be None unless the user set them on the command
         # line or in the call to the step
         drizpars = dict(
             pixfrac=self.pixfrac,
             kernel=self.kernel,
             fillval=self.fillval,
-            wht_type=self.weight_type,
             pscale_ratio=self.pixel_scale_ratio,
             )
 
@@ -177,9 +174,6 @@ class ResampleStep(Step):
 
         all_drizpars = {**reffile_drizpars, **user_drizpars}
 
-        # Convert the 'wht_type' key to a 'weight_type' key
-        all_drizpars['weight_type'] = all_drizpars.pop('wht_type')
-
         kwargs = dict(
             good_bits=GOOD_BITS,
             single=self.single,
@@ -187,12 +181,6 @@ class ResampleStep(Step):
             )
 
         kwargs.update(all_drizpars)
-
-        if 'wht_type' in kwargs:
-            raise DeprecationWarning('`wht_type` config keyword has changed ' +
-                'to `weight_type`; ' +
-                'please update calls to ResampleStep and resample.cfg files')
-            kwargs.pop('wht_type')
 
         for k,v in kwargs.items():
             self.log.debug('   {}={}'.format(k, v))
@@ -220,7 +208,7 @@ class ResampleStep(Step):
         if kwargs['fillval'] is None:
             kwargs['fillval'] = 'INDEF'
         if kwargs['weight_type'] is None:
-            kwargs['weight_type'] = 'exptime'
+            kwargs['weight_type'] = 'ivm'
         kwargs['pscale_ratio'] = self.pixel_scale_ratio
         kwargs.pop('pixel_scale_ratio')
 
