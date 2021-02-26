@@ -1,8 +1,12 @@
 1.1.1 (unreleased)
 ==================
 
+associations
+------------
 
-
+- Updated level2b WFSS rules to only consider exposures from the same
+  instrument channel when matching direct images with grism images in
+  NIRCam WFSS observations. [#5786]
 
 
 1.1.0 (2021-02-26)
