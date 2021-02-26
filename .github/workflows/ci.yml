@@ -10,8 +10,7 @@ on:
   pull_request:
   schedule:
     # Weekly Monday 9AM build
-    # * is a special character in YAML so you have to quote this string
-    - cron: '0 9 * * 1'
+    - cron: "0 9 * * 1"
 
 env:
   CRDS_SERVER_URL: https://jwst-crds.stsci.edu
@@ -20,9 +19,6 @@ env:
   CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
 
 jobs:
-
-  # The rest only run if above are done
-
   tox:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
@@ -137,39 +133,3 @@ jobs:
         with:
           file: ./coverage.xml
           flags: unit
-
-  # # A matrix of jobs with allowed failures. Not enabled for now.
-  # allowed_failures:
-  #   name: ${{ matrix.name }}
-  #   runs-on: ${{ matrix.os }}
-  #   continue-on-error: ${{ matrix.allowed-failure }}
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       include:
-  #         - name: (Allowed Failure) Dev dependencies in requirements-dev.txt
-  #           os: ubuntu-latest
-  #           allowed-failure: true
-  #           python-version: 3.9
-  #           toxenv: devdeps
-
-  #         - name: (Allowed Failure) Warnings treated as Exceptions
-  #           os: ubuntu-latest
-  #           allowed-failure: true
-  #           python-version: 3.9
-  #           toxenv: warnings
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v2
-  #       with:
-  #         fetch-depth: 0
-  #     - name: Set up Python ${{ matrix.python-version }}
-  #       uses: actions/setup-python@v2
-  #       with:
-  #         python-version: ${{ matrix.python-version }}
-  #     - name: Install tox
-  #       run: |
-  #         python -m pip install --upgrade pip
-  #         pip install tox
-  #     - name: Run tox
-  #       run: tox -e ${{ matrix.toxenv }}
