@@ -1,4 +1,4 @@
-1.0.1 (unreleased)
+1.1.0 (2021-02-26)
 ==================
 
 assign_wcs
@@ -13,6 +13,12 @@ associations
 
 - Constraint added to Asn_Lv3Coron to remove background exposures [#5781]
 
+extract_1d
+----------
+
+- Determine the background using sigma clipping of entire extended region for
+  extended source IFU data [#5743]
+
 resample
 --------
 
@@ -26,7 +32,7 @@ resample
 assign_mtwcs
 ------------
 
-- Fixed a bug which caused the step to fail with ``MultiSlitModel`` input. [#JP-1907]
+- Fixed a bug which caused the step to fail with ``MultiSlitModel`` input. [#5758]
 
 assign_wcs
 ----------
@@ -96,10 +102,6 @@ extract_1d
 
 - Fixed bug in background region fitting for image columns/rows that have zero weight
   for all pixels [#5696]
-
-- For extended source IFU data determine the background using sigma clipping of entire extended region [#5743]
-
-
 
 group_scale
 -----------
