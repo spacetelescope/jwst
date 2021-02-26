@@ -4,6 +4,7 @@ on:
   schedule:
     # Weekly Monday 6AM build
     - cron: "0 6 * * 1"
+  workflow_dispatch:
 
 env:
   CRDS_SERVER_URL: https://jwst-crds.stsci.edu
