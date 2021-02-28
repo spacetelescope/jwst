@@ -8,6 +8,12 @@ associations
   instrument channel when matching direct images with grism images in
   NIRCam WFSS observations. [#5786]
 
+general
+-------
+
+- Update file naming conventions documentation to clarify when optional components will be used. [#5796]
+
+
 
 1.1.0 (2021-02-26)
 ==================
