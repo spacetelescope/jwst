@@ -40,29 +40,54 @@ The format for the file name of a Stage 3 association product has all alphabetic
 are only used to delineate between major fields, and dashes can be used as separators for optional fields. 
 Just as for Stage 2, the suffix distinguishes the different file products of Stage 3 of the calibration pipeline.
 
-The FITS file naming scheme for Stage 3 "source-based" products is:
+The FITS file naming scheme for Stage 3 "source-based" products is as follows, where items in parentheses are optional:
 
  jw<ppppp>-<AC_ID>_[<"t"TargID | "s"SourceID>](-<"epoch"X>)_<instr>_<optElements>(-<subarray>)_<prodType>(-<ACT_ID>).fits
 
 where
 
- - ppppp: program ID number
- - AC_ID: association candidate ID
- - TargID: a 3-digit target ID (either TargID or SourceID must be present)
- - SourceID: a 5-digit source ID
- - epochX: the text "epoch" followed by a single digit epoch number (optional)
- - instr: science instrument name (e.g. 'nircam', 'miri')
- - optElements: a single or hyphen-separated list of optical elements (e.g. filter, grating)
- - subarray: optional indicator of subarray name
- - prodType: product type identifier (e.g. 'i2d', 's3d', 'x1d')
- - ACT_ID: a 2-digit activity ID
-
+ - ppppp: Program ID number
+ - AC_ID: Association candidate ID
+ - TargID: 3-digit Target ID (either TargID or SourceID must be present)
+ - SourceID: 5-digit Source ID
+ - epochX: The text "epoch" followed by a single digit epoch number (optional)
+ - instr: Science instrument name (e.g. 'nircam', 'miri')
+ - optElements: A single or hyphen-separated list of optical elements (e.g. filter, grating)
+ - subarray: Subarray name (optional)
+ - prodType: Product type identifier (e.g. 'i2d', 's3d', 'x1d')
+ - ACT_ID: 2-digit activity ID (optional)
 
 An example Stage 3 product FITS file name is:
 
  jw87600-a3001_t001_niriss_f480m-nrm_amiavg.fits
 
-In this case, the EPOCH is an optional parameter that is used for observations of the same target that are taken at different epochs.
+Optional Components
+"""""""""""""""""""
+
+A number of components are optional, all either proposal-dependent or
+data-specific. The general cases where an optional component may appear are as
+follows:
+
+TargID vs SourceID
+
+    For single-target modes, this is the target identifier as defined in the APT proposal.
+
+    For multi-object modes, such as NIRSpec MOS, this will be the slit ID for each object.
+
+epochX
+
+    If a proposal has specified that observations be performed in multiple
+    epochs, this will be the epoch id.
+
+subarray
+
+    Present for all instruments/observing modes that allow subarray specification.
+
+ACT_ID
+
+    Present when associations are dependent on being unique across visit
+    activities. Currently, only Wavefront Sensing & Control (WFS&C) coarse and
+    fine phasing are activity-dependent.
 
 .. _segmented_files:
 
