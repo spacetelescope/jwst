@@ -81,7 +81,7 @@ epochX
 
 subarray
 
-    Present or all instruments/observing modes that allow subarray specification.
+    Present for all instruments/observing modes that allow subarray specification.
 
 ACT_ID
 
