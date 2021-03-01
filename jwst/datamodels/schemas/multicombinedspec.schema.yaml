@@ -21,3 +21,8 @@ allOf:
             default: 1
             fits_keyword: SPORDER
             fits_hdu: COMBINE1D
+          source_id:
+            title: Source ID
+            type: integer
+            fits_keyword: SOURCEID
+            fits_hdu: COMBINE1D

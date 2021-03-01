@@ -108,8 +108,6 @@ class DataTypes():
         if output_dir is not None:
             self.output_name = output_dir + '/' + self.output_name
 
-#        print('*****************',self.output_name)
-
 # _______________________________________________________________________________
     def build_product_name(self, filename):
         """ Determine the base of output name if an input data is a fits filename.

@@ -14,6 +14,11 @@ from ..lib.suffix import remove_suffix
 
 
 class JwstStep(Step):
+
+    spec = """
+    output_ext         = string(default='.fits')     # Default type of output
+    """
+
     @classmethod
     def _datamodels_open(cls, init, **kwargs):
         return datamodels.open(init, **kwargs)

@@ -545,7 +545,7 @@ def _find_optimum_sky_deltas(images, apply_sky=True):
     except np.linalg.LinAlgError:
         log.warning("Unable to compute sky: No valid data in common "
                     "image areas")
-        deltas = np.full(ns, np.nan, dtype=np.float)
+        deltas = np.full(ns, np.nan, dtype=float)
         return deltas
 
     if rank < ns - 1:

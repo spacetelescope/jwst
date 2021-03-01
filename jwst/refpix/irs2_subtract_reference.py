@@ -196,7 +196,7 @@ def make_irs2_mask(output_model, scipix_n, refpix_r):
     stuff_at_end = part - k * (scipix_n + refpix_r)
 
     # Create the mask which flags normal pixels as True.
-    irs2_mask = np.ones(irs2_nx, dtype=np.bool)
+    irs2_mask = np.ones(irs2_nx, dtype=bool)
     irs2_mask[0:refout] = False
 
     # Check whether the interspersed reference pixels are in the same
@@ -209,7 +209,7 @@ def make_irs2_mask(output_model, scipix_n, refpix_r):
     else:
         # Set the flags for each readout direction separately.
         nelem = refout                  # number of elements per output
-        temp = np.ones(nelem, dtype=np.bool)
+        temp = np.ones(nelem, dtype=bool)
         for i in range(scipix_n // 2, nelem + 1,
                        scipix_n + refpix_r):
             temp[i:i + refpix_r] = False

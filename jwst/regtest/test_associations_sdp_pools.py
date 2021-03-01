@@ -96,6 +96,8 @@ SPECIAL_POOLS = {
 # #####
 class TestSDPPools(SDPPoolsSource):
     """Test creation of association from SDP-created pools"""
+
+    @pytest.mark.filterwarnings('error')
     def test_against_standard(self, pool_path, slow):
         """Compare a generated association against a standard
 

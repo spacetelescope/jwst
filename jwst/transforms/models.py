@@ -224,9 +224,9 @@ class Snell(Model):
     def __init__(self, angle, kcoef, lcoef, tcoef, tref, pref,
                  temperature, pressure, name=None):
         self.prism_angle = angle
-        self.kcoef = np.array(kcoef, dtype=np.float)
-        self.lcoef = np.array(lcoef, dtype=np.float)
-        self.tcoef = np.array(tcoef, dtype=np.float)
+        self.kcoef = np.array(kcoef, dtype=float)
+        self.lcoef = np.array(lcoef, dtype=float)
+        self.tcoef = np.array(tcoef, dtype=float)
         self.tref = tref
         self.pref = pref
         self.temp = temperature
@@ -607,7 +607,7 @@ class Rotation3D(Model):
                 "Number of angles must equal number of axes in axes_order.")
         matrices = []
         for angle, axis in zip(angles, axes_order):
-            matrix = np.zeros((3, 3), dtype=np.float)
+            matrix = np.zeros((3, 3), dtype=float)
             if axis == 'x':
                 mat = Rotation3D.rotation_matrix_from_angle(angle)
                 matrix[0, 0] = 1
@@ -1081,7 +1081,7 @@ def _toindex(value):
     >>> _toindex(np.array([1.5, 2.49999]))
     array([2, 2])
     """
-    indx = np.asarray(np.floor(np.asarray(value) + 0.5), dtype=np.int)
+    indx = np.asarray(np.floor(np.asarray(value) + 0.5), dtype=int)
     return indx
 
 

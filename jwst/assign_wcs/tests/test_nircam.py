@@ -24,11 +24,11 @@ from .. import nircam
 # Allowed settings for nircam
 tsgrism_filters = ['F277W', 'F444W', 'F322W2', 'F356W']
 
-nircam_wfss_frames = ['grism_detector', 'detector', 'v2v3', 'world']
+nircam_wfss_frames = ['grism_detector', 'detector', 'v2v3', 'v2v3vacorr', 'world']
 
-nircam_tsgrism_frames = ['grism_detector', 'full_detector', 'v2v3', 'world']
+nircam_tsgrism_frames = ['grism_detector', 'direct_image', 'v2v3', 'v2v3vacorr', 'world']
 
-nircam_imaging_frames = ['detector', 'v2v3', 'world']
+nircam_imaging_frames = ['detector', 'v2v3', 'v2v3vacorr', 'world']
 
 
 # Default wcs information
@@ -199,8 +199,8 @@ def test_traverse_wfss_grisms():
 def test_traverse_tso_grism():
     """Make sure that the TSO dispersion polynomials are reversable."""
     wcsobj = create_tso_wcs()
-    detector_to_grism = wcsobj.get_transform('full_detector', 'grism_detector')
-    grism_to_detector = wcsobj.get_transform('grism_detector', 'full_detector')
+    detector_to_grism = wcsobj.get_transform('direct_image', 'grism_detector')
+    grism_to_detector = wcsobj.get_transform('grism_detector', 'direct_image')
 
     # TSGRISM always has same source locations
     # takes x,y,order -> ra, dec, wave, order

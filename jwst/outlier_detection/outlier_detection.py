@@ -110,7 +110,7 @@ class OutlierDetection:
                                               dq=self.inputs.dq[i])
                 image.meta = self.inputs.meta
                 image.wht = build_driz_weight(image,
-                                              weight_type='exptime',
+                                              weight_type='ivm',
                                               good_bits=bits)
                 self.input_models.append(image)
             self.converted = True
@@ -202,7 +202,7 @@ class OutlierDetection:
             for i in range(len(self.input_models)):
                 drizzled_models[i].wht = build_driz_weight(
                     self.input_models[i],
-                    weight_type='exptime',
+                    weight_type='ivm',
                     good_bits=pars['good_bits'])
 
         # Initialize intermediate products used in the outlier detection
@@ -456,7 +456,7 @@ def flag_cr(sci_image, blot_image, **pars):
     # recast cr_mask to int for manipulations below; will recast to
     # Bool at end
     cr_mask_orig_bool = cr_mask.copy()
-    cr_mask = cr_mask_orig_bool.astype(np.int8)
+    cr_mask = cr_mask_orig_bool.astype(np.uint8)
 
     # make radial convolution kernel and convolve it with original cr_mask
     cr_grow_kernel = np.ones((grow, grow))

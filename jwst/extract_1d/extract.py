@@ -273,8 +273,8 @@ def get_extract_parameters(
         assigned if `ref_dict` is None.  For a reference image, the key
         'ref_image' gives the (open) image model.
     """
-    extract_params = {'match': NO_MATCH}  # initial value
 
+    extract_params = {'match': NO_MATCH}  # initial value
     if ref_dict is None:
         # There is no extract1d reference file; use "reasonable" default values.
         extract_params['ref_file_type'] = FILE_TYPE_OTHER
@@ -1016,6 +1016,7 @@ class ExtractBase(abc.ABC):
         `poly`.
         This argument must be positive or zero, and it is only used if
         background regions have been specified.
+
 
     subtract_background : bool or None
         A flag that indicates whether the background should be subtracted.
@@ -2206,14 +2207,14 @@ class ImageExtractModel(ExtractBase):
         (mask_target, mask_bkg) = self.separate_target_and_background(ref)
 
         # This is the number of pixels in the cross-dispersion direction, in the target extraction region.
-        n_target = mask_target.sum(axis=axis, dtype=np.float)
+        n_target = mask_target.sum(axis=axis, dtype=float)
 
         # Extract the data.
-        gross = (data * mask_target).sum(axis=axis, dtype=np.float)
+        gross = (data * mask_target).sum(axis=axis, dtype=float)
 
         # Compute the number of pixels that were added together to get gross.
         temp = np.ones_like(data)
-        npixels = (temp * mask_target).sum(axis=axis, dtype=np.float)
+        npixels = (temp * mask_target).sum(axis=axis, dtype=float)
 
         if self.subtract_background is not None:
             if not self.subtract_background:
@@ -2226,10 +2227,10 @@ class ImageExtractModel(ExtractBase):
 
         # Extract the background.
         if mask_bkg is not None:
-            n_bkg = mask_bkg.sum(axis=axis, dtype=np.float)
+            n_bkg = mask_bkg.sum(axis=axis, dtype=float)
             n_bkg = np.where(n_bkg == 0., -1., n_bkg)  # -1 is used as a flag, and also to avoid dividing by zero.
 
-            background = (data * mask_bkg).sum(axis=axis, dtype=np.float)
+            background = (data * mask_bkg).sum(axis=axis, dtype=float)
 
             scalefactor = n_target / n_bkg
             scalefactor = np.where(n_bkg > 0., scalefactor, 0.)
@@ -2261,9 +2262,9 @@ class ImageExtractModel(ExtractBase):
         # Used for computing the celestial coordinates and the 1-D array of wavelengths.
         flag = (mask_target > 0.)
         grid = np.indices(shape)
-        masked_grid = flag.astype(np.float) * grid[axis]
+        masked_grid = flag.astype(float) * grid[axis]
         g_sum = masked_grid.sum(axis=axis)
-        f_sum = flag.sum(axis=axis, dtype=np.float)
+        f_sum = flag.sum(axis=axis, dtype=float)
         f_sum_zero = np.where(f_sum <= 0.)
         f_sum[f_sum_zero] = 1.  # to avoid dividing by zero
 
@@ -2277,11 +2278,11 @@ class ImageExtractModel(ExtractBase):
         # Near the left and right edges, there might not be any non-zero values in mask_target, so a slice will be
         # extracted from both x_array and y_array in order to exclude pixels that are not within the extraction region.
         if self.dispaxis == HORIZONTAL:
-            x_array = np.arange(shape[1], dtype=np.float)
+            x_array = np.arange(shape[1], dtype=float)
             y_array = spectral_trace
         else:
             x_array = spectral_trace
-            y_array = np.arange(shape[0], dtype=np.float)
+            y_array = np.arange(shape[0], dtype=float)
 
         # Trim off the ends, if there's no data there.
         # Save trim_slc.
@@ -2296,8 +2297,8 @@ class ImageExtractModel(ExtractBase):
             y_array = y_array[trim_slc]
 
         if got_wavelength:
-            indx = np.around(x_array).astype(np.int)
-            indy = np.around(y_array).astype(np.int)
+            indx = np.around(x_array).astype(int)
+            indy = np.around(y_array).astype(int)
             indx = np.where(indx < 0, 0, indx)
             indx = np.where(indx >= shape[1], shape[1] - 1, indx)
             indy = np.where(indy < 0, 0, indy)
@@ -2355,9 +2356,9 @@ class ImageExtractModel(ExtractBase):
 
         if wavelength is None:
             if self.dispaxis == HORIZONTAL:
-                wavelength = np.arange(shape[1], dtype=np.float)
+                wavelength = np.arange(shape[1], dtype=float)
             else:
-                wavelength = np.arange(shape[0], dtype=np.float)
+                wavelength = np.arange(shape[0], dtype=float)
 
             wavelength = wavelength[trim_slc]
 
@@ -2459,6 +2460,7 @@ def run_extract1d(
         smoothing_length: Union[int, None],
         bkg_fit: str,
         bkg_order: Union[int, None],
+        bkg_sigma_clip: float,
         log_increment: int,
         subtract_background: Union[bool, None],
         use_source_posn: Union[bool, None],
@@ -2487,6 +2489,9 @@ def run_extract1d(
         Polynomial order for fitting to each column (or row, if the
         dispersion is vertical) of background. Only used if `bkg_fit`
         is `poly`.
+
+    bkg_sigma_clip : float
+        Sigma clipping value to use on background to remove noise/outliers
 
     log_increment : int
         if `log_increment` is greater than 0 and the input data are
@@ -2546,6 +2551,7 @@ def run_extract1d(
         smoothing_length,
         bkg_fit,
         bkg_order,
+        bkg_sigma_clip,
         log_increment,
         subtract_background,
         use_source_posn,
@@ -2604,6 +2610,7 @@ def do_extract1d(
         smoothing_length: Union[int, None] = None,
         bkg_fit: str = "poly",
         bkg_order: Union[int, None] = None,
+        bkg_sigma_clip: float = 0,
         log_increment: int = 50,
         subtract_background: Union[int, None] = None,
         use_source_posn: Union[bool, None] = None,
@@ -2642,6 +2649,9 @@ def do_extract1d(
     bkg_order : int or None
         Polynomial order for fitting to each column (or row, if the
         dispersion is vertical) of background.
+
+    bkg_sigma_clip : float
+        Sigma clipping value to use on background to remove noise/outliers
 
     log_increment : int
         if `log_increment` is greater than 0 and the input data are
@@ -3211,10 +3221,10 @@ def do_extract1d(
                     error = np.zeros_like(flux)
                     sb_error = np.zeros_like(flux)
                     berror = np.zeros_like(flux)
-
                     otab = np.array(
                         list(
-                            zip(wavelength, flux, error, surf_bright, sb_error, dq, background, berror, npixels)
+                            zip(wavelength, flux, error, surf_bright, sb_error, dq, background,
+                                berror, npixels)
                         ),
                         dtype=spec_dtype
                     )
@@ -3288,7 +3298,8 @@ def do_extract1d(
                 source_type = "UNKNOWN"
 
             output_model = ifu.ifu_extract1d(
-                input_model, extract_ref_dict, source_type, subtract_background, apcorr_ref_model
+                input_model, extract_ref_dict, source_type, subtract_background,
+                bkg_sigma_clip, apcorr_ref_model
             )
 
         else:

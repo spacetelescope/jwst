@@ -7,7 +7,7 @@ from photutils import CircularAperture, CircularAnnulus, \
 
 from .apply_apcorr import select_apcorr
 from ..assign_wcs.util import compute_scale
-
+from astropy import stats
 from .. import datamodels
 from ..datamodels import dqflags
 
@@ -32,7 +32,8 @@ OFFSET_NOT_ASSIGNED_YET = "not assigned yet"
 HUGE_DIST = 1.e10
 
 
-def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcorr_ref_model=None):
+def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
+                  bkg_sigma_clip, apcorr_ref_model=None):
     """Extract a 1-D spectrum from an IFU cube.
 
     Parameters
@@ -51,6 +52,9 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
         If None, the value in the extract_1d reference file will be used.
         If not None, this parameter overrides the value in the
         extract_1d reference file.
+
+    bkg_sigma_clip : float
+        Background sigma clipping value to use to remove noise/outliers in background
 
     apcorr_ref_model : apcorr datamodel or None
         Aperture correction table.
@@ -88,7 +92,8 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
     if slitname is None:
         slitname = "ANY"
 
-    extract_params = get_extract_parameters(ref_dict, slitname)
+    extract_params = get_extract_parameters(ref_dict, bkg_sigma_clip, slitname)
+
     if subtract_background is not None:
         if subtract_background and source_type == "EXTENDED":
             subtract_background = False
@@ -193,7 +198,7 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background, apcor
     return output_model
 
 
-def get_extract_parameters(ref_dict, slitname):
+def get_extract_parameters(ref_dict, bkg_sigma_clip, slitname):
     """Read extraction parameters for an IFU.
 
     Parameters
@@ -211,10 +216,12 @@ def get_extract_parameters(ref_dict, slitname):
     """
 
     extract_params = {}
+    # for consistency put the bkg_sigma_clip in dictionary: extract_params
+    extract_params['bkg_sigma_clip'] = bkg_sigma_clip
+
     if ref_dict['ref_file_type'] == FILE_TYPE_ASDF:
         extract_params['ref_file_type'] = FILE_TYPE_ASDF
         refmodel = ref_dict['ref_model']
-        #region_type = refmodel.meta.region_type
         subtract_background = refmodel.meta.subtract_background
         method = refmodel.meta.method
         subpixels =refmodel.meta.subpixels
@@ -289,8 +296,10 @@ def extract_ifu(input_model, source_type, extract_params):
         the solid angle of a pixel will give the flux for a point source.
 
     background : ndarray, 1-D
-        The background count rate that was subtracted from the total
-        source data values to get `temp_flux`.
+        For point source data, the background array is the count rate that was subtracted
+        from the total source data values to get `temp_flux`. This background is determined
+        for annulus region. For extended source data, the background array is the sigma clipped
+        extracted region.
 
     npixels : ndarray, 1-D, float64
         For each slice, this is the number of pixels that were added
@@ -299,11 +308,12 @@ def extract_ifu(input_model, source_type, extract_params):
     dq : ndarray, 1-D, uint32
         The data quality array.
 
-    npixels_annulus : ndarray, 1-D, float64
-        For each slice, this is the number of pixels that were added
-        together to get `temp_flux` for an annulus region.
+    npixels_bkg : ndarray, 1-D, float64
+        For each slice, for point source data  this is the number of pixels that were added
+        together to get `temp_flux` for an annulus region or for extended source
+        data it is the number of pixels used to determine the background
 
-    radius_match: ndarray,1-D, float64
+    radius_match : ndarray,1-D, float64
         The size of the extract radius in pixels used at each wavelength of the IFU cube
 
     x_center, y_center : float
@@ -324,7 +334,7 @@ def extract_ifu(input_model, source_type, extract_params):
     temp_flux = np.zeros(shape[0], dtype=np.float64)
     background = np.zeros(shape[0], dtype=np.float64)
     npixels = np.ones(shape[0], dtype=np.float64)
-    npixels_annulus = np.ones(shape[0], dtype=np.float64)
+    npixels_bkg = np.ones(shape[0], dtype=np.float64)
 
     dq = np.zeros(shape[0], dtype=np.uint32)
 
@@ -405,6 +415,7 @@ def extract_ifu(input_model, source_type, extract_params):
         y_center = height / 2. - 0.5
         theta = 0.
         subtract_background = False
+        bkg_sigma_clip =  extract_params['bkg_sigma_clip']
 
     log.debug("IFU 1-D extraction parameters:")
     log.debug("  x_center = %s", str(x_center))
@@ -418,6 +429,7 @@ def extract_ifu(input_model, source_type, extract_params):
         log.debug("  height = %s", str(height))
         log.debug("  theta = %s degrees", str(theta))
         log.debug("  subtract_background = %s", str(subtract_background))
+        log.debug("  sigma clip value for background = %s", str(bkg_sigma_clip))
         log.debug("  method = %s", method)
         if method == "subpixel":
             log.debug("  subpixels = %s", str(subpixels))
@@ -429,7 +441,7 @@ def extract_ifu(input_model, source_type, extract_params):
         aperture = RectangularAperture(position, width, height, theta)
         annulus = None
 
-    for k in range(shape[0]):
+    for k in range(shape[0]):  #  looping over wavelength
         inner_bkg = None
         outer_bkg = None
 
@@ -452,13 +464,13 @@ def extract_ifu(input_model, source_type, extract_params):
         # Compute the area of the aperture and possibly also of the annulus.
         # for each wavelength bin (taking into account empty spaxels)
         normalization = 1.
-        temp = weightmap[k,:,:]
-        temp[temp>1] = 1
+        temp_weightmap = weightmap[k,:,:]
+        temp_weightmap[temp_weightmap>1] = 1
         aperture_area = 0
         annulus_area = 0
 
         # aperture_photometry - using weight map
-        phot_table = aperture_photometry(temp, aperture,
+        phot_table = aperture_photometry(temp_weightmap, aperture,
                                          method=method, subpixels=subpixels)
 
         aperture_area = float(phot_table['aperture_sum'][0])
@@ -475,7 +487,7 @@ def extract_ifu(input_model, source_type, extract_params):
 
         if subtract_background and annulus is not None:
             # Compute the area of the annulus.
-            phot_table = aperture_photometry(temp, annulus,
+            phot_table = aperture_photometry(temp_weightmap, annulus,
                                              method=method, subpixels=subpixels)
             annulus_area = float(phot_table['aperture_sum'][0])
 
@@ -495,31 +507,56 @@ def extract_ifu(input_model, source_type, extract_params):
                 log.warning("Background annulus has no area, so background "
                             "subtraction will be turned off. %g" ,k)
                 subtract_background_plane = False
-        del temp
 
         npixels[k] = aperture_area
-        npixels_annulus[k] = 0.0
+        npixels_bkg[k] = 0.0
         if annulus is not None:
-            npixels_annulus[k] = annulus_area
+            npixels_bkg[k] = annulus_area
         # aperture_photometry - using data
 
         phot_table = aperture_photometry(data[k, :, :], aperture,
                                          method=method, subpixels=subpixels)
         temp_flux[k] = float(phot_table['aperture_sum'][0])
+
+        # Point source type of data with defined annulus size
         if subtract_background_plane:
             bkg_table = aperture_photometry(data[k, :, :], annulus,
                                             method=method, subpixels=subpixels)
             background[k] = float(bkg_table['aperture_sum'][0])
             temp_flux[k] = temp_flux[k] - background[k] * normalization
 
+        # Extended source data - background determined from sigma clipping
+        if source_type == 'EXTENDED':
+            bkg_data = data[k, :, :]
+            # pull out the data with coverage in IFU cube. We do not want to use
+            # the edge data that is zero to define the statistics on clipping
+            bkg_stat_data = bkg_data[temp_weightmap == 1]
+
+            bkg_mean, _, bkg_stddev = stats.sigma_clipped_stats(bkg_stat_data,
+                                                                sigma=bkg_sigma_clip, maxiters = 5)
+            low = bkg_mean - bkg_sigma_clip * bkg_stddev
+            high = bkg_mean + bkg_sigma_clip * bkg_stddev
+
+            # set up the mask to flag data that should not be used in aperture photometry
+            maskclip = np.logical_or(bkg_data < low, bkg_data>high)
+
+            bkg_table = aperture_photometry(bkg_data, aperture,mask=maskclip,
+                                             method=method, subpixels=subpixels)
+            background[k] = float(bkg_table['aperture_sum'][0])
+            phot_table = aperture_photometry(temp_weightmap, aperture, mask=maskclip,
+                                             method=method, subpixels=subpixels)
+            npixels_bkg[k] = float(phot_table['aperture_sum'][0])
+
+        del temp_weightmap
+        # done looping over wavelength bins
     # Check for NaNs in the wavelength array, flag them in the dq array,
     # and truncate the arrays if NaNs are found at endpoints (unless the
     # entire array is NaN).
-    (wavelength, temp_flux, background, npixels, dq, npixels_annulus) = \
-        nans_in_wavelength(wavelength, temp_flux, background, npixels, dq, npixels_annulus)
+    (wavelength, temp_flux, background, npixels, dq, npixels_bkg) = \
+        nans_in_wavelength(wavelength, temp_flux, background, npixels, dq, npixels_bkg)
 
     return (ra, dec, wavelength, temp_flux, background, npixels, dq,
-            npixels_annulus, radius_match, x_center, y_center)
+            npixels_bkg, radius_match, x_center, y_center)
 
 
 def locn_from_wcs(input_model, ra_targ, dec_targ):
@@ -617,16 +654,20 @@ def image_extract_ifu(input_model, source_type, extract_params):
 
     Extended summary
     ----------------
-    One of the requirements for this step is that for an extended target,
-    the entire aperture is supposed to be extracted (with no background
-    subtraction).  It doesn't make any sense to use an image extract1d reference file
-    to extract the entire aperture; a trivially simple JSON extract1d reference file
-    would do.  Therefore, we assume that if the user specified a reference
-    file in image format, the user actually wanted that extract1d reference file
-    to be used, so we will ignore the requirement in this case.
     The IMAGE extract1d reference file should have pixels with avalue of 1 for the
     source extraction region, 0 for pixels not to include in source or background,
     and -1 for the background region.
+    For SRCTYPE=POINT the source extraction region is defined by pixels in the ref
+    image = 1 and the background region is defiend by pixels in the ref image with
+    -1.
+    For SRCTYPE=EXTENDED the extraction region is defined by pixels in the ref image
+    =  1 (only the source region is used). The default procedure of using the extract 1d
+    asdf reference files extracts the entire region for EXTENDED source data. However,
+    if the user supplies the reference image it is assumed they have defined a specific
+    region to be extracted instead of the entire field. At each wavelenght bin sigma
+    clipping is performed on the extration region and is store in the background column of
+    spec table to be used in masterbackground subtraction. In the extended source case
+    pixels flagged as background (-1) in the reference image are ignored.
 
     Parameters
     ----------
@@ -695,23 +736,18 @@ def image_extract_ifu(input_model, source_type, extract_params):
 
     ref_image = extract_params['ref_image']
     ref = ref_image.data
-    if 'subtract_background' in extract_params:
-        subtract_background = extract_params['subtract_background']
-    else:
-        subtract_background = None
+    subtract_background = extract_params['subtract_background']
 
     (mask_target, mask_bkg) = separate_target_and_background(ref)
 
-    if subtract_background is not None:
-        if subtract_background:
-            if mask_bkg is None:
-                log.info("Skipping background subtraction because "
-                         "background regions are not defined.")
-        else:
-            if mask_bkg is not None:
-                log.info("Background subtraction was turned off "
-                         "- skipping it.")
-            mask_bkg = None
+    # subtracting the background is only allowed for source_type=POINT
+    # subtract_background = False for EXTENDED data (set in ifu_extract1d)
+
+    if subtract_background:
+        if mask_bkg is None:
+            log.info("Skipping background subtraction because "
+                     "background regions are not defined.")
+        subtract_background = False
 
     ra_targ = input_model.meta.target.ra
     dec_targ = input_model.meta.target.dec
@@ -728,6 +764,7 @@ def image_extract_ifu(input_model, source_type, extract_params):
     log.debug("Target location based on reference image is X = %g, Y = %g",
               x0, y0)
 
+    #TODO - check if shifting location should be done for reference_image option
     if locn is None or np.isnan(locn[0]):
         log.warning("Couldn't determine pixel location from WCS, so "
                     "source position correction will not be applied.")
@@ -759,23 +796,31 @@ def image_extract_ifu(input_model, source_type, extract_params):
     normalization = 1.
 
     weightmap = input_model.weightmap
-    temp = weightmap
-    temp[temp>1] = 1
-    npixels[:] = (temp * mask_target).sum(axis=2, dtype=np.float64).sum(axis=1)
+    temp_weightmap = weightmap
+    temp_weightmap[temp_weightmap>1] = 1
+    npixels[:] = (temp_weightmap * mask_target).sum(axis=2, dtype=np.float64).sum(axis=1)
+    bkg_sigma_clip =  extract_params['bkg_sigma_clip']
 
-    if mask_bkg is not None:
-        n_bkg[:] = (temp * mask_bkg).sum(axis=2, dtype=np.float64).sum(axis=1)
-        n_bkg = np.where(n_bkg <= 0., 1., n_bkg)
-        normalization = npixels / n_bkg
-    del temp
-
-    # Extract the background.
-    if mask_bkg is not None:
-        background = (data * mask_bkg).sum(axis=2, dtype=np.float64).sum(axis=1)
-        temp_flux = gross - background * normalization
+    # Point Souce data 1. extract background and subtract 2. do not
+    if source_type == 'POINT':
+        if subtract_background and mask_bkg is not None:
+            n_bkg[:] = (temp_weightmap * mask_bkg).sum(axis=2, dtype=np.float64).sum(axis=1)
+            n_bkg[:] = np.where(n_bkg <= 0., 1., n_bkg)
+            normalization = npixels / n_bkg
+            background = (data * mask_bkg).sum(axis=2, dtype=np.float64).sum(axis=1)
+            temp_flux = gross - background * normalization
+        else:
+            background = np.zeros_like(gross)
+            temp_flux = gross.copy()
     else:
-        background = np.zeros_like(gross)
-        temp_flux = gross.copy()
+        temp_flux = (data * mask_target).sum(axis=2, dtype=np.float64).sum(axis=1)
+
+    # Extended source data, sigma clip outliers of extraction region is performed
+    # at each wavelength plane.
+        (background, n_bkg)= sigma_clip_extended_region(data, mask_target, temp_weightmap, bkg_sigma_clip)
+
+    del temp_weightmap
+
 
     # Compute the ra, dec, and wavelength at the pixels of a column through
     # the IFU cube at the target location.  ra and dec should be constant
@@ -850,7 +895,7 @@ def get_coordinates(input_model, x0, y0):
     return (ra, dec, wavelength)
 
 
-def nans_in_wavelength(wavelength, flux, background, npixels, dq, npixels_annulus):
+def nans_in_wavelength(wavelength, flux, background, npixels, dq, npixels_bkg):
     """Check for NaNs in the wavelength array.
 
     If NaNs are found in the wavelength array, flag them in the dq array,
@@ -876,7 +921,7 @@ def nans_in_wavelength(wavelength, flux, background, npixels, dq, npixels_annulu
     dq : ndarray, 1-D, uint32
         The data quality array.
 
-    npixels_annulus : ndarray, 1-D, float64
+    npixels_bkg : ndarray, 1-D, float64
         For each slice, this is the number of pixels that were added
         together to get `flux` for the annulus region
 
@@ -892,20 +937,20 @@ def nans_in_wavelength(wavelength, flux, background, npixels, dq, npixels_annulu
 
     dq : ndarray, 1-D, uint32
 
-    npixels_annulus : ndarray, 1-D, float64
+    npixels_bkg : ndarray, 1-D, float64
     """
 
     nelem = np.size(wavelength)
     if nelem == 0:
         log.warning("Output arrays are empty!")
-        return (wavelength, flux, background, npixels, dq, npixels_annulus)
+        return (wavelength, flux, background, npixels, dq, npixels_bkg)
 
     nan_mask = np.isnan(wavelength)
     n_nan = nan_mask.sum(dtype=np.intp)
     if n_nan == nelem:
         log.warning("Wavelength array is all NaN!")
         dq = np.bitwise_or(dq[:], dqflags.pixel['DO_NOT_USE'])
-        return (wavelength, flux, background, npixels, dq, npixels_annulus)
+        return (wavelength, flux, background, npixels, dq, npixels_bkg)
 
     if n_nan > 0:
         log.warning("%d NaNs in wavelength array.", n_nan)
@@ -920,12 +965,12 @@ def nans_in_wavelength(wavelength, flux, background, npixels, dq, npixels_annulu
                 flux = flux[slc]
                 background = background[slc]
                 npixels = npixels[slc]
-                npixels_annulus = npixels_annulus[slc]
+                npixels_bkg = npixels_bkg[slc]
                 dq = dq[slc]
                 log.info("Output arrays have been trimmed by %d elements",
                          n_trimmed)
 
-    return (wavelength, flux, background, npixels, dq, npixels_annulus)
+    return (wavelength, flux, background, npixels, dq, npixels_bkg)
 
 
 def separate_target_and_background(ref):
@@ -953,7 +998,7 @@ def separate_target_and_background(ref):
 
     mask_bkg : ndarray, 2-D or 3-D, or None.
         This is like `mask_target` (i.e. values are 0 or 1) but for
-        background regions.  A value of 1 in `mask_bkg` indicates a pixel
+        background regions.  A value of -1 in `mask_bkg` indicates a pixel
         that should be included as part of the background.  If there is no
         pixel in the reference image with a value of -1, `mask_bkg` will
         be set to None.
@@ -1080,3 +1125,53 @@ def shift_ref_image(mask, delta_y, delta_x, fill=0):
     temp[..., oslice_y, oslice_x] = mask[..., islice_y, islice_x]
 
     return temp
+
+def sigma_clip_extended_region(data, mask_targ, wmap, sigma_clip):
+    """ sigma clip the extraction region
+
+    Parameters
+    ----------
+    data : ndarray, 3-D
+        Input data array to perform extraction from
+
+    mask_targ : ndarray, 2-D or 3-D
+        Mask of pixels defining the extended source region. A value of 1 indicated
+        pixel is in the extraction region.
+    wmap : ndarray, 3-D
+       weight map for IFU
+    sigma_clip : float
+        outlier sigma clipping parameter
+
+    Returns
+    -------
+    sigma_clip_region : ndarray, 1-D. Summed extracted region with sigma clipping for each wavelength plane
+    n_bkg : ndarray, 1-D, sum of pixels used in sigma clipped extracted region
+    """
+    shape = data.shape
+    shape_ref = mask_targ.shape
+    n_bkg = np.ones(shape[0], dtype=np.float64)
+
+    sigma_clip_region=  np.zeros(shape[0], dtype=np.float64)
+
+    # for each wavelength plane mark outliers as 0 in mask_bkg
+    for k in range(shape[0]): #  looping over wavelength
+        if len(shape_ref) == 2:
+            extract_region = mask_targ.copy()
+        else:
+            extract_region = mask_targ[k, :, :].copy()
+        data_plane = data[k, :, :]
+        # pull out extract source region to determined stats on for sigma clipping
+        extract_data = data_plane[extract_region  ==1]
+        ext_mean, _, ext_stddev = stats.sigma_clipped_stats(extract_data,
+                                                                sigma=sigma_clip, maxiters = 5)
+        low = ext_mean - sigma_clip * ext_stddev
+        high = ext_mean + sigma_clip * ext_stddev
+
+        # set up the mask to flag data that should not be used
+        maskclip = np.logical_or(data_plane < low, data_plane > high) # flag outliers
+        extract_region[maskclip] = 0
+
+        sigma_clip_region[k] = np.sum(data_plane * extract_region * wmap[k,:,:])
+        n_bkg[k] = np.sum(wmap[k, :, :] * extract_region)
+
+    return sigma_clip_region, n_bkg

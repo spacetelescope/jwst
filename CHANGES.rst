@@ -1,5 +1,70 @@
-0.18.4 (unreleased)
-===================
+1.1.1 (unreleased)
+==================
+
+associations
+------------
+
+- Updated level2b WFSS rules to only consider exposures from the same
+  instrument channel when matching direct images with grism images in
+  NIRCam WFSS observations. [#5786]
+
+general
+-------
+
+- Update file naming conventions documentation to clarify when optional components will be used. [#5796]
+
+
+
+1.1.0 (2021-02-26)
+==================
+
+assign_wcs
+----------
+
+- Added spectral frames to the output WCS frame of TSO and WFSS observations. [#5771]
+
+associations
+------------
+
+- Ignore duplicate product names while handling Level 2 associations [#5780]
+
+- Constraint added to Asn_Lv3Coron to remove background exposures [#5781]
+
+extract_1d
+----------
+
+- Determine the background using sigma clipping of entire extended region for
+  extended source IFU data [#5743]
+
+resample
+--------
+
+- Make inverse variance ``weight_type="ivm"`` the default weighting scheme for
+  multiple exposures resampled into a single output. [#5738]
+
+
+1.0.0 (2021-02-22)
+==================
+
+assign_mtwcs
+------------
+
+- Fixed a bug which caused the step to fail with ``MultiSlitModel`` input. [#5758]
+
+assign_wcs
+----------
+
+- Added velocity aberration-corrected frame ``'v2v3vacorr'`` to the WCS
+  pipeline which takes into account DVA effects. [#5602]
+
+- Renamed MIRI frame ``'V2_V3_spatial'`` to ``'v2v3_spatial'`` and
+  ``'V2_V3_vacorr_spatial'`` to ``'v2v3vacorr_spatial'``. Added axes names
+  to the ``'v2v3'`` frame for ``nircam``, ``niriss``, ``miri``, and ``fgs``.
+  Renamed axes for ``nirspec`` from ``V2`` and ``V3`` to
+  ``v2`` and ``v3``. [#5765]
+
+- Changed units of the ``'v2v3'`` frame for ``nircam`` from ``u.deg`` to
+  ``u.arcsec`` [#5765]
 
 associations
 ------------
@@ -8,6 +73,23 @@ associations
 
 - Added new Lvl2 rule, Asn_Lv2NRSLAMPImage, to run Image2 pipeline for NRSLAMP
   exposures with OPMODE=image [#5740]
+
+
+combine_1d
+----------
+
+- Pull source_id from input x1d headers (from source_catalog) to populate
+  c1d output headers [#5759]
+
+cube_build
+----------
+
+- Added support for cross-dichroic configurations [#5722]
+
+- Added infrastructure to support NIRSpec opaque + grating options to build lamp mode data [#5757]
+
+- When building MIRI internal_cal type cubes removed the requirement that cdelt1=cdelt2 [#5757]
+
 
 datamodels
 ----------
@@ -25,6 +107,9 @@ datamodels
 
 - Added 'IMAGE' to OPMODE enum list [#5745]
 
+- Added source_id to combinedspec and multicombinedspec schemas to populate
+  combine1d output headers [#5759]
+
 extract_1d
 ----------
 
@@ -34,6 +119,12 @@ extract_1d
 
 - Fixed bug in background region fitting for image columns/rows that have zero weight
   for all pixels [#5696]
+
+group_scale
+-----------
+
+- Fix premature model closing in group_scale_step [#5692]
+
 
 lib
 ---
@@ -49,6 +140,27 @@ lib
   ``VA_RA`` and ``VA_DEC``. [#5666]
 
 - Make get_wcs_values_from_siaf public for JSDP use [#5669]
+
+
+outlier_detection
+-----------------
+
+- Remove hard-coded MRS outlier detection values now that a parameter reference
+  file exists. [#5753]
+
+photom
+------
+
+- Fixed handling of NIRSpec IFU extended source data, so that the flux
+  calibration gets converted to surface brightness [#5761]
+
+
+pipeline
+--------
+
+- Remove references to Numpy globals ``np.int``, ``np.float``, ``np.bool`` and
+  ``np.str`` in the package. [#5769]
+
 
 ramp_fitting
 ------------
@@ -71,11 +183,15 @@ srctype
 - Changed default SRCTYPE for non-primary NIRSpec slits in a FIXEDSLIT
   exposure to 'EXTENDED' rather than 'POINT' [#5671]
 
+- Changed logic for handling NIRSpec MOS exposures to blank out the "global"
+  value of SRCTYPE, to ensure that only the individual slit-specific values
+  of SRCTYPE get used downstream. [#5754]
+
 stpipe
 ------
 
 - Make jwst.stpipe independent of the rest of the jwst package and move
-  core code to spacetelescope/stpipe. [#5695, #5720]
+  core code to spacetelescope/stpipe. [#5695, #5720, #5752]
 
 0.18.3 (2021-01-25)
 ===================
@@ -227,6 +343,8 @@ assign_wcs
 
 associations
 ------------
+
+- Asn_Lv2WFSS: Add segmentation map exposure to Level2 WFSS associations [#5532]
 
 - Add new dither keyword subpxpts to constraints [#5525]
 

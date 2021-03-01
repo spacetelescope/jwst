@@ -33,6 +33,10 @@ class Extract1dStep(Step):
         If both `smoothing_length` and `bkg_order` are not None, the
         boxcar smoothing will be done first.
 
+    bkg_simga_clip : float
+        Background sigma clipping value to use on background to remove outliers
+        and maximize the quality of the 1d spectrum
+
     log_increment : int
         if `log_increment` is greater than 0 (the default is 50) and the
         input data are multi-integration (which can be CubeModel or
@@ -59,12 +63,14 @@ class Extract1dStep(Step):
     apply_apcorr : bool
         Switch to select whether or not to apply an APERTURE correction during
         the Extract1dStep. Default is True
+
     """
 
     spec = """
     smoothing_length = integer(default=None)  # background smoothing size
     bkg_fit = option("poly", "mean", "median", default="poly")  # background fitting type
     bkg_order = integer(default=None, min=0)  # order of background polynomial fit
+    bkg_sigma_clip = float(default=3.0)  # background sigma clipping threshold
     log_increment = integer(default=50)  # increment for multi-integration log messages
     subtract_background = boolean(default=None)  # subtract background?
     use_source_posn = boolean(default=None)  # use source coords to center extractions?
@@ -119,7 +125,6 @@ class Extract1dStep(Step):
             input_model.meta.cal_step.extract_1d = 'SKIPPED'
             return input_model
 
-
         #______________________________________________________________________
         # Do the extraction for ModelContainer - this might only be WFSS data
         if isinstance(input_model, datamodels.ModelContainer):
@@ -156,6 +161,7 @@ class Extract1dStep(Step):
                         self.smoothing_length,
                         self.bkg_fit,
                         self.bkg_order,
+                        self.bkg_sigma_clip,
                         self.log_increment,
                         self.subtract_background,
                         self.use_source_posn,
@@ -189,6 +195,7 @@ class Extract1dStep(Step):
                             self.smoothing_length,
                             self.bkg_fit,
                             self.bkg_order,
+                            self.bkg_sigma_clip,
                             self.log_increment,
                             self.subtract_background,
                             self.use_source_posn,
@@ -225,6 +232,7 @@ class Extract1dStep(Step):
                     self.smoothing_length,
                     self.bkg_fit,
                     self.bkg_order,
+                    self.bkg_sigma_clip,
                     self.log_increment,
                     self.subtract_background,
                     self.use_source_posn,
@@ -265,6 +273,7 @@ class Extract1dStep(Step):
                 self.smoothing_length,
                 self.bkg_fit,
                 self.bkg_order,
+                self.bkg_sigma_clip,
                 self.log_increment,
                 self.subtract_background,
                 self.use_source_posn,

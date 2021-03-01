@@ -6,7 +6,7 @@ from astropy import wcs as fitswcs
 from astropy.modeling import Model
 from astropy.modeling.models import Mapping
 from astropy import units as u
-from gwcs import WCS, wcstools
+import gwcs
 
 from jwst.assign_wcs.util import wcs_from_footprints, wcs_bbox_from_shape
 from jwst.datamodels.dqflags import interpret_bit_flags
@@ -72,7 +72,7 @@ def calc_gwcs_pixmap(in_wcs, out_wcs, shape=None):
         bb = in_wcs.bounding_box
         log.debug("Bounding box from WCS: {}".format(in_wcs.bounding_box))
 
-    grid = wcstools.grid_from_bounding_box(bb)
+    grid = gwcs.wcstools.grid_from_bounding_box(bb)
     pixmap = np.dstack(reproject(in_wcs, out_wcs)(grid[0], grid[1]))
 
     return pixmap
@@ -99,7 +99,7 @@ def reproject(wcs1, wcs2):
 
     if isinstance(wcs1, fitswcs.WCS):
         forward_transform = wcs1.all_pix2world
-    elif isinstance(wcs1, WCS):
+    elif isinstance(wcs1, gwcs.WCS):
         forward_transform = wcs1.forward_transform
     elif issubclass(wcs1, Model):
         forward_transform = wcs1
@@ -109,7 +109,7 @@ def reproject(wcs1, wcs2):
 
     if isinstance(wcs2, fitswcs.WCS):
         backward_transform = wcs2.all_world2pix
-    elif isinstance(wcs2, WCS):
+    elif isinstance(wcs2, gwcs.WCS):
         if not is_sky_like(wcs1.output_frame):
             # nirspec lamps: simplify backward transformation by omitting the msa_x (it's constant)
             # and just using the wavelength lookup table [1] and linear msa_y transformation [2]
@@ -140,32 +140,42 @@ def reproject(wcs1, wcs2):
 
 
 def build_driz_weight(model, weight_type=None, good_bits=None):
-    """ Create input weighting image
+    """Create a weight map for use by drizzle
     """
     dqmask = build_mask(model.dq, good_bits)
-    exptime = model.meta.exposure.exposure_time
 
-    if weight_type == 'error':
-        err_model = np.nan_to_num(model.err)
-        inwht = (exptime / err_model)**2 * dqmask
-        log.debug("DEBUG weight mask: {} {}".format(type(inwht), np.sum(inwht)))
-    # elif weight_type == 'ivm':
-    #     _inwht = img.buildIVMmask(chip._chip,dqarr,pix_ratio)
+    if weight_type == 'ivm':
+        if model.hasattr("var_rnoise"):
+            with np.errstate(divide="ignore", invalid="ignore"):
+                inv_variance = model.var_rnoise**-1
+            inv_variance[~np.isfinite(inv_variance)] = 1
+        else:
+            warnings.warn("var_rnoise array not available.  Setting drizzle weight map to 1",
+                RuntimeWarning)
+            inv_variance = 1.0
+        result = inv_variance * dqmask
     elif weight_type == 'exptime':
-        inwht = exptime * dqmask
+        exptime = model.meta.exposure.exposure_time
+        result = exptime * dqmask
     else:
-        inwht = np.ones(model.data.shape, dtype=model.data.dtype)
-    return inwht
+        warnings.warn("weight_type set to None.  Setting drizzle weight map to 1",
+            RuntimeWarning)
+        result = np.ones(model.data.shape, dtype=model.data.dtype)
+
+    return result.astype(np.float32)
 
 
 def build_mask(dqarr, bitvalue):
-    """ Builds a bit-mask from an input DQ array and a bitvalue flag
+    """Build a bit mask from an input DQ array and a bitvalue flag
+
+    In the returned bit mask, 1 is good, 0 is bad
     """
     bitvalue = interpret_bit_flags(bitvalue)
 
     if bitvalue is None:
         return (np.ones(dqarr.shape, dtype=np.uint8))
     return np.logical_not(np.bitwise_and(dqarr, ~bitvalue)).astype(np.uint8)
+
 
 def is_sky_like(frame):
     # Differentiate between sky-like and cartesian frames

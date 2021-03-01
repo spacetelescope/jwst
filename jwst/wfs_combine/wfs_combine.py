@@ -139,8 +139,8 @@ class DataSet:
             # 1. Create smoothed image of input SCI data of image #1
             # 1a. create image to smooth by first setting bad DQ pixels equal
             #     to mean of good pixels
-            data_1 = self.input_1.data.astype(np.float)
-            bad1 = np.bitwise_and(self.input_1.dq, DO_NOT_USE).astype(np.bool)
+            data_1 = self.input_1.data.astype(float)
+            bad1 = np.bitwise_and(self.input_1.dq, DO_NOT_USE).astype(bool)
             data_1[bad1] = data_1[~bad1].mean()
 
             # 1b. Create smoothed image by smoothing this 'repaired' image
@@ -314,17 +314,17 @@ class DataSet:
             combined ERR array
         """
 
-        data1 = image1.data.astype(np.float)
-        data2 = image2.data.astype(np.float)
+        data1 = image1.data.astype(float)
+        data2 = image2.data.astype(float)
         dq1 = image1.dq.copy()
         dq2 = image2.dq.copy()
         err1 = image1.err.copy()
         err2 = image2.err.copy()
 
         # Create boolean arrays of bad pixels in each input image
-        bad1 = np.bitwise_and(dq1, DO_NOT_USE).astype(np.bool)
+        bad1 = np.bitwise_and(dq1, DO_NOT_USE).astype(bool)
         good1 = ~bad1
-        bad2 = np.bitwise_and(dq2, DO_NOT_USE).astype(np.bool)
+        bad2 = np.bitwise_and(dq2, DO_NOT_USE).astype(bool)
         good2 = ~bad2
 
         # Combine via algorithm set out above

@@ -73,7 +73,7 @@ bc0 = new BuildConfig()
 bc0.nodetype = 'jwst'
 bc0.name = 'stable-deps'
 bc0.env_vars = env_vars
-bc0.conda_ver = '4.8.4'
+bc0.conda_ver = '4.9.2'
 bc0.conda_packages = [
     "python=${python_version}",
 ]
@@ -82,7 +82,6 @@ bc0.build_cmds = [
     "pip install -e .[test,ephem]",
     "pip install pytest-xdist pytest-sugar",
     "pip freeze",
-    'echo "CRDS_CONTEXT = $(crds list --contexts $CRDS_CONTEXT --mappings | grep pmap)"',
 ]
 bc0.build_cmds = PipInject(env.OVERRIDE_REQUIREMENTS) + bc0.build_cmds
 bc0.test_cmds = [
