@@ -68,7 +68,7 @@ properties:
     fits_keyword: SRCTYPE
     fits_hdu: SCI
   is_star:
-    title: Flag indicated whether the source is a star
+    title: Flag indicating whether the source is a star
     type: boolean
   source_xpos:
     title: Source position in slit (x-axis)
