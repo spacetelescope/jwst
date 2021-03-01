@@ -197,6 +197,12 @@ def ols_ramp_fit_multi(input_model, buffsize, save_opt, readnoise_2d, gain_2d,
                                             number_of_integrations, save_opt, total_cols, total_rows,
                                             max_segments, max_CRs)
 
+        '''
+        TODO: Handle this better.  Create classes to package up the data to make this more readable.
+              Refactor to the below comment.
+        out_model, int_model, opt_model, actual_segments, actual_CRs =\
+            osl_ramp_fit(input_model, buffsize, save_opt, readnoise_2d, gain_2d, weighting, int_times)
+        '''
         out_model.data, out_model.dq, out_model.var_poisson, out_model.var_rnoise, out_model.err,\
         int_data, int_dq, int_var_poisson, int_var_rnoise, int_err,\
         dummy, opt_slope, opt_sigslope, opt_var_poisson, opt_var_rnoise, \
