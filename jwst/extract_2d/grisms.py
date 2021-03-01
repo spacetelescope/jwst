@@ -476,9 +476,8 @@ def extract_grism_objects(input_model,
                 # The overall subarray offset is recorded in model.meta.subarray.
                 # nslit = obj.sid - 1  # catalog id starts at zero
                 new_slit.name = "{0}".format(obj.sid)
-                #new_slit.source_type = 'UNKNOWN'
                 if obj.is_star:
-                    new_slit.source_type = 'POINT'
+                    new_slit.is_star = True
                 else:
                     new_slit.source_type = 'EXTENDED'
                 new_slit.xstart = xmin + 1  # fits pixels

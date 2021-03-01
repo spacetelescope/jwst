@@ -156,6 +156,14 @@ def set_source_type(input_model):
         log.info(f'Input is a TSO exposure; setting default SRCTYPE = {src_type}')
         input_model.meta.target.source_type = src_type
 
+    # FOR NIR_WFSS check slit values of is_star to set SRCTYPE
+    elif exptype == 'NIS_WFSS':
+        for slit in input_model.slits:
+            if slit.is_star:
+                slit.source_type = 'POINT'
+            else:
+                slit.source_type = 'EXTENDED'
+
     # Unrecognized exposure type; set to UNKNOWN as default
     else:
         log.warning(f'EXP_TYPE {exptype} not applicable to this operation')
