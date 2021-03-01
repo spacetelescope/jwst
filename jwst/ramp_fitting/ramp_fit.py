@@ -33,6 +33,7 @@ log.setLevel(logging.DEBUG)
 DO_NOT_USE = dqflags.group['DO_NOT_USE']
 JUMP_DET = dqflags.group['JUMP_DET']
 SATURATED = dqflags.group['SATURATED']
+UNRELIABLE_SLOPE = dqflags.pixel['UNRELIABLE_SLOPE']
 
 BUFSIZE = 1024 * 300000  # 300Mb cache size for data section
 
@@ -1529,14 +1530,14 @@ def gls_fit_all_integrations(frame_time, gain_2d, gdq_cube,
                 # Replace negative or zero variances with a large value.
             slope_var_sect[v_mask] = utils.LARGE_VARIANCE
             # Also set a flag in the pixel dq array.
-            temp_dq[:, :][v_mask] = dqflags.pixel['UNRELIABLE_SLOPE']
+            temp_dq[:, :][v_mask] = UNRELIABLE_SLOPE
             del v_mask
             # If a pixel was flagged (by an earlier step) as saturated in
             # the first group, flag the pixel as bad.
             # Note:  save s_mask until after the call to utils.gls_pedestal.
         s_mask = (gdq_cube[0] == saturated_flag)
         if s_mask.any():
-            temp_dq[:, :][s_mask] = dqflags.pixel['UNRELIABLE_SLOPE']
+            temp_dq[:, :][s_mask] = UNRELIABLE_SLOPE
         slope_err_int[num_int, :, :] = np.sqrt(slope_var_sect)
 
             # We need to take a weighted average if (and only if) number_ints > 1.
@@ -1659,7 +1660,7 @@ def dq_compress_sect(gdq_sect, pixeldq_sect):
         dq array of data section updated with saturated and jump-detected flags
 
     """
-    sat_loc_r = np.bitwise_and(gdq_sect, dqflags.group['SATURATED'])
+    sat_loc_r = np.bitwise_and(gdq_sect, SATURATED)
     sat_loc_im = np.where(sat_loc_r.sum(axis=0) > 0)
     pixeldq_sect[sat_loc_im] = np.bitwise_or(pixeldq_sect[sat_loc_im], SATURATED)
 
