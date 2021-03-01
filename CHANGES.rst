@@ -11,12 +11,30 @@ associations
 - Removed PATTTYPE='None' constraint from Lv3MIRMRS association rule to
   generate spec3 associations for undithered MRS observations. [#5804]
 
+datamodels
+----------
+
+- Added is_star to slitmeta [#5788]
+
+extract_2d
+----------
+
+- For WFSS removed setting sorce_type to UNKNOWN, added setting is_star to slitmeta [#5788]
+
 general
 -------
 
 - Update file naming conventions documentation to clarify when optional components will be used. [#5796]
 
+srctype
+-------
 
+- Added section on NIS_WFSS setting srctype based on is_star value [#5788]
+
+transforms
+----------
+
+- Added is_star to GrismObject [#5788]
 
 1.1.0 (2021-02-26)
 ==================
