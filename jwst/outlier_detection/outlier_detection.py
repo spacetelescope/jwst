@@ -403,10 +403,8 @@ def flag_cr(sci_image, blot_image, **pars):
         # No subtracted background.  Allow user-set value, which defaults to 0
         subtracted_background = backg
 
-    exptime = sci_image.meta.exposure.exposure_time
-
-    sci_data = sci_image.data * exptime
-    blot_data = (blot_image.data + subtracted_background) * exptime
+    sci_data = sci_image.data
+    blot_data = (blot_image.data + subtracted_background)
     blot_deriv = abs_deriv(blot_data)
 
     err_data = np.nan_to_num(sci_image.err)
@@ -421,23 +419,33 @@ def flag_cr(sci_image, blot_image, **pars):
     #
     # Model the noise and create a CR mask
     diff_noise = np.abs(sci_data - blot_data)
-    ta = np.sqrt(np.abs(blot_data) + err_data ** 2)
-    t2 = scl1 * blot_deriv + snr1 * ta
-    tmp1 = np.logical_not(np.greater(diff_noise, t2))
 
-    # Convolve mask with 3x3 kernel
-    kernel = np.ones((3, 3), dtype=np.uint8)
-    tmp2 = np.zeros(tmp1.shape, dtype=np.int32)
-    ndimage.convolve(tmp1, kernel, output=tmp2, mode='nearest', cval=0)
-    #
-    #
-    #    COMPUTATION PART II
-    #
-    #
-    # Create a second CR Mask
-    xt2 = scl2 * blot_deriv + snr2 * ta
 
-    np.logical_not(np.greater(diff_noise, xt2) & np.less(tmp2, 9), cr_mask)
+    if pars.get('resample_data', True):
+
+        # ta = np.sqrt(np.abs(blot_data) + err_data ** 2)
+        # t2 = scl1 * blot_deriv + snr1 * ta
+        t2 = scl1 * blot_deriv + snr1 * err_data
+        tmp1 = np.logical_not(np.greater(diff_noise, t2))
+
+        # Convolve mask with 3x3 kernel
+        kernel = np.ones((3, 3), dtype=np.uint8)
+        tmp2 = np.zeros(tmp1.shape, dtype=np.int32)
+        ndimage.convolve(tmp1, kernel, output=tmp2, mode='nearest', cval=0)
+        #
+        #
+        #    COMPUTATION PART II
+        #
+        #
+        # Create a second CR Mask
+        xt2 = scl2 * blot_deriv + snr2 * err_data
+
+        np.logical_not(np.greater(diff_noise, xt2) & np.less(tmp2, 9), cr_mask)
+
+    else:
+        t2 = snr1 * err_data
+
+        cr_mask = np.logical_not(np.greater(diff_noise - subtracted_background, t2))
 
     #
     #
@@ -501,7 +509,6 @@ def flag_cr(sci_image, blot_image, **pars):
 
     # Update the DQ array in the input image.
     sci_image.dq = np.bitwise_or(sci_image.dq, np.invert(cr_mask) * CRBIT)
-
 
 def abs_deriv(array):
     """Take the absolute derivate of a numpy array."""

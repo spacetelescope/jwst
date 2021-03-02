@@ -173,3 +173,25 @@ def test_outlier_step(we_three_sci):
 
     # Verify CR is flagged
     assert result[0].dq[12, 12] == OUTLIER_DO_NOT_USE
+
+
+def test_outlier_step_square_source_no_outliers(we_three_sci):
+    """Test whole step with square source with sharp edges, no outliers"""
+    container = datamodels.ModelContainer(list(we_three_sci))
+
+    # put a square source in all three exposures
+    for ccont in container:
+        ccont.data[5:15, 5:15] += 1e3
+
+    pristine = container.copy()
+    result = OutlierDetectionStep.call(container)
+
+    # Make sure nothing changed in SCI and DQ arrays
+    for image, uncorrected in zip(pristine, container):
+        np.testing.assert_allclose(image.data, uncorrected.data)
+        np.testing.assert_allclose(image.dq, uncorrected.dq)
+
+    # Make sure nothing changed in SCI and DQ arrays
+    for image, corrected in zip(container, result):
+        np.testing.assert_allclose(image.data, corrected.data)
+        np.testing.assert_allclose(image.dq, corrected.dq)
