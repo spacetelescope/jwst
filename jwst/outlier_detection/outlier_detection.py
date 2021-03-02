@@ -423,9 +423,9 @@ def flag_cr(sci_image, blot_image, **pars):
 
     if pars.get('resample_data', True):
 
-        # ta = np.sqrt(np.abs(blot_data) + err_data ** 2)
-        # t2 = scl1 * blot_deriv + snr1 * ta
-        t2 = scl1 * blot_deriv + snr1 * err_data
+        ta = np.sqrt(np.abs(blot_data) + err_data ** 2)
+        t2 = scl1 * blot_deriv + snr1 * ta
+        # t2 = scl1 * blot_deriv + snr1 * err_data
         tmp1 = np.logical_not(np.greater(diff_noise, t2))
 
         # Convolve mask with 3x3 kernel
