@@ -1111,11 +1111,11 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
     del s_inv_var_r3
 
     # Create new model for the primary output.
-    new_model = datamodels.ImageModel(data=c_rates.astype(np.float32),
-                                      dq=final_pixeldq.astype(np.uint32),
-                                      var_poisson=var_p2.astype(np.float32),
-                                      var_rnoise=var_r2.astype(np.float32),
-                                      err=err_tot.astype(np.float32))
+    new_model = datamodels.ImageModel(data = c_rates.astype(np.float32),
+                                      dq = final_pixeldq.astype(np.uint32),
+                                      var_poisson = var_p2.astype(np.float32),
+                                      var_rnoise = var_r2.astype(np.float32),
+                                      err = err_tot.astype(np.float32))
 
     if int_model is not None:
         int_data = int_model.data.copy()
@@ -1299,7 +1299,7 @@ def gls_ramp_fit(input_model, buffsize, save_opt, readnoise_model, gain_model, m
             err_slice = input_model.err[:, :, start_row: stop_row, :].copy()
             groupdq_slice = input_model.groupdq[:, :, start_row: stop_row, :].copy()
             pixeldq_slice = pixeldq[start_row: stop_row, :].copy()
-            slices.insert(i, 
+            slices.insert(i,
                           (frame_time, gain_slice, groupdq_slice, group_time,
                            jump_flag, max_num_cr, data_slice, err_slice, frames_per_group, pixeldq_slice,
                            readnoise_slice, saturated_flag, save_opt))
@@ -1311,7 +1311,7 @@ def gls_ramp_fit(input_model, buffsize, save_opt, readnoise_model, gain_model, m
         err_slice = input_model.err[:, :, start_row: total_rows, :].copy()
         groupdq_slice = input_model.groupdq[:, :, start_row: total_rows, :].copy()
         pixeldq_slice = input_model.pixeldq[start_row: total_rows, :].copy()
-        slices.insert(number_slices - 1, 
+        slices.insert(number_slices - 1,
                       (frame_time, gain_slice, groupdq_slice, group_time,
                        jump_flag, max_num_cr, data_slice, err_slice, frames_per_group, pixeldq_slice,
                        readnoise_slice, saturated_flag, save_opt))
@@ -1422,7 +1422,7 @@ def gls_ramp_fit(input_model, buffsize, save_opt, readnoise_model, gain_model, m
     return new_model, int_model, gls_opt_model
 
 def gls_fit_all_integrations(
-        frame_time, gain_2d, gdq_cube, group_time, jump_flag, max_num_cr, data_sect, 
+        frame_time, gain_2d, gdq_cube, group_time, jump_flag, max_num_cr, data_sect,
         input_var_sect, nframes_used, pixeldq, readnoise_2d, saturated_flag, save_opt):
     """
     This method will fit the rate for all pixels and all integrations using the Generalized Least
@@ -2105,7 +2105,7 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
                 inv_var[g_pix] += 1.0 / variance[g_pix]
 
                 # Append results to arrays
-                opt_res.append_arr(num_seg, g_pix, intercept, slope, sig_intercept, 
+                opt_res.append_arr(num_seg, g_pix, intercept, slope, sig_intercept,
                                    sig_slope, inv_var, save_opt)
 
                 num_seg[g_pix] = 1
