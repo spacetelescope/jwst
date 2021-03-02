@@ -54,6 +54,16 @@ SIFOV2V_DEFAULT = np.array(
      [-0.00226892608, 0., 0.99999742598]]
 )
 
+MX2Z = np.array(
+        [[0, 1, 0],
+         [0, 0, 1],
+         [1, 0, 0]]
+    )
+MZ2X = np.array(
+        [[0, 0, 1],
+         [1, 0, 0],
+         [0, 1, 0]]
+    )
 
 # Degree, radian, angle transformations
 R2D = 180. / np.pi
@@ -792,7 +802,7 @@ def calc_transforms_original(pointing, siaf, fsmcorr_version='latest', fsmcorr_u
     )
 
     # Calculate the FGS1 ICS to SI-FOV matrix
-    m_fgs12sifov = calc_fgs1_to_sifov_mastrix()
+    m_fgs12sifov = calc_fgs1_to_sifov_matrix()
 
     # Calculate SI FOV to V1 matrix
     m_sifov2v = calc_sifov2v_matrix()
@@ -801,10 +811,10 @@ def calc_transforms_original(pointing, siaf, fsmcorr_version='latest', fsmcorr_u
     m_eci2sifov = np.dot(
         m_sifov_fsm_delta,
         np.dot(
-            m_fgs12sifov,
+            MZ2X,
             np.dot(
-                m_j2fgs1,
-                m_eci2j
+                m_fgs12sifov,
+                np.dot(m_j2fgs1, m_eci2j)
             )
         )
     )
@@ -1068,20 +1078,13 @@ def calc_sifov_fsm_delta_matrix(fsmcorr, fsmcorr_version='latest', fsmcorr_units
     return transform
 
 
-def calc_fgs1_to_sifov_mastrix():
+def calc_fgs1_to_sifov_matrix():
     """
-    Calculate the FGS! to SI-FOV matrix
+    Calculate the FGS1 to SI-FOV matrix
 
     Currently, this is a defined matrix
     """
-    m_partial = np.array(
-        [[0, 0, 1],
-         [1, 0, 0],
-         [0, 1, 0]]
-    )
-
-    transform = np.dot(m_partial, FGS12SIFOV_DEFAULT)
-    return transform
+    return FGS12SIFOV_DEFAULT
 
 
 def calc_sifov2v_matrix():
