@@ -28,6 +28,7 @@ logger.addHandler(logging.NullHandler())
 # The available methods for transformation
 class Methods(Enum):
     ORIGINAL = auto()   # Original, pre-JSOCINT-555 algorithm
+    CMDTEST = auto()    # The JSOCINT-555 fix to test
 
     DEFAULT = ORIGINAL  # Use original algorithm if not specified
 
@@ -736,6 +737,8 @@ def calc_transforms(pointing, siaf, method=None, **transform_kwargs):
 
     if method == Methods.ORIGINAL.name:
         transforms = calc_transforms_original(pointing, siaf, **transform_kwargs)
+    elif method == Methods.CMDTEST.name:
+        transforms = calc_transforms_cmdtest(pointing, siaf, **transform_kwargs)
     else:
         raise RuntimeError(
             f'Specified method "{method}" not in available methods '
@@ -785,6 +788,7 @@ def calc_transforms_original(pointing, siaf, fsmcorr_version='latest', fsmcorr_u
             M_v1_to_siaf      *   # V1 to SIAF
             M_sifov_to_v1     *   # Science Instruments Aperture to V1
             M_sifov_fsm_delta *   # Fine Steering Mirror correction
+            M_z_to_x          *   # Transposition
             M_fgs1_to_sifov   *   # FGS1 to Science Instruments Aperture
             M_j_to_fgs1       *   # J-Frame to FGS1
             M_eci_to_j        *   # ECI to J-Frame
@@ -812,6 +816,106 @@ def calc_transforms_original(pointing, siaf, fsmcorr_version='latest', fsmcorr_u
         m_sifov_fsm_delta,
         np.dot(
             MZ2X,
+            np.dot(
+                m_fgs12sifov,
+                np.dot(m_j2fgs1, m_eci2j)
+            )
+        )
+    )
+
+    # Calculate the complete transform to the V1 reference
+    m_eci2v = np.dot(
+        m_sifov2v,
+        m_eci2sifov
+    )
+
+    # Calculate the SIAF transform matrix
+    m_v2siaf = calc_v2siaf_matrix(siaf)
+
+    # Calculate the full ECI to SIAF transform matrix
+    m_eci2siaf = np.dot(
+        m_v2siaf,
+        m_eci2v
+    )
+
+    tforms = Transforms(m_eci2j=m_eci2j, m_j2fgs1=m_j2fgs1, m_sifov_fsm_delta=m_sifov_fsm_delta,
+                        m_fgs12sifov=m_fgs12sifov, m_eci2sifov=m_eci2sifov, m_sifov2v=m_sifov2v,
+                        m_eci2v=m_eci2v, m_v2siaf=m_v2siaf, m_eci2siaf=m_eci2siaf
+                        )
+    return tforms
+
+
+def calc_transforms_cmdtest(pointing, siaf, fsmcorr_version='latest', fsmcorr_units='arcsec', j2fgs_transpose=True):
+    """Calculate transforms from pointing to SIAF using the JSOCINT-555 fix
+
+    Given the spacecraft pointing parameters and the
+    aperture-specific SIAF, calculate all the transforms
+    necessary to produce WCS information. This is using a modified
+    algorithm to fix a documentation error and to override a shift
+    being introduced by the OTB simulator.
+
+    Parameters
+    ----------
+    pointing : Pointing
+        Observatory pointing information
+
+    siaf : SIAF
+        Aperture information
+
+    fsmcorr_version : str
+        The version of the FSM correction calculation to use.
+        See :ref:`calc_sifov_fsm_delta_matrix`
+
+    fsmcorr_units : str
+        Units of the FSM correction values. Default is 'arcsec'.
+        See :ref:`calc_sifov_fsm_delta_matrix`
+
+    j2fgs_transpose : bool
+        Transpose the `j2fgs1` matrix.
+
+    Returns
+    -------
+    transforms: Transforms
+        The list of coordinate matrix transformations
+
+    Notes
+    -----
+    The matrix transform pipeline to convert from ECI J2000 observatory
+    qauternion pointing to aperture ra/dec/roll information
+    is given by the following formula. Each term is a 3x3 matrix:
+
+        M_eci_to_siaf =           # The complete transformation
+            M_v1_to_siaf      *   # V1 to SIAF
+            M_sifov_to_v1     *   # Science Instruments Aperture to V1
+            M_z_to_x          *   # Transposition
+            M_sifov_fsm_delta *   # Fine Steering Mirror correction
+            M_fgs1_to_sifov   *   # FGS1 to Science Instruments Aperture
+            M_j_to_fgs1       *   # J-Frame to FGS1
+            M_eci_to_j        *   # ECI to J-Frame
+    """
+
+    # Determine the ECI to J-frame matrix
+    m_eci2j = calc_eci2j_matrix(pointing.q)
+
+    # Calculate the J-frame to FGS! ICS matrix
+    m_j2fgs1 = calc_j2fgs1_matrix(pointing.j2fgs_matrix, transpose=j2fgs_transpose)
+
+    # Calculate the FSM corrections to the SI_FOV frame
+    m_sifov_fsm_delta = calc_sifov_fsm_delta_matrix(
+        pointing.fsmcorr, fsmcorr_version=fsmcorr_version, fsmcorr_units=fsmcorr_units
+    )
+
+    # Calculate the FGS1 ICS to SI-FOV matrix
+    m_fgs12sifov = calc_fgs1_to_sifov_matrix()
+
+    # Calculate SI FOV to V1 matrix
+    m_sifov2v = calc_sifov2v_matrix()
+
+    # Calculate ECI to SI FOV
+    m_eci2sifov = np.dot(
+        MZ2X,
+        np.dot(
+            m_sifov_fsm_delta,
             np.dot(
                 m_fgs12sifov,
                 np.dot(m_j2fgs1, m_eci2j)
