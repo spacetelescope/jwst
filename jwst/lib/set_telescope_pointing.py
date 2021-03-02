@@ -884,14 +884,13 @@ def calc_transforms_cmdtest(pointing, siaf, fsmcorr_version='latest', fsmcorr_un
     qauternion pointing to aperture ra/dec/roll information
     is given by the following formula. Each term is a 3x3 matrix:
 
-        M_eci_to_siaf =           # The complete transformation
-            M_v1_to_siaf      *   # V1 to SIAF
-            M_sifov_to_v1     *   # Science Instruments Aperture to V1
-            M_z_to_x          *   # Transposition
-            M_sifov_fsm_delta *   # Fine Steering Mirror correction
-            M_fgs1_to_sifov   *   # FGS1 to Science Instruments Aperture
-            M_j_to_fgs1       *   # J-Frame to FGS1
-            M_eci_to_j        *   # ECI to J-Frame
+        M_eci_to_siaf =                    # The complete transformation
+            M_v1_to_siaf               *   # V1 to SIAF
+            M_sifov_to_v1              *   # Science Instruments Aperture to V1
+            M_z_to_x                   *   # Transposition
+            M_sifov_fsm_delta          *   # Fine Steering Mirror correction
+            M_fgs1_to_sifov_fgs1siaf   *   # FGS1 to Science Instruments Aperture
+            M_eci_to_fgs1_commanded        # ECI to FGS1 using commanded information
     """
 
     # Determine the ECI to J-frame matrix
@@ -906,7 +905,7 @@ def calc_transforms_cmdtest(pointing, siaf, fsmcorr_version='latest', fsmcorr_un
     )
 
     # Calculate the FGS1 ICS to SI-FOV matrix
-    m_fgs12sifov = calc_fgs1_to_sifov_matrix()
+    m_fgs12sifov = calc_fgs1_to_sifov_fgs1siaf_matrix(siaf)
 
     # Calculate SI FOV to V1 matrix
     m_sifov2v = calc_sifov2v_matrix()
@@ -1189,6 +1188,33 @@ def calc_fgs1_to_sifov_matrix():
     Currently, this is a defined matrix
     """
     return FGS12SIFOV_DEFAULT
+
+
+def calc_fgs1_to_sifov_fgs1siaf_matrix(siaf_path=None, useafter=None):
+    """
+    Calculate the FGS1 to SI-FOV matrix
+
+    Based on algorithm determined in JSOCINT-555 for a more
+    accurate determination of the matrix using the SIAF
+    """
+    try:
+        fgs1_siaf = get_wcs_values_from_siaf('FGS1_FULL_OSS', useafter, siaf_path)
+    except (KeyError, OSError, TypeError) as exception:
+        logger.warning('Cannot read a SIAF database. Using the default FGS1_to_SIFOV matrix')
+        return calc_fgs1_to_sifov_matrix()
+
+    v2 = fgs1_siaf.v2_ref
+    v3 = fgs1_siaf.v3_ref + 7.8 * 60.0
+    y = fgs1_siaf.v3yangle
+
+    m = np.array([
+        [cos(v2) * cos(y) + sin(v2) * sin(v3) * sin(y), cos(v2) * sin(y) - sin(v2) * sin(v3) * cos(y), sin(v2) * cos(v3)],
+        [-cos(v3) * sin(y), cos(v3) * cos(y), sin(v3)],
+        [-sin(v2) * cos(y) + cos(v2) * sin(v3) * sin(y), -sin(v2) * sin(y) - cos(v2) * sin(v3) * cos(y), cos(v2) * cos(v3)]
+    ])
+    logger.debug(f'FGS1_to_SIFOV from siaf is {m}')
+
+    return m
 
 
 def calc_sifov2v_matrix():
