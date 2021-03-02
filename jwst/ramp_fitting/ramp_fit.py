@@ -431,12 +431,16 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
 
     Parameters
     ----------
-    data : The input 4-D array with ramp data (num_integrations, num_groups, num_rows, num_cols)
+    data : ndarray
+        The input 4-D array with ramp data (num_integrations, num_groups, num_rows, num_cols)
         The input ramp data
-    err : The input 4-D error that matches the ramp data
-    groupdq : The input 4-D group DQ flags
-    inpixeldq : The input 2-D pixel DQ flags
-    buffsize : int (unused, only logged)
+    err : ndarray 
+        The input 4-D error that matches the ramp data
+    groupdq : ndarray
+        The input 4-D group DQ flags
+    inpixeldq : ndarray
+        The input 2-D pixel DQ flags
+    buffsize : int
         The working buffer size
     save_opt : Boolean
             Whether to return the optional output model
@@ -534,7 +538,12 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
     #   the input model arrays will be resized appropriately. If all pixels in
     #   all groups are flagged, return None for the models.
     if (instrume == 'MIRI' and nreads > 1):
-        miri_ans = ramp_fit_miri_multigroups(data, err, groupdq, cubeshape, imshape, nreads, ngroups)
+
+        # The function could return None if the removed groups leaves no data to be 
+        # processed.  If this is the case, return None for all expected variables 
+        # returned by ramp_fit
+        miri_ans = ramp_fit_miri_multigroups(data, err, groupdq, cubeshape, 
+                                             imshape, nreads, ngroups)
         if miri_ans is None:
             return None * 22
         data, err, groupdq, cubeshape, imshape, nreads, ngroups, first_gdq = miri_ans
@@ -641,26 +650,54 @@ def ramp_fit_miri_multigroups(data, err, groupdq, cubeshape, imshape, nreads, ng
 
     Parameters
     ----------
-    data: 4-D image cube with dimensions (integrations, groups, rows, columns)
-    err: Error array
-    groupdq: GroupDQ array
-    cubeshape: Image cube dimensions per integration
-    imshape: Image shape per group
-    nreads: Number of reads
-    ngroups: Number of groups
+    data: ndarray
+        4-D image cube with dimensions (integrations, groups, rows, columns)
+
+    err: ndarray
+        Error array
+
+    groupdq: ndarray
+        GroupDQ array
+
+    cubeshape: tuple
+        Image cube dimensions per integration
+
+    imshape: tuple
+        Image shape per group
+
+    nreads: int
+        Number of reads
+
+    ngroups: int
+        Number of groups
 
     Returns
     -------
     None: if no data to process after discarding unusable data.
 
-    data: 4-D image cube with dimensions (integrations, groups, rows, columns)
-    err: Error array
-    groupdq: GroupDQ array
-    cubeshape: Image cube dimensions per integration
-    imshape: Image shape per group
-    nreads: Number of reads
-    ngroups: Number of groups
-    first_gdq: First groups in the GroupDQ array
+    data: ndarray
+        4-D image cube with dimensions (integrations, groups, rows, columns)
+
+    err: ndarray
+        Error array
+
+    groupdq: ndarray
+        GroupDQ array
+
+    cubeshape: tuple
+        Image cube dimensions per integration
+
+    imshape: tuple
+        Image shape per group
+
+    nreads: int
+        Number of reads
+
+    ngroups: int
+        Number of groups
+
+    first_gdq: ndarray
+        First groups in the GroupDQ array
     """
     first_gdq = groupdq[:,0,:,:]
     num_bad_slices = 0 # number of initial groups that are all DO_NOT_USE
@@ -736,37 +773,57 @@ def ramp_fit_first_pass(
     requested. Note 'nframes' is the number of given by the NFRAMES keyword, and is the
     number of frames averaged on-board for a group, i.e., it does not include the groupgap.
 
-    HERE
     Parameter
     ---------
     n_int : int
         Number of integrations
+
     nrows : int
         Number of rows in the 2-D image
-    data : 4-D image cube with dimensions (integrations, groups, rows, columns)
-    groupdq : GroupDQ array
-    inpixeldq : The input 2-D pixel DQ flags
-    cubeshape : Image cube dimensions per integration
-    imshape : Image shape per group
+
+    data : ndarray
+        4-D image cube with dimensions (integrations, groups, rows, columns)
+
+    groupdq : ndarray
+        GroupDQ array
+
+    inpixeldq : ndarray
+        The input 2-D pixel DQ flags
+
+    cubeshape : tuple
+        Image cube dimensions per integration
+
+    imshape : tuple
+        Image shape per group
 
     gain_2d : instance of gain model
         gain for all pixels
+
     readnoise_2d : instance of data Model
         readnoise for all pixels
+
     save_opt : boolean
        calculate optional fitting results
+
     group_time : float32
         The time to read one group.
+
     weighting : string
         'optimal' specifies that optimal weighting should be used;
          currently the only weighting supported.
-    groupdq : The input 4-D group DQ flags
+
+    groupdq : ndarray
+        The input 4-D group DQ flags
+
     nreads : int
         Number of reads
+
     nframes : int
         The number of frames that are included in the group average
+
     groupgap : int
         The number of frames that are not included in the group average
+
     frame_time : float32
         The time to read one frame
 
@@ -774,24 +831,40 @@ def ramp_fit_first_pass(
     ------
     max_seg : int
         Maximum possible number of segments over all groups and segments
-    gdq_cube_shape : Group DQ dimensions
-    effintim : Effective integration time
+
+    gdq_cube_shape : ndarray
+        Group DQ dimensions
+
+    effintim : float
+        effective integration time for a single group
+
     f_max_seg : int
         Actual maximum number of segments over all groups and segments
-    dq_int : 3-D DQ flag
+
+    dq_int : ndarray
         The pixel dq for each integration for each pixel
-    sum_weight : 2-D float32
+
+    sum_weight : ndarray 
+        The sum of the weights for each pixel
+
     num_seg_per_int : integer, 3D array
         Cube of numbers of segments for all integrations and pixels
+
     sat_0th_group_int : uint8, 3D array
         Integration-specific slice whose value for a pixel is 1 if the initial
         group of the ramp is saturated
+
     opt_res : OptRes
         Object to hold optional results for all good pixels.
-    pixeldq : The input 2-D pixel DQ flags
+
+    pixeldq : ndarray
+        The input 2-D pixel DQ flags
+
     inv_var : float, 1D array
         values of 1/variance for good pixels
-    med_rates : Rate array
+
+    med_rates : ndarray
+        Rate array
     """
 
     effintim = (nframes + groupgap) * frame_time
@@ -1011,37 +1084,68 @@ def ramp_fit_second_pass(
     ----------
     n_int : int
         Number of integrations
+
     nrows : int
         Number of rows in image
-    groupdq : The input 4-D group DQ flags
+
+    groupdq : ndarray
+        The input 4-D group DQ flags
+
     cubeshape : (int, int, int) tuple
        Shape of input dataset
+
     imshape : (int, int)
        Shape of image
+
     gain_2d : instance of gain model
         gain for all pixels
+
     readnoise_2d : 2-D float32
         The read noise for each pixel
+
     group_time : float32
         The time to read one group
+
     max_seg : int
         Maximum possible number of segments over all groups and segments
-    med_rates : Rate array
+
+    med_rates : ndarray
+        Rate array
+
     num_seg_per_int : integer, 3D array
         Cube of numbers of segments for all integrations and pixels
 
     Return
     ------
-    var_p3 : 3-D variance based on Poisson noise
-    var_r3 : 3-D variance based on read noise
-    var_p4 : 4-D variance based on Poisson noise
-    var_r4 : 4-D variance based on read noise
-    var_both4 : 4-D array for combined variance due to both Poisson and read noise
-    var_both3 : 3-D array for combined variance due to both Poisson and read noise
-    inv_var_both4 : 1 / var_both4
-    s_inv_var_p3 : 1 / var_p3, summed over integrations
-    s_inv_var_r3 : 1 / var_r3, summed over integrations
-    s_inv_var_both3 : 1 / var_both3, summed over integrations
+    var_p3 : ndarray
+        3-D variance based on Poisson noise
+
+    var_r3 : ndarray
+        3-D variance based on read noise
+
+    var_p4 : ndarray
+        4-D variance based on Poisson noise
+
+    var_r4 : ndarray
+        4-D variance based on read noise
+
+    var_both4 : ndarray
+        4-D array for combined variance due to both Poisson and read noise
+
+    var_both3 : ndarray
+        3-D array for combined variance due to both Poisson and read noise
+
+    inv_var_both4 : ndarray
+        1 / var_both4
+
+    s_inv_var_p3 : ndarray
+        1 / var_p3, summed over integrations
+
+    s_inv_var_r3 : ndarray
+        1 / var_r3, summed over integrations
+
+    s_inv_var_both3 : ndarray
+        1 / var_both3, summed over integrations
     """
 
     (var_p3, var_r3, var_p4, var_r4, var_both4, var_both3,
@@ -1181,41 +1285,61 @@ def ramp_fit_overall_slopes_and_variances(
     ---------
     n_int : int
         Number of integrations
+
     nrows : int
         Number of rows in image
+
     ncols : int
         Number of columns in image
+
     imshape : (int, int)
        Shape of image
+
     orig_cubeshape : (int, int, int) tuple
        Original shape of input dataset
+
     orig_nreads : int
        Original number of reads
+
     buffsize : int
         Size of data section (buffer) in bytes
-    groupdq : The input 4-D group DQ flags
+
+    groupdq : ndarray
+        The input 4-D group DQ flags
+
     first_pass_ans : tuple
         Return values from ramp_fit_first_pass
+
     second_pass_ans : tuple
         Return values from ramp_fit_second_pass
+
     opt_res : OptRes object
         Contains all quantities derived from fitting all segments in all
         pixels in all integrations, which will eventually be used to compute
         per-integration and per-exposure quantities for all pixels. It's
         also used to populate the optional product, when requested.
+
     save_opt : boolean
         Calculate optional fitting results.
-    int_times
+
+    int_times : bintable, or None
+        The INT_TIMES table, if it exists in the input, else None
+
     instrume : string
         Instrument name.
-    tstart :
+
+    tstart : float
         Start time.
+
     nframes : int
         Number of frames.
+
     nreads : int
         Number of reads.
+
     groupgap : int
         The number of frames that are not included in the group average.
+
     dropframes1 : int
         The number of frames dropped at the beginning of every integration.
 
@@ -1223,8 +1347,10 @@ def ramp_fit_overall_slopes_and_variances(
     Return
     ------
     new_model : ImageModel
-    int_model :
+
+    int_model : Data model object
         Integration-specific results to separate output file
+
     opt_model : OptRes
     """
 
@@ -1480,7 +1606,7 @@ def gls_ramp_fit(input_model, buffsize, save_opt,
     #   is the number of given by the NFRAMES keyword, and is the number of
     #   frames averaged on-board for a group, i.e., it does not include the
     #   groupgap.
-    effintim, nframes, groupgap, dropframes1= utils.get_efftim_ped(input_model)
+    effintim, nframes, groupgap, dropframes1 = utils.get_efftim_ped(input_model)
 
     if number_slices ==1:
         rows_per_slice = total_rows
