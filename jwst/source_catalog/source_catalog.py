@@ -297,15 +297,6 @@ class Background:
         """
         Estimate the 2D background and background RMS noise in an image.
 
-        Parameters
-        ----------
-        box_size : int or array_like (int)
-            The box size along each axis.  If ``box_size`` is a scalar then
-            a square box of size ``box_size`` will be used.  If ``box_size``
-            has two elements, they should be in ``(ny, nx)`` order.
-
-        coverage_mask : bool ndarray
-
         Returns
         -------
         background : `photutils.background.Background2D`
@@ -1200,20 +1191,6 @@ class SourceCatalog:
         return np.where(np.isnan(nn_abmag), nn_isomag, nn_abmag)
 
     @lazyproperty
-    def _not_star(self):
-        """
-        Whether the source is not a star.
-        """
-        if np.isnan(self.is_star[0]):
-            # TODO: remove this when ``is_star`` values are available.
-            # this array is all False:
-            is_star = np.zeros(len(self.id), dtype=bool)
-        else:
-            is_star = self.is_star
-
-        return np.logical_not(is_star)
-
-    @lazyproperty
     def aper_total_flux(self):
         """
         The aperture-corrected total flux for sources that are stars,
@@ -1222,8 +1199,7 @@ class SourceCatalog:
         idx = self.n_aper - 1  # apcorr for the largest EE (largest radius)
         flux = (self.aperture_params['aperture_corrections'][idx] *
                 getattr(self, self.aperture_flux_colnames[idx*2]))
-        flux[self._not_star] = np.nan
-
+        flux[~self.is_star] = np.nan
         return flux
 
     @lazyproperty
@@ -1235,8 +1211,7 @@ class SourceCatalog:
         idx = self.n_aper - 1  # apcorr for the largest EE (largest radius)
         flux_err = (self.aperture_params['aperture_corrections'][idx] *
                     getattr(self, self.aperture_flux_colnames[idx*2 + 1]))
-        flux_err[self._not_star] = np.nan
-
+        flux_err[~self.is_star] = np.nan
         return flux_err
 
     @lazyproperty
