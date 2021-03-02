@@ -374,7 +374,52 @@ def test_add_wcs_with_db(eng_db_ngas, data_file, siaf_file=siaf_db):
         )
 
 
-@pytest.mark.skipif(sys.version_info.major < 3,
+
+@pytest.mark.skipif(sys.version_info.major<3,
+                    reason="No URI support in sqlite3")
+def test_add_wcs_method_original(eng_db_ngas, data_file, siaf_file=siaf_db):
+    """Test using the database and the original, pre-JSOCINT-555 algorithms"""
+    stp.add_wcs(data_file, siaf_path=siaf_db, method='original', j2fgs_transpose=False)
+
+    with datamodels.Level1bModel(data_file) as model:
+        assert np.isclose(model.meta.pointing.ra_v1, 348.9278669)
+        assert np.isclose(model.meta.pointing.dec_v1, -38.749239)
+        assert np.isclose(model.meta.pointing.pa_v3, 50.1767077)
+        assert model.meta.wcsinfo.wcsaxes == 2
+        assert model.meta.wcsinfo.crpix1 == 693.5
+        assert model.meta.wcsinfo.crpix2 == 512.5
+        assert np.isclose(model.meta.wcsinfo.crval1, 348.8776709)
+        assert np.isclose(model.meta.wcsinfo.crval2, -38.854159)
+        assert model.meta.wcsinfo.ctype1 == "RA---TAN"
+        assert model.meta.wcsinfo.ctype2 == "DEC--TAN"
+        assert model.meta.wcsinfo.cunit1 == 'deg'
+        assert model.meta.wcsinfo.cunit2 == 'deg'
+        assert np.isclose(model.meta.wcsinfo.cdelt1, 3.0555555e-5)
+        assert np.isclose(model.meta.wcsinfo.cdelt2, 3.0555555e-5)
+        assert np.isclose(model.meta.wcsinfo.pc1_1, 0.03853303979862607)
+        assert np.isclose(model.meta.wcsinfo.pc1_2, 0.9992573266400789)
+        assert np.isclose(model.meta.wcsinfo.pc2_1, 0.9992573266400789)
+        assert np.isclose(model.meta.wcsinfo.pc2_2, -0.03853303979862607)
+        assert model.meta.wcsinfo.v2_ref == 200.0
+        assert model.meta.wcsinfo.v3_ref == -350.0
+        assert model.meta.wcsinfo.vparity == -1
+        assert model.meta.wcsinfo.v3yangle == 42.0
+        assert np.isclose(model.meta.wcsinfo.ra_ref, 348.8776709)
+        assert np.isclose(model.meta.wcsinfo.dec_ref, -38.854159)
+        assert np.isclose(model.meta.wcsinfo.roll_ref, 50.20832726650)
+        assert word_precision_check(
+            model.meta.wcsinfo.s_region,
+            (
+                'POLYGON ICRS'
+                ' 348.8563379013152 -38.874810886750495'
+                ' 348.85810582665334 -38.84318773861823'
+                ' 348.8982592685148 -38.84439628911871'
+                ' 348.89688051688233 -38.876020020321164'
+            )
+        )
+
+
+@pytest.mark.skipif(sys.version_info.major<3,
                     reason="No URI support in sqlite3")
 def test_add_wcs_with_db_fsmcorr_v1(eng_db_ngas, data_file):
     """Test using the database with original FSM correction"""
