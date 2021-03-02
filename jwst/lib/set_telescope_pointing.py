@@ -1,5 +1,6 @@
 """Set Telescope Pointing from quaternions"""
 from copy import copy
+from enum import Enum, auto
 import logging
 from math import (cos, sin)
 import os.path
@@ -22,6 +23,14 @@ TYPES_TO_UPDATE = set(list(IMAGING_TYPES) + FGS_GUIDE_EXP_TYPES)
 # Setup logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
+
+
+# The available methods for transformation
+class Methods(Enum):
+    ORIGINAL = auto()   # Original, pre-JSOCINT-555 algorithm
+
+    DEFAULT = ORIGINAL  # Use original algorithm if not specified
+
 
 # Conversion from seconds to MJD
 SECONDS2MJD = 1 / 24 / 60 / 60
@@ -685,8 +694,48 @@ def calc_wcs(pointing, siaf=None, **transform_kwargs):
     return (wcsinfo, vinfo)
 
 
-def calc_transforms(pointing, siaf, fsmcorr_version='latest', fsmcorr_units='arcsec', j2fgs_transpose=True):
+def calc_transforms(pointing, siaf, method=None, **transform_kwargs):
     """Calculate transforms from pointing to SIAF
+
+    Given the spacecraft pointing parameters and the
+    aperture-specific SIAF, calculate all the transforms
+    necessary to produce WCS information.
+
+    Parameters
+    ----------
+    pointing : Pointing
+        Observatory pointing information
+
+    siaf : SIAF
+        Aperture information
+
+    method : Methods
+        The method, or algorithm, to use in calculating the transform.
+        If not specified, the default method is used.
+
+    transform_kwargs : dict
+        Keyword arguments used by matrix calculation routines
+
+    Returns
+    -------
+    transforms: Transforms
+        The list of coordinate matrix transformations
+    """
+    method = method if method else Methods.DEFAULT.name
+    method = method.upper()
+
+    if method == Methods.ORIGINAL.name:
+        transforms = calc_transforms_original(pointing, siaf, **transform_kwargs)
+    else:
+        raise RuntimeError(
+            f'Specified method "{method}" not in available methods '
+            f'{[m.name for m in Methods]}'
+        )
+    return transforms
+
+
+def calc_transforms_original(pointing, siaf, fsmcorr_version='latest', fsmcorr_units='arcsec', j2fgs_transpose=True):
+    """Calculate transforms from pointing to SIAF using the original, pre-JSOCINT-555 algorithm
 
     Given the spacecraft pointing parameters and the
     aperture-specific SIAF, calculate all the transforms
