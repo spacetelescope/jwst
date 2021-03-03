@@ -1448,7 +1448,9 @@ def get_wcs_values_from_siaf(aperture_name, useafter, prd_db_filepath=None):
     Parameters
     ----------
     aperture_name : str
-        The name of the aperture in the data file (``model.meta.aperture.name``).
+        The name of the aperture to retrieve.
+        List of values can be specified as comma-separated values within the string.
+        For example: 'FGS1_FULL_OSS, FGS1_FULL'
     useafter : str
         The date of observation (``model.meta.date``)
     prd_db_filepath : str
