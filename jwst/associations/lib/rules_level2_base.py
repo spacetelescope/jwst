@@ -8,6 +8,7 @@ from os.path import (
     splitext
 )
 import re
+import warnings
 
 from jwst.associations import (
     Association,
@@ -521,7 +522,12 @@ class Utility():
                     lv2_asns.extend(finalized)
             else:
                 finalized_asns.append(asn)
-        lv2_asns = prune_duplicate_products(lv2_asns)
+
+        # Having duplicate Level 2 associations is expected.
+        # Suppress warnings.
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            lv2_asns = prune_duplicate_products(lv2_asns)
 
         # Ensure sequencing is correct.
         Utility_Level3.resequence(lv2_asns)

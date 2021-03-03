@@ -108,10 +108,16 @@ class MasterBackgroundStep(Step):
 
                     for model in background_data:
                         # Check if the background members are nodded x1d extractions.
+                        # Or background from dedicated background exposures
                         # Use "bkgdtarg == False" so we don't also get None cases
                         # for simulated data that didn't bother populating this
                         # keyword
-                        if model.meta.observation.bkgdtarg == False:
+                        this_is_ifu_extended = False
+                        if ((model.meta.exposure.type == 'MIR_MRS' or model.meta.exposure.type=='NRS_IFU')
+                            and model.meta.target.source_type=='EXTENDED'):
+                            this_is_ifu_extended = True
+
+                        if model.meta.observation.bkgdtarg == False or this_is_ifu_extended:
                             self.log.debug("Copying BACKGROUND column "
                                            "to SURF_BRIGHT")
                             copy_background_to_surf_bright(model)

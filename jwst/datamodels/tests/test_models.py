@@ -3,6 +3,7 @@ import warnings
 
 from astropy.io import fits
 from astropy.table import Table
+from astropy.time import Time
 from numpy.testing import assert_allclose, assert_array_equal
 import numpy as np
 import pytest
@@ -396,3 +397,13 @@ def test_all_datamodels_init(model):
             model()
     else:
         model()
+
+
+def test_meta_date_management(tmp_path):
+    model = JwstDataModel({"meta": {"date": "2000-01-01T00:00:00.000"}})
+    assert model.meta.date == "2000-01-01T00:00:00.000"
+    model.save(str(tmp_path/"test.fits"))
+    assert abs((Time.now() - Time(model.meta.date)).value) < 1.0
+
+    model = JwstDataModel()
+    assert abs((Time.now() - Time(model.meta.date)).value) < 1.0

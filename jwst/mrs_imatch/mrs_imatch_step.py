@@ -207,8 +207,8 @@ def apply_background_2d(model2d, channel=None, subtract=True):
     y = y.ravel()
 
     # convert to RA/DEC:
-    r, d, l = model2d.meta.wcs(x.astype(dtype=np.float),
-                               y.astype(dtype=np.float))
+    r, d, l = model2d.meta.wcs(x.astype(dtype=float),
+                               y.astype(dtype=float))
 
     # some pixels may be NaNs and so throw them out:
     m = np.logical_and(

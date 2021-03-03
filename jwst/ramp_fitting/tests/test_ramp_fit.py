@@ -489,7 +489,7 @@ class TestMethods:
         # deltaDN = 50
         delta_time = (ngroups - 1) * grouptime
         # delta_electrons = median_slope * ingain *delta_time
-        single_sample_readnoise = np.float64(inreadnoise/np.sqrt(2))
+        single_sample_readnoise = np.float64(inreadnoise / np.sqrt(2))
         np.testing.assert_allclose(slopes[0].var_poisson[50,50],
             ((median_slope)/(ingain*delta_time)), 1e-6)
         np.testing.assert_allclose(slopes[0].var_rnoise[50,50],
@@ -501,7 +501,7 @@ class TestMethods:
         grouptime=3.0
         # deltaDN = 5
         ingain = 200 # use large gain to show that Poisson noise doesn't affect the recombination
-        inreadnoise = np.float64(7)
+        inreadnoise = 7
         ngroups=10
         model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
             gain=ingain, readnoise=inreadnoise, deltatime=grouptime)

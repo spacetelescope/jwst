@@ -327,8 +327,10 @@ class CubeBuildStep (Step):
 # If not linear wavelength (multi bands) an arrays are created  for:
 # rois, roiw, weight_power, softrad
 
-            thiscube.determine_cube_parameters()
-
+            if self.coord_system == 'internal_cal':
+                thiscube.determine_cube_parameters_internal()
+            else:
+                thiscube.determine_cube_parameters()
             thiscube.setup_ifucube_wcs()
 # _______________________________________________________________________________
 # build the IFU Cube
@@ -387,10 +389,11 @@ class CubeBuildStep (Step):
         """
 
         valid_channel = ['1', '2', '3', '4', 'all']
-        valid_subchannel = ['short', 'medium', 'long', 'all']
+        valid_subchannel = ['short', 'medium', 'long', 'all', 'short-medium', 'short-long',
+                            'medium-short', 'medium-long', 'long-short', 'long-medium']
 
         valid_fwa = ['f070lp', 'f100lp',
-                     'g170lp', 'f290lp', 'clear', 'all']
+                     'g170lp', 'f290lp', 'clear', 'opaque','all']
         valid_gwa = ['g140m', 'g140h', 'g235m', 'g235h',
                      'g395m', 'g395h', 'prism', 'all']
 # ________________________________________________________________________________

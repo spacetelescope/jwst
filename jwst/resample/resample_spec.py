@@ -46,7 +46,7 @@ class ResampleSpecData:
 
     def __init__(self, input_models, output=None, single=False,
         blendheaders=False, pixfrac=1.0, kernel="square", fillval=0,
-        weight_type="exptime", good_bits=0, pscale_ratio=1.0, **kwargs):
+        weight_type="ivm", good_bits=0, pscale_ratio=1.0, **kwargs):
         """
         Parameters
         ----------

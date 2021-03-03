@@ -21,8 +21,8 @@ from .. import niriss
 
 
 # Allowed settings for niriss
-niriss_wfss_frames = ['grism_detector', 'detector', 'v2v3', 'world']
-niriss_imaging_frames = ['detector', 'v2v3', 'world']
+niriss_wfss_frames = ['grism_detector', 'detector', 'v2v3', 'v2v3vacorr', 'world']
+niriss_imaging_frames = ['detector', 'v2v3', 'v2v3vacorr', 'world']
 niriss_grisms = ['GR150R', 'GR150C']
 
 # default wcs information

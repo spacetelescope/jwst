@@ -1,10 +1,11 @@
+
 .. _extract1d_reffile:
 
 EXTRACT1D Reference File
 ------------------------
 The EXTRACT1D reference file contains information needed to guide
 the 1D extraction process. It is a text file, with the information
-in JSON format.
+in JSON format for Non-IFU data and in ASDF format for IFU data. 
 
 .. include:: ../references_general/extract1d_selection.inc
 
@@ -23,9 +24,9 @@ Keyword    Data Model Name
 EXP_TYPE   model.meta.exposure.type
 =========  ==============================
 
-Reference File Format
-+++++++++++++++++++++
-EXTRACT1D reference files are text files, with the information stored in
+Reference File Format for non-IFU data
+++++++++++++++++++++++++++++++++++++++
+EXTRACT1D reference files for non-ifu data are text files, with the information stored in
 JSON format.
 All the information is specified in a list with key ``apertures``.  Each
 element of this list is a dictionary, one for each aperture (e.g. a slit)
@@ -76,27 +77,29 @@ and background extraction regions.
 See :ref:`extract-1d-for-slits` for more details on how these parameters
 are used in the extraction process.
 
-For IFU cube data, the following keys are used instead of those above.
+Reference File Format IFU data
+++++++++++++++++++++++++++++++
+For IFU data the reference files are stored as ASDF files. The extraction size
+varies with wavelength. The reference file contains a set of vectors defining
+the extraction size based on wavelength. These vectors are all the same size and
+are defined as follows: 
 
-* id: the slit name, but this can be "ANY" (string)
-* x_center: X pixel coordinate of the target (pixels, float, the default
-  is the center of the image along the X axis)
-* y_center: Y pixel coordinate of the target (pixels, float, the default
-  is the center of the image along the Y axis)
-* radius: the radius of the circular extraction aperture (pixels, float,
-  default is one quarter of the smaller of the image axis lengths)
+* wavelength: wavelength in microns. 
+* radius: the radius of the circular extraction aperture (arcseconds, float)
+* inner_bkg: of the inner edge of the background annulus (arcseconds, float)
+* outer_bkg: of the outer edge of the background annulus (arcseconds, float)
+
+  
+In addition following general keys are also in the ASDF reference file:
+
 * subtract_background: if true, subtract a background determined from an
   annulus with inner and outer radii given by ``inner_bkg`` and
   ``outer_bkg`` (boolean)
-* inner_bkg: of the inner edge of the background annulus (pixels, float,
-  default = ``radius``)
-* outer_bkg: of the outer edge of the background annulus (pixels, float,
-  default = ``inner_bkg * sqrt(2)``)
 * method: one of "exact", "subpixel", or "center", the method
   used by photutils for computing the overlap between apertures and pixels
   (string, default is "exact")
 * subpixels: if ``method`` is "subpixel", pixels will be resampled by this
-  factor in each dimension (int, the default is 5)
+  factor in each dimension (int, the default is 10)
 
 See :ref:`extract-1d-for-ifu` for more details on how these parameters
 are used in the extraction process.

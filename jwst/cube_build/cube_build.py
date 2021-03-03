@@ -178,7 +178,8 @@ class CubeData():
 # loop over the file names
         if self.instrument == 'MIRI':
             valid_channel = ['1', '2', '3', '4']
-            valid_subchannel = ['short', 'medium', 'long']
+            valid_subchannel = ['short', 'medium', 'long', 'short-medium', 'short-long',
+                                'medium-short', 'medium-long', 'long-short', 'long-medium']
 
             nchannels = len(valid_channel)
             nsubchannels = len(valid_subchannel)
@@ -242,9 +243,11 @@ class CubeData():
         if self.instrument == 'NIRSPEC':
             # 1 to 1 mapping valid_gwa[i] -> valid_fwa[i]
             valid_gwa = ['g140m', 'g140h', 'g140m', 'g140h', 'g235m',
-                         'g235h', 'g395m', 'g395h', 'prism']
+                         'g235h', 'g395m', 'g395h', 'prism',
+                         'prism','g140m', 'g140h', 'g235m', 'g235h', 'g395m', 'g395h']
             valid_fwa = ['f070lp', 'f070lp', 'f100lp', 'f100lp', 'f170lp',
-                        'f170lp', 'f290lp', 'f290lp', 'clear']
+                         'f170lp', 'f290lp', 'f290lp', 'clear',
+                         'opaque', 'opaque','opaque', 'opaque','opaque', 'opaque','opaque']
 
             nbands = len(valid_fwa)
 

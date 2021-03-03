@@ -4,7 +4,7 @@
 # Program: create_cube.py
 # Purpose: routine to create data cube for a specified readout mode for JWST data
 # History: 03/24/10 - first version
-#          08/17/10 - changed datatype to float64 for compatibility with other programs
+#          08/17/10 - changed datatype to np.float64 for compatibility with other programs
 #
 # The 9 NIRCAM readout modes are:
 #  DEEP8, DEEP2, MEDIUM8, MEDIUM2, SHALLOW4, SHALLOW2, BRIGHT2, BRIGHT1, RAPID
@@ -147,7 +147,7 @@ class create_cube:
         t_read = t_int / float(nread)
         print(' The integration time per single read = ', t_read)
 
-###        acube = np.zeros((n_ind_reads, asize_2, asize_1), dtype = np.float32)  # < 080210
+###        acube = np.zeros((n_ind_reads, asize_2, asize_1), dtype=np.float32)  # < 080210
         acube = np.zeros((n_ind_reads, asize_2, asize_1), dtype=np.float64)  # try 080210
 
         print(' The output cube will have dimensions:', n_ind_reads, asize_2, asize_1)

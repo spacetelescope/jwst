@@ -58,7 +58,7 @@ def test_decode_mask():
                     dtype=np.uint32)
 
     nrows = len(output)
-    check = np.zeros(nrows, dtype=np.bool)
+    check = np.zeros(nrows, dtype=bool)
     compare = [[5, 20],
                [],
                [18, 23, 27],

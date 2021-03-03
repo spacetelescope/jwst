@@ -100,6 +100,7 @@ class TestAgainstStandards(BaseJWSTTest):
     test_dir = 'standards'
     ref_loc = [test_dir, 'truth']
 
+    @pytest.mark.filterwarnings('error')
     @pytest.mark.parametrize('standard_pars', standards, ids=generate_id)
     def test_against_standard(self, standard_pars):
         """Compare a generated association against a standard

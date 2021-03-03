@@ -55,3 +55,30 @@ def test_spec2(run_spec2, fitsdiff_default_kwargs, suffix):
     """Regression test matching output files"""
     rt.is_like_truth(run_spec2, fitsdiff_default_kwargs, suffix,
                      truth_path=TRUTH_PATH)
+
+
+@pytest.fixture(scope='module')
+def run_photom(jail, rtdata_module):
+    """Run the photom step on an NRS IFU exposure with SRCTYPE=EXTENDED"""
+    rtdata = rtdata_module
+
+    # Setup the inputs
+    rate_name = 'jwdata0010010_11010_0001_NRS1_pathloss.fits'
+    rate_path = INPUT_PATH + '/' + rate_name
+
+    # Run the step
+    step_params = {
+        'input_path': rate_path,
+        'step': 'photom.cfg',
+        'args': ['--save_results=True',]
+    }
+
+    rtdata = rt.run_step_from_dict(rtdata, **step_params)
+    return rtdata
+
+
+@pytest.mark.bigdata
+def test_photom(run_photom, fitsdiff_default_kwargs):
+    """Regression test matching output files"""
+    rt.is_like_truth(run_photom, fitsdiff_default_kwargs, 'photom',
+                     truth_path=TRUTH_PATH)

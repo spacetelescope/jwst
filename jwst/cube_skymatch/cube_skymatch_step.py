@@ -88,7 +88,7 @@ class CubeSkyMatchStep(Step):
                     cm.dq,
                     self._dqbits,
                     good_mask_value=0,
-                    dtype=np.bool
+                    dtype=bool
                 )
                 weights[dq] = 0.0
 
@@ -234,8 +234,8 @@ class CubeSkyMatchStep(Step):
         y = y.ravel()
 
         # convert to RA/DEC:
-        r, d, l = model2d.meta.wcs(x.astype(dtype=np.float),
-                                   y.astype(dtype=np.float))
+        r, d, l = model2d.meta.wcs(x.astype(dtype=float),
+                                   y.astype(dtype=float))
 
         # some pixels may be NaNs and so throw them out:
         m = np.logical_and(

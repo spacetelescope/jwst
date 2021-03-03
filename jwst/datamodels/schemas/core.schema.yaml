@@ -532,7 +532,7 @@ properties:
             title: Lamp operating mode
             type: string
             default: 'NONE'
-            enum: [BRIGHTOBJ, FIXEDSLIT, GRATING-ONLY, IFU, MSASPEC, 'NONE']
+            enum: [BRIGHTOBJ, FIXEDSLIT, GRATING-ONLY, IFU, MSASPEC, IMAGE, 'NONE']
             fits_keyword: OPMODE
             blend_table: True
           gwa_xtilt:
@@ -2305,6 +2305,10 @@ properties:
         title: Source catalog filename
         type: string
         fits_keyword: SCATFILE
+      segmentation_map:
+        title: Segmentation map filename
+        type: string
+        fits_keyword: SEGMFILE
       resample:
         title: Resample Parameters
         type: object
@@ -2320,7 +2324,7 @@ properties:
           weight_type:
             title: Type of drizzle weighting to use in resampling input
             type: string
-            enum: [exptime, error]
+            enum: [exptime, ivm]
             fits_keyword: RESWHT
       background:
         title: Background information
