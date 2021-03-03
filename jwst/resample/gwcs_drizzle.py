@@ -1,12 +1,10 @@
-import logging
-
 import numpy as np
 
 from drizzle import util
 from drizzle import cdrizzle
 from . import resample_utils
 
-
+import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -15,6 +13,7 @@ class GWCSDrizzle:
     """
     Combine images using the drizzle algorithm
     """
+
     def __init__(self, product, outwcs=None, single=False, wt_scl=None,
                  pixfrac=1.0, kernel="square", fillval="INDEF"):
         """
@@ -92,8 +91,8 @@ class GWCSDrizzle:
 
         if self.outcon.ndim == 2:
             self.outcon = np.reshape(self.outcon, (1,
-                                     self.outcon.shape[0],
-                                     self.outcon.shape[1]))
+                                                   self.outcon.shape[0],
+                                                   self.outcon.shape[1]))
         elif self.outcon.ndim != 3:
             raise ValueError("Drizzle context image has wrong dimensions: \
                 {0}".format(product))
@@ -403,5 +402,4 @@ def dodrizzle(insci, input_wcs, inwht, output_wcs, outsci, outwht, outcon,
         wtscale=wt_scl,
         fillstr=fillval
     )
-
     return _vers, nmiss, nskip

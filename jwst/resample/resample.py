@@ -40,6 +40,7 @@ class ResampleData:
       5. Updates output data model with output arrays from drizzle, including
          (eventually) a record of metadata from all input models.
     """
+
     def __init__(self, input_models, output=None, single=False, blendheaders=True,
                  pixfrac=1.0, kernel="square", fillval="INDEF", weight_type="ivm",
                  good_bits=0, pscale_ratio=1.0, **kwargs):

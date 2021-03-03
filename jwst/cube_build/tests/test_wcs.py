@@ -11,20 +11,22 @@ from jwst.cube_build import coord
 from jwst.cube_build import cube_build_wcs_util
 from jwst.cube_build import instrument_defaults
 
-shape = (101,101)
+
+shape = (101, 101)
 xcenter = 50
 ycenter = 50
 
 slice_gap = np.zeros(shape)
-slice_gap[:,5:25] =1
-slice_gap[:,30:50] =2
-slice_gap[:,55:75] =3
-slice_gap[:,80:] =4
+slice_gap[:,5:25] = 1
+slice_gap[:,30:50] = 2
+slice_gap[:,55:75] = 3
+slice_gap[:,80:] = 4
+
 
 def dummy_wcs(x,y):
     """ Simple WCS for testing """
 
-    global xcenter, ycenter,shape,slice_gap
+    global xcenter, ycenter, shape, slice_gap
 
     # for given shape and wcs this will result in
     # ra from 40.6 to 49.9 [x = -49, 49:  (x +1 -crpix1) * cdelt1 + crval1]
@@ -64,7 +66,8 @@ def dummy_wcs(x,y):
     ra[index_nan] = np.nan
     wave[index_nan] = np.nan
 
-    return(ra,dec,wave)
+    return (ra, dec, wave)
+
 
 def test_coord_trans1():
     """ Test finding xi,eta and cos 90, ra 45 """
@@ -153,6 +156,7 @@ def test_wrap_ra():
     ra_test = cube_build_wcs_util.wrap_ra(ra)
     assert np.all(ra_compare == ra_test)
 
+
 def test_setup_wcs():
     """ setting size of IFU given input min,max and cdelts """
     ra1 = 98.83006930071556
@@ -177,7 +181,6 @@ def test_setup_wcs():
     corner_b.append(dec2)
     corner_b.append(dec3)
     corner_b.append(dec4)
-
 
     pars_cube = {
         'scale1': 0.0,
@@ -226,10 +229,10 @@ def test_setup_wcs():
     thiscube.linear_wavelength = True
     thiscube.set_geometry(corner_a, corner_b, lambda_min, lambda_max)
 
-
     assert thiscube.naxis1 == 41
     assert thiscube.naxis2 == 41
     assert thiscube.naxis3 == 1092
+
 
 def test_footprint_miri():
 

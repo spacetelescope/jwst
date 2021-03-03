@@ -234,7 +234,7 @@ def test_pixel_scale_ratio_imaging(nircam_rate, ratio):
     assert_allclose(np.array(result1.data.shape), np.array(result2.data.shape) * ratio, rtol=1, atol=1)
 
     # Avoid edge effects; make sure data values are identical for surface brightness data
-    assert np.mean(result1.data[10:-10,10:-10]) == np.mean(result2.data[10:-10,10:-10])
+    assert np.mean(result1.data[10:-10, 10:-10]) == np.mean(result2.data[10:-10, 10:-10])
 
     # Make sure the photometry keywords describing the solid angle of a pixel
     # are updated

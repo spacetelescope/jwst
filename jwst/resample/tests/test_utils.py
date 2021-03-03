@@ -11,6 +11,7 @@ from jwst.resample.resample_utils import build_mask, build_driz_weight
 DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
 GOOD = dqflags.pixel["GOOD"]
 
+
 DQ = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8])
 BITVALUES = 2**0 + 2**2
 BITVALUES_STR = f'{2**0}, {2**2}'
@@ -21,13 +22,13 @@ JWST_NAMES_INV = '~' + JWST_NAMES
 
 @pytest.mark.parametrize(
     'dq, bitvalues, expected', [
-        (DQ, 0,                 np.array([1, 0, 0, 0, 0, 0, 0, 0, 0])),
-        (DQ, BITVALUES,         np.array([1, 1, 0, 0, 1, 1, 0, 0, 0])),
-        (DQ, BITVALUES_STR,     np.array([1, 1, 0, 0, 1, 1, 0, 0, 0])),
+        (DQ, 0, np.array([1, 0, 0, 0, 0, 0, 0, 0, 0])),
+        (DQ, BITVALUES, np.array([1, 1, 0, 0, 1, 1, 0, 0, 0])),
+        (DQ, BITVALUES_STR, np.array([1, 1, 0, 0, 1, 1, 0, 0, 0])),
         (DQ, BITVALUES_INV_STR, np.array([1, 0, 1, 0, 0, 0, 0, 0, 1])),
-        (DQ, JWST_NAMES,        np.array([1, 1, 0, 0, 1, 1, 0, 0, 0])),
-        (DQ, JWST_NAMES_INV,    np.array([1, 0, 1, 0, 0, 0, 0, 0, 1])),
-        (DQ, None,              np.array([1, 1, 1, 1, 1, 1, 1, 1, 1])),
+        (DQ, JWST_NAMES, np.array([1, 1, 0, 0, 1, 1, 0, 0, 0])),
+        (DQ, JWST_NAMES_INV, np.array([1, 0, 1, 0, 0, 0, 0, 0, 1])),
+        (DQ, None, np.array([1, 1, 1, 1, 1, 1, 1, 1, 1])),
     ]
 )
 def test_build_mask(dq, bitvalues, expected):

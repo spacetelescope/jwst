@@ -145,13 +145,14 @@ class ResampleSpecData:
                 for iw in wavelength_array:
                     all_wavelength.append(iw)
 
-                lam_center_index = int((bb[spectral_axis][1] - bb[spectral_axis][0]) / 2)
+                lam_center_index = int((bb[spectral_axis][1] -
+                                        bb[spectral_axis][0]) / 2)
                 if spatial_axis == 0:
-                    ra_center = ra[lam_center_index,:]
-                    dec_center = dec[lam_center_index,:]
+                    ra_center = ra[lam_center_index, :]
+                    dec_center = dec[lam_center_index, :]
                 else:
-                    ra_center = ra[:,lam_center_index]
-                    dec_center = dec[:,lam_center_index]
+                    ra_center = ra[:, lam_center_index]
+                    dec_center = dec[:, lam_center_index]
                 # find the ra and dec for this slit using center of slit
                 ra_center_pt = np.nanmean(ra_center)
                 dec_center_pt = np.nanmean(dec_center)
@@ -279,17 +280,14 @@ class ResampleSpecData:
         all_ra = wrap_ra(all_ra)
         ra_min = np.amin(all_ra)
         ra_max = np.amax(all_ra)
-        log.info(f"ra_min {ra_min}, ra_max{ra_max}")
 
         ra_center_final = (ra_max + ra_min) / 2.0
         dec_min = np.amin(all_dec)
         dec_max = np.amax(all_dec)
         dec_center_final = (dec_max + dec_min) / 2.0
         tan = Pix2Sky_TAN()
-
-        # If single model use ra_center_pt to be consistent with how resample
-        # was done before
-        if len(self.input_models) == 1:
+        if len(self.input_models) == 1:  # single model use ra_center_pt to be consistent
+            # with how resample was done before
             ra_center_final = ra_center_pt
             dec_center_final = dec_center_pt
 
@@ -395,14 +393,18 @@ class ResampleSpecData:
             outwcs = output_model.meta.wcs
 
             # Initialize the output with the wcs
-            driz = gwcs_drizzle.GWCSDrizzle(output_model, outwcs=outwcs,
-                                            single=self.single, pixfrac=self.pixfrac,
-                                            kernel=self.kernel, fillval=self.fillval)
+            driz = gwcs_drizzle.GWCSDrizzle(output_model,
+                                            outwcs=outwcs,
+                                            single=self.single,
+                                            pixfrac=self.pixfrac,
+                                            kernel=self.kernel,
+                                            fillval=self.fillval)
 
             for n, img in enumerate(group):
                 exposure_times['start'].append(img.meta.exposure.start_time)
                 exposure_times['end'].append(img.meta.exposure.end_time)
-                inwht = resample_utils.build_driz_weight(img, weight_type=self.weight_type,
+                inwht = resample_utils.build_driz_weight(img,
+                                                         weight_type=self.weight_type,
                                                          good_bits=self.good_bits)
 
                 if hasattr(img, 'name'):
