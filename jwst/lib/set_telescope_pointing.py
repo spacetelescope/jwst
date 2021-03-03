@@ -322,9 +322,9 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, eng
     except AttributeError:
         exp_type = None
     aperture_name = model.meta.aperture.name.upper()
+    useafter = model.meta.observation.date
     if aperture_name != "UNKNOWN":
         logger.info("Updating WCS for aperture {}".format(aperture_name))
-        useafter = model.meta.observation.date
         siaf = get_wcs_values_from_siaf(aperture_name, useafter, siaf_path)
         populate_model_from_siaf(model, siaf)
     else:
@@ -340,7 +340,8 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, eng
         update_wcs_from_telem(
             model, default_pa_v3=default_pa_v3, siaf=siaf, engdb_url=engdb_url,
             tolerance=tolerance, allow_default=allow_default,
-            reduce_func=reduce_func, **transform_kwargs
+            reduce_func=reduce_func, siaf_path=siaf_path, useafter=useafter,
+            **transform_kwargs
         )
 
 
@@ -747,7 +748,7 @@ def calc_transforms(pointing, siaf, method=None, **transform_kwargs):
     return transforms
 
 
-def calc_transforms_original(pointing, siaf, fsmcorr_version='latest', fsmcorr_units='arcsec', j2fgs_transpose=True):
+def calc_transforms_original(pointing, siaf, fsmcorr_version='latest', fsmcorr_units='arcsec', j2fgs_transpose=True, **unused_kwargs):
     """Calculate transforms from pointing to SIAF using the original, pre-JSOCINT-555 algorithm
 
     Given the spacecraft pointing parameters and the
@@ -772,6 +773,10 @@ def calc_transforms_original(pointing, siaf, fsmcorr_version='latest', fsmcorr_u
 
     j2fgs_transpose : bool
         Transpose the `j2fgs1` matrix.
+
+    unused_kwargs : dict
+        Keyword arguments used that may be needed by other `calc_transforms` methods
+        but not this one.
 
     Returns
     -------
@@ -845,7 +850,9 @@ def calc_transforms_original(pointing, siaf, fsmcorr_version='latest', fsmcorr_u
     return tforms
 
 
-def calc_transforms_cmdtest(pointing, siaf, fsmcorr_version='latest', fsmcorr_units='arcsec', j2fgs_transpose=True):
+def calc_transforms_cmdtest(pointing, siaf,
+                            siaf_path=None, useafter=None,
+                            fsmcorr_version='latest', fsmcorr_units='arcsec', j2fgs_transpose=True):
     """Calculate transforms from pointing to SIAF using the JSOCINT-555 fix
 
     Given the spacecraft pointing parameters and the
@@ -861,6 +868,12 @@ def calc_transforms_cmdtest(pointing, siaf, fsmcorr_version='latest', fsmcorr_un
 
     siaf : SIAF
         Aperture information
+
+    siaf_path: str or file-like object or None
+        The path to the SIAF database.
+
+    useafter : str
+        The date of observation (``model.meta.date``)
 
     fsmcorr_version : str
         The version of the FSM correction calculation to use.
@@ -905,7 +918,7 @@ def calc_transforms_cmdtest(pointing, siaf, fsmcorr_version='latest', fsmcorr_un
     )
 
     # Calculate the FGS1 ICS to SI-FOV matrix
-    m_fgs12sifov = calc_fgs1_to_sifov_fgs1siaf_matrix(siaf)
+    m_fgs12sifov = calc_fgs1_to_sifov_fgs1siaf_matrix(siaf_path=siaf_path, useafter=useafter)
 
     # Calculate SI FOV to V1 matrix
     m_sifov2v = calc_sifov2v_matrix()
@@ -1198,8 +1211,9 @@ def calc_fgs1_to_sifov_fgs1siaf_matrix(siaf_path=None, useafter=None):
     accurate determination of the matrix using the SIAF
     """
     try:
-        fgs1_siaf = get_wcs_values_from_siaf('FGS1_FULL_OSS', useafter, siaf_path)
+        fgs1_siaf = get_wcs_values_from_siaf('FGS1_FULL_OSS, FGS1_FULL', useafter, siaf_path)
     except (KeyError, OSError, TypeError) as exception:
+        breakpoint()
         logger.warning('Cannot read a SIAF database. Using the default FGS1_to_SIFOV matrix')
         return calc_fgs1_to_sifov_matrix()
 
@@ -1461,7 +1475,10 @@ def get_wcs_values_from_siaf(aperture_name, useafter, prd_db_filepath=None):
     logger.info("Using SIAF database from {}".format(prd_db_filepath))
     logger.info("Quering SIAF for aperture "
                 "{0} with USEAFTER {1}".format(aperture_name, useafter))
-    aperture = (aperture_name, useafter)
+
+    # Quote all aperture names
+    aperture_names = [f'"{e.strip()}"' for e in aperture_name.split(',')]
+    aperture_names = ','.join(aperture_names)
 
     RESULT = {}
     PRD_DB = False
@@ -1473,8 +1490,9 @@ def get_wcs_values_from_siaf(aperture_name, useafter, prd_db_filepath=None):
                        "XSciRef, YSciRef, XSciScale, YSciScale, "
                        "XIdlVert1, XIdlVert2, XIdlVert3, XIdlVert4, "
                        "YIdlVert1, YIdlVert2, YIdlVert3, YIdlVert4 "
-                       "FROM Aperture WHERE Apername = ? and UseAfterDate <= ? ORDER BY UseAfterDate LIMIT 1",
-                       aperture)
+                       f"FROM Aperture WHERE Apername in ({aperture_names}) "
+                       "and UseAfterDate <= ? ORDER BY UseAfterDate LIMIT 1",
+                       (useafter,))
         for row in cursor:
             RESULT[row[0]] = tuple(row[1:17])
         PRD_DB.commit()
