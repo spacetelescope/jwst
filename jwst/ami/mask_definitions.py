@@ -5,7 +5,7 @@
 import numpy as np
 import math
 
-from  .utils import rotate2dccw
+from .utils import rotate2dccw
 
 m = 1.0
 mm = 1.0e-3 * m

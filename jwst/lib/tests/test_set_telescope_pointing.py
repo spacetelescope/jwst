@@ -290,7 +290,7 @@ def test_add_wcs_fsmcorr_v1(data_file):
             '\nException={}'.format(e)
         )
 
-    with  datamodels.Level1bModel(data_file) as model:
+    with datamodels.Level1bModel(data_file) as model:
         assert model.meta.pointing.ra_v1 == TARG_RA
         assert model.meta.pointing.dec_v1 == TARG_DEC
         assert model.meta.pointing.pa_v3 == 0.

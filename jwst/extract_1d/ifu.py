@@ -184,7 +184,7 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
         apcorr.match_wavelengths(wavelength)
 
         # at each IFU wavelength we have the extraction radius defined by radius_match (radius size in pixels)
-        for i  in range(wavelength.size):
+        for i in range(wavelength.size):
             radius = radius_match[i]
             apcorr.find_apcorr_func(i, radius)
 
@@ -407,7 +407,7 @@ def extract_ifu(input_model, source_type, extract_params):
         fouter = interp1d(wave_extract, outer_bkg, bounds_error=False, fill_value="extrapolate")
         outer_bkg_match = fouter(wavelength)/scale_arcsec
 
-    elif  source_type == 'EXTENDED':
+    elif source_type == 'EXTENDED':
         # Ignore any input parameters, and extract the whole image.
         width = float(shape[-1])
         height = float(shape[-2])

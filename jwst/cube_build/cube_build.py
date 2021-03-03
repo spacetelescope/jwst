@@ -195,7 +195,7 @@ class CubeData():
             if user_clen == 1 and self.channel[0] == 'all':
                 user_clen = 0
 
-            if user_slen == 1 and  self.subchannel[0] =='all':
+            if user_slen == 1 and self.subchannel[0] =='all':
                 user_slen =0
 
             # _______________________________________________________________________________
@@ -256,7 +256,7 @@ class CubeData():
             if user_glen == 1 and self.grating[0] == 'all':
                 user_glen = 0
 
-            if user_flen == 1 and  self.filter[0] =='all':
+            if user_flen == 1 and self.filter[0] =='all':
                 user_flen =0
 
             # check if input filter or grating has been set

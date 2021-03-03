@@ -80,7 +80,7 @@ def load_wcs(input_model, reference_files={}, nrs_slit_y_range=None):
                 else:
                     log.info("assign_wcs updated S_REGION to {0}".format(
                         output_model.meta.wcsinfo.s_region))
-            elif  output_model.meta.exposure.type.lower() == "nrs_ifu":
+            elif output_model.meta.exposure.type.lower() == "nrs_ifu":
                 update_s_region_nrs_ifu(output_model, mod)
             elif output_model.meta.exposure.type.lower() == 'mir_mrs':
                 update_s_region_mrs(output_model)

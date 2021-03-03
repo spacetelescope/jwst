@@ -595,4 +595,4 @@ def psf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d,
             "pupil shape %s not supported - choices: 'circonly', 'circ', 'hexonly', 'hex', 'fringeonly'"\
             % shape)
 
-    return  (asf_2d * asf_2d.conj()).real
+    return (asf_2d * asf_2d.conj()).real
