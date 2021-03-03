@@ -565,7 +565,7 @@ def matrix_operations(img, model, flux=None, linfit=False):
 
             # uniform weight
             wy = weights
-            S = np.mat(np.diag(wy));
+            S = np.mat(np.diag(wy))
             # matrix of independent variables
             C = np.mat(flatmodeltransp)
 

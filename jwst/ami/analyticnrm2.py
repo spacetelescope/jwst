@@ -342,7 +342,8 @@ def model_array(ctrs, lam, oversample, pitch, fov, d, psf_offset=(0, 0),
         list of fringe arrays
     """
     nholes = ctrs.shape[0]
-    if phi is None:  np.zeros((nholes,)) # no phase errors in the model slices...
+    if phi is None:
+        np.zeros((nholes,)) # no phase errors in the model slices...
     modelshape = (fov*oversample, fov*oversample)  # spatial extent of image model - the oversampled array
 
     # calculate primary beam envelope (non-negative real)

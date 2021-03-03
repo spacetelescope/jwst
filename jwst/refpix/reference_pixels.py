@@ -502,7 +502,8 @@ class NIRDataset(Dataset):
         if self.odd_even_columns:
             odd = self.get_odd_refvalue(group, amplifier, top_or_bottom)
             even = self.get_even_refvalue(group, amplifier, top_or_bottom)
-            if odd is None or even is None: self.bad_reference_pixels = True
+            if odd is None or even is None:
+                self.bad_reference_pixels = True
             return odd, even
         else:
             rowstart, rowstop, colstart, colstop = \
@@ -510,7 +511,8 @@ class NIRDataset(Dataset):
             ref = group[rowstart:rowstop, colstart:colstop]
             dq = self.pixeldq[rowstart:rowstop, colstart:colstop]
             mean = self.sigma_clip(ref, dq)
-            if mean is None: self.bad_reference_pixels = True
+            if mean is None:
+                self.bad_reference_pixels = True
             return mean
 
     def get_refvalues(self, group):
@@ -1377,7 +1379,8 @@ class MIRIDataset(Dataset):
             ref = group[rowstart:rowstop, column]
             dq = self.pixeldq[rowstart:rowstop, column]
             mean = self.sigma_clip(ref, dq)
-            if mean is None: self.bad_reference_pixels = True
+            if mean is None:
+                self.bad_reference_pixels = True
             return mean
 
     def get_refvalues(self, group):

@@ -244,7 +244,7 @@ def wrap_ra(ravalues):
     """
 
     valid = np.isfinite(ravalues)
-    index_good = np.where(valid == True)
+    index_good = np.where(valid is True)
     ravalues_wrap = ravalues[index_good].copy()
     median_ra = np.nanmedian(ravalues_wrap)
 

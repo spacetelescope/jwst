@@ -524,7 +524,7 @@ def set_pipeline_defaults(im, defaults):
                              }
 
 
-    defaults.update(generic_defaults);
+    defaults.update(generic_defaults)
     instrument = defaults['meta.instrument.name']
     defaults.update(instrument_defaults[instrument])
     exposure_type = defaults['meta.exposure.type']

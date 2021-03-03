@@ -131,7 +131,8 @@ class cr_add_3d:
         asize_1 = self.fh_data_cube[0].data.shape[1]
         asize_2 = self.fh_data_cube[0].data.shape[2]
 
-        self._asize_1 = asize_1; self._asize_2 = asize_2
+        self._asize_1 = asize_1
+        self._asize_2 = asize_2
 
         if (verb > 0):
             print('   ')
@@ -159,7 +160,8 @@ class cr_add_3d:
 
         # generate new GCRs and SPs
         if self._old_cr_file is None:
-            if (verb > 0): print(' Generating GCRs and SPs...')
+            if (verb > 0):
+                print(' Generating GCRs and SPs...')
 
             try:
                 self._instrume = prihdr['INSTRUME']
@@ -245,7 +247,8 @@ class cr_add_3d:
 
         verb = self._verb
 
-        if (verb > 1): print(' Start of add_crs_this_slice() for slice number: ', self._slice)
+        if (verb > 1):
+            print(' Start of add_crs_this_slice() for slice number: ', self._slice)
         try:
             pix_val = self.fh_data_cube[0].data[self._slice, :, :]  # do all pixels in this slice
             input_data = pix_val.copy()
@@ -274,7 +277,8 @@ class cr_add_3d:
         total_gcr = 0  # total number of cosmic rays hitting array
         tot_pix_done = 0  # number of pixels looped over
 
-        asize_1 = self._asize_1; asize_2 = self._asize_2
+        asize_1 = self._asize_1
+        asize_2 = self._asize_2
 
         for ii_pix in range(0, self._asize_1):
             for jj_pix in range(0, self._asize_2):
@@ -295,7 +299,8 @@ class cr_add_3d:
                         got_num = 1
                     ii_cr += 1
 
-                if (verb > 1 and num_gcr > 0): print(' The number of cosmic rays incident on this pixel will be ', num_gcr)
+                if (verb > 1 and num_gcr > 0):
+                    print(' The number of cosmic rays incident on this pixel will be ', num_gcr)
 
                 # for each cr for this pixel, determine energy deposited in primary and secondary affected pixels
                 for each_cr in range(num_gcr):
@@ -363,7 +368,7 @@ class cr_add_3d:
                                 print('  this 2ndary pixel is beyond the array edge so this 2ndary pixel does not exist')
                             beyond_edge = True
 
-                        if (beyond_edge == False):  # include this 2ndary pixel
+                        if (beyond_edge is False):  # include this 2ndary pixel
                             num_2nd_aff += 1 # number of 2ndary pixels affected (including edge effects)
                             if (verb > 1):
                                 print(' the pixel coordinates to which energy is added are xval, yval, which are :', xval, yval)
@@ -384,9 +389,11 @@ class cr_add_3d:
                             # to compare to detections in a later program
                             self.cr_and_sp_only_cube[self._slice, yval, xval] += delta_e_adu
                         else:
-                            if (verb > 1): print(' will *NOT* include this 2ndary pixel - beyond edge')
+                            if (verb > 1):
+                                print(' will *NOT* include this 2ndary pixel - beyond edge')
 
-                    if (verb > 1): print(' for this CR each_cr = ', each_cr,
+                    if (verb > 1):
+                        print(' for this CR each_cr = ', each_cr,
                         ' the number of secondary  pixels affected (including',
                             'edge effects) = num_2nd_aff =', num_2nd_aff)
 
@@ -422,7 +429,8 @@ class cr_add_3d:
             print(' the total number of gcr hitting this slice (slice number', self._slice, '): ', total_gcr)
             print(' the final array values for this slice : ', self.fh_data_cube[0].data[self._slice, :, :])
 
-        if (verb > 1): print(' end of add crs for this slice')
+        if (verb > 1):
+            print(' end of add crs for this slice')
 
 
     def write_file(self, data, output_fname):
@@ -478,17 +486,28 @@ def lookup_factorial(kk):
         @return: lookup factorial of input
         @rtype: integer
         """
-    if kk == 0: return 1
-    elif kk == 1: return 1
-    elif kk == 2: return 2
-    elif kk == 3: return 6
-    elif kk == 4: return 24
-    elif kk == 5: return 120
-    elif kk == 6: return 720
-    elif kk == 7: return 5040
-    elif kk == 8: return 40320
-    elif kk == 9: return 362880
-    elif kk == 10: return 3628800
+    if kk == 0:
+        return 1
+    elif kk == 1:
+        return 1
+    elif kk == 2:
+        return 2
+    elif kk == 3:
+        return 6
+    elif kk == 4:
+        return 24
+    elif kk == 5:
+        return 120
+    elif kk == 6:
+        return 720
+    elif kk == 7:
+        return 5040
+    elif kk == 8:
+        return 40320
+    elif kk == 9:
+        return 362880
+    elif kk == 10:
+        return 3628800
     else:
         print(' argument unexpectedly large in factorial() ')
         sys.exit(ERROR_RETURN)

@@ -2157,7 +2157,7 @@ class IFUCubeData():
                     remove_start = remove_start + 1
                 else:
                     found = 1
-                    break;
+                    break
                 k = k + 1
 
             remove_final = 0
@@ -2170,7 +2170,7 @@ class IFUCubeData():
                     remove_final = remove_final + 1
                 else:
                     found = 1
-                    break;
+                    break
                 k = k -1
 
             remove_total = remove_start + remove_final
