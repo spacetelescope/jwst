@@ -303,11 +303,6 @@ class Asn_Lv3MIRMRS(AsnMixin_Spectrum):
             Constraint(
                 [
                     Constraint_TSO(),
-                    DMSAttrConstraint(
-                        name='patttype',
-                        sources=['patttype'],
-                        value=['none'],
-                    )
                 ],
                 reduce=Constraint.notany
             ),
