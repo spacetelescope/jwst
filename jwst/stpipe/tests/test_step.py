@@ -46,11 +46,11 @@ def data_path():
 
 @pytest.mark.parametrize(
     'arg, env_set, expected_fn', [
-        ('--disable-crds-steppars', None,   lambda stream: not CRDS_ERROR_STRING in stream),
+        ('--disable-crds-steppars', None,   lambda stream: CRDS_ERROR_STRING not in stream),
         ('--verbose',               None,   lambda stream: CRDS_ERROR_STRING in stream),
-        ('--verbose',               'true', lambda stream: not CRDS_ERROR_STRING in stream),
-        ('--verbose',               'True', lambda stream: not CRDS_ERROR_STRING in stream),
-        ('--verbose',               't',    lambda stream: not CRDS_ERROR_STRING in stream),
+        ('--verbose',               'true', lambda stream: CRDS_ERROR_STRING not in stream),
+        ('--verbose',               'True', lambda stream: CRDS_ERROR_STRING not in stream),
+        ('--verbose',               't',    lambda stream: CRDS_ERROR_STRING not in stream),
     ]
 )
 def test_disable_crds_steppars_cmdline(capsys, data_path, arg, env_set, expected_fn):
