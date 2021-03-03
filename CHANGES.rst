@@ -8,7 +8,7 @@ associations
   instrument channel when matching direct images with grism images in
   NIRCam WFSS observations. [#5786]
 
-- Removed PATTTYPE='none' constraint from Lv3MIRMRS association rule to
+- Removed PATTTYPE='None' constraint from Lv3MIRMRS association rule to
   generate spec3 associations for undithered MRS observations. [#5804]
 
 general
