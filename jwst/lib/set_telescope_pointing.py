@@ -8,8 +8,9 @@ import sqlite3
 from collections import defaultdict, namedtuple
 
 from astropy.time import Time
-from scipy.interpolate import interp1d
 import numpy as np
+import pysiaf
+from scipy.interpolate import interp1d
 
 from ..assign_wcs.util import update_s_region_keyword, calc_rotation_matrix
 from ..assign_wcs.pointing import v23tosky
@@ -71,6 +72,15 @@ R2D = 180. / np.pi
 D2R = np.pi / 180.
 A2R = D2R / 3600.
 R2A = 3600. * R2D
+
+# Map instrument three character mnemonic to full name
+INSTRUMENT_MAP = {
+    'fgs': 'fgs',
+    'mir': 'miri',
+    'nis': 'niriss',
+    'nrc': 'nircam',
+    'nrs': 'nirspec'
+}
 
 # SIAF container
 # The names should correspond to the names in the ``wcsinfo`` schema.
@@ -1211,9 +1221,8 @@ def calc_fgs1_to_sifov_fgs1siaf_matrix(siaf_path=None, useafter=None):
     accurate determination of the matrix using the SIAF
     """
     try:
-        fgs1_siaf = get_wcs_values_from_siaf('FGS1_FULL_OSS, FGS1_FULL', useafter, siaf_path)
-    except (KeyError, OSError, TypeError) as exception:
-        breakpoint()
+        fgs1_siaf = get_wcs_values_from_siaf('FGS1_FULL_OSS', useafter, siaf_path)
+    except (KeyError, OSError, TypeError, RuntimeError) as exception:
         logger.warning('Cannot read a SIAF database. Using the default FGS1_to_SIFOV matrix')
         return calc_fgs1_to_sifov_matrix()
 
@@ -1456,6 +1465,72 @@ def get_wcs_values_from_siaf(aperture_name, useafter, prd_db_filepath=None):
     prd_db_filepath : str
         The path to the SIAF (PRD database) file.
         If None, attempt to get the path from the ``XML_DATA`` environment variable.
+        If no PRD is available, use the `pysiaf` interface to retrieve the necessary information
+
+    Returns
+    -------
+    siaf : namedtuple
+        The SIAF namedtuple with values from the PRD database.
+    """
+    try:
+        return get_wcs_values_from_siaf_prd(aperture_name, useafter, prd_db_filepath=prd_db_filepath)
+    except (KeyError, OSError, TypeError, RuntimeError) as exception:
+        return get_wcs_values_from_siaf_api(aperture_name)
+
+
+def get_wcs_values_from_siaf_api(aperture_name):
+    """
+    Query the SIAF database through pysiaf and get WCS values.
+
+    Given an ``APERTURE_NAME`` query the SIAF database
+    and extract the following keywords:
+    ``V2Ref``, ``V3Ref``, ``V3IdlYAngle``, ``VIdlParity``,
+    ``XSciRef``, ``YSciRef``, ``XSciScale``, ``YSciScale``,
+    ``XIdlVert1``, ``XIdlVert2``, ``XIdlVert3``, ``XIdlVert4``,
+    ``YIdlVert1``, ``YIdlVert2``, ``YIdlVert3``, ``YIdlVert4``
+
+    Parameters
+    ----------
+    aperture_name : str
+        The name of the aperture to retrieve.
+
+    Returns
+    -------
+    siaf : namedtuple
+        The SIAF namedtuple with values from the PRD database.
+    """
+
+    # Retrieve SIAF
+    instrument = INSTRUMENT_MAP[aperture_name[:3].lower()]
+    siaf = pysiaf.Siaf(instrument)
+    aperture = siaf[aperture_name.upper()]
+
+    # Fill out the Siaf
+    siaf = SIAF(v2_ref=aperture.V2Ref, v3_ref=aperture.V3Ref, v3yangle=aperture.V3IdlYAngle, vparity=aperture.VIdlParity)
+
+    return siaf
+
+
+def get_wcs_values_from_siaf_prd(aperture_name, useafter, prd_db_filepath=None):
+    """
+    Query the SIAF database file and get WCS values.
+
+    Given an ``APERTURE_NAME`` and a ``USEAFTER`` date query the SIAF database
+    and extract the following keywords:
+    ``V2Ref``, ``V3Ref``, ``V3IdlYAngle``, ``VIdlParity``,
+    ``XSciRef``, ``YSciRef``, ``XSciScale``, ``YSciScale``,
+    ``XIdlVert1``, ``XIdlVert2``, ``XIdlVert3``, ``XIdlVert4``,
+    ``YIdlVert1``, ``YIdlVert2``, ``YIdlVert3``, ``YIdlVert4``
+
+    Parameters
+    ----------
+    aperture_name : str
+        The name of the aperture to retrieve.
+    useafter : str
+        The date of observation (``model.meta.date``)
+    prd_db_filepath : str
+        The path to the SIAF (PRD database) file.
+        If None, attempt to get the path from the ``XML_DATA`` environment variable.
 
     Returns
     -------
@@ -1478,10 +1553,6 @@ def get_wcs_values_from_siaf(aperture_name, useafter, prd_db_filepath=None):
     logger.info("Quering SIAF for aperture "
                 "{0} with USEAFTER {1}".format(aperture_name, useafter))
 
-    # Quote all aperture names
-    aperture_names = [f'"{e.strip()}"' for e in aperture_name.split(',')]
-    aperture_names = ','.join(aperture_names)
-
     RESULT = {}
     PRD_DB = False
     try:
@@ -1492,9 +1563,9 @@ def get_wcs_values_from_siaf(aperture_name, useafter, prd_db_filepath=None):
                        "XSciRef, YSciRef, XSciScale, YSciScale, "
                        "XIdlVert1, XIdlVert2, XIdlVert3, XIdlVert4, "
                        "YIdlVert1, YIdlVert2, YIdlVert3, YIdlVert4 "
-                       f"FROM Aperture WHERE Apername in ({aperture_names}) "
+                       f"FROM Aperture WHERE Apername = ? "
                        "and UseAfterDate <= ? ORDER BY UseAfterDate LIMIT 1",
-                       (useafter,))
+                       (aperture_name, useafter))
         for row in cursor:
             RESULT[row[0]] = tuple(row[1:17])
         PRD_DB.commit()
@@ -1522,7 +1593,7 @@ def get_wcs_values_from_siaf(aperture_name, useafter, prd_db_filepath=None):
         siaf = SIAF(*values)
         return siaf
     else:
-        return default_siaf
+        raise RuntimeError(f'No SIAF entries found for {aperture_name}')
 
 
 def get_mnemonics(obsstart, obsend, tolerance, engdb_url=None):
