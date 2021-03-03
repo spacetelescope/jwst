@@ -285,7 +285,7 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
     domain_bounds = np.hstack([wnew.backward_transform(*f) for f in footprints])
 
     for axs in domain_bounds:
-        axs -= (axs.min()  + .5)
+        axs -= (axs.min() + .5)
 
     output_bounding_box = []
     for axis in out_frame.axes_order:

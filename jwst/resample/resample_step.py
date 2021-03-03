@@ -130,7 +130,7 @@ class ResampleStep(Step):
             range(0, len(drizpars_table)),
             drizpars_table['filter'],
             drizpars_table['numimages']
-            ):
+        ):
             # only remember this row if no exact match has already been made for
             # the filter. This allows the wild-card row to be anywhere in the
             # table; since it may be placed at beginning or end of table.
@@ -155,7 +155,7 @@ class ResampleStep(Step):
             kernel=self.kernel,
             fillval=self.fillval,
             pscale_ratio=self.pixel_scale_ratio,
-            )
+        )
 
         # For parameters that are set in drizpars table but not set by the
         # user, use these.  Otherwise, use values set by user.
@@ -178,7 +178,7 @@ class ResampleStep(Step):
             good_bits=GOOD_BITS,
             single=self.single,
             blendheaders=self.blendheaders
-            )
+        )
 
         kwargs.update(all_drizpars)
 

@@ -380,7 +380,7 @@ def rlu_solve(matrix, free_term, nimages):
              1.10844667e-15, -5.11590770e-16]])
 
     """
-    drop =  free_term.size // nimages
+    drop = free_term.size // nimages
     if nimages <= 1:
         return np.zeros((1, drop), dtype=float)
     from scipy import linalg

@@ -40,7 +40,7 @@ class JwstDataModel(_DataModel):
         super().on_init(init)
 
         if not self.meta.hasattr("date"):
-            self.meta.date =  Time.now().isot
+            self.meta.date = Time.now().isot
 
     def on_save(self, init):
         """

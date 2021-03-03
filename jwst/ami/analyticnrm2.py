@@ -168,7 +168,7 @@ def harmonicfringes(**kwargs):
     affine2d = kwargs['affine2d']
 
     cpitch = pitch/oversample
-    ImCtr =  image_center(fov, oversample, psf_offset)
+    ImCtr = image_center(fov, oversample, psf_offset)
 
     return (np.fromfunction(ffc, (fov*oversample, fov*oversample), c=ImCtr,
                                                                    baseline=baseline,
@@ -239,9 +239,8 @@ def image_center(fov, oversample, psf_offset):
         offset of the psf center from the array center.
     """
 
-    offsets_from_center = np.array( utils.centerpoint(
-        (oversample*fov,oversample*fov)) ) + \
-        np.array((psf_offset[1],psf_offset[0]))*oversample
+    offsets_from_center = np.array(utils.centerpoint((oversample * fov, oversample * fov))) + \
+                          np.array((psf_offset[1], psf_offset[0])) * oversample
 
     return offsets_from_center
 
@@ -348,7 +347,7 @@ def model_array(ctrs, lam, oversample, pitch, fov, d, psf_offset=(0, 0),
 
     # calculate primary beam envelope (non-negative real)
     if shape=='circ':
-        asf_pb = asf(   pitch, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d)
+        asf_pb = asf(pitch, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d)
     elif shape=='hex':
         asf_pb = asf_hex(pitch, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d)
     else:
@@ -370,12 +369,10 @@ def model_array(ctrs, lam, oversample, pitch, fov, d, psf_offset=(0, 0),
     for basepair in alist:
         baseline = ctrs[int(basepair[0])] - ctrs[int(basepair[1])]
         cosfringe, sinfringe = harmonicfringes(fov=fov, pitch=pitch, psf_offset=psf_offset,
-                                               baseline=baseline,
-                                               oversample=oversample,
-                                               lam=lam,
-                                               affine2d=affine2d)
-        ffmodel.append( cosfringe )
-        ffmodel.append( sinfringe )
+                                               baseline=baseline, oversample=oversample,
+                                               lam=lam, affine2d=affine2d)
+        ffmodel.append(cosfringe)
+        ffmodel.append(sinfringe)
 
     return primary_beam, ffmodel
 
@@ -421,7 +418,7 @@ def asf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d):
         a circular aperture
     """
     pitch = detpixel/float(oversample)
-    ImCtr =  image_center(fov, oversample, psf_offset)
+    ImCtr = image_center(fov, oversample, psf_offset)
 
     return np.fromfunction(jinc, (oversample*fov,oversample*fov),
                            c=ImCtr,
@@ -469,7 +466,7 @@ def asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d):
         a fringe
     """
     pitch = detpixel/float(oversample)
-    ImCtr =  image_center(fov, oversample, psf_offset)
+    ImCtr = image_center(fov, oversample, psf_offset)
 
     return np.fromfunction(interf, (oversample*fov,oversample*fov),
                            c=ImCtr,
@@ -522,7 +519,7 @@ def asf_hex(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d):
     """
     pitch = detpixel/float(oversample)
 
-    ImCtr =  image_center(fov, oversample, psf_offset)
+    ImCtr = image_center(fov, oversample, psf_offset)
 
     return hextransformee.hextransform(
                            s=(oversample*fov,oversample*fov),

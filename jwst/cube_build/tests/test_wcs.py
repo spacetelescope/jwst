@@ -41,25 +41,25 @@ def dummy_wcs(x,y):
     crval2 = 45.0
     crval3 = 7.5
 
-    dec = np.zeros(shape, dtype= float)
-    ra = np.zeros(shape, dtype= float)
-    wave = np.zeros(shape, dtype= float)
+    dec = np.zeros(shape, dtype=float)
+    ra = np.zeros(shape, dtype=float)
+    wave = np.zeros(shape, dtype=float)
 
-    wave = (y+1 - crpix3) * cdelt3 + crval3
+    wave = (y + 1 - crpix3) * cdelt3 + crval3
     index_x1 = np.where(slice_gap == 1) # slice 1
-    dec[index_x1]  = crval2 + 1*cdelt2
+    dec[index_x1] = crval2 + 1 * cdelt2
 
     index_x2 = np.where(slice_gap == 2) # slice 2
-    dec[index_x2]  = crval2 + 2*cdelt2
+    dec[index_x2] = crval2 + 2 * cdelt2
 
     index_x3 = np.where(slice_gap == 3) # slice 3
-    dec[index_x3]  = crval2 + 3*cdelt2
+    dec[index_x3] = crval2 + 3 * cdelt2
 
     index_x4 = np.where(slice_gap == 4) # slice 4
-    dec[index_x4]  = crval2 + 4*cdelt2
-    ra = (x +1 -crpix1) * cdelt1 + crval1
+    dec[index_x4] = crval2 + 4 * cdelt2
+    ra = (x + 1 - crpix1) * cdelt1 + crval1
 
-    index_nan  = np.where(slice_gap ==0)
+    index_nan = np.where(slice_gap == 0)
     dec[index_nan] = np.nan
     ra[index_nan] = np.nan
     wave[index_nan] = np.nan
@@ -90,8 +90,8 @@ def test_coord_trans2():
     crval2 = 45.0
     diff_ra = 5.0 # in arc seconds
     diff_dec = 5.0 # in arc seconds
-    ra = crval1 + diff_ra/3600.0
-    dec = crval2 + diff_dec/3600.0
+    ra = crval1 + diff_ra / 3600.0
+    dec = crval2 + diff_dec / 3600.0
 
     # both crval1 and crval2 = 45, gives h in equation = 1
     # and an eta close to diff_dec
@@ -108,8 +108,8 @@ def test_coord_trans3():
     crval2 = 56.08
     diff_ra = 5.0 # in arc seconds
     diff_dec = 5.0 # in arc seconds
-    ra = crval1 + diff_ra/3600.0
-    dec = crval2 + diff_dec/3600.0
+    ra = crval1 + diff_ra / 3600.0
+    dec = crval2 + diff_dec / 3600.0
 
     # both crval1 and crval2 = 45, gives h in equation = 1
     # and an eta close to diff_dec
@@ -124,7 +124,7 @@ def test_wrap_ra():
     """ Test function wrap_ra but all ra on same side of 0/360 border """
 
     # test 1  wrap ra should do nothing
-    ra = np.zeros(5,dtype = float)
+    ra = np.zeros(5, dtype=float)
     ra[0] = 0.26
     ra[1] = 0.12
     ra[2] = 0.35
@@ -164,7 +164,7 @@ def test_setup_wcs():
     ra4 = 98.83139113841862
     dec4 = -66.82665445039441
     lambda_min = 6.420
-    lambda_max =7.511
+    lambda_max = 7.511
 
     corner_a = []
     corner_b = []
@@ -202,7 +202,7 @@ def test_setup_wcs():
     input_model = None
     output_name_base = None
     output_type = None
-    instrument  = None
+    instrument = None
     list_par1 = None
     list_par2 = None
     master_table = None
@@ -220,7 +220,7 @@ def test_setup_wcs():
         master_table,
         **pars_cube)
 
-    thiscube.cdelt1  = 0.13
+    thiscube.cdelt1 = 0.13
     thiscube.cdelt2 = 0.13
     thiscube.cdelt3 = 0.001
     thiscube.linear_wavelength = True

@@ -347,7 +347,7 @@ class CubeBuildStep (Step):
 
 # Else standard IFU cube building
             else:
-                cube_result  = thiscube.build_ifucube()
+                cube_result = thiscube.build_ifucube()
                 result, status = cube_result
                 cube_container.append(result)
 

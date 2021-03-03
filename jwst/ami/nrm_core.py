@@ -60,7 +60,7 @@ class FringeFitter:
             self.npix = 'default'
 
 
-    def fit_fringes_all( self, input_model ):
+    def fit_fringes_all(self, input_model):
         """
         Short Summary
         ------------
@@ -78,7 +78,7 @@ class FringeFitter:
             Fringe analysis data
         """
 
-        self.scidata = self.instrument_data.read_data_model( input_model )
+        self.scidata = self.instrument_data.read_data_model(input_model)
 
         nrm = lg_model.NrmModel(mask=self.instrument_data.mask,
                     pixscale=self.instrument_data.pscale_rad,
@@ -145,12 +145,12 @@ class FringeFitter:
         output_model = datamodels.AmiLgModel(
                 fit_image = nrm.modelpsf,
                 resid_image = nrm.residual,
-                closure_amp_table = np.asarray( nrm.redundant_cas ),
-                closure_phase_table = np.asarray( nrm.redundant_cps ),
-                fringe_amp_table = np.asarray( nrm.fringeamp ),
-                fringe_phase_table = np.asarray( nrm.fringephase ),
-                pupil_phase_table = np.asarray( nrm.fringepistons ),
-                solns_table = np.asarray ( nrm.soln ))
+                closure_amp_table = np.asarray(nrm.redundant_cas),
+                closure_phase_table = np.asarray(nrm.redundant_cps),
+                fringe_amp_table = np.asarray(nrm.fringeamp),
+                fringe_phase_table = np.asarray(nrm.fringephase),
+                pupil_phase_table = np.asarray(nrm.fringepistons),
+                solns_table = np.asarray(nrm.soln))
 
         return output_model
 
@@ -402,7 +402,7 @@ class Calibrate:
 
         # Calibrate
         self.cp_calibrated = self.cp_mean_tar - self.cp_mean_tot
-        self.cp_err_calibrated =  np.sqrt(self.cp_err_tar**2 + self.cp_err_tot**2)
+        self.cp_err_calibrated = np.sqrt(self.cp_err_tar**2 + self.cp_err_tot**2)
         self.v2_calibrated = self.v2_mean_tar/self.v2_mean_tot
         self.v2_err_calibrated = np.sqrt(self.v2_err_tar**2 + self.v2_err_tot**2)
         self.pha_calibrated = self.pha_mean_tar - self.pha_mean_tot

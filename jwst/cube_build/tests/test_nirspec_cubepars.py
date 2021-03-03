@@ -180,7 +180,7 @@ def test_nirspec_cubepars(_jail, nirspec_cube_pars):
     input_model = None
     output_name_base = None
     output_type = 'band'
-    instrument  = 'NIRSPEC'
+    instrument = 'NIRSPEC'
     list_par1 = all_grating
     list_par2 = all_filter
     master_table = None
@@ -217,7 +217,7 @@ def test_nirspec_cubepars(_jail, nirspec_cube_pars):
 
     # now test if the user has provided input to build cube
 
-    user_ascale  = 0.2
+    user_ascale = 0.2
     user_wscale = 0.05
     user_power = 1
     user_wave_min = 0.8

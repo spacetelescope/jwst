@@ -52,13 +52,13 @@ class JumpStep(Step):
             gain_filename = self.get_reference_file(input_model, 'gain')
             self.log.info('Using GAIN reference file: %s', gain_filename)
 
-            gain_model = datamodels.GainModel( gain_filename )
+            gain_model = datamodels.GainModel(gain_filename)
 
             readnoise_filename = self.get_reference_file(input_model,
                                                           'readnoise')
             self.log.info('Using READNOISE reference file: %s',
                           readnoise_filename)
-            readnoise_model = datamodels.ReadnoiseModel( readnoise_filename )
+            readnoise_model = datamodels.ReadnoiseModel(readnoise_filename)
 
             # Call the jump detection routine
             result = detect_jumps(input_model, gain_model, readnoise_model,

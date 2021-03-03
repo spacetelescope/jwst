@@ -414,8 +414,7 @@ def match_det2cube(instrument,
 
     pixel_dq = input_model.dq[y, x]
 
-    all_flags = (dqflags.pixel['DO_NOT_USE']  +
-                 dqflags.pixel['NON_SCIENCE'] )
+    all_flags = (dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['NON_SCIENCE'])
     # find the location of all the values to reject in cube building
     good_data = np.where((np.bitwise_and(pixel_dq, all_flags) == 0))
 

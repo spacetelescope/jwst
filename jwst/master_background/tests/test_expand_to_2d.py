@@ -9,13 +9,9 @@ from jwst.master_background import expand_to_2d
 
 def test_expand_to_2d_1():
     """Test 1"""
-
     input = slit_data_a()               # MultiSlitModel
-
     m_bkg_spec = user_bkg_spec_a()      # MultiSpecModel
-
     bkg = expand_to_2d.expand_to_2d(input, m_bkg_spec)
-
     truth_a = truth_array_a()
 
     assert np.allclose(bkg.slits[0].data, truth_a, rtol=1.e-6)
@@ -23,16 +19,12 @@ def test_expand_to_2d_1():
 
 def test_expand_to_2d_2():
     """Test 2"""
-
     # Same input data as in the first test.
     input = slit_data_a()               # MultiSlitModel
-
     # Check that expand_to_2d works if the wavelength array is reversed.
     # The flux array is also reversed, so the results should be unchanged.
     m_bkg_spec = user_bkg_spec_b()
-
     bkg = expand_to_2d.expand_to_2d(input, m_bkg_spec)
-
     # Same truth array as in the first test.
     truth_a = truth_array_a()
 
@@ -41,13 +33,9 @@ def test_expand_to_2d_2():
 
 def test_expand_to_2d_3():
     """Test 3"""
-
     input = image_data_c()              # ImageModel
-
     m_bkg_spec = user_bkg_spec_c()      # CombinedSpecModel
-
     bkg = expand_to_2d.expand_to_2d(input, m_bkg_spec)
-
     truth_c = truth_array_c()
 
     assert np.allclose(bkg.data, truth_c, rtol=1.e-6)
@@ -246,9 +234,9 @@ def truth_array_a():
         An array to compare with the data in the output from `expand_to_2d`.
     """
 
-    truth_a = np.array([[ 0., 14.603571, 17.057364, 19.059263, 20.748844,
+    truth_a = np.array([[0., 14.603571, 17.057364, 19.059263, 20.748844,
                          22.21304, 23.506573, 24.658548, 0.],
-                        [ 0., 15.213889, 17.548525, 19.470137, 21.102207,
+                        [0., 15.213889, 17.548525, 19.470137, 21.102207,
                          22.524107, 23.77871, 24.906878, 0.],
                         [13., 15.792757, 18.018988, 19.86396, 21.444334,
                          22.822334, 24.04857, 0., 0.],
@@ -270,8 +258,8 @@ def truth_array_c():
         An array to compare with the data in the output from `expand_to_2d`.
     """
 
-    truth_c = np.array([[ 0., 17.057364, 20.748844, 23.506573, 0.],
-                        [ 0., 17.548523, 21.102207, 23.77871, 0.],
+    truth_c = np.array([[0., 17.057364, 20.748844, 23.506573, 0.],
+                        [0., 17.548523, 21.102207, 23.77871, 0.],
                         [13., 18.018988, 21.444334, 24.04857, 0.],
                         [13.702181, 18.469252, 21.773643, 24.308529, 0.],
                         [14.3649, 18.900745, 22.095966, 24.565424, 0.],

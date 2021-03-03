@@ -1,12 +1,15 @@
+import logging
+
 import numpy as np
 
 from drizzle import util
 from drizzle import cdrizzle
 from . import resample_utils
 
-import logging
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
+
 
 class GWCSDrizzle:
     """
@@ -399,5 +402,6 @@ def dodrizzle(insci, input_wcs, inwht, output_wcs, outsci, outwht, outcon,
         expscale=expscale,
         wtscale=wt_scl,
         fillstr=fillval
-        )
+    )
+
     return _vers, nmiss, nskip

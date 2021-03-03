@@ -1122,7 +1122,7 @@ class NIRISSDataset(NIRDataset):
     def detector_to_DMS(self, integration, group):
         #
         # Just flip and rotate back
-        self.group = np.swapaxes(self.group, 0, 1)[ ::-1, ::-1]
+        self.group = np.swapaxes(self.group, 0, 1)[::-1, ::-1]
         self.restore_group(integration, group)
 
 class GUIDER1Dataset(NIRDataset):

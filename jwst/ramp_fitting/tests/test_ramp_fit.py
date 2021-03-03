@@ -495,7 +495,7 @@ class TestMethods:
         np.testing.assert_allclose(slopes[0].var_rnoise[50,50],
             (12 * single_sample_readnoise**2/(ngroups * (ngroups**2 - 1) * grouptime**2)),  1e-6)
         np.testing.assert_allclose(slopes[0].err[50,50],
-            np.sqrt(slopes[0].var_poisson[50,50]  + slopes[0].var_rnoise[50,50] ),  1e-6)
+            np.sqrt(slopes[0].var_poisson[50,50] + slopes[0].var_rnoise[50,50]),  1e-6)
 
     def test_oneCR_10_groups_combination(self, method):
         grouptime=3.0
@@ -519,7 +519,7 @@ class TestMethods:
         model1.groupdq[0,5,50,50]=JUMP_DET
         slopes, int_model, opt_model, gls_opt_model = ramp_fit(model1,
             1024*30000.,  True, rnModel, gain, 'OLS', 'optimal', 'none')
-        segment_groups  = 5
+        segment_groups = 5
         single_sample_readnoise = np.float64(inreadnoise / np.sqrt(2))
         #check that the segment variance is as expected
         np.testing.assert_allclose(opt_model.var_rnoise[0,0,50,50],
@@ -562,7 +562,7 @@ def test_twenty_groups_two_segments():
         a) gdq all 0 ; b) 1 CR (2 segments) c) 1 CR then SAT (2 segments)
     '''
     (ngroups, nints, nrows, ncols, deltatime) = (20, 1, 1, 3, 6.)
-    model1, gdq, rnModel, pixdq, err, gain = setup_small_cube( ngroups,
+    model1, gdq, rnModel, pixdq, err, gain = setup_small_cube(ngroups,
         nints, nrows, ncols, deltatime)
 
     # a) ramp having gdq all 0
@@ -584,7 +584,7 @@ def test_twenty_groups_two_segments():
         True, rnModel, gain, 'OLS', 'optimal', 'none')
 
     # Check some PRI & OPT output arrays
-    np.testing.assert_allclose( new_mod.data, 10./deltatime, rtol=1E-4 )
+    np.testing.assert_allclose(new_mod.data, 10./deltatime, rtol=1E-4)
 
     wh_data = opt_model.slope != 0. # only test existing segments
     np.testing.assert_allclose(opt_model.slope[wh_data], 10./deltatime, rtol=1E-4)
@@ -607,26 +607,26 @@ def test_miri_all_sat():
         True, rnModel, gain, 'OLS', 'optimal', 'none')
 
     # Check PRI output arrays
-    np.testing.assert_allclose( new_mod.data, 0.0, atol=1E-6  )
-    np.testing.assert_allclose( new_mod.err, 0.0, atol=1E-6  )
-    np.testing.assert_allclose( new_mod.var_poisson, 0.0, atol=1E-6  )
-    np.testing.assert_allclose( new_mod.var_rnoise, 0.0, atol=1E-6  )
+    np.testing.assert_allclose(new_mod.data, 0.0, atol=1E-6)
+    np.testing.assert_allclose(new_mod.err, 0.0, atol=1E-6)
+    np.testing.assert_allclose(new_mod.var_poisson, 0.0, atol=1E-6)
+    np.testing.assert_allclose(new_mod.var_rnoise, 0.0, atol=1E-6)
 
     # Check INT output arrays
-    np.testing.assert_allclose( int_model.data, 0.0, atol=1E-6  )
-    np.testing.assert_allclose( int_model.err, 0.0, atol=1E-6  )
-    np.testing.assert_allclose( int_model.var_poisson, 0.0, atol=1E-6  )
-    np.testing.assert_allclose( int_model.var_rnoise, 0.0, atol=1E-6  )
+    np.testing.assert_allclose(int_model.data, 0.0, atol=1E-6)
+    np.testing.assert_allclose(int_model.err, 0.0, atol=1E-6)
+    np.testing.assert_allclose(int_model.var_poisson, 0.0, atol=1E-6)
+    np.testing.assert_allclose(int_model.var_rnoise, 0.0, atol=1E-6)
 
     # Check OPT output arrays
-    np.testing.assert_allclose( opt_model.slope, 0.0, atol=1E-6  )
-    np.testing.assert_allclose( opt_model.var_poisson, 0.0, atol=1E-6  )
-    np.testing.assert_allclose( opt_model.var_rnoise, 0.0, atol=1E-6  )
-    np.testing.assert_allclose( opt_model.sigslope, 0.0, atol=1E-6  )
-    np.testing.assert_allclose( opt_model.yint, 0.0, atol=1E-6  )
-    np.testing.assert_allclose( opt_model.sigyint, 0.0, atol=1E-6  )
-    np.testing.assert_allclose( opt_model.pedestal, 0.0, atol=1E-6  )
-    np.testing.assert_allclose( opt_model.weights, 0.0, atol=1E-6  )
+    np.testing.assert_allclose(opt_model.slope, 0.0, atol=1E-6)
+    np.testing.assert_allclose(opt_model.var_poisson, 0.0, atol=1E-6)
+    np.testing.assert_allclose(opt_model.var_rnoise, 0.0, atol=1E-6)
+    np.testing.assert_allclose(opt_model.sigslope, 0.0, atol=1E-6)
+    np.testing.assert_allclose(opt_model.yint, 0.0, atol=1E-6)
+    np.testing.assert_allclose(opt_model.sigyint, 0.0, atol=1E-6)
+    np.testing.assert_allclose(opt_model.pedestal, 0.0, atol=1E-6)
+    np.testing.assert_allclose(opt_model.weights, 0.0, atol=1E-6)
 
 
 def test_miri_first_last():
@@ -663,7 +663,7 @@ def test_miri_first_last():
     new_mod, int_model, opt_model, gls_opt_model = ramp_fit(model1, 1024*30000.,
         True, rnModel, gain, 'OLS', 'optimal', 'none')
 
-    np.testing.assert_allclose( new_mod.data, 10./3., rtol=1E-5)
+    np.testing.assert_allclose(new_mod.data, 10./3., rtol=1E-5)
 
 
 def setup_small_cube(ngroups=10, nints=1, nrows=2, ncols=2, deltatime=10.,

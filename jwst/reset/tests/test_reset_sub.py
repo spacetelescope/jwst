@@ -15,7 +15,6 @@ from jwst.datamodels import RampModel, ResetModel, dqflags
 def test_correction(make_rampmodel, make_resetmodel):
     '''Check that data is unchanged for science data for groups > number of groups of reset '''
 
-
     # size of integration
     nints = 1
     ngroups = 15
@@ -32,7 +31,7 @@ def test_correction(make_rampmodel, make_resetmodel):
     reset = make_resetmodel(refgroups, ysize, xsize)
 
     # populate data array of reference file
-    for i in range(0, refgroups ):
+    for i in range(0, refgroups):
         reset.data[0, i] = i
 
     # set up test array
@@ -50,8 +49,7 @@ def test_correction(make_rampmodel, make_resetmodel):
 
     # test that the science data  are corrected for this first refgroups - should be 0
     # refgroups to ngroups should be = group # -1
-    np.testing.assert_array_equal(outfile.data, test.data  )
-
+    np.testing.assert_array_equal(outfile.data, test.data)
 
 
 def test_nan(make_rampmodel, make_resetmodel):
@@ -125,7 +123,7 @@ def test_dq_combine(make_rampmodel, make_resetmodel):
     outfile = resetcorr(dm_ramp, reset)
 
     t50_50 = jump_det | do_not_use | unreliable_reset
-    t50_51 = saturated  | unreliable_reset
+    t50_51 = saturated | unreliable_reset
     # check that dq flags were correctly added
     assert outfile.pixeldq[50, 50] == t50_50
     assert outfile.pixeldq[50, 51] == t50_51
@@ -168,13 +166,10 @@ def test_2_int(make_rampmodel, make_resetmodel):
     np.testing.assert_array_equal(outfile.data[1], diff_int2)
 
 
-
 @pytest.fixture(scope='function')
 def make_rampmodel():
     '''Make MIRI Ramp model for testing'''
-
     def _ramp(nints, ngroups, ysize, xsize):
-
         # create the data and groupdq arrays
         csize = (nints, ngroups, ysize, xsize)
         data = np.full(csize, 1.0) # default = 1.0
@@ -199,14 +194,13 @@ def make_rampmodel():
 @pytest.fixture(scope='function')
 def make_resetmodel():
     '''Make MIRI Reset model for testing'''
-
     def _reset(ngroups, ysize, xsize):
         # create the data and groupdq arrays
         nints = 2
         csize = (nints, ngroups, ysize, xsize)
         data = np.full(csize, 1.0) # default = 1.0
 
-    # create a JWST datamodel for MIRI data
+        # create a JWST datamodel for MIRI data
         reset = ResetModel(data=data)
         reset.meta.instrument.name = 'MIRI'
         reset.meta.date = '2018-01-01'

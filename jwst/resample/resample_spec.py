@@ -10,7 +10,7 @@ from astropy.modeling.models import (Mapping, Tabular1D, Linear1D,
 from astropy.modeling.fitting import LinearLSQFitter
 from gwcs import wcstools, WCS
 from gwcs import coordinate_frames as cf
-from ..cube_build.cube_build_wcs_util import  wrap_ra
+from ..cube_build.cube_build_wcs_util import wrap_ra
 
 from .. import datamodels
 from . import gwcs_drizzle
@@ -45,8 +45,8 @@ class ResampleSpecData:
     """
 
     def __init__(self, input_models, output=None, single=False,
-        blendheaders=False, pixfrac=1.0, kernel="square", fillval=0,
-        weight_type="ivm", good_bits=0, pscale_ratio=1.0, **kwargs):
+                 blendheaders=False, pixfrac=1.0, kernel="square", fillval=0,
+                 weight_type="ivm", good_bits=0, pscale_ratio=1.0, **kwargs):
         """
         Parameters
         ----------
@@ -145,8 +145,7 @@ class ResampleSpecData:
                 for iw in wavelength_array:
                     all_wavelength.append(iw)
 
-                lam_center_index = int((bb[spectral_axis][1] -
-                                            bb[spectral_axis][0]) / 2)
+                lam_center_index = int((bb[spectral_axis][1] - bb[spectral_axis][0]) / 2)
                 if spatial_axis == 0:
                     ra_center = ra[lam_center_index,:]
                     dec_center = dec[lam_center_index,:]
@@ -280,14 +279,17 @@ class ResampleSpecData:
         all_ra = wrap_ra(all_ra)
         ra_min = np.amin(all_ra)
         ra_max = np.amax(all_ra)
+        log.info(f"ra_min {ra_min}, ra_max{ra_max}")
 
-        ra_center_final  = (ra_max + ra_min)/2.0
+        ra_center_final = (ra_max + ra_min) / 2.0
         dec_min = np.amin(all_dec)
         dec_max = np.amax(all_dec)
-        dec_center_final  = (dec_max + dec_min)/2.0
+        dec_center_final = (dec_max + dec_min) / 2.0
         tan = Pix2Sky_TAN()
-        if len(self.input_models) == 1: # single model use ra_center_pt to be consistent
-                                        # with how resample was done before
+
+        # If single model use ra_center_pt to be consistent with how resample
+        # was done before
+        if len(self.input_models) == 1:
             ra_center_final = ra_center_pt
             dec_center_final = dec_center_pt
 
@@ -300,7 +302,7 @@ class ResampleSpecData:
             x_tan_all, _ = all_ra, all_dec
         x_min = np.amin(x_tan_all)
         x_max = np.amax(x_tan_all)
-        x_size = int(np.ceil((x_max - x_min)/np.absolute(pix_to_xtan.slope)))
+        x_size = int(np.ceil((x_max - x_min) / np.absolute(pix_to_xtan.slope)))
 
         # single model use size of x_tan_array
         # to be consistent with method before
@@ -393,19 +395,15 @@ class ResampleSpecData:
             outwcs = output_model.meta.wcs
 
             # Initialize the output with the wcs
-            driz = gwcs_drizzle.GWCSDrizzle(output_model,
-                                outwcs=outwcs,
-                                single=self.single,
-                                pixfrac=self.pixfrac,
-                                kernel=self.kernel,
-                                fillval=self.fillval)
+            driz = gwcs_drizzle.GWCSDrizzle(output_model, outwcs=outwcs,
+                                            single=self.single, pixfrac=self.pixfrac,
+                                            kernel=self.kernel, fillval=self.fillval)
 
             for n, img in enumerate(group):
                 exposure_times['start'].append(img.meta.exposure.start_time)
                 exposure_times['end'].append(img.meta.exposure.end_time)
-                inwht = resample_utils.build_driz_weight(img,
-                    weight_type=self.weight_type,
-                    good_bits=self.good_bits)
+                inwht = resample_utils.build_driz_weight(img, weight_type=self.weight_type,
+                                                         good_bits=self.good_bits)
 
                 if hasattr(img, 'name'):
                     log.info('Resampling slit {} {}'.format(img.name, self.data_size))

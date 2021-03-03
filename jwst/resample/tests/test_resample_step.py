@@ -8,6 +8,7 @@ from jwst.assign_wcs import AssignWcsStep
 from jwst.extract_2d import Extract2dStep
 from jwst.resample import ResampleSpecStep, ResampleStep
 
+
 @pytest.fixture
 def nirspec_rate():
     ysize = 2048
@@ -270,7 +271,6 @@ def test_weight_type(nircam_rate, _jail):
 
     assert_allclose(result2.data[100:105, 100:105], 7.5, rtol=1e-2)
     assert_allclose(result2.wht[100:105, 100:105], 20, rtol=1e-2)
-
 
 
 def test_sip_coeffs_do_not_propagate(nircam_rate):

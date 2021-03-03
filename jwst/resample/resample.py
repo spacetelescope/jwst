@@ -41,8 +41,8 @@ class ResampleData:
          (eventually) a record of metadata from all input models.
     """
     def __init__(self, input_models, output=None, single=False, blendheaders=True,
-        pixfrac=1.0, kernel="square", fillval="INDEF", weight_type="ivm",
-        good_bits=0, pscale_ratio=1.0, **kwargs):
+                 pixfrac=1.0, kernel="square", fillval="INDEF", weight_type="ivm",
+                 good_bits=0, pscale_ratio=1.0, **kwargs):
         """
         Parameters
         ----------
@@ -72,7 +72,7 @@ class ResampleData:
 
         # Define output WCS based on all inputs, including a reference WCS
         self.output_wcs = resample_utils.make_output_wcs(self.input_models,
-                                                        pscale_ratio=self.pscale_ratio)
+                                                         pscale_ratio=self.pscale_ratio)
         log.debug('Output mosaic size: {}'.format(self.output_wcs.data_size))
         can_allocate, required_memory = datamodels.util.check_memory_allocation(
             self.output_wcs.data_size, kwargs['allowed_memory'], datamodels.ImageModel
@@ -161,8 +161,8 @@ class ResampleData:
                     img.data -= blevel
 
                 inwht = resample_utils.build_driz_weight(img,
-                    weight_type=self.weight_type,
-                    good_bits=self.good_bits)
+                                                         weight_type=self.weight_type,
+                                                         good_bits=self.good_bits)
                 driz.add_image(img.data, img.meta.wcs, inwht=inwht,
                                expin=img.meta.exposure.exposure_time)
 

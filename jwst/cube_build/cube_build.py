@@ -192,7 +192,7 @@ class CubeData():
             user_clen = len(self.channel)
             user_slen = len(self.subchannel)
 
-            if user_clen == 1 and self.channel[0]  == 'all':
+            if user_clen == 1 and self.channel[0] == 'all':
                 user_clen = 0
 
             if user_slen == 1 and  self.subchannel[0] =='all':
@@ -253,7 +253,7 @@ class CubeData():
 
             user_glen = len(self.grating)
             user_flen = len(self.filter)
-            if user_glen == 1 and self.grating[0]  == 'all':
+            if user_glen == 1 and self.grating[0] == 'all':
                 user_glen = 0
 
             if user_flen == 1 and  self.filter[0] =='all':
