@@ -76,7 +76,7 @@ def data_file():
     model.meta.target.ra = TARG_RA
     model.meta.target.dec = TARG_DEC
     model.meta.aperture.name = "MIRIM_FULL"
-    model.meta.observation.date = '1/1/2017'
+    model.meta.observation.date = '2017-01-01'
     model.meta.exposure.type = "MIR_IMAGE"
 
     with TemporaryDirectory() as path:
@@ -94,7 +94,7 @@ def data_file_nosiaf():
     model.meta.target.ra = TARG_RA
     model.meta.target.dec = TARG_DEC
     model.meta.aperture.name = "UNKNOWN"
-    model.meta.observation.date = '1/1/2017'
+    model.meta.observation.date = '2017-01-01'
 
     with TemporaryDirectory() as path:
         file_path = os.path.join(path, 'fits_nosiaf.fits')
