@@ -700,17 +700,18 @@ def _create_grism_bbox(input_model, mmag_extract=99.0,
 
                     if wfss_extract_half_height is not None and obj.is_star:
                         if input_model.meta.wcsinfo.dispersion_direction == 2:
-                            rac, decc = obj.sky_centroid.ra.value, obj.sky_centroid.dec.value
-                            center, _, _, _, _ = sky_to_grism(rac, decc, (lmin + lmax) / 2, order)
-
-                            # center = (xmax + xmin) / 2
+                            #rac, decc = obj.sky_centroid.ra.value, obj.sky_centroid.dec.value
+                            #center, _, _, _, _ = sky_to_grism(rac, decc, (lmin + lmax) / 2, order)
+                            #center = xcenter
+                            center = (xmax + xmin) / 2
                             xmin = center - wfss_extract_half_height
                             xmax = center + wfss_extract_half_height
                         elif input_model.meta.wcsinfo.dispersion_direction == 1:
-                            rac, decc = obj.sky_centroid.ra.value, obj.sky_centroid.dec.value
-                            _, center, _, _, _ = sky_to_grism(rac, decc, (lmin + lmax) / 2, order)
-
-                            # center = (ymax + ymin) / 2
+                            #rac, decc = obj.sky_centroid.ra.value, obj.sky_centroid.dec.value
+                            #_, center, _, _, _ = sky_to_grism(rac, decc, (lmin + lmax) / 2, order)
+                            #print(f"Transform fit to y : {center}\n")
+                            #center = ycenter
+                            center = (ymax + ymin) / 2
                             ymin = center - wfss_extract_half_height
                             ymax = center + wfss_extract_half_height
                         else:
