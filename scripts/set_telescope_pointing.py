@@ -63,6 +63,10 @@ if __name__ == '__main__':
         help='Increase verbosity. Specifying multiple times adds more output.'
     )
     parser.add_argument(
+        '--method', choices=[m.name.lower() for m in stp.Methods], default=stp.Methods.DEFAULT.name.lower(),
+        help='Algorithic method to use. Default: %(default)s'
+    )
+    parser.add_argument(
         '--tolerance', type=int, default=60,
         help='Seconds beyond the observation time to search for telemetry. Default: %(default)s'
     )
@@ -97,6 +101,7 @@ if __name__ == '__main__':
     if level <= logging.DEBUG:
         logger_handler.setFormatter(logger_format_debug)
 
+    # Calculate WCS for all inputs.
     for filename in args.exposure:
         logger.info(
             '\n------'
@@ -110,6 +115,7 @@ if __name__ == '__main__':
                 tolerance=args.tolerance,
                 allow_default=args.allow_default,
                 dry_run=args.dry_run,
+                method=args.method,
                 j2fgs_transpose=args.transpose_j2fgs
             )
         except ValueError as exception:

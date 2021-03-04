@@ -813,6 +813,7 @@ def calc_transforms_original(pointing, siaf, fsmcorr_version='latest', fsmcorr_u
             M_j_to_fgs1       *   # J-Frame to FGS1
             M_eci_to_j        *   # ECI to J-Frame
     """
+    logger.info('Calculating transforms using ORIGINAL method...')
 
     # Determine the ECI to J-frame matrix
     m_eci2j = calc_eci2j_matrix(pointing.q)
@@ -920,6 +921,7 @@ def calc_transforms_cmdtest(pointing, siaf,
             M_fgs1_to_sifov_fgs1siaf   *   # FGS1 to Science Instruments Aperture
             M_eci_to_fgs1_commanded        # ECI to FGS1 using commanded information
     """
+    logger.info('Calculating transforms using CMDTEST method...')
 
     # Determine the ECI to J-frame matrix
     m_eci2j = calc_eci2j_matrix(pointing.q)
@@ -1482,7 +1484,7 @@ def get_wcs_values_from_siaf(aperture_name, useafter, prd_db_filepath=None):
     except (KeyError, OSError, TypeError, RuntimeError) as exception:
         siaf = get_wcs_values_from_siaf_api(aperture_name)
 
-    logger.info('SIAF = %s', siaf)
+    logger.info('For aperture %s: SIAF = %s', aperture_name, siaf)
     return siaf
 
 
