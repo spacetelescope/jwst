@@ -818,7 +818,7 @@ def calc_transforms_original(pointing, siaf, fsmcorr_version='latest', fsmcorr_u
     # Determine the ECI to J-frame matrix
     m_eci2j = calc_eci2j_matrix(pointing.q)
 
-    # Calculate the J-frame to FGS! ICS matrix
+    # Calculate the J-frame to FGS1 ICS matrix
     m_j2fgs1 = calc_j2fgs1_matrix(pointing.j2fgs_matrix, transpose=j2fgs_transpose)
 
     # Calculate the FSM corrections to the SI_FOV frame
@@ -926,7 +926,7 @@ def calc_transforms_cmdtest(pointing, siaf,
     # Determine the ECI to J-frame matrix
     m_eci2j = calc_eci2j_matrix(pointing.q)
 
-    # Calculate the J-frame to FGS! ICS matrix
+    # Calculate the J-frame to FGS1 ICS matrix
     m_j2fgs1 = calc_j2fgs1_matrix(pointing.j2fgs_matrix, transpose=j2fgs_transpose)
 
     # Calculate the FSM corrections to the SI_FOV frame
