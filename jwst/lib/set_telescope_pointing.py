@@ -24,6 +24,8 @@ TYPES_TO_UPDATE = set(list(IMAGING_TYPES) + FGS_GUIDE_EXP_TYPES)
 # Setup logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
+DEBUG_FULL = logging.DEBUG - 1
+LOGLEVELS = [logging.INFO, logging.DEBUG, DEBUG_FULL]
 
 
 # The available methods for transformation
@@ -97,6 +99,9 @@ SIAF = namedtuple("SIAF", ["v2_ref", "v3_ref", "v3yangle", "vparity",
 # FITS keywords and aperture vertices.
 SIAF.__new__.__defaults__ = (None, None, None, None, 0, 0, 3600, 3600,
                              (0, 1, 1, 0, 0, 0, 1, 1))
+
+SIAF_VERTICIES = ['XIdlVert1', 'XIdlVert2', 'XIdlVert3', 'XIdlVert4',
+                  'YIdlVert1', 'YIdlVert2', 'YIdlVert3', 'YIdlVert4']
 
 # Pointing container
 Pointing = namedtuple("Pointing", ["q", "j2fgs_matrix", "fsmcorr", "obstime"])
@@ -1367,7 +1372,7 @@ def get_pointing(obsstart, obsend, engdb_url=None,
     mnemonics = get_mnemonics(obsstart, obsend, tolerance, engdb_url=engdb_url)
     reduced = reduce_func(mnemonics)
 
-    logger.debug(f'Memonics found:\n{mnemonics}')
+    logger.log(DEBUG_FULL, f'Memonics found:\n{mnemonics}')
     logger.info(f'Reduced set of pointings:\n{reduced}')
 
     return reduced
@@ -1473,9 +1478,12 @@ def get_wcs_values_from_siaf(aperture_name, useafter, prd_db_filepath=None):
         The SIAF namedtuple with values from the PRD database.
     """
     try:
-        return get_wcs_values_from_siaf_prd(aperture_name, useafter, prd_db_filepath=prd_db_filepath)
+        siaf = get_wcs_values_from_siaf_prd(aperture_name, useafter, prd_db_filepath=prd_db_filepath)
     except (KeyError, OSError, TypeError, RuntimeError) as exception:
-        return get_wcs_values_from_siaf_api(aperture_name)
+        siaf = get_wcs_values_from_siaf_api(aperture_name)
+
+    logger.info('SIAF = %s', siaf)
+    return siaf
 
 
 def get_wcs_values_from_siaf_api(aperture_name):
@@ -1499,6 +1507,7 @@ def get_wcs_values_from_siaf_api(aperture_name):
     siaf : namedtuple
         The SIAF namedtuple with values from the PRD database.
     """
+    logger.info('Retrieving WCS through SIAF API `pysiaf`')
 
     # Retrieve SIAF
     instrument = INSTRUMENT_MAP[aperture_name[:3].lower()]
@@ -1506,7 +1515,10 @@ def get_wcs_values_from_siaf_api(aperture_name):
     aperture = siaf[aperture_name.upper()]
 
     # Fill out the Siaf
-    siaf = SIAF(v2_ref=aperture.V2Ref, v3_ref=aperture.V3Ref, v3yangle=aperture.V3IdlYAngle, vparity=aperture.VIdlParity)
+    verticies = tuple(getattr(aperture, key) for key in SIAF_VERTICIES)
+    siaf = SIAF(v2_ref=aperture.V2Ref, v3_ref=aperture.V3Ref, v3yangle=aperture.V3IdlYAngle, vparity=aperture.VIdlParity,
+                crpix1=aperture.XSciRef, crpix2=aperture.YSciRef, cdelt1=aperture.XSciScale, cdelt2=aperture.YSciScale,
+                vertices_idl=verticies)
 
     return siaf
 
