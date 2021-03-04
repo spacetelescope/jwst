@@ -43,6 +43,7 @@ import logging
 
 import jwst.lib.set_telescope_pointing as stp
 
+# Configure logging
 logger = logging.getLogger('jwst')
 logger.propagate = False
 logger_handler = logging.StreamHandler()
@@ -64,7 +65,7 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '--method', choices=[m.name.lower() for m in stp.Methods], default=stp.Methods.DEFAULT.name.lower(),
-        help='Algorithic method to use. Default: %(default)s'
+        help='Algorithmic method to use. Default: %(default)s'
     )
     parser.add_argument(
         '--tolerance', type=int, default=60,
