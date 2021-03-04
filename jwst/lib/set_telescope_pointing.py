@@ -833,15 +833,8 @@ def calc_transforms_original(pointing, siaf, fsmcorr_version='latest', fsmcorr_u
     m_sifov2v = calc_sifov2v_matrix()
 
     # Calculate ECI to SI FOV
-    m_eci2sifov = np.dot(
-        m_sifov_fsm_delta,
-        np.dot(
-            MZ2X,
-            np.dot(
-                m_fgs12sifov,
-                np.dot(m_j2fgs1, m_eci2j)
-            )
-        )
+    m_eci2sifov = np.linalg.multi_dot(
+        [m_sifov_fsm_delta, MZ2X, m_fgs12sifov, m_j2fgs1, m_eci2j]
     )
 
     # Calculate the complete transform to the V1 reference
@@ -941,15 +934,8 @@ def calc_transforms_cmdtest(pointing, siaf,
     m_sifov2v = calc_sifov2v_matrix()
 
     # Calculate ECI to SI FOV
-    m_eci2sifov = np.dot(
-        MZ2X,
-        np.dot(
-            m_sifov_fsm_delta,
-            np.dot(
-                m_fgs12sifov,
-                np.dot(m_j2fgs1, m_eci2j)
-            )
-        )
+    m_eci2sifov = np.linalg.multi_dot(
+        [MZ2X, m_sifov_fsm_delta, m_fgs12sifov, m_j2fgs1, m_eci2j]
     )
 
     # Calculate the complete transform to the V1 reference
