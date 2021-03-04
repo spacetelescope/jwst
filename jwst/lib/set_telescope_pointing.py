@@ -1294,28 +1294,28 @@ def calc_v2siaf_matrix(siaf):
     return transform
 
 
-def calc_position_angle(v1, v3):
-    """Calculate V3 position angle @V1
+def calc_position_angle(target, point):
+    """Calculate point position angle @target
 
     Parameters
     ----------
-    v1: WCSRef
-        The V1 wcs parameters
+    target: WCSRef
+        The TARGET wcs parameters
 
-    v3: WCSRef
-        The V3 wcs parameters
+    point: WCSRef
+        The POINT wcs parameters
 
     Returns
     -------
-    v3_pa: float
-      The V3 position angle, in radians
+    point_pa: float
+      The POINT position angle, in radians
     """
-    y = cos(v3.dec) * sin(v3.ra - v1.ra)
-    x = sin(v3.dec) * cos(v1.dec) - \
-        cos(v3.dec) * sin(v1.dec) * cos((v3.ra - v1.ra))
-    v3_pa = np.arctan2(y, x)
+    y = cos(point.dec) * sin(point.ra-target.ra)
+    x = sin(point.dec) * cos(target.dec) - \
+        cos(point.dec) * sin(target.dec) * cos((point.ra - target.ra))
+    point_pa = np.arctan2(y, x)
 
-    return v3_pa
+    return point_pa
 
 
 def get_pointing(obsstart, obsend, engdb_url=None,
