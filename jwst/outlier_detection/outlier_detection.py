@@ -9,10 +9,10 @@ from astropy.stats import sigma_clip
 from scipy import ndimage
 from drizzle.cdrizzle import tblot
 
-from .. import datamodels
-from ..resample import resample
-from ..resample.resample_utils import build_driz_weight, calc_gwcs_pixmap
-from ..stpipe import Step
+from jwst import datamodels
+from jwst.resample import resample
+from jwst.resample.resample_utils import build_driz_weight, calc_gwcs_pixmap
+from jwst.stpipe import Step
 
 import logging
 log = logging.getLogger(__name__)
@@ -187,6 +187,13 @@ class OutlierDetection:
         save_intermediate_results = pars['save_intermediate_results']
         save_intermediate_results = True
         if pars['resample_data']:
+            err_models = datamodels.ModelContainer()
+            for cdata in self.input_models:
+                tmodel = cdata.copy()
+                tmodel.data = tmodel.err
+                tmodel.meta.background.level = 0.0
+                err_models.append(tmodel)
+
             # Start by creating resampled/mosaic images for
             # each group of exposures
             sdriz = resample.ResampleData(self.input_models, single=True,
@@ -200,7 +207,21 @@ class OutlierDetection:
                         basepath=model.meta.filename,
                         suffix='outlier_i2d')
                     model.save(model_output_path)
+            # create the equivalent images for the err plane
+            edriz = resample.ResampleData(err_models, single=True,
+                                          blendheaders=False, **pars)
+            edriz.do_drizzle()
+            drizzled_errors = edriz.output_models
+            print(np.max(self.input_models[0].data))
+            print(np.max(self.input_models[0].err))
+            # exit()
+            # print(drizzled_models[0].data)
+            print(np.max(drizzled_models[0].data))
+            print(np.max(drizzled_errors[0].data))
+            print(drizzled_errors[0].meta.background.level)
+            exit()
         else:
+            # for non-dithered data, the resampled image is just the original image
             drizzled_models = self.input_models
             for i in range(len(self.input_models)):
                 drizzled_models[i].wht = build_driz_weight(
@@ -304,7 +325,7 @@ class OutlierDetection:
 
     def blot_median(self, median_model):
         """Blot resampled median image back to the detector images."""
-        interp = self.outlierpars.get('interp', 'poly5')
+        interp = self.outlierpars.get('interp', 'linear')
         sinscl = self.outlierpars.get('sinscl', 1.0)
 
         # Initialize container for output blot images
@@ -382,15 +403,11 @@ def flag_cr(sci_image, blot_image, **pars):
 
     Default parameters:
 
-    grow     = 1               # Radius to mask [default=1 for 3x3]
-    ctegrow  = 0               # Length of CTE correction to be applied
     snr      = "5.0 4.0"       # Signal-to-noise ratio
     scale    = "1.2 0.7"       # scaling factor applied to the derivative
     backg    = 0               # Background value
 
     """
-    grow = pars.get('grow', 1)
-    ctegrow = pars.get('ctegrow', 0)  # not provided by outlierpars
     backg = pars.get('backg', 0)
     snr1, snr2 = [float(val) for val in pars.get('snr', '5.0 4.0').split()]
     scl1, scl2 = [float(val) for val in pars.get('scale', '1.2 0.7').split()]
@@ -411,35 +428,26 @@ def flag_cr(sci_image, blot_image, **pars):
     blot_deriv = abs_deriv(blot_data)
 
     err_data = np.nan_to_num(sci_image.err)
+    print(blot_data.err)
+    exit()
 
     # Define output cosmic ray mask to populate
     cr_mask = np.zeros(sci_image.shape, dtype=np.uint8)
 
-    #
-    #
-    #    COMPUTATION PART I
-    #
-    #
-    # Model the noise and create a CR mask
-
-    if pars.get('resample_data', True):
+    if pars.get('resample_data', True):  # dithered outlier detection
         blot_data += subtracted_background
-        print(np.nanmean(sci_data), np.nanmean(blot_data))
-        # blot_data += subtracted_background
         diff_noise = np.abs(sci_data - blot_data)
 
-        fits.writeto('sci_reg.fits', sci_data, overwrite=True)
-        fits.writeto('blot_reg.fits', blot_data, overwrite=True)
+        fits.writeto("blot_deriv.fits", blot_deriv, overwrite=True)
 
         t2 = scl1 * blot_deriv + snr1 * err_data
         tmp1 = np.logical_not(np.greater(diff_noise, t2))
 
-        print(t2[7, 7], snr1 * err_data[7, 7])
-        print(diff_noise[7, 7], sci_data[7, 7], blot_data[7, 7], tmp1[7, 7])
+        # print(t2[7, 7], snr1 * err_data[7, 7])
+        # print(diff_noise[7, 7], sci_data[7, 7], blot_data[7, 7], tmp1[7, 7])
 
         # print(t2[12, 12], snr1 * err_data[12, 12])
         # print(diff_noise[12,12], sci_data[12, 12], blot_data[12, 12], tmp1[12, 12])
-
 
         # exit()
 
@@ -447,6 +455,11 @@ def flag_cr(sci_image, blot_image, **pars):
         kernel = np.ones((3, 3), dtype=np.uint8)
         tmp2 = np.zeros(tmp1.shape, dtype=np.int32)
         ndimage.convolve(tmp1, kernel, output=tmp2, mode='nearest', cval=0)
+
+
+        print(tmp1)
+        print("blah")
+        print(tmp2)
         #
         #
         #    COMPUTATION PART II
@@ -457,78 +470,19 @@ def flag_cr(sci_image, blot_image, **pars):
 
         np.logical_not(np.greater(diff_noise, xt2) & np.less(tmp2, 9), cr_mask)
 
-        print(cr_mask[7, 7])
-
+        print(cr_mask)
         exit()
 
-    else:
-        fits.writeto('sci_stack.fits', sci_data, overwrite=True)
-        fits.writeto('blot_stack.fits', blot_data, overwrite=True)
+        # print(cr_mask[7, 7])
+        # exit()
 
+    else:  # stack outlier detection
         diff_noise = np.abs(sci_data - blot_data)
         # print(diff_noise[12,12], sci_data[12, 12], blot_data[12, 12])
 
         # straightforward detection of outliers for non-dithered data
         #   as err_data includes all noise sources (photon, read, and flat for baseline)
         cr_mask = np.logical_not(np.greater(diff_noise, snr1 * err_data))
-
-    #
-    #
-    #    COMPUTATION PART III
-    #
-    #
-    # Flag additional cte 'radial' and 'tail' pixels surrounding CR
-    # pixels as CRs
-
-    # In both the 'radial' and 'length' kernels below, 0=good and
-    # 1=bad, so that upon convolving the kernels with cr_mask, the
-    # convolution output will have low->bad and high->good from which
-    # 2 new arrays are created having 0->bad and 1->good. These 2 new
-    # arrays are then AND'ed to create a new cr_mask.
-
-    # recast cr_mask to int for manipulations below; will recast to
-    # Bool at end
-    cr_mask_orig_bool = cr_mask.copy()
-    cr_mask = cr_mask_orig_bool.astype(np.uint8)
-
-    # make radial convolution kernel and convolve it with original cr_mask
-    cr_grow_kernel = np.ones((grow, grow))
-    cr_grow_kernel_conv = cr_mask.copy()
-    ndimage.convolve(cr_mask, cr_grow_kernel, output=cr_grow_kernel_conv)
-
-    # make tail convolution kernel and (shortly) convolve it with
-    # original cr_mask
-    cr_ctegrow_kernel = np.zeros((2 * ctegrow + 1, 2 * ctegrow + 1))
-    cr_ctegrow_kernel_conv = cr_mask.copy()
-
-    # which pixels are masked by tail kernel depends on readout direction
-    # We could put useful info in here for CTE masking if needed.  Code
-    # remains below.  For now, we set to zero, which turns off CTE masking.
-    ctedir = 0
-    if (ctedir == 1):
-        cr_ctegrow_kernel[0:ctegrow, ctegrow] = 1
-    if (ctedir == -1):
-        cr_ctegrow_kernel[ctegrow + 1:2 * ctegrow + 1, ctegrow] = 1
-    if (ctedir == 0):
-        pass
-
-    # finally do the tail convolution
-    ndimage.convolve(cr_mask, cr_ctegrow_kernel, output=cr_ctegrow_kernel_conv)
-
-    # select high pixels from both convolution outputs; then 'and' them to
-    # create new cr_mask
-    where_cr_grow_kernel_conv = np.where(cr_grow_kernel_conv < grow * grow,
-                                         0, 1)
-    where_cr_ctegrow_kernel_conv = np.where(cr_ctegrow_kernel_conv < ctegrow,
-                                            0, 1)
-
-    # combine masks and cast back to Bool
-    #  The cr_mask does not seem to be changd at all and so
-    #  it is not clear that this step and any code after COMPUTATION PART III
-    #  is needed.
-    np.logical_and(where_cr_ctegrow_kernel_conv,
-                   where_cr_grow_kernel_conv, cr_mask)
-    cr_mask = cr_mask.astype(bool)
 
     count_sci = np.count_nonzero(sci_image.dq)
     count_cr = np.count_nonzero(cr_mask)
@@ -537,6 +491,9 @@ def flag_cr(sci_image, blot_image, **pars):
 
     # Update the DQ array in the input image.
     sci_image.dq = np.bitwise_or(sci_image.dq, np.invert(cr_mask) * CRBIT)
+
+    print(sci_image.dq)
+    exit()
 
 def abs_deriv(array):
     """Take the absolute derivate of a numpy array."""
@@ -564,6 +521,37 @@ def _absolute_subtract(array, tmp, out):
 
 
 def gwcs_blot(median_model, blot_img, interp='poly5', sinscl=1.0):
+    """
+    Resample the output/resampled image to recreate an input image based on
+    the input image's world coordinate system
+
+    Parameters
+    ----------
+    median_model : ~jwst.datamodels.DataModel
+
+    blot_img : datamodel
+        Datamodel containing header and WCS to define the 'blotted' image
+
+    interp : str, optional
+        The type of interpolation used in the resampling. The
+        possible values are "nearest" (nearest neighbor interpolation),
+        "linear" (bilinear interpolation), "poly3" (cubic polynomial
+        interpolation), "poly5" (quintic polynomial interpolation),
+        "sinc" (sinc interpolation), "lan3" (3rd order Lanczos
+        interpolation), and "lan5" (5th order Lanczos interpolation).
+
+    sincscl : float, optional
+        The scaling factor for sinc interpolation.
+    """
+    from reproject import reproject_interp
+    outsci = np.zeros(blot_img.shape, dtype=float)
+    reproject_interp((median_model.data, median_model.meta.wcs),
+                     output_projection=blot_img.meta.wcs, order=1,
+                     output_array=outsci)
+    return outsci
+
+
+def gwcs_blot_old(median_model, blot_img, interp='poly5', sinscl=1.0):
     """
     Resample the output/resampled image to recreate an input image based on
     the input image's world coordinate system
