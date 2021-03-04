@@ -3,6 +3,8 @@
 from functools import partial
 import numpy as np
 
+from astropy.io import fits
+
 from astropy.stats import sigma_clip
 from scipy import ndimage
 from drizzle.cdrizzle import tblot
@@ -183,6 +185,7 @@ class OutlierDetection:
 
         pars = self.outlierpars
         save_intermediate_results = pars['save_intermediate_results']
+        save_intermediate_results = True
         if pars['resample_data']:
             # Start by creating resampled/mosaic images for
             # each group of exposures
@@ -404,7 +407,7 @@ def flag_cr(sci_image, blot_image, **pars):
         subtracted_background = backg
 
     sci_data = sci_image.data
-    blot_data = (blot_image.data + subtracted_background)
+    blot_data = blot_image.data
     blot_deriv = abs_deriv(blot_data)
 
     err_data = np.nan_to_num(sci_image.err)
@@ -418,15 +421,27 @@ def flag_cr(sci_image, blot_image, **pars):
     #
     #
     # Model the noise and create a CR mask
-    diff_noise = np.abs(sci_data - blot_data)
-
 
     if pars.get('resample_data', True):
+        blot_data += subtracted_background
+        print(np.nanmean(sci_data), np.nanmean(blot_data))
+        # blot_data += subtracted_background
+        diff_noise = np.abs(sci_data - blot_data)
 
-        ta = np.sqrt(np.abs(blot_data) + err_data ** 2)
-        t2 = scl1 * blot_deriv + snr1 * ta
-        # t2 = scl1 * blot_deriv + snr1 * err_data
+        fits.writeto('sci_reg.fits', sci_data, overwrite=True)
+        fits.writeto('blot_reg.fits', blot_data, overwrite=True)
+
+        t2 = scl1 * blot_deriv + snr1 * err_data
         tmp1 = np.logical_not(np.greater(diff_noise, t2))
+
+        print(t2[7, 7], snr1 * err_data[7, 7])
+        print(diff_noise[7, 7], sci_data[7, 7], blot_data[7, 7], tmp1[7, 7])
+
+        # print(t2[12, 12], snr1 * err_data[12, 12])
+        # print(diff_noise[12,12], sci_data[12, 12], blot_data[12, 12], tmp1[12, 12])
+
+
+        # exit()
 
         # Convolve mask with 3x3 kernel
         kernel = np.ones((3, 3), dtype=np.uint8)
@@ -442,10 +457,20 @@ def flag_cr(sci_image, blot_image, **pars):
 
         np.logical_not(np.greater(diff_noise, xt2) & np.less(tmp2, 9), cr_mask)
 
-    else:
-        t2 = snr1 * err_data
+        print(cr_mask[7, 7])
 
-        cr_mask = np.logical_not(np.greater(diff_noise - subtracted_background, t2))
+        exit()
+
+    else:
+        fits.writeto('sci_stack.fits', sci_data, overwrite=True)
+        fits.writeto('blot_stack.fits', blot_data, overwrite=True)
+
+        diff_noise = np.abs(sci_data - blot_data)
+        # print(diff_noise[12,12], sci_data[12, 12], blot_data[12, 12])
+
+        # straightforward detection of outliers for non-dithered data
+        #   as err_data includes all noise sources (photon, read, and flat for baseline)
+        cr_mask = np.logical_not(np.greater(diff_noise, snr1 * err_data))
 
     #
     #
@@ -498,6 +523,9 @@ def flag_cr(sci_image, blot_image, **pars):
                                             0, 1)
 
     # combine masks and cast back to Bool
+    #  The cr_mask does not seem to be changd at all and so
+    #  it is not clear that this step and any code after COMPUTATION PART III
+    #  is needed.
     np.logical_and(where_cr_ctegrow_kernel_conv,
                    where_cr_grow_kernel_conv, cr_mask)
     cr_mask = cr_mask.astype(bool)

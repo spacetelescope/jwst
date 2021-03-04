@@ -1,17 +1,16 @@
 """Public common step definition for OutlierDetection processing."""
 from functools import partial
 
-from ..stpipe import Step
-from .. import datamodels
+from jwst.stpipe import Step
+from jwst import datamodels
+from jwst.lib.pipe_utils import is_tso
 
-from . import outlier_detection
-from . import outlier_detection_scaled
-from . import outlier_detection_ifu
-from . import outlier_detection_spec
+from jwst.outlier_detection import outlier_detection
+from jwst.outlier_detection import outlier_detection_ifu
+from jwst.outlier_detection import outlier_detection_spec
 
 # Categorize all supported versions of outlier_detection
 outlier_registry = {'imaging': outlier_detection.OutlierDetection,
-                    'scaled': outlier_detection_scaled.OutlierDetectionScaled,
                     'ifu': outlier_detection_ifu.OutlierDetectionIFU,
                     'slitspec': outlier_detection_spec.OutlierDetectionSpec
                     }
@@ -115,29 +114,29 @@ class OutlierDetectionStep(Step):
             # Add logic here to select which version of OutlierDetection
             # needs to be used depending on the input data
             if self.input_container:
-                exptype = self.input_models[0].meta.exposure.type
+                single_model = self.input_models[0]
             else:
-                exptype = self.input_models.meta.exposure.type
+                single_model = self.input_models[0]
+            exptype = single_model.meta.exposure.type
             self.check_input()
 
-            if exptype in IMAGE_MODES:
-                # default mode: imaging with resampling
-                detection_step = outlier_registry['imaging']
-                pars['resample_suffix'] = 'i2d'
-            elif exptype in TSO_SPEC_MODES:
+            # check for TSO models first
+            if is_tso(single_model):
                 # algorithm selected for TSO data (no resampling)
                 pars['resample_data'] = False  # force resampling off...
                 detection_step = outlier_registry['imaging']
-                pars['resample_suffix'] = 's2d'
-            elif exptype in TSO_IMAGE_MODES + CORON_IMAGE_MODES and \
-                    not self.scale_detection:
+                if exptype in TSO_SPEC_MODES:
+                    pars['resample_suffix'] = 's2d'
+                else:
+                    pars['resample_suffix'] = 'i2d'
+            elif exptype in IMAGE_MODES:
+                # imaging with resampling
+                detection_step = outlier_registry['imaging']
+                pars['resample_suffix'] = 'i2d'
+            elif exptype in CORON_IMAGE_MODES:
                 # algorithm selected for TSO data (no resampling)
                 pars['resample_data'] = False  # force resampling off...
                 detection_step = outlier_registry['imaging']
-                pars['resample_suffix'] = 'i2d'
-            elif exptype in TSO_IMAGE_MODES and self.scale_detection:
-                # selected scaled algorithm for TSO data
-                detection_step = outlier_registry['scaled']
                 pars['resample_suffix'] = 'i2d'
             elif exptype in SLIT_SPEC_MODES:
                 detection_step = outlier_registry['slitspec']
