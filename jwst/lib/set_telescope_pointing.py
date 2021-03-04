@@ -1233,9 +1233,9 @@ def calc_fgs1_to_sifov_fgs1siaf_matrix(siaf_path=None, useafter=None):
         logger.warning('Cannot read a SIAF database. Using the default FGS1_to_SIFOV matrix')
         return calc_fgs1_to_sifov_matrix()
 
-    v2 = fgs1_siaf.v2_ref
-    v3 = fgs1_siaf.v3_ref + 7.8 * 60.0
-    y = fgs1_siaf.v3yangle
+    v2 = fgs1_siaf.v2_ref * A2R
+    v3 = (fgs1_siaf.v3_ref + 7.8 * 60.0) * A2R
+    y = fgs1_siaf.v3yangle * D2R
 
     m = np.array([
         [cos(v2) * cos(y) + sin(v2) * sin(v3) * sin(y), cos(v2) * sin(y) - sin(v2) * sin(v3) * cos(y), sin(v2) * cos(v3)],
