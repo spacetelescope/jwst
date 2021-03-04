@@ -102,14 +102,10 @@ class compare_cr_files:
 
         NSTACK = data_c.shape[0]  # number of slices
 
-        xx_size_c = data_c.shape[2]
-        yy_size_c = data_c.shape[1]
-        xx_size_f = data_f.shape[2]
-        yy_size_f = data_f.shape[1]
-        xx_size_true = data_true.shape[1]
-        yy_size_true = data_true.shape[0]
-        xx_size_avg = data_avg.shape[1]
-        yy_size_avg = data_avg.shape[0]
+        xx_size_c = data_c.shape[2]; yy_size_c = data_c.shape[1]
+        xx_size_f = data_f.shape[2]; yy_size_f = data_f.shape[1]
+        xx_size_true = data_true.shape[1]; yy_size_true = data_true.shape[0]
+        xx_size_avg = data_avg.shape[1]; yy_size_avg = data_avg.shape[0]
 
         # read the value of navg from the header of the 'found' file:
         try:
@@ -142,8 +138,7 @@ class compare_cr_files:
                 'incompatible sizes, so maybe using the wrong created file ')
             sys.exit(ERROR_RETURN)
 
-        xx_size = xx_size_c
-        yy_size = yy_size_c # all sizes compatible, so using more generic names
+        xx_size = xx_size_c; yy_size = yy_size_c # all sizes compatible, so using more generic names
 
         # create 1d arrays for later stats
         data_true_1 = data_true.ravel()
@@ -232,28 +227,24 @@ class compare_cr_files:
                         and (f_pix_whole_stack[which_read + 1] == 0.0)):
                         tot_c_only += 1
                         c_only_along_stack[yy_pix, xx_pix] += 1
-                        if verb > 1:
-                            print('       The subvector above is created only ')
+                        if verb > 1: print('       The subvector above is created only ')
 
                     if ((c_navg_line[which_read] == 0.0) and (f_pix_whole_stack[which_read] > 0.0)):
                         tot_f_only += 1
                         f_only_along_stack[yy_pix, xx_pix] += 1
-                        if verb > 1:
-                            print('       The subvector above is found only ')
+                        if verb > 1: print('       The subvector above is found only ')
 
                     if ((c_navg_line[which_read] == 0.0) and (f_pix_whole_stack[which_read] == 0.0)):
                         tot_neither += 1
                         neither_along_stack[yy_pix, xx_pix] += 1
-                        if verb > 1:
-                            print('       The subvector above is neither ')
+                        if verb > 1: print('       The subvector above is neither ')
 
                     if ((c_navg_line[which_read] > 0.0)
                         and ((f_pix_whole_stack[which_read] > 0.0)
                             or (f_pix_whole_stack[which_read + 1] > 0.0))):
                         tot_both += 1
                         both_along_stack[yy_pix, xx_pix] += 1
-                        if verb > 1:
-                            print('       The subvector above is both ')
+                        if verb > 1: print('       The subvector above is both ')
 
         if (verb > 1):
             for xx_pix in range(xx_size):
@@ -375,14 +366,10 @@ if __name__ == "__main__":
     """
     usage = "usage:  compare_cr_files created_file found_file sim_file slope_file [verb]"
 
-    if (sys.argv[1]):
-        created_file = sys.argv[1]
-    if (sys.argv[2]):
-        found_file = sys.argv[2]
-    if (sys.argv[3]):
-        sim_file = sys.argv[3]
-    if (sys.argv[4]):
-        slope_file = sys.argv[4]
+    if (sys.argv[1]): created_file = sys.argv[1]
+    if (sys.argv[2]): found_file = sys.argv[2]
+    if (sys.argv[3]): sim_file = sys.argv[3]
+    if (sys.argv[4]): slope_file = sys.argv[4]
 
     if (len(sys.argv) > 5):
         verb = sys.argv[5]

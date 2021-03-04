@@ -98,14 +98,10 @@ class compare_cr_navg_files:
         data_true = fh_true[0].data
         data_avg = fh_avg[0].data
 
-        xx_size_c = data_c.shape[2]
-        yy_size_c = data_c.shape[1]
-        xx_size_f = data_f.shape[2]
-        yy_size_f = data_f.shape[1]
-        xx_size_true = data_true.shape[1]
-        yy_size_true = data_true.shape[0]
-        xx_size_avg = data_avg.shape[1]
-        yy_size_avg = data_avg.shape[0]
+        xx_size_c = data_c.shape[2]; yy_size_c = data_c.shape[1]
+        xx_size_f = data_f.shape[2]; yy_size_f = data_f.shape[1]
+        xx_size_true = data_true.shape[1]; yy_size_true = data_true.shape[0]
+        xx_size_avg = data_avg.shape[1]; yy_size_avg = data_avg.shape[0]
 
         if (verb > 0):
             print('  ')
@@ -130,8 +126,7 @@ class compare_cr_navg_files:
                 'incompatible sizes, so maybe using the wrong created file ')
             sys.exit(ERROR_RETURN)
 
-        xx_size = xx_size_c
-        yy_size = yy_size_c # all sizes compatible, so use more generic names?
+        xx_size = xx_size_c; yy_size = yy_size_c # all sizes compatible, so use more generic names?
 
         NSTACK = data_c.shape[0]  # number of slices
 
@@ -223,28 +218,24 @@ class compare_cr_navg_files:
                         and (f_pix_whole_stack[which_read + 1] == 0.0)):
                         tot_c_only += 1
                         c_only_along_stack[yy_pix, xx_pix] += 1
-                        if verb > 1:
-                            print('       The subvector above is created only ')
+                        if verb > 1: print('       The subvector above is created only ')
 
                     elif ((c_navg_line[which_read] == 0.0) and (f_pix_whole_stack[which_read] > 0.0)):
                         tot_f_only += 1
                         f_only_along_stack[yy_pix, xx_pix] += 1
-                        if verb > 1:
-                            print('       The subvector above is found only ')
+                        if verb > 1: print('       The subvector above is found only ')
 
                     elif ((c_navg_line[which_read] > 0.0)
                         and ((f_pix_whole_stack[which_read] > 0.0)
                             or (f_pix_whole_stack[which_read + 1] > 0.0))):
                         tot_both += 1
                         both_along_stack[yy_pix, xx_pix] += 1
-                        if verb > 1:
-                            print('       The subvector above is both ')
+                        if verb > 1: print('       The subvector above is both ')
 
                     else:  # pixel has no created or found cosmic rays
                         tot_neither += 1
                         neither_along_stack[yy_pix, xx_pix] += 1
-                        if verb > 1:
-                            print('       The subvector above is neither ')
+                        if verb > 1: print('       The subvector above is neither ')
 
 
 
@@ -273,40 +264,35 @@ class compare_cr_navg_files:
             os.remove('c_only.fits')
         except FileNotFoundError:
             pass
-        print('  ')
-        print(' For the 2d array of created only pixels:  ')
+        print('  '); print(' For the 2d array of created only pixels:  ')
         write_to_file(c_only_along_stack, 'c_only.fits')
 
         try:
             os.remove('f_only.fits')
         except FileNotFoundError:
             pass
-        print('  ')
-        print(' For the 2d array of found only pixels:  ')
+        print('  '); print(' For the 2d array of found only pixels:  ')
         write_to_file(f_only_along_stack, 'f_only.fits')
 
         try:
             os.remove('both.fits')
         except FileNotFoundError:
             pass
-        print('  ')
-        print(' For the 2d array of both created and found pixels:  ')
+        print('  '); print(' For the 2d array of both created and found pixels:  ')
         write_to_file(both_along_stack, 'both.fits')
 
         try:
             os.remove('neither.fits')
         except FileNotFoundError:
             pass
-        print('  ')
-        print(' For the 2d array of neither created or found pixels:  ')
+        print('  '); print(' For the 2d array of neither created or found pixels:  ')
         write_to_file(neither_along_stack, 'neither.fits')
 
         try:
             os.remove('c_navg.fits')
         except FileNotFoundError:
             pass
-        print('  ')
-        print(' The created pixels, averaged over subvectors: ')
+        print('  '); print(' The created pixels, averaged over subvectors: ')
         write_to_file(c_navg_pixel, 'c_navg.fits')
         print('   ')
 
@@ -372,16 +358,11 @@ if __name__ == "__main__":
         print('FATAL ERROR : missing argument(s), usage = ', usage)
         sys.exit(ERROR_RETURN)
 
-    if (sys.argv[1]):
-        created_file = sys.argv[1]
-    if (sys.argv[2]):
-        found_file = sys.argv[2]
-    if (sys.argv[3]):
-        sim_file = sys.argv[3]
-    if (sys.argv[4]):
-        slope_file = sys.argv[4]
-    if (sys.argv[5]):
-        navg = int(sys.argv[5])
+    if (sys.argv[1]): created_file = sys.argv[1]
+    if (sys.argv[2]): found_file = sys.argv[2]
+    if (sys.argv[3]): sim_file = sys.argv[3]
+    if (sys.argv[4]): slope_file = sys.argv[4]
+    if (sys.argv[5]): navg = int(sys.argv[5])
 
     if (len(sys.argv) > 6):
         verb = sys.argv[6]
