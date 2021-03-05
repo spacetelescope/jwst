@@ -151,7 +151,8 @@ def test_pointing_averaging(eng_db_jw703):
     (q,
      j2fgs_matrix,
      fsmcorr,
-     obstime) = stp.get_pointing(
+     obstime,
+     gs_commanded) = stp.get_pointing(
          Time('2019-06-03T17:25:40', format='isot').mjd,
          Time('2019-06-03T17:25:56', format='isot').mjd,
     )
@@ -164,14 +165,15 @@ def test_pointing_averaging(eng_db_jw703):
 
 def test_get_pointing_fail():
     with pytest.raises(Exception):
-        q, j2fgs_matrix, fmscorr, obstime = stp.get_pointing(47892.0, 48256.0)
+        q, j2fgs_matrix, fmscorr, obstime, gs_commanded = stp.get_pointing(47892.0, 48256.0)
 
 
 def test_get_pointing(eng_db_ngas):
     (q,
      j2fgs_matrix,
      fsmcorr,
-     obstime) = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd)
+     obstime,
+     gs_commanded) = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd)
     assert np.isclose(q, Q_EXPECTED).all()
     assert np.isclose(j2fgs_matrix, J2FGS_MATRIX_EXPECTED).all()
     assert np.isclose(fsmcorr, FSMCORR_EXPECTED).all()
@@ -182,7 +184,8 @@ def test_logging(eng_db_ngas, caplog):
     (q,
      j2fgs_matrix,
      fsmcorr,
-     obstime) = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd)
+     obstime,
+     gs_commanded) = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd)
     assert 'Determining pointing between observations times' in caplog.text
     assert 'Telemetry search tolerance' in caplog.text
     assert 'Reduction function' in caplog.text
@@ -203,12 +206,14 @@ def test_get_pointing_with_zeros(eng_db_ngas):
     (q,
      j2fgs_matrix,
      fsmcorr,
-     obstime) = stp.get_pointing(ZEROTIME_START.mjd, ENDTIME.mjd, reduce_func=stp.first_pointing)
+     obstime,
+     gs_commanded) = stp.get_pointing(ZEROTIME_START.mjd, ENDTIME.mjd, reduce_func=stp.first_pointing)
     assert j2fgs_matrix.any()
     (q_desired,
      j2fgs_matrix_desired,
      fsmcorr_desired,
-     obstime) = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd)
+     obstime,
+     gs_commanded) = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd)
     assert np.array_equal(q, q_desired)
     assert np.array_equal(j2fgs_matrix, j2fgs_matrix_desired)
     assert np.array_equal(fsmcorr, fsmcorr_desired)

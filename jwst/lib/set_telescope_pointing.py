@@ -970,10 +970,70 @@ def calc_eci2fgs1(t_pars: TransformParameters):
         pa = calc_v3pa_at_gs_from_original(t_pars)
         t_pars.guide_star_wcs = WCSRef(t_pars.guide_star_wcs.ra, t_pars.guide_star_wcs.dec, pa)
 
-    m_gs_commanded = calc_gs_commanded(t_pars.guide_star_wcs, fgs1_siaf.v3yangle, t_pars.pointing.gs_commanded)
+    m_gs_commanded = calc_m_gs_commanded(t_pars.guide_star_wcs, fgs1_siaf.v3yangle, t_pars.pointing.gs_commanded)
+
+    logger.debug(f'fgs1_siaf = {fgs1_siaf}')
+    logger.debug(f'm_gs_commanded = {m_gs_commanded}')
 
     m_eci2fgs1 = np.dot(MX2Z, m_gs_commanded)
+    logger.debug(f'm_eci2fgs1 = {m_eci2fgs1}')
+
     return m_eci2fgs1
+
+
+def calc_m_gs_commanded(guide_star_wcs, fgs1_v3yangle, gs_commanded):
+    """Calculate the guide star matrix
+
+    Parameters
+    ----------
+    guide_star_wcs : WCSRef
+        The guide star position
+
+    fgs1_v3yangle : float
+        The FGS1 v3yangle
+
+    gs_commanded : numpy.array(2)
+        The commanded position from telemetry
+
+    Returns
+    -------
+    m_gs_commanded : np.array(3,3)
+        The transformation matrix
+    """
+
+    # Define the individal rotations
+    def r1(a):
+        r = np.array([
+            [1, 0, 0],
+            [0, cos(a), -sin(a)],
+            [0, sin(a), cos(a)]
+        ])
+        return r
+    def r2(a):
+        r = np.array([
+            [cos(a), 0, sin(a)],
+            [0, 1, 0],
+            [-sin(a), 0, cos(a)]
+        ])
+        return r
+
+    def r3(a):
+        r = np.array([
+            [cos(a), -sin(a), 0],
+            [sin(a), cos(a), 0],
+            [0, 0, 1]
+        ])
+        return r
+
+    # Convert to radians
+    ra = guide_star_wcs.ra * D2R
+    dec = guide_star_wcs.dec * D2R
+    pa = guide_star_wcs.pa * D2R
+    v3yangle = fgs1_v3yangle * D2R
+
+    # Calculate
+    m = np.linalg.multi_dot([r3(ra), r2(-dec), r1(-(pa + v3yangle)), r2(gs_commanded[1]), r3(-gs_commanded[0])])
+    return m
 
 
 def calc_v3pa_at_gs_from_original(t_pars: TransformParameters) -> float:
@@ -991,7 +1051,7 @@ def calc_v3pa_at_gs_from_original(t_pars: TransformParameters) -> float:
 
     # Calculate V1 using ORIGINAL method
     tforms = calc_transforms_original(t_pars)
-    vinfo = calc_v1_wcs(tforms.eci2v)
+    vinfo = calc_v1_wcs(tforms.m_eci2v)
 
     # Convert to radians
     ra_v1 = vinfo.ra * D2R
