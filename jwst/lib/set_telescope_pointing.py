@@ -1325,6 +1325,7 @@ def calc_fgs1_to_sifov_matrix():
 
     Currently, this is a defined matrix
     """
+    logger.debug(f'M_fgs1_to_sifov = {FGS12SIFOV_DEFAULT}')
     return FGS12SIFOV_DEFAULT
 
 
