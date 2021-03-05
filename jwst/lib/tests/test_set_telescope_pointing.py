@@ -75,6 +75,8 @@ def data_file():
     model.meta.exposure.end_time = ENDTIME.mjd
     model.meta.target.ra = TARG_RA
     model.meta.target.dec = TARG_DEC
+    model.meta.guidestar.gs_ra = TARG_RA + 0.0001
+    model.meta.guidestar.gs_dec = TARG_DEC + 0.0001
     model.meta.aperture.name = "MIRIM_FULL"
     model.meta.observation.date = '2017-01-01'
     model.meta.exposure.type = "MIR_IMAGE"

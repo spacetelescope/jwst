@@ -537,6 +537,11 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
         t_pars.default_pa_v3
     )
     vinfo = wcsinfo
+    t_pars.guide_star_wcs = WCSRef(
+        model.meta.guidestar.gs_ra,
+        model.meta.guidestar.gs_dec,
+        None
+    )
 
     # Get the pointing information
     try:
