@@ -106,8 +106,8 @@ SIAF_VERTICIES = ['XIdlVert1', 'XIdlVert2', 'XIdlVert3', 'XIdlVert4',
                   'YIdlVert1', 'YIdlVert2', 'YIdlVert3', 'YIdlVert4']
 
 # Pointing container
-Pointing = namedtuple("Pointing", ["q", "j2fgs_matrix", "fsmcorr", "obstime"])
-Pointing.__new__.__defaults__ = (None, None, None, None)
+Pointing = namedtuple("Pointing", ["q", "j2fgs_matrix", "fsmcorr", "obstime", "gs_commanded"])
+Pointing.__new__.__defaults__ = ((None,) * 5)
 
 # Transforms
 Transforms = namedtuple("Transforms",
@@ -158,6 +158,9 @@ class TransformParameters:
         Units of the FSM correction values. Default is 'arcsec'.
         See :ref:`calc_sifov_fsm_delta_matrix`
 
+    guide_star_wcs : WCSRef
+        Guide star WCS info, typically from the input model.
+
     j2fgs_transpose : bool
         Transpose the `j2fgs1` matrix.
 
@@ -181,10 +184,6 @@ class TransformParameters:
 
     useafter : str
         The date of observation (``model.meta.date``)
-
-    v3pa_at_gs : float
-        The V3 position angle at the guide star. Usually retrieved from header keyword XXX
-        If not specified, it will be calculated with an approximate V1 calculation.
     """
     allow_default: bool = False
     default_pa_v3: float = 0.
@@ -192,6 +191,7 @@ class TransformParameters:
     engdb_url: str = None
     fsmcorr_version : str = 'latest'
     fsmcorr_units : str = 'arcsec'
+    guide_star_wcs : WCSRef = WCSRef()
     j2fgs_transpose : bool = True
     method: Methods = None
     pointing : Pointing = None
@@ -957,36 +957,20 @@ def calc_transforms_cmdtest(t_pars: TransformParameters):
     return tforms
 
 
-def calc_eci2fgs1(gs_commanded, gs_ra, gs_dec, v3pa_at_gs=None, siaf, siaf_path=None, useafter=None, **transform_kwargs):
+def calc_eci2fgs1(t_pars: TransformParameters):
     """Calculate full ECI to FGS1 matrix based on commanded guidestar information
 
     Parameters
     ----------
-    gs_commanded : np.array((2))
-        Guide star commanded values from engineering telemetry SA_ZFGGSCMDX, SA_ZFGGSCMDY
-
-    gs_ra, gs_dec : float, float
-        Guide star RA and DEC (degrees). Typically from exposure header keywords GS_RA, GS_DEC
-
-    v3pa_at_gs : float
-        The V3 position angle at the Guide star (degrees). Typically retrieved from header keyword XXX.
-        If not specified, it will be calculated.
-
-    siaf : SIAF
-        Aperture information
-
-    siaf_path: str or file-like object or None
-        The path to the SIAF database.
-
-    useafter : str
-        The date of observation (``model.meta.date``)
+    t_pars : TransformParameters
+        The transformation parameters
     """
-    cmdx, cmdy = gs_commanded
-    fgs1_siaf = get_wcs_values_from_siaf('FGS1_FULL_OSS', useafter=useafter, prd_db_filepath=siaf_path)
-    if not v3pa_at_gs:
-        v3pa_at_gs = calc_v3pa_at_gs_from_original(pointing, siaf, **transform_kwargs)
+    fgs1_siaf = get_wcs_values_from_siaf('FGS1_FULL_OSS', useafter=t_pars.useafter, prd_db_filepath=t_pars.siaf_path)
+    if not t_pars.guide_star_wcs.pa:
+        pa = calc_v3pa_at_gs_from_original(t_pars)
+        t_pars.guide_star_wcs = WCSRef(t_pars.guide_star_wcs.ra, t_pars.guide_star_wcs.dec, pa)
 
-    m_gs_commanded = calc_gs_commanded(gs_ra, gs_dec, v3pa_at_gs, fgs1_siaf.v3yangle, cmdx, cmdy)
+    m_gs_commanded = calc_gs_commanded(t_pars.guide_star_wcs, fgs1_siaf.v3yangle, t_pars.pointing.gs_commanded)
 
     m_eci2fgs1 = np.dot(MX2Z, m_gs_commanded)
     return m_eci2fgs1
