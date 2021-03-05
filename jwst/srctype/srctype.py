@@ -156,7 +156,7 @@ def set_source_type(input_model):
         input_model.meta.target.source_type = src_type
 
         # FOR WFSS modes check slit values of is_star to set SRCTYPE
-    elif exptype in ['NIR_WFSS', 'NRC_WFSS']:
+    elif exptype in ['NIS_WFSS', 'NRC_WFSS']:
         for slit in input_model.slits:
             if slit.is_star:
                 slit.source_type = 'POINT'
