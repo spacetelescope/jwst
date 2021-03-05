@@ -1,11 +1,13 @@
 """Set Telescope Pointing from quaternions"""
+from collections import defaultdict, namedtuple
 from copy import copy
+from dataclasses import dataclass
 from enum import Enum, auto
 import logging
 from math import (cos, sin)
 import os.path
 import sqlite3
-from collections import defaultdict, namedtuple
+import typing
 
 from astropy.time import Time
 import numpy as np
@@ -125,6 +127,73 @@ Transforms.__new__.__defaults__ = (None, None, None, None, None,
 # WCS reference container
 WCSRef = namedtuple('WCSRef', ['ra', 'dec', 'pa'])
 WCSRef.__new__.__defaults__ = (None, None, None)
+
+
+@dataclass
+class TransformParameters:
+    """Parameters required the calculations
+
+    Parameters
+    ----------
+    allow_default: bool
+        If telemetry cannot be determine, use existing
+        information in the observation's header.
+
+    default_pa_v3: float
+        The V3 position angle to use if the pointing information
+        is not found.
+
+    dry_run: bool
+        Do not write out the modified file.
+
+    engdb_url: str or None
+        URL of the engineering telemetry database REST interface.
+
+    fsmcorr_version : str
+        The version of the FSM correction calculation to use.
+        See :ref:`calc_sifov_fsm_delta_matrix`
+
+    fsmcorr_units : str
+        Units of the FSM correction values. Default is 'arcsec'.
+        See :ref:`calc_sifov_fsm_delta_matrix`
+
+    j2fgs_transpose : bool
+        Transpose the `j2fgs1` matrix.
+
+    method : Methods
+        The method, or algorithm, to use in calculating the transform.
+        If not specified, the default method is used.
+
+    reduce_func: func or None
+        Reduction function to use on values.
+
+    siaf: SIAF
+        The SIAF information for the input model
+
+    siaf_path: str or file-like object or None
+        The path to the SIAF database.
+
+    tolerance: int
+        If no telemetry can be found during the observation,
+        the time, in seconds, beyond the observation time to
+        search for telemetry.
+
+    useafter : str
+        The date of observation (``model.meta.date``)
+    """
+    allow_default: bool = False
+    default_pa_v3: float = 0.
+    dry_run: bool = False
+    engdb_url: str = None
+    fsmcorr_version : str = 'latest'
+    fsmcorr_units : str = 'arcsec'
+    j2fgs_transpose : bool = True
+    method: Methods = None
+    reduce_func: typing.Callable = None
+    siaf: SIAF = None
+    siaf_path: str = None
+    tolerance: float = 60.
+    useafter : str = None
 
 
 def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
