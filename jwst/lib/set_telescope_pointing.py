@@ -114,6 +114,7 @@ Transforms = namedtuple("Transforms",
                         [
                             'm_eci2j',            # ECI to J-Frame
                             'm_j2fgs1',           # J-Frame to FGS1
+                            'm_eci2fgs1',         # Alternate ECI to FGS1
                             'm_sifov_fsm_delta',  # FSM correction
                             'm_fgs12sifov',       # FGS1 to SIFOV
                             'm_eci2sifov',        # ECI to SIFOV
@@ -122,8 +123,8 @@ Transforms = namedtuple("Transforms",
                             'm_v2siaf',           # V to SIAF
                             'm_eci2siaf'          # ECI to SIAF
                         ])
-Transforms.__new__.__defaults__ = (None, None, None, None, None,
-                                   None, None, None, None)
+Transforms.__new__.__defaults__ = ((None,) * 10)
+
 # WCS reference container
 WCSRef = namedtuple('WCSRef', ['ra', 'dec', 'pa'])
 WCSRef.__new__.__defaults__ = (None, None, None)
@@ -180,6 +181,10 @@ class TransformParameters:
 
     useafter : str
         The date of observation (``model.meta.date``)
+
+    v3pa_at_gs : float
+        The V3 position angle at the guide star. Usually retrieved from header keyword XXX
+        If not specified, it will be calculated with an approximate V1 calculation.
     """
     allow_default: bool = False
     default_pa_v3: float = 0.
@@ -195,6 +200,7 @@ class TransformParameters:
     siaf_path: str = None
     tolerance: float = 60.
     useafter : str = None
+    v3pa_at_gs : float = None
 
 
 def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
@@ -898,6 +904,10 @@ def calc_transforms_cmdtest(t_pars: TransformParameters):
 
     Notes
     -----
+    This algorithm is in response to an apparent misbehavior of the OTB simulator.
+    See JSOCINT-555 for full details. The workaround is to ignore the quaternion
+    and FGS1 J-frame telemetry. Instead use the commanded guide star telemetry.
+
     The matrix transform pipeline to convert from ECI J2000 observatory
     qauternion pointing to aperture ra/dec/roll information
     is given by the following formula. Each term is a 3x3 matrix:
@@ -908,15 +918,12 @@ def calc_transforms_cmdtest(t_pars: TransformParameters):
             M_z_to_x                   *   # Transposition
             M_sifov_fsm_delta          *   # Fine Steering Mirror correction
             M_fgs1_to_sifov_fgs1siaf   *   # FGS1 to Science Instruments Aperture
-            M_eci_to_fgs1_commanded        # ECI to FGS1 using commanded information
+            M_eci_to_fgs1                  # ECI to FGS1 using commanded information
     """
     logger.info('Calculating transforms using CMDTEST method...')
 
-    # Determine the ECI to J-frame matrix
-    m_eci2j = calc_eci2j_matrix(t_pars.pointing.q)
-
-    # Calculate the J-frame to FGS1 ICS matrix
-    m_j2fgs1 = calc_j2fgs1_matrix(t_pars.pointing.j2fgs_matrix, transpose=t_pars.j2fgs_transpose)
+    # Determine the ECI to FGS1 ICS using guide star telemetry.
+    m_eci2fgs1 = calc_eci2fgs1(t_pars)
 
     # Calculate the FSM corrections to the SI_FOV frame
     m_sifov_fsm_delta = calc_sifov_fsm_delta_matrix(
@@ -931,29 +938,58 @@ def calc_transforms_cmdtest(t_pars: TransformParameters):
 
     # Calculate ECI to SI FOV
     m_eci2sifov = np.linalg.multi_dot(
-        [MZ2X, m_sifov_fsm_delta, m_fgs12sifov, m_j2fgs1, m_eci2j]
+        [MZ2X, m_sifov_fsm_delta, m_fgs12sifov, m_eci2fgs1]
     )
 
     # Calculate the complete transform to the V1 reference
-    m_eci2v = np.dot(
-        m_sifov2v,
-        m_eci2sifov
-    )
+    m_eci2v = np.dot(m_sifov2v, m_eci2sifov)
 
     # Calculate the SIAF transform matrix
     m_v2siaf = calc_v2siaf_matrix(t_pars.siaf)
 
     # Calculate the full ECI to SIAF transform matrix
-    m_eci2siaf = np.dot(
-        m_v2siaf,
-        m_eci2v
-    )
+    m_eci2siaf = np.dot(m_v2siaf, m_eci2v)
 
-    tforms = Transforms(m_eci2j=m_eci2j, m_j2fgs1=m_j2fgs1, m_sifov_fsm_delta=m_sifov_fsm_delta,
+    tforms = Transforms(m_eci2fgs1=m_eci2fgs1, m_sifov_fsm_delta=m_sifov_fsm_delta,
                         m_fgs12sifov=m_fgs12sifov, m_eci2sifov=m_eci2sifov, m_sifov2v=m_sifov2v,
                         m_eci2v=m_eci2v, m_v2siaf=m_v2siaf, m_eci2siaf=m_eci2siaf
                         )
     return tforms
+
+
+def calc_eci2fgs1(gs_commanded, gs_ra, gs_dec, v3pa_at_gs=None, siaf, siaf_path=None, useafter=None, **transform_kwargs):
+    """Calculate full ECI to FGS1 matrix based on commanded guidestar information
+
+    Parameters
+    ----------
+    gs_commanded : np.array((2))
+        Guide star commanded values from engineering telemetry SA_ZFGGSCMDX, SA_ZFGGSCMDY
+
+    gs_ra, gs_dec : float, float
+        Guide star RA and DEC (degrees). Typically from exposure header keywords GS_RA, GS_DEC
+
+    v3pa_at_gs : float
+        The V3 position angle at the Guide star (degrees). Typically retrieved from header keyword XXX.
+        If not specified, it will be calculated.
+
+    siaf : SIAF
+        Aperture information
+
+    siaf_path: str or file-like object or None
+        The path to the SIAF database.
+
+    useafter : str
+        The date of observation (``model.meta.date``)
+    """
+    cmdx, cmdy = gs_commanded
+    fgs1_siaf = get_wcs_values_from_siaf('FGS1_FULL_OSS', useafter=useafter, prd_db_filepath=siaf_path)
+    if not v3pa_at_gs:
+        v3pa_at_gs = calc_v3pa_at_gs_from_original(pointing, siaf, **transform_kwargs)
+
+    m_gs_commanded = calc_gs_commanded(gs_ra, gs_dec, v3pa_at_gs, fgs1_siaf.v3yangle, cmdx, cmdy)
+
+    m_eci2fgs1 = np.dot(MX2Z, m_gs_commanded)
+    return m_eci2fgs1
 
 
 def calc_v1_wcs(m_eci2v):
@@ -1379,6 +1415,26 @@ def vector_to_ra_dec(v):
     if ra < 0.:
         ra += 2. * np.pi
     return(ra, dec)
+
+
+def ra_dec_to_vector(ra, dec):
+    """Convert spherical angles to unit vector
+
+    Parameters
+    ----------
+    ra, dec : float
+        Spherical angles in radians
+
+    Returns
+    -------
+    v : [float, float, float]
+        Unit vector
+    """
+    v0 = sin(ra) * cos(dec)
+    v1 = sin(ra) * sin(dec)
+    v2 = cos(dec)
+
+    return [v0, v1, v2]
 
 
 def compute_local_roll(pa_v3, ra_ref, dec_ref, v2_ref, v3_ref):
