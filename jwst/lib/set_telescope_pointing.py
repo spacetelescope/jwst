@@ -4,7 +4,7 @@ from copy import copy
 from dataclasses import dataclass
 from enum import Enum, auto
 import logging
-from math import (cos, sin)
+from math import (asin, atan2, cos, sin)
 import os.path
 import sqlite3
 import typing
@@ -974,6 +974,41 @@ def calc_eci2fgs1(t_pars: TransformParameters):
 
     m_eci2fgs1 = np.dot(MX2Z, m_gs_commanded)
     return m_eci2fgs1
+
+
+def calc_v3pa_at_gs_from_original(t_pars: TransformParameters) -> float:
+    """Calculate V3PA@GS by precomputing V1 using original method
+
+    Parameters
+    ----------
+    t_pars : TransformParameters
+        The transformation parameters
+
+    Returns
+    -------
+    v3pa_at_gs : float
+    """
+
+    # Calculate V1 using ORIGINAL method
+    tforms = calc_transforms_original(t_pars)
+    vinfo = calc_v1_wcs(tforms.eci2v)
+
+    # Convert to radians
+    ra_v1 = vinfo.ra * D2R
+    dec_v1 = vinfo.dec * D2R
+    pa_v3 = vinfo.pa * D2R
+    ra_gs = t_pars.guide_star_wcs.ra * D2R
+    dec_gs = t_pars.guide_star_wcs.dec * D2R
+
+    # Calculate
+    x = -sin(ra_v1) * sin(pa_v3) - cos(ra_v1) * sin(dec_v1) * cos(pa_v3)
+    y = cos(ra_v1) * sin(pa_v3) - sin(ra_v1) * sin(dec_v1) * cos(pa_v3)
+
+    ra_v3 = atan2(y, x)
+    dec_v3 = asin(cos(dec_v1) * cos(pa_v3))
+
+    v3pa_at_gs = calc_position_angle(WCSRef(ra_gs, dec_gs, None), WCSRef(ra_v3, dec_v3, None))
+    return v3pa_at_gs
 
 
 def calc_v1_wcs(m_eci2v):
