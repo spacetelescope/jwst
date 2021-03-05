@@ -41,7 +41,7 @@ def v1_calculate_from_models(sources, **calc_wcs_from_time_kwargs):
             guide_star_wcs = stp.WCSRef(
                 model.meta.guidestar.gs_ra,
                 model.meta.guidestar.gs_dec,
-                None
+                model.meta.guidestar.gs_pa
             )
 
             obstimes, _, vinfos = stp.calc_wcs_over_time(

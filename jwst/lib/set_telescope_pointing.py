@@ -540,8 +540,9 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
     t_pars.guide_star_wcs = WCSRef(
         model.meta.guidestar.gs_ra,
         model.meta.guidestar.gs_dec,
-        None
+        model.meta.guidestar.gs_pa
     )
+    logger.debug(f'guide_star_wcs from model = {t_pars.guide_star_wcs}')
 
     # Get the pointing information
     try:
@@ -975,6 +976,7 @@ def calc_eci2fgs1(t_pars: TransformParameters):
     fgs1_siaf = get_wcs_values_from_siaf('FGS1_FULL_OSS', useafter=t_pars.useafter, prd_db_filepath=t_pars.siaf_path)
     logger.debug(f'fgs1_siaf = {fgs1_siaf}')
 
+    logger.debug(f'incoming guide_star_wcs = {t_pars.guide_star_wcs}')
     if not t_pars.guide_star_wcs.pa:
         pa = calc_v3pa_at_gs_from_original(t_pars)
         t_pars.guide_star_wcs = WCSRef(t_pars.guide_star_wcs.ra, t_pars.guide_star_wcs.dec, pa)
