@@ -29,7 +29,7 @@ general
 srctype
 -------
 
-- Added section on NIS_WFSS setting srctype based on is_star value [#5788]
+- Added section for WFSS mode data to set srctype based on is_star value [#5788]
 
 transforms
 ----------

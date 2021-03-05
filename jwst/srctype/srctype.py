@@ -33,7 +33,6 @@ def set_source_type(input_model):
         raise RuntimeError('Step cannot be executed without an EXP_TYPE value')
     else:
         log.info(f'Input EXP_TYPE is {exptype}')
-
     # For exposure types that have a single source specification, get the
     # user-supplied source type from the selection they provided in the APT
     if exptype in ['MIR_LRS-FIXEDSLIT', 'MIR_LRS-SLITLESS', 'MIR_MRS',
@@ -156,8 +155,8 @@ def set_source_type(input_model):
         log.info(f'Input is a TSO exposure; setting default SRCTYPE = {src_type}')
         input_model.meta.target.source_type = src_type
 
-    # FOR NIR_WFSS check slit values of is_star to set SRCTYPE
-    elif exptype == 'NIS_WFSS':
+        # FOR WFSS modes check slit values of is_star to set SRCTYPE
+    elif exptype in ['NIR_WFSS', 'NRC_WFSS']:
         for slit in input_model.slits:
             if slit.is_star:
                 slit.source_type = 'POINT'
