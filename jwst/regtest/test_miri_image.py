@@ -155,6 +155,6 @@ def test_miri_image_wcs(run_image2, rtdata_module, fitsdiff_default_kwargs):
 
         # Test the inverse transform
         xtest, ytest = im.meta.wcs.backward_transform(ra, dec)
-        xtruth, ytruth = im_truth.meta.wcs.backward_transform (ratruth, dectruth)
+        xtruth, ytruth = im_truth.meta.wcs.backward_transform(ratruth, dectruth)
         assert_allclose(xtest, xtruth)
         assert_allclose(ytest, ytruth)

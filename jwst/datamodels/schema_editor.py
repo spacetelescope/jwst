@@ -162,7 +162,7 @@ def save_long_line(prefix, value, sep1, sep2, max_length=80):
                 long_line += sep1 + value
             else:
                 line_start = len(long_line) + len(sep2)
-                long_line +=  sep2 + leading + value
+                long_line += sep2 + leading + value
 
     long_line += '\n'
     return long_line
@@ -795,7 +795,7 @@ class Options:
         else:
             ptype = type(parameters[name])
             if not isinstance(value, ptype):
-                raise ValueError(badtype %  (name, value))
+                raise ValueError(badtype % (name, value))
 
 
     def write(self, editor):
@@ -1304,7 +1304,7 @@ class Schema_editor:
         """
         Convert the value of an enum field to a regular expression pattern
         """
-        return r'^((' + '|'.join(value) +  r')\\s*\\|\\s*)+$'
+        return r'^((' + '|'.join(value) + r')\\s*\\|\\s*)+$'
 
     def report_and_query(self, verb, title, keyword_value, model_value,
                          path, field):
@@ -1348,7 +1348,7 @@ class Schema_editor:
                                                                 model_value)
 
         if field == "pattern":
-            model_value  = self.pattern_from_enum(model_value)
+            model_value = self.pattern_from_enum(model_value)
             keyword_value = self.pattern_from_enum(keyword_value)
 
         self.report_schema_value("model schema", model_value, field)

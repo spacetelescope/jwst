@@ -85,7 +85,7 @@ class CubeBlot():
         # initialize blotted images to be original input images valid for the Median Image
         # read channel (MIRI) or grating (NIRSpec) value that the Median Image covers
         # only use input models in this range
-        self.input_models  = []
+        self.input_models = []
         for model in input_models:
             if self.instrument == 'MIRI':
                 par = model.meta.instrument.channel
@@ -242,7 +242,7 @@ class CubeBlot():
                 d1pix = np.array(x_cube[ipt] - xcenter[index_x])
                 d2pix = np.array(y_cube[ipt] - ycenter[index_y])
 
-                dxy = [ (dx*dx + dy*dy)  for dy in d2pix for dx in d1pix]
+                dxy = [(dx*dx + dy*dy) for dy in d2pix for dx in d1pix]
                 dxy = np.sqrt(dxy)
                 weight_distance = np.exp(-dxy)
                 weighted_flux = weight_distance * flux_cube[ipt]
@@ -354,7 +354,7 @@ class CubeBlot():
                         d1pix = np.array(x_slice[ipt] - xcenter[index_x])
                         d2pix = np.array(y_slice[ipt] - ycenter[index_y])
 
-                        dxy = [ (dx*dx + dy*dy)  for dy in d2pix for dx in d1pix]
+                        dxy = [(dx*dx + dy*dy) for dy in d2pix for dx in d1pix]
                         dxy = np.sqrt(dxy)
                         weight_distance = np.exp(-dxy)
                         weighted_flux = weight_distance * flux_slice[ipt]

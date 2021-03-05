@@ -227,7 +227,7 @@ def build_docstring(klass, template="{fits_hdu} {title}"):
 
     def get_field_info(subschema, path, combiner, info, recurse):
         # Return all schema fields representing fits hdus
-        if 'fits_hdu' in subschema and not 'fits_keyword' in subschema:
+        if 'fits_hdu' in subschema and 'fits_keyword' not in subschema:
             attr = '.'.join(path)
             info[attr] = subschema
         return 'fits_hdu' in subschema or 'fits_keyword' in subschema

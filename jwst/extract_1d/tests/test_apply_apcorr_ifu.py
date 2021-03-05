@@ -30,14 +30,14 @@ def dummy_nirspec_ref(tmpdir_factory):
     dummy_apcorr_error = np.zeros((3,100))
 
     refap['apcorr_table'] = {}
-    refap['apcorr_table']['wavelength'] =  dummy_wave.copy()
-    refap['apcorr_table']['radius'] =  dummy_radius.copy()
-    refap['apcorr_table']['apcorr'] =  dummy_apcorr.copy()
-    refap['apcorr_table']['apcorr_err'] =  dummy_apcorr_error.copy()
-    refap['apcorr_table']['wavelength_units'] =  'microns'
-    refap['apcorr_table']['radius_units'] =  'arcseconds'
-    refap['apcorr_table']['filter'] =  'ANY'
-    refap['apcorr_table']['grating'] =  'ANY'
+    refap['apcorr_table']['wavelength'] = dummy_wave.copy()
+    refap['apcorr_table']['radius'] = dummy_radius.copy()
+    refap['apcorr_table']['apcorr'] = dummy_apcorr.copy()
+    refap['apcorr_table']['apcorr_err'] = dummy_apcorr_error.copy()
+    refap['apcorr_table']['wavelength_units'] = 'microns'
+    refap['apcorr_table']['radius_units'] = 'arcseconds'
+    refap['apcorr_table']['filter'] = 'ANY'
+    refap['apcorr_table']['grating'] = 'ANY'
 
 
     ff = AsdfFile(refap)
@@ -74,14 +74,14 @@ def dummy_miri_ref(tmpdir_factory):
     dummy_apcorr_error = np.zeros((3,100))
 
     refap['apcorr_table'] = {}
-    refap['apcorr_table']['wavelength'] =  dummy_wave.copy()
-    refap['apcorr_table']['radius'] =  dummy_radius.copy()
-    refap['apcorr_table']['apcorr'] =  dummy_apcorr.copy()
-    refap['apcorr_table']['apcorr_err'] =  dummy_apcorr_error.copy()
-    refap['apcorr_table']['wavelength_units'] =  'microns'
-    refap['apcorr_table']['radius_units'] =  'arcseconds'
-    refap['apcorr_table']['channel'] =  'ANY'
-    refap['apcorr_table']['band'] =  'ANY'
+    refap['apcorr_table']['wavelength'] = dummy_wave.copy()
+    refap['apcorr_table']['radius'] = dummy_radius.copy()
+    refap['apcorr_table']['apcorr'] = dummy_apcorr.copy()
+    refap['apcorr_table']['apcorr_err'] = dummy_apcorr_error.copy()
+    refap['apcorr_table']['wavelength_units'] = 'microns'
+    refap['apcorr_table']['radius_units'] = 'arcseconds'
+    refap['apcorr_table']['channel'] = 'ANY'
+    refap['apcorr_table']['band'] = 'ANY'
 
     ff = AsdfFile(refap)
     ff.set_array_storage(refap['apcorr_table']['wavelength'],'inline')

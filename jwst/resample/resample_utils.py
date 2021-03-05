@@ -42,7 +42,7 @@ def make_output_wcs(input_models, pscale_ratio=1.0):
         output_wcs.data_size = shape_from_bounding_box(output_wcs.bounding_box)
     else:
         raise RuntimeError("Output WCS needs 2 spatial axes. "
-            f"{wcslist[0]} has {naxes}.")
+                           f"{wcslist[0]} has {naxes}.")
 
     # Check that the output data shape has no zero length dimensions
     if not np.product(output_wcs.data_size):
@@ -105,7 +105,7 @@ def reproject(wcs1, wcs2):
         forward_transform = wcs1
     else:
         raise TypeError("Expected input to be astropy.wcs.WCS or gwcs.WCS "
-            "object or astropy.modeling.Model subclass")
+                        "object or astropy.modeling.Model subclass")
 
     if isinstance(wcs2, fitswcs.WCS):
         backward_transform = wcs2.all_world2pix
@@ -121,7 +121,7 @@ def reproject(wcs1, wcs2):
         backward_transform = wcs2.inverse
     else:
         raise TypeError("Expected input to be astropy.wcs.WCS or gwcs.WCS "
-            "object or astropy.modeling.Model subclass")
+                        "object or astropy.modeling.Model subclass")
 
     def _reproject(x, y):
         sky = forward_transform(x, y)
@@ -151,7 +151,7 @@ def build_driz_weight(model, weight_type=None, good_bits=None):
             inv_variance[~np.isfinite(inv_variance)] = 1
         else:
             warnings.warn("var_rnoise array not available.  Setting drizzle weight map to 1",
-                RuntimeWarning)
+                          RuntimeWarning)
             inv_variance = 1.0
         result = inv_variance * dqmask
     elif weight_type == 'exptime':
@@ -159,7 +159,7 @@ def build_driz_weight(model, weight_type=None, good_bits=None):
         result = exptime * dqmask
     else:
         warnings.warn("weight_type set to None.  Setting drizzle weight map to 1",
-            RuntimeWarning)
+                      RuntimeWarning)
         result = np.ones(model.data.shape, dtype=model.data.dtype)
 
     return result.astype(np.float32)

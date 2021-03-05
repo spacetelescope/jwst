@@ -307,7 +307,8 @@ def get_rscd_parameters(input_model, rscd_model):
 
     # Check for old values of the MIRI LRS slitless subarray name
     # in the science data and change to the new
-    if subarray.upper() == 'SUBPRISM': subarray = 'SLITLESSPRISM'
+    if subarray.upper() == 'SUBPRISM':
+        subarray = 'SLITLESSPRISM'
 
     # read table 1: containing the number of groups to skip
     for tabdata in rscd_model.rscd_group_skip_table:

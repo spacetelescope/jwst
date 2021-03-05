@@ -250,9 +250,9 @@ class OptRes:
         max_num_crs = end_cr.max()
         if max_num_crs == 0:
             max_num_crs = 1
-            self.cr_mag_seg = np.zeros(shape=(n_int, 1, imshape[0], imshape[1] ))
+            self.cr_mag_seg = np.zeros(shape=(n_int, 1, imshape[0], imshape[1]))
         else:
-            self.cr_mag_seg = cr_com [:,:max_num_crs,:,:]
+            self.cr_mag_seg = cr_com[:, :max_num_crs, :, :]
 
 
     def output_optional(self, effintim):
@@ -280,14 +280,14 @@ class OptRes:
         -------
         rfo_model : Data Model object
         """
-        self.var_p_seg[self.var_p_seg > 0.4 * LARGE_VARIANCE ] = 0.
-        self.var_r_seg[self.var_r_seg > 0.4 * LARGE_VARIANCE ] = 0.
+        self.var_p_seg[self.var_p_seg > 0.4 * LARGE_VARIANCE] = 0.
+        self.var_r_seg[self.var_r_seg > 0.4 * LARGE_VARIANCE] = 0.
 
         # Suppress, then re-enable, arithmetic warnings
         warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
         warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
         # Tiny 'weights' values correspond to non-existent segments, so set to 0.
-        self.weights[1./self.weights > 0.4 * LARGE_VARIANCE ] = 0.
+        self.weights[1./self.weights > 0.4 * LARGE_VARIANCE] = 0.
         warnings.resetwarnings()
 
         rfo_model = \
@@ -515,14 +515,14 @@ def calc_slope_vars(rn_sect, gain_sect, gdq_sect, group_time, max_seg):
 
     # Create integration-specific sections of input arrays for determination
     #   of the variances.
-    gdq_2d = gdq_sect[:,:,:].reshape(( nreads, npix ))
-    gain_1d = gain_sect.reshape( npix )
+    gdq_2d = gdq_sect[:, :, :].reshape((nreads, npix))
+    gain_1d = gain_sect.reshape(npix)
     gdq_2d_nan = gdq_2d.copy()  # group dq with SATS will be replaced by nans
     gdq_2d_nan = gdq_2d_nan.astype(np.float32)
 
-    wh_sat = np.where(np.bitwise_and( gdq_2d, dqflags.group['SATURATED'] ))
-    if len( wh_sat[0]) > 0:
-        gdq_2d_nan[ wh_sat ] = np.nan  # set all SAT groups to nan
+    wh_sat = np.where(np.bitwise_and(gdq_2d, dqflags.group['SATURATED']))
+    if len(wh_sat[0]) > 0:
+        gdq_2d_nan[wh_sat] = np.nan  # set all SAT groups to nan
 
     del wh_sat
 
@@ -530,34 +530,34 @@ def calc_slope_vars(rn_sect, gain_sect, gdq_sect, group_time, max_seg):
     segs = np.zeros_like(gdq_2d)
 
     # Counter of semiramp for each pixel
-    sr_index = np.zeros( npix, dtype=np.uint8 )
-    pix_not_done = np.ones( npix, dtype=bool)  # initialize to True
+    sr_index = np.zeros(npix, dtype=np.uint8)
+    pix_not_done = np.ones(npix, dtype=bool)  # initialize to True
 
     i_read = 0
     # Loop over reads for all pixels to get segments (segments per pixel)
     while (i_read < nreads and np.any(pix_not_done)):
-        gdq_1d = gdq_2d_nan[ i_read, :]
-        wh_good = np.where( gdq_1d == 0) # good groups
+        gdq_1d = gdq_2d_nan[i_read, :]
+        wh_good = np.where(gdq_1d == 0) # good groups
 
         # if this group is good, increment those pixels' segments' lengths
-        if len( wh_good[0] ) > 0:
-            segs[ sr_index[ wh_good], wh_good ] += 1
+        if len(wh_good[0]) > 0:
+            segs[sr_index[wh_good], wh_good] += 1
         del wh_good
 
         # Locate any CRs that appear before the first SAT group...
-        wh_cr = np.where( gdq_2d_nan[i_read, :].astype(np.int32) & dqflags.group['JUMP_DET'] > 0 )
+        wh_cr = np.where(gdq_2d_nan[i_read, :].astype(np.int32) & dqflags.group['JUMP_DET'] > 0)
 
         # ... but not on final read:
-        if (len(wh_cr[0]) > 0 and (i_read < nreads-1) ):
-            sr_index[ wh_cr[0] ] += 1
-            segs[ sr_index[wh_cr], wh_cr ] += 1
+        if (len(wh_cr[0]) > 0 and (i_read < nreads-1)):
+            sr_index[wh_cr[0]] += 1
+            segs[sr_index[wh_cr], wh_cr] += 1
 
         del wh_cr
 
         # If current group is a NaN, this pixel is done (pix_not_done is False)
-        wh_nan = np.where( np.isnan(gdq_2d_nan[ i_read, :]))
-        if len( wh_nan[0]) > 0:
-            pix_not_done[ wh_nan[0]] = False
+        wh_nan = np.where(np.isnan(gdq_2d_nan[i_read, :]))
+        if len(wh_nan[0]) > 0:
+            pix_not_done[wh_nan[0]] = False
 
         del wh_nan
 
@@ -567,15 +567,15 @@ def calc_slope_vars(rn_sect, gain_sect, gdq_sect, group_time, max_seg):
     segs_beg = segs[:max_seg, :] # the leading nonzero lengths
 
     # Create reshaped version [ segs, y, x ] to simplify computation
-    segs_beg_3 = segs_beg.reshape( max_seg, imshape[0], imshape[1] )
-    segs_beg_3 = remove_bad_singles( segs_beg_3)
+    segs_beg_3 = segs_beg.reshape(max_seg, imshape[0], imshape[1])
+    segs_beg_3 = remove_bad_singles(segs_beg_3)
 
     # Create a version 1 less for later calculations for the variance due to
     #   Poisson, with a floor=1 to handle single-group segments
     wh_pos_3 = np.where(segs_beg_3 > 1)
     segs_beg_3_m1 = segs_beg_3.copy()
     segs_beg_3_m1[wh_pos_3] -= 1
-    segs_beg_3_m1[ segs_beg_3_m1 < 1 ] = 1
+    segs_beg_3_m1[segs_beg_3_m1 < 1] = 1
 
     # For a segment, the variance due to Poisson noise
     #   = slope/(tgroup * gain * (ngroups-1)),
@@ -588,7 +588,7 @@ def calc_slope_vars(rn_sect, gain_sect, gdq_sect, group_time, max_seg):
     #   checked for and handled later
     warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
     warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
-    den_p3 = 1./(group_time * gain_1d.reshape(imshape) * segs_beg_3_m1 )
+    den_p3 = 1./(group_time * gain_1d.reshape(imshape) * segs_beg_3_m1)
     warnings.resetwarnings()
 
     # For a segment, the variance due to readnoise noise
@@ -596,8 +596,8 @@ def calc_slope_vars(rn_sect, gain_sect, gdq_sect, group_time, max_seg):
     num_r3 = 12. * (rn_sect/group_time)**2.  # always >0
 
     # Reshape for every group, every pixel in section
-    num_r3 = np.dstack( [num_r3] * max_seg )
-    num_r3 = np.transpose( num_r3, (2, 0, 1))
+    num_r3 = np.dstack([num_r3] * max_seg)
+    num_r3 = np.transpose(num_r3, (2, 0, 1))
 
     # Denominator den_r3 = 1./(segs_beg_3 **3.-segs_beg_3). The minimum number
     #   of allowed groups is 2, which will apply if there is actually only 1
@@ -612,11 +612,11 @@ def calc_slope_vars(rn_sect, gain_sect, gdq_sect, group_time, max_seg):
     #   checked for and handled later
     warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
     warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
-    den_r3[ wh_seg_pos ] = 1./(segs_beg_3[ wh_seg_pos ] **3. -
-                               segs_beg_3[ wh_seg_pos ]) # overwrite where segs>1
+    den_r3[wh_seg_pos] = 1./(segs_beg_3[wh_seg_pos] **3. -
+                               segs_beg_3[wh_seg_pos]) # overwrite where segs>1
     warnings.resetwarnings()
 
-    return ( den_r3, den_p3, num_r3, segs_beg_3 )
+    return (den_r3, den_p3, num_r3, segs_beg_3)
 
 
 def calc_pedestal(num_int, slope_int, firstf_int, dq_first, nframes, groupgap,
@@ -663,7 +663,7 @@ def calc_pedestal(num_int, slope_int, firstf_int, dq_first, nframes, groupgap,
 
     ped[np.bitwise_and(dq_first, dqflags.group['SATURATED']
                       ) == dqflags.group['SATURATED']] = 0
-    ped[ np.isnan( ped )] = 0.
+    ped[np.isnan(ped)] = 0.
 
     return ped
 
@@ -714,9 +714,9 @@ def output_integ(slope_int, dq_int, effintim, var_p3, var_r3, var_both3,
     warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
     warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
 
-    var_p3[ var_p3 > 0.4 * LARGE_VARIANCE ] = 0.
-    var_r3[ var_r3 > 0.4 * LARGE_VARIANCE ] = 0.
-    var_both3[ var_both3 > 0.4 * LARGE_VARIANCE ] = 0.
+    var_p3[var_p3 > 0.4 * LARGE_VARIANCE] = 0.
+    var_r3[var_r3 > 0.4 * LARGE_VARIANCE] = 0.
+    var_both3[var_both3 > 0.4 * LARGE_VARIANCE] = 0.
 
     cubemod = datamodels.CubeModel()
     cubemod.data = slope_int / effintim
@@ -732,7 +732,7 @@ def output_integ(slope_int, dq_int, effintim, var_p3, var_r3, var_both3,
     return cubemod
 
 
-def gls_output_integ( model, slope_int, slope_err_int, dq_int):
+def gls_output_integ(model, slope_int, slope_err_int, dq_int):
     """
     For the GLS algorithm, construct the output integration-specific results.
     Parameters
@@ -1009,7 +1009,7 @@ def get_dataset_info(model):
     if nreads != ngroups:
         log.warning('The value from the key NGROUPS does not (but should) match')
         log.warning('  the value of nreads from the data; will use value of')
-        log.warning('  nreads: %s' % (nreads ))
+        log.warning('  nreads: %s' % (nreads))
         ngroups = nreads
 
     npix = asize2 * asize1  # number of pixels in 2D array
@@ -1099,15 +1099,15 @@ def reset_bad_gain(pdq, gain):
     """
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", "invalid value.*", RuntimeWarning)
-        wh_g = np.where( gain <= 0.)
+        wh_g = np.where(gain <= 0.)
     if len(wh_g[0]) > 0:
-        pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['NO_GAIN_VALUE'] )
-        pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['DO_NOT_USE'] )
+        pdq[wh_g] = np.bitwise_or(pdq[wh_g], dqflags.pixel['NO_GAIN_VALUE'])
+        pdq[wh_g] = np.bitwise_or(pdq[wh_g], dqflags.pixel['DO_NOT_USE'])
 
-    wh_g = np.where( np.isnan( gain ))
+    wh_g = np.where(np.isnan(gain))
     if len(wh_g[0]) > 0:
-        pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['NO_GAIN_VALUE'] )
-        pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['DO_NOT_USE'] )
+        pdq[wh_g] = np.bitwise_or(pdq[wh_g], dqflags.pixel['NO_GAIN_VALUE'])
+        pdq[wh_g] = np.bitwise_or(pdq[wh_g], dqflags.pixel['DO_NOT_USE'])
 
     return pdq
 
@@ -1160,7 +1160,7 @@ def get_ref_subs(model, readnoise_model, gain_model, nframes):
     return readnoise_2d, gain_2d
 
 
-def remove_bad_singles( segs_beg_3 ):
+def remove_bad_singles(segs_beg_3):
     """
     For the current integration and data section, remove all segments having only
     a single group if there are other segments in the ramp.  This method allows
@@ -1185,16 +1185,16 @@ def remove_bad_singles( segs_beg_3 ):
     max_seg = segs_beg_3.shape[0]
 
     #  get initial number of ramps having single-group segments
-    tot_num_single_grp_ramps = len( np.where((segs_beg_3 == 1) &
+    tot_num_single_grp_ramps = len(np.where((segs_beg_3 == 1) &
                                   (segs_beg_3.sum(axis=0) > 1))[0])
 
-    while( tot_num_single_grp_ramps > 0 ):
+    while(tot_num_single_grp_ramps > 0):
         # until there are no more single-group segments
-        for ii_0 in range( max_seg ):
+        for ii_0 in range(max_seg):
             slice_0 = segs_beg_3[ii_0,:,:]
 
-            for ii_1 in range( max_seg ): # correctly includes EARLIER segments
-                if ( ii_0 == ii_1 ):  # don't compare with itself
+            for ii_1 in range(max_seg): # correctly includes EARLIER segments
+                if (ii_0 == ii_1):  # don't compare with itself
                     continue
 
                 slice_1 = segs_beg_3[ii_1,:,:]
@@ -1216,7 +1216,7 @@ def remove_bad_singles( segs_beg_3 ):
 
                 del wh_y, wh_x
 
-                tot_num_single_grp_ramps = len( np.where((segs_beg_3 == 1) &
+                tot_num_single_grp_ramps = len(np.where((segs_beg_3 == 1) &
                            (segs_beg_3.sum(axis=0) > 1))[0])
 
     return segs_beg_3
@@ -1282,7 +1282,7 @@ def fix_sat_ramps(sat_0th_group_int, var_p3, var_both3, slope_int, dq_int):
     return var_p3, var_both3, slope_int, dq_int
 
 
-def do_all_sat( pixeldq, groupdq, imshape, n_int, save_opt):
+def do_all_sat(pixeldq, groupdq, imshape, n_int, save_opt):
     """
     For an input exposure where all groups in all integrations are saturated,
     the DQ in the primary and integration-specific output products are updated,
@@ -1317,14 +1317,14 @@ def do_all_sat( pixeldq, groupdq, imshape, n_int, save_opt):
     """
     # Create model for the primary output. Flag all pixels in the pixiel DQ
     #   extension as SATURATED and DO_NOT_USE.
-    pixeldq = np.bitwise_or(pixeldq, dqflags.group['SATURATED'] )
-    pixeldq = np.bitwise_or(pixeldq, dqflags.group['DO_NOT_USE'] )
+    pixeldq = np.bitwise_or(pixeldq, dqflags.group['SATURATED'])
+    pixeldq = np.bitwise_or(pixeldq, dqflags.group['DO_NOT_USE'])
 
     new_model = datamodels.ImageModel(data = np.zeros(imshape, dtype=np.float32),
         dq = pixeldq,
         var_poisson = np.zeros(imshape, dtype=np.float32),
         var_rnoise = np.zeros(imshape, dtype=np.float32),
-        err = np.zeros(imshape, dtype=np.float32) )
+        err = np.zeros(imshape, dtype=np.float32))
 
 
     # Create model for the integration-specific output. The 3D group DQ created
@@ -1336,17 +1336,17 @@ def do_all_sat( pixeldq, groupdq, imshape, n_int, save_opt):
         groupdq_3d = np.zeros((m_sh[0], m_sh[2], m_sh[3]), dtype=np.uint32)
 
         for ii in range(n_int): # add SAT flag to existing groupdq in each slice
-            groupdq_3d[ii,:,:] = np.bitwise_or.reduce( groupdq[ii,:,:,:],
+            groupdq_3d[ii,:,:] = np.bitwise_or.reduce(groupdq[ii,:,:,:],
                                                        axis=0)
 
-        groupdq_3d = np.bitwise_or( groupdq_3d, dqflags.group['DO_NOT_USE'] )
+        groupdq_3d = np.bitwise_or(groupdq_3d, dqflags.group['DO_NOT_USE'])
         int_model = datamodels.CubeModel(
             data = np.zeros((n_int,) + imshape, dtype=np.float32),
             dq = groupdq_3d,
             var_poisson = np.zeros((n_int,) + imshape, dtype=np.float32),
-            var_rnoise =  np.zeros((n_int,) + imshape, dtype=np.float32),
+            var_rnoise = np.zeros((n_int,) + imshape, dtype=np.float32),
             int_times = None,
-            err =  np.zeros((n_int,) + imshape, dtype=np.float32))
+            err = np.zeros((n_int,) + imshape, dtype=np.float32))
 
     else:
         int_model = None

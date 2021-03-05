@@ -56,7 +56,7 @@ def test_refraction_index(wavelength, n):
     tref = 35 # in K
     pref = 0 # in atm
     pressure_sys = 0 # in atm
-    kcoef =  [0.58339748, 0.46085267, 3.8915394]
+    kcoef = [0.58339748, 0.46085267, 3.8915394]
     lcoef = [0.00252643, 0.010078333, 1200.556]
     tcoef = [-2.66e-05, 0.0, 0.0, 0.0, 0.0, 0.0]
     n_pipeline = models.Snell.compute_refraction_index(wavelength, temp_sys,

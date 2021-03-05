@@ -148,7 +148,7 @@ def correct_mrs(input_model, slice_map):
 
         for k in x:
             if(x[k] >= xg[0] and x[k] <= xg[-1]):
-                ynew = np.interp(x[k], xg, yg);
+                ynew = np.interp(x[k], xg, yg)
             else:
                 if x[k] < xg[0]:
                     ynew = yg[0] + (x[k] - xg[0]) * (yg[1] - yg[0]) / (xg[1] - xg[0])

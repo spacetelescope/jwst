@@ -43,9 +43,9 @@ def make_datamodel():
 
     model.spec.append(spectrum)
 
-    integrations = [(  1, 58627.53891071, 58627.53896565, 58627.5390206 , 0., 0., 0.),
-                    (  2, 58627.5390206 , 58627.53907555, 58627.5391305 , 0., 0., 0.),
-                    (  3, 58627.5391305 , 58627.53918544, 58627.53924039, 0., 0., 0.)]
+    integrations = [(1, 58627.53891071, 58627.53896565, 58627.5390206, 0., 0., 0.),
+                    (2, 58627.5390206, 58627.53907555, 58627.5391305, 0., 0., 0.),
+                    (3, 58627.5391305, 58627.53918544, 58627.53924039, 0., 0., 0.)]
 
     integration_table = np.array(integrations, dtype=[('integration_number', 'i4'),
                                                       ('int_start_MJD_UTC', 'f8'),
@@ -79,7 +79,7 @@ def test_white_light_with_int_tables(make_datamodel):
     fluxsums = data.spec[0].spec_table['FLUX'].sum()
 
     assert result['MJD'] == int_times.mjd
-    assert result['whitelight_flux'] ==  fluxsums
+    assert result['whitelight_flux'] == fluxsums
 
 def test_white_light_with_expstart(make_datamodel):
     data = make_datamodel

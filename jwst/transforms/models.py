@@ -282,7 +282,7 @@ class Snell(Model):
             # Compute the absolute index of the glass
             delnabs = (0.5 * (nrel ** 2 - 1.) / nrel) * \
                     (D0 * delt + D1 * delt ** 2 + D2 * delt ** 3 + \
-                     (E0 * delt + E1 * delt ** 2) / (lamrel ** 2  - lam_tk ** 2))
+                    (E0 * delt + E1 * delt ** 2) / (lamrel ** 2 - lam_tk ** 2))
             nabs_obs = nabs_ref + delnabs
 
             # Define the relative index at the system's operating T and P.
@@ -1164,8 +1164,8 @@ class NIRCAMForwardRowGrismDispersion(Model):
         # inputs are x, y, x0, y0, order
 
         tmodel = astmath.SubtractUfunc() | xmodel
-        model = Mapping((0, 2, 0, 2, 2, 3, 4)) | ( tmodel | ymodel) & (tmodel | lmodel) & Identity(3) |\
-              Mapping((2, 3, 0, 1, 4)) | Identity(1) & astmath.AddUfunc() &  Identity(2) | Mapping((0, 1, 2, 3), n_inputs=4)
+        model = Mapping((0, 2, 0, 2, 2, 3, 4)) | (tmodel | ymodel) & (tmodel | lmodel) & Identity(3) | \
+              Mapping((2, 3, 0, 1, 4)) | Identity(1) & astmath.AddUfunc() & Identity(2) | Mapping((0, 1, 2, 3), n_inputs=4)
 
         return model(x, y, x0, y0, order)
 
@@ -1251,8 +1251,8 @@ class NIRCAMForwardColumnGrismDispersion(Model):
         dx = tmodel | xmodel
         wavelength = tmodel | lmodel
         model = Mapping((1, 3, 1, 3, 2, 3, 4)) | \
-              dx  & wavelength & Identity(3) |\
-              Mapping((0, 2, 3, 1, 4)) | astmath.AddUfunc() &  Identity(3)
+              dx & wavelength & Identity(3) |\
+              Mapping((0, 2, 3, 1, 4)) | astmath.AddUfunc() & Identity(3)
 
         return model(x, y, x0, y0, order)
 
@@ -1336,7 +1336,7 @@ class NIRCAMBackwardGrismDispersion(Model):
         dx = lmodel | xmodel
         dy = lmodel | ymodel
         model = Mapping((0, 2, 1, 2, 0, 1, 3)) | \
-              ((Identity(1) & dx) | astmath.AddUfunc())  & \
+              ((Identity(1) & dx) | astmath.AddUfunc()) & \
               ((Identity(1) & dy) | astmath.AddUfunc()) & Identity(3)
 
         return model(x, y, wavelength, order)

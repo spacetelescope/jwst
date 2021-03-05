@@ -12,7 +12,7 @@ def test_get_steps():
         pipeline_class = getattr(jwst.pipeline, class_name)
         step_info = step_info_by_class[f"jwst.pipeline.{class_name}"]
         assert step_info.class_alias == pipeline_class.class_alias
-        assert step_info.is_pipeline == True
+        assert step_info.is_pipeline is True
         assert step_info.package_name == "jwst"
         assert step_info.package_version == jwst.__version__
 
@@ -20,6 +20,6 @@ def test_get_steps():
         step_class = getattr(jwst.step, class_name)
         step_info = step_info_by_class[f"jwst.step.{class_name}"]
         assert step_info.class_alias == step_class.class_alias
-        assert step_info.is_pipeline == False
+        assert step_info.is_pipeline is False
         assert step_info.package_name == "jwst"
         assert step_info.package_version == jwst.__version__

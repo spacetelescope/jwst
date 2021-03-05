@@ -62,7 +62,7 @@ def textbox(text, width=78, boxchar='#', indent=0):
     q, r = divmod(width, len(boxchar))
     # The top/bottom border
     top_border = indentspace + boxchar * q + boxchar[:r]
-    top_padding  = indentspace + boxchar + ' ' * (width - len(boxchar) * 2) + boxchar
+    top_padding = indentspace + boxchar + ' ' * (width - len(boxchar) * 2) + boxchar
 
     lines = ['%s%s %s %s' % (indentspace, boxchar, line.ljust(wrap_width),
                              boxchar)

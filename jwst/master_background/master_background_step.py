@@ -117,7 +117,7 @@ class MasterBackgroundStep(Step):
                             and model.meta.target.source_type=='EXTENDED'):
                             this_is_ifu_extended = True
 
-                        if model.meta.observation.bkgdtarg == False or this_is_ifu_extended:
+                        if model.meta.observation.bkgdtarg is False or this_is_ifu_extended:
                             self.log.debug("Copying BACKGROUND column "
                                            "to SURF_BRIGHT")
                             copy_background_to_surf_bright(model)

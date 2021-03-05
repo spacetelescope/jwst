@@ -243,8 +243,7 @@ def wrap_ra(ravalues):
     a numpy array of ra values all on "same side" of 0/360 border
     """
 
-    valid = np.isfinite(ravalues)
-    index_good = np.where(valid == True)
+    index_good = np.where(np.isfinite(ravalues))
     ravalues_wrap = ravalues[index_good].copy()
     median_ra = np.nanmedian(ravalues_wrap)
 

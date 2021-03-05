@@ -282,8 +282,8 @@ class IFUCubeData():
 # find the CRPIX1 CRPIX2 - xi and eta centered at 0,0
 # to find location of center abs of min values is how many pixels
         # we want a systemtric cube centered on xi,eta = 0
-        xilimit = max( np.abs(xi_min), np.abs(xi_max))
-        etalimit = max( np.abs(eta_min), np.abs(eta_max))
+        xilimit = max(np.abs(xi_min), np.abs(xi_max))
+        etalimit = max(np.abs(eta_min), np.abs(eta_max))
 
         na = math.ceil(xilimit / self.cdelt1) + 1
         nb = math.ceil(etalimit / self.cdelt2) + 1
@@ -297,8 +297,8 @@ class IFUCubeData():
         self.crpix1 = float(na) + 1.0
         self.crpix2 = float(nb) + 1.0
 
-        self.naxis1 = na*2  + 1
-        self.naxis2 = nb*2  + 1
+        self.naxis1 = na*2 + 1
+        self.naxis2 = nb*2 + 1
 
         self.a_min = xi_min
         self.a_max = xi_max
@@ -401,7 +401,7 @@ class IFUCubeData():
 
         # along slice: a
         # across slice: b
-        alimit = max( np.abs(self.a_min), np.abs(self.a_max))
+        alimit = max(np.abs(self.a_min), np.abs(self.a_max))
 
         range_b = self.b_max - self.b_min
         if self.instrument == 'MIRI':
@@ -806,7 +806,7 @@ class IFUCubeData():
         t1 = time.time()
         log.info("Time to find Cube Flux = %.1f s" % (t1 - t0,))
         # result consist of ifu_cube and status
-        result  = self.setup_final_ifucube_model(ifile_ref)
+        result = self.setup_final_ifucube_model(ifile_ref)
 # _______________________________________________________________________
 # shove Flux and iflux in the  final IFU cube
 
@@ -890,7 +890,7 @@ class IFUCubeData():
                 log.debug("Time to Create Single ifucube = %.1f s" % (t1 - t0,))
                 single_ifucube_container.append(ifucube_model)
                 if status !=0:
-                    log.debug("Possible problem with single ifu cube, no valid data in cube" )
+                    log.debug("Possible problem with single ifu cube, no valid data in cube")
                 j = j + 1
         return single_ifucube_container
 
@@ -1268,7 +1268,7 @@ class IFUCubeData():
 # now loop over data and find min and max ranges data covers
 
         corner_a = []
-        corner_b  = []
+        corner_b = []
         lambda_min = []
         lambda_max = []
 
@@ -2157,7 +2157,7 @@ class IFUCubeData():
                     remove_start = remove_start + 1
                 else:
                     found = 1
-                    break;
+                    break
                 k = k + 1
 
             remove_final = 0
@@ -2170,7 +2170,7 @@ class IFUCubeData():
                     remove_final = remove_final + 1
                 else:
                     found = 1
-                    break;
+                    break
                 k = k -1
 
             remove_total = remove_start + remove_final

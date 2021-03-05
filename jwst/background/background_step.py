@@ -74,7 +74,7 @@ class BackgroundStep(Step):
                                            (bkg_xtilt, bkg_ytilt), atol=tolerance, rtol=0):
                                 pass
                             else:
-                                do_sub  = False
+                                do_sub = False
                                 break
                 # Do the background subtraction
                 if do_sub:
