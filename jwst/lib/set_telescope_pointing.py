@@ -850,6 +850,8 @@ def calc_transforms_original(t_pars: TransformParameters):
     # Calculate the J-frame to FGS1 ICS matrix
     m_j2fgs1 = calc_j2fgs1_matrix(t_pars.pointing.j2fgs_matrix, transpose=t_pars.j2fgs_transpose)
 
+    logger.debug(f'm_eci2fgs1 = {np.dot(m_j2fgs1, m_eci2j)}')
+
     # Calculate the FSM corrections to the SI_FOV frame
     m_sifov_fsm_delta = calc_sifov_fsm_delta_matrix(
         t_pars.pointing.fsmcorr, fsmcorr_version=t_pars.fsmcorr_version, fsmcorr_units=t_pars.fsmcorr_units
@@ -971,13 +973,17 @@ def calc_eci2fgs1(t_pars: TransformParameters):
         The transformation parameters
     """
     fgs1_siaf = get_wcs_values_from_siaf('FGS1_FULL_OSS', useafter=t_pars.useafter, prd_db_filepath=t_pars.siaf_path)
+    logger.debug(f'fgs1_siaf = {fgs1_siaf}')
+
     if not t_pars.guide_star_wcs.pa:
         pa = calc_v3pa_at_gs_from_original(t_pars)
         t_pars.guide_star_wcs = WCSRef(t_pars.guide_star_wcs.ra, t_pars.guide_star_wcs.dec, pa)
 
+    logger.debug(f'guide_star_wcs = {t_pars.guide_star_wcs}')
+    logger.debug(f'gs_commanded = {t_pars.pointing.gs_commanded}')
+
     m_gs_commanded = calc_m_gs_commanded(t_pars.guide_star_wcs, fgs1_siaf.v3yangle, t_pars.pointing.gs_commanded)
 
-    logger.debug(f'fgs1_siaf = {fgs1_siaf}')
     logger.debug(f'm_gs_commanded = {m_gs_commanded}')
 
     m_eci2fgs1 = np.dot(MX2Z, m_gs_commanded)
