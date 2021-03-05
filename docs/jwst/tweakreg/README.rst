@@ -45,6 +45,9 @@ then gets cross-matched and fit to this astrometric reference catalog
 to align the input images to the astrometric reference catalog's
 coordinate system.  The pipeline initially supports fitting to the
 GAIADR2 catalog, with the option to select the GAIADR1 instead.
+The results of this one fit then get applied to all the
+input images to align them all to the astrometric reference frame while
+maintaining the relative alignment between the images.
 
 
 WCS Correction
