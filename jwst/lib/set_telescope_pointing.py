@@ -1786,8 +1786,10 @@ def get_mnemonics(obsstart, obsend, tolerance, engdb_url=None):
         'SA_ZRFGS2J31': None,
         'SA_ZRFGS2J32': None,
         'SA_ZRFGS2J33': None,
-        'SA_ZADUCMDX': None,
-        'SA_ZADUCMDY': None,
+        'SA_ZADUCMDX':  None,
+        'SA_ZADUCMDY':  None,
+        'SA_ZFGGSCMDX':  None,
+        'SA_ZFGGSCMDY':  None,
     }
 
     # Retrieve the mnemonics from the engineering database.
@@ -1887,8 +1889,15 @@ def all_pointings(mnemonics):
             mnemonics_at_time['SA_ZADUCMDY'].value,
 
         ])
+
+        gs_commanded = np.array([
+            mnemonics_at_time['SA_ZFGGSCMDX'],
+            mnemonics_at_time['SA_ZFGGSCMDY']
+
+        ])
+
         pointing = Pointing(q=q, obstime=obstime, j2fgs_matrix=j2fgs_matrix,
-                            fsmcorr=fsmcorr)
+                            fsmcorr=fsmcorr, gs_commanded=gs_commanded)
         pointings.append(pointing)
 
     if not len(pointings):
@@ -1996,9 +2005,8 @@ def pointing_from_average(mnemonics):
             eng_param.value
             for eng_param in mnemonics[mnemonic]
         ]
-        # Weed out mnemonic entries that are zero
-        # 'SA_ZADUCMDX' and 'SA_ZADUCMDY' can be zero
-        if mnemonic not in ['SA_ZADUCMDX', 'SA_ZADUCMDY']:
+        # Weed out mnemonic entries that are zero, though some are OK to be zero.
+        if mnemonic not in ['SA_ZADUCMDX', 'SA_ZADUCMDY', 'SA_ZFGGSCMDX', 'SA_ZFGGSCMDY']:
             good_mnemonic = []
             for this_value in values:
                 if this_value != 0.0:
@@ -2015,6 +2023,7 @@ def pointing_from_average(mnemonics):
         badmnemonicsstring = ' '.join(zero_mnemonics)
         logger.info(badmnemonicsstring)
         raise ValueError("Bad telemetry values")
+
     # Fill out the pointing matrices.
     q = np.array([
         mnemonic_averages['SA_ZATTEST1'],
@@ -2040,8 +2049,15 @@ def pointing_from_average(mnemonics):
         mnemonic_averages['SA_ZADUCMDY']
 
     ])
+
+    gs_commanded = np.array([
+        mnemonic_averages['SA_ZFGGSCMDX'],
+        mnemonic_averages['SA_ZFGGSCMDY']
+
+    ])
+
     pointing = Pointing(obstime=obstime, q=q, j2fgs_matrix=j2fgs_matrix,
-                        fsmcorr=fsmcorr)
+                        fsmcorr=fsmcorr, gs_commanded=gs_commanded)
     # That's all folks
     return pointing
 
