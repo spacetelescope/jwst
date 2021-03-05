@@ -986,7 +986,7 @@ class SourceCatalog:
         """
         The column names of the three concentration indices.
         """
-        return [f'CI_{self.aperture_ee[i]}_{self.aperture_ee[j]}'
+        return [f'CI_{self.aperture_ee[j]}_{self.aperture_ee[i]}'
                 for (i, j) in self._ci_ee_indices]
 
     @lazyproperty
@@ -995,25 +995,28 @@ class SourceCatalog:
         The concentration indicies column descriptions.
         """
         return ['Concentration index calculated as '
-                f'{self.aperture_abmag_colnames[2*i]} - '
-                f'{self.aperture_abmag_colnames[2*j]}' for (i, j) in
+                f'({self.aperture_flux_colnames[2*j]} / '
+                f'{self.aperture_flux_colnames[2*i]})' for (i, j) in
                 self._ci_ee_indices]
 
     @lazyproperty
     def concentration_indices(self):
         """
-        A list of concentration indices, calculated as the difference of
-        AB magnitudes between:
+        A list of concentration indices, calculated as the flux
+        ratios of:
 
-            * the smallest and middle aperture radii/EE
-            * the middle and largest aperture radii/EE
-            * the smallest and largest aperture radii/EE
+            * the middle / smallest aperture radii/EE,
+              e.g., CI_50_30 = aper50_flux / aper30_flux
+            * the largest / middle aperture radii/EE,
+              e.g., CI_70_50 = aper70_flux / aper50_flux
+            * the largest / smallest aperture radii/EE,
+              e.g., CI_70_30 = aper70_flux / aper30_flux
         """
-        abmags = [(self.aperture_abmag_colnames[2*i],
-                   self.aperture_abmag_colnames[2*j]) for (i, j) in
+        fluxes = [(self.aperture_flux_colnames[2*j],
+                   self.aperture_flux_colnames[2*i]) for (i, j) in
                   self._ci_ee_indices]
-        return [getattr(self, mag1) - getattr(self, mag2)
-                for mag1, mag2 in abmags]
+        return [getattr(self, flux1).value / getattr(self, flux2).value
+                for flux1, flux2 in fluxes]
 
     def set_ci_properties(self):
         """
