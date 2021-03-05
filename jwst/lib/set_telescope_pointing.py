@@ -189,6 +189,7 @@ class TransformParameters:
     fsmcorr_units : str = 'arcsec'
     j2fgs_transpose : bool = True
     method: Methods = None
+    pointing : Pointing = None
     reduce_func: typing.Callable = None
     siaf: SIAF = None
     siaf_path: str = None
@@ -421,12 +422,13 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, eng
             model, default_roll_ref=default_roll_ref
         )
     else:
-        update_wcs_from_telem(
-            model, default_pa_v3=default_pa_v3, siaf=siaf, engdb_url=engdb_url,
+        t_pars = TransformParameters(
+            default_pa_v3=default_pa_v3, siaf=siaf, engdb_url=engdb_url,
             tolerance=tolerance, allow_default=allow_default,
             reduce_func=reduce_func, siaf_path=siaf_path, useafter=useafter,
             **transform_kwargs
         )
+        update_wcs_from_telem(model, t_pars)
 
 
 def update_wcs_from_fgs_guiding(model, default_roll_ref=0.0, default_vparity=1, default_v3yangle=0.0):
@@ -494,11 +496,7 @@ def update_wcs_from_fgs_guiding(model, default_roll_ref=0.0, default_vparity=1, 
     ) = calc_rotation_matrix(roll_ref, np.deg2rad(v3i_yang), vparity=vparity)
 
 
-def update_wcs_from_telem(
-    model, default_pa_v3=0., siaf=None, engdb_url=None,
-    tolerance=0, allow_default=False,
-    reduce_func=None, **transform_kwargs
-):
+def update_wcs_from_telem(model, t_pars: TransformParameters):
     """Update WCS pointing information
 
     Given a `jwst.datamodels.DataModel`, determine the simple WCS parameters
@@ -512,30 +510,8 @@ def update_wcs_from_telem(
     model : `~jwst.datamodels.DataModel`
         The model to update.
 
-    default_pa_v3 : float
-        If pointing information cannot be retrieved,
-        use this as the V3 position angle.
-
-    siaf_path : str
-        The path to the SIAF file, i.e. ``XML_DATA`` env variable.
-
-    engdb_url: str or None
-        URL of the engineering telemetry database REST interface.
-
-    tolerance: int
-        If no telemetry can be found during the observation,
-        the time, in seconds, beyond the observation time to
-        search for telemetry.
-
-    allow_default: bool
-        If telemetry cannot be determine, use existing
-        information in the observation's header.
-
-    reduce_func: func or None
-        Reduction function to use on values.
-
-    transform_kwargs: dict
-        Keyword arguments used by matrix calculation routines.
+    t_pars : TransformParameters
+        The transformation parameters
     """
 
     logger.info('Updating wcs from telemetry.')
@@ -543,7 +519,7 @@ def update_wcs_from_telem(
     # Get the SIAF and observation parameters
     obsstart = model.meta.exposure.start_time
     obsend = model.meta.exposure.end_time
-    if None in siaf:
+    if None in t_pars.siaf:
         # Check if any of "v2_ref", "v3_ref", "v3yangle", "vparity" is None
         # and raise an error. The other fields have default values.
         raise ValueError('Insufficient SIAF information found in header.')
@@ -552,16 +528,16 @@ def update_wcs_from_telem(
     wcsinfo = WCSRef(
         model.meta.target.ra,
         model.meta.target.dec,
-        default_pa_v3
+        t_pars.default_pa_v3
     )
     vinfo = wcsinfo
 
     # Get the pointing information
     try:
-        pointing = get_pointing(obsstart, obsend, engdb_url=engdb_url,
-                                tolerance=tolerance, reduce_func=reduce_func)
+        pointing = get_pointing(obsstart, obsend, engdb_url=t_pars.engdb_url,
+                                tolerance=t_pars.tolerance, reduce_func=t_pars.reduce_func)
     except ValueError as exception:
-        if not allow_default:
+        if not t_pars.allow_default:
             raise
         else:
             logger.warning(
@@ -577,7 +553,8 @@ def update_wcs_from_telem(
         logger.info('\tPointing = {}'.format(pointing))
         model.meta.visit.engdb_pointing_quality = "CALCULATED"
         try:
-            wcsinfo, vinfo = calc_wcs(pointing, siaf, **transform_kwargs)
+            t_pars.pointing = pointing
+            wcsinfo, vinfo = calc_wcs(t_pars)
             logger.info("Setting ENGQLPTG keyword to CALCULATED")
         except Exception as e:
             logger.warning(
@@ -585,7 +562,7 @@ def update_wcs_from_telem(
                 'Default pointing parameters will be used.'
                 '\nException is {}'.format(e)
             )
-            if not allow_default:
+            if not t_pars.allow_default:
                 raise
             else:
                 logger.info("Setting ENGQLPTG keyword to PLANNED")
@@ -603,7 +580,7 @@ def update_wcs_from_telem(
     model.meta.wcsinfo.ra_ref = wcsinfo.ra
     model.meta.wcsinfo.dec_ref = wcsinfo.dec
     model.meta.wcsinfo.roll_ref = compute_local_roll(
-        vinfo.pa, wcsinfo.ra, wcsinfo.dec, siaf.v2_ref, siaf.v3_ref
+        vinfo.pa, wcsinfo.ra, wcsinfo.dec, t_pars.siaf.v2_ref, t_pars.siaf.v3_ref
     )
     if model.meta.exposure.type.lower() in TYPES_TO_UPDATE:
         model.meta.wcsinfo.crval1 = wcsinfo.ra
@@ -616,13 +593,13 @@ def update_wcs_from_telem(
         ) = calc_rotation_matrix(
             np.deg2rad(model.meta.wcsinfo.roll_ref),
             np.deg2rad(model.meta.wcsinfo.v3yangle),
-            vparity=siaf.vparity
+            vparity=t_pars.siaf.vparity
         )
 
     # Calculate S_REGION with the footprint
     # information
     try:
-        update_s_region(model, siaf)
+        update_s_region(model, t_pars.siaf)
     except Exception as e:
         logger.warning(
             'Calculation of S_REGION failed and will be skipped.'
@@ -708,6 +685,10 @@ def calc_wcs_over_time(obsstart, obsend, engdb_url=None, tolerance=60, reduce_fu
     obstimes = list()
     wcsinfos = list()
     vinfos = list()
+    t_pars = TransformParameters(
+        engdb_url=engdb_url, tolerance=tolerance, reduce_func=reduce_func, siaf=siaf,
+        **transform_kwargs
+    )
 
     # Calculate WCS
     try:
@@ -719,7 +700,8 @@ def calc_wcs_over_time(obsstart, obsend, engdb_url=None, tolerance=60, reduce_fu
     if not isinstance(pointings, list):
         pointings = [pointings]
     for pointing in pointings:
-        wcsinfo, vinfo = calc_wcs(pointing, siaf=siaf, **transform_kwargs)
+        t_pars.pointing = pointing
+        wcsinfo, vinfo = calc_wcs(t_pars)
         obstimes.append(pointing.obstime)
         wcsinfos.append(wcsinfo)
         vinfos.append(vinfo)
@@ -727,21 +709,14 @@ def calc_wcs_over_time(obsstart, obsend, engdb_url=None, tolerance=60, reduce_fu
     return obstimes, wcsinfos, vinfos
 
 
-def calc_wcs(pointing, siaf=None, **transform_kwargs):
+def calc_wcs(t_pars: TransformParameters):
     """Transform from the given SIAF information and Pointing
     the aperture and V1 wcs
 
     Parameters
     ----------
-    pointing : Pointing
-        The telescope pointing. See ref:`Notes` for further details
-
-    siaf : SIAF or None
-        The SIAF transformation. See ref:`Notes` for further details.
-        If `None`, unit transformation is used.
-
-    transform_kwargs : dict
-        Keyword arguments used by matrix calculation routines
+    t_pars : TransformParameters
+        The transformation parameters
 
     Returns
     -------
@@ -774,11 +749,11 @@ def calc_wcs(pointing, siaf=None, **transform_kwargs):
     Parameter fsmcorr are two values provided as a list consisting of:
     [SA_ZADUCMDX, SA_ZADUCMDY]
     """
-    if siaf is None:
-        siaf = SIAF()
+    if t_pars.siaf is None:
+        t_pars.siaf = SIAF()
 
     # Calculate transforms
-    tforms = calc_transforms(pointing, siaf, **transform_kwargs)
+    tforms = calc_transforms(t_pars)
 
     # Calculate the V1 WCS information
     vinfo = calc_v1_wcs(tforms.m_eci2v)
@@ -790,7 +765,7 @@ def calc_wcs(pointing, siaf=None, **transform_kwargs):
     return (wcsinfo, vinfo)
 
 
-def calc_transforms(pointing, siaf, method=None, **transform_kwargs):
+def calc_transforms(t_pars: TransformParameters):
     """Calculate transforms from pointing to SIAF
 
     Given the spacecraft pointing parameters and the
@@ -799,31 +774,23 @@ def calc_transforms(pointing, siaf, method=None, **transform_kwargs):
 
     Parameters
     ----------
-    pointing : Pointing
-        Observatory pointing information
-
-    siaf : SIAF
-        Aperture information
-
-    method : Methods
-        The method, or algorithm, to use in calculating the transform.
-        If not specified, the default method is used.
-
-    transform_kwargs : dict
-        Keyword arguments used by matrix calculation routines
+    t_pars : TransformParameters
+        The transformation parameters
 
     Returns
     -------
     transforms: Transforms
         The list of coordinate matrix transformations
     """
+    method = t_pars.method
     method = method if method else Methods.DEFAULT.name
     method = method.upper()
+    t_pars.method = method
 
     if method == Methods.ORIGINAL.name:
-        transforms = calc_transforms_original(pointing, siaf, **transform_kwargs)
+        transforms = calc_transforms_original(t_pars)
     elif method == Methods.CMDTEST.name:
-        transforms = calc_transforms_cmdtest(pointing, siaf, **transform_kwargs)
+        transforms = calc_transforms_cmdtest(t_pars)
     else:
         raise RuntimeError(
             f'Specified method "{method}" not in available methods '
@@ -832,7 +799,7 @@ def calc_transforms(pointing, siaf, method=None, **transform_kwargs):
     return transforms
 
 
-def calc_transforms_original(pointing, siaf, fsmcorr_version='latest', fsmcorr_units='arcsec', j2fgs_transpose=True, **unused_kwargs):
+def calc_transforms_original(t_pars: TransformParameters):
     """Calculate transforms from pointing to SIAF using the original, pre-JSOCINT-555 algorithm
 
     Given the spacecraft pointing parameters and the
@@ -841,26 +808,8 @@ def calc_transforms_original(pointing, siaf, fsmcorr_version='latest', fsmcorr_u
 
     Parameters
     ----------
-    pointing : Pointing
-        Observatory pointing information
-
-    siaf : SIAF
-        Aperture information
-
-    fsmcorr_version : str
-        The version of the FSM correction calculation to use.
-        See :ref:`calc_sifov_fsm_delta_matrix`
-
-    fsmcorr_units : str
-        Units of the FSM correction values. Default is 'arcsec'.
-        See :ref:`calc_sifov_fsm_delta_matrix`
-
-    j2fgs_transpose : bool
-        Transpose the `j2fgs1` matrix.
-
-    unused_kwargs : dict
-        Keyword arguments used that may be needed by other `calc_transforms` methods
-        but not this one.
+    t_pars : TransformParameters
+        The transformation parameters
 
     Returns
     -------
@@ -885,14 +834,14 @@ def calc_transforms_original(pointing, siaf, fsmcorr_version='latest', fsmcorr_u
     logger.info('Calculating transforms using ORIGINAL method...')
 
     # Determine the ECI to J-frame matrix
-    m_eci2j = calc_eci2j_matrix(pointing.q)
+    m_eci2j = calc_eci2j_matrix(t_pars.pointing.q)
 
     # Calculate the J-frame to FGS1 ICS matrix
-    m_j2fgs1 = calc_j2fgs1_matrix(pointing.j2fgs_matrix, transpose=j2fgs_transpose)
+    m_j2fgs1 = calc_j2fgs1_matrix(t_pars.pointing.j2fgs_matrix, transpose=t_pars.j2fgs_transpose)
 
     # Calculate the FSM corrections to the SI_FOV frame
     m_sifov_fsm_delta = calc_sifov_fsm_delta_matrix(
-        pointing.fsmcorr, fsmcorr_version=fsmcorr_version, fsmcorr_units=fsmcorr_units
+        t_pars.pointing.fsmcorr, fsmcorr_version=t_pars.fsmcorr_version, fsmcorr_units=t_pars.fsmcorr_units
     )
 
     # Calculate the FGS1 ICS to SI-FOV matrix
@@ -913,7 +862,7 @@ def calc_transforms_original(pointing, siaf, fsmcorr_version='latest', fsmcorr_u
     )
 
     # Calculate the SIAF transform matrix
-    m_v2siaf = calc_v2siaf_matrix(siaf)
+    m_v2siaf = calc_v2siaf_matrix(t_pars.siaf)
 
     # Calculate the full ECI to SIAF transform matrix
     m_eci2siaf = np.dot(
@@ -928,9 +877,7 @@ def calc_transforms_original(pointing, siaf, fsmcorr_version='latest', fsmcorr_u
     return tforms
 
 
-def calc_transforms_cmdtest(pointing, siaf,
-                            siaf_path=None, useafter=None,
-                            fsmcorr_version='latest', fsmcorr_units='arcsec', j2fgs_transpose=True):
+def calc_transforms_cmdtest(t_pars: TransformParameters):
     """Calculate transforms from pointing to SIAF using the JSOCINT-555 fix
 
     Given the spacecraft pointing parameters and the
@@ -941,28 +888,8 @@ def calc_transforms_cmdtest(pointing, siaf,
 
     Parameters
     ----------
-    pointing : Pointing
-        Observatory pointing information
-
-    siaf : SIAF
-        Aperture information
-
-    siaf_path: str or file-like object or None
-        The path to the SIAF database.
-
-    useafter : str
-        The date of observation (``model.meta.date``)
-
-    fsmcorr_version : str
-        The version of the FSM correction calculation to use.
-        See :ref:`calc_sifov_fsm_delta_matrix`
-
-    fsmcorr_units : str
-        Units of the FSM correction values. Default is 'arcsec'.
-        See :ref:`calc_sifov_fsm_delta_matrix`
-
-    j2fgs_transpose : bool
-        Transpose the `j2fgs1` matrix.
+    t_pars : TransformParameters
+        The transformation parameters
 
     Returns
     -------
@@ -986,18 +913,18 @@ def calc_transforms_cmdtest(pointing, siaf,
     logger.info('Calculating transforms using CMDTEST method...')
 
     # Determine the ECI to J-frame matrix
-    m_eci2j = calc_eci2j_matrix(pointing.q)
+    m_eci2j = calc_eci2j_matrix(t_pars.pointing.q)
 
     # Calculate the J-frame to FGS1 ICS matrix
-    m_j2fgs1 = calc_j2fgs1_matrix(pointing.j2fgs_matrix, transpose=j2fgs_transpose)
+    m_j2fgs1 = calc_j2fgs1_matrix(t_pars.pointing.j2fgs_matrix, transpose=t_pars.j2fgs_transpose)
 
     # Calculate the FSM corrections to the SI_FOV frame
     m_sifov_fsm_delta = calc_sifov_fsm_delta_matrix(
-        pointing.fsmcorr, fsmcorr_version=fsmcorr_version, fsmcorr_units=fsmcorr_units
+        t_pars.pointing.fsmcorr, fsmcorr_version=t_pars.fsmcorr_version, fsmcorr_units=t_pars.fsmcorr_units
     )
 
     # Calculate the FGS1 ICS to SI-FOV matrix
-    m_fgs12sifov = calc_fgs1_to_sifov_fgs1siaf_matrix(siaf_path=siaf_path, useafter=useafter)
+    m_fgs12sifov = calc_fgs1_to_sifov_fgs1siaf_matrix(siaf_path=t_pars.siaf_path, useafter=t_pars.useafter)
 
     # Calculate SI FOV to V1 matrix
     m_sifov2v = calc_sifov2v_matrix()
@@ -1014,7 +941,7 @@ def calc_transforms_cmdtest(pointing, siaf,
     )
 
     # Calculate the SIAF transform matrix
-    m_v2siaf = calc_v2siaf_matrix(siaf)
+    m_v2siaf = calc_v2siaf_matrix(t_pars.siaf)
 
     # Calculate the full ECI to SIAF transform matrix
     m_eci2siaf = np.dot(
