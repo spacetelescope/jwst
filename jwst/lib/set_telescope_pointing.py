@@ -987,6 +987,9 @@ def calc_eci2fgs1(t_pars: TransformParameters):
 
     m_gs_commanded = calc_m_gs_commanded(t_pars.guide_star_wcs, fgs1_siaf.v3yangle, t_pars.pointing.gs_commanded)
 
+    # Need to invert the martrix
+    m_gs_commanded = np.linalg.inv(m_gs_commanded)
+
     logger.debug(f'm_gs_commanded = {m_gs_commanded}')
 
     m_eci2fgs1 = np.dot(MX2Z, m_gs_commanded)
