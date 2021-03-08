@@ -847,10 +847,11 @@ def calc_transforms_original(t_pars: TransformParameters):
 
     # Determine the ECI to J-frame matrix
     m_eci2j = calc_eci2j_matrix(t_pars.pointing.q)
+    logger.debug(f'm_eci2j: {m_eci2j}')
 
     # Calculate the J-frame to FGS1 ICS matrix
     m_j2fgs1 = calc_j2fgs1_matrix(t_pars.pointing.j2fgs_matrix, transpose=t_pars.j2fgs_transpose)
-
+    logger.debug(f'm_j2fgs1: {m_j2fgs1}')
     logger.debug(f'm_eci2fgs1 = {np.dot(m_j2fgs1, m_eci2j)}')
 
     # Calculate the FSM corrections to the SI_FOV frame
@@ -1425,6 +1426,10 @@ def calc_position_angle(target, point):
     x = sin(point.dec) * cos(target.dec) - \
         cos(point.dec) * sin(target.dec) * cos((point.ra - target.ra))
     point_pa = np.arctan2(y, x)
+    if point_pa < 0:
+        point_pa += PI2
+    if point_pa >= PI2:
+        point_pa -= PI2
 
     return point_pa
 
