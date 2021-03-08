@@ -1070,6 +1070,7 @@ def calc_v3pa_at_gs_from_original(t_pars: TransformParameters) -> float:
     # Calculate V1 using ORIGINAL method
     tforms = calc_transforms_original(t_pars)
     vinfo = calc_v1_wcs(tforms.m_eci2v)
+    logger.debug(f'vinfo: {vinfo}')
 
     # Convert to radians
     ra_v1 = vinfo.ra * D2R
@@ -1086,6 +1087,7 @@ def calc_v3pa_at_gs_from_original(t_pars: TransformParameters) -> float:
     dec_v3 = asin(cos(dec_v1) * cos(pa_v3))
 
     v3pa_at_gs = calc_position_angle(WCSRef(ra_gs, dec_gs, None), WCSRef(ra_v3, dec_v3, None))
+    v3pa_at_gs *= R2D
     return v3pa_at_gs
 
 
