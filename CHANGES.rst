@@ -1,6 +1,12 @@
 1.1.1 (unreleased)
 ==================
 
+assign_wcs
+----------
+
+- Changed evaluation of grism bounding box center from averaged extrema of
+  transformed bounding box to transformed centroid of source_cat object [#5809]
+
 associations
 ------------
 
