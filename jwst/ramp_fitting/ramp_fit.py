@@ -556,7 +556,7 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
                                              imshape, nreads, ngroups)
         if miri_ans is None:
             return None * 22
-        data, err, groupdq, cubeshape, imshape, nreads, ngroups, first_gdq = miri_ans
+        data, err, groupdq, cubeshape, imshape, nreads, ngroups = miri_ans
 
     if ngroups == 1:
         log.warning('Dataset has NGROUPS=1, so count rates for each integration')
@@ -713,10 +713,9 @@ def ramp_fit_miri_multigroups(data, err, groupdq, cubeshape, imshape, nreads, ng
         First groups in the GroupDQ array
     """
 
-    first_gdq = groupdq[:, 0, :, :]
     num_bad_slices = 0 # number of initial groups that are all DO_NOT_USE
 
-    while np.all(np.bitwise_and(first_gdq, DO_NOT_USE)):
+    while np.all(np.bitwise_and(groupdq[:, 0, :, :], DO_NOT_USE)):
         num_bad_slices += 1
         nreads -= 1
         ngroups -= 1
@@ -727,11 +726,7 @@ def ramp_fit_miri_multigroups(data, err, groupdq, cubeshape, imshape, nreads, ng
             log.error('  so will not process this dataset.')
             return None
 
-        data = data[:, 1:, :, :]
-        err = err[:, 1:, :, :]
         groupdq = groupdq[:, 1:, :, :]
-
-        cubeshape = (nreads,) + imshape
 
         # Where the initial group of the just-truncated data is a cosmic ray,
         #   remove the JUMP_DET flag from the group dq for those pixels so
@@ -742,7 +737,10 @@ def ramp_fit_miri_multigroups(data, err, groupdq, cubeshape, imshape, nreads, ng
         for ii in range(num_cr_1st):
             groupdq[wh_cr[0][ii], 0, wh_cr[1][ii], wh_cr[2][ii]] -= JUMP_DET
 
-        first_gdq = groupdq[:, 0, :, :]
+    if num_bad_slices > 0:
+        data = data[:, num_bad_slices:, :, :]
+        err = err[:, num_bad_slices:, :, :]
+        cubeshape = (nreads,) + imshape
 
     log.info('Number of leading groups that are flagged as DO_NOT_USE: %s', num_bad_slices)
 
@@ -750,8 +748,7 @@ def ramp_fit_miri_multigroups(data, err, groupdq, cubeshape, imshape, nreads, ng
     #   in the while loop above, ngroups would have been set to 0, and Nones
     #   would have been returned.  If execution has gotten here, there must
     #   be at least 1 remaining group that is not all flagged.
-    last_gdq = groupdq[:, -1, :, :]
-    if np.all(np.bitwise_and(last_gdq, DO_NOT_USE)):
+    if np.all(np.bitwise_and(groupdq[:, -1, :, :], DO_NOT_USE)):
         nreads -= 1
         ngroups -= 1
 
@@ -774,7 +771,8 @@ def ramp_fit_miri_multigroups(data, err, groupdq, cubeshape, imshape, nreads, ng
         log.warning('MIRI datasets require at least 2 groups/integration')
         log.warning('(NGROUPS), so will not process this dataset.')
         return None
-    return data, err, groupdq, cubeshape, imshape, nreads, ngroups, first_gdq
+
+    return data, err, groupdq, cubeshape, imshape, nreads, ngroups
 
 
 def ramp_fit_first_pass(
