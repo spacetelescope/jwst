@@ -70,7 +70,7 @@ def compute_va_effects(velocity_x, velocity_y, velocity_z, ra, dec):
         return 1.0, ra, dec
 
     u = np.asanyarray(SphericalToCartesian()(ra, dec))
-    beta_u =  np.dot(beta, u)
+    beta_u = np.dot(beta, u)
     igamma = np.sqrt(1.0 - beta2)  # inverse of usual gamma
     scale_factor = (1.0 + beta_u) / igamma
 

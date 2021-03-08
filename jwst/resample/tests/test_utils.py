@@ -18,15 +18,17 @@ BITVALUES_STR = f'{2**0}, {2**2}'
 BITVALUES_INV_STR = f'~{2**0}, {2**2}'
 JWST_NAMES = 'DO_NOT_USE, JUMP_DET'
 JWST_NAMES_INV = '~' + JWST_NAMES
+
+
 @pytest.mark.parametrize(
     'dq, bitvalues, expected', [
-        (DQ, 0,                 np.array([1, 0, 0, 0, 0, 0, 0, 0, 0])),
-        (DQ, BITVALUES,         np.array([1, 1, 0, 0, 1, 1, 0, 0, 0])),
-        (DQ, BITVALUES_STR,     np.array([1, 1, 0, 0, 1, 1, 0, 0, 0])),
+        (DQ, 0, np.array([1, 0, 0, 0, 0, 0, 0, 0, 0])),
+        (DQ, BITVALUES, np.array([1, 1, 0, 0, 1, 1, 0, 0, 0])),
+        (DQ, BITVALUES_STR, np.array([1, 1, 0, 0, 1, 1, 0, 0, 0])),
         (DQ, BITVALUES_INV_STR, np.array([1, 0, 1, 0, 0, 0, 0, 0, 1])),
-        (DQ, JWST_NAMES,        np.array([1, 1, 0, 0, 1, 1, 0, 0, 0])),
-        (DQ, JWST_NAMES_INV,    np.array([1, 0, 1, 0, 0, 0, 0, 0, 1])),
-        (DQ, None,              np.array([1, 1, 1, 1, 1, 1, 1, 1, 1])),
+        (DQ, JWST_NAMES, np.array([1, 1, 0, 0, 1, 1, 0, 0, 0])),
+        (DQ, JWST_NAMES_INV, np.array([1, 0, 1, 0, 0, 0, 0, 0, 1])),
+        (DQ, None, np.array([1, 1, 1, 1, 1, 1, 1, 1, 1])),
     ]
 )
 def test_build_mask(dq, bitvalues, expected):

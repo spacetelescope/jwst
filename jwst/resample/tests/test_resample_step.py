@@ -8,6 +8,7 @@ from jwst.assign_wcs import AssignWcsStep
 from jwst.extract_2d import Extract2dStep
 from jwst.resample import ResampleSpecStep, ResampleStep
 
+
 @pytest.fixture
 def nirspec_rate():
     ysize = 2048
@@ -233,7 +234,7 @@ def test_pixel_scale_ratio_imaging(nircam_rate, ratio):
     assert_allclose(np.array(result1.data.shape), np.array(result2.data.shape) * ratio, rtol=1, atol=1)
 
     # Avoid edge effects; make sure data values are identical for surface brightness data
-    assert np.mean(result1.data[10:-10,10:-10]) == np.mean(result2.data[10:-10,10:-10])
+    assert np.mean(result1.data[10:-10, 10:-10]) == np.mean(result2.data[10:-10, 10:-10])
 
     # Make sure the photometry keywords describing the solid angle of a pixel
     # are updated
@@ -270,7 +271,6 @@ def test_weight_type(nircam_rate, _jail):
 
     assert_allclose(result2.data[100:105, 100:105], 7.5, rtol=1e-2)
     assert_allclose(result2.wht[100:105, 100:105], 20, rtol=1e-2)
-
 
 
 def test_sip_coeffs_do_not_propagate(nircam_rate):

@@ -5,7 +5,7 @@
 import numpy as np
 import math
 
-from  .utils import rotate2dccw
+from .utils import rotate2dccw
 
 m = 1.0
 mm = 1.0e-3 * m
@@ -109,14 +109,14 @@ def jwst_g7s6_centers_asbuilt(chooseholes=None): # was jwst_g7s6_centers_asdesig
     # Debug orientations with b4,c6,[c2]
     allholes = ('b4','c2','b5','b2','c1','b6','c6')
 
-    #                                              design  built
-    holedict['b4'] = [ 0.00000000,  -2.640000]       #B4 -> B4
-    holedict['c2'] = [-2.2863100 ,  0.0000000]       #C5 -> C2
-    holedict['b5'] = [ 2.2863100 , -1.3200001]       #B3 -> B5
-    holedict['b2'] = [-2.2863100 ,  1.3200001]       #B6 -> B2
-    holedict['c1'] = [-1.1431500 ,  1.9800000]       #C6 -> C1
-    holedict['b6'] = [ 2.2863100 ,  1.3200001]       #B2 -> B6
-    holedict['c6'] = [ 1.1431500 ,  1.9800000]       #C1 -> C6
+    #                                             design  built
+    holedict['b4'] = [0.00000000, -2.640000]       # B4 -> B4
+    holedict['c2'] = [-2.2863100, 0.0000000]       # C5 -> C2
+    holedict['b5'] = [2.2863100, -1.3200001]       # B3 -> B5
+    holedict['b2'] = [-2.2863100, 1.3200001]       # B6 -> B2
+    holedict['c1'] = [-1.1431500, 1.9800000]       # C6 -> C1
+    holedict['b6'] = [2.2863100, 1.3200001]        # B2 -> B6
+    holedict['c6'] = [1.1431500, 1.9800000]        # C1 -> C6
 
     # as designed MB coordinates (Mathilde Beaulieu, Peter, Anand).
     # as designed: segments C5 open, C2 closed, meters V2V3 per Paul Lightsey def
@@ -129,18 +129,18 @@ def jwst_g7s6_centers_asbuilt(chooseholes=None): # was jwst_g7s6_centers_asdesig
         for h in allholes:
             if h in chooseholes:
                 holelist.append(holedict[h])
-        ctrs_asdesigned = np.array( holelist )
+        ctrs_asdesigned = np.array(holelist)
     else:
         # the REAL THING - as_designed 7 hole, m in PM space, no distortion
         # ... shape (7,2)
-        ctrs_asdesigned = np.array( [
-                [ 0.00000000,  -2.640000],       #B4 -> B4  as-designed -> as-built mapping
-                [-2.2863100 ,  0.0000000],       #C5 -> C2
-                [ 2.2863100 , -1.3200001],       #B3 -> B5
-                [-2.2863100 ,  1.3200001],       #B6 -> B2
-                [-1.1431500 ,  1.9800000],       #C6 -> C1
-                [ 2.2863100 ,  1.3200001],       #B2 -> B6
-                [ 1.1431500 ,  1.9800000]    ] ) #C1 -> C6
+        ctrs_asdesigned = np.array([
+                [0.00000000, -2.640000],     # B4 -> B4  as-designed -> as-built mapping
+                [-2.2863100, 0.0000000],     # C5 -> C2
+                [2.2863100, -1.3200001],     # B3 -> B5
+                [-2.2863100, 1.3200001],     # B6 -> B2
+                [-1.1431500, 1.9800000],     # C6 -> C1
+                [2.2863100, 1.3200001],      # B2 -> B6
+                [1.1431500, 1.9800000]])     # C1 -> C6
 
     # Preserve ctrs.as-designed (treat as immutable)
     # Reverse V2 axis coordinates to close C5 open C2, and others follow suit...

@@ -241,7 +241,7 @@ def test_calspec2_config(_jail, miri_ifushort_short):
 
     assert this_instrument == 'MIRI'
 
-    cubeinfo.instrument  = this_instrument
+    cubeinfo.instrument = this_instrument
     cubeinfo.determine_band_coverage(master_table)
     assert cubeinfo.all_channel == ['1','2']
     assert cubeinfo.all_subchannel == ['short','short']
@@ -267,9 +267,9 @@ def test_calspec3_config_miri(_jail, miri_full_coverage):
     resol_filename = 'None'
 
     input_file = 'test.fits'
-    num_files  = len(miri_full_coverage)
+    num_files = len(miri_full_coverage)
     input_filenames = []
-    for i in range (num_files):
+    for i in range(num_files):
         input_filenames.append(input_file)
 
     pars = {
@@ -294,7 +294,7 @@ def test_calspec3_config_miri(_jail, miri_full_coverage):
 
     assert this_instrument == 'MIRI'
 
-    cubeinfo.instrument  = this_instrument
+    cubeinfo.instrument = this_instrument
     cubeinfo.determine_band_coverage(master_table)
     num_cubes,cube_pars = cubeinfo.number_cubes()
     assert num_cubes == 12
@@ -349,9 +349,9 @@ def test_calspec3_config_miri_multi(_jail, miri_full_coverage):
     resol_filename = 'None'
 
     input_file = 'test.fits'
-    num_files  = len(miri_full_coverage)
+    num_files = len(miri_full_coverage)
     input_filenames = []
-    for i in range (num_files):
+    for i in range(num_files):
         input_filenames.append(input_file)
 
     pars = {
@@ -376,7 +376,7 @@ def test_calspec3_config_miri_multi(_jail, miri_full_coverage):
 
     assert this_instrument == 'MIRI'
 
-    cubeinfo.instrument  = this_instrument
+    cubeinfo.instrument = this_instrument
     cubeinfo.determine_band_coverage(master_table)
     num_cubes,cube_pars = cubeinfo.number_cubes()
     assert num_cubes == 1
@@ -412,9 +412,9 @@ def test_calspec3_config_nirspec(_jail, nirspec_medium_coverage):
     resol_filename = 'None'
 
     input_file = 'test.fits'
-    num_files  = len(nirspec_medium_coverage)
+    num_files = len(nirspec_medium_coverage)
     input_filenames = []
-    for i in range (num_files):
+    for i in range(num_files):
         input_filenames.append(input_file)
 
     pars = {
@@ -439,7 +439,7 @@ def test_calspec3_config_nirspec(_jail, nirspec_medium_coverage):
 
     assert this_instrument == 'NIRSPEC'
 
-    cubeinfo.instrument  = this_instrument
+    cubeinfo.instrument = this_instrument
     cubeinfo.determine_band_coverage(master_table)
     num_cubes,cube_pars = cubeinfo.number_cubes()
 
@@ -469,9 +469,9 @@ def test_calspec3_config_nirspec_multi(_jail, nirspec_medium_coverage):
     resol_filename = 'None'
 
     input_file = 'test.fits'
-    num_files  = len(nirspec_medium_coverage)
+    num_files = len(nirspec_medium_coverage)
     input_filenames = []
-    for i in range (num_files):
+    for i in range(num_files):
         input_filenames.append(input_file)
 
     pars = {
@@ -496,7 +496,7 @@ def test_calspec3_config_nirspec_multi(_jail, nirspec_medium_coverage):
 
     assert this_instrument == 'NIRSPEC'
 
-    cubeinfo.instrument  = this_instrument
+    cubeinfo.instrument = this_instrument
     cubeinfo.determine_band_coverage(master_table)
     num_cubes,cube_pars = cubeinfo.number_cubes()
 

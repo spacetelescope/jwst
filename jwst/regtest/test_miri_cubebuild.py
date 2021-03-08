@@ -34,7 +34,7 @@ def test_cube_build_single_output(run_cube_build_single_output, output, fitsdiff
     rtdata.output = output
 
     # Get the truth files
-    rtdata.get_truth('truth/test_miri_cubebuild/' +  output)
+    rtdata.get_truth(f'truth/test_miri_cubebuild/{output}')
 
     # Compare the results
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)

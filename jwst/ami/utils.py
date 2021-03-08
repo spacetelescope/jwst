@@ -937,11 +937,12 @@ def lambdasteps(lam, frac_width, steps=4):
         Array of increments of lambda
     """
 
-    frac = frac_width/2.0
-    steps = steps/ 2.0
+    frac = frac_width / 2.0
+    steps = steps / 2.0
 
     # add some very small number to the end to include the last number.
-    lambda_array = np.arange( -1*frac*lam + lam, frac*lam + lam + 10e-10, frac*lam/steps)
+    lambda_array = np.arange(-1 * frac * lam + lam, frac * lam + lam + 10e-10,
+                             frac * lam / steps)
 
     return lambda_array
 

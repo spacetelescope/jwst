@@ -253,7 +253,7 @@ def test_open_readonly(tmp_path, suffix):
         model.save(path)
 
     os.chmod(path, 0o440)
-    assert os.access(path, os.W_OK) == False
+    assert os.access(path, os.W_OK) is False
 
     with datamodels.open(path) as model:
         assert model.meta.telescope == 'JWST'

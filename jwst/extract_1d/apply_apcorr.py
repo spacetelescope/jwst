@@ -81,14 +81,14 @@ class ApCorrBase(abc.ABC):
             if self.location is not None:
                 if isinstance(self.model, MultiSlitModel):
                     idx = [slit.name for slit in self.model.slits].index(self.slit_name)
-                    scale_degrees =  compute_scale(
+                    scale_degrees = compute_scale(
                         self.model.slits[idx].meta.wcs,
                         self.location,
                         disp_axis=self.model.slits[idx].meta.wcsinfo.dispersion_direction)
                     scale_arcsec = scale_degrees*3600.00
                     self.reference[self.size_key] /= scale_arcsec
                 else:
-                    scale_degrees =  compute_scale(
+                    scale_degrees = compute_scale(
                         self.model.meta.wcs,
                         self.location,
                         disp_axis=self.model.meta.wcsinfo.dispersion_direction)
@@ -263,7 +263,7 @@ class ApCorrRadial(ApCorrBase):
         if self.apcorr_sizeunits.startswith('arcsec'):
             # compute_scale returns scale in degrees
             if self.location is not None:
-                scale_degrees =  compute_scale(
+                scale_degrees = compute_scale(
                     self.model.meta.wcs,
                     self.location,
                     disp_axis=self.model.meta.wcsinfo.dispersion_direction)
@@ -303,10 +303,10 @@ class ApCorrRadial(ApCorrBase):
 
         dim = self.apcorr.shape[0]
         size_match = np.zeros((dim, wavelength_ifu.shape[0]))
-        apcorr_match  = np.zeros((dim, wavelength_ifu.shape[0]))
+        apcorr_match = np.zeros((dim, wavelength_ifu.shape[0]))
         self.apcorr_correction= [] # set up here defined in find_apcor_func
         # loop over each radius dependent plane and interpolate to ifu wavelength
-        for i in range (dim):
+        for i in range(dim):
             radi = self.size[i,:]
             frad = interp1d(self.wavelength, radi, bounds_error=False, fill_value="extrapolate")
             radius_match = frad(wavelength_ifu)

@@ -184,7 +184,7 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
         apcorr.match_wavelengths(wavelength)
 
         # at each IFU wavelength we have the extraction radius defined by radius_match (radius size in pixels)
-        for i  in range(wavelength.size):
+        for i in range(wavelength.size):
             radius = radius_match[i]
             apcorr.find_apcorr_func(i, radius)
 
@@ -393,7 +393,7 @@ def extract_ifu(input_model, source_type, extract_params):
         else:
             locn_use = (ra_targ, dec_targ, wavelength[0])
 
-        scale_degrees =  compute_scale(
+        scale_degrees = compute_scale(
             input_model.meta.wcs,
             locn_use,
             disp_axis=input_model.meta.wcsinfo.dispersion_direction)
@@ -407,7 +407,7 @@ def extract_ifu(input_model, source_type, extract_params):
         fouter = interp1d(wave_extract, outer_bkg, bounds_error=False, fill_value="extrapolate")
         outer_bkg_match = fouter(wavelength)/scale_arcsec
 
-    elif  source_type == 'EXTENDED':
+    elif source_type == 'EXTENDED':
         # Ignore any input parameters, and extract the whole image.
         width = float(shape[-1])
         height = float(shape[-2])
@@ -415,7 +415,7 @@ def extract_ifu(input_model, source_type, extract_params):
         y_center = height / 2. - 0.5
         theta = 0.
         subtract_background = False
-        bkg_sigma_clip =  extract_params['bkg_sigma_clip']
+        bkg_sigma_clip = extract_params['bkg_sigma_clip']
 
     log.debug("IFU 1-D extraction parameters:")
     log.debug("  x_center = %s", str(x_center))
@@ -799,7 +799,7 @@ def image_extract_ifu(input_model, source_type, extract_params):
     temp_weightmap = weightmap
     temp_weightmap[temp_weightmap>1] = 1
     npixels[:] = (temp_weightmap * mask_target).sum(axis=2, dtype=np.float64).sum(axis=1)
-    bkg_sigma_clip =  extract_params['bkg_sigma_clip']
+    bkg_sigma_clip = extract_params['bkg_sigma_clip']
 
     # Point Souce data 1. extract background and subtract 2. do not
     if source_type == 'POINT':
@@ -1151,7 +1151,7 @@ def sigma_clip_extended_region(data, mask_targ, wmap, sigma_clip):
     shape_ref = mask_targ.shape
     n_bkg = np.ones(shape[0], dtype=np.float64)
 
-    sigma_clip_region=  np.zeros(shape[0], dtype=np.float64)
+    sigma_clip_region = np.zeros(shape[0], dtype=np.float64)
 
     # for each wavelength plane mark outliers as 0 in mask_bkg
     for k in range(shape[0]): #  looping over wavelength
@@ -1161,9 +1161,9 @@ def sigma_clip_extended_region(data, mask_targ, wmap, sigma_clip):
             extract_region = mask_targ[k, :, :].copy()
         data_plane = data[k, :, :]
         # pull out extract source region to determined stats on for sigma clipping
-        extract_data = data_plane[extract_region  ==1]
+        extract_data = data_plane[extract_region == 1]
         ext_mean, _, ext_stddev = stats.sigma_clipped_stats(extract_data,
-                                                                sigma=sigma_clip, maxiters = 5)
+                                                            sigma=sigma_clip, maxiters = 5)
         low = ext_mean - sigma_clip * ext_stddev
         high = ext_mean + sigma_clip * ext_stddev
 

@@ -120,7 +120,7 @@ class TestAgainstStandards(BaseJWSTTest):
         pool = combine_pools([
             t_path(Path('data') / (standard_pars.pool_root + '.csv'))
         ])
-        Main(args, pool=pool )
+        Main(args, pool=pool)
 
         # Retrieve the truth files
         truth_paths = [

@@ -397,8 +397,8 @@ def model_array(ctrs, lam, oversample, pitch, fov, d,
         ffs.ri = ctrs[int(r[0])]
         ffs.rj = ctrs[int(r[1])]
 
-        ffmodel.append( np.transpose(np.fromfunction(ffc, ffc.size)) )
-        ffmodel.append( np.transpose(np.fromfunction(ffs, ffs.size)) )
+        ffmodel.append(np.transpose(np.fromfunction(ffc, ffc.size)))
+        ffmodel.append(np.transpose(np.fromfunction(ffs, ffs.size)))
 
     if shape == 'circ': # if unspecified (default), or specified as 'circ'
         return np.fromfunction(primarybeam, ffc.size), ffmodel
@@ -565,7 +565,7 @@ def matrix_operations(img, model, flux=None, linfit=False):
 
             # uniform weight
             wy = weights
-            S = np.mat(np.diag(wy));
+            S = np.mat(np.diag(wy))
             # matrix of independent variables
             C = np.mat(flatmodeltransp)
 
