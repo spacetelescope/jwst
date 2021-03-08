@@ -3548,6 +3548,7 @@ def log_stats(c_rates):
 
 def compute_slices(max_cores):
     """
+    Computes the number of slices to be created for multiprocessing.
 
     Parameters
     ----------
