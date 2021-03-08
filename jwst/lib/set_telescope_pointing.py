@@ -1047,9 +1047,10 @@ def calc_m_gs_commanded(guide_star_wcs, fgs1_v3yangle, gs_commanded):
     dec = guide_star_wcs.dec * D2R
     pa = guide_star_wcs.pa * D2R
     v3yangle = fgs1_v3yangle * D2R
+    gs_commanded_rads = gs_commanded * A2R
 
     # Calculate
-    m = np.linalg.multi_dot([r3(ra), r2(-dec), r1(-(pa + v3yangle)), r2(gs_commanded[1]), r3(-gs_commanded[0])])
+    m = np.linalg.multi_dot([r3(ra), r2(-dec), r1(-(pa + v3yangle)), r2(gs_commanded_rads[1]), r3(-gs_commanded_rads[0])])
     return m
 
 
