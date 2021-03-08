@@ -23,6 +23,10 @@ general
 - Update file naming conventions documentation to clarify when optional components will be used. [#5796]
 
 
+lib
+---
+
+- Update ``update_mt_kwds`` function in ``set_telescope_pointing.py`` to  populate the TARG_RA/TARG_DEC [#5808]
 
 1.1.0 (2021-02-26)
 ==================
