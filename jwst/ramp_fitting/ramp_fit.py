@@ -127,74 +127,62 @@ def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
 def ols_ramp_fit_multi(
         input_model, buffsize, save_opt, readnoise_2d, gain_2d, weighting, max_cores):
     """
-       Setup the inputs to ols_ramp_fit with and without multiprocessing. The
-       inputs will be sliced into the number of cores that are being used for
-       multiprocessing. Because the data models cannot be pickled, only numpy
-       arrays are passed and returned as parameters to ols_ramp_fit.
+    Setup the inputs to ols_ramp_fit with and without multiprocessing. The
+    inputs will be sliced into the number of cores that are being used for
+    multiprocessing. Because the data models cannot be pickled, only numpy
+    arrays are passed and returned as parameters to ols_ramp_fit.
 
-       Parameters
-       ----------
-       input_model : data model
-           input data model, assumed to be of type RampModel
+    Parameters
+    ----------
+    input_model : data model
+        input data model, assumed to be of type RampModel
 
-       buffsize : int
-           size of data section (buffer) in bytes (not used)
+    buffsize : int
+        size of data section (buffer) in bytes (not used)
 
-       save_opt : boolean
-          calculate optional fitting results
+    save_opt : boolean
+       calculate optional fitting results
 
-       readnoise_2d : instance of data Model
-           readnoise for all pixels
+    readnoise_2d : instance of data Model
+        readnoise for all pixels
 
-       gain_2d : instance of gain model
-           gain for all pixels
+    gain_2d : instance of gain model
+        gain for all pixels
 
-       algorithm : string
-           'OLS' specifies that ordinary least squares should be used;
-           'GLS' specifies that generalized least squares should be used.
+    algorithm : string
+        'OLS' specifies that ordinary least squares should be used;
+        'GLS' specifies that generalized least squares should be used.
 
-       weighting : string
-           'optimal' specifies that optimal weighting should be used;
-            currently the only weighting supported.
+    weighting : string
+        'optimal' specifies that optimal weighting should be used;
+         currently the only weighting supported.
 
-       max_cores : string
-           Number of cores to use for multiprocessing. If set to 'none' (the default),
-           then no multiprocessing will be done. The other allowable values are 'quarter',
-           'half', and 'all'. This is the fraction of cores to use for multi-proc. The
-           total number of cores includes the SMT cores (Hyper Threading for Intel).
+    max_cores : string
+        Number of cores to use for multiprocessing. If set to 'none' (the default),
+        then no multiprocessing will be done. The other allowable values are 'quarter',
+        'half', and 'all'. This is the fraction of cores to use for multi-proc. The
+        total number of cores includes the SMT cores (Hyper Threading for Intel).
 
-       Returns
-       -------
-       new_model : Data Model object
-           DM object containing a rate image averaged over all integrations in
-           the exposure
+    Returns
+    -------
+    new_model : Data Model object
+        DM object containing a rate image averaged over all integrations in
+        the exposure
 
-       int_model : Data Model object or None
-           DM object containing rate images for each integration in the exposure
+    int_model : Data Model object or None
+        DM object containing rate images for each integration in the exposure
 
-       opt_model : RampFitOutputModel object or None
-           DM object containing optional OLS-specific ramp fitting data for the
-           exposure
+    opt_model : RampFitOutputModel object or None
+        DM object containing optional OLS-specific ramp fitting data for the
+        exposure
 
-       gls_opt_model : GLS_RampFitModel object or None
-           Object containing optional GLS-specific ramp fitting data for the
-           exposure
-       """
+    gls_opt_model : GLS_RampFitModel object or None
+        Object containing optional GLS-specific ramp fitting data for the
+        exposure
+    """
 
     # Determine number of slices to use for multi-processor computations
-    if max_cores == 'none':
-        number_slices = 1
-    else:
-        num_cores = multiprocessing.cpu_count()
-        log.debug(f'Found {num_cores} possible cores to use for ramp fitting')
-        if max_cores == 'quarter':
-            number_slices = num_cores // 4 or 1
-        elif max_cores == 'half':
-            number_slices = num_cores // 2 or 1
-        elif max_cores == 'all':
-            number_slices = num_cores
-        else:
-            number_slices = 1
+    number_slices = compute_slices(max_cores)
 
     # Copy the int_times table for TSO data
     if pipe_utils.is_tso(input_model) and hasattr(input_model, 'int_times'):
@@ -1562,6 +1550,12 @@ def gls_ramp_fit(input_model, buffsize, save_opt, readnoise_model, gain_model, m
     gain_model : instance of gain model
         Gain for all pixels.
 
+    max_cores : string
+        Number of cores to use for multiprocessing. If set to 'none' (the default),
+        then no multiprocessing will be done. The other allowable values are 'quarter',
+        'half', and 'all'. This is the fraction of cores to use for multi-proc. The
+        total number of cores includes the SMT cores (Hyper Threading for Intel).
+
     Returns
     -------
     new_model : Data Model object
@@ -1576,20 +1570,9 @@ def gls_ramp_fit(input_model, buffsize, save_opt, readnoise_model, gain_model, m
         Object containing optional GLS-specific ramp fitting data for the
         exposure; this will be None if save_opt is False.
     """
-    if max_cores == 'none':
-        number_slices = 1
-    else:
-        num_cores = multiprocessing.cpu_count()
-        log.info("Found %d possible cores to use for ramp fitting " % num_cores)
-        if max_cores == 'quarter':
-            number_slices = num_cores // 4 or 1
-        elif max_cores == 'half':
-            number_slices = num_cores // 2 or 1
-        elif max_cores == 'all':
-            number_slices = num_cores
-        else:
-            number_slices = 1
-        # Get needed sizes and shapes
+    number_slices = compute_slices(max_cores)
+
+    # Get needed sizes and shapes
     nreads, npix, imshape, cubeshape, n_int, instrume, frame_time, ngroups, \
     group_time = utils.get_dataset_info(input_model)
 
@@ -3561,3 +3544,35 @@ def log_stats(c_rates):
     log.debug('due to excessive CRs or saturation %d:', len(wh_c_0[0]))
     log.debug('Count rates - min, mean, max, std: %f, %f, %f, %f'
              % (c_rates.min(), c_rates.mean(), c_rates.max(), c_rates.std()))
+
+
+def compute_slices(max_cores):
+    """
+
+    Parameters
+    ----------
+    max_cores : string
+        Number of cores to use for multiprocessing. If set to 'none' (the default),
+        then no multiprocessing will be done. The other allowable values are 'quarter',
+        'half', and 'all'. This is the fraction of cores to use for multi-proc. The
+        total number of cores includes the SMT cores (Hyper Threading for Intel).
+
+    Returns
+    -------
+    number_slices : int
+        The number of slices for multiprocessing.
+    """
+    if max_cores == 'none':
+        number_slices = 1
+    else:
+        num_cores = multiprocessing.cpu_count()
+        log.debug(f'Found {num_cores} possible cores to use for ramp fitting')
+        if max_cores == 'quarter':
+            number_slices = num_cores // 4 or 1
+        elif max_cores == 'half':
+            number_slices = num_cores // 2 or 1
+        elif max_cores == 'all':
+            number_slices = num_cores
+        else:
+            number_slices = 1
+    return number_slices
