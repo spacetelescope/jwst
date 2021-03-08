@@ -192,7 +192,7 @@ contact the [JWST Help Desk](https://jwsthelp.stsci.edu).
 
 | jwst tag | DMS build | CRDS_CONTEXT |   Date     |          Notes                                |
 | -------- | --------- | ------------ | ---------- | ----------------------------------------------|
-|  1.1.0   | B7.7.1rc2 | 0686         | 02/26/2021 | Second release candidate for B7.7.1           |
+|  1.1.0   | B7.7.1    | 0682         | 02/26/2021 | Final release candidate for B7.7.1            |
 |  1.0.0   | B7.7.1rc1 | 0678         | 02/22/2021 | First release candidate for B7.7.1            |
 |  0.18.3  | B7.7      | 0670         | 01/25/2021 | Final release candidate for B7.7              |
 |  0.18.2  | B7.7rc3   | 0668         | 01/19/2021 | Third release candidate for B7.7              |
