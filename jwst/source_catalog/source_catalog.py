@@ -22,7 +22,6 @@ from photutils import __version__ as photutils_version
 from photutils import Background2D, MedianBackground
 from photutils import detect_sources, deblend_sources, source_properties
 from photutils import CircularAperture, CircularAnnulus, aperture_photometry
-from photutils.detection.findstars import _StarFinderKernel
 from photutils.utils._wcs_helpers import _pixel_scale_angle_at_skycoord
 
 from jwst import __version__ as jwst_version
@@ -532,7 +531,8 @@ class SourceCatalog:
         self.ci_star_thresholds = ci_star_thresholds
         self.error = error  # total error array
         self.kernel = kernel
-        self.kernel_fwhm = kernel_fwhm
+        self.kernel_sigma = kernel_fwhm * gaussian_fwhm_to_sigma
+
         self.aperture_params = aperture_params
         self.abvega_offset = abvega_offset
 
@@ -1042,27 +1042,48 @@ class SourceCatalog:
         return np.logical_not(np.logical_and(mask1, mask2))
 
     @lazyproperty
+    def _kernel_size(self):
+        """
+        The DAOFind kernel size (in both x and y dimensions).
+        """
+        # always odd
+        return 2 * int(max(2.0, 1.5 * self.kernel_sigma)) + 1
+
+    @lazyproperty
+    def _kernel_center(self):
+        """
+        The DAOFind kernel x/y center.
+        """
+        return (self._kernel_size - 1) // 2
+
+    @lazyproperty
+    def _kernel_mask(self):
+        """
+        The DAOFind kernel circular mask.
+        NOTE: 1=good pixels, 0=masked pixels
+        """
+        yy, xx = np.mgrid[0:self._kernel_size, 0:self._kernel_size]
+        radius = np.sqrt((xx - self._kernel_center) ** 2
+                         + (yy - self._kernel_center) ** 2)
+        return (radius <= max(2.0, 1.5 * self.kernel_sigma)).astype(int)
+
+    @lazyproperty
     def _daofind_kernel(self):
         """
-        The DAOFind kernel.
+        The DAOFind kernel, a 2D circular Gaussian normalized to have
+        zero sum.
         """
-        kernel = _StarFinderKernel(self.kernel_fwhm, ratio=1.0, theta=0.0,
-                                   sigma_radius=1.5, normalize_zerosum=True)
-        return kernel
+        size = self._kernel_size
+        kernel = Gaussian2DKernel(self.kernel_sigma, x_size=size,
+                                  y_size=size).array
+        kernel /= np.max(kernel)
+        kernel *= self._kernel_mask
 
-    @lazyproperty
-    def _kernel_xcenter(self):
-        """
-        The DAOFind kernel x center.
-        """
-        return (self._daofind_kernel.data.shape[1] - 1) // 2
-
-    @lazyproperty
-    def _kernel_ycenter(self):
-        """
-        The DAOFind kernel y center.
-        """
-        return (self._daofind_kernel.data.shape[0] - 1) // 2
+        # normalize the kernel to zero sum
+        npixels = self._kernel_mask.sum()
+        denom = np.sum(kernel**2) - (np.sum(kernel)**2 / npixels)
+        return (((kernel - (kernel.sum() / npixels)) / denom)
+                * self._kernel_mask)
 
     @lazyproperty
     def _daofind_convolved_data(self):
@@ -1070,7 +1091,7 @@ class SourceCatalog:
         The DAOFind convolved data.
         """
         return ndimage.convolve(self.model.data.value,
-                                self._daofind_kernel.data, mode='constant',
+                                self._daofind_kernel, mode='constant',
                                 cval=0.0)
 
     @lazyproperty
@@ -1085,7 +1106,7 @@ class SourceCatalog:
         cutout = []
         for xpeak, ypeak in zip(self._xpeak, self._ypeak):
             cutout.append(extract_array(self.model.data,
-                                        self._daofind_kernel.data.shape,
+                                        self._daofind_kernel.shape,
                                         (ypeak, xpeak),
                                         fill_value=0.0))
         return np.array(cutout)  # all cutouts are the same size
@@ -1102,7 +1123,7 @@ class SourceCatalog:
         cutout = []
         for xpeak, ypeak in zip(self._xpeak, self._ypeak):
             cutout.append(extract_array(self._daofind_convolved_data,
-                                        self._daofind_kernel.data.shape,
+                                        self._daofind_kernel.shape,
                                         (ypeak, xpeak),
                                         fill_value=0.0))
         return np.array(cutout)  # all cutouts are the same size
@@ -1119,12 +1140,12 @@ class SourceCatalog:
 
         Stars generally have a ``sharpness`` between 0.2 and 1.0.
         """
-        npixels = self._daofind_kernel.npixels - 1  # exclude the peak pixel
-        data_masked = self._daofind_cutout * self._daofind_kernel.mask
-        data_peak = self._daofind_cutout[:, self._kernel_ycenter,
-                                         self._kernel_xcenter]
-        conv_peak = self._daofind_cutout_conv[:, self._kernel_ycenter,
-                                              self._kernel_xcenter]
+        npixels = self._kernel_mask.sum() - 1  # exclude the peak pixel
+        data_masked = self._daofind_cutout * self._kernel_mask
+        data_peak = self._daofind_cutout[:, self._kernel_center,
+                                         self._kernel_center]
+        conv_peak = self._daofind_cutout_conv[:, self._kernel_center,
+                                              self._kernel_center]
 
         data_mean = ((np.sum(data_masked, axis=(1, 2)) -
                       data_peak) / npixels)
@@ -1145,14 +1166,13 @@ class SourceCatalog:
         """
         # set the central (peak) pixel to zero
         cutout = self._daofind_cutout_conv.copy()
-        cutout[:, self._kernel_ycenter, self._kernel_xcenter] = 0.0
+        cutout[:, self._kernel_center, self._kernel_center] = 0.0
 
         # calculate the four roundness quadrants
-        quad1 = cutout[:, 0:self._kernel_ycenter + 1,
-                       self._kernel_xcenter + 1:]
-        quad2 = cutout[:, 0:self._kernel_ycenter, 0:self._kernel_xcenter + 1]
-        quad3 = cutout[:, self._kernel_ycenter:, 0:self._kernel_xcenter]
-        quad4 = cutout[:, self._kernel_ycenter + 1:, self._kernel_xcenter:]
+        quad1 = cutout[:, 0:self._kernel_center + 1, self._kernel_center + 1:]
+        quad2 = cutout[:, 0:self._kernel_center, 0:self._kernel_center + 1]
+        quad3 = cutout[:, self._kernel_center:, 0:self._kernel_center]
+        quad4 = cutout[:, self._kernel_center + 1:, self._kernel_center:]
 
         axis = (1, 2)
         sum2 = (-quad1.sum(axis=axis) + quad2.sum(axis=axis) -
