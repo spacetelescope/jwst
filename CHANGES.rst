@@ -16,7 +16,8 @@ general
 
 - Update file naming conventions documentation to clarify when optional components will be used. [#5796]
 
-
+- Update DQFLAGS table with new definitions for persistence and
+  ad_floor in bits five and six [#5815]
 
 1.1.0 (2021-02-26)
 ==================
