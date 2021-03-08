@@ -575,8 +575,10 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
     if first_pass_ans[0] == "saturated":
         return first_pass_ans[1:]
 
-    max_seg, gdq_cube_shape, effintim, f_max_seg, dq_int, num_seg_per_int = first_pass_ans[:6]
-    sat_0th_group_int, opt_res, pixeldq, inv_var, med_rates = first_pass_ans[6:]
+    opt_res = first_pass_ans[-4]
+    max_seg = first_pass_ans[0]
+    num_seg_per_int = first_pass_ans[5]
+    med_rates = first_pass_ans[-1]
 
     # In this 'Second Pass' over the data, loop over integrations and data
     #   sections to calculate the variances of the slope using the estimated
@@ -587,10 +589,6 @@ def ols_ramp_fit(data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d
     second_pass_ans = ramp_fit_second_pass(
             n_int, nrows, groupdq, cubeshape, imshape, gain_2d, readnoise_2d,
             group_time, max_seg, med_rates, num_seg_per_int)
-
-    var_p3, var_r3, var_p4, var_r4, var_both4, var_both3, inv_var_both4 = second_pass_ans[:7]
-    s_inv_var_p3, s_inv_var_r3, s_inv_var_both3 = second_pass_ans[7:]
-
 
     # Now that the segment-specific and integration-specific variances have
     #   been calculated, the segment-specific, integration-specific, and
