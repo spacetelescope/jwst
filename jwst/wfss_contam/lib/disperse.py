@@ -68,7 +68,8 @@ def dispersed_pixel(x0s, y0s, f0, order, wmin, wmax, seg_wcs, grism_wcs, ID, ove
     else:
         #print("f0: is not > 1")
         #f = lambda x: f0[1][0]
-        def f(x): return f0[1][0]
+        def f(x):
+            return f0[1][0]
 
     #print("x0s:", x0s)
     #print("y0s:", y0s)

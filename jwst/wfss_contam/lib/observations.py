@@ -4,8 +4,7 @@ from multiprocessing import Pool
 from astropy.io import fits
 from scipy import sparse
 from scipy.interpolate import interp1d
-from jwst.grism_lib.disperse import dispersed_pixel
-from jwst import datamodels
+from jwst.wfss_contam.lib.disperse import dispersed_pixel
 
 import logging
 
@@ -115,7 +114,7 @@ class observation():
             self.xend = self.xstart + self.dims[0] - 1
             self.ystart = 0
             self.yend = self.ystart + self.dims[1] - 1
-            print(f"No boundaries passed.")
+            print("No boundaries passed.")
             print(f"Using final size of {self.xend+1-self.xstart} {self.yend+1-self.ystart}.")
         else:
             self.xstart, self.xend, self.ystart, self.yend = boundaries
