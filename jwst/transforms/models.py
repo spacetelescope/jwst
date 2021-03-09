@@ -55,6 +55,7 @@ class GrismObject(namedtuple('GrismObject', ("sid",
                                              "sky_bbox_ul",
                                              "xcentroid",
                                              "ycentroid",
+                                             "is_star",
                                              ), rename=False)):
     """ Grism Objects identified from a direct image catalog and segment map.
 
@@ -112,7 +113,8 @@ class GrismObject(namedtuple('GrismObject', ("sid",
                 sky_bbox_ur=None,
                 sky_bbox_ul=None,
                 xcentroid=None,
-                ycentroid=None):
+                ycentroid=None,
+                is_star=None):
 
         return super(GrismObject, cls).__new__(cls,
                                                sid=sid,
@@ -125,7 +127,8 @@ class GrismObject(namedtuple('GrismObject', ("sid",
                                                sky_bbox_ur=sky_bbox_ur,
                                                sky_bbox_ul=sky_bbox_ul,
                                                xcentroid=xcentroid,
-                                               ycentroid=ycentroid)
+                                               ycentroid=ycentroid,
+                                               is_star=is_star)
 
     def __str__(self):
         """Return a pretty print for the object information."""

@@ -751,7 +751,8 @@ def _create_grism_bbox(input_model, mmag_extract=99.0,
                                                      sky_bbox_ul=obj.sky_bbox_ul,
                                                      sky_bbox_ur=obj.sky_bbox_ur,
                                                      xcentroid=xcenter,
-                                                     ycentroid=ycenter))
+                                                     ycentroid=ycenter,
+                                                     is_star=obj.is_star))
     if len(grism_objects) == 0:
         log.warning("No grism objects saved, check catalog")
     return grism_objects

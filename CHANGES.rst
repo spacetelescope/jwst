@@ -1,6 +1,12 @@
 1.1.1 (unreleased)
 ==================
 
+assign_wcs
+----------
+
+- Changed evaluation of grism bounding box center from averaged extrema of
+  transformed bounding box to transformed centroid of source_cat object [#5809]
+
 associations
 ------------
 
@@ -11,13 +17,38 @@ associations
 - Removed PATTTYPE='None' constraint from Lv3MIRMRS association rule to
   generate spec3 associations for undithered MRS observations. [#5804]
 
+datamodels
+----------
+
+- Added is_star to slitmeta [#5788]
+
+extract_2d
+----------
+
+- For WFSS removed setting srctype to UNKNOWN; added setting ``is_star`` in slitmeta [#5788]
+
 general
 -------
 
 - Update file naming conventions documentation to clarify when optional components will be used. [#5796]
 
-- Update DQFLAGS table with new definitions for persistence and
+- Update DQFLAGS table in RTD docs with new definitions for persistence and
   ad_floor in bits five and six [#5815]
+
+lib
+---
+
+- Update ``update_mt_kwds`` function in ``set_telescope_pointing.py`` to  populate the TARG_RA/TARG_DEC [#5808]
+
+srctype
+-------
+
+- Added section for WFSS mode data to set srctype based on ``is_star`` value [#5788]
+
+transforms
+----------
+
+- Added ``is_star`` to GrismObject [#5788]
 
 1.1.0 (2021-02-26)
 ==================
