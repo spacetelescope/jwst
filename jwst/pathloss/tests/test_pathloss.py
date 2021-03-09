@@ -10,7 +10,6 @@ from jwst.pathloss.pathloss import (calculate_pathloss_vector,
                                     is_pointsource)
 from jwst.pathloss.pathloss import do_correction
 import numpy as np
-import pytest
 
 
 def test_get_center_ifu():
