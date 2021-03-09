@@ -35,10 +35,10 @@ class interp1d_picklable(object):
 
 def helper(vars):
     # parse the input list of vars; ID is a dummy number here
-    x0s, y0s, flux, order, wmin, wmax, wcs, ID, extrapolate_SED, xoffset, yoffset = vars
+    x0s, y0s, flux, order, wmin, wmax, seg_wcs, grism_wcs, ID, extrapolate_SED, xoffset, yoffset = vars
 
     # use the list of vars to compute dispersed attributes for the pixel
-    p = dispersed_pixel(x0s, y0s, flux, order, wmin, wmax, wcs, ID,
+    p = dispersed_pixel(x0s, y0s, flux, order, wmin, wmax, seg_wcs, grism_wcs, ID,
                         extrapolate_SED=extrapolate_SED, xoffset=xoffset, yoffset=yoffset)
 
     # unpack the results
@@ -51,10 +51,10 @@ def helper(vars):
 
 
 class observation():
-    # This class defines an actual observation. It is tied to a single image and a single config file
+    # This class defines an actual observation. It is tied to a single grism image.
 
-    def __init__(self, direct_images, segmentation_data, wr_ref, config, wcs, mod="A", order=1,
-                 max_split=100, SED_file=None, extrapolate_SED=False, max_cpu=8,
+    def __init__(self, direct_images, segmap_model, grism_wcs, wr_ref, filter, config,
+                 mod="A", order=1, max_split=100, SED_file=None, extrapolate_SED=False, max_cpu=8,
                  ID=0, SBE_save=None, boundaries=[], renormalize=True):
 
         """
@@ -77,12 +77,15 @@ class observation():
 
         # This loads all the info from the configuration file for this grism mode;
         # things like the name of the POM mask file, the dispersion coeffs, etc.
-        self.wcs = wcs
+        self.seg_wcs = segmap_model.meta.wcs
+        self.grism_wcs = grism_wcs
         self.ID = ID
         self.IDs = []
         self.dir_image_names = direct_images
-        self.seg = segmentation_data
-        self.dims = np.shape(self.seg)
+        self.seg = segmap_model.data
+        #self.dims = np.shape(self.seg)
+        self.dims = [2048, 2048]
+        self.filter = filter
         self.order = order
         self.SED_file = SED_file   # should always be NONE for baseline pipeline (use flat SED)
         self.SBE_save = SBE_save   # may want to have a new product in which simulated spectra are saved (NOT HDF5 format!)
@@ -93,24 +96,27 @@ class observation():
         self.renormalize = renormalize
 
         # Get the wavelength range for the grism image
-        #wr_ref = datamodels.WavelengthrangeModel('/grp/crds/jwst/references/jwst/jwst_nircam_wavelengthrange_0003.asdf')
-        #wavelength_range = wr_ref.get_wfss_wavelength_range('F444W', [self.order])
-        wavelength_range = wr_ref.get_wfss_wavelength_range('F356W', [self.order])
+        wavelength_range = wr_ref.get_wfss_wavelength_range(self.filter, [self.order])
         self.wmin = wavelength_range[self.order][0]
         self.wmax = wavelength_range[self.order][1]
-        #wr_ref.close()
         print("wmin, wmax:", self.wmin, self.wmax)
 
         if len(boundaries) != 4:
-            self.NAXIS = [2048, 2048]
-            xpad = (np.shape(segmentation_data)[1] - self.NAXIS[0])//2
-            ypad = (np.shape(segmentation_data)[0] - self.NAXIS[1])//2
-            self.xstart = 0 + xpad
-            self.xend = xpad + self.NAXIS[0] - 1
-            self.ystart = 0 + ypad
-            self.yend = ypad + self.NAXIS[1] - 1
-            print(f"No boundaries passed. Assuming symmetrical padding of {xpad} {ypad} pixels")
-            print(f"and a final size of {self.xend+1-self.xstart} {self.yend+1-self.ystart}.")
+            #self.NAXIS = [2048, 2048]
+            #xpad = (np.shape(self.seg)[1] - self.NAXIS[0])//2
+            #ypad = (np.shape(self.seg)[0] - self.NAXIS[1])//2
+            #self.xstart = 0 + xpad
+            #self.xend = xpad + self.NAXIS[0] - 1
+            #self.ystart = 0 + ypad
+            #self.yend = ypad + self.NAXIS[1] - 1
+            #print(f"No boundaries passed. Assuming symmetrical padding of {xpad} {ypad} pixels")
+            #print(f"and a final size of {self.xend+1-self.xstart} {self.yend+1-self.ystart}.")
+            self.xstart = 0
+            self.xend = self.xstart + self.dims[0] - 1
+            self.ystart = 0
+            self.yend = self.ystart + self.dims[1] - 1
+            print(f"No boundaries passed.")
+            print(f"Using final size of {self.xend+1-self.xstart} {self.yend+1-self.ystart}.")
         else:
             self.xstart, self.xend, self.ystart, self.yend = boundaries
 
@@ -168,18 +174,22 @@ class observation():
                 # PHOTPLAM (pivot wavelength) and PHOTFLAM, which DO NOT EXIST
                 # for JWST products. We have PHOTMJSR and PHOTUJA2, so this will
                 # need to be modified in some way to comply.
-                try:
-                    # convert pivlam from Angstroms to microns
-                    pivlam = fits.getval(dir_image_name, 'PHOTPLAM') / 10000.
-                except KeyError:
-                    print("ERROR: unable to find PHOTPLAM keyword in {}".format(dir_image_name))
-                    return
+                #try:
+                #    # convert pivlam from Angstroms to microns
+                #    pivlam = fits.getval(dir_image_name, 'PHOTPLAM') / 10000.
+                #except KeyError:
+                #    print("ERROR: unable to find PHOTPLAM keyword in {}".format(dir_image_name))
+                #    return
+                # temporary hack to compute an approximate pivlam from filter name
+                pivlam = float(self.filter[1:-1]) / 100
 
-                try:
-                    photflam = fits.getval(dir_image_name, 'photflam')
-                except KeyError:
-                    print("ERROR: unable to find PHOTFLAM keyword in {}".format(dir_image_name))
-                    return
+                #try:
+                #    photflam = fits.getval(dir_image_name, 'photflam')
+                #except KeyError:
+                #    print("ERROR: unable to find PHOTFLAM keyword in {}".format(dir_image_name))
+                #    return
+                # JWST data is already flux calibrated, so just set photflam=1
+                photflam = 1.0
 
                 print(f"Loaded {dir_image_name} wavelength: {pivlam} micron")
             try:
@@ -202,6 +212,8 @@ class observation():
                     # This multiplies direct image pixels for each source, which apparently are
                     # still in units of countrate, by PHOTFLAM, to convert them to fluxes.
                     # So "fs" is the list of fluxes for all source pixels, at a given wavelength "pivlam"
+                    # Note that JWST data are already flux calibrated, so we've set photflam=1, and
+                    # hence the multiplication does nothing.
                     self.fs[pivlam].append(dnew[self.ys[i], self.xs[i]] * photflam)
 
             # Use an SED file
@@ -438,8 +450,8 @@ class observation():
                 flxs = flxs * POM_value
 
             f = [lams, flxs]
-            pars.append([xs0, ys0, f, self.order, self.wmin, self.wmax, self.wcs, ID,
-                         self.extrapolate_SED, self.xstart, self.ystart])
+            pars.append([xs0, ys0, f, self.order, self.wmin, self.wmax, self.seg_wcs, self.grism_wcs,
+                         ID, self.extrapolate_SED, self.xstart, self.ystart])
             # now have full pars list for all pixels for this object
 
         time1 = time.time()

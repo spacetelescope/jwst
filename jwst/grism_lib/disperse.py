@@ -3,7 +3,8 @@ import numpy as np
 from .polyclip import polyclip
 
 
-def dispersed_pixel(x0s, y0s, f0, order, wmin, wmax, wcs, ID, oversample_factor=2, extrapolate_SED=False, xoffset=0, yoffset=0):
+def dispersed_pixel(x0s, y0s, f0, order, wmin, wmax, seg_wcs, grism_wcs, ID, oversample_factor=2,
+                    extrapolate_SED=False, xoffset=0, yoffset=0):
     """This function take a list of pixels and disperses them using the information contained
     in the grism image WCS object and returns a list of pixels and fluxes.
 
@@ -18,8 +19,10 @@ def dispersed_pixel(x0s, y0s, f0, order, wmin, wmax, wcs, ID, oversample_factor=
         The entries in the list are wavelength and flux.
     order: int
         The spectral order to disperse.
-    wcs: WCS object
-        The WCS object of grism image.
+    seg_wcs: WCS object
+        The WCS object of the segmentation map.
+    grism_wcs: WCS object
+        The WCS object of the grism image.
     ID: int
         The ID of the object this is for.
     oversample_factor: int
@@ -49,10 +52,12 @@ def dispersed_pixel(x0s, y0s, f0, order, wmin, wmax, wcs, ID, oversample_factor=
         A list containing the ID. Returned for bookkeeping convenience.
     """
 
-    # Setup the transform we need from the input WCS object
-    img_to_grism = wcs.get_transform('detector', 'grism_detector')
-    offset_x = 863.0
-    offset_y = 2.0
+    # Setup the transforms we need from the input WCS objects
+    #img_to_grism = grism_wcs.get_transform('detector', 'grism_detector')
+    sky_to_imgxy = grism_wcs.get_transform('world', 'detector')
+    imgxy_to_grismxy = grism_wcs.get_transform('detector', 'grism_detector')
+    offset_x = -imgxy_to_grismxy.offset_1
+    offset_y = -imgxy_to_grismxy.offset_2
 
     if len(f0[0]) > 1:
         #print("f0:", f0, len(f0[0]), len(f0[1]))
@@ -85,8 +90,15 @@ def dispersed_pixel(x0s, y0s, f0, order, wmin, wmax, wcs, ID, oversample_factor=
     # Get the x/y positions corresponding to wmin and wmax
     #xwmin, ywmin, _, _, _ = img_to_grism(x0, y0, wmin, order)
     #xwmax, ywmax, _, _, _ = img_to_grism(x0, y0, wmax, order)
-    xwmin, ywmin = img_to_grism(x0+offset_x, y0+offset_y, wmin, order)
-    xwmax, ywmax = img_to_grism(x0+offset_x, y0+offset_y, wmax, order)
+    #xwmin, ywmin = img_to_grism(x0+offset_x, y0+offset_y, wmin, order)
+    #xwmax, ywmax = img_to_grism(x0+offset_x, y0+offset_y, wmax, order)
+    # RA/Dec of pixel position in segmentation map
+    x0_sky, y0_sky = seg_wcs(x0, y0)
+    # Pixel position in direct image frame of grism image
+    x0_xy, y0_xy, _, _ = sky_to_imgxy(x0_sky, y0_sky, 1, order)
+    # Now pixel positions in grism image
+    xwmin, ywmin = imgxy_to_grismxy(x0_xy+offset_x, y0_xy+offset_y, wmin, order)
+    xwmax, ywmax = imgxy_to_grismxy(x0_xy+offset_x, y0_xy+offset_y, wmax, order)
     #print("xwmin, ywmin:", xwmin, ywmin)
     #print("xwmax, ywmax:", xwmax, ywmax)
     dxw = xwmax - xwmin
@@ -113,7 +125,12 @@ def dispersed_pixel(x0s, y0s, f0, order, wmin, wmax, wcs, ID, oversample_factor=
     # Compute lists of x/y positions in the grism image for
     # the set of desired wavelengths
     #x0s, y0s, _, _, _ = img_to_grism([x0]*n_lam, [y0]*n_lam, lambdas, [order]*n_lam)
-    x0s, y0s = img_to_grism([x0+offset_x]*n_lam, [y0+offset_y]*n_lam, lambdas, [order]*n_lam)
+    #x0s, y0s = img_to_grism([x0+offset_x]*n_lam, [y0+offset_y]*n_lam, lambdas, [order]*n_lam)
+    # RA/Dec of segmentation map pixel positions
+    x0_sky, y0_sky = seg_wcs([x0]*n_lam, [y0]*n_lam)
+    # Pixel positions in direct image frame of grism image
+    x0_xy, y0_xy, _, _ = sky_to_imgxy(x0_sky, y0_sky, lambdas, [order]*n_lam)
+    x0s, y0s = imgxy_to_grismxy(x0_xy+offset_x, y0_xy+offset_y, lambdas, [order]*n_lam)
     #print("x0s:", x0s)
     #print("y0s:", y0s)
 
