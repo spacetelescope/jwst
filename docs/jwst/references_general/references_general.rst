@@ -584,8 +584,8 @@ Bit  Value         Name              Description
 2    4             JUMP_DET          Jump detected during exposure
 3    8             DROPOUT           Data lost in transmission
 4    16            OUTLIER           Flagged by outlier detection
-5    32            RESERVED
-6    64            RESERVED
+5    32            PERSISTENCE       High persistence
+6    64            AD_FLOOR          Below A/D floor
 7    128           RESERVED
 8    256           UNRELIABLE_ERROR  Uncertainty exceeds quoted error
 9    512           NON_SCIENCE       Pixel not on science portion of detector

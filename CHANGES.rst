@@ -32,6 +32,9 @@ general
 
 - Update file naming conventions documentation to clarify when optional components will be used. [#5796]
 
+- Update DQFLAGS table in RTD docs with new definitions for persistence and
+  ad_floor in bits five and six [#5815]
+
 lib
 ---
 
