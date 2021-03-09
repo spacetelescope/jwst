@@ -9,52 +9,11 @@ Pipelines
 Writing a Pipeline
 ==================
 
-There are two ways to go about writing a pipeline depending on how
-much flexibility is required.
-
-1. A linear pipeline defines a simple linear progression of steps
-where each step has a single input and a single output flowing
-directly into the next step.
-
-2. A flexible pipeline allows the pipeline to be defined in Python
-code and all of the tools that implies, such as loops, conditionals
-and multiple inputs and/or outputs.
-
-Linear pipeline
----------------
-
-To create a linear pipeline, one inherits from the
-`~stpipe.LinearPipeline` class and adds a special member
-`pipeline_steps` to define the order of the steps::
-
-    from jwst.stpipe import LinearPipeline
-
-    # Some locally-defined steps
-    from . import FlatField, RampFitting
-
-    class ExampleLinearPipeline(LinearPipeline):
-        """
-        This example linear pipeline has only two steps.
-        """
-        pipeline_steps = [
-            ('flat_field', FlatField),
-            ('ramp_fitting', RampFitting)
-            ]
-
-The `pipeline_steps` member is a list of tuples.  Each tuple is a pair
-(*name*, *class*) where *name* is the name of the specific step, and
-*class* is the step's class.  Both are required so the same step class
-can be used multiple times in the pipeline.  The name is also used for
-the section headings in the pipeline's configuration file.
-
-Flexible pipeline
------------------
-
-The basics of writing a flexible Pipeline are just like
+The basics of writing a Pipeline are just like
 :ref:`writing-a-step`, but instead of inheriting from the
 `~stpipe.Step` class, one inherits from the `~stpipe.Pipeline` class.
 
-In addition, a Pipeline subclass defines what its Steps so that the
+In addition, a Pipeline subclass defines what its Steps are so that the
 framework can configure parameters for the individual Steps.  This is
 done with the ``step_defs`` member, which is a dictionary mapping step
 names to step classes.  This dictionary defines what the Steps are,

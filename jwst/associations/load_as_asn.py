@@ -96,7 +96,8 @@ class LoadAsAssociation(dict):
             )
             asn.filename = DEFAULT_NAME
         else:
-            asn = cls(pure_asn)
+            asn = rule()
+            asn.update(pure_asn)
             asn.filename = obj
 
         return asn

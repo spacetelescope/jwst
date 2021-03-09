@@ -16,7 +16,7 @@ from ..transforms.models import (NirissSOSSModel,
                                  NIRISSBackwardGrismDispersion,
                                  NIRISSForwardColumnGrismDispersion)
 from ..datamodels import ImageModel, NIRISSGrismModel, DistortionModel
-from ..lib import s3_utils
+from stdatamodels import s3_utils
 from ..lib.reffile_utils import find_row
 
 log = logging.getLogger(__name__)
@@ -221,10 +221,20 @@ def imaging(input_model, reference_files):
     It uses the "distortion" reference file.
     """
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.arcsec, u.arcsec))
+    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), axes_names=('v2', 'v3'),
+                      unit=(u.arcsec, u.arcsec))
+    v2v3vacorr = cf.Frame2D(name='v2v3vacorr', axes_order=(0, 1),
+                            axes_names=('v2', 'v3'), unit=(u.arcsec, u.arcsec))
     world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
 
     distortion = imaging_distortion(input_model, reference_files)
+
+    # Compute differential velocity aberration (DVA) correction:
+    va_corr = pointing.dva_corr_model(
+        va_scale=input_model.meta.velocity_aberration.scale_factor,
+        v2_ref=input_model.meta.wcsinfo.v2_ref,
+        v3_ref=input_model.meta.wcsinfo.v3_ref
+    )
 
     subarray2full = subarray_transform(input_model)
     if subarray2full is not None:
@@ -233,7 +243,8 @@ def imaging(input_model, reference_files):
 
     tel2sky = pointing.v23tosky(input_model)
     pipeline = [(detector, distortion),
-                (v2v3, tel2sky),
+                (v2v3, va_corr),
+                (v2v3vacorr, tel2sky),
                 (world, None)]
     return pipeline
 
@@ -255,6 +266,7 @@ def imaging_distortion(input_model, reference_files):
     """
     dist = DistortionModel(reference_files['distortion'])
     distortion = dist.model
+
     try:
         # Check if the model has a bounding box.
         distortion.bounding_box
@@ -355,9 +367,10 @@ def wfss(input_model, reference_files):
             raise ValueError('The input exposure is not NIRISS grism')
 
     # Create the empty detector as a 2D coordinate frame in pixel units
-    gdetector = cf.Frame2D(name='grism_detector',
-                           axes_order=(0, 1),
-                           unit=(u.pix, u.pix))
+    gdetector = cf.Frame2D(name='grism_detector', axes_order=(0, 1),
+                           axes_names=('x_grism', 'y_grism'), unit=(u.pix, u.pix))
+    spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,),
+                            axes_names=('wavelength',))
 
     # translate the x,y detector-in to x,y detector out coordinates
     # Get the disperser parameters which are defined as a model for each
@@ -433,11 +446,15 @@ def wfss(input_model, reference_files):
     # so the user doesn't have to
 
     imagepipe = []
-    world = image_pipeline.pop()
+    world = image_pipeline.pop()[0]
+    world.name = 'sky'
     for cframe, trans in image_pipeline:
         trans = trans & (Identity(2))
-        imagepipe.append((cframe, trans))
-    imagepipe.append((world))
+        name = cframe.name
+        cframe.name = name + 'spatial'
+        spatial_and_spectral = cf.CompositeFrame([cframe, spec], name=name)
+        imagepipe.append((spatial_and_spectral, trans))
+    imagepipe.append((cf.CompositeFrame([world, spec], name='world'), None))
     grism_pipeline.extend(imagepipe)
 
     return grism_pipeline

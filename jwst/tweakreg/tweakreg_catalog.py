@@ -73,7 +73,7 @@ def make_tweakreg_catalog(model, kernel_fwhm, snr_threshold, sharplo=0.2,
                             peakmax=peakmax)
 
     # Mask the non-imaging area (e.g. MIRI)
-    mask = (dqflags.pixel['NON_SCIENCE'] & model.dq).astype(np.bool)
+    mask = (dqflags.pixel['NON_SCIENCE'] & model.dq).astype(bool)
 
     sources = daofind(model.data, mask=mask)
 

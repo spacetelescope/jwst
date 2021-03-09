@@ -55,6 +55,7 @@ class GrismObject(namedtuple('GrismObject', ("sid",
                                              "sky_bbox_ul",
                                              "xcentroid",
                                              "ycentroid",
+                                             "is_star",
                                              ), rename=False)):
     """ Grism Objects identified from a direct image catalog and segment map.
 
@@ -112,7 +113,8 @@ class GrismObject(namedtuple('GrismObject', ("sid",
                 sky_bbox_ur=None,
                 sky_bbox_ul=None,
                 xcentroid=None,
-                ycentroid=None):
+                ycentroid=None,
+                is_star=None):
 
         return super(GrismObject, cls).__new__(cls,
                                                sid=sid,
@@ -125,7 +127,8 @@ class GrismObject(namedtuple('GrismObject', ("sid",
                                                sky_bbox_ur=sky_bbox_ur,
                                                sky_bbox_ul=sky_bbox_ul,
                                                xcentroid=xcentroid,
-                                               ycentroid=ycentroid)
+                                               ycentroid=ycentroid,
+                                               is_star=is_star)
 
     def __str__(self):
         """Return a pretty print for the object information."""
@@ -224,9 +227,9 @@ class Snell(Model):
     def __init__(self, angle, kcoef, lcoef, tcoef, tref, pref,
                  temperature, pressure, name=None):
         self.prism_angle = angle
-        self.kcoef = np.array(kcoef, dtype=np.float)
-        self.lcoef = np.array(lcoef, dtype=np.float)
-        self.tcoef = np.array(tcoef, dtype=np.float)
+        self.kcoef = np.array(kcoef, dtype=float)
+        self.lcoef = np.array(lcoef, dtype=float)
+        self.tcoef = np.array(tcoef, dtype=float)
         self.tref = tref
         self.pref = pref
         self.temp = temperature
@@ -282,7 +285,7 @@ class Snell(Model):
             # Compute the absolute index of the glass
             delnabs = (0.5 * (nrel ** 2 - 1.) / nrel) * \
                     (D0 * delt + D1 * delt ** 2 + D2 * delt ** 3 + \
-                     (E0 * delt + E1 * delt ** 2) / (lamrel ** 2  - lam_tk ** 2))
+                    (E0 * delt + E1 * delt ** 2) / (lamrel ** 2 - lam_tk ** 2))
             nabs_obs = nabs_ref + delnabs
 
             # Define the relative index at the system's operating T and P.
@@ -607,7 +610,7 @@ class Rotation3D(Model):
                 "Number of angles must equal number of axes in axes_order.")
         matrices = []
         for angle, axis in zip(angles, axes_order):
-            matrix = np.zeros((3, 3), dtype=np.float)
+            matrix = np.zeros((3, 3), dtype=float)
             if axis == 'x':
                 mat = Rotation3D.rotation_matrix_from_angle(angle)
                 matrix[0, 0] = 1
@@ -1081,7 +1084,7 @@ def _toindex(value):
     >>> _toindex(np.array([1.5, 2.49999]))
     array([2, 2])
     """
-    indx = np.asarray(np.floor(np.asarray(value) + 0.5), dtype=np.int)
+    indx = np.asarray(np.floor(np.asarray(value) + 0.5), dtype=int)
     return indx
 
 
@@ -1164,8 +1167,8 @@ class NIRCAMForwardRowGrismDispersion(Model):
         # inputs are x, y, x0, y0, order
 
         tmodel = astmath.SubtractUfunc() | xmodel
-        model = Mapping((0, 2, 0, 2, 2, 3, 4)) | ( tmodel | ymodel) & (tmodel | lmodel) & Identity(3) |\
-              Mapping((2, 3, 0, 1, 4)) | Identity(1) & astmath.AddUfunc() &  Identity(2) | Mapping((0, 1, 2, 3), n_inputs=4)
+        model = Mapping((0, 2, 0, 2, 2, 3, 4)) | (tmodel | ymodel) & (tmodel | lmodel) & Identity(3) | \
+              Mapping((2, 3, 0, 1, 4)) | Identity(1) & astmath.AddUfunc() & Identity(2) | Mapping((0, 1, 2, 3), n_inputs=4)
 
         return model(x, y, x0, y0, order)
 
@@ -1251,8 +1254,8 @@ class NIRCAMForwardColumnGrismDispersion(Model):
         dx = tmodel | xmodel
         wavelength = tmodel | lmodel
         model = Mapping((1, 3, 1, 3, 2, 3, 4)) | \
-              dx  & wavelength & Identity(3) |\
-              Mapping((0, 2, 3, 1, 4)) | astmath.AddUfunc() &  Identity(3)
+              dx & wavelength & Identity(3) |\
+              Mapping((0, 2, 3, 1, 4)) | astmath.AddUfunc() & Identity(3)
 
         return model(x, y, x0, y0, order)
 
@@ -1336,7 +1339,7 @@ class NIRCAMBackwardGrismDispersion(Model):
         dx = lmodel | xmodel
         dy = lmodel | ymodel
         model = Mapping((0, 2, 1, 2, 0, 1, 3)) | \
-              ((Identity(1) & dx) | astmath.AddUfunc())  & \
+              ((Identity(1) & dx) | astmath.AddUfunc()) & \
               ((Identity(1) & dy) | astmath.AddUfunc()) & Identity(3)
 
         return model(x, y, wavelength, order)

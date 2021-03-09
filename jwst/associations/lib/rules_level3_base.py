@@ -10,7 +10,6 @@ import re
 
 from jwst.associations import (
     Association,
-    #AssociationRegistry,
     ProcessList,
     libpath
 )
@@ -39,24 +38,24 @@ from jwst.associations.lib.dms_base import (
     IMAGE2_NONSCIENCE_EXP_TYPES,
     SPEC2_SCIENCE_EXP_TYPES,
 )
-from jwst.associations.lib.format_template import FormatTemplate
+from stpipe.format_template import FormatTemplate
 from jwst.associations.lib.member import Member
-from jwst.associations.lib.product_utils import prune_duplicate_products
+from jwst.associations.lib.product_utils import prune_duplicate_associations, prune_duplicate_products
 
 __all__ = [
     'ASN_SCHEMA',
+    'AsnMixin_AuxData',
     'AsnMixin_Science',
     'AsnMixin_Spectrum',
-    'AsnMixin_BkgScience',
-    'AsnMixin_AuxData',
+    'Constraint',
     'Constraint_Base',
     'Constraint_IFU',
     'Constraint_Image',
     'Constraint_MSA',
+    'Constraint_Obsnum',
     'Constraint_Optical_Path',
     'Constraint_Spectral',
     'Constraint_Target',
-    'Constraint',
     'DMS_Level3_Base',
     'DMSAttrConstraint',
     'ProcessList',
@@ -600,7 +599,9 @@ class Utility():
             else:
                 finalized_asns.append(asn)
 
+        lv3_asns = prune_duplicate_associations(lv3_asns)
         lv3_asns = prune_duplicate_products(lv3_asns)
+
         # Ensure sequencing is correct.
         Utility.resequence(lv3_asns)
 
@@ -714,6 +715,27 @@ class Constraint_Image(DMSAttrConstraint):
         )
 
 
+class Constraint_MSA(Constraint):
+    """Constrain on NIRSpec MSA exposures that are spectral"""
+    def __init__(self):
+        super(Constraint_MSA, self).__init__(
+            [
+                DMSAttrConstraint(
+                    name='exp_type',
+                    sources=['exp_type'],
+                    value=('nrs_msaspec'),
+                    force_unique=False
+                ),
+                DMSAttrConstraint(
+                    name='is_msa',
+                    sources=['msametfl'],
+                    force_unique=False,
+                )
+            ],
+            name='msa_spectral'
+        )
+
+
 class Constraint_Obsnum(DMSAttrConstraint):
     """Select on OBSNUM"""
     def __init__(self):
@@ -769,31 +791,6 @@ class Constraint_Spectral(DMSAttrConstraint):
         )
 
 
-class Constraint_MSA(Constraint):
-    """Constrain on NIRSpec MSA exposures that are spectral"""
-    def __init__(self):
-        super(Constraint_MSA, self).__init__(
-            [
-                DMSAttrConstraint(
-                    name='exp_type',
-                    sources=['exp_type'],
-                    value=(
-                        'nrs_autoflat'
-                        '|nrs_autowave'
-                        '|nrs_msaspec'
-                    ),
-                    force_unique=False
-                ),
-                DMSAttrConstraint(
-                    name='is_msa',
-                    sources=['msametfl'],
-                    force_unique=False,
-                )
-            ],
-            name='msa_spectral'
-        )
-
-
 class Constraint_Target(DMSAttrConstraint):
     """Select on target
 
@@ -822,6 +819,32 @@ class Constraint_Target(DMSAttrConstraint):
 # -----------
 # Base Mixins
 # -----------
+class AsnMixin_AuxData:
+    """Process special and non-science exposures as science.
+    """
+    def get_exposure_type(self, item, default='science'):
+        """Override to force exposure type to always be science
+        Parameters
+        ----------
+        item : dict
+            The pool entry for which the exposure type is determined
+        default : str or None
+            The default exposure type.
+            If None, routine will raise LookupError
+        Returns
+        -------
+        exposure_type : 'science'
+            Returns as science for most Exposures
+        exposure_type : 'target_acquisition'
+            Returns target_acquisition for mir_tacq
+        """
+        NEVER_CHANGE = ['target_acquisition']
+        exp_type = super().get_exposure_type(item, default=default)
+        if exp_type in NEVER_CHANGE:
+            return exp_type
+        return 'science'
+
+
 class AsnMixin_Science(DMS_Level3_Base):
     """Basic science constraints"""
 
@@ -872,56 +895,6 @@ class AsnMixin_Science(DMS_Level3_Base):
 
         super(AsnMixin_Science, self).__init__(*args, **kwargs)
 
-class AsnMixin_BkgScience(DMS_Level3_Base):
-    """Basic science constraints for background targets"""
-
-    def __init__(self, *args, **kwargs):
-
-        # Setup target acquisition inclusion
-        constraint_acqs = Constraint(
-            [
-                Constraint_TargetAcq(),
-                DMSAttrConstraint(
-                    name='acq_obsnum',
-                    sources=['obs_num'],
-                    value=lambda: '('
-                    + '|'.join(self.constraints['obs_num'].found_values)
-                    + ')',
-                    force_unique=False,
-                )
-            ],
-            name='acq_constraint',
-            work_over=ProcessList.EXISTING
-        )
-
-        # Put all constraints together.
-        self.constraints = Constraint(
-            [
-                Constraint_Base(),
-                DMSAttrConstraint(
-                    sources=['is_imprt'],
-                    force_undefined=True
-                ),
-                Constraint(
-                    [
-                        Constraint(
-                            [
-                                self.constraints,
-                                Constraint_Obsnum()
-                            ],
-                            name='rule'
-                        ),
-                        constraint_acqs
-                    ],
-                    name='acq_check',
-                    reduce=Constraint.any
-                ),
-            ],
-            name='dmsbase_bkg'
-        )
-
-        super(AsnMixin_BkgScience, self).__init__(*args, **kwargs)
-
 
 class AsnMixin_Spectrum(AsnMixin_Science):
     """All things that are spectrum"""
@@ -931,34 +904,3 @@ class AsnMixin_Spectrum(AsnMixin_Science):
 
         self.data['asn_type'] = 'spec3'
         super(AsnMixin_Spectrum, self)._init_hook(item)
-
-class AsnMixin_AuxData(AsnMixin_Science):
-    """Process special and non-science exposures as science.
-    """
-    def get_exposure_type(self, item, default='science'):
-        """Override to force exposure type to always be science
-        Parameters
-        ----------
-        item : dict
-            The pool entry for which the exposure type is determined
-        default : str or None
-            The default exposure type.
-            If None, routine will raise LookupError
-        Returns
-        -------
-        exposure_type : 'science'
-            Returns as science for most Exposures
-        exposure_type : 'target_acquisition'
-            Returns target_acquisition for mir_tacq
-        """
-        NEVER_CHANGE = ['target_acquisition']
-        exp_type = super().get_exposure_type(item, default=default)
-        if exp_type in NEVER_CHANGE:
-            return exp_type
-        return 'science'
-
-    def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
-
-        self.data['asn_type'] = 'spec3'
-        super(AsnMixin_AuxData, self)._init_hook(item)

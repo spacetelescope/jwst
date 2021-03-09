@@ -1,4 +1,5 @@
 """Test for duplication/missing associations"""
+import pytest
 
 from .helpers import (
     level3_rule_path,
@@ -8,6 +9,24 @@ from .helpers import (
 
 from .. import (AssociationPool, generate)
 from ..main import (Main, constrain_on_candidates)
+
+
+def test_duplicate_names():
+    """
+    For Level 3 association, there should be no association
+    with the same product name. Generation should produce
+    log messages indicating when duplicate names have been found.
+    """
+    pool = AssociationPool.read(t_path('data/jw00632_dups.csv'))
+    constrain_all_candidates = constrain_on_candidates(None)
+    rules = registry_level3_only(global_constraints=constrain_all_candidates)
+
+    with pytest.warns(RuntimeWarning):
+        asns = generate(pool, rules)
+
+    # There should only be one association left.
+    assert len(asns) == 1
+
 
 
 def test_duplicate_generate():

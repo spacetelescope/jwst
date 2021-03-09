@@ -2,11 +2,12 @@ from os.path import dirname, join, abspath
 import sys
 
 import numpy as np
-from numpy.testing import assert_allclose
 import pytest
 
+from stpipe import crds_client
+
 from jwst import datamodels
-from jwst.stpipe import Step, Pipeline, LinearPipeline, crds_client
+from jwst.stpipe import Step, Pipeline
 
 from .steps import PipeWithReference, StepWithReference
 
@@ -20,6 +21,10 @@ def library_function():
 class FlatField(Step):
     """
     An example flat-fielding Step.
+    """
+    spec = """
+        threshold = float(default=0.0)  # The threshold below which to remove
+        multiplier = float(default=1.0) # Multiply by this number
     """
 
     # Load the spec from a file
@@ -101,7 +106,7 @@ class MyPipeline(Pipeline):
 
 def test_pipeline(_jail):
     pipeline_fn = join(dirname(__file__), 'steps', 'python_pipeline.cfg')
-    pipe = Step.from_config_file(pipeline_fn)
+    pipe = Pipeline.from_config_file(pipeline_fn)
     pipe.output_filename = "output.fits"
 
     assert pipe.flat_field.threshold == 42.0
@@ -129,14 +134,6 @@ def test_pipeline_python(_jail):
     pipe.run()
 
 
-class MyLinearPipeline(LinearPipeline):
-    pipeline_steps = [
-        ('multiply', MultiplyBy2),
-        ('multiply2', MultiplyBy2),
-        ('multiply3', MultiplyBy2)
-        ]
-
-
 def test_prefetch(_jail, monkeypatch):
     """Test prefetching"""
 
@@ -144,7 +141,7 @@ def test_prefetch(_jail, monkeypatch):
     class MockGetRef:
         called = False
 
-        def mock(self, dataset_model, reference_file_types, observatory=None):
+        def mock(self, parameters, reference_file_types, observatory):
             if 'flat' in reference_file_types:
                 self.called = True
             result = {
@@ -177,23 +174,10 @@ def test_prefetch(_jail, monkeypatch):
     assert not mock_get_ref.called
 
 
-def test_partial_pipeline(_jail):
-    pipe = MyLinearPipeline()
-
-    pipe.end_step = 'multiply2'
-    result = pipe.run(abspath(join(dirname(__file__), 'data', 'science.fits')))
-
-    pipe.start_step = 'multiply3'
-    pipe.end_step = None
-    result = pipe.run(abspath(join(dirname(__file__), 'data', 'science.fits')))
-
-    assert_allclose(np.sum(result.data), 9969.82514685, rtol=1e-4)
-
-
 def test_pipeline_commandline(_jail):
     args = [
-        abspath(join(dirname(__file__), 'steps', 'python_pipeline.cfg')),
-        '--steps.flat_field.threshold=47'
+        join(dirname(__file__), 'steps', 'python_pipeline.cfg'),
+        '--steps.flat_field.threshold=47',
         ]
 
     pipe = Step.from_cmdline(args)
@@ -207,13 +191,8 @@ def test_pipeline_commandline(_jail):
 def test_pipeline_commandline_class(_jail):
     args = [
         'jwst.stpipe.tests.test_pipeline.MyPipeline',
-        '--logcfg={0}'.format(
-            abspath(join(dirname(__file__), 'steps', 'log.cfg'))),
-        # The file_name parameters are *required*
-        '--science_filename={0}'.format(
-            abspath(join(dirname(__file__), 'data', 'science.fits'))),
-        '--output_filename={0}'.format(
-            'output.fits'),
+        f"--science_filename={join(dirname(__file__), 'data', 'science.fits')}",
+        '--output_filename=output.fits',
         '--steps.flat_field.threshold=47'
         ]
 

@@ -1,8 +1,10 @@
-from .model_base import DataModel
+from .model_base import JwstDataModel
+
 
 __all__ = ['Extract1dImageModel']
 
-class Extract1dImageModel(DataModel):
+
+class Extract1dImageModel(JwstDataModel):
     """
     A data model for the extract_1d reference image array.
 

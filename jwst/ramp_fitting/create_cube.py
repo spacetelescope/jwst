@@ -4,7 +4,7 @@
 # Program: create_cube.py
 # Purpose: routine to create data cube for a specified readout mode for JWST data
 # History: 03/24/10 - first version
-#          08/17/10 - changed datatype to float64 for compatibility with other programs
+#          08/17/10 - changed datatype to np.float64 for compatibility with other programs
 #
 # The 9 NIRCAM readout modes are:
 #  DEEP8, DEEP2, MEDIUM8, MEDIUM2, SHALLOW4, SHALLOW2, BRIGHT2, BRIGHT1, RAPID
@@ -52,20 +52,76 @@ class create_cube:
         mode = mode.upper()
 
         # check input mode and set parameters accordingly
-        if (mode == 'DEEP8'): ngroup = 20; nframes = 8; nskip = 12; inst = 'NIRCAM'
-        elif (mode == 'DEEP2'): ngroup = 20; nframes = 2; nskip = 18; inst = 'NIRCAM'
-        elif (mode == 'MEDIUM8'): ngroup = 10; nframes = 8; nskip = 2; inst = 'NIRCAM'
-        elif (mode == 'MEDIUM2'): ngroup = 10; nframes = 2; nskip = 8; inst = 'NIRCAM'
-        elif (mode == 'SHALLOW4'): ngroup = 10; nframes = 4; nskip = 1; inst = 'NIRCAM'
-        elif (mode == 'BRIGHT2'): ngroup = 10; nframes = 2; nskip = 1; inst = 'NIRCAM'
-        elif (mode == 'BRIGHT1'): ngroup = 10; nframes = 1; nskip = 1; inst = 'NIRCAM'
-        elif (mode == 'RAPID'): ngroup = 10; nframes = 1; nskip = 0; inst = 'NIRCAM'
-        elif (mode == 'NRSSLOW'): ngroup = 0; nframes = 4; nskip = 0; inst = 'NIRSPEC'
-        elif (mode == 'NRSFAST'): ngroup = 0; nframes = 1; nskip = 0; inst = 'NIRSPEC'
-        elif (mode == 'TFISLOW'): ngroup = 0; nframes = 4; nskip = 0; inst = 'TFI'
-        elif (mode == 'TFIFAST'): ngroup = 0; nframes = 1; nskip = 0; inst = 'TFI'
-        elif (mode == 'MIRISLOW'): ngroup = 10; nframes = 1; nskip = 0; inst = 'MIRI'
-        elif (mode == 'MIRIFAST'): ngroup = 0; nframes = 1; nskip = 0; inst = 'MIRI'
+        if (mode == 'DEEP8'):
+            ngroup = 20
+            nframes = 8
+            nskip = 12
+            inst = 'NIRCAM'
+        elif (mode == 'DEEP2'):
+            ngroup = 20
+            nframes = 2
+            nskip = 18
+            inst = 'NIRCAM'
+        elif (mode == 'MEDIUM8'):
+            ngroup = 10
+            nframes = 8
+            nskip = 2
+            inst = 'NIRCAM'
+        elif (mode == 'MEDIUM2'):
+            ngroup = 10
+            nframes = 2
+            nskip = 8
+            inst = 'NIRCAM'
+        elif (mode == 'SHALLOW4'):
+            ngroup = 10
+            nframes = 4
+            nskip = 1
+            inst = 'NIRCAM'
+        elif (mode == 'BRIGHT2'):
+            ngroup = 10
+            nframes = 2
+            nskip = 1
+            inst = 'NIRCAM'
+        elif (mode == 'BRIGHT1'):
+            ngroup = 10
+            nframes = 1
+            nskip = 1
+            inst = 'NIRCAM'
+        elif (mode == 'RAPID'):
+            ngroup = 10
+            nframes = 1
+            nskip = 0
+            inst = 'NIRCAM'
+        elif (mode == 'NRSSLOW'):
+            ngroup = 0
+            nframes = 4
+            nskip = 0
+            inst = 'NIRSPEC'
+        elif (mode == 'NRSFAST'):
+            ngroup = 0
+            nframes = 1
+            nskip = 0
+            inst = 'NIRSPEC'
+        elif (mode == 'TFISLOW'):
+            ngroup = 0
+            nframes = 4
+            nskip = 0
+            inst = 'TFI'
+        elif (mode == 'TFIFAST'):
+            ngroup = 0
+            nframes = 1
+            nskip = 0
+            inst = 'TFI'
+        elif (mode == 'MIRISLOW'):
+            ngroup = 10
+            nframes = 1
+            nskip = 0
+            inst = 'MIRI'
+        elif (mode == 'MIRIFAST'):
+            ngroup = 0
+            nframes = 1
+            nskip = 0
+            inst = 'MIRI'
         else:
             print('Fatal ERROR:  unsupported mode  ', mode)
             sys.exit(ERROR_RETURN)
@@ -94,7 +150,8 @@ class create_cube:
         self._read_range = np.arange(ngroup) + 1
         self._noisy = noisy
         self._read_noise = READ_NOISE / ELECTRON_PER_ADU
-        self._asize_1 = int(asize); self._asize_2 = int(asize)
+        self._asize_1 = int(asize)
+        self._asize_2 = int(asize)
         self._sample_image = sample_image
 
     def make_cube(self):
@@ -108,10 +165,12 @@ class create_cube:
         nread = self._nread
         noisy = self._noisy
         verb = int(self._verb)
-        asize_1 = self._asize_1; asize_2 = self._asize_2
+        asize_1 = self._asize_1
+        asize_2 = self._asize_2
         sample_image = self._sample_image
 
-        if (verb > 0): print('Start of make_cube... ')
+        if (verb > 0):
+            print('Start of make_cube... ')
 
         print('The parameters to be used are : ')
         print(' inst : ', inst)
@@ -147,7 +206,7 @@ class create_cube:
         t_read = t_int / float(nread)
         print(' The integration time per single read = ', t_read)
 
-###        acube = np.zeros((n_ind_reads, asize_2, asize_1), dtype = np.float32)  # < 080210
+###        acube = np.zeros((n_ind_reads, asize_2, asize_1), dtype=np.float32)  # < 080210
         acube = np.zeros((n_ind_reads, asize_2, asize_1), dtype=np.float64)  # try 080210
 
         print(' The output cube will have dimensions:', n_ind_reads, asize_2, asize_1)
@@ -165,7 +224,8 @@ class create_cube:
         for ii_slice in range(0, n_ind_reads):   # 1st create noiseless cube, looping over all slices
             acube[ii_slice, :, :] = reset_data * (ii_slice + 1)
 
-            if (verb > 0): print('for slice = ', ii_slice, ' noiseless cube has',
+            if (verb > 0):
+                print('for slice = ', ii_slice, ' noiseless cube has',
                 'min, mean, max, std = ', acube[ii_slice, :, :].min(),
                 acube[ii_slice, :, :].mean(), acube[ii_slice, :, :].max(),
                 acube[ii_slice, :, :].std())
@@ -173,10 +233,12 @@ class create_cube:
 
         if (noisy == 'True'):  # add noise if requested
             for xx_out in range(0, asize_1):
-                if ((verb > 0) and ((xx_out / 20.) == int(xx_out / 20.))): print(' xx_out = ', xx_out)
+                if ((verb > 0) and ((xx_out / 20.) == int(xx_out / 20.))):
+                    print(' xx_out = ', xx_out)
 
                 for yy_out in range(0, asize_2):
-                    if (verb > 1): print(' This pixel has xx, yy = ', xx_out, yy_out)
+                    if (verb > 1):
+                        print(' This pixel has xx, yy = ', xx_out, yy_out)
                     for ii_slice in range(0, n_ind_reads):   # over all slices
                         ran_lim = reset_data[yy_out, xx_out]
                         poiss_ran = random.gauss(-np.sqrt(ran_lim), np.sqrt(ran_lim))

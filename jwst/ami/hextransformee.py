@@ -97,7 +97,7 @@ def hextransform(s=None, c=None, d=None, lam=None, pitch=None, affine2d=None):
 
     """
     if c is None:
-        c = (float(s[0])/2.0  - 0.5,  float(s[1])/2.0  - 0.5)
+        c = (float(s[0]) / 2.0 - 0.5, float(s[1]) / 2.0 - 0.5)
 
     # deal with central pixel singularity:
     c_adjust = c
@@ -108,11 +108,11 @@ def hextransform(s=None, c=None, d=None, lam=None, pitch=None, affine2d=None):
     d0, d1 = (c[0] - int(c[0]), c[1] - int(c[1]))
 
     # Are they very small (i.e. 'almost exactly' centered on 0)?
-    if (abs(d0) <  0.5*eps_offset): # might have the singular central pixel here...
-        c_adjust[0] = c[0]+ eps_offset
+    if (abs(d0) < 0.5 * eps_offset):  # might have the singular central pixel here
+        c_adjust[0] = c[0] + eps_offset
 
-    if abs(d1) <  0.5*eps_offset: # might have the singular central pixel here...
-        c_adjust[1] = c[1]+ eps_offset
+    if abs(d1) < 0.5 * eps_offset:  # might have the singular central pixel here
+        c_adjust[1] = c[1] + eps_offset
 
     hex_complex = np.fromfunction(gfunction, s, d=d, c=c_adjust, lam=lam,
                                   pixel=pitch, affine2d=affine2d, minus=False) + \

@@ -1,10 +1,10 @@
-from .model_base import DataModel
+from .model_base import JwstDataModel
 
 
 __all__ = ['SpecModel']
 
 
-class SpecModel(DataModel):
+class SpecModel(JwstDataModel):
     """
     A data model for 1D spectra.
 

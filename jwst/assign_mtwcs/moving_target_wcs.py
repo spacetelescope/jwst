@@ -42,31 +42,63 @@ def assign_moving_target_wcs(input_model):
         mt_avdec = mt_dec.mean()
 
     for model in input_model:
-        pipeline = model.meta.wcs._pipeline[:-1]
-
-        mt = deepcopy(model.meta.wcs.output_frame)
-        mt.name = 'moving_target'
-
-        mt_ra = model.meta.wcsinfo.mt_ra
-        mt_dec = model.meta.wcsinfo.mt_dec
         model.meta.wcsinfo.mt_avra = mt_avra
         model.meta.wcsinfo.mt_avdec = mt_avdec
-
-        rdel = mt_avra - mt_ra
-        ddel = mt_avdec - mt_dec
-
-        if isinstance(mt, cf.CelestialFrame):
-            transform_to_mt = Shift(rdel) & Shift(ddel)
-        elif isinstance(mt, cf.CompositeFrame):
-            transform_to_mt = Shift(rdel) & Shift(ddel) & Identity(1)
+        if isinstance(model, datamodels.MultiSlitModel):
+            for ind, slit in enumerate(model.slits):
+                new_wcs = add_mt_frame(slit.meta.wcs,
+                                          mt_avra, mt_avdec,
+                                          slit.meta.wcsinfo.mt_ra, slit.meta.wcsinfo.mt_dec)
+                del model.slits[ind].meta.wcs
+                model.slits[ind].meta.wcs = new_wcs
         else:
-            raise ValueError("Unrecognized coordinate frame.")
 
-        pipeline.append((model.meta.wcs.output_frame, transform_to_mt))
-        pipeline.append((mt, None))
-        new_wcs = WCS(pipeline)
-        del model.meta.wcs
-        model.meta.wcs = new_wcs
+            new_wcs = add_mt_frame(model.meta.wcs, mt_avra, mt_avdec,
+                                      model.meta.wcsinfo.mt_ra, model.meta.wcsinfo.mt_dec)
+            del model.meta.wcs
+            model.meta.wcs = new_wcs
+
         model.meta.cal_step.assign_mtwcs = 'COMPLETE'
 
     return input_model
+
+
+def add_mt_frame(wcs, ra_average, dec_average, mt_ra, mt_dec):
+    """ Add a "moving_target" frame to the WCS pipeline.
+
+    Parameters
+    ----------
+    wcs : `~gwcs.WCS`
+        WCS object for the observation or slit.
+    ra_average : float
+        The average RA of all observations.
+    dec_average : float
+        The average DEC of all observations.
+    mt_ra, mt_dec : float
+        The RA, DEC of the moving target in the observation.
+
+    Returns
+    -------
+    new_wcs : `~gwcs.WCS`
+        The WCS for the moving target observation.
+    """
+    pipeline = wcs._pipeline[:-1]
+
+    mt = deepcopy(wcs.output_frame)
+    mt.name = 'moving_target'
+
+    rdel = ra_average - mt_ra
+    ddel = dec_average - mt_dec
+
+    if isinstance(mt, cf.CelestialFrame):
+        transform_to_mt = Shift(rdel) & Shift(ddel)
+    elif isinstance(mt, cf.CompositeFrame):
+        transform_to_mt = Shift(rdel) & Shift(ddel) & Identity(1)
+    else:
+        raise ValueError("Unrecognized coordinate frame.")
+
+    pipeline.append((
+    wcs.output_frame, transform_to_mt))
+    pipeline.append((mt, None))
+    new_wcs = WCS(pipeline)
+    return new_wcs

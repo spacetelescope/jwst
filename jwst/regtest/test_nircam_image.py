@@ -141,6 +141,15 @@ def test_nircam_image_stage3_catalog(run_image3pipeline, rtdata_module, diff_ast
 
     assert diff_astropy_tables(rtdata.output, rtdata.truth, rtol=1e-4, atol=1e-5)
 
+@pytest.mark.bigdata
+def test_nircam_image_stage3_segmap(run_image3pipeline, rtdata_module, fitsdiff_default_kwargs):
+    rtdata = rtdata_module
+    rtdata.input = "jw42424-o002_20191220t214154_image3_001_asn.json"
+    rtdata.output = "jw42424-o002_t001_nircam_clear-f444w_segm.fits"
+    rtdata.get_truth("truth/test_nircam_image_stages/jw42424-o002_t001_nircam_clear-f444w_segm.fits")
+
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
 
 @pytest.mark.bigdata
 def test_image3_closedfile(run_image3_closedfile, rtdata, fitsdiff_default_kwargs):

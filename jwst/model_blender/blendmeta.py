@@ -9,8 +9,8 @@ from astropy.io import fits
 
 from .. import datamodels
 from .. import associations
-from ..datamodels import fits_support
-from ..datamodels import schema as dm_schema
+from stdatamodels import fits_support
+from stdatamodels import schema as dm_schema
 
 from .blendrules import KeywordRules
 

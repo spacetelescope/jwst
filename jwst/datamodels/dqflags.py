@@ -28,7 +28,7 @@ pixel = {'GOOD':             0,      # No bits set, all is good
          'DROPOUT':          2**3,   # Data lost in transmission
          'OUTLIER':          2**4,   # Flagged by outlier detection (was RESERVED_1)
          'PERSISTENCE':      2**5,   # High persistence (was RESERVED_2)
-         'RESERVED_3':       2**6,   #
+         'AD_FLOOR':         2**6,   # Below A/D floor (0 DN, was RESERVED_3)
          'RESERVED_4':       2**7,   #
          'UNRELIABLE_ERROR': 2**8,   # Uncertainty exceeds quoted error
          'NON_SCIENCE':      2**9,   # Pixel not on science portion of detector
@@ -64,13 +64,14 @@ group = {'GOOD':       pixel['GOOD'],
          'SATURATED':  pixel['SATURATED'],
          'JUMP_DET':   pixel['JUMP_DET'],
          'DROPOUT':    pixel['DROPOUT'],
+         'AD_FLOOR':   pixel['AD_FLOOR'],
 }
 
 
 def interpret_bit_flags(bit_flags, flip_bits=None):
     """Converts input bit flags to a single integer value (bit mask) or `None`.
 
-    Wraps `astropy.nddate.bitmask.interpret_bit_flags`, allowing the JWST
+    Wraps `astropy.nddata.bitmask.interpret_bit_flags`, allowing the JWST
     bit mnemonics to be used in place of integers.
 
     Parameters

@@ -2,12 +2,13 @@
 import inspect
 from os import path
 import pytest
+import re
 
 from .helpers import (
     t_path
 )
 
-from .. import AssociationRegistry
+from jwst.associations import AssociationRegistry
 
 
 @pytest.fixture(scope='module')
@@ -25,6 +26,23 @@ def dms_asns(dms_registry):
     """Create basic associations"""
     result = dms_registry.match('item')
     return result
+
+
+def test_asn_name(dms_asns):
+    """Test for generating an associaton name"""
+    asns, _ = dms_asns
+    asn = asns[0]
+
+    regex = re.compile(r'jwnoprogram-a3001_none_\d\d\d_asn')
+    assert regex.match(asn.asn_name)
+
+
+def test_asn_name_override(dms_asns):
+    """Test for generating an associaton name"""
+    asns, _ = dms_asns
+    asn = asns[0]
+    asn.asn_name = 'new_name'
+    assert asn.asn_name == 'new_name'
 
 
 def test_registry(dms_registry):

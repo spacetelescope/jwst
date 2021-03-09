@@ -246,6 +246,12 @@ properties:
             enum: [OK, SUSPECT]
             fits_keyword: ENG_QUAL
             blend_table: True
+          pointing_engdb_quality:
+            title: Quality of pointing information from EngDB
+            type: string
+            enum: [CALCULATED, PLANNED]
+            fits_keyword: ENGQLPTG
+            blend_table: True
           type:
             title: Visit type
             type: string
@@ -291,6 +297,10 @@ properties:
             type: boolean
             fits_keyword: EXP_ONLY
             blend_table: True
+          crowded_field:
+            title: Are the FGSes in a crowded field?
+            type: boolean
+            fits_keyword: CROWDFLD
       target:
         title: Target information
         type: object
@@ -387,8 +397,9 @@ properties:
             blend_table: True
             blend_rule: multi
           module:
-            title: 'NIRCam module: A or B'
+            title: 'NIRCam module: A, B, or MULTIPLE'
             type: string
+            enum: [A, B, MULTIPLE]
             fits_keyword: MODULE
             blend_table: True
             blend_rule: multi
@@ -521,7 +532,7 @@ properties:
             title: Lamp operating mode
             type: string
             default: 'NONE'
-            enum: [BRIGHTOBJ, FIXEDSLIT, GRATING-ONLY, IFU, MSASPEC, 'NONE']
+            enum: [BRIGHTOBJ, FIXEDSLIT, GRATING-ONLY, IFU, MSASPEC, IMAGE, 'NONE']
             fits_keyword: OPMODE
             blend_table: True
           gwa_xtilt:
@@ -594,7 +605,7 @@ properties:
               FGS_ACQ1, FGS_ACQ2, FGS_FINEGUIDE, FGS_ID-IMAGE, FGS_ID-STACK, FGS_TRACK,
               # MIRI
               MIR_4QPM, MIR_CORONCAL, MIR_DARKALL, MIR_DARKIMG, MIR_DARKMRS,
-              MIR_FLATALL, MIR_FLATIMAGE, MIR_FLATIMAGE-EXT, MIR_FLATMRS, MIR_FLATMRS-EXT,
+              MIR_FLATIMAGE, MIR_FLATIMAGE-EXT, MIR_FLATMRS, MIR_FLATMRS-EXT,
               MIR_IMAGE, MIR_LRS-FIXEDSLIT, MIR_LRS-SLITLESS, MIR_LYOT, MIR_MRS,
               MIR_TACONFIRM, MIR_TACQ,
               # NIRISS
@@ -685,11 +696,11 @@ properties:
             type: string
             enum: [ACQ1, ACQ2, BRIGHT1, BRIGHT2, DEEP2, DEEP8, FAST,
               FASTGRPAVG, FASTGRPAVG8, FASTGRPAVG16, FASTGRPAVG32, FASTGRPAVG64,
-              FGS, FGS60, FGS8370, FGS840, FGSRAPID, FINEGUIDE,
-              ID, MEDIUM2, MEDIUM8, NIS, NISRAPID,
+              FASTR1, FASTR100, FGS, FGS60, FGS8370, FGS840, FGSRAPID,
+              FINEGUIDE, ID, MEDIUM2, MEDIUM8, NIS, NISRAPID,
               NRS, NRSIRS2, NRSN16R4, NRSN32R8, NRSN8R2,
               NRSRAPID, NRSIRS2RAPID, NRSRAPIDD1, NRSRAPIDD2, NRSRAPIDD6,
-              NRSSLOW, RAPID, SHALLOW2, SHALLOW4, SLOW, TRACK, ANY, N/A]
+              NRSSLOW, RAPID, SHALLOW2, SHALLOW4, SLOW, SLOWR1, TRACK, ANY, N/A]
             fits_keyword: READPATT
             blend_table: True
           segment_number:
@@ -896,7 +907,10 @@ properties:
                  [8X8, 32X32, 128X128, 2048X64,
                   SUB128CNTR, SUB128DIAG, SUB128LL,
                   SUB32CNTR, SUB32DIAG, SUB32LL,
-                  SUB8CNTR, SUB8DIAG, SUB8LL]
+                  SUB8CNTR, SUB8DIAG, SUB8LL,
+                  SUBIDSTRIPCENTER, SUBIDSTRIPLL,
+                  SUBTUNE32CENTERG1, SUBTUNE32CENTERG2,
+                  SUBTUNE32LLG1, SUBTUNE32LLG2]
               # MIRI
               - enum:
                  [BRIGHTSKY, MASK1065, MASK1140, MASK1550, MASKLYOT,
@@ -1002,29 +1016,88 @@ properties:
             enum:
               # MIRI coron
              [5-POINT-SMALL-GRID, 9-POINT-SMALL-GRID,
+
               # MIRI imaging
-              4-POINT-SETS, CYCLING, GAUSSIAN, REULEAUX, WFSC,
+              CYCLING, REULEAUX, SPARSE-CYCLING,
+              2-POINT, 4-POINT-SETS,
+              2-POINT-MIRI-F770W-WITH-NIRCam, 3-POINT-MIRI-F770W-WITH-NIRCam,
+              4-POINT-MIRI-F770W-WITH-NIRCam, 9-POINT-MIRI-F770W-WITH-NIRCam,
+              3-POINT-MIRI-F1000W-WITH-NIRCam, 4-POINT-MIRI-F1000W-WITH-NIRCam,
+              2-POINT-MIRI-F1280W-WITH-NIRCam, 3-POINT-MIRI-F1280W-WITH-NIRCam,
+              4-POINT-MIRI-F1280W-WITH-NIRCam, 9-POINT-MIRI-F1280W-WITH-NIRCam,
+              2-POINT-MIRI-F1500W-WITH-NIRCam, 3-POINT-MIRI-F1500W-WITH-NIRCam,
+              4-POINT-MIRI-F1500W-WITH-NIRCam, 9-POINT-MIRI-F1500W-WITH-NIRCam,
+              2-POINT-MIRI-F1800W-WITH-NIRCam, 3-POINT-MIRI-F1800W-WITH-NIRCam,
+              4-POINT-MIRI-F1800W-WITH-NIRCam,
+              2-POINT-MIRI-F2100W-WITH-NIRCam, 3-POINT-MIRI-F2100W-WITH-NIRCam,
+              4-POINT-MIRI-F2100W-WITH-NIRCam, 9-POINT-MIRI-F2100W-WITH-NIRCam,
+              2-POINT-MIRI-F2550W-WITH-NIRCam, 3-POINT-MIRI-F2550W-WITH-NIRCam,
+              4-POINT-MIRI-F2550W-WITH-NIRCam, 9-POINT-MIRI-F2550W-WITH-NIRCam,
+              2-POINT-MIRI-F560W-WITH-NIRISS,
+              3-POINT-MIRI-F770W-WITH-NIRISS, 4-POINT-MIRI-F770W-WITH-NIRISS,
+              9-POINT-MIRI-F770W-WITH-NIRISS,
+              3-POINT-MIRI-F1000W-WITH-NIRISS, 4-POINT-MIRI-F1000W-WITH-NIRISS,
+              9-POINT-MIRI-F1000W-WITH-NIRISS,
+              2-POINT-MIRI-F1280W-WITH-NIRISS, 3-POINT-MIRI-F1280W-WITH-NIRISS,
+              4-POINT-MIRI-F1280W-WITH-NIRISS, 9-POINT-MIRI-F1280W-WITH-NIRISS,
+              2-POINT-MIRI-F1800W-WITH-NIRISS, 3-POINT-MIRI-F1800W-WITH-NIRISS,
+              4-POINT-MIRI-F1800W-WITH-NIRISS, 9-POINT-MIRI-F1800W-WITH-NIRISS,
+              2-POINT-MIRI-F2100W-WITH-NIRISS, 3-POINT-MIRI-F2100W-WITH-NIRISS,
+              4-POINT-MIRI-F2100W-WITH-NIRISS,
+              2-POINT-MIRI-F2550W-WITH-NIRISS, 3-POINT-MIRI-F2550W-WITH-NIRISS,
+              4-POINT-MIRI-F2550W-WITH-NIRISS, 9-POINT-MIRI-F2550W-WITH-NIRISS,
+
               # MIRI LRS slit
-              7PIX-5PIX-SLIT-SCAN, ALONG-SLIT-NOD, MAPPING,
+              7X3-PIXEL-MAP-CENTER, 7X3-PIXEL-MAP-NOD1, 7X3-PIXEL-MAP-NOD2,
+              1PIXEL-SLIT-SCAN, 2PIXEL-SLIT-SCAN, 7PIXEL-SLIT-SCAN, 7PIX-5PIX-SLIT-SCAN,
+              ALONG-SLIT-NOD, MAPPING,
+              INTRAPIXEL-SLIT-SCAN-CENTER, INTRAPIXEL-SLIT-SCAN-NOD1, INTRAPIXEL-SLIT-SCAN-NOD2,
+              LONG-CROSS-SCAN-CENTER, LONG-CROSS-SCAN-NOD1, LONG-CROSS-SCAN-NOD2,
+              SHORT-CROSS-SCAN-CENTER, SHORT-CROSS-SCAN-NOD1, SHORT-CROSS-SCAN-NOD2,
+
               # MIRI LRS sliteless
-              2PIXEL-SLITLESS-SCAN-SHORT, EXTENDED-FLAT-SLITLESS,
+              5PIXEL-8x4-MAP-SLITLESS, 7PIXEL-9x3-MAP-SLITLESS,
+              5PIXEL-SLITLESS-SCAN, 7PIXEL-SLITLESS-SCAN,
+              1PIXEL-SLITLESS-SCAN-LONG, 1PIXEL-SLITLESS-SCAN-SHORT,
+              2PIXEL-SLITLESS-SCAN-SHORT,
+              7x3-PIXEL-MAP-SLITLESS, 9x3-8x4-SCAN-MAPS-SLITLESS,
+
               # MIRI MRS
-              2-POINT, 4-POINT, EXTENDED-SOURCE, POINT-SOURCE,
+              2-POINT, 4-POINT,
+
               # NIRCam
               FULL, FULLBOX, FULL-TIGHT,
               INTRAMODULE, INTRAMODULEBOX, INTRAMODULEX, INTRASCA,
-              SUBARRAY-DITHER,
+              SUBARRAY-DITHER, WFSC, 1LOS,
+
               # NIRISS
-              AMI, IMAGING, MIMF, PARALLEL, WFSS,
+              AMI, IMAGING, MIMF, WFSS,
+              NIS_NRC_2L, NIS_NRC_2M,
+              NIS_NRC_3L, NIS_NRC_3M, NIS_NRC_3S,
+              NIS_NRC_4L, NIS_NRC_4M, NIS_NRC_4S,
+              NIS_NRC_9L, NIS_NRC_9M, NIS_NRC_9S,
+
               # NIRSpec FS, IFU, and MOS
+              2-POINT-NOD, 3-POINT-NOD, 5-POINT-NOD,
               2-POINT-WITH-NIRCAM-SIZE1, 2-POINT-WITH-NIRCAM-SIZE2, 2-POINT-WITH-NIRCAM-SIZE3,
               3-POINT-WITH-NIRCAM-SIZE1, 3-POINT-WITH-NIRCAM-SIZE2, 3-POINT-WITH-NIRCAM-SIZE3,
-              2-POINT-NOD, 3-POINT-NOD, 5-POINT-NOD,
+
               # NIRSpec IFU
               4-POINT-NOD, 4-POINT-DITHER, CYCLING, SPARSE-CYCLING,
+
               # Misc
               N/A, NONE, ANY]
             fits_keyword: PATTTYPE
+            blend_table: True
+          primary_dither_type:
+            title: Primary dither points and packing
+            type: string
+            fits_keyword: PRIDTYPE
+            blend_table: True
+          primary_points:
+            title: Number of points in primary dither pattern
+            type: integer
+            fits_keyword: PRIDTPTS
             blend_table: True
           position_number:
             title: Position number in primary pattern
@@ -1041,6 +1114,11 @@ properties:
             type: integer
             fits_keyword: NUMDTHPT
             blend_table: True
+          total_cycling_points:
+            title: Number of points in CYCLING pattern
+            type: integer
+            fits_keyword: PATTNPTS
+            blend_table: True
           dither_points:
             title: Total number of points in image dither pattern
             fits_keyword: NRIMDTPT
@@ -1050,18 +1128,18 @@ properties:
             type: string
             fits_keyword: PATTSIZE
             blend_table: True
-          subpixel_number:
-            title: Subpixel pattern number
-            type: integer
-            fits_keyword: SUBPXNUM
+          small_grid_pattern:
+            title: Name of small grid dither pattern
+            type: string
+            fits_keyword: SMGRDPAT
             blend_table: True
           subpixel_total_points:
-            title: Total number of points in subpixel pattern
+            title: Number of points in subpixel dither pattern
             type: integer
-            fits_keyword: SUBPXPNS
+            fits_keyword: SUBPXPTS
             blend_table: True
-          subpixel_dither_pattern:
-            title: subpixel dither pattern
+          subpixel_pattern:
+            title: Subpixel dither pattern type
             type: string
             fits_keyword: SUBPXPAT
             blend_table: True
@@ -1215,15 +1293,15 @@ properties:
         title: Velocity aberration correction information
         type: object
         properties:
-          ra_offset:
-            title: "[rad] Velocity aberration correction RA offset"
+          va_ra_ref:
+            title: "[deg] Velocity aberrated apparent reference RA"
             type: number
-            fits_keyword: DVA_RA
+            fits_keyword: VA_RA
             blend_table: True
-          dec_offset:
-            title: "[rad] Velocity aberration correction Dec offset"
+          va_dec_ref:
+            title: "[deg] Velocity aberrated apparent reference Dec"
             type: number
-            fits_keyword: DVA_DEC
+            fits_keyword: VA_DEC
             blend_table: True
       time:
         title: Time information
@@ -1477,51 +1555,6 @@ properties:
             title: Guide star annual parallax
             type: number
             fits_keyword: GS_PARA
-            blend_table: True
-          gs_jmag:
-            title: Guide star NIR J magnitude
-            type: number
-            fits_keyword: GS_JMAG
-            blend_table: True
-          gs_ujmag:
-            title: Guide star NIR J magnitude uncertainy
-            type: number
-            fits_keyword: GS_UJMAG
-            blend_table: True
-          gs_srcjm:
-            title: Guide star NIR J magnitude source
-            type: string
-            fits_keyword: GS_SRCJM
-            blend_table: True
-          gs_hmag:
-            title: Guide star NIR H magnitude
-            type: number
-            fits_keyword: GS_HMAG
-            blend_table: True
-          gs_uhmag:
-            title: Guide star NIR H magnitude uncertainy
-            type: number
-            fits_keyword: GS_UHMAG
-            blend_table: True
-          gs_srchm:
-            title: Guide star NIR H magnitude source
-            type: string
-            fits_keyword: GS_SRCHM
-            blend_table: True
-          gs_kmag:
-            title: Guide star NIR K magnitude
-            type: number
-            fits_keyword: GS_KMAG
-            blend_table: True
-          gs_ukmag:
-            title: Guide star NIR K magnitude uncertainy
-            type: number
-            fits_keyword: GS_UKMAG
-            blend_table: True
-          gs_srckm:
-            title: Guide star NIR K magnitude source
-            type: string
-            fits_keyword: GS_SRCKM
             blend_table: True
       ref_file:
         title: Reference file information
@@ -1982,6 +2015,15 @@ properties:
                 type: string
                 fits_keyword: R_V2V3
                 blend_table: True
+          wavecorr:
+            title: Zero point wavelength correction for Nirspec MOS and FS mode
+            type: object
+            properties:
+              name:
+                title: Zero point wavelength correction reference file name
+                type: string
+                fits_keyword: R_WAVCOR
+                blend_table: True
           wavelengthrange:
             title: Wavelength Range reference file information
             type: object
@@ -2021,7 +2063,7 @@ properties:
             fits_keyword: S_WCS
             blend_table: True
           assign_mtwcs:
-            title: Assign Moving Target World Coordinate System 
+            title: Assign Moving Target World Coordinate System
             type: string
             fits_keyword: S_MTWCS
             blend_table: True
@@ -2263,6 +2305,10 @@ properties:
         title: Source catalog filename
         type: string
         fits_keyword: SCATFILE
+      segmentation_map:
+        title: Segmentation map filename
+        type: string
+        fits_keyword: SEGMFILE
       resample:
         title: Resample Parameters
         type: object
@@ -2278,7 +2324,7 @@ properties:
           weight_type:
             title: Type of drizzle weighting to use in resampling input
             type: string
-            enum: [exptime, error]
+            enum: [exptime, ivm]
             fits_keyword: RESWHT
       background:
         title: Background information

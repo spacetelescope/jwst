@@ -29,6 +29,8 @@ class Coron3Pipeline(Pipeline):
 
     """
 
+    class_alias = "calwebb_coron3"
+
     spec = """
         suffix = string(default='i2d')
     """
@@ -110,6 +112,7 @@ class Coron3Pipeline(Pipeline):
         psf_models.close()
 
         # Save the resulting PSF stack
+        psf_stack.meta.filetype = 'psf stack'
         self.save_model(psf_stack, suffix='psfstack')
 
         # Call the sequence of steps outlier_detection, align_refs, and klip
@@ -129,6 +132,7 @@ class Coron3Pipeline(Pipeline):
                 psf_aligned = self.align_refs(target, psf_stack)
 
                 # Save the alignment results
+                psf_aligned.meta.filetype = 'psf aligned'
                 self.save_model(
                     psf_aligned, output_file=target_file,
                     suffix='psfalign', acid=acid
@@ -139,6 +143,7 @@ class Coron3Pipeline(Pipeline):
                 psf_aligned.close()
 
                 # Save the psf subtraction results
+                psf_sub.meta.filetype = 'psf subtracted'
                 self.save_model(
                     psf_sub, output_file=target_file,
                     suffix='psfsub', acid=acid

@@ -1,10 +1,10 @@
-from .model_base import DataModel
+from .model_base import JwstDataModel
 
 
 __all__ = ['IFUCubeModel']
 
 
-class IFUCubeModel(DataModel):
+class IFUCubeModel(JwstDataModel):
     """
     A data model for 3D IFU  cubes.
 

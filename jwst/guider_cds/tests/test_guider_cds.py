@@ -55,7 +55,7 @@ def test_guider_cds_fineguide_mode(make_guider_image):
         last_4 = data_sect[-4:, :, :].mean(axis=0)
         slope_int_cube[num_int, :, :] = last_4 - first_4
 
-        truth = slope_int_cube /  model.meta.exposure.group_time
+        truth = slope_int_cube / model.meta.exposure.group_time
 
     assert np.allclose(result.data, truth)
 
@@ -81,7 +81,7 @@ def test_guider_cds_acq_track_modes(exptype, make_guider_image):
         grp_first = data_sect[0, :, :]
         slope_int_cube[num_int, :, :] = grp_last - grp_first
 
-        truth = slope_int_cube /  model.meta.exposure.group_time
+        truth = slope_int_cube / model.meta.exposure.group_time
 
     assert np.allclose(result.data, truth)
 

@@ -73,7 +73,10 @@ def imaging(input_model, reference_files):
     and uses the "distortion" reference file.
     """
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.arcsec, u.arcsec))
+    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), axes_names=('v2', 'v3'),
+                      unit=(u.arcsec, u.arcsec))
+    v2v3vacorr = cf.Frame2D(name='v2v3vacorr', axes_order=(0, 1),
+                            axes_names=('v2', 'v3'), unit=(u.arcsec, u.arcsec))
     world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
 
     distortion = imaging_distortion(input_model, reference_files)
@@ -82,9 +85,17 @@ def imaging(input_model, reference_files):
         distortion = subarray2full | distortion
         distortion.bounding_box = bounding_box_from_subarray(input_model)
 
+    # Compute differential velocity aberration (DVA) correction:
+    va_corr = pointing.dva_corr_model(
+        va_scale=input_model.meta.velocity_aberration.scale_factor,
+        v2_ref=input_model.meta.wcsinfo.v2_ref,
+        v3_ref=input_model.meta.wcsinfo.v3_ref
+    )
+
     tel2sky = pointing.v23tosky(input_model)
     pipeline = [(detector, distortion),
-                (v2v3, tel2sky),
+                (v2v3, va_corr),
+                (v2v3vacorr, tel2sky),
                 (world, None)]
     return pipeline
 
@@ -92,7 +103,6 @@ def imaging(input_model, reference_files):
 def imaging_distortion(input_model, reference_files):
     """
     Create the "detector" to "v2v3" transform for imaging mode.
-
 
     Parameters
     ----------
@@ -173,10 +183,7 @@ def tsgrism(input_model, reference_files):
     if input_model.meta.instrument.pupil != "GRISMR":
         raise ValueError('NRC_TSGRIM mode only supports GRISMR')
 
-    gdetector = cf.Frame2D(name='grism_detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    detector = cf.Frame2D(name='full_detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.deg, u.deg))
-    world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
+    frames = create_coord_frames()
 
     # translate the x,y detector-in to x,y detector out coordinates
     # Get the disperser parameters which are defined as a model for each
@@ -253,6 +260,13 @@ def tsgrism(input_model, reference_files):
     # take us from full frame detector to v2v3
     distortion = imaging_distortion(input_model, reference_files) & Identity(2)
 
+    # Compute differential velocity aberration (DVA) correction:
+    va_corr = pointing.dva_corr_model(
+        va_scale=input_model.meta.velocity_aberration.scale_factor,
+        v2_ref=input_model.meta.wcsinfo.v2_ref,
+        v3_ref=input_model.meta.wcsinfo.v3_ref
+    ) & Identity(2)
+
     # v2v3 to the sky
     # remap the tel2sky inverse as well since we can feed it the values of
     # crval1, crval2 which correspond to crpix1, crpix2. This leaves
@@ -263,10 +277,11 @@ def tsgrism(input_model, reference_files):
     newinverse = Mapping((0, 1, 0, 1)) | setra & setdec & Identity(2) | t2skyinverse
     tel2sky.inverse = newinverse
 
-    pipeline = [(gdetector, sub2direct),
-                (detector, distortion),
-                (v2v3, tel2sky),
-                (world, None)]
+    pipeline = [(frames['grism_detector'], sub2direct),
+                (frames['direct_image'], distortion),
+                (frames['v2v3'], va_corr),
+                (frames['v2v3vacorr'], tel2sky),
+                (frames['world'], None)]
 
     return pipeline
 
@@ -328,9 +343,11 @@ def wfss(input_model, reference_files):
             raise ValueError('The input exposure is not a NIRCAM grism')
 
     # Create the empty detector as a 2D coordinate frame in pixel units
-    gdetector = cf.Frame2D(name='grism_detector',
-                           axes_order=(0, 1),
-                           unit=(u.pix, u.pix))
+    gdetector = cf.Frame2D(name='grism_detector', axes_order=(0, 1),
+                           axes_names=('x_grism', 'y_grism'), unit=(u.pix, u.pix))
+    spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,),
+                            axes_names=('wavelength',))
+
 
     # translate the x,y detector-in to x,y detector out coordinates
     # Get the disperser parameters which are defined as a model for each
@@ -389,13 +406,41 @@ def wfss(input_model, reference_files):
 
     # pass the x0,y0, wave, order, through the pipeline
     imagepipe = []
-    world = image_pipeline.pop()
+    world = image_pipeline.pop()[0]
+    world.name = 'sky'
     for cframe, trans in image_pipeline:
         trans = trans & (Identity(2))
-        imagepipe.append((cframe, trans))
-    imagepipe.append((world))
+        name = cframe.name
+        cframe.name = name + 'spatial'
+        spatial_and_spectral = cf.CompositeFrame([cframe, spec],
+                                                  name=name)
+        imagepipe.append((spatial_and_spectral, trans))
+
+    # Output frame is Celestial + Spectral
+    imagepipe.append((cf.CompositeFrame([world, spec], name='world'), None))
     grism_pipeline.extend(imagepipe)
     return grism_pipeline
+
+
+def create_coord_frames():
+    gdetector = cf.Frame2D(name='grism_detector', axes_order=(0, 1), unit=(u.pix, u.pix))
+    detector = cf.Frame2D(name='full_detector', axes_order=(0, 1),
+                          axes_names=('dx', 'dy'), unit=(u.pix, u.pix))
+    v2v3_spatial = cf.Frame2D(name='v2v3_spatial', axes_order=(0, 1),
+                              axes_names=('v2', 'v3'), unit=(u.deg, u.deg))
+    v2v3vacorr_spatial = cf.Frame2D(name='v2v3vacorr_spatial', axes_order=(0, 1),
+                                    axes_names=('v2', 'v3'), unit=(u.arcsec, u.arcsec))
+    sky_frame = cf.CelestialFrame(reference_frame=coord.ICRS(), name='icrs')
+    spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,),
+                            axes_names=('wavelength',))
+    frames = {'grism_detector': gdetector,
+              'direct_image': cf.CompositeFrame([detector, spec], name='direct_image'),
+              'v2v3': cf.CompositeFrame([v2v3_spatial, spec], name='v2v3'),
+              'v2v3vacorr': cf.CompositeFrame([v2v3vacorr_spatial, spec], name='v2v3vacorr'),
+              'world': cf.CompositeFrame([sky_frame, spec], name='world')
+              }
+    return frames
+
 
 
 exp_type2transform = {'nrc_image': imaging,

@@ -1,13 +1,396 @@
-0.17.2 (unreleased)
+1.1.1 (unreleased)
+==================
+
+assign_wcs
+----------
+
+- Changed evaluation of grism bounding box center from averaged extrema of
+  transformed bounding box to transformed centroid of source_cat object [#5809]
+
+associations
+------------
+
+- Updated level2b WFSS rules to only consider exposures from the same
+  instrument channel when matching direct images with grism images in
+  NIRCam WFSS observations. [#5786]
+
+- Removed PATTTYPE='None' constraint from Lv3MIRMRS association rule to
+  generate spec3 associations for undithered MRS observations. [#5804]
+
+datamodels
+----------
+
+- Added is_star to slitmeta [#5788]
+
+extract_2d
+----------
+
+- For WFSS removed setting srctype to UNKNOWN; added setting ``is_star`` in slitmeta [#5788]
+
+general
+-------
+
+- Update file naming conventions documentation to clarify when optional components will be used. [#5796]
+
+- Update DQFLAGS table in RTD docs with new definitions for persistence and
+  ad_floor in bits five and six [#5815]
+
+lib
+---
+
+- Update ``update_mt_kwds`` function in ``set_telescope_pointing.py`` to  populate the TARG_RA/TARG_DEC [#5808]
+
+srctype
+-------
+
+- Added section for WFSS mode data to set srctype based on ``is_star`` value [#5788]
+
+transforms
+----------
+
+- Added ``is_star`` to GrismObject [#5788]
+
+1.1.0 (2021-02-26)
+==================
+
+assign_wcs
+----------
+
+- Added spectral frames to the output WCS frame of TSO and WFSS observations. [#5771]
+
+associations
+------------
+
+- Ignore duplicate product names while handling Level 2 associations [#5780]
+
+- Constraint added to Asn_Lv3Coron to remove background exposures [#5781]
+
+extract_1d
+----------
+
+- Determine the background using sigma clipping of entire extended region for
+  extended source IFU data [#5743]
+
+resample
+--------
+
+- Make inverse variance ``weight_type="ivm"`` the default weighting scheme for
+  multiple exposures resampled into a single output. [#5738]
+
+
+1.0.0 (2021-02-22)
+==================
+
+assign_mtwcs
+------------
+
+- Fixed a bug which caused the step to fail with ``MultiSlitModel`` input. [#5758]
+
+assign_wcs
+----------
+
+- Added velocity aberration-corrected frame ``'v2v3vacorr'`` to the WCS
+  pipeline which takes into account DVA effects. [#5602]
+
+- Renamed MIRI frame ``'V2_V3_spatial'`` to ``'v2v3_spatial'`` and
+  ``'V2_V3_vacorr_spatial'`` to ``'v2v3vacorr_spatial'``. Added axes names
+  to the ``'v2v3'`` frame for ``nircam``, ``niriss``, ``miri``, and ``fgs``.
+  Renamed axes for ``nirspec`` from ``V2`` and ``V3`` to
+  ``v2`` and ``v3``. [#5765]
+
+- Changed units of the ``'v2v3'`` frame for ``nircam`` from ``u.deg`` to
+  ``u.arcsec`` [#5765]
+
+associations
+------------
+
+- Warn about duplicate product names and do not write duplicate associations [#5721]
+
+- Added new Lvl2 rule, Asn_Lv2NRSLAMPImage, to run Image2 pipeline for NRSLAMP
+  exposures with OPMODE=image [#5740]
+
+
+combine_1d
+----------
+
+- Pull source_id from input x1d headers (from source_catalog) to populate
+  c1d output headers [#5759]
+
+cube_build
+----------
+
+- Added support for cross-dichroic configurations [#5722]
+
+- Added infrastructure to support NIRSpec opaque + grating options to build lamp mode data [#5757]
+
+- When building MIRI internal_cal type cubes removed the requirement that cdelt1=cdelt2 [#5757]
+
+
+datamodels
+----------
+
+- Updated keyword_readpatt, core, preadpatt schemas for new MIRI detector
+  readout patterns 'FASTR1', 'FASTR100' and 'SLOWR1' [#5670]
+
+- Added extr_x and extr_y to multispec datamodel. These values are center
+  of extraction region for IFU data [#5685]
+
+- Added segmentation map output file name to core schema keywords, under
+  keyword 'SEGMFILE' [#5730]
+
+- Added '1LOS' to PATTTYPE enum list in core.schema datamodel [#5728]
+
+- Added 'IMAGE' to OPMODE enum list [#5745]
+
+- Added source_id to combinedspec and multicombinedspec schemas to populate
+  combine1d output headers [#5759]
+
+extract_1d
+----------
+
+- Adding writing SRCTYPE, EXTR_X, and EXTR_Y to extracted spec for IFU data [#5685]
+
+- Only update the output x1d data using the PRIMARY input data. Prevents SCI data in x1d data [#5694]
+
+- Fixed bug in background region fitting for image columns/rows that have zero weight
+  for all pixels [#5696]
+
+group_scale
+-----------
+
+- Fix premature model closing in group_scale_step [#5692]
+
+
+lib
+---
+
+- Make EngDB_Value public for JSDP use [#5669]
+
+- Update code in ``set_velocity_aberration.py`` functions based on Colin Cox
+  suggestions: simplify DVA scale computation and improve apparent ``RA`` and
+  ``DEC`` aberrated position computation. Also, attributes ``ra_offset`` and
+  ``dec_offset`` of ``datamodel.meta.velocity_aberration`` have been renamed to
+  ``va_ra_ref`` and ``va_dec_ref`` and their corresponding FITS keywords
+  have been renamed from ``DVA_RA`` and ``DVA_DEC`` to
+  ``VA_RA`` and ``VA_DEC``. [#5666]
+
+- Make get_wcs_values_from_siaf public for JSDP use [#5669]
+
+
+outlier_detection
+-----------------
+
+- Remove hard-coded MRS outlier detection values now that a parameter reference
+  file exists. [#5753]
+
+photom
+------
+
+- Fixed handling of NIRSpec IFU extended source data, so that the flux
+  calibration gets converted to surface brightness [#5761]
+
+
+pipeline
+--------
+
+- Remove references to Numpy globals ``np.int``, ``np.float``, ``np.bool`` and
+  ``np.str`` in the package. [#5769]
+
+
+ramp_fitting
+------------
+
+- Fixed bug in handling NGROUPS=2 exposures for pixels that saturate in group 2.
+  Proper slope, err, and other quantities are now computed from the good data
+  in group 1. [#5700]
+
+- Update documentation to define optimal weighting algorithm [#5682]
+
+source_catalog
+--------------
+
+- Added the segmentation map as an output data file, with
+  suffix "segm". [#5730]
+
+srctype
+-------
+
+- Changed default SRCTYPE for non-primary NIRSpec slits in a FIXEDSLIT
+  exposure to 'EXTENDED' rather than 'POINT' [#5671]
+
+- Changed logic for handling NIRSpec MOS exposures to blank out the "global"
+  value of SRCTYPE, to ensure that only the individual slit-specific values
+  of SRCTYPE get used downstream. [#5754]
+
+stpipe
+------
+
+- Make jwst.stpipe independent of the rest of the jwst package and move
+  core code to spacetelescope/stpipe. [#5695, #5720, #5752]
+
+0.18.3 (2021-01-25)
+===================
+
+- Update documentation introduction to include installation and CRDS setup
+  instructions. [#5659]
+
+combine1d
+---------
+
+- Fixed code error in combine1d, creating extensions per spectral order
+  with the same input data [#5644]
+
+ramp_fitting
+------------
+
+- Fix a bug in estimating the max number of segments that will be needed
+  to fit any pixel [#5653]
+
+set_telescope_pointing
+----------------------
+
+- Update the check in set_telescope_pointing that determines whether an
+  exposure is TSO mode to always consider hardwired TSO EXP_TYPEs as TSO,
+  regardless of TSOVISIT and NINTS settings. [#5657]
+
+white_light
+-----------
+
+- Fixed error causing multi-segment data to reject int_times
+  for MJDs [#5566]
+
+
+0.18.2 (2021-01-19)
+===================
+
+associations
+------------
+
+- JWSTDMS-410 Asn_Lv2NRSLAMPSpectral: Break out the negative cases [#5635]
+
+- Update MIRI LRS-Fixedslit ALONG-SLIT-NOD backgrounds strategies [#5620]
+
+cube_build
+----------
+
+- Do not allow varibles defined in spec (part of the cube_build_step class) to
+  be changed, to allow calspec2 to loop over a list of files and run the
+  pipeline. [#5603]
+
+datamodels
+----------
+
+- Updated schemas for new keywords CROWDFLD, PRIDTYPE, PRIDTPTS, PATTNPTS, SMGRDPAT,
+  changed name of SUBPXPNS to SUBPXPTS, and new allowed values for PATTTYPE. [#5618]
+
+flat_field
+----------
+
+- Added DO_NOT_USE to pixels flagged as NON_SCIENCE for non-NIRSpec data [#5601]
+
+outlier_detection
+-----------------
+
+- Account for the background subtracted data in the blot image for determining
+  the noise image used in flagging outliers [#5601]
+
+set_telescope_pointing
+----------------------
+
+- Updated to populate XREF_SCI, YREF_SCI keywords for all exposures with
+  TSOVISIT=True, not just NRC_TSGRISM mode. [#5616]
+
+0.18.1 (2021-01-08)
+===================
+
+combine1d
+---------
+
+- Output FITS now contains separate combine1d extensions for each spectral
+  order present in the data [#5204]
+
+cube_build
+----------
+
+- Tweaked pixel wavelength preselection range to avoid truncation at the ends
+  of the cubes. [#5598]
+
+datamodels
+----------
+
+- Fix missing CHANNEL entry in distortion reffile schema. [#5553]
+
+extract_1d
+----------
+
+- For IFU data (NIRSpec and MIRI) the extraction radius is now a varying size
+  based on wavelength. The apcorr correction is a function of wavelength and
+  radius size. Fixes a bug in units conversion for applying the apcorr correction.
+  The units are now correctly converted from arcseconds to pixels. Added an
+  new method to apply the apcorr correction for IFU data. [#5506]
+
+pipeline
+--------
+
+- Removed all unnecessary parameter settings from cfg files for all steps
+  and pipelines, and removed references to step config files from most
+  pipeline modules (only kept those that are necessary for intended
+  functionality). [#5574]
+
+skymatch
+--------
+
+- Fixed a bug due to which sky matching may fail under certain circumstances
+  such as using 'mode' statistics on a single pixel (after sigma-clipping). [#5567]
+
+stpipe
+------
+
+- Removed unused LinearPipeline class. [#5590]
+
+wavecorr
+--------
+- Fixed bugs in wavecorr. [#5570]
+
+0.18.0 (2020-12-21)
 ===================
 
 ami
 ---
+- Update code to use two new input parameters: psf_offset,rotation_search [#5548]
 
-- Update code and unit tests to use new ami analyze algorithm [#5390]
+- Update code and unit tests to use new ami_analyze algorithms [#5390]
+
+- Update ami_analyze to extract a SUB80 subarray from full-frame images [#5437]
+
+assign_wcs
+----------
+
+- Add nrs_verify to the NIRSpec exposure list [#5403]
+
+- Enable resample_spec for NIRSpec line lamp exposures [#5484]
+
+- Added SIP approximation to WCS for imaging modes. FITS WCS keywords added to meta.wcsinfo. [#5507]
+
+- Fix bug where subarray bounding boxes were 1 pixel too small. [#5543]
+
+- Mark Nirspec slits which project on less than one pixel as invalid. [#5554]
 
 associations
 ------------
+
+- Asn_Lv2WFSS: Add segmentation map exposure to Level2 WFSS associations [#5532]
+
+- Add new dither keyword subpxpts to constraints [#5525]
+
+- Add further constraints to rule Asn_Lv2NRSLAMPSpectral such that associations
+  are created only when LAMP is on and OPMODE indicates a valid optical path. [#5496]
+
+- Restrict association creation based on optical path for NIRSpec Fixed-slit and IFU [#5504]
+
+- Asn_Lv3SpecAux: Add optical element constraint [#5479]
+
+- Add utility asn_gather [#5468]
 
 - Do not allow target acqs to be considered TSO [#5385]
 
@@ -16,11 +399,13 @@ associations
 cube_build
 ----------
 
-- When making SINGLE type cubes for outlier detection or mrs_imatch data not in the 
+- When making SINGLE type cubes for outlier detection or mrs_imatch data not in the
   appropriate channel/grating is skipped [#5347]
 
 - If outlier detection has flagged all the data on a input file as DO_NOT_USE, then
   skip the file in creating an ifucube [*5347]
+
+- Refactor DataTypes handling of ModelContainer. [#5409]
 
 datamodels
 ----------
@@ -31,11 +416,47 @@ datamodels
 
 - Add NRS_VERIFY to the core schema as an allowed EXP_TYPE [#5395]
 
+- Remove logging from DataModel.close [#5413]
+
+- Updated keyword schemas for EXP_TYPE and MODULE, to keep in sync with the
+  JWST Keyword Dictionary [#5452]
+
+- Added flatfield and photom correction arrays to slit data models [#5460]
+
+- Move core ``jwst.datamodels`` code to ``stdatamodels`` package and add it as
+  an install dependency [#5433]
+
+- Update schemas to include new allowed SUBARRAY values for FGS ASIC tuning
+  modes [#5531]
+
+- Add meta.visit.pointing_engdb_quality entry to correspond to ENGQLPTG keyword [#5556]
+
+- Update Moving Target CHEBY table extension schema for changes to column
+  definitions in the JWSTKD and SDP [#5558]
+
+- Update distortion reference file schema to have ``meta.instrument.channel``
+  keyword [#5553]
+
 extract_1d
 ----------
 
-- Fixed bug invovling the determination of source RA/Dec for resampled Slit
+- Fixed bug involving the determination of source RA/Dec for resampled Slit
   data. [#5353]
+
+- Updated to use an EXTRACT1D reference file for NIRCam TSGRISM exposures;
+  added step param "bkg_fit" to allow for mean and median options in background
+  computation, in addition to the existing polynomial fit; fixed bug in
+  background computation that was preventing background subtraction from
+  ever happening. [#5414]
+
+- Fixed bug involving the processing of WFSS observations when there's only
+  one spectrum instance for a given source. [#5439]
+
+fits_generator
+--------------
+
+- Addressed deprecated get_children method of XML parser.  Changed type of PATTSIZE from
+  float to string in templates. [#5536]
 
 flatfield
 ---------
@@ -44,6 +465,19 @@ flatfield
   processing branch. [#5356]
 
 - Updated branch logic to handle NRS_LAMP exposures as spectroscopic. [#5370]
+
+- Updated NIRSpec fixed-slit processing to compute and save correction
+  values for both point and uniform sources in the primary slit when it
+  contains a point source, in order to support master background corrections.
+  [#5462]
+
+jump
+----
+
+- Fixed bug in the minimum number of groups per integration for the jump
+  detection step by changing it from 3 to 5. [#5376]
+
+- Various rework to reduce memory usage and increase readability. [#5404]
 
 master_background
 -----------------
@@ -56,6 +490,21 @@ outlier_detection
 -----------------
 
 - Implement memory check in resample to prevent huge arrays [#5354]
+
+photom
+------
+
+- Updated NIRSpec fixed-slit processing to compute and save correction
+  values for both point and uniform sources in the primary slit when it
+  contains a point source, in order to support master background corrections.
+  [#5463]
+
+pipeline
+--------
+
+- Update ``Image3Pipeline`` to allow sky subtraction when input contains
+  only one image (group). [#5423]
+- Enable resample_spec for NIRSpec line lamp exposures in Spec2Pipeline [#5484]
 
 ramp_fitting
 ------------
@@ -71,12 +520,65 @@ resample
 
 - Implement memory check in resample to prevent huge arrays [#5354]
 
+- Add ``pixel_scale_ratio`` parameter to allow finer output grid. [#5389]
+- Enable resample_spec for NIRSpec line lamp exposures [#5484]
+
+reset
+-----
+- Turn the step back on for the calwebb_detector1 pipeline [#5485]
+
 saturation
 ----------
 
 - Set saturation threshold to A-to-D limit of 65535 for pixels flagged with
   NO_SAT_CHECK in the saturation reference file, instead of skipping any
   test of those pixels. [#5394]
+- Flag groups values below A/D floor (0 DN) (#5422)
+
+set_telescope_pointing
+----------------------
+
+- Add logging of the found quaternion information [#5495]
+- Handle cases where engineering database's pointing mnemonics are all zero over the requested time range [#5540]
+- Set value of keyword ENGQLPTG to CALCULATED or PLANNED depending on whether pointing telemetry was used to
+  update the WCS [#5556]
+
+skymatch
+--------
+
+- Fix a bug in ``skymatch`` that would result in a crash when ``skymethod``
+  contains ``'global'`` and the *single image group*'s sky cannot be computed
+  (e.g., because all pixels are flagged as "bad"). [#5440]
+
+stpipe
+------
+
+- Implement utility function all_steps and fix crds reference file retrieval for non-datamodels [#5492]
+
+tso_photometry
+--------------
+
+- Place aperture using header keywords XREF_SCI and YREF_SCI instead of
+  CRPIX1 and CRPIX2 [#5533]
+
+- Fixed the flux units in the output photometry catalog. [#5529]
+
+tweakreg
+--------
+
+- Add support for the new ``fitgeom`` mode: ``'rshift'`` that can fit only
+  for shifts and a rotation. [#5475]
+
+wfs_combine
+-----------
+
+- Add checking for bad pixels by using DO_NOT_USE rather than DQ>0. [#5500, #5519]
+
+white_light
+-----------
+
+- Add support for step parameters ``min_wavelength`` and ``max_wavelength`` to modify
+  the wavelength region over which the flux integration is calculated. [#5501]
 
 0.17.1 (2020-09-15)
 ===================
@@ -115,8 +617,8 @@ flat_field
 
 - Implement applying the inverse operation. [#5302]
 
-master_backround
-----------------
+master_background
+-----------------
 
 - Create new step `MasterBackgroundNrsSlits` step to handle NIRSpec MOS data in `Spec2Pipeline` [#5317]
 
@@ -2056,10 +2558,12 @@ imprint
 
 ipc
 ---
+
 - Updated the docstrings [#2822]
 
 jump
 ----
+
  - Updated twopoint_difference.py to not use groups with groupdq set to DO_NOT_USE [#3495]
 
 jwpsf

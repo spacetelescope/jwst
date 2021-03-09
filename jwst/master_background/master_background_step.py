@@ -1,5 +1,7 @@
 from os.path import basename
 import numpy as np
+from stdatamodels.properties import merge_tree
+
 from ..stpipe import Step
 from .. import datamodels
 from ..combine_1d.combine1d import combine_1d_spectra
@@ -106,10 +108,16 @@ class MasterBackgroundStep(Step):
 
                     for model in background_data:
                         # Check if the background members are nodded x1d extractions.
+                        # Or background from dedicated background exposures
                         # Use "bkgdtarg == False" so we don't also get None cases
                         # for simulated data that didn't bother populating this
                         # keyword
-                        if model.meta.observation.bkgdtarg == False:
+                        this_is_ifu_extended = False
+                        if ((model.meta.exposure.type == 'MIR_MRS' or model.meta.exposure.type=='NRS_IFU')
+                            and model.meta.target.source_type=='EXTENDED'):
+                            this_is_ifu_extended = True
+
+                        if model.meta.observation.bkgdtarg is False or this_is_ifu_extended:
                             self.log.debug("Copying BACKGROUND column "
                                            "to SURF_BRIGHT")
                             copy_background_to_surf_bright(model)
@@ -233,9 +241,7 @@ def split_container(container):
     science.meta.asn_table = {}
     science.meta.pool_name = container.meta.pool_name
     science.meta.table_name = container.meta.table_name
-    datamodels.model_base.properties.merge_tree(
-        science.meta.asn_table._instance, asn
-    )
+    merge_tree(science.meta.asn_table._instance, asn)
     # Prune the background members from the table
     for p in science.meta.asn_table.instance['products']:
         p['members'] = [m for m in p['members'] if m['exptype'].lower() != 'background']

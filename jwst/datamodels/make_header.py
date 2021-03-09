@@ -5,10 +5,10 @@ import numpy as np
 from os import path as os_path
 from asdf.tags.core import ndarray
 
-from . import validate
-from . import properties
-from . import schema as mschema
-from . import (ImageModel, IFUImageModel, DataModel)
+from stdatamodels import validate
+from stdatamodels import properties
+from stdatamodels import schema as mschema
+from . import (ImageModel, IFUImageModel)
 
 from ..pipeline import (GuiderPipeline, DarkPipeline, Ami3Pipeline,
                         Tso3Pipeline, Coron3Pipeline,
@@ -31,9 +31,8 @@ def main(instrument, mode, level):
     """
     Main procedure for make_header
     """
-    im = DataModel()
     cls = get_class(instrument, mode)
-    im = cls(im.instance)
+    im = cls()
 
     defaults = set_default_values(im, instrument, mode, level)
     pipeline = choose_pipeline(defaults)
@@ -525,7 +524,7 @@ def set_pipeline_defaults(im, defaults):
                              }
 
 
-    defaults.update(generic_defaults);
+    defaults.update(generic_defaults)
     instrument = defaults['meta.instrument.name']
     defaults.update(instrument_defaults[instrument])
     exposure_type = defaults['meta.exposure.type']
@@ -710,7 +709,7 @@ def validate_value(im, name, value):
     schema = get_subschema(im, name)
     if schema:
         try:
-            validate._check_value(value, schema)
+            validate._check_value(value, schema, im)
         except jsonschema.ValidationError:
             valid = False
     return valid

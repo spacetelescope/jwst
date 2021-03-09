@@ -1,8 +1,10 @@
-from .model_base import DataModel
+from .model_base import JwstDataModel
+
 
 __all__ = ['TrapsFilledModel']
 
-class TrapsFilledModel(DataModel):
+
+class TrapsFilledModel(JwstDataModel):
     """
     A data model for the number of traps filled for a detector, for
     persistence.

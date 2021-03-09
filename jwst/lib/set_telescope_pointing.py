@@ -14,6 +14,7 @@ from ..assign_wcs.util import update_s_region_keyword, calc_rotation_matrix
 from ..assign_wcs.pointing import v23tosky
 from ..datamodels import Level1bModel
 from ..lib.engdb_tools import ENGDB_Service
+from ..lib.pipe_utils import is_tso
 from .exposure_types import IMAGING_TYPES, FGS_GUIDE_EXP_TYPES
 
 TYPES_TO_UPDATE = set(list(IMAGING_TYPES) + FGS_GUIDE_EXP_TYPES)
@@ -232,6 +233,8 @@ def update_mt_kwds(model):
             f_dec = interp1d(time_mt, dec)
             model.meta.wcsinfo.mt_ra = f_ra(exp_midpt_mjd).item(0)
             model.meta.wcsinfo.mt_dec = f_dec(exp_midpt_mjd).item(0)
+            model.meta.target.ra = f_ra(exp_midpt_mjd).item(0)
+            model.meta.target.dec = f_dec(exp_midpt_mjd).item(0)
         else:
             logger.info('Exposure midpoint {} is not in the moving_target '
                         'table range of {} to {}'.format(exp_midpt_mjd, time_mt[0], time_mt[-1]))
@@ -300,7 +303,7 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, eng
     if aperture_name != "UNKNOWN":
         logger.info("Updating WCS for aperture {}".format(aperture_name))
         useafter = model.meta.observation.date
-        siaf = _get_wcs_values_from_siaf(aperture_name, useafter, siaf_path)
+        siaf = get_wcs_values_from_siaf(aperture_name, useafter, siaf_path)
         populate_model_from_siaf(model, siaf)
     else:
         logger.warning("Aperture name is set to 'UNKNOWN'. "
@@ -455,23 +458,31 @@ def update_wcs_from_telem(
             raise
         else:
             logger.warning(
-                'Cannot retrieve telescope pointing.'
+                'Cannot retrieve valid telescope pointing.'
                 ' Default pointing parameters will be used.'
                 '\nException is {}'.format(exception)
             )
+            logger.info("Setting ENGQLPTG keyword to PLANNED")
+            model.meta.visit.pointing_engdb_quality = "PLANNED"
     else:
         # compute relevant WCS information
         logger.info('Successful read of engineering quaternions:')
         logger.info('\tPointing = {}'.format(pointing))
+        model.meta.visit.pointing_engdb_quality = "CALCULATED"
         try:
             wcsinfo, vinfo = calc_wcs(pointing, siaf, **transform_kwargs)
+            logger.info("Setting ENGQLPTG keyword to CALCULATED")
         except Exception as e:
             logger.warning(
                 'WCS calculation has failed and will be skipped.'
                 'Default pointing parameters will be used.'
                 '\nException is {}'.format(e)
             )
-
+            if not allow_default:
+                raise
+            else:
+                logger.info("Setting ENGQLPTG keyword to PLANNED")
+                model.meta.visit.pointing_engdb_quality = "PLANNED"
     logger.info('Aperture WCS info: {}'.format(wcsinfo))
     logger.info('V1 WCS info: {}'.format(vinfo))
 
@@ -592,8 +603,12 @@ def calc_wcs_over_time(obsstart, obsend, engdb_url=None, tolerance=60, reduce_fu
     vinfos = list()
 
     # Calculate WCS
-    pointings = get_pointing(obsstart, obsend, engdb_url=engdb_url,
+    try:
+        pointings = get_pointing(obsstart, obsend, engdb_url=engdb_url,
                              tolerance=tolerance, reduce_func=reduce_func)
+    except ValueError:
+        logger.warning("Cannot get valid engineering mnemonics from engineering database")
+        raise
     if not isinstance(pointings, list):
         pointings = [pointings]
     for pointing in pointings:
@@ -1145,6 +1160,9 @@ def get_pointing(obsstart, obsend, engdb_url=None,
     mnemonics = get_mnemonics(obsstart, obsend, tolerance, engdb_url=engdb_url)
     reduced = reduce_func(mnemonics)
 
+    logger.debug(f'Memonics found:\n{mnemonics}')
+    logger.info(f'Reduced set of pointings:\n{reduced}')
+
     return reduced
 
 
@@ -1218,7 +1236,7 @@ def _roll_angle_from_matrix(matrix, v2, v3):
     return new_roll
 
 
-def _get_wcs_values_from_siaf(aperture_name, useafter, prd_db_filepath=None):
+def get_wcs_values_from_siaf(aperture_name, useafter, prd_db_filepath=None):
     """
     Query the SIAF database file and get WCS values.
 
@@ -1479,14 +1497,14 @@ def populate_model_from_siaf(model, siaf):
     siaf : namedtuple
         The WCS keywords read in from the SIAF.
     """
-    # If not an imaging mode, update the pointing only.
+    # Update values from the SIAF for all exposures.
     model.meta.wcsinfo.v2_ref = siaf.v2_ref
     model.meta.wcsinfo.v3_ref = siaf.v3_ref
     model.meta.wcsinfo.v3yangle = siaf.v3yangle
     model.meta.wcsinfo.vparity = siaf.vparity
+
+    # For imaging modes, also update the basic FITS WCS keywords
     if model.meta.exposure.type.lower() in TYPES_TO_UPDATE:
-        # For imaging modes update the pointing and
-        # the FITS WCS keywords.
         logger.info('Setting basic FITS WCS keywords for imaging')
         model.meta.wcsinfo.ctype1 = 'RA---TAN'
         model.meta.wcsinfo.ctype2 = 'DEC--TAN'
@@ -1498,8 +1516,16 @@ def populate_model_from_siaf(model, siaf):
         model.meta.wcsinfo.cdelt1 = siaf.cdelt1 / 3600  # in deg
         model.meta.wcsinfo.cdelt2 = siaf.cdelt2 / 3600  # in deg
         model.meta.coordinates.reference_frame = "ICRS"
-    elif model.meta.exposure.type.lower() == 'nrc_tsgrism':
-        logger.info('NRC_TSGRISM:')
+
+    # For TSO exposures, also populate XREF_SCI/YREF_SCI keywords,
+    # which are used by the Cal pipeline to determine the
+    # location of the source.
+    # Note that we use a combination of the is_tso function and
+    # a check on EXP_TYPE, because there are rare corner cases
+    # where EXP_TIME=NRC_TSGRISM, TSOVISIT=False, NINTS=1, which
+    # normally return False, but we want to treat it as TSO anyway.
+    if is_tso(model) or model.meta.exposure.type.lower() in ['nrc_tsimage', 'nrc_tsgrism']:
+        logger.info('TSO exposure:')
         logger.info(' setting xref_sci to {}'.format(siaf.crpix1))
         logger.info(' setting yref_sci to {}'.format(siaf.crpix2))
         model.meta.wcsinfo.siaf_xref_sci = siaf.crpix1
@@ -1543,17 +1569,41 @@ def pointing_from_average(mnemonics):
         eng_param.obstime.unix
         for eng_param in mnemonics['SA_ZATTEST1']
     ]
-    obstime = Time(np.average(times), format='unix')
-
+    goodtimes = []
+    for this_time in times:
+        if this_time != 0.0:
+            goodtimes.append(this_time)
+    if len(goodtimes) > 0:
+        obstime = Time(np.average(goodtimes), format='unix')
+    else:
+        raise ValueError("No valid times in range")
     # Get averages for all the mnemonics.
     mnemonic_averages = {}
+    zero_mnemonics = []
     for mnemonic in mnemonics:
         values = [
             eng_param.value
             for eng_param in mnemonics[mnemonic]
         ]
-        mnemonic_averages[mnemonic] = np.average(values)
-
+        # Weed out mnemonic entries that are zero
+        # 'SA_ZADUCMDX' and 'SA_ZADUCMDY' can be zero
+        if mnemonic not in ['SA_ZADUCMDX', 'SA_ZADUCMDY']:
+            good_mnemonic = []
+            for this_value in values:
+                if this_value != 0.0:
+                    good_mnemonic.append(this_value)
+            if len(good_mnemonic) > 0:
+                mnemonic_averages[mnemonic] = np.average(good_mnemonic)
+            else:
+                zero_mnemonics.append(mnemonic)
+        else:
+            mnemonic_averages[mnemonic] = np.average(values)
+    # Raise exception if there are mnemonics with only zeros in the time range
+    if len(zero_mnemonics):
+        logger.warning("The following engineering mnemonics only contained zeros in the requested time interval:")
+        badmnemonicsstring = ' '.join(zero_mnemonics)
+        logger.info(badmnemonicsstring)
+        raise ValueError("Bad telemetry values")
     # Fill out the pointing matrices.
     q = np.array([
         mnemonic_averages['SA_ZATTEST1'],

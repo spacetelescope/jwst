@@ -8,15 +8,16 @@ import numpy as np
 from typing import Union, Tuple, NamedTuple, List
 from astropy.modeling import polynomial
 from gwcs import WCS
+from stdatamodels import DataModel
+from stdatamodels.ndmodel import MetaNode
 
 from .. import datamodels
-from ..datamodels import dqflags, DataModel, SlitModel, SpecModel
-
+from ..datamodels import dqflags, SlitModel, SpecModel
 from ..datamodels.apcorr import (
-    MirLrsApcorrModel, MirMrsApcorrModel, NrcWfssApcorrModel, NrsFsApcorrModel, NrsMosApcorrModel, NisWfssApcorrModel
+    MirLrsApcorrModel, MirMrsApcorrModel, NrcWfssApcorrModel, NrsFsApcorrModel,
+    NrsMosApcorrModel, NrsIfuApcorrModel, NisWfssApcorrModel
 )
 
-from ..datamodels.ndmodel import MetaNode
 from ..assign_wcs import niriss         # for specifying spectral order number
 from ..assign_wcs.util import wcs_bbox_from_shape
 from ..lib import pipe_utils
@@ -29,13 +30,15 @@ from .apply_apcorr import select_apcorr
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_WFSS', 'NRC_GRISM', 'NRC_TSGRISM']
+#WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_WFSS', 'NRC_GRISM', 'NRC_TSGRISM']
+WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_WFSS', 'NRC_GRISM']
 """Exposure types to be regarded as wide-field slitless spectroscopy."""
 
 # These values are used to indicate whether the input extract1d reference file
-# (if any) is JSON or IMAGE.
+# (if any) is JSON, IMAGE or ASDF (added for IFU data)
 FILE_TYPE_JSON = "JSON"
 FILE_TYPE_IMAGE = "IMAGE"
+FILE_TYPE_ASDF = "ASDF"
 FILE_TYPE_OTHER = "N/A"
 
 # This is to prevent calling offset_from_offset multiple times for multi-integration data.
@@ -96,14 +99,14 @@ class InvalidSpectralOrderNumberError(Extract1dError):
     pass
 
 
-def open_extract1d_ref(refname: str) -> dict:
+def open_extract1d_ref(refname: str, exptype: str) -> dict:
     """Open the extract1d reference file.
 
     Parameters
     ----------
     refname : str
         The name of the extract1d reference file.  This file is expected to be
-        either a JSON file giving extraction information, or a file
+        a JSON file or ASDF file  giving extraction information, or a file
         containing one or more images that are to be used as masks that
         define the extraction region and optionally background regions.
 
@@ -113,13 +116,24 @@ def open_extract1d_ref(refname: str) -> dict:
         If the extract1d reference file is in JSON format, ref_dict will be the
         dictionary returned by json.load(), except that the file type
         ('JSON') will also be included with key 'ref_file_type'.
+        If the extract1d reference file is in asdf format, the ref_dict will
+        be a dictionary  containing two keys: ref_dict['ref_file_type'] = 'ASDF'
+        and ref_dict['ref_model'].
         If the reference file is an image, ref_dict will be a
         dictionary with two keys:  ref_dict['ref_file_type'] = 'IMAGE'
         and ref_dict['ref_model'].  The latter will be the open file
         handle for the jwst.datamodels object for the extract1d file.
     """
+
     if refname == "N/A":
         ref_dict = None
+    elif exptype in['MIR_MRS',  'NRS_IFU']:
+        # read in asdf file
+        extract_model = datamodels.Extract1dIFUModel(refname)
+        ref_dict = {}
+        ref_dict['ref_file_type']= FILE_TYPE_ASDF
+        ref_dict['ref_model'] = extract_model
+
     else:
         # Try reading the file as JSON.
         fd = open(refname)
@@ -141,7 +155,7 @@ def open_extract1d_ref(refname: str) -> dict:
     return ref_dict
 
 
-def open_apcorr_ref(refname: str, exptype: str) -> datamodels.DataModel:
+def open_apcorr_ref(refname: str, exptype: str) -> DataModel:
     """Determine the appropriate DataModel class to use when opening the input APCORR reference file.
 
     Parameters
@@ -170,12 +184,11 @@ def open_apcorr_ref(refname: str, exptype: str) -> datamodels.DataModel:
         'NIS_WFSS': NisWfssApcorrModel,
         'NRS_BRIGHTOBJ': NrsFsApcorrModel,
         'NRS_FIXEDSLIT': NrsFsApcorrModel,
-        'NRS_IFU': NrsMosApcorrModel,
+        'NRS_IFU': NrsIfuApcorrModel,
         'NRS_MSASPEC': NrsMosApcorrModel
     }
 
     apcorr_model = apcorr_model_map[exptype]
-
     return apcorr_model(refname)
 
 
@@ -186,6 +199,7 @@ def get_extract_parameters(
         sp_order: int,
         meta: MetaNode,
         smoothing_length: Union[int, None],
+        bkg_fit: str,
         bkg_order: Union[int, None],
         use_source_posn: Union[bool, None]
 ) -> dict:
@@ -225,6 +239,13 @@ def get_extract_parameters(
         This argument is only used if background regions have been
         specified.
 
+    bkg_fit : str
+        The type of fit to apply to background values in each
+        column (or row, if the dispersion is vertical). The default
+        `poly` results in a polynomial fit of order `bkg_order`. Other
+        options are `mean` and `median`. If `mean` or `median` is selected,
+        `bkg_order` is ignored.
+
     bkg_order : int or None
         Polynomial order for fitting to each column (or row, if the
         dispersion is vertical) of background.  If None, the polynomial
@@ -252,8 +273,8 @@ def get_extract_parameters(
         assigned if `ref_dict` is None.  For a reference image, the key
         'ref_image' gives the (open) image model.
     """
-    extract_params = {'match': NO_MATCH}  # initial value
 
+    extract_params = {'match': NO_MATCH}  # initial value
     if ref_dict is None:
         # There is no extract1d reference file; use "reasonable" default values.
         extract_params['ref_file_type'] = FILE_TYPE_OTHER
@@ -266,7 +287,11 @@ def get_extract_parameters(
         extract_params['ystop'] = shape[-2] - 1  # last pixel in Y
         extract_params['extract_width'] = None
         extract_params['src_coeff'] = None
-        extract_params['bkg_coeff'] = None
+        extract_params['bkg_coeff'] = None  # no background sub.
+        extract_params['smoothing_length'] = 0  # because no background sub.
+        extract_params['bkg_fit'] = None  # because no background sub.
+        extract_params['bkg_order'] = 0  # because no background sub.
+        extract_params['subtract_background'] = False
 
         if use_source_posn is None:
             extract_params['use_source_posn'] = False
@@ -275,8 +300,6 @@ def get_extract_parameters(
 
         extract_params['position_correction'] = 0
         extract_params['independent_var'] = 'pixel'
-        extract_params['smoothing_length'] = 0  # because no background sub.
-        extract_params['bkg_order'] = 0  # because no background sub.
         # Note that extract_params['dispaxis'] is not assigned.  This will be done later, possibly slit by slit.
 
     elif ref_dict['ref_file_type'] == FILE_TYPE_JSON:
@@ -313,7 +336,9 @@ def get_extract_parameters(
                         shape = input_model.data.shape
                         extract_params['src_coeff'] = None
                         extract_params['bkg_coeff'] = None
+                        extract_params['bkg_fit'] = None
                         extract_params['bkg_order'] = 0
+                        extract_params['subtract_background'] = False
                         extract_params['use_source_posn'] = False
                         extract_params['xstart'] = 0
                         extract_params['xstop'] = shape[-1] - 1
@@ -325,6 +350,12 @@ def get_extract_parameters(
                     else:
                         extract_params['src_coeff'] = aper.get('src_coeff')
                         extract_params['bkg_coeff'] = aper.get('bkg_coeff')
+                        if extract_params['bkg_coeff'] is not None:
+                            extract_params['subtract_background'] = True
+                            extract_params['bkg_fit'] = aper.get('bkg_fit', 'poly')
+                        else:
+                            extract_params['bkg_fit'] = None
+                            extract_params['subtract_background'] = False
                         extract_params['independent_var'] = aper.get('independent_var', 'pixel').lower()
 
                         if bkg_order is None:
@@ -408,8 +439,6 @@ def log_initial_parameters(extract_params: dict):
     log.debug("Initial parameters:")
     log.debug(f"dispaxis = {extract_params['dispaxis']}")
     log.debug(f"spectral order = {extract_params['spectral_order']}")
-    log.debug(f"independent_var = {extract_params['independent_var']}")
-    log.debug(f"smoothing_length = {extract_params['smoothing_length']}")
     log.debug(f"initial xstart = {extract_params['xstart']}")
     log.debug(f"initial xstop = {extract_params['xstop']}")
     log.debug(f"initial ystart = {extract_params['ystart']}")
@@ -417,7 +446,10 @@ def log_initial_parameters(extract_params: dict):
     log.debug(f"extract_width = {extract_params['extract_width']}")
     log.debug(f"initial src_coeff = {extract_params['src_coeff']}")
     log.debug(f"initial bkg_coeff = {extract_params['bkg_coeff']}")
+    log.debug(f"bkg_fit = {extract_params['bkg_fit']}")
     log.debug(f"bkg_order = {extract_params['bkg_order']}")
+    log.debug(f"smoothing_length = {extract_params['smoothing_length']}")
+    log.debug(f"independent_var = {extract_params['independent_var']}")
     log.debug(f"use_source_posn = {extract_params['use_source_posn']}")
 
 
@@ -973,14 +1005,21 @@ class ExtractBase(abc.ABC):
         This argument must be an odd positive number or zero, and it is
         only used if background regions have been specified.
 
+    bkg_fit : str
+        Type of background fitting to perform in each column (or row, if
+        the dispersion is vertical). Allowed values are `poly` (default),
+        `mean`, and `median`.
+
     bkg_order : int
         Polynomial order for fitting to each column (or row, if the
-        dispersion is vertical) of background.
+        dispersion is vertical) of background. Only used if `bkg_fit` is
+        `poly`.
         This argument must be positive or zero, and it is only used if
         background regions have been specified.
 
+
     subtract_background : bool or None
-        A flag which indicates whether the background should be subtracted.
+        A flag that indicates whether the background should be subtracted.
         If None, the value in the extract_1d reference file will be used.
         If not None, this parameter overrides the value in the
         extract_1d reference file.
@@ -1008,6 +1047,7 @@ class ExtractBase(abc.ABC):
             bkg_coeff: Union[List[List[float]], None] = None,
             independent_var: str = "pixel",
             smoothing_length: int = 0,
+            bkg_fit: str = "poly",
             bkg_order: int = 0,
             position_correction: float = 0.,
             subtract_background: Union[bool, None] = None,
@@ -1067,6 +1107,10 @@ class ExtractBase(abc.ABC):
         smoothing_length : int
             Width of a boxcar function for smoothing the background
             regions.
+
+        bkg_fit : str
+            Type of fitting to apply to background values in each column
+            (or row, if the dispersion is vertical).
 
         bkg_order : int
             Polynomial order for fitting to each column (or row, if the
@@ -1146,6 +1190,7 @@ class ExtractBase(abc.ABC):
             log.warning(f"smoothing_length was even ({self.smoothing_length}), so incremented by 1")
             self.smoothing_length += 1  # must be odd
 
+        self.bkg_fit = bkg_fit
         self.bkg_order = bkg_order
         self.use_source_posn = use_source_posn
         self.position_correction = position_correction
@@ -1360,11 +1405,10 @@ class ExtractBase(abc.ABC):
         available, e.g. if the wavelength attribute or wcs function is not
         defined.
         """
-        if input_model.meta.exposure.type in WFSS_EXPTYPES:  # WFSS data are not currently supported.
-            log.warning(
-                f"Can't use target coordinates to get location of spectrum for exp type {input_model.meta.exposure.type}"
-            )
-
+        # WFSS data are not currently supported by this function
+        if input_model.meta.exposure.type in WFSS_EXPTYPES:
+            log.warning("Can't use target coordinates to get location of spectrum "
+                        f"for exp type {input_model.meta.exposure.type}")
             return
 
         bb = self.wcs.bounding_box  # ((x0, x1), (y0, y1))
@@ -1490,17 +1534,14 @@ class ExtractModel(ExtractBase):
                     self.subtract_background = False
                     if self.verbosity:
                         log.info("Skipping background subtraction because background regions are not defined.")
-
             else:
                 # If background subtraction was NOT requested, even though background region(s)
                 # were specified, blank out the bkg region info
                 if self.bkg_coeff is not None:
                     self.bkg_coeff = None
                     if self.verbosity:
-                        log.info(
-                            "Background subtraction was specified in the reference file, "
-                            "but it was overridden by the step parameter."
-                        )
+                        log.info("Background subtraction was specified in the reference file,")
+                        log.info("but has been overridden by the step parameter.")
 
     def nominal_locn(self, middle: int, middle_wl: float) -> Union[float, None]:
         """Find the nominal cross-dispersion location of the target spectrum.
@@ -1659,21 +1700,18 @@ class ExtractModel(ExtractBase):
         log.debug("Updated parameters:")
         log.debug(f"position_correction = {self.position_correction}")
 
-        note_x = ""
-        note_y = ""
         if self.src_coeff is not None:
             log.debug(f"src_coeff = {self.src_coeff}")
 
             # Since src_coeff was specified, that will be used instead of xstart & xstop (or ystart & ystop).
             if self.dispaxis == HORIZONTAL:
-                note_y = " (not actually used)"
+                # Only print xstart/xstop, because ystart/ystop are not used
+                log.debug(f"xstart = {self.xstart}")
+                log.debug(f"xstop = {self.xstop}")
             else:
-                note_x = " (not actually used)"
-
-        log.debug(f"xstart = {self.xstart}{note_x}")
-        log.debug(f"xstop = {self.xstop}{note_x}")
-        log.debug(f"ystart = {self.ystart}{note_y}")
-        log.debug(f"ystop = {self.ystop}{note_y}")
+                # Only print ystart/ystop, because xstart/xstop are not used
+                log.debug(f"ystart = {self.ystart}")
+                log.debug(f"ystop = {self.ystop}")
 
         if self.bkg_coeff is not None:
             log.debug(f"bkg_coeff = {self.bkg_coeff}")
@@ -1761,7 +1799,7 @@ class ExtractModel(ExtractBase):
                 lower = create_poly(coeff_list)
             else:
                 upper = create_poly(coeff_list)
-                self.p_src.append([lower, upper])
+                result.append([lower, upper])
 
             expect_lower = not expect_lower
 
@@ -1937,6 +1975,7 @@ class ExtractModel(ExtractBase):
             self.p_bkg,
             self.independent_var,
             self.smoothing_length,
+            self.bkg_fit,
             self.bkg_order,
             weights=None
         )
@@ -2168,14 +2207,14 @@ class ImageExtractModel(ExtractBase):
         (mask_target, mask_bkg) = self.separate_target_and_background(ref)
 
         # This is the number of pixels in the cross-dispersion direction, in the target extraction region.
-        n_target = mask_target.sum(axis=axis, dtype=np.float)
+        n_target = mask_target.sum(axis=axis, dtype=float)
 
         # Extract the data.
-        gross = (data * mask_target).sum(axis=axis, dtype=np.float)
+        gross = (data * mask_target).sum(axis=axis, dtype=float)
 
         # Compute the number of pixels that were added together to get gross.
         temp = np.ones_like(data)
-        npixels = (temp * mask_target).sum(axis=axis, dtype=np.float)
+        npixels = (temp * mask_target).sum(axis=axis, dtype=float)
 
         if self.subtract_background is not None:
             if not self.subtract_background:
@@ -2188,10 +2227,10 @@ class ImageExtractModel(ExtractBase):
 
         # Extract the background.
         if mask_bkg is not None:
-            n_bkg = mask_bkg.sum(axis=axis, dtype=np.float)
+            n_bkg = mask_bkg.sum(axis=axis, dtype=float)
             n_bkg = np.where(n_bkg == 0., -1., n_bkg)  # -1 is used as a flag, and also to avoid dividing by zero.
 
-            background = (data * mask_bkg).sum(axis=axis, dtype=np.float)
+            background = (data * mask_bkg).sum(axis=axis, dtype=float)
 
             scalefactor = n_target / n_bkg
             scalefactor = np.where(n_bkg > 0., scalefactor, 0.)
@@ -2223,9 +2262,9 @@ class ImageExtractModel(ExtractBase):
         # Used for computing the celestial coordinates and the 1-D array of wavelengths.
         flag = (mask_target > 0.)
         grid = np.indices(shape)
-        masked_grid = flag.astype(np.float) * grid[axis]
+        masked_grid = flag.astype(float) * grid[axis]
         g_sum = masked_grid.sum(axis=axis)
-        f_sum = flag.sum(axis=axis, dtype=np.float)
+        f_sum = flag.sum(axis=axis, dtype=float)
         f_sum_zero = np.where(f_sum <= 0.)
         f_sum[f_sum_zero] = 1.  # to avoid dividing by zero
 
@@ -2239,11 +2278,11 @@ class ImageExtractModel(ExtractBase):
         # Near the left and right edges, there might not be any non-zero values in mask_target, so a slice will be
         # extracted from both x_array and y_array in order to exclude pixels that are not within the extraction region.
         if self.dispaxis == HORIZONTAL:
-            x_array = np.arange(shape[1], dtype=np.float)
+            x_array = np.arange(shape[1], dtype=float)
             y_array = spectral_trace
         else:
             x_array = spectral_trace
-            y_array = np.arange(shape[0], dtype=np.float)
+            y_array = np.arange(shape[0], dtype=float)
 
         # Trim off the ends, if there's no data there.
         # Save trim_slc.
@@ -2258,8 +2297,8 @@ class ImageExtractModel(ExtractBase):
             y_array = y_array[trim_slc]
 
         if got_wavelength:
-            indx = np.around(x_array).astype(np.int)
-            indy = np.around(y_array).astype(np.int)
+            indx = np.around(x_array).astype(int)
+            indy = np.around(y_array).astype(int)
             indx = np.where(indx < 0, 0, indx)
             indx = np.where(indx >= shape[1], shape[1] - 1, indx)
             indy = np.where(indy < 0, 0, indy)
@@ -2317,9 +2356,9 @@ class ImageExtractModel(ExtractBase):
 
         if wavelength is None:
             if self.dispaxis == HORIZONTAL:
-                wavelength = np.arange(shape[1], dtype=np.float)
+                wavelength = np.arange(shape[1], dtype=float)
             else:
-                wavelength = np.arange(shape[0], dtype=np.float)
+                wavelength = np.arange(shape[0], dtype=float)
 
             wavelength = wavelength[trim_slc]
 
@@ -2419,7 +2458,9 @@ def run_extract1d(
         extract_ref_name: str,
         apcorr_ref_name: Union[str, None],
         smoothing_length: Union[int, None],
+        bkg_fit: str,
         bkg_order: Union[int, None],
+        bkg_sigma_clip: float,
         log_increment: int,
         subtract_background: Union[bool, None],
         use_source_posn: Union[bool, None],
@@ -2440,9 +2481,17 @@ def run_extract1d(
     smoothing_length : int or None
         Width of a boxcar function for smoothing the background regions.
 
+    bkg_fit : str
+        Type of fitting to apply to background values in each column
+        (or row, if the dispersion is vertical).
+
     bkg_order : int or None
         Polynomial order for fitting to each column (or row, if the
-        dispersion is vertical) of background.
+        dispersion is vertical) of background. Only used if `bkg_fit`
+        is `poly`.
+
+    bkg_sigma_clip : float
+        Sigma clipping value to use on background to remove noise/outliers
 
     log_increment : int
         if `log_increment` is greater than 0 and the input data are
@@ -2476,7 +2525,10 @@ def run_extract1d(
 
     """
     # Read and interpret the extract1d reference file.
-    ref_dict = open_extract1d_ref(extract_ref_name)
+    try:
+        ref_dict = open_extract1d_ref(extract_ref_name, input_model.meta.exposure.type)
+    except AttributeError:  # Input is a ModelContainer of some type
+        ref_dict = open_extract1d_ref(extract_ref_name, input_model[0].meta.exposure.type)
 
     apcorr_ref_model = None
 
@@ -2497,7 +2549,9 @@ def run_extract1d(
         ref_dict,
         apcorr_ref_model,
         smoothing_length,
+        bkg_fit,
         bkg_order,
+        bkg_sigma_clip,
         log_increment,
         subtract_background,
         use_source_posn,
@@ -2554,7 +2608,9 @@ def do_extract1d(
         extract_ref_dict: Union[dict, None],
         apcorr_ref_model = None,
         smoothing_length: Union[int, None] = None,
+        bkg_fit: str = "poly",
         bkg_order: Union[int, None] = None,
+        bkg_sigma_clip: float = 0,
         log_increment: int = 50,
         subtract_background: Union[int, None] = None,
         use_source_posn: Union[bool, None] = None,
@@ -2578,15 +2634,24 @@ def do_extract1d(
         to specify whether the parameters are those that could be read
         from a JSON-format reference file
         (i.e. ref_dict['ref_file_type'] = "JSON")
+        from a asdf-format reference file
+        (i.e. ref_dict['ref_file_type'] = "ASDF")
         or parameters relevant for a reference image
         (i.e. ref_dict['ref_file_type'] = "IMAGE").
 
     smoothing_length : int or None
         Width of a boxcar function for smoothing the background regions.
 
+    bkg_fit : str
+        Type of fitting to perform on background values in each column
+        (or row, if the dispersion is vertical).
+
     bkg_order : int or None
         Polynomial order for fitting to each column (or row, if the
         dispersion is vertical) of background.
+
+    bkg_sigma_clip : float
+        Sigma clipping value to use on background to remove noise/outliers
 
     log_increment : int
         if `log_increment` is greater than 0 and the input data are
@@ -2610,7 +2675,7 @@ def do_extract1d(
         obtained by iterating over a SourceModelContainer.  The default
         is False.
 
-    apcorr_ref_model : `~fits.FITS_rec` or None
+    apcorr_ref_model : `~fits.FITS_rec`, datamodel or  None
         Table of aperture correction values from the APCORR reference file.
 
     Returns
@@ -2622,13 +2687,17 @@ def do_extract1d(
     extract_ref_dict = ref_dict_sanity_check(extract_ref_dict)
 
     if isinstance(input_model, datamodels.SourceModelContainer):
-        log.debug('Input is a SourceModelContainer')
+        #log.debug('Input is a SourceModelContainer')
         was_source_model = True
 
     # Temporarily set "input" to either the first model in a container, or the individual input model, for convenience
     # of retrieving meta attributes in subsequent statements
     if was_source_model:  # input_model is SourceContainer with a single SlitModel
-        input_temp = input_model[0]
+        if isinstance(input_model, datamodels.SlitModel):
+            input_temp = input_model
+        else:
+            #log.debug(f'do_extract1d: len(input_model)={len(input_model)}')
+            input_temp = input_model[0]
     else:
         input_temp = input_model
 
@@ -2638,7 +2707,7 @@ def do_extract1d(
     if hasattr(input_temp, "int_times"):
         output_model.int_times = input_temp.int_times.copy()
 
-    output_model.update(input_temp)
+    output_model.update(input_temp,only='PRIMARY')
 
     spec_dtype = datamodels.SpecModel().spec_table.dtype  # This data type is used for creating an output table.
 
@@ -2688,11 +2757,17 @@ def do_extract1d(
     # Handle inputs that contain one or more slit models
     if was_source_model or isinstance(input_model, datamodels.MultiSlitModel):
         if was_source_model:   # SourceContainer has a single list of SlitModels
-            slits = input_model
+            if isinstance(input_model, datamodels.SlitModel):
+                # If input is a single SlitModel, as opposed to a list of SlitModels,
+                # put it into a list so that it's iterable later on
+                slits = [input_model]
+            else:
+                slits = input_model
 
             # The subsequent work on data uses the individual SlitModels, but there are many places where meta
             # attributes are retreived from input_model, so set this to allow that to work.
-            input_model = input_model[0]
+            if not isinstance(input_model, datamodels.SlitModel):
+                input_model = input_model[0]
 
         elif isinstance(input_model, datamodels.MultiSlitModel):  # A simple MultiSlitModel, not in a container
             slits = input_model.slits
@@ -2729,7 +2804,15 @@ def do_extract1d(
                 log.info("so setting use_source_posn to False")
 
             extract_params = get_extract_parameters(
-                extract_ref_dict, slit, slit.name, sp_order, input_model.meta, smoothing_length, bkg_order, use_source_posn
+                extract_ref_dict,
+                slit,
+                slit.name,
+                sp_order,
+                input_model.meta,
+                smoothing_length,
+                bkg_fit,
+                bkg_order,
+                use_source_posn
             )
 
             if subtract_background is not None:
@@ -2913,6 +2996,7 @@ def do_extract1d(
                     sp_order,
                     input_model.meta,
                     smoothing_length,
+                    bkg_fit,
                     bkg_order,
                     use_source_posn
                 )
@@ -3019,6 +3103,8 @@ def do_extract1d(
                 output_model.spec.append(spec)
 
         elif isinstance(input_model, (datamodels.CubeModel, datamodels.SlitModel)):
+            # SOSS uses this branch in both calspec2 and caltso3, where in both cases
+            # the input is a single CubeModel, because caltso3 loops over exposures
 
             # This branch will be invoked for inputs that are a CubeModel, which typically includes
             # NIRSpec BrightObj (fixed slit) and NIRISS SOSS modes, as well as inputs that are a
@@ -3055,6 +3141,8 @@ def do_extract1d(
                         log.info("Spectral order 0 is a direct image, skipping ...")
                         continue
 
+                log.info(f'Processing spectral order {sp_order}')
+
                 extract_params = get_extract_parameters(
                     extract_ref_dict,
                     input_model,
@@ -3062,6 +3150,7 @@ def do_extract1d(
                     sp_order,
                     input_model.meta,
                     smoothing_length,
+                    bkg_fit,
                     bkg_order,
                     use_source_posn
                 )
@@ -3132,10 +3221,10 @@ def do_extract1d(
                     error = np.zeros_like(flux)
                     sb_error = np.zeros_like(flux)
                     berror = np.zeros_like(flux)
-
                     otab = np.array(
                         list(
-                            zip(wavelength, flux, error, surf_bright, sb_error, dq, background, berror, npixels)
+                            zip(wavelength, flux, error, surf_bright, sb_error, dq, background,
+                                berror, npixels)
                         ),
                         dtype=spec_dtype
                     )
@@ -3209,7 +3298,8 @@ def do_extract1d(
                 source_type = "UNKNOWN"
 
             output_model = ifu.ifu_extract1d(
-                input_model, extract_ref_dict, source_type, subtract_background, apcorr_ref_model
+                input_model, extract_ref_dict, source_type, subtract_background,
+                bkg_sigma_clip, apcorr_ref_model
             )
 
         else:
@@ -3658,12 +3748,27 @@ def extract_one_slit(
 
     extract_model.assign_polynomial_limits(verbose)
 
-    # Log the extraction limits being used
-    log.info("Using extraction limits: "
-             f"xstart={extract_model.xstart}, "
-             f"xstop={extract_model.xstop}, "
-             f"ystart={extract_model.ystart}, "
-             f"ystop={extract_model.ystop}")
+    # Log the extraction limits being used; verbose flag is used to
+    # turn off logging for loops over multiple integrations
+    if verbose:
+        log.info("Using extraction limits: ")
+        if extract_model.src_coeff is not None:
+            # Because src_coeff was specified, that will be used instead of xstart/xstop (or ystart/ystop).
+            if extract_model.dispaxis == HORIZONTAL:
+                # Only print xstart/xstop, because ystart/ystop are not used
+                log.info(f"xstart={extract_model.xstart}, "
+                         f"xstop={extract_model.xstop}, and src_coeff")
+            else:
+                # Only print ystart/ystop, because xstart/xstop are not used
+                log.info(f"ystart={extract_model.ystart}, "
+                         f"ystop={extract_model.ystop}, and src_coeff")
+        else:
+            # No src_coeff, so print all xstart/xstop and ystart/ystop values
+            log.info(f"xstart={extract_model.xstart}, xstop={extract_model.xstop}, "
+                     f"ystart={extract_model.ystart}, ystop={extract_model.ystop}")
+
+        if extract_params['subtract_background']:
+            log.info("with background subtraction")
 
     ra, dec, wavelength, temp_flux, background, npixels, dq = extract_model.extract(data, wl_array, verbose)
 

@@ -20,14 +20,11 @@ Hence, to update `KNOW_SUFFIXES`, update both `SUFFIXES_TO_ADD` and
 `SUFFIXES_TO_DISCARD` as necessary, then use the output of
 `find_suffixes`.
 """
-from copy import copy
 from importlib import import_module
-from inspect import (getmembers, isclass)
 import itertools
 import logging
-from os import (listdir, path, walk)
+from os import (listdir, path)
 import re
-import sys
 
 __all__ = ['remove_suffix']
 
@@ -55,7 +52,7 @@ SUFFIXES_TO_ADD = [
 
 # Suffixes that are discovered but should not be considered.
 # Used by `find_suffixes` to remove undesired values it has found.
-SUFFIXES_TO_DISCARD = ['functionwrapper', 'systemcall']
+SUFFIXES_TO_DISCARD = ['engdblogstep', 'functionwrapper', 'pipeline', 'rscd_step', 'step', 'systemcall']
 
 
 # Calculated suffixes.
@@ -72,7 +69,6 @@ _calculated_suffixes = set([
     'resample_spec',
     'saturationstep',
     'firstframestep',
-    'testlinearpipeline',
     'cat',
     'systemcall',
     'alignrefsstep',
@@ -125,7 +121,7 @@ _calculated_suffixes = set([
     'cubeskymatchstep',
     'i2d',
     'group_scale',
-    'rscd_step',
+    'rscdstep',
     'stackrefsstep',
     'flat_field',
     'guidercdsstep',
@@ -155,7 +151,6 @@ _calculated_suffixes = set([
     'linearity',
     'rscd',
     'rampfitstep',
-    'linearpipeline',
     'pipeline',
     'engdblog',
     'resamplespecstep',
@@ -273,8 +268,7 @@ def find_suffixes():
     a static list.
     """
     from jwst.stpipe import Step
-
-    suffixes = set()
+    from jwst.stpipe.utilities import all_steps
 
     jwst = import_module('jwst')
     jwst_fpath = path.split(jwst.__file__)[0]
@@ -282,12 +276,10 @@ def find_suffixes():
     # First traverse the code base and find all
     # `Step` classes. The default suffix is the
     # class name.
-    for module in load_local_pkg(jwst_fpath):
-        for klass_name, klass in getmembers(
-            module,
-            lambda o: isclass(o) and issubclass(o, Step)
-        ):
-            suffixes.add(klass_name.lower())
+    suffixes = set(
+        klass_name.lower()
+        for klass_name, klass in all_steps().items()
+    )
 
     # Instantiate Steps/Pipelines from their configuration files.
     # Different names and suffixes can be defined in this way.
@@ -308,74 +300,6 @@ def find_suffixes():
 
     # That's all folks
     return list(suffixes)
-
-
-def load_local_pkg(fpath):
-    """Generator producing all modules under fpath
-
-    Parameters
-    ----------
-    fpath: string
-        File path to the package to load.
-
-    Returns
-    -------
-    generator
-        `module` for each module found in the package.
-    """
-    package_fpath, package = path.split(fpath)
-    package_fpath_len = len(package_fpath) + 1
-    sys_path = copy(sys.path)
-    sys.path.insert(0, package_fpath)
-    try:
-        for module_fpath in folder_traverse(
-            fpath, basename_regex=r'[^_].+\.py$', path_exclude_regex='tests'
-        ):
-            folder_path, fname = path.split(module_fpath[package_fpath_len:])
-            module_path = folder_path.split('/')
-            module_path.append(path.splitext(fname)[0])
-            module_path = '.'.join(module_path)
-            try:
-                module = import_module(module_path)
-            except Exception as err:
-                logger.debug(f'Cannot load module "{module_path}": {str(err)}')
-            else:
-                yield module
-    except Exception as err:
-        logger.debug(f'Cannot complete package loading: Exception occurred: "{str(err)}"')
-    finally:
-        sys.path = sys_path
-
-
-def folder_traverse(folder_path, basename_regex='.+', path_exclude_regex='^$'):
-    """Generator of full file paths for all files
-    in a folder.
-
-    Parameters
-    ----------
-    folder_path: str
-        The folder to traverse
-
-    basename_regex: str
-        Regular expression that must match
-        the `basename` part of the file path.
-
-    path_exclude_regex: str
-        Regular expression to exclude a path.
-
-    Returns
-    -------
-    generator
-        A generator, return the next file.
-    """
-    basename_regex = re.compile(basename_regex)
-    path_exclude_regex = re.compile(path_exclude_regex)
-    for root, dirs, files in walk(folder_path):
-        if path_exclude_regex.search(root):
-            continue
-        for file in files:
-            if basename_regex.match(file):
-                yield path.join(root, file)
 
 
 # --------------------------------------------------

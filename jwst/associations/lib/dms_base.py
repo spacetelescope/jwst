@@ -74,23 +74,23 @@ EXPTYPE_MAP = {
 
 # Coronographic exposures
 CORON_EXP_TYPES = [
-    'mir_lyot',
     'mir_4qpm',
+    'mir_lyot',
     'nrc_coron'
 ]
 
 # Exposures that get Level2b processing
 IMAGE2_SCIENCE_EXP_TYPES = [
+    'fgs_image',
+    'mir_4qpm',
     'mir_image',
     'mir_lyot',
-    'mir_4qpm',
     'nis_ami',
     'nis_image',
-    'nrc_image',
     'nrc_coron',
-    'nrc_tsimage',
+    'nrc_image',
     'nrs_mimf',
-    'fgs_image',
+    'nrc_tsimage',
 ]
 
 IMAGE2_NONSCIENCE_EXP_TYPES = [
@@ -103,23 +103,23 @@ IMAGE2_NONSCIENCE_EXP_TYPES = [
 IMAGE2_NONSCIENCE_EXP_TYPES.extend(ACQ_EXP_TYPES)
 
 SPEC2_SCIENCE_EXP_TYPES = [
-    'nrc_tsgrism',
-    'nrc_wfss',
     'mir_lrs-fixedslit',
     'mir_lrs-slitless',
     'mir_mrs',
+    'nis_soss',
+    'nis_wfss',
+    'nrc_tsgrism',
+    'nrc_wfss',
     'nrs_fixedslit',
     'nrs_ifu',
     'nrs_msaspec',
     'nrs_brightobj',
-    'nis_soss',
-    'nis_wfss',
 ]
 
 SPECIAL_EXPOSURE_MODIFIERS = {
-    'psf': ['is_psf'],
+    'background': ['bkgdtarg'],
     'imprint': ['is_imprt'],
-    'background': ['bkgdtarg']
+    'psf': ['is_psf'],
 }
 
 # Exposures that are always TSO
@@ -128,6 +128,35 @@ TSO_EXP_TYPES = [
     'nrc_tsgrism',
     'nrs_brightobj'
 ]
+
+# Define the valid optical paths vs detector for NIRSpect Fixed-slit Science
+# Tuples are (SLIT, GRATING, FILTER, DETECTOR)
+# All A-slits are represented by SLIT == 'a'.
+NRS_FSS_VALID_OPTICAL_PATHS = (
+    ('a', 'prism', 'clear',  'nrs1'),
+    ('a', 'g395h', 'f290lp', 'nrs1'),
+    ('a', 'g395h', 'f290lp', 'nrs2'),
+    ('a', 'g235h', 'f170lp', 'nrs1'),
+    ('a', 'g235h', 'f170lp', 'nrs2'),
+    ('a', 'g140h', 'f100lp', 'nrs1'),
+    ('a', 'g140h', 'f100lp', 'nrs2'),
+    ('a', 'g140h', 'f070lp', 'nrs1'),
+    ('a', 'g395m', 'f290lp', 'nrs1'),
+    ('a', 'g235m', 'f170lp', 'nrs1'),
+    ('a', 'g140m', 'f100lp', 'nrs1'),
+    ('a', 'g140m', 'f070lp', 'nrs1'),
+    ('s200b1', 'prism', 'clear',  'nrs2'),
+    ('s200b1', 'g395h', 'f290lp', 'nrs2'),
+    ('s200b1', 'g235h', 'f170lp', 'nrs2'),
+    ('s200b1', 'g140h', 'f100lp', 'nrs2'),
+    ('s200b1', 'g140h', 'f070lp', 'nrs1'),
+    ('s200b1', 'g140h', 'f070lp', 'nrs2'),
+    ('s200b1', 'g395m', 'f290lp', 'nrs2'),
+    ('s200b1', 'g235m', 'f170lp', 'nrs2'),
+    ('s200b1', 'g140m', 'f100lp', 'nrs2'),
+    ('s200b1', 'g140m', 'f070lp', 'nrs1'),
+    ('s200b1', 'g140m', 'f070lp', 'nrs2'),
+)
 
 # Key that uniquely identfies members.
 MEMBER_KEY = 'expname'
@@ -161,6 +190,7 @@ class DMSBaseMixin(ACIDMixin):
         super(DMSBaseMixin, self).__init__(*args, **kwargs)
 
         self._acid = None
+        self._asn_name = None
         self.sequence = None
         if 'degraded_status' not in self.data:
             self.data['degraded_status'] = _DEGRADED_STATUS_OK
@@ -205,6 +235,17 @@ class DMSBaseMixin(ACIDMixin):
 
     @property
     def asn_name(self):
+        """The association name
+
+        The name that identifies this association. When dumped,
+        will form the basis for the suggested file name.
+
+        Typically, it is generated based on the current state of
+        the association, but can be overridden.
+        """
+        if self._asn_name:
+            return self._asn_name
+
         program = self.data['program']
         version_id = self.version_id
         asn_type = self.data['asn_type']
@@ -226,6 +267,11 @@ class DMSBaseMixin(ACIDMixin):
                 sequence=sequence,
             )
         return name.lower()
+
+    @asn_name.setter
+    def asn_name(self, name):
+        """Override calculated association name"""
+        self._asn_name = name
 
     @property
     def current_product(self):
@@ -803,3 +849,46 @@ def item_getattr(item, attributes, association=None):
         attributes,
         invalid_values=invalid_values
     )
+
+
+def nrsfss_valid_detector(item):
+    """Check that a grating/filter combo can appear on the detector"""
+    try:
+        _, detector = item_getattr(item, ['detector'])
+        _, filter = item_getattr(item, ['filter'])
+        _, grating = item_getattr(item, ['grating'])
+        _, slit = item_getattr(item, ['fxd_slit'])
+    except KeyError:
+        return False
+
+    # Reduce all A slits to just 'a'.
+    if slit != 's200b1':
+        slit = 'a'
+
+    return (slit, grating, filter, detector) in NRS_FSS_VALID_OPTICAL_PATHS
+
+
+def nrsifu_valid_detector(item):
+    """Check that a grating/filter combo can appear on the detector"""
+    try:
+        _, detector = item_getattr(item, ['detector'])
+        _, filter = item_getattr(item, ['filter'])
+        _, grating = item_getattr(item, ['grating'])
+    except KeyError:
+        return False
+
+    # Just a checklist of paths:
+    if grating in ['g395h', 'g235h']:
+        return True
+    elif grating in ['g395m', 'g235m', 'g140m'] and detector == 'nrs1':
+        return True
+    elif grating == 'prism' and filter == 'clear' and detector == 'nrs1':
+        return True
+    elif grating == 'g140h':
+        if filter == 'f100lp':
+            return True
+        elif filter == 'f070lp' and detector == 'nrs1':
+            return True
+
+    # Nothing has matched. Not valid.
+    return False

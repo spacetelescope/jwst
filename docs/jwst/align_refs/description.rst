@@ -3,7 +3,7 @@ Description
 The ``align_refs`` step is one of the coronagraphic-specific steps in the ``coron``
 sub-package that is part of Stage 3 :ref:`calwebb_coron3 <calwebb_coron3>` processing.
 It computes offsets between science target
-images and reference PSF images, and shift the PSF images into
+images and reference PSF images, and shifts the PSF images into
 alignment. This is performed on a per-integration basis for both the science target
 data and the reference PSF data. Each integration contained in the stacked PSF data
 (the result of the :ref:`stack_refs <stack_refs_step>`) step is
@@ -21,9 +21,17 @@ function and the computed sub-pixel offsets.
 
 Arguments
 ---------
-The ``align_refs`` step  has one optional argument::
+The ``align_refs`` step  has two optional arguments:
 
-  --median_box_length  integer  default=4
+``--median_box_length`` (integer, default=3)
+  The box size to use when replacing bad pixels with the median in a surrounding box.
+
+``--bad_bits`` (string, default="DO_NOT_USE")
+  The DQ bit values from the input image DQ arrays that should be considered bad
+  and replaced with the median in a surrounding box. For example, setting to 
+  ``"OUTLIER, SATURATED"`` (or equivalently ``"16, 2"`` or ``"18"``) will treat 
+  all pixels flagged as OUTLIER or SATURATED as bad, while setting to ``""`` or  
+  ``None`` will treat all pixels as good and omit any bad pixel replacement.
 
 Inputs
 ------
@@ -31,11 +39,11 @@ Inputs
 The ``align_refs`` step takes 2 inputs: a science target exposure containing a 3D
 stack of calibrated per-integration images and a "_psfstack" product containing a 3D
 stack of reference PSF images. If the target or PSF images have any of the
-data quality flags set to "DO_NOT_USE" these pixels are replaced with
-the median value of a region around the flagged data. The size of the
-box region to use for the replacement can be specified.  These
-corrected images are using in the :ref:`align_refs <align_refs_step>`
-step and passed along for subsequent processing.  
+data quality flags set to those specified by the ``bad_bits`` argument, these pixels 
+are replaced with the median value of a region around the flagged data. The size of the
+box region to use for the replacement can also be specified. These corrected images are 
+used in the :ref:`align_refs <align_refs_step>` step and passed along for subsequent 
+processing.
 
 3D calibrated images
 ^^^^^^^^^^^^^^^^^^^^

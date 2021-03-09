@@ -34,7 +34,7 @@ def test_nrs_fixedslit_nod():
     assert len(asns) == 30
     for asn in asns:
         nods = int(asn.constraints['nods'].value)
-        multiplier = DITHER_PATTERN_MULTIPLIER[asn.constraints['subpxpns'].value]
+        multiplier = DITHER_PATTERN_MULTIPLIER[asn.constraints['subpxpts'].value]
         n_members = nods * multiplier
         assert len(asn['products'][0]['members']) == n_members
 

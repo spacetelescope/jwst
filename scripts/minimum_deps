@@ -37,12 +37,11 @@ def write_minimum_requirements_file():
 
     with open("requirements-min.txt", "w") as fd:
         for requirement in dist.requires(extras=extras):
-            if "git+http" not in requirement.name:
+            if requirement.url is None:
                 version = get_minimum_version(requirement)
                 fd.write(f'{requirement.name}=={version}\n')
             else:
-                raise RuntimeError(f"{requirement.name} is not a package "
-                    "that can by installed from PyPi.")
+                fd.write(f'{requirement}\n')
 
 
 def main():

@@ -1,5 +1,4 @@
-from .step import Step
-from .pipeline import Pipeline
-from .linear_pipeline import LinearPipeline
+from .core import JwstStep as Step, JwstPipeline as Pipeline
 
-__all__ = ['Step', 'Pipeline', 'LinearPipeline']
+
+__all__ = ['Step', 'Pipeline']

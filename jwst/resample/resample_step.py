@@ -2,10 +2,11 @@ import logging
 
 import numpy as np
 
+from stpipe.extern.configobj.validate import Validator
+from stpipe.extern.configobj.configobj import ConfigObj
+
 from . import resample
 from ..stpipe import Step
-from ..extern.configobj.validate import Validator
-from ..extern.configobj.configobj import ConfigObj
 from .. import datamodels
 from ..assign_wcs import util
 
@@ -33,7 +34,8 @@ class ResampleStep(Step):
         pixfrac = float(default=1.0)
         kernel = string(default='square')
         fillval = string(default='INDEF')
-        weight_type = option('exptime', default='exptime')
+        weight_type = option('ivm', 'exptime', default='ivm')
+        pixel_scale_ratio = float(default=1.0) # Ratio of input to output pixel scale
         single = boolean(default=False)
         blendheaders = boolean(default=True)
         allowed_memory = float(default=None)  # Fraction of memory to use for the combined image.
@@ -66,12 +68,13 @@ class ResampleStep(Step):
             self.log.info('Drizpars reference file: {}'.format(ref_filename))
             kwargs = self.get_drizpars(ref_filename, input_models)
         else:
-            # Deal with NIRSpec which currently has no default drizpars reffile
-            self.log.info("No NIRSpec DIRZPARS reffile")
+            # If there is no drizpars reffile
+            self.log.info("No DIRZPARS reffile")
             kwargs = self._set_spec_defaults()
 
-        # Call the resampling routine
         kwargs['allowed_memory'] = self.allowed_memory
+
+        # Call the resampling routine
         resamp = resample.ResampleData(input_models, **kwargs)
         resamp.do_drizzle()
 
@@ -82,6 +85,8 @@ class ResampleStep(Step):
             model.meta.asn.table_name = input_models.meta.table_name
             if hasattr(model.meta, "bunit_err") and model.meta.bunit_err is not None:
                 del model.meta.bunit_err
+            self.update_phot_keywords(model)
+            model.meta.filetype = 'resampled'
 
         if len(resamp.output_models) == 1:
             result = resamp.output_models[0]
@@ -89,6 +94,13 @@ class ResampleStep(Step):
             result = resamp.output_models
 
         return result
+
+    def update_phot_keywords(self, model):
+        """Update pixel scale keywords"""
+        if model.meta.photometry.pixelarea_steradians is not None:
+            model.meta.photometry.pixelarea_steradians *= self.pixel_scale_ratio**2
+        if model.meta.photometry.pixelarea_arcsecsq is not None:
+            model.meta.photometry.pixelarea_arcsecsq *= self.pixel_scale_ratio**2
 
     def get_drizpars(self, ref_filename, input_models):
         """
@@ -101,7 +113,6 @@ class ResampleStep(Step):
         pixfrac = float(default=None)
         kernel = string(default=None)
         fillval = string(default=None)
-        weight_type = option('exptime', default=None)
 
         Once the defaults are set from the reference file, if the user has
         used a resample.cfg file or run ResampleStep using command line args,
@@ -119,7 +130,7 @@ class ResampleStep(Step):
             range(0, len(drizpars_table)),
             drizpars_table['filter'],
             drizpars_table['numimages']
-            ):
+        ):
             # only remember this row if no exact match has already been made for
             # the filter. This allows the wild-card row to be anywhere in the
             # table; since it may be placed at beginning or end of table.
@@ -136,21 +147,20 @@ class ResampleStep(Step):
             self.log.error("No row found in %s matching input data.", ref_filename)
             raise ValueError
 
-        # Define the keys to pull from drizpars reffile table.  Note the
-        # step param 'weight_type' is 'wht_type' in the FITS binary table.
+        # Define the keys to pull from drizpars reffile table.
         # All values should be None unless the user set them on the command
         # line or in the call to the step
         drizpars = dict(
             pixfrac=self.pixfrac,
             kernel=self.kernel,
             fillval=self.fillval,
-            wht_type=self.weight_type
-            )
+            pscale_ratio=self.pixel_scale_ratio,
+        )
 
         # For parameters that are set in drizpars table but not set by the
         # user, use these.  Otherwise, use values set by user.
-        reffile_drizpars = {k:v for k,v in drizpars.items() if v is None}
-        user_drizpars = {k:v for k,v in drizpars.items() if v is not None}
+        reffile_drizpars = {k: v for k, v in drizpars.items() if v is None}
+        user_drizpars = {k: v for k, v in drizpars.items() if v is not None}
 
         # read in values from that row for each parameter
         for k in reffile_drizpars:
@@ -158,42 +168,32 @@ class ResampleStep(Step):
                 reffile_drizpars[k] = drizpars_table[k][row]
 
         # Convert the strings in the FITS binary table from np.bytes_ to str
-        for k,v in reffile_drizpars.items():
+        for k, v in reffile_drizpars.items():
             if isinstance(v, np.bytes_):
                 reffile_drizpars[k] = v.decode('UTF-8')
 
         all_drizpars = {**reffile_drizpars, **user_drizpars}
 
-        # Convert the 'wht_type' key to a 'weight_type' key
-        all_drizpars['weight_type'] = all_drizpars.pop('wht_type')
-
         kwargs = dict(
             good_bits=GOOD_BITS,
             single=self.single,
             blendheaders=self.blendheaders
-            )
+        )
 
         kwargs.update(all_drizpars)
 
-        if 'wht_type' in kwargs:
-            raise DeprecationWarning('`wht_type` config keyword has changed ' +
-                'to `weight_type`; ' +
-                'please update calls to ResampleStep and resample.cfg files')
-            kwargs.pop('wht_type')
-
-        for k,v in kwargs.items():
+        for k, v in kwargs.items():
             self.log.debug('   {}={}'.format(k, v))
 
         return kwargs
 
-    @classmethod
-    def _set_spec_defaults(cls):
+    def _set_spec_defaults(self):
         """NIRSpec currently has no default drizpars reference file, so default
         drizzle parameters are not set properly.  This method sets them.
 
         Remove this class method when a drizpars reffile is delivered.
         """
-        configspec = cls.load_spec_file()
+        configspec = self.load_spec_file()
         config = ConfigObj(configspec=configspec)
         if config.validate(Validator()):
             kwargs = config.dict()
@@ -208,10 +208,12 @@ class ResampleStep(Step):
         if kwargs['fillval'] is None:
             kwargs['fillval'] = 'INDEF'
         if kwargs['weight_type'] is None:
-            kwargs['weight_type'] = 'exptime'
+            kwargs['weight_type'] = 'ivm'
+        kwargs['pscale_ratio'] = self.pixel_scale_ratio
+        kwargs.pop('pixel_scale_ratio')
 
-        for k,v in kwargs.items():
-            if k in ['pixfrac', 'kernel', 'fillval', 'weight_type']:
+        for k, v in kwargs.items():
+            if k in ['pixfrac', 'kernel', 'fillval', 'weight_type', 'pscale_ratio']:
                 log.info('  setting: %s=%s', k, repr(v))
 
         return kwargs

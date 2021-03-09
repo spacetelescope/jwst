@@ -235,6 +235,8 @@ class DataSet():
             row = find_row(ftab.phot_table, fields_to_match)
             if row is None:
                 return
+
+            # MSA (MOS) data
             if (isinstance(self.input, datamodels.MultiSlitModel) and
                 self.exptype == 'NRS_MSASPEC'):
 
@@ -249,18 +251,34 @@ class DataSet():
             else:
                 tabdata = ftab.phot_table[row]
 
-                # Get the conversion factor from the PHOTMJ column
+                # Get the scalar conversion factor from the PHOTMJ column;
+                # Note that this is the conversion to flux units, which is
+                # appropriate for a POINT source
                 conv_factor = tabdata['photmj']
+                unit_is_surface_brightness = False
+
+                # Figure out if the calibration needs to be converted to surface
+                # brightness units, which is done if the source is extended.
+                if self.source_type is None or self.source_type.upper() != 'POINT':
+                    if self.input.meta.photometry.pixelarea_steradians is None:
+                        log.warning("Pixel area is None, so can't convert "
+                                    "flux to surface brightness!")
+                    else:
+                        log.debug("Converting conversion factor from flux "
+                                  "to surface brightness")
+                        conv_factor /= self.input.meta.photometry.pixelarea_steradians
+                        unit_is_surface_brightness = True
+
                 # Populate the photometry keywords
+                log.info(f'PHOTMJSR value: {conv_factor:.6g}')
                 self.input.meta.photometry.conversion_megajanskys = \
                     conv_factor
                 self.input.meta.photometry.conversion_microjanskys = \
                     conv_factor * MJSR_TO_UJA2
 
-                # Get the length of the relative response arrays in
-                # this table row.  If the nelem column is not present,
-                # we'll use the entire wavelength and relresponse
-                # arrays.
+                # Get the length of the relative response arrays in this table row.
+                # If the nelem column is not present, we'll use the entire wavelength
+                # and relresponse arrays.
                 try:
                     nelem = tabdata['nelem']
                 except KeyError:
@@ -272,8 +290,7 @@ class DataSet():
                     waves = waves[:nelem]
                     relresps = relresps[:nelem]
 
-                # Convert wavelengths from meters to microns,
-                # if necessary
+                # Convert wavelengths from meters to microns, if necessary
                 microns_100 = 1.e-4    # 100 microns, in meters
                 if waves.max() > 0. and waves.max() < microns_100:
                     waves *= 1.e+6
@@ -282,26 +299,21 @@ class DataSet():
                 area_model = datamodels.open(area_fname)
                 area_data = area_model.area_table
 
-                # Compute 2D wavelength and pixel area arrays for the
-                # whole image
+                # Compute 2D wavelength and pixel area arrays for the whole image
                 wave2d, area2d, dqmap = self.calc_nrs_ifu_sens2d(area_data)
 
                 # Compute relative sensitivity for each pixel based
                 # on its wavelength
                 sens2d = np.interp(wave2d, waves, relresps)
-                # Include the scalar conversion factor
-                sens2d *= conv_factor
-                # Divide by pixel area
-                sens2d /= area2d
+                sens2d *= conv_factor  # include the scalar conversion factor
+                sens2d /= area2d  # divide by pixel area
                 # Reset NON_SCIENCE pixels to 1 in sens2d array and flag
                 # them in the science data DQ array
-                where_dq = \
-                    np.bitwise_and(dqmap, dqflags.pixel['NON_SCIENCE'])
+                where_dq = np.bitwise_and(dqmap, dqflags.pixel['NON_SCIENCE'])
                 sens2d[where_dq > 0] = 1.
                 self.input.dq = np.bitwise_or(self.input.dq, dqmap)
 
-                # Multiply the science data and uncertainty arrays by
-                # the conversion factors
+                # Multiply the science data and uncertainty arrays by the conversion factors
                 if not self.inverse:
                     self.input.data *= sens2d
                 else:
@@ -314,14 +326,17 @@ class DataSet():
 
                 # Update BUNIT values for the science data and err
                 if not self.inverse:
-                    self.input.meta.bunit_data = 'MJy/sr'
-                    self.input.meta.bunit_err = 'MJy/sr'
+                    if unit_is_surface_brightness:
+                        self.input.meta.bunit_data = 'MJy/sr'
+                        self.input.meta.bunit_err = 'MJy/sr'
+                    else:
+                        self.input.meta.bunit_data = 'MJy'
+                        self.input.meta.bunit_err = 'MJy'
                 else:
                     self.input.meta.bunit_data = 'DN/s'
                     self.input.meta.bunit_err = 'DN/s'
 
                 area_model.close()
-
 
     def calc_niriss(self, ftab):
         """
@@ -362,7 +377,7 @@ class DataSet():
 
                 # Get the spectral order number for this slit
                 order = slit.meta.wcsinfo.spectral_order
-                log.info("Working on slit: {} order: {}".format(slit.name, order))
+                log.info(f"Working on slit {slit.name}, order {order}")
 
                 fields_to_match = {'filter': self.filter, 'pupil': self.pupil, 'order': order}
                 row = find_row(ftab.phot_table, fields_to_match)
@@ -605,7 +620,7 @@ class DataSet():
 
             # Get the world coords for all pixels in this slice
             coords = ifu_wcs(x, y)
-            dq = dqmap[y.astype(int),x.astype(int)]
+            dq = dqmap[y.astype(int), x.astype(int)]
             wl = coords[2]
             # pull out the valid wavelengths and reset other array to not include
             # nan values
@@ -695,7 +710,7 @@ class DataSet():
                     unit_is_surface_brightness = False
 
         # Store the conversion factor in the meta data
-        log.info('PHOTMJSR value: %g', conversion)
+        log.info(f'PHOTMJSR value: {conversion:.6g}')
         if isinstance(self.input, datamodels.MultiSlitModel):
             self.input.slits[self.slitnum].meta.photometry.conversion_megajanskys = \
                 conversion
@@ -749,22 +764,37 @@ class DataSet():
 
             # Compute a 2-D grid of conversion factors, as a function of wavelength
             if isinstance(self.input, datamodels.MultiSlitModel):
-                wl_array = get_wavelengths(self.input.slits[self.slitnum],
-                                           self.exptype,
-                                           order)
+
+                # The NIRSpec fixed-slit primary slit needs special handling if
+                # it contains a point source
+                if self.exptype.upper() == 'NRS_FIXEDSLIT' and \
+                   self.input.slits[self.slitnum].name == self.input.meta.instrument.fixed_slit and \
+                   self.input.slits[self.slitnum].source_type.upper() == 'POINT':
+
+                    # First, compute 2D array of photom correction values using
+                    # uncorrected wavelengths, which is appropriate for a uniform source
+                    conversion, no_cal = self.create_2d_conversion(self.input.slits[self.slitnum],
+                                                                   self.exptype, conversion,
+                                                                   waves, relresps, order,
+                                                                   use_wavecorr=False)
+                    slit.photom_uniform = conversion  # store the result
+
+                    # Now repeat the process using corrected wavelength values,
+                    # which is appropriate for a point source. This is the version of
+                    # the correction that will actually get applied to the data below.
+                    conversion, no_cal = self.create_2d_conversion(self.input.slits[self.slitnum],
+                                                                   self.exptype, conversion,
+                                                                   waves, relresps, order,
+                                                                   use_wavecorr=True)
+                    slit.photom_point = conversion  # store the result
+
+                else:
+                    conversion, no_cal = self.create_2d_conversion(self.input.slits[self.slitnum],
+                                                                   self.exptype, conversion,
+                                                                   waves, relresps, order)
             else:
-                wl_array = get_wavelengths(self.input,
-                                           self.exptype,
-                                           order)
-
-            wl_array[np.isnan(wl_array)] = -1.
-            conv_2d = np.interp(wl_array, waves, relresps, left=np.NaN, right=np.NaN)
-            no_cal = np.isnan(conv_2d)
-
-            # Combine the scalar and 2-D conversions
-            # NOTE: the data are now multiplied by the 2-D conversion
-            conversion = conversion * conv_2d
-            conversion[no_cal] = 0.
+                conversion, no_cal = self.create_2d_conversion(self.input, self.exptype, conversion,
+                                                               waves, relresps, order)
 
         # Apply the conversion to the data and all uncertainty arrays
         if isinstance(self.input, datamodels.MultiSlitModel):
@@ -822,6 +852,55 @@ class DataSet():
             self.input.meta.bunit_err = 'DN/s'
 
         return
+
+    def create_2d_conversion(self, model, exptype, conversion, waves, relresps,
+                             order, use_wavecorr=None):
+        """
+        Create a 2D array of photometric conversion values based on
+        wavelengths per pixel and response as a function of wavelength.
+
+        Parameters
+        ----------
+        model : `~jwst.datamodels.DataModel`
+            Input data model containing the necessary wavelength information
+        exptype : str
+            Exposure type of the input
+        conversion : float
+            Initial scalar photometric conversion value
+        waves : float
+            1D wavelength vector on which relative response values are
+            sampled
+        relresps : float
+            1D photometric response values, as a function of waves
+        order : int
+            Spectral order number
+        use_wavecorr : bool or None
+            Flag indicating whether or not to use corrected wavelengths.
+            Typically only used for NIRSpec fixed-slit data.
+
+        Returns
+        -------
+        conversion : float
+            2D array of computed photometric conversion values
+        no_cal : int
+            2D mask indicating where no conversion is available
+        """
+
+        # Get the 2D wavelength array corresponding to the input
+        # image pixel values
+        wl_array = get_wavelengths(model, exptype, order, use_wavecorr)
+        wl_array[np.isnan(wl_array)] = -1.
+
+        # Interpolate the photometric response values onto the
+        # 2D wavelength grid
+        conv_2d = np.interp(wl_array, waves, relresps, left=np.NaN, right=np.NaN)
+
+        # Combine the scalar and 2D conversion factors
+        conversion = conversion * conv_2d
+        no_cal = np.isnan(conv_2d)
+        conversion[no_cal] = 0.
+
+        return conversion, no_cal
 
     def save_area_info(self, ftab, area_fname):
         """
@@ -893,7 +972,6 @@ class DataSet():
             else:
                 self.input.meta.photometry.pixelarea_arcsecsq = area_a2
                 self.input.meta.photometry.pixelarea_steradians = area_ster
-
 
     def save_area_nirspec(self, pix_area):
         """
@@ -1017,7 +1095,6 @@ class DataSet():
 
         # Load the pixel area reference file, if it exists, and attach the
         # reference data to the science model
-        #if area_fname != 'N/A':
         self.save_area_info(ftab, area_fname)
 
         if self.instrument == 'NIRISS':

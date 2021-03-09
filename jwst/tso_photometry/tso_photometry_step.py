@@ -31,15 +31,19 @@ class TSOPhotometryStep(Step):
         # Open the input as a CubeModel
         with CubeModel(input_data) as model:
 
-            # Need the FITS WCS CRPIX1/2 values for setting the
+            # Need the FITS WCS X/YREF_SCI values for setting the
             # photometry aperture location
-            if model.meta.wcsinfo.crpix1 is None:
-                raise ValueError('CRPIX1 is missing.')
-            if model.meta.wcsinfo.crpix2 is None:
-                raise ValueError('CRPIX2 is missing.')
+            if model.meta.wcsinfo.siaf_xref_sci is None:
+                raise ValueError('XREF_SCI is missing.')
+            if model.meta.wcsinfo.siaf_yref_sci is None:
+                raise ValueError('YREF_SCI is missing.')
+            if model.meta.bunit_data is None:
+                raise ValueError('BUNIT for data array is missing.')
+            if model.meta.bunit_err is None:
+                raise ValueError('BUNIT for error array is missing.')
 
-            xcenter = model.meta.wcsinfo.crpix1 - 1    # 1-based origin
-            ycenter = model.meta.wcsinfo.crpix2 - 1    # 1-based origin
+            xcenter = model.meta.wcsinfo.siaf_xref_sci - 1    # 1-based origin
+            ycenter = model.meta.wcsinfo.siaf_yref_sci - 1    # 1-based origin
 
             # Get the tsophot reference file
             tsophot_filename = self.get_reference_file(model, 'tsophot')

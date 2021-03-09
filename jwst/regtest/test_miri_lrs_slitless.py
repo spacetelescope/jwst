@@ -25,7 +25,6 @@ def run_tso1_pipeline(jail, rtdata_module):
         rtdata.input,
         "--steps.dq_init.save_results=True",
         "--steps.saturation.save_results=True",
-        "--steps.rscd.save_results=True",
         "--steps.linearity.save_results=True",
         "--steps.dark_current.save_results=True",
         "--steps.refpix.save_results=True",
@@ -84,7 +83,7 @@ def run_tso3_pipeline(run_tso_spec2_pipeline, generate_tso3_asn):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("step_suffix", ['dq_init', 'saturation', 'refpix',
-    'rscd', 'linearity', 'dark_current', 'jump', 'rate', 'rateints'])
+    'linearity', 'dark_current', 'jump', 'rate', 'rateints'])
 def test_miri_lrs_slitless_tso1(run_tso1_pipeline, rtdata_module, fitsdiff_default_kwargs, step_suffix):
     """
     Regression test of tso1 pipeline performed on MIRI LRS slitless TSO data.

@@ -22,6 +22,8 @@ class GuiderPipeline(Pipeline):
     Included steps are: dq_init, guider_cds, and flat_field.
     """
 
+    class_alias = "calwebb_guider"
+
     # Define aliases to steps
     step_defs = {'dq_init': dq_init_step.DQInitStep,
                  'guider_cds': guider_cds_step.GuiderCdsStep,
@@ -51,6 +53,8 @@ class GuiderPipeline(Pipeline):
         input = self.dq_init(input)
         input = self.guider_cds(input)
         input = self.flat_field(input)
+
+        input.meta.filetype = 'countrate'
 
         log.info('... ending calwebb_guider')
 

@@ -35,7 +35,7 @@ import sys
 
 # LOCAL
 from jwst import assign_wcs
-from jwst.stpipe import cmdline
+from stpipe import cmdline
 
 if __name__ == '__main__':
 

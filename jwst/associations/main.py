@@ -12,6 +12,7 @@ from jwst.associations import (
     AssociationRegistry,
     generate,
 )
+from jwst.associations import config
 from jwst.associations.lib.dms_base import DMSAttrConstraint
 from jwst.associations.lib.constraint import (
     ConstraintTrue,
@@ -183,11 +184,12 @@ class Main():
         parsed = parser.parse_args(args=args)
 
         # Configure logging
-        config = None
+        logging_config = None
         if parsed.DMS_enabled:
-            config = DMS_config
-        logger = log_config(name=__package__, config=config)
+            logging_config = DMS_config
+        logger = log_config(name=__package__, config=logging_config)
         logger.setLevel(parsed.loglevel)
+        config.DEBUG = (parsed.loglevel != 0) and (parsed.loglevel <= logging.DEBUG)
 
         # Preamble
         logger.info('Command-line arguments: {}'.format(args))

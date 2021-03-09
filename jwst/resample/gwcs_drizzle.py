@@ -1,7 +1,6 @@
 import numpy as np
 
 from drizzle import util
-from drizzle import doblot
 from drizzle import cdrizzle
 from . import resample_utils
 
@@ -14,9 +13,9 @@ class GWCSDrizzle:
     """
     Combine images using the drizzle algorithm
     """
-    def __init__(self, product, outwcs=None, single=False,
-                 wt_scl="exptime", pixfrac=1.0, kernel="square",
-                 fillval="INDEF"):
+
+    def __init__(self, product, outwcs=None, single=False, wt_scl=None,
+                 pixfrac=1.0, kernel="square", fillval="INDEF"):
         """
         Create a new Drizzle output object and set the drizzle parameters.
 
@@ -34,10 +33,10 @@ class GWCSDrizzle:
             provided, the WCS is taken from product.
 
         wt_scl : str, optional
-            How each input image should be scaled. The choices are `exptime`
-            which scales each image by its exposure time, `expsq` which scales
-            each image by the exposure time squared, or an empty string, which
-            allows each input image to be scaled individually.
+            How each input image should be scaled. The choices are `exptime`,
+            which scales each image by its exposure time, or `expsq`, which scales
+            each image by the exposure time squared.  If not set, then each
+            input image is scaled by its own weight map.
 
         pixfrac : float, optional
             The fraction of a pixel that the pixel flux is confined to. The
@@ -65,7 +64,10 @@ class GWCSDrizzle:
         self.outexptime = 0.0
         self.uniqid = 0
 
-        self.wt_scl = wt_scl
+        if wt_scl is None:
+            self.wt_scl = ""
+        else:
+            self.wt_scl = wt_scl
         self.kernel = kernel
         self.fillval = fillval
         self.pixfrac = pixfrac
@@ -89,13 +91,9 @@ class GWCSDrizzle:
 
         if self.outcon.ndim == 2:
             self.outcon = np.reshape(self.outcon, (1,
-                                     self.outcon.shape[0],
-                                     self.outcon.shape[1]))
-
-        elif self.outcon.ndim == 3:
-            pass
-
-        else:
+                                                   self.outcon.shape[0],
+                                                   self.outcon.shape[1]))
+        elif self.outcon.ndim != 3:
             raise ValueError("Drizzle context image has wrong dimensions: \
                 {0}".format(product))
 
@@ -103,18 +101,12 @@ class GWCSDrizzle:
         if not self.outwcs:
             raise ValueError("Either an existing file or wcs must be supplied")
 
-        if util.is_blank(self.wt_scl):
-            self.wt_scl = ''
-        elif self.wt_scl != "exptime" and self.wt_scl != "expsq":
-            raise ValueError("Illegal value for wt_scl: %s" % self.wt_scl)
-
         if out_units == "counts":
             np.divide(self.outsci, self.outexptime, self.outsci)
         elif out_units != "cps":
             raise ValueError("Illegal value for out_units: %s" % out_units)
 
-    def add_image(self, insci, inwcs, inwht=None,
-                  xmin=0, xmax=0, ymin=0, ymax=0, pscale_ratio=1.0,
+    def add_image(self, insci, inwcs, inwht=None, xmin=0, xmax=0, ymin=0, ymax=0,
                   expin=1.0, in_units="cps", wt_scl=1.0):
         """
         Combine an input image with the output drizzled image.
@@ -196,41 +188,10 @@ class GWCSDrizzle:
         wt_scl = 1.0  # hard-coded for JWST count-rate data
         self.increment_id()
 
-        dodrizzle(insci, inwcs, inwht, self.outwcs,
-                            self.outsci, self.outwht, self.outcon,
-                            expin, in_units, wt_scl,
-                            pscale_ratio=pscale_ratio, uniqid=self.uniqid,
-                            xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax,
-                            pixfrac=self.pixfrac, kernel=self.kernel,
-                            fillval=self.fillval)
-
-    def blot_image(self, blotwcs, interp='poly5', sinscl=1.0):
-        """
-        Resample the output image using an input world coordinate system.
-
-        Parameters
-        ----------
-
-        blotwcs : wcs
-            The world coordinate system to resample on.
-
-        interp : str, optional
-            The type of interpolation used in the resampling. The
-            possible values are "nearest" (nearest neighbor interpolation),
-            "linear" (bilinear interpolation), "poly3" (cubic polynomial
-            interpolation), "poly5" (quintic polynomial interpolation),
-            "sinc" (sinc interpolation), "lan3" (3rd order Lanczos
-            interpolation), and "lan5" (5th order Lanczos interpolation).
-
-        sincscl : float, optional
-            The scaling factor for sinc interpolation.
-        """
-
-        util.set_pscale(blotwcs)
-        self.outsci = doblot.doblot(self.outsci, self.outwcs, blotwcs,
-                                    1.0, interp=interp, sinscl=sinscl)
-
-        self.outwcs = blotwcs
+        dodrizzle(insci, inwcs, inwht, self.outwcs, self.outsci, self.outwht,
+                  self.outcon, expin, in_units, wt_scl, uniqid=self.uniqid,
+                  xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax,
+                  pixfrac=self.pixfrac, kernel=self.kernel, fillval=self.fillval)
 
     def increment_id(self):
         """
@@ -258,11 +219,8 @@ class GWCSDrizzle:
         self.uniqid += 1
 
 
-def dodrizzle(insci, input_wcs, inwht,
-              output_wcs, outsci, outwht, outcon,
-              expin, in_units, wt_scl,
-              pscale_ratio=1.0, uniqid=1,
-              xmin=0, xmax=0, ymin=0, ymax=0,
+def dodrizzle(insci, input_wcs, inwht, output_wcs, outsci, outwht, outcon,
+              expin, in_units, wt_scl, uniqid=1, xmin=0, xmax=0, ymin=0, ymax=0,
               pixfrac=1.0, kernel='square', fillval="INDEF"):
     """
     Low level routine for performing 'drizzle' operation on one image.
@@ -313,12 +271,6 @@ def dodrizzle(insci, input_wcs, inwht,
 
     wt_scl : float
         A scaling factor applied to the pixel by pixel weighting.
-
-    wcslin_pscale : float, optional
-        The pixel scale of the input image. Conceptually, this is the
-        linear dimension of a side of a pixel in the input image, but it
-        is not limited to this and can be set to change how the drizzling
-        algorithm operates.
 
     uniqid : int, optional
         The id number of the input image. Should be one the first time
@@ -388,11 +340,10 @@ def dodrizzle(insci, input_wcs, inwht,
     else:
         expscale = expin
 
-    # Add input weight image if it was not passed in
-
     if (insci.dtype > np.float32):
         insci = insci.astype(np.float32)
 
+    # Add input weight image if it was not passed in
     if inwht is None:
         inwht = np.ones_like(insci)
 
@@ -423,35 +374,32 @@ def dodrizzle(insci, input_wcs, inwht,
     # Compute the mapping between the input and output pixel coordinates
     # for use in drizzle.cdrizzle.tdriz
     pixmap = resample_utils.calc_gwcs_pixmap(input_wcs, output_wcs, insci.shape)
-    # pixmap[np.isnan(pixmap)] = -10
-    # print("Number of NaNs: ", len(np.isnan(pixmap)) / 2)
     # inwht[np.isnan(pixmap[:,:,0])] = 0.
 
-    log.debug("Pixmap shape: {}".format(pixmap[:,:,0].shape))
-    log.debug("Input Sci shape: {}".format(insci.shape))
-    log.debug("Output Sci shape: {}".format(outsci.shape))
+    log.debug(f"Pixmap shape: {pixmap[:,:,0].shape}")
+    log.debug(f"Input Sci shape: {insci.shape}")
+    log.debug(f"Output Sci shape: {outsci.shape}")
 
     # y_mid = pixmap.shape[0] // 2
     # x_mid = pixmap.shape[1] // 2
     # print("x slice: ", pixmap[y_mid,:,0])
     # print("y slice: ", pixmap[:,x_mid,1])
     # print("insci: ", insci)
-
     # Call 'drizzle' to perform image combination
-    log.info('Drizzling {} --> {}'.format(insci.shape, outsci.shape))
+
+    log.info(f"Drizzling {insci.shape} --> {outsci.shape}")
+
     _vers, nmiss, nskip = cdrizzle.tdriz(
         insci, inwht, pixmap,
         outsci, outwht, outcon,
         uniqid=uniqid,
         xmin=xmin, xmax=xmax,
         ymin=ymin, ymax=ymax,
-        scale=pscale_ratio,
         pixfrac=pixfrac,
         kernel=kernel,
         in_units=in_units,
         expscale=expscale,
         wtscale=wt_scl,
         fillstr=fillval
-        )
-
+    )
     return _vers, nmiss, nskip

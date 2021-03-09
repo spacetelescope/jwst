@@ -46,7 +46,7 @@ class OutlierDetectionStep(Step):
     # by the various versions of the outlier_detection algorithms, and each
     # version will pick and choose what they need while ignoring the rest.
     spec = """
-        weight_type = option('exptime','error',None,default='exptime')
+        weight_type = option('ivm','exptime',default='ivm')
         pixfrac = float(default=1.0)
         kernel = string(default='square') # drizzle kernel
         fillval = string(default='INDEF')
@@ -171,52 +171,12 @@ class OutlierDetectionStep(Step):
             if self.input_container:
                 for model in self.input_models:
                     model.meta.cal_step.outlier_detection = state
+                    model.meta.filetype = 'cosmic-ray flagged'
             else:
                 self.input_models.meta.cal_step.outlier_detection = state
+                self.input_models.meta.filetype = 'cosmic-ray flagged'
 
             return self.input_models
-
-    def _build_reffile_container(self, reftype):
-        """Return a ModelContainer of reference file models.
-
-        This method builds a ModelContainer object which contains all the
-        reference files needed for processing the inputs.
-
-        Parameters
-        ----------
-        input_models: ModelContainer
-            the science data, ImageModels in a ModelContainer
-
-        reftype: string
-            type of reference file
-
-        Returns
-        -------
-        ModelContainer with corresponding reference files for each input model
-
-        """
-        reffile_to_model = {'gain': datamodels.GainModel,
-                            'readnoise': datamodels.ReadnoiseModel}
-        if self.input_container:
-            reffiles = [self.get_reference_file(im, reftype)
-                        for im in self.input_models]
-            length = len(self.input_models)
-        else:
-            reffiles = [self.get_reference_file(self.input_models, reftype)]
-            length = 1
-
-        self.log.debug("Using {reftype.upper()} reffile(s):")
-        for r in set(reffiles):
-            self.log.debug("    {r}")
-
-        # Check if all the ref files are the same.  If so build it by reading
-        # the reference file just once.
-        if len(set(reffiles)) <= 1:
-            ref_list = [reffile_to_model.get(reftype)(reffiles[0])] * length
-        else:
-            ref_list = [reffile_to_model.get(reftype)(ref) for ref in reffiles]
-
-        return datamodels.ModelContainer(ref_list)
 
     def check_input(self):
         """Use this method to determine whether input is valid or not."""

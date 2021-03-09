@@ -47,8 +47,7 @@ def extract_tso_object(input_model,
         reference file.
 
     compute_wavelength : bool
-        Compute a wavelength array for the datamodel.  Computationally
-        expensive, but saves doing it repeatedly later on in pipeline.
+        Compute a wavelength array for the datamodel.
 
     Returns
     -------
@@ -136,7 +135,7 @@ def extract_tso_object(input_model,
         # Create the order bounding box
         source_xpos = input_model.meta.wcsinfo.siaf_xref_sci - 1  # remove FITS 1-indexed offset
         source_ypos = input_model.meta.wcsinfo.siaf_yref_sci - 1  # remove FITS 1-indexed offset
-        transform = input_model.meta.wcs.get_transform('full_detector', 'grism_detector')
+        transform = input_model.meta.wcs.get_transform('direct_image', 'grism_detector')
         xmin, ymin, _ = transform(source_xpos,
                                   source_ypos,
                                   lmin,
@@ -199,9 +198,9 @@ def extract_tso_object(input_model,
 
         order_model = Const1D(order)
         order_model.inverse = Const1D(order)
-        tr = input_model.meta.wcs.get_transform('grism_detector', 'full_detector')
+        tr = input_model.meta.wcs.get_transform('grism_detector', 'direct_image')
         tr = Mapping((0, 1, 0)) | Shift(xmin_ext) & Shift(ymin) & order_model | tr
-        subwcs.set_transform('grism_detector', 'full_detector', tr)
+        subwcs.set_transform('grism_detector', 'direct_image', tr)
 
         xmin = int(xmin)
         xmax = int(xmax)
@@ -297,8 +296,7 @@ def extract_grism_objects(input_model,
         cutoff will not be extracted
 
     compute_wavelength : bool
-        Compute a wavelength array for the datamodel.  Computationally
-        expensive, but saves doing it repeatedly later on in pipeline.
+        Compute a wavelength array for the datamodel.
 
     wfss_extract_half_height : int, (optional)
         Cross-dispersion extraction half height in pixels, WFSS mode.
@@ -478,7 +476,7 @@ def extract_grism_objects(input_model,
                 # The overall subarray offset is recorded in model.meta.subarray.
                 # nslit = obj.sid - 1  # catalog id starts at zero
                 new_slit.name = "{0}".format(obj.sid)
-                new_slit.source_type = 'UNKNOWN'
+                new_slit.is_star = obj.is_star
                 new_slit.xstart = xmin + 1  # fits pixels
                 new_slit.xsize = ext_data.shape[1]
                 new_slit.ystart = ymin + 1  # fits pixels
@@ -561,13 +559,7 @@ def compute_wavelength_array(slit):
     wavelength : numpy.array
         The wavelength array
     """
-    #grid = grid_from_bounding_box(slit.meta.wcs.bounding_box)
-    #shape = grid[0].shape
-    #wavelength = np.empty(shape, dtype=np.float64)
     transform = slit.meta.wcs.forward_transform
-    #for j in range(shape[0]):
-        #for i in range(shape[1]):
-            #wavelength[j, i] = transform(grid[0][j, i], grid[1][j, i])[2]
     x, y = grid_from_bounding_box(slit.meta.wcs.bounding_box)
     wavelength = transform(x, y)[2]
     return wavelength

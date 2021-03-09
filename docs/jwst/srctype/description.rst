@@ -54,6 +54,8 @@ The following choices are used, in order of priority:
    value in the APT, the following table of defaults is used, based on
    the "EXP_TYPE" keyword value:
 
+.. _srctype_table:
+
 +-------------------+------------------------+----------+
 | EXP_TYPE          | Exposure Type          | SRCTYPE  |
 +===================+========================+==========+
@@ -84,8 +86,8 @@ is used to populate the SRCTYPE keyword associated with the data for
 the primary slit instance in the pipeline data products. The primary slit
 is determined from the value of the "FXD_SLIT" keyword. Any additional
 slit instances contained within the data product will have their
-SRCTYPE value set to the default for NIRSpec fixed-slit, which, as indicated
-in the table above, is "POINT".
+SRCTYPE value set to "EXTENDED", as non-primary slits are expected to contain
+background.
 
 Multi-Source Observations
 -------------------------

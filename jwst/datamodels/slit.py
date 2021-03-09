@@ -1,13 +1,13 @@
-from .model_base import DataModel
+from .model_base import JwstDataModel
 from .image import ImageModel
 
 
 __all__ = ['SlitModel', 'SlitDataModel']
 
 
-class SlitDataModel(DataModel):
+class SlitDataModel(JwstDataModel):
     """
-    A data model for 2D images.
+    A data model for 2D slit images.
 
     Parameters
     __________
@@ -32,11 +32,23 @@ class SlitDataModel(DataModel):
     barshadow : numpy float32 array
          Bar shadow correction
 
+    flatfield_point : numpy float32 array
+         flatfield array for point source
+
+    flatfield_uniform : numpy float32 array
+         flatfield array for uniform source
+
     pathloss_point : numpy float32 array
          pathloss array for point source
 
     pathloss_uniform : numpy float32 array
          pathloss array for uniform source
+
+    photom_point : numpy float32 array
+         photom array for point source
+
+    photom_uniform : numpy float32 array
+         photom array for uniform source
 
     area : numpy float32 array
          Pixel area map array
@@ -71,7 +83,7 @@ class SlitDataModel(DataModel):
                     setattr(self, key, kwargs[key])
 
 
-class SlitModel(DataModel):
+class SlitModel(JwstDataModel):
     """
     A data model for 2D images.
 
@@ -98,11 +110,23 @@ class SlitModel(DataModel):
     barshadow : numpy float32 array
          Bar shadow correction
 
+    flatfield_point : numpy float32 array
+         flatfield array for point source
+
+    flatfield_uniform : numpy float32 array
+         flatfield array for uniform source
+
     pathloss_point : numpy float32 array
          pathloss array for point source
 
     pathloss_uniform : numpy float32 array
          pathloss array for uniform source
+
+    photom_point : numpy float32 array
+         photom array for point source
+
+    photom_uniform : numpy float32 array
+         photom array for uniform source
 
     area : numpy float32 array
          Pixel area map array

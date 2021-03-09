@@ -19,8 +19,9 @@ def inputs_constant():
     b_upper = np.zeros(shape[1], dtype=np.float64) + 4.5    # 4, inclusive
     bkglim = [[b_lower, b_upper]]
     bkg_order = 0
+    bkg_fit = "poly"
 
-    return image, x, j, bkglim, bkg_order
+    return image, x, j, bkglim, bkg_fit, bkg_order
 
 
 def test_fit_background_model(inputs_constant):
@@ -33,11 +34,35 @@ def test_fit_background_model(inputs_constant):
     assert npts == 2
 
 
+def test_fit_background_mean(inputs_constant):
+    image, x, j, bkglim, bkg_fit, bkg_order = inputs_constant
+    bkg_fit = "mean"
+
+    (bkg_model, npts) = extract1d._fit_background_model(image, x, j, bkglim, bkg_fit, bkg_order)
+
+    assert math.isclose(bkg_model(0.), 22.0, rel_tol=1.e-8, abs_tol=1.e-8)
+    assert math.isclose(bkg_model(8.), 22.0, rel_tol=1.e-8, abs_tol=1.e-8)
+
+    assert npts == 2
+
+
+def test_fit_background_median(inputs_constant):
+    image, x, j, bkglim, bkg_fit, bkg_order = inputs_constant
+    bkg_fit = "median"
+
+    (bkg_model, npts) = extract1d._fit_background_model(image, x, j, bkglim, bkg_fit, bkg_order)
+
+    assert math.isclose(bkg_model(0.), 22.0, rel_tol=1.e-8, abs_tol=1.e-8)
+    assert math.isclose(bkg_model(8.), 22.0, rel_tol=1.e-8, abs_tol=1.e-8)
+
+    assert npts == 2
+
+
 def test_handles_nan(inputs_constant):
-    image, x, j, bkglim, bkg_order = inputs_constant
+    image, x, j, bkglim, bkg_fit, bkg_order = inputs_constant
     image[:, 2] = np.nan
 
-    (bkg_model, npts) = extract1d._fit_background_model(image, x, j, bkglim, bkg_order)
+    (bkg_model, npts) = extract1d._fit_background_model(image, x, j, bkglim, bkg_fit, bkg_order)
 
     assert math.isclose(bkg_model(0.), 0.0, rel_tol=1.e-8, abs_tol=1.e-8)
     assert math.isclose(bkg_model(8.), 0.0, rel_tol=1.e-8, abs_tol=1.e-8)
@@ -46,11 +71,11 @@ def test_handles_nan(inputs_constant):
 
 
 def test_handles_one_value(inputs_constant):
-    image, x, j, bkglim, bkg_order = inputs_constant
+    image, x, j, bkglim, bkg_fit, bkg_order = inputs_constant
     image[np.where(image == 22)] = np.nan   # During extraction, only two pixels are returned "normally"; set one to Nan
 
     # If only one data point is available, the polynomial fit is forced to 0
-    bkg_model, npts = extract1d._fit_background_model(image, x, j, bkglim, bkg_order)
+    bkg_model, npts = extract1d._fit_background_model(image, x, j, bkglim, bkg_fit, bkg_order)
 
     assert math.isclose(bkg_model(0.), 0.0, rel_tol=1.e-8, abs_tol=1.e-8)
     assert math.isclose(bkg_model(8.), 0.0, rel_tol=1.e-8, abs_tol=1.e-8)

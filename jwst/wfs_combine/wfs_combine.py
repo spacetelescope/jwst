@@ -1,14 +1,12 @@
-#! /usr/bin/env python
-#
-#  wfs_combine.py - combine 2 dithered PSF images
-#
-import numpy as np
 import logging
-from .. import datamodels
-from ..datamodels import dqflags
+
+import numpy as np
 from scipy.interpolate import griddata
 from scipy.signal import convolve
 from scipy import mgrid
+
+from .. import datamodels
+from ..datamodels import dqflags
 
 
 log = logging.getLogger(__name__)
@@ -21,7 +19,10 @@ BLUR_SIZE = 10  # size of gaussian kernel for convolution
 N_SIZE = 2  # size of neighborhood in create_griddata_array
 
 
-class DataSet():
+DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
+
+
+class DataSet:
     """
     Two dithered input wavefront sensing images to be combined
 
@@ -138,10 +139,9 @@ class DataSet():
             # 1. Create smoothed image of input SCI data of image #1
             # 1a. create image to smooth by first setting bad DQ pixels equal
             #     to mean of good pixels
-            data_1 = self.input_1.data.astype(np.float64)
-            wh_bad_1 = np.where(self.input_1.dq != 0)
-            wh_good_1 = np.where(self.input_1.dq == 0)
-            data_1[wh_bad_1] = data_1[wh_good_1].mean()
+            data_1 = self.input_1.data.astype(float)
+            bad1 = np.bitwise_and(self.input_1.dq, DO_NOT_USE).astype(bool)
+            data_1[bad1] = data_1[~bad1].mean()
 
             # 1b. Create smoothed image by smoothing this 'repaired' image
             g = gauss_kern(BLUR_SIZE, sizey=None)
@@ -195,7 +195,7 @@ class DataSet():
             log.info('Values for the refined offsets are, for x,y : %s %s',
                      self.off_x, self.off_y)
 
-        log.info('Final values for x,y offsets:%s %s', self.off_x, self.off_y)
+        log.info(f"Final x,y offset in pixels: {self.off_x} {self.off_y}")
 
         # Do final alignment for original (not interpolated) image #2
         data_2_a, dq_2_a, err_2_a = self.apply_final_offsets()
@@ -271,7 +271,7 @@ class DataSet():
 
         return off_x, off_y
 
-    def create_combined(self, im_1_a, im_2_a):
+    def create_combined(self, image1, image2):
         """
         Short Summary
         -------------
@@ -299,9 +299,9 @@ class DataSet():
 
         Parameters
         ----------
-        im_1_a: 2D Data Model
+        image1: 2D Data Model
              aligned image from input #1
-        im_2_a: 2D Data Model
+        image2: 2D Data Model
              aligned image from input #2
 
         Returns
@@ -314,37 +314,36 @@ class DataSet():
             combined ERR array
         """
 
-        sci_data_1 = im_1_a.data.astype(np.float64)
-        sci_data_2 = im_2_a.data.astype(np.float64)
+        data1 = image1.data.astype(float)
+        data2 = image2.data.astype(float)
+        dq1 = image1.dq.copy()
+        dq2 = image2.dq.copy()
+        err1 = image1.err.copy()
+        err2 = image2.err.copy()
 
-        dq_data_1 = im_1_a.dq.copy()
-        dq_data_2 = im_2_a.dq.copy()
-        err_data_1 = im_1_a.err.copy()
-        err_data_2 = im_2_a.err.copy()
+        # Create boolean arrays of bad pixels in each input image
+        bad1 = np.bitwise_and(dq1, DO_NOT_USE).astype(bool)
+        good1 = ~bad1
+        bad2 = np.bitwise_and(dq2, DO_NOT_USE).astype(bool)
+        good2 = ~bad2
 
-        wh_1_bad_2_good = (dq_data_1 != 0) & (dq_data_2 == 0)
-        wh_1_bad_2_bad = (dq_data_1 != 0) & (dq_data_2 != 0)
-        wh_1_good_2_good = (dq_data_1 == 0) & (dq_data_2 == 0)
-        wh_1_good_2_bad = (dq_data_1 == 0) & (dq_data_2 != 0)
+        # Combine via algorithm set out above
 
-        # Populate combined SCI, DQ and ERR arrays
-        data_comb = sci_data_1 * 0  # Pixels that are bad in both will stay 0
-        data_comb[wh_1_good_2_good] = 0.5 * (sci_data_1[wh_1_good_2_good] +
-                                             sci_data_2[wh_1_good_2_good])
-        data_comb[wh_1_good_2_bad] = sci_data_1[wh_1_good_2_bad]
-        data_comb[wh_1_bad_2_good] = sci_data_2[wh_1_bad_2_good]
+        # Data pixels that are bad in both will stay 0
+        data_comb = np.zeros_like(data1)
+        data_comb[good1 & good2] = 0.5 * (data1[good1 & good2] + data2[good1 & good2])
+        data_comb[good1 & bad2] = data1[good1 & bad2]
+        data_comb[good2 & bad1] = data2[good2 & bad1]
 
-        dq_comb = dq_data_1.copy()
-        dq_comb[wh_1_good_2_bad] = dq_data_1[wh_1_good_2_bad]
-        dq_comb[wh_1_bad_2_good] = dq_data_2[wh_1_bad_2_good]
-        dq_comb[wh_1_bad_2_bad] = np.bitwise_or(dqflags.group['DO_NOT_USE'],
-                                                dq_comb[wh_1_bad_2_bad])
+        dq_comb = dq1.copy()
+        dq_comb[good1 & bad2] = dq1[good1 & bad2]
+        dq_comb[good2 & bad1] = dq2[good2 & bad1]
+        dq_comb[bad1 & bad2] = np.bitwise_or(DO_NOT_USE, dq_comb[bad1 & bad2])
 
-        err_comb = err_data_1.copy() * 0  # will leave bad (= 0)
-        err_comb[wh_1_good_2_good] = 0.5 * (err_data_1[wh_1_good_2_good] +
-                                            err_data_2[wh_1_good_2_good])
-        err_comb[wh_1_good_2_bad] = err_data_1[wh_1_good_2_bad]
-        err_comb[wh_1_bad_2_good] = err_data_2[wh_1_bad_2_good]
+        err_comb = np.zeros_like(err1)
+        err_comb[good1 & good2] = 0.5 * (err1[good1 & good2] + err2[good1 & good2])
+        err_comb[good1 & bad2] = err1[good1 & bad2]
+        err_comb[good2 & bad1] = err2[good2 & bad1]
 
         return data_comb, dq_comb, err_comb
 
@@ -375,7 +374,7 @@ class DataSet():
         bi_y = a.shape[0] - af_y  # For output, y-direction's initial channel
         bf_y = a.shape[0] - ai_y  # ...and final channel
 
-        b = a * 0
+        b = np.zeros(a.shape)
         b[bi_y:bf_y, bi_x:bf_x] = a[ai_y:af_y, ai_x:af_x]
 
         return b
@@ -433,7 +432,8 @@ def interp_array(sci_data, dq_data):
         interpolated SCI image
     """
 
-    wh_bad_dq = np.where(dq_data != 0)
+
+    wh_bad_dq = np.where(np.bitwise_and(dq_data, DO_NOT_USE))
     num_bad_dq = len(wh_bad_dq[0])
 
     # Create array of locations of bad DQ pixels

@@ -1,10 +1,10 @@
-from .model_base import DataModel
+from .model_base import JwstDataModel
 
 
 __all__ = ['ImageModel']
 
 
-class ImageModel(DataModel):
+class ImageModel(JwstDataModel):
     """
     A data model for 2D images.
 
@@ -38,7 +38,3 @@ class ImageModel(DataModel):
          Pathloss correction for uniform source
     """
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/image.schema"
-
-    def __init__(self, init=None, **kwargs):
-
-        super(ImageModel, self).__init__(init=init, **kwargs)

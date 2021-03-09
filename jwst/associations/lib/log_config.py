@@ -219,7 +219,7 @@ def log_config(name=None,
             Handles `logging.DEBUG` exclusively.
 
         `info`
-            Handles `logging.INFO` esclusively.
+            Handles `logging.INFO` exclusively.
 
     Given the defaults, a logger is created with the given `name`,
     with the levels as described above.

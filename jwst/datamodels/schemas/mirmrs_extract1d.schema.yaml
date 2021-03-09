@@ -1,0 +1,41 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/mirmrs_extract1d.schema"
+title: Default MIRI MRS extract 1d data model
+allOf:
+- $ref: referencefile.schema
+- type: object
+  properties:
+    extract1d_params:
+      title: default MIRI extract 1d parameters
+      fits_hdu: PARAMS
+      datatype:
+      - name: id
+        datatype: [ascii,10]
+      - name: region_type
+        datatype: [ascii,10]
+      - name: subtract_background
+        datatype: uint8
+      - name: method
+        datatype: [ascii,10]
+      - name: subpixels
+        datatype: int16
+    extract1d_table:
+      title: wavelength varying extraction parameters
+      fits_hdu: X1D
+      datatype:
+      - name: wavelength
+        datatype: float32
+      - name: nelem_wl
+        datatype: int16
+      - name: radius
+        datatype: float32
+      - name: inner_bkg
+        datatype: float32
+      - name: outer_bkg
+        datatype: float32
+      - name: axis_ratio
+        datatype: float32
+      - name: axis_pa
+        datatype: float32

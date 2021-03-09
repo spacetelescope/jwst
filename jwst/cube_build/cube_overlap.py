@@ -414,8 +414,7 @@ def match_det2cube(instrument,
 
     pixel_dq = input_model.dq[y, x]
 
-    all_flags = (dqflags.pixel['DO_NOT_USE']  +
-                 dqflags.pixel['NON_SCIENCE'] )
+    all_flags = (dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['NON_SCIENCE'])
     # find the location of all the values to reject in cube building
     good_data = np.where((np.bitwise_and(pixel_dq, all_flags) == 0))
 
@@ -438,10 +437,14 @@ def match_det2cube(instrument,
         b2, a2, lam2 = transform(xx_right, yy_bot)
         b3, a3, lam3 = transform(xx_right, yy_top)
         b4, a4, lam4 = transform(xx_left, yy_top)
-        lam1 = lam1*1.0e6
-        lam2 = lam2*1.0e6
-        lam3 = lam3*1.0e6
-        lam4 = lam4*1.0e6
+        # check if units are in microns or meters, if meters convert to microns
+        # only need to check one of the wavelenghts
+        lmax = np.nanmax(lam1.flatten())
+        if lmax < 0.0001:
+            lam1 = lam1*1.0e6
+            lam2 = lam2*1.0e6
+            lam3 = lam3*1.0e6
+            lam4 = lam4*1.0e6
 
     if instrument == 'MIRI':
         a1, b1, lam1 = transform(xx_left, yy_bot)

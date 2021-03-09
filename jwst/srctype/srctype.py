@@ -33,7 +33,6 @@ def set_source_type(input_model):
         raise RuntimeError('Step cannot be executed without an EXP_TYPE value')
     else:
         log.info(f'Input EXP_TYPE is {exptype}')
-
     # For exposure types that have a single source specification, get the
     # user-supplied source type from the selection they provided in the APT
     if exptype in ['MIR_LRS-FIXEDSLIT', 'MIR_LRS-SLITLESS', 'MIR_MRS',
@@ -115,7 +114,7 @@ def set_source_type(input_model):
             # determined above to only the primary slit (the one in which
             # the target is located). Set all other slits to the default
             # value, which for NRS_FIXEDSLIT is 'POINT'.
-            default_type = 'POINT'
+            default_type = 'EXTENDED'
             primary_slit = input_model.meta.instrument.fixed_slit
             log.debug(f' primary_slit = {primary_slit}')
             for slit in input_model.slits:
@@ -146,11 +145,23 @@ def set_source_type(input_model):
 
             log.info(f'source_id={slit.source_id}, stellarity={stellarity:.4f}, type={slit.source_type}')
 
+        # Remove the global target source type, so that it never mistakenly
+        # gets used for MOS data, which should always use slit-specific values
+        input_model.meta.target.source_type = None
+
     # Set all TSO exposures to POINT
     elif pipe_utils.is_tso(input_model):
         src_type = 'POINT'
         log.info(f'Input is a TSO exposure; setting default SRCTYPE = {src_type}')
         input_model.meta.target.source_type = src_type
+
+        # FOR WFSS modes check slit values of is_star to set SRCTYPE
+    elif exptype in ['NIS_WFSS', 'NRC_WFSS']:
+        for slit in input_model.slits:
+            if slit.is_star:
+                slit.source_type = 'POINT'
+            else:
+                slit.source_type = 'EXTENDED'
 
     # Unrecognized exposure type; set to UNKNOWN as default
     else:

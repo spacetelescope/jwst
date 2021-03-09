@@ -10,7 +10,7 @@ from drizzle.cdrizzle import tblot
 from .. import datamodels
 from ..resample import resample
 from ..resample.resample_utils import build_driz_weight, calc_gwcs_pixmap
-from ..stpipe.step import Step
+from ..stpipe import Step
 
 import logging
 log = logging.getLogger(__name__)
@@ -110,7 +110,7 @@ class OutlierDetection:
                                               dq=self.inputs.dq[i])
                 image.meta = self.inputs.meta
                 image.wht = build_driz_weight(image,
-                                              weight_type='exptime',
+                                              weight_type='ivm',
                                               good_bits=bits)
                 self.input_models.append(image)
             self.converted = True
@@ -202,7 +202,7 @@ class OutlierDetection:
             for i in range(len(self.input_models)):
                 drizzled_models[i].wht = build_driz_weight(
                     self.input_models[i],
-                    weight_type='exptime',
+                    weight_type='ivm',
                     good_bits=pars['good_bits'])
 
         # Initialize intermediate products used in the outlier detection
@@ -406,7 +406,7 @@ def flag_cr(sci_image, blot_image, **pars):
     exptime = sci_image.meta.exposure.exposure_time
 
     sci_data = sci_image.data * exptime
-    blot_data = blot_image.data * exptime
+    blot_data = (blot_image.data + subtracted_background) * exptime
     blot_deriv = abs_deriv(blot_data)
 
     err_data = np.nan_to_num(sci_image.err)
@@ -421,7 +421,7 @@ def flag_cr(sci_image, blot_image, **pars):
     #
     # Model the noise and create a CR mask
     diff_noise = np.abs(sci_data - blot_data)
-    ta = np.sqrt(np.abs(blot_data + subtracted_background) + err_data ** 2)
+    ta = np.sqrt(np.abs(blot_data) + err_data ** 2)
     t2 = scl1 * blot_deriv + snr1 * ta
     tmp1 = np.logical_not(np.greater(diff_noise, t2))
 
@@ -456,7 +456,7 @@ def flag_cr(sci_image, blot_image, **pars):
     # recast cr_mask to int for manipulations below; will recast to
     # Bool at end
     cr_mask_orig_bool = cr_mask.copy()
-    cr_mask = cr_mask_orig_bool.astype(np.int8)
+    cr_mask = cr_mask_orig_bool.astype(np.uint8)
 
     # make radial convolution kernel and convolve it with original cr_mask
     cr_grow_kernel = np.ones((grow, grow))

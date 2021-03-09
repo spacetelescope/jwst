@@ -80,22 +80,28 @@ standards = [
     MakePars('pool_026_mir_image_tso'),
     MakePars('pool_027_nirspec_ifu_nods'),
     MakePars('pool_028_mir_lrsfs_nods'),
+    MakePars('pool_029_mir_lrsfs_nonod'),
+    MakePars('pool_030_mir_lrs_nods_bkg'),
+    MakePars('pool_031_mir_lrs_nonod_bkg'),
 ]
 
 
 # #####
 # Tests
 # #####
+def generate_id(value):
+    """Generate test ids based on the parametrized input"""
+    return value.pool_root
+
+
 class TestAgainstStandards(BaseJWSTTest):
     """Generate tests and compare with standard results"""
     input_loc = 'associations'
     test_dir = 'standards'
     ref_loc = [test_dir, 'truth']
 
-    @pytest.mark.parametrize(
-        'standard_pars',
-        standards,
-    )
+    @pytest.mark.filterwarnings('error')
+    @pytest.mark.parametrize('standard_pars', standards, ids=generate_id)
     def test_against_standard(self, standard_pars):
         """Compare a generated association against a standard
         Success is when no other AssertionError occurs.
@@ -114,7 +120,7 @@ class TestAgainstStandards(BaseJWSTTest):
         pool = combine_pools([
             t_path(Path('data') / (standard_pars.pool_root + '.csv'))
         ])
-        Main(args, pool=pool )
+        Main(args, pool=pool)
 
         # Retrieve the truth files
         truth_paths = [
@@ -130,18 +136,3 @@ class TestAgainstStandards(BaseJWSTTest):
                 pytest.xfail(standard_pars.xfail)
             else:
                 raise
-
-    def test_specified_standard_pool(self, standard_pool):
-        """Test against a standard pool specified from the command-line"""
-        if standard_pool:
-            for standard_pars in standards:
-                if standard_pars.pool_root == standard_pool:
-                    break
-            else:
-                assert False, f'Pool "{standard_pool}" specified by `--standard_pool` is not in test set.'
-
-            # Add debugging since this is doing only a specific file.
-            standard_pars.main_args.append('-D')
-            self.test_against_standard(standard_pars)
-        else:
-            pytest.skip('No standard pool specified using `--standard_pool` command-line option.')

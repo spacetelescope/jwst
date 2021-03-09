@@ -69,6 +69,7 @@ def compare_asn_files(left_paths, right_paths):
         If there are differences. The message will contain
         all the differences.
     """
+    __tracebackhide__ = True
     # Read in all the associations, separating out the products into separate associations.
     left_asns = []
     for path in left_paths:
@@ -113,6 +114,7 @@ def compare_asn_lists(left_asns, right_asns):
         If there are differences. The message will contain
         all the differences.
     """
+    __tracebackhide__ = True
     diffs = MultiDiffError()
 
     # Ensure that product names are unique
@@ -262,48 +264,10 @@ def compare_membership(left, right):
         for right_idx, right_product in enumerate(products_right):
             if components(right_product['name']) != left_product_name:
                 continue
-
-            if len(right_product['members']) != len(left_product['members']):
-                diffs.append(MemberMismatchError(
-                    'Product Member length differs:'
-                    ' Left Product #{left_idx} len {left_len} !=  '
-                    ' Right Product #{right_idx} len {right_len}'
-                    ''.format(left_idx=left_idx, left_len=len(left_product['members']),
-                              right_idx=right_idx, right_len=len(right_product['members']))
-                ))
-
-            members_right = copy(right_product['members'])
-            for left_member in left_product['members']:
-                for right_member in members_right:
-                    if left_member['expname'] != right_member['expname']:
-                        continue
-
-                    if left_member['exptype'] != right_member['exptype']:
-                        diffs.append(MemberMismatchError(
-                            'Left {left_expname}:{left_exptype}'
-                            ' != Right {right_expname}:{right_exptype}'
-                            ''.format(left_expname=left_member['expname'], left_exptype=left_member['exptype'],
-                                  right_expname=right_member['expname'], right_exptype=right_member['exptype'])
-                        ))
-
-                    members_right.remove(right_member)
-                    break
-                else:
-                    diffs.append(MemberMismatchError(
-                        'Left {left_expname}:{left_exptype} has no counterpart in right'
-                        ''.format(left_expname=left_member['expname'], left_exptype=left_member['exptype'])
-                    ))
-
-            if len(members_right) != 0:
-                diffs.append(MemberMismatchError(
-                    'Right has {len_over} unaccounted for members starting with'
-                    ' {right_expname}:{right_exptype}'
-                    ''.format(len_over=len(members_right),
-                              right_expname=members_right[0]['expname'],
-                              right_exptype=members_right[0]['exptype']
-                    )
-                ))
-
+            try:
+                compare_product_membership(left_product, right_product)
+            except MultiDiffError as compare_diffs:
+                diffs.extend(compare_diffs)
             products_right.remove(right_product)
             break
         else:
@@ -317,6 +281,66 @@ def compare_membership(left, right):
         diffs.append(DifferentProductSetsError(
             'Right has {n_products} left over'
             ''.format(n_products=len(products_right))
+        ))
+
+    if diffs:
+        raise diffs
+
+
+def compare_product_membership(left, right):
+    """Compare membership between products
+
+    Parameters
+    ---------
+    left, right : dict
+        Two, individual, association products to compare
+
+    Raises
+    ------
+    MultiDiffError
+        If there are differences. The message will contain
+        all the differences.
+    """
+    diffs = MultiDiffError()
+    if len(right['members']) != len(left['members']):
+        diffs.append(MemberMismatchError(
+            'Product Member length differs:'
+            ' Left Product {left_product_name} len {left_len} !=  '
+            ' Right Product {right_product_name} len {right_len}'
+            ''.format(left_product_name=left['name'], left_len=len(left['members']),
+                      right_product_name=right['name'], right_len=len(right['members']))
+        ))
+
+    members_right = copy(right['members'])
+    for left_member in left['members']:
+        for right_member in members_right:
+            if left_member['expname'] != right_member['expname']:
+                continue
+
+            if left_member['exptype'] != right_member['exptype']:
+                diffs.append(MemberMismatchError(
+                    'Left {left_expname}:{left_exptype}'
+                    ' != Right {right_expname}:{right_exptype}'
+                    ''.format(left_expname=left_member['expname'], left_exptype=left_member['exptype'],
+                          right_expname=right_member['expname'], right_exptype=right_member['exptype'])
+                ))
+
+            members_right.remove(right_member)
+            break
+        else:
+            diffs.append(MemberMismatchError(
+                'Left {left_expname}:{left_exptype} has no counterpart in right'
+                ''.format(left_expname=left_member['expname'], left_exptype=left_member['exptype'])
+            ))
+
+    if len(members_right) != 0:
+        diffs.append(MemberMismatchError(
+            'Right has {len_over} unaccounted for members starting with'
+            ' {right_expname}:{right_exptype}'
+            ''.format(len_over=len(members_right),
+                      right_expname=members_right[0]['expname'],
+                      right_exptype=members_right[0]['exptype']
+            )
         ))
 
     if diffs:

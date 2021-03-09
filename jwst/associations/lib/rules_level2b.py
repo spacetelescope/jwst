@@ -9,7 +9,10 @@ from jwst.associations.lib.constraint import (Constraint, SimpleConstraint)
 from jwst.associations.lib.dms_base import (
     Constraint_TSO,
     Constraint_WFSC,
-    format_list
+    format_list,
+    item_getattr,
+    nrsfss_valid_detector,
+    nrsifu_valid_detector,
 )
 from jwst.associations.lib.member import Member
 from jwst.associations.lib.process_list import ProcessList
@@ -249,7 +252,7 @@ class Asn_Lv2Spec(
                     DMSAttrConstraint(
                         name='patttype',
                         sources=['patttype'],
-                        value=['2-point-nod|4-point-nod|along-slit-nod'],
+                        value=['2-point-nod|4-point-nod'],
                     )
                 ],
                 reduce=Constraint.notany
@@ -359,6 +362,11 @@ class Asn_Lv2MIRLRSFixedSlitNod(
                 sources=['patttype'],
                 value=['along-slit-nod'],
             ),
+            SimpleConstraint(
+                value=True,
+                test=lambda value, item: self.acid.type != 'background',
+                force_unique=False
+            ),
             Constraint(
                 [
                     Constraint(
@@ -415,6 +423,45 @@ class Asn_Lv2MIRLRSFixedSlitNod(
 
 
 @RegistryMarker.rule
+class Asn_Lv2NRSLAMPImage(
+        AsnMixin_Lv2Image,
+        AsnMixin_Lv2Special,
+        DMSLevel2bBase
+):
+    """Level2b NIRSpec image Lamp Calibrations Association
+
+    Characteristics:
+        - Association type: ``image2``
+        - Pipeline: ``calwebb_image2``
+        - Image-based calibration exposures
+        - Single science exposure
+    """
+
+    def __init__(self, *args, **kwargs):
+        # Setup constraints
+        self.constraints = Constraint([
+            Constraint_Base(),
+            Constraint_Single_Science(self.has_science),
+            DMSAttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value='nrs_lamp'
+            ),
+            DMSAttrConstraint(
+                sources=['grating'],
+                value='mirror'
+            ),
+            DMSAttrConstraint(
+                sources=['opmode'],
+                value='image',
+                required=False
+            ),
+        ])
+
+        super(Asn_Lv2NRSLAMPImage, self).__init__(*args, **kwargs)
+
+
+@RegistryMarker.rule
 class Asn_Lv2NRSLAMPSpectral(
         AsnMixin_Lv2Special,
         DMSLevel2bBase
@@ -433,30 +480,43 @@ class Asn_Lv2NRSLAMPSpectral(
         self.constraints = Constraint([
             Constraint_Base(),
             Constraint_Single_Science(self.has_science),
-            Constraint(
-                [
-                    DMSAttrConstraint(
-                        name='opt_elem2',
-                        sources=['grating'],
-                        value='mirror'
-                    ),
-                    DMSAttrConstraint(
-                        name='exp_type',
-                        sources=['exp_type'],
-                        value='.*_dark$'
-                    )
-                ],
-                reduce=Constraint.notany
-            ),
             DMSAttrConstraint(
-                name='instrument',
-                sources=['instrume'],
-                value='nirspec'
+                name='exp_type',
+                sources=['exp_type'],
+                value='nrs_autoflat|nrs_autowave|nrs_lamp'
             ),
             DMSAttrConstraint(
                 name='opt_elem',
                 sources=['filter'],
                 value='opaque'
+            ),
+            DMSAttrConstraint(
+                name='opmode',
+                sources=['opmode'],
+            ),
+            DMSAttrConstraint(
+                name='lamp',
+                sources=['lamp'],
+            ),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        sources=['grating'],
+                        value='mirror',
+                        force_unique=False,
+                    ),
+                    DMSAttrConstraint(
+                        sources=['opmode'],
+                        value='grating-only',
+                        force_unique=False,
+                    ),
+                    DMSAttrConstraint(
+                        sources=['lamp'],
+                        value='nolamp',
+                        force_unique=False,
+                    ),
+                ],
+                reduce=Constraint.notany
             ),
         ])
 
@@ -543,12 +603,19 @@ class Asn_Lv2WFSS(
         closest = directs[0]  # If the search fails, just use the first.
         try:
             expspcin = int(getattr_from_list(science.item, ['expspcin'], _EMPTY)[1])
+            science_channel = getattr_from_list(science.item, ['channel'], _EMPTY)[1]
         except KeyError:
             # If exposure sequence cannot be determined, just fall through.
             logger.debug('Science exposure %s has no EXPSPCIN defined.', science)
         else:
-            min_diff = -1         # Initialize to an invalid value.
+            min_diff = 9999         # Initialize to an invalid value.
             for direct in directs:
+                # For NIRCam, only consider direct images from the same channel
+                # as the grism image
+                if direct.item['exp_type'] == 'nrc_image':
+                    direct_channel = getattr_from_list(direct.item, ['channel'], _EMPTY)[1]
+                    if direct_channel != science_channel:
+                        continue
                 try:
                     direct_expspcin = int(getattr_from_list(
                         direct.item, ['expspcin'], _EMPTY
@@ -558,7 +625,7 @@ class Asn_Lv2WFSS(
                     logger.debug('Direct image %s has no EXPSPCIN defined.', direct)
                     continue
                 diff = direct_expspcin - expspcin
-                if diff > min_diff:
+                if diff < min_diff and diff > 0:
                     min_diff = diff
                     closest = direct
 
@@ -577,7 +644,7 @@ class Asn_Lv2WFSS(
             for idx in sorted(direct_idxs, reverse=True)
         ))
 
-        # Add the Level3 catalog and direct image members
+        # Add the Level3 catalog, direct image, and segmentation map members
         lv3_direct_image_root = DMS_Level3_Base._dms_product_name(self)
         members.append(
             Member({
@@ -589,6 +656,12 @@ class Asn_Lv2WFSS(
             Member({
                 'expname': lv3_direct_image_root + '_cat.ecsv',
                 'exptype': 'sourcecat'
+            })
+        )
+        members.append(
+            Member({
+                'expname': lv3_direct_image_root + '_segm.fits',
+                'exptype': 'segmap'
             })
         )
 
@@ -656,6 +729,7 @@ class Asn_Lv2WFSS(
 
 @RegistryMarker.rule
 class Asn_Lv2NRSMSA(
+        AsnMixin_Lv2Nod,
         AsnMixin_Lv2Spectral,
         DMSLevel2bBase
 ):
@@ -696,39 +770,27 @@ class Asn_Lv2NRSMSA(
         # Now check and continue initialization.
         super(Asn_Lv2NRSMSA, self).__init__(*args, **kwargs)
 
-    def finalize(self):
-        """Finalize assocation
-
-        For NRS MSA, finalization means creating new associations for
-        background nods.
-
-        Returns
-        -------
-        associations: [association[, ...]] or None
-            List of fully-qualified associations that this association
-            represents.
-            `None` if a complete association cannot be produced.
-
-        """
-        if self.is_valid:
-            return self.make_nod_asns()
-        else:
-            return None
-
 
 @RegistryMarker.rule
 class Asn_Lv2NRSFSS(
+        AsnMixin_Lv2Nod,
         AsnMixin_Lv2Spectral,
         DMSLevel2bBase
 ):
     """Level2b NIRSpec Fixed-slit Association
 
+    Notes
+    -----
     Characteristics:
         - Association type: ``spec2``
         - Pipeline: ``calwebb_spec2``
         - Spectral-based NIRSpec fixed-slit single target science exposures
         - Single science exposure
         - Handle along-the-slit background nodding
+
+    Association includes both the background and science exposures of the nodding.
+    The identified science exposure is fixed by the nod, pattern, and exposure number
+    to prevent other science exposures being included.
     """
 
     def __init__(self, *args, **kwargs):
@@ -737,29 +799,25 @@ class Asn_Lv2NRSFSS(
         self.constraints = Constraint([
             Constraint_Base(),
             Constraint_Mode(),
+            DMSAttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value='nrs_fixedslit'
+            ),
+            SimpleConstraint(
+                value=True,
+                test=lambda value, item: nrsfss_valid_detector(item),
+                force_unique=False
+            ),
             Constraint(
                 [
-                    Constraint(
-                        [
-                            DMSAttrConstraint(
-                                name='exp_type',
-                                sources=['exp_type'],
-                                value='nrs_fixedslit'
-                            ),
-                            SimpleConstraint(
-                                value='science',
-                                test=lambda value, item: self.get_exposure_type(item) != value,
-                                force_unique=False
-                            )
-                        ]
+                    SimpleConstraint(
+                        value='science',
+                        test=lambda value, item: self.get_exposure_type(item) != value,
+                        force_unique=False
                     ),
                     Constraint(
                         [
-                            DMSAttrConstraint(
-                                name='exp_type',
-                                sources=['exp_type'],
-                                value='nrs_fixedslit'
-                            ),
                             DMSAttrConstraint(
                                 name='expspcin',
                                 sources=['expspcin'],
@@ -769,8 +827,8 @@ class Asn_Lv2NRSFSS(
                                 sources=['numdthpt'],
                             ),
                             DMSAttrConstraint(
-                                name='subpxpns',
-                                sources=['subpxpns'],
+                                name='subpxpts',
+                                sources=['subpxpns', 'subpxpts'],
                             ),
                             SimpleConstraint(
                                 value='science',
@@ -787,25 +845,10 @@ class Asn_Lv2NRSFSS(
         # Now check and continue initialization.
         super(Asn_Lv2NRSFSS, self).__init__(*args, **kwargs)
 
-    def finalize(self):
-        """Finalize assocation
-
-        For NRS Fixed-slit, finalization means creating new associations for
-        background nods.
-
-        Returns
-        -------
-        associations: [association[, ...]] or None
-            List of fully-qualified associations that this association
-            represents.
-            `None` if a complete association cannot be produced.
-
-        """
-        return self.make_nod_asns()
-
 
 @RegistryMarker.rule
 class Asn_Lv2NRSIFUNod(
+        AsnMixin_Lv2Nod,
         AsnMixin_Lv2Spectral,
         DMSLevel2bBase
 ):
@@ -825,46 +868,30 @@ class Asn_Lv2NRSIFUNod(
         self.constraints = Constraint([
             Constraint_Base(),
             Constraint_Mode(),
-            Constraint(
-                [
-                    DMSAttrConstraint(
-                        name='exp_type',
-                        sources=['exp_type'],
-                        value='nrs_ifu'
-                    ),
-                    DMSAttrConstraint(
-                        name='expspcin',
-                        sources=['expspcin'],
-                    ),
-                    DMSAttrConstraint(
-                        name='patttype',
-                        sources=['patttype'],
-                        value=['2-point-nod|4-point-nod'],
-                        force_unique=True
-                    )
-                ]
+            DMSAttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value='nrs_ifu'
             ),
+            SimpleConstraint(
+                value=True,
+                test=lambda value, item: nrsifu_valid_detector(item),
+                force_unique=False
+            ),
+            DMSAttrConstraint(
+                name='expspcin',
+                sources=['expspcin'],
+            ),
+            DMSAttrConstraint(
+                name='patttype',
+                sources=['patttype'],
+                value=['2-point-nod|4-point-nod'],
+                force_unique=True
+            )
         ])
 
         # Now check and continue initialization.
         super(Asn_Lv2NRSIFUNod, self).__init__(*args, **kwargs)
-
-    def finalize(self):
-        """Finalize assocation
-
-        Finalization means creating new associations for
-        background nods.
-
-        Returns
-        -------
-        associations: [association[, ...]] or None
-            List of fully-qualified associations that this association
-            represents.
-            `None` if a complete association cannot be produced.
-
-        """
-        nodded_asns = self.make_nod_asns()
-        return nodded_asns
 
 
 @RegistryMarker.rule

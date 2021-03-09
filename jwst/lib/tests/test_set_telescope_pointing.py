@@ -132,7 +132,7 @@ def test_strict_pointing(data_file, eng_db_jw703):
 
 def test_pointing_averaging(eng_db_jw703):
     """Ensure that the averaging works."""
-    q_exp = np.array([ 0.62383733,  0.53552715, -0.49252283,  0.28541008])
+    q_exp = np.array([0.62383733,  0.53552715, -0.49252283,  0.28541008])
     j2fgs_exp = np.array([
         -1.00962794e-03,  9.99999464e-01,  3.41404261e-06,
         3.38429719e-03, 2.85793453e-09,  9.99994300e-01,
@@ -290,7 +290,7 @@ def test_add_wcs_fsmcorr_v1(data_file):
             '\nException={}'.format(e)
         )
 
-    with  datamodels.Level1bModel(data_file) as model:
+    with datamodels.Level1bModel(data_file) as model:
         assert model.meta.pointing.ra_v1 == TARG_RA
         assert model.meta.pointing.dec_v1 == TARG_DEC
         assert model.meta.pointing.pa_v3 == 0.
@@ -445,6 +445,7 @@ def test_tsgrism_siaf_values(eng_db_ngas, data_file_nosiaf):
         model.meta.aperture.name = "NRCA5_GRISM256_F444W"
         model.meta.observation.date = '1/1/2017'
         model.meta.exposure.type = "NRC_TSGRISM"
+        model.meta.visit.tsovisit = True
         stp.update_wcs(model, siaf_path=siaf_db)
         assert model.meta.wcsinfo.siaf_xref_sci == 887
         assert model.meta.wcsinfo.siaf_yref_sci == 35

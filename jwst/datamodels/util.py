@@ -9,14 +9,19 @@ from os.path import basename
 from platform import system as platform_system
 import psutil
 import traceback
+import logging
+
+import asdf
 
 import numpy as np
 from astropy.io import fits
+from stdatamodels import filetype
+from stdatamodels import s3_utils
+from stdatamodels.model_base import _FileReference
 
-from ..lib import s3_utils
 from ..lib.basic_utils import bytes2human
 
-import logging
+
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
@@ -70,7 +75,6 @@ def open(init=None, memmap=False, **kwargs):
     """
 
     from . import model_base
-    from . import filetype
 
     # Initialize variables used to select model class
 
@@ -83,9 +87,9 @@ def open(init=None, memmap=False, **kwargs):
     # all special cases return a model if they match
 
     if init is None:
-        return model_base.DataModel(None)
+        return model_base.JwstDataModel(None)
 
-    elif isinstance(init, model_base.DataModel):
+    elif isinstance(init, model_base.JwstDataModel):
         # Copy the object so it knows not to close here
         return init.__class__(init)
 
@@ -112,8 +116,18 @@ def open(init=None, memmap=False, **kwargs):
             return container.ModelContainer(init, **kwargs)
 
         elif file_type == "asdf":
-            # Read the file as asdf, no need for a special class
-            return model_base.DataModel(init, **kwargs)
+            if s3_utils.is_s3_uri(init):
+                asdffile = asdf.open(s3_utils.get_object(init), **kwargs)
+            else:
+                asdffile = asdf.open(init, **kwargs)
+
+            # Detect model type, then get defined model, and call it.
+            new_class = _class_from_model_type(asdffile)
+            if new_class is None:
+                # No model class found, so return generic DataModel.
+                return model_base.JwstDataModel(asdffile, **kwargs)
+
+            return new_class(asdffile)
 
     elif isinstance(init, tuple):
         for item in init:
@@ -180,7 +194,9 @@ def open(init=None, memmap=False, **kwargs):
 
     # Close the hdulist if we opened it
     if file_to_close is not None:
-        model._files_to_close.append(file_to_close)
+        # TODO: We need a better solution than messing with DataModel
+        # internals.
+        model._file_references.append(_FileReference(file_to_close))
 
     if not has_model_type:
         class_name = new_class.__name__.split('.')[-1]
@@ -195,15 +211,29 @@ def open(init=None, memmap=False, **kwargs):
     return model
 
 
-def _class_from_model_type(hdulist):
+def _class_from_model_type(init):
     """
     Get the model type from the primary header, lookup to get class
+
+    Parameter
+    ---------
+    init: AsdfFile or HDUList
+
+    Return
+    ------
+    new_class: str or None
     """
     from . import _defined_models as defined_models
 
-    if hdulist:
-        primary = hdulist[0]
-        model_type = primary.header.get('DATAMODL')
+    if init:
+        if isinstance(init, fits.hdu.hdulist.HDUList):
+            primary = init[0]
+            model_type = primary.header.get('DATAMODL')
+        elif isinstance(init, asdf.AsdfFile):
+            try:
+                model_type = init.tree['meta']['model_type']
+            except KeyError:
+                model_type = None
 
         if model_type is None:
             new_class = None
@@ -271,7 +301,7 @@ def _class_from_shape(hdulist, shape):
     """
     if len(shape) == 0:
         from . import model_base
-        new_class = model_base.DataModel
+        new_class = model_base.JwstDataModel
     elif len(shape) == 4:
         from . import quad
         new_class = quad.QuadModel
@@ -321,177 +351,6 @@ def is_association(asn_data):
         if 'asn_id' in asn_data and 'asn_pool' in asn_data:
             return True
     return False
-
-
-def gentle_asarray(a, dtype):
-    """
-    Performs an asarray that doesn't cause a copy if the byteorder is
-    different.  It also ignores column name differences -- the
-    resulting array will have the column names from the given dtype.
-    """
-    out_dtype = np.dtype(dtype)
-    if isinstance(a, np.ndarray):
-        in_dtype = a.dtype
-        # Non-table array
-        if in_dtype.fields is None and out_dtype.fields is None:
-            if np.can_cast(in_dtype, out_dtype, 'equiv'):
-                return a
-            else:
-                return np.asanyarray(a, dtype=out_dtype)
-        elif in_dtype.fields is not None and out_dtype.fields is not None:
-            # When a FITS file includes a pseudo-unsigned-int column, astropy will return
-            # a FITS_rec with an incorrect table dtype.  The following code rebuilds
-            # in_dtype from the individual fields, which are correctly labeled with an
-            # unsigned int dtype.
-            # We can remove this once the issue is resolved in astropy:
-            # https://github.com/astropy/astropy/issues/8862
-            if isinstance(a, fits.fitsrec.FITS_rec):
-                new_in_dtype = []
-                updated = False
-                for field_name in in_dtype.fields:
-                    table_dtype = in_dtype[field_name]
-                    field_dtype = a.field(field_name).dtype
-                    if np.issubdtype(table_dtype, np.signedinteger) and np.issubdtype(field_dtype, np.unsignedinteger):
-                        new_in_dtype.append((field_name, field_dtype))
-                        updated = True
-                    else:
-                        new_in_dtype.append((field_name, table_dtype))
-                if updated:
-                    in_dtype = np.dtype(new_in_dtype)
-
-            if in_dtype == out_dtype:
-                return a
-            in_names = {n.lower() for n in in_dtype.names}
-            out_names = {n.lower() for n in out_dtype.names}
-            if in_names == out_names:
-                # Change the dtype name to match the fits record names
-                # as the mismatch causes case insensitive access to fail
-                out_dtype.names = in_dtype.names
-            else:
-                raise ValueError(
-                    "Column names don't match schema. "
-                    "Schema has {0}. Data has {1}".format(
-                        str(out_names.difference(in_names)),
-                        str(in_names.difference(out_names))))
-
-            new_dtype = []
-            for i in range(len(out_dtype.fields)):
-                in_type = in_dtype[i]
-                out_type = out_dtype[i]
-                if in_type.subdtype is None:
-                    type_str = in_type.str
-                else:
-                    type_str = in_type.subdtype[0].str
-                if np.can_cast(in_type, out_type, 'equiv'):
-                    new_dtype.append(
-                        (out_dtype.names[i],
-                         type_str,
-                         in_type.shape))
-                else:
-                    return np.asanyarray(a, dtype=out_dtype)
-            return a.view(dtype=np.dtype(new_dtype))
-        else:
-            return np.asanyarray(a, dtype=out_dtype)
-    else:
-        try:
-            a = np.asarray(a, dtype=out_dtype)
-        except Exception:
-            raise ValueError("Can't convert {0!s} to ndarray".format(type(a)))
-        return a
-
-def get_short_doc(schema):
-    title = schema.get('title', None)
-    description = schema.get('description', None)
-    if description is None:
-        description = title or ''
-    else:
-        if title is not None:
-            description = title + '\n\n' + description
-    return description.partition('\n')[0]
-
-
-def ensure_ascii(s):
-    if isinstance(s, bytes):
-        s = s.decode('ascii')
-    return s
-
-
-def create_history_entry(description, software=None):
-    """
-    Create a HistoryEntry object.
-
-    Parameters
-    ----------
-    description : str
-        Description of the change.
-    software : dict or list of dict
-        A description of the software used.  It should not include
-        asdf itself, as that is automatically notated in the
-        `asdf_library` entry.
-
-        Each dict must have the following keys:
-
-        ``name``: The name of the software
-        ``author``: The author or institution that produced the software
-        ``homepage``: A URI to the homepage of the software
-        ``version``: The version of the software
-
-    Examples
-    --------
-    >>> soft = {'name': 'jwreftools', 'author': 'STSCI', \
-                'homepage': 'https://github.com/spacetelescope/jwreftools', 'version': "0.7"}
-    >>> entry = create_history_entry(description="HISTORY of this file", software=soft)
-
-    """
-    from asdf.tags.core import Software, HistoryEntry
-    import datetime
-
-    if isinstance(software, list):
-        software = [Software(x) for x in software]
-    elif software is not None:
-        software = Software(software)
-
-    entry = HistoryEntry({
-        'description': description,
-        'time': datetime.datetime.utcnow()
-    })
-
-    if software is not None:
-        entry['software'] = software
-    return entry
-
-
-def get_envar_as_boolean(name, default=False):
-    """Interpret an environmental as a boolean flag
-
-    Truth is any numeric value that is not 0 or
-    any of the following case-insensitive strings:
-
-    ('true', 't', 'yes', 'y')
-
-    Parameters
-    ----------
-    name : str
-        The name of the environmental variable to retrieve
-
-    default : bool
-        If the environmental variable cannot be accessed, use as the default.
-    """
-    truths = ('true', 't', 'yes', 'y')
-    falses = ('false', 'f', 'no', 'n')
-    if name in os.environ:
-        value = os.environ[name]
-        try:
-            value = bool(int(value))
-        except ValueError:
-            value_lowcase = value.lower()
-            if value_lowcase not in truths + falses:
-                raise ValueError(f'Cannot convert value "{value}" to boolean unambiguously.')
-            return value_lowcase in truths
-        return value
-
-    log.debug(f'Environmental "{name}" cannot be found. Using default value of "{default}".')
-    return default
 
 
 def check_memory_allocation(shape, allowed=None, model_type=None, include_swap=True):

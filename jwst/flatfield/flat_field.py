@@ -19,7 +19,7 @@ log.setLevel(logging.DEBUG)
 MICRONS_100 = 1.e-4                     # 100 microns, in meters
 
 # This is for NIRSpec.
-FIXED_SLIT_TYPES = ["NRS_LAMP", "NRS_BRIGHTOBJ", "NRS_FIXEDSLIT"]
+FIXED_SLIT_TYPES = ["NRS_LAMP", "NRS_AUTOWAVE", "NRS_BRIGHTOBJ", "NRS_FIXEDSLIT"]
 NIRSPEC_SPECTRAL_EXPOSURES = ['NRS_AUTOWAVE', 'NRS_BRIGHTOBJ', 'NRS_FIXEDSLIT', 'NRS_IFU', 'NRS_LAMP', 'NRS_MSASPEC']
 
 # Dispersion direction, predominantly horizontal or vertical.  These values
@@ -178,12 +178,12 @@ def apply_flat_field(science, flat, inverse=False):
     bad_flag = dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['NO_FLAT_FIELD']
 
     flat_nan = np.isnan(flat_data)
-    flat_dq[flat_nan] = np.bitwise_or(flat_dq[flat_nan],bad_flag)
+    flat_dq[flat_nan] = np.bitwise_or(flat_dq[flat_nan], bad_flag)
 
     # Find pixels in the flat that have a value of zero, and set
     # DQ = DO_NOT_USE + NO_FLAT_FIELD
     flat_zero = np.where(flat_data == 0.)
-    flat_dq[flat_zero] = np.bitwise_or(flat_dq[flat_zero],bad_flag)
+    flat_dq[flat_zero] = np.bitwise_or(flat_dq[flat_zero], bad_flag)
 
     # Find all pixels in the flat that have a DQ value of DO_NOT_USE
     flat_bad = np.bitwise_and(flat_dq, dqflags.pixel['DO_NOT_USE'])
@@ -215,6 +215,11 @@ def apply_flat_field(science, flat, inverse=False):
     # Combine the science and flat DQ arrays
     science.dq = np.bitwise_or(science.dq, flat_dq)
 
+    # Find all pixels in the flat that have a DQ value of NON_SCIENCE
+    # add the DO_NOT_USE flag to these pixels. We don't want to use these pixels
+    # in futher steps
+    flag_nonsci = np.bitwise_and(science.dq, dqflags.pixel['NON_SCIENCE']).astype(bool)
+    science.dq[flag_nonsci] = np.bitwise_or(science.dq[flag_nonsci], dqflags.pixel['DO_NOT_USE'])
 
 #
 # The following functions are for NIRSpec spectrographic data.
@@ -282,7 +287,7 @@ def do_nirspec_flat_field(output_model, f_flat_model, s_flat_model, d_flat_model
     # check for that case.
     if not hasattr(output_model, "slits"):
         if exposure_type == "NRS_IFU" or (
-            exposure_type == "NRS_AUTOWAVE" and output_model.meta.instrument.lamp_mode == 'IFU'):
+            exposure_type in ["NRS_AUTOWAVE", "NRS_LAMP"] and output_model.meta.instrument.lamp_mode == 'IFU'):
             if not isinstance(output_model, datamodels.IFUImageModel):
                 log.error("NIRSpec IFU data is not an IFUImageModel; "
                           "don't know how to process it.")
@@ -334,6 +339,7 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispa
     """
 
     exposure_type = output_model.meta.exposure.type
+    primary_slit = output_model.meta.instrument.fixed_slit
 
     # Create a list to hold the list of slits.  This will eventually be used
     # to extend the MultiSlitModel.slits attribute.  We do it this way to
@@ -354,13 +360,49 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispa
         if user_supplied_flat is not None:
             slit_flat = user_supplied_flat.slits[slit_idx]
         else:
-            slit_flat = flat_for_nirspec_slit(
-                slit, f_flat_model, s_flat_model, d_flat_model,
-                dispaxis, exposure_type, slit_nt, output_model.meta.subarray
-            )
-            if slit_flat is None:
-                log.debug(f'Slit {slit} flat field could not be determined.')
-                continue
+            if exposure_type == "NRS_FIXEDSLIT" and \
+               slit.name == primary_slit and slit.source_type.upper() == "POINT":
+
+                # For fixed-slit exposures, if this is the primary slit
+                # and it contains a point source, compute the flat-field
+                # corrections for both uniform (without wavecorr) and point
+                # source (with wavecorr) modes, applying only the point
+                # source version to the data.
+
+                # First compute a flat appropriate for a uniform source,
+                # which means NOT using corrected wavelengths
+                slit_flat = flat_for_nirspec_slit(
+                    slit, f_flat_model, s_flat_model, d_flat_model,
+                    dispaxis, exposure_type, slit_nt, output_model.meta.subarray,
+                    use_wavecorr=False
+                )
+
+                # Store the result for uniform source
+                slit.flatfield_uniform = slit_flat.data
+
+                # Now compute a flat appropriate for a point source,
+                # which means using corrected wavelengths
+                slit_flat = flat_for_nirspec_slit(
+                    slit, f_flat_model, s_flat_model, d_flat_model,
+                    dispaxis, exposure_type, slit_nt, output_model.meta.subarray,
+                    use_wavecorr=True
+                )
+
+                # Store the result for point source; this will be
+                # the version actually applied to the data below.
+                slit.flatfield_point = slit_flat.data
+
+            else:
+                # Build the flat for this slit the normal way, without any
+                # specification for whether we want to use corrected wavelengths
+                slit_flat = flat_for_nirspec_slit(
+                    slit, f_flat_model, s_flat_model, d_flat_model,
+                    dispaxis, exposure_type, slit_nt, output_model.meta.subarray,
+                    use_wavecorr=None
+                )
+                if slit_flat is None:
+                    log.debug(f'Slit {slit} flat field could not be determined.')
+                    continue
 
             # Append the SlitDataModel to the list of slits
             flat_slits.append(slit_flat)
@@ -607,13 +649,13 @@ def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
     # Combine the uncertainty arrays, excluding the ones that are None
     sum_var = np.zeros_like(flat_2d)
     if f_flat_err is not None:
-        np.place(f_flat, f_flat==0, 1.)
+        np.place(f_flat, f_flat == 0, 1.)
         sum_var += f_flat_err**2 / f_flat**2
     if s_flat_err is not None:
-        np.place(s_flat, s_flat==0, 1.)
+        np.place(s_flat, s_flat == 0, 1.)
         sum_var += s_flat_err**2 / s_flat**2
     if d_flat_err is not None:
-        np.place(d_flat, d_flat==0, 1.)
+        np.place(d_flat, d_flat == 0, 1.)
         sum_var += d_flat_err**2 / d_flat**2
     flat_err = flat_2d * np.sqrt(sum_var)
 
@@ -725,12 +767,12 @@ def fore_optics_flat(wl, f_flat_model, exposure_type, dispaxis,
     # DQ mask, DO_NOT_USE + NO_FLAT_FIELD
     bad_flag = dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['NO_FLAT_FIELD']
     flat_nan = np.isnan(f_flat)
-    f_flat_dq[flat_nan] = np.bitwise_or(f_flat_dq[flat_nan],bad_flag)
+    f_flat_dq[flat_nan] = np.bitwise_or(f_flat_dq[flat_nan], bad_flag)
 
     # Find pixels in the flat have have a value of zero, and add to
     # DQ mask,  DO_NOT_USE + NO_FLAT_FIELD
     flat_zero = np.where(f_flat == 0.)
-    f_flat_dq[flat_zero] = np.bitwise_or(f_flat_dq[flat_zero],bad_flag)
+    f_flat_dq[flat_zero] = np.bitwise_or(f_flat_dq[flat_zero], bad_flag)
 
     # Find all pixels in the flat that have a DQ value of DO_NOT_USE
     flat_bad = np.bitwise_and(f_flat_dq, dqflags.pixel['DO_NOT_USE'])
@@ -828,12 +870,12 @@ def spectrograph_flat(wl, s_flat_model,
     bad_flag = dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['NO_FLAT_FIELD']
 
     flat_nan = np.isnan(flat_2d)
-    s_flat_dq[flat_nan] = np.bitwise_or(s_flat_dq[flat_nan],bad_flag)
+    s_flat_dq[flat_nan] = np.bitwise_or(s_flat_dq[flat_nan], bad_flag)
 
     # Find pixels in the flat have have a value of zero, and add to
     # DQ mask, DO_NOT_USE + NO_FLAT_FIELD
     flat_zero = np.where(flat_2d == 0.)
-    s_flat_dq[flat_zero] = np.bitwise_or(s_flat_dq[flat_zero],bad_flag)
+    s_flat_dq[flat_zero] = np.bitwise_or(s_flat_dq[flat_zero], bad_flag)
 
     # Find all pixels in the flat that have a DQ value of DO_NOT_USE
     flat_bad = np.bitwise_and(s_flat_dq, dqflags.pixel['DO_NOT_USE'])
@@ -927,12 +969,12 @@ def detector_flat(wl, d_flat_model,
     bad_flag = dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['NO_FLAT_FIELD']
 
     flat_nan = np.isnan(flat_2d)
-    d_flat_dq[flat_nan] = np.bitwise_or(d_flat_dq[flat_nan],bad_flag)
+    d_flat_dq[flat_nan] = np.bitwise_or(d_flat_dq[flat_nan], bad_flag)
 
     # Find pixels in the flat have have a value of zero, and add to
     # DQ mask, DO_NOT_USE + NO_FLAT_FIELD
     flat_zero = np.where(flat_2d == 0.)
-    d_flat_dq[flat_zero] = np.bitwise_or(d_flat_dq[flat_zero],bad_flag)
+    d_flat_dq[flat_zero] = np.bitwise_or(d_flat_dq[flat_zero], bad_flag)
 
     # Find all pixels in the flat that have a DQ value of DO_NOT_USE
     flat_bad = np.bitwise_and(d_flat_dq, dqflags.pixel['DO_NOT_USE'])
@@ -990,23 +1032,23 @@ def combine_dq(f_flat_dq, s_flat_dq, d_flat_dq, default_shape):
         flat_dq = np.bitwise_or(dq_list[0], dq_list[1])
         bad1 = np.bitwise_and(dq_list[0], dqflags.pixel['DO_NOT_USE'])
         bad2 = np.bitwise_and(dq_list[1], dqflags.pixel['DO_NOT_USE'])
-        iflag = np.where( (bad1==1) & (bad2 ==1))
+        iflag = np.where((bad1 == 1) & (bad2 == 1))
     elif n_dq == 3:
         temp = np.bitwise_or(dq_list[0], dq_list[1])
         flat_dq = np.bitwise_or(temp, dq_list[2])
         bad1 = np.bitwise_and(dq_list[0], dqflags.pixel['DO_NOT_USE'])
         bad2 = np.bitwise_and(dq_list[1], dqflags.pixel['DO_NOT_USE'])
         bad3 = np.bitwise_and(dq_list[2], dqflags.pixel['DO_NOT_USE'])
-        iflag = np.where( (bad1==1) & (bad2 ==1) & (bad3 ==1))
+        iflag = np.where((bad1 == 1) & (bad2 == 1) & (bad3 == 1))
 
     # if flats is a combination of 2 or more flats:
     # only flag DO_NOT_USE if all the flats had do not other
     # otherwize flat as UNRELIALBLE_FLAT
-    if n_dq >=2:
+    if n_dq >= 2:
         iloc = np.where(np.bitwise_and(flat_dq, dqflags.pixel['DO_NOT_USE']))
         flat_dq[iloc] = dqflags.pixel['UNRELIABLE_FLAT']
     # now only set DO_NOT_USE to pixels that are set in both flats as DO_NOT_USE
-        flat_dq[iflag] = np.bitwise_or(flat_dq[iflag],dqflags.pixel['DO_NOT_USE'])
+        flat_dq[iflag] = np.bitwise_or(flat_dq[iflag], dqflags.pixel['DO_NOT_USE'])
 
     return flat_dq
 
@@ -1116,7 +1158,7 @@ def read_flat_table(flat_model, exposure_type, slit_name=None, quadrant=None):
     row = None
     # Note that it's only for fixed-slit data that we need to select the
     # row based on the slit name.
-    if exposure_type in FIXED_SLIT_TYPES and slit_col is not None:
+    if exposure_type in FIXED_SLIT_TYPES and slit_col is not None and slit_name is not None:
         slit_name_lc = slit_name.lower()
         for i in range(nrows):
             # Note:  The .strip() is a workaround.  As of the time of
@@ -1699,7 +1741,7 @@ def flat_for_nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
 
 
 def flat_for_nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_model,
-                         dispaxis):
+                               dispaxis):
     """Create the interpolated flat for NIRSpec IFU
 
     Parameters
@@ -1813,7 +1855,8 @@ def flat_for_nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_
 
 
 def flat_for_nirspec_slit(slit, f_flat_model, s_flat_model, d_flat_model,
-                          dispaxis, exposure_type, slit_nt, subarray):
+                          dispaxis, exposure_type, slit_nt, subarray,
+                          use_wavecorr):
     """Create the interpolated flat for NIRSpec slit data
 
     Parameters
@@ -1842,6 +1885,10 @@ def flat_for_nirspec_slit(slit, f_flat_model, s_flat_model, d_flat_model,
 
     subarray : DataModel.meta.subarray
         The subarray specification
+
+    use_wavecorr : boolean
+        Flag indicating whether or not to use the corrected wavelengths
+        provided (upstream) by the wavecorr step.
 
     Returns
     -------
@@ -1872,44 +1919,73 @@ def flat_for_nirspec_slit(slit, f_flat_model, s_flat_model, d_flat_model,
         got_wl_attribute = False
     if not got_wl_attribute or len(wl) == 0:
         got_wl_attribute = False
+    return_dummy = False
 
-    # The default value is 0, so all 0 values means that the
-    # wavelength attribute was not populated.  We need either a
-    # wavelength array or a meta.wcs.
-    if not got_wl_attribute or np.nanmin(wl) == 0. and np.nanmax(wl) == 0.:
-        got_wl_attribute = False
-        log.warning("The wavelength array for slit %s has not "
-                    "been populated,", slit.name)
-        if got_wcs:
-            bb = slit.meta.wcs.bounding_box
-            grid = grid_from_bounding_box(bb)
-            wl = slit.meta.wcs(*grid)[2]
-            del grid
-        else:
-            log.warning("and this slit does not have a 'wcs' attribute")
-            log.warning("likely because assign_wcs has not been run.")
-            log.error("skipping ...")
-
-            # Put a dummy flat here as a placeholder
-            dummy_flat = datamodels.SlitModel(data=flat_2d, dq=flat_dq_2d, err=flat_err_2d)
-            dummy_flat.name = slit.name
-            dummy_flat.xstart = slit.xstart
-            dummy_flat.xsize = slit.xsize
-            dummy_flat.ystart = slit.ystart
-            dummy_flat.ysize = slit.ysize
-            dummy_flat.wavelength = np.zeros_like(slit.data)
-
-            return dummy_flat
+    # Has the use_wavecorr param been set?
+    if use_wavecorr is not None:
+        if use_wavecorr:
+            # Need to use the 2D wavelength array, because that's where
+            # the corrected wavelengths are stored
+            if got_wl_attribute:
+                # We've got the "wl" wavelength array we need
+                pass
+            else:
+                # Can't do the computation without the 2D wavelength array
+                log.error(f"The wavelength array for slit {slit.name} is not populated")
+                log.error("Skipping flat-field correction")
+                return_dummy = True
+        elif not use_wavecorr:
+            # Need to use the WCS object to create an uncorrected 2D wavelength array
+            if got_wcs:
+                log.info(f"Creating wavelength array from WCS for slit {slit.name}")
+                bb = slit.meta.wcs.bounding_box
+                grid = grid_from_bounding_box(bb)
+                wl = slit.meta.wcs(*grid)[2]
+                del grid
+            else:
+                # Can't create the uncorrected wavelengths without the WCS
+                log.error(f"Slit {slit.name} has no WCS object")
+                log.error("Skipping flat-field correction")
+                return_dummy = True
     else:
-        log.debug("Wavelengths are from the wavelength array.")
+        # use_wavecorr was not specified, so use default processing
+        if not got_wl_attribute or np.nanmin(wl) == 0. and np.nanmax(wl) == 0.:
+            got_wl_attribute = False
+            log.warning(f"The wavelength array for slit {slit.name} has not been populated")
+            # Try to create it from the WCS
+            if got_wcs:
+                bb = slit.meta.wcs.bounding_box
+                grid = grid_from_bounding_box(bb)
+                wl = slit.meta.wcs(*grid)[2]
+                del grid
+            else:
+                log.warning("and this slit does not have a 'wcs' attribute")
+                log.warning("likely because assign_wcs has not been run.")
+                log.error("skipping ...")
+                return_dummy = True
+        else:
+            log.debug("Wavelengths are from the wavelength array.")
 
+    # Create and return a dummy flat as a placeholder, if necessary
+    if return_dummy:
+        dummy_flat = datamodels.SlitModel(data=flat_2d, dq=flat_dq_2d, err=flat_err_2d)
+        dummy_flat.name = slit.name
+        dummy_flat.xstart = slit.xstart
+        dummy_flat.xsize = slit.xsize
+        dummy_flat.ystart = slit.ystart
+        dummy_flat.ysize = slit.ysize
+        dummy_flat.wavelength = np.zeros_like(slit.data)
+
+        return dummy_flat
+
+    # We've got everything we need for the rest of processing
     nan_mask = np.isnan(wl)
     good_mask = np.logical_not(nan_mask)
     sum_nan_mask = nan_mask.sum(dtype=np.intp)
     sum_good_mask = good_mask.sum(dtype=np.intp)
     if sum_nan_mask > 0:
-        log.debug("Number of NaNs in sci wavelength array = %d out of %d",
-                  sum_nan_mask, sum_nan_mask + sum_good_mask)
+        log.debug(f"Number of NaNs in sci wavelength array = {sum_nan_mask} "
+                  f"out of {sum_nan_mask + sum_good_mask}")
         if sum_good_mask < 1:
             log.warning("(all are NaN)")
         # Replace NaNs with a relatively harmless but out-of-bounds value.
@@ -1940,6 +2016,7 @@ def flat_for_nirspec_slit(slit, f_flat_model, s_flat_model, d_flat_model,
     new_flat.ystart = slit.ystart
     new_flat.ysize = slit.ysize
     new_flat.wavelength = wl.copy()
+
     # Copy the WCS info from output (same as input).
     if got_wcs:
         new_flat.meta.wcs = slit.meta.wcs

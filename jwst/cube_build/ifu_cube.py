@@ -1,4 +1,6 @@
 """ Work horse routines used for building ifu spectral cubes
+(including the main loop over files and the construction of
+final spaxel fluxes)
 """
 
 import time
@@ -132,7 +134,7 @@ class IFUCubeData():
           Interpolation = area was selected for when input data is more than
           one file or model
         AreaInterpolation
-          If Inputerpolate = area then no user selected value can be set for
+          If Interpolation = area then no user selected value can be set for
           beta dimension of the output cube
         """
         num1 = len(self.list_par1)
@@ -280,8 +282,8 @@ class IFUCubeData():
 # find the CRPIX1 CRPIX2 - xi and eta centered at 0,0
 # to find location of center abs of min values is how many pixels
         # we want a systemtric cube centered on xi,eta = 0
-        xilimit = max( np.abs(xi_min), np.abs(xi_max))
-        etalimit = max( np.abs(eta_min), np.abs(eta_max))
+        xilimit = max(np.abs(xi_min), np.abs(xi_max))
+        etalimit = max(np.abs(eta_min), np.abs(eta_max))
 
         na = math.ceil(xilimit / self.cdelt1) + 1
         nb = math.ceil(etalimit / self.cdelt2) + 1
@@ -295,8 +297,8 @@ class IFUCubeData():
         self.crpix1 = float(na) + 1.0
         self.crpix2 = float(nb) + 1.0
 
-        self.naxis1 = na*2  + 1
-        self.naxis2 = nb*2  + 1
+        self.naxis1 = na*2 + 1
+        self.naxis2 = nb*2 + 1
 
         self.a_min = xi_min
         self.a_max = xi_max
@@ -352,6 +354,7 @@ class IFUCubeData():
             self.zcoord = np.zeros(self.naxis3)
             # CRPIX3 for FITS is 1 (center of first pixel)
             # CRVAL3 then is lambda_min + self.cdelt3/ 2.0, which is also zcoord[0]
+            # Note that these are all values at the center of a spaxel
             self.crval3 = self.lambda_min + self.cdelt3 / 2.0
             self.crpix3 = 1.0
             zstart = self.lambda_min + self.cdelt3 / 2.0
@@ -398,14 +401,12 @@ class IFUCubeData():
 
         # along slice: a
         # across slice: b
-        alimit = max( np.abs(self.a_min), np.abs(self.a_max))
+        alimit = max(np.abs(self.a_min), np.abs(self.a_max))
 
         range_b = self.b_max - self.b_min
         if self.instrument == 'MIRI':
-            self.cdelt1 = self.cdelt2 # make cubes square
+            #self.cdelt1 = self.cdelt2 # make cubes same scaling. MIRI EC team requested this removed (2/16/21)
             along_cdelt = self.cdelt1
-            #n1a = int(math.ceil(math.fabs(self.a_min) / along_cdelt))
-            #n1b = int(math.ceil(math.fabs(self.a_max) / along_cdelt))
 
             n1a = math.ceil(alimit / along_cdelt)
             n1b = math.ceil(alimit / along_cdelt)
@@ -579,7 +580,7 @@ class IFUCubeData():
         spaxel_dec = None
         spaxel_wave = None
 # ______________________________________________________________________________
-# Only preformed if weighting = MIRIPSF, first convert xi,eta cube to
+# Only performed if weighting = MIRIPSF, first convert xi,eta cube to
 # v2,v3,wave. This information if past to cube_cloud and for each
 # input_model the v2,v3, wave is converted to alpha,beta in detector plane
 # ra,dec, wave is independent of input_model
@@ -695,10 +696,9 @@ class IFUCubeData():
 
                             alpha_resol = self.instrument_info.Get_psf_alpha_parameters()
                             beta_resol = self.instrument_info.Get_psf_beta_parameters()
-
-                            worldtov23 = input_model.meta.wcs.get_transform("world", "v2v3")
-                            v2ab_transform = input_model.meta.wcs.get_transform('v2v3',
-                                                                                'alpha_beta')
+                            wcsobj = input_model.meta.wcs
+                            worldtov23 = wcsobj.get_transform(wcsobj.output_frame.name, "v2v3")
+                            v2ab_transform = wcsobj.get_transform('v2v3', 'alpha_beta')
 
                             spaxel_v2, spaxel_v3, zl = worldtov23(spaxel_ra,
                                                                   spaxel_dec,
@@ -806,7 +806,7 @@ class IFUCubeData():
         t1 = time.time()
         log.info("Time to find Cube Flux = %.1f s" % (t1 - t0,))
         # result consist of ifu_cube and status
-        result  = self.setup_final_ifucube_model(ifile_ref)
+        result = self.setup_final_ifucube_model(ifile_ref)
 # _______________________________________________________________________
 # shove Flux and iflux in the  final IFU cube
 
@@ -890,11 +890,52 @@ class IFUCubeData():
                 log.debug("Time to Create Single ifucube = %.1f s" % (t1 - t0,))
                 single_ifucube_container.append(ifucube_model)
                 if status !=0:
-                    log.debug("Possible problem with single ifu cube, no valid data in cube" )
+                    log.debug("Possible problem with single ifu cube, no valid data in cube")
                 j = j + 1
         return single_ifucube_container
-# **************************************************************************
 
+
+# **************************************************************************
+    def determine_cube_parameters_internal(self):
+        """Determine the spatial and spectral ifu size for coord_system = internal_cal
+
+        """
+
+        #____________________________________________________________
+        # internal_cal is for only 1 file and weighting= area
+        # no msm or emsm  information is needed
+        par1 = self.list_par1[0]
+        par2 = self.list_par2[0]
+
+        a_scale, b_scale, w_scale = self.instrument_info.GetScale(par1,
+                                                                      par2)
+        self.spatial_size = a_scale
+        if self.scale1 != 0:
+            self.spatial_size = self.scale1
+
+        min_wave = self.instrument_info.GetWaveMin(par1, par2)
+        max_wave = self.instrument_info.GetWaveMax(par1, par2)
+        if self.wavemin is None:
+            self.wavemin = min_wave
+        else:
+            self.wavemin = np.float64(self.wavemin)
+            self.wavemin_user = True
+
+        if self.wavemax is None:
+            self.wavemax = max_wave
+        else:
+            self.wavemax = np.float64(self.wavemax)
+            self.wavemax_user = True
+
+        if self.scalew != 0:
+            self.spectral_size = self.scalew
+            self.linear_wavelength = True
+        else:
+            self.spectral_size = w_scale
+            self.linear_wavelength = True
+
+
+# **************************************************************************
     def determine_cube_parameters(self):
         """Determine the spatial and wavelength roi size to use for
         selecting point cloud elements around the spaxel centeres.
@@ -923,6 +964,7 @@ class IFUCubeData():
         minwave = np.zeros(number_bands)
         maxwave = np.zeros(number_bands)
 
+        #____________________________________________________________
         for i in range(number_bands):
             if self.instrument == 'MIRI':
                 par1 = self.list_par1[i]
@@ -931,19 +973,16 @@ class IFUCubeData():
                 par1 = self.list_par1[i]
                 par2 = self.list_par2[i]
 
-            # pull out the values from the cube pars reference file
-            roiw[i] = self.instrument_info.GetWaveRoi(par1, par2)
-            rois[i] = self.instrument_info.GetSpatialRoi(par1, par2)
-
             a_scale, b_scale, w_scale = self.instrument_info.GetScale(par1,
                                                                       par2)
             spaxelsize[i] = a_scale
             spectralsize[i] = w_scale
-
             minwave[i] = self.instrument_info.GetWaveMin(par1, par2)
             maxwave[i] = self.instrument_info.GetWaveMax(par1, par2)
-            # values will be set to NONE if cube pars table does not contain them
 
+            # pull out the values from the cube pars reference file
+            roiw[i] = self.instrument_info.GetWaveRoi(par1, par2)
+            rois[i] = self.instrument_info.GetSpatialRoi(par1, par2)
             power[i] = self.instrument_info.GetMSMPower(par1, par2)
             softrad[i] = self.instrument_info.GetSoftRad(par1, par2)
             scalerad[i] = self.instrument_info.GetScaleRad(par1, par2)
@@ -1200,7 +1239,7 @@ class IFUCubeData():
                     lam_med = np.median(lam)
                     # pick two alpha, beta values to determine rotation angle
                     # values in arc seconds
-                    alpha_beta2world = input_model.meta.wcs.get_transform('alpha_beta','world')
+                    alpha_beta2world = input_model.meta.wcs.get_transform('alpha_beta', input_model.meta.wcs.output_frame.name)
 
                     temp_ra1, temp_dec1, lam_temp = alpha_beta2world(0, 0, lam_med)
                     temp_ra2, temp_dec2, lam_temp = alpha_beta2world(0, 2, lam_med)
@@ -1216,7 +1255,7 @@ class IFUCubeData():
 
                     # pick two along sice, across slice  values to determine rotation angle
                     # values in meters
-                    slicer2world = slice_wcs.get_transform('slicer','world')
+                    slicer2world = slice_wcs.get_transform('slicer', slice_wcs.output_frame.name)
                     temp_ra1, temp_dec1, lam_temp = slicer2world(0, 0, lam_med)
                     temp_ra2, temp_dec2, lam_temp = slicer2world(0, 0.005, lam_med)
                 # ________________________________________________________________________________
@@ -1229,7 +1268,7 @@ class IFUCubeData():
 # now loop over data and find min and max ranges data covers
 
         corner_a = []
-        corner_b  = []
+        corner_b = []
         lambda_min = []
         lambda_max = []
 
@@ -1352,8 +1391,8 @@ class IFUCubeData():
 
         Return the coordinates of all the detector pixel in the output frame.
         In addition, an array of pixel fluxes and weighing parameters are
-        detemined. The pixel flux and weighing parameters are use later in
-        the processto find the final flux of a cube spaxel based on the pixel
+        determined. The pixel flux and weighing parameters are used later in
+        the process to find the final flux of a cube spaxel based on the pixel
         fluxes and pixel weighing parameters that fall within the roi of
         spaxel center
 
@@ -1521,14 +1560,25 @@ class IFUCubeData():
                 slice_no = slice_det[valid_data]
 # ______________________________________________________________________________
 # The following is for both MIRI and NIRSPEC
-# grab the flux and DQ values for these pixles
+# grab the flux and DQ values for these pixels
             flux_all = input_model.data[y, x]
             err_all = input_model.err[y, x]
             dq_all = input_model.dq[y, x]
             valid2 = np.isfinite(flux_all)
 
-            min_wave_tolerance = self.crval3 - np.absolute(self.zcoord[1] - self.zcoord[0])
-            max_wave_tolerance = self.zcoord[-1] + np.absolute(self.zcoord[-1] - self.zcoord[-2])
+            # Pre-select only data within a given wavelength range
+            # This range is defined to include all pixels for which the chosen wavelength region
+            # of interest would have them fall within one of the cube spectral planes
+            # Note that the cube lambda refer to the spaxel midpoints, so we must account for both
+            # the spaxel width and the ROI size
+            if self.linear_wavelength:
+                min_wave_tolerance = self.crval3 - np.absolute(self.zcoord[1] - self.zcoord[0]) / 2 - self.roiw
+                max_wave_tolerance = (self.zcoord[-1] + np.absolute(self.zcoord[-1] - self.zcoord[-2]) / 2
+                                      + self.roiw)
+            else:
+                min_wave_tolerance = self.crval3 - np.absolute(self.zcoord[1] - self.zcoord[0]) / 2 - np.max(self.roiw_table)
+                max_wave_tolerance = (self.zcoord[-1] + np.absolute(self.zcoord[-1] - self.zcoord[-2]) / 2
+                                      + np.max(self.roiw_table))
 
             valid_min = np.where(wave >= min_wave_tolerance)
             not_mapped_low = wave.size - len(valid_min[0])
@@ -1624,7 +1674,7 @@ class IFUCubeData():
         """
 
         # MIRI mapping:
-        # The FOV is roughtly the same for all the wavelength ranges.
+        # The FOV is roughly the same for all the wavelength ranges.
         # The offset in the slices makes the calculation of the four corners
         # of the FOV more complicated. So we only use the two slices at
         # the edges of the FOV to define the 4 corners.
@@ -1960,8 +2010,11 @@ class IFUCubeData():
             self.spaxel_flux[good] = self.spaxel_flux[good] / self.spaxel_weight[good]
             self.spaxel_var[good] = self.spaxel_var[good] / (self.spaxel_weight[good] * self.spaxel_weight[good])
         elif self.interpolation == 'pointcloud':
+            # Don't apply any normalization if no points contributed to a spaxel (i.e., don't divide by zero)
             good = self.spaxel_iflux > 0
+            # Normalize the weighted sum of pixel fluxes by the sum of the weights
             self.spaxel_flux[good] = self.spaxel_flux[good] / self.spaxel_weight[good]
+            # Normalize the variance by the square of the weights
             self.spaxel_var[good] = self.spaxel_var[good] / (self.spaxel_weight[good] * self.spaxel_weight[good])
 # ********************************************************************************
 
@@ -2082,6 +2135,7 @@ class IFUCubeData():
         # loop over the wavelength planes to confirm each plane has some data
         # for initial or final planes that do not have any data - eliminated them
         # from the IFUcube
+        # Rearrange values from 1d vectors into 3d cubes
         temp_flux = self.spaxel_flux.reshape((self.naxis3,
                                               self.naxis2, self.naxis1))
         temp_wmap = self.spaxel_iflux.reshape((self.naxis3,
@@ -2103,7 +2157,7 @@ class IFUCubeData():
                     remove_start = remove_start + 1
                 else:
                     found = 1
-                    break;
+                    break
                 k = k + 1
 
             remove_final = 0
@@ -2116,7 +2170,7 @@ class IFUCubeData():
                     remove_final = remove_final + 1
                 else:
                     found = 1
-                    break;
+                    break
                 k = k -1
 
             remove_total = remove_start + remove_final
@@ -2324,6 +2378,84 @@ class IFUCubeData():
                 ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL3C'
                 ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE3C'
             if self.list_par1[0] == '4' and self.list_par2[0] == 'long':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4C'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4C'
+
+            if self.list_par1[0] == '1' and self.list_par2[0] == 'short-medium':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL1A'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE1A'
+            if self.list_par1[0] == '2' and self.list_par2[0] == 'short-medium':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL2B'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE2B'
+            if self.list_par1[0] == '3' and self.list_par2[0] == 'short-medium':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL3B'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE3B'
+            if self.list_par1[0] == '4' and self.list_par2[0] == 'short-medium':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4A'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4A'
+
+            if self.list_par1[0] == '1' and self.list_par2[0] == 'short-long':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL1A'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE1A'
+            if self.list_par1[0] == '2' and self.list_par2[0] == 'short-long':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL2C'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE2C'
+            if self.list_par1[0] == '3' and self.list_par2[0] == 'short-long':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL3C'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE3C'
+            if self.list_par1[0] == '4' and self.list_par2[0] == 'short-long':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4A'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4A'
+
+            if self.list_par1[0] == '1' and self.list_par2[0] == 'medium-short':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL1B'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE1B'
+            if self.list_par1[0] == '2' and self.list_par2[0] == 'medium-short':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL2A'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE2A'
+            if self.list_par1[0] == '3' and self.list_par2[0] == 'medium-short':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL3A'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE3A'
+            if self.list_par1[0] == '4' and self.list_par2[0] == 'medium-short':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4B'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4B'
+
+            if self.list_par1[0] == '1' and self.list_par2[0] == 'medium-long':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL1B'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE1B'
+            if self.list_par1[0] == '2' and self.list_par2[0] == 'medium-long':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL2C'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE2C'
+            if self.list_par1[0] == '3' and self.list_par2[0] == 'medium-long':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL3C'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE3C'
+            if self.list_par1[0] == '4' and self.list_par2[0] == 'medium-long':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4B'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4B'
+
+            if self.list_par1[0] == '1' and self.list_par2[0] == 'long-short':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL1C'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE1C'
+            if self.list_par1[0] == '2' and self.list_par2[0] == 'long-short':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL2A'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE2A'
+            if self.list_par1[0] == '3' and self.list_par2[0] == 'long-short':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL3A'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE3A'
+            if self.list_par1[0] == '4' and self.list_par2[0] == 'long-short':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4C'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4C'
+
+            if self.list_par1[0] == '1' and self.list_par2[0] == 'long-medium':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL1C'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE1C'
+            if self.list_par1[0] == '2' and self.list_par2[0] == 'long-medium':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL2B'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE2B'
+            if self.list_par1[0] == '3' and self.list_par2[0] == 'long-medium':
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL3B'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE3B'
+            if self.list_par1[0] == '4' and self.list_par2[0] == 'long-medium':
                 ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4C'
                 ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4C'
 

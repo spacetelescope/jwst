@@ -26,6 +26,7 @@ class InputSpectrumModel:
         unit_weight
         right_ascension
         declination
+        source_id
     """
 
     def __init__(self, ms, spec, exptime_key):
@@ -63,6 +64,7 @@ class InputSpectrumModel:
         self.unit_weight = False        # may be reset below
         self.right_ascension = np.zeros_like(self.wavelength)
         self.declination = np.zeros_like(self.wavelength)
+        self.source_id = spec.source_id
 
         self.weight = np.ones_like(self.wavelength)
         if exptime_key == "integration_time":
@@ -94,6 +96,7 @@ class InputSpectrumModel:
         self.unit_weight = False
         self.right_ascension = None
         self.declination = None
+        self.source_id = None
 
 
 class OutputSpectrumModel:
@@ -122,6 +125,7 @@ class OutputSpectrumModel:
         self.count = None
         self.wcs = None
         self.normalized = False
+        self.source_id = None
 
     def assign_wavelengths(self, input_spectra):
         """Create an array of wavelengths to use for the output spectrum.
@@ -251,8 +255,8 @@ class OutputSpectrumModel:
             self.sb_error = np.sqrt(self.sb_error / sum_weight)
             self.normalized = True
 
-    def create_output(self):
-        """Create the output model.
+    def create_output_data(self):
+        """Create the output data.
 
         Returns
         -------
@@ -290,6 +294,7 @@ class OutputSpectrumModel:
         self.count = None
         self.wcs = None
         self.normalized = False
+        self.source_id = None
 
 
 def count_input(input_spectra):
@@ -545,26 +550,37 @@ def combine_1d_spectra(input_model, exptime_key):
 
     exptime_key = check_exptime(exptime_key)
 
-    input_spectra = []
+    input_spectra = {}
+    output_spectra = {}
     if isinstance(input_model, datamodels.ModelContainer):
         for ms in input_model:
             for in_spec in ms.spec:
-                input_spectra.append(InputSpectrumModel(
+                spectral_order = in_spec.spectral_order
+                if spectral_order not in input_spectra:
+                    input_spectra[spectral_order] = []
+                input_spectra[spectral_order].append(InputSpectrumModel(
                                 ms, in_spec, exptime_key))
     else:
         for in_spec in input_model.spec:
-            input_spectra.append(InputSpectrumModel(
+            spectral_order = in_spec.spectral_order
+            if spectral_order not in input_spectra:
+                input_spectra[spectral_order] = []
+            input_spectra[spectral_order].append(InputSpectrumModel(
                                 input_model, in_spec, exptime_key))
 
-    output_spec = OutputSpectrumModel()
-    output_spec.assign_wavelengths(input_spectra)
-    output_spec.accumulate_sums(input_spectra)
-    output_spec.compute_combination()
+    for order in input_spectra:
+        output_spectra[order] = OutputSpectrumModel()
+        output_spectra[order].assign_wavelengths(input_spectra[order])
+        output_spectra[order].accumulate_sums(input_spectra[order])
+        output_spectra[order].compute_combination()
 
-    for in_spec in input_spectra:
-        in_spec.close()
+    output_model = datamodels.MultiCombinedSpecModel()
 
-    output_model = output_spec.create_output()
+    for order in output_spectra:
+        output_order = output_spectra[order].create_output_data()
+        output_order.spectral_order = order
+        output_order.source_id = input_spectra[order][0].source_id
+        output_model.spec.append(output_order)
 
     # Copy one of the input headers to output.
     if isinstance(input_model, datamodels.ModelContainer):
@@ -572,9 +588,15 @@ def combine_1d_spectra(input_model, exptime_key):
     else:
         output_model.update(input_model, only="PRIMARY")
 
-    output_model.meta.wcs = output_spec.wcs
+    # Looks clunky, but need an output_spec instance to copy wcs
+    output_model.meta.wcs = output_spectra[list(output_spectra)[0]].wcs
     output_model.meta.cal_step.combine_1d = 'COMPLETE'
 
-    output_spec.close()
+    for order in input_spectra:
+        for in_spec in input_spectra[order]:
+            in_spec.close()
+
+    for order in output_spectra:
+        output_spectra[order].close()
 
     return output_model

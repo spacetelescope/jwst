@@ -156,12 +156,12 @@ c_{1,0,\\ldots}^2,\\ldots).
     Examples
     --------
     >>> import numpy as np
-    >>> im1 = np.zeros((5, 5, 4), dtype=np.float)
+    >>> im1 = np.zeros((5, 5, 4), dtype=float)
     >>> cbg = 1.32 * np.ones_like(im1)
-    >>> ind = np.indices(im1.shape, dtype=np.float)
+    >>> ind = np.indices(im1.shape, dtype=float)
     >>> im3 = cbg + 0.15 * ind[0] + 0.62 * ind[1] + 0.74 * ind[2]
     >>> mask = np.ones_like(im1, dtype=np.int8)
-    >>> sigma = np.ones_like(im1, dtype=np.float)
+    >>> sigma = np.ones_like(im1, dtype=float)
     >>> match_lsq([im1, im3], [mask, mask], [sigma, sigma],   #doctest: +FLOAT_CMP
     ... degree=(1, 1, 1), center=(0, 0, 0))
     array([[-6.60000000e-01, -7.50000000e-02, -3.10000000e-01,
@@ -193,7 +193,7 @@ c_{1,0,\\ldots}^2,\\ldots).
     # check that the number of good pixel mask arrays matches the numbers
     # of input images, and if 'masks' is None - set all of them to True:
     if masks is None:
-        masks = [np.ones_like(images[0], dtype=np.bool) for i in images]
+        masks = [np.ones_like(images[0], dtype=bool) for i in images]
 
     else:
         if len(masks) != nimages:
@@ -212,7 +212,7 @@ c_{1,0,\\ldots}^2,\\ldots).
     # check that the number of sigma arrays matches the numbers
     # of input images, and if 'sigmas' is None - set all of them to 1:
     if sigmas is None:
-        sigmas = [np.ones_like(images[0], dtype=np.float) for i in images]
+        sigmas = [np.ones_like(images[0], dtype=float) for i in images]
 
     else:
         if len(sigmas) != nimages:

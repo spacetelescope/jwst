@@ -141,7 +141,7 @@ class SkyCube():
         self._set_bkg_center(bkg_center)
 
         bkg_degree_p1 = tuple((i + 1 for i in self._bkg_degree))
-        self._bkg_coeff = np.zeros(bkg_degree_p1, dtype=np.float)
+        self._bkg_coeff = np.zeros(bkg_degree_p1, dtype=float)
         self._bkg_status = 1 # not computed
         self._bkg_cube = None
         self._bkg_cube_dirty = True
@@ -178,8 +178,8 @@ class SkyCube():
     @weights.setter
     def weights(self, weights):
         if weights is None:
-            self._weights = np.ones_like(self.data, dtype=np.float)
-            self._mask = np.ones_like(self.data, dtype=np.bool)
+            self._weights = np.ones_like(self.data, dtype=float)
+            self._mask = np.ones_like(self.data, dtype=bool)
         else:
             if weights.shape != self.data.shape:
                 raise ValueError("Weight map must have the same shape as "
@@ -279,7 +279,7 @@ class SkyCube():
         # This function should be called ONLY AFTER _data, _wcs, _x0, _y0, _z0,
         # _bkg_degree
 
-        z, y, x = np.indices(self._data.shape, dtype=np.float)
+        z, y, x = np.indices(self._data.shape, dtype=float)
         if self._wcs is not None:
             # TODO: the need to use ravel/reshape is due to a bug in
             # astropy.modeling that is affecting gwcs. In future, all the code

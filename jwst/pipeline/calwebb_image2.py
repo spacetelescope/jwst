@@ -26,6 +26,8 @@ class Image2Pipeline(Pipeline):
     background_subtraction, assign_wcs, flat_field, photom and resample.
     """
 
+    class_alias = "calwebb_image2"
+
     spec = """
         save_bsub = boolean(default=False) # Save background-subracted science
     """
@@ -72,6 +74,7 @@ class Image2Pipeline(Pipeline):
             if isinstance(result, datamodels.CubeModel):
                 suffix = 'calints'
             result.meta.filename = self.make_output_path(suffix=suffix)
+            result.meta.filetype = 'calibrated'
             results.append(result)
 
         self.log.info('... ending calwebb_image2')

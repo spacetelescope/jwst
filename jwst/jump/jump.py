@@ -10,10 +10,10 @@ import multiprocessing
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-def detect_jumps (input_model, gain_model, readnoise_model,
-                  rejection_threshold, max_cores,
-                  max_jump_to_flag_neighbors, min_jump_to_flag_neighbors,
-                  flag_4_neighbors):
+def detect_jumps(input_model, gain_model, readnoise_model,
+                 rejection_threshold, max_cores,
+                 max_jump_to_flag_neighbors, min_jump_to_flag_neighbors,
+                 flag_4_neighbors):
     """
     This is the high-level controlling routine for the jump detection process.
     It loads and sets the various input data and parameters needed by each of
@@ -48,9 +48,9 @@ def detect_jumps (input_model, gain_model, readnoise_model,
     # Load the data arrays that we need from the input model
     output_model = input_model.copy()
     data = input_model.data
-    err  = input_model.err
-    gdq  = input_model.groupdq
-    pdq  = input_model.pixeldq
+    err = input_model.err
+    gdq = input_model.groupdq
+    pdq = input_model.pixeldq
 
 
     # Get 2D gain and read noise values from their respective models
@@ -67,21 +67,21 @@ def detect_jumps (input_model, gain_model, readnoise_model,
         readnoise_2d = reffile_utils.get_subarray_data(input_model, readnoise_model)
 
     # Flag the pixeldq where the gain is <=0 or NaN so they will be ignored
-    wh_g = np.where( gain_2d <= 0.)
+    wh_g = np.where(gain_2d <= 0.)
     if len(wh_g[0] > 0):
-        pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['NO_GAIN_VALUE'] )
-        pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['DO_NOT_USE'] )
+        pdq[wh_g] = np.bitwise_or(pdq[wh_g], dqflags.pixel['NO_GAIN_VALUE'])
+        pdq[wh_g] = np.bitwise_or(pdq[wh_g], dqflags.pixel['DO_NOT_USE'])
 
-    wh_g = np.where( np.isnan( gain_2d ))
+    wh_g = np.where(np.isnan(gain_2d))
     if len(wh_g[0] > 0):
-        pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['NO_GAIN_VALUE'] )
-        pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['DO_NOT_USE'] )
+        pdq[wh_g] = np.bitwise_or(pdq[wh_g], dqflags.pixel['NO_GAIN_VALUE'])
+        pdq[wh_g] = np.bitwise_or(pdq[wh_g], dqflags.pixel['DO_NOT_USE'])
 
     # Apply gain to the SCI, ERR, and readnoise arrays so they're in units
     # of electrons
 
     data *= gain_2d
-    err  *= gain_2d
+    err *= gain_2d
     readnoise_2d *= gain_2d
 
     # Apply the 2-point difference method as a first pass
@@ -145,8 +145,6 @@ def detect_jumps (input_model, gain_model, readnoise_model,
             # save the neighbors to be flagged that will be in the next slice
             previous_row_above_gdq = row_above_gdq.copy()
             k += 1
-        pool.terminate()
-        pool.close()
         elapsed = time.time() - start
 
     elapsed = time.time() - start

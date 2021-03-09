@@ -12,6 +12,27 @@ def PipInject(String reqs) {
     return result
 }
 
+def MultiLineToArray(String reqs) {
+    def result = []
+    if (reqs.trim().isEmpty()) {
+        return result
+    }
+    for (req in reqs.split('\n')) {
+        result += req
+    }
+    return result
+}
+
+artifactoryenv = "dev"
+if (env.ARTIFACTORY_ENV) {
+    artifactoryenv = env.ARTIFACTORY_ENV
+}
+
+pytest_args = ""
+if (env.PYTEST_ARGS) {
+    pytest_args = env.PYTEST_ARGS
+}
+
 withCredentials([string(
     credentialsId: 'jwst-codecov',
     variable: 'codecov_token')]) {
@@ -31,10 +52,12 @@ def pip_install_args = "--index-url ${pip_index} --progress-bar=off"
 // Define environement variables needed for the regression tests
 env_vars = [
     "TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory",
-//    "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
     "CRDS_CONTEXT=jwst-edit",
     "ENG_BASE_URL=http://twjwdmsemwebag.stsci.edu/JWDMSEngFqAccSide1/TlmMnemonicDataSrv.svc/",
 ]
+if (env.ENV_VARS) {
+    env_vars.addAll(MultiLineToArray(env.ENV_VARS))
+}
 
 // Set pytest basetemp output directory
 pytest_basetemp = "test_outputs"
@@ -51,7 +74,7 @@ bc0 = new BuildConfig()
 bc0.nodetype = 'jwst'
 bc0.name = 'unstable-deps'
 bc0.env_vars = env_vars
-bc0.conda_ver = '4.8.4'
+bc0.conda_ver = '4.9.2'
 bc0.conda_packages = [
     "python=${python_version}",
 ]
@@ -60,12 +83,12 @@ bc0.build_cmds = [
     "pip install -e .[test,ephem]",
     "pip install pytest-xdist pytest-sugar",
     "pip freeze",
-    'echo "CRDS_CONTEXT = $(crds list --contexts $CRDS_CONTEXT --mappings | grep pmap)"',
 ]
 bc0.build_cmds = PipInject(env.OVERRIDE_REQUIREMENTS) + bc0.build_cmds
 bc0.test_cmds = [
     "pytest -r sxf -n 30 --bigdata --slow \
-    --basetemp=${pytest_basetemp} --junit-xml=results.xml --dist=loadscope",
+    --basetemp=${pytest_basetemp} --junit-xml=results.xml --dist=loadscope \
+    --env=${artifactoryenv} ${pytest_args}",
 ]
 bc0.test_configs = [data_config]
 

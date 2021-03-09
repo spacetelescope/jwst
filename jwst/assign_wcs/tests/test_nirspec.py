@@ -1,6 +1,7 @@
 """
 Test functions for NIRSPEC WCS - all modes.
 """
+from math import cos, sin
 import os.path
 
 import pytest
@@ -8,13 +9,14 @@ import numpy as np
 from numpy.testing import assert_allclose
 from astropy.io import fits
 from astropy.modeling import models as astmodels
+from astropy import table
 from astropy import wcs as astwcs
 import astropy.units as u
 import astropy.coordinates as coords
 from gwcs import wcs
 
 from jwst import datamodels
-from jwst.transforms.models import Slit
+from jwst.transforms import models as trmodels
 from jwst.assign_wcs import nirspec
 from jwst.assign_wcs import assign_wcs_step
 from . import data
@@ -94,19 +96,22 @@ def create_nirspec_imaging_file():
     return image
 
 
-def create_nirspec_mos_file():
+def create_nirspec_mos_file(grating='G235M', filt='F170LP'):
     image = create_hdul()
     image[0].header['exp_type'] = 'NRS_MSASPEC'
-    image[0].header['filter'] = 'F170LP'
-    image[0].header['grating'] = 'G235M'
+    image[0].header['filter'] = filt
+    image[0].header['grating'] = grating
     image[0].header['PATT_NUM'] = 1
 
     msa_status_file = get_file_path('SPCB-GD-A.msa.fits.gz')
-    image[0].header['MSACONFG'] = msa_status_file
+    image[0].header['MSAMETFL'] = msa_status_file
     return image
 
 
-def create_nirspec_ifu_file(filter, grating, lamp='N/A', detector='NRS1'):
+def create_nirspec_ifu_file(filter, grating, lamp='N/A', detector='NRS1',
+                            gwa_xtil=0.3318742513656616,
+                            gwa_ytil=0.1258982867002487,
+                            gwa_tilt=None):
     image = create_hdul(detector)
     image[0].header['exp_type'] = 'NRS_IFU'
     image[0].header['filter'] = filter
@@ -115,8 +120,10 @@ def create_nirspec_ifu_file(filter, grating, lamp='N/A', detector='NRS1'):
     image[1].header['wcsaxes'] = 3
     image[1].header['ctype3'] = 'WAVE'
     image[0].header['lamp'] = lamp
-    image[0].header['GWA_XTIL'] = 0.3318742513656616
-    image[0].header['GWA_YTIL'] = 0.1258982867002487
+    image[0].header['GWA_XTIL'] = gwa_xtil
+    image[0].header['GWA_YTIL'] = gwa_ytil
+    if gwa_tilt is not None:
+        image[0].header['GWA_TILT'] = gwa_tilt
     return image
 
 
@@ -193,7 +200,7 @@ def test_nirspec_fs_esa():
     """
     Test Nirspec FS mode using build 6 reference files.
     """
-    #Test creating the WCS
+    # Test creating the WCS
     filename = create_nirspec_fs_file(grating="G140M", filter="F100LP")
     im = datamodels.ImageModel(filename)
     im.meta.filename = "test_fs.fits"
@@ -242,11 +249,11 @@ def test_correct_tilt():
     corrected_theta_x = 0.02942671219861111
     corrected_theta_y = 0.00018649006677464447
     # corrected_theta_z = -0.2523269848788889
-    disp.gwa_tiltx =  {'temperatures': [39.58],
-                       'tilt_model': astmodels.Polynomial1D(1, c0=3307.85402614,
-                                                            c1=-9182.87552123),
-                       'unit': 'arcsec',
-                       'zeroreadings': [0.35972327]}
+    disp.gwa_tiltx = {'temperatures': [39.58],
+                     'tilt_model': astmodels.Polynomial1D(1, c0=3307.85402614,
+                      c1=-9182.87552123),
+                      'unit': 'arcsec',
+                      'zeroreadings': [0.35972327]}
     disp.gwa_tilty = {'temperatures': [39.58],
                       'tilt_model': astmodels.Polynomial1D(1, c0=0.0, c1=0.0),
                       'unit': 'arcsec',
@@ -260,7 +267,7 @@ def test_correct_tilt():
     disp.tilt_x = 0.0
     disp.tilt_y = -8.8
 
-    disp_corrected = nirspec.correct_tilt(disp, xtilt, ytilt)#, ztilt)
+    disp_corrected = nirspec.correct_tilt(disp, xtilt, ytilt)  # , ztilt)
     assert np.isclose(disp_corrected.theta_x, corrected_theta_x)
     # assert(np.isclose(disp_corrected['theta_z'], corrected_theta_z))
     assert np.isclose(disp_corrected.theta_y, corrected_theta_y)
@@ -277,8 +284,8 @@ def test_msa_configuration_normal():
     dither_position = 1
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, dither_position,
                                               slit_y_range=[-.5, .5])
-    ref_slit = Slit(55, 9376, 1, 251, 26, -5.15, 0.55, 4, 1, '1111x', '95065_1', '2122',
-                    0.13, -0.31716078999999997, -0.18092266)
+    ref_slit = trmodels.Slit(55, 9376, 1, 251, 26, -5.15, 0.55, 4, 1, '1111x', '95065_1', '2122',
+                             0.13, -0.31716078999999997, -0.18092266)
     _compare_slits(slitlet_info[0], ref_slit)
 
 
@@ -306,10 +313,9 @@ def test_msa_configuration_all_background():
     dither_position = 1
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, dither_position,
                                               slit_y_range=[-.5, .5])
-    ref_slit = Slit(57, 8646, 1, 251, 24, -2.85, .55, 4, 0, '11x', 'background_57', 'bkg_57',
-                    0, -0.5, -0.5)
+    ref_slit = trmodels.Slit(57, 8646, 1, 251, 24, -2.85, .55, 4, 0, '11x', 'background_57', 'bkg_57',
+                             0, -0.5, -0.5)
     _compare_slits(slitlet_info[0], ref_slit)
-
 
 
 def test_msa_configuration_row_skipped():
@@ -323,8 +329,8 @@ def test_msa_configuration_row_skipped():
     dither_position = 1
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, dither_position,
                                               slit_y_range=[-.5, .5])
-    ref_slit = Slit(58, 8646, 1, 251, 24, -2.85, 5.15, 4, 1, '11x1011', '95065_1', '2122',
-                    0.130, -0.31716078999999997, -0.18092266)
+    ref_slit = trmodels.Slit(58, 8646, 1, 251, 24, -2.85, 5.15, 4, 1, '11x1011', '95065_1', '2122',
+                             0.130, -0.31716078999999997, -0.18092266)
     _compare_slits(slitlet_info[0], ref_slit)
 
 
@@ -338,10 +344,10 @@ def test_msa_configuration_multiple_returns():
     dither_position = 1
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, dither_position,
                                               slit_y_range=[-.5, .5])
-    ref_slit1 = Slit(59, 8651, 1, 256, 24, -2.85, 5.15, 4, 1, '11x1011', '95065_1', '2122',
-                     0.13000000000000003, -0.31716078999999997, -0.18092266)
-    ref_slit2 = Slit(60, 11573, 1, 258, 32, -2.85, 4, 4, 2, '11x111', '95065_2', '172',
-                     0.70000000000000007, -0.31716078999999997, -0.18092266)
+    ref_slit1 = trmodels.Slit(59, 8651, 1, 256, 24, -2.85, 5.15, 4, 1, '11x1011', '95065_1', '2122',
+                              0.13000000000000003, -0.31716078999999997, -0.18092266)
+    ref_slit2 = trmodels.Slit(60, 11573, 1, 258, 32, -2.85, 4, 4, 2, '11x111', '95065_2', '172',
+                              0.70000000000000007, -0.31716078999999997, -0.18092266)
     _compare_slits(slitlet_info[0], ref_slit1)
     _compare_slits(slitlet_info[1], ref_slit2)
 
@@ -350,6 +356,7 @@ open_shutters = [[24], [23, 24], [22, 23, 25, 27], [22, 23, 25, 27, 28]]
 main_shutter = [24, 23, 25, 28]
 result = ["x", "x1", "110x01", "110101x"]
 test_data = list(zip(open_shutters, main_shutter, result))
+
 
 @pytest.mark.parametrize(('open_shutters', 'main_shutter', 'result'),
                          test_data)
@@ -448,3 +455,405 @@ def test_shutter_size_on_sky():
     assert sep_x.value < 0.194
     assert sep_y.value > 0.45
     assert sep_y.value < 0.46
+
+
+@pytest.mark.parametrize(('mode'), ['fs', 'msa'])
+def test_functional_fs_msa(mode):
+    #     """
+    #     Compare Nirspec instrument model with IDT model for FS and MSA.
+    #     """
+    if mode == 'fs':
+        model_file = 'fixed_slits_functional_ESA_v4_20180618.txt'
+        hdul = create_nirspec_fs_file(grating='G395H', filter='F290LP')
+        im = datamodels.ImageModel(hdul)
+        refs = create_reference_files(im)
+        pipeline = nirspec.create_pipeline(im, refs, slit_y_range=[-0.55, 0.55])
+        w = wcs.WCS(pipeline)
+        im.meta.wcs = w
+        # Use slit S200A1
+        slit_wcs = nirspec.nrs_wcs_set_input(im, 'S200A1')
+
+    if mode == 'msa':
+        model_file = 'msa_functional_ESA_v2_20180620.txt'
+        hdul = create_nirspec_mos_file(grating='G395H', filt='F290LP')
+        im = datamodels.ImageModel(hdul)
+        refs = create_reference_files(im)
+        slit = trmodels.Slit(name=1, shutter_id=4699, xcen=319, ycen=13,
+                             ymin=-0.55000000000000004, ymax=0.55000000000000004,
+                             quadrant=3, source_id=1, shutter_state='x',
+                             source_name='lamp', source_alias='foo',
+                             stellarity=100.0, source_xpos=-0.5, source_ypos=0.5)
+        open_slits = [slit]
+        pipeline = nirspec.slitlets_wcs(im, refs, open_slits)
+        w = wcs.WCS(pipeline)
+        im.meta.wcs = w
+        slit_wcs = nirspec.nrs_wcs_set_input(im, 1)
+
+    ins_file = get_file_path(model_file)
+    ins_tab = table.Table.read(ins_file, format='ascii')
+
+    # Setup the test
+    slitx = [0] * 5
+    slity = [-.5, -.25, 0, .25, .5]
+    lam = np.array([2.9, 3.39, 3.88, 4.37, 5]) * 10**-6
+
+    # Slit to MSA absolute
+    slit2msa = slit_wcs.get_transform('slit_frame', 'msa_frame')
+    msax, msay, _ = slit2msa(slitx, slity, lam)
+
+    assert_allclose(slitx, ins_tab['xslitpos'])
+    assert_allclose(slity, ins_tab['yslitpos'])
+    assert_allclose(msax, ins_tab['xmsapos'])
+    assert_allclose(msay, ins_tab['ymaspos'])
+
+    # Coordinates at Collimator exit
+    # Applies the Collimator forward transform to MSa absolute coordinates
+    with datamodels.open(refs['collimator']) as col:
+        colx, coly = col.model.inverse(msax, msay)
+    assert_allclose(colx, ins_tab['xcoll'])
+    assert_allclose(coly, ins_tab['ycoll'])
+
+    # After applying direcitonal cosines
+    dircos = trmodels.Unitless2DirCos()
+    xcolDircosi, ycolDircosi, z = dircos(colx, coly)
+    assert_allclose(xcolDircosi, ins_tab['xcolDirCosi'])
+    assert_allclose(ycolDircosi, ins_tab['ycolDirCosi'])
+
+    # MSA to GWA entrance
+    # This runs the Collimator forward, Unitless to Directional cosine, and
+    # 3D Rotation. It uses the corrected GWA tilt value
+    with datamodels.DisperserModel(refs['disperser']) as disp:
+        disperser = nirspec.correct_tilt(disp, im.meta.instrument.gwa_xtilt,
+                                         im.meta.instrument.gwa_ytilt)
+    collimator2gwa = nirspec.collimator_to_gwa(refs, disperser)
+    x_gwa_in, y_gwa_in, z_gwa_in = collimator2gwa(msax, msay)
+    assert_allclose(x_gwa_in, ins_tab['xdispIn'])
+    assert_allclose(y_gwa_in, ins_tab['ydispIn'])
+
+    # Slit to GWA out
+    slit2gwa = slit_wcs.get_transform('slit_frame', 'gwa')
+    x_gwa_out, y_gwa_out, z_gwa_out = slit2gwa(slitx, slity, lam)
+    assert_allclose(x_gwa_out, ins_tab['xdispLaw'])
+    assert_allclose(y_gwa_out, ins_tab['ydispLaw'])
+
+    # CAMERA entrance (assuming direction is from sky to detector)
+    angles = [disperser['theta_x'], disperser['theta_y'],
+              disperser['theta_z'], disperser['tilt_y']]
+    rotation = trmodels.Rotation3DToGWA(angles, axes_order="xyzy",
+                                        name='rotation')
+    dircos2unitless = trmodels.DirCos2Unitless()
+    gwa2cam = rotation.inverse | dircos2unitless
+    x_camera_entrance, y_camera_entrance = gwa2cam(x_gwa_out, y_gwa_out,
+                                                   z_gwa_out)
+    assert_allclose(x_camera_entrance, ins_tab['xcamCosi'])
+    assert_allclose(y_camera_entrance, ins_tab['ycamCosi'])
+
+    # at FPA
+    with datamodels.CameraModel(refs['camera']) as camera:
+        x_fpa, y_fpa = camera.model.inverse(x_camera_entrance, y_camera_entrance)
+    assert_allclose(x_fpa, ins_tab['xfpapos'])
+    assert_allclose(y_fpa, ins_tab['yfpapos'])
+
+    # at SCA These are 0-based , the IDT results are 1-based
+    slit2sca = slit_wcs.get_transform('slit_frame', 'sca')
+    x_sca_nrs1, y_sca_nrs1 = slit2sca(slitx, slity, lam)
+    # At NRS2
+    with datamodels.FPAModel(refs['fpa']) as fpa:
+        x_sca_nrs2, y_sca_nrs2 = fpa.nrs2_model.inverse(x_fpa, y_fpa)
+    # expect 1 pix difference
+    wvlns_on_nrs1 = slice(2)
+    wvlns_on_nrs2 = slice(2, 4)
+    assert_allclose(x_sca_nrs1[wvlns_on_nrs1] + 1, ins_tab['i'][wvlns_on_nrs1])
+    assert_allclose(y_sca_nrs1[wvlns_on_nrs1] + 1, ins_tab['j'][wvlns_on_nrs1])
+    assert_allclose(x_sca_nrs2[wvlns_on_nrs2] + 1, ins_tab['i'][wvlns_on_nrs2])
+    assert_allclose(y_sca_nrs2[wvlns_on_nrs2] + 1, ins_tab['j'][wvlns_on_nrs2])
+
+    # at oteip
+    slit2oteip = slit_wcs.get_transform('slit_frame', 'oteip')
+    x_oteip, y_oteip, _ = slit2oteip(slitx, slity, lam)
+    assert_allclose(x_oteip, ins_tab['xOTEIP'])
+    assert_allclose(y_oteip, ins_tab['yOTEIP'])
+
+    # at v2, v3 [in arcsec]
+    slit2v23 = slit_wcs.get_transform('slit_frame', 'v2v3')
+    v2, v3, _ = slit2v23(slitx, slity, lam)
+    v2 /= 3600
+    v3 /= 3600
+    assert_allclose(v2, ins_tab['xV2V3'])
+    assert_allclose(v3, ins_tab['yV2V3'])
+
+
+def test_functional_ifu_grating():
+    """Compare Nirspec instrument model with IDT model for IFU grating."""
+
+    # setup test
+    model_file = 'ifu_grating_functional_ESA_v1_20180619.txt'
+    hdul = create_nirspec_ifu_file(grating='G395H', filter='F290LP',
+                                   gwa_xtil=0.35986012, gwa_ytil=0.13448857)
+    im = datamodels.ImageModel(hdul)
+    refs = create_reference_files(im)
+    pipeline = nirspec.create_pipeline(im, refs, slit_y_range=[-0.55, 0.55])
+    w = wcs.WCS(pipeline)
+    im.meta.wcs = w
+    slit_wcs = nirspec.nrs_wcs_set_input(im, 0)  # use slice 0
+    ins_file = get_file_path(model_file)
+    ins_tab = table.Table.read(ins_file, format='ascii')
+    slitx = [0] * 5
+    slity = [-.5, -.25, 0, .25, .5]
+    lam = np.array([2.9, 3.39, 3.88, 4.37, 5]) * 10**-6
+    order, wrange = nirspec.get_spectral_order_wrange(im, refs['wavelengthrange'])
+    im.meta.wcsinfo.sporder = order
+    im.meta.wcsinfo.waverange_start = wrange[0]
+    im.meta.wcsinfo.waverange_end = wrange[1]
+
+    # Slit to MSA entrance
+    # This includes the Slicer transform and the IFUFORE transform
+    slit2msa = slit_wcs.get_transform('slit_frame', 'msa_frame')
+    msax, msay, _ = slit2msa(slitx, slity, lam)
+    assert_allclose(slitx, ins_tab['xslitpos'])
+    assert_allclose(slity, ins_tab['yslitpos'])
+    assert_allclose(msax + 0.0073, ins_tab['xmsapos'], rtol=1e-2)  # expected offset
+    assert_allclose(msay + 0.0085, ins_tab['ymaspos'], rtol=1e-2)  # expected offset
+
+    # Slicer
+    slit2slicer = slit_wcs.get_transform('slit_frame', 'slicer')
+    x_slicer, y_slicer, _ = slit2slicer(slitx, slity, lam)
+
+    # MSA exit
+    # Applies the IFUPOST transform to coordinates at the Slicer
+    with datamodels.IFUPostModel(refs['ifupost']) as ifupost:
+        ifupost_transform = nirspec._create_ifupost_transform(ifupost.slice_0)
+    x_msa_exit, y_msa_exit = ifupost_transform(x_slicer, y_slicer, lam)
+    assert_allclose(x_msa_exit, ins_tab['xmsapos'])
+    assert_allclose(y_msa_exit, ins_tab['ymaspos'])
+
+    # Computations are done using the eact form of the equations in the reports
+    # Part I of the Forward IFU-POST transform - the linear transform
+    xc_out = 0.0487158154447
+    yc_out = 0.00856211956976
+    xc_in = 0.000355277216
+    yc_in = -3.0089012e-05
+    theta = np.deg2rad(-0.129043957046)
+    factor_x = 0.100989874454
+    factor_y = 0.100405184145
+
+    # Slicer coordinates
+    xS = 0.000399999989895
+    yS = -0.00600000005215
+
+    x = xc_out + factor_x * (+cos(theta) * (xS - xc_in) + sin(theta) * (yS - yc_in))
+    y = yc_out + factor_y * (-sin(theta) * (xS - xc_in) + cos(theta) * (yS - yc_in))
+
+    # Forward IFU-POST II part - non-linear transform
+    lam = 2.9e-6
+    coef_names = [f'c{x}_{y}' for x in range(6) for y in range(6) if x+y <= 5]
+    y_forw = [-82.3492267824, 29234.6982762, -540260.780853, 771881.305018,
+              -2563462.26848, 29914272.1164, 4513.04082605, -2212869.44311,
+              32875633.0303, -29923698.5288, 27293902.5636, -39820.4434726,
+              62431493.9962, -667197265.033, 297253538.182, -1838860.86305,
+              -777169857.2, 4514693865.7, 42790637.764, 3596423850.94,
+              -260274017.448]
+    y_forw_dist = [188531839.97, -43453434864.0, 70807756765.8,
+                   -308272809909.0, 159768473071.0, 9712633344590.0,
+                   -11762923852.9, 3545938873190.0, -4198643655420.0,
+                   12545642983100.0, -11707051591600.0, 173091230285.0,
+                   -108534069056000.0, 82893348097600.0, -124708740989000.0,
+                   2774389757990.0, 1476779720300000.0, -545358301961000.0,
+                   -93101557994100.0, -7536890639430000.0, 646310545048000.0]
+    y_coeff = {}
+    for i, coef in enumerate(coef_names):
+        y_coeff[coef] = y_forw[i] + lam * y_forw_dist[i]
+    poly2d = astmodels.Polynomial2D(5, **y_coeff)
+    ifupost_y = poly2d(x, y)
+    assert_allclose(ifupost_y, ins_tab['ymaspos'][0])
+    assert_allclose(ifupost_y, y_msa_exit[0])
+
+    # reset 'lam'
+    lam = np.array([2.9, 3.39, 3.88, 4.37, 5]) * 10**-6
+
+    # Coordinates at Collimator exit
+    # Applies the Collimator forward transform to coordinates at the MSA exit
+    with datamodels.open(refs['collimator']) as col:
+        colx, coly = col.model.inverse(x_msa_exit, y_msa_exit)
+    assert_allclose(colx, ins_tab['xcoll'])
+    assert_allclose(coly, ins_tab['ycoll'])
+
+    # After applying direcitonal cosines
+    dircos = trmodels.Unitless2DirCos()
+    xcolDircosi, ycolDircosi, z = dircos(colx, coly)
+    assert_allclose(xcolDircosi, ins_tab['xcolDirCosi'])
+    assert_allclose(ycolDircosi, ins_tab['ycolDirCosi'])
+
+    # Slit to GWA entrance
+    # applies the Collimator forward, Unitless to Directional and 3D Rotation to MSA exit coordinates
+    with datamodels.DisperserModel(refs['disperser']) as disp:
+        disperser = nirspec.correct_tilt(disp, im.meta.instrument.gwa_xtilt,
+                                         im.meta.instrument.gwa_ytilt)
+    collimator2gwa = nirspec.collimator_to_gwa(refs, disperser)
+    x_gwa_in, y_gwa_in, z_gwa_in = collimator2gwa(x_msa_exit, y_msa_exit)
+    assert_allclose(x_gwa_in, ins_tab['xdispIn'])
+
+    # Slit to GWA out
+    # Runs slit--> slicer --> msa_exit --> collimator --> dircos --> rotation --> angle_from_grating equation
+    slit2gwa = slit_wcs.get_transform('slit_frame', 'gwa')
+    x_gwa_out, y_gwa_out, z_gwa_out = slit2gwa(slitx, slity, lam)
+    assert_allclose(x_gwa_out, ins_tab['xdispLaw'])
+    assert_allclose(y_gwa_out, ins_tab['ydispLaw'])
+
+    # CAMERA entrance (assuming direction is from sky to detector)
+    angles = [disperser['theta_x'], disperser['theta_y'],
+              disperser['theta_z'], disperser['tilt_y']]
+    rotation = trmodels.Rotation3DToGWA(angles, axes_order="xyzy", name='rotation')
+    dircos2unitless = trmodels.DirCos2Unitless()
+    gwa2cam = rotation.inverse | dircos2unitless
+    x_camera_entrance, y_camera_entrance = gwa2cam(x_gwa_out, y_gwa_out, z_gwa_out)
+    assert_allclose(x_camera_entrance, ins_tab['xcamCosi'])
+    assert_allclose(y_camera_entrance, ins_tab['ycamCosi'])
+
+    # at FPA
+    with datamodels.CameraModel(refs['camera']) as camera:
+        x_fpa, y_fpa = camera.model.inverse(x_camera_entrance, y_camera_entrance)
+    assert_allclose(x_fpa, ins_tab['xfpapos'])
+    assert_allclose(y_fpa, ins_tab['yfpapos'])
+
+    # at SCA
+    slit2sca = slit_wcs.get_transform('slit_frame', 'sca')
+    x_sca_nrs1, y_sca_nrs1 = slit2sca(slitx, slity, lam)
+
+    # At NRS2
+    with datamodels.FPAModel(refs['fpa']) as fpa:
+        x_sca_nrs2, y_sca_nrs2 = fpa.nrs2_model.inverse(x_fpa, y_fpa)
+    assert_allclose(x_sca_nrs1[:3] + 1, ins_tab['i'][:3])
+    assert_allclose(y_sca_nrs1[:3] + 1, ins_tab['j'][:3])
+    assert_allclose(x_sca_nrs2[3:] + 1, ins_tab['i'][3:])
+    assert_allclose(y_sca_nrs2[3:] + 1, ins_tab['j'][3:])
+
+    # at oteip
+    # Goes through slicer, ifufore, and fore transforms
+    slit2oteip = slit_wcs.get_transform('slit_frame', 'oteip')
+    x_oteip, y_oteip, _ = slit2oteip(slitx, slity, lam)
+    assert_allclose(x_oteip, ins_tab['xOTEIP'])
+    assert_allclose(y_oteip, ins_tab['yOTEIP'])
+
+    # at v2, v3 [in arcsec]
+    slit2v23 = slit_wcs.get_transform('slit_frame', 'v2v3')
+    v2, v3, _ = slit2v23(slitx, slity, lam)
+    v2 /= 3600
+    v3 /= 3600
+    assert_allclose(v2, ins_tab['xV2V3'])
+    assert_allclose(v3, ins_tab['yV2V3'])
+
+
+def test_functional_ifu_prism():
+    """Compare Nirspec instrument model with IDT model for IFU prism."""
+    # setup test
+    model_file = 'ifu_prism_functional_ESA_v1_20180619.txt'
+    hdu1 = create_nirspec_ifu_file(grating='PRISM', filter='CLEAR',
+                                   gwa_xtil=0.35986012, gwa_ytil=0.13448857,
+                                   gwa_tilt=37.1)
+    im = datamodels.ImageModel(hdu1)
+    refs = create_reference_files(im)
+    pipeline = nirspec.create_pipeline(im, refs, slit_y_range=[-0.55, 0.55])
+    w = wcs.WCS(pipeline)
+    im.meta.wcs = w
+    slit_wcs = nirspec.nrs_wcs_set_input(im, 0)  # use slice 0
+    ins_file = get_file_path(model_file)
+    ins_tab = table.Table.read(ins_file, format='ascii')
+    slitx = [0] * 5
+    slity = [-.5, -.25, 0, .25, .5]
+    lam = np.array([.7e-7, 1e-6, 2e-6, 3e-6, 5e-6])
+    order, wrange = nirspec.get_spectral_order_wrange(im, refs['wavelengthrange'])
+    im.meta.wcsinfo.sporder = order
+    im.meta.wcsinfo.waverange_start = wrange[0]
+    im.meta.wcsinfo.waverange_end = wrange[1]
+
+    # Slit to MSA entrance
+    # This includes the Slicer transform and the IFUFORE transform
+    slit2msa = slit_wcs.get_transform('slit_frame', 'msa_frame')
+    msax, msay, _ = slit2msa(slitx, slity, lam)
+    assert_allclose(slitx, ins_tab['xslitpos'])
+    assert_allclose(slity, ins_tab['yslitpos'])
+    assert_allclose(msax + 0.0073, ins_tab['xmsapos'], rtol=1e-2)  # expected offset
+    assert_allclose(msay + 0.0085, ins_tab['ymaspos'], rtol=1e-2)  # expected offset
+
+    # Slicer
+    slit2slicer = slit_wcs.get_transform('slit_frame', 'slicer')
+    x_slicer, y_slicer, _ = slit2slicer(slitx, slity, lam)
+
+    # MSA exit
+    # Applies the IFUPOST transform to coordinates at the Slicer
+    with datamodels.IFUPostModel(refs['ifupost']) as ifupost:
+        ifupost_transform = nirspec._create_ifupost_transform(ifupost.slice_0)
+    x_msa_exit, y_msa_exit = ifupost_transform(x_slicer, y_slicer, lam)
+    assert_allclose(x_msa_exit, ins_tab['xmsapos'])
+    assert_allclose(y_msa_exit, ins_tab['ymaspos'])
+
+    # Coordinates at Collimator exit
+    # Applies the Collimator forward transform to coordinates at the MSA exit
+    with datamodels.open(refs['collimator']) as col:
+        colx, coly = col.model.inverse(x_msa_exit, y_msa_exit)
+    assert_allclose(colx, ins_tab['xcoll'])
+    assert_allclose(coly, ins_tab['ycoll'])
+
+    # After applying direcitonal cosines
+    dircos = trmodels.Unitless2DirCos()
+    xcolDircosi, ycolDircosi, z = dircos(colx, coly)
+    assert_allclose(xcolDircosi, ins_tab['xcolDirCosi'])
+    assert_allclose(ycolDircosi, ins_tab['ycolDirCosi'])
+
+    # Slit to GWA entrance
+    # applies the Collimator forward, Unitless to Directional and 3D Rotation to MSA exit coordinates
+    with datamodels.DisperserModel(refs['disperser']) as disp:
+        disperser = nirspec.correct_tilt(disp, im.meta.instrument.gwa_xtilt,
+                                         im.meta.instrument.gwa_ytilt)
+    collimator2gwa = nirspec.collimator_to_gwa(refs, disperser)
+    x_gwa_in, y_gwa_in, z_gwa_in = collimator2gwa(x_msa_exit, y_msa_exit)
+    assert_allclose(x_gwa_in, ins_tab['xdispIn'])
+
+    # Slit to GWA out
+    # Runs slit--> slicer --> msa_exit --> collimator --> dircos --> rotation --> angle_from_grating equation
+    slit2gwa = slit_wcs.get_transform('slit_frame', 'gwa')
+    x_gwa_out, y_gwa_out, z_gwa_out = slit2gwa(slitx, slity, lam)
+    assert_allclose(x_gwa_out, ins_tab['xdispLaw'])
+    assert_allclose(y_gwa_out, ins_tab['ydispLaw'])
+
+    # CAMERA entrance (assuming direction is from sky to detector)
+    angles = [disperser['theta_x'], disperser['theta_y'],
+              disperser['theta_z'], disperser['tilt_y']]
+    rotation = trmodels.Rotation3DToGWA(angles, axes_order="xyzy", name='rotation')
+    dircos2unitless = trmodels.DirCos2Unitless()
+    gwa2cam = rotation.inverse | dircos2unitless
+    x_camera_entrance, y_camera_entrance = gwa2cam(x_gwa_out, y_gwa_out, z_gwa_out)
+    assert_allclose(x_camera_entrance, ins_tab['xcamCosi'])
+    assert_allclose(y_camera_entrance, ins_tab['ycamCosi'])
+
+    # at FPA
+    with datamodels.CameraModel(refs['camera']) as camera:
+        x_fpa, y_fpa = camera.model.inverse(x_camera_entrance, y_camera_entrance)
+    assert_allclose(x_fpa, ins_tab['xfpapos'])
+    assert_allclose(y_fpa, ins_tab['yfpapos'])
+
+    # at SCA
+    slit2sca = slit_wcs.get_transform('slit_frame', 'sca')
+    x_sca_nrs1, y_sca_nrs1 = slit2sca(slitx, slity, lam)
+
+    # At NRS2
+    with datamodels.FPAModel(refs['fpa']) as fpa:
+        x_sca_nrs2, y_sca_nrs2 = fpa.nrs2_model.inverse(x_fpa, y_fpa)
+    assert_allclose(x_sca_nrs1 + 1, ins_tab['i'])
+    assert_allclose(y_sca_nrs1 + 1, ins_tab['j'])
+
+    # at oteip
+    # Goes through slicer, ifufore, and fore transforms
+    slit2oteip = slit_wcs.get_transform('slit_frame', 'oteip')
+    x_oteip, y_oteip, _ = slit2oteip(slitx, slity, lam)
+    assert_allclose(x_oteip, ins_tab['xOTEIP'])
+    assert_allclose(y_oteip, ins_tab['yOTEIP'])
+
+    # at v2, v3 [in arcsec]
+    slit2v23 = slit_wcs.get_transform('slit_frame', 'v2v3')
+    v2, v3, _ = slit2v23(slitx, slity, lam)
+    v2 /= 3600
+    v3 /= 3600
+    assert_allclose(v2, ins_tab['xV2V3'])
+    assert_allclose(v3, ins_tab['yV2V3'])

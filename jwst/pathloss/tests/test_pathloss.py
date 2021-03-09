@@ -18,7 +18,7 @@ def test_get_center_ifu():
 
     x_pos,y_pos = get_center("NRS_IFU", None)
 
-    assert(x_pos==y_pos==0.0)
+    assert x_pos == y_pos == 0.0
 
 
 def test_get_center_attr_err():
@@ -28,7 +28,7 @@ def test_get_center_attr_err():
     datmod = MultiSlitModel()
     x_pos, y_pos = get_center("NRS_MSASPEC", datmod)
 
-    assert(x_pos==y_pos==0.0)
+    assert x_pos == y_pos == 0.0
 
 
 def test_get_center_exp_type():
@@ -36,7 +36,7 @@ def test_get_center_exp_type():
     datmod = MultiSlitModel()
     x_pos, y_pos = get_center("NRC_IMAGE", datmod)
 
-    assert(x_pos==y_pos==0.0)
+    assert x_pos == y_pos == 0.0
 
 
 def test_get_center_exptype():
@@ -49,8 +49,8 @@ def test_get_center_exptype():
     for exptype in ["NRS_MSASPEC", "NRS_FIXEDSLIT", "NRS_BRIGHTOBJ"]:
         x_pos, y_pos = get_center(exptype, datmod.slits[0])
 
-        assert(x_pos==1)
-        assert(y_pos==2)
+        assert x_pos == 1
+        assert y_pos == 2
 
 
 # Begin get_aperture_from_model tests
@@ -63,7 +63,7 @@ def test_get_app_from_model_null():
 
     result = get_aperture_from_model(datmod, None)
 
-    assert(result is None)
+    assert result is None
 
 
 def test_get_aper_from_model_fixedslit():
@@ -76,7 +76,7 @@ def test_get_aper_from_model_fixedslit():
 
     result = get_aperture_from_model(datmod, 'S200A1')
 
-    assert(result == datmod.apertures[0])
+    assert result == datmod.apertures[0]
 
 
 def test_get_aper_from_model_msa():
@@ -89,7 +89,7 @@ def test_get_aper_from_model_msa():
 
     result = get_aperture_from_model(datmod, 5)
 
-    assert(result == datmod.apertures[0])
+    assert result == datmod.apertures[0]
 
 
 # Begin calculate_pathloss_vector tests.
@@ -113,15 +113,15 @@ def test_calculate_pathloss_vector_pointsource_data():
     # Where i is the iteration of np.arange(wavesize) which is the 1st dimension of the pointsource
     # data array.
     wavelength_comparison = np.array([1 + (float(i+1) - 1.0)*1 for i in np.arange(10)])
-    assert(np.allclose(wavelength,wavelength_comparison))
+    assert np.allclose(wavelength, wavelength_comparison)
 
     # pathloss vector gets assigned at beginning of calculate_pathloss_vector and in this
     # case, doesnt change (np.zeros(wavesize, dtype=np.float32))
     pathloss_comparison = np.zeros(10, dtype=np.float32)
-    assert(np.all(pathloss==pathloss_comparison))
+    assert np.all(pathloss==pathloss_comparison)
 
     # With the current wcs values, the logic should be returning False
-    assert(is_inside_slitlet==False)
+    assert is_inside_slitlet is False
 
 def test_calculate_pathloss_vector_uniform_data():
     """Calculate the pathloss vector for uniform data arrays."""
@@ -141,10 +141,10 @@ def test_calculate_pathloss_vector_uniform_data():
     # Where i is the iteration of np.arange(wavesize) which is the shape of the uniform
     # data array.
     comparison = np.array([1 +(float(i+1) - 1)*1 for i in np.arange(10)])
-    assert(np.all(wavelength==comparison))
+    assert np.all(wavelength==comparison)
 
     # The same array is returned in this case
-    assert(np.all(datmod.apertures[0].uniform_data == pathloss))
+    assert np.all(datmod.apertures[0].uniform_data == pathloss)
 
 
 def test_calculate_pathloss_vector_interpolation():
@@ -167,7 +167,7 @@ def test_calculate_pathloss_vector_interpolation():
     # Where i is the iteration of np.arange(wavesize) which is the 1st dimension of the pointsource
     # data array.
     wavelength_comparison = np.array([1 + (float(i+1) - 1.0)*1 for i in np.arange(10)])
-    assert(np.all(wavelength==wavelength_comparison))
+    assert np.all(wavelength == wavelength_comparison)
 
     # In this instance we interpolate to get the array for pathloss VS wavelength.
     # With the current values inside of the of the pointsource_wcs starting at line 143 of pathloss.py
@@ -180,10 +180,10 @@ def test_calculate_pathloss_vector_interpolation():
     # pathloss_vector = (a22*pathloss_ref[:,i,j]) = (1*pathloss_ref[:1,j])
     # Thus pathloss == the input array to the function.
     pathloss_comparison = datmod.apertures[0].pointsource_data
-    assert(np.all(pathloss==pathloss_comparison))
+    assert np.all(pathloss==pathloss_comparison)
 
     # With the current wcs values, the logic should be returning True
-    assert(is_inside_slitlet==True)
+    assert is_inside_slitlet is True
 
 
 def test_is_pointsource():
@@ -191,15 +191,15 @@ def test_is_pointsource():
 
     point_source = None
     result = is_pointsource(point_source)
-    assert(result == False)
+    assert result is False
 
     point_source = 'point'
     result = is_pointsource(point_source)
-    assert(result == True)
+    assert result is True
 
     point_source = 'not a point'
     result = is_pointsource(point_source)
-    assert(result == False)
+    assert result is False
 
 def test_do_correction_msa_slit_size_eq_0():
     """If slits have size 0, quit calibration."""
@@ -210,7 +210,7 @@ def test_do_correction_msa_slit_size_eq_0():
     datmod.meta.exposure.type = 'NRS_MSASPEC'
 
     result, _ = do_correction(datmod, pathlossmod)
-    assert(result.meta.cal_step.pathloss == 'COMPLETE')
+    assert result.meta.cal_step.pathloss == 'COMPLETE'
 
 
 def test_do_correction_fixed_slit_exception():
@@ -224,7 +224,7 @@ def test_do_correction_fixed_slit_exception():
     datmod.meta.exposure.type = 'NRS_FIXEDSLIT'
 
     result, _ = do_correction(datmod, pathlossmod)
-    assert(result.meta.cal_step.pathloss == 'COMPLETE')
+    assert result.meta.cal_step.pathloss == 'COMPLETE'
 
 
 def test_do_correction_nis_soss_tso():
@@ -236,7 +236,7 @@ def test_do_correction_nis_soss_tso():
     datmod.meta.visit.tsovisit = True
 
     result, _ = do_correction(datmod, pathlossmod)
-    assert(result.meta.cal_step.pathloss == 'SKIPPED')
+    assert result.meta.cal_step.pathloss == 'SKIPPED'
 
 
 def test_do_correction_nis_soss_pupil_position_is_none():
@@ -249,7 +249,8 @@ def test_do_correction_nis_soss_pupil_position_is_none():
     datmod.meta.instrument.pupil_position = None
 
     result, _ = do_correction(datmod, pathlossmod)
-    assert(result.meta.cal_step.pathloss == 'SKIPPED')
+    assert result.meta.cal_step.pathloss == 'SKIPPED'
+
 
 def test_do_correction_nis_soss_aperture_is_none():
     """If no matching aperture is found, skip correction."""
@@ -265,7 +266,7 @@ def test_do_correction_nis_soss_aperture_is_none():
     datmod.meta.instrument.pupil_position = 1
 
     result, _ = do_correction(datmod, pathlossmod)
-    assert(result.meta.cal_step.pathloss == 'SKIPPED')
+    assert result.meta.cal_step.pathloss == 'SKIPPED'
 
 
 @pytest.mark.skip(reason="Fraction calculation in interpolate_onto_grid needs refactoring.")
@@ -294,4 +295,4 @@ def test_interpolate_onto_grid():
     # Call numpy interpolation to get truth.
     result_comparison = np.interp(wavelength_grid, extended_wavelength_vector, extended_pathloss_vector)
 
-    assert np.testing.assert_array_equal(result, result_comparison)
+    np.testing.assert_array_equal(result, result_comparison)

@@ -119,4 +119,10 @@ class SourceCatalogStep(Step):
                 model.meta.source_catalog = os.path.basename(cat_filepath)
                 self.log.info(f'Wrote source catalog: {cat_filepath}')
 
+                segm_model = datamodels.ImageModel(segment_img.data)
+                segm_model.update(model, only="PRIMARY")
+                self.save_model(segm_model, suffix='segm')
+                model.meta.segmentation_map = segm_model.meta.filename
+                self.log.info(f'Wrote segmentation map: {segm_model.meta.filename}')
+
         return catalog

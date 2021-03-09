@@ -2,11 +2,13 @@
 import os
 import tempfile
 import pytest
+import inspect
+
+from stdatamodels import s3_utils
 
 from jwst.associations import (AssociationRegistry, AssociationPool)
 from jwst.associations.tests.helpers import t_path
 from jwst.lib.tests import helpers as lib_helpers
-from jwst.lib import s3_utils
 
 
 @pytest.fixture(scope='session')
@@ -73,3 +75,39 @@ def jail(request, tmpdir_factory):
     os.chdir(str(newpath))
     yield newpath
     os.chdir(old_dir)
+
+
+@pytest.mark.trylast
+def pytest_configure(config):
+    terminal_reporter = config.pluginmanager.getplugin('terminalreporter')
+    config.pluginmanager.register(TestDescriptionPlugin(terminal_reporter), 'testdescription')
+
+
+class TestDescriptionPlugin:
+    """Pytest plugin to print the test docstring when `pytest -vv` is used.
+
+    This plug-in was added to support JWST instrument team testing and
+    reporting for the JWST calibration pipeline.
+    """
+    def __init__(self, terminal_reporter):
+        self.terminal_reporter = terminal_reporter
+        self.desc = None
+
+    def pytest_runtest_protocol(self, item):
+        try:
+            # Get the docstring for the test
+            self.desc = inspect.getdoc(item.obj)
+        except AttributeError:
+            self.desc = None
+
+    @pytest.hookimpl(hookwrapper=True, tryfirst=True)
+    def pytest_runtest_logstart(self, nodeid, location):
+        # When run as `pytest` or `pytest -v`, no change in behavior
+        if self.terminal_reporter.verbosity <= 1:
+            yield
+        # When run as `pytest -vv`, `pytest -vvv`, etc, print the test docstring
+        else:
+            self.terminal_reporter.write('\n')
+            yield
+            if self.desc:
+                    self.terminal_reporter.write(f'\n{self.desc} ')

@@ -1,4 +1,5 @@
-from .. import make_header
+from jwst.datamodels import make_header
+
 
 def test_make_header():
     # This is mostly a "smoke test" to determine the code works
@@ -10,4 +11,3 @@ def test_make_header():
             assert im.meta.model_type == 'ImageModel'
             assert im.meta.instrument.filter == 'F115W'
             assert im.meta.instrument.name == instrument.upper()
-            im.close()

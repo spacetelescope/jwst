@@ -10,29 +10,33 @@ import warnings
 import pytest
 import numpy as np
 from astropy.io import fits
+from stdatamodels import DataModel
 
-from jwst.datamodels import (DataModel, ModelContainer, ImageModel,
-    DistortionModel, RampModel, CubeModel, ReferenceFileModel, ReferenceImageModel,
+from jwst.datamodels import (JwstDataModel, ModelContainer, ImageModel,
+    RampModel, CubeModel, ReferenceFileModel, ReferenceImageModel,
     ReferenceCubeModel, ReferenceQuadModel)
 from jwst import datamodels
 from jwst.datamodels import util
+
+import asdf
 
 # Define artificial memory size
 MEMORY = 100  # 100 bytes
 
 
-def test_mirirampmodel_deprecation(_jail):
+def test_mirirampmodel_deprecation(tmp_path):
     """Test that a deprecated MIRIRampModel can be opened"""
-
+    path = str(tmp_path / "ramp.fits")
     # Create a MIRIRampModel, working around the deprecation.
     model = datamodels.RampModel((1, 1, 10, 10))
-    model.save('ramp.fits')
-    hduls = fits.open('ramp.fits', mode='update')
+    model.save(path)
+    hduls = fits.open(path, mode='update')
     hduls[0].header['datamodl'] = 'MIRIRampModel'
     hduls.close()
 
     # Test it.
-    miri_ramp = datamodels.open('ramp.fits')
+    with pytest.warns(DeprecationWarning):
+        miri_ramp = datamodels.open(path)
     assert isinstance(miri_ramp, datamodels.RampModel)
 
 
@@ -62,7 +66,7 @@ def test_check_memory_allocation_env(monkeypatch, mock_get_available_memory,
     if allowed_env is None:
         monkeypatch.delenv('DMODEL_ALLOWED_MEMORY', raising=False)
     else:
-        monkeypatch.setenv('DMODEL_ALLOWED_MEMORY', allowed_env)
+        monkeypatch.setenv('DMODEL_ALLOWED_MEMORY', str(allowed_env))
 
     # Allocate amount that would fit at 100% + swap.
     can_allocate, required = util.check_memory_allocation(
@@ -97,37 +101,36 @@ def test_open_from_pathlib():
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", "model_type not found")
         with datamodels.open(path) as model:
-            assert isinstance(model, DataModel)
+            assert isinstance(model, JwstDataModel)
 
 
 def test_open_fits():
     """Test opening a model from a FITS file"""
-
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", "model_type not found")
         fits_file = t_path('test.fits')
         with datamodels.open(fits_file) as model:
-            assert isinstance(model, DataModel)
+            assert isinstance(model, JwstDataModel)
 
 
 def test_open_fits_s3(s3_root_dir):
     """Test opening a model from a FITS file on S3"""
     path = str(s3_root_dir.join("test.fits"))
-    with DataModel() as dm:
+    with JwstDataModel() as dm:
         dm.save(path)
 
     with datamodels.open("s3://test-s3-data/test.fits") as m:
-        assert isinstance(m, DataModel)
+        assert isinstance(m, JwstDataModel)
 
 
 def test_open_asdf_s3(s3_root_dir):
     """Test opening a model from an ASDF file on S3"""
     path = str(s3_root_dir.join("test.asdf"))
-    with DataModel() as dm:
+    with JwstDataModel() as dm:
         dm.save(path)
 
     with datamodels.open("s3://test-s3-data/test.asdf") as m:
-        assert isinstance(m, DataModel)
+        assert isinstance(m, JwstDataModel)
 
 
 def test_open_association():
@@ -150,10 +153,16 @@ def test_container_open_asn_with_sourcecat():
             assert model.meta.asn.table_name == "association_w_cat.json"
 
 
+def test_open_none():
+    with datamodels.open() as model:
+        assert isinstance(model, JwstDataModel)
+
+
 def test_open_shape():
-    init = (200, 200)
-    with datamodels.open(init) as model:
-        assert type(model) == ImageModel
+    shape = (50, 20)
+    with datamodels.open(shape) as model:
+        assert isinstance(model, ImageModel)
+        assert model.shape == shape
 
 
 def test_open_illegal():
@@ -162,50 +171,50 @@ def test_open_illegal():
         datamodels.open(init)
 
 
-def test_open_hdulist():
+def test_open_hdulist(tmp_path):
     hdulist = fits.HDUList()
-    data = np.empty((50, 50), dtype=np.float32)
     primary = fits.PrimaryHDU()
+    data = np.empty((50, 50), dtype=np.float32)
+    science = fits.ImageHDU(data=data, name='SCI', ver=1)
     hdulist.append(primary)
-    science = fits.ImageHDU(data=data, name='SCI')
     hdulist.append(science)
 
+    # datamodels.open() can't open pathlib objects
+    path = str(tmp_path / "jwst_image.fits")
+    hdulist.writeto(path)
+
     with datamodels.open(hdulist) as model:
-        assert type(model) == ImageModel
+        assert isinstance(model, ImageModel)
+
+    with pytest.warns(datamodels.util.NoTypeWarning) as record:
+        with datamodels.open(path) as model:
+            assert isinstance(model, ImageModel)
+            assert len(record) == 1
+            assert "model_type not found" in record[0].message.args[0]
 
 
-def test_open_image():
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", "model_type not found")
-        image_name = t_path('jwst_image.fits')
-        with datamodels.open(image_name) as model:
-            assert type(model) == ImageModel
-
-
-def test_open_ramp(tmpdir):
+def test_open_ramp(tmp_path):
     """Open 4D data without a DQ as RampModel"""
-    path = str(tmpdir.join("ramp.fits"))
+    path = str(tmp_path / "ramp.fits")
     shape = (2, 3, 4, 5)
     with fits.HDUList(fits.PrimaryHDU()) as hdulist:
         hdulist.append(fits.ImageHDU(data=np.zeros(shape), name="SCI", ver=1))
         hdulist.writeto(path)
 
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", "model_type not found")
+    with pytest.warns(datamodels.util.NoTypeWarning):
         with datamodels.open(path) as model:
             assert isinstance(model, RampModel)
 
 
-def test_open_cube(tmpdir):
+def test_open_cube(tmp_path):
     """Open 3D data as CubeModel"""
-    path = str(tmpdir.join("ramp.fits"))
+    path = str(tmp_path / "ramp.fits")
     shape = (2, 3, 4)
     with fits.HDUList(fits.PrimaryHDU()) as hdulist:
         hdulist.append(fits.ImageHDU(data=np.zeros(shape), name="SCI", ver=1))
         hdulist.writeto(path)
 
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", "model_type not found")
+    with pytest.warns(datamodels.util.NoTypeWarning):
         with datamodels.open(path) as model:
             assert isinstance(model, CubeModel)
 
@@ -216,9 +225,9 @@ def test_open_cube(tmpdir):
     (ReferenceCubeModel, (3, 3, 3)),
     (ReferenceQuadModel, (2, 2, 2, 2)),
 ])
-def test_open_reffiles(tmpdir, model_class, shape):
+def test_open_reffiles(tmp_path, model_class, shape):
     """Try opening files with a REFTYPE keyword and different data/dq shapes"""
-    path = str(tmpdir.join("reffile.fits"))
+    path = str(tmp_path / "reffile.fits")
     with fits.HDUList(fits.PrimaryHDU()) as hdulist:
         hdulist["PRIMARY"].header.append(("REFTYPE", "foo"))
         if shape is not None:
@@ -226,49 +235,55 @@ def test_open_reffiles(tmpdir, model_class, shape):
             hdulist.append(fits.ImageHDU(data=np.zeros(shape, dtype=np.uint), name="DQ", ver=1))
         hdulist.writeto(path)
 
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", "model_type not found")
+    with pytest.warns(datamodels.util.NoTypeWarning):
         with datamodels.open(path) as model:
             assert isinstance(model, model_class)
 
 
-def test_open_fits_readonly(tmpdir):
+@pytest.mark.parametrize("suffix", [".asdf", ".fits"])
+def test_open_readonly(tmp_path, suffix):
     """Test opening a FITS-format datamodel that is read-only on disk"""
-    tmpfile = str(tmpdir.join('readonly.fits'))
-    data = np.arange(100, dtype=np.float).reshape(10, 10)
+    path = str(tmp_path / f"readonly{suffix}")
 
-    with ImageModel(data=data) as model:
+    with ImageModel(data=np.zeros((10, 10))) as model:
         model.meta.telescope = 'JWST'
         model.meta.instrument.name = 'NIRCAM'
         model.meta.instrument.detector = 'NRCA4'
         model.meta.instrument.channel = 'SHORT'
-        model.save(tmpfile)
+        model.save(path)
 
-    os.chmod(tmpfile, 0o440)
-    assert os.access(tmpfile, os.W_OK) == False
+    os.chmod(path, 0o440)
+    assert os.access(path, os.W_OK) is False
 
-    with datamodels.open(tmpfile) as model:
+    with datamodels.open(path) as model:
         assert model.meta.telescope == 'JWST'
+        assert isinstance(model, ImageModel)
 
-
-def test_open_asdf_readonly(tmpdir):
-    tmpfile = str(tmpdir.join('readonly.asdf'))
-
-    with DistortionModel() as model:
-        model.meta.telescope = 'JWST'
-        model.meta.instrument.name = 'NIRCAM'
-        model.meta.instrument.detector = 'NRCA4'
-        model.meta.instrument.channel = 'SHORT'
-        model.save(tmpfile)
-
-    os.chmod(tmpfile, 0o440)
-    assert os.access(tmpfile, os.W_OK) == False
-
-    with datamodels.open(tmpfile) as model:
-        assert model.meta.telescope == 'JWST'
 
 # Utilities
 def t_path(partial_path):
     """Construction the full path for test files"""
     test_dir = os.path.join(os.path.dirname(__file__), 'data')
     return os.path.join(test_dir, partial_path)
+
+
+@pytest.mark.parametrize("suffix", ["asdf", "fits"])
+def test_open_asdf_no_datamodel_class(tmp_path, suffix):
+    path = str(tmp_path / f"no_model.{suffix}")
+    model = DataModel()
+    model.save(path)
+
+    # Note: only the fits open emits a "model_type not found" warning.  Both
+    # fits and asdf should behave the same
+    with datamodels.open(path) as m:
+        assert isinstance(m, DataModel)
+
+
+def test_open_asdf(tmp_path):
+    path = str(tmp_path / "straight_asdf.asdf")
+    tree = {"foo": 42, "bar": 13, "seq": np.arange(100)}
+    with asdf.AsdfFile(tree) as af:
+        af.write_to(path)
+
+    with datamodels.open(path) as m:
+        assert isinstance(m, DataModel)

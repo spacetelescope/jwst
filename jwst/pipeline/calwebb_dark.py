@@ -33,6 +33,8 @@ class DarkPipeline(Pipeline):
 
     """
 
+    class_alias = "calwebb_dark"
+
     # Define aliases to steps
     step_defs = {'group_scale': group_scale_step.GroupScaleStep,
                  'dq_init': dq_init_step.DQInitStep,
@@ -40,7 +42,7 @@ class DarkPipeline(Pipeline):
                  'ipc': ipc_step.IPCStep,
                  'superbias': superbias_step.SuperBiasStep,
                  'refpix': refpix_step.RefPixStep,
-                 'rscd': rscd_step.RSCD_Step,
+                 'rscd': rscd_step.RscdStep,
                  'firstframe': firstframe_step.FirstFrameStep,
                  'lastframe': lastframe_step.LastFrameStep,
                  'linearity': linearity_step.LinearityStep,
@@ -83,5 +85,8 @@ class DarkPipeline(Pipeline):
             input = self.linearity(input)
 
         log.info('... ending calwebb_dark')
+
+        # reset FILETYPE in the output
+        input.meta.filetype = 'calibrated ramp'
 
         return input

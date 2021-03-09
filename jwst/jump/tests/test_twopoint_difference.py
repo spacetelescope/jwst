@@ -91,7 +91,7 @@ def test_5grps_cr2_nframe2(setup_cube):
     data[0, 4, 100, 100] = 1005
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, nframes, False, 200, 10)
     assert(4 == np.max(out_gdq)) #a CR was found
-    assert(np.array_equal([0,4,4,0,0], out_gdq[0, :, 100, 100]) )
+    assert(np.array_equal([0,4,4,0,0], out_gdq[0, :, 100, 100]))
 
 
 @pytest.mark.xfail
@@ -118,7 +118,7 @@ def test_5grps_twocrs_2nd_5th(setup_cube):
     data[0, 4, 100, 100] = 115
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, nframes, False, 200, 10)
     assert(4 == np.max(out_gdq)) #a CR was found
-    assert(np.array_equal([0,4,0,0,4] ,out_gdq[0, :, 100, 100]) )
+    assert(np.array_equal([0,4,0,0,4] ,out_gdq[0, :, 100, 100]))
 
 
 def test_5grps_twocrs_2nd_5thbig(setup_cube):
@@ -132,7 +132,7 @@ def test_5grps_twocrs_2nd_5thbig(setup_cube):
     data[0, 4, 100, 100] = 2115
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, nframes, False, 200, 10)
     assert(4 == np.max(out_gdq)) #a CR was found
-    assert(np.array_equal([0,4,0,0,4] , out_gdq[0, :, 100, 100]) )
+    assert(np.array_equal([0,4,0,0,4] , out_gdq[0, :, 100, 100]))
 
 
 def test_10grps_twocrs_2nd_8th_big(setup_cube):
@@ -151,7 +151,7 @@ def test_10grps_twocrs_2nd_8th_big(setup_cube):
     data[0, 9, 100, 100] = 2115
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, nframes, False, 200, 10)
     assert(4 == np.max(out_gdq)) #a CR was found
-    assert(np.array_equal([0,4,0,0,0,0,0,4,0,0] , out_gdq[0, :, 100, 100]) )
+    assert(np.array_equal([0,4,0,0,0,0,0,4,0,0] , out_gdq[0, :, 100, 100]))
 
 
 def test_10grps_twocrs_10percenthit(setup_cube):
@@ -170,7 +170,7 @@ def test_10grps_twocrs_10percenthit(setup_cube):
     data[0:200, 9, 100, 100] = 2115
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, nframes, False, 200, 10)
     assert(4 == np.max(out_gdq)) #a CR was found
-    assert(np.array_equal([0,4,0,0,0,0,0,4,0,0] , out_gdq[0, :, 100, 100]) )
+    assert(np.array_equal([0,4,0,0,0,0,0,4,0,0] , out_gdq[0, :, 100, 100]))
 
 
 def test_5grps_twocrs_2nd_5thbig_nframes2(setup_cube):
@@ -184,7 +184,7 @@ def test_5grps_twocrs_2nd_5thbig_nframes2(setup_cube):
     data[0, 4, 100, 100] = 2115
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, nframes, False, 200, 10)
     assert(4 == np.max(out_gdq)) #a CR was found
-    assert(np.array_equal([0,4,0,0,4] , out_gdq[0, :, 100, 100]) )
+    assert(np.array_equal([0,4,0,0,4] , out_gdq[0, :, 100, 100]))
 
 
 def test_6grps_twocrs_2nd_5th(setup_cube):
@@ -214,7 +214,7 @@ def test_6grps_twocrs_2nd_5th_nframes2(setup_cube):
     data[0, 5, 100, 100] = 115
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, nframes, False, 200, 10)
     assert(4 == np.max(out_gdq)) #a CR was found
-    assert(np.array_equal([0,4,0,0,4,0] , out_gdq[0, :, 100, 100]) )
+    assert(np.array_equal([0,4,0,0,4,0] , out_gdq[0, :, 100, 100]))
 
 
 def test_6grps_twocrs_twopixels_nframes2(setup_cube):
@@ -235,7 +235,7 @@ def test_6grps_twocrs_twopixels_nframes2(setup_cube):
     data[0, 5, 200, 100] = 115
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, nframes, False, 200, 10)
     assert(4 == np.max(out_gdq)) #a CR was found
-    assert(np.array_equal([0,4,0,0,4,0] , out_gdq[0, :, 100, 100]) )
+    assert(np.array_equal([0,4,0,0,4,0] , out_gdq[0, :, 100, 100]))
     assert(np.array_equal([0, 0, 4, 0, 4, 0] , out_gdq[0, :, 200, 100]))
 
 

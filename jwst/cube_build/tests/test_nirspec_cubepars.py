@@ -180,7 +180,7 @@ def test_nirspec_cubepars(_jail, nirspec_cube_pars):
     input_model = None
     output_name_base = None
     output_type = 'band'
-    instrument  = 'NIRSPEC'
+    instrument = 'NIRSPEC'
     list_par1 = all_grating
     list_par2 = all_filter
     master_table = None
@@ -206,7 +206,7 @@ def test_nirspec_cubepars(_jail, nirspec_cube_pars):
 
     assert math.isclose(this_cube.wavemin,wavemin, abs_tol=0.00001)
     assert math.isclose(this_cube.wavemax,wavemax, abs_tol=0.00001)
-    assert this_cube.linear_wavelength == True
+    assert this_cube.linear_wavelength is True
 
     assert math.isclose(this_cube.weight_power, 2, abs_tol=0.00001)
     assert math.isclose(this_cube.roiw, 0.011, abs_tol=0.00001)
@@ -217,7 +217,7 @@ def test_nirspec_cubepars(_jail, nirspec_cube_pars):
 
     # now test if the user has provided input to build cube
 
-    user_ascale  = 0.2
+    user_ascale = 0.2
     user_wscale = 0.05
     user_power = 1
     user_wave_min = 0.8
@@ -261,7 +261,7 @@ def test_nirspec_cubepars(_jail, nirspec_cube_pars):
     # do they match the user provided ones
     assert math.isclose(this_cube.wavemin,user_wave_min, abs_tol=0.00001)
     assert math.isclose(this_cube.wavemax,user_wave_max, abs_tol=0.00001)
-    assert this_cube.linear_wavelength == True
+    assert this_cube.linear_wavelength is True
     assert math.isclose(this_cube.spatial_size, user_ascale, abs_tol=0.00001)
     assert math.isclose(this_cube.spectral_size, user_wscale, abs_tol=0.00001)
     assert math.isclose(this_cube.weight_power, user_power, abs_tol=0.00001)

@@ -10,14 +10,13 @@ from astropy.modeling.models import (Mapping, Tabular1D, Linear1D,
 from astropy.modeling.fitting import LinearLSQFitter
 from gwcs import wcstools, WCS
 from gwcs import coordinate_frames as cf
-from ..cube_build.cube_build_wcs_util import  wrap_ra
+from ..cube_build.cube_build_wcs_util import wrap_ra
 
 from .. import datamodels
 from . import gwcs_drizzle
 from . import resample_utils
 from ..model_blender import blendmeta
 
-CRBIT = np.uint32(datamodels.dqflags.pixel['JUMP_DET'])
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -45,7 +44,9 @@ class ResampleSpecData:
          (eventually) a record of metadata from all input models.
     """
 
-    def __init__(self, input_models, output=None, **pars):
+    def __init__(self, input_models, output=None, single=False,
+                 blendheaders=False, pixfrac=1.0, kernel="square", fillval=0,
+                 weight_type="ivm", good_bits=0, pscale_ratio=1.0, **kwargs):
         """
         Parameters
         ----------
@@ -59,8 +60,15 @@ class ResampleSpecData:
         if output is None:
             output = input_models.meta.resample.output
 
-        self.drizpars = pars
-        self.pscale_ratio = 1.
+        self.pscale_ratio = pscale_ratio
+        self.single = single
+        self.blendheaders = blendheaders
+        self.pixfrac = pixfrac
+        self.kernel = kernel
+        self.fillval = fillval
+        self.weight_type = weight_type
+        self.good_bits = good_bits
+
         self.blank_output = None
 
         # Define output WCS based on all inputs, including a reference WCS
@@ -113,7 +121,10 @@ class ResampleSpecData:
             spatial_axis = spectral_axis ^ 1
 
             # Compute the wavelength array, trimming NaNs from the ends
+            # In many cases, a whole slice is NaNs, so ignore those warnings
+            warnings.simplefilter("ignore")
             wavelength_array = np.nanmedian(lam, axis=spectral_axis)
+            warnings.resetwarnings()
             wavelength_array = wavelength_array[~np.isnan(wavelength_array)]
 
             # We need to estimate the spatial sampling to use for the output WCS.
@@ -135,26 +146,31 @@ class ResampleSpecData:
                     all_wavelength.append(iw)
 
                 lam_center_index = int((bb[spectral_axis][1] -
-                                            bb[spectral_axis][0]) / 2)
+                                        bb[spectral_axis][0]) / 2)
                 if spatial_axis == 0:
-                    ra_center = ra[lam_center_index,:]
-                    dec_center = dec[lam_center_index,:]
+                    ra_center = ra[lam_center_index, :]
+                    dec_center = dec[lam_center_index, :]
                 else:
-                    ra_center = ra[:,lam_center_index]
-                    dec_center = dec[:,lam_center_index]
+                    ra_center = ra[:, lam_center_index]
+                    dec_center = dec[:, lam_center_index]
                 # find the ra and dec for this slit using center of slit
                 ra_center_pt = np.nanmean(ra_center)
                 dec_center_pt = np.nanmean(dec_center)
 
-                # ra and dec this converted to tangent projection
-                tan = Pix2Sky_TAN()
-                native2celestial = RotateNative2Celestial(ra_center_pt, dec_center_pt, 180)
-                undist2sky1 = tan | native2celestial
-                # Filter out RuntimeWarnings due to computed NaNs in the WCS
-                warnings.simplefilter("ignore")
-                # at this center of slit find x,y tangent proction - x_tan, y_tan
-                x_tan, y_tan = undist2sky1.inverse(ra, dec)
-                warnings.resetwarnings()
+                if resample_utils.is_sky_like(model.meta.wcs.output_frame):
+                    # convert ra and dec to tangent projection
+                    tan = Pix2Sky_TAN()
+                    native2celestial = RotateNative2Celestial(ra_center_pt, dec_center_pt, 180)
+                    undist2sky1 = tan | native2celestial
+                    # Filter out RuntimeWarnings due to computed NaNs in the WCS
+                    warnings.simplefilter("ignore")
+                    # at this center of slit find x,y tangent projection - x_tan, y_tan
+                    x_tan, y_tan = undist2sky1.inverse(ra, dec)
+                    warnings.resetwarnings()
+                else:
+                    # for non sky-like output frames, no need to do tangent plane projections
+                    # but we still use the same variables
+                    x_tan, y_tan = ra, dec
 
                 # pull out data from center
                 if spectral_axis == 0:
@@ -170,8 +186,12 @@ class ResampleSpecData:
                 # estimate the spatial sampling
                 fitter = LinearLSQFitter()
                 fit_model = Linear1D()
-                pix_to_xtan = fitter(fit_model, np.arange(x_tan_array.shape[0]), x_tan_array)
-                pix_to_ytan = fitter(fit_model, np.arange(y_tan_array.shape[0]), y_tan_array)
+                xstop = x_tan_array.shape[0] / self.pscale_ratio
+                xstep = 1 / self.pscale_ratio
+                ystop = y_tan_array.shape[0] / self.pscale_ratio
+                ystep = 1 / self.pscale_ratio
+                pix_to_xtan = fitter(fit_model, np.arange(0, xstop, xstep), x_tan_array)
+                pix_to_ytan = fitter(fit_model, np.arange(0, ystop, ystep), y_tan_array)
 
             # append all ra and dec values to use later to find min and max
             # ra and dec
@@ -203,16 +223,20 @@ class ResampleSpecData:
         all_dec = np.hstack(all_dec_slit)
         all_wave = np.hstack(all_wavelength)
         all_wave = all_wave[~np.isnan(all_wave)]
-        all_wave = np.sort(all_wave,axis=None)
+        all_wave = np.sort(all_wave, axis=None)
         # Tabular interpolation model, pixels -> lambda
         wavelength_array = np.unique(all_wave)
         # Check if the data is MIRI LRS FIXED Slit. If it is then
         # the wavelength array needs to be flipped so that the resampled
         # dispersion direction matches the disperion direction on the detector.
-        if self.input_models[0].meta.exposure.type == 'MIR_LRS-FIXEDSLIT' :
-            wavelength_array = np.flip(wavelength_array,axis=None)
+        if self.input_models[0].meta.exposure.type == 'MIR_LRS-FIXEDSLIT':
+            wavelength_array = np.flip(wavelength_array, axis=None)
 
-        pix_to_wavelength = Tabular1D(lookup_table=wavelength_array,
+        step = 1 / self.pscale_ratio
+        stop = wavelength_array.shape[0] / self.pscale_ratio
+        points = np.arange(0, stop, step)
+        pix_to_wavelength = Tabular1D(points=points,
+                                      lookup_table=wavelength_array,
                                       bounds_error=False, fill_value=None,
                                       name='pix2wavelength')
 
@@ -221,7 +245,7 @@ class ResampleSpecData:
         # points and lookup_table need to be reversed in the inverse transform
         # for scipy.interpolate to work properly
         points = wavelength_array
-        lookup_table = np.arange(wavelength_array.shape[0])
+        lookup_table = np.arange(0, stop, step)
 
         if not np.all(np.diff(wavelength_array) > 0):
             points = points[::-1]
@@ -257,35 +281,44 @@ class ResampleSpecData:
         ra_min = np.amin(all_ra)
         ra_max = np.amax(all_ra)
 
-        ra_center_final  = (ra_max + ra_min)/2.0
+        ra_center_final = (ra_max + ra_min) / 2.0
         dec_min = np.amin(all_dec)
         dec_max = np.amax(all_dec)
-        dec_center_final  = (dec_max + dec_min)/2.0
+        dec_center_final = (dec_max + dec_min) / 2.0
         tan = Pix2Sky_TAN()
-        if len(self.input_models) == 1: # single model use ra_center_pt to be consistent
-                                        # with how resample was done before
+        if len(self.input_models) == 1:  # single model use ra_center_pt to be consistent
+            # with how resample was done before
             ra_center_final = ra_center_pt
             dec_center_final = dec_center_pt
 
-        native2celestial = RotateNative2Celestial(ra_center_final, dec_center_final, 180)
-        undist2sky = tan | native2celestial
-
-        # find the spatial size of the output - same in x,y
-        x_tan_all, y_tan_all = undist2sky.inverse(all_ra, all_dec)
+        if resample_utils.is_sky_like(model.meta.wcs.output_frame):
+            native2celestial = RotateNative2Celestial(ra_center_final, dec_center_final, 180)
+            undist2sky = tan | native2celestial
+            # find the spatial size of the output - same in x,y
+            x_tan_all, _ = undist2sky.inverse(all_ra, all_dec)
+        else:
+            x_tan_all, _ = all_ra, all_dec
         x_min = np.amin(x_tan_all)
         x_max = np.amax(x_tan_all)
-        x_size = int(np.ceil((x_max - x_min)/np.absolute(pix_to_xtan.slope)))
+        x_size = int(np.ceil((x_max - x_min) / np.absolute(pix_to_xtan.slope)))
 
-        if len(self.input_models) == 1: # single model use size of x_tan_array
-                                        # to be consistent with method before
+        # single model use size of x_tan_array
+        # to be consistent with method before
+        if len(self.input_models) == 1:
             x_size = len(x_tan_array)
 
         # define the output wcs
-        transform = mapping | (pix_to_xtan & pix_to_ytan | undist2sky) & pix_to_wavelength
+        if resample_utils.is_sky_like(model.meta.wcs.output_frame):
+            transform = mapping | (pix_to_xtan & pix_to_ytan | undist2sky) & pix_to_wavelength
+        else:
+            transform = mapping | (pix_to_xtan & pix_to_ytan) & pix_to_wavelength
 
         det = cf.Frame2D(name='detector', axes_order=(0, 1))
-        sky = cf.CelestialFrame(name='sky', axes_order=(0, 1),
-                                reference_frame=coord.ICRS())
+        if resample_utils.is_sky_like(model.meta.wcs.output_frame):
+            sky = cf.CelestialFrame(name='sky', axes_order=(0, 1),
+                                    reference_frame=coord.ICRS())
+        else:
+            sky = cf.Frame2D(name=f'resampled_{model.meta.wcs.output_frame.name}', axes_order=(0, 1))
         spec = cf.SpectralFrame(name='spectral', axes_order=(2,),
                                 unit=(u.micron,), axes_names=('wavelength',))
         world = cf.CompositeFrame([sky, spec], name='world')
@@ -295,17 +328,18 @@ class ResampleSpecData:
 
         output_wcs = WCS(pipeline)
 
+        # import ipdb; ipdb.set_trace()
+
         # compute the output array size in WCS axes order, i.e. (x, y)
         output_array_size = [0, 0]
-        output_array_size[spectral_axis] = len(wavelength_array)
-        output_array_size[spatial_axis] = x_size
+        output_array_size[spectral_axis] = int(np.ceil(len(wavelength_array) / self.pscale_ratio))
+        output_array_size[spatial_axis] = int(np.ceil(x_size / self.pscale_ratio))
         # turn the size into a numpy shape in (y, x) order
         self.data_size = tuple(output_array_size[::-1])
         bounding_box = resample_utils.wcs_bbox_from_shape(self.data_size)
         output_wcs.bounding_box = bounding_box
 
         return output_wcs
-
 
     def blend_output_metadata(self, output_model):
         """Create new output metadata based on blending all input metadata."""
@@ -325,7 +359,7 @@ class ResampleSpecData:
 
         # Look for input configuration parameter telling the code to run
         # in single-drizzle mode (mosaic all detectors in a single observation?)
-        if self.drizpars['single']:
+        if self.single:
             driz_outputs = ['{0}_resamp.fits'.format(g) for g in self.input_models.group_names]
             model_groups = self.input_models.models_grouped
             group_exptime = []
@@ -351,7 +385,7 @@ class ResampleSpecData:
             output_model.meta.wcs.bounding_box = bb
             output_model.meta.filename = obs_product
 
-            if self.drizpars['blendheaders']:
+            if self.blendheaders:
                 self.blend_output_metadata(output_model)
 
             exposure_times = {'start': [], 'end': []}
@@ -360,18 +394,18 @@ class ResampleSpecData:
 
             # Initialize the output with the wcs
             driz = gwcs_drizzle.GWCSDrizzle(output_model,
-                                outwcs=outwcs,
-                                single=self.drizpars['single'],
-                                pixfrac=self.drizpars['pixfrac'],
-                                kernel=self.drizpars['kernel'],
-                                fillval=self.drizpars['fillval'])
+                                            outwcs=outwcs,
+                                            single=self.single,
+                                            pixfrac=self.pixfrac,
+                                            kernel=self.kernel,
+                                            fillval=self.fillval)
 
             for n, img in enumerate(group):
                 exposure_times['start'].append(img.meta.exposure.start_time)
                 exposure_times['end'].append(img.meta.exposure.end_time)
                 inwht = resample_utils.build_driz_weight(img,
-                    weight_type=self.drizpars['weight_type'],
-                    good_bits=self.drizpars['good_bits'])
+                                                         weight_type=self.weight_type,
+                                                         good_bits=self.good_bits)
 
                 if hasattr(img, 'name'):
                     log.info('Resampling slit {} {}'.format(img.name, self.data_size))
@@ -381,7 +415,6 @@ class ResampleSpecData:
                 in_wcs = img.meta.wcs
                 driz.add_image(img.data, in_wcs, inwht=inwht,
                                expin=img.meta.exposure.exposure_time,
-                               pscale_ratio=self.pscale_ratio,
                                xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
 
             # Update some basic exposure time values based on all the inputs
@@ -389,7 +422,7 @@ class ResampleSpecData:
             output_model.meta.exposure.start_time = min(exposure_times['start'])
             output_model.meta.exposure.end_time = max(exposure_times['end'])
             output_model.meta.resample.product_exposure_time = texptime
-            output_model.meta.resample.weight_type = self.drizpars['weight_type']
+            output_model.meta.resample.weight_type = self.weight_type
             output_model.meta.resample.pointings = pointings
 
             # Update slit info on the output_model. This is needed

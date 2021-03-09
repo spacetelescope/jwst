@@ -26,7 +26,6 @@ class AssignMTWcsStep(Step):
     """
 
     def process(self, input):
-
         if isinstance(input, str):
             input = datamodels.open(input)
 

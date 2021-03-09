@@ -45,7 +45,7 @@ def create_spectral_wcs(ra, dec, wavelength):
                             axes_names=('wavelength',))
     world = cf.CompositeFrame([sky, spec], name='world')
 
-    pixel = np.arange(len(wavelength), dtype=np.float)
+    pixel = np.arange(len(wavelength), dtype=float)
     tab = Mapping((0, 0, 0)) | \
           Const1D(ra) & Const1D(dec) & Tabular1D(points=pixel,
                                                  lookup_table=wavelength,

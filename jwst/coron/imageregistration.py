@@ -117,7 +117,7 @@ def fourier_imshift(image, shift):
             raise ValueError("The number of provided shifts must be equal "
                              "to the number of slices in the input image.")
 
-        offset = np.empty_like(image, dtype=np.float)
+        offset = np.empty_like(image, dtype=float)
         for k in range(nslices):
             offset[k] = fourier_imshift(image[k], shift[k])
 
@@ -164,7 +164,7 @@ def align_array(reference, target, mask=None):
 
     elif len(target.shape) == 3:
         nslices = target.shape[0]
-        shifts = np.empty((nslices, 3), dtype=np.float)
+        shifts = np.empty((nslices, 3), dtype=float)
         aligned = np.empty_like(target)
 
         for m in range(nslices):

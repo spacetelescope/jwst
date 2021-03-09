@@ -1,10 +1,12 @@
 """Constraints
 """
 import abc
+import collections
 from copy import deepcopy
 from itertools import chain
 import logging
 import re
+import typing
 
 from .process_list import ProcessList
 from .utilities import (
@@ -82,6 +84,43 @@ class SimpleConstraintABC(abc.ABC):
     def copy(self):
         """Copy ourselves"""
         return deepcopy(self)
+
+    @property
+    def dup_names(self): #  -> dict[str, list[typing.Union[SimpleConstraint, Constraint]]]
+        """Return dictionary of constraints with duplicate names
+
+        This method is meant to be overridden by classes
+        that need to traverse a list of constraints.
+
+        Returns
+        -------
+        dups : {str: [constraint[,...]][,...]}
+            Returns a mapping between the duplicated name
+            and all the constraints that define that name.
+        """
+        return {}
+
+    def get_all_attr(self, attribute: str): # -> list[tuple[SimpleConstraint, typing.Any]]:
+        """Return the specified attribute
+
+        This method is meant to be overridden by classes
+        that need to traverse a list of constraints.
+
+        Parameters
+        ----------
+        attribute : str
+            The attribute to retrieve
+
+        Returns
+        -------
+        [(self, value)] : [(SimpleConstraint, object)]
+            The value of the attribute in a tuple. If there is no attribute,
+            an empty tuple is returned.
+        """
+        value = getattr(self, attribute)
+        if value is not None:
+            return [(self, value)]
+        return []
 
     # Make iterable to work with `Constraint`.
     # Since this is a leaf, simple return ourselves.
@@ -302,9 +341,8 @@ class AttrConstraint(SimpleConstraintABC):
         the specified `ProcessList` work over state.
 
     force_unique : bool
-        If the initial value of `value` is None,
-        `value` will be set to the first source.
-        Otherwise, this will be left as None.
+        If the initial value is `None` or a list of possible values,
+        the constraint will be modified to be the value first matched.
 
     invalid_values : [str[,...]]
         List of values that are invalid in an item.
@@ -477,7 +515,7 @@ class AttrConstraint(SimpleConstraintABC):
 
 
 class Constraint:
-    """Constraint that is made up of SimpleConstraint
+    """Constraint that is made up of SimpleConstraints
 
     Parameters
     ----------
@@ -691,6 +729,62 @@ class Constraint:
         """True if none of the constraints match"""
         match, to_reprocess = Constraint.any(item, constraints)
         return not match, to_reprocess
+
+    @property
+    def dup_names(self): # -> dict[str, list[typing.Union[SimpleConstraint, Constraint]]]:
+        """Return dictionary of constraints with duplicate names
+
+        This method is meant to be overridden by classes
+        that need to traverse a list of constraints.
+
+        Returns
+        -------
+        dups : {str: [constraint[,...]][,...]}
+            Returns a mapping between the duplicated name
+            and all the constraints that define that name.
+        """
+        attrs = self.get_all_attr('name')
+        constraints, names = zip(*attrs)
+        dups = [name for name, count in collections.Counter(names).items() if count > 1]
+        result = collections.defaultdict(list)
+        for name, constraint in zip(names, constraints):
+            if name in dups:
+                result[name].append(constraint)
+
+        # Turn off the defaultdict factory.
+        result.default_factory = None
+        return result
+
+    def get_all_attr(self, attribute: str): # -> list[tuple[typing.Union[SimpleConstraint, Constraint], typing.Any]]:
+        """Return the specified attribute
+
+        This method is meant to be overridden by classes
+        that need to traverse a list of constraints.
+
+        Parameters
+        ----------
+        attribute : str
+            The attribute to retrieve
+
+        Returns
+        -------
+        result : [(SimpleConstraint or Constraint, object)[,...]]
+            The list of values of the attribute in a tuple. If there is no attribute,
+            an empty tuple is returned.
+
+        Raises
+        ------
+        AttributeError
+            If the attribute is not found.
+        """
+        result = []
+        value = getattr(self, attribute)
+        if value is not None:
+            result = [(self, value)]
+        for constraint in self.constraints:
+            result.extend(constraint.get_all_attr(attribute))
+
+        return result
 
     # Make iterable
     def __iter__(self):

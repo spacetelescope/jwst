@@ -1,4 +1,4 @@
-from . import model_base
+from .model_base import JwstDataModel
 from .image import ImageModel
 from .slit import SlitModel, SlitDataModel
 
@@ -7,7 +7,7 @@ __all__ = ['MultiSlitModel']
 
 
 
-class MultiSlitModel(model_base.DataModel):
+class MultiSlitModel(JwstDataModel):
     """
     A data model for multi-slit images.
 
@@ -49,11 +49,23 @@ class MultiSlitModel(model_base.DataModel):
     slits.items.barshadow : numpy float32 array
          Bar shadow correction
 
+    slits.items.flatfield_point : numpy float32 array
+         flatfield array for point source
+
+    slits.items.flatfield_uniform : numpy float32 array
+         flatfield array for uniform source
+
     slits.items.pathloss_point : numpy float32 array
          pathloss array for point source
 
     slits.items.pathloss_uniform : numpy float32 array
          pathloss array for uniform source
+
+    slits.items.photom_point : numpy float32 array
+         photom array for point source
+
+    slits.items.photom_uniform : numpy float32 array
+         photom array for uniform source
 
     slits.items.area : numpy float32 array
          Pixel area map array
