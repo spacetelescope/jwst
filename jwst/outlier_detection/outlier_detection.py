@@ -3,8 +3,6 @@
 from functools import partial
 import numpy as np
 
-from astropy.io import fits
-
 from astropy.stats import sigma_clip
 from scipy import ndimage
 from drizzle.cdrizzle import tblot
@@ -185,7 +183,6 @@ class OutlierDetection:
 
         pars = self.outlierpars
         save_intermediate_results = pars['save_intermediate_results']
-        save_intermediate_results = True
         if pars['resample_data']:
             # Start by creating resampled/mosaic images for
             # each group of exposures
@@ -476,37 +473,6 @@ def _absolute_subtract(array, tmp, out):
 
 
 def gwcs_blot(median_model, blot_img, interp='poly5', sinscl=1.0):
-    """
-    Resample the output/resampled image to recreate an input image based on
-    the input image's world coordinate system
-
-    Parameters
-    ----------
-    median_model : ~jwst.datamodels.DataModel
-
-    blot_img : datamodel
-        Datamodel containing header and WCS to define the 'blotted' image
-
-    interp : str, optional
-        The type of interpolation used in the resampling. The
-        possible values are "nearest" (nearest neighbor interpolation),
-        "linear" (bilinear interpolation), "poly3" (cubic polynomial
-        interpolation), "poly5" (quintic polynomial interpolation),
-        "sinc" (sinc interpolation), "lan3" (3rd order Lanczos
-        interpolation), and "lan5" (5th order Lanczos interpolation).
-
-    sincscl : float, optional
-        The scaling factor for sinc interpolation.
-    """
-    from reproject import reproject_interp
-    outsci = np.zeros(blot_img.shape, dtype=float)
-    reproject_interp((median_model.data, median_model.meta.wcs),
-                     output_projection=blot_img.meta.wcs, order=1,
-                     output_array=outsci)
-    return outsci
-
-
-def gwcs_blot_old(median_model, blot_img, interp='poly5', sinscl=1.0):
     """
     Resample the output/resampled image to recreate an input image based on
     the input image's world coordinate system
