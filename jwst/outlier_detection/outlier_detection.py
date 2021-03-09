@@ -187,13 +187,6 @@ class OutlierDetection:
         save_intermediate_results = pars['save_intermediate_results']
         save_intermediate_results = True
         if pars['resample_data']:
-            err_models = datamodels.ModelContainer()
-            for cdata in self.input_models:
-                tmodel = cdata.copy()
-                tmodel.data = tmodel.err
-                tmodel.meta.background.level = 0.0
-                err_models.append(tmodel)
-
             # Start by creating resampled/mosaic images for
             # each group of exposures
             sdriz = resample.ResampleData(self.input_models, single=True,
@@ -207,19 +200,6 @@ class OutlierDetection:
                         basepath=model.meta.filename,
                         suffix='outlier_i2d')
                     model.save(model_output_path)
-            # create the equivalent images for the err plane
-            edriz = resample.ResampleData(err_models, single=True,
-                                          blendheaders=False, **pars)
-            edriz.do_drizzle()
-            drizzled_errors = edriz.output_models
-            print(np.max(self.input_models[0].data))
-            print(np.max(self.input_models[0].err))
-            # exit()
-            # print(drizzled_models[0].data)
-            print(np.max(drizzled_models[0].data))
-            print(np.max(drizzled_errors[0].data))
-            print(drizzled_errors[0].meta.background.level)
-            exit()
         else:
             # for non-dithered data, the resampled image is just the original image
             drizzled_models = self.input_models
@@ -428,57 +408,35 @@ def flag_cr(sci_image, blot_image, **pars):
     blot_deriv = abs_deriv(blot_data)
 
     err_data = np.nan_to_num(sci_image.err)
-    print(blot_data.err)
-    exit()
 
     # Define output cosmic ray mask to populate
     cr_mask = np.zeros(sci_image.shape, dtype=np.uint8)
 
+    # create the outlier mask
     if pars.get('resample_data', True):  # dithered outlier detection
         blot_data += subtracted_background
         diff_noise = np.abs(sci_data - blot_data)
 
-        fits.writeto("blot_deriv.fits", blot_deriv, overwrite=True)
-
+        # create an initial mask based on
+        # a scaled version of the derivative image (dealing with interpolating issues?)
+        # and the standard n*sigma above the noise
         t2 = scl1 * blot_deriv + snr1 * err_data
-        tmp1 = np.logical_not(np.greater(diff_noise, t2))
-
-        # print(t2[7, 7], snr1 * err_data[7, 7])
-        # print(diff_noise[7, 7], sci_data[7, 7], blot_data[7, 7], tmp1[7, 7])
-
-        # print(t2[12, 12], snr1 * err_data[12, 12])
-        # print(diff_noise[12,12], sci_data[12, 12], blot_data[12, 12], tmp1[12, 12])
-
-        # exit()
+        # in this mask
+        init_mask = np.logical_not(np.greater(diff_noise, t2))
 
         # Convolve mask with 3x3 kernel
         kernel = np.ones((3, 3), dtype=np.uint8)
-        tmp2 = np.zeros(tmp1.shape, dtype=np.int32)
-        ndimage.convolve(tmp1, kernel, output=tmp2, mode='nearest', cval=0)
+        init_mask_smoothed = np.zeros(init_mask.shape, dtype=np.int32)
+        ndimage.convolve(init_mask, kernel, output=init_mask_smoothed, mode='nearest', cval=0)
 
+        # create a 2nd mask like the first, but based on the 2nd set of
+        # scale and threshold values
+        mask_2ndpass = scl2 * blot_deriv + snr2 * err_data
 
-        print(tmp1)
-        print("blah")
-        print(tmp2)
-        #
-        #
-        #    COMPUTATION PART II
-        #
-        #
-        # Create a second CR Mask
-        xt2 = scl2 * blot_deriv + snr2 * err_data
-
-        np.logical_not(np.greater(diff_noise, xt2) & np.less(tmp2, 9), cr_mask)
-
-        print(cr_mask)
-        exit()
-
-        # print(cr_mask[7, 7])
-        # exit()
+        cr_mask = np.logical_not(np.greater(diff_noise, mask_2ndpass) & np.less(init_mask_smoothed, 9))
 
     else:  # stack outlier detection
         diff_noise = np.abs(sci_data - blot_data)
-        # print(diff_noise[12,12], sci_data[12, 12], blot_data[12, 12])
 
         # straightforward detection of outliers for non-dithered data
         #   as err_data includes all noise sources (photon, read, and flat for baseline)
@@ -491,9 +449,6 @@ def flag_cr(sci_image, blot_image, **pars):
 
     # Update the DQ array in the input image.
     sci_image.dq = np.bitwise_or(sci_image.dq, np.invert(cr_mask) * CRBIT)
-
-    print(sci_image.dq)
-    exit()
 
 def abs_deriv(array):
     """Take the absolute derivate of a numpy array."""

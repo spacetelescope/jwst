@@ -56,7 +56,7 @@ def sci_blot_image_pair():
     return sci, blot
 
 
-@pytest.mark.skip(reason="failing due to resample issue")
+# @pytest.mark.skip(reason="failing due to resample issue")
 def test_flag_cr(sci_blot_image_pair):
     """Test the flag_cr function.  Test logic, not the actual noise model."""
     sci, blot = sci_blot_image_pair
@@ -155,7 +155,7 @@ def we_three_sci():
     return we_many_sci(numsci=3)
 
 
-@pytest.mark.skip(reason="failing due to resample issue")
+# @pytest.mark.skip(reason="failing due to resample issue")
 def test_outlier_step_no_outliers(we_three_sci):
     """Test whole step, no outliers"""
     container = datamodels.ModelContainer(list(we_three_sci))
@@ -196,7 +196,7 @@ def test_outlier_step(we_three_sci):
     assert result[0].dq[12, 12] == OUTLIER_DO_NOT_USE
 
 
-@pytest.mark.skip(reason="failing due to resample issue")
+# @pytest.mark.skip(reason="failing due to resample issue")
 def test_outlier_step_square_source_no_outliers(we_three_sci):
     """Test whole step with square source with sharp edges, no outliers"""
     container = datamodels.ModelContainer(list(we_three_sci))
