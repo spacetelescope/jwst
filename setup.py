@@ -30,7 +30,7 @@ package_data = {
     # Include the transforms schemas
     "jwst.transforms": ["schemas/stsci.edu/jwst_pipeline/*.yaml"],
     # Include C extensions
-    "jwst.grism_lib": ["*.c"],
+    "jwst.wfss_contam.lib": ["*.c"],
     "jwst.stpipe.resources": ["schemas/*.yaml"],
 }
 
@@ -40,5 +40,5 @@ setup(
     scripts=scripts,
     packages=find_packages(),
     package_data=package_data,
-    ext_modules=[Extension('jwst.grism_lib.polyclip_c', ['jwst/grism_lib/polyclip_c.c'])],
+    ext_modules=[Extension('jwst.wfss_contam.lib.polyclip_c', ['jwst/wfss_contam/lib/polyclip_c.c'])],
 )
