@@ -40,6 +40,13 @@ lib
 
 - Update ``update_mt_kwds`` function in ``set_telescope_pointing.py`` to  populate the TARG_RA/TARG_DEC [#5808]
 
+source_catalog
+--------------
+
+- Updated the concentration indices to be calculated as flux ratios
+  instead of magnitude differences. The CI column names have also been
+  renamed to list the larger EE first, e.g. ``CI_50_30``. [#5810]
+
 srctype
 -------
 

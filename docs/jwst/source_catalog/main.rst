@@ -60,8 +60,8 @@ the source.
 .. Note::
 
    Errors are only created when an image has an error extension.  Products
-   created from the resampling step currently do not have an error extension 
-   and the error columns are currently filled with a value of nan. 
+   created from the resampling step currently do not have an error extension
+   and the error columns are currently filled with a value of NaN.
 
 Source Catalog Table
 ^^^^^^^^^^^^^^^^^^^^
@@ -69,7 +69,8 @@ Source Catalog Table
 The output source catalog table is saved in `ECSV format
 <https://docs.astropy.org/en/stable/io/ascii/write.html#ecsv-format>`_.
 
-The table contains a row for each source, with the following columns:
+The table contains a row for each source, with the following default
+columns (assuming the default encircled energies of 30, 50, and 70):
 
 +------------------------+----------------------------------------------------+
 | Column                 | Description                                        |
@@ -167,14 +168,14 @@ The table contains a row for each source, with the following columns:
 |                        | based on the 70% encircled energy circular         |
 |                        | aperture; calculated only for stars                |
 +------------------------+----------------------------------------------------+
-| CI_30_50               | Concentration index calculated as aper30_abmag -   |
-|                        | aper50_abmag                                       |
+| CI_50_30               | Concentration index calculated as (aper50_flux /   |
+|                        | aper30_flux)                                       |
 +------------------------+----------------------------------------------------+
-| CI_50_70               | Concentration index calculated as aper50_abmag -   |
-|                        | aper70_abmag                                       |
+| CI_70_50               | Concentration index calculated as (aper70_flux /   |
+|                        | aper50_flux)                                       |
 +------------------------+----------------------------------------------------+
-| CI_30_70               | Concentration index calculated as aper30_abmag -   |
-|                        | aper70_abmag                                       |
+| CI_70_30               | Concentration index calculated as (aper70_flux /   |
+|                        | aper30_flux)                                       |
 +------------------------+----------------------------------------------------+
 | is_star                | Flag indicating whether the source is a star       |
 +------------------------+----------------------------------------------------+
