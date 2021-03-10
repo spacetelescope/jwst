@@ -233,6 +233,8 @@ def update_mt_kwds(model):
             f_dec = interp1d(time_mt, dec)
             model.meta.wcsinfo.mt_ra = f_ra(exp_midpt_mjd).item(0)
             model.meta.wcsinfo.mt_dec = f_dec(exp_midpt_mjd).item(0)
+            model.meta.target.ra = f_ra(exp_midpt_mjd).item(0)
+            model.meta.target.dec = f_dec(exp_midpt_mjd).item(0)
         else:
             logger.info('Exposure midpoint {} is not in the moving_target '
                         'table range of {} to {}'.format(exp_midpt_mjd, time_mt[0], time_mt[-1]))
