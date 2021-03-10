@@ -162,6 +162,7 @@ def set_source_type(input_model):
                 slit.source_type = 'POINT'
             else:
                 slit.source_type = 'EXTENDED'
+            log.info(f'source_id={slit.source_id}, type={slit.source_type}')
 
     # Unrecognized exposure type; set to UNKNOWN as default
     else:
