@@ -10,7 +10,6 @@ from jwst.pathloss.pathloss import (calculate_pathloss_vector,
                                     is_pointsource)
 from jwst.pathloss.pathloss import do_correction
 import numpy as np
-import pytest
 
 
 def test_get_center_ifu():
@@ -269,7 +268,6 @@ def test_do_correction_nis_soss_aperture_is_none():
     assert result.meta.cal_step.pathloss == 'SKIPPED'
 
 
-@pytest.mark.skip(reason="Fraction calculation in interpolate_onto_grid needs refactoring.")
 def test_interpolate_onto_grid():
     # Mock wavelength vector, grid and pathloss vector.
     wavelength_grid = np.arange(1, 101).reshape(10,10) * 1.1
