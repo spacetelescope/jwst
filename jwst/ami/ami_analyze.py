@@ -54,9 +54,9 @@ def apply_LG_plus(input_model, filter_model, oversample, rotation,
         ysize = 80
         xstop = xstart + xsize - 1
         ystop = ystart + ysize - 1
-        input_model.data = input_model.data[ystart-1:ystop, xstart-1:xstop]
-        input_model.dq = input_model.dq[ystart-1:ystop, xstart-1:xstop]
-        input_model.err = input_model.err[ystart-1:ystop, xstart-1:xstop]
+        input_model.data = input_model.data[ystart-1:ystop, xstart-1:xstop].copy()
+        input_model.dq = input_model.dq[ystart-1:ystop, xstart-1:xstop].copy()
+        input_model.err = input_model.err[ystart-1:ystop, xstart-1:xstop].copy()
 
     data = input_model.data
     dim = data.shape[1]
