@@ -5,6 +5,9 @@ from scipy.ndimage.filters import gaussian_filter
 from jwst.outlier_detection import OutlierDetectionStep
 from jwst.outlier_detection.outlier_detection import flag_cr
 from jwst.outlier_detection.outlier_detection_step import (
+    IMAGE_MODES,
+#    SLIT_SPEC_MODES,
+#    IFU_SPEC_MODES,
     TSO_SPEC_MODES,
     TSO_IMAGE_MODES,
     CORON_IMAGE_MODES,
@@ -17,12 +20,10 @@ OUTLIER_DO_NOT_USE = np.bitwise_or(
     datamodels.dqflags.pixel["DO_NOT_USE"], datamodels.dqflags.pixel["OUTLIER"]
 )
 
-# info is (exptype, tsovisit)
-# regular exptypes to test
-exptypes_reg = [("MIR_IMAGE", False)]
 # TSO types to test
 exptypes_tso = [(exptype, True) for exptype in TSO_SPEC_MODES + TSO_IMAGE_MODES]
 exptypes_tso.append(("MIR_IMAGE", True))
+# CORON types to test
 exptypes_coron = [(exptype, False) for exptype in CORON_IMAGE_MODES]
 
 
@@ -218,8 +219,37 @@ def test_outlier_step_square_source_no_outliers(we_three_sci):
         np.testing.assert_allclose(image.dq, corrected.dq)
 
 
+@pytest.mark.parametrize("exptype", IMAGE_MODES)
+def test_outlier_step_image_weak_CR_dither(exptype):
+    """Test whole step with an outlier"""
+    bkg = 1.5
+    sig = 0.02
+    container = datamodels.ModelContainer(
+        we_many_sci(
+            background=bkg, sigma=sig, signal=7.0, exptype=exptype
+        )
+    )
+
+    # Drop a weak CR on the science array
+    # no noise so it should always be above the default threshold of 5
+    container[0].data[12, 12] = bkg + sig * 10
+
+    result = OutlierDetectionStep.call(container)
+
+    # Make sure nothing changed in SCI array
+    for image, corrected in zip(container, result):
+        np.testing.assert_allclose(image.data, corrected.data)
+
+    # Verify source is not flagged
+    for r in result:
+        assert r.dq[7, 7] == datamodels.dqflags.pixel["GOOD"]
+
+    # Verify CR is flagged
+    assert result[0].dq[12, 12] == OUTLIER_DO_NOT_USE
+
+
 @pytest.mark.parametrize("exptype, tsovisit", exptypes_tso + exptypes_coron)
-def test_outlier_step_weak_CR_nodither(exptype, tsovisit):
+def test_outlier_step_image_weak_CR_nodither(exptype, tsovisit):
     """Test whole step with an outlier"""
     bkg = 1.5
     sig = 0.02
