@@ -45,7 +45,10 @@ def sci_blot_image_pair():
     sci.var_rnoise += 0
 
     # Add a source in the center
-    sci.data[10, 10] += 20 * sigma
+    signal = 20 * sigma
+    sci.data[10, 10] += signal
+    # update the noise for this source to include the photon/measurement noise
+    sci.err[10, 10] = np.sqrt(sigma**2 + signal)
 
     # The blot image is just a smoothed version of the science image that has
     # its background subtracted
@@ -56,7 +59,6 @@ def sci_blot_image_pair():
     return sci, blot
 
 
-# @pytest.mark.skip(reason="failing due to resample issue")
 def test_flag_cr(sci_blot_image_pair):
     """Test the flag_cr function.  Test logic, not the actual noise model."""
     sci, blot = sci_blot_image_pair
@@ -130,7 +132,8 @@ def we_many_sci(
     sci1.data = np.random.normal(loc=background, size=shape, scale=sigma)
     sci1.err = np.zeros(shape) + sigma
     sci1.data[7, 7] += signal
-    sci1.err[7, 7] = np.sqrt(sigma**2 + sci1.data[7, 7])
+    # update the noise for this source to include the photon/measurement noise
+    sci1.err[7, 7] = np.sqrt(sigma**2 + signal)
     sci1.var_rnoise = np.zeros(shape) + 1.0
     sci1.meta.filename = "foo1_cal.fits"
 
@@ -151,11 +154,9 @@ def we_many_sci(
 def we_three_sci():
     """Provide 3 science images with different noise but identical source
     and same background level"""
-
     return we_many_sci(numsci=3)
 
 
-# @pytest.mark.skip(reason="failing due to resample issue")
 def test_outlier_step_no_outliers(we_three_sci):
     """Test whole step, no outliers"""
     container = datamodels.ModelContainer(list(we_three_sci))
@@ -173,7 +174,6 @@ def test_outlier_step_no_outliers(we_three_sci):
         np.testing.assert_allclose(image.dq, corrected.dq)
 
 
-# @pytest.mark.skip(reason="failing due to resample issue")
 def test_outlier_step(we_three_sci):
     """Test whole step with an outlier"""
     container = datamodels.ModelContainer(list(we_three_sci))
@@ -196,7 +196,6 @@ def test_outlier_step(we_three_sci):
     assert result[0].dq[12, 12] == OUTLIER_DO_NOT_USE
 
 
-# @pytest.mark.skip(reason="failing due to resample issue")
 def test_outlier_step_square_source_no_outliers(we_three_sci):
     """Test whole step with square source with sharp edges, no outliers"""
     container = datamodels.ModelContainer(list(we_three_sci))
@@ -232,11 +231,9 @@ def test_outlier_step_weak_CR_nodither(exptype, tsovisit):
 
     # Drop a weak CR on the science array
     # no noise so it should always be above the default threshold of 5
-    container[0].data[12, 12] = bkg + 0.02 * 10
+    container[0].data[12, 12] = bkg + sig * 10
 
     result = OutlierDetectionStep.call(container)
-
-    # print(result[0].dq)
 
     # Make sure nothing changed in SCI array
     for image, corrected in zip(container, result):
@@ -244,7 +241,6 @@ def test_outlier_step_weak_CR_nodither(exptype, tsovisit):
 
     # Verify source is not flagged
     for r in result:
-        # print(r.dq)
         assert r.dq[7, 7] == datamodels.dqflags.pixel["GOOD"]
 
     # Verify CR is flagged
