@@ -43,10 +43,10 @@ def load_wcs(input_model, reference_files={}, nrs_slit_y_range=None):
         input_model.meta.wcsinfo.specsys = "BARYCENT"
         input_model.meta.wcsinfo.dispersion_direction = \
                         get_dispersion_direction(
-                                input_model.meta.exposure.type,
-                                input_model.meta.instrument.grating,
-                                input_model.meta.instrument.filter,
-                                input_model.meta.instrument.pupil)
+                            input_model.meta.exposure.type,
+                            input_model.meta.instrument.grating,
+                            input_model.meta.instrument.filter,
+                            input_model.meta.instrument.pupil)
 
     if instrument.lower() == 'nirspec':
         pipeline = mod.create_pipeline(input_model, reference_files, slit_y_range=nrs_slit_y_range)

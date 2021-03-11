@@ -239,7 +239,7 @@ def diff_astropy_tables():
 
         # Disable meta comparison for now, until we're able to specify
         # individual entries for comparison
-        #if result.meta != truth.meta:
+        # if result.meta != truth.meta:
         #    diffs.append("Metadata does not match")
 
         for col_name in truth.colnames:
@@ -278,6 +278,8 @@ def diff_astropy_tables():
     return _diff_astropy_tables
 
 # Add option to specify a single pool name
+
+
 def pytest_addoption(parser):
     parser.addoption(
         '--sdp-pool', metavar='sdp_pool', default=None,

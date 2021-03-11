@@ -23,7 +23,6 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
                        rois_pixel, roiw_pixel, weight_pixel,
                        softrad_pixel, scalerad_pixel,
                        cube_debug, debug_file):
-
     """ Map the detector pixels to the cube spaxels using the MSM parameters
 
 
@@ -136,7 +135,7 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
                 weight_distance[weight_distance < lower_limit] = lower_limit
                 weight_distance = 1.0 / weight_distance
             elif weighting_type == 'emsm':
-                weight_distance = np.exp(-wdistance/(scalerad_pixel[ipt]/cdelt1))
+                weight_distance = np.exp(-wdistance / (scalerad_pixel[ipt] / cdelt1))
 
             weight_distance = weight_distance.flatten('F')
             weighted_flux = weight_distance * flux[ipt]
@@ -308,7 +307,7 @@ def match_det2cube_miripsf(alpha_resol, beta_resol, wave_resol,
                         weight_distance = lower_limit
                         weight_distance = 1.0 / weight_distance
                 elif weighting_type == 'emsm':
-                    weight_distance = scalerad_pixel[ipt] * np.exp(1.0/wdistance)
+                    weight_distance = scalerad_pixel[ipt] * np.exp(1.0 / wdistance)
 
                 weighted_flux = weight_distance * flux[ipt]
                 weighted_var = (weight_distance * err[ipt]) * (weight_distance * err[ipt])

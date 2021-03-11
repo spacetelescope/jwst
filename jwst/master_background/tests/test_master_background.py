@@ -58,7 +58,7 @@ def test_master_background_userbg(_jail, user_background, science_image):
         science_image,
         config_file='config/master_background.cfg',
         user_background=user_background,
-        )
+    )
 
     assert type(science_image) is type(result)
     assert result is not science_image
@@ -78,7 +78,7 @@ def test_master_background_logic(_jail, user_background, science_image):
         science_image,
         config_file='config/master_background.cfg',
         user_background=user_background,
-        )
+    )
 
     assert result.meta.cal_step.master_background == 'SKIPPED'
     assert type(science_image) is type(result)
@@ -89,7 +89,7 @@ def test_master_background_logic(_jail, user_background, science_image):
         config_file='config/master_background.cfg',
         user_background=user_background,
         force_subtract=True
-        )
+    )
 
     assert result.meta.cal_step.master_background == 'COMPLETE'
     assert type(science_image) is type(result)

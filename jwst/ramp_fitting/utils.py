@@ -49,18 +49,17 @@ class OptRes:
         save_opt : boolean
            save optional fitting results
         """
-        self.slope_seg = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
+        self.slope_seg = np.zeros((n_int,) + (max_seg,) + imshape,dtype=np.float32)
         if save_opt:
-            self.yint_seg=np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
-            self.sigyint_seg=np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
-            self.sigslope_seg=np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
-            self.inv_var_seg=np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
-            self.firstf_int=np.zeros((n_int,) + imshape, dtype=np.float32)
-            self.ped_int=np.zeros((n_int,) + imshape, dtype=np.float32)
-            self.cr_mag_seg=np.zeros((n_int,)+(nreads,)+imshape, dtype=np.float32)
-            self.var_p_seg=np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
-            self.var_r_seg=np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
-
+            self.yint_seg = np.zeros((n_int,) + (max_seg,) + imshape,dtype=np.float32)
+            self.sigyint_seg = np.zeros((n_int,) + (max_seg,) + imshape,dtype=np.float32)
+            self.sigslope_seg = np.zeros((n_int,) + (max_seg,) + imshape,dtype=np.float32)
+            self.inv_var_seg = np.zeros((n_int,) + (max_seg,) + imshape,dtype=np.float32)
+            self.firstf_int = np.zeros((n_int,) + imshape, dtype=np.float32)
+            self.ped_int = np.zeros((n_int,) + imshape, dtype=np.float32)
+            self.cr_mag_seg = np.zeros((n_int,) + (nreads,) + imshape, dtype=np.float32)
+            self.var_p_seg = np.zeros((n_int,) + (max_seg,) + imshape,dtype=np.float32)
+            self.var_r_seg = np.zeros((n_int,) + (max_seg,) + imshape,dtype=np.float32)
 
     def init_2d(self, npix, max_seg, save_opt):
         """
@@ -93,7 +92,6 @@ class OptRes:
             self.var_s_2d = np.zeros((max_seg, npix), dtype=np.float32)
             self.var_r_2d = np.zeros((max_seg, npix), dtype=np.float32)
 
-
     def reshape_res(self, num_int, rlo, rhi, sect_shape, ff_sect, save_opt):
         """
         Loop over the segments and copy the reshaped 2D segment-specific
@@ -124,11 +122,11 @@ class OptRes:
         """
         for ii_seg in range(0, self.slope_seg.shape[1]):
             self.slope_seg[num_int, ii_seg, rlo:rhi, :] = \
-                    self.slope_2d[ii_seg, :].reshape(sect_shape)
+                self.slope_2d[ii_seg, :].reshape(sect_shape)
 
             if save_opt:
                 self.yint_seg[num_int, ii_seg, rlo:rhi, :] = \
-                           self.interc_2d[ii_seg, :].reshape(sect_shape)
+                    self.interc_2d[ii_seg, :].reshape(sect_shape)
                 self.slope_seg[num_int, ii_seg, rlo:rhi, :] = \
                             self.slope_2d[ii_seg, :].reshape(sect_shape)
                 self.sigyint_seg[num_int, ii_seg, rlo:rhi, :] = \
@@ -138,7 +136,6 @@ class OptRes:
                 self.inv_var_seg[num_int, ii_seg, rlo:rhi, :] = \
                               self.inv_var_2d[ii_seg, :].reshape(sect_shape)
                 self.firstf_int[num_int, rlo:rhi, :] = ff_sect
-
 
     def append_arr(self, num_seg, g_pix, intercept, slope, sig_intercept,
                    sig_slope, inv_var, save_opt):
@@ -184,7 +181,6 @@ class OptRes:
             self.siginterc_2d[num_seg[g_pix], g_pix] = sig_intercept[g_pix]
             self.sigslope_2d[num_seg[g_pix], g_pix] = sig_slope[g_pix]
             self.inv_var_2d[num_seg[g_pix], g_pix] = inv_var[g_pix]
-
 
     def shrink_crmag(self, n_int, dq_cube, imshape, nreads):
         """
@@ -254,7 +250,6 @@ class OptRes:
         else:
             self.cr_mag_seg = cr_com[:, :max_num_crs, :, :]
 
-
     def output_optional(self, effintim):
         """
         These results are the cosmic ray magnitudes in the
@@ -287,26 +282,24 @@ class OptRes:
         warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
         warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
         # Tiny 'weights' values correspond to non-existent segments, so set to 0.
-        self.weights[1./self.weights > 0.4 * LARGE_VARIANCE] = 0.
+        self.weights[1. / self.weights > 0.4 * LARGE_VARIANCE] = 0.
         warnings.resetwarnings()
 
         rfo_model = \
-        datamodels.RampFitOutputModel(
-            slope=self.slope_seg.astype(np.float32) / effintim,
-            sigslope=self.sigslope_seg.astype(np.float32),
-            var_poisson=self.var_p_seg.astype(np.float32),
-            var_rnoise=self.var_r_seg.astype(np.float32),
-            yint=self.yint_seg.astype(np.float32),
-            sigyint=self.sigyint_seg.astype(np.float32),
-            pedestal=self.ped_int.astype(np.float32),
-            weights=self.weights.astype(np.float32),
-            crmag=self.cr_mag_seg)
-
+            datamodels.RampFitOutputModel(
+                slope=self.slope_seg.astype(np.float32) / effintim,
+                sigslope=self.sigslope_seg.astype(np.float32),
+                var_poisson=self.var_p_seg.astype(np.float32),
+                var_rnoise=self.var_r_seg.astype(np.float32),
+                yint=self.yint_seg.astype(np.float32),
+                sigyint=self.sigyint_seg.astype(np.float32),
+                pedestal=self.ped_int.astype(np.float32),
+                weights=self.weights.astype(np.float32),
+                crmag=self.cr_mag_seg)
 
         return rfo_model
 
-
-    def print_full(self):# pragma: no cover
+    def print_full(self):  # pragma: no cover
         """
         Diagnostic function for printing optional output arrays; most
         useful for tiny datasets
@@ -374,11 +367,11 @@ def alloc_arrays_1(n_int, imshape):
         group of the ramp is saturated
     """
     dq_int = np.zeros((n_int,) + imshape, dtype=np.uint32)
-    num_seg_per_int = np.zeros((n_int,)+imshape, dtype=np.uint8)
+    num_seg_per_int = np.zeros((n_int,) + imshape, dtype=np.uint8)
 
     # for estimated median slopes
     median_diffs_2d = np.zeros(imshape,dtype=np.float32)
-    sat_0th_group_int = np.zeros((n_int,)+imshape, dtype=np.uint8)
+    sat_0th_group_int = np.zeros((n_int,) + imshape, dtype=np.uint8)
 
     return (dq_int, median_diffs_2d, num_seg_per_int, sat_0th_group_int)
 
@@ -456,13 +449,13 @@ def alloc_arrays_2(n_int, imshape, max_seg):
     s_inv_var_both3 = np.zeros_like(var_p3)
 
     # Segment-specific:
-    var_p4 = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)+LARGE_VARIANCE
+    var_p4 = np.zeros((n_int,) + (max_seg,) + imshape,dtype=np.float32) + LARGE_VARIANCE
     var_r4 = var_p4.copy()
     var_both4 = var_p4.copy()
     inv_var_both4 = np.zeros_like(var_p4)
 
     # number of segments
-    segs_4 = np.zeros((n_int,)+(max_seg,)+imshape, dtype=np.uint8)
+    segs_4 = np.zeros((n_int,) + (max_seg,) + imshape, dtype=np.uint8)
 
     return (var_p3, var_r3, var_p4, var_r4, var_both4, var_both3,
             inv_var_both4, s_inv_var_p3, s_inv_var_r3,
@@ -537,7 +530,7 @@ def calc_slope_vars(rn_sect, gain_sect, gdq_sect, group_time, max_seg):
     # Loop over reads for all pixels to get segments (segments per pixel)
     while (i_read < nreads and np.any(pix_not_done)):
         gdq_1d = gdq_2d_nan[i_read, :]
-        wh_good = np.where(gdq_1d == 0) # good groups
+        wh_good = np.where(gdq_1d == 0)  # good groups
 
         # if this group is good, increment those pixels' segments' lengths
         if len(wh_good[0]) > 0:
@@ -548,7 +541,7 @@ def calc_slope_vars(rn_sect, gain_sect, gdq_sect, group_time, max_seg):
         wh_cr = np.where(gdq_2d_nan[i_read, :].astype(np.int32) & dqflags.group['JUMP_DET'] > 0)
 
         # ... but not on final read:
-        if (len(wh_cr[0]) > 0 and (i_read < nreads-1)):
+        if (len(wh_cr[0]) > 0 and (i_read < nreads - 1)):
             sr_index[wh_cr[0]] += 1
             segs[sr_index[wh_cr], wh_cr] += 1
 
@@ -564,7 +557,7 @@ def calc_slope_vars(rn_sect, gain_sect, gdq_sect, group_time, max_seg):
         i_read += 1
 
     segs = segs.astype(np.uint8)
-    segs_beg = segs[:max_seg, :] # the leading nonzero lengths
+    segs_beg = segs[:max_seg, :]  # the leading nonzero lengths
 
     # Create reshaped version [ segs, y, x ] to simplify computation
     segs_beg_3 = segs_beg.reshape(max_seg, imshape[0], imshape[1])
@@ -588,12 +581,12 @@ def calc_slope_vars(rn_sect, gain_sect, gdq_sect, group_time, max_seg):
     #   checked for and handled later
     warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
     warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
-    den_p3 = 1./(group_time * gain_1d.reshape(imshape) * segs_beg_3_m1)
+    den_p3 = 1. / (group_time * gain_1d.reshape(imshape) * segs_beg_3_m1)
     warnings.resetwarnings()
 
     # For a segment, the variance due to readnoise noise
     # = 12 * readnoise**2 /(ngroups_seg**3. - ngroups_seg)/( tgroup **2.)
-    num_r3 = 12. * (rn_sect/group_time)**2.  # always >0
+    num_r3 = 12. * (rn_sect / group_time)**2.  # always >0
 
     # Reshape for every group, every pixel in section
     num_r3 = np.dstack([num_r3] * max_seg)
@@ -605,15 +598,15 @@ def calc_slope_vars(rn_sect, gain_sect, gdq_sect, group_time, max_seg):
     #   only one good group at the beginning of the integration, so it will be
     #   be compared to the plane of (near) zeros resulting from the reset. For
     #   longer segments, this value is overwritten below.
-    den_r3 = num_r3.copy() * 0. + 1./6
+    den_r3 = num_r3.copy() * 0. + 1. / 6
     wh_seg_pos = np.where(segs_beg_3 > 1)
 
     # Suppress, then, re-enable harmless arithmetic warnings, as NaN will be
     #   checked for and handled later
     warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
     warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
-    den_r3[wh_seg_pos] = 1./(segs_beg_3[wh_seg_pos] **3. -
-                               segs_beg_3[wh_seg_pos]) # overwrite where segs>1
+    den_r3[wh_seg_pos] = 1. / (segs_beg_3[wh_seg_pos] ** 3. -
+                               segs_beg_3[wh_seg_pos])  # overwrite where segs>1
     warnings.resetwarnings()
 
     return (den_r3, den_p3, num_r3, segs_beg_3)
@@ -658,8 +651,8 @@ def calc_pedestal(num_int, slope_int, firstf_int, dq_first, nframes, groupgap,
         pedestal image
     """
     ff_all = firstf_int[num_int, :, :].astype(np.float32)
-    ped = ff_all - slope_int[num_int, : :] * \
-             (((nframes + 1.)/2. + dropframes1)/(nframes+groupgap))
+    ped = ff_all - slope_int[num_int, ::] * \
+             (((nframes + 1.) / 2. + dropframes1) / (nframes + groupgap))
 
     ped[np.bitwise_and(dq_first, dqflags.group['SATURATED']
                       ) == dqflags.group['SATURATED']] = 0
@@ -761,13 +754,14 @@ def gls_output_integ(model, slope_int, slope_err_int, dq_int):
     # Reset the warnings filter to its original state
     warnings.resetwarnings()
 
-    cubemod.update(model) # keys from input needed for photom step
+    cubemod.update(model)  # keys from input needed for photom step
 
     return cubemod
 
+
 def gls_output_optional(model, intercept_int, intercept_err_int,
                         pedestal_int,
-                        ampl_int, ampl_err_int):# pragma: no cover
+                        ampl_int, ampl_err_int):  # pragma: no cover
     """Construct the optional results for the GLS algorithm.
 
     Extended Summary
@@ -819,8 +813,7 @@ def gls_output_optional(model, intercept_int, intercept_err_int,
 
 
 def gls_pedestal(first_group, slope_int, s_mask,
-                 frame_time, nframes_used):# pragma: no cover
-
+                 frame_time, nframes_used):  # pragma: no cover
     """Calculate the pedestal for the GLS case.
 
     The pedestal is the first group, but extrapolated back to zero time
@@ -1020,7 +1013,7 @@ def get_dataset_info(model):
            ngroups, group_time
 
 
-def get_more_info(model):# pragma: no cover
+def get_more_info(model):  # pragma: no cover
     """Get information used by GLS algorithm.
 
     Parameters
@@ -1052,7 +1045,7 @@ def get_more_info(model):# pragma: no cover
     return (group_time, nframes_used, saturated_flag, jump_flag)
 
 
-def get_max_num_cr(gdq_cube, jump_flag): # pragma: no cover
+def get_max_num_cr(gdq_cube, jump_flag):  # pragma: no cover
     """
     Find the maximum number of cosmic-ray hits in any one pixel.
 
@@ -1155,7 +1148,7 @@ def get_ref_subs(model, readnoise_model, gain_model, nframes):
 
     # convert read noise to correct units & scale down for single groups,
     #   and account for the number of frames per group
-    readnoise_2d *= gain_2d/np.sqrt(2. * nframes)
+    readnoise_2d *= gain_2d / np.sqrt(2. * nframes)
 
     return readnoise_2d, gain_2d
 
@@ -1184,7 +1177,7 @@ def remove_bad_singles(segs_beg_3):
     """
     max_seg = segs_beg_3.shape[0]
 
-    #  get initial number of ramps having single-group segments
+    # get initial number of ramps having single-group segments
     tot_num_single_grp_ramps = len(np.where((segs_beg_3 == 1) &
                                   (segs_beg_3.sum(axis=0) > 1))[0])
 
@@ -1193,25 +1186,25 @@ def remove_bad_singles(segs_beg_3):
         for ii_0 in range(max_seg):
             slice_0 = segs_beg_3[ii_0,:,:]
 
-            for ii_1 in range(max_seg): # correctly includes EARLIER segments
+            for ii_1 in range(max_seg):  # correctly includes EARLIER segments
                 if (ii_0 == ii_1):  # don't compare with itself
                     continue
 
                 slice_1 = segs_beg_3[ii_1,:,:]
 
                 # Find ramps of a single-group segment and another segment
-                #    either earlier or later
+                # either earlier or later
                 wh_y, wh_x = np.where((slice_0 == 1) & (slice_1 > 0))
 
                 if (len(wh_y) == 0):
-                   # Are none, so go to next pair of segments to check
+                    # Are none, so go to next pair of segments to check
                     continue
 
                 # Remove the 1-group segment
-                segs_beg_3[ii_0:-1, wh_y, wh_x] = segs_beg_3[ii_0+1:, wh_y, wh_x]
+                segs_beg_3[ii_0:-1, wh_y, wh_x] = segs_beg_3[ii_0 + 1:, wh_y, wh_x]
 
                 # Zero the last segment entry for the ramp, which would otherwise
-                #   remain non-zero due to the shift
+                # remain non-zero due to the shift
                 segs_beg_3[-1, wh_y, wh_x] = 0
 
                 del wh_y, wh_x
@@ -1320,12 +1313,11 @@ def do_all_sat(pixeldq, groupdq, imshape, n_int, save_opt):
     pixeldq = np.bitwise_or(pixeldq, dqflags.group['SATURATED'])
     pixeldq = np.bitwise_or(pixeldq, dqflags.group['DO_NOT_USE'])
 
-    new_model = datamodels.ImageModel(data = np.zeros(imshape, dtype=np.float32),
-        dq = pixeldq,
-        var_poisson = np.zeros(imshape, dtype=np.float32),
-        var_rnoise = np.zeros(imshape, dtype=np.float32),
-        err = np.zeros(imshape, dtype=np.float32))
-
+    new_model = datamodels.ImageModel(data=np.zeros(imshape, dtype=np.float32),
+        dq=pixeldq,
+        var_poisson=np.zeros(imshape, dtype=np.float32),
+        var_rnoise=np.zeros(imshape, dtype=np.float32),
+        err=np.zeros(imshape, dtype=np.float32))
 
     # Create model for the integration-specific output. The 3D group DQ created
     #   is based on the 4D group DQ of the model, and all pixels in all
@@ -1335,36 +1327,36 @@ def do_all_sat(pixeldq, groupdq, imshape, n_int, save_opt):
         m_sh = groupdq.shape  # (integ, grps/integ, y, x )
         groupdq_3d = np.zeros((m_sh[0], m_sh[2], m_sh[3]), dtype=np.uint32)
 
-        for ii in range(n_int): # add SAT flag to existing groupdq in each slice
+        for ii in range(n_int):  # add SAT flag to existing groupdq in each slice
             groupdq_3d[ii,:,:] = np.bitwise_or.reduce(groupdq[ii,:,:,:],
                                                        axis=0)
 
         groupdq_3d = np.bitwise_or(groupdq_3d, dqflags.group['DO_NOT_USE'])
         int_model = datamodels.CubeModel(
-            data = np.zeros((n_int,) + imshape, dtype=np.float32),
-            dq = groupdq_3d,
-            var_poisson = np.zeros((n_int,) + imshape, dtype=np.float32),
-            var_rnoise = np.zeros((n_int,) + imshape, dtype=np.float32),
-            int_times = None,
-            err = np.zeros((n_int,) + imshape, dtype=np.float32))
+            data=np.zeros((n_int,) + imshape, dtype=np.float32),
+            dq=groupdq_3d,
+            var_poisson=np.zeros((n_int,) + imshape, dtype=np.float32),
+            var_rnoise=np.zeros((n_int,) + imshape, dtype=np.float32),
+            int_times=None,
+            err=np.zeros((n_int,) + imshape, dtype=np.float32))
 
     else:
         int_model = None
 
     # Create model for the optional output
     if save_opt:
-        new_arr = np.zeros((n_int,)+(1,)+ imshape, dtype=np.float32)
+        new_arr = np.zeros((n_int,) + (1,) + imshape, dtype=np.float32)
 
         opt_model = datamodels.RampFitOutputModel(
-            slope = new_arr,
-            sigslope = new_arr,
-            var_poisson =new_arr,
-            var_rnoise = new_arr,
-            yint = new_arr,
-            sigyint = new_arr,
-            pedestal = np.zeros((n_int,)+ imshape,dtype=np.float32),
-            weights = new_arr,
-            crmag = new_arr)
+            slope=new_arr,
+            sigslope=new_arr,
+            var_poisson=new_arr,
+            var_rnoise=new_arr,
+            yint=new_arr,
+            sigyint=new_arr,
+            pedestal=np.zeros((n_int,) + imshape, dtype=np.float32),
+            weights=new_arr,
+            crmag=new_arr)
 
     else:
         opt_model = None

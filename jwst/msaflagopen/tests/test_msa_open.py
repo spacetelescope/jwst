@@ -80,8 +80,8 @@ def test_get_failed_open_shutters():
     # state, Internal state, and TA state.
     for shutter in result:
         assert shutter['state'] == 'open' \
-               or shutter['Internal state'] == 'open' \
-               or shutter['TA state'] == 'open'
+            or shutter['Internal state'] == 'open' \
+            or shutter['TA state'] == 'open'
 
 
 def test_create_slitlets():

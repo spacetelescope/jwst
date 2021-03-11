@@ -8,7 +8,7 @@ from numpy.testing import assert_allclose
 from jwst.transforms import models
 
 
-#_RANDOM_SEED = 0x1337
+# _RANDOM_SEED = 0x1337
 
 """
 def test_logical():
@@ -32,6 +32,7 @@ def test_logical():
     assert_allclose(res, npres)
 """
 
+
 def test_ideal_to_v23_roundtrip():
     """
     Test roundtripping of the transforms.
@@ -52,10 +53,10 @@ def test_refraction_index(wavelength, n):
     True values are from the ESA pipeline.
     Reference values are from the PRISM reference file from CV3.
     """
-    temp_sys = 37.06107795068881 # in K
-    tref = 35 # in K
-    pref = 0 # in atm
-    pressure_sys = 0 # in atm
+    temp_sys = 37.06107795068881  # in K
+    tref = 35  # in K
+    pref = 0  # in atm
+    pressure_sys = 0  # in atm
     kcoef = [0.58339748, 0.46085267, 3.8915394]
     lcoef = [0.00252643, 0.010078333, 1200.556]
     tcoef = [-2.66e-05, 0.0, 0.0, 0.0, 0.0, 0.0]

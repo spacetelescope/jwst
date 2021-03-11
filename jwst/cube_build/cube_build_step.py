@@ -107,7 +107,6 @@ class CubeBuildStep (Step):
         if self.roiw != 0.0:
             self.log.info(f'Input Wave ROI size {self.roiw}')
 
-
         self.debug_file = None
         if(self.xdebug is not None and self.ydebug is not None and self.zdebug is not None):
             self.log.info('Writing debug information for spaxel %i %i %i',
@@ -179,7 +178,7 @@ class CubeBuildStep (Step):
             self.interpolation = 'pointcloud'
 
             # Don't allow anything but msm or emsm weightings
-            if ((self.weighting != 'msm')and(self.weighting != 'emsm')):
+            if ((self.weighting != 'msm') and (self.weighting != 'emsm')):
                 self.weighting = 'emsm'
 
 
@@ -403,7 +402,7 @@ class CubeBuildStep (Step):
 
         if self.channel == 'all':
             self.pars_input['channel'].append('all')
-        else: # user has set value
+        else:  # user has set value
             if not self.single:
                 self.pars_input['output_type'] = 'user'
             channellist = self.channel.split(',')

@@ -93,7 +93,7 @@ class Detector1Pipeline(Pipeline):
             result = self.refpix(result)
 
             # skip until MIRI team has figured out an algorithm
-            #result = self.persistence(result)
+            # result = self.persistence(result)
 
         else:
 

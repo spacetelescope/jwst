@@ -7,6 +7,7 @@ from .. import datamodels
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+
 def create_background(wavelength, surf_bright):
     """Create a 1-D spectrum table as a MultiSpecModel.
 

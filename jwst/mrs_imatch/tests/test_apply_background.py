@@ -128,8 +128,8 @@ def test_apply_background_2d(_jail, miri_dither_ch12):
                 'refpoint': center,
                 'coefficients': poly.ravel().tolist(),
                 'channel': channel
-                }
-            )
+            }
+        )
 
         # input 10 output 12.5 for all images
         apply_background_2d(m, channel, subtract=True)

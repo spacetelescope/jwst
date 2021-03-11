@@ -56,12 +56,14 @@ def test_flatfield_step_interface(instrument, exptype):
     assert result.var_flat.shape == shape
     assert result.meta.cal_step.flat_field == 'COMPLETE'
 
+
 def exptypes():
     """Generate NRS EXPTYPES from the schema enum, removing spec types"""
     model = datamodels.ImageModel()
     alltypes = set(model.meta.exposure._schema['properties']['type']['enum'])
     spectypes = set(NRS_SPEC_MODES)
     return sorted([i for i in (alltypes - spectypes)])
+
 
 @pytest.mark.parametrize(
     "exptype",

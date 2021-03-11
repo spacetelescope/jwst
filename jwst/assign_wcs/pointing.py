@@ -29,7 +29,7 @@ def v23tosky(input_model, wrap_v2_at=180, wrap_lon_at=360):
 
     # The sky rotation expects values in deg.
     # This should be removed when models work with quantities.
-    m = ((Scale(1/3600) & Scale(1/3600)) | SphericalToCartesian(wrap_lon_at=wrap_v2_at)
+    m = ((Scale(1 / 3600) & Scale(1 / 3600)) | SphericalToCartesian(wrap_lon_at=wrap_v2_at)
          | rot | CartesianToSpherical(wrap_lon_at=wrap_lon_at))
     m.name = 'v23tosky'
     return m
@@ -136,17 +136,16 @@ def fitswcs_transform_from_model(wcsinfo, wavetable=None):
 
     """
     spatial_axes, spectral_axes, unknown = gwutils.get_axes(wcsinfo)
-    #sp_axis = spectral_axes[0]
 
     transform = gwutils.make_fitswcs_transform(wcsinfo)
     if spectral_axes:
         sp_axis = spectral_axes[0]
-        if wavetable is None :
+        if wavetable is None:
             # Subtract one from CRPIX which is 1-based.
             spectral_transform = astmodels.Shift(-(wcsinfo['CRPIX'][sp_axis] - 1)) | \
                 astmodels.Scale(wcsinfo['CDELT'][sp_axis]) | \
                 astmodels.Shift(wcsinfo['CRVAL'][sp_axis])
-        else :
+        else:
             # Wave dimension is an array that needs to be converted to a table
             waves = wavetable['wavelength'].flatten()
             spectral_transform = astmodels.Tabular1D(lookup_table=waves)

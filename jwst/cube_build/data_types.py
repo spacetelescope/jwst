@@ -20,17 +20,16 @@ class DataTypes():
                 "asn_pool": "",
                 "asn_type": "",
                 "products": [
-                   {"name": "",
+                    {"name": "",
                     "members": [
-                      {"exptype": "",
+                        {"exptype": "",
                        "expname": ""}
-                      ]
+                    ]
                     }
-                   ]
+                ]
                 }
 
     def __init__(self, input, single, output_file, output_dir):
-
         """ Read in input data and determine what type of input data.
 
         Open the input data using datamodels and determine if data is

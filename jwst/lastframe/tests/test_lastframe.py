@@ -30,7 +30,7 @@ def test_lastframe_set_groupdq():
 
     # check that the difference in the groupdq flags is equal to
     #   the 'do_not_use' flag
-    dq_diff = dm_ramp_lastframe.groupdq[0, ngroups-1, :, :] - dm_ramp.groupdq[0, ngroups-1, :, :]
+    dq_diff = dm_ramp_lastframe.groupdq[0, ngroups - 1, :, :] - dm_ramp.groupdq[0, ngroups - 1, :, :]
 
     np.testing.assert_array_equal(np.full((ysize, xsize),
                                           dqflags.group['DO_NOT_USE'],
@@ -40,9 +40,9 @@ def test_lastframe_set_groupdq():
                                   + 'equal to the DO_NOT_USE flag')
 
     # test that the groupdq flags are not changed for the rest of the groups
-    dq_diff = (dm_ramp_lastframe.groupdq[0, 0:ngroups-2, :, :]
-               - dm_ramp.groupdq[0, 0:ngroups-2, :, :])
-    np.testing.assert_array_equal(np.full((ngroups-2, ysize, xsize),
+    dq_diff = (dm_ramp_lastframe.groupdq[0, 0:ngroups - 2, :, :]
+               - dm_ramp.groupdq[0, 0:ngroups - 2, :, :])
+    np.testing.assert_array_equal(np.full((ngroups - 2, ysize, xsize),
                                           0,
                                           dtype=int),
                                   dq_diff,
@@ -109,7 +109,7 @@ def test_lastframe_single_group():
     # check that the difference in the groupdq flags is equal to
     # zero
 
-    dq_diff = dm_ramp_lastframe.groupdq[0, ngroups-1, :, :] - dm_ramp.groupdq[0, ngroups-1, :, :]
+    dq_diff = dm_ramp_lastframe.groupdq[0, ngroups - 1, :, :] - dm_ramp.groupdq[0, ngroups - 1, :, :]
 
     np.testing.assert_array_equal(np.full((ysize, xsize),
                                           0,
@@ -139,13 +139,13 @@ def test_lastframe_add1_groupdq():
     dm_ramp = RampModel(data=data, groupdq=groupdq)
 
     # set a flag in the groupdq, last frame
-    dm_ramp.groupdq[0, ngroups-1, 500:510, 500:510] = 4
+    dm_ramp.groupdq[0, ngroups - 1, 500:510, 500:510] = 4
 
     # run the last frame correction step
     dm_ramp_lastframe = do_correction(dm_ramp)
 
     # test if pixels in groupdq were incremented in value by 1
-    assert(dm_ramp_lastframe.groupdq[0, ngroups-1, 505, 505] == 5)
+    assert(dm_ramp_lastframe.groupdq[0, ngroups - 1, 505, 505] == 5)
 
 
 def test_nircam():
@@ -172,7 +172,7 @@ def test_nircam():
 
     # check that the difference in the groupdq flags is equal to
     #   0 since the step should not run for NIR data
-    dq_diff = dm_ramp_lastframe.groupdq[0, ngroups-1, :, :] - dm_ramp.groupdq[0, ngroups-1, :, :]
+    dq_diff = dm_ramp_lastframe.groupdq[0, ngroups - 1, :, :] - dm_ramp.groupdq[0, ngroups - 1, :, :]
 
     np.testing.assert_array_equal(np.full((ysize, xsize),
                                           0,
@@ -206,7 +206,7 @@ def test_miri():
 
     # check that the difference in the groupdq flags is equal to
     #   DO_NOT_USE flag
-    dq_diff = dm_ramp_lastframe.groupdq[0, ngroups-1, :, :] - dm_ramp.groupdq[0, ngroups-1, :, :]
+    dq_diff = dm_ramp_lastframe.groupdq[0, ngroups - 1, :, :] - dm_ramp.groupdq[0, ngroups - 1, :, :]
 
     np.testing.assert_array_equal(np.full((ysize, xsize),
                                           dqflags.group['DO_NOT_USE'],

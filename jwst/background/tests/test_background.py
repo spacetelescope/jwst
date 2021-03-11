@@ -95,7 +95,7 @@ def test_nirspec_gwa(_jail, background, science_image):
     result = BackgroundStep.call(
         science_image, bkg,
         config_file='config/background.cfg',
-        )
+    )
 
     test = science_image.data - back_image.data
     assert_allclose(result.data, test)
@@ -122,7 +122,7 @@ def test_nirspec_gwa_xtilt(_jail, background, science_image):
     result = BackgroundStep.call(
         science_image, bkg,
         config_file='config/background.cfg',
-        )
+    )
     assert type(result) is type(science_image)
     assert result.meta.cal_step.back_sub == 'SKIPPED'
     back_image.close()
@@ -146,11 +146,12 @@ def test_nirspec_gwa_ytitl(_jail, background, science_image):
     result = BackgroundStep.call(
         science_image, bkg,
         config_file='config/background.cfg',
-        )
+    )
     assert type(result) is type(science_image)
     assert result.meta.cal_step.back_sub == 'SKIPPED'
 
     back_image.close()
+
 
 @pytest.fixture(scope='module')
 def make_wfss_datamodel():
@@ -206,8 +207,11 @@ def make_wfss_datamodel():
 
     return image
 
+
 filter_list = ['F250M', 'F277W', 'F335M', 'F356W', 'F460M',
-               'F356W', 'F410M', 'F430M', 'F444W'] #+ ['F480M', 'F322W2', 'F300M']
+               'F356W', 'F410M', 'F430M', 'F444W']  # + ['F480M', 'F322W2', 'F300M']
+
+
 @pytest.mark.parametrize("pupils", ['GRISMC', 'GRISMR'])
 @pytest.mark.parametrize("filters", filter_list)
 @pytest.mark.parametrize("detectors", ['NRCALONG', 'NRCBLONG'])

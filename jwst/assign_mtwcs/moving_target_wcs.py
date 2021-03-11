@@ -98,7 +98,7 @@ def add_mt_frame(wcs, ra_average, dec_average, mt_ra, mt_dec):
         raise ValueError("Unrecognized coordinate frame.")
 
     pipeline.append((
-    wcs.output_frame, transform_to_mt))
+        wcs.output_frame, transform_to_mt))
     pipeline.append((mt, None))
     new_wcs = WCS(pipeline)
     return new_wcs

@@ -195,8 +195,8 @@ def test_interpolate():
     # shadow will have shape (7 * 500, 101)     # 7 = len(shutter_status) + 1
     shadow = bar.create_shadow(shutter_elements, shutter_status)
 
-    rows = np.arange(0, 3400*100 + 1, 10000, dtype=np.float64) / 100.
-    columns = np.arange(0, 3400*100 + 1, 10000, dtype=np.float64) / 3400.
+    rows = np.arange(0, 3400 * 100 + 1, 10000, dtype=np.float64) / 100.
+    columns = np.arange(0, 3400 * 100 + 1, 10000, dtype=np.float64) / 3400.
     rows = rows.reshape(5, 7)
     columns = columns.reshape(5, 7)
 

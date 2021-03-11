@@ -100,8 +100,8 @@ def apply_zero_point_correction(slit, reffile):
     dispersion = compute_dispersion(slit.meta.wcs)
     corr, dq_lam = compute_zero_point_correction(lam, reffile, source_xpos,
                                                  aperture_name, dispersion)
-    ## TODO: set a DQ flag to a TBD value for pixels where dq_lam == 0.
-    ## The only purpose of dq_lam is to set that flag.
+    # TODO: set a DQ flag to a TBD value for pixels where dq_lam == 0.
+    # The only purpose of dq_lam is to set that flag.
 
     # Wavelength is in um, the correction is computed in meters.
     slit.wavelength = lam - corr * 10 ** 6
@@ -139,7 +139,7 @@ def compute_zero_point_correction(lam, freference, source_xpos, aperture_name, d
                 log.info(f'Using wavelength zero-point correction for aperture {ap.aperture_name}')
                 offset_model = ap.zero_point_offset.copy()
                 # TODO: implement variance
-                #variance = ap.variance.copy()
+                # variance = ap.variance.copy()
                 # width = ap.width
                 break
         else:
@@ -147,9 +147,9 @@ def compute_zero_point_correction(lam, freference, source_xpos, aperture_name, d
 
     deltax = source_xpos
     lam = lam.copy()
-    l = lam[~np.isnan(lam)]
+    lam_no_nans = lam[~np.isnan(lam)]
     offset_model.bounds_error = False
-    correction = offset_model(l * 10 ** -6, [deltax] * l.size)
+    correction = offset_model(lam_no_nans * 10 ** -6, [deltax] * lam_no_nans.size)
     lam[~np.isnan(lam)] = correction
 
     # The correction for pixels outside the slit and wavelengths

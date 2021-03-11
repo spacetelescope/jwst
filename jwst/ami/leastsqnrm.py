@@ -127,11 +127,11 @@ def sin2deltapistons(coeffs):
     delta: 1D float array
         sine of piston differences
     """
-    asize = int((len(coeffs) -1)/2)
+    asize = int((len(coeffs) - 1) / 2)
 
     delta = np.zeros(asize)
     for q in range(asize):
-        delta[q] = np.arcsin(coeffs[2*q+2]) / (np.pi*2.0)
+        delta[q] = np.arcsin(coeffs[2 * q + 2]) / (np.pi * 2.0)
 
     return delta
 
@@ -156,15 +156,15 @@ def cos2deltapistons(coeffs):
     delta: 1D float array
         cosine of piston differences
     """
-    asize = int((len(coeffs) -1)/2)
+    asize = int((len(coeffs) - 1) / 2)
 
     delta = np.zeros(asize)
     for q in range(asize):
-        if coeffs[2*q+2]<0:
+        if coeffs[2 * q + 2] < 0:
             sgn = -1
         else:
             sgn = 1
-        delta[q] = sgn * np.arccos(coeffs[2*q+1]) / (np.pi*2.0)
+        delta[q] = sgn * np.arccos(coeffs[2 * q + 1]) / (np.pi * 2.0)
 
     return delta
 
@@ -209,7 +209,7 @@ def primarybeam(kx, ky):
         envelope intensity for circular holes & monochromatic light
     """
     R = (primarybeam.d / primarybeam.lam) * primarybeam.pitch *  \
-            np.sqrt((kx - primarybeam.offx) * (kx - primarybeam.offx) + \
+            np.sqrt((kx - primarybeam.offx) * (kx - primarybeam.offx) +
             (ky - primarybeam.offy) * (ky - primarybeam.offy))
     pb = replacenan(jv(1, np.pi * R) / (2.0 * R))
 
@@ -350,7 +350,7 @@ def model_array(ctrs, lam, oversample, pitch, fov, d,
     primarybeam.shape = shape
     primarybeam.lam = lam
     primarybeam.size = (oversample * fov, oversample * fov)
-    primarybeam.offx = oversample * fov / 2.0 - off[0] # in pixels
+    primarybeam.offx = oversample * fov / 2.0 - off[0]  # in pixels
     primarybeam.offy = oversample * fov / 2.0 - off[1]
     primarybeam.pitch = pitch / float(oversample)
     primarybeam.d = d
@@ -358,13 +358,13 @@ def model_array(ctrs, lam, oversample, pitch, fov, d,
     hexpb.shape = shape
     hexpb.lam = lam
     hexpb.size = (oversample * fov, oversample * fov)
-    hexpb.offx = oversample * fov / 2.0 - off[0] # in pixels
+    hexpb.offx = oversample * fov / 2.0 - off[0]  # in pixels
     hexpb.offy = oversample * fov / 2.0 - off[1]
     hexpb.pitch = pitch / float(oversample)
     hexpb.d = d
 
     # model fringe matrix parameters:
-    ffc.N = len(ctrs) # number of holes
+    ffc.N = len(ctrs)  # number of holes
     ffc.lam = lam
     ffc.over = oversample
     ffc.pitch = pitch / float(oversample)
@@ -372,7 +372,7 @@ def model_array(ctrs, lam, oversample, pitch, fov, d,
     ffc.offx = oversample * fov / 2.0 - off[0]
     ffc.offy = oversample * fov / 2.0 - off[1]
 
-    ffs.N = len(ctrs) # number of holes
+    ffs.N = len(ctrs)  # number of holes
     ffs.lam = lam
     ffs.over = oversample
     ffs.pitch = pitch / float(oversample)
@@ -400,7 +400,7 @@ def model_array(ctrs, lam, oversample, pitch, fov, d,
         ffmodel.append(np.transpose(np.fromfunction(ffc, ffc.size)))
         ffmodel.append(np.transpose(np.fromfunction(ffs, ffs.size)))
 
-    if shape == 'circ': # if unspecified (default), or specified as 'circ'
+    if shape == 'circ':  # if unspecified (default), or specified as 'circ'
         return np.fromfunction(primarybeam, ffc.size), ffmodel
     elif shape == 'hex':
         return hexpb(), ffmodel
@@ -561,7 +561,7 @@ def matrix_operations(img, model, flux=None, linfit=False):
             noise = np.sqrt(np.abs(flatimg))
 
             # this sets the weights of pixels fulfilling condition to zero
-            weights = np.where(np.abs(flatimg)<=1.0, 0.0, 1.0/(noise**2))
+            weights = np.where(np.abs(flatimg) <= 1.0, 0.0, 1.0 / (noise**2))
 
             # uniform weight
             wy = weights
@@ -647,11 +647,11 @@ def tan2visibilities(coeffs):
     amp, delta: 1D float array, 1D float array
         fringe amplitude & phase
     """
-    delta = np.zeros(int((len(coeffs) -1)/2))
-    amp = np.zeros(int((len(coeffs) -1)/2))
-    for q in range(int((len(coeffs) -1)/2)):
-        delta[q] = (np.arctan2(coeffs[2*q+2], coeffs[2*q+1]))
-        amp[q] = np.sqrt(coeffs[2*q+2]**2 + coeffs[2*q+1]**2)
+    delta = np.zeros(int((len(coeffs) - 1) / 2))
+    amp = np.zeros(int((len(coeffs) - 1) / 2))
+    for q in range(int((len(coeffs) - 1) / 2)):
+        delta[q] = (np.arctan2(coeffs[2 * q + 2], coeffs[2 * q + 1]))
+        amp[q] = np.sqrt(coeffs[2 * q + 2]**2 + coeffs[2 * q + 1]**2)
 
     log.debug(f"tan2visibilities: shape coeffs:{np.shape(coeffs)} "
         f"shape delta:{np.shape(delta)}")
@@ -692,7 +692,7 @@ def populate_antisymmphasearray(deltaps, n=7):
     step = 0
     n = n - 1
     for h in range(n):
-        arr[h, h+1:] = deltaps[step:step+n]
+        arr[h, h + 1:] = deltaps[step:step + n]
         step += n
         n -= 1
 
@@ -754,7 +754,7 @@ def redundant_cps(deltaps, n=7):
     cps: 1D float array
         closure phases
     """
-    arr = populate_antisymmphasearray(deltaps, n=n) # fringe phase array
+    arr = populate_antisymmphasearray(deltaps, n=n)  # fringe phase array
 
     cps = np.zeros(int(comb(n, 3)))
 
@@ -763,8 +763,8 @@ def redundant_cps(deltaps, n=7):
         for ii in range(n - kk - 2):
             for jj in range(n - kk - ii - 2):
                 cps[nn + jj] = arr[kk, ii + kk + 1] \
-                       + arr[ii + kk + 1, jj + ii + kk + 2] \
-                       + arr[jj + ii + kk + 2, kk]
+                    + arr[ii + kk + 1, jj + ii + kk + 2] \
+                    + arr[jj + ii + kk + 2, kk]
 
             nn += jj + 1
 
@@ -831,7 +831,7 @@ def closure_amplitudes(amps, n=7):
     CAs: 1D float array
         closure amplitudes
     """
-    arr = populate_symmamparray(amps, n=n) # fringe amp array
+    arr = populate_symmamparray(amps, n=n)  # fringe amp array
     nn = 0
 
     cas = np.zeros(int(comb(n, 4)))
@@ -841,8 +841,8 @@ def closure_amplitudes(amps, n=7):
             for kk in range(n - jj - ii - 3):
                 for ll in range(n - jj - ii - kk - 3):
                     cas[nn + ll] = arr[ii, jj + ii + 1] \
-                           * arr[ll + ii + jj + kk + 3, kk + jj + ii + 2] \
-                           / (arr[ii, kk + ii + jj + 2] * \
+                        * arr[ll + ii + jj + kk + 3, kk + jj + ii + 2] \
+                        / (arr[ii, kk + ii + jj + 2] *
                               arr[jj + ii + 1, ll + ii + jj + kk + 3])
                 nn = nn + ll + 1
 

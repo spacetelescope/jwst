@@ -85,6 +85,7 @@ def test_guider_cds_acq_track_modes(exptype, make_guider_image):
 
     assert np.allclose(result.data, truth)
 
+
 @pytest.mark.parametrize("exptype", ['FGS_ID-IMAGE', 'FGS_ID-STACK'])
 def test_guider_cds_id_modes(exptype, make_guider_image):
     """Test fgs id exptypes"""
@@ -113,6 +114,7 @@ def test_guider_cds_id_modes(exptype, make_guider_image):
 
     assert np.allclose(result.data[0,:,:], truth[0,:,:])
 
+
 def test_unit_assignment(make_guider_image):
     """Test that correct units are returned"""
 
@@ -121,6 +123,7 @@ def test_unit_assignment(make_guider_image):
     result = guider_cds(model)
 
     assert result.meta.bunit_data == 'DN/s'
+
 
 def test_table_extensions(make_guider_image):
     """Test that tables are assigned to result of pipeline"""

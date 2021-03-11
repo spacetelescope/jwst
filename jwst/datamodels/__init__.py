@@ -83,7 +83,6 @@ from .wfssbkg import WfssBkgModel
 from .util import open
 
 
-
 __all__ = [
     'open',
     'DataModel', 'JwstDataModel',

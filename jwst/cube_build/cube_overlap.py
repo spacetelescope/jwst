@@ -6,6 +6,7 @@ import math
 from ..datamodels import dqflags
 from jwst.transforms.models import _toindex
 
+
 def find_area_poly(nvertices, xpixel, ypixel):
     """ Find the area of the polygon
 
@@ -365,6 +366,7 @@ def sh_find_overlap(xcenter, ycenter, xlength, ylength, xp_corner, yp_corner):
     return area_clipped
 # _____________________________________________________________________________
 
+
 def match_det2cube(instrument,
                    x, y, sliceno,
                    input_model,
@@ -377,7 +379,6 @@ def match_det2cube(instrument,
                    crval_along, crval3,
                    cdelt_along, cdelt3,
                    naxis1, naxis2):
-
     """ Match detector pixels to output plane in local IFU coordinate system
 
     This routine assumes a 1-1 mapping in across slice to slice no.
@@ -411,7 +412,6 @@ def match_det2cube(instrument,
     x = _toindex(x)
     y = _toindex(y)
 
-
     pixel_dq = input_model.dq[y, x]
 
     all_flags = (dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['NON_SCIENCE'])
@@ -441,10 +441,10 @@ def match_det2cube(instrument,
         # only need to check one of the wavelenghts
         lmax = np.nanmax(lam1.flatten())
         if lmax < 0.0001:
-            lam1 = lam1*1.0e6
-            lam2 = lam2*1.0e6
-            lam3 = lam3*1.0e6
-            lam4 = lam4*1.0e6
+            lam1 = lam1 * 1.0e6
+            lam2 = lam2 * 1.0e6
+            lam3 = lam3 * 1.0e6
+            lam4 = lam4 * 1.0e6
 
     if instrument == 'MIRI':
         a1, b1, lam1 = transform(xx_left, yy_bot)
@@ -452,13 +452,13 @@ def match_det2cube(instrument,
         a3, b3, lam3 = transform(xx_right, yy_top)
         a4, b4, lam4 = transform(xx_left, yy_top)
 
-    #  corners are returned Nanned if outside range of slice
+    # corners are returned Nanned if outside range of slice
     # fixed the nanned corners when a1,lam1 is valid but
     # adding 1 to x,y pushes data outside BB valid region
 
-    #index_bad2 = np.isnan(a2)
-    #index_bad3 = np.isnan(a3)
-    #index_bad4 = np.isnan(a4)
+    # index_bad2 = np.isnan(a2)
+    # index_bad3 = np.isnan(a3)
+    # index_bad4 = np.isnan(a4)
 
     # on the edge out of bounds
     index_good2 = ~np.isnan(a2)
@@ -479,21 +479,21 @@ def match_det2cube(instrument,
     x = x[good]
     y = y[good]
     # approximate what out of bound value should be
-    #w12 = np.mean(lam1[index_good2]-lam2[index_good2])
-    #w13 = np.mean(lam1[index_good3]-lam3[index_good3])
-    #w14 = np.mean(lam1[index_good4]-lam4[index_good4])
+    # w12 = np.mean(lam1[index_good2] - lam2[index_good2])
+    # w13 = np.mean(lam1[index_good3] - lam3[index_good3])
+    # w14 = np.mean(lam1[index_good4] - lam4[index_good4])
 
-    #a12 = np.mean(a1[index_good2]-a2[index_good2])
-    #a13 = np.mean(a1[index_good3]-a3[index_good3])
-    #a14 = np.mean(a1[index_good4]-a4[index_good4])
+    # a12 = np.mean(a1[index_good2] - a2[index_good2])
+    # a13 = np.mean(a1[index_good3] - a3[index_good3])
+    # a14 = np.mean(a1[index_good4] - a4[index_good4])
 
-    #a2[index_bad2] = a1[index_bad2] - a12
-    #a3[index_bad3] = a1[index_bad3] - a13
-    #a4[index_bad4] = a1[index_bad4] - a14
+    # a2[index_bad2] = a1[index_bad2] - a12
+    # a3[index_bad3] = a1[index_bad3] - a13
+    # a4[index_bad4] = a1[index_bad4] - a14
 
-    #lam2[index_bad2] = lam1[index_bad2] - w12
-    #lam3[index_bad3] = lam1[index_bad3] - w13
-    #lam4[index_bad4] = lam1[index_bad4] - w14
+    # lam2[index_bad2] = lam1[index_bad2] - w12
+    # lam3[index_bad3] = lam1[index_bad3] - w13
+    # lam4[index_bad4] = lam1[index_bad4] - w14
 
     # center of first pixel, x,y = 1 for Adrian's equations
     # but we want the pixel corners, x,y values passed into this
@@ -540,12 +540,12 @@ def match_det2cube(instrument,
 
         # estimate where the pixel overlaps in the cube
         # find the min and max values in the cube xcoord,ycoord and zcoord
-        #along_min = -2.0
-        #along_max = -1.86
+        # along_min = -2.0
+        # along_max = -1.86
         MinA = (along_min - crval_along) / cdelt_along
         MaxA = (along_max - crval_along) / cdelt_along
         ia1 = max(0, int(MinA))
-        #ia2 = int(math.ceil(MaxA))
+        # ia2 = int(math.ceil(MaxA))
         ia2 = int(MaxA)
         if ia2 >= nac:
             ia2 = nac - 1

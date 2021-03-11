@@ -8,7 +8,6 @@ import pytest
 from jwst.datamodels import FilteroffsetModel, ImageModel
 
 
-
 FITS_FILE = os.path.join(os.path.dirname(__file__), 'data', 'sip.fits')
 
 

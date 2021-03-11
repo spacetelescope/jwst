@@ -5,6 +5,7 @@ from jwst import datamodels
 from jwst.srctype import srctype
 import pytest
 
+
 def test_background_target_set():
 
     # An exposure flagged as background target
@@ -19,6 +20,7 @@ def test_background_target_set():
 
     # Result should be EXTENDED regardless of other input settings
     assert output.meta.target.source_type == 'EXTENDED'
+
 
 def test_background_target_unset():
 
@@ -35,6 +37,7 @@ def test_background_target_unset():
     # value of PATTTYPE, which in this case should return POINT.
     assert output.meta.target.source_type == 'POINT'
 
+
 def test_nrsifu_nodded():
 
     # An exposure using a NIRSpec IFU NOD dither pattern
@@ -49,6 +52,7 @@ def test_nrsifu_nodded():
 
     # Result should be POINT regardless of input setting
     assert output.meta.target.source_type == 'POINT'
+
 
 def test_mirmrs_nodded():
 
@@ -66,6 +70,7 @@ def test_mirmrs_nodded():
     # Result should be POINT regardless of input setting
     assert output.meta.target.source_type == 'POINT'
 
+
 def test_user_input():
 
     # An exposure with the value set upstream by the user
@@ -80,6 +85,7 @@ def test_user_input():
 
     # Result should be POINT regardless of other input settings
     assert output.meta.target.source_type == 'POINT'
+
 
 def test_mrs_unknown():
 
@@ -96,6 +102,7 @@ def test_mrs_unknown():
     # Result should be EXTENDED regardless of other input settings
     assert output.meta.target.source_type == 'EXTENDED'
 
+
 def test_ifu_unknown():
 
     # An exposure with upstream input UNKNOWN
@@ -111,6 +118,7 @@ def test_ifu_unknown():
     # Result should be EXTENDED regardless of other input settings
     assert output.meta.target.source_type == 'EXTENDED'
 
+
 def test_exptype():
 
     # An exposure with an unrecognized EXP_TYPE
@@ -125,6 +133,7 @@ def test_exptype():
     # Result should be UNKNOWN regardless of other input settings
     assert output.meta.target.source_type == 'UNKNOWN'
 
+
 def test_no_sourcetype():
 
     # An exposure without the SRCTYPE keyword present at all
@@ -138,6 +147,7 @@ def test_no_sourcetype():
 
     # Result should be POINT regardless of other input settings
     assert output.meta.target.source_type == 'POINT'
+
 
 def test_nrs_msaspec():
     """Test for when exposure type is NRS_MSASPEC
@@ -157,6 +167,7 @@ def test_nrs_msaspec():
     assert result.slits[0].source_type == 'POINT'
     assert result.slits[1].source_type == 'POINT'
     assert result.slits[2].source_type == 'EXTENDED'
+
 
 def test_nrs_fixedslit():
     """Test for when exposure type is NRS_FIXEDSLIT
@@ -179,6 +190,7 @@ def test_nrs_fixedslit():
     assert result.slits[1].source_type == 'POINT'
     assert result.slits[2].source_type == 'EXTENDED'
 
+
 @pytest.mark.parametrize("exptype", ["NRS_BRIGHTOBJ", "NRC_TSGRISM", "NIS_SOSS",
     "MIR_LRS-SLITLESS"])
 def test_tso_types(exptype):
@@ -193,6 +205,7 @@ def test_tso_types(exptype):
     result = srctype.set_source_type(input)
 
     assert result.meta.target.source_type == "POINT"
+
 
 def test_exptype_is_none():
     """ Test for when exposure type is None.

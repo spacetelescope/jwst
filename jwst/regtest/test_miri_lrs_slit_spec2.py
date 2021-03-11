@@ -8,6 +8,7 @@ from jwst.stpipe import Step
 from jwst import datamodels
 from gwcs.wcstools import grid_from_bounding_box
 
+
 @pytest.fixture(scope="module")
 def run_pipeline(jail, rtdata_module):
     """Run the calwebb_spec2 pipeline on an ASN of nodded MIRI LRS

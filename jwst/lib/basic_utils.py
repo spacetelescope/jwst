@@ -136,6 +136,7 @@ class LoggingContext:
     close: bool
         Close the handler when done.
     """
+
     def __init__(self, logger, level=None, handler=None, close=True):
         self.logger = logger
         self.level = level

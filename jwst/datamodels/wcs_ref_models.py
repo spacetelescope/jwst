@@ -60,6 +60,7 @@ class _SimpleModel(ReferenceFileModel):
             else:
                 warnings.warn(traceback.format_exc(), ValidationWarning)
 
+
 class DistortionModel(_SimpleModel):
     """
     A model for a reference file of type "distortion".
@@ -81,6 +82,7 @@ class DistortionModel(_SimpleModel):
                 raise
             else:
                 warnings.warn(traceback.format_exc(), ValidationWarning)
+
 
 class DistortionMRSModel(ReferenceFileModel):
     """

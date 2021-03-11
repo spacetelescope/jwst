@@ -79,10 +79,10 @@ def read_jwst_ephemeris(times):
     f = open(os.path.join(EPHEMERIS_PATH, 'ephem_10days.txt'), 'r')
     # First get header info.
     mdict = get_jwst_ephem_metadata(f)
-    if ((mdict['CENTER_NAME'] != 'Earth') or
-        (mdict['OBJECT_NAME'] != 'JWST') or
-        (mdict['REF_FRAME'] != 'EME2000') or
-        (mdict['TIME_SYSTEM'] != 'UTC')):
+    if ((mdict['CENTER_NAME'] != 'Earth')
+            or (mdict['OBJECT_NAME'] != 'JWST')
+            or (mdict['REF_FRAME'] != 'EME2000')
+            or (mdict['TIME_SYSTEM'] != 'UTC')):
         raise RuntimeError("JWST ephemeris file metadata doesn't match expectations")
     # Determine size of time data; used to estimate location of desired times
     start = f.tell()
@@ -92,7 +92,7 @@ def read_jwst_ephemeris(times):
     end = f.tell()
     starttime = atime.Time(mdict['START_TIME']).jd
     endtime = atime.Time(mdict['STOP_TIME']).jd
-    interval = (time2 - time1) * 1440 # in minutes
+    interval = (time2 - time1) * 1440  # in minutes
     if interval > 10:
         raise ValueError("time interval in JWST ephemeris file is too large")
     # Determine min, max of times sought
@@ -117,8 +117,7 @@ def read_jwst_ephemeris(times):
     # Throw away truncated lines
     if not lines[0].startswith('20') or len(lines[0] < 125):
         lines = lines[1:]
-    if len(lines[-1]) < 80: # Can be looser here since
-                            # we don't care about the last 3 numbers.
+    if len(lines[-1]) < 80:  # Can be looser here since we don't care about the last 3 numbers.
         lines = lines[:-1]
     # Turn into numpy arrays
     nrecords = len(lines)
@@ -188,7 +187,8 @@ def parse_jwst_ephem_line(line):
     position = np.array([float(item) for item in lparts[1:4]])
     return time.jd, position
 
-#-------end of file based jwst ephem routines
+# -------end of file based jwst ephem routines
+
 
 def jwst_ephem_interp(t, padding=3):
     """Interpolate within an array of JWST positions.

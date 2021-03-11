@@ -50,6 +50,8 @@ OBSTIME_EXPECTED = STARTTIME
 # ########################
 # Database access fixtures
 # ########################
+
+
 @pytest.fixture
 def eng_db_ngas():
     """Setup the test engineering database"""
@@ -152,7 +154,7 @@ def test_pointing_averaging(eng_db_jw703):
      obstime) = stp.get_pointing(
          Time('2019-06-03T17:25:40', format='isot').mjd,
          Time('2019-06-03T17:25:56', format='isot').mjd,
-     )
+    )
 
     assert np.allclose(q, q_exp)
     assert np.allclose(j2fgs_matrix, j2fgs_exp)
@@ -212,7 +214,7 @@ def test_get_pointing_with_zeros(eng_db_ngas):
     assert np.array_equal(fsmcorr, fsmcorr_desired)
 
 
-@pytest.mark.skipif(sys.version_info.major<3,
+@pytest.mark.skipif(sys.version_info.major < 3,
                     reason="No URI support in sqlite3")
 def test_add_wcs_default(data_file):
     """Handle when no pointing exists and the default is used."""
@@ -274,7 +276,7 @@ def test_add_wcs_default_nosiaf(data_file_nosiaf, caplog):
         )
 
 
-@pytest.mark.skipif(sys.version_info.major<3,
+@pytest.mark.skipif(sys.version_info.major < 3,
                     reason="No URI support in sqlite3")
 def test_add_wcs_fsmcorr_v1(data_file):
     """Test with default value using FSM original correction"""
@@ -328,7 +330,7 @@ def test_add_wcs_fsmcorr_v1(data_file):
         )
 
 
-@pytest.mark.skipif(sys.version_info.major<3,
+@pytest.mark.skipif(sys.version_info.major < 3,
                     reason="No URI support in sqlite3")
 def test_add_wcs_with_db(eng_db_ngas, data_file, siaf_file=siaf_db):
     """Test using the database"""
@@ -372,7 +374,7 @@ def test_add_wcs_with_db(eng_db_ngas, data_file, siaf_file=siaf_db):
         )
 
 
-@pytest.mark.skipif(sys.version_info.major<3,
+@pytest.mark.skipif(sys.version_info.major < 3,
                     reason="No URI support in sqlite3")
 def test_add_wcs_with_db_fsmcorr_v1(eng_db_ngas, data_file):
     """Test using the database with original FSM correction"""

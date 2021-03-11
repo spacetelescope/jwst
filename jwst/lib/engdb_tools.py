@@ -61,6 +61,7 @@ class _Value_Collection():
         Returns the list of values.
         See `include_obstime` and `zip` for modifications.
     """
+
     def __init__(self, include_obstime=False, zip=True):
         self._include_obstime = include_obstime
         self._zip = zip
@@ -133,7 +134,7 @@ class ENGDB_Service():
     def __init__(self, base_url=None, default_format='dict'):
         if base_url is None:
             base_url = getenv('ENG_BASE_URL', ENGDB_BASE_URL)
-        if base_url[-1] !='/':
+        if base_url[-1] != '/':
             base_url += '/'
         self.base_url = base_url
         self.default_format = default_format

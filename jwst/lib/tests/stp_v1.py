@@ -163,15 +163,15 @@ def add_wcs(filename):
 
 
 def m_v_to_siaf(ya, v3, v2, vidlparity):  # This is a 321 rotation
-    mat = np.array([[cos(v3)*cos(v2),
-                    cos(v3)*sin(v2),
+    mat = np.array([[cos(v3) * cos(v2),
+                    cos(v3) * sin(v2),
                     sin(v3)],
-                   [-cos(ya)*sin(v2)+sin(ya)*sin(v3)*cos(v2),
-                    cos(ya)*cos(v2)+sin(ya)*sin(v3)*sin(v2),
-                    -sin(ya)*cos(v3)],
-                   [-sin(ya)*sin(v2)-cos(ya)*sin(v3)*cos(v2),
-                    sin(ya)*cos(v2)-cos(ya)*sin(v3)*sin(v2),
-                    cos(ya)*cos(v3)]])
+                   [-cos(ya) * sin(v2) + sin(ya) * sin(v3) * cos(v2),
+                    cos(ya) * cos(v2) + sin(ya) * sin(v3) * sin(v2),
+                    -sin(ya) * cos(v3)],
+                   [-sin(ya) * sin(v2) - cos(ya) * sin(v3) * cos(v2),
+                    sin(ya) * cos(v2) - cos(ya) * sin(v3) * sin(v2),
+                    cos(ya) * cos(v3)]])
     pmat = np.array([[0., vidlparity, 0.],
                      [0., 0., 1.],
                      [1., 0., 0.]])
@@ -186,10 +186,11 @@ def vector_to_ra_dec(v):
         ra += 2. * np.pi
     return(ra, dec)
 
-R2D = 180./np.pi
-D2R = np.pi/180.
-A2R = D2R/3600.
-R2A = 3600.*R2D
+
+R2D = 180. / np.pi
+D2R = np.pi / 180.
+A2R = D2R / 3600.
+R2A = 3600. * R2D
 
 # Define the FGS1 to SI-FOV DCM,  Transpose of DCM in SE-20 section 5.8.4.2.
 
@@ -241,22 +242,22 @@ def calc_wcs(v2ref, v3ref, v3idlyang, vidlparity,
 
     q1, q2, q3, q4 = q
     m_eci2j = np.array(
-        [[1. - 2.*q2*q2 - 2.*q3*q3,
-            2.*(q1*q2 + q3*q4),
-            2.*(q3*q1 - q2*q4)],
-         [2.*(q1*q2 - q3*q4),
-            1. - 2.*q3*q3 - 2.*q1*q1,
-            2.*(q2*q3 + q1*q4)],
-         [2.*(q3*q1 + q2*q4),
-            2.*(q2*q3 - q1*q4),
-            1. - 2.*q1*q1 - 2.*q2*q2]])
+        [[1. - 2. * q2 * q2 - 2. * q3 * q3,
+            2. * (q1 * q2 + q3 * q4),
+            2. * (q3 * q1 - q2 * q4)],
+         [2. * (q1 * q2 - q3 * q4),
+            1. - 2. * q3 * q3 - 2. * q1 * q1,
+            2. * (q2 * q3 + q1 * q4)],
+         [2. * (q3 * q1 + q2 * q4),
+            2. * (q2 * q3 - q1 * q4),
+            1. - 2. * q1 * q1 - 2. * q2 * q2]])
 
     mj2fgs1 = np.array(j2fgs_matrix).reshape((3, 3)).transpose()
 
     m_sifov_fsm_delta = np.array(
-        [[1., fsmcorr[0]/22.01, fsmcorr[1]/21.68],
-         [-fsmcorr[0]/22.01, 1., 0.],
-         [-fsmcorr[1]/21.68, 0., 1.]])
+        [[1., fsmcorr[0] / 22.01, fsmcorr[1] / 21.68],
+         [-fsmcorr[0] / 22.01, 1., 0.],
+         [-fsmcorr[1] / 21.68, 0., 1.]])
 
     mpartial = np.dot(m_sifov_to_v,
                       np.dot(m_sifov_fsm_delta,
@@ -273,7 +274,7 @@ def calc_wcs(v2ref, v3ref, v3idlyang, vidlparity,
     v3_ra, v3_dec = vector_to_ra_dec(m_eci2v[2])
 
     # The V3PA @ V1 is given by
-    y = cos(v3_dec) * sin(v3_ra-v1_ra)
+    y = cos(v3_dec) * sin(v3_ra - v1_ra)
     x = sin(v3_dec) * cos(v1_dec) - \
         cos(v3_dec) * sin(v1_dec) * cos((v3_ra - v1_ra))
     V3PA = np.arctan2(y, x)
@@ -287,9 +288,9 @@ def calc_wcs(v2ref, v3ref, v3idlyang, vidlparity,
     siaf_x = 0. * A2R
     siaf_y = 0. * A2R
     refpos = np.array(
-               [siaf_x,
+        [siaf_x,
                 siaf_y,
-                np.sqrt(1.-siaf_x * siaf_x - siaf_y * siaf_y)])
+                np.sqrt(1. - siaf_x * siaf_x - siaf_y * siaf_y)])
     msky = np.dot(m_eci2siaf.transpose(), refpos)
     vaper_ra, vaper_dec = vector_to_ra_dec(msky)
 
@@ -299,12 +300,12 @@ def calc_wcs(v2ref, v3ref, v3idlyang, vidlparity,
     # The Y axis of the aperture is given by
     vy_ra, vy_dec = vector_to_ra_dec(myeci)
     # The VyPA @ xref,yref is given by
-    y = cos(vy_dec) * sin(vy_ra-vaper_ra)
+    y = cos(vy_dec) * sin(vy_ra - vaper_ra)
     x = sin(vy_dec) * cos(vaper_dec) - \
         cos(vy_dec) * sin(vaper_dec) * cos((vy_ra - vaper_ra))
     vypa = np.arctan2(y, x)
-    wcsinfo = (vaper_ra*R2D, vaper_dec*R2D, vypa*R2D)
-    vinfo = (v1_ra*R2D, v1_dec*R2D, V3PA*R2D)
+    wcsinfo = (vaper_ra * R2D, vaper_dec * R2D, vypa * R2D)
+    vinfo = (v1_ra * R2D, v1_dec * R2D, V3PA * R2D)
     return wcsinfo, vinfo
 
 
@@ -440,9 +441,9 @@ def get_pointing(obstart, obsend, result_type='first'):
 
     if not len(results):
         raise ValueError(
-                'No non-zero quanternion found '
-                'in the DB between MJD {} and {}'.format(obstart, obsend)
-            )
+            'No non-zero quanternion found '
+            'in the DB between MJD {} and {}'.format(obstart, obsend)
+        )
 
     if result_type == 'first':
         return results[0]

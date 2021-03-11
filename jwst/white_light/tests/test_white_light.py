@@ -5,6 +5,7 @@ from astropy.time import Time, TimeDelta
 import numpy as np
 import pytest
 
+
 @pytest.fixture(scope='module')
 def make_datamodel():
     """Make data for white light tests"""
@@ -17,7 +18,7 @@ def make_datamodel():
     model.meta.exposure.integration_end = 2
 
     # Make data arrays
-    flux = np.random.rand(200)*1e-9
+    flux = np.random.rand(200) * 1e-9
     wavelength = np.arange(11,13, step=0.01)
     error = np.random.rand(200)
     surf_bright = np.zeros(200)
@@ -33,10 +34,8 @@ def make_datamodel():
 
     spec_table = np.array(data, dtype=[('WAVELENGTH', 'f8'),('FLUX', 'f8'),
                                     ('ERROR', 'f8'), ('SURF_BRIGHT', 'f8'),
-                                    ('SB_ERROR', 'f8'),('DQ', 'u4'), ('BACKGROUND', 'f8'),
-                                    ('BERROR', 'f8'), ('NPIXELS', 'f8')])
-
-
+        ('SB_ERROR', 'f8'),('DQ', 'u4'), ('BACKGROUND', 'f8'),
+        ('BERROR', 'f8'), ('NPIXELS', 'f8')])
 
     spectrum = datamodels.SpecModel()
     spectrum.spec_table = spec_table
@@ -72,7 +71,7 @@ def test_white_light_with_int_tables(make_datamodel):
 
     offset = int_start - int_num[0]
     time_arr = np.zeros(ntables, dtype=np.float64)
-    time_arr[0 : 1] = mid_utc[offset : offset + ntables]
+    time_arr[0: 1] = mid_utc[offset: offset + ntables]
     int_times = Time(time_arr, format='mjd', scale='utc')
 
     # Sum the fluxes
@@ -80,6 +79,7 @@ def test_white_light_with_int_tables(make_datamodel):
 
     assert result['MJD'] == int_times.mjd
     assert result['whitelight_flux'] == fluxsums
+
 
 def test_white_light_with_expstart(make_datamodel):
     data = make_datamodel
@@ -97,7 +97,7 @@ def test_white_light_with_expstart(make_datamodel):
 
     # We know there is only one table, so set we are hardcoding.
     ntables_current = 1
-    dt_arr[0 : 1] = np.arange(1, 1 + ntables_current) * dt - (dt / 2.)
+    dt_arr[0: 1] = np.arange(1, 1 + ntables_current) * dt - (dt / 2.)
     int_dt = TimeDelta(dt_arr, format='sec')
 
     int_times = (Time(data.meta.exposure.start_time, format='mjd')

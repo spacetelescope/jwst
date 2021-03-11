@@ -76,7 +76,7 @@ class OutlierDetectionStackStep(Step):
                 'save_intermediate_results': self.save_intermediate_results,
                 'resample_data': self.resample_data,
                 'good_bits': self.good_bits
-                }
+            }
 
             # Set up outlier detection, then do detection
             step = outlier_detection.OutlierDetection(self.input_models,

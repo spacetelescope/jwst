@@ -145,6 +145,7 @@ def test_miri_mrs_34C():
     im = create_datamodel(hdul)
     run_test(im)
 
+
 # MRS test reference data
 mrs_ref_data = {
     '1A': {'x': np.array([76.0,354.0]),

@@ -59,7 +59,7 @@ def create_pipeline(input_model, reference_files, slit_y_range):
         pipeline = exp_type2transform[exp_type](input_model, reference_files, slit_y_range=slit_y_range)
     if pipeline:
         log.info("Created a NIRSPEC {0} pipeline with references {1}".format(
-                exp_type, reference_files))
+            exp_type, reference_files))
     return pipeline
 
 
@@ -404,7 +404,7 @@ def get_open_slits(input_model, reference_files=None, slit_y_range=[-.55, .55]):
         lamp_mode = lamp_mode.lower()
     else:
         lamp_mode = 'none'
-    if exp_type in ["nrs_msaspec", "nrs_autoflat"] or ((exp_type in ["nrs_lamp", "nrs_autowave"]) and \
+    if exp_type in ["nrs_msaspec", "nrs_autoflat"] or ((exp_type in ["nrs_lamp", "nrs_autowave"]) and
                                                         (lamp_mode == "msaspec")):
         msa_metadata_file, msa_metadata_id, dither_point = get_msa_metadata(
             input_model, reference_files)
@@ -581,12 +581,12 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
 
     # First we are going to filter the msa_file data on the msa_metadata_id
     # and dither_point_index.
-    msa_data = [x for x in msa_conf.data if x['msa_metadata_id'] == msa_metadata_id \
+    msa_data = [x for x in msa_conf.data if x['msa_metadata_id'] == msa_metadata_id
                 and x['dither_point_index'] == dither_position]
 
     # Get all source_ids for slitlets with sources.
     # These should not be used when assigning source_id to background slitlets.
-    source_ids = set([x[5] for x in msa_conf.data if x['msa_metadata_id'] == msa_metadata_id \
+    source_ids = set([x[5] for x in msa_conf.data if x['msa_metadata_id'] == msa_metadata_id
                       and x['dither_point_index'] == dither_position])
     # All BKG shutters in the msa metafile have a source_id value of 0.
     # Remove it from the list of source ids.
@@ -672,7 +672,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
         shutter_id = xcen + (ycen - 1) * 365
         try:
             source_name, source_alias, stellarity, source_ra, source_dec = [
-                (s['source_name'], s['alias'], s['stellarity'], s['ra'], s['dec']) \
+                (s['source_name'], s['alias'], s['stellarity'], s['ra'], s['dec'])
                 for s in msa_source if s['source_id'] == source_id][0]
         except IndexError:
             # all background shutters
@@ -767,7 +767,7 @@ def get_spectral_order_wrange(input_model, wavelengthrange_file):
         gratings = [s.split('_')[1] for s in wrange_selector]
         try:
             index = gratings.index(grating)
-        except ValueError: # grating not in list
+        except ValueError:  # grating not in list
             order = -1
             wrange = full_range
         else:
@@ -936,7 +936,7 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files, slit_y_range)
         # construct IFU post transform
         ifupost_transform = _create_ifupost_transform(ifupost_sl)
         msa2gwa = ifuslicer_transform & Const1D(lam_cen) | ifupost_transform | collimator2gwa
-        gwa2slit = gwa_to_ymsa(msa2gwa, lam_cen=lam_cen, slit_y_range=slit_y_range)# TODO: Use model sets here
+        gwa2slit = gwa_to_ymsa(msa2gwa, lam_cen=lam_cen, slit_y_range=slit_y_range)  # TODO: Use model sets here
 
         # The commnts below list the input coordinates.
         bgwa2msa = (
@@ -1035,14 +1035,14 @@ def gwa_to_slit(open_slits, input_model, disperser,
                 slitdata_model = get_slit_location_model(slitdata)
                 msa_transform = (slitdata_model | msa_model)
                 msa2gwa = (msa_transform | collimator2gwa)
-                gwa2msa = gwa_to_ymsa(msa2gwa, slit=slit, slit_y_range=(slit.ymin, slit.ymax))# TODO: Use model sets here
+                gwa2msa = gwa_to_ymsa(msa2gwa, slit=slit, slit_y_range=(slit.ymin, slit.ymax))  # TODO: Use model sets here
                 bgwa2msa = Mapping((0, 1, 0, 1), n_inputs=3) | \
                     Const1D(0) * Identity(1) & Const1D(-1) * Identity(1) & Identity(2) | \
                     Identity(1) & gwa2msa & Identity(2) | \
                     Mapping((0, 1, 0, 1, 2, 3)) | Identity(2) & msa2gwa & Identity(2) | \
                     Mapping((0, 1, 2, 3, 5), n_inputs=7) | Identity(2) & lgreq | mask
-                    #Mapping((0, 1, 2, 5), n_inputs=7) | Identity(2) & lgreq | mask
-                    # and modify lgreq to accept alpha_in, beta_in, alpha_out
+                #   Mapping((0, 1, 2, 5), n_inputs=7) | Identity(2) & lgreq | mask
+                # and modify lgreq to accept alpha_in, beta_in, alpha_out
                 # msa to before_gwa
                 msa2bgwa = msa2gwa & Identity(1) | Mapping((3, 0, 1, 2)) | agreq
                 bgwa2msa.inverse = msa2bgwa
@@ -1139,7 +1139,7 @@ def detector_to_gwa(reference_files, detector, disperser):
                disperser['theta_z'], disperser['tilt_y']]
     rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotation')
     u2dircos = Unitless2DirCos(name='unitless2directional_cosines')
-    ## NIRSPEC 1- vs 0- based pixel coordinates issue #1781
+    # NIRSPEC 1- vs 0- based pixel coordinates issue #1781
     '''
     The pipeline works with 0-based pixel coordinates. The Nirspec model,
     stored in reference files, is also 0-based. However, the algorithm specified
@@ -1338,7 +1338,7 @@ def correct_tilt(disperser, xtilt, ytilt):
     def _get_correction(gwa_tilt, tilt_angle):
         phi_exposure = gwa_tilt.tilt_model(tilt_angle)
         phi_calibrator = gwa_tilt.tilt_model(gwa_tilt.zeroreadings[0])
-        del_theta = 0.5 * (phi_exposure - phi_calibrator) / 3600. #in deg
+        del_theta = 0.5 * (phi_exposure - phi_calibrator) / 3600.  # in deg
         return del_theta
 
     disp = disperser.copy()
@@ -1572,7 +1572,7 @@ def nrs_wcs_set_input(input_model, slit_name, wavelength_range=None):
     wcsobj : `~gwcs.wcs.WCS`
         WCS object for this slit.
     """
-    import copy # TODO: Add a copy method to gwcs.WCS
+    import copy  # TODO: Add a copy method to gwcs.WCS
     wcsobj = input_model.meta.wcs
     if wavelength_range is None:
         _, wrange = spectral_order_wrange_from_model(input_model)
@@ -1631,7 +1631,7 @@ def validate_open_slits(input_model, open_slits, reference_files):
         ylow, yhigh = domain[1]
         if (xlow >= 2048 or ylow >= 2048 or
             xhigh <= 0 or yhigh <= 0 or
-            xhigh - xlow < 1 or yhigh - ylow < 1):
+                xhigh - xlow < 1 or yhigh - ylow < 1):
             return False
         else:
             return True
@@ -1754,6 +1754,7 @@ def _create_ifupost_transform(ifupost_slice):
     model = linear & Identity(1) | model_poly
     return model
 
+
 def nrs_lamp(input_model, reference_files, slit_y_range):
     """Return the appropriate function for lamp data
 
@@ -1779,6 +1780,7 @@ def nrs_lamp(input_model, reference_files, slit_y_range):
         return slits_wcs(input_model, reference_files, slit_y_range)
     else:
         return not_implemented_mode(input_model, reference_files, slit_y_range)
+
 
 exp_type2transform = {
     'nrs_autoflat':  slits_wcs,

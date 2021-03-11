@@ -130,6 +130,7 @@ Utility functions for creating an astrometric reference catalog.
 
 """
 
+
 def compute_radius(wcs):
     """Compute the radius from the center to the furthest edge of the WCS."""
 

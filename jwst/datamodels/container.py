@@ -21,6 +21,7 @@ __all__ = ['ModelContainer']
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+
 class ModelContainer(JwstDataModel, Sequence):
     """
     A container for holding DataModels.
@@ -286,7 +287,8 @@ class ModelContainer(JwstDataModel, Sequence):
         """
         output_paths = []
         if path is None:
-            path = lambda filename, idx: filename
+            def path(filename, idx):
+                return filename
         elif not callable(path):
             path = make_file_with_index
 
@@ -336,7 +338,7 @@ class ModelContainer(JwstDataModel, Sequence):
             'sequence_id',
             'activity_id',
             'exposure_number'
-            ]
+        ]
 
         for i, model in enumerate(self._models):
             params = []

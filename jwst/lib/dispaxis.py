@@ -3,6 +3,7 @@ import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+
 def get_dispersion_direction(exposure_type, grating="ANY", filter_wh="ANY",
                              pupil="ANY"):
     """Get the dispersion direction.

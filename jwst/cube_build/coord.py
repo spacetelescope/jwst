@@ -60,7 +60,6 @@ def radec2std(crval1, crval2, ra, dec, rot_angle=None):
         xi = temp1
         eta = temp2
 
-
     return xi, eta
 # ________________________________________________________________________________
 

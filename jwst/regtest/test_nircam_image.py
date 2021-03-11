@@ -29,6 +29,7 @@ def run_detector1pipeline(jail, rtdata_module):
         ]
     Step.from_cmdline(args)
 
+
 @pytest.fixture(scope="module")
 def run_image2pipeline(run_detector1pipeline, jail, rtdata_module):
     """Run calwebb_image2 on NIRCam imaging long data"""
@@ -40,6 +41,7 @@ def run_image2pipeline(run_detector1pipeline, jail, rtdata_module):
         ]
     Step.from_cmdline(args)
 
+
 @pytest.fixture(scope="module")
 def run_image3pipeline(run_image2pipeline, rtdata_module, jail):
     """Run calwebb_image3 on NIRCam imaging long data"""
@@ -48,11 +50,11 @@ def run_image3pipeline(run_image2pipeline, rtdata_module, jail):
     # produce fresh _cal files for the image3 pipeline.  We won't check these
     # or look at intermediate products, including the resampled i2d
     rate_files = [
-    "nircam/image/jw42424001001_01101_00001_nrcb5_rate.fits",
-    "nircam/image/jw42424001001_01101_00002_nrca5_rate.fits",
-    "nircam/image/jw42424001001_01101_00002_nrcb5_rate.fits",
-    "nircam/image/jw42424001001_01101_00003_nrca5_rate.fits",
-    "nircam/image/jw42424001001_01101_00003_nrcb5_rate.fits",
+        "nircam/image/jw42424001001_01101_00001_nrcb5_rate.fits",
+        "nircam/image/jw42424001001_01101_00002_nrca5_rate.fits",
+        "nircam/image/jw42424001001_01101_00002_nrcb5_rate.fits",
+        "nircam/image/jw42424001001_01101_00003_nrca5_rate.fits",
+        "nircam/image/jw42424001001_01101_00003_nrcb5_rate.fits",
     ]
     for rate_file in rate_files:
         rtdata.get_data(rate_file)
@@ -141,6 +143,7 @@ def test_nircam_image_stage3_catalog(run_image3pipeline, rtdata_module, diff_ast
 
     assert diff_astropy_tables(rtdata.output, rtdata.truth, rtol=1e-4, atol=1e-5)
 
+
 @pytest.mark.bigdata
 def test_nircam_image_stage3_segmap(run_image3pipeline, rtdata_module, fitsdiff_default_kwargs):
     rtdata = rtdata_module
@@ -150,6 +153,7 @@ def test_nircam_image_stage3_segmap(run_image3pipeline, rtdata_module, fitsdiff_
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
+
 
 @pytest.mark.bigdata
 def test_image3_closedfile(run_image3_closedfile, rtdata, fitsdiff_default_kwargs):

@@ -284,7 +284,7 @@ class Snell(Model):
 
             # Compute the absolute index of the glass
             delnabs = (0.5 * (nrel ** 2 - 1.) / nrel) * \
-                    (D0 * delt + D1 * delt ** 2 + D2 * delt ** 3 + \
+                    (D0 * delt + D1 * delt ** 2 + D2 * delt ** 3 +
                     (E0 * delt + E1 * delt ** 2) / (lamrel ** 2 - lam_tk ** 2))
             nabs_obs = nabs_ref + delnabs
 
@@ -596,7 +596,6 @@ class Rotation3D(Model):
         self.inputs = ('x', 'y', 'z')
         self.outputs = ('x', 'y', 'z')
 
-
     @property
     def inverse(self):
         """Inverse rotation."""
@@ -629,7 +628,7 @@ class Rotation3D(Model):
             else:
                 raise ValueError("Expected axes_order to be a combination \
                         of characters 'x', 'y' and 'z', got {0}".format(
-                                     set(axes_order).difference(['x', 'y', 'z'])))
+                    set(axes_order).difference(['x', 'y', 'z'])))
             matrices.append(matrix)
         if len(angles) == 1:
             return matrix
@@ -962,11 +961,10 @@ class IdealToV2V3(Model):
     n_inputs = 2
     n_outputs = 2
 
-    v3idlyangle = Parameter() # in deg
-    v2ref = Parameter() # in arcsec
-    v3ref = Parameter() # in arcsec
+    v3idlyangle = Parameter()  # in deg
+    v2ref = Parameter()  # in arcsec
+    v3ref = Parameter()  # in arcsec
     vparity = Parameter()
-
 
     def __init__(self, v3idlyangle, v2ref, v3ref, vparity, name='idl2V', **kwargs):
         super(IdealToV2V3, self).__init__(v3idlyangle=v3idlyangle, v2ref=v2ref,
@@ -1017,11 +1015,11 @@ class V2V3ToIdeal(Model):
     _separable = False
 
     n_inputs = 2
-    n_outputs =2
+    n_outputs = 2
 
-    v3idlyangle = Parameter() # in deg
-    v2ref = Parameter() # in arcsec
-    v3ref = Parameter() # in arcsec
+    v3idlyangle = Parameter()  # in deg
+    v2ref = Parameter()  # in arcsec
+    v3ref = Parameter()  # in arcsec
     vparity = Parameter()
 
     def __init__(self, v3idlyangle, v2ref, v3ref, vparity, name='V2idl', **kwargs):
@@ -1441,12 +1439,12 @@ class NIRISSBackwardGrismDispersion(Model):
         dx = xmodel[0](x, y) + t * xmodel[1](x, y)
         dy = ymodel[0](x, y) + t * ymodel[1](x, y)
 
-        ## rotate by theta
+        # rotate by theta
         if self.theta != 0.0:
             rotate = Rotation2D(self.theta)
             dx, dy = rotate(dx, dy)
 
-        return (x+dx, y+dy, x, y, order)
+        return (x + dx, y + dy, x, y, order)
 
 
 class NIRISSForwardRowGrismDispersion(Model):
@@ -1545,14 +1543,13 @@ class NIRISSForwardRowGrismDispersion(Model):
         x00 = x0.flatten()[0]
         y00 = y0.flatten()[0]
 
-        t = np.linspace(0, 1, 10)  #sample t
+        t = np.linspace(0, 1, 10)  # sample t
         xmodel = self.xmodels[iorder]
         ymodel = self.ymodels[iorder]
         lmodel = self.lmodels[iorder]
 
         dx = xmodel[0](x00, y00) + t * xmodel[1](x00, y00)
         dy = ymodel[0](x00, y00) + t * ymodel[1](x00, y00)
-
 
         if self.theta != 0.0:
             rotate = Rotation2D(self.theta)
@@ -1616,7 +1613,7 @@ class NIRISSForwardColumnGrismDispersion(Model):
             name = 'niriss_forward_column_grism_dispersion'
         super(NIRISSForwardColumnGrismDispersion, self).__init__(name=name,
                                                                  meta=meta)
-         # starts with the backwards pixel and calculates the forward pixel
+        # starts with the backwards pixel and calculates the forward pixel
         self.inputs = ("x", "y", "x0", "y0", "order")
         self.outputs = ("x", "y", "wavelength", "order")
 

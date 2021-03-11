@@ -322,8 +322,8 @@ class Spec2Pipeline(Pipeline):
         # Check for imprint subtraction
         imprint = members_by_type['imprint']
         if not self.imprint_subtract.skip:
-            if len(imprint) > 0 and (exp_type in ['NRS_MSASPEC', 'NRS_IFU'] or \
-               is_nrs_ifu_flatlamp(input)):
+            if len(imprint) > 0 and (exp_type in ['NRS_MSASPEC', 'NRS_IFU']
+                    or is_nrs_ifu_flatlamp(input)):
                 if len(imprint) > 1:
                     self.log.warning('Wrong number of imprint members')
                 members_by_type['imprint'] = imprint[0]
@@ -361,7 +361,6 @@ class Spec2Pipeline(Pipeline):
         if not self.master_background.skip and exp_type != 'NRS_MSASPEC':
             self.log.debug('Science data does not allow master background correction. Skipping "master_background".')
             self.master_background.skip = True
-
 
     def _process_grism(self, data):
         """WFSS & Grism processing

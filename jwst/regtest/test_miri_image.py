@@ -47,9 +47,9 @@ def run_image2(run_detector1, rtdata_module):
     # produce fresh _cal files for the image3 pipeline.  We won't check these
     # or look at intermediate products, and skip resample (don't need i2d image)
     rate_files = [
-    "miri/image/det_image_1_MIRIMAGE_F770Wexp2_5stars_rate.fits",
-    "miri/image/det_image_2_MIRIMAGE_F770Wexp1_5stars_rate.fits",
-    "miri/image/det_image_2_MIRIMAGE_F770Wexp2_5stars_rate.fits",
+        "miri/image/det_image_1_MIRIMAGE_F770Wexp2_5stars_rate.fits",
+        "miri/image/det_image_2_MIRIMAGE_F770Wexp1_5stars_rate.fits",
+        "miri/image/det_image_2_MIRIMAGE_F770Wexp2_5stars_rate.fits",
     ]
     for rate_file in rate_files:
         rtdata.get_data(rate_file)

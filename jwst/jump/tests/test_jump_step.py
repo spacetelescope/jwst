@@ -9,6 +9,7 @@ from jwst.jump import JumpStep
 
 MAXIMUM_CORES = ['none', 'quarter','half','all']
 
+
 @pytest.fixture(scope="module")
 def generate_miri_reffiles(tmpdir_factory):
     gainfile = str(tmpdir_factory.mktemp("data").join("gain.fits"))
@@ -139,7 +140,7 @@ def test_one_CR(generate_miri_reffiles, max_cores, setup_inputs):
     for i in range(ngroups):
         model1.data[0, i, :, :] = deltaDN * i
     first_CR_group_locs = [x for x in range(1,89) if x % 5 == 0]
-    CR_locs = [x for x in range(xsize*ysize) if x % CR_fraction == 0]
+    CR_locs = [x for x in range(xsize * ysize) if x % CR_fraction == 0]
     CR_x_locs = [x % ysize for x in CR_locs]
     CR_y_locs = [int(x / xsize) for x in CR_locs]
     CR_pool = cycle(first_CR_group_locs)
@@ -151,7 +152,7 @@ def test_one_CR(generate_miri_reffiles, max_cores, setup_inputs):
     print("number of CRs {}".format(len(CR_x_locs)))
 
     out_model = JumpStep.call(model1, override_gain=override_gain,
-        override_readnoise = override_readnoise, maximum_cores = max_cores)
+        override_readnoise=override_readnoise, maximum_cores=max_cores)
     CR_pool = cycle(first_CR_group_locs)
     for i in range(len(CR_x_locs)):
         CR_group = next(CR_pool)
@@ -175,7 +176,7 @@ def test_nircam(generate_nircam_reffiles, setup_inputs, max_cores):
     for i in range(ngroups):
         model1.data[0, i, :, :] = deltaDN * i
     first_CR_group_locs = [x for x in range(1,89) if x % 5 == 0]
-    CR_locs = [x for x in range(nrows*ncols) if x % CR_fraction == 0]
+    CR_locs = [x for x in range(nrows * ncols) if x % CR_fraction == 0]
     CR_x_locs = [x % ncols for x in CR_locs]
     CR_y_locs = [int(x / nrows) for x in CR_locs]
     CR_pool = cycle(first_CR_group_locs)
@@ -211,7 +212,7 @@ def test_two_CRs(generate_miri_reffiles, max_cores, setup_inputs):
     for i in range(ngroups):
         model1.data[0, i, :, :] = deltaDN * i
     first_CR_group_locs = [x for x in range(1,89) if x % 5 == 0]
-    CR_locs = [x for x in range(xsize*ysize) if x % CR_fraction == 0]
+    CR_locs = [x for x in range(xsize * ysize) if x % CR_fraction == 0]
     CR_x_locs = [x % ysize for x in CR_locs]
     CR_y_locs = [int(x / xsize) for x in CR_locs]
     CR_pool = cycle(first_CR_group_locs)
@@ -219,15 +220,15 @@ def test_two_CRs(generate_miri_reffiles, max_cores, setup_inputs):
         CR_group = next(CR_pool)
         model1.data[0,CR_group:,CR_y_locs[i], CR_x_locs[i]] = \
             model1.data[0,CR_group:, CR_y_locs[i], CR_x_locs[i]] + 500
-        model1.data[0, CR_group+8:, CR_y_locs[i], CR_x_locs[i]] = \
-            model1.data[0, CR_group+8:, CR_y_locs[i], CR_x_locs[i]] + 700
+        model1.data[0, CR_group + 8:, CR_y_locs[i], CR_x_locs[i]] = \
+            model1.data[0, CR_group + 8:, CR_y_locs[i], CR_x_locs[i]] + 700
     out_model = JumpStep.call(model1, override_gain=override_gain,
         override_readnoise=override_readnoise, maximum_cores=max_cores)
     CR_pool = cycle(first_CR_group_locs)
     for i in range(len(CR_x_locs)):
         CR_group = next(CR_pool)
         assert (4 == np.max(out_model.groupdq[0, CR_group, CR_y_locs[i], CR_x_locs[i]]))
-        assert (4 == np.max(out_model.groupdq[0, CR_group+8, CR_y_locs[i], CR_x_locs[i]]))
+        assert (4 == np.max(out_model.groupdq[0, CR_group + 8, CR_y_locs[i], CR_x_locs[i]]))
 
 
 @pytest.mark.parametrize("max_cores", MAXIMUM_CORES)

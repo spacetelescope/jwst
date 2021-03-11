@@ -29,6 +29,7 @@ log.addHandler(logging.NullHandler())
 class NoTypeWarning(Warning):
     pass
 
+
 def open(init=None, memmap=False, **kwargs):
     """
     Creates a DataModel from a number of different types

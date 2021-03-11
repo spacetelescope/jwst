@@ -36,6 +36,7 @@ def run_tso_spec3(jail, rtdata_module, run_tso_spec2):
     args = ["config/calwebb_tso3.cfg", rtdata.input]
     Step.from_cmdline(args)
 
+
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["calints", "flat_field", "srctype", "x1dints"])
 def test_niriss_soss_stage2(rtdata_module, run_tso_spec2, fitsdiff_default_kwargs, suffix):

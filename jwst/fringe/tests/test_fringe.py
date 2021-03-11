@@ -12,7 +12,8 @@ from jwst.datamodels import IFUImageModel
 from jwst.datamodels import FringeModel
 from jwst.fringe import fringe
 
-FRINGE_CONSTANT = 2. # correction will be input data divided by this factor
+FRINGE_CONSTANT = 2.  # correction will be input data divided by this factor
+
 
 def test_data_correction(setup_inputs):
     ''' Test both good and NaN pixels. '''

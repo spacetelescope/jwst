@@ -112,7 +112,6 @@ def we_three_sci():
     # Replace the FITS-type WCS with an Identity WCS
     sci1.meta.wcs = create_fitswcs(sci1)
 
-
     sci1.err = np.zeros(shape) + sigma
 
     # Make copies with different noise

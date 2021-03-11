@@ -52,9 +52,9 @@ def test_nirspec_mos_wcs(rtdata):
 
 @pytest.mark.parametrize("input_file",
     [
-    'jw00011001001_01120_00001_nrs1_rate.fits',
-    'jw00011001001_01120_00002_nrs1_rate.fits',
-    'jw00011001001_01120_00003_nrs2_rate.fits',
+        'jw00011001001_01120_00001_nrs1_rate.fits',
+        'jw00011001001_01120_00002_nrs1_rate.fits',
+        'jw00011001001_01120_00003_nrs2_rate.fits',
     ],
     ids=['nrs1_f170lp', 'nrs1_opaque', 'nrs2_f170lp'])
 @pytest.mark.bigdata

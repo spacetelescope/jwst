@@ -10,6 +10,7 @@ import multiprocessing
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+
 def detect_jumps(input_model, gain_model, readnoise_model,
                  rejection_threshold, max_cores,
                  max_jump_to_flag_neighbors, min_jump_to_flag_neighbors,
@@ -51,7 +52,6 @@ def detect_jumps(input_model, gain_model, readnoise_model,
     err = input_model.err
     gdq = input_model.groupdq
     pdq = input_model.pixeldq
-
 
     # Get 2D gain and read noise values from their respective models
     if reffile_utils.ref_matches_sci(input_model, gain_model):
@@ -136,7 +136,7 @@ def detect_jumps(input_model, gain_model, readnoise_model,
                 gdq[:, :, k * yincrement:(k + 1) * yincrement, :] = resultslice[0]
             row_below_gdq[:, :, :] = resultslice[1]
             row_above_gdq[:, :, :] = resultslice[2]
-            if k != 0: # for all but the first slice, flag any CR neighbors in the top row of the previous slice and
+            if k != 0:  # for all but the first slice, flag any CR neighbors in the top row of the previous slice and
                 # flag any neighbors in the bottom row of this slice saved from the top of the previous slice
                 gdq[:, :, k * yincrement - 1, :] = np.bitwise_or(gdq[:, :, k * yincrement - 1, :],
                                                                      row_below_gdq[:, :, :])

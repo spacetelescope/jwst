@@ -1,6 +1,7 @@
 #  Module for calculation of the hexagon-aperture PSFs
 import numpy as np
 
+
 def gfunction(xi, eta, **kwargs):
     """
     Short Summary
@@ -41,8 +42,8 @@ def gfunction(xi, eta, **kwargs):
     pixel = kwargs['pixel']
     d = kwargs['d']
     lam = kwargs['lam']
-    xi = (d/lam)*pixel*(xi - c[0])
-    eta = (d/lam)*pixel*(eta - c[1])
+    xi = (d / lam) * pixel * (xi - c[0])
+    eta = (d / lam) * pixel * (eta - c[1])
     affine2d = kwargs["affine2d"]
 
     i = 1j
@@ -51,18 +52,18 @@ def gfunction(xi, eta, **kwargs):
     xip, etap = affine2d.distortFargs(xi,eta)
 
     if kwargs['minus'] is True:
-        xip = -1*xip
+        xip = -1 * xip
 
-    g = np.exp(-i*Pi*(2*etap/np.sqrt(3) + xip)) * \
-        ( \
-          (np.sqrt(3)*etap - 3*xip) * \
-          (np.exp(i*Pi*np.sqrt(3)*etap) - np.exp(i*Pi*(4*etap/np.sqrt(3) + xip))) + \
-          (np.sqrt(3)*etap + 3*xip) * \
-          (np.exp(i*Pi*etap/np.sqrt(3)) - np.exp(i*Pi*xip)) \
-         ) / \
-         (4*Pi*Pi*(etap*etap*etap - 3*etap*xip*xip))
+    g = np.exp(-i * Pi * (2 * etap / np.sqrt(3) + xip)) * \
+        (
+        (np.sqrt(3) * etap - 3 * xip) *
+        (np.exp(i * Pi * np.sqrt(3) * etap) - np.exp(i * Pi * (4 * etap / np.sqrt(3) + xip))) +
+        (np.sqrt(3) * etap + 3 * xip) *
+        (np.exp(i * Pi * etap / np.sqrt(3)) - np.exp(i * Pi * xip))
+    ) / \
+         (4 * Pi * Pi * (etap * etap * etap - 3 * etap * xip * xip))
 
-    return g*affine2d.distortphase(xi,eta)
+    return g * affine2d.distortphase(xi,eta)
 
 
 def hextransform(s=None, c=None, d=None, lam=None, pitch=None, affine2d=None):

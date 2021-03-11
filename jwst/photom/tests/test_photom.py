@@ -1015,13 +1015,13 @@ def find_row_in_ftab(input_model, ftab, select, slitname=None, order=None):
     nrows = len(ftab.phot_table)
     foundit = False
     for rownum in range(nrows):
-        if ((filter is None or filter == filter_c[rownum]) and
-            (grating is None or grating == grating_c[rownum]) and
-            (pupil is None or pupil == pupil_c[rownum]) and
-            (slitname is None or slitname == slitname_c[rownum]) and
-            (order is None or order == order_c[rownum])):
-                foundit = True
-                break
+        if ((filter is None or filter == filter_c[rownum])
+                and (grating is None or grating == grating_c[rownum])
+                and (pupil is None or pupil == pupil_c[rownum])
+                and (slitname is None or slitname == slitname_c[rownum])
+                and (order is None or order == order_c[rownum])):
+            foundit = True
+            break
     if not foundit:
         raise RuntimeError("Row not found in ftab.")
 

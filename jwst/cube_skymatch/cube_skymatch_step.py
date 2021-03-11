@@ -16,7 +16,7 @@ from astropy.nddata.bitmask import (
     interpret_bit_flags,
 )
 
-#LOCAL:
+# LOCAL:
 from .skymatch import match
 from .skycube import SkyCube
 from ..skymatch.skystatistics import SkyStats
@@ -121,7 +121,7 @@ class CubeSkyMatchStep(Step):
 
         # save background info in 'meta' and subtract sky from 2D images
         # if requested:
-        ##### model.meta.instrument.channel
+        # model.meta.instrument.channel
 
         for c in skymatch_cubes:
             self._set_cube_bkg_meta(c.meta['original_cube_model'], c)
@@ -234,22 +234,22 @@ class CubeSkyMatchStep(Step):
         y = y.ravel()
 
         # convert to RA/DEC:
-        r, d, l = model2d.meta.wcs(x.astype(dtype=float),
+        ra, dec, lam = model2d.meta.wcs(x.astype(dtype=float),
                                    y.astype(dtype=float))
 
         # some pixels may be NaNs and so throw them out:
         m = np.logical_and(
-            np.logical_and(np.isfinite(r), np.isfinite(d)),
-            np.isfinite(l)
+            np.logical_and(np.isfinite(ra), np.isfinite(dec)),
+            np.isfinite(lam)
         )
         x = x[m]
         y = y[m]
-        r = r[m]
-        d = d[m]
-        l = l[m]
+        ra = ra[m]
+        dec = dec[m]
+        lam = lam[m]
 
         if cs_type == "image":
-            raise ValueError("Polynomials must be defined in world CS in "
+            raise ValueError("Polynomials must be defined in world coords in "
                              "order to be able to perform sky subtraction "
                              "on 2D DataModel.")
 
@@ -257,10 +257,10 @@ class CubeSkyMatchStep(Step):
             raise ValueError("Unsupported background polynomial's cs_type'.")
 
         # compute background values:
-        r -= refpt[0]
-        d -= refpt[1]
-        l -= refpt[2]
-        bkg = np.polynomial.polynomial.polyval3d(r, d, l, c)
+        ra -= refpt[0]
+        dec -= refpt[1]
+        lam -= refpt[2]
+        bkg = np.polynomial.polynomial.polyval3d(ra, dec, lam, c)
 
         # subtract background:
         model2d.data[y, x] -= bkg

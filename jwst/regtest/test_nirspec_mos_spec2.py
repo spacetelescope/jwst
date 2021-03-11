@@ -5,6 +5,7 @@ from astropy.io.fits.diff import FITSDiff
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
+
 @pytest.fixture(scope="module")
 def run_pipeline(rtdata_module):
     """Run the calwebb_spec2 pipeline on a single NIRSpec MOS exposure."""

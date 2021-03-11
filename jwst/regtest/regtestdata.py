@@ -30,10 +30,10 @@ class RegtestData:
     """Defines data paths on Artifactory and data retrieval methods"""
 
     def __init__(self, env="dev", inputs_root="jwst-pipeline",
-        results_root="jwst-pipeline-results", docopy=True,
-        input=None, input_remote=None, output=None, truth=None,
-        truth_remote=None, remote_results_path=None, test_name=None,
-        traceback=None, **kwargs):
+            results_root="jwst-pipeline-results", docopy=True,
+            input=None, input_remote=None, output=None, truth=None,
+            truth_remote=None, remote_results_path=None, test_name=None,
+            traceback=None, **kwargs):
         self._env = env
         self._inputs_root = inputs_root
         self._results_root = results_root
@@ -177,7 +177,6 @@ class RegtestData:
             for file_path in file_paths
         ]
         return file_paths
-
 
     def get_truth(self, path=None, docopy=None):
         """Copy truth data from Artifactory remote resource to the CWD/truth

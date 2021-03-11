@@ -559,14 +559,14 @@ def combine_1d_spectra(input_model, exptime_key):
                 if spectral_order not in input_spectra:
                     input_spectra[spectral_order] = []
                 input_spectra[spectral_order].append(InputSpectrumModel(
-                                ms, in_spec, exptime_key))
+                    ms, in_spec, exptime_key))
     else:
         for in_spec in input_model.spec:
             spectral_order = in_spec.spectral_order
             if spectral_order not in input_spectra:
                 input_spectra[spectral_order] = []
             input_spectra[spectral_order].append(InputSpectrumModel(
-                                input_model, in_spec, exptime_key))
+                input_model, in_spec, exptime_key))
 
     for order in input_spectra:
         output_spectra[order] = OutputSpectrumModel()

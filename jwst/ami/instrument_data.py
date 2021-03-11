@@ -64,7 +64,7 @@ class NIRISS:
                       "F380M": 3.8e-6,
                       "F430M": 4.28521033106325E-06,
                       "F480M": 4.8e-6}
-        self.lam_w = {"F277W":0.2, "F380M": 0.1, "F430M": 0.0436, "F480M": 0.08} # fractional filter width
+        self.lam_w = {"F277W":0.2, "F380M": 0.1, "F430M": 0.0436, "F480M": 0.08}  # fractional filter width
 
         self.throughput = utils.tophatfilter(self.lam_c[self.filt], self.lam_w[self.filt], npoints=11)
 
@@ -78,22 +78,22 @@ class NIRISS:
 
         num = (thru_st_0 * thru_st_1).sum()
         den = thru_st[0,:].sum()
-        self.lam_c[self.filt] = num/den
+        self.lam_c[self.filt] = num / den
 
         area = simps(thru_st_0, thru_st_1)
-        ew = area / thru_st_0.max() # equivalent width
+        ew = area / thru_st_0.max()  # equivalent width
 
-        beta = ew/self.lam_c[self.filt] # fractional bandpass
+        beta = ew / self.lam_c[self.filt]  # fractional bandpass
         self.lam_w[self.filt] = beta
 
         if bandpass is not None:
             bandpass = np.array(bandpass)  # type simplification
             wt = bandpass[:,0]
             wl = bandpass[:,1]
-            cw = (wl*wt).sum()/wt.sum() # Weighted mean wavelength in meters "central wavelength"
+            cw = (wl * wt).sum() / wt.sum()  # Weighted mean wavelength in meters "central wavelength"
             area = simps(wt, wl)
-            ew = area / wt.max() # equivalent width
-            beta = ew/cw # fractional bandpass
+            ew = area / wt.max()  # equivalent width
+            beta = ew / cw  # fractional bandpass
             self.lam_c = {"F277W":cw, "F380M": cw, "F430M": cw, "F480M": cw,}
             self.lam_w = {"F277W": beta, "F380M": beta, "F430M": beta, "F480M": beta}
             self.throughput = bandpass
@@ -158,7 +158,7 @@ class NIRISS:
             self.pscalex_deg = pscalex_deg
         if pscaley_deg is not None:
             self.pscaley_deg = pscaley_deg
-        self.pscale_mas = 0.5 * (pscalex_deg + pscaley_deg) * (60*60*1000)
+        self.pscale_mas = 0.5 * (pscalex_deg + pscaley_deg) * (60 * 60 * 1000)
         self.pscale_rad = utils.mas2rad(self.pscale_mas)
 
     def read_data_model(self, input_model):
@@ -185,8 +185,8 @@ class NIRISS:
         pscalex_deg = 65.6 / (1000 * 60 * 60)
         pscaley_deg = 65.6 / (1000 * 60 * 60)
 
-       # Whatever we did set is averaged for isotropic pixel scale here
-        self.pscale_mas = 0.5 * (pscalex_deg + pscaley_deg) * (60*60*1000)
+        # Whatever we did set is averaged for isotropic pixel scale here
+        self.pscale_mas = 0.5 * (pscalex_deg + pscaley_deg) * (60 * 60 * 1000)
         self.pscale_rad = utils.mas2rad(self.pscale_mas)
         self.mask = NRM_mask_definitions(maskname=self.arrname, chooseholes=self.chooseholes,
                                          holeshape=self.holeshape)

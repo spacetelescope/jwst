@@ -67,7 +67,7 @@ def g_eeAG(xi, eta, **kwargs):
 
     g1 = np.exp(-i * Pi * (2 * eta / np.sqrt(3) + xi))
     g2 = (np.sqrt(3) * eta - 3 * xi)
-    g3 = (np.exp(i * Pi * np.sqrt(3) * eta) - np.exp(i * Pi * \
+    g3 = (np.exp(i * Pi * np.sqrt(3) * eta) - np.exp(i * Pi *
             (4 * eta / np.sqrt(3) + xi)))
     g4 = (np.sqrt(3) * eta + 3 * xi)
     g5 = (np.exp(i * Pi * eta / np.sqrt(3)) - np.exp(i * Pi * xi))

@@ -85,14 +85,14 @@ class ApCorrBase(abc.ABC):
                         self.model.slits[idx].meta.wcs,
                         self.location,
                         disp_axis=self.model.slits[idx].meta.wcsinfo.dispersion_direction)
-                    scale_arcsec = scale_degrees*3600.00
+                    scale_arcsec = scale_degrees * 3600.00
                     self.reference[self.size_key] /= scale_arcsec
                 else:
                     scale_degrees = compute_scale(
                         self.model.meta.wcs,
                         self.location,
                         disp_axis=self.model.meta.wcsinfo.dispersion_direction)
-                    scale_arcsec = scale_degrees*3600.00
+                    scale_arcsec = scale_degrees * 3600.00
                     self.reference[self.size_key] /= scale_arcsec
             else:
                 raise ValueError(
@@ -253,7 +253,6 @@ class ApCorrRadial(ApCorrBase):
         self.apcorr_sizeunits = self.reference.radius_units
         self._convert_size_units()
 
-
     def approximate(self):
         # Base class needs this. For ApCorrRadial this is done in find_apcorr_func
         pass
@@ -267,7 +266,7 @@ class ApCorrRadial(ApCorrBase):
                     self.model.meta.wcs,
                     self.location,
                     disp_axis=self.model.meta.wcsinfo.dispersion_direction)
-                scale_arcsec = scale_degrees*3600.00
+                scale_arcsec = scale_degrees * 3600.00
                 self.reference.radius /= scale_arcsec
             else:
                 raise ValueError(
@@ -275,7 +274,6 @@ class ApCorrRadial(ApCorrBase):
                     '(RA, DEC, wavelength) must be provided in order to compute a pixel scale to convert arcseconds to '
                     'pixels.'
                 )
-
 
     def apply(self, spec_table: fits.FITS_rec):
         """Apply interpolated aperture correction value to source-related extraction results in-place.
@@ -293,7 +291,6 @@ class ApCorrRadial(ApCorrBase):
             for col in cols_to_correct:
                 row[col] *= correction
 
-
     def match_wavelengths(self, wavelength_ifu):
         # given the ifu wavelength value - redefine the apcor func and radius to this wavelength
         # apcor reference data
@@ -304,7 +301,7 @@ class ApCorrRadial(ApCorrBase):
         dim = self.apcorr.shape[0]
         size_match = np.zeros((dim, wavelength_ifu.shape[0]))
         apcorr_match = np.zeros((dim, wavelength_ifu.shape[0]))
-        self.apcorr_correction= [] # set up here defined in find_apcor_func
+        self.apcorr_correction = []  # set up here defined in find_apcor_func
         # loop over each radius dependent plane and interpolate to ifu wavelength
         for i in range(dim):
             radi = self.size[i,:]
@@ -320,19 +317,19 @@ class ApCorrRadial(ApCorrBase):
         self.apcorr = apcorr_match
         self.size = size_match
 
-
     def find_apcorr_func(self, iwave, radius_ifu):
         # at ifu wavelength plane (iwave), the extraction radius is radius_ifu
         # pull out the radius values (self.size)  to use in the apcor ref file for this iwave
         # self.size and self.apcorr have already been interpolated in wavelength to match the
         # the ifu wavelength range.
 
-        radius_apcor = self.size[:,iwave]
-        temparray=self.apcorr[:,iwave]
-        fap=interp1d(radius_apcor,temparray,fill_value="extrapolate")
-        correction=fap(radius_ifu)
+        radius_apcor = self.size[:, iwave]
+        temparray = self.apcorr[:, iwave]
+        fap = interp1d(radius_apcor,temparray,fill_value="extrapolate")
+        correction = fap(radius_ifu)
         self.apcorr_correction.append(correction)
         return
+
 
 class ApCorr(ApCorrBase):
     """'Default' Aperture correction class for use with most spectroscopic modes."""

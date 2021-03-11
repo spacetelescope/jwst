@@ -22,7 +22,7 @@ def dummy_nirspec_ref(tmpdir_factory):
     refap['meta']['datamodel'] = 'NrsIfuApcorrModel'
     refap['meta']['version'] = '1.0'
     refap['meta']['name'] = 'NIRSPEC'
-    refap['meta']['origin']= 'STScI'
+    refap['meta']['origin'] = 'STScI'
 
     dummy_wave = np.zeros(100) + 0.5
     dummy_radius = np.zeros((3,100)) + 0.5
@@ -38,7 +38,6 @@ def dummy_nirspec_ref(tmpdir_factory):
     refap['apcorr_table']['radius_units'] = 'arcseconds'
     refap['apcorr_table']['filter'] = 'ANY'
     refap['apcorr_table']['grating'] = 'ANY'
-
 
     ff = AsdfFile(refap)
     ff.set_array_storage(refap['apcorr_table']['wavelength'],'inline')
@@ -66,7 +65,7 @@ def dummy_miri_ref(tmpdir_factory):
     refap['meta']['datamodel'] = 'MirMrsApcorrModel'
     refap['meta']['version'] = '1.0'
     refap['meta']['name'] = 'MIRI'
-    refap['meta']['origin']= 'STScI'
+    refap['meta']['origin'] = 'STScI'
 
     dummy_wave = np.zeros(100) + 0.5
     dummy_radius = np.zeros((3,100)) + 0.5

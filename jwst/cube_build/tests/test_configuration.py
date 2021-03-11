@@ -98,6 +98,7 @@ subarray_nirspec = {
     'ystart': 1
 }
 
+
 @pytest.fixture(scope='function')
 def miri_ifushort_short():
     """ Generate a IFU image """
@@ -109,6 +110,7 @@ def miri_ifushort_short():
     input_model.meta.subarray._instance.update(subarray)
     input_model.meta.cal_step.assign_wcs = 'COMPLETE'
     return input_model
+
 
 @pytest.fixture(scope='function')
 def miri_full_coverage():
@@ -208,7 +210,7 @@ def test_calspec2_config(_jail, miri_ifushort_short):
     pars_input['filter'] = []
     pars_input['grating'] = []
     weighting = 'msm'
-    output_type = 'multi' #calspec 2 setup. Only 1 cube create from 2 chanels
+    output_type = 'multi'  # calspec 2 setup. Only 1 cube create from 2 chanels
     single = False
     par_filename = 'None'
     resol_filename = 'None'

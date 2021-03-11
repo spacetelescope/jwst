@@ -30,7 +30,7 @@ from .apply_apcorr import select_apcorr
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-#WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_WFSS', 'NRC_GRISM', 'NRC_TSGRISM']
+# WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_WFSS', 'NRC_GRISM', 'NRC_TSGRISM']
 WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_WFSS', 'NRC_GRISM']
 """Exposure types to be regarded as wide-field slitless spectroscopy."""
 
@@ -127,11 +127,11 @@ def open_extract1d_ref(refname: str, exptype: str) -> dict:
 
     if refname == "N/A":
         ref_dict = None
-    elif exptype in['MIR_MRS',  'NRS_IFU']:
+    elif exptype in ['MIR_MRS',  'NRS_IFU']:
         # read in asdf file
         extract_model = datamodels.Extract1dIFUModel(refname)
         ref_dict = {}
-        ref_dict['ref_file_type']= FILE_TYPE_ASDF
+        ref_dict['ref_file_type'] = FILE_TYPE_ASDF
         ref_dict['ref_model'] = extract_model
 
     else:
@@ -909,7 +909,7 @@ def create_poly(coeff: List[float]) -> Union[polynomial.Polynomial1D, None]:
 
     coeff_dict = {f'c{i}': coeff[i] for i in range(n)}
 
-    return polynomial.Polynomial1D(degree=n-1, **coeff_dict)
+    return polynomial.Polynomial1D(degree=n - 1, **coeff_dict)
 
 
 class ExtractBase(abc.ABC):
@@ -1493,6 +1493,7 @@ class ExtractBase(abc.ABC):
 
 class ExtractModel(ExtractBase):
     """The extraction region was specified in a JSON file."""
+
     def __init__(self, verbose, *base_args, **base_kwargs):
         """Create a polynomial model from coefficients.
 
@@ -2606,7 +2607,7 @@ def ref_dict_sanity_check(ref_dict: Union[dict, None]) -> Union[dict, None]:
 def do_extract1d(
         input_model: DataModel,
         extract_ref_dict: Union[dict, None],
-        apcorr_ref_model = None,
+        apcorr_ref_model=None,
         smoothing_length: Union[int, None] = None,
         bkg_fit: str = "poly",
         bkg_order: Union[int, None] = None,
@@ -2687,7 +2688,7 @@ def do_extract1d(
     extract_ref_dict = ref_dict_sanity_check(extract_ref_dict)
 
     if isinstance(input_model, datamodels.SourceModelContainer):
-        #log.debug('Input is a SourceModelContainer')
+        # log.debug('Input is a SourceModelContainer')
         was_source_model = True
 
     # Temporarily set "input" to either the first model in a container, or the individual input model, for convenience
@@ -2696,7 +2697,7 @@ def do_extract1d(
         if isinstance(input_model, datamodels.SlitModel):
             input_temp = input_model
         else:
-            #log.debug(f'do_extract1d: len(input_model)={len(input_model)}')
+            # log.debug(f'do_extract1d: len(input_model)={len(input_model)}')
             input_temp = input_model[0]
     else:
         input_temp = input_model
@@ -2864,9 +2865,9 @@ def do_extract1d(
             # The input units will normally be MJy / sr, but for NIRSpec and NIRISS SOSS point-source spectra the units
             # will be MJy.
             input_units_are_megajanskys = (
-                    photom_has_been_run
-                    and source_type == 'POINT'
-                    and (instrument == 'NIRSPEC' or exp_type == 'NIS_SOSS')
+                photom_has_been_run
+                and source_type == 'POINT'
+                and (instrument == 'NIRSPEC' or exp_type == 'NIS_SOSS')
 
             )
 
@@ -2925,7 +2926,7 @@ def do_extract1d(
 
                 apcorr = select_apcorr(input_model)(
                     input_model, apcorr_ref_model.apcorr_table, apcorr_ref_model.sizeunit,
-                    slit_name = slitname, **match_kwargs
+                    slit_name=slitname, **match_kwargs
                 )
                 apcorr.apply(spec.spec_table)
 
@@ -2965,9 +2966,9 @@ def do_extract1d(
             source_type = input_model.meta.target.source_type
 
         input_units_are_megajanskys = (
-                photom_has_been_run
-                and source_type == 'POINT'
-                and (instrument == 'NIRSPEC' or exp_type == 'NIS_SOSS')
+            photom_has_been_run
+            and source_type == 'POINT'
+            and (instrument == 'NIRSPEC' or exp_type == 'NIS_SOSS')
         )
 
         # Turn off use_source_posn if the source is not POINT
@@ -3258,7 +3259,7 @@ def do_extract1d(
 
                         apcorr = select_apcorr(input_model)(
                             input_model, apcorr_ref_model.apcorr_table, apcorr_ref_model.sizeunit,
-                            slit_name = slitname, **match_kwargs
+                            slit_name=slitname, **match_kwargs
                         )
                         apcorr.apply(spec.spec_table)
 

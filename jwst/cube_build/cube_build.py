@@ -13,6 +13,7 @@ class CubeData():
     """ class CubeData holds top level information on the ifucube
 
     """
+
     def __init__(self,
                  input_models,
                  input_filenames,
@@ -195,8 +196,8 @@ class CubeData():
             if user_clen == 1 and self.channel[0] == 'all':
                 user_clen = 0
 
-            if user_slen == 1 and self.subchannel[0] =='all':
-                user_slen =0
+            if user_slen == 1 and self.subchannel[0] == 'all':
+                user_slen = 0
 
             # _______________________________________________________________________________
             for i in range(nchannels):
@@ -221,7 +222,7 @@ class CubeData():
                         # both parameters set
                         else:
                             if (valid_channel[i] in self.channel and
-                                valid_subchannel[j] in self.subchannel):
+                                    valid_subchannel[j] in self.subchannel):
                                 self.all_channel.append(valid_channel[i])
                                 self.all_subchannel.append(valid_subchannel[j])
 
@@ -256,8 +257,8 @@ class CubeData():
             if user_glen == 1 and self.grating[0] == 'all':
                 user_glen = 0
 
-            if user_flen == 1 and self.filter[0] =='all':
-                user_flen =0
+            if user_flen == 1 and self.filter[0] == 'all':
+                user_flen = 0
 
             # check if input filter or grating has been set
             if user_glen == 0 and user_flen != 0:
@@ -281,7 +282,7 @@ class CubeData():
                     # both parameters set
                     else:
                         if (valid_fwa[i] in self.filter and
-                            valid_gwa[i] in self.grating):
+                                valid_gwa[i] in self.grating):
                             self.all_grating.append(valid_gwa[i])
                             self.all_filter.append(valid_fwa[i])
 
@@ -309,7 +310,7 @@ class CubeData():
 
 # user, single, or multi
             if (self.output_type == 'user' or self.output_type == 'single' or
-                self.output_type == 'multi'):
+                    self.output_type == 'multi'):
 
                 if self.output_type == 'multi':
                     log.info('Output IFUcube are constructed from all the data ')
@@ -349,18 +350,18 @@ class CubeData():
                 num_cubes = 0
                 channel_no_repeat = list(set(band_channel))
                 for i in range(len(channel_no_repeat)):
-                        num_cubes = num_cubes + 1
-                        cube_no = str(num_cubes)
-                        cube_pars[cube_no] = {}
-                        cube_pars[cube_no]['pars1'] = {}
-                        cube_pars[cube_no]['pars2'] = {}
-                        this_channel = []
-                        for j in range(band_channel):
-                            if j == i:
-                                this_subchannel = band_subchannel[j]
-                        this_channel.append(i)
-                        cube_pars[cube_no]['par1'] = this_channel
-                        cube_pars[cube_no]['par2'] = this_subchannel
+                    num_cubes = num_cubes + 1
+                    cube_no = str(num_cubes)
+                    cube_pars[cube_no] = {}
+                    cube_pars[cube_no]['pars1'] = {}
+                    cube_pars[cube_no]['pars2'] = {}
+                    this_channel = []
+                    for j in range(band_channel):
+                        if j == i:
+                            this_subchannel = band_subchannel[j]
+                    this_channel.append(i)
+                    cube_pars[cube_no]['par1'] = this_channel
+                    cube_pars[cube_no]['par2'] = this_subchannel
 # ______________________________________________________________________
 # NIRSPEC
 # ______________________________________________________________________
@@ -370,7 +371,7 @@ class CubeData():
             band_filter = self.all_filter
 
             if (self.output_type == 'user' or self.output_type == 'single' or
-                self.output_type == 'multi'):
+                    self.output_type == 'multi'):
                 if self.output_type == 'multi':
                     log.info('Output IFUcube are constructed from all the data ')
                 if self.single:
@@ -406,16 +407,16 @@ class CubeData():
                 log.info('Output cubes are single grating & all filters in data')
                 num_cubes = 0
                 for i in range(len(band_grating)):
-                        num_cubes = num_cubes + 1
-                        cube_no = str(num_cubes)
-                        cube_pars[cube_no] = {}
-                        cube_pars[cube_no]['pars1'] = {}
-                        cube_pars[cube_no]['pars2'] = {}
-                        this_grating = []
-                        this_filter = band_subchannel
-                        this_grating.append(i)
-                        cube_pars[cube_no]['par1'] = this_grating
-                        cube_pars[cube_no]['par2'] = this_filter
+                    num_cubes = num_cubes + 1
+                    cube_no = str(num_cubes)
+                    cube_pars[cube_no] = {}
+                    cube_pars[cube_no]['pars1'] = {}
+                    cube_pars[cube_no]['pars2'] = {}
+                    this_grating = []
+                    this_filter = band_subchannel
+                    this_grating.append(i)
+                    cube_pars[cube_no]['par1'] = this_grating
+                    cube_pars[cube_no]['par2'] = this_filter
 
         self.num_cubes = num_cubes
         self.cube_pars = cube_pars

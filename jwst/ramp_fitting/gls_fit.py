@@ -196,7 +196,7 @@ def determine_slope(data_sect, input_var_sect,
     while not done:
         (intercept_sect, int_var_sect, slope_sect, slope_var_sect,
          cr_sect, cr_var_sect) = \
-                compute_slope(data_sect, input_var_sect,
+            compute_slope(data_sect, input_var_sect,
                               gdq_sect, readnoise_sect, gain_sect,
                               prev_fit, prev_slope_sect,
                               frame_time, group_time, nframes_used,
@@ -225,6 +225,7 @@ def determine_slope(data_sect, input_var_sect,
 
     return (intercept_sect, int_var_sect, slope_sect, slope_var_sect,
             cr_sect, cr_var_sect)
+
 
 def evaluate_fit(intercept_sect, slope_sect, cr_sect,
                  frame_time, group_time,
@@ -300,6 +301,7 @@ def evaluate_fit(intercept_sect, slope_sect, cr_sect,
 
     return fit_model
 
+
 def positive_fit(current_fit):
     """Replace zero and negative values with a positive number.
 
@@ -323,6 +325,7 @@ def positive_fit(current_fit):
     """
 
     return np.where(current_fit <= 0., FIT_MUST_BE_POSITIVE, current_fit)
+
 
 def compute_slope(data_sect, input_var_sect,
                   gdq_sect, readnoise_sect, gain_sect,
@@ -669,12 +672,12 @@ def gls_fit(ramp_data,
         ramp_cov[:, k, k] += saturated_data[k, :]
     del prev_fit_T
 
-    # I is 2-D, but it can broadcast to 4-D.  This is used to add terms to
+    # iden is 2-D, but it can broadcast to 4-D.  This is used to add terms to
     # the diagonal of the covariance matrix.
-    I = np.identity(ngroups)
+    iden = np.identity(ngroups)
 
     rn3d = readnoise.reshape((nz, 1, 1))
-    ramp_cov += (I * rn3d**2)
+    ramp_cov += (iden * rn3d**2)
 
     # prev_slope_data must be non-negative.
     flags = prev_slope_data < 0.
@@ -689,10 +692,10 @@ def gls_fit(ramp_data,
     xT = np.transpose(x, (0, 2, 1))
 
     # shape of `ramp_invcov` is (nz, ngroups, ngroups)
-    I = I.reshape((1, ngroups, ngroups))
-    ramp_invcov = la.solve(ramp_cov, I)
+    iden = iden.reshape((1, ngroups, ngroups))
+    ramp_invcov = la.solve(ramp_cov, iden)
 
-    del I
+    del iden
 
     # temp1 = xT @ ramp_invcov
     # np.einsum use is equivalent to matrix multiplication

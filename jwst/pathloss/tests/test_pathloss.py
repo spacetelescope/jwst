@@ -111,16 +111,17 @@ def test_calculate_pathloss_vector_pointsource_data():
     # Wavelength array is calculated with this: crval3 +(float(i+1) - crpix3)*cdelt3
     # Where i is the iteration of np.arange(wavesize) which is the 1st dimension of the pointsource
     # data array.
-    wavelength_comparison = np.array([1 + (float(i+1) - 1.0)*1 for i in np.arange(10)])
+    wavelength_comparison = np.array([1 + (float(i + 1) - 1.0) * 1 for i in np.arange(10)])
     assert np.allclose(wavelength, wavelength_comparison)
 
     # pathloss vector gets assigned at beginning of calculate_pathloss_vector and in this
     # case, doesnt change (np.zeros(wavesize, dtype=np.float32))
     pathloss_comparison = np.zeros(10, dtype=np.float32)
-    assert np.all(pathloss==pathloss_comparison)
+    assert np.all(pathloss == pathloss_comparison)
 
     # With the current wcs values, the logic should be returning False
     assert is_inside_slitlet is False
+
 
 def test_calculate_pathloss_vector_uniform_data():
     """Calculate the pathloss vector for uniform data arrays."""
@@ -139,8 +140,8 @@ def test_calculate_pathloss_vector_uniform_data():
     # Wavelength array is calculated with this: crval1 +(float(i+1) - crpix1)*cdelt1
     # Where i is the iteration of np.arange(wavesize) which is the shape of the uniform
     # data array.
-    comparison = np.array([1 +(float(i+1) - 1)*1 for i in np.arange(10)])
-    assert np.all(wavelength==comparison)
+    comparison = np.array([1 + (float(i + 1) - 1) * 1 for i in np.arange(10)])
+    assert np.all(wavelength == comparison)
 
     # The same array is returned in this case
     assert np.all(datmod.apertures[0].uniform_data == pathloss)
@@ -165,7 +166,7 @@ def test_calculate_pathloss_vector_interpolation():
     # Wavelength array is calculated with this: crval3 +(float(i+1) - crpix3)*cdelt3
     # Where i is the iteration of np.arange(wavesize) which is the 1st dimension of the pointsource
     # data array.
-    wavelength_comparison = np.array([1 + (float(i+1) - 1.0)*1 for i in np.arange(10)])
+    wavelength_comparison = np.array([1 + (float(i + 1) - 1.0) * 1 for i in np.arange(10)])
     assert np.all(wavelength == wavelength_comparison)
 
     # In this instance we interpolate to get the array for pathloss VS wavelength.
@@ -179,7 +180,7 @@ def test_calculate_pathloss_vector_interpolation():
     # pathloss_vector = (a22*pathloss_ref[:,i,j]) = (1*pathloss_ref[:1,j])
     # Thus pathloss == the input array to the function.
     pathloss_comparison = datmod.apertures[0].pointsource_data
-    assert np.all(pathloss==pathloss_comparison)
+    assert np.all(pathloss == pathloss_comparison)
 
     # With the current wcs values, the logic should be returning True
     assert is_inside_slitlet is True
@@ -199,6 +200,7 @@ def test_is_pointsource():
     point_source = 'not a point'
     result = is_pointsource(point_source)
     assert result is False
+
 
 def test_do_correction_msa_slit_size_eq_0():
     """If slits have size 0, quit calibration."""

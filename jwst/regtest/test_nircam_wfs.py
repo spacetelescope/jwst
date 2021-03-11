@@ -5,6 +5,7 @@ from astropy.io.fits.diff import FITSDiff
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
+
 @pytest.fixture(scope="module")
 def run_pipelines(jail, rtdata_module):
     """Run the calwebb_wfs-image2 and calwebb_wfs-image3 pipelines

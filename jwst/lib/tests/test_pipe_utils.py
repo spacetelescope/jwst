@@ -9,8 +9,8 @@ from jwst.associations.lib import dms_base
 from jwst.lib.pipe_utils import is_tso
 
 all_exp_types = dms_base.IMAGE2_NONSCIENCE_EXP_TYPES + \
-            dms_base.IMAGE2_SCIENCE_EXP_TYPES + \
-            dms_base.SPEC2_SCIENCE_EXP_TYPES
+    dms_base.IMAGE2_SCIENCE_EXP_TYPES + \
+    dms_base.SPEC2_SCIENCE_EXP_TYPES
 
 exp_types = [
     (exp_type, False)

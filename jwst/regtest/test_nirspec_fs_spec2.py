@@ -18,6 +18,7 @@ file_roots = [
 ]
 ids = ["fullframe", "S400A1-subarray", "ALLSLITS-subarray"]
 
+
 @pytest.fixture(scope="module", params=file_roots, ids=ids)
 def run_pipeline(jail, rtdata_module, request):
     """Run the calwebb_spec2 pipeline on NIRSpec Fixed-Slit exposures.
@@ -58,7 +59,7 @@ def test_nirspec_fs_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
     # Run the pipeline and retrieve outputs
     rtdata = run_pipeline
     output = replace_suffix(
-            os.path.splitext(os.path.basename(rtdata.input))[0], suffix) + '.fits'
+        os.path.splitext(os.path.basename(rtdata.input))[0], suffix) + '.fits'
     rtdata.output = output
 
     # Get the truth files

@@ -5,6 +5,7 @@ import numpy as np
 
 from jwst.flatfield import flat_field
 
+
 def test_clean_wl_1():
 
     # The dispersion direction is horizontal.
@@ -15,16 +16,17 @@ def test_clean_wl_1():
 
     # These are the "cleaned" arrays that we expect.
     wl_h_clean = np.array(
-                [[2.01, 2.01, 2.01, 3.005, 4.01, 5.005, 6.005, 7.01, 7.01],
+        [[2.01, 2.01, 2.01, 3.005, 4.01, 5.005, 6.005, 7.01, 7.01],
                  [2.01, 2.01, 2.01, 3.,    4.,   5.,    6.,    7.01, 7.01],
                  [2.01, 2.01, 2.01, 3.01,  4.01, 5.01,  6.01,  7.01, 7.01],
                  [2.01, 2.01, 2.01, 3.005, 4.02, 5.005, 6.005, 7.01, 7.01],
                  [2.01, 2.01, 2.01, 3.005, 4.01, 5.005, 6.005, 7.01, 7.01]],
-                dtype=np.float64)
+        dtype=np.float64)
 
     # 1 means horizontal dispersion
     wl_hc = flat_field.clean_wl(wl_h, 1)
     assert np.allclose(wl_hc, wl_h_clean, atol=0., rtol=1.e-6)
+
 
 def test_clean_wl_2():
 

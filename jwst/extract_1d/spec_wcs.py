@@ -11,6 +11,7 @@ from gwcs import coordinate_frames as cf
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+
 def create_spectral_wcs(ra, dec, wavelength):
     """Assign a WCS for sky coordinates and a table of wavelengths
 

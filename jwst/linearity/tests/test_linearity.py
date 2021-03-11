@@ -80,7 +80,7 @@ def test_coeff_dq():
     outfile = lincorr(im, ref_model)
 
     # check that multiplication of polynomial was done correctly for specified pixel
-    outval = L0+(L1*scival)+(L2*scival**2)+(L3*scival**3)+(L4*scival**4)
+    outval = L0 + (L1 * scival) + (L2 * scival**2) + (L3 * scival**3) + (L4 * scival**4)
     assert(np.isclose(outfile.data[0, 45, 30, 50], outval, rtol=0.00001))
 
     # check that dq value was handled correctly

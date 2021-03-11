@@ -53,7 +53,7 @@ def do_correction(input_model, rscd_model, type):
         input_model.meta.cal_step.rscd = 'SKIPPED'
         return input_model
         # decay function algorithm update needed
-        #output = correction_decay_function(input_model, param)
+        # output = correction_decay_function(input_model, param)
 
     return output
 
@@ -99,7 +99,7 @@ def correction_skip_groups(input_model, group_skip):
         return output
 
     # If ngroups > group_skip+3, set all of the GROUPDQ in the first group to 'DO_NOT_USE'
-    output.groupdq[1:, 0:group_skip :, :] = \
+    output.groupdq[1:, 0:group_skip:, :] = \
         np.bitwise_or(output.groupdq[1:, 0:group_skip,:,:], dqflags.group['DO_NOT_USE'])
     log.debug(f"RSCD Sub: adding DO_NOT_USE to GROUPDQ for the first {group_skip} groups")
     output.meta.cal_step.rscd = 'COMPLETE'
@@ -228,17 +228,17 @@ def correction_decay_function(input_model, param):
         # Find where counts2 > 0 and is finite
         good_even = np.where((counts2_even > 0) & np.isfinite(counts2_even))
         good_odd = np.where((counts2_odd > 0) & np.isfinite(counts2_odd))
-        #__________________________________________________________________
+        # __________________________________________________________________
         # even row values
         factor2_even[good_even] = 1.0 / \
             (np.exp(counts2_even[good_even] / b3_even) - 1)
         a1_even = b1_even * (np.power(counts2_even, b2_even)) * factor2_even
-        #___________________________________________________________________
+        # ___________________________________________________________________
         # odd row values
         factor2_odd[good_odd] = 1.0 / \
             (np.exp(counts2_odd[good_odd] / b3_odd) - 1)
         a1_odd = b1_odd * (np.power(counts2_odd, b2_odd)) * factor2_odd
-        #___________________________________________________________________
+        # ___________________________________________________________________
         # SATURATED DATA
         counts3_even = dn_lastfit[1::2, :] * sat_scale_even
         counts3_odd = dn_lastfit[0::2, :] * sat_scale_odd
@@ -336,7 +336,7 @@ def get_rscd_parameters(input_model, rscd_model):
     # read table 3: Enhanced RSCD integration 1 parameters
     for tabdata in rscd_model.rscd_int1_table:
         readpatt_int1 = tabdata['readpatt']
-        subarray_int1= tabdata['subarray']
+        subarray_int1 = tabdata['subarray']
         rows_int1 = tabdata['rows']
         a0_int1 = tabdata['a0']
         a1_int1 = tabdata['a1']
@@ -361,7 +361,7 @@ def get_rscd_parameters(input_model, rscd_model):
     # read table 4: Enhanced RSCD integration 2 parameters
     for tabdata in rscd_model.rscd_int2_table:
         readpatt_int2 = tabdata['readpatt']
-        subarray_int2= tabdata['subarray']
+        subarray_int2 = tabdata['subarray']
         rows_int2 = tabdata['rows']
         a0_int2 = tabdata['b0']
         a1_int2 = tabdata['b1']
@@ -386,7 +386,7 @@ def get_rscd_parameters(input_model, rscd_model):
     # read table 5: Enhanced RSCD integration 3 parameters
     for tabdata in rscd_model.rscd_int3_table:
         readpatt_int3 = tabdata['readpatt']
-        subarray_int3= tabdata['subarray']
+        subarray_int3 = tabdata['subarray']
         rows_int3 = tabdata['rows']
         a0_int3 = tabdata['c0']
         a1_int3 = tabdata['c1']

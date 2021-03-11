@@ -120,7 +120,7 @@ def calculate_pathloss_vector(pathloss_refdata,
         crval1 = pathloss_wcs.crval1
         cdelt1 = pathloss_wcs.cdelt1
         for i in np.arange(wavesize):
-            wavelength[i] = crval1 + (float(i+1) - crpix1)*cdelt1
+            wavelength[i] = crval1 + (float(i + 1) - crpix1) * cdelt1
         return wavelength, pathloss_refdata, True
 
     # pointsource.data is 3-d, so we have to extract a wavelength vector
@@ -130,7 +130,7 @@ def calculate_pathloss_vector(pathloss_refdata,
         crval3 = pathloss_wcs.crval3
         cdelt3 = pathloss_wcs.cdelt3
         for i in np.arange(wavesize):
-            wavelength[i] = crval3 +(float(i+1) - crpix3) * cdelt3
+            wavelength[i] = crval3 + (float(i + 1) - crpix3) * cdelt3
 
         # Calculate python index of object center
         crpix1 = pathloss_wcs.crpix1
@@ -142,7 +142,7 @@ def calculate_pathloss_vector(pathloss_refdata,
         object_colindex = crpix1 + (xcenter - crval1) / cdelt1 - 1
         object_rowindex = crpix2 + (ycenter - crval2) / cdelt2 - 1
         if (object_colindex < 0 or object_colindex >= (ncols - 1) or
-            object_rowindex < 0 or object_rowindex >= (nrows - 1)):
+                object_rowindex < 0 or object_rowindex >= (nrows - 1)):
             is_inside_slitlet = False
         else:
 
@@ -152,15 +152,15 @@ def calculate_pathloss_vector(pathloss_refdata,
             dx2 = 1.0 - dx1
             dy1 = object_rowindex - int(object_rowindex)
             dy2 = 1.0 - dy1
-            a11 = dx1*dy1
-            a12 = dx1*dy2
-            a21 = dx2*dy1
-            a22 = dx2*dy2
+            a11 = dx1 * dy1
+            a12 = dx1 * dy2
+            a21 = dx2 * dy1
+            a22 = dx2 * dy2
             j, i = int(object_colindex), int(object_rowindex)
-            pathloss_vector = (a22*pathloss_refdata[:, i, j]
-                               + a12*pathloss_refdata[:, i+1, j]
-                               + a21*pathloss_refdata[:, i, j+1]
-                               + a11*pathloss_refdata[:, i+1, j+1])
+            pathloss_vector = (a22 * pathloss_refdata[:, i, j]
+                               + a12 * pathloss_refdata[:, i + 1, j]
+                               + a21 * pathloss_refdata[:, i, j + 1]
+                               + a11 * pathloss_refdata[:, i + 1, j + 1])
 
         return wavelength, pathloss_vector, is_inside_slitlet
 
@@ -307,7 +307,7 @@ def interpolate_onto_grid(wavelength_grid, wavelength_vector, pathloss_vector):
     pathloss_grid = wavelength_grid * 0.0
 
     pathloss_grid = (extended_pathloss_vector[lower_indices]
-                     + fraction*(extended_pathloss_vector[upper_indices]
+                     + fraction * (extended_pathloss_vector[upper_indices]
                                  - extended_pathloss_vector[lower_indices]))
 
     return pathloss_grid
@@ -419,7 +419,6 @@ def do_correction_fixedslit(data, pathloss, inverse=False, source_type=None, cor
     corrections = datamodels.MultiSlitModel()
     for slit_number, slit in enumerate(data.slits):
         log.info(f'Working on slit {slit.name}')
-
 
         if correction_pars:
             correction = correction_pars.slits[slit_number]
@@ -586,7 +585,7 @@ def do_correction_soss(data, pathloss):
                 correction[row] = 1.0
             else:
                 correction[row] = (1.0 - dx) * pathloss_array[refrow_index, ix] + \
-                                  dx * pathloss_array[refrow_index, ix + 1]
+                    dx * pathloss_array[refrow_index, ix + 1]
 
     # Create and apply the 2D correction
     pathloss_2d = np.broadcast_to(correction, data.data.shape)

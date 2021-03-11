@@ -3,6 +3,7 @@ from .dynamicdq import dynamic_mask
 
 __all__ = ['PersistenceSatModel']
 
+
 class PersistenceSatModel(ReferenceFileModel):
     """
     A data model for the persistence saturation value (full well).

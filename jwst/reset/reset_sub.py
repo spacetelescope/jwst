@@ -44,11 +44,10 @@ def do_correction(input_model, reset_model):
     reset_nints = reset_model.data.shape[0]           # number of integrations in reset reference file
     reset_ngroups = reset_model.data.shape[1]         # number of groups
 
-     # Replace NaN's in the reset with zeros (should not happen but just in case)
+    # Replace NaN's in the reset with zeros (should not happen but just in case)
     reset_model.data[np.isnan(reset_model.data)] = 0.0
     log.debug("Reset Sub using: nints=%d, ngroups=%d" %
           (sci_nints, sci_ngroups))
-
 
     # Create output as a copy of the input science data model
     output = input_model.copy()
@@ -67,14 +66,13 @@ def do_correction(input_model, reset_model):
         # loop over groups in input science data:
         for j in range(sci_ngroups):
             jr = j
-            if j <= (reset_ngroups-1):
+            if j <= (reset_ngroups - 1):
                 # subtract the SCI arrays for the groups = < reset_ngroups
                 output.data[i, j] -= reset_model.data[ir, jr]
 
             # combine the ERR arrays in quadrature
             # NOTE: currently stubbed out until ERR handling is decided
-            #output.err[i,j] = np.sqrt(
+            # output.err[i,j] = np.sqrt(
             #           output.err[i,j]**2 + reset.err[j]**2)
-
 
     return output

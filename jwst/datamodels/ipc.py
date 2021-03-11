@@ -2,6 +2,7 @@ from .reference import ReferenceFileModel
 
 __all__ = ['IPCModel']
 
+
 class IPCModel(ReferenceFileModel):
     """
     A data model for IPC kernel checking information.

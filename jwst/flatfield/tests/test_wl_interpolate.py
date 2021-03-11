@@ -7,6 +7,7 @@ import numpy as np
 
 from jwst.flatfield.flat_field import wl_interpolate
 
+
 def test_wl_interpolate():
 
     tab_flat = np.array([2.99794324, 3.61644058, 4.12867112, 4.57353729,

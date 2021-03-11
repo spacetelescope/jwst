@@ -9,7 +9,7 @@ from numpy.testing import assert_allclose
 from jwst.dark_current.dark_sub import (
     average_dark_frames,
     do_correction as darkcorr
-    )
+)
 from jwst.datamodels import RampModel, DarkModel, DarkMIRIModel, dqflags
 
 
@@ -29,15 +29,15 @@ def _params():
 
     # Dictionary of NIRCam readout patterns
     readpatterns = dict(
-        DEEP8 = dict(ngroups=20, nframes=8, nskip=12),
-        DEEP2 = dict(ngroups=20, nframes=2, nskip=18),
-        MEDIUM8 = dict(ngroups=10, nframes=8, nskip=2),
-        MEDIUM2 = dict(ngroups=10, nframes=2, nskip=8),
-        SHALLOW4 = dict(ngroups=10, nframes=4, nskip=1),
-        SHALLOW2 = dict(ngroups=10, nframes=2, nskip=3),
-        BRIGHT2 = dict(ngroups=10, nframes=2, nskip=0),
-        BRIGHT1 = dict(ngroups=10, nframes=1, nskip=1),
-        RAPID = dict(ngroups=10, nframes=1, nskip=0),
+        DEEP8=dict(ngroups=20, nframes=8, nskip=12),
+        DEEP2=dict(ngroups=20, nframes=2, nskip=18),
+        MEDIUM8=dict(ngroups=10, nframes=8, nskip=2),
+        MEDIUM2=dict(ngroups=10, nframes=2, nskip=8),
+        SHALLOW4=dict(ngroups=10, nframes=4, nskip=1),
+        SHALLOW2=dict(ngroups=10, nframes=2, nskip=3),
+        BRIGHT2=dict(ngroups=10, nframes=2, nskip=0),
+        BRIGHT1=dict(ngroups=10, nframes=1, nskip=1),
+        RAPID=dict(ngroups=10, nframes=1, nskip=0),
     )
 
     params = []
@@ -57,7 +57,6 @@ def test_frame_averaging(setup_nrc_cube, readpatt, ngroups, nframes, groupgap, n
        the dark reference file to match the frame averaging and groupgap
        settings of the exposure.'''
 
-
     # Create data and dark model
     data, dark = setup_nrc_cube(readpatt, ngroups, nframes, groupgap, nrows, ncols)
 
@@ -69,7 +68,7 @@ def test_frame_averaging(setup_nrc_cube, readpatt, ngroups, nframes, groupgap, n
     avg_dark = average_dark_frames(dark, ngroups, nframes, groupgap)
 
     # Group input groups into collections of frames which will be averaged
-    total_frames = (nframes * ngroups) + (groupgap * (ngroups-1))
+    total_frames = (nframes * ngroups) + (groupgap * (ngroups - 1))
 
     # Get starting/ending indexes of the input groups to be averaged
     gstrt_ind = np.arange(0, total_frames, nframes + groupgap)
@@ -104,13 +103,11 @@ def test_more_sci_frames(make_rampmodel, make_darkmodel):
     data is than in the dark reference file and verify that when the dark is not applied,
     the data is correctly flagged as such'''
 
-
     # size of integration
     nints = 1
     ngroups = 7
     xsize = 200
     ysize = 200
-
 
     # create raw input data for step
     dm_ramp = make_rampmodel(nints, ngroups, ysize, xsize)
@@ -118,7 +115,7 @@ def test_more_sci_frames(make_rampmodel, make_darkmodel):
     dm_ramp.meta.exposure.groupgap = 0
 
     # populate data array of science cube
-    for i in range(0, ngroups-1):
+    for i in range(0, ngroups - 1):
         dm_ramp.data[0, i] = i
 
     refgroups = 5
@@ -158,7 +155,7 @@ def test_sub_by_frame(make_rampmodel, make_darkmodel):
     dm_ramp.meta.exposure.groupgap = 0
 
     # populate data array of science cube
-    for i in range(0, ngroups-1):
+    for i in range(0, ngroups - 1):
         dm_ramp.data[0, i] = i
 
     # create dark reference file model with more frames than science data
@@ -198,7 +195,7 @@ def test_nan(make_rampmodel, make_darkmodel):
     dm_ramp.meta.exposure.groupgap = 0
 
     # populate data array of science cube
-    for i in range(0, ngroups-1):
+    for i in range(0, ngroups - 1):
         dm_ramp.data[0, i, :, :] = i
 
     # create dark reference file model with more frames than science data
@@ -236,7 +233,7 @@ def test_dq_combine(make_rampmodel, make_darkmodel):
     dm_ramp.meta.exposure.groupgap = 0
 
     # populate data array of science cube
-    for i in range(1, ngroups-1):
+    for i in range(1, ngroups - 1):
         dm_ramp.data[0, i, :, :] = i
 
     # create dark reference file model with more frames than science data
@@ -277,7 +274,7 @@ def test_2_int(make_rampmodel, make_darkmodel):
     dm_ramp.meta.exposure.groupgap = 0
 
     # populate data array of science cube
-    for i in range(0, ngroups-1):
+    for i in range(0, ngroups - 1):
         dm_ramp.data[:, i] = i
 
     # create dark reference file model with more frames than science data
@@ -317,7 +314,7 @@ def test_frame_avg(make_rampmodel, make_darkmodel):
     dm_ramp.meta.exposure.groupgap = 0
 
     # populate data array of science cube
-    for i in range(0, ngroups-1):
+    for i in range(0, ngroups - 1):
         dm_ramp.data[:, i] = i + 1
 
     # create dark reference file model

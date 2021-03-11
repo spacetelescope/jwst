@@ -80,6 +80,7 @@ class RefPixStep(Step):
                     datamodel.meta.cal_step.refpix = 'SKIPPED'
                 return datamodel
 
+
 def refpix_correction(input):
     a = RefPixStep()
     result = a.process(input)

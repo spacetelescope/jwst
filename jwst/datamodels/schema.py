@@ -224,7 +224,6 @@ def build_docstring(klass, template="{fits_hdu} {title}"):
     """
     from . import model_base
 
-
     def get_field_info(subschema, path, combiner, info, recurse):
         # Return all schema fields representing fits hdus
         if 'fits_hdu' in subschema and 'fits_keyword' not in subschema:

@@ -24,6 +24,7 @@ log.setLevel(logging.DEBUG)
 # This is an interface to call
 #    timeconversion.compute_bary_helio_time(targetcoord, times)
 
+
 def utc_tdb(filename, update_tdb=True, update_velosys=True,
             delta_t=1000., ndecimals=2):
     """Convert start, mid, end times from UTC to TDB.
@@ -88,13 +89,13 @@ def utc_tdb(filename, update_tdb=True, update_velosys=True,
                                     to_tt(expmid + half_dt)])
             if USE_TIMECONVERSION:
                 tdb_rv_times = timeconversion.compute_bary_helio_time(
-                                    targetcoord, tt_rv_times)[0]
+                    targetcoord, tt_rv_times)[0]
             else:
                 (eph_time, jwst_pos, jwst_vel) = get_jwst_keywords(fd)
                 jwstpos_rv = linear_pos(tt_rv_times, eph_time,
                                         jwst_pos, jwst_vel)
                 tdb_rv_times = compute_bary_helio_time2(
-                                    targetcoord, tt_rv_times, jwstpos_rv)[0]
+                    targetcoord, tt_rv_times, jwstpos_rv)[0]
 
             # This is almost exactly the same as delta_t, but in units of days.
             delta_tt = tt_rv_times[1] - tt_rv_times[0]
@@ -129,11 +130,11 @@ def utc_tdb(filename, update_tdb=True, update_velosys=True,
         if USE_TIMECONVERSION:
             log.debug("Using the timeconversion module.")
             tdb_start_times = timeconversion.compute_bary_helio_time(
-                                    targetcoord, tt_start_times)[0]
+                targetcoord, tt_start_times)[0]
             tdb_mid_times = timeconversion.compute_bary_helio_time(
-                                    targetcoord, tt_mid_times)[0]
+                targetcoord, tt_mid_times)[0]
             tdb_end_times = timeconversion.compute_bary_helio_time(
-                                    targetcoord, tt_end_times)[0]
+                targetcoord, tt_end_times)[0]
         else:
             log.warning("Couldn't import the timeconversion module;")
             log.warning("using astropy.coordinates, and "
@@ -141,18 +142,18 @@ def utc_tdb(filename, update_tdb=True, update_velosys=True,
             (eph_time, jwst_pos, jwst_vel) = get_jwst_keywords(fd)
             jwstpos = linear_pos(tt_start_times, eph_time, jwst_pos, jwst_vel)
             tdb_start_times = compute_bary_helio_time2(
-                                    targetcoord, tt_start_times, jwstpos)[0]
+                targetcoord, tt_start_times, jwstpos)[0]
             jwstpos = linear_pos(tt_mid_times, eph_time, jwst_pos, jwst_vel)
             tdb_mid_times = compute_bary_helio_time2(
-                                    targetcoord, tt_mid_times, jwstpos)[0]
+                targetcoord, tt_mid_times, jwstpos)[0]
             jwstpos = linear_pos(tt_end_times, eph_time, jwst_pos, jwst_vel)
             tdb_end_times = compute_bary_helio_time2(
-                                    targetcoord, tt_end_times, jwstpos)[0]
+                targetcoord, tt_end_times, jwstpos)[0]
 
         try:
             # TDB, MJD
             fd[hdunum].data.field("int_start_BJD_TDB")[:] = \
-                        tdb_start_times.copy()
+                tdb_start_times.copy()
             fd[hdunum].data.field("int_mid_BJD_TDB")[:] = tdb_mid_times.copy()
             fd[hdunum].data.field("int_end_BJD_TDB")[:] = tdb_end_times.copy()
         except KeyError:
@@ -223,6 +224,7 @@ The following functions are only used if the timeconversion module could not
 be imported, i.e. if USE_TIMECONVERSION is False.
 """
 
+
 def get_jwst_position2(times, jwstpos, use_jpl_ephemeris=False):
     '''
     This returns the pair of relative positions from
@@ -262,6 +264,7 @@ def get_jwst_position2(times, jwstpos, use_jpl_ephemeris=False):
     return (barysun_centerearth_pos + centerearth_jwst), \
             (centersun_centerearth_pos + centerearth_jwst)
 
+
 def get_target_vector2(targetcoord):
     '''
     returns a unit vector given ra and dec that astropy coordinates can handle
@@ -274,6 +277,7 @@ def get_target_vector2(targetcoord):
     z = cartcoord.z.value
     vector = np.array([x, y, z])
     return vector / np.sqrt((vector**2).sum())
+
 
 def compute_bary_helio_time2(targetcoord, times, jwstpos,
                             use_jpl_ephemeris=False):
@@ -293,7 +297,7 @@ def compute_bary_helio_time2(targetcoord, times, jwstpos,
     '''
     tvector = get_target_vector2(targetcoord)
     jwst_bary_vectors, jwst_sun_vectors = get_jwst_position2(
-                        times, jwstpos, use_jpl_ephemeris)
+        times, jwstpos, use_jpl_ephemeris)
     proj_bary_dist = (tvector * jwst_bary_vectors).sum(axis=-1)
     proj_sun_dist = (tvector * jwst_sun_vectors).sum(axis=-1)
     cspeed = astropy.constants.c.value / 1000.
