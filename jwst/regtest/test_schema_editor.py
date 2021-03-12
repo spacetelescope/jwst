@@ -96,7 +96,7 @@ def test_limit_datamodels(model_db):
      'pathloss.schema.yaml',
      'referencefile.schema.yaml',
      'slitmeta.schema.yaml',
-     'wcsinfo.schema.yaml',]
+     'wcsinfo.schema.yaml', ]
 )
 def test_full_run(jail, schema, run_editor_full, rtdata_module):
     """Check fixed schema files"""

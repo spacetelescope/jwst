@@ -15,6 +15,7 @@ inner_bkg = 11.5
 outer_bkg = 16.5
 method = "exact"
 
+
 def test_ifu_3d():
     """Test 1"""
 
@@ -139,7 +140,6 @@ def make_ifu_cube(data_shape, source=None, background=None,
 def make_ref_image(shape,
                    x_center=None, y_center=None,
                    radius=None, inner_bkg=None, outer_bkg=None):
-
     """Create an image reference file for testing.
 
     Returns

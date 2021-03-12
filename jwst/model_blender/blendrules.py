@@ -83,39 +83,47 @@ def last(items):
         return items[-1]
     return None
 
+
 def mindate(items):
     """Return the minimum date from a list of date strings in yyyy-mm-dd format."""
     time_list = Time(items, format="iso", in_subfmt="date", out_subfmt="date")
     return str(time_list.min())
+
 
 def maxdate(items):
     """Return the maximum date from a list of date strings in yyyy-mm-dd format."""
     time_list = Time(items, format="iso", in_subfmt="date", out_subfmt="date")
     return str(time_list.max())
 
+
 def mindatetime(items):
     """Return the minimum datetime from a list of datetime strings in ISO-8601 format."""
     time_list = Time(items, format="isot")
     return str(time_list.min())
+
 
 def maxdatetime(items):
     """Return the maximum datetime from a list of datetime strings in ISO-8601 format."""
     time_list = Time(items, format="isot")
     return str(time_list.max())
 
+
 def mintime(items):
     times = [_isotime(time_str) for time_str in items]
     return min(times).isoformat()
 
+
 def maxtime(items):
     times = [_isotime(time_str) for time_str in items]
     return max(times).isoformat()
+
 
 def _isotime(time_str):
     hms = [float(i) for i in time_str.split(':')]
     sec_ms = hms[2] - int(hms[2])
     isotime = time(int(hms[0]), int(hms[1]), int(hms[2]), int(sec_ms * 1000000))
     return isotime
+
 
 # translation dictionary for function entries from rules files
 blender_funcs = {'first': first,
@@ -211,7 +219,6 @@ class KeywordRules():
 
                     self.rules.extend(kwr.rules)
 
-
     def merge(self, kwrules):
         """
         Merge a new set of interpreted rules into the current set
@@ -261,7 +268,7 @@ class KeywordRules():
         # this allows the rules to be used on all extensions at once yet
         # update each extension separately without making copies of kws from
         # one extension to another.
-        #new_model.update(fbdict)
+        # new_model.update(fbdict)
         for attr in new_model.to_flat_dict():
             if 'meta' in attr and attr in fbdict:
                 new_model[attr] = fbdict[attr]
@@ -379,7 +386,7 @@ def _build_schema_rules_dict(schema):
                     break
             attr = '.'.join(path)
             if subschema.get('properties'):
-                return # Ignore ObjectNodes
+                return  # Ignore ObjectNodes
 
             # Get blending info
             kwrule = subschema.get('blend_rule')
@@ -521,7 +528,7 @@ def find_keywords_in_section(hdr, title):
 
     # Now, extract the keyword names from this section
     # section_keys = hdr.ascard[sect_start+1:sect_end-1].keys()
-    section_keys = list(hdr[sect_start+1:sect_end-1].keys())
+    section_keys = list(hdr[sect_start + 1:sect_end - 1].keys())
     # remove any blank keywords
     while section_keys.count('') > 0:
         section_keys.remove('')

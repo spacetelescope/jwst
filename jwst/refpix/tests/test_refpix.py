@@ -134,18 +134,18 @@ def test_odd_even():
     im.data[:, 1:, 1:ysize:2, 1] = 2.0
     im.data[:, 1:, 1:ysize:2, 2] = 3.0
     im.data[:, 1:, 1:ysize:2, 3] = 4.0
-    im.data[:, 1:, 0:ysize-1:2, 0] = 5.0
-    im.data[:, 1:, 0:ysize-1:2, 1] = 6.0
-    im.data[:, 1:, 0:ysize-1:2, 2] = 7.0
-    im.data[:, 1:, 0:ysize-1:2, 3] = 8.0
+    im.data[:, 1:, 0:ysize - 1:2, 0] = 5.0
+    im.data[:, 1:, 0:ysize - 1:2, 1] = 6.0
+    im.data[:, 1:, 0:ysize - 1:2, 2] = 7.0
+    im.data[:, 1:, 0:ysize - 1:2, 3] = 8.0
     im.data[:, 1:, 1:ysize:2, 1028] = 1.0
     im.data[:, 1:, 1:ysize:2, 1029] = 2.0
     im.data[:, 1:, 1:ysize:2, 1030] = 3.0
     im.data[:, 1:, 1:ysize:2, 1031] = 4.0
-    im.data[:, 1:, 0:ysize-1:2, 1028] = 5.0
-    im.data[:, 1:, 0:ysize-1:2, 1029] = 6.0
-    im.data[:, 1:, 0:ysize-1:2, 1030] = 7.0
-    im.data[:, 1:, 0:ysize-1:2, 1031] = 8.0
+    im.data[:, 1:, 0:ysize - 1:2, 1028] = 5.0
+    im.data[:, 1:, 0:ysize - 1:2, 1029] = 6.0
+    im.data[:, 1:, 0:ysize - 1:2, 1030] = 7.0
+    im.data[:, 1:, 0:ysize - 1:2, 1031] = 8.0
 
     # set reference pixels to 'REFERENCE_PIXEL'
     im.pixeldq[:, :4] = dqflags.pixel['REFERENCE_PIXEL']
@@ -186,18 +186,18 @@ def test_no_odd_even():
     im.data[:, 1:, 1:ysize:2, 1] = 2.0
     im.data[:, 1:, 1:ysize:2, 2] = 3.0
     im.data[:, 1:, 1:ysize:2, 3] = 4.0
-    im.data[:, 1:, 0:ysize-1:2, 0] = 5.0
-    im.data[:, 1:, 0:ysize-1:2, 1] = 6.0
-    im.data[:, 1:, 0:ysize-1:2, 2] = 7.0
-    im.data[:, 1:, 0:ysize-1:2, 3] = 8.0
+    im.data[:, 1:, 0:ysize - 1:2, 0] = 5.0
+    im.data[:, 1:, 0:ysize - 1:2, 1] = 6.0
+    im.data[:, 1:, 0:ysize - 1:2, 2] = 7.0
+    im.data[:, 1:, 0:ysize - 1:2, 3] = 8.0
     im.data[:, 1:, 1:ysize:2, 1028] = 1.0
     im.data[:, 1:, 1:ysize:2, 1029] = 2.0
     im.data[:, 1:, 1:ysize:2, 1030] = 3.0
     im.data[:, 1:, 1:ysize:2, 1031] = 4.0
-    im.data[:, 1:, 0:ysize-1:2, 1028] = 5.0
-    im.data[:, 1:, 0:ysize-1:2, 1029] = 6.0
-    im.data[:, 1:, 0:ysize-1:2, 1030] = 7.0
-    im.data[:, 1:, 0:ysize-1:2, 1031] = 8.0
+    im.data[:, 1:, 0:ysize - 1:2, 1028] = 5.0
+    im.data[:, 1:, 0:ysize - 1:2, 1029] = 6.0
+    im.data[:, 1:, 0:ysize - 1:2, 1030] = 7.0
+    im.data[:, 1:, 0:ysize - 1:2, 1031] = 8.0
 
     # set reference pixels to 'REFERENCE_PIXEL'
     im.pixeldq[:, :4] = dqflags.pixel['REFERENCE_PIXEL']
@@ -326,7 +326,6 @@ def test_do_corrections_subarray_no_oddEven(setup_subarray_cube):
     xstart = 1
     ystart = 1
 
-
     odd_even_columns = False
     use_side_ref_pixels = False
     side_smoothing_length = 11
@@ -346,11 +345,11 @@ def test_do_corrections_subarray_no_oddEven(setup_subarray_cube):
     input_model.pixeldq[:, :4] = dqflags.pixel['REFERENCE_PIXEL']
 
     init_dataset = create_dataset(input_model,
-                                odd_even_columns,
-                                use_side_ref_pixels,
-                                side_smoothing_length,
-                                side_gain,
-                                odd_even_rows)
+                                  odd_even_columns,
+                                  use_side_ref_pixels,
+                                  side_smoothing_length,
+                                  side_gain,
+                                  odd_even_rows)
 
     init_dataset.do_corrections()
 
@@ -368,7 +367,6 @@ def test_do_corrections_subarray(setup_subarray_cube):
     ncols = 160
     xstart = 1
     ystart = 1
-
 
     odd_even_columns = True
     use_side_ref_pixels = False
@@ -389,11 +387,11 @@ def test_do_corrections_subarray(setup_subarray_cube):
     input_model.pixeldq[:, :4] = dqflags.pixel['REFERENCE_PIXEL']
 
     init_dataset = create_dataset(input_model,
-                                odd_even_columns,
-                                use_side_ref_pixels,
-                                side_smoothing_length,
-                                side_gain,
-                                odd_even_rows)
+                                  odd_even_columns,
+                                  use_side_ref_pixels,
+                                  side_smoothing_length,
+                                  side_gain,
+                                  odd_even_rows)
 
     init_dataset.do_corrections()
 
@@ -411,7 +409,6 @@ def test_get_restore_group_subarray(setup_subarray_cube):
     ncols = 320
     xstart = 486
     ystart = 1508
-
 
     odd_even_columns = True
     use_side_ref_pixels = True
@@ -433,9 +430,9 @@ def test_get_restore_group_subarray(setup_subarray_cube):
     assert np.all(init_dataset.input_model.data[0, 0, :, :] == 150)
     init_dataset.get_group(0, 0)
     assert np.shape(init_dataset.group.data) == (2048, 2048)
-    assert np.all(init_dataset.group[:ystart-1, :xstart-1] == 0)
-    assert np.all(init_dataset.group[ystart-1+nrows:, xstart-1+ncols:] == 0)
-    assert np.all(init_dataset.group[ystart-1:ystart-1+nrows, xstart-1:xstart-1+ncols] == 150)
+    assert np.all(init_dataset.group[:ystart - 1, :xstart - 1] == 0)
+    assert np.all(init_dataset.group[ystart - 1 + nrows:, xstart - 1 + ncols:] == 0)
+    assert np.all(init_dataset.group[ystart - 1:ystart - 1 + nrows, xstart - 1:xstart - 1 + ncols] == 150)
 
     init_dataset.group[:, :] = 20
     init_dataset.restore_group(0, 0)
@@ -454,7 +451,7 @@ def test_do_top_bottom_correction(setup_cube):
     side_smoothing_length = 11
     side_gain = 1.0
 
-    input_model = setup_cube('NIRCAM','NRCALONG', ngroups, nrows, ncols)
+    input_model = setup_cube('NIRCAM', 'NRCALONG', ngroups, nrows, ncols)
     input_model.meta.subarray.name = 'FULL'
     init_dataset = NIRDataset(input_model,
                               odd_even_columns,
@@ -469,48 +466,48 @@ def test_do_top_bottom_correction(setup_cube):
     bottom_odd_amps = [24, 25, 26, 27]
     dataval = [50, 51, 52, 53]
 
-    for i in np.arange(0, len(abounds)-1):
+    for i in np.arange(0, len(abounds) - 1):
 
         # bottom, odd
-        input_model.data[0, 0, :4, abounds[i]:abounds[i+1]:2] = bottom_even_amps[i]
+        input_model.data[0, 0, :4, abounds[i]:abounds[i + 1]:2] = bottom_even_amps[i]
 
         # bottom, even
-        input_model.data[0, 0, :4, abounds[i]+1:abounds[i+1]-1:2] = bottom_odd_amps[i]
+        input_model.data[0, 0, :4, abounds[i] + 1:abounds[i + 1] - 1:2] = bottom_odd_amps[i]
 
         # top, odd
-        input_model.data[0, 0, -4:, abounds[i]:abounds[i+1]:2] = top_even_amps[i]
+        input_model.data[0, 0, -4:, abounds[i]:abounds[i + 1]:2] = top_even_amps[i]
 
         # top, even
-        input_model.data[0, 0, -4:, abounds[i]+1:abounds[i+1]-1:2] = top_odd_amps[i]
+        input_model.data[0, 0, -4:, abounds[i] + 1:abounds[i + 1] - 1:2] = top_odd_amps[i]
 
         # data
-        input_model.data[0, 0, 4:-4, abounds[i]:abounds[i+1]] = dataval[i]
+        input_model.data[0, 0, 4:-4, abounds[i]:abounds[i + 1]] = dataval[i]
 
     refpix = init_dataset.get_refvalues(input_model.data[0, 0, :, :])
     init_dataset.do_top_bottom_correction(input_model.data[0, 0, :, :], refpix)
 
-    for i in np.arange(0, len(abounds)-1):
+    for i in np.arange(0, len(abounds) - 1):
         even_rmean = np.mean([bottom_even_amps[i], top_even_amps[i]])
         odd_rmean = np.mean([bottom_odd_amps[i], top_odd_amps[i]])
         rmean = np.mean([even_rmean, odd_rmean])
         np.testing.assert_almost_equal(
-            np.mean(input_model.data[0, 0, :4, abounds[i]:abounds[i+1]:2]),
+            np.mean(input_model.data[0, 0, :4, abounds[i]:abounds[i + 1]:2]),
             bottom_even_amps[i] - even_rmean,
             decimal=1)
         np.testing.assert_almost_equal(
-            np.mean(input_model.data[0, 0, :4, abounds[i]+1:abounds[i+1]:2]),
+            np.mean(input_model.data[0, 0, :4, abounds[i] + 1:abounds[i + 1]:2]),
             bottom_odd_amps[i] - odd_rmean,
             decimal=1)
         np.testing.assert_almost_equal(
-            np.mean(input_model.data[0, 0, -4:, abounds[i]:abounds[i+1]:2]),
+            np.mean(input_model.data[0, 0, -4:, abounds[i]:abounds[i + 1]:2]),
             top_even_amps[i] - even_rmean,
             decimal=1)
         np.testing.assert_almost_equal(
-            np.mean(input_model.data[0, 0, -4:, abounds[i]+1:abounds[i+1]:2]),
+            np.mean(input_model.data[0, 0, -4:, abounds[i] + 1:abounds[i + 1]:2]),
             top_odd_amps[i] - odd_rmean,
             decimal=1)
         np.testing.assert_almost_equal(
-            np.mean(input_model.data[0, 0, 4:-4, abounds[i]:abounds[i+1]]),
+            np.mean(input_model.data[0, 0, 4:-4, abounds[i]:abounds[i + 1]]),
             dataval[i] - rmean,
             decimal=1)
 
@@ -527,7 +524,7 @@ def test_do_top_bottom_correction_no_even_odd(setup_cube):
     side_smoothing_length = 11
     side_gain = 1.0
 
-    input_model = setup_cube('NIRCAM','NRCALONG', ngroups, nrows, ncols)
+    input_model = setup_cube('NIRCAM', 'NRCALONG', ngroups, nrows, ncols)
     input_model.meta.subarray.name = 'FULL'
     init_dataset = NIRDataset(input_model,
                               odd_even_columns,
@@ -540,32 +537,32 @@ def test_do_top_bottom_correction_no_even_odd(setup_cube):
     bottom_amps = [16, 17, 18, 19]
     dataval = [50, 51, 52, 53]
 
-    for i in np.arange(0, len(abounds)-1):
+    for i in np.arange(0, len(abounds) - 1):
 
         # bottom
-        input_model.data[0, 0, :4, abounds[i]:abounds[i+1]] = bottom_amps[i]
+        input_model.data[0, 0, :4, abounds[i]:abounds[i + 1]] = bottom_amps[i]
 
         # top
-        input_model.data[0, 0, -4:, abounds[i]:abounds[i+1]] = top_amps[i]
+        input_model.data[0, 0, -4:, abounds[i]:abounds[i + 1]] = top_amps[i]
 
         # data
-        input_model.data[0, 0, 4:-4, abounds[i]:abounds[i+1]] = dataval[i]
+        input_model.data[0, 0, 4:-4, abounds[i]:abounds[i + 1]] = dataval[i]
 
     refpix = init_dataset.get_refvalues(input_model.data[0, 0, :, :])
     init_dataset.do_top_bottom_correction(input_model.data[0, 0, :, :], refpix)
 
-    for i in np.arange(0, len(abounds)-1):
+    for i in np.arange(0, len(abounds) - 1):
         rmean = np.mean([top_amps[i], bottom_amps[i]])
         np.testing.assert_almost_equal(
-            np.mean(input_model.data[0, 0, :4, abounds[i]:abounds[i+1]]),
+            np.mean(input_model.data[0, 0, :4, abounds[i]:abounds[i + 1]]),
             bottom_amps[i] - rmean,
             decimal=1)
         np.testing.assert_almost_equal(
-            np.mean(input_model.data[0, 0, -4:, abounds[i]:abounds[i+1]]),
+            np.mean(input_model.data[0, 0, -4:, abounds[i]:abounds[i + 1]]),
             top_amps[i] - rmean,
             decimal=1)
         np.testing.assert_almost_equal(
-            np.mean(input_model.data[0, 0, 4:-4, abounds[i]:abounds[i+1]]),
+            np.mean(input_model.data[0, 0, 4:-4, abounds[i]:abounds[i + 1]]),
             dataval[i] - rmean,
             decimal=1)
 
@@ -579,7 +576,7 @@ def make_rampmodel(ngroups, ysize, xsize):
     # create JWST datamodel and set each frame equal to frame number
     dm_ramp = RampModel(csize)
 
-    for i in range(0, ngroups-1):
+    for i in range(0, ngroups - 1):
         dm_ramp.data[0, i, :, :] = i
 
     # populate header of data model

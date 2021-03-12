@@ -71,8 +71,8 @@ class NIRISSGrismDispersionType(JWSTTransformType):
 
     @classmethod
     def to_tree_transform(cls, model, ctx):
-        xll=[list(m) for m in model.xmodels]
-        yll=[list(m) for m in model.ymodels]
+        xll = [list(m) for m in model.xmodels]
+        yll = [list(m) for m in model.ymodels]
         node = {'orders': list(model.orders),
                 'xmodels': xll,
                 'ymodels': yll,
@@ -140,7 +140,7 @@ class CoordsType(JWSTTransformType):
     @classmethod
     def from_tree_transform(cls, node, ctx):
         model_type = node['model_type']
-        if model_type in ('to_dircos', 'unitless2directional') :
+        if model_type in ('to_dircos', 'unitless2directional'):
             return Unitless2DirCos()
         elif model_type in ('from_dircos', 'directional2unitless'):
             return DirCos2Unitless()

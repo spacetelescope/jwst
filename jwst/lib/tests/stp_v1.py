@@ -163,15 +163,15 @@ def add_wcs(filename):
 
 
 def m_v_to_siaf(ya, v3, v2, vidlparity):  # This is a 321 rotation
-    mat = np.array([[cos(v3)*cos(v2),
-                    cos(v3)*sin(v2),
-                    sin(v3)],
-                   [-cos(ya)*sin(v2)+sin(ya)*sin(v3)*cos(v2),
-                    cos(ya)*cos(v2)+sin(ya)*sin(v3)*sin(v2),
-                    -sin(ya)*cos(v3)],
-                   [-sin(ya)*sin(v2)-cos(ya)*sin(v3)*cos(v2),
-                    sin(ya)*cos(v2)-cos(ya)*sin(v3)*sin(v2),
-                    cos(ya)*cos(v3)]])
+    mat = np.array([[cos(v3) * cos(v2),
+                     cos(v3) * sin(v2),
+                     sin(v3)],
+                    [-cos(ya) * sin(v2) + sin(ya) * sin(v3) * cos(v2),
+                     cos(ya) * cos(v2) + sin(ya) * sin(v3) * sin(v2),
+                     -sin(ya) * cos(v3)],
+                    [-sin(ya) * sin(v2) - cos(ya) * sin(v3) * cos(v2),
+                     sin(ya) * cos(v2) - cos(ya) * sin(v3) * sin(v2),
+                     cos(ya) * cos(v3)]])
     pmat = np.array([[0., vidlparity, 0.],
                      [0., 0., 1.],
                      [1., 0., 0.]])
@@ -186,10 +186,11 @@ def vector_to_ra_dec(v):
         ra += 2. * np.pi
     return(ra, dec)
 
-R2D = 180./np.pi
-D2R = np.pi/180.
-A2R = D2R/3600.
-R2A = 3600.*R2D
+
+R2D = 180. / np.pi
+D2R = np.pi / 180.
+A2R = D2R / 3600.
+R2A = 3600. * R2D
 
 # Define the FGS1 to SI-FOV DCM,  Transpose of DCM in SE-20 section 5.8.4.2.
 
@@ -241,22 +242,22 @@ def calc_wcs(v2ref, v3ref, v3idlyang, vidlparity,
 
     q1, q2, q3, q4 = q
     m_eci2j = np.array(
-        [[1. - 2.*q2*q2 - 2.*q3*q3,
-            2.*(q1*q2 + q3*q4),
-            2.*(q3*q1 - q2*q4)],
-         [2.*(q1*q2 - q3*q4),
-            1. - 2.*q3*q3 - 2.*q1*q1,
-            2.*(q2*q3 + q1*q4)],
-         [2.*(q3*q1 + q2*q4),
-            2.*(q2*q3 - q1*q4),
-            1. - 2.*q1*q1 - 2.*q2*q2]])
+        [[1. - 2. * q2 * q2 - 2. * q3 * q3,
+            2. * (q1 * q2 + q3 * q4),
+            2. * (q3 * q1 - q2 * q4)],
+         [2. * (q1 * q2 - q3 * q4),
+            1. - 2. * q3 * q3 - 2. * q1 * q1,
+            2. * (q2 * q3 + q1 * q4)],
+         [2. * (q3 * q1 + q2 * q4),
+            2. * (q2 * q3 - q1 * q4),
+            1. - 2. * q1 * q1 - 2. * q2 * q2]])
 
     mj2fgs1 = np.array(j2fgs_matrix).reshape((3, 3)).transpose()
 
     m_sifov_fsm_delta = np.array(
-        [[1., fsmcorr[0]/22.01, fsmcorr[1]/21.68],
-         [-fsmcorr[0]/22.01, 1., 0.],
-         [-fsmcorr[1]/21.68, 0., 1.]])
+        [[1., fsmcorr[0] / 22.01, fsmcorr[1] / 21.68],
+         [-fsmcorr[0] / 22.01, 1., 0.],
+         [-fsmcorr[1] / 21.68, 0., 1.]])
 
     mpartial = np.dot(m_sifov_to_v,
                       np.dot(m_sifov_fsm_delta,
@@ -273,7 +274,7 @@ def calc_wcs(v2ref, v3ref, v3idlyang, vidlparity,
     v3_ra, v3_dec = vector_to_ra_dec(m_eci2v[2])
 
     # The V3PA @ V1 is given by
-    y = cos(v3_dec) * sin(v3_ra-v1_ra)
+    y = cos(v3_dec) * sin(v3_ra - v1_ra)
     x = sin(v3_dec) * cos(v1_dec) - \
         cos(v3_dec) * sin(v1_dec) * cos((v3_ra - v1_ra))
     V3PA = np.arctan2(y, x)
@@ -287,9 +288,9 @@ def calc_wcs(v2ref, v3ref, v3idlyang, vidlparity,
     siaf_x = 0. * A2R
     siaf_y = 0. * A2R
     refpos = np.array(
-               [siaf_x,
-                siaf_y,
-                np.sqrt(1.-siaf_x * siaf_x - siaf_y * siaf_y)])
+        [siaf_x,
+         siaf_y,
+         np.sqrt(1. - siaf_x * siaf_x - siaf_y * siaf_y)])
     msky = np.dot(m_eci2siaf.transpose(), refpos)
     vaper_ra, vaper_dec = vector_to_ra_dec(msky)
 
@@ -299,12 +300,12 @@ def calc_wcs(v2ref, v3ref, v3idlyang, vidlparity,
     # The Y axis of the aperture is given by
     vy_ra, vy_dec = vector_to_ra_dec(myeci)
     # The VyPA @ xref,yref is given by
-    y = cos(vy_dec) * sin(vy_ra-vaper_ra)
+    y = cos(vy_dec) * sin(vy_ra - vaper_ra)
     x = sin(vy_dec) * cos(vaper_dec) - \
         cos(vy_dec) * sin(vaper_dec) * cos((vy_ra - vaper_ra))
     vypa = np.arctan2(y, x)
-    wcsinfo = (vaper_ra*R2D, vaper_dec*R2D, vypa*R2D)
-    vinfo = (v1_ra*R2D, v1_dec*R2D, V3PA*R2D)
+    wcsinfo = (vaper_ra * R2D, vaper_dec * R2D, vypa * R2D)
+    vinfo = (v1_ra * R2D, v1_dec * R2D, V3PA * R2D)
     return wcsinfo, vinfo
 
 
@@ -359,10 +360,10 @@ def get_pointing(obstart, obsend, result_type='first'):
             )
         )
     params = {
-        'SA_ZATTEST1':  None,
-        'SA_ZATTEST2':  None,
-        'SA_ZATTEST3':  None,
-        'SA_ZATTEST4':  None,
+        'SA_ZATTEST1': None,
+        'SA_ZATTEST2': None,
+        'SA_ZATTEST3': None,
+        'SA_ZATTEST4': None,
         'SA_ZRFGS2J11': None,
         'SA_ZRFGS2J21': None,
         'SA_ZRFGS2J31': None,
@@ -372,8 +373,8 @@ def get_pointing(obstart, obsend, result_type='first'):
         'SA_ZRFGS2J13': None,
         'SA_ZRFGS2J23': None,
         'SA_ZRFGS2J33': None,
-        'SA_ZADUCMDX':  None,
-        'SA_ZADUCMDY':  None,
+        'SA_ZADUCMDX': None,
+        'SA_ZADUCMDY': None,
     }
     for param in params:
         try:
@@ -440,9 +441,9 @@ def get_pointing(obstart, obsend, result_type='first'):
 
     if not len(results):
         raise ValueError(
-                'No non-zero quanternion found '
-                'in the DB between MJD {} and {}'.format(obstart, obsend)
-            )
+            'No non-zero quanternion found '
+            'in the DB between MJD {} and {}'.format(obstart, obsend)
+        )
 
     if result_type == 'first':
         return results[0]
@@ -458,16 +459,16 @@ def get_pointing_stub(obstart, obsend):
     '''
     # The following values of q correspond to the engineering keyword values:
     # SA_ZATEST1, SA_ZATEST2, SA_ZATEST3, SA_ZATEST4
-    q = np.array([-0.36915286,  0.33763282,  0.05758533,  0.86395264])
+    q = np.array([-0.36915286, 0.33763282, 0.05758533, 0.86395264])
     # The following values of j2fgs_matrix correspond to the engineering
     #  keyword values of:
     # SA_ZRFGS2K11 SA_ZRFGS2K21 SA_ZRFGS2K31
     # SA_ZRFGS2K21 SA_ZRFGS2K22 SA_ZRFGS2K32
     # SA_ZRFGS2K31 SA_ZRFGS2K32 SA_ZRFGS2K33
     j2fgs_matrix = np.array(
-        [-1.00444000e-03,  3.38145836e-03, 9.99993778e-01,
+        [-1.00444000e-03, 3.38145836e-03, 9.99993778e-01,
          9.99999496e-01, -3.90000000e-14, 1.00444575e-03,
-         3.39649146e-06,  9.99994283e-01, -3.38145665e-03])
+         3.39649146e-06, 9.99994283e-01, -3.38145665e-03])
     # The following values of fsmcorr correspond to the engineering keywords:
     # SA_ZADUCMDX, SA_ZADUCMDY
     fsmcorr = np.array([0., 0.])
@@ -505,9 +506,9 @@ def compute_local_roll(pa_v3, ra_ref, dec_ref, v2_ref, v3_ref):
                   [sin(ra_ref) * cos(dec_ref),
                    cos(ra_ref) * cos(pa_v3) + sin(ra_ref) * sin(dec_ref) * sin(pa_v3),
                    cos(ra_ref) * sin(pa_v3) - sin(ra_ref) * sin(dec_ref) * cos(pa_v3)],
-                   [sin(dec_ref),
-                    -cos(dec_ref) * sin(pa_v3),
-                    cos(dec_ref) * cos(pa_v3)]
+                  [sin(dec_ref),
+                   -cos(dec_ref) * sin(pa_v3),
+                   cos(dec_ref) * cos(pa_v3)]
                   ])
 
     return _roll_angle_from_matrix(M, v2, v3)
@@ -516,7 +517,7 @@ def compute_local_roll(pa_v3, ra_ref, dec_ref, v2_ref, v3_ref):
 def _roll_angle_from_matrix(matrix, v2, v3):
     X = -(matrix[2, 0] * np.cos(v2) + matrix[2, 1] * np.sin(v2)) * np.sin(v3) + matrix[2, 2] * np.cos(v3)
     Y = (matrix[0, 0] * matrix[1, 2] - matrix[1, 0] * matrix[0, 2]) * np.cos(v2) + \
-      (matrix[0, 1] * matrix[1, 2] - matrix[1, 1] * matrix[0, 2]) * np.sin(v2)
+        (matrix[0, 1] * matrix[1, 2] - matrix[1, 1] * matrix[0, 2]) * np.sin(v2)
     new_roll = np.rad2deg(np.arctan2(Y, X))
     if new_roll < 0:
         new_roll += 360

@@ -2,6 +2,7 @@ import numpy as np
 
 from ..irs2_subtract_reference import decode_mask, clobber_ref
 
+
 def test_clobber_ref():
     data = np.ones((2, 3, 5, 3200), dtype=np.float32)
 

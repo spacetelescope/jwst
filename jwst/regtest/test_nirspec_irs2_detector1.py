@@ -35,10 +35,10 @@ def run_detector1pipeline(rtdata_module, jail):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ['dq_init', 'saturation', 'superbias',
-    'refpix', 'linearity', 'dark_current', 'jump', '0_ramp_fit', 'gain_scale',
-    'rate'])
+                                    'refpix', 'linearity', 'dark_current', 'jump', '0_ramp_fit', 'gain_scale',
+                                    'rate'])
 def test_nirspec_irs2_detector1(run_detector1pipeline, rtdata_module,
-    fitsdiff_default_kwargs, suffix):
+                                fitsdiff_default_kwargs, suffix):
     """
     Regression test of calwebb_detector1 pipeline performed on NIRSpec IRS2 data.
     """

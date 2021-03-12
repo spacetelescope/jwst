@@ -15,6 +15,7 @@ SCALEFACTOR = 2.
 from traps, compared with photon-generated charges.
 """
 
+
 def no_NaN(input_model, fill_value,
            zap_nan=False, zap_zero=False):
     """Replace NaNs and/or zeros with a fill value.
@@ -117,7 +118,6 @@ class DataSet():
                  flag_pers_cutoff, save_persistence,
                  trap_density_model, trappars_model,
                  persat_model):
-
         """Assign values to attributes.
 
         Parameters
@@ -173,7 +173,6 @@ class DataSet():
         self.groupgap = 0
         self.nresets = 0
 
-
     def do_all(self):
         """Execute all tasks for persistence correction
 
@@ -201,8 +200,7 @@ class DataSet():
 
         shape = self.output_obj.data.shape
         if len(shape) != 4:
-            log.warning("Don't understand shape %s of input data, "
-                        "skipping ...", str(shape))
+            log.warning(f"Don't understand shape {shape} of input data, skipping...")
             skipped = True
             return (self.output_obj, None, None, skipped)
 
@@ -231,8 +229,9 @@ class DataSet():
         if not self.traps_filled:
             have_traps_filled = False
             self.traps_filled = datamodels.TrapsFilledModel(
-                        data=np.zeros((nfamilies, det_ny, det_nx),
-                                      dtype=self.output_obj.data.dtype))
+                data=np.zeros((nfamilies, det_ny, det_nx),
+                              dtype=self.output_obj.data.dtype)
+            )
             self.traps_filled.meta.subarray.xstart = 1
             self.traps_filled.meta.subarray.ystart = 1
             self.traps_filled.meta.subarray.xsize = det_nx
@@ -380,7 +379,7 @@ class DataSet():
                                               integ, grp_slope, slope)
                 if is_subarray:
                     self.traps_filled.data[k, save_slice[0],
-                                              save_slice[1]] += filled
+                                           save_slice[1]] += filled
                 else:
                     self.traps_filled.data[k, :, :] += filled
 
@@ -399,7 +398,6 @@ class DataSet():
             self.output_pers.update(self.output_obj, only="PRIMARY")
 
         return (self.output_obj, self.traps_filled, self.output_pers, skipped)
-
 
     def get_slice(self, ref, sci):
         """Find the 2-D slice for a reference file.
@@ -442,13 +440,12 @@ class DataSet():
 
         # Check for errors in the slice indexes
         if (xstart < 0 or ystart < 0 or
-            xstop > ref.data.shape[-1] or ystop > ref.data.shape[-2]):
+                xstop > ref.data.shape[-1] or ystop > ref.data.shape[-2]):
             log.error("Science and reference file arrays not compatible")
             raise ValueError("Can't extract matching subarray from "
                              "reference data")
 
         return (slice(ystart, ystop), slice(xstart, xstop))
-
 
     def ref_matches_sci(self, ref, slc):
         """Test whether ref and sci cover the same area of the detector.
@@ -476,7 +473,6 @@ class DataSet():
             return True
         else:
             return False
-
 
     def get_subarray(self, ref, slc):
         """Extract a subarray from a reference file.
@@ -507,7 +503,6 @@ class DataSet():
 
         return refsub
 
-
     def get_parameters(self):
         """Read capture and decay parameters from a reference table.
 
@@ -533,7 +528,6 @@ class DataSet():
         par3 = data["decay_param"].copy()
 
         return (par0, par1, par2, par3)
-
 
     def compute_slope(self, integ):
         """Compute an estimate of the slope of the ramp for each pixel.
@@ -660,7 +654,6 @@ class DataSet():
 
         return (grp_slope, slope)
 
-
     def get_capture_param(self, par, k):
         """Extract capture parameters for the current trap family.
 
@@ -684,7 +677,6 @@ class DataSet():
 
         return (par0[k], par1[k], par2[k])
 
-
     def get_decay_param(self, par, k):
         """Extract decay parameter(s) for the current trap family.
 
@@ -707,7 +699,6 @@ class DataSet():
         par3 = par[3]
 
         return par3[k]
-
 
     def get_group_info(self, integ):
         """Get some metadata.
@@ -752,7 +743,6 @@ class DataSet():
                 self.nresets = 0
             else:
                 self.nresets = 1
-
 
     def predict_capture(self, capture_param_k, trap_density, integ,
                         grp_slope, slope):
@@ -823,8 +813,8 @@ class DataSet():
 
         # Traps that were filled due to the linear portion of the ramp.
         ramp_traps_filled = self.predict_ramp_capture(
-                                capture_param_k,
-                                trap_density, slope, dt)
+            capture_param_k,
+            trap_density, slope, dt)
 
         filled = ramp_traps_filled.copy()
         mask = (sat_count > 0)
@@ -832,21 +822,20 @@ class DataSet():
         if any_saturated:
             # Traps that were filled due to the saturated portion of the ramp.
             filled[mask] = self.predict_saturation_capture(
-                                capture_param_k,
-                                trap_density[mask],
-                                ramp_traps_filled[mask],
-                                sattime[mask], sat_count[mask], ngroups)
+                capture_param_k,
+                trap_density[mask],
+                ramp_traps_filled[mask],
+                sattime[mask], sat_count[mask], ngroups)
         del sat_count, sattime, ramp_traps_filled, mask
 
         # Traps that were filled due to cosmic-ray jumps.
         cr_filled = self.delta_fcn_capture(
-                                capture_param_k,
-                                trap_density, integ,
-                                grp_slope, ngroups, t_group)
+            capture_param_k,
+            trap_density, integ,
+            grp_slope, ngroups, t_group)
         filled += cr_filled
 
         return filled
-
 
     def predict_ramp_capture(self, capture_param_k, trap_density, slope, dt):
         """Compute the number of traps that will be filled in time dt.
@@ -896,7 +885,6 @@ class DataSet():
 
         traps_filled *= SCALEFACTOR
         return traps_filled
-
 
     def predict_saturation_capture(self, capture_param_k, trap_density,
                                    incoming_filled_traps,
@@ -971,7 +959,6 @@ class DataSet():
 
         return total_filled_traps
 
-
     def delta_fcn_capture(self, capture_param_k, trap_density, integ,
                           grp_slope, ngroups, t_group):
         """Compute number of traps filled due to cosmic-ray jumps.
@@ -1042,16 +1029,15 @@ class DataSet():
                 z_prev = z - 1
                 # jump is a 1-D array, just for the CRs in the current group.
                 jump = ((data[z, cr_flag[0], cr_flag[1]]
-                       - data[z_prev, cr_flag[0], cr_flag[1]])
+                         - data[z_prev, cr_flag[0], cr_flag[1]])
                         - grp_slope[cr_flag])
                 jump = np.where(jump < 0., 0., jump)
                 cr_filled[cr_flag] += trap_density[cr_flag] * jump \
-                                      * (par0 * (1. - math.exp(par1 * delta_t))
-                                         + par2)
+                    * (par0 * (1. - math.exp(par1 * delta_t))
+                       + par2)
 
         cr_filled *= SCALEFACTOR
         return cr_filled
-
 
     def compute_decay(self, traps_filled, decay_param, delta_t):
         """Compute the number of trap decays.

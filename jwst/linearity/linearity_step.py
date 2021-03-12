@@ -13,7 +13,6 @@ class LinearityStep(Step):
 
     reference_file_types = ['linearity']
 
-
     def process(self, input):
 
         # Open the input data model

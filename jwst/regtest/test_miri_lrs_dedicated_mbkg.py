@@ -31,8 +31,8 @@ def test_miri_lrs_dedicated_mbkg(run_pipeline, fitsdiff_default_kwargs):
 
     # Get the truth file
     rtdata.get_truth(os.path.join(
-                "truth/test_miri_lrs_dedicated_mbkg",
-                "miri_lrs_seq2_exp2_master_background.fits"))
+        "truth/test_miri_lrs_dedicated_mbkg",
+        "miri_lrs_seq2_exp2_master_background.fits"))
 
     # Compare the results
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)

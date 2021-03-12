@@ -99,6 +99,7 @@ class ReferenceCubeModel(ReferenceFileModel):
         self.dq = self.dq
         self.err = self.err
 
+
 class ReferenceQuadModel(ReferenceFileModel):
     """
     A data model for 4D reference images

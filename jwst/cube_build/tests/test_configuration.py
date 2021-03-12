@@ -98,6 +98,7 @@ subarray_nirspec = {
     'ystart': 1
 }
 
+
 @pytest.fixture(scope='function')
 def miri_ifushort_short():
     """ Generate a IFU image """
@@ -109,6 +110,7 @@ def miri_ifushort_short():
     input_model.meta.subarray._instance.update(subarray)
     input_model.meta.cal_step.assign_wcs = 'COMPLETE'
     return input_model
+
 
 @pytest.fixture(scope='function')
 def miri_full_coverage():
@@ -208,7 +210,7 @@ def test_calspec2_config(_jail, miri_ifushort_short):
     pars_input['filter'] = []
     pars_input['grating'] = []
     weighting = 'msm'
-    output_type = 'multi' #calspec 2 setup. Only 1 cube create from 2 chanels
+    output_type = 'multi'  # calspec 2 setup. Only 1 cube create from 2 chanels
     single = False
     par_filename = 'None'
     resol_filename = 'None'
@@ -226,7 +228,7 @@ def test_calspec2_config(_jail, miri_ifushort_short):
         'filter': pars_input['filter'],
         'weighting': weighting,
         'single': single,
-        'output_type':output_type}
+        'output_type': output_type}
 
     cubeinfo = cube_build.CubeData(
         input_models,
@@ -237,19 +239,19 @@ def test_calspec2_config(_jail, miri_ifushort_short):
 
     master_table = file_table.FileTable()
     this_instrument = master_table.set_file_table(
-        cubeinfo.input_models,cubeinfo.input_filenames)
+        cubeinfo.input_models, cubeinfo.input_filenames)
 
     assert this_instrument == 'MIRI'
 
     cubeinfo.instrument = this_instrument
     cubeinfo.determine_band_coverage(master_table)
-    assert cubeinfo.all_channel == ['1','2']
-    assert cubeinfo.all_subchannel == ['short','short']
+    assert cubeinfo.all_channel == ['1', '2']
+    assert cubeinfo.all_subchannel == ['short', 'short']
 
-    num_cubes,cube_pars = cubeinfo.number_cubes()
+    num_cubes, cube_pars = cubeinfo.number_cubes()
     assert num_cubes == 1
-    assert cube_pars['1']['par1'] == ['1','2']
-    assert cube_pars['1']['par2'] == ['short','short']
+    assert cube_pars['1']['par1'] == ['1', '2']
+    assert cube_pars['1']['par2'] == ['short', 'short']
 
 
 def test_calspec3_config_miri(_jail, miri_full_coverage):
@@ -279,7 +281,7 @@ def test_calspec3_config_miri(_jail, miri_full_coverage):
         'filter': pars_input['filter'],
         'weighting': weighting,
         'single': single,
-        'output_type':output_type}
+        'output_type': output_type}
 
     cubeinfo = cube_build.CubeData(
         miri_full_coverage,
@@ -290,16 +292,16 @@ def test_calspec3_config_miri(_jail, miri_full_coverage):
 
     master_table = file_table.FileTable()
     this_instrument = master_table.set_file_table(
-        cubeinfo.input_models,cubeinfo.input_filenames)
+        cubeinfo.input_models, cubeinfo.input_filenames)
 
     assert this_instrument == 'MIRI'
 
     cubeinfo.instrument = this_instrument
     cubeinfo.determine_band_coverage(master_table)
-    num_cubes,cube_pars = cubeinfo.number_cubes()
+    num_cubes, cube_pars = cubeinfo.number_cubes()
     assert num_cubes == 12
-    assert cubeinfo.all_channel == ['1','1', '1', '2','2', '2',
-                                      '3', '3', '3', '4', '4', '4']
+    assert cubeinfo.all_channel == ['1', '1', '1', '2', '2', '2',
+                                    '3', '3', '3', '4', '4', '4']
     assert cubeinfo.all_subchannel == ['short', 'medium', 'long',
                                        'short', 'medium', 'long',
                                        'short', 'medium', 'long',
@@ -361,7 +363,7 @@ def test_calspec3_config_miri_multi(_jail, miri_full_coverage):
         'filter': pars_input['filter'],
         'weighting': weighting,
         'single': single,
-        'output_type':output_type}
+        'output_type': output_type}
 
     cubeinfo = cube_build.CubeData(
         miri_full_coverage,
@@ -372,29 +374,29 @@ def test_calspec3_config_miri_multi(_jail, miri_full_coverage):
 
     master_table = file_table.FileTable()
     this_instrument = master_table.set_file_table(
-        cubeinfo.input_models,cubeinfo.input_filenames)
+        cubeinfo.input_models, cubeinfo.input_filenames)
 
     assert this_instrument == 'MIRI'
 
     cubeinfo.instrument = this_instrument
     cubeinfo.determine_band_coverage(master_table)
-    num_cubes,cube_pars = cubeinfo.number_cubes()
+    num_cubes, cube_pars = cubeinfo.number_cubes()
     assert num_cubes == 1
-    assert cubeinfo.all_channel == ['1','1', '1', '2','2', '2',
-                                      '3', '3', '3', '4', '4', '4']
+    assert cubeinfo.all_channel == ['1', '1', '1', '2', '2', '2',
+                                    '3', '3', '3', '4', '4', '4']
     assert cubeinfo.all_subchannel == ['short', 'medium', 'long',
                                        'short', 'medium', 'long',
                                        'short', 'medium', 'long',
                                        'short', 'medium', 'long']
 
-    assert cube_pars['1']['par1'] == ['1','1','1',
-                                      '2','2','2',
-                                      '3','3','3',
-                                      '4','4','4']
-    assert cube_pars['1']['par2'] == ['short','medium','long',
-                                      'short','medium','long',
-                                      'short','medium','long',
-                                      'short','medium','long']
+    assert cube_pars['1']['par1'] == ['1', '1', '1',
+                                      '2', '2', '2',
+                                      '3', '3', '3',
+                                      '4', '4', '4']
+    assert cube_pars['1']['par2'] == ['short', 'medium', 'long',
+                                      'short', 'medium', 'long',
+                                      'short', 'medium', 'long',
+                                      'short', 'medium', 'long']
 
 
 def test_calspec3_config_nirspec(_jail, nirspec_medium_coverage):
@@ -424,7 +426,7 @@ def test_calspec3_config_nirspec(_jail, nirspec_medium_coverage):
         'filter': pars_input['filter'],
         'weighting': weighting,
         'single': single,
-        'output_type':output_type}
+        'output_type': output_type}
 
     cubeinfo = cube_build.CubeData(
         nirspec_medium_coverage,
@@ -435,18 +437,18 @@ def test_calspec3_config_nirspec(_jail, nirspec_medium_coverage):
 
     master_table = file_table.FileTable()
     this_instrument = master_table.set_file_table(
-        cubeinfo.input_models,cubeinfo.input_filenames)
+        cubeinfo.input_models, cubeinfo.input_filenames)
 
     assert this_instrument == 'NIRSPEC'
 
     cubeinfo.instrument = this_instrument
     cubeinfo.determine_band_coverage(master_table)
-    num_cubes,cube_pars = cubeinfo.number_cubes()
+    num_cubes, cube_pars = cubeinfo.number_cubes()
 
     assert num_cubes == 2
 
-    assert cubeinfo.all_grating == ['g140m','g235m']
-    assert cubeinfo.all_filter == ['f100lp','f170lp']
+    assert cubeinfo.all_grating == ['g140m', 'g235m']
+    assert cubeinfo.all_filter == ['f100lp', 'f170lp']
 
     assert cube_pars['1']['par1'] == ['g140m']
     assert cube_pars['1']['par2'] == ['f100lp']
@@ -481,7 +483,7 @@ def test_calspec3_config_nirspec_multi(_jail, nirspec_medium_coverage):
         'filter': pars_input['filter'],
         'weighting': weighting,
         'single': single,
-        'output_type':output_type}
+        'output_type': output_type}
 
     cubeinfo = cube_build.CubeData(
         nirspec_medium_coverage,
@@ -492,17 +494,17 @@ def test_calspec3_config_nirspec_multi(_jail, nirspec_medium_coverage):
 
     master_table = file_table.FileTable()
     this_instrument = master_table.set_file_table(
-        cubeinfo.input_models,cubeinfo.input_filenames)
+        cubeinfo.input_models, cubeinfo.input_filenames)
 
     assert this_instrument == 'NIRSPEC'
 
     cubeinfo.instrument = this_instrument
     cubeinfo.determine_band_coverage(master_table)
-    num_cubes,cube_pars = cubeinfo.number_cubes()
+    num_cubes, cube_pars = cubeinfo.number_cubes()
 
     assert num_cubes == 1
-    assert cubeinfo.all_grating == ['g140m','g235m']
-    assert cubeinfo.all_filter == ['f100lp','f170lp']
+    assert cubeinfo.all_grating == ['g140m', 'g235m']
+    assert cubeinfo.all_filter == ['f100lp', 'f170lp']
 
     assert cube_pars['1']['par1'] == ['g140m', 'g235m']
     assert cube_pars['1']['par2'] == ['f100lp', 'f170lp']

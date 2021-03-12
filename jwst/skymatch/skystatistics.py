@@ -15,6 +15,7 @@ __all__ = ['SkyStats']
 __taskname__ = 'skystatistics'
 __author__ = 'Mihai Cara'
 
+
 class SkyStats():
     """
     This is a superclass build on top of
@@ -25,6 +26,7 @@ class SkyStats():
     computations on different data.
 
     """
+
     def __init__(self, skystat='mean', lower=None, upper=None,
                  nclip=5, lsig=4.0, usig=4.0, binwidth=0.1, **kwargs):
         """Initializes the SkyStats object.
@@ -84,10 +86,10 @@ cgi-bin/gethelp.cgi?gstatistics>`_
         self._kwargs['binwidth'] = binwidth
 
         self._skystat = {'mean': self._extract_mean,
-                          'mode': self._extract_mode,
-                          'median': self._extract_median,
-                          'midpt': self._extract_midpt
-                        }[skystat]
+                         'mode': self._extract_mode,
+                         'median': self._extract_median,
+                         'midpt': self._extract_midpt
+                         }[skystat]
 
     def _extract_mean(self, imstat):
         return imstat.mean

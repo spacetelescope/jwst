@@ -32,7 +32,7 @@ def background(tmpdir_factory):
     filename = tmpdir_factory.mktemp('background_input')
     filename = str(filename.join('background.fits'))
     with datamodels.IFUImageModel((10, 10)) as image:
-        image.data[:,:] = 10
+        image.data[:, :] = 10
         image.meta.instrument.name = 'NIRSPEC'
         image.meta.instrument.detector = 'NRS1'
         image.meta.instrument.filter = 'CLEAR'
@@ -59,7 +59,7 @@ def science_image():
     """Generate science image"""
 
     image = datamodels.IFUImageModel((10, 10))
-    image.data[:,:] = 100
+    image.data[:, :] = 100
     image.meta.instrument.name = 'NIRSPEC'
     image.meta.instrument.detector = 'NRS1'
     image.meta.instrument.filter = 'CLEAR'
@@ -95,7 +95,7 @@ def test_nirspec_gwa(_jail, background, science_image):
     result = BackgroundStep.call(
         science_image, bkg,
         config_file='config/background.cfg',
-        )
+    )
 
     test = science_image.data - back_image.data
     assert_allclose(result.data, test)
@@ -122,7 +122,7 @@ def test_nirspec_gwa_xtilt(_jail, background, science_image):
     result = BackgroundStep.call(
         science_image, bkg,
         config_file='config/background.cfg',
-        )
+    )
     assert type(result) is type(science_image)
     assert result.meta.cal_step.back_sub == 'SKIPPED'
     back_image.close()
@@ -146,11 +146,12 @@ def test_nirspec_gwa_ytitl(_jail, background, science_image):
     result = BackgroundStep.call(
         science_image, bkg,
         config_file='config/background.cfg',
-        )
+    )
     assert type(result) is type(science_image)
     assert result.meta.cal_step.back_sub == 'SKIPPED'
 
     back_image.close()
+
 
 @pytest.fixture(scope='module')
 def make_wfss_datamodel():
@@ -185,14 +186,14 @@ def make_wfss_datamodel():
         'start_time': 58668.72509857639,
         'zero_frame': False}
 
-    subarray = {'xsize':2048,
-                'ysize':2048,
-                'xstart':1,
-                'ystart':1}
+    subarray = {'xsize': 2048,
+                'ysize': 2048,
+                'xstart': 1,
+                'ystart': 1}
 
     instrument = {
-        'filter_position':1,
-        'pupil_position':1}
+        'filter_position': 1,
+        'pupil_position': 1}
 
     image = datamodels.ImageModel((2048, 2048))
 
@@ -206,8 +207,11 @@ def make_wfss_datamodel():
 
     return image
 
+
 filter_list = ['F250M', 'F277W', 'F335M', 'F356W', 'F460M',
-               'F356W', 'F410M', 'F430M', 'F444W'] #+ ['F480M', 'F322W2', 'F300M']
+               'F356W', 'F410M', 'F430M', 'F444W']  # + ['F480M', 'F322W2', 'F300M']
+
+
 @pytest.mark.parametrize("pupils", ['GRISMC', 'GRISMR'])
 @pytest.mark.parametrize("filters", filter_list)
 @pytest.mark.parametrize("detectors", ['NRCALONG', 'NRCBLONG'])
@@ -240,10 +244,10 @@ def test_nrc_wfss_background(filters, pupils, detectors, make_wfss_datamodel):
 
         # calculate backgrounds
         pipeline_data_mean = robust_mean(wcs_corrected.data[mask])
-        test_data_mean,_,_ = sigma_clipped_stats(wcs_corrected.data, sigma=2)
+        test_data_mean, _, _ = sigma_clipped_stats(wcs_corrected.data, sigma=2)
 
         pipeline_reference_mean = robust_mean(bkg_ref.data[mask])
-        test_reference_mean,_,_ = sigma_clipped_stats(bkg_ref.data, sigma=2)
+        test_reference_mean, _, _ = sigma_clipped_stats(bkg_ref.data, sigma=2)
 
         assert np.isclose([pipeline_data_mean], [test_data_mean], rtol=1e-3)
         assert np.isclose([pipeline_reference_mean], [test_reference_mean], rtol=1e-1)
@@ -274,10 +278,10 @@ def test_nis_wfss_background(filters, pupils, make_wfss_datamodel):
 
         # calculate backgrounds
         pipeline_data_mean = robust_mean(wcs_corrected.data[mask])
-        test_data_mean,_,_ = sigma_clipped_stats(wcs_corrected.data, sigma=2)
+        test_data_mean, _, _ = sigma_clipped_stats(wcs_corrected.data, sigma=2)
 
         pipeline_reference_mean = robust_mean(bkg_ref.data[mask])
-        test_reference_mean,_,_ = sigma_clipped_stats(bkg_ref.data, sigma=2)
+        test_reference_mean, _, _ = sigma_clipped_stats(bkg_ref.data, sigma=2)
 
         assert np.isclose([pipeline_data_mean], [test_data_mean], rtol=1e-3)
         assert np.isclose([pipeline_reference_mean], [test_reference_mean], rtol=1e-1)
@@ -296,7 +300,7 @@ def test_no_Nan():
     """Make sure that nan values are filled with fill value"""
     # Make data model
     model = datamodels.ImageModel()
-    data = np.random.rand(10,10)
+    data = np.random.rand(10, 10)
 
     # Randomly insert NaNs
     data.ravel()[np.random.choice(data.size, 10, replace=False)] = np.nan

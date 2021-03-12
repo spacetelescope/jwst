@@ -1012,8 +1012,8 @@ class SourceCatalog:
             * the largest / smallest aperture radii/EE,
               e.g., CI_70_30 = aper70_flux / aper30_flux
         """
-        fluxes = [(self.aperture_flux_colnames[2*j],
-                   self.aperture_flux_colnames[2*i]) for (i, j) in
+        fluxes = [(self.aperture_flux_colnames[2 * j],
+                   self.aperture_flux_colnames[2 * i]) for (i, j) in
                   self._ci_ee_indices]
         return [getattr(self, flux1).value / getattr(self, flux2).value
                 for flux1, flux2 in fluxes]
@@ -1221,7 +1221,7 @@ class SourceCatalog:
         """
         idx = self.n_aper - 1  # apcorr for the largest EE (largest radius)
         flux = (self.aperture_params['aperture_corrections'][idx] *
-                getattr(self, self.aperture_flux_colnames[idx*2]))
+                getattr(self, self.aperture_flux_colnames[idx * 2]))
         flux[~self.is_star] = np.nan
         return flux
 
@@ -1233,7 +1233,7 @@ class SourceCatalog:
         """
         idx = self.n_aper - 1  # apcorr for the largest EE (largest radius)
         flux_err = (self.aperture_params['aperture_corrections'][idx] *
-                    getattr(self, self.aperture_flux_colnames[idx*2 + 1]))
+                    getattr(self, self.aperture_flux_colnames[idx * 2 + 1]))
         flux_err[~self.is_star] = np.nan
         return flux_err
 

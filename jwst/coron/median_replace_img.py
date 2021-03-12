@@ -39,7 +39,7 @@ def median_fill_value(input_array, input_dq_array, bsize, bad_bitvalue, xc, yc):
     """
 
     # Set the half box size
-    hbox = int(bsize/2)
+    hbox = int(bsize / 2)
 
     # Extract the region of interest for the data
     try:

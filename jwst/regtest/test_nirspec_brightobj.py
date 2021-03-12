@@ -10,6 +10,7 @@ from jwst.lib.suffix import replace_suffix
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
+
 @pytest.fixture(scope="module")
 def run_tso_spec2_pipeline(jail, rtdata_module, request):
     """Run the calwebb_spec2 pipeline performed on NIRSpec
@@ -35,7 +36,7 @@ def run_tso_spec2_pipeline(jail, rtdata_module, request):
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("suffix",['assign_wcs', 'extract_2d', 'wavecorr', 'flat_field', 'photom', 'calints', 'x1dints'])
+@pytest.mark.parametrize("suffix", ['assign_wcs', 'extract_2d', 'wavecorr', 'flat_field', 'photom', 'calints', 'x1dints'])
 def test_nirspec_brightobj_spec2(run_tso_spec2_pipeline, fitsdiff_default_kwargs, suffix):
     """
         Regression test of calwebb_spec2 pipeline performed on NIRSpec
@@ -43,7 +44,7 @@ def test_nirspec_brightobj_spec2(run_tso_spec2_pipeline, fitsdiff_default_kwargs
     """
     rtdata = run_tso_spec2_pipeline
     output = replace_suffix(
-            os.path.splitext(os.path.basename(rtdata.input))[0], suffix) + '.fits'
+        os.path.splitext(os.path.basename(rtdata.input))[0], suffix) + '.fits'
     rtdata.output = output
 
     # Get the truth files

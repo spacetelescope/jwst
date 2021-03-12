@@ -9,7 +9,7 @@ from jwst.assign_wcs.pointing import create_fitswcs
 
 
 OUTLIER_DO_NOT_USE = np.bitwise_or(datamodels.dqflags.pixel["DO_NOT_USE"],
-                                    datamodels.dqflags.pixel["OUTLIER"])
+                                   datamodels.dqflags.pixel["OUTLIER"])
 
 
 @pytest.fixture
@@ -111,7 +111,6 @@ def we_three_sci():
 
     # Replace the FITS-type WCS with an Identity WCS
     sci1.meta.wcs = create_fitswcs(sci1)
-
 
     sci1.err = np.zeros(shape) + sigma
 

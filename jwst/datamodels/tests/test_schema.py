@@ -12,7 +12,7 @@ def test_data_array(tmp_path):
     data_array_schema = {
         "allOf": [
             mschema.load_schema("http://stsci.edu/schemas/jwst_datamodel/core.schema",
-                resolve_references=True),
+                                resolve_references=True),
             {
                 "type": "object",
                 "properties": {

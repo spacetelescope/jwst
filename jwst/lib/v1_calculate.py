@@ -42,7 +42,7 @@ def v1_calculate_from_models(sources, **calc_wcs_from_time_kwargs):
             obstimes, _, vinfos = stp.calc_wcs_over_time(
                 obsstart, obsend, siaf=siaf, **calc_wcs_from_time_kwargs
             )
-        sources = [source]*len(obstimes)
+        sources = [source] * len(obstimes)
         v1_dict['source'] += sources
         v1_dict['obstime'] += obstimes
         v1_dict['v1'] += vinfos
@@ -76,7 +76,7 @@ def v1_calculate_over_time(obsstart, obsend, **calc_wcs_from_time_kwargs):
         obsstart, obsend, siaf=siaf, **calc_wcs_from_time_kwargs
     )
     v1_dict = dict()
-    v1_dict['source'] = ['time range']*len(obstimes)
+    v1_dict['source'] = ['time range'] * len(obstimes)
     v1_dict['obstime'] = obstimes
     v1_dict['v1'] = vinfos
 

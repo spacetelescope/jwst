@@ -15,6 +15,7 @@ import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+
 def snr_image(target_model):
     """
     Compute the signal-to-noise ratio map for a KLIP-processed image. The SNR

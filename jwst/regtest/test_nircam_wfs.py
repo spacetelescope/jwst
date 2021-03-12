@@ -5,6 +5,7 @@ from astropy.io.fits.diff import FITSDiff
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
+
 @pytest.fixture(scope="module")
 def run_pipelines(jail, rtdata_module):
     """Run the calwebb_wfs-image2 and calwebb_wfs-image3 pipelines
@@ -44,7 +45,7 @@ def run_pipelines(jail, rtdata_module):
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("output",[
+@pytest.mark.parametrize("output", [
     "jw00632003002_03105_00001_nrca4_cal.fits",
     "jw00632003002_03105_00002_nrca4_cal.fits",
     "jw00632-o003_t001_nircam_f212n-wlp8-nrca4_wfscmb-05.fits",

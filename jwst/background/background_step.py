@@ -21,7 +21,6 @@ class BackgroundStep(Step):
     reference_file_types = ["wfssbkg", "wavelengthrange"]
 
     def process(self, input, bkg_list):
-
         """
         Subtract the background signal from target exposures by subtracting
         designated background images from them.
@@ -55,7 +54,7 @@ class BackgroundStep(Step):
 
                 # Do the background subtraction for WFSS/GRISM data
                 result = background_sub.subtract_wfss_bkg(
-                                input_model, bkg_name, wlrange_name)
+                    input_model, bkg_name, wlrange_name)
                 result.meta.cal_step.back_sub = 'COMPLETE'
             else:
                 # check if input data is NRS_IFU

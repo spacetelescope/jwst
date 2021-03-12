@@ -4,6 +4,7 @@ from ..stpipe import Step
 from .. import datamodels
 from . import subtract_images
 
+
 class SubtractImagesStep(Step):
     """
     SubtractImagesStep:  Subtract two exposures from one
@@ -14,7 +15,6 @@ class SubtractImagesStep(Step):
     """
 
     def process(self, input1, input2):
-
         """
         Subtract the background signal from a JWST data model by
         subtracting a background image from it.
