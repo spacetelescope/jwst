@@ -316,7 +316,7 @@ class CubeData():
                     log.info('Output IFUcube are constructed from all the data ')
                 if self.single:
                     log.info('Single = true, creating a set of single exposures mapped' +
-                          ' to output IFUCube coordinate system')
+                             ' to output IFUCube coordinate system')
                 if self.output_type == 'user':
                     log.info('The user has selected the type of IFU cube to make')
 
@@ -376,7 +376,7 @@ class CubeData():
                     log.info('Output IFUcube are constructed from all the data ')
                 if self.single:
                     log.info('Single = true, creating a set of single exposures' +
-                          ' mapped to output IFUCube coordinate system')
+                             ' mapped to output IFUCube coordinate system')
                 if self.output_type == 'user':
                     log.info('The user has selected the type of IFU cube to make')
 

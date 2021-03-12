@@ -359,7 +359,7 @@ def get_jwst_position(times, jwstpos, debug=False):
     else:
         centerearth_jwst = jwst_ephem_interp(times)
     return (barysun_centerearth_pos + centerearth_jwst), \
-            (centersun_centerearth_pos + centerearth_jwst)
+        (centersun_centerearth_pos + centerearth_jwst)
 
 
 def get_target_vector(targetcoord):

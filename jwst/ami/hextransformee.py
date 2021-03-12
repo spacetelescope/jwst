@@ -61,7 +61,7 @@ def gfunction(xi, eta, **kwargs):
         (np.sqrt(3) * etap + 3 * xip) *
         (np.exp(i * Pi * etap / np.sqrt(3)) - np.exp(i * Pi * xip))
     ) / \
-         (4 * Pi * Pi * (etap * etap * etap - 3 * etap * xip * xip))
+        (4 * Pi * Pi * (etap * etap * etap - 3 * etap * xip * xip))
 
     return g * affine2d.distortphase(xi, eta)
 
@@ -117,8 +117,8 @@ def hextransform(s=None, c=None, d=None, lam=None, pitch=None, affine2d=None):
 
     hex_complex = np.fromfunction(gfunction, s, d=d, c=c_adjust, lam=lam,
                                   pixel=pitch, affine2d=affine2d, minus=False) + \
-                  np.fromfunction(gfunction, s, d=d, c=c_adjust, lam=lam,
-                                  pixel=pitch, affine2d=affine2d, minus=True)
+        np.fromfunction(gfunction, s, d=d, c=c_adjust, lam=lam,
+                        pixel=pitch, affine2d=affine2d, minus=True)
 
     hex_complex[int(c[0]), int(c[1])] = (np.sqrt(3) / 2.0)
 

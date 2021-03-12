@@ -111,10 +111,10 @@ def generate_artifactory_json(request, artifactory_repos):
 
             # Generate an OKify JSON file
             pattern = os.path.join(rtdata.remote_results_path,
-                os.path.basename(rtdata.output))
+                                   os.path.basename(rtdata.output))
             okify_schema_pattern.append(pattern)
             okify_schema = generate_upload_schema(okify_schema_pattern,
-                f"{os.path.dirname(rtdata.truth_remote)}/")
+                                                  f"{os.path.dirname(rtdata.truth_remote)}/")
 
             jsonfile = os.path.join(cwd, f"{request.node.name}_okify.json")
             with open(jsonfile, 'w') as fd:
@@ -125,7 +125,7 @@ def generate_artifactory_json(request, artifactory_repos):
             upload_schema_pattern.append(os.path.abspath(jsonfile))
             upload_schema_pattern.append(path_asdf)
             upload_schema = generate_upload_schema(upload_schema_pattern,
-                rtdata.remote_results_path)
+                                                   rtdata.remote_results_path)
 
             jsonfile = os.path.join(cwd, f"{request.node.name}_results.json")
             with open(jsonfile, 'w') as fd:
@@ -183,7 +183,7 @@ def _rtdata_fixture_implementation(artifactory_repos, envopt, request):
     """Provides the RemoteResource class"""
     inputs_root, results_root = artifactory_repos
     rtdata = RegtestData(env=envopt, inputs_root=inputs_root,
-        results_root=results_root)
+                         results_root=results_root)
 
     yield rtdata
 
@@ -201,7 +201,7 @@ def rtdata_module(artifactory_repos, envopt, request, jail):
 @pytest.fixture
 def fitsdiff_default_kwargs():
     ignore_keywords = ['DATE', 'CAL_VER', 'CAL_VCS', 'CRDS_VER', 'CRDS_CTX',
-        'NAXIS1', 'TFORM*']
+                       'NAXIS1', 'TFORM*']
     return dict(
         ignore_hdus=['ASDF'],
         ignore_keywords=ignore_keywords,
@@ -253,12 +253,12 @@ def diff_astropy_tables():
                 if truth[col_name].dtype.kind == "f":
                     try:
                         assert_allclose(result[col_name], truth[col_name],
-                            rtol=rtol, atol=atol)
+                                        rtol=rtol, atol=atol)
                     except AssertionError as err:
                         diffs.append("\n----------------------------------\n"
-                            + f"Column '{col_name}' values do not "
-                            + f"match (within tolerances) \n{err}"
-                        )
+                                     + f"Column '{col_name}' values do not "
+                                     + f"match (within tolerances) \n{err}"
+                                     )
                 else:
                     try:
                         assert_equal(result[col_name], truth[col_name])

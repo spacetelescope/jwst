@@ -166,7 +166,7 @@ class CubeBlot():
             ydet = ydet.flatten()
             xdet = xdet.flatten()
             self.ycenter_grid, self.xcenter_grid = np.mgrid[0:ysize,
-                                                                0:xsize]
+                                                            0:xsize]
 
             xsize = xend - xstart + 1
             xcenter = np.arange(xsize) + xstart

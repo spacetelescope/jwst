@@ -68,7 +68,7 @@ def test_get_fits_wcs(tmpdir):
 def test_wcs_ref_models():
     filters = [{'name': 'F090W', 'row_offset': 1, 'column_offset': 1},
                {'name': 'F070W', 'row_offset': 2, 'column_offset': 2}
-              ]
+               ]
     with FilteroffsetModel(filters=filters, instrument='NIRCAM', strict_validation=True) as fo:
         fo.filters == filters
         with pytest.raises(ValueError, match="Model.meta is missing values for"
@@ -80,7 +80,7 @@ def test_wcs_ref_models():
                 'row_offset': 1, 'column_offset': 1},
                {'filter': 'F070W', 'pupil': 'GRISMC',
                 'row_offset': 2, 'column_offset': 2}
-              ]
+               ]
     with FilteroffsetModel(filters=filters, instrument='NIRCAM', strict_validation=True) as fo:
         fo.filters == filters
         fo.meta.description = "Filter offsets"

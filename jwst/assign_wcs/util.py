@@ -671,7 +671,7 @@ def _create_grism_bbox(input_model, mmag_extract=99.0,
                     ra = np.array([obj.sky_bbox_ll.ra.value, obj.sky_bbox_lr.ra.value,
                                    obj.sky_bbox_ul.ra.value, obj.sky_bbox_ur.ra.value])
                     dec = np.array([obj.sky_bbox_ll.dec.value, obj.sky_bbox_lr.dec.value,
-                                   obj.sky_bbox_ul.dec.value, obj.sky_bbox_ur.dec.value])
+                                    obj.sky_bbox_ul.dec.value, obj.sky_bbox_ur.dec.value])
                     x1, y1, _, _, _ = sky_to_grism(ra, dec, [lmin] * 4, [order] * 4)
                     x2, y2, _, _, _ = sky_to_grism(ra, dec, [lmax] * 4, [order] * 4)
 

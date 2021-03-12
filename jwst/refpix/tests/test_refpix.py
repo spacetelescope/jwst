@@ -345,11 +345,11 @@ def test_do_corrections_subarray_no_oddEven(setup_subarray_cube):
     input_model.pixeldq[:, :4] = dqflags.pixel['REFERENCE_PIXEL']
 
     init_dataset = create_dataset(input_model,
-                                odd_even_columns,
-                                use_side_ref_pixels,
-                                side_smoothing_length,
-                                side_gain,
-                                odd_even_rows)
+                                  odd_even_columns,
+                                  use_side_ref_pixels,
+                                  side_smoothing_length,
+                                  side_gain,
+                                  odd_even_rows)
 
     init_dataset.do_corrections()
 
@@ -387,11 +387,11 @@ def test_do_corrections_subarray(setup_subarray_cube):
     input_model.pixeldq[:, :4] = dqflags.pixel['REFERENCE_PIXEL']
 
     init_dataset = create_dataset(input_model,
-                                odd_even_columns,
-                                use_side_ref_pixels,
-                                side_smoothing_length,
-                                side_gain,
-                                odd_even_rows)
+                                  odd_even_columns,
+                                  use_side_ref_pixels,
+                                  side_smoothing_length,
+                                  side_gain,
+                                  odd_even_rows)
 
     init_dataset.do_corrections()
 

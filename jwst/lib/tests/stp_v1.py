@@ -164,14 +164,14 @@ def add_wcs(filename):
 
 def m_v_to_siaf(ya, v3, v2, vidlparity):  # This is a 321 rotation
     mat = np.array([[cos(v3) * cos(v2),
-                    cos(v3) * sin(v2),
-                    sin(v3)],
-                   [-cos(ya) * sin(v2) + sin(ya) * sin(v3) * cos(v2),
-                    cos(ya) * cos(v2) + sin(ya) * sin(v3) * sin(v2),
-                    -sin(ya) * cos(v3)],
-                   [-sin(ya) * sin(v2) - cos(ya) * sin(v3) * cos(v2),
-                    sin(ya) * cos(v2) - cos(ya) * sin(v3) * sin(v2),
-                    cos(ya) * cos(v3)]])
+                     cos(v3) * sin(v2),
+                     sin(v3)],
+                    [-cos(ya) * sin(v2) + sin(ya) * sin(v3) * cos(v2),
+                     cos(ya) * cos(v2) + sin(ya) * sin(v3) * sin(v2),
+                     -sin(ya) * cos(v3)],
+                    [-sin(ya) * sin(v2) - cos(ya) * sin(v3) * cos(v2),
+                     sin(ya) * cos(v2) - cos(ya) * sin(v3) * sin(v2),
+                     cos(ya) * cos(v3)]])
     pmat = np.array([[0., vidlparity, 0.],
                      [0., 0., 1.],
                      [1., 0., 0.]])
@@ -289,8 +289,8 @@ def calc_wcs(v2ref, v3ref, v3idlyang, vidlparity,
     siaf_y = 0. * A2R
     refpos = np.array(
         [siaf_x,
-                siaf_y,
-                np.sqrt(1. - siaf_x * siaf_x - siaf_y * siaf_y)])
+         siaf_y,
+         np.sqrt(1. - siaf_x * siaf_x - siaf_y * siaf_y)])
     msky = np.dot(m_eci2siaf.transpose(), refpos)
     vaper_ra, vaper_dec = vector_to_ra_dec(msky)
 
@@ -506,9 +506,9 @@ def compute_local_roll(pa_v3, ra_ref, dec_ref, v2_ref, v3_ref):
                   [sin(ra_ref) * cos(dec_ref),
                    cos(ra_ref) * cos(pa_v3) + sin(ra_ref) * sin(dec_ref) * sin(pa_v3),
                    cos(ra_ref) * sin(pa_v3) - sin(ra_ref) * sin(dec_ref) * cos(pa_v3)],
-                   [sin(dec_ref),
-                    -cos(dec_ref) * sin(pa_v3),
-                    cos(dec_ref) * cos(pa_v3)]
+                  [sin(dec_ref),
+                   -cos(dec_ref) * sin(pa_v3),
+                   cos(dec_ref) * cos(pa_v3)]
                   ])
 
     return _roll_angle_from_matrix(M, v2, v3)
@@ -517,7 +517,7 @@ def compute_local_roll(pa_v3, ra_ref, dec_ref, v2_ref, v3_ref):
 def _roll_angle_from_matrix(matrix, v2, v3):
     X = -(matrix[2, 0] * np.cos(v2) + matrix[2, 1] * np.sin(v2)) * np.sin(v3) + matrix[2, 2] * np.cos(v3)
     Y = (matrix[0, 0] * matrix[1, 2] - matrix[1, 0] * matrix[0, 2]) * np.cos(v2) + \
-      (matrix[0, 1] * matrix[1, 2] - matrix[1, 1] * matrix[0, 2]) * np.sin(v2)
+        (matrix[0, 1] * matrix[1, 2] - matrix[1, 1] * matrix[0, 2]) * np.sin(v2)
     new_roll = np.rad2deg(np.arctan2(Y, X))
     if new_roll < 0:
         new_roll += 360

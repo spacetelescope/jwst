@@ -41,8 +41,8 @@ def artifactory_copy(specfile, dry_run=False):
         jfrog_args.append("--dry-run")
 
     args = list(["jfrog", "rt", "cp"]
-        + jfrog_args
-        + [f"--spec={specfile}"])
+                + jfrog_args
+                + [f"--spec={specfile}"])
     subprocess.run(args, check=True)
 
 
@@ -58,9 +58,9 @@ def artifactory_get_breadcrumbs(build_number, job_name, suffix):
 
     # Retreive all the okify specfiles for failed tests.
     args = list(["jfrog", "rt", "dl"]
-        + [f"{ARTIFACTORY_REPO}/*/*{suffix}"]
-        + [f'--build={build_name}/{build_number}']
-        + ["--flat"])
+                + [f"{ARTIFACTORY_REPO}/*/*{suffix}"]
+                + [f'--build={build_name}/{build_number}']
+                + ["--flat"])
     subprocess.run(args, check=True, capture_output=True)
 
     return sorted(glob(f"*{suffix}"))
@@ -121,7 +121,7 @@ def main():
                         test_name = "test_name"
 
                 remote_results = os.path.join(remote_results_path,
-                    os.path.basename(output))
+                                              os.path.basename(output))
 
                 test_number = i + 1
 

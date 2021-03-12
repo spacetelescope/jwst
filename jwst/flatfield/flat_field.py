@@ -1573,7 +1573,7 @@ def interpolate_flat(image_flat, image_dq, image_err, image_wl, wl):
     p = np.where(zero_denom, 0., (wl - image_wl[k]) / denom)
     q = 1. - p
     flat_2d = q * image_flat[k, iypixel, ixpixel] + \
-              p * image_flat[k + 1, iypixel, ixpixel]
+        p * image_flat[k + 1, iypixel, ixpixel]
     if len(image_err.shape) == 2:
         flat_err = image_err.copy()
     else:
@@ -1997,9 +1997,9 @@ def flat_for_nirspec_slit(slit, f_flat_model, s_flat_model, d_flat_model,
 
     # Combine the three flat fields for the current subarray.
     flat_2d, flat_dq_2d, flat_err_2d = create_flat_field(wl,
-                    f_flat_model, s_flat_model, d_flat_model,
-                    xstart, xstop, ystart, ystop,
-                    exposure_type, dispaxis, slit.name, slit_nt)
+                                                         f_flat_model, s_flat_model, d_flat_model,
+                                                         xstart, xstop, ystart, ystop,
+                                                         exposure_type, dispaxis, slit.name, slit_nt)
 
     # Mask bad flatfield values
     mask = (flat_2d <= 0.)

@@ -17,7 +17,7 @@ log.addHandler(logging.NullHandler())
 phi_nb = np.array([0.028838669455909766, -0.061516214504502634,
                    0.12390958557781348, -0.020389361461019516,
                    0.016557347248600723, -0.03960017912525625,
-                  -0.04779984719154552])  # phi in waves
+                   -0.04779984719154552])  # phi in waves
 phi_nb = phi_nb * 4.3e-6  # phi_nb in m
 
 m = 1.0
@@ -307,7 +307,7 @@ class NrmModel:
         self.model = np.zeros((self.fov, self.fov, self.N * (self.N - 1) + 2))
         self.model_beam = np.zeros((self.over * self.fov, self.over * self.fov))
         self.fringes = np.zeros((self.N * (self.N - 1) + 1, self.over * self.fov,
-                                self.over * self.fov))
+                                 self.over * self.fov))
 
         for w, l in bandpass:  # w: weight, l: lambda (wavelength)
             # model_array returns the envelope and fringe model as a list of
@@ -319,9 +319,9 @@ class NrmModel:
                                               affine2d=self.affine2d)
 
             log.debug("Passed to model_array: psf_offset: {0}".
-                              format(psf_offset))
+                      format(psf_offset))
             log.debug("Primary beam in the model created: {0}".
-                              format(pb))
+                      format(pb))
             self.model_beam += pb
             self.fringes += ff
 

@@ -3322,9 +3322,8 @@ def do_extract1d(
         extract_ref_dict['ref_model'].close()
 
     if (extract_ref_dict is None
-        or 'need_to_set_to_complete' not in extract_ref_dict
-        or extract_ref_dict['need_to_set_to_complete']
-    ):
+            or 'need_to_set_to_complete' not in extract_ref_dict
+            or extract_ref_dict['need_to_set_to_complete']):
         output_model.meta.cal_step.extract_1d = 'COMPLETE'
 
     return output_model

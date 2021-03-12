@@ -308,7 +308,7 @@ def interpolate_onto_grid(wavelength_grid, wavelength_vector, pathloss_vector):
 
     pathloss_grid = (extended_pathloss_vector[lower_indices]
                      + fraction * (extended_pathloss_vector[upper_indices]
-                                 - extended_pathloss_vector[lower_indices]))
+                                   - extended_pathloss_vector[lower_indices]))
 
     return pathloss_grid
 

@@ -1493,9 +1493,9 @@ def test_apply_photom_1():
     # a file as input.
     output_model = ds.apply_photom(ftab, area_ref)
     assert(math.isclose(output_model.meta.photometry.pixelarea_steradians,
-           area_ster, rel_tol=1.e-7))
+                        area_ster, rel_tol=1.e-7))
     assert(math.isclose(output_model.meta.photometry.pixelarea_arcsecsq,
-           area_a2, rel_tol=1.e-7))
+                        area_a2, rel_tol=1.e-7))
 
 
 @pytest.mark.parametrize('srctype', ['POINT', 'EXTENDED'])

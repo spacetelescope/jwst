@@ -93,8 +93,8 @@ def ipc_correction(input_model, ipc_model):
     kernel = get_ipc_slice(input_model, ipc_model)
 
     log.debug("substrt1 = %d, subsize1 = %d, substrt2 = %d, subsize2 = %d" %
-          (input_model.meta.subarray.xstart, input_model.meta.subarray.xsize,
-           input_model.meta.subarray.ystart, input_model.meta.subarray.ysize))
+              (input_model.meta.subarray.xstart, input_model.meta.subarray.xsize,
+               input_model.meta.subarray.ystart, input_model.meta.subarray.ysize))
     log.debug('Number of reference pixels: bottom, top, left, right ='
               ' %d, %d, %d, %d' %
               (nref.bottom_rows, nref.top_rows,
@@ -277,12 +277,12 @@ def ipc_convolve(output_data, kernel, nref):
                 part = kernel[j, i] * temp
                 istart = kshape[1] - i - 1
                 output_data[yoff:yoff + ny, xoff:xoff + nx] += \
-                        part[jstart:jstart + ny, istart:istart + nx]
+                    part[jstart:jstart + ny, istart:istart + nx]
         # The middle pixel of the IPC kernel is expected to be the largest,
         # so add that last.
         part = kernel[middle_j, middle_i] * temp
         output_data[yoff:yoff + ny, xoff:xoff + nx] += \
-                part[middle_j:middle_j + ny, middle_i:middle_i + nx]
+            part[middle_j:middle_j + ny, middle_i:middle_i + nx]
 
     else:
         # 4-D IPC kernel.  Extract a subset of the kernel:  all of the
@@ -310,9 +310,9 @@ def ipc_convolve(output_data, kernel, nref):
                 # The slice of temp (a copy of the science data) includes
                 # a different offset for each loop.
                 part = k_temp[j, i, b_b:b_b + ny, l_b:l_b + nx] * \
-                       temp[jstart:jstart + ny, istart:istart + nx]
+                    temp[jstart:jstart + ny, istart:istart + nx]
                 output_data[yoff:yoff + ny, xoff:xoff + nx] += part
         # Add the product for the middle pixel last.
         part = k_temp[middle_j, middle_i, b_b:b_b + ny, l_b:l_b + nx] * \
-               temp[middle_j:middle_j + ny, middle_i:middle_i + nx]
+            temp[middle_j:middle_j + ny, middle_i:middle_i + nx]
         output_data[yoff:yoff + ny, xoff:xoff + nx] += part

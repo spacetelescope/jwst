@@ -477,7 +477,7 @@ def subtract_reference(data0, alpha, beta, irs2_mask,
 
     hnorm1 = ind_n + (refpix_r + 2) * ((ind_n + scipix_n // 2) // scipix_n)
     href1 = ind_ref + (scipix_n + 2) * (ind_ref // refpix_r) + \
-            scipix_n // 2 + 1
+        scipix_n // 2 + 1
 
     # Subtract the average over the ramp for each pixel.
     b_offset = data0.sum(axis=0, dtype=np.float64) / float(ngroups)
@@ -650,7 +650,7 @@ def subtract_reference(data0, alpha, beta, irs2_mask,
     two_indr_t = np.concatenate((indr_t, indr_t), axis=1).flatten()
     two_indr_t += (scipix_n // 2 + 1)     # [9 11 9 11 10 12 10 12]
     hs[:, scipix_n // 2 + 1 - refpix_r // 2:
-          scipix_n // 2 + 1 + refpix_r // 2 + refpix_r] = hs[:, two_indr_t]
+       scipix_n // 2 + 1 + refpix_r // 2 + refpix_r] = hs[:, two_indr_t]
     mask = (hs >= 0)
     hs = hs[mask]                       # hs is now 1-D
 
@@ -684,7 +684,7 @@ def subtract_reference(data0, alpha, beta, irs2_mask,
     if beta is not None:
         # IDL:  refout0 = reform(data0[*,*,*,0], sd[1] * sd[2], sd[3])
         refout0 = data0[0, :, :, :].reshape((shape_d[1],
-                                           shape_d[2] * shape_d[3]))
+                                             shape_d[2] * shape_d[3]))
         # IDL:  refout0 = fft(refout0, dim=1, /over)
         # Divide by the length of the axis to be consistent with IDL.
         refout0 = np.fft.fft(refout0, axis=1) / normalization

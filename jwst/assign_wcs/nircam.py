@@ -412,7 +412,7 @@ def wfss(input_model, reference_files):
         name = cframe.name
         cframe.name = name + 'spatial'
         spatial_and_spectral = cf.CompositeFrame([cframe, spec],
-                                                  name=name)
+                                                 name=name)
         imagepipe.append((spatial_and_spectral, trans))
 
     # Output frame is Celestial + Spectral

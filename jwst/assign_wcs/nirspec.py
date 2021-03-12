@@ -88,7 +88,7 @@ def imaging(input_model, reference_files):
     gwa_through = Const1D(-1) * Identity(1) & Const1D(-1) * Identity(1) & Identity(1)
 
     angles = [disperser['theta_x'], disperser['theta_y'],
-               disperser['theta_z'], disperser['tilt_y']]
+              disperser['theta_z'], disperser['tilt_y']]
     rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotation').inverse
     dircos2unitless = DirCos2Unitless(name='directional_cosines2unitless')
 
@@ -405,7 +405,7 @@ def get_open_slits(input_model, reference_files=None, slit_y_range=[-.55, .55]):
     else:
         lamp_mode = 'none'
     if exp_type in ["nrs_msaspec", "nrs_autoflat"] or ((exp_type in ["nrs_lamp", "nrs_autowave"]) and
-                                                        (lamp_mode == "msaspec")):
+                                                       (lamp_mode == "msaspec")):
         msa_metadata_file, msa_metadata_id, dither_point = get_msa_metadata(
             input_model, reference_files)
         slits = get_open_msa_slits(msa_metadata_file, msa_metadata_id, dither_point, slit_y_range)
@@ -1136,7 +1136,7 @@ def detector_to_gwa(reference_files, detector, disperser):
         camera = f.model
 
     angles = [disperser['theta_x'], disperser['theta_y'],
-               disperser['theta_z'], disperser['tilt_y']]
+              disperser['theta_z'], disperser['tilt_y']]
     rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotation')
     u2dircos = Unitless2DirCos(name='unitless2directional_cosines')
     # NIRSPEC 1- vs 0- based pixel coordinates issue #1781
@@ -1210,8 +1210,8 @@ def mask_slit(ymin=-.55, ymax=.55):
     less_than_ymin = Logical(condition='LT', compareto=ymin, value=np.nan)
 
     model = Mapping((0, 1, 2, 1)) | Identity(3) & (greater_than_ymax | less_than_ymin | models.Scale(0)) | \
-          Mapping((0, 1, 3, 2, 3)) | Identity(1) & Mapping((0,), n_inputs=2) + Mapping((1,)) & \
-          Mapping((0,), n_inputs=2) + Mapping((1,))
+        Mapping((0, 1, 3, 2, 3)) | Identity(1) & Mapping((0,), n_inputs=2) + Mapping((1,)) & \
+        Mapping((0,), n_inputs=2) + Mapping((1,))
     model.inverse = Identity(3)
     return model
 
@@ -1445,11 +1445,11 @@ def create_frames():
     det = cf.Frame2D(name='detector', axes_order=(0, 1))
     sca = cf.Frame2D(name='sca', axes_order=(0, 1))
     gwa = cf.Frame2D(name="gwa", axes_order=(0, 1), unit=(u.rad, u.rad),
-                      axes_names=('alpha_in', 'beta_in'))
+                     axes_names=('alpha_in', 'beta_in'))
     msa_spatial = cf.Frame2D(name='msa_spatial', axes_order=(0, 1), unit=(u.m, u.m),
                              axes_names=('x_msa', 'y_msa'))
     slit_spatial = cf.Frame2D(name='slit_spatial', axes_order=(0, 1), unit=("", ""),
-                             axes_names=('x_slit', 'y_slit'))
+                              axes_names=('x_slit', 'y_slit'))
     sky = cf.CelestialFrame(name='sky', axes_order=(0, 1), reference_frame=coord.ICRS())
     v2v3_spatial = cf.Frame2D(name='v2v3_spatial', axes_order=(0, 1),
                               unit=(u.arcsec, u.arcsec), axes_names=('v2', 'v3'))
@@ -1514,7 +1514,7 @@ def get_slit_location_model(slitdata):
     """
     num, xcenter, ycenter, xsize, ysize = slitdata
     model = models.Scale(xsize) & models.Scale(ysize) | \
-            models.Shift(xcenter) & models.Shift(ycenter)
+        models.Shift(xcenter) & models.Shift(ycenter)
     return model
 
 
@@ -1591,10 +1591,10 @@ def nrs_wcs_set_input(input_model, slit_name, wavelength_range=None):
     is_nirspec_ifu = is_nrs_ifu_lamp(input_model) or (exp_type.lower() == 'nrs_ifu')
     if is_nirspec_ifu:
         slit_wcs.set_transform('slit_frame', 'slicer',
-                           wcsobj.pipeline[3].transform.get_model(slit_name) & Identity(1))
+                               wcsobj.pipeline[3].transform.get_model(slit_name) & Identity(1))
     else:
         slit_wcs.set_transform('slit_frame', 'msa_frame',
-                           wcsobj.pipeline[3].transform.get_model(slit_name) & Identity(1))
+                               wcsobj.pipeline[3].transform.get_model(slit_name) & Identity(1))
     slit2detector = slit_wcs.get_transform('slit_frame', 'detector')
 
     if is_nirspec_ifu:
@@ -1659,7 +1659,7 @@ def validate_open_slits(input_model, open_slits, reference_files):
 
     msa = MSAModel(reference_files['msa'])
     col2det = collimator2gwa & Identity(1) | Mapping((3, 0, 1, 2)) | agreq | \
-            gwa2det | det2dms
+        gwa2det | det2dms
     for quadrant in range(1, 6):
         slits_in_quadrant = [s for s in open_slits if s.quadrant == quadrant]
         if any(slits_in_quadrant):
@@ -1739,11 +1739,11 @@ def _create_ifupost_transform(ifupost_slice):
     # expressed as
     # poly_independent(x, y) + poly_dependent(x, y) * lambda
     model_x = ((Mapping((0, 1), n_inputs=3) | polyx) +
-                       ((Mapping((0, 1), n_inputs=3) | polyx_dist) *
-                        (Mapping((2,)) | Identity(1))))
+               ((Mapping((0, 1), n_inputs=3) | polyx_dist) *
+                (Mapping((2,)) | Identity(1))))
     model_y = ((Mapping((0, 1), n_inputs=3) | polyy) +
-                       ((Mapping((0, 1), n_inputs=3) | polyy_dist) *
-                        (Mapping((2,)) | Identity(1))))
+               ((Mapping((0, 1), n_inputs=3) | polyy_dist) *
+                (Mapping((2,)) | Identity(1))))
 
     output2poly_mapping = Identity(2, name="{0}_outmap".format('ifupost'))
     output2poly_mapping.inverse = Mapping([0, 1, 2, 0, 1, 2])

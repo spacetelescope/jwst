@@ -60,15 +60,15 @@ def make_models(tmp_path):
 
 
 @pytest.mark.parametrize('which_file, skip_fits_update, expected_exp_type',
-    [
-        ('just_fits', None, 'FGS_DARK'),
-        ('just_fits', False, 'FGS_DARK'),
-        ('just_fits', True, 'FGS_DARK'),
-        ('model', None, 'FGS_DARK'),
-        ('model', False, 'FGS_DARK'),
-        ('model', True, 'NRC_IMAGE')
-    ]
-)
+                         [
+                             ('just_fits', None, 'FGS_DARK'),
+                             ('just_fits', False, 'FGS_DARK'),
+                             ('just_fits', True, 'FGS_DARK'),
+                             ('model', None, 'FGS_DARK'),
+                             ('model', False, 'FGS_DARK'),
+                             ('model', True, 'NRC_IMAGE')
+                         ]
+                         )
 @pytest.mark.parametrize('use_env', [False, True])
 def test_skip_fits_update(jail_environ,
                           use_env,

@@ -167,7 +167,7 @@ class Affine2d():
             coordinates in distorted space
         """
         trans_point = np.array((self.mx * point[0] + self.sx * point[1] + self.xo,
-                         self.my * point[1] + self.sy * point[0] + self.yo))
+                                self.my * point[1] + self.sy * point[0] + self.yo))
 
         return trans_point
 
@@ -246,7 +246,7 @@ class Affine2d():
             phase term divided by the determinant.
         """
         phase = np.exp(2 * np.pi * 1j / self.determinant *
-                      (self.phase_2vector[0] * u + self.phase_2vector[1] * v))
+                       (self.phase_2vector[0] * u + self.phase_2vector[1] * v))
 
         return phase
 
@@ -1206,7 +1206,7 @@ def img_median_replace(img_model, box_size):
     if (num_nan + num_dq_bad > 0):
         bad_locations = np.where(np.isnan(input_data) |
                                  np.equal(input_dq,
-                                 dqflags.pixel['DO_NOT_USE']))
+                                          dqflags.pixel['DO_NOT_USE']))
 
         # fill the bad pixel values with the median of the data in a box region
         for i_pos in range(len(bad_locations[0])):

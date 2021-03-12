@@ -14,9 +14,9 @@ def run_tso_spec2(jail, rtdata_module):
     # Run tso-spec2 pipeline on the first _rateints file, saving intermediate products
     rtdata.get_data("niriss/soss/jw00625023001_03101_00001-seg001_nis_rateints.fits")
     args = ["config/calwebb_tso-spec2.cfg", rtdata.input,
-        "--steps.flat_field.save_results=True",
-        "--steps.srctype.save_results=True",
-        ]
+            "--steps.flat_field.save_results=True",
+            "--steps.srctype.save_results=True",
+            ]
     Step.from_cmdline(args)
 
     # Run tso-spec2 pipeline on the second _rateints file, without saving or

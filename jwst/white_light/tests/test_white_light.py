@@ -29,13 +29,13 @@ def make_datamodel():
     npixels = np.zeros(200)
 
     data = [(i, j, k, l, m, n, o, p, q) for i, j, k, l, m, n, o, p, q in zip(wavelength, flux, error,
-                                                            surf_bright, sb_error, dq,
-                                                            background, berror, npixels)]
+                                                                             surf_bright, sb_error, dq,
+                                                                             background, berror, npixels)]
 
     spec_table = np.array(data, dtype=[('WAVELENGTH', 'f8'), ('FLUX', 'f8'),
-                                    ('ERROR', 'f8'), ('SURF_BRIGHT', 'f8'),
-        ('SB_ERROR', 'f8'), ('DQ', 'u4'), ('BACKGROUND', 'f8'),
-        ('BERROR', 'f8'), ('NPIXELS', 'f8')])
+                                       ('ERROR', 'f8'), ('SURF_BRIGHT', 'f8'),
+                                       ('SB_ERROR', 'f8'), ('DQ', 'u4'), ('BACKGROUND', 'f8'),
+                                       ('BERROR', 'f8'), ('NPIXELS', 'f8')])
 
     spectrum = datamodels.SpecModel()
     spectrum.spec_table = spec_table
@@ -93,7 +93,7 @@ def test_white_light_with_expstart(make_datamodel):
 
     dt_arr = np.zeros(1, dtype=np.float64)
     dt = (data.meta.exposure.group_time *
-         (data.meta.exposure.ngroups + 1))
+          (data.meta.exposure.ngroups + 1))
 
     # We know there is only one table, so set we are hardcoding.
     ntables_current = 1

@@ -197,11 +197,11 @@ def determine_slope(data_sect, input_var_sect,
         (intercept_sect, int_var_sect, slope_sect, slope_var_sect,
          cr_sect, cr_var_sect) = \
             compute_slope(data_sect, input_var_sect,
-                              gdq_sect, readnoise_sect, gain_sect,
-                              prev_fit, prev_slope_sect,
-                              frame_time, group_time, nframes_used,
-                              max_num_cr, saturated_flag, jump_flag,
-                              temp_use_extra_terms)
+                          gdq_sect, readnoise_sect, gain_sect,
+                          prev_fit, prev_slope_sect,
+                          frame_time, group_time, nframes_used,
+                          max_num_cr, saturated_flag, jump_flag,
+                          temp_use_extra_terms)
         iter += 1
         if iter == NUM_ITER_NO_EXTRA_TERMS:
             temp_use_extra_terms = use_extra_terms
@@ -281,7 +281,7 @@ def evaluate_fit(intercept_sect, slope_sect, cr_sect,
     ind_var = np.zeros(shape_3d, dtype=np.float64)
     M = round(group_time / frame_time)
     iv = np.arange(ngroups, dtype=np.float64) * group_time + \
-                 frame_time * (M + 1.) / 2.
+        frame_time * (M + 1.) / 2.
     iv = iv.reshape((ngroups, 1, 1))
     ind_var += iv
 
@@ -512,11 +512,11 @@ def compute_slope(data_sect, input_var_sect,
             saturated_data[k] = saturated[k][ncr_mask]
 
         (result, variances) = \
-                gls_fit(ramp_data,
-                        prev_fit_data, prev_slope_data,
-                        readnoise, gain,
-                        frame_time, group_time, nframes_used,
-                        num_cr, cr_flagged_2d, saturated_data)
+            gls_fit(ramp_data,
+                    prev_fit_data, prev_slope_data,
+                    readnoise, gain,
+                    frame_time, group_time, nframes_used,
+                    num_cr, cr_flagged_2d, saturated_data)
         # Copy the intercept, slope, and cosmic-ray amplitudes and their
         # variances to the arrays to be returned.
         # ncr_mask is a mask array that is True for each pixel that has the
@@ -538,10 +538,10 @@ def compute_slope(data_sect, input_var_sect,
 
 
 def gls_fit(ramp_data,
-             prev_fit_data, prev_slope_data,
-             readnoise, gain,
-             frame_time, group_time, nframes_used,
-             num_cr, cr_flagged_2d, saturated_data):
+            prev_fit_data, prev_slope_data,
+            readnoise, gain,
+            frame_time, group_time, nframes_used,
+            num_cr, cr_flagged_2d, saturated_data):
     """Generalized least squares linear fit.
 
     It is assumed that every input pixel has num_cr cosmic-ray hits
@@ -637,7 +637,7 @@ def gls_fit(ramp_data,
     x = np.zeros((nz, ngroups, 2 + num_cr), dtype=np.float64)
     x[:, :, 0] = 1.
     x[:, :, 1] = np.arange(ngroups, dtype=np.float64) * group_time + \
-                 frame_time * (M + 1.) / 2.
+        frame_time * (M + 1.) / 2.
 
     if num_cr > 0:
         sum_crs = cr_flagged_2d.cumsum(axis=0)

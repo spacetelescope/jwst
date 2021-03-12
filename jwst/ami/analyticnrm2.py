@@ -30,8 +30,8 @@ def jinc(x, y):
         2d jinc at the given coordinates, with NaNs replaced by pi/4.
     """
     R = (jinc.d / jinc.lam) * jinc.pitch *  \
-         np.sqrt((x - jinc.offx) * (x - jinc.offx) +
-         (y - jinc.offy) * (y - jinc.offy))
+        np.sqrt((x - jinc.offx) * (x - jinc.offx) +
+                (y - jinc.offy) * (y - jinc.offy))
 
     jinc_2d = leastsqnrm.replacenan(scipy.special.jv(1, np.pi * R) / (2.0 * R))
 
@@ -171,13 +171,13 @@ def harmonicfringes(**kwargs):
     ImCtr = image_center(fov, oversample, psf_offset)
 
     return (np.fromfunction(ffc, (fov * oversample, fov * oversample), c=ImCtr,
-                                                                   baseline=baseline,
-                                                                   lam=lam, pitch=cpitch,
-                                                                   affine2d=affine2d),
+                            baseline=baseline,
+                            lam=lam, pitch=cpitch,
+                            affine2d=affine2d),
             np.fromfunction(ffs, (fov * oversample, fov * oversample), c=ImCtr,
-                                                                   baseline=baseline,
-                                                                   lam=lam, pitch=cpitch,
-                                                                   affine2d=affine2d))
+                            baseline=baseline,
+                            lam=lam, pitch=cpitch,
+                            affine2d=affine2d))
 
 
 def phasor(kx, ky, hx, hy, lam, phi_m, pitch, affine2d):
@@ -214,8 +214,8 @@ def phasor(kx, ky, hx, hy, lam, phi_m, pitch, affine2d):
     """
     kxprime, kyprime = affine2d.distortFargs(kx, ky)
     return np.exp(-2 * np.pi * 1j *
-             ((pitch * hx * kxprime + pitch * hy * kyprime) / lam + phi_m / lam)) * \
-             affine2d.distortphase(kx, ky)
+                  ((pitch * hx * kxprime + pitch * hy * kyprime) / lam + phi_m / lam)) * \
+        affine2d.distortphase(kx, ky)
 
 
 def image_center(fov, oversample, psf_offset):
@@ -242,7 +242,7 @@ def image_center(fov, oversample, psf_offset):
     """
 
     offsets_from_center = np.array(utils.centerpoint((oversample * fov, oversample * fov))) + \
-                          np.array((psf_offset[1], psf_offset[0])) * oversample
+        np.array((psf_offset[1], psf_offset[0])) * oversample
 
     return offsets_from_center
 
@@ -356,7 +356,7 @@ def model_array(ctrs, lam, oversample, pitch, fov, d, psf_offset=(0, 0),
         asf_pb = asf_hex(pitch, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d)
     else:
         raise KeyError("Must provide a valid hole shape. Current supported shapes are"
-                " 'circ' and 'hex'.")
+                       " 'circ' and 'hex'.")
 
     primary_beam = (asf_pb * asf_pb.conj()).real
 

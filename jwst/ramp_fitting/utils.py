@@ -128,13 +128,13 @@ class OptRes:
                 self.yint_seg[num_int, ii_seg, rlo:rhi, :] = \
                     self.interc_2d[ii_seg, :].reshape(sect_shape)
                 self.slope_seg[num_int, ii_seg, rlo:rhi, :] = \
-                            self.slope_2d[ii_seg, :].reshape(sect_shape)
+                    self.slope_2d[ii_seg, :].reshape(sect_shape)
                 self.sigyint_seg[num_int, ii_seg, rlo:rhi, :] = \
-                              self.siginterc_2d[ii_seg, :].reshape(sect_shape)
+                    self.siginterc_2d[ii_seg, :].reshape(sect_shape)
                 self.sigslope_seg[num_int, ii_seg, rlo:rhi, :] = \
-                               self.sigslope_2d[ii_seg, :].reshape(sect_shape)
+                    self.sigslope_2d[ii_seg, :].reshape(sect_shape)
                 self.inv_var_seg[num_int, ii_seg, rlo:rhi, :] = \
-                              self.inv_var_2d[ii_seg, :].reshape(sect_shape)
+                    self.inv_var_2d[ii_seg, :].reshape(sect_shape)
                 self.firstf_int[num_int, rlo:rhi, :] = ff_sect
 
     def append_arr(self, num_seg, g_pix, intercept, slope, sig_intercept,
@@ -652,10 +652,10 @@ def calc_pedestal(num_int, slope_int, firstf_int, dq_first, nframes, groupgap,
     """
     ff_all = firstf_int[num_int, :, :].astype(np.float32)
     ped = ff_all - slope_int[num_int, ::] * \
-             (((nframes + 1.) / 2. + dropframes1) / (nframes + groupgap))
+        (((nframes + 1.) / 2. + dropframes1) / (nframes + groupgap))
 
     ped[np.bitwise_and(dq_first, dqflags.group['SATURATED']
-                      ) == dqflags.group['SATURATED']] = 0
+                       ) == dqflags.group['SATURATED']] = 0
     ped[np.isnan(ped)] = 0.
 
     return ped
@@ -1010,7 +1010,7 @@ def get_dataset_info(model):
     cubeshape = (nreads,) + imshape
 
     return nreads, npix, imshape, cubeshape, n_int, instrume, frame_time, \
-           ngroups, group_time
+        ngroups, group_time
 
 
 def get_more_info(model):  # pragma: no cover
@@ -1179,7 +1179,7 @@ def remove_bad_singles(segs_beg_3):
 
     # get initial number of ramps having single-group segments
     tot_num_single_grp_ramps = len(np.where((segs_beg_3 == 1) &
-                                  (segs_beg_3.sum(axis=0) > 1))[0])
+                                            (segs_beg_3.sum(axis=0) > 1))[0])
 
     while(tot_num_single_grp_ramps > 0):
         # until there are no more single-group segments
@@ -1210,7 +1210,7 @@ def remove_bad_singles(segs_beg_3):
                 del wh_y, wh_x
 
                 tot_num_single_grp_ramps = len(np.where((segs_beg_3 == 1) &
-                           (segs_beg_3.sum(axis=0) > 1))[0])
+                                                        (segs_beg_3.sum(axis=0) > 1))[0])
 
     return segs_beg_3
 
@@ -1314,10 +1314,10 @@ def do_all_sat(pixeldq, groupdq, imshape, n_int, save_opt):
     pixeldq = np.bitwise_or(pixeldq, dqflags.group['DO_NOT_USE'])
 
     new_model = datamodels.ImageModel(data=np.zeros(imshape, dtype=np.float32),
-        dq=pixeldq,
-        var_poisson=np.zeros(imshape, dtype=np.float32),
-        var_rnoise=np.zeros(imshape, dtype=np.float32),
-        err=np.zeros(imshape, dtype=np.float32))
+                                      dq=pixeldq,
+                                      var_poisson=np.zeros(imshape, dtype=np.float32),
+                                      var_rnoise=np.zeros(imshape, dtype=np.float32),
+                                      err=np.zeros(imshape, dtype=np.float32))
 
     # Create model for the integration-specific output. The 3D group DQ created
     #   is based on the 4D group DQ of the model, and all pixels in all
@@ -1329,7 +1329,7 @@ def do_all_sat(pixeldq, groupdq, imshape, n_int, save_opt):
 
         for ii in range(n_int):  # add SAT flag to existing groupdq in each slice
             groupdq_3d[ii, :, :] = np.bitwise_or.reduce(groupdq[ii, :, :, :],
-                                                       axis=0)
+                                                        axis=0)
 
         groupdq_3d = np.bitwise_or(groupdq_3d, dqflags.group['DO_NOT_USE'])
         int_model = datamodels.CubeModel(

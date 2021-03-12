@@ -235,7 +235,7 @@ class CubeSkyMatchStep(Step):
 
         # convert to RA/DEC:
         ra, dec, lam = model2d.meta.wcs(x.astype(dtype=float),
-                                   y.astype(dtype=float))
+                                        y.astype(dtype=float))
 
         # some pixels may be NaNs and so throw them out:
         m = np.logical_and(

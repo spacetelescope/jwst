@@ -80,10 +80,10 @@ class FringeFitter:
         self.scidata = self.instrument_data.read_data_model(input_model)
 
         nrm = lg_model.NrmModel(mask=self.instrument_data.mask,
-                    pixscale=self.instrument_data.pscale_rad,
-                    holeshape=self.instrument_data.holeshape,
-                    affine2d=self.instrument_data.affine2d,
-                    over=self.oversample)
+                                pixscale=self.instrument_data.pscale_rad,
+                                holeshape=self.instrument_data.holeshape,
+                                affine2d=self.instrument_data.affine2d,
+                                over=self.oversample)
 
         nrm.bandpass = self.instrument_data.wls[0]
 
@@ -97,10 +97,10 @@ class FringeFitter:
 
         if self.instrument_data.arrname == "NIRC2_9NRM":
             self.ctrd = utils.center_imagepeak(self.scidata[0, :, :],
-                        r=(self.npix - 1) // 2 - 2, cntrimg=False)
+                                               r=(self.npix - 1) // 2 - 2, cntrimg=False)
         elif self.instrument_data.arrname == "gpi_g10s40":
             self.ctrd = utils.center_imagepeak(self.scidata[0, :, :],
-                        r=(self.npix - 1) // 2 - 2, cntrimg=True)
+                                               r=(self.npix - 1) // 2 - 2, cntrimg=True)
         else:
             self.ctrd = utils.center_imagepeak(self.scidata[:, :])
 
@@ -119,9 +119,9 @@ class FringeFitter:
             nrm.psf_offset = self.psf_offset_ff  # user-provided psf_offsetoffsets from array center are here.
 
         nrm.make_model(fov=self.ctrd.shape[0], bandpass=nrm.bandpass,
-                   over=self.oversample,
-                   psf_offset=nrm.psf_offset,
-                   pixscale=nrm.pixel)
+                       over=self.oversample,
+                       psf_offset=nrm.psf_offset,
+                       pixscale=nrm.pixel)
 
         nrm.fit_image(self.ctrd, modelin=nrm.model, psf_offset=nrm.psf_offset)
 

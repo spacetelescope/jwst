@@ -17,12 +17,12 @@ um = 1.0e-6
 
 class NIRISS:
     def __init__(self, filt,
-                       objname="obj",
-                       src="A0V",
-                       chooseholes=None,
-                       affine2d=None,
-                       bandpass=None,
-                       **kwargs):
+                 objname="obj",
+                 src="A0V",
+                 chooseholes=None,
+                 affine2d=None,
+                 bandpass=None,
+                 **kwargs):
         """
         Short Summary
         ------------

@@ -122,7 +122,7 @@ class CubeBuildStep (Step):
             self.zdebug = self.zdebug - 1
             self.debug_file = open('cube_spaxel_info.results', 'w')
             self.debug_file.write('Writing debug information for spaxel %i %i %i' %
-                                    (self.xdebug, self.ydebug, self.zdebug) + '\n')
+                                  (self.xdebug, self.ydebug, self.zdebug) + '\n')
 
         # valid coord_system:
         # 1. skyalign (ra dec) (aka world)

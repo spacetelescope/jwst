@@ -47,14 +47,14 @@ def assign_moving_target_wcs(input_model):
         if isinstance(model, datamodels.MultiSlitModel):
             for ind, slit in enumerate(model.slits):
                 new_wcs = add_mt_frame(slit.meta.wcs,
-                                          mt_avra, mt_avdec,
-                                          slit.meta.wcsinfo.mt_ra, slit.meta.wcsinfo.mt_dec)
+                                       mt_avra, mt_avdec,
+                                       slit.meta.wcsinfo.mt_ra, slit.meta.wcsinfo.mt_dec)
                 del model.slits[ind].meta.wcs
                 model.slits[ind].meta.wcs = new_wcs
         else:
 
             new_wcs = add_mt_frame(model.meta.wcs, mt_avra, mt_avdec,
-                                      model.meta.wcsinfo.mt_ra, model.meta.wcsinfo.mt_dec)
+                                   model.meta.wcsinfo.mt_ra, model.meta.wcsinfo.mt_dec)
             del model.meta.wcs
             model.meta.wcs = new_wcs
 

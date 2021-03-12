@@ -540,7 +540,7 @@ def extract_ifu(input_model, source_type, extract_params):
             maskclip = np.logical_or(bkg_data < low, bkg_data > high)
 
             bkg_table = aperture_photometry(bkg_data, aperture, mask=maskclip,
-                                             method=method, subpixels=subpixels)
+                                            method=method, subpixels=subpixels)
             background[k] = float(bkg_table['aperture_sum'][0])
             phot_table = aperture_photometry(temp_weightmap, aperture, mask=maskclip,
                                              method=method, subpixels=subpixels)

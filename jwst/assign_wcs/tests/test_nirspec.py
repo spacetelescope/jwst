@@ -250,8 +250,8 @@ def test_correct_tilt():
     corrected_theta_y = 0.00018649006677464447
     # corrected_theta_z = -0.2523269848788889
     disp.gwa_tiltx = {'temperatures': [39.58],
-                     'tilt_model': astmodels.Polynomial1D(1, c0=3307.85402614,
-                      c1=-9182.87552123),
+                      'tilt_model': astmodels.Polynomial1D(1, c0=3307.85402614,
+                                                           c1=-9182.87552123),
                       'unit': 'arcsec',
                       'zeroreadings': [0.35972327]}
     disp.gwa_tilty = {'temperatures': [39.58],

@@ -209,8 +209,8 @@ def primarybeam(kx, ky):
         envelope intensity for circular holes & monochromatic light
     """
     R = (primarybeam.d / primarybeam.lam) * primarybeam.pitch *  \
-            np.sqrt((kx - primarybeam.offx) * (kx - primarybeam.offx) +
-            (ky - primarybeam.offy) * (ky - primarybeam.offy))
+        np.sqrt((kx - primarybeam.offx) * (kx - primarybeam.offx) +
+                (ky - primarybeam.offy) * (ky - primarybeam.offy))
     pb = replacenan(jv(1, np.pi * R) / (2.0 * R))
 
     pb = pb.transpose()
@@ -236,7 +236,7 @@ def hexpb():
         primary beam for hexagonal holes
     """
     pb = hexee.hex_eeAG(s=hexpb.size, c=(hexpb.offx, hexpb.offy),
-            d=hexpb.d, lam=hexpb.lam, pitch=hexpb.pitch)
+                        d=hexpb.d, lam=hexpb.lam, pitch=hexpb.pitch)
 
     return pb * pb.conj()
 
@@ -258,8 +258,8 @@ def ffc(kx, ky):
         cosine terms of analytic model
     """
     cos_array = 2 * np.cos(2 * np.pi * ffc.pitch *
-                   ((kx - ffc.offx) * (ffc.ri[0] - ffc.rj[0]) +
-                   (ky - ffc.offy) * (ffc.ri[1] - ffc.rj[1])) / ffc.lam)
+                           ((kx - ffc.offx) * (ffc.ri[0] - ffc.rj[0]) +
+                            (ky - ffc.offy) * (ffc.ri[1] - ffc.rj[1])) / ffc.lam)
     return cos_array
 
 
@@ -280,8 +280,8 @@ def ffs(kx, ky):
         sine terms of analytic model
     """
     sin_array = -2 * np.sin(2 * np.pi * ffs.pitch *
-                     ((kx - ffs.offx) * (ffs.ri[0] - ffs.rj[0]) +
-                     (ky - ffs.offy) * (ffs.ri[1] - ffs.rj[1])) / ffs.lam)
+                            ((kx - ffs.offx) * (ffs.ri[0] - ffs.rj[0]) +
+                             (ky - ffs.offy) * (ffs.ri[1] - ffs.rj[1])) / ffs.lam)
 
     return sin_array
 
@@ -444,7 +444,7 @@ def weighted_operations(img, model, weights):
     clist = np.delete(clist, nanlist)
     # A
     flatmodel_nan = model.reshape(np.shape(model)[0] * np.shape(model)[1],
-                    np.shape(model)[2])
+                                  np.shape(model)[2])
     flatmodel = np.zeros((len(flatimg), np.shape(model)[2]))
 
     for fringe in range(np.shape(model)[2]):
@@ -515,7 +515,7 @@ def matrix_operations(img, model, flux=None, linfit=False):
 
     # A
     flatmodel_nan = model.reshape(np.shape(model)[0] * np.shape(model)[1],
-                          np.shape(model)[2])
+                                  np.shape(model)[2])
 
     flatmodel = np.zeros((len(flatimg), np.shape(model)[2]))
 
@@ -654,7 +654,7 @@ def tan2visibilities(coeffs):
         amp[q] = np.sqrt(coeffs[2 * q + 2]**2 + coeffs[2 * q + 1]**2)
 
     log.debug(f"tan2visibilities: shape coeffs:{np.shape(coeffs)} "
-        f"shape delta:{np.shape(delta)}")
+              f"shape delta:{np.shape(delta)}")
 
     # returns fringe amplitude & phase
     return amp, delta
@@ -793,11 +793,11 @@ def closurephase(deltap, n=7):
     # p is a triangular matrix set up to calculate closure phases
     if n == 7:
         p = np.array([deltap[:6], deltap[6:11], deltap[11:15],
-                deltap[15:18], deltap[18:20], deltap[20:]], dtype=object)
+                      deltap[15:18], deltap[18:20], deltap[20:]], dtype=object)
     elif n == 10:
         p = np.array([deltap[:9], deltap[9:17], deltap[17:24],
-                deltap[24:30], deltap[30:35], deltap[35:39],
-                deltap[39:42], deltap[42:44], deltap[44:]], dtype=object)
+                      deltap[24:30], deltap[30:35], deltap[35:39],
+                      deltap[39:42], deltap[42:44], deltap[44:]], dtype=object)
     else:
         log.critical('invalid hole number: %s', n)
 
@@ -843,7 +843,7 @@ def closure_amplitudes(amps, n=7):
                     cas[nn + ll] = arr[ii, jj + ii + 1] \
                         * arr[ll + ii + jj + kk + 3, kk + jj + ii + 2] \
                         / (arr[ii, kk + ii + jj + 2] *
-                              arr[jj + ii + 1, ll + ii + jj + kk + 3])
+                           arr[jj + ii + 1, ll + ii + jj + kk + 3])
                 nn = nn + ll + 1
 
     return cas

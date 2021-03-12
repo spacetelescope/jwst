@@ -33,9 +33,9 @@ def test_data_correction(setup_inputs):
     good_pix = np.where(np.isfinite(input_model.data))
 
     assert (output_model.data[good_pix] ==
-        (input_model.data * FRINGE_CONSTANT)[good_pix]).all()
+            (input_model.data * FRINGE_CONSTANT)[good_pix]).all()
     assert (output_model.err[good_pix] ==
-        (input_model.err * FRINGE_CONSTANT)[good_pix]).all()
+            (input_model.err * FRINGE_CONSTANT)[good_pix]).all()
 
     # Check that correction was not done on pixel with NaN values for both SCI
     #     and ERR arrays (i.e. these pixels have not been corrected)

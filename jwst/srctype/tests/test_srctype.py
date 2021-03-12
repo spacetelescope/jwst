@@ -192,7 +192,7 @@ def test_nrs_fixedslit():
 
 
 @pytest.mark.parametrize("exptype", ["NRS_BRIGHTOBJ", "NRC_TSGRISM", "NIS_SOSS",
-    "MIR_LRS-SLITLESS"])
+                                     "MIR_LRS-SLITLESS"])
 def test_tso_types(exptype):
     """ Test for when visit is tso.
     """

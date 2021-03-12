@@ -379,7 +379,7 @@ class DataSet():
                                               integ, grp_slope, slope)
                 if is_subarray:
                     self.traps_filled.data[k, save_slice[0],
-                                              save_slice[1]] += filled
+                                           save_slice[1]] += filled
                 else:
                     self.traps_filled.data[k, :, :] += filled
 
@@ -1029,12 +1029,12 @@ class DataSet():
                 z_prev = z - 1
                 # jump is a 1-D array, just for the CRs in the current group.
                 jump = ((data[z, cr_flag[0], cr_flag[1]]
-                       - data[z_prev, cr_flag[0], cr_flag[1]])
+                         - data[z_prev, cr_flag[0], cr_flag[1]])
                         - grp_slope[cr_flag])
                 jump = np.where(jump < 0., 0., jump)
                 cr_filled[cr_flag] += trap_density[cr_flag] * jump \
-                                      * (par0 * (1. - math.exp(par1 * delta_t))
-                                         + par2)
+                    * (par0 * (1. - math.exp(par1 * delta_t))
+                       + par2)
 
         cr_filled *= SCALEFACTOR
         return cr_filled

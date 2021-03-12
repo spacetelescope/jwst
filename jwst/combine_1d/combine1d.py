@@ -509,7 +509,7 @@ def check_exptime(exptime_key):
         exptime_key = "integration_time"
         log.info("Using integration time as the weight.")
     elif exptime_lwr.startswith("exposure") or \
-         exptime_lwr == "effexptm":
+            exptime_lwr == "effexptm":
         exptime_key = "exposure_time"
         log.info("Using exposure time as the weight.")
     elif exptime_lwr == "unit_weight" or exptime_lwr == "unit weight":

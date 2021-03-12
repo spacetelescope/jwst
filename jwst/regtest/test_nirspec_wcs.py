@@ -51,12 +51,12 @@ def test_nirspec_mos_wcs(rtdata):
 
 
 @pytest.mark.parametrize("input_file",
-    [
-        'jw00011001001_01120_00001_nrs1_rate.fits',
-        'jw00011001001_01120_00002_nrs1_rate.fits',
-        'jw00011001001_01120_00003_nrs2_rate.fits',
-    ],
-    ids=['nrs1_f170lp', 'nrs1_opaque', 'nrs2_f170lp'])
+                         [
+                             'jw00011001001_01120_00001_nrs1_rate.fits',
+                             'jw00011001001_01120_00002_nrs1_rate.fits',
+                             'jw00011001001_01120_00003_nrs2_rate.fits',
+                         ],
+                         ids=['nrs1_f170lp', 'nrs1_opaque', 'nrs2_f170lp'])
 @pytest.mark.bigdata
 def test_nirspec_ifu_wcs(input_file, rtdata):
     """Test NIRSpec IFU wcs"""
@@ -91,4 +91,4 @@ def assert_wcs_grid_allclose(wcs, wcs_truth):
     # Compare each RA, Dec[, lambda] grid
     for n, (coord, coord_truth) in enumerate(zip(skycoords, skycoords_truth)):
         assert_allclose(coord, coord_truth,
-            err_msg=f"for coordinate axis '{wcs.output_frame.axes_names[n]}'")
+                        err_msg=f"for coordinate axis '{wcs.output_frame.axes_names[n]}'")

@@ -48,10 +48,10 @@ def create_spectral_wcs(ra, dec, wavelength):
 
     pixel = np.arange(len(wavelength), dtype=float)
     tab = Mapping((0, 0, 0)) | \
-          Const1D(ra) & Const1D(dec) & Tabular1D(points=pixel,
-                                                 lookup_table=wavelength,
-                                                 bounds_error=False,
-                                                 fill_value=None)
+        Const1D(ra) & Const1D(dec) & Tabular1D(points=pixel,
+                                               lookup_table=wavelength,
+                                               bounds_error=False,
+                                               fill_value=None)
     tab.name = "pixel_to_world"
 
     if all(np.diff(wavelength) > 0):

@@ -68,43 +68,43 @@ def additional_metadata(im, defaults, keyword):
     groups = []
 
     groups.append(set(('meta.subarray.name',
-                      'meta.subarray.xstart',
-                      'meta.subarray.ystart',
-                      'meta.subarray.xsize',
-                      'meta.subarray.ysize')))
+                       'meta.subarray.xstart',
+                       'meta.subarray.ystart',
+                       'meta.subarray.xsize',
+                       'meta.subarray.ysize')))
 
     groups.append(set(('meta.instrument.name',
-                      'meta.instrument.band',
-                      'meta.instrument.channel',
-                      'meta.instrument.module',
-                      'meta.instrument.detector',
-                      'meta.instrument.filter',
-                      'meta.instrument.grating',
-                      'meta.instrument.pupil',
-                      'meta.exposure.readpatt')))
+                       'meta.instrument.band',
+                       'meta.instrument.channel',
+                       'meta.instrument.module',
+                       'meta.instrument.detector',
+                       'meta.instrument.filter',
+                       'meta.instrument.grating',
+                       'meta.instrument.pupil',
+                       'meta.exposure.readpatt')))
 
     groups.append(set(('meta.asn.pool_name',
-                      'meta.asn.table_name')))
+                       'meta.asn.table_name')))
 
     groups.append(set(('meta.target.catalog_name',
-                      'meta.target.ra',
-                      'meta.target.dec')))
+                       'meta.target.ra',
+                       'meta.target.dec')))
 
     groups.append(set(('meta.exposure.start_time',
-                      'meta.exposure.mid_time',
-                      'meta.exposure.end_time',
-                      'meta.exposure.exposure_time')))
+                       'meta.exposure.mid_time',
+                       'meta.exposure.end_time',
+                       'meta.exposure.exposure_time')))
 
     groups.append(set(('meta.exposure.frame_divisor',
-                      'meta.exposure.frame_time',
-                      'meta.exposure.groupgap',
-                      'meta.exposure.group_time',
-                      'meta.exposure.integration_time',
-                      'meta.exposure.nframes',
-                      'meta.exposure.ngroups',
-                      'meta.exposure.nints',
-                      'meta.exposure.nresets_at_start',
-                      'meta.exposure.nresets_between_ints')))
+                       'meta.exposure.frame_time',
+                       'meta.exposure.groupgap',
+                       'meta.exposure.group_time',
+                       'meta.exposure.integration_time',
+                       'meta.exposure.nframes',
+                       'meta.exposure.ngroups',
+                       'meta.exposure.nints',
+                       'meta.exposure.nresets_at_start',
+                       'meta.exposure.nresets_between_ints')))
 
     for group in groups:
         if keyword in group:
@@ -130,7 +130,7 @@ def another_instrument(defaults, im, keyword):
              (('NRS_MSASPEC',), 'MSA'),
              (('MIR_MRS',), 'MRS'),
              (('MIR_LRS-FIXEDSLIT', 'MIR_LRS-SLITLESS'), 'LRS'),
-            )
+             )
 
     instrument = defaults['meta.instrument.name']
     exposure_type = defaults['meta.exposure.type']
@@ -480,7 +480,7 @@ def set_pipeline_defaults(im, defaults):
                        'meta.instrument.detector': 'NRCB1',
                        'meta.instrument.filter': 'F115W',
                        'meta.instrument.pupil': 'CLEAR'
-                      }
+                       }
 
     nirspec_defaults = {'meta.subarray.xsize': 2048,
                         'meta.subarray.ysize': 2048,
@@ -490,7 +490,7 @@ def set_pipeline_defaults(im, defaults):
                         'meta.instrument.filter': 'F100LP',
                         'meta.instrument.grating': 'MIRROR',
                         'meta.exposure.readpatt': 'NRSRAPID'
-                       }
+                        }
 
     miri_defaults = {'meta.subarray.xsize': 1032,
                      'meta.subarray.ysize': 1024,
@@ -533,7 +533,7 @@ def set_pipeline_defaults(im, defaults):
                              'meta.subarray.ystart': 321,
                              'meta.subarray.xsize': 68,
                              'meta.subarray.ysize': 1024
-                            }
+                             }
 
     mir_fixedslit_defaults = {'meta.instrument.detector': 'MIRIFULONG'}
 
@@ -542,7 +542,7 @@ def set_pipeline_defaults(im, defaults):
     exposure_type_defaults = {'MIR_LRS-SLITLESS': mir_slitless_defaults,
                               'MIR_LRS-FIXEDSLIT': mir_fixedslit_defaults,
                               'MIR_MRS': mir_mrs_defaults
-                             }
+                              }
 
     defaults.update(generic_defaults)
     instrument = defaults['meta.instrument.name']
@@ -683,8 +683,8 @@ def undefined_metadata(module, string):
     pat = re.compile(r'([\w\.]+' + string + r'[\w\.]+\(?)')
     seen = set()
     matched = search_source_lines(module,
-                                   '.' + string + '.',
-                                   seen)
+                                  '.' + string + '.',
+                                  seen)
     log_results("matched lines", matched)
 
     for line in matched:

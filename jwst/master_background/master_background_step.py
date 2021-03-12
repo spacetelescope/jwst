@@ -192,14 +192,14 @@ class MasterBackgroundStep(Step):
                     self.log.info(
                         "Not subtracting master background, background was subtracted in calspec2")
                     self.log.info("To force the master background to be subtracted from this data, "
-                        "run again and set force_subtract = True.")
+                                  "run again and set force_subtract = True.")
 
                 if not do_sub and isub != len(input_data):
                     self.log.warning("Not subtracting master background.")
                     self.log.warning("Input data contains a mixture of data with and without "
-                        "background subtraction done in calspec2.")
+                                     "background subtraction done in calspec2.")
                     self.log.warning("To force the master background to be subtracted from this data, "
-                        "run again and set force_subtract = True.")
+                                     "run again and set force_subtract = True.")
             # input data is a single file
             else:
                 if input_data.meta.cal_step.back_sub == 'COMPLETE' or \
@@ -208,7 +208,7 @@ class MasterBackgroundStep(Step):
                     self.log.info(
                         "Not subtracting master background, background was subtracted in calspec2")
                     self.log.info("To force the master background to be subtracted from this data, "
-                        "run again and set force_subtract = True.")
+                                  "run again and set force_subtract = True.")
 
         return do_sub
 

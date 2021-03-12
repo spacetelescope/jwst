@@ -49,7 +49,7 @@ def is_nrs_slit_linelamp(datamodel):
     lamp_mode = datamodel.meta.instrument.lamp_mode.lower()
     exp_type = datamodel.meta.exposure.type.lower()
     return lamp_mode in ['msaspec', 'fixedslit', 'brightobj'] and is_nrs_linelamp(datamodel) and \
-           exp_type in ['nrs_autowave', 'nrs_lamp']
+        exp_type in ['nrs_autowave', 'nrs_lamp']
 
 
 def is_nrs_ifu_linelamp(datamodel):

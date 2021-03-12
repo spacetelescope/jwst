@@ -110,7 +110,7 @@ def utc_tdb(filename, update_tdb=True, update_velosys=True,
 
             scihdu = find_hdu(fd, "sci")
             fd[scihdu].header["velosys"] = \
-                    (radial_velocity, "Radial velocity wrt barycenter [m / s]")
+                (radial_velocity, "Radial velocity wrt barycenter [m / s]")
 
     if update_tdb:
         try:
@@ -262,7 +262,7 @@ def get_jwst_position2(times, jwstpos, use_jpl_ephemeris=False):
     centerearth_jwst = jwstpos
 
     return (barysun_centerearth_pos + centerearth_jwst), \
-            (centersun_centerearth_pos + centerearth_jwst)
+        (centersun_centerearth_pos + centerearth_jwst)
 
 
 def get_target_vector2(targetcoord):
@@ -280,7 +280,7 @@ def get_target_vector2(targetcoord):
 
 
 def compute_bary_helio_time2(targetcoord, times, jwstpos,
-                            use_jpl_ephemeris=False):
+                             use_jpl_ephemeris=False):
     '''
     The end point computational routine to compute the distance of JWST
     to the sun (or barycenter) projected onto the unit vector to the

@@ -235,7 +235,7 @@ def build_docstring(klass, template="{fits_hdu} {title}"):
     if not (klass == model_base.DataModel or
             issubclass(klass, model_base.DataModel)):
         raise ValueError("Class must be a subclass of DataModel: %s",
-                          klass.__name__)
+                         klass.__name__)
 
     # Create a new model just to get its shape
     null_object = klass(init=None)

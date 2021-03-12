@@ -133,7 +133,7 @@ class Polygon(Region):
 
         self._bbox = self._get_bounding_box()
         self._scan_line_range = \
-                list(range(self._bbox[1], self._bbox[3] + self._bbox[1] + 1))
+            list(range(self._bbox[1], self._bbox[3] + self._bbox[1] + 1))
         # constructs a Global Edge Table (GET) in bbox coordinates
         self._GET = self._construct_ordered_GET()
 
@@ -276,7 +276,7 @@ class Polygon(Region):
         # miny = self._vertices[:,1].min()
         # maxy = self._vertices[:,1].max()
         return px[0] >= self._bbox[0] and px[0] <= self._bbox[0] + self._bbox[2] and \
-               px[1] >= self._bbox[1] and px[1] <= self._bbox[1] + self._bbox[3]
+            px[1] >= self._bbox[1] and px[1] <= self._bbox[1] + self._bbox[3]
 
 
 class Edge():

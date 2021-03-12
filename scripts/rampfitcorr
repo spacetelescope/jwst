@@ -44,10 +44,10 @@ if __name__ == '__main__':
         sys.exit(0)
 
     parser = argparse.ArgumentParser(
-       """Do a Ramp Fitting""")
+        """Do a Ramp Fitting""")
 
     parser.add_argument(
-       'infile', metavar='infile', nargs=1,
+        'infile', metavar='infile', nargs=1,
        help="""Input Level 1b FITS file.""")
 
     args = parser.parse_args()

@@ -47,7 +47,7 @@ def do_correction(input_model, reset_model):
     # Replace NaN's in the reset with zeros (should not happen but just in case)
     reset_model.data[np.isnan(reset_model.data)] = 0.0
     log.debug("Reset Sub using: nints=%d, ngroups=%d" %
-          (sci_nints, sci_ngroups))
+              (sci_nints, sci_ngroups))
 
     # Create output as a copy of the input science data model
     output = input_model.copy()

@@ -161,7 +161,7 @@ def save_long_line(prefix, value, sep1, sep2, max_length=80):
             start = False
         else:
             line_length = (len(long_line) + len(value) + len(sep1)
-                            - line_start)
+                           - line_start)
 
             if line_length < max_length:
                 long_line += sep1 + value
@@ -1128,8 +1128,8 @@ class Schema_editor:
                         if keyword_path is None:
                             if not p_name:
                                 self.schema_del_value(model_schema,
-                                                            model_name,
-                                                            new_model_path)
+                                                      model_name,
+                                                      new_model_path)
 
                         else:
                             keyword_subschema = self.find_subschema(keyword_schema,
@@ -1137,14 +1137,14 @@ class Schema_editor:
                             if keyword_subschema is not None:
                                 keyword_path = keyword_path.split('.')
                                 self.update_schema_fields(keyword_subschema,
-                                                            model_subschema,
-                                                            new_model_path)
+                                                          model_subschema,
+                                                          new_model_path)
 
                                 if not p_name and model_name != keyword_path[-1]:
                                     self.schema_rename_value(model_schema,
-                                                            keyword_path[-1],
-                                                            model_name,
-                                                            new_model_path)
+                                                             keyword_path[-1],
+                                                             model_name,
+                                                             new_model_path)
 
                                 if model_fits_name != keyword_fits_name:
                                     fits_dict[keyword_fits_name] = \
@@ -1402,7 +1402,7 @@ class Schema_editor:
         if self.add:
             title = keyword_schema.get('title')
             if self.report_and_query("Add", title, keyword_schema, None,
-                                  keyword_path, None):
+                                     keyword_path, None):
                 keyword_name = keyword_path[-1]
                 model_schema[keyword_name] = OrderedDict()
 
@@ -1427,7 +1427,7 @@ class Schema_editor:
         if self.delete:
             title = model_schema.get('title')
             if self.report_and_query("Delete", title, None,
-                                    model_schema[model_name], path, None):
+                                     model_schema[model_name], path, None):
                 del model_schema[model_name]
 
     def schema_edit_value(self, model_schema, keyword_value, model_value,

@@ -320,7 +320,7 @@ class OutlierDetection:
             blotted_median.dq = None
             # apply blot to re-create model.data from median image
             blotted_median.data = gwcs_blot(median_model, model, interp=interp,
-                                                     sinscl=sinscl)
+                                            sinscl=sinscl)
             blot_models.append(blotted_median)
 
         return blot_models
@@ -569,6 +569,6 @@ def gwcs_blot(median_model, blot_img, interp='poly5', sinscl=1.0):
     # before a change is made.  Preferably, fix tblot in drizzle.
     pixmap[np.isnan(pixmap)] = -1
     tblot(median_model.data, pixmap, outsci, scale=pix_ratio, kscale=1.0,
-                   interp=interp, exptime=1.0, misval=0.0, sinscl=sinscl)
+          interp=interp, exptime=1.0, misval=0.0, sinscl=sinscl)
 
     return outsci

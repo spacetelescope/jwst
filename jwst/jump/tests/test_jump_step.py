@@ -76,7 +76,7 @@ def generate_nircam_reffiles(tmpdir_factory):
 def setup_inputs():
 
     def _setup(ngroups=10, readnoise=10, nints=1, nrows=1024, ncols=1032,
-                                nframes=1, grouptime=1.0, gain=1, deltatime=1):
+               nframes=1, grouptime=1.0, gain=1, deltatime=1):
         times = np.array(list(range(ngroups)), dtype=np.float64) * deltatime
         gain = np.ones(shape=(nrows, ncols), dtype=np.float64) * gain
         err = np.ones(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
@@ -135,8 +135,9 @@ def test_one_CR(generate_miri_reffiles, max_cores, setup_inputs):
     xsize = 103
     ysize = 102
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
-        nrows=ysize, ncols=xsize,
-        gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
+                                                          nrows=ysize, ncols=xsize,
+                                                          gain=ingain, readnoise=inreadnoise,
+                                                          deltatime=grouptime)
     for i in range(ngroups):
         model1.data[0, i, :, :] = deltaDN * i
     first_CR_group_locs = [x for x in range(1, 89) if x % 5 == 0]
@@ -152,7 +153,7 @@ def test_one_CR(generate_miri_reffiles, max_cores, setup_inputs):
     print("number of CRs {}".format(len(CR_x_locs)))
 
     out_model = JumpStep.call(model1, override_gain=override_gain,
-        override_readnoise=override_readnoise, maximum_cores=max_cores)
+                              override_readnoise=override_readnoise, maximum_cores=max_cores)
     CR_pool = cycle(first_CR_group_locs)
     for i in range(len(CR_x_locs)):
         CR_group = next(CR_pool)
@@ -172,7 +173,9 @@ def test_nircam(generate_nircam_reffiles, setup_inputs, max_cores):
     nrows = 20
     ncols = 20
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
-        nrows=nrows, ncols=ncols, gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
+                                                          nrows=nrows, ncols=ncols,
+                                                          gain=ingain, readnoise=inreadnoise,
+                                                          deltatime=grouptime)
     for i in range(ngroups):
         model1.data[0, i, :, :] = deltaDN * i
     first_CR_group_locs = [x for x in range(1, 89) if x % 5 == 0]
@@ -188,7 +191,7 @@ def test_nircam(generate_nircam_reffiles, setup_inputs, max_cores):
     print("number of CRs {}".format(len(CR_x_locs)))
 
     out_model = JumpStep.call(model1, override_gain=override_gain,
-        override_readnoise=override_readnoise, maximum_cores=max_cores)
+                              override_readnoise=override_readnoise, maximum_cores=max_cores)
     CR_pool = cycle(first_CR_group_locs)
     for i in range(len(CR_x_locs)):
         CR_group = next(CR_pool)
@@ -207,8 +210,9 @@ def test_two_CRs(generate_miri_reffiles, max_cores, setup_inputs):
     xsize = 103
     ysize = 102
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
-        nrows=ysize, ncols=xsize,
-        gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
+                                                          nrows=ysize, ncols=xsize,
+                                                          gain=ingain, readnoise=inreadnoise,
+                                                          deltatime=grouptime)
     for i in range(ngroups):
         model1.data[0, i, :, :] = deltaDN * i
     first_CR_group_locs = [x for x in range(1, 89) if x % 5 == 0]
@@ -223,7 +227,7 @@ def test_two_CRs(generate_miri_reffiles, max_cores, setup_inputs):
         model1.data[0, CR_group + 8:, CR_y_locs[i], CR_x_locs[i]] = \
             model1.data[0, CR_group + 8:, CR_y_locs[i], CR_x_locs[i]] + 700
     out_model = JumpStep.call(model1, override_gain=override_gain,
-        override_readnoise=override_readnoise, maximum_cores=max_cores)
+                              override_readnoise=override_readnoise, maximum_cores=max_cores)
     CR_pool = cycle(first_CR_group_locs)
     for i in range(len(CR_x_locs)):
         CR_group = next(CR_pool)
@@ -241,8 +245,9 @@ def test_two_group_integration(generate_miri_reffiles, max_cores, setup_inputs):
     xsize = 103
     ysize = 102
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
-        nrows=ysize, ncols=xsize,
-        gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
+                                                          nrows=ysize, ncols=xsize,
+                                                          gain=ingain, readnoise=inreadnoise,
+                                                          deltatime=grouptime)
     out_model = JumpStep.call(model1, override_gain=override_gain,
                               override_readnoise=override_readnoise, maximum_cores=max_cores)
     assert(out_model.meta.cal_step.jump == 'SKIPPED')
@@ -258,7 +263,8 @@ def test_four_group_integration(generate_miri_reffiles, setup_inputs):
     ysize = 102
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
                                                           nrows=ysize, ncols=xsize,
-                                                          gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
+                                                          gain=ingain, readnoise=inreadnoise,
+                                                          deltatime=grouptime)
     out_model = JumpStep.call(model1, override_gain=override_gain,
                               override_readnoise=override_readnoise, maximum_cores='none')
     assert(out_model.meta.cal_step.jump == 'SKIPPED')
@@ -274,7 +280,8 @@ def test_five_group_integration(generate_miri_reffiles, setup_inputs):
     ysize = 102
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
                                                           nrows=ysize, ncols=xsize,
-                                                          gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
+                                                          gain=ingain, readnoise=inreadnoise,
+                                                          deltatime=grouptime)
     out_model = JumpStep.call(model1, override_gain=override_gain,
-                                  override_readnoise=override_readnoise, maximum_cores='none')
+                              override_readnoise=override_readnoise, maximum_cores='none')
     assert (out_model.meta.cal_step.jump == 'COMPLETE')

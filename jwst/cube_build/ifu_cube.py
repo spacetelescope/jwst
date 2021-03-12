@@ -269,7 +269,7 @@ class IFUCubeData():
 
         for i in range(num):
             xi, eta = coord.radec2std(self.crval1, self.crval2,
-                                     corner_a[i], corner_b[i], rot_angle)
+                                      corner_a[i], corner_b[i], rot_angle)
             xi_corner.append(xi)
             eta_corner.append(eta)
 
@@ -749,17 +749,17 @@ class IFUCubeData():
                                 x = x[index]
                                 slice = i - start_region
                                 cube_overlap.match_det2cube(self.instrument,
-                                                             x, y, slice,
-                                                             input_model,
-                                                             det2ab_transform,
-                                                             self.spaxel_flux,
-                                                             self.spaxel_weight,
-                                                             self.spaxel_iflux,
-                                                             self.spaxel_var,
-                                                             self.xcoord, self.zcoord,
-                                                             self.crval1, self.crval3,
-                                                             self.cdelt1, self.cdelt3,
-                                                             self.naxis1, self.naxis2)
+                                                            x, y, slice,
+                                                            input_model,
+                                                            det2ab_transform,
+                                                            self.spaxel_flux,
+                                                            self.spaxel_weight,
+                                                            self.spaxel_iflux,
+                                                            self.spaxel_var,
+                                                            self.xcoord, self.zcoord,
+                                                            self.crval1, self.crval3,
+                                                            self.cdelt1, self.cdelt3,
+                                                            self.naxis1, self.naxis2)
                             t1 = time.time()
 
                             log.info("Time to Map All slices on Detector to Cube = %.1f s" % (t1 - t0,))
@@ -904,7 +904,7 @@ class IFUCubeData():
         par2 = self.list_par2[0]
 
         a_scale, b_scale, w_scale = self.instrument_info.GetScale(par1,
-                                                                      par2)
+                                                                  par2)
         self.spatial_size = a_scale
         if self.scale1 != 0:
             self.spatial_size = self.scale1
@@ -1226,7 +1226,7 @@ class IFUCubeData():
                     ysize = input_model.data.shape[0]
                     y, x = np.mgrid[:ysize, xstart:xend]
                     detector2alpha_beta = input_model.meta.wcs.get_transform('detector',
-                                                                   'alpha_beta')
+                                                                             'alpha_beta')
                     alpha, beta, lam = detector2alpha_beta(x, y)
                     valid1 = ~np.isnan(lam)
                     lam = lam[valid1]
@@ -1581,11 +1581,11 @@ class IFUCubeData():
             not_mapped_high = wave.size - len(valid_max[0])
             if not_mapped_low > 0:
                 log.info('# of detector pixels not mapped to output plane: '
-                    f'{not_mapped_low} with wavelength below {min_wave_tolerance}')
+                         f'{not_mapped_low} with wavelength below {min_wave_tolerance}')
 
             if not_mapped_high > 0:
                 log.info('# of detector pixels not mapped to output plane: '
-                    f'{not_mapped_high} with wavelength above {max_wave_tolerance}')
+                         f'{not_mapped_high} with wavelength above {max_wave_tolerance}')
 
 # ______________________________________________________________________________
 # using the DQFlags from the input_image find pixels that should be excluded
@@ -1594,7 +1594,7 @@ class IFUCubeData():
                          dqflags.pixel['NON_SCIENCE'])
 
             valid3 = np.logical_and((wave >= min_wave_tolerance),
-                                     (wave <= max_wave_tolerance))
+                                    (wave <= max_wave_tolerance))
 
             # find the location of good data
             good_data = np.where((np.bitwise_and(dq_all, all_flags) == 0) &
@@ -1925,12 +1925,12 @@ class IFUCubeData():
         # set for a range of wavelengths
         if wmin != wmax:
             self.spaxel_dq[wmin:wmax, :] = np.bitwise_or(self.spaxel_dq[wmin:wmax, :],
-                                                        wave_slice_dq)
+                                                         wave_slice_dq)
 
         # set for a single wavelength
         else:
             self.spaxel_dq[wmin, :] = np.bitwise_or(self.spaxel_dq[wmin, :],
-                                                   wave_slice_dq)
+                                                    wave_slice_dq)
 # *******************************************************************************
 
     def four_corners(self, coord1, coord2):

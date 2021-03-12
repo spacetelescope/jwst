@@ -17,18 +17,18 @@ def run_detector1(rtdata_module):
 
     # Run detector1 pipeline only on one of the _uncal files
     args = ["config/calwebb_detector1.cfg", rtdata.input,
-        "--save_calibrated_ramp=True",
-        "--steps.dq_init.save_results=True",
-        "--steps.saturation.save_results=True",
-        "--steps.refpix.save_results=True",
-        "--steps.rscd.save_results=True",
-        "--steps.lastframe.save_results=True",
-        "--steps.firstframe.save_results=True",
-        "--steps.reset.save_results=True",
-        "--steps.linearity.save_results=True",
-        "--steps.dark_current.save_results=True",
-        "--steps.jump.rejection_threshold=200",
-        ]
+            "--save_calibrated_ramp=True",
+            "--steps.dq_init.save_results=True",
+            "--steps.saturation.save_results=True",
+            "--steps.refpix.save_results=True",
+            "--steps.rscd.save_results=True",
+            "--steps.lastframe.save_results=True",
+            "--steps.firstframe.save_results=True",
+            "--steps.reset.save_results=True",
+            "--steps.linearity.save_results=True",
+            "--steps.dark_current.save_results=True",
+            "--steps.jump.rejection_threshold=200",
+            ]
     Step.from_cmdline(args)
 
 
@@ -38,9 +38,9 @@ def run_image2(run_detector1, rtdata_module):
     rtdata = rtdata_module
     rtdata.input = 'det_image_1_MIRIMAGE_F770Wexp1_5stars_rate.fits'
     args = ["config/calwebb_image2.cfg", rtdata.input,
-        "--steps.assign_wcs.save_results=True",
-        "--steps.flat_field.save_results=True"
-        ]
+            "--steps.assign_wcs.save_results=True",
+            "--steps.flat_field.save_results=True"
+            ]
     Step.from_cmdline(args)
 
     # Grab rest of _rate files for the asn and run image2 pipeline on each to
@@ -54,7 +54,7 @@ def run_image2(run_detector1, rtdata_module):
     for rate_file in rate_files:
         rtdata.get_data(rate_file)
         args = ["config/calwebb_image2.cfg", rtdata.input,
-            "--steps.resample.skip=True"]
+                "--steps.resample.skip=True"]
         Step.from_cmdline(args)
 
 
@@ -65,19 +65,19 @@ def run_image3(run_image2, rtdata_module):
     rtdata = rtdata_module
     rtdata.get_data("miri/image/det_dithered_5stars_image3_asn.json")
     args = ["config/calwebb_image3.cfg", rtdata.input,
-        # Set some unique param values needed for these data
-        "--steps.tweakreg.snr_threshold=200",
-        "--steps.tweakreg.use2dhist=False",
-        "--steps.tweakreg.minobj=4",
-        "--steps.source_catalog.snr_threshold=10",
-        ]
+            # Set some unique param values needed for these data
+            "--steps.tweakreg.snr_threshold=200",
+            "--steps.tweakreg.use2dhist=False",
+            "--steps.tweakreg.minobj=4",
+            "--steps.source_catalog.snr_threshold=10",
+            ]
     Step.from_cmdline(args)
 
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["dq_init", "saturation", "refpix", "rscd",
-    "firstframe", "lastframe", "reset", "linearity", "dark_current", "ramp", "rate",
-    "rateints"])
+                                    "firstframe", "lastframe", "reset", "linearity", "dark_current", "ramp", "rate",
+                                    "rateints"])
 def test_miri_image_detector1(run_detector1, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Regression test of detector1 pipeline performed on MIRI data."""
     _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix)

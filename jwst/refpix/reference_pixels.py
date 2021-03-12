@@ -53,19 +53,19 @@ log.setLevel(logging.DEBUG)
 # accordance with how Python slices work
 
 NIR_reference_sections = {'A': {'top': (2044, 2048, 0, 512),
-                               'bottom': (0, 4, 0, 512),
-                               'side': (0, 2048, 0, 4),
-                               'data': (0, 2048, 0, 512)},
+                                'bottom': (0, 4, 0, 512),
+                                'side': (0, 2048, 0, 4),
+                                'data': (0, 2048, 0, 512)},
                           'B': {'top': (2044, 2048, 512, 1024),
-                               'bottom': (0, 4, 512, 1024),
-                               'data': (0, 2048, 512, 1024)},
+                                'bottom': (0, 4, 512, 1024),
+                                'data': (0, 2048, 512, 1024)},
                           'C': {'top': (2044, 2048, 1024, 1536),
-                               'bottom': (0, 4, 1024, 1536),
-                               'data': (0, 2048, 1024, 1536)},
+                                'bottom': (0, 4, 1024, 1536),
+                                'data': (0, 2048, 1024, 1536)},
                           'D': {'top': (2044, 2048, 1536, 2048),
-                               'bottom': (0, 4, 1536, 2048),
-                               'side': (0, 2048, 2044, 2048),
-                               'data': (0, 2048, 1536, 2048)}
+                                'bottom': (0, 4, 1536, 2048),
+                                'side': (0, 2048, 2044, 2048),
+                                'data': (0, 2048, 1536, 2048)}
                           }
 
 #
@@ -76,17 +76,17 @@ NIR_reference_sections = {'A': {'top': (2044, 2048, 0, 512),
 # 'data': (rowstart, rowstop, colstart, colstop, stride)
 
 MIR_reference_sections = {'A': {'left': (0, 1024, 0),
-                               'right': (0, 1024, 1028),
-                               'data': (0, 1024, 0, 1032, 4)},
+                                'right': (0, 1024, 1028),
+                                'data': (0, 1024, 0, 1032, 4)},
                           'B': {'left': (0, 1024, 1),
-                               'right': (0, 1024, 1029),
-                               'data': (0, 1024, 1, 1032, 4)},
+                                'right': (0, 1024, 1029),
+                                'data': (0, 1024, 1, 1032, 4)},
                           'C': {'left': (0, 1024, 2),
-                               'right': (0, 1024, 1030),
-                               'data': (0, 1024, 2, 1032, 4)},
+                                'right': (0, 1024, 1030),
+                                'data': (0, 1024, 2, 1032, 4)},
                           'D': {'left': (0, 1024, 3),
-                               'right': (0, 1024, 1031),
-                               'data': (0, 1024, 3, 1032, 4)}
+                                'right': (0, 1024, 1031),
+                                'data': (0, 1024, 3, 1032, 4)}
                           }
 
 #
@@ -862,7 +862,7 @@ class NIRDataset(Dataset):
                     evenrefpixvalue = self.sigma_clip(thisgroup[evenrefpixindices],
                                                       self.pixeldq[evenrefpixindices])
                     oddrefpixvalue = self.sigma_clip(thisgroup[oddrefpixindices],
-                                                      self.pixeldq[oddrefpixindices])
+                                                     self.pixeldq[oddrefpixindices])
                     thisgroup[:, 0::2] -= evenrefpixvalue
                     thisgroup[:, 1::2] -= oddrefpixvalue
                 else:
@@ -1685,9 +1685,9 @@ def create_dataset(input_model,
 
 
 def correct_model(input_model, odd_even_columns,
-                   use_side_ref_pixels,
-                   side_smoothing_length, side_gain,
-                   odd_even_rows):
+                  use_side_ref_pixels,
+                  side_smoothing_length, side_gain,
+                  odd_even_rows):
     """Wrapper to do Reference Pixel Correction on a JWST Model.
     Performs the correction on the datamodel
 

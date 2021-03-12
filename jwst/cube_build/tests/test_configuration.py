@@ -301,7 +301,7 @@ def test_calspec3_config_miri(_jail, miri_full_coverage):
     num_cubes, cube_pars = cubeinfo.number_cubes()
     assert num_cubes == 12
     assert cubeinfo.all_channel == ['1', '1', '1', '2', '2', '2',
-                                      '3', '3', '3', '4', '4', '4']
+                                    '3', '3', '3', '4', '4', '4']
     assert cubeinfo.all_subchannel == ['short', 'medium', 'long',
                                        'short', 'medium', 'long',
                                        'short', 'medium', 'long',
@@ -383,7 +383,7 @@ def test_calspec3_config_miri_multi(_jail, miri_full_coverage):
     num_cubes, cube_pars = cubeinfo.number_cubes()
     assert num_cubes == 1
     assert cubeinfo.all_channel == ['1', '1', '1', '2', '2', '2',
-                                      '3', '3', '3', '4', '4', '4']
+                                    '3', '3', '3', '4', '4', '4']
     assert cubeinfo.all_subchannel == ['short', 'medium', 'long',
                                        'short', 'medium', 'long',
                                        'short', 'medium', 'long',

@@ -28,7 +28,7 @@ def miri_cube_pars(tmpdir_factory):
     # make the first extension
     channel = np.array(['1', '1', '1', '2', '2', '2', '3', '3', '3', '4', '4', '4'])
     subchannel = np.array(['SHORT', 'MEDIUM', 'LONG', 'SHORT', 'MEDIUM', 'LONG',
-                         'SHORT', 'MEDIUM', 'LONG', 'SHORT', 'MEDIUM', 'LONG'])
+                           'SHORT', 'MEDIUM', 'LONG', 'SHORT', 'MEDIUM', 'LONG'])
 
     spsize = np.array([0.13, 0.13, 0.13, 0.17, 0.17, 0.17, 0.2, 0.2, 0.2, 0.35, 0.35, 0.35])
     wsamp = np.array([0.001, 0.001, 0.001, 0.002, 0.002, 0.002, 0.003, 0.003, 0.003, 0.006, 0.006, 0.006])

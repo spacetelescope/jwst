@@ -183,8 +183,8 @@ def frame_from_model(wcsinfo):
     if celestial_axes:
         ref_frame = coords.ICRS()
         celestial = cf.CelestialFrame(name='sky', axes_order=tuple(celestial_axes),
-                                    reference_frame=ref_frame, unit=cunit[celestial_axes],
-                                    axes_names=('RA', 'DEC'))
+                                      reference_frame=ref_frame, unit=cunit[celestial_axes],
+                                      axes_names=('RA', 'DEC'))
         frames.append(celestial)
     if spectral_axes:
         spec = cf.SpectralFrame(name='spectral', axes_order=tuple(spectral_axes),
@@ -227,13 +227,13 @@ def create_fitswcs(inp, input_frame=None):
             input_frame = cf.Frame2D(name="detector")
         elif wcsaxes == 3:
             input_frame = cf.CoordinateFrame(name="detector", naxes=3,
-                axes_order=(0, 1, 2), unit=(u.pix, u.pix, u.pix),
-                axes_type=["SPATIAL", "SPATIAL", "SPECTRAL"],
-                axes_names=('x', 'y', 'z'), axis_physical_types=None)
+                                             axes_order=(0, 1, 2), unit=(u.pix, u.pix, u.pix),
+                                             axes_type=["SPATIAL", "SPATIAL", "SPECTRAL"],
+                                             axes_names=('x', 'y', 'z'), axis_physical_types=None)
         else:
             raise TypeError(f"WCSAXES is expected to be 2 or 3, instead it is {wcsaxes}")
     pipeline = [(input_frame, transform),
-               (output_frame, None)]
+                (output_frame, None)]
 
     wcsobj = wcs.WCS(pipeline)
     return wcsobj

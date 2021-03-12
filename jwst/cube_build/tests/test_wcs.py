@@ -254,9 +254,9 @@ def test_footprint_miri():
     x1, x2 = instrument_info.GetMIRISliceEndPts(this_channel)
 
     corners = cube_build_wcs_util.find_corners_MIRI(input_model,
-                                                   this_channel,
-                                                   instrument_info,
-                                                   coord_system)
+                                                    this_channel,
+                                                    instrument_info,
+                                                    coord_system)
 
     (ra_min, b1, ra_max, b2, a1, dec_min, a2, dec_max,
      lambda_min, lambda_max) = corners

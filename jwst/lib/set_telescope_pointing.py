@@ -606,7 +606,7 @@ def calc_wcs_over_time(obsstart, obsend, engdb_url=None, tolerance=60, reduce_fu
     # Calculate WCS
     try:
         pointings = get_pointing(obsstart, obsend, engdb_url=engdb_url,
-                             tolerance=tolerance, reduce_func=reduce_func)
+                                 tolerance=tolerance, reduce_func=reduce_func)
     except ValueError:
         logger.warning("Cannot get valid engineering mnemonics from engineering database")
         raise

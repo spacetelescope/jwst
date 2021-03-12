@@ -9,7 +9,7 @@ from jwst.assign_wcs.pointing import create_fitswcs
 
 
 OUTLIER_DO_NOT_USE = np.bitwise_or(datamodels.dqflags.pixel["DO_NOT_USE"],
-                                    datamodels.dqflags.pixel["OUTLIER"])
+                                   datamodels.dqflags.pixel["OUTLIER"])
 
 
 @pytest.fixture

@@ -83,7 +83,7 @@ def run_tso3_pipeline(run_tso_spec2_pipeline, generate_tso3_asn):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("step_suffix", ['dq_init', 'saturation', 'refpix',
-    'linearity', 'dark_current', 'jump', 'rate', 'rateints'])
+                                         'linearity', 'dark_current', 'jump', 'rate', 'rateints'])
 def test_miri_lrs_slitless_tso1(run_tso1_pipeline, rtdata_module, fitsdiff_default_kwargs, step_suffix):
     """
     Regression test of tso1 pipeline performed on MIRI LRS slitless TSO data.
@@ -101,7 +101,7 @@ def test_miri_lrs_slitless_tso1(run_tso1_pipeline, rtdata_module, fitsdiff_defau
 @pytest.mark.bigdata
 @pytest.mark.parametrize("step_suffix", ["flat_field", "srctype", "calints", "assign_wcs", "x1dints"])
 def test_miri_lrs_slitless_tso_spec2(run_tso_spec2_pipeline, rtdata_module, fitsdiff_default_kwargs,
-        step_suffix):
+                                     step_suffix):
     """Compare the output of a MIRI LRS slitless calwebb_tso-spec2 pipeline."""
     rtdata = rtdata_module
 
@@ -116,7 +116,7 @@ def test_miri_lrs_slitless_tso_spec2(run_tso_spec2_pipeline, rtdata_module, fits
 @pytest.mark.bigdata
 @pytest.mark.parametrize("step_suffix", ["outlier_detection", "crfints"])
 def test_miri_lrs_slitless_tso3(run_tso3_pipeline, generate_tso3_asn, rtdata_module,
-        fitsdiff_default_kwargs, step_suffix):
+                                fitsdiff_default_kwargs, step_suffix):
     """Compare the output of a MIRI LRS slitless calwebb_tso3 pipeline."""
     rtdata = rtdata_module
     _, asn_id = generate_tso3_asn
@@ -131,7 +131,7 @@ def test_miri_lrs_slitless_tso3(run_tso3_pipeline, generate_tso3_asn, rtdata_mod
 
 @pytest.mark.bigdata
 def test_miri_lrs_slitless_tso3_x1dints(run_tso3_pipeline, rtdata_module,
-        fitsdiff_default_kwargs):
+                                        fitsdiff_default_kwargs):
     """Compare the output of a MIRI LRS slitless calwebb_tso3 pipeline."""
     rtdata = rtdata_module
 
@@ -145,7 +145,7 @@ def test_miri_lrs_slitless_tso3_x1dints(run_tso3_pipeline, rtdata_module,
 
 @pytest.mark.bigdata
 def test_miri_lrs_slitless_tso3_whtlt(run_tso3_pipeline, generate_tso3_asn,
-        rtdata_module, diff_astropy_tables):
+                                      rtdata_module, diff_astropy_tables):
     """Compare the whitelight output of a MIRI LRS slitless calwebb_tso3 pipeline."""
     rtdata = rtdata_module
     _, asn_id = generate_tso3_asn

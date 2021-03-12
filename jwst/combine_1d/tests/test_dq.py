@@ -44,13 +44,13 @@ def create_spec_model(npoints=10, flux=1e-9, wave_range=(11, 13)):
     npixels = np.zeros(npoints)
 
     data = [(i, j, k, l, m, n, o, p, q) for i, j, k, l, m, n, o, p, q in zip(wavelength, flux, error,
-                                                             surf_bright, sb_error, dq,
-                                                             background, berror, npixels)]
+                                                                             surf_bright, sb_error, dq,
+                                                                             background, berror, npixels)]
 
     spec_table = np.array(data, dtype=[('WAVELENGTH', 'f8'), ('FLUX', 'f8'),
-                                        ('ERROR', 'f8'), ('SURF_BRIGHT', 'f8'),
-                                        ('SB_ERROR', 'f8'), ('DQ', 'u4'), ('BACKGROUND', 'f8'),
-                                        ('BERROR', 'f8'), ('NPIXELS', 'f8')])
+                                       ('ERROR', 'f8'), ('SURF_BRIGHT', 'f8'),
+                                       ('SB_ERROR', 'f8'), ('DQ', 'u4'), ('BACKGROUND', 'f8'),
+                                       ('BERROR', 'f8'), ('NPIXELS', 'f8')])
     spec_model = datamodels.SpecModel()
     spec_model.spec_table = spec_table
 

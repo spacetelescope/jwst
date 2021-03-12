@@ -116,6 +116,6 @@ def find_rotation(imagedata, psf_offset, rotdegs, mx, my, sx, sy, xo, yo,
 
     # return convenient affine2d
     new_affine2d = utils.Affine2d(rotradccw=np.pi * rot_measured_d / 180.0,
-                          name="{0:.4f}".format(rot_measured_d))
+                                  name="{0:.4f}".format(rot_measured_d))
 
     return new_affine2d

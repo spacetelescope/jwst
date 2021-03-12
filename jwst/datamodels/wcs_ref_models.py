@@ -214,14 +214,14 @@ class NIRCAMGrismModel(ReferenceFileModel):
     reftype = "specwcs"
 
     def __init__(self, init=None,
-                       displ=None,
-                       dispx=None,
-                       dispy=None,
-                       invdispl=None,
-                       invdispx=None,
-                       invdispy=None,
-                       orders=None,
-                       **kwargs):
+                 displ=None,
+                 dispx=None,
+                 dispy=None,
+                 invdispl=None,
+                 invdispx=None,
+                 invdispy=None,
+                 orders=None,
+                 **kwargs):
         super().__init__(init=init, **kwargs)
 
         if init is None:
@@ -292,13 +292,13 @@ class NIRISSGrismModel(ReferenceFileModel):
     reftype = "specwcs"
 
     def __init__(self, init=None,
-                       displ=None,
-                       dispx=None,
-                       dispy=None,
-                       invdispl=None,
-                       orders=None,
-                       fwcpos_ref=None,
-                       **kwargs):
+                 displ=None,
+                 dispx=None,
+                 dispy=None,
+                 invdispl=None,
+                 orders=None,
+                 fwcpos_ref=None,
+                 **kwargs):
         super().__init__(init=init, **kwargs)
 
         if init is None:

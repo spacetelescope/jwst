@@ -126,7 +126,7 @@ class AssignWcsStep(Step):
 
         # delete naxis, cdelt, pc from wcsinfo
         rm_keys = ['naxis', 'cdelt1', 'cdelt2',
-                    'pc1_1', 'pc1_2', 'pc2_1', 'pc2_2']
+                   'pc1_1', 'pc1_2', 'pc2_1', 'pc2_2']
         for key in rm_keys:
             if key in result.meta.wcsinfo.instance:
                 del result.meta.wcsinfo.instance[key]

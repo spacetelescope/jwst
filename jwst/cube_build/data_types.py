@@ -21,11 +21,11 @@ class DataTypes():
                 "asn_type": "",
                 "products": [
                     {"name": "",
-                    "members": [
-                        {"exptype": "",
-                       "expname": ""}
-                    ]
-                    }
+                     "members": [
+                         {"exptype": "",
+                          "expname": ""}
+                     ]
+                     }
                 ]
                 }
 

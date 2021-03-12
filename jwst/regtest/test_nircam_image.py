@@ -18,15 +18,15 @@ def run_detector1pipeline(jail, rtdata_module):
 
     # Run detector1 pipeline only on one of the _uncal files
     args = ["config/calwebb_detector1.cfg", rtdata.input,
-        "--steps.dq_init.save_results=True",
-        "--steps.saturation.save_results=True",
-        "--steps.superbias.save_results=True",
-        "--steps.refpix.save_results=True",
-        "--steps.linearity.save_results=True",
-        "--steps.dark_current.save_results=True",
-        "--steps.jump.save_results=True",
-        "--steps.jump.rejection_threshold=50.0",
-        ]
+            "--steps.dq_init.save_results=True",
+            "--steps.saturation.save_results=True",
+            "--steps.superbias.save_results=True",
+            "--steps.refpix.save_results=True",
+            "--steps.linearity.save_results=True",
+            "--steps.dark_current.save_results=True",
+            "--steps.jump.save_results=True",
+            "--steps.jump.rejection_threshold=50.0",
+            ]
     Step.from_cmdline(args)
 
 
@@ -36,9 +36,9 @@ def run_image2pipeline(run_detector1pipeline, jail, rtdata_module):
     rtdata = rtdata_module
     rtdata.input = "jw42424001001_01101_00001_nrca5_rate.fits"
     args = ["config/calwebb_image2.cfg", rtdata.input,
-        "--steps.assign_wcs.save_results=True",
-        "--steps.flat_field.save_results=True",
-        ]
+            "--steps.assign_wcs.save_results=True",
+            "--steps.flat_field.save_results=True",
+            ]
     Step.from_cmdline(args)
 
 
@@ -59,18 +59,18 @@ def run_image3pipeline(run_image2pipeline, rtdata_module, jail):
     for rate_file in rate_files:
         rtdata.get_data(rate_file)
         args = ["config/calwebb_image2.cfg", rtdata.input,
-            "--steps.resample.skip=True"]
+                "--steps.resample.skip=True"]
         Step.from_cmdline(args)
 
     # Get the level3 assocation json file (though not its members) and run
     # image3 pipeline on all _cal files listed in association
     rtdata.get_data("nircam/image/jw42424-o002_20191220t214154_image3_001_asn.json")
     args = ["config/calwebb_image3.cfg", rtdata.input,
-        # Comment out following lines, as the dataset is currently broken
-        # "--steps.tweakreg.save_results=True",
-        # "--steps.skymatch.save_results=True",
-        "--steps.source_catalog.snr_threshold=20",
-        ]
+            # Comment out following lines, as the dataset is currently broken
+            # "--steps.tweakreg.save_results=True",
+            # "--steps.skymatch.save_results=True",
+            "--steps.source_catalog.snr_threshold=20",
+            ]
     Step.from_cmdline(args)
 
 
@@ -88,8 +88,8 @@ def run_image3_closedfile(rtdata, jail):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["dq_init", "saturation", "superbias",
-    "refpix", "linearity", "trapsfilled", "dark_current", "jump", "rate",
-    "flat_field", "cal", "i2d"])
+                                    "refpix", "linearity", "trapsfilled", "dark_current", "jump", "rate",
+                                    "flat_field", "cal", "i2d"])
 def test_nircam_image_stages12(run_image2pipeline, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Regression test of detector1 and image2 pipelines performed on NIRCam data."""
     rtdata = rtdata_module
