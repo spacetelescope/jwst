@@ -487,10 +487,10 @@ class observation():
             maxy = int(max(y))
             a = sparse.coo_matrix((f, (y - miny, x - minx)),
                                   shape=(maxy - miny + 1, maxx - minx + 1)).toarray()
-            self.simulated_image[miny:maxy + 1, minx:maxx + 1] =
-                self.simulated_image[miny:maxy + 1, minx:maxx + 1] + a
-            this_object[miny:maxy + 1, minx:maxx + 1] =
-                this_object[miny:maxy + 1, minx:maxx + 1] + a
+            self.simulated_image[miny:maxy + 1, minx:maxx + 1] = (
+                self.simulated_image[miny:maxy + 1, minx:maxx + 1] + a)
+            this_object[miny:maxy + 1, minx:maxx + 1] = (
+                this_object[miny:maxy + 1, minx:maxx + 1] + a)
 
             if self.cache:
                 self.cached_object[c]['x'].append(x)
@@ -549,10 +549,10 @@ class observation():
 
             a = sparse.coo_matrix((f, (y - miny, x - minx)),
                                   shape=(maxy - miny + 1, maxx - minx + 1)).toarray()
-            self.simulated_image[miny:maxy + 1, minx:maxx + 1] =
-                self.simulated_image[miny:maxy + 1, minx:maxx + 1] + a
-            this_object[miny:maxy + 1, minx:maxx + 1] =
-                this_object[miny:maxy + 1, minx:maxx + 1] + a
+            self.simulated_image[miny:maxy + 1, minx:maxx + 1] = (
+                self.simulated_image[miny:maxy + 1, minx:maxx + 1] + a)
+            this_object[miny:maxy + 1, minx:maxx + 1] = (
+                this_object[miny:maxy + 1, minx:maxx + 1] + a)
 
         time2 = time.time()
 

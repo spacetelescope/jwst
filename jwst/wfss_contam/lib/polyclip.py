@@ -5,7 +5,7 @@ import numpy as np
 import ctypes
 from ctypes import c_int
 
-#from . import polyclip_c
+# from . import polyclip_c
 this_path = os.path.split(__file__)[0]
 so_file = glob(os.path.join(this_path, 'polyclip_c*.so'))[0]
 if len(so_file) >= 1:
