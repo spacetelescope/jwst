@@ -4,7 +4,7 @@ from multiprocessing import Pool
 from astropy.io import fits
 from scipy import sparse
 from scipy.interpolate import interp1d
-from jwst.wfss_contam.lib.disperse import dispersed_pixel
+from .disperse import dispersed_pixel
 
 import logging
 
@@ -130,7 +130,6 @@ class observation():
         # Create pixel lists for ALL sources labeled in segmentation map
         self.create_pixel_list()
 
-
     def create_pixel_list(self):
         # Create a list of pixels to dispersed, grouped per object ID
 
@@ -162,7 +161,7 @@ class observation():
                 self.ys.append(ys)
                 self.IDs = [self.ID]
 
-        self.fs = {}
+        self.fluxes = {}
         for dir_image_name in self.dir_image_names:
             print(f"dir image: {dir_image_name}")
             if self.SED_file is None:
@@ -203,7 +202,7 @@ class observation():
                 # This next line uses the PHOTPLAM wavelength value, but we don't have that
                 # for JWST images. Will need to figure out wavelength some other way, e.g.
                 # by simply parsing from the filter name.
-                self.fs[pivlam] = []
+                self.fluxes[pivlam] = []
                 dnew = dimage
                 if self.POM_mask01 is not None:
                     dnew = dimage * self.POM_mask01  # Apply POM transmission mask to the data pixels
@@ -213,7 +212,7 @@ class observation():
                     # So "fs" is the list of fluxes for all source pixels, at a given wavelength "pivlam"
                     # Note that JWST data are already flux calibrated, so we've set photflam=1, and
                     # hence the multiplication does nothing.
-                    self.fs[pivlam].append(dnew[self.ys[i], self.xs[i]] * photflam)
+                    self.fluxes[pivlam].append(dnew[self.ys[i], self.xs[i]] * photflam)
 
             # Use an SED file
             else:
@@ -235,9 +234,9 @@ class observation():
                     else:
                         print("not renormlazing sources to unity")
 
-                self.fs["SED"] = []
+                self.fluxes["SED"] = []
                 for i in range(len(self.IDs)):
-                    self.fs["SED"].append(dnew[self.ys[i], self.xs[i]])
+                    self.fluxes["SED"].append(dnew[self.ys[i], self.xs[i]])
 
     def disperse_all(self, cache=False):
 
@@ -416,13 +415,13 @@ class observation():
             # and correspond to the central wavelengths of the filters used in
             # the input direct image(s). For the simple case of 1 combined direct image,
             # this contains a single value (e.g. 4.44 for F444W).
-            lams = np.array(list(self.fs.keys()))
+            lams = np.array(list(self.fluxes.keys()))
             #print("lams:", lams)
 
             # "flxs" is the list of pixel values ("fluxes") from the direct image(s).
             # For the simple case of 1 combined direct image, this contains a
             # a single value (just like "lams").
-            flxs = np.array([self.fs[lam][c][i] for lam in self.fs.keys()])
+            flxs = np.array([self.fluxes[lam][c][i] for lam in self.fluxes.keys()])
             #print("flxs:", flxs)
 
             # Only include data for pixels with non-zero fluxes

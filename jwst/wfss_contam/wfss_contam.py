@@ -4,7 +4,7 @@
 from os.path import splitext
 
 from jwst import datamodels
-from jwst.wfss_contam.lib.observations import observation
+from .lib.observations import observation
 from ..lib.suffix import replace_suffix
 
 import logging
