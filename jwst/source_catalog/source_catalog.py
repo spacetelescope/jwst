@@ -970,13 +970,6 @@ class SourceCatalog:
     def _ci_ee_indices(self):
         """
         The EE indicies for the concentration indices.
-
-        The three concentration indices are the difference in
-        AB magnitudes between:
-
-            * the smallest and middle aperture radii/EE;  idx = (0, 1)
-            * the middle and largest aperture radii/EE; idx (1, 2)
-            * the smallest and largest aperture radii/EE; idx (0, 2)
         """
         # NOTE: the EE values are always in increasing order
         return ((0, 1), (1, 2), (0, 2))
