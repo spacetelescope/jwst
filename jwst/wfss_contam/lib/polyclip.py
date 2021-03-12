@@ -9,7 +9,6 @@ from ctypes import c_int
 this_path = os.path.split(__file__)[0]
 try:
     so_file = glob(os.path.join(this_path, 'polyclip_c*.so'))[0]
-    so_file = so_file[0]
 except IndexError:
     print("WARNING: Cannot find polyclip_c*.so library")
     so_file = ''

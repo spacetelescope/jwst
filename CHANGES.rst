@@ -57,6 +57,12 @@ transforms
 
 - Added ``is_star`` to GrismObject [#5788]
 
+wfss_contam
+-----------
+
+- Implemented basic step structure to apply WFSS contamination corrections, along with
+  the necessary grism library modules [#5508]
+
 1.1.0 (2021-02-26)
 ==================
 
