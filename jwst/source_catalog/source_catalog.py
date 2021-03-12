@@ -1,4 +1,5 @@
 """
+from photutils.segmentation import detect_threshold
 Module to calculate the source catalog.
 """
 
@@ -415,10 +416,7 @@ def make_segment_img(data, threshold, npixels=5.0, kernel=None, mask=None,
     connectivity = 8
     segm = detect_sources(data, threshold, npixels, filter_kernel=kernel,
                           mask=mask, connectivity=connectivity)
-
-    # segm=None for photutils >= 0.7
-    # segm.nlabels=0 for photutils < 0.7
-    if segm is None or segm.nlabels == 0:
+    if segm is None:
         return None
 
     # source deblending requires scikit-image

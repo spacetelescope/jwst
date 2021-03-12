@@ -1,5 +1,4 @@
 from collections import OrderedDict
-from distutils.version import LooseVersion
 
 import logging
 
@@ -7,7 +6,6 @@ import numpy as np
 from astropy.table import QTable
 from astropy.time import Time, TimeDelta
 import astropy.units as u
-import photutils
 from photutils import CircularAperture, CircularAnnulus
 
 from ..datamodels import CubeModel
@@ -182,18 +180,10 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
         tbl['annulus_sum'] = annulus_sum << unit
         tbl['annulus_sum_err'] = annulus_sum_err << unit
 
-        if LooseVersion(photutils.__version__) >= '0.7':
-            annulus_mean = annulus_sum / bkg_aper.area
-            annulus_mean_err = annulus_sum_err / bkg_aper.area
-
-            aperture_bkg = annulus_mean * phot_aper.area
-            aperture_bkg_err = annulus_mean_err * phot_aper.area
-        else:
-            annulus_mean = annulus_sum / bkg_aper.area()
-            annulus_mean_err = annulus_sum_err / bkg_aper.area()
-
-            aperture_bkg = annulus_mean * phot_aper.area()
-            aperture_bkg_err = annulus_mean_err * phot_aper.area()
+        annulus_mean = annulus_sum / bkg_aper.area
+        annulus_mean_err = annulus_sum_err / bkg_aper.area
+        aperture_bkg = annulus_mean * phot_aper.area
+        aperture_bkg_err = annulus_mean_err * phot_aper.area
 
         tbl['annulus_mean'] = annulus_mean << unit
         tbl['annulus_mean_err'] = annulus_mean_err << unit
