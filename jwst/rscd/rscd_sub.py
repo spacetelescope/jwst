@@ -100,7 +100,7 @@ def correction_skip_groups(input_model, group_skip):
 
     # If ngroups > group_skip+3, set all of the GROUPDQ in the first group to 'DO_NOT_USE'
     output.groupdq[1:, 0:group_skip:, :] = \
-        np.bitwise_or(output.groupdq[1:, 0:group_skip,:,:], dqflags.group['DO_NOT_USE'])
+        np.bitwise_or(output.groupdq[1:, 0:group_skip, :, :], dqflags.group['DO_NOT_USE'])
     log.debug(f"RSCD Sub: adding DO_NOT_USE to GROUPDQ for the first {group_skip} groups")
     output.meta.cal_step.rscd = 'COMPLETE'
 

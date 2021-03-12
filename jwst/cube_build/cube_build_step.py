@@ -392,7 +392,7 @@ class CubeBuildStep (Step):
                             'medium-short', 'medium-long', 'long-short', 'long-medium']
 
         valid_fwa = ['f070lp', 'f100lp',
-                     'g170lp', 'f290lp', 'clear', 'opaque','all']
+                     'g170lp', 'f290lp', 'clear', 'opaque', 'all']
         valid_gwa = ['g140m', 'g140h', 'g235m', 'g235h',
                      'g395m', 'g395h', 'prism', 'all']
 # ________________________________________________________________________________

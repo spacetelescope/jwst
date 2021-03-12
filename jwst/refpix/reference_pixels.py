@@ -268,7 +268,7 @@ class Dataset():
         if self.is_subarray:
             self.group[self.rowstart:self.rowstop, self.colstart:self.colstop] = self.input_model.data[integration, group].copy()
         else:
-            self.group[:,:] = self.input_model.data[integration, group].copy()
+            self.group[:, :] = self.input_model.data[integration, group].copy()
 
     def restore_group(self, integration, group):
         """Replace input model data with processed group array

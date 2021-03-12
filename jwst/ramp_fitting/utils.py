@@ -49,17 +49,17 @@ class OptRes:
         save_opt : boolean
            save optional fitting results
         """
-        self.slope_seg = np.zeros((n_int,) + (max_seg,) + imshape,dtype=np.float32)
+        self.slope_seg = np.zeros((n_int,) + (max_seg,) + imshape, dtype=np.float32)
         if save_opt:
-            self.yint_seg = np.zeros((n_int,) + (max_seg,) + imshape,dtype=np.float32)
-            self.sigyint_seg = np.zeros((n_int,) + (max_seg,) + imshape,dtype=np.float32)
-            self.sigslope_seg = np.zeros((n_int,) + (max_seg,) + imshape,dtype=np.float32)
-            self.inv_var_seg = np.zeros((n_int,) + (max_seg,) + imshape,dtype=np.float32)
+            self.yint_seg = np.zeros((n_int,) + (max_seg,) + imshape, dtype=np.float32)
+            self.sigyint_seg = np.zeros((n_int,) + (max_seg,) + imshape, dtype=np.float32)
+            self.sigslope_seg = np.zeros((n_int,) + (max_seg,) + imshape, dtype=np.float32)
+            self.inv_var_seg = np.zeros((n_int,) + (max_seg,) + imshape, dtype=np.float32)
             self.firstf_int = np.zeros((n_int,) + imshape, dtype=np.float32)
             self.ped_int = np.zeros((n_int,) + imshape, dtype=np.float32)
             self.cr_mag_seg = np.zeros((n_int,) + (nreads,) + imshape, dtype=np.float32)
-            self.var_p_seg = np.zeros((n_int,) + (max_seg,) + imshape,dtype=np.float32)
-            self.var_r_seg = np.zeros((n_int,) + (max_seg,) + imshape,dtype=np.float32)
+            self.var_p_seg = np.zeros((n_int,) + (max_seg,) + imshape, dtype=np.float32)
+            self.var_r_seg = np.zeros((n_int,) + (max_seg,) + imshape, dtype=np.float32)
 
     def init_2d(self, npix, max_seg, save_opt):
         """
@@ -240,7 +240,7 @@ class OptRes:
                     y, x = cr_int_has_cr[0][nn], cr_int_has_cr[1][nn]
 
                     if (cr_mag_int[k_rd, y, x] > 0.):
-                        cr_com[ii_int,end_cr[y,x],y,x] = cr_mag_int[k_rd,y,x]
+                        cr_com[ii_int, end_cr[y, x], y, x] = cr_mag_int[k_rd, y, x]
                         end_cr[y, x] += 1
 
         max_num_crs = end_cr.max()
@@ -370,7 +370,7 @@ def alloc_arrays_1(n_int, imshape):
     num_seg_per_int = np.zeros((n_int,) + imshape, dtype=np.uint8)
 
     # for estimated median slopes
-    median_diffs_2d = np.zeros(imshape,dtype=np.float32)
+    median_diffs_2d = np.zeros(imshape, dtype=np.float32)
     sat_0th_group_int = np.zeros((n_int,) + imshape, dtype=np.uint8)
 
     return (dq_int, median_diffs_2d, num_seg_per_int, sat_0th_group_int)
@@ -449,7 +449,7 @@ def alloc_arrays_2(n_int, imshape, max_seg):
     s_inv_var_both3 = np.zeros_like(var_p3)
 
     # Segment-specific:
-    var_p4 = np.zeros((n_int,) + (max_seg,) + imshape,dtype=np.float32) + LARGE_VARIANCE
+    var_p4 = np.zeros((n_int,) + (max_seg,) + imshape, dtype=np.float32) + LARGE_VARIANCE
     var_r4 = var_p4.copy()
     var_both4 = var_p4.copy()
     inv_var_both4 = np.zeros_like(var_p4)
@@ -1184,13 +1184,13 @@ def remove_bad_singles(segs_beg_3):
     while(tot_num_single_grp_ramps > 0):
         # until there are no more single-group segments
         for ii_0 in range(max_seg):
-            slice_0 = segs_beg_3[ii_0,:,:]
+            slice_0 = segs_beg_3[ii_0, :, :]
 
             for ii_1 in range(max_seg):  # correctly includes EARLIER segments
                 if (ii_0 == ii_1):  # don't compare with itself
                     continue
 
-                slice_1 = segs_beg_3[ii_1,:,:]
+                slice_1 = segs_beg_3[ii_1, :, :]
 
                 # Find ramps of a single-group segment and another segment
                 # either earlier or later
@@ -1328,7 +1328,7 @@ def do_all_sat(pixeldq, groupdq, imshape, n_int, save_opt):
         groupdq_3d = np.zeros((m_sh[0], m_sh[2], m_sh[3]), dtype=np.uint32)
 
         for ii in range(n_int):  # add SAT flag to existing groupdq in each slice
-            groupdq_3d[ii,:,:] = np.bitwise_or.reduce(groupdq[ii,:,:,:],
+            groupdq_3d[ii, :, :] = np.bitwise_or.reduce(groupdq[ii, :, :, :],
                                                        axis=0)
 
         groupdq_3d = np.bitwise_or(groupdq_3d, dqflags.group['DO_NOT_USE'])

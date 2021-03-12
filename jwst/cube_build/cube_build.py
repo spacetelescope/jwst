@@ -245,10 +245,10 @@ class CubeData():
             # 1 to 1 mapping valid_gwa[i] -> valid_fwa[i]
             valid_gwa = ['g140m', 'g140h', 'g140m', 'g140h', 'g235m',
                          'g235h', 'g395m', 'g395h', 'prism',
-                         'prism','g140m', 'g140h', 'g235m', 'g235h', 'g395m', 'g395h']
+                         'prism', 'g140m', 'g140h', 'g235m', 'g235h', 'g395m', 'g395h']
             valid_fwa = ['f070lp', 'f070lp', 'f100lp', 'f100lp', 'f170lp',
                          'f170lp', 'f290lp', 'f290lp', 'clear',
-                         'opaque', 'opaque','opaque', 'opaque','opaque', 'opaque','opaque']
+                         'opaque', 'opaque', 'opaque', 'opaque', 'opaque', 'opaque', 'opaque']
 
             nbands = len(valid_fwa)
 

@@ -74,7 +74,7 @@ def apply_LG_plus(input_model, filter_model, oversample, rotation,
 
     lamc = 4.3e-6
     oversample = 11
-    bandpass = np.array([(1.0, lamc),])
+    bandpass = np.array([(1.0, lamc), ])
     pixelscale_as = 0.0656
     arcsec2rad = u.arcsec.to(u.rad)
     PIXELSCALE_r = pixelscale_as * arcsec2rad
@@ -82,7 +82,7 @@ def apply_LG_plus(input_model, filter_model, oversample, rotation,
     filt = "F430M"
     rotsearch_d = np.arange(rotsearch_parameters[0], rotsearch_parameters[1], rotsearch_parameters[2])
 
-    affine2d = find_rotation(data[:,:], psf_offset, rotsearch_d,
+    affine2d = find_rotation(data[:, :], psf_offset, rotsearch_d,
                              mx, my, sx, sy, xo, yo,
                              PIXELSCALE_r, dim, bandpass, oversample, holeshape)
 

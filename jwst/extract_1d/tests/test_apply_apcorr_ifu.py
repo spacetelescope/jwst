@@ -25,9 +25,9 @@ def dummy_nirspec_ref(tmpdir_factory):
     refap['meta']['origin'] = 'STScI'
 
     dummy_wave = np.zeros(100) + 0.5
-    dummy_radius = np.zeros((3,100)) + 0.5
-    dummy_apcorr = np.ones((3,100))
-    dummy_apcorr_error = np.zeros((3,100))
+    dummy_radius = np.zeros((3, 100)) + 0.5
+    dummy_apcorr = np.ones((3, 100))
+    dummy_apcorr_error = np.zeros((3, 100))
 
     refap['apcorr_table'] = {}
     refap['apcorr_table']['wavelength'] = dummy_wave.copy()
@@ -40,10 +40,10 @@ def dummy_nirspec_ref(tmpdir_factory):
     refap['apcorr_table']['grating'] = 'ANY'
 
     ff = AsdfFile(refap)
-    ff.set_array_storage(refap['apcorr_table']['wavelength'],'inline')
-    ff.set_array_storage(refap['apcorr_table']['radius'],'inline')
-    ff.set_array_storage(refap['apcorr_table']['apcorr'],'inline')
-    ff.set_array_storage(refap['apcorr_table']['apcorr_err'],'inline')
+    ff.set_array_storage(refap['apcorr_table']['wavelength'], 'inline')
+    ff.set_array_storage(refap['apcorr_table']['radius'], 'inline')
+    ff.set_array_storage(refap['apcorr_table']['apcorr'], 'inline')
+    ff.set_array_storage(refap['apcorr_table']['apcorr_err'], 'inline')
 
     ff.write_to(filename)
     return filename
@@ -68,9 +68,9 @@ def dummy_miri_ref(tmpdir_factory):
     refap['meta']['origin'] = 'STScI'
 
     dummy_wave = np.zeros(100) + 0.5
-    dummy_radius = np.zeros((3,100)) + 0.5
-    dummy_apcorr = np.ones((3,100))
-    dummy_apcorr_error = np.zeros((3,100))
+    dummy_radius = np.zeros((3, 100)) + 0.5
+    dummy_apcorr = np.ones((3, 100))
+    dummy_apcorr_error = np.zeros((3, 100))
 
     refap['apcorr_table'] = {}
     refap['apcorr_table']['wavelength'] = dummy_wave.copy()
@@ -83,10 +83,10 @@ def dummy_miri_ref(tmpdir_factory):
     refap['apcorr_table']['band'] = 'ANY'
 
     ff = AsdfFile(refap)
-    ff.set_array_storage(refap['apcorr_table']['wavelength'],'inline')
-    ff.set_array_storage(refap['apcorr_table']['radius'],'inline')
-    ff.set_array_storage(refap['apcorr_table']['apcorr'],'inline')
-    ff.set_array_storage(refap['apcorr_table']['apcorr_err'],'inline')
+    ff.set_array_storage(refap['apcorr_table']['wavelength'], 'inline')
+    ff.set_array_storage(refap['apcorr_table']['radius'], 'inline')
+    ff.set_array_storage(refap['apcorr_table']['apcorr'], 'inline')
+    ff.set_array_storage(refap['apcorr_table']['apcorr_err'], 'inline')
 
     ff.write_to(filename)
     return filename
@@ -94,7 +94,7 @@ def dummy_miri_ref(tmpdir_factory):
 
 @pytest.fixture
 def miri_cube():
-    model = IFUCubeModel((15,10,10))
+    model = IFUCubeModel((15, 10, 10))
     instrument = 'MIRI'
     exptype = 'MIR_MRS'
     model.meta.instrument.name = instrument
@@ -106,7 +106,7 @@ def miri_cube():
 
 @pytest.fixture
 def nirspec_cube():
-    model = IFUCubeModel((15,10,10))
+    model = IFUCubeModel((15, 10, 10))
     instrument = 'NIRSPEC'
     exptype = 'NRS_IFU'
     model.meta.instrument.name = instrument

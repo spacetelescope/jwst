@@ -156,11 +156,11 @@ def build_exposure_type(instrument, mode):
     """
     Build the exposure type from the instrument name and mode
     """
-    abbreviations = {'FGS':'FGS', 'MIRI':'MIR', 'NIRISS':'NIS',
-                     'NIRCAM':'NRC', 'NIRSPEC':'NRS'}
+    abbreviations = {'FGS': 'FGS', 'MIRI': 'MIR', 'NIRISS': 'NIS',
+                     'NIRCAM': 'NRC', 'NIRSPEC': 'NRS'}
 
-    spec_mode = {'FGS':'', 'MIRI':'MRS', 'NIRISS':'WFSS',
-                 'NIRCAM':'WFSS', 'NIRSPEC':'FIXEDSLIT'}
+    spec_mode = {'FGS': '', 'MIRI': 'MRS', 'NIRISS': 'WFSS',
+                 'NIRCAM': 'WFSS', 'NIRSPEC': 'FIXEDSLIT'}
 
     abbrev = abbreviations[instrument]
     if mode[0:4] == 'IMAG':
@@ -177,26 +177,26 @@ def choose_pipeline(defaults):
     """
     Select the pipeline class from the exposure type and level
     """
-    mode = {'FGS_ACQ1':1, 'FGS_ACQ2':1, 'FGS_DARK':2,
-            'FGS_FINEGUIDE':1, 'FGS_FOCUS':6, 'FGS_ID-IMAGE':1,
-            'FGS_ID-STACK':1, 'FGS_IMAGE':6, 'FGS_INTFLAT':0,
-            'FGS_SKYFLAT':6, 'FGS_TRACK':1, 'MIR_IMAGE':6,
-            'MIR_TACQ':0, 'MIR_LYOT':5, 'MIR_4QPM':5,
-            'MIR_LRS-FIXEDSLIT':9, 'MIR_LRS-SLITLESS':4, 'MIR_MRS':9,
-            'MIR_DARK':2, 'MIR_FLAT-IMAGE':6, 'MIR_FLATIMAGE':6,
-            'MIR_FLAT-MRS':6, 'MIR_FLATMRS':6, 'MIR_CORONCAL':7,
-            'NIS_AMI':3, 'NIS_DARK':2, 'NIS_FOCUS':6, 'NIS_IMAGE':6,
-            'NIS_LAMP':0, 'NIS_SOSS':4, 'NIS_TACQ':6,
-            'NIS_TACONFIRM':6, 'NIS_WFSS':9, 'N/A':6, 'ANY':6,
-            'NRC_IMAGE':6, 'NRC_GRISM':9, 'NRC_TACQ':6,
-            'NRC_CORON':5, 'NRC_FOCUS':6, 'NRC_DARK':2, 'NRC_FLAT':6,
-            'NRC_LED':0, 'NRC_TACONFIRM':6, 'NRC_TSIMAGE':4,
-            'NRC_WFSS':9, 'NRC_TSGRISM':4, 'NRS_AUTOFLAT':0,
-            'NRS_AUTOWAVE':0, 'NRS_BRIGHTOBJ':4, 'NRS_CONFIRM':0,
-            'NRS_DARK':2, 'NRS_FIXEDSLIT':9, 'NRS_FOCUS':0, 'NRS_IFU':9,
-            'NRS_IMAGE':6, 'NRS_LAMP':0, 'NRS_MIMF':0, 'NRS_MSASPEC':9,
-            'NRS_MSATA':0, 'NRS_TACONFIRM':0, 'NRS_TACQ':0, 'NRS_TASLIT':9,
-            'NRS_WATA':0}
+    mode = {'FGS_ACQ1': 1, 'FGS_ACQ2': 1, 'FGS_DARK': 2,
+            'FGS_FINEGUIDE': 1, 'FGS_FOCUS': 6, 'FGS_ID-IMAGE': 1,
+            'FGS_ID-STACK': 1, 'FGS_IMAGE': 6, 'FGS_INTFLAT': 0,
+            'FGS_SKYFLAT': 6, 'FGS_TRACK': 1, 'MIR_IMAGE': 6,
+            'MIR_TACQ': 0, 'MIR_LYOT': 5, 'MIR_4QPM': 5,
+            'MIR_LRS-FIXEDSLIT': 9, 'MIR_LRS-SLITLESS': 4, 'MIR_MRS': 9,
+            'MIR_DARK': 2, 'MIR_FLAT-IMAGE': 6, 'MIR_FLATIMAGE': 6,
+            'MIR_FLAT-MRS': 6, 'MIR_FLATMRS': 6, 'MIR_CORONCAL': 7,
+            'NIS_AMI': 3, 'NIS_DARK': 2, 'NIS_FOCUS': 6, 'NIS_IMAGE': 6,
+            'NIS_LAMP': 0, 'NIS_SOSS': 4, 'NIS_TACQ': 6,
+            'NIS_TACONFIRM': 6, 'NIS_WFSS': 9, 'N/A': 6, 'ANY': 6,
+            'NRC_IMAGE': 6, 'NRC_GRISM': 9, 'NRC_TACQ': 6,
+            'NRC_CORON': 5, 'NRC_FOCUS': 6, 'NRC_DARK': 2, 'NRC_FLAT': 6,
+            'NRC_LED': 0, 'NRC_TACONFIRM': 6, 'NRC_TSIMAGE': 4,
+            'NRC_WFSS': 9, 'NRC_TSGRISM': 4, 'NRS_AUTOFLAT': 0,
+            'NRS_AUTOWAVE': 0, 'NRS_BRIGHTOBJ': 4, 'NRS_CONFIRM': 0,
+            'NRS_DARK': 2, 'NRS_FIXEDSLIT': 9, 'NRS_FOCUS': 0, 'NRS_IFU': 9,
+            'NRS_IMAGE': 6, 'NRS_LAMP': 0, 'NRS_MIMF': 0, 'NRS_MSASPEC': 9,
+            'NRS_MSATA': 0, 'NRS_TACONFIRM': 0, 'NRS_TACQ': 0, 'NRS_TASLIT': 9,
+            'NRS_WATA': 0}
 
     pipelines = [None, GuiderPipeline, DarkPipeline,
                  Ami3Pipeline, Tso3Pipeline, Coron3Pipeline,
@@ -334,7 +334,7 @@ def import_objects(package, line):
     """
     line = line.lstrip()
     local_variables = {}
-    global_variables = {'__package__':package}
+    global_variables = {'__package__': package}
     try:
         exec(line, global_variables, local_variables)  # nosec
     except ImportError:
@@ -650,17 +650,17 @@ def set_wcs_defaults(im, defaults):
     Set default values for the wcs header keywords
     """
     wcs_defaults = {
-        'crval1':5.3196,     'crval2':-72.98605,
-        'ctype1':'RA---TAN', 'ctype2':'DEC--TAN',
-        'cunit1':'deg',      'cunit2':'deg',
-        'cdelt1':5.5E-06,    'cdelt2':5.5E-06}
+        'crval1': 5.3196, 'crval2': -72.98605,
+        'ctype1': 'RA---TAN', 'ctype2': 'DEC--TAN',
+        'cunit1': 'deg', 'cunit2': 'deg',
+        'cdelt1': 5.5E-06, 'cdelt2': 5.5E-06}
 
     shape = get_shape(im, defaults)
     for i in (1, 2):
         name = "crpix%d" % i
         wcs_defaults[name] = 0.5 * shape[i - 1]
 
-        for j in (1,2):
+        for j in (1, 2):
             name = "pc%d_%d" % (i, j)
             if i == j:
                 wcs_defaults[name] = 1.0

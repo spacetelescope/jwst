@@ -15,8 +15,8 @@ log.setLevel(logging.WARNING)
 
 
 def setup_inputs(ngroups=10, readnoise=10, nints=1,
-                 nrows=1032, ncols=1024, nframes=1, grouptime=1.0,gain=1, deltatime=1):
-    times = np.array(list(range(ngroups)),dtype=np.float64) * deltatime
+                 nrows=1032, ncols=1024, nframes=1, grouptime=1.0, gain=1, deltatime=1):
+    times = np.array(list(range(ngroups)), dtype=np.float64) * deltatime
     gain = np.ones(shape=(nrows, ncols), dtype=np.float64) * gain
     err = np.ones(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
     data = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)

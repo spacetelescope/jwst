@@ -422,7 +422,7 @@ def match_det2cube(instrument,
     x = x[good_data]
     y = y[good_data]
 
-    coord1, coord2, lam = transform(x,y)
+    coord1, coord2, lam = transform(x, y)
     valid = ~np.isnan(coord2)
     x = x[valid]
     y = y[valid]

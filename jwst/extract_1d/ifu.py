@@ -463,7 +463,7 @@ def extract_ifu(input_model, source_type, extract_params):
         # Compute the area of the aperture and possibly also of the annulus.
         # for each wavelength bin (taking into account empty spaxels)
         normalization = 1.
-        temp_weightmap = weightmap[k,:,:]
+        temp_weightmap = weightmap[k, :, :]
         temp_weightmap[temp_weightmap > 1] = 1
         aperture_area = 0
         annulus_area = 0
@@ -539,7 +539,7 @@ def extract_ifu(input_model, source_type, extract_params):
             # set up the mask to flag data that should not be used in aperture photometry
             maskclip = np.logical_or(bkg_data < low, bkg_data > high)
 
-            bkg_table = aperture_photometry(bkg_data, aperture,mask=maskclip,
+            bkg_table = aperture_photometry(bkg_data, aperture, mask=maskclip,
                                              method=method, subpixels=subpixels)
             background[k] = float(bkg_table['aperture_sum'][0])
             phot_table = aperture_photometry(temp_weightmap, aperture, mask=maskclip,
@@ -1170,7 +1170,7 @@ def sigma_clip_extended_region(data, mask_targ, wmap, sigma_clip):
         maskclip = np.logical_or(data_plane < low, data_plane > high)  # flag outliers
         extract_region[maskclip] = 0
 
-        sigma_clip_region[k] = np.sum(data_plane * extract_region * wmap[k,:,:])
+        sigma_clip_region[k] = np.sum(data_plane * extract_region * wmap[k, :, :])
         n_bkg[k] = np.sum(wmap[k, :, :] * extract_region)
 
     return sigma_clip_region, n_bkg

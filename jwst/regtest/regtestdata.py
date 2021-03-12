@@ -310,7 +310,7 @@ def run_step_from_dict(rtdata, **step_params):
     return rtdata
 
 
-def run_step_from_dict_mock(rtdata, source,  **step_params):
+def run_step_from_dict_mock(rtdata, source, **step_params):
     """Pretend to run Steps with given parameter but just copy data
 
     For long running steps where the result already exists, just

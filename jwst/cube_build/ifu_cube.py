@@ -269,7 +269,7 @@ class IFUCubeData():
 
         for i in range(num):
             xi, eta = coord.radec2std(self.crval1, self.crval2,
-                                     corner_a[i],  corner_b[i], rot_angle)
+                                     corner_a[i], corner_b[i], rot_angle)
             xi_corner.append(xi)
             eta_corner.append(eta)
 
@@ -517,7 +517,7 @@ class IFUCubeData():
                      self.wavelength_table[0], self.wavelength_table[self.naxis3 - 1])
 
         if self.rot_angle is not None:
-            log.info('Rotation angle between Ra-Dec and Slicer-Plane %12.8f',self.rot_angle)
+            log.info('Rotation angle between Ra-Dec and Slicer-Plane %12.8f', self.rot_angle)
 
         if self.instrument == 'MIRI':
             # length of channel and subchannel are the same
@@ -610,8 +610,8 @@ class IFUCubeData():
             nplane = self.naxis1 * self.naxis2
             xydebug = self.ydebug * self.naxis1 + self.xdebug
             cube_debug = (self.zdebug * nplane) + xydebug
-            log.info('Cube index debug %d',cube_debug)
-            log.info('%i %i %i %',xydebug,self.zdebug, self.ydebug, self.xdebug)
+            log.info('Cube index debug %d', cube_debug)
+            log.info('%i %i %i %', xydebug, self.zdebug, self.ydebug, self.xdebug)
 
         number_bands = len(self.list_par1)
         for i in range(number_bands):
@@ -770,14 +770,15 @@ class IFUCubeData():
                         if self.instrument == 'NIRSPEC':
                             nslices = 30
 
-                            slicemap = [15,14,16,13,17,12,18,11,19,10,20,9,21,8,22,7,23,6,24,5,25,4,26,3,
-                                        27,2,28,1,29,0]
+                            slicemap = [15, 14, 16, 13, 17, 12, 18, 11, 19, 10,
+                                        20, 9, 21, 8, 22, 7, 23, 6, 24, 5, 25,
+                                        4, 26, 3, 27, 2, 28, 1, 29, 0]
 
                             for i in range(nslices):
                                 # print('slice and slice map',i ,slicemap[i])
                                 slice_wcs = nirspec.nrs_wcs_set_input(input_model, i)
                                 x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box, step=(1, 1), center=True)
-                                detector2slicer = slice_wcs.get_transform('detector','slicer')
+                                detector2slicer = slice_wcs.get_transform('detector', 'slicer')
 
                                 cube_overlap.match_det2cube(self.instrument,
                                                             x, y, slicemap[i],
@@ -1240,8 +1241,8 @@ class IFUCubeData():
                 elif self.instrument == 'NIRSPEC':
                     slice_wcs = nirspec.nrs_wcs_set_input(input_model, 0)
                     x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box, step=(1, 1), center=True)
-                    detector2slicer = slice_wcs.get_transform('detector','slicer')
-                    across, along, lam = detector2slicer(x,y)  # lam ~0 for this transform
+                    detector2slicer = slice_wcs.get_transform('detector', 'slicer')
+                    across, along, lam = detector2slicer(x, y)  # lam ~0 for this transform
                     valid1 = ~np.isnan(lam)
                     lam = lam[valid1]
                     lam_med = np.median(lam)
@@ -1365,9 +1366,9 @@ class IFUCubeData():
     # set cube CRVALs, CRPIXs
 
         if self.coord_system == 'skyalign' or self.coord_system == 'ifualign':
-            self.set_geometry(corner_a,corner_b,final_lambda_min, final_lambda_max)
+            self.set_geometry(corner_a, corner_b, final_lambda_min, final_lambda_max)
         else:
-            self.set_geometryAB(corner_a,corner_b,final_lambda_min, final_lambda_max)
+            self.set_geometryAB(corner_a, corner_b, final_lambda_min, final_lambda_max)
 
         self.print_cube_geometry()
 
@@ -2139,7 +2140,7 @@ class IFUCubeData():
             k = 0
             found = 0
             while (k < self.naxis3 and found == 0):
-                flux_at_wave = temp_flux[k,:,:]
+                flux_at_wave = temp_flux[k, :, :]
                 sum = np.nansum(flux_at_wave)
                 if sum == 0.0:
                     remove_start = remove_start + 1
@@ -2152,7 +2153,7 @@ class IFUCubeData():
             found = 0
             k = self.naxis3 - 1
             while (k > 0 and found == 0):
-                flux_at_wave = temp_flux[k,:,:]
+                flux_at_wave = temp_flux[k, :, :]
                 sum = np.nansum(flux_at_wave)
                 if sum == 0.0:
                     remove_final = remove_final + 1
@@ -2172,10 +2173,10 @@ class IFUCubeData():
                 log.info('Number of wavelength planes removed with no data: %i',
                          remove_total)
 
-                temp_flux = temp_flux[remove_start:self.naxis3 - remove_final,:,:]
-                temp_wmap = temp_wmap[remove_start:self.naxis3 - remove_final,:,:]
-                temp_dq = temp_dq[remove_start:self.naxis3 - remove_final,:,:]
-                temp_var = temp_var[remove_start:self.naxis3 - remove_final,:,:]
+                temp_flux = temp_flux[remove_start:self.naxis3 - remove_final, :, :]
+                temp_wmap = temp_wmap[remove_start:self.naxis3 - remove_final, :, :]
+                temp_dq = temp_dq[remove_start:self.naxis3 - remove_final, :, :]
+                temp_var = temp_var[remove_start:self.naxis3 - remove_final, :, :]
 
                 if self.linear_wavelength:
                     self.crval3 = self.zcoord[remove_start]
@@ -2465,7 +2466,7 @@ class IFUCubeData():
         if status == 1:
             ifucube_model.meta.cal_step.cube_build = 'SKIPPED'
 
-        result = (ifucube_model,status)
+        result = (ifucube_model, status)
         return result
 # ********************************************************************************
 

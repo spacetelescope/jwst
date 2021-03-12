@@ -17,7 +17,7 @@ def make_guider_image():
     image.meta.exposure.group_time = 465.643643
     image.meta.exposure.type = "FGS_FINEGUIDE"
 
-    image.data = np.random.rand(4,10,10,10)
+    image.data = np.random.rand(4, 10, 10, 10)
 
     return image
 
@@ -29,7 +29,7 @@ def test_get_dataset_info(make_guider_image):
 
     imshape, n_int, grp_time, exp_type = get_dataset_info(model)
 
-    assert imshape == (10,10)
+    assert imshape == (10, 10)
     assert n_int == model.data.shape[0]
     assert grp_time == model.meta.exposure.group_time
     assert exp_type == model.meta.exposure.type
@@ -112,7 +112,7 @@ def test_guider_cds_id_modes(exptype, make_guider_image):
 
     truth[0, :, :] = np.minimum(diff_int1, diff_int0) / model.meta.exposure.group_time
 
-    assert np.allclose(result.data[0,:,:], truth[0,:,:])
+    assert np.allclose(result.data[0, :, :], truth[0, :, :])
 
 
 def test_unit_assignment(make_guider_image):

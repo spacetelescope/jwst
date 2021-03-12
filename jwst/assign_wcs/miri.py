@@ -472,7 +472,7 @@ def detector_to_abl(input_model, reference_files):
     with RegionsModel(reference_files['regions']) as f:
         allregions = f.regions.copy()
         # Use the 80% throughput slice mask
-        regions = allregions[7,:,:]
+        regions = allregions[7, :, :]
 
     label_mapper = selector.LabelMapperArray(regions)
     transforms = {}

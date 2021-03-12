@@ -64,4 +64,4 @@ def test_correction_pars(rtdata, fitsdiff_default_kwargs):
     step.use_correction_pars = True
     reflatted = step.run(data)
 
-    assert np.allclose(flatted.data,reflatted.data), 'Re-run with correction parameters failed'
+    assert np.allclose(flatted.data, reflatted.data), 'Re-run with correction parameters failed'

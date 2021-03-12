@@ -43,7 +43,7 @@ def test_flatfield_step_interface(instrument, exptype):
     flat.meta.subarray.xsize = shape[1]
     flat.meta.subarray.ysize = shape[0]
     flat.data += 1
-    flat.data[0,0] = np.nan
+    flat.data[0, 0] = np.nan
     flat.err = np.random.random(shape) * 0.05
 
     # override class attribute so only the `flat` type needs to be overriden

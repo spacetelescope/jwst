@@ -37,7 +37,7 @@ def run_pipeline(jail, rtdata_module):
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("output",[
+@pytest.mark.parametrize("output", [
     "bsub", "flat_field", "assign_wcs", "srctype", "cal", "x1d"])
 def test_miri_lrs_slit_spec2(run_pipeline, fitsdiff_default_kwargs, output):
     """Regression test of the calwebb_spec2 pipeline on MIRI

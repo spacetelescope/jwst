@@ -145,7 +145,7 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
             icube_index = [iz * nplane + ir for iz in indexz[0] for ir in indexr[0]]
 
             if cube_debug in icube_index:
-                log.info('cube_debug %i %d %d',ipt,flux[ipt],weight_distance[icube_index.index(cube_debug)])
+                log.info('cube_debug %i %d %d', ipt, flux[ipt], weight_distance[icube_index.index(cube_debug)])
 
             # Add the weighted flux and variance to running 1d cubes, along with the weights
             # (for later normalization), and point count (for information)

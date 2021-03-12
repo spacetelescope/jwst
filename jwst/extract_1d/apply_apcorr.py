@@ -304,15 +304,15 @@ class ApCorrRadial(ApCorrBase):
         self.apcorr_correction = []  # set up here defined in find_apcor_func
         # loop over each radius dependent plane and interpolate to ifu wavelength
         for i in range(dim):
-            radi = self.size[i,:]
+            radi = self.size[i, :]
             frad = interp1d(self.wavelength, radi, bounds_error=False, fill_value="extrapolate")
             radius_match = frad(wavelength_ifu)
-            size_match[i,:] = radius_match
+            size_match[i, :] = radius_match
 
-            appi = self.apcorr[i,:]
+            appi = self.apcorr[i, :]
             fap = interp1d(self.wavelength, appi, bounds_error=False, fill_value="extrapolate")
             ap_match = fap(wavelength_ifu)
-            apcorr_match[i,:] = ap_match
+            apcorr_match[i, :] = ap_match
 
         self.apcorr = apcorr_match
         self.size = size_match
@@ -325,7 +325,7 @@ class ApCorrRadial(ApCorrBase):
 
         radius_apcor = self.size[:, iwave]
         temparray = self.apcorr[:, iwave]
-        fap = interp1d(radius_apcor,temparray,fill_value="extrapolate")
+        fap = interp1d(radius_apcor, temparray, fill_value="extrapolate")
         correction = fap(radius_ifu)
         self.apcorr_correction.append(correction)
         return

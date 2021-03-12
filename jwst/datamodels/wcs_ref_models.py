@@ -627,7 +627,7 @@ class DisperserModel(ReferenceFileModel):
 
     def __init__(self, init=None, angle=None, gwa_tiltx=None, gwa_tilty=None,
                  kcoef=None, lcoef=None, tcoef=None, pref=None, tref=None,
-                 theta_x=None, theta_y=None,theta_z=None,
+                 theta_x=None, theta_y=None, theta_z=None,
                  groovedensity=None, **kwargs):
         super().__init__(init=init, **kwargs)
         if groovedensity is not None:

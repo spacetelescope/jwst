@@ -49,7 +49,7 @@ def run_pipeline(jail, rtdata_module, request):
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("suffix",[
+@pytest.mark.parametrize("suffix", [
     "assign_wcs", "extract_2d", "wavecorr", "flat_field", "pathloss", "srctype",
     "cal", "s2d", "x1d"])
 def test_nirspec_fs_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):

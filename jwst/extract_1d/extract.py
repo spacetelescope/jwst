@@ -127,7 +127,7 @@ def open_extract1d_ref(refname: str, exptype: str) -> dict:
 
     if refname == "N/A":
         ref_dict = None
-    elif exptype in ['MIR_MRS',  'NRS_IFU']:
+    elif exptype in ['MIR_MRS', 'NRS_IFU']:
         # read in asdf file
         extract_model = datamodels.Extract1dIFUModel(refname)
         ref_dict = {}
@@ -2708,7 +2708,7 @@ def do_extract1d(
     if hasattr(input_temp, "int_times"):
         output_model.int_times = input_temp.int_times.copy()
 
-    output_model.update(input_temp,only='PRIMARY')
+    output_model.update(input_temp, only='PRIMARY')
 
     spec_dtype = datamodels.SpecModel().spec_table.dtype  # This data type is used for creating an output table.
 

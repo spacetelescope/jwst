@@ -17,13 +17,13 @@ xcenter = 50
 ycenter = 50
 
 slice_gap = np.zeros(shape)
-slice_gap[:,5:25] = 1
-slice_gap[:,30:50] = 2
-slice_gap[:,55:75] = 3
-slice_gap[:,80:] = 4
+slice_gap[:, 5:25] = 1
+slice_gap[:, 30:50] = 2
+slice_gap[:, 55:75] = 3
+slice_gap[:, 80:] = 4
 
 
-def dummy_wcs(x,y):
+def dummy_wcs(x, y):
     """ Simple WCS for testing """
 
     global xcenter, ycenter, shape, slice_gap

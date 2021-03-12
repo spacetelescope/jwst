@@ -49,7 +49,7 @@ def gfunction(xi, eta, **kwargs):
     i = 1j
     Pi = np.pi
 
-    xip, etap = affine2d.distortFargs(xi,eta)
+    xip, etap = affine2d.distortFargs(xi, eta)
 
     if kwargs['minus'] is True:
         xip = -1 * xip
@@ -63,7 +63,7 @@ def gfunction(xi, eta, **kwargs):
     ) / \
          (4 * Pi * Pi * (etap * etap * etap - 3 * etap * xip * xip))
 
-    return g * affine2d.distortphase(xi,eta)
+    return g * affine2d.distortphase(xi, eta)
 
 
 def hextransform(s=None, c=None, d=None, lam=None, pitch=None, affine2d=None):
@@ -120,6 +120,6 @@ def hextransform(s=None, c=None, d=None, lam=None, pitch=None, affine2d=None):
                   np.fromfunction(gfunction, s, d=d, c=c_adjust, lam=lam,
                                   pixel=pitch, affine2d=affine2d, minus=True)
 
-    hex_complex[int(c[0]),int(c[1])] = (np.sqrt(3) / 2.0)
+    hex_complex[int(c[0]), int(c[1])] = (np.sqrt(3) / 2.0)
 
     return hex_complex

@@ -121,12 +121,12 @@ class OutlierDetectionIFU(OutlierDetection):
         for band in self.ifu_band:
             if self.instrument == 'MIRI':
                 cubestep = CubeBuildStep(config_file=cube_build_config,
-                                         channel=band,weighting='emsm',
+                                         channel=band, weighting='emsm',
                                          single=True)
 
             if self.instrument == 'NIRSPEC':
                 cubestep = CubeBuildStep(config_file=cube_build_config,
-                                         grating=band,weighting='emsm',
+                                         grating=band, weighting='emsm',
                                          single=True)
 
             single_IFUCube_result = cubestep.process(self.input_models)

@@ -19,7 +19,7 @@ def make_datamodel():
 
     # Make data arrays
     flux = np.random.rand(200) * 1e-9
-    wavelength = np.arange(11,13, step=0.01)
+    wavelength = np.arange(11, 13, step=0.01)
     error = np.random.rand(200)
     surf_bright = np.zeros(200)
     sb_error = np.zeros(200)
@@ -28,13 +28,13 @@ def make_datamodel():
     berror = np.zeros(200)
     npixels = np.zeros(200)
 
-    data = [(i,j,k,l,m,n,o,p,q) for i,j,k,l,m,n,o,p,q in zip(wavelength, flux, error,
+    data = [(i, j, k, l, m, n, o, p, q) for i, j, k, l, m, n, o, p, q in zip(wavelength, flux, error,
                                                             surf_bright, sb_error, dq,
                                                             background, berror, npixels)]
 
-    spec_table = np.array(data, dtype=[('WAVELENGTH', 'f8'),('FLUX', 'f8'),
+    spec_table = np.array(data, dtype=[('WAVELENGTH', 'f8'), ('FLUX', 'f8'),
                                     ('ERROR', 'f8'), ('SURF_BRIGHT', 'f8'),
-        ('SB_ERROR', 'f8'),('DQ', 'u4'), ('BACKGROUND', 'f8'),
+        ('SB_ERROR', 'f8'), ('DQ', 'u4'), ('BACKGROUND', 'f8'),
         ('BERROR', 'f8'), ('NPIXELS', 'f8')])
 
     spectrum = datamodels.SpecModel()

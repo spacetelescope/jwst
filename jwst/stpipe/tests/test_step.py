@@ -48,10 +48,10 @@ def data_path():
 @pytest.mark.parametrize(
     'arg, env_set, expected_fn', [
         ('--disable-crds-steppars', None, lambda stream: CRDS_ERROR_STRING not in stream),
-        ('--verbose',               None, lambda stream: CRDS_ERROR_STRING in stream),
-        ('--verbose',               'true', lambda stream: CRDS_ERROR_STRING not in stream),
-        ('--verbose',               'True', lambda stream: CRDS_ERROR_STRING not in stream),
-        ('--verbose',               't', lambda stream: CRDS_ERROR_STRING not in stream),
+        ('--verbose', None, lambda stream: CRDS_ERROR_STRING in stream),
+        ('--verbose', 'true', lambda stream: CRDS_ERROR_STRING not in stream),
+        ('--verbose', 'True', lambda stream: CRDS_ERROR_STRING not in stream),
+        ('--verbose', 't', lambda stream: CRDS_ERROR_STRING not in stream),
     ]
 )
 def test_disable_crds_steppars_cmdline(capsys, data_path, arg, env_set, expected_fn):
@@ -115,7 +115,7 @@ def test_saving_pars(tmpdir):
     ])
     assert saved_path.check()
 
-    with asdf.open(t_path(join('steps','jwst_generic_pars-makeliststep_0002.asdf'))) as af:
+    with asdf.open(t_path(join('steps', 'jwst_generic_pars-makeliststep_0002.asdf'))) as af:
         original_config = StepConfig.from_asdf(af)
         original_config.parameters["par3"] = False
 

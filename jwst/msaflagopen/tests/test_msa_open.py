@@ -94,10 +94,10 @@ def test_create_slitlets():
     msa_oper = Step().get_reference_file(dm, 'msaoper')
     result = create_slitlets(dm, msa_oper)
 
-    slit_fields = ('name','shutter_id','dither_position','xcen',
-                   'ycen','ymin','ymax','quadrant','source_id',
-                   'shutter_state','source_name','source_alias',
-                   'stellarity','source_xpos','source_ypos',
+    slit_fields = ('name', 'shutter_id', 'dither_position', 'xcen',
+                   'ycen', 'ymin', 'ymax', 'quadrant', 'source_id',
+                   'shutter_state', 'source_name', 'source_alias',
+                   'stellarity', 'source_xpos', 'source_ypos',
                    'source_ra', 'source_dec')
 
     for slit in result:
@@ -127,8 +127,8 @@ def test_wcs_to_dq():
 
 
 def test_boundingbox_from_indices():
-    dm = ImageModel((10,10))
-    bbox = ((1,2), (3,4))
+    dm = ImageModel((10, 10))
+    bbox = ((1, 2), (3, 4))
 
     result = boundingbox_to_indices(dm, bbox)
 

@@ -36,7 +36,7 @@ def run_tso_spec2_pipeline(jail, rtdata_module, request):
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("suffix",['assign_wcs', 'extract_2d', 'wavecorr', 'flat_field', 'photom', 'calints', 'x1dints'])
+@pytest.mark.parametrize("suffix", ['assign_wcs', 'extract_2d', 'wavecorr', 'flat_field', 'photom', 'calints', 'x1dints'])
 def test_nirspec_brightobj_spec2(run_tso_spec2_pipeline, fitsdiff_default_kwargs, suffix):
     """
         Regression test of calwebb_spec2 pipeline performed on NIRSpec

@@ -1003,7 +1003,7 @@ class Schema_editor:
             model_path = []
             model_schema = model_db.read(schema_file)
             self.edit_schema(model_schema, keyword_schema,
-                             keyword_dict, fits_dict,  model_path)
+                             keyword_dict, fits_dict, model_path)
 
             if self.current_file_changed:
                 # current_file_changed is set in report_and_query

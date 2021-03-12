@@ -456,7 +456,7 @@ def centerpoint(s):
     center: 2D integer or float tuple
         center of image
     """
-    return (0.5 * s[0] - 0.5,  0.5 * s[1] - 0.5)
+    return (0.5 * s[0] - 0.5, 0.5 * s[1] - 0.5)
 
 
 def combine_transmission(filt, SRC):
@@ -704,7 +704,7 @@ def findslope(a, m):
     offsetcube[3, :, :] = a_l
 
     tilt = np.zeros(a.shape), np.zeros(a.shape)
-    tilt = (a_r - a_l) / 2.0,  (a_up - a_dn) / 2.0  # raw estimate of phase slope
+    tilt = (a_r - a_l) / 2.0, (a_up - a_dn) / 2.0  # raw estimate of phase slope
     c = centerpoint(a.shape)
     C = (int(c[0]), int(c[1]))
     sigh, sigv = tilt[0][C[0] - 1:C[0] + 1, C[1] - 1:C[1] + 1].std(), \
@@ -721,7 +721,7 @@ def findslope(a, m):
     tv[newmaskv] = tilt[1][newmaskv]
 
     # determine units of tilt -
-    G = a.shape[0] / (2.0 * np.pi),  a.shape[1] / (2.0 * np.pi)
+    G = a.shape[0] / (2.0 * np.pi), a.shape[1] / (2.0 * np.pi)
 
     slopes = G[0] * tilt[0][newmaskh].mean(), G[1] * tilt[1][newmaskv].mean()
     return slopes

@@ -39,7 +39,7 @@ def test_comment():
     assert c2h[0].header.comments['comkey'] == 'comment for you'
 
 
-@pytest.mark.skipif(sys.version_info < (3,6),
+@pytest.mark.skipif(sys.version_info < (3, 6),
                     reason="requires python>=3.6 so dicts are ordered")
 def test_json():
     """Test json"""

@@ -448,7 +448,7 @@ def weighted_operations(img, model, weights):
     flatmodel = np.zeros((len(flatimg), np.shape(model)[2]))
 
     for fringe in range(np.shape(model)[2]):
-        flatmodel[:,fringe] = np.delete(flatmodel_nan[:,fringe], nanlist)
+        flatmodel[:, fringe] = np.delete(flatmodel_nan[:, fringe], nanlist)
 
     # At (A transpose)
     flatmodeltransp = flatmodel.transpose()
@@ -456,7 +456,7 @@ def weighted_operations(img, model, weights):
     CdotA = flatmodel.copy()
 
     for i in range(flatmodel.shape[1]):
-        CdotA[:,i] = clist * flatmodel[:,i]
+        CdotA[:, i] = clist * flatmodel[:, i]
 
     modelproduct = np.dot(flatmodeltransp, CdotA)
     # At.C.b
@@ -570,7 +570,7 @@ def matrix_operations(img, model, flux=None, linfit=False):
             C = np.mat(flatmodeltransp)
 
             # initialize object
-            result = linearfit.LinearFit(M,S,C)
+            result = linearfit.LinearFit(M, S, C)
 
             # do the fit
             result.fit()

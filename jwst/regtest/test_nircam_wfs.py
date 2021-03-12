@@ -45,7 +45,7 @@ def run_pipelines(jail, rtdata_module):
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("output",[
+@pytest.mark.parametrize("output", [
     "jw00632003002_03105_00001_nrca4_cal.fits",
     "jw00632003002_03105_00002_nrca4_cal.fits",
     "jw00632-o003_t001_nircam_f212n-wlp8-nrca4_wfscmb-05.fits",

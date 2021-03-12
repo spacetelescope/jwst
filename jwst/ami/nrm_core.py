@@ -88,7 +88,7 @@ class FringeFitter:
         nrm.bandpass = self.instrument_data.wls[0]
 
         if self.npix == 'default':
-            self.npix = self.scidata[:,:].shape[0]
+            self.npix = self.scidata[:, :].shape[0]
 
         # New or modified in LG++
         # center the image on its peak pixel:
@@ -96,13 +96,13 @@ class FringeFitter:
         # AG 03-2019 -- is above comment still relevant?
 
         if self.instrument_data.arrname == "NIRC2_9NRM":
-            self.ctrd = utils.center_imagepeak(self.scidata[0, :,:],
+            self.ctrd = utils.center_imagepeak(self.scidata[0, :, :],
                         r=(self.npix - 1) // 2 - 2, cntrimg=False)
         elif self.instrument_data.arrname == "gpi_g10s40":
-            self.ctrd = utils.center_imagepeak(self.scidata[0, :,:],
+            self.ctrd = utils.center_imagepeak(self.scidata[0, :, :],
                         r=(self.npix - 1) // 2 - 2, cntrimg=True)
         else:
-            self.ctrd = utils.center_imagepeak(self.scidata[:,:])
+            self.ctrd = utils.center_imagepeak(self.scidata[:, :])
 
         nrm.reference = self.ctrd  # self. is the cropped image centered on the brightest pixel
         if self.psf_offset_ff is None:
@@ -262,7 +262,7 @@ class Calibrate:
             for ii in range(self.nobjs):
                 exps = [f for f in os.listdir(objpaths[ii])
                         if self.extra_dimension in f and
-                        os.path.isdir(os.path.join(objpaths[ii],f))]
+                        os.path.isdir(os.path.join(objpaths[ii], f))]
                 nexps = len(exps)
 
                 amp = np.zeros((self.naxis2, nexps, self.nbl))
@@ -286,48 +286,48 @@ class Calibrate:
                                 if "amplitudes" in f]
                     phafiles = [f for f in os.listdir(objpaths[ii] + exps[qq]) if "phase" in f]
 
-                    amp[0, qq,:] = np.loadtxt(objpaths[ii] + exps[qq] + "/" + ampfiles[0])
-                    cps[0, qq,:] = np.loadtxt(objpaths[ii] + exps[qq] + "/" + cpfiles[0])
-                    pha[0, qq,:] = np.loadtxt(objpaths[ii] + exps[qq] + "/" + phafiles[0])
+                    amp[0, qq, :] = np.loadtxt(objpaths[ii] + exps[qq] + "/" + ampfiles[0])
+                    cps[0, qq, :] = np.loadtxt(objpaths[ii] + exps[qq] + "/" + cpfiles[0])
+                    pha[0, qq, :] = np.loadtxt(objpaths[ii] + exps[qq] + "/" + phafiles[0])
 
                     # 10/14/2016 -- flag the exposure if we get amplitudes > 1
                     # Also flag the exposure if vflag is set, to reject fraction indicated
-                    if True in (amp[:,qq,:] > 1):
+                    if True in (amp[:, qq, :] > 1):
                         expflag.append(qq)
 
                 if self.vflag > 0.0:
                     self.ncut = int(self.vflag * nexps)  # how many are we cutting out
-                    sorted_exps = np.argsort(amp.mean(axis=(0,-1)))
+                    sorted_exps = np.argsort(amp.mean(axis=(0, -1)))
                     cut_exps = sorted_exps[:self.ncut]  # flag the ncut lowest exposures
                     expflag = expflag + list(cut_exps)
 
                 # Create the cov matrix arrays
                 if ii == 0:
                     rearr = np.rollaxis(cps, -1, 0).reshape(self.naxis2 * self.ncp, nexps)
-                    R_i = rearr - rearr.mean(axis=1)[:,None]
+                    R_i = rearr - rearr.mean(axis=1)[:, None]
                     R_j = R_i.T
-                    self.cov = np.dot(R_i,R_j) / (nexps - 1)
+                    self.cov = np.dot(R_i, R_j) / (nexps - 1)
                 else:
                     rearr = np.rollaxis(cps, -1, 0).reshape(self.naxis2 * self.ncp, nexps)
-                    R_i = rearr - rearr.mean(axis=1)[:,None]
+                    R_i = rearr - rearr.mean(axis=1)[:, None]
                     R_j = R_i.T
-                    self.cov += np.dot(R_i,R_j) / (nexps - 1)
+                    self.cov += np.dot(R_i, R_j) / (nexps - 1)
 
                 # Also adding a mask to calib steps
 
                 if ii == 0:
                     # closure phases and squared visibilities
-                    self.cp_mean_tar[0,:], self.cp_err_tar[0,:], \
-                        self.v2_mean_tar[0,:], self.v2_err_tar[0,:], \
-                        self.pha_mean_tar[0,:], self.pha_err_tar = \
-                        self.calib_steps(cps[0,:,:], amp[0,:,:], pha[0,:,:], nexps, expflag=expflag)
+                    self.cp_mean_tar[0, :], self.cp_err_tar[0, :], \
+                        self.v2_mean_tar[0, :], self.v2_err_tar[0, :], \
+                        self.pha_mean_tar[0, :], self.pha_err_tar = \
+                        self.calib_steps(cps[0, :, :], amp[0, :, :], pha[0, :, :], nexps, expflag=expflag)
 
                 else:
                     # closure phases and visibilities
-                    self.cp_mean_cal[ii - 1,0, :], self.cp_err_cal[ii - 1,0, :], \
-                        self.v2_mean_cal[ii - 1,0,:], self.v2_err_cal[ii - 1,0,:], \
-                        self.pha_mean_cal[ii - 1,0,:], self.pha_err_cal[ii - 1, 0,:] = \
-                        self.calib_steps(cps[0,:,:], amp[0,:,:], pha[0,:,:], nexps, expflag=expflag)
+                    self.cp_mean_cal[ii - 1, 0, :], self.cp_err_cal[ii - 1, 0, :], \
+                        self.v2_mean_cal[ii - 1, 0, :], self.v2_err_cal[ii - 1, 0, :], \
+                        self.pha_mean_cal[ii - 1, 0, :], self.pha_err_cal[ii - 1, 0, :] = \
+                        self.calib_steps(cps[0, :, :], amp[0, :, :], pha[0, :, :], nexps, expflag=expflag)
         else:
             for ii in range(self.nobjs):
 
@@ -342,39 +342,39 @@ class Calibrate:
 
                 expflag = []
                 for qq in range(nexps):
-                    amp[qq,:] = np.loadtxt(objpaths[ii] + "/" + ampfiles[qq])
-                    if True in (amp[qq,:] > 1):
+                    amp[qq, :] = np.loadtxt(objpaths[ii] + "/" + ampfiles[qq])
+                    if True in (amp[qq, :] > 1):
                         expflag.append(qq)
 
-                    pha[qq,:] = np.loadtxt(objpaths[ii] + "/" + phafiles[qq])
-                    cps[qq,:] = np.loadtxt(objpaths[ii] + "/" + cpfiles[qq])
+                    pha[qq, :] = np.loadtxt(objpaths[ii] + "/" + phafiles[qq])
+                    cps[qq, :] = np.loadtxt(objpaths[ii] + "/" + cpfiles[qq])
 
                 # Covariance 06/27/2017
                 if ii == 0:
                     rearr = np.rollaxis(cps, -1, 0).reshape(self.ncp, nexps)
-                    R_i = rearr - rearr.mean(axis=1)[:,None]
+                    R_i = rearr - rearr.mean(axis=1)[:, None]
                     R_j = R_i.T
-                    self.cov = np.dot(R_i,R_j) / (nexps - 1)
+                    self.cov = np.dot(R_i, R_j) / (nexps - 1)
                 else:
                     rearr = np.rollaxis(cps, -1, 0).reshape(self.ncp, nexps)
-                    R_i = rearr - rearr.mean(axis=1)[:,None]
+                    R_i = rearr - rearr.mean(axis=1)[:, None]
                     R_j = R_i.T
-                    self.cov += np.dot(R_i,R_j) / (nexps - 1)
+                    self.cov += np.dot(R_i, R_j) / (nexps - 1)
 
                 # Oct 14 2016 -- adding in a visibilities flag. Can't be >1 that doesn't make sense.
                 # Also adding a mask to calib steps
                 if ii == 0:
                     # closure phases and squared visibilities
-                    self.cp_mean_tar[0,:], self.cp_err_tar[0,:], \
-                        self.v2_mean_tar[0,:], self.v2_err_tar[0,:], \
-                        self.pha_mean_tar[0,:], self.pha_err_tar[0,:] = \
+                    self.cp_mean_tar[0, :], self.cp_err_tar[0, :], \
+                        self.v2_mean_tar[0, :], self.v2_err_tar[0, :], \
+                        self.pha_mean_tar[0, :], self.pha_err_tar[0, :] = \
                         self.calib_steps(cps, amp, pha, nexps, expflag=expflag)
                 else:
                     # Fixed clunkiness!
                     # closure phases and visibilities
-                    self.cp_mean_cal[ii - 1,0, :], self.cp_err_cal[ii - 1,0, :], \
-                        self.v2_mean_cal[ii - 1,0,:], self.v2_err_cal[ii - 1,0,:], \
-                        self.pha_mean_cal[ii - 1,0,:], self.pha_err_cal[ii - 1,0,:] = \
+                    self.cp_mean_cal[ii - 1, 0, :], self.cp_err_cal[ii - 1, 0, :], \
+                        self.v2_mean_cal[ii - 1, 0, :], self.v2_err_cal[ii - 1, 0, :], \
+                        self.pha_mean_cal[ii - 1, 0, :], self.pha_err_cal[ii - 1, 0, :] = \
                         self.calib_steps(cps, amp, pha, nexps, expflag=expflag)
 
         # Combine mean calibrator values and errors
@@ -525,7 +525,7 @@ class Calibrate:
         None
         """
 
-        np.savetxt(self.savedir + "/" + fns[0],arrays[0])
+        np.savetxt(self.savedir + "/" + fns[0], arrays[0])
         np.savetxt(self.savedir + "/" + fns[1], arrays[1])
         np.savetxt(self.savedir + "/" + fns[2], arrays[2])
         np.savetxt(self.savedir + "/" + fns[3], arrays[3])
@@ -572,7 +572,7 @@ class Calibrate:
             covshape = (self.naxis2 * self.ncp) - (2 * self.clip_wls * self.ncp)
             clippedcov = np.zeros((covshape, covshape))
             for k in range(self.ncp):
-                clippedcov[nwav * k:nwav * (k + 1),nwav * k:nwav * (k + 1)] = \
+                clippedcov[nwav * k:nwav * (k + 1), nwav * k:nwav * (k + 1)] = \
                     self.cov[self.naxis2 * k + self.clip_wls:self.naxis2 * (k + 1) - self.clip_wls,
                              self.naxis2 * k + self.clip_wls:self.naxis2 * (k + 1) - self.clip_wls]
         else:
@@ -585,18 +585,18 @@ class Calibrate:
         if not hasattr(self.instrument_data, "avparang"):
             self.instrument_data.avparang = 0.0
         self.obskeywords = {
-            'path':self.savedir + "/",
-            'year':self.instrument_data.year,
-            'month':self.instrument_data.month,
-            'day':self.instrument_data.day,
-            'TEL':self.instrument_data.telname,
-            'instrument':self.instrument_data.instrument,
-            'arrname':self.instrument_data.arrname,
-            'object':self.instrument_data.objname,
-            'RA':self.instrument_data.ra,
-            'DEC':self.instrument_data.dec,
-            'PARANG':self.instrument_data.avparang,
-            'PARANGRANGE':self.instrument_data.parang_range,
-            'PA':self.instrument_data.pa,
-            'phaseceil':self.phaseceil,
-            'covariance':clippedcov}
+            'path': self.savedir + "/",
+            'year': self.instrument_data.year,
+            'month': self.instrument_data.month,
+            'day': self.instrument_data.day,
+            'TEL': self.instrument_data.telname,
+            'instrument': self.instrument_data.instrument,
+            'arrname': self.instrument_data.arrname,
+            'object': self.instrument_data.objname,
+            'RA': self.instrument_data.ra,
+            'DEC': self.instrument_data.dec,
+            'PARANG': self.instrument_data.avparang,
+            'PARANGRANGE': self.instrument_data.parang_range,
+            'PA': self.instrument_data.pa,
+            'phaseceil': self.phaseceil,
+            'covariance': clippedcov}

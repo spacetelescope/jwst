@@ -985,9 +985,9 @@ def calc_sifov_fsm_delta_matrix(fsmcorr, fsmcorr_version='latest', fsmcorr_units
     if version == 'v1':
         transform = np.array(
             [
-                [1.,       x / 22.01, y / 21.68],
-                [-x / 22.01, 1.,      0.],
-                [-y / 21.68, 0.,      1.]
+                [1., x / 22.01, y / 21.68],
+                [-x / 22.01, 1., 0.],
+                [-y / 21.68, 0., 1.]
             ]
         )
 
@@ -1001,15 +1001,15 @@ def calc_sifov_fsm_delta_matrix(fsmcorr, fsmcorr_version='latest', fsmcorr_units
             )
         m_x_partial = np.array(
             [
-                [1., 0.,      0.],
-                [0., cos(x),  sin(x)],
+                [1., 0., 0.],
+                [0., cos(x), sin(x)],
                 [0., -sin(x), cos(x)]
             ]
         )
         m_y_partial = np.array(
             [
                 [cos(y), 0., -sin(y)],
-                [0.,     1., 0.],
+                [0., 1., 0.],
                 [sin(y), 0., cos(y)]
             ]
         )
@@ -1363,10 +1363,10 @@ def get_mnemonics(obsstart, obsend, tolerance, engdb_url=None):
     )
 
     mnemonics = {
-        'SA_ZATTEST1':  None,
-        'SA_ZATTEST2':  None,
-        'SA_ZATTEST3':  None,
-        'SA_ZATTEST4':  None,
+        'SA_ZATTEST1': None,
+        'SA_ZATTEST2': None,
+        'SA_ZATTEST3': None,
+        'SA_ZATTEST4': None,
         'SA_ZRFGS2J11': None,
         'SA_ZRFGS2J12': None,
         'SA_ZRFGS2J13': None,
@@ -1376,8 +1376,8 @@ def get_mnemonics(obsstart, obsend, tolerance, engdb_url=None):
         'SA_ZRFGS2J31': None,
         'SA_ZRFGS2J32': None,
         'SA_ZRFGS2J33': None,
-        'SA_ZADUCMDX':  None,
-        'SA_ZADUCMDY':  None,
+        'SA_ZADUCMDX': None,
+        'SA_ZADUCMDY': None,
     }
 
     # Retrieve the mnemonics from the engineering database.

@@ -202,7 +202,7 @@ def test_interpolate():
 
     correction = bar.interpolate(rows, columns, shadow, default=np.nan)
 
-    compare = np.array([[0.,         0.09993018, 0.19986036, 0.29979054,
+    compare = np.array([[0., 0.09993018, 0.19986036, 0.29979054,
                          0.39972072, 0.24989818, 0.10007564],
                         [0.20000582, 0.29993599, 0.39986617, 0.25004363,
                          0.10022110, 0.20015128, 0.30008147],

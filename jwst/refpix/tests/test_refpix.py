@@ -451,7 +451,7 @@ def test_do_top_bottom_correction(setup_cube):
     side_smoothing_length = 11
     side_gain = 1.0
 
-    input_model = setup_cube('NIRCAM','NRCALONG', ngroups, nrows, ncols)
+    input_model = setup_cube('NIRCAM', 'NRCALONG', ngroups, nrows, ncols)
     input_model.meta.subarray.name = 'FULL'
     init_dataset = NIRDataset(input_model,
                               odd_even_columns,
@@ -524,7 +524,7 @@ def test_do_top_bottom_correction_no_even_odd(setup_cube):
     side_smoothing_length = 11
     side_gain = 1.0
 
-    input_model = setup_cube('NIRCAM','NRCALONG', ngroups, nrows, ncols)
+    input_model = setup_cube('NIRCAM', 'NRCALONG', ngroups, nrows, ncols)
     input_model.meta.subarray.name = 'FULL'
     init_dataset = NIRDataset(input_model,
                               odd_even_columns,

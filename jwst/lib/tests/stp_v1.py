@@ -360,10 +360,10 @@ def get_pointing(obstart, obsend, result_type='first'):
             )
         )
     params = {
-        'SA_ZATTEST1':  None,
-        'SA_ZATTEST2':  None,
-        'SA_ZATTEST3':  None,
-        'SA_ZATTEST4':  None,
+        'SA_ZATTEST1': None,
+        'SA_ZATTEST2': None,
+        'SA_ZATTEST3': None,
+        'SA_ZATTEST4': None,
         'SA_ZRFGS2J11': None,
         'SA_ZRFGS2J21': None,
         'SA_ZRFGS2J31': None,
@@ -373,8 +373,8 @@ def get_pointing(obstart, obsend, result_type='first'):
         'SA_ZRFGS2J13': None,
         'SA_ZRFGS2J23': None,
         'SA_ZRFGS2J33': None,
-        'SA_ZADUCMDX':  None,
-        'SA_ZADUCMDY':  None,
+        'SA_ZADUCMDX': None,
+        'SA_ZADUCMDY': None,
     }
     for param in params:
         try:
@@ -459,16 +459,16 @@ def get_pointing_stub(obstart, obsend):
     '''
     # The following values of q correspond to the engineering keyword values:
     # SA_ZATEST1, SA_ZATEST2, SA_ZATEST3, SA_ZATEST4
-    q = np.array([-0.36915286,  0.33763282,  0.05758533,  0.86395264])
+    q = np.array([-0.36915286, 0.33763282, 0.05758533, 0.86395264])
     # The following values of j2fgs_matrix correspond to the engineering
     #  keyword values of:
     # SA_ZRFGS2K11 SA_ZRFGS2K21 SA_ZRFGS2K31
     # SA_ZRFGS2K21 SA_ZRFGS2K22 SA_ZRFGS2K32
     # SA_ZRFGS2K31 SA_ZRFGS2K32 SA_ZRFGS2K33
     j2fgs_matrix = np.array(
-        [-1.00444000e-03,  3.38145836e-03, 9.99993778e-01,
+        [-1.00444000e-03, 3.38145836e-03, 9.99993778e-01,
          9.99999496e-01, -3.90000000e-14, 1.00444575e-03,
-         3.39649146e-06,  9.99994283e-01, -3.38145665e-03])
+         3.39649146e-06, 9.99994283e-01, -3.38145665e-03])
     # The following values of fsmcorr correspond to the engineering keywords:
     # SA_ZADUCMDX, SA_ZADUCMDY
     fsmcorr = np.array([0., 0.])

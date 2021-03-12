@@ -43,13 +43,13 @@ class NRM_mask_definitions():
         None
         """
 
-        if maskname not in ["gpi_g10s40",  "jwst_g7s6", "jwst_g7s6c", "visir_sam",
+        if maskname not in ["gpi_g10s40", "jwst_g7s6", "jwst_g7s6c", "visir_sam",
                             "p1640", "keck_nirc2", "pharo", "NIRC2_9NRM"]:
             raise ValueError("mask not supported")
         if holeshape is None:
             holeshape = 'circ'
 
-        if holeshape not in ["circ", "hex",]:
+        if holeshape not in ["circ", "hex", ]:
             raise ValueError("Unsupported mask holeshape" + maskname)
         self.maskname = maskname
 
@@ -107,7 +107,7 @@ def jwst_g7s6_centers_asbuilt(chooseholes=None):  # was jwst_g7s6_centers_asdesi
     # Assemble holes by actual open segment names (as_built).  Either the full mask or the
     # subset-of-holes mask will be V2-reversed after the as_designed centers  are defined
     # Debug orientations with b4,c6,[c2]
-    allholes = ('b4','c2','b5','b2','c1','b6','c6')
+    allholes = ('b4', 'c2', 'b5', 'b2', 'c1', 'b6', 'c6')
 
     #                                             design  built
     holedict['b4'] = [0.00000000, -2.640000]       # B4 -> B4
@@ -149,7 +149,7 @@ def jwst_g7s6_centers_asbuilt(chooseholes=None):  # was jwst_g7s6_centers_asdesi
 
     # create 'live' hole centers in an ideal, orthogonal undistorted xy pupil space,
     # eg maps open hole C5 in as_designed to C2 as_built, eg C4 unaffacted....
-    ctrs_asbuilt[:,0] *= -1
+    ctrs_asbuilt[:, 0] *= -1
 
     # LG++ rotate hole centers by 90 deg to match MAST o/p DMS PSF with
     # no affine2d transformations 8/2018 AS

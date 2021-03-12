@@ -44,7 +44,7 @@ def test_ideal_to_v23_roundtrip():
 
 @pytest.mark.parametrize(('wavelength', 'n'),
                          [(1e-6, 1.43079543),
-                          (2e-6,  1.42575377),
+                          (2e-6, 1.42575377),
                           (5e-6, 1.40061966)
                           ])
 def test_refraction_index(wavelength, n):

@@ -108,7 +108,7 @@ def find_corners_MIRI(input, this_channel, instrument_info, coord_system):
     lambda_min = np.nanmin(lam)
     lambda_max = np.nanmax(lam)
 
-    return a_min, b1, a_max, b2, a1, b_min,  a2, b_max, lambda_min, lambda_max
+    return a_min, b1, a_max, b2, a1, b_min, a2, b_max, lambda_min, lambda_max
 # *****************************************************************************
 
 
@@ -151,8 +151,8 @@ def find_corners_NIRSPEC(input, this_channel, instrument_info, coord_system):
         if coord_system == 'internal_cal':
             # coord1 = along slice
             # coord2 = across slice
-            detector2slicer = slice_wcs.get_transform('detector','slicer')
-            coord2, coord1, lam = detector2slicer(x,y)  # lam ~0 for this transform
+            detector2slicer = slice_wcs.get_transform('detector', 'slicer')
+            coord2, coord1, lam = detector2slicer(x, y)  # lam ~0 for this transform
             valid = np.logical_and(np.isfinite(coord1), np.isfinite(coord2))
             coord1 = coord1[valid]
             coord2 = coord2[valid]

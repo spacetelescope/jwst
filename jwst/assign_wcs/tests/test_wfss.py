@@ -186,7 +186,7 @@ def test_NIRISSBackwardDispersion():
     order = 1
 
     slit = create_slit(forward_model, x0, y0, order)
-    slit.meta.wcs.bounding_box = ((910, 916), (12,18))
+    slit.meta.wcs.bounding_box = ((910, 916), (12, 18))
 
     expected_xdx = np.array(
         [[641.69045022, 642.69044108, 643.69043194, 644.6904228, 645.69041366, 646.69040451, 647.69039537],

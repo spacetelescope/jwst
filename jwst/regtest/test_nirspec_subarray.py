@@ -30,7 +30,7 @@ def run_pipeline(jail, rtdata_module):
 @pytest.mark.bigdata
 @pytest.mark.parametrize("output", [
     'nrs1_group_subarray_group_scale.fits',
-    'nrs1_group_subarray_rate.fits',],
+    'nrs1_group_subarray_rate.fits', ],
     ids=['group_scale', 'rate'])
 def test_nirspec_detector1(run_pipeline, fitsdiff_default_kwargs, output):
     """

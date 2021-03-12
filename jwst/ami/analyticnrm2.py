@@ -212,10 +212,10 @@ def phasor(kx, ky, hx, hy, lam, phi_m, pitch, affine2d):
     phasor: complex
         Calculate wavefront for a single hole
     """
-    kxprime, kyprime = affine2d.distortFargs(kx,ky)
+    kxprime, kyprime = affine2d.distortFargs(kx, ky)
     return np.exp(-2 * np.pi * 1j *
              ((pitch * hx * kxprime + pitch * hy * kyprime) / lam + phi_m / lam)) * \
-             affine2d.distortphase(kx,ky)
+             affine2d.distortphase(kx, ky)
 
 
 def image_center(fov, oversample, psf_offset):
@@ -425,7 +425,7 @@ def asf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d):
     pitch = detpixel / float(oversample)
     ImCtr = image_center(fov, oversample, psf_offset)
 
-    return np.fromfunction(jinc, (oversample * fov,oversample * fov),
+    return np.fromfunction(jinc, (oversample * fov, oversample * fov),
                            c=ImCtr,
                            D=d,
                            lam=lam,
@@ -474,7 +474,7 @@ def asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d):
     pitch = detpixel / float(oversample)
     ImCtr = image_center(fov, oversample, psf_offset)
 
-    return np.fromfunction(interf, (oversample * fov,oversample * fov),
+    return np.fromfunction(interf, (oversample * fov, oversample * fov),
                            c=ImCtr,
                            ctrs=ctrs,
                            phi=phi,
