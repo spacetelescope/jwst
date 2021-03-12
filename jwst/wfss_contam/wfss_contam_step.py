@@ -18,7 +18,6 @@ class WfssContamStep(Step):
 
     reference_file_types = ['wavelengthrange']
 
-
     def process(self, input_model, *args, **kwargs):
 
         with datamodels.open(input_model) as dm:

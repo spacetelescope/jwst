@@ -82,7 +82,7 @@ class observation():
         self.IDs = []
         self.dir_image_names = direct_images
         self.seg = segmap_model.data
-        #self.dims = np.shape(self.seg)
+        # self.dims = np.shape(self.seg)
         self.dims = [2048, 2048]
         self.filter = filter
         self.order = order
@@ -101,15 +101,15 @@ class observation():
         print("wmin, wmax:", self.wmin, self.wmax)
 
         if len(boundaries) != 4:
-            #self.NAXIS = [2048, 2048]
-            #xpad = (np.shape(self.seg)[1] - self.NAXIS[0])//2
-            #ypad = (np.shape(self.seg)[0] - self.NAXIS[1])//2
-            #self.xstart = 0 + xpad
-            #self.xend = xpad + self.NAXIS[0] - 1
-            #self.ystart = 0 + ypad
-            #self.yend = ypad + self.NAXIS[1] - 1
-            #print(f"No boundaries passed. Assuming symmetrical padding of {xpad} {ypad} pixels")
-            #print(f"and a final size of {self.xend+1-self.xstart} {self.yend+1-self.ystart}.")
+            # self.NAXIS = [2048, 2048]
+            # xpad = (np.shape(self.seg)[1] - self.NAXIS[0])//2
+            # ypad = (np.shape(self.seg)[0] - self.NAXIS[1])//2
+            # self.xstart = 0 + xpad
+            # self.xend = xpad + self.NAXIS[0] - 1
+            # self.ystart = 0 + ypad
+            # self.yend = ypad + self.NAXIS[1] - 1
+            # print(f"No boundaries passed. Assuming symmetrical padding of {xpad} {ypad} pixels")
+            # print(f"and a final size of {self.xend+1-self.xstart} {self.yend+1-self.ystart}.")
             self.xstart = 0
             self.xend = self.xstart + self.dims[0] - 1
             self.ystart = 0
@@ -125,7 +125,7 @@ class observation():
             print("Warning: SED Extrapolation turned on.")
 
         # Apply the POM mask
-        #self.apply_POM()
+        # self.apply_POM()
 
         # Create pixel lists for ALL sources labeled in segmentation map
         self.create_pixel_list()
@@ -172,20 +172,20 @@ class observation():
                 # PHOTPLAM (pivot wavelength) and PHOTFLAM, which DO NOT EXIST
                 # for JWST products. We have PHOTMJSR and PHOTUJA2, so this will
                 # need to be modified in some way to comply.
-                #try:
-                #    # convert pivlam from Angstroms to microns
-                #    pivlam = fits.getval(dir_image_name, 'PHOTPLAM') / 10000.
-                #except KeyError:
-                #    print("ERROR: unable to find PHOTPLAM keyword in {}".format(dir_image_name))
-                #    return
+                # try:
+                #     # convert pivlam from Angstroms to microns
+                #     pivlam = fits.getval(dir_image_name, 'PHOTPLAM') / 10000.
+                # except KeyError:
+                #     print("ERROR: unable to find PHOTPLAM keyword in {}".format(dir_image_name))
+                #     return
                 # temporary hack to compute an approximate pivlam from filter name
                 pivlam = float(self.filter[1:-1]) / 100
 
-                #try:
-                #    photflam = fits.getval(dir_image_name, 'photflam')
-                #except KeyError:
-                #    print("ERROR: unable to find PHOTFLAM keyword in {}".format(dir_image_name))
-                #    return
+                # try:
+                #     photflam = fits.getval(dir_image_name, 'photflam')
+                # except KeyError:
+                #     print("ERROR: unable to find PHOTFLAM keyword in {}".format(dir_image_name))
+                #     return
                 # JWST data is already flux calibrated, so just set photflam=1
                 photflam = 1.0
 
@@ -248,8 +248,8 @@ class observation():
         self.simulated_image = np.zeros(self.dims, np.float)
 
         for i in range(len(self.IDs)):
-            #if i != 70:
-            #    continue
+            # if i != 70:
+            #     continue
 
             if self.cache:
                 self.cached_object[i] = {}
@@ -285,20 +285,20 @@ class observation():
 
                 this_SBE_object = this_SBE_object[miny:maxy + 1, minx:maxx + 1]
 
-                #if os.path.isfile(self.SBE_save):
-                #    mode = "a"
-                #else:
-                #    mode = "w"
+                # if os.path.isfile(self.SBE_save):
+                #     mode = "a"
+                # else:
+                #     mode = "w"
 
-                #with h5py.File(self.SBE_save,mode) as fhdf5:
-                #    dset = fhdf5.create_dataset("%d_%s" % (self.IDs[i],self.order),
-                #                                data=this_SBE_object, dtype='f',
-                #                                compression="gzip", compression_opts=9)
-                #    dset.attrs[u'minx'] = minx
-                #    dset.attrs[u'maxx'] = maxx
-                #    dset.attrs[u'miny'] = miny
-                #    dset.attrs[u'maxy'] = maxy
-                #    dset.attrs[u'units'] = 'e-/s'
+                # with h5py.File(self.SBE_save,mode) as fhdf5:
+                #     dset = fhdf5.create_dataset("%d_%s" % (self.IDs[i],self.order),
+                #                                 data=this_SBE_object, dtype='f',
+                #                                 compression="gzip", compression_opts=9)
+                #     dset.attrs[u'minx'] = minx
+                #     dset.attrs[u'maxx'] = maxx
+                #     dset.attrs[u'miny'] = miny
+                #     dset.attrs[u'maxy'] = maxy
+                #     dset.attrs[u'units'] = 'e-/s'
 
     def disperse_background_1D(self, background):
         """
@@ -344,8 +344,8 @@ class observation():
         pars = []
         for i in range(len(xs)):
             ID = 1
-            xs0 = [xs[i], xs[i]+1, xs[i]+1, xs[i]]
-            ys0 = [ys[i], ys[i], ys[i]+1, ys[i]+1]
+            xs0 = [xs[i], xs[i] + 1, xs[i] + 1, xs[i]]
+            ys0 = [ys[i], ys[i], ys[i] + 1, ys[i] + 1]
             pars.append([xs0, ys0, f, self.order, Cfg, ID, False, self.xstart, self.ystart])
 
         # Compute the dispersed results
@@ -378,8 +378,9 @@ class observation():
             maxx = int(max(x))
             miny = int(min(y))
             maxy = int(max(y))
-            a = sparse.coo_matrix((f, (y-miny, x-minx)), shape=(maxy-miny+1, maxx-minx+1)).toarray()
-            bck[miny:maxy+1, minx:maxx+1] = bck[miny:maxy+1, minx:maxx+1] + a
+            a = sparse.coo_matrix((f, (y - miny, x - minx)),
+                                  shape=(maxy - miny + 1, maxx - minx + 1)).toarray()
+            bck[miny:maxy + 1, minx:maxx + 1] = bck[miny:maxy + 1, minx:maxx + 1] + a
 
         if direction == "x":
             bck = np.sum(bck, axis=0)
@@ -408,21 +409,21 @@ class observation():
 
             # xs0, ys0 form a 2x2 grid of pixel indexes surrounding the direct image
             # pixel index
-            xs0 = [self.xs[c][i], self.xs[c][i]+1, self.xs[c][i]+1, self.xs[c][i]]
-            ys0 = [self.ys[c][i], self.ys[c][i], self.ys[c][i]+1, self.ys[c][i]+1]
+            xs0 = [self.xs[c][i], self.xs[c][i] + 1, self.xs[c][i] + 1, self.xs[c][i]]
+            ys0 = [self.ys[c][i], self.ys[c][i], self.ys[c][i] + 1, self.ys[c][i] + 1]
 
             # "lams" is the list of wavelengths previously stored in flux list
             # and correspond to the central wavelengths of the filters used in
             # the input direct image(s). For the simple case of 1 combined direct image,
             # this contains a single value (e.g. 4.44 for F444W).
             lams = np.array(list(self.fluxes.keys()))
-            #print("lams:", lams)
+            # print("lams:", lams)
 
             # "flxs" is the list of pixel values ("fluxes") from the direct image(s).
             # For the simple case of 1 combined direct image, this contains a
             # a single value (just like "lams").
             flxs = np.array([self.fluxes[lam][c][i] for lam in self.fluxes.keys()])
-            #print("flxs:", flxs)
+            # print("flxs:", flxs)
 
             # Only include data for pixels with non-zero fluxes
             ok = flxs != 0
@@ -439,7 +440,7 @@ class observation():
                 POM_value = self.POM_mask[self.ys[c][i], self.xs[c][i]]
             else:
                 POM_value = 1.
-            #print("POM_value:", POM_value)
+            # print("POM_value:", POM_value)
             if POM_value > 1:
                 print("Applying additional transmission of:", self.xs[c][i], self.ys[c][i], POM_value)
                 trans = self.POM_transmission[POM_value](lams)
@@ -484,9 +485,12 @@ class observation():
             maxx = int(max(x))
             miny = int(min(y))
             maxy = int(max(y))
-            a = sparse.coo_matrix((f, (y-miny, x-minx)), shape=(maxy-miny+1, maxx-minx+1)).toarray()
-            self.simulated_image[miny:maxy+1, minx:maxx+1] = self.simulated_image[miny:maxy+1, minx:maxx+1] + a
-            this_object[miny:maxy+1, minx:maxx+1] = this_object[miny:maxy+1, minx:maxx+1] + a
+            a = sparse.coo_matrix((f, (y - miny, x - minx)),
+                                  shape=(maxy - miny + 1, maxx - minx + 1)).toarray()
+            self.simulated_image[miny:maxy + 1, minx:maxx + 1] =
+                self.simulated_image[miny:maxy + 1, minx:maxx + 1] + a
+            this_object[miny:maxy + 1, minx:maxx + 1] =
+                this_object[miny:maxy + 1, minx:maxx + 1] + a
 
             if self.cache:
                 self.cached_object[c]['x'].append(x)
@@ -499,7 +503,7 @@ class observation():
                 self.cached_object[c]['maxy'].append(maxy)
 
         time2 = time.time()
-        print(time2-time1, "sec")
+        print(time2 - time1, "sec")
 
         return this_object
 
@@ -532,7 +536,7 @@ class observation():
         for i in range(len(self.cached_object[c]['x'])):
             x = self.cached_object[c]['x'][i]
             y = self.cached_object[c]['y'][i]
-            f = self.cached_object[c]['f'][i]*1.
+            f = self.cached_object[c]['f'][i] * 1.
             w = self.cached_object[c]['w'][i]
 
             if trans is not None:
@@ -543,11 +547,14 @@ class observation():
             miny = self.cached_object[c]['miny'][i]
             maxy = self.cached_object[c]['maxy'][i]
 
-            a = sparse.coo_matrix((f, (y-miny, x-minx)), shape=(maxy-miny+1, maxx-minx+1)).toarray()
-            self.simulated_image[miny:maxy+1, minx:maxx+1] = self.simulated_image[miny:maxy+1, minx:maxx+1] + a
-            this_object[miny:maxy+1, minx:maxx+1] = this_object[miny:maxy+1, minx:maxx+1] + a
+            a = sparse.coo_matrix((f, (y - miny, x - minx)),
+                                  shape=(maxy - miny + 1, maxx - minx + 1)).toarray()
+            self.simulated_image[miny:maxy + 1, minx:maxx + 1] =
+                self.simulated_image[miny:maxy + 1, minx:maxx + 1] + a
+            this_object[miny:maxy + 1, minx:maxx + 1] =
+                this_object[miny:maxy + 1, minx:maxx + 1] + a
 
         time2 = time.time()
 
-        print(time2-time1, "sec")
+        print(time2 - time1, "sec")
         return this_object
