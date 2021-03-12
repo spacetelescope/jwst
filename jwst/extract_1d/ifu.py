@@ -1,7 +1,7 @@
 import logging
 import numpy as np
-from photutils import CircularAperture, CircularAnnulus, \
-    RectangularAperture, aperture_photometry
+from photutils.aperture import (CircularAperture, CircularAnnulus,
+                                RectangularAperture, aperture_photometry)
 
 from .apply_apcorr import select_apcorr
 from ..assign_wcs.util import compute_scale

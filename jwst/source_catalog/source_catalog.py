@@ -1,5 +1,4 @@
 """
-from photutils.segmentation import detect_threshold
 Module to calculate the source catalog.
 """
 
@@ -20,9 +19,11 @@ from scipy import ndimage
 from scipy.spatial import cKDTree
 
 from photutils import __version__ as photutils_version
-from photutils import Background2D, MedianBackground
-from photutils import detect_sources, deblend_sources, source_properties
-from photutils import CircularAperture, CircularAnnulus, aperture_photometry
+from photutils.background import Background2D, MedianBackground
+from photutils.segmentation import (detect_sources, deblend_sources,
+                                    source_properties)
+from photutils.aperture import (CircularAperture, CircularAnnulus,
+                                aperture_photometry)
 from photutils.utils._wcs_helpers import _pixel_scale_angle_at_skycoord
 
 from jwst import __version__ as jwst_version

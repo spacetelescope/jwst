@@ -6,7 +6,7 @@ import numpy as np
 from astropy.table import QTable
 from astropy.time import Time, TimeDelta
 import astropy.units as u
-from photutils import CircularAperture, CircularAnnulus
+from photutils.aperture import CircularAperture, CircularAnnulus
 
 from ..datamodels import CubeModel
 
