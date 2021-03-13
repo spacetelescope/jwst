@@ -99,8 +99,8 @@ def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
         exposure
     """
     if algorithm.upper() == "GLS":
-        new_model, int_model, gls_opt_model = \
-            gls_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model, max_cores)
+        new_model, int_model, gls_opt_model = gls_ramp_fit(
+            model, buffsize, save_opt, readnoise_model, gain_model, max_cores)
         opt_model = None
     else:
         # Get readnoise array for calculation of variance of noiseless ramps, and
@@ -109,9 +109,8 @@ def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
         readnoise_2d, gain_2d = \
             utils.get_ref_subs(model, readnoise_model, gain_model, frames_per_group)
 
-        new_model, int_model, opt_model = \
-            ols_ramp_fit_multi(model, buffsize, save_opt, readnoise_2d,
-                               gain_2d, weighting, max_cores)
+        new_model, int_model, opt_model = ols_ramp_fit_multi(
+            model, buffsize, save_opt, readnoise_2d, gain_2d, weighting, max_cores)
         gls_opt_model = None
 
     # Update data units in output models
@@ -201,6 +200,7 @@ def ols_ramp_fit_multi(
         max_segments, max_CRs = calc_num_seg(input_model.groupdq, number_of_integrations)
         log.debug(f"Max segments={max_segments}")
 
+        # Create output models to be populated after ramp fitting.
         int_model, opt_model, out_model = \
             create_output_models(input_model, number_of_integrations, save_opt,
                                  total_cols, total_rows, max_segments, max_CRs)
@@ -373,7 +373,6 @@ def set_output_models(out_model, int_model, opt_model, new_mdl, int_mdl, opt_res
         int_model.err = None
         int_model.int_times = None
 
-    # Populate the optional output model
     if save_opt:
         opt_model.slope = opt_res.slope
         opt_model.sigslope = opt_res.sigslope
@@ -595,6 +594,7 @@ def ols_ramp_fit_sliced(
     """
     # Package image data into a RampModel
     input_model = RampModel()
+
     input_model.data = data
     input_model.err = err
     input_model.groupdq = groupdq
@@ -602,6 +602,7 @@ def ols_ramp_fit_sliced(
 
     # Capture exposure and instrument data into the RampModel
     input_model.meta.instrument.name = instrume
+
     input_model.meta.exposure.frame_time = frame_time
     input_model.meta.exposure.ngroups = ngroups
     input_model.meta.exposure.group_time = group_time
@@ -704,30 +705,13 @@ def ols_ramp_fit_single(
     opt_model : OptRes
     """
     tstart = time.time()
-
-    # Get image data information
-    data = input_model.data
-    err = input_model.err
-    groupdq = input_model.groupdq
-    inpixeldq = input_model.pixeldq
-
-    # Get instrument and exposure data
     instrume = input_model.meta.instrument.name
-    frame_time = input_model.meta.exposure.frame_time
-    ngroups = input_model.meta.exposure.ngroups
-    group_time = input_model.meta.exposure.group_time
-    groupgap = input_model.meta.exposure.groupgap
-    nframes = input_model.meta.exposure.nframes
-    dropframes1 = input_model.meta.exposure.drop_frames1
-
-    # Get needed sizes and shapes
-    n_int, ngroups, nrows, ncols = data.shape
-    imshape = (nrows, ncols)
-    cubeshape = (ngroups,) + imshape
 
     # Save original shapes for writing to log file, as these may change for MIRI
+    n_int, ngroups, nrows, ncols = input_model.data.shape
     orig_ngroups = ngroups
-    orig_cubeshape = cubeshape
+    orig_cubeshape = (ngroups, nrows, ncols)
+    dropframes1 = input_model.meta.exposure.drop_frames1
     if dropframes1 is None:    # set to default if missing
         dropframes1 = 0
         log.debug('Missing keyword DRPFRMS1, so setting to default value of 0')
@@ -738,19 +722,36 @@ def ols_ramp_fit_single(
     #   flagged as DO_NOT_USE, those groups will be ignored by ramp fitting, and
     #   the input model arrays will be resized appropriately. If all pixels in
     #   all groups are flagged, return None for the models.
-    if instrume == 'MIRI' and ngroups > 1:
+    if input_model.meta.instrument.name == 'MIRI' and ngroups > 1:
         # The function could return None if the removed groups leaves no data to be
         # processed.  If this is the case, return None for all expected variables
         # returned by ramp_fit
-        miri_ans = discard_miri_groups(data, err, groupdq, cubeshape, imshape, ngroups)
+        miri_ans = discard_miri_groups(input_model)
         if miri_ans is None:
             return None * 3
-        data, err, groupdq, cubeshape, imshape, ngroups = miri_ans
 
     if ngroups == 1:
         log.warning('Dataset has NGROUPS=1, so count rates for each integration')
         log.warning('will be calculated as the value of that 1 group divided by')
         log.warning('the group exposure time.')
+
+    # Get image data information
+    data = input_model.data
+    err = input_model.err
+    groupdq = input_model.groupdq
+    inpixeldq = input_model.pixeldq
+
+    # Get instrument and exposure data
+    frame_time = input_model.meta.exposure.frame_time
+    ngroups = input_model.meta.exposure.ngroups
+    group_time = input_model.meta.exposure.group_time
+    groupgap = input_model.meta.exposure.groupgap
+    nframes = input_model.meta.exposure.nframes
+
+    # Get needed sizes and shapes
+    n_int, ngroups, nrows, ncols = data.shape
+    imshape = (nrows, ncols)
+    cubeshape = (ngroups,) + imshape
 
     # Calculate effective integration time (once EFFINTIM has been populated
     #   and accessible, will use that instead), and other keywords that will
@@ -764,6 +765,7 @@ def ols_ramp_fit_single(
     if fit_slopes_ans[0] == "saturated":
         return fit_slopes_ans[1:]
 
+    # Calculate effective integration time (once EFFINTIM has been populated
     max_seg = fit_slopes_ans[0]
     num_seg_per_int = fit_slopes_ans[5]
     opt_res = fit_slopes_ans[7]
@@ -796,7 +798,7 @@ def ols_ramp_fit_single(
     return new_model, int_model, opt_model
 
 
-def discard_miri_groups(data, err, groupdq, cubeshape, imshape, ngroups):
+def discard_miri_groups(input_model):
     """
     For MIRI datasets having >1 group, if all pixels in the final group are
     flagged as DO_NOT_USE, resize the input model arrays to exclude the
@@ -807,23 +809,8 @@ def discard_miri_groups(data, err, groupdq, cubeshape, imshape, ngroups):
 
     Parameters
     ----------
-    data: ndarray
-        4-D image cube with dimensions (integrations, groups, rows, columns)
-
-    err: ndarray
-        Error array
-
-    groupdq: ndarray
-        GroupDQ array
-
-    cubeshape: tuple
-        Image cube dimensions per integration
-
-    imshape: tuple
-        Image shape per group
-
-    ngroups: int
-        Number of groups
+    input_model: RampModel
+        The input model containing the image data.
 
     Returns
     -------
@@ -850,6 +837,13 @@ def discard_miri_groups(data, err, groupdq, cubeshape, imshape, ngroups):
     first_gdq: ndarray
         First groups in the GroupDQ array
     """
+    data = input_model.data
+    err = input_model.err
+    groupdq = input_model.groupdq
+
+    n_int, ngroups, nrows, ncols = data.shape
+    cubeshape = (ngroups, nrows, ncols)
+    imshape = (nrows, ncols)
 
     num_bad_slices = 0  # number of initial groups that are all DO_NOT_USE
 
@@ -908,14 +902,17 @@ def discard_miri_groups(data, err, groupdq, cubeshape, imshape, ngroups):
         log.warning('(NGROUPS), so will not process this dataset.')
         return None
 
-    return data, err, groupdq, cubeshape, imshape, ngroups
+    input_model.data = data
+    input_model.err = err
+    input_model.groupdq = groupdq
+    return True
+    # return data, err, groupdq, cubeshape, imshape, ngroups
 
 
 # BEGIN
 def ramp_fit_slopes(
         n_int, nrows, data, groupdq, inpixeldq, cubeshape, imshape, gain_2d, readnoise_2d,
         save_opt, group_time, weighting, ngroups, nframes, groupgap, frame_time):
-        # save_opt, group_time, weighting, ngroups, nreads, nframes, groupgap, frame_time):
     """
     Calculate effective integration time (once EFFINTIM has been populated accessible, will
     use that instead), and other keywords that will needed if the pedestal calculation is
