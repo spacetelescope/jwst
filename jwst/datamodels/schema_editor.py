@@ -71,6 +71,7 @@ def enquote(value):
         value = "'" + value + "'"
     return value
 
+
 def is_long_line(prefix, value, sep, max_length=80):
     """
     Test if a line is so long it needs to be folded onto the next,
@@ -86,6 +87,7 @@ def is_long_line(prefix, value, sep, max_length=80):
 def leading_length(prefix):
     return len(prefix) - len(prefix.lstrip())
 
+
 def new_path(path, model_name):
     """
     Add  the model name to the path if it is not None
@@ -95,10 +97,12 @@ def new_path(path, model_name):
         new_path.append(model_name)
     return new_path
 
+
 def save_complex_list(fd, name, values, leading):
     fd.write(leading + name + ":\n")
     for value in values:
-        save_dictionary(fd, value, leading=leading+'- ')
+        save_dictionary(fd, value, leading=leading + '- ')
+
 
 def save_dictionary(fd, schema, leading=''):
     delayed = []
@@ -108,7 +112,7 @@ def save_dictionary(fd, schema, leading=''):
 
         elif name == "properties" or isinstance(value, dict):
             fd.write(leading + name + ":\n")
-            save_dictionary(fd, value, leading=leading+'  ')
+            save_dictionary(fd, value, leading=leading + '  ')
 
         elif isinstance(value, list):
             if len(value) > 0 and isinstance(value[0], dict):
@@ -133,6 +137,7 @@ def save_dictionary(fd, schema, leading=''):
             prefix = leading + name + ": "
             fd.write(save_scalar(prefix, value))
 
+
 def save_long_line(prefix, value, sep1, sep2, max_length=80):
     """
     Converta long line into a folded string
@@ -147,8 +152,8 @@ def save_long_line(prefix, value, sep1, sep2, max_length=80):
     for value in values:
         nl = value.find('\n')
         if nl >= 0:
-            long_line += value[0:nl+1]
-            value = value[nl+1:]
+            long_line += value[0:nl + 1]
+            value = value[nl + 1:]
             line_start = len(long_line)
 
         if start:
@@ -156,7 +161,7 @@ def save_long_line(prefix, value, sep1, sep2, max_length=80):
             start = False
         else:
             line_length = (len(long_line) + len(value) + len(sep1)
-                            - line_start)
+                           - line_start)
 
             if line_length < max_length:
                 long_line += sep1 + value
@@ -166,6 +171,7 @@ def save_long_line(prefix, value, sep1, sep2, max_length=80):
 
     long_line += '\n'
     return long_line
+
 
 def save_scalar(prefix, value):
     """
@@ -199,6 +205,7 @@ def save_simple_list(prefix, values, max_length=80):
     else:
         line = save_short_line(prefix, value)
     return line
+
 
 class Keyword_db:
     def __init__(self, directory=""):
@@ -248,7 +255,7 @@ class Keyword_db:
                         raise ValueError(error_msg + name)
 
                     if ("allOf" in this_subschema["properties"] or
-                        "allOf" in other_subschema["properties"]):
+                            "allOf" in other_subschema["properties"]):
                         try:
                             combine_lists(this_subschema, other_subschema)
                         except ValueError:
@@ -257,7 +264,7 @@ class Keyword_db:
                     elif ("$ref" in this_subschema["properties"] and
                           "$ref" in other_subschema["properties"]):
                         if (this_subschema["properties"]["$ref"] !=
-                            other_subschema["properties"]["$ref"]):
+                                other_subschema["properties"]["$ref"]):
                             try:
                                 combine_lists(this_subschema, other_subschema)
                             except ValueError:
@@ -286,12 +293,11 @@ class Keyword_db:
 
                 else:
                     raise ValueError
-            this_schema["properties"] = {"allOf" : list(combination.values())}
+            this_schema["properties"] = {"allOf": list(combination.values())}
 
         this_schema = self.schema["properties"]["meta"]["properties"]
         other_schema = other_schema["properties"]["meta"]["properties"]
         combine_dictionaries(this_schema, other_schema)
-
 
     def create_dict(self):
         """
@@ -335,7 +341,6 @@ class Keyword_db:
 
         return keyword_dict
 
-
     def find_directory(self, directory):
         """
         Return full path to requested directory
@@ -359,15 +364,12 @@ class Keyword_db:
         def merge_dictionaries(merged_subschema, dictionary):
             for name, subdictionary in dictionary.items():
                 if name in merged_subschema:
-                    if ("enum" in merged_subschema[name] and
-                        "enum" in subdictionary):
-                            merge_enums(merged_subschema[name],
-                                          subdictionary)
+                    if ("enum" in merged_subschema[name] and "enum" in subdictionary):
+                        merge_enums(merged_subschema[name], subdictionary)
                     else:
                         merged_subschema[name] = subdictionary
                 else:
                     merged_subschema[name] = subdictionary
-
 
         def merge_enums(merged_subschema, dictionary):
             merged_subschema["enum"] = list(set(merged_subschema["enum"]) |
@@ -449,17 +451,14 @@ class Model_db:
             if filename.endswith(".yaml") and filename not in exclude:
                 self.schema_files.append(filename)
 
-
     def __len__(self):
         return len(self.schema_files)
-
 
     def __iter__(self):
         """
         Return an iterator to the list of schema files
         """
         return iter(self.schema_files)
-
 
     def read(self, schema_file):
         """
@@ -469,7 +468,6 @@ class Model_db:
         schema = aschema.load_schema(fname, resolve_references=False)
 
         return schema
-
 
     def save(self, schema_file, schema):
         """
@@ -538,7 +536,6 @@ class Options:
         ("omit_file", "containing the list of parameters to omit", False),
         ("exclude_file", "containing the list of DataModel schema to exclude from the comparison", False)
     )
-
 
     def __init__(self, filename=None):
         """
@@ -623,7 +620,6 @@ class Options:
 
         return parameters
 
-
     def parse_command_line(self, parameters):
         """
         Parse the parameters from the command line
@@ -663,7 +659,6 @@ class Options:
 
         return parameters
 
-
     def parse_parameter(self, parameters, n, name, value):
         """
         Parse a single parameter value, check it, and save it
@@ -672,7 +667,7 @@ class Options:
             if n == 0:
                 return
             else:
-                raise ValueError("Error at line {} in option file".format(n+1))
+                raise ValueError("Error at line {} in option file".format(n + 1))
 
         value = value.replace("\t", " ")
         if value.find(" ") >= 0:
@@ -683,7 +678,6 @@ class Options:
         parameters[name] = value
 
         return
-
 
     def query_options(self, parameters):
         """
@@ -697,7 +691,6 @@ class Options:
                 parameters[prompt[0]] = choice
         return parameters
 
-
     def query_run(self, preamble, prompt):
         """
         Explain how to run the script and ask the user to continue
@@ -708,7 +701,6 @@ class Options:
 
         choice = self.query_user(prompt, default_choice=False)
         return choice
-
 
     def query_user(self, prompt, default_choice=None):
         """
@@ -735,7 +727,6 @@ class Options:
                 choice = self.coerce_type(choice, default_choice)
 
         return choice
-
 
     def read(self, parameters):
         """
@@ -764,7 +755,6 @@ class Options:
             self.parse_parameter(parameters, n, name, value)
 
         return parameters
-
 
     def set_parameters(self, editor, parameters):
         """
@@ -796,7 +786,6 @@ class Options:
             ptype = type(parameters[name])
             if not isinstance(value, ptype):
                 raise ValueError(badtype % (name, value))
-
 
     def write(self, editor):
         """
@@ -889,7 +878,7 @@ class Schema_editor:
             'TBCOL[0-9]{1,3}', 'TFORM[0-9]{1,3}', 'TTYPE[0-9]{1,3}',
             'TUNIT[0-9]{1,3}', 'TSCAL[0-9]{1,3}', 'TZERO[0-9]{1,3}',
             'TNULL[0-9]{1,3}', 'TDISP[0-9]{1,3}', 'HISTORY'
-            ]
+        ]
 
         self.builtin_regex = re.compile(
             '|'.join('(^{0}$)'.format(x) for x in _builtin_regexes))
@@ -935,7 +924,6 @@ class Schema_editor:
                                                   model_subschema,
                                                   keyword_subschema,
                                                   path)
-
 
     def builtin_fits_keyword(self, fits_name):
         """
@@ -1015,7 +1003,7 @@ class Schema_editor:
             model_path = []
             model_schema = model_db.read(schema_file)
             self.edit_schema(model_schema, keyword_schema,
-                             keyword_dict, fits_dict,  model_path)
+                             keyword_dict, fits_dict, model_path)
 
             if self.current_file_changed:
                 # current_file_changed is set in report_and_query
@@ -1063,13 +1051,12 @@ class Schema_editor:
 
         return valid
 
-
     def compare_schema_values(self, keyword_value, model_value):
         """
         Compare iwo values for type specific kind of equality
         """
         if (isinstance(keyword_value, str) and
-            isinstance(model_value, str)):
+                isinstance(model_value, str)):
             result = (keyword_value.lower().strip() ==
                       model_value.lower().strip())
 
@@ -1093,7 +1080,6 @@ class Schema_editor:
 
         return result
 
-
     def dated_directory(self, directory, prefix):
         """
         Create a dated directory in a specified directory
@@ -1110,7 +1096,6 @@ class Schema_editor:
                 return subdirectory
 
         return None
-
 
     def edit_schema(self, model_schema, keyword_schema,
                     keyword_dict, fits_dict, model_path):
@@ -1143,8 +1128,8 @@ class Schema_editor:
                         if keyword_path is None:
                             if not p_name:
                                 self.schema_del_value(model_schema,
-                                                            model_name,
-                                                            new_model_path)
+                                                      model_name,
+                                                      new_model_path)
 
                         else:
                             keyword_subschema = self.find_subschema(keyword_schema,
@@ -1152,14 +1137,14 @@ class Schema_editor:
                             if keyword_subschema is not None:
                                 keyword_path = keyword_path.split('.')
                                 self.update_schema_fields(keyword_subschema,
-                                                            model_subschema,
-                                                            new_model_path)
+                                                          model_subschema,
+                                                          new_model_path)
 
                                 if not p_name and model_name != keyword_path[-1]:
                                     self.schema_rename_value(model_schema,
-                                                            keyword_path[-1],
-                                                            model_name,
-                                                            new_model_path)
+                                                             keyword_path[-1],
+                                                             model_name,
+                                                             new_model_path)
 
                                 if model_fits_name != keyword_fits_name:
                                     fits_dict[keyword_fits_name] = \
@@ -1188,8 +1173,6 @@ class Schema_editor:
                                          fits_dict,
                                          model_path)
 
-
-
     def find_subschema(self, schema, path):
         """
         Trace a path thru the schema. If not found, return partial
@@ -1209,7 +1192,6 @@ class Schema_editor:
 
         return subschema
 
-
     def get_keyword_value(self, submodel, keyword_name):
         """
         Lppk for keyword name in submodel, return value if found
@@ -1222,12 +1204,11 @@ class Schema_editor:
             elif "allOf" in submodel:
                 for subsubmodel in submodel["allOf"]:
                     if (isinstance(subsubmodel, dict) and
-                        keyword_name in subsubmodel):
+                            keyword_name in subsubmodel):
                         keyword_value = subsubmodel[keyword_name]
                         break
 
         return keyword_value
-
 
     def has_properties(self, model_schema):
         """
@@ -1238,7 +1219,6 @@ class Schema_editor:
             model_schema = properties
 
         return len(model_schema) > 0
-
 
     def match_fits_keywords(self, schema_file, model_schema, keyword_schema,
                             keyword_dict, fits_dict, model_path):
@@ -1299,7 +1279,6 @@ class Schema_editor:
                                                  fits_dict,
                                                  new_model_path)
 
-
     def pattern_from_enum(self, value):
         """
         Convert the value of an enum field to a regular expression pattern
@@ -1332,7 +1311,6 @@ class Schema_editor:
 
         return choice
 
-
     def report_schema_difference(self, title, keyword_value, model_value,
                                  path, field):
         """
@@ -1353,7 +1331,6 @@ class Schema_editor:
 
         self.report_schema_value("model schema", model_value, field)
         self.report_schema_value("keyword db", keyword_value, field)
-
 
     def report_schema_value(self, schema_name, schema_value, field):
         """
@@ -1418,7 +1395,6 @@ class Schema_editor:
                                               new_path(keyword_path,
                                                        keyword_name))
 
-
     def schema_add_value(self, model_schema, keyword_schema, keyword_path):
         """
         Add a new keyword to the model schema
@@ -1426,7 +1402,7 @@ class Schema_editor:
         if self.add:
             title = keyword_schema.get('title')
             if self.report_and_query("Add", title, keyword_schema, None,
-                                  keyword_path, None):
+                                     keyword_path, None):
                 keyword_name = keyword_path[-1]
                 model_schema[keyword_name] = OrderedDict()
 
@@ -1451,7 +1427,7 @@ class Schema_editor:
         if self.delete:
             title = model_schema.get('title')
             if self.report_and_query("Delete", title, None,
-                                    model_schema[model_name], path, None):
+                                     model_schema[model_name], path, None):
                 del model_schema[model_name]
 
     def schema_edit_value(self, model_schema, keyword_value, model_value,
@@ -1526,7 +1502,6 @@ class Schema_editor:
             self.omit.discard(path)
         elif choice is False:
             self.omit.add(path)
-
 
     def update_schema_fields(self, keyword_schema, model_schema, path):
         """

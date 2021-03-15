@@ -262,7 +262,7 @@ c_{1,0,\\ldots}^2,\\ldots).
     if solver == 'RLU':
         bkg_poly_coef = rlu_solve(a, b, nimages)
     else:
-        tol = np.finfo(images[0].dtype).eps**(2.0/3.0)
+        tol = np.finfo(images[0].dtype).eps**(2.0 / 3.0)
         bkg_poly_coef = pinv_solve(a, b, nimages, tol)
 
     if ext_return:

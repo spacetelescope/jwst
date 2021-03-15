@@ -10,13 +10,12 @@ from jwst.pathloss.pathloss import (calculate_pathloss_vector,
                                     is_pointsource)
 from jwst.pathloss.pathloss import do_correction
 import numpy as np
-import pytest
 
 
 def test_get_center_ifu():
     """get_center assumes IFU targets are centered @ (0.0, 0.0)"""
 
-    x_pos,y_pos = get_center("NRS_IFU", None)
+    x_pos, y_pos = get_center("NRS_IFU", None)
 
     assert x_pos == y_pos == 0.0
 
@@ -44,7 +43,7 @@ def test_get_center_exptype():
     source_xpos and source_ypos exist in datamod.slits, make sure it's returned"""
 
     datmod = MultiSlitModel()
-    datmod.slits.append({'source_xpos':1, 'source_ypos':2})
+    datmod.slits.append({'source_xpos': 1, 'source_ypos': 2})
 
     for exptype in ["NRS_MSASPEC", "NRS_FIXEDSLIT", "NRS_BRIGHTOBJ"]:
         x_pos, y_pos = get_center(exptype, datmod.slits[0])
@@ -71,7 +70,7 @@ def test_get_aper_from_model_fixedslit():
     aperture reference data is returned for fixedslit mode"""
 
     datmod = PathlossModel()
-    datmod.apertures.append({'name':'S200A1'})
+    datmod.apertures.append({'name': 'S200A1'})
     datmod.meta.exposure.type = 'NRS_FIXEDSLIT'
 
     result = get_aperture_from_model(datmod, 'S200A1')
@@ -84,7 +83,7 @@ def test_get_aper_from_model_msa():
     aperture reference data is returned for MSA mode"""
 
     datmod = PathlossModel()
-    datmod.apertures.append({'shutters':5})
+    datmod.apertures.append({'shutters': 5})
     datmod.meta.exposure.type = 'NRS_MSASPEC'
 
     result = get_aperture_from_model(datmod, 5)
@@ -98,7 +97,7 @@ def test_calculate_pathloss_vector_pointsource_data():
 
     datmod = PathlossModel()
 
-    ref_data = {'pointsource_data':np.ones((10,10,10), dtype=np.float32),
+    ref_data = {'pointsource_data': np.ones((10, 10, 10), dtype=np.float32),
                 'pointsource_wcs': {'crval2': -0.5, 'crpix2': 1.0, 'cdelt2': 0.05,
                                     'cdelt3': 1, 'crval1': -0.5, 'crpix1': 1.0,
                                     'crpix3': 1.0, 'crval3': 1, 'cdelt1': 0.05}}
@@ -112,23 +111,24 @@ def test_calculate_pathloss_vector_pointsource_data():
     # Wavelength array is calculated with this: crval3 +(float(i+1) - crpix3)*cdelt3
     # Where i is the iteration of np.arange(wavesize) which is the 1st dimension of the pointsource
     # data array.
-    wavelength_comparison = np.array([1 + (float(i+1) - 1.0)*1 for i in np.arange(10)])
+    wavelength_comparison = np.array([1 + (float(i + 1) - 1.0) * 1 for i in np.arange(10)])
     assert np.allclose(wavelength, wavelength_comparison)
 
     # pathloss vector gets assigned at beginning of calculate_pathloss_vector and in this
     # case, doesnt change (np.zeros(wavesize, dtype=np.float32))
     pathloss_comparison = np.zeros(10, dtype=np.float32)
-    assert np.all(pathloss==pathloss_comparison)
+    assert np.all(pathloss == pathloss_comparison)
 
     # With the current wcs values, the logic should be returning False
     assert is_inside_slitlet is False
+
 
 def test_calculate_pathloss_vector_uniform_data():
     """Calculate the pathloss vector for uniform data arrays."""
 
     datmod = PathlossModel()
 
-    ref_data = {'uniform_data':np.ones((10,), dtype=np.float32),
+    ref_data = {'uniform_data': np.ones((10,), dtype=np.float32),
                 'uniform_wcs': {'crpix1': 1.0, 'cdelt1': 1, 'crval1': 1}}
 
     datmod.apertures.append(ref_data)
@@ -140,8 +140,8 @@ def test_calculate_pathloss_vector_uniform_data():
     # Wavelength array is calculated with this: crval1 +(float(i+1) - crpix1)*cdelt1
     # Where i is the iteration of np.arange(wavesize) which is the shape of the uniform
     # data array.
-    comparison = np.array([1 +(float(i+1) - 1)*1 for i in np.arange(10)])
-    assert np.all(wavelength==comparison)
+    comparison = np.array([1 + (float(i + 1) - 1) * 1 for i in np.arange(10)])
+    assert np.all(wavelength == comparison)
 
     # The same array is returned in this case
     assert np.all(datmod.apertures[0].uniform_data == pathloss)
@@ -152,7 +152,7 @@ def test_calculate_pathloss_vector_interpolation():
 
     datmod = PathlossModel()
 
-    ref_data = {'pointsource_data':np.ones((10,10,10), dtype=np.float32),
+    ref_data = {'pointsource_data': np.ones((10, 10, 10), dtype=np.float32),
                 'pointsource_wcs': {'crval2': -0.5, 'crpix2': 1.0, 'cdelt2': 0.5,
                                     'cdelt3': 1.0, 'crval1': -0.5, 'crpix1': 1.0,
                                     'crpix3': 1.0, 'crval3': 1.0, 'cdelt1': 0.5}}
@@ -166,7 +166,7 @@ def test_calculate_pathloss_vector_interpolation():
     # Wavelength array is calculated with this: crval3 +(float(i+1) - crpix3)*cdelt3
     # Where i is the iteration of np.arange(wavesize) which is the 1st dimension of the pointsource
     # data array.
-    wavelength_comparison = np.array([1 + (float(i+1) - 1.0)*1 for i in np.arange(10)])
+    wavelength_comparison = np.array([1 + (float(i + 1) - 1.0) * 1 for i in np.arange(10)])
     assert np.all(wavelength == wavelength_comparison)
 
     # In this instance we interpolate to get the array for pathloss VS wavelength.
@@ -180,7 +180,7 @@ def test_calculate_pathloss_vector_interpolation():
     # pathloss_vector = (a22*pathloss_ref[:,i,j]) = (1*pathloss_ref[:1,j])
     # Thus pathloss == the input array to the function.
     pathloss_comparison = datmod.apertures[0].pointsource_data
-    assert np.all(pathloss==pathloss_comparison)
+    assert np.all(pathloss == pathloss_comparison)
 
     # With the current wcs values, the logic should be returning True
     assert is_inside_slitlet is True
@@ -201,11 +201,12 @@ def test_is_pointsource():
     result = is_pointsource(point_source)
     assert result is False
 
+
 def test_do_correction_msa_slit_size_eq_0():
     """If slits have size 0, quit calibration."""
 
     datmod = MultiSlitModel()
-    datmod.slits.append({'data':np.array([])})
+    datmod.slits.append({'data': np.array([])})
     pathlossmod = PathlossModel()
     datmod.meta.exposure.type = 'NRS_MSASPEC'
 
@@ -218,7 +219,7 @@ def test_do_correction_fixed_slit_exception():
 
     datmod = MultiSlitModel()
     # Give input_model aperture name
-    datmod.slits.append({'data':np.array([]), 'name':'S200A1'})
+    datmod.slits.append({'data': np.array([]), 'name': 'S200A1'})
     # Do assign pathloss model aperture with similar name.
     pathlossmod = PathlossModel()
     datmod.meta.exposure.type = 'NRS_FIXEDSLIT'
@@ -258,7 +259,7 @@ def test_do_correction_nis_soss_aperture_is_none():
     datmod = MultiSlitModel()
     # Is FULL an option for NIRISS?
     # The test doesn't care but something to remember.
-    datmod.slits.append({'data':np.array([]), 'name':'FULL'})
+    datmod.slits.append({'data': np.array([]), 'name': 'FULL'})
     # Don't assign pathloss model aperture with similar name
     pathlossmod = PathlossModel()
     datmod.meta.exposure.type = 'NIS_SOSS'
@@ -269,10 +270,9 @@ def test_do_correction_nis_soss_aperture_is_none():
     assert result.meta.cal_step.pathloss == 'SKIPPED'
 
 
-@pytest.mark.skip(reason="Fraction calculation in interpolate_onto_grid needs refactoring.")
 def test_interpolate_onto_grid():
     # Mock wavelength vector, grid and pathloss vector.
-    wavelength_grid = np.arange(1, 101).reshape(10,10) * 1.1
+    wavelength_grid = np.arange(1, 101).reshape(10, 10) * 1.1
     wavelength_vector = np.arange(1, 11, dtype='float64')
     pathloss_vector = np.arange(1, 11, dtype='float64')
 

@@ -159,7 +159,7 @@ class OutlierDetection:
         # read in values from that row for each parameter
         for kw in list(self.outlierpars.keys()):
             self.outlierpars[kw] = \
-                                ref_model['outlierpars_table.{0}'.format(kw)]
+                ref_model['outlierpars_table.{0}'.format(kw)]
 
     def build_suffix(self, **pars):
         """Build suffix.
@@ -207,7 +207,7 @@ class OutlierDetection:
 
         # Initialize intermediate products used in the outlier detection
         median_model = datamodels.ImageModel(
-                                        init=drizzled_models[0].data.shape)
+            init=drizzled_models[0].data.shape)
         median_model.update(drizzled_models[0])
         median_model.meta.wcs = drizzled_models[0].meta.wcs
 
@@ -286,7 +286,7 @@ class OutlierDetection:
             badmasks.append(badmask)
 
         # Fill resampled_sci array with nan's where mask values are True
-        #pdb.set_trace()
+        # pdb.set_trace()
         for f1, f2 in zip(resampled_sci, badmasks):
             for elem1, elem2 in zip(f1, f2):
                 elem1[elem2] = np.nan
@@ -294,7 +294,7 @@ class OutlierDetection:
         # For a of stack of images with "bad" data replaced with Nan
         # use np.nanmedian to compute the median.
         log.info("Generating median from {} images".format(len(resampled_sci)))
-        median_image = np.nanmedian(resampled_sci, axis = 0)
+        median_image = np.nanmedian(resampled_sci, axis=0)
         del resampled_sci
 
         return median_image
@@ -320,7 +320,7 @@ class OutlierDetection:
             blotted_median.dq = None
             # apply blot to re-create model.data from median image
             blotted_median.data = gwcs_blot(median_model, model, interp=interp,
-                                                     sinscl=sinscl)
+                                            sinscl=sinscl)
             blot_models.append(blotted_median)
 
         return blot_models
@@ -396,7 +396,7 @@ def flag_cr(sci_image, blot_image, **pars):
     # can be added into the level of the blotted data, which has been
     # background-subtracted
     if (sci_image.meta.background.subtracted is False and
-        sci_image.meta.background.level is not None):
+            sci_image.meta.background.level is not None):
         subtracted_background = sci_image.meta.background.level
         log.debug(f"Adding background level {subtracted_background} to blotted image")
     else:
@@ -569,6 +569,6 @@ def gwcs_blot(median_model, blot_img, interp='poly5', sinscl=1.0):
     # before a change is made.  Preferably, fix tblot in drizzle.
     pixmap[np.isnan(pixmap)] = -1
     tblot(median_model.data, pixmap, outsci, scale=pix_ratio, kscale=1.0,
-                   interp=interp, exptime=1.0, misval=0.0, sinscl=sinscl)
+          interp=interp, exptime=1.0, misval=0.0, sinscl=sinscl)
 
     return outsci

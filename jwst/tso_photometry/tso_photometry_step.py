@@ -59,7 +59,7 @@ class TSOPhotometryStep(Step):
                 pupil_name = model.meta.instrument.pupil
 
             (radius, radius_inner, radius_outer) = get_ref_data(
-                        tsophot_filename, pupil=pupil_name)
+                tsophot_filename, pupil=pupil_name)
 
             self.log.debug(f'radius = {radius}')
             self.log.debug(f'radius_inner = {radius_inner}')

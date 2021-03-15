@@ -126,16 +126,16 @@ class SkyObject(namedtuple('SkyObject', ("id",
     __slots__ = ()  # prevent instance dictionary creation for lower mem
 
     def __new__(cls, id=None,
-                     xcentroid=None,
-                     ycentroid=None,
-                     sky_centroid=None,
-                     isophotal_abmag=None,
-                     isophotal_abmag_err=None,
-                     sky_bbox_ll=None,
-                     sky_bbox_lr=None,
-                     sky_bbox_ul=None,
-                     sky_bbox_ur=None,
-                     is_star=None,):
+                xcentroid=None,
+                ycentroid=None,
+                sky_centroid=None,
+                isophotal_abmag=None,
+                isophotal_abmag_err=None,
+                sky_bbox_ll=None,
+                sky_bbox_lr=None,
+                sky_bbox_ul=None,
+                sky_bbox_ur=None,
+                is_star=None,):
 
         return super(SkyObject, cls).__new__(cls,
                                              id=id,
@@ -176,4 +176,4 @@ class SkyObject(namedtuple('SkyObject', ("id",
                         str(self.sky_bbox_ur),
                         str(self.is_star)
                         )
-                 )
+                )

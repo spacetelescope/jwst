@@ -216,15 +216,15 @@ def extract_tso_object(input_model,
         ext_err = input_model.err[..., ymin: ymax + 1, xmin_ext:xmax_ext + 1].copy()
         ext_dq = input_model.dq[..., ymin: ymax + 1, xmin_ext:xmax_ext + 1].copy()
         if input_model.var_poisson is not None and np.size(input_model.var_poisson) > 0:
-            var_poisson = input_model.var_poisson[..., ymin:ymax+1, xmin_ext:xmax_ext + 1].copy()
+            var_poisson = input_model.var_poisson[..., ymin:ymax + 1, xmin_ext:xmax_ext + 1].copy()
         else:
             var_poisson = None
         if input_model.var_rnoise is not None and np.size(input_model.var_rnoise) > 0:
-            var_rnoise = input_model.var_rnoise[..., ymin:ymax+1, xmin_ext:xmax_ext + 1].copy()
+            var_rnoise = input_model.var_rnoise[..., ymin:ymax + 1, xmin_ext:xmax_ext + 1].copy()
         else:
             var_rnoise = None
         if input_model.var_flat is not None and np.size(input_model.var_flat) > 0:
-            var_flat = input_model.var_flat[..., ymin:ymax+1, xmin_ext:xmax_ext + 1].copy()
+            var_flat = input_model.var_flat[..., ymin:ymax + 1, xmin_ext:xmax_ext + 1].copy()
         else:
             var_flat = None
 
@@ -443,15 +443,15 @@ def extract_grism_objects(input_model,
                 ext_err = input_model.err[ymin: ymax + 1, xmin: xmax + 1].copy()
                 ext_dq = input_model.dq[ymin: ymax + 1, xmin: xmax + 1].copy()
                 if input_model.var_poisson is not None and np.size(input_model.var_poisson) > 0:
-                    var_poisson = input_model.var_poisson[ymin:ymax+1, xmin:xmax+1].copy()
+                    var_poisson = input_model.var_poisson[ymin:ymax + 1, xmin:xmax + 1].copy()
                 else:
                     var_poisson = None
                 if input_model.var_rnoise is not None and np.size(input_model.var_rnoise) > 0:
-                    var_rnoise = input_model.var_rnoise[ymin:ymax+1, xmin:xmax+1].copy()
+                    var_rnoise = input_model.var_rnoise[ymin:ymax + 1, xmin:xmax + 1].copy()
                 else:
                     var_rnoise = None
                 if input_model.var_flat is not None and np.size(input_model.var_flat) > 0:
-                    var_flat = input_model.var_flat[ymin:ymax+1, xmin:xmax+1].copy()
+                    var_flat = input_model.var_flat[ymin:ymax + 1, xmin:xmax + 1].copy()
                 else:
                     var_flat = None
 
@@ -498,8 +498,8 @@ def extract_grism_objects(input_model,
         del new_slit
     except UnboundLocalError:
         pass
-    #del subwcs
-    #del new_slit
+    # del subwcs
+    # del new_slit
     log.info("Finished extractions")
     return output_model
 

@@ -240,7 +240,7 @@ def lrs_distortion(input_model, reference_files):
     else:
         ref = fits.open(reference_files['specwcs'])
     with ref:
-        lrsdata = np.array([l for l in ref[1].data])
+        lrsdata = np.array([d for d in ref[1].data])
         # Get the zero point from the reference data.
         # The zero_point is X, Y  (which should be COLUMN, ROW)
         # These are 1-indexed in CDP-7 (i.e., SIAF convention) so must be converted to 0-indexed
@@ -472,14 +472,14 @@ def detector_to_abl(input_model, reference_files):
     with RegionsModel(reference_files['regions']) as f:
         allregions = f.regions.copy()
         # Use the 80% throughput slice mask
-        regions=allregions[7,:,:]
+        regions = allregions[7, :, :]
 
     label_mapper = selector.LabelMapperArray(regions)
     transforms = {}
 
     for i, sl in enumerate(slices):
         forward = models.Mapping([1, 0, 0, 1, 0]) | \
-                alpha_model[i] & beta_model[i] & lambda_model[i]
+            alpha_model[i] & beta_model[i] & lambda_model[i]
         inv = models.Mapping([2, 0, 2, 0]) | x_model[i] & y_model[i]
         forward.inverse = inv
         transforms[sl] = forward

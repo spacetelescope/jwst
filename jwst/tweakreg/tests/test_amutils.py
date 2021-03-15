@@ -46,7 +46,7 @@ def test_get_catalog(wcsobj):
 def test_create_catalog(wcsobj):
     # Create catalog
     gcat = amutils.create_astrometric_catalog(None, existing_wcs=wcsobj,
-        catalog=TEST_CATALOG, output=None)
+                                              catalog=TEST_CATALOG, output=None)
 
     # check that we got expected number of sources
     assert len(gcat) == EXPECTED_NUM_SOURCES

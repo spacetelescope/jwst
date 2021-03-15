@@ -12,4 +12,4 @@ def collect_pipeline_cfgs(dst='./'):
 
     cfg_dir = os.path.join(find_spec('jwst').submodule_search_locations[0], 'pipeline')
     for cfg in glob(os.path.join(cfg_dir, "*.cfg")):
-            shutil.copy(cfg, dst)
+        shutil.copy(cfg, dst)

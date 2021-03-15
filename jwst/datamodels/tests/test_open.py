@@ -13,8 +13,8 @@ from astropy.io import fits
 from stdatamodels import DataModel
 
 from jwst.datamodels import (JwstDataModel, ModelContainer, ImageModel,
-    RampModel, CubeModel, ReferenceFileModel, ReferenceImageModel,
-    ReferenceCubeModel, ReferenceQuadModel)
+                             RampModel, CubeModel, ReferenceFileModel, ReferenceImageModel,
+                             ReferenceCubeModel, ReferenceQuadModel)
 from jwst import datamodels
 from jwst.datamodels import util
 

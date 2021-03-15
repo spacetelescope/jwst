@@ -205,7 +205,7 @@ def build_lsq_eqs(images, masks, sigmas, degree, center=None,
     for i in range(sys_eq_array_size):
         # decompose first (row, or eq) flat index into "original" indices:
         lp = np.unravel_index(i, gshape)
-        l = lp[0]
+        l = lp[0]  # noqa
         p = lp[1:]
 
         # compute known terms:
@@ -215,12 +215,12 @@ def build_lsq_eqs(images, masks, sigmas, degree, center=None,
 
             # compute array elements for m!=l:
             b[i] += _image_pixel_sum(
-                image_l = images[l],
-                image_m = images[m],
-                mask_l = masks[l],
-                mask_m = masks[m],
-                sigma2_l = sigmas2[l],
-                sigma2_m = sigmas2[m],
+                image_l=images[l],
+                image_m=images[m],
+                mask_l=masks[l],
+                mask_m=masks[m],
+                sigma2_l=sigmas2[l],
+                sigma2_m=sigmas2[m],
                 coord_arrays=coord_arrays,
                 p=p
             )
@@ -232,14 +232,15 @@ def build_lsq_eqs(images, masks, sigmas, degree, center=None,
             m = mp[0]
             pp = mp[1:]
 
-            if l == m:  # we will deal with this case in the next iteration
+            # we will deal with this case in the next iteration
+            if l == m:  # noqa
                 continue
 
             a[i, j] = -_sigma_pixel_sum(
-                mask_l = masks[l],
-                mask_m = masks[m],
-                sigma2_l = sigmas2[l],
-                sigma2_m = sigmas2[m],
+                mask_l=masks[l],
+                mask_m=masks[m],
+                sigma2_l=sigmas2[l],
+                sigma2_m=sigmas2[m],
                 coord_arrays=coord_arrays,
                 p=p,
                 pp=pp
@@ -249,7 +250,7 @@ def build_lsq_eqs(images, masks, sigmas, degree, center=None,
     for i in range(sys_eq_array_size):
         # decompose first (row, or eq) flat index into "original" indices:
         lp = np.unravel_index(i, gshape)
-        l = lp[0]
+        l = lp[0]  # noqa
         p = lp[1:]
 
         for ppi in range(npolycoeff):
@@ -320,7 +321,7 @@ def pinv_solve(matrix, free_term, nimages, tol=None):
 
     """
     if tol is None:
-        tol = np.finfo(matrix.dtype).eps**(2.0/3.0)
+        tol = np.finfo(matrix.dtype).eps**(2.0 / 3.0)
     v = np.dot(np.linalg.pinv(matrix, rcond=tol), free_term)
     bkg_poly_coeff = v.reshape((nimages, v.size // nimages))
     return bkg_poly_coeff

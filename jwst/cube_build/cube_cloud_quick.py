@@ -1,11 +1,13 @@
- # Routines used in Spectral Cube Building
+# Routines used in Spectral Cube Building
 import numpy as np
 import math
 import logging
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
-#________________________________________________________________________________
+# ________________________________________________________________________________
+
+
 def match_det2cube_msm(naxis1, naxis2, naxis3,
                        cdelt1, cdelt2, cdelt3,
                        rois, roiw,
@@ -18,8 +20,6 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
                        flux,
                        err,
                        coord1, coord2, wave):
-
-
     """
     Short Summary
     -------------
@@ -52,11 +52,11 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
     nplane = naxis1 * naxis2
     lower_limit = 0.01
 
-# now loop over the pixel values for this region and find the spaxels that fall
-# withing the region of interest.
+    # now loop over the pixel values for this region and find the spaxels that fall
+    # withing the region of interest.
     nn = coord1.size
 
-# transform to ifu cube grid system
+    # transform to ifu cube grid system
     c1 = (coord1 - xcoord[0]) / cdelt1
     c2 = (coord2 - ycoord[0]) / cdelt2
     c3 = (wave - zcoord[0]) / cdelt3
@@ -79,10 +79,8 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
     c3_max = (c3 + spectral_radius).astype(int)
     c3_max[c3_max >= naxis3] = naxis3 - 1
 
-#    print('looping over n points mapping to cloud',nn)
-#________________________________________________________________________________
+    # print('looping over n points mapping to cloud',nn)
     for ipt in range(0, nn - 1):
-#________________________________________________________________________________
         # xcoord is 1 d array of center of spaxel in x direction
         # ycoord is 1 d array of center of spaxel in y direction
         # find the spaxels that fall withing ROI of point cloud defined  by
@@ -139,4 +137,4 @@ def match_det2cube_msm(naxis1, naxis2, naxis3,
         spaxel_weight[icube_index] = spaxel_weight[icube_index] + weight_distance
         spaxel_iflux[icube_index] = spaxel_iflux[icube_index] + 1
         spaxel_var[icube_index] = spaxel_var[icube_index] + weighted_var
-#_______________________________________________________________________
+# _______________________________________________________________________

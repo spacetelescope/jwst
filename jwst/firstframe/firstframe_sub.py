@@ -40,7 +40,7 @@ def do_correction(input_model):
     # the first group to 'DO_NOT_USE'
     if sci_ngroups > 3:
         output.groupdq[:, 0, :, :] = \
-            np.bitwise_or(output.groupdq[:,0,:,:], dqflags.group['DO_NOT_USE'])
+            np.bitwise_or(output.groupdq[:, 0, :, :], dqflags.group['DO_NOT_USE'])
         log.debug("FirstFrame Sub: resetting GROUPDQ in first frame to DO_NOT_USE")
         output.meta.cal_step.firstframe = 'COMPLETE'
     else:   # too few groups

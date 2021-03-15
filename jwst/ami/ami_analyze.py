@@ -1,6 +1,4 @@
-#
 #  Module for applying the LG-PLUS algorithm to an AMI exposure
-#
 
 import logging
 import numpy as np
@@ -8,6 +6,7 @@ import numpy as np
 from .find_affine2d_parameters import find_rotation
 from . import instrument_data
 from . import nrm_core
+
 
 from astropy import units as u
 
@@ -43,6 +42,8 @@ def apply_LG_plus(input_model, filter_model, oversample, rotation,
         Fringe analysis data
 
     """
+    # Create copy of input_model to avoid overwriting input
+    input_copy = input_model.copy()
 
     # If the input data were taken in full-frame mode, extract a region
     # equivalent to the SUB80 subarray mode to make execution time acceptable.
@@ -54,24 +55,29 @@ def apply_LG_plus(input_model, filter_model, oversample, rotation,
         ysize = 80
         xstop = xstart + xsize - 1
         ystop = ystart + ysize - 1
-        input_model.data = input_model.data[ystart-1:ystop, xstart-1:xstop]
-        input_model.dq = input_model.dq[ystart-1:ystop, xstart-1:xstop]
-        input_model.err = input_model.err[ystart-1:ystop, xstart-1:xstop]
+        input_copy.data = input_copy.data[ystart - 1:ystop, xstart - 1:xstop]
+        input_copy.dq = input_copy.dq[ystart - 1:ystop, xstart - 1:xstop]
+        input_copy.err = input_copy.err[ystart - 1:ystop, xstart - 1:xstop]
 
-    data = input_model.data
+    data = input_copy.data
     dim = data.shape[1]
 
     # Set transformation parameters:
     #   mx, my: dimensionless magnifications
     #   sx, sy: dimensionless shears
     #   x0, y0: offsets in pupil space
-    mx,my,sx,sy,xo,yo, = (1.0,1.0, 0.0,0.0, 0.0,0.0)
+    mx = 1.0
+    my = 1.0
+    sx = 0.0
+    sy = 0.0
+    xo = 0.0
+    yo = 0.0
 
     psf_offset_ff = None
 
     lamc = 4.3e-6
     oversample = 11
-    bandpass = np.array([(1.0, lamc),])
+    bandpass = np.array([(1.0, lamc), ])
     pixelscale_as = 0.0656
     arcsec2rad = u.arcsec.to(u.rad)
     PIXELSCALE_r = pixelscale_as * arcsec2rad
@@ -79,16 +85,16 @@ def apply_LG_plus(input_model, filter_model, oversample, rotation,
     filt = "F430M"
     rotsearch_d = np.arange(rotsearch_parameters[0], rotsearch_parameters[1], rotsearch_parameters[2])
 
-    affine2d = find_rotation(data[:,:], psf_offset, rotsearch_d,
-                   mx, my, sx, sy, xo, yo,
-                   PIXELSCALE_r, dim, bandpass, oversample, holeshape)
+    affine2d = find_rotation(data[:, :], psf_offset, rotsearch_d,
+                             mx, my, sx, sy, xo, yo,
+                             PIXELSCALE_r, dim, bandpass, oversample, holeshape)
 
     niriss = instrument_data.NIRISS(filt, bandpass=bandpass, affine2d=affine2d)
 
     ff_t = nrm_core.FringeFitter(niriss, psf_offset_ff=psf_offset_ff,
-                oversample=oversample)
+                                 oversample=oversample)
 
-    output_model = ff_t.fit_fringes_all(input_model)
+    output_model = ff_t.fit_fringes_all(input_copy)
 
     # Copy header keywords from input to output
     output_model.update(input_model)

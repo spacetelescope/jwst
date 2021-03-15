@@ -71,8 +71,8 @@ def all_steps():
         more_steps = {
             klass_name: klass
             for klass_name, klass in inspect.getmembers(
-                    module,
-                    lambda o: inspect.isclass(o) and issubclass(o, Step)
+                module,
+                lambda o: inspect.isclass(o) and issubclass(o, Step)
             )
             if klass_name not in NON_STEPS
         }

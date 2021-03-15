@@ -127,7 +127,7 @@ def test_multislit_copy(tmp_path):
     with MultiSlitModel(path) as model:
         for i, slit in enumerate(model.slits):
             pass
-        assert i+1 == 4
+        assert i + 1 == 4
 
         output = model.copy()
         assert len(output.slits) == 4

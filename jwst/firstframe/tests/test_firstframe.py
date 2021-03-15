@@ -42,7 +42,7 @@ def test_firstframe_set_groupdq():
     # test that the groupdq flags are not changed for the rest of the groups
     dq_diff = (dm_ramp_firstframe.groupdq[0, 1:ngroups, :, :]
                - dm_ramp.groupdq[0, 1:ngroups, :, :])
-    np.testing.assert_array_equal(np.full((ngroups-1, ysize, xsize),
+    np.testing.assert_array_equal(np.full((ngroups - 1, ysize, xsize),
                                           0,
                                           dtype=int),
                                   dq_diff,

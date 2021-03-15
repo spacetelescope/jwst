@@ -36,6 +36,7 @@ class Signal():
         happens when triggered.
 
     """
+
     def __init__(self, *funcs):
         self._slots = list()
         self._enabled = True
@@ -152,7 +153,7 @@ class Signal():
         self._enabled = state
 
     def reset_enabled(self):
-            self._enabled = self._states.pop()
+        self._enabled = self._states.pop()
 
     def connect(self, func, single_shot=False):
         """Connect a function to the signal

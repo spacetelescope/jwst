@@ -20,6 +20,8 @@ EMPTY_LIST = [None, '', ' ', 'INDEF', 'None']
 __doctest_skip__ = ['blendmodels']
 
 # Primary functional interface for the code
+
+
 def blendmodels(product, inputs=None, output=None, verbose=False):
     """
     Run main interface for blending metatdata from multiple models.
@@ -125,7 +127,7 @@ def blendmodels(product, inputs=None, output=None, verbose=False):
 
     # Start by identifying elements of the model which need to be ignored
     ignore_list = _build_schema_ignore_list(newmeta._schema)
-    ignore_list += ['meta.wcs'] # Necessary since meta.wcs is not in schema
+    ignore_list += ['meta.wcs']  # Necessary since meta.wcs is not in schema
 
     # Now assign values from new_hdrs to output_model.meta
     flat_new_metadata = newmeta.to_flat_dict()
@@ -296,6 +298,7 @@ def convert_dtype(value):
 
     return new_dtype
 
+
 def _build_schema_ignore_list(schema):
     """ Create a list of metadata that should be ignored when blending.
 
@@ -315,7 +318,7 @@ def _build_schema_ignore_list(schema):
         if len(path) > 1 and path[0] == 'meta' and 'items' not in path:
             attr = '.'.join(path)
             if subschema.get('properties'):
-                return # Ignore ObjectNodes
+                return  # Ignore ObjectNodes
             kwtype = subschema.get('type')
             if kwtype == 'array':
                 results.append(attr)

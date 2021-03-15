@@ -121,12 +121,12 @@ class OutlierDetectionIFU(OutlierDetection):
         for band in self.ifu_band:
             if self.instrument == 'MIRI':
                 cubestep = CubeBuildStep(config_file=cube_build_config,
-                                         channel=band,weighting='emsm',
+                                         channel=band, weighting='emsm',
                                          single=True)
 
             if self.instrument == 'NIRSPEC':
                 cubestep = CubeBuildStep(config_file=cube_build_config,
-                                         grating=band,weighting='emsm',
+                                         grating=band, weighting='emsm',
                                          single=True)
 
             single_IFUCube_result = cubestep.process(self.input_models)
@@ -143,7 +143,7 @@ class OutlierDetectionIFU(OutlierDetection):
 
             # Initialize intermediate products used in the outlier detection
             median_model = datamodels.IFUCubeModel(
-                            init=single_IFUCube_result[0].data.shape)
+                init=single_IFUCube_result[0].data.shape)
             median_model.meta = single_IFUCube_result[0].meta
 
             median_model.meta.filename = self.make_output_path(
@@ -156,7 +156,7 @@ class OutlierDetectionIFU(OutlierDetection):
 
             if save_intermediate_results:
                 log.info("Writing out MEDIAN image to: {}".format(
-                          median_model.meta.filename))
+                    median_model.meta.filename))
                 median_model.save(median_model.meta.filename)
 
             # Blot the median image back to recreate each input image specified
@@ -173,7 +173,7 @@ class OutlierDetectionIFU(OutlierDetection):
 
             self.blot_models.save(
                 partial(self.make_output_path, suffix='blot')
-                )
+            )
 
             for model in self.blot_models:
                 log.info("Blotted files {}".format(model.meta.filename))
@@ -212,7 +212,7 @@ class OutlierDetectionIFU(OutlierDetection):
             #    the mean weight
             mask = np.less(w, weight_threshold)
             log.debug("Number of pixels with low weight: {}".format(
-                        np.sum(mask)))
+                np.sum(mask)))
             badmasks.append(mask)
 
         # Compute median of stack os images using BADMASKS to remove low weight

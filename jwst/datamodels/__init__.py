@@ -75,13 +75,12 @@ from .trappars import TrapParsModel
 from .trapsfilled import TrapsFilledModel
 from .tsophot import TsoPhotModel
 from .wcs_ref_models import (DistortionModel, DistortionMRSModel, SpecwcsModel,
-    RegionsModel, WavelengthrangeModel, CameraModel, CollimatorModel, OTEModel,
-    FOREModel, FPAModel, IFUPostModel, IFUFOREModel, IFUSlicerModel, MSAModel,
-    FilteroffsetModel, DisperserModel, NIRCAMGrismModel, NIRISSGrismModel,
-    WaveCorrModel)
+                             RegionsModel, WavelengthrangeModel, CameraModel, CollimatorModel, OTEModel,
+                             FOREModel, FPAModel, IFUPostModel, IFUFOREModel, IFUSlicerModel, MSAModel,
+                             FilteroffsetModel, DisperserModel, NIRCAMGrismModel, NIRISSGrismModel,
+                             WaveCorrModel)
 from .wfssbkg import WfssBkgModel
 from .util import open
-
 
 
 __all__ = [
@@ -91,7 +90,7 @@ __all__ = [
     'AmiLgModel',
     'FgsImgApcorrModel', 'MirImgApcorrModel', 'NrcImgApcorrModel', 'NisImgApcorrModel',
     'MirLrsApcorrModel', 'MirMrsApcorrModel', 'NrcWfssApcorrModel', 'NisWfssApcorrModel',
-    'NrsMosApcorrModel', 'NrsFsApcorrModel','NrsIfuApcorrModel',
+    'NrsMosApcorrModel', 'NrsFsApcorrModel', 'NrsIfuApcorrModel',
     'AsnModel',
     'BarshadowModel', 'CameraModel', 'CollimatorModel',
     'CombinedSpecModel', 'ContrastModel', 'CubeModel',
@@ -111,11 +110,11 @@ __all__ = [
     'IFUFOREModel', 'IFUImageModel', 'IFUPostModel', 'IFUSlicerModel',
     'ImageModel', 'IPCModel', 'IRS2Model', 'LastFrameModel', 'Level1bModel',
     'LinearityModel', 'MaskModel', 'ModelContainer', 'MSAModel',
-    'MultiCombinedSpecModel','MultiExposureModel',
+    'MultiCombinedSpecModel', 'MultiExposureModel',
     'MultiExtract1dImageModel', 'MultiSlitModel',
     'MultiProductModel',
     'MultiSpecModel', 'OTEModel',
-    'NIRCAMGrismModel','NIRISSGrismModel',
+    'NIRCAMGrismModel', 'NIRISSGrismModel',
     'OutlierParsModel',
     'PathlossModel',
     'PersistenceSatModel',
@@ -152,4 +151,4 @@ except NameError:
 
 _all_models = __all__[1:]
 _local_dict = locals()
-_defined_models = {k:_local_dict[k] for k in _all_models}
+_defined_models = {k: _local_dict[k] for k in _all_models}

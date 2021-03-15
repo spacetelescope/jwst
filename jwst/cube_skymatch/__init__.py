@@ -20,7 +20,7 @@ log.setLevel(logging.DEBUG)
 
 def help():
     msg = \
-"""
+        """
 The skymatch package contains the following tasks that allow users
 perform sky level matching on user images.
 

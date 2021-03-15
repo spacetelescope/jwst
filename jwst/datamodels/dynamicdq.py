@@ -6,6 +6,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 log.addHandler(logging.NullHandler())
 
+
 def dynamic_mask(input_model):
     #
     # Return a mask model given a mask with dynamic DQ flags
@@ -16,7 +17,7 @@ def dynamic_mask(input_model):
     if (dq_table is not None and
         not np.isscalar(dq_table) and
         len(dq_table.shape) and
-        len(dq_table)):
+            len(dq_table)):
         #
         # Make an empty mask
         dqmask = np.zeros(input_model.dq.shape, dtype=input_model.dq.dtype)

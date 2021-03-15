@@ -8,6 +8,7 @@ from jwst.flatfield import FlatFieldStep
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
+
 @pytest.mark.bigdata
 def test_nirspec_image2(_jail, rtdata, fitsdiff_default_kwargs):
     rtdata.get_data("nirspec/imaging/jw84600010001_02102_00001_nrs2_rate.fits")
@@ -63,4 +64,4 @@ def test_correction_pars(rtdata, fitsdiff_default_kwargs):
     step.use_correction_pars = True
     reflatted = step.run(data)
 
-    assert np.allclose(flatted.data,reflatted.data), 'Re-run with correction parameters failed'
+    assert np.allclose(flatted.data, reflatted.data), 'Re-run with correction parameters failed'

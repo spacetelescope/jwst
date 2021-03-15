@@ -68,11 +68,11 @@ def apply_fringe(input_model, fringe):
     output_model.data /= fringe_data
     output_model.err /= fringe_data
 
-### 05/22/14: For now, commenting out the following updating of the output
-###    DQ based on the DQ of the reference file. This is done now because the
-###    current DQ values in the ref file do not correspond to 'bad' data
-###    values in the SCI array of the ref file.  Accordingly, this information
-###    will be logged for now. This behavior may be changed later.
+# 05/22/14: For now, commenting out the following updating of the output
+# DQ based on the DQ of the reference file. This is done now because the
+# current DQ values in the ref file do not correspond to 'bad' data
+# values in the SCI array of the ref file.  Accordingly, this information
+# will be logged for now. This behavior may be changed later.
 ###
     # set DQ flag for bad pixels in the fringe
 #   dq_mask = fringe.dq * 0

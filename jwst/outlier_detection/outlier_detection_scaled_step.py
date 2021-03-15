@@ -63,16 +63,16 @@ class OutlierDetectionScaledStep(Step):
                 'backg': self.backg,
                 'save_intermediate_results': self.save_intermediate_results,
                 'good_bits': self.good_bits
-                }
+            }
 
             # Setup for creating file names
             pars['make_output_path'] = self.make_output_path
 
             # Set up outlier detection, then do detection
             step = outlier_detection_scaled.OutlierDetectionScaled(
-                        self.input_models,
-                        reffiles=reffiles,
-                        **pars)
+                self.input_models,
+                reffiles=reffiles,
+                **pars)
             step.do_detection()
 
             self.input_models.meta.cal_step.outlier_detection = 'COMPLETE'
