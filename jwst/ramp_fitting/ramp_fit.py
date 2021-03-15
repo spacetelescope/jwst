@@ -727,7 +727,7 @@ def ols_ramp_fit_single(
         # processed.  If this is the case, return None for all expected variables
         # returned by ramp_fit
         miri_ans = discard_miri_groups(input_model)
-        if miri_ans is None:
+        if miri_ans is not True:
             return None * 3
 
     if ngroups == 1:
@@ -735,33 +735,13 @@ def ols_ramp_fit_single(
         log.warning('will be calculated as the value of that 1 group divided by')
         log.warning('the group exposure time.')
 
-    # Get image data information
-    data = input_model.data
-    err = input_model.err
-    groupdq = input_model.groupdq
-    inpixeldq = input_model.pixeldq
-
-    # Get instrument and exposure data
-    frame_time = input_model.meta.exposure.frame_time
-    ngroups = input_model.meta.exposure.ngroups
-    group_time = input_model.meta.exposure.group_time
-    groupgap = input_model.meta.exposure.groupgap
-    nframes = input_model.meta.exposure.nframes
-
-    # Get needed sizes and shapes
-    n_int, ngroups, nrows, ncols = data.shape
-    imshape = (nrows, ncols)
-    cubeshape = (ngroups,) + imshape
-
-    # Calculate effective integration time (once EFFINTIM has been populated
     #   and accessible, will use that instead), and other keywords that will
     #   needed if the pedestal calculation is requested. Note 'nframes'
     #   is the number of given by the NFRAMES keyword, and is the number of
     #   frames averaged on-board for a group, i.e., it does not include the
     #   groupgap.
     fit_slopes_ans = ramp_fit_slopes(
-        n_int, nrows, data, groupdq, inpixeldq, cubeshape, imshape, gain_2d, readnoise_2d,
-        save_opt, group_time, weighting, ngroups, nframes, groupgap, frame_time)
+        input_model, gain_2d, readnoise_2d, save_opt, weighting)
     if fit_slopes_ans[0] == "saturated":
         return fit_slopes_ans[1:]
 
@@ -778,8 +758,30 @@ def ols_ramp_fit_single(
     #   read noise. The integration-specific variances are 3D arrays, and the
     #   segment-specific variances are 4D arrays.
     variances_ans = ramp_fit_compute_variances(
-        n_int, nrows, groupdq, cubeshape, imshape, gain_2d, readnoise_2d,
-        group_time, max_seg, med_rates, num_seg_per_int)
+        input_model, gain_2d, readnoise_2d, max_seg, med_rates, num_seg_per_int)
+
+    # Calculate effective integration time (once EFFINTIM has been populated
+    max_seg = fit_slopes_ans[0]
+    num_seg_per_int = fit_slopes_ans[5]
+    opt_res = fit_slopes_ans[7]
+    med_rates = fit_slopes_ans[10]
+
+    # Get image data information
+    data = input_model.data
+    err = input_model.err
+    groupdq = input_model.groupdq
+    inpixeldq = input_model.pixeldq
+
+    # Get instrument and exposure data
+    frame_time = input_model.meta.exposure.frame_time
+    group_time = input_model.meta.exposure.group_time
+    groupgap = input_model.meta.exposure.groupgap
+    nframes = input_model.meta.exposure.nframes
+
+    # Get needed sizes and shapes
+    n_int, ngroups, nrows, ncols = data.shape
+    imshape = (nrows, ncols)
+    cubeshape = (ngroups,) + imshape
 
     # Now that the segment-specific and integration-specific variances have
     #   been calculated, the segment-specific, integration-specific, and
@@ -814,28 +816,9 @@ def discard_miri_groups(input_model):
 
     Returns
     -------
-    None: if no data to process after discarding unusable data.
-
-    data: ndarray
-        4-D image cube with dimensions (integrations, groups, rows, columns)
-
-    err: ndarray
-        Error array
-
-    groupdq: ndarray
-        GroupDQ array
-
-    cubeshape: tuple
-        Image cube dimensions per integration
-
-    imshape: tuple
-        Image shape per group
-
-    ngroups: int
-        Number of groups
-
-    first_gdq: ndarray
-        First groups in the GroupDQ array
+    boolean: 
+        False if no data to process after discarding unusable data.
+        True if useable data available for further processing.
     """
     data = input_model.data
     err = input_model.err
@@ -855,7 +838,7 @@ def discard_miri_groups(input_model):
         if ngroups < 1:  # no usable data
             log.error('1. All groups have all pixels flagged as DO_NOT_USE,')
             log.error('  so will not process this dataset.')
-            return None
+            return False
 
         groupdq = groupdq[:, 1:, :, :]
 
@@ -886,7 +869,7 @@ def discard_miri_groups(input_model):
         if ngroups < 1:  # no usable data
             log.error('2. All groups have all pixels flagged as DO_NOT_USE,')
             log.error('  so will not process this dataset.')
-            return None
+            return False
 
         data = data[:, :-1, :, :]
         err = err[:, :-1, :, :]
@@ -900,19 +883,15 @@ def discard_miri_groups(input_model):
     if ngroups < 2:
         log.warning('MIRI datasets require at least 2 groups/integration')
         log.warning('(NGROUPS), so will not process this dataset.')
-        return None
+        return False
 
     input_model.data = data
     input_model.err = err
     input_model.groupdq = groupdq
     return True
-    # return data, err, groupdq, cubeshape, imshape, ngroups
 
 
-# BEGIN
-def ramp_fit_slopes(
-        n_int, nrows, data, groupdq, inpixeldq, cubeshape, imshape, gain_2d, readnoise_2d,
-        save_opt, group_time, weighting, ngroups, nframes, groupgap, frame_time):
+def ramp_fit_slopes(input_model, gain_2d, readnoise_2d, save_opt, weighting):
     """
     Calculate effective integration time (once EFFINTIM has been populated accessible, will
     use that instead), and other keywords that will needed if the pedestal calculation is
@@ -921,26 +900,8 @@ def ramp_fit_slopes(
 
     Parameter
     ---------
-    n_int : int
-        Number of integrations
-
-    nrows : int
-        Number of rows in the 2-D image
-
-    data : ndarray
-        4-D image cube with dimensions (integrations, groups, rows, columns)
-
-    groupdq : ndarray
-        GroupDQ array
-
-    inpixeldq : ndarray
-        The input 2-D pixel DQ flags
-
-    cubeshape : tuple
-        Image cube dimensions per integration
-
-    imshape : tuple
-        Image shape per group
+    input_model: RampModel
+        The input model containing the image data.
 
     gain_2d : instance of gain model
         gain for all pixels
@@ -951,24 +912,9 @@ def ramp_fit_slopes(
     save_opt : boolean
        calculate optional fitting results
 
-    group_time : float32
-        The time to read one group.
-
     weighting : string
         'optimal' specifies that optimal weighting should be used;
          currently the only weighting supported.
-
-    groupdq : ndarray
-        The input 4-D group DQ flags
-
-    nframes : int
-        The number of frames that are included in the group average
-
-    groupgap : int
-        The number of frames that are not included in the group average
-
-    frame_time : float32
-        The time to read one frame
 
     Return
     ------
@@ -1009,6 +955,23 @@ def ramp_fit_slopes(
     med_rates : ndarray
         Rate array
     """
+
+    # Get image data information
+    data = input_model.data
+    err = input_model.err
+    groupdq = input_model.groupdq
+    inpixeldq = input_model.pixeldq
+
+    # Get instrument and exposure data
+    frame_time = input_model.meta.exposure.frame_time
+    group_time = input_model.meta.exposure.group_time
+    groupgap = input_model.meta.exposure.groupgap
+    nframes = input_model.meta.exposure.nframes
+
+    # Get needed sizes and shapes
+    n_int, ngroups, nrows, ncols = data.shape
+    imshape = (nrows, ncols)
+    cubeshape = (ngroups,) + imshape
 
     effintim = (nframes + groupgap) * frame_time
 
@@ -1188,14 +1151,17 @@ def ramp_fit_slopes(
     del median_diffs_2d
     del first_diffs_sect
 
+    input_model.data = data
+    input_model.err = err
+    input_model.groupdq = groupdq
+    input_model.pixeldq = inpixeldq
+
     return max_seg, gdq_cube_shape, effintim, f_max_seg, dq_int, num_seg_per_int,\
         sat_0th_group_int, opt_res, pixeldq, inv_var, med_rates
-# END
 
 
 def ramp_fit_compute_variances(
-        n_int, nrows, groupdq, cubeshape, imshape, gain_2d, readnoise_2d,
-        group_time, max_seg, med_rates, num_seg_per_int):
+    input_model, gain_2d, readnoise_2d, max_seg, med_rates, num_seg_per_int):
     """
     In this 'Second Pass' over the data, loop over integrations and data
     sections to calculate the variances of the slope using the estimated
@@ -1215,29 +1181,14 @@ def ramp_fit_compute_variances(
 
     Parameters
     ----------
-    n_int : int
-        Number of integrations
-
-    nrows : int
-        Number of rows in image
-
-    groupdq : ndarray
-        The input 4-D group DQ flags
-
-    cubeshape : (int, int, int) tuple
-       Shape of input dataset
-
-    imshape : (int, int)
-       Shape of image
+    input_model: RampModel
+        The input model containing the image data.
 
     gain_2d : instance of gain model
         gain for all pixels
 
     readnoise_2d : 2-D float32
         The read noise for each pixel
-
-    group_time : float32
-        The time to read one group
 
     max_seg : int
         Maximum possible number of segments over all groups and segments
@@ -1280,6 +1231,23 @@ def ramp_fit_compute_variances(
     s_inv_var_both3 : ndarray
         1 / var_both3, summed over integrations
     """
+
+    # Get image data information
+    data = input_model.data
+    err = input_model.err
+    groupdq = input_model.groupdq
+    inpixeldq = input_model.pixeldq
+
+    # Get instrument and exposure data
+    frame_time = input_model.meta.exposure.frame_time
+    group_time = input_model.meta.exposure.group_time
+    groupgap = input_model.meta.exposure.groupgap
+    nframes = input_model.meta.exposure.nframes
+
+    # Get needed sizes and shapes
+    n_int, ngroups, nrows, ncols = data.shape
+    imshape = (nrows, ncols)
+    cubeshape = (ngroups,) + imshape
 
     var_p3, var_r3, var_p4, var_r4, var_both4, var_both3, \
         inv_var_both4, s_inv_var_p3, s_inv_var_r3, s_inv_var_both3, segs_4 = \
@@ -1400,6 +1368,11 @@ def ramp_fit_compute_variances(
 
     if segs_4 is not None:
         del segs_4
+
+    input_model.data = data
+    input_model.err = err
+    input_model.groupdq = groupdq
+    input_model.pixeldq = inpixeldq
 
     return var_p3, var_r3, var_p4, var_r4, var_both4, var_both3, inv_var_both4, \
         s_inv_var_p3, s_inv_var_r3, s_inv_var_both3
