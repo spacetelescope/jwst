@@ -8,6 +8,7 @@ import numpy as np
 from .find_affine2d_parameters import find_rotation
 from . import instrument_data
 from . import nrm_core
+from .. import datamodels
 
 from astropy import units as u
 
@@ -44,6 +45,8 @@ def apply_LG_plus(input_model, filter_model, oversample, rotation,
 
     """
 
+    input_copy = datamodels.ImageModel(input_model.copy())
+
     # If the input data were taken in full-frame mode, extract a region
     # equivalent to the SUB80 subarray mode to make execution time acceptable.
     if input_model.meta.subarray.name.upper() == 'FULL':
@@ -54,11 +57,11 @@ def apply_LG_plus(input_model, filter_model, oversample, rotation,
         ysize = 80
         xstop = xstart + xsize - 1
         ystop = ystart + ysize - 1
-        input_model.data = input_model.data[ystart-1:ystop, xstart-1:xstop].copy()
-        input_model.dq = input_model.dq[ystart-1:ystop, xstart-1:xstop].copy()
-        input_model.err = input_model.err[ystart-1:ystop, xstart-1:xstop].copy()
+        input_copy.data = input_copy.data[ystart-1:ystop, xstart-1:xstop].copy()
+        input_copy.dq = input_copy.dq[ystart-1:ystop, xstart-1:xstop].copy()
+        input_copy.err = input_copy.err[ystart-1:ystop, xstart-1:xstop].copy()
 
-    data = input_model.data
+    data = input_copy.data
     dim = data.shape[1]
 
     # Set transformation parameters:
@@ -88,7 +91,7 @@ def apply_LG_plus(input_model, filter_model, oversample, rotation,
     ff_t = nrm_core.FringeFitter(niriss, psf_offset_ff=psf_offset_ff,
                 oversample=oversample)
 
-    output_model = ff_t.fit_fringes_all(input_model)
+    output_model = ff_t.fit_fringes_all(input_copy)
 
     # Copy header keywords from input to output
     output_model.update(input_model)
