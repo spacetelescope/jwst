@@ -42,7 +42,7 @@ def apply_LG_plus(input_model, filter_model, oversample, rotation,
         Fringe analysis data
 
     """
-
+    # Create copy of input_model to avoid overwriting input
     input_copy = datamodels.ImageModel(input_model.copy())
 
     # If the input data were taken in full-frame mode, extract a region

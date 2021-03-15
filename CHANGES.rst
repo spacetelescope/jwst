@@ -4,7 +4,7 @@
 ami_analyze
 -----------
 
-- Create copy of input_model to avoid overwriting input datamodel [#5828]
+- Create copy of input datamodel to avoid overwriting input [#5828]
 
 assign_wcs
 ----------
