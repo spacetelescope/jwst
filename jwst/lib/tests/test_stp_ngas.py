@@ -91,11 +91,14 @@ def test_stp_ngas():
         for r in data
     ]
 
-    siaf = stp.SIAF(v2_ref=0., v3_ref=0., v3yangle=0., vparity=1.)
+    # Setup transformation parameters
+    t_pars = stp.TransformParameters()
+    t_pars.method = stp.Methods.ORIGINAL.name
+    t_pars.siaf = stp.SIAF(v2_ref=0., v3_ref=0., v3yangle=0., vparity=1.)
     any_wrong = False
     for idx, pv in enumerate(pointings):
-        p, v = pv
-        wcsinfo, vinfo = stp.calc_wcs(p, siaf)
+        t_pars.pointing, v = pv
+        wcsinfo, vinfo = stp.calc_wcs(t_pars)
         try:
             wcs_equality(vinfo, v)
         except AssertionError as e:

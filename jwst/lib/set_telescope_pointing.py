@@ -76,6 +76,7 @@ R2D = 180. / np.pi
 D2R = np.pi / 180.
 A2R = D2R / 3600.
 R2A = 3600. * R2D
+PI2 = np. pi * 2.
 
 # Map instrument three character mnemonic to full name
 INSTRUMENT_MAP = {
