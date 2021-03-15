@@ -35,6 +35,7 @@ class ValidationError(Exception):
     def __str__(self):
         return self._message
 
+
 class Region():
     """
     Base class for regions.
@@ -46,6 +47,7 @@ class Region():
     coordinate_system : astropy.wcs.CoordinateSystem instance or a string
         in the context of WCS this would be an instance of wcs.CoordinateSysem
     """
+
     def __init__(self, rid, coordinate_system):
         self._coordinate_system = coordinate_system
         self._rid = rid
@@ -84,6 +86,7 @@ class Region():
         """
         raise NotImplementedError("scan")
 
+
 class Polygon(Region):
     """
     Represents a 2D polygon region with multiple vertices
@@ -101,6 +104,7 @@ class Polygon(Region):
         coordinate system
 
     """
+
     def __init__(self, rid, vertices, coord_system="Cartesian"):
         assert len(vertices) >= 4, ("Expected vertices to be "
                                     "a list of minimum 4 tuples (x,y)")
@@ -129,8 +133,8 @@ class Polygon(Region):
 
         self._bbox = self._get_bounding_box()
         self._scan_line_range = \
-                list(range(self._bbox[1], self._bbox[3] + self._bbox[1] + 1))
-        #constructs a Global Edge Table (GET) in bbox coordinates
+            list(range(self._bbox[1], self._bbox[3] + self._bbox[1] + 1))
+        # constructs a Global Edge Table (GET) in bbox coordinates
         self._GET = self._construct_ordered_GET()
 
     def _get_bounding_box(self):
@@ -161,10 +165,10 @@ class Polygon(Region):
         ymin = np.asarray([e._ymin for e in edges])
         for i in self._scan_line_range:
             ymin_ind = (ymin == i).nonzero()[0]
+            # a hack for incomplete filling .any() fails if 0 is in ymin_ind
+            # if ymin_ind.any():
             yminindlen, = ymin_ind.shape
-            if yminindlen: #mcara - a hack for incomplete filling .any() fails
-                           # if 0 is in ymin_ind
-            #if ymin_ind.any(): # original
+            if yminindlen:
                 GET[i] = [edges[ymin_ind[0]]]
                 for j in ymin_ind[1:]:
                     GET[i].append(edges[j])
@@ -203,11 +207,11 @@ class Polygon(Region):
           5. Set elements between pairs of X in the AET to the Edge's ID
 
         """
-        ##TODO: 1.This algorithm does not mark pixels in the top row and left most column.
-        ## Pad the initial pixel description on top and left with 1 px to prevent this.
-        ## 2. Currently it uses intersection of the scan line with edges. If this is
-        ## too slow it should use the 1/m increment (replace 3 above) (or the increment
-        ## should be removed from the GET entry).
+        # TODO: 1.This algorithm does not mark pixels in the top row and left most column.
+        # Pad the initial pixel description on top and left with 1 px to prevent this.
+        # 2. Currently it uses intersection of the scan line with edges. If this is
+        # too slow it should use the 1/m increment (replace 3 above) (or the increment
+        # should be removed from the GET entry).
 
         # see comments in the __init__ function for the reason of introducing
         # polygon shifts (self._shiftx & self._shifty). Here we need to shift
@@ -267,12 +271,13 @@ class Polygon(Region):
 
     def __contains__(self, px):
         """even-odd algorithm or smth else better sould be used"""
-        #minx = self._vertices[:,0].min()
-        #maxx = self._vertices[:,0].max()
-        #miny = self._vertices[:,1].min()
-        #maxy = self._vertices[:,1].max()
+        # minx = self._vertices[:,0].min()
+        # maxx = self._vertices[:,0].max()
+        # miny = self._vertices[:,1].min()
+        # maxy = self._vertices[:,1].max()
         return px[0] >= self._bbox[0] and px[0] <= self._bbox[0] + self._bbox[2] and \
-               px[1] >= self._bbox[1] and px[1] <= self._bbox[1] + self._bbox[3]
+            px[1] >= self._bbox[1] and px[1] <= self._bbox[1] + self._bbox[3]
+
 
 class Edge():
     """
@@ -284,6 +289,7 @@ class Edge():
     [ymax, x_at_ymin, delta_x/delta_y]
 
     """
+
     def __init__(self, name=None, start=None, stop=None, next=None):
         self._start = None
         if start is not None:
@@ -394,6 +400,7 @@ class Edge():
             return False
         else:
             return True
+
 
 def _round_vertex(v):
     x, y = v

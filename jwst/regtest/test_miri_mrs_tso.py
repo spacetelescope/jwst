@@ -22,12 +22,12 @@ def run_spec2(jail, rtdata_module):
 
     # Run the pipeline
     args = ["config/calwebb_tso-spec2.cfg", rtdata.input,
-        '--steps.assign_wcs.save_results=true',
-        '--steps.flat_field.save_results=true',
-        '--steps.srctype.save_results=true',
-        '--steps.fringe.save_results=true',
-        '--steps.photom.save_results=true',
-        ]
+            '--steps.assign_wcs.save_results=true',
+            '--steps.flat_field.save_results=true',
+            '--steps.srctype.save_results=true',
+            '--steps.fringe.save_results=true',
+            '--steps.photom.save_results=true',
+            ]
 
     Step.from_cmdline(args)
 

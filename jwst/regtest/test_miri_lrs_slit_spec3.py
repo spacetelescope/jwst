@@ -6,6 +6,7 @@ from astropy.io.fits.diff import FITSDiff
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
+
 @pytest.fixture(scope="module")
 def run_pipeline(jail, rtdata_module):
     """Run the calwebb_spec3 pipeline on an ASN of nodded MIRI LRS

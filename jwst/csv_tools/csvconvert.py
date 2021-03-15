@@ -71,9 +71,10 @@ class CSVConvertScript():
             raise NotImplementedError('Format {} is not implemented.'.format(parsed.format))
         self.format = parsed.format
 
-#*********
+# *********
 # Utilities
-#*********
+# *********
+
 
 def get_default_args(func):
     '''Retrieve the defaults for arguments of a given fucntion.'''
@@ -82,9 +83,9 @@ def get_default_args(func):
     return dict(list(zip(args.args[-len(args.defaults):], args.defaults)))
 
 
-#******
+# ******
 # Main
-#******
+# ******
 
 if __name__ == '__main__':
     CSVConvertScript()

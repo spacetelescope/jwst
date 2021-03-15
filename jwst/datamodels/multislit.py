@@ -6,7 +6,6 @@ from .slit import SlitModel, SlitDataModel
 __all__ = ['MultiSlitModel']
 
 
-
 class MultiSlitModel(JwstDataModel):
     """
     A data model for multi-slit images.

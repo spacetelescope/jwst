@@ -12,8 +12,8 @@ import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-def klip(target_model, refs_model, truncate):
 
+def klip(target_model, refs_model, truncate):
     """
     Parameters
     ----------

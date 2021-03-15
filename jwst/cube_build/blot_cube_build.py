@@ -117,7 +117,6 @@ class CubeBlot():
 
         log.info('Number of input models %i ', len(self.input_models))
 
-
     def blot_images(self):
         if self.instrument == 'MIRI':
             blotmodels = self.blot_images_miri()
@@ -125,6 +124,7 @@ class CubeBlot():
             blotmodels = self.blot_images_nirspec()
         return blotmodels
     # ************************************************************************
+
     def blot_images_miri(self):
         """ Core blotting routine for MIRI
 
@@ -166,7 +166,7 @@ class CubeBlot():
             ydet = ydet.flatten()
             xdet = xdet.flatten()
             self.ycenter_grid, self.xcenter_grid = np.mgrid[0:ysize,
-                                                                0:xsize]
+                                                            0:xsize]
 
             xsize = xend - xstart + 1
             xcenter = np.arange(xsize) + xstart
@@ -207,7 +207,6 @@ class CubeBlot():
         return blot_models
     # ________________________________________________________________________________
 
-
     def blot_overlap_quick(self, model, xcenter, ycenter, xstart,
                            x_cube, y_cube, flux_cube):
 
@@ -242,11 +241,11 @@ class CubeBlot():
                 d1pix = np.array(x_cube[ipt] - xcenter[index_x])
                 d2pix = np.array(y_cube[ipt] - ycenter[index_y])
 
-                dxy = [(dx*dx + dy*dy) for dy in d2pix for dx in d1pix]
+                dxy = [(dx * dx + dy * dy) for dy in d2pix for dx in d1pix]
                 dxy = np.sqrt(dxy)
                 weight_distance = np.exp(-dxy)
                 weighted_flux = weight_distance * flux_cube[ipt]
-                index2d = [iy * blot_xsize + ix for iy in index_y[0] for ix in (index_x[0]+xstart)]
+                index2d = [iy * blot_xsize + ix for iy in index_y[0] for ix in (index_x[0] + xstart)]
                 blot_flux[index2d] = blot_flux[index2d] + weighted_flux
                 blot_weight[index2d] = blot_weight[index2d] + weight_distance
 
@@ -354,7 +353,7 @@ class CubeBlot():
                         d1pix = np.array(x_slice[ipt] - xcenter[index_x])
                         d2pix = np.array(y_slice[ipt] - ycenter[index_y])
 
-                        dxy = [(dx*dx + dy*dy) for dy in d2pix for dx in d1pix]
+                        dxy = [(dx * dx + dy * dy) for dy in d2pix for dx in d1pix]
                         dxy = np.sqrt(dxy)
                         weight_distance = np.exp(-dxy)
                         weighted_flux = weight_distance * flux_slice[ipt]

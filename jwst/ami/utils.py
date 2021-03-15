@@ -147,8 +147,8 @@ class Affine2d():
         Since this uses an offset xo yo in pixels of the affine transformation,
         these are *NOT* affected by the 'oversample' in image space.  The
         vector it is dotted with is in image space."""
-        self.phase_2vector = np.array((my*xo - sx*yo,
-                                       mx*yo - sy*xo)) / self.determinant
+        self.phase_2vector = np.array((my * xo - sx * yo,
+                                       mx * yo - sy * xo)) / self.determinant
 
     def forward(self, point):
         """
@@ -167,7 +167,7 @@ class Affine2d():
             coordinates in distorted space
         """
         trans_point = np.array((self.mx * point[0] + self.sx * point[1] + self.xo,
-                         self.my * point[1] + self.sy * point[0] + self.yo))
+                                self.my * point[1] + self.sy * point[0] + self.yo))
 
         return trans_point
 
@@ -217,8 +217,8 @@ class Affine2d():
         vprime: float
             2nd transformed argument of F
         """
-        uprime = (self.my*u - self.sy*v)/self.determinant
-        vprime = (-self.sx*u + self.mx*v)/self.determinant
+        uprime = (self.my * u - self.sy * v) / self.determinant
+        vprime = (-self.sx * u + self.mx * v) / self.determinant
         return uprime, vprime
 
     def distortphase(self, u, v):
@@ -245,8 +245,8 @@ class Affine2d():
         phase: complex array
             phase term divided by the determinant.
         """
-        phase = np.exp(2*np.pi*1j/self.determinant *
-                      (self.phase_2vector[0]*u + self.phase_2vector[1]*v))
+        phase = np.exp(2 * np.pi * 1j / self.determinant *
+                       (self.phase_2vector[0] * u + self.phase_2vector[1] * v))
 
         return phase
 
@@ -267,10 +267,11 @@ class Affine2d():
             rotation used to creat a pure rotation affine2d
         """
         if self.rotradccw:
-            rotd = 180.0*self.rotradccw/np.pi
+            rotd = 180.0 * self.rotradccw / np.pi
             return rotd
         else:
             return None
+
 
 def affinepars2header(hdr, affine2d):
     """
@@ -329,20 +330,21 @@ def makedisk(N, R, ctr=(0, 0)):
         array, and =0 elsewhere.
     """
     if N % 2 == 1:  # odd
-        M = (N-1)/2
-        xx = np.linspace(-M-ctr[0], M-ctr[0], N)
-        yy = np.linspace(-M-ctr[1], M-ctr[1], N)
+        M = (N - 1) / 2
+        xx = np.linspace(-M - ctr[0], M - ctr[0], N)
+        yy = np.linspace(-M - ctr[1], M - ctr[1], N)
     if N % 2 == 0:  # even
-        M = N/2
-        xx = np.linspace(-M-ctr[0], M-ctr[0]-1, N)
-        yy = np.linspace(-M-ctr[1], M-ctr[1]-1, N)
+        M = N / 2
+        xx = np.linspace(-M - ctr[0], M - ctr[0] - 1, N)
+        yy = np.linspace(-M - ctr[1], M - ctr[1] - 1, N)
 
     (x, y) = np.meshgrid(xx, yy.T)
-    r = np.sqrt((x**2)+(y**2))
+    r = np.sqrt((x**2) + (y**2))
     array = np.zeros((N, N))
     array[r < R] = 1
 
     return array
+
 
 def trim(m, s):
     """
@@ -368,13 +370,14 @@ def trim(m, s):
         # Go through all indices in the mask:
         # the x & y lists test for any index being an edge index - if none are
         # on the edge, remember the indices in new list
-        if (m[0][ii] == 0 or m[1][ii] == 0 or m[0][ii] == s-1 or
-                m[1][ii] == s-1) is False:
+        if (m[0][ii] == 0 or m[1][ii] == 0 or m[0][ii] == s - 1 or
+                m[1][ii] == s - 1) is False:
             xl.append(m[0][ii])
             yl.append(m[1][ii])
     m_masked = (np.asarray(xl), np.asarray(yl))
 
     return m_masked
+
 
 def avoidhexsingularity(rotation):
     """
@@ -394,13 +397,14 @@ def avoidhexsingularity(rotation):
         replacement value for rotation with epsilon = 1.0e-12 degrees added.
         Precondition before using rotationdegrees in Affine2d for hex geometries
     """
-    diagnostic = rotation/15.0 - int(rotation/15.0)
+    diagnostic = rotation / 15.0 - int(rotation / 15.0)
     epsilon = 1.0e-12
-    if abs(diagnostic) < epsilon/2.0:
+    if abs(diagnostic) < epsilon / 2.0:
         rotation_adjusted = rotation + epsilon
     else:
         rotation_adjusted = rotation
     return rotation_adjusted
+
 
 def center_imagepeak(img, r='default', cntrimg=True):
     """
@@ -430,9 +434,10 @@ def center_imagepeak(img, r='default', cntrimg=True):
     else:
         pass
 
-    cropped = img[int(peakx-r):int(peakx+r+1), int(peaky-r):int(peaky+r+1)]
+    cropped = img[int(peakx - r):int(peakx + r + 1), int(peaky - r):int(peaky + r + 1)]
 
     return cropped
+
 
 def centerpoint(s):
     """
@@ -451,7 +456,8 @@ def centerpoint(s):
     center: 2D integer or float tuple
         center of image
     """
-    return (0.5*s[0] - 0.5,  0.5*s[1] - 0.5)
+    return (0.5 * s[0] - 0.5, 0.5 * s[1] - 0.5)
+
 
 def combine_transmission(filt, SRC):
     """
@@ -480,7 +486,7 @@ def combine_transmission(filt, SRC):
     src = specFromSpectralType(SRC)
 
     # converts t angstrom for pysynphot
-    src = src.resample(np.array(filt_wls)*1.0e10)
+    src = src.resample(np.array(filt_wls) * 1.0e10)
 
     specwavl, specwghts = src.getArrays()
     totalwght = specwghts * filt_wght
@@ -533,6 +539,7 @@ def min_distance_to_edge(img, cntrimg=True):
 
     return peakx, peaky, h  # the 'half side' each way from the peak pixel
 
+
 def find_centroid(a, thresh):
     """
     Short Summary
@@ -580,7 +587,7 @@ def find_centroid(a, thresh):
     cv = ft.perform(a, a.shape[0], a.shape[0])
     cvmod, cvpha = np.abs(cv), np.angle(cv)
 
-    cvmod = cvmod/cvmod.max()  # normalize to unity peak
+    cvmod = cvmod / cvmod.max()  # normalize to unity peak
 
     cvmask = np.where(cvmod >= thresh)
 
@@ -589,6 +596,7 @@ def find_centroid(a, thresh):
     htilt, vtilt = findslope(cvpha, cvmask_edgetrim)
 
     return htilt, vtilt
+
 
 def quadratic_extremum(p):
     """
@@ -609,6 +617,7 @@ def quadratic_extremum(p):
     y_max = -p[1] / (2.0 * p[0]), -p[1] * p[1] / (4.0 * p[0]) + p[2]
 
     return y_max
+
 
 def findpeak_1d(yvec, xvec):
     """
@@ -631,6 +640,7 @@ def findpeak_1d(yvec, xvec):
     """
     p = np.polyfit(np.array(xvec), np.array(yvec), 2)
     return quadratic_extremum(p)
+
 
 def findslope(a, m):
     """
@@ -694,27 +704,28 @@ def findslope(a, m):
     offsetcube[3, :, :] = a_l
 
     tilt = np.zeros(a.shape), np.zeros(a.shape)
-    tilt = (a_r - a_l)/2.0,  (a_up - a_dn)/2.0  # raw estimate of phase slope
+    tilt = (a_r - a_l) / 2.0, (a_up - a_dn) / 2.0  # raw estimate of phase slope
     c = centerpoint(a.shape)
     C = (int(c[0]), int(c[1]))
-    sigh, sigv = tilt[0][C[0]-1:C[0]+1, C[1]-1:C[1]+1].std(), \
-        tilt[1][C[0]-1:C[0]+1, C[1]-1:C[1]+1].std()
-    avgh, avgv = tilt[0][C[0]-1:C[0]+1, C[1]-1:C[1]+1].mean(), \
-        tilt[1][C[0]-1:C[0]+1, C[1]-1:C[1]+1].mean()
+    sigh, sigv = tilt[0][C[0] - 1:C[0] + 1, C[1] - 1:C[1] + 1].std(), \
+        tilt[1][C[0] - 1:C[0] + 1, C[1] - 1:C[1] + 1].std()
+    avgh, avgv = tilt[0][C[0] - 1:C[0] + 1, C[1] - 1:C[1] + 1].mean(), \
+        tilt[1][C[0] - 1:C[0] + 1, C[1] - 1:C[1] + 1].mean()
 
     # second stage mask cleaning: 5 sig rejection of mask
-    newmaskh = np.where(np.abs(tilt[0] - avgh) < 5*sigh)
-    newmaskv = np.where(np.abs(tilt[1] - avgv) < 5*sigv)
+    newmaskh = np.where(np.abs(tilt[0] - avgh) < 5 * sigh)
+    newmaskv = np.where(np.abs(tilt[1] - avgv) < 5 * sigv)
 
     th, tv = np.zeros(a.shape), np.zeros(a.shape)
     th[newmaskh] = tilt[0][newmaskh]
     tv[newmaskv] = tilt[1][newmaskv]
 
     # determine units of tilt -
-    G = a.shape[0] / (2.0*np.pi),  a.shape[1] / (2.0*np.pi)
+    G = a.shape[0] / (2.0 * np.pi), a.shape[1] / (2.0 * np.pi)
 
-    slopes = G[0]*tilt[0][newmaskh].mean(), G[1]*tilt[1][newmaskv].mean()
+    slopes = G[0] * tilt[0][newmaskh].mean(), G[1] * tilt[1][newmaskv].mean()
     return slopes
+
 
 def quadratic(p, x):
     """
@@ -747,6 +758,7 @@ def quadratic(p, x):
     fit_val = p[0] * x * x + p[1] * x + p[2]
 
     return maxx, maxy, fit_val
+
 
 def makeA(nh):
     """
@@ -814,6 +826,7 @@ def makeA(nh):
 
     return matrixA
 
+
 def fringes2pistons(fringephases, nholes):
     """
     Short Summary
@@ -839,6 +852,7 @@ def fringes2pistons(fringephases, nholes):
     Apinv = np.linalg.pinv(Anrm)
 
     return -np.dot(Apinv, fringephases)
+
 
 def rebin(a=None, rc=(2, 2)):
     """
@@ -890,6 +904,7 @@ def krebin(a, shape):
 
     return reshaped_a
 
+
 def rcrosscorrelate(a=None, b=None):
     """
     Short Summary
@@ -910,8 +925,9 @@ def rcrosscorrelate(a=None, b=None):
         real part of array that is the correlation of the two input arrays.
     """
 
-    c = crosscorrelate(a=a, b=b)/(np.sqrt((a*a).sum())*np.sqrt((b*b).sum()))
+    c = crosscorrelate(a=a, b=b) / (np.sqrt((a * a).sum()) * np.sqrt((b * b).sum()))
     return c.real.copy()
+
 
 def lambdasteps(lam, frac_width, steps=4):
     """
@@ -946,6 +962,7 @@ def lambdasteps(lam, frac_width, steps=4):
 
     return lambda_array
 
+
 def tophatfilter(lam_c, frac_width, npoints=10):
     """
     Short Summary
@@ -973,6 +990,7 @@ def tophatfilter(lam_c, frac_width, npoints=10):
     for ii in range(len(wllist)):
         filt.append(np.array([1.0, wllist[ii]]))
     return filt
+
 
 def crosscorrelate(a=None, b=None):
     """
@@ -1016,9 +1034,10 @@ def crosscorrelate(a=None, b=None):
     log.debug(' c.sum: %s:', c.sum())
     log.debug(' a.sum*b.sum: %s:', a.sum() * b.sum())
     log.debug(' c.sum.real: %s:', c.sum().real)
-    log.debug(' a.sum*b.sum/c.sum.real: %s:', a.sum()*b.sum()/c.sum().real)
+    log.debug(' a.sum*b.sum/c.sum.real: %s:', a.sum() * b.sum() / c.sum().real)
 
     return fft.fftshift(c)
+
 
 def rotate2dccw(vectors, thetarad):
     """
@@ -1044,8 +1063,8 @@ def rotate2dccw(vectors, thetarad):
     c, s = (np.cos(thetarad), np.sin(thetarad))
     ctrs_rotated = []
     for vector in vectors:
-        ctrs_rotated.append([c*vector[0] - s*vector[1],
-                             s*vector[0] + c*vector[1]])
+        ctrs_rotated.append([c * vector[0] - s * vector[1],
+                             s * vector[0] + c * vector[1]])
     rot_vectors = np.array(ctrs_rotated)
 
     return rot_vectors
@@ -1083,6 +1102,7 @@ def findmax(mag, vals, mid=1.0):
 
     return maxx, maxy
 
+
 def pix_median_fill_value(input_array, input_dq_array, bsize, xc, yc):
     """
     Short Summary
@@ -1111,7 +1131,7 @@ def pix_median_fill_value(input_array, input_dq_array, bsize, xc, yc):
 
     """
     # set the half box size
-    hbox = int(bsize/2)
+    hbox = int(bsize / 2)
 
     # Extract the region of interest for the data
     try:
@@ -1136,6 +1156,7 @@ def pix_median_fill_value(input_array, input_dq_array, bsize, xc, yc):
 
     return median_value
 
+
 def mas2rad(mas):
     """
     Short Summary
@@ -1154,6 +1175,7 @@ def mas2rad(mas):
     """
     rad = mas * (10**(-3)) / (3600 * 180 / np.pi)
     return rad
+
 
 def img_median_replace(img_model, box_size):
     """
@@ -1184,7 +1206,7 @@ def img_median_replace(img_model, box_size):
     if (num_nan + num_dq_bad > 0):
         bad_locations = np.where(np.isnan(input_data) |
                                  np.equal(input_dq,
-                                 dqflags.pixel['DO_NOT_USE']))
+                                          dqflags.pixel['DO_NOT_USE']))
 
         # fill the bad pixel values with the median of the data in a box region
         for i_pos in range(len(bad_locations[0])):

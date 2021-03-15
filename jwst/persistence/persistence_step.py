@@ -35,7 +35,7 @@ class PersistenceStep(Step):
 
         if self.input_trapsfilled is not None:
             if (self.input_trapsfilled == "None" or
-                len(self.input_trapsfilled) == 0):
+                    len(self.input_trapsfilled) == 0):
                 self.input_trapsfilled = None
 
         output_obj = datamodels.RampModel(input).copy()
@@ -73,9 +73,9 @@ class PersistenceStep(Step):
             traps_filled_model = None
         else:
             traps_filled_model = datamodels.TrapsFilledModel(
-                                        self.input_trapsfilled)
+                self.input_trapsfilled)
         trap_density_model = datamodels.TrapDensityModel(
-                                self.trap_density_filename)
+            self.trap_density_filename)
         trappars_model = datamodels.TrapParsModel(self.trappars_filename)
         persat_model = datamodels.PersistenceSatModel(self.persat_filename)
 

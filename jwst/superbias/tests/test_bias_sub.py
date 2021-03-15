@@ -10,6 +10,7 @@ from jwst.superbias import SuperBiasStep
 from jwst.superbias.bias_sub import do_correction
 from jwst.datamodels import RampModel, SuperBiasModel
 
+
 def test_basic_superbias_subtraction(setup_full_cube):
     '''Check basic superbias subtraction.'''
 
@@ -46,7 +47,7 @@ def test_subarray_correction(setup_subarray_cube):
     ystart = 1508
 
     data, bias = setup_subarray_cube(xstart, ystart, ngroups, nrows, ncols)
-    manualbias = bias.data[ystart-1:ystart-1+nrows, xstart-1:xstart-1+ncols]
+    manualbias = bias.data[ystart - 1:ystart - 1 + nrows, xstart - 1:xstart - 1 + ncols]
 
     # Add signal values and bias values
     data.data[:] = blevel

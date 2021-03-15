@@ -4,6 +4,7 @@ from jwst.datamodels import (
     ImageModel,
 )
 
+
 class StepWithReference(Step):
     """Step that refers to a reference file"""
 

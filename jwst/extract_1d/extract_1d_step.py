@@ -125,7 +125,7 @@ class Extract1dStep(Step):
             input_model.meta.cal_step.extract_1d = 'SKIPPED'
             return input_model
 
-        #______________________________________________________________________
+        # ______________________________________________________________________
         # Do the extraction for ModelContainer - this might only be WFSS data
         if isinstance(input_model, datamodels.ModelContainer):
 
@@ -133,7 +133,7 @@ class Extract1dStep(Step):
             if len(input_model) > 1:
                 self.log.debug(f"Input contains {len(input_model)} items")
 
-                #--------------------------------------------------------------
+                # --------------------------------------------------------------
                 # Data is WFSS
                 if input_model[0].meta.exposure.type in extract.WFSS_EXPTYPES:
 
@@ -170,7 +170,7 @@ class Extract1dStep(Step):
                     # Set the step flag to complete
                     result.meta.cal_step.extract_1d = 'COMPLETE'
 
-                #--------------------------------------------------------------
+                # --------------------------------------------------------------
                 # Data is a ModelContainer but is not WFSS
                     result.meta.filetype = '1d spectrum'
                 else:
@@ -200,7 +200,7 @@ class Extract1dStep(Step):
                             self.subtract_background,
                             self.use_source_posn,
                             was_source_model=was_source_model,
-                            )
+                        )
                         # Set the step flag to complete in each MultiSpecModel
                         temp.meta.cal_step.extract_1d = 'COMPLETE'
                         temp.meta.filetype = '1d spectrum'
@@ -247,7 +247,7 @@ class Extract1dStep(Step):
                 self.log.error('extract_1d will be skipped.')
                 return input_model
 
-        #______________________________________________________________________
+        # ______________________________________________________________________
         # Data that is not a ModelContainer (IFUCube and other single models)
         else:
             # Get the reference file names

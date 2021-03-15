@@ -12,8 +12,8 @@ def get_minimum_version(requirement):
     """Return minimum version available on PyPi for a given version specification"""
     if not requirement.specs:
         warnings.warn(f"No version specifier for {requirement.name} in "
-            "install_requires.  Using lowest available version on PyPi.",
-            stacklevel=2)
+                      "install_requires.  Using lowest available version on PyPi.",
+                      stacklevel=2)
     content = urllib.request.urlopen(f'https://pypi.python.org/pypi/{requirement.name}/json').read()
     versions = sorted([pkg_resources.parse_version(v) for v in json.loads(content)["releases"].keys()])
     for version in versions:
@@ -24,7 +24,7 @@ def get_minimum_version(requirement):
     # If the specified version does not exist on PyPi, issue a warning
     # and return the lowest available version
     warnings.warn(f"Exact version specified in {requirement} not found "
-        "on PyPi.  Using lowest available version.", stacklevel=2)
+                  "on PyPi.  Using lowest available version.", stacklevel=2)
     return versions[0]
 
 

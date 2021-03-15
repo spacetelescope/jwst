@@ -28,13 +28,13 @@ def miri_cube_pars(tmpdir_factory):
     # make the first extension
     channel = np.array(['1', '1', '1', '2', '2', '2', '3', '3', '3', '4', '4', '4'])
     subchannel = np.array(['SHORT', 'MEDIUM', 'LONG', 'SHORT', 'MEDIUM', 'LONG',
-                         'SHORT', 'MEDIUM', 'LONG', 'SHORT', 'MEDIUM', 'LONG'])
+                           'SHORT', 'MEDIUM', 'LONG', 'SHORT', 'MEDIUM', 'LONG'])
 
-    spsize = np.array([0.13,0.13,0.13,0.17,0.17,0.17,0.2,0.2,0.2,0.35,0.35,0.35])
-    wsamp = np.array([0.001,0.001,0.001,0.002,0.002,0.002,0.003,0.003,0.003,0.006,0.006,0.006])
+    spsize = np.array([0.13, 0.13, 0.13, 0.17, 0.17, 0.17, 0.2, 0.2, 0.2, 0.35, 0.35, 0.35])
+    wsamp = np.array([0.001, 0.001, 0.001, 0.002, 0.002, 0.002, 0.003, 0.003, 0.003, 0.006, 0.006, 0.006])
 
-    wmin = np.array([4.89,5.65,6.52,7.49,8.65,10.00,11.53,13.37,15.44,17.66,20.54,23.95])
-    wmax = np.array([5.75,6.64,7.66,8.78,10.14,11.7,13.48,15.63,18.05,20.92,24.40,28.45])
+    wmin = np.array([4.89, 5.65, 6.52, 7.49, 8.65, 10.00, 11.53, 13.37, 15.44, 17.66, 20.54, 23.95])
+    wmax = np.array([5.75, 6.64, 7.66, 8.78, 10.14, 11.7, 13.48, 15.63, 18.05, 20.92, 24.40, 28.45])
 
     col1 = fits.Column(name='CHANNEL', format='1A', array=channel)
     col2 = fits.Column(name='BAND', format='6A', array=subchannel)
@@ -47,11 +47,11 @@ def miri_cube_pars(tmpdir_factory):
     hdu1.header['EXTNAME'] = 'CUBEPAR'
 
     # make the second extension
-    roispat = np.array([0.1,0.1,0.1,0.15,0.15,0.15,0.20,0.20,0.20,0.40,0.40,0.40])
-    roispec = np.array([0.001,0.001,0.001,0.002,0.002,0.002,0.003,0.003,0.003,0.006,0.006,0.006])
+    roispat = np.array([0.1, 0.1, 0.1, 0.15, 0.15, 0.15, 0.20, 0.20, 0.20, 0.40, 0.40, 0.40])
+    roispec = np.array([0.001, 0.001, 0.001, 0.002, 0.002, 0.002, 0.003, 0.003, 0.003, 0.006, 0.006, 0.006])
 
-    power = np.array([2,2,2,2,2,2,2,2,2,2,2,2])
-    softrad = np.array([0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01])
+    power = np.array([2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
+    softrad = np.array([0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01])
 
     col1 = fits.Column(name='CHANNEL', format='1A', array=channel)
     col2 = fits.Column(name='BAND', format='6A', array=subchannel)

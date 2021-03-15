@@ -1,6 +1,7 @@
 from collections import OrderedDict
 import json
 
+
 def table_to_json(table, **json_kwargs):
     """Create a JSON string based on the table
 

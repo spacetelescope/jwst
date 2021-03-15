@@ -146,7 +146,7 @@ def test_nirspec_imaging():
     """
     Test Nirspec Imaging mode using build 6 reference files.
     """
-    #Test creating the WCS
+    # Test creating the WCS
     f = create_nirspec_imaging_file()
     im = datamodels.ImageModel(f)
 
@@ -179,11 +179,11 @@ def test_nirspec_ifu_against_esa():
     w0 = nirspec.nrs_wcs_set_input(im, 0)
 
     # get positions within the slit and the coresponding lambda
-    slit1 = ref['SLITY1'].data # y offset on the slit
+    slit1 = ref['SLITY1'].data  # y offset on the slit
     lam = ref['LAMBDA1'].data
     # filter out locations outside the slit
     cond = np.logical_and(slit1 < .5, slit1 > -.5)
-    y, x = cond.nonzero() # 0-based
+    y, x = cond.nonzero()  # 0-based
 
     x, y = pyw.wcs_pix2world(x, y, 0)
     # The pipeline accepts 0-based cooridnates
@@ -216,12 +216,12 @@ def test_nirspec_fs_esa():
     pyw = astwcs.WCS(ref[1].header)
 
     # get positions within the slit and the coresponding lambda
-    slit1 = ref[5].data # y offset on the slit
+    slit1 = ref[5].data  # y offset on the slit
     lam = ref[4].data
 
     # filter out locations outside the slit
     cond = np.logical_and(slit1 < .5, slit1 > -.5)
-    y, x = cond.nonzero() # 0-based
+    y, x = cond.nonzero()  # 0-based
 
     x, y = pyw.wcs_pix2world(x, y, 0)
     # The pipeline works with 0-based coordinates
@@ -250,8 +250,8 @@ def test_correct_tilt():
     corrected_theta_y = 0.00018649006677464447
     # corrected_theta_z = -0.2523269848788889
     disp.gwa_tiltx = {'temperatures': [39.58],
-                     'tilt_model': astmodels.Polynomial1D(1, c0=3307.85402614,
-                      c1=-9182.87552123),
+                      'tilt_model': astmodels.Polynomial1D(1, c0=3307.85402614,
+                                                           c1=-9182.87552123),
                       'unit': 'arcsec',
                       'zeroreadings': [0.35972327]}
     disp.gwa_tilty = {'temperatures': [39.58],
@@ -447,7 +447,7 @@ def test_shutter_size_on_sky():
     ra, dec, lam = slit2world(virtual_corners_x,
                               virtual_corners_y,
                               input_lam)
-    sky = coords.SkyCoord(ra*u.deg, dec*u.deg)
+    sky = coords.SkyCoord(ra * u.deg, dec * u.deg)
     sep_x = sky[0].separation(sky[3]).to(u.arcsec)
     sep_y = sky[0].separation(sky[1]).to(u.arcsec)
 
@@ -646,7 +646,7 @@ def test_functional_ifu_grating():
 
     # Forward IFU-POST II part - non-linear transform
     lam = 2.9e-6
-    coef_names = [f'c{x}_{y}' for x in range(6) for y in range(6) if x+y <= 5]
+    coef_names = [f'c{x}_{y}' for x in range(6) for y in range(6) if x + y <= 5]
     y_forw = [-82.3492267824, 29234.6982762, -540260.780853, 771881.305018,
               -2563462.26848, 29914272.1164, 4513.04082605, -2212869.44311,
               32875633.0303, -29923698.5288, 27293902.5636, -39820.4434726,

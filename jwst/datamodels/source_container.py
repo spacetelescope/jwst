@@ -20,6 +20,7 @@ class SourceModelContainer(ModelContainer):
     wrapper around each exposure, such that pipeline code can treat each
     as a `DataModel`.
     """
+
     def __init__(self, init=None, **kwargs):
 
         if not isinstance(init, (self.__class__, ) + VALID_INITS):
@@ -44,7 +45,6 @@ class SourceModelContainer(ModelContainer):
             self._models = models
             self._multiexposure = init
 
-
     @property
     def multiexposure(self):
         """Return the MultiExposureModel that is being wrapped
@@ -57,7 +57,6 @@ class SourceModelContainer(ModelContainer):
             exposure._instance.update(model._instance)
 
         return self._multiexposure
-
 
     def save(self,
              path=None,

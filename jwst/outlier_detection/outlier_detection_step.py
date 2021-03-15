@@ -105,7 +105,7 @@ class OutlierDetectionStep(Step):
                 'snr': self.snr,
                 'scale': self.scale,
                 'backg': self.backg,
-                'allowed_memory' : self.allowed_memory,
+                'allowed_memory': self.allowed_memory,
                 'save_intermediate_results': self.save_intermediate_results,
                 'resample_data': self.resample_data,
                 'good_bits': self.good_bits,
@@ -129,7 +129,7 @@ class OutlierDetectionStep(Step):
                 pars['resample_data'] = False  # force resampling off...
                 detection_step = outlier_registry['imaging']
                 pars['resample_suffix'] = 's2d'
-            elif exptype in TSO_IMAGE_MODES+CORON_IMAGE_MODES and \
+            elif exptype in TSO_IMAGE_MODES + CORON_IMAGE_MODES and \
                     not self.scale_detection:
                 # algorithm selected for TSO data (no resampling)
                 pars['resample_data'] = False  # force resampling off...

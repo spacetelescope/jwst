@@ -32,8 +32,8 @@ def test_miri_lrs_nod_masterbg(run_pipeline, fitsdiff_default_kwargs, nod_seq):
 
     # Get the truth file
     rtdata.get_truth(os.path.join(
-                "truth/test_miri_lrs_nod_masterbg",
-                "miri_lrs_nod_" + nod_seq + "_exp1_master_background.fits"))
+        "truth/test_miri_lrs_nod_masterbg",
+        "miri_lrs_nod_" + nod_seq + "_exp1_master_background.fits"))
 
     # Compare the results
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)

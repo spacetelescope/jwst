@@ -3,6 +3,7 @@ from .dynamicdq import dynamic_mask
 
 __all__ = ['TrapDensityModel']
 
+
 class TrapDensityModel(ReferenceFileModel):
     """
     A data model for the trap density of a detector, for persistence.

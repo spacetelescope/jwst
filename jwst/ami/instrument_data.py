@@ -17,12 +17,12 @@ um = 1.0e-6
 
 class NIRISS:
     def __init__(self, filt,
-                       objname="obj",
-                       src="A0V",
-                       chooseholes=None,
-                       affine2d=None,
-                       bandpass=None,
-                       **kwargs):
+                 objname="obj",
+                 src="A0V",
+                 chooseholes=None,
+                 affine2d=None,
+                 bandpass=None,
+                 **kwargs):
         """
         Short Summary
         ------------
@@ -57,14 +57,14 @@ class NIRISS:
         self.filt = filt
 
         # 12 waves in f430 - data analysis:
-        self.lam_bin = {"F277W": 50, "F380M": 20, "F430M":40, "F480M":30}
+        self.lam_bin = {"F277W": 50, "F380M": 20, "F430M": 40, "F480M": 30}
 
         # use 150 for 3 waves ax f430m; nominal values
         self.lam_c = {"F277W": 2.77e-6,  # central wavelength (SI)
                       "F380M": 3.8e-6,
                       "F430M": 4.28521033106325E-06,
                       "F480M": 4.8e-6}
-        self.lam_w = {"F277W":0.2, "F380M": 0.1, "F430M": 0.0436, "F480M": 0.08} # fractional filter width
+        self.lam_w = {"F277W": 0.2, "F380M": 0.1, "F430M": 0.0436, "F480M": 0.08}  # fractional filter width
 
         self.throughput = utils.tophatfilter(self.lam_c[self.filt], self.lam_w[self.filt], npoints=11)
 
@@ -73,28 +73,28 @@ class NIRISS:
         from scipy.integrate import simps
 
         thru_st = np.stack(self.throughput, axis=1)
-        thru_st_0 = thru_st[0,:]
-        thru_st_1 = thru_st[1,:]
+        thru_st_0 = thru_st[0, :]
+        thru_st_1 = thru_st[1, :]
 
         num = (thru_st_0 * thru_st_1).sum()
-        den = thru_st[0,:].sum()
-        self.lam_c[self.filt] = num/den
+        den = thru_st[0, :].sum()
+        self.lam_c[self.filt] = num / den
 
         area = simps(thru_st_0, thru_st_1)
-        ew = area / thru_st_0.max() # equivalent width
+        ew = area / thru_st_0.max()  # equivalent width
 
-        beta = ew/self.lam_c[self.filt] # fractional bandpass
+        beta = ew / self.lam_c[self.filt]  # fractional bandpass
         self.lam_w[self.filt] = beta
 
         if bandpass is not None:
             bandpass = np.array(bandpass)  # type simplification
-            wt = bandpass[:,0]
-            wl = bandpass[:,1]
-            cw = (wl*wt).sum()/wt.sum() # Weighted mean wavelength in meters "central wavelength"
+            wt = bandpass[:, 0]
+            wl = bandpass[:, 1]
+            cw = (wl * wt).sum() / wt.sum()  # Weighted mean wavelength in meters "central wavelength"
             area = simps(wt, wl)
-            ew = area / wt.max() # equivalent width
-            beta = ew/cw # fractional bandpass
-            self.lam_c = {"F277W":cw, "F380M": cw, "F430M": cw, "F480M": cw,}
+            ew = area / wt.max()  # equivalent width
+            beta = ew / cw  # fractional bandpass
+            self.lam_c = {"F277W": cw, "F380M": cw, "F430M": cw, "F480M": cw, }
             self.lam_w = {"F277W": beta, "F380M": beta, "F430M": beta, "F480M": beta}
             self.throughput = bandpass
 
@@ -104,7 +104,7 @@ class NIRISS:
             self.wls = [self.throughput, ]
 
         # Wavelength info for NIRISS bands F277W, F380M, F430M, or F480M
-        self.wavextension = ([self.lam_c[self.filt],], [self.lam_w[self.filt],])
+        self.wavextension = ([self.lam_c[self.filt], ], [self.lam_w[self.filt], ])
         self.nwav = 1
 
         # only one NRM on JWST:
@@ -120,9 +120,9 @@ class NIRISS:
         # Separating detector tilt pixel scale effects from pupil distortion effects is
         # yet to be determined... see comments in Affine class definition.
         if affine2d is None:
-            self.affine2d = utils.Affine2d(mx=1.0,my=1.0,
-                                           sx=0.0,sy=0.0,
-                                           xo=0.0,yo=0.0, name="Ideal")
+            self.affine2d = utils.Affine2d(mx=1.0, my=1.0,
+                                           sx=0.0, sy=0.0,
+                                           xo=0.0, yo=0.0, name="Ideal")
         else:
             self.affine2d = affine2d
 
@@ -132,7 +132,7 @@ class NIRISS:
         # for the threshold application.
         # Data reduction gurus: tweak the threshold value with experience...
         # Gurus: tweak cvsupport with use...
-        self.cvsupport_threshold = {"F277W":0.02, "F380M": 0.02, "F430M": 0.02, "F480M": 0.02}
+        self.cvsupport_threshold = {"F277W": 0.02, "F380M": 0.02, "F430M": 0.02, "F480M": 0.02}
         self.threshold = self.cvsupport_threshold[filt]
 
     def set_pscale(self, pscalex_deg=None, pscaley_deg=None):
@@ -158,7 +158,7 @@ class NIRISS:
             self.pscalex_deg = pscalex_deg
         if pscaley_deg is not None:
             self.pscaley_deg = pscaley_deg
-        self.pscale_mas = 0.5 * (pscalex_deg + pscaley_deg) * (60*60*1000)
+        self.pscale_mas = 0.5 * (pscalex_deg + pscaley_deg) * (60 * 60 * 1000)
         self.pscale_rad = utils.mas2rad(self.pscale_mas)
 
     def read_data_model(self, input_model):
@@ -185,8 +185,8 @@ class NIRISS:
         pscalex_deg = 65.6 / (1000 * 60 * 60)
         pscaley_deg = 65.6 / (1000 * 60 * 60)
 
-       # Whatever we did set is averaged for isotropic pixel scale here
-        self.pscale_mas = 0.5 * (pscalex_deg + pscaley_deg) * (60*60*1000)
+        # Whatever we did set is averaged for isotropic pixel scale here
+        self.pscale_mas = 0.5 * (pscalex_deg + pscaley_deg) * (60 * 60 * 1000)
         self.pscale_rad = utils.mas2rad(self.pscale_mas)
         self.mask = NRM_mask_definitions(maskname=self.arrname, chooseholes=self.chooseholes,
                                          holeshape=self.holeshape)

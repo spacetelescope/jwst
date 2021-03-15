@@ -77,7 +77,7 @@ def set_bary_helio_times(filename, jwstpos=None):
         timeconversion.compute_bary_helio_time(
             targetcoord=(targcoord.ra.degree, targcoord.dec.degree),
             times=times
-        )
+    )
     pheader['BSTRTIME'] = bstrtime
     pheader['BMIDTIME'] = bmidtime
     pheader['BENDTIME'] = bendtime
@@ -141,6 +141,7 @@ def main(args):
         jwstpos = None
     for filename in args.filenames:
         set_bary_helio_times(filename, jwstpos=jwstpos)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(

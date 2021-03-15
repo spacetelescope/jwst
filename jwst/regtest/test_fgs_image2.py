@@ -3,6 +3,7 @@ from astropy.io.fits.diff import FITSDiff
 
 from jwst.stpipe import Step
 
+
 @pytest.fixture(scope="module")
 def run_fgs_image2(rtdata_module):
     rtdata = rtdata_module

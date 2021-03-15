@@ -20,6 +20,7 @@ SHUTTERS_PER_ROW = 365
 # States in the msaoper file that are to flagged when set to 'open'
 FLAGGABLE_STATES = ['Internal state', 'TA state', 'state']
 
+
 def do_correction(input_model, shutter_refname, wcs_refnames):
     """
     Short Summary
@@ -123,6 +124,7 @@ def flag(input_datamodel, failed_slitlets, wcs_refnames):
     input_datamodel.dq = dq_array
     return input_datamodel
 
+
 def boundingbox_to_indices(data_model, bounding_box):
     """
     Takes a bounding_box (tuple of tuples: ((x1, x2), (y1, y2)) and
@@ -155,6 +157,7 @@ def boundingbox_to_indices(data_model, bounding_box):
     ymax = min(ymax, nrows)
     return (xmin, xmax, ymin, ymax)
 
+
 def wcs_to_dq(wcs_array, FLAG):
     #
     # Convert one of the arrays in the wcs_array tuple to a DQ array,
@@ -164,6 +167,7 @@ def wcs_to_dq(wcs_array, FLAG):
     non_nan = np.where(~np.isnan(wcs_array[0]))
     dq[non_nan] = FLAG
     return dq
+
 
 def get_failed_open_shutters(shutter_refname):
     """
@@ -182,6 +186,7 @@ def get_failed_open_shutters(shutter_refname):
                 failedopen.append(shutter)
                 break
     return failedopen
+
 
 def create_slitlets(input_model, shutter_refname):
     """
@@ -220,13 +225,15 @@ def create_slitlets(input_model, shutter_refname):
                         )
     return slitlets
 
+
 def id_from_xy(x, y):
     """
     Calculate the shutter_id from the x and y of a shutter
     """
 
-    shutter_id = x + (y-1)*SHUTTERS_PER_ROW
+    shutter_id = x + (y - 1) * SHUTTERS_PER_ROW
     return shutter_id
+
 
 def or_subarray_with_array(dq_array, dq_subarray, xmin, xmax, ymin, ymax):
     """

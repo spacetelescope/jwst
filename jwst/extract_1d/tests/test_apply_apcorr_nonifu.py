@@ -114,7 +114,7 @@ def test_select_apcorr(inputs):
     apcorr_cls = select_apcorr(dm)
 
     if dm.meta.instrument.name == 'NIRSPEC':
-            assert apcorr_cls == ApCorrPhase
+        assert apcorr_cls == ApCorrPhase
     else:
         assert apcorr_cls == ApCorr
 

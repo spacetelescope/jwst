@@ -32,7 +32,6 @@ class MSAFlagOpenStep(Step):
                 result.meta.cal_step.msa_flagging = 'SKIPPED'
                 return result
 
-
             #
             # Get the reference file names for constructing the WCS pipeline
             wcs_reffile_names = create_reference_filename_dictionary(input_model)
@@ -45,6 +44,7 @@ class MSAFlagOpenStep(Step):
             result.meta.cal_step.msa_flagging = 'COMPLETE'
 
         return result
+
 
 def create_reference_filename_dictionary(input_model):
     reffiles = {}
