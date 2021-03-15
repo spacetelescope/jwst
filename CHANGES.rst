@@ -1,6 +1,11 @@
 1.1.1 (unreleased)
 ==================
 
+ami_analyze
+-----------
+
+- Create copy of input_model to avoid overwriting input datamodel [#5828]
+
 assign_wcs
 ----------
 
