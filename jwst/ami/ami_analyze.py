@@ -6,7 +6,7 @@ import numpy as np
 from .find_affine2d_parameters import find_rotation
 from . import instrument_data
 from . import nrm_core
-from .. import datamodels
+
 
 from astropy import units as u
 
@@ -43,7 +43,7 @@ def apply_LG_plus(input_model, filter_model, oversample, rotation,
 
     """
     # Create copy of input_model to avoid overwriting input
-    input_copy = datamodels.ImageModel(input_model.copy())
+    input_copy = input_model.copy()
 
     # If the input data were taken in full-frame mode, extract a region
     # equivalent to the SUB80 subarray mode to make execution time acceptable.
@@ -55,9 +55,9 @@ def apply_LG_plus(input_model, filter_model, oversample, rotation,
         ysize = 80
         xstop = xstart + xsize - 1
         ystop = ystart + ysize - 1
-        input_copy.data = input_copy.data[ystart - 1:ystop, xstart - 1:xstop].copy()
-        input_copy.dq = input_copy.dq[ystart - 1:ystop, xstart - 1:xstop].copy()
-        input_copy.err = input_copy.err[ystart - 1:ystop, xstart - 1:xstop].copy()
+        input_copy.data = input_copy.data[ystart - 1:ystop, xstart - 1:xstop]
+        input_copy.dq = input_copy.dq[ystart - 1:ystop, xstart - 1:xstop]
+        input_copy.err = input_copy.err[ystart - 1:ystop, xstart - 1:xstop]
 
     data = input_copy.data
     dim = data.shape[1]
