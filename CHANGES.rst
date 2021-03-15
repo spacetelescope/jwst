@@ -17,6 +17,11 @@ associations
 - Removed PATTTYPE='None' constraint from Lv3MIRMRS association rule to
   generate spec3 associations for undithered MRS observations. [#5804]
 
+cube_build
+----------
+
+- Fixed typo in cube_build_step spec for grating [#5839]
+
 datamodels
 ----------
 
