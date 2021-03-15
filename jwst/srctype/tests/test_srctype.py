@@ -5,10 +5,11 @@ from jwst import datamodels
 from jwst.srctype import srctype
 import pytest
 
+
 def test_background_target_set():
 
     # An exposure flagged as background target
-    input = datamodels.ImageModel((10,10))
+    input = datamodels.ImageModel((10, 10))
 
     input.meta.exposure.type = 'NRS_IFU'
     input.meta.observation.bkgdtarg = True
@@ -20,10 +21,11 @@ def test_background_target_set():
     # Result should be EXTENDED regardless of other input settings
     assert output.meta.target.source_type == 'EXTENDED'
 
+
 def test_background_target_unset():
 
     # An exposure without BKGDTARG set at all
-    input = datamodels.ImageModel((10,10))
+    input = datamodels.ImageModel((10, 10))
 
     input.meta.exposure.type = 'NRS_IFU'
     input.meta.dither.primary_type = '2-POINT-NOD'
@@ -35,10 +37,11 @@ def test_background_target_unset():
     # value of PATTTYPE, which in this case should return POINT.
     assert output.meta.target.source_type == 'POINT'
 
+
 def test_nrsifu_nodded():
 
     # An exposure using a NIRSpec IFU NOD dither pattern
-    input = datamodels.ImageModel((10,10))
+    input = datamodels.ImageModel((10, 10))
 
     input.meta.exposure.type = 'NRS_IFU'
     input.meta.observation.bkgdtarg = False
@@ -50,10 +53,11 @@ def test_nrsifu_nodded():
     # Result should be POINT regardless of input setting
     assert output.meta.target.source_type == 'POINT'
 
+
 def test_mirmrs_nodded():
 
     # An exposure using a MIRI MRS NOD dither pattern
-    input = datamodels.ImageModel((10,10))
+    input = datamodels.ImageModel((10, 10))
 
     input.meta.exposure.type = 'MIR_MRS'
     input.meta.observation.bkgdtarg = False
@@ -66,10 +70,11 @@ def test_mirmrs_nodded():
     # Result should be POINT regardless of input setting
     assert output.meta.target.source_type == 'POINT'
 
+
 def test_user_input():
 
     # An exposure with the value set upstream by the user
-    input = datamodels.ImageModel((10,10))
+    input = datamodels.ImageModel((10, 10))
 
     input.meta.exposure.type = 'NRS_IFU'
     input.meta.observation.bkgdtarg = False
@@ -81,10 +86,11 @@ def test_user_input():
     # Result should be POINT regardless of other input settings
     assert output.meta.target.source_type == 'POINT'
 
+
 def test_mrs_unknown():
 
     # An exposure with upstream input UNKNOWN
-    input = datamodels.ImageModel((10,10))
+    input = datamodels.ImageModel((10, 10))
 
     input.meta.exposure.type = 'MIR_MRS'
     input.meta.observation.bkgdtarg = False
@@ -96,10 +102,11 @@ def test_mrs_unknown():
     # Result should be EXTENDED regardless of other input settings
     assert output.meta.target.source_type == 'EXTENDED'
 
+
 def test_ifu_unknown():
 
     # An exposure with upstream input UNKNOWN
-    input = datamodels.ImageModel((10,10))
+    input = datamodels.ImageModel((10, 10))
 
     input.meta.exposure.type = 'NRS_IFU'
     input.meta.observation.bkgdtarg = False
@@ -111,10 +118,11 @@ def test_ifu_unknown():
     # Result should be EXTENDED regardless of other input settings
     assert output.meta.target.source_type == 'EXTENDED'
 
+
 def test_exptype():
 
     # An exposure with an unrecognized EXP_TYPE
-    input = datamodels.ImageModel((10,10))
+    input = datamodels.ImageModel((10, 10))
 
     input.meta.exposure.type = 'NRS_LAMP'
     input.meta.observation.bkgdtarg = False
@@ -125,10 +133,11 @@ def test_exptype():
     # Result should be UNKNOWN regardless of other input settings
     assert output.meta.target.source_type == 'UNKNOWN'
 
+
 def test_no_sourcetype():
 
     # An exposure without the SRCTYPE keyword present at all
-    input = datamodels.ImageModel((10,10))
+    input = datamodels.ImageModel((10, 10))
 
     input.meta.exposure.type = 'MIR_LRS-FIXEDSLIT'
     input.meta.observation.bkgdtarg = False
@@ -139,15 +148,16 @@ def test_no_sourcetype():
     # Result should be POINT regardless of other input settings
     assert output.meta.target.source_type == 'POINT'
 
+
 def test_nrs_msaspec():
     """Test for when exposure type is NRS_MSASPEC
     """
     input = datamodels.MultiSlitModel()
     input.meta.exposure.type = "NRS_MSASPEC"
 
-    slits = [{'source_id':1, 'stellarity':0.9},
-             {'source_id':2, 'stellarity':-1},
-             {'source_id':3, 'stellarity':0.5}]
+    slits = [{'source_id': 1, 'stellarity': 0.9},
+             {'source_id': 2, 'stellarity': -1},
+             {'source_id': 3, 'stellarity': 0.5}]
 
     for slit in slits:
         input.slits.append(slit)
@@ -158,6 +168,7 @@ def test_nrs_msaspec():
     assert result.slits[1].source_type == 'POINT'
     assert result.slits[2].source_type == 'EXTENDED'
 
+
 def test_nrs_fixedslit():
     """Test for when exposure type is NRS_FIXEDSLIT
     """
@@ -166,9 +177,9 @@ def test_nrs_fixedslit():
     input.meta.instrument.fixed_slit = "S200A1"
     input.meta.target.source_type = 'POINT'
 
-    slits = [{'name':'S200A2'},
-             {'name':'S200A1'},
-             {'name':'S1600A1'}]
+    slits = [{'name': 'S200A2'},
+             {'name': 'S200A1'},
+             {'name': 'S1600A1'}]
 
     for slit in slits:
         input.slits.append(slit)
@@ -179,8 +190,9 @@ def test_nrs_fixedslit():
     assert result.slits[1].source_type == 'POINT'
     assert result.slits[2].source_type == 'EXTENDED'
 
+
 @pytest.mark.parametrize("exptype", ["NRS_BRIGHTOBJ", "NRC_TSGRISM", "NIS_SOSS",
-    "MIR_LRS-SLITLESS"])
+                                     "MIR_LRS-SLITLESS"])
 def test_tso_types(exptype):
     """ Test for when visit is tso.
     """
@@ -194,10 +206,11 @@ def test_tso_types(exptype):
 
     assert result.meta.target.source_type == "POINT"
 
+
 def test_exptype_is_none():
     """ Test for when exposure type is None.
     """
     with pytest.raises(RuntimeError):
-        input = datamodels.ImageModel((10,10))
+        input = datamodels.ImageModel((10, 10))
         input.meta.exposure.type = None
         srctype.set_source_type(input)

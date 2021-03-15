@@ -44,14 +44,14 @@ if __name__ == '__main__':
         sys.exit(0)
 
     parser = argparse.ArgumentParser(
-       """Do a Flat Field Correction on Level 1b FITS files""")
+        """Do a Flat Field Correction on Level 1b FITS files""")
 
     parser.add_argument(
-       'infile', metavar='infile', nargs=1,
+        'infile', metavar='infile', nargs=1,
        help="""Input Level 1b FITS file.""")
 
     parser.add_argument(
-       'offsets', metavar='offsets', nargs=1,
+        'offsets', metavar='offsets', nargs=1,
        help="""Offsets.""")
 
     parser.add_argument(

@@ -8,7 +8,7 @@ import tempfile
 
 # Import from the common helpers module
 # simply to make available from this module.
-from ...tests.helpers import ( # noqa: F401
+from ...tests.helpers import (  # noqa: F401
     abspath,
 )
 

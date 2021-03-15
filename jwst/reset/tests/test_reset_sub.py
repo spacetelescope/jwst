@@ -7,9 +7,8 @@ import numpy as np
 
 from jwst.reset.reset_sub import (
     do_correction as resetcorr
-    )
+)
 from jwst.datamodels import RampModel, ResetModel, dqflags
-
 
 
 def test_correction(make_rampmodel, make_resetmodel):
@@ -65,7 +64,7 @@ def test_nan(make_rampmodel, make_resetmodel):
     dm_ramp = make_rampmodel(nints, ngroups, ysize, xsize)
 
     # populate data array of science cube
-    for i in range(0, ngroups-1):
+    for i in range(0, ngroups - 1):
         dm_ramp.data[0, i, :, :] = i
 
     # create reset reference file model with more frames than science data
@@ -100,7 +99,7 @@ def test_dq_combine(make_rampmodel, make_resetmodel):
     dm_ramp = make_rampmodel(nints, ngroups, ysize, xsize)
 
     # populate data array of science cube
-    for i in range(1, ngroups-1):
+    for i in range(1, ngroups - 1):
         dm_ramp.data[0, i, :, :] = i
 
     # create reset reference file model with more frames than science data
@@ -142,7 +141,7 @@ def test_2_int(make_rampmodel, make_resetmodel):
     dm_ramp = make_rampmodel(nints, ngroups, ysize, xsize)
 
     # populate data array of science cube
-    for i in range(0, ngroups-1):
+    for i in range(0, ngroups - 1):
         dm_ramp.data[:, i] = i
 
     # create reset reference file model with more frames than science data
@@ -172,7 +171,7 @@ def make_rampmodel():
     def _ramp(nints, ngroups, ysize, xsize):
         # create the data and groupdq arrays
         csize = (nints, ngroups, ysize, xsize)
-        data = np.full(csize, 1.0) # default = 1.0
+        data = np.full(csize, 1.0)  # default = 1.0
 
         # create a JWST datamodel for MIRI data
         dm_ramp = RampModel(data=data)
@@ -198,7 +197,7 @@ def make_resetmodel():
         # create the data and groupdq arrays
         nints = 2
         csize = (nints, ngroups, ysize, xsize)
-        data = np.full(csize, 1.0) # default = 1.0
+        data = np.full(csize, 1.0)  # default = 1.0
 
         # create a JWST datamodel for MIRI data
         reset = ResetModel(data=data)

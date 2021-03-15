@@ -90,8 +90,8 @@ def test_imatch_background_reset(_jail, miri_dither_ch12):
                 'refpoint': center,
                 'coefficients': poly.ravel().tolist(),
                 'channel': channel
-                }
-            )
+            }
+        )
         new_container.append(m)
 
     # test if reset backgound - removes background
@@ -121,8 +121,8 @@ def test_find_channel_index(_jail, miri_dither_ch12):
             'refpoint': center,
             'coefficients': poly.ravel().tolist(),
             'channel': channel
-            }
-        )
+        }
+    )
 
     index = _find_channel_bkg_index(input_model12, '1')
     assert index == 0
@@ -141,8 +141,8 @@ def test_find_channel_index(_jail, miri_dither_ch12):
             'refpoint': center,
             'coefficients': poly.ravel().tolist(),
             'channel': channel
-            }
-        )
+        }
+    )
 
     index = _find_channel_bkg_index(input_model12, '2')
     assert index == 0
@@ -159,8 +159,8 @@ def test_find_channel_index(_jail, miri_dither_ch12):
             'refpoint': center,
             'coefficients': poly.ravel().tolist(),
             'channel': channel
-            }
-        )
+        }
+    )
 
     index = _find_channel_bkg_index(input_model12, '1')
     assert index == 1
@@ -180,8 +180,8 @@ def test_find_channel_index(_jail, miri_dither_ch12):
             'refpoint': center,
             'coefficients': poly.ravel().tolist(),
             'channel': channel
-            }
-        )
+        }
+    )
 
     index = _find_channel_bkg_index(input_model34, '3')
     assert index == 0
@@ -201,8 +201,8 @@ def test_find_channel_index(_jail, miri_dither_ch12):
             'refpoint': center,
             'coefficients': poly.ravel().tolist(),
             'channel': channel
-            }
-        )
+        }
+    )
 
     index = _find_channel_bkg_index(input_model34, '4')
     assert index == 0
@@ -222,8 +222,8 @@ def test_find_channel_index(_jail, miri_dither_ch12):
             'refpoint': center,
             'coefficients': poly.ravel().tolist(),
             'channel': channel
-            }
-        )
+        }
+    )
 
     channel = '3'
     input_model34.meta.background.polynomial_info.append(
@@ -232,8 +232,8 @@ def test_find_channel_index(_jail, miri_dither_ch12):
             'refpoint': center,
             'coefficients': poly.ravel().tolist(),
             'channel': channel
-            }
-        )
+        }
+    )
 
     index = _find_channel_bkg_index(input_model34, '4')
     assert index == 0

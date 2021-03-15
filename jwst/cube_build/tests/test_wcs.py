@@ -17,13 +17,13 @@ xcenter = 50
 ycenter = 50
 
 slice_gap = np.zeros(shape)
-slice_gap[:,5:25] = 1
-slice_gap[:,30:50] = 2
-slice_gap[:,55:75] = 3
-slice_gap[:,80:] = 4
+slice_gap[:, 5:25] = 1
+slice_gap[:, 30:50] = 2
+slice_gap[:, 55:75] = 3
+slice_gap[:, 80:] = 4
 
 
-def dummy_wcs(x,y):
+def dummy_wcs(x, y):
     """ Simple WCS for testing """
 
     global xcenter, ycenter, shape, slice_gap
@@ -48,16 +48,16 @@ def dummy_wcs(x,y):
     wave = np.zeros(shape, dtype=float)
 
     wave = (y + 1 - crpix3) * cdelt3 + crval3
-    index_x1 = np.where(slice_gap == 1) # slice 1
+    index_x1 = np.where(slice_gap == 1)  # slice 1
     dec[index_x1] = crval2 + 1 * cdelt2
 
-    index_x2 = np.where(slice_gap == 2) # slice 2
+    index_x2 = np.where(slice_gap == 2)  # slice 2
     dec[index_x2] = crval2 + 2 * cdelt2
 
-    index_x3 = np.where(slice_gap == 3) # slice 3
+    index_x3 = np.where(slice_gap == 3)  # slice 3
     dec[index_x3] = crval2 + 3 * cdelt2
 
-    index_x4 = np.where(slice_gap == 4) # slice 4
+    index_x4 = np.where(slice_gap == 4)  # slice 4
     dec[index_x4] = crval2 + 4 * cdelt2
     ra = (x + 1 - crpix1) * cdelt1 + crval1
 
@@ -74,10 +74,10 @@ def test_coord_trans1():
 
     crval1 = 45.0
     crval2 = 90.0
-    diff_ra = 3.0 # in arc seconds
-    diff_dec = 3.0 # in arc seconds
-    ra = crval1 + diff_ra/3600.0
-    dec = crval2 + diff_dec/3600.0
+    diff_ra = 3.0  # in arc seconds
+    diff_dec = 3.0  # in arc seconds
+    ra = crval1 + diff_ra / 3600.0
+    dec = crval2 + diff_dec / 3600.0
 
     # declination near 90 yields xi values close to 0
     # and an eta close to diff_dec
@@ -91,8 +91,8 @@ def test_coord_trans2():
     """ Test finding ci,eta and cos 45, ra 45 """
     crval1 = 45.0
     crval2 = 45.0
-    diff_ra = 5.0 # in arc seconds
-    diff_dec = 5.0 # in arc seconds
+    diff_ra = 5.0  # in arc seconds
+    diff_dec = 5.0  # in arc seconds
     ra = crval1 + diff_ra / 3600.0
     dec = crval2 + diff_dec / 3600.0
 
@@ -109,8 +109,8 @@ def test_coord_trans3():
 
     crval1 = 27.89
     crval2 = 56.08
-    diff_ra = 5.0 # in arc seconds
-    diff_dec = 5.0 # in arc seconds
+    diff_ra = 5.0  # in arc seconds
+    diff_dec = 5.0  # in arc seconds
     ra = crval1 + diff_ra / 3600.0
     dec = crval2 + diff_dec / 3600.0
 
@@ -254,9 +254,9 @@ def test_footprint_miri():
     x1, x2 = instrument_info.GetMIRISliceEndPts(this_channel)
 
     corners = cube_build_wcs_util.find_corners_MIRI(input_model,
-                                                   this_channel,
-                                                   instrument_info,
-                                                   coord_system)
+                                                    this_channel,
+                                                    instrument_info,
+                                                    coord_system)
 
     (ra_min, b1, ra_max, b2, a1, dec_min, a2, dec_max,
      lambda_min, lambda_max) = corners

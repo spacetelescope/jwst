@@ -60,15 +60,15 @@ def make_models(tmp_path):
 
 
 @pytest.mark.parametrize('which_file, skip_fits_update, expected_exp_type',
-    [
-        ('just_fits', None,  'FGS_DARK'),
-        ('just_fits', False, 'FGS_DARK'),
-        ('just_fits', True,  'FGS_DARK'),
-        ('model',     None,  'FGS_DARK'),
-        ('model',     False, 'FGS_DARK'),
-        ('model',     True,  'NRC_IMAGE')
-    ]
-)
+                         [
+                             ('just_fits', None, 'FGS_DARK'),
+                             ('just_fits', False, 'FGS_DARK'),
+                             ('just_fits', True, 'FGS_DARK'),
+                             ('model', None, 'FGS_DARK'),
+                             ('model', False, 'FGS_DARK'),
+                             ('model', True, 'NRC_IMAGE')
+                         ]
+                         )
 @pytest.mark.parametrize('use_env', [False, True])
 def test_skip_fits_update(jail_environ,
                           use_env,
@@ -325,7 +325,7 @@ def test_multislit_model():
     wav = np.arange(24).reshape((6, 4)) + 3
     dq = np.arange(24).reshape((6, 4)) + 1
     s0 = SlitDataModel(data=data, err=err, dq=dq, wavelength=wav)
-    s1 = SlitDataModel(data=data+1, err=err+1, dq=dq+1, wavelength=wav+1)
+    s1 = SlitDataModel(data=data + 1, err=err + 1, dq=dq + 1, wavelength=wav + 1)
 
     ms = MultiSlitModel()
     ms.slits.append(s0)
@@ -341,7 +341,7 @@ def test_multislit_model():
 
 def test_slit_from_image():
     data = np.arange(24, dtype=np.float32).reshape((6, 4))
-    im = ImageModel(data=data, err=data/2, dq=data)
+    im = ImageModel(data=data, err=data / 2, dq=data)
     im.meta.instrument.name = "MIRI"
     slit_dm = SlitDataModel(im)
     assert_allclose(im.data, slit_dm.data)
@@ -364,7 +364,7 @@ def test_slit_from_image():
 
 def test_ifuimage():
     data = np.arange(24).reshape((6, 4))
-    im = ImageModel(data=data, err=data/2, dq=data)
+    im = ImageModel(data=data, err=data / 2, dq=data)
     ifuimage = IFUImageModel(im)
     assert_array_equal(im.data, ifuimage.data)
     assert_array_equal(im.err, ifuimage.err)
@@ -402,7 +402,7 @@ def test_all_datamodels_init(model):
 def test_meta_date_management(tmp_path):
     model = JwstDataModel({"meta": {"date": "2000-01-01T00:00:00.000"}})
     assert model.meta.date == "2000-01-01T00:00:00.000"
-    model.save(str(tmp_path/"test.fits"))
+    model.save(str(tmp_path / "test.fits"))
     assert abs((Time.now() - Time(model.meta.date)).value) < 1.0
 
     model = JwstDataModel()

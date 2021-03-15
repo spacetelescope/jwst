@@ -1,4 +1,3 @@
-#
 #  Module for handling Reference Pixels
 #  Final CCWG Recommendation of 6/2013:
 #
@@ -54,19 +53,19 @@ log.setLevel(logging.DEBUG)
 # accordance with how Python slices work
 
 NIR_reference_sections = {'A': {'top': (2044, 2048, 0, 512),
-                               'bottom': (0, 4, 0, 512),
-                               'side': (0, 2048, 0, 4),
-                               'data': (0, 2048, 0, 512)},
+                                'bottom': (0, 4, 0, 512),
+                                'side': (0, 2048, 0, 4),
+                                'data': (0, 2048, 0, 512)},
                           'B': {'top': (2044, 2048, 512, 1024),
-                               'bottom': (0, 4, 512, 1024),
-                               'data': (0, 2048, 512, 1024)},
+                                'bottom': (0, 4, 512, 1024),
+                                'data': (0, 2048, 512, 1024)},
                           'C': {'top': (2044, 2048, 1024, 1536),
-                               'bottom': (0, 4, 1024, 1536),
-                               'data': (0, 2048, 1024, 1536)},
+                                'bottom': (0, 4, 1024, 1536),
+                                'data': (0, 2048, 1024, 1536)},
                           'D': {'top': (2044, 2048, 1536, 2048),
-                               'bottom': (0, 4, 1536, 2048),
-                               'side': (0, 2048, 2044, 2048),
-                               'data': (0, 2048, 1536, 2048)}
+                                'bottom': (0, 4, 1536, 2048),
+                                'side': (0, 2048, 2044, 2048),
+                                'data': (0, 2048, 1536, 2048)}
                           }
 
 #
@@ -77,17 +76,17 @@ NIR_reference_sections = {'A': {'top': (2044, 2048, 0, 512),
 # 'data': (rowstart, rowstop, colstart, colstop, stride)
 
 MIR_reference_sections = {'A': {'left': (0, 1024, 0),
-                               'right': (0, 1024, 1028),
-                               'data': (0, 1024, 0, 1032, 4)},
+                                'right': (0, 1024, 1028),
+                                'data': (0, 1024, 0, 1032, 4)},
                           'B': {'left': (0, 1024, 1),
-                               'right': (0, 1024, 1029),
-                               'data': (0, 1024, 1, 1032, 4)},
+                                'right': (0, 1024, 1029),
+                                'data': (0, 1024, 1, 1032, 4)},
                           'C': {'left': (0, 1024, 2),
-                               'right': (0, 1024, 1030),
-                               'data': (0, 1024, 2, 1032, 4)},
+                                'right': (0, 1024, 1030),
+                                'data': (0, 1024, 2, 1032, 4)},
                           'D': {'left': (0, 1024, 3),
-                               'right': (0, 1024, 1031),
-                               'data': (0, 1024, 3, 1032, 4)}
+                                'right': (0, 1024, 1031),
+                                'data': (0, 1024, 3, 1032, 4)}
                           }
 
 #
@@ -97,6 +96,7 @@ REFPIX_OK = 0
 BAD_REFERENCE_PIXELS = 1
 SUBARRAY_DOESNTFIT = 2
 SUBARRAY_SKIPPED = 3
+
 
 class Dataset():
     """Base Class to handle passing stuff from routine to routine
@@ -132,6 +132,7 @@ class Dataset():
         separately (MIR only)
 
 """
+
     def __init__(self, input_model,
                  odd_even_columns,
                  use_side_ref_pixels,
@@ -142,7 +143,7 @@ class Dataset():
         if (input_model.meta.subarray.xstart is None or
             input_model.meta.subarray.ystart is None or
             input_model.meta.subarray.xsize is None or
-            input_model.meta.subarray.ysize is None):
+                input_model.meta.subarray.ysize is None):
             raise ValueError('subarray metadata not found')
         self.input_model = input_model
 
@@ -164,7 +165,7 @@ class Dataset():
         self.ysize = input_model.meta.subarray.ysize
         self.colstart = self.xstart - 1
         self.colstop = self.colstart + self.xsize
-        self.rowstart = self.ystart -1
+        self.rowstart = self.ystart - 1
         self.rowstop = self.rowstart + self.ysize
         self.odd_even_columns = odd_even_columns
         self.use_side_ref_pixels = use_side_ref_pixels
@@ -267,7 +268,7 @@ class Dataset():
         if self.is_subarray:
             self.group[self.rowstart:self.rowstop, self.colstart:self.colstop] = self.input_model.data[integration, group].copy()
         else:
-            self.group[:,:] = self.input_model.data[integration, group].copy()
+            self.group[:, :] = self.input_model.data[integration, group].copy()
 
     def restore_group(self, integration, group):
         """Replace input model data with processed group array
@@ -318,6 +319,7 @@ class NIRDataset(Dataset):
         gain to use in applying the side reference pixel correction
 
     """
+
     def __init__(self, input_model,
                  odd_even_columns,
                  use_side_ref_pixels,
@@ -405,7 +407,6 @@ class NIRDataset(Dataset):
         evendq = self.pixeldq[rowstart:rowstop, colstart:colstop: 2]
         return evenref, evendq
 
-
     def get_odd_refvalue(self, group, amplifier, top_or_bottom):
         """Calculate the clipped mean of the counts in the reference pixels
         in odd-numbered columns
@@ -435,7 +436,6 @@ class NIRDataset(Dataset):
         odd = self.sigma_clip(ref, dq)
         return odd
 
-
     def get_even_refvalue(self, group, amplifier, top_or_bottom):
         """Calculate the clipped mean of the counts in the reference pixels
         in even-numbered columns
@@ -464,7 +464,6 @@ class NIRDataset(Dataset):
         ref, dq = self.collect_even_refpixels(group, amplifier, top_or_bottom)
         even = self.sigma_clip(ref, dq)
         return even
-
 
     def get_amplifier_refvalue(self, group, amplifier, top_or_bottom):
         """Calculate the reference pixel mean for a given amplifier
@@ -549,7 +548,6 @@ class NIRDataset(Dataset):
                 else:
                     refpix[amplifier][top_bottom] = refvalues
         return refpix
-
 
     def do_top_bottom_correction(self, group, refvalues):
         """Do the top/bottom correction
@@ -637,7 +635,7 @@ class NIRDataset(Dataset):
         bufsize = smoothing_length // 2
         reflected[bufsize:bufsize + nrows] = data[:]
         reflected[:bufsize] = data[bufsize:0:-1]
-        reflected[-(bufsize):] = data[-2:-(bufsize+2):-1]
+        reflected[-(bufsize):] = data[-2:-(bufsize + 2):-1]
         return reflected
 
     def median_filter(self, data, dq, smoothing_length):
@@ -864,7 +862,7 @@ class NIRDataset(Dataset):
                     evenrefpixvalue = self.sigma_clip(thisgroup[evenrefpixindices],
                                                       self.pixeldq[evenrefpixindices])
                     oddrefpixvalue = self.sigma_clip(thisgroup[oddrefpixindices],
-                                                      self.pixeldq[oddrefpixindices])
+                                                     self.pixeldq[oddrefpixindices])
                     thisgroup[:, 0::2] -= evenrefpixvalue
                     thisgroup[:, 1::2] -= oddrefpixvalue
                 else:
@@ -897,6 +895,7 @@ class NRS1Dataset(NIRDataset):
         # pixeldq only has to be done once
         self.pixeldq = np.swapaxes(self.pixeldq, 0, 1)
 
+
 class NRS2Dataset(NIRDataset):
     """NRS2 Data"""
 
@@ -915,6 +914,7 @@ class NRS2Dataset(NIRDataset):
         # The inverse is to rotate 180 degrees, then flip over the line Y=X
         self.group = np.swapaxes(self.group[::-1, ::-1], 0, 1)
         self.restore_group(integration, group)
+
 
 class NRCA1Dataset(NIRDataset):
     """For NRCA1 data"""
@@ -935,6 +935,7 @@ class NRCA1Dataset(NIRDataset):
         self.group = self.group[:, ::-1]
         self.restore_group(integration, group)
 
+
 class NRCA2Dataset(NIRDataset):
     """For NRCA2 data"""
 
@@ -953,6 +954,7 @@ class NRCA2Dataset(NIRDataset):
         # Just flip back
         self.group = self.group[::-1]
         self.restore_group(integration, group)
+
 
 class NRCA3Dataset(NIRDataset):
     """For NRCA3 data"""
@@ -973,6 +975,7 @@ class NRCA3Dataset(NIRDataset):
         self.group = self.group[:, ::-1]
         self.restore_group(integration, group)
 
+
 class NRCA4Dataset(NIRDataset):
     """For NRCA4 data"""
 
@@ -991,6 +994,7 @@ class NRCA4Dataset(NIRDataset):
         # Just flip back
         self.group = self.group[::-1]
         self.restore_group(integration, group)
+
 
 class NRCALONGDataset(NIRDataset):
     """For NRCALONG data"""
@@ -1011,6 +1015,7 @@ class NRCALONGDataset(NIRDataset):
         self.group = self.group[:, ::-1]
         self.restore_group(integration, group)
 
+
 class NRCB1Dataset(NIRDataset):
     """For NRCB1 data"""
 
@@ -1030,6 +1035,7 @@ class NRCB1Dataset(NIRDataset):
         self.group = self.group[::-1]
         self.restore_group(integration, group)
 
+
 class NRCB2Dataset(NIRDataset):
     """For NRCB2 data"""
 
@@ -1048,7 +1054,8 @@ class NRCB2Dataset(NIRDataset):
         # Just flip back
         self.group = self.group[:, ::-1]
         self.restore_group(integration, group)
-        #self.pixeldq = self.pixeldq[:, ::-1]
+        # self.pixeldq = self.pixeldq[:, ::-1]
+
 
 class NRCB3Dataset(NIRDataset):
     """For NRCB3 data"""
@@ -1069,6 +1076,7 @@ class NRCB3Dataset(NIRDataset):
         self.group = self.group[::-1]
         self.restore_group(integration, group)
 
+
 class NRCB4Dataset(NIRDataset):
     """For NRCB4 data"""
 
@@ -1088,6 +1096,7 @@ class NRCB4Dataset(NIRDataset):
         self.group = self.group[:, ::-1]
         self.restore_group(integration, group)
 
+
 class NRCBLONGDataset(NIRDataset):
     """For NRCBLONG data"""
 
@@ -1106,6 +1115,7 @@ class NRCBLONGDataset(NIRDataset):
         # Just flip back
         self.group = self.group[::-1]
         self.restore_group(integration, group)
+
 
 class NIRISSDataset(NIRDataset):
     """For NIRISS data"""
@@ -1127,6 +1137,7 @@ class NIRISSDataset(NIRDataset):
         self.group = np.swapaxes(self.group, 0, 1)[::-1, ::-1]
         self.restore_group(integration, group)
 
+
 class GUIDER1Dataset(NIRDataset):
     """For GUIDER1 data"""
 
@@ -1145,6 +1156,7 @@ class GUIDER1Dataset(NIRDataset):
         # Just flip back
         self.group = self.group[::-1, ::-1]
         self.restore_group(integration, group)
+
 
 class GUIDER2Dataset(NIRDataset):
     """For GUIDER2 data"""
@@ -1270,7 +1282,6 @@ class MIRIDataset(Dataset):
         evendq = self.pixeldq[rowstart:rowstop:2, column]
         return evenref, evendq
 
-
     def get_odd_refvalue(self, group, amplifier, left_or_right):
         """Calculate the clipped mean of the counts in the reference pixels
         in odd-numbered rows
@@ -1300,7 +1311,6 @@ class MIRIDataset(Dataset):
         odd = self.sigma_clip(ref, dq)
         return odd
 
-
     def get_even_refvalue(self, group, amplifier, left_or_right):
         """Calculate the clipped mean of the counts in the reference pixels
         in even-numbered rows
@@ -1329,7 +1339,6 @@ class MIRIDataset(Dataset):
         ref, dq = self.collect_even_refpixels(group, amplifier, left_or_right)
         even = self.sigma_clip(ref, dq)
         return even
-
 
     def get_amplifier_refvalue(self, group, amplifier, left_or_right):
         """Calculate the reference pixel mean for a given amplifier
@@ -1526,6 +1535,7 @@ class MIRIDataset(Dataset):
         del first_read
         return
 
+
 def create_dataset(input_model,
                    odd_even_columns,
                    use_side_ref_pixels,
@@ -1675,9 +1685,9 @@ def create_dataset(input_model,
 
 
 def correct_model(input_model, odd_even_columns,
-                   use_side_ref_pixels,
-                   side_smoothing_length, side_gain,
-                   odd_even_rows):
+                  use_side_ref_pixels,
+                  side_smoothing_length, side_gain,
+                  odd_even_rows):
     """Wrapper to do Reference Pixel Correction on a JWST Model.
     Performs the correction on the datamodel
 

@@ -1,6 +1,7 @@
 import numpy as np
 from astropy.io import fits
 
+
 def table_to_hdulist(table):
     '''Create an HDUList from a set of headers and an astropy Table
 

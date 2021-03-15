@@ -30,10 +30,10 @@ class RegtestData:
     """Defines data paths on Artifactory and data retrieval methods"""
 
     def __init__(self, env="dev", inputs_root="jwst-pipeline",
-        results_root="jwst-pipeline-results", docopy=True,
-        input=None, input_remote=None, output=None, truth=None,
-        truth_remote=None, remote_results_path=None, test_name=None,
-        traceback=None, **kwargs):
+                 results_root="jwst-pipeline-results", docopy=True,
+                 input=None, input_remote=None, output=None, truth=None,
+                 truth_remote=None, remote_results_path=None, test_name=None,
+                 traceback=None, **kwargs):
         self._env = env
         self._inputs_root = inputs_root
         self._results_root = results_root
@@ -59,9 +59,9 @@ class RegtestData:
     def __repr__(self):
         return pprint.pformat(
             dict(input=self.input, output=self.output, truth=self.truth,
-            input_remote=self.input_remote, truth_remote=self.truth_remote,
-            remote_results_path=self.remote_results_path, test_name=self.test_name,
-            traceback=self.traceback),
+                 input_remote=self.input_remote, truth_remote=self.truth_remote,
+                 remote_results_path=self.remote_results_path, test_name=self.test_name,
+                 traceback=self.traceback),
             indent=1
         )
 
@@ -143,7 +143,7 @@ class RegtestData:
         if docopy is None:
             docopy = self.docopy
         self.input = get_bigdata(self._inputs_root, self._env, path,
-            docopy=docopy)
+                                 docopy=docopy)
         self.input_remote = os.path.join(self._inputs_root, self._env, path)
 
         return self.input
@@ -178,7 +178,6 @@ class RegtestData:
         ]
         return file_paths
 
-
     def get_truth(self, path=None, docopy=None):
         """Copy truth data from Artifactory remote resource to the CWD/truth
 
@@ -194,7 +193,7 @@ class RegtestData:
         os.chdir('truth')
         try:
             self.truth = get_bigdata(self._inputs_root, self._env, path,
-                docopy=docopy)
+                                     docopy=docopy)
             self.truth_remote = os.path.join(self._inputs_root, self._env, path)
         except BigdataError:
             os.chdir('..')
@@ -234,7 +233,7 @@ class RegtestData:
 
         # Get the association JSON file
         self.input = get_bigdata(self._inputs_root, self._env, path,
-            docopy=docopy)
+                                 docopy=docopy)
         with open(self.input) as fp:
             asn = load_asn(fp)
             self.asn = asn
@@ -311,7 +310,7 @@ def run_step_from_dict(rtdata, **step_params):
     return rtdata
 
 
-def run_step_from_dict_mock(rtdata, source,  **step_params):
+def run_step_from_dict_mock(rtdata, source, **step_params):
     """Pretend to run Steps with given parameter but just copy data
 
     For long running steps where the result already exists, just
@@ -483,8 +482,8 @@ def _data_glob_url(*url_parts, root=None):
             headers = {'X-JFrog-Art-Api': fp.readline().strip()}
     except (PermissionError, FileNotFoundError):
         print("Warning: Anonymous Artifactory search requests are limited to "
-            "1000 results. Use an API key and define API_KEY_FILE environment "
-            "variable to get full search results.", file=sys.stderr)
+              "1000 results. Use an API key and define API_KEY_FILE environment "
+              "variable to get full search results.", file=sys.stderr)
         headers = None
 
     search_url = '/'.join([root, 'api/search/pattern'])

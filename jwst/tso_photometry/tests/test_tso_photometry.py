@@ -10,6 +10,7 @@ shape = (7, 100, 150)
 xcenter = 75.
 ycenter = 50.
 
+
 def mk_data_array(shape, value, background, xcenter, ycenter, radius):
     """Create a data array"""
 

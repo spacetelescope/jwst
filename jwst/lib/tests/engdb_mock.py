@@ -48,6 +48,7 @@ class EngDB_Mocker(requests_mock.Mocker):
     """
     Setup a mock of the JWST Engineering DB.
     """
+
     def __init__(self, *args, **kwargs):
         db_path = kwargs.pop('db_path', ENGDB_PATH)
         super(EngDB_Mocker, self).__init__(*args, **kwargs)
@@ -119,7 +120,7 @@ class EngDB_Mocker(requests_mock.Mocker):
             mnemonic,
             request.qs['stime'][0],
             request.qs['etime'][0]
-            )
+        )
         context.status_code = 200
         return data
 
@@ -128,6 +129,7 @@ class EngDB_Local():
     """
     Fetch engineering data from the local cache
     """
+
     def __init__(self, db_path=''):
         self.db_path = db_path
 

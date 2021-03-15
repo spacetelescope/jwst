@@ -44,10 +44,10 @@ if __name__ == '__main__':
         sys.exit(0)
 
     parser = argparse.ArgumentParser(
-       """Do a Persistence Correction""")
+        """Do a Persistence Correction""")
 
     parser.add_argument(
-       'infile', metavar='infile', nargs=1,
+        'infile', metavar='infile', nargs=1,
        help="""Input Level 1b FITS file.""")
 
     parser.add_argument(

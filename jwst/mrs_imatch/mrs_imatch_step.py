@@ -207,25 +207,25 @@ def apply_background_2d(model2d, channel=None, subtract=True):
     y = y.ravel()
 
     # convert to RA/DEC:
-    r, d, l = model2d.meta.wcs(x.astype(dtype=float),
-                               y.astype(dtype=float))
+    ra, dec, lam = model2d.meta.wcs(x.astype(dtype=float),
+                                    y.astype(dtype=float))
 
     # some pixels may be NaNs and so throw them out:
     m = np.logical_and(
-        np.logical_and(np.isfinite(r), np.isfinite(d)),
-        np.isfinite(l)
+        np.logical_and(np.isfinite(ra), np.isfinite(dec)),
+        np.isfinite(lam)
     )
     x = x[m]
     y = y[m]
-    r = r[m]
-    d = d[m]
-    l = l[m]
+    ra = ra[m]
+    dec = dec[m]
+    lam = lam[m]
 
     # compute background values:
-    r -= refpt[0]
-    d -= refpt[1]
-    l -= refpt[2]
-    bkg = np.polynomial.polynomial.polyval3d(r, d, l, c)
+    ra -= refpt[0]
+    dec -= refpt[1]
+    lam -= refpt[2]
+    bkg = np.polynomial.polynomial.polyval3d(ra, dec, lam, c)
 
     # subtract background:
     if subtract:
@@ -291,7 +291,7 @@ def _match_models(models, channel, degree, center=None, center_cs='image'):
     sigma_data = []
 
     for cm in cube_models:
-        #TODO: at this time it is not clear that data should be weighted
+        # TODO: at this time it is not clear that data should be weighted
         #      by exptime the way it is done below and possibly should be
         #      revised later.
         exptime = cm.meta.exposure.exposure_time
@@ -309,7 +309,7 @@ def _match_models(models, channel, degree, center=None, center_cs='image'):
             weights = cm.weightmap.copy()
             eps = np.finfo(weights.dtype).tiny
             bad_data = weights < eps
-            weights[bad_data] = eps # in order to avoid runtime warnings
+            weights[bad_data] = eps  # in order to avoid runtime warnings
             sigmas = 1.0 / np.sqrt(exptime * weights)
             mask = np.logical_not(bad_data).astype(np.uint8)
             mask_data.append(mask)
@@ -318,15 +318,15 @@ def _match_models(models, channel, degree, center=None, center_cs='image'):
         sigma_data.append(sigmas)
 
     # leaving in below commented out lines for
-    # Mihia to de-bug step  when coefficients are NAN
-    #mask_array = np.asarray(mask_data)
-    #image_array = np.asarray(image_data)
-    #sigma_array = np.asarray(sigma_data)
-    #test_data = image_array[mask_array>0]
-    #test_sigma = sigma_array[mask_array>0]
-    #if np.isnan(test_data).any():
+    # Mihia to de-bug step when coefficients are NAN
+    # mask_array = np.asarray(mask_data)
+    # image_array = np.asarray(image_data)
+    # sigma_array = np.asarray(sigma_data)
+    # test_data = image_array[mask_array>0]
+    # test_sigma = sigma_array[mask_array>0]
+    # if np.isnan(test_data).any():
     #    print('a nan exists in test data')
-    #if np.isnan(sigma_data).any():
+    # if np.isnan(sigma_data).any():
     #    print('a nan exists in sigma data')
 
     # MRS fields of view are small compared to source sizes,
@@ -364,14 +364,14 @@ def _match_models(models, channel, degree, center=None, center_cs='image'):
     if cs != 'world':
         raise RuntimeError("Unexpected coordinate system.")
 
-    #TODO: try to identify if all images overlap
-    #if nsubspace > 1:
-        #self.log.warning("Not all cubes have been sky matched as "
-                         #"some of them do not overlap.")
+    # TODO: try to identify if all images overlap
+    # if nsubspace > 1:
+    #     self.log.warning("Not all cubes have been sky matched as "
+    #                      "some of them do not overlap.")
 
     # save background info in 'meta' and subtract sky from 2D images
     # if requested:
-    ##### model.meta.instrument.channel
+    # model.meta.instrument.channel
 
     if np.isnan(bkg_poly_coef).any():
         bkg_poly_coef = None
@@ -384,10 +384,10 @@ def _match_models(models, channel, degree, center=None, center_cs='image'):
             im.meta.background.subtracted = False
             im.meta.background.polynomial_info.append(
                 {
-                'degree': degree,
-                'refpoint': center,
-                'coefficients': poly.ravel().tolist(),
-                'channel': channel
+                    'degree': degree,
+                    'refpoint': center,
+                    'coefficients': poly.ravel().tolist(),
+                    'channel': channel
                 }
             )
 

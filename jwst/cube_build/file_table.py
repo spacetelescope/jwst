@@ -9,6 +9,7 @@ log.setLevel(logging.DEBUG)
 class FileTable():
     """ Dictionary contains defaults for MIRI and NIRSPEC data
     """
+
     def __init__(self):
 
         self.FileMap = {}

@@ -54,7 +54,7 @@ pixel = {'GOOD':             0,      # No bits set, all is good
          'MSA_FAILED_OPEN':  2**29,  # Pixel sees light from failed-open shutter
          'OTHER_BAD_PIXEL':  2**30,  # A catch-all flag
          'REFERENCE_PIXEL':  2**31,  # Pixel is a reference pixel
-}
+         }
 
 
 # Group-specific flags. Once groups are combined, these flags
@@ -65,7 +65,7 @@ group = {'GOOD':       pixel['GOOD'],
          'JUMP_DET':   pixel['JUMP_DET'],
          'DROPOUT':    pixel['DROPOUT'],
          'AD_FLOOR':   pixel['AD_FLOOR'],
-}
+         }
 
 
 def interpret_bit_flags(bit_flags, flip_bits=None):

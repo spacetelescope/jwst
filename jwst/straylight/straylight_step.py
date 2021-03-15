@@ -34,7 +34,7 @@ class StraylightStep (Step):
                     # reasonable power varible defined as: 0.1 < power < 5
                     if self.power < 0.1 or self.power > 5:
                         self.log.warning("The kernel power parameter is outside the reasonable range of"
-                                  " 0.1 to 5. It is set to {}".format(self.power))
+                                         " 0.1 to 5. It is set to {}".format(self.power))
                         self.log.warning('Straylight step will be skipped')
                         result = input_model.copy()
                         result.meta.cal_step.straylight = 'SKIPPED'
@@ -42,7 +42,7 @@ class StraylightStep (Step):
 
                     if self.roi < 2 or self.roi > 1024:
                         self.log.warning("The kernel roi parameter is outside the reasonable range of"
-                                  " 2 to 1024. It is set to {} ".format(self.roi))
+                                         " 2 to 1024. It is set to {} ".format(self.roi))
                         self.log.warning('Straylight step will be skipped')
                         result = input_model.copy()
                         result.meta.cal_step.straylight = 'SKIPPED'
@@ -95,7 +95,7 @@ class StraylightStep (Step):
 
             else:
                 self.log.warning('Straylight correction not defined for detector %s',
-                                  detector)
+                                 detector)
                 self.log.warning('Straylight step will be skipped')
                 result = input_model.copy()
                 result.meta.cal_step.straylight = 'SKIPPED'

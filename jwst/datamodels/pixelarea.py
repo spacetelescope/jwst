@@ -17,7 +17,6 @@ class PixelAreaModel(ReferenceFileModel):
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/pixelarea.schema"
 
 
-
 class NirspecSlitAreaModel(ReferenceFileModel):
     """
     A data model for the NIRSpec fixed-slit pixel area reference file

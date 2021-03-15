@@ -1,5 +1,4 @@
-#
-#  Module for  applying straylight correction.
+# Module for  applying straylight correction.
 # The routine correct_mrs applies a straylight correction to MRS science
 # slope images. The straylight mask contains 0's for science regions and
 # 1's for gaps between slices.
@@ -57,26 +56,26 @@ def correct_mrs(input_model, slice_map):
     # sci_mask is the input science image * mask
     # science regions  = 0 (reference pixel are  also = 0)
 
-    output = input_model.copy() # this is used in algorithm to
+    output = input_model.copy()  # this is used in algorithm to
     # find the straylight correction.
 
-    #_________________________________________________________________
     # if there are nans remove them because they mess up the correction
     index_inf = np.isinf(output.data).nonzero()
     output.data[index_inf] = 0.0
-    mask[index_inf] = 0  # flag associated mask so we do not  use any
-                         # slice gaps that are nans, now data=0.
-    #_________________________________________________________________
+    # flag associated mask so we do not  use any
+    # slice gaps that are nans, now data=0.
+    mask[index_inf] = 0
+
     # flag bad pixels
-    mask_dq = input_model.dq.copy()# * mask # find DQ flags of the gap values
+    mask_dq = input_model.dq.copy()  # * mask # find DQ flags of the gap values
     all_flags = (dqflags.pixel['DEAD'] + dqflags.pixel['HOT'])
     # where are pixels set to any one of the all_flags cases
     testflags = np.bitwise_and(mask_dq, all_flags)
     # where are testflags ne 0 and mask == 1
     bad_flags = np.where(testflags != 0)
     mask[bad_flags] = 0
-    #_________________________________________________________________
-    sci_mask = output.data * mask    #sci_maskcontains 0's in science regions of detector.
+
+    sci_mask = output.data * mask    # sci_maskcontains 0's in science regions of detector.
     straylight_image = output.data * 0.0
 
     # We Want Sci mask smoothed for GAP region with 3 X 3 box car filter
@@ -86,9 +85,9 @@ def correct_mrs(input_model, slice_map):
     sci_ave = convolve(sci_mask, Box2DKernel(3))
     mask_ave = convolve(mask, Box2DKernel(3))
 
-    # catch /0 cases
-    index = np.where(mask_ave == 0) # zero catches cases that would be #/0
-                                   # near edges values are 0.3333 0.6667 1
+    # catch divide by zero cases
+    # near edges values are 0.3333 0.6667 1
+    index = np.where(mask_ave == 0)
     sci_ave[index] = 0
     mask_ave[index] = 1
     sci_smooth = sci_ave / mask_ave
@@ -99,15 +98,15 @@ def correct_mrs(input_model, slice_map):
         row_mask = mask[j, :]
         if(np.sum(row_mask) > 0):
             # find the locations of slice gaps
-            #determine the data in the slice gaps
+            # determine the data in the slice gaps
             yuse = sci_smooth[j, np.where(row_mask == 1)]
 
-            #find the x locations of the slice gaps
+            # find the x locations of the slice gaps
             xuse = x[np.where(row_mask == 1)]
 
-            #find data in same gap area
+            # find data in same gap area
             nn = len(xuse)
-            #dx difference in adjacent slice gaps pixels --> used
+            # dx difference in adjacent slice gaps pixels --> used
             # to find x limits of each gap
             dx = xuse[1:nn] - xuse[0:nn - 1]
 
@@ -123,7 +122,7 @@ def correct_mrs(input_model, slice_map):
                 xlimits[i] = xuse[index]
                 i = i + 1
 
-            xlimits[ngroups] = xuse[nn - 1]#+1
+            xlimits[ngroups] = xuse[nn - 1]  # +1
 
             xg = np.zeros(ngroups)
             yg = np.zeros(ngroups)
@@ -142,10 +141,10 @@ def correct_mrs(input_model, slice_map):
         else:
             xg = np.array([0, 1032])
             yg = np.array([0, 0])
-       #using mean y value in slice gaps and x location of ymean
-       #interpolate what straylight contribution based on yg and xg
-       # for all points in row
 
+        # using mean y value in slice gaps and x location of ymean
+        # interpolate what straylight contribution based on yg and xg
+        # for all points in row
         for k in x:
             if(x[k] >= xg[0] and x[k] <= xg[-1]):
                 ynew = np.interp(x[k], xg, yg)
@@ -265,7 +264,6 @@ def correct_mrs_modshepard(input_model, slice_map, roi, power):
 
 
 def shepard_2d_kernel(roi, power):
-
     """
     Calculates the kernel matrix of Shepard's modified algorithm.
 

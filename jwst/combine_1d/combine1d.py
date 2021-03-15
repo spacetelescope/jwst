@@ -509,7 +509,7 @@ def check_exptime(exptime_key):
         exptime_key = "integration_time"
         log.info("Using integration time as the weight.")
     elif exptime_lwr.startswith("exposure") or \
-         exptime_lwr == "effexptm":
+            exptime_lwr == "effexptm":
         exptime_key = "exposure_time"
         log.info("Using exposure time as the weight.")
     elif exptime_lwr == "unit_weight" or exptime_lwr == "unit weight":
@@ -559,14 +559,14 @@ def combine_1d_spectra(input_model, exptime_key):
                 if spectral_order not in input_spectra:
                     input_spectra[spectral_order] = []
                 input_spectra[spectral_order].append(InputSpectrumModel(
-                                ms, in_spec, exptime_key))
+                    ms, in_spec, exptime_key))
     else:
         for in_spec in input_model.spec:
             spectral_order = in_spec.spectral_order
             if spectral_order not in input_spectra:
                 input_spectra[spectral_order] = []
             input_spectra[spectral_order].append(InputSpectrumModel(
-                                input_model, in_spec, exptime_key))
+                input_model, in_spec, exptime_key))
 
     for order in input_spectra:
         output_spectra[order] = OutputSpectrumModel()

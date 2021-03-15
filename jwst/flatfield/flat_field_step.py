@@ -12,7 +12,7 @@ EXTRACT_2D_IS_OK = [
     "NRS_MSASPEC",
     "NRS_AUTOWAVE",
     "NRS_AUTOFLAT",
-    ]
+]
 
 # NIRSpec imaging types (see exp_type2transform in assign_wcs/nirspec.py)
 NRS_IMAGING_MODES = [
@@ -25,7 +25,7 @@ NRS_IMAGING_MODES = [
     "NRS_TACQ",
     "NRS_TASLIT",
     "NRS_WATA",
-    ]
+]
 # Supported NIRSpec spectrographic types. No flat fielding for NRS_AUTOFLAT
 NRS_SPEC_MODES = [
     "NRS_BRIGHTOBJ",
@@ -34,7 +34,7 @@ NRS_SPEC_MODES = [
     "NRS_MSASPEC",
     "NRS_LAMP",
     "NRS_AUTOWAVE",
-    ]
+]
 
 
 __all__ = ["FlatFieldStep"]
@@ -74,7 +74,7 @@ class FlatFieldStep(Step):
 
         if input_model.meta.instrument.name.upper() == "NIRSPEC":
             if (exposure_type not in NRS_SPEC_MODES and
-                exposure_type not in NRS_IMAGING_MODES):
+                    exposure_type not in NRS_IMAGING_MODES):
                 self.log.warning("Exposure type is %s; flat-fielding will be "
                                  "skipped because it is not currently "
                                  "supported for this mode.", exposure_type)
@@ -82,7 +82,7 @@ class FlatFieldStep(Step):
 
         # Check whether extract_2d has been run.
         if (input_model.meta.cal_step.extract_2d == 'COMPLETE' and
-            exposure_type not in EXTRACT_2D_IS_OK):
+                exposure_type not in EXTRACT_2D_IS_OK):
             self.log.warning("The extract_2d step has been run, but for "
                              "%s data it should not have been run, so ...",
                              exposure_type)
@@ -185,7 +185,7 @@ class FlatFieldStep(Step):
             fflat=datamodels.NirspecFlatModel,
             sflat=datamodels.NirspecFlatModel,
             dflat=datamodels.NirspecFlatModel,
-            )
+        )
         if exposure_type == "NRS_MSASPEC":
             model_type["fflat"] = datamodels.NirspecQuadFlatModel
 

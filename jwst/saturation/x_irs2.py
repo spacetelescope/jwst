@@ -28,6 +28,7 @@ from ..lib import pipe_utils
 
 ReadoutParam = namedtuple("ReadoutParam", ["refout", "n", "r"])
 
+
 def _get_irs2_parameters(input_model, n=None, r=None):
     """Get the parameters describing IRS2 readout format.
 
@@ -80,6 +81,7 @@ def _get_irs2_parameters(input_model, n=None, r=None):
 
     return param
 
+
 def normal_shape(input_model, n=None, r=None, detector=None):
     """Determine the shape of the 'normal' pixel data."""
 
@@ -112,6 +114,7 @@ def normal_shape(input_model, n=None, r=None, detector=None):
         data_shape = shape[0:-2] + (n_output, shape[-1])
 
     return data_shape
+
 
 def make_mask(input_model, n=None, r=None):
     """Create a mask to extract "normal" pixels.
@@ -179,6 +182,7 @@ def make_mask(input_model, n=None, r=None):
 
     return irs2_mask
 
+
 def from_irs2(irs2_data, irs2_mask, detector=None):
     """Extract 'normal' pixel data from an IRS2 image.
 
@@ -221,6 +225,7 @@ def from_irs2(irs2_data, irs2_mask, detector=None):
                            detector)
 
     return norm_data
+
 
 def to_irs2(irs2_data, norm_data, irs2_mask, detector=None):
     """Copy 'normal' pixel data into an IRS2 image.

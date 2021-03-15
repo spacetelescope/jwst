@@ -14,6 +14,7 @@ from .base_classes import (
 )
 from .helpers import word_precision_check
 
+
 def test_word_precision_check():
     """Test word_precision_check"""
     s1 = "a b c"

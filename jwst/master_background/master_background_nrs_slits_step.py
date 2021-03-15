@@ -189,9 +189,9 @@ class MasterBackgroundNrsSlitsStep(Pipeline):
         num_bkg = num_src = 0
         for slit in data.slits:
             if "background" in slit.source_name:
-                num_bkg+=1
+                num_bkg += 1
             else:
-                num_src+=1
+                num_src += 1
 
         return num_bkg, num_src
 
