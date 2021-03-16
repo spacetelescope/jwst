@@ -37,11 +37,10 @@ def run_spec2_mbkg(jail, rtdata_module):
 
 def test_masterbkg_rerun(rtdata):
     """Test to ensure sequential runs of the step are consistent"""
-    data = dm.open(rtdata.get_data('nirspec/mos/nrs_mos_with_bkgslits_srctype.fits'))
-
-    mbs = MasterBackgroundNrsSlitsStep()
-    corrected = mbs.run(data)
-    corrected_again = mbs.run(data)
+    with dm.open(rtdata.get_data('nirspec/mos/nrs_mos_with_bkgslits_srctype.fits')) as data:
+        mbs = MasterBackgroundNrsSlitsStep()
+        corrected = mbs.run(data)
+        corrected_again = mbs.run(data)
 
     bad_slits = []
     for idx, slits in enumerate(zip(corrected.slits, corrected_again.slits)):
@@ -53,13 +52,12 @@ def test_masterbkg_rerun(rtdata):
 
 def test_masterbkg_corrpars(rtdata):
     """Test for correction parameters"""
-    data = dm.open(rtdata.get_data('nirspec/mos/nrs_mos_with_bkgslits_srctype.fits'))
+    with dm.open(rtdata.get_data('nirspec/mos/nrs_mos_with_bkgslits_srctype.fits')) as data:
+        mbs = MasterBackgroundNrsSlitsStep()
+        corrected = mbs.run(data)
 
-    mbs = MasterBackgroundNrsSlitsStep()
-    corrected = mbs.run(data)
-
-    mbs.use_correction_pars = True
-    corrected_corrpars = mbs.run(data)
+        mbs.use_correction_pars = True
+        corrected_corrpars = mbs.run(data)
 
     bad_slits = []
     for idx, slits in enumerate(zip(corrected.slits, corrected_corrpars.slits)):
