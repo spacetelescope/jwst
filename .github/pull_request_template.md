@@ -9,15 +9,18 @@ JP-123: <Fix a bug>
 
 Closes #
 
-Closes JP-
+Resolves JP-
 
 **Description**
 
 This PR addresses ...
 
 
+Checklist
 - [ ] Tests
 
 - [ ] Documentation
 
 - [ ] Change log
+
+- [ ] Milestone
