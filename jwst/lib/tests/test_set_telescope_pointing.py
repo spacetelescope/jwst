@@ -381,7 +381,7 @@ def test_add_wcs_with_db(eng_db_ngas, data_file, siaf_file=siaf_db):
         )
 
 
-@pytest.mark.skipif(sys.version_info.major<3,
+@pytest.mark.skipif(sys.version_info.major < 3,
                     reason="No URI support in sqlite3")
 def test_add_wcs_method_original(eng_db_ngas, data_file, siaf_file=siaf_db):
     """Test using the database and the original, pre-JSOCINT-555 algorithms"""
@@ -425,7 +425,7 @@ def test_add_wcs_method_original(eng_db_ngas, data_file, siaf_file=siaf_db):
         )
 
 
-@pytest.mark.skipif(sys.version_info.major<3,
+@pytest.mark.skipif(sys.version_info.major < 3,
                     reason="No URI support in sqlite3")
 def test_add_wcs_method_cmdtest(eng_db_ngas, data_file, siaf_file=siaf_db):
     """Test using the database and the original, pre-JSOCINT-555 algorithms"""
@@ -473,7 +473,7 @@ def test_add_wcs_method_cmdtest(eng_db_ngas, data_file, siaf_file=siaf_db):
         )
 
 
-@pytest.mark.skipif(sys.version_info.major<3,
+@pytest.mark.skipif(sys.version_info.major < 3,
                     reason="No URI support in sqlite3")
 def test_add_wcs_with_db_fsmcorr_v1(eng_db_ngas, data_file):
     """Test using the database with original FSM correction"""

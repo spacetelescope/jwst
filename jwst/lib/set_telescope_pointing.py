@@ -2,7 +2,7 @@
 from collections import defaultdict, namedtuple
 from copy import copy
 from dataclasses import dataclass
-from enum import Enum, auto
+from enum import Enum
 import logging
 from math import (asin, atan2, cos, sin)
 import os.path
@@ -40,6 +40,7 @@ class Methods(Enum):
     def __str__(self):
         return self.value
 
+
 # Conversion from seconds to MJD
 SECONDS2MJD = 1 / 24 / 60 / 60
 
@@ -63,22 +64,22 @@ SIFOV2V_DEFAULT = np.array(
 )
 
 MX2Z = np.array(
-        [[0, 1, 0],
-         [0, 0, 1],
-         [1, 0, 0]]
-    )
+    [[0, 1, 0],
+     [0, 0, 1],
+     [1, 0, 0]]
+)
 MZ2X = np.array(
-        [[0, 0, 1],
-         [1, 0, 0],
-         [0, 1, 0]]
-    )
+    [[0, 0, 1],
+     [1, 0, 0],
+     [0, 1, 0]]
+)
 
 # Degree, radian, angle transformations
 R2D = 180. / np.pi
 D2R = np.pi / 180.
 A2R = D2R / 3600.
 R2A = 3600. * R2D
-PI2 = np. pi * 2.
+PI2 = np.pi * 2.
 
 # Map instrument three character mnemonic to full name
 INSTRUMENT_MAP = {
@@ -192,18 +193,18 @@ class TransformParameters:
     default_pa_v3: float = 0.
     dry_run: bool = False
     engdb_url: str = None
-    fsmcorr_version : str = 'latest'
-    fsmcorr_units : str = 'arcsec'
-    guide_star_wcs : WCSRef = WCSRef()
-    j2fgs_transpose : bool = True
+    fsmcorr_version: str = 'latest'
+    fsmcorr_units: str = 'arcsec'
+    guide_star_wcs: WCSRef = WCSRef()
+    j2fgs_transpose: bool = True
     method: Methods = None
-    pointing : Pointing = None
+    pointing: Pointing = None
     reduce_func: typing.Callable = None
     siaf: SIAF = None
     siaf_path: str = None
     tolerance: float = 60.
-    useafter : str = None
-    v3pa_at_gs : float = None
+    useafter: str = None
+    v3pa_at_gs: float = None
 
 
 def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
@@ -1026,6 +1027,7 @@ def calc_m_gs_commanded(guide_star_wcs, fgs1_v3yangle, gs_commanded):
             [0, sin(a), cos(a)]
         ])
         return r
+
     def r2(a):
         r = np.array([
             [cos(a), 0, sin(a)],
@@ -1347,7 +1349,7 @@ def calc_fgs1_to_sifov_fgs1siaf_matrix(siaf_path=None, useafter=None):
     """
     try:
         fgs1_siaf = get_wcs_values_from_siaf('FGS1_FULL_OSS', useafter, siaf_path)
-    except (KeyError, OSError, TypeError, RuntimeError) as exception:
+    except (KeyError, OSError, TypeError, RuntimeError):
         logger.warning('Cannot read a SIAF database. Using the default FGS1_to_SIFOV matrix')
         return calc_fgs1_to_sifov_matrix()
 
@@ -1428,7 +1430,7 @@ def calc_position_angle(target, point):
     point_pa: float
       The POINT position angle, in radians
     """
-    y = cos(point.dec) * sin(point.ra-target.ra)
+    y = cos(point.dec) * sin(point.ra - target.ra)
     x = sin(point.dec) * cos(target.dec) - \
         cos(point.dec) * sin(target.dec) * cos((point.ra - target.ra))
     point_pa = np.arctan2(y, x)
@@ -1623,7 +1625,7 @@ def get_wcs_values_from_siaf(aperture_name, useafter, prd_db_filepath=None):
     """
     try:
         siaf = get_wcs_values_from_siaf_prd(aperture_name, useafter, prd_db_filepath=prd_db_filepath)
-    except (KeyError, OSError, TypeError, RuntimeError) as exception:
+    except (KeyError, OSError, TypeError, RuntimeError):
         siaf = get_wcs_values_from_siaf_api(aperture_name)
 
     logger.info('For aperture %s: SIAF = %s', aperture_name, siaf)
@@ -1719,7 +1721,7 @@ def get_wcs_values_from_siaf_prd(aperture_name, useafter, prd_db_filepath=None):
                        "XSciRef, YSciRef, XSciScale, YSciScale, "
                        "XIdlVert1, XIdlVert2, XIdlVert3, XIdlVert4, "
                        "YIdlVert1, YIdlVert2, YIdlVert3, YIdlVert4 "
-                       f"FROM Aperture WHERE Apername = ? "
+                       "FROM Aperture WHERE Apername = ? "
                        "and UseAfterDate <= ? ORDER BY UseAfterDate LIMIT 1",
                        (aperture_name, useafter))
         for row in cursor:

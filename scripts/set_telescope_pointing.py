@@ -98,7 +98,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Set output detail.
-    level = stp.LOGLEVELS[min(len(stp.LOGLEVELS)-1, args.verbose)]
+    level = stp.LOGLEVELS[min(len(stp.LOGLEVELS) - 1, args.verbose)]
     logger.setLevel(level)
     if level <= logging.DEBUG:
         logger_handler.setFormatter(logger_format_debug)
