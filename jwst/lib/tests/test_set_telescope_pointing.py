@@ -385,7 +385,7 @@ def test_add_wcs_with_db(eng_db_ngas, data_file, siaf_file=siaf_db):
                     reason="No URI support in sqlite3")
 def test_add_wcs_method_original(eng_db_ngas, data_file, siaf_file=siaf_db):
     """Test using the database and the original, pre-JSOCINT-555 algorithms"""
-    stp.add_wcs(data_file, siaf_path=siaf_db, method=stp.Methods.original, j2fgs_transpose=False)
+    stp.add_wcs(data_file, siaf_path=siaf_db, method=stp.Methods.ORIGINAL, j2fgs_transpose=False)
 
     with datamodels.Level1bModel(data_file) as model:
         assert np.isclose(model.meta.pointing.ra_v1, 348.9278669)
@@ -429,7 +429,7 @@ def test_add_wcs_method_original(eng_db_ngas, data_file, siaf_file=siaf_db):
                     reason="No URI support in sqlite3")
 def test_add_wcs_method_cmdtest(eng_db_ngas, data_file, siaf_file=siaf_db):
     """Test using the database and the original, pre-JSOCINT-555 algorithms"""
-    stp.add_wcs(data_file, siaf_path=siaf_db, method=stp.Methods.cmdtest, j2fgs_transpose=False)
+    stp.add_wcs(data_file, siaf_path=siaf_db, method=stp.Methods.CMDTEST, j2fgs_transpose=False)
 
     with datamodels.Level1bModel(data_file) as model:
 

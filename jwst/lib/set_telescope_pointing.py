@@ -32,10 +32,10 @@ LOGLEVELS = [logging.INFO, logging.DEBUG, DEBUG_FULL]
 
 # The available methods for transformation
 class Methods(Enum):
-    original = 'original'  # Original, pre-JSOCINT-555 algorithm
-    cmdtest = 'cmdtest'   # The JSOCINT-555 fix to test
+    ORIGINAL = 'original'  # Original, pre-JSOCINT-555 algorithm
+    CMDTEST = 'cmdtest'   # The JSOCINT-555 fix to test
 
-    default = original  # Use original algorithm if not specified
+    default = ORIGINAL  # Use original algorithm if not specified
 
     def __str__(self):
         return self.value
@@ -799,9 +799,9 @@ def calc_transforms(t_pars: TransformParameters):
     """
     t_pars.method = t_pars.method if t_pars.method else Methods.default
 
-    if t_pars.method == Methods.original:
+    if t_pars.method == Methods.ORIGINAL:
         transforms = calc_transforms_original(t_pars)
-    elif t_pars.method == Methods.cmdtest:
+    elif t_pars.method == Methods.CMDTEST:
         transforms = calc_transforms_cmdtest(t_pars)
     else:
         raise RuntimeError(
