@@ -64,7 +64,8 @@ if __name__ == '__main__':
         help='Increase verbosity. Specifying multiple times adds more output.'
     )
     parser.add_argument(
-        '--method', choices=[m.name for m in stp.Methods], default=stp.Methods.default.name,
+        '--method',
+        type=stp.Methods, choices=list(stp.Methods), default=stp.Methods.default,
         help='Algorithmic method to use. Default: %(default)s'
     )
     parser.add_argument(

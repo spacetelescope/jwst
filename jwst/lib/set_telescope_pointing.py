@@ -32,14 +32,13 @@ LOGLEVELS = [logging.INFO, logging.DEBUG, DEBUG_FULL]
 
 # The available methods for transformation
 class Methods(Enum):
-    original = auto()   # Original, pre-JSOCINT-555 algorithm
-    cmdtest = auto()    # The JSOCINT-555 fix to test
+    original = 'original'  # Original, pre-JSOCINT-555 algorithm
+    cmdtest = 'cmdtest'   # The JSOCINT-555 fix to test
 
     default = original  # Use original algorithm if not specified
 
-    def __repr__(self):
-        return f'{self.__class__.__name__}.{self.name}'
-
+    def __str__(self):
+        return self.value
 
 # Conversion from seconds to MJD
 SECONDS2MJD = 1 / 24 / 60 / 60
@@ -798,18 +797,15 @@ def calc_transforms(t_pars: TransformParameters):
     transforms: Transforms
         The list of coordinate matrix transformations
     """
-    method = t_pars.method
-    method = method if method else Methods.default.name
-    method = method.lower()
-    t_pars.method = method
+    t_pars.method = t_pars.method if t_pars.method else Methods.default
 
-    if method == Methods.original.name:
+    if t_pars.method == Methods.original:
         transforms = calc_transforms_original(t_pars)
-    elif method == Methods.cmdtest.name:
+    elif t_pars.method == Methods.cmdtest:
         transforms = calc_transforms_cmdtest(t_pars)
     else:
         raise RuntimeError(
-            f'Specified method "{method}" not in available methods '
+            f'Specified method "{t_pars.method}" not in available methods '
             f'{[m.name for m in Methods]}'
         )
     return transforms
