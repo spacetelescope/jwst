@@ -1,8 +1,8 @@
-<!-- This comments are hidden when you submit the PR,
+<!-- These comments are hidden when you submit the PR,
 so you do not need to remove them!
 
 **Note: If this PR closes a JIRA ticket, make sure the title
-starts with the JIRA issue number, for example 
+starts with the JIRA issue number, for example
 JP-123: <Fix a bug>
 **
 -->
