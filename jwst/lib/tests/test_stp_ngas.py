@@ -93,7 +93,7 @@ def test_stp_ngas():
 
     # Setup transformation parameters
     t_pars = stp.TransformParameters()
-    t_pars.method = stp.Methods.ORIGINAL.name
+    t_pars.method = stp.Methods.original.name
     t_pars.siaf = stp.SIAF(v2_ref=0., v3_ref=0., v3yangle=0., vparity=1.)
     any_wrong = False
     for idx, pv in enumerate(pointings):
