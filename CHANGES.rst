@@ -32,6 +32,8 @@ datamodels
 
 - Added is_star to slitmeta [#5788]
 
+- Update keyword comments for NIRSpec grating wheel (GWA) keywords [#5844]
+
 extract_2d
 ----------
 
