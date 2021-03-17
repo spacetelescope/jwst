@@ -630,14 +630,15 @@ class TestMethods:
 
     # FAIL GPS
     def test_oneCR_10_groups_combination_noisy2ndSegment(self, method):
-        grouptime = 3.0
-        # deltaDN = 5
-        ingain = 200  # use large gain to show that Poisson noise doesn't affect the recombination
-        inreadnoise = 7
-        ngroups = 10
-        model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
-                                                              gain=ingain, readnoise=inreadnoise,
-                                                              deltatime=grouptime)
+        # Reason: opt_res is None
+        # Reason: Computed slope is different by 0.033539
+
+        # use large gain to show that Poisson noise doesn't affect the recombination
+        grouptime, ingain, inreadnoise, ngroups = 3.0, 200, 7, 10
+
+        model1, gdq, rnModel, pixdq, err, gain = setup_inputs(
+            ngroups=ngroups, gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
+
         # two segments perfect fit, second segment has twice the slope
         model1.data[0, 0, 50, 50] = 15.0
         model1.data[0, 1, 50, 50] = 20.0
@@ -649,11 +650,14 @@ class TestMethods:
         model1.data[0, 7, 50, 50] = 160.0
         model1.data[0, 8, 50, 50] = 168.0
         model1.data[0, 9, 50, 50] = 180.0
+
         model1.groupdq[0, 5, 50, 50] = JUMP_DET
+
         slopes, int_model, opt_model, gls_opt_model = \
             ramp_fit(model1, 1024 * 30000., True, rnModel, gain, method, 'optimal', 'none')
 
         avg_slope = (opt_model.slope[0, 0, 50, 50] + opt_model.slope[0, 1, 50, 50]) / 2.0
+
         # even with noiser second segment, final slope should be just the
         # average since they have the same number of groups
         np.testing.assert_allclose(slopes.data[50, 50], avg_slope, rtol=1e-5)
