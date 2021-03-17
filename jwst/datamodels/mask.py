@@ -1,5 +1,7 @@
 from .reference import ReferenceFileModel
-from .dynamicdq import dynamic_mask
+#from .dynamicdq import dynamic_mask
+from stcal.dynamicdq import dynamic_mask
+from .dqflags import pixel, group
 
 __all__ = ['MaskModel']
 
@@ -22,7 +24,7 @@ class MaskModel(ReferenceFileModel):
         super(MaskModel, self).__init__(init=init, **kwargs)
 
         if self.dq is not None or self.dq_def is not None:
-            self.dq = dynamic_mask(self)
+            self.dq = dynamic_mask(self, pixel)
 
         # Implicitly create arrays
         self.dq = self.dq
