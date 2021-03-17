@@ -351,7 +351,7 @@ def set_output_models(out_model, int_model, opt_model, new_mdl, int_mdl, opt_res
         if opt_model is not None
 
     save_opt : boolean
-       calculate optional fitting results
+       Save optional fitting results.
     """
     out_model.data = new_mdl.data
     out_model.dq = new_mdl.dq
@@ -1355,7 +1355,7 @@ def ramp_fit_overall(
        Original shape of input dataset
 
     orig_ngroups: int
-       Original number of reads
+       Original number of groups
 
     buffsize : int
         Size of data section (buffer) in bytes
