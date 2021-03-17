@@ -21,7 +21,7 @@ def run_tso1_pipeline(jail, rtdata_module):
     rtdata.get_data(f"miri/lrs/{DATASET_ID}_uncal.fits")
 
     args = [
-        "config/calwebb_tso1.cfg",
+        "jwst.pipeline.Detector1Pipeline",
         rtdata.input,
         "--steps.dq_init.save_results=True",
         "--steps.saturation.save_results=True",

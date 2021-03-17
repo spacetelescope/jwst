@@ -43,7 +43,7 @@ def test_ff_inv(rtdata, fitsdiff_default_kwargs):
 @pytest.mark.bigdata
 def test_pathloss_corrpars(rtdata):
     """Test PathLossStep using correction_pars"""
-    with  dm.open(rtdata.get_data('nirspec/mos/usf_wavecorr.fits')) as data:
+    with dm.open(rtdata.get_data('nirspec/mos/usf_wavecorr.fits')) as data:
         pls = PathLossStep()
         corrected = pls.run(data)
 
@@ -81,7 +81,7 @@ def test_pathloss_inverse(rtdata):
 @pytest.mark.bigdata
 def test_pathloss_source_type(rtdata):
     """Test PathLossStep forcing source type"""
-    with  dm.open(rtdata.get_data('nirspec/mos/usf_wavecorr.fits')) as data:
+    with dm.open(rtdata.get_data('nirspec/mos/usf_wavecorr.fits')) as data:
         pls = PathLossStep()
         pls.source_type = 'extended'
         pls.run(data)
