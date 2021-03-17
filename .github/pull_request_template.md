@@ -24,3 +24,5 @@ Checklist
 - [ ] Change log
 
 - [ ] Milestone
+
+- [ ] Label(s)
