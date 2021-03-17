@@ -14,18 +14,18 @@ def run_detector1(rtdata_module):
 
     # Run detector1 pipeline only on one of the _uncal files
     args = ["jwst.pipeline.Detector1Pipeline", rtdata.input,
-        "--save_calibrated_ramp=True",
-        "--steps.dq_init.save_results=True",
-        "--steps.saturation.save_results=True",
-        "--steps.refpix.save_results=True",
-        "--steps.rscd.save_results=True",
-        "--steps.lastframe.save_results=True",
-        "--steps.firstframe.save_results=True",
-        "--steps.reset.save_results=True",
-        "--steps.linearity.save_results=True",
-        "--steps.dark_current.save_results=True",
-        "--steps.jump.rejection_threshold=200",
-        ]
+            "--save_calibrated_ramp=True",
+            "--steps.dq_init.save_results=True",
+            "--steps.saturation.save_results=True",
+            "--steps.refpix.save_results=True",
+            "--steps.rscd.save_results=True",
+            "--steps.lastframe.save_results=True",
+            "--steps.firstframe.save_results=True",
+            "--steps.reset.save_results=True",
+            "--steps.linearity.save_results=True",
+            "--steps.dark_current.save_results=True",
+            "--steps.jump.rejection_threshold=200",
+            ]
     Step.from_cmdline(args)
 
 
