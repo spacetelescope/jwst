@@ -6,8 +6,6 @@ from jwst.outlier_detection import OutlierDetectionStep
 from jwst.outlier_detection.outlier_detection import flag_cr
 from jwst.outlier_detection.outlier_detection_step import (
     IMAGE_MODES,
-#    SLIT_SPEC_MODES,
-#    IFU_SPEC_MODES,
     TSO_SPEC_MODES,
     TSO_IMAGE_MODES,
     CORON_IMAGE_MODES,
@@ -49,7 +47,7 @@ def sci_blot_image_pair():
     signal = 20 * sigma
     sci.data[10, 10] += signal
     # update the noise for this source to include the photon/measurement noise
-    sci.err[10, 10] = np.sqrt(sigma**2 + signal)
+    sci.err[10, 10] = np.sqrt(sigma ** 2 + signal)
 
     # The blot image is just a smoothed version of the science image that has
     # its background subtracted
@@ -134,7 +132,7 @@ def we_many_sci(
     sci1.err = np.zeros(shape) + sigma
     sci1.data[7, 7] += signal
     # update the noise for this source to include the photon/measurement noise
-    sci1.err[7, 7] = np.sqrt(sigma**2 + signal)
+    sci1.err[7, 7] = np.sqrt(sigma ** 2 + signal)
     sci1.var_rnoise = np.zeros(shape) + 1.0
     sci1.meta.filename = "foo1_cal.fits"
 
@@ -182,8 +180,9 @@ def test_outlier_step(we_three_sci):
     # Drop a CR on the science array
     container[0].data[12, 12] += 1
 
-    result = OutlierDetectionStep.call(container, save_results=True,
-                                       save_intermediate_results=True)
+    result = OutlierDetectionStep.call(
+        container, save_results=True, save_intermediate_results=True
+    )
 
     # Make sure nothing changed in SCI array
     for image, corrected in zip(container, result):
@@ -221,13 +220,11 @@ def test_outlier_step_square_source_no_outliers(we_three_sci):
 
 @pytest.mark.parametrize("exptype", IMAGE_MODES)
 def test_outlier_step_image_weak_CR_dither(exptype):
-    """Test whole step with an outlier"""
+    """Test whole step with an outlierf for imaging modes"""
     bkg = 1.5
     sig = 0.02
     container = datamodels.ModelContainer(
-        we_many_sci(
-            background=bkg, sigma=sig, signal=7.0, exptype=exptype
-        )
+        we_many_sci(background=bkg, sigma=sig, signal=7.0, exptype=exptype)
     )
 
     # Drop a weak CR on the science array
@@ -250,7 +247,7 @@ def test_outlier_step_image_weak_CR_dither(exptype):
 
 @pytest.mark.parametrize("exptype, tsovisit", exptypes_tso + exptypes_coron)
 def test_outlier_step_image_weak_CR_nodither(exptype, tsovisit):
-    """Test whole step with an outlier"""
+    """Test whole step with an outlier for TSO & coronagraphic modes"""
     bkg = 1.5
     sig = 0.02
     container = datamodels.ModelContainer(
