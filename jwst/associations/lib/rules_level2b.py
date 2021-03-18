@@ -603,7 +603,6 @@ class Asn_Lv2WFSS(
         closest = directs[0]  # If the search fails, just use the first.
         try:
             expspcin = int(getattr_from_list(science.item, ['expspcin'], _EMPTY)[1])
-            science_channel = getattr_from_list(science.item, ['channel'], _EMPTY)[1]
         except KeyError:
             # If exposure sequence cannot be determined, just fall through.
             logger.debug('Science exposure %s has no EXPSPCIN defined.', science)
@@ -613,8 +612,15 @@ class Asn_Lv2WFSS(
                 # For NIRCam, only consider direct images from the same channel
                 # as the grism image
                 if direct.item['exp_type'] == 'nrc_image':
+                    science_channel = getattr_from_list(science.item, ['channel'], _EMPTY)[1]
                     direct_channel = getattr_from_list(direct.item, ['channel'], _EMPTY)[1]
                     if direct_channel != science_channel:
+                        continue
+                # For NIRISS, only consider direct images with the same PUPIL value
+                if direct.item['exp_type'] == 'nis_image':
+                    science_pupil = getattr_from_list(science.item, ['pupil'], _EMPTY)[1]
+                    direct_pupil = getattr_from_list(direct.item, ['pupil'], _EMPTY)[1]
+                    if direct_pupil != science_pupil:
                         continue
                 try:
                     direct_expspcin = int(getattr_from_list(
