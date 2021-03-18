@@ -174,7 +174,7 @@ def test_outlier_step_no_outliers(we_three_sci):
 
 
 def test_outlier_step(we_three_sci):
-    """Test whole step with an outlier"""
+    """Test whole step with an outlier including saving intermediate and results files"""
     container = datamodels.ModelContainer(list(we_three_sci))
 
     # Drop a CR on the science array

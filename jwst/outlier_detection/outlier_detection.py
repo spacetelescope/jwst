@@ -447,6 +447,7 @@ def flag_cr(sci_image, blot_image, **pars):
     # Update the DQ array in the input image.
     sci_image.dq = np.bitwise_or(sci_image.dq, np.invert(cr_mask) * CRBIT)
 
+
 def abs_deriv(array):
     """Take the absolute derivate of a numpy array."""
     tmp = np.zeros(array.shape, dtype=np.float64)
