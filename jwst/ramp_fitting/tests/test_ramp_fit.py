@@ -206,13 +206,12 @@ class TestMethods:
         assert(0 == np.max(slopes[0].data))
         assert(0 == np.min(slopes[0].data))
 
-    # FAIL GPS
     def test_nocrs_noflux_firstrows_are_nan(self, method):
-        # Reason: GLS return NaN as max slope, whereas OLS returns 0.
-
         model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=5)
         model1.data[0, :, 0:12, :] = np.nan
+
         slopes = ramp_fit(model1, 60000, False, rnModel, gain, method, 'optimal', 'none')
+
         assert(0 == np.max(slopes[0].data))
         assert(0 == np.min(slopes[0].data))
 
@@ -259,28 +258,23 @@ class TestMethods:
         assert(0 == np.max(slopes[0].data))
         assert(0 == np.min(slopes[0].data))
 
-    # FAIL GPS
     def test_bad_gain_values(self, method):
-        # Reason: Max and min slope is NaN for GLS, but 0 for OLS.
-
         # all pixel values are zero. So slope should be zero
         model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=5)
 
-        # Why does this get changed?  Can this happen?  Can exposure ngroups be different
-        # from the number of groups in an integration?
         model1.meta.exposure.ngroups = 11
+
         gain.data[10, 10] = -10
         gain.data[20, 20] = np.nan
+
         slopes = ramp_fit(model1, 64000, False, rnModel, gain, method, 'optimal', 'none')
+
         assert(0 == np.max(slopes[0].data))
         assert(0 == np.min(slopes[0].data))
         assert slopes[0].dq[10, 10] == 524288 + 1
         assert slopes[0].dq[20, 20] == 524288 + 1
 
-    # FAIL GPS
     def test_subarray_5groups(self, method):
-        # Reason: Code failure.  Will need to debug this.
-
         # all pixel values are zero. So slope should be zero
         model1, gdq, rnModel, pixdq, err, gain = setup_subarray_inputs(
             ngroups=5, subxstart=10, subystart=20, subxsize=5, subysize=15, readnoise=50)
@@ -295,8 +289,8 @@ class TestMethods:
 
         xvalues = np.arange(5) * 1.0
         yvalues = np.array([10, 15, 25, 33, 60])
-
         coeff = np.polyfit(xvalues, yvalues, 1)
+
         slopes = ramp_fit(model1, 64000, False, rnModel, gain, method, 'optimal', 'none')
 
         np.testing.assert_allclose(slopes[0].data[12, 1], coeff[0], 1e-6)
@@ -318,10 +312,7 @@ class TestMethods:
         # take the ratio of the slopes to get the relative error
         np.testing.assert_allclose(slopes[0].data[50, 50], (20.0 / 3), 1e-6)
 
-    # FAIL GPS
     def test_read_noise_only_fit(self, method):
-        # Reason: The difference between polyfit and GLS estimate is only 0.022575
-        #         It is desired to be less than 1e-6.
         model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=5, readnoise=50)
 
         model1.data[0, 0, 50, 50] = 10.0
@@ -338,10 +329,7 @@ class TestMethods:
 
         np.testing.assert_allclose(slopes[0].data[50, 50], coeff[0], 1e-6)
 
-    # FAIL GPS
     def test_photon_noise_only_fit(self, method):
-        # Reason: The model data is multiplied by the gain, so the value cds_slope is 
-        #         a multiple of the gain, so it is 1000 times too large.
         model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=5, gain=1000, readnoise=1)
 
         model1.data[0, 0, 50, 50] = 10.0
@@ -355,10 +343,7 @@ class TestMethods:
 
         np.testing.assert_allclose(slopes[0].data[50, 50], cds_slope, 1e-2)
 
-    # FAIL GPS
     def test_photon_noise_only_bad_last_frame(self, method):
-        # Reason: The slope is bad.  It appears to not ignore the last group.
-        #         The cds_slope is off by a factor of 1000.
         model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=5, gain=1000, readnoise=1)
 
         model1.data[0, 0, 50, 50] = 10.0
@@ -385,9 +370,7 @@ class TestMethods:
         cds_slope = (model1.data[0, 1, 50, 50] - model1.data[0, 0, 50, 50]) / 1.0
         np.testing.assert_allclose(slopes[0].data[50, 50], cds_slope, 1e-6)
 
-    # FAIL GPS
     def test_photon_noise_with_unweighted_fit(self, method):
-        # Reason: The difference between slopes and coeff is too large, only 0.055.
         model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=5, gain=1000, readnoise=1)
 
         model1.data[0, 0, 50, 50] = 10.0
@@ -397,17 +380,14 @@ class TestMethods:
         model1.data[0, 4, 50, 50] = 60.0
 
         slopes = ramp_fit(model1, 1024 * 30000., True, rnModel, gain, method, 'unweighted', 'none')
+
         # cds_slope = (model1.data[0,4,500,500] - model1.data[0,0,500,500])/ 4.0
         xvalues = np.arange(5) * 1.0
         yvalues = np.array([10, 15, 25, 33, 60])
         coeff = np.polyfit(xvalues, yvalues, 1)
         np.testing.assert_allclose(slopes[0].data[50, 50], coeff[0], 1e-6)
 
-    # FAIL GPS
     def test_two_groups_fit(self, method):
-        # Reason: Incorrect dimensions in the following line of 
-        #         code in gls_fits_all_integrations:
-        # temp_dq[:, :][s_mask] = UNRELIABLE_SLOPE
         model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=2, gain=1, readnoise=10)
 
         model1.data[0, 0, 50, 50] = 10.0
@@ -429,10 +409,11 @@ class TestMethods:
         slopes = ramp_fit(model1, 1024 * 30000., True, rnModel, gain, method, 'optimal', 'none')
 
         cds_slope = (model1.data[0, 1, 50, 50] - model1.data[0, 0, 50, 50])
-
         np.testing.assert_allclose(slopes[0].data[50, 50], cds_slope, 1e-6)
+
         # expect SATURATED
         assert slopes[0].dq[50, 51] == SATURATED
+
         # expect SATURATED and DO_NOT_USE, because 1st group is Saturated
         assert slopes[0].dq[50, 52] == SATURATED + DO_NOT_USE
 
@@ -461,9 +442,7 @@ class TestMethods:
         cds_slope = (model1.data[0, 1, 50, 50] - model1.data[0, 0, 50, 50])
         np.testing.assert_allclose(slopes[0].data[50, 50], cds_slope, 1e-6)
 
-    # FAIL GPS
     def test_four_groups_four_CRs(self, method):
-        # Reason: JUMP_DET used in computing slope.
         model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=4, gain=1, readnoise=10)
 
         model1.data[0, 0, 50, 50] = 10.0
@@ -480,9 +459,7 @@ class TestMethods:
 
         np.testing.assert_allclose(slopes[0].data[50, 50], 0, 1e-6)
 
-    # FAIL GPS
     def test_four_groups_three_CRs_at_end(self, method):
-        # Reason: JUMP_DET used in computing slope.
         model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=4, gain=1, readnoise=10)
 
         model1.data[0, 0, 50, 50] = 10.0
@@ -510,9 +487,7 @@ class TestMethods:
         expected_slope = 20.0
         np.testing.assert_allclose(slopes[0].data[50, 50], expected_slope, 1e-6)
 
-    # FAIL GPS
     def test_one_group_fit(self, method):
-        # Reason: Code for 'determine_slope' assumes always more than one group.
         model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=1, gain=1, readnoise=10)
 
         model1.data[0, 0, 50, 50] = 10.0
@@ -521,15 +496,8 @@ class TestMethods:
 
         np.testing.assert_allclose(slopes[0].data[50, 50], 10.0, 1e-6)
 
-    # FAIL GPS
     def test_two_groups_unc(self, method):
-        # Reason: computed var_poisson anc var_rnoise are incorrect.
-        # Reason: Error matrix is only one dimensional havig shape (102,).
-        grouptime = 3.0
-        deltaDN = 5
-        ingain = 2
-        inreadnoise = 10
-        ngroups = 2
+        grouptime, deltaDN, ingain, inreadnoise, ngroups = 3.0, 5, 2, 10, 2
 
         model1, gdq, rnModel, pixdq, err, gain = setup_inputs(
             ngroups=ngroups, gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
@@ -553,28 +521,26 @@ class TestMethods:
         np.testing.assert_allclose(slopes[0].err[50, 50],
                                    (np.sqrt((deltaDN / ingain) / grouptime**2 + (inreadnoise**2 / grouptime**2))), 1e-6)
 
-    # FAIL GPS
     def test_five_groups_unc(self, method):
-        # Reason: computed var_poisson anc var_rnoise are incorrect.
-        # Reason: Error matrix is only one dimensional havig shape (102,).
-        grouptime = 3.0
-        # deltaDN = 5
-        ingain = 2
-        inreadnoise = 7
-        ngroups = 5
-        model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
-                                                              gain=ingain, readnoise=inreadnoise,
-                                                              deltatime=grouptime)
+        grouptime, ingain, inreadnoise, ngroups = 3.0, 2, 7, 5
+
+        model1, gdq, rnModel, pixdq, err, gain = setup_inputs(
+            ngroups=ngroups, gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
+
         model1.data[0, 0, 50, 50] = 10.0
         model1.data[0, 1, 50, 50] = 15.0
         model1.data[0, 2, 50, 50] = 25.0
         model1.data[0, 3, 50, 50] = 33.0
         model1.data[0, 4, 50, 50] = 60.0
+
         slopes = ramp_fit(model1, 1024 * 30000., True, rnModel, gain, method, 'optimal', 'none')
+
         # out_slope=slopes[0].data[500, 500]
         median_slope = np.median(np.diff(model1.data[0, :, 50, 50])) / grouptime
+
         # deltaDN = 50
         delta_time = (ngroups - 1) * grouptime
+
         # delta_electrons = median_slope * ingain *delta_time
         single_sample_readnoise = np.float64(inreadnoise / np.sqrt(2))
         np.testing.assert_allclose(slopes[0].var_poisson[50, 50],
@@ -584,11 +550,7 @@ class TestMethods:
         np.testing.assert_allclose(slopes[0].err[50, 50],
                                    np.sqrt(slopes[0].var_poisson[50, 50] + slopes[0].var_rnoise[50, 50]), 1e-6)
 
-    # FAIL GPS
     def test_oneCR_10_groups_combination(self, method):
-        # Reason: opt_model = None
-        # Reason: slopes.data[50, 50] differs from 2.5 by only 0.00110101
-
         # use large gain to show that Poisson noise doesn't affect the recombination
         grouptime, ingain, inreadnoise, ngroups = 3.0, 200, 7, 10
 
@@ -614,6 +576,7 @@ class TestMethods:
 
         segment_groups = 5
         single_sample_readnoise = np.float64(inreadnoise / np.sqrt(2))
+
         # check that the segment variance is as expected
         np.testing.assert_allclose(
             opt_model.var_rnoise[0, 0, 50, 50],
@@ -628,11 +591,7 @@ class TestMethods:
         np.testing.assert_allclose(opt_model.slope[0, 0, 50, 50], 5 / 3.0, rtol=1e-5)
         np.testing.assert_allclose(opt_model.slope[0, 1, 50, 50], 10 / 3.0, rtol=1e-5)
 
-    # FAIL GPS
     def test_oneCR_10_groups_combination_noisy2ndSegment(self, method):
-        # Reason: opt_res is None
-        # Reason: Computed slope is different by 0.033539
-
         # use large gain to show that Poisson noise doesn't affect the recombination
         grouptime, ingain, inreadnoise, ngroups = 3.0, 200, 7, 10
 
