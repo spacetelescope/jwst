@@ -2,8 +2,8 @@
 
 calwebb_guider: Guide Star Processing
 =====================================
-:Config: calwebb_guider.cfg
 :Class: `~jwst.pipeline.GuiderPipeline`
+:Alias: calwebb_guider
 
 The guider pipeline is only for use with data resulting from the FGS guiding functions:
 Identification (ID), Acquisition (ACQ1 and ACQ2), Track, and Fine Guide.
