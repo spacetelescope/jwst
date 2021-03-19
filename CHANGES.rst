@@ -73,6 +73,11 @@ transforms
 
 - Added ``is_star`` to GrismObject [#5788]
 
+tweakreg
+--------
+
+- Updated documentation to include the new "rshift" option for fit geometry [#5899]
+
 1.1.0 (2021-02-26)
 ==================
 

@@ -117,8 +117,12 @@ The ``tweakreg`` step has the following optional arguments:
 **Catalog fitting parameters:**
 
 * ``fitgeometry``: A `str` value indicating the type of affine transformation
-  to be considered when fitting catalogs. Allowed values: {``'shift'``,
-  ``'rscale'``, ``'general'``}. (Default="general")
+  to be considered when fitting catalogs. Allowed values:
+
+  - ``'shift'``: x/y shifts only
+  - ``'rscale'``: rotation and scale
+  - ``'rshift'``: rotation and shifts
+  - ``'general'``: shift, rotation, and scale (Default="general")
 
 * ``nclip``: A non-negative integer number of clipping iterations
   to use in the fit. (Default = 3)
