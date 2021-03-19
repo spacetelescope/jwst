@@ -3,8 +3,8 @@
 calwebb_coron3: Stage 3 Coronagraphic Processing
 ================================================
 
-:Config: calwebb_coron3.cfg
 :Class: `~jwst.pipeline.Coron3Pipeline`
+:Alias: calwebb_coron3
 
 The stage 3 coronagraphic pipeline is to be applied to
 associations of calibrated NIRCam coronagraphic and MIRI Lyot and 4QPM

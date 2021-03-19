@@ -32,7 +32,7 @@ pipeline, the order of steps is a bit different for MIRI exposures.
 |                                       | :ref:`rscd <rscd_step>`                 |
 +---------------------------------------+-----------------------------------------+
 
-.. [1] By default, the step parameter reference file `pars-darkpipeline`
+.. [1] By default, the step parameter reference `pars-darkpipeline`
    retrieved from CRDS will skip the :ref:`ipc <ipc_step>` step.
 
 Arguments
