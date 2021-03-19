@@ -4,37 +4,37 @@
 calwebb_image2: Stage 2 Imaging Processing
 ==========================================
 
-:Config: calwebb_image2.cfg, calwebb_tso-image2.cfg
 :Class: `~jwst.pipeline.Image2Pipeline`
+:Alias: calwebb_image2
 
 Stage 2 imaging processing applies additional instrumental corrections and
-calibrations that result in a fully calibrated individual exposure. There are two
-unique configuration files to be used to control this pipeline, depending on whether
-the data are to be treated as Time Series Observation (TSO). Non-TSO exposures use
-the ``calwebb_image2`` configuration, which applies all applicable steps to the data.
-The ``calwebb_tso-image2.cfg`` configuration, on the other hand, should be used for
-TSO exposures, for which some steps are set to be skipped by default (see the list of
-steps in the table below). Both configurations call the ``Image2Pipeline``; the only
+calibrations that result in a fully calibrated individual exposure. There are
+two unique configurations used to control this pipeline, depending on whether
+the data are to be treated as Time Series Observation (TSO). The configuration
+is controlled by CRDS and the reftype ``pars-image2pipeline``. In general, for
+non-TSO exposures, all applicable steps are applied to the data. For TSO
+exposures, some steps are set to be skipped by default (see the list of steps in
+the table below). Both configurations call the ``Image2Pipeline``; the only
 difference is which steps are applied.
 
-The list of steps applied by the ``Image2Pipeline`` pipeline is shown in the table
-below and indicates which steps are used by the ``calwebb_tso-image2.cfg`` configuration.
+As of CRDS context ``jwst_0704``, the list of steps applied by the
+``Image2Pipeline`` pipeline is shown in the table below.
 
 .. |check| unicode:: U+2713 .. checkmark
 
-+--------------------------------------+--------------------+
-| calwebb_image2                       | calwebb_tso-image2 |
-+======================================+====================+
-| :ref:`background <background_step>`  |                    |
-+--------------------------------------+--------------------+
-| :ref:`assign_wcs <assign_wcs_step>`  | |check|            |
-+--------------------------------------+--------------------+
-| :ref:`flat_field <flatfield_step>`   | |check|            |
-+--------------------------------------+--------------------+
-| :ref:`photom <photom_step>`          | |check|            |
-+--------------------------------------+--------------------+
-| :ref:`resample <resample_step>` [1]_ |                    |
-+--------------------------------------+--------------------+
++--------------------------------------+---------+---------+
+| Step                                 | Non-TSO | TSO     |
++======================================+=========+=========+
+| :ref:`background <background_step>`  | |check| |         |
++--------------------------------------+---------+---------+
+| :ref:`assign_wcs <assign_wcs_step>`  | |check| | |check| |
++--------------------------------------+---------+---------+
+| :ref:`flat_field <flatfield_step>`   | |check| | |check| |
++--------------------------------------+---------+---------+
+| :ref:`photom <photom_step>`          | |check| | |check| |
++--------------------------------------+---------+---------+
+| :ref:`resample <resample_step>` [1]_ | |check| |         |
++--------------------------------------+---------+---------+
 
 .. [1] Resampling is only performed for exposure types "MIR_IMAGE", "NRC_IMAGE", and
    "NIS_IMAGE".
@@ -69,9 +69,7 @@ used as input, each step applies its algorithm to each
 integration in the exposure, where appropriate.
 
 TSO and coronagraphic exposures are expected to use 3D data as input, to be
-processed on a per-integration basis. TSO exposures should use the
-``calwebb_tso-image2.cfg`` configuration, while coronagraphic exposures
-should use the regular ``calwebb_image2.cfg`` configuration.
+processed on a per-integration basis.
 
 Outputs
 -------

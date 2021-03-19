@@ -15,7 +15,7 @@ are in the form of one or more ramps (integrations) containing accumulating
 counts from the non-destructive detector readouts and the output is a corrected
 countrate (slope) image.
 
-There are two unique configuration files to be used to control this pipeline,
+There are two unique configurations used to control this pipeline,
 depending on whether the data are to be treated as a Time Series Observation
 (TSO). The configuration is controlled by CRDS and the reftype
 ``pars-detector1pipeline``. In general, for Non-TSO exposures, all applicable
