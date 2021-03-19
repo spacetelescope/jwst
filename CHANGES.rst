@@ -22,6 +22,10 @@ associations
 - Removed PATTTYPE='None' constraint from Lv3MIRMRS association rule to
   generate spec3 associations for undithered MRS observations. [#5804]
 
+- Updated level2b WFSS rules to only consider exposures using the same
+  PUPIL value (cross filter) when matching direct images with grism images
+  in NIRISS WFSS observations. [#5896]
+
 cube_build
 ----------
 

@@ -1,14 +1,14 @@
 .. _asn-level2-techspecs:
 
-Level 2 Associations: Technical Specifications
+Stage 2 Associations: Technical Specifications
 ==============================================
 
 Logical Structure
 -----------------
 
-Independent of the actual format, all Level 2 associations have the
+Independent of the actual format, all stage 2 associations have the
 following structure. Again, the structure is defined and enforced by
-the Level 2 schema
+the stage 2 schema
 
   * Top level, or meta, key/values
   * List of products, each consisting of
@@ -103,23 +103,23 @@ constraints *optional*
 ^^^^^^^^^^^^^^^^^^^^
 
 A list of products that would be produced by this association. For
-Level2, each product is an exposure. Each product should have one
-``science`` member, the exposure on which the Level2b processing will
+stage 2, each product is an exposure. Each product should have one
+``science`` member, the exposure on which the stage 2 processing will
 occur.
 
 Association products have two components: 
 
 name *optional*
-  The string template to be used by Level 2b processing tasks to create
+  The string template to be used by stage 2 processing tasks to create
   the output file names. The product name, in general, is a prefix on
   which the individual pipeline and step modules will append whatever
   suffix information is needed.
 
-  If not specified, the Level2b processing modules will create a name
+  If not specified, the stage 2 processing modules will create a name
   based off the name of the ``science`` member.
 
 members *required*
-  This is a list of the exposures to be used by the Level 2b processing
+  This is a list of the exposures to be used by the stage 2 processing
   tasks. This keyword is explained in detail in the next section.
 
 ``members`` Keyword
