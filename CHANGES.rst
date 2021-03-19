@@ -34,6 +34,8 @@ datamodels
 
 - Update keyword comments for NIRSpec grating wheel (GWA) keywords [#5844]
 
+- Moved functions in dqflags to ``stcal`` [#5898]
+
 extract_2d
 ----------
 
