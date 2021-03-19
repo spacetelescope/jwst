@@ -3,8 +3,8 @@
 calwebb_dark: Dark Processing
 =============================
 
-:Config: calwebb_dark.cfg
-:Class: `~jwst.pipeline.DarkPipeline`
+:Class: `jwst.pipeline.DarkPipeline`
+:Alias: calwebb_dark
 
 The ``DarkPipeline`` applies basic detector-level corrections to all dark exposures.
 It is identical to the :ref:`calwebb_detector1 <calwebb_detector1>` pipeline, except
@@ -32,8 +32,8 @@ pipeline, the order of steps is a bit different for MIRI exposures.
 |                                       | :ref:`rscd <rscd_step>`                 |
 +---------------------------------------+-----------------------------------------+
 
-.. [1] The :ref:`ipc <ipc_step>` step is currently set to be skipped by default in the
-   "calwebb_dark.cfg" configuration file for all instruments.
+.. [1] By default, the step parameter reference file `pars-darkpipeline`
+   retrieved from CRDS will skip the :ref:`ipc <ipc_step>` step.
 
 Arguments
 ---------
