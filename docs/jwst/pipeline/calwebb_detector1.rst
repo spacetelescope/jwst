@@ -4,8 +4,8 @@
 calwebb_detector1: Stage 1 Detector Processing
 ==============================================
 
-:Config: calwebb_detector1.cfg, calwebb_tso1.cfg
 :Class: `~jwst.pipeline.Detector1Pipeline`
+:Alias: calwebb_detector1
 
 The ``Detector1Pipeline`` applies basic detector-level corrections to all exposure
 types (imaging, spectroscopic, coronagraphic, etc.). It is applied to one
@@ -16,53 +16,53 @@ counts from the non-destructive detector readouts and the output is a corrected
 countrate (slope) image.
 
 There are two unique configuration files to be used to control this pipeline,
-depending on whether the data are to be treated as a Time Series Observation (TSO).
-Non-TSO exposures use the ``calwebb_detector1`` configuration, which applies all
-applicable steps to the data. The ``calwebb_tso1`` configuration, on the other hand,
-should be used for TSO exposures, for which some steps are set to be skipped by
-default (see the list of steps in the table below). Both configurations call the
-``Detector1Pipeline``; the only difference is which steps are applied.
+depending on whether the data are to be treated as a Time Series Observation
+(TSO). The configuration is controlled by CRDS and the reftype
+``pars-detector1pipeline``. In general, for Non-TSO exposures, all applicable
+steps are applied to the data. For TSO exposures, some steps are set to be
+skipped by default (see the list of steps in the table below).
 
-The list of steps applied by the ``Detector1Pipeline`` pipeline is shown in the
-table below. Note that MIRI exposures use some instrument-specific steps and some of
-the steps are applied in a different order than for Near-IR (NIR) instrument exposures.
+As of CRDS context ``jwst_0704``, the list of steps applied by the
+``Detector1Pipeline`` pipeline is shown in the table below. Note that MIRI
+exposures use some instrument-specific steps and some of the steps are applied
+in a different order than for Near-IR (NIR) instrument exposures.
 
 .. |check| unicode:: U+2713 .. checkmark
 
-+--------------------------------------------+---------+-----------------------------------------+---------+
-| Near-IR                                              | MIRI                                              |
-+--------------------------------------------+---------+-----------------------------------------+---------+
-| calwebb_detector1                          | tso1    | calwebb_detector1                       | tso1    |
-+============================================+=========+=========================================+=========+
-| :ref:`group_scale <group_scale_step>`      | |check| | :ref:`group_scale <group_scale_step>`   |         |
-+--------------------------------------------+---------+-----------------------------------------+---------+
-| :ref:`dq_init <dq_init_step>`              | |check| | :ref:`dq_init <dq_init_step>`           | |check| |
-+--------------------------------------------+---------+-----------------------------------------+---------+
-| :ref:`saturation <saturation_step>`        | |check| | :ref:`saturation <saturation_step>`     | |check| |
-+--------------------------------------------+---------+-----------------------------------------+---------+
-| :ref:`ipc <ipc_step>` [1]_                 |         | :ref:`ipc <ipc_step>`                   |         |
-+--------------------------------------------+---------+-----------------------------------------+---------+
-| :ref:`superbias <superbias_step>`          | |check| | :ref:`firstframe <firstframe_step>`     |         |
-+--------------------------------------------+---------+-----------------------------------------+---------+
-| :ref:`refpix <refpix_step>`                | |check| | :ref:`lastframe <lastframe_step>`       |         |
-+--------------------------------------------+---------+-----------------------------------------+---------+
-| :ref:`linearity <linearity_step>`          | |check| | :ref:`linearity <linearity_step>`       | |check| |
-+--------------------------------------------+---------+-----------------------------------------+---------+
-| :ref:`persistence <persistence_step>` [2]_ |         | :ref:`rscd <rscd_step>`                 |         |
-+--------------------------------------------+---------+-----------------------------------------+---------+
-| :ref:`dark_current <dark_current_step>`    | |check| | :ref:`dark_current <dark_current_step>` | |check| |
-+--------------------------------------------+---------+-----------------------------------------+---------+
-|                                            |         | :ref:`refpix <refpix_step>`             | |check| |
-+--------------------------------------------+---------+-----------------------------------------+---------+
-| :ref:`jump <jump_step>`                    | |check| | :ref:`jump <jump_step>`                 | |check| |
-+--------------------------------------------+---------+-----------------------------------------+---------+
-| :ref:`ramp_fitting <ramp_fitting_step>`    | |check| | :ref:`ramp_fitting <ramp_fitting_step>` | |check| |
-+--------------------------------------------+---------+-----------------------------------------+---------+
-| :ref:`gain_scale <gain_scale_step>`        | |check| | :ref:`gain_scale <gain_scale_step>`     | |check| |
-+--------------------------------------------+---------+-----------------------------------------+---------+
++--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
+| Near-IR                                                        | MIRI                                                        |
++--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
+| Step                                       | Non-TSO | TSO     | Step                                    | Non-TSO | TSO     |
++============================================+=========+=========+=========================================+=========+=========+
+| :ref:`group_scale <group_scale_step>`      | |check| | |check| | :ref:`group_scale <group_scale_step>`   | |check| | |check| |
++--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
+| :ref:`dq_init <dq_init_step>`              | |check| | |check| | :ref:`dq_init <dq_init_step>`           | |check| | |check| |
++--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
+| :ref:`saturation <saturation_step>`        | |check| | |check| | :ref:`saturation <saturation_step>`     | |check| | |check| |
++--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
+| :ref:`ipc <ipc_step>` [1]_                 |         |         | :ref:`ipc <ipc_step>`                   |         |         |
++--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
+| :ref:`superbias <superbias_step>`          | |check| | |check| | :ref:`firstframe <firstframe_step>`     | |check| |         |
++--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
+| :ref:`refpix <refpix_step>`                | |check| | |check| | :ref:`lastframe <lastframe_step>`       | |check| |         |
++--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
+| :ref:`linearity <linearity_step>`          | |check| | |check| | :ref:`linearity <linearity_step>`       | |check| | |check| |
++--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
+| :ref:`persistence <persistence_step>` [2]_ | |check| |         | :ref:`rscd <rscd_step>`                 | |check| |         |
++--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
+| :ref:`dark_current <dark_current_step>`    | |check| | |check| | :ref:`dark_current <dark_current_step>` | |check| | |check| |
++--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
+|                                            |         |         | :ref:`refpix <refpix_step>`             | |check| | |check| |
++--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
+| :ref:`jump <jump_step>`                    | |check| | |check| | :ref:`jump <jump_step>`                 | |check| | |check| |
++--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
+| :ref:`ramp_fitting <ramp_fitting_step>`    | |check| | |check| | :ref:`ramp_fitting <ramp_fitting_step>` | |check| | |check| |
++--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
+| :ref:`gain_scale <gain_scale_step>`        | |check| | |check| | :ref:`gain_scale <gain_scale_step>`     | |check| | |check| |
++--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
 
-.. [1] The :ref:`ipc <ipc_step>` step is currently set to be skipped by default in the
-   "calwebb_detector1.cfg" and "calwebb_tso1.cfg" configuration files for all instruments.
+.. [1] By default, the step parameter reference `pars-darkpipeline`
+   retrieved from CRDS will skip the :ref:`ipc <ipc_step>` step for all instruments.
 .. [2] The :ref:`persistence <persistence_step>` step is currently hardwired to be skipped in
    the `Detector1Pipeline` module for all NIRSpec exposures.
 
