@@ -3,7 +3,7 @@
 calwebb_image3: Stage 3 Imaging Processing
 ==========================================
 
-:Class: `~jwst.pipeline.Image3Pipeline`
+:Class: `jwst.pipeline.Image3Pipeline`
 :Alias: calwebb_image3
 
 Stage 3 processing for direct-imaging observations is intended for combining the 

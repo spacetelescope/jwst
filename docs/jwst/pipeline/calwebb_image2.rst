@@ -4,7 +4,7 @@
 calwebb_image2: Stage 2 Imaging Processing
 ==========================================
 
-:Class: `~jwst.pipeline.Image2Pipeline`
+:Class: `jwst.pipeline.Image2Pipeline`
 :Alias: calwebb_image2
 
 Stage 2 imaging processing applies additional instrumental corrections and

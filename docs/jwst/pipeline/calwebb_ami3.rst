@@ -3,7 +3,7 @@
 calwebb_ami3: Stage 3 Aperture Masking Interferometry (AMI) Processing
 ======================================================================
 
-:Class: `~jwst.pipeline.Ami3Pipeline`
+:Class: `jwst.pipeline.Ami3Pipeline`
 :Alias: calwebb_ami3
 
 The stage 3 AMI pipeline is applied to associations of calibrated NIRISS AMI exposures.

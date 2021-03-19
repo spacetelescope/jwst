@@ -3,7 +3,7 @@
 calwebb_wfs-image3: Stage 3 WFS&C Processing
 ============================================
 
-:Class: `~jwst.wfs_combine.WfsCombineStep`
+:Class: `jwst.wfs_combine.WfsCombineStep`
 :Alias: calwebb_wfs-image3
 
 Stage 3 processing of Wavefront Sensing and Control (WFS&C) images is only performed

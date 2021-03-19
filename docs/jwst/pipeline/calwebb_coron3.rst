@@ -3,7 +3,7 @@
 calwebb_coron3: Stage 3 Coronagraphic Processing
 ================================================
 
-:Class: `~jwst.pipeline.Coron3Pipeline`
+:Class: `jwst.pipeline.Coron3Pipeline`
 :Alias: calwebb_coron3
 
 The stage 3 coronagraphic pipeline is to be applied to

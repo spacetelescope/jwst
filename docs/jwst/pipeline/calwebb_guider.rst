@@ -2,7 +2,7 @@
 
 calwebb_guider: Guide Star Processing
 =====================================
-:Class: `~jwst.pipeline.GuiderPipeline`
+:Class: `jwst.pipeline.GuiderPipeline`
 :Alias: calwebb_guider
 
 The guider pipeline is only for use with data resulting from the FGS guiding functions:

@@ -3,7 +3,7 @@
 calwebb_spec3: Stage 3 Spectroscopic Processing
 ===============================================
 
-:Class: `~jwst.pipeline.Spec3Pipeline`
+:Class: `jwst.pipeline.Spec3Pipeline`
 :Alias: calwebb_spec3
 
 Stage 3 processing for spectroscopic observations is intended for combining the 

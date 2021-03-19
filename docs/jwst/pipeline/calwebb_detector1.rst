@@ -4,7 +4,7 @@
 calwebb_detector1: Stage 1 Detector Processing
 ==============================================
 
-:Class: `~jwst.pipeline.Detector1Pipeline`
+:Class: `jwst.pipeline.Detector1Pipeline`
 :Alias: calwebb_detector1
 
 The ``Detector1Pipeline`` applies basic detector-level corrections to all exposure
