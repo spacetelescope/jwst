@@ -159,7 +159,18 @@ def test_export_config(step_obj, expected, tmp_path):
     step_obj.export_config(config_path)
 
     with asdf.open(config_path) as af:
-        assert StepConfig.from_asdf(af) == expected
+        # StepConfig has an __eq__ implementation but we can't use it
+        # due to differences between asdf 2.7 and 2.8 in serializing None
+        # values.  This can be simplified once the minimum asdf requirement
+        # is changed to >= 2.8.
+        # assert StepConfig.from_asdf(af) == expected
+        config = StepConfig.from_asdf(af)
+        assert config.class_name == expected.class_name
+        assert config.name == expected.name
+        assert config.steps == expected.steps
+        parameters = set(expected.parameters.keys()).union(set(config.parameters.keys()))
+        for parameter in parameters:
+            assert config.parameters.get(parameter) == expected.parameters.get(parameter)
 
 
 @pytest.mark.parametrize(
