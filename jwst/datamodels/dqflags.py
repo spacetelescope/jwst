@@ -16,6 +16,8 @@ The data structure that stores bit flags is just the standard Python `int`,
 which provides 32 bits. Bits of an integer are most easily referred to using
 the formula `2**bit_number` where `bit_number` is the 0-index bit of interest.
 """
+
+# These imports are here for backwards compatibility 
 from astropy.nddata.bitmask import interpret_bit_flags as ap_interpret_bit_flags
 from stcal.dqflags import interpret_bit_flags, dqflags_to_mnemonics
 from jwst.lib.basic_utils import multiple_replace

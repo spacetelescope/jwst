@@ -1,5 +1,4 @@
 from .reference import ReferenceFileModel
-#from .dynamicdq import dynamic_mask
 from stcal.dynamicdq import dynamic_mask
 from .dqflags import pixel, group
 
