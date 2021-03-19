@@ -1,6 +1,6 @@
 from .reference import ReferenceFileModel
 from stcal.dynamicdq import dynamic_mask
-from .dqflags import pixel, group
+from .dqflags import pixel
 
 __all__ = ['MaskModel']
 
