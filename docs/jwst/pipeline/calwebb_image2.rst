@@ -14,8 +14,7 @@ the data are to be treated as Time Series Observation (TSO). The configuration
 is controlled by CRDS and the reftype ``pars-image2pipeline``. In general, for
 non-TSO exposures, all applicable steps are applied to the data. For TSO
 exposures, some steps are set to be skipped by default (see the list of steps in
-the table below). Both configurations call the ``Image2Pipeline``; the only
-difference is which steps are applied.
+the table below).
 
 As of CRDS context ``jwst_0704``, the list of steps applied by the
 ``Image2Pipeline`` pipeline is shown in the table below.
