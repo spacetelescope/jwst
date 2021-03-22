@@ -32,8 +32,8 @@ LOGLEVELS = [logging.INFO, logging.DEBUG, DEBUG_FULL]
 
 # The available methods for transformation
 class Methods(Enum):
-    ORIGINAL       = ('original', 'calc_transforms_original')              # Original, pre-JSOCINT-555 algorithm
-    CMDTEST        = ('cmdtest', 'calc_transforms_cmdtest_j3pags')         # JSOCINT-555 fix using J3PA@GS
+    ORIGINAL = ('original', 'calc_transforms_original')                    # Original, pre-JSOCINT-555 algorithm
+    CMDTEST = ('cmdtest', 'calc_transforms_cmdtest_j3pags')                # JSOCINT-555 fix using J3PA@GS
     CMDTEST_V3PAGS = ('cmdtest_v3pags', 'calc_transforms_cmdtest_v3pags')  # JSOCINT-555 fix using V3PA@GS
 
     default = ORIGINAL  # Use original algorithm if not specified
