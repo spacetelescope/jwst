@@ -32,10 +32,20 @@ LOGLEVELS = [logging.INFO, logging.DEBUG, DEBUG_FULL]
 
 # The available methods for transformation
 class Methods(Enum):
-    ORIGINAL = 'original'  # Original, pre-JSOCINT-555 algorithm
-    CMDTEST = 'cmdtest'   # The JSOCINT-555 fix to test
+    ORIGINAL = ('original', 'calc_transforms_original')  # Original, pre-JSOCINT-555 algorithm
+    CMDTEST = ('cmdtest', 'calc_transforms_cmdtest')     # The JSOCINT-555 fix to test
 
     default = ORIGINAL  # Use original algorithm if not specified
+
+    def __new__(cls: object, value: str, func_name: str):
+        obj = object.__new__(cls)
+        obj._value_ = value
+        obj._func_name = func_name
+        return obj
+
+    @property
+    def func(self):
+        return globals()[self._func_name]
 
     def __str__(self):
         return self.value
@@ -799,16 +809,7 @@ def calc_transforms(t_pars: TransformParameters):
         The list of coordinate matrix transformations
     """
     t_pars.method = t_pars.method if t_pars.method else Methods.default
-
-    if t_pars.method == Methods.ORIGINAL:
-        transforms = calc_transforms_original(t_pars)
-    elif t_pars.method == Methods.CMDTEST:
-        transforms = calc_transforms_cmdtest(t_pars)
-    else:
-        raise RuntimeError(
-            f'Specified method "{t_pars.method}" not in available methods '
-            f'{[m.name for m in Methods]}'
-        )
+    transforms = t_pars.method.func(t_pars)
     return transforms
 
 
