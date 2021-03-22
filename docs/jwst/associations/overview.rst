@@ -80,7 +80,7 @@ to run the generator, the :ref:`asn-utilities` and :ref:`Association Generator <
 Once an association is in-hand, one can pass it as input to a pipeline
 routine. For example::
 
-  % strun calwebb_image3.cfg  jw12345_xxxx_asn.json
+  % strun calwebb_image3  jw12345_xxxx_asn.json
 
 Programmatically, to read in an Association, one uses the
 :py:func:`~jwst.associations.load_asn` function:
