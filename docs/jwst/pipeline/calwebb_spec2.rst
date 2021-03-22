@@ -18,9 +18,9 @@ by default (see the list of steps in the table below).
 The ``Spec2Pipeline`` is the "Swiss army knife" of pipeline modules, containing
 many steps that are only applied to certain instruments or instrument modes. The
 logic for determining which steps are appropriate is built into the pipeline
-module itself or controlled by the CRDS reftype ``pars-spec2pipeline``. Logic is
-mostly based on either the instrument name or the exposure type (EXP_TYPE
-keyword) of the data.
+module itself or controlled by the CRDS ``pars-spec2pipeline`` parameter
+reference file. Logic is mostly based on either the instrument name or the
+exposure type (EXP_TYPE keyword) of the data.
 
 The list of steps is shown in the table below and indicates which steps are
 applied to various spectroscopic modes, as well as TSO. The instrument mode

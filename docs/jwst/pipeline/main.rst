@@ -219,13 +219,13 @@ Control (WFS&C) use a dedicated processing flow through the pipeline stages.
 Configuration File Deprecation
 ==============================
 
-Up to version 1.1.1, the primary way specific pipelines were referred to was by
+Up to version 1.1.0, the primary way specific pipelines were referred to was by
 their configuration file name, i.e. ``calwebb_detector1.cfg``. These
 configuration files were delivered as part of the JWST calibration package.
 Below is the table that matched configuration file to observing mode it was
 intended to be used with.
 
-Post-1.1.1, configuration files are no longer the primary identifier of
+Post-1.1.0, configuration files are no longer the primary identifier of
 pipelines. Instead, pipelines are identified by their full class name, i.e.
 ``jwst.pipeline.Detector1Pipeline``, or by their simple name, or alias, i.e.
 ``calwebb_detector1``. How a pipeline is run is determined by the input data and
@@ -237,7 +237,7 @@ specific reference file for a reftype is then determined by the data, just as
 with any other reference file.
 
 As a result, there are a few pipelines that no longer exist explicitly by name,
-since they were only a configuration file for an already existing pipeline
+because they were only a configuration file for an already existing pipeline
 class. The pipelines continue to operate correctly for the specific cases,
 because the step parameter references pulled from CRDS will have the correct
 configuration. The following table lists the deprecated configuration files and
@@ -257,7 +257,7 @@ what pipeline should now be referred to.
 | calwebb_wfs-image2.cfg    | `jwst.pipeline.Image2Pipeline`    | calwebb_image2    |
 +---------------------------+-----------------------------------+-------------------+
 
-The deprecated, up to version 1.1.1, configuration to mode mapping. This table is given only
+The deprecated configuration to mode mapping up to version 1.1.0. This table is given only
 as historical reference for software and documentation that used this terminology.
 
 +------------------------------------+---------------------------+------------------------------+

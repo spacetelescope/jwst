@@ -17,15 +17,15 @@ countrate (slope) image.
 
 There are two unique configurations used to control this pipeline,
 depending on whether the data are to be treated as a Time Series Observation
-(TSO). The configuration is controlled by CRDS and the reftype
+(TSO). The configuration is provided by CRDS and the reftype
 ``pars-detector1pipeline``. In general, for Non-TSO exposures, all applicable
 steps are applied to the data. For TSO exposures, some steps are set to be
 skipped by default (see the list of steps in the table below).
 
-As of CRDS context ``jwst_0704``, the list of steps applied by the
-``Detector1Pipeline`` pipeline is shown in the table below. Note that MIRI
-exposures use some instrument-specific steps and some of the steps are applied
-in a different order than for Near-IR (NIR) instrument exposures.
+The list of steps applied by the ``Detector1Pipeline`` pipeline is shown in the
+table below. Note that MIRI exposures use some instrument-specific steps and
+some of the steps are applied in a different order than for Near-IR (NIR)
+instrument exposures.
 
 .. |check| unicode:: U+2713 .. checkmark
 
@@ -61,7 +61,7 @@ in a different order than for Near-IR (NIR) instrument exposures.
 | :ref:`gain_scale <gain_scale_step>`        | |check| | |check| | :ref:`gain_scale <gain_scale_step>`     | |check| | |check| |
 +--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
 
-.. [1] By default, the step parameter reference `pars-darkpipeline`
+.. [1] By default, the step parameter reference `pars-detector1pipeline`
    retrieved from CRDS will skip the :ref:`ipc <ipc_step>` step for all instruments.
 .. [2] The :ref:`persistence <persistence_step>` step is currently hardwired to be skipped in
    the `Detector1Pipeline` module for all NIRSpec exposures.
