@@ -20,7 +20,7 @@ the formula `2**bit_number` where `bit_number` is the 0-index bit of interest.
 # These imports are here for backwards compatibility
 from astropy.nddata.bitmask import interpret_bit_flags as ap_interpret_bit_flags # NOQA
 from stcal.dqflags import interpret_bit_flags, dqflags_to_mnemonics # NOQA
-from jwst.lib.basic_utils import multiple_replace # NOQA
+from stcal.basic_utils import multiple_replace # NOQA
 
 # Pixel-specific flags
 pixel = {'GOOD':             0,      # No bits set, all is good
