@@ -25,33 +25,39 @@ From a configuration file
 -------------------------
 
 A Pipeline configuration file follows the same format as a Step
-configuration file: the ini-file format used by the `ConfigObj
-<https://configobj.readthedocs.io/en/latest/>`_ library.
+configuration file: :ref:`config_asdf_files`
 
-Here is an example pipeline configuration file for a `TestPipeline`
+Here is an example pipeline configuration file for the `Image2Pipeline`
 class:
 
-.. code-block:: ini
+.. code-block:: yaml
 
-    name = "TestPipeline"
-    class = "stpipe.test.test_pipeline.TestPipeline"
-
-    science_filename = "science.fits"
-    flat_filename = "flat.fits"
-    output_filename = "output.fits"
-
-    [steps]
-      [[flat_field]]
-        config_file = "flat_field.cfg"
-        threshold = 42.0
-
-      [[combine]]
-        skip = True
+   #ASDF 1.0.0
+   #ASDF_STANDARD 1.5.0
+   %YAML 1.1
+   %TAG ! tag:stsci.edu:asdf/
+   --- !core/asdf-1.1.0
+   asdf_library: !core/software-1.0.0 {author: Space Telescope Science Institute, homepage: 'http://github.com/spacetelescope/asdf',
+      name: asdf, version: 2.7.3}
+   class: jwst.pipeline.Image2Pipeline
+   name: Image2Pipeline
+   parameters:
+      save_bsub: false
+   steps:
+   - class: jwst.flatfield.flat_field_step.FlatFieldStep
+     name: flat_field
+     parameters:
+       skip = True
+   - class: jwst.resample.resample_step.ResampleStep
+     name: resample
+     parameters:
+       pixel_scale_ratio: 1.0
+       pixfrac: 1.0
 
 Just like a ``Step``, it must have ``name`` and ``class`` values.
 Here the ``class`` must refer to a subclass of `stpipe.Pipeline`.
 
-Following ``name`` and ``class`` is the ``[steps]`` section.  Under
+Following ``name`` and ``class`` is the ``steps`` section.  Under
 this section is a subsection for each step in the pipeline.  To figure
 out what configuration parameters are available, use the `stspec`
 script (just as with a regular step):
@@ -78,27 +84,34 @@ specified inline, or specified by referencing an external
 configuration file just for that step.  For example, a pipeline
 configuration file that contains:
 
-.. code-block:: ini
+.. code-block:: yaml
 
-    [steps]
-      [[flat_field]]
-        threshold = 42.0
-        multiplier = 2.0
+   steps:
+   - class: jwst.resample.resample_step.ResampleStep
+     name: resample
+     parameters:
+       pixel_scale_ratio: 1.0
+       pixfrac: 1.0
 
 is equivalent to:
 
-.. code-block:: ini
+.. code-block:: yaml
 
-    [steps]
-      [[flat_field]]
-        config_file = myflatfield.cfg
+   steps:
+   - class: jwst.resample.resample_step.ResampleStep
+     name: resample
+     parameters:
+        config_file = myresample.asdf
 
-with the file ``myflatfield.cfg`` in the same directory:
+with the file ``myresample.asdf.`` in the same directory:
 
-.. code-block:: ini
+.. code-block:: yaml
 
-    threshold = 42.0
-    multiplier = 2.0
+   class: jwst.resample.resample_step.ResampleStep
+   name: resample
+   parameters:
+     pixel_scale_ratio: 1.0
+     pixfrac: 1.0
 
 If both a ``config_file`` and additional parameters are specified, the
 ``config_file`` is loaded, and then the local parameters override
@@ -119,19 +132,13 @@ equivalent of the configuration file above:
 
 .. code-block:: python
 
-    from stpipe.test.test_pipeline import TestPipeline
+    from stpipe.pipeline import Image2Pipeline
 
     steps = {
-        'flat_field':   {'threshold': 42.0}
-        }
+        'resample': {'pixel_scale_ratio': 1.0, 'pixfrac': 1.0}
+    }
 
-    pipe = TestPipeline(
-        "TestPipeline",
-        config_file=__file__,
-        science_filename="science.fits",
-        flat_filename="flat.fits",
-        output_filename="output.fits",
-        steps=steps)
+    pipe = Image2Pipeline(steps=steps)
 
 Running a Pipeline
 ==================
@@ -144,10 +151,10 @@ also run Pipelines.
 
 The only wrinkle is that any step parameters overridden from the
 commandline use dot notation to specify the parameter name.  For
-example, to override the ``threshold`` value on the ``flat_field``
-step in the example pipeline above, one can do::
+example, to override the ``pixfrac`` value on the ``resample``
+step in the example above, one can do::
 
-    > strun stpipe.test.test_pipeline.TestPipeline --steps.flat_field.threshold=48
+    > strun stpipe.pipeline.Image2Pipeline --steps.resample.pixfrac=2.0
 
 From Python
 -----------
@@ -201,9 +208,10 @@ For example, here’s a ``post_hook`` that will display a FITS file in
 the ``ds9`` FITS viewer the ``flat_field`` step has done flat field
 correction on it:
 
-.. code-block:: ini
+.. code-block:: yaml
 
-    [steps]
-      [[flat_field]]
-        threshold = 42.0
+   steps:
+   - class: jwst.resample.resample_step.ResampleStep
+     name: resample
+     parameters:
         post_hooks = "ds9 {0}",

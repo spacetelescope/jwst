@@ -262,7 +262,7 @@ arguments.  Any remaining positional arguments are passed along to the step's
 
     from jwst.stpipe import cleanup
 
-    cleanup.call('image.fits', config_file='do_cleanup.cfg', threshold=42.0)
+    cleanup.call('image.fits', config_file='do_cleanup.asdf', threshold=42.0)
 
 So use call() if you’re passing a config file or passing along args or kwargs.
 Otherwise use run().

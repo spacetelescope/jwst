@@ -193,10 +193,8 @@ determined by the built-in configuration option `save_results`. If
 `True`, output files will be created. `save_results` is set under a
 number of conditions:
 
-    - Explicitly through the `cfg` file or as a command-line option.
+    - Explicitly through a configuration file or as a command-line option.
     - Implicitly when a step is called by `strun`.
-    - Implicitly when the configuration option `output_file` is given
-      a value.
 
 Output File Naming
 ------------------

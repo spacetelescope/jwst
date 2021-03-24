@@ -21,10 +21,10 @@ then supply the file using the ``config_file`` keyword:
 ::
 
  # Calling a pipeline
- result = Detector1Pipeline.call('jw00017001001_01101_00001_nrca1_uncal.fits', config_file='calwebb_detector1.cfg')
+ result = Detector1Pipeline.call('jw00017001001_01101_00001_nrca1_uncal.fits', config_file='calwebb_detector1.asdf')
 
  # Calling a step
- result = LinearityStep.call('jw00017001001_01101_00001_nrca1_uncal.fits', config_file='linearity.cfg')
+ result = LinearityStep.call('jw00017001001_01101_00001_nrca1_uncal.fits', config_file='linearity.asdf')
 
 
 When running a pipeline, parameter values can also be supplied in the call to ``call`` itself by using a nested dictionary of step and
@@ -32,7 +32,7 @@ parameter names:
 
 ::
 
- result = Detector1Pipeline.call("jw00017001001_01101_00001_nrca1_uncal.fits", config_file='calwebb_detector1.cfg', steps={"jump":{"rejection_threshold": 200}})
+ result = Detector1Pipeline.call("jw00017001001_01101_00001_nrca1_uncal.fits", config_file='calwebb_detector1.asdf', steps={"jump":{"rejection_threshold": 200}})
 
 When running a single step with ``call``, parameter values can be supplied more simply:
 
