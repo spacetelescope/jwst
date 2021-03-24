@@ -210,6 +210,7 @@ used. For example, to create a configuration file for ``CubeBuildStep``, use the
 following:
 
 .. code-block:: python
+.. doctest-skip::
 
    >>> from jwst.cube_build import CubeBuildStep
    >>> step = CubeBuildStep()
@@ -226,6 +227,7 @@ The direct way of creating a step parameter reference file is through the ``Step
 configuration file. The only addition is the added argument ``include_meta=True``. For example, to get a reference-file ready version of the ``CubeBuildStep``, use the following Python code:
 
 .. code-block:: python
+.. doctest-skip::
 
    >>> from jwst.cube_build import CubeBuildStep
    >>> step = CubeBuildStep()

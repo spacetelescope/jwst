@@ -187,9 +187,11 @@ For example, the command line below:
 can be executed from within Python as follows:
 ::
 
-    >>> from jwst.stpipe import Step
-    >>> Step.from_cmdline(['calwebb_spec2', 'jw00017001001_01101_00001_nrca1_uncal.fits',
-            '--steps.dark_current.override_dark', 'my_dark.fits'])
+.. doctest-skip::
+
+   >>> from jwst.stpipe import Step
+   >>> Step.from_cmdline(['calwebb_spec2', 'jw00017001001_01101_00001_nrca1_uncal.fits',
+           '--steps.dark_current.override_dark', 'my_dark.fits'])
 
 ``from_cmdline`` returns the ``Step`` object executed, ``Detector1Pipeline`` in
 the above example. However, it does not return any results.
