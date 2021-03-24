@@ -95,11 +95,11 @@ that runs the ``stpipe.cleanup`` step to clean up an image.
     %YAML 1.1
     %TAG ! tag:stsci.edu:asdf/
     --- !core/asdf-1.1.0
+    class: stpipe.cleanup
+    name: MyCleanup
     parameters:
-      class = "stpipe.cleanup"
-      name = "MyCleanup"
-      threshold = 42.0
-      scale = 0.01
+      threshold: 42.0
+      scale: 0.01
     ...
 
 .. _strun:
