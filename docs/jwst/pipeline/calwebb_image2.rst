@@ -16,8 +16,8 @@ non-TSO exposures, all applicable steps are applied to the data. For TSO
 exposures, some steps are set to be skipped by default (see the list of steps in
 the table below).
 
-As of CRDS context ``jwst_0704``, the list of steps applied by the
-``Image2Pipeline`` pipeline is shown in the table below.
+The list of steps applied by the ``Image2Pipeline`` pipeline is shown in the
+table below.
 
 .. |check| unicode:: U+2713 .. checkmark
 
