@@ -1,5 +1,4 @@
 """General utility objects"""
-import re
 
 
 def deprecate_class(new_class,
