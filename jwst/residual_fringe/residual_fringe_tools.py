@@ -57,7 +57,7 @@ def slice_info(slice_map, c):
         # create a mask of the slice
         pixels = np.where(slice_map == s)
         slice = np.zeros(slice_map.shape)
-        print('slice shape',slice.shape)
+#        print('slice shape',slice.shape)
         slice[pixels] = 1
 
         # add this to the all_slice_mask array
@@ -71,6 +71,7 @@ def slice_info(slice_map, c):
         print('slice_x_ranges',n,s,slice_x_ranges[n,0],slice_x_ranges[n,1],slice_x_ranges[n,2])
 
     print(np.amin(slice_x_ranges[:,1]), np.amax(slice_x_ranges[:,2]))
+
     xrange_channel = np.zeros(2)
     xrange_channel[0] = np.amin(slice_x_ranges[:,1])
     xrange_channel[1] = np.amax(slice_x_ranges[:,2])

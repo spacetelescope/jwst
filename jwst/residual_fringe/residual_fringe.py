@@ -9,6 +9,9 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 from . import residual_fringe_tools
+import astropy.units as u
+from specutils import Spectrum1D
+from specutils.analysis import snr_derived
 
 class ResidualFringeCorrection():
 
@@ -19,6 +22,7 @@ class ResidualFringeCorrection():
                  transmission_level):
         
         self.input_model = input_model
+        self.output_model =None
         self.residual_fringe_reference_file = residual_fringe_reference_file
         self.regions_reference_file = regions_reference_file
         self.transmission_level = int(transmission_level)
@@ -57,7 +61,12 @@ class ResidualFringeCorrection():
         residual fringe-corrected science data model
 
         """
+        
+        # normalise the output_data to remove units
 
+        self.output_data  = self.input_model.data.copy()
+        self.output_data /= np.median(self.input_model.data)
+        
         # Load the fringe reference file
         residual_fringe_model = datamodels.ResidualFringeModel(self.residual_fringe_reference_file)
 
@@ -105,8 +114,9 @@ class ResidualFringeCorrection():
 
         for c in self.channels:
             log.info("Processing channel {}".format(c))
-            result = residual_fringe_tools.slice_info(slice_map,c)
-            (slices_in_band, xrange_channel, all_slice_masks) = result
+            (slices_in_band, xrange_channel, all_slice_masks) = residual_fringe_tools.slice_info(slice_map,c)
+            print(all_slice_masks.shape)
+            print(xrange_channel)
             
             ysize = self.input_model.data.shape[0]
             xsize = self.input_model.data.shape[1]
@@ -123,24 +133,79 @@ class ResidualFringeCorrection():
 
                 # use the mask to set all out-of-slice pixels to 0 in wmap and data
                 # set out-of-slice pixels to 0 in arrays
-                ss_data = all_slice_masks[n] * self.input_model.data.copy()
+                ss_data = all_slice_masks[n] * self.output_data.copy()
+                print(' columns 450 to 500 in data*mask',ss_data[0,450:500])
+                
                 ss_wmap = all_slice_masks[n] * wave_map
                 ss_weight = all_slice_masks[n] * self.input_weights.copy()
                 ss_mask = all_slice_masks[n]
 
+                
+                print('weights',ss_weight[0,450:500])
                 # get the freq_table info for this slice
-                slice_row = self.freq_table[(self.freq_table['Slice'] == str(ss))]
-                print(' Using slice freq info:\n {}'.format(slice_row))
-                ffreq = slice_row['ffreq'][0][0]
-                dffreq = slice_row['dffreq'][0][0]
-                min_nfringes = slice_row['min_nfringes'][0][0]
-                max_nfringes = slice_row['max_nfringes'][0][0]
-                min_snr = slice_row['min_snr'][0][0]
-                pgram_res = slice_row['pgram_res'][0][0]
+                this_row = np.where(self.freq_table['slice'] == float(ss))[0][0]
+                print('this_row',this_row)
+                
+                ffreq = self.freq_table['ffreq'][this_row][0][0]
+                dffreq = self.freq_table['dffreq'][this_row][0][0]
+                print(' freq',ffreq, dffreq)
+                min_nfringes = self.freq_table['min_nfringes'][0][0]
+                max_nfringes = self.freq_table['max_nfringes'][0][0]
+                min_snr = self.freq_table['min_snr'][0][0]
+                pgram_res = self.freq_table['pgram_res'][0][0]
+                # cycle through the cols and fit the fringes
+                for col in np.arange(ss_data.shape[1]):
+                    # set a root name for outputs
+                    #out_root = self.input_detector + '_' + self.input_band + '_CH' + str(c) + \
+                    #           '_SL' + str(ss) + '_COL' + str(col)
+
+                    print('ss_data',ss_data.shape)
+                    print('col',col)
+                    # get the column data
+                    col_data = ss_data[:, col]
+                    col_wmap = ss_wmap[:, col]
+                    col_weight = ss_weight[:, col]
+                    col_mask = ss_mask[:, col]
+                    col_max_amp = np.interp(col_wmap, self.max_amp['Wavelength'], self.max_amp['Amplitude'])
+                    #print(col_max_amp.shape)
+                    
+
+                    # Transform wavelength in micron to wavenumber in cm^-1.
+                    col_wnum = 10000.0 / col_wmap
+
+                    #print(col_data.shape)
+                    #print(col_wnum.shape)
+
+                    
+                    # do some checks on column to make sure there is reasonable signal. If the SNR < min_snr (CDP), pass
+                    # to use the method http://www.stecf.org/software/ASTROsoft/DER_SNR/ in specutils, need to
+                    # use a Spectrum1D option. Use arbitraty units
+                    test_wnum = col_wnum.copy()
+                    test_flux = col_data.copy()
+                    check_spectrum = Spectrum1D(flux=test_flux[::-1] * u.Jy,
+                                               spectral_axis=test_wnum[::-1] / u.cm)
+
+                    
+                    # determine SNR
+                    snr = snr_derived(check_spectrum, region=None)
+                    if snr.value > min_snr[0]:
+                        print('check spectrum shape',check_spectrum.shape)
+                        print(col_wnum[0:100])
+                        print(col_data[0:100])
+                        print(check_spectrum[0:100])
+                        exit(-1)
+
+                    # Sometimes can return nan, inf for bad data so include this in check
+                    if (snr.value < min_snr[0]) or (str(snr.value) == 'inf') or (str(snr.value) == 'nan'):
+                        print('not fitting colum')
+                        pass
+                    else:
+                        log.info("Fitting column{}".format(col))
+
 
 
             
-        result = self.apply_residual_fringe()
+        #result = self.apply_residual_fringe()
 
 
     #output_model.meta.cal_step.residual_fringe = 'COMPLETE'
