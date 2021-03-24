@@ -19,7 +19,7 @@ Stage 0 and Stage 1 Data Products
 +--------------------+-----------------------+----------------------------+-------+------+---------+----------------------------------------+
 | calwebb_detector1  | :ref:`uncal <uncal>`  | :ref:`trapsfilled <trfld>` |   1   | Exp  | N/A     | Charge trap state data                 |
 |                    |                       +----------------------------+       |      +---------+----------------------------------------+
-| calwebb_tso1       |                       | :ref:`rateints <rateints>` |       |      | DN/s    | 3-D countrate data (per integration)   |
+|                    |                       | :ref:`rateints <rateints>` |       |      | DN/s    | 3-D countrate data (per integration)   |
 |                    |                       +----------------------------+       |      |         +----------------------------------------+
 |                    |                       | :ref:`rate <rate>`         |       |      |         | 2-D countrate data (per exposure)      |
 |                    |                       +----------------------------+       |      +---------+----------------------------------------+
@@ -42,9 +42,9 @@ Stage 2 Data Products
 |                    |                       | :ref:`cal <cal>`         |      | MJy/sr, MJy [#1]_     | | 2-D calibrated data                 |
 |                    |                       +--------------------------+      |                       +---------------------------------------+
 |                    |                       | :ref:`i2d <i2d>`         |      |                       | | 2-D resampled imaging data          |
-|                    +-----------------------+--------------------------+      +-----------------------+---------------------------------------+
-| calwebb_tso-image2 | :ref:`rateints <rate>`| :ref:`calints <calints>` |      | MJy/sr, MJy [#1]_     | | 3-D calibrated data;                |
-|                    |                       |                          |      |                       | | coronagraphy and TSO                |
++--------------------+-----------------------+--------------------------+      +-----------------------+---------------------------------------+
+| calwebb_image2     | :ref:`rateints <rate>`| :ref:`calints <calints>` |      | MJy/sr, MJy [#1]_     | | 3-D calibrated data;                |
+| with TSO data      |                       |                          |      |                       | | coronagraphy and TSO                |
 +--------------------+-----------------------+--------------------------+------+-----------------------+---------------------------------------+
 | calwebb_spec2      | :ref:`rate <rate>`    | :ref:`bsub <bsub>`       | Exp  | DN/s                  | | 2-D background-subtracted data,     |
 |                    |                       |                          |      |                       | | when background step applied        |
@@ -60,9 +60,9 @@ Stage 2 Data Products
 |                    |                       +--------------------------+      +-----------------------+---------------------------------------+
 |                    |                       | flat                     |      | N/A                   | | *Optional* for NIRSpec data;        |
 |                    |                       |                          |      |                       | | on-the-fly constructed flat.        |
-|                    +-----------------------+--------------------------+      +-----------------------+---------------------------------------+
-| calwebb_tso-spec2  | :ref:`rateints <rate>`| :ref:`calints <calints>` |      | MJy/sr, MJy [#1]_     | | 3-D calibrated data; TSO            |
-|                    |                       +--------------------------+      +-----------------------+---------------------------------------+
++--------------------+-----------------------+--------------------------+      +-----------------------+---------------------------------------+
+| calwebb_spec2      | :ref:`rateints <rate>`| :ref:`calints <calints>` |      | MJy/sr, MJy [#1]_     | | 3-D calibrated data; TSO            |
+| with TSO data      |                       +--------------------------+      +-----------------------+---------------------------------------+
 |                    |                       | :ref:`x1dints <x1dints>` |      | various               | | 1-D spectral data (per integration) |
 |                    |                       +--------------------------+      +-----------------------+---------------------------------------+
 |                    |                       | flat                     |      | N/A                   | | *Optional* for NIRSpec data;        |
