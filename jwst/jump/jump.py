@@ -10,8 +10,9 @@ import multiprocessing
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+
 def detect_jumps(input_model, gain_model, readnoise_model,
-                 rejection_threshold, max_cores,
+                 rejection_threshold, three_grp_rejection_threshold, four_grp_rejection_threshold, max_cores,
                  max_jump_to_flag_neighbors, min_jump_to_flag_neighbors,
                  flag_4_neighbors):
     """
@@ -51,7 +52,6 @@ def detect_jumps(input_model, gain_model, readnoise_model,
     err = input_model.err
     gdq = input_model.groupdq
     pdq = input_model.pixeldq
-
 
     # Get 2D gain and read noise values from their respective models
     if reffile_utils.ref_matches_sci(input_model, gain_model):
@@ -105,19 +105,22 @@ def detect_jumps(input_model, gain_model, readnoise_model,
         slices.insert(i, (data[:, :, i * yincrement:(i + 1) * yincrement, :],
                           gdq[:, :, i * yincrement:(i + 1) * yincrement, :],
                           readnoise_2d[i * yincrement:(i + 1) * yincrement, :],
-                          rejection_threshold, frames_per_group, flag_4_neighbors,
+                          rejection_threshold, three_grp_rejection_threshold, four_grp_rejection_threshold,
+                          frames_per_group, flag_4_neighbors,
                           max_jump_to_flag_neighbors, min_jump_to_flag_neighbors))
     # last slice get the rest
     slices.insert(numslices - 1, (data[:, :, (numslices - 1) * yincrement:nrows, :],
-                                 gdq[:, :, (numslices - 1) * yincrement:nrows, :],
-                                 readnoise_2d[(numslices - 1) * yincrement:nrows, :],
-                                 rejection_threshold, frames_per_group, flag_4_neighbors,
-                                 max_jump_to_flag_neighbors, min_jump_to_flag_neighbors))
+                                  gdq[:, :, (numslices - 1) * yincrement:nrows, :],
+                                  readnoise_2d[(numslices - 1) * yincrement:nrows, :],
+                                  rejection_threshold, three_grp_rejection_threshold, four_grp_rejection_threshold,
+                                  frames_per_group, flag_4_neighbors,
+                                  max_jump_to_flag_neighbors, min_jump_to_flag_neighbors))
     if numslices == 1:
         gdq, row_below_dq, row_above_dq = twopt.find_crs(data, gdq, readnoise_2d, rejection_threshold,
-                                                                        frames_per_group, flag_4_neighbors,
-                                                                        max_jump_to_flag_neighbors,
-                                                                        min_jump_to_flag_neighbors)
+                                                         three_grp_rejection_threshold, four_grp_rejection_threshold,
+                                                         frames_per_group, flag_4_neighbors,
+                                                         max_jump_to_flag_neighbors,
+                                                         min_jump_to_flag_neighbors)
         elapsed = time.time() - start
     else:
         log.info("Creating %d processes for jump detection " % numslices)
@@ -136,12 +139,12 @@ def detect_jumps(input_model, gain_model, readnoise_model,
                 gdq[:, :, k * yincrement:(k + 1) * yincrement, :] = resultslice[0]
             row_below_gdq[:, :, :] = resultslice[1]
             row_above_gdq[:, :, :] = resultslice[2]
-            if k != 0: # for all but the first slice, flag any CR neighbors in the top row of the previous slice and
+            if k != 0:  # for all but the first slice, flag any CR neighbors in the top row of the previous slice and
                 # flag any neighbors in the bottom row of this slice saved from the top of the previous slice
                 gdq[:, :, k * yincrement - 1, :] = np.bitwise_or(gdq[:, :, k * yincrement - 1, :],
-                                                                     row_below_gdq[:, :, :])
+                                                                 row_below_gdq[:, :, :])
                 gdq[:, :, k * yincrement, :] = np.bitwise_or(gdq[:, :, k * yincrement, :],
-                                                                     previous_row_above_gdq[:, :, :])
+                                                             previous_row_above_gdq[:, :, :])
             # save the neighbors to be flagged that will be in the next slice
             previous_row_above_gdq = row_above_gdq.copy()
             k += 1
