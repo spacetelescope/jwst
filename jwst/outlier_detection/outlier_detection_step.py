@@ -121,21 +121,12 @@ class OutlierDetectionStep(Step):
             self.check_input()
 
             # check for TSO models first
-            if is_tso(single_model):
+            if is_tso(single_model) or exptype in CORON_IMAGE_MODES:
                 # algorithm selected for TSO data (no resampling)
                 pars['resample_data'] = False  # force resampling off...
                 detection_step = outlier_registry['imaging']
-                if exptype in TSO_SPEC_MODES:
-                    pars['resample_suffix'] = 's2d'
-                else:
-                    pars['resample_suffix'] = 'i2d'
             elif exptype in IMAGE_MODES:
                 # imaging with resampling
-                detection_step = outlier_registry['imaging']
-                pars['resample_suffix'] = 'i2d'
-            elif exptype in CORON_IMAGE_MODES:
-                # algorithm selected for TSO data (no resampling)
-                pars['resample_data'] = False  # force resampling off...
                 detection_step = outlier_registry['imaging']
                 pars['resample_suffix'] = 'i2d'
             elif exptype in SLIT_SPEC_MODES:
