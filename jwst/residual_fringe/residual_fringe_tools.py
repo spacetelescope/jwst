@@ -25,9 +25,14 @@ from astropy.timeseries import LombScargle
 #from specutils import Spectrum1D
 #from specutils.manipulation import FluxConservingResampler, SplineInterpolatedResampler
 from jwst import datamodels
+from .SplineModel import SplineModel
 #from BayesicFitting import SplinesModel, Fitter, SineModel, LevenbergMarquardtFitter, \
-#    PolynomialModel, RobustShell, SineSplineModel, SineAmpModel
+#    PolynomialModel (not used) , RobustShell, SineSplineModel (not used), SineAmpModel (not used) 
 from numpy.linalg.linalg import LinAlgError
+
+import logging
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 #
 
 # hard coded parameters, have been selected based on testing but can be changed
@@ -51,13 +56,13 @@ def slice_info(slice_map, c):
                                               & (slice_inventory < 100 * (c + 1)))]
     print('slices in band',slices_in_band.shape)
 
-    slice_x_ranges = np.zeros((slices_in_band.shape[0], 3))
+    slice_x_ranges = np.zeros((slices_in_band.shape[0], 3),dtype=int)
     all_slice_masks = np.zeros((slices_in_band.shape[0], slice_map.shape[0], slice_map.shape[1]))
     for n, s in enumerate(slices_in_band):
         # create a mask of the slice
         pixels = np.where(slice_map == s)
         slice = np.zeros(slice_map.shape)
-#        print('slice shape',slice.shape)
+
         slice[pixels] = 1
 
         # add this to the all_slice_mask array
@@ -66,7 +71,8 @@ def slice_info(slice_map, c):
         # get the indices at the start and end of the slice
         collapsed_slice = np.sum(slice, axis=0)
         indices = np.where(collapsed_slice[:-1] != collapsed_slice[1:])[0]
-        slice_x_ranges[n, 0], slice_x_ranges[n, 1], slice_x_ranges[n, 2] = s, np.amin(indices), np.amax(indices) + 1
+        slice_x_ranges[n, 0], slice_x_ranges[n, 1], slice_x_ranges[n, 2] = int(s), \
+            int(np.amin(indices)),int( np.amax(indices) + 1)
 
         print('slice_x_ranges',n,s,slice_x_ranges[n,0],slice_x_ranges[n,1],slice_x_ranges[n,2])
 
@@ -76,5 +82,429 @@ def slice_info(slice_map, c):
     xrange_channel[0] = np.amin(slice_x_ranges[:,1])
     xrange_channel[1] = np.amax(slice_x_ranges[:,2])
     
-    result = (slices_in_band, xrange_channel, all_slice_masks)
+    result = (slices_in_band, xrange_channel, slice_x_ranges,all_slice_masks)
     return result
+
+
+
+
+def fill_wavenumbers(wnums):
+    """
+    Function to take a wavenumber array with missing values (e.g., columns with on-slice and
+    off-slice pixels), fit the good points using a polynomial, then run use the coefficients
+    to estimate wavenumbers on the off-slice pixels.
+    Note that these new values are physically meaningless but having them in the wavenum array
+    stops the BayesicFitting package from crashing with a LinAlgErr.
+
+    :Parameters:
+
+    wnums: numpy array, required
+        the wavenumber array
+
+    :Returns:
+
+    wnums_filled: numpy array
+        the wavenumber array with off-slice pixels filled
+
+    """
+
+    # set the off-slice pixels to nans and get their indices
+    wnums[wnums == 0] = np.nan
+    idx = np.isfinite(wnums)
+
+    # fit the on-slice wavenumbers
+    coefs = poly.polyfit(np.arange(wnums.shape[0])[idx], wnums[idx], 3)
+    wnums_filled = poly.polyval(np.arange(wnums.shape[0]), coefs)
+
+    # keep the original wnums for the on-slice pixels
+    wnums_filled[idx] = wnums[idx]
+
+    # clean
+    del idx, coefs
+
+    return wnums_filled
+
+
+
+def fit_envelope(wavenum, signal):
+    """ Fit the upper and lower envelope of signal using a univariate spline
+
+    :param wavenum:
+    :param signal:
+    :return:
+    """
+
+    # Detect troughs and mark their location. Define endpoints
+    l_x = [wavenum[0]]
+    l_y = [signal[0]]
+    u_x = [wavenum[0]]
+    u_y = [signal[0]]
+
+    for k in np.arange(1, len(signal) - 1):
+        if (np.sign(signal[k] - signal[k - 1]) == -1) and ((np.sign(signal[k] - signal[k + 1])) == -1):
+            l_x.append(wavenum[k])
+            l_y.append(signal[k])
+        if (np.sign(signal[k] - signal[k - 1]) == 1) and ((np.sign(signal[k] - signal[k + 1])) == 1):
+            u_x.append(wavenum[k])
+            u_y.append(signal[k])
+
+    # Append the last value of (s) to the interpolating values. This forces the model to use the same ending point
+    l_x.append(wavenum[-1])
+    l_y.append(signal[-1])
+    u_x.append(wavenum[-1])
+    u_y.append(signal[-1])
+
+    # fit a model
+    pcl = pchip(l_x, l_y)
+    pcu = pchip(u_x, u_y)
+
+    return pcl(wavenum), l_x, l_y, pcu(wavenum), u_x, u_y
+
+
+def find_lines(signal, max_amp):
+    """
+    Take signal and max amp array, determine location of spectral
+    features with amplitudes greater than max amp
+
+    :param signal:
+    :param max_amp:
+    :return:
+    """
+
+    log.info("find_lines: starting line finding")
+    r_x = np.arange(signal.shape[0] - 1)
+
+    # setup the output arrays
+    log.info("find_lines: initalise outputs")
+    signal_check = signal.copy()
+    weights_factors = np.ones(signal.shape[0])
+
+    # Detect peaks
+    log.info("find_lines: initialise peak, trough lists")
+    u_y, u_x, l_y, l_x = [], [], [], []
+
+    log.info("find_lines: finding peaks and troughs where slope changes sign")
+    for x in r_x:
+        if (np.sign(signal_check[x] - signal_check[x - 1]) == 1) and (np.sign(signal_check[x] - signal_check[x + 1]) == 1):
+            u_y.append(signal_check[x])
+            u_x.append(x)
+
+        if (np.sign(signal_check[x] - signal_check[x - 1]) == -1) and (np.sign(signal_check[x] - signal_check[x + 1]) == -1):
+            l_y.append(signal[x])
+            l_x.append(x)
+
+    log.info("find_lines: Found {} peaks   {} troughs".format(len(u_x), len(l_x)))
+
+    
+    weights_factors[signal_check > np.amax(max_amp)] = 0
+
+    # fig, axs = plt.subplots(1, 1, figsize=(12, 6), sharex=True)
+    # axs.plot(signal, c='r', label='signal')
+    # axs.plot(signal_check, c='b', label='signal_check')
+    # axs.plot(weights_factors, c='k', label='weights', linewidth=0.5, alpha=0.8)
+    # axs.scatter(u_x, u_y, c='g', marker='x', s=50, label='peaks')
+    # axs.plot([0, 1023], [max_amp, max_amp], c='k', label='weights', linestyle='--', linewidth=0.5, alpha=0.5)
+    # axs.set_ylim(0, 10)
+    # plt.tight_layout(pad=0.5)
+    # plt.show()
+
+    log.info("find_lines: finished")
+
+    return weights_factors
+
+
+def interp_helper(mask):
+    """Helper function to for interpolating in feature gaps.
+
+    :Parameters:
+
+    mask:  numpy array, required
+        the 1D mask array (weights)
+
+    :Returns:
+
+        - logical indices of NaNs
+        - index, a function, with signature indices= index(logical_indices),
+          to convert logical indices to 'equivalent' indices
+
+    """
+    return mask < 1e-05, lambda z: z.nonzero()[0]
+
+
+
+def make_knots(flux, nknots=20, weights=None):
+    """Defines knot positions for piecewise models. This simply splits the array into sections. It does
+    NOT take into account the shape of the data.
+
+    :Parameters:
+
+    flux: numpy array, required
+        the flux array or any array of the same dimension
+
+    nknots: int, optional, default=20
+        the number of knots to create (excluding 0 and 1023)
+
+    weights: numpy array, optional, default=None
+        optionally supply a weights array. This will be used to add knots at the edge of bad pixels or features
+
+    :Returns:
+
+    knot_idx, numpy array
+        the indices of the knots
+
+    """
+    logger.debug("make_knots: creating {} knots on flux array".format(nknots))
+
+    # create an array of indices
+    npoints = flux.shape[0]
+
+    # kstep is the number of points / number of knots
+    knot_step = npoints // nknots  # + 1
+
+    # define an initial knot index array
+    init_knot_idx = np.zeros(nknots + 1)
+    for n in range(nknots):
+        init_knot_idx[n] = n * knot_step
+    init_knot_idx[-1] = npoints - 1
+
+    # get difference between the indices
+    knot_split = np.ediff1d(init_knot_idx)
+
+    # the last diff will always be different than the others
+    last_split = knot_split[-1]
+
+    # create new knot array with knots at 0 and 1023, then inital and final splits = last_split/2
+    knot_idx = np.ones(nknots + 2)
+    for n in range(nknots):
+        knot_idx[n + 1] = (n * knot_step) + (last_split / 2)
+    knot_idx[0] = 0
+    knot_idx[-1] = npoints - 1
+    logger.debug("make_knots: initial knot locations created")
+
+    # if the weights array is supplied, determine the edges of good data and set knots there
+    if weights is not None:
+
+        logger.debug("make_knots: adding knots at edges of bad pixels in weights array")
+
+        # if there are bad pixels in the flux array with flux~0,
+        # add these to weights array if not already there
+        weights *= (flux > 1e-03).astype(int)
+
+        # use a two-point difference method
+        weights_diff = np.ediff1d(weights)
+
+        # set edges where diff should be almost equal to the largest of the two datapoints used
+        # iteratate over the diffs and compare to the datapoints
+        edges_idx_list = []
+        for n, wd in enumerate(weights_diff):
+            # get the data points used for the diff
+            datapoints = np.array([weights[n], weights[n + 1]])
+
+            # get the value and index of the larges
+            largest = np.amax(datapoints)
+            largest_idx = np.argmax(datapoints)
+
+            # we don't need knots in the bad pixels so ignore these
+            if largest > 1e-03:
+
+                # check if the absolute values are almost equal
+                if math.isclose(largest, np.abs(wd), rel_tol=1e-01):
+                    # if so, set the index and adjust depending on whether the
+                    # first or second datapoint is the largest
+                    idx = n + largest_idx
+
+                    # check if this is right next to another index already defined
+                    #(causes problems in fitting, minimal difference)
+                    if (idx - 1 in knot_idx) | (idx + 1 in knot_idx):
+                        pass
+                    else:
+                        # append to the index list
+                        edges_idx_list.append(idx)
+
+                else:
+                    pass
+
+        logger.debug("make_knots: tidying knots array and returning")
+        # convert the list to array, add to the knot_idx array, remove duplicates and sort
+        edges_idx = np.asarray(edges_idx_list)
+        knot_idx = np.sort(np.concatenate((knot_idx, edges_idx), axis=0), axis=0)
+        knot_idx = np.unique(knot_idx.astype(int))
+
+    return knot_idx.astype(int)
+
+
+
+def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None):
+    """Fit the background signal using a pieceweise spline of n knots. Note that this will also try to identify
+    obvious emission lines and flag them so they aren't considered in the fitting.
+
+    :Parameters:
+
+    flux:  numpy array, required
+        the 1D array of fluxes
+
+    weights: numpy array, required
+        the 1D array of weights
+
+    wavenum: numpy array, required
+        the 1D array of wavenum
+
+    order: int, optional, default=2
+        the order of the Splines model
+
+    ffreq: float, optional, default=None
+        the expected fringe frequency, used to determine number of knots. If None,
+        defaults to NUM_KNOTS constant
+
+    :Returns:
+
+    bg_fit: numpy array
+        the fitted background
+
+    bgindx: numpy array
+        the location of the knots
+
+    fitter: BayesicFitting object
+        fitter object, mainly used for testing
+
+    """
+    logger.debug("fit_1d_background_complex: starting background fitting")
+
+    # first get the weighted pixel fraction
+    weighted_pix_frac =  (weights > 1e-05).sum() / flux.shape[0]
+
+    # define number of knots using fringe freq, want 1 knot per period
+    if ffreq is not None:
+        logger.debug("fit_1d_background_complex: knot positions for {} cm-1".format(ffreq))
+        nknots = int((np.amax(wavenum) - np.amin(wavenum)) / (ffreq))
+    else:
+        logger.debug("fit_1d_background_complex: using num_knots={}".format(NUM_KNOTS))
+        nknots = int((flux.shape[0] / 1024) * NUM_KNOTS)
+
+    logger.debug("fit_1d_background_complex: number of knots = {}".format(nknots))
+
+    # recale wavenums to around 1 for bayesicfitting
+    factor = np.amin(wavenum)
+    wavenum_scaled = wavenum.copy() / factor
+
+    # get number of fringe periods in array
+    nper = (np.amax(wavenum) - np.amin(wavenum)) // ffreq
+    logger.debug("fit_1d_background_complex: column is {} fringe periods".format(nper))
+
+    # now reduce by the weighted pixel fraction to see how many can be fitted
+    nper_cor = int(nper * weighted_pix_frac)
+    logger.debug("fit_1d_background_complex: column has {} weighted fringe periods".format(nper_cor))
+
+    # require at least 5 sine periods to fit
+    if nper_cor >= 5:
+        logger.debug(" using splines model")
+        bgindx = make_knots(flux.copy(), int(nknots), weights=weights.copy())
+        bgknots = wavenum_scaled[bgindx].astype(float)
+        bg_model = SplinesModel(bgknots, order=order)
+        fitter = Fitter(wavenum_scaled, bg_model)
+
+    else:
+        logger.debug(" not enough weighted data, no fit performed")
+        return flux.copy(), np.zeros(flux.shape[0]), None
+
+    ftr = RobustShell(fitter, domain=10)
+    # sometimes the fits will fail for small segments because the model is too complex for the data,
+    # in this case return the original array
+    # NOTE: since iso-alpha no longer supported this shouldn't be an issue, but will leave here for now
+    try:
+        ftr.fit(flux.copy(), weights=weights.copy())
+    except LinAlgError:
+        return flux.copy(), np.zeros(flux.shape[0]), None
+
+    # fit the background
+    bg_fit = bg_model.result(wavenum_scaled)
+    bg_fit *= np.where(weights.copy() > 1e-07, 1, 1e-08)
+
+    # linearly interpolate over the feature gaps if possible, stops issues later
+    try:
+        nz, z = interp_helper(weights)
+        bg_fit[nz] = np.interp(z(nz), z(~nz), bg_fit[~nz])
+        del nz, z
+    except ValueError:
+        pass
+
+    logger.debug("fit_1d_background_complex: finished background fitting")
+
+    return bg_fit, bgindx, fitter
+
+def fit_quality(wavenum, res_fringes, weights, ffreq, dffreq, save_fig=False, plot_name='fit_quality.pdf'):
+    """Determine the post correction fringe residual
+
+    Fit a single sine model to the corrected array to get the post correction fringe residual
+
+    :Parameters:
+
+    wavenum: numpy array
+        the wavenum array
+
+    res_fringes: numpy array
+        the residual fringe fit data
+
+    weights: numpy array
+        the weights array
+
+    ffreq: float, required
+        the central scan frequency
+
+    dffreq:  float, required
+        the one-sided interval of scan frequencies
+
+    save_fig: boolean, optional
+        a figure showing the fit
+
+    plot_name: str, optional
+        if save_fig=True, name of the output pdf
+
+    :Returns:
+
+    fringe_res_amp: numpy array
+        the post correction fringe residual amplitude
+
+    fig: matplotlib object
+        figure showing the fit
+
+    """
+    ffreq, dffreq = 2.8, 0.2
+
+    # fit the residual with a single sine model
+    # use a Lomb-Scargle periodogram to get PSD and identify the strongest frequency
+    logger.debug("fit_quality: finding strongest frequency")
+    freq = np.linspace(ffreq - dffreq, ffreq + dffreq, 100)
+
+    # handle out of slice pixels
+    res_fringes = np.nan_to_num(res_fringes)
+    res_fringe_scan = res_fringes[np.where(weights > 1e-05)]
+    wavenum_scan = wavenum[np.where(weights > 1e-05)]
+    pgram = LombScargle(wavenum_scan[::-1], res_fringe_scan[::-1]).power(1 / freq)
+    peak = np.argmax(pgram)
+    peak_freq = freq[peak]
+    logger.debug("fit_quality: strongest frequency is {}".format(peak_freq))
+
+
+    # create the model
+    logger.debug("fit_quality: fitting sine model")
+    mdl = SineModel(pars=[0.1, 0.1], fixed={0: 1/peak_freq})
+    fitter = LevenbergMarquardtFitter(wavenum[50:-50], mdl)
+    ftr = RobustShell(fitter, domain=10)
+    fr_par = ftr.fit(res_fringes[50:-50], weights=weights[50:-50])
+    logger.debug("fit_quality: best fit pars: {}".format(fr_par))
+
+    if np.abs(fr_par[0]) > np.abs(fr_par[1]):
+        contrast = np.abs(round(fr_par[0]*2, 3))
+    else:
+        contrast = np.abs(round(fr_par[1]*2, 3))
+
+    # make a figure to return
+    if save_fig:
+        best_mdl = SineModel(fixed={0: 1/peak_freq, 1:fr_par[0], 2:fr_par[1]})
+        fit = best_mdl.result(wavenum)
+        xdata = [wavenum]
+        ydata = [res_fringes, fit]
+        diagnostic_plot('fit_quality', 'columns', plot_name=plot_name, xdata=xdata, ydata=ydata)
+
+    return contrast

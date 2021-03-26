@@ -20,7 +20,7 @@ class ResidualFringeStep(Step):
 
     spec = """
         save_intermediate_results  = boolean(default = False)
-        transmission_level = integer(default=50) # transmission level to use to define slice locations
+        transmission_level = integer(default=80) # transmission level to use to define slice locations
     """
     
     reference_file_types = ['fringefreq','regions']
