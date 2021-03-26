@@ -11,7 +11,8 @@ Package Index
    assign_mtwcs/index.rst
    assign_wcs/index.rst
    associations/index.rst
-   background/index.rst
+   background_step/index.rst
+   background_subtraction/index.rst
    barshadow/index.rst
    combine_1d/index.rst
    csv_tools/index.rst
