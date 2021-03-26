@@ -71,7 +71,6 @@ def test_3grps_cr2_noflux(setup_cube):
     data[0, 1:4, 100, 100] = 1000
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold, nframes, False, 200, 10)
     assert 4 == np.max(out_gdq)  # a CR was found
-    #    assert 1,np.argmax(out_gdq[0,:,100,100])  # find the CR in the expected group
     assert np.array_equal([0, 4, 0], out_gdq[0, :, 100, 100])
 
 
@@ -96,10 +95,9 @@ def test_5grps_cr2_nframe2(setup_cube):
     data[0, 4, 100, 100] = 1005
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold, nframes, False, 200, 10)
     assert 4 == np.max(out_gdq)  # a CR was found
-    assert np.array_equal([0,4,4,0,0], out_gdq[0, :, 100, 100])
+    assert np.array_equal([0, 4, 4, 0, 0], out_gdq[0, :, 100, 100])
 
 
-@pytest.mark.xfail
 def test_4grps_twocrs_2nd_4th(setup_cube):
     ngroups = 4
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups)
@@ -123,7 +121,7 @@ def test_5grps_twocrs_2nd_5th(setup_cube):
     data[0, 4, 100, 100] = 115
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold, nframes, False, 200, 10)
     assert 4 == np.max(out_gdq)  # a CR was found
-    assert np.array_equal([0,4,0,0,4] ,out_gdq[0, :, 100, 100])
+    assert np.array_equal([0, 4, 0 , 0, 4] ,out_gdq[0, :, 100, 100])
 
 
 def test_5grps_twocrs_2nd_5thbig(setup_cube):
@@ -137,7 +135,7 @@ def test_5grps_twocrs_2nd_5thbig(setup_cube):
     data[0, 4, 100, 100] = 2115
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold, nframes, False, 200, 10)
     assert 4 == np.max(out_gdq)  # a CR was found
-    assert np.array_equal([0,4,0,0,4] , out_gdq[0, :, 100, 100])
+    assert np.array_equal([0, 4, 0, 0, 4] , out_gdq[0, :, 100, 100])
 
 
 def test_10grps_twocrs_2nd_8th_big(setup_cube):
@@ -156,7 +154,7 @@ def test_10grps_twocrs_2nd_8th_big(setup_cube):
     data[0, 9, 100, 100] = 2115
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold, nframes, False, 200, 10)
     assert 4 == np.max(out_gdq)  # a CR was found
-    assert np.array_equal([0,4,0,0,0,0,0,4,0,0] , out_gdq[0, :, 100, 100])
+    assert np.array_equal([0, 4 , 0, 0, 0, 0, 0, 4, 0, 0] , out_gdq[0, :, 100, 100])
 
 
 def test_10grps_twocrs_10percenthit(setup_cube):
@@ -175,7 +173,7 @@ def test_10grps_twocrs_10percenthit(setup_cube):
     data[0:200, 9, 100, 100] = 2115
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold, nframes, False, 200, 10)
     assert 4 == np.max(out_gdq)  # a CR was found
-    assert np.array_equal([0,4,0,0,0,0,0,4,0,0] , out_gdq[0, :, 100, 100])
+    assert np.array_equal([0, 4, 0, 0, 0, 0, 0, 4, 0, 0] , out_gdq[0, :, 100, 100])
 
 
 def test_5grps_twocrs_2nd_5thbig_nframes2(setup_cube):
@@ -189,7 +187,7 @@ def test_5grps_twocrs_2nd_5thbig_nframes2(setup_cube):
     data[0, 4, 100, 100] = 2115
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold, nframes, False, 200, 10)
     assert 4 == np.max(out_gdq)  # a CR was found
-    assert np.array_equal([0,4,0,0,4] , out_gdq[0, :, 100, 100])
+    assert np.array_equal([0, 4, 0, 0, 4] , out_gdq[0, :, 100, 100])
 
 
 def test_6grps_twocrs_2nd_5th(setup_cube):
@@ -204,7 +202,7 @@ def test_6grps_twocrs_2nd_5th(setup_cube):
     data[0, 5, 100, 100] = 115
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold, nframes, False, 200, 10)
     assert 4 == np.max(out_gdq)  # a CR was found
-    assert np.array_equal([0,4,0,0,4,0] , out_gdq[0, :, 100, 100])
+    assert np.array_equal([0, 4, 0, 0, 4, 0] , out_gdq[0, :, 100, 100])
 
 
 def test_6grps_twocrs_2nd_5th_nframes2(setup_cube):
@@ -219,7 +217,7 @@ def test_6grps_twocrs_2nd_5th_nframes2(setup_cube):
     data[0, 5, 100, 100] = 115
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold, nframes, False, 200, 10)
     assert 4 == np.max(out_gdq)  # a CR was found
-    assert np.array_equal([0,4,0,0,4,0] , out_gdq[0, :, 100, 100])
+    assert np.array_equal([0, 4, 0, 0, 4, 0] , out_gdq[0, :, 100, 100])
 
 
 def test_6grps_twocrs_twopixels_nframes2(setup_cube):
@@ -240,7 +238,7 @@ def test_6grps_twocrs_twopixels_nframes2(setup_cube):
     data[0, 5, 200, 100] = 115
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold, nframes, False, 200, 10)
     assert 4 == np.max(out_gdq)  # a CR was found
-    assert np.array_equal([0,4,0,0,4,0] , out_gdq[0, :, 100, 100])
+    assert np.array_equal([0, 4, 0, 0, 4, 0] , out_gdq[0, :, 100, 100])
     assert np.array_equal([0, 0, 4, 0, 4, 0] , out_gdq[0, :, 200, 100])
 
 
@@ -413,7 +411,7 @@ def test_10grps_cr2_gt3sigma(setup_cube):
     data[0, 1:11, 100, 100] = crmag
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold, nframes, False, 200, 10)
     assert 4 == np.max(out_gdq)   # a CR was found
-    assert np.array_equal([0, 4, 0, 0, 0,0,0,0,0,0] , out_gdq[0, :, 100, 100])
+    assert np.array_equal([0, 4, 0, 0, 0, 0, 0, 0, 0, 0] , out_gdq[0, :, 100, 100])
 
 
 def test_10grps_cr2_3sigma_nocr(setup_cube):
@@ -425,7 +423,7 @@ def test_10grps_cr2_3sigma_nocr(setup_cube):
     data[0, 1:11, 100, 100] = crmag
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold, nframes, False, 200, 10)
     assert 0 == np.max(out_gdq)   # a CR was found
-    assert np.array_equal([0, 0, 0, 0, 0,0,0,0,0,0] , out_gdq[0, :, 100, 100])
+    assert np.array_equal([0, 0, 0, 0, 0, 0, 0, 0, 0, 0] , out_gdq[0, :, 100, 100])
 
 
 def test_10grps_cr2_gt3sigma_2frames(setup_cube):
@@ -437,7 +435,7 @@ def test_10grps_cr2_gt3sigma_2frames(setup_cube):
     data[0, 1:11, 100, 100] = crmag
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold, nframes, False, 200, 10)
     assert 4 == np.max(out_gdq)  # a CR was found
-    assert np.array_equal([0, 4, 0, 0, 0,0,0,0,0,0] , out_gdq[0, :, 100, 100])
+    assert np.array_equal([0, 4, 0, 0, 0, 0, 0, 0, 0, 0] , out_gdq[0, :, 100, 100])
 
 def test_10grps_cr2_gt3sigma_2frames_offdiag(setup_cube):
     ngroups = 10
@@ -448,7 +446,7 @@ def test_10grps_cr2_gt3sigma_2frames_offdiag(setup_cube):
     data[0, 1:11, 100, 110] = crmag
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold, nframes, False, 200, 10)
     assert 4 == np.max(out_gdq)  # a CR was found
-    assert np.array_equal([0, 4, 0, 0, 0,0,0,0,0,0] , out_gdq[0, :, 100, 110])
+    assert np.array_equal([0, 4, 0, 0, 0, 0, 0, 0, 0, 0] , out_gdq[0, :, 100, 110])
 
 def test_10grps_cr2_3sigma_2frames_nocr(setup_cube):
     ngroups = 10
@@ -514,7 +512,7 @@ def test_6grps_satat6_crat1(setup_cube):
     gdq[0, 5, 100, 100] = dqflags.group['SATURATED']
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold, nframes, False, 200, 10)
     # assert 4 == np.max(out_gdq)  # no CR was found
-    assert np.array_equal([0, dqflags.group['JUMP_DET'], 0,0,0, dqflags.group['SATURATED']], out_gdq[0, :, 100, 100])
+    assert np.array_equal([0, dqflags.group['JUMP_DET'], 0, 0, 0, dqflags.group['SATURATED']], out_gdq[0, :, 100, 100])
 
 
 @pytest.mark.xfail
@@ -628,16 +626,16 @@ def test_first_last_group(setup_cube):
     #  set up the data so that if the first and last group are used in jump
     #  detection it would cause a jump to be detected between group 1-2
     #  and group 6-7. Add a jump between 3 and 4 just to make sure jump detection is working
-    #  set group 1 to be 10,000
+    #  set group 1 to be 10, 000
     data[0, 0, 100, 100] = 10000.0
-    #  set groups 1,2 - to be around 30,000
+    #  set groups 1, 2 - to be around 30, 000
     data[0, 1, 100, 100] = 30000.0
     data[0, 2, 100, 100] = 30020.0
     #  set up a jump to make sure it is detected
     data[0, 3, 100, 100] = 40000.0
     data[0, 4, 100, 100] = 40020.0
     data[0, 5, 100, 100] = 40040.0
-    #  set group 6 to be 50,000
+    #  set group 6 to be 50, 000
     data[0, 6, 100, 100] = 50000.0
 
     gdq[0, 0, 100, 100] = dqflags.group['DO_NOT_USE']
@@ -725,7 +723,7 @@ def test_6grps_different_valid_grps_each_pixel(setup_cube):
     ngroups = 6
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups, readnoise=5 * np.sqrt(2), nrows=3, ncols=2)
     nframes=1
-    # pixel 0,0 no crs
+    # pixel 0, 0 no crs
     data[0, 0, 0, 0] = 0
     data[0, 1, 0, 0] = 10
     data[0, 2, 0, 0] = 20
@@ -739,7 +737,7 @@ def test_6grps_different_valid_grps_each_pixel(setup_cube):
     data[0, 3, 0, 1] = 2500
     data[0, 4, 0, 1] = 2510
     data[0, 5, 0, 1] = 2522
-    # pixel 1,0 one cr, two last grps saturated
+    # pixel 1, 0 one cr, two last grps saturated
     data[0, 0, 1, 0] = 0
     data[0, 1, 1, 0] = 10
     data[0, 2, 1, 0] = 20
@@ -755,7 +753,7 @@ def test_6grps_different_valid_grps_each_pixel(setup_cube):
     data[0, 3, 1, 1] = 10000
     data[0, 4, 1, 1] = 10102
     data[0, 5, 1, 1] = 10208
-    # pixel 2,0 one cr, three last groups saturated
+    # pixel 2, 0 one cr, three last groups saturated
     data[0, 0, 2, 0] = 0
     data[0, 1, 2, 0] = 1000
     data[0, 2, 2, 0] = 10100
@@ -831,9 +829,9 @@ def test_5diff_3sat_median_vector():
 
 
 def test_4diff_median_array():
-    diffs_to_skip = np.zeros(shape=(2,2), dtype=np.int32)
-    indiffs = np.zeros(shape=(2,2,4),dtype=np.float32)
-    indices = np.zeros(shape=(2,2,4),dtype=np.int32)
+    diffs_to_skip = np.zeros(shape=(2, 2), dtype=np.int32)
+    indiffs = np.zeros(shape=(2, 2, 4),dtype=np.float32)
+    indices = np.zeros(shape=(2, 2, 4),dtype=np.int32)
     indiffs[0, 0] = [11, 6, 9, 13]
     indiffs[0, 1] = [9, 4, 7, 3]
     indiffs[1, 0] = [10, 5, 3, 12]
@@ -851,9 +849,9 @@ def test_4diff_median_array():
 
 
 def test_4diff_median_2pixsat_array():
-    diffs_to_skip = np.zeros(shape=(2,2), dtype=np.int32)
-    indiffs = np.zeros(shape=(2,2,4),dtype=np.float32)
-    indices = np.zeros(shape=(2,2,4),dtype=np.int32)
+    diffs_to_skip = np.zeros(shape=(2, 2), dtype=np.int32)
+    indiffs = np.zeros(shape=(2, 2, 4),dtype=np.float32)
+    indices = np.zeros(shape=(2, 2, 4),dtype=np.int32)
     indiffs[0, 0] = [11, 6, 9, 13]
     indiffs[0, 1] = [9, 4, 7, 3]
     indiffs[1, 0] = [10, 5, 3, 12]
@@ -872,9 +870,9 @@ def test_4diff_median_2pixsat_array():
     assert med_array[1, 1] == 3
 
 def test_4diff_median_2pixsat_2pixverysat_array():
-    diffs_to_skip = np.zeros(shape=(2,2), dtype=np.int32)
-    indiffs = np.zeros(shape=(2,2,4),dtype=np.float32)
-    indices = np.zeros(shape=(2,2,4),dtype=np.int32)
+    diffs_to_skip = np.zeros(shape=(2, 2), dtype=np.int32)
+    indiffs = np.zeros(shape=(2, 2, 4),dtype=np.float32)
+    indices = np.zeros(shape=(2, 2, 4),dtype=np.int32)
     indiffs[0, 0] = [11, 6, 9, 13]
     indiffs[0, 1] = [9, 4, 7, 3]
     indiffs[1, 0] = [10, 5, 3, 12]
