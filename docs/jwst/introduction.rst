@@ -84,7 +84,7 @@ referencing their class name is done as follows:
   $ strun jwst.pipeline.Detector1Pipeline jw00017001001_01101_00001_nrca1_uncal.fits
   $ strun jwst.dq_init.DQInitStep jw00017001001_01101_00001_nrca1_uncal.fits
 
-Most pipelines also have an "alias", or short name, that can be used instead of the
+Pipeline classes also have an "alias", or short name, that can be used instead of the
 full class specification. For example, ``jwst.pipeline.Detector1Pipeline`` has the
 alias ``calwebb_detector`` and can be run as
 ::
