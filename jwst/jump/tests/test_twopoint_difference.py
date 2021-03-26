@@ -16,7 +16,7 @@ def test_nocrs_noflux(setup_cube):
 
 def test_5grps_cr3_noflux(setup_cube):
     """"
-       A test that has a jump in the third group of pixel 100,100
+       A test that has a jump in the third group of pixel 100, 100
        """
     ngroups = 5
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups)
@@ -25,7 +25,7 @@ def test_5grps_cr3_noflux(setup_cube):
     data[0, 2:5, 100, 100] = 1000
     out_gdq, row_below_gdq, row_above_gdq =find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold, nframes, False, 200, 10)
     assert 4 == np.max(out_gdq)  # a CR was found
-    assert 2 == np.argmax(out_gdq[0,:,100,100])  # find the CR in the expected group
+    assert 2 == np.argmax(out_gdq[0, :, 100, 100])  # find the CR in the expected group
 
 
 def test_5grps_cr2_noflux(setup_cube):
@@ -36,7 +36,7 @@ def test_5grps_cr2_noflux(setup_cube):
     data[0, 1:6, 100, 100] = 1000
     out_gdq, row_below_gdq, row_above_gdq =find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold, nframes, False, 200, 10)
     assert 4 == np.max(out_gdq)  # a CR was found
-    assert 1 == np.argmax(out_gdq[0,:,100,100])  # find the CR in the expected group
+    assert 1 == np.argmax(out_gdq[0, :, 100, 100])  # find the CR in the expected group
 
 
 def test_6grps_negative_differences_zeromedian(setup_cube):
@@ -61,7 +61,7 @@ def test_5grps_cr2_negjumpflux(setup_cube):
     data[0, 1:6, 100, 100] = 10
     out_gdq, row_below_gdq, row_above_gdq =find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold, nframes, False, 200, 10)
     assert 4 == np.max(out_gdq)  # a CR was found
-    assert 1 == np.argmax(out_gdq[0,:,100,100])  # find the CR in the expected group
+    assert 1 == np.argmax(out_gdq[0, :, 100, 100])  # find the CR in the expected group
 
 
 def test_3grps_cr2_noflux(setup_cube):
@@ -81,7 +81,7 @@ def test_4grps_cr2_noflux(setup_cube):
     data[0, 1:4, 100, 100] = 1000
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold, nframes, False, 200, 10)
     assert 4 == np.max(out_gdq)  # a CR was found
-    assert 1 == np.argmax(out_gdq[0,:,100,100])  # find the CR in the expected group
+    assert 1 == np.argmax(out_gdq[0, :, 100, 100])  # find the CR in the expected group
 
 
 def test_5grps_cr2_nframe2(setup_cube):
@@ -282,7 +282,7 @@ def test_7grps_1cr(setup_cube):
     data[0, 5, 100, 100] = 60
     data[0, 6, 100, 100] = 1160
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold, nframes, False, 200, 10)
-    assert 4 == out_gdq[0, 6,100,100]
+    assert 4 == out_gdq[0, 6, 100, 100]
 
 def test_8grps_1cr(setup_cube):
     ngroups = 8
@@ -297,7 +297,7 @@ def test_8grps_1cr(setup_cube):
     data[0, 6, 100, 100] = 1160
     data[0, 7, 100, 100] = 1175
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold, nframes, False, 200, 10)
-    assert 4 == out_gdq[0, 6,100,100]
+    assert 4 == out_gdq[0, 6, 100, 100]
 
 def test_9grps_1cr_1sat(setup_cube):
     ngroups = 9
@@ -314,7 +314,7 @@ def test_9grps_1cr_1sat(setup_cube):
     data[0, 8, 100, 100] = 6175
     gdq[0, 8, 100, 100] = dqflags.group['SATURATED']
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold, nframes, False, 200, 10)
-    assert 4 == out_gdq[0, 6,100,100]
+    assert 4 == out_gdq[0, 6, 100, 100]
 
 def test_10grps_1cr_2sat(setup_cube):
     ngroups = 10
@@ -333,7 +333,7 @@ def test_10grps_1cr_2sat(setup_cube):
     gdq[0, 8, 100, 100] = dqflags.group['SATURATED']
     gdq[0, 9, 100, 100] = dqflags.group['SATURATED']
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold, nframes, False, 200, 10)
-    assert 4 == out_gdq[0, 6,100,100]
+    assert 4 == out_gdq[0, 6, 100, 100]
 
 def test_11grps_1cr_3sat(setup_cube):
     ngroups = 11
@@ -354,7 +354,7 @@ def test_11grps_1cr_3sat(setup_cube):
     gdq[0, 9, 100, 100] = dqflags.group['SATURATED']
     gdq[0, 10, 100, 100] = dqflags.group['SATURATED']
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold, nframes, False, 200, 10)
-    assert 4 == out_gdq[0, 6,100,100]
+    assert 4 == out_gdq[0, 6, 100, 100]
 
 def test_11grps_0cr_3donotuse(setup_cube):
     ngroups = 11
@@ -594,7 +594,7 @@ def test_median_with_saturation_even_num_sat_frames(setup_cube):
     data[0, 7, 100, 100] = 49900
     data[0, 8:10, 100, 100] = 60000
     gdq[0, 6:10, 100, 100] = dqflags.group['SATURATED']
-    print(np.diff(data[0,:,100,100]))
+    print(np.diff(data[0, :, 100, 100]))
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold, nframes, False, 200, 10)
     assert np.array_equal([0, 0, 0, 0, 0, 4, 2, 2, 2, 2], out_gdq[0, :, 100, 100])
 
@@ -613,7 +613,7 @@ def test_median_with_saturation_odd_number_final_difference(setup_cube):
     data[0, 7, 100, 100] = 49900
     data[0, 8:9, 100, 100] = 60000
     gdq[0, 6:9, 100, 100] = dqflags.group['SATURATED']
-    print(np.diff(data[0,:,100,100]))
+    print(np.diff(data[0, :, 100, 100]))
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold, nframes, False, 200, 10)
     assert np.array_equal([0, 0, 0, 0, 0, 4, 2, 2, 2], out_gdq[0, :, 100, 100])
 
@@ -649,7 +649,7 @@ def test_first_last_group(setup_cube):
 
 def test_4grps_1cr(setup_cube):
     """"
-    A test of a four group integration that has a jump in the third group of pixel 100,100
+    A test of a four group integration that has a jump in the third group of pixel 100, 100
     """
     ngroups = 4
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups, readnoise=5 * np.sqrt(2))
@@ -658,14 +658,14 @@ def test_4grps_1cr(setup_cube):
     data[0, 1, 100, 100] = 4500
     data[0, 2, 100, 100] = 40000
     data[0, 3, 100, 100] = 44500
-    print(np.diff(data[0,:,100,100]))
+    print(np.diff(data[0, :, 100, 100]))
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold,
                                                      rej_threshold, rej_threshold, nframes, False, 200, 10)
     assert np.array_equal([0, 0, 4, 0], out_gdq[0, :, 100, 100])
 
 def test_3grps_1cr(setup_cube):
     """"
-        A test of a three group integration that has a jump in the third group of pixel 1,1
+        A test of a three group integration that has a jump in the third group of pixel 1, 1
         """
     ngroups = 3
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups, readnoise=5 * np.sqrt(2), nrows=2, ncols=2)
@@ -679,7 +679,7 @@ def test_3grps_1cr(setup_cube):
 
 def test_4grps_2crs(setup_cube):
     """"
-        A test of a four group integration that has a jump in the 2nd and fourth groups of pixel 1,1
+        A test of a four group integration that has a jump in the 2nd and fourth groups of pixel 1, 1
         """
     ngroups = 4
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups, readnoise=5 * np.sqrt(2), nrows=2, ncols=2)
@@ -730,7 +730,7 @@ def test_6grps_different_valid_grps_each_pixel(setup_cube):
     data[0, 3, 0, 0] = 25
     data[0, 4, 0, 0] = 35
     data[0, 5, 0, 0] = 42
-    # pixel 0,1 one crs grp 3
+    # pixel 0, 1 one crs grp 3
     data[0, 0, 0, 1] = 0
     data[0, 1, 0, 1] = 10
     data[0, 2, 0, 1] = 20
@@ -746,7 +746,7 @@ def test_6grps_different_valid_grps_each_pixel(setup_cube):
     data[0, 5, 1, 0] = 1522
     gdq[0, 4, 1, 0]  = dqflags.group['SATURATED']
     gdq[0, 5, 1, 0]  = dqflags.group['SATURATED']
-    # pixel 1,1 two crs
+    # pixel 1, 1 two crs
     data[0, 0, 1, 1] = 0
     data[0, 1, 1, 1] = 1000
     data[0, 2, 1, 1] = 1100
@@ -763,7 +763,7 @@ def test_6grps_different_valid_grps_each_pixel(setup_cube):
     gdq[0, 3, 2, 0]  = dqflags.group['SATURATED']
     gdq[0, 4, 2, 0]  = dqflags.group['SATURATED']
     gdq[0, 5, 2, 0]  = dqflags.group['SATURATED']
-    # pixel 2,1 two crs, last group saturated
+    # pixel 2, 1 two crs, last group saturated
     data[0, 0, 2, 1] = 0
     data[0, 1, 2, 1] = 10000
     data[0, 2, 2, 1] = 20100
