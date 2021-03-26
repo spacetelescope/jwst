@@ -75,7 +75,7 @@ Inputs
 The inputs to ``calwebb_spec3`` should be in the form of an ASN file that
 lists the multiple exposures to be processed into combined output products.
 The individual exposures should be calibrated the ("_cal") products from
-``calwebb_spec2`` processing.
+:ref:`calwebb_spec2 <calwebb_spec2>` processing.
 
 The member list for each product in the ASN file can also contain exposures
 of dedicated background targets, which are intended for use in the

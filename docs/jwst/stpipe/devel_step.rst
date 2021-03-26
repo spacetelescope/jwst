@@ -77,12 +77,12 @@ name of the step that produced the results. Use the `suffix` parameter
 to explicitly change the suffix.
 
 For pipelines, this can be done either in the default coniguration
-file, or within the code itself. See `calwebb_dark` for an example
+file, or within the code itself. See :ref:`calwebb_dark <calwebb_dark>` for an example
 of specifying in the configuration.
 
 For an example where the suffix can only be determined at runtime, see
-`calwebb_detector1`. For an example of a pipeline that returns many
-results, see `calwebb_spec2`.
+:ref:`calwebb_detector1 <calwebb_detector1>`. For an example of a pipeline that returns many
+results, see :ref:`calwebb_spec2 <calwebb_spec2>`.
 
 The Python class
 ----------------

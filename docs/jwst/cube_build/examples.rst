@@ -1,7 +1,7 @@
-Examples of How to Run Cube_Build
-=================================
-It is assumed that the input data have been processed through the ``calwebb_detector1`` pipeline and up through
-the ``photom`` step of the ``calwebb_spec2`` pipeline.
+Examples of How to Run Cube_Build ================================= It is
+assumed that the input data have been processed through the
+:ref:`calwebb_detector1 <calwebb_detector1>` pipeline and up through the
+``photom`` step of the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline.
 
 Cube Building for MIRI data
 -------------------------------

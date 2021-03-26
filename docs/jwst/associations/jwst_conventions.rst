@@ -52,15 +52,15 @@ Level 3 pipeline module to use to process this association.
 
 The current association types are:
 
-  * ``ami3``: Intended for ``calwebb_ami3`` processing
-  * ``coron3``: Intended for ``calwebb_coron3`` processing
-  * ``image2``: Intended for ``calwebb_image2`` processing
-  * ``image3``: Intended for ``calwebb_image3`` processing
-  * ``nrslamp-spec2``: Intended for ``calwebb_spec2`` processing
-  * ``spec2``: Intended for ``calwebb_spec2`` processing
-  * ``spec3``: Intended for ``calwebb_spec3`` processing
-  * ``tso3``: Intended for ``calwebb_tso3`` processing
-  * ``tso-image2``: Intended for ``calwebb_image2`` processing
-  * ``tso-spec2``: Intended for ``calwebb_spec2`` processing
-  * ``wfs-image2``: Intended for ``calwebb_image2`` processing
-  * ``wfs-image3``: Intended for ``calwebb_wfs-image3`` processing
+  * ``ami3``: Intended for :ref:`calwebb_ami3 <calwebb_ami3>` processing
+  * ``coron3``: Intended for :ref:`calwebb_coron3 <calwebb_coron3>` processing
+  * ``image2``: Intended for :ref:`calwebb_image2 <calwebb_image2>` processing
+  * ``image3``: Intended for :ref:`calwebb_image3 <calwebb_image3>` processing
+  * ``nrslamp-spec2``: Intended for :ref:`calwebb_spec2 <calwebb_spec2>` processing
+  * ``spec2``: Intended for :ref:`calwebb_spec2 <calwebb_spec2>` processing
+  * ``spec3``: Intended for :ref:`calwebb_spec3 <calwebb_spec3>` processing
+  * ``tso3``: Intended for :ref:`calwebb_tso3 <calwebb_tso3>` processing
+  * ``tso-image2``: Intended for :ref:`calwebb_image2 <calwebb_image2>` processing
+  * ``tso-spec2``: Intended for :ref:`calwebb_spec2 <calwebb_spec2>` processing
+  * ``wfs-image2``: Intended for :ref:`calwebb_image2 <calwebb_image2>` processing
+  * ``wfs-image3``: Intended for :ref:`calwebb_wfs-image3 <calwebb_wfs-image3>` processing
