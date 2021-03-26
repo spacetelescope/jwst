@@ -80,7 +80,7 @@ to run the generator, the :ref:`asn-utilities` and :ref:`Association Generator <
 Once an association is in-hand, one can pass it as input to a pipeline
 routine. For example::
 
-  % strun calwebb_image3  jw12345_xxxx_asn.json
+  % strun calwebb_image3  jw12345-o001_20210311t170002_image3_001_asn.json
 
 Programmatically, to read in an Association, one uses the
 :py:func:`~jwst.associations.load_asn` function:
@@ -89,7 +89,7 @@ Programmatically, to read in an Association, one uses the
 
    from jwst.associations import load_asn
 
-   with open('jw12345_xxxx_asn.json') as fp:
+   with open('jw12345-o001_20210311t170002_image3_001_asn.json') as fp:
        asn = load_asn(fp)
 
 What exactly is returned depends on what the association is. However,
@@ -107,7 +107,7 @@ Model<data-models>`:
 .. code-block:: python
 
   from jwst.datamodels import open as dm_open
-  container_model = dm_open('jw12345_xxxx_asn.json')
+  container_model = dm_open('jw12345-o001_20210311t170002_image3_001_asn.json')
 
 .. _asn-utilities:
 
