@@ -86,12 +86,12 @@ referencing their class name is done as follows:
 
 Pipeline classes also have an "alias", or short name, that can be used instead of the
 full class specification. For example, ``jwst.pipeline.Detector1Pipeline`` has the
-alias ``calwebb_detector`` and can be run as
+alias ``calwebb_detector1`` and can be run as
 ::
 
   $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits
 
-A full list of pipeline aliases can be found in :ref:`Pipeline Stages<pipelines>`
+A full list of pipeline aliases can be found in :ref:`Pipeline Stages <pipelines>`
 
 When a pipeline or step is executed in this manner (i.e. by referencing the
 class name), it will be run using a CRDS-supplied configuration merged with

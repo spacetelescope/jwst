@@ -61,7 +61,7 @@ instrument exposures.
 | :ref:`gain_scale <gain_scale_step>`        | |check| | |check| | :ref:`gain_scale <gain_scale_step>`     | |check| | |check| |
 +--------------------------------------------+---------+---------+-----------------------------------------+---------+---------+
 
-.. [1] By default, the step parameter reference `pars-detector1pipeline`
+.. [1] By default, the parameter reference `pars-detector1pipeline`
    retrieved from CRDS will skip the :ref:`ipc <ipc_step>` step for all instruments.
 .. [2] The :ref:`persistence <persistence_step>` step is currently hardwired to be skipped in
    the `Detector1Pipeline` module for all NIRSpec exposures.
