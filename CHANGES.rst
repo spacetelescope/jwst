@@ -41,7 +41,7 @@ datamodels
 - Moved functions in ``dqflags`` and ``dynamic_mask`` to ``stcal`` [#5898]
 
 - API change - ``stcal.dqflags.interpret_bit_flags`` and ``stcal.dynamicdq.dynamic_mask``
-  now require the ``mnemonic_map`` as input. [#5898]
+  now require the ``mnemonic_map`` as input. [#5898, #5914]
 
 extract_2d
 ----------
