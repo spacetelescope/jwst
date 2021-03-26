@@ -15,6 +15,9 @@ def test_nocrs_noflux(setup_cube):
 
 
 def test_5grps_cr3_noflux(setup_cube):
+    """"
+       A test that has a jump in the third group of pixel 100,100
+       """
     ngroups = 5
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups)
 
@@ -648,6 +651,9 @@ def test_first_last_group(setup_cube):
 
 
 def test_4grps_1cr(setup_cube):
+    """"
+    A test of a four group integration that has a jump in the third group of pixel 100,100
+    """
     ngroups = 4
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups, readnoise=5 * np.sqrt(2))
     nframes=1
@@ -661,6 +667,9 @@ def test_4grps_1cr(setup_cube):
     assert (np.array_equal([0, 0, 4, 0], out_gdq[0, :, 100, 100]))
 
 def test_3grps_1cr(setup_cube):
+    """"
+        A test of a three group integration that has a jump in the third group of pixel 1,1
+        """
     ngroups = 3
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups, readnoise=5 * np.sqrt(2), nrows=2, ncols=2)
     nframes=1
@@ -673,6 +682,9 @@ def test_3grps_1cr(setup_cube):
     assert (np.array_equal([0, 4, 0], out_gdq[0, :, 1, 1]))
 
 def test_4grps_2crs(setup_cube):
+    """"
+        A test of a four group integration that has a jump in the 2nd and fourth groups of pixel 1,1
+        """
     ngroups = 4
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups, readnoise=5 * np.sqrt(2), nrows=2, ncols=2)
     nframes=1
@@ -680,7 +692,7 @@ def test_4grps_2crs(setup_cube):
     data[0, 1, 1, 1] = 1000
     data[0, 2, 1, 1] = 1100
     data[0, 3, 1, 1] = 10000
-    print(np.diff(data[0,:,1,1]))
+    print(np.diff(data[0, :, 1, 1]))
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold,
                                                      rej_threshold, rej_threshold, nframes, False, 200, 10)
     assert (np.array_equal([0, 4, 0, 4], out_gdq[0, :, 1, 1]))
@@ -713,6 +725,69 @@ def test_6grps_2crs(setup_cube):
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold,
                                                      rej_threshold, rej_threshold, nframes, False, 200, 10)
     assert (np.array_equal([0, 4, 0, 4, 0, 0], out_gdq[0, :, 1, 1]))
+
+def test_6grps_different_valid_grps_each_pixel(setup_cube):
+    ngroups = 6
+    data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups, readnoise=5 * np.sqrt(2), nrows=3, ncols=2)
+    nframes=1
+    #pixel 0,0 no crs
+    data[0, 0, 0, 0] = 0
+    data[0, 1, 0, 0] = 10
+    data[0, 2, 0, 0] = 20
+    data[0, 3, 0, 0] = 25
+    data[0, 4, 0, 0] = 35
+    data[0, 5, 0, 0] = 42
+    #pixel 0,1 one crs grp 3
+    data[0, 0, 0, 1] = 0
+    data[0, 1, 0, 1] = 10
+    data[0, 2, 0, 1] = 20
+    data[0, 3, 0, 1] = 2500
+    data[0, 4, 0, 1] = 2510
+    data[0, 5, 0, 1] = 2522
+    #pixel 1,0 one cr, two last grps saturated
+    data[0, 0, 1, 0] = 0
+    data[0, 1, 1, 0] = 10
+    data[0, 2, 1, 0] = 20
+    data[0, 3, 1, 0] = 2500
+    data[0, 4, 1, 0] = 2510
+    data[0, 5, 1, 0] = 1522
+    gdq[0, 4, 1, 0]  = dqflags.group['SATURATED']
+    gdq[0, 5, 1, 0]  = dqflags.group['SATURATED']
+    #pixel 1,1 two crs
+    data[0, 0, 1, 1] = 0
+    data[0, 1, 1, 1] = 1000
+    data[0, 2, 1, 1] = 1100
+    data[0, 3, 1, 1] = 10000
+    data[0, 4, 1, 1] = 10102
+    data[0, 5, 1, 1] = 10208
+    #pixel 2,0 one cr, three last groups saturated
+    data[0, 0, 2, 0] = 0
+    data[0, 1, 2, 0] = 1000
+    data[0, 2, 2, 0] = 10100
+    data[0, 3, 2, 0] = 10000
+    data[0, 4, 2, 0] = 10102
+    data[0, 5, 2, 0] = 10208
+    gdq[0, 3, 2, 0]  = dqflags.group['SATURATED']
+    gdq[0, 4, 2, 0]  = dqflags.group['SATURATED']
+    gdq[0, 5, 2, 0]  = dqflags.group['SATURATED']
+    #pixel 2,1 two crs, last group saturated
+    data[0, 0, 2, 1] = 0
+    data[0, 1, 2, 1] = 10000
+    data[0, 2, 2, 1] = 20100
+    data[0, 3, 2, 1] = 20200
+    data[0, 4, 2, 1] = 20302
+    data[0, 5, 2, 1] = 10208
+    gdq[0, 5, 2, 1] = dqflags.group['SATURATED']
+    print(np.diff(data[0,:,1,1]))
+    out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold,
+                                                     rej_threshold, rej_threshold, nframes, False, 200, 10)
+    assert (np.array_equal([0, 0, 0, 0, 0, 0], out_gdq[0, :, 0, 0]))
+    assert (np.array_equal([0, 0, 0, 4, 0, 0], out_gdq[0, :, 0, 1]))
+    assert (np.array_equal([0, 0, 0, 4, 2, 2], out_gdq[0, :, 1, 0]))
+    assert (np.array_equal([0, 4, 0, 4, 0, 0], out_gdq[0, :, 1, 1]))
+    assert (np.array_equal([0, 0, 4, 2, 2, 2], out_gdq[0, :, 2, 0]))
+    assert (np.array_equal([0, 4, 4, 0, 0, 2], out_gdq[0, :, 2, 1]))
+
 
 def test_3diff_median_vector():
     indiffs = np.asarray([7, 5, 10])
