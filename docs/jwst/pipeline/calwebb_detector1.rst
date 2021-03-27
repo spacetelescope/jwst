@@ -15,12 +15,12 @@ are in the form of one or more ramps (integrations) containing accumulating
 counts from the non-destructive detector readouts and the output is a corrected
 countrate (slope) image.
 
-There are two unique configurations used to control this pipeline,
-depending on whether the data are to be treated as a Time Series Observation
-(TSO). The configuration is provided by CRDS and the reftype
-``pars-detector1pipeline``. In general, for Non-TSO exposures, all applicable
-steps are applied to the data. For TSO exposures, some steps are set to be
-skipped by default (see the list of steps in the table below).
+There are two general configurations for this pipeline, depending on whether the
+data are to be treated as a Time Series Observation (TSO). The configuration is
+provided by CRDS and the reftype ``pars-detector1pipeline``. In general, for
+Non-TSO exposures, all applicable steps are applied to the data. For TSO
+exposures, some steps are set to be skipped by default (see the list of steps in
+the table below).
 
 The list of steps applied by the ``Detector1Pipeline`` pipeline is shown in the
 table below. Note that MIRI exposures use some instrument-specific steps and

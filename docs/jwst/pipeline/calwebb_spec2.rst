@@ -7,18 +7,18 @@ calwebb_spec2: Stage 2 Spectroscopic Processing
 :Class: `jwst.pipeline.Spec2Pipeline`
 :Aliass: calwebb_spec2
 
-The ``Spec2Pipeline`` applies additional instrumental corrections and calibrations
-to countrate products that result in a fully calibrated individual exposure.
-There are two unique configurations used to control this pipeline,
-depending on whether the data are to be treated as Time Series Observation (TSO).
-In general, for non-TSO exposures, all
-applicable steps are applied to the data. For TSO exposures, some steps are set to be skipped
-by default (see the list of steps in the table below).
+The ``Spec2Pipeline`` applies additional instrumental corrections and
+calibrations to countrate products that result in a fully calibrated individual
+exposure. There are two general configurations for this pipeline, depending on
+whether the data are to be treated as Time Series Observation (TSO). In general,
+for non-TSO exposures, all applicable steps are applied to the data. For TSO
+exposures, some steps are set to be skipped by default (see the list of steps in
+the table below).
 
 The ``Spec2Pipeline`` is the "Swiss army knife" of pipeline modules, containing
 many steps that are only applied to certain instruments or instrument modes. The
 logic for determining which steps are appropriate is built into the pipeline
-module itself or controlled by the CRDS ``pars-spec2pipeline`` parameter
+module itself and determined by the CRDS ``pars-spec2pipeline`` parameter
 reference file. Logic is mostly based on either the instrument name or the
 exposure type (EXP_TYPE keyword) of the data.
 

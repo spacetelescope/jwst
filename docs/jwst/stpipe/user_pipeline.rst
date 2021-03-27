@@ -19,15 +19,15 @@ write a Pipeline subclass in Python.  That is described in the
 :ref:`devel-pipelines` section of the developer documentation.
 
 Just as with Steps, Pipelines can by configured either by a
-configuration file or directly from Python.
+parameter file or directly from Python.
 
-From a configuration file
--------------------------
+From a parameter file
+---------------------
 
-A Pipeline configuration file follows the same format as a Step
-configuration file: :ref:`config_asdf_files`
+A Pipeline parameter file follows the same format as a Step parameter file:
+:ref:`config_asdf_files`
 
-Here is an example pipeline configuration file for the `Image2Pipeline`
+Here is an example pipeline parameter file for the `Image2Pipeline`
 class:
 
 .. code-block:: yaml
@@ -59,7 +59,7 @@ Here the ``class`` must refer to a subclass of `stpipe.Pipeline`.
 
 Following ``name`` and ``class`` is the ``steps`` section.  Under
 this section is a subsection for each step in the pipeline.  To figure
-out what configuration parameters are available, use the `stspec`
+out what parameters are available, use the `stspec`
 script (just as with a regular step):
 
 .. code-block:: python
@@ -81,8 +81,8 @@ script (just as with a regular step):
 
 For each Step’s section, the parameters for that step may either be
 specified inline, or specified by referencing an external
-configuration file just for that step.  For example, a pipeline
-configuration file that contains:
+parameter file just for that step.  For example, a pipeline
+parameter file that contains:
 
 .. code-block:: yaml
 
@@ -128,7 +128,7 @@ A pipeline may be configured from Python by passing a nested
 dictionary of parameters to the Pipeline’s constructor.  Each key is
 the name of a step, and the value is another dictionary containing
 parameters for that step.  For example, the following is the
-equivalent of the configuration file above:
+equivalent of the parameter file above:
 
 .. code-block:: python
 
@@ -179,7 +179,7 @@ Hooks
 
 Each Step in a pipeline can also have pre- and post-hooks associated.
 Hooks themselves are Step instances, but there are some conveniences
-provided to make them easier to specify in a configuration file.
+provided to make them easier to specify in a parameter file.
 
 Pre-hooks are run right before the Step.  The inputs to the pre-hook
 are the same as the inputs to their parent Step.
@@ -189,12 +189,11 @@ always passed as a list. If the return value from the parent Step is a
 single item, a list of this single item is passed to the post hooks.
 This allows the post hooks to modify the return results, if necessary.
 
-Hooks are specified using the ``pre_hooks`` and ``post_hooks``
-configuration parameter associated with each step.  More than one pre-
-or post-hook may be assigned, and they are run in the order they are
-given.  There can also be ``pre_hooks`` and ``post_hooks`` on the
-Pipeline as a whole (since a Pipeline is also a Step).  Each of these
-parameters is a list of strings, where each entry is one of:
+Hooks are specified using the ``pre_hooks`` and ``post_hooks`` parameters
+associated with each step. More than one pre- or post-hook may be assigned, and
+they are run in the order they are given. There can also be ``pre_hooks`` and
+``post_hooks`` on the Pipeline as a whole (since a Pipeline is also a Step).
+Each of these parameters is a list of strings, where each entry is one of:
 
    - An external commandline application.  The arguments can be
      accessed using {0}, {1} etc.  (See

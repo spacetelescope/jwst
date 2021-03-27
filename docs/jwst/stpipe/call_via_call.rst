@@ -16,7 +16,7 @@ in a single call.
 
 
 To set custom parameter values when using the ``call`` method, set
-the parameters in the pipeline or step configuration file and
+the parameters in the pipeline or step parameter file and
 then supply the file using the ``config_file`` keyword:
 ::
 

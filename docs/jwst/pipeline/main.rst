@@ -229,7 +229,7 @@ Post-1.1.0, configuration files are no longer the primary identifier of
 pipelines. Instead, pipelines are identified by their full class name, i.e.
 ``jwst.pipeline.Detector1Pipeline``, or by their simple name, or alias, i.e.
 ``calwebb_detector1``. How a pipeline is run is determined by the input data and
-what step parameter reference file in CRDS is selected by that data. The reftype
+what parameter reference file in CRDS is selected by that data. The reftype
 for each pipeline, or step, is determined by appending the class name of the
 step to the string ``pars-``. For example, the reftype for
 ``jwst.pipeline.Detector1Pipeline`` is ``pars-detector1pipeline``. Which
@@ -239,26 +239,27 @@ with any other reference file.
 As a result, there are a few pipelines that no longer exist explicitly by name,
 because they were only a configuration file for an already existing pipeline
 class. The pipelines continue to operate correctly for the specific cases,
-because the step parameter references pulled from CRDS will have the correct
+because the parameter references pulled from CRDS will have the correct
 configuration. The following table lists the deprecated configuration files and
 what pipeline should now be referred to.
 
-+---------------------------+-----------------------------------+-------------------+
-| Deprecated CFG            | Pipeline Class                    | Alias             |
-+===========================+===================================+===================+
-| calwebb_nrslamp-spec2.cfg | `jwst.pipeline.Spec2Pipeline`     | calwebb_spec2     |
-+---------------------------+-----------------------------------+-------------------+
-| calwebb_tso1.cfg          | `jwst.pipeline.Detector1Pipeline` | calwebb_detector1 |
-+---------------------------+-----------------------------------+-------------------+
-| calwebb_tso-image2.cfg    | `jwst.pipeline.Image2Pipeline`    | calwebb_image2    |
-+---------------------------+-----------------------------------+-------------------+
-| calwebb_tso-spec2.cfg     | `jwst.pipeline.Spec2Pipeline`     | calwebb_spec2     |
-+---------------------------+-----------------------------------+-------------------+
-| calwebb_wfs-image2.cfg    | `jwst.pipeline.Image2Pipeline`    | calwebb_image2    |
-+---------------------------+-----------------------------------+-------------------+
++---------------------------+-----------------------------------+----------------------------------------------+
+| Deprecated CFG            | Pipeline Class                    | Alias                                        |
++===========================+===================================+==============================================+
+| calwebb_nrslamp-spec2.cfg | `jwst.pipeline.Spec2Pipeline`     | :ref:`calwebb_spec2 <calwebb_spec2>`         |
++---------------------------+-----------------------------------+----------------------------------------------+
+| calwebb_tso1.cfg          | `jwst.pipeline.Detector1Pipeline` | :ref:`calwebb_detector1 <calwebb_detector1>` |
++---------------------------+-----------------------------------+----------------------------------------------+
+| calwebb_tso-image2.cfg    | `jwst.pipeline.Image2Pipeline`    | :ref:`calwebb_image2 <calwebb_image2>`       |
++---------------------------+-----------------------------------+----------------------------------------------+
+| calwebb_tso-spec2.cfg     | `jwst.pipeline.Spec2Pipeline`     | :ref:`calwebb_spec2 <calwebb_spec2>`         |
++---------------------------+-----------------------------------+----------------------------------------------+
+| calwebb_wfs-image2.cfg    | `jwst.pipeline.Image2Pipeline`    | :ref:`calwebb_image2 <calwebb_image2>`       |
++---------------------------+-----------------------------------+----------------------------------------------+
 
-The deprecated configuration to mode mapping up to version 1.1.0. This table is given only
-as historical reference for software and documentation that used this terminology.
+The deprecated configuration to mode mapping up to version 1.1.0 is in the table
+below. This table is given only as historical reference for software and
+documentation that used this terminology.
 
 +------------------------------------+---------------------------+------------------------------+
 | Pipeline Class                     | Configuration File        | Used For                     |

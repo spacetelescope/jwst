@@ -1,9 +1,9 @@
 .. _config_asdf_files:
 
-ASDF Configuration Files
-========================
+ASDF Parameter Files
+====================
 
-The format of choice to use for step configuration files. `ASDF
+ASDF is the format of choice for parameter files. `ASDF
 <https://asdf-standard.readthedocs.io/>`_ stands for "Advanced Scientific Data
 Format", a general purpose, non-proprietary, and system-agnostic format for the
 dissemination of data. Built on `YAML <https://yaml.org/>`_, the most basic file
@@ -11,12 +11,12 @@ is text-based requiring minimal formatting.
 
 ASDF replaces the original :ref:`CFG <config_cfg_files>` format for step
 configuration. Using ASDF allows the configurations to be stored and retrieved
-from CRDS, selecting the best configuration for a given set of criteria, such as
-instrument and observation mode.
+from CRDS, selecting the best parameter file for a given set of criteria, such
+as instrument and observation mode.
 
 .. _asdf_minimal_file:
 
-To create a configuration file, the most direct way is to choose the Pipeline
+To create a parameter file, the most direct way is to choose the Pipeline
 class, Step class, or already existing .asdf or .cfg file, and run that step
 using the ``--save-parameters`` option. For example, to get the parameters for
 the ``Spec2Pipeline`` pipeline, do the following: ::
@@ -33,7 +33,8 @@ The remaining sections will describe the file format and contents.
 File Contents
 -------------
 
-To describe the contents of an ASDF file, the configuration for the step ``CubeBuildStep`` will be used as the example:
+To describe the contents of an ASDF file, the configuration for the step
+``CubeBuildStep`` will be used as the example:
 
 .. code-block::
 
@@ -94,7 +95,7 @@ class and name
 There are two required keys at the top level: ``class`` and ``parameters``.
 ``parameters`` is discussed below. ``class`` defines which ``Step`` or
 ``Pipeline`` the parameters belong to. This key is used by ``strun`` to
-determine which class to actually execute when given a configuration file.
+determine which class to actually execute when given a parameter file.
 
 ``name`` defines an alias to use for the class referenced by the ``class`` key.
 Pipelines use this alias to refer to their sub-steps.  ``name`` is optional.
@@ -105,7 +106,7 @@ Parameters
 ``parameters`` contains all the parameters to pass onto the step. The order of
 the parameters does not matter. It is not necessary to specify all parameters
 either. If not defined, the default, as defined in the code or values from CRDS
-step parameter references, will be used.
+parameter references, will be used.
 
 Formatting
 **********
@@ -124,14 +125,14 @@ For example, the ``parameters`` block above could also have been formatted as:
 Optional Components
 ~~~~~~~~~~~~~~~~~~~
 
-The ``asdf_library`` and ``history`` blocks are necessary only when the configuration
-file is to be used as a parameter reference file in CRDS. See `Configuration as
-Reference File`_ below.
+The ``asdf_library`` and ``history`` blocks are necessary only when a parameter
+file is to be used as a parameter reference file in CRDS. See `Parameter Files
+as Reference Files`_ below.
 
 Completeness
 ~~~~~~~~~~~~
 
-For any configuration file, it is not necessary to specify all step/pipeline
+For any parameter file, it is not necessary to specify all step/pipeline
 parameters. Any parameter left unspecified will get, at least, the default value
 define in the step's code. If a parameter is defined without a default value,
 and the parameter is never assigned a value, an error will be produced when the
@@ -158,7 +159,7 @@ format, parameters for sub-steps can also be specified. All sub-step parameters
 appear in a key called `steps`. Sub-step parameters are specified by using the
 sub-step name as the key, then underneath and indented, the parameters to change
 for that sub-step. For example, to define the ``weight_power`` of the
-``cube_build`` step in a ``Spec2Pipeline`` configuration file, the parameter
+``cube_build`` step in a ``Spec2Pipeline`` parameter file, the parameter
 block would look as follows:
 
 .. code-block::
@@ -170,14 +171,14 @@ block would look as follows:
      parameters:
        weight_power: 4.0
 
-As with step configuration files, not all sub-steps need to be specified. If
-left unspecified, the sub-steps will be run with their default parameter sets.
-For the example above, the other steps of ``Spec2Pipeline``, such as
-``assign_wcs`` and ``photom`` would still be executed.
+As with step parameter files, not all sub-steps need to be specified. If left
+unspecified, the sub-steps will be run with their default parameter sets. For
+the example above, the other steps of ``Spec2Pipeline``, such as ``assign_wcs``
+and ``photom`` would still be executed.
 
 Similarly, to skip a particular step, one would specify ``skip: true`` for that
 substep. Continuing from the above example, to skip the ``msa_flagging`` step,
-the configuration file would look like:
+the parameter file would look like:
 
 .. code-block::
 
@@ -202,31 +203,32 @@ the configuration file would look like:
 Python API
 ----------
 
-There are a number of ways to create an ASDF configuration file. From the
+There are a number of ways to create an ASDF parameter file. From the
 command line utility ``strun``, the option ``--save-parameters`` can be used.
 
 Within a Python script, the method ``Step.export_config(filename: str)`` can be
-used. For example, to create a configuration file for ``CubeBuildStep``, use the
+used. For example, to create a parameter file for ``CubeBuildStep``, use the
 following:
 
-.. code-block:: python
 .. doctest-skip::
 
    >>> from jwst.cube_build import CubeBuildStep
    >>> step = CubeBuildStep()
    >>> step.export_config('cube_build.asdf')
 
-Configuration as Reference File
--------------------------------
+Parameter Files as Reference Files
+----------------------------------
 
-ASDF-formatted configuration files are the basis for the step parameter
-reference reftypes in CRDS. There are two more keys that are needed to be added
-which CRDS requires: ``meta`` and ``history``.
+ASDF-formatted parameter files are the basis for the parameter reference
+reftypes in CRDS. There are two more keys that are needed to be added which CRDS
+requires: ``meta`` and ``history``.
 
-The direct way of creating a step parameter reference file is through the ``Step.export_config`` method, just as one would to get a basic
-configuration file. The only addition is the added argument ``include_meta=True``. For example, to get a reference-file ready version of the ``CubeBuildStep``, use the following Python code:
+The direct way of creating a parameter reference file is through the
+``Step.export_config`` method, just as one would to get a basic parameter file.
+The only addition is the argument ``include_meta=True``. For example, to get a
+reference-file ready version of the ``CubeBuildStep``, use the following Python
+code:
 
-.. code-block:: python
 .. doctest-skip::
 
    >>> from jwst.cube_build import CubeBuildStep
@@ -239,9 +241,9 @@ The explanations for the ``meta`` and ``history`` blocks are given below.
 META Block
 ~~~~~~~~~~
 
-When a configuration file is to be ingested into CRDS, there is another key
-required, ``meta``, which defines the information needed by CRDS to select a
-configuration file. A basic reference configuration will look as follows:
+When a parameter file is to be ingested into CRDS, there is another key
+required, ``meta``, which defines the information needed by CRDS parameter file
+selection. A basic reference parameter file will look as follows:
 
 .. code-block:: yaml
 
@@ -262,7 +264,7 @@ configuration file. A basic reference configuration will look as follows:
       author: Alfred E. Neuman
       date: '2019-07-17T10:56:23.456'
       description: MakeListStep parameters
-      instrument: {name: GENERIC}
+      instrument: {name: MIRI}
       pedigree: GROUND
       reftype: pars-spec2pipeline
       telescope: JWST
@@ -277,9 +279,9 @@ self-explanatory. For more information, refer to the `CRDS documentation
 <https://jwst-crds.stsci.edu/static/users_guide/>`_.
 
 The one keyword to explain further is ``reftype``. This is what CRDS uses to
-determine which reference file is being sought after. For step configurations,
-this has the format ``pars-<step_name>`` where ``<step_name>`` will be the Python
-class name, in lowercase.
+determine which parameter file is being sought after. This has the format
+``pars-<step_name>`` where ``<step_name>`` is the Python class name, in
+lowercase.
 
 
 History

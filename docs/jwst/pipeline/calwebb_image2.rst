@@ -9,8 +9,8 @@ calwebb_image2: Stage 2 Imaging Processing
 
 Stage 2 imaging processing applies additional instrumental corrections and
 calibrations that result in a fully calibrated individual exposure. There are
-two unique configurations used to control this pipeline, depending on whether
-the data are to be treated as Time Series Observation (TSO). The configuration
+two parameter references used to control this pipeline, depending on whether the
+data are to be treated as Time Series Observation (TSO). The parameter reference
 is provided by CRDS and the reftype ``pars-image2pipeline``. In general, for
 non-TSO exposures, all applicable steps are applied to the data. For TSO
 exposures, some steps are set to be skipped by default (see the list of steps in
