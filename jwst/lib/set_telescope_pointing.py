@@ -32,11 +32,13 @@ LOGLEVELS = [logging.INFO, logging.DEBUG, DEBUG_FULL]
 
 # The available methods for transformation
 class Methods(Enum):
-    ORIGINAL = ('original', 'calc_transforms_original')                    # Original, pre-JSOCINT-555 algorithm
-    CMDTEST = ('cmdtest', 'calc_transforms_cmdtest_j3pags')                # JSOCINT-555 fix using J3PA@GS
-    CMDTEST_V3PAGS = ('cmdtest_v3pags', 'calc_transforms_cmdtest_v3pags')  # JSOCINT-555 fix using V3PA@GS
+    GSCMD_J3PAGS = ('gscmd', 'calc_transforms_gscmd_j3pags')         # JSOCINT-555 fix using J3PA@GS
+    GSCMD_V3PAGS = ('gscmd_v3pags', 'calc_transforms_gscmd_v3pags')  # JSOCINT-555 fix using V3PA@GS
+    ORIGINAL = ('original', 'calc_transforms_original')              # Original, pre-JSOCINT-555 algorithm
 
-    default = ORIGINAL  # Use original algorithm if not specified
+    # Alias
+    default = ORIGINAL    # Use original algorithm if not specified
+    GSCMD = GSCMD_J3PAGS  # When specifying GS Commanded, use the J3VA@GS method by default.
 
     def __new__(cls: object, value: str, func_name: str):
         obj = object.__new__(cls)
@@ -898,7 +900,7 @@ def calc_transforms_original(t_pars: TransformParameters):
     return tforms
 
 
-def calc_transforms_cmdtest_j3pags(t_pars: TransformParameters):
+def calc_transforms_gscmd_j3pags(t_pars: TransformParameters):
     """Calculate transforms from pointing to SIAF using the JSOCINT-555 fix and J3PA@GS
 
     Given the spacecraft pointing parameters and the
@@ -935,7 +937,7 @@ def calc_transforms_cmdtest_j3pags(t_pars: TransformParameters):
             M_fgs1_to_sifov_fgs1siaf   *   # FGS1 to Science Instruments Aperture
             M_eci_to_fgs1                  # ECI to FGS1 using commanded information
     """
-    logger.info('Calculating transforms using CMDTEST method...')
+    logger.info('Calculating transforms using GSCMD with J3PA@GS method...')
 
     # Determine the ECI to FGS1 ICS using guide star telemetry.
     m_eci2j = calc_eci2j_matrix(t_pars.pointing.q)
@@ -976,7 +978,7 @@ def calc_transforms_cmdtest_j3pags(t_pars: TransformParameters):
     return tforms
 
 
-def calc_transforms_cmdtest_v3pags(t_pars: TransformParameters):
+def calc_transforms_gscmd_v3pags(t_pars: TransformParameters):
     """Calculate transforms from pointing to SIAF using the JSOCINT-555 fix
 
     Given the spacecraft pointing parameters and the
@@ -1013,7 +1015,7 @@ def calc_transforms_cmdtest_v3pags(t_pars: TransformParameters):
             M_fgs1_to_sifov_fgs1siaf   *   # FGS1 to Science Instruments Aperture
             M_eci_to_fgs1                  # ECI to FGS1 using commanded information
     """
-    logger.info('Calculating transforms using CMDTEST method...')
+    logger.info('Calculating transforms using GSCMD using V3PA@GS method...')
 
     # Determine the ECI to FGS1 ICS using guide star telemetry.
     m_eci2fgs1 = calc_eci2fgs1_v3pags(t_pars)

@@ -427,9 +427,9 @@ def test_add_wcs_method_original(eng_db_ngas, data_file, siaf_file=siaf_db):
 
 @pytest.mark.skipif(sys.version_info.major < 3,
                     reason="No URI support in sqlite3")
-def test_add_wcs_method_cmdtest(eng_db_ngas, data_file, siaf_file=siaf_db):
+def test_add_wcs_method_gscmd(eng_db_ngas, data_file, siaf_file=siaf_db):
     """Test using the database and the original, pre-JSOCINT-555 algorithms"""
-    stp.add_wcs(data_file, siaf_path=siaf_db, method=stp.Methods.CMDTEST, j2fgs_transpose=False)
+    stp.add_wcs(data_file, siaf_path=siaf_db, method=stp.Methods.GSCMD, j2fgs_transpose=False)
 
     with datamodels.Level1bModel(data_file) as model:
 
@@ -475,9 +475,9 @@ def test_add_wcs_method_cmdtest(eng_db_ngas, data_file, siaf_file=siaf_db):
 
 @pytest.mark.skipif(sys.version_info.major < 3,
                     reason="No URI support in sqlite3")
-def test_add_wcs_method_cmdtest_v3pags(eng_db_ngas, data_file, siaf_file=siaf_db):
+def test_add_wcs_method_gscmd_v3pags(eng_db_ngas, data_file, siaf_file=siaf_db):
     """Test using the database and the original, pre-JSOCINT-555 algorithms"""
-    stp.add_wcs(data_file, siaf_path=siaf_db, method=stp.Methods.CMDTEST_V3PAGS, j2fgs_transpose=False)
+    stp.add_wcs(data_file, siaf_path=siaf_db, method=stp.Methods.GSCMD_V3PAGS, j2fgs_transpose=False)
 
     with datamodels.Level1bModel(data_file) as model:
 
