@@ -3,7 +3,6 @@ from .ami.ami_average_step import AmiAverageStep
 from .ami.ami_normalize_step import AmiNormalizeStep
 from .assign_mtwcs.assign_mtwcs_step import AssignMTWcsStep
 from .assign_wcs.assign_wcs_step import AssignWcsStep
-from .background.subtract_images_step import SubtractImagesStep
 from .background.background_step import BackgroundStep
 from .barshadow.barshadow_step import BarShadowStep
 from .combine_1d.combine_1d_step import Combine1dStep
@@ -64,7 +63,6 @@ __all__ = [
     "AmiNormalizeStep",
     "AssignMTWcsStep",
     "AssignWcsStep",
-    "SubtractImagesStep",
     "BackgroundStep",
     "BarShadowStep",
     "Combine1dStep",

@@ -26,6 +26,11 @@ associations
   PUPIL value (cross filter) when matching direct images with grism images
   in NIRISS WFSS observations. [#5896]
 
+background
+----------
+
+- Remove unused ``SubtractImagesStep`` [#5919]
+
 cube_build
 ----------
 
