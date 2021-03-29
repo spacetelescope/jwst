@@ -10,6 +10,7 @@ from jwst.lib.suffix import replace_suffix
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
+
 @pytest.fixture(scope="module")
 def run_tso_spec2_pipeline(jail, rtdata_module, request):
     """Run the calwebb_spec2 pipeline performed on NIRSpec
@@ -35,7 +36,7 @@ def run_tso_spec2_pipeline(jail, rtdata_module, request):
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("suffix",['assign_wcs', 'extract_2d', 'wavecorr', 'flat_field', 'photom', 'calints', 'x1dints'])
+@pytest.mark.parametrize("suffix", ['assign_wcs', 'extract_2d', 'wavecorr', 'flat_field', 'photom', 'calints', 'x1dints'])
 def test_nirspec_brightobj_spec2(run_tso_spec2_pipeline, fitsdiff_default_kwargs, suffix):
     """
         Regression test of calwebb_spec2 pipeline performed on NIRSpec
@@ -43,7 +44,7 @@ def test_nirspec_brightobj_spec2(run_tso_spec2_pipeline, fitsdiff_default_kwargs
     """
     rtdata = run_tso_spec2_pipeline
     output = replace_suffix(
-            os.path.splitext(os.path.basename(rtdata.input))[0], suffix) + '.fits'
+        os.path.splitext(os.path.basename(rtdata.input))[0], suffix) + '.fits'
     rtdata.output = output
 
     # Get the truth files
@@ -72,9 +73,8 @@ def test_flat_field_step_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
 @pytest.mark.bigdata
 def test_ff_inv(rtdata, fitsdiff_default_kwargs):
     """Test flat field inversion"""
-    data = dm.open(rtdata.get_data('nirspec/tso/nrs2_wavecorr.fits'))
-
-    flatted = FlatFieldStep.call(data)
-    unflatted = FlatFieldStep.call(flatted, inverse=True)
+    with dm.open(rtdata.get_data('nirspec/tso/nrs2_wavecorr.fits')) as data:
+        flatted = FlatFieldStep.call(data)
+        unflatted = FlatFieldStep.call(flatted, inverse=True)
 
     assert np.allclose(data.data, unflatted.data), 'Inversion failed'

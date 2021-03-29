@@ -340,14 +340,13 @@ def wfss(input_model, reference_files):
 
     # make sure this is a grism image
     if "NRC_WFSS" not in input_model.meta.exposure.type:
-            raise ValueError('The input exposure is not a NIRCAM grism')
+        raise ValueError('The input exposure is not a NIRCAM grism')
 
     # Create the empty detector as a 2D coordinate frame in pixel units
     gdetector = cf.Frame2D(name='grism_detector', axes_order=(0, 1),
                            axes_names=('x_grism', 'y_grism'), unit=(u.pix, u.pix))
     spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,),
                             axes_names=('wavelength',))
-
 
     # translate the x,y detector-in to x,y detector out coordinates
     # Get the disperser parameters which are defined as a model for each
@@ -413,7 +412,7 @@ def wfss(input_model, reference_files):
         name = cframe.name
         cframe.name = name + 'spatial'
         spatial_and_spectral = cf.CompositeFrame([cframe, spec],
-                                                  name=name)
+                                                 name=name)
         imagepipe.append((spatial_and_spectral, trans))
 
     # Output frame is Celestial + Spectral
@@ -440,7 +439,6 @@ def create_coord_frames():
               'world': cf.CompositeFrame([sky_frame, spec], name='world')
               }
     return frames
-
 
 
 exp_type2transform = {'nrc_image': imaging,

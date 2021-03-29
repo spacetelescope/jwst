@@ -32,6 +32,7 @@ from ..lib import pipe_utils
 
 ReadoutParam = namedtuple("ReadoutParam", ["refout", "n", "r"])
 
+
 def _get_irs2_parameters(input_model, n=None, r=None):
     """Get the parameters describing IRS2 readout format.
 
@@ -89,7 +90,6 @@ def _get_irs2_parameters(input_model, n=None, r=None):
                          n=n_norm, r=n_ref)
 
     return param
-
 
 
 def normal_shape(input_model, n=None, r=None, detector=None):

@@ -6,6 +6,7 @@ from scipy.ndimage.filters import convolve1d
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+
 def correct_model(input_model, irs2_model,
                   scipix_n_default=16, refpix_r_default=4, pad=8):
     """Process IRS2 data.
@@ -38,8 +39,7 @@ def correct_model(input_model, irs2_model,
         subtracted.
     """
 
-
-    #; Part_C applies the calibration as derived from part_A and part_B.
+    # ; Part_C applies the calibration as derived from part_A and part_B.
 
     """Readout parameters
     scipix_n   16         Number of regular samples before stepping out
@@ -87,22 +87,22 @@ def correct_model(input_model, irs2_model,
     beta = np.zeros((4, nrows // 2), dtype=np.complex64)
 
     alpha[0, :] = float_to_complex(
-                        irs2_model.irs2_table.field("alpha_0"))
+        irs2_model.irs2_table.field("alpha_0"))
     alpha[1, :] = float_to_complex(
-                        irs2_model.irs2_table.field("alpha_1"))
+        irs2_model.irs2_table.field("alpha_1"))
     alpha[2, :] = float_to_complex(
-                        irs2_model.irs2_table.field("alpha_2"))
+        irs2_model.irs2_table.field("alpha_2"))
     alpha[3, :] = float_to_complex(
-                        irs2_model.irs2_table.field("alpha_3"))
+        irs2_model.irs2_table.field("alpha_3"))
 
     beta[0, :] = float_to_complex(
-                    irs2_model.irs2_table.field("beta_0"))
+        irs2_model.irs2_table.field("beta_0"))
     beta[1, :] = float_to_complex(
-                    irs2_model.irs2_table.field("beta_1"))
+        irs2_model.irs2_table.field("beta_1"))
     beta[2, :] = float_to_complex(
-                    irs2_model.irs2_table.field("beta_2"))
+        irs2_model.irs2_table.field("beta_2"))
     beta[3, :] = float_to_complex(
-                    irs2_model.irs2_table.field("beta_3"))
+        irs2_model.irs2_table.field("beta_3"))
 
     if beta is None:
         log.info("Using reference pixels only.")
@@ -181,6 +181,7 @@ def float_to_complex(data):
     nelem = len(data)
 
     return data[0:-1:2] + 1j * data[1:nelem:2]
+
 
 def make_irs2_mask(output_model, scipix_n, refpix_r):
 
@@ -347,8 +348,8 @@ def clobber_ref(data, output, odd_even, mask, scipix_n=16, refpix_r=4):
             ref = (offset + scipix_n // 2 + k * (scipix_n + refpix_r) +
                    2 * (odd_even_row - 1))
             log.debug("bad interleaved reference at pixels {} {}"
-                      .format(ref, ref+1))
-            data[..., ref:ref+2] = 0.
+                      .format(ref, ref + 1))
+            data[..., ref:ref + 2] = 0.
 
 
 def decode_mask(output, mask):
@@ -476,7 +477,7 @@ def subtract_reference(data0, alpha, beta, irs2_mask,
 
     hnorm1 = ind_n + (refpix_r + 2) * ((ind_n + scipix_n // 2) // scipix_n)
     href1 = ind_ref + (scipix_n + 2) * (ind_ref // refpix_r) + \
-            scipix_n // 2 + 1
+        scipix_n // 2 + 1
 
     # Subtract the average over the ramp for each pixel.
     b_offset = data0.sum(axis=0, dtype=np.float64) / float(ngroups)
@@ -523,7 +524,7 @@ def subtract_reference(data0, alpha, beta, irs2_mask,
     data0 = d0.copy()
     del d0
 
-    #; <<<<< Fitting and removal of slopes per frame to remove issues at frame
+    # ; <<<<< Fitting and removal of slopes per frame to remove issues at frame
     # boundaries.
     # IDL:  time = findgen(row, s[2])
     time_arr = np.arange(ny * row, dtype=np.float32).reshape((ny, row))
@@ -571,7 +572,7 @@ def subtract_reference(data0, alpha, beta, irs2_mask,
         # xxx why '+=' instead of just '=' ?
         data0[kk, jj, :, :] += dat * (1. - mask)
 
-    #;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     # Use Fourier filter/interpolation to replace
     # (a) bad pixel, gaps, and reference data in the time-ordered normal data
     # (b) gaps and normal data in the time-ordered reference data
@@ -618,9 +619,9 @@ def subtract_reference(data0, alpha, beta, irs2_mask,
     data0[0, :, :, :] = dd0.copy()
     del aa, dd0
 
-#;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+# ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-#;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+# ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     # The comments in this section are for scipix_n = 16, refpix_r = 4.
     # ; indices for keeping/shuffling reference pixels
     n0 = 512 // scipix_n
@@ -649,7 +650,7 @@ def subtract_reference(data0, alpha, beta, irs2_mask,
     two_indr_t = np.concatenate((indr_t, indr_t), axis=1).flatten()
     two_indr_t += (scipix_n // 2 + 1)     # [9 11 9 11 10 12 10 12]
     hs[:, scipix_n // 2 + 1 - refpix_r // 2:
-          scipix_n // 2 + 1 + refpix_r // 2 + refpix_r] = hs[:, two_indr_t]
+       scipix_n // 2 + 1 + refpix_r // 2 + refpix_r] = hs[:, two_indr_t]
     mask = (hs >= 0)
     hs = hs[mask]                       # hs is now 1-D
 
@@ -662,7 +663,7 @@ def subtract_reference(data0, alpha, beta, irs2_mask,
     # ; construct the reference data
     r0 = np.zeros_like(data0)
     r0[:, :, :, ht] = data0[:, :, :, hs]
-    #;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
     # data0 has shape (5, ngroups, ny, row).  See the section above where
     # d0 was created, then copied (moved) to data0.
@@ -683,7 +684,7 @@ def subtract_reference(data0, alpha, beta, irs2_mask,
     if beta is not None:
         # IDL:  refout0 = reform(data0[*,*,*,0], sd[1] * sd[2], sd[3])
         refout0 = data0[0, :, :, :].reshape((shape_d[1],
-                                           shape_d[2] * shape_d[3]))
+                                             shape_d[2] * shape_d[3]))
         # IDL:  refout0 = fft(refout0, dim=1, /over)
         # Divide by the length of the axis to be consistent with IDL.
         refout0 = np.fft.fft(refout0, axis=1) / normalization

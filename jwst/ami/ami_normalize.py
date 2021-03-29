@@ -35,9 +35,9 @@ def normalize_LG(target_model, reference_model):
 
     # Apply the normalizations to the target data
     output_model.closure_phase_table['coeffs'] -= \
-            reference_model.closure_phase_table['coeffs']
+        reference_model.closure_phase_table['coeffs']
     output_model.fringe_amp_table['coeffs'] /= \
-            reference_model.fringe_amp_table['coeffs']
+        reference_model.fringe_amp_table['coeffs']
 
     # Return the normalized target model
     return output_model

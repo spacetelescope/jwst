@@ -225,6 +225,7 @@ def apply_flat_field(science, flat, inverse=False):
 # The following functions are for NIRSpec spectrographic data.
 #
 
+
 def do_nirspec_flat_field(output_model, f_flat_model, s_flat_model, d_flat_model,
                           user_supplied_flat=None, inverse=False):
     """Apply flat-fielding for NIRSpec data, updating in-place.
@@ -287,7 +288,7 @@ def do_nirspec_flat_field(output_model, f_flat_model, s_flat_model, d_flat_model
     # check for that case.
     if not hasattr(output_model, "slits"):
         if exposure_type == "NRS_IFU" or (
-            exposure_type in ["NRS_AUTOWAVE", "NRS_LAMP"] and output_model.meta.instrument.lamp_mode == 'IFU'):
+                exposure_type in ["NRS_AUTOWAVE", "NRS_LAMP"] and output_model.meta.instrument.lamp_mode == 'IFU'):
             if not isinstance(output_model, datamodels.IFUImageModel):
                 log.error("NIRSpec IFU data is not an IFUImageModel; "
                           "don't know how to process it.")
@@ -632,15 +633,15 @@ def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
     """
 
     f_flat, f_flat_dq, f_flat_err = fore_optics_flat(
-                        wl, f_flat_model, exposure_type, dispaxis,
-                        slit_name, slit_nt)
+        wl, f_flat_model, exposure_type, dispaxis,
+        slit_name, slit_nt)
 
     s_flat, s_flat_dq, s_flat_err = spectrograph_flat(
-                        wl, s_flat_model, xstart, xstop, ystart, ystop,
-                        exposure_type, dispaxis, slit_name)
+        wl, s_flat_model, xstart, xstop, ystart, ystop,
+        exposure_type, dispaxis, slit_name)
     d_flat, d_flat_dq, d_flat_err = detector_flat(
-                        wl, d_flat_model, xstart, xstop, ystart, ystop,
-                        exposure_type, dispaxis, slit_name)
+        wl, d_flat_model, xstart, xstop, ystart, ystop,
+        exposure_type, dispaxis, slit_name)
 
     flat_2d = f_flat * s_flat * d_flat
     flat_dq = combine_dq(f_flat_dq, s_flat_dq, d_flat_dq,
@@ -1572,12 +1573,12 @@ def interpolate_flat(image_flat, image_dq, image_err, image_wl, wl):
     p = np.where(zero_denom, 0., (wl - image_wl[k]) / denom)
     q = 1. - p
     flat_2d = q * image_flat[k, iypixel, ixpixel] + \
-              p * image_flat[k + 1, iypixel, ixpixel]
+        p * image_flat[k + 1, iypixel, ixpixel]
     if len(image_err.shape) == 2:
         flat_err = image_err.copy()
     else:
         flat_err = q * image_err[k, iypixel, ixpixel] + \
-                   p * image_err[k + 1, iypixel, ixpixel]
+            p * image_err[k + 1, iypixel, ixpixel]
 
     if len(image_dq.shape) == 2:
         flat_dq = image_dq.copy()
@@ -1712,9 +1713,9 @@ def flat_for_nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
         wl[nan_flag] = 0.
 
         flat_2d, flat_dq_2d, flat_err_2d = create_flat_field(
-                        wl, f_flat_model, s_flat_model, d_flat_model,
-                        xstart, xstop, ystart, ystop,
-                        exposure_type, dispaxis, None, None)
+            wl, f_flat_model, s_flat_model, d_flat_model,
+            xstart, xstop, ystart, ystop,
+            exposure_type, dispaxis, None, None)
         flat_2d[nan_flag] = 1.
         mask = (flat_2d <= 0.)
         nbad = mask.sum(dtype=np.intp)
@@ -1834,9 +1835,9 @@ def flat_for_nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_
     # Combine the three flat fields.  The same flat will be applied to
     # each plane (integration) in the cube.
     flat_2d, flat_dq_2d, flat_err_2d = create_flat_field(
-                        wl, f_flat_model, s_flat_model, d_flat_model,
-                        xstart, xstop, ystart, ystop,
-                        exposure_type, dispaxis, slit_name, None)
+        wl, f_flat_model, s_flat_model, d_flat_model,
+        xstart, xstop, ystart, ystop,
+        exposure_type, dispaxis, slit_name, None)
     mask = (flat_2d <= 0.)
     nbad = mask.sum(dtype=np.intp)
     if nbad > 0:
@@ -1996,9 +1997,9 @@ def flat_for_nirspec_slit(slit, f_flat_model, s_flat_model, d_flat_model,
 
     # Combine the three flat fields for the current subarray.
     flat_2d, flat_dq_2d, flat_err_2d = create_flat_field(wl,
-                    f_flat_model, s_flat_model, d_flat_model,
-                    xstart, xstop, ystart, ystop,
-                    exposure_type, dispaxis, slit.name, slit_nt)
+                                                         f_flat_model, s_flat_model, d_flat_model,
+                                                         xstart, xstop, ystart, ystop,
+                                                         exposure_type, dispaxis, slit.name, slit_nt)
 
     # Mask bad flatfield values
     mask = (flat_2d <= 0.)

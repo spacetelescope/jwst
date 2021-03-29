@@ -19,7 +19,7 @@ from astropy.nddata.bitmask import (
     interpret_bit_flags,
 )
 
-#LOCAL:
+# LOCAL:
 from .skymatch import match
 from .skyimage import SkyImage, SkyGroup
 from .skystatistics import SkyStats
@@ -117,7 +117,7 @@ class SkyMatchStep(Step):
 
         return img
 
-    #DEBUG: remove _group_images_by_id() once we are past
+    # DEBUG: remove _group_images_by_id() once we are past
     # debugging stage.
     def _group_images_by_id(self, image_list):
 
@@ -180,10 +180,10 @@ class SkyMatchStep(Step):
             image=image_model.data,
             wcs_fwd=image_model.meta.wcs.__call__,
             wcs_inv=image_model.meta.wcs.invert,
-            pix_area=1.0, #TODO: pixel area
-            convf=1.0,    #TODO: conv. factor to brightness
+            pix_area=1.0,  # TODO: pixel area
+            convf=1.0,  # TODO: conv. factor to brightness
             mask=dqmask,
-            id=image_model.meta.filename, # file name?
+            id=image_model.meta.filename,  # file name?
             skystat=self._skystat,
             stepsize=self.stepsize,
             meta={'image_model': image_model}

@@ -4,7 +4,7 @@ __all__ = ['FgsImgApcorrModel', 'MirImgApcorrModel',
            'NrcImgApcorrModel', 'NisImgApcorrModel',
            'MirLrsApcorrModel', 'MirMrsApcorrModel',
            'NrcWfssApcorrModel', 'NisWfssApcorrModel',
-           'NrsMosApcorrModel', 'NrsIfuApcorrModel','NrsFsApcorrModel']
+           'NrsMosApcorrModel', 'NrsIfuApcorrModel', 'NrsFsApcorrModel']
 
 
 class FgsImgApcorrModel(ReferenceFileModel):

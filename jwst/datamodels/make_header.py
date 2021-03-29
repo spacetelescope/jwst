@@ -27,6 +27,7 @@ triple_quote = re.compile(r'""".*?"""', flags=re.DOTALL)
 
 relative_import = re.compile(r'\s*from\s+\.+[\.\w]*\s+import')
 
+
 def main(instrument, mode, level):
     """
     Main procedure for make_header
@@ -41,6 +42,7 @@ def main(instrument, mode, level):
     fill_extensions(im, defaults)
 
     return im
+
 
 def add_metadata(im, defaults, pipeline):
     """
@@ -58,6 +60,7 @@ def add_metadata(im, defaults, pipeline):
             set_value(im, defaults, keyword)
             additional_metadata(im, defaults, keyword)
 
+
 def additional_metadata(im, defaults, keyword):
     """
     Add additional metadata items from the same group
@@ -65,43 +68,43 @@ def additional_metadata(im, defaults, keyword):
     groups = []
 
     groups.append(set(('meta.subarray.name',
-                      'meta.subarray.xstart',
-                      'meta.subarray.ystart',
-                      'meta.subarray.xsize',
-                      'meta.subarray.ysize')))
+                       'meta.subarray.xstart',
+                       'meta.subarray.ystart',
+                       'meta.subarray.xsize',
+                       'meta.subarray.ysize')))
 
     groups.append(set(('meta.instrument.name',
-                      'meta.instrument.band',
-                      'meta.instrument.channel',
-                      'meta.instrument.module',
-                      'meta.instrument.detector',
-                      'meta.instrument.filter',
-                      'meta.instrument.grating',
-                      'meta.instrument.pupil',
-                      'meta.exposure.readpatt')))
+                       'meta.instrument.band',
+                       'meta.instrument.channel',
+                       'meta.instrument.module',
+                       'meta.instrument.detector',
+                       'meta.instrument.filter',
+                       'meta.instrument.grating',
+                       'meta.instrument.pupil',
+                       'meta.exposure.readpatt')))
 
     groups.append(set(('meta.asn.pool_name',
-                      'meta.asn.table_name')))
+                       'meta.asn.table_name')))
 
     groups.append(set(('meta.target.catalog_name',
-                      'meta.target.ra',
-                      'meta.target.dec')))
+                       'meta.target.ra',
+                       'meta.target.dec')))
 
     groups.append(set(('meta.exposure.start_time',
-                      'meta.exposure.mid_time',
-                      'meta.exposure.end_time',
-                      'meta.exposure.exposure_time')))
+                       'meta.exposure.mid_time',
+                       'meta.exposure.end_time',
+                       'meta.exposure.exposure_time')))
 
     groups.append(set(('meta.exposure.frame_divisor',
-                      'meta.exposure.frame_time',
-                      'meta.exposure.groupgap',
-                      'meta.exposure.group_time',
-                      'meta.exposure.integration_time',
-                      'meta.exposure.nframes',
-                      'meta.exposure.ngroups',
-                      'meta.exposure.nints',
-                      'meta.exposure.nresets_at_start',
-                      'meta.exposure.nresets_between_ints')))
+                       'meta.exposure.frame_time',
+                       'meta.exposure.groupgap',
+                       'meta.exposure.group_time',
+                       'meta.exposure.integration_time',
+                       'meta.exposure.nframes',
+                       'meta.exposure.ngroups',
+                       'meta.exposure.nints',
+                       'meta.exposure.nresets_at_start',
+                       'meta.exposure.nresets_between_ints')))
 
     for group in groups:
         if keyword in group:
@@ -109,6 +112,7 @@ def additional_metadata(im, defaults, keyword):
                 if not another_instrument(defaults, im, additional_key):
                     if additional_key != keyword:
                         set_value(im, defaults, additional_key)
+
 
 def another_instrument(defaults, im, keyword):
     """
@@ -126,7 +130,7 @@ def another_instrument(defaults, im, keyword):
              (('NRS_MSASPEC',), 'MSA'),
              (('MIR_MRS',), 'MRS'),
              (('MIR_LRS-FIXEDSLIT', 'MIR_LRS-SLITLESS'), 'LRS'),
-            )
+             )
 
     instrument = defaults['meta.instrument.name']
     exposure_type = defaults['meta.exposure.type']
@@ -147,15 +151,16 @@ def another_instrument(defaults, im, keyword):
 
     return False
 
+
 def build_exposure_type(instrument, mode):
     """
     Build the exposure type from the instrument name and mode
     """
-    abbreviations = {'FGS':'FGS', 'MIRI':'MIR', 'NIRISS':'NIS',
-                     'NIRCAM':'NRC', 'NIRSPEC':'NRS'}
+    abbreviations = {'FGS': 'FGS', 'MIRI': 'MIR', 'NIRISS': 'NIS',
+                     'NIRCAM': 'NRC', 'NIRSPEC': 'NRS'}
 
-    spec_mode = {'FGS':'', 'MIRI':'MRS', 'NIRISS':'WFSS',
-                 'NIRCAM':'WFSS', 'NIRSPEC':'FIXEDSLIT'}
+    spec_mode = {'FGS': '', 'MIRI': 'MRS', 'NIRISS': 'WFSS',
+                 'NIRCAM': 'WFSS', 'NIRSPEC': 'FIXEDSLIT'}
 
     abbrev = abbreviations[instrument]
     if mode[0:4] == 'IMAG':
@@ -167,30 +172,31 @@ def build_exposure_type(instrument, mode):
 
     return mode
 
+
 def choose_pipeline(defaults):
     """
     Select the pipeline class from the exposure type and level
     """
-    mode = {'FGS_ACQ1':1, 'FGS_ACQ2':1, 'FGS_DARK':2,
-            'FGS_FINEGUIDE':1, 'FGS_FOCUS':6, 'FGS_ID-IMAGE':1,
-            'FGS_ID-STACK':1, 'FGS_IMAGE':6, 'FGS_INTFLAT':0,
-            'FGS_SKYFLAT':6, 'FGS_TRACK':1, 'MIR_IMAGE':6,
-            'MIR_TACQ':0, 'MIR_LYOT':5, 'MIR_4QPM':5,
-            'MIR_LRS-FIXEDSLIT':9, 'MIR_LRS-SLITLESS':4, 'MIR_MRS':9,
-            'MIR_DARK':2, 'MIR_FLAT-IMAGE':6, 'MIR_FLATIMAGE':6,
-            'MIR_FLAT-MRS':6, 'MIR_FLATMRS':6, 'MIR_CORONCAL':7,
-            'NIS_AMI':3, 'NIS_DARK':2, 'NIS_FOCUS':6, 'NIS_IMAGE':6,
-            'NIS_LAMP':0, 'NIS_SOSS':4, 'NIS_TACQ':6,
-            'NIS_TACONFIRM':6, 'NIS_WFSS':9, 'N/A':6, 'ANY':6,
-            'NRC_IMAGE':6, 'NRC_GRISM':9, 'NRC_TACQ':6,
-            'NRC_CORON':5, 'NRC_FOCUS':6, 'NRC_DARK':2, 'NRC_FLAT':6,
-            'NRC_LED':0, 'NRC_TACONFIRM':6, 'NRC_TSIMAGE':4,
-            'NRC_WFSS':9, 'NRC_TSGRISM':4, 'NRS_AUTOFLAT':0,
-            'NRS_AUTOWAVE':0, 'NRS_BRIGHTOBJ':4, 'NRS_CONFIRM':0,
-            'NRS_DARK':2, 'NRS_FIXEDSLIT':9, 'NRS_FOCUS':0, 'NRS_IFU':9,
-            'NRS_IMAGE':6, 'NRS_LAMP':0, 'NRS_MIMF':0, 'NRS_MSASPEC':9,
-            'NRS_MSATA':0, 'NRS_TACONFIRM':0, 'NRS_TACQ':0, 'NRS_TASLIT':9,
-            'NRS_WATA':0}
+    mode = {'FGS_ACQ1': 1, 'FGS_ACQ2': 1, 'FGS_DARK': 2,
+            'FGS_FINEGUIDE': 1, 'FGS_FOCUS': 6, 'FGS_ID-IMAGE': 1,
+            'FGS_ID-STACK': 1, 'FGS_IMAGE': 6, 'FGS_INTFLAT': 0,
+            'FGS_SKYFLAT': 6, 'FGS_TRACK': 1, 'MIR_IMAGE': 6,
+            'MIR_TACQ': 0, 'MIR_LYOT': 5, 'MIR_4QPM': 5,
+            'MIR_LRS-FIXEDSLIT': 9, 'MIR_LRS-SLITLESS': 4, 'MIR_MRS': 9,
+            'MIR_DARK': 2, 'MIR_FLAT-IMAGE': 6, 'MIR_FLATIMAGE': 6,
+            'MIR_FLAT-MRS': 6, 'MIR_FLATMRS': 6, 'MIR_CORONCAL': 7,
+            'NIS_AMI': 3, 'NIS_DARK': 2, 'NIS_FOCUS': 6, 'NIS_IMAGE': 6,
+            'NIS_LAMP': 0, 'NIS_SOSS': 4, 'NIS_TACQ': 6,
+            'NIS_TACONFIRM': 6, 'NIS_WFSS': 9, 'N/A': 6, 'ANY': 6,
+            'NRC_IMAGE': 6, 'NRC_GRISM': 9, 'NRC_TACQ': 6,
+            'NRC_CORON': 5, 'NRC_FOCUS': 6, 'NRC_DARK': 2, 'NRC_FLAT': 6,
+            'NRC_LED': 0, 'NRC_TACONFIRM': 6, 'NRC_TSIMAGE': 4,
+            'NRC_WFSS': 9, 'NRC_TSGRISM': 4, 'NRS_AUTOFLAT': 0,
+            'NRS_AUTOWAVE': 0, 'NRS_BRIGHTOBJ': 4, 'NRS_CONFIRM': 0,
+            'NRS_DARK': 2, 'NRS_FIXEDSLIT': 9, 'NRS_FOCUS': 0, 'NRS_IFU': 9,
+            'NRS_IMAGE': 6, 'NRS_LAMP': 0, 'NRS_MIMF': 0, 'NRS_MSASPEC': 9,
+            'NRS_MSATA': 0, 'NRS_TACONFIRM': 0, 'NRS_TACQ': 0, 'NRS_TASLIT': 9,
+            'NRS_WATA': 0}
 
     pipelines = [None, GuiderPipeline, DarkPipeline,
                  Ami3Pipeline, Tso3Pipeline, Coron3Pipeline,
@@ -208,6 +214,7 @@ def choose_pipeline(defaults):
 
     return pipelines[index]
 
+
 def drop_prefix(string, name):
     """
     Drop the model name preceding the metadata keyword
@@ -217,6 +224,7 @@ def drop_prefix(string, name):
         if part == string:
             return '.'.join(parts[i:])
     return ''
+
 
 def drop_suffix(name):
     """
@@ -229,6 +237,7 @@ def drop_suffix(name):
         parts.pop()
 
     return '.'.join(parts)
+
 
 def fill_extensions(im, defaults):
     """
@@ -255,6 +264,7 @@ def fill_extensions(im, defaults):
     shape = get_shape(im, defaults)
     mschema.walk_schema(im._schema, fill_hdu, shape)
 
+
 def get_class(instrument, mode):
     """
     Get the model class from the exposure type
@@ -268,6 +278,7 @@ def get_class(instrument, mode):
     else:
         cls = ImageModel
     return cls
+
 
 def get_package(obj):
     """
@@ -291,6 +302,7 @@ def get_package(obj):
 
     return '.'.join(path)
 
+
 def get_shape(im, defaults):
     """
     Get the shape of the image
@@ -303,6 +315,7 @@ def get_shape(im, defaults):
 
     return shape
 
+
 def get_subschema(im, keyword):
     """
     Get the subschema for a keyword or None if not found
@@ -314,15 +327,16 @@ def get_subschema(im, keyword):
             break
     return schema
 
+
 def import_objects(package, line):
     """
     Run an import command and save any objects generated by it
     """
     line = line.lstrip()
     local_variables = {}
-    global_variables = {'__package__':package}
+    global_variables = {'__package__': package}
     try:
-        exec(line, global_variables, local_variables) # nosec
+        exec(line, global_variables, local_variables)  # nosec
     except ImportError:
         pass
 
@@ -330,9 +344,10 @@ def import_objects(package, line):
     for value in local_variables.values():
         if (inspect.isclass(value) or
             inspect.isfunction(value) or
-            inspect.ismodule(value)):
+                inspect.ismodule(value)):
             objects.append(value)
     return objects
+
 
 def log_file(filename):
     """
@@ -347,6 +362,7 @@ def log_file(filename):
         filename = '/'.join(path[jpos:])
         print("Searching " + '/'.join(path[jpos:]))
 
+
 def log_results(title, strings):
     """
     Write intermediate results to a log file
@@ -355,6 +371,7 @@ def log_results(title, strings):
         print("\n=== %s ===\n" % title)
         for s in strings:
             print(s)
+
 
 def next_line(fd):
     """
@@ -388,6 +405,7 @@ def next_line(fd):
 
     return unquote(long_line)
 
+
 def search_file(source_file, package, string, seen):
     """
     Search a file for lines containing a string
@@ -408,6 +426,7 @@ def search_file(source_file, package, string, seen):
                 matches.append(line)
     return matches
 
+
 def search_source_lines(obj, string, seen):
     """
     Search all files contained in a pipeline for a string
@@ -425,6 +444,7 @@ def search_source_lines(obj, string, seen):
                 matches.extend(new_matches)
     return matches
 
+
 def set_default_values(im, instrument, mode, level):
     """
     Set the default values used to set header keywords
@@ -434,6 +454,7 @@ def set_default_values(im, instrument, mode, level):
     set_pipeline_defaults(im, defaults)
     set_wcs_defaults(im, defaults)
     return defaults
+
 
 def set_pipeline_defaults(im, defaults):
     """
@@ -459,7 +480,7 @@ def set_pipeline_defaults(im, defaults):
                        'meta.instrument.detector': 'NRCB1',
                        'meta.instrument.filter': 'F115W',
                        'meta.instrument.pupil': 'CLEAR'
-                      }
+                       }
 
     nirspec_defaults = {'meta.subarray.xsize': 2048,
                         'meta.subarray.ysize': 2048,
@@ -469,7 +490,7 @@ def set_pipeline_defaults(im, defaults):
                         'meta.instrument.filter': 'F100LP',
                         'meta.instrument.grating': 'MIRROR',
                         'meta.exposure.readpatt': 'NRSRAPID'
-                       }
+                        }
 
     miri_defaults = {'meta.subarray.xsize': 1032,
                      'meta.subarray.ysize': 1024,
@@ -512,7 +533,7 @@ def set_pipeline_defaults(im, defaults):
                              'meta.subarray.ystart': 321,
                              'meta.subarray.xsize': 68,
                              'meta.subarray.ysize': 1024
-                            }
+                             }
 
     mir_fixedslit_defaults = {'meta.instrument.detector': 'MIRIFULONG'}
 
@@ -521,8 +542,7 @@ def set_pipeline_defaults(im, defaults):
     exposure_type_defaults = {'MIR_LRS-SLITLESS': mir_slitless_defaults,
                               'MIR_LRS-FIXEDSLIT': mir_fixedslit_defaults,
                               'MIR_MRS': mir_mrs_defaults
-                             }
-
+                              }
 
     defaults.update(generic_defaults)
     instrument = defaults['meta.instrument.name']
@@ -538,6 +558,7 @@ def set_pipeline_defaults(im, defaults):
             defaults['meta.subarray.xsize'] = shape[0]
         if shape[1] != 0:
             defaults['meta.subarray.ysize'] = shape[1]
+
 
 def set_standard_defaults(im, defaults, instrument, mode, level):
     """
@@ -577,6 +598,7 @@ def set_standard_defaults(im, defaults, instrument, mode, level):
         raise ValueError('Unrecognized level: ' + level)
     else:
         defaults['meta.pipeline_level'] = value
+
 
 def set_value(im, defaults, keyword):
     """
@@ -622,22 +644,23 @@ def set_value(im, defaults, keyword):
     if val is not None:
         im[keyword] = val
 
+
 def set_wcs_defaults(im, defaults):
     """
     Set default values for the wcs header keywords
     """
     wcs_defaults = {
-                    'crval1':5.3196,     'crval2':-72.98605,
-                    'ctype1':'RA---TAN', 'ctype2':'DEC--TAN',
-                    'cunit1':'deg',      'cunit2':'deg',
-                    'cdelt1':5.5E-06,    'cdelt2':5.5E-06}
+        'crval1': 5.3196, 'crval2': -72.98605,
+        'ctype1': 'RA---TAN', 'ctype2': 'DEC--TAN',
+        'cunit1': 'deg', 'cunit2': 'deg',
+        'cdelt1': 5.5E-06, 'cdelt2': 5.5E-06}
 
     shape = get_shape(im, defaults)
     for i in (1, 2):
         name = "crpix%d" % i
-        wcs_defaults[name] = 0.5 * shape[i-1]
+        wcs_defaults[name] = 0.5 * shape[i - 1]
 
-        for j in (1,2):
+        for j in (1, 2):
             name = "pc%d_%d" % (i, j)
             if i == j:
                 wcs_defaults[name] = 1.0
@@ -647,6 +670,7 @@ def set_wcs_defaults(im, defaults):
     for name in wcs_defaults:
         wcs_name = 'meta.wcsinfo.' + name
         defaults[wcs_name] = wcs_defaults[name]
+
 
 def undefined_metadata(module, string):
     """
@@ -659,8 +683,8 @@ def undefined_metadata(module, string):
     pat = re.compile(r'([\w\.]+' + string + r'[\w\.]+\(?)')
     seen = set()
     matched = search_source_lines(module,
-                                   '.' + string + '.',
-                                   seen)
+                                  '.' + string + '.',
+                                  seen)
     log_results("matched lines", matched)
 
     for line in matched:
@@ -671,7 +695,7 @@ def undefined_metadata(module, string):
 
         j = 1
         for i in range(len(sides), 0, -1):
-            pat_match = pat.search(sides[i-1])
+            pat_match = pat.search(sides[i - 1])
             if pat_match is not None:
                 for name in pat_match.groups():
                     if name is not None:
@@ -691,6 +715,7 @@ def undefined_metadata(module, string):
     log_results("undefined metadata", undefined)
     return undefined
 
+
 def unquote(line):
     """
     Remove quoted strings and comments from a line
@@ -700,6 +725,7 @@ def unquote(line):
     line = single_quote.sub("''", line)
     line = comment.sub('', line)
     return line
+
 
 def validate_value(im, name, value):
     """

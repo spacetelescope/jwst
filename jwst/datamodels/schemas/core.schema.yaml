@@ -536,32 +536,32 @@ properties:
             fits_keyword: OPMODE
             blend_table: True
           gwa_xtilt:
-            title: Grating Y tilt angle relative to mirror
+            title: Grating wheel tilt along instrmnt model Y axis
             type: number
             fits_keyword: GWA_XTIL
             blend_table: True
           gwa_ytilt:
-            title: Grating X tilt angle relative to mirror
+            title: Grating wheel tilt along instrmnt model X axis
             type: number
             fits_keyword: GWA_YTIL
             blend_table: True
           gwa_xp_v:
-            title: GWA X-position/tilt sensor calib
+            title: GWA X-position/tilt sensor calibrated
             type: number
             fits_keyword: GWA_XP_V
             blend_table: True
           gwa_yp_v:
-            title: GWA Y-position/tilt sensor calib
+            title: GWA Y-position/tilt sensor calibrated
             type: number
             fits_keyword: GWA_YP_V
             blend_table: True
           gwa_pxav:
-            title: GWA REC avg X-pos/tilt sensor calib
+            title: GWA REC avg X-pos/tilt sensor calibrated
             type: number
             fits_keyword: GWA_PXAV
             blend_table: True
           gwa_pyav:
-            title: GWA REC avg Y-pos/tilt sensor calib
+            title: GWA REC avg Y-pos/tilt sensor calibrated
             type: number
             fits_keyword: GWA_PYAV
             blend_table: True

@@ -156,7 +156,7 @@ def correct_for_NaN(lin_coeffs, input):
     # If there are NaNs as the correction coefficients, update those
     # coefficients so that those SCI values will be unchanged.
     if len(znan) > 0:
-        ben_cor = ben_coeffs(lin_coeffs) # get benign coefficients
+        ben_cor = ben_coeffs(lin_coeffs)  # get benign coefficients
         num_nan = len(znan)
 
         for ii in range(num_nan):
@@ -206,7 +206,7 @@ def correct_for_flag(lin_coeffs, lin_dq):
     # If there are pixels flagged as 'NO_LIN_CORR', update the corresponding
     #     coefficients so that those SCI values will be unchanged.
     if (num_flag > 0):
-        ben_cor = ben_coeffs(lin_coeffs) # get benign coefficients
+        ben_cor = ben_coeffs(lin_coeffs)  # get benign coefficients
 
         for ii in range(num_flag):
             lin_coeffs[:, yf[ii], xf[ii]] = ben_cor

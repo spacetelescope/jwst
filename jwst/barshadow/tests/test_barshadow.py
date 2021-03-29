@@ -195,14 +195,14 @@ def test_interpolate():
     # shadow will have shape (7 * 500, 101)     # 7 = len(shutter_status) + 1
     shadow = bar.create_shadow(shutter_elements, shutter_status)
 
-    rows = np.arange(0, 3400*100 + 1, 10000, dtype=np.float64) / 100.
-    columns = np.arange(0, 3400*100 + 1, 10000, dtype=np.float64) / 3400.
+    rows = np.arange(0, 3400 * 100 + 1, 10000, dtype=np.float64) / 100.
+    columns = np.arange(0, 3400 * 100 + 1, 10000, dtype=np.float64) / 3400.
     rows = rows.reshape(5, 7)
     columns = columns.reshape(5, 7)
 
     correction = bar.interpolate(rows, columns, shadow, default=np.nan)
 
-    compare = np.array([[0.,         0.09993018, 0.19986036, 0.29979054,
+    compare = np.array([[0., 0.09993018, 0.19986036, 0.29979054,
                          0.39972072, 0.24989818, 0.10007564],
                         [0.20000582, 0.29993599, 0.39986617, 0.25004363,
                          0.10022110, 0.20015128, 0.30008147],

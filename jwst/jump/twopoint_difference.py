@@ -301,6 +301,7 @@ def get_clipped_median_vector(num_differences, diffs_to_ignore, differences, sor
     elif num_differences - diffs_to_ignore == 3:
         # For the three diff case we do not reject the largest diff when the median is calculated.
         skip_max_diff = 0
+
     else:
         # For the four or more diff case we will skip the largest diff.
         skip_max_diff = 1

@@ -130,7 +130,7 @@ class Tso3Pipeline(Pipeline):
 
         # Imaging
         if (input_exptype == 'NRC_TSIMAGE' or
-            (input_exptype == 'MIR_IMAGE' and input_tsovisit)):
+                (input_exptype == 'MIR_IMAGE' and input_tsovisit)):
 
             # Create name for extracted photometry (Level 3) product
             phot_tab_suffix = 'phot'

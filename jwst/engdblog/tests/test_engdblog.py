@@ -72,11 +72,10 @@ def test_multi_mnemonics(caplog, engdb):
         assert '{}[2016-01-01:2016-01-31] = '.format(mnemonic) in caplog.text
 
 
-
 # #####################
 # Utilities for testing
 # #####################
 @pytest.fixture
 def engdb():
-    with EngDB_Mocker() as mocker: # noqa: F841
+    with EngDB_Mocker() as mocker:  # noqa: F841
         yield

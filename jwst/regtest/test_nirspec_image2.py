@@ -8,6 +8,7 @@ from jwst.flatfield import FlatFieldStep
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
+
 @pytest.mark.bigdata
 def test_nirspec_image2(_jail, rtdata, fitsdiff_default_kwargs):
     rtdata.get_data("nirspec/imaging/jw84600010001_02102_00001_nrs2_rate.fits")
@@ -41,26 +42,25 @@ def test_flat_field_step_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
 @pytest.mark.bigdata
 def test_ff_inv(rtdata, fitsdiff_default_kwargs):
     """Test flat field inversion"""
-    data = dm.open(rtdata.get_data('nirspec/imaging/usf_assign_wcs.fits'))
+    with dm.open(rtdata.get_data('nirspec/imaging/usf_assign_wcs.fits')) as data:
+        flatted = FlatFieldStep.call(data)
+        unflatted = FlatFieldStep.call(flatted, inverse=True)
 
-    flatted = FlatFieldStep.call(data)
-    unflatted = FlatFieldStep.call(flatted, inverse=True)
-
-    assert np.allclose(data.data, unflatted.data), 'Inversion failed'
+        assert np.allclose(data.data, unflatted.data), 'Inversion failed'
 
 
 @pytest.mark.bigdata
 def test_correction_pars(rtdata, fitsdiff_default_kwargs):
     """Test use of correction parameters"""
-    data = dm.open(rtdata.get_data('nirspec/imaging/usf_assign_wcs.fits'))
+    with dm.open(rtdata.get_data('nirspec/imaging/usf_assign_wcs.fits')) as data:
 
-    # First use of FlatFieldStep will store the correction.
-    # The next use will use that correction
-    step = FlatFieldStep()
-    flatted = step.run(data)
-    assert step.correction_pars['flat'] is not None
+        # First use of FlatFieldStep will store the correction.
+        # The next use will use that correction
+        step = FlatFieldStep()
+        flatted = step.run(data)
+        assert step.correction_pars['flat'] is not None
 
-    step.use_correction_pars = True
-    reflatted = step.run(data)
+        step.use_correction_pars = True
+        reflatted = step.run(data)
 
-    assert np.allclose(flatted.data,reflatted.data), 'Re-run with correction parameters failed'
+    assert np.allclose(flatted.data, reflatted.data), 'Re-run with correction parameters failed'

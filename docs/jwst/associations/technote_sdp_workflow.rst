@@ -9,11 +9,11 @@ General Workflow
 
 See :ref:`asn-associations-and-jwst` for an overview of how JWST uses
 associations. This document describes how associations are used by the
-ground processing system to execute the level 2 and level 3 pipelines
+ground processing system to execute the stage 2 and stage 3 pipelines
 based on.
 
 Up to the initial calibration step ``calwebb_detector1``, the science
-exposures are treated individually. However, starting at the level 2
+exposures are treated individually. However, starting at the stage 2
 calibration step, exposures may need other exposures in order to be
 further processed. Instead of creating a single monolithic pipeline,
 the workflow uses the associations to determine what pipeline should
@@ -32,7 +32,7 @@ data through the system.
 .. figure:: graphics/workflow-generic.png
    :scale: 75%
 
-   General workflow through level 2 and level 3 processing
+   General workflow through stage 2 and stage 3 processing
 
 The figure represents the following workflow:
 
@@ -56,7 +56,7 @@ The figure represents the following workflow:
 Wide Field Slitless Spectroscopy
 ================================
 
-In most cases, the data will flow from level 2 to level 3, completing
+In most cases, the data will flow from stage 2 to stage 3, completing
 calibration. However, more complicated situations can be handled by
 the same wait-then-execute process. One particular case is for the
 Wide Field Slitless Spectrometry (WFSS) modes. The specific flow is
@@ -70,27 +70,27 @@ show in the figure below:
 For WFSS data, at least two observations are made, one consisting of a
 direct image of the field-of-view (FOV), and a second where the FOV is
 dispersed using a grism. The direct image is first processed through
-level 3. At the level 3 stage, a source catalog of objects found in
-the image, and a segment map, used to record the minimum bounding
+stage 3. At the stage 3 stage, a source catalog of objects found in
+the image, and a segmentation map, used to record the minimum bounding
 box sizes for each object, are generated. The source catalog is then used
-as input to the level 2 processing of the spectral data. This extra
+as input to the stage 2 processing of the spectral data. This extra
 link between the two major stages is represented by the ``Segment &
-Catalog`` file set, shown in red in the diagram. The level 2 association
+Catalog`` file set, shown in red in the diagram. The stage 2 association
 ``grism_spec2_asn`` not only lists the needed countrate exposures, but
-also the catalog file produced by the level 3 image
+also the catalog file produced by the stage 3 image
 processing. Hence, the workflow knows to wait for this file before
 continuing the spectral processing.
 
 Field Guide to File Names
 =========================
 
-The high-level distinctions between level 2, level 3, exposure-centric,
+The high-level distinctions between stage 2, stage 3, exposure-centric,
 and target-centric files can be determined by the following file patterns.
 
-- Files produced by level 3 processing
+- Files produced by stage 3 processing
   
   Any file name that matches the following regex is a file that has
-  been produced by a level 3 pipeline::
+  been produced by a stage 3 pipeline::
 
     .+[aocr][0-9]{3:4}.+
 
@@ -107,7 +107,7 @@ and target-centric files can be determined by the following file patterns.
     jw[0-9]{5}-[aocr][0-9]{3:4}_.+
 
   Such data is the result of the combination of data from several
-  exposures, usually produced by a level 3 calibration pipeline.
+  exposures, usually produced by a stage 3 calibration pipeline.
 
 Note that these patterns are not intended to fully define all the
 specific types of files there are. However, these are the main

@@ -116,7 +116,7 @@ def detect_jumps(input_model, gain_model, readnoise_model,
                                   max_jump_to_flag_neighbors, min_jump_to_flag_neighbors))
     if numslices == 1:
         gdq, row_below_dq, row_above_dq = twopt.find_crs(data, gdq, readnoise_2d, rejection_threshold,
-                                                         three_grp_rejection_threshold, four_grp_rejection_threshold, frames_per_group, flag_4_neighbors,
+                                                         three_grp_rejection_threshold, four_grp_rejection_threshold, frames_per_group, flag_4_neighbors
                                                          max_jump_to_flag_neighbors,
                                                          min_jump_to_flag_neighbors)
         elapsed = time.time() - start

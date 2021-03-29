@@ -68,7 +68,7 @@ class TweakRegStep(Step):
         if self.align_to_gaia:
             # Set expand_refcat to True to eliminate possibility of duplicate
             # entries when aligning to GAIA
-            self.expand_refcat=True
+            self.expand_refcat = True
 
         # Build the catalogs for input images
         for image_model in images:
@@ -187,7 +187,7 @@ class TweakRegStep(Step):
         except ValueError as e:
             msg = e.args[0]
             if (msg == "Too few input images (or groups of images) with "
-                "non-empty catalogs."):
+                    "non-empty catalogs."):
                 # we need at least two exposures to perform image alignment
                 self.log.warning(msg)
                 self.log.warning("At least two exposures are required for "
@@ -337,7 +337,7 @@ def _common_name(group):
     file_names = [path.splitext(im.meta.filename)[0].strip('_- ')
                   for im in group]
     fname_len = list(map(len, file_names))
-    assert all(fname_len[0] == l for l in fname_len)
+    assert all(fname_len[0] == length for length in fname_len)
     cn = path.commonprefix(file_names)
     assert cn
     return cn

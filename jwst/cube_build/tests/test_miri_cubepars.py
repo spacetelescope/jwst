@@ -71,7 +71,7 @@ def miri_cube_pars(tmpdir_factory):
     power = np.array([1, 2, 3, 4, 5])
     softrad = np.array([0.01, 0.02, 0.03, 0.04, 0.05])
 
-    col1 = fits.Column(name='WAVELENGTH', format='D',  array=finalwave, unit='micron')
+    col1 = fits.Column(name='WAVELENGTH', format='D', array=finalwave, unit='micron')
     col2 = fits.Column(name='ROISPATIAL', format='E', array=roispat, unit='arcsec')
     col3 = fits.Column(name='ROISPECTRAL', format='E', array=roispec, unit='micron')
     col4 = fits.Column(name='POWER', format='I', array=power)
@@ -86,7 +86,7 @@ def miri_cube_pars(tmpdir_factory):
     return filename
 
 
-def test_miri_use_cubepars(_jail,  miri_cube_pars):
+def test_miri_use_cubepars(_jail, miri_cube_pars):
     """ Test reading in the miri cube pars file """
 
     instrument_info = instrument_defaults.InstrumentInfo()

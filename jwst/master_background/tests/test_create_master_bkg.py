@@ -5,6 +5,7 @@ import numpy as np
 
 from jwst.master_background import create_master_bkg
 
+
 def test_create_master_bkg():
 
     wl = np.arange(37, dtype=np.float64) * 0.1 + 3.

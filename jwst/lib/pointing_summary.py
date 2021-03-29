@@ -131,14 +131,13 @@ def calc_deltas(exposures, extra_meta=None):
             for meta in extra_meta:
                 extra_meta_values[meta].append(model[meta])
 
-
     # Places results into a Table.
     deltas_dict = {
-        'exposure':       exposures,
-        'target':         targets,
-        'v1':             v1s,
-        'refpoint':       refpoints,
-        'delta_v1':       delta_v1s,
+        'exposure': exposures,
+        'target': targets,
+        'v1': v1s,
+        'refpoint': refpoints,
+        'delta_v1': delta_v1s,
         'delta_refpoint': delta_refpoints,
     }
     deltas_dict.update(extra_meta_values)

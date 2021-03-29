@@ -11,7 +11,6 @@ from jwst.flatfield.flat_field import g_average
 
 
 def test_g_average():
-
     """Assign an array of values to tab_wl; these are strictly increasing,
     but they're not uniformly spaced.
     The abscissas and weights in combine_fast_slow are for three-point

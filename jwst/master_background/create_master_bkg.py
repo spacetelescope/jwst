@@ -7,6 +7,7 @@ from .. import datamodels
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+
 def create_background(wavelength, surf_bright):
     """Create a 1-D spectrum table as a MultiSpecModel.
 
@@ -37,11 +38,11 @@ def create_background(wavelength, surf_bright):
     if len(wl_shape) > 1:
         bad = True
         log.error("The wavelength array has shape {}; expected "
-              "a 1-D array".format(wl_shape))
+                  "a 1-D array".format(wl_shape))
     if len(sb_shape) > 1:
         bad = True
         log.error("The background surf_bright array has shape {}; expected "
-              "a 1-D array".format(sb_shape))
+                  "a 1-D array".format(sb_shape))
     if bad:
         return None
 

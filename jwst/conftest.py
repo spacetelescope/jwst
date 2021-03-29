@@ -89,6 +89,7 @@ class TestDescriptionPlugin:
     This plug-in was added to support JWST instrument team testing and
     reporting for the JWST calibration pipeline.
     """
+
     def __init__(self, terminal_reporter):
         self.terminal_reporter = terminal_reporter
         self.desc = None
@@ -110,4 +111,4 @@ class TestDescriptionPlugin:
             self.terminal_reporter.write('\n')
             yield
             if self.desc:
-                    self.terminal_reporter.write(f'\n{self.desc} ')
+                self.terminal_reporter.write(f'\n{self.desc} ')

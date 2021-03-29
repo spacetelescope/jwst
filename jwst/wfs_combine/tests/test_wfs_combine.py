@@ -48,7 +48,7 @@ def wfs_association(tmp_path_factory):
     im2.save(path2)
 
     asn = asn_from_list([path1, path2],
-        product_name='jw00024-a3001_t001_nircam_nrca4_{suffix}')
+                        product_name='jw00024-a3001_t001_nircam_nrca4_{suffix}')
     asn.data["program"] = "00024"
     asn.data["asn_type"] = "wfs-image2"
     asn.sequence = 1
@@ -75,7 +75,7 @@ def wfs_association(tmp_path_factory):
     ]
 )
 def test_create_combined(_jail, wfs_association,
-    data1, data2, dq1, dq2, result_data, result_dq):
+                         data1, data2, dq1, dq2, result_data, result_dq):
     path_asn, path1, path2 = wfs_association
 
     # Populate data and DQ array at [5, 5] with what is to be tested

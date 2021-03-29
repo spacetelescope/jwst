@@ -116,7 +116,7 @@ def create_coordinate_arrays(image_shape, center=None, image2world=None,
 
     if center is None:
         # set the center at the center of the image array:
-        center = tuple([float(i//2) for i in image_shape])
+        center = tuple([float(i // 2) for i in image_shape])
         center_cs = 'image'
 
     else:

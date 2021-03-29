@@ -84,13 +84,13 @@ class OutlierDetectionSpec(OutlierDetection):
             drizzled_models = self.input_models
             for i in range(len(self.input_models)):
                 drizzled_models[i].wht = resample_utils.build_driz_weight(
-                                            self.input_models[i],
-                                            weight_type='ivm',
-                                            good_bits=pars['good_bits'])
+                    self.input_models[i],
+                    weight_type='ivm',
+                    good_bits=pars['good_bits'])
 
         # Initialize intermediate products used in the outlier detection
         median_model = datamodels.ImageModel(
-                                        init=drizzled_models[0].data.shape)
+            init=drizzled_models[0].data.shape)
         median_model.meta = drizzled_models[0].meta
         median_model.meta.filename = self.make_output_path(
             basepath=self.input_models[0].meta.filename,
