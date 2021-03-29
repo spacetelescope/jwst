@@ -15,10 +15,9 @@ in a single call.
  result = LinearityStep.call('jw00001001001_01101_00001_mirimage_uncal.fits')
 
 
-To set custom parameter values when using the ``call`` method, set
-the parameters in the pipeline or step parameter file and
-then supply the file using the ``config_file`` keyword:
-::
+To set custom parameter values when using the ``call`` method, set the
+parameters in the pipeline or parameter file and then supply the file using the
+``config_file`` keyword: ::
 
  # Calling a pipeline
  result = Detector1Pipeline.call('jw00017001001_01101_00001_nrca1_uncal.fits', config_file='calwebb_detector1.asdf')

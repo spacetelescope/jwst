@@ -206,7 +206,7 @@ Control (WFS&C) use a dedicated processing flow through the pipeline stages.
 
  - Stage 2: WFS&C exposures use the same :ref:`calwebb_image2 <calwebb_image2>`
    pipeline processing and steps as regular images. CRDS reftype
-   ``pars-image2pipeline`` has a specific step parameter reference for WFS&C
+   ``pars-image2pipeline`` has a specific parameter reference for WFS&C
    processing. The processing is identical with other image processing except
    for the omission of the :ref:`resample <resample_step>` step.
 

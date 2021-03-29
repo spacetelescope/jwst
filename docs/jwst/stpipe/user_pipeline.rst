@@ -149,7 +149,7 @@ From the commandline
 The same ``strun`` script used to run Steps from the commandline can
 also run Pipelines.
 
-The only wrinkle is that any step parameters overridden from the
+The only wrinkle is that any parameters overridden from the
 commandline use dot notation to specify the parameter name.  For
 example, to override the ``pixfrac`` value on the ``resample``
 step in the example above, one can do::

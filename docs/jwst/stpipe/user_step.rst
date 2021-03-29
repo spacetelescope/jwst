@@ -169,7 +169,7 @@ The full order of precedence for a pipeline and its sub steps is as follows:
 
     1. Value specified on the command-line: ``strun pipeline.asdf --steps.step.par=value_that_will_be_used``
     2. Value found in the user-specified pipeline parameter file: ``strun pipeline.asdf``
-    3. Value found in the step parameter file specified in a pipeline parameter file
+    3. Value found in the parameter file specified in a pipeline parameter file
     4. CRDS-retrieved parameter reference for the pipeline
     5. CRDS-retrieved parameter reference for each sub-step
     6. ``Pipeline``-coded default for itself and all sub-steps
