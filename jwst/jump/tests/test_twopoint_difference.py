@@ -133,7 +133,7 @@ def test_5grps_twocrs_2nd_5thbig(setup_cube):
     data[0, 2, 100, 100] = 60
     data[0, 3, 100, 100] = 60
     data[0, 4, 100, 100] = 2115
-    out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, nframes, False, 200, 10)
+    out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold, nframes, False, 200, 10)
     assert 4 == np.max(out_gdq)  # a CR was found
     assert np.array_equal([0, 4, 0, 0, 4], out_gdq[0, :, 100, 100])
 
