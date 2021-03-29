@@ -16,7 +16,7 @@ The ``cube_build`` step can accept several different forms of input data, includ
 
   - a model container with several 2-D IFU data models
 
-There are a number of arguments the user can provide either in a configuration file or
+There are a number of arguments the user can provide either in a parameter file or
 on the command line that control the sampling size of the cube, as well as the type of data
 that is combined to create the cube. See the :ref:`arguments` section for more details.
 

@@ -93,12 +93,23 @@ class and name
 ++++++++++++++
 
 There are two required keys at the top level: ``class`` and ``parameters``.
-``parameters`` is discussed below. ``class`` defines which ``Step`` or
-``Pipeline`` the parameters belong to. This key is used by ``strun`` to
-determine which class to actually execute when given a parameter file.
+``parameters`` is discussed below.
 
-``name`` defines an alias to use for the class referenced by the ``class`` key.
-Pipelines use this alias to refer to their sub-steps.  ``name`` is optional.
+``class`` specifies the Python class to run.  It should be a
+fully-qualified Python path to the class.  Step classes can ship with
+``stpipe`` itself, they may be part of other Python packages, or they
+exist in freestanding modules alongside the configuration file.  For
+example, to use the ``SystemCall`` step included with ``stpipe``, set
+``class`` to ``stpipe.subprocess.SystemCall``.  To use a class called
+``Custom`` defined in a file ``mysteps.py`` in the same directory as
+the configuration file, set ``class`` to ``mysteps.Custom``.
+
+``name`` defines the name of the step.  This is distinct from the
+class of the step, since the same class of Step may be configured in
+different ways, and it is useful to be able to have a way of
+distinguishing between them.  For example, when Steps are combined
+into :ref:`stpipe-user-pipelines`, a Pipeline may use the same Step class
+multiple times, each with different configuration parameters.
 
 Parameters
 ++++++++++

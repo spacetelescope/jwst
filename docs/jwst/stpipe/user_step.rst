@@ -12,29 +12,25 @@ parameters on it.
 
 Steps can be configured by either:
 
-    - Writing a configuration file
+    - Writing a parameter file
     - Instantiating the Step directly from Python
 
 .. _running_a_step_from_a_configuration_file:
 
-Running a Step from a configuration file
-========================================
+Running a Step from a parameter file
+====================================
 
-A Step configuration file contains one or more of a ``Step``'s parameters. Any
-parameter not specified in the file will take its value from the CRDS-retrieved
-configuration or the defaults coded directly into the ``Step``. Note that any
+A parameter file contains one or more of a ``Step``'s parameters. Any parameter
+not specified in the file will take its value from the CRDS-retrieved parameter
+reference file or the defaults coded directly into the ``Step``. Note that any
 parameter specified on the command line overrides all other values.
 
-The preferred format of configuration files is the :ref:`config_asdf_files`
-format. Refer to the :ref:`minimal example<asdf_minimal_file>` for a complete
-description of the contents. The rest of this documented will focus on the step
+The preferred format of parameter files is the :ref:`config_asdf_files` format.
+Refer to the :ref:`minimal example<asdf_minimal_file>` for a complete
+description of the contents. The rest of this document will focus on the step
 parameters themselves.
 
-All step parameters appear under the ``parameters:`` section, and they must be
-indented. The amount of indentation does not matter, as long as all parameters
-are indented equally.
-
-Every step configuration file must contain the parameter ``class``, followed by
+Every parameter file must contain the key ``class``, followed by
 the optional ``name`` followed by any parameters that are specific to the step
 being run.
 
@@ -54,11 +50,10 @@ distinguishing between them.  For example, when Steps are combined
 into :ref:`stpipe-user-pipelines`, a Pipeline may use the same Step class
 multiple times, each with different configuration parameters.
 
-Below ``name`` and ``class`` in the configuration file are parameters
-specific to the Step.  The set of accepted parameters is defined in
-the Step’s spec member.  You can print out a Step’s configspec using
-the ``stspec`` commandline utility.  For example, to print the
-configspec for an imaginary step called `stpipe.cleanup`::
+The parameters specific to the Step all reside under the key ``parameters``. The
+set of accepted parameters is defined in the Step’s spec member. You can print
+out a Step’s configspec using the ``stspec`` commandline utility. For example,
+to print the configspec for an imaginary step called `stpipe.cleanup`::
 
     $ stspec stpipe.cleanup
     # The threshold below which to apply cleanup
@@ -84,9 +79,9 @@ configspec for an imaginary step called `stpipe.cleanup`::
   >>> # A scale factor
   >>> scale = float()
 
-Using this information, one can write a configuration file to use this
-step.  For example, here is a configuration file (``do_cleanup.asdf``)
-that runs the ``stpipe.cleanup`` step to clean up an image.
+Using this information, one can write a parameter file to use this step. For
+example, here is a parameter file (``do_cleanup.asdf``) that runs the
+``stpipe.cleanup`` step to clean up an image.
 
 .. code-block::
 
@@ -110,23 +105,23 @@ The ``strun`` command can be used to run Steps from the commandline.
 
 The first argument may be either:
 
-    - The path to a configuration file
+    - The path to a parameter file
 
     - A Python class
 
-Additional configuration parameters may be passed on the commandline.
-These parameters override any that are present in the configuration
-file.  Any extra positional parameters on the commandline are passed
-to the step's process method.  This will often be input filenames.
+Additional parameters may be passed on the commandline. These parameters
+override any that are present in the parameter file. Any extra positional
+parameters on the commandline are passed to the step's process method. This will
+often be input filenames.
 
-For example, to use an existing configuration file from above, but
+For example, to use an existing parameter file from above, but
 override it so the threshold parameter is different::
 
     $ strun do_cleanup.asdf input.fits --threshold=86
 
 To display a list of the parameters that are accepted for a given Step
 class, pass the ``-h`` parameter, and the name of a Step class or
-configuration file::
+parameter file::
 
     $ strun -h do_cleanup.asdf
     usage: strun [--logcfg LOGCFG] cfg_file_or_class [-h] [--pre_hooks]
@@ -150,7 +145,7 @@ the name of the step.  For example, in this case, `foo.fits` is output
 to `foo_cleanup.fits`.
 
 Finally, the parameters a ``Step`` actually ran with can be saved to a new
-configuration file using the `--save-parameters` option. This file will have all
+parameter file using the `--save-parameters` option. This file will have all
 the parameters, specific to the step, and the final values used.
 
 .. _`Parameter Precedence`:
@@ -163,8 +158,8 @@ The order of precedence, from most to least significant, for parameter value
 assignment is as follows:
 
     1. Value specified on the command-line: ``strun step.asdf --par=value_that_will_be_used``
-    2. Value found in the user-specified configuration file
-    3. CRDS-retrieved configuration
+    2. Value found in the user-specified parameter file
+    3. CRDS-retrieved parameter reference
     4. ``Step``-coded default, determined by the parameter definition ``Step.spec``
 
 For pipelines, if a pipeline parameter file specifies a value for a step in the
@@ -173,10 +168,10 @@ a step-specific parameter file or CRDS-retrieved step-specific parameter file.
 The full order of precedence for a pipeline and its sub steps is as follows:
 
     1. Value specified on the command-line: ``strun pipeline.asdf --steps.step.par=value_that_will_be_used``
-    2. Value found in the user-specified pipeline configuration file: ``strun pipeline.asdf``
-    3. Value found in the step configuration file specified in a pipeline configuration file
-    4. CRDS-retrieved configuration for the pipeline
-    5. CRDS-retrieved configuration for each sub-step
+    2. Value found in the user-specified pipeline parameter file: ``strun pipeline.asdf``
+    3. Value found in the step parameter file specified in a pipeline parameter file
+    4. CRDS-retrieved parameter reference for the pipeline
+    5. CRDS-retrieved parameter reference for each sub-step
     6. ``Pipeline``-coded default for itself and all sub-steps
     7. ``Step``-coded default for each sub-step
 
@@ -228,7 +223,7 @@ very useful if one wants to setup the step's attributes first, then run it::
 `input` in this case can be a fits file containing the appropriate data, or the output
 of a previously run step/pipeline, which is an instance of a particular :ref:`datamodel<datamodels>`.
 
-Unlike in the use of ``call``, a configuration file supplied while instantiating ``run()`` will be ignored.
+Unlike in the use of ``call``, a parameter file supplied while instantiating ``run()`` will be ignored.
 
 Using the ``.run()`` method is the same as calling the instance or class directly.
 They are equivalent::
@@ -238,7 +233,7 @@ They are equivalent::
 call()
 ``````
 
-If one has all the configuration in a configuration file or can pass the
+If one has all the parameter in a parameter file or can pass the
 arguments directly to the step, one can use the `call()` method, which creates a new
 instance of the class every time you call it.  So::
 
@@ -249,14 +244,14 @@ makes a new instance of `FlatFieldStep` and then runs. Because it is a new
 instance, it ignores any attributes of `mystep` that one may have set earlier,
 such overriding the sflat.
 
-The nice thing about call() is that it can take a configuration file, so::
+The nice thing about call() is that it can take a parameter file, so::
 
     output = mystep.call(input, config_file=’my_flatfield.asdf’)
 
-and it will take all the configuration from the config file.
+and it will take all the parameter from the config file.
 
-Configuration parameters may be passed to the step by setting the `config_file`
-kwarg in `call` (which takes a path to a configuration file) or as keyword
+Parameter parameters may be passed to the step by setting the `config_file`
+kwarg in `call` (which takes a path to a parameter file) or as keyword
 arguments.  Any remaining positional arguments are passed along to the step's
 `process()` method::
 
