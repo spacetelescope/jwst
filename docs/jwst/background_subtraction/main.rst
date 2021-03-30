@@ -4,7 +4,9 @@ Subtraction of background signal can take several different forms depending on t
 observing mode and the available data. Here we give an overview of the different
 methods that are available, when they can be used, and where they occur in the
 processing flow. Imaging and spectroscopic observations share one method for background
-subtraction, while others are unique to spectroscopic data only.
+subtraction, while others are unique to spectroscopic data only. See the documentation
+for the individual steps mentioned here for complete details on how each of them
+function.
 
 Imaging Mode
 ------------
@@ -105,7 +107,7 @@ Spectroscopy (SOSS), and MIRI LRS slitless, use other ways of handling backgroun
 
 Image-from-Image Subtraction
 ----------------------------
-As outlined in the documentation for the :ref:`background <background_step>` step,
+As explained in the documentation for the :ref:`background <background_step>` step,
 this process combines one or more exposures to be treated as backgrounds into a
 sigma-clipped mean background image, which is then directly subtracted, in
 detector space, from an exposure being processed in the :ref:`calwebb_image2 <calwebb_image2>`
