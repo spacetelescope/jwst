@@ -583,11 +583,11 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
         # compute relevant WCS information
         logger.info('Successful read of engineering quaternions:')
         logger.info('\tPointing = {}'.format(pointing))
-        model.meta.visit.engdb_pointing_quality = "CALCULATED"
         try:
             t_pars.pointing = pointing
             wcsinfo, vinfo = calc_wcs(t_pars)
             logger.info("Setting ENGQLPTG keyword to CALCULATED")
+            model.meta.visit.pointing_engdb_quality = f'CALCULATED_{t_pars.method.value.upper()}'
         except Exception as e:
             logger.warning(
                 'WCS calculation has failed and will be skipped.'
