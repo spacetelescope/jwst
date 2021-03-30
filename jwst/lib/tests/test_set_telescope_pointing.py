@@ -52,15 +52,12 @@ OBSTIME_EXPECTED = STARTTIME
 # ########################
 
 
-@pytest.fixture()
-def base_tpars():
-    """Default TransformParameters
+@pytest.fixture(scope='module')
+def gscmd_j3pags_transforms():
+    """Calculate matricies using the GSCMD_J3PAGS method
 
     This set was derived from the first valid group of enginerring parameters for exposure
     jw00624028002_02101_00001_nrca1 retrieved from the SDP regression tests for Build 7.1.1.
-
-    Testing note: This cannot be scoped module because TransformParameters is modified
-    by the calculations
     """
     # setup inputs
     t_pars = stp.TransformParameters()
@@ -75,41 +72,40 @@ def base_tpars():
         obstime=Time(1611628160.325, format='unix'),
         gs_commanded=np.array([-22.40031242,  -8.17869377])
     )
+    t_pars.siaf = stp.SIAF(v2_ref=120.525464, v3_ref=-527.543132, v3yangle=-0.5627898, vparity=-1,
+                           crpix1=1024.5, crpix2=1024.5, cdelt1=0.03113928, cdelt2=0.03132232,
+                           vertices_idl=(-32.1682, 32.0906, 31.6586, -31.7234, -32.1683, -32.1904, 32.0823, 31.9456))
 
-    # setup expectations
-    expected = dict()
-    expected['j3pags'] = 297.3522435208429
-    expected['m_eci2fgs1_j3pags'] = np.array([[0.79338298, 0.5312005, 0.29727004],
-                                              [-0.58752257, 0.7959905, 0.14565831],
-                                              [-0.15925035, -0.29021568, 0.9436176]])
-    expected['m_fgs12sifov_siaf'] = np.array([[9.99761239e-01, -2.18280166e-02, 1.00096493e-03],
-                                              [2.18291297e-02, 9.99761094e-01, -1.11492579e-03],
-                                              [-9.76389175e-04, 1.13650978e-03, 9.99998878e-01]])
-
-    return t_pars, expected
+    # Calculate the transforms
+    transforms = stp.calc_transforms_gscmd_j3pags(t_pars)
+    return transforms
 
 
-def test_fgs12sifov_siaf(base_tpars):
-    """Ensure Mfgs12sifov based on SIAF is as expected"""
-    t_pars, expected = base_tpars
+@pytest.mark.parametrize(
+    'matrix, expected',
+    [('m_eci2fgs1', np.array([[0.79338298, 0.5312005, 0.29727004],
+                              [-0.58752257, 0.7959905, 0.14565831],
+                              [-0.15925035, -0.29021568, 0.9436176]])),
+     ('m_fgs12sifov', np.array([[9.99761239e-01, -2.18280166e-02, 1.00096493e-03],
+                                [2.18291297e-02, 9.99761094e-01, -1.11492579e-03],
+                                [-9.76389175e-04, 1.13650978e-03, 9.99998878e-01]])),
+     ]
+)
+def test_gscmd_j3pags(gscmd_j3pags_transforms, matrix, expected):
+    """Ensure expected calculate of the specified matrix
 
-    # Calculate
-    m_fgs12sifov = stp.calc_fgs1_to_sifov_fgs1siaf_matrix(siaf_path=t_pars.siaf_path, useafter=t_pars.useafter)
+    Parameters
+    ----------
+    gscmd_j3pags_transforms : Transforms
+        The calculated transforms
 
-    # Test
-    assert np.allclose(expected['m_fgs12sifov_siaf'], m_fgs12sifov)
+    matrix : str
+        The matrix under examination
 
-
-def test_eci2fgs1_j3pags(base_tpars):
-    """Ensure Meci2fgs1, based on V3PA@GS is as expected"""
-    t_pars, expected = base_tpars
-
-    # Calculate
-    m_eci2fgs1 = stp.calc_eci2fgs1_j3pags(t_pars)
-
-    # Test
-    assert np.allclose(expected['m_eci2fgs1_j3pags'], m_eci2fgs1)
-    assert np.allclose(expected['j3pags'], t_pars.guide_star_wcs.pa)
+    expected : numpy.array
+        Expected value of the matrix
+    """
+    assert np.allclose(getattr(gscmd_j3pags_transforms, matrix), expected)
 
 
 @pytest.fixture
