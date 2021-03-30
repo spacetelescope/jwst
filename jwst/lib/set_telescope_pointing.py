@@ -946,13 +946,13 @@ def calc_transforms_gscmd_j3pags(t_pars: TransformParameters):
     logger.debug(f'j3wcs: {j3wcs}')
     m_eci2fgs1 = calc_eci2fgs1_j3pags(j3wcs, t_pars)
 
+    # Calculate the FGS1 ICS to SI-FOV matrix
+    m_fgs12sifov = calc_fgs1_to_sifov_fgs1siaf_matrix(siaf_path=t_pars.siaf_path, useafter=t_pars.useafter)
+
     # Calculate the FSM corrections to the SI_FOV frame
     m_sifov_fsm_delta = calc_sifov_fsm_delta_matrix(
         t_pars.pointing.fsmcorr, fsmcorr_version=t_pars.fsmcorr_version, fsmcorr_units=t_pars.fsmcorr_units
     )
-
-    # Calculate the FGS1 ICS to SI-FOV matrix
-    m_fgs12sifov = calc_fgs1_to_sifov_fgs1siaf_matrix(siaf_path=t_pars.siaf_path, useafter=t_pars.useafter)
 
     # Calculate SI FOV to V1 matrix
     m_sifov2v = calc_sifov2v_matrix()
@@ -961,9 +961,11 @@ def calc_transforms_gscmd_j3pags(t_pars: TransformParameters):
     m_eci2sifov = np.linalg.multi_dot(
         [MZ2X, m_sifov_fsm_delta, m_fgs12sifov, m_eci2fgs1]
     )
+    logger.debug(f'm_eci2sifov: {m_eci2sifov}')
 
     # Calculate the complete transform to the V1 reference
     m_eci2v = np.dot(m_sifov2v, m_eci2sifov)
+    logger.debug(f'm_eci2v: {m_eci2v}')
 
     # Calculate the SIAF transform matrix
     m_v2siaf = calc_v2siaf_matrix(t_pars.siaf)
@@ -1452,6 +1454,7 @@ def calc_sifov_fsm_delta_matrix(fsmcorr, fsmcorr_version='latest', fsmcorr_units
         )
         transform = np.dot(m_x_partial, m_y_partial)
 
+    logger.debug(f'transform: {transform}')
     return transform
 
 
@@ -2038,8 +2041,8 @@ def all_pointings(mnemonics):
         ])
 
         gs_commanded = np.array([
-            mnemonics_at_time['SA_ZFGGSCMDX'],
-            mnemonics_at_time['SA_ZFGGSCMDY']
+            mnemonics_at_time['SA_ZFGGSCMDX'].value,
+            mnemonics_at_time['SA_ZFGGSCMDY'].value
 
         ])
 
