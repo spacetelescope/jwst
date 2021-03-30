@@ -26,6 +26,18 @@ associations
   PUPIL value (cross filter) when matching direct images with grism images
   in NIRISS WFSS observations. [#5896]
 
+calwebb_spec2
+-------------
+
+- Updated documentation to indicate that master_background is applied to
+  NIRSpec MOS exposures in the calwebb_spec2 pipeline [#5913]
+
+calwebb_spec3
+-------------
+
+- Updated documentation to indicate that master_background is applied to
+  NIRSpec MOS exposures in the calwebb_spec2 pipeline [#5913]
+
 cube_build
 ----------
 
@@ -55,6 +67,12 @@ lib
 ---
 
 - Update ``update_mt_kwds`` function in ``set_telescope_pointing.py`` to  populate the TARG_RA/TARG_DEC [#5808]
+
+master_background
+-----------------
+
+- Updated documentation to more fully describe the various ways in which the
+  step is applied [#5913]
 
 source_catalog
 --------------
