@@ -53,7 +53,7 @@ OBSTIME_EXPECTED = STARTTIME
 
 
 @pytest.fixture(scope='module')
-def gscmd_j3pags_transforms():
+def method_gscmd_j3pags():
     """Calculate matricies using the GSCMD_J3PAGS method
 
     This set was derived from the first valid group of enginerring parameters for exposure
@@ -78,7 +78,8 @@ def gscmd_j3pags_transforms():
 
     # Calculate the transforms
     transforms = stp.calc_transforms_gscmd_j3pags(t_pars)
-    return transforms
+
+    return transforms, t_pars
 
 
 @pytest.mark.parametrize(
@@ -91,13 +92,13 @@ def gscmd_j3pags_transforms():
                                 [-9.76389175e-04, 1.13650978e-03, 9.99998878e-01]])),
      ]
 )
-def test_gscmd_j3pags(gscmd_j3pags_transforms, matrix, expected):
+def test_gscmd_j3pags(method_gscmd_j3pags, matrix, expected):
     """Ensure expected calculate of the specified matrix
 
     Parameters
     ----------
-    gscmd_j3pags_transforms : Transforms
-        The calculated transforms
+    method_gscmd_j3pags: Transforms, TransformPars
+        The calculated transforms and parameters used to do the calculation.
 
     matrix : str
         The matrix under examination
@@ -105,7 +106,15 @@ def test_gscmd_j3pags(gscmd_j3pags_transforms, matrix, expected):
     expected : numpy.array
         Expected value of the matrix
     """
-    assert np.allclose(getattr(gscmd_j3pags_transforms, matrix), expected)
+    transforms, t_pars = method_gscmd_j3pags
+    assert np.allclose(getattr(transforms, matrix), expected)
+
+
+def test_j3pa_at_gs(method_gscmd_j3pags):
+    """Ensure J3PA@GS is as expected"""
+    transforms, t_pars = method_gscmd_j3pags
+
+    assert np.allclose(t_pars.guide_star_wcs.pa, 297.3522435208429)
 
 
 @pytest.fixture
