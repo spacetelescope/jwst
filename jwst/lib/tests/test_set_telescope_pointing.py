@@ -388,6 +388,7 @@ def test_add_wcs_method_original(eng_db_ngas, data_file, siaf_file=siaf_db):
     stp.add_wcs(data_file, siaf_path=siaf_db, method=stp.Methods.ORIGINAL, j2fgs_transpose=False)
 
     with datamodels.Level1bModel(data_file) as model:
+        assert model.meta.visit.pointing_engdb_quality == 'CALCULATED_ORIGINAL'
         assert np.isclose(model.meta.pointing.ra_v1, 348.9278669)
         assert np.isclose(model.meta.pointing.dec_v1, -38.749239)
         assert np.isclose(model.meta.pointing.pa_v3, 50.1767077)
@@ -433,9 +434,7 @@ def test_add_wcs_method_gscmd(eng_db_ngas, data_file, siaf_file=siaf_db):
 
     with datamodels.Level1bModel(data_file) as model:
 
-        print(model.meta.pointing.instance)
-        print(model.meta.wcsinfo.instance)
-
+        assert model.meta.visit.pointing_engdb_quality == 'CALCULATED_GSCMD'
         assert np.isclose(model.meta.pointing.ra_v1, 347.7610269680282)
         assert np.isclose(model.meta.pointing.dec_v1, -86.86190329281591)
         assert np.isclose(model.meta.pointing.pa_v3, 62.07421054339623)
@@ -481,9 +480,7 @@ def test_add_wcs_method_gscmd_v3pags(eng_db_ngas, data_file, siaf_file=siaf_db):
 
     with datamodels.Level1bModel(data_file) as model:
 
-        print(model.meta.pointing.instance)
-        print(model.meta.wcsinfo.instance)
-
+        assert model.meta.visit.pointing_engdb_quality == 'CALCULATED_GSCMD_V3PAGS'
         assert np.isclose(model.meta.pointing.ra_v1, 347.76099011134437)
         assert np.isclose(model.meta.pointing.dec_v1, -86.86190123281543)
         assert np.isclose(model.meta.pointing.pa_v3, 62.073430219473025)
