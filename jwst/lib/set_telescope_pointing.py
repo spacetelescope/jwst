@@ -940,11 +940,7 @@ def calc_transforms_gscmd_j3pags(t_pars: TransformParameters):
     logger.info('Calculating transforms using GSCMD with J3PA@GS method...')
 
     # Determine the ECI to FGS1 ICS using guide star telemetry.
-    m_eci2j = calc_eci2j_matrix(t_pars.pointing.q)
-    j3_ra, j3_dec = vector_to_ra_dec(m_eci2j[2])
-    j3wcs = WCSRef(j3_ra, j3_dec, None)
-    logger.debug(f'j3wcs: {j3wcs}')
-    m_eci2fgs1 = calc_eci2fgs1_j3pags(j3wcs, t_pars)
+    m_eci2fgs1 = calc_eci2fgs1_j3pags(t_pars)
 
     # Calculate the FGS1 ICS to SI-FOV matrix
     m_fgs12sifov = calc_fgs1_to_sifov_fgs1siaf_matrix(siaf_path=t_pars.siaf_path, useafter=t_pars.useafter)
@@ -1054,14 +1050,11 @@ def calc_transforms_gscmd_v3pags(t_pars: TransformParameters):
     return tforms
 
 
-def calc_eci2fgs1_j3pags(j3wcs, t_pars: TransformParameters):
+def calc_eci2fgs1_j3pags(t_pars: TransformParameters):
     """Calculate full ECI to FGS1 matrix based on commanded guidestar information and J3PA@GS
 
     Parameters
     ----------
-    j3wcs : WCSRef
-        The J3-Frame pointing.
-
     t_pars : TransformParameters
         The transformation parameters
 
@@ -1069,7 +1062,19 @@ def calc_eci2fgs1_j3pags(j3wcs, t_pars: TransformParameters):
     ------
     m_eci2fgs1 : numpy.array
         The ECI to FGS1ics matrix
+
+    Modifies
+    --------
+    t_pars.guide_star_wcs
+        Update PA to calculated if originally None.
     """
+    # Calculate J3 position.
+    m_eci2j = calc_eci2j_matrix(t_pars.pointing.q)
+    j3_ra, j3_dec = vector_to_ra_dec(m_eci2j[2])
+    j3wcs = WCSRef(j3_ra, j3_dec, None)
+    logger.debug(f'j3wcs: {j3wcs}')
+
+    # Calculate J3PA@GS
     logger.debug(f'incoming guide_star_wcs = {t_pars.guide_star_wcs}')
     if not t_pars.guide_star_wcs.pa:
         gs_wcs_ra = WCSRef(t_pars.guide_star_wcs.ra * D2R,

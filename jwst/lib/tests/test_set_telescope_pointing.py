@@ -52,6 +52,52 @@ OBSTIME_EXPECTED = STARTTIME
 # ########################
 
 
+@pytest.fixture()
+def base_tpars():
+    """Default TransformParameters
+
+    This set was derived from the first valid group of enginerring parameters for exposure
+    jw00624028002_02101_00001_nrca1 retrieved from the SDP regression tests for Build 7.1.1.
+
+    Testing note: This cannot be scoped module because TransformParameters is modified
+    by the calculations
+    """
+    # setup inputs
+    t_pars = stp.TransformParameters()
+
+    t_pars.guide_star_wcs = stp.WCSRef(ra=241.24294932221, dec=70.66165389073196, pa=None)
+    t_pars.pointing = stp.Pointing(
+        q=np.array([-0.20954692, -0.6177655, -0.44653177, 0.61242575]),
+        j2fgs_matrix=np.array([-9.77300013e-04, 3.38988895e-03, 9.99993777e-01,
+                               9.99999522e-01, 8.37175385e-09, 9.77305600e-04,
+                               3.30458575e-06, 9.99994254e-01, -3.38988734e-03]),
+        fsmcorr=np.array([0.00584114, -0.00432878]),
+        obstime=Time(1611628160.325, format='unix'),
+        gs_commanded=np.array([-22.40031242,  -8.17869377])
+    )
+
+    # setup expectations
+    expected = dict()
+    expected['m_eci2fgs1_j3pags'] = np.array([[0.79338298, 0.5312005, 0.29727004],
+                                              [-0.58752257, 0.7959905, 0.14565831],
+                                              [-0.15925035, -0.29021568, 0.9436176]])
+    expected['j3pags'] = 297.3522435208429
+
+    return t_pars, expected
+
+
+def test_eci2fgs1_j3pags(base_tpars):
+    """Ensure Meci2fgs1, based on V3PA@GS is as expected"""
+    t_pars, expected = base_tpars
+
+    # Calculate
+    m_eci2fgs1 = stp.calc_eci2fgs1_j3pags(t_pars)
+
+    # Test
+    assert np.allclose(expected['m_eci2fgs1_j3pags'], m_eci2fgs1)
+    assert np.allclose(expected['j3pags'], t_pars.guide_star_wcs.pa)
+
+
 @pytest.fixture
 def eng_db_ngas():
     """Setup the test engineering database"""
