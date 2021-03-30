@@ -78,12 +78,26 @@ def base_tpars():
 
     # setup expectations
     expected = dict()
+    expected['j3pags'] = 297.3522435208429
     expected['m_eci2fgs1_j3pags'] = np.array([[0.79338298, 0.5312005, 0.29727004],
                                               [-0.58752257, 0.7959905, 0.14565831],
                                               [-0.15925035, -0.29021568, 0.9436176]])
-    expected['j3pags'] = 297.3522435208429
+    expected['m_fgs12sifov_siaf'] = np.array([[9.99761239e-01, -2.18280166e-02, 1.00096493e-03],
+                                              [2.18291297e-02, 9.99761094e-01, -1.11492579e-03],
+                                              [-9.76389175e-04, 1.13650978e-03, 9.99998878e-01]])
 
     return t_pars, expected
+
+
+def test_fgs12sifov_siaf(base_tpars):
+    """Ensure Mfgs12sifov based on SIAF is as expected"""
+    t_pars, expected = base_tpars
+
+    # Calculate
+    m_fgs12sifov = stp.calc_fgs1_to_sifov_fgs1siaf_matrix(siaf_path=t_pars.siaf_path, useafter=t_pars.useafter)
+
+    # Test
+    assert np.allclose(expected['m_fgs12sifov_siaf'], m_fgs12sifov)
 
 
 def test_eci2fgs1_j3pags(base_tpars):
