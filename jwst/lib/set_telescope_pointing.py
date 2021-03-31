@@ -534,10 +534,11 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
     Parameters
     ----------
     model : `~jwst.datamodels.DataModel`
-        The model to update.
+        The model to update. The update is done in-place.
 
     t_pars : TransformParameters
-        The transformation parameters
+        The transformation parameters. Parameters are updated during processing.
+
     """
 
     logger.info('Updating wcs from telemetry.')
@@ -749,7 +750,7 @@ def calc_wcs(t_pars: TransformParameters):
     Parameters
     ----------
     t_pars : TransformParameters
-        The transformation parameters
+        The transformation parameters. Parameters are updated during processing.
 
     Returns
     -------
@@ -808,7 +809,7 @@ def calc_transforms(t_pars: TransformParameters):
     Parameters
     ----------
     t_pars : TransformParameters
-        The transformation parameters
+        The transformation parameters. Parameters are updated during processing.
 
     Returns
     -------
@@ -830,7 +831,7 @@ def calc_transforms_original(t_pars: TransformParameters):
     Parameters
     ----------
     t_pars : TransformParameters
-        The transformation parameters
+        The transformation parameters. Parameters are updated during processing.
 
     Returns
     -------
@@ -913,7 +914,7 @@ def calc_transforms_gscmd_j3pags(t_pars: TransformParameters):
     Parameters
     ----------
     t_pars : TransformParameters
-        The transformation parameters
+        The transformation parameters. Parameters are updated during processing.
 
     Returns
     -------
@@ -990,7 +991,7 @@ def calc_transforms_gscmd_v3pags(t_pars: TransformParameters):
     Parameters
     ----------
     t_pars : TransformParameters
-        The transformation parameters
+        The transformation parameters. Parameters are updated during processing.
 
     Returns
     -------
@@ -1107,7 +1108,7 @@ def calc_eci2fgs1_v3pags(t_pars: TransformParameters):
     Parameters
     ----------
     t_pars : TransformParameters
-        The transformation parameters
+        The transformation parameters. Parameters are updated during processing.
     """
     fgs1_siaf = get_wcs_values_from_siaf('FGS1_FULL_OSS', useafter=t_pars.useafter, prd_db_filepath=t_pars.siaf_path)
     logger.debug(f'fgs1_siaf = {fgs1_siaf}')
@@ -1196,7 +1197,7 @@ def calc_v3pa_at_gs_from_original(t_pars: TransformParameters) -> float:
     Parameters
     ----------
     t_pars : TransformParameters
-        The transformation parameters
+        The transformation parameters. Parameters are updated during processing.
 
     Returns
     -------
