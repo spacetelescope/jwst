@@ -92,17 +92,20 @@ background.
 Multi-Source Observations
 -------------------------
 
-NIRSpec MOS +++++++++++ For NIRSpec MOS exposures (EXP_TYPE="NRS_MSASPEC"),
-there are multiple sources per exposure and hence a single user-selected
-parameter can't be used in the APT, nor a single keyword in the science product,
-to record the type of each source. For these exposures, a stellarity value can
-be supplied by the observer for each source used in the MSA Planning Tool (MPT).
-The stellarity values are in turn passed from the MPT to the MSA metadata
-(_msa.fits) file created by DMS and used in the calibration pipeline. The
-stellarity values from the MSA metadata file are loaded for each source/slitlet
-by the ``assign_wcs`` step of the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline
-and then evaluated by the ``srctype`` step to determine whether each source
-should be treated as point or extended.
+NIRSpec MOS
++++++++++++
+
+For NIRSpec MOS exposures (EXP_TYPE="NRS_MSASPEC"), there are multiple sources
+per exposure and hence a single user-selected parameter can't be used in the
+APT, nor a single keyword in the science product, to record the type of each
+source. For these exposures, a stellarity value can be supplied by the observer
+for each source used in the MSA Planning Tool (MPT). The stellarity values are
+in turn passed from the MPT to the MSA metadata (_msa.fits) file created by DMS
+and used in the calibration pipeline. The stellarity values from the MSA
+metadata file are loaded for each source/slitlet by the ``assign_wcs`` step of
+the :ref:`calwebb_spec2 <calwebb_spec2gg95 >` pipeline and then evaluated by the
+``srctype`` step to determine whether each source should be treated as point or
+extended.
 
 If the stellarity value for a given source in the MSA metadata is less
 than zero, the source type defaults to "POINT." If the stellarity value is

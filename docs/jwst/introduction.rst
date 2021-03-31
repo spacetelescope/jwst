@@ -130,11 +130,11 @@ Exit Status
 - 64: No science data found
 
 The "No science data found" condition is returned by the ``assign_wcs`` step of
-``calwebb_spec2`` pipeline when, after successfully determining the WCS solution
-for a file, the WCS indicates that no science data will be found. This condition
-most often occurs with NIRSpec's Multi-object Spectroscopy (MOS) mode: There are
-certain optical and MSA configurations in which dispersion will not cross one
-or the other of NIRSpec's detectors.
+the ``calwebb_spec2`` pipeline when, after successfully determining the WCS
+solution for a file, the WCS indicates that no science data will be found. This
+condition most often occurs with NIRSpec's Multi-object Spectroscopy (MOS) mode:
+There are certain optical and MSA configurations in which dispersion will not
+cross one or the other of NIRSpec's detectors.
 
 .. _run_from_python:
 
@@ -186,7 +186,6 @@ For example, the command line below:
         --steps.dark_current.override_dark='my_dark.fits'
 
 can be executed from within Python as follows:
-::
 
 .. doctest-skip::
 
@@ -368,24 +367,26 @@ you would use:
 Skip
 ----
 
-Another argument available to all steps in a pipeline is ``skip``.
-If ``skip=True`` is set for any step, that step will be skipped, with the
-output of the previous step being automatically passed directly to the input
-of the step following the one that was skipped. For example, if you want to
-skip the linearity correction step, edit the calwebb_detector1.asdf file to
-contain:
-::
-
-  steps:
-    - class: jwst.linearity.linearity_step.LinearityStep
-      parameters:
-        skip: true
-
-Alternatively you can specify the ``skip`` argument on the command line:
+Another argument available to all steps in a pipeline is ``skip``. If
+``skip=True`` is set for any step, that step will be skipped, with the output of
+the previous step being automatically passed directly to the input of the step
+following the one that was skipped. For example, if you want to skip the
+linearity correction step, one can specify the ``skip`` argument for the
+``strun`` command:
 ::
 
     $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits
         --steps.linearity.skip=True
+
+Alternatively, if using a :ref:`parameter file<Parameter Files>`, edit the
+file to add the following snippet:
+::
+
+  steps:
+  - class: jwst.linearity.linearity_step.LinearityStep
+    parameters:
+      skip: true
+
 
 Logging Configuration
 ---------------------
