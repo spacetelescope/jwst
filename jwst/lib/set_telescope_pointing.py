@@ -1302,6 +1302,8 @@ def calc_aperture_wcs(m_eci2siaf):
     x = sin(vy_dec) * cos(wcs_dec) - \
         cos(vy_dec) * sin(wcs_dec) * cos((vy_ra - wcs_ra))
     wcs_pa = np.arctan2(y, x)
+    if wcs_pa < 0.:
+        wcs_pa += PI2
 
     # Convert all WCS to degrees
     wcsinfo = WCSRef(
