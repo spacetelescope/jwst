@@ -586,8 +586,9 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
         try:
             t_pars.pointing = pointing
             wcsinfo, vinfo = calc_wcs(t_pars)
-            logger.info("Setting ENGQLPTG keyword to CALCULATED")
-            model.meta.visit.pointing_engdb_quality = f'CALCULATED_{t_pars.method.value.upper()}'
+            pointing_engdb_quality = f'CALCULATED_{t_pars.method.value.upper()}'
+            logger.info(f'Setting ENGQLPTG keyword to {pointing_engdb_quality}')
+            model.meta.visit.pointing_engdb_quality = pointing_engdb_quality
         except Exception as e:
             logger.warning(
                 'WCS calculation has failed and will be skipped.'
@@ -968,6 +969,7 @@ def calc_transforms_gscmd_j3pags(t_pars: TransformParameters):
 
     # Calculate the full ECI to SIAF transform matrix
     m_eci2siaf = np.dot(m_v2siaf, m_eci2v)
+    logger.debug(f'm_eci2siaf: {m_eci2siaf}')
 
     tforms = Transforms(m_eci2fgs1=m_eci2fgs1, m_sifov_fsm_delta=m_sifov_fsm_delta,
                         m_fgs12sifov=m_fgs12sifov, m_eci2sifov=m_eci2sifov, m_sifov2v=m_sifov2v,
@@ -1544,6 +1546,8 @@ def calc_v2siaf_matrix(siaf):
                      [1., 0., 0.]])
 
     transform = np.dot(pmat, mat)
+    logger.debug(f'transform: {transform}')
+
     return transform
 
 
