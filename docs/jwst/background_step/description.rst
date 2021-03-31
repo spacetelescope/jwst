@@ -8,8 +8,13 @@ Two different approaches to background image subtraction are used, depending
 on the observing mode. Imaging and most spectroscopic modes use one method,
 while a special method is used for Wide-Field Slitless Spectroscopy (WFSS).
 
-Non-WFSS Modes
---------------
+This type of background subtraction is just one method available within the
+JWST pipeline. See :ref:`Background Subtraction <background_subtraction`
+for an overview of all the methods and to which observing modes they're
+applicable.
+
+Imaging and Non-WFSS Spectroscopic Modes
+----------------------------------------
 If more than one background exposure is provided, they will be averaged
 together before being subtracted from the target exposure. Iterative sigma
 clipping is applied during the averaging process, to reject sources or other
