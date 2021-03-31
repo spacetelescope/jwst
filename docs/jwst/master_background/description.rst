@@ -1,5 +1,10 @@
 Description
 ===========
+Master background subtraction is one form of background subtraction available for
+spectroscopic data. See :ref:`Background Subtraction <background_subtraction>` for an
+overview of all the available methods and where they occur within the various stages
+of the calibration pipeline.
+
 The master background subtraction step subtracts background signal from
 2-D spectroscopic data using a 1-D master background spectrum. The 1-D master background
 spectrum is created from one or more input exposures, or can alternatively be supplied

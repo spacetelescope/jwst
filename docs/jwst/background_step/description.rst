@@ -9,7 +9,7 @@ on the observing mode. Imaging and most spectroscopic modes use one method,
 while a special method is used for Wide-Field Slitless Spectroscopy (WFSS).
 
 This type of background subtraction is just one method available within the
-JWST pipeline. See :ref:`Background Subtraction <background_subtraction`
+JWST pipeline. See :ref:`Background Subtraction <background_subtraction>`
 for an overview of all the methods and to which observing modes they're
 applicable.
 

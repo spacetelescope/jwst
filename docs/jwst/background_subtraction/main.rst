@@ -10,29 +10,33 @@ function.
 
 Imaging Mode
 ------------
-Background subtraction for imaging data is currently only available in two places
-within the calibration pipeline:
+Background subtraction for imaging data is currently available in several places
+within the calibration pipeline stages.
 
-1. Image-from-image subtraction during :ref:`calwebb_image2 <calwebb_image2>`
-   processing in the :ref:`background <background_step>` step. The background images
-   come from observations of a dedicated background target.
-2. Local background subtraction for individual sources in the
-   :ref:`calwebb_image3 <calwebb_image3>` pipeline
-   :ref:`source_catalog <source_catalog_step>` step
+1. Image-from-image subtraction can be performed by the
+   :ref:`background <background_step>` step during :ref:`calwebb_image2 <calwebb_image2>`
+   processing. The background images come from observations of a dedicated
+   background target.
+2. Background matching and subtraction can be performed within an ensemble of
+   images by the :ref:`skymatch <skymatch_step>` step during
+   :ref:`calwebb_image3 <calwebb_image3>` processing.
+3. Local background subtraction for individual sources can be performed by the
+   :ref:`source_catalog <source_catalog_step>` step within the
+   :ref:`calwebb_image3 <calwebb_image3>` pipeline.
 
 Spectroscopic Modes
 -------------------
 Spectroscopic observations allow for some additional ways of performing
 background subtraction. The list of options includes:
 
-1. Image-from-image subtraction during :ref:`calwebb_spec2 <calwebb_spec2>`
-   processing in the :ref:`background <background_step>` step. The background images
-   can come from:
+1. Image-from-image subtraction can be performed by the
+   :ref:`background <background_step>` step during :ref:`calwebb_spec2 <calwebb_spec2>`
+   processing. The background images can come from:
 
    a) Observations of a dedicated background target
    b) Nodded observations of a point-like science target
 
-2. Subtraction via a "master" background spectrum, where the master background
+2. Subtraction of a "master" background spectrum, where the master background
    spectrum can come from:
 
    a) Observations of a dedicated background target
@@ -40,8 +44,9 @@ background subtraction. The list of options includes:
    c) Dedicated background slitlets in a NIRSpec MOS exposure
    d) A user-supplied spectrum
 
-3. Local background subtraction for individual sources during 1D spectral
-   extraction in the :ref:`extract_1d <extract_1d_step>` step
+3. Local background subtraction for individual spectral can be performed by
+   the :ref:`extract_1d <extract_1d_step>` step when doing 1D spectral
+   extraction.
 
 The following table shows the list of image-from-image and master background
 subtraction methods available for various spectroscopic observation modes, and
