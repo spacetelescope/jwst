@@ -258,9 +258,9 @@ class Dataset():
             pixeldq = np.zeros(self.full_shape, dtype=self.input_model.pixeldq.dtype)
             refpixdq_dontuse = dqflags.pixel['DO_NOT_USE'] | dqflags.pixel['REFERENCE_PIXEL']
             pixeldq[0:4, :] = refpixdq_dontuse
-            pixeldq[fullrows-4:fullrows, :] = refpixdq_dontuse
-            pixeldq[4:fullrows-4, 0:4] = refpixdq_dontuse
-            pixeldq[4:fullrows-4, fullcols-4:fullcols] = refpixdq_dontuse
+            pixeldq[fullrows - 4:fullrows, :] = refpixdq_dontuse
+            pixeldq[4:fullrows - 4, 0:4] = refpixdq_dontuse
+            pixeldq[4:fullrows - 4, fullcols - 4:fullcols] = refpixdq_dontuse
             pixeldq[self.rowstart:self.rowstop, self.colstart:self.colstop] = self.input_model.pixeldq.copy()
         else:
             pixeldq = self.input_model.pixeldq.copy()
@@ -605,7 +605,7 @@ class NIRDataset(Dataset):
                     oddslice = (slice(datarowstart, datarowstop, 1),
                                 slice(datacolstart, datacolstop, 2))
                     evenslice = (slice(datarowstart, datarowstop, 1),
-                                slice(datacolstart + 1, datacolstop, 2))
+                                 slice(datacolstart + 1, datacolstop, 2))
                     group[oddslice] = group[oddslice] - oddrefsignal
                     group[evenslice] = group[evenslice] - evenrefsignal
                 else:
@@ -647,7 +647,7 @@ class NIRDataset(Dataset):
             return a
 
         else:
-            return 0.5*(a + b)
+            return 0.5 * (a + b)
 
     def create_reflected(self, data, smoothing_length):
         """Make an array bigger by extending it at the top and bottom by
@@ -813,7 +813,7 @@ class NIRDataset(Dataset):
         result[b_nan] = a[b_nan]
 
         no_nan = np.where(~np.isnan(a) & ~np.isnan(b))
-        result[no_nan] = 0.5*(a[no_nan] + b[no_nan])
+        result[no_nan] = 0.5 * (a[no_nan] + b[no_nan])
 
         return result
 
@@ -1820,7 +1820,7 @@ def correct_model(input_model, odd_even_columns,
     if input_dataset is None:
         status = SUBARRAY_DOESNTFIT
         return status
-    result_dataset = reference_pixel_correction(input_dataset)
+    reference_pixel_correction(input_dataset)
 
     return REFPIX_OK
 
@@ -1845,4 +1845,4 @@ def reference_pixel_correction(input_dataset):
 
     input_dataset.do_corrections()
 
-    return input_dataset
+    return
