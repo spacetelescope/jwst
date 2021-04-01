@@ -1224,7 +1224,7 @@ def compute_bounding_box(slit2detector, wavelength_range, slit_ymin=-.55, slit_y
     of the projection of the slit on the detector.
     Because the trace is curved and the wavelength_range may span the
     two detectors, y_min of the projection may be at an arbitrary wavelength.
-    The transform is run with a regularly sampled wavelengths to determin y_min.
+    The transform is run with a regularly sampled wavelengths to determine y_min.
 
     Parameters
     ----------
@@ -1596,12 +1596,14 @@ def nrs_wcs_set_input(input_model, slit_name, wavelength_range=None):
         slit_wcs.set_transform('slit_frame', 'msa_frame',
                                wcsobj.pipeline[3].transform.get_model(slit_name) & Identity(1))
     slit2detector = slit_wcs.get_transform('slit_frame', 'detector')
+    #msa2detector = slit_wcs.get_transform('msa_frame', 'detector')
 
     if is_nirspec_ifu:
         bb = compute_bounding_box(slit2detector, wrange)
     else:
         slit = [s for s in open_slits if s.name == slit_name][0]
         bb = compute_bounding_box(slit2detector, wrange,
+        # bb = compute_bounding_box(msa2detector, wrange,
                                   slit_ymin=slit.ymin, slit_ymax=slit.ymax)
 
     slit_wcs.bounding_box = bb
@@ -1673,7 +1675,12 @@ def validate_open_slits(input_model, open_slits, reference_files):
                 msa_transform = slitdata_model | msa_model
                 msa2det = msa_transform & Identity(1) | col2det
                 bb = compute_bounding_box(msa2det, wrange, slit.ymin, slit.ymax)
+
+                slit2det = slitdata_model & Identity(1) | col2det
+                bb = compute_bounding_box(slit2det, wrange, slit.ymin, slit.ymax)
+
                 valid = _is_valid_slit(bb)
+                log.warning(f"Slit bounding_box is {bb}")
                 if not valid:
                     log.info("Removing slit {0} from the list of open slits because the "
                              "WCS bounding_box is completely outside the detector.".format(slit.name))
