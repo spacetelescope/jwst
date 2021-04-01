@@ -970,7 +970,6 @@ def ramp_fit_slopes(input_model, gain_2d, readnoise_2d, save_opt, weighting):
     dq_int, median_diffs_2d, num_seg_per_int, sat_0th_group_int =\
         utils.alloc_arrays_1(n_int, imshape)
 
-    # opt_res = utils.OptRes(n_int, imshape, max_seg, nreads, save_opt)
     opt_res = utils.OptRes(n_int, imshape, max_seg, ngroups, save_opt)
 
     # Get Pixel DQ array from input file. The incoming RampModel has uint32

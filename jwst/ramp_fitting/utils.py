@@ -175,7 +175,17 @@ class OptRes:
         -------
         None
         """
-        self.slope_2d[num_seg[g_pix], g_pix] = slope[g_pix]
+        self.slope_2d[num_seg[g_pix], g_pix] = slope[g_pix]  # <- regtest fail
+
+        # ------------------------------------------------------------------------
+        # HERE
+        # The above does not set the pixels of interest, despite the
+        # information being in the slope array.  Setting the pixels
+        # individually as below works, though.
+        # px2 = 32371
+        # self.slope_2d[num_seg[px2], px2] = slope[px2]
+        # ------------------------------------------------------------------------
+
         if save_opt:
             self.interc_2d[num_seg[g_pix], g_pix] = intercept[g_pix]
             self.siginterc_2d[num_seg[g_pix], g_pix] = sig_intercept[g_pix]
