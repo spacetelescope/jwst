@@ -107,6 +107,9 @@ and/or rotated to convert to the detector frame.
 NIR Data
 ++++++++
 
+For single amplifier readout (NOUTPUTS keyword = 1):
+----------------------------------------------------
+
 If the odd_even_columns flag is set to True, then the clipped means of all
 reference pixels in odd-numbered columns and those in even numbered columns
 are calculated separately, and subtracted from their respective data columns.
@@ -122,6 +125,16 @@ the reference pixels in each group and subtracted from each pixel.
 
 If the science dataset has at least 1 group with no valid reference pixels,
 the step is skipped and the S_REFPIX header keyword is set to 'SKIPPED'.
+
+For 4 amplifier readout (NOUTPUTS keyword = 4):
+-----------------------------------------------
+
+If the NOUTPUTS keyword is 4 for a subarray exposure, then the data are calibrated
+the same as for full-frame exposures.  The top/bottom reference values are obtained from available
+reference pixel regions, and the side reference values are used if available.  If only 1 of the
+top/bottom or side reference regions are available, they are used, whereas if both are available they
+are averaged.  If there are no top/bottom or side reference pixels available, then that part of
+the correction is omitted.
 
 MIR Data
 ++++++++
