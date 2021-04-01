@@ -2203,9 +2203,9 @@ def calc_slope(data_sect, gdq_sect, frame_time, opt_res, save_opt, rn_sect,
         numbers of segments for good pixels
     """
     # CODE
-    ngroups, asize2, asize1 = data_sect.shape
+    ngroups, nrows, ncols = data_sect.shape
 
-    npix = asize2 * asize1  # number of pixels in section of 2D array
+    npix = nrows * ncols # number of pixels in section of 2D array
 
     all_pix = np.arange(npix)
     arange_ngroups_col = np.arange(ngroups)[:, np.newaxis]
@@ -2391,8 +2391,9 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
     num_seg : int, 1D array
         numbers of segments for good pixels
     """
-    nreads, asize2, asize1 = data_sect.shape  # Note: nreads is a scalar here
-    all_pix = np.arange(asize2 * asize1)
+    # CODE
+    nreads, nrows, ncols = data_sect.shape  # Note: nreads is a scalar here
+    all_pix = np.arange(nrows * ncols)
 
     ramp_mask_sum = mask_2d_init.sum(axis=0)
 
@@ -2412,7 +2413,7 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
 
     # Create array to set when each good pixel is classified for the current
     #   semiramp (to enable unclassified pixels to have their arrays updated)
-    got_case = np.zeros((asize1 * asize2), dtype=bool)
+    got_case = np.zeros((ncols * nrows), dtype=bool)
 
     # CASE A) Long enough (semiramp has >2 groups), at end of ramp
     #    - set start to -1 to designate all fitting done
@@ -2742,6 +2743,7 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
         end_heads[end_heads < 0.] = 0.
 
     return f_max_seg, num_seg
+# END
 
 
 def fit_lines(data, mask_2d, rn_sect, gain_sect, ngroups, weighting):
