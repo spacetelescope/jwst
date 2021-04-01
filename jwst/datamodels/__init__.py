@@ -67,6 +67,7 @@ from .saturation import SaturationModel
 from .slit import SlitModel, SlitDataModel
 from .source_container import SourceModelContainer
 from .spec import SpecModel
+from .speckernel import SpecKernelModel
 from .specprofile import SpecProfileModel, SpecProfileSingleModel
 from .spectrace import SpecTraceModel, SpecTraceSingleModel
 from .straylight import StrayLightModel
@@ -136,6 +137,7 @@ __all__ = [
     'ResolutionModel', 'MiriResolutionModel',
     'RSCDModel', 'SaturationModel', 'SlitDataModel', 'SlitModel', 'SpecModel',
     'SourceModelContainer',
+    'SpecKernelModel',
     'SpecProfileModel', 'SpecProfileSingleModel',
     'SpecTraceModel', 'SpecTraceSingleModel',
     'SpecwcsModel',
