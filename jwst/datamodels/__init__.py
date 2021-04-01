@@ -67,6 +67,8 @@ from .saturation import SaturationModel
 from .slit import SlitModel, SlitDataModel
 from .source_container import SourceModelContainer
 from .spec import SpecModel
+from .specprofile import SpecProfileModel, SpecProfileSingleModel
+from .spectrace import SpecTraceModel, SpecTraceSingleModel
 from .straylight import StrayLightModel
 from .superbias import SuperBiasModel
 from .throughput import ThroughputModel
@@ -74,6 +76,7 @@ from .trapdensity import TrapDensityModel
 from .trappars import TrapParsModel
 from .trapsfilled import TrapsFilledModel
 from .tsophot import TsoPhotModel
+from .wavemap import WaveMapModel, WaveMapSingleModel
 from .wcs_ref_models import (DistortionModel, DistortionMRSModel, SpecwcsModel,
                              RegionsModel, WavelengthrangeModel, CameraModel, CollimatorModel, OTEModel,
                              FOREModel, FPAModel, IFUPostModel, IFUFOREModel, IFUSlicerModel, MSAModel,
@@ -113,8 +116,9 @@ __all__ = [
     'MultiCombinedSpecModel', 'MultiExposureModel',
     'MultiExtract1dImageModel', 'MultiSlitModel',
     'MultiProductModel',
-    'MultiSpecModel', 'OTEModel',
+    'MultiSpecModel',
     'NIRCAMGrismModel', 'NIRISSGrismModel',
+    'OTEModel',
     'OutlierParsModel',
     'PathlossModel',
     'PersistenceSatModel',
@@ -132,11 +136,16 @@ __all__ = [
     'ResolutionModel', 'MiriResolutionModel',
     'RSCDModel', 'SaturationModel', 'SlitDataModel', 'SlitModel', 'SpecModel',
     'SourceModelContainer',
-    'StrayLightModel', 'SuperBiasModel', 'SpecwcsModel',
+    'SpecProfileModel', 'SpecProfileSingleModel',
+    'SpecTraceModel', 'SpecTraceSingleModel',
+    'SpecwcsModel',
+    'StrayLightModel', 'SuperBiasModel',
     'ThroughputModel',
     'TrapDensityModel', 'TrapParsModel', 'TrapsFilledModel',
     'TsoPhotModel',
-    'WavelengthrangeModel', 'WaveCorrModel', 'WfssBkgModel']
+    'WavelengthrangeModel', 'WaveCorrModel',
+    'WaveMapModel', 'WaveMapSingleModel',
+    'WfssBkgModel']
 
 # Initialize the astropy.io registry,
 # but only the first time this module is called
