@@ -79,6 +79,11 @@ datamodels
 - Added ``FULLP`` to SUBARRAY enum list in core, subarray,
   and keyword_psubarray schemas [#5947]
 
+documentation
+-------------
+
+- Update documentation, deprecating primary use of CFG files [#5901]
+
 extract_2d
 ----------
 
