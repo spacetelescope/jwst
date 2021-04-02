@@ -140,6 +140,8 @@ The ``asdf_library`` and ``history`` blocks are necessary only when a parameter
 file is to be used as a parameter reference file in CRDS. See `Parameter Files
 as Reference Files`_ below.
 
+.. _`Completeness`:
+
 Completeness
 ~~~~~~~~~~~~
 
@@ -318,3 +320,35 @@ It is highly suggested to use the ASDF API to add history entries:
        #
    >>> cfg.add_history_entry('Parameters modified for some reason')
    >>> cfg.write_to('config_modified.asdf')
+
+JWST, Parameters and Parameter References
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In general, the default parameters for any pipeline or step are valid for nearly
+all instruments and observing modes. This means that when a pipeline or step is
+run without any explicit parameter setting, that pipeline or step will usually
+do the desired operation. Hence, most of the time there is no need for a
+parameter reference to be available in CRDS, or provided by the user. Only for a
+small set of observing mode/step combinations, will there be need to create a
+parameter reference. Even then, nearly all cases will involve changing a subset
+of a pipeline or step parameters.
+
+Keeping this sparse-population philosophy in mind, for most parameter
+references, only those parameters that are explicilty changed should be
+specified in the reference. If adhered to, when a pipeline/step default value
+for a particular parameter needs to change, the change will be immediately
+available. Otherwise, all references that mistakenly set said parameter will
+need to be updated. See :ref:`Completeness` for more information.
+
+Furthermore, every pipeline/step have a common set of parameters, listed
+below. These parameters generally affect the infrastructure operation of
+pipelines/steps, and should not be included in a parameter reference.
+
+- input_dir
+- output_ext
+- output_use_index
+- output_use_model
+- post_hooks
+- pre_hooks
+- save_results
+- search_output_file
