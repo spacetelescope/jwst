@@ -12,6 +12,10 @@ assign_wcs
 - Changed evaluation of grism bounding box center from averaged extrema of
   transformed bounding box to transformed centroid of source_cat object [#5809]
 
+- Added pixel shift to non-fixed slits due to 0-indexing in NIRSpec slit
+  validation code, fixing difference between bounding box locations during the
+  separate halves of assign_wcs runs [#5927]
+
 associations
 ------------
 
