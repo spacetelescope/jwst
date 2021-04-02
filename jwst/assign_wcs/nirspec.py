@@ -1595,7 +1595,6 @@ def nrs_wcs_set_input(input_model, slit_name, wavelength_range=None):
     else:
         slit_wcs.set_transform('slit_frame', 'msa_frame',
                                wcsobj.pipeline[3].transform.get_model(slit_name) & Identity(1))
-
     slit2detector = slit_wcs.get_transform('slit_frame', 'detector')
 
     if is_nirspec_ifu:
