@@ -8,7 +8,7 @@ allOf:
 - $ref: subarray.schema
 - type: object
   properties:
-    profiles:
+    profile:
       type: array
       title: An array of profiles
       items:

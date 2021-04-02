@@ -8,7 +8,7 @@ allOf:
 - $ref: subarray.schema
 - type: object
   properties:
-    maps:
+    map:
       type: array
       title: An array of wavelength maps
       items:
