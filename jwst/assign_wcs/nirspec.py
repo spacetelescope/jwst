@@ -1671,7 +1671,7 @@ def validate_open_slits(input_model, open_slits, reference_files):
         valid = _is_valid_slit(bb)
         if not valid:
             log.info("Removing slit {0} from the list of open slits because the "
-                    "WCS bounding_box is completely outside the detector.".format(slit.name))
+                     "WCS bounding_box is completely outside the detector.".format(slit.name))
             idx = np.nonzero([s.name == slit.name for s in open_slits])[0][0]
             open_slits.pop(idx)
 
