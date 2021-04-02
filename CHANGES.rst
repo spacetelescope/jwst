@@ -60,6 +60,10 @@ datamodels
 - API change - ``stcal.dqflags.interpret_bit_flags`` and ``stcal.dynamicdq.dynamic_mask``
   now require the ``mnemonic_map`` as input. [#5898, #5914]
 
+- Implemented new data models ``SpecKernelModel``, ``SpecProfileModel``,
+  ``SpecTraceModel``, and ``WaveMapModel`` for use by new NIRISS SOSS
+  reference files in optimized 1D extraction [#5925]
+
 extract_2d
 ----------
 
