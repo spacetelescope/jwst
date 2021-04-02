@@ -10,7 +10,7 @@ Configuration (CFG) Files
    to the ``ASDF`` format. Note also that all ``cfg`` files that are currently
    being delivered in the package and retrieved using ``collect_pipeline_cfgs``
    set no parameters; files are empty. All steps query CRDS parameter references
-   for any data-dependent parameter settings.
+   for any data-dependent parameter settings, or use coded defaults.
 
 The ``cfg`` format for configuration files uses the well-known ini-file format.
 
