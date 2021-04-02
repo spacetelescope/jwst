@@ -1658,38 +1658,11 @@ def validate_open_slits(input_model, open_slits, reference_files):
     # collimator to GWA
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
 
-    #msa = MSAModel(reference_files['msa'])
-
     col2det = collimator2gwa & Identity(1) | Mapping((3, 0, 1, 2)) | agreq | \
         gwa2det | det2dms
 
     slit2msa = slit_to_msa(open_slits,reference_files['msa'])
-    '''
-    for quadrant in range(1, 6):
-        slits_in_quadrant = [s for s in open_slits if s.quadrant == quadrant]
-        if any(slits_in_quadrant):
-            msa_quadrant = getattr(msa, "Q{0}".format(quadrant))
-            msa_model = msa_quadrant.model
-            msa_data = msa_quadrant.data
-            for slit in slits_in_quadrant:
-                slit_id = slit.shutter_id
-                # Shutters are numbered starting from 1.
-                # Fixed slits (Quadrant 5) are mapped starting from 0.
-                if quadrant != 5:
-                    slit_id = slit_id - 1
-                slitdata = msa_data[slit_id]
-                slitdata_model = get_slit_location_model(slitdata)
-                msa_transform = slitdata_model | msa_model
-                msa2det = msa_transform & Identity(1) | col2det
-                bb = compute_bounding_box(msa2det, wrange, slit.ymin, slit.ymax)
 
-                valid = _is_valid_slit(bb)
-                if not valid:
-                    log.info("Removing slit {0} from the list of open slits because the "
-                             "WCS bounding_box is completely outside the detector.".format(slit.name))
-                    idx = np.nonzero([s.name == slit.name for s in open_slits])[0][0]
-                    open_slits.pop(idx)
-    '''
     for slit in slit2msa.slits:
         msa_transform = slit2msa.get_model(slit.name)
         msa2det = msa_transform & Identity(1) | col2det
@@ -1703,7 +1676,6 @@ def validate_open_slits(input_model, open_slits, reference_files):
             idx = np.nonzero([s.name == slit.name for s in open_slits])[0][0]
             open_slits.pop(idx)
 
-    # msa.close()
     return open_slits
 
 
