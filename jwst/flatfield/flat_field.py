@@ -1918,10 +1918,7 @@ def flat_for_nirspec_slit(slit, f_flat_model, s_flat_model, d_flat_model,
         wl = slit.wavelength.copy()         # a 2-D array
     except AttributeError:
         got_wl_attribute = False
-    # if not got_wl_attribute or len(wl) == 0:
-    if 0 in np.shape(wl):
-        log.warning(f"")
-        wl = [0.]
+    if not got_wl_attribute or len(wl) == 0:
         got_wl_attribute = False
     return_dummy = False
 
