@@ -60,7 +60,7 @@ refpix
 ------
 
 - Added code to handle NIR subarrays that use 4 readout amplifiers.  Uses and applies reference pixel signal from
-available amplifiers and side reference pixel regions, including odd-even column separation if requested.
+available amplifiers and side reference pixel regions, including odd-even column separation if requested [#5926]
 
 source_catalog
 --------------
