@@ -1,5 +1,6 @@
+from stcal.dynamicdq import dynamic_mask
+from .dqflags import pixel
 from .reference import ReferenceFileModel
-from .dynamicdq import dynamic_mask
 
 
 __all__ = ['FlatModel']
@@ -28,7 +29,7 @@ class FlatModel(ReferenceFileModel):
     def __init__(self, init=None, **kwargs):
         super(FlatModel, self).__init__(init=init, **kwargs)
 
-        self.dq = dynamic_mask(self)
+        self.dq = dynamic_mask(self, pixel)
 
         # Implicitly create arrays
         self.err = self.err

@@ -8,8 +8,11 @@ from astropy.modeling.models import Mapping
 from astropy import units as u
 import gwcs
 
+from stcal.dqflags import interpret_bit_flags
+
 from jwst.assign_wcs.util import wcs_from_footprints, wcs_bbox_from_shape
-from jwst.datamodels.dqflags import interpret_bit_flags
+from jwst.datamodels.dqflags import pixel
+
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -170,7 +173,7 @@ def build_mask(dqarr, bitvalue):
 
     In the returned bit mask, 1 is good, 0 is bad
     """
-    bitvalue = interpret_bit_flags(bitvalue)
+    bitvalue = interpret_bit_flags(bitvalue, mnemonic_map=pixel)
 
     if bitvalue is None:
         return (np.ones(dqarr.shape, dtype=np.uint8))

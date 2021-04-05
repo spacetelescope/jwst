@@ -1,9 +1,7 @@
-from distutils.version import LooseVersion
 import logging
 import numpy as np
-import photutils
-from photutils import CircularAperture, CircularAnnulus, \
-    RectangularAperture, aperture_photometry
+from photutils.aperture import (CircularAperture, CircularAnnulus,
+                                RectangularAperture, aperture_photometry)
 
 from .apply_apcorr import select_apcorr
 from ..assign_wcs.util import compute_scale
@@ -473,13 +471,8 @@ def extract_ifu(input_model, source_type, extract_params):
                                          method=method, subpixels=subpixels)
 
         aperture_area = float(phot_table['aperture_sum'][0])
-
-        if LooseVersion(photutils.__version__) >= '0.7':
-            log.debug("aperture.area = %g; aperture_area = %g",
-                      aperture.area, aperture_area)
-        else:
-            log.debug("aperture.area() = %g; aperture_area = %g",
-                      aperture.area(), aperture_area)
+        log.debug("aperture.area = %g; aperture_area = %g",
+                  aperture.area, aperture_area)
 
         if(aperture_area == 0 and aperture.area > 0):
             aperture_area = aperture.area
@@ -489,13 +482,8 @@ def extract_ifu(input_model, source_type, extract_params):
             phot_table = aperture_photometry(temp_weightmap, annulus,
                                              method=method, subpixels=subpixels)
             annulus_area = float(phot_table['aperture_sum'][0])
-
-            if LooseVersion(photutils.__version__) >= '0.7':
-                log.debug("annulus.area = %g; annulus_area = %g",
-                          annulus.area, annulus_area)
-            else:
-                log.debug("annulus.area() = %g; annulus_area = %g",
-                          annulus.area(), annulus_area)
+            log.debug("annulus.area = %g; annulus_area = %g",
+                      annulus.area, annulus_area)
 
             if(annulus_area == 0 and annulus.area > 0):
                 annulus_area = annulus.area

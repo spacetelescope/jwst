@@ -26,6 +26,23 @@ associations
   PUPIL value (cross filter) when matching direct images with grism images
   in NIRISS WFSS observations. [#5896]
 
+background
+----------
+
+- Remove unused ``SubtractImagesStep`` [#5919]
+
+calwebb_spec2
+-------------
+
+- Updated documentation to indicate that master_background is applied to
+  NIRSpec MOS exposures in the calwebb_spec2 pipeline [#5913]
+
+calwebb_spec3
+-------------
+
+- Updated documentation to indicate that master_background is applied to
+  NIRSpec MOS exposures in the calwebb_spec2 pipeline [#5913]
+
 cube_build
 ----------
 
@@ -34,9 +51,14 @@ cube_build
 datamodels
 ----------
 
-- Added is_star to slitmeta [#5788]
+- Added ``is_star`` to ``slitmeta`` [#5788]
 
 - Update keyword comments for NIRSpec grating wheel (GWA) keywords [#5844]
+
+- Moved functions in ``dqflags`` and ``dynamic_mask`` to ``stcal`` [#5898]
+
+- API change - ``stcal.dqflags.interpret_bit_flags`` and ``stcal.dynamicdq.dynamic_mask``
+  now require the ``mnemonic_map`` as input. [#5898, #5914]
 
 extract_2d
 ----------
@@ -55,12 +77,19 @@ lib
 ---
 
 - Update ``update_mt_kwds`` function in ``set_telescope_pointing.py`` to  populate the TARG_RA/TARG_DEC [#5808]
+- moved ``basic_utils.multiple_replace`` to stcal. [#5898]
 
 refpix
 ------
 
 - Added code to handle NIR subarrays that use 4 readout amplifiers.  Uses and applies reference pixel signal from
-available amplifiers and side reference pixel regions, including odd-even column separation if requested [#5926]
+  available amplifiers and side reference pixel regions, including odd-even column separation if requested [#5926]
+
+master_background
+-----------------
+
+- Updated documentation to more fully describe the various ways in which the
+  step is applied [#5913]
 
 source_catalog
 --------------

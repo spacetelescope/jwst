@@ -502,7 +502,7 @@ def get_object_info(catalog_name=None):
     # (hence, the four separate columns).
 
     for row in catalog:
-        objects.append(SkyObject(id=row['id'],
+        objects.append(SkyObject(label=row['label'],
                                  xcentroid=row['xcentroid'],
                                  ycentroid=row['ycentroid'],
                                  sky_centroid=row['sky_centroid'],
@@ -726,12 +726,12 @@ def _create_grism_bbox(input_model, mmag_extract=99.0,
 
                     if contained == 0:
                         exclude = True
-                        log.info("Excluding off-image object: {}, order {}".format(obj.id, order))
+                        log.info("Excluding off-image object: {}, order {}".format(obj.label, order))
                     elif contained >= 1:
                         outbox = pts[np.logical_not(inidx)]
                         if len(outbox) > 0:
                             ispartial = True
-                            log.info("Partial order on detector for obj: {} order: {}".format(obj.id, order))
+                            log.info("Partial order on detector for obj: {} order: {}".format(obj.label, order))
 
                     if not exclude:
                         order_bounding[order] = ((round(ymin), round(ymax)), (round(xmin), round(xmax)))
@@ -739,7 +739,7 @@ def _create_grism_bbox(input_model, mmag_extract=99.0,
                         partial_order[order] = ispartial
 
                 if len(order_bounding) > 0:
-                    grism_objects.append(GrismObject(sid=obj.id,
+                    grism_objects.append(GrismObject(sid=obj.label,
                                                      order_bounding=order_bounding,
                                                      sky_centroid=obj.sky_centroid,
                                                      partial_order=partial_order,
