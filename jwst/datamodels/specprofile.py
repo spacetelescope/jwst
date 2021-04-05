@@ -35,9 +35,9 @@ class SpecProfileModel(ReferenceFileModel):
 
         if isinstance(init, SpecProfileSingleModel):
             super(SpecProfileModel, self).__init__(init=None, **kwargs)
+            self.update(init)
             self.profile.append(self.profile.item())
             self.profile[0].data = init.data
-            return
 
         super(SpecProfileModel, self).__init__(init=init, **kwargs)
 

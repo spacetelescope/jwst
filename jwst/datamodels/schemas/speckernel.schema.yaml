@@ -25,17 +25,17 @@ allOf:
           type: number
           fits_keyword: WAVEMAX
           fits_hdu: WAVELENGTHS
-        specos:
+        spectral_oversampling:
           title: The spectral oversampling of the native pixels
           type: integer
           fits_keyword: SPECOS
           fits_hdu: KERNELS
-        halfwidt:
+        halfwidth:
           title: The half width of the kernel in native pixels
           type: integer
           fits_keyword: HALFWIDT
           fits_hdu: KERNELS
-        indcentr:
+        centroid_index:
           title: Index of the kernel centroid
           type: integer
           fits_keyword: INDCENTR

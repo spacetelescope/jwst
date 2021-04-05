@@ -9,19 +9,12 @@ allOf:
 - $ref: subarray.schema
 - type: object
   properties:
-    data:
-      title: The profile data
-      fits_hdu: ORDER
-      max_ndim: 2
-      datatype: float32
-- type: object
-  properties:
     order:
       title: Spectral order
       type: integer
       fits_keyword: ORDER
       fits_hdu: ORDER
-    oversamp:
+    oversampling:
       title: Pixel oversampling
       type: integer
       fits_keyword: OVERSAMP
@@ -31,3 +24,8 @@ allOf:
       type: integer
       fits_keyword: PADDING
       fits_hdu: ORDER
+    data:
+      title: The profile data
+      fits_hdu: ORDER
+      ndim: 2
+      datatype: float32

@@ -35,9 +35,9 @@ class SpecTraceModel(ReferenceFileModel):
 
         if isinstance(init, SpecTraceSingleModel):
             super(SpecTraceModel, self).__init__(init=None, **kwargs)
+            self.update(init)
             self.trace.append(self.trace.item())
             self.trace[0].data = init.data
-            return
 
         super(SpecTraceModel, self).__init__(init=init, **kwargs)
 

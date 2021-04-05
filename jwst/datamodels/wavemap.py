@@ -35,9 +35,9 @@ class WaveMapModel(ReferenceFileModel):
 
         if isinstance(init, WaveMapSingleModel):
             super(WaveMapModel, self).__init__(init=None, **kwargs)
+            self.update(init)
             self.map.append(self.map.item())
             self.map[0].data = init.data
-            return
 
         super(WaveMapModel, self).__init__(init=init, **kwargs)
 
