@@ -40,6 +40,13 @@ lib
 
 - Update ``update_mt_kwds`` function in ``set_telescope_pointing.py`` to  populate the TARG_RA/TARG_DEC [#5808]
 
+ramp_fitting
+------------
+
+- Refactoring OLS code for ramp fitting to improve readability and maintenance.
+  Also, reference to ``nreads`` is being removed and replaced with ``ngroups``
+  to remove and confusion on functionality. [JP-1887]
+
 source_catalog
 --------------
 
