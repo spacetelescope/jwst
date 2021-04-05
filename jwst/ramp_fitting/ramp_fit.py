@@ -2129,7 +2129,6 @@ def calc_nrows(model, buffsize, cubeshape, nreads):
     return nrows
 
 
-# BEGIN
 def calc_slope(data_sect, gdq_sect, frame_time, opt_res, save_opt, rn_sect,
                gain_sect, i_max_seg, ngroups, weighting, f_max_seg):
     """
@@ -2201,10 +2200,8 @@ def calc_slope(data_sect, gdq_sect, frame_time, opt_res, save_opt, rn_sect,
     num_seg : int, 1D array
         numbers of segments for good pixels
     """
-    # CODE
     ngroups, nrows, ncols = data_sect.shape
-
-    npix = nrows * ncols # number of pixels in section of 2D array
+    npix = nrows * ncols  # number of pixels in section of 2D array
 
     all_pix = np.arange(npix)
     arange_ngroups_col = np.arange(ngroups)[:, np.newaxis]
@@ -2309,7 +2306,6 @@ def calc_slope(data_sect, gdq_sect, frame_time, opt_res, save_opt, rn_sect,
     all_pix = 0
 
     return gdq_sect, inv_var, opt_res, f_max_seg, num_seg
-# END
 
 
 def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
@@ -2390,7 +2386,6 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
     num_seg : int, 1D array
         numbers of segments for good pixels
     """
-    # CODE
     nreads, nrows, ncols = data_sect.shape  # Note: nreads is a scalar here
     all_pix = np.arange(nrows * ncols)
 
@@ -2742,7 +2737,6 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
         end_heads[end_heads < 0.] = 0.
 
     return f_max_seg, num_seg
-# END
 
 
 def fit_lines(data, mask_2d, rn_sect, gain_sect, ngroups, weighting):

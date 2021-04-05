@@ -175,9 +175,7 @@ class OptRes:
         -------
         None
         """
-        # g_pix does not contain the pixel indices of interest, causing regtest
-        # fail
-        self.slope_2d[num_seg[g_pix], g_pix] = slope[g_pix]  # <- regtest fail
+        self.slope_2d[num_seg[g_pix], g_pix] = slope[g_pix]
 
         if save_opt:
             self.interc_2d[num_seg[g_pix], g_pix] = intercept[g_pix]
