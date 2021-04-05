@@ -56,6 +56,12 @@ lib
 
 - Update ``update_mt_kwds`` function in ``set_telescope_pointing.py`` to  populate the TARG_RA/TARG_DEC [#5808]
 
+refpix
+------
+
+- Added code to handle NIR subarrays that use 4 readout amplifiers.  Uses and applies reference pixel signal from
+available amplifiers and side reference pixel regions, including odd-even column separation if requested.
+
 source_catalog
 --------------
 
