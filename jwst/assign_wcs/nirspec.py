@@ -1660,7 +1660,7 @@ def validate_open_slits(input_model, open_slits, reference_files):
     col2det = collimator2gwa & Identity(1) | Mapping((3, 0, 1, 2)) | agreq | \
         gwa2det | det2dms
 
-    slit2msa = slit_to_msa(open_slits,reference_files['msa'])
+    slit2msa = slit_to_msa(open_slits, reference_files['msa'])
 
     for slit in slit2msa.slits:
         msa_transform = slit2msa.get_model(slit.name)
