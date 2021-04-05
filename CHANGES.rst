@@ -45,7 +45,7 @@ ramp_fitting
 
 - Refactoring OLS code for ramp fitting to improve readability and maintenance.
   Also, reference to ``nreads`` is being removed and replaced with ``ngroups``
-  to remove and confusion on functionality. [JP-1887]
+  to remove and confusion on functionality. [#5872]
 
 source_catalog
 --------------
