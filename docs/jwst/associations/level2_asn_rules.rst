@@ -1,13 +1,13 @@
 .. asn-level2-rules:
 
-Level 2 Associations: Rules
+Stage 2 Associations: Rules
 ===========================
 
 The following table describes exactly which exposures will go
-through any type of Level 2b processing, such as Spec2Pipeline or
+through any type of stage 2 processing, such as Spec2Pipeline or
 Image2Pipeline.
 
-.. list-table:: Exposure Modes for Level 2 Processing
+.. list-table:: Exposure Modes for Stage 2 Processing
    :widths: 20 20 20 20
    :header-rows: 1
 

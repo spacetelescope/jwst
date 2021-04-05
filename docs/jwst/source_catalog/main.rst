@@ -75,7 +75,7 @@ columns (assuming the default encircled energies of 30, 50, and 70):
 +------------------------+----------------------------------------------------+
 | Column                 | Description                                        |
 +========================+====================================================+
-| id                     | Unique source identification number                |
+| label                  | Unique source identification label number          |
 +------------------------+----------------------------------------------------+
 | xcentroid              | X pixel value of the source centroid               |
 +------------------------+----------------------------------------------------+

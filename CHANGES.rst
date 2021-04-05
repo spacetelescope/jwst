@@ -1,11 +1,20 @@
 1.1.1 (unreleased)
 ==================
 
+ami_analyze
+-----------
+
+- Create copy of input datamodel to avoid overwriting input [#5828]
+
 assign_wcs
 ----------
 
 - Changed evaluation of grism bounding box center from averaged extrema of
   transformed bounding box to transformed centroid of source_cat object [#5809]
+
+- Added pixel shift to MSA slits due to 0-indexing in NIRSpec slit validation
+  code, fixing difference between bounding box locations during the separate
+  halves of assign_wcs runs [#5927]
 
 associations
 ------------
@@ -17,10 +26,43 @@ associations
 - Removed PATTTYPE='None' constraint from Lv3MIRMRS association rule to
   generate spec3 associations for undithered MRS observations. [#5804]
 
+- Updated level2b WFSS rules to only consider exposures using the same
+  PUPIL value (cross filter) when matching direct images with grism images
+  in NIRISS WFSS observations. [#5896]
+
+background
+----------
+
+- Remove unused ``SubtractImagesStep`` [#5919]
+
+calwebb_spec2
+-------------
+
+- Updated documentation to indicate that master_background is applied to
+  NIRSpec MOS exposures in the calwebb_spec2 pipeline [#5913]
+
+calwebb_spec3
+-------------
+
+- Updated documentation to indicate that master_background is applied to
+  NIRSpec MOS exposures in the calwebb_spec2 pipeline [#5913]
+
+cube_build
+----------
+
+- Fixed typo in cube_build_step spec for grating [#5839]
+
 datamodels
 ----------
 
-- Added is_star to slitmeta [#5788]
+- Added ``is_star`` to ``slitmeta`` [#5788]
+
+- Update keyword comments for NIRSpec grating wheel (GWA) keywords [#5844]
+
+- Moved functions in ``dqflags`` and ``dynamic_mask`` to ``stcal`` [#5898]
+
+- API change - ``stcal.dqflags.interpret_bit_flags`` and ``stcal.dynamicdq.dynamic_mask``
+  now require the ``mnemonic_map`` as input. [#5898, #5914]
 
 extract_2d
 ----------
@@ -40,12 +82,20 @@ lib
 
 - Update ``update_mt_kwds`` function in ``set_telescope_pointing.py`` to  populate the TARG_RA/TARG_DEC [#5808]
 
+- moved ``basic_utils.multiple_replace`` to stcal. [#5898]
+
 ramp_fitting
 ------------
 
 - Refactoring OLS code for ramp fitting to improve readability and maintenance.
   Also, reference to ``nreads`` is being removed and replaced with ``ngroups``
   to remove and confusion on functionality. [#5872]
+
+master_background
+-----------------
+
+- Updated documentation to more fully describe the various ways in which the
+  step is applied [#5913]
 
 source_catalog
 --------------
@@ -63,6 +113,11 @@ transforms
 ----------
 
 - Added ``is_star`` to GrismObject [#5788]
+
+tweakreg
+--------
+
+- Updated documentation to include the new "rshift" option for fit geometry [#5899]
 
 1.1.0 (2021-02-26)
 ==================
@@ -206,6 +261,8 @@ photom
 
 pipeline
 --------
+
+- Empty remaining cfg files of any content [#5766]
 
 - Remove references to Numpy globals ``np.int``, ``np.float``, ``np.bool`` and
   ``np.str`` in the package. [#5769]

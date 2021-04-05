@@ -141,9 +141,9 @@ Install from your local checked-out copy as an "editable" install:
 If you want to run the unit or regression tests and/or build the docs, you can make
 sure those dependencies are installed too:
 
-    pip install -e .[test]
-    pip install -e .[docs]
-    pip install -e .[test,docs]
+    pip install -e ".[test]"
+    pip install -e ".[docs]"
+    pip install -e ".[test,docs]"
 
 Need other useful packages in your development environment?
 
@@ -169,7 +169,7 @@ https://jwst-pipeline.readthedocs.io/en/latest/
 
 To build the docs yourself, clone this repository and build the documentation with:
 
-    pip install -e .[docs]
+    pip install -e ".[docs]"
     cd docs
     make html
     make latexpdf
@@ -242,7 +242,7 @@ Note: CRDS_CONTEXT values flagged with an asterisk in the above table are estima
 
 Unit tests can be run via `pytest`.  Within the top level of your local `jwst` repo checkout:
 
-    pip install -e .[test]
+    pip install -e ".[test]"
     pytest
 
 Need to parallelize your test runs over 8 cores?
@@ -263,7 +263,7 @@ To run the regression tests on your local machine, get the test dependencies
 and set the environment variable TEST_BIGDATA to our Artifactory server
 (STSci staff members only):
 
-    pip install -e .[test]
+    pip install -e ".[test]"
     export TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory
 
 To run all the regression tests:

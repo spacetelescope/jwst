@@ -4,4 +4,6 @@ git+https://github.com/spacetelescope/crds
 git+https://github.com/spacetelescope/gwcs
 git+https://github.com/astropy/photutils
 git+https://github.com/spacetelescope/stdatamodels
+git+https://github.com/spacetelescope/stpipe
+git+https://github.com/spacetelescope/stcal
 git+https://github.com/spacetelescope/tweakwcs
