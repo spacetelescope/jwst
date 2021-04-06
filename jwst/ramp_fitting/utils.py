@@ -176,6 +176,7 @@ class OptRes:
         None
         """
         self.slope_2d[num_seg[g_pix], g_pix] = slope[g_pix]
+
         if save_opt:
             self.interc_2d[num_seg[g_pix], g_pix] = intercept[g_pix]
             self.siginterc_2d[num_seg[g_pix], g_pix] = sig_intercept[g_pix]

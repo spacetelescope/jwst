@@ -12,6 +12,10 @@ assign_wcs
 - Changed evaluation of grism bounding box center from averaged extrema of
   transformed bounding box to transformed centroid of source_cat object [#5809]
 
+- Added pixel shift to MSA slits due to 0-indexing in NIRSpec slit validation
+  code, fixing difference between bounding box locations during the separate
+  halves of assign_wcs runs [#5927]
+
 associations
 ------------
 
@@ -60,6 +64,10 @@ datamodels
 - API change - ``stcal.dqflags.interpret_bit_flags`` and ``stcal.dynamicdq.dynamic_mask``
   now require the ``mnemonic_map`` as input. [#5898, #5914]
 
+- Implemented new data models ``SpecKernelModel``, ``SpecProfileModel``,
+  ``SpecTraceModel``, and ``WaveMapModel`` for use by new NIRISS SOSS
+  reference files in optimized 1D extraction [#5925]
+
 extract_2d
 ----------
 
@@ -79,17 +87,24 @@ lib
 - Update ``update_mt_kwds`` function in ``set_telescope_pointing.py`` to  populate the TARG_RA/TARG_DEC [#5808]
 - moved ``basic_utils.multiple_replace`` to stcal. [#5898]
 
-refpix
-------
-
-- Added code to handle NIR subarrays that use 4 readout amplifiers.  Uses and applies reference pixel signal from
-  available amplifiers and side reference pixel regions, including odd-even column separation if requested [#5926]
-
 master_background
 -----------------
 
 - Updated documentation to more fully describe the various ways in which the
   step is applied [#5913]
+
+ramp_fitting
+------------
+
+- Refactoring OLS code for ramp fitting to improve readability and maintenance.
+  Also, reference to ``nreads`` is being removed and replaced with ``ngroups``
+  to remove and confusion on functionality. [#5872]
+  
+refpix
+------
+
+- Added code to handle NIR subarrays that use 4 readout amplifiers.  Uses and applies reference pixel signal from
+  available amplifiers and side reference pixel regions, including odd-even column separation if requested [#5926]
 
 source_catalog
 --------------
