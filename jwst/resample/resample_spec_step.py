@@ -94,6 +94,7 @@ class ResampleSpecStep(ResampleStep):
 
         for container in containers.values():
             resamp = resample_spec.ResampleSpecData(container, **self.drizpars)
+
             drizzled_models = resamp.do_drizzle()
 
             for model in drizzled_models:
@@ -138,6 +139,7 @@ class ResampleSpecStep(ResampleStep):
 
         resamp = resample_spec.ResampleSpecData(input_models, **self.drizpars)
 
+        # Only drizzle the area within the bounding box
         if input_models[0].meta.exposure.type == "MIR_LRS-FIXEDSLIT":
             bb = input_models[0].meta.wcs.bounding_box
             ((x1, x2), (y1, y2)) = bb

@@ -142,20 +142,20 @@ class ResampleSpecData:
             # first input model sets intializes wavelength array and defines
             # the spatial scale of the output wcs
             if im == 0:
-                for iw in wavelength_array:
-                    all_wavelength.append(iw)
+                all_wavelength = np.append(all_wavelength, wavelength_array)
 
+                # find the center ra and dec for this slit at central wavelength
                 lam_center_index = int((bb[spectral_axis][1] -
                                         bb[spectral_axis][0]) / 2)
-                if spatial_axis == 0:
-                    ra_center = ra[lam_center_index, :]
-                    dec_center = dec[lam_center_index, :]
+                if spatial_axis == 0:  # MIRI LRS, the WCS x axis is spatial
+                    ra_slice = ra[lam_center_index, :]
+                    dec_slice = dec[lam_center_index, :]
                 else:
-                    ra_center = ra[:, lam_center_index]
-                    dec_center = dec[:, lam_center_index]
-                # find the ra and dec for this slit using center of slit
-                ra_center_pt = np.nanmean(ra_center)
-                dec_center_pt = np.nanmean(dec_center)
+                    ra_slice = ra[:, lam_center_index]
+                    dec_slice = dec[:, lam_center_index]
+                # wrap RA if near zero
+                ra_center_pt = np.nanmean(wrap_ra(ra_slice))
+                dec_center_pt = np.nanmean(dec_slice)
 
                 if resample_utils.is_sky_like(model.meta.wcs.output_frame):
                     # convert ra and dec to tangent projection
@@ -173,7 +173,7 @@ class ResampleSpecData:
                     x_tan, y_tan = ra, dec
 
                 # pull out data from center
-                if spectral_axis == 0:
+                if spectral_axis == 0:  # MIRI LRS, the WCS x axis is spatial
                     x_tan_array = x_tan.T[lam_center_index]
                     y_tan_array = y_tan.T[lam_center_index]
                 else:
@@ -195,12 +195,10 @@ class ResampleSpecData:
 
             # append all ra and dec values to use later to find min and max
             # ra and dec
-            ra_use = ra.flatten()
-            ra_use = ra_use[~np.isnan(ra_use)]
-            dec_use = dec.flatten()
-            dec_use = dec_use[~np.isnan(dec_use)]
-            all_ra_slit.append(ra_use)
-            all_dec_slit.append(dec_use)
+            ra_use = ra[~np.isnan(ra)].flatten()
+            dec_use = dec[~np.isnan(dec)].flatten()
+            all_ra_slit = np.append(all_ra_slit, ra_use)
+            all_dec_slit = np.append(all_dec_slit, dec_use)
 
             # now check wavelength array to see if we need to add to it
             this_minw = np.min(wavelength_array)
@@ -218,7 +216,6 @@ class ResampleSpecData:
                     all_wavelength.append(addpts[ip])
 
         # done looping over set of models
-
         all_ra = np.hstack(all_ra_slit)
         all_dec = np.hstack(all_dec_slit)
         all_wave = np.hstack(all_wavelength)
@@ -280,11 +277,12 @@ class ResampleSpecData:
         all_ra = wrap_ra(all_ra)
         ra_min = np.amin(all_ra)
         ra_max = np.amax(all_ra)
-
         ra_center_final = (ra_max + ra_min) / 2.0
+
         dec_min = np.amin(all_dec)
         dec_max = np.amax(all_dec)
         dec_center_final = (dec_max + dec_min) / 2.0
+
         tan = Pix2Sky_TAN()
         if len(self.input_models) == 1:  # single model use ra_center_pt to be consistent
             # with how resample was done before
@@ -311,7 +309,7 @@ class ResampleSpecData:
         if resample_utils.is_sky_like(model.meta.wcs.output_frame):
             transform = mapping | (pix_to_xtan & pix_to_ytan | undist2sky) & pix_to_wavelength
         else:
-            transform = mapping | (pix_to_xtan & pix_to_ytan) & pix_to_wavelength
+            transform = mapping | pix_to_xtan & pix_to_ytan & pix_to_wavelength
 
         det = cf.Frame2D(name='detector', axes_order=(0, 1))
         if resample_utils.is_sky_like(model.meta.wcs.output_frame):

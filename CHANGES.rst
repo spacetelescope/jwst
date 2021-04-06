@@ -107,13 +107,17 @@ ramp_fitting
 refpix
 ------
 
-- Added code to handle NIR subarrays that use 4 readout amplifiers.  Uses and applies reference pixel signal from
-  available amplifiers and side reference pixel regions, including odd-even column separation if requested [#5926]
+- Added code to handle NIR subarrays that use 4 readout amplifiers.  Uses and
+  applies reference pixel signal from available amplifiers and side reference
+  pixel regions, including odd-even column separation if requested [#5926]
 
-- Fixed a bug introduced in #5926 that affected refpix calibration of 1-amp NIR subarrays [#5937]
+- Fixed a bug introduced in #5926 that affected refpix calibration of 1-amp NIR
+  subarrays [#5937]
 
 resample
 --------
+
+- Fix ``resample_spec`` output size from input images crossing RA=0 [#5929]
 
 - Propagate variance arrays into ``SlitModel`` used as input for ``ResampleSpecStep`` [#5941]
 
