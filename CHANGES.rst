@@ -112,6 +112,11 @@ refpix
 
 - Fixed a bug introduced in #5926 that affected refpix calibration of 1-amp NIR subarrays [#5937]
 
+resample
+--------
+
+- Propagate variance arrays into ``SlitModel`` used as input for ``ResampleSpecStep`` [#5941]
+
 source_catalog
 --------------
 

@@ -23,18 +23,11 @@ class ResampleSpecStep(ResampleStep):
     """
 
     def process(self, input):
-
-        # Define input_new, because if input is ImageModel, it will
-        # get recreated as a SlitModel
         input_new = datamodels.open(input)
 
+        # Convert ImageModel to SlitModel (needed for MIRI LRS)
         if isinstance(input_new, ImageModel):
-            slit_model = datamodels.SlitModel()
-            slit_model.update(input_new, only="PRIMARY")
-            slit_model.update(input_new, only="SCI")
-            slit_model.meta.wcs = input_new.meta.wcs
-            slit_model.data = input_new.data
-            input_new = slit_model
+            input_new = datamodels.SlitModel(input_new)
 
         # If single DataModel input, wrap in a ModelContainer
         if not isinstance(input_new, ModelContainer):
