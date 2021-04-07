@@ -110,6 +110,8 @@ refpix
 - Added code to handle NIR subarrays that use 4 readout amplifiers.  Uses and applies reference pixel signal from
   available amplifiers and side reference pixel regions, including odd-even column separation if requested [#5926]
 
+- Fixed a bug introduced in #5926 that affected refpix calibration of 1-amp NIR subarrays [#5937]
+
 source_catalog
 --------------
 

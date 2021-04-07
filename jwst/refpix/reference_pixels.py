@@ -909,12 +909,13 @@ class NIRDataset(Dataset):
         #  First transform to detector coordinates
         #
         refdq = dqflags.pixel['REFERENCE_PIXEL']
+        donotuse = dqflags.pixel['DO_NOT_USE']
         #
         # This transforms the pixeldq array from DMS to detector coordinates,
         # only needs to be done once
         self.DMS_to_detector_dq()
         # Determined refpix indices to use on each group
-        refpixindices = np.where(np.bitwise_and(self.pixeldq, refdq) == refdq)
+        refpixindices = np.where((self.pixeldq & refdq == refdq) & (self.pixeldq & donotuse != donotuse))
         nrefpixels = len(refpixindices[0])
         if nrefpixels == 0:
             self.bad_reference_pixels = True
