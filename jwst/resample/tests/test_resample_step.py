@@ -7,6 +7,7 @@ from jwst.datamodels import ImageModel, ModelContainer
 from jwst.assign_wcs import AssignWcsStep
 from jwst.extract_2d import Extract2dStep
 from jwst.resample import ResampleSpecStep, ResampleStep
+from jwst.resample.resample_spec import ResampleSpecData
 
 
 @pytest.fixture
@@ -15,6 +16,7 @@ def nirspec_rate():
     xsize = 2048
     shape = (ysize, xsize)
     im = ImageModel(shape)
+    im.var_rnoise += 1
     im.meta.wcsinfo = {
         'dec_ref': 40,
         'ra_ref': 100,
@@ -71,7 +73,7 @@ def miri_rate():
     shape = (ysize, xsize)
     im = ImageModel(shape)
     im.data += 5
-    im.var_rnoise = np.random.random(shape)
+    im.var_rnoise += 1
     im.meta.wcsinfo = {
         'dec_ref': 40,
         'ra_ref': 100,
@@ -203,6 +205,9 @@ def test_nirspec_wcs_roundtrip(nirspec_rate):
         assert_allclose(x, xp, atol=1e-8)
         assert_allclose(y, yp, atol=1e-8)
 
+def test_foo(miri_rate):
+    assert miri_rate.hasattr("var_rnoise")
+
 
 def test_miri_wcs_roundtrip(miri_rate):
     im = AssignWcsStep.call(miri_rate)
@@ -247,6 +252,7 @@ def test_pixel_scale_ratio_imaging(nircam_rate, ratio):
 def test_weight_type(nircam_rate, _jail):
     """Check that weight_type of exptime and ivm work"""
     im1 = AssignWcsStep.call(nircam_rate, sip_approx=False)
+    im1.var_rnoise[:] = 0
     im2 = im1.copy()
     im3 = im1.copy()
     im1.data += 10
@@ -346,19 +352,23 @@ def miri_rate_zero_crossing():
     return im
 
 
-def test_build_interpolated_output_wcs(miri_rate_zero_crossing):
-    im1 = AssignWcsStep.call(miri_rate_zero_crossing)
-
+@pytest.fixture
+def miri_rate_pair(miri_rate_zero_crossing):
+    im1 = miri_rate_zero_crossing
     # Create a nodded version
-    im2 = miri_rate_zero_crossing.copy()
+    im2 = im1.copy()
     im2.meta.wcsinfo.ra_ref = 0.00026308279776455
     im2.meta.wcsinfo.dec_ref = -2.1860888891293e-05
+    im1 = AssignWcsStep.call(im1)
     im2 = AssignWcsStep.call(im2)
 
-    from jwst.resample.resample_spec import ResampleSpecData
-    from jwst import datamodels
+    return im1, im2
 
-    driz = ResampleSpecData(datamodels.ModelContainer([im1, im2]))
+
+def test_build_interpolated_output_wcs(miri_rate_pair):
+    im1, im2 = miri_rate_pair
+
+    driz = ResampleSpecData(ModelContainer([im1, im2]))
     output_wcs = driz.build_interpolated_output_wcs()
 
     # Make sure that all RA, Dec values in the input image have a location in
@@ -370,6 +380,6 @@ def test_build_interpolated_output_wcs(miri_rate_zero_crossing):
     # This currently fails, as we see a slight offset
     # assert (x > 0).all()
 
-    # Make sure the output slit height is larger than the input slit height
+    # Make sure the output slit size is larger than the input slit size
     # for this nodded data
     assert driz.data_size[1] > ra.shape[1]
