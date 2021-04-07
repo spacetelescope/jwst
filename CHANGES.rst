@@ -16,6 +16,10 @@ assign_wcs
   code, fixing difference between bounding box locations during the separate
   halves of assign_wcs runs [#5927]
 
+- Added logic to prevent the sending of an empty list of slits to the
+  validate_open_slits function, so a proper error message is provided to
+  the user [#5939]
+
 associations
 ------------
 
