@@ -108,7 +108,7 @@ NIR Data
 ++++++++
 
 For single amplifier readout (NOUTPUTS keyword = 1):
-----------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If the odd_even_columns flag is set to True, then the clipped means of all
 reference pixels in odd-numbered columns and those in even numbered columns
@@ -127,7 +127,7 @@ If the science dataset has at least 1 group with no valid reference pixels,
 the step is skipped and the S_REFPIX header keyword is set to 'SKIPPED'.
 
 For 4 amplifier readout (NOUTPUTS keyword = 4):
------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If the NOUTPUTS keyword is 4 for a subarray exposure, then the data are calibrated
 the same as for full-frame exposures.  The top/bottom reference values are obtained from available
