@@ -72,7 +72,8 @@ datamodels
   ``SpecTraceModel``, and ``WaveMapModel`` for use by new NIRISS SOSS
   reference files in optimized 1D extraction [#5925]
 
-- Added ``FULLP`` to SUBARRAY enum list in core and subarray schemas [#5947]
+- Added ``FULLP`` to SUBARRAY enum list in core, subarray,
+  and keyword_psubarray schemas [#5947]
 
 extract_2d
 ----------
