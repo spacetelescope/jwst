@@ -28,6 +28,7 @@ def sci_blot_image_pair():
 
     sci.data = np.random.normal(loc=background, size=shape, scale=sigma)
     sci.err = np.zeros(shape) + sigma
+    sci.var_rnoise += 0
 
     # Add a source in the center
     sci.data[10, 10] += 20 * sigma
@@ -113,6 +114,7 @@ def we_three_sci():
     sci1.meta.wcs = create_fitswcs(sci1)
 
     sci1.err = np.zeros(shape) + sigma
+    sci1.var_rnoise += 0
 
     # Make copies with different noise
     sci2 = sci1.copy()
