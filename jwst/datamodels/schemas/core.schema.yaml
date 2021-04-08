@@ -917,7 +917,7 @@ properties:
                   SLITLESSPRISM, SUB128, SUB256, SUB64, SUBPRISM]
               # NIRCam
               - enum:
-                  [MASK210R, MASK335R, MASK430R, MASKLWB, MASKSWB,
+                  [FULLP, MASK210R, MASK335R, MASK430R, MASKLWB, MASKSWB,
                    SUB160, SUB160P, SUB320,
                    SUB320A335R, SUB320A430R, SUB320ALWB,
                    SUB320B335R, SUB320B430R, SUB320BLWB,
