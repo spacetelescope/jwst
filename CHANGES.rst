@@ -16,6 +16,10 @@ assign_wcs
   code, fixing difference between bounding box locations during the separate
   halves of assign_wcs runs [#5927]
 
+- Added logic to prevent the sending of an empty list of slits to the
+  validate_open_slits function, so a proper error message is provided to
+  the user [#5939]
+
 associations
 ------------
 
@@ -68,6 +72,9 @@ datamodels
   ``SpecTraceModel``, and ``WaveMapModel`` for use by new NIRISS SOSS
   reference files in optimized 1D extraction [#5925]
 
+- Added ``FULLP`` to SUBARRAY enum list in core, subarray,
+  and keyword_psubarray schemas [#5947]
+
 extract_2d
 ----------
 
@@ -81,10 +88,14 @@ general
 - Update DQFLAGS table in RTD docs with new definitions for persistence and
   ad_floor in bits five and six [#5815]
 
+- Update data products, ``calwebb_image3``, and ``source_catalog`` docs to include
+  information about the segmentation map product [#5949]
+
 lib
 ---
 
 - Update ``update_mt_kwds`` function in ``set_telescope_pointing.py`` to  populate the TARG_RA/TARG_DEC [#5808]
+
 - moved ``basic_utils.multiple_replace`` to stcal. [#5898]
 
 master_background
@@ -105,6 +116,13 @@ refpix
 
 - Added code to handle NIR subarrays that use 4 readout amplifiers.  Uses and applies reference pixel signal from
   available amplifiers and side reference pixel regions, including odd-even column separation if requested [#5926]
+
+- Fixed a bug introduced in #5926 that affected refpix calibration of 1-amp NIR subarrays [#5937]
+
+resample
+--------
+
+- Propagate variance arrays into ``SlitModel`` used as input for ``ResampleSpecStep`` [#5941]
 
 source_catalog
 --------------

@@ -418,7 +418,7 @@ def get_open_slits(input_model, reference_files=None, slit_y_range=[-.55, .55]):
             slits = get_open_fixed_slits(input_model, slit_y_range)
     else:
         raise ValueError("EXP_TYPE {0} is not supported".format(exp_type.upper()))
-    if reference_files is not None:
+    if reference_files is not None and slits:
         slits = validate_open_slits(input_model, slits, reference_files)
         log.info("Slits projected on detector {0}: {1}".format(input_model.meta.instrument.detector,
                                                                [sl.name for sl in slits]))
@@ -575,7 +575,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
         log.error(message)
         raise MSAFileError(message)
 
-    # Get the configuration header from teh _msa.fits file.  The EXTNAME should be 'SHUTTER_INFO'
+    # Get the configuration header from the _msa.fits file.  The EXTNAME should be 'SHUTTER_INFO'
     msa_conf = msa_file[('SHUTTER_INFO', 1)]
     msa_source = msa_file[("SOURCE_INFO", 1)].data
 
@@ -1631,7 +1631,7 @@ def validate_open_slits(input_model, open_slits, reference_files):
         ylow, yhigh = domain[1]
         if (xlow >= 2048 or ylow >= 2048 or
             xhigh <= 0 or yhigh <= 0 or
-                xhigh - xlow < 1 or yhigh - ylow < 1):
+                xhigh - xlow < 2 or yhigh - ylow < 1):
             return False
         else:
             return True

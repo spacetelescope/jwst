@@ -86,3 +86,13 @@ Source catalog
 The source catalog produced by the :ref:`source_catalog <source_catalog_step>` step
 from the "_i2d" product is saved as an ASCII file in ``ecsv`` format, with a product type
 of "_cat."
+
+Segmentation map
+^^^^^^^^^^^^^^^^
+
+:Data model: `~jwst.datamodels.ImageModel`
+:File suffix: _segm
+
+A 2D image segmentation map produced by the :ref:`source_catalog <source_catalog_step>`
+step from the "_i2d" product, saved as a FITS file with a single image extension and
+a product type suffix of "_segm."
