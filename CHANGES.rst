@@ -88,10 +88,14 @@ general
 - Update DQFLAGS table in RTD docs with new definitions for persistence and
   ad_floor in bits five and six [#5815]
 
+- Update data products, ``calwebb_image3``, and ``source_catalog`` docs to include
+  information about the segmentation map product [#5949]
+
 lib
 ---
 
 - Update ``update_mt_kwds`` function in ``set_telescope_pointing.py`` to  populate the TARG_RA/TARG_DEC [#5808]
+
 - moved ``basic_utils.multiple_replace`` to stcal. [#5898]
 
 master_background
