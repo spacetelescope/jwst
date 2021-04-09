@@ -34,6 +34,10 @@ associations
   PUPIL value (cross filter) when matching direct images with grism images
   in NIRISS WFSS observations. [#5896]
 
+- Updated level2b and level3 TSO rules to exclude exposures with
+  EXP_TYPE=NRC_TSGRISM and PUPIL=CLEAR, which can result from NIRCam
+  engineering template observations. [#5946]
+
 background
 ----------
 
