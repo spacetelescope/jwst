@@ -671,16 +671,18 @@ class Asn_Lv3TSO(AsnMixin_Science):
             # with PUPIL='CLEAR' in tso3
             Constraint(
                 [
-                    DMSAttrConstraint(
-                        name='restricted_grism',
-                        sources=['exp_type'],
-                        value = ('nrc_tsgrism')
-                    ),
-                    DMSAttrConstraint(
-                        name='grism_clear',
-                        sources=['pupil'],
-                        value = ('clear')
-                    ),
+                    Constraint([
+                        DMSAttrConstraint(
+                            name='restricted_grism',
+                            sources=['exp_type'],
+                            value = ('nrc_tsgrism')
+                        ),
+                        DMSAttrConstraint(
+                            name='grism_clear',
+                            sources=['pupil'],
+                            value = ('clear')
+                        ),
+                    ]),
                 ],
                 reduce=Constraint.notany
             )

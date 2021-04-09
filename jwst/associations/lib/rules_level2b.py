@@ -321,18 +321,18 @@ class Asn_Lv2SpecTSO(
             Constraint_TSO(),
             Constraint(
                 [
-                    DMSAttrConstraint(
-                        name='exp_type',
-                        sources=['exp_type'],
-                        value=['nrc_tsgrism'],
-                        force_unique=False,
-                    ),
-                    DMSAttrConstraint(
-                        name='pupil',
-                        sources=['pupil'],
-                        value=['clear'],
-                        force_unique=False,
-                    ),
+                    Constraint([
+                        DMSAttrConstraint(
+                            name='exp_type',
+                            sources=['exp_type'],
+                            value=['nrc_tsgrism'],
+                        ),
+                        DMSAttrConstraint(
+                            name='pupil',
+                            sources=['pupil'],
+                            value=['clear'],
+                        )],
+                    )
                 ],
                 reduce=Constraint.notany
             )
