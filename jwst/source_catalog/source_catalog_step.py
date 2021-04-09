@@ -10,7 +10,7 @@ from photutils.utils.exceptions import NoDetectionsWarning
 
 from .source_catalog import (ReferenceData, Background, make_kernel,
                              make_segment_img, calc_total_error,
-                             SourceCatalog)
+                             JWSTSourceCatalog)
 from .. import datamodels
 from ..stpipe import Step
 
@@ -104,12 +104,12 @@ class SourceCatalogStep(Step):
 
             ci_star_thresholds = (self.ci1_star_threshold,
                                   self.ci2_star_threshold)
-            catobj = SourceCatalog(model, segment_img, error=total_error,
-                                   kernel=kernel,
-                                   kernel_fwhm=self.kernel_fwhm,
-                                   aperture_params=aperture_params,
-                                   abvega_offset=abvega_offset,
-                                   ci_star_thresholds=ci_star_thresholds)
+            catobj = JWSTSourceCatalog(model, segment_img, error=total_error,
+                                       kernel=kernel,
+                                       kernel_fwhm=self.kernel_fwhm,
+                                       aperture_params=aperture_params,
+                                       abvega_offset=abvega_offset,
+                                       ci_star_thresholds=ci_star_thresholds)
             catalog = catobj.catalog
 
             if self.save_results:

@@ -35,13 +35,35 @@ def run_spec2_mbkg(jail, rtdata_module):
     return rtdata
 
 
+@pytest.fixture(scope='module')
+def run_spec2_mbkg_user(jail, rtdata_module):
+    """Run Spec2 on MSA data with a user-supplied master bkg spectrum"""
+    rtdata = rtdata_module
+
+    # Get data
+    rtdata.get_data('nirspec/mos/nrs_mos_3pointnod_1_msa.fits')
+    rtdata.get_data('nirspec/mos/jw00626030001_02103_00001_nrs1_masterbg1d.fits')
+    rtdata.get_data('nirspec/mos/jw00626030001_02103_00001_nrs1_rate.fits')
+    collect_pipeline_cfgs('config')
+
+    # Run the pipeline
+    step_params = {
+        'step': 'calwebb_spec2.cfg',
+        'args': [
+            '--steps.master_background.skip=false',
+            '--steps.master_background.user_background=jw00626030001_02103_00001_nrs1_masterbg1d.fits'
+        ]
+    }
+    rtdata = rt.run_step_from_dict(rtdata, **step_params)
+    return rtdata
+
+
 def test_masterbkg_rerun(rtdata):
     """Test to ensure sequential runs of the step are consistent"""
-    data = dm.open(rtdata.get_data('nirspec/mos/nrs_mos_with_bkgslits_srctype.fits'))
-
-    mbs = MasterBackgroundNrsSlitsStep()
-    corrected = mbs.run(data)
-    corrected_again = mbs.run(data)
+    with dm.open(rtdata.get_data('nirspec/mos/nrs_mos_with_bkgslits_srctype.fits')) as data:
+        mbs = MasterBackgroundNrsSlitsStep()
+        corrected = mbs.run(data)
+        corrected_again = mbs.run(data)
 
     bad_slits = []
     for idx, slits in enumerate(zip(corrected.slits, corrected_again.slits)):
@@ -53,13 +75,12 @@ def test_masterbkg_rerun(rtdata):
 
 def test_masterbkg_corrpars(rtdata):
     """Test for correction parameters"""
-    data = dm.open(rtdata.get_data('nirspec/mos/nrs_mos_with_bkgslits_srctype.fits'))
+    with dm.open(rtdata.get_data('nirspec/mos/nrs_mos_with_bkgslits_srctype.fits')) as data:
+        mbs = MasterBackgroundNrsSlitsStep()
+        corrected = mbs.run(data)
 
-    mbs = MasterBackgroundNrsSlitsStep()
-    corrected = mbs.run(data)
-
-    mbs.use_correction_pars = True
-    corrected_corrpars = mbs.run(data)
+        mbs.use_correction_pars = True
+        corrected_corrpars = mbs.run(data)
 
     bad_slits = []
     for idx, slits in enumerate(zip(corrected.slits, corrected_corrpars.slits)):
@@ -73,9 +94,19 @@ def test_masterbkg_corrpars(rtdata):
     'suffix',
     ['cal', 'masterbg1d', 'masterbg2d']
 )
-def test_nirspec_spec2_mbkg(suffix, run_spec2_mbkg, fitsdiff_default_kwargs):
+def test_nirspec_mos_mbkg(suffix, run_spec2_mbkg, fitsdiff_default_kwargs):
     """Run spec2 with master background"""
     rtdata = run_spec2_mbkg
+    rt.is_like_truth(rtdata, fitsdiff_default_kwargs, suffix, truth_path='truth/test_nirspec_mos_mbkg')
+
+
+@pytest.mark.parametrize(
+    'suffix',
+    ['cal', 's2d', 'x1d']
+)
+def test_nirspec_mos_mbkg_user(suffix, run_spec2_mbkg_user, fitsdiff_default_kwargs):
+    """Run spec2 with master background and user-supplied mbkg"""
+    rtdata = run_spec2_mbkg_user
     rt.is_like_truth(rtdata, fitsdiff_default_kwargs, suffix, truth_path='truth/test_nirspec_mos_mbkg_user')
 
 
@@ -124,31 +155,6 @@ def test_nirspec_ifu_mbkg_user(rtdata, fitsdiff_default_kwargs):
 
     # Get the truth file
     rtdata.get_truth(f"truth/test_nirspec_ifu_mbkg_user/{output}")
-
-    # Compare the results
-    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
-    assert diff.identical, diff.report()
-
-
-def test_nirspec_mos_mbkg_user(rtdata, fitsdiff_default_kwargs):
-    """Test NIRSpec MOS data with a user-supplied background file."""
-    # Get user-supplied background
-    user_background = "v2_nrs_mos_bkg_x1d.fits"
-    rtdata.get_data(f"nirspec/mos/{user_background}")
-
-    # Get input data
-    rtdata.get_data("nirspec/mos/nrs_mos_sci+bkg_cal.fits")
-
-    collect_pipeline_cfgs("config")
-    args = ["config/master_background.cfg", rtdata.input,
-            "--user_background", user_background]
-    Step.from_cmdline(args)
-
-    output = "nrs_mos_sci+bkg_master_background.fits"
-    rtdata.output = output
-
-    # Get the truth file
-    rtdata.get_truth(f"truth/test_nirspec_mos_mbkg_user/{output}")
 
     # Compare the results
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)

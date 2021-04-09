@@ -75,7 +75,7 @@ def replace_suffix_ext(filename, old_suffix_list, new_suffix,
     return output_path
 
 
-class SkyObject(namedtuple('SkyObject', ("id",
+class SkyObject(namedtuple('SkyObject', ("label",
                                          "xcentroid",
                                          "ycentroid",
                                          "sky_centroid",
@@ -99,7 +99,7 @@ class SkyObject(namedtuple('SkyObject', ("id",
 
     Parameters
     ----------
-    id : int
+    label : int
         source identifed
     xcentroid : float
         x center of object in pixels
@@ -125,7 +125,7 @@ class SkyObject(namedtuple('SkyObject', ("id",
 
     __slots__ = ()  # prevent instance dictionary creation for lower mem
 
-    def __new__(cls, id=None,
+    def __new__(cls, label=None,
                 xcentroid=None,
                 ycentroid=None,
                 sky_centroid=None,
@@ -138,7 +138,7 @@ class SkyObject(namedtuple('SkyObject', ("id",
                 is_star=None,):
 
         return super(SkyObject, cls).__new__(cls,
-                                             id=id,
+                                             label=label,
                                              xcentroid=xcentroid,
                                              ycentroid=ycentroid,
                                              sky_centroid=sky_centroid,
@@ -153,7 +153,7 @@ class SkyObject(namedtuple('SkyObject', ("id",
 
     def __str__(self):
         """Return a pretty print for the object information."""
-        return ("id: {0}\n"
+        return ("label: {0}\n"
                 "xcentroid: {1}\n"
                 "ycentroid: {2}\n"
                 "sky_centroid: {3}\n"
@@ -164,7 +164,7 @@ class SkyObject(namedtuple('SkyObject', ("id",
                 "sky_bbox_ul: {8}\n"
                 "sky_bbox_ur: {9}\n"
                 "is_star: {10}"
-                .format(self.id,
+                .format(self.label,
                         self.xcentroid,
                         self.ycentroid,
                         str(self.sky_centroid),

@@ -73,9 +73,8 @@ def test_flat_field_step_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
 @pytest.mark.bigdata
 def test_ff_inv(rtdata, fitsdiff_default_kwargs):
     """Test flat field inversion"""
-    data = dm.open(rtdata.get_data('nirspec/tso/nrs2_wavecorr.fits'))
-
-    flatted = FlatFieldStep.call(data)
-    unflatted = FlatFieldStep.call(flatted, inverse=True)
+    with dm.open(rtdata.get_data('nirspec/tso/nrs2_wavecorr.fits')) as data:
+        flatted = FlatFieldStep.call(data)
+        unflatted = FlatFieldStep.call(flatted, inverse=True)
 
     assert np.allclose(data.data, unflatted.data), 'Inversion failed'

@@ -28,13 +28,18 @@
 #
 #  Subarray processing added 7/2018
 #
-#  For NIR exposures, calculate the clipped means of odd and even columns
+#  For NIR exposures, if the value of the meta.exposure.noutputs attribute is 1,
+#  calculate the clipped means of odd and even columns
 #  in detector coordinates.  Subtract the odd mean from the odd columns, and
 #  the even mean from the even columns.  If there are no reference pixels in the
 #  subarray, omit the refpix step.
 #
+#  If the value of meta.exposure.noutputs is 4, calculate odd and even reference
+#  values for each amplifier separately, if available, and subtract those values
+#  from their corresponding data sections.  Also use side reference pixels if
+#  available.
+#
 #  For MIRI subarray exposures, omit the refpix step.
-
 
 import numpy as np
 from scipy import stats
@@ -158,6 +163,7 @@ class Dataset():
         self.ncols = ncols
         self.full_shape = (nrows, ncols)
         self.detector = input_model.meta.instrument.detector
+        self.noutputs = input_model.meta.exposure.noutputs
 
         self.xstart = input_model.meta.subarray.xstart
         self.ystart = input_model.meta.subarray.ystart
@@ -239,12 +245,22 @@ class Dataset():
 
         """
         if self.is_subarray:
-            # deal with subarrays
+            # deal with subarrays by embedding the pixeldq array in a full-sized
+            # array with DO_NOT_USE and REFERENCE_PIXEL dqflags bit set where the
+            # reference pixels live, except where the data are embedded
             if self.detector[:3] == 'MIR':
-                self.full_shape = (1024, 1032)
+                fullrows = 1024
+                fullcols = 1032
             else:
-                self.full_shape = (2048, 2048)
+                fullrows = 2048
+                fullcols = 2048
+            self.full_shape = (fullrows, fullcols)
             pixeldq = np.zeros(self.full_shape, dtype=self.input_model.pixeldq.dtype)
+            refpixdq_dontuse = dqflags.pixel['DO_NOT_USE'] | dqflags.pixel['REFERENCE_PIXEL']
+            pixeldq[0:4, :] = refpixdq_dontuse
+            pixeldq[fullrows - 4:fullrows, :] = refpixdq_dontuse
+            pixeldq[4:fullrows - 4, 0:4] = refpixdq_dontuse
+            pixeldq[4:fullrows - 4, fullcols - 4:fullcols] = refpixdq_dontuse
             pixeldq[self.rowstart:self.rowstop, self.colstart:self.colstop] = self.input_model.pixeldq.copy()
         else:
             pixeldq = self.input_model.pixeldq.copy()
@@ -583,22 +599,55 @@ class NIRDataset(Dataset):
                 evenrefbottom = refvalues[amplifier]['even']['bottom']
                 #
                 # For now, just average the top and bottom corrections
-                oddrefsignal = 0.5 * (oddreftop + oddrefbottom)
-                evenrefsignal = 0.5 * (evenreftop + evenrefbottom)
-                oddslice = (slice(datarowstart, datarowstop, 1),
-                            slice(datacolstart, datacolstop, 2))
-                evenslice = (slice(datarowstart, datarowstop, 1),
-                             slice(datacolstart + 1, datacolstop, 2))
-                group[oddslice] = group[oddslice] - oddrefsignal
-                group[evenslice] = group[evenslice] - evenrefsignal
+                oddrefsignal = self.average_with_None(oddreftop, oddrefbottom)
+                evenrefsignal = self.average_with_None(evenreftop, evenrefbottom)
+                if oddrefsignal is not None and evenrefsignal is not None:
+                    oddslice = (slice(datarowstart, datarowstop, 1),
+                                slice(datacolstart, datacolstop, 2))
+                    evenslice = (slice(datarowstart, datarowstop, 1),
+                                 slice(datacolstart + 1, datacolstop, 2))
+                    group[oddslice] = group[oddslice] - oddrefsignal
+                    group[evenslice] = group[evenslice] - evenrefsignal
+                else:
+                    pass
             else:
                 reftop = refvalues[amplifier]['top']
                 refbottom = refvalues[amplifier]['bottom']
-                refsignal = 0.5 * (reftop + refbottom)
-                dataslice = (slice(datarowstart, datarowstop, 1),
-                             slice(datacolstart, datacolstop, 1))
-                group[dataslice] = group[dataslice] - refsignal
+                refsignal = self.average_with_None(reftop, refbottom)
+                if refsignal is not None:
+                    dataslice = (slice(datarowstart, datarowstop, 1),
+                                 slice(datacolstart, datacolstop, 1))
+                    group[dataslice] = group[dataslice] - refsignal
+                else:
+                    pass
         return
+
+    def average_with_None(self, a, b):
+        """Average two numbers.  If one is None, return the
+        other.  If both are None, return None
+
+        Parameters:
+        -----------
+
+        a, b:    Numbers or None
+
+        Returns:
+        --------
+
+        result = Number or None
+        """
+
+        if a is None and b is None:
+            return None
+
+        if a is None:
+            return b
+
+        elif b is None:
+            return a
+
+        else:
+            return 0.5 * (a + b)
 
     def create_reflected(self, data, smoothing_length):
         """Make an array bigger by extending it at the top and bottom by
@@ -670,8 +719,11 @@ class NIRDataset(Dataset):
             rowstop = rowstart + smoothing_length
             goodpixels = np.where(np.bitwise_and(augmented_dq[rowstart:rowstop],
                                                  dqflags.pixel['DO_NOT_USE']) == 0)
-            window = augmented_data[rowstart:rowstop][goodpixels]
-            result[i] = np.median(window)
+            if len(goodpixels[0]) == 0:
+                result[i] = np.nan
+            else:
+                window = augmented_data[rowstart:rowstop][goodpixels]
+                result[i] = np.median(window)
         return result
 
     def calculate_side_ref_signal(self, group, colstart, colstop):
@@ -725,11 +777,45 @@ class NIRDataset(Dataset):
 
         """
 
-        combined = 0.5 * (left + right)
+        combined = self.combine_with_NaNs(left, right)
         sidegroup = np.zeros((2048, 2048))
         for column in range(2048):
             sidegroup[:, column] = combined
         return sidegroup
+
+    def combine_with_NaNs(self, a, b):
+        """Combine 2 1-d arrays that have NaNs.
+        Wherever both arrays are NaN, output is 0.0.
+        Wherever a is NaN and b is not, return b.
+        Wherever b is NaN and a is not, return a.
+        Wherever neither a nor b is NaN, return the average of
+        a and b
+
+        Parameters:
+        -----------
+
+        a, b:   numpy 1-d arrays of numbers
+
+        Returns:
+
+        result = numpy 1-d array of numbers
+        """
+
+        result = np.zeros(len(a), dtype=a.dtype)
+
+        bothnan = np.where(np.isnan(a) & np.isnan(b))
+        result[bothnan] = 0.0
+
+        a_nan = np.where(np.isnan(a) & ~np.isnan(b))
+        result[a_nan] = b[a_nan]
+
+        b_nan = np.where(~np.isnan(a) & np.isnan(b))
+        result[b_nan] = a[b_nan]
+
+        no_nan = np.where(~np.isnan(a) & ~np.isnan(b))
+        result[no_nan] = 0.5 * (a[no_nan] + b[no_nan])
+
+        return result
 
     def apply_side_correction(self, group, sidegroup):
         """Apply reference pixel correction from the side reference pixels
@@ -779,7 +865,10 @@ class NIRDataset(Dataset):
 
     def do_corrections(self):
         if self.is_subarray:
-            self.do_subarray_corrections()
+            if self.noutputs == 4:
+                self.do_fullframe_corrections()
+            else:
+                self.do_subarray_corrections()
         else:
             self.do_fullframe_corrections()
 
@@ -800,8 +889,6 @@ class NIRDataset(Dataset):
                 self.DMS_to_detector(integration, group)
                 thisgroup = self.group
                 refvalues = self.get_refvalues(thisgroup)
-                if self.bad_reference_pixels:
-                    break
                 self.do_top_bottom_correction(thisgroup, refvalues)
                 if self.use_side_ref_pixels:
                     corrected_group = self.do_side_correction(thisgroup)
@@ -822,12 +909,13 @@ class NIRDataset(Dataset):
         #  First transform to detector coordinates
         #
         refdq = dqflags.pixel['REFERENCE_PIXEL']
+        donotuse = dqflags.pixel['DO_NOT_USE']
         #
         # This transforms the pixeldq array from DMS to detector coordinates,
         # only needs to be done once
         self.DMS_to_detector_dq()
         # Determined refpix indices to use on each group
-        refpixindices = np.where(np.bitwise_and(self.pixeldq, refdq) == refdq)
+        refpixindices = np.where((self.pixeldq & refdq == refdq) & (self.pixeldq & donotuse != donotuse))
         nrefpixels = len(refpixindices[0])
         if nrefpixels == 0:
             self.bad_reference_pixels = True
@@ -1733,12 +1821,9 @@ def correct_model(input_model, odd_even_columns,
     if input_dataset is None:
         status = SUBARRAY_DOESNTFIT
         return status
-    result_dataset = reference_pixel_correction(input_dataset)
+    reference_pixel_correction(input_dataset)
 
-    if result_dataset.bad_reference_pixels:
-        return BAD_REFERENCE_PIXELS
-    else:
-        return REFPIX_OK
+    return REFPIX_OK
 
 
 def reference_pixel_correction(input_dataset):
@@ -1758,6 +1843,7 @@ def reference_pixel_correction(input_dataset):
         Corrected dataset
 
     """
+
     input_dataset.do_corrections()
 
-    return input_dataset
+    return

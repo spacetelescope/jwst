@@ -19,9 +19,11 @@ from scipy import ndimage
 from scipy.spatial import cKDTree
 
 from photutils import __version__ as photutils_version
-from photutils import Background2D, MedianBackground
-from photutils import detect_sources, deblend_sources, source_properties
-from photutils import CircularAperture, CircularAnnulus, aperture_photometry
+from photutils.background import Background2D, MedianBackground
+from photutils.segmentation import (detect_sources, deblend_sources,
+                                    SourceCatalog)
+from photutils.aperture import (CircularAperture, CircularAnnulus,
+                                aperture_photometry)
 from photutils.utils._wcs_helpers import _pixel_scale_angle_at_skycoord
 
 from jwst import __version__ as jwst_version
@@ -415,10 +417,7 @@ def make_segment_img(data, threshold, npixels=5.0, kernel=None, mask=None,
     connectivity = 8
     segm = detect_sources(data, threshold, npixels, filter_kernel=kernel,
                           mask=mask, connectivity=connectivity)
-
-    # segm=None for photutils >= 0.7
-    # segm.nlabels=0 for photutils < 0.7
-    if segm is None or segm.nlabels == 0:
+    if segm is None:
         return None
 
     # source deblending requires scikit-image
@@ -457,9 +456,9 @@ def calc_total_error(model):
     return np.zeros_like(model.data)
 
 
-class SourceCatalog:
+class JWSTSourceCatalog:
     """
-    Class for the source catalog.
+    Class for the JWST source catalog.
 
     Parameters
     ----------
@@ -588,7 +587,7 @@ class SourceCatalog:
         for the segment catalog.
         """
         desc = OrderedDict()
-        desc['id'] = 'Unique source identification number'
+        desc['label'] = 'Unique source identification label number'
         desc['xcentroid'] = 'X pixel value of the source centroid'
         desc['ycentroid'] = 'Y pixel value of the source centroid'
         desc['sky_centroid'] = 'Sky coordinate of the source centroid'
@@ -633,32 +632,26 @@ class SourceCatalog:
 
         The values are set as dynamic attributes.
         """
-        source_props = source_properties(self.model.data.astype(float),
-                                         self.segment_img,
-                                         error=self.error,
-                                         filter_kernel=self.kernel,
-                                         wcs=self.wcs)
+        segm_cat = SourceCatalog(self.model.data.astype(float),
+                                 self.segment_img, error=self.error,
+                                 kernel=self.kernel, wcs=self.wcs)
 
-        self._xpeak = source_props.maxval_xpos.value.astype(int)
-        self._ypeak = source_props.maxval_ypos.value.astype(int)
+        self._xpeak = segm_cat.maxval_xindex
+        self._ypeak = segm_cat.maxval_yindex
 
         # rename some columns in the output catalog
         prop_names = {}
-        prop_names['isophotal_flux'] = 'source_sum'
-        prop_names['isophotal_flux_err'] = 'source_sum_err'
+        prop_names['isophotal_flux'] = 'segment_flux'
+        prop_names['isophotal_flux_err'] = 'segment_fluxerr'
         prop_names['isophotal_area'] = 'area'
-        prop_names['semimajor_sigma'] = 'semimajor_axis_sigma'
-        prop_names['semiminor_sigma'] = 'semiminor_axis_sigma'
 
         for column in self.segment_colnames:
             # define the property name
             prop_name = prop_names.get(column, column)
-
             try:
-                value = getattr(source_props, prop_name)
+                value = getattr(segm_cat, prop_name)
             except AttributeError:
                 value = getattr(self, prop_name)
-
             setattr(self, column, value)
 
         return
@@ -668,7 +661,7 @@ class SourceCatalog:
         """
         An array containing only NaNs.
         """
-        values = np.empty(len(self.id))
+        values = np.empty(len(self.label))
         values.fill(np.nan)
         return values
 

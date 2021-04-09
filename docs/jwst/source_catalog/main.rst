@@ -1,6 +1,5 @@
 Description
 ===========
-
 This step creates a catalog of source photometry and morphologies.
 Both aperture and isophotal (segment-based) photometry are calculated.
 Source morphologies are based on 2D image moments within the source
@@ -8,8 +7,7 @@ segment.
 
 
 Source Detection
-^^^^^^^^^^^^^^^^
-
+----------------
 Sources are detected using `image segmentation
 <https://en.wikipedia.org/wiki/Image_segmentation>`_, which is a
 process of assigning a label to every pixel in an image such that
@@ -24,8 +22,7 @@ filtered before thresholding to smooth the noise and maximize the
 detectability of objects with a shape similar to the filter kernel.
 
 Source Deblending
-^^^^^^^^^^^^^^^^^
-
+-----------------
 Overlapping sources are detected as single sources.  Separating those
 sources requires a deblending procedure, such as a multi-thresholding
 technique used by `SExtractor
@@ -39,8 +36,7 @@ order to deblend sources, they must be separated enough such that
 there is a saddle between them.
 
 Source Photometry and Properties
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
+--------------------------------
 After detecting sources using image segmentation, we can measure their
 photometry, centroids, and morphological properties.  The aperture
 photometry is measured in three apertures, based on the input
@@ -63,9 +59,11 @@ the source.
    created from the resampling step currently do not have an error extension
    and the error columns are currently filled with a value of NaN.
 
+Output Products
+---------------
+
 Source Catalog Table
 ^^^^^^^^^^^^^^^^^^^^
-
 The output source catalog table is saved in `ECSV format
 <https://docs.astropy.org/en/stable/io/ascii/write.html#ecsv-format>`_.
 
@@ -75,7 +73,7 @@ columns (assuming the default encircled energies of 30, 50, and 70):
 +------------------------+----------------------------------------------------+
 | Column                 | Description                                        |
 +========================+====================================================+
-| id                     | Unique source identification number                |
+| label                  | Unique source identification label number          |
 +------------------------+----------------------------------------------------+
 | xcentroid              | X pixel value of the source centroid               |
 +------------------------+----------------------------------------------------+
@@ -233,3 +231,10 @@ columns (assuming the default encircled energies of 30, 50, and 70):
 | sky_bbox_ur            | Sky coordinate of the upper-right vertex of the    |
 |                        | minimal bounding box of the source                 |
 +------------------------+----------------------------------------------------+
+
+Segmentation Map
+^^^^^^^^^^^^^^^^
+The segmentation map computed during the source finding process is saved
+to a single 2D image extension in a FITS file. Each image pixel contains an
+integer value corresponding to a source label number in the source catalog
+product. Pixels that don't belong to any source have a value of zero.

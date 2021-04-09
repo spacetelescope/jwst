@@ -1,5 +1,6 @@
+from stcal.dynamicdq import dynamic_mask
+from .dqflags import pixel
 from .reference import ReferenceFileModel
-from .dynamicdq import dynamic_mask
 
 
 __all__ = ['LinearityModel']
@@ -25,7 +26,7 @@ class LinearityModel(ReferenceFileModel):
     def __init__(self, init=None, **kwargs):
         super(LinearityModel, self).__init__(init=init, **kwargs)
 
-        self.dq = dynamic_mask(self)
+        self.dq = dynamic_mask(self, pixel)
 
         # Implicitly create arrays
         self.dq = self.dq

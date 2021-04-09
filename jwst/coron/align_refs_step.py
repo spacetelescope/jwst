@@ -1,6 +1,8 @@
 """ Replace bad pixels and align psf image with target image."""
 
-from jwst.datamodels.dqflags import interpret_bit_flags
+from stcal.dqflags import interpret_bit_flags
+
+from jwst.datamodels.dqflags import pixel
 
 from ..stpipe import Step
 from .. import datamodels
@@ -50,7 +52,7 @@ class AlignRefsStep(Step):
 
             # Get the bit value of bad pixels. A value of 0 treats all pixels as good.
             bad_bitvalue = self.bad_bits
-            bad_bitvalue = interpret_bit_flags(bad_bitvalue)
+            bad_bitvalue = interpret_bit_flags(bad_bitvalue, mnemonic_map=pixel)
             if bad_bitvalue is None:
                 bad_bitvalue = 0
 
