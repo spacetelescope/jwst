@@ -13,17 +13,8 @@
 # In this module, comments on the 'first group','second group', etc are
 #    1-based, unless noted otherwise.
 
-import time
 import logging
-import numpy as np
-from multiprocessing.pool import Pool as Pool
-import multiprocessing
 
-import warnings
-from .. import datamodels
-from ..datamodels import dqflags
-from ..datamodels import RampModel
-from ..lib import pipe_utils
 
 from . import gls_fit           # used only if algorithm is "GLS"
 from . import ols_fit           # used only if algorithm is "OLS"
@@ -31,11 +22,6 @@ from . import utils
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
-
-DO_NOT_USE = dqflags.group['DO_NOT_USE']
-JUMP_DET = dqflags.group['JUMP_DET']
-SATURATED = dqflags.group['SATURATED']
-UNRELIABLE_SLOPE = dqflags.pixel['UNRELIABLE_SLOPE']
 
 BUFSIZE = 1024 * 300000  # 300Mb cache size for data section
 
@@ -125,4 +111,3 @@ def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
         int_model.meta.bunit_err = 'DN/s'
 
     return new_model, int_model, opt_model, gls_opt_model
-

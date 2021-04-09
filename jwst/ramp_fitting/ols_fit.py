@@ -3,9 +3,7 @@
 
 import logging
 from multiprocessing.pool import Pool as Pool
-import multiprocessing
 import numpy as np
-import numpy.linalg as la
 import time
 
 import warnings
@@ -14,7 +12,6 @@ from ..datamodels import dqflags
 from ..datamodels import RampModel
 from ..lib import pipe_utils
 
-from . import gls_fit           # used only if algorithm is "GLS"
 from . import utils
 
 log = logging.getLogger(__name__)

@@ -2,8 +2,9 @@
 #
 # utils.py: utility functions
 import logging
-import warnings
+import multiprocessing
 import numpy as np
+import warnings
 
 from .. import datamodels
 from ..datamodels import dqflags
@@ -1488,4 +1489,3 @@ def dq_compress_sect(gdq_sect, pixeldq_sect):
     pixeldq_sect[cr_loc_im] = np.bitwise_or(pixeldq_sect[cr_loc_im], JUMP_DET)
 
     return pixeldq_sect
-
