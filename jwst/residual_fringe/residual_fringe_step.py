@@ -21,31 +21,37 @@ class ResidualFringeStep(Step):
     spec = """
         save_intermediate_results  = boolean(default = False)
         transmission_level = integer(default=80) # transmission level to use to define slice locations
+        search_output_file = boolean(default = False)
     """
     
     reference_file_types = ['fringefreq','regions']
 
-    def process(self, input_data):
+    def process(self, input):
 
         self.suffix = 'residual_fringe'
+        input = datamodels.open(input)
+        #self.input_models = input
         
-        with datamodels.open(input_data) as input_models:
+        # If single file, wrap in a ModelContainter
+        if not isinstance(input, datamodels.ModelContainer):
+            input_models = datamodels.ModelContainer([input])
+            input_models.meta.residual_fringe.output = input.meta.filename
+            self.input_container = False
+            exptype = input_models.meta.exposure.type
+        else:
+            input_models = input
+            self.input_container = True
+            exptype = input[0].meta.exposure.type        
 
-            self.input_models = input_models
-            if not isinstance(self.input_models, datamodels.ModelContainer):
-                self.input_container = False
-            else:
-                self.input_container = True
-
-            # Setup output path naming if associations are involved.
-            asn_id = None
-            try:
-                asn_id = self.input_models.meta.asn_table.asn_id
-            except (AttributeError, KeyError):
-                pass
-            if asn_id is None:
-                asn_id = self.search_attr('asn_id')
-            if asn_id is not None:
+        # Setup output path naming if associations are involved.
+        asn_id = None
+        try:
+            asn_id = self.input_models.meta.asn_table.asn_id
+        except (AttributeError, KeyError):
+            pass
+        if asn_id is None:
+            asn_id = self.search_attr('asn_id')
+        if asn_id is not None:
                 _make_output_path = self.search_attr(
                     '_make_output_path', parent_first=True
                 )
@@ -55,41 +61,43 @@ class ResidualFringeStep(Step):
                     asn_id=asn_id
                 )
 
+        # Set up residual fringe correction parameters
+        pars = {
+            'transmission_level': self.transmission_level,
+            'save_intermediate_results': self.save_intermediate_results,
+            'make_output_path': self.make_output_path
+            }
+        
+        if exptype != 'MIR_MRS':
+            self.log(" Residual Fringe correction is only for MIRI MRS data")
+            self.log.error( "Unsupported ", f"exposure type: {exptype}")
+
             if self.input_container:
-                exptype = self.input_models[0].meta.exposure.type
-            else:
-                exptype = self.input_models.meta.exposure.type
-
-            print('exptype',exptype)
-            if exptype != 'MIR_MRS':
-                self.log(" Residual Fringe correction is only for MIRI MRS data")
-                self.log.error( "Unsupported ", f"exposure type: {exptype}")
-
-                if self.input_container:
-                    for model in self.input_models:
-                        model.meta.cal_step.outlier_detection = "SKIPPED"
+                for model in input_models:
+                    model.meta.cal_step.outlier_detection = "SKIPPED"
                 else:
-                    self.input_models.meta.cal_step.outlier_detection = "SKIPPED"
+                    input_model.meta.cal_step.outlier_detection = "SKIPPED"
                 self.skip = True
 
-                return self.input_models
+                return input_models
 
-        # loop over each model
-        # read in reference file for model
-        # form ResidualFringeCorrection
-        # correct
-        for model in self.input_models:
-            
+            # loop over each model
+            # read in reference file for model
+            # form ResidualFringeCorrection
+            # correct
+        self.output_models = datamodels.ModelContainer()
+        for model in input:
+
             # Open the residual fringe reference file
             self.residual_fringe_filename = self.get_reference_file(model,
                                                                     'fringefreq')
-            self.log.info('Using Residual FRINGE reference file: %s',
-                          self.residual_fringe_filename)
+            self.log.info('Using Residual FRINGE reference file:{}'.
+                          format(self.residual_fringe_filename))
 
             # Open the regions reference file
             self.regions_filename = self.get_reference_file(model,'regions')
-            self.log.info('Using MRS regrions reference file: %s',
-                          self.regions_filename)
+            self.log.info('Using MRS regrions reference file: {}'.
+                          format(self.regions_filename))
 
             # Check for a valid reference files. If they are not found skip step 
             if self.residual_fringe_filename == 'N/A' or self.regions_filename =='N/A':
@@ -97,7 +105,7 @@ class ResidualFringeStep(Step):
                 if self.residual_fringe_filename == 'N/A':
                     self.log.warning('No Residual FRINGE reference file found')
                     self.log.warning('Residual Fringe step will be skipped')
-
+                    
                 if self.regions_filename == 'N/A':
                     self.log.warning('No MRS regions reference file found')
                     self.log.warning('Residual Fringe step will be skipped')
@@ -105,29 +113,30 @@ class ResidualFringeStep(Step):
                 if self.input_container:
                     for model in self.input_models:
                         model.meta.cal_step.outlier_detection = "SKIPPED"
+                        self.output_models.append(model)
                 else:
-                    self.input_models.meta.cal_step.residual_fringe = "SKIPPED"
-                self.skip = True
-                return self.input_models
+                    input.meta.cal_step.residual_fringe = "SKIPPED"
+                    self.output_models.append(input)
+                    self.skip = True
+                return self.output_models
 
             # Do the correction
             rfc= residual_fringe.ResidualFringeCorrection(model,
                                                           self.residual_fringe_filename,
                                                           self.regions_filename,
-                                                          self.transmission_level)
-            rfc.do_correction()
+                                                          **pars)
+            result = rfc.do_correction()
+            result.meta.cal_step.residual_fringe = 'COMPLETE'
+            self.output_models.append(result)
+
+        print('finished the step, returning result')
+
+        return self.output_models
 
 
-
-
-
-
-        return output_model
-
-
-    def make_output_path(ignored, idx=None):
-                output_path = self.make_output_path(
-                    basepath=base_filename, suffix='rf', idx=idx,
-                    component_format='_{asn_id}_{idx}'
-                )
-                return output_path
+    #def make_output_path(ignored, idx=None):
+    #    output_path = self.make_output_path(
+    #        basepath=base_filename, suffix='rf', idx=idx,
+    #        component_format='_{asn_id}_{idx}'
+    #    )
+    #    return output_path

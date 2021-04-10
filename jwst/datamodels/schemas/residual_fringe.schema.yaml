@@ -20,10 +20,10 @@ allOf:
         datatype: float32
         ndim: 2
       - name: min_nfringes
-        datatype: float32
+        datatype: int32
         ndim: 2
       - name: max_nfringes
-        datatype: float32
+        datatype: int32
         ndim: 2
       - name: min_snr
         datatype: float32
@@ -44,10 +44,10 @@ allOf:
         datatype: float32
         ndim: 2
       - name: min_nfringes
-        datatype: float32
+        datatype: int32
         ndim: 2
       - name: max_nfringes
-        datatype: float32
+        datatype: int32
         ndim: 2
       - name: min_snr
         datatype: float32
@@ -68,10 +68,10 @@ allOf:
         datatype: float32
         ndim: 2
       - name: min_nfringes
-        datatype: float32
+        datatype: int32
         ndim: 2
       - name: max_nfringes
-        datatype: float32
+        datatype: int32
         ndim: 2
       - name: min_snr
         datatype: float32
