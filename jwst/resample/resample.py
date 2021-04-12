@@ -179,6 +179,8 @@ class ResampleData:
 
             self.output_models.append(output_model)
 
+        return self.output_models
+
     def update_fits_wcs(self, model):
         """
         Update FITS WCS keywords of the resampled image.
