@@ -1,8 +1,7 @@
 import logging
-from collections import OrderedDict
 import warnings
-import numpy as np
 
+import numpy as np
 from astropy import coordinates as coord
 from astropy import units as u
 from astropy.modeling.models import (Mapping, Tabular1D, Linear1D,
@@ -10,8 +9,8 @@ from astropy.modeling.models import (Mapping, Tabular1D, Linear1D,
 from astropy.modeling.fitting import LinearLSQFitter
 from gwcs import wcstools, WCS
 from gwcs import coordinate_frames as cf
-from ..assign_wcs.util import wrap_ra
 
+from ..assign_wcs.util import wrap_ra
 from .. import datamodels
 from . import gwcs_drizzle
 from . import resample_utils
@@ -340,12 +339,12 @@ class ResampleSpecData:
         blendmeta.blendmodels(output_model, inputs=self.input_models, output=output_file)
 
     def do_drizzle(self, xmin=0, xmax=0, ymin=0, ymax=0, **pars):
-        """ Perform drizzling operation on input images's to create a new output
+        """ Perform drizzling operation on input images to create a new output
         """
         # Set up information about what outputs we need to create: single or final
         # Key: value from metadata for output/observation name
         # Value: full filename for output file
-        driz_outputs = OrderedDict()
+        driz_outputs = {}
 
         # Look for input configuration parameter telling the code to run
         # in single-drizzle mode (mosaic all detectors in a single observation?)
