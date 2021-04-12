@@ -205,15 +205,12 @@ class ResampleSpecData:
             this_maxw = np.max(wavelength_array)
             all_minw = np.min(all_wavelength)
             all_maxw = np.max(all_wavelength)
-
             if this_minw < all_minw:
                 addpts = wavelength_array[wavelength_array < all_minw]
-                for ip in range(len(addpts)):
-                    all_wavelength.append(addpts[ip])
+                all_wavelength = np.append(all_wavelength, addpts)
             if this_maxw > all_maxw:
                 addpts = wavelength_array[wavelength_array > all_maxw]
-                for ip in range(len(addpts)):
-                    all_wavelength.append(addpts[ip])
+                all_wavelength = np.append(all_wavelength, addpts)
 
         # done looping over set of models
         all_ra = np.hstack(all_ra_slit)

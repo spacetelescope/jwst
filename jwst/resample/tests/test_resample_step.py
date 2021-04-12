@@ -205,9 +205,6 @@ def test_nirspec_wcs_roundtrip(nirspec_rate):
         assert_allclose(x, xp, atol=1e-8)
         assert_allclose(y, yp, atol=1e-8)
 
-def test_foo(miri_rate):
-    assert miri_rate.hasattr("var_rnoise")
-
 
 def test_miri_wcs_roundtrip(miri_rate):
     im = AssignWcsStep.call(miri_rate)
