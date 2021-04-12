@@ -1516,43 +1516,6 @@ def interpolate_power(snr):
     return pow_wt.ravel()
 
 
-def calc_nrows(model, buffsize, cubeshape, nreads):
-    """
-    Calculate the number of rows per data section to process.
-
-    Parameters
-    ----------
-    model : instance of Data Model
-       DM object for input
-
-    buffsize : int
-       size of data section (buffer) in bytes
-
-    cubeshape : (int, int, int) tuple
-       shape of input dataset
-
-    nreads : int
-       number of reads in input dataset
-
-    Returns
-    -------
-    nrows : int
-       number of rows in buffer of data section
-    """
-    bitpix = model.data.dtype.itemsize
-    bytepix = int(abs(bitpix) / 8)
-    if bytepix < 1:
-        bytepix = 1
-
-    nrows = int(buffsize / (bytepix * cubeshape[2] * nreads))
-    if nrows < 1:
-        nrows = 1
-    if nrows > cubeshape[1]:
-        nrows = cubeshape[1]
-
-    return nrows
-
-
 def calc_slope(data_sect, gdq_sect, frame_time, opt_res, save_opt, rn_sect,
                gain_sect, i_max_seg, ngroups, weighting, f_max_seg):
     """
@@ -1810,7 +1773,7 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
     num_seg : int, 1D array
         numbers of segments for good pixels
     """
-    nreads, nrows, ncols = data_sect.shape  # Note: nreads is a scalar here
+    ngroups, nrows, ncols = data_sect.shape
     all_pix = np.arange(nrows * ncols)
 
     ramp_mask_sum = mask_2d_init.sum(axis=0)
@@ -1833,172 +1796,488 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
     #   semiramp (to enable unclassified pixels to have their arrays updated)
     got_case = np.zeros((ncols * nrows), dtype=bool)
 
-    # CASE A) Long enough (semiramp has >2 groups), at end of ramp
-    #    - set start to -1 to designate all fitting done
-    #    - remove current end from end stack
-    #    - set number of ends to 0
-    #    - add slopes and variances to running sums
-    #  For segments of this type, the final good group is the final group in the
-    #  ramp, and the variable `l_interval` used below is equal to the number of
-    #  the segment's groups minus 1.
-    wh_check = np.where((l_interval > 1) & (end_locs == nreads - 1) & (~pixel_done))
+    # Special case fit with NGROUPS being 1 or 2.
+    if ngroups == 1 or ngroups == 2:
+        return fit_short_ngroups(
+            ngroups, start, end_st, end_heads, pixel_done, all_pix,
+            inv_var, num_seg, slope, intercept, variance, sig_intercept, sig_slope,
+            opt_res, save_opt, mask_2d_init, ramp_mask_sum)
+
+    # CASE: Long enough (semiramp has >2 groups), at end of ramp
+    wh_check = np.where((l_interval > 1) & (end_locs == ngroups - 1) & (~pixel_done))
     if len(wh_check[0]) > 0:
-        these_pix = wh_check[0]
-        start[these_pix] = -1   # all processing for this pixel is completed
-        end_st[end_heads[these_pix] - 1, these_pix] = 0
-        end_heads[these_pix] = 0
-        pixel_done[these_pix] = True  # all processing for pixel is completed
-        got_case[these_pix] = True
+        f_max_seg = fit_next_segment_long_end_of_ramp(
+            wh_check, start, end_st, end_heads, pixel_done, got_case, f_max_seg,
+            inv_var, num_seg, slope, intercept, variance, sig_intercept, sig_slope,
+            opt_res, save_opt)
 
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", "invalid value.*", RuntimeWarning)
-            g_pix = these_pix[variance[these_pix] > 0.]  # good pixels
-        if len(g_pix) > 0:
-            inv_var[g_pix] += 1.0 / variance[g_pix]
-
-            # Append results to arrays
-            opt_res.append_arr(num_seg, g_pix, intercept, slope, sig_intercept,
-                               sig_slope, inv_var, save_opt)
-
-            num_seg[g_pix] += 1
-            f_max_seg = max(f_max_seg, num_seg.max())
-
-    # CASE B) Long enough (semiramp has >2 groups ), not at array end (meaning
+    # CASE: Long enough (semiramp has >2 groups ), not at array end (meaning
     #  final group for this semiramp is not final group of the whole ramp)
-    #    - remove current end from end stack
-    #    - decrement number of ends
-    #    - add slopes and variances to running sums
-    #  For segments of this type, the final good group in the segment is a CR
-    #  and/or SAT and is not the final group in the ramp, and the variable
-    #  `l_interval` used below is equal to the number of the segment's groups.
-    wh_check = np.where((l_interval > 2) & (end_locs != nreads - 1) & ~pixel_done)
+    wh_check = np.where((l_interval > 2) & (end_locs != ngroups - 1) & ~pixel_done)
     if len(wh_check[0]) > 0:
-        these_pix = wh_check[0]
-        got_case[these_pix] = True
+        f_max_seg = fit_next_segment_long_not_end_of_ramp(
+            wh_check, start, end_st, end_heads, pixel_done, got_case, f_max_seg,
+            inv_var, num_seg, slope, intercept, variance, sig_intercept, sig_slope,
+            opt_res, save_opt, mask_2d_init, end_locs, ngroups)
 
-        start[these_pix] = end_locs[these_pix]
-        end_st[end_heads[these_pix] - 1, these_pix] = 0
-        end_heads[these_pix] -= 1
-        end_heads[end_heads < 0.] = 0.
-
-        g_pix = these_pix[variance[these_pix] > 0.]  # good pixels
-
-        if len(g_pix) > 0:
-            inv_var[g_pix] += 1.0 / variance[g_pix]
-
-            # Append results to arrays
-            opt_res.append_arr(num_seg, g_pix, intercept, slope, sig_intercept,
-                               sig_slope, inv_var, save_opt)
-
-            num_seg[g_pix] += 1
-            f_max_seg = max(f_max_seg, num_seg.max())
-
-            # If there are pixels with no later good groups, update stack
-            #   arrays accordingly
-            c_mask_2d_init = mask_2d_init.copy()
-
-            # create array: 0...nreads-1 in a column for each pixel
-            arr_ind_all = np.array(
-                [np.arange(nreads), ] * c_mask_2d_init.shape[1]).transpose()
-
-            wh_c_start_all = np.zeros(c_mask_2d_init.shape[1], dtype=np.uint8)
-            wh_c_start_all[g_pix] = start[g_pix]
-
-            # set to False all groups before start group
-            c_mask_2d_init[arr_ind_all < wh_c_start_all] = False
-
-            # select pixels having all groups False from start to ramp end
-            wh_rest_false = np.where(c_mask_2d_init.sum(axis=0) == 0)
-            if len(wh_rest_false[0]) > 0:
-                pix_rest_false = wh_rest_false[0]
-                start[pix_rest_false] = -1
-                end_st[end_heads[pix_rest_false] - 1, pix_rest_false] = 0
-                end_heads[pix_rest_false] = 0
-                pixel_done[pix_rest_false] = True  # all processing is complete
-
-    # CASE C) - dataset has NGROUPS=1 ; so special fitting is done for all pixels
-    #    and all intervals are at the end of the array.
-    #    - set start to -1 to designate all fitting done
-    #    - remove current end from end stack
-    #    - set number of ends to 0
-    #    - add slopes and variances to running sums
-    #    - set pixel_done to True to designate all fitting done
-    if ngroups == 1:
-        start[all_pix] = -1
-        end_st[end_heads[all_pix] - 1, all_pix] = 0
-        end_heads[all_pix] = 0
-        pixel_done[all_pix] = True
-
-        wh_check = np.where(mask_2d_init[0, :] & (ramp_mask_sum == 1))
-        if len(wh_check[0]) > 0:
-            g_pix = wh_check[0]
-
-            # Ignore all pixels having no good groups (so the single group is bad)
-            if len(g_pix) > 0:
-                inv_var[g_pix] += 1.0 / variance[g_pix]
-
-                # Append results to arrays
-                opt_res.append_arr(num_seg, g_pix, intercept, slope, sig_intercept,
-                                   sig_slope, inv_var, save_opt)
-
-                num_seg[g_pix] = 1
-
-        return 1, num_seg
-
-    # CASE D) - dataset has NGROUPS=2, so special fitting is done for all pixels.
-    #    All segments are at the end of the array.
-    #    - set start to -1 to designate all fitting done
-    #    - remove current end from end stack
-    #    - set number of ends to 0
-    #    - add slopes and variances to running sums
-    #    - set pixel_done to True to designate all fitting done
-    if ngroups == 2:
-        start[all_pix] = -1
-        end_st[end_heads[all_pix] - 1, all_pix] = 0
-        end_heads[all_pix] = 0
-        pixel_done[all_pix] = True
-
-        g_pix = all_pix[variance[all_pix] > 0.]
-        if len(g_pix) > 0:
-            inv_var[g_pix] += 1.0 / variance[g_pix]
-
-            opt_res.append_arr(num_seg, g_pix, intercept, slope, sig_intercept,
-                               sig_slope, inv_var, save_opt)
-
-            num_seg[g_pix] = 1
-
-            return 1, num_seg
-
-    # CASE E) - interval too short to fit normally (only 2 good groups)
+    # CASE: interval too short to fit normally (only 2 good groups)
     #    At end of array, NGROUPS>1, but exclude NGROUPS==2 datasets
-    #    as they are covered in CASE D.
-    #    - set start to -1 to designate all fitting done
-    #    - remove current end from end stack
-    #    - set number of ends to 0
-    #    - add slopes and variances to running sums
-    #    - set pixel_done to True to designate all fitting done
-    #  For segments of this type, the final good group is the final group in the
-    #  ramp, and the variable `l_interval` used below = 1, and the number of
-    #  groups in the segment = 2
-    wh_check = np.where((l_interval == 1)
-                        & (end_locs == nreads - 1)
-                        & (nreads > 1)
-                        & (ngroups != 2)
-                        & (~pixel_done))
+    #    as they are covered in `fit_short_ngroups`.
+    wh_check = np.where((l_interval == 1) & (end_locs == ngroups - 1)
+                        & (ngroups > 2) & (~pixel_done))
 
+    if len(wh_check[0]) > 0:
+        f_max_seg = fit_next_segment_short_seg_at_end(
+            wh_check, start, end_st, end_heads, pixel_done, got_case, f_max_seg,
+            inv_var, num_seg, slope, intercept, variance, sig_intercept, sig_slope,
+            opt_res, save_opt, mask_2d_init)
+
+    # CASE: full-length ramp has 2 good groups not at array end
+    wh_check = np.where((l_interval == 2) & (ngroups > 2)
+                        & (end_locs != ngroups - 1) & ~pixel_done)
+
+    if len(wh_check[0]) > 0:
+        f_max_seg = fit_next_segment_short_seg_not_at_end(
+            wh_check, start, end_st, end_heads, pixel_done, got_case, f_max_seg,
+            inv_var, num_seg, slope, intercept, variance, sig_intercept, sig_slope,
+            opt_res, save_opt, mask_2d_init, end_locs, ngroups)
+
+    # CASE: full-length ramp has a good group on 0th group of the entire ramp,
+    #    and no later good groups. Will use single good group data as the slope.
+    wh_check = np.where(
+        mask_2d_init[0, :] & ~mask_2d_init[1, :] & (ramp_mask_sum == 1) & ~pixel_done)
+
+    if len(wh_check[0]) > 0:
+        f_max_seg = fit_next_segment_only_good_0th_group(
+            wh_check, start, end_st, end_heads, pixel_done, got_case, f_max_seg,
+            inv_var, num_seg, slope, intercept, variance, sig_intercept, sig_slope,
+            opt_res, save_opt, mask_2d_init)
+
+    # CASE: the segment has a good 0th group and a bad 1st group.
+    wh_check = np.where(mask_2d_init[0, :] & ~mask_2d_init[1, :] & ~pixel_done
+                        & (end_locs == 1) & (start == 0))
+
+    if len(wh_check[0]) > 0:
+        fit_next_segment_good_0th_bad_1st(
+            wh_check, start, end_st, end_heads, got_case, ngroups)
+
+    # CASE OTHER: all other types of segments not covered earlier. No segments
+    #   handled here have adequate data, but the stack arrays are updated.
+    wh_check = np.asarray(np.where(~pixel_done & ~got_case))
+    if len(wh_check[0]) > 0:
+        fit_next_segment_all_other(wh_check, start, end_st, end_heads, ngroups)
+
+    return f_max_seg, num_seg
+
+
+def fit_next_segment_all_other(wh_check, start, end_st, end_heads, ngroups):
+    """
+    Catch all other types of segments not covered earlier. No segments
+    handled here have adequate data, but the stack arrays are updated.
+        - increment start array
+        - remove current end from end stack
+        - decrement number of ends
+
+    Parameter
+    ----------
+    wh_check: 1D array
+        pixels for current segment processing and updating
+
+    start : int, 1D array
+        lowest channel in fit
+
+    end_st : int, 2D array
+        stack array of endpoints
+
+    end_heads : int, 1D array
+        number of endpoints for each pixel
+
+    ngroups: int
+        number of groups in exposure
+    """
+    these_pix = wh_check[0]
+    start[these_pix] += 1
+    start[start > ngroups - 1] = ngroups - 1  # to keep at max level
+    end_st[end_heads[these_pix] - 1, these_pix] = 0
+    end_heads[these_pix] -= 1
+    end_heads[end_heads < 0.] = 0.
+
+
+def fit_next_segment_good_0th_bad_1st(
+        wh_check, start, end_st, end_heads, got_case, ngroups):
+    """
+    The segment has a good 0th group and a bad 1st group. For the
+    data from the 0th good group of this segment to possibly be used as a
+    slope, that group must necessarily be the 0th group of the entire ramp.
+    It is possible to have a single 'good' group segment after the 0th group
+    of the ramp; in that case the 0th group and the 1st group would both have
+    to be CRs, and the data of the 0th group would not be included as a slope.
+    For a good 0th group in a ramp followed by a bad 1st group there must be
+    good groups later in the segment because if there were not, the segment
+    would be done in `fit_next_segment_only_good_0th_group`. In this situation,
+    since here are later good groups in the segment, those later good groups
+    will be used in the slope computation, and the 0th good group will not be.
+    As a result, for all instances of these types of segments, the data in the
+    initial good group will not be used in the slope calculation, but the
+    arrays for the indices for the ramp (end_st, etc) are appropriately
+    adjusted.
+        - increment start array
+        - remove current end from end stack
+        - decrement number of ends
+
+    Parameter
+    ----------
+    wh_check: 1D array
+        pixels for current segment processing and updating
+
+    start : int, 1D array
+        lowest channel in fit
+
+    end_st : int, 2D array
+        stack array of endpoints
+
+    end_heads : int, 1D array
+        number of endpoints for each pixel
+
+    got_case: 1D array
+        classification of pixel for current semiramp
+
+    ngroups: int
+        number of groups in exposure
+    """
+    these_pix = wh_check[0]
+    got_case[these_pix] = True
+    start[these_pix] += 1
+    start[start > ngroups - 1] = ngroups - 1  # to keep at max level
+    end_st[end_heads[these_pix] - 1, these_pix] = 0
+    end_heads[these_pix] -= 1
+    end_heads[end_heads < 0.] = 0.
+
+
+def fit_next_segment_only_good_0th_group(
+        wh_check, start, end_st, end_heads, pixel_done, got_case, f_max_seg,
+        inv_var, num_seg, slope, intercept, variance, sig_intercept, sig_slope,
+        opt_res, save_opt, mask_2d_init):
+    """
+    Full-length ramp has a good group on 0th group of the entire ramp,
+    and no later good groups. Will use single good group data as the slope.
+        - set start to -1 to designate all fitting done
+        - remove current end from end stack
+        - set number of end to 0
+        - add slopes and variances to running sums
+        - set pixel_done to True to designate all fitting done
+
+    Parameters
+    ----------
+    wh_check: 1D array
+        pixels for current segment processing and updating
+
+    start : int, 1D array
+        lowest channel in fit
+
+    end_st : int, 2D array
+        stack array of endpoints
+
+    end_heads : int, 1D array
+        number of endpoints for each pixel
+
+    pixel_done : boolean, 1D array
+        whether each pixel's calculations are completed
+
+    got_case: 1D array
+        classification of pixel for current semiramp
+
+    f_max_seg : int
+        actual maximum number of segments within a ramp, updated here based on
+        fitting ramps in the current data section; later used when truncating
+        arrays before output.
+
+    inv_var : float, 1D array
+        values of 1/variance for good pixels
+
+    num_seg : int, 1D array
+        numbers of segments for good pixels
+
+    slope: float, 1D array
+       weighted slope for current iteration's pixels for data section
+
+    intercept: float, 1D array
+       y-intercepts from fit for data section
+
+    variance: float, 1D array
+       variance of residuals for fit for data section
+
+    sig_intercept: float, 1D array
+       sigma of y-intercepts from fit for data section
+
+    sig_slope: float, 1D array
+       sigma of slopes from fit for data section (for a single segment)
+
+    opt_res : OptRes object
+        all fitting quantities, used to compute final results
+        and to populate optional output product
+
+    save_opt : boolean
+       save optional fitting results
+
+    mask_2d_init : bool, 2D array
+        copy of intial mask_2d
+
+    Returns
+    -------
+    f_max_seg : int
+        actual maximum number of segments within a ramp, updated here based on
+        fitting ramps in the current data section; later used when truncating
+        arrays before output.
+    """
+    these_pix = wh_check[0]
+    got_case[these_pix] = True
+
+    start[these_pix] = -1
+    end_st[end_heads[these_pix] - 1, these_pix] = 0
+    end_heads[these_pix] = 0
+    pixel_done[these_pix] = True  # all processing for pixel is completed
+    inv_var[these_pix] += 1.0 / variance[these_pix]
+
+    # Append results to arrays
+    opt_res.append_arr(num_seg, these_pix, intercept, slope,
+                       sig_intercept, sig_slope, inv_var, save_opt)
+
+    num_seg[these_pix] += 1
+    f_max_seg = max(f_max_seg, num_seg.max())
+
+    return f_max_seg
+
+
+def fit_next_segment_short_seg_not_at_end(
+        wh_check, start, end_st, end_heads, pixel_done, got_case, f_max_seg,
+        inv_var, num_seg, slope, intercept, variance, sig_intercept, sig_slope,
+        opt_res, save_opt, mask_2d_init, end_locs, ngroups):
+    """
+    Special case
+    Full-length ramp has 2 good groups not at array end
+        - use the 2 good reads to get the slope
+        - set start to -1 to designate all fitting done
+        - remove current end from end stack
+        - set number of end to 0
+        - add slopes and variances to running sums
+        - set pixel_done to True to designate all fitting done
+    For segments of this type, the final good group in the segment is
+    followed by a group that is flagged as a CR and/or SAT and is not the
+    final group in the ramp, and the variable `l_interval` used below is
+    equal to 2, which is the number of the segment's groups.
+
+    Parameters
+    ----------
+    wh_check: 1D array
+        pixels for current segment processing and updating
+
+    start : int, 1D array
+        lowest channel in fit
+
+    end_st : int, 2D array
+        stack array of endpoints
+
+    end_heads : int, 1D array
+        number of endpoints for each pixel
+
+    pixel_done : boolean, 1D array
+        whether each pixel's calculations are completed
+
+    got_case: 1D array
+        classification of pixel for current semiramp
+
+    f_max_seg : int
+        actual maximum number of segments within a ramp, updated here based on
+        fitting ramps in the current data section; later used when truncating
+        arrays before output.
+
+    inv_var : float, 1D array
+        values of 1/variance for good pixels
+
+    num_seg : int, 1D array
+        numbers of segments for good pixels
+
+    slope: float, 1D array
+       weighted slope for current iteration's pixels for data section
+
+    intercept: float, 1D array
+       y-intercepts from fit for data section
+
+    variance: float, 1D array
+       variance of residuals for fit for data section
+
+    sig_intercept: float, 1D array
+       sigma of y-intercepts from fit for data section
+
+    sig_slope: float, 1D array
+       sigma of slopes from fit for data section (for a single segment)
+
+    opt_res : OptRes object
+        all fitting quantities, used to compute final results
+        and to populate optional output product
+
+    save_opt : boolean
+       save optional fitting results
+
+    mask_2d_init : bool, 2D array
+        copy of intial mask_2d
+
+    end_locs: 1D array
+        end locations
+
+    ngroups: int
+        number of groups in exposure
+
+    Returns
+    -------
+    f_max_seg : int
+        actual maximum number of segments within a ramp, updated here based on
+        fitting ramps in the current data section; later used when truncating
+        arrays before output.
+    """
+    # Copy mask, as will modify when calculating the number of later good groups
+    c_mask_2d_init = mask_2d_init.copy()
+
+    these_pix = wh_check[0]
+    got_case[these_pix] = True
+
+    # Suppress, then re-enable, harmless arithmetic warnings
+    warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
+    warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
+    inv_var[these_pix] += 1.0 / variance[these_pix]
+    warnings.resetwarnings()
+
+    # create array: 0...ngroups-1 in a column for each pixel
+    arr_ind_all = np.array(
+        [np.arange(ngroups), ] * c_mask_2d_init.shape[1]).transpose()
+    wh_c_start_all = np.zeros(mask_2d_init.shape[1], dtype=np.uint8)
+    wh_c_start_all[these_pix] = start[these_pix]
+
+    # set to False all groups before start group
+    c_mask_2d_init[arr_ind_all < wh_c_start_all] = 0
+    tot_good_groups = c_mask_2d_init.sum(axis=0)
+
+    # Select pixels having at least 2 later good groups (these later good
+    #   groups are a segment whose slope will be calculated)
+    wh_more = np.where(tot_good_groups[these_pix] > 1)
+    pix_more = these_pix[wh_more]
+    start[pix_more] = end_locs[pix_more]
+    end_st[end_heads[pix_more] - 1, pix_more] = 0
+    end_heads[pix_more] -= 1
+
+    # Select pixels having less than 2 later good groups (these later good
+    #   groups will not be used)
+    wh_only = np.where(tot_good_groups[these_pix] <= 1)
+    pix_only = these_pix[wh_only]
+    start[pix_only] = -1
+    end_st[end_heads[pix_only] - 1, pix_only] = 0
+    end_heads[pix_only] = 0
+    pixel_done[pix_only] = True  # all processing for pixel is completed
+    end_heads[(end_heads < 0.)] = 0.
+
+    # Append results to arrays
+    opt_res.append_arr(num_seg, these_pix, intercept, slope,
+                       sig_intercept, sig_slope, inv_var, save_opt)
+
+    num_seg[these_pix] += 1
+    f_max_seg = max(f_max_seg, num_seg.max())
+
+    return f_max_seg
+
+
+def fit_next_segment_short_seg_at_end(
+        wh_check, start, end_st, end_heads, pixel_done, got_case, f_max_seg,
+        inv_var, num_seg, slope, intercept, variance, sig_intercept, sig_slope,
+        opt_res, save_opt, mask_2d_init):
+    """
+    Interval too short to fit normally (only 2 good groups)
+    At end of array, NGROUPS>1, but exclude NGROUPS==2 datasets
+    as they are covered in `fit_short_groups`.
+        - set start to -1 to designate all fitting done
+        - remove current end from end stack
+        - set number of ends to 0
+        - add slopes and variances to running sums
+        - set pixel_done to True to designate all fitting done
+    For segments of this type, the final good group is the final group in the
+    ramp, and the variable `l_interval` used below = 1, and the number of
+    groups in the segment = 2
+
+    Parameters
+    ----------
+    wh_check: 1D array
+        pixels for current segment processing and updating
+
+    start : int, 1D array
+        lowest channel in fit
+
+    end_st : int, 2D array
+        stack array of endpoints
+
+    end_heads : int, 1D array
+        number of endpoints for each pixel
+
+    pixel_done : boolean, 1D array
+        whether each pixel's calculations are completed
+
+    got_case: 1D array
+        classification of pixel for current semiramp
+
+    f_max_seg : int
+        actual maximum number of segments within a ramp, updated here based on
+        fitting ramps in the current data section; later used when truncating
+        arrays before output.
+
+    inv_var : float, 1D array
+        values of 1/variance for good pixels
+
+    num_seg : int, 1D array
+        numbers of segments for good pixels
+
+    slope: float, 1D array
+       weighted slope for current iteration's pixels for data section
+
+    intercept: float, 1D array
+       y-intercepts from fit for data section
+
+    variance: float, 1D array
+       variance of residuals for fit for data section
+
+    sig_intercept: float, 1D array
+       sigma of y-intercepts from fit for data section
+
+    sig_slope: float, 1D array
+       sigma of slopes from fit for data section (for a single segment)
+
+    opt_res : OptRes object
+        all fitting quantities, used to compute final results
+        and to populate optional output product
+
+    save_opt : boolean
+       save optional fitting results
+
+    mask_2d_init : bool, 2D array
+        copy of intial mask_2d
+
+    Returns
+    -------
+    f_max_seg : int
+        actual maximum number of segments within a ramp, updated here based on
+        fitting ramps in the current data section; later used when truncating
+        arrays before output.
+    """
     # Require that pixels to be processed here have at least 1 good group out
     #   of the final 2 groups (these ramps have 2 groups and are at the end of
     #   the array).
     wh_list = []
 
-    if len(wh_check[0]) > 0:
-        num_wh = len(wh_check[0])
-        for ii in range(num_wh):  # locate pixels with at least 1 good group
-            this_pix = wh_check[0][ii]
-            sum_final_2 = mask_2d_init[start[this_pix]:, this_pix].sum()
+    num_wh = len(wh_check[0])
+    for ii in range(num_wh):  # locate pixels with at least 1 good group
+        this_pix = wh_check[0][ii]
+        sum_final_2 = mask_2d_init[start[this_pix]:, this_pix].sum()
 
-            if sum_final_2 > 0:
-                wh_list.append(wh_check[0][ii])  # add to list to be fit
+        if sum_final_2 > 0:
+            wh_list.append(wh_check[0][ii])  # add to list to be fit
 
     if len(wh_list) > 0:
         these_pix = np.asarray(wh_list)
@@ -2021,146 +2300,358 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
             num_seg[g_pix] += 1
             f_max_seg = max(f_max_seg, num_seg.max())
 
-    # CASE F) - full-length ramp has 2 good groups not at array end
-    #    - use the 2 good reads to get the slope
-    #    - set start to -1 to designate all fitting done
-    #    - remove current end from end stack
-    #    - set number of end to 0
-    #    - add slopes and variances to running sums
-    #    - set pixel_done to True to designate all fitting done
-    #  For segments of this type, the final good group in the segment is
-    #    followed by a group that is flagged as a CR and/or SAT and is not the
-    #    final group in the ramp, and the variable `l_interval` used below is
-    #    equal to 2, which is the number of the segment's groups.
+    return f_max_seg
 
-    # Copy mask, as will modify when calculating the number of later good groups
-    c_mask_2d_init = mask_2d_init.copy()
 
-    wh_check = np.where((l_interval == 2)
-                        & (ngroups > 2)
-                        & (end_locs != nreads - 1)
-                        & ~pixel_done)
+def fit_next_segment_long_not_end_of_ramp(
+        wh_check, start, end_st, end_heads, pixel_done, got_case, f_max_seg,
+        inv_var, num_seg, slope, intercept, variance, sig_intercept, sig_slope,
+        opt_res, save_opt, mask_2d_init, end_locs, ngroups):
+    """
+    Special case fitting long segment at the end of ramp.
+    Long enough (semiramp has >2 groups ), not at array end (meaning
+    final group for this semiramp is not final group of the whole ramp)
+        - remove current end from end stack
+        - decrement number of ends
+        - add slopes and variances to running sums
+    For segments of this type, the final good group in the segment is a CR
+    and/or SAT and is not the final group in the ramp, and the variable
+    `l_interval` used below is equal to the number of the segment's groups.
 
-    if len(wh_check[0]) > 0:
-        these_pix = wh_check[0]
-        got_case[these_pix] = True
+    Parameters
+    ----------
+    wh_check: 1D array
+        pixels for current segment processing and updating
 
-        # Suppress, then re-enable, harmless arithmetic warnings
-        warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
-        warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
-        inv_var[these_pix] += 1.0 / variance[these_pix]
-        warnings.resetwarnings()
+    start : int, 1D array
+        lowest channel in fit
 
-        # create array: 0...nreads-1 in a column for each pixel
+    end_st : int, 2D array
+        stack array of endpoints
+
+    end_heads : int, 1D array
+        number of endpoints for each pixel
+
+    pixel_done : boolean, 1D array
+        whether each pixel's calculations are completed
+
+    got_case: 1D array
+        classification of pixel for current semiramp
+
+    f_max_seg : int
+        actual maximum number of segments within a ramp, updated here based on
+        fitting ramps in the current data section; later used when truncating
+        arrays before output.
+
+    inv_var : float, 1D array
+        values of 1/variance for good pixels
+
+    num_seg : int, 1D array
+        numbers of segments for good pixels
+
+    slope: float, 1D array
+       weighted slope for current iteration's pixels for data section
+
+    intercept: float, 1D array
+       y-intercepts from fit for data section
+
+    variance: float, 1D array
+       variance of residuals for fit for data section
+
+    sig_intercept: float, 1D array
+       sigma of y-intercepts from fit for data section
+
+    sig_slope: float, 1D array
+       sigma of slopes from fit for data section (for a single segment)
+
+    opt_res : OptRes object
+        all fitting quantities, used to compute final results
+        and to populate optional output product
+
+    save_opt : boolean
+       save optional fitting results
+
+    end_locs: 1D array
+        end locations
+
+    mask_2d_init : bool, 2D array
+        copy of intial mask_2d
+
+    ngroups: int
+        number of groups in exposure
+
+    Returns
+    -------
+    f_max_seg : int
+        actual maximum number of segments within a ramp, updated here based on
+        fitting ramps in the current data section; later used when truncating
+        arrays before output.
+    """
+    these_pix = wh_check[0]
+    got_case[these_pix] = True
+
+    start[these_pix] = end_locs[these_pix]
+    end_st[end_heads[these_pix] - 1, these_pix] = 0
+    end_heads[these_pix] -= 1
+    end_heads[end_heads < 0.] = 0.
+
+    g_pix = these_pix[variance[these_pix] > 0.]  # good pixels
+
+    if len(g_pix) > 0:
+        inv_var[g_pix] += 1.0 / variance[g_pix]
+
+        # Append results to arrays
+        opt_res.append_arr(num_seg, g_pix, intercept, slope, sig_intercept,
+                           sig_slope, inv_var, save_opt)
+
+        num_seg[g_pix] += 1
+        f_max_seg = max(f_max_seg, num_seg.max())
+
+        # If there are pixels with no later good groups, update stack
+        #   arrays accordingly
+        c_mask_2d_init = mask_2d_init.copy()
+
+        # create array: 0...ngroups-1 in a column for each pixel
         arr_ind_all = np.array(
-            [np.arange(nreads), ] * c_mask_2d_init.shape[1]).transpose()
-        wh_c_start_all = np.zeros(mask_2d_init.shape[1], dtype=np.uint8)
-        wh_c_start_all[these_pix] = start[these_pix]
+            [np.arange(ngroups), ] * c_mask_2d_init.shape[1]).transpose()
+
+        wh_c_start_all = np.zeros(c_mask_2d_init.shape[1], dtype=np.uint8)
+        wh_c_start_all[g_pix] = start[g_pix]
 
         # set to False all groups before start group
-        c_mask_2d_init[arr_ind_all < wh_c_start_all] = 0
-        tot_good_groups = c_mask_2d_init.sum(axis=0)
+        c_mask_2d_init[arr_ind_all < wh_c_start_all] = False
 
-        # Select pixels having at least 2 later good groups (these later good
-        #   groups are a segment whose slope will be calculated)
-        wh_more = np.where(tot_good_groups[these_pix] > 1)
-        pix_more = these_pix[wh_more]
-        start[pix_more] = end_locs[pix_more]
-        end_st[end_heads[pix_more] - 1, pix_more] = 0
-        end_heads[pix_more] -= 1
+        # select pixels having all groups False from start to ramp end
+        wh_rest_false = np.where(c_mask_2d_init.sum(axis=0) == 0)
+        if len(wh_rest_false[0]) > 0:
+            pix_rest_false = wh_rest_false[0]
+            start[pix_rest_false] = -1
+            end_st[end_heads[pix_rest_false] - 1, pix_rest_false] = 0
+            end_heads[pix_rest_false] = 0
+            pixel_done[pix_rest_false] = True  # all processing is complete
 
-        # Select pixels having less than 2 later good groups (these later good
-        #   groups will not be used)
-        wh_only = np.where(tot_good_groups[these_pix] <= 1)
-        pix_only = these_pix[wh_only]
-        start[pix_only] = -1
-        end_st[end_heads[pix_only] - 1, pix_only] = 0
-        end_heads[pix_only] = 0
-        pixel_done[pix_only] = True  # all processing for pixel is completed
-        end_heads[(end_heads < 0.)] = 0.
+    return f_max_seg
+
+
+def fit_next_segment_long_end_of_ramp(
+        wh_check, start, end_st, end_heads, pixel_done, got_case, f_max_seg,
+        inv_var, num_seg, slope, intercept, variance, sig_intercept, sig_slope,
+        opt_res, save_opt):
+    """
+    Long enough (semiramp has >2 groups), at end of ramp
+        - set start to -1 to designate all fitting done
+        - remove current end from end stack
+        - set number of ends to 0
+        - add slopes and variances to running sums
+    For segments of this type, the final good group is the final group in the
+    ramp, and the variable `l_interval` used below is equal to the number of
+    the segment's groups minus 1.
+
+    Parameters
+    ----------
+    wh_check: 1D array
+        pixels for current segment processing and updating
+
+    start : int, 1D array
+        lowest channel in fit
+
+    end_st : int, 2D array
+        stack array of endpoints
+
+    end_heads : int, 1D array
+        number of endpoints for each pixel
+
+    pixel_done : boolean, 1D array
+        whether each pixel's calculations are completed
+
+    got_case: 1D array
+        classification of pixel for current semiramp
+
+    f_max_seg : int
+        actual maximum number of segments within a ramp, updated here based on
+        fitting ramps in the current data section; later used when truncating
+        arrays before output.
+
+    inv_var : float, 1D array
+        values of 1/variance for good pixels
+
+    num_seg : int, 1D array
+        numbers of segments for good pixels
+
+    slope: float, 1D array
+       weighted slope for current iteration's pixels for data section
+
+    intercept: float, 1D array
+       y-intercepts from fit for data section
+
+    variance: float, 1D array
+       variance of residuals for fit for data section
+
+    sig_intercept: float, 1D array
+       sigma of y-intercepts from fit for data section
+
+    sig_slope: float, 1D array
+       sigma of slopes from fit for data section (for a single segment)
+
+    opt_res : OptRes object
+        all fitting quantities, used to compute final results
+        and to populate optional output product
+
+    save_opt : boolean
+       save optional fitting results
+
+    Returns
+    -------
+    f_max_seg : int
+        actual maximum number of segments within a ramp, updated here based on
+        fitting ramps in the current data section; later used when truncating
+        arrays before output.
+    """
+    these_pix = wh_check[0]
+    start[these_pix] = -1   # all processing for this pixel is completed
+    end_st[end_heads[these_pix] - 1, these_pix] = 0
+    end_heads[these_pix] = 0
+    pixel_done[these_pix] = True  # all processing for pixel is completed
+    got_case[these_pix] = True
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "invalid value.*", RuntimeWarning)
+        g_pix = these_pix[variance[these_pix] > 0.]  # good pixels
+    if len(g_pix) > 0:
+        inv_var[g_pix] += 1.0 / variance[g_pix]
 
         # Append results to arrays
-        opt_res.append_arr(num_seg, these_pix, intercept, slope,
-                           sig_intercept, sig_slope, inv_var, save_opt)
+        opt_res.append_arr(num_seg, g_pix, intercept, slope, sig_intercept,
+                           sig_slope, inv_var, save_opt)
 
-        num_seg[these_pix] += 1
+        num_seg[g_pix] += 1
         f_max_seg = max(f_max_seg, num_seg.max())
+    return f_max_seg
 
-    # CASE G) - full-length ramp has a good group on 0th group of the entire ramp,
-    #    and no later good groups. Will use single good group data as the slope.
+
+def fit_short_ngroups(
+        ngroups, start, end_st, end_heads, pixel_done, all_pix,
+        inv_var, num_seg, slope, intercept, variance, sig_intercept, sig_slope,
+        opt_res, save_opt, mask_2d_init, ramp_mask_sum):
+    """
+    Special case fitting for short ngroups fit.
+
+    Parameters
+    ----------
+    ngroups: int
+        number of groups in exposure
+
+    start : int, 1D array
+        lowest channel in fit
+
+    end_st : int, 2D array
+        stack array of endpoints
+
+    end_heads : int, 1D array
+        number of endpoints for each pixel
+
+    pixel_done : boolean, 1D array
+        whether each pixel's calculations are completed
+
+    all_pix: 1D array
+        all pixels in image
+
+    inv_var : float, 1D array
+        values of 1/variance for good pixels
+
+    num_seg : int, 1D array
+        numbers of segments for good pixels
+
+    slope: float, 1D array
+       weighted slope for current iteration's pixels for data section
+
+    intercept: float, 1D array
+       y-intercepts from fit for data section
+
+    variance: float, 1D array
+       variance of residuals for fit for data section
+
+    sig_intercept: float, 1D array
+       sigma of y-intercepts from fit for data section
+
+    sig_slope: float, 1D array
+       sigma of slopes from fit for data section (for a single segment)
+
+    opt_res : OptRes object
+        all fitting quantities, used to compute final results
+        and to populate optional output product
+
+    save_opt : boolean
+       save optional fitting results
+
+    mask_2d_init : bool, 2D array
+        copy of intial mask_2d
+
+    ramp_mask_sum: int, 1D array
+        number of channels to fit for each pixel
+
+    Returns
+    -------
+    f_max_seg : int
+        actual maximum number of segments within a ramp, updated here based on
+        fitting ramps in the current data section; later used when truncating
+        arrays before output.
+
+    num_seg : int, 1D array
+        numbers of segments for good pixels
+    """
+
+    # Dataset has NGROUPS=2, so special fitting is done for all pixels.
+    # All segments are at the end of the array.
     #    - set start to -1 to designate all fitting done
     #    - remove current end from end stack
-    #    - set number of end to 0
+    #    - set number of ends to 0
     #    - add slopes and variances to running sums
     #    - set pixel_done to True to designate all fitting done
-    wh_check = np.where(
-        mask_2d_init[0, :] & ~mask_2d_init[1, :] & (ramp_mask_sum == 1) & ~pixel_done)
+    if ngroups == 2:
+        start[all_pix] = -1
+        end_st[end_heads[all_pix] - 1, all_pix] = 0
+        end_heads[all_pix] = 0
+        pixel_done[all_pix] = True
 
+        g_pix = all_pix[variance[all_pix] > 0.]
+        if len(g_pix) > 0:
+            inv_var[g_pix] += 1.0 / variance[g_pix]
+
+            opt_res.append_arr(num_seg, g_pix, intercept, slope, sig_intercept,
+                               sig_slope, inv_var, save_opt)
+
+            num_seg[g_pix] = 1
+
+            return 1, num_seg
+
+    # Dataset has NGROUPS=1 ; so special fitting is done for all pixels
+    # and all intervals are at the end of the array.
+    #    - set start to -1 to designate all fitting done
+    #    - remove current end from end stack
+    #    - set number of ends to 0
+    #    - add slopes and variances to running sums
+    #    - set pixel_done to True to designate all fitting done
+    start[all_pix] = -1
+    end_st[end_heads[all_pix] - 1, all_pix] = 0
+    end_heads[all_pix] = 0
+    pixel_done[all_pix] = True
+
+    wh_check = np.where(mask_2d_init[0, :] & (ramp_mask_sum == 1))
     if len(wh_check[0]) > 0:
-        these_pix = wh_check[0]
-        got_case[these_pix] = True
+        g_pix = wh_check[0]
 
-        start[these_pix] = -1
-        end_st[end_heads[these_pix] - 1, these_pix] = 0
-        end_heads[these_pix] = 0
-        pixel_done[these_pix] = True  # all processing for pixel is completed
-        inv_var[these_pix] += 1.0 / variance[these_pix]
+        # Ignore all pixels having no good groups (so the single group is bad)
+        if len(g_pix) > 0:
+            inv_var[g_pix] += 1.0 / variance[g_pix]
 
-        # Append results to arrays
-        opt_res.append_arr(num_seg, these_pix, intercept, slope,
-                           sig_intercept, sig_slope, inv_var, save_opt)
+            # Append results to arrays
+            opt_res.append_arr(num_seg, g_pix, intercept, slope, sig_intercept,
+                               sig_slope, inv_var, save_opt)
 
-        num_seg[these_pix] += 1
-        f_max_seg = max(f_max_seg, num_seg.max())
+            num_seg[g_pix] = 1
 
-    # CASE H) - the segment has a good 0th group and a bad 1st group. For the
-    #  data from the 0th good group of this segment to possibly be used as a
-    #  slope, that group must necessarily be the 0th group of the entire ramp.
-    #  It is possible to have a single 'good' group segment after the 0th group
-    #  of the ramp; in that case the 0th group and the 1st group would both have
-    #  to be CRs, and the data of the 0th group would not be included as a slope.
-    #  For a good 0th group in a ramp followed by a bad 1st group there must be
-    #  good groups later in the segment because if there were not, the segment
-    #  would already have be classified as CASE G. In this situation, since
-    #  there are later good groups in the segment, those later good groups will
-    #  be used in the slope computation, and the 0th good group will not be.
-    #  As a result, for all instances of these types of segments, the data in the
-    #  initial good group will not be used in the slope calculation, but the
-    #  arrays for the indices for the ramp (end_st, etc) are appropriately
-    #  adjusted.
-    #   - increment start array
-    #   - remove current end from end stack
-    #   - decrement number of ends
-    wh_check = np.where(mask_2d_init[0, :]
-                        & ~mask_2d_init[1, :]
-                        & ~pixel_done
-                        & (end_locs == 1)
-                        & (start == 0))
-
-    if len(wh_check[0]) > 0:
-        these_pix = wh_check[0]
-        got_case[these_pix] = True
-        start[these_pix] += 1
-        start[start > nreads - 1] = nreads - 1  # to keep at max level
-        end_st[end_heads[these_pix] - 1, these_pix] = 0
-        end_heads[these_pix] -= 1
-        end_heads[end_heads < 0.] = 0.
-
-    # CASE OTHER) - all other types of segments not covered earlier. No segments
-    #   handled here have adequate data, but the stack arrays are updated.
-    #   - increment start array
-    #   - remove current end from end stack
-    #   - decrement number of ends
-    wh_check = np.asarray(np.where(~pixel_done & ~got_case))
-    if len(wh_check[0]) > 0:
-        these_pix = wh_check[0]
-        start[these_pix] += 1
-        start[start > nreads - 1] = nreads - 1  # to keep at max level
-        end_st[end_heads[these_pix] - 1, these_pix] = 0
-        end_heads[these_pix] -= 1
-        end_heads[end_heads < 0.] = 0.
-
-    return f_max_seg, num_seg
+    return 1, num_seg
 
 
 def fit_lines(data, mask_2d, rn_sect, gain_sect, ngroups, weighting):
