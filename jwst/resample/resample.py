@@ -22,9 +22,6 @@ class OutputTooLargeError(RuntimeError):
 class ResampleData:
     """
     This is the controlling routine for the resampling process.
-    It loads and sets the various input data and parameters needed by
-    the drizzle function and then calls the C-based cdriz.tdriz function
-    to do the actual resampling.
 
     Notes
     -----
@@ -35,10 +32,8 @@ class ResampleData:
          them with any user-provided values.
       2. Creates output WCS based on input images and define mapping function
          between all input arrays and the output array.
-      3. Initializes all output arrays, including WHT and CTX arrays.
-      4. Passes all information for each input chip to drizzle function.
-      5. Updates output data model with output arrays from drizzle, including
-         (eventually) a record of metadata from all input models.
+      3. Updates output data model with output arrays from drizzle, including
+         a record of metadata from all input models.
     """
 
     def __init__(self, input_models, output=None, single=False, blendheaders=True,
