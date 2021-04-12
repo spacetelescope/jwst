@@ -188,8 +188,7 @@ class OutlierDetection:
             # each group of exposures
             sdriz = resample.ResampleData(self.input_models, single=True,
                                           blendheaders=False, **pars)
-            sdriz.do_drizzle()
-            drizzled_models = sdriz.output_models
+            drizzled_models = sdriz.do_drizzle()
             for model in drizzled_models:
                 if save_intermediate_results:
                     log.info("Writing out resampled exposures...")

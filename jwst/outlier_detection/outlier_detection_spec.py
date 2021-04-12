@@ -70,8 +70,7 @@ class OutlierDetectionSpec(OutlierDetection):
             # Start by creating resampled/mosaic images for
             #  each group of exposures
             sdriz = resample_spec.ResampleSpecData(self.input_models, single=True, blendheaders=False, **pars)
-            sdriz.do_drizzle()
-            drizzled_models = sdriz.output_models
+            drizzled_models = sdriz.do_drizzle()
             for model in drizzled_models:
                 model.meta.filename = self.make_output_path(
                     basepath=model.meta.filename,
