@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def background_sub(input_model, bkg_list, sigma, maxiters):
+def background_sub(input_model, bkg_list, sigma, maxiters, save_combined_background):
     """
     Short Summary
     -------------
@@ -45,7 +45,7 @@ def background_sub(input_model, bkg_list, sigma, maxiters):
     bkg_model.close()
 
     # We're done. Return the result.
-    return result
+    return bkg_model, result
 
 
 def average_background(bkg_list, sigma, maxiters):
