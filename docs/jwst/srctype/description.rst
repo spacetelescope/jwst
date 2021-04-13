@@ -103,7 +103,7 @@ for each source used in the MSA Planning Tool (MPT). The stellarity values are
 in turn passed from the MPT to the MSA metadata (_msa.fits) file created by DMS
 and used in the calibration pipeline. The stellarity values from the MSA
 metadata file are loaded for each source/slitlet by the ``assign_wcs`` step of
-the :ref:`calwebb_spec2 <calwebb_spec2gg95 >` pipeline and then evaluated by the
+the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline and then evaluated by the
 ``srctype`` step to determine whether each source should be treated as point or
 extended.
 

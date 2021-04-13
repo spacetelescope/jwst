@@ -280,7 +280,7 @@ for such parameter files is ``pars-<class name>``. For example, for the step
 ``jwst.persistence.PersistenceStep``, the ``reftype`` would be
 ``pars-persistencestep``.
 
-For more information, see :ref:`Configuration Files`.
+For more information, see :ref:`Parameter Files`.
 
 .. _`Standard Required Keywords`:
 
