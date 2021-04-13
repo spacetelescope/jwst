@@ -42,7 +42,7 @@ def background_sub(input_model, bkg_list, sigma, maxiters):
     result = subtract_images.subtract(input_model, bkg_model)
 
     # Close the average background image and update the step status
-    #bkg_model.close()
+    # bkg_model.close()
 
     # We're done. Return the result.
     return bkg_model, result
