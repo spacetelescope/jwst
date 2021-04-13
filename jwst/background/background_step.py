@@ -82,9 +82,9 @@ class BackgroundStep(Step):
                 # Do the background subtraction
                 if do_sub:
                     bkg_model, result = background_sub.background_sub(input_model,
-                                                           bkg_list,
-                                                           self.sigma,
-                                                           self.maxiters)
+                                                                      bkg_list,
+                                                                      self.sigma,
+                                                                      self.maxiters)
                     result.meta.cal_step.back_sub = 'COMPLETE'
                     if self.save_combined_background:
                         comb_bkg_path = self.save_model(bkg_model, suffix=self.bkg_suffix, force=True)
