@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def background_sub(input_model, bkg_list, sigma, maxiters, save_combined_background):
+def background_sub(input_model, bkg_list, sigma, maxiters):
     """
     Short Summary
     -------------
