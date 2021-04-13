@@ -88,7 +88,7 @@ class BackgroundStep(Step):
                     result.meta.cal_step.back_sub = 'COMPLETE'
                     if self.save_combined_background:
                         comb_bkg_path = self.save_model(bkg_model, suffix=self.bkg_suffix, force=True)
-                        self.log.info(f'Interpolated flat written to "{comb_bkg_path}".')
+                        self.log.info(f'Combined background written to "{comb_bkg_path}".')
 
                 else:
                     result = input_model.copy()
