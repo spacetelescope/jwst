@@ -173,7 +173,7 @@ def test_outlier_step_no_outliers(we_three_sci):
         np.testing.assert_allclose(image.dq, corrected.dq)
 
 
-def test_outlier_step(we_three_sci):
+def test_outlier_step(_jail, we_three_sci):
     """Test whole step with an outlier including saving intermediate and results files"""
     container = datamodels.ModelContainer(list(we_three_sci))
 
@@ -220,7 +220,7 @@ def test_outlier_step_square_source_no_outliers(we_three_sci):
 
 @pytest.mark.parametrize("exptype", IMAGE_MODES)
 def test_outlier_step_image_weak_CR_dither(exptype):
-    """Test whole step with an outlierf for imaging modes"""
+    """Test whole step with an outlier for imaging modes"""
     bkg = 1.5
     sig = 0.02
     container = datamodels.ModelContainer(

@@ -116,7 +116,7 @@ class OutlierDetectionStep(Step):
             if self.input_container:
                 single_model = self.input_models[0]
             else:
-                single_model = self.input_models[0]
+                single_model = self.input_models
             exptype = single_model.meta.exposure.type
             self.check_input()
 
