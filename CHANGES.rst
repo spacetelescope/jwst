@@ -84,6 +84,10 @@ documentation
 
 - Update documentation, deprecating primary use of CFG files [#5901]
 
+- Update pipeline introduction document to include segmentation map (``segm``)
+  in list of data products [#5956]
+
+
 extract_2d
 ----------
 
