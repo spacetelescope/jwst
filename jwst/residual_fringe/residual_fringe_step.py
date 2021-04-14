@@ -30,7 +30,7 @@ class ResidualFringeStep(Step):
 
         self.suffix = 'residual_fringe'
         input = datamodels.open(input)
-        #self.input_models = input
+
         
         # If single file, wrap in a ModelContainter
         if not isinstance(input, datamodels.ModelContainer):
@@ -80,11 +80,11 @@ class ResidualFringeStep(Step):
                 self.skip = True
 
                 return input_models
-
-            # loop over each model
-            # read in reference file for model
-            # form ResidualFringeCorrection
-            # correct
+            
+        # loop over each model
+        # 1. read in reference file for model
+        # 2. correct each model
+        # 3. append corrected data to output_models - to return from step 
         self.output_models = datamodels.ModelContainer()
         for model in input:
 
@@ -133,10 +133,3 @@ class ResidualFringeStep(Step):
 
         return self.output_models
 
-
-    #def make_output_path(ignored, idx=None):
-    #    output_path = self.make_output_path(
-    #        basepath=base_filename, suffix='rf', idx=idx,
-    #        component_format='_{asn_id}_{idx}'
-    #    )
-    #    return output_path

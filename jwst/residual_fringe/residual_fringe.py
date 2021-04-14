@@ -88,7 +88,7 @@ class ResidualFringeCorrection():
 
         output_data = self.model.data.copy()
         output_data /= np.median(self.input_model.data)
-        print('normalizing the data', np.median(self.input_model.data))
+        #print('normalizing the data', np.median(self.input_model.data))
         
         # Load the fringe reference file
         residual_fringe_model = datamodels.ResidualFringeModel(self.residual_fringe_reference_file)
@@ -106,6 +106,7 @@ class ResidualFringeCorrection():
         residual_fringe_model.close()
 
         self.freq_table = residual_fringe_table
+        
         # Read in the regions reference file
         # Use throughput array defined by self.transmission_level
         allregions = datamodels.RegionsModel(self.regions_reference_file)
@@ -134,7 +135,7 @@ class ResidualFringeCorrection():
         self.rejected_fit =  np.zeros(self.input_model.data.shape)
         allregions.close()
 
-        # temp table - remove after testing - or figure out what to save from the table
+        # intermiedate output product - Table 
         stat_table = Table(names=('Slice', 'mean', 'median', 'stddev', 'max', 'pmean', 'pmedian', 'pstddev', 'pmax'),
                            dtype=('i4', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8'))
         
