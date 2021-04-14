@@ -150,7 +150,7 @@ exptype *required*
   * ``sourcecat`` *optional*
     
     The catalog of sources to extract spectra for. Usually produced by
-    ``calwebb_image3`` for wide-field slitless spectroscopy.
+    :ref:`calwebb_image3 <calwebb_image3>` for wide-field slitless spectroscopy.
 
 Editing the member list
 ^^^^^^^^^^^^^^^^^^^^^^^

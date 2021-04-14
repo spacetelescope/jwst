@@ -2,7 +2,7 @@
 
 Step Arguments
 ==============
-The default values for the step arguments are found either in the cube_build.cfg file or the cube parameter reference file.
+The default values for the step arguments are found in the ``CubeBuildStep.spec`` attribute.
 The user can override the default values for a parameter if a step argument exist for the parameter. 
 
 The  step arguments can be used to control the properties of the output IFU cube or to select  subsets of data are used to produce the output cubes. Note that some options will result in multiple cubes being

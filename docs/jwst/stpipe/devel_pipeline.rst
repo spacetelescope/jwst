@@ -63,9 +63,8 @@ When writing the spec member for a Pipeline, only the parameters
 that apply to the Pipeline as a whole need to be included.  The
 parameters for each Step are automatically loaded in by the framework.
 
-In the case of the above example, we define two new pipeline
-configuration parameters for the flat field file and the output
-filename.
+In the case of the above example, we define two new pipeline parameters for the
+flat field file and the output filename.
 
 The parameters for the individual substeps that make up the Pipeline
 will be implicitly added by the framework.
