@@ -116,9 +116,9 @@ master_background
 outlier_detection
 -----------------
 
-- outlier detection on non-dithered images is implemented with a simple sigma clipping
-- dithered outlier detection cleaned up and HST specific steps removed
-- additional tests added
+- Outlier detection on non-dithered images is implemented with a simple sigma clipping,
+  dithered outlier detection cleaned up and HST specific steps removed
+  and additional tests added. [#5822]
 
 ramp_fitting
 ------------
