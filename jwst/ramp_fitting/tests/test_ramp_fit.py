@@ -690,22 +690,17 @@ def test_miri_first_last():
 
 def test_miri_no_good_pixel():
     ''' 
-    This is a test of whether ramp fitting correctly handles having all 0th
-    group dq flagged as DO_NOT_USE, and all final group dq flagged as
-    DO_NOT_USE for MIRI data.  For 1 pixel ([1,1]) the 1st (again, 0-based)
-    group is flagged as a CR.  For such a ramp, the code removes the CR-flag
-    from such a CR-affected 1st group; so if it initially was 4 it is reset
-    to 0 ("good"), in which case it's as if that CR was not even there.
+    With no good data, MIRI will remove all groups where all pixels are bad.
+    If all groups are bad, NoneType is returned for all return values from
+    ramp_fit.
     '''
-    (ngroups, nints, nrows, ncols, deltatime) = (10, 1, 2, 2, 3.)
     nints, ngroups, nrows, ncols = 1, 2, 2, 2
     deltatime = 3.
     model1, gdq, rnModel, pixdq, err, gain = setup_small_cube(
         ngroups, nints, nrows, ncols, deltatime)
 
-    # Make smooth ramps having outlier SCI values in the 0th and final groups
-    #   to reveal if they are included in the fit (they shouldn't be, as those
-    #   groups are flagged as DO_NOT_USE)
+    # Dummy non-zero data to make sure if processing occurs a non-NoneType gets
+    # returned.
     model1.data[0, :, 0, 0] = np.array([-200., -500.], dtype=np.float32)
     model1.data[0, :, 0, 1] = np.array([-300., -600.], dtype=np.float32)
     model1.data[0, :, 1, 0] = np.array([-200., 900.], dtype=np.float32)
@@ -717,7 +712,6 @@ def test_miri_no_good_pixel():
     new_mod, int_model, opt_model, gls_opt_model = ramp_fit(
         model1, 1024 * 30000., True, rnModel, gain, 'OLS', 'optimal', 'none')
 
-    # np.testing.assert_allclose(new_mod.data, 10. / 3., rtol=1E-5)
     assert new_mod is None
 
 
