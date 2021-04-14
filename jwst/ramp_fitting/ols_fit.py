@@ -99,19 +99,35 @@ def ols_ramp_fit_multi(
     total_cols = input_model.data.shape[3]
     number_of_integrations = input_model.data.shape[0]
 
+    # For MIRI datasets having >1 group, if all pixels in the final group are
+    #   flagged as DO_NOT_USE, resize the input model arrays to exclude the
+    #   final group.  Similarly, if leading groups 1 though N have all pixels
+    #   flagged as DO_NOT_USE, those groups will be ignored by ramp fitting, and
+    #   the input model arrays will be resized appropriately. If all pixels in
+    #   all groups are flagged, return None for the models.
+    if input_model.meta.instrument.name == 'MIRI' and input_model.data.shape[1]> 1:
+        miri_ans = discard_miri_groups(input_model)
+        # The function returns False if the removed groups leaves no data to be
+        # processed.  If this is the case, return None for all expected variables
+        # returned by ramp_fit
+        if miri_ans is not True:
+            return [None] * 3
+
     # Call ramp fitting for the single processor (1 data slice) case
     if number_slices == 1:
         max_segments, max_CRs = calc_num_seg(input_model.groupdq, number_of_integrations)
         log.debug(f"Max segments={max_segments}")
 
-        # Create output models to be populated after ramp fitting.
-        int_model, opt_model, out_model = \
-            create_output_models(input_model, number_of_integrations, save_opt,
-                                 total_cols, total_rows, max_segments, max_CRs)
-
         # Single threaded computation
         new_mdl, int_mdl, opt_res = ols_ramp_fit_single(
             input_model, int_times, buffsize, save_opt, readnoise_2d, gain_2d, weighting)
+        if new_mdl is None:
+            return None, None, None
+
+        # Create output models to be populated after ramp fitting.
+        int_model, opt_model, out_model = create_output_models(
+            input_model, number_of_integrations, save_opt,
+            total_cols, total_rows, max_segments, max_CRs)
 
         set_output_models(out_model, int_model, opt_model, new_mdl, int_mdl, opt_res, save_opt)
 
@@ -169,6 +185,11 @@ def ols_ramp_fit_multi(
         pool.join()
         k = 0
         log.debug("All processes complete")
+
+        # Check that all slices got processed properly
+        for resultslice in real_results:
+            if resultslice[0] is None:
+                return None, None, None
 
         # Create new model for the primary output.
         actual_segments = real_results[0][20]
@@ -519,7 +540,7 @@ def ols_ramp_fit_sliced(
         input_model, int_times, buffsize, save_opt, readnoise_2d, gain_2d, weighting)
 
     if new_model is None:
-        return None * 22
+        return [None] * 22
 
     # Package computed data for return
     if int_model is not None:
@@ -616,6 +637,7 @@ def ols_ramp_fit_single(
     orig_ngroups = ngroups
     orig_cubeshape = (ngroups, nrows, ncols)
 
+    '''
     # For MIRI datasets having >1 group, if all pixels in the final group are
     #   flagged as DO_NOT_USE, resize the input model arrays to exclude the
     #   final group.  Similarly, if leading groups 1 though N have all pixels
@@ -628,7 +650,8 @@ def ols_ramp_fit_single(
         # returned by ramp_fit
         miri_ans = discard_miri_groups(input_model)
         if miri_ans is not True:
-            return None * 3
+            return [None] * 3
+    '''
 
     if ngroups == 1:
         log.warning('Dataset has NGROUPS=1, so count rates for each integration')
