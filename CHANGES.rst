@@ -117,6 +117,13 @@ master_background
 - Updated documentation to more fully describe the various ways in which the
   step is applied [#5913]
 
+outlier_detection
+-----------------
+
+- Outlier detection on non-dithered images is implemented with a simple sigma clipping,
+  dithered outlier detection cleaned up and HST specific steps removed
+  and additional tests added. [#5822]
+
 ramp_fitting
 ------------
 
@@ -125,7 +132,7 @@ ramp_fitting
   to remove and confusion on functionality. [#5872]
 
 - Refactoring ramp fit code separating OLS and GLS code into their own file. [#5951]
-  
+
 refpix
 ------
 
