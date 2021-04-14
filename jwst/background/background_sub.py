@@ -41,9 +41,6 @@ def background_sub(input_model, bkg_list, sigma, maxiters):
     log.debug(' subtracting avg bkg from {}'.format(input_model.meta.filename))
     result = subtract_images.subtract(input_model, bkg_model)
 
-    # Close the average background image and update the step status
-    # bkg_model.close()
-
     # We're done. Return the result.
     return bkg_model, result
 
@@ -101,7 +98,8 @@ def average_background(bkg_list, sigma, maxiters):
     merr = np.ma.masked_array(cerr, mask=mdata.mask)
 
     # Compute the combined ERR as the uncertainty in the mean
-    avg_bkg.err = np.sqrt(merr.sum(axis=0)) / (num_bkg - merr.mask.sum(axis=0))
+    avg_bkg.err = (np.sqrt(merr.sum(axis=0)) / (num_bkg - merr.mask.sum(axis=0))).data
+    # avg_bkg.err[merr.mask.sum(axis=0)] = np.nan
 
     return avg_bkg
 
