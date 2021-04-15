@@ -225,10 +225,6 @@ def dodrizzle(insci, input_wcs, inwht, output_wcs, outsci, outwht, outcon,
     """
     Low level routine for performing 'drizzle' operation on one image.
 
-    The interface is compatible with STScI code. All images are Python
-    ndarrays, instead of filenames. File handling (input and output) is
-    performed by the calling routine.
-
     Parameters
     ----------
 
