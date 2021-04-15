@@ -26,7 +26,6 @@ def run_pipeline(jail, rtdata_module):
     # NOTE: THE RESAMPLE_SPEC STEP IS SKIPPED FOR NOW, BECAUSE IT HAS A BUG
     # (the s2d image is all zeros)
     args = ["config/calwebb_spec2.cfg", rtdata.input,
-            "--steps.resample_spec.skip=true",       # remove when bug fixed
             "--save_bsub=true",
             "--steps.assign_wcs.save_results=true",
             "--steps.flat_field.save_results=true",
