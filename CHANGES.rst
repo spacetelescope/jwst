@@ -43,6 +43,9 @@ background
 
 - Remove unused ``SubtractImagesStep`` [#5919]
 
+- Added new step parameter to optionally save the combined, average
+  background image: ``save_combined_background``. [#5954]
+
 calwebb_spec2
 -------------
 

@@ -53,6 +53,9 @@ subtracted from it. If the target exposure is in the form of a 3-D CubeModel
 (e.g. the result of a time series exposure), the background image
 is subtracted from each plane of the CubeModel.
 
+The combined, averaged background image can be saved using the step parameter
+``save_combined_background``.
+
 WFSS Mode
 ---------
 For Wide-Field Slitless Spectroscopy expsoures (NIS_WFSS and NRC_WFSS),
