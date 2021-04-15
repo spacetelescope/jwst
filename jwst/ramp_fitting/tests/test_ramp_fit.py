@@ -700,13 +700,13 @@ def test_miri_no_good_pixel():
         ngroups, nints, nrows, ncols, deltatime)
 
     # Dummy non-zero data to make sure if processing occurs a non-NoneType gets
-    # returned.
+    # returned.  Processing should not occur and a NoneType should be returned.
     model1.data[0, :, 0, 0] = np.array([-200., -500.], dtype=np.float32)
     model1.data[0, :, 0, 1] = np.array([-300., -600.], dtype=np.float32)
     model1.data[0, :, 1, 0] = np.array([-200., 900.], dtype=np.float32)
     model1.data[0, :, 1, 1] = np.array([-600., -400.], dtype=np.float32)
 
-    # For all pixels, set gdq for 0th and final groups to DO_NOT_USE
+    # Set all groups to DO_NOT_USE
     model1.groupdq[:, :, :, :] = DO_NOT_USE
 
     new_mod, int_model, opt_model, gls_opt_model = ramp_fit(
