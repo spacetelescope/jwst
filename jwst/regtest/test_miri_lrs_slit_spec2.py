@@ -30,7 +30,8 @@ def run_pipeline(jail, rtdata_module):
             "--save_bsub=true",
             "--steps.assign_wcs.save_results=true",
             "--steps.flat_field.save_results=true",
-            "--steps.srctype.save_results=true"]
+            "--steps.srctype.save_results=true",
+            "--steps.bkg_subtract.save_combined_background=true"]
     Step.from_cmdline(args)
 
     return rtdata
@@ -38,7 +39,7 @@ def run_pipeline(jail, rtdata_module):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("output", [
-    "bsub", "flat_field", "assign_wcs", "srctype", "cal", "x1d"])
+    "bsub", "flat_field", "assign_wcs", "srctype", "cal", "x1d", "combinedbackground"])
 def test_miri_lrs_slit_spec2(run_pipeline, fitsdiff_default_kwargs, output):
     """Regression test of the calwebb_spec2 pipeline on MIRI
        LRS fixedslit data using along-slit-nod pattern for

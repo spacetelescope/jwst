@@ -99,7 +99,6 @@ def average_background(bkg_list, sigma, maxiters):
 
     # Compute the combined ERR as the uncertainty in the mean
     avg_bkg.err = (np.sqrt(merr.sum(axis=0)) / (num_bkg - merr.mask.sum(axis=0))).data
-    # avg_bkg.err[merr.mask.sum(axis=0)] = np.nan
 
     return avg_bkg
 
