@@ -121,7 +121,7 @@ def test_gls_vs_ols_two_ints_ols():
 def test_multiprocessing():
     nints, ngroups, nrows = 3, 25, 100
     ncols = nrows  # make sure these are the same, so the loops below work
-    
+
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(
         ngroups=ngroups, gain=1, readnoise=10, nints=nints, nrows=nrows, ncols=ncols)
 
@@ -612,7 +612,7 @@ def test_twenty_groups_two_segments():
 
 
 def test_miri_all_sat():
-    ''' 
+    '''
     Test of all groups in all integrations being saturated; all output arrays
     (particularly variances) should be 0.
     '''
@@ -649,7 +649,7 @@ def test_miri_all_sat():
 
 
 def test_miri_first_last():
-    ''' 
+    '''
     This is a test of whether ramp fitting correctly handles having all 0th
     group dq flagged as DO_NOT_USE, and all final group dq flagged as
     DO_NOT_USE for MIRI data.  For 1 pixel ([1,1]) the 1st (again, 0-based)
@@ -689,7 +689,7 @@ def test_miri_first_last():
 
 
 def test_miri_no_good_pixel():
-    ''' 
+    '''
     With no good data, MIRI will remove all groups where all pixels are bad.
     If all groups are bad, NoneType is returned for all return values from
     ramp_fit.

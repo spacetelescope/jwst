@@ -105,7 +105,7 @@ def ols_ramp_fit_multi(
     #   flagged as DO_NOT_USE, those groups will be ignored by ramp fitting, and
     #   the input model arrays will be resized appropriately. If all pixels in
     #   all groups are flagged, return None for the models.
-    if input_model.meta.instrument.name == 'MIRI' and input_model.data.shape[1]> 1:
+    if input_model.meta.instrument.name == 'MIRI' and input_model.data.shape[1] > 1:
         miri_ans = discard_miri_groups(input_model)
         # The function returns False if the removed groups leaves no data to be
         # processed.  If this is the case, return None for all expected variables
