@@ -54,7 +54,7 @@ class Methods(Enum):
         return self.value
 
 
-# Definition of th J3 Idle Y-Angle
+# Definition of th J3 Ideal Y-Angle
 J3IDLYANGLE = -1.25  # Degrees
 
 # Conversion from seconds to MJD

@@ -83,6 +83,15 @@ def method_gscmd_j3pags():
 
 
 @pytest.mark.parametrize(
+    'method',
+    [method for method in stp.Methods]
+)
+def test_method_string(method):
+    """Ensure that the value of the method is the string representation"""
+    assert f'{method}' == method.value
+
+
+@pytest.mark.parametrize(
     'matrix, expected',
     [('m_eci2fgs1', np.array([[0.79338298, 0.5312005, 0.29727004],
                               [-0.58752257, 0.7959905, 0.14565831],
