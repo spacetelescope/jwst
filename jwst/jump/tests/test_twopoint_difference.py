@@ -605,7 +605,6 @@ def test_median_with_saturation_even_num_sat_frames(setup_cube):
     data[0, 7, 100, 100] = 49900
     data[0, 8:10, 100, 100] = 60000
     gdq[0, 6:10, 100, 100] = dqflags.group['SATURATED']
-    print(np.diff(data[0, :, 100, 100]))
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold, nframes, False, 200, 10)
     assert np.array_equal([0, 0, 0, 0, 0, 4, 2, 2, 2, 2], out_gdq[0, :, 100, 100])
 
@@ -625,7 +624,6 @@ def test_median_with_saturation_odd_number_final_difference(setup_cube):
     data[0, 7, 100, 100] = 49900
     data[0, 8:9, 100, 100] = 60000
     gdq[0, 6:9, 100, 100] = dqflags.group['SATURATED']
-    print(np.diff(data[0, :, 100, 100]))
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold, nframes, False, 200, 10)
     assert np.array_equal([0, 0, 0, 0, 0, 4, 2, 2, 2], out_gdq[0, :, 100, 100])
 
@@ -638,16 +636,16 @@ def test_first_last_group(setup_cube):
     #  set up the data so that if the first and last group are used in jump
     #  detection it would cause a jump to be detected between group 1-2
     #  and group 6-7. Add a jump between 3 and 4 just to make sure jump detection is working
-    #  set group 1 to be 10, 000
+    #  set group 1 to be 10,000
     data[0, 0, 100, 100] = 10000.0
-    #  set groups 1, 2 - to be around 30, 000
+    #  set groups 1, 2 - to be around 30,000
     data[0, 1, 100, 100] = 30000.0
     data[0, 2, 100, 100] = 30020.0
     #  set up a jump to make sure it is detected
     data[0, 3, 100, 100] = 40000.0
     data[0, 4, 100, 100] = 40020.0
     data[0, 5, 100, 100] = 40040.0
-    #  set group 6 to be 50, 000
+    #  set group 6 to be 50,000
     data[0, 6, 100, 100] = 50000.0
 
     gdq[0, 0, 100, 100] = dqflags.group['DO_NOT_USE']
@@ -670,7 +668,6 @@ def test_4grps_1cr(setup_cube):
     data[0, 1, 100, 100] = 4500
     data[0, 2, 100, 100] = 40000
     data[0, 3, 100, 100] = 44500
-    print(np.diff(data[0, :, 100, 100]))
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold,
                                                      rej_threshold, rej_threshold, nframes, False, 200, 10)
     assert np.array_equal([0, 0, 4, 0], out_gdq[0, :, 100, 100])
