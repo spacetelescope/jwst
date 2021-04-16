@@ -1559,7 +1559,7 @@ properties:
             blend_table: True
           gs_pa:
             title: guide star V3 position angle
-            fits_keyword: GS_PA
+            fits_keyword: GS_V3_PA
             blend_table: True
           gs_ura:
             title: guide star right ascension uncertainty
