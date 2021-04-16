@@ -30,7 +30,8 @@ def find_crs(data, group_dq, read_noise, normal_rejection_threshold,
     Find CRs/Jumps in each integration within the input data array.
     The input data array is assumed to be in units of electrons, i.e. already
     multiplied by the gain. We also assume that the read noise is in units of
-    electrons.
+    electrons. We also assume that there are at least three groups in the integrations. This was checked by
+    jump_step.
     """
     gdq = group_dq.copy()
 
@@ -236,10 +237,10 @@ def get_rejection_threshold(num_usable_diffs, two_group_threshold, three_group_t
         return normal_threshold
 
 
-def get_clipped_median_array(num_differences, diffs_to_ignore, differences, sorted_index):
+def get_clipped_median_array(num_differences, diffs_to_ignore, input_array, sorted_index):
     """
     This routine will return the clipped median for the input array.
-    It will ignore the input number of largest differences. This is only called once for the entire array.
+    It will ignore the input number of largest input_array. This is only called once for the entire array.
     """
     pixel_med_diff = np.zeros_like(diffs_to_ignore)
     pixel_med_index = np.zeros_like(diffs_to_ignore)
@@ -252,7 +253,7 @@ def get_clipped_median_array(num_differences, diffs_to_ignore, differences, sort
     # these will be saturated values in this case
     #    row, col = np.indices(diffs_to_ignore.shape)
     pixel_med_index[row4, col4] = sorted_index[row4, col4, (num_differences - (diffs_to_ignore[row4, col4] + 1)) // 2]
-    pixel_med_diff[row4, col4] = differences[row4, col4, pixel_med_index[row4, col4]]
+    pixel_med_diff[row4, col4] = input_array[row4, col4, pixel_med_index[row4, col4]]
 
     # For pixels with an even number of differences the median is the mean of the two central values.
     # So we need to get the value the other central difference one lower in the sorted index that the one found
@@ -266,7 +267,7 @@ def get_clipped_median_array(num_differences, diffs_to_ignore, differences, sort
 
     # Average together the two central values
     pixel_med_diff[even_group_rows, even_group_cols] = (pixel_med_diff[even_group_rows, even_group_cols] +
-                                                        differences[even_group_rows, even_group_cols, pixel_med_index2[
+                                                        input_array[even_group_rows, even_group_cols, pixel_med_index2[
                                                             even_group_rows, even_group_cols]]) / 2.0
     # Process pixels with three good differences
     row3, col3 = np.where(num_differences - diffs_to_ignore == 3)
@@ -278,18 +279,18 @@ def get_clipped_median_array(num_differences, diffs_to_ignore, differences, sort
     #    row, col = np.indices(diffs_to_ignore.shape)
     if len(row3) > 0:
         pixel_med_index[row3, col3] = sorted_index[row3, col3, (num_differences - (diffs_to_ignore[row3, col3])) // 2]
-        pixel_med_diff[row3, col3] = differences[row3, col3, pixel_med_index[row3, col3]]
+        pixel_med_diff[row3, col3] = input_array[row3, col3, pixel_med_index[row3, col3]]
 
     # Process pixels with two good differences
     row2, col2 = np.where(num_differences - diffs_to_ignore == 2)
     if len(row2) > 0:
         pixel_med_index[row2, col2] = sorted_index[row2, col2, 0]
-        pixel_med_diff[row2, col2] = differences[row2, col2, pixel_med_index[row2, col2]]
+        pixel_med_diff[row2, col2] = input_array[row2, col2, pixel_med_index[row2, col2]]
 
     return pixel_med_diff
 
 
-def get_clipped_median_vector(num_differences, diffs_to_ignore, differences, sorted_index):
+def get_clipped_median_vector(num_differences, diffs_to_ignore, input_vector, sorted_index):
     """
     This routine will return the clipped median for the input pixel.
     It will ignore the input number of largest differences. As cosmic rays are found,
@@ -297,7 +298,7 @@ def get_clipped_median_vector(num_differences, diffs_to_ignore, differences, sor
     """
     if num_differences - diffs_to_ignore == 2:
         # For the two diff case we just return the smallest value instead of the median.
-        return np.min(differences[sorted_index[0:1]])
+        return np.min(input_vector[sorted_index[0:1]])
     elif num_differences - diffs_to_ignore == 3:
         # For the three diff case we do not reject the largest diff when the median is calculated.
         skip_max_diff = 0
@@ -307,10 +308,10 @@ def get_clipped_median_vector(num_differences, diffs_to_ignore, differences, sor
         skip_max_diff = 1
     # Find the median difference
     pixel_med_index = sorted_index[int(((num_differences - skip_max_diff - diffs_to_ignore) / 2))]
-    pixel_med_diff = differences[pixel_med_index]
+    pixel_med_diff = input_vector[pixel_med_index]
     # If there are an even number of differences, then average the two values in the middle.
     if (num_differences - diffs_to_ignore - skip_max_diff) % 2 == 0:  # even number of differences
         pixel_med_index2 = sorted_index[int((num_differences - skip_max_diff - diffs_to_ignore) / 2) - 1]
-        pixel_med_diff = (pixel_med_diff + differences[pixel_med_index2]) / 2.0
+        pixel_med_diff = (pixel_med_diff + input_vector[pixel_med_index2]) / 2.0
 
     return pixel_med_diff

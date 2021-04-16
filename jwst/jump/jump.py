@@ -100,7 +100,7 @@ def detect_jumps(input_model, gain_model, readnoise_model,
     slices = []
     # Slice up data, gdq, readnoise_2d into slices
     # Each element of slices is a tuple of
-    # (data, gdq, readnoise_2d, rejection_thresh, three_grp_thres, four_grp_thres, nframes)
+    # (data, gdq, readnoise_2d, rejection_thresh, three_grp_thresh, four_grp_thresh, nframes)
     for i in range(numslices - 1):
         slices.insert(i, (data[:, :, i * yincrement:(i + 1) * yincrement, :],
                           gdq[:, :, i * yincrement:(i + 1) * yincrement, :],

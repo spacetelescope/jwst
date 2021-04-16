@@ -32,8 +32,8 @@ class JumpStep(Step):
             tstart = time.time()
             # Check for an input model with NGROUPS<=2
             ngroups = input_model.data.shape[1]
-            if ngroups <= 4:
-                self.log.warning('Can not apply jump detection when NGROUPS<=4;')
+            if ngroups <= 2:
+                self.log.warning('Cannot apply jump detection when NGROUPS<=2;')
                 self.log.warning('Jump step will be skipped')
                 result = input_model.copy()
                 result.meta.cal_step.jump = 'SKIPPED'
