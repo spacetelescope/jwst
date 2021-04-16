@@ -157,7 +157,7 @@ class TransformParameters:
     Parameters
     ----------
     allow_default : bool
-        If telemetry cannot be determine, use existing
+        If telemetry cannot be determined, use existing
         information in the observation's header.
 
     default_pa_v3 : float
@@ -800,7 +800,7 @@ def calc_wcs(t_pars: TransformParameters):
 
 
 def calc_transforms(t_pars: TransformParameters):
-    """Calculate transforms from pointing to SIAF
+    """Calculate transforms  which determine reference point celestial WCS
 
     Given the spacecraft pointing parameters and the
     aperture-specific SIAF, calculate all the transforms
@@ -822,11 +822,11 @@ def calc_transforms(t_pars: TransformParameters):
 
 
 def calc_transforms_original(t_pars: TransformParameters):
-    """Calculate transforms from pointing to SIAF using the original, pre-JSOCINT-555 algorithm
+    """Calculate transforms which determine reference point celestial WCS from the original, pre-JSOCINT-555 algorithm
 
-    Given the spacecraft pointing parameters and the
-    aperture-specific SIAF, calculate all the transforms
-    necessary to produce WCS information.
+    Given the spacecraft pointing parameters and the aperture-specific SIAF,
+    calculate all the transforms necessary to produce the celestial World
+    Coordinate system information.
 
     Parameters
     ----------
@@ -852,6 +852,7 @@ def calc_transforms_original(t_pars: TransformParameters):
             M_fgs1_to_sifov   *   # FGS1 to Science Instruments Aperture
             M_j_to_fgs1       *   # J-Frame to FGS1
             M_eci_to_j        *   # ECI to J-Frame
+
     """
     logger.info('Calculating transforms using ORIGINAL method...')
 
@@ -903,7 +904,7 @@ def calc_transforms_original(t_pars: TransformParameters):
 
 
 def calc_transforms_gscmd_j3pags(t_pars: TransformParameters):
-    """Calculate transforms from pointing to SIAF using the JSOCINT-555 fix and J3PA@GS
+    """Calculate transforms which determine reference point celestial WCS using the JSOCINT-555 fix and J3PA@GS
 
     Given the spacecraft pointing parameters and the
     aperture-specific SIAF, calculate all the transforms
@@ -980,7 +981,7 @@ def calc_transforms_gscmd_j3pags(t_pars: TransformParameters):
 
 
 def calc_transforms_gscmd_v3pags(t_pars: TransformParameters):
-    """Calculate transforms from pointing to SIAF using the JSOCINT-555 fix
+    """Calculate transforms which determine reference point celestial WCS using the JSOCINT-555 fix
 
     Given the spacecraft pointing parameters and the
     aperture-specific SIAF, calculate all the transforms
@@ -1005,7 +1006,7 @@ def calc_transforms_gscmd_v3pags(t_pars: TransformParameters):
     and FGS1 J-frame telemetry. Instead use the commanded guide star telemetry.
 
     The matrix transform pipeline to convert from ECI J2000 observatory
-    qauternion pointing to aperture ra/dec/roll information
+    quaternion pointing to aperture ra/dec/roll information
     is given by the following formula. Each term is a 3x3 matrix:
 
         M_eci_to_siaf =                    # The complete transformation
