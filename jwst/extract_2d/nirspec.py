@@ -150,7 +150,7 @@ def set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi):
     log.debug('slit.ymin {}'.format(slit.ymin))
     if output_model.meta.exposure.type.lower() in ['nrs_msaspec', 'nrs_autoflat'] or \
        output_model.meta.instrument.lamp_mode.upper == 'MSASPEC':
-        #output_model.source_id = int(slit.source_id)
+        # output_model.source_id = int(slit.source_id)
         output_model.source_name = slit.source_name
         output_model.source_alias = slit.source_alias
         output_model.stellarity = float(slit.stellarity)
@@ -229,12 +229,11 @@ def extract_slit(input_model, slit, exp_type):
         ext_dq = input_model.dq[slit_slice].copy()
         ext_var_rnoise = input_model.var_rnoise[slit_slice].copy()
         ext_var_poisson = input_model.var_poisson[slit_slice].copy()
-        if (pipe_utils.is_tso(input_model) and
-            hasattr(input_model, 'int_times')):
-                log.debug("TSO data, so copying the INT_TIMES table.")
-                int_times = input_model.int_times.copy()
+        if (pipe_utils.is_tso(input_model) and hasattr(input_model, 'int_times')):
+            log.debug("TSO data, so copying the INT_TIMES table.")
+            int_times = input_model.int_times.copy()
         else:
-                int_times = None
+            int_times = None
     else:
         raise ValueError("extract_2d does not work with "
                          "{0} dimensional data".format(ndim))

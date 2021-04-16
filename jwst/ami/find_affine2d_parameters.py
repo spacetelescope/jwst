@@ -11,6 +11,7 @@ from . import utils
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+
 def create_afflist_rot(rotdegs):
     """
     Short Summary
@@ -31,9 +32,10 @@ def create_afflist_rot(rotdegs):
     alist = []
     for nrot, rotd in enumerate(rotdegs):
         rotd_ = utils.avoidhexsingularity(rotd)
-        alist.append(utils.Affine2d(rotradccw=np.pi*rotd_/180.0,
+        alist.append(utils.Affine2d(rotradccw=np.pi * rotd_ / 180.0,
                                     name="affrot_{0:+.3f}".format(rotd_)))
     return alist
+
 
 def find_rotation(imagedata, psf_offset, rotdegs, mx, my, sx, sy, xo, yo,
                   pixel, npix, bandpass, over, holeshape):
@@ -99,7 +101,7 @@ def find_rotation(imagedata, psf_offset, rotdegs, mx, my, sx, sy, xo, yo,
 
     crosscorr_rots = []
 
-    for (rot,aff) in zip(rotdegs,affine2d_list):
+    for (rot, aff) in zip(rotdegs, affine2d_list):
         jw = lg_model.NrmModel(mask='jwst', holeshape=holeshape, over=over, affine2d=aff)
 
         jw.set_pixelscale(pixel)
@@ -113,7 +115,7 @@ def find_rotation(imagedata, psf_offset, rotdegs, mx, my, sx, sy, xo, yo,
     rot_measured_d, max_cor = utils.findpeak_1d(crosscorr_rots, rotdegs)
 
     # return convenient affine2d
-    new_affine2d = utils.Affine2d(rotradccw=np.pi*rot_measured_d/180.0,
-                          name="{0:.4f}".format(rot_measured_d))
+    new_affine2d = utils.Affine2d(rotradccw=np.pi * rot_measured_d / 180.0,
+                                  name="{0:.4f}".format(rot_measured_d))
 
     return new_affine2d

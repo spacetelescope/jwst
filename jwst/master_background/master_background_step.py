@@ -64,16 +64,16 @@ class MasterBackgroundStep(Step):
 
             # Check that data is a supported datamodel. If not, bail.
             if not isinstance(input_data, (
-                    datamodels.ModelContainer,
-                    datamodels.MultiSlitModel,
-                    datamodels.ImageModel,
-                    datamodels.IFUImageModel,
-                )):
+                datamodels.ModelContainer,
+                datamodels.MultiSlitModel,
+                datamodels.ImageModel,
+                datamodels.IFUImageModel,
+            )):
                 result = input_data.copy()
                 self.log.warning(
                     "Input %s of type %s cannot be handled.  Step skipped.",
                     input, type(input)
-                    )
+                )
                 self.record_step_status(result, 'master_background', success=False)
                 return result
 
@@ -113,8 +113,8 @@ class MasterBackgroundStep(Step):
                         # for simulated data that didn't bother populating this
                         # keyword
                         this_is_ifu_extended = False
-                        if ((model.meta.exposure.type == 'MIR_MRS' or model.meta.exposure.type=='NRS_IFU')
-                            and model.meta.target.source_type=='EXTENDED'):
+                        if ((model.meta.exposure.type == 'MIR_MRS' or model.meta.exposure.type == 'NRS_IFU')
+                                and model.meta.target.source_type == 'EXTENDED'):
                             this_is_ifu_extended = True
 
                         if model.meta.observation.bkgdtarg is False or this_is_ifu_extended:
@@ -125,7 +125,7 @@ class MasterBackgroundStep(Step):
                     master_background = combine_1d_spectra(
                         background_data,
                         exptime_key='exposure_time',
-                        )
+                    )
 
                     background_data.close()
 
@@ -146,7 +146,7 @@ class MasterBackgroundStep(Step):
                     self.log.warning(
                         "Input %s of type %s cannot be handled without user-supplied background.  Step skipped.",
                         input, type(input)
-                        )
+                    )
                     self.record_step_status(result, 'master_background', success=False)
                     return result
 
@@ -192,14 +192,14 @@ class MasterBackgroundStep(Step):
                     self.log.info(
                         "Not subtracting master background, background was subtracted in calspec2")
                     self.log.info("To force the master background to be subtracted from this data, "
-                        "run again and set force_subtract = True.")
+                                  "run again and set force_subtract = True.")
 
                 if not do_sub and isub != len(input_data):
                     self.log.warning("Not subtracting master background.")
                     self.log.warning("Input data contains a mixture of data with and without "
-                        "background subtraction done in calspec2.")
+                                     "background subtraction done in calspec2.")
                     self.log.warning("To force the master background to be subtracted from this data, "
-                        "run again and set force_subtract = True.")
+                                     "run again and set force_subtract = True.")
             # input data is a single file
             else:
                 if input_data.meta.cal_step.back_sub == 'COMPLETE' or \
@@ -208,7 +208,7 @@ class MasterBackgroundStep(Step):
                     self.log.info(
                         "Not subtracting master background, background was subtracted in calspec2")
                     self.log.info("To force the master background to be subtracted from this data, "
-                        "run again and set force_subtract = True.")
+                                  "run again and set force_subtract = True.")
 
         return do_sub
 

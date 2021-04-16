@@ -4,14 +4,14 @@ Executing a pipeline or pipeline step directly, or via run()
 ============================================================
 
 When calling a pipeline or step instance directly, or using the ``run`` method,
-you can specify individual parameter values manually. In this case, configuration
-files are not used. If you use ``run`` after instatiating with a configuration
+you can specify individual parameter values manually. In this case, parameter
+files are not used. If you use ``run`` after instatiating with a parameter
 file (as is done when using the :ref:`call<call_examples>` method), the
-configuration file will be ignored.
+parameter file will be ignored.
 
 ::
 
- # Instantiate the class. Do not provide a configuration file.
+ # Instantiate the class. Do not provide a parameter file.
  pipe = Detector1Pipeline()
 
  # Manually set any desired non-default parameter values

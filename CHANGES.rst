@@ -1,11 +1,24 @@
 1.1.1 (unreleased)
 ==================
 
+ami_analyze
+-----------
+
+- Create copy of input datamodel to avoid overwriting input [#5828]
+
 assign_wcs
 ----------
 
 - Changed evaluation of grism bounding box center from averaged extrema of
   transformed bounding box to transformed centroid of source_cat object [#5809]
+
+- Added pixel shift to MSA slits due to 0-indexing in NIRSpec slit validation
+  code, fixing difference between bounding box locations during the separate
+  halves of assign_wcs runs [#5927]
+
+- Added logic to prevent the sending of an empty list of slits to the
+  validate_open_slits function, so a proper error message is provided to
+  the user [#5939]
 
 associations
 ------------
@@ -17,10 +30,66 @@ associations
 - Removed PATTTYPE='None' constraint from Lv3MIRMRS association rule to
   generate spec3 associations for undithered MRS observations. [#5804]
 
+- Updated level2b WFSS rules to only consider exposures using the same
+  PUPIL value (cross filter) when matching direct images with grism images
+  in NIRISS WFSS observations. [#5896]
+
+- Updated level2b and level3 TSO rules to exclude exposures with
+  EXP_TYPE=NRC_TSGRISM and PUPIL=CLEAR, which can result from NIRCam
+  engineering template observations. [#5946]
+
+background
+----------
+
+- Remove unused ``SubtractImagesStep`` [#5919]
+
+- Added new step parameter to optionally save the combined, average
+  background image: ``save_combined_background``. [#5954]
+
+calwebb_spec2
+-------------
+
+- Updated documentation to indicate that master_background is applied to
+  NIRSpec MOS exposures in the calwebb_spec2 pipeline [#5913]
+
+calwebb_spec3
+-------------
+
+- Updated documentation to indicate that master_background is applied to
+  NIRSpec MOS exposures in the calwebb_spec2 pipeline [#5913]
+
+cube_build
+----------
+
+- Fixed typo in cube_build_step spec for grating [#5839]
+
 datamodels
 ----------
 
-- Added is_star to slitmeta [#5788]
+- Added ``is_star`` to ``slitmeta`` [#5788]
+
+- Update keyword comments for NIRSpec grating wheel (GWA) keywords [#5844]
+
+- Moved functions in ``dqflags`` and ``dynamic_mask`` to ``stcal`` [#5898]
+
+- API change - ``stcal.dqflags.interpret_bit_flags`` and ``stcal.dynamicdq.dynamic_mask``
+  now require the ``mnemonic_map`` as input. [#5898, #5914]
+
+- Implemented new data models ``SpecKernelModel``, ``SpecProfileModel``,
+  ``SpecTraceModel``, and ``WaveMapModel`` for use by new NIRISS SOSS
+  reference files in optimized 1D extraction [#5925]
+
+- Added ``FULLP`` to SUBARRAY enum list in core, subarray,
+  and keyword_psubarray schemas [#5947]
+
+documentation
+-------------
+
+- Update documentation, deprecating primary use of CFG files [#5901]
+
+- Update pipeline introduction document to include segmentation map (``segm``)
+  in list of data products [#5956]
+
 
 extract_2d
 ----------
@@ -35,10 +104,61 @@ general
 - Update DQFLAGS table in RTD docs with new definitions for persistence and
   ad_floor in bits five and six [#5815]
 
+- Update data products, ``calwebb_image3``, and ``source_catalog`` docs to include
+  information about the segmentation map product [#5949]
+
 lib
 ---
 
 - Update ``update_mt_kwds`` function in ``set_telescope_pointing.py`` to  populate the TARG_RA/TARG_DEC [#5808]
+
+- moved ``basic_utils.multiple_replace`` to stcal. [#5898]
+
+master_background
+-----------------
+
+- Updated documentation to more fully describe the various ways in which the
+  step is applied [#5913]
+
+outlier_detection
+-----------------
+
+- Outlier detection on non-dithered images is implemented with a simple sigma clipping,
+  dithered outlier detection cleaned up and HST specific steps removed
+  and additional tests added. [#5822]
+
+ramp_fitting
+------------
+
+- Refactoring OLS code for ramp fitting to improve readability and maintenance.
+  Also, reference to ``nreads`` is being removed and replaced with ``ngroups``
+  to remove and confusion on functionality. [#5872]
+
+- Refactoring ramp fit code separating OLS and GLS code into their own file. [#5951]
+
+refpix
+------
+
+- Added code to handle NIR subarrays that use 4 readout amplifiers.  Uses and
+  applies reference pixel signal from available amplifiers and side reference
+  pixel regions, including odd-even column separation if requested [#5926]
+
+- Fixed a bug introduced in #5926 that affected refpix calibration of 1-amp NIR
+  subarrays [#5937]
+
+resample
+--------
+
+- Fix ``resample_spec`` output size from input images crossing RA=0 [#5929]
+
+- Propagate variance arrays into ``SlitModel`` used as input for ``ResampleSpecStep`` [#5941]
+
+source_catalog
+--------------
+
+- Updated the concentration indices to be calculated as flux ratios
+  instead of magnitude differences. The CI column names have also been
+  renamed to list the larger EE first, e.g. ``CI_50_30``. [#5810]
 
 srctype
 -------
@@ -49,6 +169,11 @@ transforms
 ----------
 
 - Added ``is_star`` to GrismObject [#5788]
+
+tweakreg
+--------
+
+- Updated documentation to include the new "rshift" option for fit geometry [#5899]
 
 1.1.0 (2021-02-26)
 ==================
@@ -192,6 +317,8 @@ photom
 
 pipeline
 --------
+
+- Empty remaining cfg files of any content [#5766]
 
 - Remove references to Numpy globals ``np.int``, ``np.float``, ``np.bool`` and
   ``np.str`` in the package. [#5769]

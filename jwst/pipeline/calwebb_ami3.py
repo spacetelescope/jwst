@@ -29,7 +29,7 @@ class Ami3Pipeline(Pipeline):
     class_alias = "calwebb_ami3"
 
     spec = """
-        save_averages = boolean(default=False)
+        save_averages = boolean(default=True)
     """
 
     # Define aliases to steps

@@ -148,7 +148,7 @@ def _calc_correction(slitlet, barshadow_model, source_type):
             # shutter center has an index shutter_height greater.
             index_of_fiducial_in_array = shadow.shape[0] - shutter_height * (1 + index_of_fiducial)
             yrow = index_of_fiducial_in_array + yslit * shutter_height
-            wcol = (wavelength - w0)/wave_increment
+            wcol = (wavelength - w0) / wave_increment
 
             # Interpolate the bar shadow correction for non-Nan pixels
             correction.data = interpolate(yrow, wcol, shadow)
@@ -362,7 +362,7 @@ def create_empty_shadow_array(nshutters):
     #
     # Assume the reference files have a shape of 1001 rows by 101 columns
     # and go from -1 to +1 in Y
-    nrows = nshutters*500 + 500
+    nrows = nshutters * 500 + 500
     ncolumns = 101
     empty_shadow = np.zeros((nrows, ncolumns))
     return empty_shadow
@@ -478,11 +478,11 @@ def interpolate(rows, columns, array, default=np.nan):
     nrows_out, ncols_out = array.shape
     #
     # Extend the boundary of array by 1 row and column to handle end cases
-    augmented_array = np.ones((nrows_out+1, ncols_out+1))
+    augmented_array = np.ones((nrows_out + 1, ncols_out + 1))
     augmented_array[:nrows_out, :ncols_out] = array
-    augmented_array[nrows_out, :ncols_out] = array[nrows_out-1, :]
-    augmented_array[:nrows_out, ncols_out] = array[:, ncols_out-1]
-    augmented_array[nrows_out, ncols_out] = array[nrows_out-1, ncols_out-1]
+    augmented_array[nrows_out, :ncols_out] = array[nrows_out - 1, :]
+    augmented_array[:nrows_out, ncols_out] = array[:, ncols_out - 1]
+    augmented_array[nrows_out, ncols_out] = array[nrows_out - 1, ncols_out - 1]
     for row in range(nrows):
         for column in range(ncolumns):
             if ~np.isnan(rows[row, column]) and ~np.isnan(columns[row, column]):
@@ -501,13 +501,13 @@ def interpolate(rows, columns, array, default=np.nan):
                 ix = int(array_column)
                 iy = int(array_row)
                 a11 = augmented_array[iy, ix]
-                a12 = augmented_array[iy, ix+1]
-                a21 = augmented_array[iy+1, ix]
-                a22 = augmented_array[iy+1, ix+1]
+                a12 = augmented_array[iy, ix + 1]
+                a21 = augmented_array[iy + 1, ix]
+                a22 = augmented_array[iy + 1, ix + 1]
                 dx = array_column - ix
                 dy = array_row - iy
-                correction[row, column] = a11*(1.0-dx)*(1.0-dy) + a12*dx*(1.0-dy) + \
-                    a21*(1.0-dx)*dy + a22*dx*dy
+                correction[row, column] = a11 * (1.0 - dx) * (1.0 - dy) + a12 * dx * (1.0 - dy) + \
+                    a21 * (1.0 - dx) * dy + a22 * dx * dy
     return correction
 
 

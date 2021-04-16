@@ -4,28 +4,27 @@
 calwebb_spec2: Stage 2 Spectroscopic Processing
 ===============================================
 
-:Config: calwebb_spec2.cfg, calwebb_tso-spec2.cfg
-:Class: `~jwst.pipeline.Spec2Pipeline`
+:Class: `jwst.pipeline.Spec2Pipeline`
+:Aliass: calwebb_spec2
 
-The ``Spec2Pipeline`` applies additional instrumental corrections and calibrations
-to countrate products that result in a fully calibrated individual exposure.
-There are two unique configuration files to be used to control this pipeline,
-depending on whether the data are to be treated as Time Series Observation (TSO).
-Non-TSO exposures use the ``calwebb_spec2`` configuration, which applies all
-applicable steps to the data. The ``calwebb_tso-spec2`` configuration, on the other
-hand, should be used for TSO exposures, for which some steps are set to be skipped
-by default (see the list of steps in the table below). Both configurations call the
-``Spec2Pipeline`` module; the only difference is which steps are applied.
+The ``Spec2Pipeline`` applies additional instrumental corrections and
+calibrations to countrate products that result in a fully calibrated individual
+exposure. There are two general configurations for this pipeline, depending on
+whether the data are to be treated as Time Series Observation (TSO). In general,
+for non-TSO exposures, all applicable steps are applied to the data. For TSO
+exposures, some steps are set to be skipped by default (see the list of steps in
+the table below).
 
-The ``Spec2Pipeline`` is the "Swiss army knife" of pipeline modules, containing many
-steps that are only applied to certain instruments or instrument modes. The logic for
-determining which steps are appropriate is built into the pipeline module itself and
-is mostly based on either the instrument name or the exposure type (EXP_TYPE keyword)
-of the data.
-The list of steps is shown in the table
-below and indicates which steps are applied to various spectroscopic modes, as
-well as which ones are used by the ``calwebb_tso-spec2.cfg`` configuration for TSO data.
-The instrument mode abbreviations used in the table are as follows:
+The ``Spec2Pipeline`` is the "Swiss army knife" of pipeline modules, containing
+many steps that are only applied to certain instruments or instrument modes. The
+logic for determining which steps are appropriate is built into the pipeline
+module itself and determined by the CRDS ``pars-spec2pipeline`` parameter
+reference file. Logic is mostly based on either the instrument name or the
+exposure type (EXP_TYPE keyword) of the data.
+
+The list of steps is shown in the table below and indicates which steps are
+applied to various spectroscopic modes, as well as TSO. The instrument mode
+abbreviations used in the table are as follows:
 
 - NIRSpec FS = Fixed Slit
 - NIRSpec MOS = Multi-Object Spectroscopy
@@ -38,49 +37,55 @@ The instrument mode abbreviations used in the table are as follows:
 
 .. |c| unicode:: U+2713 .. checkmark
 
-+-----------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
-| Instrument/Mode                               |      NIRSpec    |      MIRI       |    NIRISS   | NIRCam | All |
-+-----------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
-| Step                                          | FS  | MOS | IFU | FS  | SL  | MRS | SOSS | WFSS | WFSS   | TSO |
-+===============================================+=====+=====+=====+=====+=====+=====+======+======+========+=====+
-| :ref:`assign_wcs <assign_wcs_step>`           | |c| | |c| | |c| | |c| | |c| | |c| |  |c| | |c|  |  |c|   | |c| |
-+-----------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
-| :ref:`background <background_step>`           | |c| | |c| | |c| | |c| |     | |c| |  |c| | |c|  |  |c|   |     |
-+-----------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
-| :ref:`imprint <imprint_step>`                 |     | |c| | |c| |     |     |     |      |      |        |     |
-+-----------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
-| :ref:`msaflagopen <msaflagopen_step>`         |     | |c| | |c| |     |     |     |      |      |        |     |
-+-----------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
-| :ref:`extract_2d <extract_2d_step>`\ :sup:`1` | |c| | |c| |     |     |     |     |      | |c|  |  |c|   | |c| |
-+-----------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
-| :ref:`srctype <srctype_step>`\ :sup:`1`       | |c| | |c| | |c| | |c| | |c| | |c| |  |c| |      |        | |c| |
-+-----------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
-| :ref:`wavecorr <wavecorr_step>`               | |c| | |c| |     |     |     |     |      |      |        |     |
-+-----------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
-| :ref:`flat_field <flatfield_step>`\ :sup:`1`  | |c| | |c| | |c| | |c| | |c| | |c| |  |c| | |c|  |  |c|   | |c| |
-+-----------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
-| :ref:`straylight <straylight_step>`           |     |     |     |     |     | |c| |      |      |        |     |
-+-----------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
-| :ref:`fringe <fringe_step>`                   |     |     |     |     |     | |c| |      |      |        |     |
-+-----------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
-| :ref:`pathloss <pathloss_step>`               | |c| | |c| | |c| |     |     |     |  |c| |      |        |     |
-+-----------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
-| :ref:`barshadow <barshadow_step>`             |     | |c| |     |     |     |     |      |      |        |     |
-+-----------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
-| :ref:`photom <photom_step>`                   | |c| | |c| | |c| | |c| | |c| | |c| |  |c| | |c|  |  |c|   | |c| |
-+-----------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
-| :ref:`resample_spec <resample_step>`          | |c| | |c| |     | |c| |     |     |      |      |        |     |
-+-----------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
-| :ref:`cube_build <cube_build_step>`           |     |     | |c| |     |     | |c| |      |      |        |     |
-+-----------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
-| :ref:`extract_1d <extract_1d_step>`           | |c| | |c| | |c| | |c| | |c| | |c| |  |c| | |c|  |  |c|   | |c| |
-+-----------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
++---------------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
+| Instrument/Mode                                   |      NIRSpec    |      MIRI       |    NIRISS   | NIRCam | All |
++---------------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
+| Step                                              | FS  | MOS | IFU | FS  | SL  | MRS | SOSS | WFSS | WFSS   | TSO |
++===================================================+=====+=====+=====+=====+=====+=====+======+======+========+=====+
+| :ref:`assign_wcs <assign_wcs_step>`               | |c| | |c| | |c| | |c| | |c| | |c| |  |c| | |c|  |  |c|   | |c| |
++---------------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
+| :ref:`background <background_step>`               | |c| | |c| | |c| | |c| |     | |c| |  |c| | |c|  |  |c|   |     |
++---------------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
+| :ref:`imprint <imprint_step>`                     |     | |c| | |c| |     |     |     |      |      |        |     |
++---------------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
+| :ref:`msaflagopen <msaflagopen_step>`             |     | |c| | |c| |     |     |     |      |      |        |     |
++---------------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
+| :ref:`extract_2d <extract_2d_step>`\ :sup:`1`     | |c| | |c| |     |     |     |     |      | |c|  |  |c|   | |c| |
++---------------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
+| :ref:`srctype <srctype_step>`\ :sup:`1`           | |c| | |c| | |c| | |c| | |c| | |c| |  |c| |      |        | |c| |
++---------------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
+| :ref:`master_background <master_background_step>` |     | |c| |     |     |     |     |      |      |        |     |
++---------------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
+| :ref:`wavecorr <wavecorr_step>`                   | |c| | |c| |     |     |     |     |      |      |        |     |
++---------------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
+| :ref:`flat_field <flatfield_step>`\ :sup:`1`      | |c| | |c| | |c| | |c| | |c| | |c| |  |c| | |c|  |  |c|   | |c| |
++---------------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
+| :ref:`straylight <straylight_step>`               |     |     |     |     |     | |c| |      |      |        |     |
++---------------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
+| :ref:`fringe <fringe_step>`                       |     |     |     |     |     | |c| |      |      |        |     |
++---------------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
+| :ref:`pathloss <pathloss_step>`                   | |c| | |c| | |c| |     |     |     |  |c| |      |        |     |
++---------------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
+| :ref:`barshadow <barshadow_step>`                 |     | |c| |     |     |     |     |      |      |        |     |
++---------------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
+| :ref:`photom <photom_step>`                       | |c| | |c| | |c| | |c| | |c| | |c| |  |c| | |c|  |  |c|   | |c| |
++---------------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
+| :ref:`resample_spec <resample_step>`              | |c| | |c| |     | |c| |     |     |      |      |        |     |
++---------------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
+| :ref:`cube_build <cube_build_step>`               |     |     | |c| |     |     | |c| |      |      |        |     |
++---------------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
+| :ref:`extract_1d <extract_1d_step>`               | |c| | |c| | |c| | |c| | |c| | |c| |  |c| | |c|  |  |c|   | |c| |
++---------------------------------------------------+-----+-----+-----+-----+-----+-----+------+------+--------+-----+
 
 :sup:`1`\ The exact order of the :ref:`extract_2d <extract_2d_step>`, :ref:`srctype <srctype_step>`,
 and :ref:`flat_field <flatfield_step>` steps depends on the observing mode.
 For NIRISS and NIRCam WFSS, as well as NIRCam TSO grism exposures, the order is
 flat_field followed by extract_2d (no wavecorr or srctype).
 For all other modes the order is extract_2d, srctype, wavecorr, and flat_field.
+
+Notice that NIRSpec MOS is the only mode to receive master background subtraction
+in the `calwebb_spec2` pipeline. All other spectral modes have master background
+subtraction applied in the :ref:`calwebb_spec3 <calwebb_spec3>` pipeline.
 
 The :ref:`resample_spec <resample_step>` step produces a resampled/rectified product for
 non-IFU modes of some spectroscopic exposures. If the :ref:`resample_spec <resample_step>` step

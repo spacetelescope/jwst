@@ -1,9 +1,7 @@
-from distutils.version import LooseVersion
 import logging
 import numpy as np
-import photutils
-from photutils import CircularAperture, CircularAnnulus, \
-                      RectangularAperture, aperture_photometry
+from photutils.aperture import (CircularAperture, CircularAnnulus,
+                                RectangularAperture, aperture_photometry)
 
 from .apply_apcorr import select_apcorr
 from ..assign_wcs.util import compute_scale
@@ -105,11 +103,11 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
         if extract_params['ref_file_type'] == FILE_TYPE_ASDF:
             (ra, dec, wavelength, temp_flux, background, npixels, dq, npixels_bkg,
              radius_match, x_center, y_center) = \
-                    extract_ifu(input_model, source_type, extract_params)
+                extract_ifu(input_model, source_type, extract_params)
         else:                                   # FILE_TYPE_IMAGE
             (ra, dec, wavelength, temp_flux, background, npixels, dq, npixels_bkg,
              x_center, y_center) = \
-                    image_extract_ifu(input_model, source_type, extract_params)
+                image_extract_ifu(input_model, source_type, extract_params)
     else:
         log.critical('Missing extraction parameters.')
         raise ValueError('Missing extraction parameters.')
@@ -224,7 +222,7 @@ def get_extract_parameters(ref_dict, bkg_sigma_clip, slitname):
         refmodel = ref_dict['ref_model']
         subtract_background = refmodel.meta.subtract_background
         method = refmodel.meta.method
-        subpixels =refmodel.meta.subpixels
+        subpixels = refmodel.meta.subpixels
 
         data = refmodel.data
         wavelength = data.wavelength
@@ -244,11 +242,10 @@ def get_extract_parameters(ref_dict, bkg_sigma_clip, slitname):
         extract_params['ref_file_type'] = FILE_TYPE_IMAGE
         foundit = False
         for im in ref_dict['ref_model'].images:
-            if (im.name is None or im.name == "ANY" or slitname == "ANY" or
-                im.name == slitname):
-                    extract_params['ref_image'] = im
-                    foundit = True
-                    break
+            if (im.name is None or im.name == "ANY" or slitname == "ANY" or im.name == slitname):
+                extract_params['ref_image'] = im
+                foundit = True
+                break
 
         if not foundit:
             log.error("No match for slit name %s in reference image", slitname)
@@ -398,14 +395,14 @@ def extract_ifu(input_model, source_type, extract_params):
             locn_use,
             disp_axis=input_model.meta.wcsinfo.dispersion_direction)
 
-        scale_arcsec = scale_degrees*3600.00
+        scale_arcsec = scale_degrees * 3600.00
         radius_match /= scale_arcsec
 
         finner = interp1d(wave_extract, inner_bkg, bounds_error=False, fill_value="extrapolate")
-        inner_bkg_match = finner(wavelength)/scale_arcsec
+        inner_bkg_match = finner(wavelength) / scale_arcsec
 
         fouter = interp1d(wave_extract, outer_bkg, bounds_error=False, fill_value="extrapolate")
-        outer_bkg_match = fouter(wavelength)/scale_arcsec
+        outer_bkg_match = fouter(wavelength) / scale_arcsec
 
     elif source_type == 'EXTENDED':
         # Ignore any input parameters, and extract the whole image.
@@ -441,12 +438,12 @@ def extract_ifu(input_model, source_type, extract_params):
         aperture = RectangularAperture(position, width, height, theta)
         annulus = None
 
-    for k in range(shape[0]):  #  looping over wavelength
+    for k in range(shape[0]):  # looping over wavelength
         inner_bkg = None
         outer_bkg = None
 
         if source_type == 'POINT':
-            radius = radius_match[k] # this radius has been converted to pixels
+            radius = radius_match[k]  # this radius has been converted to pixels
             aperture = CircularAperture(position, r=radius)
             inner_bkg = inner_bkg_match[k]
             outer_bkg = outer_bkg_match[k]
@@ -464,8 +461,8 @@ def extract_ifu(input_model, source_type, extract_params):
         # Compute the area of the aperture and possibly also of the annulus.
         # for each wavelength bin (taking into account empty spaxels)
         normalization = 1.
-        temp_weightmap = weightmap[k,:,:]
-        temp_weightmap[temp_weightmap>1] = 1
+        temp_weightmap = weightmap[k, :, :]
+        temp_weightmap[temp_weightmap > 1] = 1
         aperture_area = 0
         annulus_area = 0
 
@@ -474,15 +471,10 @@ def extract_ifu(input_model, source_type, extract_params):
                                          method=method, subpixels=subpixels)
 
         aperture_area = float(phot_table['aperture_sum'][0])
+        log.debug("aperture.area = %g; aperture_area = %g",
+                  aperture.area, aperture_area)
 
-        if LooseVersion(photutils.__version__) >= '0.7':
-            log.debug("aperture.area = %g; aperture_area = %g",
-                      aperture.area, aperture_area)
-        else:
-            log.debug("aperture.area() = %g; aperture_area = %g",
-                      aperture.area(), aperture_area)
-
-        if(aperture_area ==0 and aperture.area > 0):
+        if(aperture_area == 0 and aperture.area > 0):
             aperture_area = aperture.area
 
         if subtract_background and annulus is not None:
@@ -490,22 +482,17 @@ def extract_ifu(input_model, source_type, extract_params):
             phot_table = aperture_photometry(temp_weightmap, annulus,
                                              method=method, subpixels=subpixels)
             annulus_area = float(phot_table['aperture_sum'][0])
+            log.debug("annulus.area = %g; annulus_area = %g",
+                      annulus.area, annulus_area)
 
-            if LooseVersion(photutils.__version__) >= '0.7':
-                log.debug("annulus.area = %g; annulus_area = %g",
-                          annulus.area, annulus_area)
-            else:
-                log.debug("annulus.area() = %g; annulus_area = %g",
-                          annulus.area(), annulus_area)
-
-            if(annulus_area ==0 and annulus.area > 0):
+            if(annulus_area == 0 and annulus.area > 0):
                 annulus_area = annulus.area
 
             if annulus_area > 0.:
                 normalization = aperture_area / annulus_area
             else:
                 log.warning("Background annulus has no area, so background "
-                            "subtraction will be turned off. %g" ,k)
+                            f"subtraction will be turned off. {k}")
                 subtract_background_plane = False
 
         npixels[k] = aperture_area
@@ -533,15 +520,15 @@ def extract_ifu(input_model, source_type, extract_params):
             bkg_stat_data = bkg_data[temp_weightmap == 1]
 
             bkg_mean, _, bkg_stddev = stats.sigma_clipped_stats(bkg_stat_data,
-                                                                sigma=bkg_sigma_clip, maxiters = 5)
+                                                                sigma=bkg_sigma_clip, maxiters=5)
             low = bkg_mean - bkg_sigma_clip * bkg_stddev
             high = bkg_mean + bkg_sigma_clip * bkg_stddev
 
             # set up the mask to flag data that should not be used in aperture photometry
-            maskclip = np.logical_or(bkg_data < low, bkg_data>high)
+            maskclip = np.logical_or(bkg_data < low, bkg_data > high)
 
-            bkg_table = aperture_photometry(bkg_data, aperture,mask=maskclip,
-                                             method=method, subpixels=subpixels)
+            bkg_table = aperture_photometry(bkg_data, aperture, mask=maskclip,
+                                            method=method, subpixels=subpixels)
             background[k] = float(bkg_table['aperture_sum'][0])
             phot_table = aperture_photometry(temp_weightmap, aperture, mask=maskclip,
                                              method=method, subpixels=subpixels)
@@ -764,7 +751,7 @@ def image_extract_ifu(input_model, source_type, extract_params):
     log.debug("Target location based on reference image is X = %g, Y = %g",
               x0, y0)
 
-    #TODO - check if shifting location should be done for reference_image option
+    # TODO - check if shifting location should be done for reference_image option
     if locn is None or np.isnan(locn[0]):
         log.warning("Couldn't determine pixel location from WCS, so "
                     "source position correction will not be applied.")
@@ -797,7 +784,7 @@ def image_extract_ifu(input_model, source_type, extract_params):
 
     weightmap = input_model.weightmap
     temp_weightmap = weightmap
-    temp_weightmap[temp_weightmap>1] = 1
+    temp_weightmap[temp_weightmap > 1] = 1
     npixels[:] = (temp_weightmap * mask_target).sum(axis=2, dtype=np.float64).sum(axis=1)
     bkg_sigma_clip = extract_params['bkg_sigma_clip']
 
@@ -817,10 +804,9 @@ def image_extract_ifu(input_model, source_type, extract_params):
 
     # Extended source data, sigma clip outliers of extraction region is performed
     # at each wavelength plane.
-        (background, n_bkg)= sigma_clip_extended_region(data, mask_target, temp_weightmap, bkg_sigma_clip)
+        (background, n_bkg) = sigma_clip_extended_region(data, mask_target, temp_weightmap, bkg_sigma_clip)
 
     del temp_weightmap
-
 
     # Compute the ra, dec, and wavelength at the pixels of a column through
     # the IFU cube at the target location.  ra and dec should be constant
@@ -883,7 +869,7 @@ def get_coordinates(input_model, x0, y0):
         x_array.fill(x0)
         y_array = np.empty(nelem, dtype=np.float64)
         y_array.fill(y0)
-        z_array = np.arange(nelem, dtype=np.float64) # for wavelengths
+        z_array = np.arange(nelem, dtype=np.float64)  # for wavelengths
         ra, dec, wavelength = wcs(x_array, y_array, z_array)
         # ra and dec should be constant, so nelem // 2 is an arbitrary element.
         ra = ra[nelem // 2]
@@ -1126,6 +1112,7 @@ def shift_ref_image(mask, delta_y, delta_x, fill=0):
 
     return temp
 
+
 def sigma_clip_extended_region(data, mask_targ, wmap, sigma_clip):
     """ sigma clip the extraction region
 
@@ -1154,7 +1141,7 @@ def sigma_clip_extended_region(data, mask_targ, wmap, sigma_clip):
     sigma_clip_region = np.zeros(shape[0], dtype=np.float64)
 
     # for each wavelength plane mark outliers as 0 in mask_bkg
-    for k in range(shape[0]): #  looping over wavelength
+    for k in range(shape[0]):  # looping over wavelength
         if len(shape_ref) == 2:
             extract_region = mask_targ.copy()
         else:
@@ -1163,15 +1150,15 @@ def sigma_clip_extended_region(data, mask_targ, wmap, sigma_clip):
         # pull out extract source region to determined stats on for sigma clipping
         extract_data = data_plane[extract_region == 1]
         ext_mean, _, ext_stddev = stats.sigma_clipped_stats(extract_data,
-                                                            sigma=sigma_clip, maxiters = 5)
+                                                            sigma=sigma_clip, maxiters=5)
         low = ext_mean - sigma_clip * ext_stddev
         high = ext_mean + sigma_clip * ext_stddev
 
         # set up the mask to flag data that should not be used
-        maskclip = np.logical_or(data_plane < low, data_plane > high) # flag outliers
+        maskclip = np.logical_or(data_plane < low, data_plane > high)  # flag outliers
         extract_region[maskclip] = 0
 
-        sigma_clip_region[k] = np.sum(data_plane * extract_region * wmap[k,:,:])
+        sigma_clip_region[k] = np.sum(data_plane * extract_region * wmap[k, :, :])
         n_bkg[k] = np.sum(wmap[k, :, :] * extract_region)
 
     return sigma_clip_region, n_bkg

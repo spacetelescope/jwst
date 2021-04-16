@@ -70,7 +70,7 @@ def run_photom(jail, rtdata_module):
     step_params = {
         'input_path': rate_path,
         'step': 'photom.cfg',
-        'args': ['--save_results=True',]
+        'args': ['--save_results=True', ]
     }
 
     rtdata = rt.run_step_from_dict(rtdata, **step_params)

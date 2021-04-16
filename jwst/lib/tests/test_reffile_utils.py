@@ -1,10 +1,11 @@
 from ..reffile_utils import find_row
 
+
 def test_find_row():
     filters = [
         {'column_offset': 1.0, 'filter': 'F277W', 'pupil': 'FLAT', 'row_offset': 2.0},
         {'column_offset': 0.0, 'filter': 'F356W', 'pupil': 'FLAT', 'row_offset': 0.0},
-        ]
+    ]
     match_keys = {'filter': 'F277W', 'pupil': 'FLAT'}
     missing_key = {'filter': 'F277H', 'pupil': 'FLAT'}
 

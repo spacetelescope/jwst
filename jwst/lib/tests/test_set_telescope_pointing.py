@@ -40,9 +40,9 @@ Q_EXPECTED = np.asarray(
     [-0.36915286, 0.33763282, 0.05758533, 0.86395264]
 )
 J2FGS_MATRIX_EXPECTED = np.asarray(
-    [-1.00444000e-03, 9.99999496e-01,  3.39649146e-06,
-     3.38145836e-03,  -3.90000000e-14, 9.99994283e-01,
-     9.99993778e-01,  1.00444575e-03,  -3.38145665e-03]
+    [-1.00444000e-03, 9.99999496e-01, 3.39649146e-06,
+     3.38145836e-03, -3.90000000e-14, 9.99994283e-01,
+     9.99993778e-01, 1.00444575e-03, -3.38145665e-03]
 )
 FSMCORR_EXPECTED = np.zeros((2,))
 OBSTIME_EXPECTED = STARTTIME
@@ -50,6 +50,8 @@ OBSTIME_EXPECTED = STARTTIME
 # ########################
 # Database access fixtures
 # ########################
+
+
 @pytest.fixture
 def eng_db_ngas():
     """Setup the test engineering database"""
@@ -132,16 +134,16 @@ def test_strict_pointing(data_file, eng_db_jw703):
 
 def test_pointing_averaging(eng_db_jw703):
     """Ensure that the averaging works."""
-    q_exp = np.array([0.62383733,  0.53552715, -0.49252283,  0.28541008])
+    q_exp = np.array([0.62383733, 0.53552715, -0.49252283, 0.28541008])
     j2fgs_exp = np.array([
-        -1.00962794e-03,  9.99999464e-01,  3.41404261e-06,
-        3.38429719e-03, 2.85793453e-09,  9.99994300e-01,
-        9.99993742e-01,  1.00963370e-03, -3.38429548e-03
+        -1.00962794e-03, 9.99999464e-01, 3.41404261e-06,
+        3.38429719e-03, 2.85793453e-09, 9.99994300e-01,
+        9.99993742e-01, 1.00963370e-03, -3.38429548e-03
     ])
     j2fgs_exp = np.array([
         -1.00962794e-03, 3.38429719e-03, 9.99993742e-01,
-        9.99999464e-01,  2.85793453e-09, 1.00963370e-03,
-        3.41404261e-06,  9.99994300e-01, -3.38429548e-03
+        9.99999464e-01, 2.85793453e-09, 1.00963370e-03,
+        3.41404261e-06, 9.99994300e-01, -3.38429548e-03
     ])
     fsmcorr_exp = np.array([-0.02558673, -0.00200601])
     obstime_exp = Time(1559582740.4880004, format='unix')
@@ -152,7 +154,7 @@ def test_pointing_averaging(eng_db_jw703):
      obstime) = stp.get_pointing(
          Time('2019-06-03T17:25:40', format='isot').mjd,
          Time('2019-06-03T17:25:56', format='isot').mjd,
-     )
+    )
 
     assert np.allclose(q, q_exp)
     assert np.allclose(j2fgs_matrix, j2fgs_exp)
@@ -212,7 +214,7 @@ def test_get_pointing_with_zeros(eng_db_ngas):
     assert np.array_equal(fsmcorr, fsmcorr_desired)
 
 
-@pytest.mark.skipif(sys.version_info.major<3,
+@pytest.mark.skipif(sys.version_info.major < 3,
                     reason="No URI support in sqlite3")
 def test_add_wcs_default(data_file):
     """Handle when no pointing exists and the default is used."""
@@ -274,7 +276,7 @@ def test_add_wcs_default_nosiaf(data_file_nosiaf, caplog):
         )
 
 
-@pytest.mark.skipif(sys.version_info.major<3,
+@pytest.mark.skipif(sys.version_info.major < 3,
                     reason="No URI support in sqlite3")
 def test_add_wcs_fsmcorr_v1(data_file):
     """Test with default value using FSM original correction"""
@@ -328,7 +330,7 @@ def test_add_wcs_fsmcorr_v1(data_file):
         )
 
 
-@pytest.mark.skipif(sys.version_info.major<3,
+@pytest.mark.skipif(sys.version_info.major < 3,
                     reason="No URI support in sqlite3")
 def test_add_wcs_with_db(eng_db_ngas, data_file, siaf_file=siaf_db):
     """Test using the database"""
@@ -372,7 +374,7 @@ def test_add_wcs_with_db(eng_db_ngas, data_file, siaf_file=siaf_db):
         )
 
 
-@pytest.mark.skipif(sys.version_info.major<3,
+@pytest.mark.skipif(sys.version_info.major < 3,
                     reason="No URI support in sqlite3")
 def test_add_wcs_with_db_fsmcorr_v1(eng_db_ngas, data_file):
     """Test using the database with original FSM correction"""

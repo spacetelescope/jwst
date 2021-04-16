@@ -12,6 +12,8 @@ class WfsCombineStep(Step):
     This step combines pairs of dithered PSF images
     """
 
+    class_alias = "calwebb_wfs-image3"
+
     spec = """
         do_refine = boolean(default=False)
     """

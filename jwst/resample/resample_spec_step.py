@@ -23,18 +23,11 @@ class ResampleSpecStep(ResampleStep):
     """
 
     def process(self, input):
-
-        # Define input_new, because if input is ImageModel, it will
-        # get recreated as a SlitModel
         input_new = datamodels.open(input)
 
+        # Convert ImageModel to SlitModel (needed for MIRI LRS)
         if isinstance(input_new, ImageModel):
-            slit_model = datamodels.SlitModel()
-            slit_model.update(input_new, only="PRIMARY")
-            slit_model.update(input_new, only="SCI")
-            slit_model.meta.wcs = input_new.meta.wcs
-            slit_model.data = input_new.data
-            input_new = slit_model
+            input_new = datamodels.SlitModel(input_new)
 
         # If single DataModel input, wrap in a ModelContainer
         if not isinstance(input_new, ModelContainer):
@@ -101,6 +94,7 @@ class ResampleSpecStep(ResampleStep):
 
         for container in containers.values():
             resamp = resample_spec.ResampleSpecData(container, **self.drizpars)
+
             drizzled_models = resamp.do_drizzle()
 
             for model in drizzled_models:
@@ -145,6 +139,7 @@ class ResampleSpecStep(ResampleStep):
 
         resamp = resample_spec.ResampleSpecData(input_models, **self.drizpars)
 
+        # Only drizzle the area within the bounding box
         if input_models[0].meta.exposure.type == "MIR_LRS-FIXEDSLIT":
             bb = input_models[0].meta.wcs.bounding_box
             ((x1, x2), (y1, y2)) = bb

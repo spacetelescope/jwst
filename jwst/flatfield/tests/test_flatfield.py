@@ -43,7 +43,7 @@ def test_flatfield_step_interface(instrument, exptype):
     flat.meta.subarray.xsize = shape[1]
     flat.meta.subarray.ysize = shape[0]
     flat.data += 1
-    flat.data[0,0] = np.nan
+    flat.data[0, 0] = np.nan
     flat.err = np.random.random(shape) * 0.05
 
     # override class attribute so only the `flat` type needs to be overriden
@@ -56,12 +56,14 @@ def test_flatfield_step_interface(instrument, exptype):
     assert result.var_flat.shape == shape
     assert result.meta.cal_step.flat_field == 'COMPLETE'
 
+
 def exptypes():
     """Generate NRS EXPTYPES from the schema enum, removing spec types"""
     model = datamodels.ImageModel()
     alltypes = set(model.meta.exposure._schema['properties']['type']['enum'])
     spectypes = set(NRS_SPEC_MODES)
     return sorted([i for i in (alltypes - spectypes)])
+
 
 @pytest.mark.parametrize(
     "exptype",

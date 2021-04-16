@@ -1,0 +1,18 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/spectracesingle.schema"
+title: Spectral trace data
+allOf:
+- $ref: referencefile.schema
+- $ref: keyword_exptype.schema
+- $ref: subarray.schema
+- type: object
+  properties:
+    order:
+      title: Spectral order
+      type: integer
+      fits_keyword: ORDER
+      fits_hdu: ORDER
+    data:
+      $ref: spectracetable.schema

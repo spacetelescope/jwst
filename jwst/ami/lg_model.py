@@ -17,13 +17,14 @@ log.addHandler(logging.NullHandler())
 phi_nb = np.array([0.028838669455909766, -0.061516214504502634,
                    0.12390958557781348, -0.020389361461019516,
                    0.016557347248600723, -0.03960017912525625,
-                  -0.04779984719154552])  # phi in waves
+                   -0.04779984719154552])  # phi in waves
 phi_nb = phi_nb * 4.3e-6  # phi_nb in m
 
 m = 1.0
 mm = 1.0e-3 * m
 um = 1.0e-6 * m
-mas = 1.0e-3 / (60*60*180/np.pi)  # in radians
+mas = 1.0e-3 / (60 * 60 * 180 / np.pi)  # in radians
+
 
 class NrmModel:
     '''
@@ -117,19 +118,19 @@ class NrmModel:
                 #     no distortion, shape (7,2)
                 # below: as-designed -> as-built mapping
                 self.ctrs_asdesigned = np.array([
-                        [0.00000000, -2.640000],    # B4 -> B4
-                        [-2.2863100, 0.0000000],    # C5 -> C2
-                        [2.2863100, -1.3200001],    # B3 -> B5
-                        [-2.2863100, 1.3200001],    # B6 -> B2
-                        [-1.1431500, 1.9800000],    # C6 -> C1
-                        [2.2863100, 1.3200001],     # B2 -> B6
-                        [1.1431500, 1.9800000]])    # C1 -> C6
+                    [0.00000000, -2.640000],    # B4 -> B4
+                    [-2.2863100, 0.0000000],    # C5 -> C2
+                    [2.2863100, -1.3200001],    # B3 -> B5
+                    [-2.2863100, 1.3200001],    # B6 -> B2
+                    [-1.1431500, 1.9800000],    # C6 -> C1
+                    [2.2863100, 1.3200001],     # B2 -> B6
+                    [1.1431500, 1.9800000]])    # C1 -> C6
 
             self.d = 0.82 * m
             self.D = 6.5 * m
         else:
             self.ctrs, self.d, self.D = np.array(mask.ctrs), mask.hdia, \
-                                                 mask.activeD
+                mask.activeD
 
         if mask.lower() == 'jwst':
             """
@@ -151,7 +152,7 @@ class NrmModel:
             # LG++ The above aligns the hole patern with the hex analytic FT,
             # flat top & bottom as seen in DMS data. 8/2018 AS
             # overwrites attributes:
-            self.ctrs_asbuilt = utils.rotate2dccw(self.ctrs_asbuilt, np.pi/2.0)
+            self.ctrs_asbuilt = utils.rotate2dccw(self.ctrs_asbuilt, np.pi / 2.0)
 
             # create 'live' hole centers in an ideal, orthogonal undistorted xy
             #    pupil space,
@@ -184,7 +185,6 @@ class NrmModel:
                                            xo=0.0, yo=0.0, name="Ideal")
         else:
             self.affine2d = affine2d
-
 
     def simulate(self, fov=None, bandpass=None, over=None, psf_offset=(0, 0)):
         '''
@@ -222,10 +222,10 @@ class NrmModel:
             over = 1  # ?  Always comes in as integer.
 
         self.simhdr['OVER'] = (over, 'sim pix = det pix/over')
-        self.simhdr['PIX_OV'] = (self.pixel/float(over),
+        self.simhdr['PIX_OV'] = (self.pixel / float(over),
                                  'Sim pixel scale in radians')
 
-        self.psf_over = np.zeros((over*fov, over*fov))
+        self.psf_over = np.zeros((over * fov, over * fov))
         nspec = 0
         # accumulate polychromatic oversampled psf in the object
 
@@ -304,10 +304,10 @@ class NrmModel:
         # There are N(N-1) independent pistons, double-counted by cosine
         # and sine, one constant term and a DC offset.
 
-        self.model = np.zeros((self.fov, self.fov, self.N*(self.N-1)+2))
-        self.model_beam = np.zeros((self.over*self.fov, self.over*self.fov))
-        self.fringes = np.zeros((self.N*(self.N-1)+1, self.over*self.fov,
-                                self.over*self.fov))
+        self.model = np.zeros((self.fov, self.fov, self.N * (self.N - 1) + 2))
+        self.model_beam = np.zeros((self.over * self.fov, self.over * self.fov))
+        self.fringes = np.zeros((self.N * (self.N - 1) + 1, self.over * self.fov,
+                                 self.over * self.fov))
 
         for w, l in bandpass:  # w: weight, l: lambda (wavelength)
             # model_array returns the envelope and fringe model as a list of
@@ -319,9 +319,9 @@ class NrmModel:
                                               affine2d=self.affine2d)
 
             log.debug("Passed to model_array: psf_offset: {0}".
-                              format(psf_offset))
+                      format(psf_offset))
             log.debug("Primary beam in the model created: {0}".
-                              format(pb))
+                      format(pb))
             self.model_beam += pb
             self.fringes += ff
 
@@ -335,7 +335,7 @@ class NrmModel:
                 model_binned[:, :, sl] = utils.rebin(self.model_over[:, :, sl],
                                                      (self.over, self.over))
 
-            self.model += w*model_binned
+            self.model += w * model_binned
 
         return self.model
 
@@ -417,7 +417,7 @@ class NrmModel:
 
         self.rawDC = self.soln[-1]
         self.flux = self.soln[0]
-        self.soln = self.soln/self.soln[0]
+        self.soln = self.soln / self.soln[0]
 
         # fringephase now in radians
         self.fringeamp, self.fringephase = \
@@ -506,7 +506,7 @@ class NrmModel:
 
         self.pixscales = np.zeros(len(self.scallist))
         for q, scal in enumerate(self.scallist):
-            self.test_pixscale = self.pixel*scal
+            self.test_pixscale = self.pixel * scal
             self.pixscales[q] = self.test_pixscale
             psf = self.simulate(bandpass=self.bandpass, fov=reffov,
                                 pixel=self.test_pixscale, centering=centering)
@@ -534,7 +534,7 @@ class NrmModel:
 
         self.rot_measured, maxy = utils.findmax(mag=self.rots, vals=self.corrs)
         self.refpsf = self.simulate(bandpass=self.bandpass,
-                                    pixel=self.pixscale_factor*self.pixel,
+                                    pixel=self.pixscale_factor * self.pixel,
                                     fov=reffov, rotate=self.rot_measured,
                                     centering=centering)
 

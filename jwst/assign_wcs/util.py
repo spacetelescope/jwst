@@ -248,7 +248,6 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
 
     prj = astmodels.Pix2Sky_TAN()
 
-
     if transform is None:
         transform = []
         wcsinfo = pointing.wcsinfo_from_model(refmodel)
@@ -366,7 +365,7 @@ def is_fits(input_img):
         isfits = True
         f = input_img
     else:
-        isfits = True in [input_img.endswith(l) for l in names]
+        isfits = True in [input_img.endswith(suffix) for suffix in names]
 
     # if input is a fits file determine what kind of fits it is
     # waiver fits len(shape) == 3
@@ -418,13 +417,13 @@ def subarray_transform(input_model):
     ystart = input_model.meta.subarray.ystart
 
     if xstart is not None and xstart != 1:
-        tr_xstart = astmodels.Shift(xstart -1)
+        tr_xstart = astmodels.Shift(xstart - 1)
 
     if ystart is not None and ystart != 1:
-        tr_ystart = astmodels.Shift(ystart -1)
+        tr_ystart = astmodels.Shift(ystart - 1)
 
     if (isinstance(tr_xstart, astmodels.Identity) and
-        isinstance(tr_ystart, astmodels.Identity)):
+            isinstance(tr_ystart, astmodels.Identity)):
         # the case of a full frame observation
         return None
     else:
@@ -503,7 +502,7 @@ def get_object_info(catalog_name=None):
     # (hence, the four separate columns).
 
     for row in catalog:
-        objects.append(SkyObject(id=row['id'],
+        objects.append(SkyObject(label=row['label'],
                                  xcentroid=row['xcentroid'],
                                  ycentroid=row['ycentroid'],
                                  sky_centroid=row['sky_centroid'],
@@ -611,11 +610,10 @@ def create_grism_bbox(input_model,
                 raise ValueError(err_text)
             ref_extract_orders = f.extract_orders
             if extract_orders is None:
-                #ref_extract_orders = extract_orders
+                # ref_extract_orders = extract_orders
                 extract_orders = [x[1] for x in ref_extract_orders if x[0] == filter_name].pop()
 
             wavelength_range = f.get_wfss_wavelength_range(filter_name, extract_orders)
-
 
     if not isinstance(mmag_extract, (int, float)):
         raise TypeError(f"Expected mmag_extract to be a number, got {mmag_extract}")
@@ -673,9 +671,9 @@ def _create_grism_bbox(input_model, mmag_extract=99.0,
                     ra = np.array([obj.sky_bbox_ll.ra.value, obj.sky_bbox_lr.ra.value,
                                    obj.sky_bbox_ul.ra.value, obj.sky_bbox_ur.ra.value])
                     dec = np.array([obj.sky_bbox_ll.dec.value, obj.sky_bbox_lr.dec.value,
-                                   obj.sky_bbox_ul.dec.value, obj.sky_bbox_ur.dec.value])
-                    x1, y1, _, _, _ = sky_to_grism(ra, dec, [lmin] * 4, [order]*4)
-                    x2, y2, _, _, _ = sky_to_grism(ra, dec, [lmax] * 4, [order]*4)
+                                    obj.sky_bbox_ul.dec.value, obj.sky_bbox_ur.dec.value])
+                    x1, y1, _, _, _ = sky_to_grism(ra, dec, [lmin] * 4, [order] * 4)
+                    x2, y2, _, _, _ = sky_to_grism(ra, dec, [lmax] * 4, [order] * 4)
 
                     xstack = np.hstack([x1, x2])
                     ystack = np.hstack([y1, y2])
@@ -728,12 +726,12 @@ def _create_grism_bbox(input_model, mmag_extract=99.0,
 
                     if contained == 0:
                         exclude = True
-                        log.info("Excluding off-image object: {}, order {}".format(obj.id, order))
+                        log.info("Excluding off-image object: {}, order {}".format(obj.label, order))
                     elif contained >= 1:
                         outbox = pts[np.logical_not(inidx)]
                         if len(outbox) > 0:
                             ispartial = True
-                            log.info("Partial order on detector for obj: {} order: {}".format(obj.id, order))
+                            log.info("Partial order on detector for obj: {} order: {}".format(obj.label, order))
 
                     if not exclude:
                         order_bounding[order] = ((round(ymin), round(ymax)), (round(xmin), round(xmax)))
@@ -741,7 +739,7 @@ def _create_grism_bbox(input_model, mmag_extract=99.0,
                         partial_order[order] = ispartial
 
                 if len(order_bounding) > 0:
-                    grism_objects.append(GrismObject(sid=obj.id,
+                    grism_objects.append(GrismObject(sid=obj.label,
                                                      order_bounding=order_bounding,
                                                      sky_centroid=obj.sky_centroid,
                                                      partial_order=partial_order,

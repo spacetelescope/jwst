@@ -6,7 +6,6 @@ log.setLevel(logging.DEBUG)
 
 
 def subtract(model1, model2):
-
     """
     Short Summary
     -------------

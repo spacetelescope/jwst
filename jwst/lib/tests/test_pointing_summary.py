@@ -51,7 +51,7 @@ def test_calc_pointing_deltas(engdb, data_path):
              '\n    (91.08142005, -66.60547869)>, refpoint=<SkyCoord (ICRS): (ra, dec) in deg'
              '\n    (90.70377653, -66.59540224)>, delta_v1=<Angle 0.13712727'
              ' deg>, delta_refpoint=<Angle 0.04044315 deg>)'
-    )
+             )
     model = dm.ImageModel(str(data_path))
     deltas = ps.calc_pointing_deltas(model)
 

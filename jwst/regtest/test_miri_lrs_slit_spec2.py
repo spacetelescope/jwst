@@ -8,6 +8,7 @@ from jwst.stpipe import Step
 from jwst import datamodels
 from gwcs.wcstools import grid_from_bounding_box
 
+
 @pytest.fixture(scope="module")
 def run_pipeline(jail, rtdata_module):
     """Run the calwebb_spec2 pipeline on an ASN of nodded MIRI LRS
@@ -25,19 +26,19 @@ def run_pipeline(jail, rtdata_module):
     # NOTE: THE RESAMPLE_SPEC STEP IS SKIPPED FOR NOW, BECAUSE IT HAS A BUG
     # (the s2d image is all zeros)
     args = ["config/calwebb_spec2.cfg", rtdata.input,
-            "--steps.resample_spec.skip=true",       # remove when bug fixed
             "--save_bsub=true",
             "--steps.assign_wcs.save_results=true",
             "--steps.flat_field.save_results=true",
-            "--steps.srctype.save_results=true"]
+            "--steps.srctype.save_results=true",
+            "--steps.bkg_subtract.save_combined_background=true"]
     Step.from_cmdline(args)
 
     return rtdata
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("output",[
-    "bsub", "flat_field", "assign_wcs", "srctype", "cal", "x1d"])
+@pytest.mark.parametrize("output", [
+    "bsub", "flat_field", "assign_wcs", "srctype", "cal", "x1d", "combinedbackground"])
 def test_miri_lrs_slit_spec2(run_pipeline, fitsdiff_default_kwargs, output):
     """Regression test of the calwebb_spec2 pipeline on MIRI
        LRS fixedslit data using along-slit-nod pattern for

@@ -35,13 +35,13 @@ def do_correction(input_model, gain_factor):
 
     # Apply the square of the gain factor to the variance arrays,
     # if they exist
-    if (output_model.var_poisson is not None and
-            np.size(output_model.var_poisson)) > 0:
-                output_model.var_poisson *= gain_factor**2
+    if (output_model.var_poisson is not None
+            and np.size(output_model.var_poisson)) > 0:
+        output_model.var_poisson *= gain_factor**2
 
-    if (output_model.var_rnoise is not None and
-            np.size(output_model.var_rnoise)) > 0:
-                output_model.var_rnoise *= gain_factor**2
+    if (output_model.var_rnoise is not None
+            and np.size(output_model.var_rnoise)) > 0:
+        output_model.var_rnoise *= gain_factor**2
 
     # Set step status info
     output_model.meta.exposure.gain_factor = gain_factor

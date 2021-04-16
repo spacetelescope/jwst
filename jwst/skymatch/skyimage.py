@@ -15,7 +15,7 @@ import numpy as np
 # THIRD-PARTY
 from spherical_geometry.polygon import SphericalPolygon
 
-#LOCAL
+# LOCAL
 from . skystatistics import SkyStats
 from . import region
 
@@ -38,7 +38,6 @@ class SkyImage:
     * mask associated image data indicating "good" (1) data.
 
     """
-
 
     def __init__(self, image, wcs_fwd, wcs_inv, pix_area=1.0, convf=1.0,
                  mask=None, id=None, skystat=None, stepsize=None, meta=None):
@@ -419,7 +418,7 @@ None, optional
                     polyarea += polyarea1
                     radec += list(intersection.to_radec())
 
-            else: # assume a list of (ra, dec) tuples:
+            else:  # assume a list of (ra, dec) tuples:
                 radec = []
                 polyarea = 0.0
                 for r, d in overlap:
@@ -521,7 +520,7 @@ None, optional
                 polyarea = np.fabs(intersection.area())
                 radec = intersection.to_radec()
 
-            else: # assume a list of (ra, dec) tuples:
+            else:  # assume a list of (ra, dec) tuples:
                 radec = []
                 polyarea = 0.0
                 for r, d in overlap:
@@ -601,6 +600,7 @@ class SkyGroup:
     of :py:class:`SkyImage` objects and to compute sky value of the group.
 
     """
+
     def __init__(self, images, id=None, sky=0.0):
 
         if isinstance(images, SkyImage):
@@ -697,7 +697,6 @@ class SkyGroup:
         else:
             intersect_poly = self._polygon.intersection(other)
         return intersect_poly
-
 
     def _update_bounding_polygon(self):
         polygons = [im.polygon for im in self._images]
@@ -814,9 +813,7 @@ None, optional
 
             return (wsky, wght, area)
 
-        ################################################
-        ##  compute weighted sky in various overlaps: ##
-        ################################################
+        # compute weighted sky in various overlaps:
         wsky = 0.0
 
         for image in self._images:

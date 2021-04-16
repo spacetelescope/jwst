@@ -18,7 +18,7 @@ __all__ = ['match']
 __author__ = 'Mihai Cara'
 
 
-#DEBUG
+# DEBUG
 __local_debug__ = True
 
 log = logging.getLogger(__name__)
@@ -276,9 +276,7 @@ def match(images, skymethod='global+match', match_down=True, subtract=False):
         .format(nimages)
     )
 
-    ###################################
-    ##   Print conversion factors:   ##
-    ###################################
+    # Print conversion factors
     log.debug(" ")
     log.debug("----  Image data conversion factors:")
 
@@ -294,11 +292,9 @@ def match(images, skymethod='global+match', match_down=True, subtract=False):
             log.debug("   *  Image ID={}. Conversion factor = {:G}"
                       .format(img.id, img.convf))
 
-    ###############################################################
-    ## 1. Method: "match" (or "global+match").                   ##
-    ##    Find sky "deltas" that will match sky across all       ##
-    ##    (intersecting) images.                                 ##
-    ###############################################################
+    # 1. Method: "match" (or "global+match").
+    #    Find sky "deltas" that will match sky across all
+    #    (intersecting) images.
     if do_match:
 
         log.info(" ")
@@ -325,18 +321,16 @@ def match(images, skymethod='global+match', match_down=True, subtract=False):
         _apply_sky(images, sky_deltas, False, subtract, show_old)
         show_old = True
 
-    ###############################################################
-    ## 2. Method: "local". Compute the minimum sky background    ##
-    ##    value in each sky group/image.                         ##
-    ##    This is an improved (use of masks) replacement         ##
-    ##    for the classical 'subtract' used by astrodrizzle.  ##
-    ##                                                           ##
-    ##    NOTE: incompatible with "match"-containing             ##
-    ##          'skymethod' modes.                               ##
-    ##                                                           ##
-    ## 3. Method: "global". Compute the minimum sky background   ##
-    ##    value *across* *all* sky line members.                 ##
-    ###############################################################
+    # 2. Method: "local". Compute the minimum sky background
+    #    value in each sky group/image.
+    #    This is an improved (use of masks) replacement
+    #    for the classical 'subtract' used by astrodrizzle.
+    #
+    #    NOTE: incompatible with "match"-containing
+    #          'skymethod' modes.
+    #
+    # 3. Method: "global". Compute the minimum sky background
+    #    value *across* *all* sky line members.
     if do_global or not do_match:
 
         log.info(" ")
@@ -453,28 +447,28 @@ def _apply_sky(images, sky_deltas, do_global, do_skysub, show_old):
 #
 
 # Original version:
-#def _overlap_matrix(images, apply_sky=True):
-    ##TODO: to improve performance, the nested loops could be parallelized
-    ## since _calc_sky() here can be called independently from previous steps.
-    #ns = len(images)
-    #A = np.zeros((ns, ns), dtype=float)
-    #W = np.zeros((ns, ns), dtype=float)
-    #for i in range(ns):
-        #for j in range(i+1, ns):
-            #overlap = images[i].intersection(images[j])
-            #s1, w1, area1 = images[i].calc_sky(overlap=overlap, delta=apply_sky)
-            #s2, w2, area2 = images[j].calc_sky(overlap=overlap, delta=apply_sky)
-            #if area1 == 0.0 or area2 == 0.0 or s1 is None or s2 is None:
-                #continue
-            #A[j,i] = s1
-            #W[j,i] = w1
-            #A[i,j] = s2
-            #W[i,j] = w2
-    #return A, W
+# def _overlap_matrix(images, apply_sky=True):
+#     # TODO: to improve performance, the nested loops could be parallelized
+#     # since _calc_sky() here can be called independently from previous steps.
+#     ns = len(images)
+#     A = np.zeros((ns, ns), dtype=float)
+#     W = np.zeros((ns, ns), dtype=float)
+#     for i in range(ns):
+#         for j in range(i+1, ns):
+#             overlap = images[i].intersection(images[j])
+#             s1, w1, area1 = images[i].calc_sky(overlap=overlap, delta=apply_sky)
+#             s2, w2, area2 = images[j].calc_sky(overlap=overlap, delta=apply_sky)
+#             if area1 == 0.0 or area2 == 0.0 or s1 is None or s2 is None:
+#                 continue
+#             A[j,i] = s1
+#             W[j,i] = w1
+#             A[i,j] = s2
+#             W[i,j] = w2
+#     return A, W
 
 # bug workaround version:
 def _overlap_matrix(images, apply_sky=True):
-    #TODO: to improve performance, the nested loops could be parallelized
+    # TODO: to improve performance, the nested loops could be parallelized
     # since _calc_sky() here can be called independently from previous steps.
     ns = len(images)
     A = np.zeros((ns, ns), dtype=float)

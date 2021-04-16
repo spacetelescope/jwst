@@ -39,7 +39,7 @@ class Image2Pipeline(Pipeline):
         'flat_field': flat_field_step.FlatFieldStep,
         'photom': photom_step.PhotomStep,
         'resample': resample_step.ResampleStep
-        }
+    }
 
     # List of normal imaging exp_types
     image_exptypes = ['MIR_IMAGE', 'NRC_IMAGE', 'NIS_IMAGE', 'FGS_IMAGE']
@@ -155,7 +155,7 @@ class Image2Pipeline(Pipeline):
         # Resample individual exposures, but only if it's one of the
         # regular 2D science image types
         if input.meta.exposure.type.upper() in self.image_exptypes and \
-        len(input.data.shape) == 2:
+                len(input.data.shape) == 2:
             self.resample.save_results = self.save_results
             self.resample.suffix = 'i2d'
             self.resample(input)

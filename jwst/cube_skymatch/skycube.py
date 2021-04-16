@@ -40,6 +40,7 @@ class SkyCube():
     (:math:`\alpha`, :math:`\delta`, :math:`\lambda`) instead of the
     image/cube coordinates (x, y, z).
     """
+
     def __init__(self, data, wcs=None, wcsinfo=None,
                  weights=None, cube_weight=1.0,
                  bkg_deg=0, bkg_center=None,
@@ -142,7 +143,7 @@ class SkyCube():
 
         bkg_degree_p1 = tuple((i + 1 for i in self._bkg_degree))
         self._bkg_coeff = np.zeros(bkg_degree_p1, dtype=float)
-        self._bkg_status = 1 # not computed
+        self._bkg_status = 1  # not computed
         self._bkg_cube = None
         self._bkg_cube_dirty = True
 
@@ -383,7 +384,6 @@ class SkyCube():
     @skystat.setter
     def skystat(self, skystat):
         self._skystat = skystat
-
 
     def combine_with_other(self, other):
         """

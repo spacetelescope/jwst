@@ -51,10 +51,10 @@ class AmiAnalyzeStep(Step):
                     raise RuntimeError("Only 2D ImageModel data can be processed.")
                 # Get the name of the filter throughput reference file to use
                 throughput_reffile = self.get_reference_file(input_model,
-                                       'throughput')
+                                                             'throughput')
 
                 self.log.info('Using filter throughput reference file %s',
-                               throughput_reffile)
+                              throughput_reffile)
 
                 # Check for a valid reference file
                 if throughput_reffile == 'N/A':

@@ -10,7 +10,7 @@ def main():
 
     # Parse command line arguments
     description_text = \
-    """
+        """
 Edit Association File
 
 This script adds or removes filenames from an association file. The
@@ -28,7 +28,7 @@ When removing files, the filename must be found in the association. If
 not, no change will be made to the file.
     """
     parser = argparse.ArgumentParser(description=description_text,
-                formatter_class=argparse.RawDescriptionHelpFormatter)
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
 
     arg_group = parser.add_mutually_exclusive_group()
     arg_group.add_argument('-a', '--add', action='store_true',

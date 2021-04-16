@@ -667,6 +667,25 @@ class Asn_Lv3TSO(AsnMixin_Science):
                 ],
                 reduce=Constraint.notany
             ),
+            # Don't allow NIRCam engineering mode
+            # with PUPIL='CLEAR' in tso3
+            Constraint(
+                [
+                    Constraint([
+                        DMSAttrConstraint(
+                            name='restricted_grism',
+                            sources=['exp_type'],
+                            value = ('nrc_tsgrism')
+                        ),
+                        DMSAttrConstraint(
+                            name='grism_clear',
+                            sources=['pupil'],
+                            value = ('clear')
+                        ),
+                    ]),
+                ],
+                reduce=Constraint.notany
+            )
         ])
 
         super(Asn_Lv3TSO, self).__init__(*args, **kwargs)

@@ -1,7 +1,7 @@
 # %ECSV 0.9
 # ---
 # datatype:
-# - {name: id, datatype: int64}
+# - {name: label, datatype: int64}
 # - {name: xcentroid, unit: pix, datatype: float64}
 # - {name: ycentroid, unit: pix, datatype: float64}
 # - {name: sky_centroid.ra, unit: deg, datatype: float64}
@@ -122,7 +122,7 @@
 #       unit: *id002
 #       value: !astropy.table.SerializedColumn {name: ycentroid}
 # schema: astropy-2.0
-id xcentroid ycentroid sky_centroid.ra sky_centroid.dec area source_sum source_sum_err semimajor_axis_sigma semiminor_axis_sigma orientation sky_bbox_ll.ra sky_bbox_ll.dec sky_bbox_ul.ra sky_bbox_ul.dec sky_bbox_lr.ra sky_bbox_lr.dec sky_bbox_ur.ra sky_bbox_ur.dec orientation_sky isophotal_abmag isophotal_abmag_err is_star
+label xcentroid ycentroid sky_centroid.ra sky_centroid.dec area source_sum source_sum_err semimajor_axis_sigma semiminor_axis_sigma orientation sky_bbox_ll.ra sky_bbox_ll.dec sky_bbox_ul.ra sky_bbox_ul.dec sky_bbox_lr.ra sky_bbox_lr.dec sky_bbox_ur.ra sky_bbox_ur.dec orientation_sky isophotal_abmag isophotal_abmag_err is_star
 2 1777.652238481037 170.01540474826263 53.14666557034219 -27.80713677752155 75.0 728.18805 2.9282207 1.5637714124328412 1.4929967724271964 5.940707967484156 53.14677076477291 -27.80722012009914 53.14677277145135 -27.80705602898487 53.14654402563116 -27.80721795051216 53.14654603265186 -27.807053859401304 276.553125629852 20.394437789916992 0.004366008 True
 3 252.0518174088754 276.8019135457481 53.17813554840662 -27.805487142968335 117.0 1621.8623 4.3626847 1.6801889279565265 1.6497992805681438 19.14707952799964 53.17826922515514 -27.805603303521906 53.17827183728369 -27.805384514766672 53.178001263967154 -27.805600800209078 53.178003876634996 -27.805382011458658 289.7594971903675 19.525012969970703 0.0029205466 True
 4 643.0723319287848 417.31178148916507 53.17010646964325 -27.8028497833051 280.0 4258.8887 7.0671167 2.461319256973988 2.152392199285991 35.88685081396852 53.17030184339177 -27.803012297634876 53.17030578554253 -27.8026841147135 53.16991021740034 -27.803008616299795 53.16991416073337 -27.80268043338929 306.49926847633634 18.476806640625 0.0018016493 True

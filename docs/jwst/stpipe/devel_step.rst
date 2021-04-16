@@ -21,22 +21,20 @@ description. A more detailed discussion can be found in
 
 Steps get their inputs from two sources:
 
-    - Configuration parameters come from the configuration file or
+    - Configuration parameters come from the parameter file or
       commandline and are set as member variables on the Step object
       by the stpipe framework.
 
     - Arguments are passed to the Step’s `process` function as regular
       function arguments.
 
-Configuration parameters should be used to specify things that must be
-determined outside of the code by a user using the class.  Arguments
-should be used to pass data that needs to go from one step to another
-as part of a larger pipeline.  Another way to think about this is: if
-the user would want to examine or change the value, use a
-configuration parameter.
+Parameters should be used to specify things that must be determined outside of
+the code by a user using the class. Arguments should be used to pass data that
+needs to go from one step to another as part of a larger pipeline. Another way
+to think about this is: if the user would want to examine or change the value,
+use a parameter.
 
-The configuration parameters are defined by the
-:ref:`Step.spec <the-spec-member>` member. 
+The parameters are defined by the :ref:`Step.spec <the-spec-member>` member.
 
 Input Files, Associations, and Directories
 ``````````````````````````````````````````
@@ -50,13 +48,12 @@ directory as the association file itself.
 Output Files and Directories
 ````````````````````````````
 
-The step will generally return its output as a data model. Every step
-has implicitly created configuration parameters `output_dir` and
-`output_file` which the user can use to specify the directory and file
-to save this model to. Since the `stpipe` architecture generally
-creates output file names, in general, it is expected that `output_file`
-be rarely specified, and that different sets of outputs be separated
-using `output_dir`.
+The step will generally return its output as a data model. Every step has
+implicitly created parameters `output_dir` and `output_file` which the user can
+use to specify the directory and file to save this model to. Since the `stpipe`
+architecture generally creates output file names, in general, it is expected
+that `output_file` be rarely specified, and that different sets of outputs be
+separated using `output_dir`.
 
 Output Suffix
 -------------
@@ -76,25 +73,25 @@ at the end of the base file name. By default this suffix is the class
 name of the step that produced the results. Use the `suffix` parameter
 to explicitly change the suffix.
 
-For pipelines, this can be done either in the default coniguration
-file, or within the code itself. See `calwebb_dark` for an example
-of specifying in the configuration.
+For pipelines, this can be done either in a parameter file, or within the code
+itself. See :ref:`calwebb_dark <calwebb_dark>` for an example of specifying in
+the parameter file.
 
 For an example where the suffix can only be determined at runtime, see
-`calwebb_detector1`. For an example of a pipeline that returns many
-results, see `calwebb_spec2`.
+:ref:`calwebb_detector1 <calwebb_detector1>`. For an example of a pipeline that returns many
+results, see :ref:`calwebb_spec2 <calwebb_spec2>`.
 
 The Python class
 ----------------
 
-At a minimum, the Python Step class should inherit from `stpipe.Step`,
-implement a ``process`` method to do the actual work of the step and
-have a `spec` member to describe its configuration parameters.
+At a minimum, the Python Step class should inherit from `stpipe.Step`, implement
+a ``process`` method to do the actual work of the step and have a `spec` member
+to describe its parameters.
 
 1. Objects from other Steps in a pipeline are passed as arguments to
    the ``process`` method.
 
-2. The configuration parameters described in :ref:`configuring-a-step`
+2. The parameters described in :ref:`configuring-a-step`
    are available as member variables on ``self``.
 
 3. To support the caching suspend/resume feature of pipelines, images
@@ -104,18 +101,17 @@ have a `spec` member to describe its configuration parameters.
    here to ensure that if the input is a file path that the file will
    be appropriately closed.
 
-4. Use `get_reference_file_model` method to load any CRDS reference
-   files used by the Step.  This will make a cached network request to
-   CRDS.  If the user of the step has specified an override for the
-   reference file in either the configuration file or at the command
-   line, the override file will be used instead.  (See
-   :ref:`interfacing-with-crds`).
+4. Use `get_reference_file_model` method to load any CRDS reference files used
+   by the Step. This will make a cached network request to CRDS. If the user of
+   the step has specified an override for the reference file in either the
+   parameter file or at the command line, the override file will be used
+   instead. (See :ref:`interfacing-with-crds`).
 
 5. Objects to pass to other Steps in the pipeline are simply returned
    from the function.  To return multiple objects, return a tuple.
 
-6. The configuration parameters for the step are described in the
-   `spec` member in the `configspec` format.
+6. The parameters for the step are described in the `spec` member in the
+   `configspec` format.
 
 7. Declare any CRDS reference files used by the Step.  (See
    :ref:`interfacing-with-crds`).
@@ -169,13 +165,13 @@ The spec member
 ---------------
 
 The `spec` member variable is a string containing information about
-the configuration parameters.  It is in the `configspec` format
+the parameters.  It is in the `configspec` format
 defined in the `ConfigObj` library that stpipe uses.
 
-The `configspec` format defines the types of the configuration
-parameters, as well as allowing an optional tree structure.
+The `configspec` format defines the types of the parameters, as well as allowing
+an optional tree structure.
 
-The types of configuration parameters are declared like this::
+The types of parameters are declared like this::
 
     n_iterations = integer(1, 100)  # The number of iterations to run
     factor = float()                # A multiplication factor
@@ -184,7 +180,7 @@ The types of configuration parameters are declared like this::
 Note that each parameter may have a comment.  This comment is
 extracted and displayed in help messages and docstrings etc.
 
-Configuration parameters can be grouped into categories using
+Parameters can be grouped into categories using
 ini-file-like syntax::
 
     [red]
@@ -256,12 +252,12 @@ The following is a list of the commonly useful configspec types.
 
     Normally, steps will receive input files as parameters and return
     output files from their process methods.  However, in cases where
-    paths to files should be specified in the configuration file,
+    paths to files should be specified in the parameter file,
     there are some extra parameter types that stpipe provides that
     aren’t part of the core configobj library.
 
     `input_file`: Specifies an input file.  Relative paths are
-    resolved against the location of the configuration file.  The file
+    resolved against the location of the parameter file.  The file
     must also exist.
 
     `output_file`: Specifies an output file.  Identical to
@@ -283,20 +279,19 @@ things to do:
    file.
 
 2. Declare the reference file types used by the Step in the
-   `reference_file_types` member.  This information is used by the
-   stpipe framework for two purposes: a) to pre-cache the reference
-   files needed by a Pipeline before any of the pipeline processing
-   actually runs, and b) to add override configuration parameters to
-   the Step's configspec.
+   `reference_file_types` member. This information is used by the stpipe
+   framework for two purposes: a) to pre-cache the reference files needed by a
+   Pipeline before any of the pipeline processing actually runs, and b) to add
+   override parameters to the Step's configspec.
 
-For each reference file type that the Step declares, an `override_*`
-configuration parameter is added to the Step's configspec.  For
-example, if a step declares the following::
+For each reference file type that the Step declares, an `override_*` parameter
+is added to the Step's configspec. For example, if a step declares the
+following::
 
    reference_file_types = ['flat_field']
 
 then the user can override the flat field reference file using the
-configuration file::
+parameter file::
 
    override_flat_field = /path/to/my_reference_file.fits
 

@@ -54,7 +54,7 @@ def textbox(text, width=78, boxchar='#', indent=0):
     """
 
     min_width = len(boxchar) * 2 + 3
-    width = max(width-indent, min_width)
+    width = max(width - indent, min_width)
     indentspace = indent * ' '
 
     wrap_width = width - min_width + 1

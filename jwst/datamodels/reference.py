@@ -1,9 +1,11 @@
 import warnings
 
 from stdatamodels.validate import ValidationWarning
+from stcal.dynamicdq import dynamic_mask
 
 from .model_base import JwstDataModel
-from .dynamicdq import dynamic_mask
+from .dqflags import pixel
+
 
 __all__ = ['ReferenceFileModel']
 
@@ -72,7 +74,7 @@ class ReferenceImageModel(ReferenceFileModel):
         self.err = self.err
 
         if self.hasattr('dq_def'):
-            self.dq = dynamic_mask(self)
+            self.dq = dynamic_mask(self, pixel)
 
 
 class ReferenceCubeModel(ReferenceFileModel):
@@ -98,6 +100,7 @@ class ReferenceCubeModel(ReferenceFileModel):
         # Implicitly create arrays
         self.dq = self.dq
         self.err = self.err
+
 
 class ReferenceQuadModel(ReferenceFileModel):
     """

@@ -80,34 +80,32 @@ class MyPipeline(Pipeline):
         'flat_field': FlatField,
         'combine': Combine,
         'display': Display
-        }
+    }
 
     spec = """
     science_filename = input_file()  # The input science filename
     flat_filename = input_file(default=None)     # The input flat filename
-    output_filename = output_file()  # The output filename
     """
 
     def process(self, *args):
         science = datamodels.open(self.science_filename)
         if self.flat_filename is None:
-            self.flat_filename = join(dirname(__file__), "data/flat.fits")
+            self.flat_filename = join(dirname(__file__), "data", "flat.fits")
         flat = datamodels.open(self.flat_filename)
         calibrated = []
         calibrated.append(self.flat_field(science, flat))
         combined = self.combine(calibrated)
         self.display(combined)
         dm = datamodels.ImageModel(combined)
-        dm.save(self.output_filename)
+        self.save_model(dm)
         science.close()
         flat.close()
         return dm
 
 
-def test_pipeline(_jail):
-    pipeline_fn = join(dirname(__file__), 'steps', 'python_pipeline.cfg')
-    pipe = Pipeline.from_config_file(pipeline_fn)
-    pipe.output_filename = "output.fits"
+def test_pipeline_from_config_file(_jail):
+    config_file_path = join(dirname(__file__), 'steps', 'python_pipeline.cfg')
+    pipe = Pipeline.from_config_file(config_file_path)
 
     assert pipe.flat_field.threshold == 42.0
     assert pipe.flat_field.multiplier == 2.0
@@ -118,15 +116,14 @@ def test_pipeline(_jail):
 def test_pipeline_python(_jail):
     steps = {
         'flat_field': {'threshold': 42.0}
-        }
+    }
 
     pipe = MyPipeline(
         "MyPipeline",
-        config_file=__file__,
         steps=steps,
         science_filename=abspath(join(dirname(__file__), 'data', 'science.fits')),
         flat_filename=abspath(join(dirname(__file__), 'data', 'flat.fits')),
-        output_filename="output.fits")
+        output_file="python.fits")
 
     assert pipe.flat_field.threshold == 42.0
     assert pipe.flat_field.multiplier == 1.0
@@ -174,11 +171,11 @@ def test_prefetch(_jail, monkeypatch):
     assert not mock_get_ref.called
 
 
-def test_pipeline_commandline(_jail):
+def test_pipeline_from_cmdline_cfg(_jail):
     args = [
         join(dirname(__file__), 'steps', 'python_pipeline.cfg'),
         '--steps.flat_field.threshold=47',
-        ]
+    ]
 
     pipe = Step.from_cmdline(args)
 
@@ -188,13 +185,13 @@ def test_pipeline_commandline(_jail):
     pipe.run()
 
 
-def test_pipeline_commandline_class(_jail):
+def test_pipeline_from_cmdline_class(_jail):
     args = [
         'jwst.stpipe.tests.test_pipeline.MyPipeline',
         f"--science_filename={join(dirname(__file__), 'data', 'science.fits')}",
-        '--output_filename=output.fits',
+        '--output_file=output.fits',
         '--steps.flat_field.threshold=47'
-        ]
+    ]
 
     pipe = Step.from_cmdline(args)
 
@@ -215,7 +212,7 @@ def test_pipeline_commandline_invalid_args():
         '--flat_filename={0}'.format(
             abspath(join(dirname(__file__), 'data', 'flat.fits'))),
         '--steps.flat_field.threshold=47'
-        ]
+    ]
 
     sys.stdout = buffer = StringIO()
 

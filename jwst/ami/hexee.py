@@ -67,8 +67,8 @@ def g_eeAG(xi, eta, **kwargs):
 
     g1 = np.exp(-i * Pi * (2 * eta / np.sqrt(3) + xi))
     g2 = (np.sqrt(3) * eta - 3 * xi)
-    g3 = (np.exp(i * Pi * np.sqrt(3) * eta) - np.exp(i * Pi * \
-            (4 * eta / np.sqrt(3) + xi)))
+    g3 = (np.exp(i * Pi * np.sqrt(3) * eta) - np.exp(i * Pi *
+                                                     (4 * eta / np.sqrt(3) + xi)))
     g4 = (np.sqrt(3) * eta + 3 * xi)
     g5 = (np.exp(i * Pi * eta / np.sqrt(3)) - np.exp(i * Pi * xi))
     g6 = (4 * Pi * Pi * (eta * eta * eta - 3 * eta * xi * xi))
@@ -127,7 +127,7 @@ def glimit(xi, eta, **kwargs):
 
     g1 = (np.exp(-1j * Pi * xi) / (2 * np.sqrt(3) * Pi * Pi * xi * xi))
     g2 = (-1 + 1j * Pi * xi + np.exp(1j * Pi * xi) - 2j * Pi * xi *
-            np.exp(1J * Pi * xi))
+          np.exp(1J * Pi * xi))
     g = g1 * g2
 
     return g
@@ -235,8 +235,8 @@ def hex_eeAG(s=(121, 121), c=None, d=0.80, lam=4.3e-6,
         hr = hex_complex.real
         hi = hex_complex.imag
         log.debug('hex_eeAG: hr.min: %s, hr.mean: %s, hr.max: %s',
-                   hr.min(), hr.mean(), hr.max())
+                  hr.min(), hr.mean(), hr.max())
         log.debug('hex_eeAG: hi.min: %s, hi.mean: %s, hi.max: %s',
-                   hi.min(), hi.mean(), hi.max())
+                  hi.min(), hi.mean(), hi.max())
 
     return np.abs(hex_complex)

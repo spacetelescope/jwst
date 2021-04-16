@@ -67,6 +67,9 @@ from .saturation import SaturationModel
 from .slit import SlitModel, SlitDataModel
 from .source_container import SourceModelContainer
 from .spec import SpecModel
+from .speckernel import SpecKernelModel
+from .specprofile import SpecProfileModel, SpecProfileSingleModel
+from .spectrace import SpecTraceModel, SpecTraceSingleModel
 from .straylight import StrayLightModel
 from .superbias import SuperBiasModel
 from .throughput import ThroughputModel
@@ -74,14 +77,14 @@ from .trapdensity import TrapDensityModel
 from .trappars import TrapParsModel
 from .trapsfilled import TrapsFilledModel
 from .tsophot import TsoPhotModel
+from .wavemap import WaveMapModel, WaveMapSingleModel
 from .wcs_ref_models import (DistortionModel, DistortionMRSModel, SpecwcsModel,
-    RegionsModel, WavelengthrangeModel, CameraModel, CollimatorModel, OTEModel,
-    FOREModel, FPAModel, IFUPostModel, IFUFOREModel, IFUSlicerModel, MSAModel,
-    FilteroffsetModel, DisperserModel, NIRCAMGrismModel, NIRISSGrismModel,
-    WaveCorrModel)
+                             RegionsModel, WavelengthrangeModel, CameraModel, CollimatorModel, OTEModel,
+                             FOREModel, FPAModel, IFUPostModel, IFUFOREModel, IFUSlicerModel, MSAModel,
+                             FilteroffsetModel, DisperserModel, NIRCAMGrismModel, NIRISSGrismModel,
+                             WaveCorrModel)
 from .wfssbkg import WfssBkgModel
 from .util import open
-
 
 
 __all__ = [
@@ -91,7 +94,7 @@ __all__ = [
     'AmiLgModel',
     'FgsImgApcorrModel', 'MirImgApcorrModel', 'NrcImgApcorrModel', 'NisImgApcorrModel',
     'MirLrsApcorrModel', 'MirMrsApcorrModel', 'NrcWfssApcorrModel', 'NisWfssApcorrModel',
-    'NrsMosApcorrModel', 'NrsFsApcorrModel','NrsIfuApcorrModel',
+    'NrsMosApcorrModel', 'NrsFsApcorrModel', 'NrsIfuApcorrModel',
     'AsnModel',
     'BarshadowModel', 'CameraModel', 'CollimatorModel',
     'CombinedSpecModel', 'ContrastModel', 'CubeModel',
@@ -111,11 +114,12 @@ __all__ = [
     'IFUFOREModel', 'IFUImageModel', 'IFUPostModel', 'IFUSlicerModel',
     'ImageModel', 'IPCModel', 'IRS2Model', 'LastFrameModel', 'Level1bModel',
     'LinearityModel', 'MaskModel', 'ModelContainer', 'MSAModel',
-    'MultiCombinedSpecModel','MultiExposureModel',
+    'MultiCombinedSpecModel', 'MultiExposureModel',
     'MultiExtract1dImageModel', 'MultiSlitModel',
     'MultiProductModel',
-    'MultiSpecModel', 'OTEModel',
-    'NIRCAMGrismModel','NIRISSGrismModel',
+    'MultiSpecModel',
+    'NIRCAMGrismModel', 'NIRISSGrismModel',
+    'OTEModel',
     'OutlierParsModel',
     'PathlossModel',
     'PersistenceSatModel',
@@ -133,11 +137,17 @@ __all__ = [
     'ResolutionModel', 'MiriResolutionModel',
     'RSCDModel', 'SaturationModel', 'SlitDataModel', 'SlitModel', 'SpecModel',
     'SourceModelContainer',
-    'StrayLightModel', 'SuperBiasModel', 'SpecwcsModel',
+    'SpecKernelModel',
+    'SpecProfileModel', 'SpecProfileSingleModel',
+    'SpecTraceModel', 'SpecTraceSingleModel',
+    'SpecwcsModel',
+    'StrayLightModel', 'SuperBiasModel',
     'ThroughputModel',
     'TrapDensityModel', 'TrapParsModel', 'TrapsFilledModel',
     'TsoPhotModel',
-    'WavelengthrangeModel', 'WaveCorrModel', 'WfssBkgModel']
+    'WavelengthrangeModel', 'WaveCorrModel',
+    'WaveMapModel', 'WaveMapSingleModel',
+    'WfssBkgModel']
 
 # Initialize the astropy.io registry,
 # but only the first time this module is called
@@ -152,4 +162,4 @@ except NameError:
 
 _all_models = __all__[1:]
 _local_dict = locals()
-_defined_models = {k:_local_dict[k] for k in _all_models}
+_defined_models = {k: _local_dict[k] for k in _all_models}

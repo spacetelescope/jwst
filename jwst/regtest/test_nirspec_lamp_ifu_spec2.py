@@ -37,7 +37,7 @@ def test_nirspec_lamp_ifu_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
     # Run the pipeline and retrieve outputs
     rtdata = run_pipeline
     output = replace_suffix(
-            os.path.splitext(os.path.basename(rtdata.input))[0], suffix) + '.fits'
+        os.path.splitext(os.path.basename(rtdata.input))[0], suffix) + '.fits'
     rtdata.output = output
 
     # Get the truth files

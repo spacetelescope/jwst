@@ -177,7 +177,7 @@ def find_crs(data, group_dq, read_noise, rej_threshold, nframes, flag_4_neighbor
 
                 # Jumps must be within a certain range to have neighbors flagged
                 if ratio[cr_row[j], cr_col[j], cr_group[j] - 1] < max_jump_to_flag_neighbors and \
-                    ratio[cr_row[j], cr_col[j], cr_group[j] - 1] > min_jump_to_flag_neighbors:
+                        ratio[cr_row[j], cr_col[j], cr_group[j] - 1] > min_jump_to_flag_neighbors:
 
                     # This section saves flagged neighbors that are above or below the current range of row. If this
                     # method is running in a single process, the row above and below are not used. If it is running in
@@ -222,7 +222,7 @@ def get_clipped_median(num_differences, diffs_to_ignore, differences, sorted_ind
         # In addition, decrease the index by 1 for every two diffs_to_ignore,
         # these will be saturated values in this case
         row, col = np.indices(diffs_to_ignore.shape)
-        pixel_med_index = sorted_index[row, col, (num_differences - (diffs_to_ignore[row, col] + 1))//2]
+        pixel_med_index = sorted_index[row, col, (num_differences - (diffs_to_ignore[row, col] + 1)) // 2]
         pixel_med_diff = differences[row, col, pixel_med_index]
 
         # For pixels with an even number of differences the median is the mean of the two central values.
@@ -232,12 +232,12 @@ def get_clipped_median(num_differences, diffs_to_ignore, differences, sorted_ind
         pixel_med_index2 = np.zeros_like(pixel_med_index)
         pixel_med_index2[even_group_rows, even_group_cols] = \
             sorted_index[even_group_rows, even_group_cols,
-                         (num_differences - (diffs_to_ignore[even_group_rows, even_group_cols] + 3))//2]
+                         (num_differences - (diffs_to_ignore[even_group_rows, even_group_cols] + 3)) // 2]
 
         # Average together the two central values
         pixel_med_diff[even_group_rows, even_group_cols] = (
             pixel_med_diff[even_group_rows, even_group_cols] +
-            differences[even_group_rows, even_group_cols, pixel_med_index2[even_group_rows, even_group_cols]])/2.0
+            differences[even_group_rows, even_group_cols, pixel_med_index2[even_group_rows, even_group_cols]]) / 2.0
 
     # The 1-D array case is a lot simplier.
     else:

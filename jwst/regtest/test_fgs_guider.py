@@ -9,6 +9,8 @@ from . import regtestdata as rt
 
 
 file_roots = ['exptype_fgs_acq1', 'exptype_fgs_fineguide', 'exptype_fgs_id_image', 'exptype_fgs_id_stack']
+
+
 @pytest.fixture(scope='module', params=file_roots, ids=file_roots)
 def run_guider_pipelines(jail, rtdata_module, request):
     """Run pipeline for guider data"""
@@ -26,7 +28,10 @@ def run_guider_pipelines(jail, rtdata_module, request):
 
     return rtdata
 
+
 guider_suffixes = ['cal', 'dq_init', 'guider_cds']
+
+
 @pytest.mark.bigdata
 @pytest.mark.parametrize('suffix', guider_suffixes, ids=guider_suffixes)
 def test_fgs_guider(run_guider_pipelines, fitsdiff_default_kwargs, suffix):

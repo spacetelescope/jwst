@@ -19,10 +19,11 @@ from scipy import ndimage
 from scipy.spatial import cKDTree
 
 from photutils import __version__ as photutils_version
-from photutils import Background2D, MedianBackground
-from photutils import detect_sources, deblend_sources, source_properties
-from photutils import CircularAperture, CircularAnnulus, aperture_photometry
-from photutils.detection.findstars import _StarFinderKernel
+from photutils.background import Background2D, MedianBackground
+from photutils.segmentation import (detect_sources, deblend_sources,
+                                    SourceCatalog)
+from photutils.aperture import (CircularAperture, CircularAnnulus,
+                                aperture_photometry)
 from photutils.utils._wcs_helpers import _pixel_scale_angle_at_skycoord
 
 from jwst import __version__ as jwst_version
@@ -297,15 +298,6 @@ class Background:
         """
         Estimate the 2D background and background RMS noise in an image.
 
-        Parameters
-        ----------
-        box_size : int or array_like (int)
-            The box size along each axis.  If ``box_size`` is a scalar then
-            a square box of size ``box_size`` will be used.  If ``box_size``
-            has two elements, they should be in ``(ny, nx)`` order.
-
-        coverage_mask : bool ndarray
-
         Returns
         -------
         background : `photutils.background.Background2D`
@@ -425,10 +417,7 @@ def make_segment_img(data, threshold, npixels=5.0, kernel=None, mask=None,
     connectivity = 8
     segm = detect_sources(data, threshold, npixels, filter_kernel=kernel,
                           mask=mask, connectivity=connectivity)
-
-    # segm=None for photutils >= 0.7
-    # segm.nlabels=0 for photutils < 0.7
-    if segm is None or segm.nlabels == 0:
+    if segm is None:
         return None
 
     # source deblending requires scikit-image
@@ -467,9 +456,9 @@ def calc_total_error(model):
     return np.zeros_like(model.data)
 
 
-class SourceCatalog:
+class JWSTSourceCatalog:
     """
-    Class for the source catalog.
+    Class for the JWST source catalog.
 
     Parameters
     ----------
@@ -532,7 +521,8 @@ class SourceCatalog:
         self.ci_star_thresholds = ci_star_thresholds
         self.error = error  # total error array
         self.kernel = kernel
-        self.kernel_fwhm = kernel_fwhm
+        self.kernel_sigma = kernel_fwhm * gaussian_fwhm_to_sigma
+
         self.aperture_params = aperture_params
         self.abvega_offset = abvega_offset
 
@@ -597,7 +587,7 @@ class SourceCatalog:
         for the segment catalog.
         """
         desc = OrderedDict()
-        desc['id'] = 'Unique source identification number'
+        desc['label'] = 'Unique source identification label number'
         desc['xcentroid'] = 'X pixel value of the source centroid'
         desc['ycentroid'] = 'Y pixel value of the source centroid'
         desc['sky_centroid'] = 'Sky coordinate of the source centroid'
@@ -642,32 +632,26 @@ class SourceCatalog:
 
         The values are set as dynamic attributes.
         """
-        source_props = source_properties(self.model.data.astype(float),
-                                         self.segment_img,
-                                         error=self.error,
-                                         filter_kernel=self.kernel,
-                                         wcs=self.wcs)
+        segm_cat = SourceCatalog(self.model.data.astype(float),
+                                 self.segment_img, error=self.error,
+                                 kernel=self.kernel, wcs=self.wcs)
 
-        self._xpeak = source_props.maxval_xpos.value.astype(int)
-        self._ypeak = source_props.maxval_ypos.value.astype(int)
+        self._xpeak = segm_cat.maxval_xindex
+        self._ypeak = segm_cat.maxval_yindex
 
         # rename some columns in the output catalog
         prop_names = {}
-        prop_names['isophotal_flux'] = 'source_sum'
-        prop_names['isophotal_flux_err'] = 'source_sum_err'
+        prop_names['isophotal_flux'] = 'segment_flux'
+        prop_names['isophotal_flux_err'] = 'segment_fluxerr'
         prop_names['isophotal_area'] = 'area'
-        prop_names['semimajor_sigma'] = 'semimajor_axis_sigma'
-        prop_names['semiminor_sigma'] = 'semiminor_axis_sigma'
 
         for column in self.segment_colnames:
             # define the property name
             prop_name = prop_names.get(column, column)
-
             try:
-                value = getattr(source_props, prop_name)
+                value = getattr(segm_cat, prop_name)
             except AttributeError:
                 value = getattr(self, prop_name)
-
             setattr(self, column, value)
 
         return
@@ -677,7 +661,7 @@ class SourceCatalog:
         """
         An array containing only NaNs.
         """
-        values = np.empty(len(self.id))
+        values = np.empty(len(self.label))
         values.fill(np.nan)
         return values
 
@@ -979,13 +963,6 @@ class SourceCatalog:
     def _ci_ee_indices(self):
         """
         The EE indicies for the concentration indices.
-
-        The three concentration indices are the difference in
-        AB magnitudes between:
-
-            * the smallest and middle aperture radii/EE;  idx = (0, 1)
-            * the middle and largest aperture radii/EE; idx (1, 2)
-            * the smallest and largest aperture radii/EE; idx (0, 2)
         """
         # NOTE: the EE values are always in increasing order
         return ((0, 1), (1, 2), (0, 2))
@@ -995,7 +972,7 @@ class SourceCatalog:
         """
         The column names of the three concentration indices.
         """
-        return [f'CI_{self.aperture_ee[i]}_{self.aperture_ee[j]}'
+        return [f'CI_{self.aperture_ee[j]}_{self.aperture_ee[i]}'
                 for (i, j) in self._ci_ee_indices]
 
     @lazyproperty
@@ -1004,25 +981,28 @@ class SourceCatalog:
         The concentration indicies column descriptions.
         """
         return ['Concentration index calculated as '
-                f'{self.aperture_abmag_colnames[2*i]} - '
-                f'{self.aperture_abmag_colnames[2*j]}' for (i, j) in
+                f'({self.aperture_flux_colnames[2*j]} / '
+                f'{self.aperture_flux_colnames[2*i]})' for (i, j) in
                 self._ci_ee_indices]
 
     @lazyproperty
     def concentration_indices(self):
         """
-        A list of concentration indices, calculated as the difference of
-        AB magnitudes between:
+        A list of concentration indices, calculated as the flux
+        ratios of:
 
-            * the smallest and middle aperture radii/EE
-            * the middle and largest aperture radii/EE
-            * the smallest and largest aperture radii/EE
+            * the middle / smallest aperture radii/EE,
+              e.g., CI_50_30 = aper50_flux / aper30_flux
+            * the largest / middle aperture radii/EE,
+              e.g., CI_70_50 = aper70_flux / aper50_flux
+            * the largest / smallest aperture radii/EE,
+              e.g., CI_70_30 = aper70_flux / aper30_flux
         """
-        abmags = [(self.aperture_abmag_colnames[2*i],
-                   self.aperture_abmag_colnames[2*j]) for (i, j) in
+        fluxes = [(self.aperture_flux_colnames[2 * j],
+                   self.aperture_flux_colnames[2 * i]) for (i, j) in
                   self._ci_ee_indices]
-        return [getattr(self, mag1) - getattr(self, mag2)
-                for mag1, mag2 in abmags]
+        return [getattr(self, flux1).value / getattr(self, flux2).value
+                for flux1, flux2 in fluxes]
 
     def set_ci_properties(self):
         """
@@ -1042,27 +1022,48 @@ class SourceCatalog:
         return np.logical_not(np.logical_and(mask1, mask2))
 
     @lazyproperty
+    def _kernel_size(self):
+        """
+        The DAOFind kernel size (in both x and y dimensions).
+        """
+        # always odd
+        return 2 * int(max(2.0, 1.5 * self.kernel_sigma)) + 1
+
+    @lazyproperty
+    def _kernel_center(self):
+        """
+        The DAOFind kernel x/y center.
+        """
+        return (self._kernel_size - 1) // 2
+
+    @lazyproperty
+    def _kernel_mask(self):
+        """
+        The DAOFind kernel circular mask.
+        NOTE: 1=good pixels, 0=masked pixels
+        """
+        yy, xx = np.mgrid[0:self._kernel_size, 0:self._kernel_size]
+        radius = np.sqrt((xx - self._kernel_center) ** 2
+                         + (yy - self._kernel_center) ** 2)
+        return (radius <= max(2.0, 1.5 * self.kernel_sigma)).astype(int)
+
+    @lazyproperty
     def _daofind_kernel(self):
         """
-        The DAOFind kernel.
+        The DAOFind kernel, a 2D circular Gaussian normalized to have
+        zero sum.
         """
-        kernel = _StarFinderKernel(self.kernel_fwhm, ratio=1.0, theta=0.0,
-                                   sigma_radius=1.5, normalize_zerosum=True)
-        return kernel
+        size = self._kernel_size
+        kernel = Gaussian2DKernel(self.kernel_sigma, x_size=size,
+                                  y_size=size).array
+        kernel /= np.max(kernel)
+        kernel *= self._kernel_mask
 
-    @lazyproperty
-    def _kernel_xcenter(self):
-        """
-        The DAOFind kernel x center.
-        """
-        return (self._daofind_kernel.data.shape[1] - 1) // 2
-
-    @lazyproperty
-    def _kernel_ycenter(self):
-        """
-        The DAOFind kernel y center.
-        """
-        return (self._daofind_kernel.data.shape[0] - 1) // 2
+        # normalize the kernel to zero sum
+        npixels = self._kernel_mask.sum()
+        denom = np.sum(kernel**2) - (np.sum(kernel)**2 / npixels)
+        return (((kernel - (kernel.sum() / npixels)) / denom)
+                * self._kernel_mask)
 
     @lazyproperty
     def _daofind_convolved_data(self):
@@ -1070,7 +1071,7 @@ class SourceCatalog:
         The DAOFind convolved data.
         """
         return ndimage.convolve(self.model.data.value,
-                                self._daofind_kernel.data, mode='constant',
+                                self._daofind_kernel, mode='constant',
                                 cval=0.0)
 
     @lazyproperty
@@ -1085,7 +1086,7 @@ class SourceCatalog:
         cutout = []
         for xpeak, ypeak in zip(self._xpeak, self._ypeak):
             cutout.append(extract_array(self.model.data,
-                                        self._daofind_kernel.data.shape,
+                                        self._daofind_kernel.shape,
                                         (ypeak, xpeak),
                                         fill_value=0.0))
         return np.array(cutout)  # all cutouts are the same size
@@ -1102,7 +1103,7 @@ class SourceCatalog:
         cutout = []
         for xpeak, ypeak in zip(self._xpeak, self._ypeak):
             cutout.append(extract_array(self._daofind_convolved_data,
-                                        self._daofind_kernel.data.shape,
+                                        self._daofind_kernel.shape,
                                         (ypeak, xpeak),
                                         fill_value=0.0))
         return np.array(cutout)  # all cutouts are the same size
@@ -1119,12 +1120,12 @@ class SourceCatalog:
 
         Stars generally have a ``sharpness`` between 0.2 and 1.0.
         """
-        npixels = self._daofind_kernel.npixels - 1  # exclude the peak pixel
-        data_masked = self._daofind_cutout * self._daofind_kernel.mask
-        data_peak = self._daofind_cutout[:, self._kernel_ycenter,
-                                         self._kernel_xcenter]
-        conv_peak = self._daofind_cutout_conv[:, self._kernel_ycenter,
-                                              self._kernel_xcenter]
+        npixels = self._kernel_mask.sum() - 1  # exclude the peak pixel
+        data_masked = self._daofind_cutout * self._kernel_mask
+        data_peak = self._daofind_cutout[:, self._kernel_center,
+                                         self._kernel_center]
+        conv_peak = self._daofind_cutout_conv[:, self._kernel_center,
+                                              self._kernel_center]
 
         data_mean = ((np.sum(data_masked, axis=(1, 2)) -
                       data_peak) / npixels)
@@ -1145,14 +1146,13 @@ class SourceCatalog:
         """
         # set the central (peak) pixel to zero
         cutout = self._daofind_cutout_conv.copy()
-        cutout[:, self._kernel_ycenter, self._kernel_xcenter] = 0.0
+        cutout[:, self._kernel_center, self._kernel_center] = 0.0
 
         # calculate the four roundness quadrants
-        quad1 = cutout[:, 0:self._kernel_ycenter + 1,
-                       self._kernel_xcenter + 1:]
-        quad2 = cutout[:, 0:self._kernel_ycenter, 0:self._kernel_xcenter + 1]
-        quad3 = cutout[:, self._kernel_ycenter:, 0:self._kernel_xcenter]
-        quad4 = cutout[:, self._kernel_ycenter + 1:, self._kernel_xcenter:]
+        quad1 = cutout[:, 0:self._kernel_center + 1, self._kernel_center + 1:]
+        quad2 = cutout[:, 0:self._kernel_center, 0:self._kernel_center + 1]
+        quad3 = cutout[:, self._kernel_center:, 0:self._kernel_center]
+        quad4 = cutout[:, self._kernel_center + 1:, self._kernel_center:]
 
         axis = (1, 2)
         sum2 = (-quad1.sum(axis=axis) + quad2.sum(axis=axis) -
@@ -1200,20 +1200,6 @@ class SourceCatalog:
         return np.where(np.isnan(nn_abmag), nn_isomag, nn_abmag)
 
     @lazyproperty
-    def _not_star(self):
-        """
-        Whether the source is not a star.
-        """
-        if np.isnan(self.is_star[0]):
-            # TODO: remove this when ``is_star`` values are available.
-            # this array is all False:
-            is_star = np.zeros(len(self.id), dtype=bool)
-        else:
-            is_star = self.is_star
-
-        return np.logical_not(is_star)
-
-    @lazyproperty
     def aper_total_flux(self):
         """
         The aperture-corrected total flux for sources that are stars,
@@ -1221,9 +1207,8 @@ class SourceCatalog:
         """
         idx = self.n_aper - 1  # apcorr for the largest EE (largest radius)
         flux = (self.aperture_params['aperture_corrections'][idx] *
-                getattr(self, self.aperture_flux_colnames[idx*2]))
-        flux[self._not_star] = np.nan
-
+                getattr(self, self.aperture_flux_colnames[idx * 2]))
+        flux[~self.is_star] = np.nan
         return flux
 
     @lazyproperty
@@ -1234,9 +1219,8 @@ class SourceCatalog:
         """
         idx = self.n_aper - 1  # apcorr for the largest EE (largest radius)
         flux_err = (self.aperture_params['aperture_corrections'][idx] *
-                    getattr(self, self.aperture_flux_colnames[idx*2 + 1]))
-        flux_err[self._not_star] = np.nan
-
+                    getattr(self, self.aperture_flux_colnames[idx * 2 + 1]))
+        flux_err[~self.is_star] = np.nan
         return flux_err
 
     @lazyproperty

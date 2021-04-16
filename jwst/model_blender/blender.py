@@ -39,6 +39,7 @@ class _KeywordMapping:
     A simple class to verify and store information about each mapping
     entry.
     """
+
     def __init__(self, src_kwd, dst_name, agg_func=None, error_type="ignore",
                  error_value=np.nan):
         if not isinstance(src_kwd, str):
@@ -60,13 +61,13 @@ class _KeywordMapping:
             except TypeError:
                 if not hasattr(agg_func, '__call__'):
                     raise TypeError(
-                      "The aggregating function must be a callable object, " +
-                      "None or a sequence of callables")
+                        "The aggregating function must be a callable object, "
+                        "None or a sequence of callables")
                 self.agg_func_is_sequence = False
 
         if error_type not in ('ignore', 'raise', 'constant'):
             raise ValueError(
-              "The error type must be either 'ignore', 'raise' or 'constant'")
+                "The error type must be either 'ignore', 'raise' or 'constant'")
 
         self.src_kwd = src_kwd
         self.dst_name = dst_name
@@ -233,7 +234,7 @@ def metablender(input_models, spec):
             array = np.array(data[i])
             if np.issubdtype(np.int32, array.dtype):
                 # see about recasting as int32
-                if not np.any(array/(2**31 - 1) > 1.):
+                if not np.any(array / (2**31 - 1) > 1.):
                     array = array.astype(np.int32)
             dtype.append((mapping.dst_name, array.dtype))
             arrays.append(array)

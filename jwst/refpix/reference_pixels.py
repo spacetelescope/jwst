@@ -1,4 +1,3 @@
-#
 #  Module for handling Reference Pixels
 #  Final CCWG Recommendation of 6/2013:
 #
@@ -29,13 +28,18 @@
 #
 #  Subarray processing added 7/2018
 #
-#  For NIR exposures, calculate the clipped means of odd and even columns
+#  For NIR exposures, if the value of the meta.exposure.noutputs attribute is 1,
+#  calculate the clipped means of odd and even columns
 #  in detector coordinates.  Subtract the odd mean from the odd columns, and
 #  the even mean from the even columns.  If there are no reference pixels in the
 #  subarray, omit the refpix step.
 #
+#  If the value of meta.exposure.noutputs is 4, calculate odd and even reference
+#  values for each amplifier separately, if available, and subtract those values
+#  from their corresponding data sections.  Also use side reference pixels if
+#  available.
+#
 #  For MIRI subarray exposures, omit the refpix step.
-
 
 import numpy as np
 from scipy import stats
@@ -54,19 +58,19 @@ log.setLevel(logging.DEBUG)
 # accordance with how Python slices work
 
 NIR_reference_sections = {'A': {'top': (2044, 2048, 0, 512),
-                               'bottom': (0, 4, 0, 512),
-                               'side': (0, 2048, 0, 4),
-                               'data': (0, 2048, 0, 512)},
+                                'bottom': (0, 4, 0, 512),
+                                'side': (0, 2048, 0, 4),
+                                'data': (0, 2048, 0, 512)},
                           'B': {'top': (2044, 2048, 512, 1024),
-                               'bottom': (0, 4, 512, 1024),
-                               'data': (0, 2048, 512, 1024)},
+                                'bottom': (0, 4, 512, 1024),
+                                'data': (0, 2048, 512, 1024)},
                           'C': {'top': (2044, 2048, 1024, 1536),
-                               'bottom': (0, 4, 1024, 1536),
-                               'data': (0, 2048, 1024, 1536)},
+                                'bottom': (0, 4, 1024, 1536),
+                                'data': (0, 2048, 1024, 1536)},
                           'D': {'top': (2044, 2048, 1536, 2048),
-                               'bottom': (0, 4, 1536, 2048),
-                               'side': (0, 2048, 2044, 2048),
-                               'data': (0, 2048, 1536, 2048)}
+                                'bottom': (0, 4, 1536, 2048),
+                                'side': (0, 2048, 2044, 2048),
+                                'data': (0, 2048, 1536, 2048)}
                           }
 
 #
@@ -77,17 +81,17 @@ NIR_reference_sections = {'A': {'top': (2044, 2048, 0, 512),
 # 'data': (rowstart, rowstop, colstart, colstop, stride)
 
 MIR_reference_sections = {'A': {'left': (0, 1024, 0),
-                               'right': (0, 1024, 1028),
-                               'data': (0, 1024, 0, 1032, 4)},
+                                'right': (0, 1024, 1028),
+                                'data': (0, 1024, 0, 1032, 4)},
                           'B': {'left': (0, 1024, 1),
-                               'right': (0, 1024, 1029),
-                               'data': (0, 1024, 1, 1032, 4)},
+                                'right': (0, 1024, 1029),
+                                'data': (0, 1024, 1, 1032, 4)},
                           'C': {'left': (0, 1024, 2),
-                               'right': (0, 1024, 1030),
-                               'data': (0, 1024, 2, 1032, 4)},
+                                'right': (0, 1024, 1030),
+                                'data': (0, 1024, 2, 1032, 4)},
                           'D': {'left': (0, 1024, 3),
-                               'right': (0, 1024, 1031),
-                               'data': (0, 1024, 3, 1032, 4)}
+                                'right': (0, 1024, 1031),
+                                'data': (0, 1024, 3, 1032, 4)}
                           }
 
 #
@@ -97,6 +101,7 @@ REFPIX_OK = 0
 BAD_REFERENCE_PIXELS = 1
 SUBARRAY_DOESNTFIT = 2
 SUBARRAY_SKIPPED = 3
+
 
 class Dataset():
     """Base Class to handle passing stuff from routine to routine
@@ -132,6 +137,7 @@ class Dataset():
         separately (MIR only)
 
 """
+
     def __init__(self, input_model,
                  odd_even_columns,
                  use_side_ref_pixels,
@@ -142,7 +148,7 @@ class Dataset():
         if (input_model.meta.subarray.xstart is None or
             input_model.meta.subarray.ystart is None or
             input_model.meta.subarray.xsize is None or
-            input_model.meta.subarray.ysize is None):
+                input_model.meta.subarray.ysize is None):
             raise ValueError('subarray metadata not found')
         self.input_model = input_model
 
@@ -157,6 +163,7 @@ class Dataset():
         self.ncols = ncols
         self.full_shape = (nrows, ncols)
         self.detector = input_model.meta.instrument.detector
+        self.noutputs = input_model.meta.exposure.noutputs
 
         self.xstart = input_model.meta.subarray.xstart
         self.ystart = input_model.meta.subarray.ystart
@@ -164,7 +171,7 @@ class Dataset():
         self.ysize = input_model.meta.subarray.ysize
         self.colstart = self.xstart - 1
         self.colstop = self.colstart + self.xsize
-        self.rowstart = self.ystart -1
+        self.rowstart = self.ystart - 1
         self.rowstop = self.rowstart + self.ysize
         self.odd_even_columns = odd_even_columns
         self.use_side_ref_pixels = use_side_ref_pixels
@@ -238,12 +245,22 @@ class Dataset():
 
         """
         if self.is_subarray:
-            # deal with subarrays
+            # deal with subarrays by embedding the pixeldq array in a full-sized
+            # array with DO_NOT_USE and REFERENCE_PIXEL dqflags bit set where the
+            # reference pixels live, except where the data are embedded
             if self.detector[:3] == 'MIR':
-                self.full_shape = (1024, 1032)
+                fullrows = 1024
+                fullcols = 1032
             else:
-                self.full_shape = (2048, 2048)
+                fullrows = 2048
+                fullcols = 2048
+            self.full_shape = (fullrows, fullcols)
             pixeldq = np.zeros(self.full_shape, dtype=self.input_model.pixeldq.dtype)
+            refpixdq_dontuse = dqflags.pixel['DO_NOT_USE'] | dqflags.pixel['REFERENCE_PIXEL']
+            pixeldq[0:4, :] = refpixdq_dontuse
+            pixeldq[fullrows - 4:fullrows, :] = refpixdq_dontuse
+            pixeldq[4:fullrows - 4, 0:4] = refpixdq_dontuse
+            pixeldq[4:fullrows - 4, fullcols - 4:fullcols] = refpixdq_dontuse
             pixeldq[self.rowstart:self.rowstop, self.colstart:self.colstop] = self.input_model.pixeldq.copy()
         else:
             pixeldq = self.input_model.pixeldq.copy()
@@ -267,7 +284,7 @@ class Dataset():
         if self.is_subarray:
             self.group[self.rowstart:self.rowstop, self.colstart:self.colstop] = self.input_model.data[integration, group].copy()
         else:
-            self.group[:,:] = self.input_model.data[integration, group].copy()
+            self.group[:, :] = self.input_model.data[integration, group].copy()
 
     def restore_group(self, integration, group):
         """Replace input model data with processed group array
@@ -318,6 +335,7 @@ class NIRDataset(Dataset):
         gain to use in applying the side reference pixel correction
 
     """
+
     def __init__(self, input_model,
                  odd_even_columns,
                  use_side_ref_pixels,
@@ -405,7 +423,6 @@ class NIRDataset(Dataset):
         evendq = self.pixeldq[rowstart:rowstop, colstart:colstop: 2]
         return evenref, evendq
 
-
     def get_odd_refvalue(self, group, amplifier, top_or_bottom):
         """Calculate the clipped mean of the counts in the reference pixels
         in odd-numbered columns
@@ -435,7 +452,6 @@ class NIRDataset(Dataset):
         odd = self.sigma_clip(ref, dq)
         return odd
 
-
     def get_even_refvalue(self, group, amplifier, top_or_bottom):
         """Calculate the clipped mean of the counts in the reference pixels
         in even-numbered columns
@@ -464,7 +480,6 @@ class NIRDataset(Dataset):
         ref, dq = self.collect_even_refpixels(group, amplifier, top_or_bottom)
         even = self.sigma_clip(ref, dq)
         return even
-
 
     def get_amplifier_refvalue(self, group, amplifier, top_or_bottom):
         """Calculate the reference pixel mean for a given amplifier
@@ -550,7 +565,6 @@ class NIRDataset(Dataset):
                     refpix[amplifier][top_bottom] = refvalues
         return refpix
 
-
     def do_top_bottom_correction(self, group, refvalues):
         """Do the top/bottom correction
 
@@ -585,22 +599,55 @@ class NIRDataset(Dataset):
                 evenrefbottom = refvalues[amplifier]['even']['bottom']
                 #
                 # For now, just average the top and bottom corrections
-                oddrefsignal = 0.5 * (oddreftop + oddrefbottom)
-                evenrefsignal = 0.5 * (evenreftop + evenrefbottom)
-                oddslice = (slice(datarowstart, datarowstop, 1),
-                            slice(datacolstart, datacolstop, 2))
-                evenslice = (slice(datarowstart, datarowstop, 1),
-                             slice(datacolstart + 1, datacolstop, 2))
-                group[oddslice] = group[oddslice] - oddrefsignal
-                group[evenslice] = group[evenslice] - evenrefsignal
+                oddrefsignal = self.average_with_None(oddreftop, oddrefbottom)
+                evenrefsignal = self.average_with_None(evenreftop, evenrefbottom)
+                if oddrefsignal is not None and evenrefsignal is not None:
+                    oddslice = (slice(datarowstart, datarowstop, 1),
+                                slice(datacolstart, datacolstop, 2))
+                    evenslice = (slice(datarowstart, datarowstop, 1),
+                                 slice(datacolstart + 1, datacolstop, 2))
+                    group[oddslice] = group[oddslice] - oddrefsignal
+                    group[evenslice] = group[evenslice] - evenrefsignal
+                else:
+                    pass
             else:
                 reftop = refvalues[amplifier]['top']
                 refbottom = refvalues[amplifier]['bottom']
-                refsignal = 0.5 * (reftop + refbottom)
-                dataslice = (slice(datarowstart, datarowstop, 1),
-                             slice(datacolstart, datacolstop, 1))
-                group[dataslice] = group[dataslice] - refsignal
+                refsignal = self.average_with_None(reftop, refbottom)
+                if refsignal is not None:
+                    dataslice = (slice(datarowstart, datarowstop, 1),
+                                 slice(datacolstart, datacolstop, 1))
+                    group[dataslice] = group[dataslice] - refsignal
+                else:
+                    pass
         return
+
+    def average_with_None(self, a, b):
+        """Average two numbers.  If one is None, return the
+        other.  If both are None, return None
+
+        Parameters:
+        -----------
+
+        a, b:    Numbers or None
+
+        Returns:
+        --------
+
+        result = Number or None
+        """
+
+        if a is None and b is None:
+            return None
+
+        if a is None:
+            return b
+
+        elif b is None:
+            return a
+
+        else:
+            return 0.5 * (a + b)
 
     def create_reflected(self, data, smoothing_length):
         """Make an array bigger by extending it at the top and bottom by
@@ -637,7 +684,7 @@ class NIRDataset(Dataset):
         bufsize = smoothing_length // 2
         reflected[bufsize:bufsize + nrows] = data[:]
         reflected[:bufsize] = data[bufsize:0:-1]
-        reflected[-(bufsize):] = data[-2:-(bufsize+2):-1]
+        reflected[-(bufsize):] = data[-2:-(bufsize + 2):-1]
         return reflected
 
     def median_filter(self, data, dq, smoothing_length):
@@ -672,8 +719,11 @@ class NIRDataset(Dataset):
             rowstop = rowstart + smoothing_length
             goodpixels = np.where(np.bitwise_and(augmented_dq[rowstart:rowstop],
                                                  dqflags.pixel['DO_NOT_USE']) == 0)
-            window = augmented_data[rowstart:rowstop][goodpixels]
-            result[i] = np.median(window)
+            if len(goodpixels[0]) == 0:
+                result[i] = np.nan
+            else:
+                window = augmented_data[rowstart:rowstop][goodpixels]
+                result[i] = np.median(window)
         return result
 
     def calculate_side_ref_signal(self, group, colstart, colstop):
@@ -727,11 +777,45 @@ class NIRDataset(Dataset):
 
         """
 
-        combined = 0.5 * (left + right)
+        combined = self.combine_with_NaNs(left, right)
         sidegroup = np.zeros((2048, 2048))
         for column in range(2048):
             sidegroup[:, column] = combined
         return sidegroup
+
+    def combine_with_NaNs(self, a, b):
+        """Combine 2 1-d arrays that have NaNs.
+        Wherever both arrays are NaN, output is 0.0.
+        Wherever a is NaN and b is not, return b.
+        Wherever b is NaN and a is not, return a.
+        Wherever neither a nor b is NaN, return the average of
+        a and b
+
+        Parameters:
+        -----------
+
+        a, b:   numpy 1-d arrays of numbers
+
+        Returns:
+
+        result = numpy 1-d array of numbers
+        """
+
+        result = np.zeros(len(a), dtype=a.dtype)
+
+        bothnan = np.where(np.isnan(a) & np.isnan(b))
+        result[bothnan] = 0.0
+
+        a_nan = np.where(np.isnan(a) & ~np.isnan(b))
+        result[a_nan] = b[a_nan]
+
+        b_nan = np.where(~np.isnan(a) & np.isnan(b))
+        result[b_nan] = a[b_nan]
+
+        no_nan = np.where(~np.isnan(a) & ~np.isnan(b))
+        result[no_nan] = 0.5 * (a[no_nan] + b[no_nan])
+
+        return result
 
     def apply_side_correction(self, group, sidegroup):
         """Apply reference pixel correction from the side reference pixels
@@ -781,7 +865,10 @@ class NIRDataset(Dataset):
 
     def do_corrections(self):
         if self.is_subarray:
-            self.do_subarray_corrections()
+            if self.noutputs == 4:
+                self.do_fullframe_corrections()
+            else:
+                self.do_subarray_corrections()
         else:
             self.do_fullframe_corrections()
 
@@ -802,8 +889,6 @@ class NIRDataset(Dataset):
                 self.DMS_to_detector(integration, group)
                 thisgroup = self.group
                 refvalues = self.get_refvalues(thisgroup)
-                if self.bad_reference_pixels:
-                    break
                 self.do_top_bottom_correction(thisgroup, refvalues)
                 if self.use_side_ref_pixels:
                     corrected_group = self.do_side_correction(thisgroup)
@@ -824,12 +909,13 @@ class NIRDataset(Dataset):
         #  First transform to detector coordinates
         #
         refdq = dqflags.pixel['REFERENCE_PIXEL']
+        donotuse = dqflags.pixel['DO_NOT_USE']
         #
         # This transforms the pixeldq array from DMS to detector coordinates,
         # only needs to be done once
         self.DMS_to_detector_dq()
         # Determined refpix indices to use on each group
-        refpixindices = np.where(np.bitwise_and(self.pixeldq, refdq) == refdq)
+        refpixindices = np.where((self.pixeldq & refdq == refdq) & (self.pixeldq & donotuse != donotuse))
         nrefpixels = len(refpixindices[0])
         if nrefpixels == 0:
             self.bad_reference_pixels = True
@@ -864,7 +950,7 @@ class NIRDataset(Dataset):
                     evenrefpixvalue = self.sigma_clip(thisgroup[evenrefpixindices],
                                                       self.pixeldq[evenrefpixindices])
                     oddrefpixvalue = self.sigma_clip(thisgroup[oddrefpixindices],
-                                                      self.pixeldq[oddrefpixindices])
+                                                     self.pixeldq[oddrefpixindices])
                     thisgroup[:, 0::2] -= evenrefpixvalue
                     thisgroup[:, 1::2] -= oddrefpixvalue
                 else:
@@ -897,6 +983,7 @@ class NRS1Dataset(NIRDataset):
         # pixeldq only has to be done once
         self.pixeldq = np.swapaxes(self.pixeldq, 0, 1)
 
+
 class NRS2Dataset(NIRDataset):
     """NRS2 Data"""
 
@@ -915,6 +1002,7 @@ class NRS2Dataset(NIRDataset):
         # The inverse is to rotate 180 degrees, then flip over the line Y=X
         self.group = np.swapaxes(self.group[::-1, ::-1], 0, 1)
         self.restore_group(integration, group)
+
 
 class NRCA1Dataset(NIRDataset):
     """For NRCA1 data"""
@@ -935,6 +1023,7 @@ class NRCA1Dataset(NIRDataset):
         self.group = self.group[:, ::-1]
         self.restore_group(integration, group)
 
+
 class NRCA2Dataset(NIRDataset):
     """For NRCA2 data"""
 
@@ -953,6 +1042,7 @@ class NRCA2Dataset(NIRDataset):
         # Just flip back
         self.group = self.group[::-1]
         self.restore_group(integration, group)
+
 
 class NRCA3Dataset(NIRDataset):
     """For NRCA3 data"""
@@ -973,6 +1063,7 @@ class NRCA3Dataset(NIRDataset):
         self.group = self.group[:, ::-1]
         self.restore_group(integration, group)
 
+
 class NRCA4Dataset(NIRDataset):
     """For NRCA4 data"""
 
@@ -991,6 +1082,7 @@ class NRCA4Dataset(NIRDataset):
         # Just flip back
         self.group = self.group[::-1]
         self.restore_group(integration, group)
+
 
 class NRCALONGDataset(NIRDataset):
     """For NRCALONG data"""
@@ -1011,6 +1103,7 @@ class NRCALONGDataset(NIRDataset):
         self.group = self.group[:, ::-1]
         self.restore_group(integration, group)
 
+
 class NRCB1Dataset(NIRDataset):
     """For NRCB1 data"""
 
@@ -1030,6 +1123,7 @@ class NRCB1Dataset(NIRDataset):
         self.group = self.group[::-1]
         self.restore_group(integration, group)
 
+
 class NRCB2Dataset(NIRDataset):
     """For NRCB2 data"""
 
@@ -1048,7 +1142,8 @@ class NRCB2Dataset(NIRDataset):
         # Just flip back
         self.group = self.group[:, ::-1]
         self.restore_group(integration, group)
-        #self.pixeldq = self.pixeldq[:, ::-1]
+        # self.pixeldq = self.pixeldq[:, ::-1]
+
 
 class NRCB3Dataset(NIRDataset):
     """For NRCB3 data"""
@@ -1069,6 +1164,7 @@ class NRCB3Dataset(NIRDataset):
         self.group = self.group[::-1]
         self.restore_group(integration, group)
 
+
 class NRCB4Dataset(NIRDataset):
     """For NRCB4 data"""
 
@@ -1088,6 +1184,7 @@ class NRCB4Dataset(NIRDataset):
         self.group = self.group[:, ::-1]
         self.restore_group(integration, group)
 
+
 class NRCBLONGDataset(NIRDataset):
     """For NRCBLONG data"""
 
@@ -1106,6 +1203,7 @@ class NRCBLONGDataset(NIRDataset):
         # Just flip back
         self.group = self.group[::-1]
         self.restore_group(integration, group)
+
 
 class NIRISSDataset(NIRDataset):
     """For NIRISS data"""
@@ -1127,6 +1225,7 @@ class NIRISSDataset(NIRDataset):
         self.group = np.swapaxes(self.group, 0, 1)[::-1, ::-1]
         self.restore_group(integration, group)
 
+
 class GUIDER1Dataset(NIRDataset):
     """For GUIDER1 data"""
 
@@ -1145,6 +1244,7 @@ class GUIDER1Dataset(NIRDataset):
         # Just flip back
         self.group = self.group[::-1, ::-1]
         self.restore_group(integration, group)
+
 
 class GUIDER2Dataset(NIRDataset):
     """For GUIDER2 data"""
@@ -1270,7 +1370,6 @@ class MIRIDataset(Dataset):
         evendq = self.pixeldq[rowstart:rowstop:2, column]
         return evenref, evendq
 
-
     def get_odd_refvalue(self, group, amplifier, left_or_right):
         """Calculate the clipped mean of the counts in the reference pixels
         in odd-numbered rows
@@ -1300,7 +1399,6 @@ class MIRIDataset(Dataset):
         odd = self.sigma_clip(ref, dq)
         return odd
 
-
     def get_even_refvalue(self, group, amplifier, left_or_right):
         """Calculate the clipped mean of the counts in the reference pixels
         in even-numbered rows
@@ -1329,7 +1427,6 @@ class MIRIDataset(Dataset):
         ref, dq = self.collect_even_refpixels(group, amplifier, left_or_right)
         even = self.sigma_clip(ref, dq)
         return even
-
 
     def get_amplifier_refvalue(self, group, amplifier, left_or_right):
         """Calculate the reference pixel mean for a given amplifier
@@ -1526,6 +1623,7 @@ class MIRIDataset(Dataset):
         del first_read
         return
 
+
 def create_dataset(input_model,
                    odd_even_columns,
                    use_side_ref_pixels,
@@ -1675,9 +1773,9 @@ def create_dataset(input_model,
 
 
 def correct_model(input_model, odd_even_columns,
-                   use_side_ref_pixels,
-                   side_smoothing_length, side_gain,
-                   odd_even_rows):
+                  use_side_ref_pixels,
+                  side_smoothing_length, side_gain,
+                  odd_even_rows):
     """Wrapper to do Reference Pixel Correction on a JWST Model.
     Performs the correction on the datamodel
 
@@ -1723,12 +1821,9 @@ def correct_model(input_model, odd_even_columns,
     if input_dataset is None:
         status = SUBARRAY_DOESNTFIT
         return status
-    result_dataset = reference_pixel_correction(input_dataset)
+    reference_pixel_correction(input_dataset)
 
-    if result_dataset.bad_reference_pixels:
-        return BAD_REFERENCE_PIXELS
-    else:
-        return REFPIX_OK
+    return REFPIX_OK
 
 
 def reference_pixel_correction(input_dataset):
@@ -1748,6 +1843,7 @@ def reference_pixel_correction(input_dataset):
         Corrected dataset
 
     """
+
     input_dataset.do_corrections()
 
-    return input_dataset
+    return

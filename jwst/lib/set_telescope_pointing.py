@@ -47,10 +47,10 @@ SIFOV2V_DEFAULT = np.array(
 
 
 # Degree, radian, angle transformations
-R2D = 180./np.pi
-D2R = np.pi/180.
-A2R = D2R/3600.
-R2A = 3600.*R2D
+R2D = 180. / np.pi
+D2R = np.pi / 180.
+A2R = D2R / 3600.
+R2A = 3600. * R2D
 
 # SIAF container
 # The names should correspond to the names in the ``wcsinfo`` schema.
@@ -212,6 +212,7 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
         else:
             model.save(filename)
     logger.info('...update completed')
+
 
 def update_mt_kwds(model):
     """Add/update the Moving target header keywords
@@ -605,7 +606,7 @@ def calc_wcs_over_time(obsstart, obsend, engdb_url=None, tolerance=60, reduce_fu
     # Calculate WCS
     try:
         pointings = get_pointing(obsstart, obsend, engdb_url=engdb_url,
-                             tolerance=tolerance, reduce_func=reduce_func)
+                                 tolerance=tolerance, reduce_func=reduce_func)
     except ValueError:
         logger.warning("Cannot get valid engineering mnemonics from engineering database")
         raise
@@ -838,7 +839,7 @@ def calc_aperture_wcs(m_eci2siaf):
     refpos = np.array(
         [siaf_x,
          siaf_y,
-         np.sqrt(1.-siaf_x * siaf_x - siaf_y * siaf_y)]
+         np.sqrt(1. - siaf_x * siaf_x - siaf_y * siaf_y)]
     )
     msky = np.dot(m_eci2siaf.transpose(), refpos)
     wcs_ra, wcs_dec = vector_to_ra_dec(msky)
@@ -851,7 +852,7 @@ def calc_aperture_wcs(m_eci2siaf):
     vy_ra, vy_dec = vector_to_ra_dec(myeci)
 
     # The VyPA @ xref,yref is given by
-    y = cos(vy_dec) * sin(vy_ra-wcs_ra)
+    y = cos(vy_dec) * sin(vy_ra - wcs_ra)
     x = sin(vy_dec) * cos(wcs_dec) - \
         cos(vy_dec) * sin(wcs_dec) * cos((vy_ra - wcs_ra))
     wcs_pa = np.arctan2(y, x)
@@ -882,15 +883,15 @@ def calc_eci2j_matrix(q):
     """
     q1, q2, q3, q4 = q
     transform = np.array(
-        [[1. - 2.*q2*q2 - 2.*q3*q3,
-          2.*(q1*q2 + q3*q4),
-          2.*(q3*q1 - q2*q4)],
-         [2.*(q1*q2 - q3*q4),
-          1. - 2.*q3*q3 - 2.*q1*q1,
-          2.*(q2*q3 + q1*q4)],
-         [2.*(q3*q1 + q2*q4),
-          2.*(q2*q3 - q1*q4),
-          1. - 2.*q1*q1 - 2.*q2*q2]]
+        [[1. - 2. * q2 * q2 - 2. * q3 * q3,
+          2. * (q1 * q2 + q3 * q4),
+          2. * (q3 * q1 - q2 * q4)],
+         [2. * (q1 * q2 - q3 * q4),
+          1. - 2. * q3 * q3 - 2. * q1 * q1,
+          2. * (q2 * q3 + q1 * q4)],
+         [2. * (q3 * q1 + q2 * q4),
+          2. * (q2 * q3 - q1 * q4),
+          1. - 2. * q1 * q1 - 2. * q2 * q2]]
     )
 
     return transform
@@ -984,9 +985,9 @@ def calc_sifov_fsm_delta_matrix(fsmcorr, fsmcorr_version='latest', fsmcorr_units
     if version == 'v1':
         transform = np.array(
             [
-                [1.,       x/22.01, y/21.68],
-                [-x/22.01, 1.,      0.],
-                [-y/21.68, 0.,      1.]
+                [1., x / 22.01, y / 21.68],
+                [-x / 22.01, 1., 0.],
+                [-y / 21.68, 0., 1.]
             ]
         )
 
@@ -1000,15 +1001,15 @@ def calc_sifov_fsm_delta_matrix(fsmcorr, fsmcorr_version='latest', fsmcorr_units
             )
         m_x_partial = np.array(
             [
-                [1., 0.,      0.],
-                [0., cos(x),  sin(x)],
+                [1., 0., 0.],
+                [0., cos(x), sin(x)],
                 [0., -sin(x), cos(x)]
             ]
         )
         m_y_partial = np.array(
             [
                 [cos(y), 0., -sin(y)],
-                [0.,     1., 0.],
+                [0., 1., 0.],
                 [sin(y), 0., cos(y)]
             ]
         )
@@ -1063,15 +1064,15 @@ def calc_v2siaf_matrix(siaf):
     v3idlyang *= D2R
 
     mat = np.array(
-        [[cos(v3)*cos(v2),
-          cos(v3)*sin(v2),
+        [[cos(v3) * cos(v2),
+          cos(v3) * sin(v2),
           sin(v3)],
-         [-cos(v3idlyang)*sin(v2)+sin(v3idlyang)*sin(v3)*cos(v2),
-          cos(v3idlyang)*cos(v2)+sin(v3idlyang)*sin(v3)*sin(v2),
-          -sin(v3idlyang)*cos(v3)],
-         [-sin(v3idlyang)*sin(v2)-cos(v3idlyang)*sin(v3)*cos(v2),
-          sin(v3idlyang)*cos(v2)-cos(v3idlyang)*sin(v3)*sin(v2),
-          cos(v3idlyang)*cos(v3)]])
+         [-cos(v3idlyang) * sin(v2) + sin(v3idlyang) * sin(v3) * cos(v2),
+          cos(v3idlyang) * cos(v2) + sin(v3idlyang) * sin(v3) * sin(v2),
+          -sin(v3idlyang) * cos(v3)],
+         [-sin(v3idlyang) * sin(v2) - cos(v3idlyang) * sin(v3) * cos(v2),
+          sin(v3idlyang) * cos(v2) - cos(v3idlyang) * sin(v3) * sin(v2),
+          cos(v3idlyang) * cos(v3)]])
     pmat = np.array([[0., vparity, 0.],
                      [0., 0., 1.],
                      [1., 0., 0.]])
@@ -1096,7 +1097,7 @@ def calc_position_angle(v1, v3):
     v3_pa: float
       The V3 position angle, in radians
     """
-    y = cos(v3.dec) * sin(v3.ra-v1.ra)
+    y = cos(v3.dec) * sin(v3.ra - v1.ra)
     x = sin(v3.dec) * cos(v1.dec) - \
         cos(v3.dec) * sin(v1.dec) * cos((v3.ra - v1.ra))
     v3_pa = np.arctan2(y, x)
@@ -1362,10 +1363,10 @@ def get_mnemonics(obsstart, obsend, tolerance, engdb_url=None):
     )
 
     mnemonics = {
-        'SA_ZATTEST1':  None,
-        'SA_ZATTEST2':  None,
-        'SA_ZATTEST3':  None,
-        'SA_ZATTEST4':  None,
+        'SA_ZATTEST1': None,
+        'SA_ZATTEST2': None,
+        'SA_ZATTEST3': None,
+        'SA_ZATTEST4': None,
         'SA_ZRFGS2J11': None,
         'SA_ZRFGS2J12': None,
         'SA_ZRFGS2J13': None,
@@ -1375,8 +1376,8 @@ def get_mnemonics(obsstart, obsend, tolerance, engdb_url=None):
         'SA_ZRFGS2J31': None,
         'SA_ZRFGS2J32': None,
         'SA_ZRFGS2J33': None,
-        'SA_ZADUCMDX':  None,
-        'SA_ZADUCMDY':  None,
+        'SA_ZADUCMDX': None,
+        'SA_ZADUCMDY': None,
     }
 
     # Retrieve the mnemonics from the engineering database.

@@ -12,7 +12,7 @@ from jwst.datamodels.wcs_ref_models import _SimpleModel
 
 def find_all_wcs_ref_models_classes():
     clsmembers = inspect.getmembers(sys.modules[wcs_ref_models.__name__], inspect.isclass)
-    classes = [cls for name,cls in clsmembers if issubclass(cls, ReferenceFileModel)]
+    classes = [cls for name, cls in clsmembers if issubclass(cls, ReferenceFileModel)]
     classes.remove(_SimpleModel)
     return classes
 

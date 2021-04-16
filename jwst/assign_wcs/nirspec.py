@@ -59,7 +59,7 @@ def create_pipeline(input_model, reference_files, slit_y_range):
         pipeline = exp_type2transform[exp_type](input_model, reference_files, slit_y_range=slit_y_range)
     if pipeline:
         log.info("Created a NIRSPEC {0} pipeline with references {1}".format(
-                exp_type, reference_files))
+            exp_type, reference_files))
     return pipeline
 
 
@@ -88,7 +88,7 @@ def imaging(input_model, reference_files):
     gwa_through = Const1D(-1) * Identity(1) & Const1D(-1) * Identity(1) & Identity(1)
 
     angles = [disperser['theta_x'], disperser['theta_y'],
-               disperser['theta_z'], disperser['tilt_y']]
+              disperser['theta_z'], disperser['tilt_y']]
     rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotation').inverse
     dircos2unitless = DirCos2Unitless(name='directional_cosines2unitless')
 
@@ -404,8 +404,8 @@ def get_open_slits(input_model, reference_files=None, slit_y_range=[-.55, .55]):
         lamp_mode = lamp_mode.lower()
     else:
         lamp_mode = 'none'
-    if exp_type in ["nrs_msaspec", "nrs_autoflat"] or ((exp_type in ["nrs_lamp", "nrs_autowave"]) and \
-                                                        (lamp_mode == "msaspec")):
+    if exp_type in ["nrs_msaspec", "nrs_autoflat"] or ((exp_type in ["nrs_lamp", "nrs_autowave"]) and
+                                                       (lamp_mode == "msaspec")):
         msa_metadata_file, msa_metadata_id, dither_point = get_msa_metadata(
             input_model, reference_files)
         slits = get_open_msa_slits(msa_metadata_file, msa_metadata_id, dither_point, slit_y_range)
@@ -418,7 +418,7 @@ def get_open_slits(input_model, reference_files=None, slit_y_range=[-.55, .55]):
             slits = get_open_fixed_slits(input_model, slit_y_range)
     else:
         raise ValueError("EXP_TYPE {0} is not supported".format(exp_type.upper()))
-    if reference_files is not None:
+    if reference_files is not None and slits:
         slits = validate_open_slits(input_model, slits, reference_files)
         log.info("Slits projected on detector {0}: {1}".format(input_model.meta.instrument.detector,
                                                                [sl.name for sl in slits]))
@@ -575,18 +575,18 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
         log.error(message)
         raise MSAFileError(message)
 
-    # Get the configuration header from teh _msa.fits file.  The EXTNAME should be 'SHUTTER_INFO'
+    # Get the configuration header from the _msa.fits file.  The EXTNAME should be 'SHUTTER_INFO'
     msa_conf = msa_file[('SHUTTER_INFO', 1)]
     msa_source = msa_file[("SOURCE_INFO", 1)].data
 
     # First we are going to filter the msa_file data on the msa_metadata_id
     # and dither_point_index.
-    msa_data = [x for x in msa_conf.data if x['msa_metadata_id'] == msa_metadata_id \
+    msa_data = [x for x in msa_conf.data if x['msa_metadata_id'] == msa_metadata_id
                 and x['dither_point_index'] == dither_position]
 
     # Get all source_ids for slitlets with sources.
     # These should not be used when assigning source_id to background slitlets.
-    source_ids = set([x[5] for x in msa_conf.data if x['msa_metadata_id'] == msa_metadata_id \
+    source_ids = set([x[5] for x in msa_conf.data if x['msa_metadata_id'] == msa_metadata_id
                       and x['dither_point_index'] == dither_position])
     # All BKG shutters in the msa metafile have a source_id value of 0.
     # Remove it from the list of source ids.
@@ -672,7 +672,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
         shutter_id = xcen + (ycen - 1) * 365
         try:
             source_name, source_alias, stellarity, source_ra, source_dec = [
-                (s['source_name'], s['alias'], s['stellarity'], s['ra'], s['dec']) \
+                (s['source_name'], s['alias'], s['stellarity'], s['ra'], s['dec'])
                 for s in msa_source if s['source_id'] == source_id][0]
         except IndexError:
             # all background shutters
@@ -767,7 +767,7 @@ def get_spectral_order_wrange(input_model, wavelengthrange_file):
         gratings = [s.split('_')[1] for s in wrange_selector]
         try:
             index = gratings.index(grating)
-        except ValueError: # grating not in list
+        except ValueError:  # grating not in list
             order = -1
             wrange = full_range
         else:
@@ -936,7 +936,7 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files, slit_y_range)
         # construct IFU post transform
         ifupost_transform = _create_ifupost_transform(ifupost_sl)
         msa2gwa = ifuslicer_transform & Const1D(lam_cen) | ifupost_transform | collimator2gwa
-        gwa2slit = gwa_to_ymsa(msa2gwa, lam_cen=lam_cen, slit_y_range=slit_y_range)# TODO: Use model sets here
+        gwa2slit = gwa_to_ymsa(msa2gwa, lam_cen=lam_cen, slit_y_range=slit_y_range)  # TODO: Use model sets here
 
         # The commnts below list the input coordinates.
         bgwa2msa = (
@@ -1035,14 +1035,14 @@ def gwa_to_slit(open_slits, input_model, disperser,
                 slitdata_model = get_slit_location_model(slitdata)
                 msa_transform = (slitdata_model | msa_model)
                 msa2gwa = (msa_transform | collimator2gwa)
-                gwa2msa = gwa_to_ymsa(msa2gwa, slit=slit, slit_y_range=(slit.ymin, slit.ymax))# TODO: Use model sets here
+                gwa2msa = gwa_to_ymsa(msa2gwa, slit=slit, slit_y_range=(slit.ymin, slit.ymax))  # TODO: Use model sets here
                 bgwa2msa = Mapping((0, 1, 0, 1), n_inputs=3) | \
                     Const1D(0) * Identity(1) & Const1D(-1) * Identity(1) & Identity(2) | \
                     Identity(1) & gwa2msa & Identity(2) | \
                     Mapping((0, 1, 0, 1, 2, 3)) | Identity(2) & msa2gwa & Identity(2) | \
                     Mapping((0, 1, 2, 3, 5), n_inputs=7) | Identity(2) & lgreq | mask
-                    #Mapping((0, 1, 2, 5), n_inputs=7) | Identity(2) & lgreq | mask
-                    # and modify lgreq to accept alpha_in, beta_in, alpha_out
+                #   Mapping((0, 1, 2, 5), n_inputs=7) | Identity(2) & lgreq | mask
+                # and modify lgreq to accept alpha_in, beta_in, alpha_out
                 # msa to before_gwa
                 msa2bgwa = msa2gwa & Identity(1) | Mapping((3, 0, 1, 2)) | agreq
                 bgwa2msa.inverse = msa2bgwa
@@ -1136,10 +1136,10 @@ def detector_to_gwa(reference_files, detector, disperser):
         camera = f.model
 
     angles = [disperser['theta_x'], disperser['theta_y'],
-               disperser['theta_z'], disperser['tilt_y']]
+              disperser['theta_z'], disperser['tilt_y']]
     rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotation')
     u2dircos = Unitless2DirCos(name='unitless2directional_cosines')
-    ## NIRSPEC 1- vs 0- based pixel coordinates issue #1781
+    # NIRSPEC 1- vs 0- based pixel coordinates issue #1781
     '''
     The pipeline works with 0-based pixel coordinates. The Nirspec model,
     stored in reference files, is also 0-based. However, the algorithm specified
@@ -1210,8 +1210,8 @@ def mask_slit(ymin=-.55, ymax=.55):
     less_than_ymin = Logical(condition='LT', compareto=ymin, value=np.nan)
 
     model = Mapping((0, 1, 2, 1)) | Identity(3) & (greater_than_ymax | less_than_ymin | models.Scale(0)) | \
-          Mapping((0, 1, 3, 2, 3)) | Identity(1) & Mapping((0,), n_inputs=2) + Mapping((1,)) & \
-          Mapping((0,), n_inputs=2) + Mapping((1,))
+        Mapping((0, 1, 3, 2, 3)) | Identity(1) & Mapping((0,), n_inputs=2) + Mapping((1,)) & \
+        Mapping((0,), n_inputs=2) + Mapping((1,))
     model.inverse = Identity(3)
     return model
 
@@ -1224,7 +1224,7 @@ def compute_bounding_box(slit2detector, wavelength_range, slit_ymin=-.55, slit_y
     of the projection of the slit on the detector.
     Because the trace is curved and the wavelength_range may span the
     two detectors, y_min of the projection may be at an arbitrary wavelength.
-    The transform is run with a regularly sampled wavelengths to determin y_min.
+    The transform is run with a regularly sampled wavelengths to determine y_min.
 
     Parameters
     ----------
@@ -1338,7 +1338,7 @@ def correct_tilt(disperser, xtilt, ytilt):
     def _get_correction(gwa_tilt, tilt_angle):
         phi_exposure = gwa_tilt.tilt_model(tilt_angle)
         phi_calibrator = gwa_tilt.tilt_model(gwa_tilt.zeroreadings[0])
-        del_theta = 0.5 * (phi_exposure - phi_calibrator) / 3600. #in deg
+        del_theta = 0.5 * (phi_exposure - phi_calibrator) / 3600.  # in deg
         return del_theta
 
     disp = disperser.copy()
@@ -1445,11 +1445,11 @@ def create_frames():
     det = cf.Frame2D(name='detector', axes_order=(0, 1))
     sca = cf.Frame2D(name='sca', axes_order=(0, 1))
     gwa = cf.Frame2D(name="gwa", axes_order=(0, 1), unit=(u.rad, u.rad),
-                      axes_names=('alpha_in', 'beta_in'))
+                     axes_names=('alpha_in', 'beta_in'))
     msa_spatial = cf.Frame2D(name='msa_spatial', axes_order=(0, 1), unit=(u.m, u.m),
                              axes_names=('x_msa', 'y_msa'))
     slit_spatial = cf.Frame2D(name='slit_spatial', axes_order=(0, 1), unit=("", ""),
-                             axes_names=('x_slit', 'y_slit'))
+                              axes_names=('x_slit', 'y_slit'))
     sky = cf.CelestialFrame(name='sky', axes_order=(0, 1), reference_frame=coord.ICRS())
     v2v3_spatial = cf.Frame2D(name='v2v3_spatial', axes_order=(0, 1),
                               unit=(u.arcsec, u.arcsec), axes_names=('v2', 'v3'))
@@ -1514,7 +1514,7 @@ def get_slit_location_model(slitdata):
     """
     num, xcenter, ycenter, xsize, ysize = slitdata
     model = models.Scale(xsize) & models.Scale(ysize) | \
-            models.Shift(xcenter) & models.Shift(ycenter)
+        models.Shift(xcenter) & models.Shift(ycenter)
     return model
 
 
@@ -1572,7 +1572,7 @@ def nrs_wcs_set_input(input_model, slit_name, wavelength_range=None):
     wcsobj : `~gwcs.wcs.WCS`
         WCS object for this slit.
     """
-    import copy # TODO: Add a copy method to gwcs.WCS
+    import copy  # TODO: Add a copy method to gwcs.WCS
     wcsobj = input_model.meta.wcs
     if wavelength_range is None:
         _, wrange = spectral_order_wrange_from_model(input_model)
@@ -1591,10 +1591,10 @@ def nrs_wcs_set_input(input_model, slit_name, wavelength_range=None):
     is_nirspec_ifu = is_nrs_ifu_lamp(input_model) or (exp_type.lower() == 'nrs_ifu')
     if is_nirspec_ifu:
         slit_wcs.set_transform('slit_frame', 'slicer',
-                           wcsobj.pipeline[3].transform.get_model(slit_name) & Identity(1))
+                               wcsobj.pipeline[3].transform.get_model(slit_name) & Identity(1))
     else:
         slit_wcs.set_transform('slit_frame', 'msa_frame',
-                           wcsobj.pipeline[3].transform.get_model(slit_name) & Identity(1))
+                               wcsobj.pipeline[3].transform.get_model(slit_name) & Identity(1))
     slit2detector = slit_wcs.get_transform('slit_frame', 'detector')
 
     if is_nirspec_ifu:
@@ -1631,7 +1631,7 @@ def validate_open_slits(input_model, open_slits, reference_files):
         ylow, yhigh = domain[1]
         if (xlow >= 2048 or ylow >= 2048 or
             xhigh <= 0 or yhigh <= 0 or
-            xhigh - xlow < 1 or yhigh - ylow < 1):
+                xhigh - xlow < 2 or yhigh - ylow < 1):
             return False
         else:
             return True
@@ -1657,31 +1657,24 @@ def validate_open_slits(input_model, open_slits, reference_files):
     # collimator to GWA
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
 
-    msa = MSAModel(reference_files['msa'])
     col2det = collimator2gwa & Identity(1) | Mapping((3, 0, 1, 2)) | agreq | \
-            gwa2det | det2dms
-    for quadrant in range(1, 6):
-        slits_in_quadrant = [s for s in open_slits if s.quadrant == quadrant]
-        if any(slits_in_quadrant):
-            msa_quadrant = getattr(msa, "Q{0}".format(quadrant))
-            msa_model = msa_quadrant.model
-            msa_data = msa_quadrant.data
-            for slit in slits_in_quadrant:
-                slit_id = slit.shutter_id
-                slitdata = msa_data[slit_id]
-                slitdata_model = get_slit_location_model(slitdata)
-                msa_transform = slitdata_model | msa_model
-                msa2det = msa_transform & Identity(1) | col2det
-                bb = compute_bounding_box(msa2det, wrange, slit.ymin, slit.ymax)
-                valid = _is_valid_slit(bb)
-                if not valid:
-                    log.info("Removing slit {0} from the list of open slits because the "
-                             "WCS bounding_box is completely outside the detector.".format(slit.name))
-                    log.debug("Slit bounding_box is {0}".format(bb))
-                    idx = np.nonzero([s.name == slit.name for s in open_slits])[0][0]
-                    open_slits.pop(idx)
+        gwa2det | det2dms
 
-    msa.close()
+    slit2msa = slit_to_msa(open_slits, reference_files['msa'])
+
+    for slit in slit2msa.slits:
+        msa_transform = slit2msa.get_model(slit.name)
+        msa2det = msa_transform & Identity(1) | col2det
+
+        bb = compute_bounding_box(msa2det, wrange, slit.ymin, slit.ymax)
+
+        valid = _is_valid_slit(bb)
+        if not valid:
+            log.info("Removing slit {0} from the list of open slits because the "
+                     "WCS bounding_box is completely outside the detector.".format(slit.name))
+            idx = np.nonzero([s.name == slit.name for s in open_slits])[0][0]
+            open_slits.pop(idx)
+
     return open_slits
 
 
@@ -1739,11 +1732,11 @@ def _create_ifupost_transform(ifupost_slice):
     # expressed as
     # poly_independent(x, y) + poly_dependent(x, y) * lambda
     model_x = ((Mapping((0, 1), n_inputs=3) | polyx) +
-                       ((Mapping((0, 1), n_inputs=3) | polyx_dist) *
-                        (Mapping((2,)) | Identity(1))))
+               ((Mapping((0, 1), n_inputs=3) | polyx_dist) *
+                (Mapping((2,)) | Identity(1))))
     model_y = ((Mapping((0, 1), n_inputs=3) | polyy) +
-                       ((Mapping((0, 1), n_inputs=3) | polyy_dist) *
-                        (Mapping((2,)) | Identity(1))))
+               ((Mapping((0, 1), n_inputs=3) | polyy_dist) *
+                (Mapping((2,)) | Identity(1))))
 
     output2poly_mapping = Identity(2, name="{0}_outmap".format('ifupost'))
     output2poly_mapping.inverse = Mapping([0, 1, 2, 0, 1, 2])
@@ -1753,6 +1746,7 @@ def _create_ifupost_transform(ifupost_slice):
     model_poly = input2poly_mapping | (model_x & model_y) | output2poly_mapping
     model = linear & Identity(1) | model_poly
     return model
+
 
 def nrs_lamp(input_model, reference_files, slit_y_range):
     """Return the appropriate function for lamp data
@@ -1779,6 +1773,7 @@ def nrs_lamp(input_model, reference_files, slit_y_range):
         return slits_wcs(input_model, reference_files, slit_y_range)
     else:
         return not_implemented_mode(input_model, reference_files, slit_y_range)
+
 
 exp_type2transform = {
     'nrs_autoflat':  slits_wcs,
