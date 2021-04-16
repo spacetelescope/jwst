@@ -411,7 +411,7 @@ def test_every_pixel_CR_neighbors_flagged(setup_inputs):
     ingain = 200
     inreadnoise = 7.0
     ngroups = 10
-    model, rnoise, gain = setup_inputs(ngroups=ngroups, gain=ingain, nrows=1000, ncols=1000,
+    model, rnoise, gain = setup_inputs(ngroups=ngroups, gain=ingain, nrows=100, ncols=100,
                                         readnoise=inreadnoise, deltatime=grouptime)
 
     # two segments perfect fit, second segment has twice the slope
