@@ -692,7 +692,7 @@ def test_miri_no_good_pixel():
     '''
     With no good data, MIRI will remove all groups where all pixels are bad.
     If all groups are bad, NoneType is returned for all return values from
-    ramp_fit.
+    ramp_fit.  This test is to force this return of NoneType.
     '''
     nints, ngroups, nrows, ncols = 1, 2, 2, 2
     deltatime = 3.

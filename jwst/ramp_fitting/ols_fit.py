@@ -637,22 +637,6 @@ def ols_ramp_fit_single(
     orig_ngroups = ngroups
     orig_cubeshape = (ngroups, nrows, ncols)
 
-    '''
-    # For MIRI datasets having >1 group, if all pixels in the final group are
-    #   flagged as DO_NOT_USE, resize the input model arrays to exclude the
-    #   final group.  Similarly, if leading groups 1 though N have all pixels
-    #   flagged as DO_NOT_USE, those groups will be ignored by ramp fitting, and
-    #   the input model arrays will be resized appropriately. If all pixels in
-    #   all groups are flagged, return None for the models.
-    if input_model.meta.instrument.name == 'MIRI' and ngroups > 1:
-        # The function returns False if the removed groups leaves no data to be
-        # processed.  If this is the case, return None for all expected variables
-        # returned by ramp_fit
-        miri_ans = discard_miri_groups(input_model)
-        if miri_ans is not True:
-            return [None] * 3
-    '''
-
     if ngroups == 1:
         log.warning('Dataset has NGROUPS=1, so count rates for each integration')
         log.warning('will be calculated as the value of that 1 group divided by')
