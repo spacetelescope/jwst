@@ -56,8 +56,8 @@ OBSTIME_EXPECTED = STARTTIME
 def method_gscmd_j3pags():
     """Calculate matricies using the GSCMD_J3PAGS method
 
-    This set was derived from the first valid group of enginerring parameters for exposure
-    jw00624028002_02101_00001_nrca1 retrieved from the SDP regression tests for Build 7.1.1.
+    This set was derived from the first valid group of engineering parameters for exposure
+    jw00624028002_02101_00001_nrca1 retrieved from the SDP regression tests for Build 7.7.1.
     """
     # setup inputs
     t_pars = stp.TransformParameters()
