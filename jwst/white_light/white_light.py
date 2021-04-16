@@ -51,8 +51,8 @@ def white_light(input, min_wave=None, max_wave=None):
 
     for i in range(ntables):
         wave_mask = np.where(
-            (input.spec[i].spec_table['WAVELENGTH']>=low_cutoff) &
-            (input.spec[i].spec_table['WAVELENGTH']<=high_cutoff))[0]
+            (input.spec[i].spec_table['WAVELENGTH'] >= low_cutoff) &
+            (input.spec[i].spec_table['WAVELENGTH'] <= high_cutoff))[0]
 
         fluxsums.append(np.nansum(input.spec[i].spec_table['FLUX'][wave_mask]))
 
@@ -106,7 +106,7 @@ def white_light(input, min_wave=None, max_wave=None):
             for k in range(norders):
                 ntables_current = ntables_order[k]
                 j1 = j0 + ntables_current
-                time_arr[j0 : j1] = mid_utc[offset : offset + ntables_current]
+                time_arr[j0: j1] = mid_utc[offset: offset + ntables_current]
                 j0 += ntables_current
 
             int_times = Time(time_arr, format='mjd', scale='utc')
@@ -121,7 +121,7 @@ def white_light(input, min_wave=None, max_wave=None):
         for k in range(norders):
             ntables_current = ntables_order[k]
             j1 = j0 + ntables_current
-            dt_arr[j0 : j1] = np.arange(1, 1 + ntables_current) * dt - (dt / 2.)
+            dt_arr[j0: j1] = np.arange(1, 1 + ntables_current) * dt - (dt / 2.)
             j0 += ntables_current
         int_dt = TimeDelta(dt_arr, format='sec')
 

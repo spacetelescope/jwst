@@ -18,6 +18,7 @@ file_roots = [
 ]
 ids = ["fullframe", "S400A1-subarray", "ALLSLITS-subarray"]
 
+
 @pytest.fixture(scope="module", params=file_roots, ids=ids)
 def run_pipeline(jail, rtdata_module, request):
     """Run the calwebb_spec2 pipeline on NIRSpec Fixed-Slit exposures.
@@ -48,7 +49,7 @@ def run_pipeline(jail, rtdata_module, request):
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("suffix",[
+@pytest.mark.parametrize("suffix", [
     "assign_wcs", "extract_2d", "wavecorr", "flat_field", "pathloss", "srctype",
     "cal", "s2d", "x1d"])
 def test_nirspec_fs_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
@@ -58,7 +59,7 @@ def test_nirspec_fs_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
     # Run the pipeline and retrieve outputs
     rtdata = run_pipeline
     output = replace_suffix(
-            os.path.splitext(os.path.basename(rtdata.input))[0], suffix) + '.fits'
+        os.path.splitext(os.path.basename(rtdata.input))[0], suffix) + '.fits'
     rtdata.output = output
 
     # Get the truth files
@@ -72,13 +73,12 @@ def test_nirspec_fs_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
 @pytest.mark.bigdata
 def test_pathloss_corrpars(rtdata):
     """Test PathLossStep using correction_pars"""
-    data = dm.open(rtdata.get_data('nirspec/fs/nrs1_flat_field.fits'))
+    with dm.open(rtdata.get_data('nirspec/fs/nrs1_flat_field.fits')) as data:
+        pls = PathLossStep()
+        corrected = pls.run(data)
 
-    pls = PathLossStep()
-    corrected = pls.run(data)
-
-    pls.use_correction_pars = True
-    corrected_corrpars = pls.run(data)
+        pls.use_correction_pars = True
+        corrected_corrpars = pls.run(data)
 
     bad_slits = []
     for idx, slits in enumerate(zip(corrected.slits, corrected_corrpars.slits)):
@@ -91,31 +91,30 @@ def test_pathloss_corrpars(rtdata):
 @pytest.mark.bigdata
 def test_pathloss_inverse(rtdata):
     """Test PathLossStep using inversion"""
-    data = dm.open(rtdata.get_data('nirspec/fs/nrs1_flat_field.fits'))
+    with dm.open(rtdata.get_data('nirspec/fs/nrs1_flat_field.fits')) as data:
+        pls = PathLossStep()
+        corrected = pls.run(data)
 
-    pls = PathLossStep()
-    corrected = pls.run(data)
+        pls.inverse = True
+        corrected_inverse = pls.run(corrected)
 
-    pls.inverse = True
-    corrected_inverse = pls.run(corrected)
+        bad_slits = []
+        for idx, slits in enumerate(zip(data.slits, corrected_inverse.slits)):
+            data_slit, corrected_inverse_slit = slits
+            non_nan = ~np.isnan(corrected_inverse_slit.data)
+            if not np.allclose(data_slit.data[non_nan], corrected_inverse_slit.data[non_nan]):
+                bad_slits.append(idx)
 
-    bad_slits = []
-    for idx, slits in enumerate(zip(data.slits, corrected_inverse.slits)):
-        data_slit, corrected_inverse_slit = slits
-        non_nan = ~np.isnan(corrected_inverse_slit.data)
-        if not np.allclose(data_slit.data[non_nan], corrected_inverse_slit.data[non_nan]):
-            bad_slits.append(idx)
     assert not bad_slits, f'Inversion failed for slits {bad_slits}'
 
 
 @pytest.mark.bigdata
 def test_pathloss_source_type(rtdata):
     """Test PathLossStep forcing source type"""
-    data = dm.open(rtdata.get_data('nirspec/fs/nrs1_flat_field.fits'))
-
-    pls = PathLossStep()
-    pls.source_type = 'extended'
-    pls.run(data)
+    with dm.open(rtdata.get_data('nirspec/fs/nrs1_flat_field.fits')) as data:
+        pls = PathLossStep()
+        pls.source_type = 'extended'
+        pls.run(data)
 
     bad_slits = []
     for idx, slit in enumerate(pls.correction_pars.slits):

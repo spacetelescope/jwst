@@ -1,9 +1,11 @@
 import os
+from pathlib import Path
 import pytest
 from astropy.io.fits.diff import FITSDiff
 
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
+
 
 @pytest.fixture(scope="module")
 def run_pipelines(jail, rtdata_module):
@@ -21,7 +23,7 @@ def run_pipelines(jail, rtdata_module):
     rtdata.get_asn("nircam/wavefront/jw00632-o003_20191210t194815_wfs-image2_001_asn.json")
 
     # Run the calwebb_wfs-image2 pipeline
-    args = ["config/calwebb_wfs-image2.cfg", rtdata.input]
+    args = ["jwst.pipeline.Image2Pipeline", rtdata.input]
     Step.from_cmdline(args)
 
     # Get the image3 ASN file only, not the members. The members were just
@@ -41,6 +43,14 @@ def run_pipelines(jail, rtdata_module):
     Step.from_cmdline(args)
 
     return rtdata
+
+
+@pytest.mark.bigdata
+def test_nicam_wfsimage_noextras(run_pipelines):
+    """Ensure that i2d files are not created"""
+    i2ds = list(Path('.').glob('*i2d*'))
+
+    assert not i2ds
 
 
 @pytest.mark.bigdata

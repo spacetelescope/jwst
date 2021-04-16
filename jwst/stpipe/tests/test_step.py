@@ -37,6 +37,7 @@ REFPIXSTEP_CRDS_MIRI_PARS = {
 
 CRDS_ERROR_STRING = 'PARS-WITHDEFAULTSSTEP: No parameters found'
 
+
 @pytest.fixture(scope='module')
 def data_path():
     """Provide a test data model"""
@@ -47,10 +48,10 @@ def data_path():
 @pytest.mark.parametrize(
     'arg, env_set, expected_fn', [
         ('--disable-crds-steppars', None, lambda stream: CRDS_ERROR_STRING not in stream),
-        ('--verbose',               None, lambda stream: CRDS_ERROR_STRING in stream),
-        ('--verbose',               'true', lambda stream: CRDS_ERROR_STRING not in stream),
-        ('--verbose',               'True', lambda stream: CRDS_ERROR_STRING not in stream),
-        ('--verbose',               't', lambda stream: CRDS_ERROR_STRING not in stream),
+        ('--verbose', None, lambda stream: CRDS_ERROR_STRING in stream),
+        ('--verbose', 'true', lambda stream: CRDS_ERROR_STRING not in stream),
+        ('--verbose', 'True', lambda stream: CRDS_ERROR_STRING not in stream),
+        ('--verbose', 't', lambda stream: CRDS_ERROR_STRING not in stream),
     ]
 )
 def test_disable_crds_steppars_cmdline(capsys, data_path, arg, env_set, expected_fn):
@@ -114,7 +115,7 @@ def test_saving_pars(tmpdir):
     ])
     assert saved_path.check()
 
-    with asdf.open(t_path(join('steps','jwst_generic_pars-makeliststep_0002.asdf'))) as af:
+    with asdf.open(t_path(join('steps', 'jwst_generic_pars-makeliststep_0002.asdf'))) as af:
         original_config = StepConfig.from_asdf(af)
         original_config.parameters["par3"] = False
 
@@ -158,7 +159,18 @@ def test_export_config(step_obj, expected, tmp_path):
     step_obj.export_config(config_path)
 
     with asdf.open(config_path) as af:
-        assert StepConfig.from_asdf(af) == expected
+        # StepConfig has an __eq__ implementation but we can't use it
+        # due to differences between asdf 2.7 and 2.8 in serializing None
+        # values.  This can be simplified once the minimum asdf requirement
+        # is changed to >= 2.8.
+        # assert StepConfig.from_asdf(af) == expected
+        config = StepConfig.from_asdf(af)
+        assert config.class_name == expected.class_name
+        assert config.name == expected.name
+        assert config.steps == expected.steps
+        parameters = set(expected.parameters.keys()).union(set(config.parameters.keys()))
+        for parameter in parameters:
+            assert config.parameters.get(parameter) == expected.parameters.get(parameter)
 
 
 @pytest.mark.parametrize(
@@ -355,7 +367,7 @@ def test_step_from_commandline():
     args = [
         abspath(join(dirname(__file__), 'steps', 'some_other_step.cfg')),
         '--par1=58', '--par2=hij klm'
-        ]
+    ]
 
     step = Step.from_cmdline(args)
 
@@ -370,7 +382,7 @@ def test_step_from_commandline_class():
     args = [
         'jwst.stpipe.tests.steps.AnotherDummyStep',
         '--par1=58', '--par2=hij klm'
-        ]
+    ]
 
     step = Step.from_cmdline(args)
 
@@ -414,8 +426,8 @@ def test_step_from_commandline_config_class_alias(mock_stpipe_entry_points):
 
 def test_step_from_commandline_invalid():
     args = [
-            '__foo__'
-        ]
+        '__foo__'
+    ]
 
     with pytest.raises(ValueError):
         Step.from_cmdline(args)
@@ -424,7 +436,7 @@ def test_step_from_commandline_invalid():
 def test_step_from_commandline_invalid2():
     args = [
         '__foo__.__bar__'
-        ]
+    ]
     with pytest.raises(ValueError):
         Step.from_cmdline(args)
 
@@ -432,7 +444,7 @@ def test_step_from_commandline_invalid2():
 def test_step_from_commandline_invalid3():
     args = [
         'sys.foo'
-        ]
+    ]
     with pytest.raises(ValueError):
         Step.from_cmdline(args)
 
@@ -440,7 +452,7 @@ def test_step_from_commandline_invalid3():
 def test_step_from_commandline_invalid4():
     args = [
         'sys.argv'
-        ]
+    ]
     with pytest.raises(ValueError):
         Step.from_cmdline(args)
 
@@ -514,7 +526,7 @@ def test_step_from_commandline_par_precedence(command_line_pars, command_line_co
     input_path = join(dirname(__file__), "data", "science.fits")
 
     if command_line_config_pars:
-        command_line_config_path = tmp_path/"with_defaults_step.cfg"
+        command_line_config_path = tmp_path / "with_defaults_step.cfg"
         config = ConfigObj(str(command_line_config_path))
         config["class"] = class_name
         config["name"] = config_name
@@ -533,7 +545,7 @@ def test_step_from_commandline_par_precedence(command_line_pars, command_line_co
 
     reference_file_map = {}
     if reference_pars:
-        reference_path = tmp_path/f"{reference_type}.asdf"
+        reference_path = tmp_path / f"{reference_type}.asdf"
         reference_config = StepConfig(class_name, config_name, reference_pars, [])
         with reference_config.to_asdf() as af:
             af.write_to(reference_path)

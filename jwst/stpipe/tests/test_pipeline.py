@@ -80,7 +80,7 @@ class MyPipeline(Pipeline):
         'flat_field': FlatField,
         'combine': Combine,
         'display': Display
-        }
+    }
 
     spec = """
     science_filename = input_file()  # The input science filename
@@ -116,7 +116,7 @@ def test_pipeline_from_config_file(_jail):
 def test_pipeline_python(_jail):
     steps = {
         'flat_field': {'threshold': 42.0}
-        }
+    }
 
     pipe = MyPipeline(
         "MyPipeline",
@@ -175,7 +175,7 @@ def test_pipeline_from_cmdline_cfg(_jail):
     args = [
         join(dirname(__file__), 'steps', 'python_pipeline.cfg'),
         '--steps.flat_field.threshold=47',
-        ]
+    ]
 
     pipe = Step.from_cmdline(args)
 
@@ -191,7 +191,7 @@ def test_pipeline_from_cmdline_class(_jail):
         f"--science_filename={join(dirname(__file__), 'data', 'science.fits')}",
         '--output_file=output.fits',
         '--steps.flat_field.threshold=47'
-        ]
+    ]
 
     pipe = Step.from_cmdline(args)
 
@@ -212,7 +212,7 @@ def test_pipeline_commandline_invalid_args():
         '--flat_filename={0}'.format(
             abspath(join(dirname(__file__), 'data', 'flat.fits'))),
         '--steps.flat_field.threshold=47'
-        ]
+    ]
 
     sys.stdout = buffer = StringIO()
 

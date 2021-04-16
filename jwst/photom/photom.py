@@ -15,7 +15,7 @@ log.setLevel(logging.DEBUG)
 PHOT_TOL = 0.001  # relative tolerance between PIXAR_* keys
 
 # Conversion factor from MJy/sr to uJy/arcsec^2
-MJSR_TO_UJA2 = (u.megajansky/u.steradian).to(u.microjansky/u.arcsecond/u.arcsecond)
+MJSR_TO_UJA2 = (u.megajansky / u.steradian).to(u.microjansky / u.arcsecond / u.arcsecond)
 
 # Conversion factor from square arcseconds to steradians
 A2_TO_SR = (np.pi / (180. * 3600.))**2
@@ -76,6 +76,7 @@ class DataSet():
     ----------
 
     """
+
     def __init__(self, model, inverse=False, source_type=None, correction_pars=None):
         """
         Short Summary
@@ -238,7 +239,7 @@ class DataSet():
 
             # MSA (MOS) data
             if (isinstance(self.input, datamodels.MultiSlitModel) and
-                self.exptype == 'NRS_MSASPEC'):
+                    self.exptype == 'NRS_MSASPEC'):
 
                 # Loop over the MSA slits, applying the same photom
                 # ref data to all slits

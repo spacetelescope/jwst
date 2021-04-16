@@ -43,6 +43,7 @@ def test_asdf_roundtrip_pipeline(_jail):
     # `par2` is set.
     assert step.make_list.par2 == 'par2'
 
+
 def test_asdf_from_call():
     """Test using an ASDF file from call"""
     config_file = t_path(

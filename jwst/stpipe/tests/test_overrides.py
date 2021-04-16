@@ -81,13 +81,13 @@ def test_invalid_override():
     dm_ramp, ref_data = create_models()
 
     with pytest.raises(ValidationError):
-        DQInitStep(override_mask = DQInitStep)
+        DQInitStep(override_mask=DQInitStep)
 
 
 def test_valid_model_override():
     dm_ramp, ref_data = create_models()
 
-    step = DQInitStep(override_mask = ref_data)
+    step = DQInitStep(override_mask=ref_data)
 
     # Verify get_reference_file() returns an override model.
     fetched_reference = step.get_reference_file(dm_ramp, 'mask')
@@ -101,7 +101,7 @@ def test_valid_model_override():
 def test_string_override():
     dm_ramp, ref_data = create_models()
 
-    step = DQInitStep(override_mask = "some_file.fits")
+    step = DQInitStep(override_mask="some_file.fits")
 
     # Verify stpipe treats string as filename and attempts to open
     with pytest.raises(FileNotFoundError):

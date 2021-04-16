@@ -22,6 +22,7 @@ def test_nircam_image_moving_target(rtdata, fitsdiff_default_kwargs):
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
+
 @pytest.mark.parametrize("input_file",
                          [
                              'jw00634_nrcblong_mttest_tnotinrange_uncal.fits',

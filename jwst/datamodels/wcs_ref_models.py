@@ -60,6 +60,7 @@ class _SimpleModel(ReferenceFileModel):
             else:
                 warnings.warn(traceback.format_exc(), ValidationWarning)
 
+
 class DistortionModel(_SimpleModel):
     """
     A model for a reference file of type "distortion".
@@ -81,6 +82,7 @@ class DistortionModel(_SimpleModel):
                 raise
             else:
                 warnings.warn(traceback.format_exc(), ValidationWarning)
+
 
 class DistortionMRSModel(ReferenceFileModel):
     """
@@ -212,14 +214,14 @@ class NIRCAMGrismModel(ReferenceFileModel):
     reftype = "specwcs"
 
     def __init__(self, init=None,
-                       displ=None,
-                       dispx=None,
-                       dispy=None,
-                       invdispl=None,
-                       invdispx=None,
-                       invdispy=None,
-                       orders=None,
-                       **kwargs):
+                 displ=None,
+                 dispx=None,
+                 dispy=None,
+                 invdispl=None,
+                 invdispx=None,
+                 invdispy=None,
+                 orders=None,
+                 **kwargs):
         super().__init__(init=init, **kwargs)
 
         if init is None:
@@ -290,13 +292,13 @@ class NIRISSGrismModel(ReferenceFileModel):
     reftype = "specwcs"
 
     def __init__(self, init=None,
-                       displ=None,
-                       dispx=None,
-                       dispy=None,
-                       invdispl=None,
-                       orders=None,
-                       fwcpos_ref=None,
-                       **kwargs):
+                 displ=None,
+                 dispx=None,
+                 dispy=None,
+                 invdispl=None,
+                 orders=None,
+                 fwcpos_ref=None,
+                 **kwargs):
         super().__init__(init=init, **kwargs)
 
         if init is None:
@@ -625,7 +627,7 @@ class DisperserModel(ReferenceFileModel):
 
     def __init__(self, init=None, angle=None, gwa_tiltx=None, gwa_tilty=None,
                  kcoef=None, lcoef=None, tcoef=None, pref=None, tref=None,
-                 theta_x=None, theta_y=None,theta_z=None,
+                 theta_x=None, theta_y=None, theta_z=None,
                  groovedensity=None, **kwargs):
         super().__init__(init=init, **kwargs)
         if groovedensity is not None:

@@ -161,13 +161,13 @@ def niriss_soss(input_model, reference_files):
 
     # Reverse the order of inputs passed to Tabular because it's in python order in modeling.
     # Consider changing it in modelng ?
-    cm_order1 = (Mapping((0, 1, 1, 0)) | \
+    cm_order1 = (Mapping((0, 1, 1, 0)) |
                  (Const1D(target_ra) & Const1D(target_dec) & wl1)
                  ).rename('Order1')
-    cm_order2 = (Mapping((0, 1, 1, 0)) | \
+    cm_order2 = (Mapping((0, 1, 1, 0)) |
                  (Const1D(target_ra) & Const1D(target_dec) & wl2)
                  ).rename('Order2')
-    cm_order3 = (Mapping((0, 1, 1, 0)) | \
+    cm_order3 = (Mapping((0, 1, 1, 0)) |
                  (Const1D(target_ra) & Const1D(target_dec) & wl3)
                  ).rename('Order3')
 
@@ -364,7 +364,7 @@ def wfss(input_model, reference_files):
 
     # make sure this is a grism image
     if "NIS_WFSS" != input_model.meta.exposure.type:
-            raise ValueError('The input exposure is not NIRISS grism')
+        raise ValueError('The input exposure is not NIRISS grism')
 
     # Create the empty detector as a 2D coordinate frame in pixel units
     gdetector = cf.Frame2D(name='grism_detector', axes_order=(0, 1),

@@ -8,7 +8,6 @@ log.setLevel(logging.DEBUG)
 
 
 def is_subarray(input_model):
-
     """
     Check to see if a data model comes from a subarray readout.
     If the data dimensions are less than 2048x2048 (or 1032x1024
@@ -45,7 +44,6 @@ def is_subarray(input_model):
 
 
 def ref_matches_sci(sci_model, ref_model):
-
     """
     Short Summary
     -------------
@@ -192,14 +190,13 @@ def ref_matches_sci(sci_model, ref_model):
     # Finally, see if all of the science file subarray params match those
     # of the reference file
     if (xstart_ref == xstart_sci and xsize_ref == xsize_sci and
-        ystart_ref == ystart_sci and ysize_ref == ysize_sci):
+            ystart_ref == ystart_sci and ysize_ref == ysize_sci):
         return True
     else:
         return False
 
 
 def get_subarray_data(sci_model, ref_model):
-
     """
     Extract a subarray from the data attribute of a reference file
     data model that matches the subarray characteristics of a
@@ -280,22 +277,21 @@ def get_subarray_data(sci_model, ref_model):
     # Make sure that the slice limits are within the bounds of
     # the reference file data array
     if (xstart < 0 or ystart < 0 or
-        xstop > ref_model.meta.subarray.xsize or ystop > ref_model.meta.subarray.ysize):
+            xstop > ref_model.meta.subarray.xsize or ystop > ref_model.meta.subarray.ysize):
         log.error('Computed reference file slice indexes are ' +
                   'incompatible with size of reference data array')
         log.error('Science: SUBSTRT1=%d, SUBSTRT2=%d, SUBSIZE1=%d, SUBSIZE2=%d',
-                   xstart_sci, ystart_sci, xsize_sci, ysize_sci)
+                  xstart_sci, ystart_sci, xsize_sci, ysize_sci)
         log.error('Reference: SUBSTRT1=%d, SUBSTRT2=%d, SUBSIZE1=%d, SUBSIZE2=%d',
-                   xstart_ref, ystart_ref, xsize_ref, ysize_ref)
+                  xstart_ref, ystart_ref, xsize_ref, ysize_ref)
         log.error('Slice indexes: xstart=%d, xstop=%d, ystart=%d, ystop=%d',
-                   xstart, xstop, ystart, ystop)
+                  xstart, xstop, ystart, ystop)
         raise ValueError('Bad reference file slice indexes')
 
     return ref_model.data[ystart:ystop, xstart:xstop]
 
 
 def get_subarray_model(sci_model, ref_model):
-
     """
     Create a subarray version of a reference file model that matches
     the subarray characteristics of a science data model. A new
@@ -338,12 +334,12 @@ def get_subarray_model(sci_model, ref_model):
     # Make sure that the slice limits are within the bounds of
     # the reference file data array
     if (xstart < 0 or ystart < 0 or
-        xstop > ref_model.meta.subarray.xsize or ystop > ref_model.meta.subarray.ysize):
+            xstop > ref_model.meta.subarray.xsize or ystop > ref_model.meta.subarray.ysize):
         log.error('Computed reference file slice indexes are incompatible with size of reference data array')
         log.error('Science: SUBSTRT1=%d, SUBSTRT2=%d, SUBSIZE1=%d, SUBSIZE2=%d',
-                   xstart_sci, ystart_sci, xsize_sci, ysize_sci)
+                  xstart_sci, ystart_sci, xsize_sci, ysize_sci)
         log.error('Reference: SUBSTRT1=%d, SUBSTRT2=%d, SUBSIZE1=%d, SUBSIZE2=%d',
-                   xstart_ref, ystart_ref, xsize_ref, ysize_ref)
+                  xstart_ref, ystart_ref, xsize_ref, ysize_ref)
         log.error('Slice indexes: xstart=%d, xstop=%d, ystart=%d, ystop=%d', xstart, xstop, ystart, ystop)
         raise ValueError('Bad reference file slice indexes')
 

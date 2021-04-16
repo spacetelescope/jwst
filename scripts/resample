@@ -44,10 +44,10 @@ if __name__ == '__main__':
         sys.exit(0)
 
     parser = argparse.ArgumentParser(
-       """Do image resampling on Level 2b FITS files""")
+        """Do image resampling on Level 2b FITS files""")
 
     parser.add_argument(
-       'infile', metavar='infile', nargs=1,
+        'infile', metavar='infile', nargs=1,
        help="""Input Level 2b FITS file.""")
 
     parser.add_argument(

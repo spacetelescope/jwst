@@ -1,14 +1,14 @@
 .. _asn-level3-techspecs:
 
-Level 3 Associations: Technical Specifications
+Stage 3 Associations: Technical Specifications
 ==============================================
 
 Logical Structure
 -----------------
 
-Independent of the actual format, all Level 3 associations have the
+Independent of the actual format, all stage 3 associations have the
 following structure. Again, the structure is defined and enforced by
-the Level 3 schema
+the stage 3 schema
 
   * Top level, or meta, key/values
   * List of products, each consisting of
@@ -71,7 +71,7 @@ program *optional*
 
 target *optional*
   Target ID for which this association refers to. DMS currently uses
-  the TARGETID header keyword in the Level2 exposure files, but there
+  the TARGETID header keyword in the stage 2 exposure files, but there
   is no formal restrictions on value.
 
 asn_type *optional*
@@ -107,15 +107,15 @@ constraints *optional*
 Association products have two components:
 
 name *optional*
-  The string template to be used by Level 3 processing tasks to create
+  The string template to be used by stage 3 processing tasks to create
   the output file names. The product name, in general, is a prefix on
   which the individual pipeline and step modules will append whatever
   suffix information is needed.
 
-  If not specified, the Level3 processing modules will create a name root.
+  If not specified, the stage 3 processing modules will create a name root.
 
 members *required*
-  This is a list of the exposures to be used by the Level 3 processing
+  This is a list of the exposures to be used by the stage 3 processing
   tasks. This keyword is explained in detail in the next section.
 
 ``members`` Keyword
@@ -133,7 +133,7 @@ exptype *required*
   * ``science`` *required*
 
     The primary science exposures. There is usually more than one
-    since Level3 calibration involves combining multiple science
+    since stage 3 calibration involves combining multiple science
     exposures. However, at least one exposure in an association needs
     to be ``science``.
     

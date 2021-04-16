@@ -2,7 +2,6 @@ import numpy as np
 from ..assign_wcs import niriss
 
 
-
 WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_WFSS', 'NRC_GRISM', 'NRC_TSGRISM']
 
 
@@ -38,10 +37,10 @@ def get_wavelengths(model, exp_type="", order=None, use_wavecorr=None):
         got_wavelength = True                   # may be reset below
     else:
         wl_array = None
-    if (wl_array is None or len(wl_array) == 0 or
-        np.nanmin(wl_array) == 0. and np.nanmax(wl_array) == 0.):
-            got_wavelength = False
-            wl_array = None
+    if (wl_array is None or len(wl_array) == 0 or np.nanmin(wl_array) == 0.
+            and np.nanmax(wl_array) == 0.):
+        got_wavelength = False
+        wl_array = None
 
     # If we've been asked to use the corrected wavelengths stored in
     # the wavelength array, return those wavelengths. Otherwise, the

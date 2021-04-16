@@ -46,7 +46,7 @@ def test_rscd_baseline_set_groupdq():
     # in the 2nd integration
     dq_diff = (dm_ramp_rscd.groupdq[1, nflag:ngroups, :, :]
                - dm_ramp.groupdq[1, nflag:ngroups, :, :])
-    np.testing.assert_array_equal(np.full((ngroups-nflag, ysize, xsize),
+    np.testing.assert_array_equal(np.full((ngroups - nflag, ysize, xsize),
                                           0,
                                           dtype=int),
                                   dq_diff,

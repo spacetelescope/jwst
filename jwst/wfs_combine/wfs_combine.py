@@ -258,8 +258,8 @@ class DataSet:
         tr2 = wcs2.get_transform('world', 'detector')
 
         # Get coords of center pixel
-        xcen = int(self.input_1.data.shape[1]/2)
-        ycen = int(self.input_1.data.shape[0]/2)
+        xcen = int(self.input_1.data.shape[1] / 2)
+        ycen = int(self.input_1.data.shape[0] / 2)
 
         radec = tr1(xcen, ycen)
         pixels = tr2(radec[0], radec[1])
@@ -432,7 +432,6 @@ def interp_array(sci_data, dq_data):
         interpolated SCI image
     """
 
-
     wh_bad_dq = np.where(np.bitwise_and(dq_data, DO_NOT_USE))
     num_bad_dq = len(wh_bad_dq[0])
 
@@ -511,7 +510,6 @@ def create_griddata_array(sci_data, pixel):
 
 
 def get_index_range(offset, length):
-
     """
     Short Summary
     -------------

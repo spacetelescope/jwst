@@ -12,7 +12,6 @@ log.setLevel(logging.DEBUG)
 
 
 def background_sub(input_model, bkg_list, sigma, maxiters):
-
     """
     Short Summary
     -------------
@@ -50,7 +49,6 @@ def background_sub(input_model, bkg_list, sigma, maxiters):
 
 
 def average_background(bkg_list, sigma, maxiters):
-
     """
     Average multiple background exposures into a combined data model
 

@@ -38,5 +38,5 @@ class KlipStep(Step):
         # Update the step completion status
         psf_sub.meta.cal_step.klip = 'COMPLETE'
 
-        #return psf_sub, psf_fit
+        # return psf_sub, psf_fit
         return psf_sub

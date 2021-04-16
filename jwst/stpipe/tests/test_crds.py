@@ -24,6 +24,7 @@ def setup():
 def teardown():
     shutil.rmtree(TMP_DIR)
 
+
 class CrdsStep(Step):
     reference_file_types = ['flat']
 
@@ -69,13 +70,14 @@ def test_crds_step_override():
     with fits.open(TMP_FITS) as hdulist:
         assert hdulist[0].header['R_FLAT'].endswith('flat.fits')
 
+
 def test_crds_failed_getreferences_parameter():
     """Run crds.getreferences() with invalid FILTER."""
     header = {
         '_extra_fits.PRIMARY.IRAF-TLM': '2013-12-12T15:56:30',
         'meta.date': '2014-07-22T15:53:19.893683',
         'meta.filename': 'crds.fits',
-        'meta.instrument.detector': 'yyyyNRCA1yyyy', # whack this parameter
+        'meta.instrument.detector': 'yyyyNRCA1yyyy',  # whack this parameter
         'meta.instrument.filter': 'F140M',
         'meta.instrument.name': 'NIRCAM',
         'meta.instrument.pupil': 'CLEAR',
@@ -87,9 +89,10 @@ def test_crds_failed_getreferences_parameter():
         'meta.subarray.ysize': 2048,
         'meta.subarray.ystart': 1,
         'meta.telescope': 'JWST'
-        }
+    }
     with pytest.raises(crds.CrdsError):
         crds.getreferences(header, reftypes=["flat"])
+
 
 def test_crds_failed_getreferences_reftype():
     """Run crds.getreferences() with an invalid reftypes list."""
@@ -109,9 +112,10 @@ def test_crds_failed_getreferences_reftype():
         'meta.subarray.ysize': 2048,
         'meta.subarray.ystart': 1,
         'meta.telescope': 'JWST'
-        }
+    }
     with pytest.raises(crds.CrdsError):
         crds.getreferences(header, reftypes=["foo"])
+
 
 def test_crds_failed_getreferences_bad_context():
     import crds
@@ -131,7 +135,7 @@ def test_crds_failed_getreferences_bad_context():
         'meta.subarray.ysize': 2048,
         'meta.subarray.ystart': 1,
         'meta.telescope': 'JWST'
-        }
+    }
     with pytest.raises(crds.CrdsError):
         crds.getreferences(header, reftypes=["flat"], context="jwst_9942.pmap")
 

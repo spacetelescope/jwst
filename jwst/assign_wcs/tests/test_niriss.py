@@ -124,6 +124,7 @@ def traverse_wfss_trace(filtername):
     assert ydet == ysource
     assert orderdet == orderin
 
+
 def test_traverse_wfss_grisms():
     """Make sure the trace polynomials roundtrip for both grisms."""
     for f in niriss_grisms:

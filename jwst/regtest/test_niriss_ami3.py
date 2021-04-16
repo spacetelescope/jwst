@@ -14,8 +14,8 @@ def run_pipeline(jail, rtdata_module):
     # Run the calwebb_ami3 pipeline on the association
     collect_pipeline_cfgs("config")
     args = ["config/calwebb_ami3.cfg", rtdata.input,
-        "--steps.ami_analyze.rotation=1.49",
-    ]
+            "--steps.ami_analyze.rotation=1.49",
+            ]
     Step.from_cmdline(args)
 
     return rtdata

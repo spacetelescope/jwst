@@ -59,7 +59,7 @@ class JumpStep(Step):
             gain_model = datamodels.GainModel(gain_filename)
 
             readnoise_filename = self.get_reference_file(input_model,
-                                                          'readnoise')
+                                                         'readnoise')
             self.log.info('Using READNOISE reference file: %s',
                           readnoise_filename)
             readnoise_model = datamodels.ReadnoiseModel(readnoise_filename)
@@ -69,6 +69,7 @@ class JumpStep(Step):
                                 rej_thresh, three_grp_rej_thresh, four_grp_rej_thresh, max_cores,
                                 max_jump_to_flag_neighbors, min_jump_to_flag_neighbors,
                                 flag_4_neighbors)
+
 
             gain_model.close()
             readnoise_model.close()

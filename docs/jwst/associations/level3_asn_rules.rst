@@ -1,6 +1,6 @@
 .. _level3-asn-rules:
 
-Level3 Associations: Rules
+Stage3 Associations: Rules
 ==========================
 
 .. _level3-asn-data-grouping:
@@ -51,7 +51,7 @@ follows:
 
 - exposure
 
-  The basic unit of science data. Starting at Level1b, an exposure
+  The basic unit of science data. Starting at stage 1, an exposure
   contains a single integrations of a single detector from a single
   instrument for a single *snap*. Note that a single integration
   actually is a number of readouts of the detector during the integration.
