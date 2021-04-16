@@ -119,7 +119,6 @@ def find_crs(data, group_dq, read_noise, normal_rejection_threshold,
         min_index1d = sort_index[row, col, 0]
         max_index1d = sort_index[row, col, 1]
         min_index2d = np.reshape(min_index1d, (nrows, ncols))
-        first_ratio = np.reshape(ratio3d[row, col, min_index2d[row, col]], (nrows, ncols))
         max_index2d = np.reshape(max_index1d, (nrows, ncols))
         last_ratio = np.reshape(ratio3d[row, col, max_index2d[row, col]], (nrows, ncols))
         # Get the row and column indices of pixels whose largest non-saturated ratio is above the threshold
@@ -178,8 +177,8 @@ def find_crs(data, group_dq, read_noise, normal_rejection_threshold,
                                                               three_diff_rejection_threshold,
                                                               normal_rejection_threshold)
                 # Check if largest remaining difference is above threshold
-                if pixel_ratio[
-                    pixel_sorted_index[ndiffs - number_CRs_found - pixel_sat_groups - 1]] > rejection_threshold:
+                largest_diff = ndiffs - number_CRs_found - pixel_sat_groups - 1
+                if pixel_ratio[pixel_sorted_index[largest_diff]] > rejection_threshold:
                     new_CR_found = True
                     pixel_cr_mask[pixel_sorted_index[ndiffs - number_CRs_found - pixel_sat_groups - 1]] = 0
                     number_CRs_found += 1
