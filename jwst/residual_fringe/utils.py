@@ -31,7 +31,6 @@ from .SineModel import SineModel
 from .LevenbergMarquardtFitter import LevenbergMarquardtFitter
 from .RobustShell import RobustShell
 #from .SineSplineModel import SineSplineModel
-
 #from BayesicFitting import SplinesModel, Fitter, SineModel, LevenbergMarquardtFitter, \
 #    PolynomialModel (not used) , RobustShell, SineSplineModel (not used), SineAmpModel (not used) 
 from numpy.linalg.linalg import LinAlgError
@@ -598,12 +597,12 @@ def fit_quality(wavenum, res_fringes, weights, ffreq, dffreq, save_fig=False, pl
         contrast = np.abs(round(fr_par[1]*2, 3))
 
     # make a figure to return
-    #if save_fig:
-    #    best_mdl = SineModel(fixed={0: 1/peak_freq, 1:fr_par[0], 2:fr_par[1]})
-    #    fit = best_mdl.result(wavenum)
-    #    xdata = [wavenum]
-    #    ydata = [res_fringes, fit]
-    #    diagnostic_plot('fit_quality', 'columns', plot_name=plot_name, xdata=xdata, ydata=ydata)
+    if save_fig:
+        best_mdl = SineModel(fixed={0: 1/peak_freq, 1:fr_par[0], 2:fr_par[1]})
+        fit = best_mdl.result(wavenum)
+        xdata = [wavenum]
+        ydata = [res_fringes, fit]
+        diagnostic_plot('fit_quality', 'columns', plot_name=plot_name, xdata=xdata, ydata=ydata)
 
     return contrast
 
