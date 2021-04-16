@@ -156,18 +156,18 @@ class TransformParameters:
 
     Parameters
     ----------
-    allow_default: bool
+    allow_default : bool
         If telemetry cannot be determine, use existing
         information in the observation's header.
 
-    default_pa_v3: float
+    default_pa_v3 : float
         The V3 position angle to use if the pointing information
         is not found.
 
-    dry_run: bool
+    dry_run : bool
         Do not write out the modified file.
 
-    engdb_url: str or None
+    engdb_url : str or None
         URL of the engineering telemetry database REST interface.
 
     fsmcorr_version : str
@@ -188,16 +188,16 @@ class TransformParameters:
         The method, or algorithm, to use in calculating the transform.
         If not specified, the default method is used.
 
-    reduce_func: func or None
+    reduce_func : func or None
         Reduction function to use on values.
 
-    siaf: SIAF
+    siaf : SIAF
         The SIAF information for the input model
 
-    siaf_path: str or file-like object or None
+    siaf_path : str or file-like object or None
         The path to the SIAF database.
 
-    tolerance: int
+    tolerance : int
         If no telemetry can be found during the observation,
         the time, in seconds, beyond the observation time to
         search for telemetry.
@@ -236,35 +236,35 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
 
     Parameters
     ----------
-    filename: str
+    filename : str
         The path to a data file.
 
-    default_pa_v3: float
+    default_pa_v3 : float
         The V3 position angle to use if the pointing information
         is not found.
 
-    siaf_path: str or file-like object or None
+    siaf_path : str or file-like object or None
         The path to the SIAF database.
 
-    engdb_url: str or None
+    engdb_url : str or None
         URL of the engineering telemetry database REST interface.
 
-    tolerance: int
+    tolerance : int
         If no telemetry can be found during the observation,
         the time, in seconds, beyond the observation time to
         search for telemetry.
 
-    allow_default: bool
+    allow_default : bool
         If telemetry cannot be determine, use existing
         information in the observation's header.
 
-    reduce_func: func or None
+    reduce_func : func or None
         Reduction function to use on values.
 
-    dry_run: bool
+    dry_run : bool
         Do not write out the modified file.
 
-    transform_kwargs: dict
+    transform_kwargs : dict
         Keyword arguments used by matrix calculation routines
 
     Notes
@@ -407,22 +407,22 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, eng
     siaf_path : str
         The path to the SIAF file, i.e. ``XML_DATA`` env variable.
 
-    engdb_url: str or None
+    engdb_url : str or None
         URL of the engineering telemetry database REST interface.
 
-    tolerance: int
+    tolerance : int
         If no telemetry can be found during the observation,
         the time, in seconds, beyond the observation time to
         search for telemetry.
 
-    allow_default: bool
+    allow_default : bool
         If telemetry cannot be determine, use existing
         information in the observation's header.
 
-    reduce_func: func or None
+    reduce_func : func or None
         Reduction function to use on values.
 
-    transform_kwargs: dict
+    transform_kwargs : dict
         Keyword arguments used by matrix calculation routines.
     """
 
@@ -474,7 +474,7 @@ def update_wcs_from_fgs_guiding(model, default_roll_ref=0.0, default_vparity=1, 
         If pointing information cannot be retrieved,
         use this as the V3 position angle.
 
-    default_vparity: int
+    default_vparity : int
         The default `VIdlParity` to use and should
         be either "1" or "-1". "1" is the
         default since FGS guiding will be using the
@@ -754,7 +754,7 @@ def calc_wcs(t_pars: TransformParameters):
 
     Returns
     -------
-    (wcsinfo, vinfo): (WCSRef, WCSRef)
+    (wcsinfo, vinfo) : (WCSRef, WCSRef)
         A 2-tuple is returned with the WCS pointing for
         the aperture and the V1 axis
 
@@ -813,7 +813,7 @@ def calc_transforms(t_pars: TransformParameters):
 
     Returns
     -------
-    transforms: Transforms
+    transforms : Transforms
         The list of coordinate matrix transformations
     """
     t_pars.method = t_pars.method if t_pars.method else Methods.default
@@ -835,7 +835,7 @@ def calc_transforms_original(t_pars: TransformParameters):
 
     Returns
     -------
-    transforms: Transforms
+    transforms : Transforms
         The list of coordinate matrix transformations
 
     Notes
@@ -918,7 +918,7 @@ def calc_transforms_gscmd_j3pags(t_pars: TransformParameters):
 
     Returns
     -------
-    transforms: Transforms
+    transforms : Transforms
         The list of coordinate matrix transformations
 
     Notes
@@ -995,7 +995,7 @@ def calc_transforms_gscmd_v3pags(t_pars: TransformParameters):
 
     Returns
     -------
-    transforms: Transforms
+    transforms : Transforms
         The list of coordinate matrix transformations
 
     Notes
@@ -1233,12 +1233,12 @@ def calc_v1_wcs(m_eci2v):
 
     Parameters
     ----------
-    m_eci2v: np.array((3, 3))
+    m_eci2v : np.array((3, 3))
         The ECI to V transformation matrix
 
     Returns
     -------
-    vinfo: WCSRef
+    vinfo : WCSRef
         The V1 wcs pointing
     """
     # V1 RA/Dec is the first row of the transform
@@ -1267,12 +1267,12 @@ def calc_aperture_wcs(m_eci2siaf):
 
     Parameters
     ----------
-    m_eci2siaf: np.array((3, 3))
+    m_eci2siaf : np.array((3, 3))
         The ECI to SIAF transformation matrix
 
     Returns
     -------
-    wcsinfo: WCSRef
+    wcsinfo : WCSRef
         The aperturn wcs information
     """
 
@@ -1321,12 +1321,12 @@ def calc_eci2j_matrix(q):
 
     Parameters
     ----------
-    q: np.array(q1, q2, q3, q4)
+    q : np.array(q1, q2, q3, q4)
         Array of quaternions from the engineering database
 
     Returns
     -------
-    transform: np.array((3, 3))
+    transform : np.array((3, 3))
         The transform matrix representing the transformation
         from observatory orientation to J-Frame
     """
@@ -1351,16 +1351,16 @@ def calc_j2fgs1_matrix(j2fgs_matrix, transpose=False):
 
     Parameters
     ----------
-    j2fgs_matrix: n.array((9,))
+    j2fgs_matrix : n.array((9,))
         Matrix parameters from the engineering database.
         If all zeros, a predefined matrix is used.
 
-    transpose: bool
+    transpose : bool
         Transpose the resulting matrix.
 
     Returns
     -------
-    transform: np.array((3, 3))
+    transform : np.array((3, 3))
         The transformation matrix
     """
     if np.isclose(j2fgs_matrix, 0.).all():
@@ -1414,7 +1414,7 @@ def calc_sifov_fsm_delta_matrix(fsmcorr, fsmcorr_version='latest', fsmcorr_units
 
     Returns
     -------
-    transform: np.array((3, 3))
+    transform : np.array((3, 3))
         The transformation matrix
     """
     version = fsmcorr_version.lower()
@@ -1520,12 +1520,12 @@ def calc_v2siaf_matrix(siaf):
 
     Parameters
     ----------
-    siaf: SIAF
+    siaf : SIAF
         The SIAF parameters
 
     Returns
     -------
-    transform: np.array((3, 3))
+    transform : np.array((3, 3))
         The V1 to SIAF transformation matrix
     """
     v2, v3, v3idlyang, vparity = (siaf.v2_ref, siaf.v3_ref,
@@ -1559,15 +1559,15 @@ def calc_position_angle(target, point):
 
     Parameters
     ----------
-    target: WCSRef
+    target : WCSRef
         The TARGET wcs parameters
 
-    point: WCSRef
+    point : WCSRef
         The POINT wcs parameters
 
     Returns
     -------
-    point_pa: float
+    point_pa : float
       The POINT position angle, in radians
     """
     y = cos(point.dec) * sin(point.ra - target.ra)
@@ -1589,24 +1589,24 @@ def get_pointing(obsstart, obsend, engdb_url=None,
 
     Parameters
     ----------
-    obsstart, obsend: float
+    obsstart, obsend : float
         MJD observation start/end times
 
-    engdb_url: str or None
+    engdb_url : str or None
         URL of the engineering telemetry database REST interface.
 
-    tolerance: int
+    tolerance : int
         If no telemetry can be found during the observation,
         the time, in seconds, beyond the observation time to
         search for telemetry.
 
-    reduce_func: func or None
+    reduce_func : func or None
         Reduction function to use on values.
         If None, the average pointing is returned.
 
     Returns
     -------
-    pointing: Pointing or [Pointing(, ...)]
+    pointing : Pointing or [Pointing(, ...)]
         The engineering pointing parameters.
         If the `result_type` is `all`, a list
         of pointings will be returned
@@ -1649,11 +1649,11 @@ def vector_to_ra_dec(v):
 
     Parameters
     ----------
-    v: [v0, v1, v2]
+    v : [v0, v1, v2]
 
     Returns
     -------
-    ra, dec: float, float
+    ra, dec : float, float
         The spherical angles, in radians
     """
     ra = np.arctan2(v[1], v[0])
@@ -1899,20 +1899,20 @@ def get_mnemonics(obsstart, obsend, tolerance, engdb_url=None):
 
     Parameters
     ----------
-    obsstart, obsend: float
+    obsstart, obsend : float
         MJD observation start/end times
 
-    tolerance: int
+    tolerance : int
         If no telemetry can be found during the observation,
         the time, in seconds, beyond the observation time to
         search for telemetry.
 
-    engdb_url: str or None
+    engdb_url : str or None
         URL of the engineering telemetry database REST interface.
 
     Returns
     -------
-    mnemonics: {mnemonic: [value[,...]][,...]}
+    mnemonics : {mnemonic: [value[,...]][,...]}
         The values for each pointing mnemonic
 
     Raises
@@ -2014,12 +2014,12 @@ def all_pointings(mnemonics):
 
     Parameters
     ==========
-    mnemonics: {mnemonic: [value[,...]][,...]}
+    mnemonics : {mnemonic: [value[,...]][,...]}
         The values for each pointing mnemonic
 
     Returns
     =======
-    pointings: [Pointing[,...]]
+    pointings : [Pointing[,...]]
         List of pointings.
     """
     pointings = []
@@ -2119,12 +2119,12 @@ def first_pointing(mnemonics):
 
     Parameters
     ==========
-    mnemonics: {mnemonic: [value[,...]][,...]}
+    mnemonics : {mnemonic: [value[,...]][,...]}
         The values for each pointing mnemonic
 
     Returns
     =======
-    pointing: Pointing
+    pointing : Pointing
         First pointing.
 
     """
@@ -2137,12 +2137,12 @@ def pointing_from_average(mnemonics):
 
     Parameters
     ==========
-    mnemonics: {mnemonic: [value[,...]][,...]}
+    mnemonics : {mnemonic: [value[,...]][,...]}
         The values for each pointing mnemonic
 
     Returns
     =======
-    pointing: Pointing
+    pointing : Pointing
         Pointing from average.
 
     """
