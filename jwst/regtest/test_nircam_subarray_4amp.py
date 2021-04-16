@@ -3,7 +3,6 @@ import os
 import pytest
 from astropy.io.fits.diff import FITSDiff
 
-from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
 """
@@ -32,7 +31,6 @@ def run_pipeline(jail, rtdata_module):
     'jw00617196001_02102_00001_nrca4_rateints.fits',
     'jw00617196001_02102_00001_nrca4_trapsfilled.fits', ],
     ids=['rate', 'rateints', 'trapsfilled'])
-
 def test_nircam_detector1_subarray(run_pipeline, fitsdiff_default_kwargs, output):
     """
     Regression test of calwebb_detector1 pipeline performed on NIRSpec data.
