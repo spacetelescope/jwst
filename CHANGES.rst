@@ -136,6 +136,8 @@ refpix
 - Fixed a bug introduced in #5926 that affected refpix calibration of 1-amp NIR
   subarrays [#5937]
 
+- Added regression test and unit test for NIR 4-amp subarray correction
+
 resample
 --------
 
