@@ -12,7 +12,7 @@ log.setLevel(logging.DEBUG)
 
 
 def detect_jumps(input_model, gain_model, readnoise_model,
-                 rejection_threshold, three_grp_rejection_threshold, four_grp_rejection_threshold, max_cores,
+                 rejection_thresh, three_grp_thresh, four_grp_thresh, max_cores,
                  max_jump_to_flag_neighbors, min_jump_to_flag_neighbors,
                  flag_4_neighbors):
     """
@@ -100,23 +100,25 @@ def detect_jumps(input_model, gain_model, readnoise_model,
     slices = []
     # Slice up data, gdq, readnoise_2d into slices
     # Each element of slices is a tuple of
-    # (data, gdq, readnoise_2d, rejection_threshold, nframes)
+    # (data, gdq, readnoise_2d, rejection_thresh, three_grp_thres, four_grp_thres, nframes)
     for i in range(numslices - 1):
         slices.insert(i, (data[:, :, i * yincrement:(i + 1) * yincrement, :],
                           gdq[:, :, i * yincrement:(i + 1) * yincrement, :],
                           readnoise_2d[i * yincrement:(i + 1) * yincrement, :],
-                          rejection_threshold, three_grp_rejection_threshold, four_grp_rejection_threshold,
+                          rejection_thresh, three_grp_thresh, four_grp_thresh,
                           frames_per_group, flag_4_neighbors,
                           max_jump_to_flag_neighbors, min_jump_to_flag_neighbors))
     # last slice get the rest
     slices.insert(numslices - 1, (data[:, :, (numslices - 1) * yincrement:nrows, :],
                                   gdq[:, :, (numslices - 1) * yincrement:nrows, :],
                                   readnoise_2d[(numslices - 1) * yincrement:nrows, :],
-                                  rejection_threshold, three_grp_rejection_threshold, four_grp_rejection_threshold, frames_per_group, flag_4_neighbors,
+                                  rejection_thresh, three_grp_thresh, four_grp_thresh,
+                                  frames_per_group, flag_4_neighbors,
                                   max_jump_to_flag_neighbors, min_jump_to_flag_neighbors))
     if numslices == 1:
-        gdq, row_below_dq, row_above_dq = twopt.find_crs(data, gdq, readnoise_2d, rejection_threshold,
-                                                         three_grp_rejection_threshold, four_grp_rejection_threshold, frames_per_group, flag_4_neighbors,
+        gdq, row_below_dq, row_above_dq = twopt.find_crs(data, gdq, readnoise_2d, rejection_thresh,
+                                                         three_grp_thresh, four_grp_thresh,
+                                                         frames_per_group, flag_4_neighbors,
                                                          max_jump_to_flag_neighbors,
                                                          min_jump_to_flag_neighbors)
         elapsed = time.time() - start
