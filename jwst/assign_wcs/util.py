@@ -938,15 +938,9 @@ def update_s_region_keyword(model, footprint):
         log.info("Update S_REGION to {}".format(model.meta.wcsinfo.s_region))
 
 
-def _nanminmax(wcsobj):
-    x, y = grid_from_bounding_box(wcsobj.bounding_box)
-    ra, dec, lam = wcsobj(x, y)
-    return np.nanmin(ra), np.nanmax(ra), np.nanmin(dec), np.nanmax(dec)
-
-
 def compute_footprint_nrs_ifu(output_model, mod):
     """
-    determine NIRSPEC ifu footprint observations using the instrument model.
+    Determine NIRSPEC ifu footprint observations using the instrument model.
 
     Parameters
     ----------
@@ -955,19 +949,27 @@ def compute_footprint_nrs_ifu(output_model, mod):
     mod : module
         The imported ``nirspec`` module.
     """
-    wcs_list = mod.nrs_ifu_wcs(output_model)
     ra_total = []
     dec_total = []
-    for wcsobj in wcs_list:
-        rmin, rmax, dmin, dmax = _nanminmax(wcsobj)
-        ra_total.append((rmin, rmax))
-        dec_total.append((dmin, dmax))
-    ra_max = np.asarray(ra_total)[:, 1].max()
-    ra_min = np.asarray(ra_total)[:, 0].min()
-    dec_max = np.asarray(dec_total)[:, 1].max()
-    dec_min = np.asarray(dec_total)[:, 0].min()
+    lam_total = []
+
+    # Use the same grid (full detector) for every slice.
+    # NaNs will be removed, it is computationally faster
+    x, y = grid_from_bounding_box(((0, 2048), (0, 2048)))
+    for sl in range(2):
+        wcsobj = mod._nrs_wcs_set_input(output_model, sl)
+        ra, dec, lam = wcsobj(x, y)
+        ra_total.append(ra)
+        dec_total.append(dec)
+        lam_total.append(lam)
+    ra_max = np.nanmax(ra_total)
+    ra_min = np.nanmin(ra_total)
+    dec_max = np.nanmax(dec_total)
+    dec_min = np.nanmin(dec_total)
+    lam_max = np.nanmax(lam_total)
+    lam_min = np.nanmin(lam_total)
     footprint = np.array([ra_min, dec_min, ra_max, dec_min, ra_max, dec_max, ra_min, dec_max])
-    return footprint
+    return footprint, (lam_min, lam_max)
 
 
 def update_s_region_nrs_ifu(output_model, mod):
@@ -981,8 +983,9 @@ def update_s_region_nrs_ifu(output_model, mod):
     mod : module
         The imported ``nirspec`` module.
     """
-    footprint = compute_footprint_nrs_ifu(output_model, mod)
+    footprint, spectral_region = compute_footprint_nrs_ifu(output_model, mod)
     update_s_region_keyword(output_model, footprint)
+    output_model.meta.wcsinfo.spectral_region = spectral_region
 
 
 def update_s_region_mrs(output_model):
