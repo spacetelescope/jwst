@@ -956,8 +956,8 @@ def compute_footprint_nrs_ifu(output_model, mod):
     # Use the same grid (full detector) for every slice.
     # NaNs will be removed, it is computationally faster
     x, y = grid_from_bounding_box(((0, 2048), (0, 2048)))
-    for sl in range(2):
-        wcsobj = mod._nrs_wcs_set_input(output_model, sl)
+    for sl in range(30):
+        wcsobj = mod.nrs_wcs_set_input(output_model, sl)
         ra, dec, lam = wcsobj(x, y)
         ra_total.append(ra)
         dec_total.append(dec)
