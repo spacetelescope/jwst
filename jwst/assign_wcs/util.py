@@ -2,6 +2,7 @@
 Utility function for assign_wcs.
 
 """
+import copy
 import logging
 import functools
 import numpy as np
@@ -938,7 +939,7 @@ def update_s_region_keyword(model, footprint):
         log.info("Update S_REGION to {}".format(model.meta.wcsinfo.s_region))
 
 
-def compute_footprint_nrs_ifu(output_model, mod):
+def compute_footprint_nrs_ifu(dmodel, mod):
     """
     Determine NIRSPEC ifu footprint observations using the instrument model.
 
@@ -952,16 +953,27 @@ def compute_footprint_nrs_ifu(output_model, mod):
     ra_total = []
     dec_total = []
     lam_total = []
+    _, wrange = mod.spectral_order_wrange_from_model(dmodel)
+    pipe = dmodel.meta.wcs.pipeline
 
-    # Use the same grid (full detector) for every slice.
-    # NaNs will be removed, it is computationally faster
-    x, y = grid_from_bounding_box(((0, 2048), (0, 2048)))
+    g2s = pipe[2].transform
+    transforms = [pipe[0].transform]
+    transforms.append(pipe[1].transform[1:])
+    transforms.append(astmodels.Identity(1))
+    transforms.append(astmodels.Identity(1))
+    transforms.extend([step.transform for step in pipe[4:-1]])
+
     for sl in range(30):
-        wcsobj = mod.nrs_wcs_set_input(output_model, sl)
-        ra, dec, lam = wcsobj(x, y)
-        ra_total.append(ra)
-        dec_total.append(dec)
-        lam_total.append(lam)
+        transforms[2] = g2s.get_model(sl)
+        m = functools.reduce(lambda x, y: x | y, [tr.inverse for tr in transforms[:3][::-1]])
+        bbox = mod.compute_bounding_box(m, wrange)
+        transforms[3] = pipe[3].transform.get_model(sl) & astmodels.Identity(1)
+        mforw = functools.reduce(lambda x, y: x | y, transforms)
+        x1, y1 = grid_from_bounding_box(bbox)
+        ra, dec, lam = mforw(x1, y1)
+        ra_total.extend(np.ravel(ra))
+        dec_total.extend(np.ravel(dec))
+        lam_total.extend(np.ravel(lam))
     ra_max = np.nanmax(ra_total)
     ra_min = np.nanmin(ra_total)
     dec_max = np.nanmax(dec_total)
