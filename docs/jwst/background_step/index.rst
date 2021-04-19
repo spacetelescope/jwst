@@ -1,8 +1,8 @@
 .. _background_step:
 
-============================
-Background Image Subtraction
-============================
+===============
+Background Step
+===============
 
 .. toctree::
    :maxdepth: 2

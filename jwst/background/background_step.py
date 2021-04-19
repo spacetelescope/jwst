@@ -13,12 +13,16 @@ class BackgroundStep(Step):
     """
 
     spec = """
+        save_combined_background = boolean(default=False)  # Save combined background image
         sigma = float(default=3.0)  # Clipping threshold
         maxiters = integer(default=None)  # Number of clipping iterations
     """
 
     # These reference files are only used for WFSS/GRISM data.
     reference_file_types = ["wfssbkg", "wavelengthrange"]
+
+    # Define a suffix for optional saved output of the combined background
+    bkg_suffix = 'combinedbackground'
 
     def process(self, input, bkg_list):
         """
@@ -77,11 +81,15 @@ class BackgroundStep(Step):
                                 break
                 # Do the background subtraction
                 if do_sub:
-                    result = background_sub.background_sub(input_model,
-                                                           bkg_list,
-                                                           self.sigma,
-                                                           self.maxiters)
+                    bkg_model, result = background_sub.background_sub(input_model,
+                                                                      bkg_list,
+                                                                      self.sigma,
+                                                                      self.maxiters)
                     result.meta.cal_step.back_sub = 'COMPLETE'
+                    if self.save_combined_background:
+                        comb_bkg_path = self.save_model(bkg_model, suffix=self.bkg_suffix, force=True)
+                        self.log.info(f'Combined background written to "{comb_bkg_path}".')
+
                 else:
                     result = input_model.copy()
                     result.meta.cal_step.back_sub = 'SKIPPED'

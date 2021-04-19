@@ -58,8 +58,7 @@ def run_image3pipeline(run_image2pipeline, rtdata_module, jail):
     ]
     for rate_file in rate_files:
         rtdata.get_data(rate_file)
-        args = ["config/calwebb_image2.cfg", rtdata.input,
-                "--steps.resample.skip=True"]
+        args = ["config/calwebb_image2.cfg", rtdata.input]
         Step.from_cmdline(args)
 
     # Get the level3 assocation json file (though not its members) and run

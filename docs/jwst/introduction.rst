@@ -18,7 +18,7 @@ coronagraphic, Aperture Masking Interferometry (AMI), and Time Series
 Observation (TSO) modes.
 
 Details of all the pipeline modules can be found at :ref:`pipeline-modules`.
-The remainder of this document discusses pipeline configuration files and
+The remainder of this document discusses pipeline parameter files and
 gives examples of running pipelines as a whole or in individual steps.
 
 Reference Files
@@ -70,28 +70,38 @@ Individual steps and pipelines (consisting of a series of steps) can be run
 from the command line using the ``strun`` command:
 ::
 
-    $ strun <class_name or configuration_file> <input_file>
+    $ strun <class_name or parameter_file> <input_file>
 
-The first argument to ``strun`` must be either the python class name of the
-step or pipeline to be run, or the name of a configuration (.asdf or .cfg) file for the
-desired step or pipeline (see `Configuration Files`_ below for more details).
-The second argument to ``strun`` is the name of the input data file to be processed.
+The first argument to ``strun`` must be either the python class name of the step
+or pipeline to be run, or the name of a parameter (.asdf or .cfg) file for the
+desired step or pipeline (see `Parameter Files`_ below for more details).
+The second argument to ``strun`` is the name of the input data file to be
+processed.
 
 For example, running the full stage 1 pipeline or an individual step by
-referencing their class names is done as follows:
+referencing their class name is done as follows:
 ::
 
   $ strun jwst.pipeline.Detector1Pipeline jw00017001001_01101_00001_nrca1_uncal.fits
   $ strun jwst.dq_init.DQInitStep jw00017001001_01101_00001_nrca1_uncal.fits
 
+Pipeline classes also have an "alias", or short name, that can be used instead of the
+full class specification. For example, ``jwst.pipeline.Detector1Pipeline`` has the
+alias ``calwebb_detector1`` and can be run as
+::
+
+  $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits
+
+A full list of pipeline aliases can be found in :ref:`Pipeline Stages <pipelines>`
+
 When a pipeline or step is executed in this manner (i.e. by referencing the
-class name), it will be run using a CRDS-supplied configuration merged with
+class name), it will be run using a CRDS-supplied parameters merged with
 default values
 
 If you want to use non-default parameter
 values, you can specify them as
 keyword arguments on the command line or set them in the appropriate
-configuration file.
+parameter file.
 
 To specify parameter values for an individual step when running a pipeline
 use the syntax ``--steps.<step_name>.<parameter>=value``.
@@ -99,7 +109,7 @@ For example, to override the default selection of a dark current reference
 file from CRDS when running a pipeline:
 ::
 
-    $ strun jwst.pipeline.Detector1Pipeline jw00017001001_01101_00001_nrca1_uncal.fits
+    $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits
           --steps.dark_current.override_dark='my_dark.fits'
     $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
           --steps.dark_current.override_dark='my_dark.fits'
@@ -109,32 +119,7 @@ step by using the '-h' (help) argument to strun:
 ::
 
     $ strun dq_init.cfg -h
-    $ strun jwst.pipeline.Detector1Pipeline -h
-
-JWST automatic processing uses configuration files to determine the
-pipeline/step parameters to use. To retrieve these files, use the
-``collect_pipeline_cfgs`` command. The general form of the command is:
-::
-
-$ collect_pipeline_cfgs <dir>
-
-Where ``<dir>`` is the destination directory. If the directory does not exist,
-it will be created. For example, to place the configuration files in the current
-working directory, use:
-::
-
-$ collect_pipeline_cfgs .
-
-To use a configuration, specify the desired file in place of the ``class_name``
-specification in the ``strun`` command. For example, to run the
-``Detector1Pipeline`` using the ``calwebb_detector1.cfg`` configuration file, use
-the following:
-::
-
-$ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
-
-These configuration files can be edited as needed, or created completely from
-scratch. For more information, see the `Configuration Files`_ file section below.
+    $ strun calwebb_detector1 -h
 
 Exit Status
 -----------
@@ -145,11 +130,11 @@ Exit Status
 - 64: No science data found
 
 The "No science data found" condition is returned by the ``assign_wcs`` step of
-``calwebb_spec2.cfg`` pipeline when, after successfully determining the WCS
+the ``calwebb_spec2`` pipeline when, after successfully determining the WCS
 solution for a file, the WCS indicates that no science data will be found. This
-condition most often occurs with NIRSpec's NRS2 detector: There are certain
-optical and MSA configurations in which dispersion will not cross to the NRS2
-detector.
+condition most often occurs with NIRSpec's Multi-object Spectroscopy (MOS) mode:
+There are certain optical and MSA configurations in which dispersion will not
+cross one or the other of NIRSpec's detectors.
 
 .. _run_from_python:
 
@@ -161,7 +146,7 @@ You can execute a pipeline or a step from within python by using the
 step instance directly.
 
 The ``call`` method creates a new instance of the class and runs the pipeline or
-step. Optional parameter settings can be specified by supplying a configuration file,
+step. Optional parameter settings can be specified by supplying a parameter file,
 or via keyword arguments. Examples are shown on the :ref:`Execute via call()<call_examples>` page.
 ::
 
@@ -175,7 +160,7 @@ or via keyword arguments. Examples are shown on the :ref:`Execute via call()<cal
 Another way to call the pipeline is by calling the instance of the pipeline directly.
 First create an instance, then set any desired parameter
 values and finally, execute. In this case, do not instatiate the pipeline
-with a configuration file. Examples are shown on the :ref:`Execute via run()<run_examples>` page.
+with a parameter file. Examples are shown on the :ref:`Execute via run()<run_examples>` page.
 ::
 
  pipe = Detector1Pipeline()
@@ -193,6 +178,23 @@ method. Examples are shown on the :ref:`Execute via run()<run_examples>` page.
 For more details on the different ways to run a pipeline step, see
 the :ref:`Configuring a Step<configuring-a-step>` page.
 
+To mimic exactly how a pipeline is run from the command line, but within a Python script, use ``Step.from_cmdline``.
+For example, the command line below:
+::
+
+    $ strun calwebb_spec2 jw00017001001_01101_00001_nrca1_uncal.fits
+        --steps.dark_current.override_dark='my_dark.fits'
+
+can be executed from within Python as follows:
+
+.. doctest-skip::
+
+   >>> from jwst.stpipe import Step
+   >>> Step.from_cmdline(['calwebb_spec2', 'jw00017001001_01101_00001_nrca1_uncal.fits',
+           '--steps.dark_current.override_dark', 'my_dark.fits'])
+
+``from_cmdline`` returns the ``Step`` object executed, ``Detector1Pipeline`` in
+the above example. However, it does not return any results.
 
 .. _intro_file_conventions:
 
@@ -220,8 +222,7 @@ Output Files
 ------------
 
 Output files will be created either in the current working directory, or where
-specified by the :ref:`output_dir <intro_output_directory>` configuration
-parameter.
+specified by the :ref:`output_dir <intro_output_directory>` parameter.
 
 File names for the outputs from pipelines and steps come from
 three different sources:
@@ -248,11 +249,10 @@ input. Normally, the output file is defined in each association's "product name"
 which defines the basename that will be used for output file naming.
 
 Often, one may reprocess the same set of data multiple times, such as to change
-reference files or parameters in configuration parameters.
-When doing so, it is highly suggested to use ``output_dir`` to place
-the results in a different directory instead of using ``output_file`` to
-rename the output files. Most pipelines and steps create a set of output files.
-Separating runs by directory may be much easier to manage.
+reference files or parameter files. When doing so, it is highly suggested to use
+``output_dir`` to place the results in a different directory instead of using
+``output_file`` to rename the output files. Most pipelines and steps create a
+set of output files. Separating runs by directory may be much easier to manage.
 
 
 Individual Step Outputs
@@ -266,7 +266,7 @@ name. If the input file name already has a known suffix, that suffix
 will be replaced. For example:
 ::
 
- $ strun dq_init.cfg jw00017001001_01101_00001_nrca1_uncal.fits
+ $ strun jwst.dq_init.DQInitStep jw00017001001_01101_00001_nrca1_uncal.fits
 
 produces an output file named
 ``jw00017001001_01101_00001_nrca1_dq_init.fits``.
@@ -289,7 +289,7 @@ have all output from ``calwebb_detector1``, including any saved
 intermediate steps, appear in the sub-directory ``calibrated``, use
 ::
 
-    $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
+    $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits
         --output_dir=calibrated
 
 ``output_dir`` can be specified at the step level, overriding what was
@@ -297,7 +297,7 @@ specified for the pipeline. From the example above, to change the name
 and location of the ``dark_current`` step, use the following
 ::
 
-    $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
+    $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits
         --output_dir=calibrated
         --steps.dark_current.output_file='dark_sub.fits'
         --steps.dark_current.output_dir='dark_calibrated'
@@ -326,7 +326,7 @@ For example, to save the result from the dark current step of
 
 ::
 
-    $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
+    $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits
         --steps.dark_current.output_file='intermediate'
 
 A file, ``intermediate_dark_current.fits``, will then be created. Note that the
@@ -336,7 +336,7 @@ You can also specify a particular file name for saving the end result of
 the entire pipeline using the ``--output_file`` argument also
 ::
 
-    $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
+    $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits
         --output_file='stage1_processed'
 
 In this situation, using the default configuration, three files are created:
@@ -361,30 +361,32 @@ To override the use of the default linearity file selection, for example,
 you would use:
 ::
 
-  $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
+  $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits
           --steps.linearity.override_linearity='my_lin.fits'
 
 Skip
 ----
 
-Another argument available to all steps in a pipeline is ``skip``.
-If ``skip=True`` is set for any step, that step will be skipped, with the
-output of the previous step being automatically passed directly to the input
-of the step following the one that was skipped. For example, if you want to
-skip the linearity correction step, edit the calwebb_detector1.cfg file to
-contain:
+Another argument available to all steps in a pipeline is ``skip``. If
+``skip=True`` is set for any step, that step will be skipped, with the output of
+the previous step being automatically passed directly to the input of the step
+following the one that was skipped. For example, if you want to skip the
+linearity correction step, one can specify the ``skip`` argument for the
+``strun`` command:
 ::
 
-   [steps]
-      [[linearity]]
-        skip = True
-      ...
-
-Alternatively you can specify the ``skip`` argument on the command line:
-::
-
-    $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
+    $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits
         --steps.linearity.skip=True
+
+Alternatively, if using a :ref:`parameter file<Parameter Files>`, edit the
+file to add the following snippet:
+::
+
+  steps:
+  - class: jwst.linearity.linearity_step.LinearityStep
+    parameters:
+      skip: true
+
 
 Logging Configuration
 ---------------------
@@ -434,17 +436,17 @@ will be displayed.
    present. Consider using a different name and specifying it explicitly on the
    command line.
 
-.. _`Configuration Files`:
+.. _`Parameter Files`:
 
-Configuration Files
-===================
+Parameter Files
+===============
 
-Configuration files can be used to specify parameter values when running a
-pipeline or individual steps. For JWST, configuration files are retrieved from
+Parameter files can be used to specify parameter values when running a
+pipeline or individual steps. For JWST, parameter files are retrieved from
 CRDS, just as with other reference files. If there is no match between a step,
 the input data, and CRDS, the coded defaults are used. These values can be
 overridden either by the command line options, as previously described, and by a
-local configuration file. See :ref:`Parameter Precedence` for a full description of
+local parameter file. See :ref:`Parameter Precedence` for a full description of
 how a parameter gets its final value.
 
 .. note::
@@ -453,37 +455,36 @@ how a parameter gets its final value.
    using the ``--disable-crds-steppars`` command-line switch, or setting the
    environmental variable ``STPIPE_DISABLE_CRDS_STEPPARS`` to ``true``.
 
-A configuration file should be used when there are parameters a user wishes to
+A parameter file should be used when there are parameters a user wishes to
 change from the default/CRDS version for a custom run of the step. To create a
-configuration file add ``--save-parameters <filename.asdf>`` to the command:
+parameter file add ``--save-parameters <filename.asdf>`` to the command:
 ::
 
 $ strun <step.class> <required-input-files> --save-parameters <filename.asdf>
 
-For example, to save the parameters used for a run of the ``calwebb_image2.cfg`` pipeline, use:
+For example, to save the parameters used for a run of the ``calwebb_image2`` pipeline, use:
 ::
 
-$ collect_pipeline_cfgs .
-$ strun calwebb_image2.cfg jw82500001003_02101_00001_NRCALONG_rate.fits --save-parameters my_image2.asdf
+$ strun calwebb_image2 jw82500001003_02101_00001_NRCALONG_rate.fits --save-parameters my_image2.asdf
 
 Once saved, the file can be edited, removing parameters that should be left
 at their default/CRDS values, and setting the remaining parameters to the
-desired values. Once modified, the new configuration file can be used:
+desired values. Once modified, the new parameter file can be used:
 ::
 
 $ strun my_image2.asdf jw82500001003_02101_00001_NRCALONG_rate.fits
 
 Note that the parameter values will reflect whatever was set on the
-command-line, through a specified local configuration file, and what was
+command-line, through a specified local parameter file, and what was
 retrieved from CRDS. In short, the values will be those actually used in the
 running of the step.
 
-For more information about and editing of configuration files, see
+For more information about and editing of parameter files, see
 :ref:`config_asdf_files`. Note that the older :ref:`config_cfg_files` format is
 still an option, understanding that this format will be deprecated.
 
 
-More information on configuration files can be found in the ``stpipe`` User's
+More information on parameter files can be found in the ``stpipe`` User's
 Guide at :ref:`stpipe-user-steps`.
 
 Available Pipelines
@@ -528,6 +529,7 @@ Resampled 3D IFU cube                          s3d
 1D extracted spectra per integration           x1dints
 1D combined spectrum                           c1d
 Source catalog                                 cat
+Segmentation map                               segm
 Time Series photometric catalog                phot
 Time Series white-light catalog                whtlt
 Coronagraphic PSF image stack                  psfstack

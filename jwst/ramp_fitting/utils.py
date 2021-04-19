@@ -2,8 +2,9 @@
 #
 # utils.py: utility functions
 import logging
-import warnings
+import multiprocessing
 import numpy as np
+import warnings
 
 from .. import datamodels
 from ..datamodels import dqflags
@@ -14,6 +15,11 @@ log.setLevel(logging.DEBUG)
 
 # Replace zero or negative variances with this:
 LARGE_VARIANCE = 1.e8
+
+DO_NOT_USE = dqflags.group['DO_NOT_USE']
+JUMP_DET = dqflags.group['JUMP_DET']
+SATURATED = dqflags.group['SATURATED']
+UNRELIABLE_SLOPE = dqflags.pixel['UNRELIABLE_SLOPE']
 
 
 class OptRes:
@@ -176,6 +182,7 @@ class OptRes:
         None
         """
         self.slope_2d[num_seg[g_pix], g_pix] = slope[g_pix]
+
         if save_opt:
             self.interc_2d[num_seg[g_pix], g_pix] = intercept[g_pix]
             self.siginterc_2d[num_seg[g_pix], g_pix] = sig_intercept[g_pix]
@@ -1364,3 +1371,121 @@ def do_all_sat(pixeldq, groupdq, imshape, n_int, save_opt):
     log.info('All groups of all integrations are saturated.')
 
     return new_model, int_model, opt_model
+
+
+def log_stats(c_rates):
+    """
+    Optionally log statistics of detected cosmic rays
+
+    Parameters
+    ----------
+    c_rates : float, 2D array
+       weighted count rate
+
+    Returns
+    -------
+    None
+    """
+    wh_c_0 = np.where(c_rates == 0.)  # insuff data or no signal
+
+    log.debug('The number of pixels having insufficient data')
+    log.debug('due to excessive CRs or saturation %d:', len(wh_c_0[0]))
+    log.debug('Count rates - min, mean, max, std: %f, %f, %f, %f'
+              % (c_rates.min(), c_rates.mean(), c_rates.max(), c_rates.std()))
+
+
+def compute_slices(max_cores):
+    """
+    Computes the number of slices to be created for multiprocessing.
+
+    Parameters
+    ----------
+    max_cores : string
+        Number of cores to use for multiprocessing. If set to 'none' (the default),
+        then no multiprocessing will be done. The other allowable values are 'quarter',
+        'half', and 'all'. This is the fraction of cores to use for multi-proc. The
+        total number of cores includes the SMT cores (Hyper Threading for Intel).
+
+    Returns
+    -------
+    number_slices : int
+        The number of slices for multiprocessing.
+    """
+    if max_cores == 'none':
+        number_slices = 1
+    else:
+        num_cores = multiprocessing.cpu_count()
+        log.debug(f'Found {num_cores} possible cores to use for ramp fitting')
+        if max_cores == 'quarter':
+            number_slices = num_cores // 4 or 1
+        elif max_cores == 'half':
+            number_slices = num_cores // 2 or 1
+        elif max_cores == 'all':
+            number_slices = num_cores
+        else:
+            number_slices = 1
+    return number_slices
+
+
+def dq_compress_final(dq_int, n_int):
+    """
+    Combine the integration-specific dq arrays (which have already been
+    compressed and combined with the PIXELDQ array) to create the dq array
+    of the primary output product.
+
+    Parameters
+    ----------
+    dq_int : uint16, 3D array
+        cube of combined dq arrays for all data sections in a single integration
+
+    n_int : int
+        total number of integrations in data set
+
+    Returns
+    -------
+    f_dq : uint16, 2D array
+        combination of all integration's pixeldq arrays
+    """
+    f_dq = dq_int[0, :, :]
+
+    for jj in range(1, n_int):
+        f_dq = np.bitwise_or(f_dq, dq_int[jj, :, :])
+
+    return f_dq
+
+
+def dq_compress_sect(gdq_sect, pixeldq_sect):
+    """
+    Get ramp locations where the data has been flagged as saturated in the 4D
+    GROUPDQ array for the current data section, find the corresponding image
+    locations, and set the SATURATED flag in those locations in the PIXELDQ
+    array. Similarly, get the ramp locations where the data has been flagged as
+    a jump detection in the 4D GROUPDQ array, find the corresponding image
+    locations, and set the COSMIC_BEFORE flag in those locations in the PIXELDQ
+    array. These modifications to the section of the PIXELDQ array are not used
+    to flag groups for any computations; they are used only in the integration-
+    specific output.
+
+    Parameters
+    ----------
+    gdq_sect : int (uint8), 3D array
+        cube of GROUPDQ array for a data section
+
+    pixeldq_sect : int, 2D array
+        dq array of data section of input model
+
+    Returns
+    -------
+    pixeldq_sect : int, 2D array
+        dq array of data section updated with saturated and jump-detected flags
+
+    """
+    sat_loc_r = np.bitwise_and(gdq_sect, SATURATED)
+    sat_loc_im = np.where(sat_loc_r.sum(axis=0) > 0)
+    pixeldq_sect[sat_loc_im] = np.bitwise_or(pixeldq_sect[sat_loc_im], SATURATED)
+
+    cr_loc_r = np.bitwise_and(gdq_sect, JUMP_DET)
+    cr_loc_im = np.where(cr_loc_r.sum(axis=0) > 0)
+    pixeldq_sect[cr_loc_im] = np.bitwise_or(pixeldq_sect[cr_loc_im], JUMP_DET)
+
+    return pixeldq_sect

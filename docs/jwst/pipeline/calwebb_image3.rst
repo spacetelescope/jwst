@@ -3,8 +3,8 @@
 calwebb_image3: Stage 3 Imaging Processing
 ==========================================
 
-:Config: calwebb_image3.cfg
-:Class: `~jwst.pipeline.Image3Pipeline`
+:Class: `jwst.pipeline.Image3Pipeline`
+:Alias: calwebb_image3
 
 Stage 3 processing for direct-imaging observations is intended for combining the 
 calibrated data from multiple exposures (e.g. a dither or mosaic pattern) into a
@@ -86,3 +86,13 @@ Source catalog
 The source catalog produced by the :ref:`source_catalog <source_catalog_step>` step
 from the "_i2d" product is saved as an ASCII file in ``ecsv`` format, with a product type
 of "_cat."
+
+Segmentation map
+^^^^^^^^^^^^^^^^
+
+:Data model: `~jwst.datamodels.ImageModel`
+:File suffix: _segm
+
+A 2D image segmentation map produced by the :ref:`source_catalog <source_catalog_step>`
+step from the "_i2d" product, saved as a FITS file with a single image extension and
+a product type suffix of "_segm."
