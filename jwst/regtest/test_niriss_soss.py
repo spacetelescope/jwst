@@ -34,8 +34,8 @@ def run_tso_spec3(jail, rtdata_module, run_tso_spec2):
     # the tso3 pipeline on all _calints files listed in association
     rtdata.get_data("niriss/soss/jw00625-o023_20191210t204036_tso3_001_asn.json")
     args = ["config/calwebb_tso3.cfg", rtdata.input,
-            "--steps.outlier_detection.snr='13.0 10.0'"
-           ]
+            "--steps.outlier_detection.snr='13.0 10.0'",
+            ]
     Step.from_cmdline(args)
 
 
