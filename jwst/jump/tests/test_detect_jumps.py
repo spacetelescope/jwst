@@ -222,8 +222,8 @@ def test_multiple_neighbor_jumps_firstlastbad(setup_inputs):
     model.groupdq[0, -1, :, :] = 1
 
     # run jump detection
-    out_model = detect_jumps(model, gain, rnoise, rejection_threshold=200.0, three_grp_rejection_threshold=200,
-                             four_grp_rejection_threshold=200,
+    out_model = detect_jumps(model, gain, rnoise, rejection_thresh=200.0, three_grp_thresh=200,
+                             four_grp_thresh=200,
                              max_cores=None, max_jump_to_flag_neighbors=200,
                              min_jump_to_flag_neighbors=10, flag_4_neighbors=True)
 
@@ -282,8 +282,8 @@ def test_nirspec_saturated_pix(setup_inputs):
     model.groupdq[0, :, 4, 4] = [0, 0, 2, 2, 2, 2, 2]
 
     # run jump detection
-    out_model = detect_jumps(model, gain, rnoise, rejection_threshold=200.0, three_grp_rejection_threshold=200,
-                             four_grp_rejection_threshold=200,
+    out_model = detect_jumps(model, gain, rnoise, rejection_thresh=200.0, three_grp_thresh=200,
+                             four_grp_thresh=200,
                              max_cores=None, max_jump_to_flag_neighbors=200,
                              min_jump_to_flag_neighbors=10, flag_4_neighbors=True)
 
@@ -412,7 +412,7 @@ def test_every_pixel_CR_neighbors_flagged(setup_inputs):
     inreadnoise = 7.0
     ngroups = 10
     model, rnoise, gain = setup_inputs(ngroups=ngroups, gain=ingain, nrows=100, ncols=100,
-                                        readnoise=inreadnoise, deltatime=grouptime)
+                                       readnoise=inreadnoise, deltatime=grouptime)
 
     # two segments perfect fit, second segment has twice the slope
     model.data[0, 0, :, :] = 15.0
