@@ -24,7 +24,7 @@ def test_5grps_cr3_noflux(setup_cube):
 
     data[0, 0:2, 100, 100] = 10.0
     data[0, 2:5, 100, 100] = 1000
-    out_gdq, row_below_gdq, row_above_gdq =find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold,
+    out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold,
                                                     nframes, False, 200, 10)
     assert 4 == np.max(out_gdq)  # a CR was found
     assert 2 == np.argmax(out_gdq[0, :, 100, 100])  # find the CR in the expected group
@@ -36,7 +36,7 @@ def test_5grps_cr2_noflux(setup_cube):
 
     data[0, 0, 100, 100] = 10.0
     data[0, 1:6, 100, 100] = 1000
-    out_gdq, row_below_gdq, row_above_gdq =find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold,
+    out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold,
                                                     nframes, False, 200, 10)
     assert 4 == np.max(out_gdq)  # a CR was found
     assert 1 == np.argmax(out_gdq[0, :, 100, 100])  # find the CR in the expected group
@@ -63,7 +63,7 @@ def test_5grps_cr2_negjumpflux(setup_cube):
 
     data[0, 0, 100, 100] = 1000.0
     data[0, 1:6, 100, 100] = 10
-    out_gdq, row_below_gdq, row_above_gdq =find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold,
+    out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold,
                                                     nframes, False, 200, 10)
     assert 4 == np.max(out_gdq)  # a CR was found
     assert 1 == np.argmax(out_gdq[0, :, 100, 100])  # find the CR in the expected group
@@ -79,8 +79,11 @@ def test_3grps_cr2_noflux(setup_cube):
     assert 4 == np.max(out_gdq)  # a CR was found
     assert np.array_equal([0, 4, 0], out_gdq[0, :, 100, 100])
 
+
+
 @pytest.mark.xfail
 def test_4grps_cr2_noflux(setup_cube):
+    # This test should fail because with 2 CRs and only 4 groups we cannot detect the jump
     ngroups = 4
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups)
     data[0, 0, 100, 100] = 10.0
@@ -105,8 +108,10 @@ def test_5grps_cr2_nframe2(setup_cube):
     assert 4 == np.max(out_gdq)  # a CR was found
     assert np.array_equal([0, 4, 4, 0, 0], out_gdq[0, :, 100, 100])
 
+
 @pytest.mark.xfail
 def test_4grps_twocrs_2nd_4th(setup_cube):
+    #This test should fail because two jumps with four groups we cannot find the second jump.
     ngroups = 4
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups)
     nframes = 1
@@ -559,8 +564,8 @@ def test_6grps_satat6_crat1(setup_cube):
     assert np.array_equal([0, dqflags.group['JUMP_DET'], 0, 0, 0, dqflags.group['SATURATED']], out_gdq[0, :, 100, 100])
 
 
-@pytest.mark.xfail
-def test_6grps_satat6_crat1_flagadjpixels(setup_cube):
+def test_6grps_satat6_crat1_flagadjpixelsoff(setup_cube):
+    #Check that neighbor pixels are not flagged when flag_4_neighbors is set to false
     ngroups = 6
     # crmag = 1000
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups, readnoise=5 * np.sqrt(2))
@@ -581,7 +586,7 @@ def test_6grps_satat6_crat1_flagadjpixels(setup_cube):
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold,
                                                      nframes, False, 200, 10)
     assert np.array_equal([0, dqflags.group['JUMP_DET'], 0, 0, 0, dqflags.group['SATURATED']], out_gdq[0, :, 100, 100])
-    assert np.array_equal([0, dqflags.group['JUMP_DET'], 0, 0, 0, dqflags.group['SATURATED']], out_gdq[0, :, 99, 100])
+    assert np.array_equal([0, 0, 0, 0, 0, 0], out_gdq[0, :, 99, 100])
 
 
 def test_10grps_satat8_crsat3and6(setup_cube):
@@ -800,8 +805,8 @@ def test_6grps_different_valid_grps_each_pixel(setup_cube):
     data[0, 3, 1, 0] = 2500
     data[0, 4, 1, 0] = 2510
     data[0, 5, 1, 0] = 1522
-    gdq[0, 4, 1, 0]  = dqflags.group['SATURATED']
-    gdq[0, 5, 1, 0]  = dqflags.group['SATURATED']
+    gdq[0, 4, 1, 0] = dqflags.group['SATURATED']
+    gdq[0, 5, 1, 0] = dqflags.group['SATURATED']
     # pixel 1, 1 two crs
     data[0, 0, 1, 1] = 0
     data[0, 1, 1, 1] = 1000
@@ -816,9 +821,9 @@ def test_6grps_different_valid_grps_each_pixel(setup_cube):
     data[0, 3, 2, 0] = 10000
     data[0, 4, 2, 0] = 10102
     data[0, 5, 2, 0] = 10208
-    gdq[0, 3, 2, 0]  = dqflags.group['SATURATED']
-    gdq[0, 4, 2, 0]  = dqflags.group['SATURATED']
-    gdq[0, 5, 2, 0]  = dqflags.group['SATURATED']
+    gdq[0, 3, 2, 0] = dqflags.group['SATURATED']
+    gdq[0, 4, 2, 0] = dqflags.group['SATURATED']
+    gdq[0, 5, 2, 0] = dqflags.group['SATURATED']
     # pixel 2, 1 two crs, last group saturated
     data[0, 0, 2, 1] = 0
     data[0, 1, 2, 1] = 10000
@@ -840,49 +845,49 @@ def test_6grps_different_valid_grps_each_pixel(setup_cube):
 def test_3diff_median_vector():
     indiffs = np.asarray([7, 5, 10])
     indices = np.asarray([1, 0, 2])
-    median = get_clipped_median_vector(num_differences=3, diffs_to_ignore=0, differences=indiffs, sorted_index=indices)
+    median = get_clipped_median_vector(num_differences=3, diffs_to_ignore=0, input_vector=indiffs, sorted_index=indices)
     assert median == 7
 
 
 def test_3diff_1sat_median_vector():
     indiffs = np.asarray([7, 5, 10])
     indices = np.asarray([1, 0, 2])
-    median = get_clipped_median_vector(num_differences=3, diffs_to_ignore=1, differences=indiffs, sorted_index=indices)
+    median = get_clipped_median_vector(num_differences=3, diffs_to_ignore=1, input_vector=indiffs, sorted_index=indices)
     assert median == 5
 
 
 def test_4diff_median_vector():
     indiffs = np.asarray([7, 5, 10, 12])
     indices = np.asarray([1, 0, 2, 13])
-    median = get_clipped_median_vector(num_differences=4, diffs_to_ignore=0, differences=indiffs, sorted_index=indices)
+    median = get_clipped_median_vector(num_differences=4, diffs_to_ignore=0, input_vector=indiffs, sorted_index=indices)
     assert median == 7
 
 
 def test_5diff_median_vector():
     indiffs = np.asarray([7, 5, 10, 12, 13])
     indices = np.asarray([1, 0, 2, 3, 4])
-    median = get_clipped_median_vector(num_differences=5, diffs_to_ignore=0, differences=indiffs, sorted_index=indices)
+    median = get_clipped_median_vector(num_differences=5, diffs_to_ignore=0, input_vector=indiffs, sorted_index=indices)
     assert median == 8.5
 
 
 def test_5diff_1sat_median_vector():
     indiffs = np.asarray([7, 5, 10, 12, 100000])
     indices = np.asarray([1, 0, 2, 3, 4])
-    median = get_clipped_median_vector(num_differences=5, diffs_to_ignore=1, differences=indiffs, sorted_index=indices)
+    median = get_clipped_median_vector(num_differences=5, diffs_to_ignore=1, input_vector=indiffs, sorted_index=indices)
     assert median == 7
 
 
 def test_5diff_2sat_median_vector():
     indiffs = np.asarray([7, 5, 10, 10000, 100000])
     indices = np.asarray([1, 0, 2, 3, 4])
-    median = get_clipped_median_vector(num_differences=5, diffs_to_ignore=2, differences=indiffs, sorted_index=indices)
+    median = get_clipped_median_vector(num_differences=5, diffs_to_ignore=2, input_vector=indiffs, sorted_index=indices)
     assert median == 7
 
 
 def test_5diff_3sat_median_vector():
     indiffs = np.asarray([7, 5, 10, 10000, 100000])
     indices = np.asarray([1, 0, 2, 3, 4])
-    median = get_clipped_median_vector(num_differences=5, diffs_to_ignore=3, differences=indiffs, sorted_index=indices)
+    median = get_clipped_median_vector(num_differences=5, diffs_to_ignore=3, input_vector=indiffs, sorted_index=indices)
     assert median == 5
 
 
@@ -898,7 +903,7 @@ def test_4diff_median_array():
     indices[0, 1] = [3, 1, 2, 0]
     indices[1, 0] = [2, 1, 0, 3]
     indices[1, 1] = [0, 1, 2, 3]
-    med_array = get_clipped_median_array(num_differences=4, diffs_to_ignore=diffs_to_skip, differences=indiffs,
+    med_array = get_clipped_median_array(num_differences=4, diffs_to_ignore=diffs_to_skip, input_array=indiffs,
                                          sorted_index=indices)
     assert med_array[0, 0] == 9
     assert med_array[0, 1] == 4
@@ -920,7 +925,7 @@ def test_4diff_median_2pixsat_array():
     indices[1, 1] = [0, 1, 2, 3]
     diffs_to_skip[1, 0] = 1
     diffs_to_skip[1, 1] = 1
-    med_array = get_clipped_median_array(num_differences=4, diffs_to_ignore=diffs_to_skip, differences=indiffs,
+    med_array = get_clipped_median_array(num_differences=4, diffs_to_ignore=diffs_to_skip, input_array=indiffs,
                                          sorted_index=indices)
     assert med_array[0, 0] == 9
     assert med_array[0, 1] == 4
@@ -944,7 +949,7 @@ def test_4diff_median_2pixsat_2pixverysat_array():
     diffs_to_skip[1, 1] = 1
     diffs_to_skip[0, 0] = 2
     diffs_to_skip[0, 1] = 2
-    med_array = get_clipped_median_array(num_differences=4, diffs_to_ignore=diffs_to_skip, differences=indiffs,
+    med_array = get_clipped_median_array(num_differences=4, diffs_to_ignore=diffs_to_skip, input_array=indiffs,
                                          sorted_index=indices)
     assert med_array[0, 0] == 6  # min value
     assert med_array[0, 1] == 3  # min value
