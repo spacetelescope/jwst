@@ -413,35 +413,6 @@ def test_11grps_0cr_3donotuse(setup_cube):
     assert np.array_equal([0, 0, 0, 0, 0, 0, 0, 0], out_gdq[0, 1:-2, 100, 100])
 
 
-@pytest.mark.skip("This test has no assert")
-def test_5grps_nocr(setup_cube):
-    ngroups = 6
-    data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups, readnoise=10)
-    nframes = 1
-    data[0, 0, 100, 100] = 0
-    data[0, 1, 100, 100] = 10
-    data[0, 2, 100, 100] = 21
-    data[0, 3, 100, 100] = 33
-    data[0, 4, 100, 100] = 46
-    out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold,
-                                                     nframes, False, 200, 10)
-
-
-@pytest.mark.skip("This test has no assert")
-def test_6grps_nocr(setup_cube):
-    ngroups = 6
-    data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups, readnoise=10)
-    nframes = 1
-    data[0, 0, 100, 100] = 0
-    data[0, 1, 100, 100] = 10
-    data[0, 2, 100, 100] = 21
-    data[0, 3, 100, 100] = 33
-    data[0, 4, 100, 100] = 46
-    data[0, 5, 100, 100] = 60
-    out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold,
-                                                     nframes, False, 200, 10)
-
-
 def test_10grps_cr2_gt3sigma(setup_cube):
     ngroups = 10
     crmag = 16
