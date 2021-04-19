@@ -400,6 +400,75 @@ def test_do_corrections_subarray(setup_subarray_cube):
     np.testing.assert_almost_equal(np.mean(input_model.data[0, 0, 4:-4, 4:-4]), dataval - rmean, decimal=0)
 
 
+def test_do_corrections_subarray_4amp(setup_subarray_cube):
+    '''Test all corrections for subarray data.'''
+
+    # Create inputs and subarray SUBGRISM64 data, and set correction parameters
+    ngroups = 3
+    nrows = 64
+    ncols = 2048
+    xstart = 1
+    ystart = 1
+
+    odd_even_columns = True
+    use_side_ref_pixels = True
+    side_smoothing_length = 11
+    side_gain = 1.0
+    odd_even_rows = False
+
+    left_rpix = 0
+    right_rpix = 1
+    side_rpix_mean = 0.5 * (left_rpix + right_rpix)
+    bottom_rpix_a_odd = 7
+    bottom_rpix_a_even = 7.4
+    bottom_rpix_b_odd = 9
+    bottom_rpix_b_even = 9.4
+    bottom_rpix_c_odd = 6
+    bottom_rpix_c_even = 6.4
+    bottom_rpix_d_odd = 8
+    bottom_rpix_d_even = 8.4
+    dataval = 150
+
+    input_model = setup_subarray_cube('SUBGRISM64', 'NRCA1', xstart, ystart, ngroups, nrows, ncols)
+    input_model.meta.exposure.noutputs = 4
+    input_model.data[0, 0, 4:-4, 4:512:2] = dataval + bottom_rpix_a_odd + side_rpix_mean
+    input_model.data[0, 0, 4:-4, 5:512:2] = dataval + bottom_rpix_a_even + side_rpix_mean
+    input_model.data[0, 0, 4:-4, 512:1024:2] = dataval + bottom_rpix_b_odd + side_rpix_mean
+    input_model.data[0, 0, 4:-4, 513:1024:2] = dataval + bottom_rpix_b_even + side_rpix_mean
+    input_model.data[0, 0, 4:-4, 1024:1536:2] = dataval + bottom_rpix_c_odd + side_rpix_mean
+    input_model.data[0, 0, 4:-4, 1025:1536:2] = dataval + bottom_rpix_c_even + side_rpix_mean
+    input_model.data[0, 0, 4:-4, 1536:2044:2] = dataval + bottom_rpix_d_odd + side_rpix_mean
+    input_model.data[0, 0, 4:-4, 1537:2044:2] = dataval + bottom_rpix_d_even + side_rpix_mean
+
+    input_model.data[0, 0, :4, 0:512:2] = bottom_rpix_a_odd
+    input_model.data[0, 0, :4, 1:512:2] = bottom_rpix_a_even
+    input_model.data[0, 0, :4, 512:1024:2] = bottom_rpix_b_odd
+    input_model.data[0, 0, :4, 513:1024:2] = bottom_rpix_b_even
+    input_model.data[0, 0, :4, 1024:1536:2] = bottom_rpix_c_odd
+    input_model.data[0, 0, :4, 1025:1536:2] = bottom_rpix_c_even
+    input_model.data[0, 0, :4, 1536:2048:2] = bottom_rpix_d_odd
+    input_model.data[0, 0, :4, 1537:2048:2] = bottom_rpix_d_even
+
+    input_model.data[0, 0, :, :4:2] = left_rpix + bottom_rpix_a_odd
+    input_model.data[0, 0, :, 1:4:2] = left_rpix + bottom_rpix_a_even
+    input_model.data[0, 0, :, -4::2] = right_rpix + bottom_rpix_d_odd
+    input_model.data[0, 0, :, -3::2] = right_rpix + bottom_rpix_d_even
+    input_model.pixeldq[:4, :] = dqflags.pixel['REFERENCE_PIXEL']
+    input_model.pixeldq[:, :4] = dqflags.pixel['REFERENCE_PIXEL']
+    input_model.pixeldq[:, -4:] = dqflags.pixel['REFERENCE_PIXEL']
+
+    init_dataset = create_dataset(input_model,
+                                  odd_even_columns,
+                                  use_side_ref_pixels,
+                                  side_smoothing_length,
+                                  side_gain,
+                                  odd_even_rows)
+
+    init_dataset.do_corrections()
+
+    np.testing.assert_almost_equal(np.mean(input_model.data[0, 0, 4:-4, 4:-4]), dataval, decimal=4)
+
+
 def test_get_restore_group_subarray(setup_subarray_cube):
     '''Test subarray input model data is replaced with group data.'''
 
