@@ -43,6 +43,9 @@ background
 
 - Remove unused ``SubtractImagesStep`` [#5919]
 
+- Added new step parameter to optionally save the combined, average
+  background image: ``save_combined_background``. [#5954]
+
 calwebb_spec2
 -------------
 
@@ -79,6 +82,15 @@ datamodels
 - Added ``FULLP`` to SUBARRAY enum list in core, subarray,
   and keyword_psubarray schemas [#5947]
 
+documentation
+-------------
+
+- Update documentation, deprecating primary use of CFG files [#5901]
+
+- Update pipeline introduction document to include segmentation map (``segm``)
+  in list of data products [#5956]
+
+
 extract_2d
 ----------
 
@@ -108,23 +120,38 @@ master_background
 - Updated documentation to more fully describe the various ways in which the
   step is applied [#5913]
 
+outlier_detection
+-----------------
+
+- Outlier detection on non-dithered images is implemented with a simple sigma clipping,
+  dithered outlier detection cleaned up and HST specific steps removed
+  and additional tests added. [#5822]
+
 ramp_fitting
 ------------
 
 - Refactoring OLS code for ramp fitting to improve readability and maintenance.
   Also, reference to ``nreads`` is being removed and replaced with ``ngroups``
   to remove and confusion on functionality. [#5872]
-  
+
+- Refactoring ramp fit code separating OLS and GLS code into their own file. [#5951]
+
 refpix
 ------
 
-- Added code to handle NIR subarrays that use 4 readout amplifiers.  Uses and applies reference pixel signal from
-  available amplifiers and side reference pixel regions, including odd-even column separation if requested [#5926]
+- Added code to handle NIR subarrays that use 4 readout amplifiers.  Uses and
+  applies reference pixel signal from available amplifiers and side reference
+  pixel regions, including odd-even column separation if requested [#5926]
 
-- Fixed a bug introduced in #5926 that affected refpix calibration of 1-amp NIR subarrays [#5937]
+- Fixed a bug introduced in #5926 that affected refpix calibration of 1-amp NIR
+  subarrays [#5937]
+
+- Added regression test and unit test for NIR 4-amp subarray correction [#5967]
 
 resample
 --------
+
+- Fix ``resample_spec`` output size from input images crossing RA=0 [#5929]
 
 - Propagate variance arrays into ``SlitModel`` used as input for ``ResampleSpecStep`` [#5941]
 

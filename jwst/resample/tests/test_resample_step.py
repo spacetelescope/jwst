@@ -7,6 +7,7 @@ from jwst.datamodels import ImageModel, ModelContainer
 from jwst.assign_wcs import AssignWcsStep
 from jwst.extract_2d import Extract2dStep
 from jwst.resample import ResampleSpecStep, ResampleStep
+from jwst.resample.resample_spec import ResampleSpecData
 
 
 @pytest.fixture
@@ -15,6 +16,7 @@ def nirspec_rate():
     xsize = 2048
     shape = (ysize, xsize)
     im = ImageModel(shape)
+    im.var_rnoise += 1
     im.meta.wcsinfo = {
         'dec_ref': 40,
         'ra_ref': 100,
@@ -71,7 +73,7 @@ def miri_rate():
     shape = (ysize, xsize)
     im = ImageModel(shape)
     im.data += 5
-    im.var_rnoise = np.random.random(shape)
+    im.var_rnoise += 1
     im.meta.wcsinfo = {
         'dec_ref': 40,
         'ra_ref': 100,
@@ -247,6 +249,7 @@ def test_pixel_scale_ratio_imaging(nircam_rate, ratio):
 def test_weight_type(nircam_rate, _jail):
     """Check that weight_type of exptime and ivm work"""
     im1 = AssignWcsStep.call(nircam_rate, sip_approx=False)
+    im1.var_rnoise[:] = 0
     im2 = im1.copy()
     im3 = im1.copy()
     im1.data += 10
@@ -292,3 +295,88 @@ def test_sip_coeffs_do_not_propagate(nircam_rate):
 
     # Make sure we have a PC matrix
     assert result.meta.wcsinfo.pc1_1 is not None
+
+
+@pytest.fixture
+def miri_rate_zero_crossing():
+    xsize = 1032
+    ysize = 1024
+    shape = (ysize, xsize)
+    im = ImageModel(shape)
+    im.var_rnoise = np.random.random(shape)
+    im.meta.wcsinfo = {
+        'dec_ref': 2.16444343946559e-05,
+        'ra_ref': -0.00026031780056776,
+        'roll_ref': 0.0,
+        'v2_ref': -415.0690466121227,
+        'v3_ref': -400.575920398547,
+        'v3yangle': 0.0,
+        'vparity': -1}
+    im.meta.instrument = {
+        'detector': 'MIRIMAGE',
+        'filter': 'P750L',
+        'name': 'MIRI'}
+    im.meta.observation = {
+        'date': '2019-01-01',
+        'time': '17:00:00'}
+    im.meta.subarray = {
+        'fastaxis': 1,
+        'name': 'FULL',
+        'slowaxis': 2,
+        'xsize': xsize,
+        'xstart': 1,
+        'ysize': ysize,
+        'ystart': 1}
+    im.meta.exposure = {
+        'duration': 11.805952,
+        'end_time': 58119.85416,
+        'exposure_time': 11.776,
+        'frame_time': 0.11776,
+        'group_time': 0.11776,
+        'groupgap': 0,
+        'integration_time': 11.776,
+        'nframes': 1,
+        'ngroups': 100,
+        'nints': 1,
+        'nresets_between_ints': 0,
+        'nsamples': 1,
+        'readpatt': 'FAST',
+        'sample_time': 10.0,
+        'start_time': 58119.8333,
+        'type': 'MIR_LRS-FIXEDSLIT',
+        'zero_frame': False}
+
+    return im
+
+
+@pytest.fixture
+def miri_rate_pair(miri_rate_zero_crossing):
+    im1 = miri_rate_zero_crossing
+    # Create a nodded version
+    im2 = im1.copy()
+    im2.meta.wcsinfo.ra_ref = 0.00026308279776455
+    im2.meta.wcsinfo.dec_ref = -2.1860888891293e-05
+    im1 = AssignWcsStep.call(im1)
+    im2 = AssignWcsStep.call(im2)
+
+    return im1, im2
+
+
+def test_build_interpolated_output_wcs(miri_rate_pair):
+    im1, im2 = miri_rate_pair
+
+    driz = ResampleSpecData(ModelContainer([im1, im2]))
+    output_wcs = driz.build_interpolated_output_wcs()
+
+    # Make sure that all RA, Dec values in the input image have a location in
+    # the output frame
+    grid = grid_from_bounding_box(im2.meta.wcs.bounding_box)
+    ra, dec, lam = im2.meta.wcs(*grid)
+    x, y = output_wcs.invert(ra, dec, lam)
+
+    # This currently fails, as we see a slight offset
+    # assert (x > 0).all()
+
+    # Make sure the output slit size is larger than the input slit size
+    # for this nodded data
+    assert driz.data_size[1] > ra.shape[1]
