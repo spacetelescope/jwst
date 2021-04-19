@@ -253,12 +253,12 @@ def test_two_group_integration(generate_miri_reffiles, max_cores, setup_inputs):
     assert(out_model.meta.cal_step.jump == 'SKIPPED')
 
 
-def test_four_group_integration(generate_miri_reffiles, setup_inputs):
+def test_two_group_integration(generate_miri_reffiles, setup_inputs):
     override_gain, override_readnoise = generate_miri_reffiles
     grouptime = 3.0
     ingain = 6
     inreadnoise = 7
-    ngroups = 4
+    ngroups = 2
     xsize = 103
     ysize = 102
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
@@ -270,12 +270,12 @@ def test_four_group_integration(generate_miri_reffiles, setup_inputs):
     assert(out_model.meta.cal_step.jump == 'SKIPPED')
 
 
-def test_five_group_integration(generate_miri_reffiles, setup_inputs):
+def test_three_group_integration(generate_miri_reffiles, setup_inputs):
     override_gain, override_readnoise = generate_miri_reffiles
     grouptime = 3.0
     ingain = 6
     inreadnoise = 7
-    ngroups = 5
+    ngroups = 3
     xsize = 103
     ysize = 102
     model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
