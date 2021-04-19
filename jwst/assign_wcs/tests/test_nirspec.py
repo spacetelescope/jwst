@@ -1,6 +1,7 @@
 """
 Test functions for NIRSPEC WCS - all modes.
 """
+import functools
 from math import cos, sin
 import os.path
 
@@ -929,6 +930,19 @@ def test_ifu_bbox():
     pipe = nirspec.create_pipeline(im, refs, slit_y_range=[-.5, .5])
     w = wcs.WCS(pipe)
     im.meta.wcs = w
-    for i in range(30):
-        w = nirspec.nrs_wcs_set_input(im, i)
-        assert_allclose(bbox[i], w.bounding_box)
+
+    _, wrange = nirspec.spectral_order_wrange_from_model(im)
+    pipe = im.meta.wcs.pipeline
+
+    g2s = pipe[2].transform
+    transforms = [pipe[0].transform]
+    transforms.append(pipe[1].transform[1:])
+    transforms.append(astmodels.Identity(1))
+    transforms.append(astmodels.Identity(1))
+    transforms.extend([step.transform for step in pipe[4:-1]])
+
+    for sl in range(30):
+        transforms[2] = g2s.get_model(sl)
+        m = functools.reduce(lambda x, y: x | y, [tr.inverse for tr in transforms[:3][::-1]])
+        bbox_sl = nirspec.compute_bounding_box(m, wrange)
+        assert_allclose(bbox[sl], bbox_sl)
