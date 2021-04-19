@@ -951,6 +951,13 @@ fringe
 
 - Update the fringe step to handle 3D inputs for MIRI MRS TSO mode. [#5202]
 
+jump
+-----------------
+
+- Update the step to detect jumps in three and four group integations.
+- Change the default S/N ratio for not flagging neighbors to be a higher value to
+  better reflect the correct IPC. 
+
 master_background
 -----------------
 
