@@ -31,7 +31,7 @@ def find_crs(data, group_dq, read_noise, normal_rejection_threshold,
     The input data array is assumed to be in units of electrons, i.e. already
     multiplied by the gain. We also assume that the read noise is in units of
     electrons. We also assume that there are at least three groups in the integrations. This was checked by
-    jump_step.
+    jump_step before this routine is called.
     """
     gdq = group_dq.copy()
 
@@ -158,9 +158,10 @@ def find_crs(data, group_dq, read_noise, normal_rejection_threshold,
             pixel_cr_mask[pixel_sorted_index[ndiffs - pixel_sat_groups - 1]] = 0  # setting largest diff to be a CR
             new_CR_found = True
 
-            # Loop and see if there is more than one CR, setting the mask as you go
+            # Loop and see if there is more than one CR, setting the mask as you go, stop when only 1 diffs is left.
             while new_CR_found and ((ndiffs - number_CRs_found - pixel_sat_groups) > 1):
                 new_CR_found = False
+                largest_diff = ndiffs - number_CRs_found - pixel_sat_groups
                 # For this pixel get a new median difference excluding the number of CRs found and
                 # the number of saturated groups
                 pixel_med_diff = get_clipped_median_vector(ndiffs, number_CRs_found + pixel_sat_groups,
@@ -171,15 +172,14 @@ def find_crs(data, group_dq, read_noise, normal_rejection_threshold,
                 pixel_sigma = np.sqrt(pixel_poisson_noise * pixel_poisson_noise + pixel_rn2 / nframes)
                 pixel_ratio = np.abs(pixel_masked_diffs - pixel_med_diff) / pixel_sigma
 
-                rejection_threshold = get_rejection_threshold(ndiffs - number_CRs_found - pixel_sat_groups,
+                rejection_threshold = get_rejection_threshold(largest_diff,
                                                               two_diff_rejection_threshold,
                                                               three_diff_rejection_threshold,
                                                               normal_rejection_threshold)
                 # Check if largest remaining difference is above threshold
-                largest_diff = ndiffs - number_CRs_found - pixel_sat_groups - 1
-                if pixel_ratio[pixel_sorted_index[largest_diff]] > rejection_threshold:
+                if pixel_ratio[pixel_sorted_index[largest_diff - 1]] > rejection_threshold:
                     new_CR_found = True
-                    pixel_cr_mask[pixel_sorted_index[ndiffs - number_CRs_found - pixel_sat_groups - 1]] = 0
+                    pixel_cr_mask[pixel_sorted_index[largest_diff - 1]] = 0
                     number_CRs_found += 1
 
             # Found all CRs for this pixel. Set CR flags in input DQ array for this pixel
@@ -237,8 +237,9 @@ def get_rejection_threshold(num_usable_diffs, two_group_threshold, three_group_t
 
 def get_clipped_median_array(num_differences, diffs_to_ignore, input_array, sorted_index):
     """
-    This routine will return the clipped median for the input array.
-    It will ignore the input number of largest input_array. This is only called once for the entire array.
+    This routine will return the clipped median for input_array which is a three dimensional array of
+    first differences. It will ignore the largest differences (diffs_to_ignore) for each pixel and compute
+    the median of the remaining differences. This is only called once for the entire array.
     """
     pixel_med_diff = np.zeros_like(diffs_to_ignore)
     pixel_med_index = np.zeros_like(diffs_to_ignore)
@@ -290,8 +291,8 @@ def get_clipped_median_array(num_differences, diffs_to_ignore, input_array, sort
 
 def get_clipped_median_vector(num_differences, diffs_to_ignore, input_vector, sorted_index):
     """
-    This routine will return the clipped median for the input pixel.
-    It will ignore the input number of largest differences. As cosmic rays are found,
+    This routine will return the clipped median for the first differences of the input pixel (input_vector).
+    It will ignore the input number of largest differences (diffs_to_ignore). As cosmic rays are found,
     the diffs_to_ignore will increase.
     """
     if num_differences - diffs_to_ignore == 2:
