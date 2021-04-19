@@ -1,6 +1,7 @@
 from astropy.table import Table
 import numpy as np
-from photutils import detect_threshold, DAOStarFinder
+from photutils.detection import DAOStarFinder
+from photutils.segmentation import detect_threshold
 
 from ..datamodels import dqflags, ImageModel
 

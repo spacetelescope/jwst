@@ -3,8 +3,8 @@
 calwebb_spec3: Stage 3 Spectroscopic Processing
 ===============================================
 
-:Config: calwebb_spec3.cfg
-:Class: `~jwst.pipeline.Spec3Pipeline`
+:Class: `jwst.pipeline.Spec3Pipeline`
+:Alias: calwebb_spec3
 
 Stage 3 processing for spectroscopic observations is intended for combining the 
 calibrated data from multiple exposures (e.g. a dither/nod pattern) into a single
@@ -17,27 +17,30 @@ processed using the :ref:`calwebb_tso3 <calwebb_tso3>` pipeline.
 
 .. |c| unicode:: U+2713 .. checkmark
 
-+---------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
-| Instrument/Mode                                   |     NIRSpec     |    MIRI   |   NIRISS    | NIRCam |
-+---------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
-| Step                                              | FS  | MOS | IFU | FS  | MRS | SOSS | WFSS | WFSS   |
-+===================================================+=====+=====+=====+=====+=====+======+======+========+
-| :ref:`master_background <master_background_step>` | |c| | |c| | |c| | |c| | |c| |      |      |        |
-+---------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
-| :ref:`exp_to_source <exp_to_source>`              | |c| | |c| |     |     |     |      | |c|  |  |c|   |
-+---------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
-| :ref:`mrs_imatch <mrs_imatch_step>`               |     |     |     |     | |c| |      |      |        |
-+---------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
-| :ref:`outlier_detection <outlier_detection_step>` | |c| | |c| | |c| | |c| | |c| |      |      |        |
-+---------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
-| :ref:`resample_spec <resample_step>`              | |c| | |c| |     | |c| |     |      |      |        |
-+---------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
-| :ref:`cube_build <cube_build_step>`               |     |     | |c| |     | |c| |      |      |        |
-+---------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
-| :ref:`extract_1d <extract_1d_step>`               | |c| | |c| | |c| | |c| | |c| | |c|  | |c|  |  |c|   |
-+---------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
-| :ref:`combine_1d <combine_1d_step>`               |     |     |     |     |     | |c|  | |c|  |  |c|   |
-+---------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
++-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
+| Instrument/Mode                                             |     NIRSpec     |    MIRI   |   NIRISS    | NIRCam |
++-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
+| Step                                                        | FS  | MOS | IFU | FS  | MRS | SOSS | WFSS | WFSS   |
++=============================================================+=====+=====+=====+=====+=====+======+======+========+
+| :ref:`master_background <master_background_step>`\ :sup:`1` | |c| |     | |c| | |c| | |c| |      |      |        |
++-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
+| :ref:`exp_to_source <exp_to_source>`                        | |c| | |c| |     |     |     |      | |c|  |  |c|   |
++-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
+| :ref:`mrs_imatch <mrs_imatch_step>`                         |     |     |     |     | |c| |      |      |        |
++-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
+| :ref:`outlier_detection <outlier_detection_step>`           | |c| | |c| | |c| | |c| | |c| |      |      |        |
++-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
+| :ref:`resample_spec <resample_step>`                        | |c| | |c| |     | |c| |     |      |      |        |
++-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
+| :ref:`cube_build <cube_build_step>`                         |     |     | |c| |     | |c| |      |      |        |
++-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
+| :ref:`extract_1d <extract_1d_step>`                         | |c| | |c| | |c| | |c| | |c| | |c|  | |c|  |  |c|   |
++-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
+| :ref:`combine_1d <combine_1d_step>`                         |     |     |     |     |     | |c|  | |c|  |  |c|   |
++-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
+
+:sup:`1`\ The master background subtraction step is applied to NIRSpec MOS
+exposures in the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline.
 
 Notice that NIRCam and NIRISS WFSS, as well as NIRISS SOSS data, receive only minimal
 processing by ``calwebb_spec3``.
@@ -72,7 +75,7 @@ Inputs
 The inputs to ``calwebb_spec3`` should be in the form of an ASN file that
 lists the multiple exposures to be processed into combined output products.
 The individual exposures should be calibrated the ("_cal") products from
-``calwebb_spec2`` processing.
+:ref:`calwebb_spec2 <calwebb_spec2>` processing.
 
 The member list for each product in the ASN file can also contain exposures
 of dedicated background targets, which are intended for use in the

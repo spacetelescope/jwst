@@ -319,6 +319,23 @@ class Asn_Lv2SpecTSO(
             ),
             Constraint_Single_Science(self.has_science),
             Constraint_TSO(),
+            Constraint(
+                [
+                    Constraint([
+                        DMSAttrConstraint(
+                            name='exp_type',
+                            sources=['exp_type'],
+                            value=['nrc_tsgrism'],
+                        ),
+                        DMSAttrConstraint(
+                            name='pupil',
+                            sources=['pupil'],
+                            value=['clear'],
+                        )],
+                    )
+                ],
+                reduce=Constraint.notany
+            )
         ])
 
         # Now check and continue initialization.

@@ -118,8 +118,7 @@ A `Step` gets its input from two sources:
     - Configuration parameters
     - Arguments to the `Step.process` method
 
-The definition and use of the configuration parameters is
-documented in :ref:`writing-a-step`.
+The definition and use of parameters is documented in :ref:`writing-a-step`.
 
 When using the `Step.process` arguments, the code must at least expect
 strings. When invoked from the command line using `strun`, how many
@@ -189,14 +188,12 @@ When Files are Created
 ----------------------
 
 Whether a `Step` produces an output file or not is ultimately
-determined by the built-in configuration option `save_results`. If
+determined by the built-in parameter option `save_results`. If
 `True`, output files will be created. `save_results` is set under a
 number of conditions:
 
-    - Explicitly through the `cfg` file or as a command-line option.
+    - Explicitly through a parameter file or as a command-line option.
     - Implicitly when a step is called by `strun`.
-    - Implicitly when the configuration option `output_file` is given
-      a value.
 
 Output File Naming
 ------------------
@@ -221,7 +218,7 @@ The most common suffixes are listed in the
 A `Step`'s suffix is defined in a couple of different ways:
 
     - By the `Step.name` attribute. This is the default.
-    - By the `suffix` configuration parameter.
+    - By the `suffix` parameter.
     - Explicitly in the code. Often this is done in ``Pipelines`` where
       a single pipeline creates numerous different output files.
 
@@ -234,7 +231,7 @@ Most often, the output file basename is determined through any of the
 following, given from higher precedence to lower:
 
     - The `--output_file` command-line option.
-    - The `output_file` configuration option.
+    - The `output_file` parameter option.
     - Primary input file name.
     - If the output is a `DataModel`, from the `DataModel.meta.filename`.
 
@@ -244,15 +241,15 @@ that suffix is removed and replaced by the `Step`'s own suffix.
 In very rare cases, when there is no other source for the basename, a
 basename of `step_\<step_name\>` is used.  This can happen when a
 `Step` is being programmatically used and only the `save_results`
-configuration option is given.
+parameter option is given.
 
 .. _devel_io_substeps_and_output:
 
 Sub-Steps and Output
 ````````````````````
-Normally, the value of a configuration option is completely local to
+Normally, the value of a parameter option is completely local to
 the `Step`: A `Step`, called from another `Step` or `Pipeline`, can
-only access its own configuration parameters. Hence, options such as
+only access its own parameters. Hence, options such as
 `save_results` do not affect a called `Step`.
 
 The exceptions to this are the parameters `output_file` and
@@ -301,49 +298,24 @@ associations is::
 
           return (result)
 
-Some pipelines, such as `calwebb_spec3`, call steps which are supposed
-to save their results, but whose basenames should not be based on the
-association product name. An example is the `outlier_detection` step.
-For such steps, one can prevent using the `Pipeline.output_file`
-specification by setting the configuration parameter
-`search_output_file=False`. When such steps then save their output,
-they will go through the standard basename search. If nothing else is
-specified, the basename will be based on `DataModel.meta.filename`
-that step's result, creating appropriate names for that step. This can
-be seen in the `calwebb_spec3` default configuration file::
-
-  name = "Spec3Pipeline"
-  class = "jwst.pipeline.Spec3Pipeline"
-
-      [steps]
-        [[mrs_imatch]]
-          suffix = 'mrs_imatch'
-        [[outlier_detection]]
-          suffix = 'crf'
-          save_results = True
-          search_output_file = False
-        [[resample_spec]]
-          suffix = 's2d'
-          save_results = True
-        [[cube_build]]
-          suffix = 's3d'
-          save_results = True
-        [[extract_1d]]
-          suffix = 'x1d'
-          save_results = True
-        [[combine_1d]]
-          suffix = 'c1d'
-          save_results = True
+Some pipelines, such as :ref:`calwebb_spec3 <calwebb_spec3>`, call steps which
+are supposed to save their results, but whose basenames should not be based on
+the association product name. An example is the
+`~jwst.outlier_detection.OutlierDetectionStep` step. For such steps, one can
+prevent using the `Pipeline.output_file` specification by setting the parameter
+`search_output_file=False`. When such steps then save their output, they will go
+through the standard basename search. If nothing else is specified, the basename
+will be based on `DataModel.meta.filename` that step's result, creating
+appropriate names for that step.
 
 Output API: When More Control Is Needed
 ---------------------------------------
 
-In summary, the standard output API, as described so far, is basically
-"set a few configuration parameters, and let the `Step` framework
-handle the rest". However, there are always the exceptions that
-require finer control, such as saving intermediate files or multiple
-files of different formats. This section discusses the method API and
-conventions to use in these situations.
+In summary, the standard output API, as described so far, is basically "set a
+few parameters, and let the `Step` framework handle the rest". However, there
+are always the exceptions that require finer control, such as saving
+intermediate files or multiple files of different formats. This section
+discusses the method API and conventions to use in these situations.
 
 Save That Model: Step.save_model
 ````````````````````````````````

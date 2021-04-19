@@ -611,6 +611,21 @@ of an ASCII table in `ECSV <http://docs.astropy.org/en/stable/_modules/astropy/i
 (Enhanced Character Separated Values) format. It is a flat text file, containing meta data
 header entries and the source data in a 2-D table layout, with one row per source.
 
+.. _segm:
+
+Segmentation map: ``segm``
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+The :ref:`source_catalog <source_catalog_step>` step contained in the
+:ref:`calwebb_image3 <calwebb_image3>` pipeline uses an image segmentation procedure
+to detect sources, which is a process of assigning a label to every image pixel that
+contains signal from a source, such that pixels belonging to the same source have the
+same label. The result of this procedure is saved in a ``segm`` product. The product
+is in FITS format, with a single image extension containing a 2-D image. The image
+has the same dimensions as the science image from which the sources were detected,
+and each pixel belonging to a source has an integer value corresponding to the
+label listed in the source catalog (``cat`` product).
+Pixels not belonging to a source have a value of zero.
+
 .. _phot:
 
 Photometry catalog: ``phot``

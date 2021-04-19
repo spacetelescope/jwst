@@ -35,10 +35,10 @@ The ``-o`` option defines the name of the association file to create.
 The ``-r DMSLevel2bBase`` option indicates that a Level2 association is
 to be created.
 
-Each file in the list will have its own ``product`` in the association
-file. When used as input to ``calwebb_image2`` or ``calwebb_spec2``, each
-product is processed independently, producing the Level2b result for
-each product.
+Each file in the list will have its own ``product`` in the association file.
+When used as input to :ref:`calwebb_image2 <calwebb_image2>` or
+:ref:`calwebb_spec2 <calwebb_spec2>`, each product is processed independently,
+producing the Level2b result for each product.
 
 For those exposures that require an off-target background or imprint
 image, modify the ``members`` list for those exposure, adding a new
@@ -83,9 +83,9 @@ To create a Level3 association, use the following command:
 
 The ``-o`` option defines the name of the association file to create.
 
-The ``--product-name`` will set the ``name`` field that the Level3
-calibration code will use as the output name. For the above example, the
-output files created by ``calwebb_image3``, or other Level3 pipelines,
+The ``--product-name`` will set the ``name`` field that the Level3 calibration
+code will use as the output name. For the above example, the output files
+created by :ref:`calwebb_image3 <calwebb_image3>`, or other Level3 pipelines,
 will all begin with **l3_results**.
 
 The list of files will all become ``science`` members of the

@@ -275,12 +275,12 @@ Step Parameters Reference Types
 +++++++++++++++++++++++++++++++
 
 When each ``Step`` is instantiated, a CRDS look-up, based on the ``Step`` class
-name and input data, is made to retrieve a configuration file. The ``reftype``
-for such configuration files is ``pars-<class name>``. For example, for the step
+name and input data, is made to retrieve a parameter file. The ``reftype``
+for such parameter files is ``pars-<class name>``. For example, for the step
 ``jwst.persistence.PersistenceStep``, the ``reftype`` would be
 ``pars-persistencestep``.
 
-For more information, see :ref:`Configuration Files`.
+For more information, see :ref:`Parameter Files`.
 
 .. _`Standard Required Keywords`:
 
