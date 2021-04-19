@@ -47,14 +47,14 @@ jobs:
       - name: Get CRDS context
         id: crds-context
         run: |
-          pip install crds asdf
+          pip install crds
           echo "::set-output name=pmap::$(crds list --resolve-contexts --contexts | cut -f 1 -d ".")"
 
       - name: Restore CRDS cache
         uses: actions/cache@v2
         with:
           path: ~/crds_cache
-          key: crds-${{ steps.crds-context.outputs.pmap }}
+          key: crds-${{ matrix.toxenv }}-${{ steps.crds-context.outputs.pmap }}
 
       - name: Install tox
         run: |
