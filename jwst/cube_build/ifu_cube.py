@@ -683,7 +683,7 @@ class IFUCubeData():
                                                       self.debug_file)
 
                         t1 = time.time()
-                        log.info("Time to match file to ifucube = %.1f s" % (t1 - t0,))
+                        log.info("Time to match pixels to cube spaxels = %.1f s" % (t1 - t0,))
 # ________________________________________________________________________________
                     elif self.weighting == 'miripsf':
                         with datamodels.IFUImageModel(ifile) as input_model:

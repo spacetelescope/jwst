@@ -6,7 +6,7 @@ from . import cube_build
 from . import ifu_cube
 from . import data_types
 from ..assign_wcs.util import update_s_region_keyword
-
+import time 
 
 __all__ = ["CubeBuildStep"]
 
@@ -297,6 +297,7 @@ class CubeBuildStep (Step):
         cube_container = datamodels.ModelContainer()
 
         status_cube = 0
+        t0 = time.time()
         for i in range(num_cubes):
             icube = str(i + 1)
             list_par1 = cube_pars[icube]['par1']
@@ -325,12 +326,14 @@ class CubeBuildStep (Step):
 # rois, roiw,  weight_power, softrad
 # If not linear wavelength (multi bands) an arrays are created  for:
 # rois, roiw, weight_power, softrad
-
+            t4 = time.time()
             if self.coord_system == 'internal_cal':
                 thiscube.determine_cube_parameters_internal()
             else:
                 thiscube.determine_cube_parameters()
             thiscube.setup_ifucube_wcs()
+            t5 = time.time()
+            print('Time to set up size of IFU cube',t5-t4)
 # _______________________________________________________________________________
 # build the IFU Cube
 
@@ -346,8 +349,11 @@ class CubeBuildStep (Step):
 
 # Else standard IFU cube building
             else:
+                t3 = time.time()
                 cube_result = thiscube.build_ifucube()
                 result, status = cube_result
+                t4 = time.time()
+                print('time to cube a 1 cube', t4 - t3)
                 cube_container.append(result)
 
             if self.debug_file is not None:
@@ -358,6 +364,9 @@ class CubeBuildStep (Step):
             if status == 1:
                 status_cube = 1
 
+        t1 = time.time()
+        print('Time to build all cubes',t1-t0)
+        
         for cube in cube_container:
             footprint = cube.meta.wcs.footprint(axis_type="spatial")
             update_s_region_keyword(cube, footprint)
