@@ -887,14 +887,17 @@ def compute_footprint_spectral(model):
                           [np.nanmax(ra), np.nanmin(dec)],
                           [np.nanmax(ra), np.nanmax(dec)],
                           [np.nanmin(ra), np.nanmax(dec)]])
-    return footprint
+    lam_min = np.nanmin(lam)
+    lam_max = np.nanmax(lam)
+    return footprint, (lam_min, lam_max)
 
 
 def update_s_region_spectral(model):
     """ Update the S_REGION keyword.
     """
-    footprint = compute_footprint_spectral(model)
+    footprint, spectral_region = compute_footprint_spectral(model)
     update_s_region_keyword(model, footprint)
+    model.meta.wcsinfo.spectral_region = spectral_region
 
 
 def compute_footprint_nrs_slit(slit):
@@ -913,12 +916,16 @@ def compute_footprint_nrs_slit(slit):
     ra, dec, lam = slit2world(virtual_corners_x,
                               virtual_corners_y,
                               input_lam)
-    return np.array([ra, dec]).T
+    footprint = np.array([ra, dec]).T
+    lam_min = np.nanmin(lam)
+    lam_max = np.nanmax(lam)
+    return footprint, (lam_min, lam_max)
 
 
 def update_s_region_nrs_slit(slit):
-    footprint = compute_footprint_nrs_slit(slit)
+    footprint, spectral_region = compute_footprint_nrs_slit(slit)
     update_s_region_keyword(slit, footprint)
+    slit.meta.wcsinfo.spectral_region = spectral_region
 
 
 def update_s_region_keyword(model, footprint):
@@ -960,8 +967,8 @@ def compute_footprint_nrs_ifu(dmodel, mod):
     -------
     footprint : ndarray
         The spatial footprint
-    spctral_region : tuple
-        The wavwlength range for the observation.
+    spectral_region : tuple
+        The wavelength range for the observation.
     """
     ra_total = []
     dec_total = []
@@ -1030,8 +1037,9 @@ def update_s_region_mrs(output_model):
     output_model : `~jwst.datamodels.IFUImageModel`
         The output of assign_wcs.
     """
-    footprint = compute_footprint_spectral(output_model)
+    footprint, spectral_region = compute_footprint_spectral(output_model)
     update_s_region_keyword(output_model, footprint)
+    output_model.meta.wcsinfo.spectral_region = spectral_region
 
 
 def velocity_correction(velosys):

@@ -1602,7 +1602,7 @@ def nrs_wcs_set_input(input_model, slit_name, wavelength_range=None,
     slit_name : int or str
         Slit.name of an open slit.
     wavelength_range: list
-        Wavelength range for the combination of fliter and grating.
+        Wavelength range for the combination of filter and grating.
 
     Returns
     -------
