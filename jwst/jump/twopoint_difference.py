@@ -116,7 +116,6 @@ def find_crs(data, group_dq, read_noise, normal_rejection_threshold,
         max_index1d = sort_index[row, col, max_value_index[row, col]]
         max_index1 = np.reshape(max_index1d, (nrows, ncols))  # reshape to a 2-D array
         max_ratio2d = np.reshape(ratio3d[row, col, max_index1[row, col]], (nrows, ncols))
-        min_index1d = sort_index[row, col, 0]
         max_index1d = sort_index[row, col, 1]
         max_index2d = np.reshape(max_index1d, (nrows, ncols))
         last_ratio = np.reshape(ratio3d[row, col, max_index2d[row, col]], (nrows, ncols))

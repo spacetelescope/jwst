@@ -25,7 +25,7 @@ def test_5grps_cr3_noflux(setup_cube):
     data[0, 0:2, 100, 100] = 10.0
     data[0, 2:5, 100, 100] = 1000
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold,
-                                                    nframes, False, 200, 10)
+                                                     nframes, False, 200, 10)
     assert 4 == np.max(out_gdq)  # a CR was found
     assert 2 == np.argmax(out_gdq[0, :, 100, 100])  # find the CR in the expected group
 
@@ -37,7 +37,7 @@ def test_5grps_cr2_noflux(setup_cube):
     data[0, 0, 100, 100] = 10.0
     data[0, 1:6, 100, 100] = 1000
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold,
-                                                    nframes, False, 200, 10)
+                                                     nframes, False, 200, 10)
     assert 4 == np.max(out_gdq)  # a CR was found
     assert 1 == np.argmax(out_gdq[0, :, 100, 100])  # find the CR in the expected group
 
@@ -64,7 +64,7 @@ def test_5grps_cr2_negjumpflux(setup_cube):
     data[0, 0, 100, 100] = 1000.0
     data[0, 1:6, 100, 100] = 10
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold,
-                                                    nframes, False, 200, 10)
+                                                     nframes, False, 200, 10)
     assert 4 == np.max(out_gdq)  # a CR was found
     assert 1 == np.argmax(out_gdq[0, :, 100, 100])  # find the CR in the expected group
 
@@ -78,7 +78,6 @@ def test_3grps_cr2_noflux(setup_cube):
                                                      nframes, False, 200, 10)
     assert 4 == np.max(out_gdq)  # a CR was found
     assert np.array_equal([0, 4, 0], out_gdq[0, :, 100, 100])
-
 
 
 @pytest.mark.xfail
@@ -111,7 +110,7 @@ def test_5grps_cr2_nframe2(setup_cube):
 
 @pytest.mark.xfail
 def test_4grps_twocrs_2nd_4th(setup_cube):
-    #This test should fail because two jumps with four groups we cannot find the second jump.
+    # This test should fail because two jumps with four groups we cannot find the second jump.
     ngroups = 4
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups)
     nframes = 1
@@ -536,7 +535,7 @@ def test_6grps_satat6_crat1(setup_cube):
 
 
 def test_6grps_satat6_crat1_flagadjpixelsoff(setup_cube):
-    #Check that neighbor pixels are not flagged when flag_4_neighbors is set to false
+    # Check that neighbor pixels are not flagged when flag_4_neighbors is set to false
     ngroups = 6
     # crmag = 1000
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups, readnoise=5 * np.sqrt(2))
