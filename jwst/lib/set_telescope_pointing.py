@@ -316,7 +316,7 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
     It does not currently place the new keywords in any particular location
     in the header other than what is required by the standard.
     """
-    logger.info('Updating WCS info for file {}'.format(filename))
+    logger.info('Updating WCS info for file %s', filename)
     with Level1bModel(filename) as model:
         update_wcs(
             model,
@@ -368,8 +368,8 @@ def update_mt_kwds(model):
             model.meta.target.ra = f_ra(exp_midpt_mjd).item(0)
             model.meta.target.dec = f_dec(exp_midpt_mjd).item(0)
         else:
-            logger.info('Exposure midpoint {} is not in the moving_target '
-                        'table range of {} to {}'.format(exp_midpt_mjd, time_mt[0], time_mt[-1]))
+            logger.info('Exposure midpoint %s is not in the moving_target '
+                        'table range of %s to %s', exp_midpt_mjd, time_mt[0], time_mt[-1])
             return
     else:
         logger.info("Moving target position table not found in the file")
@@ -434,7 +434,7 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, eng
     aperture_name = model.meta.aperture.name.upper()
     useafter = model.meta.observation.date
     if aperture_name != "UNKNOWN":
-        logger.info("Updating WCS for aperture {}".format(aperture_name))
+        logger.info("Updating WCS for aperture %s", aperture_name)
         siaf = get_wcs_values_from_siaf(aperture_name, useafter, siaf_path)
         populate_model_from_siaf(model, siaf)
     else:
@@ -486,11 +486,7 @@ def update_wcs_from_fgs_guiding(model, default_roll_ref=0.0, default_vparity=1, 
     try:
         roll_ref = model.meta.wcsinfo.roll_ref if model.meta.wcsinfo.roll_ref is not None else default_roll_ref
     except AttributeError:
-        logger.warning(
-            'Keyword `ROLL_REF` not found. Using {} as default value'.format(
-                default_roll_ref
-            )
-        )
+        logger.warning('Keyword `ROLL_REF` not found. Using %s as default value', default_roll_ref)
         roll_ref = default_roll_ref
 
     roll_ref = np.deg2rad(roll_ref)
@@ -499,18 +495,13 @@ def update_wcs_from_fgs_guiding(model, default_roll_ref=0.0, default_vparity=1, 
     try:
         vparity = model.meta.wcsinfo.vparity
     except AttributeError:
-        logger.warning(
-            'Keyword "VPARITY" not found. Using {} as default value'.format(
-                default_vparity
-            )
-        )
+        logger.warning('Keyword "VPARITY" not found. Using %s as default value', default_vparity)
         vparity = default_vparity
 
     try:
         v3i_yang = model.meta.wcsinfo.v3yangle
     except AttributeError:
-        logger.warning(f'Keyword "V3I_YANG" not found. Using {default_v3yangle} as default value.')
-
+        logger.warning('Keyword "V3I_YANG" not found. Using %s as default value.', default_v3yangle)
         v3i_yang = default_v3yangle
 
     (
@@ -562,7 +553,7 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
         model.meta.guidestar.gs_dec,
         model.meta.guidestar.gs_pa
     )
-    logger.debug(f'guide_star_wcs from model = {t_pars.guide_star_wcs}')
+    logger.debug('guide_star_wcs from model: %s', t_pars.guide_star_wcs)
 
     # Get the pointing information
     try:
@@ -575,33 +566,33 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
             logger.warning(
                 'Cannot retrieve valid telescope pointing.'
                 ' Default pointing parameters will be used.'
-                '\nException is {}'.format(exception)
             )
+            logger.warning('Exception is %s', exception)
             logger.info("Setting ENGQLPTG keyword to PLANNED")
             model.meta.visit.engdb_pointing_quality = "PLANNED"
     else:
         # compute relevant WCS information
         logger.info('Successful read of engineering quaternions:')
-        logger.info('\tPointing = {}'.format(pointing))
+        logger.info('\tPointing: %s', pointing)
         try:
             t_pars.pointing = pointing
             wcsinfo, vinfo = calc_wcs(t_pars)
             pointing_engdb_quality = f'CALCULATED_{t_pars.method.value.upper()}'
-            logger.info(f'Setting ENGQLPTG keyword to {pointing_engdb_quality}')
+            logger.info('Setting ENGQLPTG keyword to %s', pointing_engdb_quality)
             model.meta.visit.pointing_engdb_quality = pointing_engdb_quality
         except Exception as e:
             logger.warning(
                 'WCS calculation has failed and will be skipped.'
                 'Default pointing parameters will be used.'
-                '\nException is {}'.format(e)
             )
+            logger.warning('Exception is %s', e)
             if not t_pars.allow_default:
                 raise
             else:
                 logger.info("Setting ENGQLPTG keyword to PLANNED")
-                model.meta.visit.engdb_pointing_quality = "PLANNED"
-    logger.info('Aperture WCS info: {}'.format(wcsinfo))
-    logger.info('V1 WCS info: {}'.format(vinfo))
+                model.meta.visit.pointing_engdb_quality = "PLANNED"
+    logger.info('Aperture WCS info: %s', wcsinfo)
+    logger.info('V1 WCS info: %s', vinfo)
 
     # Update V1 pointing
     model.meta.pointing.ra_v1 = vinfo.ra
@@ -634,10 +625,8 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
     try:
         update_s_region(model, t_pars.siaf)
     except Exception as e:
-        logger.warning(
-            'Calculation of S_REGION failed and will be skipped.'
-            '\nException is {}'.format(e)
-        )
+        logger.warning('Calculation of S_REGION failed and will be skipped.')
+        logger.warning('Exception is %s', e)
 
 
 def update_s_region(model, siaf):
@@ -656,9 +645,8 @@ def update_s_region(model, siaf):
     vertices = siaf.vertices_idl
     xvert = vertices[:4]
     yvert = vertices[4:]
-    logger.info(
-        "Vertices for aperture {0}: {1}".format(model.meta.aperture.name, vertices)
-    )
+    logger.info("Vertices for aperture %s: %s", model.meta.aperture.name, vertices)
+
     # Execute IdealToV2V3, followed by V23ToSky
     from ..transforms.models import IdealToV2V3
     vparity = model.meta.wcsinfo.vparity
@@ -857,12 +845,12 @@ def calc_transforms_original(t_pars: TransformParameters):
 
     # Determine the ECI to J-frame matrix
     m_eci2j = calc_eci2j_matrix(t_pars.pointing.q)
-    logger.debug(f'm_eci2j: {m_eci2j}')
+    logger.debug('m_eci2j: %s', m_eci2j)
 
     # Calculate the J-frame to FGS1 ICS matrix
     m_j2fgs1 = calc_j2fgs1_matrix(t_pars.pointing.j2fgs_matrix, transpose=t_pars.j2fgs_transpose)
-    logger.debug(f'm_j2fgs1: {m_j2fgs1}')
-    logger.debug(f'm_eci2fgs1 = {np.dot(m_j2fgs1, m_eci2j)}')
+    logger.debug('m_j2fgs1: %s', m_j2fgs1)
+    logger.debug('m_eci2fgs1: %s', np.dot(m_j2fgs1, m_eci2j))
 
     # Calculate the FSM corrections to the SI_FOV frame
     m_sifov_fsm_delta = calc_sifov_fsm_delta_matrix(
@@ -959,18 +947,18 @@ def calc_transforms_gscmd_j3pags(t_pars: TransformParameters):
     m_eci2sifov = np.linalg.multi_dot(
         [MZ2X, m_sifov_fsm_delta, m_fgs12sifov, m_eci2fgs1]
     )
-    logger.debug(f'm_eci2sifov: {m_eci2sifov}')
+    logger.debug('m_eci2sifov: %s', m_eci2sifov)
 
     # Calculate the complete transform to the V1 reference
     m_eci2v = np.dot(m_sifov2v, m_eci2sifov)
-    logger.debug(f'm_eci2v: {m_eci2v}')
+    logger.debug('m_eci2v: %s', m_eci2v)
 
     # Calculate the SIAF transform matrix
     m_v2siaf = calc_v2siaf_matrix(t_pars.siaf)
 
     # Calculate the full ECI to SIAF transform matrix
     m_eci2siaf = np.dot(m_v2siaf, m_eci2v)
-    logger.debug(f'm_eci2siaf: {m_eci2siaf}')
+    logger.debug('m_eci2siaf: %s', m_eci2siaf)
 
     tforms = Transforms(m_eci2fgs1=m_eci2fgs1, m_sifov_fsm_delta=m_sifov_fsm_delta,
                         m_fgs12sifov=m_fgs12sifov, m_eci2sifov=m_eci2sifov, m_sifov2v=m_sifov2v,
@@ -1075,10 +1063,10 @@ def calc_eci2fgs1_j3pags(t_pars: TransformParameters):
     m_eci2j = calc_eci2j_matrix(t_pars.pointing.q)
     j3_ra, j3_dec = vector_to_ra_dec(m_eci2j[2])
     j3wcs = WCSRef(j3_ra, j3_dec, None)
-    logger.debug(f'j3wcs: {j3wcs}')
+    logger.debug('j3wcs: %s', j3wcs)
 
     # Calculate J3PA@GS
-    logger.debug(f'incoming guide_star_wcs = {t_pars.guide_star_wcs}')
+    logger.debug('Incoming guide_star_wcs: %s', t_pars.guide_star_wcs)
     if not t_pars.guide_star_wcs.pa:
         gs_wcs_ra = WCSRef(t_pars.guide_star_wcs.ra * D2R,
                            t_pars.guide_star_wcs.dec * D2R, None)
@@ -1086,18 +1074,18 @@ def calc_eci2fgs1_j3pags(t_pars: TransformParameters):
         pa *= R2D
         t_pars.guide_star_wcs = WCSRef(t_pars.guide_star_wcs.ra, t_pars.guide_star_wcs.dec, pa)
 
-    logger.debug(f'guide_star_wcs = {t_pars.guide_star_wcs}')
-    logger.debug(f'gs_commanded = {t_pars.pointing.gs_commanded}')
+    logger.debug('guide_star_wcs: %s', t_pars.guide_star_wcs)
+    logger.debug('gs_commanded: %s', t_pars.pointing.gs_commanded)
 
     m_gs_commanded = calc_m_gs_commanded(t_pars.guide_star_wcs, J3IDLYANGLE, t_pars.pointing.gs_commanded)
 
     # Need to invert the martrix
     m_gs_commanded = np.linalg.inv(m_gs_commanded)
 
-    logger.debug(f'm_gs_commanded = {m_gs_commanded}')
+    logger.debug('m_gs_commanded: %s', m_gs_commanded)
 
     m_eci2fgs1 = np.dot(MX2Z, m_gs_commanded)
-    logger.debug(f'm_eci2fgs1 = {m_eci2fgs1}')
+    logger.debug('m_eci2fgs1: %s', m_eci2fgs1)
 
     return m_eci2fgs1
 
@@ -1111,25 +1099,25 @@ def calc_eci2fgs1_v3pags(t_pars: TransformParameters):
         The transformation parameters. Parameters are updated during processing.
     """
     fgs1_siaf = get_wcs_values_from_siaf('FGS1_FULL_OSS', useafter=t_pars.useafter, prd_db_filepath=t_pars.siaf_path)
-    logger.debug(f'fgs1_siaf = {fgs1_siaf}')
+    logger.debug('fgs1_siaf: %s', fgs1_siaf)
 
-    logger.debug(f'incoming guide_star_wcs = {t_pars.guide_star_wcs}')
+    logger.debug('Incoming guide_star_wcs: %s', t_pars.guide_star_wcs)
     if not t_pars.guide_star_wcs.pa:
         pa = calc_v3pa_at_gs_from_original(t_pars)
         t_pars.guide_star_wcs = WCSRef(t_pars.guide_star_wcs.ra, t_pars.guide_star_wcs.dec, pa)
 
-    logger.debug(f'guide_star_wcs = {t_pars.guide_star_wcs}')
-    logger.debug(f'gs_commanded = {t_pars.pointing.gs_commanded}')
+    logger.debug('guide_star_wcs: %s', t_pars.guide_star_wcs)
+    logger.debug('gs_commanded: %s', t_pars.pointing.gs_commanded)
 
     m_gs_commanded = calc_m_gs_commanded(t_pars.guide_star_wcs, fgs1_siaf.v3yangle, t_pars.pointing.gs_commanded)
 
     # Need to invert the martrix
     m_gs_commanded = np.linalg.inv(m_gs_commanded)
 
-    logger.debug(f'm_gs_commanded = {m_gs_commanded}')
+    logger.debug('m_gs_commanded: %s', m_gs_commanded)
 
     m_eci2fgs1 = np.dot(MX2Z, m_gs_commanded)
-    logger.debug(f'm_eci2fgs1 = {m_eci2fgs1}')
+    logger.debug('m_eci2fgs1: %s', m_eci2fgs1)
 
     return m_eci2fgs1
 
@@ -1207,7 +1195,7 @@ def calc_v3pa_at_gs_from_original(t_pars: TransformParameters) -> float:
     # Calculate V1 using ORIGINAL method
     tforms = calc_transforms_original(t_pars)
     vinfo = calc_v1_wcs(tforms.m_eci2v)
-    logger.debug(f'vinfo: {vinfo}')
+    logger.debug('vinfo: %s', vinfo)
 
     # Convert to radians
     ra_v1 = vinfo.ra * D2R
@@ -1364,10 +1352,8 @@ def calc_j2fgs1_matrix(j2fgs_matrix, transpose=False):
         The transformation matrix
     """
     if np.isclose(j2fgs_matrix, 0.).all():
-        logger.warning(
-            'J-Frame to FGS1 engineering parameters are all zero.'
-            '\nUsing default matrix'
-        )
+        logger.warning('J-Frame to FGS1 engineering parameters are all zero.')
+        logger.warning('Using default matrix')
         m_partial = np.asarray(
             [
                 [0., 1., 0.],
@@ -1419,8 +1405,8 @@ def calc_sifov_fsm_delta_matrix(fsmcorr, fsmcorr_version='latest', fsmcorr_units
     """
     version = fsmcorr_version.lower()
     units = fsmcorr_units.lower()
-    logger.debug('Using version {}'.format(version))
-    logger.debug('Using units {}'.format(units))
+    logger.debug('Using version %s', version)
+    logger.debug('Using units %s', units)
 
     x = fsmcorr[0]  # SA_ZADUCMDX
     y = fsmcorr[1]  # SA_ZADUCMDY
@@ -1445,8 +1431,7 @@ def calc_sifov_fsm_delta_matrix(fsmcorr, fsmcorr_version='latest', fsmcorr_units
     else:
         if version not in ('latest', 'v2'):
             logger.warning(
-                'Unknown version "{}" specified.'
-                ' Using the latest (spherical) calculation.'
+                'Unknown version "%s" specified. Using the latest (spherical) calculation.', version
             )
         m_x_partial = np.array(
             [
@@ -1464,7 +1449,7 @@ def calc_sifov_fsm_delta_matrix(fsmcorr, fsmcorr_version='latest', fsmcorr_units
         )
         transform = np.dot(m_x_partial, m_y_partial)
 
-    logger.debug(f'transform: {transform}')
+    logger.debug('transform: %s', transform)
     return transform
 
 
@@ -1474,7 +1459,7 @@ def calc_fgs1_to_sifov_matrix():
 
     Currently, this is a defined matrix
     """
-    logger.debug(f'M_fgs1_to_sifov = {FGS12SIFOV_DEFAULT}')
+    logger.debug('M_fgs1_to_sifov: %s', FGS12SIFOV_DEFAULT)
     return FGS12SIFOV_DEFAULT
 
 
@@ -1500,7 +1485,7 @@ def calc_fgs1_to_sifov_fgs1siaf_matrix(siaf_path=None, useafter=None):
         [-cos(v3) * sin(y), cos(v3) * cos(y), sin(v3)],
         [-sin(v2) * cos(y) + cos(v2) * sin(v3) * sin(y), -sin(v2) * sin(y) - cos(v2) * sin(v3) * cos(y), cos(v2) * cos(v3)]
     ])
-    logger.debug(f'FGS1_to_SIFOV from siaf is {m}')
+    logger.debug('FGS1_to_SIFOV from siaf is %s', m)
 
     return m
 
@@ -1549,7 +1534,7 @@ def calc_v2siaf_matrix(siaf):
                      [1., 0., 0.]])
 
     transform = np.dot(pmat, mat)
-    logger.debug(f'transform: {transform}')
+    logger.debug('transform: %s', transform)
 
     return transform
 
@@ -1625,21 +1610,18 @@ def get_pointing(obsstart, obsend, engdb_url=None,
     if reduce_func is None:
         reduce_func = pointing_from_average
 
-    logger.info(
-        'Determining pointing between observations times (mjd):'
-        'obsstart = {obsstart} obsend = {obsend}'
-        '\nTelemetry search tolerance = {tolerance}'
-        '\nReduction function = {reduce_func}'
-        ''.format(
-            obsstart=obsstart, obsend=obsend, tolerance=tolerance, reduce_func=reduce_func
-        )
-    )
+    logger.info('Determining pointing between observations times (mjd):')
+    logger.info('obsstart: %s obsend: %s', obsstart, obsend)
+    logger.info('Telemetry search tolerance: %s', tolerance)
+    logger.info('Reduction function: %s', reduce_func)
 
     mnemonics = get_mnemonics(obsstart, obsend, tolerance, engdb_url=engdb_url)
     reduced = reduce_func(mnemonics)
 
-    logger.log(DEBUG_FULL, f'Memonics found:\n{mnemonics}')
-    logger.info(f'Reduced set of pointings:\n{reduced}')
+    logger.log(DEBUG_FULL, 'Memonics found:')
+    logger.log(DEBUG_FULL, '%s', mnemonics)
+    logger.info('Reduced set of pointings:')
+    logger.info('%s', reduced)
 
     return reduced
 
@@ -1768,7 +1750,7 @@ def get_wcs_values_from_siaf(aperture_name, useafter, prd_db_filepath=None):
     except (KeyError, OSError, TypeError, RuntimeError):
         siaf = get_wcs_values_from_siaf_api(aperture_name)
 
-    logger.info('For aperture %s: SIAF = %s', aperture_name, siaf)
+    logger.info('For aperture %s: SIAF: %s', aperture_name, siaf)
     return siaf
 
 
@@ -1848,9 +1830,9 @@ def get_wcs_values_from_siaf_prd(aperture_name, useafter, prd_db_filepath=None):
         logger.info(message)
         raise OSError(message)
     prd_db_filepath = "file:{0}?mode=ro".format(prd_db_filepath)
-    logger.info("Using SIAF database from {}".format(prd_db_filepath))
+    logger.info("Using SIAF database from %s", prd_db_filepath)
     logger.info("Quering SIAF for aperture "
-                "{0} with USEAFTER {1}".format(aperture_name, useafter))
+                "%s with USEAFTER %s", aperture_name, useafter)
 
     RESULT = {}
     PRD_DB = False
@@ -1874,7 +1856,7 @@ def get_wcs_values_from_siaf_prd(aperture_name, useafter, prd_db_filepath=None):
     finally:
         if PRD_DB:
             PRD_DB.close()
-    logger.info("loaded {0} table rows from {1}".format(len(RESULT), prd_db_filepath))
+    logger.info("loaded %s table rows from %s", len(RESULT), prd_db_filepath)
     default_siaf = SIAF()
     if RESULT:
         # This populates the SIAF tuple with the values from the database.
@@ -1927,12 +1909,10 @@ def get_mnemonics(obsstart, obsend, tolerance, engdb_url=None):
     except Exception as exception:
         raise ValueError(
             'Cannot open engineering DB connection'
-            '\nException: {}'.format(
-                exception
-            )
+            '\nException: {}'.format(exception)
         )
     logger.info(
-        'Querying engineering DB: {}'.format(engdb.base_url)
+        'Querying engineering DB: %s', engdb.base_url
     )
 
     mnemonics = {
@@ -1979,12 +1959,9 @@ def get_mnemonics(obsstart, obsend, tolerance, engdb_url=None):
         if len(mnemonics[mnemonic]) > 2:
             mnemonics[mnemonic] = mnemonics[mnemonic][1:-1]
         else:
-            logger.warning(
-                'Mnemonic {} has no telemetry within the observation time.'
-                '\nAttempting to use bracket values within {} seconds'.format(
-                    mnemonic, tolerance
-                )
-            )
+            logger.warning('Mnemonic %s has no telemetry within the observation time.', mnemonic)
+            logger.warning('Attempting to use bracket values within %s seconds', tolerance)
+
             tolerance_mjd = tolerance * SECONDS2MJD
             allowed_start = obsstart - tolerance_mjd
             allowed_end = obsend + tolerance_mjd
@@ -2109,8 +2086,8 @@ def populate_model_from_siaf(model, siaf):
     # normally return False, but we want to treat it as TSO anyway.
     if is_tso(model) or model.meta.exposure.type.lower() in ['nrc_tsimage', 'nrc_tsgrism']:
         logger.info('TSO exposure:')
-        logger.info(' setting xref_sci to {}'.format(siaf.crpix1))
-        logger.info(' setting yref_sci to {}'.format(siaf.crpix2))
+        logger.info(' setting xref_sci to %s', siaf.crpix1)
+        logger.info(' setting yref_sci to %s', siaf.crpix2)
         model.meta.wcsinfo.siaf_xref_sci = siaf.crpix1
         model.meta.wcsinfo.siaf_yref_sci = siaf.crpix2
 
