@@ -183,14 +183,14 @@ class TransformParameters:
     j2fgs_transpose : bool
         Transpose the `j2fgs1` matrix.
 
-    method : Methods
+    method : `Methods`
         The method, or algorithm, to use in calculating the transform.
         If not specified, the default method is used.
 
     reduce_func : func or None
         Reduction function to use on values.
 
-    siaf : SIAF
+    siaf : `SIAF`
         The SIAF information for the input model
 
     siaf_path : str or file-like object or None
@@ -535,7 +535,7 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
     model : `~jwst.datamodels.DataModel`
         The model to update. The update is done in-place.
 
-    t_pars : TransformParameters
+    t_pars : `TransformParameters`
         The transformation parameters. Parameters are updated during processing.
 
     """
@@ -748,7 +748,7 @@ def calc_wcs(t_pars: TransformParameters):
 
     Parameters
     ----------
-    t_pars : TransformParameters
+    t_pars : `TransformParameters`
         The transformation parameters. Parameters are updated during processing.
 
     Returns
@@ -812,7 +812,7 @@ def calc_transforms(t_pars: TransformParameters):
 
     Returns
     -------
-    transforms : Transforms
+    transforms : `Transforms`
         The list of coordinate matrix transformations
     """
     t_pars.method = t_pars.method if t_pars.method else Methods.default
