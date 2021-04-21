@@ -20,6 +20,8 @@ assign_wcs
   validate_open_slits function, so a proper error message is provided to
   the user [#5939]
 
+- Added computed ``spectral_region`` to ``model.meta.wcsinfo``. [#5969]
+
 associations
 ------------
 
