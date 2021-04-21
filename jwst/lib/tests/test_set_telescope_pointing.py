@@ -59,6 +59,9 @@ def method_gscmd_j3pags():
     This set was derived from the first valid group of engineering parameters for exposure
     jw00624028002_02101_00001_nrca1 retrieved from the SDP regression tests for Build 7.7.1.
     """
+    # Only run if `pysiaf` is installed.
+    pysiaf = pytest.importorskip('pysiaf')
+
     # setup inputs
     t_pars = stp.TransformParameters()
 
@@ -516,8 +519,13 @@ def test_add_wcs_method_original(eng_db_ngas, data_file, siaf_file=siaf_db):
                     reason="No URI support in sqlite3")
 def test_add_wcs_method_gscmd(eng_db_ngas, data_file, siaf_file=siaf_db):
     """Test using the database and the original, pre-JSOCINT-555 algorithms"""
+    # Only run if `pysiaf` is installed.
+    pysiaf = pytest.importorskip('pysiaf')
+
+    # Calculate
     stp.add_wcs(data_file, siaf_path=siaf_db, method=stp.Methods.GSCMD, j2fgs_transpose=False)
 
+    # Test
     with datamodels.Level1bModel(data_file) as model:
 
         assert model.meta.visit.pointing_engdb_quality == 'CALCULATED_GSCMD'
@@ -562,8 +570,13 @@ def test_add_wcs_method_gscmd(eng_db_ngas, data_file, siaf_file=siaf_db):
                     reason="No URI support in sqlite3")
 def test_add_wcs_method_gscmd_v3pags(eng_db_ngas, data_file, siaf_file=siaf_db):
     """Test using the database and the original, pre-JSOCINT-555 algorithms"""
+    # Only run if `pysiaf` is installed.
+    pysiaf = pytest.importorskip('pysiaf')
+
+    # Calculate
     stp.add_wcs(data_file, siaf_path=siaf_db, method=stp.Methods.GSCMD_V3PAGS, j2fgs_transpose=False)
 
+    # Test
     with datamodels.Level1bModel(data_file) as model:
 
         assert model.meta.visit.pointing_engdb_quality == 'CALCULATED_GSCMD_V3PAGS'
