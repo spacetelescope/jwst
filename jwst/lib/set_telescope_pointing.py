@@ -11,7 +11,6 @@ import typing
 
 from astropy.time import Time
 import numpy as np
-import pysiaf
 from scipy.interpolate import interp1d
 
 from ..assign_wcs.util import update_s_region_keyword, calc_rotation_matrix
@@ -1795,6 +1794,7 @@ def get_wcs_values_from_siaf_api(aperture_name):
         The SIAF namedtuple with values from the PRD database.
     """
     logger.info('Retrieving WCS through SIAF API `pysiaf`')
+    import pysiaf
 
     # Retrieve SIAF
     instrument = INSTRUMENT_MAP[aperture_name[:3].lower()]
