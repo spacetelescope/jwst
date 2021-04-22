@@ -658,7 +658,7 @@ class IFUCubeData():
                         self.map_fov_to_dqplane(this_par1, coord1, coord2, wave, roiw_ave, slice_no)
                         t1 = time.time()
                         log.debug("Time to set initial dq values = %.1f s" % (t1 - t0,))
-
+                        print("Time to set initial dq values = ", (t1 - t0))
                     if no_data:
                         log.warning(f'No valid data found on file {ifile.meta.filename}')
                     if self.weighting == 'msm' or self.weighting == 'emsm':
@@ -684,6 +684,7 @@ class IFUCubeData():
 
                         t1 = time.time()
                         log.info("Time to match pixels to cube spaxels = %.1f s" % (t1 - t0,))
+                        print("Time to match pixels to cube spaxels = ",  (t1 - t0,))
 # ________________________________________________________________________________
                     elif self.weighting == 'miripsf':
                         with datamodels.IFUImageModel(ifile) as input_model:

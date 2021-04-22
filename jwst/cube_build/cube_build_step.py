@@ -333,7 +333,7 @@ class CubeBuildStep (Step):
                 thiscube.determine_cube_parameters()
             thiscube.setup_ifucube_wcs()
             t5 = time.time()
-            print('Time to set up size of IFU cube',t5-t4)
+            print('Time to set up size of one cube',t5-t4)
 # _______________________________________________________________________________
 # build the IFU Cube
 
@@ -353,7 +353,7 @@ class CubeBuildStep (Step):
                 cube_result = thiscube.build_ifucube()
                 result, status = cube_result
                 t4 = time.time()
-                print('time to cube a 1 cube', t4 - t3)
+                print('Time to build one cube', t4 - t3)
                 cube_container.append(result)
 
             if self.debug_file is not None:
