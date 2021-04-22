@@ -14,7 +14,9 @@ KNOWN_STEPS = set(jwst.pipeline.__all__ + jwst.step.__all__)
 def test_all_steps():
     """Test finding all defined steps and pipelines"""
     found_steps = all_steps()
+    print(found_steps.keys())
     diff = KNOWN_STEPS.symmetric_difference(found_steps)
+    print(KNOWN_STEPS)
     assert not diff, f'Steps not accounted for. Confirm and check suffix and CRDS calpars.\n{diff}'
 
 
