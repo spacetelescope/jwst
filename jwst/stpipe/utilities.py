@@ -29,7 +29,6 @@
 """
 Utilities
 """
-from copy import copy
 from importlib import import_module
 import importlib.util
 import inspect
