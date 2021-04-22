@@ -1,9 +1,11 @@
 import logging
 
 import numpy as np
+import scipy.signal
 from scipy.interpolate import griddata
 from scipy.signal import convolve
-from scipy import mgrid
+#from scipy import mgrid
+from astropy.io import fits
 
 from .. import datamodels
 from ..datamodels import dqflags
@@ -13,8 +15,8 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 # The following should probably be in a ref file instead
-OFF_DELTA = 2  # for searching +/-2 around nominal offsets
-PSF_SIZE = 200  # half width of psf for 12 waves
+OFF_DELTA = 0  # for searching +/-2 around nominal offsets
+PSF_SIZE = 100  # half width of psf for 12 waves
 BLUR_SIZE = 10  # size of gaussian kernel for convolution
 N_SIZE = 2  # size of neighborhood in create_griddata_array
 
@@ -65,6 +67,8 @@ class DataSet:
         log.info('File 2 to combine: %s', infile_2)
         log.info('Output file: %s', outfile)
         log.info('do_refine: %s', do_refine)
+        self.off_x = 0
+        self.off_y = 0
 
     def do_all(self):
         """
@@ -134,7 +138,7 @@ class DataSet:
         """
 
         self.off_x, self.off_y = self.get_wcs_offsets()
-
+        log.info(f"x,y offset in integer pixels from WCS: {self.off_x} {self.off_y}")
         if self.do_refine:
             # 1. Create smoothed image of input SCI data of image #1
             # 1a. create image to smooth by first setting bad DQ pixels equal
@@ -164,6 +168,7 @@ class DataSet:
             #    and adding BLUR_SIZE, taking edges into account
             xmin = int(round(max(0, ctrd_x - PSF_SIZE)))
             ymin = int(round(max(0, ctrd_y - PSF_SIZE)))
+            ### Is shape correct!!!!!!!!!
             xmax = int(round(min(self.input_1.data.shape[1], ctrd_x + PSF_SIZE)))
             ymax = int(round(min(self.input_1.data.shape[0], ctrd_y + PSF_SIZE)))
 
@@ -180,24 +185,34 @@ class DataSet:
             #    return nominally aligned, interpolated images
             sci_nai_1, sci_nai_2 = get_overlap(sci_int_1, sci_int_2,
                                                self.off_x, self.off_y)
-
+            fits.writeto("sci_nai_1.fits", sci_nai_1, overwrite=True)
+            fits.writeto("sci_nai_2.fits", sci_nai_2, overwrite=True)
             # 5. Around this nominal alignment, get refined (delta) offsets
-            ref_del_off_x, ref_del_off_y = optimize_offs(sci_nai_1, sci_nai_2)
-
+#            ref_del_off_x, ref_del_off_y = optimize_offs(sci_nai_1, sci_nai_2)
+            ref_del_off_x, ref_del_off_y = calc_cor_coef(sci_nai_1, sci_nai_2, 0, 0)
             log.info('From the refined offsets calculation,'
                      'the x,y changes in ofsets are: %s %s',
-                     ref_del_off_x, ref_del_off_y)
+                     round(ref_del_off_x, 2), round(ref_del_off_y, 2))
 
             # 6. Add the refined delta offsets to the nominal offsets
-            self.off_x += ref_del_off_x
-            self.off_y += ref_del_off_y
+            self.off_x += int(round(ref_del_off_x))
+            self.off_y += int(round(ref_del_off_y))
 
-            log.info('Values for the refined offsets are, for x,y : %s %s',
-                     self.off_x, self.off_y)
+#            log.info('Values for the refined offsets are, for x,y : %s %s',
+#                     self.off_x, self.off_y)
 
         log.info(f"Final x,y offset in pixels: {self.off_x} {self.off_y}")
 
-        # Do final alignment for original (not interpolated) image #2
+        # If the shift in x is negative, switch the two models and change the signs of the shifts
+        # This will make the final position the same even when we start at the second position.
+        if self.off_x < 0:
+            temp_input_1 = self.input_1.copy()
+            self.input_1 = self.input_2.copy()
+            self.input_2 = temp_input_1.copy()
+            self.off_x = -1 * self.off_x
+            self.off_y = -1 * self.off_y
+
+        # Do the final alignment for original (not interpolated) image #2
         data_2_a, dq_2_a, err_2_a = self.apply_final_offsets()
 
         model_2_a = self.input_2.copy()  # Model for aligned image #2
@@ -265,7 +280,8 @@ class DataSet:
         pixels = tr2(radec[0], radec[1])
         off_x = pixels[0] - xcen
         off_y = pixels[1] - ycen
-
+        log.info('From the WCS the x,y pixel offsets are: %s %s',
+                 round(off_x, 2), round(off_y, 2))
         off_x = int(round(off_x))  # Offsets required to be integers
         off_y = int(round(off_y))
 
@@ -405,7 +421,7 @@ def gauss_kern(size, sizey=None):
     else:
         sizey = int(sizey)
 
-    x, y = mgrid[-size:size + 1, -sizey:sizey + 1]
+    x, y = np.mgrid[-size:size + 1, -sizey:sizey + 1]
     g = np.exp(-(x**2 / float(size) + y**2 / float(sizey)))
 
     return g / g.sum()
@@ -624,12 +640,12 @@ def optimize_offs(sci_nai_1, sci_nai_2):
 
     """
 
-    max_diff = 0.
+    max_diff = 0
 
     for off_y in range(-OFF_DELTA, OFF_DELTA + 1):
         for off_x in range(-OFF_DELTA, OFF_DELTA + 1):
             this_diff = calc_cor_coef(sci_nai_1, sci_nai_2, off_x, off_y)
-
+            print(off_x, off_y, this_diff)
             if (this_diff > max_diff):
                 max_diff = this_diff
                 max_off_x = off_x
@@ -663,7 +679,7 @@ def calc_cor_coef(sci_nai_1, sci_nai_2, off_x, off_y):
         mean of correlation coefficient array
 
     """
-
+    centroid_size = 3
     sub_1, sub_2 = get_overlap(sci_nai_1, sci_nai_2, off_x, off_y)
     num_pix = sub_1.shape[0] * sub_1.shape[1]  # Number of overlapping pixels
 
@@ -688,9 +704,21 @@ def calc_cor_coef(sci_nai_1, sci_nai_2, off_x, off_y):
     #   1D for numpy's correlation coefficient
     sub_1_sub = sub_1[ymin:ymax, xmin:xmax]
     sub_2_sub = sub_2[ymin:ymax, xmin:xmax]
-    sub_1_sub = np.ravel(sub_1_sub)
-    sub_2_sub = np.ravel(sub_2_sub)
+    fits.writeto("sub_1_sub.fits", sub_1_sub, overwrite=True)
+    fits.writeto("sub_2_sub.fits", sub_2_sub, overwrite=True)
+#    sub_1_sub = np.ravel(sub_1_sub)
+#    sub_2_sub = np.ravel(sub_2_sub)
 
-    cor_coef = np.corrcoef(sub_1_sub, sub_2_sub)
+#    cor_coef = np.corrcoef(sub_1_sub, sub_2_sub)
+    cross_cor = scipy.signal.correlate2d(sub_2_sub - scipy.ndimage.gaussian_filter(sub_2_sub, 5), sub_1_sub -
+                                         scipy.ndimage.gaussian_filter(sub_1_sub, 5))
+    fits.writeto('zerooffset.fits', cross_cor, overwrite=True)
+    maximum_pixel = np.unravel_index(np.argmax(cross_cor), cross_cor.shape)
 
-    return cor_coef.mean()
+    ymax = maximum_pixel[0]-sub_1_sub.shape[0]+1
+    xmax = maximum_pixel[1]-sub_1_sub.shape[1]+1
+    central_cutout = cross_cor[maximum_pixel[0]-centroid_size:maximum_pixel[0]+centroid_size+1,
+                               maximum_pixel[1]-centroid_size:maximum_pixel[1]+centroid_size+1]
+    fits.writeto('central_cutoout.fits', central_cutout, overwrite=True)
+    centroid = scipy.ndimage.measurements.center_of_mass(central_cutout)
+    return centroid[1]-centroid_size, centroid[0]-centroid_size

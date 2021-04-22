@@ -4,6 +4,7 @@ from jwst import datamodels
 from jwst.assign_wcs import AssignWcsStep
 from jwst.associations.asn_from_list import asn_from_list
 from jwst.wfs_combine import WfsCombineStep
+from astropy.io import fits
 
 
 GOOD = datamodels.dqflags.pixel["GOOD"]
@@ -94,3 +95,22 @@ def test_create_combined(_jail, wfs_association,
     # Check that results are as expected
     assert result.data[5, 5] == result_data
     assert result.dq[5, 5] == result_dq
+
+
+def test_shift_order():
+    local_path = "/users/mregan/Documents/wfsc/"
+    path1 = str(local_path + "jw01465091001_02105_00001_nrca3_cal.fits")
+    path2 = str(local_path + "jw01465091001_02105_00002_nrca3_cal.fits")
+    asn = asn_from_list([path1, path2],
+                        product_name='jw00077_02105_nrca3_combine')
+    asn.data["program"] = "00077"
+    asn.data["asn_type"] = "wfs-image2"
+    asn.sequence = 1
+    asn_name, serialized = asn.dump(format="json")
+    path_asn = local_path + asn_name
+    with open(path_asn, "w") as f:
+        f.write(serialized)
+    result = WfsCombineStep.call(path_asn, do_refine=False)
+    fits.writeto(local_path+"combined_image"+asn.data["program"]+".fits", result.data, overwrite=True)
+    result = WfsCombineStep.call(path_asn, do_refine=True)
+    fits.writeto(local_path + "combined_image_refined" + asn.data["program"] + ".fits", result.data, overwrite=True)
