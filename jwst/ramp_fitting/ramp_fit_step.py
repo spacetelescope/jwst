@@ -2,7 +2,7 @@
 
 from ..stpipe import Step
 from .. import datamodels
-from . import ramp_fit
+from stcal.ramp_fitting.ramp_fit import ramp_fit
 
 import logging
 log = logging.getLogger(__name__)
