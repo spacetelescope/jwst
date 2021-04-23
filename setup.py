@@ -31,8 +31,10 @@ package_data = {
 
     # Include the rules .py files in associations test data
     "jwst.associations": ["tests/data/*.py"],
+
     # Include C extensions
-    "jwst.wfss_contam.lib": ["*.c"],
+    "jwst.lib.src": ["*.c"],
+
     # Include the transforms schemas
     "jwst.transforms": ["schemas/stsci.edu/jwst_pipeline/*.yaml"],
     "jwst.stpipe.resources": ["schemas/*.yaml"],
@@ -52,8 +54,10 @@ setup(
     package_data=package_data,
     ext_modules=[
         Extension(
-            'jwst.wfss_contam.lib.polyclip_c',
-            ['jwst/wfss_contam/lib/polyclip_c.c']
+            'jwst.lib.winclip',
+            ['jwst/lib/src/winclip.c'],
+            include_dirs=include_dirs,
+            define_macros=define_macros
         )
     ],
 )
