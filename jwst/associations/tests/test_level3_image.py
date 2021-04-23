@@ -5,7 +5,7 @@ processed by CALIMAGE3.
 
 Such associations are mosaics and dithers.
 """
-from .helpers import BasePoolRule, PoolParams, t_path
+from jwst.associations.tests.helpers import BasePoolRule, PoolParams, t_path
 
 
 class TestLevel3Image(BasePoolRule):

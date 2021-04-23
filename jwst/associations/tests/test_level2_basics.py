@@ -1,17 +1,17 @@
 """Test basic usage of Level2 associations"""
 import re
 
-from .helpers import (
+from jwst.associations.tests.helpers import (
     combine_pools,
     registry_level2_only,
     t_path
 )
 
-from .. import (
+from jwst.associations import (
     generate,
     load_asn,
 )
-from ..main import Main
+from jwst.associations.main import Main
 
 NONSSCIENCE = ['background']
 REGEX_LEVEL2A = r'(?P<path>.+)(?P<type>_rate(ints)?)(?P<extension>\..+)'

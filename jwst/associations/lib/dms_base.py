@@ -1,5 +1,5 @@
 """Association attributes common to DMS-based Rules"""
-from .counter import Counter
+from jwst.associations.lib.counter import Counter
 
 from jwst.associations.exceptions import (
     AssociationNotAConstraint,

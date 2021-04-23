@@ -4,7 +4,9 @@ Unit tests for master background NIRSpec corrections
 import numpy as np
 
 from jwst import datamodels
-from ..nirspec_utils import correct_nrs_ifu_bkg, correct_nrs_fs_bkg
+from jwst.master_background.nirspec_utils import (
+    correct_nrs_ifu_bkg, correct_nrs_fs_bkg
+)
 
 
 def test_ifu_pathloss_existence():

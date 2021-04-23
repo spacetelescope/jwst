@@ -1,13 +1,13 @@
 """Test Level2 candidate operation"""
 import pytest
 
-from .helpers import (
+from jwst.associations.tests.helpers import (
     level2_rule_path,
     mkstemp_pool_file,
     t_path,
 )
 
-from ..main import Main
+from jwst.associations.main import Main
 
 
 @pytest.mark.parametrize(

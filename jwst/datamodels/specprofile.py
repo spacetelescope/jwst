@@ -11,7 +11,7 @@ class SpecProfileModel(ReferenceFileModel):
     This model has a special member `profile` that can be used to
     deal with an entire spectral profile at a time.  It behaves like a list::
 
-       >>> from . import SpecProfileSingleModel
+       >>> from jwst.datamodels.specprofile import SpecProfileSingleModel
        >>> specprofile_model = SpecProfileModel()
        >>> specprofile_model.profile.append(SpecProfileSingleModel())
        >>> specprofile_model.profile[0] # doctest: +SKIP

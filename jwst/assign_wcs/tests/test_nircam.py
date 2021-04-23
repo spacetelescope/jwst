@@ -15,10 +15,10 @@ import pytest
 from astropy.io import fits
 from gwcs import wcs
 
-from ...datamodels.image import ImageModel
-from ...datamodels import CubeModel
-from ..assign_wcs_step import AssignWcsStep
-from .. import nircam
+from jwst.datamodels.image import ImageModel
+from jwst.datamodels import CubeModel
+from jwst.assign_wcs.assign_wcs_step import AssignWcsStep
+from jwst.assign_wcs import nircam
 
 
 # Allowed settings for nircam

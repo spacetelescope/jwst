@@ -5,7 +5,7 @@ from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.resample.resample import OutputTooLargeError
 from jwst.stpipe import Step
 
-from . import regtestdata as rt
+from jwst.regtest import regtestdata as rt
 
 
 file_roots = ['exptype_fgs_acq1', 'exptype_fgs_fineguide', 'exptype_fgs_id_image', 'exptype_fgs_id_stack']

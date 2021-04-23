@@ -5,7 +5,7 @@ import asdf
 
 from stpipe.config import export_config, StepConfig, _validate_asdf
 
-from .steps import MakeListPipeline, WithDefaultsStep
+from jwst.stpipe.tests.steps import MakeListPipeline, WithDefaultsStep
 
 
 @pytest.fixture

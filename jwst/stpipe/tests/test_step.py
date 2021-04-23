@@ -18,8 +18,11 @@ from jwst import datamodels
 from jwst.refpix import RefPixStep
 from jwst.stpipe import Step
 
-from .steps import EmptyPipeline, MakeListPipeline, MakeListStep, ProperPipeline, AnotherDummyStep
-from .util import t_path
+from jwst.stpipe.tests.steps import (
+    EmptyPipeline, MakeListPipeline, MakeListStep,
+    ProperPipeline, AnotherDummyStep
+)
+from jwst.stpipe.tests.util import t_path
 
 import asdf
 from crds.core.exceptions import CrdsLookupError
@@ -322,8 +325,6 @@ def test_step():
     step_fn = join(dirname(__file__), 'steps', 'some_other_step.cfg')
     step = Step.from_config_file(step_fn)
 
-    from .steps import AnotherDummyStep
-
     assert isinstance(step, AnotherDummyStep)
     assert step.name == 'SomeOtherStepOriginal'
     assert step.par2 == 'abc def'
@@ -332,8 +333,6 @@ def test_step():
 
 
 def test_step_from_python():
-    from .steps import AnotherDummyStep
-
     step = AnotherDummyStep("SomeOtherStepOriginal", par1=42.0, par2="abc def")
 
     assert step.par1 == 42.0
@@ -346,16 +345,12 @@ def test_step_from_python():
 
 
 def test_step_from_python_simple():
-    from .steps import AnotherDummyStep
-
     result = AnotherDummyStep.call(1, 2, par1=42.0, par2="abc def")
 
     assert result == 3
 
 
 def test_step_from_python_simple2():
-    from .steps import AnotherDummyStep
-
     step_fn = join(dirname(__file__), 'steps', 'some_other_step.cfg')
 
     result = AnotherDummyStep.call(1, 2, config_file=step_fn)
@@ -574,14 +569,11 @@ def test_step_with_local_class():
 
 
 def test_extra_parameter():
-    from .steps import AnotherDummyStep
     with pytest.raises(ValidationError):
         AnotherDummyStep("SomeOtherStepOriginal", par5='foo')
 
 
 def test_crds_override():
-    from .steps import AnotherDummyStep
-
     step = AnotherDummyStep(
         "SomeOtherStepOriginal",
         par1=42.0, par2="abc def",
@@ -592,14 +584,14 @@ def test_crds_override():
 
 
 def test_omit_ref_file():
-    from .steps import OptionalRefTypeStep
+    from jwst.stpipe.tests.steps import OptionalRefTypeStep
 
     step = OptionalRefTypeStep(override_to_be_ignored_ref_type="")
     step.process()
 
 
 def test_search_attr():
-    from .steps import SavePipeline
+    from jwst.stpipe.tests.steps import SavePipeline
 
     value = '/tmp'
     pipeline = SavePipeline('afile.fits', output_dir=value)

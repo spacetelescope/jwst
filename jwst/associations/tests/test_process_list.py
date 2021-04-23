@@ -1,11 +1,11 @@
 """Test ProcessList, ProcessQueue, ProcessQueueSorted"""
 
-from .helpers import (
+from jwst.associations.tests.helpers import (
     combine_pools,
     t_path
 )
 
-from ..lib.process_list import *
+from jwst.associations.lib.process_list import *
 
 
 def test_item():

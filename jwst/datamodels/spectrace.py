@@ -11,7 +11,7 @@ class SpecTraceModel(ReferenceFileModel):
     This model has a special member `trace` that can be used to
     deal with an entire spectral trace at a time.  It behaves like a list::
 
-       >>> from . import SpecTraceSingleModel
+       >>> from jwst.datamodels.spectrace import SpecTraceSingleModel
        >>> spectrace_model = SpecTraceModel()
        >>> spectrace_model.trace.append(SpecTraceSingleModel())
        >>> spectrace_model.trace[0] # doctest: +SKIP
