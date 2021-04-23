@@ -1,7 +1,6 @@
 from scipy.interpolate import interp1d
 import numpy as np
 from ..lib.winclip import get_clipped_pixels
-import sys, time
 
 
 def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,

@@ -416,8 +416,8 @@ class observation():
             # a single value (just like "lams").
 
             flxs, lams = map(np.array, zip(*[
-                (self.fluxes[l][c][i], l) for l in sorted(self.fluxes.keys())
-                if self.fluxes[l][c][i] != 0
+                (self.fluxes[lm][c][i], lm) for lm in sorted(self.fluxes.keys())
+                if self.fluxes[lm][c][i] != 0
             ]))
 
             # Apply POM mask correction to the fluxes
