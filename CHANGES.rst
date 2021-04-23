@@ -123,6 +123,8 @@ lib
 
 - moved ``basic_utils.multiple_replace`` to stcal. [#5898]
 
+- Implemented window clipping algorithm for WFSS contamination corrections. [#5978]
+
 master_background
 -----------------
 

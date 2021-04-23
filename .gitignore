@@ -27,7 +27,6 @@ pip-wheel-metadata/
 .pydevproject
 .vscode
 *code-workspace
-src/
 scripts/launch.json
 *.orig
 .ipynb_checkpoints

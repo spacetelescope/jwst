@@ -1,6 +1,7 @@
 from os.path import basename
 from setuptools import setup, find_packages, Extension
 from glob import glob
+import numpy
 
 
 scripts = [s for s in glob("scripts/*") if basename(s) != "__pycache__"]
@@ -19,12 +20,15 @@ package_data = {
         "tests/data/*.txt",
         "*.yaml",
     ],
+
     "jwst.fits_generator": [
         "templates/*.inc",
         "templates/*.txt",
         "tests/okfile/*.prop",
     ],
+
     "jwst.lib": ["tests/data/siaf.db"],
+
     # Include the rules .py files in associations test data
     "jwst.associations": ["tests/data/*.py"],
     # Include C extensions
@@ -34,11 +38,22 @@ package_data = {
     "jwst.stpipe.resources": ["schemas/*.yaml"],
 }
 
+# Setup C module include directories
+include_dirs = [numpy.get_include()]
+
+# Setup C module macros
+define_macros = [('NUMPY', '1')]
+
 setup(
     use_scm_version=True,
     setup_requires=["setuptools_scm"],
     scripts=scripts,
     packages=find_packages(),
     package_data=package_data,
-    ext_modules=[Extension('jwst.wfss_contam.lib.polyclip_c', ['jwst/wfss_contam/lib/polyclip_c.c'])],
+    ext_modules=[
+        Extension(
+            'jwst.wfss_contam.lib.polyclip_c',
+            ['jwst/wfss_contam/lib/polyclip_c.c']
+        )
+    ],
 )
