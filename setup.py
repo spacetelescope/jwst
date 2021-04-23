@@ -27,10 +27,10 @@ package_data = {
     "jwst.lib": ["tests/data/siaf.db"],
     # Include the rules .py files in associations test data
     "jwst.associations": ["tests/data/*.py"],
-    # Include the transforms schemas
-    "jwst.transforms": ["schemas/stsci.edu/jwst_pipeline/*.yaml"],
     # Include C extensions
     "jwst.wfss_contam.lib": ["*.c"],
+    # Include the transforms schemas
+    "jwst.transforms": ["schemas/stsci.edu/jwst_pipeline/*.yaml"],
     "jwst.stpipe.resources": ["schemas/*.yaml"],
 }
 

@@ -179,7 +179,9 @@ class observation():
                 #     print("ERROR: unable to find PHOTPLAM keyword in {}".format(dir_image_name))
                 #     return
                 # temporary hack to compute an approximate pivlam from filter name
-                pivlam = float(self.filter[1:-1]) / 100
+                # pivlam = float(self.filter[1:4]) / 100
+                # compute pivlam as average of wmin/wmax range
+                pivlam = (self.wmin + self.wmax) / 2
 
                 # try:
                 #     photflam = fits.getval(dir_image_name, 'photflam')
