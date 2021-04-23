@@ -32,23 +32,6 @@ class interp1d_picklable(object):
         self.f = interp1d(state[0], state[1], **state[2])
 
 
-def helper(vars):
-    # parse the input list of vars; ID is a dummy number here
-    x0s, y0s, flux, order, wmin, wmax, seg_wcs, grism_wcs, ID, extrapolate_SED, xoffset, yoffset = vars
-
-    # use the list of vars to compute dispersed attributes for the pixel
-    p = dispersed_pixel(x0s, y0s, flux, order, wmin, wmax, seg_wcs, grism_wcs, ID,
-                        extrapolate_SED=extrapolate_SED, xoffset=xoffset, yoffset=yoffset)
-
-    # unpack the results
-    xs, ys, areas, lams, counts, ID = p
-    IDs = [ID] * len(xs)
-
-    # return results as numpy array
-    pp = np.array([xs, ys, areas, lams, counts, IDs])
-    return pp
-
-
 class observation():
     # This class defines an actual observation. It is tied to a single grism image.
 
@@ -343,22 +326,29 @@ class observation():
 
         f = [lam, flam]
 
+        width = 1.0
+        height = 1.0
+
         pars = []
         for i in range(len(xs)):
             ID = 1
-            xs0 = [xs[i], xs[i] + 1, xs[i] + 1, xs[i]]
-            ys0 = [ys[i], ys[i], ys[i] + 1, ys[i] + 1]
-            pars.append([xs0, ys0, f, self.order, Cfg, ID, False, self.xstart, self.ystart])
+            # xc, yc are the coordinates of the central pixel of the group
+            # of pixels surrounding the direct image pixel index
+            xc = xs[i] + 0.5 * width
+            yc = ys[i] + 0.5 * height
+
+            pars.append([xc, yc, width, height, f, self.order, Cfg, ID, 2,
+                         False, self.xstart, self.ystart])
 
         # Compute the dispersed results
         if self.max_cpu > 1:
             mypool = Pool(self.max_cpu)  # Create pool
-            all_res = mypool.imap_unordered(helper, pars)  # Stuff the pool
+            all_res = mypool.imap_unordered(dispersed_pixel, pars)  # Stuff the pool
             mypool.close()
         else:
             all_res = []
             for i in range(len(pars)):
-                all_res.append(helper(pars[i]))
+                all_res.append(dispersed_pixel(*pars[i]))
 
         bck = np.zeros(naxis, np.float)
         for i, pp in enumerate(all_res, 1):
@@ -409,76 +399,69 @@ class observation():
             # being processed, as opposed to the ID number of the object itself
             ID = i
 
-            # xs0, ys0 form a 2x2 grid of pixel indexes surrounding the direct image
-            # pixel index
-            xs0 = [self.xs[c][i], self.xs[c][i] + 1, self.xs[c][i] + 1, self.xs[c][i]]
-            ys0 = [self.ys[c][i], self.ys[c][i], self.ys[c][i] + 1, self.ys[c][i] + 1]
+            # xc, yc are the coordinates of the central pixel of the group
+            # of pixels surrounding the direct image pixel index
+            width = 1.0
+            height = 1.0
+            xc = self.xs[c][i] + 0.5 * width
+            yc = self.ys[c][i] + 0.5 * height
 
             # "lams" is the list of wavelengths previously stored in flux list
             # and correspond to the central wavelengths of the filters used in
             # the input direct image(s). For the simple case of 1 combined direct image,
             # this contains a single value (e.g. 4.44 for F444W).
-            lams = np.array(list(self.fluxes.keys()))
-            # print("lams:", lams)
 
             # "flxs" is the list of pixel values ("fluxes") from the direct image(s).
             # For the simple case of 1 combined direct image, this contains a
             # a single value (just like "lams").
-            flxs = np.array([self.fluxes[lam][c][i] for lam in self.fluxes.keys()])
-            # print("flxs:", flxs)
 
-            # Only include data for pixels with non-zero fluxes
-            ok = flxs != 0
-            if len(flxs[ok]) == 0:
-                continue
-            flxs = flxs[ok]
-            lams = lams[ok]
-            ok = np.argsort(lams)
-            flxs = flxs[ok]  # list of good fluxes for this pixel
-            lams = lams[ok]  # list of wavelengths for this pixel
+            flxs, lams = map(np.array, zip(*[
+                (self.fluxes[l][c][i], l) for l in sorted(self.fluxes.keys())
+                if self.fluxes[l][c][i] != 0
+            ]))
 
             # Apply POM mask correction to the fluxes
             if self.POM_mask is not None:
                 POM_value = self.POM_mask[self.ys[c][i], self.xs[c][i]]
             else:
                 POM_value = 1.
-            # print("POM_value:", POM_value)
+
             if POM_value > 1:
-                print("Applying additional transmission of:", self.xs[c][i], self.ys[c][i], POM_value)
+                print("Applying additional transmission of:",
+                      self.xs[c][i], self.ys[c][i], POM_value)
                 trans = self.POM_transmission[POM_value](lams)
                 flxs = flxs * trans
-            else:
+            elif POM_value != 1:
                 flxs = flxs * POM_value
 
-            f = [lams, flxs]
-            pars.append([xs0, ys0, f, self.order, self.wmin, self.wmax, self.seg_wcs, self.grism_wcs,
-                         ID, self.extrapolate_SED, self.xstart, self.ystart])
+            pars_i = (xc, yc, width, height, lams, flxs, self.order,
+                      self.wmin, self.wmax,
+                      self.seg_wcs, self.grism_wcs, ID, self.dims[::-1], 2,
+                      self.extrapolate_SED, self.xstart, self.ystart)
+
+            pars.append(pars_i)
             # now have full pars list for all pixels for this object
 
         time1 = time.time()
         if self.max_cpu > 1:
             mypool = Pool(self.max_cpu)  # Create pool
-            all_res = mypool.imap_unordered(helper, pars)  # Stuff the pool
+            all_res = mypool.imap_unordered(dispersed_pixel, pars)  # Stuff the pool
             mypool.close()  # No more work
         else:
             all_res = []
             for i in range(len(pars)):
-                all_res.append(helper(pars[i]))
+                all_res.append(dispersed_pixel(*pars[i]))
 
         this_object = np.zeros(self.dims, np.float)
 
-        for i, pp in enumerate(all_res, 1):
-            if np.shape(pp.transpose()) == (1, 6):
+        nres = 0
+        for pp in all_res:
+            if pp is None:
                 continue
 
-            x, y, w, f = pp[0], pp[1], pp[3], pp[4]
+            nres += 1
 
-            vg = (x >= 0) & (x < self.dims[1]) & (y >= 0) & (y < self.dims[0])
-
-            x = x[vg]
-            y = y[vg]
-            f = f[vg]
-            w = w[vg]
+            x, y, _, w, f, *_ = pp
 
             if len(x) < 1:
                 continue
