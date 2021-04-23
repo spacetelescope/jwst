@@ -13,7 +13,7 @@ or residual non-linearities or noise can lead to the false detection of jumps in
 due to departure from linearity.
 
 The ``jump`` step will automatically skip execution if the input data contain fewer
-than 5 groups per integration, because the baseline algorthim requires four first
+than 3 groups per integration, because the baseline algorthim requires two first
 differences to work.
 
 Algorithm
@@ -47,7 +47,12 @@ The two-point difference method is applied to each integration as follows:
 * If a jump is found in a given pixel, iterate the above steps with the
   jump-impacted group excluded, looking for additional lower-level jumps
   that still exceed the rejection threshold.
-* Stop iterating on a given pixel when no new jumps are found
+* Stop iterating on a given pixel when no new jumps are found or only one
+  difference remains.
+* If the there are only three differences (four groups), the standard median
+  is used rather than the clipped median.
+* If there are only two differences (three groups), the smallest one is compared to the larger
+  one and if the larger one is above a threshold, it is flagged as a jump.
 
 Note that any ramp values flagged as SATURATED in the input GROUPDQ array
 are not used in any of the above calculations and hence will never be

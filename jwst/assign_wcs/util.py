@@ -887,14 +887,17 @@ def compute_footprint_spectral(model):
                           [np.nanmax(ra), np.nanmin(dec)],
                           [np.nanmax(ra), np.nanmax(dec)],
                           [np.nanmin(ra), np.nanmax(dec)]])
-    return footprint
+    lam_min = np.nanmin(lam)
+    lam_max = np.nanmax(lam)
+    return footprint, (lam_min, lam_max)
 
 
 def update_s_region_spectral(model):
     """ Update the S_REGION keyword.
     """
-    footprint = compute_footprint_spectral(model)
+    footprint, spectral_region = compute_footprint_spectral(model)
     update_s_region_keyword(model, footprint)
+    model.meta.wcsinfo.spectral_region = spectral_region
 
 
 def compute_footprint_nrs_slit(slit):
@@ -913,12 +916,16 @@ def compute_footprint_nrs_slit(slit):
     ra, dec, lam = slit2world(virtual_corners_x,
                               virtual_corners_y,
                               input_lam)
-    return np.array([ra, dec]).T
+    footprint = np.array([ra, dec]).T
+    lam_min = np.nanmin(lam)
+    lam_max = np.nanmax(lam)
+    return footprint, (lam_min, lam_max)
 
 
 def update_s_region_nrs_slit(slit):
-    footprint = compute_footprint_nrs_slit(slit)
+    footprint, spectral_region = compute_footprint_nrs_slit(slit)
     update_s_region_keyword(slit, footprint)
+    slit.meta.wcsinfo.spectral_region = spectral_region
 
 
 def update_s_region_keyword(model, footprint):
@@ -938,15 +945,16 @@ def update_s_region_keyword(model, footprint):
         log.info("Update S_REGION to {}".format(model.meta.wcsinfo.s_region))
 
 
-def _nanminmax(wcsobj):
-    x, y = grid_from_bounding_box(wcsobj.bounding_box)
-    ra, dec, lam = wcsobj(x, y)
-    return np.nanmin(ra), np.nanmax(ra), np.nanmin(dec), np.nanmax(dec)
-
-
-def compute_footprint_nrs_ifu(output_model, mod):
+def compute_footprint_nrs_ifu(dmodel, mod):
     """
-    determine NIRSPEC ifu footprint observations using the instrument model.
+    Determine NIRSPEC IFU footprint using the instrument model.
+
+    For efficiency this function uses the transforms directly,
+    instead of the WCS object. The common transforms in the WCS
+    model chain are referenced and reused; only the slice specific
+    transforms are computed.
+
+    If the transforms change this function should be revised.
 
     Parameters
     ----------
@@ -954,20 +962,54 @@ def compute_footprint_nrs_ifu(output_model, mod):
         The output of assign_wcs.
     mod : module
         The imported ``nirspec`` module.
+
+    Returns
+    -------
+    footprint : ndarray
+        The spatial footprint
+    spectral_region : tuple
+        The wavelength range for the observation.
     """
-    wcs_list = mod.nrs_ifu_wcs(output_model)
     ra_total = []
     dec_total = []
-    for wcsobj in wcs_list:
-        rmin, rmax, dmin, dmax = _nanminmax(wcsobj)
-        ra_total.append((rmin, rmax))
-        dec_total.append((dmin, dmax))
-    ra_max = np.asarray(ra_total)[:, 1].max()
-    ra_min = np.asarray(ra_total)[:, 0].min()
-    dec_max = np.asarray(dec_total)[:, 1].max()
-    dec_min = np.asarray(dec_total)[:, 0].min()
+    lam_total = []
+    _, wrange = mod.spectral_order_wrange_from_model(dmodel)
+    pipe = dmodel.meta.wcs.pipeline
+
+    # Get the GWA to slit_frame transform
+    g2s = pipe[2].transform
+
+    # Construct a list of the transforms between coordinate frames.
+    # Set a place holder ``Identity`` transform at index 2 and 3.
+    # Update them with slice specific transforms.
+    transforms = [pipe[0].transform]
+    transforms.append(pipe[1].transform[1:])
+    transforms.append(astmodels.Identity(1))
+    transforms.append(astmodels.Identity(1))
+    transforms.extend([step.transform for step in pipe[4:-1]])
+
+    for sl in range(30):
+        transforms[2] = g2s.get_model(sl)
+        # Create the full transform from ``slit_frame`` to ``detector``.
+        # It is used to compute the bounding box.
+        m = functools.reduce(lambda x, y: x | y, [tr.inverse for tr in transforms[:3][::-1]])
+        bbox = mod.compute_bounding_box(m, wrange)
+        # Add the remaining transforms - from ``sli_frame`` to ``world``
+        transforms[3] = pipe[3].transform.get_model(sl) & astmodels.Identity(1)
+        mforw = functools.reduce(lambda x, y: x | y, transforms)
+        x1, y1 = grid_from_bounding_box(bbox)
+        ra, dec, lam = mforw(x1, y1)
+        ra_total.extend(np.ravel(ra))
+        dec_total.extend(np.ravel(dec))
+        lam_total.extend(np.ravel(lam))
+    ra_max = np.nanmax(ra_total)
+    ra_min = np.nanmin(ra_total)
+    dec_max = np.nanmax(dec_total)
+    dec_min = np.nanmin(dec_total)
+    lam_max = np.nanmax(lam_total)
+    lam_min = np.nanmin(lam_total)
     footprint = np.array([ra_min, dec_min, ra_max, dec_min, ra_max, dec_max, ra_min, dec_max])
-    return footprint
+    return footprint, (lam_min, lam_max)
 
 
 def update_s_region_nrs_ifu(output_model, mod):
@@ -981,8 +1023,9 @@ def update_s_region_nrs_ifu(output_model, mod):
     mod : module
         The imported ``nirspec`` module.
     """
-    footprint = compute_footprint_nrs_ifu(output_model, mod)
+    footprint, spectral_region = compute_footprint_nrs_ifu(output_model, mod)
     update_s_region_keyword(output_model, footprint)
+    output_model.meta.wcsinfo.spectral_region = spectral_region
 
 
 def update_s_region_mrs(output_model):
@@ -994,8 +1037,9 @@ def update_s_region_mrs(output_model):
     output_model : `~jwst.datamodels.IFUImageModel`
         The output of assign_wcs.
     """
-    footprint = compute_footprint_spectral(output_model)
+    footprint, spectral_region = compute_footprint_spectral(output_model)
     update_s_region_keyword(output_model, footprint)
+    output_model.meta.wcsinfo.spectral_region = spectral_region
 
 
 def velocity_correction(velosys):

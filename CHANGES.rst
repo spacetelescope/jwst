@@ -20,6 +20,8 @@ assign_wcs
   validate_open_slits function, so a proper error message is provided to
   the user [#5939]
 
+- Added computed ``spectral_region`` to ``model.meta.wcsinfo``. [#5969]
+
 associations
 ------------
 
@@ -106,6 +108,13 @@ general
 
 - Update data products, ``calwebb_image3``, and ``source_catalog`` docs to include
   information about the segmentation map product [#5949]
+
+jump
+-----------------
+
+- Update the step to detect jumps in three and four group integations [#5915].
+- Change the default S/N ratio for not flagging neighbors to be a higher value to
+  better reflect the correct IPC.
 
 lib
 ---
@@ -958,6 +967,7 @@ fringe
 ------
 
 - Update the fringe step to handle 3D inputs for MIRI MRS TSO mode. [#5202]
+
 
 master_background
 -----------------
