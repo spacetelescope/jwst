@@ -1,19 +1,25 @@
 from scipy.interpolate import interp1d
 import numpy as np
-from .polyclip import polyclip
+from ..lib.winclip import get_clipped_pixels
+import sys, time
 
 
-def dispersed_pixel(x0s, y0s, f0, order, wmin, wmax, seg_wcs, grism_wcs, ID, oversample_factor=2,
+def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
+                    seg_wcs, grism_wcs, ID, naxis, oversample_factor=2,
                     extrapolate_SED=False, xoffset=0, yoffset=0):
     """This function take a list of pixels and disperses them using the information contained
     in the grism image WCS object and returns a list of pixels and fluxes.
 
     Parameters
     ----------
-    x0s: list
-        A list of n x-coordinates.
-    y0s: list
-        A list of n y-coordinates.
+    x0: list
+        A list of n x-coordinates of the centers of the pixels.
+    y0: list
+        A list of n y-coordinates of the centers of the pixels.
+    width: int
+        Width of the pixels to be dispersed.
+    height: int
+        Width of the pixels to be dispersed.
     f0: list
         A list of n flux (flam) for each of the pixels contained in x0s,y0s.
         The entries in the list are wavelength and flux.
@@ -59,34 +65,14 @@ def dispersed_pixel(x0s, y0s, f0, order, wmin, wmax, seg_wcs, grism_wcs, ID, ove
     offset_x = -imgxy_to_grismxy.offset_1
     offset_y = -imgxy_to_grismxy.offset_2
 
-    if len(f0[0]) > 1:
-        # print("f0:", f0, len(f0[0]), len(f0[1]))
+    if len(lams) > 1:
         if extrapolate_SED is False:
-            f = interp1d(f0[0], f0[1], fill_value=0., bounds_error=False)
+            f = interp1d(lams, flxs, fill_value=0., bounds_error=False)
         else:
-            f = interp1d(f0[0], f0[1], fill_value="extrapolate", bounds_error=False)
+            f = interp1d(lams, flxs, fill_value="extrapolate", bounds_error=False)
     else:
-        # print("f0: is not > 1")
-        # f = lambda x: f0[1][0]
         def f(x):
-            return f0[1][0]
-
-    # print("x0s:", x0s)
-    # print("y0s:", y0s)
-    # print("f0:", f0)
-
-    # Mean x/y of input pixel coords
-    x0 = np.mean(x0s)
-    y0 = np.mean(y0s)
-    # print("x0, y0:", x0, y0)
-
-    # deltas relative to mean x/y coords
-    # typcially results in a list like -0.5, +0.5, +0.5, -0.5 when the input
-    # simply brackets a single pixel
-    dx0s = [t - x0 for t in x0s]
-    dy0s = [t - y0 for t in y0s]
-    # print("dx0s:", dx0s)
-    # print("dy0s:", dy0s)
+            return flxs[0]
 
     # Get the x/y positions corresponding to wmin and wmax
     # xwmin, ywmin, _, _, _ = img_to_grism(x0, y0, wmin, order)
@@ -111,7 +97,7 @@ def dispersed_pixel(x0s, y0s, f0, order, wmin, wmax, seg_wcs, grism_wcs, ID, ove
 
     # Use a natural wavelength scale or the wavelength scale of the input SED/spectrum,
     # whichever is smaller, divided by oversampling requested
-    input_dlam = np.median(f0[0][1:] - f0[0][:-1])
+    input_dlam = np.median(lams[1:] - lams[:-1])
     if input_dlam < dw:
         # print("input_dlam is < dw")
         dlam = input_dlam / oversample_factor
@@ -121,7 +107,6 @@ def dispersed_pixel(x0s, y0s, f0, order, wmin, wmax, seg_wcs, grism_wcs, ID, ove
 
     lambdas = np.arange(wmin, wmax + dlam, dlam)
     n_lam = len(lambdas)
-    # print("n_lam:", n_lam)
 
     # Compute lists of x/y positions in the grism image for
     # the set of desired wavelengths
@@ -132,49 +117,18 @@ def dispersed_pixel(x0s, y0s, f0, order, wmin, wmax, seg_wcs, grism_wcs, ID, ove
     # Pixel positions in direct image frame of grism image
     x0_xy, y0_xy, _, _ = sky_to_imgxy(x0_sky, y0_sky, lambdas, [order] * n_lam)
     x0s, y0s = imgxy_to_grismxy(x0_xy + offset_x, y0_xy + offset_y, lambdas, [order] * n_lam)
-    # print("x0s:", x0s)
-    # print("y0s:", y0s)
 
     padding = 1
-    left = x0s.astype(np.int32) - padding
-    right = x0s.astype(np.int32) + padding
-    bottom = y0s.astype(np.int32) - padding
-    top = y0s.astype(np.int32) + padding
-
-    px = np.array([x0s + dx0s[0], x0s + dx0s[1], x0s + dx0s[2], x0s + dx0s[3]],
-                  dtype=np.float32).transpose().ravel()
-    py = np.array([y0s + dy0s[0], y0s + dy0s[1], y0s + dy0s[2], y0s + dy0s[3]],
-                  dtype=np.float32).transpose().ravel()
-
-    lams = np.array([[ll, 0, 0, 0] for ll in lambdas], dtype=np.float32).transpose().ravel()
-
-    poly_inds = np.arange(0, (n_lam + 1) * 4, 4, dtype=np.int32)
-    n_poly = len(x0s)
-    n = len(lams)  # number of pixels we are "dropping", e.g. number of wav bins
-    n *= 2
-
-    index = np.zeros(n, dtype=np.int32)
-    x = np.zeros(n, dtype=np.int32)
-    y = np.zeros(n, dtype=np.int32)
-    areas = np.zeros(n, dtype=np.float32)
-    nclip_poly = np.array([0], np.int32)
-    polyclip.polyclip_multi4(left, right, bottom, top, px, py, n_poly, poly_inds,
-                             x, y, nclip_poly, areas, index)
-
-    xs = x[0:nclip_poly[0]]
-    ys = y[0:nclip_poly[0]]
-    areas = areas[0:nclip_poly[0]]
-    lams = np.take(lambdas, index)[0:len(xs)]
-    # factor of 10000 because dlam is in micron and we want Angstrom with to apply f(lams)
-    # counts = f(lams) * areas * sens(lams) * np.abs(dlam) * 10000.
-    # counts = f(lams) * areas * np.abs(dlam) * 10000.
+    xs, ys, areas, index = get_clipped_pixels(
+        x0s, y0s,
+        padding,
+        naxis[0], naxis[1],
+        width, height
+    )
+    lams = np.take(lambdas, index)
     counts = f(lams) * areas * np.abs(dlam)
-    vg = (xs >= 0) & (ys >= 0)
 
-    if len(xs[vg]) == 0:
-        return np.array([0]), np.array([0]), np.array([0]), np.array([0]), np.array([0]), 0
+    if xs.size <= 1:
+        return None
 
-    # print("xs:", xs[vg])
-    # print("ys:", ys[vg])
-    # print("areas:", areas[vg])
-    return xs[vg], ys[vg], areas[vg], lams[vg], counts[vg], ID
+    return xs, ys, areas, lams, counts, ID
