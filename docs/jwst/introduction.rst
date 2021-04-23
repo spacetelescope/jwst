@@ -1,3 +1,5 @@
+.. _introduction:
+
 Introduction
 ============
 
@@ -66,6 +68,14 @@ file type, such as ``R_DARK``, ``R_LINEAR``, and ``R_PHOTOM``.
 
 Running From the Command Line
 =============================
+
+.. note::
+
+   For seasoned users who are familiar with using ``collect_pipeline_cfgs`` and
+   running pipelines by the default configuration (CFG) files, please note that
+   this functionality has been deprecated. Please read :ref:`CFG Usage
+   Deprecation Notice<cfg_usage_deprecation_notice>`.
+
 Individual steps and pipelines (consisting of a series of steps) can be run
 from the command line using the ``strun`` command:
 ::
