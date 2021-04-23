@@ -147,6 +147,7 @@ int clip_pixels(int n, dbl_type *xc, dbl_type *yc, int padding,
     int imin, imax, jmin, jmax, imin1, jmin1;
     dbl_type *av = NULL;  // vector for clipped pixel area
     int *xv = NULL, *yv = NULL, *iv = NULL;  // vectors of coordinates
+    int i, j, k;
 
     npixe = (int) (dbl_min(ceil(w + 1.0), 2.0 * padding + 1.0) *
                    dbl_min(ceil(h + 1.0), 2.0 * padding + 1.0));
@@ -160,7 +161,7 @@ int clip_pixels(int n, dbl_type *xc, dbl_type *yc, int padding,
     nx -= 1;
     ny -= 1;
 
-    for (int k = 0; k < n; k++) {
+    for (k = 0; k < n; k++) {
         // compute clipping window:
         ix = (int) xc[k];
         iy = (int) yc[k];
@@ -247,7 +248,7 @@ int clip_pixels(int n, dbl_type *xc, dbl_type *yc, int padding,
             tnpix++;
 
             //   - 1.c: middle of the left column:
-            for (int j = jmin + 1; j < jmax; j++) {
+            for (j = jmin + 1; j < jmax; j++) {
                 xv[tnpix] = imin;
                 yv[tnpix] = j;
                 av[tnpix] = (dbl_type) wx1;
@@ -258,7 +259,7 @@ int clip_pixels(int n, dbl_type *xc, dbl_type *yc, int padding,
 
         if (imax > imin) {
             // 2. process middle columns:
-            for (int i = imin + 1; i < imax; i++) {
+            for (i = imin + 1; i < imax; i++) {
                 //   -2.a: bottom pixel:
                 xv[tnpix] = i;
                 yv[tnpix] = jmin;
@@ -268,7 +269,7 @@ int clip_pixels(int n, dbl_type *xc, dbl_type *yc, int padding,
 
                 if (jmax > jmin) {
                     //   -2.b: middle of each column:
-                    for (int j = jmin + 1; j < jmax; j++) {
+                    for (j = jmin + 1; j < jmax; j++) {
                         xv[tnpix] = i;
                         yv[tnpix] = j;
                         av[tnpix] = full_pixel_area;
@@ -294,7 +295,7 @@ int clip_pixels(int n, dbl_type *xc, dbl_type *yc, int padding,
 
             if (jmax > jmin) {
                 //   -3.b: middle of the right column:
-                for (int j = jmin + 1; j < jmax; j++) {
+                for (j = jmin + 1; j < jmax; j++) {
                     xv[tnpix] = imax;
                     yv[tnpix] = j;
                     av[tnpix] = (dbl_type) wx2;
