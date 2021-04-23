@@ -111,7 +111,7 @@ file from CRDS when running a pipeline:
 
     $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits
           --steps.dark_current.override_dark='my_dark.fits'
-    $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
+    $ strun calwebb_detector1.asdf jw00017001001_01101_00001_nrca1_uncal.fits
           --steps.dark_current.override_dark='my_dark.fits'
 
 You can get a list of all the available arguments for a given pipeline or
@@ -412,7 +412,7 @@ pipeline cfg file.
 For example:
 ::
 
-    $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
+    $ strun calwebb_detector1.asdf jw00017001001_01101_00001_nrca1_uncal.fits
         --logcfg=pipeline-log.cfg
 
 and the file ``pipeline-log.cfg`` contains:
