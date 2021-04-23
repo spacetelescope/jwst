@@ -31,13 +31,14 @@ LOGLEVELS = [logging.INFO, logging.DEBUG, DEBUG_FULL]
 
 # The available methods for transformation
 class Methods(Enum):
+    FULL         = ('full', 'calc_transforms_quaternion')            # JSOCINT-555 fix using quaternion
     GSCMD_J3PAGS = ('gscmd', 'calc_transforms_gscmd_j3pags')         # JSOCINT-555 fix using J3PA@GS
     GSCMD_V3PAGS = ('gscmd_v3pags', 'calc_transforms_gscmd_v3pags')  # JSOCINT-555 fix using V3PA@GS
-    ORIGINAL = ('original', 'calc_transforms_original')              # Original, pre-JSOCINT-555 algorithm
+    ORIGINAL     = ('original', 'calc_transforms_original')          # Original, pre-JSOCINT-555 algorithm
 
     # Alias
-    default = ORIGINAL    # Use original algorithm if not specified
-    GSCMD = GSCMD_J3PAGS  # When specifying GS Commanded, use the J3VA@GS method by default.
+    default = FULL        # Use original algorithm if not specified
+    GSCMD   = GSCMD_J3PAGS  # When specifying GS Commanded, use the J3VA@GS method by default.
 
     def __new__(cls: object, value: str, func_name: str):
         obj = object.__new__(cls)
@@ -806,6 +807,88 @@ def calc_transforms(t_pars: TransformParameters):
     t_pars.method = t_pars.method if t_pars.method else Methods.default
     transforms = t_pars.method.func(t_pars)
     return transforms
+
+
+def calc_transforms_quaternion(t_pars: TransformParameters):
+    """Calculate transforms which determine reference point celestial WCS from the original, pre-JSOCINT-555 algorithm
+
+    Given the spacecraft pointing parameters and the aperture-specific SIAF,
+    calculate all the transforms necessary to produce the celestial World
+    Coordinate system information.
+
+    Parameters
+    ----------
+    t_pars : TransformParameters
+        The transformation parameters. Parameters are updated during processing.
+
+    Returns
+    -------
+    transforms : Transforms
+        The list of coordinate matrix transformations
+
+    Notes
+    -----
+    The matrix transform pipeline to convert from ECI J2000 observatory
+    qauternion pointing to aperture ra/dec/roll information
+    is given by the following formula. Each term is a 3x3 matrix:
+
+        M_eci_to_siaf =           # The complete transformation
+            M_v1_to_siaf      *   # V1 to SIAF
+            M_sifov_to_v1     *   # Science Instruments Aperture to V1
+            M_sifov_fsm_delta *   # Fine Steering Mirror correction
+            M_z_to_x          *   # Transposition
+            M_fgs1_to_sifov   *   # FGS1 to Science Instruments Aperture
+            M_j_to_fgs1       *   # J-Frame to FGS1
+            M_eci_to_j        *   # ECI to J-Frame
+
+    """
+    logger.info('Calculating transforms using FULL quaternion method...')
+
+    # Determine the ECI to J-frame matrix
+    m_eci2j = calc_eci2j_matrix(t_pars.pointing.q)
+    logger.debug('m_eci2j: %s', m_eci2j)
+
+    # Calculate the J-frame to FGS1 ICS matrix
+    m_j2fgs1 = calc_j2fgs1_matrix(t_pars.pointing.j2fgs_matrix, transpose=t_pars.j2fgs_transpose)
+    logger.debug('m_j2fgs1: %s', m_j2fgs1)
+    logger.debug('m_eci2fgs1: %s', np.dot(m_j2fgs1, m_eci2j))
+
+    # Calculate the FSM corrections to the SI_FOV frame
+    m_sifov_fsm_delta = calc_sifov_fsm_delta_matrix(
+        t_pars.pointing.fsmcorr, fsmcorr_version=t_pars.fsmcorr_version, fsmcorr_units=t_pars.fsmcorr_units
+    )
+
+    # Calculate the FGS1 ICS to SI-FOV matrix
+    m_fgs12sifov = calc_fgs1_to_sifov_matrix()
+
+    # Calculate SI FOV to V1 matrix
+    m_sifov2v = calc_sifov2v_matrix()
+
+    # Calculate ECI to SI FOV
+    m_eci2sifov = np.linalg.multi_dot(
+        [MZ2X, m_sifov_fsm_delta, m_fgs12sifov, m_j2fgs1, m_eci2j]
+    )
+
+    # Calculate the complete transform to the V1 reference
+    m_eci2v = np.dot(
+        m_sifov2v,
+        m_eci2sifov
+    )
+
+    # Calculate the SIAF transform matrix
+    m_v2siaf = calc_v2siaf_matrix(t_pars.siaf)
+
+    # Calculate the full ECI to SIAF transform matrix
+    m_eci2siaf = np.dot(
+        m_v2siaf,
+        m_eci2v
+    )
+
+    tforms = Transforms(m_eci2j=m_eci2j, m_j2fgs1=m_j2fgs1, m_sifov_fsm_delta=m_sifov_fsm_delta,
+                        m_fgs12sifov=m_fgs12sifov, m_eci2sifov=m_eci2sifov, m_sifov2v=m_sifov2v,
+                        m_eci2v=m_eci2v, m_v2siaf=m_v2siaf, m_eci2siaf=m_eci2siaf
+                        )
+    return tforms
 
 
 def calc_transforms_original(t_pars: TransformParameters):
