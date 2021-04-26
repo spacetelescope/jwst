@@ -3,10 +3,10 @@
 CFG Usage Deprecation Notice
 ============================
 
-As of March 18, a significant change to how JWST pipelines operate was completed
-and pushed to the JWST master branch on github. Theoretically the change should
-be transparent. However, we are all familiar with the difference between theory
-and practice and hence we want to alert all users.
+As of March 18, 2021, a significant change to how JWST pipelines operate was
+completed and pushed to the JWST master branch on github. Theoretically the
+change should be transparent. However, we are all familiar with the difference
+between theory and practice and hence we want to alert all users.
 
 Originally, how the pipelines operated was determined by a set of configuration
 (CFG) files that were delivered as part of the JWST package. These configuration
@@ -22,15 +22,15 @@ the Calibration Working Group, to the default operation of the pipeline requires
 a code release. A better solution would be if the pipeline configurations could
 come from reference files retrieved from CRDS.
 
-As of the version of master introduced on March 18th, in conjunction with CRDS
-context jwst_0712, the default pipeline configurations no longer depend on the
-package-delivered configuration files. Instead, all default configuration relies
-on settings in the pipeline code itself, using CRDS-retrieved parameter
+As of the version of master introduced on March 18th, 2021, in conjunction with
+CRDS context jwst_0712, the default pipeline configurations no longer depend on
+the package-delivered configuration files. Instead, all default configuration
+relies on settings in the pipeline code itself, using CRDS-retrieved parameter
 reference files to modify any parameters that are data-dependent. There is no
-longer any need to run ``collect_pipeline_cfgs`` and specify a configuration file
-for the ``strun`` command. One only needs to specify a simplified pipeline name.
-In most cases, this simple name, or alias, is the same as the name of the old
-configuration file, but without the suffix ``.cfg``.
+longer any need to run ``collect_pipeline_cfgs`` and specify a configuration
+file for the ``strun`` command. One only needs to specify a simplified pipeline
+name. In most cases, this simple name, or alias, is the same as the name of the
+old configuration file, but without the suffix ``.cfg``.
 
 Taking the example above, to get the same operation, the single command would become::
 
