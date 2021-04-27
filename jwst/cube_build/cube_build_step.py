@@ -6,7 +6,7 @@ from . import cube_build
 from . import ifu_cube
 from . import data_types
 from ..assign_wcs.util import update_s_region_keyword
-import time 
+import time
 
 __all__ = ["CubeBuildStep"]
 
@@ -347,11 +347,8 @@ class CubeBuildStep (Step):
 
 # Else standard IFU cube building
             else:
-                t3 = time.time()
                 cube_result = thiscube.build_ifucube()
                 result, status = cube_result
-                t4 = time.time()
-                print('Time to build one cube', t4 - t3)
                 cube_container.append(result)
 
             if self.debug_file is not None:
@@ -364,7 +361,7 @@ class CubeBuildStep (Step):
 
         t1 = time.time()
         self.log.debug(f'Time to build all cubes {t1-t0}')
-        
+
         for cube in cube_container:
             footprint = cube.meta.wcs.footprint(axis_type="spatial")
             update_s_region_keyword(cube, footprint)
