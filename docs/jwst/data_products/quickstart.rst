@@ -15,6 +15,7 @@ instead of doing this:
     >>> with fits.open(filename) as pf:
     ...     myhdu = pf['SCI']
     ...     mydata = myhdu.data
+    ...     mydata_unit_str = mdhdu.header['BUNIT']
     ...     mywcs = WCS(myhdu.header)
 
 Now, you would do this instead:
@@ -25,4 +26,5 @@ Now, you would do this instead:
     >>> filename = 'myasdfinfits.fits'
     >>> with datamodels.open(filename) as dm:
     ...     mydata = dm.data  # Same as SCI
+    ...     mydata_unit_str = dm.bunit_data
     ...     mywcs = dm.meta.wcs  # This is GWCS, not FITS WCS
