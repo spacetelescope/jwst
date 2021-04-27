@@ -326,14 +326,12 @@ class CubeBuildStep (Step):
 # rois, roiw,  weight_power, softrad
 # If not linear wavelength (multi bands) an arrays are created  for:
 # rois, roiw, weight_power, softrad
-            t4 = time.time()
+
             if self.coord_system == 'internal_cal':
                 thiscube.determine_cube_parameters_internal()
             else:
                 thiscube.determine_cube_parameters()
             thiscube.setup_ifucube_wcs()
-            t5 = time.time()
-            print('Time to set up size of one cube',t5-t4)
 # _______________________________________________________________________________
 # build the IFU Cube
 
@@ -365,7 +363,7 @@ class CubeBuildStep (Step):
                 status_cube = 1
 
         t1 = time.time()
-        print('Time to build all cubes',t1-t0)
+        self.log.debug(f'Time to build all cubes {t1-t0}')
         
         for cube in cube_container:
             footprint = cube.meta.wcs.footprint(axis_type="spatial")
