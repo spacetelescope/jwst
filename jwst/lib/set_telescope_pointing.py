@@ -184,6 +184,9 @@ class TransformParameters:
     j2fgs_transpose : bool
         Transpose the `j2fgs1` matrix.
 
+    jwst_velocity : numpy.array
+        The [DX, DY, DZ] barycentri velocity vector
+
     method : `Methods`
         The method, or algorithm, to use in calculating the transform.
         If not specified, the default method is used.
@@ -213,6 +216,7 @@ class TransformParameters:
     fsmcorr_units: str = 'arcsec'
     guide_star_wcs: WCSRef = WCSRef()
     j2fgs_transpose: bool = True
+    jwst_velocity: np.array = None
     method: Methods = None
     pointing: Pointing = None
     reduce_func: typing.Callable = None
