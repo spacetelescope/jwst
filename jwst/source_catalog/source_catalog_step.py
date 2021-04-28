@@ -6,6 +6,7 @@ import os
 import warnings
 
 from crds.core.exceptions import CrdsLookupError
+import numpy as np
 from photutils.utils.exceptions import NoDetectionsWarning
 
 from .source_catalog import (ReferenceData, Background, make_kernel,
@@ -72,10 +73,10 @@ class SourceCatalogStep(Step):
                 self.log.warning(msg)
                 return
 
-            coverage_mask = (model.wht == 0)
+            coverage_mask = np.isnan(model.err)
             if coverage_mask.all():
-                self.log.warning('There are no pixels with non-zero weight. '
-                                 'Source catalog will not be created.')
+                self.log.warning('There are no valid pixels. Source catalog '
+                                 'will not be created.')
                 return
 
             bkg = Background(model.data, box_size=self.bkg_boxsize,
