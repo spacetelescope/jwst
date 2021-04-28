@@ -179,6 +179,9 @@ source_catalog
 - Photometric errors are now computed using the new resampled total
   error array. [#5997]
 
+- The ``nn_dist`` column was replaced by a ``nn_label`` column
+  indicating the label number of the nearest neighbor. [#5998]
+
 srctype
 -------
 
