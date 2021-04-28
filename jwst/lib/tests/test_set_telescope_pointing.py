@@ -94,35 +94,106 @@ def test_method_string(method):
     assert f'{method}' == method.value
 
 
+@pytest.fixture(scope='module')
+def method_full():
+    """Calculate matricies using the FULL method
+
+    This set was derived from the first valid group of engineering parameters for exposure
+    jw00624028002_02101_00001_nrca1 retrieved from the SDP regression tests for Build 7.7.1.
+    """
+    # Only run if `pysiaf` is installed.
+    pytest.importorskip('pysiaf')
+
+    # setup inputs
+    t_pars = stp.TransformParameters()
+
+    t_pars.guide_star_wcs = stp.WCSRef(ra=241.24294932221, dec=70.66165389073196, pa=None)
+    t_pars.jwst_velocity = np.array([-25.021, -16.507, -7.187])
+    t_pars.pointing = stp.Pointing(
+        q=np.array([-0.20954692, -0.6177655, -0.44653177, 0.61242575]),
+        j2fgs_matrix=np.array([-9.77300013e-04, 3.38988895e-03, 9.99993777e-01,
+                               9.99999522e-01, 8.37175385e-09, 9.77305600e-04,
+                               3.30458575e-06, 9.99994254e-01, -3.38988734e-03]),
+        fsmcorr=np.array([0.00584114, -0.00432878]),
+        obstime=Time(1611628160.325, format='unix'),
+        gs_commanded=np.array([-22.40031242,  -8.17869377])
+    )
+    t_pars.siaf = stp.SIAF(v2_ref=120.525464, v3_ref=-527.543132, v3yangle=-0.5627898, vparity=-1,
+                           crpix1=1024.5, crpix2=1024.5, cdelt1=0.03113928, cdelt2=0.03132232,
+                           vertices_idl=(-32.1682, 32.0906, 31.6586, -31.7234, -32.1683, -32.1904, 32.0823, 31.9456))
+
+    # Calculate the transforms
+    transforms = stp.calc_transforms_quaternion(t_pars)
+
+    return transforms, t_pars
+
+
 @pytest.mark.parametrize(
-    'matrix, expected',
-    [('m_eci2fgs1', np.array([[0.79338298, 0.5312005, 0.29727004],
-                              [-0.58752257, 0.7959905, 0.14565831],
-                              [-0.15925035, -0.29021568, 0.9436176]])),
-     ('m_fgs12sifov', np.array([[9.99761239e-01, -2.18280166e-02, 1.00096493e-03],
-                                [2.18291297e-02, 9.99761094e-01, -1.11492579e-03],
-                                [-9.76389175e-04, 1.13650978e-03, 9.99998878e-01]])),
-     ('m_sifov_fsm_delta', np.array([[1.00000000e+00, 0.00000000e+00, 2.09865089e-08],
-                                     [-5.94309657e-16, 1.00000000e+00, 2.83186526e-08],
-                                     [-2.09865089e-08, -2.83186526e-08, 1.00000000e+00]])),
-     ('m_eci2v', np.array([[-0.16198517, -0.287996, 0.94383214],
-                           [0.80585859, 0.51340828, 0.29496417],
-                           [-0.56951974, 0.80837506, 0.14891952]])),
-     ('m_v2siaf', np.array([[5.59174025e-04, -9.99951603e-01, -9.82234493e-03],
-                            [2.56321412e-03, -9.82088099e-03, 9.99948489e-01],
-                            [9.99996559e-01, 5.84321994e-04, -2.55759849e-03]])),
-     ('m_eci2siaf', np.array([[-0.80031602, -0.5214848, -0.2958849],
-                              [-0.57782002, 0.80255299, 0.14843421],
-                              [-0.16005712, -0.2897625, 0.94362038]]))
+    'method',
+    [method for method in stp.Methods]
+)
+def test_method_string(method):
+    """Ensure that the value of the method is the string representation"""
+    assert f'{method}' == method.value
+
+
+@pytest.mark.parametrize(
+    'fixture, matrix, expected',
+    [
+        ('method_gscmd_j3pags', 'm_eci2fgs1', np.array([[0.79338298, 0.5312005, 0.29727004],
+                                                        [-0.58752257, 0.7959905, 0.14565831],
+                                                        [-0.15925035, -0.29021568, 0.9436176]])),
+        ('method_gscmd_j3pags', 'm_fgs12sifov', np.array([[9.99761239e-01, -2.18280166e-02, 1.00096493e-03],
+                                                          [2.18291297e-02, 9.99761094e-01, -1.11492579e-03],
+                                                          [-9.76389175e-04, 1.13650978e-03, 9.99998878e-01]])),
+        ('method_gscmd_j3pags', 'm_sifov_fsm_delta', np.array([[1.00000000e+00, 0.00000000e+00, 2.09865089e-08],
+                                                               [-5.94309657e-16, 1.00000000e+00, 2.83186526e-08],
+                                                               [-2.09865089e-08, -2.83186526e-08, 1.00000000e+00]])),
+        ('method_gscmd_j3pags', 'm_eci2v', np.array([[-0.16198517, -0.287996, 0.94383214],
+                                                     [0.80585859, 0.51340828, 0.29496417],
+                                                     [-0.56951974, 0.80837506, 0.14891952]])),
+        ('method_gscmd_j3pags', 'm_v2siaf', np.array([[5.59174025e-04, -9.99951603e-01, -9.82234493e-03],
+                                                      [2.56321412e-03, -9.82088099e-03, 9.99948489e-01],
+                                                      [9.99996559e-01, 5.84321994e-04, -2.55759849e-03]])),
+        ('method_gscmd_j3pags', 'm_eci2siaf', np.array([[-0.80031602, -0.5214848, -0.2958849],
+                                                        [-0.57782002, 0.80255299, 0.14843421],
+                                                        [-0.16005712, -0.2897625, 0.94362038]])),
+        ('method_full', 'm_eci2j', np.array([[-0.16204967, -0.28803339, 0.94380971],
+                                             [ 0.80583682,  0.51339893, 0.29503999],
+                                             [-0.56953229,  0.8083677 , 0.14891175]])),
+        ('method_full', 'm_j2fgs1', np.array([[-9.77300013e-04, 9.99999522e-01, 3.30458575e-06],
+                                              [ 3.38988895e-03, 8.37175385e-09, 9.99994254e-01],
+                                              [ 9.99993777e-01, 9.77305600e-04, -3.38988734e-03]])),
+        ('method_full', 'm_sifov_fsm_delta', np.array([[1.00000000e+00, 0.00000000e+00, 2.09865089e-08],
+                                                       [-5.94309657e-16, 1.00000000e+00, 2.83186526e-08],
+                                                       [-2.09865089e-08, -2.83186526e-08, 1.00000000e+00]])),
+        ('method_full', 'm_fgs12sifov', np.array([[9.99999496e-01, 0.00000000e+00, 1.00444575e-03],
+                                                  [ 1.11748260e-06, 9.99999381e-01, -1.11253598e-03],
+                                                  [-1.00444512e-03, 1.11253654e-03, 9.99998877e-01]])),
+        ('method_full', 'm_eci2sifov', np.array([[-0.16077409, -0.28988755, 0.94346012],
+                                                 [0.80583248, 0.51339103, 0.2950656 ],
+                                                 [-0.56989983, 0.80770966, 0.15106079]])),
+        ('method_full', 'm_sifov2v', np.array([[0.99999743, 0., 0.00226893],
+                                               [0., 1., 0.],
+                                               [-0.00226893, 0., 0.99999743]])),
+        ('method_full', 'm_eci2v', np.array([[-0.16206674, -0.28805417, 0.94380044],
+                                             [0.80583248, 0.51339103, 0.2950656 ],
+                                             [-0.56953357, 0.80836532, 0.14891976]])),
+        ('method_full', 'm_v2siaf', np.array([[5.59174025e-04, -9.99951603e-01, -9.82234493e-03],
+                                              [ 2.56321412e-03, -9.82088099e-03, 9.99948489e-01],
+                                              [9.99996559e-01, 5.84321994e-04, -2.55759849e-03]])),
+        ('method_full', 'm_eci2siaf', np.array([[-0.80028995, -0.5214673 , -0.29598632],
+                                                [-0.57783363, 0.80254338, 0.14843345],
+                                                [-0.16013868, -0.28982067,  0.94358873]])),
      ]
 )
-def test_gscmd_j3pags(method_gscmd_j3pags, matrix, expected):
+def test_methods(fixture, matrix, expected, request):
     """Ensure expected calculate of the specified matrix
 
     Parameters
     ----------
-    method_gscmd_j3pags: Transforms, TransformPars
-        The calculated transforms and parameters used to do the calculation.
+    fixture: str
+        The fixture to retrieve calculated transforms and parameters used to do the calculation.
 
     matrix : str
         The matrix under examination
@@ -130,7 +201,7 @@ def test_gscmd_j3pags(method_gscmd_j3pags, matrix, expected):
     expected : numpy.array
         Expected value of the matrix
     """
-    transforms, t_pars = method_gscmd_j3pags
+    transforms, t_pars = request.getfixturevalue(fixture)
     assert np.allclose(getattr(transforms, matrix), expected)
 
 
