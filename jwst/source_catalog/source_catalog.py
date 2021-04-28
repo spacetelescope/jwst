@@ -779,10 +779,10 @@ class JWSTSourceCatalog:
 
         desc.append(f'Total aperture-corrected {ftype2} based on the '
                     f'{self.aperture_ee[-1]}% encircled energy circular '
-                    'aperture; calculated only for stars')
+                    'aperture; should be used only for unresolved sources.')
         desc.append(f'Total aperture-corrected {ftype2} error based on the '
                     f'{self.aperture_ee[-1]}% encircled energy circular '
-                    'aperture; calculated only for stars')
+                    'aperture; should be used only for unresolved sources.')
 
         return desc
 
@@ -1238,28 +1238,40 @@ class JWSTSourceCatalog:
     @lazyproperty
     def aper_total_abmag(self):
         """
-        The total AB magnitude.
+        The aperture-corrected total AB magnitude.
+
+        The aperture-corrected total magnitude should be used only for
+        unresolved sources.
         """
         return self._abmag_total[0]
 
     @lazyproperty
     def aper_total_abmag_err(self):
         """
-        The total AB magnitude error.
+        The aperture-corrected total AB magnitude error.
+
+        The aperture-corrected total magnitude error should be used only
+        for unresolved sources.
         """
         return self._abmag_total[1]
 
     @lazyproperty
     def aper_total_vegamag(self):
         """
-        The total Vega magnitude.
+        The aperture-corrected total Vega magnitude.
+
+        The aperture-corrected total magnitude should be used only for
+        unresolved sources.
         """
         return self.aper_total_abmag - self.abvega_offset
 
     @lazyproperty
     def aper_total_vegamag_err(self):
         """
-        The total Vega magnitude error.
+        The aperture-corrected total Vega magnitude error.
+
+        The aperture-corrected total magnitude error should be used only
+        for unresolved sources.
         """
         return self.aper_total_abmag_err
 
