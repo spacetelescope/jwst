@@ -173,6 +173,9 @@ source_catalog
   instead of magnitude differences. The CI column names have also been
   renamed to list the larger EE first, e.g. ``CI_50_30``. [#5810]
 
+- Aperture-corrected total fluxes and magnitudes are now computed for
+  all sources. [#5996]
+
 srctype
 -------
 
