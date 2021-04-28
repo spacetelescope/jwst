@@ -180,12 +180,9 @@ columns (assuming the default encircled energies of 30, 50, and 70):
 +------------------------+----------------------------------------------------+
 | roundness              | The DAOFind source roundness statistic             |
 +------------------------+----------------------------------------------------+
-| nn_dist                | The distance in pixels to the nearest neighbor     |
+| nn_label               | The label number of the nearest neighbor           |
 +------------------------+----------------------------------------------------+
-| nn_abmag               | The AB magnitude of the nearest neighbor.  If the  |
-|                        | object is a star it is the total aperture-         |
-|                        | corrected AB magnitude, otherwise it is the        |
-|                        | isophotal AB magnitude.                            |
+| nn_dist                | The distance in pixels to the nearest neighbor     |
 +------------------------+----------------------------------------------------+
 | isophotal_flux         | Isophotal flux                                     |
 +------------------------+----------------------------------------------------+
