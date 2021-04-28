@@ -433,29 +433,6 @@ def make_segment_img(data, threshold, npixels=5.0, kernel=None, mask=None,
     return segm
 
 
-def calc_total_error(model):
-    """
-    Calculate the total error array.
-
-    The total error includes both background-only error and the source
-    Poisson noise.
-
-    Parameters
-    ----------
-    model : `ImageModel`
-        The input `ImageModel`.
-
-    Returns
-    -------
-    total_error : `~numpy.ndarray`
-        The total error array.
-    """
-    # TODO: Until errors are produced for the level 3 drizzle
-    # products, the JPWG has decided that the errors should not be
-    # populated.
-    return np.zeros_like(model.data)
-
-
 class JWSTSourceCatalog:
     """
     Class for the JWST source catalog.
@@ -481,13 +458,6 @@ class JWSTSourceCatalog:
         extended if both concentration indices are greater than the
         corresponding thresholds, otherwise it is considered a star.
 
-    error : array_like or `~astropy.units.Quantity`, optional
-        The total error array corresponding to the input ``data`` array.
-        ``error`` is assumed to include *all* sources of error,
-        including the Poisson error of the sources (see
-        `~photutils.utils.calc_total_error`) .  ``error`` must have the
-        same shape as the input ``data``.
-
     kernel : array-like (2D) or `~astropy.convolution.Kernel2D`, optional
         The 2D array of the kernel used to filter the data prior to
         calculating the source centroid and morphological parameters.
@@ -504,11 +474,17 @@ class JWSTSourceCatalog:
     abvega_offset : float
         Offset to convert from AB to Vega magnitudes.  The value
         represents m_AB - m_Vega.
+
+    Notes
+    -----
+    ``model.err`` is assumed to be the total error array corresponding
+    to the input science ``model.data`` array. It is assumed to include
+    *all* sources of error, including the Poisson error of the sources,
+    and have the same shape and units as the science data array.
     """
 
-    def __init__(self, model, segment_img, ci_star_thresholds, error=None,
-                 kernel=None, kernel_fwhm=None, aperture_params=None,
-                 abvega_offset=0.0):
+    def __init__(self, model, segment_img, ci_star_thresholds, kernel=None,
+                 kernel_fwhm=None, aperture_params=None, abvega_offset=0.0):
 
         if not isinstance(model, ImageModel):
             raise ValueError('The input model must be a ImageModel.')
@@ -519,7 +495,6 @@ class JWSTSourceCatalog:
             raise ValueError('ci_star_thresholds must contain only 2 '
                              'items')
         self.ci_star_thresholds = ci_star_thresholds
-        self.error = error  # total error array
         self.kernel = kernel
         self.kernel_sigma = kernel_fwhm * gaussian_fwhm_to_sigma
 
@@ -547,7 +522,7 @@ class JWSTSourceCatalog:
 
         unit = u.Jy
         self.model.data <<= unit
-        self.error <<= unit
+        self.model.err <<= unit
 
         return
 
@@ -632,9 +607,9 @@ class JWSTSourceCatalog:
 
         The values are set as dynamic attributes.
         """
-        segm_cat = SourceCatalog(self.model.data.astype(float),
-                                 self.segment_img, error=self.error,
-                                 kernel=self.kernel, wcs=self.wcs)
+        segm_cat = SourceCatalog(self.model.data, self.segment_img,
+                                 error=self.model.err, kernel=self.kernel,
+                                 wcs=self.wcs)
 
         self._xpeak = segm_cat.maxval_xindex
         self._ypeak = segm_cat.maxval_yindex
@@ -655,15 +630,6 @@ class JWSTSourceCatalog:
             setattr(self, column, value)
 
         return
-
-    @lazyproperty
-    def null_column(self):
-        """
-        An array containing only NaNs.
-        """
-        values = np.empty(len(self.label))
-        values.fill(np.nan)
-        return values
 
     @lazyproperty
     def xypos(self):
@@ -912,7 +878,7 @@ class JWSTSourceCatalog:
         apertures = [CircularAperture(self.xypos, radius) for radius in
                      self.aperture_params['aperture_radii']]
         aper_phot = aperture_photometry(self.model.data, apertures,
-                                        error=self.error)
+                                        error=self.model.err)
 
         for i, aperture in enumerate(apertures):
             flux_col = f'aperture_sum_{i}'
@@ -1345,13 +1311,6 @@ class JWSTSourceCatalog:
         for column in self.colnames:
             catalog[column] = getattr(self, column)
             catalog[column].info.description = self.column_desc[column]
-
-        # TODO: Until errors are produced for the level 3 drizzle
-        # products, the JPWG has decided that the errors should not be
-        # populated.
-        for colname in catalog.colnames:
-            if colname.endswith('_err'):
-                catalog[colname][:] = self.null_column
 
         catalog = self.format_columns(catalog)
         catalog.meta.update(self.catalog_metadata)

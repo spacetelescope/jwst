@@ -10,8 +10,7 @@ import numpy as np
 from photutils.utils.exceptions import NoDetectionsWarning
 
 from .source_catalog import (ReferenceData, Background, make_kernel,
-                             make_segment_img, calc_total_error,
-                             JWSTSourceCatalog)
+                             make_segment_img, JWSTSourceCatalog)
 from .. import datamodels
 from ..stpipe import Step
 
@@ -100,13 +99,9 @@ class SourceCatalogStep(Step):
                 return
             self.log.info(f'Detected {segment_img.nlabels} sources')
 
-            # TODO: update when model contains errors
-            total_error = calc_total_error(model)
-
             ci_star_thresholds = (self.ci1_star_threshold,
                                   self.ci2_star_threshold)
-            catobj = JWSTSourceCatalog(model, segment_img, error=total_error,
-                                       kernel=kernel,
+            catobj = JWSTSourceCatalog(model, segment_img, kernel=kernel,
                                        kernel_fwhm=self.kernel_fwhm,
                                        aperture_params=aperture_params,
                                        abvega_offset=abvega_offset,
