@@ -1202,25 +1202,29 @@ class JWSTSourceCatalog:
     @lazyproperty
     def aper_total_flux(self):
         """
-        The aperture-corrected total flux for sources that are stars,
-        based on the flux in largest aperture.
+        The aperture-corrected total flux for sources, based on the flux
+        in largest aperture.
+
+        The aperture-corrected total flux should be used only for
+        unresolved sources.
         """
         idx = self.n_aper - 1  # apcorr for the largest EE (largest radius)
         flux = (self.aperture_params['aperture_corrections'][idx] *
                 getattr(self, self.aperture_flux_colnames[idx * 2]))
-        flux[~self.is_star] = np.nan
         return flux
 
     @lazyproperty
     def aper_total_flux_err(self):
         """
-        The aperture-corrected total flux error for sources that are
-        stars, based on the flux in largest aperture.
+        The aperture-corrected total flux error for sources,
+        based on the flux in largest aperture.
+
+        The aperture-corrected total flux error should be used only for
+        unresolved sources.
         """
         idx = self.n_aper - 1  # apcorr for the largest EE (largest radius)
         flux_err = (self.aperture_params['aperture_corrections'][idx] *
                     getattr(self, self.aperture_flux_colnames[idx * 2 + 1]))
-        flux_err[~self.is_star] = np.nan
         return flux_err
 
     @lazyproperty
