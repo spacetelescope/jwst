@@ -34,15 +34,15 @@ LOGLEVELS = [logging.INFO, logging.DEBUG, DEBUG_FULL]
 
 # The available methods for transformation
 class Methods(Enum):
-    FULL         = ('full', 'calc_transforms_quaternion')                        # JSOCINT-555 fix using quaternion
-    FULLVA       = ('fullva', 'calc_transforms_quaternion_velocity_abberation')  # JSOCINT-555 fix using quaternion with velocity abberation
-    GSCMD_J3PAGS = ('gscmd', 'calc_transforms_gscmd_j3pags')                     # JSOCINT-555 fix using J3PA@GS
-    GSCMD_V3PAGS = ('gscmd_v3pags', 'calc_transforms_gscmd_v3pags')              # JSOCINT-555 fix using V3PA@GS
-    ORIGINAL     = ('original', 'calc_transforms_original')                      # Original, pre-JSOCINT-555 algorithm
+    FULL         = ('full', 'calc_transforms_quaternion')                        # noqa: E221 JSOCINT-555 fix using quaternion
+    FULLVA       = ('fullva', 'calc_transforms_quaternion_velocity_abberation')  # noqa: E221 JSOCINT-555 fix using quaternion/VA
+    GSCMD_J3PAGS = ('gscmd', 'calc_transforms_gscmd_j3pags')                     # noqa: E221 JSOCINT-555 fix using J3PA@GS
+    GSCMD_V3PAGS = ('gscmd_v3pags', 'calc_transforms_gscmd_v3pags')              # noqa: E221 JSOCINT-555 fix using V3PA@GS
+    ORIGINAL     = ('original', 'calc_transforms_original')                      # noqa: E221 Original, pre-JSOCINT-555 algorithm
 
     # Alias
     default = FULL        # Use original algorithm if not specified
-    GSCMD   = GSCMD_J3PAGS  # When specifying GS Commanded, use the J3VA@GS method by default.
+    GSCMD = GSCMD_J3PAGS  # When specifying GS Commanded, use the J3VA@GS method by default.
 
     def __new__(cls: object, value: str, func_name: str):
         obj = object.__new__(cls)
@@ -1312,7 +1312,7 @@ def calc_gs2gsapp(m_eci2fgs1, jwst_velocity):
     # Step 3: Apply VA
     try:
         scale_factor, u_j2000 = compute_va_effects_vector(*jwst_velocity, u)
-    except TypeError as exception:
+    except TypeError:
         logger.warning('Failure in computing velocity aberration. Returning identity matrix.')
         logger.warning('Exception: %s', sys.exc_info()[0])
         return np.identity(3)
