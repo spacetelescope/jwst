@@ -1,4 +1,6 @@
 """Set Telescope Pointing from quaternions"""
+import sys
+
 from collections import defaultdict, namedtuple
 from copy import copy
 from dataclasses import dataclass
@@ -13,6 +15,7 @@ from astropy.time import Time
 import numpy as np
 from scipy.interpolate import interp1d
 
+from .set_velocity_aberration import compute_va_effects_vector
 from ..assign_wcs.util import update_s_region_keyword, calc_rotation_matrix
 from ..assign_wcs.pointing import v23tosky
 from ..datamodels import Level1bModel
@@ -31,10 +34,11 @@ LOGLEVELS = [logging.INFO, logging.DEBUG, DEBUG_FULL]
 
 # The available methods for transformation
 class Methods(Enum):
-    FULL         = ('full', 'calc_transforms_quaternion')            # JSOCINT-555 fix using quaternion
-    GSCMD_J3PAGS = ('gscmd', 'calc_transforms_gscmd_j3pags')         # JSOCINT-555 fix using J3PA@GS
-    GSCMD_V3PAGS = ('gscmd_v3pags', 'calc_transforms_gscmd_v3pags')  # JSOCINT-555 fix using V3PA@GS
-    ORIGINAL     = ('original', 'calc_transforms_original')          # Original, pre-JSOCINT-555 algorithm
+    FULL         = ('full', 'calc_transforms_quaternion')                        # JSOCINT-555 fix using quaternion
+    FULLVA       = ('fullva', 'calc_transforms_quaternion_velocity_abberation')  # JSOCINT-555 fix using quaternion with velocity abberation
+    GSCMD_J3PAGS = ('gscmd', 'calc_transforms_gscmd_j3pags')                     # JSOCINT-555 fix using J3PA@GS
+    GSCMD_V3PAGS = ('gscmd_v3pags', 'calc_transforms_gscmd_v3pags')              # JSOCINT-555 fix using V3PA@GS
+    ORIGINAL     = ('original', 'calc_transforms_original')                      # Original, pre-JSOCINT-555 algorithm
 
     # Alias
     default = FULL        # Use original algorithm if not specified
@@ -134,7 +138,8 @@ Transforms = namedtuple("Transforms",
                         [
                             'm_eci2j',            # ECI to J-Frame
                             'm_j2fgs1',           # J-Frame to FGS1
-                            'm_eci2fgs1',         # Alternate ECI to FGS1
+                            'm_eci2fgs1',         # ECI to FGS1
+                            'm_gs2gsapp',         # Velocity abberation
                             'm_sifov_fsm_delta',  # FSM correction
                             'm_fgs12sifov',       # FGS1 to SIFOV
                             'm_eci2sifov',        # ECI to SIFOV
@@ -560,6 +565,14 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
     )
     logger.debug('guide_star_wcs from model: %s', t_pars.guide_star_wcs)
 
+    # Get jwst velocity
+    t_pars.jwst_velocity = np.array([
+        model.meta.ephemeris.velocity_x,
+        model.meta.ephemeris.velocity_y,
+        model.meta.ephemeris.velocity_z,
+    ])
+    logger.debug('JWST Velocity: %s', t_pars.jwst_velocity)
+
     # Get the pointing information
     try:
         pointing = get_pointing(obsstart, obsend, engdb_url=t_pars.engdb_url,
@@ -895,6 +908,96 @@ def calc_transforms_quaternion(t_pars: TransformParameters):
     return tforms
 
 
+def calc_transforms_quaternion_velocity_abberation(t_pars: TransformParameters):
+    """Calculate transforms which determine reference point celestial WCS from the original, pre-JSOCINT-555 algorithm
+
+    Given the spacecraft pointing parameters and the aperture-specific SIAF,
+    calculate all the transforms necessary to produce the celestial World
+    Coordinate system information.
+
+    Parameters
+    ----------
+    t_pars : TransformParameters
+        The transformation parameters. Parameters are updated during processing.
+
+    Returns
+    -------
+    transforms : Transforms
+        The list of coordinate matrix transformations
+
+    Notes
+    -----
+    The matrix transform pipeline to convert from ECI J2000 observatory
+    qauternion pointing to aperture ra/dec/roll information
+    is given by the following formula. Each term is a 3x3 matrix:
+
+        M_eci_to_siaf =           # The complete transformation
+            M_v1_to_siaf      *   # V1 to SIAF
+            M_sifov_to_v1     *   # Science Instruments Aperture to V1
+            M_sifov_fsm_delta *   # Fine Steering Mirror correction
+            M_z_to_x          *   # Transposition
+            M_fgs1_to_sifov   *   # FGS1 to Science Instruments Aperture
+            M_gs2gsapp        *   # Apply Velocity Aberration
+            M_j_to_fgs1       *   # J-Frame to FGS1
+            M_eci_to_j        *   # ECI to J-Frame
+
+    """
+    logger.info('Calculating transforms using FULLVA quaternion method with velocity aberration...')
+
+    # Determine the ECI to J-frame matrix
+    m_eci2j = calc_eci2j_matrix(t_pars.pointing.q)
+    logger.debug('m_eci2j: %s', m_eci2j)
+
+    # Calculate the J-frame to FGS1 ICS matrix
+    m_j2fgs1 = calc_j2fgs1_matrix(t_pars.pointing.j2fgs_matrix, transpose=t_pars.j2fgs_transpose)
+    logger.debug('m_j2fgs1: %s', m_j2fgs1)
+
+    m_eci2fgs1 = np.dot(m_j2fgs1, m_eci2j)
+    logger.debug('m_eci2fgs1: %s', m_eci2fgs1)
+
+    # Calculate Velocity Aberration corrections
+    m_gs2gsapp = calc_gs2gsapp(m_eci2fgs1, t_pars.jwst_velocity)
+    logger.debug('m_gs2gsapp: %s', m_gs2gsapp)
+
+    # Calculate the FSM corrections to the SI_FOV frame
+    m_sifov_fsm_delta = calc_sifov_fsm_delta_matrix(
+        t_pars.pointing.fsmcorr, fsmcorr_version=t_pars.fsmcorr_version, fsmcorr_units=t_pars.fsmcorr_units
+    )
+
+    # Calculate the FGS1 ICS to SI-FOV matrix
+    m_fgs12sifov = calc_fgs1_to_sifov_matrix()
+
+    # Calculate SI FOV to V1 matrix
+    m_sifov2v = calc_sifov2v_matrix()
+
+    # Calculate ECI to SI FOV
+    m_eci2sifov = np.linalg.multi_dot(
+        [MZ2X, m_sifov_fsm_delta, m_fgs12sifov, m_gs2gsapp, m_j2fgs1, m_eci2j]
+    )
+
+    # Calculate the complete transform to the V1 reference
+    m_eci2v = np.dot(
+        m_sifov2v,
+        m_eci2sifov
+    )
+
+    # Calculate the SIAF transform matrix
+    m_v2siaf = calc_v2siaf_matrix(t_pars.siaf)
+
+    # Calculate the full ECI to SIAF transform matrix
+    m_eci2siaf = np.dot(
+        m_v2siaf,
+        m_eci2v
+    )
+
+    tforms = Transforms(m_eci2j=m_eci2j, m_j2fgs1=m_j2fgs1, m_eci2fgs1=m_eci2fgs1,
+                        m_gs2gsapp=m_gs2gsapp, m_sifov_fsm_delta=m_sifov_fsm_delta,
+                        m_fgs12sifov=m_fgs12sifov, m_eci2sifov=m_eci2sifov, m_sifov2v=m_sifov2v,
+                        m_eci2v=m_eci2v, m_v2siaf=m_v2siaf, m_eci2siaf=m_eci2siaf
+                        )
+    return tforms
+
+
 def calc_transforms_original(t_pars: TransformParameters):
     """Calculate transforms which determine reference point celestial WCS from the original, pre-JSOCINT-555 algorithm
 
@@ -1047,7 +1150,7 @@ def calc_transforms_gscmd_j3pags(t_pars: TransformParameters):
     m_eci2siaf = np.dot(m_v2siaf, m_eci2v)
     logger.debug('m_eci2siaf: %s', m_eci2siaf)
 
-    tforms = Transforms(m_eci2fgs1=m_eci2fgs1, m_sifov_fsm_delta=m_sifov_fsm_delta,
+    tforms = Transforms(m_eci2fgs1=m_eci2fgs1, m_eci2j=None, m_sifov_fsm_delta=m_sifov_fsm_delta,
                         m_fgs12sifov=m_fgs12sifov, m_eci2sifov=m_eci2sifov, m_sifov2v=m_sifov2v,
                         m_eci2v=m_eci2v, m_v2siaf=m_v2siaf, m_eci2siaf=m_eci2siaf
                         )
@@ -1123,7 +1226,8 @@ def calc_transforms_gscmd_v3pags(t_pars: TransformParameters):
 
     tforms = Transforms(m_eci2fgs1=m_eci2fgs1, m_sifov_fsm_delta=m_sifov_fsm_delta,
                         m_fgs12sifov=m_fgs12sifov, m_eci2sifov=m_eci2sifov, m_sifov2v=m_sifov2v,
-                        m_eci2v=m_eci2v, m_v2siaf=m_v2siaf, m_eci2siaf=m_eci2siaf
+                        m_eci2v=m_eci2v, m_v2siaf=m_v2siaf, m_eci2siaf=m_eci2siaf,
+                        m_eci2j=None,
                         )
     return tforms
 
@@ -1175,6 +1279,58 @@ def calc_eci2fgs1_j3pags(t_pars: TransformParameters):
     logger.debug('m_eci2fgs1: %s', m_eci2fgs1)
 
     return m_eci2fgs1
+
+
+def calc_gs2gsapp(m_eci2fgs1, jwst_velocity):
+    """Calculate the Velocity Aberration correction
+
+    Parameters
+    ----------
+    m_eci2fgs : numpy.array(3, 3)
+        The matrix defining the FGS1, guide star, position
+
+    jwst_velocity : numpy.array([dx, dy, dz])
+        The barycentric velocity of JWST
+
+    Returns
+    -------
+    m_gs2gsapp : numpy.array(3, 3)
+        The corection matrix
+
+    Notes
+    -----
+    The algorithm is from an NGAS memo describing the procedure. The steps referred
+    to in the commentary are in direct relation to the memo's text.
+
+    Step 1 is the calculation of the Meci2fgs1 matrix, which is the input.
+    """
+    ux = np.array([1., 0., 0.])
+
+    # Step 2: Compute guide star unit vector
+    u = np.dot(np.transpose(m_eci2fgs1), ux)
+
+    # Step 3: Apply VA
+    try:
+        scale_factor, u_j2000 = compute_va_effects_vector(*jwst_velocity, u)
+    except TypeError as exception:
+        logger.warning('Failure in computing velocity aberration. Returning identity matrix.')
+        logger.warning('Exception: %s', sys.exc_info()[0])
+        return np.identity(3)
+
+    # Step 4: Transform to guide star attitude frame
+    u_gs = np.dot(m_eci2fgs1, u_j2000)
+
+    # Step 5: Compute apparent attitude correction
+    u_prod = np.cross(ux, u_gs)
+    a_hat = u_prod / np.linalg.norm(u_prod)
+    a_hat_sym = np.array([[0., -a_hat[2], a_hat[1]],
+                          [a_hat[2], 0., -a_hat[0]],
+                          [-a_hat[1], a_hat[0], 0.]])
+    theta = np.arccos(np.dot(ux, u_gs) / np.linalg.norm(u_gs))
+
+    m_gs2gsapp = np.identity(3) - a_hat_sym * np.sin(theta) + 2 * a_hat_sym**2 * np.sin(theta / 2.)**2
+
+    return m_gs2gsapp
 
 
 def calc_eci2fgs1_v3pags(t_pars: TransformParameters):

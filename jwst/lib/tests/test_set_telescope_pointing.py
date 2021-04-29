@@ -94,8 +94,7 @@ def test_method_string(method):
     assert f'{method}' == method.value
 
 
-@pytest.fixture(scope='module')
-def method_full():
+def method_full_nofixture():
     """Calculate matricies using the FULL method
 
     This set was derived from the first valid group of engineering parameters for exposure
@@ -126,6 +125,49 @@ def method_full():
     transforms = stp.calc_transforms_quaternion(t_pars)
 
     return transforms, t_pars
+
+
+@pytest.fixture(scope='module')
+def method_full():
+    return method_full_nofixture()
+
+
+def method_fullva_nofixture():
+    """Calculate matricies using the FULL method
+
+    This set was derived from the first valid group of engineering parameters for exposure
+    jw00624028002_02101_00001_nrca1 retrieved from the SDP regression tests for Build 7.7.1.
+    """
+    # Only run if `pysiaf` is installed.
+    pytest.importorskip('pysiaf')
+
+    # setup inputs
+    t_pars = stp.TransformParameters()
+
+    t_pars.guide_star_wcs = stp.WCSRef(ra=241.24294932221, dec=70.66165389073196, pa=None)
+    t_pars.jwst_velocity = np.array([-25.021, -16.507, -7.187])
+    t_pars.pointing = stp.Pointing(
+        q=np.array([-0.20954692, -0.6177655, -0.44653177, 0.61242575]),
+        j2fgs_matrix=np.array([-9.77300013e-04, 3.38988895e-03, 9.99993777e-01,
+                               9.99999522e-01, 8.37175385e-09, 9.77305600e-04,
+                               3.30458575e-06, 9.99994254e-01, -3.38988734e-03]),
+        fsmcorr=np.array([0.00584114, -0.00432878]),
+        obstime=Time(1611628160.325, format='unix'),
+        gs_commanded=np.array([-22.40031242,  -8.17869377])
+    )
+    t_pars.siaf = stp.SIAF(v2_ref=120.525464, v3_ref=-527.543132, v3yangle=-0.5627898, vparity=-1,
+                           crpix1=1024.5, crpix2=1024.5, cdelt1=0.03113928, cdelt2=0.03132232,
+                           vertices_idl=(-32.1682, 32.0906, 31.6586, -31.7234, -32.1683, -32.1904, 32.0823, 31.9456))
+
+    # Calculate the transforms
+    transforms = stp.calc_transforms_quaternion_velocity_abberation(t_pars)
+
+    return transforms, t_pars
+
+
+@pytest.fixture(scope='module')
+def method_fullva():
+    return method_fullva_nofixture()
 
 
 @pytest.mark.parametrize(
@@ -185,6 +227,36 @@ def test_method_string(method):
         ('method_full', 'm_eci2siaf', np.array([[-0.80028995, -0.5214673 , -0.29598632],
                                                 [-0.57783363, 0.80254338, 0.14843345],
                                                 [-0.16013868, -0.28982067,  0.94358873]])),
+        ('method_fullva', 'm_eci2j', np.array([[-0.16204967, -0.28803339, 0.94380971],
+                                               [ 0.80583682,  0.51339893, 0.29503999],
+                                               [-0.56953229,  0.8083677 , 0.14891175]])),
+        ('method_fullva', 'm_gs2gsapp', np.array([[1.00000000e+00, -5.73448753e-07, 6.63659539e-06],
+                                                  [5.73449081e-07, 1.00000000e+00, 0.00000000e+00],
+                                                  [-6.63655135e-06, 0.00000000e+00, 1.00000000e+00]])),
+        ('method_fullva', 'm_j2fgs1', np.array([[-9.77300013e-04, 9.99999522e-01, 3.30458575e-06],
+                                                [ 3.38988895e-03, 8.37175385e-09, 9.99994254e-01],
+                                                [ 9.99993777e-01, 9.77305600e-04, -3.38988734e-03]])),
+        ('method_fullva', 'm_sifov_fsm_delta', np.array([[1.00000000e+00, 0.00000000e+00, 2.09865089e-08],
+                                                         [-5.94309657e-16, 1.00000000e+00, 2.83186526e-08],
+                                                         [-2.09865089e-08, -2.83186526e-08, 1.00000000e+00]])),
+        ('method_fullva', 'm_fgs12sifov', np.array([[9.99999496e-01, 0.00000000e+00, 1.00444575e-03],
+                                                    [ 1.11748260e-06, 9.99999381e-01, -1.11253598e-03],
+                                                    [-1.00444512e-03, 1.11253654e-03, 9.99998877e-01]])),
+        ('method_fullva', 'm_eci2sifov', np.array([[-0.16077944, -0.28989096, 0.94345816],
+                                                   [0.80583174, 0.51338864, 0.29507178],
+                                                   [-0.56989936, 0.80770996, 0.15106096]])),
+        ('method_fullva', 'm_sifov2v', np.array([[0.99999743, 0., 0.00226893],
+                                                 [0., 1., 0.],
+                                                 [-0.00226893, 0., 0.99999743]])),
+        ('method_fullva', 'm_eci2v', np.array([[-0.16207209, -0.28805758, 0.94379848],
+                                               [0.80583174, 0.51338864, 0.29507178],
+                                               [-0.56953309, 0.80836562, 0.14891994]])),
+        ('method_fullva', 'm_v2siaf', np.array([[5.59174025e-04, -9.99951603e-01, -9.82234493e-03],
+                                                [ 2.56321412e-03, -9.82088099e-03, 9.99948489e-01],
+                                                [9.99996559e-01, 5.84321994e-04, -2.55759849e-03]])),
+        ('method_fullva', 'm_eci2siaf', np.array([[-0.80028922, -0.52146491, -0.29599249],
+                                                  [-0.57783316, 0.8025437 , 0.14843356],
+                                                  [-0.16014403, -0.28982408, 0.94358677]])),
      ]
 )
 def test_methods(fixture, matrix, expected, request):
@@ -240,6 +312,9 @@ def data_file():
     model.meta.aperture.name = "MIRIM_FULL"
     model.meta.observation.date = '2017-01-01'
     model.meta.exposure.type = "MIR_IMAGE"
+    model.meta.ephemeris.velocity_x = -25.021
+    model.meta.ephemeris.velocity_y = -16.507
+    model.meta.ephemeris.velocity_z = -7.187
 
     with TemporaryDirectory() as path:
         file_path = os.path.join(path, 'fits.fits')
@@ -633,6 +708,107 @@ def test_add_wcs_method_gscmd(eng_db_ngas, data_file, siaf_file=siaf_db):
                 ' 346.401373707 -86.941784876'
                 ' 346.968272880 -86.949985434'
                 ' 346.816341294 -86.98058802'
+            )
+        )
+
+
+@pytest.mark.skipif(sys.version_info.major < 3,
+                    reason="No URI support in sqlite3")
+def test_add_wcs_method_full(eng_db_ngas, data_file, siaf_file=siaf_db):
+    """Test using the database and the original, post-JSOCINT-555 quaternion-based algorithm"""
+    # Only run if `pysiaf` is installed.
+    pytest.importorskip('pysiaf')
+
+    # Calculate
+    stp.add_wcs(data_file, siaf_path=siaf_db, method=stp.Methods.FULL, j2fgs_transpose=False)
+
+    # Test
+    with datamodels.Level1bModel(data_file) as model:
+
+        assert model.meta.visit.pointing_engdb_quality == 'CALCULATED_FULL'
+        assert np.isclose(model.meta.pointing.ra_v1, 348.92786699856623)
+        assert np.isclose(model.meta.pointing.dec_v1, -38.749239233976155)
+        assert np.isclose(model.meta.pointing.pa_v3, 50.17670770067501)
+        assert model.meta.wcsinfo.wcsaxes == 2
+        assert model.meta.wcsinfo.crpix1 == 693.5
+        assert model.meta.wcsinfo.crpix2 == 512.5
+        assert np.isclose(model.meta.wcsinfo.crval1, 348.8776709296192)
+        assert np.isclose(model.meta.wcsinfo.crval2, -38.85415968227314)
+        assert model.meta.wcsinfo.ctype1 == "RA---TAN"
+        assert model.meta.wcsinfo.ctype2 == "DEC--TAN"
+        assert model.meta.wcsinfo.cunit1 == 'deg'
+        assert model.meta.wcsinfo.cunit2 == 'deg'
+        assert np.isclose(model.meta.wcsinfo.cdelt1, 3.0555555e-5)
+        assert np.isclose(model.meta.wcsinfo.cdelt2, 3.0555555e-5)
+        assert np.isclose(model.meta.wcsinfo.pc1_1, 0.038533039798626066)
+        assert np.isclose(model.meta.wcsinfo.pc1_2, 0.9992573266400789)
+        assert np.isclose(model.meta.wcsinfo.pc2_1, 0.9992573266400789)
+        assert np.isclose(model.meta.wcsinfo.pc2_2, -0.038533039798626066)
+        assert model.meta.wcsinfo.v2_ref == 200.0
+        assert model.meta.wcsinfo.v3_ref == -350.0
+        assert model.meta.wcsinfo.vparity == -1
+        assert model.meta.wcsinfo.v3yangle == 42.0
+        assert np.isclose(model.meta.wcsinfo.ra_ref, 348.8776709296192)
+        assert np.isclose(model.meta.wcsinfo.dec_ref, -38.85415968227314)
+        assert np.isclose(model.meta.wcsinfo.roll_ref, 50.20832726795373)
+        assert word_precision_check(
+            model.meta.wcsinfo.s_region,
+            (
+                'POLYGON ICRS'
+                ' 348.856337901 -38.874810887'
+                ' 348.858105827 -38.843187739'
+                ' 348.898259269 -38.844396289'
+                ' 348.896880517 -38.876020020')
+        )
+
+
+@pytest.mark.skipif(sys.version_info.major < 3,
+                    reason="No URI support in sqlite3")
+def test_add_wcs_method_fullva(eng_db_ngas, data_file, siaf_file=siaf_db):
+    """Test using the database and the original, post-JSOCINT-555 quaternion-based algorithm"""
+    # Only run if `pysiaf` is installed.
+    pytest.importorskip('pysiaf')
+
+    # Calculate
+    stp.add_wcs(data_file, siaf_path=siaf_db, method=stp.Methods.FULLVA, j2fgs_transpose=False)
+
+    # Test
+    with datamodels.Level1bModel(data_file) as model:
+
+        assert model.meta.visit.pointing_engdb_quality == 'CALCULATED_FULLVA'
+        assert np.isclose(model.meta.pointing.ra_v1, 348.92978374155734)
+        assert np.isclose(model.meta.pointing.dec_v1, -38.751023415447335)
+        assert np.isclose(model.meta.pointing.pa_v3, 50.18091561778752)
+        assert model.meta.wcsinfo.wcsaxes == 2
+        assert model.meta.wcsinfo.crpix1 == 693.5
+        assert model.meta.wcsinfo.crpix2 == 512.5
+        assert np.isclose(model.meta.wcsinfo.crval1, 348.87957651954684)
+        assert np.isclose(model.meta.wcsinfo.crval2, -38.85594098764741)
+        assert model.meta.wcsinfo.ctype1 == "RA---TAN"
+        assert model.meta.wcsinfo.ctype2 == "DEC--TAN"
+        assert model.meta.wcsinfo.cunit1 == 'deg'
+        assert model.meta.wcsinfo.cunit2 == 'deg'
+        assert np.isclose(model.meta.wcsinfo.cdelt1, 3.0555555e-5)
+        assert np.isclose(model.meta.wcsinfo.cdelt2, 3.0555555e-5)
+        assert np.isclose(model.meta.wcsinfo.pc1_1, 0.038606570733346564)
+        assert np.isclose(model.meta.wcsinfo.pc1_2, 0.9992544884543733)
+        assert np.isclose(model.meta.wcsinfo.pc2_1, 0.9992544884543733)
+        assert np.isclose(model.meta.wcsinfo.pc2_2, -0.038606570733346564)
+        assert model.meta.wcsinfo.v2_ref == 200.0
+        assert model.meta.wcsinfo.v3_ref == -350.0
+        assert model.meta.wcsinfo.vparity == -1
+        assert model.meta.wcsinfo.v3yangle == 42.0
+        assert np.isclose(model.meta.wcsinfo.ra_ref, 348.87957651954684)
+        assert np.isclose(model.meta.wcsinfo.dec_ref, -38.85594098764741)
+        assert np.isclose(model.meta.wcsinfo.roll_ref, 50.212543417379926)
+        assert word_precision_check(
+            model.meta.wcsinfo.s_region,
+            (
+                'POLYGON ICRS'
+                ' 348.858241005 -38.876590969'
+                ' 348.860011964 -38.844967923'
+                ' 348.900166297 -38.846178774'
+                ' 348.898784522 -38.877802426'
             )
         )
 
