@@ -2,10 +2,10 @@ import pytest
 import numpy as np
 
 from jwst.ramp_fitting.ramp_fit_step import RampFitStep
-# from jwst.ramp_fitting.ramp_fit import ramp_fit
+from jwst.ramp_fitting.ramp_fit_step import compute_int_times
+
 from stcal.ramp_fitting.ramp_fit import ramp_fit
-# from jwst.ramp_fitting.ols_fit import calc_num_seg
-from stcal.ramp_fitting.ols_fit import calc_num_seg
+# from stcal.ramp_fitting.ols_fit import calc_num_seg
 
 from jwst.datamodels import dqflags
 from jwst.datamodels import RampModel
@@ -100,7 +100,6 @@ def setup_inputs():
         grouptime=1.0, gain=1, deltatime=1):
 """
 
-@pytest.mark.skip(reason="GLS code does not [yet] handle single group integrations.")
 def setup_subarray_inputs(
         nints=1, ngroups=10, nrows=1032, ncols=1024,
         subxstart=1, subxsize=1024, subystart=1, subysize=1032,
@@ -181,6 +180,44 @@ def test_ramp_fit_step(generate_miri_reffiles, setup_inputs):
     assert slopes.meta.cal_step.ramp_fit == "COMPLETE"
 
 
+def test_int_times1(generate_miri_reffiles, setup_inputs):
+    # Test whether int_times table gets copied to output when it should
+    override_gain, override_readnoise = generate_miri_reffiles
+    ingain, inreadnoise = 6, 7
+    grouptime = 3.0
+    deltaDN = 5
+    nints, ngroups, nrows, ncols = 5, 3, 2, 2
+    model, gdq, rnModel, pixdq, err, gain = setup_inputs(
+        ngroups=ngroups, readnoise=inreadnoise, nints=nints, nrows=nrows,
+        ncols=ncols, gain=ingain, deltatime=grouptime)
+
+    # Set TSOVISIT false, in which case the int_times table should come back with zero length
+    model.meta.visit.tsovisit = False
+    int_times = compute_int_times(model)
+
+    assert(int_times is None)
+
+
+def test_int_times2(generate_miri_reffiles, setup_inputs):
+    # Test whether int_times table gets copied to output when it should
+    override_gain, override_readnoise = generate_miri_reffiles
+    ingain, inreadnoise = 6, 7
+    grouptime = 3.0
+    deltaDN = 5
+    nints, ngroups, nrows, ncols = 1, 5, 2, 2
+    model, gdq, rnModel, pixdq, err, gain = setup_inputs(
+        ngroups=ngroups, readnoise=inreadnoise, nints=nints, nrows=nrows,
+        ncols=ncols, gain=ingain, deltatime=grouptime)
+
+
+    # Set TSOVISIT true, in which case the int_times table should come back with length nints
+    model.meta.visit.tsovisit = True
+    int_times = compute_int_times(model)
+    assert(int_times is not None)
+
+
+
+@pytest.mark.skip(reason="GLS code does not [yet] handle single group integrations.")
 def test_ramp_fit_step_subarray(generate_miri_reffiles, setup_inputs):
     """
     Create a simple input to instantiate RampFitStep and execute a call to test
@@ -199,8 +236,6 @@ def test_ramp_fit_step_subarray(generate_miri_reffiles, setup_inputs):
     xvalues = np.arange(5) * 1.0
     yvalues = np.array([10, 15, 25, 33, 60])
     coeff = np.polyfit(xvalues, yvalues, 1)
-
-    # slopes = ramp_fit(model1, 64000, False, rnModel, gain, 'OLS', 'optimal', 'none')
 
     # Call ramp fit throug the step class
     slopes, cube_model = RampFitStep.call(

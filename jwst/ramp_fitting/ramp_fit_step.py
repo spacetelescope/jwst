@@ -3,6 +3,7 @@
 import numpy as np
 
 from jwst.lib import reffile_utils
+from jwst.lib import pipe_utils
 
 from ..stpipe import Step
 from .. import datamodels
@@ -59,14 +60,19 @@ def get_ref_subs(model, readnoise_model, gain_model, nframes):
         log.info('Extracting readnoise subarray to match science data')
         readnoise_2d = reffile_utils.get_subarray_data(model, readnoise_model)
 
-    '''
-    # convert read noise to correct units & scale down for single groups,
-    #   and account for the number of frames per group
-    readnoise_2d *= gain_2d / np.sqrt(2. * nframes)
-    '''
-
     return readnoise_2d, gain_2d
 
+
+def compute_int_times(input_model):
+    """
+    input_model: RampModel
+        Compute integration time based on time series observetion and int_times.
+    """
+    int_times = None
+    if pipe_utils.is_tso(input_model) and hasattr(input_model, 'int_times'):
+        int_times = input_model.int_times
+
+    return int_times
 
 
 class RampFitStep (Step):
@@ -128,6 +134,10 @@ class RampFitStep (Step):
             nframes = input_model.meta.exposure.nframes
             gain_2d, readnoise_2d = get_ref_subs(
                     input_model, readnoise_model, gain_model, nframes)
+
+            # Save old value in case needed here because the function can return NoneType
+            old_int_times = input_model.int_times
+            input_model.int_times = compute_int_times(input_model)
 
             # The out_model and int_model are JWST data models, but need to be
             # converted to simple arrays and the models created here, not in
