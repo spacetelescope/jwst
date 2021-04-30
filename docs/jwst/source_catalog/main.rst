@@ -107,12 +107,12 @@ columns (assuming the default encircled energies of 30, 50, and 70):
 |                        | circular aperture                                  |
 +------------------------+----------------------------------------------------+
 | aper_total_flux        | Total aperture-corrected flux based on the 70%     |
-|                        | encircled energy circular aperture; calculated     |
-|                        | only for stars                                     |
+|                        | encircled energy circular aperture; should be used |
+|                        | only for unresolved sources                        |
 +------------------------+----------------------------------------------------+
 | aper_total_flux_err    | Total aperture-corrected flux error based on the   |
-|                        | 70% encircled energy circular aperture; calculated |
-|                        | only for stars                                     |
+|                        | 70% encircled energy circular aperture; should be  |
+|                        | used only for unresolved sources                   |
 +------------------------+----------------------------------------------------+
 | aper30_abmag           | AB magnitude within the 30% encircled energy       |
 |                        | circular aperture                                  |
@@ -133,12 +133,12 @@ columns (assuming the default encircled energies of 30, 50, and 70):
 |                        | circular aperture                                  |
 +------------------------+----------------------------------------------------+
 | aper_total_abmag       | Total aperture-corrected AB magnitude based on the |
-|                        | 70% encircled energy circular aperture; calculated |
-|                        | only for stars                                     |
+|                        | 70% encircled energy circular aperture; should be  |
+|                        | used only for unresolved sources                   |
 +------------------------+----------------------------------------------------+
 | aper_total_abmag_err   | Total aperture-corrected AB magnitude error based  |
 |                        | on the 70% encircled energy circular aperture;     |
-|                        | calculated only for stars                          |
+|                        | should be used only for unresolved sources         |
 +------------------------+----------------------------------------------------+
 | aper30_vegamag         | Vega magnitude within the 30% encircled energy     |
 |                        | circular aperture                                  |
@@ -160,11 +160,12 @@ columns (assuming the default encircled energies of 30, 50, and 70):
 +------------------------+----------------------------------------------------+
 | aper_total_vegamag     | Total aperture-corrected Vega magnitude based on   |
 |                        | the 70% encircled energy circular aperture;        |
-|                        | calculated only for stars                          |
+|                        | should be used only for unresolved sources         |
 +------------------------+----------------------------------------------------+
 | aper_total_vegamag_err | Total aperture-corrected Vega magnitude error      |
 |                        | based on the 70% encircled energy circular         |
-|                        | aperture; calculated only for stars                |
+|                        | aperture; should be used only for unresolved       |
+|                        | sources                                            |
 +------------------------+----------------------------------------------------+
 | CI_50_30               | Concentration index calculated as (aper50_flux /   |
 |                        | aper30_flux)                                       |
