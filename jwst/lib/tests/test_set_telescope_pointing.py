@@ -59,9 +59,6 @@ def method_gscmd_j3pags():
     This set was derived from the first valid group of engineering parameters for exposure
     jw00624028002_02101_00001_nrca1 retrieved from the SDP regression tests for Build 7.7.1.
     """
-    # Only run if `pysiaf` is installed.
-    pytest.importorskip('pysiaf')
-
     # setup inputs
     t_pars = stp.TransformParameters()
 
@@ -78,6 +75,7 @@ def method_gscmd_j3pags():
     t_pars.siaf = stp.SIAF(v2_ref=120.525464, v3_ref=-527.543132, v3yangle=-0.5627898, vparity=-1,
                            crpix1=1024.5, crpix2=1024.5, cdelt1=0.03113928, cdelt2=0.03132232,
                            vertices_idl=(-32.1682, 32.0906, 31.6586, -31.7234, -32.1683, -32.1904, 32.0823, 31.9456))
+    t_pars.siaf_path = siaf_db
 
     # Calculate the transforms
     transforms = stp.calc_transforms_gscmd_j3pags(t_pars)
@@ -100,9 +98,6 @@ def method_full_nofixture():
     This set was derived from the first valid group of engineering parameters for exposure
     jw00624028002_02101_00001_nrca1 retrieved from the SDP regression tests for Build 7.7.1.
     """
-    # Only run if `pysiaf` is installed.
-    pytest.importorskip('pysiaf')
-
     # setup inputs
     t_pars = stp.TransformParameters()
 
@@ -120,6 +115,7 @@ def method_full_nofixture():
     t_pars.siaf = stp.SIAF(v2_ref=120.525464, v3_ref=-527.543132, v3yangle=-0.5627898, vparity=-1,
                            crpix1=1024.5, crpix2=1024.5, cdelt1=0.03113928, cdelt2=0.03132232,
                            vertices_idl=(-32.1682, 32.0906, 31.6586, -31.7234, -32.1683, -32.1904, 32.0823, 31.9456))
+    t_pars.siaf_path = siaf_db
 
     # Calculate the transforms
     transforms = stp.calc_transforms_quaternion(t_pars)
@@ -138,9 +134,6 @@ def method_fullva_nofixture():
     This set was derived from the first valid group of engineering parameters for exposure
     jw00624028002_02101_00001_nrca1 retrieved from the SDP regression tests for Build 7.7.1.
     """
-    # Only run if `pysiaf` is installed.
-    pytest.importorskip('pysiaf')
-
     # setup inputs
     t_pars = stp.TransformParameters()
 
@@ -158,6 +151,7 @@ def method_fullva_nofixture():
     t_pars.siaf = stp.SIAF(v2_ref=120.525464, v3_ref=-527.543132, v3yangle=-0.5627898, vparity=-1,
                            crpix1=1024.5, crpix2=1024.5, cdelt1=0.03113928, cdelt2=0.03132232,
                            vertices_idl=(-32.1682, 32.0906, 31.6586, -31.7234, -32.1683, -32.1904, 32.0823, 31.9456))
+    t_pars.siaf_path = siaf_db
 
     # Calculate the transforms
     transforms = stp.calc_transforms_quaternion_velocity_abberation(t_pars)
@@ -464,6 +458,7 @@ def test_add_wcs_default(data_file):
         )
 
     with datamodels.Level1bModel(data_file) as model:
+
         assert model.meta.pointing.ra_v1 == TARG_RA
         assert model.meta.pointing.dec_v1 == TARG_DEC
         assert model.meta.pointing.pa_v3 == 0.
@@ -476,27 +471,27 @@ def test_add_wcs_default(data_file):
         assert model.meta.wcsinfo.ctype2 == "DEC--TAN"
         assert model.meta.wcsinfo.cunit1 == 'deg'
         assert model.meta.wcsinfo.cunit2 == 'deg'
-        assert np.isclose(model.meta.wcsinfo.cdelt1, 3.0555555e-5)
-        assert np.isclose(model.meta.wcsinfo.cdelt2, 3.0555555e-5)
-        assert np.isclose(model.meta.wcsinfo.pc1_1, -0.7558009243361943)
-        assert np.isclose(model.meta.wcsinfo.pc1_2, 0.654801468211972)
-        assert np.isclose(model.meta.wcsinfo.pc2_1, 0.654801468211972)
-        assert np.isclose(model.meta.wcsinfo.pc2_2, 0.7558009243361943)
-        assert model.meta.wcsinfo.v2_ref == 200.0
-        assert model.meta.wcsinfo.v3_ref == -350.0
+        assert np.isclose(model.meta.wcsinfo.cdelt1, 3.067124166666667e-05)
+        assert np.isclose(model.meta.wcsinfo.cdelt2, 3.090061944444444e-05)
+        assert np.isclose(model.meta.wcsinfo.pc1_1, -0.9918437873477998)
+        assert np.isclose(model.meta.wcsinfo.pc1_2, 0.12745941118478668)
+        assert np.isclose(model.meta.wcsinfo.pc2_1, 0.12745941118478668)
+        assert np.isclose(model.meta.wcsinfo.pc2_2, 0.9918437873477998)
+        assert model.meta.wcsinfo.v2_ref == -453.559116
+        assert model.meta.wcsinfo.v3_ref == -373.814447
         assert model.meta.wcsinfo.vparity == -1
-        assert model.meta.wcsinfo.v3yangle == 42.0
+        assert model.meta.wcsinfo.v3yangle == 4.83425324
         assert model.meta.wcsinfo.ra_ref == TARG_RA
         assert model.meta.wcsinfo.dec_ref == TARG_DEC
-        assert np.isclose(model.meta.wcsinfo.roll_ref, 358.9045979379)
+        assert np.isclose(model.meta.wcsinfo.roll_ref, 2.4885527140636143)
         assert word_precision_check(
             model.meta.wcsinfo.s_region,
             (
                 'POLYGON ICRS'
-                ' 345.11054995209815 -87.02586884935684'
-                ' 344.6537904121288 -87.00498014679253'
-                ' 345.04569816117015 -86.98138111042982'
-                ' 345.50498899320183 -87.00187988107017'
+                ' 345.367907569 -87.018095946'
+                ' 344.762655544 -87.014181559'
+                ' 344.844131586 -86.983147828'
+                ' 345.436760816 -86.987021446'
             )
         )
 
@@ -526,6 +521,7 @@ def test_add_wcs_fsmcorr_v1(data_file):
         )
 
     with datamodels.Level1bModel(data_file) as model:
+
         assert model.meta.pointing.ra_v1 == TARG_RA
         assert model.meta.pointing.dec_v1 == TARG_DEC
         assert model.meta.pointing.pa_v3 == 0.
@@ -538,34 +534,34 @@ def test_add_wcs_fsmcorr_v1(data_file):
         assert model.meta.wcsinfo.ctype2 == "DEC--TAN"
         assert model.meta.wcsinfo.cunit1 == 'deg'
         assert model.meta.wcsinfo.cunit2 == 'deg'
-        assert np.isclose(model.meta.wcsinfo.cdelt1, 3.0555555e-5)
-        assert np.isclose(model.meta.wcsinfo.cdelt2, 3.0555555e-5)
-        assert np.isclose(model.meta.wcsinfo.pc1_1, -0.7558009243361943)
-        assert np.isclose(model.meta.wcsinfo.pc1_2, 0.654801468211972)
-        assert np.isclose(model.meta.wcsinfo.pc2_1, 0.654801468211972)
-        assert np.isclose(model.meta.wcsinfo.pc2_2, 0.7558009243361943)
-        assert model.meta.wcsinfo.v2_ref == 200.0
-        assert model.meta.wcsinfo.v3_ref == -350.0
+        assert np.isclose(model.meta.wcsinfo.cdelt1, 3.067124166666667e-05)
+        assert np.isclose(model.meta.wcsinfo.cdelt2, 3.090061944444444e-05)
+        assert np.isclose(model.meta.wcsinfo.pc1_1, -0.9918437873477998)
+        assert np.isclose(model.meta.wcsinfo.pc1_2, 0.12745941118478668)
+        assert np.isclose(model.meta.wcsinfo.pc2_1, 0.12745941118478668)
+        assert np.isclose(model.meta.wcsinfo.pc2_2, 0.9918437873477998)
+        assert model.meta.wcsinfo.v2_ref == -453.559116
+        assert model.meta.wcsinfo.v3_ref == -373.814447
         assert model.meta.wcsinfo.vparity == -1
-        assert model.meta.wcsinfo.v3yangle == 42.0
+        assert model.meta.wcsinfo.v3yangle == 4.83425324
         assert model.meta.wcsinfo.ra_ref == TARG_RA
         assert model.meta.wcsinfo.dec_ref == TARG_DEC
-        assert np.isclose(model.meta.wcsinfo.roll_ref, 358.9045979379)
+        assert np.isclose(model.meta.wcsinfo.roll_ref, 2.4885527140636143)
         assert word_precision_check(
             model.meta.wcsinfo.s_region,
             (
                 'POLYGON ICRS'
-                ' 345.11054995209815 -87.02586884935684'
-                ' 344.6537904121288 -87.00498014679253'
-                ' 345.04569816117015 -86.98138111042982'
-                ' 345.50498899320183 -87.00187988107017'
+                ' 345.367907569 -87.018095946'
+                ' 344.762655544 -87.014181559'
+                ' 344.844131586 -86.983147828'
+                ' 345.436760816 -86.987021446'
             )
         )
 
 
 @pytest.mark.skipif(sys.version_info.major < 3,
                     reason="No URI support in sqlite3")
-def test_add_wcs_with_db(eng_db_ngas, data_file, siaf_file=siaf_db):
+def test_add_wcs_with_db(eng_db_ngas, data_file):
     """Test using the database"""
     stp.add_wcs(data_file, siaf_path=siaf_db, j2fgs_transpose=False)
 
@@ -576,44 +572,45 @@ def test_add_wcs_with_db(eng_db_ngas, data_file, siaf_file=siaf_db):
         assert model.meta.wcsinfo.wcsaxes == 2
         assert model.meta.wcsinfo.crpix1 == 693.5
         assert model.meta.wcsinfo.crpix2 == 512.5
-        assert np.isclose(model.meta.wcsinfo.crval1, 348.8776709)
-        assert np.isclose(model.meta.wcsinfo.crval2, -38.854159)
+        assert np.isclose(model.meta.wcsinfo.crval1, 348.72223984791793)
+        assert np.isclose(model.meta.wcsinfo.crval2, -38.71879675101562)
         assert model.meta.wcsinfo.ctype1 == "RA---TAN"
         assert model.meta.wcsinfo.ctype2 == "DEC--TAN"
         assert model.meta.wcsinfo.cunit1 == 'deg'
         assert model.meta.wcsinfo.cunit2 == 'deg'
-        assert np.isclose(model.meta.wcsinfo.cdelt1, 3.0555555e-5)
-        assert np.isclose(model.meta.wcsinfo.cdelt2, 3.0555555e-5)
-        assert np.isclose(model.meta.wcsinfo.pc1_1, 0.03853303979862607)
-        assert np.isclose(model.meta.wcsinfo.pc1_2, 0.9992573266400789)
-        assert np.isclose(model.meta.wcsinfo.pc2_1, 0.9992573266400789)
-        assert np.isclose(model.meta.wcsinfo.pc2_2, -0.03853303979862607)
-        assert model.meta.wcsinfo.v2_ref == 200.0
-        assert model.meta.wcsinfo.v3_ref == -350.0
+        assert np.isclose(model.meta.wcsinfo.cdelt1, 3.067124166666667e-05)
+        assert np.isclose(model.meta.wcsinfo.cdelt2, 3.090061944444444e-05)
+        assert np.isclose(model.meta.wcsinfo.pc1_1, -0.571582196495406)
+        assert np.isclose(model.meta.wcsinfo.pc1_2, 0.8205448145284249)
+        assert np.isclose(model.meta.wcsinfo.pc2_1, 0.8205448145284249)
+        assert np.isclose(model.meta.wcsinfo.pc2_2, 0.571582196495406)
+        assert model.meta.wcsinfo.v2_ref == -453.559116
+        assert model.meta.wcsinfo.v3_ref == -373.814447
         assert model.meta.wcsinfo.vparity == -1
-        assert model.meta.wcsinfo.v3yangle == 42.0
-        assert np.isclose(model.meta.wcsinfo.ra_ref, 348.8776709)
-        assert np.isclose(model.meta.wcsinfo.dec_ref, -38.854159)
-        assert np.isclose(model.meta.wcsinfo.roll_ref, 50.20832726650)
+        assert model.meta.wcsinfo.v3yangle == 4.83425324
+        assert np.isclose(model.meta.wcsinfo.ra_ref, 348.72223984791793)
+        assert np.isclose(model.meta.wcsinfo.dec_ref, -38.71879675101562)
+        assert np.isclose(model.meta.wcsinfo.roll_ref, 50.305115778257154)
         assert word_precision_check(
             model.meta.wcsinfo.s_region,
             (
                 'POLYGON ICRS'
-                ' 348.8563379013152 -38.874810886750495'
-                ' 348.85810582665334 -38.84318773861823'
-                ' 348.8982592685148 -38.84439628911871'
-                ' 348.89688051688233 -38.876020020321164'
+                ' 348.721466922 -38.745171194'
+                ' 348.698106607 -38.719173521'
+                ' 348.731171783 -38.701408921'
+                ' 348.754244643 -38.727146895'
             )
         )
 
 
 @pytest.mark.skipif(sys.version_info.major < 3,
                     reason="No URI support in sqlite3")
-def test_add_wcs_method_original(eng_db_ngas, data_file, siaf_file=siaf_db):
+def test_add_wcs_method_original(eng_db_ngas, data_file):
     """Test using the database and the original, pre-JSOCINT-555 algorithms"""
     stp.add_wcs(data_file, siaf_path=siaf_db, method=stp.Methods.ORIGINAL, j2fgs_transpose=False)
 
     with datamodels.Level1bModel(data_file) as model:
+
         assert model.meta.visit.pointing_engdb_quality == 'CALCULATED_ORIGINAL'
         assert np.isclose(model.meta.pointing.ra_v1, 348.9278669)
         assert np.isclose(model.meta.pointing.dec_v1, -38.749239)
@@ -621,43 +618,41 @@ def test_add_wcs_method_original(eng_db_ngas, data_file, siaf_file=siaf_db):
         assert model.meta.wcsinfo.wcsaxes == 2
         assert model.meta.wcsinfo.crpix1 == 693.5
         assert model.meta.wcsinfo.crpix2 == 512.5
-        assert np.isclose(model.meta.wcsinfo.crval1, 348.8776709)
-        assert np.isclose(model.meta.wcsinfo.crval2, -38.854159)
+        assert np.isclose(model.meta.wcsinfo.crval1, 348.72223984791793)
+        assert np.isclose(model.meta.wcsinfo.crval2, -38.71879675101562)
         assert model.meta.wcsinfo.ctype1 == "RA---TAN"
         assert model.meta.wcsinfo.ctype2 == "DEC--TAN"
         assert model.meta.wcsinfo.cunit1 == 'deg'
         assert model.meta.wcsinfo.cunit2 == 'deg'
-        assert np.isclose(model.meta.wcsinfo.cdelt1, 3.0555555e-5)
-        assert np.isclose(model.meta.wcsinfo.cdelt2, 3.0555555e-5)
-        assert np.isclose(model.meta.wcsinfo.pc1_1, 0.03853303979862607)
-        assert np.isclose(model.meta.wcsinfo.pc1_2, 0.9992573266400789)
-        assert np.isclose(model.meta.wcsinfo.pc2_1, 0.9992573266400789)
-        assert np.isclose(model.meta.wcsinfo.pc2_2, -0.03853303979862607)
-        assert model.meta.wcsinfo.v2_ref == 200.0
-        assert model.meta.wcsinfo.v3_ref == -350.0
+        assert np.isclose(model.meta.wcsinfo.cdelt1, 3.067124166666667e-05)
+        assert np.isclose(model.meta.wcsinfo.cdelt2, 3.090061944444444e-05)
+        assert np.isclose(model.meta.wcsinfo.pc1_1, -0.571582196495406)
+        assert np.isclose(model.meta.wcsinfo.pc1_2, 0.8205448145284249)
+        assert np.isclose(model.meta.wcsinfo.pc2_1, 0.8205448145284249)
+        assert np.isclose(model.meta.wcsinfo.pc2_2, 0.571582196495406)
+        assert model.meta.wcsinfo.v2_ref == -453.559116
+        assert model.meta.wcsinfo.v3_ref == -373.814447
         assert model.meta.wcsinfo.vparity == -1
-        assert model.meta.wcsinfo.v3yangle == 42.0
-        assert np.isclose(model.meta.wcsinfo.ra_ref, 348.8776709)
-        assert np.isclose(model.meta.wcsinfo.dec_ref, -38.854159)
-        assert np.isclose(model.meta.wcsinfo.roll_ref, 50.20832726650)
+        assert model.meta.wcsinfo.v3yangle == 4.83425324
+        assert np.isclose(model.meta.wcsinfo.ra_ref, 348.72223984791793)
+        assert np.isclose(model.meta.wcsinfo.dec_ref, -38.71879675101562)
+        assert np.isclose(model.meta.wcsinfo.roll_ref, 50.305115778257154)
         assert word_precision_check(
             model.meta.wcsinfo.s_region,
             (
                 'POLYGON ICRS'
-                ' 348.8563379013152 -38.874810886750495'
-                ' 348.85810582665334 -38.84318773861823'
-                ' 348.8982592685148 -38.84439628911871'
-                ' 348.89688051688233 -38.876020020321164'
+                ' 348.721466922 -38.745171194'
+                ' 348.698106607 -38.719173521'
+                ' 348.731171783 -38.701408921'
+                ' 348.754244643 -38.727146895'
             )
         )
 
 
 @pytest.mark.skipif(sys.version_info.major < 3,
                     reason="No URI support in sqlite3")
-def test_add_wcs_method_gscmd(eng_db_ngas, data_file, siaf_file=siaf_db):
+def test_add_wcs_method_gscmd(eng_db_ngas, data_file):
     """Test using the database and the original, pre-JSOCINT-555 algorithms"""
-    # Only run if `pysiaf` is installed.
-    pytest.importorskip('pysiaf')
 
     # Calculate
     stp.add_wcs(data_file, siaf_path=siaf_db, method=stp.Methods.GSCMD, j2fgs_transpose=False)
@@ -672,44 +667,41 @@ def test_add_wcs_method_gscmd(eng_db_ngas, data_file, siaf_file=siaf_db):
         assert model.meta.wcsinfo.wcsaxes == 2
         assert model.meta.wcsinfo.crpix1 == 693.5
         assert model.meta.wcsinfo.crpix2 == 512.5
-        assert np.isclose(model.meta.wcsinfo.crval1, 346.63329946732654)
-        assert np.isclose(model.meta.wcsinfo.crval2, -86.95593300483553)
+        assert np.isclose(model.meta.wcsinfo.crval1, 345.0631069614913)
+        assert np.isclose(model.meta.wcsinfo.crval2, -86.79567097531229)
         assert model.meta.wcsinfo.ctype1 == "RA---TAN"
         assert model.meta.wcsinfo.ctype2 == "DEC--TAN"
         assert model.meta.wcsinfo.cunit1 == 'deg'
         assert model.meta.wcsinfo.cunit2 == 'deg'
-        assert np.isclose(model.meta.wcsinfo.cdelt1, 3.0555555e-5)
-        assert np.isclose(model.meta.wcsinfo.cdelt2, 3.0555555e-5)
-        assert np.isclose(model.meta.wcsinfo.pc1_1, 0.2628005754440661)
-        assert np.isclose(model.meta.wcsinfo.pc1_2, 0.9648501736260754)
-        assert np.isclose(model.meta.wcsinfo.pc2_1, 0.9648501736260754)
-        assert np.isclose(model.meta.wcsinfo.pc2_2, -0.2628005754440661)
-        assert model.meta.wcsinfo.v2_ref == 200.0
-        assert model.meta.wcsinfo.v3_ref == -350.0
+        assert np.isclose(model.meta.wcsinfo.cdelt1, 3.067124166666667e-05)
+        assert np.isclose(model.meta.wcsinfo.cdelt2, 3.090061944444444e-05)
+        assert np.isclose(model.meta.wcsinfo.pc1_1, -0.3494308313783168)
+        assert np.isclose(model.meta.wcsinfo.pc1_2, 0.9369621625670155)
+        assert np.isclose(model.meta.wcsinfo.pc2_1, 0.9369621625670155)
+        assert np.isclose(model.meta.wcsinfo.pc2_2, 0.3494308313783168)
+        assert model.meta.wcsinfo.v2_ref == -453.559116
+        assert model.meta.wcsinfo.v3_ref == -373.814447
         assert model.meta.wcsinfo.vparity == -1
-        assert model.meta.wcsinfo.v3yangle == 42.0
-        assert np.isclose(model.meta.wcsinfo.ra_ref, 346.63329946732654)
-        assert np.isclose(model.meta.wcsinfo.dec_ref, -86.95593300483553)
-        assert np.isclose(model.meta.wcsinfo.roll_ref, 63.236303497892706)
+        assert model.meta.wcsinfo.v3yangle == 4.83425324
+        assert np.isclose(model.meta.wcsinfo.ra_ref, 345.0631069614913)
+        assert np.isclose(model.meta.wcsinfo.dec_ref, -86.79567097531229)
+        assert np.isclose(model.meta.wcsinfo.roll_ref, 64.71324058202622)
         assert word_precision_check(
             model.meta.wcsinfo.s_region,
             (
                 'POLYGON ICRS'
-                ' 346.238814600 -86.972238983'
-                ' 346.401373707 -86.941784876'
-                ' 346.968272880 -86.949985434'
-                ' 346.816341294 -86.98058802'
+                ' 344.934234572 -86.821057863'
+                ' 344.735601211 -86.791300754'
+                ' 345.260360839 -86.780545799'
+                ' 345.460312293 -86.809898942'
             )
         )
 
 
 @pytest.mark.skipif(sys.version_info.major < 3,
                     reason="No URI support in sqlite3")
-def test_add_wcs_method_full(eng_db_ngas, data_file, siaf_file=siaf_db):
+def test_add_wcs_method_full(eng_db_ngas, data_file):
     """Test using the database and the original, post-JSOCINT-555 quaternion-based algorithm"""
-    # Only run if `pysiaf` is installed.
-    pytest.importorskip('pysiaf')
-
     # Calculate
     stp.add_wcs(data_file, siaf_path=siaf_db, method=stp.Methods.FULL, j2fgs_transpose=False)
 
@@ -723,42 +715,90 @@ def test_add_wcs_method_full(eng_db_ngas, data_file, siaf_file=siaf_db):
         assert model.meta.wcsinfo.wcsaxes == 2
         assert model.meta.wcsinfo.crpix1 == 693.5
         assert model.meta.wcsinfo.crpix2 == 512.5
-        assert np.isclose(model.meta.wcsinfo.crval1, 348.8776709296192)
-        assert np.isclose(model.meta.wcsinfo.crval2, -38.85415968227314)
+        assert np.isclose(model.meta.wcsinfo.crval1, 348.72223984791793)
+        assert np.isclose(model.meta.wcsinfo.crval2, -38.71879675101562)
         assert model.meta.wcsinfo.ctype1 == "RA---TAN"
         assert model.meta.wcsinfo.ctype2 == "DEC--TAN"
         assert model.meta.wcsinfo.cunit1 == 'deg'
         assert model.meta.wcsinfo.cunit2 == 'deg'
-        assert np.isclose(model.meta.wcsinfo.cdelt1, 3.0555555e-5)
-        assert np.isclose(model.meta.wcsinfo.cdelt2, 3.0555555e-5)
-        assert np.isclose(model.meta.wcsinfo.pc1_1, 0.038533039798626066)
-        assert np.isclose(model.meta.wcsinfo.pc1_2, 0.9992573266400789)
-        assert np.isclose(model.meta.wcsinfo.pc2_1, 0.9992573266400789)
-        assert np.isclose(model.meta.wcsinfo.pc2_2, -0.038533039798626066)
-        assert model.meta.wcsinfo.v2_ref == 200.0
-        assert model.meta.wcsinfo.v3_ref == -350.0
+        assert np.isclose(model.meta.wcsinfo.cdelt1, 3.067124166666667e-05)
+        assert np.isclose(model.meta.wcsinfo.cdelt2, 3.090061944444444e-05)
+        assert np.isclose(model.meta.wcsinfo.pc1_1, -0.571582196495406)
+        assert np.isclose(model.meta.wcsinfo.pc1_2, 0.8205448145284249)
+        assert np.isclose(model.meta.wcsinfo.pc2_1, 0.8205448145284249)
+        assert np.isclose(model.meta.wcsinfo.pc2_2, 0.571582196495406)
+        assert model.meta.wcsinfo.v2_ref == -453.559116
+        assert model.meta.wcsinfo.v3_ref == -373.814447
         assert model.meta.wcsinfo.vparity == -1
-        assert model.meta.wcsinfo.v3yangle == 42.0
-        assert np.isclose(model.meta.wcsinfo.ra_ref, 348.8776709296192)
-        assert np.isclose(model.meta.wcsinfo.dec_ref, -38.85415968227314)
-        assert np.isclose(model.meta.wcsinfo.roll_ref, 50.20832726795373)
+        assert model.meta.wcsinfo.v3yangle == 4.83425324
+        assert np.isclose(model.meta.wcsinfo.ra_ref, 348.72223984791793)
+        assert np.isclose(model.meta.wcsinfo.dec_ref, -38.71879675101562)
+        assert np.isclose(model.meta.wcsinfo.roll_ref, 50.305115778257154)
         assert word_precision_check(
             model.meta.wcsinfo.s_region,
             (
                 'POLYGON ICRS'
-                ' 348.856337901 -38.874810887'
-                ' 348.858105827 -38.843187739'
-                ' 348.898259269 -38.844396289'
-                ' 348.896880517 -38.876020020')
+                ' 348.721466922 -38.745171194'
+                ' 348.698106607 -38.719173521'
+                ' 348.731171783 -38.701408921'
+                ' 348.754244643 -38.727146895'
+            )
+        )
+
+
+def test_add_wcs_method_fullva_nosiafdb(eng_db_ngas, data_file):
+    """Test using the database and the original, post-JSOCINT-555 quaternion-based algorithm"""
+    # Only run if `pysiaf` is installed.
+    pytest.importorskip('pysiaf')
+
+    # Calculate
+    stp.add_wcs(data_file, method=stp.Methods.FULLVA, j2fgs_transpose=False)
+
+    # Test
+    with datamodels.Level1bModel(data_file) as model:
+
+        assert model.meta.visit.pointing_engdb_quality == 'CALCULATED_FULLVA'
+        assert np.isclose(model.meta.pointing.ra_v1, 348.92978374155734)
+        assert np.isclose(model.meta.pointing.dec_v1, -38.751023415447335)
+        assert np.isclose(model.meta.pointing.pa_v3, 50.18091561778752)
+        assert model.meta.wcsinfo.wcsaxes == 2
+        assert model.meta.wcsinfo.crpix1 == 693.5
+        assert model.meta.wcsinfo.crpix2 == 512.5
+        assert np.isclose(model.meta.wcsinfo.crval1, 348.7241543386483)
+        assert np.isclose(model.meta.wcsinfo.crval2, -38.72056914314013)
+        assert model.meta.wcsinfo.ctype1 == "RA---TAN"
+        assert model.meta.wcsinfo.ctype2 == "DEC--TAN"
+        assert model.meta.wcsinfo.cunit1 == 'deg'
+        assert model.meta.wcsinfo.cunit2 == 'deg'
+        assert np.isclose(model.meta.wcsinfo.cdelt1, 3.067124166666667e-05)
+        assert np.isclose(model.meta.wcsinfo.cdelt2, 3.090061944444444e-05)
+        assert np.isclose(model.meta.wcsinfo.pc1_1, -0.5715218418752389)
+        assert np.isclose(model.meta.wcsinfo.pc1_2, 0.8205868535746441)
+        assert np.isclose(model.meta.wcsinfo.pc2_1, 0.8205868535746441)
+        assert np.isclose(model.meta.wcsinfo.pc2_2, 0.5715218418752389)
+        assert model.meta.wcsinfo.v2_ref == -453.559116
+        assert model.meta.wcsinfo.v3_ref == -373.814447
+        assert model.meta.wcsinfo.vparity == -1
+        assert model.meta.wcsinfo.v3yangle == 4.83425324
+        assert np.isclose(model.meta.wcsinfo.ra_ref, 348.7241543386483)
+        assert np.isclose(model.meta.wcsinfo.dec_ref, -38.72056914314013)
+        assert np.isclose(model.meta.wcsinfo.roll_ref, 50.30933002270242)
+        assert word_precision_check(
+            model.meta.wcsinfo.s_region,
+            (
+                'POLYGON ICRS'
+                ' 348.723378906 -38.746943542'
+                ' 348.700020464 -38.720944528'
+                ' 348.733088134 -38.703181826'
+                ' 348.756159141 -38.728921124'
+            )
         )
 
 
 @pytest.mark.skipif(sys.version_info.major < 3,
                     reason="No URI support in sqlite3")
-def test_add_wcs_method_fullva(eng_db_ngas, data_file, siaf_file=siaf_db):
+def test_add_wcs_method_fullva_siafdb(eng_db_ngas, data_file):
     """Test using the database and the original, post-JSOCINT-555 quaternion-based algorithm"""
-    # Only run if `pysiaf` is installed.
-    pytest.importorskip('pysiaf')
 
     # Calculate
     stp.add_wcs(data_file, siaf_path=siaf_db, method=stp.Methods.FULLVA, j2fgs_transpose=False)
@@ -773,49 +813,49 @@ def test_add_wcs_method_fullva(eng_db_ngas, data_file, siaf_file=siaf_db):
         assert model.meta.wcsinfo.wcsaxes == 2
         assert model.meta.wcsinfo.crpix1 == 693.5
         assert model.meta.wcsinfo.crpix2 == 512.5
-        assert np.isclose(model.meta.wcsinfo.crval1, 348.87957651954684)
-        assert np.isclose(model.meta.wcsinfo.crval2, -38.85594098764741)
+        assert np.isclose(model.meta.wcsinfo.crval1, 348.7241543386483)
+        assert np.isclose(model.meta.wcsinfo.crval2, -38.72056914314013)
         assert model.meta.wcsinfo.ctype1 == "RA---TAN"
         assert model.meta.wcsinfo.ctype2 == "DEC--TAN"
         assert model.meta.wcsinfo.cunit1 == 'deg'
         assert model.meta.wcsinfo.cunit2 == 'deg'
-        assert np.isclose(model.meta.wcsinfo.cdelt1, 3.0555555e-5)
-        assert np.isclose(model.meta.wcsinfo.cdelt2, 3.0555555e-5)
-        assert np.isclose(model.meta.wcsinfo.pc1_1, 0.038606570733346564)
-        assert np.isclose(model.meta.wcsinfo.pc1_2, 0.9992544884543733)
-        assert np.isclose(model.meta.wcsinfo.pc2_1, 0.9992544884543733)
-        assert np.isclose(model.meta.wcsinfo.pc2_2, -0.038606570733346564)
-        assert model.meta.wcsinfo.v2_ref == 200.0
-        assert model.meta.wcsinfo.v3_ref == -350.0
+        assert np.isclose(model.meta.wcsinfo.cdelt1, 3.067124166666667e-05)
+        assert np.isclose(model.meta.wcsinfo.cdelt2, 3.090061944444444e-05)
+        assert np.isclose(model.meta.wcsinfo.pc1_1, -0.5715218418752389)
+        assert np.isclose(model.meta.wcsinfo.pc1_2, 0.8205868535746441)
+        assert np.isclose(model.meta.wcsinfo.pc2_1, 0.8205868535746441)
+        assert np.isclose(model.meta.wcsinfo.pc2_2, 0.5715218418752389)
+        assert model.meta.wcsinfo.v2_ref == -453.559116
+        assert model.meta.wcsinfo.v3_ref == -373.814447
         assert model.meta.wcsinfo.vparity == -1
-        assert model.meta.wcsinfo.v3yangle == 42.0
-        assert np.isclose(model.meta.wcsinfo.ra_ref, 348.87957651954684)
-        assert np.isclose(model.meta.wcsinfo.dec_ref, -38.85594098764741)
-        assert np.isclose(model.meta.wcsinfo.roll_ref, 50.212543417379926)
+        assert model.meta.wcsinfo.v3yangle == 4.83425324
+        assert np.isclose(model.meta.wcsinfo.ra_ref, 348.7241543386483)
+        assert np.isclose(model.meta.wcsinfo.dec_ref, -38.72056914314013)
+        assert np.isclose(model.meta.wcsinfo.roll_ref, 50.30933002270242)
         assert word_precision_check(
             model.meta.wcsinfo.s_region,
             (
                 'POLYGON ICRS'
-                ' 348.858241005 -38.876590969'
-                ' 348.860011964 -38.844967923'
-                ' 348.900166297 -38.846178774'
-                ' 348.898784522 -38.877802426'
+                ' 348.723378906 -38.746943542'
+                ' 348.700020464 -38.720944528'
+                ' 348.733088134 -38.703181826'
+                ' 348.756159141 -38.728921124'
             )
         )
 
 
 @pytest.mark.skipif(sys.version_info.major < 3,
                     reason="No URI support in sqlite3")
-def test_add_wcs_method_gscmd_v3pags(eng_db_ngas, data_file, siaf_file=siaf_db):
+def test_add_wcs_method_gscmd_v3pags(eng_db_ngas, data_file):
     """Test using the database and the original, pre-JSOCINT-555 algorithms"""
-    # Only run if `pysiaf` is installed.
-    pytest.importorskip('pysiaf')
 
     # Calculate
     stp.add_wcs(data_file, siaf_path=siaf_db, method=stp.Methods.GSCMD_V3PAGS, j2fgs_transpose=False)
 
     # Test
     with datamodels.Level1bModel(data_file) as model:
+
+        print(model.meta.instance)
 
         assert model.meta.visit.pointing_engdb_quality == 'CALCULATED_GSCMD_V3PAGS'
         assert np.isclose(model.meta.pointing.ra_v1, 347.76099011134437)
@@ -824,33 +864,33 @@ def test_add_wcs_method_gscmd_v3pags(eng_db_ngas, data_file, siaf_file=siaf_db):
         assert model.meta.wcsinfo.wcsaxes == 2
         assert model.meta.wcsinfo.crpix1 == 693.5
         assert model.meta.wcsinfo.crpix2 == 512.5
-        assert np.isclose(model.meta.wcsinfo.crval1, 346.6332873326963)
-        assert np.isclose(model.meta.wcsinfo.crval2, -86.95593178595206)
+        assert np.isclose(model.meta.wcsinfo.crval1, 345.06305485388486)
+        assert np.isclose(model.meta.wcsinfo.crval2, -86.79567092830204)
         assert model.meta.wcsinfo.ctype1 == "RA---TAN"
         assert model.meta.wcsinfo.ctype2 == "DEC--TAN"
         assert model.meta.wcsinfo.cunit1 == 'deg'
         assert model.meta.wcsinfo.cunit2 == 'deg'
-        assert np.isclose(model.meta.wcsinfo.cdelt1, 3.0555555e-5)
-        assert np.isclose(model.meta.wcsinfo.cdelt2, 3.0555555e-5)
-        assert np.isclose(model.meta.wcsinfo.pc1_1, 0.26278701123754644)
-        assert np.isclose(model.meta.wcsinfo.pc1_2, 0.9648538680675108)
-        assert np.isclose(model.meta.wcsinfo.pc2_1, 0.9648538680675108)
-        assert np.isclose(model.meta.wcsinfo.pc2_2, -0.26278701123754644)
-        assert model.meta.wcsinfo.v2_ref == 200.0
-        assert model.meta.wcsinfo.v3_ref == -350.0
+        assert np.isclose(model.meta.wcsinfo.cdelt1, 3.067124166666667e-05)
+        assert np.isclose(model.meta.wcsinfo.cdelt2, 3.090061944444444e-05)
+        assert np.isclose(model.meta.wcsinfo.pc1_1, -0.349443321493709)
+        assert np.isclose(model.meta.wcsinfo.pc1_2, 0.9369575044063868)
+        assert np.isclose(model.meta.wcsinfo.pc2_1, 0.9369575044063868)
+        assert np.isclose(model.meta.wcsinfo.pc2_2, 0.349443321493709)
+        assert model.meta.wcsinfo.v2_ref == -453.559116
+        assert model.meta.wcsinfo.v3_ref == -373.814447
         assert model.meta.wcsinfo.vparity == -1
-        assert model.meta.wcsinfo.v3yangle == 42.0
-        assert np.isclose(model.meta.wcsinfo.ra_ref, 346.6332873326963)
-        assert np.isclose(model.meta.wcsinfo.dec_ref, -86.95593178595206)
-        assert np.isclose(model.meta.wcsinfo.roll_ref, 63.23549801501118)
+        assert model.meta.wcsinfo.v3yangle == 4.83425324
+        assert np.isclose(model.meta.wcsinfo.ra_ref, 345.06305485388486)
+        assert np.isclose(model.meta.wcsinfo.dec_ref, -86.79567092830204)
+        assert np.isclose(model.meta.wcsinfo.roll_ref, 64.71247680232936)
         assert word_precision_check(
             model.meta.wcsinfo.s_region,
             (
                 'POLYGON ICRS'
-                ' 346.238806945 -86.972238059'
-                ' 346.401357930 -86.941783830'
-                ' 346.968259026 -86.949983965'
-                ' 346.816335662 -86.980586665'
+                ' 344.934188567 -86.821057912'
+                ' 344.735548055 -86.791300951'
+                ' 345.260305134 -86.780545605'
+                ' 345.460263569 -86.809898599'
             )
         )
 
@@ -862,39 +902,42 @@ def test_add_wcs_with_db_fsmcorr_v1(eng_db_ngas, data_file):
     stp.add_wcs(data_file, fsmcorr_version='v1', siaf_path=siaf_db, j2fgs_transpose=False)
 
     with datamodels.Level1bModel(data_file) as model:
+
+        print(model.meta.instance)
+
         assert np.isclose(model.meta.pointing.ra_v1, 348.9278669)
         assert np.isclose(model.meta.pointing.dec_v1, -38.749239)
         assert np.isclose(model.meta.pointing.pa_v3, 50.1767077)
         assert model.meta.wcsinfo.wcsaxes == 2
         assert model.meta.wcsinfo.crpix1 == 693.5
         assert model.meta.wcsinfo.crpix2 == 512.5
-        assert np.isclose(model.meta.wcsinfo.crval1, 348.8776709)
-        assert np.isclose(model.meta.wcsinfo.crval2, -38.854159)
+        assert np.isclose(model.meta.wcsinfo.crval1, 348.72223984791793)
+        assert np.isclose(model.meta.wcsinfo.crval2, -38.71879675101562)
         assert model.meta.wcsinfo.ctype1 == "RA---TAN"
         assert model.meta.wcsinfo.ctype2 == "DEC--TAN"
         assert model.meta.wcsinfo.cunit1 == 'deg'
         assert model.meta.wcsinfo.cunit2 == 'deg'
-        assert np.isclose(model.meta.wcsinfo.cdelt1, 3.0555555e-5)
-        assert np.isclose(model.meta.wcsinfo.cdelt2, 3.0555555e-5)
-        assert np.isclose(model.meta.wcsinfo.pc1_1, 0.03853303979862607)
-        assert np.isclose(model.meta.wcsinfo.pc1_2, 0.9992573266400789)
-        assert np.isclose(model.meta.wcsinfo.pc2_1, 0.9992573266400789)
-        assert np.isclose(model.meta.wcsinfo.pc2_2, -0.03853303979862607)
-        assert model.meta.wcsinfo.v2_ref == 200.0
-        assert model.meta.wcsinfo.v3_ref == -350.0
+        assert np.isclose(model.meta.wcsinfo.cdelt1, 3.067124166666667e-05)
+        assert np.isclose(model.meta.wcsinfo.cdelt2, 3.090061944444444e-05)
+        assert np.isclose(model.meta.wcsinfo.pc1_1, -0.571582196495406)
+        assert np.isclose(model.meta.wcsinfo.pc1_2, 0.8205448145284249)
+        assert np.isclose(model.meta.wcsinfo.pc2_1, 0.8205448145284249)
+        assert np.isclose(model.meta.wcsinfo.pc2_2, 0.571582196495406)
+        assert model.meta.wcsinfo.v2_ref == -453.559116
+        assert model.meta.wcsinfo.v3_ref == -373.814447
         assert model.meta.wcsinfo.vparity == -1
-        assert model.meta.wcsinfo.v3yangle == 42.0
-        assert np.isclose(model.meta.wcsinfo.ra_ref, 348.8776709)
-        assert np.isclose(model.meta.wcsinfo.dec_ref, -38.854159)
-        assert np.isclose(model.meta.wcsinfo.roll_ref, 50.20832726650)
+        assert model.meta.wcsinfo.v3yangle == 4.83425324
+        assert np.isclose(model.meta.wcsinfo.ra_ref, 348.72223984791793)
+        assert np.isclose(model.meta.wcsinfo.dec_ref, -38.71879675101562)
+        assert np.isclose(model.meta.wcsinfo.roll_ref, 50.305115778257154)
         assert word_precision_check(
             model.meta.wcsinfo.s_region,
             (
                 'POLYGON ICRS'
-                ' 348.8563379013152 -38.874810886750495'
-                ' 348.85810582665334 -38.84318773861823'
-                ' 348.8982592685148 -38.84439628911871'
-                ' 348.89688051688233 -38.876020020321164'
+                ' 348.721466922 -38.745171194'
+                ' 348.698106607 -38.719173521'
+                ' 348.731171783 -38.701408921'
+                ' 348.754244643 -38.727146895'
             )
         )
 
@@ -912,10 +955,10 @@ def test_default_siaf_values(eng_db_ngas, data_file_nosiaf):
         model.meta.observation.date = '1/1/2017'
         model.meta.exposure.type = "MIR_IMAGE"
         stp.update_wcs(model, siaf_path=siaf_db, allow_default=False)
-        assert model.meta.wcsinfo.crpix1 == 0
-        assert model.meta.wcsinfo.crpix2 == 0
-        assert model.meta.wcsinfo.cdelt1 == 1
-        assert model.meta.wcsinfo.cdelt2 == 1
+        assert model.meta.wcsinfo.crpix1 == 24.5
+        assert model.meta.wcsinfo.crpix2 == 24.5
+        assert model.meta.wcsinfo.cdelt1 == 3.067124166666667e-05
+        assert model.meta.wcsinfo.cdelt2 == 3.090061944444444e-05
 
 
 def test_tsgrism_siaf_values(eng_db_ngas, data_file_nosiaf):
@@ -930,5 +973,5 @@ def test_tsgrism_siaf_values(eng_db_ngas, data_file_nosiaf):
         model.meta.exposure.type = "NRC_TSGRISM"
         model.meta.visit.tsovisit = True
         stp.update_wcs(model, siaf_path=siaf_db)
-        assert model.meta.wcsinfo.siaf_xref_sci == 887
+        assert model.meta.wcsinfo.siaf_xref_sci == 952
         assert model.meta.wcsinfo.siaf_yref_sci == 35
