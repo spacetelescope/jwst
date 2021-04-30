@@ -176,6 +176,9 @@ source_catalog
 - Aperture-corrected total fluxes and magnitudes are now computed for
   all sources. [#5996]
 
+- Photometric errors are now computed using the new resampled total
+  error array. [#5997]
+
 srctype
 -------
 

@@ -53,11 +53,9 @@ semimajor and semiminor axis lengths, orientation of the major axis,
 and sky coordinates at corners of the minimal bounding box enclosing
 the source.
 
-.. Note::
-
-   Errors are only created when an image has an error extension.  Products
-   created from the resampling step currently do not have an error extension
-   and the error columns are currently filled with a value of NaN.
+Photometric errors are calculated from the resampled total-error
+array contained in the ``ERR`` (``model.err``) array. Note that this
+total-error array includes source Poisson noise.
 
 Output Products
 ---------------
