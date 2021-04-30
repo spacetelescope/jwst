@@ -205,14 +205,57 @@ environmental variable ``STPIPE_DISABLE_CRDS_STEPPARS`` to ``true``.
 Running a Step in Python
 ------------------------
 
-Running a step can also be done inside the Python interpreter and is as simple
-as calling its `run()` or `call()` classmethods.
+There are a number of methods to run a step within a Python interpreter,
+depending on how much control one needs.
+
+Step.from_cmdline()
+```````````````````
+
+For individuals who are used to using the ``strun`` command, `Step.from_cmdline`
+is the most direct method of executing a step or pipeline. The only argument is
+a list of strings, representing the command line arguments one would have used
+for ``strun``. See the :ref:`Introduction discussion<run_from_python>` for an example.
+
+call()
+``````
+
+Class method `Step.call` is the slightly more programmatic, and preferred,
+method of executing a step or pipeline. When using ``call``, one gets the full
+configuration initialization, including CRDS parameter reference retrieval, that
+one gets with the ``strun`` command or ``Step.from_cmdline`` method. The call
+signature is::
+
+    Step.call(input, config_file=None, **parameters)
+
+The positional argument ``input`` is the data to be operated on, usually a
+string representing a file path or a :ref:`DataModel<datamodels>`. The optional
+keyword argument ``config_file`` is used to specify a local parameter file.
+Finally, the remaining optional keyword arguments are the parameters that the
+particular step accepts. The method returns the result of the step. A basic
+example is::
+
+    from jwst.jump import JumpStep
+    output = JumpStep.call('jw00017001001_01101_00001_nrca1_uncal.fits')
+
+makes a new instance of `JumpStep` and executes using the specified exposure
+file. `JumpStep` has a parameter ``rejection_threshold``. To use a different
+value than the default, the statement would be::
+
+    output = JumpStep.call('jw00017001001_01101_00001_nrca1_uncal.fits',
+                           rejection_threshold=10.0)
+
+If one wishes to use a :ref:`parameter_files`, specify the path to it using
+the ``config_file`` argument::
+
+    output = JumpStep.call('jw00017001001_01101_00001_nrca1_uncal.fits',
+                           config_file='my_jumpstep_config.asdf')
 
 run()
 `````
 
-The `run()` classmethod will run a previously instantiated step class. This is
-very useful if one wants to setup the step's attributes first, then run it::
+The instance method `Step.run()` is the lowest-level method to executing a step
+or pipeline. Intitialization and parameter settings is left up to the user. An
+example is::
 
     from jwst.flatfield import FlatFieldStep
 
@@ -223,41 +266,31 @@ very useful if one wants to setup the step's attributes first, then run it::
 `input` in this case can be a fits file containing the appropriate data, or the output
 of a previously run step/pipeline, which is an instance of a particular :ref:`datamodel<datamodels>`.
 
-Unlike in the use of ``call``, a parameter file supplied while instantiating ``run()`` will be ignored.
+Unlike the ``call`` class method, there is no parameter initialization that
+occurs, either by a local parameter file or from a CRDS-retrieved parameter
+reference file. Parameters can be set individually on the instance, as is shown
+above. Parameters can also be specified as keyword arguments when instantiating
+the step. The previous example could be re-written as::
 
-Using the ``.run()`` method is the same as calling the instance or class directly.
+    from jwst.flatfield import FlatFieldStep
+
+    mystep = FlatFieldStep(override_sflat = ‘sflat.fits’)
+    output = mystep.run(input)
+
+One can implement parameter reference file retrieval and use of a local
+parameter file as follows::
+
+    from stpipe import config_parser
+    from jwst.flatfield import FlatFieldStep
+
+    config = FlatFieldStep.get_config_from_reference(input)
+    local_config = config_parser.load_config_file('my_flatfield_config.asdf')
+    config_parser.merge_config(config, local_config)
+
+    flat_field_step = FlatFieldStep.from_config_section(config)
+    output = flat_field_step.run(input)
+
+Using the ``.run()`` method is the same as calling the instance directly.
 They are equivalent::
 
     output = mystep(input)
-
-call()
-``````
-
-If one has all the parameter in a parameter file or can pass the
-arguments directly to the step, one can use the `call()` method, which creates a new
-instance of the class every time you call it.  So::
-
-    from jwst.jump import JumpStep
-    output = JumpStep.call(input)
-
-makes a new instance of `FlatFieldStep` and then runs. Because it is a new
-instance, it ignores any attributes of `mystep` that one may have set earlier,
-such overriding the sflat.
-
-The nice thing about call() is that it can take a parameter file, so::
-
-    output = mystep.call(input, config_file=’my_flatfield.asdf’)
-
-and it will take all the parameter from the config file.
-
-Parameter parameters may be passed to the step by setting the `config_file`
-kwarg in `call` (which takes a path to a parameter file) or as keyword
-arguments.  Any remaining positional arguments are passed along to the step's
-`process()` method::
-
-    from jwst.stpipe import cleanup
-
-    cleanup.call('image.fits', config_file='do_cleanup.asdf', threshold=42.0)
-
-So use call() if you’re passing a config file or passing along args or kwargs.
-Otherwise use run().

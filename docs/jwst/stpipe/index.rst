@@ -16,7 +16,8 @@ For Users
    config_cfg.rst
    call_via_call.rst
    call_via_run.rst
-   ../cfg_deprecation.rst
+   parameter_files.rst
+   cfg_deprecation.rst
 
 
 .. _stpipe-devel-steps:
