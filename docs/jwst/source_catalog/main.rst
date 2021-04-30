@@ -53,6 +53,10 @@ semimajor and semiminor axis lengths, orientation of the major axis,
 and sky coordinates at corners of the minimal bounding box enclosing
 the source.
 
+Photometric errors are calculated from the resampled total-error
+array contained in the ``ERR`` (``model.err``) array. Note that this
+total-error array includes source Poisson noise.
+
 Output Products
 ---------------
 
