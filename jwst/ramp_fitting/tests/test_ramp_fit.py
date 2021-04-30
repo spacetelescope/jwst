@@ -272,7 +272,9 @@ class TestMethods:
         assert slopes[0].dq[10, 10] == 524288 + 1
         assert slopes[0].dq[20, 20] == 524288 + 1
 
+    '''
     # TODO Skip this to put subarray tests in step class tests
+    @pytest.mark.skip(reason="subarray moved to step code")
     def test_subarray_5groups(self, method):
         # all pixel values are zero. So slope should be zero
         model1, gdq, rnModel, pixdq, err, gain = setup_subarray_inputs(
@@ -289,6 +291,7 @@ class TestMethods:
         coeff = np.polyfit(xvalues, yvalues, 1)
         slopes = ramp_fit(model1, 64000, False, rnModel, gain, 'OLS', 'optimal', 'none')
         np.testing.assert_allclose(slopes[0].data[12, 1], coeff[0], 1e-6)
+    '''
 
     def test_simple_ramp(self, method):
         # Here given a 10 group ramp with an exact slope of 20/group. The output slope should be 20.
@@ -465,9 +468,9 @@ class TestMethods:
         ingain = 2
         inreadnoise = 10
         ngroups = 2
-        model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
-                                                              gain=ingain, readnoise=inreadnoise,
-                                                              deltatime=grouptime)
+        model1, gdq, rnModel, pixdq, err, gain = setup_inputs(
+            ngroups=ngroups, gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
+
         model1.data[0, 0, 50, 50] = 10.0
         model1.data[0, 1, 50, 50] = 10.0 + deltaDN
         slopes = ramp_fit(model1, 1024 * 30000., True, rnModel, gain, 'OLS', 'optimal', 'none')
@@ -583,8 +586,8 @@ def test_twenty_groups_two_segments():
         a) gdq all 0 ; b) 1 CR (2 segments) c) 1 CR then SAT (2 segments)
     """
     (ngroups, nints, nrows, ncols, deltatime) = (20, 1, 1, 3, 6.)
-    model1, gdq, rnModel, pixdq, err, gain = setup_small_cube(ngroups,
-                                                              nints, nrows, ncols, deltatime)
+    model1, gdq, rnModel, pixdq, err, gain = setup_small_cube(
+        ngroups, nints, nrows, ncols, deltatime)
 
     # a) ramp having gdq all 0
     model1.data[0, :, 0, 0] = np.arange(ngroups) * 10. + 30.
@@ -749,6 +752,11 @@ def setup_small_cube(ngroups=10, nints=1, nrows=2, ncols=2, deltatime=10.,
     model1.meta.exposure.group_time = deltatime
     model1.meta.exposure.nframes = 1
     model1.meta.exposure.groupgap = 0
+
+
+    return model1, gdq, read_noise, pixdq, err, gain
+
+    '''
     gain = GainModel(data=gain)
     gain.meta.instrument.name = 'MIRI'
 
@@ -766,6 +774,7 @@ def setup_small_cube(ngroups=10, nints=1, nrows=2, ncols=2, deltatime=10.,
     rnModel.meta.subarray.ysize = nrows
 
     return model1, gdq, rnModel, pixdq, err, gain
+    '''
 
 
 # Need test for multi-ints near zero with positive and negative slopes
@@ -798,6 +807,11 @@ def setup_inputs(ngroups=10, readnoise=10, nints=1,
     model1.meta.exposure.nframes = 1
     model1.meta.exposure.groupgap = 0
     model1.meta.exposure.drop_frames1 = 0
+
+    return model1, gdq, read_noise, pixdq, err, gain
+
+
+    '''
     gain = GainModel(data=gain)
     gain.meta.instrument.name = 'MIRI'
     gain.meta.subarray.xstart = 1
@@ -811,8 +825,10 @@ def setup_inputs(ngroups=10, readnoise=10, nints=1,
     rnModel.meta.subarray.xsize = ncols
     rnModel.meta.subarray.ysize = nrows
     return model1, gdq, rnModel, pixdq, err, gain
+    '''
 
 
+'''
 def setup_subarray_inputs(ngroups=10, readnoise=10, nints=1,
                           nrows=1032, ncols=1024, subxstart=1, subystart=1,
                           subxsize=1024, subysize=1032, nframes=1,
@@ -856,3 +872,4 @@ def setup_subarray_inputs(ngroups=10, readnoise=10, nints=1,
     rnModel.meta.subarray.xsize = 1024
     rnModel.meta.subarray.ysize = 1032
     return model1, gdq, rnModel, pixdq, err, gain
+'''

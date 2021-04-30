@@ -27,16 +27,16 @@ def test_pix_0():
     """
 
     ngroups, nints, nrows, ncols, deltatime, gain, readnoise = set_scalars()
-    ramp_model, rnoise_model, gain_model, pixdq, groupdq, err = create_mod_arrays(ngroups,
-                                                                                  nints, nrows, ncols, deltatime, gain, readnoise)
+    ramp_model, rnoise_model, gain_model, pixdq, groupdq, err = create_mod_arrays(
+        ngroups, nints, nrows, ncols, deltatime, gain, readnoise)
 
     # Populate pixel-specific SCI and GROUPDQ arrays
     ramp_model.data[0, :, 0, 0] = np.array([15., 25., 35., 54., 55.,
                                             65., 75., 94., 95., 105.], dtype=np.float32)
     ramp_model.groupdq[0, :, 0, 0] = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
-    new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit(ramp_model, 1024 * 300., True,
-                                                      rnoise_model, gain_model, 'OLS', 'optimal', 'none')
+    new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit(
+        ramp_model, 1024 * 300., True, rnoise_model, gain_model, 'OLS', 'optimal', 'none')
 
     # Set truth values for PRIMARY results:
     # [data, dq, err, var_p, var_r]
@@ -62,16 +62,16 @@ def test_pix_1():
     """
 
     ngroups, nints, nrows, ncols, deltatime, gain, readnoise = set_scalars()
-    ramp_model, rnoise_model, gain_model, pixdq, groupdq, err = create_mod_arrays(ngroups,
-                                                                                  nints, nrows, ncols, deltatime, gain, readnoise)
+    ramp_model, rnoise_model, gain_model, pixdq, groupdq, err = create_mod_arrays(
+        ngroups, nints, nrows, ncols, deltatime, gain, readnoise)
 
     # Populate pixel-specific SCI and GROUPDQ arrays
     ramp_model.data[0, :, 0, 0] = np.array([15., 25., 35., 54., 55., 65., 75.,
                                             94., 95., 105.], dtype=np.float32)
     ramp_model.groupdq[0, :, 0, 0] = np.array([0, 4, 4, 0, 2, 2, 2, 2, 2, 2])
 
-    new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit(ramp_model, 1024 * 300., True,
-                                                      rnoise_model, gain_model, 'OLS', 'optimal', 'none')
+    new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit(
+        ramp_model, 1024 * 300., True, rnoise_model, gain_model, 'OLS', 'optimal', 'none')
 
     # Set truth values for PRIMARY results:
     p_true = [1.8999999, 6, 1.046670, 0.02636364, 1.0691562]
@@ -92,16 +92,16 @@ def test_pix_2():
     """
 
     ngroups, nints, nrows, ncols, deltatime, gain, readnoise = set_scalars()
-    ramp_model, rnoise_model, gain_model, pixdq, groupdq, err = create_mod_arrays(ngroups,
-                                                                                  nints, nrows, ncols, deltatime, gain, readnoise)
+    ramp_model, rnoise_model, gain_model, pixdq, groupdq, err = create_mod_arrays(
+        ngroups, nints, nrows, ncols, deltatime, gain, readnoise)
 
     # Populate pixel-specific SCI and GROUPDQ arrays
     ramp_model.data[0, :, 0, 0] = np.array([15., 25., 35., 54., 55., 65., 75., 94.,
                                             95., 105.], dtype=np.float32)
     ramp_model.groupdq[0, :, 0, 0] = np.array([0, 0, 0, 4, 0, 4, 0, 4, 2, 2])
 
-    new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit(ramp_model, 1024 * 300., True,
-                                                      rnoise_model, gain_model, 'OLS', 'optimal', 'none')
+    new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit(
+        ramp_model, 1024 * 300., True, rnoise_model, gain_model, 'OLS', 'optimal', 'none')
 
     # Set truth values for PRIMARY results:
     p_true = [0.84761256, 6, 0.42986465, 0.00659091, 0.1781927]
@@ -129,16 +129,16 @@ def test_pix_3():
     """
 
     ngroups, nints, nrows, ncols, deltatime, gain, readnoise = set_scalars()
-    ramp_model, rnoise_model, gain_model, pixdq, groupdq, err = create_mod_arrays(ngroups,
-                                                                                  nints, nrows, ncols, deltatime, gain, readnoise)
+    ramp_model, rnoise_model, gain_model, pixdq, groupdq, err = create_mod_arrays(
+            ngroups, nints, nrows, ncols, deltatime, gain, readnoise)
 
     # Populate pixel-specific SCI and GROUPDQ arrays
     ramp_model.data[0, :, 0, 0] = np.array([15., 25., 35., 54., 55., 65., 75.,
                                             94., 95., 105.], dtype=np.float32)
     ramp_model.groupdq[0, :, 0, 0] = np.array([0, 0, 0, 0, 0, 0, 0, 0, 4, 0])
 
-    new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit(ramp_model, 1024 * 300., True,
-                                                      rnoise_model, gain_model, 'OLS', 'optimal', 'none')
+    new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit(
+        ramp_model, 1024 * 300., True, rnoise_model, gain_model, 'OLS', 'optimal', 'none')
 
     # Set truth values for PRIMARY results:
     p_true = [1.0746869, 4, 0.12186482, 0.00227273, 0.01257831]
@@ -166,16 +166,16 @@ def test_pix_4():
     """
 
     ngroups, nints, nrows, ncols, deltatime, gain, readnoise = set_scalars()
-    ramp_model, rnoise_model, gain_model, pixdq, groupdq, err = create_mod_arrays(ngroups,
-                                                                                  nints, nrows, ncols, deltatime, gain, readnoise)
+    ramp_model, rnoise_model, gain_model, pixdq, groupdq, err = create_mod_arrays(
+            ngroups, nints, nrows, ncols, deltatime, gain, readnoise)
 
     # Populate pixel-specific SCI and GROUPDQ arrays
     ramp_model.data[0, :, 0, 0] = np.array([15., 25., 35., 54., 1055., 1065., 1075.,
                                             2594., 2595., 2605.], dtype=np.float32)
     ramp_model.groupdq[0, :, 0, 0] = np.array([0, 2, 2, 2, 2, 2, 2, 2, 2, 2])
 
-    new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit(ramp_model, 1024 * 300., True,
-                                                      rnoise_model, gain_model, 'OLS', 'optimal', 'none')
+    new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit(
+        ramp_model, 1024 * 300., True, rnoise_model, gain_model, 'OLS', 'optimal', 'none')
 
     # Set truth values for PRIMARY results:
     p_true = [1.5, 2, 1.047105, 0.02727273, 1.0691562]
@@ -196,16 +196,16 @@ def test_pix_5():
     """
 
     ngroups, nints, nrows, ncols, deltatime, gain, readnoise = set_scalars()
-    ramp_model, rnoise_model, gain_model, pixdq, groupdq, err = create_mod_arrays(ngroups,
-                                                                                  nints, nrows, ncols, deltatime, gain, readnoise)
+    ramp_model, rnoise_model, gain_model, pixdq, groupdq, err = create_mod_arrays(
+        ngroups, nints, nrows, ncols, deltatime, gain, readnoise)
 
     # Populate pixel-specific SCI and GROUPDQ arrays
     ramp_model.data[0, :, 0, 0] = np.array([15., 25., 35., 54., 2055., 2065., 2075.,
                                             2094., 2095., 2105.], dtype=np.float32)
     ramp_model.groupdq[0, :, 0, 0] = np.array([0, 0, 0, 0, 4, 0, 0, 0, 0, 0])
 
-    new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit(ramp_model, 1024 * 300., True,
-                                                      rnoise_model, gain_model, 'OLS', 'optimal', 'none')
+    new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit(
+        ramp_model, 1024 * 300., True, rnoise_model, gain_model, 'OLS', 'optimal', 'none')
 
     # Set truth values for PRIMARY results:
     p_true = [1.076075, 4, 0.16134359, 0.00227273, 0.02375903]
@@ -695,20 +695,4 @@ def create_mod_arrays(ngroups, nints, nrows, ncols, deltatime, gain, readnoise):
     ramp_model.meta.exposure.groupgap = 0
     ramp_model.meta.exposure.drop_frames1 = 0
 
-    # Create and populate gain model
-    gain_model = GainModel(data=gain)
-    gain_model.meta.instrument.name = 'MIRI'
-    gain_model.meta.subarray.xstart = 1
-    gain_model.meta.subarray.ystart = 1
-    gain_model.meta.subarray.xsize = ncols
-    gain_model.meta.subarray.ysize = nrows
-
-    # Create and populate readnoise model
-    rnoise_model = ReadnoiseModel(data=read_noise)
-    rnoise_model.meta.instrument.name = 'MIRI'
-    rnoise_model.meta.subarray.xstart = 1
-    rnoise_model.meta.subarray.ystart = 1
-    rnoise_model.meta.subarray.xsize = ncols
-    rnoise_model.meta.subarray.ysize = nrows
-
-    return ramp_model, rnoise_model, gain_model, pixdq, gdq, err
+    return ramp_model, read_noise, gain, pixdq, gdq, err
