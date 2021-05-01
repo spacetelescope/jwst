@@ -217,7 +217,7 @@ def test_int_times2(generate_miri_reffiles, setup_inputs):
 
 
 
-@pytest.mark.skip(reason="GLS code does not [yet] handle single group integrations.")
+@pytest.mark.skip(reason="This test is failing after moving ramp fitting to STCAL.")
 def test_ramp_fit_step_subarray(generate_miri_reffiles, setup_inputs):
     """
     Create a simple input to instantiate RampFitStep and execute a call to test
@@ -242,4 +242,14 @@ def test_ramp_fit_step_subarray(generate_miri_reffiles, setup_inputs):
         model, override_gain=override_gain, override_readnoise=override_readnoise,
         maximum_cores="none")
 
+    '''
+    print("-" * 70)
+    print(f"slopes.data[12, 1] = {slopes.data[12, 1]}") 
+    print("-" * 70)
+    print(f"coeff[0] = {coeff[0]}")
+    print("-" * 70)
+    '''
+
+    # slopes.data[12, 1]    = 11.942501068115234
+    # coeff[0]              = 11.799999999999999
     np.testing.assert_allclose(slopes.data[12, 1], coeff[0], 1e-6)
