@@ -214,7 +214,21 @@ Step.from_cmdline()
 For individuals who are used to using the ``strun`` command, `Step.from_cmdline`
 is the most direct method of executing a step or pipeline. The only argument is
 a list of strings, representing the command line arguments one would have used
-for ``strun``. See the :ref:`Introduction discussion<run_from_python>` for an example.
+for ``strun``. The call signature is::
+
+    Step.from_cmdline([string,...])
+
+For example, given the following command-line::
+
+    $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits
+            --steps.linearity.override_linearity='my_lin.fits'
+
+the equivalent `from_cmdline` call would be::
+
+    from jwst.pipeline import Detector1Pipeline
+    Detector1Pipeline.from_cmdline(['jw00017001001_01101_00001_nrca1_uncal.fits',
+                                   'steps.linearity.override_linearity', 'my_lin.fits'])
+
 
 call()
 ``````
@@ -242,10 +256,10 @@ file. `JumpStep` has a parameter ``rejection_threshold``. To use a different
 value than the default, the statement would be::
 
     output = JumpStep.call('jw00017001001_01101_00001_nrca1_uncal.fits',
-                           rejection_threshold=10.0)
+                           rejection_threshold=42.0)
 
-If one wishes to use a :ref:`parameter_files`, specify the path to it using
-the ``config_file`` argument::
+If one wishes to use a :ref:`parameter file<parameter_files>`, specify the path
+to it using the ``config_file`` argument::
 
     output = JumpStep.call('jw00017001001_01101_00001_nrca1_uncal.fits',
                            config_file='my_jumpstep_config.asdf')
@@ -254,13 +268,13 @@ run()
 `````
 
 The instance method `Step.run()` is the lowest-level method to executing a step
-or pipeline. Intitialization and parameter settings is left up to the user. An
+or pipeline. Initialization and parameter settings are left up to the user. An
 example is::
 
     from jwst.flatfield import FlatFieldStep
 
     mystep = FlatFieldStep()
-    mystep.override_sflat = ‘sflat.fits’
+    mystep.override_sflat = 'sflat.fits'
     output = mystep.run(input)
 
 `input` in this case can be a fits file containing the appropriate data, or the output
@@ -274,7 +288,7 @@ the step. The previous example could be re-written as::
 
     from jwst.flatfield import FlatFieldStep
 
-    mystep = FlatFieldStep(override_sflat = ‘sflat.fits’)
+    mystep = FlatFieldStep(override_sflat='sflat.fits')
     output = mystep.run(input)
 
 One can implement parameter reference file retrieval and use of a local

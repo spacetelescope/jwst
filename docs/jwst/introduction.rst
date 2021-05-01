@@ -83,9 +83,9 @@ from the command line using the ``strun`` command:
     $ strun <pipeline_name, class_name, or parameter_file> <input_file>
 
 The first argument to ``strun`` must be one of either a pipeline name, python
-class of the step or pipeline to be run, or the name of a parameter (.asdf or
-.cfg) file for the desired step or pipeline (see :ref:`parameter_files`). The second
-argument to ``strun`` is the name of the input data file to be processed.
+class of the step or pipeline to be run, or the name of a parameter file for the
+desired step or pipeline (see :ref:`parameter_files`). The second argument to
+``strun`` is the name of the input data file to be processed.
 
 For example, the Stage 1 pipeline is implemented by the class
 :ref:`jwst.pipeline.Detector1Pipeline <calwebb_detector1>`. The command to run this pipeline is as
@@ -94,7 +94,7 @@ follows:
 
   $ strun jwst.pipeline.Detector1Pipeline jw00017001001_01101_00001_nrca1_uncal.fits
 
-Pipeline classes also have a "pipeline name, or "alias", that can be used instead of the
+Pipeline classes also have a **pipeline name**, or **alias**, that can be used instead of the
 full class specification. For example, ``jwst.pipeline.Detector1Pipeline`` has the
 alias ``calwebb_detector1`` and can be run as
 ::
@@ -151,10 +151,10 @@ three different sources:
 
 - The name of the input file
 - The product name defined in an association
-- As specified by the :ref:`output_file <intro_output_file>` argument
+- As specified by the :ref:`output_file <intro_output_file>` parameter
 
-Regardless of the source, each pipeline/step uses the name as a "base
-name", onto which several different suffixes are appended, which
+Regardless of the source, each pipeline/step uses the name as a base
+name, onto which several different suffixes are appended, which
 indicate the type of data in that particular file. A list of the main suffixes
 can be :ref:`found below <pipeline_step_suffix_definitions>`.
 
@@ -171,17 +171,17 @@ input. Normally, the output file is defined in each association's "product name"
 which defines the basename that will be used for output file naming.
 
 Often, one may reprocess the same set of data multiple times, such as to change
-reference files or parameter files. When doing so, it is highly suggested to use
+reference files or parameters. When doing so, it is highly suggested to use
 ``output_dir`` to place the results in a different directory instead of using
-``output_file`` to rename the output files. Most pipelines and steps create a
-set of output files. Separating runs by directory may be much easier to manage.
+``output_file`` to rename the output files. Most pipelines and steps create sets
+of output files. Separating runs by directory may be much easier to manage.
 
 
 Individual Step Outputs
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 If individual steps are executed without an output file name specified via
-the ``output_file`` argument, the ``stpipe`` infrastructure
+the ``output_file`` parameter, the ``stpipe`` infrastructure
 automatically uses the input file name as the root of the output file name
 and appends the name of the step as an additional suffix to the input file
 name. If the input file name already has a known suffix, that suffix
@@ -230,7 +230,7 @@ Universal Parameters
 --------------------
 
 The set of parameters that are common to all pipelines and steps are referred to
-as **universal parameters** and are described below:
+as **universal parameters** and are described below.
 
 .. _intro_output_directory:
 
@@ -239,7 +239,7 @@ Output Directory
 
 By default, all pipeline and step outputs will drop into the current
 working directory, i.e., the directory in which the process is
-running. To change this, use the ``output_dir`` argument. For example, to
+running. To change this, use the ``output_dir`` parameter. For example, to
 have all output from ``calwebb_detector1``, including any saved
 intermediate steps, appear in the sub-directory ``calibrated``, use
 ::
@@ -267,13 +267,11 @@ output data model from one step to the input of the next step, without
 saving any intermediate results to disk. If you want to save the results from
 individual steps, you have two options:
 
-  - Specify ``save_results``
-
+  - Specify ``save_results``.
     This option will save the results of the step, using a filename
     created by the step.
 
-  - Specify a file name using ``output_file <basename>``
-
+  - Specify a file name using ``output_file <basename>``.
     This option will save the step results using the name specified.
 
 For example, to save the result from the dark current step of
@@ -288,7 +286,7 @@ A file, ``intermediate_dark_current.fits``, will then be created. Note that the
 suffix of the step is always appended to any given name.
 
 You can also specify a particular file name for saving the end result of
-the entire pipeline using the ``--output_file`` argument also
+the entire pipeline using the ``--output_file`` parameter also
 ::
 
     $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits
@@ -306,11 +304,11 @@ Override Reference File
 
 For any step that uses a calibration reference file you always have the
 option to override the automatic selection of a reference file from CRDS and
-specify your own file to use. Arguments for this are of the form
+specify your own file to use. Parameters for this are of the form
 ``--override_<ref_type>``, where ``ref_type`` is the name of the reference file
 type, such as ``mask``, ``dark``, ``gain``, or ``linearity``. When in doubt as to
 the correct name, just use the ``-h`` argument to ``strun`` to show you the list
-of available override arguments.
+of available override parameters.
 
 To override the use of the default linearity file selection, for example,
 you would use:
@@ -322,11 +320,11 @@ you would use:
 Skip
 ^^^^
 
-Another argument available to all steps in a pipeline is ``skip``. If
+Another parameter available to all steps in a pipeline is ``skip``. If
 ``skip=True`` is set for any step, that step will be skipped, with the output of
 the previous step being automatically passed directly to the input of the step
 following the one that was skipped. For example, if you want to skip the
-linearity correction step, one can specify the ``skip`` argument for the
+linearity correction step, one can specify the ``skip`` parameter for the
 ``strun`` command:
 ::
 
@@ -367,7 +365,7 @@ pipeline cfg file.
 For example:
 ::
 
-    $ strun calwebb_detector1.asdf jw00017001001_01101_00001_nrca1_uncal.fits
+    $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits
         --logcfg=pipeline-log.cfg
 
 and the file ``pipeline-log.cfg`` contains:
@@ -400,37 +398,18 @@ You can execute a pipeline or a step from within python by using the
 ``call`` method of the class.
 
 The ``call`` method creates a new instance of the class and runs the pipeline or
-step. Optional parameter settings can be specified by supplying a parameter file,
-or via keyword arguments. Examples are shown on the :ref:`Execute via call()<call_examples>` page.
-::
+step. Optional parameter settings can be specified by via keyword arguments or
+supplying a parameter file. Some examples are shown below. For more information,
+see :ref:`Execute via call()<call_examples>`::
 
  from jwst.pipeline import Detector1Pipeline
- result = Detector1Pipeline.call('jw00017001001_01101_00001_nrca1_uncal.fits', save_results=True)
+ result = Detector1Pipeline.call('jw00017001001_01101_00001_nrca1_uncal.fits')
 
  from jwst.linearity import LinearityStep
- result = LinearityStep.call('jw00001001001_01101_00001_mirimage_uncal.fits', save_results=True)
+ result = LinearityStep.call('jw00001001001_01101_00001_mirimage_uncal.fits')
 
 For more details on the different ways to run a pipeline step, see
 the :ref:`Configuring a Step<configuring-a-step>` page.
-
-To mimic exactly how a pipeline is run from the command line, but within a Python script, use `Step.from_cmdline`.
-For example, the command line below:
-::
-
-    $ strun calwebb_spec2 jw00017001001_01101_00001_nrca1_uncal.fits
-        --steps.dark_current.override_dark='my_dark.fits'
-
-can be executed from within Python as follows:
-
-.. doctest-skip::
-
-   >>> from jwst.stpipe import Step
-   >>> Step.from_cmdline(['calwebb_spec2',
-   'jw00017001001_01101_00001_nrca1_uncal.fits',
-           '--steps.dark_current.override_dark', 'my_dark.fits'])
-
-``from_cmdline`` returns the ``Step`` object executed, ``Detector1Pipeline`` in
-the above example.
 
 Available Pipelines
 ===================

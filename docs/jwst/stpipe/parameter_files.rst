@@ -7,7 +7,7 @@ Parameter files can be used to specify parameter values when running a
 pipeline or individual steps. For JWST, parameter files are retrieved from
 CRDS, just as with other reference files. If there is no match between a step,
 the input data, and CRDS, the coded defaults are used. These values can be
-overridden either by the command line options, as previously described, and by a
+overridden either by the command line options and/or a
 local parameter file. See :ref:`Parameter Precedence` for a full description of
 how a parameter gets its final value.
 
