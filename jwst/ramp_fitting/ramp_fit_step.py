@@ -75,16 +75,126 @@ def compute_int_times(input_model):
     return int_times
 
 
-# For when data model creation from tupble the following is needed:
-    '''
-    if new_model is not None:
-        new_model.meta.bunit_data = 'DN/s'
-        new_model.meta.bunit_err = 'DN/s'
+def create_output_image_model(input_model, image_info):
+    """
+    Creates output ImageModel using keyworsd from the inut RampModel and the
+    computed arrays from the ramp fitting.
 
-    if int_model is not None:
-        int_model.meta.bunit_data = 'DN/s'
-        int_model.meta.bunit_err = 'DN/s'
-    '''
+    Parameter
+    ---------
+    input_model: RampModel
+        The input RampModel to be fitted.  It contains all needed keywords.
+
+    image_info: tuple
+        This contains the fitted arrays for the output image.
+        (data, dq, var_poisson, var_rnoise, err)
+
+    Return
+    ------
+    image_model: ImageModel
+        An image model created from the input ramp model keywords and the
+        computed ramp fitting arrays.
+    """
+    nints, ngroups, nrows, ncols = input_model.data.shape
+    imshape = (nrows, ncols)
+
+    # Create image model
+    image_model = datamodels.ImageModel(
+        data=np.zeros(imshape, dtype=np.float32),
+        dq=np.zeros(imshape, dtype=np.float32),
+        var_poisson=np.zeros(imshape, dtype=np.float32),
+        var_rnoise=np.zeros(imshape, dtype=np.float32),
+        var_err=np.zeros(imshape, dtype=np.float32))
+
+    # Update all keys from input
+    image_model.update(input_model)
+
+    # Set image arrays
+    data, dq, var_poisson, var_rnoise, err = image_info
+    image_model.data = data
+    image_model.dq = dq
+    image_model.var_poisson = var_poisson
+    image_model.var_rnoise = var_rnoise
+    image_model.err = err
+
+    return image_model
+
+
+def create_optional_results_model(opt_info):
+    """
+    Creates the optional RampFitOutputModel from the computed arrays from ramp
+    fitting
+
+    Parameter
+    ---------
+    opt_info: tuple
+        A tuple containing the optional results arrays from ramp fitting.
+
+    Return
+    ------
+    opt_model: RampFitOutputModel
+        The optional RampFitOuptput model computed during ramp fitting.
+    """
+    slope, sigslope, var_poisson, var_rnoise, yint = opt_info[:5]
+    sigyint, pedestal, weights, crmag = opt_info[5:]
+    opt_model = datamodels.RampFitOutputModel(
+        slope=slope,
+        sigslope=sigslope,
+        var_poisson=var_poisson,
+        var_rnoise=var_rnoise,
+        yint=yint,
+        sigyint=sigyint,
+        pedestal=pedestal,
+        weights=weights,
+        crmag=crmag)
+
+    return opt_model
+
+
+def create_output_integration_model(input_model, int_info):
+    """
+    Creates the integration CubeModel from the computed arrays from ramp
+    fittingl
+
+    Parameter
+    ---------
+    input_model: RampModel
+        The input RampModel to be fitted.  It contains all needed keywords.
+
+    int_info: tuple
+        A tuple containing the integration arrays from ramp fitting.
+
+    Return
+    ------
+    int_model: CubeModel
+        The integration Cubemodel computed during ramp fitting.
+    """
+    nints, ngroups, nrows, ncols = input_model.data.shape
+
+    cubeshape = (nints, nrows, ncols)
+    int_model = datamodels.CubeModel(
+        data=np.zeros(cubeshape, dtype=np.float32),
+        err=np.zeros(cubeshape, dtype=np.float32),
+        dq=np.zeros(cubeshape, dtype=np.float32),
+        var_poisson=np.zeros(cubeshape, dtype=np.float32),
+        var_rnoise=np.zeros(cubeshape, dtype=np.float32))
+    int_model.int_times = None
+
+    # Get keywords from input model
+    int_model.update(input_model)
+
+
+    data, dq, var_poisson, var_rnoise, int_times, err = int_info
+    int_model.data = data
+    int_model.err = err
+    int_model.dq = dq
+    int_model.var_poisson = var_poisson
+    int_model.var_rnoise = var_rnoise
+    int_model.int_times = int_times
+
+    return int_model
+
+
 class RampFitStep (Step):
 
     """
@@ -153,7 +263,7 @@ class RampFitStep (Step):
             # converted to simple arrays and the models created here, not in
             # the ramp fitting code.
             # TODO: Change variable names, since models are not returned.
-            out_model, int_model, opt_model, gls_opt_model = ramp_fit(
+            image_info, int_info, opt_info, gls_opt_model = ramp_fit(
                 input_model, buffsize, self.save_opt, 
                 readnoise_2d, gain_2d, 
                 self.algorithm, self.weighting, max_cores
@@ -169,14 +279,17 @@ class RampFitStep (Step):
                 gls_opt_model, 'fitoptgls', output_file=self.opt_name
             )
 
-        # TODO: data models will not be returned from RampFit, so the below
-        # code no longer works
-
         # Save the OLS optional fit product, if it exists
-        if opt_model is not None:
+        if opt_info is not None:
+            opt_model = create_optional_results_model(opt_info)
             self.save_model(opt_model, 'fitopt', output_file=self.opt_name)
 
-        if out_model is not None:
+        if image_info is not None:
+            input_model.int_times = old_int_times
+            out_model = create_output_image_model(input_model, image_info)
+            if out_model is not None:
+                out_model.meta.bunit_data = 'DN/s'
+                out_model.meta.bunit_err = 'DN/s'
             out_model.meta.cal_step.ramp_fit = 'COMPLETE'
             if (input_model.meta.exposure.type in ['NRS_IFU', 'MIR_MRS']) or (
                 input_model.meta.exposure.type in ['NRS_AUTOWAVE', 'NRS_LAMP'] and
@@ -184,7 +297,13 @@ class RampFitStep (Step):
 
                 out_model = datamodels.IFUImageModel(out_model)
 
-        if int_model is not None:
+
+        # TODO
+        if int_info is not None:
+            int_model = create_output_integration_model(input_model, int_info)
+            if int_model is not None:
+                int_model.meta.bunit_data = 'DN/s'
+                int_model.meta.bunit_err = 'DN/s'
             int_model.meta.cal_step.ramp_fit = 'COMPLETE'
 
         return out_model, int_model

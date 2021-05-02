@@ -175,6 +175,9 @@ def test_ramp_fit_step(generate_miri_reffiles, setup_inputs):
         model, override_gain=override_gain, override_readnoise=override_readnoise,
         maximum_cores="none")
 
+    assert slopes is not None
+    assert cube_model is not None
+
     # Test to make sure the ramps are as expected and that the step is complete
     np.testing.assert_allclose(slopes.data, ans_slopes, rtol=1e-5)
     assert slopes.meta.cal_step.ramp_fit == "COMPLETE"
