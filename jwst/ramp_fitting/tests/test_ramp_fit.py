@@ -780,10 +780,10 @@ class TestMethods:
         np.testing.assert_allclose(sdata[50, 50], avg_slope, rtol=1e-5)
 
 
-''' BEGIN
 def test_twenty_groups_two_segments():
-    """Test to verify weighting of multiple segments in combination:
-        a) gdq all 0 ; b) 1 CR (2 segments) c) 1 CR then SAT (2 segments)
+    """
+    Test to verify weighting of multiple segments in combination:
+    a) gdq all 0 ; b) 1 CR (2 segments) c) 1 CR then SAT (2 segments)
     """
     (ngroups, nints, nrows, ncols, deltatime) = (20, 1, 1, 3, 6.)
     model1, gdq, rnModel, pixdq, err, gain = setup_small_cube(
@@ -804,17 +804,23 @@ def test_twenty_groups_two_segments():
     gdq[0, 15:, 0, 2] = SATURATED
     model1.data[0, 15:, 0, 2] = 25000.
 
-    new_mod, int_model, opt_model, gls_opt_model = ramp_fit(model1, 1024 * 30000.,
-                                                            True, rnModel, gain, 'OLS',
-                                                            'optimal', 'none')
+    slopes, int_info, opt_info, gls_opt_model = ramp_fit(
+        model1, 1024 * 30000., True, rnModel, gain, 'OLS', 'optimal', 'none')
+
+    assert slopes is not None
+    assert opt_info is not None
+
+    sdata, sdq, svar_poisson, svar_rnoise, serr = slopes
+    oslope, osigslope, ovar_poisson, ovar_rnoise, oyint = opt_info[:5]
+    osigyint, opedestal, oweights, ocrmag = opt_info[5:]
 
     # Check some PRI & OPT output arrays
-    np.testing.assert_allclose(new_mod.data, 10. / deltatime, rtol=1E-4)
+    np.testing.assert_allclose(sdata, 10. / deltatime, rtol=1E-4)
+    wh_data = oslope != 0.  # only test existing segments
 
-    wh_data = opt_model.slope != 0.  # only test existing segments
-    np.testing.assert_allclose(opt_model.slope[wh_data], 10. / deltatime, rtol=1E-4)
-    np.testing.assert_allclose(opt_model.yint[0, 0, 0, :], model1.data[0, 0, 0, :], rtol=1E-5)
-    np.testing.assert_allclose(opt_model.pedestal[0, 0, :],
+    np.testing.assert_allclose(oslope[wh_data], 10. / deltatime, rtol=1E-4)
+    np.testing.assert_allclose(oyint[0, 0, 0, :], model1.data[0, 0, 0, :], rtol=1E-5)
+    np.testing.assert_allclose(opedestal[0, 0, :],
                                model1.data[0, 0, 0, :] - 10., rtol=1E-5)
 
 
@@ -829,30 +835,41 @@ def test_miri_all_sat():
 
     model1.groupdq[:, :, :, :] = SATURATED
 
-    new_mod, int_model, opt_model, gls_opt_model = ramp_fit(
+    slopes, int_info, opt_info, gls_opt_model = ramp_fit(
         model1, 1024 * 30000., True, rnModel, gain, 'OLS', 'optimal', 'none')
 
+    assert slopes is not None
+    assert int_info is not None
+    assert opt_info is not None
+
+    sdata, sdq, svar_poisson, svar_rnoise, serr = slopes
+
+    idata, idq, ivar_poisson, ivar_rnoise, iint_times, ierr = int_info
+
+    oslope, osigslope, ovar_poisson, ovar_rnoise, oyint = opt_info[:5]
+    osigyint, opedestal, oweights, ocrmag = opt_info[5:]
+
     # Check PRI output arrays
-    np.testing.assert_allclose(new_mod.data, 0.0, atol=1E-6)
-    np.testing.assert_allclose(new_mod.err, 0.0, atol=1E-6)
-    np.testing.assert_allclose(new_mod.var_poisson, 0.0, atol=1E-6)
-    np.testing.assert_allclose(new_mod.var_rnoise, 0.0, atol=1E-6)
+    np.testing.assert_allclose(sdata, 0.0, atol=1E-6)
+    np.testing.assert_allclose(serr, 0.0, atol=1E-6)
+    np.testing.assert_allclose(svar_poisson, 0.0, atol=1E-6)
+    np.testing.assert_allclose(svar_rnoise, 0.0, atol=1E-6)
 
     # Check INT output arrays
-    np.testing.assert_allclose(int_model.data, 0.0, atol=1E-6)
-    np.testing.assert_allclose(int_model.err, 0.0, atol=1E-6)
-    np.testing.assert_allclose(int_model.var_poisson, 0.0, atol=1E-6)
-    np.testing.assert_allclose(int_model.var_rnoise, 0.0, atol=1E-6)
+    np.testing.assert_allclose(idata, 0.0, atol=1E-6)
+    np.testing.assert_allclose(ierr, 0.0, atol=1E-6)
+    np.testing.assert_allclose(ivar_poisson, 0.0, atol=1E-6)
+    np.testing.assert_allclose(ivar_rnoise, 0.0, atol=1E-6)
 
     # Check OPT output arrays
-    np.testing.assert_allclose(opt_model.slope, 0.0, atol=1E-6)
-    np.testing.assert_allclose(opt_model.var_poisson, 0.0, atol=1E-6)
-    np.testing.assert_allclose(opt_model.var_rnoise, 0.0, atol=1E-6)
-    np.testing.assert_allclose(opt_model.sigslope, 0.0, atol=1E-6)
-    np.testing.assert_allclose(opt_model.yint, 0.0, atol=1E-6)
-    np.testing.assert_allclose(opt_model.sigyint, 0.0, atol=1E-6)
-    np.testing.assert_allclose(opt_model.pedestal, 0.0, atol=1E-6)
-    np.testing.assert_allclose(opt_model.weights, 0.0, atol=1E-6)
+    np.testing.assert_allclose(oslope, 0.0, atol=1E-6)
+    np.testing.assert_allclose(ovar_poisson, 0.0, atol=1E-6)
+    np.testing.assert_allclose(ovar_rnoise, 0.0, atol=1E-6)
+    np.testing.assert_allclose(osigslope, 0.0, atol=1E-6)
+    np.testing.assert_allclose(oyint, 0.0, atol=1E-6)
+    np.testing.assert_allclose(osigyint, 0.0, atol=1E-6)
+    np.testing.assert_allclose(opedestal, 0.0, atol=1E-6)
+    np.testing.assert_allclose(oweights, 0.0, atol=1E-6)
 
 
 def test_miri_first_last():
@@ -889,10 +906,14 @@ def test_miri_first_last():
     # Put CR in 1st (0-based) group
     model1.groupdq[0, 1, 1, 1] = JUMP_DET
 
-    new_mod, int_model, opt_model, gls_opt_model = ramp_fit(
+    slopes, int_info, opt_info, gls_opt_model = ramp_fit(
         model1, 1024 * 30000., True, rnModel, gain, 'OLS', 'optimal', 'none')
 
-    np.testing.assert_allclose(new_mod.data, 10. / 3., rtol=1E-5)
+    assert slopes is not None
+
+    sdata, sdq, svar_poisson, svar_rnoise, serr = slopes
+
+    np.testing.assert_allclose(sdata, 10. / 3., rtol=1E-5)
 
 
 def test_miri_no_good_pixel():
@@ -916,11 +937,10 @@ def test_miri_no_good_pixel():
     # Set all groups to DO_NOT_USE
     model1.groupdq[:, :, :, :] = DO_NOT_USE
 
-    new_mod, int_model, opt_model, gls_opt_model = ramp_fit(
+    slopes, int_info, opt_info, gls_opt_model = ramp_fit(
         model1, 1024 * 30000., True, rnModel, gain, 'OLS', 'optimal', 'none')
 
-    assert new_mod is None
-END '''
+    assert slopes is None
 
 # -------------------------------------------------------------------------
 # Helper functions to set up tests

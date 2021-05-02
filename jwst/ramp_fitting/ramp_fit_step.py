@@ -75,6 +75,16 @@ def compute_int_times(input_model):
     return int_times
 
 
+# For when data model creation from tupble the following is needed:
+    '''
+    if new_model is not None:
+        new_model.meta.bunit_data = 'DN/s'
+        new_model.meta.bunit_err = 'DN/s'
+
+    if int_model is not None:
+        int_model.meta.bunit_data = 'DN/s'
+        int_model.meta.bunit_err = 'DN/s'
+    '''
 class RampFitStep (Step):
 
     """
@@ -142,6 +152,7 @@ class RampFitStep (Step):
             # The out_model and int_model are JWST data models, but need to be
             # converted to simple arrays and the models created here, not in
             # the ramp fitting code.
+            # TODO: Change variable names, since models are not returned.
             out_model, int_model, opt_model, gls_opt_model = ramp_fit(
                 input_model, buffsize, self.save_opt, 
                 readnoise_2d, gain_2d, 
@@ -151,11 +162,8 @@ class RampFitStep (Step):
             readnoise_model.close()
             gain_model.close()
 
-        # Save the OLS optional fit product, if it exists
-        if opt_model is not None:
-            self.save_model(opt_model, 'fitopt', output_file=self.opt_name)
-
-        # Save the GLS optional fit product, if it exists
+        # Save the GLS optional fit product, if it exists (NOT USED RIGHT NOW)
+        # When GLS is implemented, this will not be a data model
         if gls_opt_model is not None:
             self.save_model(
                 gls_opt_model, 'fitoptgls', output_file=self.opt_name
@@ -163,6 +171,11 @@ class RampFitStep (Step):
 
         # TODO: data models will not be returned from RampFit, so the below
         # code no longer works
+
+        # Save the OLS optional fit product, if it exists
+        if opt_model is not None:
+            self.save_model(opt_model, 'fitopt', output_file=self.opt_name)
+
         if out_model is not None:
             out_model.meta.cal_step.ramp_fit = 'COMPLETE'
             if (input_model.meta.exposure.type in ['NRS_IFU', 'MIR_MRS']) or (
