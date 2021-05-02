@@ -952,7 +952,7 @@ def test_default_siaf_values(eng_db_ngas, data_file_nosiaf):
         model.meta.target.ra = TARG_RA
         model.meta.target.dec = TARG_DEC
         model.meta.aperture.name = "MIRIM_TAFULL"
-        model.meta.observation.date = '1/1/2017'
+        model.meta.observation.date = '2017-01-01'
         model.meta.exposure.type = "MIR_IMAGE"
         stp.update_wcs(model, siaf_path=siaf_db, allow_default=False)
         assert model.meta.wcsinfo.crpix1 == 24.5
@@ -969,7 +969,7 @@ def test_tsgrism_siaf_values(eng_db_ngas, data_file_nosiaf):
         model.meta.exposure.start_time = STARTTIME.mjd
         model.meta.exposure.end_time = ENDTIME.mjd
         model.meta.aperture.name = "NRCA5_GRISM256_F444W"
-        model.meta.observation.date = '1/1/2017'
+        model.meta.observation.date = '2017-01-01'
         model.meta.exposure.type = "NRC_TSGRISM"
         model.meta.visit.tsovisit = True
         stp.update_wcs(model, siaf_path=siaf_db)

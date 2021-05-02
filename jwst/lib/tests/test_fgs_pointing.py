@@ -26,7 +26,7 @@ WCS_META = {
             'name': 'FGS1_FULL',
         },
         'observation': {
-            'date': '1/1/2017',
+            'date': '2017-01-01',
         }
     }
 }

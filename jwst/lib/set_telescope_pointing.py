@@ -4,6 +4,7 @@ import sys
 from collections import defaultdict, namedtuple
 from copy import copy
 from dataclasses import dataclass
+from datetime import date
 from enum import Enum
 import logging
 from math import (asin, atan2, cos, sin)
@@ -1959,7 +1960,7 @@ def _roll_angle_from_matrix(matrix, v2, v3):
     return new_roll
 
 
-def get_wcs_values_from_siaf(aperture_name, useafter, prd_db_filepath=None):
+def get_wcs_values_from_siaf(aperture_name, useafter=None, prd_db_filepath=None):
     """
     Query the SIAF database file and get WCS values.
 
@@ -1976,8 +1977,9 @@ def get_wcs_values_from_siaf(aperture_name, useafter, prd_db_filepath=None):
         The name of the aperture to retrieve.
         List of values can be specified as comma-separated values within the string.
         For example: 'FGS1_FULL_OSS, FGS1_FULL'
-    useafter : str
-        The date of observation (``model.meta.date``)
+    useafter : str or None
+        The date of observation (``model.meta.date``).
+        If None, use current date
     prd_db_filepath : str
         The path to the SIAF (PRD database) file.
         If None, attempt to get the path from the ``XML_DATA`` environment variable.
@@ -1988,6 +1990,9 @@ def get_wcs_values_from_siaf(aperture_name, useafter, prd_db_filepath=None):
     siaf : namedtuple
         The SIAF namedtuple with values from the PRD database.
     """
+    if not useafter:
+        useafter = date.today().strftime('%Y-%m-%d')
+
     try:
         siaf = get_wcs_values_from_siaf_prd(aperture_name, useafter, prd_db_filepath=prd_db_filepath)
     except (KeyError, OSError, TypeError, RuntimeError):
