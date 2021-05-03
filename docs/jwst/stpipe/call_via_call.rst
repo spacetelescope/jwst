@@ -38,3 +38,25 @@ When running a single step with ``call``, parameter values can be supplied more 
 ::
 
  result = JumpStep.call("jw00017001001_01101_00001_nrca1_uncal.fits", rejection_threshold=200)
+
+Where are the results?
+----------------------
+
+A fundamental difference between running steps and pipelines in Python as
+opposed to from the command line using ``strun`` is whether files are created or
+not. When using ``strun``, results are automatically saved to files because that
+is the only way to access the results.
+
+However, when running within a Python interpreter or script, the presumption is
+that results will be used within the script. As such, results are not
+automatically saved to files. It is left to the user to decide when to save.
+
+If one wishes for results to be saved by a particular ``call``, use the
+parameter ``save_results=True``::
+
+ result = JumpStep.call("jw00017001001_01101_00001_nrca1_uncal.fits",
+                        rejection_threshold=200, save_results=True)
+
+If one wishes to specify a different file name, rather than a system-generated
+one, set :ref:`output_file<intro_output_file>` and/or
+:ref:`output_dir<intro_output_directory>`.
