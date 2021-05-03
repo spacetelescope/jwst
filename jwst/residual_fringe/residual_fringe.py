@@ -14,8 +14,6 @@ log.setLevel(logging.DEBUG)
 from astropy.table import Table
 from . import utils
 import astropy.units as u
-#from specutils import Spectrum1D
-#from specutils.analysis import snr_derived
 from .diagnostic_plot import diagnostic_plot
 from ..stpipe import Step
 
@@ -43,6 +41,7 @@ class ResidualFringeCorrection():
         self.make_output_path = pars.get('make_output_path',
                                         partial(Step._make_output_path,None))
                                                 
+        print('make output path',self.make_output_path)
         
         self.rfc_factors = None
         self.fit_mask = None
@@ -54,6 +53,9 @@ class ResidualFringeCorrection():
         self.freq_table = None
         self.slice_map = None
 
+        self.background_fit = None
+        self.knot_locations = None
+        
         self.band = None
         self.channel = None
 
@@ -133,11 +135,26 @@ class ResidualFringeCorrection():
         self.fit_mask = np.zeros(self.input_model.data.shape)
         self.weighted_pix_num = np.zeros(self.input_model.data.shape)
         self.rejected_fit =  np.zeros(self.input_model.data.shape)
+
+        self.background_fit = np.zeros(self.input_model.data.shape)
+        self.knot_locations = np.zeros(self.input_model.data.shape)
+                
         allregions.close()
 
-        # intermiedate output product - Table 
+        # intermediate output product - Table 
         stat_table = Table(names=('Slice', 'mean', 'median', 'stddev', 'max', 'pmean', 'pmedian', 'pstddev', 'pmax'),
                            dtype=('i4', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8'))
+
+        out_table = Table(names=('Slice#', 'col#', 'fringe#', 's/n', 'pre-contrast', 'post_contrast',
+                                 'periodogram res', 'opt_fringes', 'peak_freq', 'freq_min', 'freq_max' ),
+                           dtype=('i4', 'i4', 'i4', 'f8', 'f8', 'f8',
+                                  'f8', 'f8', 'f8', 'f8', 'f8'))
+
+        # intermediate output
+        #qual_table = Table(names=('column', 'quality'),
+        #           units=('', ''),
+        #           dtype=('S', '({},3)f8'.format(n_wav_samples)))
+
         
         for c in self.channels:
             log.info("Processing channel {}".format(c))
@@ -185,51 +202,27 @@ class ResidualFringeCorrection():
                     col_wmap = ss_wmap[:, col]
 
                     valid = np.logical_and( (col_wmap>0), ~np.isnan(col_wmap))
+                    # because of the curvature of the slices there can be large regions not falling on a column
                     num_good  = len(np.where(valid)[0])
-                    # print('num of valid values in wavelength array',num_good)
+                    #print('num of valid values in wavelength array',num_good)
 
-                    if num_good > 25:
+                    if num_good > 50:
 
-                        #test_flux = col_data[valid]
+                        test_flux = col_data[valid]
                         # Transform wavelength in micron to wavenumber in cm^-1.
                         col_wnum = 10000.0 / col_wmap
-                        #test_wnum = col_wnum[valid]
 
-                        #test_flux = col_data
-                        #test_wnum = col_wnum
-                        
                         # do some checks on column to make sure there is reasonable signal. If the SNR < min_snr (CDP), pass
-                        
-                        # to use the method http://www.stecf.org/software/ASTROsoft/DER_SNR/ in specutils, need to
-                        # use a Spectrum1D option. Use arbitraty units
-                        #check_spectrum = Spectrum1D(flux=test_flux[::-1] * u.Jy,
-                        #                            spectral_axis=test_wnum[::-1] / u.cm)
-
-                    
                         # determine SNR for this column of data
-                        #snr = snr_derived(check_spectrum, region=None)
-
-                        n = len(col_data)
-                        signal = np.median(col_data)
-                        noise = 0.6052697 * np.median(np.abs(2.0 * col_data[2:n-2] - col_data[0:n-4] - col_data[4:n]))
+                        n = len(test_flux)
+                        signal = np.median(test_flux)
+                        noise = 0.6052697 * np.median(np.abs(2.0 * test_flux[2:n-2] - test_flux[0:n-4] - test_flux[4:n]))
                         
                         snr2  = 0.0 # initialize
                         if noise !=0:
                             snr2 = signal/noise
-                        #else: 
-                        #    print('number of values in col',col,n,num_good)
-                        #    print(np.median(np.abs(2.0 * col_data[2:n-2] - col_data[0:n-4] - col_data[4:n])))
-                        #    for i in range(n):
-                        #        print(col_data[i])
-                        #    exit(-1)
-
-                        #test = np.abs(snr.value - snr2)
-                        #if test > 1.0 and snr2 !=0:    
-                        #    print('snr',snr.value, snr2,min_snr[0])
-                            #exit(-1)
                         
                         # Sometimes can return nan, inf for bad data so include this in check
-                        #if (snr.value < min_snr[0]) or (str(snr.value) == 'inf') or (str(snr.value) == 'nan'):
                         if (snr2 < min_snr[0]):
                                 print('not fitting column',col)
                                 pass
@@ -270,7 +263,7 @@ class ResidualFringeCorrection():
                                 # given signal in mod find location of lines > col_max_amp * 2
                                 weight_factors = utils.find_lines(mod, col_max_amp * 2)
                                 weights_feat = col_weight * weight_factors
-
+                                #print('size of weights_feat',weights_feat.shape) - 1024
                             # iterate over the fringe components to fit, initialise pre-contrast, other output arrays
                             # in case fit fails
                             proc_data = col_data.copy()
@@ -297,6 +290,8 @@ class ResidualFringeCorrection():
                                             bg_fit, bgindx, fitter = \
                                                 utils.fit_1d_background_complex(proc_data, weights_feat,
                                                                                 col_wnum, ffreq=ffreq[fn])
+
+                                           # print('size of bg_fit and bgindx', bg_fit.shape, bgindx.shape)# 1024 and varying for bgindx
                                             
                                             # get the residual fringes as fraction of signal
                                             res_fringes = np.divide(proc_data, bg_fit, out=np.zeros_like(proc_data),
@@ -369,13 +364,14 @@ class ResidualFringeCorrection():
                                 if self.diagnostic_mode:
                                     #out_name = os.path.join(self.plot_dir,
                                     #                        out_root + '_fit_quality.pdf')
-                                    out_name = 'fit_quality.pdf'
+                                    # out_name = 'fit_quality.pdf'
                                     contrast = utils.fit_quality(col_wnum,
                                                                  fit_res,
                                                                  weights_feat,
                                                                  ffreq,
-                                                                 dffreq,
-                                                                 save_fig=True, plot_name=out_name)
+                                                                 dffreq)
+#                                                                 self.save_intermediate_results=True,
+#                                                                 qual_table)
                                 else:
                                     contrast = utils.fit_quality(col_wnum, fit_res, weights_feat, ffreq, dffreq)
 
@@ -408,6 +404,8 @@ class ResidualFringeCorrection():
                                 self.weights_feat[idx, col] = weights_feat[idx]
                                 self.weighted_pix_num[idx, col] = np.ones(1024)[idx] * (wpix_num/1024)
                                 self.rejected_fit[idx, col] = res_fringe_fit_flag[idx]
+                                self.background_fit[idx,col] = bg_fit[idx]
+                                #self.knot_locations[idx,col] = bgindx
 
                             except Exception as e:
                                 log.warning(" Skipping col={}".format(col, ss))
@@ -447,6 +445,14 @@ class ResidualFringeCorrection():
         
         # save output to file
         #self.logger.debug(" saving the output to file")
+        if self.save_intermediate_results:
+            stat_table_name = self.make_output_path(
+                basepath=self.input_model.meta.filename,
+                suffix='stat_table')
+            print('Stat table name',stat_table)
+            
+            save_data_astropy(stat_table)
+
         #save_data_astropy(self.input, self.input_type, self.output_dir, self.output_data,
         #                  self.rfc_factors, self.fit_mask, self.weights_feat,
         #                  self.weighted_pix_num, stat_table, self.rejected_fit)

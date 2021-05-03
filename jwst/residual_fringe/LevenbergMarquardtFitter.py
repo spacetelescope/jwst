@@ -304,7 +304,11 @@ class LevenbergMarquardtFitter( IterativeFitter ):
         """
         onedge = False
 #        if self.model.priors is not None and self.model.priors.hasLimits( ):
+
+        
         if self.model.priors is not None :
+
+            print('in LevenbergMarq Fitter has priors', self.model.priors)
             fitin = []
             for i,k in enumerate( fitindex ) :
                 pr = self.model.getPrior( k )
