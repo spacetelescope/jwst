@@ -35,7 +35,7 @@ class ResidualFringeCorrection():
         self.residual_fringe_reference_file = residual_fringe_reference_file
         self.regions_reference_file = regions_reference_file
 
-        self.intermediate_results = pars['save_intermediate_results']
+        self.save_intermediate_results = pars['save_intermediate_results']
         self.transmission_level = int(pars['transmission_level'])
         # define how filenames are created
         self.make_output_path = pars.get('make_output_path',
@@ -311,7 +311,7 @@ class ResidualFringeCorrection():
                                                 log.debug(" pre-correction contrast = {}".format(pre_contrast))
 
                                             # fit the residual fringes
-                                            pdgm_name = 'periodogram.pdf'
+                                            #pdgm_name = 'periodogram.pdf'
                                             #pdgm_name = None
                                             log.debug(" set up bayes ")
                                             res_fringe_fit, wpix_num = \
@@ -322,9 +322,9 @@ class ResidualFringeCorrection():
                                                                                     dffreq[fn],
                                                                                     min_nfringes=min_nfringes[fn],
                                                                                     max_nfringes=max_nfringes[fn],
-                                                                                    pgram_res=pgram_res[fn],
-                                                                                    plot_pdgm=self.diagnostic_mode,
-                                                                                    pdgm_name=pdgm_name)
+                                                                                    pgram_res=pgram_res[fn])
+                                                                                    #plot_pdgm=self.diagnostic_mode,
+                                                                                    #pdgm_name=pdgm_name)
 
                                             
                                             # check for fit blowing up, reset rfc fit to 0, raise a flag
@@ -361,24 +361,24 @@ class ResidualFringeCorrection():
                                 fit_res = np.subtract(fit_res, 1, where=fit_res != 0)
                                 fit_res *= np.where(col_weight > 1e-07, 1, 1e-08)
 
-                                if self.diagnostic_mode:
+                                #if self.diagnostic_mode:
                                     #out_name = os.path.join(self.plot_dir,
                                     #                        out_root + '_fit_quality.pdf')
                                     # out_name = 'fit_quality.pdf'
-                                    contrast = utils.fit_quality(col_wnum,
-                                                                 fit_res,
-                                                                 weights_feat,
-                                                                 ffreq,
-                                                                 dffreq)
+                                 #   contrast = utils.fit_quality(col_wnum,
+                                 #                                fit_res,
+                                 #                                weights_feat,
+                                 #                                ffreq,
+                                 #                                dffreq)
 #                                                                 self.save_intermediate_results=True,
 #                                                                 qual_table)
-                                else:
-                                    contrast = utils.fit_quality(col_wnum, fit_res, weights_feat, ffreq, dffreq)
+                                ##lse:
+                                contrast = utils.fit_quality(col_wnum, fit_res, weights_feat, ffreq, dffreq)
 
                                 correction_quality.append([contrast, pre_contrast])
                                 log.debug(" residual contrast = {}".format(contrast))
                                 
-                                if self.diagnostic_mode:
+                               # if self.diagnostic_mode:
 
                                     # MASK1D plot
                                     #out_name = os.path.join(self.plot_dir, out_root + '_mask.pdf')
@@ -389,12 +389,12 @@ class ResidualFringeCorrection():
 
                                     # FITS1D plot
                                     #out_name = os.path.join(self.plot_dir, out_root + '_res-fringe-fits.pdf')
-                                    out_name = 'res-friinge-fits.pdf'
-                                    xdata = [col_wnum]
-                                    ydata = [col_data, bg_fit, res_fringes, col_weight, res_fringe_fit, weights_feat,
-                                             fringe_sub]
-                                    diagnostic_plot('fits1d', 'columns', out_name, xdata=xdata, ydata=ydata,
-                                                    save_data=True)
+                                #    out_name = 'res-friinge-fits.pdf'
+                                #    xdata = [col_wnum]
+                                 #   ydata = [col_data, bg_fit, res_fringes, col_weight, res_fringe_fit, weights_feat,
+                                 #            fringe_sub]
+                                 #   diagnostic_plot('fits1d', 'columns', out_name, xdata=xdata, ydata=ydata,
+                                 #                   save_data=True)
 
                                 # replace the corrected in-slice column pixels in the data_cor array
                                 log.debug(" updating the trace pixels in the output")
@@ -410,7 +410,7 @@ class ResidualFringeCorrection():
                             except Exception as e:
                                 log.warning(" Skipping col={}".format(col, ss))
                                 log.warning(' %s' % (str(e)))
-
+                                #exit(1)
                                 #if self.diagnostic_mode:
                                     # save data for testing
                                     #self.logger.debug(" saving failed fit data for testing")

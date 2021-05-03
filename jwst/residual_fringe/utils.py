@@ -599,8 +599,8 @@ def fit_quality(wavenum, res_fringes, weights, ffreq, dffreq, save_intermediate_
     return contrast
 
 
-def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, min_nfringes, max_nfringes, pgram_res,
-                                  plot_pdgm=False, pdgm_name=None):
+def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, min_nfringes, max_nfringes, pgram_res):
+#                                  plot_pdgm=False, pdgm_name=None):
     """Fit the residual fringe signal.
 
     Takes an input 1D array of residual fringes and fits using the supplied mode in the BayesicFitting package:
@@ -704,11 +704,11 @@ def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, 
             freqs = 1. / freq[peak_ind]
 
         # plot the results if asked
-        if plot_pdgm:
-            log.debug("fit_1d_fringes_bayes: saving periodogram")
+        #if plot_pdgm:
+        #    log.debug("fit_1d_fringes_bayes: saving periodogram")
             # PERIODOGRAM plot
-            xdata = [wavenum, freq * factor, peaks_freq * factor]
-            ydata = [res_fringes, pgram, peaks_power]
+        #    xdata = [wavenum, freq * factor, peaks_freq * factor]
+        #    ydata = [res_fringes, pgram, peaks_power]
         #    name = os.path.splitext(pdgm_name)[0] + 'ffreq{}'.format(np.round(ffreq * factor, 2)) + \
         #           os.path.splitext(pdgm_name)[1]
         #    print('**********name',name)
@@ -777,6 +777,7 @@ def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, 
         pars = []
         keep_dict = {}
 
+        #print('fit_1d_fringes check size',opt_nfringes, freqs.shape)
         # fill the variables with parameters to be frozen (freqs) and initialised (amps)
         for n in range(opt_nfringes):
             pars.append(freqs[n])
