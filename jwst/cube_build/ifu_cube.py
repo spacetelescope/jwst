@@ -1224,9 +1224,7 @@ class IFUCubeData():
                 detector2alpha_beta = input_model.meta.wcs.get_transform('detector',
                                                                          'alpha_beta')
                 alpha, beta, lam = detector2alpha_beta(x, y)
-                valid1 = ~np.isnan(lam)
-                lam = lam[valid1]
-                lam_med = np.median(lam)
+                lam_med = np.nanmedian(lam)
                 # pick two alpha, beta values to determine rotation angle
                 # values in arc seconds
                 alpha_beta2world = input_model.meta.wcs.get_transform('alpha_beta',
@@ -1240,9 +1238,7 @@ class IFUCubeData():
                 x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box, step=(1, 1), center=True)
                 detector2slicer = slice_wcs.get_transform('detector', 'slicer')
                 across, along, lam = detector2slicer(x, y)  # lam ~0 for this transform
-                valid1 = ~np.isnan(lam)
-                lam = lam[valid1]
-                lam_med = np.median(lam)
+                lam_med = np.nanmedian(lam)
 
                 # pick two along sice, across slice  values to determine rotation angle
                 # values in meters
