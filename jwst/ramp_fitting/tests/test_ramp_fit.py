@@ -804,23 +804,6 @@ def setup_small_cube(ngroups=10, nints=1, nrows=2, ncols=2, deltatime=10.,
 
     return model1, gdq, rnoise, pixdq, err, gain
 
-    gain = GainModel(data=gain)
-    gain.meta.instrument.name = 'MIRI'
-    gain.meta.subarray.xstart = 1
-    gain.meta.subarray.ystart = 1
-    gain.meta.subarray.xsize = ncols
-    gain.meta.subarray.ysize = nrows
-
-    rnoise = ReadnoiseModel(data=read_noise)
-    rnoise.meta.instrument.name = 'MIRI'
-
-    rnoise.meta.subarray.xstart = 1
-    rnoise.meta.subarray.ystart = 1
-    rnoise.meta.subarray.xsize = ncols
-    rnoise.meta.subarray.ysize = nrows
-
-    return model1, gdq, rnoise, pixdq, err, gain
-
 
 # Need test for multi-ints near zero with positive and negative slopes
 def setup_inputs(ngroups=10, readnoise=10, nints=1,
@@ -852,21 +835,5 @@ def setup_inputs(ngroups=10, readnoise=10, nints=1,
     model1.meta.exposure.nframes = 1
     model1.meta.exposure.groupgap = 0
     model1.meta.exposure.drop_frames1 = 0
-
-    return model1, gdq, rnoise, pixdq, err, gain
-
-    gain = GainModel(data=gain)
-    gain.meta.instrument.name = 'MIRI'
-    gain.meta.subarray.xstart = 1
-    gain.meta.subarray.ystart = 1
-    gain.meta.subarray.xsize = ncols
-    gain.meta.subarray.ysize = nrows
-
-    rnoise = ReadnoiseModel(data=read_noise)
-    rnoise.meta.instrument.name = 'MIRI'
-    rnoise.meta.subarray.xstart = 1
-    rnoise.meta.subarray.ystart = 1
-    rnoise.meta.subarray.xsize = ncols
-    rnoise.meta.subarray.ysize = nrows
 
     return model1, gdq, rnoise, pixdq, err, gain

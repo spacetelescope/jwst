@@ -8,7 +8,7 @@ import warnings
 
 from .. import datamodels
 from ..datamodels import dqflags
-from ..lib import reffile_utils
+from ..lib import reffile_utils  # TODO remove
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -1110,54 +1110,6 @@ def reset_bad_gain(pdq, gain):
         pdq[wh_g] = np.bitwise_or(pdq[wh_g], dqflags.pixel['DO_NOT_USE'])
 
     return pdq
-
-
-def get_ref_subs(model, readnoise_model, gain_model, nframes):
-    """
-    Get readnoise array for calculation of variance of noiseless ramps, and
-    the gain array in case optimal weighting is to be done. The returned
-    readnoise has been multiplied by the gain.
-
-    Parameters
-    ----------
-    model : data model
-        input data model, assumed to be of type RampModel
-
-    readnoise_model : instance of data Model
-        readnoise for all pixels
-
-    gain_model : instance of gain Model
-        gain for all pixels
-
-    nframes : int
-        number of frames averaged per group; from the NFRAMES keyword. Does
-        not contain the groupgap.
-
-    Returns
-    -------
-    readnoise_2d : float, 2D array
-        readnoise subarray
-
-    gain_2d : float, 2D array
-        gain subarray
-    """
-    if reffile_utils.ref_matches_sci(model, gain_model):
-        gain_2d = gain_model.data
-    else:
-        log.info('Extracting gain subarray to match science data')
-        gain_2d = reffile_utils.get_subarray_data(model, gain_model)
-
-    if reffile_utils.ref_matches_sci(model, readnoise_model):
-        readnoise_2d = readnoise_model.data.copy()
-    else:
-        log.info('Extracting readnoise subarray to match science data')
-        readnoise_2d = reffile_utils.get_subarray_data(model, readnoise_model)
-
-    # convert read noise to correct units & scale down for single groups,
-    #   and account for the number of frames per group
-    # readnoise_2d *= gain_2d / np.sqrt(2. * nframes)
-
-    return readnoise_2d, gain_2d
 
 
 def remove_bad_singles(segs_beg_3):

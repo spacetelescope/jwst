@@ -19,7 +19,6 @@ import logging
 
 from . import gls_fit           # used only if algorithm is "GLS"
 from . import ols_fit           # used only if algorithm is "OLS"
-from . import utils
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -27,7 +26,7 @@ log.setLevel(logging.DEBUG)
 BUFSIZE = 1024 * 300000  # 300Mb cache size for data section
 
 
-def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
+def ramp_fit(model, buffsize, save_opt, readnoise_2d, gain_2d,
              algorithm, weighting, max_cores):
     """
     Calculate the count rate for each pixel in all data cube sections and all
@@ -48,11 +47,11 @@ def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     save_opt : boolean
        calculate optional fitting results
 
-    readnoise_model : instance of data Model
-        readnoise for all pixels
+    readnoise_2d: ndarray
+        2-D array readnoise for all pixels
 
-    gain_model : instance of gain model
-        gain for all pixels
+    gain_2d: ndarray
+        2-D array gain for all pixels
 
     algorithm : string
         'OLS' specifies that ordinary least squares should be used;
@@ -87,6 +86,9 @@ def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
         exposure
     """
     if algorithm.upper() == "GLS":
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # !!!!! Reference to ReadModel and GainModel changed to simple ndarrays !!!!!
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # new_model, int_model, gls_opt_model = gls_fit.gls_ramp_fit(
         #     model, buffsize, save_opt, readnoise_model, gain_model, max_cores)
         new_model, int_model, gls_opt_model = None, None, None
@@ -94,13 +96,7 @@ def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     else:
         # Get readnoise array for calculation of variance of noiseless ramps, and
         #   gain array in case optimal weighting is to be done
-        '''
-        frames_per_group = model.meta.exposure.nframes
-        readnoise_2d, gain_2d = \
-            utils.get_ref_subs(model, readnoise_model, gain_model, frames_per_group)
-        '''
         nframes = model.meta.exposure.nframes
-        readnoise_2d, gain_2d = readnoise_model, gain_model
         readnoise_2d *= gain_2d / np.sqrt(2. * nframes)
 
         # Compute ramp fitting using ordinary least squares.
