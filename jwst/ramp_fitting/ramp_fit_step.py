@@ -5,6 +5,7 @@ from .. import datamodels
 from . import ramp_fit
 
 from ..lib import reffile_utils  # TODO remove
+from ..lib import pipe_utils
 
 import logging
 log = logging.getLogger(__name__)
@@ -117,9 +118,17 @@ class RampFitStep (Step):
             if self.algorithm == "GLS":
                 buffsize //= 10
 
+            # Get gain arrays, subrrays if desired.
             frames_per_group = input_model.meta.exposure.nframes
             readnoise_2d, gain_2d = get_ref_subs(
                 input_model, readnoise_model, gain_model, frames_per_group)
+
+            # Save old int_times just in case and set it for ramp fit usage.
+            old_int_times = input_model.int_times
+            if pipe_utils.is_tso(input_model) and hasattr(input_model, 'int_times'):
+                input_model.int_times = input_model.int_times
+            else:
+                input_model.int_times = None
 
             out_model, int_model, opt_model, gls_opt_model = ramp_fit.ramp_fit(
                 input_model, buffsize,

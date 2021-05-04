@@ -9,8 +9,6 @@ import time
 import warnings
 from .. import datamodels
 from ..datamodels import dqflags
-from ..datamodels import RampModel
-from ..lib import pipe_utils
 
 from . import utils
 
@@ -90,10 +88,7 @@ def ols_ramp_fit_multi(
     number_slices = utils.compute_slices(max_cores)
 
     # Copy the int_times table for TSO data
-    if pipe_utils.is_tso(input_model) and hasattr(input_model, 'int_times'):
-        int_times = input_model.int_times
-    else:
-        int_times = None
+    int_times = input_model.int_times
 
     total_rows = input_model.data.shape[2]
     total_cols = input_model.data.shape[3]

@@ -2,7 +2,6 @@ import pytest
 import numpy as np
 
 from jwst.ramp_fitting.ramp_fit_step import RampFitStep
-# from jwst.ramp_fitting.ramp_fit_step import compute_int_times
 
 # from stcal.ramp_fitting.ramp_fit import ramp_fit
 # from stcal.ramp_fitting.ols_fit import calc_num_seg
@@ -57,8 +56,11 @@ def setup_inputs():
         pixdq = np.zeros(shape=(nrows, ncols), dtype=np.uint32)
         read_noise = np.full((nrows, ncols), readnoise, dtype=np.float64)
         gdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.uint32)
+        int_times = np.zeros((nints,))
 
-        rampmodel = RampModel(data=data, err=err, pixeldq=pixdq, groupdq=gdq, times=times)
+        rampmodel = RampModel(
+            data=data, err=err, pixeldq=pixdq, groupdq=gdq, times=times, int_times=int_times)
+
         rampmodel.meta.instrument.name = 'MIRI'
         rampmodel.meta.instrument.detector = 'MIRIMAGE'
         rampmodel.meta.instrument.filter = 'F480M'
@@ -258,13 +260,5 @@ def test_int_times2(generate_miri_reffiles, setup_inputs):
 
     assert slopes is not None
     assert cube_model is not None
-
-    print("-" * 70)
-    print(f"cube_model = {cube_model}")
-    print("-" * 70)
-    print(f"type(cube_model) = {type(cube_model)}")
-    print("-" * 70)
-    print(f"cube_model.int_times = {cube_model.int_times}")
-    print("-" * 70)
 
     assert(len(cube_model.int_times) == nints)

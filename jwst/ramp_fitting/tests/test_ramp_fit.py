@@ -6,34 +6,17 @@ from jwst.ramp_fitting.ols_fit import calc_num_seg
 
 from jwst.datamodels import dqflags
 from jwst.datamodels import RampModel
-from jwst.datamodels import GainModel, ReadnoiseModel
 
 DO_NOT_USE = dqflags.group['DO_NOT_USE']
 JUMP_DET = dqflags.group['JUMP_DET']
 SATURATED = dqflags.group['SATURATED']
 
+DELIM = "-" * 70
 
 # single group intergrations fail in the GLS fitting
 # so, keep the two method test separate and mark GLS test as
 # expected to fail.  Needs fixing, but the fix is not clear
 # to me. [KDG - 19 Dec 2018]
-
-'''
-def test_int_times():
-    # Test whether int_times table gets copied to output when it should
-    nints = 5
-    model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=3, nints=nints, nrows=2, ncols=2)
-
-    # Set TSOVISIT false, in which case the int_times table should come back with zero length
-    model1.meta.visit.tsovisit = False
-    slopes, int_model, dum1, dum2 = ramp_fit(model1, 512, False, rnoise, gain, 'OLS', 'optimal', 'none')
-    assert(len(int_model.int_times) == 0)
-
-    # Set TSOVISIT true, in which case the int_times table should come back with length nints
-    model1.meta.visit.tsovisit = True
-    slopes, int_model, dum1, dum2 = ramp_fit(model1, 512, False, rnoise, gain, 'OLS', 'optimal', 'none')
-    assert(len(int_model.int_times) == nints)
-'''
 
 
 def test_one_group_small_buffer_fit_ols():
