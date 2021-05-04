@@ -102,4 +102,6 @@ def ramp_fit(model, buffsize, save_opt, readnoise_2d, gain_2d,
             model, buffsize, save_opt, readnoise_2d, gain_2d, weighting, max_cores)
         gls_opt_model = None
 
+    # TODO Change int_model to integ_info
+    # TODO Change opt_model to opt_info
     return image_info, int_model, opt_model, gls_opt_model
