@@ -141,6 +141,8 @@ class RampFitStep (Step):
             )
 
         if out_model is not None:
+            out_model.meta.bunit_data = 'DN/s'
+            out_model.meta.bunit_err = 'DN/s'
             out_model.meta.cal_step.ramp_fit = 'COMPLETE'
             if (input_model.meta.exposure.type in ['NRS_IFU', 'MIR_MRS']) or (
                 input_model.meta.exposure.type in ['NRS_AUTOWAVE', 'NRS_LAMP'] and
@@ -149,6 +151,8 @@ class RampFitStep (Step):
                 out_model = datamodels.IFUImageModel(out_model)
 
         if int_model is not None:
+            int_model.meta.bunit_data = 'DN/s'
+            int_model.meta.bunit_err = 'DN/s'
             int_model.meta.cal_step.ramp_fit = 'COMPLETE'
 
         return out_model, int_model
