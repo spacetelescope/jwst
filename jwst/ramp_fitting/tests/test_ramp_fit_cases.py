@@ -604,12 +604,8 @@ def assert_pri(p_true, new_mod, pix):
     """
 
     # image_info = (data, dq, var_poisson, var_rnoise, err)
-    # data, dq, var_poisson, var_rnoise, err = new_mod
-    data = new_mod.data
-    dq = new_mod.dq
-    err = new_mod.err
-    var_poisson = new_mod.var_poisson
-    var_rnoise = new_mod.var_rnoise
+    data, dq, var_poisson, var_rnoise, err = new_mod
+
     npt.assert_allclose(data[0, pix], p_true[0], atol=2E-5, rtol=2e-5)
     npt.assert_allclose(dq[0, pix], p_true[1], atol=1E-1)
     npt.assert_allclose(err[0, pix], p_true[2], atol=2E-5, rtol=2e-5)

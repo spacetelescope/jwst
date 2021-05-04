@@ -117,7 +117,7 @@ def ols_ramp_fit_multi(
         # Single threaded computation
         image_info, int_mdl, opt_res = ols_ramp_fit_single(
             input_model, int_times, buffsize, save_opt, readnoise_2d, gain_2d, weighting)
-        if new_mdl is None:
+        if image_info is None:
             return None, None, None
 
         # TODO: These computations will eventually be removed.
@@ -126,7 +126,7 @@ def ols_ramp_fit_multi(
             input_model, number_of_integrations, save_opt,
             total_cols, total_rows, max_segments, max_CRs)
 
-        set_output_models(out_model, int_model, opt_model, new_mdl, int_mdl, opt_res, save_opt)
+        set_output_models(out_model, int_model, opt_model, None, int_mdl, opt_res, save_opt)
 
         return image_info, int_model, opt_model
 
@@ -279,11 +279,13 @@ def set_output_models(out_model, int_model, opt_model, new_mdl, int_mdl, opt_res
     save_opt : boolean
        Save optional fitting results.
     """
+    '''
     out_model.data = new_mdl.data
     out_model.dq = new_mdl.dq
     out_model.var_poisson = new_mdl.var_poisson
     out_model.var_rnoise = new_mdl.var_rnoise
     out_model.err = new_mdl.err
+    '''
 
     if int_mdl is not None:
         int_model.data = int_mdl.data

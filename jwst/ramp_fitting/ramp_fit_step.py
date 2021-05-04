@@ -1,5 +1,7 @@
 #! /usr/bin/env python
 
+import numpy as np
+
 from ..stpipe import Step
 from .. import datamodels
 from . import ramp_fit
@@ -61,6 +63,25 @@ def get_ref_subs(model, readnoise_model, gain_model, nframes):
     # readnoise_2d *= gain_2d / np.sqrt(2. * nframes)
 
     return readnoise_2d, gain_2d
+
+
+def create_image_model(input_model, image_info):
+    data, dq, var_poisson, var_rnoise, err = image_info
+    imshape = data.shape
+    out_model = datamodels.ImageModel(data=np.zeros(imshape, dtype=np.float32),
+                                      dq=np.zeros(imshape, dtype=np.uint32),
+                                      var_poisson=np.zeros(imshape, dtype=np.float32),
+                                      var_rnoise=np.zeros(imshape, dtype=np.float32),
+                                      err=np.zeros(imshape, dtype=np.float32))
+    # ... and add all keys from input
+    out_model.update(input_model)
+    out_model.data = data
+    out_model.dq = dq
+    out_model.var_poisson = var_poisson
+    out_model.var_rnoise = var_rnoise
+    out_model.err = err
+
+    return out_model
 
 
 class RampFitStep (Step):
@@ -130,7 +151,7 @@ class RampFitStep (Step):
             else:
                 input_model.int_times = None
 
-            out_model, int_model, opt_model, gls_opt_model = ramp_fit.ramp_fit(
+            image_info, int_model, opt_model, gls_opt_model = ramp_fit.ramp_fit(
                 input_model, buffsize,
                 self.save_opt, readnoise_2d, gain_2d, self.algorithm,
                 self.weighting, max_cores
@@ -149,7 +170,8 @@ class RampFitStep (Step):
                 gls_opt_model, 'fitoptgls', output_file=self.opt_name
             )
 
-        if out_model is not None:
+        if image_info is not None:
+            out_model = create_image_model(input_model, image_info)
             out_model.meta.bunit_data = 'DN/s'
             out_model.meta.bunit_err = 'DN/s'
             out_model.meta.cal_step.ramp_fit = 'COMPLETE'
