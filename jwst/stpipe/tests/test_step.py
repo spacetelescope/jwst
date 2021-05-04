@@ -23,6 +23,7 @@ from jwst.stpipe.tests.steps import (
     ProperPipeline, AnotherDummyStep
 )
 from jwst.stpipe.tests.util import t_path
+from jwst.stpipe.tests.steps import OptionalRefTypeStep, SavePipeline
 
 import asdf
 from crds.core.exceptions import CrdsLookupError
@@ -584,15 +585,11 @@ def test_crds_override():
 
 
 def test_omit_ref_file():
-    from jwst.stpipe.tests.steps import OptionalRefTypeStep
-
     step = OptionalRefTypeStep(override_to_be_ignored_ref_type="")
     step.process()
 
 
 def test_search_attr():
-    from jwst.stpipe.tests.steps import SavePipeline
-
     value = '/tmp'
     pipeline = SavePipeline('afile.fits', output_dir=value)
 
