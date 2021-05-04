@@ -1,8 +1,8 @@
 """Test basic generate operations"""
 
-from .helpers import t_path
+from jwst.associations.tests.helpers import t_path
 
-from .. import (
+from jwst.associations import (
     AssociationPool,
     AssociationRegistry,
     generate,

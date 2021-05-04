@@ -1,4 +1,4 @@
-from ..reffile_utils import find_row
+from jwst.lib.reffile_utils import find_row
 
 
 def test_find_row():

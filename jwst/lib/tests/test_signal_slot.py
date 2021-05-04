@@ -1,6 +1,6 @@
 """Test signal_slot.py"""
 
-from .. import signal_slot as ss
+from jwst.lib import signal_slot as ss
 
 
 REFLECT_CALLED = 'reflect: called.'

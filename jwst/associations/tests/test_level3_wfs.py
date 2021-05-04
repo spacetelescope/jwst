@@ -1,9 +1,9 @@
 """test_level3_dithers: Test of WFS rules."""
 
-from . import helpers
+from jwst.associations.tests import helpers
 
-from .. import generate
-from ..main import constrain_on_candidates
+from jwst.associations import generate
+from jwst.associations.main import constrain_on_candidates
 
 # Generate Level3 assocations
 all_candidates = constrain_on_candidates(None)

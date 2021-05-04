@@ -5,7 +5,7 @@ from copy import copy
 import logging
 import re
 
-from ..load_asn import load_asn
+from jwst.associations.load_asn import load_asn
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())

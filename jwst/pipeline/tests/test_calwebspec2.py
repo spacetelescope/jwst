@@ -1,6 +1,6 @@
 import pytest
 
-from ..calwebb_spec2 import Spec2Pipeline
+from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
 
 
 def test_filenotfounderror_raised(capsys):

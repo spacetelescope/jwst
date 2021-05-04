@@ -20,7 +20,7 @@ from jwst import datamodels
 from jwst.transforms import models as trmodels
 from jwst.assign_wcs import nirspec
 from jwst.assign_wcs import assign_wcs_step
-from . import data
+from jwst.assign_wcs.tests import data
 from jwst.assign_wcs.util import MSAFileError
 
 

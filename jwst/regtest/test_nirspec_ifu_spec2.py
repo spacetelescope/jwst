@@ -1,7 +1,7 @@
 """Regression tests for NIRSpec IFU"""
 import pytest
 
-from . import regtestdata as rt
+from jwst.regtest import regtestdata as rt
 
 # Define artifactory source and truth
 INPUT_PATH = 'nirspec/ifu'

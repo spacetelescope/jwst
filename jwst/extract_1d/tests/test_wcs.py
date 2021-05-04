@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.testing import assert_allclose
 
-from .. import spec_wcs
+from jwst.extract_1d import spec_wcs
 
 import pytest
 

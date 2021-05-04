@@ -12,7 +12,7 @@ class MultiSpecModel(JwstDataModel):
     This model has a special member `spec` that can be used to
     deal with an entire spectrum at a time.  It behaves like a list::
 
-       >>> from . import SpecModel
+       >>> from jwst.datamodels import SpecModel
        >>> multispec_model = MultiSpecModel()
        >>> multispec_model.spec.append(SpecModel())
        >>> multispec_model.spec[0] # doctest: +SKIP

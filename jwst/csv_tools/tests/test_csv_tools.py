@@ -3,10 +3,10 @@ import sys
 
 import pytest
 
-from ..csv_to_hdulist import csv_to_hdulist
-from ..csv_to_table import csv_to_table
-from ..table_to_json import table_to_json
-from . import data
+from jwst.csv_tools.csv_to_hdulist import csv_to_hdulist
+from jwst.csv_tools.csv_to_table import csv_to_table
+from jwst.csv_tools.table_to_json import table_to_json
+from jwst.csv_tools.tests import data
 
 
 json_mixed_result = "".join([

@@ -5,8 +5,8 @@ import pytest
 from stpipe.config_parser import ValidationError
 from stpipe import Step
 
-from .steps import MakeListStep, MakeListPipeline
-from .util import t_path
+from jwst.stpipe.tests.steps import MakeListStep, MakeListPipeline
+from jwst.stpipe.tests.util import t_path
 
 DEFAULT_PAR1 = 42.0
 DEFAULT_PAR2 = 'Yes, a string'

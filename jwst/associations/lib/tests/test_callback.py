@@ -1,5 +1,5 @@
 """Test callback_registry"""
-from ..callback_registry import CallbackRegistry
+from jwst.associations.lib.callback_registry import CallbackRegistry
 
 
 def fn_single_1(arg):
