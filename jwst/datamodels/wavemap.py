@@ -11,7 +11,7 @@ class WaveMapModel(ReferenceFileModel):
     This model has a special member `map` that can be used to
     deal with an entire wavelength map at a time.  It behaves like a list::
 
-       >>> from jwst.datamodels.wavemap import WaveMapSingleModel, WaveMapModel
+       >>> from jwst.datamodels import WaveMapSingleModel, WaveMapModel
        >>> wavemap_model = WaveMapModel()
        >>> wavemap_model.map.append(WaveMapSingleModel())
        >>> wavemap_model.map[0] # doctest: +SKIP

@@ -13,7 +13,7 @@ class MultiSlitModel(JwstDataModel):
     This model has a special member `slits` that can be used to
     deal with an entire slit at a time.  It behaves like a list::
 
-       >>> from jwst.datamodels.slit import SlitModel
+       >>> from jwst.datamodels import SlitModel
        >>> multislit_model = MultiSlitModel()
        >>> multislit_model.slits.append(SlitModel())
        >>> multislit_model[0]
