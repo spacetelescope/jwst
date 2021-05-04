@@ -603,11 +603,18 @@ def assert_pri(p_true, new_mod, pix):
     SCI, DQ, ERR, VAR_POISSSON, VAR_RNOISE.
     """
 
-    npt.assert_allclose(new_mod.data[0, pix], p_true[0], atol=2E-5, rtol=2e-5)
-    npt.assert_allclose(new_mod.dq[0, pix], p_true[1], atol=1E-1)
-    npt.assert_allclose(new_mod.err[0, pix], p_true[2], atol=2E-5, rtol=2e-5)
-    npt.assert_allclose(new_mod.var_poisson[0, pix], p_true[3], atol=2E-5, rtol=2e-5)
-    npt.assert_allclose(new_mod.var_rnoise[0, pix], p_true[4], atol=2E-5, rtol=2e-5)
+    # image_info = (data, dq, var_poisson, var_rnoise, err)
+    # data, dq, var_poisson, var_rnoise, err = new_mod
+    data = new_mod.data
+    dq = new_mod.dq
+    err = new_mod.err
+    var_poisson = new_mod.var_poisson
+    var_rnoise = new_mod.var_rnoise
+    npt.assert_allclose(data[0, pix], p_true[0], atol=2E-5, rtol=2e-5)
+    npt.assert_allclose(dq[0, pix], p_true[1], atol=1E-1)
+    npt.assert_allclose(err[0, pix], p_true[2], atol=2E-5, rtol=2e-5)
+    npt.assert_allclose(var_poisson[0, pix], p_true[3], atol=2E-5, rtol=2e-5)
+    npt.assert_allclose(var_rnoise[0, pix], p_true[4], atol=2E-5, rtol=2e-5)
 
     return None
 
