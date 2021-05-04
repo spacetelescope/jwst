@@ -77,7 +77,7 @@ def compute_int_times(input_model):
 
 def create_output_image_model(input_model, image_info):
     """
-    Creates output ImageModel using keyworsd from the inut RampModel and the
+    Creates output ImageModel using keywords from the inut RampModel and the
     computed arrays from the ramp fitting.
 
     Parameter
@@ -262,7 +262,6 @@ class RampFitStep (Step):
             # The out_model and int_model are JWST data models, but need to be
             # converted to simple arrays and the models created here, not in
             # the ramp fitting code.
-            # TODO: Change variable names, since models are not returned.
             image_info, int_info, opt_info, gls_opt_model = ramp_fit(
                 input_model, buffsize, self.save_opt, 
                 readnoise_2d, gain_2d, 
@@ -287,9 +286,8 @@ class RampFitStep (Step):
         if image_info is not None:
             input_model.int_times = old_int_times
             out_model = create_output_image_model(input_model, image_info)
-            if out_model is not None:
-                out_model.meta.bunit_data = 'DN/s'
-                out_model.meta.bunit_err = 'DN/s'
+            out_model.meta.bunit_data = 'DN/s'
+            out_model.meta.bunit_err = 'DN/s'
             out_model.meta.cal_step.ramp_fit = 'COMPLETE'
             if (input_model.meta.exposure.type in ['NRS_IFU', 'MIR_MRS']) or (
                 input_model.meta.exposure.type in ['NRS_AUTOWAVE', 'NRS_LAMP'] and
@@ -298,12 +296,10 @@ class RampFitStep (Step):
                 out_model = datamodels.IFUImageModel(out_model)
 
 
-        # TODO
         if int_info is not None:
             int_model = create_output_integration_model(input_model, int_info)
-            if int_model is not None:
-                int_model.meta.bunit_data = 'DN/s'
-                int_model.meta.bunit_err = 'DN/s'
+            int_model.meta.bunit_data = 'DN/s'
+            int_model.meta.bunit_err = 'DN/s'
             int_model.meta.cal_step.ramp_fit = 'COMPLETE'
 
         return out_model, int_model
