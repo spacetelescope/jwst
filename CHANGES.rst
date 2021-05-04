@@ -166,6 +166,8 @@ resample
 
 - Propagate variance arrays into ``SlitModel`` used as input for ``ResampleSpecStep`` [#5941]
 
+- Remove certain WCS keywords that are irrelevant after resampling. [#5971]
+
 source_catalog
 --------------
 
@@ -178,6 +180,9 @@ source_catalog
 
 - Photometric errors are now computed using the new resampled total
   error array. [#5997]
+
+- The ``nn_dist`` column was replaced by a ``nn_label`` column
+  indicating the label number of the nearest neighbor. [#5998]
 
 srctype
 -------

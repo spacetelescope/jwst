@@ -93,6 +93,13 @@ class ResampleStep(Step):
         else:
             result = resamp.output_models
 
+        # remove irrelevant WCS keywords
+        rm_keys = ['v2_ref', 'v3_ref', 'ra_ref', 'dec_ref', 'roll_ref',
+                   'v3yangle', 'vparity']
+        for key in rm_keys:
+            if key in result.meta.wcsinfo.instance:
+                del result.meta.wcsinfo.instance[key]
+
         return result
 
     def update_phot_keywords(self, model):

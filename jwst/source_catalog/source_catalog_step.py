@@ -72,7 +72,7 @@ class SourceCatalogStep(Step):
                 self.log.warning(msg)
                 return
 
-            coverage_mask = np.isnan(model.err)
+            coverage_mask = np.isnan(model.err) | (model.wht == 0)
             if coverage_mask.all():
                 self.log.warning('There are no valid pixels. Source catalog '
                                  'will not be created.')

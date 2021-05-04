@@ -915,12 +915,8 @@ class JWSTSourceCatalog:
         desc['is_star'] = 'Flag indicating whether the source is a star'
         desc['sharpness'] = 'The DAOFind source sharpness statistic'
         desc['roundness'] = 'The DAOFind source roundness statistic'
+        desc['nn_label'] = 'The label number of the nearest neighbor'
         desc['nn_dist'] = 'The distance in pixels to the nearest neighbor'
-        desc['nn_abmag'] = ('The AB magnitude of the nearest neighbor.  If '
-                            'the object is a star it is the total '
-                            'aperture-corrected AB magnitude, otherwise it '
-                            'is the isophotal AB magnitude.')
-
         self.column_desc.update(desc)
 
         return list(desc.keys())
@@ -1143,27 +1139,18 @@ class JWSTSourceCatalog:
             return np.transpose(qdist)[1], np.transpose(qidx)[1]
 
     @lazyproperty
+    def nn_label(self):
+        """
+        The label number of the nearest neighbor.
+        """
+        return self.label[self._ckdtree_query[1]]
+
+    @lazyproperty
     def nn_dist(self):
         """
         The distance in pixels to the nearest neighbor.
         """
         return self._ckdtree_query[0] * u.pixel
-
-    @lazyproperty
-    def nn_abmag(self):
-        """
-        The AB magnitude of the nearest neighbor.
-
-        If the nearest-neighbor is a star, then its aperture-corrected
-        total AB magnitude is used.  Otherwise, its isophotal AB
-        magnitude is used.
-        """
-        if len(self._ckdtree_query[1]) == 1:  # only one detected source
-            return np.nan
-
-        nn_abmag = self.aper_total_abmag[self._ckdtree_query[1]]
-        nn_isomag = self.isophotal_abmag[self._ckdtree_query[1]]
-        return np.where(np.isnan(nn_abmag), nn_isomag, nn_abmag)
 
     @lazyproperty
     def aper_total_flux(self):
@@ -1273,8 +1260,8 @@ class JWSTSourceCatalog:
                 catalog[colname].info.format = '.4f'
             if 'flux' in colname:
                 catalog[colname].info.format = '.6e'
-            if ('abmag' in colname or 'vegamag' in colname or 'nn_' in colname
-                    or colname in ('sharpness', 'roundness')):
+            if ('abmag' in colname or 'vegamag' in colname
+                    or colname in ('nn_dist', 'sharpness', 'roundness')):
                 catalog[colname].info.format = '.6f'
             if colname in ('semimajor_sigma', 'semiminor_sigma',
                            'ellipticity', 'orientation', 'sky_orientation'):
