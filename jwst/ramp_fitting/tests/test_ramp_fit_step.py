@@ -95,13 +95,6 @@ def setup_inputs():
     return _setup
 
 
-"""
-        ngroups=10, readnoise=10, nints=1,
-        nrows=1032, ncols=1024, subxstart=1, subystart=1,
-        subxsize=1024, subysize=1032, nframes=1,
-        grouptime=1.0, gain=1, deltatime=1):
-"""
-
 def setup_subarray_inputs(
         nints=1, ngroups=10, nrows=1032, ncols=1024,
         subxstart=1, subxsize=1024, subystart=1, subysize=1032,
@@ -175,7 +168,7 @@ def test_ramp_fit_step(generate_miri_reffiles, setup_inputs):
         model.data[0, :, x, y] = ramp
         ans_slopes[x, y] = ramp[0] / grouptime
 
-    # Call ramp fit throug the step class
+    # Call ramp fit through the step class
     slopes, cube_model = RampFitStep.call(
         model, override_gain=override_gain, override_readnoise=override_readnoise,
         maximum_cores="none")
@@ -205,7 +198,7 @@ def test_subarray_5groups(tmpdir_factory):
     model1.data[0, 3, 12, 1] = 33.0
     model1.data[0, 4, 12, 1] = 60.0
 
-    # Call ramp fit throug the step class
+    # Call ramp fit through the step class
     slopes, cube_model = RampFitStep.call(
         model1, override_gain=gainfile, override_readnoise=readnoisefile,
         maximum_cores="none")
@@ -219,8 +212,6 @@ def test_subarray_5groups(tmpdir_factory):
 
     np.testing.assert_allclose(slopes.data[12, 1], coeff[0], 1e-6)
 
-
-'''
 def test_int_times1(generate_miri_reffiles, setup_inputs):
     # Test whether int_times table gets copied to output when it should
     override_gain, override_readnoise = generate_miri_reffiles
@@ -234,9 +225,16 @@ def test_int_times1(generate_miri_reffiles, setup_inputs):
 
     # Set TSOVISIT false, in which case the int_times table should come back with zero length
     model.meta.visit.tsovisit = False
-    int_times = compute_int_times(model)
 
-    assert(int_times is None)
+    # Call ramp fit through the step class
+    slopes, cube_model = RampFitStep.call(
+        model, override_gain=override_gain, override_readnoise=override_readnoise,
+        maximum_cores="none")
+
+    assert slopes is not None
+    assert cube_model is not None
+
+    assert(len(cube_model.int_times) == 0)
 
 
 def test_int_times2(generate_miri_reffiles, setup_inputs):
@@ -245,16 +243,28 @@ def test_int_times2(generate_miri_reffiles, setup_inputs):
     ingain, inreadnoise = 6, 7
     grouptime = 3.0
     deltaDN = 5
-    nints, ngroups, nrows, ncols = 1, 5, 2, 2
+    nints, ngroups, nrows, ncols = 5, 3, 2, 2
     model, gdq, rnModel, pixdq, err, gain = setup_inputs(
         ngroups=ngroups, readnoise=inreadnoise, nints=nints, nrows=nrows,
         ncols=ncols, gain=ingain, deltatime=grouptime)
 
-
-    # Set TSOVISIT true, in which case the int_times table should come back with length nints
+    # Set TSOVISIT false, in which case the int_times table should come back with zero length
     model.meta.visit.tsovisit = True
-    int_times = compute_int_times(model)
-    assert(int_times is not None)
-'''
 
+    # Call ramp fit through the step class
+    slopes, cube_model = RampFitStep.call(
+        model, override_gain=override_gain, override_readnoise=override_readnoise,
+        maximum_cores="none")
 
+    assert slopes is not None
+    assert cube_model is not None
+
+    print("-" * 70)
+    print(f"cube_model = {cube_model}")
+    print("-" * 70)
+    print(f"type(cube_model) = {type(cube_model)}")
+    print("-" * 70)
+    print(f"cube_model.int_times = {cube_model.int_times}")
+    print("-" * 70)
+
+    assert(len(cube_model.int_times) == nints)

@@ -8,7 +8,6 @@ import warnings
 
 from .. import datamodels
 from ..datamodels import dqflags
-from ..lib import reffile_utils  # TODO remove
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

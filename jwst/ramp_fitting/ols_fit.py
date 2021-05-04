@@ -135,6 +135,9 @@ def ols_ramp_fit_multi(
 
     # Call ramp fitting for multi-processor (multiple data slices) case
     else:
+        return None, None, None
+        '''
+        # Remove multiprocessing
         log.debug(f'number of processes being used is {number_slices}')
         rows_per_slice = round(total_rows / number_slices)
         pool = Pool(processes=number_slices)
@@ -250,6 +253,7 @@ def ols_ramp_fit_multi(
             k = k + 1
 
         return out_model, int_model, opt_model
+        '''
 
 
 def set_output_models(out_model, int_model, opt_model, new_mdl, int_mdl, opt_res, save_opt):
@@ -383,6 +387,8 @@ def create_output_models(input_model, number_of_integrations, save_opt,
     return int_model, opt_model, out_model
 
 
+'''
+# Remove multiprocessing
 def ols_ramp_fit_sliced(
         data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d, gain_2d,
         weighting, instrume, frame_time, ngroups, group_time, groupgap, nframes,
@@ -588,6 +594,7 @@ def ols_ramp_fit_sliced(
         int_data, int_dq, int_var_poisson, int_var_rnoise, int_err, int_int_times, \
         opt_slope, opt_sigslope, opt_var_poisson, opt_var_rnoise, opt_yint, opt_sigyint, \
         opt_pedestal, opt_weights, opt_crmag, actual_segments, actual_CRs
+'''
 
 
 def ols_ramp_fit_single(
