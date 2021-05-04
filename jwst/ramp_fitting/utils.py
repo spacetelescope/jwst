@@ -7,7 +7,7 @@ import numpy as np
 import warnings
 
 from .. import datamodels
-from ..datamodels import dqflags
+from ..datamodels import dqflags  # TODO here for flags
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -15,6 +15,7 @@ log.setLevel(logging.DEBUG)
 # Replace zero or negative variances with this:
 LARGE_VARIANCE = 1.e8
 
+# TODO Change dependencies when moved to STCAL
 DO_NOT_USE = dqflags.group['DO_NOT_USE']
 JUMP_DET = dqflags.group['JUMP_DET']
 SATURATED = dqflags.group['SATURATED']
@@ -1255,9 +1256,8 @@ def do_all_sat(pixeldq, groupdq, imshape, n_int, save_opt):
 
     Returns
     -------
-    new_model : Data Model object
-        DM object containing a rate image averaged over all integrations in
-        the exposure
+    image_info: tuple
+        The tuple of computed ramp fitting arrays.
 
     int_model : Data Model object or None
         DM object containing rate images for each integration in the exposure
@@ -1271,11 +1271,12 @@ def do_all_sat(pixeldq, groupdq, imshape, n_int, save_opt):
     pixeldq = np.bitwise_or(pixeldq, dqflags.group['SATURATED'])
     pixeldq = np.bitwise_or(pixeldq, dqflags.group['DO_NOT_USE'])
 
-    new_model = datamodels.ImageModel(data=np.zeros(imshape, dtype=np.float32),
-                                      dq=pixeldq,
-                                      var_poisson=np.zeros(imshape, dtype=np.float32),
-                                      var_rnoise=np.zeros(imshape, dtype=np.float32),
-                                      err=np.zeros(imshape, dtype=np.float32))
+    data = np.zeros(imshape, dtype=np.float32)
+    dq = pixeldq
+    var_poisson = np.zeros(imshape, dtype=np.float32)
+    var_rnoise = np.zeros(imshape, dtype=np.float32)
+    err = np.zeros(imshape, dtype=np.float32)
+    image_info = (data, dq, var_poisson, var_rnoise, err)
 
     # Create model for the integration-specific output. The 3D group DQ created
     #   is based on the 4D group DQ of the model, and all pixels in all
@@ -1321,7 +1322,7 @@ def do_all_sat(pixeldq, groupdq, imshape, n_int, save_opt):
 
     log.info('All groups of all integrations are saturated.')
 
-    return new_model, int_model, opt_model
+    return image_info, int_model, opt_model
 
 
 def log_stats(c_rates):

@@ -16,7 +16,6 @@
 import numpy as np
 import logging
 
-
 from . import gls_fit           # used only if algorithm is "GLS"
 from . import ols_fit           # used only if algorithm is "OLS"
 
@@ -70,9 +69,8 @@ def ramp_fit(model, buffsize, save_opt, readnoise_2d, gain_2d,
 
     Returns
     -------
-    new_model : Data Model object
-        DM object containing a rate image averaged over all integrations in
-        the exposure
+    image_info: tuple
+        The tuple of computed ramp fitting arrays.
 
     int_model : Data Model object or None
         DM object containing rate images for each integration in the exposure
@@ -91,7 +89,7 @@ def ramp_fit(model, buffsize, save_opt, readnoise_2d, gain_2d,
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # new_model, int_model, gls_opt_model = gls_fit.gls_ramp_fit(
         #     model, buffsize, save_opt, readnoise_model, gain_model, max_cores)
-        new_model, int_model, gls_opt_model = None, None, None
+        image_info, int_model, gls_opt_model = None, None, None
         opt_model = None
     else:
         # Get readnoise array for calculation of variance of noiseless ramps, and
@@ -100,8 +98,8 @@ def ramp_fit(model, buffsize, save_opt, readnoise_2d, gain_2d,
         readnoise_2d *= gain_2d / np.sqrt(2. * nframes)
 
         # Compute ramp fitting using ordinary least squares.
-        new_model, int_model, opt_model = ols_fit.ols_ramp_fit_multi(
+        image_info, int_model, opt_model = ols_fit.ols_ramp_fit_multi(
             model, buffsize, save_opt, readnoise_2d, gain_2d, weighting, max_cores)
         gls_opt_model = None
 
-    return new_model, int_model, opt_model, gls_opt_model
+    return image_info, int_model, opt_model, gls_opt_model

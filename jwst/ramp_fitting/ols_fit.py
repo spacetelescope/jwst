@@ -8,13 +8,15 @@ import time
 
 import warnings
 from .. import datamodels
-from ..datamodels import dqflags
+
+from ..datamodels import dqflags  # TODO here for flags
 
 from . import utils
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+# TODO Change dependencies when moved to STCAL
 DO_NOT_USE = dqflags.group['DO_NOT_USE']
 JUMP_DET = dqflags.group['JUMP_DET']
 SATURATED = dqflags.group['SATURATED']
@@ -68,9 +70,8 @@ def ols_ramp_fit_multi(
 
     Returns
     -------
-    new_model : Data Model object
-        DM object containing a rate image averaged over all integrations in
-        the exposure
+    image_info: tuple
+        The tuple of computed ramp fitting arrays.
 
     int_model : Data Model object or None
         DM object containing rate images for each integration in the exposure
@@ -114,11 +115,12 @@ def ols_ramp_fit_multi(
         log.debug(f"Max segments={max_segments}")
 
         # Single threaded computation
-        new_mdl, int_mdl, opt_res = ols_ramp_fit_single(
+        image_info, int_mdl, opt_res = ols_ramp_fit_single(
             input_model, int_times, buffsize, save_opt, readnoise_2d, gain_2d, weighting)
         if new_mdl is None:
             return None, None, None
 
+        # TODO: These computations will eventually be removed.
         # Create output models to be populated after ramp fitting.
         int_model, opt_model, out_model = create_output_models(
             input_model, number_of_integrations, save_opt,
@@ -126,13 +128,13 @@ def ols_ramp_fit_multi(
 
         set_output_models(out_model, int_model, opt_model, new_mdl, int_mdl, opt_res, save_opt)
 
-        return out_model, int_model, opt_model
+        return image_info, int_model, opt_model
 
     # Call ramp fitting for multi-processor (multiple data slices) case
     else:
         return None, None, None
         '''
-        # Remove multiprocessing
+        # Remove BEGIN multiprocessing
         log.debug(f'number of processes being used is {number_slices}')
         rows_per_slice = round(total_rows / number_slices)
         pool = Pool(processes=number_slices)
@@ -248,6 +250,7 @@ def ols_ramp_fit_multi(
             k = k + 1
 
         return out_model, int_model, opt_model
+        # END Multiprocessing
         '''
 
 
@@ -383,7 +386,7 @@ def create_output_models(input_model, number_of_integrations, save_opt,
 
 
 '''
-# Remove multiprocessing
+# Remove BEGIN multiprocessing
 def ols_ramp_fit_sliced(
         data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d, gain_2d,
         weighting, instrume, frame_time, ngroups, group_time, groupgap, nframes,
@@ -589,6 +592,7 @@ def ols_ramp_fit_sliced(
         int_data, int_dq, int_var_poisson, int_var_rnoise, int_err, int_int_times, \
         opt_slope, opt_sigslope, opt_var_poisson, opt_var_rnoise, opt_yint, opt_sigyint, \
         opt_pedestal, opt_weights, opt_crmag, actual_segments, actual_CRs
+# END Multiprocessing
 '''
 
 
@@ -624,8 +628,8 @@ def ols_ramp_fit_single(
 
     Return
     ------
-    new_model : ImageModel
-        Contains the computed rates and variances for the ramp fitting.
+    image_info: tuple
+        The tuple of computed ramp fitting arrays.
 
     int_model : Data model object
         Integration-specific results to separate output file
@@ -673,11 +677,11 @@ def ols_ramp_fit_single(
     #     all integrations:
     #     slope = sum_over_integs_and_segs(slope_seg/var_seg)/
     #                    sum_over_integs_and_segs(1/var_seg)
-    new_model, int_model, opt_model = ramp_fit_overall(
+    image_info, int_model, opt_model = ramp_fit_overall(
         input_model, orig_cubeshape, orig_ngroups, buffsize, fit_slopes_ans,
         variances_ans, save_opt, int_times, tstart)
 
-    return new_model, int_model, opt_model
+    return image_info, int_model, opt_model
 
 
 def discard_miri_groups(input_model):
@@ -856,10 +860,10 @@ def ramp_fit_slopes(input_model, gain_2d, readnoise_2d, save_opt, weighting):
     #   a ramp is saturated, it is assumed that all groups are saturated.
     first_gdq = groupdq[:, 0, :, :]
     if np.all(np.bitwise_and(first_gdq, SATURATED)):
-        new_model, int_model, opt_model = \
-            utils.do_all_sat(inpixeldq, groupdq, imshape, n_int, save_opt)
+        image_info, int_model, opt_model = utils.do_all_sat(
+            inpixeldq, groupdq, imshape, n_int, save_opt)
 
-        return "saturated", new_model, int_model, opt_model
+        return "saturated", image_info, int_model, opt_model
 
     # Calculate effective integration time (once EFFINTIM has been populated
     #   and accessible, will use that instead), and other keywords that will
@@ -1288,8 +1292,8 @@ def ramp_fit_overall(
 
     Return
     ------
-    new_model : ImageModel
-        Contains the computed rates and variances for the ramp fitting.
+    image_info: tuple
+        The tuple of computed ramp fitting arrays.
 
     int_model : Data model object
         Integration-specific results to separate output file
@@ -1479,13 +1483,14 @@ def ramp_fit_overall(
     del s_inv_var_r3
 
     # Create new model for the primary output.
-    new_model = datamodels.ImageModel(data=c_rates.astype(np.float32),
-                                      dq=final_pixeldq.astype(np.uint32),
-                                      var_poisson=var_p2.astype(np.float32),
-                                      var_rnoise=var_r2.astype(np.float32),
-                                      err=err_tot.astype(np.float32))
+    data = c_rates.astype(np.float32)
+    dq = final_pixeldq.astype(np.uint32)
+    var_poisson = var_p2.astype(np.float32)
+    var_rnoise = var_r2.astype(np.float32)
+    err = err_tot.astype(np.float32)
+    image_info = (data, dq, var_poisson, var_rnoise, err)
 
-    return new_model, int_model, opt_model
+    return image_info, int_model, opt_model
 
 
 def calc_power(snr):
