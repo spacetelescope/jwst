@@ -266,25 +266,6 @@ class TestMethods:
         assert slopes[0].dq[10, 10] == 524288 + 1
         assert slopes[0].dq[20, 20] == 524288 + 1
 
-    def test_subarray_5groups(self, method):
-        # all pixel values are zero. So slope should be zero
-        model1, gdq, rnModel, pixdq, err, gain = setup_subarray_inputs(ngroups=5,
-                                                                       subxstart=10,
-                                                                       subystart=20,
-                                                                       subxsize=5,
-                                                                       subysize=15,
-                                                                       readnoise=50)
-        model1.meta.exposure.ngroups = 11
-        model1.data[0, 0, 12, 1] = 10.0
-        model1.data[0, 1, 12, 1] = 15.0
-        model1.data[0, 2, 12, 1] = 25.0
-        model1.data[0, 3, 12, 1] = 33.0
-        model1.data[0, 4, 12, 1] = 60.0
-        xvalues = np.arange(5) * 1.0
-        yvalues = np.array([10, 15, 25, 33, 60])
-        coeff = np.polyfit(xvalues, yvalues, 1)
-        slopes = ramp_fit(model1, 64000, False, rnModel, gain, 'OLS', 'optimal', 'none')
-        np.testing.assert_allclose(slopes[0].data[12, 1], coeff[0], 1e-6)
 
     def test_simple_ramp(self, method):
         # Here given a 10 group ramp with an exact slope of 20/group. The output slope should be 20.
