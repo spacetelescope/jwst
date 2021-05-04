@@ -166,6 +166,8 @@ resample
 
 - Propagate variance arrays into ``SlitModel`` used as input for ``ResampleSpecStep`` [#5941]
 
+- Remove certain WCS keywords that are irrelevant after resampling. [#5971]
+
 source_catalog
 --------------
 

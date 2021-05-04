@@ -380,3 +380,18 @@ def test_build_interpolated_output_wcs(miri_rate_pair):
     # Make sure the output slit size is larger than the input slit size
     # for this nodded data
     assert driz.data_size[1] > ra.shape[1]
+
+
+def test_wcs_keywords(nircam_rate):
+    # make sure certain wcs keywords are removed after resample
+
+    im = AssignWcsStep.call(nircam_rate)
+    result = ResampleStep.call(im)
+
+    assert result.meta.wcsinfo.v2_ref is None
+    assert result.meta.wcsinfo.v3_ref is None
+    assert result.meta.wcsinfo.ra_ref is None
+    assert result.meta.wcsinfo.dec_ref is None
+    assert result.meta.wcsinfo.roll_ref is None
+    assert result.meta.wcsinfo.v3yangle is None
+    assert result.meta.wcsinfo.vparity is None
