@@ -3,6 +3,7 @@
 from ..stpipe import Step
 from .. import datamodels
 from . import ramp_fit
+from . import utils
 
 import logging
 log = logging.getLogger(__name__)
@@ -67,9 +68,13 @@ class RampFitStep (Step):
             if self.algorithm == "GLS":
                 buffsize //= 10
 
+            frames_per_group = input_model.meta.exposure.nframes
+            readnoise_2d, gain_2d = \
+                utils.get_ref_subs(input_model, readnoise_model, gain_model, frames_per_group)
+
             out_model, int_model, opt_model, gls_opt_model = ramp_fit.ramp_fit(
                 input_model, buffsize,
-                self.save_opt, readnoise_model, gain_model, self.algorithm,
+                self.save_opt, readnoise_2d, gain_2d, self.algorithm,
                 self.weighting, max_cores
             )
 

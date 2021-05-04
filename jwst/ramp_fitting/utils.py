@@ -1155,7 +1155,7 @@ def get_ref_subs(model, readnoise_model, gain_model, nframes):
 
     # convert read noise to correct units & scale down for single groups,
     #   and account for the number of frames per group
-    readnoise_2d *= gain_2d / np.sqrt(2. * nframes)
+    # readnoise_2d *= gain_2d / np.sqrt(2. * nframes)
 
     return readnoise_2d, gain_2d
 

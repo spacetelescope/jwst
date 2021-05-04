@@ -206,7 +206,8 @@ def test_one_group_two_ints_fit_gls():
 # that both can use the parameterized 'method'
 
 
-@pytest.mark.parametrize("method", ['OLS', 'GLS'])  # don't do GLS to see if it causes hang
+# @pytest.mark.parametrize("method", ['OLS', 'GLS'])  # don't do GLS to see if it causes hang
+@pytest.mark.parametrize("method", ['OLS'])  # don't do GLS to see if it causes hang
 class TestMethods:
 
     def test_nocrs_noflux(self, method):
@@ -778,7 +779,7 @@ def setup_small_cube(ngroups=10, nints=1, nrows=2, ncols=2, deltatime=10.,
     err = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
     data = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
     pixdq = np.zeros(shape=(nrows, ncols), dtype=np.int32)
-    read_noise = np.full((nrows, ncols), readnoise, dtype=np.float64)
+    rnoise = np.full((nrows, ncols), readnoise, dtype=np.float64)
     gdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.uint8)
     model1 = RampModel(data=data, err=err, pixeldq=pixdq, groupdq=gdq)
 
@@ -800,9 +801,11 @@ def setup_small_cube(ngroups=10, nints=1, nrows=2, ncols=2, deltatime=10.,
     model1.meta.exposure.group_time = deltatime
     model1.meta.exposure.nframes = 1
     model1.meta.exposure.groupgap = 0
+
+    return model1, gdq, rnoise, pixdq, err, gain
+
     gain = GainModel(data=gain)
     gain.meta.instrument.name = 'MIRI'
-
     gain.meta.subarray.xstart = 1
     gain.meta.subarray.ystart = 1
     gain.meta.subarray.xsize = ncols
@@ -828,7 +831,7 @@ def setup_inputs(ngroups=10, readnoise=10, nints=1,
     pixdq = np.zeros(shape=(nrows, ncols), dtype=np.uint32)
     gdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.uint8)
     gain = np.ones(shape=(nrows, ncols), dtype=np.float64) * gain
-    read_noise = np.full((nrows, ncols), readnoise, dtype=np.float32)
+    rnoise = np.full((nrows, ncols), readnoise, dtype=np.float32)
     int_times = np.zeros((nints,))
 
     model1 = RampModel(data=data, err=err, pixeldq=pixdq, groupdq=gdq, int_times=int_times)
@@ -850,6 +853,8 @@ def setup_inputs(ngroups=10, readnoise=10, nints=1,
     model1.meta.exposure.groupgap = 0
     model1.meta.exposure.drop_frames1 = 0
 
+    return model1, gdq, rnoise, pixdq, err, gain
+
     gain = GainModel(data=gain)
     gain.meta.instrument.name = 'MIRI'
     gain.meta.subarray.xstart = 1
@@ -863,4 +868,5 @@ def setup_inputs(ngroups=10, readnoise=10, nints=1,
     rnoise.meta.subarray.ystart = 1
     rnoise.meta.subarray.xsize = ncols
     rnoise.meta.subarray.ysize = nrows
+
     return model1, gdq, rnoise, pixdq, err, gain
