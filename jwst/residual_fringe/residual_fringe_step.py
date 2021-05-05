@@ -120,6 +120,7 @@ class ResidualFringeStep(Step):
                     self.skip = True
                 return self.output_models
 
+
             # Do the correction
             rfc= residual_fringe.ResidualFringeCorrection(model,
                                                           self.residual_fringe_filename,

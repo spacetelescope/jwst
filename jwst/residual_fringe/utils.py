@@ -13,10 +13,7 @@ from scipy.interpolate import interp1d
 from scipy.optimize import curve_fit
 from scipy.stats import ks_2samp
 #
-# remove matplotlib after testing 
-import matplotlib.pyplot as plt
-from matplotlib.colors import LogNorm
-#
+
 from astropy.io import fits
 from astropy.table import Table
 import astropy.units as u
@@ -31,8 +28,6 @@ from .SineModel import SineModel
 from .LevenbergMarquardtFitter import LevenbergMarquardtFitter
 from .RobustShell import RobustShell
 from numpy.linalg.linalg import LinAlgError
-
-from .diagnostic_plot import diagnostic_plot
 
 import logging
 log = logging.getLogger(__name__)
@@ -243,21 +238,7 @@ def find_lines(signal, max_amp):
             l_x.append(x)
 
     log.debug("find_lines: Found {} peaks   {} troughs".format(len(u_x), len(l_x)))
-
-    
     weights_factors[signal_check > np.amax(max_amp)] = 0
-
-    # fig, axs = plt.subplots(1, 1, figsize=(12, 6), sharex=True)
-    # axs.plot(signal, c='r', label='signal')
-    # axs.plot(signal_check, c='b', label='signal_check')
-    # axs.plot(weights_factors, c='k', label='weights', linewidth=0.5, alpha=0.8)
-    # axs.scatter(u_x, u_y, c='g', marker='x', s=50, label='peaks')
-    # axs.plot([0, 1023], [max_amp, max_amp], c='k', label='weights', linestyle='--', linewidth=0.5, alpha=0.5)
-    # axs.set_ylim(0, 10)
-    # plt.tight_layout(pad=0.5)
-    # plt.show()
-
-
     return weights_factors
 
 
@@ -526,7 +507,7 @@ def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None):
     return bg_fit, bgindx, fitter
 
 
-def fit_quality(wavenum, res_fringes, weights, ffreq, dffreq, save_intermediate_results=False, qual_table=None):
+def fit_quality(wavenum, res_fringes, weights, ffreq, dffreq, save_results=False):
     """Determine the post correction fringe residual
 
     Fit a single sine model to the corrected array to get the post correction fringe residual
@@ -552,9 +533,6 @@ def fit_quality(wavenum, res_fringes, weights, ffreq, dffreq, save_intermediate_
 
     fringe_res_amp: numpy array
         the post correction fringe residual amplitude
-
-    fig: matplotlib object
-        figure showing the fit
 
     """
     ffreq, dffreq = 2.8, 0.2
@@ -588,19 +566,18 @@ def fit_quality(wavenum, res_fringes, weights, ffreq, dffreq, save_intermediate_
         contrast = np.abs(round(fr_par[1]*2, 3))
 
     # make data to return for fit quality
-    if save_intermediate_results:
+    quality  = None
+    if save_results:
         best_mdl = SineModel(fixed={0: 1/peak_freq, 1:fr_par[0], 2:fr_par[1]})
         fit = best_mdl.result(wavenum)
-        # save wavenum -> wavelength, res_fringes, fit 
-        xdata = [wavenum]
-        ydata = [res_fringes, fit]
-        #diagnostic_plot('fit_quality', 'columns', plot_name=plot_name, xdata=xdata, ydata=ydata)
-
-    return contrast
+        quality = np.array([(10000.0/wavenum), res_fringes, fit])
+        #quality = np.transpose(quality)
+        
+    return contrast, quality
 
 
 def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, min_nfringes, max_nfringes, pgram_res):
-#                                  plot_pdgm=False, pdgm_name=None):
+
     """Fit the residual fringe signal.
 
     Takes an input 1D array of residual fringes and fits using the supplied mode in the BayesicFitting package:
@@ -631,11 +608,6 @@ def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, 
     wavenum: numpy array, required
         the 1D array of wavenum
 
-    plot_pdgm: boolean, default=False
-        Option to make diagnostic output, plot the periodogram
-
-    pdgm_name: str, optional, default=None
-        if plot_pdgm is True, supply the root name for plotting
 
     :Returns:
 
@@ -703,25 +675,12 @@ def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, 
             peak_ind = pgram.argsort()[-peaks_freq.shape[0]:][::-1]
             freqs = 1. / freq[peak_ind]
 
-        # plot the results if asked
-        #if plot_pdgm:
-        #    log.debug("fit_1d_fringes_bayes: saving periodogram")
-            # PERIODOGRAM plot
-        #    xdata = [wavenum, freq * factor, peaks_freq * factor]
-        #    ydata = [res_fringes, pgram, peaks_power]
-        #    name = os.path.splitext(pdgm_name)[0] + 'ffreq{}'.format(np.round(ffreq * factor, 2)) + \
-        #           os.path.splitext(pdgm_name)[1]
-        #    print('**********name',name)
-            #exit(-1)
-            #diagnostic_plot('periodogram', 'columns', name,
-            #                xdata=xdata, ydata=ydata, save_data=True)
-
         # start from 2 frequency, add 1 each loop and check evidence
         log.debug("fit_1d_fringes_bayes: fit {} freqs incrementally, check bayes evidence".format(freqs.shape[0]))
 
-        #got to here 
         evidence1 = 1e-5 # arbitrarily small
         opt_nfringes = min_nfringes # initialise
+        print('in fit_1d_fringes_bayes_evidence', min_nfringes, freqs.shape[0])
         
         for nfringes in np.arange(min_nfringes, freqs.shape[0]):
             # use the significant frequencies setup a multi-sine model of that number of sines
@@ -756,7 +715,7 @@ def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, 
 
             log.debug("fit_1d_fringes_bayes_evidence: nfringe={} ev={} chi={}".format(nfringes, evidence2, fitter.chisq))
 
-            bayes_factor = evidence2 - evidence1
+            bayes_factor=  evidence2 - evidence1
             log.debug(
                 "fit_1d_fringes_bayes_evidence: bayes factor={}".format(bayes_factor))
             if bayes_factor > 1:  # strong evidence thresh (log(bayes factor)>1, Kass and Raftery 1995)
@@ -795,7 +754,14 @@ def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, 
         best_fringe_model.parameters = fr_par
         res_fringe_fit = best_fringe_model(wavenum)
 
-        return res_fringe_fit, weighted_pix_num
+        # create outputs to return
+        fitted_frequencies = (1/freqs[:opt_nfringes+1]) * factor
+        peak_freq = fitted_frequencies[0]
+        freq_min = np.amin(fitted_frequencies)
+        freq_max = np.amax(fitted_frequencies)
+                             
+        #print( res_fringe_fit, weighted_pix_num, opt_nfringes, peak_freq, freq_min, freq_max)
+        return res_fringe_fit, weighted_pix_num, opt_nfringes, peak_freq, freq_min, freq_max
 
 
 
