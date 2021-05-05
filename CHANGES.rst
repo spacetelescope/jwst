@@ -60,6 +60,11 @@ calwebb_spec3
 - Updated documentation to indicate that master_background is applied to
   NIRSpec MOS exposures in the calwebb_spec2 pipeline [#5913]
 
+csv_tools
+---------
+
+- The ``csv_tools`` subpackage was removed [#6006]
+
 cube_build
 ----------
 
