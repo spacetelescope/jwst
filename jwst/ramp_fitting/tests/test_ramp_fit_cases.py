@@ -2,6 +2,8 @@ import numpy as np
 import numpy.testing as npt
 
 from jwst.ramp_fitting.ramp_fit import ramp_fit
+# from stcal.ramp_fitting.ramp_fit import ramp_fit
+
 from jwst.datamodels import RampModel
 from jwst.datamodels import GainModel, ReadnoiseModel
 

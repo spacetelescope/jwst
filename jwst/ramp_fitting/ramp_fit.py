@@ -16,7 +16,7 @@
 import numpy as np
 import logging
 
-from . import gls_fit           # used only if algorithm is "GLS"
+# from . import gls_fit           # used only if algorithm is "GLS"
 from . import ols_fit           # used only if algorithm is "OLS"
 
 log = logging.getLogger(__name__)
@@ -78,7 +78,7 @@ def ramp_fit(model, buffsize, save_opt, readnoise_2d, gain_2d,
     opt_info: tuple
         The tuple of computed optional results arrays for fitting.
 
-    gls_opt_model : GLS_RampFitModel object or None
+    gls_opt_model : GLS_RampFitModel object or None (Unused for now)
         Object containing optional GLS-specific ramp fitting data for the
         exposure
     """

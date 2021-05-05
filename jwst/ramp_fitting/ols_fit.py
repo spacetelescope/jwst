@@ -2,12 +2,11 @@
 
 
 import logging
-from multiprocessing.pool import Pool as Pool
+# from multiprocessing.pool import Pool as Pool
 import numpy as np
 import time
 
 import warnings
-from .. import datamodels
 
 from ..datamodels import dqflags  # TODO here for flags
 
@@ -90,8 +89,8 @@ def ols_ramp_fit_multi(
     # Copy the int_times table for TSO data
     int_times = input_model.int_times
 
-    total_rows = input_model.data.shape[2]
-    total_cols = input_model.data.shape[3]
+    # total_rows = input_model.data.shape[2]
+    # total_cols = input_model.data.shape[3]
     number_of_integrations = input_model.data.shape[0]
 
     # For MIRI datasets having >1 group, if all pixels in the final group are
@@ -124,8 +123,10 @@ def ols_ramp_fit_multi(
     # Call ramp fitting for multi-processor (multiple data slices) case
     else:
         return None, None, None
-        '''
-        # Remove BEGIN multiprocessing
+
+
+'''
+# Remove BEGIN multiprocessing
         log.debug(f'number of processes being used is {number_slices}')
         rows_per_slice = round(total_rows / number_slices)
         pool = Pool(processes=number_slices)
@@ -241,73 +242,6 @@ def ols_ramp_fit_multi(
             k = k + 1
 
         return out_model, int_model, opt_model
-        # END Multiprocessing
-        '''
-
-
-def set_output_models(out_model, int_model, opt_model, new_mdl, int_mdl, opt_res, save_opt):
-    """
-    out_model : Data Model Object
-        Allocated model to be populated
-
-    int_model : Data Model Object
-        Allocated model to be populated
-
-    opt_model : RampFitOutputModel object or None
-        Allocated model to be populated
-
-    new_mdl : Data Model object
-        Output from ols_ramp_fit_single to use to populate out_model
-
-    int_mdl : Data Model object
-        Output from ols_ramp_fit_single to use to populate int_model,
-        if int_model is not None
-
-    opt_res : RampFitOutputModel object
-        Output from ols_ramp_fit_single to use to populate opt_model,
-        if opt_model is not None
-
-    save_opt : boolean
-       Save optional fitting results.
-    """
-    pass
-    '''
-    out_model.data = new_mdl.data
-    out_model.dq = new_mdl.dq
-    out_model.var_poisson = new_mdl.var_poisson
-    out_model.var_rnoise = new_mdl.var_rnoise
-    out_model.err = new_mdl.err
-    '''
-
-    '''
-    if int_mdl is not None:
-        int_model.data = int_mdl.data
-        int_model.dq = int_mdl.dq
-        int_model.var_poisson = int_mdl.var_poisson
-        int_model.var_rnoise = int_mdl.var_rnoise
-        int_model.err = int_mdl.err
-        int_model.int_times = int_mdl.int_times
-    else:
-        int_model.data = None
-        int_model.dq = None
-        int_model.var_poisson = None
-        int_model.var_rnoise = None
-        int_model.err = None
-        int_model.int_times = None
-    '''
-
-    '''
-    if save_opt:
-        opt_model.slope = opt_res.slope
-        opt_model.sigslope = opt_res.sigslope
-        opt_model.var_poisson = opt_res.var_poisson
-        opt_model.var_rnoise = opt_res.var_rnoise
-        opt_model.yint = opt_res.yint
-        opt_model.sigyint = opt_res.sigyint
-        opt_model.pedestal = opt_res.pedestal
-        opt_model.weights = opt_res.weights
-        opt_model.crmag = opt_res.crmag
-    '''
 
 
 def create_output_models(input_model, number_of_integrations, save_opt,
@@ -341,8 +275,6 @@ def create_output_models(input_model, number_of_integrations, save_opt,
     out_model : RampFitOutputModel
         The standard rate output model
     """
-    pass
-    '''
     # TODO Remove function
     imshape = (total_rows, total_cols)
     out_model = datamodels.ImageModel(data=np.zeros(imshape, dtype=np.float32),
@@ -386,11 +318,8 @@ def create_output_models(input_model, number_of_integrations, save_opt,
         opt_model = None
 
     return int_model, opt_model, out_model
-    '''
 
 
-'''
-# Remove BEGIN multiprocessing
 def ols_ramp_fit_sliced(
         data, err, groupdq, inpixeldq, buffsize, save_opt, readnoise_2d, gain_2d,
         weighting, instrume, frame_time, ngroups, group_time, groupgap, nframes,
@@ -1425,8 +1354,9 @@ def ramp_fit_overall(
         del pixeldq
 
     # Output integration-specific results to separate file
-    integ_info = utils.output_integ(slope_int, dq_int, effintim,
-                                   var_p3, var_r3, var_both3, int_times)
+    integ_info = utils.output_integ(
+        slope_int, dq_int, effintim, var_p3, var_r3, var_both3, int_times)
+
     if opt_res is not None:
         del opt_res
 

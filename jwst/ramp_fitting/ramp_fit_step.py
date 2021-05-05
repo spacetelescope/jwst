@@ -4,12 +4,15 @@ import numpy as np
 
 from ..stpipe import Step
 from .. import datamodels
+
 from . import ramp_fit
+# from stcal.ramp_fitting import ramp_fit
 
 from ..lib import reffile_utils  # TODO remove
 from ..lib import pipe_utils
 
 import logging
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -57,10 +60,6 @@ def get_ref_subs(model, readnoise_model, gain_model, nframes):
     else:
         log.info('Extracting readnoise subarray to match science data')
         readnoise_2d = reffile_utils.get_subarray_data(model, readnoise_model)
-
-    # convert read noise to correct units & scale down for single groups,
-    #   and account for the number of frames per group
-    # readnoise_2d *= gain_2d / np.sqrt(2. * nframes)
 
     return readnoise_2d, gain_2d
 
@@ -117,7 +116,7 @@ def create_integration_model(input_model, integ_info):
     int_model: CubeModel
         The output CubeModel to be returned from the ramp fit step.
     """
-    data, dq, var_poisson, var_rnoise, int_times, err = integ_info 
+    data, dq, var_poisson, var_rnoise, int_times, err = integ_info
     int_model = datamodels.CubeModel(
         data=np.zeros(data.shape, dtype=np.float32),
         dq=np.zeros(data.shape, dtype=np.uint32),
@@ -137,7 +136,7 @@ def create_integration_model(input_model, integ_info):
     return int_model
 
 
-def create_optional_results_model(image_info):
+def create_optional_results_model(opt_info):
     """
     Creates an ImageModel from the computed arrays from ramp_fit.
 
@@ -227,8 +226,7 @@ class RampFitStep (Step):
             readnoise_2d, gain_2d = get_ref_subs(
                 input_model, readnoise_model, gain_model, frames_per_group)
 
-            # Save old int_times just in case and set it for ramp fit usage.
-            old_int_times = input_model.int_times
+            # Set int_times depending on model meta data.
             if pipe_utils.is_tso(input_model) and hasattr(input_model, 'int_times'):
                 input_model.int_times = input_model.int_times
             else:
@@ -245,7 +243,7 @@ class RampFitStep (Step):
 
         # Save the OLS optional fit product, if it exists
         if opt_info is not None:
-            opt_model = create_optional_results_model(image_info)
+            opt_model = create_optional_results_model(opt_info)
             self.save_model(opt_model, 'fitopt', output_file=self.opt_name)
 
         '''

@@ -6,7 +6,6 @@ import multiprocessing
 import numpy as np
 import warnings
 
-from .. import datamodels
 from ..datamodels import dqflags  # TODO here for flags
 
 log = logging.getLogger(__name__)
@@ -732,6 +731,8 @@ def output_integ(slope_int, dq_int, effintim, var_p3, var_r3, var_both3,
     return integ_info
 
 
+'''
+# BEGIN remove GLS
 def gls_output_integ(model, slope_int, slope_err_int, dq_int):
     """
     For the GLS algorithm, construct the output integration-specific results.
@@ -869,6 +870,8 @@ def gls_pedestal(first_group, slope_int, s_mask,
         pedestal[s_mask] = 0.
 
     return pedestal
+# END remove GLS
+'''
 
 
 def shift_z(a, off):
@@ -1306,7 +1309,6 @@ def do_all_sat(pixeldq, groupdq, imshape, n_int, save_opt):
     if save_opt:
         new_arr = np.zeros((n_int,) + (1,) + imshape, dtype=np.float32)
 
-        # opt_model = datamodels.RampFitOutputModel(
         slope = new_arr
         sigslope = new_arr
         var_poisson = new_arr
@@ -1321,7 +1323,7 @@ def do_all_sat(pixeldq, groupdq, imshape, n_int, save_opt):
                     yint, sigyint, pedestal, weights, crmag)
 
     else:
-        opt_info= None
+        opt_info = None
 
     log.info('All groups of all integrations are saturated.')
 

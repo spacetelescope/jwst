@@ -3,12 +3,6 @@ import numpy as np
 
 from jwst.ramp_fitting.ramp_fit_step import RampFitStep
 
-# from stcal.ramp_fitting.ramp_fit import ramp_fit
-# from stcal.ramp_fitting.ols_fit import calc_num_seg
-from jwst.ramp_fitting.ramp_fit import ramp_fit
-from jwst.ramp_fitting.ols_fit import calc_num_seg
-
-from jwst.datamodels import dqflags
 from jwst.datamodels import RampModel
 from jwst.datamodels import GainModel, ReadnoiseModel
 
@@ -154,7 +148,6 @@ def test_ramp_fit_step(generate_miri_reffiles, setup_inputs):
     override_gain, override_readnoise = generate_miri_reffiles
     ingain, inreadnoise = 6, 7
     grouptime = 3.0
-    deltaDN = 5
     nints, ngroups, nrows, ncols = 1, 5, 2, 2
     model, gdq, rnModel, pixdq, err, gain = setup_inputs(
         ngroups=ngroups, readnoise=inreadnoise, nints=nints, nrows=nrows,
@@ -165,7 +158,7 @@ def test_ramp_fit_step(generate_miri_reffiles, setup_inputs):
     base_ramp = np.array([k + 1 for k in range(ngroups)])
     ans_slopes = np.zeros(shape=(2,2))
     for k, p in enumerate(pix):
-        ramp = base_ramp * (k+1)  # A simple linear ramp
+        ramp = base_ramp * (k + 1)  # A simple linear ramp
         x, y = p
         model.data[0, :, x, y] = ramp
         ans_slopes[x, y] = ramp[0] / grouptime
@@ -214,12 +207,12 @@ def test_subarray_5groups(tmpdir_factory):
 
     np.testing.assert_allclose(slopes.data[12, 1], coeff[0], 1e-6)
 
+
 def test_int_times1(generate_miri_reffiles, setup_inputs):
     # Test whether int_times table gets copied to output when it should
     override_gain, override_readnoise = generate_miri_reffiles
     ingain, inreadnoise = 6, 7
     grouptime = 3.0
-    deltaDN = 5
     nints, ngroups, nrows, ncols = 5, 3, 2, 2
     model, gdq, rnModel, pixdq, err, gain = setup_inputs(
         ngroups=ngroups, readnoise=inreadnoise, nints=nints, nrows=nrows,
@@ -244,7 +237,6 @@ def test_int_times2(generate_miri_reffiles, setup_inputs):
     override_gain, override_readnoise = generate_miri_reffiles
     ingain, inreadnoise = 6, 7
     grouptime = 3.0
-    deltaDN = 5
     nints, ngroups, nrows, ncols = 5, 3, 2, 2
     model, gdq, rnModel, pixdq, err, gain = setup_inputs(
         ngroups=ngroups, readnoise=inreadnoise, nints=nints, nrows=nrows,

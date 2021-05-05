@@ -3,6 +3,8 @@ import numpy as np
 
 from jwst.ramp_fitting.ramp_fit import ramp_fit
 from jwst.ramp_fitting.ols_fit import calc_num_seg
+# from stcal.ramp_fitting.ramp_fit import ramp_fit
+# from stcal.ramp_fitting.ols_fit import calc_num_seg
 
 from jwst.datamodels import dqflags
 from jwst.datamodels import RampModel
@@ -294,7 +296,6 @@ class TestMethods:
         assert(0 == np.min(data))
         assert dq[10, 10] == 524288 + 1
         assert dq[20, 20] == 524288 + 1
-
 
     def test_simple_ramp(self, method):
         # Here given a 10 group ramp with an exact slope of 20/group. The output slope should be 20.
