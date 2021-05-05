@@ -597,14 +597,14 @@ def test_miri_3():
     assert_opt(o_true, opt_mod, 0)
 
 
-def assert_pri(p_true, new_mod, pix):
+def assert_pri(p_true, new_info, pix):
     """
     Compare true and fit values of primary output for extensions
     SCI, DQ, ERR, VAR_POISSSON, VAR_RNOISE.
     """
 
     # image_info = (data, dq, var_poisson, var_rnoise, err)
-    data, dq, var_poisson, var_rnoise, err = new_mod
+    data, dq, var_poisson, var_rnoise, err = new_info
 
     npt.assert_allclose(data[0, pix], p_true[0], atol=2E-5, rtol=2e-5)
     npt.assert_allclose(dq[0, pix], p_true[1], atol=1E-1)
@@ -615,22 +615,24 @@ def assert_pri(p_true, new_mod, pix):
     return None
 
 
-def assert_opt(o_true, opt_mod, pix):
+def assert_opt(o_true, opt_info, pix):
     """
     Compare true and fit values of optional output for extensions SLOPE,
     SIGSLOPE, VAR_POISSSON, VAR_RNOISE, YINT, SIGYINT, PEDESTAL, and WEIGHTS.
     Selecting the particular (and only) ramp in the optional output, which is
     [0,:,0,0]
     """
+    (slope, sigslope, var_poisson, var_rnoise,
+        yint, sigyint, pedestal, weights, crmag) = opt_info
 
-    opt_slope = opt_mod.slope[0, :, 0, pix]
-    opt_sigslope = opt_mod.sigslope[0, :, 0, pix]
-    opt_var_poisson = opt_mod.var_poisson[0, :, 0, pix]
-    opt_var_rnoise = opt_mod.var_rnoise[0, :, 0, pix]
-    opt_yint = opt_mod.yint[0, :, 0, pix]
-    opt_sigyint = opt_mod.sigyint[0, :, 0, pix]
-    opt_pedestal = opt_mod.pedestal[:, 0, pix]
-    opt_weights = opt_mod.weights[0, :, 0, pix]
+    opt_slope = slope[0, :, 0, pix]
+    opt_sigslope = sigslope[0, :, 0, pix]
+    opt_var_poisson = var_poisson[0, :, 0, pix]
+    opt_var_rnoise = var_rnoise[0, :, 0, pix]
+    opt_yint = yint[0, :, 0, pix]
+    opt_sigyint = sigyint[0, :, 0, pix]
+    opt_pedestal = pedestal[:, 0, pix]
+    opt_weights = weights[0, :, 0, pix]
 
     npt.assert_allclose(opt_slope, o_true[0], atol=2E-5, rtol=2e-5)
     npt.assert_allclose(opt_sigslope, o_true[1], atol=2E-5, rtol=2e-5)

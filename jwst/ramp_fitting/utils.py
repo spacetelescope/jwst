@@ -272,15 +272,13 @@ class OptRes:
 
         Parameters
         ----------
-        model : instance of Data Model
-            DM object for input
-
         effintim : float
             effective integration time for a single group
 
         Returns
         -------
-        rfo_model : Data Model object
+        opt_info: tuple
+            The tuple of computed optional results arrays for fitting.
         """
         self.var_p_seg[self.var_p_seg > 0.4 * LARGE_VARIANCE] = 0.
         self.var_r_seg[self.var_r_seg > 0.4 * LARGE_VARIANCE] = 0.
@@ -292,19 +290,20 @@ class OptRes:
         self.weights[1. / self.weights > 0.4 * LARGE_VARIANCE] = 0.
         warnings.resetwarnings()
 
-        rfo_model = \
-            datamodels.RampFitOutputModel(
-                slope=self.slope_seg.astype(np.float32) / effintim,
-                sigslope=self.sigslope_seg.astype(np.float32),
-                var_poisson=self.var_p_seg.astype(np.float32),
-                var_rnoise=self.var_r_seg.astype(np.float32),
-                yint=self.yint_seg.astype(np.float32),
-                sigyint=self.sigyint_seg.astype(np.float32),
-                pedestal=self.ped_int.astype(np.float32),
-                weights=self.weights.astype(np.float32),
-                crmag=self.cr_mag_seg)
+        slope = self.slope_seg.astype(np.float32) / effintim
+        sigslope = self.sigslope_seg.astype(np.float32)
+        var_poisson = self.var_p_seg.astype(np.float32)
+        var_rnoise = self.var_r_seg.astype(np.float32)
+        yint = self.yint_seg.astype(np.float32)
+        sigyint = self.sigyint_seg.astype(np.float32)
+        pedestal = self.ped_int.astype(np.float32)
+        weights = self.weights.astype(np.float32)
+        crmag = self.cr_mag_seg
 
-        return rfo_model
+        opt_info = (slope, sigslope, var_poisson, var_rnoise,
+                    yint, sigyint, pedestal, weights, crmag)
+
+        return opt_info
 
     def print_full(self):  # pragma: no cover
         """
@@ -1261,11 +1260,10 @@ def do_all_sat(pixeldq, groupdq, imshape, n_int, save_opt):
         The tuple of computed ramp fitting arrays.
 
     integ_info: tuple
-        The tuple of computed integration:t fitting arrays.
+        The tuple of computed integration fitting arrays.
 
-    opt_model : RampFitOutputModel object or None
-        DM object containing optional OLS-specific ramp fitting data for the
-        exposure
+    opt_info: tuple
+        The tuple of computed optional results arrays for fitting.
     """
     # Create model for the primary output. Flag all pixels in the pixiel DQ
     #   extension as SATURATED and DO_NOT_USE.
@@ -1308,23 +1306,26 @@ def do_all_sat(pixeldq, groupdq, imshape, n_int, save_opt):
     if save_opt:
         new_arr = np.zeros((n_int,) + (1,) + imshape, dtype=np.float32)
 
-        opt_model = datamodels.RampFitOutputModel(
-            slope=new_arr,
-            sigslope=new_arr,
-            var_poisson=new_arr,
-            var_rnoise=new_arr,
-            yint=new_arr,
-            sigyint=new_arr,
-            pedestal=np.zeros((n_int,) + imshape, dtype=np.float32),
-            weights=new_arr,
-            crmag=new_arr)
+        # opt_model = datamodels.RampFitOutputModel(
+        slope = new_arr
+        sigslope = new_arr
+        var_poisson = new_arr
+        var_rnoise = new_arr
+        yint = new_arr
+        sigyint = new_arr
+        pedestal = np.zeros((n_int,) + imshape, dtype=np.float32)
+        weights = new_arr
+        crmag = new_arr
+
+        opt_info = (slope, sigslope, var_poisson, var_rnoise,
+                    yint, sigyint, pedestal, weights, crmag)
 
     else:
-        opt_model = None
+        opt_info= None
 
     log.info('All groups of all integrations are saturated.')
 
-    return image_info, integ_info, opt_model
+    return image_info, integ_info, opt_info
 
 
 def log_stats(c_rates):

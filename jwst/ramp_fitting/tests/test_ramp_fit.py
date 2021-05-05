@@ -618,14 +618,14 @@ class TestMethods:
         model1.data[0, 9, 50, 50] = 180.0
         model1.groupdq[0, 5, 50, 50] = JUMP_DET
 
-        slopes, int_model, opt_model, gls_opt_model = ramp_fit(
+        slopes, int_info, opt_info, gls_opt_model = ramp_fit(
             model1, 1024 * 30000., True, rnoise, gain, 'OLS', 'optimal', 'none')
 
         segment_groups = 5
         single_sample_readnoise = np.float64(inreadnoise / np.sqrt(2))
         # check that the segment variance is as expected
 
-        ovar_rnoise = opt_model.var_rnoise
+        ovar_rnoise = opt_info[3]
         np.testing.assert_allclose(
             ovar_rnoise[0, 0, 50, 50],
             (12.0 * single_sample_readnoise**2 /
@@ -637,7 +637,7 @@ class TestMethods:
         np.testing.assert_allclose(data[50, 50], 2.5, rtol=1e-5)
 
         # check that the slopes of the two segments are correct
-        oslope = opt_model.slope
+        oslope = opt_info[0]
         np.testing.assert_allclose(oslope[0, 0, 50, 50], 5 / 3.0, rtol=1e-5)
         np.testing.assert_allclose(oslope[0, 1, 50, 50], 10 / 3.0, rtol=1e-5)
 
@@ -663,10 +663,10 @@ class TestMethods:
         model1.data[0, 9, 50, 50] = 180.0
         model1.groupdq[0, 5, 50, 50] = JUMP_DET
 
-        slopes, int_model, opt_model, gls_opt_model = ramp_fit(
+        slopes, int_info, opt_info, gls_opt_model = ramp_fit(
             model1, 1024 * 30000., True, rnoise, gain, 'OLS', 'optimal', 'none')
 
-        oslope = opt_model.slope
+        oslope = opt_info[0]
         avg_slope = (oslope[0, 0, 50, 50] + oslope[0, 1, 50, 50]) / 2.0
 
         # even with noiser second segment, final slope should be just the
@@ -699,20 +699,20 @@ def test_twenty_groups_two_segments():
     gdq[0, 15:, 0, 2] = SATURATED
     model1.data[0, 15:, 0, 2] = 25000.
 
-    new_mod, int_model, opt_model, gls_opt_model = ramp_fit(
+    new_mod, int_model, opt_info, gls_opt_model = ramp_fit(
         model1, 1024 * 30000., True, rnoise, gain, 'OLS', 'optimal', 'none')
 
     # Check some PRI & OPT output arrays
     data = new_mod[0]
     np.testing.assert_allclose(data, 10. / deltatime, rtol=1E-4)
 
-    wh_data = opt_model.slope != 0.  # only test existing segments
-    oslope = opt_model.slope
-    oyint = opt_model.yint
+    (oslope, sigslope, var_poisson, var_rnoise,
+        oyint, sigyint, opedestal, weights, crmag) = opt_info
+
+    wh_data = oslope != 0.  # only test existing segments
     np.testing.assert_allclose(oslope[wh_data], 10. / deltatime, rtol=1E-4)
     np.testing.assert_allclose(oyint[0, 0, 0, :], model1.data[0, 0, 0, :], rtol=1E-5)
 
-    opedestal = opt_model.pedestal
     np.testing.assert_allclose(
         opedestal[0, 0, :],
         model1.data[0, 0, 0, :] - 10.,
@@ -730,7 +730,7 @@ def test_miri_all_sat():
 
     model1.groupdq[:, :, :, :] = SATURATED
 
-    image_info, integ_info, opt_model, gls_opt_model = ramp_fit(
+    image_info, integ_info, opt_info, gls_opt_model = ramp_fit(
         model1, 1024 * 30000., True, rnoise, gain, 'OLS', 'optimal', 'none')
 
     # Check PRI output arrays
@@ -748,14 +748,9 @@ def test_miri_all_sat():
     np.testing.assert_allclose(var_rnoise, 0.0, atol=1E-6)
 
     # Check OPT output arrays
-    slope = opt_model.slope
-    var_poisson = opt_model.var_poisson
-    var_rnoise = opt_model.var_rnoise
-    sigslope = opt_model.sigslope
-    yint = opt_model.yint
-    sigyint = opt_model.sigyint
-    pedestal = opt_model.pedestal
-    weights = opt_model.weights
+    (slope, sigslope, var_poisson, var_rnoise,
+        yint, sigyint, pedestal, weights, crmag) = opt_info
+
     np.testing.assert_allclose(slope, 0.0, atol=1E-6)
     np.testing.assert_allclose(var_poisson, 0.0, atol=1E-6)
     np.testing.assert_allclose(var_rnoise, 0.0, atol=1E-6)

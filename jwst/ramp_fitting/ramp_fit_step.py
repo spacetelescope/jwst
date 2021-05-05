@@ -66,6 +66,22 @@ def get_ref_subs(model, readnoise_model, gain_model, nframes):
 
 
 def create_image_model(input_model, image_info):
+    """
+    Creates an ImageModel from the computed arrays from ramp_fit.
+
+    Parameter
+    ---------
+    input_model: RampModel
+        Input RampModel for which the output ImageModel is created.
+
+    image_info: tuple
+        The ramp fitting arrays needed for the ImageModel.
+
+    Parameter
+    ---------
+    out_model: ImageModel
+        The output ImageModel to be returned from the ramp fit step.
+    """
     data, dq, var_poisson, var_rnoise, err = image_info
     imshape = data.shape
     out_model = datamodels.ImageModel(data=np.zeros(imshape, dtype=np.float32),
@@ -85,6 +101,22 @@ def create_image_model(input_model, image_info):
 
 
 def create_integration_model(input_model, integ_info):
+    """
+    Creates an ImageModel from the computed arrays from ramp_fit.
+
+    Parameter
+    ---------
+    input_model: RampModel
+        Input RampModel for which the output CubeModel is created.
+
+    integ_info: tuple
+        The ramp fitting arrays needed for the CubeModel for each integration.
+
+    Parameter
+    ---------
+    int_model: CubeModel
+        The output CubeModel to be returned from the ramp fit step.
+    """
     data, dq, var_poisson, var_rnoise, int_times, err = integ_info 
     int_model = datamodels.CubeModel(
         data=np.zeros(data.shape, dtype=np.float32),
@@ -103,6 +135,36 @@ def create_integration_model(input_model, integ_info):
     int_model.int_times = int_times
 
     return int_model
+
+
+def create_optional_results_model(image_info):
+    """
+    Creates an ImageModel from the computed arrays from ramp_fit.
+
+    Parameter
+    ---------
+    opt_info: tuple
+        The ramp fitting arrays needed for the RampFitOutputModel.
+
+    Parameter
+    ---------
+    opt_model: RampFitOutputModel
+        The optional RampFitOutputModel to be returned from the ramp fit step.
+    """
+    (slope, sigslope, var_poisson, var_rnoise,
+        yint, sigyint, pedestal, weights, crmag) = opt_info
+    opt_model = datamodels.RampFitOutputModel(
+        slope=slope,
+        sigslope=sigslope,
+        var_poisson=var_poisson,
+        var_rnoise=var_rnoise,
+        yint=yint,
+        sigyint=sigyint,
+        pedestal=pedestal,
+        weights=weights,
+        crmag=crmag)
+
+    return opt_model
 
 
 class RampFitStep (Step):
@@ -172,7 +234,7 @@ class RampFitStep (Step):
             else:
                 input_model.int_times = None
 
-            image_info, integ_info, opt_model, gls_opt_model = ramp_fit.ramp_fit(
+            image_info, integ_info, opt_info, gls_opt_model = ramp_fit.ramp_fit(
                 input_model, buffsize,
                 self.save_opt, readnoise_2d, gain_2d, self.algorithm,
                 self.weighting, max_cores
@@ -182,14 +244,18 @@ class RampFitStep (Step):
             gain_model.close()
 
         # Save the OLS optional fit product, if it exists
-        if opt_model is not None:
+        if opt_info is not None:
+            opt_model = create_optional_results_model(image_info)
             self.save_model(opt_model, 'fitopt', output_file=self.opt_name)
 
+        '''
+        # GLS removed from code, since it's not implemented right now.
         # Save the GLS optional fit product, if it exists
         if gls_opt_model is not None:
             self.save_model(
                 gls_opt_model, 'fitoptgls', output_file=self.opt_name
             )
+        '''
 
         if image_info is not None:
             out_model = create_image_model(input_model, image_info)
