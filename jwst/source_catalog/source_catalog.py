@@ -1143,6 +1143,8 @@ class JWSTSourceCatalog:
         """
         The label number of the nearest neighbor.
         """
+        if np.isnan(self._ckdtree_query[1]):  # only one detected source
+            return np.nan
         return self.label[self._ckdtree_query[1]]
 
     @lazyproperty
@@ -1150,6 +1152,7 @@ class JWSTSourceCatalog:
         """
         The distance in pixels to the nearest neighbor.
         """
+        # self._ckdtree_query[0] is NaN if only one detected source
         return self._ckdtree_query[0] * u.pixel
 
     @lazyproperty
