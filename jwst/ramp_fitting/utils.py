@@ -707,7 +707,8 @@ def output_integ(slope_int, dq_int, effintim, var_p3, var_r3, var_both3,
 
     Returns
     -------
-    cubemod : Data Model object
+    integ_info: tuple
+        The tuple of computed integration:t fitting arrays.
 
     """
     # Suppress harmless arithmetic warnings for now
@@ -718,18 +719,18 @@ def output_integ(slope_int, dq_int, effintim, var_p3, var_r3, var_both3,
     var_r3[var_r3 > 0.4 * LARGE_VARIANCE] = 0.
     var_both3[var_both3 > 0.4 * LARGE_VARIANCE] = 0.
 
-    cubemod = datamodels.CubeModel()
-    cubemod.data = slope_int / effintim
-    cubemod.err = np.sqrt(var_both3)
-    cubemod.dq = dq_int
-    cubemod.var_poisson = var_p3
-    cubemod.var_rnoise = var_r3
-    cubemod.int_times = int_times
+    data = slope_int / effintim
+    err = np.sqrt(var_both3)
+    dq = dq_int
+    var_poisson = var_p3
+    var_rnoise = var_r3
+    int_times = int_times
+    integ_info = (data, dq, var_poisson, var_rnoise, int_times, err)
 
     # Reset the warnings filter to its original state
     warnings.resetwarnings()
 
-    return cubemod
+    return integ_info
 
 
 def gls_output_integ(model, slope_int, slope_err_int, dq_int):
@@ -1259,8 +1260,8 @@ def do_all_sat(pixeldq, groupdq, imshape, n_int, save_opt):
     image_info: tuple
         The tuple of computed ramp fitting arrays.
 
-    int_model : Data Model object or None
-        DM object containing rate images for each integration in the exposure
+    integ_info: tuple
+        The tuple of computed integration:t fitting arrays.
 
     opt_model : RampFitOutputModel object or None
         DM object containing optional OLS-specific ramp fitting data for the
@@ -1291,16 +1292,17 @@ def do_all_sat(pixeldq, groupdq, imshape, n_int, save_opt):
                                                         axis=0)
 
         groupdq_3d = np.bitwise_or(groupdq_3d, dqflags.group['DO_NOT_USE'])
-        int_model = datamodels.CubeModel(
-            data=np.zeros((n_int,) + imshape, dtype=np.float32),
-            dq=groupdq_3d,
-            var_poisson=np.zeros((n_int,) + imshape, dtype=np.float32),
-            var_rnoise=np.zeros((n_int,) + imshape, dtype=np.float32),
-            int_times=None,
-            err=np.zeros((n_int,) + imshape, dtype=np.float32))
 
+        data = np.zeros((n_int,) + imshape, dtype=np.float32)
+        dq = groupdq_3d
+        var_poisson = np.zeros((n_int,) + imshape, dtype=np.float32)
+        var_rnoise = np.zeros((n_int,) + imshape, dtype=np.float32)
+        int_times = None
+        err = np.zeros((n_int,) + imshape, dtype=np.float32)
+
+        integ_info = (data, dq, var_poisson, var_rnoise, int_times, err)
     else:
-        int_model = None
+        integ_info = None
 
     # Create model for the optional output
     if save_opt:
@@ -1322,7 +1324,7 @@ def do_all_sat(pixeldq, groupdq, imshape, n_int, save_opt):
 
     log.info('All groups of all integrations are saturated.')
 
-    return image_info, int_model, opt_model
+    return image_info, integ_info, opt_model
 
 
 def log_stats(c_rates):

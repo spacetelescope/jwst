@@ -730,7 +730,7 @@ def test_miri_all_sat():
 
     model1.groupdq[:, :, :, :] = SATURATED
 
-    image_info, int_model, opt_model, gls_opt_model = ramp_fit(
+    image_info, integ_info, opt_model, gls_opt_model = ramp_fit(
         model1, 1024 * 30000., True, rnoise, gain, 'OLS', 'optimal', 'none')
 
     # Check PRI output arrays
@@ -741,10 +741,7 @@ def test_miri_all_sat():
     np.testing.assert_allclose(var_rnoise, 0.0, atol=1E-6)
 
     # Check INT output arrays
-    data = int_model.data
-    err = int_model.err
-    var_poisson = int_model.var_poisson
-    var_rnoise = int_model.var_rnoise
+    data, dq, var_poisson, var_rnoise, int_times, err = integ_info
     np.testing.assert_allclose(data, 0.0, atol=1E-6)
     np.testing.assert_allclose(err, 0.0, atol=1E-6)
     np.testing.assert_allclose(var_poisson, 0.0, atol=1E-6)

@@ -84,6 +84,27 @@ def create_image_model(input_model, image_info):
     return out_model
 
 
+def create_integration_model(input_model, integ_info):
+    data, dq, var_poisson, var_rnoise, int_times, err = integ_info 
+    int_model = datamodels.CubeModel(
+        data=np.zeros(data.shape, dtype=np.float32),
+        dq=np.zeros(data.shape, dtype=np.uint32),
+        var_poisson=np.zeros(data.shape, dtype=np.float32),
+        var_rnoise=np.zeros(data.shape, dtype=np.float32),
+        err=np.zeros(data.shape, dtype=np.float32))
+    int_model.int_times = None
+    int_model.update(input_model)  # ... and add all keys from input
+
+    int_model.data = data
+    int_model.dq = dq
+    int_model.var_poisson = var_poisson
+    int_model.var_rnoise = var_rnoise
+    int_model.err = err
+    int_model.int_times = int_times
+
+    return int_model
+
+
 class RampFitStep (Step):
 
     """
@@ -151,7 +172,7 @@ class RampFitStep (Step):
             else:
                 input_model.int_times = None
 
-            image_info, int_model, opt_model, gls_opt_model = ramp_fit.ramp_fit(
+            image_info, integ_info, opt_model, gls_opt_model = ramp_fit.ramp_fit(
                 input_model, buffsize,
                 self.save_opt, readnoise_2d, gain_2d, self.algorithm,
                 self.weighting, max_cores
@@ -181,7 +202,8 @@ class RampFitStep (Step):
 
                 out_model = datamodels.IFUImageModel(out_model)
 
-        if int_model is not None:
+        if integ_info is not None:
+            int_model = create_integration_model(input_model, integ_info)
             int_model.meta.bunit_data = 'DN/s'
             int_model.meta.bunit_err = 'DN/s'
             int_model.meta.cal_step.ramp_fit = 'COMPLETE'

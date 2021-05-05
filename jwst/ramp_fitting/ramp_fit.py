@@ -72,8 +72,8 @@ def ramp_fit(model, buffsize, save_opt, readnoise_2d, gain_2d,
     image_info: tuple
         The tuple of computed ramp fitting arrays.
 
-    int_model : Data Model object or None
-        DM object containing rate images for each integration in the exposure
+    integ_info: tuple
+        The tuple of computed integration fitting arrays.
 
     opt_model : RampFitOutputModel object or None
         DM object containing optional OLS-specific ramp fitting data for the
@@ -89,7 +89,7 @@ def ramp_fit(model, buffsize, save_opt, readnoise_2d, gain_2d,
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # new_model, int_model, gls_opt_model = gls_fit.gls_ramp_fit(
         #     model, buffsize, save_opt, readnoise_model, gain_model, max_cores)
-        image_info, int_model, gls_opt_model = None, None, None
+        image_info, integ_info, gls_opt_model = None, None, None
         opt_model = None
     else:
         # Get readnoise array for calculation of variance of noiseless ramps, and
@@ -98,10 +98,10 @@ def ramp_fit(model, buffsize, save_opt, readnoise_2d, gain_2d,
         readnoise_2d *= gain_2d / np.sqrt(2. * nframes)
 
         # Compute ramp fitting using ordinary least squares.
-        image_info, int_model, opt_model = ols_fit.ols_ramp_fit_multi(
+        image_info, integ_info, opt_model = ols_fit.ols_ramp_fit_multi(
             model, buffsize, save_opt, readnoise_2d, gain_2d, weighting, max_cores)
         gls_opt_model = None
 
     # TODO Change int_model to integ_info
     # TODO Change opt_model to opt_info
-    return image_info, int_model, opt_model, gls_opt_model
+    return image_info, integ_info, opt_model, gls_opt_model
