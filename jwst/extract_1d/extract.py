@@ -2033,9 +2033,16 @@ class ExtractModel(ExtractBase):
         dq = np.zeros(temp_flux.shape, dtype=np.uint32)
 
         if n_nan > 0:
-            wavelength, temp_flux, background, npixels, dq = nans_at_endpoints(
-                wavelength, temp_flux, background, npixels, dq, verbose
-            )
+            wavelength, dq, nan_slc = nans_at_endpoints(wavelength, dq, verbose)
+            temp_flux = temp_flux[nan_slc]
+            background = background[nan_slc]
+            npixels = npixels[nan_slc]
+            f_var_poisson = f_var_poisson[nan_slc]
+            f_var_rnoise = f_var_rnoise[nan_slc]
+            f_var_flat = f_var_flat[nan_slc]
+            b_var_poisson = b_var_poisson[nan_slc]
+            b_var_rnoise = b_var_rnoise[nan_slc]
+            b_var_flat = b_var_flat[nan_slc]
 
         return (ra, dec, wavelength,
                 temp_flux, f_var_poisson, f_var_rnoise, f_var_flat,
@@ -2478,10 +2485,16 @@ class ImageExtractModel(ExtractBase):
             if verbose:
                 log.warning(f"{n_nan} NaNs in wavelength array")
 
-            wavelength, temp_flux, background, npixels, dq = nans_at_endpoints(
-                wavelength, temp_flux, background, npixels, dq, verbose
-            )
-
+            wavelength, dq, nan_slc = nans_at_endpoints(wavelength, dq, verbose)
+            temp_flux = temp_flux[nan_slc]
+            background = background[nan_slc]
+            npixels = npixels[nan_slc]
+            f_var_poisson = f_var_poisson[nan_slc]
+            f_var_rnoise = f_var_rnoise[nan_slc]
+            f_var_flat = f_var_flat[nan_slc]
+            b_var_poisson = b_var_poisson[nan_slc]
+            b_var_rnoise = b_var_rnoise[nan_slc]
+            b_var_flat = b_var_flat[nan_slc]
         return (ra, dec, wavelength,
                 temp_flux, f_var_poisson, f_var_rnoise, f_var_flat,
                 background, b_var_poisson, b_var_rnoise, b_var_flat,
@@ -2952,13 +2965,15 @@ def do_extract1d(
                 pixel_solid_angle = 1.  # not needed
 
             try:
-                ra, dec, wavelength, temp_flux, background, npixels, dq, prev_offset = extract_one_slit(
-                    input_model,
-                    slit,
-                    -1,  # Integration number is not relevant in this case
-                    prev_offset,
-                    True,
-                    extract_params
+                ra, dec, wavelength, temp_flux, f_var_poisson,\
+                    f_var_rnoise, f_var_flat, background, b_var_poisson,\
+                    b_var_rnoise, b_var_flat, npixels, dq, prev_offset = extract_one_slit(
+                        input_model,
+                        slit,
+                        -1,  # Integration number is not relevant in this case
+                        prev_offset,
+                        True,
+                        extract_params
                 )
             except InvalidSpectralOrderNumberError as e:
                 log.info(f'{str(e)}, skipping ...')
@@ -2967,7 +2982,13 @@ def do_extract1d(
             # Convert the sum to an average, for surface brightness.
             npixels_temp = np.where(npixels > 0., npixels, 1.)
             surf_bright = temp_flux / npixels_temp  # may be reset below
+            sb_var_poisson = f_var_poisson / npixels_temp
+            sb_var_rnoise = f_var_rnoise / npixels_temp
+            sb_var_flat = f_var_flat / npixels_temp
             background /= npixels_temp
+            b_var_poisson = b_var_poisson / npixels_temp
+            b_var_rnoise = b_var_rnoise / npixels_temp
+            b_var_flat = b_var_flat / npixels_temp
 
             del npixels_temp
 
@@ -2985,25 +3006,38 @@ def do_extract1d(
                 # for NIRSpec data and NIRISS SOSS, point source
                 if input_units_are_megajanskys:
                     flux = temp_flux * 1.e6  # MJy --> Jy
+                    f_var_poisson *= 1.e12  # MJy**2 --> Jy**2
+                    f_var_rnoise *= 1.e12  # MJy**2 --> Jy**2
+                    f_var_flat *= 1.e12  # MJy**2 --> Jy**2
                     surf_bright[:] = 0.
+                    sb_var_poisson = 0.
+                    sb_var_rnoise = 0.
+                    sb_var_flat = 0.
                     background[:] /= pixel_solid_angle  # MJy / sr
+                    b_var_poisson /= pixel_solid_angle
+                    b_var_rnoise /= pixel_solid_angle
+                    b_var_flat /= pixel_solid_angle
+
                 else:
                     flux = temp_flux * pixel_solid_angle * 1.e6  # MJy / steradian --> Jy
+                    f_var_poisson *= (pixel_solid_angle**2 * 1.e12)  # (MJy / sr)**2 --> Jy**2
+                    f_var_rnoise *= (pixel_solid_angle**2 * 1.e12)  # (MJy / sr)**2 --> Jy**2
+                    f_var_flat *= (pixel_solid_angle**2 * 1.e12)  # (MJy / sr)**2 --> Jy**2
                     # surf_bright was assigned above
             else:
                 flux = temp_flux  # count rate
 
             del temp_flux
 
-            # TODO GOES HERE
-
-            error = np.zeros_like(flux)
-            sb_error = np.zeros_like(flux)
-            berror = np.zeros_like(flux)
+            error = np.sqrt(f_var_poisson + f_var_rnoise + f_var_flat)
+            sb_error = np.sqrt(sb_var_poisson + sb_var_rnoise + sb_var_flat)
+            berror = np.sqrt(b_var_poisson + b_var_rnoise + b_var_flat)
 
             otab = np.array(
                 list(
-                    zip(wavelength, flux, error, surf_bright, sb_error, dq, background, berror, npixels)
+                    zip(wavelength, flux, error, f_var_poisson,f_var_rnoise, f_var_flat,
+                        surf_bright, sb_error, sb_var_poisson, sb_var_rnoise, sb_var_flat,
+                        dq, background, berror, b_var_poisson, b_var_rnoise, b_var_flat, npixels)
                 ),
                 dtype=spec_dtype
             )
@@ -3012,11 +3046,20 @@ def do_extract1d(
             spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
             spec.spec_table.columns['wavelength'].unit = 'um'
             spec.spec_table.columns['flux'].unit = flux_units
-            spec.spec_table.columns['error'].unit = flux_units
+            spec.spec_table.columns['flux_error'].unit = flux_units
+            spec.spec_table.columns['flux_var_poisson'].unit = flux_units * flux_units
+            spec.spec_table.columns['flux_var_rnoise'].unit = flux_units * flux_units
+            spec.spec_table.columns['flux_var_flat'].unit = flux_units * flux_units
             spec.spec_table.columns['surf_bright'].unit = sb_units
             spec.spec_table.columns['sb_error'].unit = sb_units
+            spec.spec_table.columns['sb_var_poisson'].unit = sb_units * sb_units
+            spec.spec_table.columns['sb_var_rnoise'].unit = sb_units * sb_units
+            spec.spec_table.columns['sb_var_flat'].unit = sb_units * sb_units
             spec.spec_table.columns['background'].unit = sb_units
-            spec.spec_table.columns['berror'].unit = sb_units
+            spec.spec_table.columns['bkgd_error'].unit = sb_units
+            spec.spec_table.columns['bkgd_var_poisson'].unit = sb_units * sb_units
+            spec.spec_table.columns['bkgd_var_rnoise'].unit = sb_units * sb_units
+            spec.spec_table.columns['bkgd_var_flat'].unit = sb_units * sb_units
             spec.slit_ra = ra
             spec.slit_dec = dec
             spec.spectral_order = sp_order
@@ -3126,14 +3169,16 @@ def do_extract1d(
                         continue
 
                     try:
-                        ra, dec, wavelength, temp_flux, background, npixels, dq, prev_offset = extract_one_slit(
-                            input_model,
-                            slit,
-                            -1,
-                            prev_offset,
-                            True,
-                            extract_params
-                        )
+                        ra, dec, wavelength, temp_flux, f_var_poisson, \
+                            f_var_rnoise, f_var_flat, background, b_var_poisson, \
+                            b_var_rnoise, b_var_flat, npixels, dq, prev_offset = extract_one_slit(
+                                input_model,
+                                slit,
+                                -1,
+                                prev_offset,
+                                True,
+                                extract_params
+                                )
                     except InvalidSpectralOrderNumberError as e:
                         log.info(f'{str(e)}, skipping ...')
                         continue
@@ -3148,7 +3193,13 @@ def do_extract1d(
                 # Convert the sum to an average, for surface brightness.
                 npixels_temp = np.where(npixels > 0., npixels, 1.)
                 surf_bright = temp_flux / npixels_temp
+                sb_var_poisson = f_var_poisson / npixels_temp
+                sb_var_rnoise = f_var_rnoise / npixels_temp
+                sb_var_flat = f_var_flat / npixels_temp
                 background /= npixels_temp
+                b_var_poisson = b_var_poisson / npixels_temp
+                b_var_rnoise = b_var_rnoise / npixels_temp
+                b_var_flat = b_var_flat / npixels_temp
 
                 del npixels_temp
 
@@ -3157,24 +3208,36 @@ def do_extract1d(
                     # for NIRSpec data and NIRISS SOSS, point source
                     if input_units_are_megajanskys:
                         flux = temp_flux * 1.e6  # MJy --> Jy
+                        f_var_poisson *= 1.e12  # MJy**2 --> Jy**2
+                        f_var_rnoise *= 1.e12  # MJy**2 --> Jy**2
+                        f_var_flat *= 1.e12  # MJy**2 --> Jy**2
                         surf_bright[:] = 0.
+                        sb_var_poisson = 0.
+                        sb_var_rnoise = 0.
+                        sb_var_flat = 0.
                         background[:] /= pixel_solid_angle  # MJy / sr
+                        b_var_poisson /= pixel_solid_angle
+                        b_var_rnoise /= pixel_solid_angle
+                        b_var_flat /= pixel_solid_angle
                     else:
-                        # MJy / steradian --> Jy
-                        flux = temp_flux * pixel_solid_angle * 1.e6
-                        # surf_bright was assigned above
+                        flux = temp_flux * pixel_solid_angle * 1.e6  # MJy / steradian --> Jy
+                        f_var_poisson *= (pixel_solid_angle ** 2 * 1.e12)  # (MJy / sr)**2 --> Jy**2
+                        f_var_rnoise *= (pixel_solid_angle ** 2 * 1.e12)  # (MJy / sr)**2 --> Jy**2
+                        f_var_flat *= (pixel_solid_angle ** 2 * 1.e12)  # (MJy / sr)**2 --> Jy**2
                 else:
                     flux = temp_flux  # count rate
 
                 del temp_flux
 
-                error = np.zeros_like(flux)
-                sb_error = np.zeros_like(flux)
-                berror = np.zeros_like(flux)
+                error = np.sqrt(f_var_poisson + f_var_rnoise + f_var_flat)
+                sb_error = np.sqrt(sb_var_poisson + sb_var_rnoise + sb_var_flat)
+                berror = np.sqrt(b_var_poisson + b_var_rnoise + b_var_flat)
 
                 otab = np.array(
                     list(
-                        zip(wavelength, flux, error, surf_bright, sb_error, dq, background, berror, npixels)
+                        zip(wavelength, flux, error, f_var_poisson, f_var_rnoise, f_var_flat,
+                            surf_bright, sb_error, sb_var_poisson, sb_var_rnoise, sb_var_flat,
+                            dq, background, berror, b_var_poisson, b_var_rnoise, b_var_flat, npixels)
                     ),
                     dtype=spec_dtype
                 )
@@ -3183,15 +3246,25 @@ def do_extract1d(
                 spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
                 spec.spec_table.columns['wavelength'].unit = 'um'
                 spec.spec_table.columns['flux'].unit = flux_units
-                spec.spec_table.columns['error'].unit = flux_units
+                spec.spec_table.columns['flux_error'].unit = flux_units
+                spec.spec_table.columns['flux_var_poisson'].unit = flux_units * flux_units
+                spec.spec_table.columns['flux_var_rnoise'].unit = flux_units * flux_units
+                spec.spec_table.columns['flux_var_flat'].unit = flux_units * flux_units
                 spec.spec_table.columns['surf_bright'].unit = sb_units
                 spec.spec_table.columns['sb_error'].unit = sb_units
+                spec.spec_table.columns['sb_var_poisson'].unit = sb_units * sb_units
+                spec.spec_table.columns['sb_var_rnoise'].unit = sb_units * sb_units
+                spec.spec_table.columns['sb_var_flat'].unit = sb_units * sb_units
                 spec.spec_table.columns['background'].unit = sb_units
-                spec.spec_table.columns['berror'].unit = sb_units
+                spec.spec_table.columns['bkgd_error'].unit = sb_units
+                spec.spec_table.columns['bkgd_var_poisson'].unit = sb_units * sb_units
+                spec.spec_table.columns['bkgd_var_rnoise'].unit = sb_units * sb_units
+                spec.spec_table.columns['bkgd_var_flat'].unit = sb_units * sb_units
                 spec.slit_ra = ra
                 spec.slit_dec = dec
                 spec.spectral_order = sp_order
                 spec.dispersion_direction = extract_params['dispaxis']
+
 
                 # The first argument of copy_keyword_info was originally intended to be a SlitModel object, but
                 # ImageModel now has the attributes we will look for in this function.
@@ -3296,14 +3369,16 @@ def do_extract1d(
 
                 for integ in integrations:
                     try:
-                        ra, dec, wavelength, temp_flux, background, npixels, dq, prev_offset = extract_one_slit(
-                            input_model,
-                            slit,
-                            integ,
-                            prev_offset,
-                            verbose,
-                            extract_params
-                        )
+                        ra, dec, wavelength, temp_flux, f_var_poisson, \
+                            f_var_rnoise, f_var_flat, background, b_var_poisson, \
+                            b_var_rnoise, b_var_flat, npixels, dq, prev_offset = extract_one_slit(
+                                input_model,
+                                slit,
+                                integ,
+                                prev_offset,
+                                verbose,
+                                extract_params
+                                )
                     except InvalidSpectralOrderNumberError as e:
                         log.info(f'{str(e)}, skipping ...')
                         break
@@ -3311,7 +3386,13 @@ def do_extract1d(
                     # Convert the sum to an average, for surface brightness.
                     npixels_temp = np.where(npixels > 0., npixels, 1.)
                     surf_bright = temp_flux / npixels_temp
+                    sb_var_poisson = f_var_poisson / npixels_temp
+                    sb_var_rnoise = f_var_rnoise / npixels_temp
+                    sb_var_flat = f_var_flat / npixels_temp
                     background /= npixels_temp
+                    b_var_poisson = b_var_poisson / npixels_temp
+                    b_var_rnoise = b_var_rnoise / npixels_temp
+                    b_var_flat = b_var_flat / npixels_temp
 
                     del npixels_temp
 
@@ -3320,24 +3401,36 @@ def do_extract1d(
                         # for NIRSpec data and NIRISS SOSS, point source
                         if input_units_are_megajanskys:
                             flux = temp_flux * 1.e6  # MJy --> Jy
+                            f_var_poisson *= 1.e12  # MJy**2 --> Jy**2
+                            f_var_rnoise *= 1.e12  # MJy**2 --> Jy**2
+                            f_var_flat *= 1.e12  # MJy**2 --> Jy**2
                             surf_bright[:] = 0.
+                            sb_var_poisson = 0.
+                            sb_var_rnoise = 0.
+                            sb_var_flat = 0.
                             background[:] /= pixel_solid_angle  # MJy / sr
+                            b_var_poisson /= pixel_solid_angle
+                            b_var_rnoise /= pixel_solid_angle
+                            b_var_flat /= pixel_solid_angle
                         else:
-                            # MJy / steradian --> Jy
-                            flux = temp_flux * pixel_solid_angle * 1.e6
-                            # surf_bright was assigned above
+                            flux = temp_flux * pixel_solid_angle * 1.e6  # MJy / steradian --> Jy
+                            f_var_poisson *= (pixel_solid_angle ** 2 * 1.e12)  # (MJy / sr)**2 --> Jy**2
+                            f_var_rnoise *= (pixel_solid_angle ** 2 * 1.e12)  # (MJy / sr)**2 --> Jy**2
+                            f_var_flat *= (pixel_solid_angle ** 2 * 1.e12)  # (MJy / sr)**2 --> Jy**2
                     else:
                         flux = temp_flux  # count rate
 
                     del temp_flux
 
-                    error = np.zeros_like(flux)
-                    sb_error = np.zeros_like(flux)
-                    berror = np.zeros_like(flux)
+                    error = np.sqrt(f_var_poisson + f_var_rnoise + f_var_flat)
+                    sb_error = np.sqrt(sb_var_poisson + sb_var_rnoise + sb_var_flat)
+                    berror = np.sqrt(b_var_poisson + b_var_rnoise + b_var_flat)
+
                     otab = np.array(
                         list(
-                            zip(wavelength, flux, error, surf_bright, sb_error, dq, background,
-                                berror, npixels)
+                            zip(wavelength, flux, error, f_var_poisson, f_var_rnoise, f_var_flat,
+                                surf_bright, sb_error, sb_var_poisson, sb_var_rnoise, sb_var_flat,
+                                dq, background, berror, b_var_poisson, b_var_rnoise, b_var_flat, npixels)
                         ),
                         dtype=spec_dtype
                     )
@@ -3346,11 +3439,20 @@ def do_extract1d(
                     spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
                     spec.spec_table.columns['wavelength'].unit = 'um'
                     spec.spec_table.columns['flux'].unit = flux_units
-                    spec.spec_table.columns['error'].unit = flux_units
+                    spec.spec_table.columns['flux_error'].unit = flux_units
+                    spec.spec_table.columns['flux_var_poisson'].unit = flux_units * flux_units
+                    spec.spec_table.columns['flux_var_rnoise'].unit = flux_units * flux_units
+                    spec.spec_table.columns['flux_var_flat'].unit = flux_units * flux_units
                     spec.spec_table.columns['surf_bright'].unit = sb_units
                     spec.spec_table.columns['sb_error'].unit = sb_units
+                    spec.spec_table.columns['sb_var_poisson'].unit = sb_units * sb_units
+                    spec.spec_table.columns['sb_var_rnoise'].unit = sb_units * sb_units
+                    spec.spec_table.columns['sb_var_flat'].unit = sb_units * sb_units
                     spec.spec_table.columns['background'].unit = sb_units
-                    spec.spec_table.columns['berror'].unit = sb_units
+                    spec.spec_table.columns['bkgd_error'].unit = sb_units
+                    spec.spec_table.columns['bkgd_var_poisson'].unit = sb_units * sb_units
+                    spec.spec_table.columns['bkgd_var_rnoise'].unit = sb_units * sb_units
+                    spec.spec_table.columns['bkgd_var_flat'].unit = sb_units * sb_units
                     spec.slit_ra = ra
                     spec.slit_dec = dec
                     spec.spectral_order = sp_order
@@ -3724,16 +3826,10 @@ def extract_one_slit(
         prev_offset: Union[float, str],
         verbose: bool,
         extract_params: dict
-) -> Tuple[
-    float,
-    float,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    float
-]:
+) -> Tuple[float, float, np.ndarray,
+           np.ndarray, np.ndarray, np.ndarray, np.ndarray,
+           np.ndarray, np.ndarray, np.ndarray, np.ndarray,
+           np.ndarray, np.ndarray, float]:
     """Extract data for one slit, or spectral order, or plane.
 
     Parameters
@@ -3785,9 +3881,33 @@ def extract_one_slit(
         compute the average) to get the array for the "surf_bright"
         (surface brightness) output column.
 
-    background : ndarray, 1-D, float64
-        The background count rate that was subtracted from the total
-        source count rate to get `temp_flux`.
+    f_var_poisson : ndarray, 1-D
+        The extracted poisson variance values to go along with the
+        temp_flux array.
+
+    f_var_rnoise : ndarray, 1-D
+        The extracted read noise variance values to go along with the
+        temp_flux array.
+
+    f_var_flat : ndarray, 1-D
+        The extracted flat field variance values to go along with the
+        temp_flux array.
+
+    background : ndarray, 1-D
+        The background count rate that was subtracted from the sum of
+        the source data values to get `temp_flux`.
+
+    b_var_poisson : ndarray, 1-D
+        The extracted poisson variance values to go along with the
+        background array.
+
+    b_var_rnoise : ndarray, 1-D
+        The extracted read noise variance values to go along with the
+        background array.
+
+    b_var_flat : ndarray, 1-D
+        The extracted flat field variance values to go along with the
+        background array.
 
     npixels : ndarray, 1-D, float64
         The number of pixels that were added together to get `temp_flux`.
@@ -3801,8 +3921,6 @@ def extract_one_slit(
        copied from the input `prev_offset`.
 
     """
-
-    spec_dtype = datamodels.SpecModel().spec_table.dtype  # This data type is used for creating an output table.
 
     if verbose:
         log_initial_parameters(extract_params)
@@ -3894,10 +4012,13 @@ def extract_one_slit(
         if extract_params['subtract_background']:
             log.info("with background subtraction")
 
-    ra, dec, wavelength, temp_flux, background, npixels, dq = extract_model.extract(data, var_poisson, var_rnoise,
-                                                                                    var_flat, wl_array, verbose)
+    ra, dec, wavelength, temp_flux, f_var_poisson,\
+        f_var_rnoise, f_var_flat, background, b_var_poisson,\
+        b_var_rnoise, b_var_flat, npixels, dq = extract_model.extract(data, var_poisson, var_rnoise,
+                                                                      var_flat, wl_array, verbose)
 
-    return ra, dec, wavelength, temp_flux, background, npixels, dq, offset
+    return (ra, dec, wavelength, temp_flux, f_var_poisson, f_var_rnoise, f_var_flat,
+            background, b_var_poisson, b_var_rnoise, b_var_flat, npixels, dq, offset)
 
 
 def replace_bad_values(
@@ -3946,17 +4067,14 @@ def replace_bad_values(
 
 def nans_at_endpoints(
         wavelength: np.ndarray,
-        temp_flux: np.ndarray,
-        background: np.ndarray,
-        npixels: np.ndarray,
         dq: np.ndarray,
         verbose: bool
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+) -> Tuple[np.ndarray, np.ndarray, slice]:
     """Flag NaNs in the wavelength array.
 
     Extended summary
     ----------------
-    All five input arrays should be 1-D and have the same shape.
+    Both input arrays should be 1-D and have the same shape.
     If NaNs are present at endpoints of `wavelength`, the arrays will be
     trimmed to remove the NaNs.  NaNs at interior elements of `wavelength`
     will be left in place, but they will be flagged with DO_NOT_USE in the
@@ -3967,15 +4085,6 @@ def nans_at_endpoints(
     wavelength : ndarray
         Array of wavelengths, possibly containing NaNs.
 
-    temp_flux : ndarray
-        Array of sums of data values (scaled background has been subtracted).
-
-    background : ndarray
-        Array of background values that were subtracted to get `temp_flux`.
-
-    npixels : ndarray, float64
-        The number of pixels that were added together to get `temp_flux`.
-
     dq : ndarray
         Data quality array.
 
@@ -3984,16 +4093,16 @@ def nans_at_endpoints(
 
     Returns
     -------
-    wavelength, temp_flux, background, npixels, dq : ndarray
+    wavelength, dq : ndarray
         The returned `dq` array may have NaNs flagged with DO_NOT_USE,
-        and all five arrays may have been trimmed at either or both ends.
+        and both arrays may have been trimmed at either or both ends.
 
+    nan_slc : slice
+        The slice to be applied to other output arrays to match the modified
+        shape of the wavelength array.
     """
     # The input arrays will not be modified in-place.
     new_wl = wavelength.copy()
-    new_temp_flux = temp_flux.copy()
-    new_bkg = background.copy()
-    new_npixels = npixels.copy()
     new_dq = dq.copy()
     nelem = wavelength.shape[0]
 
@@ -4011,11 +4120,8 @@ def nans_at_endpoints(
 
             slc = slice(flag[0][0], flag[0][-1] + 1)
             new_wl = new_wl[slc]
-            new_temp_flux = new_temp_flux[slc]
-            new_bkg = new_bkg[slc]
-            new_npixels = new_npixels[slc]
             new_dq = new_dq[slc]
     else:
         new_dq |= dqflags.pixel['DO_NOT_USE']
 
-    return new_wl, new_temp_flux, new_bkg, new_npixels, new_dq
+    return new_wl, new_dq, nan_slc
