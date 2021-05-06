@@ -2394,12 +2394,12 @@ class ImageExtractModel(ExtractBase):
             trim_slc = slice(mask[0][0], mask[0][-1] + 1)
             temp_flux = temp_flux[trim_slc]
             background = background[trim_slc]
-            f_var_poisson  = f_var_poisson[trim_slc]
+            f_var_poisson = f_var_poisson[trim_slc]
             f_var_rnoise = f_var_rnoise[trim_slc]
-            f_var_flat  = f_var_flat[trim_slc]
-            b_var_poisson  = b_var_poisson[trim_slc]
-            b_var_rnoise  = b_var_rnoise[trim_slc]
-            b_var_flat  = b_var_flat[trim_slc]
+            f_var_flat = f_var_flat[trim_slc]
+            b_var_poisson = b_var_poisson[trim_slc]
+            b_var_rnoise = b_var_rnoise[trim_slc]
+            b_var_flat = b_var_flat[trim_slc]
             npixels = npixels[trim_slc]
             x_array = x_array[trim_slc]
             y_array = y_array[trim_slc]
@@ -2482,8 +2482,10 @@ class ImageExtractModel(ExtractBase):
                 wavelength, temp_flux, background, npixels, dq, verbose
             )
 
-        return ra, dec, wavelength,\
-               temp_flux, background, npixels, dq
+        return (ra, dec, wavelength,
+                temp_flux, f_var_poisson, f_var_rnoise, f_var_flat,
+                background, b_var_poisson, b_var_rnoise, b_var_flat,
+                npixels, dq)
 
     def match_shape(self, shape: tuple) -> np.ndarray:
         """Truncate or expand reference image to match the science data.
