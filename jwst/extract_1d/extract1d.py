@@ -22,7 +22,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def extract1d(image, lambdas, disp_range,
+def extract1d(image, var_poisson, var_rnoise, var_flat, lambdas, disp_range,
               p_src, p_bkg=None, independent_var="wavelength",
               smoothing_length=0, bkg_fit="poly", bkg_order=0, weights=None):
     """Extract the spectrum, optionally subtracting background.
@@ -30,6 +30,18 @@ def extract1d(image, lambdas, disp_range,
     Parameters:
     -----------
     image : 2-D ndarray
+        The array may have been transposed so that the dispersion direction
+        is the second index.
+
+    var_poisson : 2-D ndarray
+        The array may have been transposed so that the dispersion direction
+        is the second index.
+
+    var_rnoise : 2-D ndarray
+        The array may have been transposed so that the dispersion direction
+        is the second index.
+
+    var_flat : 2-D ndarray
         The array may have been transposed so that the dispersion direction
         is the second index.
 
@@ -81,8 +93,26 @@ def extract1d(image, lambdas, disp_range,
     countrate : ndarray, 1-D, float64
         The extracted spectrum in units of counts / s.
 
+    f_var_poisson : ndarray, 1-D, float64
+        The extracted variance due to Poisson noise, units of (counts/s)^2
+
+    f_var_rnoise : ndarray, 1-D, float64
+        The extracted variance due to read noise, units of (counts/s)^2
+
+    f_var_flat : ndarray, 1-D, float64
+        The extracted flat-field variance, units of (counts/s)^2
+
     background : ndarray, 1-D, float64
         The background that was subtracted from the source.
+
+    b_var_poisson : ndarray, 1-D, float64
+        The extracted background variance due to Poisson noise, units of (counts/s)^2
+
+    b_var_rnoise : ndarray, 1-D, float64
+        The extracted background variance due to read noise, units of (counts/s)^2
+
+    b_var_flat : ndarray, 1-D, float64
+        The extracted background flat-field variance, units of (counts/s)^2
 
     npixels : ndarray, 1-D, float64
         For each column, this is the number of pixels that were added
@@ -215,8 +245,10 @@ def extract1d(image, lambdas, disp_range,
 
             # Compute the background for the current column,
             # using the (optionally) smoothed background.
-            bkg_model, bkg_npts = _fit_background_model(
-                temp_image, x, j, bkglim, bkg_fit, bkg_order
+            (bkg_model, b_var_poisson_model, b_var_rnoise_model,
+             b_var_flat_model, bkg_npts) = _fit_background_model(
+                temp_image, var_poisson, var_rnoise, var_flat,
+                j, bkglim, bkg_fit, bkg_order
             )
 
             if bkg_npts == 0:
@@ -235,9 +267,12 @@ def extract1d(image, lambdas, disp_range,
         # background smoothing was done, we must extract the source from
         # the original, unsmoothed image.
         # source total flux, background total flux, area, total weight
-        (total_flux, bkg_flux, tarea, twht) = _extract_src_flux(
-            image, x, j, lam, srclim,
-            weights=weights, bkgmodel=bkg_model
+        (total_flux, f_var_poisson, f_var_rnoise, f_var_flat,
+         bkg_flux, b_var_poisson, b_var_rnoise, b_var_flat,
+         tarea, twht) = _extract_src_flux(
+            image, var_poisson, var_rnoise, var_flat, x, j, lam, srclim,
+            weights=weights, bkgmodels=[bkg_model, b_var_poisson_model,
+                                        b_var_rnoise_model, b_var_flat_model]
         )
         countrate[j] = total_flux
         npixels[j] = tarea
@@ -247,7 +282,8 @@ def extract1d(image, lambdas, disp_range,
         x += 1
         continue
 
-    return (countrate, background, npixels)
+    return (countrate, f_var_poisson, f_var_rnoise, f_var_flat,
+            background, b_var_poisson, b_var_rnoise, b_var_flat, npixels)
 
 
 def bxcar(image, smoothing_length):
@@ -286,13 +322,22 @@ def bxcar(image, smoothing_length):
     return temp_im[..., half:half + width].astype(image.dtype)
 
 
-def _extract_src_flux(image, x, j, lam, srclim, weights, bkgmodel):
+def _extract_src_flux(image, var_poisson, var_rnoise, var_flat, x, j, lam, srclim, weights, bkgmodels):
     """Extract the source and subtract background.
 
     Parameters:
     -----------
     image : 2-D ndarray
         The input data array.
+
+    var_poisson : 2-D ndarray
+        The input poisson variance array.
+
+    var_rnoise : 2-D ndarray
+        The input read noise variance array.
+
+    var_flat : 2-D ndarray
+        The input flat field variance array.
 
     x : int
         This is an index (column number) within `image`.
@@ -313,7 +358,7 @@ def _extract_src_flux(image, x, j, lam, srclim, weights, bkgmodel):
         If not None, this function gives the weights for pixels within
         an extraction region.
 
-    bkgmodel : function
+    bkgmodels : function
 
     Returns:
     --------
@@ -322,9 +367,27 @@ def _extract_src_flux(image, x, j, lam, srclim, weights, bkgmodel):
         column.  This will be NaN if there is no data in the source
         extraction region for the current column.
 
+    f_var_poisson : float or NaN
+        Sum of variance within source extraction region for current column.
+
+    f_var_rnoise : float or NaN
+        Sum of variance within source extraction region for current column.
+
+    f_var_flat : float or NaN
+        Sum of variance within source extraction region for current column.
+
     bkg_flux : float
         Sum of counts within the background extraction regions for the
         current column.
+
+    b_var_poisson : float or NaN
+        Sum of variance within background extraction region for current column.
+
+    b_var_rnoise : float or NaN
+        Sum of variance within background extraction region for current column.
+
+    b_var_flat : float or NaN
+        Sum of variance within background extraction region for current column.
 
     tarea : float
         The sum of the number of pixels in the source extraction region for
@@ -362,10 +425,22 @@ def _extract_src_flux(image, x, j, lam, srclim, weights, bkgmodel):
     val = val[good]
     area = area[good]
     y = y[good]
-    if bkgmodel is None:
+    if bkgmodels[0] is None:
         bkg = np.zeros_like(val, dtype=np.float64)
+        b_var_poisson = np.zeros_like(val, dtype=np.float64)
+        b_var_rnoise = np.zeros_like(val, dtype=np.float64)
+        b_var_flat = np.zeros_like(val, dtype=np.float64)
     else:
-        bkg = bkgmodel(y)
+        bkg = bkgmodels[0](y)
+        b_var_poisson = bkgmodels[1](y) * area
+        b_var_rnoise = bkgmodels[2](y) * area
+        b_var_flat = bkgmodels[3](y) * area
+
+    f_var_poisson = var_poisson[y,x] * area
+    f_var_rnoise = var_rnoise[y,x] * area
+    f_var_flat = var_flat[y,x] * area
+
+
 
     # subtract background per pixel:
     val -= bkg
@@ -388,12 +463,20 @@ def _extract_src_flux(image, x, j, lam, srclim, weights, bkgmodel):
     twht = wht.sum(dtype=np.float64)
     mwht = twht / wht.shape[0]
     total_flux = (val * wht).sum(dtype=np.float64) / mwht
+    f_var_poisson = (f_var_poisson * wht).sum(dtype=np.float64) / mwht
+    f_var_rnoise = (f_var_rnoise * wht).sum(dtype=np.float64) / mwht
+    f_var_flat = (f_var_flat * wht).sum(dtype=np.float64) / mwht
     bkg_flux = bkg.sum(dtype=np.float64)
+    b_var_poisson = b_var_poisson.sum(dtype=np.float64)
+    b_var_rnoise = b_var_rnoise.sum(dtype=np.float64)
+    b_var_flat = b_var_flat.sum(dtype=np.float64)
 
-    return (total_flux, bkg_flux, tarea, twht)
+    return (total_flux, f_var_poisson, f_var_rnoise, f_var_flat,
+            bkg_flux, b_var_poisson, b_var_rnoise, b_var_flat, tarea, twht)
 
 
-def _fit_background_model(image, x, j, bkglim, bkg_fit, bkg_order):
+def _fit_background_model(image, var_poisson, var_rnoise, var_flat,
+                          x, j, bkglim, bkg_fit, bkg_order):
     """Extract background pixels and fit a polynomial. If the number of good data
     points is <= 1, the fit model will be forced to 0 to avoid divergence.
 
@@ -401,6 +484,15 @@ def _fit_background_model(image, x, j, bkglim, bkg_fit, bkg_order):
     -----------
     image : 2-D ndarray
         The input data array.
+
+    var_poisson : 2-D ndarray
+        The input poisson variance array.
+
+    var_rnoise : 2-D ndarray
+        The input read noise variance array.
+
+    var_flat : 2-D ndarray
+        The input flat field variance array.
 
     x : int
         This is an index (column number) within `image`.
@@ -431,6 +523,15 @@ def _fit_background_model(image, x, j, bkglim, bkg_fit, bkg_order):
         When the requested fit is either "mean" or "median", the returned
         model is a 0th-order polynomial with c0 equal to the mean/median.
 
+    b_var_poisson_model : function
+        Polynomial fit to the background regions for var_poisson values.
+
+    b_var_rnoise_model : function
+        Polynomial fit to the background regions for var_rnoise values.
+
+    b_var_flat_model : function
+        Polynomial fit to the background regions for var_flat values.
+
     npts : int
         This is intended to be the number of good values in the background
         regions.  If the background limits are at pixel edges, however,
@@ -457,6 +558,12 @@ def _fit_background_model(image, x, j, bkglim, bkg_fit, bkg_order):
     if wht.sum() == 0:
         return models.Polynomial1D(0), 0
 
+    # Find values for each variance array according to locations of
+    # "good" image values
+    var_poisson_val = var_poisson[y,x]
+    var_rnoise_val = var_rnoise[y,x]
+    var_flat_val = var_flat[y,x]
+
     # Compute the fit
     if bkg_fit == 'poly':
 
@@ -464,20 +571,32 @@ def _fit_background_model(image, x, j, bkglim, bkg_fit, bkg_order):
         lsqfitter = fitting.LinearLSQFitter()
         bkg_model = lsqfitter(models.Polynomial1D(min(bkg_order, npts - 1)),
                               y, val, weights=wht)
+        b_var_poisson_model = lsqfitter(models.Polynomial1D(min(bkg_order, npts - 1)),
+                                        y, var_poisson_val, weights=wht)
+        b_var_rnoise_model = lsqfitter(models.Polynomial1D(min(bkg_order, npts - 1)),
+                                        y, var_rnoise_val, weights=wht)
+        b_var_flat_model = lsqfitter(models.Polynomial1D(min(bkg_order, npts - 1)),
+                                        y, var_flat_val, weights=wht)
 
     elif bkg_fit == 'mean':
 
         # Compute the mean of the (good) background values
         # only use values with weight=1
         bkg_model = models.Polynomial1D(degree=0, c0=np.mean(val[wht == 1]))
+        b_var_poisson_model = models.Polynomial1D(degree=0, c0=np.mean(var_poisson_val[wht == 1]))
+        b_var_rnoise_model = models.Polynomial1D(degree=0, c0=np.mean(var_rnoise_val[wht == 1]))
+        b_var_flat_model = models.Polynomial1D(degree=0, c0=np.mean(var_flat_val[wht == 1]))
 
     elif bkg_fit == 'median':
 
         # Compute the median of the (good) background values
         # only use values with weight=1
         bkg_model = models.Polynomial1D(degree=0, c0=np.median(val[wht == 1]))
+        b_var_poisson_model = models.Polynomial1D(degree=0, c0=np.median(var_poisson_val[wht == 1]))
+        b_var_rnoise_model = models.Polynomial1D(degree=0, c0=np.median(var_rnoise_val[wht == 1]))
+        b_var_flat_model = models.Polynomial1D(degree=0, c0=np.median(var_flat_val[wht == 1]))
 
-    return bkg_model, npts
+    return bkg_model, b_var_poisson_model, b_var_rnoise_model, b_var_flat_model, npts
 
 
 def _extract_colpix(image_data, x, j, limits):

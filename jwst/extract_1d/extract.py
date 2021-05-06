@@ -1809,10 +1809,16 @@ class ExtractModel(ExtractBase):
     def extract(
             self,
             data: np.ndarray,
+            var_poisson: np.ndarray,
+            var_rnoise: np.ndarray,
+            var_flat: np.ndarray,
             wl_array: Union[np.ndarray, None],
             verbose: bool
     ) -> Tuple[
-        float, float, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray
+        float, float, np.ndarray,
+        np.ndarray, np.ndarray, np.ndarray, np.ndarray,
+        np.ndarray, np.ndarray, np.ndarray, np.ndarray,
+        np.ndarray, np.ndarray
     ]:
         """Do the extraction.
 
@@ -1825,6 +1831,15 @@ class ExtractModel(ExtractBase):
         ----------
         data : ndarray, 2-D
             Data array from which the spectrum will be extracted.
+
+        var_poisson: ndarray, 2-D
+            Poisson noise variance array to be extracted following data extraction method.
+
+        var_rnoise: ndarray, 2-D
+            Read noise variance array to be extracted following data extraction method.
+
+        var_flat: ndarray, 2-D
+            Flat noise variance array to be extracted following data extraction method.
 
         wl_array : ndarray, 2-D, or None
             Wavelengths corresponding to `data`, or None if no WAVELENGTH
@@ -1853,9 +1868,33 @@ class ExtractModel(ExtractBase):
             and multiplying by the solid angle of a pixel will give the
             flux for a point source.
 
+        f_var_poisson : ndarray, 1-D
+            The extracted poisson variance values to go along with the
+            temp_flux array.
+
+        f_var_rnoise : ndarray, 1-D
+            The extracted read noise variance values to go along with the
+            temp_flux array.
+
+        f_var_flat : ndarray, 1-D
+            The extracted flat field variance values to go along with the
+            temp_flux array.
+
         background : ndarray, 1-D, float64
             The background count rate that was subtracted from the sum of
             the source data values to get `temp_flux`.
+
+        b_var_poisson : ndarray, 1-D
+            The extracted poisson variance values to go along with the
+            background array.
+
+        b_var_rnoise : ndarray, 1-D
+            The extracted read noise variance values to go along with the
+            background array.
+
+        b_var_flat : ndarray, 1-D
+            The extracted flat field variance values to go along with the
+            background array.
 
         npixels : ndarray, 1-D, float64
             The number of pixels that were added together to get `temp_flux`.
@@ -1946,6 +1985,9 @@ class ExtractModel(ExtractBase):
             image = data
         else:
             image = np.transpose(data, (1, 0))
+            var_poisson = np.transpose(var_poisson, (1, 0))
+            var_rnoise = np.transpose(var_rnoise, (1, 0))
+            var_flat = np.transpose(var_flat, (1, 0))
 
         if wavelength is None:
             if verbose:
@@ -1968,8 +2010,13 @@ class ExtractModel(ExtractBase):
 
         disp_range = [slice0, slice1]  # Range (slice) of pixel numbers in the dispersion direction.
 
-        temp_flux, background, npixels = extract1d.extract1d(
+        temp_flux, f_var_poisson, f_var_rnoise, f_var_flat, \
+        background, b_var_poisson, b_var_rnoise, b_var_flat, \
+        npixels = extract1d.extract1d(
             image,
+            var_poisson,
+            var_rnoise,
+            var_flat,
             temp_wl,
             disp_range,
             self.p_src,
@@ -1990,7 +2037,9 @@ class ExtractModel(ExtractBase):
                 wavelength, temp_flux, background, npixels, dq, verbose
             )
 
-        return ra, dec, wavelength, temp_flux, background, npixels, dq
+        return (ra, dec, wavelength,
+                temp_flux, f_var_poisson, f_var_rnoise, f_var_flat,
+                background, b_var_poisson, b_var_rnoise, b_var_flat, npixels, dq)
 
 
 class ImageExtractModel(ExtractBase):
@@ -2144,11 +2193,15 @@ class ImageExtractModel(ExtractBase):
         log.debug(f"smoothing_length = {self.smoothing_length}")
         log.debug(f"position_correction = {self.position_correction}")
 
-    def extract(
-            self, data: np.ndarray, wl_array: np.ndarray, verbose: bool
-    ) -> Tuple[
-        float, float, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray
-    ]:
+    def extract(self, data,
+            var_poisson : np.ndarray,
+            var_rnoise : np.ndarray,
+            var_flat : np.ndarray,
+            wl_array : np.ndarray,
+            verbose : bool) -> Tuple[float, float, np.ndarray,
+                                     np.ndarray, np.ndarray, np.ndarray, np.ndarray,
+                                     np.ndarray, np.ndarray, np.ndarray, np.ndarray,
+                                     np.ndarray, np.ndarray]:
         """
         Do the actual extraction, for the case that the extract1d reference file
         is an image.
@@ -2157,6 +2210,15 @@ class ImageExtractModel(ExtractBase):
         ----------
         data : ndarray, 2-D
             Science data array.
+
+        var_poisson: ndarray, 2-D
+            Poisson noise variance array to be extracted following data extraction method.
+
+        var_rnoise: ndarray, 2-D
+            Read noise variance array to be extracted following data extraction method.
+
+        var_flat: ndarray, 2-D
+            Flat noise variance array to be extracted following data extraction method.
 
         wl_array : ndarray, 2-D, or None
             Wavelengths corresponding to `data`, or None if no WAVELENGTH
@@ -2185,9 +2247,33 @@ class ImageExtractModel(ExtractBase):
             `npixels` (to compute the average) to get the array for the
             "surf_bright" (surface brightness) output column.
 
+        f_var_poisson : ndarray, 1-D
+            The extracted poisson variance values to go along with the
+            temp_flux array.
+
+        f_var_rnoise : ndarray, 1-D
+            The extracted read noise variance values to go along with the
+            temp_flux array.
+
+        f_var_flat : ndarray, 1-D
+            The extracted flat field variance values to go along with the
+            temp_flux array.
+
         background : ndarray, 1-D
             The background count rate that was subtracted from the sum of
             the source data values to get `temp_flux`.
+
+        b_var_poisson : ndarray, 1-D
+            The extracted poisson variance values to go along with the
+            background array.
+
+        b_var_rnoise : ndarray, 1-D
+            The extracted read noise variance values to go along with the
+            background array.
+
+        b_var_flat : ndarray, 1-D
+            The extracted flat field variance values to go along with the
+            background array.
 
         npixels : ndarray, 1-D, float64
             The number of pixels that were added together to get `temp_flux`.
@@ -2212,6 +2298,9 @@ class ImageExtractModel(ExtractBase):
 
         # Extract the data.
         gross = (data * mask_target).sum(axis=axis, dtype=float)
+        f_var_poisson = (var_poisson * mask_target).sum(axis=axis, dtype=float)
+        f_var_rnoise = (var_rnoise * mask_target).sum(axis=axis, dtype=float)
+        f_var_flat = (var_flat * mask_target).sum(axis=axis, dtype=float)
 
         # Compute the number of pixels that were added together to get gross.
         temp = np.ones_like(data)
@@ -2232,6 +2321,9 @@ class ImageExtractModel(ExtractBase):
             n_bkg = np.where(n_bkg == 0., -1., n_bkg)  # -1 is used as a flag, and also to avoid dividing by zero.
 
             background = (data * mask_bkg).sum(axis=axis, dtype=float)
+            b_var_poisson = (var_poisson * mask_bkg).sum(axis=axis, dtype=float)
+            b_var_rnoise = (var_rnoise * mask_bkg).sum(axis=axis, dtype=float)
+            b_var_flat = (var_flat * mask_bkg).sum(axis=axis, dtype=float)
 
             scalefactor = n_target / n_bkg
             scalefactor = np.where(n_bkg > 0., scalefactor, 0.)
@@ -2241,10 +2333,19 @@ class ImageExtractModel(ExtractBase):
             if self.smoothing_length > 1:
                 background = extract1d.bxcar(background, self.smoothing_length)  # Boxcar smoothing.
                 background = np.where(n_bkg > 0., background, 0.)
+                b_var_poisson = extract1d.bxcar(b_var_poisson, self.smoothing_length)
+                b_var_poisson = np.where(n_bkg > 0., b_var_poisson, 0.)
+                b_var_rnoise = extract1d.bxcar(b_var_rnoise, self.smoothing_length)
+                b_var_rnoise = np.where(n_bkg > 0., b_var_rnoise, 0.)
+                b_var_flat = extract1d.bxcar(b_var_flat, self.smoothing_length)
+                b_var_flat = np.where(n_bkg > 0., b_var_flat, 0.)
 
             temp_flux = gross - background
         else:
             background = np.zeros_like(gross)
+            b_var_poisson = np.zeros_like(gross)
+            b_var_rnoise = np.zeros_like(gross)
+            b_var_flat = np.zeros_like(gross)
             temp_flux = gross.copy()
 
         del gross
@@ -2293,6 +2394,12 @@ class ImageExtractModel(ExtractBase):
             trim_slc = slice(mask[0][0], mask[0][-1] + 1)
             temp_flux = temp_flux[trim_slc]
             background = background[trim_slc]
+            f_var_poisson  = f_var_poisson[trim_slc]
+            f_var_rnoise = f_var_rnoise[trim_slc]
+            f_var_flat  = f_var_flat[trim_slc]
+            b_var_poisson  = b_var_poisson[trim_slc]
+            b_var_rnoise  = b_var_rnoise[trim_slc]
+            b_var_flat  = b_var_flat[trim_slc]
             npixels = npixels[trim_slc]
             x_array = x_array[trim_slc]
             y_array = y_array[trim_slc]
@@ -2375,7 +2482,8 @@ class ImageExtractModel(ExtractBase):
                 wavelength, temp_flux, background, npixels, dq, verbose
             )
 
-        return ra, dec, wavelength, temp_flux, background, npixels, dq
+        return ra, dec, wavelength,\
+               temp_flux, background, npixels, dq
 
     def match_shape(self, shape: tuple) -> np.ndarray:
         """Truncate or expand reference image to match the science data.
@@ -2884,6 +2992,8 @@ def do_extract1d(
                 flux = temp_flux  # count rate
 
             del temp_flux
+
+            # TODO GOES HERE
 
             error = np.zeros_like(flux)
             sb_error = np.zeros_like(flux)
@@ -3689,6 +3799,9 @@ def extract_one_slit(
        copied from the input `prev_offset`.
 
     """
+
+    spec_dtype = datamodels.SpecModel().spec_table.dtype  # This data type is used for creating an output table.
+
     if verbose:
         log_initial_parameters(extract_params)
 
@@ -3699,12 +3812,21 @@ def extract_one_slit(
 
     if integ > -1:
         data = input_model.data[integ]
+        var_poisson = input_model.var_poisson[integ]
+        var_rnoise = input_model.var_rnoise[integ]
+        var_flat = input_model.var_flat[integ]
         input_dq = input_model.dq[integ]
     elif slit is None:
         data = input_model.data
+        var_poisson = input_model.var_poisson
+        var_rnoise = input_model.var_rnoise
+        var_flat = input_model.var_flat
         input_dq = input_model.dq
     else:
         data = slit.data
+        var_poisson = slit.var_poisson
+        var_rnoise = slit.var_rnoise
+        var_flat = slit.var_flat
         input_dq = slit.dq
 
     if input_dq.size == 0:
@@ -3770,7 +3892,8 @@ def extract_one_slit(
         if extract_params['subtract_background']:
             log.info("with background subtraction")
 
-    ra, dec, wavelength, temp_flux, background, npixels, dq = extract_model.extract(data, wl_array, verbose)
+    ra, dec, wavelength, temp_flux, background, npixels, dq = extract_model.extract(data, var_poisson, var_rnoise,
+                                                                                    var_flat, wl_array, verbose)
 
     return ra, dec, wavelength, temp_flux, background, npixels, dq, offset
 
