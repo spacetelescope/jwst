@@ -285,7 +285,7 @@ def eng_db_jw703():
         yield engdb
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture
 def data_file():
     model = datamodels.Level1bModel()
     model.meta.exposure.start_time = STARTTIME.mjd
@@ -308,7 +308,7 @@ def data_file():
         yield file_path
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture
 def data_file_nosiaf():
     model = datamodels.Level1bModel()
     model.meta.exposure.start_time = STARTTIME.mjd

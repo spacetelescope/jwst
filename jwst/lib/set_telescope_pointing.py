@@ -2,7 +2,7 @@
 import sys
 
 from collections import defaultdict, namedtuple
-from copy import copy
+from copy import copy, deepcopy
 from dataclasses import dataclass
 from datetime import date
 from enum import Enum
@@ -861,6 +861,7 @@ def calc_transforms_quaternion(t_pars: TransformParameters):
 
     """
     logger.info('Calculating transforms using FULL quaternion method...')
+    t_pars.method = Methods.FULL
 
     # Determine the ECI to J-frame matrix
     m_eci2j = calc_eci2j_matrix(t_pars.pointing.q)
@@ -944,6 +945,7 @@ def calc_transforms_quaternion_velocity_abberation(t_pars: TransformParameters):
 
     """
     logger.info('Calculating transforms using FULLVA quaternion method with velocity aberration...')
+    t_pars.method = Methods.FULLVA
 
     # Determine the ECI to J-frame matrix
     m_eci2j = calc_eci2j_matrix(t_pars.pointing.q)
@@ -1033,6 +1035,7 @@ def calc_transforms_original(t_pars: TransformParameters):
 
     """
     logger.info('Calculating transforms using ORIGINAL method...')
+    t_pars.method = Methods.ORIGINAL
 
     # Determine the ECI to J-frame matrix
     m_eci2j = calc_eci2j_matrix(t_pars.pointing.q)
@@ -1119,6 +1122,7 @@ def calc_transforms_gscmd_j3pags(t_pars: TransformParameters):
             M_eci_to_fgs1                  # ECI to FGS1 using commanded information
     """
     logger.info('Calculating transforms using GSCMD with J3PA@GS method...')
+    t_pars.method = Methods.GSCMD_J3PAGS
 
     # Determine the ECI to FGS1 ICS using guide star telemetry.
     m_eci2fgs1 = calc_eci2fgs1_j3pags(t_pars)
@@ -1196,6 +1200,7 @@ def calc_transforms_gscmd_v3pags(t_pars: TransformParameters):
             M_eci_to_fgs1                  # ECI to FGS1 using commanded information
     """
     logger.info('Calculating transforms using GSCMD using V3PA@GS method...')
+    t_pars.method = Methods.GSCMD_V3PAGS
 
     # Determine the ECI to FGS1 ICS using guide star telemetry.
     m_eci2fgs1 = calc_eci2fgs1_v3pags(t_pars)
@@ -1437,7 +1442,7 @@ def calc_v3pa_at_gs_from_original(t_pars: TransformParameters) -> float:
     """
 
     # Calculate V1 using ORIGINAL method
-    tforms = calc_transforms_original(t_pars)
+    tforms = calc_transforms_original(deepcopy(t_pars))
     vinfo = calc_v1_wcs(tforms.m_eci2v)
     logger.debug('vinfo: %s', vinfo)
 
