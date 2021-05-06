@@ -13,7 +13,7 @@ ROOT = 'nrs_verify_nrs1'
 def run_detector1(rtdata_module):
     """Run NRS_VERIFY through detector1"""
     rtdata = rtdata_module
-    rtdata.get_data('nirspec/imaging/' + replace_suffix(ROOT, 'uncal') + '.fits')
+    rtdata.get_data(f'nirspec/imaging/{ROOT}_uncal.fits')
 
     collect_pipeline_cfgs('config')
 
@@ -39,9 +39,9 @@ def run_image2(run_detector1, rtdata_module):
     # from CRDS.
     refs = ['jwst_nirspec_fpa_0005.asdf', 'jwst_nirspec_flat_0061.fits', 'jwst_nirspec_area_0001.fits']
     for ref in refs:
-        rtdata.get_data('nirspec/imaging/' + ref)
+        rtdata.get_data(f'nirspec/imaging/{ref}')
 
-    rtdata.input = replace_suffix(ROOT, 'rate') + '.fits'
+    rtdata.input = f'{ROOT}_rate.fits'
 
     args = [
         'jwst.pipeline.Image2Pipeline', rtdata.input,
@@ -67,10 +67,12 @@ def run_image2(run_detector1, rtdata_module):
 def test_verify_detector1(run_detector1, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Test results of the detector1 and image2 processing"""
     rtdata = rtdata_module
-    rtdata.input = replace_suffix(ROOT, 'uncal') + '.fits'
-    output = replace_suffix(ROOT, suffix) + '.fits'
+    output = f'{ROOT}_{suffix}.fits'
     rtdata.output = output
-    rtdata.get_truth('truth/test_nirspec_verify/' + output)
+    rtdata.get_truth(f'truth/test_nirspec_verify/{output}')
+
+    fitsdiff_default_kwargs["rtol"] = 1e-4
+    fitsdiff_default_kwargs["atol"] = 1e-3
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
@@ -84,10 +86,12 @@ def test_verify_detector1(run_detector1, rtdata_module, fitsdiff_default_kwargs,
 def test_verify_image2(run_image2, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Test results of the detector1 and image2 processing"""
     rtdata = rtdata_module
-    rtdata.input = replace_suffix(ROOT, 'uncal') + '.fits'
-    output = replace_suffix(ROOT, suffix) + '.fits'
+    output = f'{ROOT}_{suffix}.fits'
     rtdata.output = output
-    rtdata.get_truth('truth/test_nirspec_verify/' + output)
+    rtdata.get_truth(f'truth/test_nirspec_verify/{output}')
+
+    fitsdiff_default_kwargs["rtol"] = 1e-4
+    fitsdiff_default_kwargs["atol"] = 1e-3
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
