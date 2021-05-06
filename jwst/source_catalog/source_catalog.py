@@ -1143,7 +1143,7 @@ class JWSTSourceCatalog:
         """
         The label number of the nearest neighbor.
         """
-        if np.isnan(self._ckdtree_query[1]):  # only one detected source
+        if len(self._ckdtree_query[1]) == 1:  # only one detected source
             return np.nan
         return self.label[self._ckdtree_query[1]]
 
