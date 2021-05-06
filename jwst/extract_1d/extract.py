@@ -2218,13 +2218,13 @@ class ImageExtractModel(ExtractBase):
         data : ndarray, 2-D
             Science data array.
 
-        var_poisson: ndarray, 2-D
+        var_poisson : ndarray, 2-D
             Poisson noise variance array to be extracted following data extraction method.
 
-        var_rnoise: ndarray, 2-D
+        var_rnoise : ndarray, 2-D
             Read noise variance array to be extracted following data extraction method.
 
-        var_flat: ndarray, 2-D
+        var_flat : ndarray, 2-D
             Flat noise variance array to be extracted following data extraction method.
 
         wl_array : ndarray, 2-D, or None
@@ -2854,11 +2854,15 @@ def do_extract1d(
     if s_photom is not None and s_photom.upper() == 'COMPLETE':
         photom_has_been_run = True
         flux_units = 'Jy'
+        f_var_units = 'Jy^2'
         sb_units = 'MJy/sr'
+        sb_var_units = '(MJy/sr)^2'
     else:
         photom_has_been_run = False
         flux_units = 'DN/s'
+        f_var_units = '(DN/s)^2'
         sb_units = 'DN/s'
+        sb_var_units = '(DN/s)^2'
         log.warning("The photom step has not been run.")
 
     # use_source_posn doesn't apply to WFSS, so turn it off if it's currently on
@@ -3047,19 +3051,19 @@ def do_extract1d(
             spec.spec_table.columns['wavelength'].unit = 'um'
             spec.spec_table.columns['flux'].unit = flux_units
             spec.spec_table.columns['flux_error'].unit = flux_units
-            spec.spec_table.columns['flux_var_poisson'].unit = flux_units * flux_units
-            spec.spec_table.columns['flux_var_rnoise'].unit = flux_units * flux_units
-            spec.spec_table.columns['flux_var_flat'].unit = flux_units * flux_units
+            spec.spec_table.columns['flux_var_poisson'].unit = f_var_units
+            spec.spec_table.columns['flux_var_rnoise'].unit = f_var_units
+            spec.spec_table.columns['flux_var_flat'].unit = f_var_units
             spec.spec_table.columns['surf_bright'].unit = sb_units
             spec.spec_table.columns['sb_error'].unit = sb_units
-            spec.spec_table.columns['sb_var_poisson'].unit = sb_units * sb_units
-            spec.spec_table.columns['sb_var_rnoise'].unit = sb_units * sb_units
-            spec.spec_table.columns['sb_var_flat'].unit = sb_units * sb_units
+            spec.spec_table.columns['sb_var_poisson'].unit = sb_var_units
+            spec.spec_table.columns['sb_var_rnoise'].unit = sb_var_units
+            spec.spec_table.columns['sb_var_flat'].unit = sb_var_units
             spec.spec_table.columns['background'].unit = sb_units
             spec.spec_table.columns['bkgd_error'].unit = sb_units
-            spec.spec_table.columns['bkgd_var_poisson'].unit = sb_units * sb_units
-            spec.spec_table.columns['bkgd_var_rnoise'].unit = sb_units * sb_units
-            spec.spec_table.columns['bkgd_var_flat'].unit = sb_units * sb_units
+            spec.spec_table.columns['bkgd_var_poisson'].unit = sb_var_units
+            spec.spec_table.columns['bkgd_var_rnoise'].unit = sb_var_units
+            spec.spec_table.columns['bkgd_var_flat'].unit = sb_var_units
             spec.slit_ra = ra
             spec.slit_dec = dec
             spec.spectral_order = sp_order
@@ -4097,7 +4101,7 @@ def nans_at_endpoints(
         The returned `dq` array may have NaNs flagged with DO_NOT_USE,
         and both arrays may have been trimmed at either or both ends.
 
-    nan_slc : slice
+    slc : slice
         The slice to be applied to other output arrays to match the modified
         shape of the wavelength array.
     """
@@ -4105,6 +4109,7 @@ def nans_at_endpoints(
     new_wl = wavelength.copy()
     new_dq = dq.copy()
     nelem = wavelength.shape[0]
+    slc = slice(nelem)
 
     nan_mask = np.isnan(wavelength)
     new_dq[nan_mask] = np.bitwise_or(new_dq[nan_mask], dqflags.pixel['DO_NOT_USE'])
@@ -4124,4 +4129,4 @@ def nans_at_endpoints(
     else:
         new_dq |= dqflags.pixel['DO_NOT_USE']
 
-    return new_wl, new_dq, nan_slc
+    return new_wl, new_dq, slc
