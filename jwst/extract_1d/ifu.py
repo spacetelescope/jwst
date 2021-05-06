@@ -639,7 +639,6 @@ def extract_ifu(input_model, source_type, extract_params):
                                                  method=method, subpixels=subpixels)
             b_var_flat[k] = float(var_flat_table['aperture_sum'][0])
 
-
         del temp_weightmap
         # done looping over wavelength bins
     # Check for NaNs in the wavelength array, flag them in the dq array,
