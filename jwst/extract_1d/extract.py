@@ -2011,22 +2011,22 @@ class ExtractModel(ExtractBase):
         disp_range = [slice0, slice1]  # Range (slice) of pixel numbers in the dispersion direction.
 
         temp_flux, f_var_poisson, f_var_rnoise, f_var_flat, \
-        background, b_var_poisson, b_var_rnoise, b_var_flat, \
-        npixels = extract1d.extract1d(
-            image,
-            var_poisson,
-            var_rnoise,
-            var_flat,
-            temp_wl,
-            disp_range,
-            self.p_src,
-            self.p_bkg,
-            self.independent_var,
-            self.smoothing_length,
-            self.bkg_fit,
-            self.bkg_order,
-            weights=None
-        )
+            background, b_var_poisson, b_var_rnoise, b_var_flat, \
+            npixels = extract1d.extract1d(
+                image,
+                var_poisson,
+                var_rnoise,
+                var_flat,
+                temp_wl,
+                disp_range,
+                self.p_src,
+                self.p_bkg,
+                self.independent_var,
+                self.smoothing_length,
+                self.bkg_fit,
+                self.bkg_order,
+                weights=None
+            )
 
         del temp_wl
 
@@ -2201,14 +2201,16 @@ class ImageExtractModel(ExtractBase):
         log.debug(f"position_correction = {self.position_correction}")
 
     def extract(self, data,
-            var_poisson : np.ndarray,
-            var_rnoise : np.ndarray,
-            var_flat : np.ndarray,
-            wl_array : np.ndarray,
-            verbose : bool) -> Tuple[float, float, np.ndarray,
-                                     np.ndarray, np.ndarray, np.ndarray, np.ndarray,
-                                     np.ndarray, np.ndarray, np.ndarray, np.ndarray,
-                                     np.ndarray, np.ndarray]:
+                var_poisson: np.ndarray,
+                var_rnoise: np.ndarray,
+                var_flat: np.ndarray,
+                wl_array: np.ndarray,
+                verbose: bool)\
+            -> \
+            Tuple[float, float, np.ndarray,
+                  np.ndarray, np.ndarray, np.ndarray, np.ndarray,
+                  np.ndarray, np.ndarray, np.ndarray, np.ndarray,
+                  np.ndarray, np.ndarray]:
         """
         Do the actual extraction, for the case that the extract1d reference file
         is an image.
@@ -2978,7 +2980,7 @@ def do_extract1d(
                         prev_offset,
                         True,
                         extract_params
-                )
+                    )
             except InvalidSpectralOrderNumberError as e:
                 log.info(f'{str(e)}, skipping ...')
                 continue
@@ -3182,7 +3184,7 @@ def do_extract1d(
                                 prev_offset,
                                 True,
                                 extract_params
-                                )
+                            )
                     except InvalidSpectralOrderNumberError as e:
                         log.info(f'{str(e)}, skipping ...')
                         continue
@@ -3251,24 +3253,23 @@ def do_extract1d(
                 spec.spec_table.columns['wavelength'].unit = 'um'
                 spec.spec_table.columns['flux'].unit = flux_units
                 spec.spec_table.columns['flux_error'].unit = flux_units
-                spec.spec_table.columns['flux_var_poisson'].unit = flux_units * flux_units
-                spec.spec_table.columns['flux_var_rnoise'].unit = flux_units * flux_units
-                spec.spec_table.columns['flux_var_flat'].unit = flux_units * flux_units
+                spec.spec_table.columns['flux_var_poisson'].unit = f_var_units
+                spec.spec_table.columns['flux_var_rnoise'].unit = f_var_units
+                spec.spec_table.columns['flux_var_flat'].unit = f_var_units
                 spec.spec_table.columns['surf_bright'].unit = sb_units
                 spec.spec_table.columns['sb_error'].unit = sb_units
-                spec.spec_table.columns['sb_var_poisson'].unit = sb_units * sb_units
-                spec.spec_table.columns['sb_var_rnoise'].unit = sb_units * sb_units
-                spec.spec_table.columns['sb_var_flat'].unit = sb_units * sb_units
+                spec.spec_table.columns['sb_var_poisson'].unit = sb_var_units
+                spec.spec_table.columns['sb_var_rnoise'].unit = sb_var_units
+                spec.spec_table.columns['sb_var_flat'].unit = sb_var_units
                 spec.spec_table.columns['background'].unit = sb_units
                 spec.spec_table.columns['bkgd_error'].unit = sb_units
-                spec.spec_table.columns['bkgd_var_poisson'].unit = sb_units * sb_units
-                spec.spec_table.columns['bkgd_var_rnoise'].unit = sb_units * sb_units
-                spec.spec_table.columns['bkgd_var_flat'].unit = sb_units * sb_units
+                spec.spec_table.columns['bkgd_var_poisson'].unit = sb_var_units
+                spec.spec_table.columns['bkgd_var_rnoise'].unit = sb_var_units
+                spec.spec_table.columns['bkgd_var_flat'].unit = sb_var_units
                 spec.slit_ra = ra
                 spec.slit_dec = dec
                 spec.spectral_order = sp_order
                 spec.dispersion_direction = extract_params['dispaxis']
-
 
                 # The first argument of copy_keyword_info was originally intended to be a SlitModel object, but
                 # ImageModel now has the attributes we will look for in this function.
@@ -3382,7 +3383,7 @@ def do_extract1d(
                                 prev_offset,
                                 verbose,
                                 extract_params
-                                )
+                            )
                     except InvalidSpectralOrderNumberError as e:
                         log.info(f'{str(e)}, skipping ...')
                         break
@@ -3444,19 +3445,19 @@ def do_extract1d(
                     spec.spec_table.columns['wavelength'].unit = 'um'
                     spec.spec_table.columns['flux'].unit = flux_units
                     spec.spec_table.columns['flux_error'].unit = flux_units
-                    spec.spec_table.columns['flux_var_poisson'].unit = flux_units * flux_units
-                    spec.spec_table.columns['flux_var_rnoise'].unit = flux_units * flux_units
-                    spec.spec_table.columns['flux_var_flat'].unit = flux_units * flux_units
+                    spec.spec_table.columns['flux_var_poisson'].unit = f_var_units
+                    spec.spec_table.columns['flux_var_rnoise'].unit = f_var_units
+                    spec.spec_table.columns['flux_var_flat'].unit = f_var_units
                     spec.spec_table.columns['surf_bright'].unit = sb_units
                     spec.spec_table.columns['sb_error'].unit = sb_units
-                    spec.spec_table.columns['sb_var_poisson'].unit = sb_units * sb_units
-                    spec.spec_table.columns['sb_var_rnoise'].unit = sb_units * sb_units
-                    spec.spec_table.columns['sb_var_flat'].unit = sb_units * sb_units
+                    spec.spec_table.columns['sb_var_poisson'].unit = sb_var_units
+                    spec.spec_table.columns['sb_var_rnoise'].unit = sb_var_units
+                    spec.spec_table.columns['sb_var_flat'].unit = sb_var_units
                     spec.spec_table.columns['background'].unit = sb_units
                     spec.spec_table.columns['bkgd_error'].unit = sb_units
-                    spec.spec_table.columns['bkgd_var_poisson'].unit = sb_units * sb_units
-                    spec.spec_table.columns['bkgd_var_rnoise'].unit = sb_units * sb_units
-                    spec.spec_table.columns['bkgd_var_flat'].unit = sb_units * sb_units
+                    spec.spec_table.columns['bkgd_var_poisson'].unit = sb_var_units
+                    spec.spec_table.columns['bkgd_var_rnoise'].unit = sb_var_units
+                    spec.spec_table.columns['bkgd_var_flat'].unit = sb_var_units
                     spec.slit_ra = ra
                     spec.slit_dec = dec
                     spec.spectral_order = sp_order

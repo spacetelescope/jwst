@@ -440,8 +440,6 @@ def _extract_src_flux(image, var_poisson, var_rnoise, var_flat, x, j, lam, srcli
     f_var_rnoise = var_rnoise[y,x] * area
     f_var_flat = var_flat[y,x] * area
 
-
-
     # subtract background per pixel:
     val -= bkg
 
@@ -574,9 +572,9 @@ def _fit_background_model(image, var_poisson, var_rnoise, var_flat,
         b_var_poisson_model = lsqfitter(models.Polynomial1D(min(bkg_order, npts - 1)),
                                         y, var_poisson_val, weights=wht)
         b_var_rnoise_model = lsqfitter(models.Polynomial1D(min(bkg_order, npts - 1)),
-                                        y, var_rnoise_val, weights=wht)
+                                       y, var_rnoise_val, weights=wht)
         b_var_flat_model = lsqfitter(models.Polynomial1D(min(bkg_order, npts - 1)),
-                                        y, var_flat_val, weights=wht)
+                                     y, var_flat_val, weights=wht)
 
     elif bkg_fit == 'mean':
 
