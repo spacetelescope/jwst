@@ -1,9 +1,10 @@
 """Set Telescope Pointing from quaternions"""
 import sys
 
+import asdf
 from collections import defaultdict, namedtuple
 from copy import copy, deepcopy
-from dataclasses import dataclass
+import dataclasses
 from datetime import date
 from enum import Enum
 import logging
@@ -134,29 +135,78 @@ SIAF_VERTICIES = ['XIdlVert1', 'XIdlVert2', 'XIdlVert3', 'XIdlVert4',
 Pointing = namedtuple("Pointing", ["q", "j2fgs_matrix", "fsmcorr", "obstime", "gs_commanded"])
 Pointing.__new__.__defaults__ = ((None,) * 5)
 
+
 # Transforms
-Transforms = namedtuple("Transforms",
-                        [
-                            'm_eci2j',            # ECI to J-Frame
-                            'm_j2fgs1',           # J-Frame to FGS1
-                            'm_eci2fgs1',         # ECI to FGS1
-                            'm_gs2gsapp',         # Velocity abberation
-                            'm_sifov_fsm_delta',  # FSM correction
-                            'm_fgs12sifov',       # FGS1 to SIFOV
-                            'm_eci2sifov',        # ECI to SIFOV
-                            'm_sifov2v',          # SIFOV to V1
-                            'm_eci2v',            # ECI to V
-                            'm_v2siaf',           # V to SIAF
-                            'm_eci2siaf'          # ECI to SIAF
-                        ])
+class Transforms(namedtuple("Transforms",
+                            [
+                                'm_eci2j',            # ECI to J-Frame
+                                'm_j2fgs1',           # J-Frame to FGS1
+                                'm_eci2fgs1',         # ECI to FGS1
+                                'm_gs2gsapp',         # Velocity abberation
+                                'm_sifov_fsm_delta',  # FSM correction
+                                'm_fgs12sifov',       # FGS1 to SIFOV
+                                'm_eci2sifov',        # ECI to SIFOV
+                                'm_sifov2v',          # SIFOV to V1
+                                'm_eci2v',            # ECI to V
+                                'm_v2siaf',           # V to SIAF
+                                'm_eci2siaf'          # ECI to SIAF
+                            ])):
+    """Transformation matricies"""
+
+    @classmethod
+    def from_asdf(cls, asdf_file):
+        """Create Transforms from AsdfFile
+
+        Parameters
+        ----------
+        asdf_file : Stream-like or `asdf.AsdfFile`
+            The asdf to create from.
+
+        Returns
+        -------
+        transforms : Transforms
+            The Transforms instance.
+        """
+        if isinstance(asdf_file, asdf.AsdfFile):
+            transforms = asdf_file.tree['transforms']
+        else:
+            with asdf.open(asdf_file, copy_arrays=True, lazy_load=False) as af:
+                transforms = af.tree['transforms']
+
+        return cls(**transforms)
+
+    def to_asdf(self):
+        """Serialize to AsdfFile
+
+        Returns
+        -------
+        asdf_file : asdf.AsdfFile
+            The ASDF serialization.
+        """
+        self_dict = self._asdict()
+        asdf_file = asdf.AsdfFile({'transforms': self_dict})
+        return asdf_file
+
+    def write_to_asdf(self, path):
+        """Serialize to a file path
+
+        Parameters
+        ----------
+        path : Stream-like
+        """
+        asdf_file = self.to_asdf()
+        asdf_file.write_to(path)
+
+
 Transforms.__new__.__defaults__ = ((None,) * 10)
+
 
 # WCS reference container
 WCSRef = namedtuple('WCSRef', ['ra', 'dec', 'pa'])
 WCSRef.__new__.__defaults__ = (None, None, None)
 
 
-@dataclass
+@dataclasses.dataclass
 class TransformParameters:
     """Parameters required the calculations
 

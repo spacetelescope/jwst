@@ -164,6 +164,18 @@ def method_fullva():
     return method_fullva_nofixture()
 
 
+def test_transform_serialize(method_fullva, tmp_path):
+    """Test serialization of Transforms"""
+    transforms, t_pars = method_fullva
+
+    path = tmp_path / 'transforms.asdf'
+    transforms.write_to_asdf(path)
+    from_asdf = stp.Transforms.from_asdf(path)
+
+    assert isinstance(from_asdf, stp.Transforms)
+    assert str(transforms) == str(from_asdf)
+
+
 @pytest.mark.parametrize(
     'fixture, matrix, expected',
     [
