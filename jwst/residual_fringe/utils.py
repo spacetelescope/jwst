@@ -54,8 +54,8 @@ def slice_info(slice_map, c):
     slice_inventory = np.unique(slice_map)
     slices_in_band = slice_inventory[np.where((slice_inventory >= 100 * c)
                                               & (slice_inventory < 100 * (c + 1)))]
-    print('slices in band',slices_in_band.shape)
 
+    log.info("Number of slices in band {} ".format(slices_in_band.shape[0]))
     slice_x_ranges = np.zeros((slices_in_band.shape[0], 3),dtype=int)
     all_slice_masks = np.zeros((slices_in_band.shape[0], slice_map.shape[0], slice_map.shape[1]))
     for n, s in enumerate(slices_in_band):
@@ -74,9 +74,9 @@ def slice_info(slice_map, c):
         slice_x_ranges[n, 0], slice_x_ranges[n, 1], slice_x_ranges[n, 2] = int(s), \
             int(np.amin(indices)),int( np.amax(indices) + 1)
 
-        print('slice_x_ranges',n,s,slice_x_ranges[n,0],slice_x_ranges[n,1],slice_x_ranges[n,2])
+        log.debug("For slice {} x ranges of slices region {}, {}".format(slice_x_ranges[n,0],slice_x_ranges[n,1],slice_x_ranges[n,2]))
 
-    print(np.amin(slice_x_ranges[:,1]), np.amax(slice_x_ranges[:,2]))
+    log.debug("Min and max x pixel values of all slices in channel {} {}".format(np.amin(slice_x_ranges[:,1]), np.amax(slice_x_ranges[:,2])))
 
     xrange_channel = np.zeros(2)
     xrange_channel[0] = np.amin(slice_x_ranges[:,1])
@@ -154,7 +154,7 @@ def multi_sine(n):
     mdl, BayesFitting model
         the model composed of n sines
     """
-    log.debug("multi_sine: creating multi sine model of {} sines".format(n))
+
     # make the first sine
     mdl = SineModel()
 
@@ -224,10 +224,9 @@ def find_lines(signal, max_amp):
     weights_factors = np.ones(signal.shape[0])
 
     # Detect peaks
-    log.debug("find_lines: initialise peak, trough lists")
+
     u_y, u_x, l_y, l_x = [], [], [], []
 
-    log.debug("find_lines: finding peaks and troughs where slope changes sign")
     for x in r_x:
         if (np.sign(signal_check[x] - signal_check[x - 1]) == 1) and (np.sign(signal_check[x] - signal_check[x + 1]) == 1):
             u_y.append(signal_check[x])
@@ -253,12 +252,10 @@ def check_res_fringes(res_fringe_fit, max_amp):
     flags = np.zeros(res_fringe_fit.shape[0])
 
     # get fit envelope
-    log.debug("check_res_fringes: fit the res fringe fit envelope")
     npix = np.arange(res_fringe_fit.shape[0])
     lenv_fit, _, _, uenv_fit, _, _ = fit_envelope(npix, res_fringe_fit)
 
     # get the indices of the nodes (where uenv slope goes from negative to positive), add 0 and 1023
-    log.debug("check_res_fringes: find the beat nodes of envelope")
     node_ind = [0]
     for k in np.arange(1, len(uenv_fit) - 1):
         if (np.sign(uenv_fit[k] - uenv_fit[k - 1]) == -1) and ((np.sign(uenv_fit[k] - uenv_fit[k + 1])) == -1):
@@ -284,7 +281,7 @@ def check_res_fringes(res_fringe_fit, max_amp):
             res_fringe_fit[lind[0]:uind[0]] = 0
             flags[lind[0]:uind[0]] = 1  # set flag to 1 for reject fit region
 
-    log.debug("check_res_fringes: finished")
+
     return res_fringe_fit, flags
 
 
@@ -354,7 +351,6 @@ def make_knots(flux, nknots=20, weights=None):
         knot_idx[n + 1] = (n * knot_step) + (last_split / 2)
     knot_idx[0] = 0
     knot_idx[-1] = npoints - 1
-    log.debug("make_knots: initial knot locations created")
 
     # if the weights array is supplied, determine the edges of good data and set knots there
     if weights is not None:
@@ -399,7 +395,6 @@ def make_knots(flux, nknots=20, weights=None):
                 else:
                     pass
 
-        log.debug("make_knots: tidying knots array and returning")
         # convert the list to array, add to the knot_idx array, remove duplicates and sort
         edges_idx = np.asarray(edges_idx_list)
         knot_idx = np.sort(np.concatenate((knot_idx, edges_idx), axis=0), axis=0)
@@ -443,7 +438,6 @@ def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None):
         fitter object, mainly used for testing
 
     """
-    log.debug("fit_1d_background_complex: starting background fitting")
 
     # first get the weighted pixel fraction
     weighted_pix_frac =  (weights > 1e-05).sum() / flux.shape[0]
@@ -472,7 +466,6 @@ def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None):
 
     # require at least 5 sine periods to fit
     if nper_cor >= 5:
-        log.debug(" using splines model")
         bgindx = make_knots(flux.copy(), int(nknots), weights=weights.copy())
         bgknots = wavenum_scaled[bgindx].astype(float)
         bg_model = SplinesModel(bgknots, order=order)
@@ -501,8 +494,6 @@ def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None):
         del nz, z
     except ValueError:
         pass
-
-    log.debug("fit_1d_background_complex: finished background fitting")
 
     return bg_fit, bgindx, fitter
 
@@ -539,7 +530,6 @@ def fit_quality(wavenum, res_fringes, weights, ffreq, dffreq, save_results=False
 
     # fit the residual with a single sine model
     # use a Lomb-Scargle periodogram to get PSD and identify the strongest frequency
-    log.debug("fit_quality: finding strongest frequency")
     freq = np.linspace(ffreq - dffreq, ffreq + dffreq, 100)
 
     # handle out of slice pixels
@@ -553,7 +543,6 @@ def fit_quality(wavenum, res_fringes, weights, ffreq, dffreq, save_results=False
 
 
     # create the model
-    log.debug("fit_quality: fitting sine model")
     mdl = SineModel(pars=[0.1, 0.1], fixed={0: 1/peak_freq})
     fitter = LevenbergMarquardtFitter(wavenum[50:-50], mdl)
     ftr = RobustShell(fitter, domain=10)
@@ -571,7 +560,7 @@ def fit_quality(wavenum, res_fringes, weights, ffreq, dffreq, save_results=False
         best_mdl = SineModel(fixed={0: 1/peak_freq, 1:fr_par[0], 2:fr_par[1]})
         fit = best_mdl.result(wavenum)
         quality = np.array([(10000.0/wavenum), res_fringes, fit])
-        #quality = np.transpose(quality)
+
         
     return contrast, quality
 
@@ -615,6 +604,14 @@ def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, 
         the residual fringe fit data
 
     """
+    #initialize output to none
+    res_fringe_fit = None
+    weighted_pix_num = None
+    opt_nfringes = None
+    peak_freq = None
+    freq_min = None
+    freq_max = None
+    
     # get the number of weighted pixels
     weighted_pix_num = (weights > 1e-05).sum()
     # set the maximum array size, always 1024
@@ -624,7 +621,6 @@ def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, 
     res = np.around((2 * dffreq) / pgram_res).astype(int)
     log.debug("fit_1d_fringes_bayes: scan res = {}".format(res))
 
-    log.debug("fit_1d_fringes_bayes: rescale for BayesicFitting")
     factor = np.amin(wavenum)
     wavenum = wavenum.copy() / factor
     ffreq = ffreq / factor
@@ -642,12 +638,11 @@ def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, 
     log.debug("fit_1d_fringes_bayes: get periodogram")
     pgram = LombScargle(wavenum_scan[::-1], res_fringe_scan[::-1]).power(1/freq)
 
-    log.debug("fit_1d_fringes_bayes: set a threshold in periodogram")
     res_fringe_thresh = np.mean(np.abs(pgram))
     peaks = np.argwhere(pgram > res_fringe_thresh)[:, 0]
     if len(peaks) == 0:
         log.debug("fit_1d_fringes_bayes: no significant frequencies found")
-        return res_fringes, weighted_pix_num
+        return res_fringes, weighted_pix_num, opt_nfringes, peak_freq, freq_min, freq_max
 
     else:
         log.debug("fit_1d_fringes_bayes: set significant frequencies")
@@ -680,7 +675,11 @@ def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, 
 
         evidence1 = 1e-5 # arbitrarily small
         opt_nfringes = min_nfringes # initialise
-        print('in fit_1d_fringes_bayes_evidence', min_nfringes, freqs.shape[0])
+        #print('in fit_1d_fringes_bayes_evidence', min_nfringes, freqs.shape[0])
+        if min_nfringes > freqs.shape[0]:
+            warning = 'Number of fringes found is less then minimum number of required fringes for column'
+            raise Exception(warning)
+
         
         for nfringes in np.arange(min_nfringes, freqs.shape[0]):
             # use the significant frequencies setup a multi-sine model of that number of sines
@@ -731,12 +730,10 @@ def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, 
         mdl_fit = multi_sine(opt_nfringes)
         log.debug("fit_1d_fringes_bayes_evidence: optimal={} fringes".format(opt_nfringes))
 
-        log.debug("fit_1d_fringes_bayes: define the best fit")
         # initialise some variables used in the fitting
         pars = []
         keep_dict = {}
 
-        #print('fit_1d_fringes check size',opt_nfringes, freqs.shape)
         # fill the variables with parameters to be frozen (freqs) and initialised (amps)
         for n in range(opt_nfringes):
             pars.append(freqs[n])
@@ -760,7 +757,6 @@ def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, 
         freq_min = np.amin(fitted_frequencies)
         freq_max = np.amax(fitted_frequencies)
                              
-        #print( res_fringe_fit, weighted_pix_num, opt_nfringes, peak_freq, freq_min, freq_max)
         return res_fringe_fit, weighted_pix_num, opt_nfringes, peak_freq, freq_min, freq_max
 
 
