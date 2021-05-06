@@ -16,6 +16,10 @@ class WfsCombineStep(Step):
 
     spec = """
         do_refine = boolean(default=False)
+        flip_dithers = boolean(default=True) # change the sign and switch order of images when x offset is negative
+        psf_size = integer(default=100)
+        blur_size = integer(default=10)
+        n_size = integer(default=2)
     """
 
     def process(self, input_table):
@@ -42,11 +46,12 @@ class WfsCombineStep(Step):
 
             # Create the step instance
             wfs = wfs_combine.DataSet(
-                infile_1, infile_2, outfile, self.do_refine
+                infile_1, infile_2, outfile, self.do_refine, self.flip_dithers, self.psf_size,
+                self.blur_size, self.n_size
             )
 
             # Do the processing
-            output_model = wfs.do_all()
+            output_model = wfs.do_all
 
             # The DataSet class does not close its resources.  Do that here.
             wfs.input_1.close()
@@ -60,7 +65,7 @@ class WfsCombineStep(Step):
             # Save the output file
             if self.save_results:
                 self.save_model(
-                    output_model, suffix='wfscmb', output_file=outfile, format=False
+                    output_model, suffix='wfscmb.fits', output_file=outfile, format=False
                 )
 
         # Short-circuit auto-save of returned model if run from strun, as it is
