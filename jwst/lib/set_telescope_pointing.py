@@ -151,7 +151,7 @@ class Transforms(namedtuple("Transforms",
                                 'm_v2siaf',           # V to SIAF
                                 'm_eci2siaf'          # ECI to SIAF
                             ])):
-    """Transformation matricies"""
+    """Transformation matrices"""
 
     @classmethod
     def from_asdf(cls, asdf_file):
