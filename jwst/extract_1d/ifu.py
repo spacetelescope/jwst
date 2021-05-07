@@ -848,17 +848,20 @@ def image_extract_ifu(input_model, source_type, extract_params):
     """
 
     data = input_model.data
-    var_poisson = input_model.var_poisson
-    var_rnoise = input_model.var_rnoise
-    var_flat = input_model.var_flat
+    try:
+        var_poisson = input_model.var_poisson
+        var_rnoise = input_model.var_rnoise
+        var_flat = input_model.var_flat
+    except AttributeError:
+        var_poisson = np.zeros_like(input_model.data)
+        var_rnoise = np.zeros_like(input_model.data)
+        var_flat = np.zeros_like(input_model.data)
     # The axes are (z, y, x) in the sense that (x, y) are the ordinary
     # axes of the image for one plane, i.e. at one wavelength.  The
     # wavelengths vary along the z-axis.
     shape = data.shape
 
     # The dispersion direction is the first axis.
-    temp_flux = np.zeros(shape[0], dtype=np.float64)
-    background = np.zeros(shape[0], dtype=np.float64)
     npixels = np.ones(shape[0], dtype=np.float64)
     n_bkg = np.ones(shape[0], dtype=np.float64)
 
