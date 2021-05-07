@@ -427,7 +427,8 @@ def _extract_src_flux(image, var_poisson, var_rnoise, var_flat, x, j, lam, srcli
     npts = good.sum()
 
     if npts == 0:
-        return (np.nan, 0.0, 0.0, 0.0)  # src total flux, bkg, area, total weight
+        return (np.nan, 0.0, 0.0, 0.0, 0.0,
+                0.0, 0.0, 0.0, 0.0, 0.0)
 
     # filter-out bad values:
     # TODO: in the future we may need to develop a way of interpolating
@@ -559,7 +560,8 @@ def _fit_background_model(image, var_poisson, var_rnoise, var_flat,
     npts = good.sum()
 
     if npts <= 1 or not np.any(good):
-        return models.Polynomial1D(0), 0
+        return (models.Polynomial1D(0), models.Polynomial1D(0),
+                models.Polynomial1D(0), models.Polynomial1D(0), 0)
 
     # filter-out bad values:
     val = val[good]
@@ -567,7 +569,8 @@ def _fit_background_model(image, var_poisson, var_rnoise, var_flat,
     y = y[good]
 
     if wht.sum() == 0:
-        return models.Polynomial1D(0), 0
+        return (models.Polynomial1D(0), models.Polynomial1D(0),
+                models.Polynomial1D(0), models.Polynomial1D(0), 0)
 
     # Find values for each variance array according to locations of
     # "good" image values
