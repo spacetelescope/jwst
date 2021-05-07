@@ -230,9 +230,18 @@ def extract1d(image, var_poisson, var_rnoise, var_flat, lambdas, disp_range,
     #################################################
 
     bkg_model = None
+    b_var_poisson_model = None
+    b_var_rnoise_model = None
+    b_var_flat_model = None
 
     countrate = np.zeros(nl, dtype=np.float64)
+    f_var_poisson = np.zeros(nl, dtype=np.float64)
+    f_var_rnoise = np.zeros(nl, dtype=np.float64)
+    f_var_flat = np.zeros(nl, dtype=np.float64)
     background = np.zeros(nl, dtype=np.float64)
+    b_var_poisson = np.zeros(nl, dtype=np.float64)
+    b_var_rnoise = np.zeros(nl, dtype=np.float64)
+    b_var_flat = np.zeros(nl, dtype=np.float64)
     npixels = np.zeros(nl, dtype=np.float64)
     # x is an index (column number) within `image`, while j is an index in
     # lambdas, countrate, background, npixels, and the arrays in
@@ -267,17 +276,18 @@ def extract1d(image, var_poisson, var_rnoise, var_flat, lambdas, disp_range,
         # background smoothing was done, we must extract the source from
         # the original, unsmoothed image.
         # source total flux, background total flux, area, total weight
-        (total_flux, f_var_poisson, f_var_rnoise, f_var_flat,
-         bkg_flux, b_var_poisson, b_var_rnoise, b_var_flat,
-         tarea, twht) = _extract_src_flux(
+        (countrate[j], f_var_poisson[j], f_var_rnoise[j], f_var_flat[j],
+         bkg_flux, b_var_poisson_val, b_var_rnoise_val, b_var_flat_val,
+         npixels[j], twht) = _extract_src_flux(
             image, var_poisson, var_rnoise, var_flat, x, j, lam, srclim,
             weights=weights, bkgmodels=[bkg_model, b_var_poisson_model,
                                         b_var_rnoise_model, b_var_flat_model]
         )
-        countrate[j] = total_flux
-        npixels[j] = tarea
         if nbkglim > 0:
             background[j] = bkg_flux
+            b_var_poisson[j] = b_var_poisson_val
+            b_var_rnoise[j] = b_var_rnoise_val
+            b_var_flat[j] = b_var_flat_val
 
         x += 1
         continue
@@ -436,9 +446,12 @@ def _extract_src_flux(image, var_poisson, var_rnoise, var_flat, x, j, lam, srcli
         b_var_rnoise = bkgmodels[2](y) * area
         b_var_flat = bkgmodels[3](y) * area
 
-    f_var_poisson = var_poisson[y,x] * area
-    f_var_rnoise = var_rnoise[y,x] * area
-    f_var_flat = var_flat[y,x] * area
+    dummy_y, f_var_poisson_val, dummy_area = _extract_colpix(var_poisson, x, j, srclim)
+    f_var_poisson = f_var_poisson_val[good] * area
+    dummy_y, f_var_rnoise_val, dummy_area = _extract_colpix(var_rnoise, x, j, srclim)
+    f_var_rnoise = f_var_rnoise_val[good] * area
+    dummy_y, f_var_flat_val, dummy_area = _extract_colpix(var_flat, x, j, srclim)
+    f_var_flat = f_var_flat_val[good] * area
 
     # subtract background per pixel:
     val -= bkg
@@ -558,9 +571,12 @@ def _fit_background_model(image, var_poisson, var_rnoise, var_flat,
 
     # Find values for each variance array according to locations of
     # "good" image values
-    var_poisson_val = var_poisson[y,x]
-    var_rnoise_val = var_rnoise[y,x]
-    var_flat_val = var_flat[y,x]
+    dummy_y, var_poisson_val, dummy_area = _extract_colpix(var_poisson, x, j, bkglim)
+    var_poisson_val = var_poisson_val[good]
+    dummy_y, var_rnoise_val, dummy_area = _extract_colpix(var_rnoise, x, j, bkglim)
+    var_rnoise_val = var_rnoise_val[good]
+    dummy_y, var_flat_val, dummy_area = _extract_colpix(var_flat, x, j, bkglim)
+    var_flat_val = var_flat_val[good]
 
     # Compute the fit
     if bkg_fit == 'poly':
