@@ -40,13 +40,16 @@ def make_datamodel():
 
     spec_dtype = datamodels.SpecModel().spec_table.dtype  # This data type is used for creating an output table.
 
-    otab = np.array(list(zip(
-                             wavelength, flux, error, f_var_poisson, f_var_rnoise, f_var_flat,
-                             surf_bright, sb_error, sb_var_poisson, sb_var_rnoise, sb_var_flat,
-                             dq, background, berror, b_var_poisson, b_var_rnoise, b_var_flat,
-                             npixels),
-                         ), dtype=spec_dtype
-                    )
+    otab = np.array(
+        list(
+            zip(
+                wavelength, flux, error, var_dummy, var_dummy, var_dummy,
+                surf_bright, sb_error, var_dummy, var_dummy, var_dummy,
+                dq, background, berror, var_dummy, var_dummy, var_dummy,
+                npixels
+            ),
+        ), dtype=spec_dtype
+    )
 
     spec_model = datamodels.SpecModel(spec_table=otab)
 

@@ -46,13 +46,16 @@ def create_spec_model(npoints=10, flux=1e-9, wave_range=(11, 13)):
 
     spec_dtype = datamodels.SpecModel().spec_table.dtype  # This data type is used for creating an output table.
 
-    otab = np.array(list(zip(
-                             wavelength, flux, error, var_dummy, var_dummy, var_dummy,
-                             surf_bright, sb_error, var_dummy, var_dummy, var_dummy,
-                             dq, background, berror, var_dummy, var_dummy, var_dummy,
-                             npixels),
-                         ), dtype=spec_dtype
-                    )
+    otab = np.array(
+        list(
+            zip(
+                wavelength, flux, error, var_dummy, var_dummy, var_dummy,
+                surf_bright, sb_error, var_dummy, var_dummy, var_dummy,
+                dq, background, berror, var_dummy, var_dummy, var_dummy,
+                npixels
+            ),
+        ), dtype=spec_dtype
+    )
 
     spec_model = datamodels.SpecModel(spec_table=otab)
 
