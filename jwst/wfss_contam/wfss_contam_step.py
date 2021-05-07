@@ -16,7 +16,7 @@ class WfssContamStep(Step):
     spec = """
     """
 
-    reference_file_types = ['wavelengthrange']
+    reference_file_types = ['photom', 'wavelengthrange']
 
     def process(self, input_model, *args, **kwargs):
 
@@ -27,6 +27,11 @@ class WfssContamStep(Step):
             self.log.info(f'Using WAVELENGTHRANGE reference file {waverange_ref}')
             waverange_model = datamodels.WavelengthrangeModel(waverange_ref)
 
-            output_model = wfss_contam.contam_corr(dm, waverange_model)
+            # Get the photom ref file
+            photom_ref = self.get_reference_file(dm, 'photom')
+            self.log.info(f'Using PHOTOM reference file {photom_ref}')
+            photom_model = datamodels.open(photom_ref)
+
+            output_model = wfss_contam.contam_corr(dm, waverange_model, photom_model)
 
         return output_model

@@ -4,7 +4,8 @@
 from os.path import splitext
 
 from jwst import datamodels
-from .observations import observation
+from .observations import Observation
+from .sens1d import get_photom_data
 from ..lib.suffix import replace_suffix
 
 import logging
@@ -13,7 +14,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def contam_corr(input_model, waverange):
+def contam_corr(input_model, waverange, photom):
     """
     The main WFSS contam correction function
 
@@ -23,6 +24,8 @@ def contam_corr(input_model, waverange):
         Input data model containing 2D spectral cutouts
     waverange : `~jwst.datamodels.WavelengthrangeModel`
         Wavelength range reference file model
+    photom : `~jwst.datamodels.NrcWfssPhotomModel` or `~jwst.datamodels.NisWfssPhotomModel`
+        Photom (flux cal) reference file model
 
     Returns
     -------
@@ -39,14 +42,19 @@ def contam_corr(input_model, waverange):
     direct_file = input_model.meta.direct_image
     image_names = [direct_file]
 
+    # Load the sensitivity (inverse flux cal) data for this mode
+    filter = input_model.meta.instrument.filter
+    pupil = input_model.meta.instrument.pupil
+    sens_waves, sens_response = get_photom_data(photom, filter, pupil, order=1)
+
     # Get the grism WCS from the input model
     grism_wcs = input_model.slits[0].meta.wcs
-    filter = input_model.meta.instrument.filter
 
     # Create a simulated grism image containing all of the sources
     # defined in the segmentation map
-    obs = observation(image_names, seg_model, grism_wcs, waverange, filter,
-                      None, order=1, max_split=2, max_cpu=1)
+    obs = Observation(image_names, seg_model, grism_wcs, waverange, filter,
+                      sens_waves, sens_response, order=1, max_split=2,
+                      max_cpu=1, boundaries=[0, 2047, 0, 2047])
 
     log.debug("Creating full simulated grism image with all sources")
     obs.disperse_all()
