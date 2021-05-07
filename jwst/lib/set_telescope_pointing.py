@@ -198,7 +198,7 @@ class Transforms(namedtuple("Transforms",
         asdf_file.write_to(path)
 
 
-Transforms.__new__.__defaults__ = ((None,) * 10)
+Transforms.__new__.__defaults__ = ((None,) * 11)
 
 
 # WCS reference container
@@ -247,6 +247,12 @@ class TransformParameters:
         The method, or algorithm, to use in calculating the transform.
         If not specified, the default method is used.
 
+    override_transforms : `Transforms`
+        If set, matrices that should be used instead of the calculated one.
+
+    pointing : `Pointing`
+        The quaternion.
+
     reduce_func : func or None
         Reduction function to use on values.
 
@@ -274,6 +280,7 @@ class TransformParameters:
     j2fgs_transpose: bool = True
     jwst_velocity: np.array = None
     method: Methods = None
+    override_transforms: Transforms = Transforms()
     pointing: Pointing = None
     reduce_func: typing.Callable = None
     siaf: SIAF = None
