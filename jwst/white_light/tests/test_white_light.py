@@ -43,10 +43,10 @@ def make_datamodel():
     otab = np.array(
         list(
             zip(
-                wavelength, flux, error, var_dummy, var_dummy, var_dummy,
-                surf_bright, sb_error, var_dummy, var_dummy, var_dummy,
-                dq, background, berror, var_dummy, var_dummy, var_dummy,
-                npixels
+                 wavelength, flux, error, f_var_poisson, f_var_rnoise, f_var_flat,
+                 surf_bright, sb_error, sb_var_poisson, sb_var_rnoise, sb_var_flat,
+                 dq, background, berror, b_var_poisson, b_var_rnoise, b_var_flat,
+                 npixels
             ),
         ), dtype=spec_dtype
     )
@@ -66,7 +66,7 @@ def make_datamodel():
                                                       ('int_start_BJD_TDB', 'f8'),
                                                       ('int_mid_BJD_TDB', 'f8'),
                                                       ('int_end_BJD_TDB', 'f8')])
-    model.int_times = (integration_table)
+    model.int_times = integration_table
 
     return model
 
