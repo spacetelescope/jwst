@@ -157,9 +157,6 @@ def find_corners_NIRSPEC(input, this_channel, instrument_info, coord_system):
             coord1 = coord1[valid]
             coord2 = coord2[valid]
 
-            # TODO - fix kludge after figure out how to determine what the units
-            # for wavelength are coming out of detector2slicer.
-            # print(input.meta.wcs.output_frame.unit[2])
             lmax = np.nanmax(lam.flatten())
             if lmax < 0.0001:
                 lam = lam[valid] * 1.0e6
