@@ -1557,7 +1557,6 @@ class IFUCubeData():
 # grab the flux and DQ values for these pixels
             flux_all = input_model.data[y, x]
             err_all = input_model.err[y, x]
-            var_poisson_all = input_model.err[y, x]
             dq_all = input_model.dq[y, x]
             valid2 = np.isfinite(flux_all)
 
