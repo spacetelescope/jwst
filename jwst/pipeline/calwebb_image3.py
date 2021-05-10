@@ -47,7 +47,7 @@ class Image3Pipeline(Pipeline):
 
         Parameters
         ----------
-        input_data: Level3 Association, or ModelContainer
+        input_data: Level3 Association, or ~jwst.datamodels.ModelContainer
             The exposures to process
         """
         self.log.info('Starting calwebb_image3 ...')
