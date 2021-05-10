@@ -6,7 +6,7 @@ from . import cube_build
 from . import ifu_cube
 from . import data_types
 from ..assign_wcs.util import update_s_region_keyword
-
+import time
 
 __all__ = ["CubeBuildStep"]
 
@@ -297,6 +297,7 @@ class CubeBuildStep (Step):
         cube_container = datamodels.ModelContainer()
 
         status_cube = 0
+        t0 = time.time()
         for i in range(num_cubes):
             icube = str(i + 1)
             list_par1 = cube_pars[icube]['par1']
@@ -357,6 +358,9 @@ class CubeBuildStep (Step):
             # **************************
             if status == 1:
                 status_cube = 1
+
+        t1 = time.time()
+        self.log.debug(f'Time to build all cubes {t1-t0}')
 
         for cube in cube_container:
             footprint = cube.meta.wcs.footprint(axis_type="spatial")

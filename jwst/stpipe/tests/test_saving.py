@@ -4,7 +4,7 @@ import os
 from os import path
 import shutil
 
-from .. import Step
+from jwst.stpipe import Step
 
 data_fn = 'flat.fits'
 data_fn_path = path.join(path.dirname(__file__), 'data', data_fn)

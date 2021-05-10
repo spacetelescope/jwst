@@ -6,8 +6,8 @@ import os
 import pytest
 from tempfile import TemporaryDirectory
 
-from .. import utc_to_tdb
-from ... import datamodels
+from jwst.lib import utc_to_tdb
+from jwst import datamodels
 
 
 @pytest.fixture

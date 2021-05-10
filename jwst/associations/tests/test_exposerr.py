@@ -1,15 +1,15 @@
 """Test degraded exposure info"""
-from .helpers import (
+from jwst.associations.tests.helpers import (
     combine_pools,
     t_path
 )
 
-from ..lib.dms_base import (
+from jwst.associations.lib.dms_base import (
     _DEGRADED_STATUS_OK,
     _DEGRADED_STATUS_NOTOK,
     _EMPTY
     )
-from ..main import Main
+from jwst.associations.main import Main
 
 
 def test_exposerr():

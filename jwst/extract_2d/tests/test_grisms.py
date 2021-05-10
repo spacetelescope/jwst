@@ -21,15 +21,14 @@ import numpy as np
 from astropy.io import fits
 from gwcs import wcs
 
-from ...datamodels.image import ImageModel
-from ...datamodels import CubeModel, SlitModel, MultiSlitModel
-from ...assign_wcs.util import create_grism_bbox
-from ...assign_wcs import AssignWcsStep, nircam
+from jwst.datamodels.image import ImageModel
+from jwst.datamodels import CubeModel, SlitModel, MultiSlitModel
+from jwst.assign_wcs.util import create_grism_bbox
+from jwst.assign_wcs import AssignWcsStep, nircam
 
-from ..extract_2d_step import Extract2dStep
-from ..grisms import extract_tso_object, extract_grism_objects
-
-from . import data
+from jwst.extract_2d.extract_2d_step import Extract2dStep
+from jwst.extract_2d.grisms import extract_tso_object, extract_grism_objects
+from jwst.extract_2d.tests import data
 
 
 # Allowed settings for nircam

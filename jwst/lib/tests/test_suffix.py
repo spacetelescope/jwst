@@ -5,7 +5,7 @@ import pytest
 
 from jwst.lib.basic_utils import LoggingContext
 
-from .. import suffix as s
+from jwst.lib import suffix as s
 
 
 @pytest.fixture(scope='module')

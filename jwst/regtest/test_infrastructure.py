@@ -5,7 +5,7 @@ import pytest
 from astropy.table import Table
 import astropy.units as u
 import numpy as np
-from .regtestdata import text_diff
+from jwst.regtest.regtestdata import text_diff
 
 
 @pytest.mark.bigdata

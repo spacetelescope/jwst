@@ -15,7 +15,6 @@ Package Index
    background_subtraction/index.rst
    barshadow/index.rst
    combine_1d/index.rst
-   csv_tools/index.rst
    cube_build/index.rst
    dark_current/index.rst
    datamodels/index.rst

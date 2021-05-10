@@ -1,8 +1,8 @@
 import pytest
 
-from . import helpers
+from jwst.associations.tests import helpers
 
-from .. import (
+from jwst.associations import (
     AssociationRegistry,
     AssociationNotValidError,
     load_asn

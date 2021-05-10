@@ -1,17 +1,17 @@
 """test_associations: Test of general Association functionality."""
 import pytest
 
-from . import helpers
+from jwst.associations.tests import helpers
 
-from .. import (
+from jwst.associations import (
     Association,
     AssociationError,
     AssociationRegistry,
     generate)
-from ..registry import (
+from jwst.associations.registry import (
     import_from_file,
 )
-from ..lib.dms_base import DMSAttrConstraint
+from jwst.associations.lib.dms_base import DMSAttrConstraint
 
 
 # Basic Association object

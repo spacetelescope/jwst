@@ -11,7 +11,7 @@ import jwst.datamodels as dm
 from jwst.lib import engdb_tools
 import jwst.lib.pointing_summary as ps
 
-from .engdb_mock import EngDB_Mocker
+from jwst.lib.tests.engdb_mock import EngDB_Mocker
 
 DATA_PATH = Path(__file__).parent / 'data'
 

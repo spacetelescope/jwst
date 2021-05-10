@@ -2,7 +2,7 @@ import os
 import pytest
 import numpy as np
 
-from . import helpers
+from jwst.exp_to_source.tests import helpers
 from jwst.datamodels import (MultiExposureModel, MultiSlitModel, ModelContainer)
 from jwst.exp_to_source import exp_to_source, multislit_to_container
 

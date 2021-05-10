@@ -1,6 +1,6 @@
 """Callback registry"""
 
-from ...lib.signal_slot import Signal
+from jwst.lib.signal_slot import Signal
 
 __all__ = ['CallbackRegistry']
 

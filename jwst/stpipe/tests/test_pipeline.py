@@ -9,7 +9,7 @@ from stpipe import crds_client
 from jwst import datamodels
 from jwst.stpipe import Step, Pipeline
 
-from .steps import PipeWithReference, StepWithReference
+from jwst.stpipe.tests.steps import PipeWithReference, StepWithReference
 
 
 def library_function():

@@ -14,8 +14,8 @@ import requests
 
 from astropy.time import Time
 
-from .. import engdb_tools
-from .engdb_mock import EngDB_Mocker
+from jwst.lib import engdb_tools
+from jwst.lib.tests.engdb_mock import EngDB_Mocker
 
 GOOD_MNEMONIC = 'INRSI_GWA_Y_TILT_AVGED'
 GOOD_STARTTIME = '2016-01-18'

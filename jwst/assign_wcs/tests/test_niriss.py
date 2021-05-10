@@ -14,10 +14,10 @@ from astropy.io import fits
 from gwcs import wcs
 import pytest
 
-from ...datamodels.image import ImageModel
+from jwst.datamodels.image import ImageModel
 
-from ..assign_wcs_step import AssignWcsStep
-from .. import niriss
+from jwst.assign_wcs.assign_wcs_step import AssignWcsStep
+from jwst.assign_wcs import niriss
 
 
 # Allowed settings for niriss
