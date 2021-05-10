@@ -164,6 +164,18 @@ def method_fullva():
     return method_fullva_nofixture()
 
 
+@pytest.mark.parametrize(
+    'attribute, expected',
+    [('m_eci2j', 'overriden'), ('m_j2fgs1', 'untouched')]
+)
+def test_override(attribute, expected):
+    """Test overriding of Transforms attributes"""
+    overrides = stp.Transforms(m_eci2j='overriden')
+    to_override = stp.Transforms(m_eci2j='original', m_j2fgs1='untouched', override=overrides)
+
+    assert getattr(to_override, attribute) == expected
+
+
 def test_transform_serialize(method_fullva, tmp_path):
     """Test serialization of Transforms"""
     transforms, t_pars = method_fullva

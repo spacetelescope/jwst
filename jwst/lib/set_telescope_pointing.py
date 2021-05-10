@@ -150,6 +150,7 @@ class Transforms:
     m_eci2v: np.array = None            # ECI to V
     m_v2siaf: np.array = None           # V to SIAF
     m_eci2siaf: np.array = None         # ECI to SIAF
+    override: object = None             # Override values. Either another Transforms or dict-like object
     """Transformation matrices"""
 
     @classmethod
@@ -195,6 +196,17 @@ class Transforms:
         """
         asdf_file = self.to_asdf()
         asdf_file.write_to(path)
+
+    def __getattribute__(self, name):
+        """If an override has been specified, return that value regardless"""
+        if name == 'override':
+            return super().__getattribute__(name)
+
+        override = self.override
+        if override and getattr(override, name):
+            return getattr(override, name)
+        else:
+            return super().__getattribute__(name)
 
 
 # WCS reference container
