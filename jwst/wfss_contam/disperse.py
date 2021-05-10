@@ -8,7 +8,7 @@ from .sens1d import create_1d_sens
 
 def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
                     sens_waves, sens_resp, seg_wcs, grism_wcs, ID, naxis,
-                    oversample_factor=2, extrapolate_SED=False, xoffset=0,
+                    oversample_factor=2, extrapolate_sed=False, xoffset=0,
                     yoffset=0):
     """
     This function take a list of pixels and disperses them using the information contained
@@ -53,7 +53,7 @@ def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
     oversample_factor : int
         The amount of oversampling required above that of the input spectra or natural dispersion,
         whichever is smaller. Default=2.
-    extrapolate_SED : bool
+    extrapolate_sed : bool
         Whether to allow for the SED of the object to be extrapolated when it does not fully cover the
         needed wavelength range. Default if False.
     xoffset : int
@@ -92,7 +92,7 @@ def dispersed_pixel(x0, y0, width, height, lams, flxs, order, wmin, wmax,
         # If we have direct image flux values from more than one filter (lambda),
         # we have the option to extrapolate the fluxes outside the
         # wavelength range of the direct images
-        if extrapolate_SED is False:
+        if extrapolate_sed is False:
             flux = interp1d(lams, flxs, fill_value=0., bounds_error=False)
         else:
             flux = interp1d(lams, flxs, fill_value="extrapolate", bounds_error=False)

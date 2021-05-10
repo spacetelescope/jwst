@@ -17,7 +17,7 @@ class Observation:
     """This class defines an actual observation. It is tied to a single grism image."""
 
     def __init__(self, direct_images, segmap_model, grism_wcs, wr_ref, filter, sens_waves,
-                 sens_resp, order=1, max_split=100, SED_file=None, extrapolate_SED=False,
+                 sens_resp, order=1, max_split=100, sed_file=None, extrapolate_sed=False,
                  max_cpu=1, ID=0, SBE_save=None, boundaries=[], renormalize=True):
 
         """
@@ -41,10 +41,10 @@ class Observation:
             Spectral order to simulate, +1 or +2 for NIRCAM
         max_split : int
             Number of chunks to compute instead of trying everything at once.
-        SED_file : str
+        sed_file : str
             Name of Spectral Energy Distribution (SED) file containing datasets matching
             the ID in the segmentation file and each consisting of a [[lambda],[flux]] array.
-        extrapolate_SED : bool
+        extrapolate_sed : bool
             Flag indicating whether to extrapolate wavelength range of SED
         max_cpu : int
             Max number of cpu's to use when multiprocessing
@@ -67,7 +67,7 @@ class Observation:
         self.seg = segmap_model.data
         self.filter = filter
         self.order = order
-        self.SED_file = SED_file   # should always be NONE for baseline pipeline (use flat SED)
+        self.sed_file = sed_file   # should always be NONE for baseline pipeline (use flat SED)
         self.SBE_save = SBE_save
         self.max_cpu = max_cpu
         self.cache = False
@@ -94,8 +94,8 @@ class Observation:
         log.debug(f"Using final size of {self.dims[1]} {self.dims[0]}")
 
         # Allow for SED extrapolation
-        self.extrapolate_SED = extrapolate_SED
-        if self.extrapolate_SED:
+        self.extrapolate_sed = extrapolate_sed
+        if self.extrapolate_sed:
             log.warning("SED Extrapolation turned on.")
 
         # Create pixel lists for ALL sources labeled in segmentation map
@@ -133,8 +133,8 @@ class Observation:
         self.fluxes = {}
         for dir_image_name in self.dir_image_names:
 
-            if self.SED_file is None:
-                # Default pipeline will use SED_file=None, so we need to compute
+            if self.sed_file is None:
+                # Default pipeline will use sed_file=None, so we need to compute
                 # photometry values that used to come from HST-style header keywords.
                 # Compute pivlam as average of wmin/wmax range.
                 pivlam = (self.wmin + self.wmax) / 2
@@ -142,7 +142,7 @@ class Observation:
             log.info(f"Loading direct image {dir_image_name}")
             dimage = datamodels.open(dir_image_name).data
 
-            if self.SED_file is None:
+            if self.sed_file is None:
                 # If an SED file is not used, then we use pixel fluxes from
                 # the direct image.
                 self.fluxes[pivlam] = []
@@ -163,9 +163,9 @@ class Observation:
                     else:
                         log.debug("not renormlazing sources to unity")
 
-                self.fluxes["SED"] = []
+                self.fluxes["sed"] = []
                 for i in range(len(self.IDs)):
-                    self.fluxes["SED"].append(dnew[self.ys[i], self.xs[i]])
+                    self.fluxes["sed"].append(dnew[self.ys[i], self.xs[i]])
 
     def disperse_all(self, cache=False):
         """
@@ -236,7 +236,7 @@ class Observation:
             pars_i = (xc, yc, width, height, lams, fluxes, self.order,
                       self.wmin, self.wmax, self.sens_waves, self.sens_resp,
                       self.seg_wcs, self.grism_wcs, ID, self.dims[::-1], 2,
-                      self.extrapolate_SED, self.xstart, self.ystart)
+                      self.extrapolate_sed, self.xstart, self.ystart)
 
             pars.append(pars_i)
             # now have full pars list for all pixels for this object
