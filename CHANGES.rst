@@ -103,6 +103,10 @@ extract_2d
 
 - For WFSS removed setting srctype to UNKNOWN; added setting ``is_star`` in slitmeta [#5788]
 
+- In NRC_TSGRISM mode replaced FITS WCS keywords with JWST specific ones. [#6005]
+
+- Added ``specsys`` to slits. [#6005]
+
 general
 -------
 

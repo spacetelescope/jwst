@@ -209,7 +209,7 @@ def extract_tso_object(input_model,
         log.info("Spectral trace extents: (xmin: {}, ymin: {}), "
                  "(xmax: {}, ymax: {})".format(xmin, ymin, xmax, ymax))
         log.info("Extraction limits: (xmin: {}, ymin: {}), "
-                 "(xmax: {}, ymax: {})".format(xmin_ext, ymin, xmax, ymax))
+                 "(xmax: {}, ymax: {})".format(xmin_ext, ymin, xmax_ext, ymax))
 
         # Cut out the subarray from the input data arrays
         ext_data = input_model.data[..., ymin: ymax + 1, xmin_ext:xmax_ext + 1].copy()
