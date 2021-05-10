@@ -1179,43 +1179,40 @@ def calc_transforms_gscmd_j3pags(t_pars: TransformParameters):
     """
     logger.info('Calculating transforms using GSCMD with J3PA@GS method...')
     t_pars.method = Methods.GSCMD_J3PAGS
+    t = Transforms(override=t_pars.override_transforms)  # Shorthand the resultant transforms
 
     # Determine the ECI to FGS1 ICS using guide star telemetry.
-    m_eci2fgs1 = calc_eci2fgs1_j3pags(t_pars)
+    t.m_eci2fgs1 = calc_eci2fgs1_j3pags(t_pars)
 
     # Calculate the FGS1 ICS to SI-FOV matrix
-    m_fgs12sifov = calc_fgs1_to_sifov_fgs1siaf_matrix(siaf_path=t_pars.siaf_path, useafter=t_pars.useafter)
+    t.m_fgs12sifov = calc_fgs1_to_sifov_fgs1siaf_matrix(siaf_path=t_pars.siaf_path, useafter=t_pars.useafter)
 
     # Calculate the FSM corrections to the SI_FOV frame
-    m_sifov_fsm_delta = calc_sifov_fsm_delta_matrix(
+    t.m_sifov_fsm_delta = calc_sifov_fsm_delta_matrix(
         t_pars.pointing.fsmcorr, fsmcorr_version=t_pars.fsmcorr_version, fsmcorr_units=t_pars.fsmcorr_units
     )
 
     # Calculate SI FOV to V1 matrix
-    m_sifov2v = calc_sifov2v_matrix()
+    t.m_sifov2v = calc_sifov2v_matrix()
 
     # Calculate ECI to SI FOV
-    m_eci2sifov = np.linalg.multi_dot(
-        [MZ2X, m_sifov_fsm_delta, m_fgs12sifov, m_eci2fgs1]
+    t.m_eci2sifov = np.linalg.multi_dot(
+        [MZ2X, t.m_sifov_fsm_delta, t.m_fgs12sifov, t.m_eci2fgs1]
     )
-    logger.debug('m_eci2sifov: %s', m_eci2sifov)
+    logger.debug('m_eci2sifov: %s', t.m_eci2sifov)
 
     # Calculate the complete transform to the V1 reference
-    m_eci2v = np.dot(m_sifov2v, m_eci2sifov)
-    logger.debug('m_eci2v: %s', m_eci2v)
+    t.m_eci2v = np.dot(t.m_sifov2v, t.m_eci2sifov)
+    logger.debug('m_eci2v: %s', t.m_eci2v)
 
     # Calculate the SIAF transform matrix
-    m_v2siaf = calc_v2siaf_matrix(t_pars.siaf)
+    t.m_v2siaf = calc_v2siaf_matrix(t_pars.siaf)
 
     # Calculate the full ECI to SIAF transform matrix
-    m_eci2siaf = np.dot(m_v2siaf, m_eci2v)
-    logger.debug('m_eci2siaf: %s', m_eci2siaf)
+    t.m_eci2siaf = np.dot(t.m_v2siaf, t.m_eci2v)
+    logger.debug('m_eci2siaf: %s', t.m_eci2siaf)
 
-    tforms = Transforms(m_eci2fgs1=m_eci2fgs1, m_eci2j=None, m_sifov_fsm_delta=m_sifov_fsm_delta,
-                        m_fgs12sifov=m_fgs12sifov, m_eci2sifov=m_eci2sifov, m_sifov2v=m_sifov2v,
-                        m_eci2v=m_eci2v, m_v2siaf=m_v2siaf, m_eci2siaf=m_eci2siaf
-                        )
-    return tforms
+    return t
 
 
 def calc_transforms_gscmd_v3pags(t_pars: TransformParameters):
