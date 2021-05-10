@@ -296,7 +296,6 @@ class OptRes:
                     self.var_r_seg, self.yint_seg, self.sigyint_seg,
                     self.ped_int, self.weights, self.cr_mag_seg)
 
-
         return opt_info
 
     def print_full(self):  # pragma: no cover
