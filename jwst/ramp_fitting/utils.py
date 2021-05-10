@@ -285,22 +285,17 @@ class OptRes:
         # Suppress, then re-enable, arithmetic warnings
         warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
         warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
+
         # Tiny 'weights' values correspond to non-existent segments, so set to 0.
         self.weights[1. / self.weights > 0.4 * LARGE_VARIANCE] = 0.
         warnings.resetwarnings()
 
-        slope = self.slope_seg.astype(np.float32) / effintim
-        sigslope = self.sigslope_seg.astype(np.float32)
-        var_poisson = self.var_p_seg.astype(np.float32)
-        var_rnoise = self.var_r_seg.astype(np.float32)
-        yint = self.yint_seg.astype(np.float32)
-        sigyint = self.sigyint_seg.astype(np.float32)
-        pedestal = self.ped_int.astype(np.float32)
-        weights = self.weights.astype(np.float32)
-        crmag = self.cr_mag_seg
+        self.slope_seg /= effintim
 
-        opt_info = (slope, sigslope, var_poisson, var_rnoise,
-                    yint, sigyint, pedestal, weights, crmag)
+        opt_info = (self.slope_seg, self.sigslope_seg, self.var_p_seg,
+                    self.var_r_seg, self.yint_seg, self.sigyint_seg,
+                    self.ped_int, self.weights, self.cr_mag_seg)
+
 
         return opt_info
 

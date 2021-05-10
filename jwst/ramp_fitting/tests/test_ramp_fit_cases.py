@@ -605,7 +605,6 @@ def assert_pri(p_true, new_info, pix):
     SCI, DQ, ERR, VAR_POISSSON, VAR_RNOISE.
     """
 
-    # image_info = (data, dq, var_poisson, var_rnoise, err)
     data, dq, var_poisson, var_rnoise, err = new_info
 
     npt.assert_allclose(data[0, pix], p_true[0], atol=2E-5, rtol=2e-5)

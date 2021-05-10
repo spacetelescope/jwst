@@ -43,17 +43,14 @@ def setup_inputs():
 
     def _setup(ngroups=10, readnoise=10, nints=1, nrows=1024, ncols=1032,
                nframes=1, grouptime=1.0, gain=1, deltatime=1):
-        times = np.array(list(range(ngroups)), dtype=np.float64) * deltatime
         gain = np.ones(shape=(nrows, ncols), dtype=np.float64) * gain
         err = np.ones(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
-        data = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
         pixdq = np.zeros(shape=(nrows, ncols), dtype=np.uint32)
         read_noise = np.full((nrows, ncols), readnoise, dtype=np.float64)
         gdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.uint32)
         int_times = np.zeros((nints,))
 
-        rampmodel = RampModel(
-            data=data, err=err, pixeldq=pixdq, groupdq=gdq, times=times, int_times=int_times)
+        rampmodel = RampModel((nints, ngroups, nrows, ncols), int_times=int_times)
 
         rampmodel.meta.instrument.name = 'MIRI'
         rampmodel.meta.instrument.detector = 'MIRIMAGE'

@@ -20,7 +20,7 @@ log.setLevel(logging.DEBUG)
 __all__ = ["RampFitStep"]
 
 
-def get_ref_subs(model, readnoise_model, gain_model, nframes):
+def get_reference_file_subarrays(model, readnoise_model, gain_model, nframes):
     """
     Get readnoise array for calculation of variance of noiseless ramps, and
     the gain array in case optimal weighting is to be done. The returned
@@ -82,14 +82,14 @@ def create_image_model(input_model, image_info):
         The output ImageModel to be returned from the ramp fit step.
     """
     data, dq, var_poisson, var_rnoise, err = image_info
-    imshape = data.shape
-    out_model = datamodels.ImageModel(data=np.zeros(imshape, dtype=np.float32),
-                                      dq=np.zeros(imshape, dtype=np.uint32),
-                                      var_poisson=np.zeros(imshape, dtype=np.float32),
-                                      var_rnoise=np.zeros(imshape, dtype=np.float32),
-                                      err=np.zeros(imshape, dtype=np.float32))
+
+    # Create output datamodel
+    out_model = datamodels.ImageModel(data.shape)
+
     # ... and add all keys from input
     out_model.update(input_model)
+
+    # Populate with output arrays
     out_model.data = data
     out_model.dq = dq
     out_model.var_poisson = var_poisson
@@ -202,44 +202,41 @@ class RampFitStep (Step):
             gain_filename = self.get_reference_file(input_model, 'gain')
 
             log.info('Using READNOISE reference file: %s', readnoise_filename)
-            readnoise_model = datamodels.ReadnoiseModel(readnoise_filename)
             log.info('Using GAIN reference file: %s', gain_filename)
-            gain_model = datamodels.GainModel(gain_filename)
+            with datamodels.ReadnoiseModel(readnoise_filename) as readnoise_model:
+                with datamodels.GainModel(gain_filename) as gain_model:
 
-            # Try to retrieve the gain factor from the gain reference file.
-            # If found, store it in the science model meta data, so that it's
-            # available later in the gain_scale step, which avoids having to
-            # load the gain ref file again in that step.
-            if gain_model.meta.exposure.gain_factor is not None:
-                input_model.meta.exposure.gain_factor = \
-                    gain_model.meta.exposure.gain_factor
+                    # Try to retrieve the gain factor from the gain reference file.
+                    # If found, store it in the science model meta data, so that it's
+                    # available later in the gain_scale step, which avoids having to
+                    # load the gain ref file again in that step.
+                    if gain_model.meta.exposure.gain_factor is not None:
+                        input_model.meta.exposure.gain_factor = \
+                            gain_model.meta.exposure.gain_factor
 
-            log.info('Using algorithm = %s' % self.algorithm)
-            log.info('Using weighting = %s' % self.weighting)
+                    log.info('Using algorithm = %s' % self.algorithm)
+                    log.info('Using weighting = %s' % self.weighting)
 
-            buffsize = ramp_fit.BUFSIZE
-            if self.algorithm == "GLS":
-                buffsize //= 10
+                    buffsize = ramp_fit.BUFSIZE
+                    if self.algorithm == "GLS":
+                        buffsize //= 10
 
-            # Get gain arrays, subrrays if desired.
-            frames_per_group = input_model.meta.exposure.nframes
-            readnoise_2d, gain_2d = get_ref_subs(
-                input_model, readnoise_model, gain_model, frames_per_group)
+                    # Get gain arrays, subrrays if desired.
+                    frames_per_group = input_model.meta.exposure.nframes
+                    readnoise_2d, gain_2d = get_reference_file_subarrays(
+                        input_model, readnoise_model, gain_model, frames_per_group)
 
-            # Set int_times depending on model meta data.
-            if pipe_utils.is_tso(input_model) and hasattr(input_model, 'int_times'):
-                input_model.int_times = input_model.int_times
-            else:
-                input_model.int_times = None
+                    # Set int_times depending on model meta data.
+                    if pipe_utils.is_tso(input_model) and hasattr(input_model, 'int_times'):
+                        input_model.int_times = input_model.int_times
+                    else:
+                        input_model.int_times = None
 
-            image_info, integ_info, opt_info, gls_opt_model = ramp_fit.ramp_fit(
-                input_model, buffsize,
-                self.save_opt, readnoise_2d, gain_2d, self.algorithm,
-                self.weighting, max_cores
-            )
-
-            readnoise_model.close()
-            gain_model.close()
+                    image_info, integ_info, opt_info, gls_opt_model = ramp_fit.ramp_fit(
+                        input_model, buffsize,
+                        self.save_opt, readnoise_2d, gain_2d, self.algorithm,
+                        self.weighting, max_cores
+                    )
 
         # Save the OLS optional fit product, if it exists
         if opt_info is not None:
