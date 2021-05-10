@@ -663,7 +663,7 @@ class Constraint_TargetAcq(SimpleConstraint):
 
     Parameters
     ----------
-    association: Association
+    association:  ~jwst.associations.Association
         If specified, use the `get_exposure_type` method
         of the association rather than the utility version.
     """

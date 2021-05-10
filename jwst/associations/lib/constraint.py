@@ -72,11 +72,11 @@ class SimpleConstraintABC(abc.ABC):
 
         Returns
         -------
-        success, reprocess : bool, [ProcessList[,...]]
+        success, reprocess : bool, [~jwst.associations.ProcessList[,...]]
             Returns 2-tuple of
 
                 - True if check is successful.
-                - List of `ProcessList`.
+                - List of `~jwst.associations.ProcessList`.
         """
         self.matched = True
         return self.matched, []
@@ -284,11 +284,11 @@ class SimpleConstraint(SimpleConstraintABC):
 
         Returns
         -------
-        success, reprocess : bool, [ProcessList[,...]]
+        success, reprocess : bool, [~jwst.associations.ProcessList[,...]]
             Returns 2-tuple of
 
                 - True if check is successful.
-                - List of `ProcessList`.
+                - List of `~jwst.associations.ProcessList`.
         """
         source_value = self.sources(item)
 
@@ -338,7 +338,7 @@ class AttrConstraint(SimpleConstraintABC):
 
     force_reprocess : ProcessList.state or False
         Add item back onto the reprocess list using
-        the specified `ProcessList` work over state.
+        the specified `~jwst.associations.ProcessList` work over state.
 
     force_unique : bool
         If the initial value is `None` or a list of possible values,
@@ -422,11 +422,11 @@ class AttrConstraint(SimpleConstraintABC):
 
         Returns
         -------
-        success, reprocess : bool, [ProcessList[,...]]
+        success, reprocess : bool, [~jwst.associations.ProcessList[,...]]
             Returns 2-tuple of
 
                 - True if check is successful.
-                - List of `ProcessList`.
+                - List of `~jwst.associations.ProcessList`.
         """
         reprocess = []
 
@@ -634,11 +634,11 @@ class Constraint:
 
         Returns
         -------
-        success, reprocess : bool, [ProcessList[,...]]
+        success, reprocess : bool, [~jwst.associations.ProcessList[,...]]
             Returns 2-tuple of
 
                 - success : True if check is successful.
-                - List of `ProcessList`.
+                - List of `~jwst.associations.ProcessList`.
         """
         if work_over not in (self.work_over, ProcessList.BOTH):
             return False, []

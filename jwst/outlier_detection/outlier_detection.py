@@ -369,10 +369,10 @@ def flag_cr(sci_image, blot_image, **pars):
 
     Parameters
     ----------
-    sci_image : ImageModel
+    sci_image : ~jwst.datamodels.ImageModel
         the science data
 
-    blot_image : ImageModel
+    blot_image : ~jwst.datamodels.ImageModel
         the blotted median image of the dithered science frames
 
     pars : dict

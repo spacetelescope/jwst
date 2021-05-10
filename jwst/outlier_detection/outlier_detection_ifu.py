@@ -53,14 +53,14 @@ class OutlierDetectionIFU(OutlierDetection):
 
         Parameters
         ----------
-        input_models : ModelContainer, str
+        input_models : ~jwst.datamodels.ModelContainer, str
             list of data models as ModelContainer or ASN file,
             one data model for each input 2-D ImageModel
 
         drizzled_models : list of objects
             ModelContainer containing drizzled grouped input images
 
-        reffiles : dict of `jwst.datamodels.DataModel`
+        reffiles : dict of ~jwst.datamodels.DataModel
             Dictionary of datamodels.  Keys are reffile_types.
 
 

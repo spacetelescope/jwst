@@ -70,7 +70,7 @@ cube_build
 
 - Fixed typo in cube_build_step spec for grating [#5839]
 - Update code to read in spectral and spatial size of exposure on the sky #5991
-- For calspec2 pipeline skip determining the dq plane in cube_build #5991 
+- For calspec2 pipeline skip determining the dq plane in cube_build #5991
 
 datamodels
 ----------
@@ -105,6 +105,10 @@ extract_2d
 
 - For WFSS removed setting srctype to UNKNOWN; added setting ``is_star`` in slitmeta [#5788]
 
+- In NRC_TSGRISM mode replaced FITS WCS keywords with JWST specific ones. [#6005]
+
+- Added ``specsys`` to slits. [#6005]
+
 general
 -------
 
@@ -115,6 +119,9 @@ general
 
 - Update data products, ``calwebb_image3``, and ``source_catalog`` docs to include
   information about the segmentation map product [#5949]
+
+- Replace documentation references to ambiguous class names with full
+  paths. [#6017]
 
 jump
 -----------------
