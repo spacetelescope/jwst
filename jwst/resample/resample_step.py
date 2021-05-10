@@ -26,7 +26,7 @@ class ResampleStep(Step):
 
     Parameters
     -----------
-    input : DataModel or Association
+    input :  ~jwst.datamodels.DataModel or ~jwst.associations.Association
         Single filename for either a single image or an association table.
     """
 

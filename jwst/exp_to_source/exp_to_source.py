@@ -21,7 +21,7 @@ def exp_to_source(inputs):
 
     Parameters
     ----------
-    inputs : [MultiSlitModel, ...]
+    inputs : [~jwst.datamodels.MultiSlitModel, ...]
         List of MultiSlitModel instances to reformat.
 
     Returns
@@ -60,7 +60,7 @@ def multislit_to_container(inputs):
 
     Parameters
     ----------
-    inputs : [MultiSlitModel, ...]
+    inputs : [~jwst.datamodels.MultiSlitModel, ...]
         List of MultiSlitModel instances to reformat, or just a
         ModelContainer full of MultiSlitModels.
 
