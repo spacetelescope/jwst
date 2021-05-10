@@ -25,6 +25,7 @@ from jwst import datamodels
 from .SplinesModel import SplinesModel
 from .Fitter  import Fitter
 from .SineModel import SineModel
+from astropy.modeling.models import Sine1D
 from .LevenbergMarquardtFitter import LevenbergMarquardtFitter
 from .RobustShell import RobustShell
 from numpy.linalg.linalg import LinAlgError
@@ -156,7 +157,8 @@ def multi_sine(n):
     """
 
     # make the first sine
-    mdl = SineModel()
+    #mdl = SineModel()
+    mdl = Sine1D()
 
     # make a copy
     model = mdl.copy()
@@ -544,6 +546,11 @@ def fit_quality(wavenum, res_fringes, weights, ffreq, dffreq, save_results=False
 
     # create the model
     mdl = SineModel(pars=[0.1, 0.1], fixed={0: 1/peak_freq})
+    print('going to call Sine1d')
+    #mdl = Sine1D(amplitude =0.1, frquency= 0.1, fixed={0: 1/peak_freq})
+
+    print('mdl',mdl)
+    exit(1)
     fitter = LevenbergMarquardtFitter(wavenum[50:-50], mdl)
     ftr = RobustShell(fitter, domain=10)
     fr_par = ftr.fit(res_fringes[50:-50], weights=weights[50:-50])
@@ -557,7 +564,8 @@ def fit_quality(wavenum, res_fringes, weights, ffreq, dffreq, save_results=False
     # make data to return for fit quality
     quality  = None
     if save_results:
-        best_mdl = SineModel(fixed={0: 1/peak_freq, 1:fr_par[0], 2:fr_par[1]})
+        #best_mdl = SineModel(fixed={0: 1/peak_freq, 1:fr_par[0], 2:fr_par[1]})
+        best_mdl = Sine1D(fixed={0: 1/peak_freq, 1:fr_par[0], 2:fr_par[1]})
         fit = best_mdl.result(wavenum)
         quality = np.array([(10000.0/wavenum), res_fringes, fit])
 
@@ -758,281 +766,3 @@ def fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, 
         freq_max = np.amax(fitted_frequencies)
                              
         return res_fringe_fit, weighted_pix_num, opt_nfringes, peak_freq, freq_min, freq_max
-
-
-
-def save_data_astropy(input_file, input_type, output_dir, data, factors, fit_mask, weights, wpix_frac, stats, rejected):
-    """Function to save the output to a fits file
-
-    :Parameters:
-
-    input_file: str, required
-        the filename of the input to res fringe correction
-
-    input_type: str, required
-        the type of input, options are 'dms' and 'dhas'
-
-    output_dir: str, required
-        the location to save the output file
-
-    data: numpy array, required
-        the res fringe corrected array
-
-    factors: numpy array, required
-        the res fringe correction factors per pixel
-
-    fit_mask: numpy array, required
-        mask showing bad fits
-
-    weights: numpy array, required
-        weights array used in fitting
-
-    wpix_frac: numpy array, required
-        mask showing fraction of pixels in col/iso used for RFC
-
-    stats: astropy Table object, required
-        the statistics per slice
-
-    rejected: numpy array, required
-        regions where the RF fit was rejected
-
-    :Returns:
-
-    Nothing, saves output fits file
-
-    """
-    logger.debug("save_data_astropy: saving to output_dir={}".format(output_dir))
-    logger.debug("save_data_astropy: reading input fits file")
-    hdu_list = fits.open(input_file)
-
-    logger.debug("save_data_astropy: replacing data array")
-    if input_type == 'dhas':
-        hdu_list[0].data[0] = data
-
-    elif input_type == 'dms':
-        hdu_list[1].data = data
-
-    else:
-        raise ValueError('Unrecognised file type, options are dhas or dms')
-
-    logger.debug("save_data_astropy: adding the rfc_factors and fit_mask arrays, fit statistics per slice extension")
-    hdu_list.append(fits.ImageHDU(data=factors, name='RFC_FACTORS'))
-    hdu_list.append(fits.ImageHDU(data=fit_mask, name='FIT_MASK'))
-    hdu_list.append(fits.ImageHDU(data=weights, name='WEIGHTS_FEATURES'))
-    hdu_list.append(fits.ImageHDU(data=wpix_frac, name='WEIGHTED_PIXEL_FRACTION'))
-    hdu_list.append(fits.ImageHDU(data=rejected, name='REJECTED_FIT'))
-    hdu_list.append(fits.BinTableHDU(data=stats, name='FIT_STATS'))
-
-    # get the channel stats for fits header output
-    # filter the stat table per channel
-    new_keys = []
-
-    # go through each channel
-    # channel 1
-    mask = (stats['Slice'] < 150)
-    filt_stats = stats[mask]
-    if len(filt_stats) > 0:
-        c = 1
-
-        ch_mean = np.round(np.mean(filt_stats['mean']), 2)
-        ch_pmean = np.round(np.mean(filt_stats['pmean']), 2)
-        ch_median = np.round(np.mean(filt_stats['median']), 2)
-        ch_pmedian = np.round(np.mean(filt_stats['pmedian']), 2)
-        ch_stddev = np.round(np.mean(filt_stats['stddev']), 2)
-        ch_pstddev = np.round(np.mean(filt_stats['pstddev']), 2)
-        ch_max = np.round(np.mean(filt_stats['max']), 2)
-        ch_pmax = np.round(np.mean(filt_stats['pmax']), 2)
-        ch_mean_imp = np.round(ch_pmean - ch_mean, 2) * 100
-        ch_median_imp = np.round(ch_pmedian - ch_median, 2) * 100
-
-        ch_mean_key, ch_mean_com = 'CH{}_MN'.format(c), 'CH{} mean contrast'.format(c)
-        ch_pmean_key, ch_pmean_com = 'CH{}_PMN'.format(c), 'CH{} mean contrast, pre-RFC'.format(c)
-        ch_median_key, ch_median_com = 'CH{}_MD'.format(c), 'CH{} median contrast'.format(c)
-        ch_pmedian_key, ch_pmedian_com = 'CH{}_PMD'.format(c), 'CH{} median contrast, pre-RFC'.format(c)
-        ch_stddev_key, ch_stddev_com = 'CH{}_SD'.format(c), 'CH{} stddev contrast'.format(c)
-        ch_pstddev_key, ch_pstddev_com = 'CH{}_PSD'.format(c), 'CH{} stddev contrast, pre-RFC'.format(c)
-        ch_max_key, ch_max_com = 'CH{}_MX'.format(c), 'CH{} max contrast'.format(c)
-        ch_pmax_key, ch_pmax_com = 'CH{}_PMX'.format(c), 'CH{} max contrast, pre-RFC'.format(c)
-        ch_mean_imp_key, ch_mean_imp_com = 'CH{}_MNI'.format(c), 'CH{} mean % improvement'.format(c)
-        ch_median_imp_key, ch_median_imp_com = 'CH{}_MDI'.format(c), 'CH{} median % improvement'.format(c)
-
-        new_keys.append([ch_mean_key, ch_mean, ch_mean_com])
-        new_keys.append([ch_pmean_key, ch_pmean, ch_pmean_com])
-        new_keys.append([ch_median_key, ch_median, ch_median_com])
-        new_keys.append([ch_pmedian_key, ch_pmedian, ch_pmedian_com])
-        new_keys.append([ch_stddev_key, ch_stddev, ch_stddev_com])
-        new_keys.append([ch_pstddev_key, ch_pstddev, ch_pstddev_com])
-        new_keys.append([ch_max_key, ch_max, ch_max_com])
-        new_keys.append([ch_pmax_key, ch_pmax, ch_pmax_com])
-        new_keys.append([ch_mean_imp_key, ch_mean_imp, ch_mean_imp_com])
-        new_keys.append([ch_median_imp_key, ch_median_imp, ch_median_imp_com])
-
-        # ground test data expectation
-        ch_mean_gtd = 5.
-        ch_median_gtd = 5.
-        ch_mean_gtd_key, ch_mean_gtd_com = 'CH{}_MNG'.format(c), 'CH{} mean contrast, ground test data expectation'.format(
-            c)
-        ch_median_gtd_key, ch_median_gtd_com = 'CH{}_MNG'.format(
-            c), 'CH{} median contrast, ground test data expectation'.format(c)
-        new_keys.append([ch_mean_gtd_key, ch_mean_gtd, ch_mean_gtd_com])
-        new_keys.append([ch_median_gtd_key, ch_median_gtd, ch_median_gtd_com])
-
-    # channel 2
-    mask = (stats['Slice'] > 150) & (stats['Slice'] < 250)
-    filt_stats = stats[mask]
-    if len(filt_stats) > 0:
-        c = 2
-
-        ch_mean = np.round(np.mean(filt_stats['mean']), 2)
-        ch_pmean = np.round(np.mean(filt_stats['pmean']), 2)
-        ch_median = np.round(np.mean(filt_stats['median']), 2)
-        ch_pmedian = np.round(np.mean(filt_stats['pmedian']), 2)
-        ch_stddev = np.round(np.mean(filt_stats['stddev']), 2)
-        ch_pstddev = np.round(np.mean(filt_stats['pstddev']), 2)
-        ch_max = np.round(np.mean(filt_stats['max']), 2)
-        ch_pmax = np.round(np.mean(filt_stats['pmax']), 2)
-        ch_mean_imp = np.round(ch_pmean - ch_mean, 2) * 100
-        ch_median_imp = np.round(ch_pmedian - ch_median, 2) * 100
-
-        ch_mean_key, ch_mean_com = 'CH{}_MN'.format(c), 'CH{} mean contrast'.format(c)
-        ch_pmean_key, ch_pmean_com = 'CH{}_PMN'.format(c), 'CH{} mean contrast, pre-RFC'.format(c)
-        ch_median_key, ch_median_com = 'CH{}_MD'.format(c), 'CH{} median contrast'.format(c)
-        ch_pmedian_key, ch_pmedian_com = 'CH{}_PMD'.format(c), 'CH{} median contrast, pre-RFC'.format(c)
-        ch_stddev_key, ch_stddev_com = 'CH{}_SD'.format(c), 'CH{} stddev contrast'.format(c)
-        ch_pstddev_key, ch_pstddev_com = 'CH{}_PSD'.format(c), 'CH{} stddev contrast, pre-RFC'.format(c)
-        ch_max_key, ch_max_com = 'CH{}_MX'.format(c), 'CH{} max contrast'.format(c)
-        ch_pmax_key, ch_pmax_com = 'CH{}_PMX'.format(c), 'CH{} max contrast, pre-RFC'.format(c)
-        ch_mean_imp_key, ch_mean_imp_com = 'CH{}_MNI'.format(c), 'CH{} mean % improvement'.format(c)
-        ch_median_imp_key, ch_median_imp_com = 'CH{}_MDI'.format(c), 'CH{} median % improvement'.format(c)
-
-        new_keys.append([ch_mean_key, ch_mean, ch_mean_com])
-        new_keys.append([ch_pmean_key, ch_pmean, ch_pmean_com])
-        new_keys.append([ch_median_key, ch_median, ch_median_com])
-        new_keys.append([ch_pmedian_key, ch_pmedian, ch_pmedian_com])
-        new_keys.append([ch_stddev_key, ch_stddev, ch_stddev_com])
-        new_keys.append([ch_pstddev_key, ch_pstddev, ch_pstddev_com])
-        new_keys.append([ch_max_key, ch_max, ch_max_com])
-        new_keys.append([ch_pmax_key, ch_pmax, ch_pmax_com])
-        new_keys.append([ch_mean_imp_key, ch_mean_imp, ch_mean_imp_com])
-        new_keys.append([ch_median_imp_key, ch_median_imp, ch_median_imp_com])
-
-        # ground test data expectation
-        ch_mean_gtd = 5.
-        ch_median_gtd = 5.
-        ch_mean_gtd_key, ch_mean_gtd_com = 'CH{}_MNG'.format(c), 'CH{} mean contrast, ground test data'.format(
-            c)
-        ch_median_gtd_key, ch_median_gtd_com = 'CH{}_MNG'.format(
-            c), 'CH{} median contrast, ground test data'.format(c)
-        new_keys.append([ch_mean_gtd_key, ch_mean_gtd, ch_mean_gtd_com])
-        new_keys.append([ch_median_gtd_key, ch_median_gtd, ch_median_gtd_com])
-
-    # channel 3
-    mask = (stats['Slice'] > 250) & (stats['Slice'] < 350)
-    filt_stats = stats[mask]
-    if len(filt_stats) > 0:
-        c = 3
-
-        ch_mean = np.round(np.mean(filt_stats['mean']), 2)
-        ch_pmean = np.round(np.mean(filt_stats['pmean']), 2)
-        ch_median = np.round(np.mean(filt_stats['median']), 2)
-        ch_pmedian = np.round(np.mean(filt_stats['pmedian']), 2)
-        ch_stddev = np.round(np.mean(filt_stats['stddev']), 2)
-        ch_pstddev = np.round(np.mean(filt_stats['pstddev']), 2)
-        ch_max = np.round(np.mean(filt_stats['max']), 2)
-        ch_pmax = np.round(np.mean(filt_stats['pmax']), 2)
-        ch_mean_imp = np.round(ch_pmean - ch_mean, 2) * 100
-        ch_median_imp = np.round(ch_pmedian - ch_median, 2) * 100
-
-        ch_mean_key, ch_mean_com = 'CH{}_MN'.format(c), 'CH{} mean contrast'.format(c)
-        ch_pmean_key, ch_pmean_com = 'CH{}_PMN'.format(c), 'CH{} mean contrast, pre-RFC'.format(c)
-        ch_median_key, ch_median_com = 'CH{}_MD'.format(c), 'CH{} median contrast'.format(c)
-        ch_pmedian_key, ch_pmedian_com = 'CH{}_PMD'.format(c), 'CH{} median contrast, pre-RFC'.format(c)
-        ch_stddev_key, ch_stddev_com = 'CH{}_SD'.format(c), 'CH{} stddev contrast'.format(c)
-        ch_pstddev_key, ch_pstddev_com = 'CH{}_PSD'.format(c), 'CH{} stddev contrast, pre-RFC'.format(c)
-        ch_max_key, ch_max_com = 'CH{}_MX'.format(c), 'CH{} max contrast'.format(c)
-        ch_pmax_key, ch_pmax_com = 'CH{}_PMX'.format(c), 'CH{} max contrast, pre-RFC'.format(c)
-        ch_mean_imp_key, ch_mean_imp_com = 'CH{}_MNI'.format(c), 'CH{} mean % improvement'.format(c)
-        ch_median_imp_key, ch_median_imp_com = 'CH{}_MDI'.format(c), 'CH{} median % improvement'.format(c)
-
-        new_keys.append([ch_mean_key, ch_mean, ch_mean_com])
-        new_keys.append([ch_pmean_key, ch_pmean, ch_pmean_com])
-        new_keys.append([ch_median_key, ch_median, ch_median_com])
-        new_keys.append([ch_pmedian_key, ch_pmedian, ch_pmedian_com])
-        new_keys.append([ch_stddev_key, ch_stddev, ch_stddev_com])
-        new_keys.append([ch_pstddev_key, ch_pstddev, ch_pstddev_com])
-        new_keys.append([ch_max_key, ch_max, ch_max_com])
-        new_keys.append([ch_pmax_key, ch_pmax, ch_pmax_com])
-        new_keys.append([ch_mean_imp_key, ch_mean_imp, ch_mean_imp_com])
-        new_keys.append([ch_median_imp_key, ch_median_imp, ch_median_imp_com])
-
-        # ground test data expectation
-        ch_mean_gtd = 5.
-        ch_median_gtd = 5.
-        ch_mean_gtd_key, ch_mean_gtd_com = 'CH{}_MNG'.format(c), 'CH{} mean contrast, ground test data'.format(
-            c)
-        ch_median_gtd_key, ch_median_gtd_com = 'CH{}_MNG'.format(
-            c), 'CH{} median contrast, ground test data'.format(c)
-        new_keys.append([ch_mean_gtd_key, ch_mean_gtd, ch_mean_gtd_com])
-        new_keys.append([ch_median_gtd_key, ch_median_gtd, ch_median_gtd_com])
-
-    # channel 4
-    mask = (stats['Slice'] > 350) & (stats['Slice'] < 450)
-    filt_stats = stats[mask]
-    if len(filt_stats) > 0:
-        c = 4
-
-        ch_mean = np.round(np.mean(filt_stats['mean']), 2)
-        ch_pmean = np.round(np.mean(filt_stats['pmean']), 2)
-        ch_median = np.round(np.mean(filt_stats['median']), 2)
-        ch_pmedian = np.round(np.mean(filt_stats['pmedian']), 2)
-        ch_stddev = np.round(np.mean(filt_stats['stddev']), 2)
-        ch_pstddev = np.round(np.mean(filt_stats['pstddev']), 2)
-        ch_max = np.round(np.mean(filt_stats['max']), 2)
-        ch_pmax = np.round(np.mean(filt_stats['pmax']), 2)
-        ch_mean_imp = np.round(ch_pmean - ch_mean, 2) * 100
-        ch_median_imp = np.round(ch_pmedian - ch_median, 2) * 100
-
-        ch_mean_key, ch_mean_com = 'CH{}_MN'.format(c), 'CH{} mean contrast'.format(c)
-        ch_pmean_key, ch_pmean_com = 'CH{}_PMN'.format(c), 'CH{} mean contrast, pre-RFC'.format(c)
-        ch_median_key, ch_median_com = 'CH{}_MD'.format(c), 'CH{} median contrast'.format(c)
-        ch_pmedian_key, ch_pmedian_com = 'CH{}_PMD'.format(c), 'CH{} median contrast, pre-RFC'.format(c)
-        ch_stddev_key, ch_stddev_com = 'CH{}_SD'.format(c), 'CH{} stddev contrast'.format(c)
-        ch_pstddev_key, ch_pstddev_com = 'CH{}_PSD'.format(c), 'CH{} stddev contrast, pre-RFC'.format(c)
-        ch_max_key, ch_max_com = 'CH{}_MX'.format(c), 'CH{} max contrast'.format(c)
-        ch_pmax_key, ch_pmax_com = 'CH{}_PMX'.format(c), 'CH{} max contrast, pre-RFC'.format(c)
-        ch_mean_imp_key, ch_mean_imp_com = 'CH{}_MNI'.format(c), 'CH{} mean % improvement'.format(c)
-        ch_median_imp_key, ch_median_imp_com = 'CH{}_MDI'.format(c), 'CH{} median % improvement'.format(c)
-
-        new_keys.append([ch_mean_key, ch_mean, ch_mean_com])
-        new_keys.append([ch_pmean_key, ch_pmean, ch_pmean_com])
-        new_keys.append([ch_median_key, ch_median, ch_median_com])
-        new_keys.append([ch_pmedian_key, ch_pmedian, ch_pmedian_com])
-        new_keys.append([ch_stddev_key, ch_stddev, ch_stddev_com])
-        new_keys.append([ch_pstddev_key, ch_pstddev, ch_pstddev_com])
-        new_keys.append([ch_max_key, ch_max, ch_max_com])
-        new_keys.append([ch_pmax_key, ch_pmax, ch_pmax_com])
-        new_keys.append([ch_mean_imp_key, ch_mean_imp, ch_mean_imp_com])
-        new_keys.append([ch_median_imp_key, ch_median_imp, ch_median_imp_com])
-
-        # ground test data expectation
-        ch_mean_gtd = 5.
-        ch_median_gtd = 5.
-        ch_mean_gtd_key, ch_mean_gtd_com = 'CH{}_MNG'.format(c), 'CH{} mean contrast, ground test data'.format(c)
-        ch_median_gtd_key, ch_median_gtd_com = 'CH{}_MNG'.format(c), 'CH{} median contrast, ground test data'.format(c)
-        new_keys.append([ch_mean_gtd_key, ch_mean_gtd, ch_mean_gtd_com])
-        new_keys.append([ch_median_gtd_key, ch_median_gtd, ch_median_gtd_com])
-
-    # write to the FIT_STATS header
-    hdr = hdu_list['FIT_STATS'].header
-    for k in new_keys:
-        hdr.set(k[0], k[1], k[2])
-
-    out_name = os.path.splitext(os.path.basename(input_file))[0] + '_rfc.fits'
-    logger.debug("save_data_astropy: saving to {}".format(out_name))
-    hdu_list.writeto(os.path.join(output_dir,out_name), overwrite=True)
-
-    # clean
-    del hdu_list
-
-    return None
-
