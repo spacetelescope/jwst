@@ -526,27 +526,45 @@ extension for each integration in the exposure.
 
 The structure of the "EXTRACT1D" table extension is as follows:
 
-+-------------+-----------+--------------------+---------------+
-| Column Name | Data Type | Contents           | Units         |
-+=============+===========+===================+================+
-| WAVELENGTH  | float64   | Wavelength values  | :math:`\mu` m |
-+-------------+-----------+--------------------+---------------+
-| FLUX        | float64   | Flux values        | Jy            |
-+-------------+-----------+--------------------+---------------+
-| ERROR       | float64   | Error values       | Jy            |
-+-------------+-----------+--------------------+---------------+
-| SURF_BRIGHT | float64   | Surface Brightness | MJy/sr        |
-+-------------+-----------+--------------------+---------------+
-| SB_ERROR    | float64   | Surf. Brt. errors  | MJy/sr        |
-+-------------+-----------+--------------------+---------------+
-| DQ          | uint32    | DQ flags           | N/A           |
-+-------------+-----------+--------------------+---------------+
-| BACKGROUND  | float64   | Background signal  | MJy/sr        |
-+-------------+-----------+--------------------+---------------+
-| BERROR      | float64   | Background error   | MJy/sr        |
-+-------------+-----------+--------------------+---------------+
-| NPIXELS     | float64   | Number of pixels   | N/A           |
-+-------------+-----------+--------------------+---------------+
++-------------------+-----------+--------------------+---------------+
+| Column Name       | Data Type | Contents           | Units         |
++===================+===========+===================+================+
+| WAVELENGTH        | float64   | Wavelength values  | :math:`\mu` m |
++-------------------+-----------+--------------------+---------------+
+| FLUX              | float64   | Flux values        | Jy            |
++-------------------+-----------+--------------------+---------------+
+| FLUX_ERROR        | float64   | Error values       | Jy            |
++-------------------+-----------+--------------------+---------------+
+| FLUX_VAR_POISSON  | float64   | Error values       | Jy^2          |
++-------------------+-----------+--------------------+---------------+
+| FLUX_VAR_RNOISE   | float64   | Error values       | Jy^2          |
++-------------------+-----------+--------------------+---------------+
+| FLUX_VAR_FLAT     | float64   | Error values       | Jy^2          |
++-------------------+-----------+--------------------+---------------+
+| SURF_BRIGHT       | float64   | Surface Brightness | MJy/sr        |
++-------------------+-----------+--------------------+---------------+
+| SB_ERROR          | float64   | Surf. Brt. errors  | MJy/sr        |
++-------------------+-----------+--------------------+---------------+
+| SB_VAR_POISSON    | float64   | Surf. Brt. errors  | (MJy/sr)^2    |
++-------------------+-----------+--------------------+---------------+
+| SB_VAR_RNOISE     | float64   | Surf. Brt. errors  | (MJy/sr)^2    |
++-------------------+-----------+--------------------+---------------+
+| SB_VAR_FLAT       | float64   | Surf. Brt. errors  | (MJy/sr)^2    |
++-------------------+-----------+--------------------+---------------+
+| DQ                | uint32    | DQ flags           | N/A           |
++-------------------+-----------+--------------------+---------------+
+| BACKGROUND        | float64   | Background signal  | MJy/sr        |
++-------------------+-----------+--------------------+---------------+
+| BKGD_ERROR        | float64   | Background error   | MJy/sr        |
++-------------------+-----------+--------------------+---------------+
+| BKGD_VAR_POISSON  | float64   | Background error   | (MJy/sr)^2    |
++-------------------+-----------+--------------------+---------------+
+| BKGD_VAR_RNOISE   | float64   | Background error   | (MJy/sr)^2    |
++-------------------+-----------+--------------------+---------------+
+| BKGD_VAR_FLAT     | float64   | Background error   | (MJy/sr)^2    |
++-------------------+-----------+--------------------+---------------+
+| NPIXELS           | float64   | Number of pixels   | N/A           |
++-------------------+-----------+--------------------+---------------+
 
 The table is constructed using a simple 2-D layout, using one row per extracted spectral
 element in the dispersion direction of the data (i.e. one row per wavelength bin).

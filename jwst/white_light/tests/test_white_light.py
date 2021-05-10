@@ -43,10 +43,10 @@ def make_datamodel():
     otab = np.array(
         list(
             zip(
-                 wavelength, flux, error, f_var_poisson, f_var_rnoise, f_var_flat,
-                 surf_bright, sb_error, sb_var_poisson, sb_var_rnoise, sb_var_flat,
-                 dq, background, berror, b_var_poisson, b_var_rnoise, b_var_flat,
-                 npixels
+                wavelength, flux, error, f_var_poisson, f_var_rnoise, f_var_flat,
+                surf_bright, sb_error, sb_var_poisson, sb_var_rnoise, sb_var_flat,
+                dq, background, berror, b_var_poisson, b_var_rnoise, b_var_flat,
+                npixels
             ),
         ), dtype=spec_dtype
     )

@@ -92,6 +92,11 @@ documentation
 - Update pipeline introduction document to include segmentation map (``segm``)
   in list of data products [#5956]
 
+extract_1d
+----------
+
+- Implemented error and variance propagation for all modes but those
+  utilizing IFU cubes [#6014]
 
 extract_2d
 ----------
