@@ -137,20 +137,19 @@ Pointing.__new__.__defaults__ = ((None,) * 5)
 
 
 # Transforms
-class Transforms(namedtuple("Transforms",
-                            [
-                                'm_eci2j',            # ECI to J-Frame
-                                'm_j2fgs1',           # J-Frame to FGS1
-                                'm_eci2fgs1',         # ECI to FGS1
-                                'm_gs2gsapp',         # Velocity abberation
-                                'm_sifov_fsm_delta',  # FSM correction
-                                'm_fgs12sifov',       # FGS1 to SIFOV
-                                'm_eci2sifov',        # ECI to SIFOV
-                                'm_sifov2v',          # SIFOV to V1
-                                'm_eci2v',            # ECI to V
-                                'm_v2siaf',           # V to SIAF
-                                'm_eci2siaf'          # ECI to SIAF
-                            ])):
+@dataclasses.dataclass
+class Transforms:
+    m_eci2j: np.array = None            # ECI to J-Frame
+    m_j2fgs1: np.array = None           # J-Frame to FGS1
+    m_eci2fgs1: np.array = None         # ECI to FGS1
+    m_gs2gsapp: np.array = None         # Velocity abberation
+    m_sifov_fsm_delta: np.array = None  # FSM correction
+    m_fgs12sifov: np.array = None       # FGS1 to SIFOV
+    m_eci2sifov: np.array = None        # ECI to SIFOV
+    m_sifov2v: np.array = None          # SIFOV to V1
+    m_eci2v: np.array = None            # ECI to V
+    m_v2siaf: np.array = None           # V to SIAF
+    m_eci2siaf: np.array = None         # ECI to SIAF
     """Transformation matrices"""
 
     @classmethod
@@ -183,7 +182,7 @@ class Transforms(namedtuple("Transforms",
         asdf_file : asdf.AsdfFile
             The ASDF serialization.
         """
-        self_dict = self._asdict()
+        self_dict = dataclasses.asdict(self)
         asdf_file = asdf.AsdfFile({'transforms': self_dict})
         return asdf_file
 
@@ -196,9 +195,6 @@ class Transforms(namedtuple("Transforms",
         """
         asdf_file = self.to_asdf()
         asdf_file.write_to(path)
-
-
-Transforms.__new__.__defaults__ = ((None,) * 11)
 
 
 # WCS reference container
