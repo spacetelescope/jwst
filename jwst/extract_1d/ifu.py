@@ -378,9 +378,14 @@ def extract_ifu(input_model, source_type, extract_params):
     """
 
     data = input_model.data
-    var_poisson = input_model.var_poisson
-    var_rnoise = input_model.var_rnoise
-    var_flat = input_model.var_flat
+    try:
+        var_poisson = input_model.var_poisson
+        var_rnoise = input_model.var_rnoise
+        var_flat = input_model.var_flat
+    except AttributeError:
+        var_poisson = np.zeros_like(input_model.data)
+        var_rnoise = np.zeros_like(input_model.data)
+        var_flat = np.zeros_like(input_model.data)
     weightmap = input_model.weightmap
 
     shape = data.shape
