@@ -201,7 +201,7 @@ class Transforms:
         path : Stream-like
         """
         asdf_file = self.to_asdf()
-        asdf_file.write_to(path)
+        asdf_file.write_to(path, all_array_storage='inline')
 
     def __getattribute__(self, name):
         """If an override has been specified, return that value regardless
@@ -413,7 +413,7 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
     """
     logger.info('Updating WCS info for file %s', filename)
     with Level1bModel(filename) as model:
-        update_wcs(
+        t_pars, transforms = update_wcs(
             model,
             default_pa_v3=default_pa_v3,
             siaf_path=siaf_path,
@@ -435,7 +435,12 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
         if dry_run:
             logger.info('Dry run requested; results are not saved.')
         else:
+            logger.info('Saving updated model %s', filename)
             model.save(filename)
+            if transforms and save_transforms:
+                logger.info('Saving transform matrices to %s', save_transforms)
+                transforms.write_to_asdf(save_transforms)
+
     logger.info('...update completed')
 
 
@@ -518,7 +523,15 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, eng
 
     transform_kwargs : dict
         Keyword arguments used by matrix calculation routines.
+
+    Returns
+    -------
+    t_pars, transforms : TransformParameters, Transforms
+        The parameters and transforms calculated. May be
+        None for either if telemetry calculations were not
+        performed.
     """
+    t_pars = transforms = None  # Assume telemetry is not used.
 
     # If the type of exposure is not FGS, then attempt to get pointing
     # from telemetry.
@@ -548,7 +561,9 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, eng
             reduce_func=reduce_func, siaf_path=siaf_path, useafter=useafter,
             **transform_kwargs
         )
-        update_wcs_from_telem(model, t_pars)
+        transforms = update_wcs_from_telem(model, t_pars)
+
+    return t_pars, transforms
 
 
 def update_wcs_from_fgs_guiding(model, default_roll_ref=0.0, default_vparity=1, default_v3yangle=0.0):
@@ -624,9 +639,13 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
     t_pars : `TransformParameters`
         The transformation parameters. Parameters are updated during processing.
 
+    Returns
+    -------
+    transforms : Transforms or None
+        If available, the transformation matrices.
     """
-
     logger.info('Updating wcs from telemetry.')
+    transforms = None  # Assume no transforms are calculated.
 
     # Get the SIAF and observation parameters
     obsstart = model.meta.exposure.start_time
@@ -679,7 +698,7 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
         logger.info('\tPointing: %s', pointing)
         try:
             t_pars.pointing = pointing
-            wcsinfo, vinfo = calc_wcs(t_pars)
+            wcsinfo, vinfo, transforms = calc_wcs(t_pars)
             pointing_engdb_quality = f'CALCULATED_{t_pars.method.value.upper()}'
             logger.info('Setting ENGQLPTG keyword to %s', pointing_engdb_quality)
             model.meta.visit.pointing_engdb_quality = pointing_engdb_quality
@@ -731,6 +750,7 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
         logger.warning('Calculation of S_REGION failed and will be skipped.')
         logger.warning('Exception is %s', e)
 
+    return transforms
 
 def update_s_region(model, siaf):
     """Update ``S_REGION`` sky footprint information.
@@ -844,9 +864,9 @@ def calc_wcs(t_pars: TransformParameters):
 
     Returns
     -------
-    (wcsinfo, vinfo) : (WCSRef, WCSRef)
-        A 2-tuple is returned with the WCS pointing for
-        the aperture and the V1 axis
+    wcsinfo, vinfo, transforms : WCSRef, WCSRef, Transforms 
+        A 3-tuple is returned with the WCS pointing for
+        the aperture and the V1 axis, and the transformation matrices.
 
     Notes
     -----
@@ -886,7 +906,7 @@ def calc_wcs(t_pars: TransformParameters):
     wcsinfo = calc_aperture_wcs(tforms.m_eci2siaf)
 
     # That's all folks
-    return (wcsinfo, vinfo)
+    return wcsinfo, vinfo, tforms
 
 
 def calc_transforms(t_pars: TransformParameters):

@@ -119,7 +119,7 @@ if __name__ == '__main__':
         transform_path= None
         if args.save_transforms:
             path = Path(filename)
-            transform_path = path.parent / path.stem + '_transforms.asdf'
+            transform_path = path.with_name(f'{path.stem}_transforms.asdf')
 
         try:
             stp.add_wcs(
