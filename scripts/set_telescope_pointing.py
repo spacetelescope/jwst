@@ -74,6 +74,10 @@ if __name__ == '__main__':
         help='Save transforms.'
     )
     parser.add_argument(
+        '--override_transforms', type=str, default=None,
+        help='Transform matrices to use instead of calculated'
+    )
+    parser.add_argument(
         '--tolerance', type=int, default=60,
         help='Seconds beyond the observation time to search for telemetry. Default: %(default)s'
     )
@@ -108,6 +112,10 @@ if __name__ == '__main__':
     if level <= logging.DEBUG:
         logger_handler.setFormatter(logger_format_debug)
 
+    override_transforms = args.override_transforms
+    if override_transforms:
+        override_transforms = stp.Transforms.from_asdf(override_transforms)
+
     # Calculate WCS for all inputs.
     for filename in args.exposure:
         logger.info(
@@ -131,7 +139,8 @@ if __name__ == '__main__':
                 dry_run=args.dry_run,
                 method=args.method,
                 j2fgs_transpose=args.transpose_j2fgs,
-                save_transforms=transform_path
+                save_transforms=transform_path,
+                override_transforms=override_transforms
             )
         except ValueError as exception:
             logger.info('Cannot determine pointing information: ' + str(exception))

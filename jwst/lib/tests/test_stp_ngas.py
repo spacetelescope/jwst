@@ -98,7 +98,7 @@ def test_stp_ngas():
     any_wrong = False
     for idx, pv in enumerate(pointings):
         t_pars.pointing, v = pv
-        wcsinfo, vinfo = stp.calc_wcs(t_pars)
+        wcsinfo, vinfo, transforms = stp.calc_wcs(t_pars)
         try:
             wcs_equality(vinfo, v)
         except AssertionError as e:

@@ -359,7 +359,7 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
         File to save the calculated transforms to.
 
     transform_kwargs : dict
-        Keyword arguments used by matrix calculation routines
+        Keyword arguments used by matrix calculation routines.
 
     Notes
     -----
@@ -845,7 +845,7 @@ def calc_wcs_over_time(obsstart, obsend, engdb_url=None, tolerance=60, reduce_fu
         pointings = [pointings]
     for pointing in pointings:
         t_pars.pointing = pointing
-        wcsinfo, vinfo = calc_wcs(t_pars)
+        wcsinfo, vinfo, transforms = calc_wcs(t_pars)
         obstimes.append(pointing.obstime)
         wcsinfos.append(wcsinfo)
         vinfos.append(vinfo)

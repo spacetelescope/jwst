@@ -166,11 +166,11 @@ def method_fullva():
 
 @pytest.mark.parametrize(
     'attribute, expected',
-    [('m_eci2j', 'overriden'), ('m_j2fgs1', 'untouched')]
+    [('m_eci2j', 'overridden'), ('m_j2fgs1', 'untouched')]
 )
 def test_override(attribute, expected):
     """Test overriding of Transforms attributes"""
-    overrides = stp.Transforms(m_eci2j='overriden')
+    overrides = stp.Transforms(m_eci2j='overridden')
     to_override = stp.Transforms(m_eci2j='original', m_j2fgs1='untouched', override=overrides)
 
     assert getattr(to_override, attribute) == expected
