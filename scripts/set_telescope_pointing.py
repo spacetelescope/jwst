@@ -74,7 +74,7 @@ if __name__ == '__main__':
         help='Save transforms.'
     )
     parser.add_argument(
-        '--override_transforms', type=str, default=None,
+        '--override-transforms', type=str, default=None,
         help='Transform matrices to use instead of calculated'
     )
     parser.add_argument(

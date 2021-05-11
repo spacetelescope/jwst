@@ -60,6 +60,10 @@ if __name__ == '__main__':
         help='Increase verbosity. Specifying multiple times adds more output.'
     )
     parser.add_argument(
+        '--override-transforms', type=str, default=None,
+        help='Transform matrices to use instead of calculated'
+    )
+    parser.add_argument(
         '--engdb-url', type=str, default=None,
         help=('The engineering database to use. If unspecified, the value'
               ' of the environment ENG_BASE_URL is used. Otherwise, the production'
@@ -74,6 +78,10 @@ if __name__ == '__main__':
     logger.setLevel(level)
     if level <= logging.DEBUG:
         logger_handler.setFormatter(logger_format_debug)
+
+    override_transforms = args.override_transforms
+    if override_transforms:
+        override_transforms = stp.Transforms.from_asdf(override_transforms)
 
     # Determine whether the sources are time specifications or a file list.
     if len(args.time_sources) == 2:
@@ -101,13 +109,13 @@ if __name__ == '__main__':
         v1s = v1_calculate.v1_calculate_from_models(
             args.time_sources, engdb_url=args.engdb_url,
             reduce_func=REDUCE_FUNCS_MAPPING[args.pointing],
-            method=args.method
+            method=args.method, override_transforms=override_transforms
         )
     else:
         v1s = v1_calculate.v1_calculate_over_time(
             obsstart.mjd, obsend.mjd, engdb_url=args.engdb_url,
             reduce_func=REDUCE_FUNCS_MAPPING[args.pointing],
-            method=args.method
+            method=args.method, override_transforms=override_transforms
         )
 
     formatted = v1_calculate.simplify_table(v1s)
