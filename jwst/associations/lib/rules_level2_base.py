@@ -310,7 +310,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             )
         self._acid = ACID((acid, ac_type))
 
-        #set the default exptype
+        # set the default exptype
         exptype = 'science'
 
         for idx, item in enumerate(items, start=1):
@@ -321,13 +321,13 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             else:
                 expname = item
 
-            #check to see if kwargs are passed and if exptype is given
+            # check to see if kwargs are passed and if exptype is given
             if kwargs:
                 if 'with_exptype' in kwargs:
                     if item[1]:
                         exptype = item[1]
                     else:
-                        exptype='science'
+                        exptype = 'science'
             member = Member({
                 'expname': expname,
                 'exptype': exptype
@@ -440,12 +440,27 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
                     if other_science['expname'] != science_exp['expname']:
                         if science_exp.item['exp_type'] == 'nrs_fixedslit':
                             try:
-                                if other_science.item['spat_num'] != science_exp.item['spat_num']:
+                                sci_prim_dithpt = (int(science_exp.item['patt_num']) - 1) // \
+                                                  int(science_exp.item['subpxpts'])
+                                other_prim_dithpt = (int(other_science.item['patt_num']) - 1) // \
+                                                    int(other_science.item['subpxpts'])
+                                if sci_prim_dithpt != other_prim_dithpt:
                                     now_background = Member(other_science)
                                     now_background['exptype'] = 'background'
                                     new_members.append(now_background)
-                            except KeyError:
-                                pass
+                            #  Catch missing values with KeyError, NULL values with ValueError
+                            except (ValueError, KeyError):
+                                try:
+                                    sci_prim_dithpt = (int(science_exp.item['patt_num']) - 1) // \
+                                                      int(science_exp.item['subpxpns'])
+                                    other_prim_dithpt = (int(other_science.item['patt_num']) - 1) // \
+                                                        int(other_science.item['subpxpns'])
+                                    if sci_prim_dithpt != other_prim_dithpt:
+                                        now_background = Member(other_science)
+                                        now_background['exptype'] = 'background'
+                                        new_members.append(now_background)
+                                except (ValueError, KeyError):
+                                    pass
                         else:
                             now_background = Member(other_science)
                             now_background['exptype'] = 'background'
@@ -696,6 +711,7 @@ class Utility():
 # -----------------
 class Constraint_Base(Constraint):
     """Select on program and instrument"""
+
     def __init__(self):
         super(Constraint_Base, self).__init__([
             DMSAttrConstraint(
@@ -730,6 +746,7 @@ class Constraint_ExtCal(Constraint):
 
 class Constraint_Mode(Constraint):
     """Select on instrument and optical path"""
+
     def __init__(self):
         super(Constraint_Mode, self).__init__([
             DMSAttrConstraint(
@@ -796,6 +813,7 @@ class Constraint_Mode(Constraint):
 
 class Constraint_Image_Science(DMSAttrConstraint):
     """Select on science images"""
+
     def __init__(self):
         super(Constraint_Image_Science, self).__init__(
             name='exp_type',
@@ -806,6 +824,7 @@ class Constraint_Image_Science(DMSAttrConstraint):
 
 class Constraint_Image_Nonscience(Constraint):
     """Select on non-science images"""
+
     def __init__(self):
         super(Constraint_Image_Nonscience, self).__init__(
             [
@@ -868,6 +887,7 @@ class Constraint_Single_Science(SimpleConstraint):
 
 class Constraint_Special(DMSAttrConstraint):
     """Select on backgrounds and other auxilliary images"""
+
     def __init__(self):
         super(Constraint_Special, self).__init__(
             name='is_special',
@@ -916,6 +936,7 @@ class Constraint_Target(DMSAttrConstraint):
             sources=['targetid'],
         )
 
+
 # ---------------------------------------------
 # Mixins to define the broad category of rules.
 # ---------------------------------------------
@@ -939,6 +960,7 @@ class AsnMixin_Lv2Nod:
     is split out into many associations, where each nod is, in turn, treated
     as science, and the other nods are treated as background.
     """
+
     def finalize(self):
         """Finalize association
 
@@ -966,6 +988,7 @@ class AsnMixin_Lv2Nod:
 class AsnMixin_Lv2Special:
     """Process special and non-science exposures as science.
     """
+
     def get_exposure_type(self, item, default='science'):
         """Override to force exposure type to always be science
         Parameters

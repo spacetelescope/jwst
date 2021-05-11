@@ -11,7 +11,7 @@ from ..main import constrain_on_candidates
 DITHER_PATTERN_MULTIPLIER = {
     '0': 1,  # No pattern, 1-to-1 exposure count
     '2': 2,  # Spatial, 2-to-1 exposure count
-    '3': 2,  # Spectral, 2-to-1 exposure count
+    '3': 3,  # Spectral, 3-to-1 exposure count
     '4': 4,  # Both, 4-to-1 exposure count
 }
 
@@ -33,9 +33,10 @@ def test_nrs_fixedslit_nod():
     )
     assert len(asns) == 30
     for asn in asns:
-        nods = int(asn.constraints['nods'].value)
-        multiplier = DITHER_PATTERN_MULTIPLIER[asn.constraints['subpxpts'].value]
-        n_members = nods * multiplier
+        n_dithers = int(asn.constraints['nods'].value)
+        n_spectral_dithers = int(asn.constraints['subpxpts'].value)
+        #  Expect self + all exposures not at the same primary dither
+        n_members = n_dithers - n_spectral_dithers + 1
         assert len(asn['products'][0]['members']) == n_members
 
 
