@@ -18,7 +18,7 @@ class Observation:
 
     def __init__(self, direct_images, segmap_model, grism_wcs, wr_ref, filter, sens_waves,
                  sens_resp, order=1, max_split=100, sed_file=None, extrapolate_sed=False,
-                 max_cpu=1, ID=0, SBE_save=None, boundaries=[], renormalize=True):
+                 max_cpu=1, ID=0, boundaries=[], renormalize=True):
 
         """
         Parameters
@@ -50,8 +50,6 @@ class Observation:
             Max number of cpu's to use when multiprocessing
         ID : int
             ID of source to process. If zero, all sources processed.
-        SBE_save : str
-            If set to a path, file containing simulated stamps for all objects will be saved.
         boundaries : tuple
             Start/Stop coordinates of the FOV within the larger seed image.
         renormalize : bool
@@ -68,7 +66,6 @@ class Observation:
         self.filter = filter
         self.order = order
         self.sed_file = sed_file   # should always be NONE for baseline pipeline (use flat SED)
-        self.SBE_save = SBE_save
         self.max_cpu = max_cpu
         self.cache = False
         self.renormalize = renormalize

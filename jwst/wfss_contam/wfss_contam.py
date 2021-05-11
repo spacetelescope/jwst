@@ -72,11 +72,11 @@ def contam_corr(input_model, waverange, photom):
     for slit in output_model.slits:
 
         # Create simulated spectrum for this source only
-        id = slit.source_id
+        sid = slit.source_id
         order = slit.meta.wcsinfo.spectral_order
         if order != 1:
             continue
-        obs.disperse_chunk(id)
+        obs.disperse_chunk(sid)
         this_source = obs.simulated_image
 
         # Contamination estimate is full simulated image
