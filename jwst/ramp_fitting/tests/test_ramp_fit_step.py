@@ -8,10 +8,7 @@ from jwst.datamodels import GainModel, ReadnoiseModel
 
 
 @pytest.fixture(scope="module")
-def generate_miri_reffiles(tmpdir_factory):
-    gainfile = str(tmpdir_factory.mktemp("data").join("gain.fits"))
-    readnoisefile = str(tmpdir_factory.mktemp("data").join('readnoise.fits'))
-
+def generate_miri_reffiles():
     ingain = 6
     xsize = 103
     ysize = 102
@@ -23,7 +20,6 @@ def generate_miri_reffiles(tmpdir_factory):
     gain_model.meta.subarray.ystart = 1
     gain_model.meta.subarray.xsize = xsize
     gain_model.meta.subarray.ysize = ysize
-    gain_model.save(gainfile)
 
     inreadnoise = 5
     rnoise = np.ones(shape=(ysize, xsize), dtype=np.float64) * inreadnoise
@@ -33,9 +29,8 @@ def generate_miri_reffiles(tmpdir_factory):
     readnoise_model.meta.subarray.ystart = 1
     readnoise_model.meta.subarray.xsize = xsize
     readnoise_model.meta.subarray.ysize = ysize
-    readnoise_model.save(readnoisefile)
 
-    return gainfile, readnoisefile
+    return gain_model, readnoise_model
 
 
 @pytest.fixture
