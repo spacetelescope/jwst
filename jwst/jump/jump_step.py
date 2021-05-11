@@ -16,9 +16,11 @@ class JumpStep(Step):
 
     spec = """
         rejection_threshold = float(default=4.0,min=0) # CR sigma rejection threshold
+        three_group_rejection_threshold = float(default=6.0,min=0) # CR sigma rejection threshold
+        four_group_rejection_threshold = float(default=5.0,min=0) # CR sigma rejection threshold
         maximum_cores = option('none', 'quarter', 'half', 'all', default='none') # max number of processes to create
         flag_4_neighbors = boolean(default=True) # flag the four perpendicular neighbors of each CR
-        max_jump_to_flag_neighbors = float(default=200) # maximum jump sigma that will trigger neighbor flagging
+        max_jump_to_flag_neighbors = float(default=1000) # maximum jump sigma that will trigger neighbor flagging
         min_jump_to_flag_neighbors = float(default=10) # minimum jump sigma that will trigger neighbor flagging
     """
 
@@ -30,8 +32,8 @@ class JumpStep(Step):
             tstart = time.time()
             # Check for an input model with NGROUPS<=2
             ngroups = input_model.data.shape[1]
-            if ngroups <= 4:
-                self.log.warning('Can not apply jump detection when NGROUPS<=4;')
+            if ngroups <= 2:
+                self.log.warning('Cannot apply jump detection when NGROUPS<=2;')
                 self.log.warning('Jump step will be skipped')
                 result = input_model.copy()
                 result.meta.cal_step.jump = 'SKIPPED'
@@ -39,6 +41,8 @@ class JumpStep(Step):
 
             # Retrieve the parameter values
             rej_thresh = self.rejection_threshold
+            three_grp_rej_thresh = self.three_group_rejection_threshold
+            four_grp_rej_thresh = self.four_group_rejection_threshold
             max_cores = self.maximum_cores
             max_jump_to_flag_neighbors = self.max_jump_to_flag_neighbors
             min_jump_to_flag_neighbors = self.min_jump_to_flag_neighbors
@@ -62,10 +66,9 @@ class JumpStep(Step):
 
             # Call the jump detection routine
             result = detect_jumps(input_model, gain_model, readnoise_model,
-                                  rej_thresh, max_cores,
+                                  rej_thresh, three_grp_rej_thresh, four_grp_rej_thresh, max_cores,
                                   max_jump_to_flag_neighbors, min_jump_to_flag_neighbors,
                                   flag_4_neighbors)
-
             gain_model.close()
             readnoise_model.close()
             tstop = time.time()

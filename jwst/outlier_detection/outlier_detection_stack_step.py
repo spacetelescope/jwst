@@ -22,7 +22,7 @@ class OutlierDetectionStackStep(Step):
 
     Parameters
     -----------
-    input : asn file or ModelContainer
+    input : asn file or ~jwst.datamodels.ModelContainer
         Single filename association table, or a datamodels.ModelContainer.
 
     """

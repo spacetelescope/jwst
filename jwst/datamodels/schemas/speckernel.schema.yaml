@@ -1,0 +1,54 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/fits-schema/fits-schema"
+id: "http://stsci.edu/schemas/jwst_datamodel/speckernel.schema"
+allOf:
+- $ref: referencefile.schema
+- $ref: keyword_exptype.schema
+- type: object
+  properties:
+    meta:
+      type: object
+      properties:
+        nwave:
+          title: The number of wavelengths used
+          type: integer
+          fits_keyword: NWAVE
+          fits_hdu: WAVELENGTHS
+        wavemin:
+          title: Wavelength of the first kernel (in microns)
+          type: number
+          fits_keyword: WAVEMIN
+          fits_hdu: WAVELENGTHS
+        wavemax:
+          title: Wavelength of the last kernel (in microns)
+          type: number
+          fits_keyword: WAVEMAX
+          fits_hdu: WAVELENGTHS
+        spectral_oversampling:
+          title: The spectral oversampling of the native pixels
+          type: integer
+          fits_keyword: SPECOS
+          fits_hdu: KERNELS
+        halfwidth:
+          title: The half width of the kernel in native pixels
+          type: integer
+          fits_keyword: HALFWIDT
+          fits_hdu: KERNELS
+        centroid_index:
+          title: Index of the kernel centroid
+          type: integer
+          fits_keyword: INDCENTR
+          fits_hdu: KERNELS
+- type: object
+  properties:
+    wavelengths:
+      title: Wavelengths
+      fits_hdu: WAVELENGTHS
+      ndim: 2
+      datatype: float32
+    kernels:
+      title: Kernels
+      fits_hdu: KERNELS
+      ndim: 2
+      datatype: float32

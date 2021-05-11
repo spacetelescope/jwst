@@ -10,11 +10,11 @@ from tempfile import TemporaryDirectory
 
 from astropy.time import Time
 
-from .. import engdb_tools
-from .engdb_mock import EngDB_Mocker
-from .. import set_telescope_pointing as stp
-from ... import datamodels
-from ...tests.helpers import word_precision_check
+from jwst.lib import engdb_tools
+from jwst.lib.tests.engdb_mock import EngDB_Mocker
+from jwst.lib import set_telescope_pointing as stp
+from jwst import datamodels
+from jwst.tests.helpers import word_precision_check
 
 # Ensure that `set_telescope_pointing` logs.
 stp.logger.setLevel(logging.DEBUG)

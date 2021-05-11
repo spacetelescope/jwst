@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 
 from jwst.ramp_fitting.ramp_fit import ramp_fit
-from jwst.ramp_fitting.ramp_fit import calc_num_seg
+from jwst.ramp_fitting.ols_fit import calc_num_seg
 from jwst.datamodels import dqflags
 from jwst.datamodels import RampModel
 from jwst.datamodels import GainModel, ReadnoiseModel
@@ -119,19 +119,19 @@ def test_gls_vs_ols_two_ints_ols():
 
 @pytest.mark.skip(reason="Jenkins environment does not correctly handle multi-processing.")
 def test_multiprocessing():
-    nrows = 100
-    ncols = 100
-    ngroups = 25
-    nints = 3
-    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups, gain=1, readnoise=10, nints=nints,
-                                                          nrows=nrows,
-                                                          ncols=ncols)
+    nints, ngroups, nrows = 3, 25, 100
+    ncols = nrows  # make sure these are the same, so the loops below work
+
+    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(
+        ngroups=ngroups, gain=1, readnoise=10, nints=nints, nrows=nrows, ncols=ncols)
+
     delta_plane1 = np.zeros((nrows, ncols), dtype=np.float64)
     delta_plane2 = np.zeros((nrows, ncols), dtype=np.float64)
     delta_vec = np.asarray([x / 50.0 for x in range(nrows)])
     for i in range(ncols):
         delta_plane1[i, :] = delta_vec * i
         delta_plane2[:, i] = delta_vec * i
+
     model1.data[:, :, :, :] = 0
     for j in range(ngroups - 1):
         model1.data[0, j + 1, :, :] = model1.data[0, j, :, :] + delta_plane1 + delta_plane2
@@ -139,47 +139,45 @@ def test_multiprocessing():
         model1.data[2, j + 1, :, :] = model1.data[2, j, :, :] + delta_plane1 + delta_plane2
     model1.data = np.round(model1.data + np.random.normal(0, 5, (nints, ngroups, ncols, nrows)))
 
-    slopes, int_model, opt_model, gls_opt_model = ramp_fit(model1,
-                                                           1024 * 30000., False,
-                                                           rnModel, gain, 'GLS', 'optimal', 'none')
-    slopes_multi, int_model_multi, opt_model_multi, gls_opt_model_multi = ramp_fit(model1,
-                                                                                   1024 * 30000.,
-                                                                                   False, rnModel,
-                                                                                   gain, 'GLS',
-                                                                                   'optimal', 'half')
+    # TODO change this to be parametrized once GLS gets working.
+    algo = "OLS"
+    # algo = "GLS"
+    slopes, int_model, opt_model, gls_opt_model = ramp_fit(
+        model1, 1024 * 30000., False, rnModel, gain, algo, 'optimal', 'none')
+
+    slopes_multi, int_model_multi, opt_model_multi, gls_opt_model_multi = ramp_fit(
+        model1, 1024 * 30000., False, rnModel, gain, algo, 'optimal', 'half')
 
     np.testing.assert_allclose(slopes.data, slopes_multi.data, rtol=1e-5)
 
 
 @pytest.mark.skip(reason="Jenkins environment does not correctly handle multi-processing.")
 def test_multiprocessing2():
-    nrows = 100
-    ncols = 100
-    ngroups = 25
-    nints = 1
-    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups, gain=1,
-                                                          readnoise=10, nints=nints,
-                                                          nrows=nrows,
-                                                          ncols=ncols)
+    nints, ngroups, nrows = 1, 25, 100
+    ncols = nrows  # make sure these are the same, so the loops below work
+    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(
+        ngroups=ngroups, gain=1, readnoise=10, nints=nints, nrows=nrows, ncols=ncols)
+
     delta_plane1 = np.zeros((nrows, ncols), dtype=np.float64)
     delta_plane2 = np.zeros((nrows, ncols), dtype=np.float64)
     delta_vec = np.asarray([x / 50.0 for x in range(nrows)])
     for i in range(ncols):
         delta_plane1[i, :] = delta_vec * i
         delta_plane2[:, i] = delta_vec * i
+
     model1.data[:, :, :, :] = 0
     for j in range(ngroups - 1):
         model1.data[0, j + 1, :, :] = model1.data[0, j, :, :] + delta_plane1 + delta_plane2
     model1.data = np.round(model1.data + np.random.normal(0, 5, (nints, ngroups, ncols, nrows)))
 
-    slopes, int_model, opt_model, gls_opt_model = ramp_fit(model1,
-                                                           1024 * 30000., True, rnModel, gain,
-                                                           'GLS', 'optimal', 'none')
-    slopes_multi, int_model_multi, opt_model_multi, gls_opt_model_multi = ramp_fit(model1,
-                                                                                   1024 * 30000.,
-                                                                                   True, rnModel,
-                                                                                   gain, 'GLS',
-                                                                                   'optimal', 'half')
+    # TODO change this to be parametrized once GLS gets working.
+    algo = "OLS"
+    # algo = "GLS"
+    slopes, int_model, opt_model, gls_opt_model = ramp_fit(
+        model1, 1024 * 30000., True, rnModel, gain, algo, 'optimal', 'none')
+
+    slopes_multi, int_model_multi, opt_model_multi, gls_opt_model_multi = ramp_fit(
+        model1, 1024 * 30000., True, rnModel, gain, algo, 'optimal', 'half')
 
     np.testing.assert_allclose(slopes.data, slopes_multi.data, rtol=1e-5)
 
@@ -614,18 +612,18 @@ def test_twenty_groups_two_segments():
 
 
 def test_miri_all_sat():
-    ''' Test of all groups in all integrations being saturated; all output arrays
-        (particularly variances) should be 0.
+    '''
+    Test of all groups in all integrations being saturated; all output arrays
+    (particularly variances) should be 0.
     '''
     (ngroups, nints, nrows, ncols, deltatime) = (3, 2, 2, 2, 6.)
-    model1, gdq, rnModel, pixdq, err, gain = setup_small_cube(ngroups,
-                                                              nints, nrows, ncols, deltatime)
+    model1, gdq, rnModel, pixdq, err, gain = setup_small_cube(
+        ngroups, nints, nrows, ncols, deltatime)
 
     model1.groupdq[:, :, :, :] = SATURATED
 
-    new_mod, int_model, opt_model, gls_opt_model = ramp_fit(model1, 1024 * 30000.,
-                                                            True, rnModel, gain, 'OLS',
-                                                            'optimal', 'none')
+    new_mod, int_model, opt_model, gls_opt_model = ramp_fit(
+        model1, 1024 * 30000., True, rnModel, gain, 'OLS', 'optimal', 'none')
 
     # Check PRI output arrays
     np.testing.assert_allclose(new_mod.data, 0.0, atol=1E-6)
@@ -651,16 +649,19 @@ def test_miri_all_sat():
 
 
 def test_miri_first_last():
-    ''' This is a test of whether ramp fitting correctly handles having all 0th
-        group dq flagged as DO_NOT_USE, and all final group dq flagged as
-        DO_NOT_USE for MIRI data.  For 1 pixel ([1,1]) the 1st (again, 0-based)
-        group is flagged as a CR.  For such a ramp, the code removes the CR-flag
-        from such a CR-affected 1st group; so if it initially was 4 it is reset
-        to 0 ("good"), in which case it's as if that CR was not even there.
     '''
-    (ngroups, nints, nrows, ncols, deltatime) = (10, 1, 2, 2, 3.)
-    model1, gdq, rnModel, pixdq, err, gain = setup_small_cube(ngroups,
-                                                              nints, nrows, ncols, deltatime)
+    This is a test of whether ramp fitting correctly handles having all 0th
+    group dq flagged as DO_NOT_USE, and all final group dq flagged as
+    DO_NOT_USE for MIRI data.  For 1 pixel ([1,1]) the 1st (again, 0-based)
+    group is flagged as a CR.  For such a ramp, the code removes the CR-flag
+    from such a CR-affected 1st group; so if it initially was 4 it is reset
+    to 0 ("good"), in which case it's as if that CR was not even there.
+    '''
+    # (ngroups, nints, nrows, ncols, deltatime) = (10, 1, 2, 2, 3.)
+    nints, ngroups, nrows, ncols = 1, 10, 2, 2
+    deltatime = 3.
+    model1, gdq, rnModel, pixdq, err, gain = setup_small_cube(
+        ngroups, nints, nrows, ncols, deltatime)
 
     # Make smooth ramps having outlier SCI values in the 0th and final groups
     #   to reveal if they are included in the fit (they shouldn't be, as those
@@ -681,11 +682,37 @@ def test_miri_first_last():
     # Put CR in 1st (0-based) group
     model1.groupdq[0, 1, 1, 1] = JUMP_DET
 
-    new_mod, int_model, opt_model, gls_opt_model = ramp_fit(model1, 1024 * 30000.,
-                                                            True, rnModel, gain, 'OLS',
-                                                            'optimal', 'none')
+    new_mod, int_model, opt_model, gls_opt_model = ramp_fit(
+        model1, 1024 * 30000., True, rnModel, gain, 'OLS', 'optimal', 'none')
 
     np.testing.assert_allclose(new_mod.data, 10. / 3., rtol=1E-5)
+
+
+def test_miri_no_good_pixel():
+    '''
+    With no good data, MIRI will remove all groups where all pixels are bad.
+    If all groups are bad, NoneType is returned for all return values from
+    ramp_fit.  This test is to force this return of NoneType.
+    '''
+    nints, ngroups, nrows, ncols = 1, 2, 2, 2
+    deltatime = 3.
+    model1, gdq, rnModel, pixdq, err, gain = setup_small_cube(
+        ngroups, nints, nrows, ncols, deltatime)
+
+    # Dummy non-zero data to make sure if processing occurs a non-NoneType gets
+    # returned.  Processing should not occur and a NoneType should be returned.
+    model1.data[0, :, 0, 0] = np.array([-200., -500.], dtype=np.float32)
+    model1.data[0, :, 0, 1] = np.array([-300., -600.], dtype=np.float32)
+    model1.data[0, :, 1, 0] = np.array([-200., 900.], dtype=np.float32)
+    model1.data[0, :, 1, 1] = np.array([-600., -400.], dtype=np.float32)
+
+    # Set all groups to DO_NOT_USE
+    model1.groupdq[:, :, :, :] = DO_NOT_USE
+
+    new_mod, int_model, opt_model, gls_opt_model = ramp_fit(
+        model1, 1024 * 30000., True, rnModel, gain, 'OLS', 'optimal', 'none')
+
+    assert new_mod is None
 
 
 def setup_small_cube(ngroups=10, nints=1, nrows=2, ncols=2, deltatime=10.,

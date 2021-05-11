@@ -3,8 +3,15 @@
 calwebb_wfs-image2: Stage 2 WFS&C Processing
 ============================================
 
+:Deprecated post-1.1.0:
+   
+   The operation of the pipeline is no longer dependent on built-in configuration files.
+   How `jwst.pipeline.Image2Pipeline` processes WFS&C data is determined by the CRDS
+   reftype ``pars-image2pipeline``. The version of ``calwebb_wfs-image2.cfg`` delivered with
+   the software is devoid of any configuration and will be removed in a future version.
+
 :Config: calwebb_wfs-image2.cfg
-:Class: `~jwst.pipeline.Image2Pipeline`
+:Class: `jwst.pipeline.Image2Pipeline`
 
 Stage 2 processing of Wavefront Sensing and Control (WFS&C) images duplicates the
 processing applied to regular science imaging, with the exception of image resampling.

@@ -418,7 +418,7 @@ def get_open_slits(input_model, reference_files=None, slit_y_range=[-.55, .55]):
             slits = get_open_fixed_slits(input_model, slit_y_range)
     else:
         raise ValueError("EXP_TYPE {0} is not supported".format(exp_type.upper()))
-    if reference_files is not None:
+    if reference_files is not None and slits:
         slits = validate_open_slits(input_model, slits, reference_files)
         log.info("Slits projected on detector {0}: {1}".format(input_model.meta.instrument.detector,
                                                                [sl.name for sl in slits]))
@@ -575,7 +575,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id, dither_position,
         log.error(message)
         raise MSAFileError(message)
 
-    # Get the configuration header from teh _msa.fits file.  The EXTNAME should be 'SHUTTER_INFO'
+    # Get the configuration header from the _msa.fits file.  The EXTNAME should be 'SHUTTER_INFO'
     msa_conf = msa_file[('SHUTTER_INFO', 1)]
     msa_source = msa_file[("SOURCE_INFO", 1)].data
 
@@ -1224,7 +1224,7 @@ def compute_bounding_box(slit2detector, wavelength_range, slit_ymin=-.55, slit_y
     of the projection of the slit on the detector.
     Because the trace is curved and the wavelength_range may span the
     two detectors, y_min of the projection may be at an arbitrary wavelength.
-    The transform is run with a regularly sampled wavelengths to determin y_min.
+    The transform is run with a regularly sampled wavelengths to determine y_min.
 
     Parameters
     ----------
@@ -1554,9 +1554,10 @@ def gwa_to_ymsa(msa2gwa_model, lam_cen=None, slit=None, slit_y_range=None):
     return tab
 
 
-def nrs_wcs_set_input(input_model, slit_name, wavelength_range=None):
+def _nrs_wcs_set_input(input_model, slit_name):
     """
     Returns a WCS object for a specific slit, slice or shutter.
+    Does not compute the bounding box.
 
     Parameters
     ----------
@@ -1564,27 +1565,18 @@ def nrs_wcs_set_input(input_model, slit_name, wavelength_range=None):
         A WCS object for the all open slitlets in an observation.
     slit_name : int or str
         Slit.name of an open slit.
-    wavelength_range: list
-        Wavelength range for the combination of fliter and grating.
 
     Returns
     -------
     wcsobj : `~gwcs.wcs.WCS`
         WCS object for this slit.
     """
-    import copy  # TODO: Add a copy method to gwcs.WCS
+    import copy
     wcsobj = input_model.meta.wcs
-    if wavelength_range is None:
-        _, wrange = spectral_order_wrange_from_model(input_model)
-    else:
-        wrange = wavelength_range
+
     slit_wcs = copy.deepcopy(wcsobj)
     slit_wcs.set_transform('sca', 'gwa', wcsobj.pipeline[1].transform[1:])
-    # get the open slits from the model
-    # Need them to get the slit ymin,ymax
-    g2s = wcsobj.pipeline[2].transform
-    open_slits = g2s.slits
-
+    g2s = slit_wcs.pipeline[2].transform
     slit_wcs.set_transform('gwa', 'slit_frame', g2s.get_model(slit_name))
 
     exp_type = input_model.meta.exposure.type
@@ -1595,14 +1587,49 @@ def nrs_wcs_set_input(input_model, slit_name, wavelength_range=None):
     else:
         slit_wcs.set_transform('slit_frame', 'msa_frame',
                                wcsobj.pipeline[3].transform.get_model(slit_name) & Identity(1))
-    slit2detector = slit_wcs.get_transform('slit_frame', 'detector')
+    return slit_wcs
 
-    if is_nirspec_ifu:
-        bb = compute_bounding_box(slit2detector, wrange)
-    else:
+
+def nrs_wcs_set_input(input_model, slit_name, wavelength_range=None,
+                      slit_y_low=None, slit_y_high=None):
+    """
+    Returns a WCS object for a specific slit, slice or shutter.
+
+    Parameters
+    ----------
+    input_model : `~jwst.datamodels.DataModel`
+        A WCS object for the all open slitlets in an observation.
+    slit_name : int or str
+        Slit.name of an open slit.
+    wavelength_range: list
+        Wavelength range for the combination of filter and grating.
+
+    Returns
+    -------
+    wcsobj : `~gwcs.wcs.WCS`
+        WCS object for this slit.
+    """
+    def _get_y_range(input_model):
+        # get the open slits from the model
+        # Need them to get the slit ymin,ymax
+        g2s = input_model.meta.wcs.get_transform('gwa', 'slit_frame')
+        open_slits = g2s.slits
         slit = [s for s in open_slits if s.name == slit_name][0]
-        bb = compute_bounding_box(slit2detector, wrange,
-                                  slit_ymin=slit.ymin, slit_ymax=slit.ymax)
+        return slit.ymin, slit.ymax
+
+    if wavelength_range is None:
+        _, wavelength_range = spectral_order_wrange_from_model(input_model)
+
+    slit_wcs = _nrs_wcs_set_input(input_model, slit_name)
+    slit2detector = slit_wcs.get_transform('slit_frame', 'detector')
+    is_nirspec_ifu = is_nrs_ifu_lamp(input_model) or input_model.meta.exposure.type.lower() == 'nrs_ifu'
+    if is_nirspec_ifu:
+        bb = compute_bounding_box(slit2detector, wavelength_range)
+    else:
+        if slit_y_low is None or slit_y_high is None:
+            slit_y_low, slit_y_high = _get_y_range(input_model)
+        bb = compute_bounding_box(slit2detector, wavelength_range,
+                                  slit_ymin=slit_y_low, slit_ymax=slit_y_high)
 
     slit_wcs.bounding_box = bb
     return slit_wcs
@@ -1631,7 +1658,7 @@ def validate_open_slits(input_model, open_slits, reference_files):
         ylow, yhigh = domain[1]
         if (xlow >= 2048 or ylow >= 2048 or
             xhigh <= 0 or yhigh <= 0 or
-                xhigh - xlow < 1 or yhigh - ylow < 1):
+                xhigh - xlow < 2 or yhigh - ylow < 1):
             return False
         else:
             return True
@@ -1657,31 +1684,24 @@ def validate_open_slits(input_model, open_slits, reference_files):
     # collimator to GWA
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
 
-    msa = MSAModel(reference_files['msa'])
     col2det = collimator2gwa & Identity(1) | Mapping((3, 0, 1, 2)) | agreq | \
         gwa2det | det2dms
-    for quadrant in range(1, 6):
-        slits_in_quadrant = [s for s in open_slits if s.quadrant == quadrant]
-        if any(slits_in_quadrant):
-            msa_quadrant = getattr(msa, "Q{0}".format(quadrant))
-            msa_model = msa_quadrant.model
-            msa_data = msa_quadrant.data
-            for slit in slits_in_quadrant:
-                slit_id = slit.shutter_id
-                slitdata = msa_data[slit_id]
-                slitdata_model = get_slit_location_model(slitdata)
-                msa_transform = slitdata_model | msa_model
-                msa2det = msa_transform & Identity(1) | col2det
-                bb = compute_bounding_box(msa2det, wrange, slit.ymin, slit.ymax)
-                valid = _is_valid_slit(bb)
-                if not valid:
-                    log.info("Removing slit {0} from the list of open slits because the "
-                             "WCS bounding_box is completely outside the detector.".format(slit.name))
-                    log.debug("Slit bounding_box is {0}".format(bb))
-                    idx = np.nonzero([s.name == slit.name for s in open_slits])[0][0]
-                    open_slits.pop(idx)
 
-    msa.close()
+    slit2msa = slit_to_msa(open_slits, reference_files['msa'])
+
+    for slit in slit2msa.slits:
+        msa_transform = slit2msa.get_model(slit.name)
+        msa2det = msa_transform & Identity(1) | col2det
+
+        bb = compute_bounding_box(msa2det, wrange, slit.ymin, slit.ymax)
+
+        valid = _is_valid_slit(bb)
+        if not valid:
+            log.info("Removing slit {0} from the list of open slits because the "
+                     "WCS bounding_box is completely outside the detector.".format(slit.name))
+            idx = np.nonzero([s.name == slit.name for s in open_slits])[0][0]
+            open_slits.pop(idx)
+
     return open_slits
 
 

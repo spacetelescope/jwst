@@ -2,7 +2,7 @@
 import pytest
 import re
 
-from .helpers import (
+from jwst.associations.tests.helpers import (
     BasePoolRule,
     PoolParams,
     combine_pools,
@@ -10,8 +10,8 @@ from .helpers import (
     t_path
 )
 
-from .. import generate
-from ..main import constrain_on_candidates
+from jwst.associations import generate
+from jwst.associations.main import constrain_on_candidates
 
 
 class TestLevel3Spec(BasePoolRule):

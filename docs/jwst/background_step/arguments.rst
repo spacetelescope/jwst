@@ -16,3 +16,7 @@ control the sigma clipping, and are passed as arguments to the astropy
   The number of clipping iterations to perform, or ``None`` to clip until
   convergence is achieved. Defaults to ``None``.
 
+``--save_combined_background``
+  Saves the combined, averaged background image used for background
+  subtraction. Defaults to ``False``.
+

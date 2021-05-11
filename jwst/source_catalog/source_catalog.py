@@ -433,29 +433,6 @@ def make_segment_img(data, threshold, npixels=5.0, kernel=None, mask=None,
     return segm
 
 
-def calc_total_error(model):
-    """
-    Calculate the total error array.
-
-    The total error includes both background-only error and the source
-    Poisson noise.
-
-    Parameters
-    ----------
-    model : `ImageModel`
-        The input `ImageModel`.
-
-    Returns
-    -------
-    total_error : `~numpy.ndarray`
-        The total error array.
-    """
-    # TODO: Until errors are produced for the level 3 drizzle
-    # products, the JPWG has decided that the errors should not be
-    # populated.
-    return np.zeros_like(model.data)
-
-
 class JWSTSourceCatalog:
     """
     Class for the JWST source catalog.
@@ -481,13 +458,6 @@ class JWSTSourceCatalog:
         extended if both concentration indices are greater than the
         corresponding thresholds, otherwise it is considered a star.
 
-    error : array_like or `~astropy.units.Quantity`, optional
-        The total error array corresponding to the input ``data`` array.
-        ``error`` is assumed to include *all* sources of error,
-        including the Poisson error of the sources (see
-        `~photutils.utils.calc_total_error`) .  ``error`` must have the
-        same shape as the input ``data``.
-
     kernel : array-like (2D) or `~astropy.convolution.Kernel2D`, optional
         The 2D array of the kernel used to filter the data prior to
         calculating the source centroid and morphological parameters.
@@ -504,11 +474,17 @@ class JWSTSourceCatalog:
     abvega_offset : float
         Offset to convert from AB to Vega magnitudes.  The value
         represents m_AB - m_Vega.
+
+    Notes
+    -----
+    ``model.err`` is assumed to be the total error array corresponding
+    to the input science ``model.data`` array. It is assumed to include
+    *all* sources of error, including the Poisson error of the sources,
+    and have the same shape and units as the science data array.
     """
 
-    def __init__(self, model, segment_img, ci_star_thresholds, error=None,
-                 kernel=None, kernel_fwhm=None, aperture_params=None,
-                 abvega_offset=0.0):
+    def __init__(self, model, segment_img, ci_star_thresholds, kernel=None,
+                 kernel_fwhm=None, aperture_params=None, abvega_offset=0.0):
 
         if not isinstance(model, ImageModel):
             raise ValueError('The input model must be a ImageModel.')
@@ -519,7 +495,6 @@ class JWSTSourceCatalog:
             raise ValueError('ci_star_thresholds must contain only 2 '
                              'items')
         self.ci_star_thresholds = ci_star_thresholds
-        self.error = error  # total error array
         self.kernel = kernel
         self.kernel_sigma = kernel_fwhm * gaussian_fwhm_to_sigma
 
@@ -547,7 +522,7 @@ class JWSTSourceCatalog:
 
         unit = u.Jy
         self.model.data <<= unit
-        self.error <<= unit
+        self.model.err <<= unit
 
         return
 
@@ -632,9 +607,9 @@ class JWSTSourceCatalog:
 
         The values are set as dynamic attributes.
         """
-        segm_cat = SourceCatalog(self.model.data.astype(float),
-                                 self.segment_img, error=self.error,
-                                 kernel=self.kernel, wcs=self.wcs)
+        segm_cat = SourceCatalog(self.model.data, self.segment_img,
+                                 error=self.model.err, kernel=self.kernel,
+                                 wcs=self.wcs)
 
         self._xpeak = segm_cat.maxval_xindex
         self._ypeak = segm_cat.maxval_yindex
@@ -655,15 +630,6 @@ class JWSTSourceCatalog:
             setattr(self, column, value)
 
         return
-
-    @lazyproperty
-    def null_column(self):
-        """
-        An array containing only NaNs.
-        """
-        values = np.empty(len(self.label))
-        values.fill(np.nan)
-        return values
 
     @lazyproperty
     def xypos(self):
@@ -779,10 +745,10 @@ class JWSTSourceCatalog:
 
         desc.append(f'Total aperture-corrected {ftype2} based on the '
                     f'{self.aperture_ee[-1]}% encircled energy circular '
-                    'aperture; calculated only for stars')
+                    'aperture; should be used only for unresolved sources.')
         desc.append(f'Total aperture-corrected {ftype2} error based on the '
                     f'{self.aperture_ee[-1]}% encircled energy circular '
-                    'aperture; calculated only for stars')
+                    'aperture; should be used only for unresolved sources.')
 
         return desc
 
@@ -912,7 +878,7 @@ class JWSTSourceCatalog:
         apertures = [CircularAperture(self.xypos, radius) for radius in
                      self.aperture_params['aperture_radii']]
         aper_phot = aperture_photometry(self.model.data, apertures,
-                                        error=self.error)
+                                        error=self.model.err)
 
         for i, aperture in enumerate(apertures):
             flux_col = f'aperture_sum_{i}'
@@ -946,15 +912,11 @@ class JWSTSourceCatalog:
         for idx, colname in enumerate(self.ci_colnames):
             desc[colname] = self.ci_colname_descriptions[idx]
 
-        desc['is_star'] = 'Flag indicating whether the source is a star'
+        desc['is_extended'] = 'Flag indicating whether the source is extended'
         desc['sharpness'] = 'The DAOFind source sharpness statistic'
         desc['roundness'] = 'The DAOFind source roundness statistic'
+        desc['nn_label'] = 'The label number of the nearest neighbor'
         desc['nn_dist'] = 'The distance in pixels to the nearest neighbor'
-        desc['nn_abmag'] = ('The AB magnitude of the nearest neighbor.  If '
-                            'the object is a star it is the total '
-                            'aperture-corrected AB magnitude, otherwise it '
-                            'is the isophotal AB magnitude.')
-
         self.column_desc.update(desc)
 
         return list(desc.keys())
@@ -1013,13 +975,13 @@ class JWSTSourceCatalog:
         return
 
     @lazyproperty
-    def is_star(self):
+    def is_extended(self):
         """
-        Boolean indicating whether the source is a star.
+        Boolean indicating whether the source is extended.
         """
         mask1 = self.concentration_indices[0] > self.ci_star_thresholds[0]
         mask2 = self.concentration_indices[1] > self.ci_star_thresholds[1]
-        return np.logical_not(np.logical_and(mask1, mask2))
+        return np.logical_and(mask1, mask2)
 
     @lazyproperty
     def _kernel_size(self):
@@ -1177,50 +1139,48 @@ class JWSTSourceCatalog:
             return np.transpose(qdist)[1], np.transpose(qidx)[1]
 
     @lazyproperty
+    def nn_label(self):
+        """
+        The label number of the nearest neighbor.
+        """
+        if len(self._ckdtree_query[1]) == 1:  # only one detected source
+            return np.nan
+        return self.label[self._ckdtree_query[1]]
+
+    @lazyproperty
     def nn_dist(self):
         """
         The distance in pixels to the nearest neighbor.
         """
+        # self._ckdtree_query[0] is NaN if only one detected source
         return self._ckdtree_query[0] * u.pixel
-
-    @lazyproperty
-    def nn_abmag(self):
-        """
-        The AB magnitude of the nearest neighbor.
-
-        If the nearest-neighbor is a star, then its aperture-corrected
-        total AB magnitude is used.  Otherwise, its isophotal AB
-        magnitude is used.
-        """
-        if len(self._ckdtree_query[1]) == 1:  # only one detected source
-            return np.nan
-
-        nn_abmag = self.aper_total_abmag[self._ckdtree_query[1]]
-        nn_isomag = self.isophotal_abmag[self._ckdtree_query[1]]
-        return np.where(np.isnan(nn_abmag), nn_isomag, nn_abmag)
 
     @lazyproperty
     def aper_total_flux(self):
         """
-        The aperture-corrected total flux for sources that are stars,
-        based on the flux in largest aperture.
+        The aperture-corrected total flux for sources, based on the flux
+        in largest aperture.
+
+        The aperture-corrected total flux should be used only for
+        unresolved sources.
         """
         idx = self.n_aper - 1  # apcorr for the largest EE (largest radius)
         flux = (self.aperture_params['aperture_corrections'][idx] *
                 getattr(self, self.aperture_flux_colnames[idx * 2]))
-        flux[~self.is_star] = np.nan
         return flux
 
     @lazyproperty
     def aper_total_flux_err(self):
         """
-        The aperture-corrected total flux error for sources that are
-        stars, based on the flux in largest aperture.
+        The aperture-corrected total flux error for sources,
+        based on the flux in largest aperture.
+
+        The aperture-corrected total flux error should be used only for
+        unresolved sources.
         """
         idx = self.n_aper - 1  # apcorr for the largest EE (largest radius)
         flux_err = (self.aperture_params['aperture_corrections'][idx] *
                     getattr(self, self.aperture_flux_colnames[idx * 2 + 1]))
-        flux_err[~self.is_star] = np.nan
         return flux_err
 
     @lazyproperty
@@ -1234,28 +1194,40 @@ class JWSTSourceCatalog:
     @lazyproperty
     def aper_total_abmag(self):
         """
-        The total AB magnitude.
+        The aperture-corrected total AB magnitude.
+
+        The aperture-corrected total magnitude should be used only for
+        unresolved sources.
         """
         return self._abmag_total[0]
 
     @lazyproperty
     def aper_total_abmag_err(self):
         """
-        The total AB magnitude error.
+        The aperture-corrected total AB magnitude error.
+
+        The aperture-corrected total magnitude error should be used only
+        for unresolved sources.
         """
         return self._abmag_total[1]
 
     @lazyproperty
     def aper_total_vegamag(self):
         """
-        The total Vega magnitude.
+        The aperture-corrected total Vega magnitude.
+
+        The aperture-corrected total magnitude should be used only for
+        unresolved sources.
         """
         return self.aper_total_abmag - self.abvega_offset
 
     @lazyproperty
     def aper_total_vegamag_err(self):
         """
-        The total Vega magnitude error.
+        The aperture-corrected total Vega magnitude error.
+
+        The aperture-corrected total magnitude error should be used only
+        for unresolved sources.
         """
         return self.aper_total_abmag_err
 
@@ -1291,8 +1263,8 @@ class JWSTSourceCatalog:
                 catalog[colname].info.format = '.4f'
             if 'flux' in colname:
                 catalog[colname].info.format = '.6e'
-            if ('abmag' in colname or 'vegamag' in colname or 'nn_' in colname
-                    or colname in ('sharpness', 'roundness')):
+            if ('abmag' in colname or 'vegamag' in colname
+                    or colname in ('nn_dist', 'sharpness', 'roundness')):
                 catalog[colname].info.format = '.6f'
             if colname in ('semimajor_sigma', 'semiminor_sigma',
                            'ellipticity', 'orientation', 'sky_orientation'):
@@ -1329,13 +1301,6 @@ class JWSTSourceCatalog:
         for column in self.colnames:
             catalog[column] = getattr(self, column)
             catalog[column].info.description = self.column_desc[column]
-
-        # TODO: Until errors are produced for the level 3 drizzle
-        # products, the JPWG has decided that the errors should not be
-        # populated.
-        for colname in catalog.colnames:
-            if colname.endswith('_err'):
-                catalog[colname][:] = self.null_column
 
         catalog = self.format_columns(catalog)
         catalog.meta.update(self.catalog_metadata)

@@ -3,6 +3,15 @@
 Configuration (CFG) Files
 =========================
 
+.. note::
+
+   The ``cfg`` format can still be used but is deprecated in favor of
+   :ref:`config_asdf_files`. Please convert any processes that use ``cfg`` files
+   to the ``ASDF`` format. Note also that all ``cfg`` files that are currently
+   being delivered in the package and retrieved using ``collect_pipeline_cfgs``
+   set no parameters; files are empty. All steps query CRDS parameter references
+   for any data-dependent parameter settings, or use coded defaults.
+
 The ``cfg`` format for configuration files uses the well-known ini-file format.
 
 You can use the ``collect_pipeline_cfgs`` task to get copies of all the cfg

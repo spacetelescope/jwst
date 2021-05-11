@@ -7,9 +7,9 @@ import pytest
 
 from astropy.io import fits
 
-from . import helpers
-from .. import (AssociationRegistry, AssociationPool)
-from ..mkpool import mkpool
+from jwst.associations.tests import helpers
+from jwst.associations import (AssociationRegistry, AssociationPool)
+from jwst.associations.mkpool import mkpool
 
 REQUIRED_PARAMS = set(('PROGRAM', 'FILENAME'))
 

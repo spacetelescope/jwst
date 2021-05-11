@@ -1,13 +1,13 @@
 """test_level3_dithers: Test of dither rules."""
 import pytest
 
-from .helpers import (
+from jwst.associations.tests.helpers import (
     level3_rule_path,
     mkstemp_pool_file,
     t_path,
 )
 
-from ..main import Main
+from jwst.associations.main import Main
 
 
 @pytest.mark.parametrize(

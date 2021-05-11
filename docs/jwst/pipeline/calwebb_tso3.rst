@@ -3,8 +3,8 @@
 calwebb_tso3: Stage 3 Time-Series Observation(TSO) Processing
 =============================================================
 
-:Config file: calwebb_tso3.cfg
-:Class: `~jwst.pipeline.Tso3Pipeline`
+:Class: `jwst.pipeline.Tso3Pipeline`
+:Alias: calwebb_tso3
 
 The stage 3 TSO pipeline is to be applied to associations of calibrated TSO exposures
 (e.g. NIRCam TS imaging, NIRCam TS grism, NIRISS SOSS, NIRSpec BrightObj, MIRI LRS Slitless)

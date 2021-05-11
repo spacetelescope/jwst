@@ -7,12 +7,12 @@ import pytest
 
 from ci_watson.artifactory_helpers import get_bigdata_root
 
-from .base_classes import (
+from jwst.tests.base_classes import (
     BaseJWSTTest,
     _data_glob_local,
     _data_glob_url
 )
-from .helpers import word_precision_check
+from jwst.tests.helpers import word_precision_check
 
 
 def test_word_precision_check():

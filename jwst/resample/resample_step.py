@@ -26,7 +26,7 @@ class ResampleStep(Step):
 
     Parameters
     -----------
-    input : DataModel or Association
+    input :  ~jwst.datamodels.DataModel or ~jwst.associations.Association
         Single filename for either a single image or an association table.
     """
 
@@ -92,6 +92,13 @@ class ResampleStep(Step):
             result = resamp.output_models[0]
         else:
             result = resamp.output_models
+
+        # remove irrelevant WCS keywords
+        rm_keys = ['v2_ref', 'v3_ref', 'ra_ref', 'dec_ref', 'roll_ref',
+                   'v3yangle', 'vparity']
+        for key in rm_keys:
+            if key in result.meta.wcsinfo.instance:
+                del result.meta.wcsinfo.instance[key]
 
         return result
 

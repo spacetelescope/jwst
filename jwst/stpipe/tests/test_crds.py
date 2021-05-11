@@ -8,7 +8,7 @@ from astropy.io import fits
 
 from stpipe import crds_client
 
-from .. import Step
+from jwst.stpipe import Step
 import crds
 
 TMP_DIR = None

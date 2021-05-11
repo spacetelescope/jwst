@@ -195,7 +195,7 @@ class ModelContainer(JwstDataModel, Sequence):
 
         Parameters
         ----------
-        asn_data : Association
+        asn_data : ~jwst.associations.Association
             An association dictionary
 
         asn_file_path: str

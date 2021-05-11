@@ -4,7 +4,7 @@ from os import path
 import pytest
 import re
 
-from .helpers import (
+from jwst.associations.tests.helpers import (
     t_path
 )
 
