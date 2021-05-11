@@ -316,7 +316,7 @@ class TransformParameters:
 
 def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
             tolerance=60, allow_default=False, reduce_func=None,
-            dry_run=False, **transform_kwargs):
+            dry_run=False, save_transforms=None, **transform_kwargs):
     """Add WCS information to a FITS file.
 
     Telescope orientation is attempted to be obtained from
@@ -354,6 +354,9 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
 
     dry_run : bool
         Do not write out the modified file.
+
+    save_transforms : Path-like or None
+        File to save the calculated transforms to.
 
     transform_kwargs : dict
         Keyword arguments used by matrix calculation routines

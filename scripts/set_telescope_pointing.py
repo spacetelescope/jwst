@@ -40,6 +40,7 @@ DAMAGE.
 
 import argparse
 import logging
+from pathlib import Path
 
 import jwst.lib.set_telescope_pointing as stp
 
@@ -67,6 +68,10 @@ if __name__ == '__main__':
         '--method',
         type=stp.Methods, choices=list(stp.Methods), default=stp.Methods.default,
         help='Algorithmic method to use. Default: %(default)s'
+    )
+    parser.add_argument(
+        '--save-transforms', action='store_true',
+        help='Save transforms.'
     )
     parser.add_argument(
         '--tolerance', type=int, default=60,
@@ -109,6 +114,13 @@ if __name__ == '__main__':
             '\n------'
             'Setting pointing for {}'.format(filename)
         )
+
+        # Create path for saving the transforms.
+        transform_path= None
+        if args.save_transforms:
+            path = Path(filename)
+            transform_path = path.parent / path.stem + '_transforms.asdf'
+
         try:
             stp.add_wcs(
                 filename,
@@ -118,7 +130,8 @@ if __name__ == '__main__':
                 allow_default=args.allow_default,
                 dry_run=args.dry_run,
                 method=args.method,
-                j2fgs_transpose=args.transpose_j2fgs
+                j2fgs_transpose=args.transpose_j2fgs,
+                save_transforms=transform_path
             )
         except ValueError as exception:
             logger.info('Cannot determine pointing information: ' + str(exception))
