@@ -164,6 +164,21 @@ def method_fullva():
     return method_fullva_nofixture()
 
 
+def test_override_calc_wcs(method_fullva):
+    """Test matrix override in the full calculation"""
+    transforms, t_pars = method_fullva
+    wcsinfo, vinfo, _ = stp.calc_wcs(t_pars)
+
+    override = stp.Transforms(m_eci2j= np.array([[0.80583682, 0.51339893, 0.29503999],
+                                                 [-0.56953229, 0.8083677, 0.14891175],
+                                                 [-0.16204967, -0.28803339, 0.94380971]]))
+    t_pars.override_transforms = override
+    wcsinfo_new, vinfo_new, transforms_new = stp.calc_wcs(t_pars)
+
+    assert vinfo_new != vinfo
+    assert vinfo_new == stp.WCSRef(ra=32.505777840562835, dec=17.160130467271525, pa=351.03490223492486)
+
+
 @pytest.mark.parametrize(
     'attribute, expected',
     [('m_eci2j', 'overridden'), ('m_j2fgs1', 'untouched')]

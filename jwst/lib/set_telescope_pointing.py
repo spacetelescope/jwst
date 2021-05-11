@@ -216,7 +216,7 @@ class Transforms:
 
         override = self.override
         override_value = getattr(override, name) if override else None
-        return override_value if override_value else object.__getattribute__(self, name)
+        return override_value if override_value is not None else object.__getattribute__(self, name)
 
     def __post_init__(self):
         """Post-initialization of a DataClass"""
@@ -864,7 +864,7 @@ def calc_wcs(t_pars: TransformParameters):
 
     Returns
     -------
-    wcsinfo, vinfo, transforms : WCSRef, WCSRef, Transforms 
+    wcsinfo, vinfo, transforms : WCSRef, WCSRef, Transforms
         A 3-tuple is returned with the WCS pointing for
         the aperture and the V1 axis, and the transformation matrices.
 
