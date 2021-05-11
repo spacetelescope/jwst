@@ -124,7 +124,7 @@ if __name__ == '__main__':
         )
 
         # Create path for saving the transforms.
-        transform_path= None
+        transform_path = None
         if args.save_transforms:
             path = Path(filename)
             transform_path = path.with_name(f'{path.stem}_transforms.asdf')

@@ -211,7 +211,7 @@ class Transforms:
         This dunder method is called for ALL attributes. Tread carefully.
         """
         # If the attribute is not a field, just return its value. Like NOW.
-        if name.startswith('_') or name not in self._fields or name  == 'override':
+        if name.startswith('_') or name not in self._fields or name == 'override':
             return object.__getattribute__(self, name)
 
         override = self.override
@@ -751,6 +751,7 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
         logger.warning('Exception is %s', e)
 
     return transforms
+
 
 def update_s_region(model, siaf):
     """Update ``S_REGION`` sky footprint information.
