@@ -912,7 +912,7 @@ class JWSTSourceCatalog:
         for idx, colname in enumerate(self.ci_colnames):
             desc[colname] = self.ci_colname_descriptions[idx]
 
-        desc['is_star'] = 'Flag indicating whether the source is a star'
+        desc['is_extended'] = 'Flag indicating whether the source is extended'
         desc['sharpness'] = 'The DAOFind source sharpness statistic'
         desc['roundness'] = 'The DAOFind source roundness statistic'
         desc['nn_label'] = 'The label number of the nearest neighbor'
@@ -975,13 +975,13 @@ class JWSTSourceCatalog:
         return
 
     @lazyproperty
-    def is_star(self):
+    def is_extended(self):
         """
-        Boolean indicating whether the source is a star.
+        Boolean indicating whether the source is extended.
         """
         mask1 = self.concentration_indices[0] > self.ci_star_thresholds[0]
         mask2 = self.concentration_indices[1] > self.ci_star_thresholds[1]
-        return np.logical_not(np.logical_and(mask1, mask2))
+        return np.logical_and(mask1, mask2)
 
     @lazyproperty
     def _kernel_size(self):

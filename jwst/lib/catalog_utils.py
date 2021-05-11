@@ -85,7 +85,7 @@ class SkyObject(namedtuple('SkyObject', ("label",
                                          "sky_bbox_lr",
                                          "sky_bbox_ul",
                                          "sky_bbox_ur",
-                                         "is_star",
+                                         "is_extended",
                                          ), rename=False)):
 
     """
@@ -119,8 +119,8 @@ class SkyObject(namedtuple('SkyObject', ("label",
         Upper left corner of the minimum bounding box
     sky_bbox_ur : `~astropy.coordinates.SkyCoord`
         Upper right corner of the minimum bounding box
-    is_star : bool
-        Flag indicating if the object is a point source.
+    is_extended : bool
+        Flag indicating if the object is extended
     """
 
     __slots__ = ()  # prevent instance dictionary creation for lower mem
@@ -135,7 +135,7 @@ class SkyObject(namedtuple('SkyObject', ("label",
                 sky_bbox_lr=None,
                 sky_bbox_ul=None,
                 sky_bbox_ur=None,
-                is_star=None,):
+                is_extended=None,):
 
         return super(SkyObject, cls).__new__(cls,
                                              label=label,
@@ -148,7 +148,7 @@ class SkyObject(namedtuple('SkyObject', ("label",
                                              sky_bbox_lr=sky_bbox_lr,
                                              sky_bbox_ul=sky_bbox_ul,
                                              sky_bbox_ur=sky_bbox_ur,
-                                             is_star=is_star
+                                             is_extended=is_extended
                                              )
 
     def __str__(self):
@@ -163,7 +163,7 @@ class SkyObject(namedtuple('SkyObject', ("label",
                 "sky_bbox_lr: {7}\n"
                 "sky_bbox_ul: {8}\n"
                 "sky_bbox_ur: {9}\n"
-                "is_star: {10}"
+                "is_extended: {10}"
                 .format(self.label,
                         self.xcentroid,
                         self.ycentroid,
@@ -174,6 +174,6 @@ class SkyObject(namedtuple('SkyObject', ("label",
                         str(self.sky_bbox_lr),
                         str(self.sky_bbox_ul),
                         str(self.sky_bbox_ur),
-                        str(self.is_star)
+                        str(self.is_extended)
                         )
                 )

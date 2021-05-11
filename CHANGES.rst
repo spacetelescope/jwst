@@ -198,6 +198,9 @@ source_catalog
 - The ``nn_dist`` column was replaced by a ``nn_label`` column
   indicating the label number of the nearest neighbor. [#5998]
 
+- The ``is_star`` column was replaced by a ``is_extended`` column with
+  inverted boolean values. [#6018]
+
 srctype
 -------
 

@@ -67,8 +67,8 @@ properties:
     enum: [EXTENDED, POINT, UNKNOWN]
     fits_keyword: SRCTYPE
     fits_hdu: SCI
-  is_star:
-    title: Flag indicating whether the source is a star
+  is_extended:
+    title: Flag indicating whether the source is extended
     type: boolean
   source_xpos:
     title: Source position in slit (x-axis)

@@ -174,7 +174,7 @@ columns (assuming the default encircled energies of 30, 50, and 70):
 | CI_70_30               | Concentration index calculated as (aper70_flux /   |
 |                        | aper30_flux)                                       |
 +------------------------+----------------------------------------------------+
-| is_star                | Flag indicating whether the source is a star       |
+| is_extended            | Flag indicating whether the source is extended     |
 +------------------------+----------------------------------------------------+
 | sharpness              | The DAOFind source sharpness statistic             |
 +------------------------+----------------------------------------------------+

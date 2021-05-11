@@ -512,7 +512,7 @@ def get_object_info(catalog_name=None):
                                  sky_bbox_lr=row['sky_bbox_lr'],
                                  sky_bbox_ul=row['sky_bbox_ul'],
                                  sky_bbox_ur=row['sky_bbox_ur'],
-                                 is_star=row['is_star']
+                                 is_extended=row['is_extended']
                                  )
                        )
     return objects
@@ -693,7 +693,7 @@ def _create_grism_bbox(input_model, mmag_extract=99.0,
                     ymin = int(np.min(ystack))
                     ymax = int(np.max(ystack))
 
-                    if wfss_extract_half_height is not None and obj.is_star:
+                    if wfss_extract_half_height is not None and not obj.is_extended:
                         if input_model.meta.wcsinfo.dispersion_direction == 2:
                             ra_center, dec_center = obj.sky_centroid.ra.value, obj.sky_centroid.dec.value
                             center, _, _, _, _ = sky_to_grism(ra_center, dec_center, (lmin + lmax) / 2, order)
@@ -750,7 +750,7 @@ def _create_grism_bbox(input_model, mmag_extract=99.0,
                                                      sky_bbox_ur=obj.sky_bbox_ur,
                                                      xcentroid=xcenter,
                                                      ycentroid=ycenter,
-                                                     is_star=obj.is_star))
+                                                     is_extended=obj.is_extended))
     if len(grism_objects) == 0:
         log.warning("No grism objects saved, check catalog")
     return grism_objects
