@@ -7,13 +7,15 @@ import os
 from astropy.modeling.models import Shift, Identity
 from astropy.table import QTable
 
-from ...lib.catalog_utils import SkyObject
-from ... import datamodels
+from jwst.lib.catalog_utils import SkyObject
+from jwst import datamodels
 
-from ..util import (get_object_info, wcs_bbox_from_shape, subarray_transform,
-                    bounding_box_from_subarray, transform_bbox_from_shape)
+from jwst.assign_wcs.util import (
+    get_object_info, wcs_bbox_from_shape, subarray_transform,
+    bounding_box_from_subarray, transform_bbox_from_shape
+)
 
-from . import data
+from jwst.assign_wcs.tests import data
 
 data_path = os.path.split(os.path.abspath(data.__file__))[0]
 

@@ -60,10 +60,17 @@ calwebb_spec3
 - Updated documentation to indicate that master_background is applied to
   NIRSpec MOS exposures in the calwebb_spec2 pipeline [#5913]
 
+csv_tools
+---------
+
+- The ``csv_tools`` subpackage was removed [#6006]
+
 cube_build
 ----------
 
 - Fixed typo in cube_build_step spec for grating [#5839]
+- Update code to read in spectral and spatial size of exposure on the sky #5991
+- For calspec2 pipeline skip determining the dq plane in cube_build #5991
 
 datamodels
 ----------
@@ -103,6 +110,10 @@ extract_2d
 
 - For WFSS removed setting srctype to UNKNOWN; added setting ``is_star`` in slitmeta [#5788]
 
+- In NRC_TSGRISM mode replaced FITS WCS keywords with JWST specific ones. [#6005]
+
+- Added ``specsys`` to slits. [#6005]
+
 general
 -------
 
@@ -113,6 +124,9 @@ general
 
 - Update data products, ``calwebb_image3``, and ``source_catalog`` docs to include
   information about the segmentation map product [#5949]
+
+- Replace documentation references to ambiguous class names with full
+  paths. [#6017]
 
 jump
 -----------------
@@ -152,6 +166,8 @@ ramp_fitting
 
 - Refactoring ramp fit code separating OLS and GLS code into their own file. [#5951]
 
+- Refactoring ramp fit code in preparation for moving code to STCAL. [#6010]
+
 refpix
 ------
 
@@ -171,6 +187,8 @@ resample
 
 - Propagate variance arrays into ``SlitModel`` used as input for ``ResampleSpecStep`` [#5941]
 
+- Remove certain WCS keywords that are irrelevant after resampling. [#5971]
+
 source_catalog
 --------------
 
@@ -183,6 +201,12 @@ source_catalog
 
 - Photometric errors are now computed using the new resampled total
   error array. [#5997]
+
+- The ``nn_dist`` column was replaced by a ``nn_label`` column
+  indicating the label number of the nearest neighbor. [#5998]
+
+- The ``is_star`` column was replaced by a ``is_extended`` column with
+  inverted boolean values. [#6018]
 
 srctype
 -------
@@ -198,6 +222,12 @@ tweakreg
 --------
 
 - Updated documentation to include the new "rshift" option for fit geometry [#5899]
+
+wfss_contam
+-----------
+
+- Implemented basic step structure to apply WFSS contamination corrections, along with
+  the necessary grism library modules [#5508]
 
 1.1.0 (2021-02-26)
 ==================

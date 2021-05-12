@@ -82,7 +82,7 @@ class Spec2Pipeline(Pipeline):
 
         Parameters
         ----------
-        input: str, Level2 Association, or DataModel
+        input: str, Level2 Association, or ~jwst.datamodels.DataModel
             The exposure or association of exposures to process
         """
         self.log.info('Starting calwebb_spec2 ...')
@@ -92,6 +92,7 @@ class Spec2Pipeline(Pipeline):
         self.resample_spec.suffix = 's2d'
         self.cube_build.output_type = 'multi'
         self.cube_build.save_results = False
+        self.cube_build.skip_dqflagging = True
         self.extract_1d.save_results = self.save_results
 
         # Retrieve the input(s)
@@ -192,6 +193,10 @@ class Spec2Pipeline(Pipeline):
                 try:
                     science.meta.source_catalog = os.path.basename(members_by_type['sourcecat'][0])
                     self.log.info('Using sourcecat file {}'.format(science.meta.source_catalog))
+                    science.meta.segmentation_map = os.path.basename(members_by_type['segmap'][0])
+                    self.log.info('Using segmentation map {}'.format(science.meta.segmentation_map))
+                    science.meta.direct_image = os.path.basename(members_by_type['direct_image'][0])
+                    self.log.info('Using direct image {}'.format(science.meta.direct_image))
                 except IndexError:
                     if science.meta.source_catalog is None:
                         raise IndexError("No source catalog specified in association or datamodel")

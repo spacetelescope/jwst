@@ -2,7 +2,7 @@
 import pytest
 from astropy.io.fits.diff import FITSDiff
 
-from . import regtestdata as rt
+from jwst.regtest import regtestdata as rt
 
 
 @pytest.fixture(scope='module')

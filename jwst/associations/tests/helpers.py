@@ -10,10 +10,10 @@ from tempfile import TemporaryDirectory
 
 from astropy.table import (Table, vstack)
 
-from .. import (AssociationRegistry, AssociationPool, generate)
-from ..lib.counter import Counter
-from ..lib.diff import compare_asns
-from ..lib.utilities import is_iterable
+from jwst.associations import (AssociationRegistry, AssociationPool, generate)
+from jwst.associations.lib.counter import Counter
+from jwst.associations.lib.diff import compare_asns
+from jwst.associations.lib.utilities import is_iterable
 
 
 # Define how to setup initial conditions with pools.

@@ -62,6 +62,7 @@ class AssociationRegistry(dict):
     The general workflow is as follows:
 
         * Create the registry
+            >>> from jwst.associations.registry import AssociationRegistry
             >>> registry = AssociationRegistry()
 
         * Create associations from an item

@@ -1,7 +1,7 @@
 from glob import glob
 import os
 
-from . import helpers
+from jwst.exp_to_source.tests import helpers
 from jwst.exp_to_source.main import Main
 
 

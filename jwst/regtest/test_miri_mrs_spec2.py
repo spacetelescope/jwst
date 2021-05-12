@@ -10,7 +10,7 @@ from jwst import datamodels
 from jwst.associations import load_asn
 from jwst.lib.suffix import replace_suffix
 
-from . import regtestdata as rt
+from jwst.regtest import regtestdata as rt
 
 # Define artifactory source and truth
 INPUT_PATH = 'miri/mrs'

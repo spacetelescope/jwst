@@ -7,8 +7,8 @@ from jwst.stpipe import Step
 from jwst.datamodels import JwstDataModel, ModelContainer
 from jwst import datamodels
 
-from .steps import StepWithModel
-from .util import t_path
+from jwst.stpipe.tests.steps import StepWithModel
+from jwst.stpipe.tests.util import t_path
 
 
 def test_default_input_with_container(mk_tmp_dirs):

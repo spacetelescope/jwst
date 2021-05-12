@@ -2,7 +2,7 @@ import os
 
 from jwst import datamodels
 from jwst.assign_mtwcs import AssignMTWcsStep
-from . import data
+from jwst.assign_mtwcs.tests import data
 
 data_path = os.path.split(os.path.abspath(data.__file__))[0]
 

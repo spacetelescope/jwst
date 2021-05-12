@@ -55,7 +55,7 @@ class GrismObject(namedtuple('GrismObject', ("sid",
                                              "sky_bbox_ul",
                                              "xcentroid",
                                              "ycentroid",
-                                             "is_star",
+                                             "is_extended",
                                              ), rename=False)):
     """ Grism Objects identified from a direct image catalog and segment map.
 
@@ -114,7 +114,7 @@ class GrismObject(namedtuple('GrismObject', ("sid",
                 sky_bbox_ul=None,
                 xcentroid=None,
                 ycentroid=None,
-                is_star=None):
+                is_extended=None):
 
         return super(GrismObject, cls).__new__(cls,
                                                sid=sid,
@@ -128,7 +128,7 @@ class GrismObject(namedtuple('GrismObject', ("sid",
                                                sky_bbox_ul=sky_bbox_ul,
                                                xcentroid=xcentroid,
                                                ycentroid=ycentroid,
-                                               is_star=is_star)
+                                               is_extended=is_extended)
 
     def __str__(self):
         """Return a pretty print for the object information."""
@@ -1075,6 +1075,7 @@ def _toindex(value):
 
     Examples
     --------
+    >>> from jwst.transforms.models import _toindex
     >>> _toindex(np.array([-0.5, 0.49999]))
     array([0, 0])
     >>> _toindex(np.array([0.5, 1.49999]))

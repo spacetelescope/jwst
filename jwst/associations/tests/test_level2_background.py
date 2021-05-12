@@ -1,12 +1,12 @@
 """Test Level2 background nods"""
-from .helpers import (
+from jwst.associations.tests.helpers import (
     combine_pools,
     registry_level2_only,
     t_path
 )
 
-from .. import generate
-from ..main import constrain_on_candidates
+from jwst.associations import generate
+from jwst.associations.main import constrain_on_candidates
 
 DITHER_PATTERN_MULTIPLIER = {
     '0': 1,  # No pattern, 1-to-1 exposure count

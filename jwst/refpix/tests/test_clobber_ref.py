@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..irs2_subtract_reference import decode_mask, clobber_ref
+from jwst.refpix.irs2_subtract_reference import decode_mask, clobber_ref
 
 
 def test_clobber_ref():

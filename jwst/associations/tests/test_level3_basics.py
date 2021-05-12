@@ -1,13 +1,13 @@
 """Test general Level 3 rules environment"""
 import pytest
 
-from .helpers import (
+from jwst.associations.tests.helpers import (
     combine_pools,
     registry_level3_only,
     t_path
 )
 
-from .. import generate
+from jwst.associations import generate
 
 
 def test_meta():

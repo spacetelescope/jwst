@@ -8,7 +8,7 @@ from jwst.master_background import MasterBackgroundNrsSlitsStep
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
-from . import regtestdata as rt
+from jwst.regtest import regtestdata as rt
 
 pytestmark = pytest.mark.bigdata
 
