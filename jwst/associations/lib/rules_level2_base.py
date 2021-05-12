@@ -459,7 +459,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
                                         now_background = Member(other_science)
                                         now_background['exptype'] = 'background'
                                         new_members.append(now_background)
-                                except (ValueError, KeyError):
+                                except (ValueError, KeyError, ZeroDivisionError):
                                     pass
                         else:
                             now_background = Member(other_science)
