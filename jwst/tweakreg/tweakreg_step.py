@@ -123,7 +123,7 @@ class TweakRegStep(Step):
             raise ValueError("Input must contain at least one image model.")
 
         # group images by their "group id":
-        grp_img = images.models_grouped
+        grp_img = list(images.models_grouped)
 
         self.log.info('')
         self.log.info("Number of image groups to be aligned: {:d}."
