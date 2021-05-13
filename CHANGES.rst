@@ -99,6 +99,8 @@ documentation
 - Update pipeline introduction document to include segmentation map (``segm``)
   in list of data products [#5956]
 
+- Update ``assign_mtwcs`` step docs and reference the ``assign_mtwcs`` step in the
+  ``calwebb_image3`` and ``calwebb_spec3`` pipeline docs [#6024]
 
 extract_2d
 ----------
