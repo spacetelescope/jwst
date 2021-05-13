@@ -18,6 +18,8 @@ processed using the :ref:`calwebb_tso3 <calwebb_tso3>` pipeline.
 +--------------------------------------------------+
 | calwebb_image3                                   |
 +==================================================+
+| :ref:`assign_mtwcs <assign_mtwcs_step>`          |
++--------------------------------------------------+
 | :ref:`tweakreg <tweakreg_step>`                  |
 +--------------------------------------------------+
 | :ref:`skymatch <skymatch_step>`                  |
