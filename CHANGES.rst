@@ -216,6 +216,9 @@ transforms
 tweakreg
 --------
 
+- Fix a bug due to ``models_grouped`` now returning ``odict_values`` instead
+  of lists. [#6022]
+
 - Updated documentation to include the new "rshift" option for fit geometry [#5899]
 
 wfss_contam
