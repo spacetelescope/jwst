@@ -1089,7 +1089,7 @@ def wrap_ra(ravalues):
     Parameters
     ----------
     ravalues : numpy.ndarray
-        input RA values 
+        input RA values
 
     Returns
     ------
