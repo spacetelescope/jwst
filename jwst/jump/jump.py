@@ -32,11 +32,12 @@ def detect_jumps(input_model, gain_model, readnoise_model,
     image.  Also, a 2-dimensional read noise array with appropriate values for
     each pixel is passed to the detection methods.
     """
-    if max_cores is None:
+    if max_cores is 'none' or None:
         numslices = 1
+        og.info("Using 1 core for jump detection ")
+
     else:
         num_cores = multiprocessing.cpu_count()
-        log.info("Found %d possible cores to use for jump detection " % num_cores)
         if max_cores == 'quarter':
             numslices = num_cores // 4 or 1
         elif max_cores == 'half':
@@ -45,6 +46,7 @@ def detect_jumps(input_model, gain_model, readnoise_model,
             numslices = num_cores
         else:
             numslices = 1
+        log.info(f"Found {num_cores} possible cores to use for jump detection, using {numslices} ")
 
     # Load the data arrays that we need from the input model
     output_model = input_model.copy()
@@ -123,7 +125,6 @@ def detect_jumps(input_model, gain_model, readnoise_model,
                                                          min_jump_to_flag_neighbors)
         elapsed = time.time() - start
     else:
-        log.info("Creating %d processes for jump detection " % numslices)
         pool = multiprocessing.Pool(processes=numslices)
         # Starts each slice in it's own process. Starmap allows more than one parameter to be passed.
         real_result = pool.starmap(twopt.find_crs, slices)
