@@ -1656,7 +1656,7 @@ def calc_eci2j_matrix(q):
     return transform
 
 
-def calc_j2fgs1_matrix(j2fgs_matrix, transpose=False):
+def calc_j2fgs1_matrix(j2fgs_matrix, transpose=True):
     """Calculate the J-frame to FGS1 transformation
 
     Parameters
@@ -1676,17 +1676,7 @@ def calc_j2fgs1_matrix(j2fgs_matrix, transpose=False):
     if np.isclose(j2fgs_matrix, 0.).all():
         logger.warning('J-Frame to FGS1 engineering parameters are all zero.')
         logger.warning('Using default matrix')
-        m_partial = np.asarray(
-            [
-                [0., 1., 0.],
-                [0., 0., 1.],
-                [1., 0., 0.]
-            ]
-        )
-        transform = np.dot(
-            m_partial,
-            J2FGS_MATRIX_DEFAULT
-        )
+        transform = J2FGS_MATRIX_DEFAULT
 
     else:
         logger.info(
@@ -1694,8 +1684,10 @@ def calc_j2fgs1_matrix(j2fgs_matrix, transpose=False):
             ' for the J-Frame to FGS1 transformation.'
         )
         transform = np.array(j2fgs_matrix).reshape((3, 3))
-        if transpose:
-            transform = transform.transpose()
+
+    if transpose:
+        logger.info('Transposing the J-Frame to FGS matrix.')
+        transform = transform.transpose()
 
     return transform
 
