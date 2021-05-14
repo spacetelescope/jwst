@@ -1096,8 +1096,9 @@ def wrap_ra(ravalues):
     a numpy array of ra values all on "same side" of 0/360 border
     """
 
-    index_good = np.where(np.isfinite(ravalues))
-    ravalues_wrap = ravalues[index_good].copy()
+    ravalues_array = np.array(ravalues)
+    index_good = np.where(np.isfinite(ravalues_array))
+    ravalues_wrap = ravalues_array[index_good].copy()
     median_ra = np.nanmedian(ravalues_wrap)
 
     # using median to test if there is any wrapping going on
@@ -1110,5 +1111,9 @@ def wrap_ra(ravalues):
 
     if(nwrap != 0 and median_ra > 180):
         ravalues_wrap[wrap_index] = ravalues_wrap[wrap_index] + 360.0
+
+    # if the input ravaules are a list - return a list
+    if isinstance(ravalues, list):
+        ravalues = ravalues_wrap.tolist()
 
     return ravalues_wrap
