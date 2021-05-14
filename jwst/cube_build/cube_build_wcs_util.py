@@ -111,10 +111,10 @@ def find_corners_MIRI(input, this_channel, instrument_info, coord_system):
     lambda_min = np.nanmin(lam)
     lambda_max = np.nanmax(lam)
 
-    # before returning ra should be between 0 to 360
+    # before returning,  ra should be between 0 to 360
     if a_min < 0:
         a_min = a_min + 360
-    if a_max > 360.0:
+    if a_max >= 360.0:
         a_max = a_max - 360.0
 
     if a1 < 0:

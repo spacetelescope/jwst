@@ -9,8 +9,8 @@ ami_analyze
 assign_wcs
 ----------
 
-- Moved the routine wrap_ra from cube_build to assign_wcs.ulit. The correctly
-  determines for s_region for data that cross ra boundary. [#6026]
+- Moved the routine wrap_ra from cube_build to assign_wcs.util. The s_region is now
+  correct for data that cross ra boundary. [#6026]
 
 - Changed evaluation of grism bounding box center from averaged extrema of
   transformed bounding box to transformed centroid of source_cat object [#5809]

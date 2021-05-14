@@ -884,7 +884,7 @@ def compute_footprint_spectral(model):
     x, y = grid_from_bounding_box(bbox)
     ra, dec, lam = swcs(x, y)
 
-    # the wrapped ra values are forced to be on one side of ra-boarder
+    # the wrapped ra values are forced to be on one side of ra-border
     # the wrapped ra are used to determine the correct  min and max ra
     ra = wrap_ra(ra)
     min_ra = np.nanmin(ra)
@@ -893,7 +893,7 @@ def compute_footprint_spectral(model):
     # for the footprint we want the ra values to fall between 0 to 360
     if(min_ra < 0):
         min_ra = min_ra + 360.0
-    if(max_ra > 360.0):
+    if(max_ra >= 360.0):
         max_ra = max_ra - 360.0
     footprint = np.array([[min_ra, np.nanmin(dec)],
                           [max_ra, np.nanmin(dec)],
@@ -1014,7 +1014,7 @@ def compute_footprint_nrs_ifu(dmodel, mod):
         ra_total.extend(np.ravel(ra))
         dec_total.extend(np.ravel(dec))
         lam_total.extend(np.ravel(lam))
-    # the wrapped ra values are forced to be on one side of ra-boa`rder
+    # the wrapped ra values are forced to be on one side of ra-border
     # the wrapped ra are used to determine the correct  min and max ra
     ra_total = wrap_ra(ra_total)
     ra_max = np.nanmax(ra_total)
@@ -1022,7 +1022,7 @@ def compute_footprint_nrs_ifu(dmodel, mod):
     # for the footprint we want ra to be between 0 to 360
     if(ra_min < 0):
         ra_min = ra_min + 360.0
-    if(ra_max > 360.0):
+    if(ra_max >= 360.0):
         ra_max = ra_max - 360.0
 
     dec_max = np.nanmax(dec_total)
@@ -1088,8 +1088,8 @@ def wrap_ra(ravalues):
 
     Parameters
     ----------
-    input : ravalues
-        RA values numpy.ndarray
+    ravalues : numpy.ndarray
+        input RA values 
 
     Returns
     ------

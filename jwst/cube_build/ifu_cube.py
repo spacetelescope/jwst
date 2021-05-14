@@ -1333,7 +1333,7 @@ class IFUCubeData():
         final_b_min = min(corner_b)
         final_b_max = max(corner_b)
 
-        log.info(f'final a and b:{final_a_min, final_b_min, final_a_max, final_b_max}')
+        log.debug(f'final a and b:{final_a_min, final_b_min, final_a_max, final_b_max}')
         log.debug(f'final wave:   {min(lambda_min), max(lambda_max)}')
 
         # for MIRI wavelength range read in from cube pars reference file
