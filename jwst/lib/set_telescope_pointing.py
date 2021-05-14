@@ -1672,6 +1672,13 @@ def calc_j2fgs1_matrix(j2fgs_matrix, transpose=True):
     -------
     transform : np.array((3, 3))
         The transformation matrix
+
+    Notes
+    -----
+    The parameter `transpose` is defaulted to `True` because the
+    matrix, as defined in the engineering telemetry, is actually for
+    FGS1-to-J-frame. However, all documentation has always
+    referred to this J-to-FGS1.
     """
     if np.isclose(j2fgs_matrix, 0.).all():
         logger.warning('J-Frame to FGS1 engineering parameters are all zero.')
