@@ -10,7 +10,7 @@ from astropy.modeling.models import (Mapping, Tabular1D, Linear1D,
 from astropy.modeling.fitting import LinearLSQFitter
 from gwcs import wcstools, WCS
 from gwcs import coordinate_frames as cf
-from ..cube_build.cube_build_wcs_util import wrap_ra
+from ..assign_wcs.util import wrap_ra
 
 from .. import datamodels
 from . import gwcs_drizzle

@@ -32,7 +32,7 @@ log.setLevel(logging.DEBUG)
 
 __all__ = ["reproject", "wcs_from_footprints", "velocity_correction",
            "MSAFileError", "NoDataOnDetectorError", "compute_scale",
-           "calc_rotation_matrix"]
+           "calc_rotation_matrix", "wrap_ra"]
 
 
 class MSAFileError(Exception):
@@ -883,10 +883,22 @@ def compute_footprint_spectral(model):
 
     x, y = grid_from_bounding_box(bbox)
     ra, dec, lam = swcs(x, y)
-    footprint = np.array([[np.nanmin(ra), np.nanmin(dec)],
-                          [np.nanmax(ra), np.nanmin(dec)],
-                          [np.nanmax(ra), np.nanmax(dec)],
-                          [np.nanmin(ra), np.nanmax(dec)]])
+
+    # the wrapped ra values are forced to be on one side of ra-border
+    # the wrapped ra are used to determine the correct  min and max ra
+    ra = wrap_ra(ra)
+    min_ra = np.nanmin(ra)
+    max_ra = np.nanmax(ra)
+
+    # for the footprint we want the ra values to fall between 0 to 360
+    if(min_ra < 0):
+        min_ra = min_ra + 360.0
+    if(max_ra >= 360.0):
+        max_ra = max_ra - 360.0
+    footprint = np.array([[min_ra, np.nanmin(dec)],
+                          [max_ra, np.nanmin(dec)],
+                          [max_ra, np.nanmax(dec)],
+                          [min_ra, np.nanmax(dec)]])
     lam_min = np.nanmin(lam)
     lam_max = np.nanmax(lam)
     return footprint, (lam_min, lam_max)
@@ -1002,8 +1014,17 @@ def compute_footprint_nrs_ifu(dmodel, mod):
         ra_total.extend(np.ravel(ra))
         dec_total.extend(np.ravel(dec))
         lam_total.extend(np.ravel(lam))
+    # the wrapped ra values are forced to be on one side of ra-border
+    # the wrapped ra are used to determine the correct  min and max ra
+    ra_total = wrap_ra(ra_total)
     ra_max = np.nanmax(ra_total)
     ra_min = np.nanmin(ra_total)
+    # for the footprint we want ra to be between 0 to 360
+    if(ra_min < 0):
+        ra_min = ra_min + 360.0
+    if(ra_max >= 360.0):
+        ra_max = ra_max - 360.0
+
     dec_max = np.nanmax(dec_total)
     dec_min = np.nanmin(dec_total)
     lam_max = np.nanmax(lam_total)
@@ -1056,3 +1077,38 @@ def velocity_correction(velosys):
     model.inverse = astmodels.Identity(1) / astmodels.Const1D(correction, name="inv_vel_correciton")
 
     return model
+
+
+def wrap_ra(ravalues):
+    """Test for 0/360 wrapping in ra values.
+
+    If exists it makes it difficult to determine
+    ra range of a region on the sky. This problem is solved by putting them all
+    on "one side" of 0/360 border
+
+    Parameters
+    ----------
+    ravalues : numpy.ndarray
+        input RA values
+
+    Returns
+    ------
+    a numpy array of ra values all on "same side" of 0/360 border
+    """
+
+    index_good = np.where(np.isfinite(ravalues))
+    ravalues_wrap = ravalues[index_good].copy()
+    median_ra = np.nanmedian(ravalues_wrap)
+
+    # using median to test if there is any wrapping going on
+    wrap_index = np.where(np.fabs(ravalues_wrap - median_ra) > 180.0)
+    nwrap = wrap_index[0].size
+
+    # get all the ra on the same "side" of 0/360
+    if(nwrap != 0 and median_ra < 180):
+        ravalues_wrap[wrap_index] = ravalues_wrap[wrap_index] - 360.0
+
+    if(nwrap != 0 and median_ra > 180):
+        ravalues_wrap[wrap_index] = ravalues_wrap[wrap_index] + 360.0
+
+    return ravalues_wrap
