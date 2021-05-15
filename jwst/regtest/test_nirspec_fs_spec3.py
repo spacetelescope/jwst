@@ -34,13 +34,12 @@ def test_nirspec_fs_spec3(run_pipeline, rtdata_module, fitsdiff_default_kwargs, 
 
     output = f"jw93045-o010_s00003_nirspec_f290lp-g395h-subs400a1_{suffix}.fits"
     rtdata.output = output
-
-    # Get the truth files
     rtdata.get_truth(f"truth/test_nirspec_fs_spec3/{output}")
 
-    # Set looser tolerance for resampled s2d comparison
+    # Adjust tolerance for machine precision with float32 drizzle code
     if suffix == "s2d":
-        fitsdiff_default_kwargs["atol"] = 1e-5
+        fitsdiff_default_kwargs["rtol"] = 1e-2
+        fitsdiff_default_kwargs["atol"] = 2e-4
 
     # Compare the results
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
