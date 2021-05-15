@@ -8,6 +8,7 @@ ami_analyze
 
 assign_wcs
 ----------
+- Convert the ra values to array in util.wrap_ra, but if input is a list return a list [6031]
 
 - Moved the routine wrap_ra from cube_build to assign_wcs.util. The s_region is now
   correct for data that cross ra boundary. [#6026]
