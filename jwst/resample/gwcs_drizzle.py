@@ -14,7 +14,7 @@ class GWCSDrizzle:
     Combine images using the drizzle algorithm
     """
 
-    def __init__(self, product, outwcs=None, single=False, wt_scl=None,
+    def __init__(self, product, outwcs=None, wt_scl=None,
                  pixfrac=1.0, kernel="square", fillval="INDEF"):
         """
         Create a new Drizzle output object and set the drizzle parameters.
@@ -173,13 +173,6 @@ class GWCSDrizzle:
             will be used to set the weight scaling and the value of this parameter
             will be ignored.
         """
-        insci = insci.astype(np.float32)
-
-        if inwht is None:
-            inwht = np.ones(insci.shape, dtype=insci.dtype)
-        else:
-            inwht = inwht.astype(np.float32)
-
         if self.wt_scl == "exptime":
             wt_scl = expin
         elif self.wt_scl == "expsq":
@@ -376,17 +369,11 @@ def dodrizzle(insci, input_wcs, inwht, output_wcs, outsci, outwht, outcon,
     log.debug(f"Input Sci shape: {insci.shape}")
     log.debug(f"Output Sci shape: {outsci.shape}")
 
-    # y_mid = pixmap.shape[0] // 2
-    # x_mid = pixmap.shape[1] // 2
-    # print("x slice: ", pixmap[y_mid,:,0])
-    # print("y slice: ", pixmap[:,x_mid,1])
-    # print("insci: ", insci)
     # Call 'drizzle' to perform image combination
-
     log.info(f"Drizzling {insci.shape} --> {outsci.shape}")
 
     _vers, nmiss, nskip = cdrizzle.tdriz(
-        insci, inwht, pixmap,
+        insci.astype(np.float32), inwht.astype(np.float32), pixmap,
         outsci, outwht, outcon,
         uniqid=uniqid,
         xmin=xmin, xmax=xmax,

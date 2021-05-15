@@ -98,26 +98,19 @@ class ResampleData:
                            self.output_wcs.data_size[1]), dtype=np.int32)
         self.blank_output.con = outcon
 
-    def blend_output_metadata(self, output_model):
-        """Create new output metadata based on blending all input metadata."""
-        # Run fitsblender on output product
-        output_file = output_model.meta.filename
-
-        log.info('Blending metadata for {}'.format(output_file))
-        blendmeta.blendmodels(output_model, inputs=self.input_models,
-                              output=output_file)
-
     def do_drizzle(self):
-        """ Perform drizzling operation on input images to create a new output
+        """ Perform drizzling operation on input images's to create a new output
         """
         # Look for input configuration parameter telling the code to run
         # in single-drizzle mode (mosaic all detectors in a single observation)
         if self.single:
+            driz_outputs = self.input_models.group_names
             exposures = self.input_models.models_grouped
             group_exptime = []
             for exposure in exposures:
                 group_exptime.append(exposure[0].meta.exposure.exposure_time)
         else:
+            driz_outputs = [self.output_filename]
             exposures = [self.input_models]
 
             total_exposure_time = 0.0
@@ -126,8 +119,10 @@ class ResampleData:
             group_exptime = [total_exposure_time]
         pointings = len(self.input_models.group_names)
 
-        for exposure, texptime in zip(exposures, group_exptime):
+        for obs_product, exposure, texptime in zip(driz_outputs, exposures,
+                                                   group_exptime):
             output_model = self.blank_output.copy()
+            output_model.meta.filename = obs_product
 
             if self.blendheaders:
                 self.blend_output_metadata(output_model)
@@ -136,7 +131,6 @@ class ResampleData:
 
             # Initialize the output with the wcs
             driz = gwcs_drizzle.GWCSDrizzle(output_model,
-                                            single=self.single,
                                             pixfrac=self.pixfrac,
                                             kernel=self.kernel,
                                             fillval=self.fillval)
@@ -171,6 +165,15 @@ class ResampleData:
             self.output_models.append(output_model)
 
         return self.output_models
+
+    def blend_output_metadata(self, output_model):
+        """Create new output metadata based on blending all input metadata."""
+        # Run fitsblender on output product
+        output_file = output_model.meta.filename
+
+        log.info('Blending metadata for {}'.format(output_file))
+        blendmeta.blendmodels(output_model, inputs=self.input_models,
+                              output=output_file)
 
     def update_fits_wcs(self, model):
         """

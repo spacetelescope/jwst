@@ -384,7 +384,6 @@ class ResampleSpecData:
             # Initialize the output with the wcs
             driz = gwcs_drizzle.GWCSDrizzle(output_model,
                                             outwcs=outwcs,
-                                            single=self.single,
                                             pixfrac=self.pixfrac,
                                             kernel=self.kernel,
                                             fillval=self.fillval)
