@@ -187,7 +187,7 @@ class OutlierDetection:
             # Start by creating resampled/mosaic images for
             # each group of exposures
             resamp = resample.ResampleData(self.input_models, single=True,
-                                          blendheaders=False, **pars)
+                                           blendheaders=False, **pars)
             drizzled_models = resamp.do_drizzle()
             if save_intermediate_results:
                 for model in drizzled_models:

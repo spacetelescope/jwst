@@ -149,7 +149,7 @@ def test_nircam_image_stage3_segm(run_image3pipeline, rtdata_module, fitsdiff_de
     """Test that segmentation map looks good for NIRCam imaging"""
     rtdata = rtdata_module
     rtdata.input = "jw42424-o002_20191220t214154_image3_001_asn.json"
-    output = f"jw42424-o002_t001_nircam_clear-f444w_segm.fits"
+    output = "jw42424-o002_t001_nircam_clear-f444w_segm.fits"
     rtdata.output = output
     rtdata.get_truth(f"truth/test_nircam_image_stages/{output}")
 

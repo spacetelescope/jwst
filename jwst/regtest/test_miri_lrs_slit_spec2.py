@@ -1,11 +1,8 @@
-import os
-
 from astropy.io.fits.diff import FITSDiff
 from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
 import pytest
 
-from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 from jwst import datamodels
 
@@ -29,6 +26,7 @@ def run_pipeline(jail, rtdata_module):
     Step.from_cmdline(args)
 
 
+@pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", [
     "bsub", "flat_field", "assign_wcs", "srctype", "combinedbackground", "cal", "s2d", "x1d"])
 def test_miri_lrs_slit_spec2(run_pipeline, fitsdiff_default_kwargs, suffix, rtdata_module):
