@@ -48,8 +48,73 @@ FSMCORR_EXPECTED = np.zeros((2,))
 OBSTIME_EXPECTED = STARTTIME
 
 
+# Expected transforms
+TFORMS_FULLVA = stp.Transforms(m_eci2j=np.array([[-0.16204967, -0.28803339,  0.94380971],
+       [ 0.80583682,  0.51339893,  0.29503999],
+       [-0.56953229,  0.8083677 ,  0.14891175]]), m_j2fgs1=np.array([[-9.77300013e-04,  9.99999522e-01,  3.30458575e-06],
+       [ 3.38988895e-03,  8.37175385e-09,  9.99994254e-01],
+       [ 9.99993777e-01,  9.77305600e-04, -3.38988734e-03]]), m_eci2fgs1=np.array([[ 0.80599293,  0.51368285,  0.29411795],
+       [-0.57007834,  0.80738666,  0.15211031],
+       [-0.15933046, -0.29027013,  0.94358739]]), m_gs2gsapp=np.array([[ 1.00000000e+00, -5.73448753e-07,  6.63659539e-06],
+       [ 5.73449081e-07,  1.00000000e+00,  0.00000000e+00],
+       [-6.63655135e-06,  0.00000000e+00,  1.00000000e+00]]), m_sifov_fsm_delta=np.array([[ 1.00000000e+00,  0.00000000e+00,  2.09865177e-08],
+       [-5.94309761e-16,  1.00000000e+00,  2.83186459e-08],
+       [-2.09865177e-08, -2.83186459e-08,  1.00000000e+00]]), m_fgs12sifov=np.array([[ 9.99761239e-01, -2.18280166e-02,  1.00096493e-03],
+       [ 2.18291297e-02,  9.99761094e-01, -1.11492579e-03],
+       [-9.76389175e-04,  1.13650978e-03,  9.99998878e-01]]), m_eci2sifov=np.array([[-0.16077049, -0.28985719,  0.94347006],
+       [ 0.81808393,  0.4956436 ,  0.29167815],
+       [-0.55216993,  0.81873089,  0.15744261]]), m_sifov2v=np.array([[ 0.99999743,  0.        ,  0.00226893],
+       [ 0.        ,  1.        ,  0.        ],
+       [-0.00226893,  0.        ,  0.99999743]]), m_eci2v=np.array([[-0.16202291, -0.28799881,  0.94382486],
+       [ 0.81808393,  0.4956436 ,  0.29167815],
+       [-0.55180373,  0.81938645,  0.15530154]]), m_v2siaf=np.array([[ 5.59174025e-04, -9.99951603e-01, -9.82234493e-03],
+       [ 2.56321412e-03, -9.82088099e-03,  9.99948489e-01],
+       [ 9.99996559e-01,  5.84321994e-04, -2.55759849e-03]]), m_eci2siaf=np.array([[-0.81271493, -0.50382895, -0.29266169],
+       [-0.56022491,  0.81373838,  0.15484823],
+       [-0.16013304, -0.28980386,  0.94359485]]), override=None)
+
+TFORMS_GSCMD_J3PAGS = stp.Transforms(m_eci2j=None, m_j2fgs1=None, m_eci2fgs1=np.array([[ 0.79338297,  0.53120051,  0.29727004],
+       [-0.58752258,  0.7959905 ,  0.14565831],
+       [-0.15925035, -0.29021568,  0.9436176 ]]), m_gs2gsapp=None, m_sifov_fsm_delta=np.array([[ 1.00000000e+00,  0.00000000e+00,  2.09865177e-08],
+       [-5.94309761e-16,  1.00000000e+00,  2.83186459e-08],
+       [-2.09865177e-08, -2.83186459e-08,  1.00000000e+00]]), m_fgs12sifov=np.array([[ 9.99761239e-01, -2.18280166e-02,  1.00096493e-03],
+       [ 2.18291297e-02,  9.99761094e-01, -1.11492579e-03],
+       [-9.76389175e-04,  1.13650978e-03,  9.99998878e-01]]), m_eci2sifov=np.array([[-0.16069255, -0.2898294 ,  0.94349182],
+       [ 0.80585859,  0.51340829,  0.29496418],
+       [-0.56988581,  0.80771954,  0.15106062]]), m_sifov2v=np.array([[ 0.99999743,  0.        ,  0.00226893],
+       [ 0.        ,  1.        ,  0.        ],
+       [-0.00226893,  0.        ,  0.99999743]]), m_eci2v=np.array([[-0.16198517, -0.287996  ,  0.94383214],
+       [ 0.80585859,  0.51340829,  0.29496418],
+       [-0.56951975,  0.80837506,  0.14891952]]), m_v2siaf=np.array([[ 5.59174025e-04, -9.99951603e-01, -9.82234493e-03],
+       [ 2.56321412e-03, -9.82088099e-03,  9.99948489e-01],
+       [ 9.99996559e-01,  5.84321994e-04, -2.55759849e-03]]), m_eci2siaf=np.array([[-0.80031615, -0.52148462, -0.29588487],
+       [-0.57781985,  0.8025531 ,  0.14843428],
+       [-0.16005713, -0.28976251,  0.94362037]]), override=None)
+
+
+TFORMS_FULL = stp.Transforms(m_eci2j=np.array([[-0.16204967, -0.28803339,  0.94380971],
+       [ 0.80583682,  0.51339893,  0.29503999],
+       [-0.56953229,  0.8083677 ,  0.14891175]]), m_j2fgs1=np.array([[-9.77300013e-04,  9.99999522e-01,  3.30458575e-06],
+       [ 3.38988895e-03,  8.37175385e-09,  9.99994254e-01],
+       [ 9.99993777e-01,  9.77305600e-04, -3.38988734e-03]]), m_eci2fgs1=None, m_gs2gsapp=None, m_sifov_fsm_delta=np.array([[ 1.00000000e+00,  0.00000000e+00,  2.09865177e-08],
+       [-5.94309761e-16,  1.00000000e+00,  2.83186459e-08],
+       [-2.09865177e-08, -2.83186459e-08,  1.00000000e+00]]), m_fgs12sifov=np.array([[ 9.99761239e-01, -2.18280166e-02,  1.00096493e-03],
+       [ 2.18291297e-02,  9.99761094e-01, -1.11492579e-03],
+       [-9.76389175e-04,  1.13650978e-03,  9.99998878e-01]]), m_eci2sifov=np.array([[-0.16076515, -0.28985379,  0.94347202],
+       [ 0.81808468,  0.495646  ,  0.29167198],
+       [-0.55217038,  0.81873064,  0.1574423 ]]), m_sifov2v=np.array([[ 0.99999743,  0.        ,  0.00226893],
+       [ 0.        ,  1.        ,  0.        ],
+       [-0.00226893,  0.        ,  0.99999743]]), m_eci2v=np.array([[-0.16201757, -0.2879954 ,  0.94382682],
+       [ 0.81808468,  0.495646  ,  0.29167198],
+       [-0.55180419,  0.81938619,  0.15530123]]), m_v2siaf=np.array([[ 5.59174025e-04, -9.99951603e-01, -9.82234493e-03],
+       [ 2.56321412e-03, -9.82088099e-03,  9.99948489e-01],
+       [ 9.99996559e-01,  5.84321994e-04, -2.55759849e-03]]), m_eci2siaf=np.array([[-0.81271567, -0.50383135, -0.29265552],
+       [-0.56022537,  0.81373811,  0.15484798],
+       [-0.16012769, -0.28980045,  0.9435968 ]]), override=None)
+
+
 @pytest.fixture(scope='module')
-def method_gscmd_j3pags():
+def method_gscmd_j3pags(tmp_path_factory):
     """Calculate matricies using the GSCMD_J3PAGS method
 
     This set was derived from the first valid group of engineering parameters for exposure
@@ -76,6 +141,9 @@ def method_gscmd_j3pags():
     # Calculate the transforms
     transforms = stp.calc_transforms_gscmd_j3pags(t_pars)
 
+    # Save transforms for later examination
+    transforms.write_to_asdf(tmp_path_factory.mktemp('transforms') / 'tforms_gscmd_j3pags.asdf')
+
     return transforms, t_pars
 
 
@@ -89,7 +157,7 @@ def test_method_string(method):
 
 
 @pytest.fixture(scope='module')
-def method_full():
+def method_full(tmp_path_factory):
     """Calculate matricies using the FULL method
 
     This set was derived from the first valid group of engineering parameters for exposure
@@ -117,11 +185,14 @@ def method_full():
     # Calculate the transforms
     transforms = stp.calc_transforms_quaternion(t_pars)
 
+    # Save transforms for later examination
+    transforms.write_to_asdf(tmp_path_factory.mktemp('transforms') / 'tforms_full.asdf')
+
     return transforms, t_pars
 
 
 @pytest.fixture(scope='module')
-def method_fullva():
+def method_fullva(tmp_path_factory):
     """Calculate matricies using the FULL method
 
     This set was derived from the first valid group of engineering parameters for exposure
@@ -148,6 +219,9 @@ def method_fullva():
 
     # Calculate the transforms
     transforms = stp.calc_transforms_quaternion_velocity_abberation(t_pars)
+
+    # Save transforms for later examination
+    transforms.write_to_asdf(tmp_path_factory.mktemp('transforms') / 'tforms_fullva.asdf')
 
     return transforms, t_pars
 
@@ -194,81 +268,11 @@ def test_transform_serialize(method_fullva, tmp_path):
 @pytest.mark.parametrize(
     'fixture, matrix, expected',
     [
-        ('method_gscmd_j3pags', 'm_eci2fgs1', np.array([[0.79338298, 0.5312005, 0.29727004],
-                                                        [-0.58752257, 0.7959905, 0.14565831],
-                                                        [-0.15925035, -0.29021568, 0.9436176]])),
-        ('method_gscmd_j3pags', 'm_fgs12sifov', np.array([[9.99761239e-01, -2.18280166e-02, 1.00096493e-03],
-                                                          [2.18291297e-02, 9.99761094e-01, -1.11492579e-03],
-                                                          [-9.76389175e-04, 1.13650978e-03, 9.99998878e-01]])),
-        ('method_gscmd_j3pags', 'm_sifov_fsm_delta', np.array([[1.00000000e+00, 0.00000000e+00, 2.09865089e-08],
-                                                               [-5.94309657e-16, 1.00000000e+00, 2.83186526e-08],
-                                                               [-2.09865089e-08, -2.83186526e-08, 1.00000000e+00]])),
-        ('method_gscmd_j3pags', 'm_eci2v', np.array([[-0.16198517, -0.287996, 0.94383214],
-                                                     [0.80585859, 0.51340828, 0.29496417],
-                                                     [-0.56951974, 0.80837506, 0.14891952]])),
-        ('method_gscmd_j3pags', 'm_v2siaf', np.array([[5.59174025e-04, -9.99951603e-01, -9.82234493e-03],
-                                                      [2.56321412e-03, -9.82088099e-03, 9.99948489e-01],
-                                                      [9.99996559e-01, 5.84321994e-04, -2.55759849e-03]])),
-        ('method_gscmd_j3pags', 'm_eci2siaf', np.array([[-0.80031602, -0.5214848, -0.2958849],
-                                                        [-0.57782002, 0.80255299, 0.14843421],
-                                                        [-0.16005712, -0.2897625, 0.94362038]])),
-        ('method_full', 'm_eci2j', np.array([[-0.16204967, -0.28803339, 0.94380971],
-                                             [0.80583682,  0.51339893, 0.29503999],
-                                             [-0.56953229, 0.8083677, 0.14891175]])),
-        ('method_full', 'm_j2fgs1', np.array([[-9.77300013e-04, 9.99999522e-01, 3.30458575e-06],
-                                              [3.38988895e-03, 8.37175385e-09, 9.99994254e-01],
-                                              [9.99993777e-01, 9.77305600e-04, -3.38988734e-03]])),
-        ('method_full', 'm_sifov_fsm_delta', np.array([[1.00000000e+00, 0.00000000e+00, 2.09865089e-08],
-                                                       [-5.94309657e-16, 1.00000000e+00, 2.83186526e-08],
-                                                       [-2.09865089e-08, -2.83186526e-08, 1.00000000e+00]])),
-        ('method_full', 'm_fgs12sifov', np.array([[9.99999496e-01, 0.00000000e+00, 1.00444575e-03],
-                                                  [1.11748260e-06, 9.99999381e-01, -1.11253598e-03],
-                                                  [-1.00444512e-03, 1.11253654e-03, 9.99998877e-01]])),
-        ('method_full', 'm_eci2sifov', np.array([[-0.16077409, -0.28988755, 0.94346012],
-                                                 [0.80583248, 0.51339103, 0.2950656],
-                                                 [-0.56989983, 0.80770966, 0.15106079]])),
-        ('method_full', 'm_sifov2v', np.array([[0.99999743, 0., 0.00226893],
-                                               [0., 1., 0.],
-                                               [-0.00226893, 0., 0.99999743]])),
-        ('method_full', 'm_eci2v', np.array([[-0.16206674, -0.28805417, 0.94380044],
-                                             [0.80583248, 0.51339103, 0.2950656],
-                                             [-0.56953357, 0.80836532, 0.14891976]])),
-        ('method_full', 'm_v2siaf', np.array([[5.59174025e-04, -9.99951603e-01, -9.82234493e-03],
-                                              [2.56321412e-03, -9.82088099e-03, 9.99948489e-01],
-                                              [9.99996559e-01, 5.84321994e-04, -2.55759849e-03]])),
-        ('method_full', 'm_eci2siaf', np.array([[-0.80028995, -0.5214673, -0.29598632],
-                                                [-0.57783363, 0.80254338, 0.14843345],
-                                                [-0.16013868, -0.28982067,  0.94358873]])),
-        ('method_fullva', 'm_eci2j', np.array([[-0.16204967, -0.28803339, 0.94380971],
-                                               [0.80583682, 0.51339893, 0.29503999],
-                                               [-0.56953229, 0.8083677, 0.14891175]])),
-        ('method_fullva', 'm_gs2gsapp', np.array([[1.00000000e+00, -5.73448753e-07, 6.63659539e-06],
-                                                  [5.73449081e-07, 1.00000000e+00, 0.00000000e+00],
-                                                  [-6.63655135e-06, 0.00000000e+00, 1.00000000e+00]])),
-        ('method_fullva', 'm_j2fgs1', np.array([[-9.77300013e-04, 9.99999522e-01, 3.30458575e-06],
-                                                [3.38988895e-03, 8.37175385e-09, 9.99994254e-01],
-                                                [9.99993777e-01, 9.77305600e-04, -3.38988734e-03]])),
-        ('method_fullva', 'm_sifov_fsm_delta', np.array([[1.00000000e+00, 0.00000000e+00, 2.09865089e-08],
-                                                         [-5.94309657e-16, 1.00000000e+00, 2.83186526e-08],
-                                                         [-2.09865089e-08, -2.83186526e-08, 1.00000000e+00]])),
-        ('method_fullva', 'm_fgs12sifov', np.array([[9.99999496e-01, 0.00000000e+00, 1.00444575e-03],
-                                                    [1.11748260e-06, 9.99999381e-01, -1.11253598e-03],
-                                                    [-1.00444512e-03, 1.11253654e-03, 9.99998877e-01]])),
-        ('method_fullva', 'm_eci2sifov', np.array([[-0.16077944, -0.28989096, 0.94345816],
-                                                   [0.80583174, 0.51338864, 0.29507178],
-                                                   [-0.56989936, 0.80770996, 0.15106096]])),
-        ('method_fullva', 'm_sifov2v', np.array([[0.99999743, 0., 0.00226893],
-                                                 [0., 1., 0.],
-                                                 [-0.00226893, 0., 0.99999743]])),
-        ('method_fullva', 'm_eci2v', np.array([[-0.16207209, -0.28805758, 0.94379848],
-                                               [0.80583174, 0.51338864, 0.29507178],
-                                               [-0.56953309, 0.80836562, 0.14891994]])),
-        ('method_fullva', 'm_v2siaf', np.array([[5.59174025e-04, -9.99951603e-01, -9.82234493e-03],
-                                                [2.56321412e-03, -9.82088099e-03, 9.99948489e-01],
-                                                [9.99996559e-01, 5.84321994e-04, -2.55759849e-03]])),
-        ('method_fullva', 'm_eci2siaf', np.array([[-0.80028922, -0.52146491, -0.29599249],
-                                                  [-0.57783316, 0.8025437, 0.14843356],
-                                                  [-0.16014403, -0.28982408, 0.94358677]])),
+        (fixture, matrix, getattr(transforms, matrix))
+        for fixture, transforms in [('method_full', TFORMS_FULL),
+                                    ('method_fullva', TFORMS_FULLVA),
+                                    ('method_gscmd_j3pags', TFORMS_GSCMD_J3PAGS)]
+        for matrix in transforms._fields
     ]
 )
 def test_methods(fixture, matrix, expected, request):
@@ -286,7 +290,11 @@ def test_methods(fixture, matrix, expected, request):
         Expected value of the matrix
     """
     transforms, t_pars = request.getfixturevalue(fixture)
-    assert np.allclose(getattr(transforms, matrix), expected)
+    value = getattr(transforms, matrix)
+    if expected is None:
+        assert value is None
+    else:
+        assert np.allclose(value, expected)
 
 
 def test_j3pa_at_gs(method_gscmd_j3pags):

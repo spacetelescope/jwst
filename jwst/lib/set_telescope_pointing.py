@@ -984,7 +984,7 @@ def calc_transforms_quaternion(t_pars: TransformParameters):
     )
 
     # Calculate the FGS1 ICS to SI-FOV matrix
-    t.m_fgs12sifov = calc_fgs1_to_sifov_matrix()
+    t.m_fgs12sifov = calc_fgs1_to_sifov_matrix(t_pars.siaf_path, t_pars.useafter)
 
     # Calculate SI FOV to V1 matrix
     t.m_sifov2v = calc_sifov2v_matrix()
@@ -1068,7 +1068,7 @@ def calc_transforms_quaternion_velocity_abberation(t_pars: TransformParameters):
     )
 
     # Calculate the FGS1 ICS to SI-FOV matrix
-    t.m_fgs12sifov = calc_fgs1_to_sifov_matrix()
+    t.m_fgs12sifov = calc_fgs1_to_sifov_matrix(t_pars.siaf_path, t_pars.useafter)
 
     # Calculate SI FOV to V1 matrix
     t.m_sifov2v = calc_sifov2v_matrix()
@@ -1142,7 +1142,9 @@ def calc_transforms_original(t_pars: TransformParameters):
     )
 
     # Calculate the FGS1 ICS to SI-FOV matrix
-    t.m_fgs12sifov = calc_fgs1_to_sifov_matrix()
+    # The SIAF is explicitly not used because this was not accounted for in
+    # the original specification. 
+    t.m_fgs12sifov = calc_fgs1_to_sifov_matrix(siaf_path=None, useafter=None)
 
     # Calculate SI FOV to V1 matrix
     t.m_sifov2v = calc_sifov2v_matrix()
@@ -1209,7 +1211,7 @@ def calc_transforms_gscmd_j3pags(t_pars: TransformParameters):
     t.m_eci2fgs1 = calc_eci2fgs1_j3pags(t_pars)
 
     # Calculate the FGS1 ICS to SI-FOV matrix
-    t.m_fgs12sifov = calc_fgs1_to_sifov_fgs1siaf_matrix(siaf_path=t_pars.siaf_path, useafter=t_pars.useafter)
+    t.m_fgs12sifov = calc_fgs1_to_sifov_matrix(siaf_path=t_pars.siaf_path, useafter=t_pars.useafter)
 
     # Calculate the FSM corrections to the SI_FOV frame
     t.m_sifov_fsm_delta = calc_sifov_fsm_delta_matrix(
@@ -1289,7 +1291,7 @@ def calc_transforms_gscmd_v3pags(t_pars: TransformParameters):
     )
 
     # Calculate the FGS1 ICS to SI-FOV matrix
-    t.m_fgs12sifov = calc_fgs1_to_sifov_fgs1siaf_matrix(siaf_path=t_pars.siaf_path, useafter=t_pars.useafter)
+    t.m_fgs12sifov = calc_fgs1_to_sifov_matrix(siaf_path=t_pars.siaf_path, useafter=t_pars.useafter)
 
     # Calculate SI FOV to V1 matrix
     t.m_sifov2v = calc_sifov2v_matrix()
@@ -1774,28 +1776,18 @@ def calc_sifov_fsm_delta_matrix(fsmcorr, fsmcorr_version='latest', fsmcorr_units
     return transform
 
 
-def calc_fgs1_to_sifov_matrix():
-    """
-    Calculate the FGS1 to SI-FOV matrix
-
-    Currently, this is a defined matrix
-    """
-    logger.debug('M_fgs1_to_sifov: %s', FGS12SIFOV_DEFAULT)
-    return FGS12SIFOV_DEFAULT
-
-
-def calc_fgs1_to_sifov_fgs1siaf_matrix(siaf_path=None, useafter=None):
+def calc_fgs1_to_sifov_matrix(siaf_path=None, useafter=None):
     """
     Calculate the FGS1 to SI-FOV matrix
 
     Based on algorithm determined in JSOCINT-555 for a more
-    accurate determination of the matrix using the SIAF
+    accurate determination of the matrix using the SIAF.
     """
     try:
         fgs1_siaf = get_wcs_values_from_siaf('FGS1_FULL_OSS', useafter, siaf_path)
     except (KeyError, OSError, TypeError, RuntimeError):
         logger.warning('Cannot read a SIAF database. Using the default FGS1_to_SIFOV matrix')
-        return calc_fgs1_to_sifov_matrix()
+        return FGS12SIFOV_DEFAULT
 
     v2 = fgs1_siaf.v2_ref * A2R
     v3 = (fgs1_siaf.v3_ref + 7.8 * 60.0) * A2R
@@ -2067,12 +2059,21 @@ def get_wcs_values_from_siaf(aperture_name, useafter=None, prd_db_filepath=None)
     siaf : namedtuple
         The SIAF namedtuple with values from the PRD database.
     """
-    if not useafter:
-        useafter = date.today().strftime('%Y-%m-%d')
+    # Assume PRD failure
+    prd_fail = True
 
-    try:
-        siaf = get_wcs_values_from_siaf_prd(aperture_name, useafter, prd_db_filepath=prd_db_filepath)
-    except (KeyError, OSError, TypeError, RuntimeError):
+    # Try the PRD
+    if prd_db_filepath:
+        if not useafter:
+            useafter = date.today().strftime('%Y-%m-%d')
+        try:
+            siaf = get_wcs_values_from_siaf_prd(aperture_name, useafter, prd_db_filepath=prd_db_filepath)
+        except (KeyError, OSError, TypeError, RuntimeError):
+            pass
+        else:
+            prd_fail = False
+
+    if prd_fail:
         siaf = get_wcs_values_from_siaf_api(aperture_name)
 
     logger.info('For aperture %s: SIAF: %s', aperture_name, siaf)
