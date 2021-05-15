@@ -163,7 +163,7 @@ def build_driz_weight(model, weight_type=None, good_bits=None):
     else:
         warnings.warn("weight_type set to None.  Setting drizzle weight map to 1",
                       RuntimeWarning)
-        result = np.ones(model.data.shape, dtype=model.data.dtype)
+        result = np.ones(model.data.shape, dtype=model.data.dtype) * dqmask
 
     return result.astype(np.float32)
 
