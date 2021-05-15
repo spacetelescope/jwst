@@ -47,10 +47,6 @@ J2FGS_MATRIX_EXPECTED = np.asarray(
 FSMCORR_EXPECTED = np.zeros((2,))
 OBSTIME_EXPECTED = STARTTIME
 
-# ########################
-# Database access fixtures
-# ########################
-
 
 @pytest.fixture(scope='module')
 def method_gscmd_j3pags():
@@ -92,7 +88,8 @@ def test_method_string(method):
     assert f'{method}' == method.value
 
 
-def method_full_nofixture():
+@pytest.fixture(scope='module')
+def method_full():
     """Calculate matricies using the FULL method
 
     This set was derived from the first valid group of engineering parameters for exposure
@@ -124,11 +121,7 @@ def method_full_nofixture():
 
 
 @pytest.fixture(scope='module')
-def method_full():
-    return method_full_nofixture()
-
-
-def method_fullva_nofixture():
+def method_fullva():
     """Calculate matricies using the FULL method
 
     This set was derived from the first valid group of engineering parameters for exposure
@@ -159,11 +152,6 @@ def method_fullva_nofixture():
     return transforms, t_pars
 
 
-@pytest.fixture(scope='module')
-def method_fullva():
-    return method_fullva_nofixture()
-
-
 def test_override_calc_wcs(method_fullva):
     """Test matrix override in the full calculation"""
     transforms, t_pars = method_fullva
@@ -176,7 +164,7 @@ def test_override_calc_wcs(method_fullva):
     wcsinfo_new, vinfo_new, transforms_new = stp.calc_wcs(t_pars)
 
     assert vinfo_new != vinfo
-    assert vinfo_new == stp.WCSRef(ra=32.505777840562835, dec=17.160130467271525, pa=351.03490223492486)
+    assert vinfo_new == stp.WCSRef(ra=32.5101542644757, dec=17.16214932779597, pa=352.2869379284309)
 
 
 @pytest.mark.parametrize(
@@ -308,7 +296,7 @@ def test_j3pa_at_gs(method_gscmd_j3pags):
     assert np.allclose(t_pars.guide_star_wcs.pa, 297.3522435208429)
 
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def eng_db_ngas():
     """Setup the test engineering database"""
     with EngDB_Mocker(db_path=db_ngas_path):
@@ -316,7 +304,7 @@ def eng_db_ngas():
         yield engdb
 
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def eng_db_jw703():
     """Setup the test engineering database"""
     with EngDB_Mocker(db_path=db_jw703_path):
@@ -324,7 +312,7 @@ def eng_db_jw703():
         yield engdb
 
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def data_file():
     model = datamodels.Level1bModel()
     model.meta.exposure.start_time = STARTTIME.mjd

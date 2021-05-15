@@ -11,6 +11,8 @@ test is to ensure that the original baseline did meet documented specs.
 """
 from pathlib import Path
 
+import pytest
+
 from astropy.table import Table
 import numpy as np
 
@@ -71,6 +73,7 @@ def wcs_equality(left, right):
     assert np.isclose(left.pa, right.pa), 'PAs are different {} != {}'.format(left.pa, right.pa)
 
 
+@pytest.mark.slow
 def test_stp_ngas():
     """Test set_telescope_pointing using original Northrup-Grumman data
 
