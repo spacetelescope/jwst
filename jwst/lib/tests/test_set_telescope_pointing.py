@@ -57,15 +57,17 @@ TFORMS_FULLVA = stp.Transforms.from_asdf(DATA_PATH / 'tforms_fullva.asdf')
 TFORMS_GSCMD_J3PAGS = stp.Transforms.from_asdf(DATA_PATH / 'tforms_gscmd_j3pags.asdf')
 
 
-@pytest.fixture(scope='module')
-def method_gscmd_j3pags(tmp_path_factory):
-    """Calculate matricies using the GSCMD_J3PAGS method
+@pytest.fixture(scope='module',
+                params=[method for method in stp.Methods])
+def calc_transforms(request, tmp_path_factory):
+    """Calculate matrices for specified method method
 
     This set was derived from the first valid group of engineering parameters for exposure
     jw00624028002_02101_00001_nrca1 retrieved from the SDP regression tests for Build 7.7.1.
     """
     # setup inputs
     t_pars = stp.TransformParameters()
+    t_pars.method = request.param
 
     t_pars.guide_star_wcs = stp.WCSRef(ra=241.24294932221, dec=70.66165389073196, pa=None)
     t_pars.pointing = stp.Pointing(
@@ -83,10 +85,10 @@ def method_gscmd_j3pags(tmp_path_factory):
     t_pars.siaf_path = siaf_db
 
     # Calculate the transforms
-    transforms = stp.calc_transforms_gscmd_j3pags(t_pars)
+    transforms = stp.calc_transforms(t_pars)
 
     # Save transforms for later examination
-    transforms.write_to_asdf(tmp_path_factory.mktemp('transforms') / 'tforms_gscmd_j3pags.asdf')
+    transforms.write_to_asdf(tmp_path_factory.mktemp('transforms') / f'tforms_{request.param}.asdf')
 
     return transforms, t_pars
 
@@ -98,76 +100,6 @@ def method_gscmd_j3pags(tmp_path_factory):
 def test_method_string(method):
     """Ensure that the value of the method is the string representation"""
     assert f'{method}' == method.value
-
-
-@pytest.fixture(scope='module')
-def method_full(tmp_path_factory):
-    """Calculate matricies using the FULL method
-
-    This set was derived from the first valid group of engineering parameters for exposure
-    jw00624028002_02101_00001_nrca1 retrieved from the SDP regression tests for Build 7.7.1.
-    """
-    # setup inputs
-    t_pars = stp.TransformParameters()
-
-    t_pars.guide_star_wcs = stp.WCSRef(ra=241.24294932221, dec=70.66165389073196, pa=None)
-    t_pars.jwst_velocity = np.array([-25.021, -16.507, -7.187])
-    t_pars.pointing = stp.Pointing(
-        q=np.array([-0.20954692, -0.6177655, -0.44653177, 0.61242575]),
-        j2fgs_matrix=np.array([-9.77300013e-04, 3.38988895e-03, 9.99993777e-01,
-                               9.99999522e-01, 8.37175385e-09, 9.77305600e-04,
-                               3.30458575e-06, 9.99994254e-01, -3.38988734e-03]),
-        fsmcorr=np.array([0.00584114, -0.00432878]),
-        obstime=Time(1611628160.325, format='unix'),
-        gs_commanded=np.array([-22.40031242,  -8.17869377])
-    )
-    t_pars.siaf = stp.SIAF(v2_ref=120.525464, v3_ref=-527.543132, v3yangle=-0.5627898, vparity=-1,
-                           crpix1=1024.5, crpix2=1024.5, cdelt1=0.03113928, cdelt2=0.03132232,
-                           vertices_idl=(-32.1682, 32.0906, 31.6586, -31.7234, -32.1683, -32.1904, 32.0823, 31.9456))
-    t_pars.siaf_path = siaf_db
-
-    # Calculate the transforms
-    transforms = stp.calc_transforms_quaternion(t_pars)
-
-    # Save transforms for later examination
-    transforms.write_to_asdf(tmp_path_factory.mktemp('transforms') / 'tforms_full.asdf')
-
-    return transforms, t_pars
-
-
-@pytest.fixture(scope='module')
-def method_fullva(tmp_path_factory):
-    """Calculate matricies using the FULL method
-
-    This set was derived from the first valid group of engineering parameters for exposure
-    jw00624028002_02101_00001_nrca1 retrieved from the SDP regression tests for Build 7.7.1.
-    """
-    # setup inputs
-    t_pars = stp.TransformParameters()
-
-    t_pars.guide_star_wcs = stp.WCSRef(ra=241.24294932221, dec=70.66165389073196, pa=None)
-    t_pars.jwst_velocity = np.array([-25.021, -16.507, -7.187])
-    t_pars.pointing = stp.Pointing(
-        q=np.array([-0.20954692, -0.6177655, -0.44653177, 0.61242575]),
-        j2fgs_matrix=np.array([-9.77300013e-04, 3.38988895e-03, 9.99993777e-01,
-                               9.99999522e-01, 8.37175385e-09, 9.77305600e-04,
-                               3.30458575e-06, 9.99994254e-01, -3.38988734e-03]),
-        fsmcorr=np.array([0.00584114, -0.00432878]),
-        obstime=Time(1611628160.325, format='unix'),
-        gs_commanded=np.array([-22.40031242,  -8.17869377])
-    )
-    t_pars.siaf = stp.SIAF(v2_ref=120.525464, v3_ref=-527.543132, v3yangle=-0.5627898, vparity=-1,
-                           crpix1=1024.5, crpix2=1024.5, cdelt1=0.03113928, cdelt2=0.03132232,
-                           vertices_idl=(-32.1682, 32.0906, 31.6586, -31.7234, -32.1683, -32.1904, 32.0823, 31.9456))
-    t_pars.siaf_path = siaf_db
-
-    # Calculate the transforms
-    transforms = stp.calc_transforms_quaternion_velocity_abberation(t_pars)
-
-    # Save transforms for later examination
-    transforms.write_to_asdf(tmp_path_factory.mktemp('transforms') / 'tforms_fullva.asdf')
-
-    return transforms, t_pars
 
 
 def test_override_calc_wcs(method_fullva):
@@ -197,9 +129,9 @@ def test_override(attribute, expected):
     assert getattr(to_override, attribute) == expected
 
 
-def test_transform_serialize(method_fullva, tmp_path):
+def test_transform_serialize(calc_transforms, tmp_path):
     """Test serialization of Transforms"""
-    transforms, t_pars = method_fullva
+    transforms, t_pars = calc_transforms
 
     path = tmp_path / 'transforms.asdf'
     transforms.write_to_asdf(path)
@@ -209,16 +141,6 @@ def test_transform_serialize(method_fullva, tmp_path):
     assert str(transforms) == str(from_asdf)
 
 
-@pytest.mark.parametrize(
-    'fixture, matrix, expected',
-    [
-        (fixture, matrix, getattr(transforms, matrix))
-        for fixture, transforms in [('method_full', TFORMS_FULL),
-                                    ('method_fullva', TFORMS_FULLVA),
-                                    ('method_gscmd_j3pags', TFORMS_GSCMD_J3PAGS)]
-        for matrix in transforms._fields
-    ]
-)
 def test_methods(fixture, matrix, expected, request):
     """Ensure expected calculate of the specified matrix
 
