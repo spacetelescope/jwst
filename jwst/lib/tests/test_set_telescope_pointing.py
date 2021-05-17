@@ -34,7 +34,7 @@ TARG_DEC = -87.0
 
 # Get the mock databases
 DATA_PATH = Path(__file__).parent / 'data'
-db_ngas_path = DATA_PATH  / 'engdb_ngas'
+db_ngas_path = DATA_PATH / 'engdb_ngas'
 db_jw703_path = DATA_PATH / 'engdb_jw00703'
 siaf_db = DATA_PATH / 'siaf.db'
 
@@ -49,12 +49,6 @@ J2FGS_MATRIX_EXPECTED = np.asarray(
 )
 FSMCORR_EXPECTED = np.zeros((2,))
 OBSTIME_EXPECTED = STARTTIME
-
-
-# Expected transforms
-TFORMS_FULL = stp.Transforms.from_asdf(DATA_PATH / 'tforms_full.asdf')
-TFORMS_FULLVA = stp.Transforms.from_asdf(DATA_PATH / 'tforms_fullva.asdf')
-TFORMS_GSCMD_J3PAGS = stp.Transforms.from_asdf(DATA_PATH / 'tforms_gscmd_j3pags.asdf')
 
 
 @pytest.fixture(scope='module',
@@ -141,26 +135,28 @@ def test_transform_serialize(calc_transforms, tmp_path):
     assert str(transforms) == str(from_asdf)
 
 
-def test_methods(fixture, matrix, expected, request):
+@pytest.mark.parametrize('matrix', [matrix for matrix in stp.Transforms()._fields])
+def test_methods(calc_transforms, matrix):
     """Ensure expected calculate of the specified matrix
 
     Parameters
     ----------
-    fixture: str
-        The fixture to retrieve calculated transforms and parameters used to do the calculation.
+    transforms, t_pars : Transforms, TransformParameters
+        The transforms and the parameters used to generate the transforms
 
     matrix : str
-        The matrix under examination
-
-    expected : numpy.array
-        Expected value of the matrix
+        The matrix to compare
     """
-    transforms, t_pars = request.getfixturevalue(fixture)
+    transforms, t_pars = calc_transforms
+
+    expected_tforms = stp.Transforms.from_asdf(DATA_PATH / f'tforms_{t_pars.method}.asdf')
+    expected_value = getattr(expected_tforms, matrix)
+
     value = getattr(transforms, matrix)
-    if expected is None:
+    if expected_value is None:
         assert value is None
     else:
-        assert np.allclose(value, expected)
+        assert np.allclose(value, expected_value)
 
 
 def test_j3pa_at_gs(method_gscmd_j3pags):
