@@ -73,21 +73,10 @@ def run_image3pipeline(run_image2pipeline, rtdata_module, jail):
     Step.from_cmdline(args)
 
 
-@pytest.fixture()
-def run_image3_closedfile(rtdata, jail):
-    """Run calwebb_image3 on NIRCam imaging with data that had a closed file issue."""
-
-    rtdata.get_asn("nircam/image/fail_short_image3_asn.json")
-
-    collect_pipeline_cfgs("config")
-
-    args = ["config/calwebb_image3.cfg", rtdata.input]
-    Step.from_cmdline(args)
-
-
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["dq_init", "saturation", "superbias",
-                                    "refpix", "linearity", "trapsfilled", "dark_current", "jump", "rate",
+                                    "refpix", "linearity", "trapsfilled",
+                                    "dark_current", "jump", "rate",
                                     "flat_field", "cal", "i2d"])
 def test_nircam_image_stages12(run_image2pipeline, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Regression test of detector1 and image2 pipelines performed on NIRCam data."""
@@ -95,7 +84,12 @@ def test_nircam_image_stages12(run_image2pipeline, rtdata_module, fitsdiff_defau
     rtdata.input = "jw42424001001_01101_00001_nrca5_uncal.fits"
     output = "jw42424001001_01101_00001_nrca5_" + suffix + ".fits"
     rtdata.output = output
-    rtdata.get_truth("truth/test_nircam_image_stages/" + output)
+    rtdata.get_truth(f"truth/test_nircam_image_stages/{output}")
+
+    # Adjust tolerance for machine precision with float32 drizzle code
+    if suffix == "i2d":
+        fitsdiff_default_kwargs["rtol"] = 5e-5
+        fitsdiff_default_kwargs["atol"] = 1e-4
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
@@ -108,7 +102,7 @@ def test_nircam_image_stage2_wcs(run_image2pipeline, rtdata_module):
     rtdata.input = "jw42424001001_01101_00001_nrca5_uncal.fits"
     output = "jw42424001001_01101_00001_nrca5_assign_wcs.fits"
     rtdata.output = output
-    rtdata.get_truth("truth/test_nircam_image_stages/" + output)
+    rtdata.get_truth(f"truth/test_nircam_image_stages/{output}")
 
     with datamodels.open(rtdata.output) as model, datamodels.open(rtdata.truth) as model_truth:
         grid = grid_from_bounding_box(model.meta.wcs.bounding_box)
@@ -121,14 +115,20 @@ def test_nircam_image_stage2_wcs(run_image2pipeline, rtdata_module):
 
 
 @pytest.mark.bigdata
-def test_nircam_image_stage3_i2d(run_image3pipeline, rtdata_module, fitsdiff_default_kwargs):
+@pytest.mark.parametrize("suffix", ["i2d"])
+def test_nircam_image_stage3(run_image3pipeline, rtdata_module, fitsdiff_default_kwargs,
+                             assert_most_pixels_same, suffix):
     """Test that resampled i2d looks good for NIRCam imaging"""
     rtdata = rtdata_module
     rtdata.input = "jw42424-o002_20191220t214154_image3_001_asn.json"
-    rtdata.output = "jw42424-o002_t001_nircam_clear-f444w_i2d.fits"
-    rtdata.get_truth("truth/test_nircam_image_stages/jw42424-o002_t001_nircam_clear-f444w_i2d.fits")
+    output = f"jw42424-o002_t001_nircam_clear-f444w_{suffix}.fits"
+    rtdata.output = output
+    rtdata.get_truth(f"truth/test_nircam_image_stages/{output}")
 
-    fitsdiff_default_kwargs["atol"] = 1e-5
+    # Adjust tolerance for machine precision with float32 drizzle code
+    fitsdiff_default_kwargs["rtol"] = 1e-4
+    fitsdiff_default_kwargs["atol"] = 2e-4
+
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
@@ -137,21 +137,35 @@ def test_nircam_image_stage3_i2d(run_image3pipeline, rtdata_module, fitsdiff_def
 def test_nircam_image_stage3_catalog(run_image3pipeline, rtdata_module, diff_astropy_tables):
     rtdata = rtdata_module
     rtdata.input = "jw42424-o002_20191220t214154_image3_001_asn.json"
-    rtdata.output = "jw42424-o002_t001_nircam_clear-f444w_cat.ecsv"
-    rtdata.get_truth("truth/test_nircam_image_stages/jw42424-o002_t001_nircam_clear-f444w_cat.ecsv")
+    output = "jw42424-o002_t001_nircam_clear-f444w_cat.ecsv"
+    rtdata.output = output
+    rtdata.get_truth(f"truth/test_nircam_image_stages/{output}")
 
     assert diff_astropy_tables(rtdata.output, rtdata.truth, rtol=1e-4, atol=1e-5)
 
 
 @pytest.mark.bigdata
-def test_nircam_image_stage3_segmap(run_image3pipeline, rtdata_module, fitsdiff_default_kwargs):
+def test_nircam_image_stage3_segm(run_image3pipeline, rtdata_module, fitsdiff_default_kwargs):
+    """Test that segmentation map looks good for NIRCam imaging"""
     rtdata = rtdata_module
     rtdata.input = "jw42424-o002_20191220t214154_image3_001_asn.json"
-    rtdata.output = "jw42424-o002_t001_nircam_clear-f444w_segm.fits"
-    rtdata.get_truth("truth/test_nircam_image_stages/jw42424-o002_t001_nircam_clear-f444w_segm.fits")
+    output = "jw42424-o002_t001_nircam_clear-f444w_segm.fits"
+    rtdata.output = output
+    rtdata.get_truth(f"truth/test_nircam_image_stages/{output}")
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
+
+
+@pytest.fixture()
+def run_image3_closedfile(rtdata, jail):
+    """Run calwebb_image3 on NIRCam imaging with data that had a closed file issue."""
+    rtdata.get_asn("nircam/image/fail_short_image3_asn.json")
+
+    collect_pipeline_cfgs("config")
+
+    args = ["config/calwebb_image3.cfg", rtdata.input]
+    Step.from_cmdline(args)
 
 
 @pytest.mark.bigdata

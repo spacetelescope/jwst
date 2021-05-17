@@ -22,9 +22,6 @@ class OutputTooLargeError(RuntimeError):
 class ResampleData:
     """
     This is the controlling routine for the resampling process.
-    It loads and sets the various input data and parameters needed by
-    the drizzle function and then calls the C-based cdriz.tdriz function
-    to do the actual resampling.
 
     Notes
     -----
@@ -35,10 +32,8 @@ class ResampleData:
          them with any user-provided values.
       2. Creates output WCS based on input images and define mapping function
          between all input arrays and the output array.
-      3. Initializes all output arrays, including WHT and CTX arrays.
-      4. Passes all information for each input chip to drizzle function.
-      5. Updates output data model with output arrays from drizzle, including
-         (eventually) a record of metadata from all input models.
+      3. Updates output data model with output arrays from drizzle, including
+         a record of metadata from all input models.
     """
 
     def __init__(self, input_models, output=None, single=False, blendheaders=True,
@@ -103,15 +98,6 @@ class ResampleData:
                            self.output_wcs.data_size[1]), dtype=np.int32)
         self.blank_output.con = outcon
 
-    def blend_output_metadata(self, output_model):
-        """Create new output metadata based on blending all input metadata."""
-        # Run fitsblender on output product
-        output_file = output_model.meta.filename
-
-        log.info('Blending metadata for {}'.format(output_file))
-        blendmeta.blendmodels(output_model, inputs=self.input_models,
-                              output=output_file)
-
     def do_drizzle(self):
         """ Perform drizzling operation on input images's to create a new output
         """
@@ -145,7 +131,6 @@ class ResampleData:
 
             # Initialize the output with the wcs
             driz = gwcs_drizzle.GWCSDrizzle(output_model,
-                                            single=self.single,
                                             pixfrac=self.pixfrac,
                                             kernel=self.kernel,
                                             fillval=self.fillval)
@@ -178,6 +163,17 @@ class ResampleData:
             self.update_fits_wcs(output_model)
 
             self.output_models.append(output_model)
+
+        return self.output_models
+
+    def blend_output_metadata(self, output_model):
+        """Create new output metadata based on blending all input metadata."""
+        # Run fitsblender on output product
+        output_file = output_model.meta.filename
+
+        log.info('Blending metadata for {}'.format(output_file))
+        blendmeta.blendmodels(output_model, inputs=self.input_models,
+                              output=output_file)
 
     def update_fits_wcs(self, model):
         """
