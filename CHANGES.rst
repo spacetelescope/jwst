@@ -169,7 +169,7 @@ ramp_fitting
 
 - Refactoring ramp fit code in preparation for moving code to STCAL. [#6010]
 
-- Moved ramp fit code to STCAL. [#]
+- Moved ramp fit code to STCAL. [#6023]
 
 refpix
 ------
