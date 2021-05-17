@@ -90,18 +90,6 @@ class ResampleData:
 
         self.output_models = datamodels.ModelContainer()
 
-    # TODO: Following method is not used, and never has been.  Find out if needed
-    # def update_driz_outputs(self):
-    #     """ Define output arrays for use with drizzle operations.
-    #     """
-    #     numchips = len(self.input_models)
-    #     numplanes = (numchips // 32) + 1
-
-    #     # Replace CONTEXT array with full set of planes needed for all inputs
-    #     outcon = np.zeros((numplanes, self.output_wcs.data_size[0],
-    #                        self.output_wcs.data_size[1]), dtype=np.int32)
-    #     self.blank_output.con = outcon
-
     def do_drizzle(self):
         """Perform drizzling operation on input images's to create a new output
         """
