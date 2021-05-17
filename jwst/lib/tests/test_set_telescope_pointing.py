@@ -51,17 +51,13 @@ FSMCORR_EXPECTED = np.zeros((2,))
 OBSTIME_EXPECTED = STARTTIME
 
 
-@pytest.fixture(scope='module',
-                params=[method for method in stp.Methods])
-def calc_transforms(request, tmp_path_factory):
-    """Calculate matrices for specified method method
+def make_t_pars():
+    """Setup initial Transforms Parameters
 
     This set was derived from the first valid group of engineering parameters for exposure
     jw00624028002_02101_00001_nrca1 retrieved from the SDP regression tests for Build 7.7.1.
     """
-    # setup inputs
     t_pars = stp.TransformParameters()
-    t_pars.method = request.param
 
     t_pars.guide_star_wcs = stp.WCSRef(ra=241.24294932221, dec=70.66165389073196, pa=None)
     t_pars.pointing = stp.Pointing(
@@ -77,6 +73,19 @@ def calc_transforms(request, tmp_path_factory):
                            crpix1=1024.5, crpix2=1024.5, cdelt1=0.03113928, cdelt2=0.03132232,
                            vertices_idl=(-32.1682, 32.0906, 31.6586, -31.7234, -32.1683, -32.1904, 32.0823, 31.9456))
     t_pars.siaf_path = siaf_db
+
+    return t_pars
+
+
+@pytest.fixture(scope='module',
+                params=[method for method in stp.Methods])
+def calc_transforms(request, tmp_path_factory):
+    """Calculate matrices for specified method method
+    """
+    t_pars = make_t_pars()
+
+    # Set the method
+    t_pars.method = request.param
 
     # Calculate the transforms
     transforms = stp.calc_transforms(t_pars)
@@ -96,9 +105,10 @@ def test_method_string(method):
     assert f'{method}' == method.value
 
 
-def test_override_calc_wcs(method_fullva):
+def test_override_calc_wcs():
     """Test matrix override in the full calculation"""
-    transforms, t_pars = method_fullva
+    t_pars = make_t_pars()
+    t_pars.method = stp.Methods.FULLVA
     wcsinfo, vinfo, _ = stp.calc_wcs(t_pars)
 
     override = stp.Transforms(m_eci2j=np.array([[0.80583682, 0.51339893, 0.29503999],
@@ -108,7 +118,7 @@ def test_override_calc_wcs(method_fullva):
     wcsinfo_new, vinfo_new, transforms_new = stp.calc_wcs(t_pars)
 
     assert vinfo_new != vinfo
-    assert vinfo_new == stp.WCSRef(ra=32.5101542644757, dec=17.16214932779597, pa=352.2869379284309)
+    assert vinfo_new == stp.WCSRef(ra=32.50407337171124, dec=17.161233048951043, pa=352.28553015159287)
 
 
 @pytest.mark.parametrize(
@@ -159,9 +169,11 @@ def test_methods(calc_transforms, matrix):
         assert np.allclose(value, expected_value)
 
 
-def test_j3pa_at_gs(method_gscmd_j3pags):
+def test_j3pa_at_gs():
     """Ensure J3PA@GS is as expected"""
-    transforms, t_pars = method_gscmd_j3pags
+    t_pars = make_t_pars()
+    t_pars.method = stp.Methods.GSCMD_J3PAGS
+    transforms = stp.calc_transforms(t_pars)
 
     assert np.allclose(t_pars.guide_star_wcs.pa, 297.3522435208429)
 
