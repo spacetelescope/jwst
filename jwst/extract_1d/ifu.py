@@ -143,9 +143,9 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
         f_var_rnoise *= 1.e12  # MJy**2 --> Jy**2
         f_var_flat *= 1.e12  # MJy**2 --> Jy**2
         surf_bright[:] = 0.
-        sb_var_poisson = 0.
-        sb_var_rnoise = 0.
-        sb_var_flat = 0.
+        sb_var_poisson[:] = 0.
+        sb_var_rnoise[:] = 0.
+        sb_var_flat[:] = 0.
         background[:] /= pixel_solid_angle  # MJy / sr
         b_var_poisson /= pixel_solid_angle
         b_var_rnoise /= pixel_solid_angle

@@ -25,7 +25,7 @@ class GWCSDrizzle:
         product : str, optional
             A data model containing results from a previous run. The three
             extensions SCI, WHT, and CTX contain the combined image, total counts
-            and image id bitmap, repectively. The WCS of the combined image is
+            and image id bitmap, respectively. The WCS of the combined image is
             also read from the SCI extension.
 
         outwcs : `gwcs.WCS`

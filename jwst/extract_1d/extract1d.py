@@ -256,7 +256,7 @@ def extract1d(image, var_poisson, var_rnoise, var_flat, lambdas, disp_range,
             # using the (optionally) smoothed background.
             (bkg_model, b_var_poisson_model, b_var_rnoise_model,
              b_var_flat_model, bkg_npts) = _fit_background_model(
-                temp_image, var_poisson, var_rnoise, var_flat,
+                temp_image, var_poisson, var_rnoise, var_flat, x,
                 j, bkglim, bkg_fit, bkg_order
             )
 

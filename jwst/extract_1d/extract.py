@@ -3016,9 +3016,9 @@ def do_extract1d(
                     f_var_rnoise *= 1.e12  # MJy**2 --> Jy**2
                     f_var_flat *= 1.e12  # MJy**2 --> Jy**2
                     surf_bright[:] = 0.
-                    sb_var_poisson = 0.
-                    sb_var_rnoise = 0.
-                    sb_var_flat = 0.
+                    sb_var_poisson[:] = 0.
+                    sb_var_rnoise[:] = 0.
+                    sb_var_flat[:] = 0.
                     background[:] /= pixel_solid_angle  # MJy / sr
                     b_var_poisson /= pixel_solid_angle
                     b_var_rnoise /= pixel_solid_angle
@@ -3218,9 +3218,9 @@ def do_extract1d(
                         f_var_rnoise *= 1.e12  # MJy**2 --> Jy**2
                         f_var_flat *= 1.e12  # MJy**2 --> Jy**2
                         surf_bright[:] = 0.
-                        sb_var_poisson = 0.
-                        sb_var_rnoise = 0.
-                        sb_var_flat = 0.
+                        sb_var_poisson[:] = 0.
+                        sb_var_rnoise[:] = 0.
+                        sb_var_flat[:] = 0.
                         background[:] /= pixel_solid_angle  # MJy / sr
                         b_var_poisson /= pixel_solid_angle
                         b_var_rnoise /= pixel_solid_angle
@@ -3410,9 +3410,9 @@ def do_extract1d(
                             f_var_rnoise *= 1.e12  # MJy**2 --> Jy**2
                             f_var_flat *= 1.e12  # MJy**2 --> Jy**2
                             surf_bright[:] = 0.
-                            sb_var_poisson = 0.
-                            sb_var_rnoise = 0.
-                            sb_var_flat = 0.
+                            sb_var_poisson[:] = 0.
+                            sb_var_rnoise[:] = 0.
+                            sb_var_flat[:] = 0.
                             background[:] /= pixel_solid_angle  # MJy / sr
                             b_var_poisson /= pixel_solid_angle
                             b_var_rnoise /= pixel_solid_angle
@@ -3953,6 +3953,14 @@ def extract_one_slit(
         var_rnoise = slit.var_rnoise
         var_flat = slit.var_flat
         input_dq = slit.dq
+
+    #  Ensure variance arrays have been populated. If not, zero fill.
+    if np.shape(var_poisson) != np.shape(data):
+        var_poisson = np.zeros_like(data)
+        var_rnoise = np.zeros_like(data)
+
+    if np.shape(var_flat) != np.shape(data):
+        var_flat = np.zeros_like(data)
 
     if input_dq.size == 0:
         input_dq = None
