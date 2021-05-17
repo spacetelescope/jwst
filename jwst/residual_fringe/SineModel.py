@@ -119,11 +119,11 @@ class SineModel( NonLinearModel ):
         if phase :
             param = [1.0, 1.0, 0.0]
             names = ["amplitude", "frequency", "phase"]
-            print('*****names',names)
+            #print('*****names',names)
         else :
             param = [1.0, 1.0, 1.0]
             names = ["frequency", "cosamp", "sinamp"]
-            print('*****names',names)
+            #print('*****names',names)
         super( SineModel, self ).__init__( 3, copy=copy, params=param,
                         names=names, **kwargs )
 

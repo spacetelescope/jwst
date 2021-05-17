@@ -25,7 +25,7 @@ from jwst import datamodels
 from .SplinesModel import SplinesModel
 from .Fitter  import Fitter
 from .SineModel import SineModel
-from astropy.modeling.models import Sine1D
+#from astropy.modeling.models import Sine1D
 from .LevenbergMarquardtFitter import LevenbergMarquardtFitter
 from .RobustShell import RobustShell
 from numpy.linalg.linalg import LinAlgError
@@ -157,8 +157,7 @@ def multi_sine(n):
     """
 
     # make the first sine
-    #mdl = SineModel()
-    mdl = Sine1D()
+    mdl = SineModel()
 
     # make a copy
     model = mdl.copy()
@@ -546,11 +545,7 @@ def fit_quality(wavenum, res_fringes, weights, ffreq, dffreq, save_results=False
 
     # create the model
     mdl = SineModel(pars=[0.1, 0.1], fixed={0: 1/peak_freq})
-    print('going to call Sine1d')
-    #mdl = Sine1D(amplitude =0.1, frquency= 0.1, fixed={0: 1/peak_freq})
 
-    print('mdl',mdl)
-    exit(1)
     fitter = LevenbergMarquardtFitter(wavenum[50:-50], mdl)
     ftr = RobustShell(fitter, domain=10)
     fr_par = ftr.fit(res_fringes[50:-50], weights=weights[50:-50])
@@ -564,8 +559,7 @@ def fit_quality(wavenum, res_fringes, weights, ffreq, dffreq, save_results=False
     # make data to return for fit quality
     quality  = None
     if save_results:
-        #best_mdl = SineModel(fixed={0: 1/peak_freq, 1:fr_par[0], 2:fr_par[1]})
-        best_mdl = Sine1D(fixed={0: 1/peak_freq, 1:fr_par[0], 2:fr_par[1]})
+        best_mdl = SineModel(fixed={0: 1/peak_freq, 1:fr_par[0], 2:fr_par[1]})
         fit = best_mdl.result(wavenum)
         quality = np.array([(10000.0/wavenum), res_fringes, fit])
 

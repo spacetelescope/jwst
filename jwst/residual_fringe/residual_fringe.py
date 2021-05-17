@@ -192,7 +192,6 @@ class ResidualFringeCorrection():
                 min_snr = slice_row['min_snr'][0][0]
                 pgram_res = slice_row['pgram_res'][0][0]
                 
-                #print(' freq',ffreq, dffreq, min_nfringes,max_nfringes)
                 # cycle through the cols and fit the fringes
                 for col in np.arange(slice_x_ranges[n,1], slice_x_ranges[n,2]):
                     col_data = ss_data[:, col]
@@ -201,11 +200,9 @@ class ResidualFringeCorrection():
                     valid = np.logical_and( (col_wmap>0), ~np.isnan(col_wmap))
                     # because of the curvature of the slices there can be large regions not falling on a column
                     num_good  = len(np.where(valid)[0])
-                    #print('num of valid values in wavelength array',num_good)
                     # Need at least 50 pixels in column to proceed
                     
                     if num_good > 50:
-
                         test_flux = col_data[valid]
                         # Transform wavelength in micron to wavenumber in cm^-1.
                         col_wnum = 10000.0 / col_wmap
@@ -222,7 +219,8 @@ class ResidualFringeCorrection():
                         
                         # Sometimes can return nan, inf for bad data so include this in check
                         if (snr2 < min_snr[0]):
-                                print('not fitting column',col)
+                                log.info('SNR too high not fitting column {}, {}, {}'.format(col,snr2,min_snr[0]))
+                                
                                 pass
                         else:
                             log.debug("Fitting column{} ".format(col))
@@ -361,6 +359,10 @@ class ResidualFringeCorrection():
                                                                       ffreq,
                                                                       dffreq,
                                                                       save_results=self.save_intermediate_results)
+
+                                
+                                out_table.add_row((ss, col, fn ,snr2, pre_contrast, contrast, pgram_res[0],
+                                                   opt_nfringe,peak_freq, freq_min, freq_max))
                                 
                                 qual_table.add_row((col, quality))
                                 correction_quality.append([contrast, pre_contrast])
@@ -405,31 +407,30 @@ class ResidualFringeCorrection():
         del output_data
         
         if self.save_intermediate_results:
-            log.info(" saving the output data")
             stat_table_name = self.make_output_path(
                 basepath=self.input_model.meta.filename,
                 suffix='stat_table',ext='.ecvs')
-            print('Stat table name',stat_table_name)
+            log.info(' Saving intermediate Stat table {}'.format(stat_table_name))
             ascii.write(stat_table,stat_table_name, format='ecsv',fast_writer=False, overwrite=True)
 
             out_table_name = self.make_output_path(
                 basepath=self.input_model.meta.filename,
                 suffix='out_table',ext='.ecvs')
-            print('out table name',out_table_name)
+            log.info(' Saving intermediate Output table {}'.format(out_table_name))
             ascii.write(out_table,out_table_name, format='ecsv',fast_writer=False,overwrite=True)
 
-            qual_table_name = self.make_output_path(
-                basepath=self.input_model.meta.filename,
-                suffix='qual_table',ext='.fits')
-            print('out table name',out_table_name)
+            # qual table is a binary table that will be attached to fit_results output
+            #qual_table_name = self.make_output_path(
+            #    basepath=self.input_model.meta.filename,
+            #    suffix='qual_table',ext='.fits')
+            #print('out table name',out_table_name)
             t = fits.BinTableHDU(data=qual_table,name='FIT_QUAL')
-            t.writeto(qual_table_name, overwrite=True)
-
+            #t.writeto(qual_table_name, overwrite=True)
 
             fit_results_name = self.make_output_path(
                 basepath=self.input_model.meta.filename,
                 suffix='fit_results',ext='.fits')
-            print('fit results name',fit_results_name)
+            log.info('Saving intermediate fit results output {}'.format(fit_results_name))
             h  = fits.open(self.input_model.meta.filename)
             hdr = h[0].header
             h.close()
@@ -442,7 +443,7 @@ class ResidualFringeCorrection():
             hdu5 = fits.ImageHDU(self.background_fit, name='BACKGROUND_FIT')
             hdu6 = fits.ImageHDU(self.knot_locations, name= 'KNOT_LOCATIONS')            
 
-            hdu = fits.HDUList([hdu0, hdu1, hdu2, hdu3, hdu4, hdu5, hdu6])
+            hdu = fits.HDUList([hdu0, hdu1, hdu2, hdu3, hdu4, hdu5, hdu6,t])
             hdu.writeto(fit_results_name, overwrite=True)
             hdu.close()
 
