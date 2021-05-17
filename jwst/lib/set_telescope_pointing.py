@@ -955,19 +955,32 @@ def calc_transforms_quaternion(t_pars: TransformParameters):
     qauternion pointing to aperture ra/dec/roll information
     is given by the following formula. Each term is a 3x3 matrix:
 
-        M_eci_to_siaf =           # The complete transformation
-            M_v1_to_siaf      *   # V1 to SIAF
-            M_sifov_to_v1     *   # Science Instruments Aperture to V1
-            M_sifov_fsm_delta *   # Fine Steering Mirror correction
-            M_z_to_x          *   # Transposition
-            M_fgs1_to_sifov   *   # FGS1 to Science Instruments Aperture
-            M_j_to_fgs1       *   # J-Frame to FGS1
-            M_eci_to_j        *   # ECI to J-Frame
+        M_eci_to_siaf =       # Complete transformation
+            M_v_to_siaf    *  # V to SIAF
+            M_eci_to_v        # ECI to V
+
+        where
+
+        M_eci_to_v = 
+            M_sifov_to_v   *  # SIFOV to V
+            M_z_to_j       *  # ICS-frame to SIAF-frame
+            M_eci_to_sifov    # ECI to SIFOV 
+
+        M_eci_to_sifov =
+            M_z_to_x          *  # Rotate from Z out to X out
+            M_sifov_fsm_delta *  # SIFOV correstion due to Fast Steering Mirror offsets
+            M_fgs1_to_sifov   *  # FGS1 to SIFOV
+            M_j_to_fgs1       *  # J-frame to FGS1
+            M_eci_to_j           # ECI to J-Frame
 
     """
     logger.info('Calculating transforms using FULL quaternion method...')
     t_pars.method = Methods.FULL
     t = Transforms(override=t_pars.override_transforms)  # Shorthand the resultant transforms
+
+    # ---
+    # Calculate base matrices from telemetry, siaf database, and/or constants
+    # ___
 
     # Determine the ECI to J-frame matrix
     t.m_eci2j = calc_eci2j_matrix(t_pars.pointing.q)
@@ -976,35 +989,35 @@ def calc_transforms_quaternion(t_pars: TransformParameters):
     # Calculate the J-frame to FGS1 ICS matrix
     t.m_j2fgs1 = calc_j2fgs1_matrix(t_pars.pointing.j2fgs_matrix, transpose=t_pars.j2fgs_transpose)
     logger.debug('m_j2fgs1: %s', t.m_j2fgs1)
-    logger.debug('m_eci2fgs1: %s', np.dot(t.m_j2fgs1, t.m_eci2j))
+
+    # Calculate the FGS1 ICS to SI-FOV matrix
+    t.m_fgs12sifov = calc_fgs1_to_sifov_matrix(t_pars.siaf_path, t_pars.useafter)
 
     # Calculate the FSM corrections to the SI_FOV frame
     t.m_sifov_fsm_delta = calc_sifov_fsm_delta_matrix(
         t_pars.pointing.fsmcorr, fsmcorr_version=t_pars.fsmcorr_version, fsmcorr_units=t_pars.fsmcorr_units
     )
 
-    # Calculate the FGS1 ICS to SI-FOV matrix
-    t.m_fgs12sifov = calc_fgs1_to_sifov_matrix(t_pars.siaf_path, t_pars.useafter)
-
     # Calculate SI FOV to V1 matrix
     t.m_sifov2v = calc_sifov2v_matrix()
-
-    # Calculate ECI to SI FOV
-    t.m_eci2sifov = np.linalg.multi_dot(
-        [MZ2X, t.m_sifov_fsm_delta, t.m_fgs12sifov, t.m_j2fgs1, t.m_eci2j]
-    )
-
-    # Calculate the complete transform to the V1 reference
-    t.m_eci2v = np.dot(t.m_sifov2v, t.m_eci2sifov)
 
     # Calculate the SIAF transform matrix
     t.m_v2siaf = calc_v2siaf_matrix(t_pars.siaf)
 
+    # ---
+    # Calculate matrices based on previously computed matrices
+    # ---
+
+    # Calculate ECI to SIFOV complete transformation
+    t.m_eci2sifov = np.linalg.multi_dot([
+        MZ2X, t.m_sifov_fsm_delta, t.m_fgs12sifov, t.m_j2fgs1, t.m_eci2j
+    ])
+
+    # Calculate the complete transform to the V1 reference
+    t.m_eci2v = np.dot(t.m_sifov2v, t.m_eci2sifov)
+
     # Calculate the full ECI to SIAF transform matrix
-    t.m_eci2siaf = np.dot(
-        t.m_v2siaf,
-        t.m_eci2v
-    )
+    t.m_eci2siaf = np.dot(t.m_v2siaf, t.m_eci2v)
 
     return t
 
