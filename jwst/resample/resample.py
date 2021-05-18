@@ -118,7 +118,6 @@ class ResampleData:
         """
         for exposure in self.input_models.models_grouped:
             output_model = self.blank_output.copy()
-            output_model.update(exposure, only="PRIMARY")
 
             # Initialize the output with the wcs
             driz = gwcs_drizzle.GWCSDrizzle(output_model, pixfrac=self.pixfrac,
