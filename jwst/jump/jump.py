@@ -34,7 +34,7 @@ def detect_jumps(input_model, gain_model, readnoise_model,
     """
     if max_cores is 'none' or None:
         numslices = 1
-        og.info("Using 1 core for jump detection ")
+        log.info("Using 1 core for jump detection ")
 
     else:
         num_cores = multiprocessing.cpu_count()
