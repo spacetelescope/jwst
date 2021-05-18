@@ -23,7 +23,7 @@ class ResidualFringeStep(Step):
         transmission_level = integer(default=80) # transmission level to use to define slice locations
         search_output_file = boolean(default = False)
     """
-    
+
     reference_file_types = ['fringefreq','regions']
 
     def process(self, input):
@@ -31,7 +31,6 @@ class ResidualFringeStep(Step):
         self.suffix = 'residual_fringe'
         input = datamodels.open(input)
 
-        
         # If single file, wrap in a ModelContainter
         if not isinstance(input, datamodels.ModelContainer):
             input_models = datamodels.ModelContainer([input])
@@ -41,7 +40,7 @@ class ResidualFringeStep(Step):
         else:
             input_models = input
             self.input_container = True
-            exptype = input[0].meta.exposure.type        
+            exptype = input[0].meta.exposure.type
 
         # Setup output path naming if associations are involved.
         asn_id = None
@@ -52,39 +51,39 @@ class ResidualFringeStep(Step):
         if asn_id is None:
             asn_id = self.search_attr('asn_id')
         if asn_id is not None:
-                _make_output_path = self.search_attr(
-                    '_make_output_path', parent_first=True
-                )
+            _make_output_path = self.search_attr(
+                '_make_output_path', parent_first=True
+            )
 
-                self._make_output_path = partial(
-                    _make_output_path,
-                    asn_id=asn_id
-                )
+            self._make_output_path = partial(
+                _make_output_path,
+                asn_id=asn_id
+            )
 
         # Set up residual fringe correction parameters
         pars = {
             'transmission_level': self.transmission_level,
             'save_intermediate_results': self.save_intermediate_results,
             'make_output_path': self.make_output_path
-            }
-        
+        }
+
         if exptype != 'MIR_MRS':
             self.log(" Residual Fringe correction is only for MIRI MRS data")
-            self.log.error( "Unsupported ", f"exposure type: {exptype}")
+            self.log.error("Unsupported ", f"exposure type: {exptype}")
 
             if self.input_container:
                 for model in input_models:
                     model.meta.cal_step.outlier_detection = "SKIPPED"
                 else:
-                    input_model.meta.cal_step.outlier_detection = "SKIPPED"
+                    input_models.meta.cal_step.outlier_detection = "SKIPPED"
                 self.skip = True
 
                 return input_models
-            
+
         # loop over each model
         # 1. read in reference file for model
         # 2. correct each model
-        # 3. append corrected data to output_models - to return from step 
+        # 3. append corrected data to output_models - to return from step
         self.output_models = datamodels.ModelContainer()
         for model in input:
 
@@ -99,13 +98,13 @@ class ResidualFringeStep(Step):
             self.log.info('Using MRS regrions reference file: {}'.
                           format(self.regions_filename))
 
-            # Check for a valid reference files. If they are not found skip step 
-            if self.residual_fringe_filename == 'N/A' or self.regions_filename =='N/A':
-                
+            # Check for a valid reference files. If they are not found skip step
+            if self.residual_fringe_filename == 'N/A' or self.regions_filename == 'N/A':
+
                 if self.residual_fringe_filename == 'N/A':
                     self.log.warning('No Residual FRINGE reference file found')
                     self.log.warning('Residual Fringe step will be skipped')
-                    
+
                 if self.regions_filename == 'N/A':
                     self.log.warning('No MRS regions reference file found')
                     self.log.warning('Residual Fringe step will be skipped')
@@ -120,17 +119,13 @@ class ResidualFringeStep(Step):
                     self.skip = True
                 return self.output_models
 
-
             # Do the correction
-            rfc= residual_fringe.ResidualFringeCorrection(model,
-                                                          self.residual_fringe_filename,
-                                                          self.regions_filename,
-                                                          **pars)
+            rfc = residual_fringe.ResidualFringeCorrection(model,
+                                                           self.residual_fringe_filename,
+                                                           self.regions_filename,
+                                                           **pars)
             result = rfc.do_correction()
             result.meta.cal_step.residual_fringe = 'COMPLETE'
             self.output_models.append(result)
 
-        print('finished the step, returning result')
-
         return self.output_models
-
