@@ -75,7 +75,7 @@ cube_build
 - Fixed typo in cube_build_step spec for grating [#5839]
 - Update code to read in spectral and spatial size of exposure on the sky #5991
 - For calspec2 pipeline skip determining the dq plane in cube_build #5991
-
+- Remove certain WCS keywords that are irrelevant after cube_building. [#6032]
 datamodels
 ----------
 
