@@ -116,8 +116,7 @@ def test_nircam_image_stage2_wcs(run_image2pipeline, rtdata_module):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["i2d"])
-def test_nircam_image_stage3(run_image3pipeline, rtdata_module, fitsdiff_default_kwargs,
-                             assert_most_pixels_same, suffix):
+def test_nircam_image_stage3(run_image3pipeline, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Test that resampled i2d looks good for NIRCam imaging"""
     rtdata = rtdata_module
     rtdata.input = "jw42424-o002_20191220t214154_image3_001_asn.json"
