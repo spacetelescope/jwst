@@ -374,7 +374,7 @@ class CubeBuildStep (Step):
             # remove certain WCS keywords that are irrelevant after combine data into IFUCubes
             for key in rm_keys:
                 if key in cube.meta.wcsinfo.instance:
-                    del cube.meta.wcsinfo.instance[key]            
+                    del cube.meta.wcsinfo.instance[key]
         if status_cube == 1:
             self.skip = True
 
