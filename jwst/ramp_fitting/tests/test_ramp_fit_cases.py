@@ -73,11 +73,11 @@ def test_pix_1():
         ramp_model, 1024 * 300., True, rnoise_model, gain_model, 'OLS', 'optimal', 'none')
 
     # Set truth values for PRIMARY results:
-    p_true = [1.8999999, 6, 1.046670, 0.02636364, 1.0691562]
+    p_true = [1.8999999, 6, 1.05057204, 0.03454545, 1.0691562]
 
     # Set truth values for OPTIONAL results:
-    o_true = [1.9, 56.870003, 0.02636364, 1.0691562, -3., 56.870003,
-              -3.999998, 0.83321977]
+    o_true = [1.9, 56.870003, 0.03454545, 1.0691562, -3., 56.870003,
+              -3.999998, 0.82091206]
 
     assert_pri(p_true, new_mod, 0)
     assert_opt(o_true, opt_mod, 0)
@@ -103,17 +103,17 @@ def test_pix_2():
         ramp_model, 1024 * 300., True, rnoise_model, gain_model, 'OLS', 'optimal', 'none')
 
     # Set truth values for PRIMARY results:
-    p_true = [0.84761256, 6, 0.42986465, 0.00659091, 0.1781927]
+    p_true = [0.84833729, 6, 0.42747884, 0.00454545, 0.1781927]
 
     # Set truth values for OPTIONAL results for all segments
     o_true = [[1.0000001, 0.1, 1.],                 # slopes for 3 segments
               [28.435, 56.870003, 56.870003],        # sigslope
-              [0.01318182, 0.02636364, 0.02636364, ],  # var_poisson
+              [0.00909091, 0.01818182, 0.01818182],  # var_poisson
               [0.26728904, 1.0691562, 1.0691562],   # var_rnoise
               [14.999998, 51., 15.],                # yint
               [36.709427, 56.870003, 56.870003],     # sigyint
-              [6.5238733],                          # pedestal
-              [12.712313, 0.83321977, 0.83321977],   # weights
+              [6.5166273],                          # pedestal
+              [13.091425, 0.84580624, 0.84580624],   # weights
               ]
 
     assert_pri(p_true, new_mod, 0)
