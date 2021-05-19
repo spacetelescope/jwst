@@ -192,6 +192,8 @@ resample
 
 - Remove certain WCS keywords that are irrelevant after resampling. [#5971]
 
+- Propgagate error and variance arrays in ``ResampleStep`` for imaging data. [#6036]
+
 source_catalog
 --------------
 

@@ -185,7 +185,7 @@ class ResampleData:
     def resample_variance_array(self, name, output_model):
         """Resample variance arrays from self.input_models to the output_model
 
-        Loop through self.input_models and resampled the `name` variance array
+        Loop through self.input_models and resample the `name` variance array
         to the same name in output_model.  This modifies output_model in-place.
         """
         outwht = np.zeros_like(output_model.data)
