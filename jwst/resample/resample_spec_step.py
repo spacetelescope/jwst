@@ -101,12 +101,6 @@ class ResampleSpecStep(ResampleStep):
                 model.meta.cal_step.resample = "COMPLETE"
                 model.meta.asn.pool_name = input_models.meta.pool_name
                 model.meta.asn.table_name = input_models.meta.table_name
-
-                # Delete the BUNIT keyword for the ERR extension, so that datamodels
-                # doesn't create an empty ERR extension (just for that keyword)
-                if hasattr(model.meta, "bunit_err") and model.meta.bunit_err is not None:
-                    del model.meta.bunit_err
-
                 update_s_region_spectral(model)
 
             # Everything resampled to single output model
@@ -139,28 +133,12 @@ class ResampleSpecStep(ResampleStep):
 
         resamp = resample_spec.ResampleSpecData(input_models, **self.drizpars)
 
-        # Only drizzle the area within the bounding box
-        if input_models[0].meta.exposure.type == "MIR_LRS-FIXEDSLIT":
-            bb = input_models[0].meta.wcs.bounding_box
-            ((x1, x2), (y1, y2)) = bb
-            xmin = int(min(x1, x2))
-            ymin = int(min(y1, y2))
-            xmax = int(max(x1, x2))
-            ymax = int(max(y1, y2))
-            drizzled_models = resamp.do_drizzle(xmin=xmin, xmax=xmax,
-                                                ymin=ymin, ymax=ymax)
-        else:
-            drizzled_models = resamp.do_drizzle()
+        drizzled_models = resamp.do_drizzle()
 
         result = drizzled_models[0]
         result.meta.cal_step.resample = "COMPLETE"
         result.meta.asn.pool_name = input_models.meta.pool_name
         result.meta.asn.table_name = input_models.meta.table_name
-
-        # Delete BUNIT keyword for ERR extension to prevent datamodels from
-        # creating an empty ERR extension (just for the keyword)
-        if hasattr(result.meta, "bunit_err") and result.meta.bunit_err is not None:
-            del result.meta.bunit_err
 
         update_s_region_spectral(result)
         result.meta.bunit_data = drizzled_models[0].meta.bunit_data

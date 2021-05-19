@@ -103,8 +103,7 @@ class ResampleData:
         output_file = output_model.meta.filename
 
         log.info('Blending metadata for {}'.format(output_file))
-        blendmeta.blendmodels(output_model, inputs=self.input_models,
-                              output=output_file)
+        blendmeta.blendmodels(output_model, inputs=self.input_models, output=output_file)
 
     def resample_many_to_many(self):
         """Resample many inputs to many outputs where outputs have a common frame.
@@ -175,7 +174,13 @@ class ResampleData:
         output_model.err = np.sqrt(output_model.var_rnoise + output_model.var_poisson
                                    + output_model.var_flat)
 
-        self.update_fits_wcs(output_model)
+        # TODO: The following two methods and calls should be moved upstream to
+        # ResampleStep and ResampleSpecStep respectively
+        if isinstance(output_model, datamodels.ImageModel):
+            self.update_fits_wcs(output_model)
+        if isinstance(output_model, datamodels.SlitModel):
+            self.update_slit_metadata(output_model)
+
         self.update_exposure_times(output_model)
         self.output_models.append(output_model)
 
@@ -240,7 +245,7 @@ class ResampleData:
 
     @staticmethod
     def drizzle_arrays(insci, inwht, input_wcs, output_wcs, outsci, outwht, outcon,
-                       uniqid=1, xmin=0, xmax=0, ymin=0, ymax=0,
+                       uniqid=1, xmin=None, xmax=None, ymin=None, ymax=None,
                        pixfrac=1.0, kernel='square', fillval="INDEF"):
         """
         Low level routine for performing 'drizzle' operation on one image.
@@ -353,11 +358,6 @@ class ResampleData:
         if inwht is None:
             inwht = np.ones_like(insci)
 
-        if xmax is None or xmax == xmin:
-            xmax = insci.shape[1]
-        if ymax is None or ymax == ymin:
-            ymax = insci.shape[0]
-
         # Compute what plane of the context image this input would
         # correspond to:
         planeid = int((uniqid - 1) / 32)
@@ -376,6 +376,14 @@ class ResampleData:
         # Alias context image to the requested plane if 3d
         if outcon.ndim == 3:
             outcon = outcon[planeid]
+
+        if xmin is xmax is ymin is ymax is None:
+            bb = input_wcs.bounding_box
+            ((x1, x2), (y1, y2)) = bb
+            xmin = int(min(x1, x2))
+            ymin = int(min(y1, y2))
+            xmax = int(max(x1, x2))
+            ymax = int(max(y1, y2))
 
         # Compute the mapping between the input and output pixel coordinates
         # for use in drizzle.cdrizzle.tdriz
@@ -430,3 +438,30 @@ class ResampleData:
         model.meta.wcsinfo.pc2_2 = transform[2].matrix.value[1][1]
         model.meta.wcsinfo.ctype1 = "RA---TAN"
         model.meta.wcsinfo.ctype2 = "DEC--TAN"
+
+        # Remove no longer relevant WCS keywords
+        rm_keys = ['v2_ref', 'v3_ref', 'ra_ref', 'dec_ref', 'roll_ref',
+                   'v3yangle', 'vparity']
+        for key in rm_keys:
+            if key in model.meta.wcsinfo.instance:
+                del model.meta.wcsinfo.instance[key]
+
+    def update_slit_metadata(self, model):
+        """
+        Update slit attributes in the resampled slit image.
+
+        This is needed because model.slit attributes are not in model.meta, so
+        the normal update() method doesn't work with them. Updates output_model
+        in-place.
+        """
+        for attr in ['name', 'xstart', 'xsize', 'ystart', 'ysize',
+                     'slitlet_id', 'source_id', 'source_name', 'source_alias',
+                     'stellarity', 'source_type', 'source_xpos', 'source_ypos',
+                     'dispersion_direction', 'shutter_state']:
+            try:
+                val = getattr(self.input_models[-1], attr)
+            except AttributeError:
+                pass
+            else:
+                if val is not None:
+                    setattr(model, attr, val)
