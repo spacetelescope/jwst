@@ -7,7 +7,7 @@ from jwst.associations.lib.dms_base import (Constraint_TargetAcq, Constraint_TSO
 from jwst.associations.lib.process_list import ProcessList
 from jwst.associations.lib.rules_level3_base import *
 from jwst.associations.lib.rules_level3_base import (
-    dms_product_name_sources,
+    dms_product_name_sources, dms_product_name_noopt,
     format_product
 )
 
@@ -18,6 +18,7 @@ __all__ = [
     'Asn_Lv3Image',
     'Asn_Lv3SpecAux',
     'Asn_Lv3MIRMRS',
+    'Asn_Lv3MIRMRSAux',
     'Asn_Lv3NRSFSS',
     'Asn_Lv3NRSIFU',
     'Asn_Lv3NRSIFUBackground',
@@ -312,18 +313,7 @@ class Asn_Lv3MIRMRS(AsnMixin_Spectrum):
 
     @property
     def dms_product_name(self):
-        """Define product name."""
-        target = self._get_target()
-
-        instrument = self._get_instrument()
-
-        product_name = 'jw{}-{}_{}_{}'.format(
-            self.data['program'],
-            self.acid.id,
-            target,
-            instrument
-        )
-        return product_name.lower()
+        return dms_product_name_noopt(self)
 
 
 @RegistryMarker.rule
@@ -370,18 +360,7 @@ class Asn_Lv3MIRMRSAux(AsnMixin_AuxData, AsnMixin_Spectrum):
 
     @property
     def dms_product_name(self):
-        """Define product name."""
-        target = self._get_target()
-
-        instrument = self._get_instrument()
-
-        product_name = 'jw{}-{}_{}_{}'.format(
-            self.data['program'],
-            self.acid.id,
-            target,
-            instrument
-        )
-        return product_name.lower()
+        return dms_product_name_noopt(self)
 
 
 @RegistryMarker.rule
