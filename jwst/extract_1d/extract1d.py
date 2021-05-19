@@ -90,8 +90,9 @@ def extract1d(image, var_poisson, var_rnoise, var_flat, lambdas, disp_range,
 
     Returns:
     --------
-    countrate : ndarray, 1-D, float64
-        The extracted spectrum in units of counts / s.
+    temp_flux : ndarray, 1-D, float64
+        The extracted spectrum, typically in units of MJy/sr, except for observations
+        with NIRSpec and NIRISS SOSS, where temp_flux is in units of MJy.
 
     f_var_poisson : ndarray, 1-D, float64
         The extracted variance due to Poisson noise, units of (counts/s)^2
@@ -116,7 +117,7 @@ def extract1d(image, var_poisson, var_rnoise, var_flat, lambdas, disp_range,
 
     npixels : ndarray, 1-D, float64
         For each column, this is the number of pixels that were added
-        together to get `countrate`.
+        together to get `temp_flux`.
     """
     nl = lambdas.shape[0]
 
@@ -234,7 +235,7 @@ def extract1d(image, var_poisson, var_rnoise, var_flat, lambdas, disp_range,
     b_var_rnoise_model = None
     b_var_flat_model = None
 
-    countrate = np.zeros(nl, dtype=np.float64)
+    temp_flux = np.zeros(nl, dtype=np.float64)
     f_var_poisson = np.zeros(nl, dtype=np.float64)
     f_var_rnoise = np.zeros(nl, dtype=np.float64)
     f_var_flat = np.zeros(nl, dtype=np.float64)
@@ -244,7 +245,7 @@ def extract1d(image, var_poisson, var_rnoise, var_flat, lambdas, disp_range,
     b_var_flat = np.zeros(nl, dtype=np.float64)
     npixels = np.zeros(nl, dtype=np.float64)
     # x is an index (column number) within `image`, while j is an index in
-    # lambdas, countrate, background, npixels, and the arrays in
+    # lambdas, temp_flux, background, npixels, and the arrays in
     # srclim and bkglim.
     x = disp_range[0]
     for j in range(nl):
@@ -276,7 +277,7 @@ def extract1d(image, var_poisson, var_rnoise, var_flat, lambdas, disp_range,
         # background smoothing was done, we must extract the source from
         # the original, unsmoothed image.
         # source total flux, background total flux, area, total weight
-        (countrate[j], f_var_poisson[j], f_var_rnoise[j], f_var_flat[j],
+        (temp_flux[j], f_var_poisson[j], f_var_rnoise[j], f_var_flat[j],
          bkg_flux, b_var_poisson_val, b_var_rnoise_val, b_var_flat_val,
          npixels[j], twht) = _extract_src_flux(
             image, var_poisson, var_rnoise, var_flat, x, j, lam, srclim,
@@ -292,7 +293,7 @@ def extract1d(image, var_poisson, var_rnoise, var_flat, lambdas, disp_range,
         x += 1
         continue
 
-    return (countrate, f_var_poisson, f_var_rnoise, f_var_flat,
+    return (temp_flux, f_var_poisson, f_var_rnoise, f_var_flat,
             background, b_var_poisson, b_var_rnoise, b_var_flat, npixels)
 
 

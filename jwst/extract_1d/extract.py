@@ -2200,17 +2200,18 @@ class ImageExtractModel(ExtractBase):
         log.debug(f"smoothing_length = {self.smoothing_length}")
         log.debug(f"position_correction = {self.position_correction}")
 
-    def extract(self, data,
+    def extract(self,
+                data: np.ndarray,
                 var_poisson: np.ndarray,
                 var_rnoise: np.ndarray,
                 var_flat: np.ndarray,
                 wl_array: np.ndarray,
-                verbose: bool)\
-            -> \
-            Tuple[float, float, np.ndarray,
-                  np.ndarray, np.ndarray, np.ndarray, np.ndarray,
-                  np.ndarray, np.ndarray, np.ndarray, np.ndarray,
-                  np.ndarray, np.ndarray]:
+                verbose: bool
+    ) -> Tuple[
+               float, float, np.ndarray,
+               np.ndarray, np.ndarray, np.ndarray, np.ndarray,
+               np.ndarray, np.ndarray, np.ndarray, np.ndarray,
+               np.ndarray, np.ndarray]:
         """
         Do the actual extraction, for the case that the extract1d reference file
         is an image.

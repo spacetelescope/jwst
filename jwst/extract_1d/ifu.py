@@ -383,6 +383,7 @@ def extract_ifu(input_model, source_type, extract_params):
         var_rnoise = input_model.var_rnoise
         var_flat = input_model.var_flat
     except AttributeError:
+        log.info("Input model has no variance information. Creating zero-filled arrays.")
         var_poisson = np.zeros_like(input_model.data)
         var_rnoise = np.zeros_like(input_model.data)
         var_flat = np.zeros_like(input_model.data)
@@ -858,6 +859,7 @@ def image_extract_ifu(input_model, source_type, extract_params):
         var_rnoise = input_model.var_rnoise
         var_flat = input_model.var_flat
     except AttributeError:
+        log.info("Input model has no variance information. Creating zero-filled arrays.")
         var_poisson = np.zeros_like(input_model.data)
         var_rnoise = np.zeros_like(input_model.data)
         var_flat = np.zeros_like(input_model.data)
