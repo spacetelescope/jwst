@@ -213,6 +213,9 @@ source_catalog
 - The ``is_star`` column was replaced by a ``is_extended`` column with
   inverted boolean values. [#6018]
 
+- Circular aperture sizes now scale in the case of non-native pixel
+  scales in the resampled image. [#6045]
+
 srctype
 -------
 
