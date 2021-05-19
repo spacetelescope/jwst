@@ -8,6 +8,10 @@ ami_analyze
 
 assign_wcs
 ----------
+- Convert the ra values to array in util.wrap_ra, but if input is a list return a list [6031]
+
+- Moved the routine wrap_ra from cube_build to assign_wcs.util. The s_region is now
+  correct for data that cross ra boundary. [#6026]
 
 - Changed evaluation of grism bounding box center from averaged extrema of
   transformed bounding box to transformed centroid of source_cat object [#5809]
@@ -71,7 +75,7 @@ cube_build
 - Fixed typo in cube_build_step spec for grating [#5839]
 - Update code to read in spectral and spatial size of exposure on the sky #5991
 - For calspec2 pipeline skip determining the dq plane in cube_build #5991
-
+- Remove certain WCS keywords that are irrelevant after cube_building. [#6032]
 datamodels
 ----------
 
@@ -98,6 +102,9 @@ documentation
 
 - Update pipeline introduction document to include segmentation map (``segm``)
   in list of data products [#5956]
+
+- Update ``assign_mtwcs`` step docs and reference the ``assign_mtwcs`` step in the
+  ``calwebb_image3`` and ``calwebb_spec3`` pipeline docs [#6024]
 
 extract_1d
 ----------
@@ -168,6 +175,8 @@ ramp_fitting
 
 - Refactoring ramp fit code in preparation for moving code to STCAL. [#6010]
 
+- Moved ramp fit code to STCAL. [#6023]
+
 refpix
 ------
 
@@ -188,6 +197,8 @@ resample
 - Propagate variance arrays into ``SlitModel`` used as input for ``ResampleSpecStep`` [#5941]
 
 - Remove certain WCS keywords that are irrelevant after resampling. [#5971]
+
+- Propgagate error and variance arrays in ``ResampleStep`` for imaging data. [#6036]
 
 source_catalog
 --------------
@@ -220,6 +231,9 @@ transforms
 
 tweakreg
 --------
+
+- Fix a bug due to ``models_grouped`` now returning ``odict_values`` instead
+  of lists. [#6022]
 
 - Updated documentation to include the new "rshift" option for fit geometry [#5899]
 

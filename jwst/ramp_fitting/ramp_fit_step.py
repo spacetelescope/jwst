@@ -5,8 +5,7 @@ import numpy as np
 from ..stpipe import Step
 from .. import datamodels
 
-from . import ramp_fit
-# from stcal.ramp_fitting import ramp_fit
+from stcal.ramp_fitting import ramp_fit
 
 from ..lib import reffile_utils  # TODO remove
 from ..lib import pipe_utils

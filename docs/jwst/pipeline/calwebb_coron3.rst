@@ -142,7 +142,7 @@ product, using exposure-based file names, e.g.
 2D resampled image
 ^^^^^^^^^^^^^^^^^^
 
-:Data model: `~jwst.datamodels.DrizProductModel`
+:Data model: `~jwst.datamodels.ImageModel`
 :File suffix: _i2d
 
 The :ref:`resample <resample_step>` step is applied to the CR-flagged products to create a

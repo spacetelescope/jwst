@@ -76,22 +76,18 @@ class ResampleStep(Step):
 
         # Call the resampling routine
         resamp = resample.ResampleData(input_models, **kwargs)
-        resamp.do_drizzle()
+        result = resamp.do_drizzle()
 
-        for model in resamp.output_models:
+        for model in result:
             model.meta.cal_step.resample = 'COMPLETE'
             util.update_s_region_imaging(model)
             model.meta.asn.pool_name = input_models.meta.pool_name
             model.meta.asn.table_name = input_models.meta.table_name
-            if hasattr(model.meta, "bunit_err") and model.meta.bunit_err is not None:
-                del model.meta.bunit_err
             self.update_phot_keywords(model)
             model.meta.filetype = 'resampled'
 
-        if len(resamp.output_models) == 1:
-            result = resamp.output_models[0]
-        else:
-            result = resamp.output_models
+        if len(result) == 1:
+            result = result[0]
 
         # remove irrelevant WCS keywords
         rm_keys = ['v2_ref', 'v3_ref', 'ra_ref', 'dec_ref', 'roll_ref',

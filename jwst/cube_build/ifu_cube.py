@@ -16,6 +16,7 @@ from astropy.stats import circmean
 from astropy import units as u
 from gwcs import wcstools
 from ..assign_wcs import nirspec
+from ..assign_wcs.util import wrap_ra
 from ..datamodels import dqflags
 from . import cube_build_wcs_util
 from . import cube_overlap
@@ -1324,6 +1325,8 @@ class IFUCubeData():
                 lambda_max.append(lmax)
     # ________________________________________________________________________________
     # done looping over files determine final size of cube
+        corner_a = np.array(corner_a)
+        corner_a = wrap_ra(corner_a)
 
         final_a_min = min(corner_a)
         final_a_max = max(corner_a)

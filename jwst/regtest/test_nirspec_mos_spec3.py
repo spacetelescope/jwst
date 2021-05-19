@@ -27,10 +27,14 @@ def test_nirspec_mos_spec3(run_pipeline, suffix, source_id, fitsdiff_default_kwa
     """Check results of calwebb_spec3"""
     rtdata = run_pipeline
 
-    output = "jw00626-o030_" + source_id + "_nirspec_f170lp-g235m_" + suffix + ".fits"
+    output = f"jw00626-o030_{source_id}_nirspec_f170lp-g235m_{suffix}.fits"
     rtdata.output = output
-    rtdata.get_truth("truth/test_nirspec_mos_spec3/" + output)
+    rtdata.get_truth(f"truth/test_nirspec_mos_spec3/{output}")
 
-    fitsdiff_default_kwargs['atol'] = 1e-5
+    # Adjust tolerance for machine precision with float32 drizzle code
+    if suffix == "s2d":
+        fitsdiff_default_kwargs["rtol"] = 1e-4
+        fitsdiff_default_kwargs["atol"] = 1e-5
+
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
