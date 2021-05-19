@@ -45,10 +45,6 @@ jobconfig.publish_env_filter = "spacetelescope/master"
 // Define python version for conda
 python_version = "3.8"
 
-// pip related setup
-def pip_index = "https://bytesalad.stsci.edu/artifactory/api/pypi/datb-pypi-virtual/simple"
-def pip_install_args = "--index-url ${pip_index} --progress-bar=off"
-
 // Define environement variables needed for the regression tests
 env_vars = [
     "TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory",
@@ -80,8 +76,8 @@ bc0.conda_packages = [
 ]
 bc0.pip_reqs_files = ['requirements-dev.txt']
 bc0.build_cmds = [
-    "pip install -e .[test,ephem]",
-    "pip install pytest-xdist pytest-sugar",
+    "pip install -e .[test,ephem] --no-cache-dir",
+    "pip install pytest-xdist",
     "pip freeze",
 ]
 bc0.build_cmds = PipInject(env.OVERRIDE_REQUIREMENTS) + bc0.build_cmds
