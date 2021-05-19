@@ -84,14 +84,13 @@ class ResampleData:
         self.blank_output = datamodels.ImageModel(self.output_wcs.data_size)
 
         # update meta data and wcs
-        self.blank_output.update(input_models[0], only='PRIMARY')
-        self.blank_output.update(input_models[0], only='SCI')
+        self.blank_output.update(input_models[0])
         self.blank_output.meta.wcs = self.output_wcs
 
         self.output_models = datamodels.ModelContainer()
 
     def do_drizzle(self):
-        """Perform drizzling operation on input images's to create a new output
+        """Pick the correct drizzling mode based on self.single
         """
         if self.single:
             return self.resample_many_to_many()
