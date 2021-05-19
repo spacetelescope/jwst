@@ -195,7 +195,9 @@ resample
 
 - Remove certain WCS keywords that are irrelevant after resampling. [#5971]
 
-- Propgagate error and variance arrays in ``ResampleStep`` for imaging data. [#6036]
+- Propagate error and variance arrays in ``ResampleStep`` for imaging data. [#6036]
+
+- Propagate error and variance arrays in ``ResampleSpecStep`` for 2D spectral data [#6041]
 
 source_catalog
 --------------
