@@ -186,12 +186,11 @@ class OutlierDetection:
         if pars['resample_data']:
             # Start by creating resampled/mosaic images for
             # each group of exposures
-            sdriz = resample.ResampleData(self.input_models, single=True,
-                                          blendheaders=False, **pars)
-            sdriz.do_drizzle()
-            drizzled_models = sdriz.output_models
-            for model in drizzled_models:
-                if save_intermediate_results:
+            resamp = resample.ResampleData(self.input_models, single=True,
+                                           blendheaders=False, **pars)
+            drizzled_models = resamp.do_drizzle()
+            if save_intermediate_results:
+                for model in drizzled_models:
                     log.info("Writing out resampled exposures...")
                     model_output_path = self.make_output_path(
                         basepath=model.meta.filename,
@@ -207,8 +206,7 @@ class OutlierDetection:
                     good_bits=pars['good_bits'])
 
         # Initialize intermediate products used in the outlier detection
-        median_model = datamodels.ImageModel(
-            init=drizzled_models[0].data.shape)
+        median_model = datamodels.ImageModel(drizzled_models[0].data.shape)
         median_model.update(drizzled_models[0])
         median_model.meta.wcs = drizzled_models[0].meta.wcs
 

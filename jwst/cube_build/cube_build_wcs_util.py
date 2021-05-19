@@ -2,6 +2,7 @@
 """
 import numpy as np
 from ..assign_wcs import nirspec
+from ..assign_wcs.util import wrap_ra
 from gwcs import wcstools
 import logging
 
@@ -91,6 +92,7 @@ def find_corners_MIRI(input, this_channel, instrument_info, coord_system):
     a_min = np.nanmin(coord1)
     a_max = np.nanmax(coord1)
 
+    # find index of min a value
     a1_index = np.argmin(coord1)
     a2_index = np.argmax(coord1)
 
@@ -100,6 +102,7 @@ def find_corners_MIRI(input, this_channel, instrument_info, coord_system):
     b_min = np.nanmin(coord2)
     b_max = np.nanmax(coord2)
 
+    # find index of min b value
     b1_index = np.argmin(coord2)
     b2_index = np.argmax(coord2)
     a1 = coord1[b1_index]
@@ -107,6 +110,22 @@ def find_corners_MIRI(input, this_channel, instrument_info, coord_system):
 
     lambda_min = np.nanmin(lam)
     lambda_max = np.nanmax(lam)
+
+    # before returning,  ra should be between 0 to 360
+    if a_min < 0:
+        a_min = a_min + 360
+    if a_max >= 360.0:
+        a_max = a_max - 360.0
+
+    if a1 < 0:
+        a1 = a1 + 360
+    if a1 > 360.0:
+        a1 = a1 - 360.0
+
+    if a2 < 0:
+        a2 = a2 + 360
+    if a2 > 360.0:
+        a2 = a2 - 360.0
 
     return a_min, b1, a_max, b2, a1, b_min, a2, b_max, lambda_min, lambda_max
 # *****************************************************************************
@@ -223,39 +242,4 @@ def find_corners_NIRSPEC(input, this_channel, instrument_info, coord_system):
     lambda_min = min(lambda_slice)
     lambda_max = max(lambda_slice)
     return a_min, b1, a_max, b2, a1, b_min, a2, b_max, lambda_min, lambda_max
-# ______________________________________________________________________________
-
-
-def wrap_ra(ravalues):
-    """Test for 0/360 wrapping in ra values.
-
-    If exists it makes it difficult to determine
-    ra range of IFU cube. So put them all on "one side" of 0/360 border
-
-    Parameters
-    ----------
-    input : ravalues
-        RA values numpy.ndarray
-
-    Returns
-    ------
-    a numpy array of ra values all on "same side" of 0/360 border
-    """
-
-    index_good = np.where(np.isfinite(ravalues))
-    ravalues_wrap = ravalues[index_good].copy()
-    median_ra = np.nanmedian(ravalues_wrap)
-
-    # using median to test if there is any wrapping going on
-    wrap_index = np.where(np.fabs(ravalues_wrap - median_ra) > 180.0)
-    nwrap = wrap_index[0].size
-
-    # get all the ra on the same "side" of 0/360
-    if(nwrap != 0 and median_ra < 180):
-        ravalues_wrap[wrap_index] = ravalues_wrap[wrap_index] - 360.0
-
-    if(nwrap != 0 and median_ra > 180):
-        ravalues_wrap[wrap_index] = ravalues_wrap[wrap_index] + 360.0
-
-    return ravalues_wrap
 # ______________________________________________________________________________

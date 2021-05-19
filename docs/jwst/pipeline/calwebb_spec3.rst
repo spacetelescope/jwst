@@ -22,7 +22,9 @@ processed using the :ref:`calwebb_tso3 <calwebb_tso3>` pipeline.
 +-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
 | Step                                                        | FS  | MOS | IFU | FS  | MRS | SOSS | WFSS | WFSS   |
 +=============================================================+=====+=====+=====+=====+=====+======+======+========+
-| :ref:`master_background <master_background_step>`\ :sup:`1` | |c| |     | |c| | |c| | |c| |      |      |        |
+| :ref:`assign_mtwcs <assign_mtwcs_step>`\ :sup:`1`           | |c| | |c| | |c| | |c| | |c| | |c|  | |c|  |  |c|   |
++-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
+| :ref:`master_background <master_background_step>`\ :sup:`2` | |c| |     | |c| | |c| | |c| |      |      |        |
 +-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
 | :ref:`exp_to_source <exp_to_source>`                        | |c| | |c| |     |     |     |      | |c|  |  |c|   |
 +-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
@@ -39,7 +41,10 @@ processed using the :ref:`calwebb_tso3 <calwebb_tso3>` pipeline.
 | :ref:`combine_1d <combine_1d_step>`                         |     |     |     |     |     | |c|  | |c|  |  |c|   |
 +-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
 
-:sup:`1`\ The master background subtraction step is applied to NIRSpec MOS
+:sup:`1`\ The :ref:`assign_mtwcs <assign_mtwcs_step>` step is only applied
+to observations of a moving target (TARGTYPE='moving').
+
+:sup:`2`\ The master background subtraction step is applied to NIRSpec MOS
 exposures in the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline.
 
 Notice that NIRCam and NIRISS WFSS, as well as NIRISS SOSS data, receive only minimal
@@ -127,7 +132,7 @@ new field in the original product root name, e.g.
 2D resampled and combined spectral data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:Data model: `~jwst.datamodels.DrizProductModel`
+:Data model: `~jwst.datamodels.SlitModel`
 :File suffix: _s2d
 
 When processing non-IFU modes, a resampled/rectified 2D product of type
