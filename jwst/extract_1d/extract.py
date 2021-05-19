@@ -2207,11 +2207,12 @@ class ImageExtractModel(ExtractBase):
                 var_flat: np.ndarray,
                 wl_array: np.ndarray,
                 verbose: bool
-    ) -> Tuple[
-               float, float, np.ndarray,
-               np.ndarray, np.ndarray, np.ndarray, np.ndarray,
-               np.ndarray, np.ndarray, np.ndarray, np.ndarray,
-               np.ndarray, np.ndarray]:
+                ) -> \
+            Tuple[
+                float, float, np.ndarray,
+                np.ndarray, np.ndarray, np.ndarray, np.ndarray,
+                np.ndarray, np.ndarray, np.ndarray, np.ndarray,
+                np.ndarray, np.ndarray]:
         """
         Do the actual extraction, for the case that the extract1d reference file
         is an image.
