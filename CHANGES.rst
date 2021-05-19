@@ -44,6 +44,9 @@ associations
   EXP_TYPE=NRC_TSGRISM and PUPIL=CLEAR, which can result from NIRCam
   engineering template observations. [#5946]
 
+- Updated level2b NIRSpec FS rules to exclude exposures sharing a primary
+  dither location from the list of background exposures [#5994]
+
 background
 ----------
 
