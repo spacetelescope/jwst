@@ -245,6 +245,9 @@ def test_pixel_scale_ratio_imaging(nircam_rate, ratio):
     area2 = result2.meta.photometry.pixelarea_steradians
     assert_allclose(area1 * ratio**2, area2, rtol=1e-6)
 
+    assert result1.meta.resample.pixel_scale_ratio == 1.0
+    assert result2.meta.resample.pixel_scale_ratio == ratio
+
 
 def test_weight_type(nircam_rate, _jail):
     """Check that weight_type of exptime and ivm work"""

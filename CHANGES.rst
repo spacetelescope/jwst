@@ -199,6 +199,9 @@ resample
 
 - Propagate error and variance arrays in ``ResampleSpecStep`` for 2D spectral data [#6041]
 
+- Record ``pixel_scale_ratio`` from ``ResampleStep`` in header keyword PXSCLRT
+  or ``meta.photometry.pixel_scale_ratio``, for later use in aperture photometry. [#6044]
+
 source_catalog
 --------------
 
