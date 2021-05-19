@@ -132,7 +132,7 @@ new field in the original product root name, e.g.
 2D resampled and combined spectral data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:Data model: `~jwst.datamodels.DrizProductModel`
+:Data model: `~jwst.datamodels.SlitModel`
 :File suffix: _s2d
 
 When processing non-IFU modes, a resampled/rectified 2D product of type

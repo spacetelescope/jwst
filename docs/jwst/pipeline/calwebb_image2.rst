@@ -98,7 +98,7 @@ input, e.g. "jw80600012001_02101_00003_mirimage_cal.fits".
 2D resampled image
 ^^^^^^^^^^^^^^^^^^
 
-:Data model: `~jwst.datamodels.DrizProductModel`
+:Data model: `~jwst.datamodels.ImageModel`
 :File suffix: _i2d
 
 This is the output of the :ref:`resample <resample_step>` step and is only created

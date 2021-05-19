@@ -72,7 +72,7 @@ new field in the original product root name, e.g.
 Resampled and combined 2D image
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:Data model: `~jwst.datamodels.DrizProductModel`
+:Data model: `~jwst.datamodels.ImageModel`
 :File suffix: _i2d
 
 A resampled 2D image product of type "_i2d" is created containing the
