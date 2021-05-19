@@ -189,14 +189,18 @@ class ReferenceData:
             skyins.append(row['skyin'][0])
             skyouts.append(row['skyout'][0])
 
-        # TODO
-        # These aperture and background-aperture radii are in pixel
-        # units and are based on the detector native pixel scales.  If
-        # the user changes the output pixel scale in the resample step,
-        # then these radii need to be scaled.  Changing the output pixel
-        # scale is not yet a pipeline option (as of Apr 2020).
+        if self.model.meta.resample.pixel_scale_ratio is not None:
+            # pixel_scale_ratio is the ratio of the resampled to the native
+            # pixel scale (values < 1 have smaller resampled pixels)
+            pixel_scale_ratio = self.model.meta.resample.pixel_scale_ratio
+        else:
+            log.warning('model.meta.resample.pixel_scale_ratio was not '
+                        'found. Assuming the native detector pixel scale '
+                        '(i.e., pixel_scale_ratio = 1)')
+            pixel_scale_ratio = 1.0
+
         params['aperture_ee'] = self.aperture_ee
-        params['aperture_radii'] = np.array(radii)
+        params['aperture_radii'] = np.array(radii) / pixel_scale_ratio
         params['aperture_corrections'] = np.array(apcorrs)
 
         skyins = np.unique(skyins)
@@ -205,8 +209,8 @@ class ReferenceData:
             raise RuntimeError('Expected to find only one value for skyin '
                                'and skyout in the APCORR reference file for '
                                'a given selector.')
-        params['bkg_aperture_inner_radius'] = skyins[0]
-        params['bkg_aperture_outer_radius'] = skyouts[0]
+        params['bkg_aperture_inner_radius'] = skyins[0] / pixel_scale_ratio
+        params['bkg_aperture_outer_radius'] = skyouts[0] / pixel_scale_ratio
 
         return params
 
