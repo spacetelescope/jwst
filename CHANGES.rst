@@ -209,6 +209,10 @@ resample
 
 - Propagate error and variance arrays in ``ResampleSpecStep`` for 2D spectral data [#6041]
 
+- Record ``pixel_scale_ratio`` and ``pixfrac`` from ``ResampleStep`` in header
+  keywords PXSCLRT and PIXFRAC, respectively, or ``meta.resample.pixel_scale_ratio``
+  and ``meta.resample.pixfrac``. [#6044]
+
 source_catalog
 --------------
 

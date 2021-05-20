@@ -35,7 +35,7 @@ class ResampleStep(Step):
         kernel = string(default='square')
         fillval = string(default='INDEF')
         weight_type = option('ivm', 'exptime', default='ivm')
-        pixel_scale_ratio = float(default=1.0) # Ratio of input to output pixel scale
+        pixel_scale_ratio = float(default=1.0) # Ratio of output to input pixel scale
         single = boolean(default=False)
         blendheaders = boolean(default=True)
         allowed_memory = float(default=None)  # Fraction of memory to use for the combined image.
@@ -97,6 +97,8 @@ class ResampleStep(Step):
             model.meta.photometry.pixelarea_steradians *= self.pixel_scale_ratio**2
         if model.meta.photometry.pixelarea_arcsecsq is not None:
             model.meta.photometry.pixelarea_arcsecsq *= self.pixel_scale_ratio**2
+        model.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
+        model.meta.resample.pixfrac = self.pixfrac
 
     def get_drizpars(self, ref_filename, input_models):
         """

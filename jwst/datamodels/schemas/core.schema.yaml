@@ -2330,6 +2330,14 @@ properties:
             type: string
             enum: [exptime, ivm]
             fits_keyword: RESWHT
+          pixfrac:
+            title: Drizzle parameter describing pixel shrinking
+            type: number
+            fits_keyword: PIXFRAC
+          pixel_scale_ratio:
+            title: Pixel scale ratio relative to native detector scale
+            type: number
+            fits_keyword: PXSCLRT
       background:
         title: Background information
         type: object
