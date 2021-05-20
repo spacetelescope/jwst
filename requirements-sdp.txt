@@ -3,3 +3,4 @@
 #     pip install -e .[test]
 #     pip install pytest-xdist
 #     pip freeze | grep -v jwst.git >> requirements-sdp.txt
+stcal==0.2.1
