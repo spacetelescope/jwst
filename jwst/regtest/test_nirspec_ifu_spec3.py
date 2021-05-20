@@ -31,6 +31,7 @@ def run_spec3_multi(jail, rtdata_module):
     return rtdata
 
 
+@pytest.mark.slow
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
     'output',

@@ -37,8 +37,8 @@ results onto an infinite aperture scale.
 This is done by creating interpolation functions based on the APCORR reference
 file data and applying the interpolated aperture correction (a multiplicative
 factor between 0 and 1) to the extracted, 1D spectral data (corrected data
-include the "flux", "surf_bright", "error", and "sb_error" columns in the output
-table).
+include the "flux", "surf_bright", "flux_error", "sb_error", and all flux and
+surface brightness variance columns in the output table).
 
 Input
 -----
@@ -65,24 +65,27 @@ Output
 ------
 The output will be in ``MultiSpecModel`` format. For each input slit there will
 be an output table extension with the name EXTRACT1D.  This extension will
-have columns WAVELENGTH, FLUX, ERROR, SURF_BRIGHT, SB_ERROR, DQ,
-BACKGROUND, BERROR and NPIXELS.
+have columns WAVELENGTH, FLUX, FLUX_ERROR, FLUX_VAR_POISSON, FLUX_VAR_RNOISE,
+FLUX_VAR_FLAT, SURF_BRIGHT, SB_ERROR, SB_VAR_POISSON, SB_VAR_RNOISE,
+SB_VAR_FLAT, DQ, BACKGROUND, BKGD_ERROR, BKGD_VAR_POISSON, BKGD_VAR_RNOISE,
+BKGD_VAR_FLAT and NPIXELS.
 Some metadata will be written to the table header, mostly copied from the
 input header.
 
 The output WAVELENGTH data is copied from the wavelength array of the input 2D data,
 if that attribute exists and was populated, otherwise it is calculated from the WCS.
 FLUX is the flux density in Janskys; see keyword TUNIT2 if the data are
-in a FITS BINTABLE.  ERROR is the error estimate for FLUX, and it has the
-same units as FLUX.
+in a FITS BINTABLE.  FLUX_ERROR is the error estimate for FLUX, and it has the
+same units as FLUX. The error is calculated as the square root of the sum of the
+three variance arrays: Poisson, read noise (RNOISE), and flat field (FLAT).
 SURF_BRIGHT is the surface brightness in MJy / sr, except that for point
 sources observed with NIRSpec and NIRISS SOSS, SURF_BRIGHT will be set to
 zero, because there's no way to express the extracted results from those modes
-as a surface brightness. SB_ERROR is the error estimate for SURF_BRIGHT.
-While it's expected that a user will make use of the FLUX column for
-point-source data and the SURF_BRIGHT column for an extended source,
-both columns are populated (except for NIRSpec and NIRISS SOSS point sources,
-as mentioned above).
+as a surface brightness. SB_ERROR is the error estimate for SURF_BRIGHT, calculated
+in the same fashion as FLUX_ERROR but using the SB_VAR arrays. While it's expected
+that a user will make use of the FLUX column for point-source data and the
+SURF_BRIGHT column for an extended source, both columns are populated (except for
+NIRSpec and NIRISS SOSS point sources, as mentioned above).
 The ``extract_1d`` step collapses the input data from 2-D to 1-D by summing
 one or more rows (or columns, depending on the dispersion direction).
 A background may optionally be subtracted, but
@@ -104,8 +107,8 @@ extraction region.  Note that this is not necessarily a constant, and
 the value is not necessarily an integer (the data type is float).
 BACKGROUND is the measured background, scaled to the extraction width used
 for FLUX and SURF_BRIGHT.  BACKGROUND will be zero if background subtraction
-is not requested.
-ERROR, SB_ERROR, BERROR, and DQ are not populated with useful values yet.
+is not requested. BKGD_ERROR is calculated as the square root of the sum of the
+BKGD_VAR arrays. DQ is not populated with useful values yet.
 
 
 .. _extract-1d-for-slits:

@@ -44,6 +44,9 @@ associations
   EXP_TYPE=NRC_TSGRISM and PUPIL=CLEAR, which can result from NIRCam
   engineering template observations. [#5946]
 
+- Updated level2b NIRSpec FS rules to exclude exposures sharing a primary
+  dither location from the list of background exposures [#5994]
+
 background
 ----------
 
@@ -75,7 +78,7 @@ cube_build
 - Fixed typo in cube_build_step spec for grating [#5839]
 - Update code to read in spectral and spatial size of exposure on the sky #5991
 - For calspec2 pipeline skip determining the dq plane in cube_build #5991
-
+- Remove certain WCS keywords that are irrelevant after cube_building. [#6032]
 datamodels
 ----------
 
@@ -105,6 +108,12 @@ documentation
 
 - Update ``assign_mtwcs`` step docs and reference the ``assign_mtwcs`` step in the
   ``calwebb_image3`` and ``calwebb_spec3`` pipeline docs [#6024]
+
+extract_1d
+----------
+
+- Implemented error and variance propagation for all modes but those
+  utilizing IFU cubes [#6014]
 
 extract_2d
 ----------
@@ -195,6 +204,10 @@ resample
 - Propagate variance arrays into ``SlitModel`` used as input for ``ResampleSpecStep`` [#5941]
 
 - Remove certain WCS keywords that are irrelevant after resampling. [#5971]
+
+- Propagate error and variance arrays in ``ResampleStep`` for imaging data. [#6036]
+
+- Propagate error and variance arrays in ``ResampleSpecStep`` for 2D spectral data [#6041]
 
 source_catalog
 --------------

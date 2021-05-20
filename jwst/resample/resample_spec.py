@@ -12,16 +12,15 @@ from gwcs import coordinate_frames as cf
 
 from ..assign_wcs.util import wrap_ra
 from .. import datamodels
-from . import gwcs_drizzle
 from . import resample_utils
-from ..model_blender import blendmeta
+from .resample import ResampleData
 
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-class ResampleSpecData:
+class ResampleSpecData(ResampleData):
     """
     This is the controlling routine for the resampling process.
 
@@ -38,9 +37,9 @@ class ResampleSpecData:
          a record of metadata from all input models.
     """
 
-    def __init__(self, input_models, output=None, single=False,
-                 blendheaders=False, pixfrac=1.0, kernel="square", fillval=0,
-                 weight_type="ivm", good_bits=0, pscale_ratio=1.0, **kwargs):
+    def __init__(self, input_models, output=None, single=False, blendheaders=False,
+                 pixfrac=1.0, kernel="square", fillval=0, weight_type="ivm",
+                 good_bits=0, pscale_ratio=1.0, **kwargs):
         """
         Parameters
         ----------
@@ -49,10 +48,11 @@ class ResampleSpecData:
 
         output : str
             filename for output
+
+        kwargs : dict
+            Other parameters
         """
         self.input_models = input_models
-        if output is None:
-            output = input_models.meta.resample.output
 
         self.pscale_ratio = pscale_ratio
         self.single = single
@@ -63,13 +63,14 @@ class ResampleSpecData:
         self.weight_type = weight_type
         self.good_bits = good_bits
 
-        self.blank_output = None
+        if output is None:
+            output = input_models.meta.resample.output
+        self.output_filename = output
 
         # Define output WCS based on all inputs, including a reference WCS
         self.output_wcs = self.build_interpolated_output_wcs()
         self.blank_output = datamodels.SlitModel(self.data_size)
-        self.blank_output.update(self.input_models[0], only="PRIMARY")
-        self.blank_output.update(self.input_models[0], only="SCI")
+        self.blank_output.update(self.input_models[0])
         self.blank_output.meta.wcs = self.output_wcs
         self.output_models = datamodels.ModelContainer()
 
@@ -317,8 +318,6 @@ class ResampleSpecData:
 
         output_wcs = WCS(pipeline)
 
-        # import ipdb; ipdb.set_trace()
-
         # compute the output array size in WCS axes order, i.e. (x, y)
         output_array_size = [0, 0]
         output_array_size[spectral_axis] = int(np.ceil(len(wavelength_array) / self.pscale_ratio))
@@ -329,108 +328,6 @@ class ResampleSpecData:
         output_wcs.bounding_box = bounding_box
 
         return output_wcs
-
-    def blend_output_metadata(self, output_model):
-        """Create new output metadata based on blending all input metadata."""
-        # Run fitsblender on output product
-        output_file = output_model.meta.filename
-
-        log.info(f'Blending metadata for {output_file}')
-        blendmeta.blendmodels(output_model, inputs=self.input_models, output=output_file)
-
-    def do_drizzle(self, xmin=0, xmax=0, ymin=0, ymax=0, **pars):
-        """ Perform drizzling operation on input images to create a new output
-        """
-        # Set up information about what outputs we need to create: single or final
-        # Key: value from metadata for output/observation name
-        # Value: full filename for output file
-        driz_outputs = {}
-
-        # Look for input configuration parameter telling the code to run
-        # in single-drizzle mode (mosaic all detectors in a single observation?)
-        if self.single:
-            driz_outputs = ['{0}_resamp.fits'.format(g) for g in self.input_models.group_names]
-            model_groups = self.input_models.models_grouped
-            group_exptime = []
-            for group in model_groups:
-                group_exptime.append(group[0].meta.exposure.exposure_time)
-        else:
-            final_output = self.input_models.meta.resample.output
-            driz_outputs = [final_output]
-            model_groups = [self.input_models]
-
-            total_exposure_time = 0.0
-            for group in self.input_models.models_grouped:
-                total_exposure_time += group[0].meta.exposure.exposure_time
-            group_exptime = [total_exposure_time]
-
-        pointings = len(self.input_models.group_names)
-        # Now, generate each output for all input_models
-        for obs_product, group, texptime in zip(driz_outputs, model_groups, group_exptime):
-            output_model = self.blank_output.copy()
-            output_model.meta.wcs = self.output_wcs
-
-            bb = resample_utils.wcs_bbox_from_shape(output_model.data.shape)
-            output_model.meta.wcs.bounding_box = bb
-            output_model.meta.filename = obs_product
-
-            if self.blendheaders:
-                self.blend_output_metadata(output_model)
-
-            exposure_times = {'start': [], 'end': []}
-
-            outwcs = output_model.meta.wcs
-
-            # Initialize the output with the wcs
-            driz = gwcs_drizzle.GWCSDrizzle(output_model,
-                                            outwcs=outwcs,
-                                            pixfrac=self.pixfrac,
-                                            kernel=self.kernel,
-                                            fillval=self.fillval)
-
-            for n, img in enumerate(group):
-                exposure_times['start'].append(img.meta.exposure.start_time)
-                exposure_times['end'].append(img.meta.exposure.end_time)
-                inwht = resample_utils.build_driz_weight(img,
-                                                         weight_type=self.weight_type,
-                                                         good_bits=self.good_bits)
-
-                if hasattr(img, 'name'):
-                    log.info('Resampling slit {} {}'.format(img.name, self.data_size))
-                else:
-                    log.info('Resampling slit {}'.format(self.data_size))
-
-                in_wcs = img.meta.wcs
-                driz.add_image(img.data, in_wcs, inwht=inwht,
-                               expin=img.meta.exposure.exposure_time,
-                               xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
-
-            # Update some basic exposure time values based on all the inputs
-            output_model.meta.exposure.exposure_time = texptime
-            output_model.meta.exposure.start_time = min(exposure_times['start'])
-            output_model.meta.exposure.end_time = max(exposure_times['end'])
-            output_model.meta.resample.product_exposure_time = texptime
-            output_model.meta.resample.weight_type = self.weight_type
-            output_model.meta.resample.pointings = pointings
-
-            # Update slit info on the output_model. This is needed
-            # because model.slit attributes are not in model.meta, so the
-            # normal update() method doesn't work with them.
-            for attr in ['name', 'xstart', 'xsize', 'ystart', 'ysize',
-                         'slitlet_id', 'source_id', 'source_name', 'source_alias',
-                         'stellarity', 'source_type', 'source_xpos', 'source_ypos',
-                         'dispersion_direction', 'shutter_state']:
-                try:
-                    val = getattr(img, attr)
-                except AttributeError:
-                    pass
-                else:
-                    if val is not None:
-                        setattr(output_model, attr, val)
-
-            self.output_models.append(output_model)
-
-        return self.output_models
 
 
 def find_dispersion_axis(refmodel):

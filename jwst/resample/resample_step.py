@@ -83,20 +83,11 @@ class ResampleStep(Step):
             util.update_s_region_imaging(model)
             model.meta.asn.pool_name = input_models.meta.pool_name
             model.meta.asn.table_name = input_models.meta.table_name
-            if hasattr(model.meta, "bunit_err") and model.meta.bunit_err is not None:
-                del model.meta.bunit_err
             self.update_phot_keywords(model)
             model.meta.filetype = 'resampled'
 
         if len(result) == 1:
             result = result[0]
-
-        # remove irrelevant WCS keywords
-        rm_keys = ['v2_ref', 'v3_ref', 'ra_ref', 'dec_ref', 'roll_ref',
-                   'v3yangle', 'vparity']
-        for key in rm_keys:
-            if key in result.meta.wcsinfo.instance:
-                del result.meta.wcsinfo.instance[key]
 
         return result
 

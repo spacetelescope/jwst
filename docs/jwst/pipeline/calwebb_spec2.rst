@@ -185,7 +185,7 @@ extracted slits/sources.
 2D resampled data
 ^^^^^^^^^^^^^^^^^
 
-:Data model: `~jwst.datamodels.DrizProductModel` or `~jwst.datamodels.MultiProductModel`
+:Data model: `~jwst.datamodels.SlitModel` or `~jwst.datamodels.MultiSlitModel`
 :File suffix: _s2d
 
 If the input is a 2D exposure type that gets resampled/rectified by the
@@ -196,8 +196,8 @@ products are passed along as input to subsequent Stage 3 processing.
 
 If the input to the :ref:`resample_spec <resample_step>` step is a `~jwst.datamodels.MultiSlitModel`,
 then the resampled output will be in the form of a
-`~jwst.datamodels.MultiProductModel`, which contains an array of individual models,
-one per slit. Otherwise the output will be a `~jwst.datamodels.DrizProductModel`.
+`~jwst.datamodels.MultiSlitModel`, which contains an array of individual models,
+one per slit. Otherwise the output will be a single `~jwst.datamodels.SlitModel`.
 
 3D resampled (IFU cube) data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -383,8 +383,8 @@ def test_build_interpolated_output_wcs(miri_rate_pair):
 
 
 def test_wcs_keywords(nircam_rate):
-    # make sure certain wcs keywords are removed after resample
-
+    """Make sure certain wcs keywords are removed after resample
+    """
     im = AssignWcsStep.call(nircam_rate)
     result = ResampleStep.call(im)
 

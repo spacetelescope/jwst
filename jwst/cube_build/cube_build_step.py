@@ -362,10 +362,19 @@ class CubeBuildStep (Step):
         t1 = time.time()
         self.log.debug(f'Time to build all cubes {t1-t0}')
 
+        # irrelevant WCS keywords we will remove from final product
+        rm_keys = ['v2_ref', 'v3_ref', 'ra_ref', 'dec_ref', 'roll_ref',
+                   'v3yangle', 'vparity']
+
         for cube in cube_container:
             footprint = cube.meta.wcs.footprint(axis_type="spatial")
             update_s_region_keyword(cube, footprint)
             cube.meta.filetype = '3d ifu cube'
+
+            # remove certain WCS keywords that are irrelevant after combine data into IFUCubes
+            for key in rm_keys:
+                if key in cube.meta.wcsinfo.instance:
+                    del cube.meta.wcsinfo.instance[key]
         if status_cube == 1:
             self.skip = True
 
