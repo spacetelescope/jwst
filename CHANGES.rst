@@ -109,6 +109,12 @@ documentation
 - Update ``assign_mtwcs`` step docs and reference the ``assign_mtwcs`` step in the
   ``calwebb_image3`` and ``calwebb_spec3`` pipeline docs [#6024]
 
+extract_1d
+----------
+
+- Implemented error and variance propagation for all modes but those
+  utilizing IFU cubes [#6014]
+
 extract_2d
 ----------
 
