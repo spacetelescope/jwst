@@ -180,6 +180,10 @@ ramp_fitting
 
 - Moved ramp fit code to STCAL. [#6023]
 
+- Now that ramp fitting has been moved to STCAL, for the JWST unit tests to
+  pass need to use STCAL 0.2.1 or greater.  The bug fix for JP-1920 were made
+  in STCAL, which affected JWST unit tests for ramp fitting. [#6038]
+
 refpix
 ------
 
