@@ -89,8 +89,7 @@ class ResampleSpecStep(ResampleStep):
         containers = multislit_to_container(input_models)
         result = datamodels.MultiSlitModel()
 
-        result.update(input_models[0], only="PRIMARY")
-        result.update(input_models[0], only="SCI")
+        result.update(input_models[0])
 
         for container in containers.values():
             resamp = resample_spec.ResampleSpecData(container, **self.drizpars)
@@ -98,21 +97,15 @@ class ResampleSpecStep(ResampleStep):
             drizzled_models = resamp.do_drizzle()
 
             for model in drizzled_models:
-                model.meta.cal_step.resample = "COMPLETE"
-                model.meta.asn.pool_name = input_models.meta.pool_name
-                model.meta.asn.table_name = input_models.meta.table_name
                 update_s_region_spectral(model)
+                result.slits.append(model)
 
-            # Everything resampled to single output model
-            if len(drizzled_models) == 1:
-                result.slits.append(drizzled_models[0])
-                if container[0].meta.bunit_data is not None:
-                    result.slits[-1].meta.bunit_data = container[0].meta.bunit_data
-            else:
-                # When each input is resampled to its own output
-                for model in drizzled_models:
-                    result.slits.append(model)
-                    result.slits[-1].meta.bunit_data = container[0].meta.bunit_data
+        result.meta.cal_step.resample = "COMPLETE"
+        result.meta.asn.pool_name = input_models.meta.pool_name
+        result.meta.asn.table_name = input_models.meta.table_name
+        result.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
+        result.meta.resample.pixfrac = self.pixfrac
+
         return result
 
     def _process_slit(self, input_models):
@@ -127,8 +120,8 @@ class ResampleSpecStep(ResampleStep):
 
         Returns
         -------
-        result : `~jwst.datamodels.ImageModel`
-            The resampled output, one per source
+        result : `~jwst.datamodels.SlitModel`
+            The resampled output
         """
 
         resamp = resample_spec.ResampleSpecData(input_models, **self.drizpars)
@@ -139,7 +132,9 @@ class ResampleSpecStep(ResampleStep):
         result.meta.cal_step.resample = "COMPLETE"
         result.meta.asn.pool_name = input_models.meta.pool_name
         result.meta.asn.table_name = input_models.meta.table_name
-
-        update_s_region_spectral(result)
         result.meta.bunit_data = drizzled_models[0].meta.bunit_data
+        result.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
+        result.meta.resample.pixfrac = self.pixfrac
+        update_s_region_spectral(result)
+
         return result

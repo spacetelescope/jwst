@@ -98,6 +98,7 @@ class ResampleStep(Step):
         if model.meta.photometry.pixelarea_arcsecsq is not None:
             model.meta.photometry.pixelarea_arcsecsq *= self.pixel_scale_ratio**2
         model.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
+        model.meta.resample.pixfrac = self.pixfrac
 
     def get_drizpars(self, ref_filename, input_models):
         """
