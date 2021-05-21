@@ -11,7 +11,7 @@ combine_1d
 
 - Added SRCTYPE to COMBINE1D output extension headers, propagated from
   EXTRACT1D inputs [#6079]
-  
+
 cube_build
 ----------
 
@@ -39,6 +39,12 @@ lib
 
 - Updated set_telescope_pointing to populate ENGQLPTG keyword with new
   allowed values [#6088]
+
+scripts
+-------
+
+- Add migrate_data command with support for migrating spec_table in
+  x1d files produced with <= 1.1.0 of this package. [#6055]
 
 1.2.0 (2021-05-24)
 ==================

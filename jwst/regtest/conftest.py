@@ -182,20 +182,18 @@ def generate_upload_schema(pattern, target, recursive=False):
 def _rtdata_fixture_implementation(artifactory_repos, envopt, request):
     """Provides the RemoteResource class"""
     inputs_root, results_root = artifactory_repos
-    rtdata = RegtestData(env=envopt, inputs_root=inputs_root,
-                         results_root=results_root)
-
-    yield rtdata
+    return RegtestData(env=envopt, inputs_root=inputs_root,
+                       results_root=results_root)
 
 
 @pytest.fixture(scope='function')
 def rtdata(artifactory_repos, envopt, request, _jail):
-    yield from _rtdata_fixture_implementation(artifactory_repos, envopt, request)
+    return _rtdata_fixture_implementation(artifactory_repos, envopt, request)
 
 
 @pytest.fixture(scope='module')
 def rtdata_module(artifactory_repos, envopt, request, jail):
-    yield from _rtdata_fixture_implementation(artifactory_repos, envopt, request)
+    return _rtdata_fixture_implementation(artifactory_repos, envopt, request)
 
 
 @pytest.fixture
