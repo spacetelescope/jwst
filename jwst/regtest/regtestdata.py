@@ -34,7 +34,7 @@ class RegtestData:
                  input=None, input_remote=None, output=None, truth=None,
                  truth_remote=None, remote_results_path=None, test_name=None,
                  traceback=None, **kwargs):
-        self._env = env
+        self.env = env
         self._inputs_root = inputs_root
         self._results_root = results_root
         self._bigdata_root = get_bigdata_root()
@@ -142,9 +142,9 @@ class RegtestData:
             self.input_remote = path
         if docopy is None:
             docopy = self.docopy
-        self.input = get_bigdata(self._inputs_root, self._env, path,
+        self.input = get_bigdata(self._inputs_root, self.env, path,
                                  docopy=docopy)
-        self.input_remote = os.path.join(self._inputs_root, self._env, path)
+        self.input_remote = os.path.join(self._inputs_root, self.env, path)
 
         return self.input
 
@@ -161,13 +161,13 @@ class RegtestData:
         # is a local path or URL.
         root = self.bigdata_root
         if op.exists(root):
-            root_path = op.join(root, self._inputs_root, self._env)
+            root_path = op.join(root, self._inputs_root, self.env)
             root_len = len(root_path) + 1
             path = op.join(root_path, path)
             file_paths = _data_glob_local(path, glob)
         elif check_url(root):
-            root_len = len(self._env) + 1
-            file_paths = _data_glob_url(self._inputs_root, self._env, path, glob, root=root)
+            root_len = len(self.env) + 1
+            file_paths = _data_glob_url(self._inputs_root, self.env, path, glob, root=root)
         else:
             raise BigdataError('Path cannot be found: {}'.format(path))
 
@@ -192,9 +192,9 @@ class RegtestData:
         os.makedirs('truth', exist_ok=True)
         os.chdir('truth')
         try:
-            self.truth = get_bigdata(self._inputs_root, self._env, path,
+            self.truth = get_bigdata(self._inputs_root, self.env, path,
                                      docopy=docopy)
-            self.truth_remote = os.path.join(self._inputs_root, self._env, path)
+            self.truth_remote = os.path.join(self._inputs_root, self.env, path)
         except BigdataError:
             os.chdir('..')
             raise
@@ -232,7 +232,7 @@ class RegtestData:
             docopy = self.docopy
 
         # Get the association JSON file
-        self.input = get_bigdata(self._inputs_root, self._env, path,
+        self.input = get_bigdata(self._inputs_root, self.env, path,
                                  docopy=docopy)
         with open(self.input) as fp:
             asn = load_asn(fp)
@@ -245,7 +245,7 @@ class RegtestData:
                     fullpath = os.path.join(
                         os.path.dirname(self.input_remote),
                         member['expname'])
-                    get_bigdata(self._inputs_root, self._env, fullpath,
+                    get_bigdata(self._inputs_root, self.env, fullpath,
                                 docopy=self.docopy)
 
     def to_asdf(self, path):
