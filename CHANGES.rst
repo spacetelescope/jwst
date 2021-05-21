@@ -29,6 +29,8 @@ assign_wcs
 associations
 ------------
 
+- Add rule Asn_MIRMRSBackground to treat background as science. [#6046]
+
 - Updated level2b WFSS rules to only consider exposures from the same
   instrument channel when matching direct images with grism images in
   NIRCam WFSS observations. [#5786]

@@ -53,6 +53,16 @@ SPECIAL_POOLS = {
         'xfail': 'JSOCINT-TDB: WFSC ROUTINE VISIT issue',
         'slow': False,
     },
+    'jw00676_20210403t114320_pool': {
+        'args': [],
+        'xfail': None,
+        'slow': True,
+    },
+    'jw00676_20210403t114320_c1007_pool': {
+        'args': [],
+        'xfail': None,
+        'slow': True,
+    },
     'jw80600_20171108T041522_pool': {
         'args': [],
         'xfail': 'PR #3450',
@@ -110,7 +120,7 @@ class TestSDPPools(SDPPoolsSource):
         special = SPECIAL_POOLS.get(pool, SPECIAL_DEFAULT)
 
         if special['slow'] and not slow:
-            pytest.skip('Pool {pool} requires "--slow" option')
+            pytest.skip(f'Pool {pool} requires "--slow" option')
 
         # Create the generator running arguments
         generated_path = Path('generate')

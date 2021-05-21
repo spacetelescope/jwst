@@ -622,6 +622,33 @@ format_product = FormatTemplate(
 )
 
 
+def dms_product_name_noopt(asn):
+    """Define product name without any optical elements.
+
+    Parameters
+    ---------
+    asn : Association
+        The association for which the product
+        name is to be created.
+
+    Returns
+    -------
+    product_name : str
+        The product name
+    """
+    target = asn._get_target()
+
+    instrument = asn._get_instrument()
+
+    product_name = 'jw{}-{}_{}_{}'.format(
+        asn.data['program'],
+        asn.acid.id,
+        target,
+        instrument
+    )
+    return product_name.lower()
+
+
 def dms_product_name_sources(asn):
     """Produce source-based product names
 
