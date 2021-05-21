@@ -79,6 +79,7 @@ cube_build
 - Update code to read in spectral and spatial size of exposure on the sky #5991
 - For calspec2 pipeline skip determining the dq plane in cube_build #5991
 - Remove certain WCS keywords that are irrelevant after cube_building. [#6032]
+
 datamodels
 ----------
 
@@ -97,6 +98,9 @@ datamodels
 
 - Added ``FULLP`` to SUBARRAY enum list in core, subarray,
   and keyword_psubarray schemas [#5947]
+
+- Added a new datamodel, ``SegmentationMapModel`` that has an uint32 data array
+  for storing the segmentation map output from ``source_catalog``. [#6051]
 
 documentation
 -------------
