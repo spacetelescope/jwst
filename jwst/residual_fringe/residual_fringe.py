@@ -87,7 +87,8 @@ class ResidualFringeCorrection():
         # normalise the output_data to remove units
         output_data = self.model.data.copy()
         pos_data = self.input_model.data[self.input_model.data > 0]
-        output_data /= np.median(pos_data)
+        normalization_factor = np.median(pos_data)
+        output_data /= normalization_factor
 
         # Load the fringe reference file
         residual_fringe_model = datamodels.ResidualFringeModel(self.residual_fringe_reference_file)
@@ -394,20 +395,20 @@ class ResidualFringeCorrection():
 
         # add units back to output data
         log.info(" adding units back to output array")
-        output_data *= np.median(self.input_model.data)
+        output_data *= normalization_factor
         self.model.data = output_data
         del output_data
 
         if self.save_intermediate_results:
             stat_table_name = self.make_output_path(
                 basepath=self.input_model.meta.filename,
-                suffix='stat_table',ext='.ecvs')
+                suffix='stat_table',ext='.ecsv')
             log.info(' Saving intermediate Stat table {}'.format(stat_table_name))
             ascii.write(stat_table,stat_table_name, format='ecsv',fast_writer=False, overwrite=True)
 
             out_table_name = self.make_output_path(
                 basepath=self.input_model.meta.filename,
-                suffix='out_table',ext='.ecvs')
+                suffix='out_table',ext='.ecsv')
             log.info(' Saving intermediate Output table {}'.format(out_table_name))
             ascii.write(out_table,out_table_name, format='ecsv',fast_writer=False,overwrite=True)
 
