@@ -307,15 +307,15 @@ def compute_bary_helio_time2(targetcoord, times, jwstpos,
 def get_jwst_keywords(fd):
 
     # TT MJD time at which JWST has position jwst_pos and velocity jwst_vel.
-    eph_time = to_tt(fd[0].header['eph_time'])
+    eph_time = to_tt(fd['SCI'].header['eph_time'])
 
-    jwst_pos = np.array((fd[0].header['jwst_x'],
-                         fd[0].header['jwst_y'],
-                         fd[0].header['jwst_z']), dtype=np.float64)
+    jwst_pos = np.array((fd['SCI'].header['jwst_x'],
+                         fd['SCI'].header['jwst_y'],
+                         fd['SCI'].header['jwst_z']), dtype=np.float64)
 
-    jwst_vel = np.array((fd[0].header['jwst_dx'],
-                         fd[0].header['jwst_dy'],
-                         fd[0].header['jwst_dz']), dtype=np.float64)
+    jwst_vel = np.array((fd['SCI'].header['jwst_dx'],
+                         fd['SCI'].header['jwst_dy'],
+                         fd['SCI'].header['jwst_dz']), dtype=np.float64)
 
     return(eph_time, jwst_pos, jwst_vel)
 
