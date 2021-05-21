@@ -1234,46 +1234,91 @@ properties:
             title: Ephemeris reference frame
             type: string
             fits_keyword: REFFRAME
+            fits_hdu: SCI
             blend_table: True
           type:
             title: Definitive or Predicted
             type: string
             fits_keyword: EPH_TYPE
+            fits_hdu: SCI
             blend_table: True
           time:
             title: UTC time of position and velocity vectors in ephemeris (MJD)
             type: number
             fits_keyword: EPH_TIME
+            fits_hdu: SCI
             blend_table: True
-          spatial_x:
-            title: "[km] X spatial coordinate of JWST"
+          spatial_x_bary:
+            title: "[km] barycentric JWST X coordinate at MJD_AVG"
             type: number
             fits_keyword: JWST_X
+            fits_hdu: SCI
             blend_table: True
-          spatial_y:
-            title: "[km] Y spatial coordinate of JWST"
+          spatial_y_bary:
+            title: "[km] barycentric JWST Y coordinate at MJD_AVG"
             type: number
             fits_keyword: JWST_Y
+            fits_hdu: SCI
             blend_table: True
-          spatial_z:
-            title: "[km] Z spatial coordinate of JWST"
+          spatial_z_bary:
+            title: "[km] barycentric JWST Z coordinate at MJD_AVG"
             type: number
             fits_keyword: JWST_Z
+            fits_hdu: SCI
             blend_table: True
-          velocity_x:
-            title: "[km/s] X component of JWST velocity"
+          spatial_x_geo:
+            title: "[m] geocentric JWST X coordinate at MJD_AVG"
+            type: number
+            fits_keyword: OBSGEO-X
+            fits_hdu: SCI
+            blend_table: True
+          spatial_y_geo:
+            title: "[m] geocentric JWST Y coordinate at MJD_AVG"
+            type: number
+            fits_keyword: OBSGEO-Y
+            fits_hdu: SCI
+            blend_table: True
+          spatial_z_geo:
+            title: "[m] geocentric JWST Z coordinate at MJD_AVG"
+            type: number
+            fits_keyword: OBSGEO-Z
+            fits_hdu: SCI
+            blend_table: True
+          velocity_x_bary:
+            title: "[km/s] barycentric JWST X velocity at MJD_AVG"
             type: number
             fits_keyword: JWST_DX
+            fits_hdu: SCI
             blend_table: True
-          velocity_y:
-            title: "[km/s] Y component of JWST velocity"
+          velocity_y_bary:
+            title: "[km/s] barycentric JWST Y velocity at MJD_AVG"
             type: number
             fits_keyword: JWST_DY
+            fits_hdu: SCI
             blend_table: True
-          velocity_z:
-            title: "[km/s] Z component of JWST velocity"
+          velocity_z_bary:
+            title: "[km/s] barycentric JWST Z velocity at MJD_AVG"
             type: number
             fits_keyword: JWST_DZ
+            fits_hdu: SCI
+            blend_table: True
+          velocity_x_geo:
+            title: "[m/s] geocentric JWST X velocity at MJD_AVG"
+            type: number
+            fits_keyword: OBSGEODX
+            fits_hdu: SCI
+            blend_table: True
+          velocity_y_geo:
+            title: "[m/s] geocentric JWST Y velocity at MJD_AVG"
+            type: number
+            fits_keyword: OBSGEODY
+            fits_hdu: SCI
+            blend_table: True
+          velocity_z_geo:
+            title: "[m/s] geocentric JWST Z velocity at MJD_AVG"
+            type: number
+            fits_keyword: OBSGEODZ
+            fits_hdu: SCI
             blend_table: True
       aperture:
         title: Aperture information
