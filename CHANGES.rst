@@ -235,6 +235,8 @@ source_catalog
 - Circular aperture sizes now scale in the case of non-native pixel
   scales in the resampled image. [#6045]
 
+- Segmentation map output dtype is now ``uint32`` [#6051]
+
 srctype
 -------
 
