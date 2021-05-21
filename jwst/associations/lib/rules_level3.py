@@ -18,7 +18,7 @@ __all__ = [
     'Asn_Lv3Image',
     'Asn_Lv3SpecAux',
     'Asn_Lv3MIRMRS',
-    'Asn_Lv3MIRMRSAux',
+    'Asn_Lv3MIRMRSBackground',
     'Asn_Lv3NRSFSS',
     'Asn_Lv3NRSIFU',
     'Asn_Lv3NRSIFUBackground',
@@ -317,7 +317,7 @@ class Asn_Lv3MIRMRS(AsnMixin_Spectrum):
 
 
 @RegistryMarker.rule
-class Asn_Lv3MIRMRSAux(AsnMixin_AuxData, AsnMixin_Spectrum):
+class Asn_Lv3MIRMRSBackground(AsnMixin_AuxData, AsnMixin_Spectrum):
     """Level 3 MIRI MRS Association Auxiliary data
 
     Characteristics:
@@ -356,7 +356,7 @@ class Asn_Lv3MIRMRSAux(AsnMixin_AuxData, AsnMixin_Spectrum):
         ])
 
         # Check and continue initialization.
-        super(Asn_Lv3MIRMRSAux, self).__init__(*args, **kwargs)
+        super(Asn_Lv3MIRMRSBackground, self).__init__(*args, **kwargs)
 
     @property
     def dms_product_name(self):

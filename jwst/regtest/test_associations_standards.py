@@ -117,7 +117,6 @@ class TestAgainstStandards(BaseJWSTTest):
         if standard_pars.slow and not slow:
             pytest.skip(f'Pool {standard_pars.pool_root} requires "--slow" option')
 
-
         # Create the associations
         generated_path = Path('generate')
         generated_path.mkdir()
