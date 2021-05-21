@@ -64,6 +64,7 @@ from .reset import ResetModel
 from .resolution import ResolutionModel, MiriResolutionModel
 from .rscd import RSCDModel
 from .saturation import SaturationModel
+from .segmap import SegmentationMapModel
 from .slit import SlitModel, SlitDataModel
 from .source_container import SourceModelContainer
 from .spec import SpecModel
@@ -136,7 +137,7 @@ __all__ = [
     'RegionsModel', 'ResetModel',
     'ResolutionModel', 'MiriResolutionModel',
     'RSCDModel', 'SaturationModel', 'SlitDataModel', 'SlitModel', 'SpecModel',
-    'SourceModelContainer',
+    'SegmentationMapModel', 'SourceModelContainer',
     'SpecKernelModel',
     'SpecProfileModel', 'SpecProfileSingleModel',
     'SpecTraceModel', 'SpecTraceSingleModel',

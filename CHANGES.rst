@@ -81,6 +81,7 @@ cube_build
 - Update code to read in spectral and spatial size of exposure on the sky #5991
 - For calspec2 pipeline skip determining the dq plane in cube_build #5991
 - Remove certain WCS keywords that are irrelevant after cube_building. [#6032]
+
 datamodels
 ----------
 
@@ -104,6 +105,9 @@ datamodels
   header and updated their comment fields to indicate they'll now be in the
   barycentric frame. Also added the new OBSGEO[XYZ] keywords to the SCI
   extension header, which are in the geocentric frame. [#6050]
+
+- Added a new datamodel, ``SegmentationMapModel`` that has an uint32 data array
+  for storing the segmentation map output from ``source_catalog``. [#6051]
 
 documentation
 -------------
@@ -244,6 +248,8 @@ source_catalog
 
 - Circular aperture sizes now scale in the case of non-native pixel
   scales in the resampled image. [#6045]
+
+- Segmentation map output dtype is now ``uint32`` [#6051]
 
 srctype
 -------
