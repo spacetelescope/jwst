@@ -100,6 +100,11 @@ datamodels
 - Added ``FULLP`` to SUBARRAY enum list in core, subarray,
   and keyword_psubarray schemas [#5947]
 
+- Moved JWST_[XYZ] and JWST_[DXDYDZ] keywords from primary to SCI extension
+  header and updated their comment fields to indicate they'll now be in the
+  barycentric frame. Also added the new OBSGEO[XYZ] keywords to the SCI
+  extension header, which are in the geocentric frame. [#6050]
+
 documentation
 -------------
 
@@ -155,6 +160,9 @@ lib
 - moved ``basic_utils.multiple_replace`` to stcal. [#5898]
 
 - Implemented window clipping algorithm for WFSS contamination corrections. [#5978]
+
+- Updated ``set_velocity_aberration`` and ``utc_to_tdb`` to access the JWST position
+  and velocity keywords from the SCI extension header, rather than the primary header. [#6050]
 
 master_background
 -----------------
