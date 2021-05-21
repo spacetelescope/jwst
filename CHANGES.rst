@@ -29,6 +29,8 @@ assign_wcs
 associations
 ------------
 
+- Add rule Asn_MIRMRSBackground to treat background as science. [#6046]
+
 - Updated level2b WFSS rules to only consider exposures from the same
   instrument channel when matching direct images with grism images in
   NIRCam WFSS observations. [#5786]
@@ -99,6 +101,11 @@ datamodels
 - Added ``FULLP`` to SUBARRAY enum list in core, subarray,
   and keyword_psubarray schemas [#5947]
 
+- Moved JWST_[XYZ] and JWST_[DXDYDZ] keywords from primary to SCI extension
+  header and updated their comment fields to indicate they'll now be in the
+  barycentric frame. Also added the new OBSGEO[XYZ] keywords to the SCI
+  extension header, which are in the geocentric frame. [#6050]
+
 - Added a new datamodel, ``SegmentationMapModel`` that has an uint32 data array
   for storing the segmentation map output from ``source_catalog``. [#6051]
 
@@ -157,6 +164,9 @@ lib
 - moved ``basic_utils.multiple_replace`` to stcal. [#5898]
 
 - Implemented window clipping algorithm for WFSS contamination corrections. [#5978]
+
+- Updated ``set_velocity_aberration`` and ``utc_to_tdb`` to access the JWST position
+  and velocity keywords from the SCI extension header, rather than the primary header. [#6050]
 
 master_background
 -----------------

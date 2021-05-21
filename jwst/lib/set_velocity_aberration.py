@@ -96,9 +96,9 @@ def add_dva(filename):
 
     # compute the velocity aberration information
     scale_factor, apparent_ra, apparent_dec = compute_va_effects(
-        velocity_x=pheader['JWST_DX'],
-        velocity_y=pheader['JWST_DY'],
-        velocity_z=pheader['JWST_DZ'],
+        velocity_x=sheader['JWST_DX'],
+        velocity_y=sheader['JWST_DY'],
+        velocity_z=sheader['JWST_DZ'],
         ra=sheader['RA_REF'],
         dec=sheader['DEC_REF']
     )

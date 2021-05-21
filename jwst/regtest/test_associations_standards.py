@@ -48,7 +48,8 @@ class MakePars():
             source=None,
             outdir=None,
             execute=True,
-            xfail=None
+            xfail=None,
+            slow=False,
     ):
         self.pool_root = pool_root
         self.main_args = main_args
@@ -56,18 +57,19 @@ class MakePars():
         self.outdir = outdir
         self.execute = execute
         self.xfail = xfail
+        self.slow = slow
 
 
 standards = [
     MakePars('pool_002_image_miri', main_args=LV3_ONLY_ARGS),
-    MakePars('pool_004_wfs'),
+    MakePars('pool_004_wfs', slow=True),
     MakePars('pool_005_spec_niriss'),
     MakePars('pool_006_spec_nirspec'),
     MakePars('pool_007_spec_miri'),
     MakePars('pool_009_spec_miri_lv2bkg'),
     MakePars('pool_010_spec_nirspec_lv2bkg'),
     MakePars('pool_011_spec_miri_lv2bkg_lrs'),
-    MakePars('pool_013_coron_nircam'),
+    MakePars('pool_013_coron_nircam', slow=True),
     MakePars('pool_014_ami_niriss'),
     MakePars('pool_015_spec_nirspec_lv2bkg_reversed', main_args=LV2_ONLY_ARGS),
     MakePars('pool_016_spec_nirspec_lv2bkg_double', main_args=LV2_ONLY_ARGS),
@@ -105,12 +107,15 @@ class TestAgainstStandards(BaseJWSTTest):
 
     @pytest.mark.filterwarnings('error')
     @pytest.mark.parametrize('standard_pars', standards, ids=generate_id)
-    def test_against_standard(self, standard_pars):
+    def test_against_standard(self, standard_pars, slow):
         """Compare a generated association against a standard
         Success is when no other AssertionError occurs.
         """
         if standard_pars.xfail is not None:
             pytest.xfail(reason=standard_pars.xfail)
+
+        if standard_pars.slow and not slow:
+            pytest.skip(f'Pool {standard_pars.pool_root} requires "--slow" option')
 
         # Create the associations
         generated_path = Path('generate')

@@ -16,12 +16,12 @@ def data_file():
     model.meta.target.ra = 0.
     model.meta.target.dec = 0.
     model.meta.ephemeris.time = 55727.0
-    model.meta.ephemeris.spatial_x = -34305.4075983316
-    model.meta.ephemeris.spatial_y = 1049528.04998405
-    model.meta.ephemeris.spatial_z = 679175.58185602
-    model.meta.ephemeris.velocity_x = -0.548663244644384
-    model.meta.ephemeris.velocity_y = -0.103904924724239
-    model.meta.ephemeris.velocity_z = 0.000982870964178323
+    model.meta.ephemeris.spatial_x_bary = -34305.4075983316
+    model.meta.ephemeris.spatial_y_bary = 1049528.04998405
+    model.meta.ephemeris.spatial_z_bary = 679175.58185602
+    model.meta.ephemeris.velocity_x_bary = -0.548663244644384
+    model.meta.ephemeris.velocity_y_bary = -0.103904924724239
+    model.meta.ephemeris.velocity_z_bary = 0.000982870964178323
 
     # Assign dummy values to the last three columns.
     model.int_times = \
@@ -42,17 +42,17 @@ def test_utc_to_tdb(data_file):
 
     model = datamodels.open(data_file)
     assert np.isclose(model.meta.ephemeris.time, 55727.0, rtol=1.e-10)
-    assert np.isclose(model.meta.ephemeris.spatial_x, -34305.4075983316,
+    assert np.isclose(model.meta.ephemeris.spatial_x_bary, -34305.4075983316,
                       rtol=1.e-10)
-    assert np.isclose(model.meta.ephemeris.spatial_y, 1049528.04998405,
+    assert np.isclose(model.meta.ephemeris.spatial_y_bary, 1049528.04998405,
                       rtol=1.e-10)
-    assert np.isclose(model.meta.ephemeris.spatial_z, 679175.58185602,
+    assert np.isclose(model.meta.ephemeris.spatial_z_bary, 679175.58185602,
                       rtol=1.e-10)
-    assert np.isclose(model.meta.ephemeris.velocity_x, -0.548663244644384,
+    assert np.isclose(model.meta.ephemeris.velocity_x_bary, -0.548663244644384,
                       rtol=1.e-10)
-    assert np.isclose(model.meta.ephemeris.velocity_y, -0.103904924724239,
+    assert np.isclose(model.meta.ephemeris.velocity_y_bary, -0.103904924724239,
                       rtol=1.e-10)
-    assert np.isclose(model.meta.ephemeris.velocity_z, 0.000982870964178323,
+    assert np.isclose(model.meta.ephemeris.velocity_z_bary, 0.000982870964178323,
                       rtol=1.e-10)
     # These are the last three columns.
     start_tdb = model.int_times['int_start_BJD_TDB']
