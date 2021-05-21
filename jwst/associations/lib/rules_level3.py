@@ -7,7 +7,7 @@ from jwst.associations.lib.dms_base import (Constraint_TargetAcq, Constraint_TSO
 from jwst.associations.lib.process_list import ProcessList
 from jwst.associations.lib.rules_level3_base import *
 from jwst.associations.lib.rules_level3_base import (
-    dms_product_name_sources,
+    dms_product_name_sources, dms_product_name_noopt,
     format_product
 )
 
@@ -18,6 +18,7 @@ __all__ = [
     'Asn_Lv3Image',
     'Asn_Lv3SpecAux',
     'Asn_Lv3MIRMRS',
+    'Asn_Lv3MIRMRSBackground',
     'Asn_Lv3NRSFSS',
     'Asn_Lv3NRSIFU',
     'Asn_Lv3NRSIFUBackground',
@@ -264,8 +265,7 @@ class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_Spectrum):
             DMSAttrConstraint(
                 name='allowed_bkgdtarg',
                 sources=['exp_type'],
-                value=['mir_mrs','mir_lrs-fixedslit',
-                       'nrs_fixedslit'],
+                value=['mir_lrs-fixedslit', 'nrs_fixedslit'],
             ),
             Constraint_Optical_Path(),
         ])
@@ -313,18 +313,54 @@ class Asn_Lv3MIRMRS(AsnMixin_Spectrum):
 
     @property
     def dms_product_name(self):
-        """Define product name."""
-        target = self._get_target()
+        return dms_product_name_noopt(self)
 
-        instrument = self._get_instrument()
 
-        product_name = 'jw{}-{}_{}_{}'.format(
-            self.data['program'],
-            self.acid.id,
-            target,
-            instrument
-        )
-        return product_name.lower()
+@RegistryMarker.rule
+class Asn_Lv3MIRMRSBackground(AsnMixin_AuxData, AsnMixin_Spectrum):
+    """Level 3 MIRI MRS Association Auxiliary data
+
+    Characteristics:
+        - Association type: ``spec3``
+        - Pipeline: ``calwebb_spec3``
+        - Just MIRI MRS
+        - optical path determined by calibration
+        - Cannot be TSO
+        - Must have pattern type defined
+    """
+
+    def __init__(self, *args, **kwargs):
+        # Setup for checking.
+        self.constraints = Constraint([
+            Constraint_Target(),
+            DMSAttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value=(
+                    'mir_mrs'
+                    '|mir_flatmrs'
+                ),
+                force_unique=False
+            ),
+            Constraint(
+                [
+                    Constraint_TSO(),
+                ],
+                reduce=Constraint.notany
+            ),
+            DMSAttrConstraint(
+                name='bkgdtarg',
+                sources=['bkgdtarg'],
+                value=['T'],
+            ),
+        ])
+
+        # Check and continue initialization.
+        super(Asn_Lv3MIRMRSBackground, self).__init__(*args, **kwargs)
+
+    @property
+    def dms_product_name(self):
+        return dms_product_name_noopt(self)
 
 
 @RegistryMarker.rule
