@@ -106,3 +106,4 @@ jobs:
         with:
           file: ./coverage.xml
           flags: unit
+          fail_ci_if_error: true
