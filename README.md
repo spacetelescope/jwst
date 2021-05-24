@@ -52,7 +52,7 @@ You can also install a specific version (from `jwst 0.17.0` onward):
 
     conda create -n <env_name> python
     conda activate <env_name>
-    pip install jwst==1.1.0
+    pip install jwst==1.2.0
 
 Installing specific versions before `jwst 0.17.0` need to be installed from Github:
 
@@ -192,6 +192,7 @@ contact the [JWST Help Desk](https://jwsthelp.stsci.edu).
 
 | jwst tag | DMS build | CRDS_CONTEXT |   Date     |          Notes                                |
 | -------- | --------- | ------------ | ---------- | ----------------------------------------------|
+|  1.2.0   | B7.8rc1   | 0723         | 05/24/2021 | First release candidate for B7.8              |
 |  1.1.0   | B7.7.1    | 0682         | 02/26/2021 | Final release candidate for B7.7.1            |
 |  1.0.0   | B7.7.1rc1 | 0678         | 02/22/2021 | First release candidate for B7.7.1            |
 |  0.18.3  | B7.7      | 0670         | 01/25/2021 | Final release candidate for B7.7              |
@@ -245,10 +246,10 @@ Unit tests can be run via `pytest`.  Within the top level of your local `jwst` r
     pip install -e ".[test]"
     pytest
 
-Need to parallelize your test runs over 8 cores?
+Need to parallelize your test runs over all available cores?
 
     pip install pytest-xdist
-    pytest -n 8
+    pytest -n auto
 
 
 ## Regression Tests
@@ -266,7 +267,7 @@ and set the environment variable TEST_BIGDATA to our Artifactory server
     pip install -e ".[test]"
     export TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory
 
-To run all the regression tests:
+To run all the regression tests (except the very slow ones):
 
     pytest --bigdata jwst/regtest
 

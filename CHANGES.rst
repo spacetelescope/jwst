@@ -1,17 +1,18 @@
-1.1.1 (unreleased)
+1.2.0 (2021-05-24)
 ==================
 
 ami_analyze
 -----------
 
-- Create copy of input datamodel to avoid overwriting input [#5828]
+- Create copy of input datamodel to avoid overwriting input. [#5828]
 
 assign_wcs
 ----------
-- Convert the ra values to array in util.wrap_ra, but if input is a list return a list [6031]
+- Convert the ra values to array in util.wrap_ra, but if input is a list return
+  a list [#6031]
 
-- Moved the routine wrap_ra from cube_build to assign_wcs.util. The s_region is now
-  correct for data that cross ra boundary. [#6026]
+- Moved the routine wrap_ra from cube_build to assign_wcs.util. The s_region is
+  now correct for data that cross ra boundary. [#6026]
 
 - Changed evaluation of grism bounding box center from averaged extrema of
   transformed bounding box to transformed centroid of source_cat object [#5809]
@@ -77,10 +78,13 @@ csv_tools
 cube_build
 ----------
 
-- Fixed typo in cube_build_step spec for grating [#5839]
-- Update code to read in spectral and spatial size of exposure on the sky #5991
-- For calspec2 pipeline skip determining the dq plane in cube_build #5991
-- Remove certain WCS keywords that are irrelevant after cube_building. [#6032]
+- Fixed typo in ``CubeBuildStep`` spec for grating [#5839]
+
+- Update code to read in spectral and spatial size of exposure on the sky [#5991]
+
+- For calspec2 pipeline skip determining the dq plane in ``cube_build`` [#5991]
+
+- Remove certain WCS keywords that are irrelevant after ``cube_build``. [#6032]
 
 datamodels
 ----------
@@ -138,7 +142,8 @@ extract_2d
 general
 -------
 
-- Update file naming conventions documentation to clarify when optional components will be used. [#5796]
+- Update file naming conventions documentation to clarify when optional components
+  will be used. [#5796]
 
 - Update DQFLAGS table in RTD docs with new definitions for persistence and
   ad_floor in bits five and six [#5815]
@@ -153,20 +158,23 @@ jump
 -----------------
 
 - Update the step to detect jumps in three and four group integations [#5915].
+
 - Change the default S/N ratio for not flagging neighbors to be a higher value to
   better reflect the correct IPC.
 
 lib
 ---
 
-- Update ``update_mt_kwds`` function in ``set_telescope_pointing.py`` to  populate the TARG_RA/TARG_DEC [#5808]
+- Update ``update_mt_kwds`` function in ``set_telescope_pointing.py`` to populate
+  the TARG_RA/TARG_DEC [#5808]
 
 - moved ``basic_utils.multiple_replace`` to stcal. [#5898]
 
 - Implemented window clipping algorithm for WFSS contamination corrections. [#5978]
 
-- Updated ``set_velocity_aberration`` and ``utc_to_tdb`` to access the JWST position
-  and velocity keywords from the SCI extension header, rather than the primary header. [#6050]
+- Updated ``set_velocity_aberration`` and ``utc_to_tdb`` to access the JWST
+  position and velocity keywords from the SCI extension header, rather than the
+  primary header. [#6050]
 
 master_background
 -----------------
@@ -177,8 +185,8 @@ master_background
 outlier_detection
 -----------------
 
-- Outlier detection on non-dithered images is implemented with a simple sigma clipping,
-  dithered outlier detection cleaned up and HST specific steps removed
+- Outlier detection on non-dithered images is implemented with a simple sigma
+  clipping, dithered outlier detection cleaned up and HST specific steps removed
   and additional tests added. [#5822]
 
 ramp_fitting
@@ -274,6 +282,7 @@ wfss_contam
 
 - Implemented basic step structure to apply WFSS contamination corrections, along with
   the necessary grism library modules [#5508]
+
 
 1.1.0 (2021-02-26)
 ==================
