@@ -5,6 +5,7 @@ from stcal.ramp_fitting.ramp_fit import ramp_fit
 
 from jwst.datamodels import RampModel
 from jwst.datamodels import GainModel, ReadnoiseModel
+from jwst.datamodels import dqflags
 
 #
 # The first 12 tests are for a single ramp in a single integration. The ramps
@@ -17,6 +18,18 @@ from jwst.datamodels import GainModel, ReadnoiseModel
 #  for the pixel based on the ramp's GROUPDQ, and the resulting segments and
 #  their SCI values (these are mostly for my reference).
 #
+
+test_dq_flags = {
+    "DO_NOT_USE": dqflags.pixel["DO_NOT_USE"],
+    "JUMP_DET": dqflags.pixel["JUMP_DET"],
+    "SATURATED": dqflags.pixel["SATURATED"],
+    "NO_GAIN_VALUE": dqflags.pixel["NO_GAIN_VALUE"],
+    "UNRELIABLE_SLOPE": dqflags.pixel["UNRELIABLE_SLOPE"],
+}
+
+DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
+JUMP_DET = dqflags.pixel["JUMP_DET"]
+SATURATED = dqflags.pixel["SATURATED"]
 
 
 def test_pix_0():
@@ -35,7 +48,8 @@ def test_pix_0():
     ramp_model.groupdq[0, :, 0, 0] = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
     new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit(
-        ramp_model, 1024 * 300., True, rnoise_model, gain_model, 'OLS', 'optimal', 'none')
+        ramp_model, 1024 * 300., True, rnoise_model, gain_model,
+        'OLS', 'optimal', 'none', test_dq_flags)
 
     # Set truth values for PRIMARY results:
     # [data, dq, err, var_p, var_r]
@@ -70,7 +84,8 @@ def test_pix_1():
     ramp_model.groupdq[0, :, 0, 0] = np.array([0, 4, 4, 0, 2, 2, 2, 2, 2, 2])
 
     new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit(
-        ramp_model, 1024 * 300., True, rnoise_model, gain_model, 'OLS', 'optimal', 'none')
+        ramp_model, 1024 * 300., True, rnoise_model, gain_model,
+        'OLS', 'optimal', 'none', test_dq_flags)
 
     # Set truth values for PRIMARY results:
     p_true = [1.8999999, 6, 1.05057204, 0.03454545, 1.0691562]
@@ -100,7 +115,8 @@ def test_pix_2():
     ramp_model.groupdq[0, :, 0, 0] = np.array([0, 0, 0, 4, 0, 4, 0, 4, 2, 2])
 
     new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit(
-        ramp_model, 1024 * 300., True, rnoise_model, gain_model, 'OLS', 'optimal', 'none')
+        ramp_model, 1024 * 300., True, rnoise_model, gain_model,
+        'OLS', 'optimal', 'none', test_dq_flags)
 
     # Set truth values for PRIMARY results:
     p_true = [0.84833729, 6, 0.42747884, 0.00454545, 0.1781927]
@@ -137,7 +153,8 @@ def test_pix_3():
     ramp_model.groupdq[0, :, 0, 0] = np.array([0, 0, 0, 0, 0, 0, 0, 0, 4, 0])
 
     new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit(
-        ramp_model, 1024 * 300., True, rnoise_model, gain_model, 'OLS', 'optimal', 'none')
+        ramp_model, 1024 * 300., True, rnoise_model, gain_model,
+        'OLS', 'optimal', 'none', test_dq_flags)
 
     # Set truth values for PRIMARY results:
     p_true = [1.0746869, 4, 0.12186482, 0.00227273, 0.01257831]
@@ -174,7 +191,8 @@ def test_pix_4():
     ramp_model.groupdq[0, :, 0, 0] = np.array([0, 2, 2, 2, 2, 2, 2, 2, 2, 2])
 
     new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit(
-        ramp_model, 1024 * 300., True, rnoise_model, gain_model, 'OLS', 'optimal', 'none')
+        ramp_model, 1024 * 300., True, rnoise_model, gain_model,
+        'OLS', 'optimal', 'none', test_dq_flags)
 
     # Set truth values for PRIMARY results:
     p_true = [1.5, 2, 1.047105, 0.02727273, 1.0691562]
@@ -204,7 +222,8 @@ def test_pix_5():
     ramp_model.groupdq[0, :, 0, 0] = np.array([0, 0, 0, 0, 4, 0, 0, 0, 0, 0])
 
     new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit(
-        ramp_model, 1024 * 300., True, rnoise_model, gain_model, 'OLS', 'optimal', 'none')
+        ramp_model, 1024 * 300., True, rnoise_model, gain_model,
+        'OLS', 'optimal', 'none', test_dq_flags)
 
     # Set truth values for PRIMARY results:
     p_true = [1.076075, 4, 0.16134359, 0.00227273, 0.02375903]
@@ -241,7 +260,8 @@ def test_pix_6():
     ramp_model.groupdq[0, :, 0, 0] = np.array([0, 0, 4, 4, 0, 0, 0, 0, 0, 0])
 
     new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit(
-        ramp_model, 1024 * 300., True, rnoise_model, gain_model, 'OLS', 'optimal', 'none')
+        ramp_model, 1024 * 300., True, rnoise_model, gain_model,
+        'OLS', 'optimal', 'none', test_dq_flags)
 
     # Set truth values for PRIMARY results:
     p_true = [6.092052, 4, 0.14613187, 0.0025974, 0.01875712]
@@ -277,7 +297,8 @@ def test_pix_7():
     ramp_model.groupdq[0, :, 0, 0] = np.array([0, 0, 0, 0, 0, 0, 0, 0, 4, 4])
 
     new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit(
-        ramp_model, 1024 * 300., True, rnoise_model, gain_model, 'OLS', 'optimal', 'none')
+        ramp_model, 1024 * 300., True, rnoise_model, gain_model,
+        'OLS', 'optimal', 'none', test_dq_flags)
 
     # Set truth values for PRIMARY results:
     p_true = [1.0757396, 4, 0.12379601, 0.0025974, 0.01272805]
@@ -307,7 +328,8 @@ def test_pix_8():
     ramp_model.groupdq[0, :, 0, 0] = np.array([0, 4, 0, 0, 0, 0, 0, 2, 2, 2])
 
     new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit(
-        ramp_model, 1024 * 300., True, rnoise_model, gain_model, 'OLS', 'optimal', 'none')
+        ramp_model, 1024 * 300., True, rnoise_model, gain_model,
+        'OLS', 'optimal', 'none', test_dq_flags)
 
     # Set truth values for PRIMARY results:
     p_true = [1.0101178, 6, 0.1848883, 0.00363636, 0.03054732]
@@ -338,7 +360,8 @@ def test_pix_9():
     ramp_model.groupdq[0, :, 0, 0] = np.array([0, 0, 4, 4, 0, 0, 0, 0, 4, 0])
 
     new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit(
-        ramp_model, 1024 * 300., True, rnoise_model, gain_model, 'OLS', 'optimal', 'none')
+        ramp_model, 1024 * 300., True, rnoise_model, gain_model,
+        'OLS', 'optimal', 'none', test_dq_flags)
 
     # Set truth values for PRIMARY results:
     p_true = [0.9999994, 4, 0.22721863, 0.0030303, 0.048598]
@@ -376,7 +399,8 @@ def test_pix_10():
     ramp_model.groupdq[0, :, 0, 0] = np.array([0, 0, 4, 0, 0, 4, 0, 0, 0, 0])
 
     new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit(
-        ramp_model, 1024 * 300., True, rnoise_model, gain_model, 'OLS', 'optimal', 'none')
+        ramp_model, 1024 * 300., True, rnoise_model, gain_model,
+        'OLS', 'optimal', 'none', test_dq_flags)
 
     # Set truth values for PRIMARY results:
     p_true = [1., 4, 0.21298744, 0.0025974, 0.04276625]
@@ -412,7 +436,8 @@ def test_pix_11():
     ramp_model.groupdq[0, :, 0, 0] = np.array([0, 0, 2, 2, 2, 2, 2, 2, 2, 2])
 
     new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit(
-        ramp_model, 1024 * 300., True, rnoise_model, gain_model, 'OLS', 'optimal', 'none')
+        ramp_model, 1024 * 300., True, rnoise_model, gain_model,
+        'OLS', 'optimal', 'none', test_dq_flags)
 
     # Set truth values for PRIMARY results:
     p_true = [1., 2, 1.042755, 0.01818182, 1.0691562]
@@ -446,7 +471,8 @@ def test_pix_12():
 
     # call ramp_fit
     new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit(
-        ramp_model, 1024 * 300., True, rnoise_model, gain_model, 'OLS', 'optimal', 'none')
+        ramp_model, 1024 * 300., True, rnoise_model, gain_model,
+        'OLS', 'optimal', 'none', test_dq_flags)
 
     # Set truth values for PRIMARY results for pixel 1:
     # slope, dq, err, var_p, var_r
@@ -495,7 +521,8 @@ def test_miri_0():
     ramp_model.groupdq[0, :, 0, 0] = np.array([1, 0, 0, 0, 0, 0, 0, 0, 0, 1])
 
     new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit(
-        ramp_model, 1024 * 300., True, rnoise_model, gain_model, 'OLS', 'optimal', 'none')
+        ramp_model, 1024 * 300., True, rnoise_model, gain_model,
+        'OLS', 'optimal', 'none', test_dq_flags)
 
     # Set truth values for PRIMARY results:
     p_true = [1.025854, 0, 0.12379601, 0.0025974, 0.01272805]
@@ -525,7 +552,8 @@ def test_miri_1():
     ramp_model.groupdq[0, :, 0, 0] = np.array([5, 0, 0, 0, 0, 0, 0, 0, 0, 1])
 
     new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit(
-        ramp_model, 1024 * 300., True, rnoise_model, gain_model, 'OLS', 'optimal', 'none')
+        ramp_model, 1024 * 300., True, rnoise_model, gain_model,
+        'OLS', 'optimal', 'none', test_dq_flags)
 
     # Set truth values for PRIMARY results:
     p_true = [1.1996487, 0, 0.12379601, 0.0025974, 0.01272805]
@@ -555,7 +583,8 @@ def test_miri_2():
     ramp_model.groupdq[0, :, 0, 0] = np.array([5, 0, 0, 0, 0, 0, 0, 0, 0, 5])
 
     new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit(
-        ramp_model, 1024 * 300., True, rnoise_model, gain_model, 'OLS', 'optimal', 'none')
+        ramp_model, 1024 * 300., True, rnoise_model, gain_model,
+        'OLS', 'optimal', 'none', test_dq_flags)
 
     # Set truth values for PRIMARY results:
     p_true = [1.025854, 0, 0.12379601, 0.0025974, 0.01272805]
@@ -585,7 +614,8 @@ def test_miri_3():
     ramp_model.groupdq[0, :, 0, 0] = np.array([1, 0, 0, 0, 0, 0, 0, 0, 0, 5])
 
     new_mod, int_mod, opt_mod, gls_opt_mod = ramp_fit(
-        ramp_model, 1024 * 300., True, rnoise_model, gain_model, 'OLS', 'optimal', 'none')
+        ramp_model, 1024 * 300., True, rnoise_model, gain_model,
+        'OLS', 'optimal', 'none', test_dq_flags)
 
     # Set truth values for PRIMARY results:
     p_true = [1.025854, 0, 0.12379601, 0.0025974, 0.01272805]

@@ -6,6 +6,7 @@ from ..stpipe import Step
 from .. import datamodels
 
 from stcal.ramp_fitting import ramp_fit
+from jwst.datamodels import dqflags
 
 from ..lib import reffile_utils  # TODO remove
 from ..lib import pipe_utils
@@ -231,11 +232,18 @@ class RampFitStep (Step):
             else:
                 input_model.int_times = None
 
+            ramp_fit_dq_flags = {
+                "DO_NOT_USE": dqflags.pixel["DO_NOT_USE"],
+                "JUMP_DET": dqflags.pixel["JUMP_DET"],
+                "SATURATED": dqflags.pixel["SATURATED"],
+                "NO_GAIN_VALUE": dqflags.pixel["NO_GAIN_VALUE"],
+                "UNRELIABLE_SLOPE": dqflags.pixel["UNRELIABLE_SLOPE"],
+            }
+
             image_info, integ_info, opt_info, gls_opt_model = ramp_fit.ramp_fit(
                 input_model, buffsize,
                 self.save_opt, readnoise_2d, gain_2d, self.algorithm,
-                self.weighting, max_cores
-            )
+                self.weighting, max_cores, ramp_fit_dq_flags)
 
         # Save the OLS optional fit product, if it exists
         if opt_info is not None:
