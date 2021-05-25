@@ -1,9 +1,10 @@
 1.2.1 (unreleased)
 ==================
 
+general
+-------
 
-
-
+- Make CRDS context reporting pytest plugin disabled by default. [#6070]
 
 1.2.0 (2021-05-24)
 ==================
