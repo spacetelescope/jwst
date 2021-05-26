@@ -1,6 +1,11 @@
 1.2.1 (unreleased)
 ==================
 
+datamodels
+----------
+
+- Updated enum lists for ENGQLPTG and PATTTYPE keywords [#6081]
+
 general
 -------
 

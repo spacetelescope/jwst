@@ -249,9 +249,9 @@ properties:
           engdb_pointing_quality:
             title: Quality of pointing information from EngDB
             type: string
-            enum: ["CALCULATED_FULLVA", "CALCULATED_FULL",
-                   "CALCULATED_GSCMD", "CALCULATED_GSCMD_V3PAGS",
-                   "CALCULATED_ORIGINAL", "PLANNED"]
+            enum: [CALCULATED_FULLVA, CALCULATED_FULL,
+                   CALCULATED_GSCMD, CALCULATED_GSCMD_V3PAGS,
+                   CALCULATED_ORIGINAL, PLANNED]
             fits_keyword: ENGQLPTG
             blend_table: True
           type:
@@ -1084,14 +1084,14 @@ properties:
               NIS_NRC_9L, NIS_NRC_9M, NIS_NRC_9S,
 
               # NIRISS with MIRI in parallel
-              NIS-MIR056-2, "NIS-MIR056-3,
-              NIS-MIR077-3, "NIS-MIR077-9,
-              NIS-MIR100-2, "NIS-MIR100-3, "NIS-MIR100-4,
-              NIS-MIR128-2, "NIS-MIR128-3, "NIS-MIR128-4, "NIS-MIR128-9,
-              NIS-MIR150-2, "NIS-MIR150-3, "NIS-MIR150-4, "NIS-MIR150-9,
-              NIS-MIR180-2, "NIS-MIR180-3, "NIS-MIR180-4, "NIS-MIR180-9,
-              NIS-MIR210-2, "NIS-MIR210-3, "NIS-MIR210-4, "NIS-MIR210-9,
-              NIS-MIR255-2, "NIS-MIR255-3, "NIS-MIR255-4, "NIS-MIR255-9,
+              NIS-MIR056-2, NIS-MIR056-3,
+              NIS-MIR077-3, NIS-MIR077-9,
+              NIS-MIR100-2, NIS-MIR100-3, NIS-MIR100-4,
+              NIS-MIR128-2, NIS-MIR128-3, NIS-MIR128-4, NIS-MIR128-9,
+              NIS-MIR150-2, NIS-MIR150-3, NIS-MIR150-4, NIS-MIR150-9,
+              NIS-MIR180-2, NIS-MIR180-3, NIS-MIR180-4, NIS-MIR180-9,
+              NIS-MIR210-2, NIS-MIR210-3, NIS-MIR210-4, NIS-MIR210-9,
+              NIS-MIR255-2, NIS-MIR255-3, NIS-MIR255-4, NIS-MIR255-9,
 
               # NIRSpec FS and MOS
               2-POINT-NOD, 3-POINT-NOD, 5-POINT-NOD,
