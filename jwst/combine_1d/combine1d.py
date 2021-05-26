@@ -558,7 +558,6 @@ def combine_1d_spectra(input_model, exptime_key):
         for ms in input_model:
             for in_spec in ms.spec:
                 spectral_order = in_spec.spectral_order
-                log.warning(f"in_spec srctype? {ms.meta.target.source_type}\n\n")
                 if spectral_order not in input_spectra:
                     input_spectra[spectral_order] = []
                 input_spectra[spectral_order].append(InputSpectrumModel(
@@ -566,7 +565,6 @@ def combine_1d_spectra(input_model, exptime_key):
     else:
         for in_spec in input_model.spec:
             spectral_order = in_spec.spectral_order
-            log.warning(f"input_model srctype? {input_model.meta.target.source_type}\n\n")
             if spectral_order not in input_spectra:
                 input_spectra[spectral_order] = []
             input_spectra[spectral_order].append(InputSpectrumModel(
@@ -584,8 +582,7 @@ def combine_1d_spectra(input_model, exptime_key):
         output_order = output_spectra[order].create_output_data()
         output_order.spectral_order = order
         output_order.source_id = input_spectra[order][0].source_id
-        output_order.meta.target.source_type = input_spectra[order][0].source_type
-        log.warning(f"input source type: {input_spectra[order][0].source_type}\n")
+        output_order.source_type = input_spectra[order][0].source_type
         output_model.spec.append(output_order)
 
     # Copy one of the input headers to output.
