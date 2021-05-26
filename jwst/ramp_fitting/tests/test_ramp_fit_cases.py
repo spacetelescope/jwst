@@ -19,17 +19,11 @@ from jwst.datamodels import dqflags
 #  their SCI values (these are mostly for my reference).
 #
 
-test_dq_flags = {
-    "DO_NOT_USE": dqflags.pixel["DO_NOT_USE"],
-    "JUMP_DET": dqflags.pixel["JUMP_DET"],
-    "SATURATED": dqflags.pixel["SATURATED"],
-    "NO_GAIN_VALUE": dqflags.pixel["NO_GAIN_VALUE"],
-    "UNRELIABLE_SLOPE": dqflags.pixel["UNRELIABLE_SLOPE"],
-}
+test_dq_flags = dqflags.pixel
 
-DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
-JUMP_DET = dqflags.pixel["JUMP_DET"]
-SATURATED = dqflags.pixel["SATURATED"]
+DO_NOT_USE = test_dq_flags["DO_NOT_USE"]
+JUMP_DET = test_dq_flags["JUMP_DET"]
+SATURATED = test_dq_flags["SATURATED"]
 
 
 def test_pix_0():
