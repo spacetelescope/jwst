@@ -94,6 +94,8 @@ cube_build
 
 - Remove certain WCS keywords that are irrelevant after ``cube_build``. [#6032]
 
+- Fix some typos in the the arguments documentation.
+
 datamodels
 ----------
 
