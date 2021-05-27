@@ -7,6 +7,8 @@ combine_1d
 - Added SRCTYPE to COMBINE1D output extension headers, propagated from
   EXTRACT1D inputs [#6079]
 
+- Added units to CombinedSpecModel table output [#6082]
+
 general
 -------
 
