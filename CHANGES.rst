@@ -6,6 +6,11 @@ combine_1d
 
 - Added SRCTYPE to COMBINE1D output extension headers, propagated from
   EXTRACT1D inputs [#6079]
+  
+datamodels
+----------
+
+- Updated enum lists for ENGQLPTG and PATTTYPE keywords [#6081]
 
 general
 -------
