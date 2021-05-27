@@ -67,6 +67,8 @@ class InputSpectrumModel:
         self.declination = np.zeros_like(self.wavelength)
         self.source_id = spec.source_id
         self.source_type = spec.source_type
+        self.flux_unit = spec.spec_table.columns['flux'].unit
+        self.sb_unit = spec.spec_table.columns['surf_bright'].unit
 
         self.weight = np.ones_like(self.wavelength)
         if exptime_key == "integration_time":
@@ -128,6 +130,8 @@ class OutputSpectrumModel:
         self.wcs = None
         self.normalized = False
         self.source_id = None
+        self.flux_unit = None
+        self.sb_unit = None
 
     def assign_wavelengths(self, input_spectra):
         """Create an array of wavelengths to use for the output spectrum.
@@ -189,6 +193,9 @@ class OutputSpectrumModel:
         self.dq = np.zeros(nelem, dtype=dq_dtype)
         self.weight = np.zeros(nelem, dtype=np.float64)
         self.count = np.zeros(nelem, dtype=np.float64)
+
+        self.flux_unit = input_spectra[0].flux_unit
+        self.sb_unit = input_spectra[0].sb_unit
 
         n_nan = 0                                       # initial value
         ninputs = 0
@@ -282,6 +289,12 @@ class OutputSpectrumModel:
                                  self.weight,
                                  self.count)), dtype=cmb_dtype)
         output_model = datamodels.CombinedSpecModel(spec_table=data)
+
+        output_model.spec_table.columns['wavelength'].unit = 'um'
+        output_model.spec_table.columns['flux'].unit = self.flux_unit
+        output_model.spec_table.columns['error'].unit = self.flux_unit
+        output_model.spec_table.columns['surf_bright'].unit = self.sb_unit
+        output_model.spec_table.columns['sb_error'].unit = self.sb_unit
 
         return output_model
 

@@ -14,6 +14,8 @@ datamodels
 
 - Removed obsolete keyword NDITHPTS and updated attributes for NRIMDTPT [#6083]
 
+- Added units to CombinedSpecModel table output [#6082]
+
 general
 -------
 
