@@ -49,6 +49,8 @@ assign_wcs
 associations
 ------------
 
+- Asn_Lv2NRSLAMPSpectral: Allow msaspec only if msametfl is available. [#6085]
+
 - Add rule Asn_MIRMRSBackground to treat background as science. [#6046]
 
 - Updated level2b WFSS rules to only consider exposures from the same
