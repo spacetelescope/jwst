@@ -1120,7 +1120,8 @@ properties:
             fits_keyword: PATTNPTS
             blend_table: True
           dither_points:
-            title: Total number of points in image dither pattern
+            title: Number of points in image dither pattern
+            type: integer
             fits_keyword: NRIMDTPT
             blend_table: True
           pattern_size:
@@ -1222,10 +1223,6 @@ properties:
             type: string
             enum: [ALL, CHANNEL1, CHANNEL2, CHANNEL3, CHANNEL4]
             fits_keyword: MRSPRCHN
-          dither_points:
-            title: Total number of points in primary dither pattern
-            type: string
-            fits_keyword: NDITHPTS
       ephemeris:
         title: JWST ephemeris information
         type: object
