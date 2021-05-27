@@ -1,6 +1,12 @@
 1.2.1 (unreleased)
 ==================
 
+combine_1d
+----------
+
+- Added SRCTYPE to COMBINE1D output extension headers, propagated from
+  EXTRACT1D inputs [#6079]
+  
 datamodels
 ----------
 
