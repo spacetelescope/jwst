@@ -20,3 +20,9 @@ allOf:
       type: integer
       fits_keyword: SOURCEID
       fits_hdu: COMBINE1D
+    source_type:
+      title: Source type used for calibration
+      type: string
+      enum: [EXTENDED, POINT, UNKNOWN]
+      fits_keyword: SRCTYPE
+      fits_hdu: COMBINE1D

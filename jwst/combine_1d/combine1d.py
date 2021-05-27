@@ -27,6 +27,7 @@ class InputSpectrumModel:
         right_ascension
         declination
         source_id
+        source_type
     """
 
     def __init__(self, ms, spec, exptime_key):
@@ -65,6 +66,7 @@ class InputSpectrumModel:
         self.right_ascension = np.zeros_like(self.wavelength)
         self.declination = np.zeros_like(self.wavelength)
         self.source_id = spec.source_id
+        self.source_type = spec.source_type
 
         self.weight = np.ones_like(self.wavelength)
         if exptime_key == "integration_time":
@@ -580,6 +582,7 @@ def combine_1d_spectra(input_model, exptime_key):
         output_order = output_spectra[order].create_output_data()
         output_order.spectral_order = order
         output_order.source_id = input_spectra[order][0].source_id
+        output_order.source_type = input_spectra[order][0].source_type
         output_model.spec.append(output_order)
 
     # Copy one of the input headers to output.
