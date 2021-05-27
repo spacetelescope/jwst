@@ -12,6 +12,8 @@ datamodels
 
 - Updated enum lists for ENGQLPTG and PATTTYPE keywords [#6081]
 
+- Removed obsolete keyword NDITHPTS and updated attributes for NRIMDTPT [#6083]
+
 general
 -------
 
