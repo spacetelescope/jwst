@@ -1,6 +1,11 @@
 1.2.1 (unreleased)
 ==================
 
+associations
+------------
+
+- Asn_Lv2NRSLAMPSpectral: Allow msaspec only if msametfl is available. [#6085]
+
 combine_1d
 ----------
 
