@@ -48,7 +48,7 @@ each band will be created.
     (channel/sub-channel for MIRI or grating/filter combination for NIRSpec).
 
   - ``output_type = channel`` creates a single IFU cube from each unique channel of MIRI data
-    (or just those channels set by the 'channel' option.
+    (or just those channels set by the 'channel' option).
 
   - ``output_type = grating`` combines all the gratings in the NIRSpec data or set by the
     grating option into a single IFU cube.
