@@ -1,10 +1,33 @@
 1.2.1 (unreleased)
 ==================
 
+associations
+------------
+
+- Asn_Lv2NRSLAMPSpectral: Allow msaspec only if msametfl is available. [#6085]
+
+combine_1d
+----------
+
+- Added SRCTYPE to COMBINE1D output extension headers, propagated from
+  EXTRACT1D inputs [#6079]
+  
 cube_build
 ----------
 
 - Fix some typos in the the arguments documentation. [#6077]
+
+datamodels
+----------
+
+- Updated enum lists for ENGQLPTG and PATTTYPE keywords [#6081]
+
+- Removed obsolete keyword NDITHPTS and updated attributes for NRIMDTPT [#6083]
+
+- Added units to CombinedSpecModel table output [#6082]
+
+- Added keywords OSS_VER, DETMODE, CMD_TSEL, NOD_TYPE, and GS_V3_PA to
+  the core schema [#6086]
 
 general
 -------
@@ -42,6 +65,8 @@ assign_wcs
 
 associations
 ------------
+
+- Asn_Lv2NRSLAMPSpectral: Allow msaspec only if msametfl is available. [#6085]
 
 - Add rule Asn_MIRMRSBackground to treat background as science. [#6046]
 
