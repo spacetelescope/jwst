@@ -200,7 +200,7 @@ class DataSet:
                                                self.off_x, self.off_y)
             # 5. Around this nominal alignment, get refined (delta) offsets
 #            ref_del_off_x, ref_del_off_y = optimize_offs(sci_nai_1, sci_nai_2)
-            ref_del_off_x, ref_del_off_y = calc_cor_coef(sci_nai_1, sci_nai_2, 0, 0, self.psf_size)
+            ref_del_off_x, ref_del_off_y = calc_refined_offsets(sci_nai_1, sci_nai_2, 0, 0, self.psf_size)
             log.info('From the refined offsets calculation,'
                      'the x,y changes in ofsets are: %s %s',
                      round(ref_del_off_x, 2), round(ref_del_off_y, 2))
@@ -655,7 +655,7 @@ def get_overlap(sci_int_1, sci_int_2, nom_off_x, nom_off_y):
     return sub_1, sub_2
 
 
-def calc_cor_coef(sci_nai_1, sci_nai_2, off_x, off_y, psf_size):
+def calc_refined_offsets(sci_nai_1, sci_nai_2, off_x, off_y, psf_size):
     """
     Short Summary
     -------------
@@ -678,8 +678,10 @@ def calc_cor_coef(sci_nai_1, sci_nai_2, off_x, off_y, psf_size):
 
     Returns
     -------
-    mean_diff: float
-        mean of correlation coefficient array
+    refined_x: float
+        The refined value of the x offset
+    refined_y: float
+        The refined value of the y offset
 
     """
     centroid_size = 3
@@ -703,18 +705,21 @@ def calc_cor_coef(sci_nai_1, sci_nai_2, off_x, off_y, psf_size):
     ymin = int(max(0, ycen - psf_size))
     ymax = int(min(ylen - 1, ycen + psf_size))
 
-    # Create subarrays using these limits, and make them
-    #   1D for numpy's correlation coefficient
+    # Create subarrays using these limits
     sub_1_sub = sub_1[ymin:ymax, xmin:xmax]
     sub_2_sub = sub_2[ymin:ymax, xmin:xmax]
-
+    # Create the cross correlation image
     cross_cor = scipy.signal.correlate2d(sub_2_sub - scipy.ndimage.gaussian_filter(sub_2_sub, 5), sub_1_sub -
                                          scipy.ndimage.gaussian_filter(sub_1_sub, 5))
     maximum_pixel = np.unravel_index(np.argmax(cross_cor), cross_cor.shape)
 
     ymax = maximum_pixel[0]-sub_1_sub.shape[0]+1
     xmax = maximum_pixel[1]-sub_1_sub.shape[1]+1
+    # Slice out a box center on the peak of the cross correlation image. The centroid of this box will give a
+    # accurate estimate of the x and y offsets
     central_cutout = cross_cor[maximum_pixel[0]-centroid_size:maximum_pixel[0]+centroid_size+1,
                                maximum_pixel[1]-centroid_size:maximum_pixel[1]+centroid_size+1]
     centroid = scipy.ndimage.measurements.center_of_mass(central_cutout)
-    return xmax + centroid[1] - centroid_size, ymax + centroid[0] - centroid_size
+    refined_x = xmax + centroid[1] - centroid_size
+    refined_y = ymax + centroid[0] - centroid_size
+    return refined_x, refined_y
