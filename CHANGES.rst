@@ -1,6 +1,11 @@
 1.2.1 (unreleased)
 ==================
 
+associations
+------------
+
+- Asn_Lv2NRSLAMPSpectral: Allow msaspec only if msametfl is available. [#6085]
+
 combine_1d
 ----------
 
@@ -52,6 +57,8 @@ assign_wcs
 
 associations
 ------------
+
+- Asn_Lv2NRSLAMPSpectral: Allow msaspec only if msametfl is available. [#6085]
 
 - Add rule Asn_MIRMRSBackground to treat background as science. [#6046]
 
