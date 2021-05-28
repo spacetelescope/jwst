@@ -94,10 +94,7 @@ class ModelContainer(JwstDataModel, Sequence):
         elif isinstance(init, list):
             if all(isinstance(x, (str, fits.HDUList, DataModel)) for x in init):
                 # Try opening the list as datamodels
-                try:
-                    init = [datamodel_open(m, memmap=self._memmap) for m in init]
-                except (FileNotFoundError, ValueError):
-                    raise
+                init = [datamodel_open(m, memmap=self._memmap) for m in init]
             else:
                 raise TypeError("list must contain items that can be opened "
                                 "with jwst.datamodels.open()")
@@ -169,7 +166,8 @@ class ModelContainer(JwstDataModel, Sequence):
                 result.append(m)
         return result
 
-    def read_asn(self, filepath):
+    @staticmethod
+    def read_asn(filepath):
         """
         Load fits files from a JWST association file.
 
@@ -185,8 +183,8 @@ class ModelContainer(JwstDataModel, Sequence):
         try:
             with open(filepath) as asn_file:
                 asn_data = load_asn(asn_file)
-        except AssociationNotValidError:
-            raise IOError("Cannot read ASN file.")
+        except AssociationNotValidError as e:
+            raise IOError("Cannot read ASN file.") from e
         return asn_data
 
     def from_asn(self, asn_data, asn_file_path=None):
@@ -256,7 +254,7 @@ class ModelContainer(JwstDataModel, Sequence):
              path=None,
              dir_path=None,
              save_model_func=None,
-             *args, **kwargs):
+             **kwargs):
         """
         Write out models in container to FITS or ASDF.
 
@@ -287,7 +285,7 @@ class ModelContainer(JwstDataModel, Sequence):
         """
         output_paths = []
         if path is None:
-            def path(filename, idx):
+            def path(filename):
                 return filename
         elif not callable(path):
             path = make_file_with_index
@@ -304,7 +302,7 @@ class ModelContainer(JwstDataModel, Sequence):
                 save_path = op.join(outpath, filename)
                 try:
                     output_paths.append(
-                        model.save(save_path, *args, **kwargs)
+                        model.save(save_path, **kwargs)
                     )
                 except IOError as err:
                     raise err
