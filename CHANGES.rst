@@ -12,6 +12,11 @@ combine_1d
 - Added SRCTYPE to COMBINE1D output extension headers, propagated from
   EXTRACT1D inputs [#6079]
   
+cube_build
+----------
+
+- Fix some typos in the the arguments documentation. [#6077]
+
 datamodels
 ----------
 
