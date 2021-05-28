@@ -199,7 +199,6 @@ class DataSet:
             sci_nai_1, sci_nai_2 = get_overlap(sci_int_1, sci_int_2,
                                                self.off_x, self.off_y)
             # 5. Around this nominal alignment, get refined (delta) offsets
-#            ref_del_off_x, ref_del_off_y = optimize_offs(sci_nai_1, sci_nai_2)
             ref_del_off_x, ref_del_off_y = calc_refined_offsets(sci_nai_1, sci_nai_2, 0, 0, self.psf_size)
             log.info('From the refined offsets calculation,'
                      'the x,y changes in ofsets are: %s %s',
@@ -210,9 +209,6 @@ class DataSet:
             self.flt_off_y = self.off_y + ref_del_off_y
             self.off_x += int(round(ref_del_off_x))
             self.off_y += int(round(ref_del_off_y))
-
-#            log.info('Values for the refined offsets are, for x,y : %s %s',
-#                     self.off_x, self.off_y)
 
         # Do the final alignment for original (not interpolated) image two
         data_2_a, dq_2_a, err_2_a = self.apply_final_offsets()
@@ -716,7 +712,7 @@ def calc_refined_offsets(sci_nai_1, sci_nai_2, off_x, off_y, psf_size):
     ymax = maximum_pixel[0]-sub_1_sub.shape[0]+1
     xmax = maximum_pixel[1]-sub_1_sub.shape[1]+1
     # Slice out a box center on the peak of the cross correlation image. The centroid of this box will give a
-    # accurate estimate of the x and y offsets
+    # accurate estimate of the x and y offsets.
     central_cutout = cross_cor[maximum_pixel[0]-centroid_size:maximum_pixel[0]+centroid_size+1,
                                maximum_pixel[1]-centroid_size:maximum_pixel[1]+centroid_size+1]
     centroid = scipy.ndimage.measurements.center_of_mass(central_cutout)
