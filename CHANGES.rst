@@ -1,6 +1,11 @@
 1.2.1 (unreleased)
 ==================
 
+cube_build
+----------
+
+- Fix some typos in the the arguments documentation. [#6077]
+
 general
 -------
 
@@ -93,8 +98,6 @@ cube_build
 - For calspec2 pipeline skip determining the dq plane in ``cube_build`` [#5991]
 
 - Remove certain WCS keywords that are irrelevant after ``cube_build``. [#6032]
-
-- Fix some typos in the the arguments documentation. [#6077]
 
 datamodels
 ----------
