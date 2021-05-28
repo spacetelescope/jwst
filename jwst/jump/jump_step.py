@@ -2,7 +2,7 @@
 
 from ..stpipe import Step
 from .. import datamodels
-from .jump import detect_jumps
+from .jump import run_detect_jumps
 import time
 
 __all__ = ["JumpStep"]
@@ -65,10 +65,10 @@ class JumpStep(Step):
             readnoise_model = datamodels.ReadnoiseModel(readnoise_filename)
 
             # Call the jump detection routine
-            result = detect_jumps(input_model, gain_model, readnoise_model,
-                                  rej_thresh, three_grp_rej_thresh, four_grp_rej_thresh, max_cores,
-                                  max_jump_to_flag_neighbors, min_jump_to_flag_neighbors,
-                                  flag_4_neighbors)
+            result = run_detect_jumps(input_model, gain_model, readnoise_model,
+                                      rej_thresh, three_grp_rej_thresh, four_grp_rej_thresh, max_cores,
+                                      max_jump_to_flag_neighbors, min_jump_to_flag_neighbors,
+                                      flag_4_neighbors)
             gain_model.close()
             readnoise_model.close()
             tstop = time.time()

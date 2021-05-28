@@ -9,7 +9,13 @@ assign_wcs
 
 cube_build
 ----------
-- Fix bug when creating cubes using output_type=channel [#6138]
+- Fix bug when creating cubes using outlsput_type=channel [#6138]
+
+jump
+----
+- jump detection step now uses common code moved to stcal [#6089]
+
+
 
 outlier_detection
 -----------------
