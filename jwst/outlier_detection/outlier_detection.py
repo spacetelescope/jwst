@@ -1,8 +1,10 @@
 """Primary code for performing outlier detection on JWST observations."""
 
 from functools import partial
-import numpy as np
+import logging
+import warnings
 
+import numpy as np
 from astropy.stats import sigma_clip
 from scipy import ndimage
 from drizzle.cdrizzle import tblot
@@ -12,7 +14,6 @@ from jwst.resample import resample
 from jwst.resample.resample_utils import build_driz_weight, calc_gwcs_pixmap
 from jwst.stpipe import Step
 
-import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -293,8 +294,11 @@ class OutlierDetection:
         # For a of stack of images with "bad" data replaced with Nan
         # use np.nanmedian to compute the median.
         log.info("Generating median from {} images".format(len(resampled_sci)))
-        median_image = np.nanmedian(resampled_sci, axis=0)
-        del resampled_sci
+        with warnings.catch_warnings():
+            warnings.filterwarnings(action="ignore",
+                                    message="All-NaN slice encountered",
+                                    category=RuntimeWarning)
+            median_image = np.nanmedian(resampled_sci, axis=0)
 
         return median_image
 

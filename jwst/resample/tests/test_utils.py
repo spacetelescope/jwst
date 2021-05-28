@@ -67,9 +67,9 @@ def test_build_driz_weight(weight_type):
 def test_build_driz_weight_zeros(weight_type):
     """Check that zero or not finite weight maps get set to 1"""
     model = ImageModel((10, 10))
+    model.var_rnoise += 1
 
-    with pytest.warns(RuntimeWarning):
-        weight_map = build_driz_weight(model, weight_type=weight_type)
+    weight_map = build_driz_weight(model, weight_type=weight_type)
 
     assert_array_equal(weight_map, 1)
 
