@@ -21,6 +21,9 @@ datamodels
 
 - Added units to CombinedSpecModel table output [#6082]
 
+- Added keywords OSS_VER, DETMODE, CMD_TSEL, NOD_TYPE, and GS_V3_PA to
+  the core schema [#6086]
+
 general
 -------
 
