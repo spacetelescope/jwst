@@ -29,6 +29,12 @@ general
 
 - Make CRDS context reporting pytest plugin disabled by default. [#6070]
 
+lib
+---
+
+- Updated set_telescope_pointing to populate ENGQLPTG keyword with new
+  allowed values [#6088]
+
 1.2.0 (2021-05-24)
 ==================
 
@@ -60,8 +66,6 @@ assign_wcs
 
 associations
 ------------
-
-- Asn_Lv2NRSLAMPSpectral: Allow msaspec only if msametfl is available. [#6085]
 
 - Add rule Asn_MIRMRSBackground to treat background as science. [#6046]
 
