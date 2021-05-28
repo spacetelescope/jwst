@@ -507,9 +507,29 @@ class Asn_Lv2NRSLAMPSpectral(
                 sources=['filter'],
                 value='opaque'
             ),
-            DMSAttrConstraint(
-                name='opmode',
-                sources=['opmode'],
+            Constraint(
+                [
+                    Constraint(
+                        [DMSAttrConstraint(
+                            name='opmode',
+                            sources=['opmode'],
+                            value='msaspec',
+                        )],
+                        reduce=Constraint.notany
+                    ),
+                    Constraint(
+                        [
+                            DMSAttrConstraint(
+                                sources=['opmode'],
+                                value='msaspec'
+                            ),
+                            DMSAttrConstraint(
+                                sources=['msametfl']
+                            )
+                        ]
+                    ),
+                ],
+                reduce=Constraint.any
             ),
             DMSAttrConstraint(
                 name='lamp',
