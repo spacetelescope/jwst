@@ -1,7 +1,7 @@
 # %ECSV 0.9
 # ---
 # datatype:
-# - {name: exposure, datatype: object}
+# - {name: exposure, datatype: string}
 # - {name: target.ra, unit: deg, datatype: float64}
 # - {name: target.dec, unit: deg, datatype: float64}
 # - {name: v1.ra, unit: deg, datatype: float64}

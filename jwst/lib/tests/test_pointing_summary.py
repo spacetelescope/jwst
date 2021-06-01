@@ -7,7 +7,7 @@ import pytest
 from astropy.table import Table
 from astropy.utils.diff import report_diff_values
 
-import jwst.datamodels as dm
+from jwst.datamodels import ImageModel
 from jwst.lib import engdb_tools
 import jwst.lib.pointing_summary as ps
 
@@ -24,14 +24,13 @@ GOOD_ENDTIME = '2016-01-19'
 def engdb():
     """Setup the service to operate through the mock service"""
     with EngDB_Mocker():
-        engdb = engdb_tools.ENGDB_Service()
-        yield engdb
+        yield engdb_tools.ENGDB_Service()
 
 
 @pytest.fixture(scope='module')
 def data_path(jail):
     """Create data file with needed header parameters"""
-    model = dm.ImageModel()
+    model = ImageModel()
 
     model.meta.target.ra = 90.75541666666666
     model.meta.target.dec = -66.56055555555554
@@ -52,16 +51,16 @@ def test_calc_pointing_deltas(engdb, data_path):
              '\n    (90.70377653, -66.59540224)>, delta_v1=<Angle 0.13712727'
              ' deg>, delta_refpoint=<Angle 0.04044315 deg>)'
              )
-    model = dm.ImageModel(str(data_path))
-    deltas = ps.calc_pointing_deltas(model)
+    with ImageModel(str(data_path)) as model:
+        deltas = ps.calc_pointing_deltas(model)
 
     assert truth == str(deltas)
 
 
 def test_calc_deltas(engdb, data_path):
     """Test `calc_deltas` basic running"""
-    model = dm.ImageModel(data_path)
-    deltas = ps.calc_deltas([model])
-    truth = Table.read(DATA_PATH / 'calc_deltas_truth.ecsv')
+    with ImageModel(data_path) as model:
+        deltas = ps.calc_deltas([model])
 
+    truth = Table.read(DATA_PATH / 'calc_deltas_truth.ecsv')
     assert report_diff_values(truth, deltas, fileobj=sys.stderr)
