@@ -3,12 +3,12 @@ the interoplation method = area
 """
 import numpy as np
 import math
-import numba
 from numba import jit
 from ..datamodels import dqflags
 from jwst.transforms.models import _toindex
 
-#@jit(nopython=True)
+
+@jit(nopython=True)
 def find_area_poly(nvertices, xpixel, ypixel):
     """ Find the area of the polygon
 
@@ -38,7 +38,8 @@ def find_area_poly(nvertices, xpixel, ypixel):
     return areaPoly
 # _____________________________________________________________________________
 
-#@jit(nopython=True)
+
+@jit(nopython=True)
 def find_area_quad(MinX, MinY, Xcorner, Ycorner):
     """ Find the area of an quadrilateral
 
@@ -80,7 +81,8 @@ def find_area_quad(MinX, MinY, Xcorner, Ycorner):
     return abs(Area)
 # _______________________________________________________________________
 
-#@jit(nopython=True)
+
+@jit(nopython=True)
 def calcCondition(edge, x1, y1, x2, y2, left, right, top, bottom):
     """ Determine if a point is inside a polygon
 
@@ -124,7 +126,8 @@ def calcCondition(edge, x1, y1, x2, y2, left, right, top, bottom):
     return 0   # never executed
 # _______________________________________________________________________
 
-#@jit(nopython=True)
+
+@jit(nopython=True)
 def insideWindow(edge, x, y, left, right, top, bottom):
     """Function used in determined overlap of detector pixel and spaxel
 
@@ -171,7 +174,8 @@ def insideWindow(edge, x, y, left, right, top, bottom):
         return 0
 # _______________________________________________________________________
 
-#@jit(nopython=True)
+
+@jit(nopython=True)
 def solve_intersection(edge, x1, y1, x2, y2,
                        left, right, top, bottom):
     """ Finds the intersection of a polygon and rectangular pixel
@@ -231,7 +235,8 @@ def solve_intersection(edge, x1, y1, x2, y2,
     return x, y
 # _______________________________________________________________________
 
-#@jit(nopython=True)
+
+@jit(nopython=True)
 def addpoint(x, y, xnew, ynew, nvertices2):
     """ adds a point to vertices of the detector pixel region inside the spaxel
 
@@ -260,7 +265,8 @@ def addpoint(x, y, xnew, ynew, nvertices2):
     return nvertices2
 # ________________________________________________________________________________
 
-#@jit(nopython=True)
+
+@jit(nopython=True)
 def sh_find_overlap(xcenter, ycenter, xlength, ylength, xp_corner, yp_corner):
     """ Find overlap between pixel and spaxel
 
