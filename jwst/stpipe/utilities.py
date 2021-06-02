@@ -36,7 +36,6 @@ import inspect
 import logging
 import os
 import re
-import sys
 
 # Configure logging
 logger = logging.getLogger(__name__)
