@@ -7,8 +7,6 @@ import time
 import numpy as np
 import logging
 import math
-#import numba
-#from numba import jit
 from ..model_blender import blendmeta
 
 from .. import datamodels
@@ -312,36 +310,15 @@ class IFUCubeData():
         self.xcoord = np.zeros(self.naxis1)
         xstart = xi_min + self.cdelt1 / 2.0
 
-        self.xcoord = np.arange(start=xstart, stop=xstart + self.naxis1*self.cdelt1, step=self.cdelt1)
-        
+        self.xcoord = np.arange(start=xstart, stop=xstart + self.naxis1 * self.cdelt1, step=self.cdelt1)
+
         self.ycoord = np.zeros(self.naxis2)
         ystart = eta_min + self.cdelt2 / 2.0
-        self.ycoord = np.arange(start=ystart, stop=ystart + self.naxis2*self.cdelt2, step=self.cdelt2)
-
-#        ygrid = np.zeros(self.naxis2 * self.naxis1)
-#        xgrid = np.zeros(self.naxis2 * self.naxis1)
-#        k = 0
-#        ystart = self.ycoord[0]
-#        for i in range(self.naxis2):
-#            xstart = self.xcoord[0]
-#            for j in range(self.naxis1):
-#                xgrid[k] = xstart
-#                ygrid[k] = ystart
-#                xstart = xstart + self.cdelt1
-#                k = k + 1
-#            ystart = ystart + self.cdelt2
-#        self.xcenters = xgrid
-#        self.ycenters = ygrid
+        self.ycoord = np.arange(start=ystart, stop=ystart + self.naxis2 * self.cdelt2, step=self.cdelt2)
 
         xv,yv = np.meshgrid(self.xcoord, self.ycoord)
         self.xcenters = xv.flatten()
         self.ycenters = yv.flatten()
-
-        #print(xv.shape, yv.shape, self.xcenters.shape, self.ycenters.shape)
-        #for i in range(xv.shape[0]):
-        #    print(xv[i]-self.xcenters[i],yv[i]- self.ycenters[i])
-            
-        
 # _______________________________________________________________________
         # set up the lambda (z) coordinate of the cube
         self.cdelt3_normal = None
@@ -360,7 +337,6 @@ class IFUCubeData():
             # Note that these are all values at the center of a spaxel
             self.crval3 = self.lambda_min + self.cdelt3 / 2.0
             self.crpix3 = 1.0
-            time01 = time.time()
             zstart = self.lambda_min + self.cdelt3 / 2.0
             self.zcoord = np.arange(start=zstart, stop=self.lambda_max, step=self.cdelt3)
 
@@ -570,13 +546,10 @@ class IFUCubeData():
         total_num = self.naxis1 * self.naxis2 * self.naxis3
         self.spaxel_flux = np.zeros(total_num, dtype=np.float64)
         self.spaxel_weight = np.zeros(total_num,dtype=np.float64)
-        self.spaxel_iflux = np.zeros(total_num, dtype = np.int32)
+        self.spaxel_iflux = np.zeros(total_num, dtype=np.int32)
         self.spaxel_var = np.zeros(total_num,dtype=np.float64)
         self.spaxel_dq = np.zeros((self.naxis3, self.naxis2 * self.naxis1), dtype=np.uint32)
 
-        spaxel_ra = None
-        spaxel_dec = None
-        spaxel_wave = None
 # ______________________________________________________________________________
 
         subtract_background = True
@@ -620,8 +593,7 @@ class IFUCubeData():
 
                     coord1, coord2, wave, flux, err, slice_no, rois_pixel, roiw_pixel, weight_pixel,\
                         softrad_pixel, scalerad_pixel = pixelresult
-                    #coord1, coord2, wave, flux, err, slice_no, rois_pixel, roiw_pixel, weight_pixel,\
-                    #    softrad_pixel, scalerad_pixel, alpha_det, beta_det = pixelresult
+
                     # check that there is valid data returned
                     # If all the data is flagged as DO_NOT_USE - not common then log warning and skip data
                     if wave.size == 0:
@@ -672,10 +644,9 @@ class IFUCubeData():
                         nplane = self.naxis1 * self.naxis2
                         # now loop over the detector pixel and find the spaxels that fall
                         # within the region of interest.
-                        
                         nn = coord1.size
                         # ________________________________________________________________________________
-                        if self.weighting =='msm':
+                        if self.weighting == 'msm':
                             for ipt in range(0, nn - 1):
                                 cube_cloud.match_det2cube_msm(ipt,
                                                               nplane,
@@ -695,19 +666,19 @@ class IFUCubeData():
                         elif self.weighting == 'emsm':
                             for ipt in range(0, nn - 1):
                                 cube_cloud.match_det2cube_emsm(ipt,
-                                                              nplane,
-                                                              self.cdelt1, self.cdelt2,
-                                                              self.cdelt3_normal,
-                                                              self.xcenters, self.ycenters, self.zcoord,
-                                                              self.spaxel_flux,
-                                                              self.spaxel_weight,
-                                                              self.spaxel_iflux,
-                                                              self.spaxel_var,
-                                                              flux,
-                                                              err,
-                                                              coord1, coord2, wave,
-                                                              rois_pixel, roiw_pixel,
-                                                              scalerad_pixel)
+                                                               nplane,
+                                                               self.cdelt1, self.cdelt2,
+                                                               self.cdelt3_normal,
+                                                               self.xcenters, self.ycenters, self.zcoord,
+                                                               self.spaxel_flux,
+                                                               self.spaxel_weight,
+                                                               self.spaxel_iflux,
+                                                               self.spaxel_var,
+                                                               flux,
+                                                               err,
+                                                               coord1, coord2, wave,
+                                                               rois_pixel, roiw_pixel,
+                                                               scalerad_pixel)
 
                         t1 = time.time()
                         log.debug("Time to match pixels to cube spaxels = %.1f s" % (t1 - t0,))
@@ -819,16 +790,16 @@ class IFUCubeData():
 # loop over the files that cover the spectral range the cube is for
             for k in range(nfiles):
                 input_model = self.master_table.FileMap[self.instrument][this_par1][this_par2][k]
-                cube_debug = None
+
                 log.debug("Working on next Single IFU Cube = %i" % (j + 1))
                 t0 = time.time()
                 # for each new data model create a new spaxel
                 total_num = self.naxis1 * self.naxis2 * self.naxis3
-                self.spaxel_flux = np.zeros(total_num,dtype= np.float)
-                self.spaxel_weight = np.zeros(total_num, dtype=np.float)
+                self.spaxel_flux = np.zeros(total_num,dtype=np.float64)
+                self.spaxel_weight = np.zeros(total_num, dtype=np.float64)
                 self.spaxel_iflux = np.zeros(total_num)
                 self.spaxel_dq = np.zeros((self.naxis3, self.naxis2 * self.naxis1), dtype=np.uint32)
-                self.spaxel_var = np.zeros(total_num,dtype=np.float)
+                self.spaxel_var = np.zeros(total_num,dtype=np.float64)
 
                 subtract_background = False
 
@@ -837,12 +808,12 @@ class IFUCubeData():
                                                                input_model)
 
                 coord1, coord2, wave, flux, err, slice_no, rois_pixel, roiw_pixel, weight_pixel, \
-                    softrad_pixel, scalerad_pixel, alpha_det, beta_det = pixelresult
+                    softrad_pixel, scalerad_pixel = pixelresult
 
                 nn = coord1.size
                 nplane = self.naxis1 * self.naxis2
                 for ipt in range(0, nn - 1):
-                    if self.weighting =='msm':
+                    if self.weighting == 'msm':
                         cube_cloud.match_det2cube_msm(ipt,
                                                       nplane,
                                                       self.cdelt1, self.cdelt2,
@@ -1069,10 +1040,10 @@ class IFUCubeData():
                     self.wavemax > table_wavelength[imax]):
                 imax = imax + 1
 
-            num_table = imax - imin + 1                
+            num_table = imax - imin + 1
             self.scalerad_table = np.zeros(num_table)
             self.scalerad_table[:] = table_scalerad[imin:imax + 1]
-            
+
             self.softrad_table = np.zeros(num_table)
             self.softrad_table[:] = table_softrad[imin:imax + 1]
 
@@ -1509,15 +1480,14 @@ class IFUCubeData():
                              (valid2) & (valid3))
 
         # good data holds the location of pixels we want to map to cube
-        # define variables as numpy arrays (numba needs this defined) 
-        flux = np.zeros(flux_all[good_data].shape, dtype = np.float)
-        err = np.zeros(flux_all[good_data].shape, dtype = np.float)
-        coord1 = np.zeros(flux_all[good_data].shape, dtype = np.float)
-        coord2 = np.zeros(flux_all[good_data].shape, dtype = np.float)
-        wave = np.zeros(flux_all[good_data].shape, dtype = np.float)
+        # define variables as numpy arrays (numba needs this defined)
+        flux = np.zeros(flux_all[good_data].shape, dtype=np.float64)
+        err = np.zeros(flux_all[good_data].shape, dtype=np.float64)
+        coord1 = np.zeros(flux_all[good_data].shape, dtype=np.float64)
+        coord2 = np.zeros(flux_all[good_data].shape, dtype=np.float64)
+        wave = np.zeros(flux_all[good_data].shape, dtype=np.float64)
         slice_no = np.zeros(flux_all[good_data].shape)
-        
-        flux[:] = flux_all[good_data]        
+        flux[:] = flux_all[good_data]
         err[:] = err_all[good_data]
         wave[:] = wave_all[good_data]
         slice_no[:] = slice_no_all[good_data]
@@ -1539,27 +1509,18 @@ class IFUCubeData():
         else:
             # for each wavelength find the closest point in the self.wavelength_table
             for iw, w in enumerate(wave):
-                test = 1
-                if test ==1:
-                    cube_cloud.find_closest_wave(iw,w,
-                                                 self.wavelength_table,
-                                                 self.rois_table,
-                                                 self.roiw_table,
-                                                 self.softrad_table,
-                                                 self.weight_power_table,
-                                                 self.scalerad_table,
-                                                 rois_det,
-                                                 roiw_det,
-                                                 softrad_det,
-                                                 weight_det,
-                                                 scalerad_det)
-                else:
-                    ifound = (np.abs(self.wavelength_table - w)).argmin()
-                    rois_det[iw] = self.rois_table[ifound]
-                    roiw_det[iw] = self.roiw_table[ifound]
-                    softrad_det[iw] = self.softrad_table[ifound]
-                    weight_det[iw] = self.weight_power_table[ifound]
-                    scalerad_det[iw] = self.scalerad_table[ifound]
+                cube_cloud.find_closest_wave(iw,w,
+                                             self.wavelength_table,
+                                             self.rois_table,
+                                             self.roiw_table,
+                                             self.softrad_table,
+                                             self.weight_power_table,
+                                             self.scalerad_table,
+                                             rois_det,
+                                             roiw_det,
+                                             softrad_det,
+                                             weight_det,
+                                             scalerad_det)
 
         ra_use = ra[good_data]
         dec_use = dec[good_data]
@@ -1567,7 +1528,6 @@ class IFUCubeData():
                                          self.crval2,
                                          ra_use, dec_use,
                                          self.rot_angle)
-
 
         return coord1, coord2, wave, flux, err, slice_no, rois_det, roiw_det, weight_det, \
             softrad_det, scalerad_det
@@ -1683,16 +1643,14 @@ class IFUCubeData():
         nslices = 30
         log.info("Mapping each NIRSpec slice to sky for input file")
 
-        t80 = time.time()
+        # t80 = time.time()
         for ii in range(nslices):
-            t10 = time.time()
+            # t10 = time.time()
             slice_wcs = nirspec.nrs_wcs_set_input(input_model, ii)
-            t11 = time.time()
-            #log.debug(f'Time to run nirspec nrs_wcs_set_input  {t11-t10} ')
+            # t11 = time.time()
+            # log.debug(f'Time to run nirspec nrs_wcs_set_input  {t11-t10} ')
             x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
             ra, dec, lam = slice_wcs(x, y)
-            t12 = time.time()
-            #log.debug(f'Time to run wcstools grif from bounding box  {t12-t11} ')
 
             # the slices are curved on detector so a rectangular region returns NaNs
             valid = ~np.isnan(lam)
@@ -1714,11 +1672,9 @@ class IFUCubeData():
             lam_det[yind, xind] = lam
             flag_det[yind, xind] = 1
             slice_det[yind, xind] = ii + 1
-            t13 = time.time()
-            #log.debug(f'The remaining time  {t13-t12} ')
         # after looping over slices  - pull out valid values
-        t81 = time.time()
-        log.debug(f'Time to map NIRSpec slices to sky  {t81-t80} ')
+        # t81 = time.time()
+        # log.debug(f'Time to map NIRSpec slices to sky  {t81-t80} ')
         valid_data = np.where(flag_det == 1)
         y, x = valid_data
 
@@ -1729,8 +1685,6 @@ class IFUCubeData():
 
         sky_result = (x, y, ra, dec, wave, slice_no)
         return sky_result
-
-
 # ********************************************************************************
 
     def find_spaxel_flux(self):
@@ -1738,7 +1692,6 @@ class IFUCubeData():
         """
         # currently these are the same but in the future there could be a difference in
         # how the spaxel flux is determined according to self.interpolation.
-        
         if self.interpolation == 'area':
             good = self.spaxel_iflux > 0
             self.spaxel_flux[good] = self.spaxel_flux[good] / self.spaxel_weight[good]
@@ -1853,9 +1806,7 @@ class IFUCubeData():
         else:
             log.info('Average # of holes/wavelength plane: %i', ave_holes)
         log.info('Total # of holes for IFU cube is : %i', len(location_holes[0]))
-
     # ********************************************************************************
-            
 
     def setup_final_ifucube_model(self, model_ref):
         """ Set up the final meta WCS info of IFUCube along with other fits keywords
