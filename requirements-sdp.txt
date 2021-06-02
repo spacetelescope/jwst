@@ -67,4 +67,4 @@ stsci.imagestats==1.6.2
 stsci.stimage==0.2.4
 toml==0.10.2
 tweakwcs==0.7.2
-urllib3==1.26.4
+urllib3==1.26.5
