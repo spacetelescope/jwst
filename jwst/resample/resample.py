@@ -1,5 +1,6 @@
 import logging
 import re
+import warnings
 
 import numpy as np
 from drizzle import util
@@ -55,6 +56,7 @@ class ResampleData:
         """
         self.input_models = input_models
 
+        self.output_filename = output
         self.pscale_ratio = pscale_ratio
         self.single = single
         self.blendheaders = blendheaders
@@ -63,10 +65,6 @@ class ResampleData:
         self.fillval = fillval
         self.weight_type = weight_type
         self.good_bits = good_bits
-
-        if output is None:
-            output = input_models.meta.resample.output
-        self.output_filename = output
 
         # Define output WCS based on all inputs, including a reference WCS
         self.output_wcs = resample_utils.make_output_wcs(self.input_models,
@@ -154,6 +152,7 @@ class ResampleData:
         driz = gwcs_drizzle.GWCSDrizzle(output_model, pixfrac=self.pixfrac,
                                         kernel=self.kernel, fillval=self.fillval)
 
+        log.info("Resampling science data")
         for img in self.input_models:
             inwht = resample_utils.build_driz_weight(img,
                                                      weight_type=self.weight_type,
@@ -197,6 +196,7 @@ class ResampleData:
         output_wcs = output_model.meta.wcs
         output_arrays = []
 
+        log.info(f"Resampling {name}")
         for model in self.input_models:
             # Unity weight but ignore pixels that are NON_SCIENCE or REFERENCE_PIXEL
             inwht = resample_utils.build_driz_weight(model, weight_type=None,
@@ -218,8 +218,11 @@ class ResampleData:
                 inv_var = np.reciprocal(stacked)
             inv_var[~np.isfinite(inv_var)] = np.nan
 
-            inv_var_mean = np.nanmean(inv_var, axis=0)
-
+            with warnings.catch_warnings():
+                warnings.filterwarnings(action="ignore",
+                                        message="Mean of empty slice",
+                                        category=RuntimeWarning)
+                inv_var_mean = np.nanmean(inv_var, axis=0)
             with np.errstate(divide="ignore"):
                 output_err_array = np.reciprocal(inv_var_mean)
         else:

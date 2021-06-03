@@ -29,6 +29,9 @@ datamodels
 - Added keywords OSS_VER, DETMODE, CMD_TSEL, NOD_TYPE, and GS_V3_PA to
   the core schema [#6086]
 
+- Remove ``ModelContainer`` schema and refactor use of association table
+  metadata within. [#6094]
+
 general
 -------
 
