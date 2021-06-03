@@ -6,7 +6,6 @@ from jwst.associations.asn_from_list import asn_from_list
 from jwst.wfs_combine import WfsCombineStep
 from jwst.wfs_combine import wfs_combine
 import numpy as np
-from astropy.io import fits
 
 
 GOOD = datamodels.dqflags.pixel["GOOD"]
@@ -15,7 +14,7 @@ SATURATED = datamodels.dqflags.pixel["SATURATED"]
 
 
 def gaussian(x, mu, sig):
-    return 1./(np.sqrt(2 * np.pi) * sig) * np.exp(-np.power((x - mu)/sig, 2)/2)
+    return 1. /(np.sqrt(2 * np.pi) * sig) * np.exp(-np.power((x - mu) /sig, 2) /2)
 
 
 def gaussian2d(x, y, mux, muy, sigx, sigy):
@@ -122,7 +121,7 @@ def test_create_combined(_jail, wfs_association,
 
 def test_shift_order_no_refine_no_flip(wfs_association):
     path_asn, path1, path2 = wfs_association
-    nircam_pixel_size = 0.031/3600.
+    nircam_pixel_size = 0.031 /3600.
     delta_pixel = 5
     with datamodels.open(path2) as im2:
         im2.meta.wcsinfo = {
@@ -135,7 +134,7 @@ def test_shift_order_no_refine_no_flip(wfs_association):
         im2.save(path2)
     wfs = wfs_combine.DataSet(path1, path2, 'outfile.fits', do_refine=False, flip_dithers=False, psf_size=50,
                               blur_size=10, n_size=2)
-    output_model = wfs.do_all
+    wfs.do_all
     assert wfs.input_1.meta.observation.exposure_number == '1'
     assert wfs.input_2.meta.observation.exposure_number == '2'
     assert wfs.off_x == abs(delta_pixel)
@@ -160,7 +159,7 @@ def test_shift_order_no_refine_with_flip(wfs_association):
         im2.save(path2)
     wfs = wfs_combine.DataSet(path1, path2, 'outfile.fits', do_refine=False, flip_dithers=True, psf_size=50,
                               blur_size=10, n_size=2)
-    output_model = wfs.do_all
+    wfs.do_all
     wfs.input_1.close()
     wfs.input_2.close()
 #    assert wfs.input_1.meta.observation.exposure_number == '2'
@@ -223,7 +222,7 @@ def test_refine_no_error(wfs_association, xshift, yshift, xerror, yerror, flip_d
         im2.save(path2)
     wfs = wfs_combine.DataSet(path1, path2, 'outfile.fits', do_refine=True, flip_dithers=flip_dithers, psf_size=50,
                               blur_size=10, n_size=2)
-    output_model = wfs.do_all
+    wfs.do_all
     assert np.max(abs(wfs.diff)) < 0.001
     if delta_x_pixel + xerror >= 0 or not flip_dithers:
         assert wfs.off_x == delta_x_pixel + xerror
@@ -259,7 +258,7 @@ def test_refine_with_error(wfs_association):
         im2.save(path2)
     wfs = wfs_combine.DataSet(path1, path2, 'outfile.fits', do_refine=True, flip_dithers=True, psf_size=50,
                               blur_size=10, n_size=2)
-    output_model = wfs.do_all
+    wfs.do_all
     assert wfs.input_1.meta.observation.exposure_number == '1'
     assert wfs.input_2.meta.observation.exposure_number == '2'
     assert wfs.off_x == delta_pixel + shift_error

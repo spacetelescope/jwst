@@ -14,6 +14,7 @@ log.setLevel(logging.DEBUG)
 
 DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
 
+
 class DataSet:
     """
     Two dithered input wavefront sensing images to be combined
@@ -111,9 +112,9 @@ class DataSet:
         print(" Refine value {}".format(self.do_refine))
         new_model.history.append('WFS_COMBINE refine offset = {}'.format(self.do_refine))
         new_model.history.append('WFS_COMBINE X offset applied ' + str(self.off_x) + ' pixels ' +
-                                 'actual offset '+str(round(self.flt_off_x, 2)) + ' pixels')
+                                 'actual offset ' + str(round(self.flt_off_x, 2)) + ' pixels')
         new_model.history.append('WFS_COMBINE Y offset applied ' + str(self.off_y) + ' pixels ' +
-                                 'actual offset '+str(round(self.flt_off_y, 2)) + ' pixels')
+                                 'actual offset ' + str(round(self.flt_off_y, 2)) + ' pixels')
         return new_model
 
     def create_aligned_2(self):
@@ -709,12 +710,12 @@ def calc_refined_offsets(sci_nai_1, sci_nai_2, off_x, off_y, psf_size):
                                          scipy.ndimage.gaussian_filter(sub_1_sub, 5))
     maximum_pixel = np.unravel_index(np.argmax(cross_cor), cross_cor.shape)
 
-    ymax = maximum_pixel[0]-sub_1_sub.shape[0]+1
-    xmax = maximum_pixel[1]-sub_1_sub.shape[1]+1
+    ymax = maximum_pixel[0] - sub_1_sub.shape[0] + 1
+    xmax = maximum_pixel[1] - sub_1_sub.shape[1] + 1
     # Slice out a box center on the peak of the cross correlation image. The centroid of this box will give a
     # accurate estimate of the x and y offsets.
-    central_cutout = cross_cor[maximum_pixel[0]-centroid_size:maximum_pixel[0]+centroid_size+1,
-                               maximum_pixel[1]-centroid_size:maximum_pixel[1]+centroid_size+1]
+    central_cutout = cross_cor[maximum_pixel[0] - centroid_size:maximum_pixel[0] + centroid_size+1,
+                               maximum_pixel[1] - centroid_size:maximum_pixel[1] + centroid_size+1]
     centroid = scipy.ndimage.measurements.center_of_mass(central_cutout)
     refined_x = xmax + centroid[1] - centroid_size
     refined_y = ymax + centroid[0] - centroid_size
