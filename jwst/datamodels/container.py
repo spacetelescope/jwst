@@ -243,7 +243,6 @@ class ModelContainer(JwstDataModel, Sequence):
             self.meta.asn_table._instance, asn_data
         )
 
-        self.meta.resample.output = asn_data['products'][0]['name']
         if asn_file_path is None:
             self.meta.table_name = None
             self.meta.pool_name = None

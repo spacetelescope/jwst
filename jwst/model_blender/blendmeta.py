@@ -81,20 +81,11 @@ def blendmodels(product, inputs=None, output=None, verbose=False):
     `resample` step to specify all the inputs for blending using the
     following syntax::
 
-    >>> from .. import datamodels
+    >>> from jwst import datamodels
     >>> asnfile = "jw99999-a3001_20170327t121212_coron3_001_asn.json"
-    >>> asn = datamodels.open(asnfile)
-    >>> input_models = [asn[3],asn[4]]  # we know the last datasets are SCIENCE
-    >>> blendmodels(asn.meta.resample.output, inputs=input_models)
-
-    Alternatively, the filenames for all the inputs could be provided directly
-    instead using::
-
-    >>> from ..associations import load_asn
-    >>> asn = load_asn(open(asnfile))
-    >>> input_names = [i['expname'] for i in asn['products'][0]['members'][3:]]
-    >>> blendmodels(asn['products'][0]['name'], inputs=input_names)
-
+    >>> data = datamodels.open(asnfile)
+    >>> input_models = [data[3], data[4]]  # we know the last datasets are SCIENCE
+    >>> blendmodels(data.meta.asn_table.products[0].name, inputs=input_models)
     """
     if inputs in EMPTY_LIST:
         input_filenames = extract_filenames_from_product(product)
