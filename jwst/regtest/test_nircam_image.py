@@ -1,3 +1,5 @@
+from glob import glob
+
 import pytest
 from astropy.io.fits.diff import FITSDiff
 from gwcs.wcstools import grid_from_bounding_box
@@ -65,8 +67,7 @@ def run_image3pipeline(run_image2pipeline, rtdata_module, jail):
     # image3 pipeline on all _cal files listed in association
     rtdata.get_data("nircam/image/jw42424-o002_20191220t214154_image3_001_asn.json")
     args = ["config/calwebb_image3.cfg", rtdata.input,
-            # Comment out following lines, as the dataset is currently broken
-            # "--steps.tweakreg.save_results=True",
+            "--steps.tweakreg.save_results=True",
             # "--steps.skymatch.save_results=True",
             "--steps.source_catalog.snr_threshold=20",
             ]
@@ -112,6 +113,22 @@ def test_nircam_image_stage2_wcs(run_image2pipeline, rtdata_module):
 
         assert_allclose(ra, ra_truth)
         assert_allclose(dec, dec_truth)
+
+
+@pytest.mark.bigdata
+def test_nircam_image_stage3_tweakreg(run_image3pipeline):
+    """Test that tweakreg doesn't attach a catalog and that it updates the wcs"""
+    files = glob("*tweakreg.fits")
+    for filename in files:
+        with datamodels.open(filename) as model:
+            # Makes sure the catalog is not attached
+            with pytest.raises(AttributeError):
+                model.catalog
+
+            # Check that all but the first exposure in the association
+            # has a WCS correction applied
+            if "jw42424001001_01101_00001" not in model.meta.filename:
+                assert "v2v3corr" in model.meta.wcs.available_frames
 
 
 @pytest.mark.bigdata
