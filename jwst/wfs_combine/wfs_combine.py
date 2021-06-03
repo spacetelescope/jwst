@@ -714,8 +714,8 @@ def calc_refined_offsets(sci_nai_1, sci_nai_2, off_x, off_y, psf_size):
     xmax = maximum_pixel[1] - sub_1_sub.shape[1] + 1
     # Slice out a box center on the peak of the cross correlation image. The centroid of this box will give a
     # accurate estimate of the x and y offsets.
-    central_cutout = cross_cor[maximum_pixel[0] - centroid_size:maximum_pixel[0] + centroid_size+1,
-                               maximum_pixel[1] - centroid_size:maximum_pixel[1] + centroid_size+1]
+    central_cutout = cross_cor[maximum_pixel[0] - centroid_size:maximum_pixel[0] + centroid_size + 1,
+                               maximum_pixel[1] - centroid_size:maximum_pixel[1] + centroid_size + 1]
     centroid = scipy.ndimage.measurements.center_of_mass(central_cutout)
     refined_x = xmax + centroid[1] - centroid_size
     refined_y = ymax + centroid[0] - centroid_size

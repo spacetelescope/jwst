@@ -14,7 +14,7 @@ SATURATED = datamodels.dqflags.pixel["SATURATED"]
 
 
 def gaussian(x, mu, sig):
-    return 1. /(np.sqrt(2 * np.pi) * sig) * np.exp(-np.power((x - mu) /sig, 2) /2)
+    return 1. / (np.sqrt(2 * np.pi) * sig) * np.exp(-np.power((x - mu) / sig, 2) / 2)
 
 
 def gaussian2d(x, y, mux, muy, sigx, sigy):
@@ -121,7 +121,7 @@ def test_create_combined(_jail, wfs_association,
 
 def test_shift_order_no_refine_no_flip(wfs_association):
     path_asn, path1, path2 = wfs_association
-    nircam_pixel_size = 0.031 /3600.
+    nircam_pixel_size = 0.031 / 3600.
     delta_pixel = 5
     with datamodels.open(path2) as im2:
         im2.meta.wcsinfo = {
