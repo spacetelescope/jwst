@@ -239,9 +239,9 @@ def split_container(container):
 
     # Pass along the association table to the output science container
     science.meta.asn_table = {}
-    science.meta.pool_name = container.meta.pool_name
-    science.meta.table_name = container.meta.table_name
-    merge_tree(science.meta.asn_table._instance, asn)
+    science.asn_pool_name = container.asn_pool_name
+    science.asn_table_name = container.asn_table_name
+    merge_tree(science.meta.asn_table.instance, asn)
     # Prune the background members from the table
     for p in science.meta.asn_table.instance['products']:
         p['members'] = [m for m in p['members'] if m['exptype'].lower() != 'background']
