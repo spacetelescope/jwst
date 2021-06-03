@@ -1,7 +1,10 @@
 1.2.1 (unreleased)
 ==================
 
+general
+-------
 
+- Removed all usage of sys.path, in associations and jwst.stpipe [#6098]
 
 
 
