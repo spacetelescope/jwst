@@ -464,12 +464,12 @@ def update_wcs_from_telem(
                 '\nException is {}'.format(exception)
             )
             logger.info("Setting ENGQLPTG keyword to PLANNED")
-            model.meta.visit.pointing_engdb_quality = "PLANNED"
+            model.meta.visit.engdb_pointing_quality = "PLANNED"
     else:
         # compute relevant WCS information
         logger.info('Successful read of engineering quaternions:')
         logger.info('\tPointing = {}'.format(pointing))
-        model.meta.visit.pointing_engdb_quality = "CALCULATED"
+        model.meta.visit.engdb_pointing_quality = "CALCULATED_ORIGINAL"
         try:
             wcsinfo, vinfo = calc_wcs(pointing, siaf, **transform_kwargs)
             logger.info("Setting ENGQLPTG keyword to CALCULATED")
@@ -483,7 +483,7 @@ def update_wcs_from_telem(
                 raise
             else:
                 logger.info("Setting ENGQLPTG keyword to PLANNED")
-                model.meta.visit.pointing_engdb_quality = "PLANNED"
+                model.meta.visit.engdb_pointing_quality = "PLANNED"
     logger.info('Aperture WCS info: {}'.format(wcsinfo))
     logger.info('V1 WCS info: {}'.format(vinfo))
 

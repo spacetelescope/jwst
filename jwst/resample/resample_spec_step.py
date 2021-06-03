@@ -29,13 +29,21 @@ class ResampleSpecStep(ResampleStep):
         if isinstance(input_new, ImageModel):
             input_new = datamodels.SlitModel(input_new)
 
-        # If single DataModel input, wrap in a ModelContainer
-        if not isinstance(input_new, ModelContainer):
-            input_models = datamodels.ModelContainer([input_new])
-            input_models.meta.resample.output = input_new.meta.filename
-            self.blendheaders = False
-        else:
+        if isinstance(input_new, ModelContainer):
             input_models = input_new
+            try:
+                output = input_models.meta.asn_table.products[0].name
+            except AttributeError:
+                # NIRSpec MOS data goes through this path, as the container
+                # is only ModelContainer-like, and doesn't have an asn_table
+                # attribute attached.  Output name handling gets done in
+                # _process_multislit() via the update method
+                # TODO: the container-like object should retain asn_table
+                output = None
+        else:
+            input_models = datamodels.ModelContainer([input_new])
+            output = input_new.meta.filename
+            self.blendheaders = False
 
         # Get the drizpars reference file
         for reftype in self.reference_file_types:
@@ -50,8 +58,8 @@ class ResampleSpecStep(ResampleStep):
             kwargs = self._set_spec_defaults()
             kwargs['blendheaders'] = self.blendheaders
 
-        # Update user-supplied kwargs
         kwargs['allowed_memory'] = self.allowed_memory
+        kwargs['output'] = output
 
         # Call resampling
         self.drizpars = kwargs
@@ -101,8 +109,8 @@ class ResampleSpecStep(ResampleStep):
                 result.slits.append(model)
 
         result.meta.cal_step.resample = "COMPLETE"
-        result.meta.asn.pool_name = input_models.meta.pool_name
-        result.meta.asn.table_name = input_models.meta.table_name
+        result.meta.asn.pool_name = input_models.asn_pool_name
+        result.meta.asn.table_name = input_models.asn_table_name
         result.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
         result.meta.resample.pixfrac = self.pixfrac
 
@@ -130,8 +138,8 @@ class ResampleSpecStep(ResampleStep):
 
         result = drizzled_models[0]
         result.meta.cal_step.resample = "COMPLETE"
-        result.meta.asn.pool_name = input_models.meta.pool_name
-        result.meta.asn.table_name = input_models.meta.table_name
+        result.meta.asn.pool_name = input_models.asn_pool_name
+        result.meta.asn.table_name = input_models.asn_table_name
         result.meta.bunit_data = drizzled_models[0].meta.bunit_data
         result.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
         result.meta.resample.pixfrac = self.pixfrac

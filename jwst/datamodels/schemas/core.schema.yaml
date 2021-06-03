@@ -47,6 +47,11 @@ properties:
         type: string
         fits_keyword: PRD_VER
         blend_table: True
+      oss_software_version:
+        title: Observatory Scheduling Software (OSS) version number
+        type: string
+        fits_keyword: OSS_VER
+        blend_table: True
       calibration_software_version:
         title: Calibration software version number
         type: string
@@ -246,10 +251,12 @@ properties:
             enum: [OK, SUSPECT]
             fits_keyword: ENG_QUAL
             blend_table: True
-          pointing_engdb_quality:
+          engdb_pointing_quality:
             title: Quality of pointing information from EngDB
             type: string
-            enum: [CALCULATED, PLANNED]
+            enum: [CALCULATED_FULLVA, CALCULATED_FULL,
+                   CALCULATED_GSCMD, CALCULATED_GSCMD_V3PAGS,
+                   CALCULATED_ORIGINAL, PLANNED]
             fits_keyword: ENGQLPTG
             blend_table: True
           type:
@@ -757,6 +764,16 @@ properties:
             type: integer
             fits_keyword: MIRNFRMS
             blend_table: True
+          detmode:
+            title: Detector mode indicator
+            type: string
+            enum: [FLUSH_MODE, TEST_PATTERN, CLOCKING, EXPOSURE]
+            fits_keyword: DETMODE
+          cmd_tsel:
+            title: Test pattern selection
+            type: string
+            enum: [COLUMNS, ROWS, FRAMES, ALL]
+            fits_keyword: CMD_TSEL
           frame_divisor:
             title: Divisor applied to frame-averaged groups
             type: integer
@@ -1014,8 +1031,12 @@ properties:
             title: Primary dither pattern type
             type: string
             enum:
+              # FGS in parallel with NIRCam and NIRISS
+             [FULL, FULLBOX, INTRAMODULE, INTRAMODULEBOX, INTRAMODULEX,
+              INTRASCA, SUBARRAY_DITHER, WFSC, AMI, IMAGING, MIMF, WFSS,
+
               # MIRI coron
-             [5-POINT-SMALL-GRID, 9-POINT-SMALL-GRID,
+              5-POINT-SMALL-GRID, 9-POINT-SMALL-GRID,
 
               # MIRI imaging
               CYCLING, REULEAUX, SPARSE-CYCLING,
@@ -1077,13 +1098,23 @@ properties:
               NIS_NRC_4L, NIS_NRC_4M, NIS_NRC_4S,
               NIS_NRC_9L, NIS_NRC_9M, NIS_NRC_9S,
 
-              # NIRSpec FS, IFU, and MOS
+              # NIRISS with MIRI in parallel
+              NIS-MIR056-2, NIS-MIR056-3,
+              NIS-MIR077-3, NIS-MIR077-9,
+              NIS-MIR100-2, NIS-MIR100-3, NIS-MIR100-4,
+              NIS-MIR128-2, NIS-MIR128-3, NIS-MIR128-4, NIS-MIR128-9,
+              NIS-MIR150-2, NIS-MIR150-3, NIS-MIR150-4, NIS-MIR150-9,
+              NIS-MIR180-2, NIS-MIR180-3, NIS-MIR180-4, NIS-MIR180-9,
+              NIS-MIR210-2, NIS-MIR210-3, NIS-MIR210-4, NIS-MIR210-9,
+              NIS-MIR255-2, NIS-MIR255-3, NIS-MIR255-4, NIS-MIR255-9,
+
+              # NIRSpec FS and MOS
               2-POINT-NOD, 3-POINT-NOD, 5-POINT-NOD,
               2-POINT-WITH-NIRCAM-SIZE1, 2-POINT-WITH-NIRCAM-SIZE2, 2-POINT-WITH-NIRCAM-SIZE3,
               3-POINT-WITH-NIRCAM-SIZE1, 3-POINT-WITH-NIRCAM-SIZE2, 3-POINT-WITH-NIRCAM-SIZE3,
 
               # NIRSpec IFU
-              4-POINT-NOD, 4-POINT-DITHER, CYCLING, SPARSE-CYCLING,
+              2-POINT-NOD, 4-POINT-NOD, 4-POINT-DITHER, CYCLING, SPARSE-CYCLING,
 
               # Misc
               N/A, NONE, ANY]
@@ -1120,8 +1151,17 @@ properties:
             fits_keyword: PATTNPTS
             blend_table: True
           dither_points:
-            title: Total number of points in image dither pattern
+            title: Number of points in image dither pattern
+            type: integer
             fits_keyword: NRIMDTPT
+            blend_table: True
+          nod_type:
+            title: Nod pattern type
+            type: string
+            enum: [NONE, 3-POINT-NOD, 2-SHUTTER-SLITLET,
+                   3-SHUTTER-SLITLET, 5-SHUTTER-SLITLET,
+                   5-SHUTTER-SLITLET-WITH-GAP]
+            fits_keyword: NOD_TYPE
             blend_table: True
           pattern_size:
             title: "Primary dither pattern size"
@@ -1222,10 +1262,6 @@ properties:
             type: string
             enum: [ALL, CHANNEL1, CHANNEL2, CHANNEL3, CHANNEL4]
             fits_keyword: MRSPRCHN
-          dither_points:
-            title: Total number of points in primary dither pattern
-            type: string
-            fits_keyword: NDITHPTS
       ephemeris:
         title: JWST ephemeris information
         type: object
@@ -1538,6 +1574,11 @@ properties:
             title: guide star magnitude uncertainty
             type: number
             fits_keyword: GS_UMAG
+            blend_table: True
+          gs_v3_pa_science:
+            title: V3 Position Angle of guide star for science
+            type: number
+            fits_keyword: GS_V3_PA
             blend_table: True
           gs_pcs_mode:
             title: Pointing Control System mode

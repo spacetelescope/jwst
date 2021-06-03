@@ -1,12 +1,55 @@
 1.2.1 (unreleased)
 ==================
 
+associations
+------------
+
+- Asn_Lv2NRSLAMPSpectral: Allow msaspec only if msametfl is available. [#6085]
+
+combine_1d
+----------
+
+- Added SRCTYPE to COMBINE1D output extension headers, propagated from
+  EXTRACT1D inputs [#6079]
+
+cube_build
+----------
+
+- Fix some typos in the the arguments documentation. [#6077]
+
+datamodels
+----------
+
+- Updated enum lists for ENGQLPTG and PATTTYPE keywords [#6081]
+
+- Removed obsolete keyword NDITHPTS and updated attributes for NRIMDTPT [#6083]
+
+- Added units to CombinedSpecModel table output [#6082]
+
+- Added keywords OSS_VER, DETMODE, CMD_TSEL, NOD_TYPE, and GS_V3_PA to
+  the core schema [#6086]
+
+- Remove ``ModelContainer`` schema and refactor use of association table
+  metadata within. [#6094]
+
 general
 -------
 
+- Make CRDS context reporting pytest plugin disabled by default. [#6070]
+
 - Removed all usage of sys.path, in associations and jwst.stpipe [#6098]
 
+lib
+---
 
+- Updated set_telescope_pointing to populate ENGQLPTG keyword with new
+  allowed values [#6088]
+
+scripts
+-------
+
+- Add migrate_data command with support for migrating spec_table in
+  x1d files produced with <= 1.1.0 of this package. [#6055]
 
 1.2.0 (2021-05-24)
 ==================
