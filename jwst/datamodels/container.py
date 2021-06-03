@@ -73,7 +73,7 @@ class ModelContainer(JwstDataModel, Sequence):
     >>> m = datamodels.open('myfile.fits')
     >>> c.append(m)
     """
-    schema_url = "http://stsci.edu/schemas/jwst_datamodel/container.schema"
+    schema_url = None
 
     def __init__(self, init=None, asn_exptypes=None, asn_n_members=None,
                  iscopy=False, **kwargs):
@@ -85,12 +85,8 @@ class ModelContainer(JwstDataModel, Sequence):
         self.asn_exptypes = asn_exptypes
         self.asn_n_members = asn_n_members
         self.asn_table = {}
-        self.meta.resample = {}
         self.asn_table_name = None
         self.asn_pool_name = None
-
-        # Legacy attribute to be removed in the future
-        self.resample_output = None
 
         self._memmap = kwargs.get("memmap", False)
 
