@@ -37,6 +37,8 @@ general
 
 - Make CRDS context reporting pytest plugin disabled by default. [#6070]
 
+- Removed all usage of sys.path, in associations and jwst.stpipe [#6098]
+
 lib
 ---
 
