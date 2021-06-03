@@ -243,16 +243,13 @@ class ModelContainer(JwstDataModel, Sequence):
             self.meta.asn_table._instance, asn_data
         )
 
-        if asn_file_path is None:
-            self.meta.table_name = None
-            self.meta.pool_name = None
-        else:
-            self.meta.table_name = op.basename(asn_file_path)
-            self.meta.pool_name = asn_data['asn_pool']
+        if asn_file_path is not None:
+            self.asn_table_name = op.basename(asn_file_path)
+            self.asn_pool_name = asn_data['asn_pool']
             for model in self:
                 try:
-                    model.meta.asn.table_name = self.meta.table_name
-                    model.meta.asn.pool_name = self.meta.pool_name
+                    model.meta.asn.table_name = self.asn_table_name
+                    model.meta.asn.pool_name = self.asn_pool_name
                 except AttributeError:
                     pass
 

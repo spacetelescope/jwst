@@ -109,8 +109,8 @@ class ResampleSpecStep(ResampleStep):
                 result.slits.append(model)
 
         result.meta.cal_step.resample = "COMPLETE"
-        result.meta.asn.pool_name = input_models.meta.pool_name
-        result.meta.asn.table_name = input_models.meta.table_name
+        result.meta.asn.pool_name = input_models.asn_pool_name
+        result.meta.asn.table_name = input_models.asn_table_name
         result.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
         result.meta.resample.pixfrac = self.pixfrac
 
@@ -138,8 +138,8 @@ class ResampleSpecStep(ResampleStep):
 
         result = drizzled_models[0]
         result.meta.cal_step.resample = "COMPLETE"
-        result.meta.asn.pool_name = input_models.meta.pool_name
-        result.meta.asn.table_name = input_models.meta.table_name
+        result.meta.asn.pool_name = input_models.asn_pool_name
+        result.meta.asn.table_name = input_models.asn_table_name
         result.meta.bunit_data = drizzled_models[0].meta.bunit_data
         result.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
         result.meta.resample.pixfrac = self.pixfrac

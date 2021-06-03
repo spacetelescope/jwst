@@ -87,8 +87,8 @@ class ResampleStep(Step):
         for model in result:
             model.meta.cal_step.resample = 'COMPLETE'
             util.update_s_region_imaging(model)
-            model.meta.asn.pool_name = input_models.meta.pool_name
-            model.meta.asn.table_name = input_models.meta.table_name
+            model.meta.asn.pool_name = input_models.asn_pool_name
+            model.meta.asn.table_name = input_models.asn_table_name
             self.update_phot_keywords(model)
             model.meta.filetype = 'resampled'
 
