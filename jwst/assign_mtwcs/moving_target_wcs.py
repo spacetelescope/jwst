@@ -33,7 +33,6 @@ def assign_moving_target_wcs(input_model):
     mt_ra = np.array([model.meta.wcsinfo.mt_ra for model in sci_models])
     mt_dec = np.array([model.meta.wcsinfo.mt_dec for model in sci_models])
 
-
     # Compute the mean MT RA/Dec over all exposures
     if (None in mt_ra) or (None in mt_dec):
         log.warning("One or more MT RA/Dec values missing in input images")

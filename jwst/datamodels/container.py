@@ -423,7 +423,6 @@ class ModelContainer(JwstDataModel, Sequence):
 
         return datamodel_open(first_exposure)
 
-
     def ind_asn_type(self, asn_exptype):
         """
         Determine the indices of models corresponding to ``asn_exptype``.
@@ -439,8 +438,8 @@ class ModelContainer(JwstDataModel, Sequence):
             Indices of models in ModelContainer._models matching ``asn_exptype``.
         """
         ind = []
-        names = [m.expname for m in self.meta.asn_table.products[0].members \
-                 if m.exptype.lower()==asn_exptype]
+        names = [m.expname for m in self.meta.asn_table.products[0].members
+                 if m.exptype.lower() == asn_exptype]
         for i, model in enumerate(self._models):
             if model.meta.filename in names:
                 ind.append(i)
