@@ -588,6 +588,10 @@ class Asn_Lv2WFSS(
             # Basic constraints
             Constraint_Base(),
             Constraint_Target(),
+            DMSAttrConstraint(
+                name='instrument',
+                sources=['instrume']
+            ),
 
             # Allow WFSS exposures but account for the direct imaging.
             Constraint([
