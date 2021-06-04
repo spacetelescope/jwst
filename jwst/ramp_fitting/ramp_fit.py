@@ -13,11 +13,12 @@
 # In this module, comments on the 'first group','second group', etc are
 #    1-based, unless noted otherwise.
 
-import numpy as np
 import logging
 
-# from . import gls_fit           # used only if algorithm is "GLS"
+
+from . import gls_fit           # used only if algorithm is "GLS"
 from . import ols_fit           # used only if algorithm is "OLS"
+from . import utils
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -25,7 +26,7 @@ log.setLevel(logging.DEBUG)
 BUFSIZE = 1024 * 300000  # 300Mb cache size for data section
 
 
-def ramp_fit(model, buffsize, save_opt, readnoise_2d, gain_2d,
+def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
              algorithm, weighting, max_cores):
     """
     Calculate the count rate for each pixel in all data cube sections and all
@@ -46,11 +47,11 @@ def ramp_fit(model, buffsize, save_opt, readnoise_2d, gain_2d,
     save_opt : boolean
        calculate optional fitting results
 
-    readnoise_2d: ndarray
-        2-D array readnoise for all pixels
+    readnoise_model : instance of data Model
+        readnoise for all pixels
 
-    gain_2d: ndarray
-        2-D array gain for all pixels
+    gain_model : instance of gain model
+        gain for all pixels
 
     algorithm : string
         'OLS' specifies that ordinary least squares should be used;
@@ -69,36 +70,44 @@ def ramp_fit(model, buffsize, save_opt, readnoise_2d, gain_2d,
 
     Returns
     -------
-    image_info: tuple
-        The tuple of computed ramp fitting arrays.
+    new_model : Data Model object
+        DM object containing a rate image averaged over all integrations in
+        the exposure
 
-    integ_info: tuple
-        The tuple of computed integration fitting arrays.
+    int_model : Data Model object or None
+        DM object containing rate images for each integration in the exposure
 
-    opt_info: tuple
-        The tuple of computed optional results arrays for fitting.
+    opt_model : RampFitOutputModel object or None
+        DM object containing optional OLS-specific ramp fitting data for the
+        exposure
 
-    gls_opt_model : GLS_RampFitModel object or None (Unused for now)
+    gls_opt_model : GLS_RampFitModel object or None
         Object containing optional GLS-specific ramp fitting data for the
         exposure
     """
     if algorithm.upper() == "GLS":
-        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # !!!!! Reference to ReadModel and GainModel changed to simple ndarrays !!!!!
-        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # new_model, int_model, gls_opt_model = gls_fit.gls_ramp_fit(
-        #     model, buffsize, save_opt, readnoise_model, gain_model, max_cores)
-        image_info, integ_info, gls_opt_model = None, None, None
-        opt_info = None
+        new_model, int_model, gls_opt_model = gls_fit.gls_ramp_fit(
+            model, buffsize, save_opt, readnoise_model, gain_model, max_cores)
+        opt_model = None
     else:
         # Get readnoise array for calculation of variance of noiseless ramps, and
         #   gain array in case optimal weighting is to be done
-        nframes = model.meta.exposure.nframes
-        readnoise_2d *= gain_2d / np.sqrt(2. * nframes)
+        frames_per_group = model.meta.exposure.nframes
+        readnoise_2d, gain_2d = \
+            utils.get_ref_subs(model, readnoise_model, gain_model, frames_per_group)
 
         # Compute ramp fitting using ordinary least squares.
-        image_info, integ_info, opt_info = ols_fit.ols_ramp_fit_multi(
+        new_model, int_model, opt_model = ols_fit.ols_ramp_fit_multi(
             model, buffsize, save_opt, readnoise_2d, gain_2d, weighting, max_cores)
         gls_opt_model = None
 
-    return image_info, integ_info, opt_info, gls_opt_model
+    # Update data units in output models
+    if new_model is not None:
+        new_model.meta.bunit_data = 'DN/s'
+        new_model.meta.bunit_err = 'DN/s'
+
+    if int_model is not None:
+        int_model.meta.bunit_data = 'DN/s'
+        int_model.meta.bunit_err = 'DN/s'
+
+    return new_model, int_model, opt_model, gls_opt_model
