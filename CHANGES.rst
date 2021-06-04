@@ -240,6 +240,10 @@ master_background
 outlier_detection
 -----------------
 
+- Avoid using 'linear' interpolation method as default for ``blot`` due to
+  a bug in the implimentation of the bilinear interpolator in the ``drizzle``
+  package. Now the default value will be 'poly5'. [#6116]
+
 - Outlier detection on non-dithered images is implemented with a simple sigma
   clipping, dithered outlier detection cleaned up and HST specific steps removed
   and additional tests added. [#5822]
