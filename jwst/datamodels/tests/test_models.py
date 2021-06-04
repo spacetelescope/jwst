@@ -407,3 +407,8 @@ def test_meta_date_management(tmp_path):
 
     model = JwstDataModel()
     assert abs((Time.now() - Time(model.meta.date)).value) < 1.0
+
+
+def test_model_container_ind_asn_exptype(container):
+    ind = container.ind_asn_type('science')
+    assert ind == [0, 1]
