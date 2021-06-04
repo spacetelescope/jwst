@@ -1,8 +1,10 @@
 import pytest
 import numpy as np
 
-from stcal.ramp_fitting.ramp_fit import ramp_fit
-from stcal.ramp_fitting.ols_fit import calc_num_seg
+from jwst.ramp_fitting.ramp_fit import ramp_fit
+from jwst.ramp_fitting.ols_fit import calc_num_seg
+# from stcal.ramp_fitting.ramp_fit import ramp_fit
+# from stcal.ramp_fitting.ols_fit import calc_num_seg
 
 from jwst.datamodels import dqflags
 from jwst.datamodels import RampModel
