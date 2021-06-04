@@ -117,7 +117,6 @@ def test_gls_vs_ols_two_ints_ols():
     np.testing.assert_allclose(slopes_gls[0].data[50, 50], 150.0, 1e-6)
 
 
-@pytest.mark.skip(reason="Jenkins environment does not correctly handle multi-processing.")
 def test_multiprocessing():
     nints, ngroups, nrows = 3, 25, 100
     ncols = nrows  # make sure these are the same, so the loops below work
@@ -146,12 +145,11 @@ def test_multiprocessing():
         model1, 1024 * 30000., False, rnModel, gain, algo, 'optimal', 'none')
 
     slopes_multi, int_model_multi, opt_model_multi, gls_opt_model_multi = ramp_fit(
-        model1, 1024 * 30000., False, rnModel, gain, algo, 'optimal', 'half')
+        model1, 1024 * 30000., False, rnModel, gain, algo, 'optimal', 'all')
 
     np.testing.assert_allclose(slopes.data, slopes_multi.data, rtol=1e-5)
 
 
-@pytest.mark.skip(reason="Jenkins environment does not correctly handle multi-processing.")
 def test_multiprocessing2():
     nints, ngroups, nrows = 1, 25, 100
     ncols = nrows  # make sure these are the same, so the loops below work
@@ -177,7 +175,7 @@ def test_multiprocessing2():
         model1, 1024 * 30000., True, rnModel, gain, algo, 'optimal', 'none')
 
     slopes_multi, int_model_multi, opt_model_multi, gls_opt_model_multi = ramp_fit(
-        model1, 1024 * 30000., True, rnModel, gain, algo, 'optimal', 'half')
+        model1, 1024 * 30000., True, rnModel, gain, algo, 'optimal', 'all')
 
     np.testing.assert_allclose(slopes.data, slopes_multi.data, rtol=1e-5)
 
