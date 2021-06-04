@@ -4,6 +4,8 @@
 associations
 ------------
 
+- Asn_Lv2WFSS: Add instrument constraint. [#6114]
+
 - Asn_Lv2NRSLAMPSpectral: Allow msaspec only if msametfl is available. [#6085]
 
 combine_1d
