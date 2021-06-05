@@ -304,7 +304,7 @@ class OutlierDetection:
 
     def blot_median(self, median_model):
         """Blot resampled median image back to the detector images."""
-        interp = self.outlierpars.get('interp', 'linear')
+        interp = self.outlierpars.get('interp', 'poly5')
         sinscl = self.outlierpars.get('sinscl', 1.0)
 
         # Initialize container for output blot images
