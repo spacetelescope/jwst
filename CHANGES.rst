@@ -53,6 +53,12 @@ scripts
 - Add migrate_data command with support for migrating spec_table in
   x1d files produced with <= 1.1.0 of this package. [#6055]
 
+tweakreg
+--------
+
+- Remove attached tweakreg catalog from datamodel before exiting step [#6102]
+
+
 1.2.0 (2021-05-24)
 ==================
 
