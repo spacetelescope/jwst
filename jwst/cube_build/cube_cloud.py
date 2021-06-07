@@ -6,8 +6,8 @@ import numpy as np
 import logging
 from . import cube_overlap
 
-log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+log = logging.getLogger('numba')
+log.setLevel(logging.WARNING)
 
 
 @jit(nopython=True)
@@ -24,6 +24,9 @@ def find_closest_wave(iw,w,
                       weight_det,
                       scalerad_det):
 
+    """ Given a specific wavelength, find the closest value in the wavelength_table
+
+    """
     ifound = (np.abs(wavelength_table - w)).argmin()
     rois_det[iw] = rois_table[ifound]
     roiw_det[iw] = roiw_table[ifound]
@@ -82,7 +85,7 @@ def map_fov_to_dqplane_miri(start_region, end_region,
     # find the wavelength boundaries of the band - use two extreme slices
     wavemin = np.amin(wave)
     wavemax = np.amax(wave)
-        
+
     # self.zcoord holds the center of the wavelength bin
     imin = (np.abs(zcoord - wavemin)).argmin()
     imax = (np.abs(zcoord - wavemax)).argmin()

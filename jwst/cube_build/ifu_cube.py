@@ -1053,7 +1053,7 @@ class IFUCubeData():
             self.rois_table = np.zeros(num_table)
             self.rois_table[:] = table_sroi[imin:imax + 1]
             if self.num_files < 4:
-                self.rois_table = [i * 1.5 for i in self.rois_table]
+                self.rois_table = self.rois_table * 1.5
 
             self.weight_power_table = np.zeros(num_table)
             self.weight_power_table[:] = table_power[imin:imax + 1]
