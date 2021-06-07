@@ -467,10 +467,6 @@ def match_det2cube(instrument,
     # fixed the nanned corners when a1,lam1 is valid but
     # adding 1 to x,y pushes data outside BB valid region
 
-    # index_bad2 = np.isnan(a2)
-    # index_bad3 = np.isnan(a3)
-    # index_bad4 = np.isnan(a4)
-
     # on the edge out of bounds
     index_good2 = ~np.isnan(a2)
     index_good3 = ~np.isnan(a3)
@@ -489,22 +485,6 @@ def match_det2cube(instrument,
     lam4 = lam4[good]
     x = x[good]
     y = y[good]
-    # approximate what out of bound value should be
-    # w12 = np.mean(lam1[index_good2] - lam2[index_good2])
-    # w13 = np.mean(lam1[index_good3] - lam3[index_good3])
-    # w14 = np.mean(lam1[index_good4] - lam4[index_good4])
-
-    # a12 = np.mean(a1[index_good2] - a2[index_good2])
-    # a13 = np.mean(a1[index_good3] - a3[index_good3])
-    # a14 = np.mean(a1[index_good4] - a4[index_good4])
-
-    # a2[index_bad2] = a1[index_bad2] - a12
-    # a3[index_bad3] = a1[index_bad3] - a13
-    # a4[index_bad4] = a1[index_bad4] - a14
-
-    # lam2[index_bad2] = lam1[index_bad2] - w12
-    # lam3[index_bad3] = lam1[index_bad3] - w13
-    # lam4[index_bad4] = lam1[index_bad4] - w14
 
     # center of first pixel, x,y = 1 for Adrian's equations
     # but we want the pixel corners, x,y values passed into this
@@ -530,7 +510,6 @@ def match_det2cube(instrument,
 
         along_corner = []
         wave_corner = []
-
         along_corner.append(a1[ipixel])
         along_corner.append(a2[ipixel])
         along_corner.append(a3[ipixel])
@@ -540,12 +519,24 @@ def match_det2cube(instrument,
         wave_corner.append(lam2[ipixel])
         wave_corner.append(lam3[ipixel])
         wave_corner.append(lam4[ipixel])
+        along_corner = np.zeros(4)
+        wave_corner = np.zeros(4)
+        along_corner[0] = a1[ipixel]
+        along_corner[1] = a2[ipixel]
+        along_corner[2] = a3[ipixel]
+        along_corner[3] = a4[ipixel]
+
+        wave_corner[0] = lam1[ipixel]
+        wave_corner[1] = lam2[ipixel]
+        wave_corner[2] = lam3[ipixel]
+        wave_corner[3] = lam4[ipixel]
+
 # ________________________________________________________________________________
 # Now it does not matter the WCS method used
-        along_min = min(along_corner)
-        along_max = max(along_corner)
-        wave_min = min(wave_corner)
-        wave_max = max(wave_corner)
+        along_min = np.min(along_corner)
+        along_max = np.max(along_corner)
+        wave_min = np.min(wave_corner)
+        wave_max = np.max(wave_corner)
 
         Area = find_area_quad(along_min, wave_min, along_corner, wave_corner)
 
@@ -584,6 +575,7 @@ def match_det2cube(instrument,
                     cube_index = istart + yy * naxis1 + aa  # xx = slice #
 
                 acenter = acoord[aa]
+
                 area_overlap = sh_find_overlap(acenter, zcenter,
                                                cdelt_along, cdelt3,
                                                along_corner, wave_corner)
