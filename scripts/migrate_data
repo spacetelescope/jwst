@@ -11,6 +11,7 @@ import warnings
 
 import asdf
 from astropy.io import fits
+from astropy.time import Time
 import numpy as np
 from packaging.specifiers import SpecifierSet
 
@@ -60,6 +61,10 @@ def migrate_mt_table_1_2_2(hdul):
             new_data = np.zeros(hdu.data.shape, dtype=dtype)
             for column_name in hdu.data.dtype.names:
                 new_data[renamed_columns.get(column_name, column_name)] = hdu.data[column_name]
+
+            # Convert from MJD to ISO
+            time_data = Time(hdu.data['time'], format='mjd', scale='utc')
+            new_data['time'] = [t.isot for t in time_data]
             hdu.data = new_data
 
 
