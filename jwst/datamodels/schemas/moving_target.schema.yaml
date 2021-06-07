@@ -9,24 +9,24 @@ properties:
     fits_hdu: MOVING_TARGET_POSITION
     datatype:
     - name: time
-      datatype: float64
-    - name: moving_target_x
-      datatype: int32
-    - name: moving_target_y
-      datatype: int32
+      datatype: [ascii, 23]
+    - name: mt_detector_x
+      datatype:  float32
+    - name: mt_detector_y
+      datatype:  float32
     - name: ref_pixel_RA
       datatype: float64
     - name: ref_pixel_Dec
       datatype: float64
-    - name: moving_target_RA
+    - name: mt_apparent_RA
       datatype: float64
-    - name: moving_target_Dec
+    - name: mt_apparent_DEC
       datatype: float64
-    - name: mt_x_helio
+    - name: mt_apparent_x_helio
       datatype: float64
-    - name: mt_y_helio
+    - name: mt_apparent_y_helio
       datatype: float64
-    - name: mt_z_helio
+    - name: mt_apparent_z_helio
       datatype: float64
     - name: jwst_x_helio
       datatype: float64
@@ -34,15 +34,55 @@ properties:
       datatype: float64
     - name: jwst_z_helio
       datatype: float64
-    - name: mt_x_jwst
+    - name: mt_apparent_x_jwst
       datatype: float64
-    - name: mt_y_jwst
+    - name: mt_apparent_y_jwst
       datatype: float64
-    - name: mt_z_jwst
+    - name: mt_apparent_z_jwst
       datatype: float64
-    - name: mt_jwst_distance
+    - name: mt_apparent_jwst_distance
       datatype: float64
-    - name: mt_sun_distance
+    - name: mt_apparent_sun_distance
       datatype: float64
-    - name: phase_angle
+    - name: apparent_phase_angle
       datatype: float64
+    - name: apparent_light_travel_time
+      datatype: float64
+    - name: mt_true_x_helio
+      datatype: float64
+    - name: mt_true_y_helio
+      datatype: float64
+    - name: mt_true_z_helio
+      datatype: float64
+    - name: mt_true_x_jwst
+      datatype: float64
+    - name: mt_true_y_jwst
+      datatype: float64
+    - name: mt_true_z_jwst
+      datatype: float64
+#    - name: moving_target_x
+#      datatype: int32
+#    - name: moving_target_y
+#      datatype: int32
+#    - name: moving_target_RA
+#      datatype: float64
+#    - name: moving_target_Dec
+#      datatype: float64
+#    - name: mt_x_helio
+#      datatype: float64
+#    - name: mt_y_helio
+#      datatype: float64
+#    - name: mt_z_helio
+#      datatype: float64
+#    - name: mt_x_jwst
+#      datatype: float64
+#    - name: mt_y_jwst
+#      datatype: float64
+#    - name: mt_z_jwst
+#      datatype: float64
+#    - name: mt_jwst_distance
+#      datatype: float64
+#    - name: mt_sun_distance
+#      datatype: float64
+#    - name: phase_angle
+#      datatype: float64
