@@ -1,3 +1,10 @@
+1.2.2 (unreleased)
+==================
+
+
+
+
+
 1.2.1 (2021-06-07)
 ==================
 
@@ -46,6 +53,12 @@ lib
 
 - Updated set_telescope_pointing to populate ENGQLPTG keyword with new
   allowed values [#6088]
+
+ramp_fitting
+------------
+
+- Re-enable multiprocessing in ``RampFitStep`` by moving code back from
+  stcal package. [#6119]
 
 scripts
 -------
