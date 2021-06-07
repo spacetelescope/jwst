@@ -26,7 +26,7 @@ datamodels
 
 - Removed obsolete keyword NDITHPTS and updated attributes for NRIMDTPT [#6083]
 
-- Added units to CombinedSpecModel table output [#6082]
+- Added units to ``CombinedSpecModel`` table output [#6082]
 
 - Added keywords OSS_VER, DETMODE, CMD_TSEL, NOD_TYPE, and GS_V3_PA to
   the core schema [#6086]
@@ -39,13 +39,19 @@ general
 
 - Make CRDS context reporting pytest plugin disabled by default. [#6070]
 
-- Removed all usage of sys.path, in associations and jwst.stpipe [#6098]
+- Removed all usage of sys.path, in associations and ``jwst.stpipe`` [#6098]
 
 lib
 ---
 
 - Updated set_telescope_pointing to populate ENGQLPTG keyword with new
   allowed values [#6088]
+
+ramp_fitting
+------------
+
+- Re-enable multiprocessing in ``RampFitStep`` by moving code back from
+  stcal package. [#6119]
 
 scripts
 -------
