@@ -37,12 +37,12 @@ In all cases, the installation is generally a 3-step process:
 
 Details are given below on how to do this for different types of installations,
 including tagged releases, DMS builds used in operations, and development versions.
-Remember that all conda operations must be done from within a bash shell.
+Remember that all conda operations must be done from within a bash/zsh shell.
 
 
 ### Installing latest releases
 
-You can install the latest released version via `pip`.  From a bash shell:
+You can install the latest released version via `pip`.  From a bash/zsh shell:
 
     conda create -n <env_name> python
     conda activate <env_name>
@@ -52,7 +52,7 @@ You can also install a specific version (from `jwst 0.17.0` onward):
 
     conda create -n <env_name> python
     conda activate <env_name>
-    pip install jwst==1.2.0
+    pip install jwst==1.2.1
 
 Installing specific versions before `jwst 0.17.0` need to be installed from Github:
 
@@ -76,16 +76,12 @@ Github master branch:
 There may be occasions where an exact copy of an operational DMS build is
 desired (e.g. for validation testing or debugging operational issues).
 We package releases for DMS builds via environment snapshots that specify the
-exact versions of all packages to be installed. This method may result in more
-stable processing than what was outlined above for installing a particular
-tagged release, because that method installs the latest versions of dependency
-packages, while this method installs dependencies pinned to particular versions
-that have been well tested.
+exact versions of all packages to be installed.
 
 To install a particular DMS build, consult the
 [Software vs DMS build version map](https://github.com/spacetelescope/jwst#software-vs-dms-build-version-map)
 table shown below to determine the correct jwst tag. For example, to install the
-version of `jwst` used in DMS build 7.5, use jwst tag 0.16.1. The overall
+version of `jwst` used in DMS build 7.8, use jwst tag 1.2.1. The overall
 procedure is similar to the 3-step process outlined in the previous section, but the
 details of each command vary, due to the use of environment snapshot files that specify
 all of the particular packages to install. Also note that different snapshot files are
@@ -93,15 +89,15 @@ used for Linux and Mac OS systems.
 
 Linux:
 
-    conda create -n <env_name> --file https://ssb.stsci.edu/releases/jwstdp/0.16.1/conda_python_stable-deps.txt
-    conda activate <env_name>
-    pip install -r https://ssb.stsci.edu/releases/jwstdp/0.16.1/reqs_stable-deps.txt
+    conda create -n jwstdp-1.2.1 --file https://ssb.stsci.edu/releases/jwstdp/1.2.1/conda_python_stable-deps.txt
+    conda activate jwstdp-1.2.1
+    pip install -r https://ssb.stsci.edu/releases/jwstdp/1.2.1/reqs_stable-deps.txt
 
 MacOS:
 
-    conda create -n <env_name> --file https://ssb.stsci.edu/releases/jwstdp/0.16.1/conda_python_macos-stable-deps.txt
-    conda activate <env_name>
-    pip install -r https://ssb.stsci.edu/releases/jwstdp/0.16.1/reqs_macos-stable-deps.txt
+    conda create -n jwstdp-1.2.1 --file https://ssb.stsci.edu/releases/jwstdp/1.2.1/conda_python_macos-stable-deps.txt
+    conda activate jwstdp-1.2.1
+    pip install -r https://ssb.stsci.edu/releases/jwstdp/1.2.1/reqs_macos-stable-deps.txt
 
 Each DMS delivery has its own installation instructions, which may be found in
 the corresponding release documentation linked from this page:
@@ -147,7 +143,7 @@ sure those dependencies are installed too:
 
 Need other useful packages in your development environment?
 
-    pip install ipython pytest-xdist
+    pip install ipython jupyter matplotlib pylint
 
 
 ## Calibration References Data System (CRDS) Setup
@@ -192,6 +188,7 @@ contact the [JWST Help Desk](https://jwsthelp.stsci.edu).
 
 | jwst tag | DMS build | CRDS_CONTEXT |   Date     |          Notes                                |
 | -------- | --------- | ------------ | ---------- | ----------------------------------------------|
+|  1.2.1   | B7.8rc2   | 0732         | 06/07/2021 | Second release candidate for B7.8             |
 |  1.2.0   | B7.8rc1   | 0723         | 05/24/2021 | First release candidate for B7.8              |
 |  1.1.0   | B7.7.1    | 0682         | 02/26/2021 | Final release candidate for B7.7.1            |
 |  1.0.0   | B7.7.1rc1 | 0678         | 02/22/2021 | First release candidate for B7.7.1            |
@@ -283,19 +280,3 @@ If developers need to update the truth files in our nightly regression tests,
 there are instructions in the repository wiki.
 
 https://github.com/spacetelescope/jwst/wiki/Maintaining-Regression-Tests
-
-
-## JupyterHub Access
-
-**NOTE:** This is currently still in research-and-development stage and is subject to change.
-
-To run a pre-installed pipeline in JupyterHub:
-
-* Click on https://dev.science.stsci.edu/hub/spawn?image=793754315137.dkr.ecr.us-east-1.amazonaws.com/datb-tc-pipeline-nb:jwstdp-snapshot and sign in.
-* Click "Terminal" to:
-    * Run `pip freeze` to see what is installed.
-    * Grab your notebooks (e.g., using `git clone`) and install any optional software (e.g., using `pip install`).
-* Launch your notebook to run the JWST pipeline.
-
-Latest release of any packages is not guaranteed in this environment.
-Amazon Web Services charges may apply.
