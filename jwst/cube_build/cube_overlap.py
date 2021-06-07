@@ -6,6 +6,9 @@ import math
 from numba import jit
 from ..datamodels import dqflags
 from jwst.transforms.models import _toindex
+import logging
+log = logging.getLogger('numba')
+log.setLevel(logging.WARNING)
 
 
 @jit(nopython=True)
