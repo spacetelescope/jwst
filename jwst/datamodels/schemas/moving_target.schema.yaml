@@ -20,7 +20,7 @@ properties:
       datatype: float64
     - name: mt_apparent_RA
       datatype: float64
-    - name: mt_apparent_DEC
+    - name: mt_apparent_Dec
       datatype: float64
     - name: mt_apparent_x_helio
       datatype: float64
@@ -60,29 +60,3 @@ properties:
       datatype: float64
     - name: mt_true_z_jwst
       datatype: float64
-#    - name: moving_target_x
-#      datatype: int32
-#    - name: moving_target_y
-#      datatype: int32
-#    - name: moving_target_RA
-#      datatype: float64
-#    - name: moving_target_Dec
-#      datatype: float64
-#    - name: mt_x_helio
-#      datatype: float64
-#    - name: mt_y_helio
-#      datatype: float64
-#    - name: mt_z_helio
-#      datatype: float64
-#    - name: mt_x_jwst
-#      datatype: float64
-#    - name: mt_y_jwst
-#      datatype: float64
-#    - name: mt_z_jwst
-#      datatype: float64
-#    - name: mt_jwst_distance
-#      datatype: float64
-#    - name: mt_sun_distance
-#      datatype: float64
-#    - name: phase_angle
-#      datatype: float64
