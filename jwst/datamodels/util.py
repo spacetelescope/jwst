@@ -6,6 +6,7 @@ import sys
 import warnings
 import os
 from os.path import basename
+from pathlib import Path
 from platform import system as platform_system
 import psutil
 import traceback
@@ -86,6 +87,9 @@ def open(init=None, memmap=False, **kwargs):
 
     # Get special cases for opening a model out of the way
     # all special cases return a model if they match
+
+    if isinstance(init, Path):
+        init = str(init)
 
     if init is None:
         return model_base.JwstDataModel(None)
