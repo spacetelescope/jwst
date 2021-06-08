@@ -61,7 +61,7 @@ def make_models(tmp_path):
 
 
 def test_init_from_pathlib(tmp_path):
-    """Test initializing model from a PurePath object"""
+    """Test initializing model from a Path object"""
     path = tmp_path / "pathlib.fits"
     model1 = datamodels.ImageModel((50, 50))
     model1.save(path)
