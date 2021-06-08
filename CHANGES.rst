@@ -6,7 +6,10 @@ associations
 
 - Ensure no Lv3_WFSC associations created on group candidates [#6131]
 
+datamodels
+----------
 
+- Convert incoming Path objects to strings in datamodels.open [#6130]
 
 
 
