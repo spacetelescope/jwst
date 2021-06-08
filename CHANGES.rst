@@ -1,7 +1,10 @@
 1.2.2 (unreleased)
 ==================
 
+datamodels
+----------
 
+- Update moving target schema to match b7.8 keyword schema. [#6129]
 
 
 1.2.1 (2021-06-07)

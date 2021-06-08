@@ -41,3 +41,25 @@ def test_x1d_spec_table(truth_path, rtdata):
     # Now the model should validate
     with datamodels.open(rtdata.truth):
         pass
+
+
+@pytest.mark.bigdata
+@pytest.mark.parametrize("truth_path",
+                         ["truth/test_nircam_mtimage/mt_pre_1-2-2_schema_uncal.fits"],
+                         ids=["nircam_mt"])
+def test_pre_1_2_2_schemas(truth_path, rtdata):
+    rtdata.env = "1.2.1"
+    rtdata.get_truth(truth_path)
+
+    # Confirm that the file doesn't initially validate
+    # (open with fits first so that the failed call to open doesn't leave behind an open file)
+    with fits.open(rtdata.truth, memmap=False) as hdu:
+        with pytest.raises(ValueError, match="Column names don't match schema"):
+            with datamodels.open(hdu):
+                pass
+
+    subprocess.check_call(["migrate_data", rtdata.truth, "--in-place"])
+
+    # Now the model should validate
+    with datamodels.open(rtdata.truth):
+        pass

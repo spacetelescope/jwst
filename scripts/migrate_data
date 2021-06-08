@@ -11,6 +11,7 @@ import warnings
 
 import asdf
 from astropy.io import fits
+from astropy.time import Time
 import numpy as np
 from packaging.specifiers import SpecifierSet
 
@@ -32,6 +33,39 @@ def parse_args():
 
 # If there get to be many of these we may want to move
 # them to jwst.datamodels somewhere:
+
+def migrate_mt_table_1_2_2(hdul):
+    """moving_target.schema has been filled out with actual data.
+    """
+    schema = asdf.schema.load_schema("http://stsci.edu/schemas/jwst_datamodel/moving_target.schema")
+    dtype = asdf.tags.core.ndarray.asdf_datatype_to_numpy_dtype(schema['properties']['moving_target']['datatype'])
+    renamed_columns = {
+        'moving_target_Dec': 'mt_apparent_Dec',
+        'moving_target_RA': 'mt_apparent_RA',
+        'moving_target_x': 'mt_detector_x',
+        'moving_target_y': 'mt_detector_y',
+        'mt_x_helio': 'mt_apparent_x_helio',
+        'mt_y_helio': 'mt_apparent_y_helio',
+        'mt_z_helio': 'mt_apparent_z_helio',
+        'mt_x_jwst': 'mt_apparent_x_jwst',
+        'mt_y_jwst': 'mt_apparent_y_jwst',
+        'mt_z_jwst': 'mt_apparent_z_jwst',
+        'mt_jwst_distance': 'mt_apparent_jwst_distance',
+        'mt_sun_distance': 'mt_apparent_sun_distance',
+        'phase_angle': 'apparent_phase_angle',
+    }
+
+    for hdu in hdul:
+        if hdu.name == "MOVING_TARGET_POSITION":
+            new_data = np.zeros(hdu.data.shape, dtype=dtype)
+            for column_name in hdu.data.dtype.names:
+                new_data[renamed_columns.get(column_name, column_name)] = hdu.data[column_name]
+
+            # Convert from MJD to ISO
+            time_data = Time(hdu.data['time'], format='mjd', scale='utc')
+            new_data['time'] = [t.isot for t in time_data]
+            hdu.data = new_data
+
 
 def migrate_spec_table_1_1_0(hdul):
     """
@@ -58,10 +92,13 @@ def migrate_spec_table_1_1_0(hdul):
 # is a method that accepts an HDUList and modifies
 # it in-place.
 _MIGRATE_METHODS = {
-    "SpecModel": {
-        "> 0.13.1, <= 1.1.0": migrate_spec_table_1_1_0,
+    "Level1bModel": {
+        "<= 1.2.1": migrate_mt_table_1_2_2,
     },
     "MultiSpecModel": {
+        "> 0.13.1, <= 1.1.0": migrate_spec_table_1_1_0,
+    },
+    "SpecModel": {
         "> 0.13.1, <= 1.1.0": migrate_spec_table_1_1_0,
     },
 }
