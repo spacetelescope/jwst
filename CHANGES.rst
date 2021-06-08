@@ -1,4 +1,4 @@
-1.2.3 (unreleased)
+1.2.3 (2021-06-08)
 ==================
 
 datamodels
@@ -7,7 +7,6 @@ datamodels
 - Add back and use "CALCULATED" for ENGQLPTG. [#6135]
 
 - Convert incoming Path objects to strings in datamodels.open [#6130]
-
 
 
 1.2.2 (2021-06-08)
