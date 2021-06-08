@@ -103,7 +103,7 @@ def test_utils_fringes2pistons():
 
     result = utils.fringes2pistons(fringephases, nholes)
 
-    true_result = np.array([0.02, 0.034, 0.02, -0.014, -0.06])
+    true_result = np.array([-0.02, -0.034, -0.02, 0.014, 0.06])
     assert_allclose(result, true_result)
 
 

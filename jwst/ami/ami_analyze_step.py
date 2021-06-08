@@ -42,7 +42,6 @@ class AmiAnalyzeStep(Step):
         self.log.info(f'Oversampling factor =  {oversample}')
         self.log.info(f'Initial rotation guess = {rotate} deg')
         self.log.info(f'Initial values to use for psf offset = {psf_offset}')
-        self.log.info(f'Initial values to use for rotation search {rotsearch_parameters}')
 
         # Open the input data model
         try:
