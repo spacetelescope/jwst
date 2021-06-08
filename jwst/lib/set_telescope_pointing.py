@@ -223,13 +223,14 @@ def update_mt_kwds(model):
     """
 
     if model.hasattr('moving_target'):
-        time_mt = model.moving_target.time
+        time_mt = Time(model.moving_target.time, format='isot')
+        time_mt = [t.mjd for t in time_mt]
         exp_midpt_mjd = model.meta.exposure.mid_time
         # check to see if the midpoint of the observation is contained within
         # the timerange of the MT table
         if time_mt[0] <= exp_midpt_mjd <= time_mt[-1]:
-            ra = model.moving_target.moving_target_RA
-            dec = model.moving_target.moving_target_Dec
+            ra = model.moving_target.mt_apparent_RA
+            dec = model.moving_target.mt_apparent_Dec
             f_ra = interp1d(time_mt, ra)
             f_dec = interp1d(time_mt, dec)
             model.meta.wcsinfo.mt_ra = f_ra(exp_midpt_mjd).item(0)
