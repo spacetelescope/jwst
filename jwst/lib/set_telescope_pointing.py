@@ -470,7 +470,7 @@ def update_wcs_from_telem(
         # compute relevant WCS information
         logger.info('Successful read of engineering quaternions:')
         logger.info('\tPointing = {}'.format(pointing))
-        model.meta.visit.engdb_pointing_quality = "CALCULATED_ORIGINAL"
+        model.meta.visit.engdb_pointing_quality = "CALCULATED"
         try:
             wcsinfo, vinfo = calc_wcs(pointing, siaf, **transform_kwargs)
             logger.info("Setting ENGQLPTG keyword to CALCULATED")
