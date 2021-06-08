@@ -1,3 +1,13 @@
+1.2.3 (unreleased)
+==================
+
+datamodels
+----------
+
+- Convert incoming Path objects to strings in datamodels.open [#6130]
+
+
+
 1.2.2 (2021-06-08)
 ==================
 
