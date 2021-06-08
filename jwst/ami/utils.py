@@ -851,7 +851,7 @@ def fringes2pistons(fringephases, nholes):
     Anrm = makeA(nholes)
     Apinv = np.linalg.pinv(Anrm)
 
-    return -np.dot(Apinv, fringephases)
+    return np.dot(Apinv, fringephases)
 
 
 def rebin(a=None, rc=(2, 2)):
