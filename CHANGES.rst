@@ -6,6 +6,11 @@ ami_analyze
 
 - Fix to AMI pupil phases sign error [#6128]
 
+datamodels
+----------
+
+- Update moving target schema to match b7.8 keyword schema. [#6129]
+
 
 1.2.1 (2021-06-07)
 ==================
