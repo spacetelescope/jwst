@@ -7,7 +7,7 @@ from jwst.stpipe import Step
 
 
 @pytest.mark.bigdata
-def test_nircam_image_moving_target(rtdata, fitsdiff_default_kwargs):
+def test_nircam_image_moving_target_i2d(rtdata, fitsdiff_default_kwargs):
     """Test resampled i2d of moving target exposures for NIRCam imaging"""
     rtdata.get_asn("nircam/image/mt_asn.json")
     rtdata.output = "mt_assoc_i2d.fits"
