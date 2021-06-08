@@ -65,7 +65,7 @@ def test_init_from_pathlib(tmp_path):
     path = tmp_path / "pathlib.fits"
     model1 = datamodels.ImageModel((50, 50))
     model1.save(path)
-    model = datamodels.open(Path(path))
+    model = datamodels.open(path)
 
     # Test is basically, did we open the model?
     assert isinstance(model, ImageModel)
