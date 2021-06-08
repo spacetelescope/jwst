@@ -5,6 +5,7 @@ from astropy.io import fits
 from astropy.table import Table
 from astropy.time import Time
 from numpy.testing import assert_allclose, assert_array_equal
+from pathlib import Path
 import numpy as np
 import pytest
 
@@ -57,6 +58,17 @@ def make_models(tmp_path):
         'just_fits': path_just_fits,
         'model': path_model
     }
+
+
+def test_init_from_pathlib(tmp_path):
+    """Test initializing model from a PurePath object"""
+    path = tmp_path / "pathlib.fits"
+    model1 = datamodels.ImageModel((50, 50))
+    model1.save(path)
+    model = datamodels.open(Path(path))
+
+    # Test is basically, did we open the model?
+    assert isinstance(model, ImageModel)
 
 
 @pytest.mark.parametrize('which_file, skip_fits_update, expected_exp_type',
