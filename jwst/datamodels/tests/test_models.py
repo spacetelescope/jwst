@@ -5,7 +5,6 @@ from astropy.io import fits
 from astropy.table import Table
 from astropy.time import Time
 from numpy.testing import assert_allclose, assert_array_equal
-from pathlib import Path
 import numpy as np
 import pytest
 
