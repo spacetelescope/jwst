@@ -37,8 +37,7 @@ def parse_args():
 def migrate_mt_table_1_2_2(hdul):
     """moving_target.schema has been filled out with actual data.
     """
-    #schema = asdf.schema.load_schema("http://stsci.edu/schemas/jwst_datamodel/moving_target.schema")
-    schema = asdf.schema.load_schema("/Users/eisenham/Documents/ssbdev/jwst_project/jp-2125-mt/jwst/datamodels/schemas/moving_target.schema.yaml")
+    schema = asdf.schema.load_schema("http://stsci.edu/schemas/jwst_datamodel/moving_target.schema")
     dtype = asdf.tags.core.ndarray.asdf_datatype_to_numpy_dtype(schema['properties']['moving_target']['datatype'])
     renamed_columns = {
         'moving_target_Dec': 'mt_apparent_Dec',
