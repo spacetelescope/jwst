@@ -6,6 +6,11 @@ ami_analyze
 
 - Fix to AMI pupil phases sign error [#6128]
 
+associations
+------------
+
+- Ensure no Lv3_WFSC associations created on group candidates [#6131]
+
 datamodels
 ----------
 
