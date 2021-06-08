@@ -1,7 +1,10 @@
 1.2.3 (unreleased)
 ==================
 
+datamodels
+----------
 
+- Convert incoming Path objects to strings in datamodels.open [#6130]
 
 
 
@@ -17,8 +20,6 @@ datamodels
 ----------
 
 - Update moving target schema to match b7.8 keyword schema. [#6129]
-
-- Convert incoming Path objects to strings in datamodels.open [#6130]
 
 
 1.2.1 (2021-06-07)
