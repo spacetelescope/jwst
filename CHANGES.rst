@@ -4,6 +4,8 @@
 datamodels
 ----------
 
+- Add back and use "CALCULATED" for ENGQLPTG. [#6135]
+
 - Convert incoming Path objects to strings in datamodels.open [#6130]
 
 

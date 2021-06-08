@@ -254,7 +254,8 @@ properties:
           engdb_pointing_quality:
             title: Quality of pointing information from EngDB
             type: string
-            enum: [CALCULATED_FULLVA, CALCULATED_FULL,
+            enum: [CALCULATED,
+                   CALCULATED_FULLVA, CALCULATED_FULL,
                    CALCULATED_GSCMD, CALCULATED_GSCMD_V3PAGS,
                    CALCULATED_ORIGINAL, PLANNED]
             fits_keyword: ENGQLPTG
