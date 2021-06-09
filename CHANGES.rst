@@ -1,7 +1,9 @@
 1.2.4 (unreleased)
 ==================
 
-
+cube_build
+----------
+- Fix bug when creating cubes using output_type= channel [#6138]
 
 
 1.2.3 (2021-06-08)
