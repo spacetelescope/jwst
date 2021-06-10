@@ -1,11 +1,15 @@
+import os  # TODO temporary.
 from ..stpipe import Step
 from .. import datamodels
 from . import extract
+from .soss_extract import soss_extract
 
 
 __all__ = ["Extract1dStep"]
 
-
+# TODO I currently seen no overlap between the existing step and the SOSS
+# TODO specific components (different parameters and reference files). Perhaps
+# TODO an entirely separate step is preferable after all?
 class Extract1dStep(Step):
     """Extract a 1-d spectrum from 2-d data
 
@@ -66,6 +70,7 @@ class Extract1dStep(Step):
 
     """
 
+    # TODO add SOSS extraction parameters (e.g. threhold).
     spec = """
     smoothing_length = integer(default=None)  # background smoothing size
     bkg_fit = option("poly", "mean", "median", default="poly")  # background fitting type
@@ -77,6 +82,7 @@ class Extract1dStep(Step):
     apply_apcorr = boolean(default=True)  # apply aperture corrections?
     """
 
+    # TODO add SOSS reference file types.
     reference_file_types = ['extract1d', 'apcorr']
 
     def process(self, input):
@@ -124,6 +130,36 @@ class Extract1dStep(Step):
             self.log.error('extract_1d will be skipped.')
             input_model.meta.cal_step.extract_1d = 'SKIPPED'
             return input_model
+
+        # Data is NRISS SOSS observation.
+        # TODO should go in the else of ModelContainer? discuss with StSci.
+        if input_model.meta.exposure.type == 'NIS_SOSS':
+
+            self.log.info('Input is a NIRISS SOSS observation, the specialized SOSS extraction will be used.')
+
+            # Load reference files.
+            # TODO Local placeholders inserted, correct usage example: self.get_reference_file(input_model, 'apcorr')
+            soss_ref_path = '/home/talens-irex/Dropbox/SOSS_Ref_Files/'
+            spectrace_ref_name = os.path.join(soss_ref_path, 'SOSS_ref_trace_table_SUBSTRIP256.fits.gz')  # SpecTraceModel
+            wavemap_ref_name = os.path.join(soss_ref_path, 'SOSS_ref_2D_wave_SUBSTRIP256.fits.gz')  # WaveMapModel
+            specprofile_ref_name = os.path.join(soss_ref_path, 'SOSS_ref_2D_profile_SUBSTRIP256.fits.gz')  # SpecProfileModel
+            speckernel_ref_name = os.path.join(soss_ref_path, 'SOSS_ref_spectral_kernel.fits.gz')  # SpecKernelModel
+
+            # Run the extraction.
+            # TODO additional user-controlled parameters (e.g. threshold)?
+            result = soss_extract.run_extract1d(input_model,
+                                                spectrace_ref_name,
+                                                wavemap_ref_name,
+                                                specprofile_ref_name,
+                                                speckernel_ref_name)
+
+            # Set the step flag to complete
+            result.meta.cal_step.extract_1d = 'COMPLETE'
+            result.meta.filetype = '1d spectrum'
+
+            input_model.close()
+
+            return result
 
         # ______________________________________________________________________
         # Do the extraction for ModelContainer - this might only be WFSS data
