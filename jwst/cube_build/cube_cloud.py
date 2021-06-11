@@ -37,6 +37,7 @@ def find_closest_wave(iw,w,
 
 @jit(nopython=True)
 def map_fov_to_dqplane_miri(start_region, end_region,
+                            overlap_partial, overlap_full,
                             naxis1, naxis2,
                             xcenters, ycenters, zcoord,
                             cdelt1, cdelt2,
@@ -128,7 +129,8 @@ def map_fov_to_dqplane_miri(start_region, end_region,
             xi_corner = np.array([xi1, xi2, xi3, xi4])
             eta_corner = np.array([eta1, eta2, eta3, eta4])
 
-            overlap_fov_with_spaxels(cdelt1,cdelt2,
+            overlap_fov_with_spaxels(overlap_partial, overlap_full,
+                                     cdelt1,cdelt2,
                                      naxis1, naxis2,
                                      xcenters, ycenters,
                                      xi_corner, eta_corner, w, w,
@@ -136,7 +138,8 @@ def map_fov_to_dqplane_miri(start_region, end_region,
 
 
 @jit(nopython=True)
-def map_fov_to_dqplane_nirspec(naxis1, naxis2,
+def map_fov_to_dqplane_nirspec(overlap_partial,
+                               naxis1, naxis2,
                                cdelt1, cdelt2,
                                xcenters, ycenters,
                                xcoord, ycoord, zcoord,
@@ -153,6 +156,7 @@ def map_fov_to_dqplane_nirspec(naxis1, naxis2,
 
         Paramteter
         ---------
+        overlap_partial - intermediate DQ flag
         coord1: xi coordinates of input data (~x coordinate in IFU space)
         coord2: eta coordinates of input data (~y coordinate in IFU space)
         wave: wavelength of input data
@@ -201,7 +205,8 @@ def map_fov_to_dqplane_nirspec(naxis1, naxis2,
                 eta_corner = np.array([eta1, eta2, eta3, eta4])
 
                 # if isline:
-                overlap_slice_with_spaxels(cdelt1, cdelt2,
+                overlap_slice_with_spaxels(overlap_partial,
+                                           cdelt1, cdelt2,
                                            naxis1,
                                            xcoord, ycoord,
                                            xi_corner, eta_corner,
@@ -275,7 +280,8 @@ def four_corners(coord1, coord2):
 
 
 @jit(nopython=True)
-def overlap_fov_with_spaxels(cdelt1, cdelt2,
+def overlap_fov_with_spaxels(overlap_partial, overlap_full,
+                             cdelt1, cdelt2,
                              naxis1, naxis2,
                              xcenters, ycenters,
                              xi_corner, eta_corner, wmin, wmax,
@@ -287,8 +293,8 @@ def overlap_fov_with_spaxels(cdelt1, cdelt2,
         overlap with this FOV.  Set the intermediate spaxel  to
         a value based on the overlap between the FOV for each exposure
         and the spaxel area. The values assigned are:
-        a. self.overlap_partial = overlap partial
-        b  self.overlap_full = overlap_full
+        a. overlap_partial = overlap partial
+        b  overlap_full = overlap_full
         bit_wise combination of these values is allowed to account for
         dithered FOVs.
 
@@ -328,8 +334,6 @@ def overlap_fov_with_spaxels(cdelt1, cdelt2,
         overlap_coverage = area_overlap / area_box
 
         tolerance_dq_overlap = 0.05  # spaxel has to have 5% overlap to flag in FOV
-        overlap_partial = 4  # intermediate flag
-        overlap_full = 2    # intermediate flag
 
         if overlap_coverage > tolerance_dq_overlap:
             if overlap_coverage > 0.95:
@@ -349,7 +353,8 @@ def overlap_fov_with_spaxels(cdelt1, cdelt2,
 
 
 @jit(nopython=True)
-def overlap_slice_with_spaxels(cdelt1, cdelt2,
+def overlap_slice_with_spaxels(overlap_partial,
+                               cdelt1, cdelt2,
                                naxis1,
                                xcoord, ycoord,
                                xi_corner, eta_corner, w,
@@ -362,6 +367,7 @@ def overlap_slice_with_spaxels(cdelt1, cdelt2,
 
         Parameters
         ---------
+        overlap_partial: intermediate dq flag
         xi_corner: holds the x starting and ending points of the slice
         eta_corner: holds the y starting and ending points of the slice
         wavelength: the wavelength bin of the IFU cube working with
@@ -376,7 +382,7 @@ def overlap_slice_with_spaxels(cdelt1, cdelt2,
                                  xcoord, ycoord,
                                  xi_corner, eta_corner)
     num = len(points)
-    overlap_partial = 4  # intermediate flag
+
     for i in range(num):
         xpt, ypt = points[i]
         index = (ypt * naxis1) + xpt
