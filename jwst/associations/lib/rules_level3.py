@@ -773,11 +773,15 @@ class Asn_Lv3WFSCMB(AsnMixin_Science):
             )
         ])
 
-        # Only valid if two members exist.
+        # Only valid if two members exist and candidate is not a GROUP.
         self.validity.update({
             'has_pair': {
                 'validated': False,
                 'check': self._has_pair
+            },
+            'is_not_group': {
+                'validated': False,
+                'check': self._validate_candidates
             }
         })
 
@@ -833,6 +837,25 @@ class Asn_Lv3WFSCMB(AsnMixin_Science):
 
         return len(self.current_product['members']) == count
 
+    def _validate_candidates(self, member):
+        """Disallow GROUP candidates
+
+        Parameters
+        ----------
+        member : Member
+            Member being added. Ignored.
+
+        Returns
+        -------
+        False if candidate is GROUP.
+        True otherwise.
+        """
+
+        # If a group candidate, reject.
+        if self.acid.type.lower() == 'group':
+            return False
+
+        return True
 
 @RegistryMarker.rule
 class Asn_Lv3WFSSNIS(AsnMixin_Spectrum):
