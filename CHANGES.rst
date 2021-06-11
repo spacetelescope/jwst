@@ -1,6 +1,11 @@
 1.2.3 (2021-06-08)
 ==================
 
+associations
+------------
+
+- Ensure no Lv3_WFSC associations created on group candidates [#6131]
+
 datamodels
 ----------
 
