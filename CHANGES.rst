@@ -1,7 +1,10 @@
 1.2.4 (unreleased)
 ==================
 
+associations
+------------
 
+- Renamed Asn_Lv3SpectralSource to Asn_Lv3NRCWFSS [#6144]
 
 
 1.2.3 (2021-06-08)
