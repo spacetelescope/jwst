@@ -615,6 +615,7 @@ class IFUCubeData():
                             start_region = self.instrument_info.GetStartSlice(this_par1)
                             end_region = self.instrument_info.GetEndSlice(this_par1)
                             cube_cloud.map_fov_to_dqplane_miri(start_region, end_region,
+                                                               self.overlap_partial, self.overlap_full,
                                                                self.naxis1, self.naxis2,
                                                                self.xcenters, self.ycenters, self.zcoord,
                                                                self.cdelt1, self.cdelt2,
@@ -625,7 +626,8 @@ class IFUCubeData():
                                                                self.spaxel_dq)
 
                         elif self.instrument == 'NIRSPEC':
-                            cube_cloud.map_fov_to_dqplane_nirspec(self.naxis1, self.naxis2,
+                            cube_cloud.map_fov_to_dqplane_nirspec(self.overlap_partial,
+                                                                  self.naxis1, self.naxis2,
                                                                   self.cdelt1, self.cdelt2,
                                                                   self.xcenters, self.ycenters,
                                                                   self.xcoord, self.ycoord, self.zcoord,
@@ -2024,125 +2026,8 @@ class IFUCubeData():
             if self.instrument == 'MIRI':
                 ifucube_model.meta.wcsinfo.cunit1 = 'arcsec'
                 ifucube_model.meta.wcsinfo.cunit2 = 'arcsec'
-# we only need to check list_par1[0] and list_par2[0] because these types
-# of cubes are made from 1 exposures (setup_cube checks this at the start
-# of cube_build).
-            if self.list_par1[0] == '1' and self.list_par2[0] == 'short':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL1A'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE1A'
-            if self.list_par1[0] == '2' and self.list_par2[0] == 'short':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL2A'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE2A'
-            if self.list_par1[0] == '3' and self.list_par2[0] == 'short':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL3A'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE3A'
-            if self.list_par1[0] == '4' and self.list_par2[0] == 'short':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4A'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4A'
-
-            if self.list_par1[0] == '1' and self.list_par2[0] == 'medium':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL1B'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE1B'
-            if self.list_par1[0] == '2' and self.list_par2[0] == 'medium':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL2B'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE2B'
-            if self.list_par1[0] == '3' and self.list_par2[0] == 'medium':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL3B'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE3B'
-            if self.list_par1[0] == '4' and self.list_par2[0] == 'medium':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4B'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4B'
-
-            if self.list_par1[0] == '1' and self.list_par2[0] == 'long':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL1C'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE1C'
-            if self.list_par1[0] == '2' and self.list_par2[0] == 'long':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL2C'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE2C'
-            if self.list_par1[0] == '3' and self.list_par2[0] == 'long':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL3C'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE3C'
-            if self.list_par1[0] == '4' and self.list_par2[0] == 'long':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4C'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4C'
-
-            if self.list_par1[0] == '1' and self.list_par2[0] == 'short-medium':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL1A'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE1A'
-            if self.list_par1[0] == '2' and self.list_par2[0] == 'short-medium':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL2B'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE2B'
-            if self.list_par1[0] == '3' and self.list_par2[0] == 'short-medium':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL3B'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE3B'
-            if self.list_par1[0] == '4' and self.list_par2[0] == 'short-medium':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4A'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4A'
-
-            if self.list_par1[0] == '1' and self.list_par2[0] == 'short-long':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL1A'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE1A'
-            if self.list_par1[0] == '2' and self.list_par2[0] == 'short-long':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL2C'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE2C'
-            if self.list_par1[0] == '3' and self.list_par2[0] == 'short-long':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL3C'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE3C'
-            if self.list_par1[0] == '4' and self.list_par2[0] == 'short-long':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4A'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4A'
-
-            if self.list_par1[0] == '1' and self.list_par2[0] == 'medium-short':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL1B'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE1B'
-            if self.list_par1[0] == '2' and self.list_par2[0] == 'medium-short':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL2A'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE2A'
-            if self.list_par1[0] == '3' and self.list_par2[0] == 'medium-short':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL3A'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE3A'
-            if self.list_par1[0] == '4' and self.list_par2[0] == 'medium-short':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4B'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4B'
-
-            if self.list_par1[0] == '1' and self.list_par2[0] == 'medium-long':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL1B'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE1B'
-            if self.list_par1[0] == '2' and self.list_par2[0] == 'medium-long':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL2C'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE2C'
-            if self.list_par1[0] == '3' and self.list_par2[0] == 'medium-long':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL3C'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE3C'
-            if self.list_par1[0] == '4' and self.list_par2[0] == 'medium-long':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4B'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4B'
-
-            if self.list_par1[0] == '1' and self.list_par2[0] == 'long-short':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL1C'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE1C'
-            if self.list_par1[0] == '2' and self.list_par2[0] == 'long-short':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL2A'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE2A'
-            if self.list_par1[0] == '3' and self.list_par2[0] == 'long-short':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL3A'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE3A'
-            if self.list_par1[0] == '4' and self.list_par2[0] == 'long-short':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4C'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4C'
-
-            if self.list_par1[0] == '1' and self.list_par2[0] == 'long-medium':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL1C'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE1C'
-            if self.list_par1[0] == '2' and self.list_par2[0] == 'long-medium':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL2B'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE2B'
-            if self.list_par1[0] == '3' and self.list_par2[0] == 'long-medium':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL3B'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE3B'
-            if self.list_par1[0] == '4' and self.list_par2[0] == 'long-medium':
-                ifucube_model.meta.wcsinfo.ctype1 = 'MRSAL4C'
-                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBE4C'
+                ifucube_model.meta.wcsinfo.ctype1 = 'MRSALPHA'
+                ifucube_model.meta.wcsinfo.ctype2 = 'MRSBETA'
 
             if self.instrument == 'NIRSPEC':
                 ifucube_model.meta.wcsinfo.cunit1 = 'meter'
