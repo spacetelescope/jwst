@@ -23,7 +23,7 @@ __all__ = [
     'Asn_Lv3NRSIFU',
     'Asn_Lv3NRSIFUBackground',
     'Asn_Lv3SlitlessSpectral',
-    'Asn_Lv3SpectralSource',
+    'Asn_Lv3NRCWFSS',
     'Asn_Lv3SpectralTarget',
     'Asn_Lv3TSO',
     'Asn_Lv3WFSCMB',
@@ -565,7 +565,7 @@ class Asn_Lv3SlitlessSpectral(AsnMixin_Spectrum):
 
 
 @RegistryMarker.rule
-class Asn_Lv3SpectralSource(AsnMixin_Spectrum):
+class Asn_Lv3NRCWFSS(AsnMixin_Spectrum):
     """Level 3 slit-like, multi-object spectrographic Association
 
     Characteristics:
@@ -604,7 +604,7 @@ class Asn_Lv3SpectralSource(AsnMixin_Spectrum):
         ])
 
         # Check and continue initialization.
-        super(Asn_Lv3SpectralSource, self).__init__(*args, **kwargs)
+        super(Asn_Lv3NRCWFSS, self).__init__(*args, **kwargs)
 
     @property
     def dms_product_name(self):
