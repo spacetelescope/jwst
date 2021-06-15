@@ -211,10 +211,10 @@ Image2Pipeline.
      - science
      - N/A/
      - image2
-   * - NRC_GRISM [#f1]_
+   * - NRC_GRISM
      - science
      - N/A
-     - spec2
+     - N/A
    * - NRC_IMAGE
      - science
      - N/A
@@ -295,7 +295,7 @@ Image2Pipeline.
      - science
      - N/A
      - image2
-   * - NRS_LAMP [#f2]_
+   * - NRS_LAMP [#f1]_
      - science
      - N/A
      - nrslamp-spec2
@@ -331,8 +331,7 @@ Image2Pipeline.
 Footnotes
 ---------
 
-.. [#f1] Deprecated.
-.. [#f2] Association creation is heavily dependent upon other parameters such as ``LAMP``, ``OPMODE``, and ``GRATING``.
+.. [#f1] Association creation is heavily dependent upon other parameters such as ``LAMP``, ``OPMODE``, and ``GRATING``.
 
 Notes
 -----
@@ -344,11 +343,11 @@ Column definitions
 - Specials : The association rule modifications to handle the exposure.
 - Association Type : :ref:`Association type <asn-jwst-association-types>` created.
 
-More about Specials: Though exposures that are not directly science, such as
-backgrounds, are primarily used to be applied to their associated science, they
-are also often calibrated as if they were science products themselves. In these
-situations, a special association rule is created to produce the necessary
-associations.
+More about Specials: Many exposures that are not directly science, such as
+backgrounds, are primarily used as auxiliary members for other science products.
+However, they are also often calibrated as if they were science products
+themselves. In these situations, a special association rule is created to
+produce the necessary associations.
 
 History
 -------
