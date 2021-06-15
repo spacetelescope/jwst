@@ -20,13 +20,13 @@ from astropy.modeling.models import math as astmath
 from astropy.utils import isiterable
 
 
-__all__ = ['AngleFromGratingEquation', 'WavelengthFromGratingEquation',
-           'Unitless2DirCos', 'DirCos2Unitless', 'Rotation3DToGWA', 'Gwa2Slit',
-           'Slit2Msa', 'Snell', 'Logical', 'NirissSOSSModel', 'V23ToSky', 'Slit',
+__all__ = ['Gwa2Slit','Slit2Msa', 'Logical', 'NirissSOSSModel', 'Slit',
            'NIRCAMForwardRowGrismDispersion', 'NIRCAMForwardColumnGrismDispersion',
            'NIRCAMBackwardGrismDispersion', 'MIRI_AB2Slice', 'GrismObject',
            'NIRISSForwardRowGrismDispersion', 'NIRISSForwardColumnGrismDispersion',
-           'NIRISSBackwardGrismDispersion', 'V2V3ToIdeal', 'IdealToV2V3']
+           'NIRISSBackwardGrismDispersion', 'V2V3ToIdeal', 'IdealToV2V3',
+           'RefractionIndexFromPrism', 'Snell', 'V23ToSky', 'Rotation3DToGWA',
+           'AngleFromGratingEquation', 'WavelengthFromGratingEquation']
 
 
 N_SHUTTERS_QUADRANT = 62415
@@ -193,133 +193,6 @@ class MIRI_AB2Slice(Model):
         return _toindex(s)
 
 
-class Snell(Model):
-    """
-    Apply transforms, including Snell law, through the NIRSpec prism.
-
-    Parameters
-    ----------
-    angle : float
-        Prism angle in deg.
-    kcoef : list
-        K coefficients in Sellmeir equation.
-    lcoef : list
-        L coefficients in Sellmeir equation.
-    tcoef : list
-        Thermal coefficients of glass.
-    tref : float
-        Refernce temperature in K.
-    pref : float
-        Refernce pressure in ATM.
-    temperature : float
-        System temperature during observation in K
-    pressure : float
-        System pressure during observation in ATM.
-
-    """
-
-    standard_broadcasting = False
-    _separable = False
-
-    n_inputs = 4
-    n_outputs = 3
-
-    def __init__(self, angle, kcoef, lcoef, tcoef, tref, pref,
-                 temperature, pressure, name=None):
-        self.prism_angle = angle
-        self.kcoef = np.array(kcoef, dtype=float)
-        self.lcoef = np.array(lcoef, dtype=float)
-        self.tcoef = np.array(tcoef, dtype=float)
-        self.tref = tref
-        self.pref = pref
-        self.temp = temperature
-        self.pressure = pref
-        super(Snell, self).__init__(name=name)
-        self.inputs = ("lam", "alpha_in", "beta_in", "zin")
-        self.outputs = ("alpha_out", "beta_out", "zout")
-
-    @staticmethod
-    def compute_refraction_index(lam, temp, tref, pref, pressure, kcoef, lcoef, tcoef):
-        """Calculate and retrun the refraction index."""
-
-        # Convert to microns
-        lam = np.asarray(lam * 1e6)
-        KtoC = 273.15  # kelvin to celcius conversion
-        temp -= KtoC
-        tref -= KtoC
-        delt = temp - tref
-
-        K1, K2, K3 = kcoef
-        L1, L2, L3 = lcoef
-        D0, D1, D2, E0, E1, lam_tk = tcoef
-
-        if delt < 20:
-            n = np.sqrt(1. +
-                        K1 * lam**2 / (lam**2 - L1) +
-                        K2 * lam**2 / (lam**2 - L2) +
-                        K3 * lam**2 / (lam**2 - L3)
-                        )
-        else:
-            # Derive the refractive index of air at the reference temperature and pressure
-            # and at the operational system's temperature and pressure.
-            nref = 1. + (6432.8 + 2949810. * lam**2 /
-                         (146.0 * lam**2 - 1.) + (5540.0 * lam**2) /
-                         (41.0 * lam**2 - 1.)) * 1e-8
-
-            # T should be in C, P should be in ATM
-            nair_obs = 1.0 + ((nref - 1.0) * pressure) / (1.0 + (temp - 15.) * 3.4785e-3)
-            nair_ref = 1.0 + ((nref - 1.0) * pref) / (1.0 + (tref - 15) * 3.4785e-3)
-
-            # Compute the relative index of the glass at Tref and Pref using Sellmeier equation I.
-            lamrel = lam * nair_obs / nair_ref
-
-            nrel = np.sqrt(1. +
-                           K1 * lamrel ** 2 / (lamrel ** 2 - L1) +
-                           K2 * lamrel ** 2 / (lamrel ** 2 - L2) +
-                           K3 * lamrel ** 2 / (lamrel ** 2 - L3)
-                           )
-            # Convert the relative index of refraction at the reference temperature and pressure
-            # to absolute.
-            nabs_ref = nrel * nair_ref
-
-            # Compute the absolute index of the glass
-            delnabs = (0.5 * (nrel ** 2 - 1.) / nrel) * \
-                (D0 * delt + D1 * delt ** 2 + D2 * delt ** 3 +
-                 (E0 * delt + E1 * delt ** 2) / (lamrel ** 2 - lam_tk ** 2))
-            nabs_obs = nabs_ref + delnabs
-
-            # Define the relative index at the system's operating T and P.
-            n = nabs_obs / nair_obs
-        return n
-
-    def evaluate(self, lam, alpha_in, beta_in, zin):
-        """Go through the prism"""
-        n = self.compute_refraction_index(lam, self.temp, self.tref, self.pref, self.pressure,
-                                          self.kcoef, self.lcoef, self.tcoef)
-        # Apply Snell's law through front surface, eq 5.3.3 II
-        xout = alpha_in / n
-        yout = beta_in / n
-        zout = np.sqrt(1.0 - xout**2 - yout**2)
-
-        # Go to back surface frame # eq 5.3.3 III
-        y_rotation = Rotation3DToGWA([self.prism_angle], "y")
-        xout, yout, zout = y_rotation(xout, yout, zout)
-
-        # Reflection on back surface
-        xout = -1 * xout
-        yout = -1 * yout
-
-        # Back to front surface
-        y_rotation = Rotation3DToGWA([-self.prism_angle], "y")
-        xout, yout, zout = y_rotation(xout, yout, zout)
-
-        # Snell's refraction law through front surface
-        xout = xout * n
-        yout = yout * n
-        zout = np.sqrt(1.0 - xout**2 - yout**2)
-        return xout, yout, zout
-
-
 class RefractionIndexFromPrism(Model):
     """
     Compute the refraction index of a prism (NIRSpec).
@@ -349,319 +222,6 @@ class RefractionIndexFromPrism(Model):
         nsq = ((alpha_out + alpha_in * (1 - 2 * sangle ** 2)) / (2 * sangle * cangle)) ** 2 + \
             alpha_in ** 2 + beta_in ** 2
         return np.sqrt(nsq)
-
-
-class AngleFromGratingEquation(Model):
-    """
-    Solve the 3D Grating Dispersion Law for the refracted angle.
-
-    Parameters
-    ----------
-    groove_density : int
-        Grating ruling density.
-    order : int
-        Spectral order.
-    """
-
-    _separable = False
-    n_inputs = 4
-    n_outputs = 3
-
-    groove_density = Parameter()
-    """ Grating ruling density."""
-
-    order = Parameter(default=-1)
-    """ Spectral order."""
-
-    def __init__(self, groove_density, order, **kwargs):
-        super().__init__(groove_density=groove_density, order=order, **kwargs)
-        self.inputs = ("lam", "alpha_in", "beta_in", "z")
-        """ Wavelength and 3 angle coordinates going into the grating."""
-
-        self.outputs = ("alpha_out", "beta_out", "zout")
-        """ Three angles coming out of the grating. """
-
-    def evaluate(self, lam, alpha_in, beta_in, z, groove_density, order):
-        if alpha_in.shape != beta_in.shape != z.shape:
-            raise ValueError("Expected input arrays to have the same shape")
-        orig_shape = alpha_in.shape or (1,)
-        xout = -alpha_in - groove_density * order * lam
-        yout = - beta_in
-        zout = np.sqrt(1 - xout**2 - yout**2)
-        xout.shape = yout.shape = zout.shape = orig_shape
-        return xout, yout, zout
-
-
-class WavelengthFromGratingEquation(Model):
-    """
-    Solve the 3D Grating Dispersion Law for the wavelength.
-
-    Parameters
-    ----------
-    groove_density : int
-        Grating ruling density.
-    order : int
-        Spectral order.
-    """
-
-    _separable = False
-    n_inputs = 3
-    n_outputs = 1
-
-    groove_density = Parameter()
-    """ Grating ruling density."""
-    order = Parameter(default=1)
-    """ Spectral order."""
-
-    def __init__(self, groove_density, order, **kwargs):
-        super().__init__(groove_density=groove_density, order=order, **kwargs)
-        self.inputs = ("alpha_in", "beta_in", "alpha_out")
-        """ three angle - alpha_in and beta_in going into the grating and alpha_out coming out of the grating."""
-        self.outputs = ("lam",)
-        """ Wavelength."""
-
-    def evaluate(self, alpha_in, beta_in, alpha_out, groove_density, order):
-        # beta_in is not used in this equation but is here because it's
-        # needed for the prism computation. Currently these two computations
-        # need to have the same interface.
-        return -(alpha_in + alpha_out) / (groove_density * order)
-
-
-class Unitless2DirCos(Model):
-    """
-    Transform a vector to directional cosines.
-    """
-    _separable = False
-    n_inputs = 2
-    n_outputs = 3
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.inputs = ('x', 'y')
-        self.outputs = ('x', 'y', 'z')
-
-    def evaluate(self, x, y):
-        vabs = np.sqrt(1. + x**2 + y**2)
-        cosa = x / vabs
-        cosb = y / vabs
-        cosc = 1. / vabs
-        return cosa, cosb, cosc
-
-    def inverse(self):
-        return DirCos2Unitless()
-
-
-class DirCos2Unitless(Model):
-    """
-    Transform directional cosines to vector.
-    """
-    _separable = False
-    n_inputs = 3
-    n_outputs = 2
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.inputs = ('x', 'y', 'z')
-        self.outputs = ('x', 'y')
-
-    def evaluate(self, x, y, z):
-
-        return x / z, y / z
-
-    def inverse(self):
-        return Unitless2DirCos()
-
-
-class Rotation3DToGWA(Model):
-    """
-    Perform a 3D rotation given an angle in degrees.
-
-    Positive angles represent a counter-clockwise rotation and vice-versa.
-
-    Parameters
-    ----------
-    angles : array-like
-        Angles of rotation in deg in the order of axes_order.
-    axes_order : str
-        A sequence of 'x', 'y', 'z' corresponding of axis of rotation/
-    """
-    standard_broadcasting = False
-    _separable = False
-
-    separable = False
-
-    n_inputs = 3
-    n_outputs = 3
-
-    angles = Parameter(getter=np.rad2deg, setter=np.deg2rad)
-
-    def __init__(self, angles, axes_order, name=None):
-        if len(angles) != len(axes_order):
-            raise InputParameterError(
-                "Number of angles must equal number of axes in axes_order.")
-
-        self.axes = ['x', 'y', 'z']
-        unrecognized = set(axes_order).difference(self.axes)
-        if unrecognized:
-            raise ValueError("Unrecognized axis label {0}; "
-                             "should be one of {1} ".format(unrecognized,
-                                                            self.axes))
-        self.axes_order = axes_order
-
-        self._func_map = {'x': self._xrot,
-                          'y': self._yrot,
-                          'z': self._zrot
-                          }
-        super(Rotation3DToGWA, self).__init__(angles, name=name)
-        self.inputs = ('x', 'y', 'z')
-        self.outputs = ('x', 'y', 'z')
-
-    @property
-    def inverse(self):
-        """Inverse rotation."""
-        angles = self.angles.value[::-1] * -1
-        return self.__class__(angles, self.axes_order[::-1])
-
-    def _xrot(self, x, y, z, theta):
-        xout = x
-        yout = y * np.cos(theta) + z * np.sin(theta)
-        zout = np.sqrt(1 - xout ** 2 - yout ** 2)
-        return [xout, yout, zout]
-
-    def _yrot(self, x, y, z, theta):
-        xout = x * np.cos(theta) - z * np.sin(theta)
-        yout = y
-        zout = np.sqrt(1 - xout ** 2 - yout ** 2)
-        return [xout, yout, zout]
-
-    def _zrot(self, x, y, z, theta):
-        xout = x * np.cos(theta) + y * np.sin(theta)
-        yout = -x * np.sin(theta) + y * np.cos(theta)
-        zout = np.sqrt(1 - xout ** 2 - yout ** 2)
-        return [xout, yout, zout]
-
-    def evaluate(self, x, y, z, angles):
-        """
-        Apply the rotation to a set of 3D Cartesian coordinates.
-
-        """
-
-        if x.shape != y.shape != z.shape:
-            raise ValueError("Expected input arrays to have the same shape")
-
-        #  Note: If the original shape was () (an array scalar) convert to a
-        #  1-element 1-D array on output for consistency with most other models
-        orig_shape = x.shape or (1,)
-        for ang, ax in zip(angles[0], self.axes_order):
-            x, y, z = self._func_map[ax](x, y, z, theta=ang)
-        x.shape = y.shape = z.shape = orig_shape
-
-        return x, y, z
-
-
-class Rotation3D(Model):
-    """
-    Perform a series of rotations about different axis in 3D space.
-
-    Positive angles represent a counter-clockwise rotation.
-
-    Parameters
-    ----------
-    angles : array-like
-        Angles of rotation in deg in the order of axes_order.
-    axes_order : str
-        A sequence of 'x', 'y', 'z' corresponding of axis of rotation.
-    """
-    standard_broadcasting = False
-    _separable = False
-
-    n_inputs = 3
-    n_outputs = 3
-
-    angles = Parameter(getter=np.rad2deg, setter=np.deg2rad)
-
-    def __init__(self, angles, axes_order, name=None):
-        self.axes = ['x', 'y', 'z']
-        unrecognized = set(axes_order).difference(self.axes)
-        if unrecognized:
-            raise ValueError("Unrecognized axis label {0}; "
-                             "should be one of {1} ".format(unrecognized,
-                                                            self.axes))
-        self.axes_order = axes_order
-        if len(angles) != len(axes_order):
-            raise ValueError("The number of angles {0} should match the number \
-                              of axes {1}.".format(len(angles),
-                                                   len(axes_order)))
-        super(Rotation3D, self).__init__(angles, name=name)
-        self.inputs = ('x', 'y', 'z')
-        self.outputs = ('x', 'y', 'z')
-
-    @property
-    def inverse(self):
-        """Inverse rotation."""
-        angles = self.angles.value[::-1] * -1
-        return self.__class__(angles, axes_order=self.axes_order[::-1])
-
-    @staticmethod
-    def _compute_matrix(angles, axes_order):
-        if len(angles) != len(axes_order):
-            raise InputParameterError(
-                "Number of angles must equal number of axes in axes_order.")
-        matrices = []
-        for angle, axis in zip(angles, axes_order):
-            matrix = np.zeros((3, 3), dtype=float)
-            if axis == 'x':
-                mat = Rotation3D.rotation_matrix_from_angle(angle)
-                matrix[0, 0] = 1
-                matrix[1:, 1:] = mat
-            elif axis == 'y':
-                mat = Rotation3D.rotation_matrix_from_angle(-angle)
-                matrix[1, 1] = 1
-                matrix[0, 0] = mat[0, 0]
-                matrix[0, 2] = mat[0, 1]
-                matrix[2, 0] = mat[1, 0]
-                matrix[2, 2] = mat[1, 1]
-            elif axis == 'z':
-                mat = Rotation3D.rotation_matrix_from_angle(angle)
-                matrix[2, 2] = 1
-                matrix[:2, :2] = mat
-            else:
-                raise ValueError("Expected axes_order to be a combination \
-                        of characters 'x', 'y' and 'z', got {0}".format(
-                    set(axes_order).difference(['x', 'y', 'z'])))
-            matrices.append(matrix)
-        if len(angles) == 1:
-            return matrix
-        elif len(matrices) == 2:
-            return np.dot(matrices[1], matrices[0])
-        else:
-            prod = np.dot(matrices[1], matrices[0])
-            for m in matrices[2:]:
-                prod = np.dot(m, prod)
-            return prod
-
-    @staticmethod
-    def rotation_matrix_from_angle(angle):
-        """
-        Clockwise rotation matrix.
-        """
-        return np.array([[math.cos(angle), -math.sin(angle)],
-                         [math.sin(angle), math.cos(angle)]])
-
-    def evaluate(self, x, y, z, angles):
-        """
-        Apply the rotation to a set of 3D Cartesian coordinates.
-        """
-        if x.shape != y.shape != z.shape:
-            raise ValueError("Expected input arrays to have the same shape")
-        # Note: If the original shape was () (an array scalar) convert to a
-        # 1-element 1-D array on output for consistency with most other models
-        orig_shape = x.shape or (1,)
-        inarr = np.array([x.flatten(), y.flatten(), z.flatten()])
-        result = np.dot(self._compute_matrix(angles[0], self.axes_order), inarr)
-        x, y, z = result[0], result[1], result[2]
-        x.shape = y.shape = z.shape = orig_shape
-        return x, y, z
 
 
 class Gwa2Slit(Model):
@@ -864,90 +424,6 @@ class Logical(Model):
         txt = "{0}(condition={1}, compareto={2}, value={3})"
         return txt.format(self.__class__.__name__, self.condition,
                           self.compareto, self.value)
-
-
-class V23ToSky(Rotation3D):
-    """
-    Transform from V2V3 to a standard coordinate system (ICRS).
-
-    Parameters
-    ----------
-    angles : list
-        A sequence of angles (in deg).
-        The angles are [-V2_REF, V3_REF, -ROLL_REF, -DEC_REF, RA_REF].
-    axes_order : str
-        A sequence of characters ('x', 'y', or 'z') corresponding to the
-        axis of rotation and matching the order in ``angles``.
-        The axes are "zyxyz".
-    """
-
-    _separable = False
-
-    n_inputs = 2
-    n_outputs = 2
-
-    def __init__(self, angles, axes_order, name=None):
-        super(V23ToSky, self).__init__(angles, axes_order=axes_order, name=name)
-        self._inputs = ("v2", "v3")
-        """ ("v2", "v3"): Coordinates in the (V2, V3) telescope frame."""
-        self._outputs = ("ra", "dec")
-        """ ("ra", "dec"): RA, DEC cooridnates in ICRS."""
-
-    @property
-    def inputs(self):
-        return self._inputs
-
-    @inputs.setter
-    def inputs(self, val):
-        self._inputs = val
-
-    @property
-    def outputs(self):
-        return self._outputs
-
-    @outputs.setter
-    def outputs(self, val):
-        self._outputs = val
-
-    @staticmethod
-    def spherical2cartesian(alpha, delta):
-        """
-        Convert spherical coordinates (in deg) to cartesian.
-        """
-        alpha = np.deg2rad(alpha)
-        delta = np.deg2rad(delta)
-        x = np.cos(alpha) * np.cos(delta)
-        y = np.cos(delta) * np.sin(alpha)
-        z = np.sin(delta)
-        return np.array([x, y, z])
-
-    @staticmethod
-    def cartesian2spherical(x, y, z):
-        """
-        Convert cartesian coordinates to spherical coordinates (in deg).
-        """
-        h = np.hypot(x, y)
-        alpha = np.rad2deg(np.arctan2(y, x))
-        delta = np.rad2deg(np.arctan2(z, h))
-        return alpha, delta
-
-    def evaluate(self, v2, v3, angles):
-        x, y, z = self.spherical2cartesian(v2, v3)
-        x1, y1, z1 = super(V23ToSky, self).evaluate(x, y, z, angles)
-        ra, dec = self.cartesian2spherical(x1, y1, z1)
-
-        return ra, dec
-
-    def __call__(self, v2, v3, **kwargs):
-        from itertools import chain
-        inputs, format_info = self.prepare_inputs(v2, v3)
-        parameters = self._param_sets(raw=True)
-
-        outputs = self.evaluate(*chain(inputs, parameters))
-        if self.n_outputs == 1:
-            outputs = (outputs,)
-
-        return self.prepare_outputs(format_info, *outputs)
 
 
 class IdealToV2V3(Model):
@@ -1381,7 +857,7 @@ class NIRISSBackwardGrismDispersion(Model):
     n_outputs = 5
 
     def __init__(self, orders, lmodels=None, xmodels=None,
-                 ymodels=None, theta=None, name=None, meta=None):
+                 ymodels=None, theta=0.0, name=None, meta=None):
         self._order_mapping = {int(k): v for v, k in enumerate(orders)}
         self.xmodels = xmodels
         self.ymodels = ymodels
@@ -1673,3 +1149,522 @@ class NIRISSForwardColumnGrismDispersion(Model):
         wavelength = dyr | tab | lmodel
         model = Mapping((2, 3, 1, 3, 4)) | Const1D(x00) & Const1D(y00) & wavelength & Const1D(order)
         return model(x, y, x0, y0, order)
+
+
+class Rotation3DToGWA(Model):
+    """
+    Perform a 3D rotation given an angle in degrees.
+    Positive angles represent a counter-clockwise rotation and vice-versa.
+    Parameters
+    ----------
+    angles : array-like
+        Angles of rotation in deg in the order of axes_order.
+    axes_order : str
+        A sequence of 'x', 'y', 'z' corresponding of axis of rotation/
+    """
+    standard_broadcasting = False
+    _separable = False
+
+    separable = False
+
+    n_inputs = 3
+    n_outputs = 3
+
+    angles = Parameter(getter=np.rad2deg, setter=np.deg2rad)
+
+    def __init__(self, angles, axes_order, name=None):
+        if len(angles) != len(axes_order):
+            raise InputParameterError(
+                "Number of angles must equal number of axes in axes_order.")
+
+        self.axes = ['x', 'y', 'z']
+        unrecognized = set(axes_order).difference(self.axes)
+        if unrecognized:
+            raise ValueError("Unrecognized axis label {0}; "
+                             "should be one of {1} ".format(unrecognized,
+                                                            self.axes))
+        self.axes_order = axes_order
+
+        self._func_map = {'x': self._xrot,
+                          'y': self._yrot,
+                          'z': self._zrot
+                          }
+        super(Rotation3DToGWA, self).__init__(angles, name=name)
+        self.inputs = ('x', 'y', 'z')
+        self.outputs = ('x', 'y', 'z')
+
+    @property
+    def inverse(self):
+        """Inverse rotation."""
+        angles = self.angles.value[::-1] * -1
+        return self.__class__(angles, self.axes_order[::-1])
+
+    def _xrot(self, x, y, z, theta):
+        xout = x
+        yout = y * np.cos(theta) + z * np.sin(theta)
+        zout = np.sqrt(1 - xout ** 2 - yout ** 2)
+        return [xout, yout, zout]
+
+    def _yrot(self, x, y, z, theta):
+        xout = x * np.cos(theta) - z * np.sin(theta)
+        yout = y
+        zout = np.sqrt(1 - xout ** 2 - yout ** 2)
+        return [xout, yout, zout]
+
+    def _zrot(self, x, y, z, theta):
+        xout = x * np.cos(theta) + y * np.sin(theta)
+        yout = -x * np.sin(theta) + y * np.cos(theta)
+        zout = np.sqrt(1 - xout ** 2 - yout ** 2)
+        return [xout, yout, zout]
+
+    def evaluate(self, x, y, z, angles):
+        """
+        Apply the rotation to a set of 3D Cartesian coordinates.
+        """
+
+        if x.shape != y.shape != z.shape:
+            raise ValueError("Expected input arrays to have the same shape")
+
+        #  Note: If the original shape was () (an array scalar) convert to a
+        #  1-element 1-D array on output for consistency with most other models
+        orig_shape = x.shape or (1,)
+        for ang, ax in zip(angles[0], self.axes_order):
+            x, y, z = self._func_map[ax](x, y, z, theta=ang)
+        x.shape = y.shape = z.shape = orig_shape
+
+        return x, y, z
+
+
+class Snell(Model):
+    """
+    Apply transforms, including Snell law, through the NIRSpec prism.
+    Parameters
+    ----------
+    angle : float
+        Prism angle in deg.
+    kcoef : list
+        K coefficients in Sellmeir equation.
+    lcoef : list
+        L coefficients in Sellmeir equation.
+    tcoef : list
+        Thermal coefficients of glass.
+    tref : float
+        Refernce temperature in K.
+    pref : float
+        Refernce pressure in ATM.
+    temperature : float
+        System temperature during observation in K
+    pressure : float
+        System pressure during observation in ATM.
+    """
+
+    standard_broadcasting = False
+    _separable = False
+
+    n_inputs = 4
+    n_outputs = 3
+
+    def __init__(self, angle, kcoef, lcoef, tcoef, tref, pref,
+                 temperature, pressure, name=None):
+        self.prism_angle = angle
+        self.kcoef = np.array(kcoef, dtype=float)
+        self.lcoef = np.array(lcoef, dtype=float)
+        self.tcoef = np.array(tcoef, dtype=float)
+        self.tref = tref
+        self.pref = pref
+        self.temp = temperature
+        self.pressure = pref
+        super(Snell, self).__init__(name=name)
+        self.inputs = ("lam", "alpha_in", "beta_in", "zin")
+        self.outputs = ("alpha_out", "beta_out", "zout")
+
+    @staticmethod
+    def compute_refraction_index(lam, temp, tref, pref, pressure, kcoef, lcoef, tcoef):
+        """Calculate and retrun the refraction index."""
+
+        # Convert to microns
+        lam = np.asarray(lam * 1e6)
+        KtoC = 273.15  # kelvin to celcius conversion
+        temp -= KtoC
+        tref -= KtoC
+        delt = temp - tref
+
+        K1, K2, K3 = kcoef
+        L1, L2, L3 = lcoef
+        D0, D1, D2, E0, E1, lam_tk = tcoef
+
+        if delt < 20:
+            n = np.sqrt(1. +
+                        K1 * lam**2 / (lam**2 - L1) +
+                        K2 * lam**2 / (lam**2 - L2) +
+                        K3 * lam**2 / (lam**2 - L3)
+                        )
+        else:
+            # Derive the refractive index of air at the reference temperature and pressure
+            # and at the operational system's temperature and pressure.
+            nref = 1. + (6432.8 + 2949810. * lam**2 /
+                         (146.0 * lam**2 - 1.) + (5540.0 * lam**2) /
+                         (41.0 * lam**2 - 1.)) * 1e-8
+
+            # T should be in C, P should be in ATM
+            nair_obs = 1.0 + ((nref - 1.0) * pressure) / (1.0 + (temp - 15.) * 3.4785e-3)
+            nair_ref = 1.0 + ((nref - 1.0) * pref) / (1.0 + (tref - 15) * 3.4785e-3)
+
+            # Compute the relative index of the glass at Tref and Pref using Sellmeier equation I.
+            lamrel = lam * nair_obs / nair_ref
+
+            nrel = np.sqrt(1. +
+                           K1 * lamrel ** 2 / (lamrel ** 2 - L1) +
+                           K2 * lamrel ** 2 / (lamrel ** 2 - L2) +
+                           K3 * lamrel ** 2 / (lamrel ** 2 - L3)
+                           )
+            # Convert the relative index of refraction at the reference temperature and pressure
+            # to absolute.
+            nabs_ref = nrel * nair_ref
+
+            # Compute the absolute index of the glass
+            delnabs = (0.5 * (nrel ** 2 - 1.) / nrel) * \
+                (D0 * delt + D1 * delt ** 2 + D2 * delt ** 3 +
+                 (E0 * delt + E1 * delt ** 2) / (lamrel ** 2 - lam_tk ** 2))
+            nabs_obs = nabs_ref + delnabs
+
+            # Define the relative index at the system's operating T and P.
+            n = nabs_obs / nair_obs
+        return n
+
+    def evaluate(self, lam, alpha_in, beta_in, zin):
+        """Go through the prism"""
+        n = self.compute_refraction_index(lam, self.temp, self.tref, self.pref, self.pressure,
+                                          self.kcoef, self.lcoef, self.tcoef)
+        # Apply Snell's law through front surface, eq 5.3.3 II
+        xout = alpha_in / n
+        yout = beta_in / n
+        zout = np.sqrt(1.0 - xout**2 - yout**2)
+
+        # Go to back surface frame # eq 5.3.3 III
+        y_rotation = Rotation3DToGWA([self.prism_angle], "y")
+        xout, yout, zout = y_rotation(xout, yout, zout)
+
+        # Reflection on back surface
+        xout = -1 * xout
+        yout = -1 * yout
+
+        # Back to front surface
+        y_rotation = Rotation3DToGWA([-self.prism_angle], "y")
+        xout, yout, zout = y_rotation(xout, yout, zout)
+
+        # Snell's refraction law through front surface
+        xout = xout * n
+        yout = yout * n
+        zout = np.sqrt(1.0 - xout**2 - yout**2)
+        return xout, yout, zout
+
+
+class AngleFromGratingEquation(Model):
+    """
+    Solve the 3D Grating Dispersion Law for the refracted angle.
+
+    Parameters
+    ----------
+    groove_density : int
+        Grating ruling density.
+    order : int
+        Spectral order.
+    """
+
+    _separable = False
+    n_inputs = 4
+    n_outputs = 3
+
+    groove_density = Parameter()
+    """ Grating ruling density."""
+
+    order = Parameter(default=-1)
+    """ Spectral order."""
+
+    def __init__(self, groove_density, order, **kwargs):
+        super().__init__(groove_density=groove_density, order=order, **kwargs)
+        self.inputs = ("lam", "alpha_in", "beta_in", "z")
+        """ Wavelength and 3 angle coordinates going into the grating."""
+
+        self.outputs = ("alpha_out", "beta_out", "zout")
+        """ Three angles coming out of the grating. """
+
+    def evaluate(self, lam, alpha_in, beta_in, z, groove_density, order):
+        if alpha_in.shape != beta_in.shape != z.shape:
+            raise ValueError("Expected input arrays to have the same shape")
+        orig_shape = alpha_in.shape or (1,)
+        xout = -alpha_in - groove_density * order * lam
+        yout = - beta_in
+        zout = np.sqrt(1 - xout**2 - yout**2)
+        xout.shape = yout.shape = zout.shape = orig_shape
+        return xout, yout, zout
+
+
+class WavelengthFromGratingEquation(Model):
+    """
+    Solve the 3D Grating Dispersion Law for the wavelength.
+
+    Parameters
+    ----------
+    groove_density : int
+        Grating ruling density.
+    order : int
+        Spectral order.
+    """
+
+    _separable = False
+    n_inputs = 3
+    n_outputs = 1
+
+    groove_density = Parameter()
+    """ Grating ruling density."""
+    order = Parameter(default=1)
+    """ Spectral order."""
+
+    def __init__(self, groove_density, order, **kwargs):
+        super().__init__(groove_density=groove_density, order=order, **kwargs)
+        self.inputs = ("alpha_in", "beta_in", "alpha_out")
+        """ three angle - alpha_in and beta_in going into the grating and alpha_out coming out of the grating."""
+        self.outputs = ("lam",)
+        """ Wavelength."""
+
+    def evaluate(self, alpha_in, beta_in, alpha_out, groove_density, order):
+        # beta_in is not used in this equation but is here because it's
+        # needed for the prism computation. Currently these two computations
+        # need to have the same interface.
+        return -(alpha_in + alpha_out) / (groove_density * order)
+
+
+class Rotation3D(Model):
+    """
+    Perform a series of rotations about different axis in 3D space.
+
+    Positive angles represent a counter-clockwise rotation.
+
+    Parameters
+    ----------
+    angles : array-like
+        Angles of rotation in deg in the order of axes_order.
+    axes_order : str
+        A sequence of 'x', 'y', 'z' corresponding of axis of rotation.
+    """
+    standard_broadcasting = False
+    _separable = False
+
+    n_inputs = 3
+    n_outputs = 3
+
+    angles = Parameter(getter=np.rad2deg, setter=np.deg2rad)
+
+    def __init__(self, angles, axes_order, name=None):
+        self.axes = ['x', 'y', 'z']
+        unrecognized = set(axes_order).difference(self.axes)
+        if unrecognized:
+            raise ValueError("Unrecognized axis label {0}; "
+                             "should be one of {1} ".format(unrecognized,
+                                                            self.axes))
+        self.axes_order = axes_order
+        if len(angles) != len(axes_order):
+            raise ValueError("The number of angles {0} should match the number \
+                              of axes {1}.".format(len(angles),
+                                                   len(axes_order)))
+        super(Rotation3D, self).__init__(angles, name=name)
+        self.inputs = ('x', 'y', 'z')
+        self.outputs = ('x', 'y', 'z')
+
+    @property
+    def inverse(self):
+        """Inverse rotation."""
+        angles = self.angles.value[::-1] * -1
+        return self.__class__(angles, axes_order=self.axes_order[::-1])
+
+    @staticmethod
+    def _compute_matrix(angles, axes_order):
+        if len(angles) != len(axes_order):
+            raise InputParameterError(
+                "Number of angles must equal number of axes in axes_order.")
+        matrices = []
+        for angle, axis in zip(angles, axes_order):
+            matrix = np.zeros((3, 3), dtype=float)
+            if axis == 'x':
+                mat = Rotation3D.rotation_matrix_from_angle(angle)
+                matrix[0, 0] = 1
+                matrix[1:, 1:] = mat
+            elif axis == 'y':
+                mat = Rotation3D.rotation_matrix_from_angle(-angle)
+                matrix[1, 1] = 1
+                matrix[0, 0] = mat[0, 0]
+                matrix[0, 2] = mat[0, 1]
+                matrix[2, 0] = mat[1, 0]
+                matrix[2, 2] = mat[1, 1]
+            elif axis == 'z':
+                mat = Rotation3D.rotation_matrix_from_angle(angle)
+                matrix[2, 2] = 1
+                matrix[:2, :2] = mat
+            else:
+                raise ValueError(f"""Expected axes_order to be a combination
+                                 of characters 'x', 'y' and 'z',
+                                 got {set(axes_order).difference(['x', 'y', 'z'])}""")
+            matrices.append(matrix)
+        if len(angles) == 1:
+            return matrix
+        elif len(matrices) == 2:
+            return np.dot(matrices[1], matrices[0])
+        else:
+            prod = np.dot(matrices[1], matrices[0])
+            for m in matrices[2:]:
+                prod = np.dot(m, prod)
+            return prod
+
+    @staticmethod
+    def rotation_matrix_from_angle(angle):
+        """
+        Clockwise rotation matrix.
+        """
+        return np.array([[math.cos(angle), -math.sin(angle)],
+                         [math.sin(angle), math.cos(angle)]])
+
+    def evaluate(self, x, y, z, angles):
+        """
+        Apply the rotation to a set of 3D Cartesian coordinates.
+        """
+        if x.shape != y.shape != z.shape:
+            raise ValueError("Expected input arrays to have the same shape")
+        # Note: If the original shape was () (an array scalar) convert to a
+        # 1-element 1-D array on output for consistency with most other models
+        orig_shape = x.shape or (1,)
+        inarr = np.array([x.flatten(), y.flatten(), z.flatten()])
+        result = np.dot(self._compute_matrix(angles[0], self.axes_order), inarr)
+        x, y, z = result[0], result[1], result[2]
+        x.shape = y.shape = z.shape = orig_shape
+        return x, y, z
+
+
+class V23ToSky(Rotation3D):
+    """
+    Transform from V2V3 to a standard coordinate system (ICRS).
+
+    Parameters
+    ----------
+    angles : list
+        A sequence of angles (in deg).
+        The angles are [-V2_REF, V3_REF, -ROLL_REF, -DEC_REF, RA_REF].
+    axes_order : str
+        A sequence of characters ('x', 'y', or 'z') corresponding to the
+        axis of rotation and matching the order in ``angles``.
+        The axes are "zyxyz".
+    """
+
+    _separable = False
+
+    n_inputs = 2
+    n_outputs = 2
+
+    def __init__(self, angles, axes_order, name=None):
+        super(V23ToSky, self).__init__(angles, axes_order=axes_order, name=name)
+        self._inputs = ("v2", "v3")
+        """ ("v2", "v3"): Coordinates in the (V2, V3) telescope frame."""
+        self._outputs = ("ra", "dec")
+        """ ("ra", "dec"): RA, DEC cooridnates in ICRS."""
+
+    @property
+    def inputs(self):
+        return self._inputs
+
+    @inputs.setter
+    def inputs(self, val):
+        self._inputs = val
+
+    @property
+    def outputs(self):
+        return self._outputs
+
+    @outputs.setter
+    def outputs(self, val):
+        self._outputs = val
+
+    @staticmethod
+    def spherical2cartesian(alpha, delta):
+        """
+        Convert spherical coordinates (in deg) to cartesian.
+        """
+        alpha = np.deg2rad(alpha)
+        delta = np.deg2rad(delta)
+        x = np.cos(alpha) * np.cos(delta)
+        y = np.cos(delta) * np.sin(alpha)
+        z = np.sin(delta)
+        return np.array([x, y, z])
+
+    @staticmethod
+    def cartesian2spherical(x, y, z):
+        """
+        Convert cartesian coordinates to spherical coordinates (in deg).
+        """
+        h = np.hypot(x, y)
+        alpha = np.rad2deg(np.arctan2(y, x))
+        delta = np.rad2deg(np.arctan2(z, h))
+        return alpha, delta
+
+    def evaluate(self, v2, v3, angles):
+        x, y, z = self.spherical2cartesian(v2, v3)
+        x1, y1, z1 = super(V23ToSky, self).evaluate(x, y, z, angles)
+        ra, dec = self.cartesian2spherical(x1, y1, z1)
+
+        return ra, dec
+
+    def __call__(self, v2, v3, **kwargs):
+        from itertools import chain
+        inputs, format_info = self.prepare_inputs(v2, v3)
+        parameters = self._param_sets(raw=True)
+
+        outputs = self.evaluate(*chain(inputs, parameters))
+        if self.n_outputs == 1:
+            outputs = (outputs,)
+
+        return self.prepare_outputs(format_info, *outputs)
+
+
+class Unitless2DirCos(Model):
+    """
+    Transform a vector to directional cosines.
+    """
+    _separable = False
+    n_inputs = 2
+    n_outputs = 3
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.inputs = ('x', 'y')
+        self.outputs = ('x', 'y', 'z')
+
+    def evaluate(self, x, y):
+        vabs = np.sqrt(1. + x**2 + y**2)
+        cosa = x / vabs
+        cosb = y / vabs
+        cosc = 1. / vabs
+        return cosa, cosb, cosc
+
+    def inverse(self):
+        return DirCos2Unitless()
+
+
+class DirCos2Unitless(Model):
+    """
+    Transform directional cosines to vector.
+    """
+    _separable = False
+    n_inputs = 3
+    n_outputs = 2
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.inputs = ('x', 'y', 'z')
+        self.outputs = ('x', 'y')
+
+    def evaluate(self, x, y, z):
+
+        return x / z, y / z
+
+    def inverse(self):
+        return Unitless2DirCos()

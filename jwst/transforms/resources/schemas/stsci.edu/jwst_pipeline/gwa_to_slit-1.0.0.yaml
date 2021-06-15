@@ -1,0 +1,36 @@
+---
+$schema: "http://stsci.edu/schemas/yaml-schema/draft-01"
+id: "http://stsci.edu/schemas/jwst_pipeline/gwa_to_slit-1.0.0"
+title: >
+  NIRSPEC set of models from GWA to slit_frame.
+
+description: |
+  This model is used by the NIRSPEC WCS pipeline.
+  It maps slit to the transform from the Grating Wheel Assembly (GWA)
+  to the coordinate frame of the slit, where (0, 0) is the center of
+  the slit.
+
+allOf:
+  - $ref: "http://stsci.edu/schemas/asdf/transform/transform-1.2.0"
+  - type: object
+    properties:
+      slits:
+        description: |
+          An array with slit numbers.
+          The slit number is computed from the quadrant and
+          the slit ID in this quadrant using
+
+          $P = quadrant * number_of_shutters_quadrant + slit_id$
+        anyOf:
+          - type: array
+            items:
+              anyOf:
+                - type: array
+                - type: number
+          - tag: "tag:stsci.edu:asdf/core/ndarray-*"
+      models:
+        description: |
+          A compound model transferring positions at the GWA to
+          position in the slit frame.
+        type: array
+    required: [slits, models]
