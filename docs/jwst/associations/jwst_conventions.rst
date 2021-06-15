@@ -6,7 +6,7 @@ JWST Conventions
 
 .. _asn-jwst-naming:
 
-Naming Conventions
+Association Naming
 ==================
 
 When produced through the ground processing, all association files are
