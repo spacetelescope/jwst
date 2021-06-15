@@ -1,8 +1,8 @@
 %YAML 1.1
 ---
 $schema: "http://stsci.edu/schemas/yaml-schema/draft-01"
-id: "http://stsci.edu/schemas/jwst_pipeline/coords-0.7.0"
-tag: "tag:stsci.edu:jwst_pipeline/coords-0.7.0"
+id: "http://stsci.edu/schemas/jwst_pipeline/coords-1.0.0"
+tag: "tag:stsci.edu:jwst_pipeline/coords-1.0.0"
 
 title: >
   Convert coordinates between vector and directional cosine form.
@@ -12,27 +12,27 @@ description: |
   some computation with them. Models have no parameters. Currently it supports
   DirCos2Unitless, Unitless2DirCos.
 
-examples: 
-  - 
+examples:
+  -
     - Convert directional cosines to vectors.
 
     - |
-      
-        !<tag:stsci.edu:jwst_pipeline/coords-0.7.0>
+
+        !<tag:stsci.edu:jwst_pipeline/coords-1.0.0>
           model_type: directional2unitless
 
   -
     - Convert vectors to directional cosines.
 
     - |
-        !<tag:stsci.edu:jwst_pipeline/coords-0.7.0>
+        !<tag:stsci.edu:jwst_pipeline/coords-1.0.0>
           model_type: unitless2directional
 
 allOf:
-  - $ref:  "tag:stsci.edu:asdf/transform/transform-1.1.0"
+  - $ref:  "http://stsci.edu/schemas/asdf/transform/transform-1.2.0"
   - object:
     properties:
-      model_type: 
+      model_type:
         description: |
           The type of class to initialize.
         type: string

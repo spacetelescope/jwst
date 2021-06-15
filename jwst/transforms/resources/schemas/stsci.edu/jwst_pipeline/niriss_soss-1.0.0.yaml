@@ -1,6 +1,6 @@
 $schema: "http://stsci.edu/schemas/yaml-schema/draft-01"
-id: "http://stsci.edu/schemas/jwst_pipeline/niriss_soss-0.1.0"
-tag: "tag:stsci.edu:jwst_pipeline/niriss_soss-0.1.0"
+id: "http://stsci.edu/schemas/jwst_pipeline/niriss_soss-1.0.0"
+tag: "tag:stsci.edu:jwst_pipeline/niriss_soss-1.0.0"
 title: >
   NIRISS SOSS transforms.
 
@@ -9,7 +9,7 @@ description: |
   It maps spectral orderto to transform
 
 allOf:
-  - $ref: ../asdf/transform/transform-1.1.0
+  - $ref: "http://stsci.edu/schemas/asdf/transform/transform-1.2.0"
   - type: object
     properties:
       spectral_orders:
@@ -23,5 +23,5 @@ allOf:
           A compound model transferring pixel to worlds coordinates.
         type: array
         items:
-          $ref: ../asdf/transform/transform-1.1.0
+          $ref: "http://stsci.edu/schemas/asdf/transform/transform-1.2.0"
     required: [spectral_orders, models]
