@@ -220,6 +220,8 @@ Converting from ``astropy.io.fits``
 This section describes how to port code that uses ``astropy.io.fits``
 to use `jwst.datamodels`.
 
+.. _datamodels-open:
+
 Opening a file
 --------------
 
