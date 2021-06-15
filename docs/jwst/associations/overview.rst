@@ -68,6 +68,15 @@ associations. When retrieving the data from the archive, users will find the
 list of associated data in JSON files that are submitted together with the
 requested Stage 2 or Stage 3 data.
 
+Association Pools
+-----------------
+
+The information about what data will be associated is constructed with the
+information derived from the Astronomer Proposal Tool and the rules on how data
+should be associated that are defined by the instrument teams. All the
+information from a single proposal is captured in a single file known as the
+:ref:`Association Pool<design-pool>`.
+
 .. _asn-usage:
 
 Usage
