@@ -163,6 +163,9 @@ def create_optional_results_model(opt_info):
         weights=weights,
         crmag=crmag)
 
+    opt_model.meta.filename = input_model.meta.filename
+    opt_model.update(input_model)  # ... and add all keys from input
+
     return opt_model
 
 
