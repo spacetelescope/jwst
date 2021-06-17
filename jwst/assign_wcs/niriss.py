@@ -4,6 +4,7 @@ import asdf
 from astropy import coordinates as coord
 from astropy import units as u
 from astropy.modeling.models import Const1D, Mapping, Identity, Shift
+from astropy.modeling.utils import ComplexBoundingBox
 import gwcs.coordinate_frames as cf
 from gwcs import wcs
 
@@ -88,6 +89,27 @@ def niriss_soss_set_input(model, order_number):
     return wcs.WCS(pipeline)
 
 
+def _niriss_order_bounding_box(input_model, order):
+    import numpy as np
+    bbox_y = np.array([-0.5, input_model.meta.subarray.ysize - 0.5])
+    bbox_x = np.array([-0.5, input_model.meta.subarray.xsize - 0.5])
+
+    if order == 1:
+        return (tuple(bbox_y), tuple(bbox_x))
+    elif order == 2:
+        return (tuple(2 * bbox_y), tuple(2 * bbox_x))
+    elif order == 3:
+        return (tuple(3 * bbox_y), tuple(3 * bbox_x))
+    else:
+        raise ValueError(f'Invalid spectral order: {order} provided. Spectral order must be 1, 2, or 3.')
+
+
+def niriss_bounding_box(input_model):
+    bbox = {order: _niriss_order_bounding_box(input_model, order)
+            for order in [1, 2, 3]}
+    return ComplexBoundingBox(bbox, slice_arg=2, remove_slice_arg=True)
+
+
 def niriss_soss(input_model, reference_files):
     """
     The NIRISS SOSS WCS pipeline.
@@ -113,6 +135,9 @@ def niriss_soss(input_model, reference_files):
 
     It uses the "specwcs" reference file.
     """
+
+    print("Running niriss_soss")
+    # raise RuntimeError("Please say something")
 
     # Get the target RA and DEC, they will be used for setting the WCS RA
     # and DEC based on a conversation with Kevin Volk.
@@ -173,6 +198,7 @@ def niriss_soss(input_model, reference_files):
         cm_order2 = subarray2full | cm_order2
         cm_order3 = subarray2full | cm_order3
 
+        print("Assigning bounding_box")
         bbox = ((-0.5, input_model.meta.subarray.ysize - 0.5),
                 (-0.5, input_model.meta.subarray.xsize - 0.5))
         cm_order1.bounding_box = bbox
