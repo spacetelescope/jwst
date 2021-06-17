@@ -6,15 +6,14 @@ Stage 2 Associations: Technical Specifications
 Logical Structure
 -----------------
 
-Independent of the actual format, all stage 2 associations have the
-following structure. Again, the structure is defined and enforced by
-the stage 2 schema
+All stage 2 associations have the following structure. The structure is defined
+and enforced by the stage 2 schema
 
-  * Top level, or meta, key/values
-  * List of products, each consisting of
+  * :ref:`Informational Meta Keywords<asn-level2-meta-keywords>`
+  * List of :ref:`products<asn-level2-products>`, each consisting of
     
-    * Output product name template
-    * List of exposure members, each consisting of
+    * Output product name
+    * List of :ref:`exposure members<asn-level2-members>`, each consisting of
       
       * filename of the input exposure
       * Type of exposure
@@ -68,6 +67,8 @@ The following example will be used to explain the contents of an association::
         ]
     }
 
+.. _asn-level2-meta-keywords:
+
 Association Meta Keywords
 -------------------------
 
@@ -98,6 +99,7 @@ constraints *optional*
   association. Format and contents are determined by the defining
   rule.
 
+.. _asn-level2-products:
 
 ``products`` Keyword
 ^^^^^^^^^^^^^^^^^^^^
@@ -121,6 +123,8 @@ name *optional*
 members *required*
   This is a list of the exposures to be used by the stage 2 processing
   tasks. This keyword is explained in detail in the next section.
+
+.. _asn-level2-members:
 
 ``members`` Keyword
 ^^^^^^^^^^^^^^^^^^^
