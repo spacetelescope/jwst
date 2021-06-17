@@ -69,7 +69,7 @@ bc0 = new BuildConfig()
 bc0.nodetype = 'jwst'
 bc0.name = 'stable-deps'
 bc0.env_vars = env_vars
-bc0.conda_ver = '4.9.2'
+bc0.conda_ver = '4.10.1'
 bc0.conda_packages = [
     "python=${python_version}",
 ]
@@ -81,7 +81,7 @@ bc0.build_cmds = [
 ]
 bc0.build_cmds = PipInject(env.OVERRIDE_REQUIREMENTS) + bc0.build_cmds
 bc0.test_cmds = [
-    "pytest --cov-report=xml --cov=./ -r sxf -n 30 --bigdata --slow \
+    "pytest --cov-report=xml --cov=./ -r sxf -n auto --bigdata --slow \
     --basetemp=${pytest_basetemp} --junit-xml=results.xml --dist=loadscope \
     --env=${artifactoryenv} ${pytest_args}",
     // The following line needs single quotes to avoid insecure interpolation
