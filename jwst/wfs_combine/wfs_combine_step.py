@@ -65,7 +65,7 @@ class WfsCombineStep(Step):
             # Save the output file
             if self.save_results:
                 self.save_model(
-                    output_model, suffix='wfscmb.fits', output_file=outfile, format=False
+                    output_model, suffix='wfscmb', output_file=outfile, format=False
                 )
 
         # Short-circuit auto-save of returned model if run from strun, as it is

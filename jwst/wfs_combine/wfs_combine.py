@@ -55,10 +55,11 @@ class DataSet:
         if self.input_1.data.shape != self.input_2.data.shape:
             log.error('Incompatible sizes for input files')
 
-        log.info('File 1 to combine: %s', infile_1)
-        log.info('File 2 to combine: %s', infile_2)
         log.info('Output file: %s', outfile)
         log.info('do_refine: %s', do_refine)
+        log.info('flip_dithers: %s', flip_dithers)
+        self.file1 = infile_1
+        self.file2 = infile_2
         self.off_x = 0
         self.off_y = 0
         self.flt_off_x = 0
@@ -85,24 +86,30 @@ class DataSet:
             combined input file data
         """
 
+        self.off_x, self.off_y = self.get_wcs_offsets()
+
+        # If the shift in x is negative, switch the two images
+        if self.off_x < 0 and self.flip_dithers:
+            self.input_1.close()
+            self.input_2.close()
+            self.input_1 = datamodels.open(self.file2)
+            self.input_2 = datamodels.open(self.file1)
+            log.info('File 1 to combine: %s', self.file2)
+            log.info('File 2 to combine: %s', self.file1)
+        else:
+            log.info('File 1 to combine: %s', self.file1)
+            log.info('File 2 to combine: %s', self.file2)
+
         # Input SCI arrays may have nan's so replace with 0's to prevent
         # later annoyances (hopefully this can be removed later)
         self.input_1.data[np.isnan(self.input_1.data)] = 0.
         self.input_2.data[np.isnan(self.input_2.data)] = 0.
-
         im_1_a = self.input_1.copy()  # Aligned image #1 (already aligned)
         im_2_a = self.create_aligned_2()  # Aligned image #2
 
         # Create and populate extensions for combined data
-        # If the shift in x is negative, switch the two images and change the signs of the shifts
-        # This will make the final position the same even when we start at the second position.
-        if self.off_x >= 0 or not self.flip_dithers:
-            data_c, dq_c, err_c, diff_c = self.create_combined(im_1_a, im_2_a)
-        else:
-            log.info("Changing sign of dithers and flipping images")
-            self.off_x = -1 * self.off_x
-            self.off_y = -1 * self.off_y
-            data_c, dq_c, err_c, diff_c = self.create_combined(im_2_a, im_1_a)
+        data_c, dq_c, err_c, diff_c = self.create_combined(im_1_a, im_2_a)
+
         log.info(f"Final x, y offset in pixels: {self.off_x} {self.off_y}")
 
         self.diff = diff_c
