@@ -127,31 +127,25 @@ members *required*
 ``members`` Keyword
 ^^^^^^^^^^^^^^^^^^^
 
-``members`` is a list of objects, each consisting of the following
-keywords
+``members`` is a list of dictionaries, one for each member exposure in the
+association. Each member has the following keywords.
 
 expname *required*
   The exposure file name
 
 exptype *required*
-  Type of information represented by the exposure. Possible values are
+  Type of information represented by the exposure. Possible
+  values are as follows. *Note that this is not the same as the exposure
+  ``EXP_TYPE`` header keyword.*
 
-  * ``science`` *required*
-    
-    Primary science exposure. For each product, only one exposure can
+  * ``science``: Primary science exposure. For each product, only one exposure can
     be ``science``.
     
-  * ``background`` *optional*
+  * ``background``: Off-target background exposure to subtract.
     
-    Off-target background exposure to subtract.
+  * ``imprint``: Imprint exposure to subtract.
     
-  * ``imprint`` *optional*
-    
-    Imprint exposure to subtract.
-    
-  * ``sourcecat`` *optional*
-    
-    The catalog of sources to extract spectra for. Usually produced by
+  * ``sourcecat``: The catalog of sources to extract spectra for. Usually produced by
     :ref:`calwebb_image3 <calwebb_image3>` for wide-field slitless spectroscopy.
 
 Editing the member list
