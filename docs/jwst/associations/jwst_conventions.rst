@@ -64,3 +64,32 @@ The current association types are:
   * ``tso-spec2``: Intended for :ref:`calwebb_spec2 <calwebb_spec2>` processing
   * ``wfs-image2``: Intended for :ref:`calwebb_image2 <calwebb_image2>` processing
   * ``wfs-image3``: Intended for :ref:`calwebb_wfs-image3 <calwebb_wfs-image3>` processing
+
+Field Guide to File Names
+=========================
+
+The high-level distinctions between stage 2, stage 3, exposure-centric, and
+target-centric files can be determined by the following file patterns. These
+patterns are not intended to fully define all the specific types of files there
+are. However, these are the main classifications, from which the documentation
+for the individual calibrations steps and pipelines will describe any further
+details.
+
+- Files produced by stage 3 processing
+  
+  Any file name that matches the following regex is a file that has
+  been produced by a stage 3 pipeline::
+
+    .+[aocr][0-9]{3:4}.+
+
+- Files containing exposure-centric data
+
+  The following regex matches files names that contain Stage 2 & 3, exposure-centric data::
+
+    jw[0-9]{11}_[0-9]{5}_[0-9]{5}_.+\.fits
+
+- Files containing target-centric data
+
+  The following regex matches file names that contain Stage 3, target-centric data::
+
+    jw[0-9]{5}-[aocr][0-9]{3:4}_.+
