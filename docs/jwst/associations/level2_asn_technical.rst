@@ -15,10 +15,9 @@ and enforced by the stage 2 schema
     * Output product name
     * List of :ref:`exposure members<asn-level2-members>`, each consisting of
       
-      * filename of the input exposure
+      * Filename of the exposure that is a member of this assocation
       * Type of exposure
-      * Errors from the observatory log
-      * Association Candidates this exposure belongs to
+      * If present, information about errors from the observatory log
 
 .. _asn-level2-example:
    
@@ -28,39 +27,24 @@ Example Association
 The following example will be used to explain the contents of an association::
 
     {
-        "asn_rule": "Asn_Lv2Spec",
-        "asn_pool": "jw82600_001_20160304T145416_pool",
-        "program": "82600",
-        "asn_type": "spec2",
+        "asn_type": "image2",
+        "asn_rule": "candidate_Asn_Lv2Image",
+        "version_id": "20210610t121508",
+        "code_version": "1.2.3",
+        "degraded_status": "No known degraded exposures in association.",
+        "program": "00623",
+        "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '623'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'miri'})\nDMSAttrConstraint({'name': 'detector', 'sources': ['detector'], 'value': 'mirimage'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'f1130w'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['pupil', 'grating'], 'value': None})\nDMSAttrConstraint({'name': 'opt_elem3', 'sources': ['fxd_slit'], 'value': None})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 'brightsky'})\nDMSAttrConstraint({'name': 'channel', 'sources': ['channel'], 'value': None})\nDMSAttrConstraint({'name': 'slit', 'sources': ['fxd_slit'], 'value': None})\nConstraint_Image_Science({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'mir_image'})\nConstraint_Single_Science({'name': 'single_science', 'value': False})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\('o037',\\\\ 'observation'\\\\)\"})",
+        "asn_id": "o037",
+        "asn_pool": "jw00623_20210610t121508_pool",
+        "target": "9",
         "products": [
             {
-                "name": "test_lrs1",
+                "name": "jw00623037001_02101_00001_mirimage",
                 "members": [
                     {
-                        "expname": "test_lrs1_rate.fits",
-                        "exptype": "science"
-                    }
-                ]
-            },
-            {
-                "name": "test_lrs2bkg",
-                "members": [
-                    {
-                        "expname": "test_lrs2bkg_rate.fits",
-                        "exptype": "science"
-                    }
-                ]
-            },
-            {
-                "name": "test_lrs2",
-                "members": [
-                    {
-                        "expname": "test_lrs2_rate.fits",
-                        "exptype": "science"
-                    },
-                    {
-                        "expname": "test_lrs2bkg_rate.fits",
-                        "exptype": "background"
+                        "expname": "jw00623037001_02101_00001_mirimage_rate.fits",
+                        "exptype": "science",
+                        "exposerr": "null"
                     }
                 ]
             }
@@ -72,14 +56,8 @@ The following example will be used to explain the contents of an association::
 Association Meta Keywords
 -------------------------
 
-The following are the top-level, or meta, keywords of an association.
-
-program *optional*
-  Program number for which this association was created.
+The following are the informational, meta keywords of an association.
   
-asn_type *optional*
-  The type of association represented. See :ref:`asn-jwst-association-types`
-
 asn_id *optional*
   The association id. The id is what appears in the :ref:`asn-jwst-naming`
   
@@ -88,16 +66,36 @@ asn_pool *optional*
 
 asn_rule *optional*
   Name of the association rule which created this association.
-  
-version_id *optional*
-  Version identifier. DMS uses a time stamp with the format
-  ``yyyymmddthhmmss``
-  Can be None or NULL
+
+asn_type *optional*
+  The type of association represented. See :ref:`asn-jwst-association-types`
+
+code_version *optional*
+  The version of the generator which created this association. Typically this is the version
+  of the jwst python package.
 
 constraints *optional*
   List of constraints used by the association generator to create this
   association. Format and contents are determined by the defining
   rule.
+
+degraded_status *optional*
+  If any of the included members have an actual issue,
+  as reported by the ``exposerr`` keyword, ``degraded_status`` will have the
+  value ``One or more members have an error associated with them.`` If no errors
+  are indicated, the value will be ``No known degraded exposures in
+  association.``
+
+program *optional*
+  Program number for which this association was created.
+
+target *optional*
+  The APT target number of all the exposures in the association.
+  
+version_id *optional*
+  Version identifier. DMS uses a time stamp with the format
+  ``yyyymmddthhmmss``
+  Can be None or NULL
 
 .. _asn-level2-products:
 
