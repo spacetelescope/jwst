@@ -38,7 +38,7 @@ jobs:
 
           - name: SDP dependencies in requirements-sdp.txt
             os: ubuntu-latest
-            python-version: 3.8
+            python-version: 3.9
             toxenv: sdpdeps
 
           - name: Installed package with --pyargs
