@@ -57,7 +57,7 @@ Association Meta Keywords
 -------------------------
 
 The following are the informational, meta keywords of an association.
-  
+
 asn_id *optional*
   The association id. The id is what appears in the :ref:`asn-jwst-naming`
   
@@ -90,7 +90,9 @@ program *optional*
   Program number for which this association was created.
 
 target *optional*
-  The APT target number of all the exposures in the association.
+  Target ID for which this association refers to. JWST currently uses
+  the TARGETID header keyword in the stage 2 exposure files, but there
+  is no formal restrictions on value.
   
 version_id *optional*
   Version identifier. DMS uses a time stamp with the format
