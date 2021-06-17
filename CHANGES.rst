@@ -1,7 +1,12 @@
 1.2.4 (unreleased)
 ==================
 
+outlier_detection
+-----------------
 
+- Revert back to using 'linear' interpolation method as default for ``blot``.
+  The bug in the implimentation of the bilinear interpolator in the ``drizzle``
+  package is now fixed. [#6146]
 
 
 1.2.3 (2021-06-08)
