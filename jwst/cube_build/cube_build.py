@@ -349,19 +349,22 @@ class CubeData():
                 log.info('Output cubes are single channel and all subchannels in data')
                 num_cubes = 0
                 channel_no_repeat = list(set(band_channel))
-                for i in range(len(channel_no_repeat)):
+
+                for i in channel_no_repeat:
                     num_cubes = num_cubes + 1
                     cube_no = str(num_cubes)
                     cube_pars[cube_no] = {}
                     cube_pars[cube_no]['pars1'] = {}
                     cube_pars[cube_no]['pars2'] = {}
                     this_channel = []
-                    for j in range(band_channel):
+                    this_subchannel = []
+                    for k, j in enumerate(band_channel):
                         if j == i:
-                            this_subchannel = band_subchannel[j]
-                    this_channel.append(i)
+                            this_subchannel.append(band_subchannel[k])
+                            this_channel.append(i)
                     cube_pars[cube_no]['par1'] = this_channel
                     cube_pars[cube_no]['par2'] = this_subchannel
+
 # ______________________________________________________________________
 # NIRSPEC
 # ______________________________________________________________________

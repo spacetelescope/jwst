@@ -55,6 +55,7 @@ class IFUCubeData():
         self.instrument = instrument
         self.list_par1 = list_par1
         self.list_par2 = list_par2
+
         self.instrument_info = instrument_info  # dictionary class imported in cube_build.py
         self.master_table = master_table
         self.output_type = output_type
@@ -144,7 +145,6 @@ class IFUCubeData():
         for i in range(num1):
             this_a = self.list_par1[i]
             this_b = self.list_par2[i]
-
             n = len(self.master_table.FileMap[self.instrument][this_a][this_b])
             num_files = num_files + n
         self.num_files = num_files
