@@ -3,11 +3,22 @@
 
 cube_build
 ----------
-- Fix bug when creating cubes using output_type= channel [#6138]
+- Fix bug when creating cubes using output_type=channel [#6138]
 
+outlier_detection
+-----------------
+
+- Revert back to using 'linear' interpolation method as default for ``blot``.
+  The bug in the implimentation of the bilinear interpolator in the ``drizzle``
+  package is now fixed. [#6146]
 
 1.2.3 (2021-06-08)
 ==================
+
+associations
+------------
+
+- Ensure no Lv3_WFSC associations created on group candidates [#6131]
 
 datamodels
 ----------
@@ -79,6 +90,13 @@ lib
 
 - Updated set_telescope_pointing to populate ENGQLPTG keyword with new
   allowed values [#6088]
+
+outlier_detection
+-----------------
+
+- Avoid using 'linear' interpolation method as default for ``blot`` due to
+  a bug in the implimentation of the bilinear interpolator in the ``drizzle``
+  package. Now the default value will be 'poly5'. [#6116]
 
 ramp_fitting
 ------------
@@ -284,10 +302,6 @@ master_background
 
 outlier_detection
 -----------------
-
-- Avoid using 'linear' interpolation method as default for ``blot`` due to
-  a bug in the implimentation of the bilinear interpolator in the ``drizzle``
-  package. Now the default value will be 'poly5'. [#6116]
 
 - Outlier detection on non-dithered images is implemented with a simple sigma
   clipping, dithered outlier detection cleaned up and HST specific steps removed
