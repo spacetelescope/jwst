@@ -135,29 +135,25 @@ def niriss_soss(input_model, reference_files):
     try:
         # We'd like to open this file as a DataModel, so we can consolidate
         # the S3 URI handling to one place.  The S3-related code here can
-        # be removed once that has been changed.
+        # be removed once we have a specwcs DataModel subclass.
         if s3_utils.is_s3_uri(reference_files['specwcs']):
-            wl = asdf.open(s3_utils.get_object(reference_files['specwcs']))
+            uri = s3_utils.get_object(reference_files['specwcs'])
         else:
-            wl = asdf.open(reference_files['specwcs'])
-        with wl:
-            wl1 = wl.tree[1].copy()
-            wl2 = wl.tree[2].copy()
-            wl3 = wl.tree[3].copy()
-    except Exception:
-        raise IOError('Error reading wavelength correction from {}'.format(reference_files['specwcs']))
+            uri = reference_files['specwcs']
+        with asdf.open(uri) as af:
+            wl1 = af.tree[1].copy()
+            wl2 = af.tree[2].copy()
+            wl3 = af.tree[3].copy()
+    except Exception as e:
+        raise IOError(f'Error reading wavelength correction from {uri}') from e
 
-    try:
-        velosys = input_model.meta.wcsinfo.velosys
-    except AttributeError:
-        pass
-    else:
-        if velosys is not None:
-            velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
-            wl1 = wl1 | velocity_corr
-            wl2 = wl2 | velocity_corr
-            wl2 = wl3 | velocity_corr
-            log.info("Applied Barycentric velocity correction: {}".format(velocity_corr[1].amplitude.value))
+    velosys = input_model.meta.wcsinfo.velosys
+    if velosys is not None:
+        velocity_corr = velocity_correction(velosys)
+        wl1 = wl1 | velocity_corr
+        wl2 = wl2 | velocity_corr
+        wl2 = wl3 | velocity_corr
+        log.info(f"Applied Barycentric velocity correction: {velocity_corr[1].amplitude.value}")
 
     # Reverse the order of inputs passed to Tabular because it's in python order in modeling.
     # Consider changing it in modelng ?
