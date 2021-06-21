@@ -174,6 +174,7 @@ _calculated_suffixes = set([
     'resetstep',
     'combine1dstep',
     'outlier_detection_scaled',
+    'outlier_detection_stack',
     'srctype',
     'outlier_detection',
     'engdblogstep',
