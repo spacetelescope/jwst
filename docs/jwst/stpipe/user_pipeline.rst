@@ -58,26 +58,11 @@ Just like a ``Step``, it must have ``name`` and ``class`` values.
 Here the ``class`` must refer to a subclass of `stpipe.Pipeline`.
 
 Following ``name`` and ``class`` is the ``steps`` section.  Under
-this section is a subsection for each step in the pipeline.  To figure
-out what parameters are available, use the `stspec`
-script (just as with a regular step):
-
-.. code-block:: python
-
-    > stspec stpipe.test.test_pipeline.TestPipeline
-    science_filename = input_file()  # The input science filename
-    flat_filename = input_file()     # The input flat filename
-    skip = bool(default=False)   # Skip this step
-    output_filename = output_file()  # The output filename
-    [steps]
-    [[combine]]
-    config_file = string(default=None)
-    skip = bool(default=False)   # Skip this step
-    [[flat_field]]
-    threshold = float(default=0.0)# The threshold below which to remove
-    multiplier = float(default=1.0)# Multiply by this number
-    skip = bool(default=False)   # Skip this step
-    config_file = string(default=None)
+this section is a subsection for each step in the pipeline.  The easiest
+way to get started on a parameter file is to call ``Step.export_config`` and
+then edit the file that is created.  This will generate an ASDF config file
+that includes every available parameter, which can then be trimmed to the
+parameters that require customization.
 
 For each Step’s section, the parameters for that step may either be
 specified inline, or specified by referencing an external
