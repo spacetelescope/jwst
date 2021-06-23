@@ -7,7 +7,7 @@ Logical Structure
 -----------------
 
 All stage 2 associations have the following structure. The structure is defined
-and enforced by the stage 2 schema
+and enforced by the stage 2 schema.
 
   * :ref:`Informational Meta Keywords<asn-level2-meta-keywords>`
   * List of :ref:`products<asn-level2-products>`, each consisting of
