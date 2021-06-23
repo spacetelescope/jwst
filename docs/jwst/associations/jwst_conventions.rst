@@ -75,21 +75,21 @@ are. However, these are the main classifications, from which the documentation
 for the individual calibrations steps and pipelines will describe any further
 details.
 
-- Files produced by stage 3 processing
-  
-  Any file name that matches the following regex is a file that has
-  been produced by a stage 3 pipeline::
+The most general regex matches all files that have been produced by Stage 3 processing::
 
     .+[aocr][0-9]{3:4}.+
 
+The following regexes differentiate between exposure-centric and target-centric files.
+
 - Files containing exposure-centric data
 
-  The following regex matches files names that contain Stage 2 & 3, exposure-centric data::
+  The following regex matches files names produced by either Stage 2 or 3
+  calibration and containing exposure-centric data::
 
     jw[0-9]{11}_[0-9]{5}_[0-9]{5}_.+\.fits
 
 - Files containing target-centric data
 
-  The following regex matches file names that contain Stage 3, target-centric data::
+  The following regex matches file names produced by Stage 3 calibration and containing target-centric data::
 
     jw[0-9]{5}-[aocr][0-9]{3:4}_.+

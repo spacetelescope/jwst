@@ -9,8 +9,7 @@ General Workflow for Generating Association Products
 
 See :ref:`asn-associations-and-jwst` for an overview of how JWST uses
 associations. This document describes how associations are used by the
-ground processing system to execute the stage 2 and stage 3 pipelines
-based on.
+ground processing system to execute the stage 2 and stage 3 pipelines.
 
 Up to the initial calibration step :ref:`calwebb_detector1 <calwebb_detector1>`,
 the science exposures are treated individually. However, starting at the stage 2
