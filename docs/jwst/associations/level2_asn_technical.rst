@@ -150,6 +150,11 @@ exptype *required*
   * ``sourcecat``: The catalog of sources to extract spectra for. Usually produced by
     :ref:`calwebb_image3 <calwebb_image3>` for wide-field slitless spectroscopy.
 
+  * ``segmap``: The 2D secgmentation map used to produce the source catalog. Usually produced by
+    :ref:`calwebb_image3 <calwebb_image3>` for wide-field slitless spectroscopy.
+
+  * ``direct_image``: The direct image used to produce the source catalog.
+
 Editing the member list
 ^^^^^^^^^^^^^^^^^^^^^^^
 
