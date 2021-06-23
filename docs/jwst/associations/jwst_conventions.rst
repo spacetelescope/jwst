@@ -45,7 +45,7 @@ Association Types
 Each association is intended to make a specific science
 product. The type of science product is indicated by the ``ATYPE`` field
 in the association file name (see :ref:`asn-jwst-naming`), and in the ``asn_type`` meta
-keyword of the association itself (see :ref:`asn-association-meta-keywords`).
+keyword of the association itself (see :ref:`asn-level3-meta-keywords`).
 
 The pipeline uses this type as the key to indicate which Level 2 or
 Level 3 pipeline module to use to process this association.
