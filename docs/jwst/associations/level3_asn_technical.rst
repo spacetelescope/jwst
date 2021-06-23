@@ -16,7 +16,7 @@ the stage 3 schema
     * Output product name
     * List of :ref:`exposure members<asn-level3-members>`, each consisting of
       
-      * Filename of the exposure that is a member of this assocation
+      * Filename of the exposure that is a member of this association
       * Type of exposure
       * If present, information about errors from the observatory log
       * If present, the Association Candidates this exposure belongs to
@@ -79,7 +79,7 @@ asn_type *optional*
   The type of association represented. See :ref:`asn-jwst-association-types`
 
 code_version *optional*
-  The version of the generator which created this association. Typically this is the version
+  The version of the generator that created this association. Typically this is the version
   of the jwst python package.
 
 constraints *optional*
@@ -98,9 +98,9 @@ program *optional*
   Program number for which this association was created.
 
 target *optional*
-  Target ID for which this association refers to. JWST currently uses
+  Target ID to which this association refers. JWST currently uses
   the TARGETID header keyword in the stage 2 exposure files, but there
-  is no formal restrictions on value.
+  are no formal restrictions on value.
   
 version_id *optional*
   Version identifier. DMS uses a time stamp with the format

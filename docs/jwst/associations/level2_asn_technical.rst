@@ -15,7 +15,7 @@ and enforced by the stage 2 schema.
     * Output product name
     * List of :ref:`exposure members<asn-level2-members>`, each consisting of
       
-      * Filename of the exposure that is a member of this assocation
+      * Filename of the exposure that is a member of this association
       * Type of exposure
       * If present, information about errors from the observatory log
 
@@ -71,7 +71,7 @@ asn_type *optional*
   The type of association represented. See :ref:`asn-jwst-association-types`
 
 code_version *optional*
-  The version of the generator which created this association. Typically this is the version
+  The version of the generator that created this association. Typically this is the version
   of the jwst python package.
 
 constraints *optional*
@@ -143,14 +143,14 @@ exptype *required*
   * ``science``: Primary science exposure. For each product, only one exposure can
     be ``science``.
     
-  * ``background``: Off-target background exposure to subtract.
+  * ``background``: Background exposure to subtract.
     
   * ``imprint``: Imprint exposure to subtract.
     
   * ``sourcecat``: The catalog of sources to extract spectra for. Usually produced by
     :ref:`calwebb_image3 <calwebb_image3>` for wide-field slitless spectroscopy.
 
-  * ``segmap``: The 2D secgmentation map used to produce the source catalog. Usually produced by
+  * ``segmap``: The 2D segmentation map used to produce the source catalog. Usually produced by
     :ref:`calwebb_image3 <calwebb_image3>` for wide-field slitless spectroscopy.
 
   * ``direct_image``: The direct image used to produce the source catalog.
