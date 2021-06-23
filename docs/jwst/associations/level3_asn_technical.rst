@@ -66,10 +66,10 @@ Association Meta Keywords
 
 The following are the informational, meta keywords of an association.
 
-asn_id *optional*
+asn_id *required*
   The association id. The id is what appears in the :ref:`asn-jwst-naming`
 
-asn_pool *optional*
+asn_pool *required*
   Association pool from which this association was created.
 
 asn_rule *optional*
