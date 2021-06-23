@@ -21,7 +21,7 @@ execute them. In the figure below, this wait-then-execute process is represented
 by the ``workflow trigger``. The workflow reads the contents of an association
 file to determine what exposures, and possibly other files, are needed to
 continue processing. The workflow then waits until all exposures exist. At that
-point, the related calibration step is executed with the association as input.
+point, the related calibration pipeline is executed with the association as input.
 
 With this finer granularity, the workflow can run more processes parallel,
 and allows the operators deeper visibility into the progression of the
