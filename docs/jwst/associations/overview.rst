@@ -63,7 +63,19 @@ signal-to-noise data.
 In short, Stage 2 and Stage 3 associations are created running the
 :ref:`asn-generate` task on an :py:class:`~jwst.associations.AssociationPool`
 using the default :ref:`Level2<asn-level2-techspecs>` and :ref:`Level
-3<asn-level3-techspecs>` association rules to produce Stage 2 and Stage 3 associations.
+3<asn-level3-techspecs>` association rules to produce Stage 2 and Stage 3
+associations. When retrieving the data from the archive, users will find the
+list of associated data in JSON files that are submitted together with the
+requested Stage 2 or Stage 3 data.
+
+Association Pools
+-----------------
+
+The information about what data will be associated is constructed with the
+information derived from the Astronomer Proposal Tool and the rules on how data
+should be associated that are defined by the instrument teams. All the
+information from a single proposal is captured in a single file known as the
+:ref:`Association Pool<design-pool>`.
 
 .. _asn-usage:
 
@@ -98,11 +110,16 @@ whose structure matches that of the JSON or YAML file. Continuing
 from the above example, the following shows how to access the first
 exposure file name of a Stage 3 associations::
 
-  exposure = asn['products'][0]['members'][0]['expname']
+.. code-block:: python
 
-Since the JWST pipeline uses associations extensively, higher-level
-access is gained by opening an association as a :ref:`JWST Data
-Model<data-models>`:
+   exposure = asn['products'][0]['members'][0]['expname']
+
+Since most JWST data are some form of a :ref:`JWST Data
+Model<data-models>`, an association can be opened with
+:ref:`datamodels.open<datamodels-open>`, which returns a
+:py:class:`~jwst.datamodels.ModelContainer`. All members of the association that can
+be represented as a ``DataModel``, will be available in the ``ModelContainer``
+as their respective DataModels.
 
 .. code-block:: python
 
