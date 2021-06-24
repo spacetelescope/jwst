@@ -10,16 +10,16 @@ Independent of the actual format, all stage 3 associations have the
 following structure. Again, the structure is defined and enforced by
 the stage 3 schema
 
-  * Top level, or meta, key/values
-  * List of products, each consisting of
-
-    * Output product name template
-    * List of exposure members, each consisting of
-
-      * filename of the input exposure
+  * :ref:`Informational Meta Keywords<asn-level3-meta-keywords>`
+  * List of :ref:`products<asn-level3-products>`, each consisting of
+    
+    * Output product name
+    * List of :ref:`exposure members<asn-level3-members>`, each consisting of
+      
+      * Filename of the exposure that is a member of this association
       * Type of exposure
-      * Errors from the observatory log
-      * Association Candidates this exposure belongs to
+      * If present, information about errors from the observatory log
+      * If present, the Association Candidates this exposure belongs to
 
 .. _asn-level3-example:
 
@@ -59,47 +59,55 @@ The following example will be used to explain the contents of an association::
         ]
     }
 
-.. _asn-association-meta-keywords:
+.. _asn-level3-meta-keywords:
 
 Association Meta Keywords
 -------------------------
 
-The following are the top-level, or meta, keywords of an association.
+The following are the informational, meta keywords of an association.
 
-program *optional*
-  Program number for which this association was created.
-
-target *optional*
-  Target ID for which this association refers to. DMS currently uses
-  the TARGETID header keyword in the stage 2 exposure files, but there
-  is no formal restrictions on value.
-
-asn_type *optional*
-  The type of association represented. See :ref:`asn-jwst-association-types`
-
-asn_id *optional*
+asn_id *required*
   The association id. The id is what appears in the :ref:`asn-jwst-naming`
 
-asn_pool *optional*
+asn_pool *required*
   Association pool from which this association was created.
 
 asn_rule *optional*
   Name of the association rule which created this association.
 
-degraded_status *optional*
-  Error status from the observation logs. If none the phrase "No
-  known degraded exposures in association." is used.
+asn_type *optional*
+  The type of association represented. See :ref:`asn-jwst-association-types`
 
-version_id *optional*
-  Version identifier. DMS uses a time stamp with the format
-  ``yyyymmddthhmmss``
-  Can be None or NULL
+code_version *optional*
+  The version of the generator that created this association. Typically this is the version
+  of the jwst python package.
 
 constraints *optional*
   List of constraints used by the association generator to create this
   association. Format and contents are determined by the defining
   rule.
 
+degraded_status *optional*
+  If any of the included members have an actual issue,
+  as reported by the ``exposerr`` keyword, ``degraded_status`` will have the
+  value ``One or more members have an error associated with them.`` If no errors
+  are indicated, the value will be ``No known degraded exposures in
+  association.``
+
+program *optional*
+  Program number for which this association was created.
+
+target *optional*
+  Target ID to which this association refers. JWST currently uses
+  the TARGETID header keyword in the stage 2 exposure files, but there
+  are no formal restrictions on value.
+  
+version_id *optional*
+  Version identifier. DMS uses a time stamp with the format
+  ``yyyymmddthhmmss``
+  Can be None or NULL
+
+.. _asn-level3-products:
 
 ``products`` Keyword
 ^^^^^^^^^^^^^^^^^^^^
@@ -118,11 +126,13 @@ members *required*
   This is a list of the exposures to be used by the stage 3 processing
   tasks. This keyword is explained in detail in the next section.
 
+.. _asn-level3-members:
+
 ``members`` Keyword
 ^^^^^^^^^^^^^^^^^^^
 
-``members`` is a list of objects, each consisting of the following
-keywords
+``members`` is a list of dictionaries, one for each member exposure in the
+association. Each member has the following keywords.
 
 expname *required*
   The exposure file name
@@ -130,16 +140,14 @@ expname *required*
 exptype *required*
   Type of information represented by the exposure. Possible values are
 
-  * ``science`` *required*
-
-    The primary science exposures. There is usually more than one
+  * ``science``: The primary science exposures. There is usually more than one
     since stage 3 calibration involves combining multiple science
     exposures. However, at least one exposure in an association needs
     to be ``science``.
-    
-  * ``psf`` *optional*
 
-    Exposures that should be considered PSF references for
+  * ``background``: Exposures used for background subtraction.
+    
+  * ``psf``: Exposures that should be considered PSF references for
     coronagraphic and AMI calibration.
 
 exposerr *optional*
