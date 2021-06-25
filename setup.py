@@ -34,6 +34,7 @@ package_data = {
 
     # Include C extensions
     "jwst.lib.src": ["*.c"],
+    "jwst.cube_build.src": ["*.c"],
 
     # Include the transforms schemas
     "jwst.transforms": ["schemas/stsci.edu/jwst_pipeline/*.yaml"],
@@ -56,6 +57,12 @@ setup(
         Extension(
             'jwst.lib.winclip',
             ['jwst/lib/src/winclip.c'],
+            include_dirs=include_dirs,
+            define_macros=define_macros
+        ),
+        Extension(
+            'jwst.cube_build.match_det_cube',
+            ['jwst/cube_build/src/match_det_cube.c'],
             include_dirs=include_dirs,
             define_macros=define_macros
         )
