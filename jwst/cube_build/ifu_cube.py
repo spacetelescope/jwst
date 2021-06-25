@@ -23,6 +23,7 @@ from . import cube_overlap
 from . import cube_cloud
 from . import coord
 from ..mrs_imatch.mrs_imatch_step import apply_background_2d
+from .match_det_cube import point_emsm
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -644,9 +645,11 @@ class IFUCubeData():
 
                     t0 = time.time()
                     nplane = self.naxis1 * self.naxis2
+                    nwave = self.naxis3
                     # now loop over the detector pixel and find the spaxels that fall
                     # within the region of interest.
                     nn = coord1.size
+
                     # ________________________________________________________________________________
                     if self.weighting == 'msm':
                         for ipt in range(0, nn - 1):
@@ -659,31 +662,40 @@ class IFUCubeData():
                                                           self.spaxel_weight,
                                                           self.spaxel_iflux,
                                                           self.spaxel_var,
-                                                          flux,
-                                                          err,
-                                                          coord1, coord2, wave,
-                                                          weight_pixel,
-                                                          rois_pixel, roiw_pixel,
-                                                          softrad_pixel)
+                                                          flux[ipt],
+                                                          err[ipt],
+                                                          coord1[ipt], coord2[ipt], wave[ipt],
+                                                          weight_pixel[ipt],
+                                                          rois_pixel[ipt], roiw_pixel[ipt],
+                                                          softrad_pixel[ipt])
                     elif self.weighting == 'emsm':
-                        for ipt in range(0, nn - 1):
-                            cube_cloud.match_det2cube_emsm(ipt,
-                                                           nplane,
-                                                           self.cdelt1, self.cdelt2,
-                                                           self.cdelt3_normal,
-                                                           self.xcenters, self.ycenters, self.zcoord,
-                                                           self.spaxel_flux,
-                                                           self.spaxel_weight,
-                                                           self.spaxel_iflux,
-                                                           self.spaxel_var,
-                                                           flux,
-                                                           err,
-                                                           coord1, coord2, wave,
-                                                           rois_pixel, roiw_pixel,
-                                                           scalerad_pixel)
+                        code = 'Python'
+                        if code == 'Python':
+                            for ipt in range(0, nn - 1):
+                                cube_cloud.match_det2cube_emsm(ipt,
+                                                               nplane,
+                                                               self.cdelt1, self.cdelt2,
+                                                               self.cdelt3_normal,
+                                                               self.xcenters, self.ycenters, self.zcoord,
+                                                               self.spaxel_flux,
+                                                               self.spaxel_weight,
+                                                               self.spaxel_iflux,
+                                                               self.spaxel_var,
+                                                               flux[ipt],
+                                                               err[ipt],
+                                                               coord1[ipt], coord2[ipt], wave[ipt],
+                                                               rois_pixel[ipt], roiw_pixel[ipt],
+                                                               scalerad_pixel[ipt])
 
-                    t1 = time.time()
-                    log.debug("Time to match pixels to cube spaxels = %.1f s" % (t1 - t0,))
+                                t1 = time.time()
+                                log.debug("Time to match pixels to cube spaxels = %.1f s" % (t1 - t0,))
+                        else:
+                            print('Calling c code for finding match between detector and cube')
+                            spaxel_flux, spaxel_weight, spaxel_iflux, spaxel_var = point_emsm(
+                                xcenters, ycenters, zcoord,
+                                flux,err, coord1, coord2, wave,
+                                rois_pixel, roiw_pixel, scalerad_pixel,
+                                nplane, nwave, ncube, nn,cdelt1, cdelt2,celt3_normal)
 
                 # --------------------------------------------------------------------------------
                 #                     # AREA - 2d method only works for single files local slicer plane (internal_cal)

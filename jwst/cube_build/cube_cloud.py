@@ -478,8 +478,7 @@ def findpoints_on_slice(cdelt1, cdelt2,
 
 
 @jit(nopython=True)
-def match_det2cube_emsm(ipt,
-                        nplane,
+def match_det2cube_emsm(nplane,
                         cdelt1, cdelt2,
                         zcdelt3,
                         xcenters, ycenters, zcoord,
@@ -509,8 +508,6 @@ def match_det2cube_emsm(ipt,
 
     Parameters
     ----------
-    ipt : int
-       index of point cloud member
     nplane : int
        naxis1 * naxis 2
     cdelt1 : float
@@ -564,19 +561,19 @@ def match_det2cube_emsm(ipt,
     # find the spaxels that fall withing ROI of point cloud defined  by
     # coord1,coord2,wave
 
-    xdistance = (xcenters - coord1[ipt])
-    ydistance = (ycenters - coord2[ipt])
+    xdistance = (xcenters - coord1)
+    ydistance = (ycenters - coord2[)
     radius = np.sqrt(xdistance * xdistance + ydistance * ydistance)
 
-    indexr = np.where(radius <= rois_pixel[ipt])
-    indexz = np.where(np.absolute(zcoord - wave[ipt]) <= roiw_pixel[ipt])
+    indexr = np.where(radius <= rois_pixel)
+    indexz = np.where(np.absolute(zcoord - wave) <= roiw_pixel)
 
     # Find the cube spectral planes that this input point will contribute to
     if len(indexz[0]) > 0:
 
-        d1 = (coord1[ipt] - xcenters[indexr]) / cdelt1
-        d2 = (coord2[ipt] - ycenters[indexr]) / cdelt2
-        d3 = (wave[ipt] - zcoord[indexz]) / zcdelt3[indexz]
+        d1 = (coord1 - xcenters[indexr]) / cdelt1
+        d2 = (coord2 - ycenters[indexr]) / cdelt2
+        d3 = (wave - zcoord[indexz]) / zcdelt3[indexz]
 
         dxy = (d1 * d1) + (d2 * d2)
 
@@ -602,12 +599,12 @@ def match_det2cube_emsm(ipt,
         d3_matrix2[:,0:d3.shape[0]] = d32
         wdistance = dxy_matrix2 + d3_matrix2
 
-        weight_distance = np.exp(-wdistance / (scalerad_pixel[ipt] / cdelt1))
+        weight_distance = np.exp(-wdistance / (scalerad_pixel / cdelt1))
         weight_distance2 = np.transpose(weight_distance)
         weight_distance2 = weight_distance2.flatten()
 
-        weighted_flux = weight_distance2 * flux[ipt]
-        weighted_var = (weight_distance2 * err[ipt]) * (weight_distance2 * err[ipt])
+        weighted_flux = weight_distance2 * flux
+        weighted_var = (weight_distance2 * err) * (weight_distance2 * err)
 
         # Identify all of the cube spaxels (ordered in a 1d vector) that this input point contributes to
         icube_index = [iz * nplane + ir for iz in indexz[0] for ir in indexr[0]]
@@ -623,8 +620,7 @@ def match_det2cube_emsm(ipt,
 
 
 @jit(nopython=True)
-def match_det2cube_msm(ipt,
-                       nplane,
+def match_det2cube_msm(nplane,
                        cdelt1, cdelt2,
                        zcdelt3,
                        xcenters, ycenters, zcoord,
@@ -655,8 +651,6 @@ def match_det2cube_msm(ipt,
 
     Parameters
     ----------
-    ipt : int
-       index of point cloud element
     nplane : int
        naxis1 * naxis 2
     cdelt1 : float
@@ -709,20 +703,20 @@ def match_det2cube_msm(ipt,
     # cube coordinates.
     # find the spaxels that fall withing ROI of point cloud defined  by
     # coord1,coord2,wave
-    lower_limit = softrad_pixel[ipt]
-    xdistance = (xcenters - coord1[ipt])
-    ydistance = (ycenters - coord2[ipt])
+    lower_limit = softrad_pixel
+    xdistance = (xcenters - coord1)
+    ydistance = (ycenters - coord2)
     radius = np.sqrt(xdistance * xdistance + ydistance * ydistance)
 
-    indexr = np.where(radius <= rois_pixel[ipt])
-    indexz = np.where(np.absolute(zcoord - wave[ipt]) <= roiw_pixel[ipt])
+    indexr = np.where(radius <= rois_pixel)
+    indexz = np.where(np.absolute(zcoord - wave) <= roiw_pixel)
 
     # Find the cube spectral planes that this input point will contribute to
     if len(indexz[0]) > 0:
 
-        d1 = (coord1[ipt] - xcenters[indexr]) / cdelt1
-        d2 = (coord2[ipt] - ycenters[indexr]) / cdelt2
-        d3 = (wave[ipt] - zcoord[indexz]) / zcdelt3[indexz]
+        d1 = (coord1 - xcenters[indexr]) / cdelt1
+        d2 = (coord2 - ycenters[indexr]) / cdelt2
+        d3 = (wave - zcoord[indexz]) / zcdelt3[indexz]
 
         dxy = (d1 * d1) + (d2 * d2)
 
@@ -747,14 +741,14 @@ def match_det2cube_msm(ipt,
 
         d3_matrix2[:,0:d3.shape[0]] = d32
         wdistance = dxy_matrix2 + d3_matrix2
-        weight_distance22 = np.power(np.sqrt(wdistance), weight_pixel[ipt])
+        weight_distance22 = np.power(np.sqrt(wdistance), weight_pixel)
         weight_distance22 = np.transpose(weight_distance22)
         weight_distance22 = weight_distance22.flatten()
         weight_distance22[weight_distance22 < lower_limit] = lower_limit
         weight_distance2 = 1.0 / weight_distance22
 
-        weighted_flux = weight_distance2 * flux[ipt]
-        weighted_var = (weight_distance2 * err[ipt]) * (weight_distance2 * err[ipt])
+        weighted_flux = weight_distance2 * flux
+        weighted_var = (weight_distance2 * err) * (weight_distance2 * err)
 
         # Identify all of the cube spaxels (ordered in a 1d vector) that this input point contributes to
         icube_index = [iz * nplane + ir for iz in indexz[0] for ir in indexr[0]]
