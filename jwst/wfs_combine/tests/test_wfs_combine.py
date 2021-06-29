@@ -5,6 +5,7 @@ from jwst.assign_wcs import AssignWcsStep
 from jwst.associations.asn_from_list import asn_from_list
 from jwst.wfs_combine import WfsCombineStep
 from jwst.wfs_combine import wfs_combine
+import astropy.modeling as modeling
 import numpy as np
 
 
@@ -26,11 +27,15 @@ def add_point_source(inarray, scale, xcen, ycen, sigx, sigy):
     for y in range(inarray.shape[0]):
         for x in range(inarray.shape[1]):
             outarray[y, x] = scale * gaussian2d(x, y, xcen, ycen, sigx, sigy)
+#            outarray[y, x] = modeling.functional_models.Gaussian2D(amplitude=scale,
+#                                                                   x_mean=xcen, y_mean=ycen,
+#                                                                   x_stddev=sigx, y_stddev=sigy)
     return outarray
 
 
 @pytest.fixture(scope="module")
-def wfs_association(tmp_path_factory, imsize=10):
+def wfs_association(tmp_path_factory):
+    imsize = 10
     tmp_path = tmp_path_factory.mktemp("wfs")
     im1 = datamodels.ImageModel((imsize, imsize))
     im1.meta.observation.exposure_number = 1

@@ -3,7 +3,6 @@ import logging
 import numpy as np
 import scipy.signal
 from scipy.interpolate import griddata
-from scipy.signal import convolve
 
 from .. import datamodels
 from ..datamodels import dqflags
@@ -38,6 +37,14 @@ class DataSet:
             File for combined image
         do_refine: boolean
             True if refined offset calculation and application is to be made
+        flip_dithers: boolean
+            True will cause the dithers to align in pixel coordinates for different filters
+        psf_size: float
+            size of largest psf
+        blur_size: float
+            amount of smoothing to apply before finding the initial centroid
+        n_size: int
+            size of interpolation box
         """
 
         if outfile == "":
@@ -116,7 +123,6 @@ class DataSet:
         # Create a new model using the combined arrays...
         new_model = datamodels.ImageModel(data=data_c, dq=dq_c, err=err_c)
         new_model.update(self.input_1)
-        print(" Refine value {}".format(self.do_refine))
         new_model.history.append('WFS_COMBINE refine offset = {}'.format(self.do_refine))
         new_model.history.append('WFS_COMBINE X offset applied ' + str(self.off_x) + ' pixels ' +
                                  'actual offset ' + str(round(self.flt_off_x, 2)) + ' pixels')
@@ -171,7 +177,7 @@ class DataSet:
 
             # 1b. Create smoothed image by smoothing this 'repaired' image
             g = gauss_kern(self.blur_size, sizey=None)
-            s_data_1 = convolve(data_1, g, mode='valid')
+            s_data_1 = scipy.signal.convolve(data_1, g, mode='valid')
 
             # 2. Find approximate center of PSF in umsmoothed frame by taking
             #    all pixels in smoothed image exceeding 50% of the maximum
@@ -479,6 +485,8 @@ def interp_array(sci_data, dq_data, n_size):
         original SCI image to interpolate over
     dq_data: 2D int array
         corresponding DQ image
+    n_size: int
+        size of the interpolation box
 
     Returns
     -------
@@ -527,6 +535,9 @@ def create_griddata_array(sci_data, pixel, n_size):
 
     pixel: int, int
         y, x coordinates of pixel to interpolate over
+
+    n_size: int
+        size of the interpolation box
 
     Returns
     -------
@@ -664,8 +675,11 @@ def calc_refined_offsets(sci_nai_1, sci_nai_2, off_x, off_y, psf_size):
     Short Summary
     -------------
     Get the overlap of the 2 images (based on the offsets), and
-    calculate the correlation coefficient between 2 image subarrays.
-    (We may want something more sophisticated later)
+    calculate the two dimensional cross correlation image between 2 image subarrays.
+    Then we slice on the a subarray around the peak of the cross correlation image and
+    find the first moment. The first momement provies a high S/N measurement of the offset
+    between the two images.
+
 
     Parameters
     ----------
