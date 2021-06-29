@@ -5,7 +5,6 @@ from jwst.assign_wcs import AssignWcsStep
 from jwst.associations.asn_from_list import asn_from_list
 from jwst.wfs_combine import WfsCombineStep
 from jwst.wfs_combine import wfs_combine
-import astropy.modeling as modeling
 import numpy as np
 
 
