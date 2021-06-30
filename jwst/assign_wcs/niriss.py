@@ -137,15 +137,15 @@ def niriss_soss(input_model, reference_files):
         # the S3 URI handling to one place.  The S3-related code here can
         # be removed once we have a specwcs DataModel subclass.
         if s3_utils.is_s3_uri(reference_files['specwcs']):
-            uri = s3_utils.get_object(reference_files['specwcs'])
+            bytesio_or_path = s3_utils.get_object(reference_files['specwcs'])
         else:
-            uri = reference_files['specwcs']
-        with asdf.open(uri) as af:
+            bytesio_or_path = reference_files['specwcs']
+        with asdf.open(bytesio_or_path) as af:
             wl1 = af.tree[1].copy()
             wl2 = af.tree[2].copy()
             wl3 = af.tree[3].copy()
     except Exception as e:
-        raise IOError(f'Error reading wavelength correction from {uri}') from e
+        raise IOError(f"Error reading wavelength correction from {reference_files['specwcs']}") from e
 
     velosys = input_model.meta.wcsinfo.velosys
     if velosys is not None:
