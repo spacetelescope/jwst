@@ -16,11 +16,14 @@ log.setLevel(logging.DEBUG)
 class Observation:
     """This class defines an actual observation. It is tied to a single grism image."""
 
-    def __init__(self, direct_images, segmap_model, grism_wcs, wr_ref, filter, sens_waves,
-                 sens_resp, order=1, max_split=100, sed_file=None, extrapolate_sed=False,
-                 max_cpu=1, ID=0, boundaries=[], renormalize=True):
+    def __init__(self, direct_images, segmap_model, grism_wcs, filter, ID=0,
+                 sed_file=None, extrapolate_sed=False,
+                 boundaries=[], renormalize=True, max_cpu=1):
 
         """
+        Initialize all data and metadata for a given observation. Creates lists of
+        direct image pixel values for selected objects.
+
         Parameters
         ----------
         direct_images : List of strings
@@ -29,31 +32,21 @@ class Observation:
             Segmentation map model
         grism_wcs : gwcs object
             WCS object from grism image
-        wr_ref : `jwst.datamodels.WavelengthrangeModel`
-            Wavelengthrange reference file model
         filter : str
             Filter name
-        sens_waves : float array
-            Wavelength array from photom reference file
-        sens_resp : float array
-            Response (flux calibration) array from photom reference file
-        order : int
-            Spectral order to simulate, +1 or +2 for NIRCAM
-        max_split : int
-            Number of chunks to compute instead of trying everything at once.
+        ID : int
+            ID of source to process. If zero, all sources processed.
         sed_file : str
             Name of Spectral Energy Distribution (SED) file containing datasets matching
             the ID in the segmentation file and each consisting of a [[lambda],[flux]] array.
         extrapolate_sed : bool
             Flag indicating whether to extrapolate wavelength range of SED
-        max_cpu : int
-            Max number of cpu's to use when multiprocessing
-        ID : int
-            ID of source to process. If zero, all sources processed.
         boundaries : tuple
             Start/Stop coordinates of the FOV within the larger seed image.
         renormalize : bool
             Flag indicating whether to renormalize SED's
+        max_cpu : int
+            Max number of cpu's to use when multiprocessing
         """
 
         # Load all the info for this grism mode
@@ -64,19 +57,10 @@ class Observation:
         self.dir_image_names = direct_images
         self.seg = segmap_model.data
         self.filter = filter
-        self.order = order
         self.sed_file = sed_file   # should always be NONE for baseline pipeline (use flat SED)
-        self.max_cpu = max_cpu
         self.cache = False
         self.renormalize = renormalize
-        self.sens_waves = sens_waves
-        self.sens_resp = sens_resp
-
-        # Get the wavelength range for the grism image
-        wavelength_range = wr_ref.get_wfss_wavelength_range(self.filter, [self.order])
-        self.wmin = wavelength_range[self.order][0]
-        self.wmax = wavelength_range[self.order][1]
-        log.debug(f"wmin={self.wmin}, wmax={self.wmax}")
+        self.max_cpu = max_cpu
 
         # Set the limits of the dispersed image to be simulated
         if len(boundaries) == 0:
@@ -88,14 +72,14 @@ class Observation:
         else:
             self.xstart, self.xend, self.ystart, self.yend = boundaries
         self.dims = (self.yend - self.ystart + 1, self.xend - self.xstart + 1)
-        log.debug(f"Using final size of {self.dims[1]} {self.dims[0]}")
+        log.debug(f"Using simulated image size of {self.dims[1]} {self.dims[0]}")
 
         # Allow for SED extrapolation
         self.extrapolate_sed = extrapolate_sed
         if self.extrapolate_sed:
             log.warning("SED Extrapolation turned on.")
 
-        # Create pixel lists for ALL sources labeled in segmentation map
+        # Create pixel lists for sources labeled in segmentation map
         self.create_pixel_list()
 
     def create_pixel_list(self):
@@ -109,39 +93,37 @@ class Observation:
             self.ys = []
             all_IDs = np.array(list(set(np.ravel(self.seg))))
             all_IDs = all_IDs[all_IDs > 0]
-            log.info(f"Total of {len(all_IDs)} sources to process")
+            self.IDs = all_IDs
+            log.info(f"Loading {len(all_IDs)} sources from segmentation map")
             for ID in all_IDs:
                 ys, xs = np.nonzero(self.seg == ID)
                 if (len(xs) > 0) & (len(ys) > 0):
                     self.xs.append(xs)
                     self.ys.append(ys)
-                    self.IDs = all_IDs
 
         else:
             # Process only the given source ID
-            log.info(f"Process source {self.ID}")
+            log.info(f"Loading source {self.ID} from segmentation map")
             ys, xs = np.nonzero(self.seg == self.ID)
             if (len(xs) > 0) & (len(ys) > 0):
-                self.xs.append(xs)
-                self.ys.append(ys)
+                self.xs = [xs]
+                self.ys = [ys]
                 self.IDs = [self.ID]
 
         # Populate lists of direct image flux values for the sources.
         self.fluxes = {}
         for dir_image_name in self.dir_image_names:
 
-            if self.sed_file is None:
-                # Default pipeline will use sed_file=None, so we need to compute
-                # photometry values that used to come from HST-style header keywords.
-                # Compute pivlam as average of wmin/wmax range.
-                pivlam = (self.wmin + self.wmax) / 2
-
-            log.info(f"Loading direct image {dir_image_name}")
+            log.info(f"Using direct image {dir_image_name}")
             dimage = datamodels.open(dir_image_name).data
 
             if self.sed_file is None:
-                # If an SED file is not used, then we use pixel fluxes from
-                # the direct image.
+                # Default pipeline will use sed_file=None, so we need to compute
+                # photometry values that used to come from HST-style header keywords.
+                # Set pivlam, in units of microns, based on filter name.
+                pivlam = float(self.filter[1:4]) / 100.
+
+                # Use pixel fluxes from the direct image.
                 self.fluxes[pivlam] = []
                 for i in range(len(self.IDs)):
                     # This loads lists of pixel flux values for each source
@@ -164,10 +146,23 @@ class Observation:
                 for i in range(len(self.IDs)):
                     self.fluxes["sed"].append(dnew[self.ys[i], self.xs[i]])
 
-    def disperse_all(self, cache=False):
+    def disperse_all(self, order, wmin, wmax, sens_waves, sens_resp, cache=False):
         """
         Compute dispersed pixel values for all sources identified in
         the segmentation map.
+
+        Parameters
+        ----------
+        order : int
+            Spectral order number to process
+        wmin : float
+            Minimum wavelength for dispersed spectra
+        wmax : float
+            Maximum wavelength for dispersed spectra
+        sens_waves : float array
+            Wavelength array from photom reference file
+        sens_resp : float array
+            Response (flux calibration) array from photom reference file
         """
         if cache:
             log.debug("Object caching ON")
@@ -191,15 +186,36 @@ class Observation:
                 self.cached_object[i]['maxy'] = []
 
             # Disperse object "i"
-            self.disperse_chunk(i)
+            self.disperse_chunk(i, order, wmin, wmax, sens_waves, sens_resp)
 
-    def disperse_chunk(self, c):
+    def disperse_chunk(self, c, order, wmin, wmax, sens_waves, sens_resp):
         """
         Method that computes dispersion for a single source.
         To be called after create_pixel_list().
+
+        Parameters
+        ----------
+        c : int
+            Chunk (source) number to process
+        order : int
+            Spectral order number to process
+        wmin : float
+            Minimum wavelength for dispersed spectra
+        wmax : float
+            Maximum wavelength for dispersed spectra
+        sens_waves : float array
+            Wavelength array from photom reference file
+        sens_resp : float array
+            Response (flux calibration) array from photom reference file
         """
 
-        log.info(f"Dispersing object {c+1}")
+        sid = int(self.IDs[c])
+        self.order = order
+        self.wmin = wmin
+        self.wmax = wmax
+        self.sens_waves = sens_waves
+        self.sens_resp = sens_resp
+        log.info(f"Dispersing source {sid}, order {self.order}")
         pars = []  # initialize params for this object
 
         # Loop over all pixels in list for object "c"
