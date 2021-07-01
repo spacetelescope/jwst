@@ -115,7 +115,9 @@ class DataSet():
             if model.meta.instrument.grating is not None:
                 self.grating = model.meta.instrument.grating.upper()
             self.order = None
-            if model.meta.hasattr('wcsinfo') and model.meta.wcsinfo.spectral_order is not None:
+            if (model.meta.hasattr('wcsinfo') and
+                model.meta.wcsinfo.hasattr('spectral_order') and
+                model.meta.wcsinfo.spectral_order is not None):
                 self.order = model.meta.wcsinfo.spectral_order
             self.pupil = None
             if model.meta.instrument.pupil is not None:
