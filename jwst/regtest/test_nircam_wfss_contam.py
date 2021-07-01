@@ -1,8 +1,6 @@
 """Regression test for WFSS contam correction of NIRCam data"""
 import pytest
 
-from astropy.io.fits.diff import FITSDiff
-
 from jwst.regtest import regtestdata as rt
 
 
