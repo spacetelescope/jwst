@@ -1,7 +1,3 @@
-from astropy.io import registry
-
-from stdatamodels import ndmodel
-
 from .model_base import JwstDataModel, DataModel
 from .abvega_offset import ABVegaOffsetModel
 from .amilg import AmiLgModel
@@ -150,16 +146,6 @@ __all__ = [
     'WaveMapModel', 'WaveMapSingleModel',
     'WfssBkgModel']
 
-# Initialize the astropy.io registry,
-# but only the first time this module is called
-
-try:
-    _defined_models
-except NameError:
-    with registry.delay_doc_updates(JwstDataModel):
-        registry.register_reader('datamodel', JwstDataModel, ndmodel.read)
-        registry.register_writer('datamodel', JwstDataModel, ndmodel.write)
-        registry.register_identifier('datamodel', JwstDataModel, ndmodel.identify)
 
 _all_models = __all__[1:]
 _local_dict = locals()
