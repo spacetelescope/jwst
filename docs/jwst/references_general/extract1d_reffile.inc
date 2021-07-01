@@ -1,4 +1,3 @@
-
 .. _extract1d_reffile:
 
 EXTRACT1D Reference File
@@ -73,6 +72,13 @@ and background extraction regions.
 * bkg_fit: the type of background fit or computation (string)
 * bkg_order: order of polynomial fit to background regions (int)
 * extract_width: number of pixels in cross-dispersion direction (int)
+
+.. note::
+
+   All parameter values that represent pixel indexes, such as ``xstart``,
+   ``xstop``, and the ``src_coeff`` and ``bkg_coeff`` coefficients, are always
+   in the frame of the image being operated on, which could be a small cutout
+   from a larger original image.
 
 See :ref:`extract-1d-for-slits` for more details on how these parameters
 are used in the extraction process.
