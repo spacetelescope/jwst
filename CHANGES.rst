@@ -1,6 +1,12 @@
 1.2.4 (unreleased)
 ==================
 
+assign_wcs
+----------
+
+- Open the specwcs reference file for WFSS modes using the ``with`` context
+  manger. [#6160]
+
 cube_build
 ----------
 - Fix bug when creating cubes using output_type=channel [#6138]
