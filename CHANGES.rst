@@ -18,6 +18,11 @@ outlier_detection
   The bug in the implimentation of the bilinear interpolator in the ``drizzle``
   package is now fixed. [#6146]
 
+wfss_contam
+-----------
+
+- Updated to process all defined spectral orders for the grism mode [#6175]
+
 1.2.3 (2021-06-08)
 ==================
 

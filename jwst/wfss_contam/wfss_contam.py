@@ -1,22 +1,21 @@
 #
 #  Top level module for WFSS contamination correction.
 #
-from os.path import splitext
+import logging
+import multiprocessing
+import numpy as np
 
 from jwst import datamodels
 from .observations import Observation
 from .sens1d import get_photom_data
-from ..lib.suffix import replace_suffix
-
-import logging
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def contam_corr(input_model, waverange, photom):
+def contam_corr(input_model, waverange, photom, max_cores):
     """
-    The main WFSS contam correction function
+    The main WFSS contamination correction function
 
     Parameters
     ----------
@@ -26,71 +25,159 @@ def contam_corr(input_model, waverange, photom):
         Wavelength range reference file model
     photom : `~jwst.datamodels.NrcWfssPhotomModel` or `~jwst.datamodels.NisWfssPhotomModel`
         Photom (flux cal) reference file model
+    max_cores : string
+        Number of cores to use for multiprocessing. If set to 'none'
+        (the default), then no multiprocessing will be done. The other
+        allowable values are 'quarter', 'half', and 'all', which indicate
+        the fraction of cores to use for multi-proc. The total number of
+        cores includes the SMT cores (Hyper Threading for Intel).
 
     Returns
     -------
     output_model : `~jwst.datamodels.MultiSlitModel`
-      A copy of the input_model that has been corrected
+        A copy of the input_model that has been corrected
+    simul_model : `~jwst.datamodels.ImageModel`
+        Full-frame simulated image of the grism exposure
+    contam_model : `~jwst.datamodels.MultiSlitModel`
+        Contamination estimate images for each source slit
 
     """
+    # Determine number of cpu's to use for multi-processing
+    if max_cores == 'none':
+        ncpus = 1
+    else:
+        num_cores = multiprocessing.cpu_count()
+        if max_cores == 'quarter':
+            ncpus = num_cores // 4 or 1
+        elif max_cores == 'half':
+            ncpus = num_cores // 2 or 1
+        elif max_cores == 'all':
+            ncpus = num_cores
+        else:
+            ncpus = 1
+        log.debug(f"Found {num_cores} cores; using {ncpus}")
+
+    # Initialize output model
     output_model = input_model.copy()
 
     # Get the segmentation map for this grism exposure
     seg_model = datamodels.open(input_model.meta.segmentation_map)
 
-    # Get the direct image from which the segmentation was constructed
+    # Get the direct image from which the segmentation map was constructed
     direct_file = input_model.meta.direct_image
     image_names = [direct_file]
-
-    # Load the sensitivity (inverse flux cal) data for this mode
-    filter = input_model.meta.instrument.filter
-    pupil = input_model.meta.instrument.pupil
-    sens_waves, sens_response = get_photom_data(photom, filter, pupil, order=1)
 
     # Get the grism WCS from the input model
     grism_wcs = input_model.slits[0].meta.wcs
 
-    # Create a simulated grism image containing all of the sources
-    # defined in the segmentation map
-    obs = Observation(image_names, seg_model, grism_wcs, waverange, filter,
-                      sens_waves, sens_response, order=1, max_split=2,
-                      max_cpu=1, boundaries=[0, 2047, 0, 2047])
+    # Find out how many spectral orders are defined, based on the
+    # array of order values in the Wavelengthrange ref file
+    spec_orders = np.asarray(waverange.order)
+    spec_orders = spec_orders[spec_orders != 0]  # ignore any order 0 entries
+    log.debug(f"Spectral orders defined = {spec_orders}")
 
-    log.debug("Creating full simulated grism image with all sources")
-    obs.disperse_all()
-    simul_all = obs.simulated_image
+    # Load lists of wavelength ranges and flux cal info for all orders
+    wmin = {}
+    wmax = {}
+    sens_waves = {}
+    sens_response = {}
+    filter = input_model.meta.instrument.filter
+    pupil = input_model.meta.instrument.pupil
+    for order in spec_orders:
+        wavelength_range = waverange.get_wfss_wavelength_range(filter, [order])
+        wmin[order] = wavelength_range[order][0]
+        wmax[order] = wavelength_range[order][1]
+        # Load the sensitivity (inverse flux cal) data for this mode and order
+        sens_waves[order], sens_response[order] = get_photom_data(photom, filter, pupil, order)
+    log.debug(f"wmin={wmin}, wmax={wmax}")
 
-    # Save the full simulated grism image
+    # Initialize the simulated image object
+    simul_all = None
+    obs = Observation(image_names, seg_model, grism_wcs, filter,
+                      boundaries=[0, 2047, 0, 2047], max_cpu=ncpus)
+
+    # Create simulated grism image for each order and sum them up
+    for order in spec_orders:
+
+        log.info(f"Creating full simulated grism image for order {order}")
+        obs.disperse_all(order, wmin[order], wmax[order], sens_waves[order],
+                         sens_response[order])
+
+        # Accumulate result for this order into the combined image
+        if simul_all is None:
+            simul_all = obs.simulated_image
+        else:
+            simul_all += obs.simulated_image
+
+    # Save the full-frame simulated grism image
     simul_model = datamodels.ImageModel(data=simul_all)
-    root, _ = splitext(input_model.meta.filename)
-    simul_model.meta.filename = replace_suffix(root, 'simul') + '.fits'
-    log.info(f"Saving full simulated image as {simul_model.meta.filename}")
-    simul_model.save(simul_model.meta.filename)
+    simul_model.update(input_model, only="PRIMARY")
 
-    # Loop over all slits/sources
-    log.debug("Creating contam image for each individual source")
+    # Loop over all slits/sources to subtract contaminating spectra
+    log.info("Creating contamination image for each individual source")
+    contam_model = datamodels.MultiSlitModel()
+    contam_model.update(input_model)
+    slits = []
     for slit in output_model.slits:
 
         # Create simulated spectrum for this source only
         sid = slit.source_id
         order = slit.meta.wcsinfo.spectral_order
-        if order != 1:
-            continue
-        obs.disperse_chunk(sid)
+        chunk = np.where(obs.IDs == sid)[0][0]  # find chunk for this source
+
+        obs.simulated_image = np.zeros(obs.dims)
+        obs.disperse_chunk(chunk, order, wmin[order], wmax[order],
+                           sens_waves[order], sens_response[order])
         this_source = obs.simulated_image
 
-        # Contamination estimate is full simulated image
-        # minus this source
+        # Contamination estimate is full simulated image minus this source
         contam = simul_all - this_source
 
-        # Subtract the cutout of the contam image from the slit image
+        # Create a cutout of the contam image that matches the extent
+        # of the source slit
         x1 = slit.xstart - 1
         x2 = x1 + slit.xsize
         y1 = slit.ystart - 1
         y2 = y1 + slit.ysize
-        slit.data -= contam[y1:y2, x1:x2]
+        cutout = contam[y1:y2, x1:x2]
+        new_slit = datamodels.SlitModel(data=cutout)
+        copy_slit_info(slit, new_slit)
+        slits.append(new_slit)
+
+        # Subtract the cutout from the source slit
+        slit.data -= cutout
+
+    # Save the contamination estimates for all slits
+    contam_model.slits.extend(slits)
 
     # Set the step status to COMPLETE
     output_model.meta.cal_step.wfss_contam = 'COMPLETE'
 
-    return output_model
+    return output_model, simul_model, contam_model
+
+
+def copy_slit_info(input_slit, output_slit):
+
+    """Copy meta info from one slit to another.
+
+    Parameters
+    ----------
+    input_slit : SlitModel
+        Input slit model from which slit-specific info will be copied
+
+    output_slit : SlitModel
+        Output slit model to which slit-specific info will be copied
+
+    """
+    output_slit.name = input_slit.name
+    output_slit.xstart = input_slit.xstart
+    output_slit.ystart = input_slit.ystart
+    output_slit.xsize = input_slit.xsize
+    output_slit.ysize = input_slit.ysize
+    output_slit.source_id = input_slit.source_id
+    output_slit.source_type = input_slit.source_type
+    output_slit.source_xpos = input_slit.source_xpos
+    output_slit.source_ypos = input_slit.source_ypos
+    output_slit.meta.wcsinfo.spectral_order = input_slit.meta.wcsinfo.spectral_order
+    output_slit.meta.wcsinfo.dispersion_direction = input_slit.meta.wcsinfo.dispersion_direction
+    output_slit.meta.wcs = input_slit.meta.wcs
