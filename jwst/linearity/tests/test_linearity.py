@@ -49,11 +49,11 @@ def test_coeff_dq():
 
     coeffs = np.asfarray([0.0e+00, 0.85, 4.62e-06, -6.16e-11, 7.23e-16])
 
-    ref_model.data[:, 30, 50] = coeffs
+    ref_model.coeffs[:, 30, 50] = coeffs
 
     # check behavior with NaN coefficients: should not alter pixel values
     coeffs2 = np.asfarray([L0, np.nan, L2, L3, L4])
-    ref_model.data[:, 20, 50] = coeffs2
+    ref_model.coeffs[:, 20, 50] = coeffs2
     im.data[0, 50, 20, 50] = 500.0
 
     tgroup = 2.775
