@@ -117,7 +117,7 @@ class ApCorrBase(abc.ABC):
         match_pars = {}
 
         for node, keys in self.match_keys.items():
-            meta_node = self.model.meta[node]
+            meta_node = getattr(self.model.meta, node)
 
             for key in keys:
                 match_pars[key if key != 'name' else node] = getattr(meta_node, key)

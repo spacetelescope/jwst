@@ -9,7 +9,7 @@ from typing import Union, Tuple, NamedTuple, List
 from astropy.modeling import polynomial
 from gwcs import WCS
 from stdatamodels import DataModel
-from stdatamodels.ndmodel import MetaNode
+from stdatamodels.properties import ObjectNode
 
 from .. import datamodels
 from ..datamodels import dqflags, SlitModel, SpecModel
@@ -197,7 +197,7 @@ def get_extract_parameters(
         input_model: DataModel,
         slitname: str,
         sp_order: int,
-        meta: MetaNode,
+        meta: ObjectNode,
         smoothing_length: Union[int, None],
         bkg_fit: str,
         bkg_order: Union[int, None],

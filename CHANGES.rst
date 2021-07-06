@@ -1,4 +1,4 @@
-1.2.4 (unreleased)
+1.3.0 (unreleased)
 ==================
 
 assign_wcs
@@ -9,7 +9,13 @@ assign_wcs
 
 cube_build
 ----------
-- Fix bug when creating cubes using output_type=channel [#6138]
+
+- Fix bug when creating cubes using output_type=channel. [#6138]
+
+datamodels
+----------
+
+- Remove astropy.io registration of JwstDataModel. [#6179]
 
 outlier_detection
 -----------------
