@@ -25,12 +25,12 @@ from photutils.segmentation import (detect_sources, deblend_sources,
                                     SourceCatalog)
 from photutils.aperture import (CircularAperture, CircularAnnulus,
                                 aperture_photometry)
-from photutils.utils._wcs_helpers import _pixel_scale_angle_at_skycoord
 
 from jwst import __version__ as jwst_version
 
 from .. import datamodels
 from ..datamodels import ImageModel, ABVegaOffsetModel
+from ._wcs_helpers import pixel_scale_angle_at_skycoord
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -703,7 +703,7 @@ class JWSTSourceCatalog:
         # NOTE: crpix1 and crpix2 are 1-based values
         skycoord = self.wcs.pixel_to_world(self.model.meta.wcsinfo.crpix1 - 1,
                                            self.model.meta.wcsinfo.crpix2 - 1)
-        _, angle = _pixel_scale_angle_at_skycoord(skycoord, self.wcs)
+        _, _, angle = pixel_scale_angle_at_skycoord(skycoord, self.wcs)
 
         return (180.0 * u.deg) - angle + self.orientation
 
