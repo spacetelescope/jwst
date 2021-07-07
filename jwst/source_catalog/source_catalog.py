@@ -1163,7 +1163,11 @@ class JWSTSourceCatalog:
         """
         if len(self._ckdtree_query[1]) == 1:  # only one detected source
             return np.nan
-        return self.label[self._ckdtree_query[1]]
+
+        idx = self._ckdtree_query[1].copy()
+        mask = idx >= len(self.label)
+        idx[mask] = 0
+        return np.where(mask, self.label, self.label[idx])
 
     @lazyproperty
     def nn_dist(self):
