@@ -644,6 +644,20 @@ class JWSTSourceCatalog:
         return np.transpose((self.xcentroid, self.ycentroid))
 
     @lazyproperty
+    def _xypos_finite(self):
+        """
+        The (x, y) source positions, where non-finite positions are
+        set to a large negative value.
+
+        At this position the aperture will not overlap the data, thus
+        returning NaN fluxes and errors.
+        """
+        xypos = self.xypos.copy()
+        nanmask = ~np.isfinite(xypos)
+        xypos[nanmask] = -1000.
+        return xypos
+
+    @lazyproperty
     def _isophotal_abmag(self):
         """
         The isophotal AB magnitude and error.
@@ -833,18 +847,18 @@ class JWSTSourceCatalog:
         median, sqrt(pi / 2N) * std.
         """
         bkg_aper = CircularAnnulus(
-            self.xypos, self.aperture_params['bkg_aperture_inner_radius'],
+            self._xypos_finite,
+            self.aperture_params['bkg_aperture_inner_radius'],
             self.aperture_params['bkg_aperture_outer_radius'])
         bkg_aper_masks = bkg_aper.to_mask(method='center')
-        sigclip = SigmaClip(sigma=3)
+        sigclip = SigmaClip(sigma=3.)
 
         nvalues = []
         bkg_median = []
         bkg_std = []
         for mask in bkg_aper_masks:
-            bkg_data = mask.multiply(self.model.data.value)
-            bkg_data_1d = bkg_data[mask.data > 0]
-            values = sigclip(bkg_data_1d, masked=False)
+            bkg_data = mask.get_values(self.model.data.value)
+            values = sigclip(bkg_data, masked=False)
             nvalues.append(values.size)
             bkg_median.append(np.median(values))
             bkg_std.append(np.std(values))
@@ -879,7 +893,7 @@ class JWSTSourceCatalog:
 
         The values are set as dynamic attributes.
         """
-        apertures = [CircularAperture(self.xypos, radius) for radius in
+        apertures = [CircularAperture(self._xypos_finite, radius) for radius in
                      self.aperture_params['aperture_radii']]
         aper_phot = aperture_photometry(self.model.data, apertures,
                                         error=self.model.err)
