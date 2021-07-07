@@ -24,6 +24,11 @@ outlier_detection
   The bug in the implimentation of the bilinear interpolator in the ``drizzle``
   package is now fixed. [#6146]
 
+source_catalog
+--------------
+
+- Fixed issue with non-finite positions for aperture photometry. [#6206]
+
 wfss_contam
 -----------
 

@@ -13,6 +13,7 @@ from astropy.stats import gaussian_fwhm_to_sigma, SigmaClip
 from astropy.table import QTable
 import astropy.units as u
 from astropy.utils import lazyproperty
+from astropy.utils.exceptions import AstropyUserWarning
 import numpy as np
 from scipy import __version__ as scipy_version
 from scipy import ndimage
@@ -24,12 +25,12 @@ from photutils.segmentation import (detect_sources, deblend_sources,
                                     SourceCatalog)
 from photutils.aperture import (CircularAperture, CircularAnnulus,
                                 aperture_photometry)
-from photutils.utils._wcs_helpers import _pixel_scale_angle_at_skycoord
 
 from jwst import __version__ as jwst_version
 
 from .. import datamodels
 from ..datamodels import ImageModel, ABVegaOffsetModel
+from ._wcs_helpers import pixel_scale_angle_at_skycoord
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -547,7 +548,7 @@ class JWSTSourceCatalog:
         """
         # ignore RunTimeWarning if flux or flux_err contains NaNs
         with warnings.catch_warnings():
-            warnings.simplefilter("ignore", category=RuntimeWarning)
+            warnings.simplefilter('ignore', category=RuntimeWarning)
 
             abmag = -2.5 * np.log10(flux.value) + 8.9
             abmag_err = 2.5 * np.log10(1.0 + (flux_err.value / flux.value))
@@ -644,6 +645,20 @@ class JWSTSourceCatalog:
         return np.transpose((self.xcentroid, self.ycentroid))
 
     @lazyproperty
+    def _xypos_finite(self):
+        """
+        The (x, y) source positions, where non-finite positions are
+        set to a large negative value.
+
+        At this position the aperture will not overlap the data, thus
+        returning NaN fluxes and errors.
+        """
+        xypos = self.xypos.copy()
+        nanmask = ~np.isfinite(xypos)
+        xypos[nanmask] = -1000.
+        return xypos
+
+    @lazyproperty
     def _isophotal_abmag(self):
         """
         The isophotal AB magnitude and error.
@@ -688,7 +703,7 @@ class JWSTSourceCatalog:
         # NOTE: crpix1 and crpix2 are 1-based values
         skycoord = self.wcs.pixel_to_world(self.model.meta.wcsinfo.crpix1 - 1,
                                            self.model.meta.wcsinfo.crpix2 - 1)
-        _, angle = _pixel_scale_angle_at_skycoord(skycoord, self.wcs)
+        _, _, angle = pixel_scale_angle_at_skycoord(skycoord, self.wcs)
 
         return (180.0 * u.deg) - angle + self.orientation
 
@@ -833,21 +848,25 @@ class JWSTSourceCatalog:
         median, sqrt(pi / 2N) * std.
         """
         bkg_aper = CircularAnnulus(
-            self.xypos, self.aperture_params['bkg_aperture_inner_radius'],
+            self._xypos_finite,
+            self.aperture_params['bkg_aperture_inner_radius'],
             self.aperture_params['bkg_aperture_outer_radius'])
         bkg_aper_masks = bkg_aper.to_mask(method='center')
-        sigclip = SigmaClip(sigma=3)
+        sigclip = SigmaClip(sigma=3.)
 
-        nvalues = []
-        bkg_median = []
-        bkg_std = []
-        for mask in bkg_aper_masks:
-            bkg_data = mask.multiply(self.model.data.value)
-            bkg_data_1d = bkg_data[mask.data > 0]
-            values = sigclip(bkg_data_1d, masked=False)
-            nvalues.append(values.size)
-            bkg_median.append(np.median(values))
-            bkg_std.append(np.std(values))
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', category=RuntimeWarning)
+            warnings.simplefilter('ignore', category=AstropyUserWarning)
+
+            nvalues = []
+            bkg_median = []
+            bkg_std = []
+            for mask in bkg_aper_masks:
+                bkg_data = mask.get_values(self.model.data.value)
+                values = sigclip(bkg_data, masked=False)
+                nvalues.append(values.size)
+                bkg_median.append(np.median(values))
+                bkg_std.append(np.std(values))
 
         nvalues = np.array(nvalues)
         bkg_median = np.array(bkg_median)
@@ -879,7 +898,7 @@ class JWSTSourceCatalog:
 
         The values are set as dynamic attributes.
         """
-        apertures = [CircularAperture(self.xypos, radius) for radius in
+        apertures = [CircularAperture(self._xypos_finite, radius) for radius in
                      self.aperture_params['aperture_radii']]
         aper_phot = aperture_photometry(self.model.data, apertures,
                                         error=self.model.err)
@@ -1149,7 +1168,11 @@ class JWSTSourceCatalog:
         """
         if len(self._ckdtree_query[1]) == 1:  # only one detected source
             return np.nan
-        return self.label[self._ckdtree_query[1]]
+
+        idx = self._ckdtree_query[1].copy()
+        mask = idx >= len(self.label)
+        idx[mask] = 0
+        return np.where(mask, self.label, self.label[idx])
 
     @lazyproperty
     def nn_dist(self):
