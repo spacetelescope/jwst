@@ -4,7 +4,7 @@ title: JWST Transform extension 0.7.0
 description: |-
   A set of tags for serializing data transforms for the JWST pipeline.
 asdf_standard_requirement:
-  gte: 1.5.0
+  gte: 1.1.0
 tags:
 - tag_uri: "tag:stsci.edu:jwst_pipeline/nircam_grism_dispersion-0.7.0"
   schema_uri: http://stsci.edu/schemas/jwst_pipeline/nircam_grism_dispersion-0.7.0
