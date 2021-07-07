@@ -13,6 +13,7 @@ from astropy.stats import gaussian_fwhm_to_sigma, SigmaClip
 from astropy.table import QTable
 import astropy.units as u
 from astropy.utils import lazyproperty
+from astropy.utils.exceptions import AstropyUserWarning
 import numpy as np
 from scipy import __version__ as scipy_version
 from scipy import ndimage
@@ -547,7 +548,7 @@ class JWSTSourceCatalog:
         """
         # ignore RunTimeWarning if flux or flux_err contains NaNs
         with warnings.catch_warnings():
-            warnings.simplefilter("ignore", category=RuntimeWarning)
+            warnings.simplefilter('ignore', category=RuntimeWarning)
 
             abmag = -2.5 * np.log10(flux.value) + 8.9
             abmag_err = 2.5 * np.log10(1.0 + (flux_err.value / flux.value))
@@ -853,15 +854,19 @@ class JWSTSourceCatalog:
         bkg_aper_masks = bkg_aper.to_mask(method='center')
         sigclip = SigmaClip(sigma=3.)
 
-        nvalues = []
-        bkg_median = []
-        bkg_std = []
-        for mask in bkg_aper_masks:
-            bkg_data = mask.get_values(self.model.data.value)
-            values = sigclip(bkg_data, masked=False)
-            nvalues.append(values.size)
-            bkg_median.append(np.median(values))
-            bkg_std.append(np.std(values))
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', category=RuntimeWarning)
+            warnings.simplefilter('ignore', category=AstropyUserWarning)
+
+            nvalues = []
+            bkg_median = []
+            bkg_std = []
+            for mask in bkg_aper_masks:
+                bkg_data = mask.get_values(self.model.data.value)
+                values = sigclip(bkg_data, masked=False)
+                nvalues.append(values.size)
+                bkg_median.append(np.median(values))
+                bkg_std.append(np.std(values))
 
         nvalues = np.array(nvalues)
         bkg_median = np.array(bkg_median)
