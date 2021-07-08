@@ -24,6 +24,11 @@ outlier_detection
   The bug in the implimentation of the bilinear interpolator in the ``drizzle``
   package is now fixed. [#6146]
 
+pipeline
+--------
+
+- Added wfss_contam step to `calwebb_spec2` pipeline flow for WFSS modes [#6207]
+
 wfss_contam
 -----------
 
