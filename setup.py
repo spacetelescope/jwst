@@ -65,6 +65,13 @@ setup(
             ['jwst/cube_build/src/match_det_cube.c'],
             include_dirs=include_dirs,
             define_macros=define_macros
+        ),
+        Extension(
+            'jwst.cube_build.dq_plane',
+            ['jwst/cube_build/src/dq_plane.c'],
+            include_dirs=include_dirs,
+            define_macros=define_macros
         )
+        
     ],
 )
