@@ -77,7 +77,6 @@ class DataSet:
         self.blur_size = blur_size
         self.n_size = n_size
 
-    @property
     def do_all(self):
         """
         Short Summary
@@ -123,6 +122,7 @@ class DataSet:
         # Create a new model using the combined arrays...
         new_model = datamodels.ImageModel(data=data_c, dq=dq_c, err=err_c)
         new_model.update(self.input_1)
+        new_model.history.append('Flip dithers = {}'.format(self.flip_dithers))
         new_model.history.append('WFS_COMBINE refine offset = {}'.format(self.do_refine))
         new_model.history.append('WFS_COMBINE X offset applied ' + str(self.off_x) + ' pixels ' +
                                  'actual offset ' + str(round(self.flt_off_x, 2)) + ' pixels')

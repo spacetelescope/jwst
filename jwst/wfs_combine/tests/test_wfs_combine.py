@@ -138,7 +138,7 @@ def test_shift_order_no_refine_no_flip(wfs_association):
         im2.save(path2)
     wfs = wfs_combine.DataSet(path1, path2, 'outfile.fits', do_refine=False, flip_dithers=False, psf_size=50,
                               blur_size=10, n_size=2)
-    wfs.do_all
+    wfs.do_all()
     assert wfs.input_1.meta.observation.exposure_number == '1'
     assert wfs.input_2.meta.observation.exposure_number == '2'
     assert wfs.off_x == abs(delta_pixel)
@@ -163,7 +163,7 @@ def test_shift_order_no_refine_with_flip(wfs_association):
         im2.save(path2)
     wfs = wfs_combine.DataSet(path1, path2, 'outfile.fits', do_refine=False, flip_dithers=True, psf_size=50,
                               blur_size=10, n_size=2)
-    wfs.do_all
+    wfs.do_all()
     wfs.input_1.close()
     wfs.input_2.close()
 #    assert wfs.input_1.meta.observation.exposure_number == '2'
@@ -226,7 +226,7 @@ def test_refine_no_error(wfs_association, xshift, yshift, xerror, yerror, flip_d
         im2.save(path2)
     wfs = wfs_combine.DataSet(path1, path2, 'outfile.fits', do_refine=True, flip_dithers=flip_dithers, psf_size=50,
                               blur_size=10, n_size=2)
-    wfs.do_all
+    wfs.do_all()
     assert np.max(abs(wfs.diff)) < 0.001
     if delta_x_pixel + xerror >= 0 or not flip_dithers:
         assert wfs.off_x == delta_x_pixel + xerror
@@ -262,7 +262,7 @@ def test_refine_with_error(wfs_association):
         im2.save(path2)
     wfs = wfs_combine.DataSet(path1, path2, 'outfile.fits', do_refine=True, flip_dithers=True, psf_size=50,
                               blur_size=10, n_size=2)
-    wfs.do_all
+    wfs.do_all()
     assert wfs.input_1.meta.observation.exposure_number == '1'
     assert wfs.input_2.meta.observation.exposure_number == '2'
     assert wfs.off_x == delta_pixel + shift_error
