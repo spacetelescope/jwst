@@ -132,7 +132,7 @@ def find_corners_MIRI(input, this_channel, instrument_info, coord_system):
 # *****************************************************************************
 
 
-def find_corners_NIRSPEC(input, this_channel, instrument_info, coord_system):
+def find_corners_NIRSPEC(input, instrument_info, coord_system):
     """Find the sky footprint of a slice of a NIRSpec exposure
 
     For each slice find:
@@ -222,6 +222,7 @@ def find_corners_NIRSPEC(input, this_channel, instrument_info, coord_system):
         lambda_slice[k] = np.nanmin(lam)
         lambda_slice[k + 1] = np.nanmax(lam)
 
+        #print('cube_build_wcs_util',lambda_slice[k], lambda_slice[k+1], k)
         k = k + 2
 # ________________________________________________________________________________
 # now test the ra slices for consistency. Adjust if needed.
@@ -242,5 +243,7 @@ def find_corners_NIRSPEC(input, this_channel, instrument_info, coord_system):
 
     lambda_min = min(lambda_slice)
     lambda_max = max(lambda_slice)
+    #print('lambda min',lambda_min)
+    
     return a_min, b1, a_max, b2, a1, b_min, a2, b_max, lambda_min, lambda_max
 # ______________________________________________________________________________
