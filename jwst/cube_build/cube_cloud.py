@@ -217,12 +217,7 @@ def map_fov_to_dqplane_nirspec(overlap_partial,
                                            xi_corner, eta_corner,
                                            w,
                                            spaxel_dq)
-                # else:
-                #    overlap_fov_with_spaxels(cdelt1, cdelt2,
-                #                             naxis1, naxis2,
-                #                             xcenters, ycenters,
-                #                             xi_corner, eta_corner, w, w,
-                #                             spaxel_dq)
+
 # ********************************************************************************
 
 
@@ -347,14 +342,14 @@ def overlap_fov_with_spaxels(overlap_partial, overlap_full,
                 wave_slice_dq[ixy] = overlap_partial
 
     # set for a range of wavelengths
-    if wmin != wmax:
-        spaxel_dq[wmin:wmax, :] = np.bitwise_or(spaxel_dq[wmin:wmax, :],
-                                                wave_slice_dq)
+    #if wmin != wmax:
+    #    spaxel_dq[wmin:wmax, :] = np.bitwise_or(spaxel_dq[wmin:wmax, :],
+    #                                            wave_slice_dq)
 
         # set for a single wavelength
-    else:
-        spaxel_dq[wmin, :] = np.bitwise_or(spaxel_dq[wmin, :],
-                                           wave_slice_dq)
+    #else:
+    #    spaxel_dq[wmin, :] = np.bitwise_or(spaxel_dq[wmin, :],
+    #                                       wave_slice_dq)
 
 
 @jit(nopython=True)

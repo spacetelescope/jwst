@@ -59,17 +59,15 @@ spaxel_var : numpy.ndarray
 #include <numpy/arrayobject.h>
 #include <numpy/npy_math.h>
 
-//typedef double dbl_type;
-//static const int npy_dbl = NPY_DOUBLE;
 
 
-int mem_alloc(int nelem, double **fluxv, double **weightv, double **varv,  int **ifluxv) {
+int mem_alloc(int nelem, double **fluxv, double **weightv, double **varv,  double **ifluxv) {
     int  *i;
     double *f, *w, *v;
     const char *msg = "Couldn't allocate memory for output arrays.";
 
     // flux:
-    f = (double*)calloc(nelem, sizeof(double));
+    f = (double*)malloc(nelem* sizeof(double));
     if (f) {
         *fluxv = f;
     } else {
@@ -78,7 +76,7 @@ int mem_alloc(int nelem, double **fluxv, double **weightv, double **varv,  int *
     }
 
     // weight:
-    w = (double*)calloc(nelem, sizeof(double));
+    w = (double*)malloc(nelem* sizeof(double));
     if (w) {
         *weightv = w;
     } else {
@@ -87,7 +85,7 @@ int mem_alloc(int nelem, double **fluxv, double **weightv, double **varv,  int *
     }
 
     // variance:
-    v = (double*)calloc(nelem, sizeof(double));
+    v = (double*)malloc(nelem* sizeof(double));
     if (v) {
         *varv = v;
     } else {
@@ -95,7 +93,7 @@ int mem_alloc(int nelem, double **fluxv, double **weightv, double **varv,  int *
         return 1;
     }
     // iflux
-    i = (int*)calloc(nelem, sizeof(int));
+    i = (int*)malloc(nelem* sizeof(double));
     if (i) {
         *ifluxv = i;
     } else {
@@ -118,10 +116,10 @@ int match_point_emsm(double *xc, double *yc, double *zc,
 		     int nx, int ny, int nwave, int ncube, int npt,
 		     double cdelt1, double cdelt2, double *zcdelt3,
 		     double **spaxel_flux, double **spaxel_weight, double **spaxel_var,
-		     int **spaxel_iflux) {
+		     double **spaxel_iflux) {
 
     double *fluxv = NULL, *weightv=NULL, *varv=NULL ;  // vectors for spaxel 
-    int *ifluxv = NULL;  // int vector for spaxel
+    double *ifluxv = NULL;  // int vector for spaxel
 
     // allocate memory to hold output 
     if (mem_alloc(ncube, &fluxv, &weightv, &varv, &ifluxv)) return 1;
@@ -305,7 +303,7 @@ static PyObject * point_emsm(PyObject *module, PyObject *args) {
   double cdelt1, cdelt2;
   int  nwave, npt, nxx, nyy, ncube;
   double *spaxel_flux=NULL, *spaxel_weight=NULL, *spaxel_var=NULL;
-  int *spaxel_iflux=NULL;
+  double *spaxel_iflux=NULL;
 
   int free_xc=0, free_yc=0, free_zc=0, free_coord1=0, free_coord2 =0 , free_wave=0, status=0;
   int free_rois_pixel=0, free_roiw_pixel=0, free_scalerad_pixel=0, free_flux=0, free_err=0, free_zcdelt3=0;
@@ -366,7 +364,7 @@ static PyObject * point_emsm(PyObject *module, PyObject *args) {
 
   ncube = nxx * nyy * nwave;
   
-  printf(" sizes %i %i %i %i %lu \n ", nxx, nyy, nwave, npt, ncube);
+  printf(" sizes %i %i %i %i %i \n ", nxx, nyy, nwave, npt, ncube);
 
   if (ncube ==0) {
     // 0-length input arrays. Nothing to clip. Return 0-length arrays
@@ -379,7 +377,7 @@ static PyObject * point_emsm(PyObject *module, PyObject *args) {
     spaxel_var_arr = (PyArrayObject*) PyArray_EMPTY(1, &npy_ncube, NPY_DOUBLE, 0);
     if (!spaxel_var_arr) goto fail;
 
-    spaxel_iflux_arr = (PyArrayObject*) PyArray_EMPTY(1, &npy_ncube, NPY_INT, 0);
+    spaxel_iflux_arr = (PyArrayObject*) PyArray_EMPTY(1, &npy_ncube, NPY_DOUBLE, 0);
     if (!spaxel_iflux_arr) goto fail;
 
     result = Py_BuildValue("(OOOO)", spaxel_flux_arr, spaxel_weight_arr, spaxel_var_arr, spaxel_iflux_arr);
@@ -421,7 +419,7 @@ static PyObject * point_emsm(PyObject *module, PyObject *args) {
     if (!spaxel_var_arr) goto fail;
     spaxel_var = NULL;
     
-    spaxel_iflux_arr = (PyArrayObject*) PyArray_SimpleNewFromData(1, &npy_ncube, NPY_INT, spaxel_iflux);
+    spaxel_iflux_arr = (PyArrayObject*) PyArray_SimpleNewFromData(1, &npy_ncube, NPY_DOUBLE, spaxel_iflux);
     if (!spaxel_iflux_arr) goto fail;
     spaxel_iflux = NULL;
 
@@ -473,7 +471,8 @@ static PyMethodDef match_det_cube_methods[] =
         "point_emsm",  point_emsm, METH_VARARGS,
         "point_emsm(put in doc string)"
     },
-    {0, 0}  /* sentinel */
+    //    {0, 0}  /* sentinel */
+    {NULL}  /* sentinel */
 };
 
 
