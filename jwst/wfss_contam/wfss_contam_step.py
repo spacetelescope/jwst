@@ -17,6 +17,7 @@ class WfssContamStep(Step):
         save_simulated_image = boolean(default=False)  # Save full-frame simulated image
         save_contam_images = boolean(default=False)  # Save source contam estimates
         maximum_cores = option('none', 'quarter', 'half', 'all', default='none')
+        skip = boolean(default=True)
     """
 
     reference_file_types = ['photom', 'wavelengthrange']
