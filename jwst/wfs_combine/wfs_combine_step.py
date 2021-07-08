@@ -51,7 +51,7 @@ class WfsCombineStep(Step):
             )
 
             # Do the processing
-            output_model = wfs.do_all
+            output_model = wfs.do_all()
 
             # The DataSet class does not close its resources.  Do that here.
             wfs.input_1.close()
@@ -65,8 +65,7 @@ class WfsCombineStep(Step):
             # Save the output file
             if self.save_results:
                 self.save_model(
-                    output_model, suffix='wfscmb', output_file=outfile, format=False
-                )
+                    output_model, output_file=outfile, format=False)
 
         # Short-circuit auto-save of returned model if run from strun, as it is
         # already done above.  Ideally we would use self.output_use_model,
