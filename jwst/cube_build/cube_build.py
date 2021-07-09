@@ -18,7 +18,6 @@ class CubeData():
                  input_models,
                  input_filenames,
                  par_filename,
-                 resol_filename,
                  **pars):
         """ Initialize the high level of information for the ifu cube
 
@@ -36,15 +35,12 @@ class CubeData():
           list of fits filenames
         par_filename: str
           cube parameter reference filename
-        resol_filename: str
-          miri resolution reference filename
         pars : dictionary holding top level cube parameters
         """
 
         self.input_models = input_models
         self.input_filenames = input_filenames
         self.par_filename = par_filename
-        self.resol_filename = resol_filename
         self.single = pars.get('single')
         self.channel = pars.get('channel')
         self.subchannel = pars.get('subchannel')
@@ -73,7 +69,6 @@ class CubeData():
 
         Read in necessary reference data:
         * cube parameter reference file
-        * if miripsf weighting parameter is set then read in resolution file
 
         This routine fills in the instrument_info dictionary, which holds the
         default spatial and spectral size of the output cube, as well as,
@@ -117,15 +112,6 @@ class CubeData():
                                          self.all_filter,
                                          instrument_info)
 # -------------------------------------------------------------------------------
-# Read the miri resolution reference file
-        if self.weighting == 'miripsf':
-            log.info('Reading default MIRI cube resolution file %s',
-                     self.resol_filename)
-            cube_build_io_util.read_resolution_file(self.resol_filename,
-                                                    self.all_channel,
-                                                    self.all_subchannel,
-                                                    instrument_info)
-# _______________________________________________________________________________
         self.instrument_info = instrument_info
 # _______________________________________________________________________________
 # Set up values to return and acess for other parts of cube_build

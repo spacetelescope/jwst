@@ -111,27 +111,28 @@ def find_corners_MIRI(input, this_channel, instrument_info, coord_system):
     lambda_min = np.nanmin(lam)
     lambda_max = np.nanmax(lam)
 
-    # before returning,  ra should be between 0 to 360
-    if a_min < 0:
-        a_min = a_min + 360
-    if a_max >= 360.0:
-        a_max = a_max - 360.0
+    if coord_system != 'internal_cal':
+        # before returning,  ra should be between 0 to 360
+        if a_min < 0:
+            a_min = a_min + 360
+        if a_max >= 360.0:
+            a_max = a_max - 360.0
 
-    if a1 < 0:
-        a1 = a1 + 360
-    if a1 > 360.0:
-        a1 = a1 - 360.0
+        if a1 < 0:
+            a1 = a1 + 360
+        if a1 > 360.0:
+            a1 = a1 - 360.0
 
-    if a2 < 0:
-        a2 = a2 + 360
-    if a2 > 360.0:
-        a2 = a2 - 360.0
+        if a2 < 0:
+            a2 = a2 + 360
+        if a2 > 360.0:
+            a2 = a2 - 360.0
 
     return a_min, b1, a_max, b2, a1, b_min, a2, b_max, lambda_min, lambda_max
 # *****************************************************************************
 
 
-def find_corners_NIRSPEC(input, this_channel, instrument_info, coord_system):
+def find_corners_NIRSPEC(input, instrument_info, coord_system):
     """Find the sky footprint of a slice of a NIRSpec exposure
 
     For each slice find:
@@ -221,6 +222,7 @@ def find_corners_NIRSPEC(input, this_channel, instrument_info, coord_system):
         lambda_slice[k] = np.nanmin(lam)
         lambda_slice[k + 1] = np.nanmax(lam)
 
+        #print('cube_build_wcs_util',lambda_slice[k], lambda_slice[k+1], k)
         k = k + 2
 # ________________________________________________________________________________
 # now test the ra slices for consistency. Adjust if needed.
@@ -241,5 +243,7 @@ def find_corners_NIRSPEC(input, this_channel, instrument_info, coord_system):
 
     lambda_min = min(lambda_slice)
     lambda_max = max(lambda_slice)
+    #print('lambda min',lambda_min)
+    
     return a_min, b1, a_max, b2, a1, b_min, a2, b_max, lambda_min, lambda_max
 # ______________________________________________________________________________
