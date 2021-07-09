@@ -304,25 +304,36 @@ def standard_pool(request):
 def pytest_generate_tests(metafunc):
     """Prefetch and parametrize a set of test pools"""
     if 'pool_path' in metafunc.fixturenames:
-        try:
-            SDPPoolsSource.inputs_root = metafunc.config.getini('inputs_root')[0]
-            SDPPoolsSource.results_root = metafunc.config.getini('results_root')[0]
-            SDPPoolsSource.env = metafunc.config.getoption('env')
-        except IndexError:
-            SDPPoolsSource.inputs_root = "jwst-pipeline"
-            SDPPoolsSource.results_root = "jwst-pipeline-results"
-            SDPPoolsSource.env = "dev"
+        pool_path_fixture(metafunc)
 
-        pools = SDPPoolsSource()
 
-        try:
-            pool_paths = pools.pool_paths
-        except Exception:
-            pool_paths = []
+def pool_path_fixture(metafunc):
+    """Define the pool_path fixture
 
-        ids = [
-            Path(pool_path).stem
-            for pool_path in pool_paths
-        ]
+    Parameters
+    ----------
+    metafunc: pytest.Metafunc
+        The pytest test generation inspection object.
+    """
+    try:
+        SDPPoolsSource.inputs_root = metafunc.config.getini('inputs_root')[0]
+        SDPPoolsSource.results_root = metafunc.config.getini('results_root')[0]
+        SDPPoolsSource.env = metafunc.config.getoption('env')
+    except IndexError:
+        SDPPoolsSource.inputs_root = "jwst-pipeline"
+        SDPPoolsSource.results_root = "jwst-pipeline-results"
+        SDPPoolsSource.env = "dev"
 
-        metafunc.parametrize('pool_path', pool_paths, ids=ids)
+    pools = SDPPoolsSource()
+
+    try:
+        pool_paths = pools.pool_paths
+    except Exception:
+        pool_paths = []
+
+    ids = [
+        Path(pool_path).stem
+        for pool_path in pool_paths
+    ]
+
+    metafunc.parametrize('pool_path', pool_paths, ids=ids)
