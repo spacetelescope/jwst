@@ -34,6 +34,8 @@ wfss_contam
 
 - Updated to process all defined spectral orders for the grism mode [#6175]
 
+- Added step documentation [#6210]
+
 1.2.3 (2021-06-08)
 ==================
 

@@ -64,5 +64,6 @@ Package Index
    tweakreg/index.rst
    wavecorr/index.rst
    wfs_combine/index.rst
+   wfss_contam/index.rst
    white_light/index.rst
    wiimatch/index.rst
