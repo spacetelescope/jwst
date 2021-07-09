@@ -62,8 +62,8 @@ spaxel_var : numpy.ndarray
 
 
 int mem_alloc(int nelem, double **fluxv, double **weightv, double **varv,  double **ifluxv) {
-    int  *i;
-    double *f, *w, *v;
+
+    double *f, *w, *v, *i;
     const char *msg = "Couldn't allocate memory for output arrays.";
 
     // flux:
@@ -93,7 +93,7 @@ int mem_alloc(int nelem, double **fluxv, double **weightv, double **varv,  doubl
         return 1;
     }
     // iflux
-    i = (int*)malloc(nelem* sizeof(double));
+    i = (double*)malloc(nelem* sizeof(double));
     if (i) {
         *ifluxv = i;
     } else {
@@ -113,22 +113,25 @@ int match_point_emsm(double *xc, double *yc, double *zc,
 		     double *coord1, double *coord2, double *wave,
 		     double *flux, double *err,
 		     double *rois_pixel, double *roiw_pixel, double *scalerad_pixel,
+		     double *zcdelt3,
 		     int nx, int ny, int nwave, int ncube, int npt,
-		     double cdelt1, double cdelt2, double *zcdelt3,
+		     double cdelt1, double cdelt2,
 		     double **spaxel_flux, double **spaxel_weight, double **spaxel_var,
 		     double **spaxel_iflux) {
 
     double *fluxv = NULL, *weightv=NULL, *varv=NULL ;  // vectors for spaxel 
-    double *ifluxv = NULL;  // int vector for spaxel
+    double *ifluxv = NULL;  // vector for spaxel
 
     // allocate memory to hold output 
-    if (mem_alloc(ncube, &fluxv, &weightv, &varv, &ifluxv)) return 1;
-
+    //if (mem_alloc(ncube, &fluxv, &weightv, &varv, &ifluxv)) return 1;
+    int status = (mem_alloc(ncube, &fluxv, &weightv, &varv, &ifluxv));
+    printf("Return array from allocating memory %i \n", status);
+    
     // Set all data to zero
     for (int i = 0; i < ncube; i++){
       varv[i] = 0.0;
       fluxv[i] = 0.0;
-      ifluxv[i] = 0;
+      ifluxv[i] = 0.0;
       weightv[i] = 0.0;
     }
     
@@ -250,10 +253,10 @@ int match_point_emsm(double *xc, double *yc, double *zc,
 		fluxv[index_cube] = fluxv[index_cube] + weighted_flux;
 		weightv[index_cube] = weightv[index_cube] + ww;
 		varv[index_cube] = varv[index_cube] + weighted_var;
-		ifluxv[index_cube] = ifluxv[index_cube] +1;
+		ifluxv[index_cube] = ifluxv[index_cube] +1.0;
 
-		if( ix == 22 && iy == 22 && iw ==0) {
-		  printf("found element %i %i %f %f %f %f %f %f \n", k, index_cube, err[k], flux[k], ww, weighted_var, varv[index_cube], fluxv[index_cube]);
+		if( ix == 24 && iy == 24 && iw ==0) {
+		  printf("found element %i %i %f %f %f  %f %f \n", k, index_cube, err[k], flux[k], ifluxv[index_cube], varv[index_cube], fluxv[index_cube]);
 		}
 	      }
 	    }
@@ -296,7 +299,7 @@ PyArrayObject * ensure_array(PyObject *obj, int *is_copy) {
 }
 
 
-static PyObject * point_emsm(PyObject *module, PyObject *args) {
+static PyObject *point_emsm(PyObject *module, PyObject *args) {
   PyObject *result = NULL, *xco, *yco, *zco, *fluxo, *erro, *coord1o, *coord2o, *waveo;
   PyObject *rois_pixelo, *roiw_pixelo, *scalerad_pixelo, *zcdelt3o;
   
@@ -315,10 +318,10 @@ static PyObject * point_emsm(PyObject *module, PyObject *args) {
   npy_intp npy_ncube = 0;
 
   int  ny,nz;
-  if (!PyArg_ParseTuple(args, "OOOOOOOOOOOddO:point_emsm",
+  if (!PyArg_ParseTuple(args, "OOOOOOOOOOOOddiiiii:point_emsm",
 			&xco, &yco, &zco, &coord1o, &coord2o, &waveo,  &fluxo, &erro,
-			&rois_pixelo, &roiw_pixelo, &scalerad_pixelo,
-			&cdelt1, &cdelt2, &zcdelt3o)) {
+			&rois_pixelo, &roiw_pixelo, &scalerad_pixelo,&zcdelt3o,
+			&cdelt1, &cdelt2, &nxx, &nyy, &nwave, &npt, &ncube)) {
     return NULL;
   }
 
@@ -358,11 +361,11 @@ static PyObject * point_emsm(PyObject *module, PyObject *args) {
     goto cleanup;
   }
 
-  nxx = (int) PyArray_Size((PyObject *) xc);
-  nyy = (int) PyArray_Size((PyObject *) yc);
-  nwave = (int) PyArray_Size((PyObject *) zc);
+  //nxx = (int) PyArray_Size((PyObject *) xc);
+  //nyy = (int) PyArray_Size((PyObject *) yc);
+  //nwave = (int) PyArray_Size((PyObject *) zc);
 
-  ncube = nxx * nyy * nwave;
+  //ncube = nxx * nyy * nwave;
   
   printf(" sizes %i %i %i %i %i \n ", nxx, nyy, nwave, npt, ncube);
 
@@ -396,8 +399,8 @@ static PyObject * point_emsm(PyObject *module, PyObject *args) {
 			    (double *) PyArray_DATA(rois_pixel),
 			    (double *) PyArray_DATA(roiw_pixel),
 			    (double *) PyArray_DATA(scalerad_pixel),
-			    nxx, nyy, nwave, ncube, npt, cdelt1, cdelt2,
 			    (double *) PyArray_DATA(zcdelt3),
+			    nxx, nyy, nwave, ncube, npt, cdelt1, cdelt2,
 			    &spaxel_flux, &spaxel_weight, &spaxel_var, &spaxel_iflux);
 
   if (status) {
@@ -468,11 +471,12 @@ static PyObject * point_emsm(PyObject *module, PyObject *args) {
 static PyMethodDef match_det_cube_methods[] =
 {
     {
-        "point_emsm",  point_emsm, METH_VARARGS,
+        "point_emsm",
+	point_emsm,
+	METH_VARARGS,
         "point_emsm(put in doc string)"
     },
-    //    {0, 0}  /* sentinel */
-    {NULL}  /* sentinel */
+    {NULL, NULL, 0, NULL}  /* sentinel */
 };
 
 

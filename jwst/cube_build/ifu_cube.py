@@ -7,6 +7,7 @@ import time
 import numpy as np
 import logging
 import math
+#import gc
 from ..model_blender import blendmeta
 
 from .. import datamodels
@@ -547,17 +548,18 @@ class IFUCubeData():
         self.output_name = self.define_cubename()
         total_num = self.naxis1 * self.naxis2 * self.naxis3
         code = 'CPython'
-        if(code == 'Python'):
-            self.spaxel_flux = np.zeros(total_num)
-            self.spaxel_weight = np.zeros(total_num)
-            self.spaxel_var = np.zeros(total_num)
-            self.spaxel_iflux = np.zeros(total_num)
+        #if(code == 'Python'):
+        self.spaxel_flux = np.zeros(total_num,dtype=np.float64)
+        self.spaxel_weight = np.zeros(total_num, dtype=np.float64)
+        self.spaxel_var = np.zeros(total_num, dtype=np.float64)
+        self.spaxel_iflux = np.zeros(total_num, dtype = np.float64)
 
         self.spaxel_dq = np.zeros(total_num, dtype=np.uint32)
 
 # ______________________________________________________________________________
 
         subtract_background = True
+
 
         # now need to loop over every file that covers this
         # channel/subchannel (MIRI)
@@ -644,18 +646,18 @@ class IFUCubeData():
 
                                 
                         print('calling c code to determine dq flag')
-                        spaxel_dq = setup_dq(instrument, start_region, end_region,
-                                             self.overlap_partial, self.overlap_full,
-                                             self.naxis1, self.naxis2, self.naxis3,
-                                             self.cdelt1, self.cdelt2,roiw_ave,
-                                             self.xcoord, self.ycoord, self.zcoord,
-                                             coord1, coord2,wave,
-                                             slice_no,
-                                             ncube,nn, imin, imax)
+                        #spaxel_dq = setup_dq(instrument, start_region, end_region,
+                        #                     self.overlap_partial, self.overlap_full,
+                        #                     self.naxis1, self.naxis2, self.naxis3,
+                        #                     self.cdelt1, self.cdelt2,roiw_ave,
+                        #                     self.xcoord, self.ycoord, self.zcoord,
+                        #                     coord1, coord2,wave,
+                        #                     slice_no,
+                        #                     ncube,nn, imin, imax)
 
-                        spaxel_dq = spaxel_dq[0]
-                        spaxel_dq.astype(np.uint)
-                        self.spaxel_dq = np.bitwise_or(self.spaxel_dq, spaxel_dq)
+                        #spaxel_dq = spaxel_dq[0]
+                        #spaxel_dq.astype(np.uint)
+                        #self.spaxel_dq = np.bitwise_or(self.spaxel_dq, spaxel_dq)
 
                                 
                         print('Calling c code for finding match between detector and cube')
@@ -666,28 +668,25 @@ class IFUCubeData():
                         cdelt1 = self.cdelt1
                         cdelt2 = self.cdelt2
 
+
                         result = point_emsm(xcoord, ycoord, zcoord,
                                             coord1, coord2, wave, flux, err,
-                                            rois_pixel, roiw_pixel, scalerad_pixel,
-                                            cdelt1, cdelt2, cdelt3_normal)
-                        spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux = result
-                        print('**** first check value', spaxel_iflux[2448], spaxel_iflux[2244])
-                        if k ==0 and ib == 0 :
-                            spaxel_flux_total = spaxel_flux.copy()
-                            spaxel_weight_total = spaxel_weight.copy()
-                            spaxel_var_total = spaxel_var.copy()
-                            spaxel_iflux_total = spaxel_iflux.copy()
-                        else:
-                            spaxel_flux_total = spaxel_flux_total + spaxel_flux
-                            spaxel_var_total = spaxel_var_total + spaxel_var
-                            spaxel_weight_total = spaxel_weight_total + spaxel_weight
-                            spaxel_iflux_total = spaxel_iflux_total + spaxel_iflux
+                                            rois_pixel, roiw_pixel, scalerad_pixel,cdelt3_normal,
+                                            cdelt1, cdelt2, self.naxis1, self.naxis2, self.naxis3,
+                                            nn, ncube)
 
-                        print('**** second check value', spaxel_iflux_total[2448], spaxel_iflux_total[2244])
-                        spaxel_flux = 0;
-                        spaxel_weight = 0;
-                        spaxel_var = 0;
-                        spaxel_iflux = 0;
+                        spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux = result
+                        print('**** first check value',spaxel_flux[1728], spaxel_weight[1728], spaxel_var[1728], spaxel_iflux[1728])
+                        print('size',self.spaxel_iflux.size, spaxel_iflux.size)
+                    
+
+                        self.spaxel_iflux = self.spaxel_iflux + np.asarray(spaxel_iflux,np.float64)
+                        self.spaxel_weight = self.spaxel_weight + np.asarray(spaxel_weight, np.float64)
+                        self.spaxel_var = self.spaxel_var + np.asarray(spaxel_var, np.float64)
+                        self.spaxel_flux = self.spaxel_flux + np.asarray(spaxel_flux, np.float64)
+
+                        print('**** second check value', self.spaxel_flux[1728], self.spaxel_weight[1728], self.spaxel_var[1728], self.spaxel_iflux[1728])
+
                     # ______________________________________________________________________
                     # Python comparison code to be removed (except for area
                     # ______________________________________________________________________
@@ -839,16 +838,10 @@ class IFUCubeData():
 
             # _______________________________________________________________________
             # done looping over files  
-        if code == 'CPython':
-            print('***** check value', spaxel_iflux_total[2448], spaxel_iflux_total[2244])
-            self.spaxel_flux = np.asarray(spaxel_flux_total, np.float64)
-            self.spaxel_var = np.asarray(spaxel_var_total, np.float64)
-            self.spaxel_weight = np.asarray(spaxel_weight_total,np.float64)
-            self.spaxel_iflux = np.asarray(spaxel_iflux_total,np.int32)
-            print('****check value', self.spaxel_iflux[2448], self.spaxel_iflux[2244])
+
         self.find_spaxel_flux()
 
-        #self.find_spaxel_flux(spaxel_flux_total, spaxel_var_total,spaxel_weight_total, spaxel_iflux_total)
+
         self.set_final_dq_flags()
 
         # result consist of ifu_cube and status

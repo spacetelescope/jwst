@@ -5,6 +5,7 @@ from numba import jit
 import numpy as np
 import logging
 from . import cube_overlap
+from .match_det_cube import point_emsm
 
 log = logging.getLogger('numba')
 log.setLevel(logging.WARNING)
