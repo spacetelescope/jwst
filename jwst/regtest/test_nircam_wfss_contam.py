@@ -20,6 +20,7 @@ def run_wfss_contam(jail, rtdata_module):
         'args': [
             '--save_simulated_image=True',
             '--save_contam_images=True',
+            '--skip=False',
         ]
     }
     rtdata = rt.run_step_from_dict(rtdata, **step_params)
