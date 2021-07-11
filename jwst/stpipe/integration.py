@@ -52,6 +52,7 @@ def get_steps():
         ("jwst.step.FirstFrameStep", None, False),
         ("jwst.step.FlatFieldStep", None, False),
         ("jwst.step.FringeStep", None, False),
+        ("jwst.step.ResidualFringeStep", None, False),
         ("jwst.step.GainScaleStep", None, False),
         ("jwst.step.GroupScaleStep", None, False),
         ("jwst.step.GuiderCdsStep", None, False),
