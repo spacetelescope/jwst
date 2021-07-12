@@ -116,7 +116,7 @@ class Extract1dStep(Step):
         elif isinstance(input_model, datamodels.IFUCubeModel):
             self.log.debug('Input is an IFUCubeModel')
         elif isinstance(input_model, datamodels.SlitModel):
-            # NRS_BRIGHTOBJ mode
+            # NRS_BRIGHTOBJ and MIRI LRS fixed-slit (resampled) modes
             self.log.debug('Input is a SlitModel')
         else:
             self.log.error(f'Input is a {str(type(input_model))}, ')
