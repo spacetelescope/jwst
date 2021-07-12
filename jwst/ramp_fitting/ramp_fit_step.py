@@ -6,6 +6,7 @@ from ..stpipe import Step
 from .. import datamodels
 
 from stcal.ramp_fitting import ramp_fit
+from jwst.datamodels import dqflags
 
 from ..lib import reffile_utils  # TODO remove
 from ..lib import pipe_utils
@@ -162,6 +163,9 @@ def create_optional_results_model(opt_info):
         weights=weights,
         crmag=crmag)
 
+    opt_model.meta.filename = input_model.meta.filename
+    opt_model.update(input_model)  # ... and add all keys from input
+
     return opt_model
 
 
@@ -234,8 +238,7 @@ class RampFitStep (Step):
             image_info, integ_info, opt_info, gls_opt_model = ramp_fit.ramp_fit(
                 input_model, buffsize,
                 self.save_opt, readnoise_2d, gain_2d, self.algorithm,
-                self.weighting, max_cores
-            )
+                self.weighting, max_cores, dqflags.pixel)
 
         # Save the OLS optional fit product, if it exists
         if opt_info is not None:
