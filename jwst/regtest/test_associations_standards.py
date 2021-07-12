@@ -99,48 +99,46 @@ def generate_id(value):
     return value.pool_root
 
 
-class TestAgainstStandards(BaseJWSTTest):
-    """Generate tests and compare with standard results"""
-    input_loc = 'associations'
-    test_dir = 'standards'
-    ref_loc = [test_dir, 'truth']
+input_loc = 'associations'
+test_dir = 'standards'
+ref_loc = [input_loc, test_dir, 'truth']
 
-    @pytest.mark.filterwarnings('error')
-    @pytest.mark.parametrize('standard_pars', standards, ids=generate_id)
-    def test_against_standard(self, standard_pars, slow):
-        """Compare a generated association against a standard
-        Success is when no other AssertionError occurs.
-        """
-        if standard_pars.xfail is not None:
-            pytest.xfail(reason=standard_pars.xfail)
+@pytest.mark.filterwarnings('error')
+@pytest.mark.parametrize('standard_pars', standards, ids=generate_id)
+def test_against_standard(rtdata, standard_pars, slow):
+    """Compare a generated association against a standard
+    Success is when no other AssertionError occurs.
+    """
+    if standard_pars.xfail is not None:
+        pytest.xfail(reason=standard_pars.xfail)
 
-        if standard_pars.slow and not slow:
-            pytest.skip(f'Pool {standard_pars.pool_root} requires "--slow" option')
+    if standard_pars.slow and not slow:
+        pytest.skip(f'Pool {standard_pars.pool_root} requires "--slow" option')
 
-        # Create the associations
-        generated_path = Path('generate')
-        generated_path.mkdir()
-        version_id = standard_pars.pool_root.replace('_', '-')
-        args = standard_pars.main_args + [
-            '-p', str(generated_path),
-            '--version-id', version_id,
-        ]
-        pool = combine_pools([
-            t_path(Path('data') / (standard_pars.pool_root + '.csv'))
-        ])
-        Main(args, pool=pool)
+    # Create the associations
+    generated_path = Path('generate')
+    generated_path.mkdir()
+    version_id = standard_pars.pool_root.replace('_', '-')
+    args = standard_pars.main_args + [
+        '-p', str(generated_path),
+        '--version-id', version_id,
+    ]
+    pool = combine_pools([
+        t_path(Path('data') / (standard_pars.pool_root + '.csv'))
+    ])
+    Main(args, pool=pool)
 
-        # Retrieve the truth files
-        truth_paths = [
-            self.get_data(truth_path)
-            for truth_path in self.data_glob(*self.ref_loc, glob='*_' + version_id + '_*.json')
-        ]
+    # Retrieve the truth files
+    truth_paths = [
+        rtdata.get_data(truth_path)
+        for truth_path in rtdata.data_glob('/'.join(ref_loc), glob='*_' + version_id + '_*.json')
+    ]
 
-        # Compare the association sets.
-        try:
-            compare_asn_files(generated_path.glob('*.json'), truth_paths)
-        except AssertionError:
-            if standard_pars.xfail:
-                pytest.xfail(standard_pars.xfail)
-            else:
-                raise
+    # Compare the association sets.
+    try:
+        compare_asn_files(generated_path.glob('*.json'), truth_paths)
+    except AssertionError:
+        if standard_pars.xfail:
+            pytest.xfail(standard_pars.xfail)
+        else:
+            raise
