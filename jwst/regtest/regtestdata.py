@@ -18,6 +18,7 @@ from ci_watson.artifactory_helpers import (
 )
 
 from jwst.associations import AssociationNotValidError, load_asn
+from jwst.lib.file_utils import pushdir
 from jwst.lib.suffix import replace_suffix
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
@@ -190,15 +191,10 @@ class RegtestData:
         if docopy is None:
             docopy = self.docopy
         os.makedirs('truth', exist_ok=True)
-        os.chdir('truth')
-        try:
+        with pushdir('truth'):
             self.truth = get_bigdata(self._inputs_root, self.env, path,
                                      docopy=docopy)
             self.truth_remote = os.path.join(self._inputs_root, self.env, path)
-        except BigdataError:
-            os.chdir('..')
-            raise
-        os.chdir('..')
 
         return self.truth
 
