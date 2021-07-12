@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from astropy.modeling.models import Shift, Rotation2D
-from asdf.tests import helpers
-from jwst.transforms import jwextension
+from asdf_astropy.converters.transform.tests.test_transform import (
+    assert_model_roundtrip)
+
 from jwst.transforms.models import (
-    AngleFromGratingEquation, WavelengthFromGratingEquation,
-    Unitless2DirCos, DirCos2Unitless, Rotation3DToGWA, Gwa2Slit,
-    Snell, Logical, V23ToSky, Slit
-)
+    Rotation3DToGWA, Gwa2Slit, Logical, V23ToSky, Slit,
+    DirCos2Unitless, Unitless2DirCos, Snell, AngleFromGratingEquation,
+    WavelengthFromGratingEquation)
 import pytest
 
 
@@ -28,9 +28,8 @@ test_models = [DirCos2Unitless(), Unitless2DirCos(),
 
 
 @pytest.mark.parametrize(('model'), test_models)
-def test_model(tmpdir, model):
-    tree = {'model': model}
-    helpers.assert_roundtrip_tree(tree, tmpdir, extensions=jwextension.JWSTExtension())
+def test_model(tmpdir, model, version=None):
+    assert_model_roundtrip(model, tmpdir)
 
 
 def test_gwa_to_slit(tmpdir):
@@ -39,10 +38,8 @@ def test_gwa_to_slit(tmpdir):
     s1 = Slit("s1", 10, 20, 30, 40, 50, 60, 70, 80)
     slits = [s0, s1]
     m = Gwa2Slit(slits, transforms)
-    tree = {'model': m}
-    helpers.assert_roundtrip_tree(tree, tmpdir, extensions=jwextension.JWSTExtension())
+    assert_model_roundtrip(m, tmpdir)
 
     slits = [1, 2]
     m = Gwa2Slit(slits, transforms)
-    tree = {'model': m}
-    helpers.assert_roundtrip_tree(tree, tmpdir, extensions=jwextension.JWSTExtension())
+    assert_model_roundtrip(m, tmpdir)
