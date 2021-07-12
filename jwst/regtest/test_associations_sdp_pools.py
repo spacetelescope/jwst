@@ -10,6 +10,7 @@ from jwst.associations.lib.diff import (
     compare_asn_files,
 )
 from jwst.associations.main import Main as asn_generate
+from jwst.lib.file_utils import pushdir
 
 from jwst.regtest.sdp_pools_source import SDPPoolsSource
 
@@ -104,23 +105,25 @@ SPECIAL_POOLS = {
 # #####
 # Tests
 # #####
-class TestSDPPools(SDPPoolsSource):
-    """Test creation of association from SDP-created pools"""
+@pytest.mark.filterwarnings('error')
+def test_against_standard(sdpdata_module, pool_path, slow):
+    """Compare a generated association against a standard
 
-    @pytest.mark.filterwarnings('error')
-    def test_against_standard(self, pool_path, slow):
-        """Compare a generated association against a standard
+    Success is when no other AssertionError occurs.
+    """
 
-        Success is when no other AssertionError occurs.
-        """
+    # Parse pool name
+    pool = Path(pool_path).stem
+    proposal, version_id = pool_regex.match(pool).group('proposal', 'versionid')
+    special = SPECIAL_POOLS.get(pool, SPECIAL_DEFAULT)
 
-        # Parse pool name
-        pool = Path(pool_path).stem
-        proposal, version_id = pool_regex.match(pool).group('proposal', 'versionid')
-        special = SPECIAL_POOLS.get(pool, SPECIAL_DEFAULT)
+    if special['slow'] and not slow:
+        pytest.skip(f'Pool {pool} requires "--slow" option')
 
-        if special['slow'] and not slow:
-            pytest.skip(f'Pool {pool} requires "--slow" option')
+    # Setup test path
+    cwd = Path(pool)
+    cwd.mkdir()
+    with pushdir(cwd):
 
         # Create the generator running arguments
         generated_path = Path('generate')
@@ -128,7 +131,7 @@ class TestSDPPools(SDPPoolsSource):
         args = special['args'] + [
             '-p', str(generated_path),
             '--version-id', version_id,
-            self.get_data(pool_path)
+            sdpdata_module.get_data(pool_path)
         ]
 
         # Create the associations
@@ -142,8 +145,8 @@ class TestSDPPools(SDPPoolsSource):
             flags=re.IGNORECASE
         )
         truth_paths = [
-            self.get_data(truth_path)
-            for truth_path in self.truth_paths
+            sdpdata_module.get_data(truth_path)
+            for truth_path in sdpdata_module.truth_paths
             if asn_regex.match(truth_path)
         ]
 

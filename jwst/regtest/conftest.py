@@ -196,6 +196,18 @@ def rtdata_module(artifactory_repos, envopt, request, jail):
     return _rtdata_fixture_implementation(artifactory_repos, envopt, request)
 
 
+def _sdpdata_fixture_implementation(artifactory_repos, envopt, request):
+    """Provides the RemoteResource class"""
+    inputs_root, results_root = artifactory_repos
+    return SDPPoolsSource(env=envopt, inputs_root=inputs_root,
+                          results_root=results_root)
+
+
+@pytest.fixture(scope='module')
+def sdpdata_module(artifactory_repos, envopt, request, jail):
+    return _sdpdata_fixture_implementation(artifactory_repos, envopt, request)
+
+
 @pytest.fixture
 def fitsdiff_default_kwargs():
     ignore_keywords = ['DATE', 'CAL_VER', 'CAL_VCS', 'CRDS_VER', 'CRDS_CTX',
