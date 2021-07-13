@@ -125,14 +125,12 @@ class RegtestData:
     # ###########
     # The methods
     # ###########
-    def data_glob(self, path=None, glob='*', docopy=None):
+    def data_glob(self, path=None, glob='*'):
         """Get a list of files"""
         if path is None:
             path = self.input_remote
         else:
             self.input_remote = path
-        if docopy is None:
-            docopy = self.docopy
 
         # Get full path and proceed depending on whether
         # is a local path or URL.

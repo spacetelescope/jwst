@@ -328,15 +328,15 @@ def pool_path_fixture(metafunc):
         The pytest test generation inspection object.
     """
     try:
-        SDPPoolsSource.inputs_root = metafunc.config.getini('inputs_root')[0]
-        SDPPoolsSource.results_root = metafunc.config.getini('results_root')[0]
-        SDPPoolsSource.env = metafunc.config.getoption('env')
+        inputs_root = metafunc.config.getini('inputs_root')[0]
+        results_root = metafunc.config.getini('results_root')[0]
+        env = metafunc.config.getoption('env')
     except IndexError:
-        SDPPoolsSource.inputs_root = "jwst-pipeline"
-        SDPPoolsSource.results_root = "jwst-pipeline-results"
-        SDPPoolsSource.env = "dev"
+        inputs_root = "jwst-pipeline"
+        results_root = "jwst-pipeline-results"
+        env = "dev"
 
-    pools = SDPPoolsSource()
+    pools = SDPPoolsSource(env=env, inputs_root=inputs_root, results_root=results_root)
 
     try:
         pool_paths = pools.pool_paths

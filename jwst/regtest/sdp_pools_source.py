@@ -32,9 +32,8 @@ class SDPPoolsSource(RegtestData):
             self._pool_paths = self.data_glob(self.test_dir + '/pools', glob='*.csv')
         return self._pool_paths
 
-    @property
-    def truth_paths(self):
+    def truth_paths(self, pool):
         """Get the truth associations"""
-        if self._truth_paths is None:
-            self._truth_paths = self.data_glob('/'.join(self.ref_loc), glob='*.json')
+        truth_pool_path = '/'.join(self.ref_loc) + '/' + pool
+        self._truth_paths = self.data_glob(truth_pool_path, glob='*.json')
         return self._truth_paths

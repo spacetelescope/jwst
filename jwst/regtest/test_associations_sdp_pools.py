@@ -137,17 +137,10 @@ def test_against_standard(sdpdata_module, pool_path, slow):
         # Create the associations
         asn_generate(args)
 
-        # Retrieve the truth files
-        asn_regex = re.compile(
-            r'.+{proposal}.+{version_id}(_[^_]+?_[^_]+?_asn\.json)$'.format(
-                proposal=proposal, version_id=version_id
-            ),
-            flags=re.IGNORECASE
-        )
+        # Get the truths
         truth_paths = [
             sdpdata_module.get_data(truth_path)
-            for truth_path in sdpdata_module.truth_paths
-            if asn_regex.match(truth_path)
+            for truth_path in sdpdata_module.truth_paths(pool)
         ]
 
         # Compare the association sets.
