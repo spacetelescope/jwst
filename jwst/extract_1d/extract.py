@@ -3125,6 +3125,7 @@ def do_extract1d(
             source_type = input_model.source_type
             if source_type is None:
                 source_type = input_model.meta.target.source_type
+                input_model.source_type = source_type
         else:
             source_type = input_model.meta.target.source_type
 

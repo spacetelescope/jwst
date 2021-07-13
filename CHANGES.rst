@@ -17,6 +17,12 @@ datamodels
 
 - Remove astropy.io registration of JwstDataModel. [#6179]
 
+extract_1d
+----------
+
+- Updated to propagate SRCTYPE keyword during extraction of MIRI LRS
+  fixed-slit inputs that are in `SlitModel` form. [#6212]
+
 outlier_detection
 -----------------
 
