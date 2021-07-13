@@ -57,14 +57,20 @@ class RegtestData:
         # Initialize non-initialized attributes
         self.asn = None
 
-    def __repr__(self):
-        return pprint.pformat(
-            dict(input=self.input, output=self.output, truth=self.truth,
-                 input_remote=self.input_remote, truth_remote=self.truth_remote,
-                 remote_results_path=self.remote_results_path, test_name=self.test_name,
-                 traceback=self.traceback),
-            indent=1
-        )
+    @property
+    def bigdata_root(self):
+        return self._bigdata_root
+
+    @property
+    def input(self):
+        return self._input
+
+    @input.setter
+    def input(self, value):
+        if value:
+            self._input = os.path.abspath(value)
+        else:
+            self._input = value
 
     @property
     def input_remote(self):
@@ -81,29 +87,15 @@ class RegtestData:
             self._input_remote = value
 
     @property
-    def truth_remote(self):
-        if self._truth_remote is not None:
-            return os.path.join(*self._truth_remote)
-        else:
-            return None
+    def output(self):
+        return self._output
 
-    @truth_remote.setter
-    def truth_remote(self, value):
+    @output.setter
+    def output(self, value):
         if value:
-            self._truth_remote = value.split(os.sep)
+            self._output = os.path.abspath(value)
         else:
-            self._truth_remote = value
-
-    @property
-    def input(self):
-        return self._input
-
-    @input.setter
-    def input(self, value):
-        if value:
-            self._input = os.path.abspath(value)
-        else:
-            self._input = value
+            self._output = value
 
     @property
     def truth(self):
@@ -117,38 +109,22 @@ class RegtestData:
             self._truth = value
 
     @property
-    def output(self):
-        return self._output
+    def truth_remote(self):
+        if self._truth_remote is not None:
+            return os.path.join(*self._truth_remote)
+        else:
+            return None
 
-    @output.setter
-    def output(self, value):
+    @truth_remote.setter
+    def truth_remote(self, value):
         if value:
-            self._output = os.path.abspath(value)
+            self._truth_remote = value.split(os.sep)
         else:
-            self._output = value
+            self._truth_remote = value
 
-    @property
-    def bigdata_root(self):
-        return self._bigdata_root
-
+    # ###########
     # The methods
-    def get_data(self, path=None, docopy=None):
-        """Copy data from Artifactory remote resource to the CWD
-
-        Updates self.input and self.input_remote upon completion
-        """
-        if path is None:
-            path = self.input_remote
-        else:
-            self.input_remote = path
-        if docopy is None:
-            docopy = self.docopy
-        self.input = get_bigdata(self._inputs_root, self.env, path,
-                                 docopy=docopy)
-        self.input_remote = os.path.join(self._inputs_root, self.env, path)
-
-        return self.input
-
+    # ###########
     def data_glob(self, path=None, glob='*', docopy=None):
         """Get a list of files"""
         if path is None:
@@ -178,6 +154,23 @@ class RegtestData:
             for file_path in file_paths
         ]
         return file_paths
+
+    def get_data(self, path=None, docopy=None):
+        """Copy data from Artifactory remote resource to the CWD
+
+        Updates self.input and self.input_remote upon completion
+        """
+        if path is None:
+            path = self.input_remote
+        else:
+            self.input_remote = path
+        if docopy is None:
+            docopy = self.docopy
+        self.input = get_bigdata(self._inputs_root, self.env, path,
+                                 docopy=docopy)
+        self.input_remote = os.path.join(self._inputs_root, self.env, path)
+
+        return self.input
 
     def get_truth(self, path=None, docopy=None):
         """Copy truth data from Artifactory remote resource to the CWD/truth
@@ -500,3 +493,12 @@ def _data_glob_url(*url_parts, root=None):
         url_paths = r.json()['files']
 
     return url_paths
+
+    def __repr__(self):
+        return pprint.pformat(
+            dict(input=self.input, output=self.output, truth=self.truth,
+                 input_remote=self.input_remote, truth_remote=self.truth_remote,
+                 remote_results_path=self.remote_results_path, test_name=self.test_name,
+                 traceback=self.traceback),
+            indent=1
+        )
