@@ -139,7 +139,7 @@ def test_against_standard(sdpdata_module, pool_path, slow):
 
         # Get the truths
         truth_paths = [
-            sdpdata_module.get_data(truth_path)
+            sdpdata_module.get_truth(truth_path)
             for truth_path in sdpdata_module.truth_paths(pool)
         ]
 
