@@ -17,6 +17,8 @@ datamodels
 
 - Remove astropy.io registration of JwstDataModel. [#6179]
 
+- Add NOUTPUTS keyword to the `DarkModel` schema. [#6213]
+
 extract_1d
 ----------
 
