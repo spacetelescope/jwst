@@ -8,6 +8,7 @@ allOf:
 - $ref: keyword_exptype.schema
 - $ref: keyword_readpatt.schema
 - $ref: keyword_preadpatt.schema
+- $ref: keyword_noutputs.schema
 - $ref: keyword_nframes.schema
 - $ref: keyword_ngroups.schema
 - $ref: keyword_groupgap.schema
