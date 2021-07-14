@@ -127,7 +127,8 @@ def generate_artifactory_json(request, artifactory_repos):
             upload_schema_pattern.append(os.path.abspath(jsonfile))
             upload_schema_pattern.append(path_asdf)
             upload_schema = generate_upload_schema(upload_schema_pattern,
-                                                   rtdata.remote_results_path)
+                                                   rtdata.remote_results_path,
+                                                   recursive=(rtdata.okify_op == 'folder_copy'))
 
             jsonfile = os.path.join(cwd, f"{request.node.name}_results.json")
             with open(jsonfile, 'w') as fd:
