@@ -144,6 +144,9 @@ def test_against_standard(sdpdata_module, pool_path, slow):
             for truth_path in sdpdata_module.truth_paths(pool)
         ]
 
+        # Reset the remote path to the truth to be just the parent folder
+        sdpdata_module.truth_remote = str(Path(sdpdata_module.truth_remote).parent)
+
         # Compare the association sets.
         try:
             compare_asn_files(output_path.glob('*.json'), truth_paths)
