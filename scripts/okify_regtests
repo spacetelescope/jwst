@@ -47,7 +47,7 @@ def artifactory_copy(specfile, dry_run=False):
     subprocess.run(args, check=True)
 
 
-def artifactory_copy_folder(specfile, dry_run=False):
+def artifactory_folder_copy(specfile, dry_run=False):
     """Copy a folder after removing target folder"""
     jfrog_args = []
     if dry_run:
@@ -58,16 +58,15 @@ def artifactory_copy_folder(specfile, dry_run=False):
     # to the target's parent. So, read in the spec.
     with open(specfile) as fh:
         spec = json.load(fh)
-    pattern = spec['files'][0]['pattern']
+    pattern = spec['files'][0]['pattern'] + '/'
     target = spec['files'][0]['target']
 
     # Remove the target
-    args = ['jfrog', 'rt', 'del', target] + jfrog_args
+    args = ['jfrog', 'rt', 'del', target, '--quiet=true'] + jfrog_args
     subprocess.run(args, check=True)
 
     # Copy pattern to parent of target.
-    target_parent = Path(target).parent
-    args = ['jfrog', 'rt', 'cp', pattern, target_parent] + jfrog_args
+    args = ['jfrog', 'rt', 'cp', '--flat=true', pattern, target] + jfrog_args
     subprocess.run(args, check=True)
 
 
