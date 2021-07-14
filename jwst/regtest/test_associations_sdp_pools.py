@@ -126,10 +126,11 @@ def test_against_standard(sdpdata_module, pool_path, slow):
     with pushdir(cwd):
 
         # Create the generator running arguments
-        generated_path = Path('generate')
-        generated_path.mkdir()
+        output_path = Path(pool)
+        output_path.mkdir()
+        sdpdata_module.output = str(output_path)
         args = special['args'] + [
-            '-p', str(generated_path),
+            '-p', sdpdata_module.output,
             '--version-id', version_id,
             sdpdata_module.get_data(pool_path)
         ]
@@ -145,7 +146,7 @@ def test_against_standard(sdpdata_module, pool_path, slow):
 
         # Compare the association sets.
         try:
-            compare_asn_files(generated_path.glob('*.json'), truth_paths)
+            compare_asn_files(output_path.glob('*.json'), truth_paths)
         except AssertionError:
             if special['xfail']:
                 pytest.xfail(special['xfail'])

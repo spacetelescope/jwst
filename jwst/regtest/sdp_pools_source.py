@@ -25,6 +25,9 @@ class SDPPoolsSource(RegtestData):
     _results_root = ''
     _truth_paths = None
 
+    def __init__(self, okify_op='folder_copy', **kwargs):
+        super().__init__(okify_op=okify_op, **kwargs)
+
     @property
     def pool_paths(self):
         """Get the association pools"""

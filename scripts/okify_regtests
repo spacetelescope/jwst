@@ -5,14 +5,15 @@ Regression test okifying script.
 Requires JFrog CLI (https://jfrog.com/getcli/) configured with credentials
 that have write access to the jwst-pipeline repository.
 """
-
-import subprocess
-import os
-import tempfile
 from argparse import ArgumentParser
 from contextlib import contextmanager
 from glob import glob
+import json
+import os
+from pathlib import Path
+import subprocess
 import shutil
+import tempfile
 
 import asdf
 from colorama import Fore
@@ -44,6 +45,54 @@ def artifactory_copy(specfile, dry_run=False):
                 + jfrog_args
                 + [f"--spec={specfile}"])
     subprocess.run(args, check=True)
+
+
+def artifactory_copy_folder(specfile, dry_run=False):
+    """Copy a folder after removing target folder"""
+    jfrog_args = []
+    if dry_run:
+        jfrog_args.append('--dry-run')
+
+    # The spec file cannot be used directly because there are two operations
+    # that need to occur: First delete the target then copy the pattern
+    # to the target's parent. So, read in the spec.
+    with open(specfile) as fh:
+        spec = json.load(fh)
+    pattern = spec['files'][0]['pattern']
+    target = spec['files'][0]['target']
+
+    # Remove the target
+    args = ['jfrog', 'rt', 'del', target] + jfrog_args
+    subprocess.run(args, check=True)
+
+    # Copy pattern to parent of target.
+    target_parent = Path(target).parent
+    args = ['jfrog', 'rt', 'cp', pattern, target_parent] + jfrog_args
+    subprocess.run(args, check=True)
+
+
+def artifactory_dispatch(okify_op, specfile, dry_run):
+    """Peform the indicated artifactory operation
+
+    Parameters
+    ----------
+    okify_op : str
+        The operation to perform:
+        - 'file_copy': Copy individual files
+        - 'folder_copy': Replace whole folders
+
+    specfile : str
+        The full path to the jfrog spec file
+
+    dry_run : bool
+        True to just show what would be done
+    """
+    if okify_op == 'file_copy':
+        artifactory_copy(os.path.abspath(specfile), dry_run=dry_run)
+    elif okify_op == 'folder_copy':
+        artifactory_folder_copy(os.path.abspath(specfile), dry_run=dry_run)
+    else:
+        raise RuntimeError(f'Unknown artifactory operation: {okify_op}')
 
 
 def artifactory_get_breadcrumbs(build_number, job_name, suffix):
@@ -111,6 +160,7 @@ def main():
 
                 # Print traceback and OKify info for this test failure
                 with asdf.open(asdffile) as af:
+                    okify_op = af.tree['okify_op']
                     traceback = af.tree["traceback"]
                     remote_results_path = af.tree["remote_results_path"]
                     output = af.tree["output"]
@@ -152,7 +202,7 @@ def main():
                 elif result == 's':
                     pass
                 else:
-                    artifactory_copy(os.path.abspath(specfile), dry_run=args.dry_run)
+                    artifactory_dispatch(okify_op, os.path.abspath(specfile), dry_run=args.dry_run)
                     print("")
 
 

@@ -89,7 +89,9 @@ def generate_artifactory_json(request, artifactory_repos):
     upload_schema_pattern = []
     okify_schema_pattern = []
 
-    rtdata = postmortem(request, 'rtdata') or postmortem(request, 'rtdata_module')
+    rtdata = postmortem(request, 'rtdata') or \
+        postmortem(request, 'rtdata_module') or \
+        postmortem(request, 'sdpdata_module')
     if rtdata:
         try:
             # The _jail fixture from ci_watson sets tmp_path
