@@ -10,7 +10,7 @@ from scipy.interpolate import interp1d, Akima1DInterpolator
 from scipy.optimize import minimize_scalar
 
 # Local imports.
-from SOSS.dms import engine_utils
+from . import engine_utils
 
 # Plotting.
 import matplotlib.pyplot as plt
