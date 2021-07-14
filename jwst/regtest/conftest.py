@@ -123,18 +123,20 @@ def generate_artifactory_json(request, artifactory_repos):
                 json.dump(okify_schema, fd, indent=2)
 
             # Generate an upload JSON file, including the OKify, asdf file
-            upload_schema_pattern.append(rtdata.output)
             upload_schema_pattern.append(os.path.abspath(jsonfile))
             upload_schema_pattern.append(path_asdf)
             upload_schema = generate_upload_schema(upload_schema_pattern,
                                                    rtdata.remote_results_path)
+            upload_schema = generate_upload_schema(rtdata.output,
+                                                   rtdata.remote_results_path,
+                                                   schema=upload_schema)
 
             jsonfile = os.path.join(cwd, f"{request.node.name}_results.json")
             with open(jsonfile, 'w') as fd:
                 json.dump(upload_schema, fd, indent=2)
 
 
-def generate_upload_schema(pattern, target, recursive=False):
+def generate_upload_schema(pattern, target, recursive=False, schema=None):
     """
     Generate JSON schema for Artifactory upload specfile using JFROG.
 
@@ -157,27 +159,28 @@ def generate_upload_schema(pattern, target, recursive=False):
         Specify whether or not to identify files listed in sub-directories
         for uploading.  Default: `False`
 
+    schema : dict
+        Existing schema to append to.
+
     Returns
     -------
     upload_schema : dict
         Dictionary specifying the upload schema
     """
     recursive = repr(recursive).lower()
-
-    if not isinstance(pattern, str):
-        # Populate schema for this test's data
+    if schema is None:
         upload_schema = {"files": []}
-
-        for p in pattern:
-            temp_schema = copy.deepcopy(UPLOAD_SCHEMA["files"][0])
-            temp_schema.update({"pattern": p, "target": target,
-                                "recursive": recursive})
-            upload_schema["files"].append(temp_schema)
     else:
-        # Populate schema for this test's data
-        upload_schema = copy.deepcopy(UPLOAD_SCHEMA)
-        upload_schema["files"][0].update({"pattern": pattern, "target": target,
-                                          "recursive": recursive})
+        upload_schema = copy.deepcopy(schema)
+    if isinstance(pattern, str):
+        pattern = [pattern]
+
+    for p in pattern:
+        temp_schema = copy.deepcopy(UPLOAD_SCHEMA["files"][0])
+        temp_schema.update({"pattern": p, "target": target,
+                            "recursive": recursive})
+        upload_schema["files"].append(temp_schema)
+
     return upload_schema
 
 
