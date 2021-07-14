@@ -9,6 +9,8 @@ because they are used as CRDS selectors
 Keyword    Data Model Name                 Instruments
 =========  ==============================  ==========================
 DETECTOR   model.meta.instrument.detector  All
+EXP_TYPE   model.meta.exposure.type        NIRCam
+NOUTPUTS   model.meta.exposure.noutputs    NIRCam
 READPATT   model.meta.exposure.readpatt    FGS, MIRI, NIRISS, NIRSpec
 SUBARRAY   model.meta.subarray.name        All
 SUBSTRT1   model.meta.subarray.xstart      NIRSpec
