@@ -116,7 +116,7 @@ def generate_artifactory_json(request, artifactory_repos):
                                    os.path.basename(rtdata.output))
             okify_schema_pattern.append(pattern)
             okify_schema = generate_upload_schema(okify_schema_pattern,
-                                                  f"{rtdata.truth_remote}/")
+                                                  f"{os.path.dirname(rtdata.truth_remote)}/")
 
             jsonfile = os.path.join(cwd, f"{request.node.name}_okify.json")
             with open(jsonfile, 'w') as fd:

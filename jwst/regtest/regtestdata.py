@@ -235,9 +235,9 @@ class RegtestData:
             docopy = self.docopy
         os.makedirs('truth', exist_ok=True)
         with pushdir('truth'):
+            self.truth_remote = os.path.join(self._inputs_root, self.env, path)
             self.truth = get_bigdata(self._inputs_root, self.env, path,
                                      docopy=docopy)
-            self.truth_remote = os.path.join(self._inputs_root, self.env, path)
 
         return self.truth
 
