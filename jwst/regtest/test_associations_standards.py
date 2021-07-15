@@ -1,5 +1,6 @@
 """Test against Level2 standard associations
 """
+import os
 from pathlib import Path
 import pytest
 
@@ -10,7 +11,7 @@ from jwst.associations.tests.helpers import (
     combine_pools,
     t_path
 )
-from jwst.tests.base_classes import BaseJWSTTest
+from jwst.lib.file_utils import pushdir
 
 from jwst.associations.main import Main
 
@@ -103,6 +104,7 @@ input_loc = 'associations'
 test_dir = 'standards'
 ref_loc = [input_loc, test_dir, 'truth']
 
+
 @pytest.mark.filterwarnings('error')
 @pytest.mark.parametrize('standard_pars', standards, ids=generate_id)
 def test_against_standard(rtdata, standard_pars, slow):
@@ -115,30 +117,41 @@ def test_against_standard(rtdata, standard_pars, slow):
     if standard_pars.slow and not slow:
         pytest.skip(f'Pool {standard_pars.pool_root} requires "--slow" option')
 
-    # Create the associations
-    generated_path = Path('generate')
-    generated_path.mkdir()
-    version_id = standard_pars.pool_root.replace('_', '-')
-    args = standard_pars.main_args + [
-        '-p', str(generated_path),
-        '--version-id', version_id,
-    ]
-    pool = combine_pools([
-        t_path(Path('data') / (standard_pars.pool_root + '.csv'))
-    ])
-    Main(args, pool=pool)
+    # Tell rtdata to handle failures as folder replacements.
+    rtdata.okify_op = 'folder_copy'
 
-    # Retrieve the truth files
-    truth_paths = [
-        rtdata.get_data(truth_path)
-        for truth_path in rtdata.data_glob('/'.join(ref_loc), glob='*_' + version_id + '_*.json')
-    ]
+    # Start test
+    pool_root = standard_pars.pool_root
+    cwd = Path(pool_root)
+    cwd.mkdir()
+    with pushdir(cwd):
 
-    # Compare the association sets.
-    try:
-        compare_asn_files(generated_path.glob('*.json'), truth_paths)
-    except AssertionError:
-        if standard_pars.xfail:
-            pytest.xfail(standard_pars.xfail)
-        else:
-            raise
+        # Create the associations
+        output_path = Path(pool_root)
+        output_path.mkdir()
+        rtdata.output = str(output_path)
+        version_id = standard_pars.pool_root.replace('_', '-')
+        args = standard_pars.main_args + [
+            '-p', str(output_path),
+            '--version-id', version_id,
+        ]
+        pool = combine_pools([
+            t_path(Path('data') / (standard_pars.pool_root + '.csv'))
+        ])
+        Main(args, pool=pool)
+
+        # Retrieve the truth files
+        truth_paths = []
+        truth_pool_path = '/'.join(ref_loc) + '/' + standard_pars.pool_root
+        for path in rtdata.data_glob(truth_pool_path, glob='*.json'):
+            truth_paths.append(rtdata.get_truth(path))
+        rtdata.truth_remote = os.path.join(rtdata._inputs_root, rtdata.env, truth_pool_path)
+
+        # Compare the association sets.
+        try:
+            compare_asn_files(output_path.glob('*.json'), truth_paths)
+        except AssertionError:
+            if standard_pars.xfail:
+                pytest.xfail(standard_pars.xfail)
+            else:
+                raise

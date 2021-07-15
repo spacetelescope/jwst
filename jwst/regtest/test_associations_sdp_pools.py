@@ -12,8 +12,6 @@ from jwst.associations.lib.diff import (
 from jwst.associations.main import Main as asn_generate
 from jwst.lib.file_utils import pushdir
 
-from jwst.regtest.sdp_pools_source import SDPPoolsSource
-
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
