@@ -7,6 +7,12 @@ assign_wcs
 - Open the specwcs reference file for WFSS modes using the ``with`` context
   manger. [#6160]
 
+associations
+------------
+
+- Fix bug causing ``pytest`` to encounter an error in test collection when
+  running with recent commits to ``astropy`` main (``5.0.dev``). [#6176]
+
 cube_build
 ----------
 
