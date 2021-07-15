@@ -53,20 +53,20 @@ def artifactory_folder_copy(specfile, dry_run=False):
     if dry_run:
         jfrog_args.append('--dry-run')
 
-    # The spec file cannot be used directly because there are two operations
-    # that need to occur: First delete the target then copy the pattern
-    # to the target's parent. So, read in the spec.
+    # Since two different jfrog operations are required, need to read in
+    # the spec to perform the delete.
     with open(specfile) as fh:
         spec = json.load(fh)
     pattern = spec['files'][0]['pattern'] + '/'
     target = spec['files'][0]['target']
 
     # Remove the target
-    args = ['jfrog', 'rt', 'del', target, '--quiet=true'] + jfrog_args
+    folder = target + Path(pattern).stem
+    args = ['jfrog', 'rt', 'del', folder, '--quiet=true'] + jfrog_args
     subprocess.run(args, check=True)
 
     # Copy pattern to parent of target.
-    args = ['jfrog', 'rt', 'cp', '--flat=true', pattern, target] + jfrog_args
+    args = ['jfrog', 'rt', 'cp', '--spec', specfile] + jfrog_args
     subprocess.run(args, check=True)
 
 
