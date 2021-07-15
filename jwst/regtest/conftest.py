@@ -340,6 +340,13 @@ def pool_path_fixture(metafunc):
     metafunc: pytest.Metafunc
         The pytest test generation inspection object.
     """
+    # If doing "big data" regressions has not been requested,
+    # do not invoke any tests.
+    if not metafunc.config.getoption('bigdata'):
+        skip = pytest.skip('For "pool_path" fixtures, option "--bigdata" was not specified.')
+        metafunc.parametrize('pool_path', skip)
+        return
+
     try:
         inputs_root = metafunc.config.getini('inputs_root')[0]
         results_root = metafunc.config.getini('results_root')[0]
