@@ -23,7 +23,6 @@ class SDPPoolsSource(RegtestData):
     _inputs_root = ''
     _pool_paths = None
     _results_root = ''
-    _truth_paths = None
 
     def __init__(self, okify_op='folder_copy', **kwargs):
         super().__init__(okify_op=okify_op, **kwargs)
@@ -37,6 +36,9 @@ class SDPPoolsSource(RegtestData):
 
     def truth_paths(self, pool):
         """Get the truth associations"""
+        paths = []
         truth_pool_path = '/'.join(self.ref_loc) + '/' + pool
-        self._truth_paths = self.data_glob(truth_pool_path, glob='*.json')
-        return self._truth_paths
+        for path in self.data_glob(truth_pool_path, glob='*.json'):
+            paths.append(self.get_truth(path))
+        self.truth_remote = truth_pool_path
+        return paths

@@ -138,16 +138,8 @@ def test_against_standard(sdpdata_module, pool_path, slow):
         # Create the associations
         asn_generate(args)
 
-        # Get the truths
-        truth_paths = [
-            sdpdata_module.get_truth(truth_path)
-            for truth_path in sdpdata_module.truth_paths(pool)
-        ]
-
-        # Reset the remote path to the truth to be just the parent folder
-        sdpdata_module.truth_remote = str(Path(sdpdata_module.truth_remote).parent)
-
-        # Compare the association sets.
+        # Compare to the truth associations.
+        truth_paths = sdpdata_module.truth_paths(pool)
         try:
             compare_asn_files(output_path.glob('*.json'), truth_paths)
         except AssertionError:
