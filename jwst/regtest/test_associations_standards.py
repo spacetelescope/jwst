@@ -105,6 +105,7 @@ test_dir = 'standards'
 ref_loc = [input_loc, test_dir, 'truth']
 
 
+@pytest.mark.bigdata
 @pytest.mark.filterwarnings('error')
 @pytest.mark.parametrize('standard_pars', standards, ids=generate_id)
 def test_against_standard(rtdata, standard_pars, slow):
