@@ -1,6 +1,9 @@
 """
 Association Pools
 """
+
+from pkg_resources import parse_version, get_distribution
+
 from astropy.io.ascii import convert_numpy
 
 from astropy.table import Table
@@ -50,7 +53,7 @@ class AssociationPool(Table):
         table = super(AssociationPool, cls).read(
             filename, delimiter=delimiter,
             format=format,
-            converters=_ConvertToStr(), **kwargs
+            converters=convert_to_str, **kwargs
         )
 
         # If anything has been masked, just fill
@@ -101,17 +104,27 @@ class AssociationPool(Table):
             )
 
 
+def _convert_to_str():
+    func, type_ = convert_numpy(str)
+
+    def convert_func(vals):
+        """Lowercase the conversion"""
+        results = func(vals)
+        results = [result.lower() for result in results]
+        return results
+
+    return [(convert_func, type_)]
+
+
 class _ConvertToStr(dict):
     def __getitem__(self, k):
-        func, type_ = convert_numpy(str)
-
-        def convert_func(vals):
-            """Lowercase the conversion"""
-            results = func(vals)
-            results = [result.lower() for result in results]
-            return results
-
-        return [(convert_func, type_)]
+        return _convert_to_str()
 
     def get(self, k, default=None):
         return self.__getitem__(k)
+
+
+if parse_version(get_distribution('astropy').version) >= parse_version('5.0.dev'):
+    convert_to_str = {'*': _convert_to_str()}
+else:
+    convert_to_str = _ConvertToStr()
