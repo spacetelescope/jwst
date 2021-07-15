@@ -2,6 +2,8 @@
 # Setup a base class and instantiate it in order to provide the
 # SDP pool lists for test parametrization.
 # #############################################################
+import os
+
 from jwst.regtest.regtestdata import RegtestData
 
 
@@ -40,5 +42,6 @@ class SDPPoolsSource(RegtestData):
         truth_pool_path = '/'.join(self.ref_loc) + '/' + pool
         for path in self.data_glob(truth_pool_path, glob='*.json'):
             paths.append(self.get_truth(path))
-        self.truth_remote = truth_pool_path
+        self.truth_remote = os.path.join(self._inputs_root, self.env, truth_pool_path)
+
         return paths
