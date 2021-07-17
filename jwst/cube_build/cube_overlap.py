@@ -6,6 +6,7 @@ import math
 from numba import jit
 from ..datamodels import dqflags
 from jwst.transforms.models import _toindex
+from .cube_match_internal import cube_wrapper_internal # c extension
 import logging
 log = logging.getLogger('numba')
 log.setLevel(logging.WARNING)
@@ -322,7 +323,6 @@ def sh_find_overlap(xcenter, ycenter, xlength, ylength, xp_corner, yp_corner):
         ynew.append(0.0)
         xPixel.append(0.0)
         yPixel.append(0.0)
-
     # Xpixel, YPixel closed (5 corners)
     for i in range(0, 4):
         xPixel[i] = xp_corner[i]
@@ -494,101 +494,134 @@ def match_det2cube(instrument,
 
     nzc = len(zcoord)
     nac = len(acoord)
+    xx = None
+    yy = None
     # 1-1 mapping in across slice direction (x for NIRSPEC, y for MIRI)
     if instrument == 'NIRSPEC':
         xx = sliceno
-
+        ss = sliceno
+        instrument_no = 1
     if instrument == 'MIRI':
         yy = sliceno
-
+        ss = sliceno
+        instrument_no = 0
     # Loop over all pixels in slice
     nn = len(x)
-    for ipixel in range(0, nn - 1):
-        # detector pixel -> 4 corners
-        # In along slice,wave space
-        # along slice: a
 
-        along_corner = []
-        wave_corner = []
-        along_corner.append(a1[ipixel])
-        along_corner.append(a2[ipixel])
-        along_corner.append(a3[ipixel])
-        along_corner.append(a4[ipixel])
+    code = 'CPython'
 
-        wave_corner.append(lam1[ipixel])
-        wave_corner.append(lam2[ipixel])
-        wave_corner.append(lam3[ipixel])
-        wave_corner.append(lam4[ipixel])
-        along_corner = np.zeros(4)
-        wave_corner = np.zeros(4)
-        along_corner[0] = a1[ipixel]
-        along_corner[1] = a2[ipixel]
-        along_corner[2] = a3[ipixel]
-        along_corner[3] = a4[ipixel]
+    if( code == 'CPython'):
+        result = cube_wrapper_internal(instrument_no, naxis1, naxis2,
+                                       crval_along, cdelt_along, crval3, cdelt3,
+                                       a1, a2, a3, a4, lam1, lam2, lam3, lam4,
+                                       acoord, zcoord, ss,
+                                       pixel_flux, pixel_err)
+        
 
-        wave_corner[0] = lam1[ipixel]
-        wave_corner[1] = lam2[ipixel]
-        wave_corner[2] = lam3[ipixel]
-        wave_corner[3] = lam4[ipixel]
+        spaxel_flux_slice, spaxel_weight_slice, spaxel_var_slice, spaxel_iflux_slice = result
 
-# ________________________________________________________________________________
-# Now it does not matter the WCS method used
-        along_min = np.min(along_corner)
-        along_max = np.max(along_corner)
-        wave_min = np.min(wave_corner)
-        wave_max = np.max(wave_corner)
+        spaxel_flux = spaxel_flux + np.asarray(spaxel_flux_slice, np.float64)
+        spaxel_weight = spaxel_weight + np.asarray(spaxel_weight_slice, np.float64)
+        spaxel_var = spaxel_var + np.asarray(spaxel_var_slice, np.float64)
+        spaxel_iflux = spaxel_iflux + np.asarray(spaxel_flux_slice,np.float64)
 
-        Area = find_area_quad(along_min, wave_min, along_corner, wave_corner)
+        result = None
+        
+    if( code == 'Python'):
+        print('******************* Running Python Code')
+        for ii in range(0, 10):
+            print(acoord[ii])
+        for ipixel in range(0, nn - 1):
+            # detector pixel -> 4 corners
+            # In along slice,wave space
+            # along slice: a
+            along_corner = np.zeros(4)
+            wave_corner = np.zeros(4)
+            along_corner[0] = a1[ipixel]
+            along_corner[1] = a2[ipixel]
+            along_corner[2] = a3[ipixel]
+            along_corner[3] = a4[ipixel]
 
-        # estimate where the pixel overlaps in the cube
-        # find the min and max values in the cube xcoord,ycoord and zcoord
-        # along_min = -2.0
-        # along_max = -1.86
-        MinA = (along_min - crval_along) / cdelt_along
-        MaxA = (along_max - crval_along) / cdelt_along
-        ia1 = max(0, int(MinA))
-        # ia2 = int(math.ceil(MaxA))
-        ia2 = int(MaxA)
-        if ia2 >= nac:
-            ia2 = nac - 1
+            wave_corner[0] = lam1[ipixel]
+            wave_corner[1] = lam2[ipixel]
+            wave_corner[2] = lam3[ipixel]
+            wave_corner[3] = lam4[ipixel]
 
-        MinW = (wave_min - crval3) / cdelt3
-        MaxW = (wave_max - crval3) / cdelt3
-        iz1 = int(math.trunc(MinW))
-        iz2 = int(math.ceil(MaxW))
-        if iz2 >= nzc:
-            iz2 = nzc - 1
+            # ________________________________________________________________________________
+            # Now it does not matter the WCS method used
+            along_min = np.min(along_corner)
+            along_max = np.max(along_corner)
+            wave_min = np.min(wave_corner)
+            wave_max = np.max(wave_corner)
 
-        # loop over possible overlapping cube pixels
-        # noverlap = 0
-        nplane = naxis1 * naxis2
+            Area = find_area_quad(along_min, wave_min, along_corner, wave_corner)
 
-        for zz in range(iz1, iz2 + 1):
-            zcenter = zcoord[zz]
-            istart = zz * nplane
+            # estimate where the pixel overlaps in the cube
+            # find the min and max values in the cube xcoord,ycoord and zcoord
+            # along_min = -2.0
+            # along_max = -1.86
+            MinA = (along_min - crval_along) / cdelt_along
+            MaxA = (along_max - crval_along) / cdelt_along
+            ia1 = max(0, int(MinA))
+        
+            ia2 = int(MaxA)
+            if ia2 >= nac:
+                ia2 = nac - 1
 
-            for aa in range(ia1, ia2 + 1):
-                if instrument == 'NIRSPEC':
-                    cube_index = istart + aa * naxis1 + xx  # xx = slice #
+            MinW = (wave_min - crval3) / cdelt3
+            MaxW = (wave_max - crval3) / cdelt3
+            iz1 = int(math.trunc(MinW))
+            if(iz1 < 0):
+                iz1 = 0;
+            iz2 = int(math.ceil(MaxW))
+            if iz2 >= nzc:
+                iz2 = nzc - 1
 
-                if instrument == 'MIRI':
-                    cube_index = istart + yy * naxis1 + aa  # xx = slice #
+            if(ipixel > 270 and ipixel< 300 ):
+                print(' Wave info', ipixel,wave_min, wave_max,crval3,cdelt3, MinW, MaxW,iz1,iz2)
+                print(' along info', ipixel,along_min, along_max, crval_along, MinA, MaxA,ia1,ia2)
+            #print(ipixel,ia1, ia2, iz1,iz2)
+            # loop over possible overlapping cube pixels
+            # noverlap = 0
+            nplane = naxis1 * naxis2
 
-                acenter = acoord[aa]
+            for zz in range(iz1, iz2 + 1):
+                zcenter = zcoord[zz]
+                istart = zz * nplane
 
-                area_overlap = sh_find_overlap(acenter, zcenter,
-                                               cdelt_along, cdelt3,
-                                               along_corner, wave_corner)
-                if area_overlap > 0.0:
-                    AreaRatio = area_overlap / Area
+                for aa in range(ia1, ia2 + 1):
+                    if instrument == 'NIRSPEC':
+                        cube_index = istart + aa * naxis1 + xx  # xx = slice #
 
-                    spaxel_flux[cube_index] = spaxel_flux[cube_index] + \
-                        (AreaRatio * pixel_flux[ipixel])
-                    spaxel_weight[cube_index] = spaxel_weight[cube_index] + \
-                        AreaRatio
-                    spaxel_iflux[cube_index] = spaxel_iflux[cube_index] + 1
-                    spaxel_var[cube_index] = spaxel_var[cube_index] + \
-                        (AreaRatio * pixel_err[ipixel]) * (AreaRatio * pixel_err[ipixel])
+                    if instrument == 'MIRI':
+                        cube_index = istart + yy * naxis1 + aa  # yy = slice #
+
+                    acenter = acoord[aa]
+
+                        
+                    area_overlap = sh_find_overlap(acenter, zcenter,
+                                                   cdelt_along, cdelt3,
+                                                   along_corner, wave_corner)
+                    if(ipixel > 270 and ipixel < 300):
+                        print('a center zcenter ',acenter, zcenter,iz1,iz2,ia1,ia2)
+                        print('a corner',along_corner)
+                        print('wave corner',wave_corner)
+                        print(' overlap',area_overlap)
+                    
+                    if area_overlap > 0.0:
+                        print('match overlap',ipixel,zz,aa, area_overlap)
+                        
+                        if(ipixel > 300):
+                            exit(0)
+                        AreaRatio = area_overlap / Area
+
+                        spaxel_flux[cube_index] = spaxel_flux[cube_index] + \
+                            (AreaRatio * pixel_flux[ipixel])
+                        spaxel_weight[cube_index] = spaxel_weight[cube_index] + \
+                            AreaRatio
+                        spaxel_iflux[cube_index] = spaxel_iflux[cube_index] + 1
+                        spaxel_var[cube_index] = spaxel_var[cube_index] + \
+                            (AreaRatio * pixel_err[ipixel]) * (AreaRatio * pixel_err[ipixel])
 # ________________________________________________________________________________
 
 

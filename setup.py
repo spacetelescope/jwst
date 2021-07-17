@@ -61,14 +61,14 @@ setup(
             define_macros=define_macros
         ),
         Extension(
-            'jwst.cube_build.match_det_cube',
-            ['jwst/cube_build/src/match_det_cube.c'],
+            'jwst.cube_build.cube_match_internal',
+            ['jwst/cube_build/src/cube_match_internal.c','jwst/cube_build/src/cube_utils.c'],
             include_dirs=include_dirs,
             define_macros=define_macros
         ),
         Extension(
-            'jwst.cube_build.dq_plane',
-            ['jwst/cube_build/src/dq_plane.c'],
+            'jwst.cube_build.cube_match_sky',
+            ['jwst/cube_build/src/cube_match_sky.c','jwst/cube_build/src/cube_utils.c'],
             include_dirs=include_dirs,
             define_macros=define_macros
         )

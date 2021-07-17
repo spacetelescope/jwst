@@ -5,7 +5,6 @@ from numba import jit
 import numpy as np
 import logging
 from . import cube_overlap
-from .match_det_cube import point_emsm
 
 log = logging.getLogger('numba')
 log.setLevel(logging.WARNING)
@@ -139,7 +138,7 @@ def map_fov_to_dqplane_miri(start_region, end_region,
                                      cdelt1,cdelt2,
                                      naxis1, naxis2,
                                      xcenters, ycenters,
-                                     xi_corner, eta_corner, w, w,
+                                     xi_corner, eta_corner, w,
                                      spaxel_dq)
 
 
@@ -210,10 +209,10 @@ def map_fov_to_dqplane_nirspec(overlap_partial,
                 xi_corner = np.array([xi1, xi2, xi3, xi4])
                 eta_corner = np.array([eta1, eta2, eta3, eta4])
 
-                # if isline:
+    
                 overlap_slice_with_spaxels(overlap_partial,
                                            cdelt1, cdelt2,
-                                           naxis1,
+                                           naxis1, naxis2,
                                            xcoord, ycoord,
                                            xi_corner, eta_corner,
                                            w,
@@ -285,7 +284,7 @@ def overlap_fov_with_spaxels(overlap_partial, overlap_full,
                              cdelt1, cdelt2,
                              naxis1, naxis2,
                              xcenters, ycenters,
-                             xi_corner, eta_corner, wmin, wmax,
+                             xi_corner, eta_corner, w,
                              spaxel_dq):
 
     """find the amount of overlap of FOV with each spaxel
@@ -303,8 +302,7 @@ def overlap_fov_with_spaxels(overlap_partial, overlap_full,
         ----------
         xi_corner: xi coordinates of the 4 corners of the FOV on the wavelenghth plane
         eta_corner: eta coordinates of the 4 corners of the FOV on the wavelength plane
-        wmin: minimum wavelength bin in the IFU cube that this data covers
-        wmax: maximum wavelength bin in the IFU cube that this data covers
+        w:  wavelength bin in the IFU cube that this data covers
 
         Sets
         -------
@@ -342,21 +340,18 @@ def overlap_fov_with_spaxels(overlap_partial, overlap_full,
             else:
                 wave_slice_dq[ixy] = overlap_partial
 
-    # set for a range of wavelengths
-    #if wmin != wmax:
-    #    spaxel_dq[wmin:wmax, :] = np.bitwise_or(spaxel_dq[wmin:wmax, :],
-    #                                            wave_slice_dq)
+    wstart = naxis1*naxis2*w
+    wend = wstart + naxis1*naxis2
+    
 
-        # set for a single wavelength
-    #else:
-    #    spaxel_dq[wmin, :] = np.bitwise_or(spaxel_dq[wmin, :],
-    #                                       wave_slice_dq)
+    spaxel_dq[wstart:wend] = np.bitwise_or(spaxel_dq[wstart:wend],
+                                           wave_slice_dq)
 
 
 @jit(nopython=True)
 def overlap_slice_with_spaxels(overlap_partial,
                                cdelt1, cdelt2,
-                               naxis1,
+                               naxis1, naxis2,
                                xcoord, ycoord,
                                xi_corner, eta_corner, w,
                                spaxel_dq):
@@ -383,11 +378,12 @@ def overlap_slice_with_spaxels(overlap_partial,
                                  xcoord, ycoord,
                                  xi_corner, eta_corner)
     num = len(points)
-
+    wstart = w*naxis1*naxis2
+    
     for i in range(num):
         xpt, ypt = points[i]
         index = (ypt * naxis1) + xpt
-        spaxel_dq[w, index] = overlap_partial
+        spaxel_dq[wstart + index] = overlap_partial
 
 
 @jit(nopython=True)
