@@ -1,15 +1,11 @@
 """ Map the detector pixels to the cube coordinate system.
 This is where the weight functions are used.
 """
-from numba import jit
 import numpy as np
 import logging
 
-log = logging.getLogger('numba')
 log.setLevel(logging.WARNING)
 
-
-@jit(nopython=True)
 def blot_overlap(ipt, xstart,
                  xcenter, ycenter,
                  x_cube, y_cube,
