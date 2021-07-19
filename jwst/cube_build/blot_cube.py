@@ -3,8 +3,9 @@ This is where the weight functions are used.
 """
 import numpy as np
 import logging
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
-log.setLevel(logging.WARNING)
 
 def blot_overlap(ipt, xstart,
                  xcenter, ycenter,
