@@ -26,22 +26,25 @@ def assign_moving_target_wcs(input_model):
     if not isinstance(input_model, datamodels.ModelContainer):
         raise ValueError("Expected a ModelContainer object")
 
+    # get the indices of the science exposures in the ModelContainer
+    ind = input_model.ind_asn_type('science')
+    sci_models = np.asarray(input_model._models)[ind]
     # Get the MT RA/Dec values from all the input exposures
-    mt_ra = np.array([model.meta.wcsinfo.mt_ra for model in input_model._models])
-    mt_dec = np.array([model.meta.wcsinfo.mt_dec for model in input_model._models])
+    mt_ra = np.array([model.meta.wcsinfo.mt_ra for model in sci_models])
+    mt_dec = np.array([model.meta.wcsinfo.mt_dec for model in sci_models])
 
     # Compute the mean MT RA/Dec over all exposures
     if (None in mt_ra) or (None in mt_dec):
         log.warning("One or more MT RA/Dec values missing in input images")
         log.warning("Step will be skipped, resulting in target misalignment")
-        for model in input_model:
+        for model in sci_models:
             model.meta.cal_step.assign_mtwcs = 'SKIPPED'
         return input_model
     else:
         mt_avra = mt_ra.mean()
         mt_avdec = mt_dec.mean()
 
-    for model in input_model:
+    for model in sci_models:
         model.meta.wcsinfo.mt_avra = mt_avra
         model.meta.wcsinfo.mt_avdec = mt_avdec
         if isinstance(model, datamodels.MultiSlitModel):

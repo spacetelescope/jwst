@@ -4,13 +4,12 @@
 Science Data Processing Workflow
 ================================
 
-General Workflow
-================
+General Workflow for Generating Association Products
+====================================================
 
 See :ref:`asn-associations-and-jwst` for an overview of how JWST uses
 associations. This document describes how associations are used by the
-ground processing system to execute the stage 2 and stage 3 pipelines
-based on.
+ground processing system to execute the stage 2 and stage 3 pipelines.
 
 Up to the initial calibration step :ref:`calwebb_detector1 <calwebb_detector1>`,
 the science exposures are treated individually. However, starting at the stage 2
@@ -19,9 +18,9 @@ processed. Instead of creating a single monolithic pipeline, the workflow uses
 the associations to determine what pipeline should be executed and when to
 execute them. In the figure below, this wait-then-execute process is represented
 by the ``workflow trigger``. The workflow reads the contents of an association
-to determine what exposures, and possibly other files, are needed to continue
-processing. The workflow then waits until all exposures exist. At that point,
-the related calibration step is executed with the association as input.
+file to determine what exposures, and possibly other files, are needed to
+continue processing. The workflow then waits until all exposures exist. At that
+point, the related calibration pipeline is executed with the association as input.
 
 With this finer granularity, the workflow can run more processes parallel,
 and allows the operators deeper visibility into the progression of the
@@ -78,36 +77,3 @@ Catalog`` file set, shown in red in the diagram. The stage 2 association
 also the catalog file produced by the stage 3 image
 processing. Hence, the workflow knows to wait for this file before
 continuing the spectral processing.
-
-Field Guide to File Names
-=========================
-
-The high-level distinctions between stage 2, stage 3, exposure-centric,
-and target-centric files can be determined by the following file patterns.
-
-- Files produced by stage 3 processing
-  
-  Any file name that matches the following regex is a file that has
-  been produced by a stage 3 pipeline::
-
-    .+[aocr][0-9]{3:4}.+
-
-- Files containing exposure-centric data
-
-  Such data have files that match the following regex::
-
-    jw[0-9]{11}_[0-9]{5}_[0-9]{5}_.+\.fits
-
-- Files containing target-centric data
-
-  Such data have files that match the following regex::
-
-    jw[0-9]{5}-[aocr][0-9]{3:4}_.+
-
-  Such data is the result of the combination of data from several
-  exposures, usually produced by a stage 3 calibration pipeline.
-
-Note that these patterns are not intended to fully define all the
-specific types of files there are. However, these are the main
-classifications, from which the documentation for the individual
-calibrations steps and pipelines will describe any further details.

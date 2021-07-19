@@ -47,13 +47,19 @@ class ResampleStep(Step):
 
         input = datamodels.open(input)
 
-        # If single input, wrap in a ModelContainer
-        if not isinstance(input, datamodels.ModelContainer):
-            input_models = datamodels.ModelContainer([input])
-            input_models.meta.resample.output = input.meta.filename
-            self.blendheaders = False
-        else:
+        if isinstance(input, datamodels.ModelContainer):
             input_models = input
+            try:
+                output = input_models.meta.asn_table.products[0].name
+            except AttributeError:
+                # coron data goes through this path by the time it gets to
+                # resampling.
+                # TODO: figure out why and make sure asn_table is carried along
+                output = None
+        else:
+            input_models = datamodels.ModelContainer([input])
+            output = input.meta.filename
+            self.blendheaders = False
 
         # Check that input models are 2D images
         if len(input_models[0].data.shape) != 2:
@@ -75,14 +81,14 @@ class ResampleStep(Step):
         kwargs['allowed_memory'] = self.allowed_memory
 
         # Call the resampling routine
-        resamp = resample.ResampleData(input_models, **kwargs)
+        resamp = resample.ResampleData(input_models, output=output, **kwargs)
         result = resamp.do_drizzle()
 
         for model in result:
             model.meta.cal_step.resample = 'COMPLETE'
             util.update_s_region_imaging(model)
-            model.meta.asn.pool_name = input_models.meta.pool_name
-            model.meta.asn.table_name = input_models.meta.table_name
+            model.meta.asn.pool_name = input_models.asn_pool_name
+            model.meta.asn.table_name = input_models.asn_table_name
             self.update_phot_keywords(model)
             model.meta.filetype = 'resampled'
 

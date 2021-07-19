@@ -14,7 +14,7 @@ on:
 
 env:
   CRDS_SERVER_URL: https://jwst-crds.stsci.edu
-  CRDS_PATH: ~/crds_cache
+  CRDS_PATH: $HOME/crds_cache
   CRDS_CLIENT_RETRY_COUNT: 3
   CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
 
@@ -38,7 +38,7 @@ jobs:
 
           - name: SDP dependencies in requirements-sdp.txt
             os: ubuntu-latest
-            python-version: 3.8
+            python-version: 3.9
             toxenv: sdpdeps
 
           - name: Installed package with --pyargs
@@ -91,7 +91,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{ env.CRDS_PATH }}
-          key: crds-${{ steps.crds-context.outputs.pmap }}
+          key: crds-${{ matrix.toxenv }}-${{ steps.crds-context.outputs.pmap }}
 
       - name: Install tox
         run: |

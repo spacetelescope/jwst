@@ -43,10 +43,12 @@ class ModelContainer(JwstDataModel, Sequence):
         - None: initializes an empty `ModelContainer` instance, to which
           DataModels can be added via the ``append()`` method.
 
-       - asn_exptypes: list of exposure types from the asn file to read
-         into the ModelContainer, if None read all the given files.
+    asn_exptypes: str
+        list of exposure types from the asn file to read
+        into the ModelContainer, if None read all the given files.
 
-       - asn_n_members: Open only the first N qualifying members.
+    asn_n_members : int
+        Open only the first N qualifying members.
 
     iscopy : bool
         Presume this model is a copy. Members will not be closed
@@ -55,8 +57,8 @@ class ModelContainer(JwstDataModel, Sequence):
     Examples
     --------
     >>> container = ModelContainer('example_asn.json')
-    >>> for dm in container:
-    ...     print(dm.meta.filename)
+    >>> for model in container:
+    ...     print(model.meta.filename)
 
     Say the association was a NIRCam dithered dataset. The `models_grouped`
     attribute is a list of lists, the first index giving the list of exposure
@@ -71,19 +73,21 @@ class ModelContainer(JwstDataModel, Sequence):
     >>> m = datamodels.open('myfile.fits')
     >>> c.append(m)
     """
+    schema_url = None
 
-    # This schema merely extends the 'meta' part of the datamodel, and
-    # does not describe the data contents of the container.
-    schema_url = "http://stsci.edu/schemas/jwst_datamodel/container.schema"
+    def __init__(self, init=None, asn_exptypes=None, asn_n_members=None,
+                 iscopy=False, **kwargs):
 
-    def __init__(self, init=None, asn_exptypes=None, asn_n_members=None, iscopy=False, **kwargs):
-
-        super().__init__(init=None, asn_exptypes=None, **kwargs)
+        super().__init__(init=None, **kwargs)
 
         self._models = []
         self._iscopy = iscopy
         self.asn_exptypes = asn_exptypes
         self.asn_n_members = asn_n_members
+        self.asn_table = {}
+        self.asn_table_name = None
+        self.asn_pool_name = None
+
         self._memmap = kwargs.get("memmap", False)
 
         if init is None:
@@ -93,11 +97,7 @@ class ModelContainer(JwstDataModel, Sequence):
             self._models.append([datamodel_open(init, memmap=self._memmap)])
         elif isinstance(init, list):
             if all(isinstance(x, (str, fits.HDUList, DataModel)) for x in init):
-                # Try opening the list as datamodels
-                try:
-                    init = [datamodel_open(m, memmap=self._memmap) for m in init]
-                except (FileNotFoundError, ValueError):
-                    raise
+                init = [datamodel_open(m, memmap=self._memmap) for m in init]
             else:
                 raise TypeError("list must contain items that can be opened "
                                 "with jwst.datamodels.open()")
@@ -109,7 +109,6 @@ class ModelContainer(JwstDataModel, Sequence):
             self._asdf = AsdfFile(instance)
             self._instance = instance
             self._ctx = self
-            self.__class__ = init.__class__
             self._models = init._models
             self._iscopy = True
         elif is_association(init):
@@ -160,7 +159,7 @@ class ModelContainer(JwstDataModel, Sequence):
         result._asdf = AsdfFile(instance)
         result._instance = instance
         result._iscopy = self._iscopy
-        result._schema = result._schema
+        result._schema = self._schema
         result._ctx = result
         for m in self._models:
             if isinstance(m, DataModel):
@@ -169,7 +168,8 @@ class ModelContainer(JwstDataModel, Sequence):
                 result.append(m)
         return result
 
-    def read_asn(self, filepath):
+    @staticmethod
+    def read_asn(filepath):
         """
         Load fits files from a JWST association file.
 
@@ -185,8 +185,8 @@ class ModelContainer(JwstDataModel, Sequence):
         try:
             with open(filepath) as asn_file:
                 asn_data = load_asn(asn_file)
-        except AssociationNotValidError:
-            raise IOError("Cannot read ASN file.")
+        except AssociationNotValidError as e:
+            raise IOError("Cannot read ASN file.") from e
         return asn_data
 
     def from_asn(self, asn_data, asn_file_path=None):
@@ -239,24 +239,21 @@ class ModelContainer(JwstDataModel, Sequence):
             self.meta.asn_table._instance, asn_data
         )
 
-        self.meta.resample.output = asn_data['products'][0]['name']
-        if asn_file_path is None:
-            self.meta.table_name = 'not specified'
-        else:
-            self.meta.table_name = op.basename(asn_file_path)
+        if asn_file_path is not None:
+            self.asn_table_name = op.basename(asn_file_path)
+            self.asn_pool_name = asn_data['asn_pool']
             for model in self:
                 try:
-                    model.meta.asn.table_name = op.basename(asn_file_path)
-                    model.meta.asn.pool_name = asn_data['asn_pool']
+                    model.meta.asn.table_name = self.asn_table_name
+                    model.meta.asn.pool_name = self.asn_pool_name
                 except AttributeError:
                     pass
-        self.meta.pool_name = asn_data['asn_pool']
 
     def save(self,
              path=None,
              dir_path=None,
              save_model_func=None,
-             *args, **kwargs):
+             **kwargs):
         """
         Write out models in container to FITS or ASDF.
 
@@ -287,7 +284,7 @@ class ModelContainer(JwstDataModel, Sequence):
         """
         output_paths = []
         if path is None:
-            def path(filename, idx):
+            def path(filename, idx=None):
                 return filename
         elif not callable(path):
             path = make_file_with_index
@@ -304,7 +301,7 @@ class ModelContainer(JwstDataModel, Sequence):
                 save_path = op.join(outpath, filename)
                 try:
                     output_paths.append(
-                        model.save(save_path, *args, **kwargs)
+                        model.save(save_path, **kwargs)
                     )
                 except IOError as err:
                     raise err
@@ -425,6 +422,28 @@ class ModelContainer(JwstDataModel, Sequence):
             first_exposure = self.meta.asn_table.products[0].members[0].expname
 
         return datamodel_open(first_exposure)
+
+    def ind_asn_type(self, asn_exptype):
+        """
+        Determine the indices of models corresponding to ``asn_exptype``.
+
+        Parameters
+        ----------
+        asn_exptype : str
+            Exposure type as defined in an association, e.g. "science".
+
+        Returns
+        -------
+        ind : list
+            Indices of models in ModelContainer._models matching ``asn_exptype``.
+        """
+        ind = []
+        names = [m.expname for m in self.meta.asn_table.products[0].members
+                 if m.exptype.lower() == asn_exptype]
+        for i, model in enumerate(self._models):
+            if model.meta.filename in names:
+                ind.append(i)
+        return ind
 
 
 def make_file_with_index(file_path, idx):

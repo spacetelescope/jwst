@@ -59,6 +59,17 @@ def make_models(tmp_path):
     }
 
 
+def test_init_from_pathlib(tmp_path):
+    """Test initializing model from a Path object"""
+    path = tmp_path / "pathlib.fits"
+    model1 = datamodels.ImageModel((50, 50))
+    model1.save(path)
+    model = datamodels.open(path)
+
+    # Test is basically, did we open the model?
+    assert isinstance(model, ImageModel)
+
+
 @pytest.mark.parametrize('which_file, skip_fits_update, expected_exp_type',
                          [
                              ('just_fits', None, 'FGS_DARK'),
@@ -407,3 +418,8 @@ def test_meta_date_management(tmp_path):
 
     model = JwstDataModel()
     assert abs((Time.now() - Time(model.meta.date)).value) < 1.0
+
+
+def test_model_container_ind_asn_exptype(container):
+    ind = container.ind_asn_type('science')
+    assert ind == [0, 1]

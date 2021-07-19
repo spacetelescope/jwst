@@ -6,10 +6,12 @@ on:
     types:
       - requested
 
-# Note: This has to be in workflow_run so it works for PRs from forks.
+# Note: This has to be in workflow_run so it works for PRs from forks.  And only cancel
+# pull_request triggers, not push, i.e. merges into master.
 jobs:
   cancel:
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.event == 'pull_request' }}
     steps:
     - name: Cancel previous runs
       uses: styfle/cancel-workflow-action@3d86a7cc43670094ac248017207be0295edbc31d  # 0.8.0
