@@ -671,9 +671,9 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
 
     # Get jwst velocity
     t_pars.jwst_velocity = np.array([
-        model.meta.ephemeris.velocity_x,
-        model.meta.ephemeris.velocity_y,
-        model.meta.ephemeris.velocity_z,
+        model.meta.ephemeris.velocity_x_bary,
+        model.meta.ephemeris.velocity_y_bary,
+        model.meta.ephemeris.velocity_z_bary,
     ])
     logger.debug('JWST Velocity: %s', t_pars.jwst_velocity)
 
