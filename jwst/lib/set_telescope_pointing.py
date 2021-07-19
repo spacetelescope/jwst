@@ -665,7 +665,7 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
     t_pars.guide_star_wcs = WCSRef(
         model.meta.guidestar.gs_ra,
         model.meta.guidestar.gs_dec,
-        model.meta.guidestar.gs_pa
+        model.meta.guidestar.gs_v3_pa_science
     )
     logger.debug('guide_star_wcs from model: %s', t_pars.guide_star_wcs)
 
