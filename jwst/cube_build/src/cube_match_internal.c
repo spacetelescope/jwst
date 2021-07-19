@@ -23,52 +23,49 @@ Parameters
 ----------
 instrument: int
     0 = MIRI, 1 = NIRSPEC. Used for set the dq plane
-start_region : int
-    starting slice number for detector region
-end_region: int 
-    ending slice number for detector region
-xcoord : numpy.ndarray
-   size of naxis1. This array holds the center x axis values of the ifu cube 
-ycoord : numpy.ndarray
-   size of naxis2. This array holds the center y axis values of the ifu cube 
-zcoord : numpy.ndarray
-   size of naxis3. This array holds the center x axis values of the ifu cube 
-flux : numpy.ndarray
-   size: point cloud elements. Flux of each point cloud memeber
-err : numpy.ndarray
-   size: point cloud elements. Flux of each point cloud memeber
-coord1 : numpy.ndarray
-   size: point cloud elements. Flux of each point cloud memeber
-coord2 : numpy.ndarray
-   size: point cloud elements. Flux of each point cloud memeber
-wave : numpy.ndarray
-   size: point cloud elements. Flux of each point cloud memeber
-rois_pixel : numpy.ndarray
-   size: point cloud elements. Flux of each point cloud memeber
-roiw_pixel : numpy.ndarray
-   size: point cloud elements. Flux of each point cloud memeber
-scalerad_pixel : numpy.ndarray
-   size: point cloud elements. Flux of each point cloud memeber
-zcdelt3: numpy.ndarray
-   size: point cloud elements. Flux of each point cloud memeber
-
-nplane : int
-nwave : int
-ncube : int (this is a huge number does it need to int64?)
-npt : int  
-
-cdelt1 : double
-cdelt2 : double
-
+naxis1 : int 
+   axis 1 of IFU cube
+nasix2 : int
+  axis 2 of IFU cube
+crval_along : double
+  along slice reference value in IFU cube
+cdelt_along : double
+  along slice sampling in IFU cube
+crval3 : double
+   wavelength reference value in IFU cube
+cdetl3 : double
+   wavelength sampling in IFU cube
+a1, a2, a3, a4: double array 
+    array of corners of pixels holding along slice coordinates
+    a1 holds corner 1 
+    a2 holds corner 2 
+    a3 holds corner 3 
+    a4 holds corner 4 
+lam1, lam2, lam3, lam4: double array
+    array of corners of pixels holding wavelength coordinates
+    lam1 holds corner 1 
+    lam2 holds corner 2 
+    lam3 holds corner 3 
+    lam4 holds corner 4 
+acoord : double array
+   Array holds along slice coordinates in IFU cube
+zcoord : double array
+   Array holds the wavelength coordinates in the IFU cube
+ss : double array
+   Array holds the slice number
+pixel_flux : double array
+  Array that holds detector pixel flux
+pixel_error : double array
+  Array that holds detector pixel flux error
 
 Returns
 -------
 
-spaxel_flux : numpy.ndarray
-spaxel_weight : numpy.ndarray
-spaxel_iflux : numpy.ndarray
-spaxel_var : numpy.ndarray
-spaxel_dq : numpy.ndarray
+spaxel_flux : array
+spaxel_weight : array
+spaxel_iflux : array
+spaxel_var : array
+spaxel_dq : array
 
 */
 
@@ -84,56 +81,15 @@ spaxel_dq : numpy.ndarray
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 
 
-
 // routines used from cube_utils.c
-
 extern double sh_find_overlap(const double xcenter, const double ycenter, 
 		      const double xlength, const double ylength,
 			      double xPixelCorner[],double yPixelCorner[]);
 
 
 
-double find_area_quad(double MinX, double MinY, double Xcorner[], double Ycorner[]){
-  /* Find the area of an quadrilateral
+extern double find_area_quad(double MinX, double MinY, double Xcorner[], double Ycorner[]);
 
-    Parameters
-    ----------
-    MinX : float
-       Minimum X value
-    MinY : float
-       Minimum Y value
-    Xcorners : numpy.ndarray
-       x corner values (use first 4 corners)
-    YCorners : numpy.ndarray
-       y corner values (use first 4 corners)
-
-    Returns
-    -------
-    Area
-  */
-  
-  double PX[5];
-  double PY[5];
-
-  PX[0] = Xcorner[0] - MinX;
-  PX[1] = Xcorner[1] - MinX;
-  PX[2] = Xcorner[2] - MinX;
-  PX[3] = Xcorner[3] - MinX;
-  PX[4]= PX[0];
-
-  PY[0] = Ycorner[0] - MinY;
-  PY[1] = Ycorner[1] - MinY;
-  PY[2] = Ycorner[2] - MinY;
-  PY[3] = Ycorner[3] - MinY;
-  PY[4] = PY[0];
-
-  double Area = 0.5 * ((PX[0] * PY[1] - PX[1] * PY[0]) +
-		(PX[1] * PY[2] - PX[2] * PY[1]) +
-		(PX[2] * PY[3] - PX[3] * PY[2]) +
-		(PX[3] * PY[4] - PX[4] * PY[3])); 
-    
-  return fabs(Area);
-}
 
 //_______________________________________________________________________
 // Allocate the memory to for the spaxel arrays in the cube
@@ -182,9 +138,11 @@ int mem_alloc(int nelem, double **fluxv, double **weightv, double **varv,  doubl
     return 0;
 }
 
-//________________________________________________________________________________
-//________________________________________________________________________________
-       //int nac = size of acoord;
+//_______________________________________________________________________
+//  based on a 2-D drizzling type of algorithm find the contribution of
+// each detector flux to the IFU cube
+//_______________________________________________________________________
+
 int match_detector_cube(int instrument, int naxis1, int naxis2, int nz, int npt, int ncube, int na,
 			double crval_along, double cdelt_along, double crval3, double cdelt3,
 			double *a1, double *a2,double *a3, double*a4,
@@ -208,7 +166,8 @@ int match_detector_cube(int instrument, int naxis1, int naxis2, int nz, int npt,
     weightv[i] = set_zero;
   }
 
-  // loop over each valid point on detector and find match to IFU cube
+  // loop over each valid point on detector and find match to IFU cube based
+  // on along slice coordinate and wavelength
   for (int ipixel= 0; ipixel< npt; ipixel++){
     double along_corner[4];
     double wave_corner[4];
@@ -290,7 +249,10 @@ int match_detector_cube(int instrument, int naxis1, int naxis2, int nz, int npt,
   return 0;
 }
 
-                            
+
+
+// C extension SETUP
+
 PyArrayObject * ensure_array(PyObject *obj, int *is_copy) {
     if (PyArray_CheckExact(obj) &&
         PyArray_IS_C_CONTIGUOUS((PyArrayObject *) obj) &&
@@ -400,9 +362,7 @@ static PyObject *cube_wrapper_internal(PyObject *module, PyObject *args) {
 			   spaxel_iflux_arr);
 
     goto cleanup;
-
   }
-
 
   //______________________________________________________________________
   // Match the point cloud elements to the spaxels they fail within the roi
@@ -456,7 +416,6 @@ static PyObject *cube_wrapper_internal(PyObject *module, PyObject *args) {
 			   spaxel_iflux_arr);
 	
     goto cleanup;
-    
   }
 
  fail:
@@ -493,7 +452,6 @@ static PyObject *cube_wrapper_internal(PyObject *module, PyObject *args) {
   return result;
 }
 
-
 static PyMethodDef cube_methods[] =
 {
     {
@@ -504,7 +462,6 @@ static PyMethodDef cube_methods[] =
     },
     {NULL, NULL, 0, NULL}  /* sentinel */
 };
-
 
 static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT,

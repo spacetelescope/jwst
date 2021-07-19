@@ -1,3 +1,4 @@
+// This library contains c functions to support building IFU cubes
 
 #include <stdlib.h>
 #include <math.h>
@@ -10,14 +11,14 @@
 #define CP_BOTTOM 2
 #define CP_TOP 3
 
-
+// support function for sh_find_overlap 
 void addpoint (double x, double y, double xnew[], double ynew[], int *nVertices2){
   xnew[*nVertices2] = x;
   ynew[*nVertices2] = y;
   *nVertices2 = *nVertices2 + 1;
 }
 
-
+// support function for sh_find_overlap 
 int insideWindow(int edge, double x, double y, 
                  double left,double right, double top, double bottom){
         switch(edge)
@@ -34,6 +35,7 @@ int insideWindow(int edge, double x, double y,
         return 0;
 }
 
+// support function for sh_find_overlap 
 int calcCondition(int edge, double x1, double y1, double x2, double y2, 
                   double left, double right, double top, double bottom) {
   int stat1 = insideWindow(edge,x1,y1,left,right,top,bottom);
@@ -46,6 +48,7 @@ int calcCondition(int edge, double x1, double y1, double x2, double y2,
 
 }
 
+// support function for sh_find_overlap 
 void solveIntersection(int edge ,double x1,double y1,double x2,double y2,
                        double *x,double *y,
                        double left, double right, double top, double bottom){
@@ -79,6 +82,50 @@ void solveIntersection(int edge ,double x1,double y1,double x2,double y2,
 }
 
 
+double find_area_quad(double MinX, double MinY, double Xcorner[], double Ycorner[]){
+  /* Find the area of an quadrilateral
+
+    Parameters
+    ----------
+    MinX : float
+       Minimum X value
+    MinY : float
+       Minimum Y value
+    Xcorners : numpy.ndarray
+       x corner values (use first 4 corners)
+    YCorners : numpy.ndarray
+       y corner values (use first 4 corners)
+
+    Returns
+    -------
+    Area
+  */
+  
+  double PX[5];
+  double PY[5];
+
+  PX[0] = Xcorner[0] - MinX;
+  PX[1] = Xcorner[1] - MinX;
+  PX[2] = Xcorner[2] - MinX;
+  PX[3] = Xcorner[3] - MinX;
+  PX[4]= PX[0];
+
+  PY[0] = Ycorner[0] - MinY;
+  PY[1] = Ycorner[1] - MinY;
+  PY[2] = Ycorner[2] - MinY;
+  PY[3] = Ycorner[3] - MinY;
+  PY[4] = PY[0];
+
+  double Area = 0.5 * ((PX[0] * PY[1] - PX[1] * PY[0]) +
+		(PX[1] * PY[2] - PX[2] * PY[1]) +
+		(PX[2] * PY[3] - PX[3] * PY[2]) +
+		(PX[3] * PY[4] - PX[4] * PY[3])); 
+    
+  return fabs(Area);
+}
+
+
+// find the area of a closed polygon
 double find_area_poly(int nVertices,double xPixel[],double yPixel[]){
   
   double areaPoly = 0.0;
@@ -104,11 +151,8 @@ double sh_find_overlap(const double xcenter, const double ycenter,
 		      const double xlength, const double ylength,
 		      double xPixelCorner[],double yPixelCorner[])
 {
-  // user the Sutherland_hedgeman Polygon Clipping Algorithm to solve the overlap region
-  // first clip the y-z detector plane by the cube's yz rectangle - find the overlap area
-  // Then clip the x-y detector plane by the cube's xy rectangle and find the average x lenghth
-  //   overlap: overlap vol = area overlap * x lenght overlap
-
+  // Sutherland_hedgeman Polygon Clipping Algorithm to solve the overlap region
+  // between a 2-D detector mapped to IFU space with cube spaxel
 
   double areaClipped = 0.0;
   double top = ycenter + 0.5*ylength;

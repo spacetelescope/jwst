@@ -518,14 +518,12 @@ class IFUCubeData():
         associated with the band
         2. map_detector_to_output_frame: Maps the detector data to the cube output coordinate system
         3. For each mapped detector pixel the ifu cube spaxel located in the region of
-        interest. There are three different routines to do this step each of them use
-        a slighly different weighting function in how to combine the detector fluxs that
-        fall within a region of influence from the spaxel center
-        a. cube_cloud:match_det2_cube_msm: This routine uses the modified
+        interest. There are two different routines to do this step, both of which use a c extension
+        to combine the detector fluxes that fall within a region of influence from the spaxel center
+        a. src/cube_match_sky: This routine uses the modified
         shepard method to determing the weighting function, which weights the detector
         fluxes based on the distance between the detector center and spaxel center.
-
-        c. cube_internal_cal.match_det2cube is only for single exposure, single band cubes and
+        b. src/cube_match_internalis only for single exposure, single band cubes and
         the ifucube in created in the detector plane. The weighting function is based on
         the overlap of between the detector pixel and spaxel. This method is simplified
         to determine the overlap in the along slice-wavelength plane.
@@ -546,7 +544,6 @@ class IFUCubeData():
         self.spaxel_weight = np.zeros(total_num, dtype=np.float64)
         self.spaxel_var = np.zeros(total_num, dtype=np.float64)
         self.spaxel_iflux = np.zeros(total_num, dtype=np.float64)
-
         self.spaxel_dq = np.zeros(total_num, dtype=np.uint32)
 
         for i in range(total_num):
@@ -557,8 +554,8 @@ class IFUCubeData():
         # ______________________________________________________________________________
         subtract_background = True
 
-        # now need to loop over every file that covers this
-        # channel/subchannel (MIRI) or Grating/filter(NIRSPEC)
+        # loop over every file that covers this channel/subchannel (MIRI) or
+        # Grating/filter(NIRSPEC)
         # and map the detector pixels to the cube spaxel
 
         number_bands = len(self.list_par1)
@@ -567,8 +564,8 @@ class IFUCubeData():
             this_par1 = self.list_par1[ib]
             this_par2 = self.list_par2[ib]
             nfiles = len(self.master_table.FileMap[self.instrument][this_par1][this_par2])
-# ________________________________________________________________________________
-# loop over the files that cover the spectral range the cube is for
+            # ________________________________________________________________________________
+            # loop over the files that cover the spectral range the cube is for
             for k in range(nfiles):
                 input_model = self.master_table.FileMap[self.instrument][this_par1][this_par2][k]
                 # set up input_model to be first file used to copy in basic header info
@@ -619,11 +616,17 @@ class IFUCubeData():
                         instrument = 1
 
                     result = None
-                    result = cube_wrapper(instrument, flag_dq_plane,start_region, end_region,
+                    weight_type = 0  # default to emsm
+                    if self.weighting == 'msm':
+                        weight_type = 1
+
+                    result = cube_wrapper(instrument, flag_dq_plane, weight_type, start_region, end_region,
                                           self.overlap_partial, self.overlap_full,
                                           self.xcoord, self.ycoord, self.zcoord,
                                           coord1, coord2, wave, flux, err, slice_no,
-                                          rois_pixel, roiw_pixel, scalerad_pixel,self.cdelt3_normal,
+                                          rois_pixel, roiw_pixel, scalerad_pixel,
+                                          weight_pixel, softrad_pixel,
+                                          self.cdelt3_normal,
                                           roiw_ave, self.cdelt1, self.cdelt2)
                     spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq = result
 
@@ -638,7 +641,6 @@ class IFUCubeData():
                 # --------------------------------------------------------------------------------
                 #                     # AREA - 2d method only works for single files local slicer plane (internal_cal)
                 # --------------------------------------------------------------------------------
-
                 elif self.interpolation == 'area':
                     # --------------------------------------------------------------------------------
                     # MIRI
@@ -726,14 +728,17 @@ class IFUCubeData():
         # loop over input models
         single_ifucube_container = datamodels.ModelContainer()
 
+        weight_type = 0  # default to emsm
+        if self.weighting == 'msm':
+            weight_type = 1
         number_bands = len(self.list_par1)
         this_par1 = self.list_par1[0]  # single IFUcube only have a single channel
         j = 0
         for i in range(number_bands):
             this_par2 = self.list_par2[i]
             nfiles = len(self.master_table.FileMap[self.instrument][this_par1][this_par2])
-# ________________________________________________________________________________
-# loop over the files that cover the spectral range the cube is for
+            # ________________________________________________________________________________
+            # loop over the files that cover the spectral range the cube is for
             for k in range(nfiles):
                 input_model = self.master_table.FileMap[self.instrument][this_par1][this_par2][k]
 
@@ -758,6 +763,7 @@ class IFUCubeData():
 
                 # the following values are not needed in cube_wrapper because the DQ plane is not being
                 # filled in
+                flag_dq_plane = 0
                 start_region = 0
                 end_region = 0
                 roiw_ave = 0
@@ -768,26 +774,26 @@ class IFUCubeData():
                     instrument = 1
 
                 result = None
-                flag_dq_plane = 0
-                result = cube_wrapper(instrument, flag_dq_plane,start_region, end_region,
+                result = cube_wrapper(instrument, flag_dq_plane, weight_type, start_region, end_region,
                                       self.overlap_partial, self.overlap_full,
                                       self.xcoord, self.ycoord, self.zcoord,
                                       coord1, coord2, wave, flux, err, slice_no,
-                                      rois_pixel, roiw_pixel, scalerad_pixel,self.cdelt3_normal,
+                                      rois_pixel, roiw_pixel, scalerad_pixel,
+                                      weight_pixel, softrad_pixel,
+                                      self.cdelt3_normal,
                                       roiw_ave, self.cdelt1, self.cdelt2)
-                spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq = result
+                spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, _ = result
 
                 self.spaxel_flux = self.spaxel_flux + np.asarray(result[0], np.float64)
                 self.spaxel_weight = self.spaxel_weight + np.asarray(result[1], np.float64)
                 self.spaxel_var = self.spaxel_var + np.asarray(result[2], np.float64)
                 self.spaxel_iflux = self.spaxel_iflux + np.asarray(result[3],np.float64)
-
                 result = None
-# ______________________________________________________________________
-# shove Flux and iflux in the  final ifucube
+                # ______________________________________________________________________
+                # shove Flux and iflux in the  final ifucube
                 self.find_spaxel_flux()
 
-            # determine Cube Spaxel flux
+                # determine Cube Spaxel flux
                 status = 0
                 result = self.setup_final_ifucube_model(input_model)
                 ifucube_model, status = result
@@ -799,8 +805,7 @@ class IFUCubeData():
                 j = j + 1
         return single_ifucube_container
 
-# **************************************************************************
-
+    # **************************************************************************
     def determine_cube_parameters_internal(self):
         """Determine the spatial and spectral ifu size for coord_system = internal_cal
 
