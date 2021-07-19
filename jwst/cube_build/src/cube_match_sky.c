@@ -305,8 +305,8 @@ int corner_wave_plane_miri(int w, int start_region, int end_region,
   // Because we do not know the orientation on the sky pick the  longest length to set how to pick corners. 
     float length_c1_start = c1_start_max - c1_start_min;
     float length_c2_start = c2_start_max - c2_start_min;
-    float length_c1_end = c1_end_max - c1_end_min;
-    float length_c2_end = c2_end_max - c2_end_min;
+    //float length_c1_end = c1_end_max - c1_end_min;
+    // float length_c2_end = c2_end_max - c2_end_min;
 
     int c1_use = 1; // use the c1 coords to set corners 
     if(length_c1_start < length_c2_start){
@@ -573,15 +573,15 @@ int overlap_slice_with_spaxels(int overlap_partial,
     }
 
   // Swap start and end points if necessary and store swap state
-  bool swapped;
-  swapped = false;
+  //bool swapped;
+  //swapped = false;
   if (x1 > x2){
     x1 = x2;
     x2 = x1;
 
     y1 = y2;
     y2 = y1;
-    swapped = true;
+    //swapped = true;
   }
 
   // Recalculate differences
@@ -974,7 +974,7 @@ int match_point_msm(double *xc, double *yc, double *zc,
 		    double *coord1, double *coord2, double *wave,
 		    double *flux, double *err,
 		    double *rois_pixel, double *roiw_pixel,
-		    double *weight_pixel, *softrad_pixel,
+		    double *weight_pixel, double *softrad_pixel,
 		    double *zcdelt3,
 		    int nx, int ny, int nwave, int ncube, int npt,
 		    double cdelt1, double cdelt2,
