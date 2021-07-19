@@ -6,14 +6,14 @@ coordinates is cdetl1 and cdelt2, while the wavelength size is zcdelt3.
 This module uses the e modified shephard weighting method to determine how to  weight each point clold member
 in the spaxel.
  
-Main function for Python: cube_wrapper
+Main function for Python: cube_wrapper_internal
 
-Python signature: result = cube_wrapper(instrument, start_region, end_region,
-                                        self.overlap_partial, self.overlap_full,
-                                        self.xcoord, self.ycoord, self.zcoord,
-                                        coord1, coord2, wave, flux, err, slice_no,
-                                        rois_pixel, roiw_pixel, scalerad_pixel,self.cdelt3_normal,
-                                        roiw_ave, self.cdelt1, self.cdelt2)
+Python signature: 
+    result = cube_wrapper_internal(instrument_no, naxis1, naxis2,
+                                   crval_along, cdelt_along, crval3, cdelt3,
+                                   a1, a2, a3, a4, lam1, lam2, lam3, lam4,
+                                   acoord, zcoord, ss,
+                                   pixel_flux, pixel_err)
 provide more details
 
 The output of this function is a tuple of 5 arrays:(spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq) 
@@ -79,7 +79,6 @@ spaxel_dq : numpy.ndarray
 #include <stdbool.h>
 #include <numpy/arrayobject.h>
 #include <numpy/npy_math.h>
-//#include "cube_utils.c"
 
 #define PY_ARRAY_UNIQUE_SYMBOL _jwst_cube_match_sky_numpy_api    //WHAT IS THIS AND WHERE IS IT USED???
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION

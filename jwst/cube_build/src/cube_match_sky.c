@@ -8,12 +8,12 @@ in the spaxel.
  
 Main function for Python: cube_wrapper
 
-Python signature: result = cube_wrapper(instrument, start_region, end_region,
-                                        self.overlap_partial, self.overlap_full,
-                                        self.xcoord, self.ycoord, self.zcoord,
+Python signature: result = cube_wrapper(instrument, flag_dq_plane,start_region, end_region,
+                                        overlap_partial, overlap_full,
+                                        xcoord, ycoord, zcoord,
                                         coord1, coord2, wave, flux, err, slice_no,
-                                        rois_pixel, roiw_pixel, scalerad_pixel,self.cdelt3_normal,
-                                        roiw_ave, self.cdelt1, self.cdelt2)
+                                        rois_pixel, roiw_pixel, scalerad_pixel,cdelt3_normal,
+                                        roiw_ave, cdelt1, cdelt2)
 provide more details
 
 The output of this function is a tuple of 5 arrays:(spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq) 
@@ -21,55 +21,66 @@ example output
 
 Parameters
 ----------
-instrument: int
+instrument : int
     0 = MIRI, 1 = NIRSPEC. Used for set the dq plane
+flag_dq_plane : int
+   0 do set the DQ plane based on FOV, but set all values =0
+   1 set the DQ plane based on the FOV
 start_region : int
-    starting slice number for detector region
+    starting slice number for detector region used in dq flagging
 end_region: int 
-    ending slice number for detector region
-xcoord : numpy.ndarray
+    ending slice number for detector region used in dq flagging
+overlap_partial : int
+    a dq flag indicating that only a portion of the spaxel is overlapped by a mapped detector pixel
+overlap_full : int
+    a dq flag indicating that the entire spaxel is overlapped by the mapped detector pixel
+xcoord : double array
    size of naxis1. This array holds the center x axis values of the ifu cube 
-ycoord : numpy.ndarray
+ycoord : double array
    size of naxis2. This array holds the center y axis values of the ifu cube 
-zcoord : numpy.ndarray
+zcoord : double array
    size of naxis3. This array holds the center x axis values of the ifu cube 
-flux : numpy.ndarray
+flux : double array
    size: point cloud elements. Flux of each point cloud memeber
-err : numpy.ndarray
-   size: point cloud elements. Flux of each point cloud memeber
-coord1 : numpy.ndarray
-   size: point cloud elements. Flux of each point cloud memeber
-coord2 : numpy.ndarray
-   size: point cloud elements. Flux of each point cloud memeber
-wave : numpy.ndarray
-   size: point cloud elements. Flux of each point cloud memeber
-rois_pixel : numpy.ndarray
-   size: point cloud elements. Flux of each point cloud memeber
-roiw_pixel : numpy.ndarray
-   size: point cloud elements. Flux of each point cloud memeber
-scalerad_pixel : numpy.ndarray
-   size: point cloud elements. Flux of each point cloud memeber
-zcdelt3: numpy.ndarray
-   size: point cloud elements. Flux of each point cloud memeber
-
-nplane : int
-nwave : int
-ncube : int (this is a huge number does it need to int64?)
-npt : int  
-
+err : double array
+   size: point cloud elements. err of each point cloud memeber
+slice_no: int
+   slice number of point cloud member to be in dq flagging
+coord1 : double array
+   size: point cloud elements. Naxis 1 coordinate of point cloud member (xi) 
+coord2 : double array
+   size: point cloud elements. Naxis 2 coordinate of point cloud member (eta)
+wave : double array
+   size: point cloud elements. Wavelegnth of each point cloud memeber
+rois_pixel : double array
+   size: point cloud elements. Roi in spatial dimension to use for point cloud memeber
+roiw_pixel : double array
+   size: point cloud elements. Roi in wavelength dimension to use point cloud memeber
+scalerad_pixel : double array
+   size: point cloud elements. MSM weight parameter to use for point cloud member
+zcdelt3: double array
+   size: point cloud elements. Spectral scale to use at wavelength of point cloud member
+roiw_ave : double
+   Average roiw for all the wavelength planes. Used in dq flagging
 cdelt1 : double
+   Naxis 1 scale for cube
 cdelt2 : double
+   Naxis 2 scale for cube
 
 
 Returns
 -------
 
 spaxel_flux : numpy.ndarray
+  IFU spaxel cflux
 spaxel_weight : numpy.ndarray
+  IFU spaxel weight 
 spaxel_iflux : numpy.ndarray
+  IFU spaxel weight map (number of overlaps) 
 spaxel_var : numpy.ndarray
+  IFU spaxel error
 spaxel_dq : numpy.ndarray
-
+  IFU spaxel dq
 */
 
 #include <stdlib.h>
@@ -79,12 +90,9 @@ spaxel_dq : numpy.ndarray
 #include <stdbool.h>
 #include <numpy/arrayobject.h>
 #include <numpy/npy_math.h>
-//#include "cube_utils.c"
 
 #define PY_ARRAY_UNIQUE_SYMBOL _jwst_cube_match_sky_numpy_api    //WHAT IS THIS AND WHERE IS IT USED???
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
-
-
 
 // routines used from cube_utils.c
 
@@ -167,6 +175,10 @@ int corner_wave_plane_miri(int w, int start_region, int end_region,
 			   double *corner1, double *corner2, double *corner3, double *corner4) {
   /* 
      For wavelength plane determine the corners (in xi,eta) of the FOV for MIRI
+     Use the 2 extreme slices set by start_region and end_region to define the FOV of the wavelength plane FOV
+     Using the min and max coordinates for the extent of the slice on the sky for these two slice - set the
+     corners of the FOV. 
+
      w : wavelength plane
      start_region : starting slice # for channel (slice # in nirspec) 
      end_region : ending slice # for chanel      (slice # in nirspec)
@@ -205,10 +217,14 @@ int corner_wave_plane_miri(int w, int start_region, int end_region,
   float c1_end_max = -10000;
   float c2_end_max = -10000;
 
+  // Loop over every point cloud member and pull out values
+  // 1. Fail withing roiw_ave of wavelength plane
+  // and 
+  // 2. Are for either of the 2 extreme slices
+  
   for (int ipt =0; ipt< npt ; ipt++){
     int slice = (int)sliceno[ipt];
     double wave_distance = fabs(zc[w] - wave[ipt]);
-
 
     float c11 = -1;  // coord1 for start region
     float c21 = -1;  // coord2 for start region
@@ -343,7 +359,8 @@ int corner_wave_plane_miri(int w, int start_region, int end_region,
 }
 
 //________________________________________________________________________________
-// MIRI DQ routine. Find the overlap of the FOV for the wavelength slice with sky
+// MIRI DQ routine. Find the overlap of the FOV for the wavelength slice in IFU cube
+
 int overlap_fov_with_spaxels(int overlap_partial,  int overlap_full,
                              double cdelt1, double cdelt2,
                              int naxis1, int naxis2,
@@ -357,17 +374,30 @@ int overlap_fov_with_spaxels(int overlap_partial,  int overlap_full,
         overlap with this FOV.  Set the intermediate spaxel  to
         a value based on the overlap between the FOV for each exposure
         and the spaxel area. The values assigned are:
-        a. overlap_partial = overlap partial
-        b  overlap_full = overlap_full
+        a. overlap_partial
+        b  overlap_full
         bit_wise combination of these values is allowed to account for
         dithered FOVs.
 
-        Parameter
+        Parameters
         ----------
+	overlap_partial : int
+	overlap_full : int
+	cdelt1 : double
+          IFU cube naxis 1 spatial scale
+	cdelt2 : double
+          IFU cube naxis 1 spatial scale
+	naxis1 : int 
+          IFU cube naxis 1 size
+	naxis2 : int
+          IFU cube naxis 1 size
+	xcenters : double array
+          IFU naxis 1 array of xi values
+	ycenters : double array
+          IFU naxis 2 array of eta values 
         xi_corner: xi coordinates of the 4 corners of the FOV on the wavelenghth plane
         eta_corner: eta coordinates of the 4 corners of the FOV on the wavelength plane
-        wmin: minimum wavelength bin in the IFU cube that this data covers
-        wmax: maximum wavelength bin in the IFU cube that this data covers
+
 
         Sets
         -------
@@ -437,7 +467,11 @@ int slice_wave_plane_nirspec(int w, int slicevalue,
 		      long ncube, int npt,
 		      double *c1_min, double *c1_max, double *c2_min, double *c2_max) {
   /* 
-     For wavelength plane determine the limits of each slice
+
+     NIRSpec dq plane is set by mapping each slice to IFU wavelength plane 
+     This routine maps each slice to sky and finds the min and max coordinates on the sky
+     of the slice. 
+
      w : wavelength plane
      slicevalue : slice # 1 to 30 
      roiw_ave : average roiw for all wavelengths
@@ -488,9 +522,6 @@ int slice_wave_plane_nirspec(int w, int slicevalue,
     status = 1; 
   }
 
-  //if (status){
-  //  printf(" found min max of slice for wavelength %f %i %f %f %f %f \n" , zc[w],slicevalue, *c1_min, *c1_max, *c2_min, *c2_max );
-  //}
   return status;
 }
 
@@ -522,7 +553,7 @@ int overlap_slice_with_spaxels(int overlap_partial,
 
      Sets
      ----
-     wave_slice_dq : numpy.ndarray containing intermediate dq flag
+     wave_slice_dq : array containing intermediate dq flag
 
      Bresenham's Line Algorithm to find points a line intersects with grid.
 
@@ -579,8 +610,6 @@ int overlap_slice_with_spaxels(int overlap_partial,
     ystep = 1;
   }
 
-  //printf(" corners %f %f %f %f \n ", xi_min, xi_max, eta_min, eta_max);
-  //printf(" for slice on wavelength x y ranges on cube %i %i %i %i \n ", x1, x2, y1, y2);
   // iterate over grid to generate points between the start and end of line
   int y = y1;
   for (int x = x1; x< (x2 + 1); x++){
@@ -604,6 +633,26 @@ int overlap_slice_with_spaxels(int overlap_partial,
 }
 
 //________________________________________________________________________________
+// Set the spaxel dq = 0. This is used when not determining the FOV on the sky for
+// setting the DQ plane. This is case for internalCal type cubes
+
+int dq_set_zero(int ncube, int **spaxel_dq){
+    int *idqv = NULL;  // int vector for spaxel
+
+    if (mem_alloc_dq(ncube, &idqv)) return 1;
+
+    // Set all data to zero
+    for (long i = 0; i < ncube; i++){
+      idqv[i] = 0;
+    }
+     *spaxel_dq = idqv;
+
+    return 0;
+}
+
+//________________________________________________________________________________
+// Main MIRI routine to set DQ plane
+
 int dq_miri(int start_region, int end_region, int overlap_partial, int overlap_full,
 	    int nx, int ny, int nz,
 	    double cdelt1, double cdelt2, double roiw_ave,
@@ -655,8 +704,6 @@ int dq_miri(int start_region, int end_region, int overlap_partial, int overlap_f
 	eta_corner[2] = corner3[1];
 	eta_corner[3] = corner4[1];
 	
-
-
 	status = overlap_fov_with_spaxels(overlap_partial, overlap_full,
 					  cdelt1,cdelt2,
 					  nx, ny,
@@ -677,9 +724,8 @@ int dq_miri(int start_region, int end_region, int overlap_partial, int overlap_f
     return 0;
 }
 
-
 //________________________________________________________________________________
-// set up the dq plane for NIRSPEC
+//Main NIRSpec routine to set up dq plane
  
 int dq_nirspec(int overlap_partial,
 	       int nx, int ny, int nz,
@@ -719,14 +765,12 @@ int dq_nirspec(int overlap_partial,
   if (mem_alloc_dq(ncube, &idqv)) return 1;
 
   // Set all data to zero
-  //printf( " number of elements allocating memory for %lu \n" , ncube);
   for (long i = 0; i < ncube; i++){
     idqv[i] = 0;
   }
 
   //  for each of the 30 slices - find the projection of this slice
   //     onto each of the IFU wavelength planes.
-
 
   for (int w = 0; w  < nz; w++) {
     int n_slice_found = 0;
@@ -764,9 +808,6 @@ int dq_nirspec(int overlap_partial,
       } // end loop over status
       
     } // end loop over slices
-    //if (n_slice_found ==0){
-    //  printf(" no slices found on wavelength plane %i %f \n",w, zc[w]);
-    //}
 	
   } // end of wavelength
   *spaxel_dq = idqv;
@@ -774,9 +815,9 @@ int dq_nirspec(int overlap_partial,
   return 0;
 }
 
-/*
-return values: spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux
-*/
+// Match point cloud to sky and determine the weighting to assign to each point cloud  member
+// to matched spaxel based on ROI
+
 int match_point_emsm(double *xc, double *yc, double *zc,
 		     double *coord1, double *coord2, double *wave,
 		     double *flux, double *err,
@@ -787,6 +828,10 @@ int match_point_emsm(double *xc, double *yc, double *zc,
 		     double **spaxel_flux, double **spaxel_weight, double **spaxel_var,
 		     double **spaxel_iflux) {
 
+
+  /*
+return values: spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux
+*/
     double *fluxv = NULL, *weightv=NULL, *varv=NULL ;  // vectors for spaxel 
     double *ifluxv = NULL;  // vector for spaxel
 
@@ -918,9 +963,6 @@ int match_point_emsm(double *xc, double *yc, double *zc,
 		varv[index_cube] = varv[index_cube] + weighted_var;
 		ifluxv[index_cube] = ifluxv[index_cube] +1.0;
 
-		//if( ix == 24 && iy == 24 && iw ==0) {
-		//  printf("found element %i %i %f %f %f  %f %f \n", k, index_cube, err[k], flux[k], ifluxv[index_cube], varv[index_cube], fluxv[index_cube]);
-		//}
 	      }
 	    }
 	  } // end loop over iy
@@ -964,7 +1006,7 @@ static PyObject *cube_wrapper(PyObject *module, PyObject *args) {
   double cdelt1, cdelt2, roiw_ave;
   int  nwave, npt, nxx, nyy, ncube;
 
-  int instrument, start_region, end_region, overlap_partial, overlap_full;
+  int instrument, flag_dq_plane,start_region, end_region, overlap_partial, overlap_full;
   double *spaxel_flux=NULL, *spaxel_weight=NULL, *spaxel_var=NULL;
   double *spaxel_iflux=NULL;
   int *spaxel_dq=NULL;
@@ -981,8 +1023,8 @@ static PyObject *cube_wrapper(PyObject *module, PyObject *args) {
 
   int  ny,nz;
 
-  if (!PyArg_ParseTuple(args, "iiiiiOOOOOOOOOOOOOddd:cube_wrapper",
-			&instrument, &start_region, &end_region, &overlap_partial, &overlap_full,
+  if (!PyArg_ParseTuple(args, "iiiiiiOOOOOOOOOOOOOddd:cube_wrapper",
+			&instrument,&flag_dq_plane,  &start_region, &end_region, &overlap_partial, &overlap_full,
 			&xco, &yco, &zco, &coord1o, &coord2o, &waveo,  &fluxo, &erro, &slicenoo,
 			&rois_pixelo, &roiw_pixelo, &scalerad_pixelo,&zcdelt3o, &roiw_ave,
 			&cdelt1, &cdelt2)) {
@@ -1061,38 +1103,43 @@ static PyObject *cube_wrapper(PyObject *module, PyObject *args) {
   }
 
   //______________________________________________________________________
-  // First set up the dq plane
+  // if flag_dq_plane = 1, Set up the dq plane 
   //______________________________________________________________________
-  int status1 = 0; 
-  if (instrument == 0){
-		       status1 = dq_miri(start_region, end_region,overlap_partial, overlap_full,
-					 nxx,nyy,nwave,
-					 cdelt1, cdelt2, roiw_ave,
-					 (double *) PyArray_DATA(xc),
-					 (double *) PyArray_DATA(yc),
-					 (double *) PyArray_DATA(zc),
-					 (double *) PyArray_DATA(coord1),
-					 (double *) PyArray_DATA(coord2),
-					 (double *) PyArray_DATA(wave),
-					 (double *) PyArray_DATA(sliceno),
-					 ncube, npt,
-					 &spaxel_dq);
+  int status1 = 0;
+  if(flag_dq_plane){
+    if (instrument == 0){
+      status1 = dq_miri(start_region, end_region,overlap_partial, overlap_full,
+			nxx,nyy,nwave,
+			cdelt1, cdelt2, roiw_ave,
+			(double *) PyArray_DATA(xc),
+			(double *) PyArray_DATA(yc),
+			(double *) PyArray_DATA(zc),
+			(double *) PyArray_DATA(coord1),
+			(double *) PyArray_DATA(coord2),
+			(double *) PyArray_DATA(wave),
+			(double *) PyArray_DATA(sliceno),
+			ncube, npt,
+			&spaxel_dq);
 
-  } else{
-	 status1 = dq_nirspec(overlap_partial,
-			      nxx,nyy,nwave,
-			      cdelt1, cdelt2, roiw_ave,
-			      (double *) PyArray_DATA(xc),
-			      (double *) PyArray_DATA(yc),
-			      (double *) PyArray_DATA(zc),
-			      (double *) PyArray_DATA(coord1),
-			      (double *) PyArray_DATA(coord2),
-			      (double *) PyArray_DATA(wave),
-			      (double *) PyArray_DATA(sliceno),
-			      ncube, npt,
-			      &spaxel_dq);
+    } else{
+      status1 = dq_nirspec(overlap_partial,
+			   nxx,nyy,nwave,
+			   cdelt1, cdelt2, roiw_ave,
+			   (double *) PyArray_DATA(xc),
+			   (double *) PyArray_DATA(yc),
+			   (double *) PyArray_DATA(zc),
+			   (double *) PyArray_DATA(coord1),
+			   (double *) PyArray_DATA(coord2),
+			   (double *) PyArray_DATA(wave),
+			   (double *) PyArray_DATA(sliceno),
+			   ncube, npt,
+			   &spaxel_dq);
+    }
+  } else{ // set dq plane to 0
+
+    status1 = dq_set_zero(ncube, &spaxel_dq);
+
   }
-
   //______________________________________________________________________
   // Match the point cloud elements to the spaxels they fail within the roi
   //______________________________________________________________________
