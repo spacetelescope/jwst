@@ -1457,7 +1457,6 @@ class IFUCubeData():
         else:
             # for each wavelength find the closest point in the self.wavelength_table
 
-            tw0 = time.time()
             for iw, w in enumerate(wave):
                 self.find_closest_wave(iw,w,
                                        self.wavelength_table,
@@ -1471,8 +1470,6 @@ class IFUCubeData():
                                        softrad_det,
                                        weight_det,
                                        scalerad_det)
-            tw1 = time.time()
-            print(f'Time to find closest wave  {tw1-tw0} ')
         ra_use = ra[good_data]
         dec_use = dec[good_data]
         coord1, coord2 = coord.radec2std(self.crval1,
