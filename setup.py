@@ -72,6 +72,5 @@ setup(
             include_dirs=include_dirs,
             define_macros=define_macros
         )
-        
     ],
 )
