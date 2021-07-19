@@ -1,8 +1,163 @@
-1.2.1 (unreleased)
+1.3.0 (unreleased)
 ==================
 
+assign_wcs
+----------
+
+- Open the specwcs reference file for WFSS modes using the ``with`` context
+  manger. [#6160]
+
+associations
+------------
+
+- Fix bug causing ``pytest`` to encounter an error in test collection when
+  running with recent commits to ``astropy`` main (``5.0.dev``). [#6176]
+
+cube_build
+----------
+
+- Fix bug when creating cubes using output_type=channel. [#6138]
+
+datamodels
+----------
+
+- Remove astropy.io registration of JwstDataModel. [#6179]
+
+- Add NOUTPUTS keyword to the `DarkModel` schema. [#6213]
+
+extract_1d
+----------
+
+- Updated to propagate SRCTYPE keyword during extraction of MIRI LRS
+  fixed-slit inputs that are in `SlitModel` form. [#6212]
+
+outlier_detection
+-----------------
+
+- Revert back to using 'linear' interpolation method as default for ``blot``.
+  The bug in the implimentation of the bilinear interpolator in the ``drizzle``
+  package is now fixed. [#6146]
+
+pipeline
+--------
+
+- Added wfss_contam step to `calwebb_spec2` pipeline flow for WFSS modes [#6207]
+
+ramp_fitting
+------------
+
+- Update ``RampFitStep`` to pass DQ flags as a parameter to the ``ramp_fit``
+  algorithm code in stcal.  Bump version requirement for stcal.  [#6072]
+
+wfss_contam
+-----------
+
+- Updated to process all defined spectral orders for the grism mode [#6175]
+
+- Added step documentation [#6210]
+
+1.2.3 (2021-06-08)
+==================
+
+associations
+------------
+
+- Ensure no Lv3_WFSC associations created on group candidates [#6131]
+
+datamodels
+----------
+
+- Add back and use "CALCULATED" for ENGQLPTG. [#6135]
+
+- Convert incoming Path objects to strings in datamodels.open [#6130]
 
 
+1.2.2 (2021-06-08)
+==================
+
+ami_analyze
+-----------
+
+- Fix to AMI pupil phases sign error [#6128]
+
+datamodels
+----------
+
+- Update moving target schema to match b7.8 keyword schema. [#6129]
+
+
+1.2.1 (2021-06-07)
+==================
+
+associations
+------------
+
+- Asn_Lv2WFSS: Add instrument constraint. [#6114]
+
+- Asn_Lv2NRSLAMPSpectral: Allow msaspec only if msametfl is available. [#6085]
+
+combine_1d
+----------
+
+- Added SRCTYPE to COMBINE1D output extension headers, propagated from
+  EXTRACT1D inputs [#6079]
+
+cube_build
+----------
+
+- Fix some typos in the the arguments documentation. [#6077]
+
+datamodels
+----------
+
+- Updated enum lists for ENGQLPTG and PATTTYPE keywords [#6081]
+
+- Removed obsolete keyword NDITHPTS and updated attributes for NRIMDTPT [#6083]
+
+- Added units to CombinedSpecModel table output [#6082]
+
+- Added keywords OSS_VER, DETMODE, CMD_TSEL, NOD_TYPE, and GS_V3_PA to
+  the core schema [#6086]
+
+- Remove ``ModelContainer`` schema and refactor use of association table
+  metadata within. [#6094]
+
+general
+-------
+
+- Make CRDS context reporting pytest plugin disabled by default. [#6070]
+
+- Removed all usage of sys.path, in associations and jwst.stpipe [#6098]
+
+lib
+---
+
+- Updated set_telescope_pointing to populate ENGQLPTG keyword with new
+  allowed values [#6088]
+
+outlier_detection
+-----------------
+
+- Avoid using 'linear' interpolation method as default for ``blot`` due to
+  a bug in the implimentation of the bilinear interpolator in the ``drizzle``
+  package. Now the default value will be 'poly5'. [#6116]
+
+ramp_fitting
+------------
+
+- Re-enable multiprocessing in ``RampFitStep`` by moving code back from
+  stcal package. [#6119]
+
+scripts
+-------
+
+- Add migrate_data command with support for migrating spec_table in
+  x1d files produced with <= 1.1.0 of this package. [#6055]
+
+tweakreg
+--------
+
+- Remove attached tweakreg catalog from datamodel before exiting step [#6102]
 
 
 1.2.0 (2021-05-24)
