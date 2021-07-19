@@ -312,23 +312,6 @@ int corner_wave_plane_miri(int w, int start_region, int end_region,
     if(length_c1_start < length_c2_start){
       c1_use = 0;   // use the c2 coords to set the corners
     }
-    if(c1_use ==0) {
-      if (length_c1_end > length_c2_end){
-	printf(" Check sizes 1 \n" );
-	printf(" for wavelength %i start  %f %f %f %f  \n", w,c1_start_min, c1_start_max, c2_start_min, c2_start_max);
-	printf(" for wavelength %i start %f %f %f %f  \n", w,c1_end_min, c1_end_max, c2_end_min, c2_end_max);
-	printf("length %f %f %f %f \n ", length_c1_start, length_c2_start, length_c1_end, length_c2_end);
-      }
-    }
-      
-    if(c1_use == 1) {
-      if (length_c1_end < length_c2_end){
-	printf(" Check sizes 2 \n " );
-	printf(" for wavelength %i start  %f %f %f %f  \n", w,c1_start_min, c1_start_max, c2_start_min, c2_start_max);
-	printf(" for wavelength %i start %f %f %f %f  \n", w,c1_end_min, c1_end_max, c2_end_min, c2_end_max);
-	printf("length %f %f %f %f \n ", length_c1_start, length_c2_start, length_c1_end, length_c2_end);
-      }
-    }
 
     if(c1_use ==0) {
       corner1[0] = coord1[ic2_start_min];
@@ -945,9 +928,7 @@ return values: spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux
  	      int index_xy = iy* nx + ix;
 	      for (int iw = iwstart; iw< iwend; iw++){
 		int index_cube = iw*nxy + index_xy;
-		if(index_cube > ncube){
-		  printf(" Index Cube > ncube \n");
-		}
+
 		double d1 = xdist/cdelt1;
 		double d2 = ydist/cdelt2;
 		double dxy = (d1 * d1) + (d2 * d2);
@@ -1114,9 +1095,7 @@ return values: spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux
  	      int index_xy = iy* nx + ix;
 	      for (int iw = iwstart; iw< iwend; iw++){
 		int index_cube = iw*nxy + index_xy;
-		if(index_cube > ncube){
-		  printf(" Index Cube > ncube \n");
-		}
+
 		double d1 = xdist/cdelt1;
 		double d2 = ydist/cdelt2;
 		double dxy = (d1 * d1) + (d2 * d2);
@@ -1314,7 +1293,7 @@ static PyObject *cube_wrapper(PyObject *module, PyObject *args) {
     status1 = dq_set_zero(ncube, &spaxel_dq);
 
   }
-  printf(" weight type %i \n", weight_type);
+
   //______________________________________________________________________
   // Match the point cloud elements to the spaxels they fail within the roi
   //______________________________________________________________________

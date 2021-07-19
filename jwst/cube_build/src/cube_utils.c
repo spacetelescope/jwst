@@ -219,10 +219,11 @@ double sh_find_overlap(const double xcenter, const double ycenter,
 
    addpoint (xnew[0], ynew[0], xnew, ynew, &nVertices2); // closed polygon
     
-   if(nVertices2 >  MaxVertices ) {
-     printf( " sh_find_overlap:: failure in finding the clipped polygon, nVertices2 > 9 \n ");
-     exit(EXIT_FAILURE);
-   }
+   //if(nVertices2 >  MaxVertices ) {
+   //  printf( " sh_find_overlap:: failure in finding the clipped polygon, nVertices2 > 9 \n ");
+   //  exit(EXIT_FAILURE);
+   //}
+   
    nVertices = nVertices2-1;
 
    for (int k = 0; k< nVertices2; k++){
