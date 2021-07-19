@@ -136,12 +136,14 @@ def create_integration_model(input_model, integ_info):
     return int_model
 
 
-def create_optional_results_model(opt_info):
+def create_optional_results_model(input_model, opt_info):
     """
     Creates an ImageModel from the computed arrays from ramp_fit.
 
     Parameter
     ---------
+    input_model: ~jwst.datamodels.RampModel
+
     opt_info: tuple
         The ramp fitting arrays needed for the RampFitOutputModel.
 
@@ -169,7 +171,7 @@ def create_optional_results_model(opt_info):
     return opt_model
 
 
-class RampFitStep (Step):
+class RampFitStep(Step):
 
     """
     This step fits a straight line to the value of counts vs. time to
@@ -242,7 +244,7 @@ class RampFitStep (Step):
 
         # Save the OLS optional fit product, if it exists
         if opt_info is not None:
-            opt_model = create_optional_results_model(opt_info)
+            opt_model = create_optional_results_model(input_model, opt_info)
             self.save_model(opt_model, 'fitopt', output_file=self.opt_name)
 
         '''
