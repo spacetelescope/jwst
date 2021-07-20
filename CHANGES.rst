@@ -25,6 +25,8 @@ datamodels
 
 - Add NOUTPUTS keyword to the `DarkModel` schema. [#6213]
 
+- Update `DarkModel` to use uint32 for DQ array. [#6228]
+
 extract_1d
 ----------
 
