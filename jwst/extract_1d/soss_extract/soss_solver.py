@@ -242,7 +242,8 @@ def apply_transform(simple_transform, ref_map, oversample, pad, native=True,
     ceny = ovs*(pad + 50)
 
     # Set NaN pixels to zero - the rotation doesn't handle NaNs well.
-    ref_map[np.isnan(ref_map)] = 0
+    fill_value = np.nanmin(ref_map)
+    ref_map[np.isnan(ref_map)] = fill_value
 
     # Apply the transformation to the reference map.
     trans_map = transform_image(-angle, xshift, yshift, ref_map, cenx, ceny)
@@ -261,6 +262,8 @@ def apply_transform(simple_transform, ref_map, oversample, pad, native=True,
         with warnings.catch_warnings():
             warnings.simplefilter(action="ignore", category=RuntimeWarning)
             trans_map = trans_map/np.nansum(trans_map, axis=0)
+
+        trans_map[~np.isfinite(trans_map)] = 0.
 
     return trans_map
 
