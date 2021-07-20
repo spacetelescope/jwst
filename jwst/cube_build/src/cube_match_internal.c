@@ -90,11 +90,10 @@ extern double sh_find_overlap(const double xcenter, const double ycenter,
 			      double xPixelCorner[],double yPixelCorner[]);
 
 
-
 extern double find_area_quad(double MinX, double MinY, double Xcorner[], double Ycorner[]);
 
 
-extern alloc_flux_arrays(int nelem, double **fluxv, double **weightv, double **varv,  double **ifluxv);
+extern int alloc_flux_arrays(int nelem, double **fluxv, double **weightv, double **varv,  double **ifluxv);
 
 
 //_______________________________________________________________________

@@ -11,6 +11,51 @@
 #define CP_BOTTOM 2
 #define CP_TOP 3
 
+
+//_______________________________________________________________________
+// Allocate the memory to for the spaxel arrays in the cube
+//_______________________________________________________________________
+
+int alloc_flux_arrays(int nelem, double **fluxv, double **weightv, double **varv,  double **ifluxv) {
+
+    const char *msg = "Couldn't allocate memory for output arrays.";
+
+    printf(" going to allocate memory \n"); 
+    // flux:
+    if (!(*fluxv  = (double*)calloc(nelem, sizeof(double)))) {
+        PyErr_SetString(PyExc_MemoryError, msg);
+        goto failed_mem_alloc;
+    }
+    
+    //weight
+    if (!(*weightv  = (double*)calloc(nelem, sizeof(double)))) {
+      PyErr_SetString(PyExc_MemoryError, msg);
+      goto failed_mem_alloc;
+    }
+
+    //variance
+    if (!(*varv  = (double*)calloc(nelem, sizeof(double)))) {
+      PyErr_SetString(PyExc_MemoryError, msg);
+      goto failed_mem_alloc;
+    }
+
+    //iflux
+    if (!(*ifluxv  = (double*)calloc(nelem, sizeof(double)))) {
+      PyErr_SetString(PyExc_MemoryError, msg);
+      goto failed_mem_alloc;
+    }
+    
+    return 0;
+
+ failed_mem_alloc:
+    printf("Problem allocating \n");
+    free(*fluxv);
+    free(*weightv);
+    free(*varv);
+    free(*ifluxv);
+    
+}
+
 // support function for sh_find_overlap 
 void addpoint (double x, double y, double xnew[], double ynew[], int *nVertices2){
   xnew[*nVertices2] = x;

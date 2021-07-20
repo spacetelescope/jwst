@@ -103,7 +103,7 @@ extern double sh_find_overlap(const double xcenter, const double ycenter,
 		      const double xlength, const double ylength,
 			      double xPixelCorner[],double yPixelCorner[]);
 
-extern alloc_flux_arrays(int nelem, double **fluxv, double **weightv, double **varv,  double **ifluxv);
+extern int alloc_flux_arrays(int nelem, double **fluxv, double **weightv, double **varv,  double **ifluxv);
 
 
 //________________________________________________________________________________
