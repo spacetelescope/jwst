@@ -546,11 +546,6 @@ class IFUCubeData():
         self.spaxel_iflux = np.zeros(total_num, dtype=np.float64)
         self.spaxel_dq = np.zeros(total_num, dtype=np.uint32)
 
-        for i in range(total_num):
-            self.spaxel_flux[i] = 0.0
-            self.spaxel_iflux[i] = 0.0
-            self.spaxel_weight[i] = 0.0
-            self.spaxel_var[i] = 0.0
         # ______________________________________________________________________________
         subtract_background = True
 
@@ -578,7 +573,6 @@ class IFUCubeData():
                 # POINTCLOUD used for skyalign and IFUalign
                 # --------------------------------------------------------------------------------
                 if self.interpolation == 'pointcloud':
-                    t0 = time.time()
                     pixelresult = self.map_detector_to_outputframe(this_par1,
                                                                    subtract_background,
                                                                    input_model)
@@ -586,18 +580,16 @@ class IFUCubeData():
                     coord1, coord2, wave, flux, err, slice_no, rois_pixel, roiw_pixel, weight_pixel,\
                         softrad_pixel, scalerad_pixel = pixelresult
 
-                    # check that there is valid data returned
-                    # If all the data is flagged as DO_NOT_USE - not common then log warning and skip data
+                    # by default flag the dq plane based on the FOV of the detector projected to sky
                     flag_dq_plane = 1
-                    if wave.size == 0:
-                        log.warning(f'No valid data found on file {input_model.meta.filename}')
-                    else:
-                        flag_dq_plane = 0
                     if self.skip_dqflagging:
                         flag_dq_plane = 0
 
-                    t1 = time.time()
-                    log.debug("Time to transform pixels to output frame = %.1f s" % (t1 - t0,))
+                    # check that there is valid data returned
+                    # If all the data is flagged as DO_NOT_USE - not common- then log warning
+                    if wave.size == 0:
+                        log.warning(f'No valid data found on file {input_model.meta.filename}')
+                        flag_dq_plane = 0
 
                     t0 = time.time()
                     roiw_ave = np.mean(roiw_pixel)
@@ -1391,10 +1383,10 @@ class IFUCubeData():
 
         if self.linear_wavelength:
             min_wave_tolerance = self.zcoord[0] - self.roiw
-            max_wave_tolerance = (self.zcoord[-1] + self.roiw)
+            max_wave_tolerance = self.zcoord[-1] + self.roiw
         else:
             min_wave_tolerance = self.zcoord[0] - np.max(self.roiw_table)
-            max_wave_tolerance = (self.zcoord[-1] + np.max(self.roiw_table))
+            max_wave_tolerance = self.zcoord[-1] + np.max(self.roiw_table)
 
         valid_min = np.where(wave_all >= min_wave_tolerance)
         not_mapped_low = wave_all.size - len(valid_min[0])
@@ -1414,8 +1406,8 @@ class IFUCubeData():
         # all_flags = (dqflags.pixel['DO_NOT_USE'] +
         #             dqflags.pixel['NON_SCIENCE'])
 
-        valid3 = np.logical_and((wave_all >= min_wave_tolerance),
-                                (wave_all <= max_wave_tolerance))
+        valid3 = np.logical_and(wave_all >= min_wave_tolerance,
+                                wave_all <= max_wave_tolerance)
 
         # find the location of good data
         # good_data = np.where((np.bitwise_and(dq_all, all_flags) == 0) &
@@ -1427,13 +1419,16 @@ class IFUCubeData():
 
         # good data holds the location of pixels we want to map to cube
         # define variables as numpy arrays (numba needs this defined)
-        flux = np.zeros(flux_all[good_data].shape, dtype=np.float64)
-        err = np.zeros(flux_all[good_data].shape, dtype=np.float64)
-        coord1 = np.zeros(flux_all[good_data].shape, dtype=np.float64)
-        coord2 = np.zeros(flux_all[good_data].shape, dtype=np.float64)
-        wave = np.zeros(flux_all[good_data].shape, dtype=np.float64)
-        slice_no = np.zeros(flux_all[good_data].shape)
-        flux[:] = flux_all[good_data]
+        flux_all_good = flux_all[good_data]
+        good_shape = flux_all_good.shape
+        flux = np.zeros(good_shape, dtype=np.float64)
+        err = np.zeros(good_shape, dtype=np.float64)
+        coord1 = np.zeros(good_shape, dtype=np.float64)
+        coord2 = np.zeros(good_shape, dtype=np.float64)
+        wave = np.zeros(good_shape, dtype=np.float64)
+        slice_no = np.zeros(good_shape)
+
+        flux[:] = flux_all_good
         err[:] = err_all[good_data]
         wave[:] = wave_all[good_data]
         slice_no[:] = slice_no_all[good_data]

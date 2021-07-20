@@ -1,9 +1,9 @@
 /*
-The detector pixels are represented by a 'point could' on the sky. The IFU cube is
+The detector pixels are represented by a 'point cloud' on the sky. The IFU cube is
 represented by a 3-D regular grid. This module finds the point cloud members contained
 in a region centered on the center of the cube spaxel. The size of the spaxel is spatial
 coordinates is cdetl1 and cdelt2, while the wavelength size is zcdelt3.
-This module uses the  modified shephard weighting method (emsm if weight_type =0 or msm if weight_type =1)
+This module uses the modified shephard weighting method (emsm if weight_type =0 or msm if weight_type =1)
 to determine how to  weight each point cloud member in the spaxel.
  
 Main function for Python: cube_wrapper
@@ -103,68 +103,23 @@ extern double sh_find_overlap(const double xcenter, const double ycenter,
 		      const double xlength, const double ylength,
 			      double xPixelCorner[],double yPixelCorner[]);
 
-// Allocate the memory to for the spaxel arrays in the cube
+extern alloc_flux_arrays(int nelem, double **fluxv, double **weightv, double **varv,  double **ifluxv);
 
-int mem_alloc(int nelem, double **fluxv, double **weightv, double **varv,  double **ifluxv) {
-
-    double *f, *w, *v, *i;
-    const char *msg = "Couldn't allocate memory for output arrays.";
-    
-    // flux:
-    f = (double*)malloc(nelem* sizeof(double));
-    if (f) {
-        *fluxv = f;
-    } else {
-        PyErr_SetString(PyExc_MemoryError, msg);
-        return 1;
-    }
-
-    // weight:
-    w = (double*)malloc(nelem* sizeof(double));
-    if (w) {
-        *weightv = w;
-    } else {
-        PyErr_SetString(PyExc_MemoryError, msg);
-        return 1;
-    }
-
-    // variance:
-    v = (double*)malloc(nelem* sizeof(double));
-    if (v) {
-        *varv = v;
-    } else {
-        PyErr_SetString(PyExc_MemoryError, msg);
-        return 1;
-    }
-    // iflux
-    i = (double*)malloc(nelem* sizeof(double));
-    if (i) {
-        *ifluxv = i;
-    } else {
-        PyErr_SetString(PyExc_MemoryError, msg);
-        return 1;
-    }
-
-    return 0;
-}
 
 //________________________________________________________________________________
 // allocate the memory for the spaxel DQ array
 
-int mem_alloc_dq(long nelem, int **idqv) {
-    int  *i;
+int mem_alloc_dq(int nelem, int **idqv) {
+    
     const char *msg = "Couldn't allocate memory for output arrays.";
 
-    i = (int*)malloc(nelem * sizeof(int));
-    if (i) {
-        *idqv = i;
-    } else {
-        PyErr_SetString(PyExc_MemoryError, msg);
-        return 1;
+    if (!(*idqv = (int*)calloc(nelem, sizeof(int)))) {
+      PyErr_SetString(PyExc_MemoryError, msg);
+      return 1;
     }
+
     return 0;
 }
-
 
 //________________________________________________________________________________
 // Routine for MIRI DQ plane assignment
@@ -438,9 +393,7 @@ int overlap_fov_with_spaxels(int overlap_partial,  int overlap_full,
   } // end loop over ix
   
   return status ;
-
 }
-
 
 //________________________________________________________________________________
 // Routine to setting NIRSpec dq plane for each wavelength plane
@@ -511,9 +464,7 @@ int slice_wave_plane_nirspec(int w, int slicevalue,
   return status;
 }
 
-
 //________________________________________________________________________________
-
 // NIRSpec  Find the overlap of the slices  for the wavelength slice with sky
 int overlap_slice_with_spaxels(int overlap_partial,
 			       double cdelt1, double cdelt2,
@@ -573,15 +524,13 @@ int overlap_slice_with_spaxels(int overlap_partial,
     }
 
   // Swap start and end points if necessary and store swap state
-  //bool swapped;
-  //swapped = false;
+
   if (x1 > x2){
     x1 = x2;
     x2 = x1;
 
     y1 = y2;
     y2 = y1;
-    //swapped = true;
   }
 
   // Recalculate differences
@@ -604,7 +553,7 @@ int overlap_slice_with_spaxels(int overlap_partial,
 	yuse = x;
 	xuse = y;
       }
-    //coord = (y, x) if is_steep else (x, y);
+
     int index = (yuse * naxis1) + xuse;
     wave_slice_dq[index] = overlap_partial;
     error -= abs(dy);
@@ -612,7 +561,6 @@ int overlap_slice_with_spaxels(int overlap_partial,
       y += ystep;
       error += dx;
     }
-
   }
   return status; 
 }
@@ -621,17 +569,11 @@ int overlap_slice_with_spaxels(int overlap_partial,
 // Set the spaxel dq = 0. This is used when not determining the FOV on the sky for
 // setting the DQ plane. This is case for internalCal type cubes
 
-int dq_set_zero(int ncube, int **spaxel_dq){
-    int *idqv = NULL;  // int vector for spaxel
+int set_dqplane_to_zero(int ncube, int **spaxel_dq){
 
+    int *idqv;  // int vector for spaxel
     if (mem_alloc_dq(ncube, &idqv)) return 1;
-
-    // Set all data to zero
-    for (long i = 0; i < ncube; i++){
-      idqv[i] = 0;
-    }
      *spaxel_dq = idqv;
-
     return 0;
 }
 
@@ -647,66 +589,60 @@ int dq_miri(int start_region, int end_region, int overlap_partial, int overlap_f
 	    long ncube, int npt, 
 	    int **spaxel_dq) {
 
-  int *idqv = NULL;  // int vector for spaxel
+  int *idqv ;  // int vector for spaxel
+  if (mem_alloc_dq(ncube, &idqv)) return 1;
 
-    if (mem_alloc_dq(ncube, &idqv)) return 1;
-
-    // Set all data to zero
-    for (long i = 0; i < ncube; i++){
-      idqv[i] = 0;
-    }
-
-    double corner1[2];
-    double corner2[2];
-    double corner3[2];
-    double corner4[2];
+  double corner1[2];
+  double corner2[2];
+  double corner3[2];
+  double corner4[2];
     
-    // for each wavelength plane find the 2 extreme slices to set FOV. Use these two extreme slices to set up the
-    // corner of the FOV for each wavelength
+  // for each wavelength plane find the 2 extreme slices to set FOV. Use these two extreme slices to set up the
+  // corner of the FOV for each wavelength
 
-    int nxy = nx * ny;
-    // Loop over the wavelength planes and set DQ plane 
-    for (int w = 0; w  < nz; w++) {
+  int nxy = nx * ny;
+  // Loop over the wavelength planes and set DQ plane 
+  for (int w = 0; w  < nz; w++) {
 
-      int wave_slice_dq[nxy];
-      for( int i = 0; i < nxy; i ++){
-	wave_slice_dq[i] = 0;
-      }
+    int wave_slice_dq[nxy];
+    for( int i = 0; i < nxy; i ++){
+      wave_slice_dq[i] = 0;
+    }
       
-      int status =  corner_wave_plane_miri( w, start_region, end_region, roiw_ave, zc,
-				   coord1, coord2, wave, sliceno, ncube, npt,
-				   corner1, corner2, corner3, corner4);
-      if( status == 0){ // found min and max slice on wavelengh plane
-	double xi_corner[4];
-	double eta_corner[4];
-	xi_corner[0] = corner1[0];
-	xi_corner[1] = corner2[0];
-	xi_corner[2] = corner3[0];
-	xi_corner[3] = corner4[0];
+    int status =  corner_wave_plane_miri( w, start_region, end_region, roiw_ave, zc,
+					  coord1, coord2, wave, sliceno, ncube, npt,
+					  corner1, corner2, corner3, corner4);
+    if( status == 0){ // found min and max slice on wavelengh plane
+      double xi_corner[4];
+      double eta_corner[4];
+      xi_corner[0] = corner1[0];
+      xi_corner[1] = corner2[0];
+      xi_corner[2] = corner3[0];
+      xi_corner[3] = corner4[0];
 	
-	eta_corner[0] = corner1[1];
-	eta_corner[1] = corner2[1];
-	eta_corner[2] = corner3[1];
-	eta_corner[3] = corner4[1];
+      eta_corner[0] = corner1[1];
+      eta_corner[1] = corner2[1];
+      eta_corner[2] = corner3[1];
+      eta_corner[3] = corner4[1];
 	
-	status = overlap_fov_with_spaxels(overlap_partial, overlap_full,
-					  cdelt1,cdelt2,
-					  nx, ny,
-					  xc, yc,
-					  xi_corner, eta_corner,
-					  wave_slice_dq);
-	long istart = nxy*w;
-	long iend = istart + nxy;
-	for( long in = istart; in < iend; in ++){
-	  long ii = in - istart;
-	  idqv[in] = wave_slice_dq[ii];
-	}
+      status = overlap_fov_with_spaxels(overlap_partial, overlap_full,
+					cdelt1,cdelt2,
+					nx, ny,
+					xc, yc,
+					xi_corner, eta_corner,
+					wave_slice_dq);
+      long istart = nxy*w;
+      long iend = istart + nxy;
+      for( long in = istart; in < iend; in ++){
+	long ii = in - istart;
+	idqv[in] = wave_slice_dq[ii];
       }
-    } // end loop over wavelength
+    }
+  } // end loop over wavelength
 
-    *spaxel_dq = idqv;
+  *spaxel_dq = idqv;
 
-    return 0;
+  return 0;
 }
 
 //________________________________________________________________________________
@@ -745,14 +681,9 @@ int dq_nirspec(int overlap_partial,
   */
   
 
-  int *idqv = NULL;  // int vector for spaxel
-
+  int *idqv ;  // int vector for spaxel
   if (mem_alloc_dq(ncube, &idqv)) return 1;
-
-  // Set all data to zero
-  for (long i = 0; i < ncube; i++){
-    idqv[i] = 0;
-  }
+  
 
   //  for each of the 30 slices - find the projection of this slice
   //     onto each of the IFU wavelength planes.
@@ -803,6 +734,8 @@ int dq_nirspec(int overlap_partial,
 // Match point cloud to sky and determine the weighting to assign to each point cloud  member
 // to matched spaxel based on ROI - weighting type - emsm
 
+// return values: spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux
+
 int match_point_emsm(double *xc, double *yc, double *zc,
 		     double *coord1, double *coord2, double *wave,
 		     double *flux, double *err,
@@ -814,23 +747,11 @@ int match_point_emsm(double *xc, double *yc, double *zc,
 		     double **spaxel_iflux) {
 
 
-  /*
-return values: spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux
-*/
-    double *fluxv = NULL, *weightv=NULL, *varv=NULL ;  // vectors for spaxel 
-    double *ifluxv = NULL;  // vector for spaxel
+  double *fluxv, *weightv, *varv, *ifluxv;  // vector for spaxel
 
-    // allocate memory to hold output 
-    if (mem_alloc(ncube, &fluxv, &weightv, &varv, &ifluxv)) return 1;
-    
-    double set_zero=0.0;
-    // Set all data to zero
-    for (int i = 0; i < ncube; i++){
-      varv[i] = set_zero;
-      fluxv[i] = set_zero;
-      ifluxv[i] = set_zero;
-      weightv[i] = set_zero;
-    }
+  // allocate memory to hold output 
+  if (alloc_flux_arrays(ncube, &fluxv, &weightv, &varv, &ifluxv)) return 1;
+  
     
     // loop over each point cloud member and find which roi spaxels it is found
 
@@ -969,6 +890,7 @@ return values: spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux
 
 // Match point cloud to sky and determine the weighting to assign to each point cloud  member
 // to matched spaxel based on ROI - weighting type - msm
+//return values: spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux
 
 int match_point_msm(double *xc, double *yc, double *zc,
 		    double *coord1, double *coord2, double *wave,
@@ -981,34 +903,22 @@ int match_point_msm(double *xc, double *yc, double *zc,
 		    double **spaxel_flux, double **spaxel_weight, double **spaxel_var,
 		    double **spaxel_iflux) {
 
-  /*
-return values: spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux
-*/
-    double *fluxv = NULL, *weightv=NULL, *varv=NULL ;  // vectors for spaxel 
-    double *ifluxv = NULL;  // vector for spaxel
 
-    // allocate memory to hold output 
-    if (mem_alloc(ncube, &fluxv, &weightv, &varv, &ifluxv)) return 1;
-    
-    double set_zero=0.0;
-    // Set all data to zero
-    for (int i = 0; i < ncube; i++){
-      varv[i] = set_zero;
-      fluxv[i] = set_zero;
-      ifluxv[i] = set_zero;
-      weightv[i] = set_zero;
-    }
-    
-    // loop over each point cloud member and find which roi spaxels it is found
+  double *fluxv, *weightv, *varv, *ifluxv;  // vector for spaxel
+  
+  // allocate memory to hold output
+  if (alloc_flux_arrays(ncube, &fluxv, &weightv, &varv, &ifluxv)) return 1;
+        
+  // loop over each point cloud member and find which roi spaxels it is found
 
-    for (int k = 0; k < npt; k++) {
-       // Search wave and find match
-      int iwstart = -1;
-      int iwend = -1;
-      int ii = 0;
-      int done_search_w = 0;
+  for (int k = 0; k < npt; k++) {
+    // Search wave and find match
+    int iwstart = -1;
+    int iwend = -1;
+    int ii = 0;
+    int done_search_w = 0;
 
-      while (ii < nwave && done_search_w == 0) {
+    while (ii < nwave && done_search_w == 0) {
 	float wdiff = fabs(zc[ii] - wave[k]);
 	if(wdiff <= roiw_pixel[k]){
 	  if (iwstart == -1){
@@ -1289,9 +1199,8 @@ static PyObject *cube_wrapper(PyObject *module, PyObject *args) {
 			   &spaxel_dq);
     }
   } else{ // set dq plane to 0
-
-    status1 = dq_set_zero(ncube, &spaxel_dq);
-
+    status1 = set_dqplane_to_zero(ncube, &spaxel_dq);
+    
   }
 
   //______________________________________________________________________
@@ -1329,7 +1238,8 @@ static PyObject *cube_wrapper(PyObject *module, PyObject *args) {
 			     nxx, nyy, nwave, ncube, npt, cdelt1, cdelt2,
 			     &spaxel_flux, &spaxel_weight, &spaxel_var, &spaxel_iflux);
   }
-  
+
+
   if (status || status1) {
     goto fail;
 

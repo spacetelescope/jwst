@@ -1,10 +1,13 @@
 /*
-The detector pixels are represented by a 'point could' on the sky. The IFU cube is
-represented by a 3-D regular grid. This module finds the point cloud members contained
-in a region centered on the center of the cube spaxel. The size of the spaxel is spatial
-coordinates is cdetl1 and cdelt2, while the wavelength size is zcdelt3.
-This module uses the e modified shephard weighting method to determine how to  weight each point clold member
-in the spaxel.
+Thie module forms the IFU cube in the "detector plane". This method of creating cubes is
+for an engineering mode. The detector pixels are mapped to the along slice coordinate
+and wavelength. The slice number represents the across slice coordinate. The pixels from
+each slice are assumed to not overlap on the output plane with pixels from other slices. This
+breaks the 3-D representation of the pixel's coordinates in the output plane to 2D. Standard
+drizzling type routines are used to calculate the percentage of each pixel's overlap with
+the output spaxels. The percentage of the area of the detector pixel overlapped onto an output
+spaxel is used to weight the pixel flux for determining the spaxel flux. 
+
  
 Main function for Python: cube_wrapper_internal
 
@@ -91,52 +94,8 @@ extern double sh_find_overlap(const double xcenter, const double ycenter,
 extern double find_area_quad(double MinX, double MinY, double Xcorner[], double Ycorner[]);
 
 
-//_______________________________________________________________________
-// Allocate the memory to for the spaxel arrays in the cube
-//_______________________________________________________________________
+extern alloc_flux_arrays(int nelem, double **fluxv, double **weightv, double **varv,  double **ifluxv);
 
-int mem_alloc(int nelem, double **fluxv, double **weightv, double **varv,  double **ifluxv) {
-
-    double *f, *w, *v, *i;
-    const char *msg = "Couldn't allocate memory for output arrays.";
-    
-    // flux:
-    f = (double*)malloc(nelem* sizeof(double));
-    if (f) {
-        *fluxv = f;
-    } else {
-        PyErr_SetString(PyExc_MemoryError, msg);
-        return 1;
-    }
-
-    // weight:
-    w = (double*)malloc(nelem* sizeof(double));
-    if (w) {
-        *weightv = w;
-    } else {
-        PyErr_SetString(PyExc_MemoryError, msg);
-        return 1;
-    }
-
-    // variance:
-    v = (double*)malloc(nelem* sizeof(double));
-    if (v) {
-        *varv = v;
-    } else {
-        PyErr_SetString(PyExc_MemoryError, msg);
-        return 1;
-    }
-    // iflux
-    i = (double*)malloc(nelem* sizeof(double));
-    if (i) {
-        *ifluxv = i;
-    } else {
-        PyErr_SetString(PyExc_MemoryError, msg);
-        return 1;
-    }
-
-    return 0;
-}
 
 //_______________________________________________________________________
 //  based on a 2-D drizzling type of algorithm find the contribution of
@@ -151,20 +110,11 @@ int match_detector_cube(int instrument, int naxis1, int naxis2, int nz, int npt,
 			double *pixel_flux, double *pixel_err,
 			double **spaxel_flux, double **spaxel_weight, double **spaxel_var,double **spaxel_iflux){
 
-  double *fluxv = NULL, *weightv=NULL, *varv=NULL ;  // vectors for spaxel 
-  double *ifluxv = NULL;  // vector for spaxel
+  double *fluxv, *weightv, *varv, *ifluxv ;  // vectors for spaxel 
 
   // allocate memory to hold output 
-  if (mem_alloc(ncube, &fluxv, &weightv, &varv, &ifluxv)) return 1;
+  if (alloc_flux_arrays(ncube, &fluxv, &weightv, &varv, &ifluxv)) return 1;
     
-  double set_zero=0.0;
-  // Set all data to zero
-  for (int i = 0; i < ncube; i++){
-    varv[i] = set_zero;
-    fluxv[i] = set_zero;
-    ifluxv[i] = set_zero;
-    weightv[i] = set_zero;
-  }
 
   // loop over each valid point on detector and find match to IFU cube based
   // on along slice coordinate and wavelength
