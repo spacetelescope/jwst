@@ -6,6 +6,7 @@ from ..stpipe import Step
 from .. import datamodels
 
 from stcal.ramp_fitting import ramp_fit
+from jwst.datamodels import dqflags
 
 from ..lib import reffile_utils  # TODO remove
 from ..lib import pipe_utils
@@ -135,12 +136,14 @@ def create_integration_model(input_model, integ_info):
     return int_model
 
 
-def create_optional_results_model(opt_info):
+def create_optional_results_model(input_model, opt_info):
     """
     Creates an ImageModel from the computed arrays from ramp_fit.
 
     Parameter
     ---------
+    input_model: ~jwst.datamodels.RampModel
+
     opt_info: tuple
         The ramp fitting arrays needed for the RampFitOutputModel.
 
@@ -162,10 +165,13 @@ def create_optional_results_model(opt_info):
         weights=weights,
         crmag=crmag)
 
+    opt_model.meta.filename = input_model.meta.filename
+    opt_model.update(input_model)  # ... and add all keys from input
+
     return opt_model
 
 
-class RampFitStep (Step):
+class RampFitStep(Step):
 
     """
     This step fits a straight line to the value of counts vs. time to
@@ -234,12 +240,11 @@ class RampFitStep (Step):
             image_info, integ_info, opt_info, gls_opt_model = ramp_fit.ramp_fit(
                 input_model, buffsize,
                 self.save_opt, readnoise_2d, gain_2d, self.algorithm,
-                self.weighting, max_cores
-            )
+                self.weighting, max_cores, dqflags.pixel)
 
         # Save the OLS optional fit product, if it exists
         if opt_info is not None:
-            opt_model = create_optional_results_model(opt_info)
+            opt_model = create_optional_results_model(input_model, opt_info)
             self.save_model(opt_model, 'fitopt', output_file=self.opt_name)
 
         '''
