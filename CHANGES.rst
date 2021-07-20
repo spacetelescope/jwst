@@ -43,6 +43,12 @@ pipeline
 
 - Added wfss_contam step to `calwebb_spec2` pipeline flow for WFSS modes [#6207]
 
+ramp_fitting
+------------
+
+- Update ``RampFitStep`` to pass DQ flags as a parameter to the ``ramp_fit``
+  algorithm code in stcal.  Bump version requirement for stcal.  [#6072]
+
 wfss_contam
 -----------
 
