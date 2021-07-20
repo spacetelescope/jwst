@@ -15,7 +15,7 @@ class DarkMIRIModel(ReferenceFileModel):
     data : numpy float32 array
          Dark current array
 
-    dq : numpy uint16 array
+    dq : numpy uint32 array
          2-D data quality array for all planes
 
     err : numpy float32 array
