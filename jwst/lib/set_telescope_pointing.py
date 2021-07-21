@@ -36,15 +36,20 @@ LOGLEVELS = [logging.INFO, logging.DEBUG, DEBUG_FULL]
 
 # The available methods for transformation
 class Methods(Enum):
-    FULL         = ('full', 'calc_transforms_quaternion')                        # noqa: E221 JSOCINT-555 fix using quaternion
-    FULLVA       = ('fullva', 'calc_transforms_quaternion_velocity_abberation')  # noqa: E221 JSOCINT-555 fix using quaternion/VA
-    GSCMD_J3PAGS = ('gscmd', 'calc_transforms_gscmd_j3pags')                     # noqa: E221 JSOCINT-555 fix using J3PA@GS
-    GSCMD_V3PAGS = ('gscmd_v3pags', 'calc_transforms_gscmd_v3pags')              # noqa: E221 JSOCINT-555 fix using V3PA@GS
-    ORIGINAL     = ('original', 'calc_transforms_original')                      # noqa: E221 Original, pre-JSOCINT-555 algorithm
+    COURSE_TR_202107 = ('course_tr_202107', 'calc_transforms_course_tr_202107')
+    TRACK_TR_202107 = ('track_tr_202107', 'calc_transforms_track_tr_202107')
+    OPS_TR_202107 = ('ops_tr_202107', 'calc_transforms_ops_tr_202107')
+    TR_202105 = ('full', 'calc_transforms_tr202105')
+    TR_VA_202105 = ('fullva', 'calc_transforms_velocity_abberation_tr202105')
+    GSCMD_J3PAGS = ('gscmd', 'calc_transforms_gscmd_j3pags')
+    GSCMD_V3PAGS = ('gscmd_v3pags', 'calc_transforms_gscmd_v3pags')
+    ORIGINAL = ('original', 'calc_transforms_original')
 
     # Alias
-    default = FULL        # Use original algorithm if not specified
-    GSCMD = GSCMD_J3PAGS  # When specifying GS Commanded, use the J3VA@GS method by default.
+    default = OPS_TR_202107  # Algorithm to use by default. Used by Operations.
+    COURSE = COURSE_TR_202107  # Default algorithm under PCS_MODE COURSE.
+    OPS = OPS_TR_202107  # Default algorithm for use by Operations.
+    TRACK = TRACK_TR_202107  # Default algorithm under PCS_MODE TRACK/FINEGUIDE.
 
     def __new__(cls: object, value: str, func_name: str):
         obj = object.__new__(cls)
@@ -932,7 +937,7 @@ def calc_transforms(t_pars: TransformParameters):
     return transforms
 
 
-def calc_transforms_quaternion(t_pars: TransformParameters):
+def calc_transforms_202105(t_pars: TransformParameters):
     """Calculate transforms which determine reference point celestial WCS from the original, pre-JSOCINT-555 algorithm
 
     Given the spacecraft pointing parameters and the aperture-specific SIAF,
@@ -975,7 +980,7 @@ def calc_transforms_quaternion(t_pars: TransformParameters):
 
     """
     logger.info('Calculating transforms using FULL quaternion method...')
-    t_pars.method = Methods.FULL
+    t_pars.method = Methods.TR_202105
     t = Transforms(override=t_pars.override_transforms)  # Shorthand the resultant transforms
 
     # ---
@@ -1022,7 +1027,22 @@ def calc_transforms_quaternion(t_pars: TransformParameters):
     return t
 
 
-def calc_transforms_quaternion_velocity_abberation(t_pars: TransformParameters):
+def calc_transforms_course_tr_202107(t_pars: TransformParameters):
+    """Calculate transforms for COURSE guiding as per TR presented in 2021-07"""
+    raise NotImplementedError
+
+
+def calc_transforms_track_tr_202107(t_pars: TransformParameters):
+    """Calculate transforms for TRACK/FINEGUIDE guiding as per TR presented in 2021-07"""
+    raise NotImplementedError
+
+
+def calc_transforms_ops_tr_202107(t_pars: TransformParameters):
+    """Calculate transforms as per TR presented in 2021-07"""
+    raise NotImplementedError
+
+
+def calc_transforms_velocity_abberation_tr202105(t_pars: TransformParameters):
     """Calculate transforms which determine reference point celestial WCS from the original, pre-JSOCINT-555 algorithm
 
     Given the spacecraft pointing parameters and the aperture-specific SIAF,
@@ -1057,7 +1077,7 @@ def calc_transforms_quaternion_velocity_abberation(t_pars: TransformParameters):
 
     """
     logger.info('Calculating transforms using FULLVA quaternion method with velocity aberration...')
-    t_pars.method = Methods.FULLVA
+    t_pars.method = Methods.TR_VA_202105
     t = Transforms(override=t_pars.override_transforms)  # Shorthand the resultant transforms
 
     # Determine the ECI to J-frame matrix
