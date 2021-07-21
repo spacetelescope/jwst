@@ -937,7 +937,7 @@ def calc_transforms(t_pars: TransformParameters):
     return transforms
 
 
-def calc_transforms_202105(t_pars: TransformParameters):
+def calc_transforms_tr202105(t_pars: TransformParameters):
     """Calculate transforms which determine reference point celestial WCS from the original, pre-JSOCINT-555 algorithm
 
     Given the spacecraft pointing parameters and the aperture-specific SIAF,
@@ -1033,7 +1033,17 @@ def calc_transforms_course_tr_202107(t_pars: TransformParameters):
 
 
 def calc_transforms_track_tr_202107(t_pars: TransformParameters):
-    """Calculate transforms for TRACK/FINEGUIDE guiding as per TR presented in 2021-07"""
+    """Calculate transforms for TRACK/FINEGUIDE guiding as per TR presented in 2021-07
+
+    This implements equation 43 from Technical Report JWST-STScI-003222, SM-12.
+    From Section 4:
+
+    In COARSE mode the measured attitude of the J-frame of the spacecraft is
+    determined by the star tracker and inertial gyroscopes attitude
+    measurements and is converted to an estimated guide star inertial attitude
+    using the equations in section 3.2. The V-frame attitude then is determined
+    using the equation below (equation 43).
+    """
     raise NotImplementedError
 
 
