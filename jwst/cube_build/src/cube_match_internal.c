@@ -1,11 +1,11 @@
 /*
-Thie module forms the IFU cube in the "detector plane". This method of creating cubes is
+This module forms the IFU cube in the "detector plane". This method of creating cubes is
 for an engineering mode. The detector pixels are mapped to the along slice coordinate
 and wavelength. The slice number represents the across slice coordinate. The pixels from
 each slice are assumed to not overlap on the output plane with pixels from other slices. This
 breaks the 3-D representation of the pixel's coordinates in the output plane to 2D. Standard
 drizzling type routines are used to calculate the percentage of each pixel's overlap with
-the output spaxels. The percentage of the area of the detector pixel overlapped onto an output
+the output spaxels. The percentage of the pixel area  overlapped onto an output
 spaxel is used to weight the pixel flux for determining the spaxel flux. 
 
  
