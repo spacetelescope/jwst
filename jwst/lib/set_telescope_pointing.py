@@ -37,15 +37,15 @@ LOGLEVELS = [logging.INFO, logging.DEBUG, DEBUG_FULL]
 # The available methods for transformation
 class Methods(Enum):
     COURSE_TR_202107 = ('course_tr_202107', 'calc_transforms_course_tr_202107')
-    TRACK_TR_202107 = ('track_tr_202107', 'calc_transforms_track_tr_202107')
-    OPS_TR_202107 = ('ops_tr_202107', 'calc_transforms_ops_tr_202107')
-    TR_202105 = ('full', 'calc_transforms_tr202105')
-    TR_VA_202105 = ('fullva', 'calc_transforms_velocity_abberation_tr202105')
     GSCMD_J3PAGS = ('gscmd', 'calc_transforms_gscmd_j3pags')
     GSCMD_V3PAGS = ('gscmd_v3pags', 'calc_transforms_gscmd_v3pags')
+    OPS_TR_202107 = ('ops_tr_202107', 'calc_transforms_ops_tr_202107')
     ORIGINAL = ('original', 'calc_transforms_original')
+    TR_202105 = ('full', 'calc_transforms_tr202105')
+    TR_VA_202105 = ('fullva', 'calc_transforms_velocity_abberation_tr202105')
+    TRACK_TR_202107 = ('track_tr_202107', 'calc_transforms_track_tr_202107')
 
-    # Alias
+    # Aliases
     default = OPS_TR_202107  # Algorithm to use by default. Used by Operations.
     COURSE = COURSE_TR_202107  # Default algorithm under PCS_MODE COURSE.
     OPS = OPS_TR_202107  # Default algorithm for use by Operations.
