@@ -20,7 +20,6 @@ int alloc_flux_arrays(int nelem, double **fluxv, double **weightv, double **varv
 
     const char *msg = "Couldn't allocate memory for output arrays.";
 
-    printf(" going to allocate memory \n"); 
     // flux:
     if (!(*fluxv  = (double*)calloc(nelem, sizeof(double)))) {
         PyErr_SetString(PyExc_MemoryError, msg);
@@ -48,7 +47,6 @@ int alloc_flux_arrays(int nelem, double **fluxv, double **weightv, double **varv
     return 0;
 
  failed_mem_alloc:
-    printf("Problem allocating \n");
     free(*fluxv);
     free(*weightv);
     free(*varv);
