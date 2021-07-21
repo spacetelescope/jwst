@@ -2,7 +2,6 @@ import pytest
 from jwst import datamodels
 from jwst.assign_wcs import AssignWcsStep
 from jwst.associations.lib.rules_level3_base import DMS_Level3_Base
-from jwst.associations.lib.rules_level2_base import DMSLevel2bBase
 from jwst.associations import asn_from_list
 from jwst.wfs_combine import WfsCombineStep
 
@@ -59,12 +58,6 @@ def wfs_association(tmp_path_factory):
         f.write(serialized)
 
     return path_asn, path1, path2
-
-
-def test_image1_location(_jail, wfs_association):
-    path_asn, path1, path2 = wfs_association
-    out_model = WfsCombineStep.call(path_asn, do_refine=False, flip_dithers=False, psf_size=50,
-                                    blur_size=10, n_size=2)
 
 
 def test_step_pos_shift_no_refine_no_flip(wfs_association):
