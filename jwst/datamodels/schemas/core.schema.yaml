@@ -1038,6 +1038,7 @@ properties:
 
               # MIRI coron
               5-POINT-SMALL-GRID, 9-POINT-SMALL-GRID,
+              4QPM_LFLAT, 4QPM_PFLAT, LYOT_LFLAT, LYOT_PFLAT,
 
               # MIRI imaging
               CYCLING, REULEAUX, SPARSE-CYCLING,
