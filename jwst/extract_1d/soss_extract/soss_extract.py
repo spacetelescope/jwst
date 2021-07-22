@@ -107,6 +107,8 @@ def extract_image(scidata, scierr, scimask, ref_files, transform=None,
     # TODO placing the tranform (and the call to get_ref_file_args()) in run_extract_1d might be better.
     if transform is None:
 
+        log.info('Solving for the transformation parameters.')
+
         # Unpack the expected order 1 positions.
         spectrace_ref = ref_files['spectrace']
         xref = spectrace_ref.trace[0].data['X']
@@ -116,6 +118,8 @@ def extract_image(scidata, scierr, scimask, ref_files, transform=None,
         # Use the Solver on the image.
         transform = solve_transform(scidata, scimask, xref, yref, subarray)
 
+    log.info('Using transformation parameters {}'.format(transform))
+
     # Prepare the reference file arguments.
     ref_file_args = get_ref_file_args(ref_files, transform)
 
@@ -123,6 +127,8 @@ def extract_image(scidata, scierr, scimask, ref_files, transform=None,
     engine = ExtractionEngine(*ref_file_args, n_os=n_os, threshold=threshold)
 
     if tikfac is None:
+
+        log.info('Solving for the optimal Tikhonov factor.')
 
         # Find the tikhonov factor.
         # Initial pass 14 orders of magnitude.
@@ -135,6 +141,8 @@ def extract_image(scidata, scierr, scimask, ref_files, transform=None,
         factors = np.logspace(tikfac - 2, tikfac + 2, 20)
         tiktests = engine.get_tikho_tests(factors, data=scidata_bkg, error=scierr, mask=scimask)
         tikfac = engine.best_tikho_factor(tests=tiktests)
+
+    log.info('Using a Tikhonov factor of {}'.format(tikfac))
 
     # Run the extract method of the Engine.
     f_k = engine.extract(data=scidata_bkg, error=scierr, mask=scimask, tikhonov=True, factor=tikfac)
@@ -192,6 +200,8 @@ def run_extract1d(input_model: DataModel,
 
     if isinstance(input_model, datamodels.ImageModel):
 
+        log.info('Input is an ImageModel, processing a single integration.')
+
         # Received a single 2D image.
         scidata = input_model.data
         scierr = input_model.err
@@ -229,6 +239,8 @@ def run_extract1d(input_model: DataModel,
 
         nimages = len(input_model.data)  # TODO Do this or use meta.exposure.
 
+        log.info('Input is a CubeModel containing {} integrations.'.format(nimages))
+
         # Build deepstack out of max N images OPTIONAL.
         # TODO making a deepstack could be used to get a more robust transform and tikfac, 1/f.
 
@@ -242,6 +254,8 @@ def run_extract1d(input_model: DataModel,
 
         # Loop over images.
         for i in range(nimages):
+
+            log.info('Processing integration {} of {}.'.format(i + 1, nimages))
 
             # Unpack the i-th image.
             scidata = input_model.data[i]
