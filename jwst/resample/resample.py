@@ -1,6 +1,5 @@
 import logging
 import re
-import warnings
 
 import numpy as np
 from drizzle import util
@@ -188,48 +187,40 @@ class ResampleData:
     def resample_variance_array(self, name, output_model):
         """Resample variance arrays from self.input_models to the output_model
 
-        Loop through self.input_models and resample the `name` variance array
-        to the same name in output_model.  This modifies output_model in-place.
+        Resample the `name` variance array to the same name in output_model,
+        using a cummulative sum instead of weighted average.
+
+        This modifies output_model in-place.
         """
+        output_wcs = output_model.meta.wcs
+        output_array = np.zeros_like(output_model.data)
         outwht = np.zeros_like(output_model.data)
         outcon = np.zeros_like(output_model.con)
-        output_wcs = output_model.meta.wcs
-        output_arrays = []
 
         log.info(f"Resampling {name}")
+        uniqid = 1
         for model in self.input_models:
-            # Unity weight but ignore pixels that are NON_SCIENCE or REFERENCE_PIXEL
-            inwht = resample_utils.build_driz_weight(model, weight_type=None,
-                                                     good_bits="~NON_SCIENCE+REFERENCE_PIXEL")
-            input_array = getattr(model, name)
-            output_array = np.zeros_like(output_model.data)
+            with np.errstate(divide="ignore"):
+                inv_var = np.reciprocal(getattr(model, name))
+            inwht = np.ones_like(model.data)
 
-            # Resample the variance array
-            self.drizzle_arrays(input_array, inwht, model.meta.wcs,
+            # Resample the inverse variance array
+            self.drizzle_arrays(inv_var, inwht, model.meta.wcs,
                                 output_wcs, output_array, outwht, outcon,
                                 pixfrac=self.pixfrac, kernel=self.kernel,
-                                fillval=np.nan)
-            output_arrays.append(output_array)
+                                fillval=np.nan, uniqid=uniqid)
+            uniqid += 1
 
-        # Stack and coadd as inverse variance if there any to stack
-        if len(output_arrays) > 1:
-            stacked = np.stack(output_arrays)
-            with np.errstate(divide="ignore"):
-                inv_var = np.reciprocal(stacked)
-            inv_var[~np.isfinite(inv_var)] = np.nan
+        # Drizzle produces a weighted average of the new image with the
+        # existing cumulative image.  But we want a weighted sum.  We have
+        # specified all the input weights to be unity above, which means to get
+        # a sum, we just multiply the final cummulative weighted average image
+        # by the total cummulative weights to get the sum.
+        output_array *= outwht
 
-            with warnings.catch_warnings():
-                warnings.filterwarnings(action="ignore",
-                                        message="Mean of empty slice",
-                                        category=RuntimeWarning)
-                inv_var_mean = np.nanmean(inv_var, axis=0)
-            with np.errstate(divide="ignore"):
-                output_err_array = np.reciprocal(inv_var_mean)
-        else:
-            output_err_array = output_arrays[0]
-        output_err_array[~np.isfinite(output_err_array)] = np.nan
-
-        setattr(output_model, name, output_err_array)
+        output_variance = np.reciprocal(output_array)
+        output_variance[~np.isfinite(output_variance)] = np.nan
+        setattr(output_model, name, output_variance)
 
     def update_exposure_times(self, output_model):
         """Modify exposure time metadata in-place"""
@@ -249,7 +240,7 @@ class ResampleData:
     @staticmethod
     def drizzle_arrays(insci, inwht, input_wcs, output_wcs, outsci, outwht, outcon,
                        uniqid=1, xmin=None, xmax=None, ymin=None, ymax=None,
-                       pixfrac=1.0, kernel='square', fillval="INDEF"):
+                       pixfrac=1.0, kernel='square', fillval="INDEF", wtscale=1.0):
         """
         Low level routine for performing 'drizzle' operation on one image.
 
@@ -408,7 +399,7 @@ class ResampleData:
             kernel=kernel,
             in_units="cps",
             expscale=1.0,
-            wtscale=1.0,
+            wtscale=wtscale,
             fillstr=fillval
         )
 

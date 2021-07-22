@@ -54,6 +54,11 @@ ramp_fitting
 - Update ``RampFitStep`` to pass DQ flags as a parameter to the ``ramp_fit``
   algorithm code in stcal.  Bump version requirement for stcal.  [#6072]
 
+resample
+--------
+
+Fix the extreme memory consumption seen in resampling of variance arrays. [#6251]
+
 source_catalog
 --------------
 
