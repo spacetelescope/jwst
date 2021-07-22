@@ -82,6 +82,7 @@ if sys.version_info[0] == 2:
 # ones.
 extensions = [
     'numfig',
+    'pytest_doctestplus.sphinx.doctestplus',
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
@@ -94,7 +95,6 @@ extensions = [
     'sphinx_automodapi.automodsumm',
     'sphinx_automodapi.autodoc_enhancements',
     'sphinx_automodapi.smart_resolver',
-    'sphinx_astropy.ext.doctest',
     'sphinx_asdf',
     ]
 
