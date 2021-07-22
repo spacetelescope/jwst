@@ -20,6 +20,7 @@ class WfsCombineStep(Step):
         psf_size = integer(default=100)
         blur_size = integer(default=10)
         n_size = integer(default=2)
+        suffix = string(default="wfscmb")
     """
 
     def process(self, input_table):
