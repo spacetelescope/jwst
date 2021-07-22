@@ -7,7 +7,8 @@ from jwst.datamodels import dqflags
 from jwst.datamodels import RampModel
 from jwst.datamodels import GainModel, ReadnoiseModel
 
-from jwst.ramp_fitting.ramp_fit import ramp_fit
+# TODO: This module no longer exists in this repo:
+# from jwst.ramp_fitting.ramp_fit import ramp_fit
 
 import logging
 log = logging.getLogger(__name__)
