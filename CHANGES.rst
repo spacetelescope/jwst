@@ -51,6 +51,11 @@ ramp_fitting
 - Update ``RampFitStep`` to pass DQ flags as a parameter to the ``ramp_fit``
   algorithm code in stcal.  Bump version requirement for stcal.  [#6072]
 
+source_catalog
+--------------
+
+- Fixed issue with non-finite positions for aperture photometry. [#6206]
+
 wfss_contam
 -----------
 
