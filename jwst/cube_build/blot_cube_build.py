@@ -199,18 +199,18 @@ class CubeBlot():
             # pixel.
             # the Regular grid is on the x,y detector
 
-            blot_flux = self.blot_overlap_quick(model, xcenter, ycenter,
-                                                xstart, x_cube, y_cube,
-                                                flux_cube)
+            blot_flux = self.blot_overlap(model, xcenter, ycenter,
+                                          xstart, x_cube, y_cube,
+                                          flux_cube)
             blot.data = blot_flux
             blot_models.append(blot)
         return blot_models
     # ________________________________________________________________________________
 
-    def blot_overlap_quick(self, model, xcenter, ycenter, xstart,
+    def blot_overlap(self, model, xcenter, ycenter, xstart,
                            x_cube, y_cube, flux_cube):
 
-        # blot_overlap_quick finds to overlap between the blotted sky values
+        # blot_overlap finds to overlap between the blotted sky values
         # (x_cube, y_cube) and the detector pixels.
         # Looping is done over irregular arrays (x_cube, y_cube) and mapping
         # to xcenter ycenter is quicker than looping over detector x,y and
@@ -220,12 +220,15 @@ class CubeBlot():
         blot_weight = np.zeros(model.shape, dtype=np.float32)
         blot_ysize, blot_xsize = blot_flux.shape
         blot_flux = np.ndarray.flatten(blot_flux)
-        blot_weight = np.ndarray.flatten(blot_weight)
 
         # loop over valid points in cube (not empty edge pixels)
         roi_det = 1.0  # Just large enough that we don't get holes
-        ivalid = np.nonzero(np.absolute(flux_cube))
 
+        code = 'Python'
+        if code == 'CPython': 
+        
+        ivalid = np.nonzero(np.absolute(flux_cube))
+        blot_weight = np.ndarray.flatten(blot_weight)
         t0 = time.time()
         for ipt in ivalid[0]:
             # search xcenter and ycenter seperately. These arrays are smallsh.
