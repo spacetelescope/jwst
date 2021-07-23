@@ -27,6 +27,9 @@ datamodels
 
 - Update `DarkModel` to use uint32 for DQ array. [#6228]
 
+- Add new PATTTYPE values for MIRI Coronagraphic flats:
+  4QPM_LFLAT, 4QPM_PFLAT, LYOT_LFLAT, LYOT_PFLAT. [#6232]
+
 extract_1d
 ----------
 
