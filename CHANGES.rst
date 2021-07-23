@@ -27,6 +27,9 @@ datamodels
 
 - Update `DarkModel` to use uint32 for DQ array. [#6228]
 
+- Add new PATTTYPE values for MIRI Coronagraphic flats:
+  4QPM_LFLAT, 4QPM_PFLAT, LYOT_LFLAT, LYOT_PFLAT. [#6232]
+
 extract_1d
 ----------
 
@@ -51,12 +54,19 @@ ramp_fitting
 - Update ``RampFitStep`` to pass DQ flags as a parameter to the ``ramp_fit``
   algorithm code in stcal.  Bump version requirement for stcal.  [#6072]
 
+source_catalog
+--------------
+
+- Fixed issue with non-finite positions for aperture photometry. [#6206]
+
 wfss_contam
 -----------
 
 - Updated to process all defined spectral orders for the grism mode [#6175]
 
 - Added step documentation [#6210]
+
+- Fixed handling of filter/pupil names for NIRISS WFSS mode [#6233]
 
 1.2.3 (2021-06-08)
 ==================
@@ -3930,7 +3940,8 @@ ipc
 
 jump
 ----
-
+=- Fix to stop the flagging of all groups as jumps for 3 & 4 group
+   MIRI integrations when the first frame is flagged as DO_NOT_USE[#2206]
 jwpsf
 -----
 
@@ -4052,6 +4063,11 @@ tweakreg
 
 wfs_combine
 -----------
+
+-- add option to flip the dither locations so that images with different
+   filters will have the same pixel locations [#2051]
+-- Fixed the refine option to correctly use the cross correlation to align
+   the images if the WCS is off [#2051]
 
 white_light
 -----------
