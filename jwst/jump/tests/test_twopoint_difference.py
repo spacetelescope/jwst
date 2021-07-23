@@ -71,13 +71,22 @@ def test_5grps_cr2_negjumpflux(setup_cube):
 
 def test_3grps_cr2_noflux(setup_cube):
     ngroups = 3
-    data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups)
-    data[0, 0, 100, 100] = 10.0
-    data[0, 1:4, 100, 100] = 1000
+    data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups, nrows=2, ncols=2)
+    data[0, 0, 0, 0] = 10.0
+    data[0, 1:3, 0, 0] = 1000
+    data[0, 0, 0, 1] = 100
+    data[0, 1, 0, 1] = 95
+    data[0, 2, 0, 1] = 94
+    data[0, 0, 1, 1] = 80
+    data[0, 1, 1, 1] = 100
+    data[0, 2, 1, 1] = 111
+    data[0, 0, 1, 0] = 90
+    data[0, 1, 1, 0] = 100
+    data[0, 2, 1, 0] = 81
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold,
                                                      nframes, False, 200, 10)
     assert 4 == np.max(out_gdq)  # a CR was found
-    assert np.array_equal([0, 4, 0], out_gdq[0, :, 100, 100])
+    assert np.array_equal([0, 4, 0], out_gdq[0, :, 0, 0])
 
 
 @pytest.mark.xfail
@@ -135,7 +144,7 @@ def test_5grps_twocrs_2nd_5th(setup_cube):
     out_gdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold,
                                                      nframes, False, 200, 10)
     assert 4 == np.max(out_gdq)  # a CR was found
-    assert np.array_equal([0, 4, 0, 0, 4],out_gdq[0, :, 100, 100])
+    assert np.array_equal([0, 4, 0, 0, 4], out_gdq[0, :, 100, 100])
 
 
 def test_5grps_twocrs_2nd_5thbig(setup_cube):
@@ -644,9 +653,81 @@ def test_median_with_saturation_odd_number_final_difference(setup_cube):
     assert np.array_equal([0, 0, 0, 0, 0, 4, 2, 2, 2], out_gdq[0, :, 100, 100])
 
 
+def test_2group(setup_cube):
+    # test should not find a CR, can't do it with only one difference.
+    ngroups = 2
+    data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups, readnoise=25.0, nrows=2, ncols=2)
+
+    data[0, 0, 0, 0] = 10000.0
+    #  set groups 1,2 - to be around 30,000
+    data[0, 1, 0, 0] = 30000.0
+
+    outgdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold,
+                                                    nframes, False, 200, 10)
+    assert outgdq[0, 1, 0, 0] == 0
+    assert outgdq[0, 0, 0, 0] == 0
+
+
+def test_4group(setup_cube):
+    ngroups = 4
+    data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups, readnoise=25.0, nrows=2, ncols=2)
+
+    data[0, 0, 0, 0] = 10000.0
+    #  set groups 1,2 - to be around 30,000
+    data[0, 1, 0, 0] = 30000.0
+    data[0, 2, 0, 0] = 30020.0
+    data[0, 3, 0, 0] = 30000.0
+
+    outgdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold,
+                                                    nframes, False, 200, 10)
+    assert outgdq[0, 1, 0, 0] == 4
+
+
+def test_first_last_4group(setup_cube):
+    ngroups = 4
+    data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups, readnoise=25.0, nrows=2, ncols=2)
+
+    #  set up the data so that if the first and last group are used in jump
+    #  detection it would cause a jump to be detected between group 0-1.
+    data[0, 0, 0, 0] = 10000.0
+    #  set groups 1,2 - to be around 30,000
+    data[0, 1, 0, 0] = 30000.0
+    data[0, 2, 0, 0] = 30020.0
+    data[0, 3, 0, 0] = 30000.0
+    # treat as MIRI data with first and last flagged
+    gdq[0, 0, :, :] = dqflags.group['DO_NOT_USE']
+    gdq[0, 3, :, :] = dqflags.group['DO_NOT_USE']
+    outgdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold,
+                                                    nframes, False, 200, 10)
+
+    assert outgdq[0, 0, 0, 0] == dqflags.group['DO_NOT_USE']
+    assert outgdq[0, 3, 0, 0] == dqflags.group['DO_NOT_USE']
+    assert outgdq[0, 1, 0, 0] == 0
+
+
+def test_first_last_3group(setup_cube):
+    ngroups = 3
+    data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups, readnoise=25.0, nrows=2, ncols=2)
+
+    #  set up the data so that if the first and last group are used in jump
+    #  detection it would cause a jump to be detected between group 1-2
+    #  and group 6-7. Add a jump between 3 and 4 just to make sure jump detection is working
+    #  set group 1 to be 10,000
+    data[0, 0, 0, 0] = 10000.0
+    data[0, 1, 0, 0] = 10010.0
+    data[0, 2, 0, 0] = 30020.0
+
+    gdq[0, 2, 0, 0] = dqflags.group['DO_NOT_USE']  # only flag the last group
+    outgdq, row_below_gdq, row_above_gdq = find_crs(data, gdq, read_noise, rej_threshold, rej_threshold, rej_threshold,
+                                                    nframes, False, 200, 10)
+
+    assert outgdq[0, 0, 0, 0] == 0
+    assert outgdq[0, 2, 0, 0] == dqflags.group['DO_NOT_USE']
+    assert outgdq[0, 1, 0, 0] == 0
+
+
 def test_first_last_group(setup_cube):
     ngroups = 7
-    nframes = 1
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups, readnoise=25.0)
 
     #  set up the data so that if the first and last group are used in jump
@@ -863,8 +944,8 @@ def test_5diff_3sat_median_vector():
 
 def test_4diff_median_array():
     diffs_to_skip = np.zeros(shape=(2, 2), dtype=np.int32)
-    indiffs = np.zeros(shape=(2, 2, 4),dtype=np.float32)
-    indices = np.zeros(shape=(2, 2, 4),dtype=np.int32)
+    indiffs = np.zeros(shape=(2, 2, 4), dtype=np.float32)
+    indices = np.zeros(shape=(2, 2, 4), dtype=np.int32)
     indiffs[0, 0] = [11, 6, 9, 13]
     indiffs[0, 1] = [9, 4, 7, 3]
     indiffs[1, 0] = [10, 5, 3, 12]
@@ -883,8 +964,8 @@ def test_4diff_median_array():
 
 def test_4diff_median_2pixsat_array():
     diffs_to_skip = np.zeros(shape=(2, 2), dtype=np.int32)
-    indiffs = np.zeros(shape=(2, 2, 4),dtype=np.float32)
-    indices = np.zeros(shape=(2, 2, 4),dtype=np.int32)
+    indiffs = np.zeros(shape=(2, 2, 4), dtype=np.float32)
+    indices = np.zeros(shape=(2, 2, 4), dtype=np.int32)
     indiffs[0, 0] = [11, 6, 9, 13]
     indiffs[0, 1] = [9, 4, 7, 3]
     indiffs[1, 0] = [10, 5, 3, 12]
@@ -905,8 +986,8 @@ def test_4diff_median_2pixsat_array():
 
 def test_4diff_median_2pixsat_2pixverysat_array():
     diffs_to_skip = np.zeros(shape=(2, 2), dtype=np.int32)
-    indiffs = np.zeros(shape=(2, 2, 4),dtype=np.float32)
-    indices = np.zeros(shape=(2, 2, 4),dtype=np.int32)
+    indiffs = np.zeros(shape=(2, 2, 4), dtype=np.float32)
+    indices = np.zeros(shape=(2, 2, 4), dtype=np.int32)
     indiffs[0, 0] = [11, 6, 9, 13]
     indiffs[0, 1] = [9, 4, 7, 3]
     indiffs[1, 0] = [10, 5, 3, 12]

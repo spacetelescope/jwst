@@ -73,11 +73,13 @@ def detect_jumps(input_model, gain_model, readnoise_model,
     if len(wh_g[0] > 0):
         pdq[wh_g] = np.bitwise_or(pdq[wh_g], dqflags.pixel['NO_GAIN_VALUE'])
         pdq[wh_g] = np.bitwise_or(pdq[wh_g], dqflags.pixel['DO_NOT_USE'])
+        gain_2d[wh_g] == 0
 
     wh_g = np.where(np.isnan(gain_2d))
     if len(wh_g[0] > 0):
         pdq[wh_g] = np.bitwise_or(pdq[wh_g], dqflags.pixel['NO_GAIN_VALUE'])
         pdq[wh_g] = np.bitwise_or(pdq[wh_g], dqflags.pixel['DO_NOT_USE'])
+        gain_2d[wh_g] = 0.0  # a pixel with all NaNs messes up the two point difference step
 
     # Apply gain to the SCI, ERR, and readnoise arrays so they're in units
     # of electrons

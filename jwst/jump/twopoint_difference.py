@@ -75,8 +75,10 @@ def find_crs(data, group_dq, read_noise, normal_rejection_threshold,
 
         # Make all the first diffs for saturated groups be equal to
         # 100,000 to put them above the good values in the sorted index
+        max_value_index = np.nanargmax(positive_first_diffs, axis=2)
         first_diffs[np.isnan(first_diffs)] = 100000.
-
+#        not_sat = first_diffs < 100000.
+#        max_value_index = np.where(not_sat.any(1), )
         # Here we sort the 3D array along the last axis, which is the group axis.
         # np.argsort returns a 3D array with the last axis containing the indices
         # that would yield the groups in order.
@@ -105,20 +107,11 @@ def find_crs(data, group_dq, read_noise, normal_rejection_threshold,
         # ratio is a 2D array with the units of sigma deviation of the difference from the median.
         ratio = np.abs(first_diffs - median_diffs[:, :, np.newaxis]) / sigma[:, :, np.newaxis]
         ratio3d = np.reshape(ratio, (nrows, ncols, ndiffs))
-        # Get the group index for each pixel of the largest non-saturated group,
-        # assuming the indices are sorted. 2 is subtracted from ngroups because we are using
-        # differences and there is one less difference than the number of groups.
-        # This is a 2-D array.
-        max_value_index = ngroups - 2 - number_sat_groups
 
-        # Extract from the sorted group indices the index of the largest non-saturated group.
+        # Get the row and column indices of pixels whose largest non-saturated ratio is above the threshold
         row, col = np.where(number_sat_groups >= 0)
-        max_index1d = sort_index[row, col, max_value_index[row, col]]
-        max_index1 = np.reshape(max_index1d, (nrows, ncols))  # reshape to a 2-D array
-        max_ratio2d = np.reshape(ratio3d[row, col, max_index1[row, col]], (nrows, ncols))
-        max_index1d = sort_index[row, col, 1]
-        max_index2d = np.reshape(max_index1d, (nrows, ncols))
-        last_ratio = np.reshape(ratio3d[row, col, max_index2d[row, col]], (nrows, ncols))
+        max_ratio2d = np. reshape(ratio3d[row, col, max_value_index[row, col]], (nrows, ncols))
+
         # Get the row and column indices of pixels whose largest non-saturated ratio is above the threshold
         # First search all the pixels that have at least four good groups, these will use the normal threshold
         row4cr, col4cr = np.where(np.logical_and(ndiffs - number_sat_groups >= 4,
@@ -128,7 +121,7 @@ def find_crs(data, group_dq, read_noise, normal_rejection_threshold,
                                                  max_ratio2d > three_diff_rejection_threshold))
         # Finally, for pixels with only two good groups, compare the SNR of the last good group to the two diff
         # threshold
-        row2cr, col2cr = np.where(last_ratio > two_diff_rejection_threshold)
+        row2cr, col2cr = np.where(max_ratio2d > two_diff_rejection_threshold)
         log.info(
             f'From highest outlier Two-point found {len(row4cr)} pixels with at least one CR and at least four groups')
         log.info(
