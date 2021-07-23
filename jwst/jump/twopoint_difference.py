@@ -121,7 +121,8 @@ def find_crs(data, group_dq, read_noise, normal_rejection_threshold,
                                                  max_ratio2d > three_diff_rejection_threshold))
         # Finally, for pixels with only two good groups, compare the SNR of the last good group to the two diff
         # threshold
-        row2cr, col2cr = np.where(max_ratio2d > two_diff_rejection_threshold)
+        row2cr, col2cr = np.where(np.logical_and(ndiffs - number_sat_groups == 2,
+                                                 max_ratio2d > two_diff_rejection_threshold))
         log.info(
             f'From highest outlier Two-point found {len(row4cr)} pixels with at least one CR and at least four groups')
         log.info(

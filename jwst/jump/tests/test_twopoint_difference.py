@@ -5,7 +5,7 @@ from jwst.jump.twopoint_difference import find_crs
 from jwst.jump.twopoint_difference import get_clipped_median_vector
 from jwst.jump.twopoint_difference import get_clipped_median_array
 from jwst.datamodels import dqflags
-
+from astropy.io import fits
 
 def test_nocrs_noflux(setup_cube):
     ngroups = 5
@@ -714,7 +714,7 @@ def test_first_last_3group(setup_cube):
     #  and group 6-7. Add a jump between 3 and 4 just to make sure jump detection is working
     #  set group 1 to be 10,000
     data[0, 0, 0, 0] = 10000.0
-    data[0, 1, 0, 0] = 10010.0
+    data[0, 1, 0, 0] = 10100.0
     data[0, 2, 0, 0] = 30020.0
 
     gdq[0, 2, 0, 0] = dqflags.group['DO_NOT_USE']  # only flag the last group

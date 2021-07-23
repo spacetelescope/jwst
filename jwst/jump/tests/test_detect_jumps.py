@@ -290,9 +290,9 @@ def test_nirspec_saturated_pix(setup_inputs):
     # Check the results. There should not be any pixels with DQ values of 6, which
     # is saturated (2) plus jump (4). All the DQ's should be either just 2 or just 4.
     assert_array_equal(out_model.groupdq[0, :, 1, 1], [0, 4, 4, 4, 0, 2, 2])
-    assert_array_equal(out_model.groupdq[0, :, 2, 2], [0, 4, 2, 2, 2, 2, 2])
+    assert_array_equal(out_model.groupdq[0, :, 2, 2], [0, 0, 2, 2, 2, 2, 2])  # cannot find jump with just one grp
     assert_array_equal(out_model.groupdq[0, :, 3, 3], [0, 4, 4, 0, 0, 4, 2])
-    assert_array_equal(out_model.groupdq[0, :, 4, 4], [0, 4, 2, 2, 2, 2, 2])
+    assert_array_equal(out_model.groupdq[0, :, 4, 4], [0, 0, 2, 2, 2, 2, 2])  # cannot find jump with just one grp
 
 
 def test_flagging_of_CRs_across_slice_boundaries(setup_inputs):
