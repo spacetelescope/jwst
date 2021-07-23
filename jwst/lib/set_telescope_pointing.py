@@ -65,6 +65,9 @@ class Methods(Enum):
         return self.value
 
 
+# FGS id to aperture name
+FGSId2Aper = {1: 'FGS1_FULL_OSS', 2: 'FGS2_FULL_OSS'}
+
 # Definition of th J3 Ideal Y-Angle
 J3IDLYANGLE = -1.25  # Degrees
 
@@ -137,7 +140,7 @@ SIAF_VERTICIES = ['XIdlVert1', 'XIdlVert2', 'XIdlVert3', 'XIdlVert4',
                   'YIdlVert1', 'YIdlVert2', 'YIdlVert3', 'YIdlVert4']
 
 # Pointing container
-Pointing = namedtuple("Pointing", ["q", "j2fgs_matrix", "fsmcorr", "obstime", "gs_commanded"])
+Pointing = namedtuple('Pointing', ['q', 'j2fgs_matrix', 'fsmcorr', 'obstime', 'gs_commanded', 'fgsid'])
 Pointing.__new__.__defaults__ = ((None,) * 5)
 
 
@@ -966,10 +969,10 @@ def calc_transforms_tr202105(t_pars: TransformParameters):
 
         where
 
-        M_eci_to_v = 
+        M_eci_to_v =
             M_sifov_to_v   *  # SIFOV to V
             M_z_to_j       *  # ICS-frame to SIAF-frame
-            M_eci_to_sifov    # ECI to SIFOV 
+            M_eci_to_sifov    # ECI to SIFOV
 
         M_eci_to_sifov =
             M_z_to_x          *  # Rotate from Z out to X out
@@ -1035,16 +1038,62 @@ def calc_transforms_course_tr_202107(t_pars: TransformParameters):
 def calc_transforms_track_tr_202107(t_pars: TransformParameters):
     """Calculate transforms for TRACK/FINEGUIDE guiding as per TR presented in 2021-07
 
-    This implements equation 43 from Technical Report JWST-STScI-003222, SM-12.
-    From Section 4:
+    This implements equation 43 from Technical Report JWST-STScI-003222, SM-12. 2021-07
+    From Section 5:
 
-    In COARSE mode the measured attitude of the J-frame of the spacecraft is
-    determined by the star tracker and inertial gyroscopes attitude
-    measurements and is converted to an estimated guide star inertial attitude
-    using the equations in section 3.2. The V-frame attitude then is determined
-    using the equation below (equation 43).
+    Under guide star control the guide star position is measured relative to
+    the V-frame. The V3 position angle at the guide star is derived from the
+    measured J-frame attitude. Then using the corrected guide star catalog
+    position the data be used to determine the inertial V-frame attitude on the
+    sky.
+
+    Parameters
+    ----------
+    t_pars : TransformParameters
+        The transformation parameters. Parameters are updated during processing.
+
+    Returns
+    -------
+    transforms : Transforms
+        The list of coordinate matrix transformations
+
+    Notes
+    -----
+    The matrix transform pipeline to convert from ECI J2000 observatory
+    qauternion pointing to aperture ra/dec/roll information
+    is given by the following formula. Each term is a 3x3 matrix:
+
+        M_eci_to_siaf =       # Complete transformation
+            M_v_to_siaf    *  # V to SIAF
+            M_eci_to_v        # ECI to V
+
+        where
+
+            M_eci_to_v = Conversion of the attitude to a DCM
     """
-    raise NotImplementedError
+    logger.info('Calculating transforms using TR 202107 TRACK/FINEGUIDE Tracking method...')
+    t_pars.method = Methods.TRACK_TR_202107
+    t = Transforms(override=t_pars.override_transforms)  # Shorthand the resultant transforms
+
+    # Determine V3PA@GS
+    v3pags = calc_v3pags(t_pars)
+    t_pars.guide_star_wcs = WCSRef(t_pars.guide_star_wcs.ra, t_pars.guide_star_wcs.dec, v3pags)
+
+    # Transform the guide star location in ideal detector coordinates to the telescope/V23 frame.
+    gs_pos_v23 = trans_fgs2v(t_pars.pointing.fgsid, t_pars.pointing.gs_position)
+
+    # Calculate the M_eci2v matrix. This is the attitude matrix of the observatory
+    # relative to the guide star.
+    t.m_eci2v = calc_attitude_matrix(t_pars.guide_star_wcs, v3pags, gs_pos_v23)
+
+    # Calculate the SIAF transform matrix
+    t.m_v2siaf = calc_v2siaf_matrix(t_pars.siaf)
+
+    # Calculate the full ECI to SIAF transform matrix
+    t.m_eci2siaf = np.dot(t.m_v2siaf, t.m_eci2v)
+    logger.debug('m_eci2siaf: %s', t.m_eci2siaf)
+
+    return t
 
 
 def calc_transforms_ops_tr_202107(t_pars: TransformParameters):
@@ -1186,7 +1235,7 @@ def calc_transforms_original(t_pars: TransformParameters):
 
     # Calculate the FGS1 ICS to SI-FOV matrix
     # The SIAF is explicitly not used because this was not accounted for in
-    # the original specification. 
+    # the original specification.
     t.m_fgs12sifov = calc_fgs1_to_sifov_matrix(siaf_path=None, useafter=None)
 
     # Calculate SI FOV to V1 matrix
@@ -1392,7 +1441,7 @@ def calc_eci2fgs1_j3pags(t_pars: TransformParameters):
     logger.debug('guide_star_wcs: %s', t_pars.guide_star_wcs)
     logger.debug('gs_commanded: %s', t_pars.pointing.gs_commanded)
 
-    m_gs_commanded = calc_m_gs_commanded(t_pars.guide_star_wcs, J3IDLYANGLE, t_pars.pointing.gs_commanded)
+    m_gs_commanded = calc_attitude_matrix(t_pars.guide_star_wcs, J3IDLYANGLE, t_pars.pointing.gs_commanded)
 
     # Need to invert the martrix
     m_gs_commanded = np.linalg.inv(m_gs_commanded)
@@ -1476,7 +1525,7 @@ def calc_eci2fgs1_v3pags(t_pars: TransformParameters):
     logger.debug('guide_star_wcs: %s', t_pars.guide_star_wcs)
     logger.debug('gs_commanded: %s', t_pars.pointing.gs_commanded)
 
-    m_gs_commanded = calc_m_gs_commanded(t_pars.guide_star_wcs, fgs1_siaf.v3yangle, t_pars.pointing.gs_commanded)
+    m_gs_commanded = calc_attitude_matrix(t_pars.guide_star_wcs, fgs1_siaf.v3yangle, t_pars.pointing.gs_commanded)
 
     # Need to invert the martrix
     m_gs_commanded = np.linalg.inv(m_gs_commanded)
@@ -1489,23 +1538,25 @@ def calc_eci2fgs1_v3pags(t_pars: TransformParameters):
     return m_eci2fgs1
 
 
-def calc_m_gs_commanded(guide_star_wcs, yangle, gs_commanded):
-    """Calculate the guide star matrix
+def calc_attitude_matrix(wcs, yangle, position):
+    """Calculate the DCM attitude from known positions and roll angles.
+
+    This implements Appendix A from Technical Report JWST-STScI-003222, SM-12. 2021-07
 
     Parameters
     ----------
-    guide_star_wcs : WCSRef
+    wcs : WCSRef
         The guide star position
 
     yangle : float
         The IdlYangle of the point in question.
 
-    gs_commanded : numpy.array(2)
-        The commanded position from telemetry
+    position : numpy.array(2)
+        The position in Ideal frame.
 
     Returns
     -------
-    m_gs_commanded : np.array(3,3)
+    m : np.array(3,3)
         The transformation matrix
     """
 
@@ -1535,14 +1586,14 @@ def calc_m_gs_commanded(guide_star_wcs, yangle, gs_commanded):
         return r
 
     # Convert to radians
-    ra = guide_star_wcs.ra * D2R
-    dec = guide_star_wcs.dec * D2R
-    pa = guide_star_wcs.pa * D2R
+    ra = wcs.ra * D2R
+    dec = wcs.dec * D2R
+    pa = wcs.pa * D2R
     yangle_ra = yangle * D2R
-    gs_commanded_rads = gs_commanded * A2R
+    position_rads = position * A2R
 
     # Calculate
-    m = np.linalg.multi_dot([r3(ra), r2(-dec), r1(-(pa + yangle_ra)), r2(gs_commanded_rads[1]), r3(-gs_commanded_rads[0])])
+    m = np.linalg.multi_dot([r3(ra), r2(-dec), r1(-(pa + yangle_ra)), r2(position_rads[1]), r3(-position_rads[0])])
     return m
 
 
@@ -2298,10 +2349,11 @@ def get_mnemonics(obsstart, obsend, tolerance, engdb_url=None):
         'SA_ZRFGS2J31': None,
         'SA_ZRFGS2J32': None,
         'SA_ZRFGS2J33': None,
-        'SA_ZADUCMDX':  None,
-        'SA_ZADUCMDY':  None,
-        'SA_ZFGGSCMDX':  None,
-        'SA_ZFGGSCMDY':  None,
+        'SA_ZADUCMDX': None,
+        'SA_ZADUCMDY': None,
+        'SA_ZFGGSCMDX': None,
+        'SA_ZFGGSCMDY': None,
+        'SA_ZFGDETID': None
     }
 
     # Retrieve the mnemonics from the engineering database.
@@ -2405,8 +2457,11 @@ def all_pointings(mnemonics):
 
         ])
 
+        fgsid = mnemonics_at_time['SA_ZFGDETID'].value
+
         pointing = Pointing(q=q, obstime=obstime, j2fgs_matrix=j2fgs_matrix,
-                            fsmcorr=fsmcorr, gs_commanded=gs_commanded)
+                            fsmcorr=fsmcorr, gs_commanded=gs_commanded,
+                            fgsid=fgsid)
         pointings.append(pointing)
 
     if not len(pointings):
@@ -2526,6 +2581,7 @@ def pointing_from_average(mnemonics):
                 zero_mnemonics.append(mnemonic)
         else:
             mnemonic_averages[mnemonic] = np.average(values)
+
     # Raise exception if there are mnemonics with only zeros in the time range
     if len(zero_mnemonics):
         logger.warning("The following engineering mnemonics only contained zeros in the requested time interval:")
@@ -2565,8 +2621,12 @@ def pointing_from_average(mnemonics):
 
     ])
 
+    # For FGS ID, just take the first one.
+    fgsid = mnemonics['SA_ZFGDETID'][0].value
+
     pointing = Pointing(obstime=obstime, q=q, j2fgs_matrix=j2fgs_matrix,
-                        fsmcorr=fsmcorr, gs_commanded=gs_commanded)
+                        fsmcorr=fsmcorr, gs_commanded=gs_commanded,
+                        fgsid=fgsid)
     # That's all folks
     return pointing
 
@@ -2618,3 +2678,255 @@ def fill_mnemonics_chronologically(mnemonics, filled_only=True):
             filled[obstime] = copy(last_obstime)
 
     return filled
+
+
+def calc_estimated_gs_wcs(t_pars: TransformParameters):
+    """Calculate the estimated guide star RA/DEC/Y-angle
+
+    Parameters
+    ----------
+    t_pars : TransformParameters
+        The transformation parameters. Parameters are updated during processing.
+
+    Returns
+    -------
+    gs_wcs : WCSRef
+        Estimated RA, Dec, and Y-angle. All in degrees.
+
+    Notes
+    -----
+
+    This implements equation 15, 16, 17 from Technical Report JWST-STScI-003222, SM-12.
+    """
+
+    # Determine the ECI to Guide star transformation
+    m_eci2gs = calc_m_eci2gs(t_pars)
+
+    # Calculate the angles
+    ra = atan2(m_eci2gs[0, 1], m_eci2gs[0, 0])
+    dec = asin(m_eci2gs[0, 2])
+    yangle = atan2(m_eci2gs[1, 2], m_eci2gs[2, 2])
+
+    # Convert to degrees
+    ra *= R2D
+    dec *= R2D
+    yangle *= R2D
+
+    return WCSRef(ra, dec, yangle)
+
+
+def calc_v3pags(t_pars: TransformParameters):
+    """Calculate the V3 Position Angle at the Guide Star
+
+    This implements equation 18 from Technical Report JWST-STScI-003222, SM-12. 2021-07
+
+    Parameters
+    ----------
+    t_pars : TransformParameters
+        The transformation parameters. Parameters are updated during processing.
+
+    Returns
+    -------
+    v3pags : float
+        The V3 Position Angle at the Guide Star, in degrees
+    """
+
+    # Determine Guides Star estimated WCS information.
+    gs_wcs = calc_estimated_gs_wcs(t_pars)
+
+    # Retrieve the Ideal Y-angle for the desired FGS
+    fgs_siaf = get_wcs_values_from_siaf(FGSId2Aper[t_pars.pointing.fgsid],
+                                        useafter=t_pars.useafter,
+                                        prd_db_filepath=t_pars.siaf_path)
+
+    # Calculate V3PAGS
+    v3pags = gs_wcs.pa - fgs_siaf.v3yangle
+
+    return v3pags
+
+
+def calc_m_eci2gs(t_pars: TransformParameters):
+    """Calculate the M_eci2gs matrix as per TR presented in 2021-07
+
+    This implements equation 14 from Technical Report JWST-STScI-003222, SM-12.
+    From Section 3.2:
+
+    The equation is formed by inverting the equation in Section 5.9.1.2 of
+    SE-20 which converts from the attitude specified at the Guide Star into the
+    commanded spacecraft J-frame attitude. With the inversion, the commanded
+    J-frame attitude quaternion is replaced in this equation by the matrix
+    derived from the measured J-frame attitude quaternion.
+
+    Parameters
+    ----------
+    t_pars : TransformParameters
+        The transformation parameters. Parameters are updated during processing.
+
+    Returns
+    -------
+    transforms : Transforms
+        The calculated transforms. The target transform is
+        `transforms.m_eci2gs`. See the notes for other transforms
+        used and calculated.
+
+    Notes
+    -----
+    The transform train needed to calculate M_eci_to_gs is
+
+        M_eci_to_gs =
+            M_z_to_x               *
+            M_gsics_to_gsappics    *
+            M_fgsics_to_gsics      *
+            M_fgs1ics_to_M_fgsics  *
+            M_j_to_fgs1ics         *
+            M_eci_to_j
+
+        where
+
+            M_eci_to_gs = ECI to Guide Star Ideal Frame
+            M_gsics_to_gsappics = Velocity Aberration correction
+            M_fgsics_to_gsics = Convert from the FGS ICS frame to Guide Star ICS frame
+            M_fgs1ics_to_fgsics = Convert from the FGS1 ICS frame to the in-use FGS ICS frame
+            M_j_to_fgs1ics = Convert from J frame to FGS1 ICS frame
+            M_eci_to_j = ECI (quaternion) to J-frame
+    """
+
+    # Initial state of the transforms
+    t = Transforms(override=t_pars.override_transforms)
+
+    t.m_eci2j = calc_eci2j_matrix(t_pars.pointing.q)
+    t.m_j2fgs1 = calc_j2fgs1_matrix(t_pars.pointing.j2fgs_matrix, t_pars.j2fgs_transpose)
+    t.m_fgs12fgsx = calc_m_fgs12fgsx(t_pars.pointing.fgsid, t_pars.siaf_path)
+    t.m_fgsx2gs = calc_m_fgsx2gs(t_pars.pointing.gs_commanded)
+
+    t.m_eci2fgs1 = np.dot(t.m_j2fgs1, t.m_eci2j)
+    t.m_gs2gsapp = calc_gs2gsapp(t.m_eci2fgs1, t_pars.jwst_velocity)
+
+    # Put it all together
+    t.m_eci2gs = np.linalg.multi_dot(
+        [MZ2X, t.m_gs2gsapp, t.m_fgsx2gs, t.fgs12fgsx, t.m_eci2fgs1]
+    )
+
+    # That's all folks
+    return t
+
+
+def calc_m_fgs12fgsx(fgsid, siaf_path):
+    """Calculate the FGS1 to FGSx matrix
+
+    This implements equation 23 from Technical Report JWST-STScI-003222, SM-12, 2021-07
+    From Section 3.2.3:
+
+    A selected guide star being used, could be in FGS 1 or FGS 2. The JWST ACS
+    always uses the FGS 1 ICS frame to calculate the commanded spacecraft
+    J-frame attitude and is used in the attitude control loop. If the specified
+    guide star is in FGS 2, its position will be converted to the FGS 1 ICS
+    using an on board FGS2 to FGS1 k-constant matrix. Here we are creating the
+    FGS1 ICS to FGSj ICS DCM which converts from the FGS1 ICS frame to the FGSj
+    ICS frame using SIAF parameters for the FGSs.
+
+    Parameters
+    ----------
+    fgsid : int
+        The id of the FGS in actually in use. 1 or 2
+
+    siaf_path : str or file-like object or None
+        The path to the SIAF database.
+
+    Returns
+    -------
+    m_fgs12fgsx : numpy.array(3, 3)
+        The DCM to transform from FGS1 ICS frame to the desired FGS frame
+
+    """
+    # If the in-use FGS is FGS1, no transformation is necessary.
+    # Simply return the identity matrix.
+    if fgsid == 1:
+        return np.identity(3)
+
+    if fgsid != 2:
+        raise ValueError(f'fgsid == {fgsid} is invalid. Must be 1 or 2')
+
+    # FGS2 is in use. Calculate the transform from FGS1 to FGS2
+    fgs1_siaf = get_wcs_values_from_siaf(FGSId2Aper[1])
+    fgs2_siaf = get_wcs_values_from_siaf(FGSId2Aper[2])
+    m_fgs1 = calc_v2siaf_matrix(fgs1_siaf)
+    m_fgs2 = calc_v2siaf_matrix(fgs2_siaf)
+
+    m_fgs12fgsx = np.dot(m_fgs2, m_fgs1.transpose())
+
+    return m_fgs12fgsx
+
+
+def calc_m_fgsx2gs(gs_commanded):
+    """Calculate the FGS1 to commanded Guide Star frame
+
+    This implements equation 29 from Technical Report JWST-STScI-003222, SM-12, 2021-07
+
+    Parameters
+    ----------
+    gs_commanded : numpy.array(2)
+        The Guide Star commanded position, in arcseconds
+
+    Returns
+    -------
+    m_fgsx2gs : numpy.array(3, 3)
+        The DCM transform from FGSx (1 or 2) to Guide Star ICS frame
+    """
+    m_gs2fgsx = calc_m_gs2fgsx(gs_commanded)
+    return m_gs2fgsx.transpose()
+
+
+def calc_m_gs2fgsx(gs_commanded):
+    """Calculate the Guides Star frame to FGSx ICS frame
+
+    This implements equation 26 from Technical Report JWST-STScI-003222, SM-12, 2021-07
+
+    Parameters
+    ----------
+    gs_commanded : numpy.array(2)
+        The commanded position of the guide stars, in arcseconds
+
+    Returns
+    -------
+    m_gs2fgsx : numpy.array(3, 3)
+        The guide star to FGSx transformation
+    """
+    in_rads = gs_commanded * A2R
+    x, y = in_rads
+    m_y = np.array([
+        [1.0, 0.0, 0.0],
+        [0., cos(y), sin(y)],
+        [0., -sin(y), cos(y)]
+    ])
+    m_x = np.array([
+        [cos(-x), 0., -sin(-x)],
+        [0., 1., 0.],
+        [sin(-x), 0., cos(-x)]
+    ])
+
+    return np.dot(m_y, m_x)
+
+
+def trans_fgs2v(fgsid, ideal):
+    """Transform an Ideal coordinate to V coordinates
+
+    Parameters
+    ----------
+    fgsid : int
+        The FGS in use.
+
+    ideal : numpy.array(2)
+        The Ideal coordinates
+
+    Returns
+    -------
+    v : numpy.array(2)
+        The V-frame coordinates
+    """
+    ideal_rads = ideal * A2R
+    m_v2fgs = get_wcs_values_from_siaf(FGSId2Aper[fgsid])
+    v_rads = np.dot(m_v2fgs.transpose(), ideal_rads)
+    v = v_rads * R2A
+
+    return v
