@@ -27,6 +27,9 @@ datamodels
 
 - Update `DarkModel` to use uint32 for DQ array. [#6228]
 
+- Add new PATTTYPE values for MIRI Coronagraphic flats:
+  4QPM_LFLAT, 4QPM_PFLAT, LYOT_LFLAT, LYOT_PFLAT. [#6232]
+
 extract_1d
 ----------
 
@@ -50,6 +53,11 @@ ramp_fitting
 
 - Update ``RampFitStep`` to pass DQ flags as a parameter to the ``ramp_fit``
   algorithm code in stcal.  Bump version requirement for stcal.  [#6072]
+
+source_catalog
+--------------
+
+- Fixed issue with non-finite positions for aperture photometry. [#6206]
 
 wfss_contam
 -----------
