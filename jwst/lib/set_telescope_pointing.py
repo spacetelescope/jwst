@@ -140,7 +140,7 @@ SIAF_VERTICIES = ['XIdlVert1', 'XIdlVert2', 'XIdlVert3', 'XIdlVert4',
                   'YIdlVert1', 'YIdlVert2', 'YIdlVert3', 'YIdlVert4']
 
 # Pointing container
-Pointing = namedtuple('Pointing', ['q', 'j2fgs_matrix', 'fsmcorr', 'obstime', 'gs_commanded', 'fgsid'])
+Pointing = namedtuple('Pointing', ['q', 'j2fgs_matrix', 'fsmcorr', 'obstime', 'gs_commanded', 'fgsid', 'gs_position'])
 Pointing.__new__.__defaults__ = ((None,) * 5)
 
 
@@ -2353,6 +2353,8 @@ def get_mnemonics(obsstart, obsend, tolerance, engdb_url=None):
         'SA_ZADUCMDY': None,
         'SA_ZFGGSCMDX': None,
         'SA_ZFGGSCMDY': None,
+        'SA_ZFGGSPOSX': None,
+        'SA_ZFGGSPOSY': None,
         'SA_ZFGDETID': None
     }
 
@@ -2457,11 +2459,17 @@ def all_pointings(mnemonics):
 
         ])
 
+        gs_position = np.array([
+            mnemonics_at_time['SA_ZFGGSPOSX'].value,
+            mnemonics_at_time['SA_ZFGGSPOSY'].value
+
+        ])
+
         fgsid = mnemonics_at_time['SA_ZFGDETID'].value
 
         pointing = Pointing(q=q, obstime=obstime, j2fgs_matrix=j2fgs_matrix,
                             fsmcorr=fsmcorr, gs_commanded=gs_commanded,
-                            fgsid=fgsid)
+                            fgsid=fgsid, gs_position=gs_position)
         pointings.append(pointing)
 
     if not len(pointings):
@@ -2621,12 +2629,17 @@ def pointing_from_average(mnemonics):
 
     ])
 
+    gs_position = np.array([
+        mnemonic_averages['SA_ZFGGSPOSX'],
+        mnemonic_averages['SA_ZFGGSPOSY']
+    ])
+
     # For FGS ID, just take the first one.
     fgsid = mnemonics['SA_ZFGDETID'][0].value
 
     pointing = Pointing(obstime=obstime, q=q, j2fgs_matrix=j2fgs_matrix,
                         fsmcorr=fsmcorr, gs_commanded=gs_commanded,
-                        fgsid=fgsid)
+                        fgsid=fgsid, gs_position=gs_position)
     # That's all folks
     return pointing
 
