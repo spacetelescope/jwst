@@ -3985,6 +3985,11 @@ tweakreg
 wfs_combine
 -----------
 
+-- add option to flip the dither locations so that images with different
+   filters will have the same pixel locations [#2051]
+-- Fixed the refine option to correctly use the cross correlation to align
+   the images if the WCS is off [#2051]
+
 white_light
 -----------
 

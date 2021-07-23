@@ -6,11 +6,19 @@ The input images are aligned with one another and then combined using a pixel
 replacement technique, described in detail below. The images are aligned to only the nearest
 integer pixel in each direction. No sub-pixel resampling is done.
 
+Due to the WFS dither patterns osscilating between two locations, the first image of the pair
+will oscillate between the two dither locations. Because the WSS software works in pixel space,
+we need to change which input image is "image 1" to get star to have the same pixel location in
+the output image. When the input parameter "flip_dithers" is set to True (the default)
+and the x offset between image 1 and image 2 is negative, the two images will be switched before
+any processing is performed.
+
 Algorithm
 ---------
-Creation of the output combined image is a three-step process: first the offsets between the images
-are computed, the offsets are used to shift image 2 to be in alignment with image 1, and finally
-the aligned data from the two images are combined.
+Creation of the output combined image is a three-step process: first the offsets between the
+images are computed using the World Coordinate System, then the offsets are used to shift
+image 2 to be in alignment with image 1, and finally the aligned data from the two images
+are combined.
 
 Computing Offsets
 ^^^^^^^^^^^^^^^^^
@@ -27,10 +35,12 @@ refined using a cross-correlation technique. The steps in the refinement are as 
    separately in the x and y axes, of all pixel values that are above 50% of the peak signal
    in the smoothed image.
 3. Create subarrays from image 1 and 2 centered on the computed source centroid.
-4. For a range of +/- 2 pixels on either side of the nominal offsets computed from the WCS info,
-   compute the cross-correlation between the two images.
-5. Use the pixel offsets corresponding to the cross-correlation minimum as delta offsets to add
-   to the nominal offsets computed from the WCS info.
+4. Create the cross-correlation image of the two input images.
+5. Find the peak intensity of the cross-correlation image and use this to determine the
+    refined offset.
+6. Use the find the difference between the cross-correlation pixel offsets and the WCS offsets.
+    Add these deltas to the nominal offsets computed from the WCS info to form the refined offsets.
+
 
 Creating the Combined Image
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
