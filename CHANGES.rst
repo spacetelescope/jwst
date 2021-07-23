@@ -66,6 +66,8 @@ wfss_contam
 
 - Added step documentation [#6210]
 
+- Fixed handling of filter/pupil names for NIRISS WFSS mode [#6233]
+
 1.2.3 (2021-06-08)
 ==================
 

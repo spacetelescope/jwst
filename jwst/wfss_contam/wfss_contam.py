@@ -66,6 +66,7 @@ def contam_corr(input_model, waverange, photom, max_cores):
     # Get the direct image from which the segmentation map was constructed
     direct_file = input_model.meta.direct_image
     image_names = [direct_file]
+    log.debug(f"Direct image names={image_names}")
 
     # Get the grism WCS from the input model
     grism_wcs = input_model.slits[0].meta.wcs
@@ -76,24 +77,36 @@ def contam_corr(input_model, waverange, photom, max_cores):
     spec_orders = spec_orders[spec_orders != 0]  # ignore any order 0 entries
     log.debug(f"Spectral orders defined = {spec_orders}")
 
+    # Get the FILTER and PUPIL wheel positions, for use later
+    filter_kwd = input_model.meta.instrument.filter
+    pupil_kwd = input_model.meta.instrument.pupil
+
+    # NOTE: The NIRCam WFSS mode uses filters that are in the FILTER wheel
+    # with gratings in the PUPIL wheel. NIRISS WFSS mode, however, is just
+    # the opposite. It has gratings in the FILTER wheel and filters in the
+    # PUPIL wheel. So when processing NIRISS grism exposures the name of
+    # filter needs to come from the PUPIL keyword value.
+    if input_model.meta.instrument.name == 'NIRISS':
+        filter_name = pupil_kwd
+    else:
+        filter_name = filter_kwd
+
     # Load lists of wavelength ranges and flux cal info for all orders
     wmin = {}
     wmax = {}
     sens_waves = {}
     sens_response = {}
-    filter = input_model.meta.instrument.filter
-    pupil = input_model.meta.instrument.pupil
     for order in spec_orders:
-        wavelength_range = waverange.get_wfss_wavelength_range(filter, [order])
+        wavelength_range = waverange.get_wfss_wavelength_range(filter_name, [order])
         wmin[order] = wavelength_range[order][0]
         wmax[order] = wavelength_range[order][1]
         # Load the sensitivity (inverse flux cal) data for this mode and order
-        sens_waves[order], sens_response[order] = get_photom_data(photom, filter, pupil, order)
+        sens_waves[order], sens_response[order] = get_photom_data(photom, filter_kwd, pupil_kwd, order)
     log.debug(f"wmin={wmin}, wmax={wmax}")
 
     # Initialize the simulated image object
     simul_all = None
-    obs = Observation(image_names, seg_model, grism_wcs, filter,
+    obs = Observation(image_names, seg_model, grism_wcs, filter_name,
                       boundaries=[0, 2047, 0, 2047], max_cpu=ncpus)
 
     # Create simulated grism image for each order and sum them up
