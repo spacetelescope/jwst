@@ -1081,9 +1081,13 @@ def calc_transforms_track_tr_202107(t_pars: TransformParameters):
     v3pags = calc_v3pags(t_pars)
     t_pars.guide_star_wcs = WCSRef(t_pars.guide_star_wcs.ra, t_pars.guide_star_wcs.dec, v3pags)
 
+    # Transform the guide star location in ideal detector coordinates to the telescope/V23 frame.
+    # gs_pos_v23 = trans_fgs2v(t_pars.pointing.fgsid, t_pars.pointing.gs_position)
+    gs_pos_v23 = t_pars.pointing.gs_position
+
     # Calculate the M_eci2v matrix. This is the attitude matrix of the observatory
     # relative to the guide star.
-    t.m_eci2v = calc_attitude_matrix(t_pars.guide_star_wcs, v3pags, t_pars.pointing.gs_position)
+    t.m_eci2v = calc_attitude_matrix(t_pars.guide_star_wcs, v3pags, gs_pos_v23)
 
     # Calculate the SIAF transform matrix
     t.m_v2siaf = calc_v2siaf_matrix(t_pars.siaf)
@@ -2051,24 +2055,24 @@ def vector_to_angle(v):
 
     Returns
     -------
-    ra, dec : float, float
+    alpha, delta : float, float
         The spherical angles, in radians
     """
-    ra = np.arctan2(v[1], v[0])
-    dec = np.arcsin(v[2])
-    if ra < 0.:
-        ra += 2. * np.pi
-    return(ra, dec)
+    alpha = np.arctan2(v[1], v[0])
+    delta = np.arcsin(v[2])
+    if alpha < 0.:
+        alpha += 2. * np.pi
+    return(alpha, delta)
 
 
-def angle_to_vector(ra, dec):
+def angle_to_vector(alpha, delta):
     """Convert spherical angles to unit vector
 
     This implements equation 7 from Technical Report JWST-STScI-003222, SM-12. 2021-07
 
     Parameters
     ----------
-    ra, dec : float
+    alpha, delta : float
         Spherical angles in radians
 
     Returns
@@ -2076,9 +2080,9 @@ def angle_to_vector(ra, dec):
     v : [float, float, float]
         Unit vector
     """
-    v0 = sin(ra) * cos(dec)
-    v1 = sin(ra) * sin(dec)
-    v2 = cos(dec)
+    v0 = sin(alpha) * cos(delta)
+    v1 = sin(alpha) * sin(delta)
+    v2 = cos(delta)
 
     return [v0, v1, v2]
 
@@ -2942,20 +2946,19 @@ def trans_fgs2v(fgsid, ideal):
         The FGS in use.
 
     ideal : numpy.array(2)
-        The Ideal coordinates
+        The Ideal coordinates in arcseconds
 
     Returns
     -------
     v : numpy.array(2)
-        The V-frame coordinates
+        The V-frame coordinates in arcseconds
     """
     ideal_rads = ideal * A2R
-    ideal_full = np.zeros(3)
-    ideal_full[:2] = ideal_rads
+    ideal_vec = angle_to_vector(ideal_rads[0], ideal_rads[1])
     siaf = get_wcs_values_from_siaf(FGSId2Aper[fgsid])
     m_v2fgs = calc_v2siaf_matrix(siaf)
-    breakpoint()
-    v_rads = np.dot(m_v2fgs.transpose(), ideal_full)
+    v_vec = np.dot(m_v2fgs.transpose(), ideal_vec)
+    v_rads = np.array(vector_to_angle(v_vec))
     v = v_rads * R2A
 
-    return v[:2]
+    return v
