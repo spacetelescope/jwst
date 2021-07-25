@@ -147,17 +147,19 @@ Pointing.__new__.__defaults__ = ((None,) * 5)
 # Transforms
 @dataclasses.dataclass
 class Transforms:
-    m_eci2j: np.array = None            # ECI to J-Frame
-    m_j2fgs1: np.array = None           # J-Frame to FGS1
     m_eci2fgs1: np.array = None         # ECI to FGS1
-    m_gs2gsapp: np.array = None         # Velocity abberation
-    m_sifov_fsm_delta: np.array = None  # FSM correction
-    m_fgs12sifov: np.array = None       # FGS1 to SIFOV
-    m_eci2sifov: np.array = None        # ECI to SIFOV
-    m_sifov2v: np.array = None          # SIFOV to V1
-    m_eci2v: np.array = None            # ECI to V
-    m_v2siaf: np.array = None           # V to SIAF
+    m_eci2gs: np.array = None           # ECI to Guide Star
+    m_eci2j: np.array = None            # ECI to J-Frame
     m_eci2siaf: np.array = None         # ECI to SIAF
+    m_eci2sifov: np.array = None        # ECI to SIFOV
+    m_eci2v: np.array = None            # ECI to V
+    m_fgs12fgsx: np.array = None        # FGS1 to FGSx transformation
+    m_fgs12sifov: np.array = None       # FGS1 to SIFOV
+    m_gs2gsapp: np.array = None         # Velocity abberation
+    m_j2fgs1: np.array = None           # J-Frame to FGS1
+    m_sifov_fsm_delta: np.array = None  # FSM correction
+    m_sifov2v: np.array = None          # SIFOV to V1
+    m_v2siaf: np.array = None           # V to SIAF
     override: object = None             # Override values. Either another Transforms or dict-like object
     """Transformation matrices"""
 
@@ -1079,12 +1081,9 @@ def calc_transforms_track_tr_202107(t_pars: TransformParameters):
     v3pags = calc_v3pags(t_pars)
     t_pars.guide_star_wcs = WCSRef(t_pars.guide_star_wcs.ra, t_pars.guide_star_wcs.dec, v3pags)
 
-    # Transform the guide star location in ideal detector coordinates to the telescope/V23 frame.
-    gs_pos_v23 = trans_fgs2v(t_pars.pointing.fgsid, t_pars.pointing.gs_position)
-
     # Calculate the M_eci2v matrix. This is the attitude matrix of the observatory
     # relative to the guide star.
-    t.m_eci2v = calc_attitude_matrix(t_pars.guide_star_wcs, v3pags, gs_pos_v23)
+    t.m_eci2v = calc_attitude_matrix(t_pars.guide_star_wcs, v3pags, t_pars.pointing.gs_position)
 
     # Calculate the SIAF transform matrix
     t.m_v2siaf = calc_v2siaf_matrix(t_pars.siaf)
@@ -1425,7 +1424,7 @@ def calc_eci2fgs1_j3pags(t_pars: TransformParameters):
     """
     # Calculate J3 position.
     m_eci2j = calc_eci2j_matrix(t_pars.pointing.q)
-    j3_ra, j3_dec = vector_to_ra_dec(m_eci2j[2])
+    j3_ra, j3_dec = vector_to_angle(m_eci2j[2])
     j3wcs = WCSRef(j3_ra, j3_dec, None)
     logger.debug('j3wcs: %s', j3wcs)
 
@@ -1648,11 +1647,11 @@ def calc_v1_wcs(m_eci2v):
         The V1 wcs pointing
     """
     # V1 RA/Dec is the first row of the transform
-    v1_ra, v1_dec = vector_to_ra_dec(m_eci2v[0])
+    v1_ra, v1_dec = vector_to_angle(m_eci2v[0])
     vinfo = WCSRef(v1_ra, v1_dec, None)
 
     # V3 is the third row of the transformation
-    v3_ra, v3_dec = vector_to_ra_dec(m_eci2v[2])
+    v3_ra, v3_dec = vector_to_angle(m_eci2v[2])
     v3info = WCSRef(v3_ra, v3_dec, None)
 
     # Calculate the V3 position angle
@@ -1695,14 +1694,14 @@ def calc_aperture_wcs(m_eci2siaf):
          np.sqrt(1. - siaf_x * siaf_x - siaf_y * siaf_y)]
     )
     msky = np.dot(m_eci2siaf.transpose(), refpos)
-    wcs_ra, wcs_dec = vector_to_ra_dec(msky)
+    wcs_ra, wcs_dec = vector_to_angle(msky)
 
     # Calculate the position angle
     vysiaf = np.array([0., 1., 0.])
     myeci = np.dot(m_eci2siaf.transpose(), vysiaf)
 
     # The Y axis of the aperture is given by
-    vy_ra, vy_dec = vector_to_ra_dec(myeci)
+    vy_ra, vy_dec = vector_to_angle(myeci)
 
     # The VyPA @ xref,yref is given by
     y = cos(vy_dec) * sin(vy_ra - wcs_ra)
@@ -1910,15 +1909,23 @@ def calc_sifov2v_matrix():
 def calc_v2siaf_matrix(siaf):
     """Calculate the SIAF transformation matrix
 
+    This implements equation 10 from Technical Report JWST-STScI-003222, SM-12. 2021-07
+    From Section 3.1:
+
+    The V to SIAF parameters V3IdlYang, V2Ref, V3Ref, and VIdlParity are
+    defined and their usage explained in SIAF2017. The parameter values for
+    each aperture are specified in the Project Reference Database (PRD).
+
     Parameters
     ----------
     siaf : SIAF
-        The SIAF parameters
+        The SIAF parameters, where angles are in arcseconds/degrees
 
     Returns
     -------
     transform : np.array((3, 3))
         The V1 to SIAF transformation matrix
+
     """
     v2, v3, v3idlyang, vparity = (siaf.v2_ref, siaf.v3_ref,
                                   siaf.v3yangle, siaf.vparity)
@@ -2033,8 +2040,10 @@ def get_pointing(obsstart, obsend, engdb_url=None,
     return reduced
 
 
-def vector_to_ra_dec(v):
+def vector_to_angle(v):
     """Returns tuple of spherical angles from unit direction Vector
+
+    This implements equations 8 & 9 from Technical Report JWST-STScI-003222, SM-12. 2021-07
 
     Parameters
     ----------
@@ -2052,8 +2061,10 @@ def vector_to_ra_dec(v):
     return(ra, dec)
 
 
-def ra_dec_to_vector(ra, dec):
+def angle_to_vector(ra, dec):
     """Convert spherical angles to unit vector
+
+    This implements equation 7 from Technical Report JWST-STScI-003222, SM-12. 2021-07
 
     Parameters
     ----------
@@ -2713,7 +2724,8 @@ def calc_estimated_gs_wcs(t_pars: TransformParameters):
     """
 
     # Determine the ECI to Guide star transformation
-    m_eci2gs = calc_m_eci2gs(t_pars)
+    t = calc_m_eci2gs(t_pars)
+    m_eci2gs = t.m_eci2gs
 
     # Calculate the angles
     ra = atan2(m_eci2gs[0, 1], m_eci2gs[0, 0])
@@ -2817,7 +2829,7 @@ def calc_m_eci2gs(t_pars: TransformParameters):
 
     # Put it all together
     t.m_eci2gs = np.linalg.multi_dot(
-        [MZ2X, t.m_gs2gsapp, t.m_fgsx2gs, t.fgs12fgsx, t.m_eci2fgs1]
+        [MZ2X, t.m_gs2gsapp, t.m_fgsx2gs, t.m_fgs12fgsx, t.m_eci2fgs1]
     )
 
     # That's all folks
@@ -2938,8 +2950,12 @@ def trans_fgs2v(fgsid, ideal):
         The V-frame coordinates
     """
     ideal_rads = ideal * A2R
-    m_v2fgs = get_wcs_values_from_siaf(FGSId2Aper[fgsid])
-    v_rads = np.dot(m_v2fgs.transpose(), ideal_rads)
+    ideal_full = np.zeros(3)
+    ideal_full[:2] = ideal_rads
+    siaf = get_wcs_values_from_siaf(FGSId2Aper[fgsid])
+    m_v2fgs = calc_v2siaf_matrix(siaf)
+    breakpoint()
+    v_rads = np.dot(m_v2fgs.transpose(), ideal_full)
     v = v_rads * R2A
 
-    return v
+    return v[:2]

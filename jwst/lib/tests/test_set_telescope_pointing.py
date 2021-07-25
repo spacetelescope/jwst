@@ -96,7 +96,8 @@ def make_t_pars():
                                3.30458575e-06, 9.99994254e-01, -3.38988734e-03]),
         fsmcorr=np.array([0.00584114, -0.00432878]),
         obstime=Time(1611628160.325, format='unix'),
-        gs_commanded=np.array([-22.40031242,  -8.17869377])
+        gs_commanded=np.array([-22.40031242, -8.17869377]),
+        gs_position=np.array([-22.4002638, -8.1786461])
     )
     t_pars.siaf = stp.SIAF(v2_ref=120.525464, v3_ref=-527.543132, v3yangle=-0.5627898, vparity=-1,
                            crpix1=1024.5, crpix2=1024.5, cdelt1=0.03113928, cdelt2=0.03132232,
