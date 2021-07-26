@@ -97,7 +97,8 @@ def make_t_pars():
         fsmcorr=np.array([0.00584114, -0.00432878]),
         obstime=Time(1611628160.325, format='unix'),
         gs_commanded=np.array([-22.40031242, -8.17869377]),
-        gs_position=np.array([-22.4002638, -8.1786461])
+        gs_position=np.array([-22.4002638, -8.1786461]),
+        fgsid=1,
     )
     t_pars.siaf = stp.SIAF(v2_ref=120.525464, v3_ref=-527.543132, v3yangle=-0.5627898, vparity=-1,
                            crpix1=1024.5, crpix2=1024.5, cdelt1=0.03113928, cdelt2=0.03132232,
@@ -138,7 +139,7 @@ def test_method_string(method):
 def test_override_calc_wcs():
     """Test matrix override in the full calculation"""
     t_pars = make_t_pars()
-    t_pars.method = stp.Methods.FULLVA
+    t_pars.method = stp.Methods.TR_202105
     wcsinfo, vinfo, _ = stp.calc_wcs(t_pars)
 
     override = stp.Transforms(m_eci2j=np.array([[0.80583682, 0.51339893, 0.29503999],
@@ -312,7 +313,9 @@ def test_pointing_averaging(eng_db_jw703):
      j2fgs_matrix,
      fsmcorr,
      obstime,
-     gs_commanded) = stp.get_pointing(
+     gs_commanded,
+     fgsid,
+     gs_position) = stp.get_pointing(
          Time('2019-06-03T17:25:40', format='isot').mjd,
          Time('2019-06-03T17:25:56', format='isot').mjd,
     )
@@ -333,7 +336,9 @@ def test_get_pointing(eng_db_ngas):
      j2fgs_matrix,
      fsmcorr,
      obstime,
-     gs_commanded) = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd)
+     gs_commanded,
+     fgsid,
+     gs_position) = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd)
     assert np.isclose(q, Q_EXPECTED).all()
     assert np.isclose(j2fgs_matrix, J2FGS_MATRIX_EXPECTED).all()
     assert np.isclose(fsmcorr, FSMCORR_EXPECTED).all()
@@ -345,7 +350,9 @@ def test_logging(eng_db_ngas, caplog):
      j2fgs_matrix,
      fsmcorr,
      obstime,
-     gs_commanded) = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd)
+     gs_commanded,
+     fgsid,
+     gs_position) = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd)
     assert 'Determining pointing between observations times' in caplog.text
     assert 'Telemetry search tolerance' in caplog.text
     assert 'Reduction function' in caplog.text
@@ -367,13 +374,17 @@ def test_get_pointing_with_zeros(eng_db_ngas):
      j2fgs_matrix,
      fsmcorr,
      obstime,
-     gs_commanded) = stp.get_pointing(ZEROTIME_START.mjd, ENDTIME.mjd, reduce_func=stp.first_pointing)
+     gs_commanded,
+     fgsid,
+     gs_position) = stp.get_pointing(ZEROTIME_START.mjd, ENDTIME.mjd, reduce_func=stp.first_pointing)
     assert j2fgs_matrix.any()
     (q_desired,
      j2fgs_matrix_desired,
      fsmcorr_desired,
      obstime,
-     gs_commanded) = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd)
+     gs_commanded,
+     fgsid,
+     gs_position) = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd)
     assert np.array_equal(q, q_desired)
     assert np.array_equal(j2fgs_matrix, j2fgs_matrix_desired)
     assert np.array_equal(fsmcorr, fsmcorr_desired)
@@ -451,7 +462,7 @@ def test_add_wcs_method_gscmd(eng_db_ngas, data_file, tmp_path):
     """Test using the database and the original, pre-JSOCINT-555 algorithms"""
     expected_name = 'add_wcs_method_gscmd.fits'
     # Calculate
-    stp.add_wcs(data_file, siaf_path=siaf_db, method=stp.Methods.GSCMD)
+    stp.add_wcs(data_file, siaf_path=siaf_db, method=stp.Methods.GSCMD_J3PAGS)
 
     # Tests
     with datamodels.Level1bModel(data_file) as model:
@@ -477,7 +488,7 @@ def test_add_wcs_method_full_nosiafdb(eng_db_ngas, data_file, tmp_path):
     expected_name = 'add_wcs_method_full_nosiafdb.fits'
 
     # Calculate
-    stp.add_wcs(data_file, method=stp.Methods.FULL)
+    stp.add_wcs(data_file, method=stp.Methods.TR_202105)
 
     # Tests
     with datamodels.Level1bModel(data_file) as model:
@@ -502,7 +513,7 @@ def test_add_wcs_method_full_siafdb(eng_db_ngas, data_file, tmp_path):
     expected_name = 'add_wcs_method_full_siafdb.fits'
 
     # Calculate
-    stp.add_wcs(data_file, siaf_path=siaf_db, method=stp.Methods.FULL)
+    stp.add_wcs(data_file, siaf_path=siaf_db, method=stp.Methods.TR_202105)
 
     # Test
     with datamodels.Level1bModel(data_file) as model:

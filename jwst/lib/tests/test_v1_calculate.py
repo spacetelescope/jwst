@@ -17,8 +17,10 @@ from jwst.lib.tests.engdb_mock import EngDB_Mocker
 DATA_PATH = Path(__file__).parent / 'data'
 
 # Engineering parameters
-GOOD_STARTTIME = '2016-01-18'
-GOOD_ENDTIME = '2016-01-19'
+# Time range corresponds to simulation producing exposure jw00624028002_02101_00001_nrca1_uncal.fits
+# Midpoint is about 2021-01-26T02:32:26.205
+GOOD_STARTTIME = Time('59240.10349754328', format='mjd')
+GOOD_ENDTIME = Time('59240.1082197338', format='mjd')
 
 
 @pytest.fixture
@@ -31,8 +33,8 @@ def engdb():
 def test_from_models(engdb, tmp_path):
     """Test v1_calculate_from_models for basic running"""
     model = ImageModel()
-    model.meta.exposure.start_time = Time(GOOD_STARTTIME).mjd
-    model.meta.exposure.end_time = Time(GOOD_ENDTIME).mjd
+    model.meta.exposure.start_time = GOOD_STARTTIME.mjd
+    model.meta.exposure.end_time = GOOD_ENDTIME.mjd
 
     v1_table = v1c.v1_calculate_from_models([model])
     v1_formatted = v1c.simplify_table(v1_table)
@@ -47,7 +49,7 @@ def test_from_models(engdb, tmp_path):
 def test_over_time(engdb, tmp_path):
     """Test v1_calculate_over_time for basic running"""
     v1_table = v1c.v1_calculate_over_time(
-        Time(GOOD_STARTTIME).mjd, Time(GOOD_ENDTIME).mjd
+        GOOD_STARTTIME.mjd, GOOD_ENDTIME.mjd
     )
     v1_formatted = v1c.simplify_table(v1_table)
 

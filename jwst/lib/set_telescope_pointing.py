@@ -2653,7 +2653,8 @@ def pointing_from_average(mnemonics):
             for eng_param in mnemonics[mnemonic]
         ]
         # Weed out mnemonic entries that are zero, though some are OK to be zero.
-        if mnemonic not in ['SA_ZADUCMDX', 'SA_ZADUCMDY', 'SA_ZFGGSCMDX', 'SA_ZFGGSCMDY']:
+        if mnemonic not in ['SA_ZADUCMDX', 'SA_ZADUCMDY', 'SA_ZFGGSCMDX', 'SA_ZFGGSCMDY',
+                            'SA_ZFGGSPOSX', 'SA_ZFGGSPOSY']:
             good_mnemonic = []
             for this_value in values:
                 if this_value != 0.0:
