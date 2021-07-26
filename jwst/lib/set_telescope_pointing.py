@@ -8,7 +8,7 @@ import dataclasses
 from datetime import date
 from enum import Enum
 import logging
-from math import (asin, atan2, cos, sin)
+from math import (asin, atan2, cos, sin, sqrt)
 import os.path
 import sqlite3
 import typing
@@ -1082,8 +1082,7 @@ def calc_transforms_track_tr_202107(t_pars: TransformParameters):
     t_pars.guide_star_wcs = WCSRef(t_pars.guide_star_wcs.ra, t_pars.guide_star_wcs.dec, v3pags)
 
     # Transform the guide star location in ideal detector coordinates to the telescope/V23 frame.
-    # gs_pos_v23 = trans_fgs2v(t_pars.pointing.fgsid, t_pars.pointing.gs_position)
-    gs_pos_v23 = t_pars.pointing.gs_position
+    gs_pos_v23 = trans_fgs2v(t_pars.pointing.fgsid, t_pars.pointing.gs_position)
 
     # Calculate the M_eci2v matrix. This is the attitude matrix of the observatory
     # relative to the guide star.
@@ -2954,7 +2953,7 @@ def trans_fgs2v(fgsid, ideal):
         The V-frame coordinates in arcseconds
     """
     ideal_rads = ideal * A2R
-    ideal_vec = angle_to_vector(ideal_rads[0], ideal_rads[1])
+    ideal_vec = cart_to_vector(ideal_rads)
     siaf = get_wcs_values_from_siaf(FGSId2Aper[fgsid])
     m_v2fgs = calc_v2siaf_matrix(siaf)
     v_vec = np.dot(m_v2fgs.transpose(), ideal_vec)
@@ -2962,3 +2961,27 @@ def trans_fgs2v(fgsid, ideal):
     v = v_rads * R2A
 
     return v
+
+
+def cart_to_vector(coord):
+    """Convert Cartesian to a unit vector
+
+    This implements equation 4 from Technical Report JWST-STScI-003222, SM-12. 2021-07
+
+    Parameters
+    ----------
+    coord : numpy.array(2)
+        The Cartesian coordinate.
+
+    Returns
+    -------
+    vector : numpy.array(3)
+        The vector version
+    """
+    vector = np.array([
+        coord[0],
+        coord[1],
+        sqrt(1 - coord[0]**2 - coord[1]**2)
+    ])
+
+    return vector
