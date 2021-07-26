@@ -994,11 +994,9 @@ def calc_transforms_tr202105(t_pars: TransformParameters):
 
     # Determine the ECI to J-frame matrix
     t.m_eci2j = calc_eci2j_matrix(t_pars.pointing.q)
-    logger.debug('m_eci2j: %s', t.m_eci2j)
 
     # Calculate the J-frame to FGS1 ICS matrix
     t.m_j2fgs1 = calc_j2fgs1_matrix(t_pars.pointing.j2fgs_matrix, transpose=t_pars.j2fgs_transpose)
-    logger.debug('m_j2fgs1: %s', t.m_j2fgs1)
 
     # Calculate the FGS1 ICS to SI-FOV matrix
     t.m_fgs12sifov = calc_fgs1_to_sifov_matrix(t_pars.siaf_path, t_pars.useafter)
@@ -1022,12 +1020,15 @@ def calc_transforms_tr202105(t_pars: TransformParameters):
     t.m_eci2sifov = np.linalg.multi_dot([
         MZ2X, t.m_sifov_fsm_delta, t.m_fgs12sifov, t.m_j2fgs1, t.m_eci2j
     ])
+    logger.debug('m_eci2sifov: %s', t.m_eci2sifov)
 
     # Calculate the complete transform to the V1 reference
     t.m_eci2v = np.dot(t.m_sifov2v, t.m_eci2sifov)
+    logger.debug('m_eci2v: %s', t.m_eci2v)
 
     # Calculate the full ECI to SIAF transform matrix
     t.m_eci2siaf = np.dot(t.m_v2siaf, t.m_eci2v)
+    logger.debug('m_eci2siaf: %s', t.m_eci2siaf)
 
     return t
 
@@ -1094,6 +1095,7 @@ def calc_transforms_course_tr_202107(t_pars: TransformParameters):
 
     # Calculate full transformation
     t.m_eci2siaf = np.dot(t.m_v2siaf, t.m_eci2v)
+    logger.debug('m_eci2siaf: %s', t.m_eci2siaf)
 
     return t
 
@@ -1204,18 +1206,15 @@ def calc_transforms_velocity_abberation_tr202105(t_pars: TransformParameters):
 
     # Determine the ECI to J-frame matrix
     t.m_eci2j = calc_eci2j_matrix(t_pars.pointing.q)
-    logger.debug('m_eci2j: %s', t.m_eci2j)
 
     # Calculate the J-frame to FGS1 ICS matrix
     t.m_j2fgs1 = calc_j2fgs1_matrix(t_pars.pointing.j2fgs_matrix, transpose=t_pars.j2fgs_transpose)
-    logger.debug('m_j2fgs1: %s', t.m_j2fgs1)
 
     t.m_eci2fgs1 = np.dot(t.m_j2fgs1, t.m_eci2j)
     logger.debug('m_eci2fgs1: %s', t.m_eci2fgs1)
 
     # Calculate Velocity Aberration corrections
     t.m_gs2gsapp = calc_gs2gsapp(t.m_eci2fgs1, t_pars.jwst_velocity)
-    logger.debug('m_gs2gsapp: %s', t.m_gs2gsapp)
 
     # Calculate the FSM corrections to the SI_FOV frame
     t.m_sifov_fsm_delta = calc_sifov_fsm_delta_matrix(
@@ -1232,15 +1231,18 @@ def calc_transforms_velocity_abberation_tr202105(t_pars: TransformParameters):
     t.m_eci2sifov = np.linalg.multi_dot(
         [MZ2X, t.m_sifov_fsm_delta, t.m_fgs12sifov, t.m_gs2gsapp, t.m_j2fgs1, t.m_eci2j]
     )
+    logger.debug('m_eci2sifov: %s', t.m_eci2sifov)
 
     # Calculate the complete transform to the V1 reference
     t.m_eci2v = np.dot(t.m_sifov2v, t.m_eci2sifov)
+    logger.debug('m_eci2v: %s', t.m_eci2v)
 
     # Calculate the SIAF transform matrix
     t.m_v2siaf = calc_v2siaf_matrix(t_pars.siaf)
 
     # Calculate the full ECI to SIAF transform matrix
     t.m_eci2siaf = np.dot(t.m_v2siaf, t.m_eci2v)
+    logger.debug('m_eci2siaf: %s', t.m_eci2siaf)
 
     return t
 
@@ -1284,12 +1286,9 @@ def calc_transforms_original(t_pars: TransformParameters):
 
     # Determine the ECI to J-frame matrix
     t.m_eci2j = calc_eci2j_matrix(t_pars.pointing.q)
-    logger.debug('m_eci2j: %s', t.m_eci2j)
 
     # Calculate the J-frame to FGS1 ICS matrix
     t.m_j2fgs1 = calc_j2fgs1_matrix(t_pars.pointing.j2fgs_matrix, transpose=t_pars.j2fgs_transpose)
-    logger.debug('m_j2fgs1: %s', t.m_j2fgs1)
-    logger.debug('m_eci2fgs1: %s', np.dot(t.m_j2fgs1, t.m_eci2j))
 
     # Calculate the FSM corrections to the SI_FOV frame
     t.m_sifov_fsm_delta = calc_sifov_fsm_delta_matrix(
@@ -1308,15 +1307,18 @@ def calc_transforms_original(t_pars: TransformParameters):
     t.m_eci2sifov = np.linalg.multi_dot(
         [t.m_sifov_fsm_delta, MZ2X, t.m_fgs12sifov, t.m_j2fgs1, t.m_eci2j]
     )
+    logger.debug('m_eci2sifov: %s', t.m_eci2sifov)
 
     # Calculate the complete transform to the V1 reference
     t.m_eci2v = np.dot(t.m_sifov2v, t.m_eci2sifov)
+    logger.debug('m_eci2v: %s', t.m_eci2v)
 
     # Calculate the SIAF transform matrix
     t.m_v2siaf = calc_v2siaf_matrix(t_pars.siaf)
 
     # Calculate the full ECI to SIAF transform matrix
     t.m_eci2siaf = np.dot(t.m_v2siaf, t.m_eci2v)
+    logger.debug('m_eci2siaf: %s', t.m_eci2siaf)
 
     return t
 
@@ -1455,15 +1457,18 @@ def calc_transforms_gscmd_v3pags(t_pars: TransformParameters):
     t.m_eci2sifov = np.linalg.multi_dot(
         [MZ2X, t.m_sifov_fsm_delta, t.m_fgs12sifov, t.m_eci2fgs1]
     )
+    logger.debug('m_eci2sifov: %s', t.m_eci2sifov)
 
     # Calculate the complete transform to the V1 reference
     t.m_eci2v = np.dot(t.m_sifov2v, t.m_eci2sifov)
+    logger.debug('m_eci2v: %s', t.m_eci2v)
 
     # Calculate the SIAF transform matrix
     t.m_v2siaf = calc_v2siaf_matrix(t_pars.siaf)
 
     # Calculate the full ECI to SIAF transform matrix
     t.m_eci2siaf = np.dot(t.m_v2siaf, t.m_eci2v)
+    logger.debug('m_eci2siaf: %s', t.m_eci2siaf)
 
     return t
 
@@ -1512,8 +1517,8 @@ def calc_eci2fgs1_j3pags(t_pars: TransformParameters):
     logger.debug('m_gs_commanded: %s', m_gs_commanded)
 
     m_eci2fgs1 = np.dot(MX2Z, m_gs_commanded)
-    logger.debug('m_eci2fgs1: %s', m_eci2fgs1)
 
+    logger.debug('m_eci2fgs1: %s', m_eci2fgs1)
     return m_eci2fgs1
 
 
@@ -1566,6 +1571,7 @@ def calc_gs2gsapp(m_eci2fgs1, jwst_velocity):
 
     m_gs2gsapp = np.identity(3) - a_hat_sym * np.sin(theta) + 2 * a_hat_sym**2 * np.sin(theta / 2.)**2
 
+    logger.debug('m_gs2gsapp: %s', m_gs2gsapp)
     return m_gs2gsapp
 
 
@@ -1596,8 +1602,8 @@ def calc_eci2fgs1_v3pags(t_pars: TransformParameters):
     logger.debug('m_gs_commanded: %s', m_gs_commanded)
 
     m_eci2fgs1 = np.dot(MX2Z, m_gs_commanded)
-    logger.debug('m_eci2fgs1: %s', m_eci2fgs1)
 
+    logger.debug('m_eci2fgs1: %s', m_eci2fgs1)
     return m_eci2fgs1
 
 
@@ -1657,6 +1663,8 @@ def calc_attitude_matrix(wcs, yangle, position):
 
     # Calculate
     m = np.linalg.multi_dot([r3(ra), r2(-dec), r1(-(pa + yangle_ra)), r2(position_rads[1]), r3(-position_rads[0])])
+
+    logger.debug('m: %s', m)
     return m
 
 
@@ -1676,7 +1684,6 @@ def calc_v3pa_at_gs_from_original(t_pars: TransformParameters) -> float:
     # Calculate V1 using ORIGINAL method
     tforms = calc_transforms_original(deepcopy(t_pars))
     vinfo = calc_v1_wcs(tforms.m_eci2v)
-    logger.debug('vinfo: %s', vinfo)
 
     # Convert to radians
     ra_v1 = vinfo.ra * D2R
@@ -1694,6 +1701,8 @@ def calc_v3pa_at_gs_from_original(t_pars: TransformParameters) -> float:
 
     v3pa_at_gs = calc_position_angle(WCSRef(ra_gs, dec_gs, None), WCSRef(ra_v3, dec_v3, None))
     v3pa_at_gs *= R2D
+
+    logger.debug('v3pa_at_gs: %s', v3pa_at_gs)
     return v3pa_at_gs
 
 
@@ -1728,6 +1737,7 @@ def calc_v1_wcs(m_eci2v):
         pa=v1_pa * R2D
     )
 
+    logger.debug('vinfo: %s', vinfo)
     return vinfo
 
 
@@ -1782,6 +1792,7 @@ def calc_aperture_wcs(m_eci2siaf):
         pa=wcs_pa * R2D
     )
 
+    logger.debug('wcsinfo: %s', wcsinfo)
     return wcsinfo
 
 
@@ -1812,6 +1823,7 @@ def calc_eci2j_matrix(q):
           1. - 2. * q1 * q1 - 2. * q2 * q2]]
     )
 
+    logger.debug('quaternion: %s', transform)
     return transform
 
 
@@ -1855,6 +1867,7 @@ def calc_j2fgs1_matrix(j2fgs_matrix, transpose=True):
         logger.info('Transposing the J-Frame to FGS matrix.')
         transform = transform.transpose()
 
+    logger.debug('j2fgs1: %s', transform)
     return transform
 
 
@@ -1929,7 +1942,7 @@ def calc_sifov_fsm_delta_matrix(fsmcorr, fsmcorr_version='latest', fsmcorr_units
         )
         transform = np.dot(m_x_partial, m_y_partial)
 
-    logger.debug('transform: %s', transform)
+    logger.debug('fsm_delta_matrix: %s', transform)
     return transform
 
 
@@ -1955,8 +1968,8 @@ def calc_fgs1_to_sifov_matrix(siaf_path=None, useafter=None):
         [-cos(v3) * sin(y), cos(v3) * cos(y), sin(v3)],
         [-sin(v2) * cos(y) + cos(v2) * sin(v3) * sin(y), -sin(v2) * sin(y) - cos(v2) * sin(v3) * cos(y), cos(v2) * cos(v3)]
     ])
-    logger.debug('FGS1_to_SIFOV from siaf is %s', m)
 
+    logger.debug('FGS1_to_SIFOV from siaf is %s', m)
     return m
 
 
@@ -2012,8 +2025,8 @@ def calc_v2siaf_matrix(siaf):
                      [1., 0., 0.]])
 
     transform = np.dot(pmat, mat)
-    logger.debug('transform: %s', transform)
 
+    logger.debug('transform: %s', transform)
     return transform
 
 
@@ -2042,6 +2055,7 @@ def calc_position_angle(target, point):
     if point_pa >= PI2:
         point_pa -= PI2
 
+    logger.debug('Given target: %s, point: %s, then PA: %s', target, point, point_pa)
     return point_pa
 
 
@@ -2802,7 +2816,9 @@ def calc_estimated_gs_wcs(t_pars: TransformParameters):
     dec *= R2D
     yangle *= R2D
 
-    return WCSRef(ra, dec, yangle)
+    wcs = WCSRef(ra, dec, yangle)
+    logger.debug('wcs: %s', wcs)
+    return wcs
 
 
 def calc_v3pags(t_pars: TransformParameters):
@@ -2832,6 +2848,7 @@ def calc_v3pags(t_pars: TransformParameters):
     # Calculate V3PAGS
     v3pags = gs_wcs.pa - fgs_siaf.v3yangle
 
+    logger.debug('v3pags: %s', v3pags)
     return v3pags
 
 
@@ -2890,12 +2907,14 @@ def calc_m_eci2gs(t_pars: TransformParameters):
     t.m_fgsx2gs = calc_m_fgsx2gs(t_pars.pointing.gs_commanded)
 
     t.m_eci2fgs1 = np.dot(t.m_j2fgs1, t.m_eci2j)
+    logger.debug('m_eci2fgs1: %s', t.m_eci2fgs1)
     t.m_gs2gsapp = calc_gs2gsapp(t.m_eci2fgs1, t_pars.jwst_velocity)
 
     # Put it all together
     t.m_eci2gs = np.linalg.multi_dot(
         [MZ2X, t.m_gs2gsapp, t.m_fgsx2gs, t.m_fgs12fgsx, t.m_eci2fgs1]
     )
+    logger.debug('m_eci2gs: %s', t.m_eci2gs)
 
     # That's all folks
     return t
@@ -2932,7 +2951,9 @@ def calc_m_fgs12fgsx(fgsid, siaf_path):
     # If the in-use FGS is FGS1, no transformation is necessary.
     # Simply return the identity matrix.
     if fgsid == 1:
-        return np.identity(3)
+        m_fgs12fgsx = np.identity(3)
+        logger.debug('FGS1 is in use, the identity matrix is returned: %s', m_fgs12fgsx)
+        return m_fgs12fgsx
 
     if fgsid != 2:
         raise ValueError(f'fgsid == {fgsid} is invalid. Must be 1 or 2')
@@ -2945,6 +2966,7 @@ def calc_m_fgs12fgsx(fgsid, siaf_path):
 
     m_fgs12fgsx = np.dot(m_fgs2, m_fgs1.transpose())
 
+    logger.debug('m_fgs12fgsx: %s', m_fgs12fgsx)
     return m_fgs12fgsx
 
 
@@ -2964,7 +2986,10 @@ def calc_m_fgsx2gs(gs_commanded):
         The DCM transform from FGSx (1 or 2) to Guide Star ICS frame
     """
     m_gs2fgsx = calc_m_gs2fgsx(gs_commanded)
-    return m_gs2fgsx.transpose()
+    m_fgsx2gs = m_gs2fgsx.transpose()
+
+    logger.debug('m_fgsx2gs: %s', m_fgsx2gs)
+    return m_fgsx2gs
 
 
 def calc_m_gs2fgsx(gs_commanded):
@@ -2994,8 +3019,10 @@ def calc_m_gs2fgsx(gs_commanded):
         [0., 1., 0.],
         [sin(-x), 0., cos(-x)]
     ])
+    m_gs2fgsx = np.dot(m_y, m_x)
 
-    return np.dot(m_y, m_x)
+    logger.debug('m_gs2fgsx: %s', m_gs2fgsx)
+    return m_gs2fgsx
 
 
 def trans_fgs2v(fgsid, ideal):
@@ -3022,6 +3049,7 @@ def trans_fgs2v(fgsid, ideal):
     v_rads = np.array(vector_to_angle(v_vec))
     v = v_rads * R2A
 
+    logger.debug('FGS%s %s -> V %s', fgsid, ideal, v)
     return v
 
 
