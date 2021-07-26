@@ -1033,8 +1033,69 @@ def calc_transforms_tr202105(t_pars: TransformParameters):
 
 
 def calc_transforms_course_tr_202107(t_pars: TransformParameters):
-    """Calculate transforms for COURSE guiding as per TR presented in 2021-07"""
-    raise NotImplementedError
+    """Calculate transforms for  guiding as per TR presented in 2021-07
+
+    This implements equation 42 from Technical Report JWST-STScI-003222, SM-12. 2021-07
+    From Section 5:
+
+    In COARSE mode the measured attitude of the J-frame of the spacecraft is
+    determined by the star tracker and inertial gyroscopes attitude
+    measurements and is converted to an estimated guide star inertial attitude
+    using the equations in section 3.2. The V-frame attitude then is
+    determined.
+
+    Parameters
+    ----------
+    t_pars : TransformParameters
+        The transformation parameters. Parameters are updated during processing.
+
+    Returns
+    -------
+    transforms : Transforms
+        The list of coordinate matrix transformations
+
+    Notes
+    -----
+    The matrix transform pipeline to convert from ECI J2000 observatory
+    qauternion pointing to aperture ra/dec/roll information
+    is given by the following formula. Each term is a 3x3 matrix:
+
+        M_eci_to_siaf =
+            transpose(M_fgsx_to_v)  *
+            transpose(M_gs_to_fgsx) *
+            M_x_to_z                *
+            M_eci_to_gs
+
+        where
+
+            M_fgsx_to_v = FGSx to V-frame
+            M_gs_to_fgsx = Guide star to FGSx
+            M_eci_to_gs = ECI to Guide star
+    """
+    logger.info('Calculating transforms using TR 202107 COARSE Tracking method...')
+    t_pars.method = Methods.COURSE_TR_202107
+
+    # Determine the M_eci_to_gs matrix. Since this is a full train, the matrix
+    # is returned as part of the full Transforms object. Many of the required
+    # matrices are already determined as part of this calculation.
+    t = calc_m_eci2gs(t_pars)
+
+    # Determine the M_fgsx_to_v matrix
+    siaf = get_wcs_values_from_siaf(FGSId2Aper[t_pars.pointing.fgsid])
+    t.m_v2fgsx = calc_v2siaf_matrix(siaf)
+
+    # Determine M_eci_to_v frame.
+    # Note that the left two terms, as written in the equation, are to be transposed.
+    # Here, the already-transposed versions are being used.
+    t.m_eci2v = np.linalg.multi_dot([t.m_v2fgsx, t.m_fgsx2gs, MX2Z, t.m_eci2gs])
+
+    # Calculate the SIAF transform matrix
+    t.m_v2siaf = calc_v2siaf_matrix(t_pars.siaf)
+
+    # Calculate full transformation
+    t.m_eci2siaf = np.dot(t.m_v2siaf, t.m_eci2v)
+
+    return t
 
 
 def calc_transforms_track_tr_202107(t_pars: TransformParameters):
