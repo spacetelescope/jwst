@@ -897,7 +897,7 @@ def calc_wcs(t_pars: TransformParameters):
     tforms = calc_transforms(t_pars)
 
     # Calculate the V1 WCS information
-    vinfo = calc_v1_wcs(tforms.m_eci2v)
+    vinfo = calc_wcs_from_matrix(tforms.m_eci2v)
 
     # Calculate the Aperture WCS
     wcsinfo = calc_aperture_wcs(tforms.m_eci2siaf)
@@ -1719,7 +1719,7 @@ def calc_v3pa_at_gs_from_original(t_pars: TransformParameters) -> float:
 
     # Calculate V1 using ORIGINAL method
     tforms = calc_transforms_original(deepcopy(t_pars))
-    vinfo = calc_v1_wcs(tforms.m_eci2v)
+    vinfo = calc_wcs_from_matrix(tforms.m_eci2v)
 
     # Convert to radians
     ra_v1 = vinfo.ra * D2R
@@ -1742,39 +1742,39 @@ def calc_v3pa_at_gs_from_original(t_pars: TransformParameters) -> float:
     return v3pa_at_gs
 
 
-def calc_v1_wcs(m_eci2v):
-    """Calculate the V1 wcs information
+def calc_wcs_from_matrix(m):
+    """Calculate the WCS information from a DCM.
 
     Parameters
     ----------
-    m_eci2v : np.array((3, 3))
-        The ECI to V transformation matrix
+    m: np.array((3, 3))
+        The DCM matrix to extract WCS information from
 
     Returns
     -------
-    vinfo : WCSRef
-        The V1 wcs pointing
+    wcs : WCSRef
+        The WCS.
     """
     # V1 RA/Dec is the first row of the transform
-    v1_ra, v1_dec = vector_to_angle(m_eci2v[0])
-    vinfo = WCSRef(v1_ra, v1_dec, None)
+    v1_ra, v1_dec = vector_to_angle(m[0])
+    wcs = WCSRef(v1_ra, v1_dec, None)
 
     # V3 is the third row of the transformation
-    v3_ra, v3_dec = vector_to_angle(m_eci2v[2])
-    v3info = WCSRef(v3_ra, v3_dec, None)
+    v3_ra, v3_dec = vector_to_angle(m[2])
+    v3wcs = WCSRef(v3_ra, v3_dec, None)
 
     # Calculate the V3 position angle
-    v1_pa = calc_position_angle(vinfo, v3info)
+    v1_pa = calc_position_angle(wcs, v3wcs)
 
     # Convert to degrees
-    vinfo = WCSRef(
-        ra=vinfo.ra * R2D,
-        dec=vinfo.dec * R2D,
+    wcs = WCSRef(
+        ra=wcs.ra * R2D,
+        dec=wcs.dec * R2D,
         pa=v1_pa * R2D
     )
 
-    logger.debug('vinfo: %s', vinfo)
-    return vinfo
+    logger.debug('wcs: %s', wcs)
+    return wcs
 
 
 def calc_aperture_wcs(m_eci2siaf):
@@ -2842,20 +2842,9 @@ def calc_estimated_gs_wcs(t_pars: TransformParameters):
     t = calc_m_eci2gs(t_pars)
     m_eci2gs = t.m_eci2gs
 
-    # Temporarily use a algorithm known to work.
-    return calc_v1_wcs(m_eci2gs)
+    # Determine the wcs
+    wcs = calc_wcs_from_matrix(m_eci2gs)
 
-    # Calculate the angles
-    ra = atan2(m_eci2gs[0, 1], m_eci2gs[0, 0])
-    dec = asin(m_eci2gs[0, 2])
-    yangle = atan2(m_eci2gs[1, 2], m_eci2gs[2, 2])
-
-    # Convert to degrees
-    ra *= R2D
-    dec *= R2D
-    yangle *= R2D
-
-    wcs = WCSRef(ra, dec, yangle)
     logger.debug('wcs: %s', wcs)
     return wcs
 
