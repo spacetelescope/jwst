@@ -95,12 +95,12 @@ def extract_image(scidata, scierr, scimask, ref_files, transform=None,
     :rtype: TODO TBD
     """
 
-    # TODO Some scierr = 0?, temporary fix.
-    scierr = scierr + 5.
-
     # Perform background correction.
     bkg_mask = make_background_mask(scidata)
     scidata_bkg, col_bkg, npix_bkg = soss_background(scidata, scimask, bkg_mask=bkg_mask)
+
+    # Some error values are 0, we need to mask those pixels for the ectraction engine.
+    scimask = scimask | ~(scierr > 0)
 
     # TODO add 1/f correction?
 
@@ -203,9 +203,9 @@ def run_extract1d(input_model: DataModel,
         log.info('Input is an ImageModel, processing a single integration.')
 
         # Received a single 2D image.
-        scidata = input_model.data
-        scierr = input_model.err
-        scimask = input_model.dq == 0
+        scidata = input_model.data.astype('float64')  # TODO eewww.
+        scierr = input_model.err.astype('float64')
+        scimask = input_model.dq > 0  # Mask bad pixels with True.
 
         # Perform the extraction.
         wavelengths, fluxes, fluxerrs, transform, tikfac = extract_image(scidata, scierr, scimask, ref_files)
@@ -258,9 +258,9 @@ def run_extract1d(input_model: DataModel,
             log.info('Processing integration {} of {}.'.format(i + 1, nimages))
 
             # Unpack the i-th image.
-            scidata = input_model.data[i]
-            scierr = input_model.err[i]
-            scimask = input_model.dq[i] == 0
+            scidata = input_model.data[i].astype('float64')  # TODO eewww.
+            scierr = input_model.err[i].astype('float64')
+            scimask = input_model.dq[i] > 0
 
             # Perform the extraction.
             result = extract_image(scidata, scierr, scimask, ref_files, transform=transform, tikfac=tikfac)
