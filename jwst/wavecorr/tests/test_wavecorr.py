@@ -13,7 +13,6 @@ from jwst.wavecorr import WavecorrStep
 from jwst.wavecorr import wavecorr
 
 from jwst.assign_wcs.tests.test_nirspec import create_nirspec_mos_file
-from jwst.assign_wcs.tests.test_nirspec import create_nirspec_fs_file
 
 
 def test_wavecorr():
@@ -52,12 +51,11 @@ def test_wavecorr():
 
 
 def test_ideal_to_v23_fs():
-    hdul = create_nirspec_fs_file(grating='G140H', filter='F070LP')
-    # create data model, populate wcs_info
+    """Test roundtripping between Ideal and V2V3 frames."""
     v3yangle = 138.78
     v2_ref = 321.87
     v3_ref = -477.94
     vparity = -1
-    id2v=models.IdealToV2V3(v3yangle, v2_ref, v3_ref, vparity)
+    id2v = models.IdealToV2V3(v3yangle, v2_ref, v3_ref, vparity)
     assert_allclose(id2v(0, 0), (v2_ref, v3_ref))
     assert_allclose(id2v.inverse(v2_ref, v3_ref), (0, 0))
