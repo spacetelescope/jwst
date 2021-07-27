@@ -96,7 +96,7 @@ def extract_image(scidata, scierr, scimask, ref_files, transform=None,
     """
 
     # Perform background correction.
-    bkg_mask = make_background_mask(scidata)
+    bkg_mask = make_background_mask(scidata, width=40)
     scidata_bkg, col_bkg, npix_bkg = soss_background(scidata, scimask, bkg_mask=bkg_mask)
 
     # Some error values are 0, we need to mask those pixels for the ectraction engine.
