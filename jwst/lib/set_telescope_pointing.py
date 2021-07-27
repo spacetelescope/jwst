@@ -1613,7 +1613,36 @@ def calc_attitude_matrix(wcs, yangle, position):
     m : np.array(3,3)
         The transformation matrix
     """
-    raise NotImplementedError
+    # Convert to radians
+    ra = wcs.ra * D2R
+    dec = wcs.dec * D2R
+    yangle_ra = yangle * D2R
+    pos_rads = position * A2R
+    v2 = pos_rads[0]
+    v3 = pos_rads[1]
+
+    # Create the matrices
+    r1 = np.array([
+        [cos(ra) * cos(dec), sin(ra) * cos(dec), sin(dec)],
+        [(-sin(ra) * cos(yangle_ra)) + (cos(ra) * sin(dec) * sin(yangle_ra)),
+         (cos(ra) * cos(yangle_ra)) + (sin(ra) * sin(dec) * sin(yangle_ra)),
+         -cos(dec) * sin(yangle_ra)],
+        [(-sin(ra) * sin(yangle_ra)) - (cos(ra) * sin(dec) * cos(yangle_ra)),
+         (cos(ra) * sin(yangle_ra)) - (sin(ra) * sin(dec) * cos(yangle_ra)),
+         cos(dec) * cos(yangle_ra)]
+    ])
+
+    r2 = np.array([
+        [cos(v2) * cos(v3), -sin(v2), -cos(v2) * sin(v3)],
+        [sin(v2) * cos(v3), cos(v2), -sin(v2) * sin(v3)],
+        [sin(v3), 0., cos(v3)]
+    ])
+
+    # Final transformation
+    m = np.dot(r2, r1)
+
+    logger.debug('attitude DCM: %s', m)
+    return m
 
 
 def calc_m_gs_commanded(guide_star_wcs, yangle, gs_commanded):
