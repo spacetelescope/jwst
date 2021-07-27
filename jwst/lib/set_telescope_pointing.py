@@ -20,7 +20,7 @@ from scipy.interpolate import interp1d
 from .set_velocity_aberration import compute_va_effects_vector
 from ..assign_wcs.util import update_s_region_keyword, calc_rotation_matrix
 from ..assign_wcs.pointing import v23tosky
-from ..datamodels import Level1bModel
+from ..datamodels import open as dm_open
 from ..lib.engdb_tools import ENGDB_Service
 from ..lib.pipe_utils import is_tso
 from .exposure_types import IMAGING_TYPES, FGS_GUIDE_EXP_TYPES
@@ -432,7 +432,7 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
     in the header other than what is required by the standard.
     """
     logger.info('Updating WCS info for file %s', filename)
-    with Level1bModel(filename) as model:
+    with dm_open(filename) as model:
         t_pars, transforms = update_wcs(
             model,
             default_pa_v3=default_pa_v3,
