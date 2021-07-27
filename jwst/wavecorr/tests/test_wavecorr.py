@@ -8,10 +8,12 @@ from jwst import datamodels
 from jwst.assign_wcs import AssignWcsStep
 from jwst.extract_2d import Extract2dStep
 from jwst.srctype import SourceTypeStep
+from jwst.transforms import models
 from jwst.wavecorr import WavecorrStep
 from jwst.wavecorr import wavecorr
 
 from jwst.assign_wcs.tests.test_nirspec import create_nirspec_mos_file
+from jwst.assign_wcs.tests.test_nirspec import create_nirspec_fs_file
 
 
 def test_wavecorr():
@@ -47,3 +49,15 @@ def test_wavecorr():
     zero_point2 = wavecorr.compute_zero_point_correction(lam, freference, source_xpos2, 'MOS', dispersion)
     diff_correction = np.abs(zero_point1[1] - zero_point2[1])
     assert_allclose(diff_correction[diff_correction.nonzero()].mean(), 0.02, atol=0.01)
+
+
+def test_ideal_to_v23_fs():
+    hdul = create_nirspec_fs_file(grating='G140H', filter='F070LP')
+    # create data model, populate wcs_info
+    v3yangle = 138.78
+    v2_ref = 321.87
+    v3_ref = -477.94
+    vparity = -1
+    id2v=models.IdealToV2V3(v3yangle, v2_ref, v3_ref, vparity)
+    assert_allclose(id2v(0, 0), (v2_ref, v3_ref))
+    assert_allclose(id2v.inverse(v2_ref, v3_ref), (0, 0))
