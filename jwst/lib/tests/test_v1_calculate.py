@@ -10,6 +10,7 @@ from astropy.utils.diff import report_diff_values
 
 from jwst.datamodels import ImageModel
 from jwst.lib import engdb_tools
+import jwst.lib.set_telescope_pointing as stp
 import jwst.lib.v1_calculate as v1c
 
 from jwst.lib.tests.engdb_mock import EngDB_Mocker
@@ -36,7 +37,7 @@ def test_from_models(engdb, tmp_path):
     model.meta.exposure.start_time = GOOD_STARTTIME.mjd
     model.meta.exposure.end_time = GOOD_ENDTIME.mjd
 
-    v1_table = v1c.v1_calculate_from_models([model])
+    v1_table = v1c.v1_calculate_from_models([model], method=stp.Methods.TR_202105)
     v1_formatted = v1c.simplify_table(v1_table)
 
     # Save for post-test examination
@@ -48,9 +49,7 @@ def test_from_models(engdb, tmp_path):
 
 def test_over_time(engdb, tmp_path):
     """Test v1_calculate_over_time for basic running"""
-    v1_table = v1c.v1_calculate_over_time(
-        GOOD_STARTTIME.mjd, GOOD_ENDTIME.mjd
-    )
+    v1_table = v1c.v1_calculate_over_time(GOOD_STARTTIME.mjd, GOOD_ENDTIME.mjd, method=stp.Methods.TR_202105)
     v1_formatted = v1c.simplify_table(v1_table)
 
     # Save for post-test examination

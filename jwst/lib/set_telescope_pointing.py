@@ -803,8 +803,7 @@ def update_s_region(model, siaf):
     update_s_region_keyword(model, footprint)
 
 
-def calc_wcs_over_time(obsstart, obsend, engdb_url=None, tolerance=60, reduce_func=None,
-                       siaf=None, **transform_kwargs):
+def calc_wcs_over_time(obsstart, obsend, t_pars: TransformParameters):
     """Calculate V1 and WCS over a time period
 
     Parameters
@@ -812,23 +811,8 @@ def calc_wcs_over_time(obsstart, obsend, engdb_url=None, tolerance=60, reduce_fu
     obsstart, obsend : float
         MJD observation start/end times
 
-    engdb_url : str or None
-        URL of the engineering telemetry database REST interface.
-
-    tolerance : int
-        If no telemetry can be found during the observation,
-        the time, in seconds, beyond the observation time to
-        search for telemetry.
-
-    reduce_func : func or None
-        Reduction function to use on values.
-        If None, the average pointing is returned.
-
-    siaf : SIAF or None
-        The SIAF transformation. If `None`, a unit transformation is used.
-
-    transform_kwargs : dict
-        Keyword arguments used by matrix calculation routines
+    t_pars : `TransformParameters`
+        The transformation parameters. Parameters are updated during processing.
 
     Returns
     -------
@@ -840,15 +824,11 @@ def calc_wcs_over_time(obsstart, obsend, engdb_url=None, tolerance=60, reduce_fu
     obstimes = list()
     wcsinfos = list()
     vinfos = list()
-    t_pars = TransformParameters(
-        engdb_url=engdb_url, tolerance=tolerance, reduce_func=reduce_func, siaf=siaf,
-        **transform_kwargs
-    )
 
     # Calculate WCS
     try:
-        pointings = get_pointing(obsstart, obsend, engdb_url=engdb_url,
-                                 tolerance=tolerance, reduce_func=reduce_func)
+        pointings = get_pointing(obsstart, obsend, engdb_url=t_pars.engdb_url,
+                                 tolerance=t_pars.tolerance, reduce_func=t_pars.reduce_func)
     except ValueError:
         logger.warning("Cannot get valid engineering mnemonics from engineering database")
         raise

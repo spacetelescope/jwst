@@ -32,6 +32,7 @@ def v1_calculate_from_models(sources, **calc_wcs_from_time_kwargs):
     # Initialize structures.
     v1_dict = defaultdict(list)
     siaf = stp.SIAF(v2_ref=0., v3_ref=0., v3yangle=0., vparity=1.)
+    t_pars = stp.TransformParameters(siaf=siaf, **calc_wcs_from_time_kwargs)
 
     # Calculate V1 for all sources.
     for source in sources:
@@ -44,9 +45,9 @@ def v1_calculate_from_models(sources, **calc_wcs_from_time_kwargs):
                 model.meta.guidestar.gs_v3_pa_science
             )
 
-            obstimes, _, vinfos = stp.calc_wcs_over_time(
-                obsstart, obsend, siaf=siaf, guide_star_wcs=guide_star_wcs, **calc_wcs_from_time_kwargs
-            )
+            t_pars.guide_star_wcs = guide_star_wcs
+            obstimes, _, vinfos = stp.calc_wcs_over_time(obsstart, obsend, t_pars)
+
         sources = [source] * len(obstimes)
         v1_dict['source'] += sources
         v1_dict['obstime'] += obstimes
@@ -75,11 +76,10 @@ def v1_calculate_over_time(obsstart, obsend, **calc_wcs_from_time_kwargs):
     """
     # Initialize structures.
     siaf = stp.SIAF(v2_ref=0., v3_ref=0., v3yangle=0., vparity=1.)
+    t_pars = stp.TransformParameters(siaf=siaf, **calc_wcs_from_time_kwargs)
 
     # Calculate V1 for all sources.
-    obstimes, _, vinfos = stp.calc_wcs_over_time(
-        obsstart, obsend, siaf=siaf, **calc_wcs_from_time_kwargs
-    )
+    obstimes, _, vinfos = stp.calc_wcs_over_time(obsstart, obsend, t_pars)
     v1_dict = dict()
     v1_dict['source'] = ['time range'] * len(obstimes)
     v1_dict['obstime'] = obstimes
