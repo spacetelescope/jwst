@@ -1186,7 +1186,7 @@ def calc_transforms_velocity_abberation_tr202105(t_pars: TransformParameters):
 
     """
     logger.info('Calculating transforms using FULLVA quaternion method with velocity aberration...')
-    t_pars.method = Methods.TR_VA_202105
+    t_pars.method = Methods.TR_202105_VA
     t = Transforms(override=t_pars.override_transforms)  # Shorthand the resultant transforms
 
     # Determine the ECI to J-frame matrix
@@ -1494,7 +1494,7 @@ def calc_eci2fgs1_j3pags(t_pars: TransformParameters):
     logger.debug('guide_star_wcs: %s', t_pars.guide_star_wcs)
     logger.debug('gs_commanded: %s', t_pars.pointing.gs_commanded)
 
-    m_gs_commanded = calc_attitude_matrix(t_pars.guide_star_wcs, J3IDLYANGLE, t_pars.pointing.gs_commanded)
+    m_gs_commanded = calc_m_gs_commanded(t_pars.guide_star_wcs, J3IDLYANGLE, t_pars.pointing.gs_commanded)
 
     # Need to invert the martrix
     m_gs_commanded = np.linalg.inv(m_gs_commanded)
@@ -1579,7 +1579,7 @@ def calc_eci2fgs1_v3pags(t_pars: TransformParameters):
     logger.debug('guide_star_wcs: %s', t_pars.guide_star_wcs)
     logger.debug('gs_commanded: %s', t_pars.pointing.gs_commanded)
 
-    m_gs_commanded = calc_attitude_matrix(t_pars.guide_star_wcs, fgs1_siaf.v3yangle, t_pars.pointing.gs_commanded)
+    m_gs_commanded = calc_m_gs_commanded(t_pars.guide_star_wcs, fgs1_siaf.v3yangle, t_pars.pointing.gs_commanded)
 
     # Need to invert the martrix
     m_gs_commanded = np.linalg.inv(m_gs_commanded)
@@ -1613,6 +1613,28 @@ def calc_attitude_matrix(wcs, yangle, position):
     m : np.array(3,3)
         The transformation matrix
     """
+    raise NotImplementedError
+
+
+def calc_m_gs_commanded(guide_star_wcs, yangle, gs_commanded):
+    """Calculate the guide star matrix
+
+    Parameters
+    ----------
+    guide_star_wcs : WCSRef
+        The guide star position
+
+    yangle : float
+        The IdlYangle of the point in question.
+
+    gs_commanded : numpy.array(2)
+        The commanded position from telemetry
+
+    Returns
+    -------
+    m_gs_commanded : np.array(3,3)
+        The transformation matrix
+    """
 
     # Define the individal rotations
     def r1(a):
@@ -1640,14 +1662,14 @@ def calc_attitude_matrix(wcs, yangle, position):
         return r
 
     # Convert to radians
-    ra = wcs.ra * D2R
-    dec = wcs.dec * D2R
-    pa = wcs.pa * D2R
+    ra = guide_star_wcs.ra * D2R
+    dec = guide_star_wcs.dec * D2R
+    pa = guide_star_wcs.pa * D2R
     yangle_ra = yangle * D2R
-    position_rads = position * A2R
+    gs_commanded_rads = gs_commanded * A2R
 
     # Calculate
-    m = np.linalg.multi_dot([r3(ra), r2(-dec), r1(-(pa + yangle_ra)), r2(position_rads[1]), r3(-position_rads[0])])
+    m = np.linalg.multi_dot([r3(ra), r2(-dec), r1(-(pa + yangle_ra)), r2(gs_commanded_rads[1]), r3(-gs_commanded_rads[0])])
 
     logger.debug('m: %s', m)
     return m
@@ -2790,6 +2812,9 @@ def calc_estimated_gs_wcs(t_pars: TransformParameters):
     # Determine the ECI to Guide star transformation
     t = calc_m_eci2gs(t_pars)
     m_eci2gs = t.m_eci2gs
+
+    # Temporarily use a algorithm known to work.
+    return calc_v1_wcs(m_eci2gs)
 
     # Calculate the angles
     ra = atan2(m_eci2gs[0, 1], m_eci2gs[0, 0])
