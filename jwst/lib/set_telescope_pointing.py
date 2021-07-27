@@ -323,6 +323,12 @@ class TransformParameters:
     useafter: str = None
     v3pa_at_gs: float = None
 
+    def as_reprdict(self):
+        """Return a dict where all values are REPR of their values"""
+        d = dataclasses.asdict(self)
+        r = {key: repr(value) for key, value in d.items()}
+        return r
+
 
 def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
             tolerance=60, allow_default=False, reduce_func=None,

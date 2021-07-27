@@ -1,6 +1,7 @@
 """V1 Calculation based on time and engineering database info
 """
 from collections import defaultdict
+from dataclasses import asdict
 import logging
 
 from astropy.table import Table
@@ -54,7 +55,7 @@ def v1_calculate_from_models(sources, **calc_wcs_from_time_kwargs):
         v1_dict['v1'] += vinfos
 
     # Format and return.
-    v1_table = Table(v1_dict)
+    v1_table = Table(v1_dict, meta=t_pars.as_reprdict())
     return v1_table
 
 
@@ -86,7 +87,7 @@ def v1_calculate_over_time(obsstart, obsend, **calc_wcs_from_time_kwargs):
     v1_dict['v1'] = vinfos
 
     # Format and return.
-    v1_table = Table(v1_dict)
+    v1_table = Table(v1_dict, meta=t_pars.as_reprdict())
     return v1_table
 
 
@@ -118,6 +119,7 @@ def simplify_table(v1_table):
 
     formatted = Table(
         [source_formatted, obstime_formatted, ras, decs, pa_v3s],
-        names=('source', 'obstime', 'ra', 'dec', 'pa_v3')
+        names=('source', 'obstime', 'ra', 'dec', 'pa_v3'),
+        meta=v1_table.meta
     )
     return formatted
