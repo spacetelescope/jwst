@@ -667,12 +667,13 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
     logger.info('Updating wcs from telemetry.')
     transforms = None  # Assume no transforms are calculated.
 
-    # Get the SIAF and observation parameters
+    # observation parameters
     obsstart = model.meta.exposure.start_time
     obsend = model.meta.exposure.end_time
-    if None in t_pars.siaf:
-        # Check if any of "v2_ref", "v3_ref", "v3yangle", "vparity" is None
-        # and raise an error. The other fields have default values.
+
+    # Check that the V-frame to SIAF refpoint has been defined.
+    v2siaf_pars = [getattr(t_pars.siaf, attr) for attr in ['v2_ref', 'v3_ref', 'v3yangle', 'vparity']]
+    if None in v2siaf_pars:
         raise ValueError('Insufficient SIAF information found in header.')
 
     # Setup default WCS info if actual pointing and calculations fail.
