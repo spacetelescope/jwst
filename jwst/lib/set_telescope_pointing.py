@@ -284,6 +284,9 @@ class TransformParameters:
     override_transforms : `Transforms`
         If set, matrices that should be used instead of the calculated one.
 
+    pcs_mode : str
+        The tracking mode in use.
+
     pointing : `Pointing`
         The quaternion.
 
@@ -315,6 +318,7 @@ class TransformParameters:
     jwst_velocity: np.array = None
     method: Methods = None
     override_transforms: Transforms = None
+    pcs_mode: str = None
     pointing: Pointing = None
     reduce_func: typing.Callable = None
     siaf: SIAF = None
@@ -678,12 +682,16 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
         t_pars.default_pa_v3
     )
     vinfo = wcsinfo
+
+    # Get Guide Star information
     t_pars.guide_star_wcs = WCSRef(
         model.meta.guidestar.gs_ra,
         model.meta.guidestar.gs_dec,
         model.meta.guidestar.gs_v3_pa_science
     )
+    t_pars.pcs_mode = model.meta.guidestar.gs_pcs_mode
     logger.debug('guide_star_wcs from model: %s', t_pars.guide_star_wcs)
+    logger.debug('PCS_MODE: %s', t_pars.pcs_mode)
 
     # Get jwst velocity
     t_pars.jwst_velocity = np.array([
@@ -692,6 +700,8 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
         model.meta.ephemeris.velocity_z_bary,
     ])
     logger.debug('JWST Velocity: %s', t_pars.jwst_velocity)
+
+    # Retrieve tracking mode.
 
     # Get the pointing information
     try:
@@ -1147,8 +1157,29 @@ def calc_transforms_track_tr_202107(t_pars: TransformParameters):
 
 
 def calc_transforms_ops_tr_202107(t_pars: TransformParameters):
-    """Calculate transforms as per TR presented in 2021-07"""
-    raise NotImplementedError
+    """Calculate transforms as per TR presented in 2021-07
+
+    This implements the ECI-to-SIAF transformation from Technical Report JWST-STScI-003222, SM-12. 2021-07
+    The actual implementation depends on the guide star mode, represented by the header keyword PCS_MODE.
+    For COARSE or NONE, the method COARSE_TR_202107 is used.
+    For TRACK or FINEGUIDE, the method TRACK_TR_202107 is used.
+
+    Parameters
+    ----------
+    t_pars : TransformParameters
+        The transformation parameters. Parameters are updated during processing.
+
+    Returns
+    -------
+    transforms : Transforms
+        The list of coordinate matrix transformations
+    """
+    if t_pars.pcs_mode is None or t_pars.pcs_mode in ['NONE', 'COARSE']:
+        return calc_transforms_coarse_tr_202107(t_pars)
+    elif t_pars.pcs_mode in ['TRACK', 'FINEGUIDE']:
+        return calc_transforms_track_tr_202107(t_pars)
+    else:
+        raise ValueError(f'Invalid PCS_MODE: {t_pars.pcs_mode}. Should be in ["NONE", "COARSE", "TRACK", "FINEGUIDE"]')
 
 
 def calc_transforms_velocity_abberation_tr202105(t_pars: TransformParameters):
