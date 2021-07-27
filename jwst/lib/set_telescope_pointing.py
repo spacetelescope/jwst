@@ -36,18 +36,18 @@ LOGLEVELS = [logging.INFO, logging.DEBUG, DEBUG_FULL]
 
 # The available methods for transformation
 class Methods(Enum):
-    COURSE_TR_202107 = ('course_tr_202107', 'calc_transforms_course_tr_202107')
+    COARSE_TR_202107 = ('coarse_tr_202107', 'calc_transforms_coarse_tr_202107')
     GSCMD_J3PAGS = ('gscmd', 'calc_transforms_gscmd_j3pags')
     GSCMD_V3PAGS = ('gscmd_v3pags', 'calc_transforms_gscmd_v3pags')
     OPS_TR_202107 = ('ops_tr_202107', 'calc_transforms_ops_tr_202107')
     ORIGINAL = ('original', 'calc_transforms_original')
-    TR_202105 = ('full', 'calc_transforms_tr202105')
-    TR_VA_202105 = ('fullva', 'calc_transforms_velocity_abberation_tr202105')
+    TR_202105 = ('tr_202105', 'calc_transforms_tr202105')  # Was FULL
+    TR_202105_VA = ('tr_202105_va', 'calc_transforms_velocity_abberation_tr202105')  # Was FULLVA
     TRACK_TR_202107 = ('track_tr_202107', 'calc_transforms_track_tr_202107')
 
     # Aliases
     default = OPS_TR_202107  # Algorithm to use by default. Used by Operations.
-    COURSE = COURSE_TR_202107  # Default algorithm under PCS_MODE COURSE.
+    COARSE = COARSE_TR_202107  # Default algorithm under PCS_MODE COARSE.
     OPS = OPS_TR_202107  # Default algorithm for use by Operations.
     TRACK = TRACK_TR_202107  # Default algorithm under PCS_MODE TRACK/FINEGUIDE.
 
@@ -1019,7 +1019,7 @@ def calc_transforms_tr202105(t_pars: TransformParameters):
     return t
 
 
-def calc_transforms_course_tr_202107(t_pars: TransformParameters):
+def calc_transforms_coarse_tr_202107(t_pars: TransformParameters):
     """Calculate transforms for  guiding as per TR presented in 2021-07
 
     This implements equation 42 from Technical Report JWST-STScI-003222, SM-12. 2021-07
@@ -1060,7 +1060,7 @@ def calc_transforms_course_tr_202107(t_pars: TransformParameters):
             M_eci_to_gs = ECI to Guide star
     """
     logger.info('Calculating transforms using TR 202107 COARSE Tracking method...')
-    t_pars.method = Methods.COURSE_TR_202107
+    t_pars.method = Methods.COARSE_TR_202107
 
     # Determine the M_eci_to_gs matrix. Since this is a full train, the matrix
     # is returned as part of the full Transforms object. Many of the required
@@ -1075,6 +1075,7 @@ def calc_transforms_course_tr_202107(t_pars: TransformParameters):
     # Note that the left two terms, as written in the equation, are to be transposed.
     # Here, the already-transposed versions are being used.
     t.m_eci2v = np.linalg.multi_dot([t.m_v2fgsx, t.m_fgsx2gs, MX2Z, t.m_eci2gs])
+    logger.debug('M_eci2v: %s', t.m_eci2v)
 
     # Calculate the SIAF transform matrix
     t.m_v2siaf = calc_v2siaf_matrix(t_pars.siaf)
@@ -1541,7 +1542,7 @@ def calc_gs2gsapp(m_eci2fgs1, jwst_velocity):
         scale_factor, u_j2000 = compute_va_effects_vector(*jwst_velocity, u)
     except TypeError:
         logger.warning('Failure in computing velocity aberration. Returning identity matrix.')
-        logger.warning('Exception: %s', sys.exc_info()[0])
+        logger.warning('Exception: %s', sys.exc_info())
         return np.identity(3)
 
     # Step 4: Transform to guide star attitude frame
@@ -2959,7 +2960,7 @@ def calc_m_fgs12fgsx(fgsid, siaf_path):
 def calc_m_fgsx2gs(gs_commanded):
     """Calculate the FGS1 to commanded Guide Star frame
 
-    This implements equation 29 from Technical Report JWST-STScI-003222, SM-12, 2021-07
+    This implements equation 25 from Technical Report JWST-STScI-003222, SM-12, 2021-07
 
     Parameters
     ----------
@@ -2995,15 +2996,15 @@ def calc_m_gs2fgsx(gs_commanded):
     """
     in_rads = gs_commanded * A2R
     x, y = in_rads
-    m_y = np.array([
-        [1.0, 0.0, 0.0],
-        [0., cos(y), sin(y)],
-        [0., -sin(y), cos(y)]
-    ])
     m_x = np.array([
         [cos(-x), 0., -sin(-x)],
         [0., 1., 0.],
         [sin(-x), 0., cos(-x)]
+    ])
+    m_y = np.array([
+        [1.0, 0.0, 0.0],
+        [0., cos(y), sin(y)],
+        [0., -sin(y), cos(y)]
     ])
     m_gs2fgsx = np.dot(m_y, m_x)
 
