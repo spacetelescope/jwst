@@ -87,6 +87,7 @@ class Extract1dStep(Step):
     use_source_posn = boolean(default=None)  # use source coords to center extractions?
     center_xy = int_list(min=2, max=2, default=None)  # IFU extraction x/y center
     apply_apcorr = boolean(default=True)  # apply aperture corrections?
+    soss_tikfac = float(default=None)  # regularisation factor for NIRISS SOSS extraction
     """
 
     # TODO add SOSS reference file types.
@@ -158,7 +159,8 @@ class Extract1dStep(Step):
                                                 spectrace_ref_name,
                                                 wavemap_ref_name,
                                                 specprofile_ref_name,
-                                                speckernel_ref_name)
+                                                speckernel_ref_name,
+                                                self.soss_tikfac)
 
             # Set the step flag to complete
             result.meta.cal_step.extract_1d = 'COMPLETE'

@@ -167,7 +167,8 @@ def run_extract1d(input_model: DataModel,
                   spectrace_ref_name: str,
                   wavemap_ref_name: str,
                   specprofile_ref_name: str,
-                  speckernel_ref_name: str):  # TODO What other parameters are needed: threshold, oversampling etc.
+                  speckernel_ref_name: str,
+                  tikfac: float):  # TODO What other parameters are needed: threshold, oversampling etc.
     """Run the spectral extraction on NIRISS SOSS data.
 
     :param input_model:
@@ -208,7 +209,7 @@ def run_extract1d(input_model: DataModel,
         scimask = input_model.dq > 0  # Mask bad pixels with True.
 
         # Perform the extraction.
-        wavelengths, fluxes, fluxerrs, transform, tikfac = extract_image(scidata, scierr, scimask, ref_files)
+        wavelengths, fluxes, fluxerrs, transform, tikfac = extract_image(scidata, scierr, scimask, ref_files, tikfac=tikfac)
 
         # Initialize the output model.
         output_model = datamodels.MultiSpecModel()  # TODO is this correct for ImageModel input?
@@ -245,8 +246,7 @@ def run_extract1d(input_model: DataModel,
         # TODO making a deepstack could be used to get a more robust transform and tikfac, 1/f.
 
         # Set transform and tikfac, will be computed first iteration only.
-        transform = [0., 0., 0.]  # TODO should be None but solve_tranform is broken.
-        tikfac = None
+        transform = None
 
         # Initialize the output model.
         output_model = datamodels.MultiSpecModel()  # TODO is this correct for CubeModel input?
