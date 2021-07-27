@@ -1,42 +1,58 @@
 Description
 ===========
-At its basic level this step flat-fields an input science data set by dividing
+At its basic level this step flat-fields an input science dataset by dividing
 by a flat-field reference image. In particular, the SCI array from the
-flat-field reference file is divided into both the SCI and ERR arrays of the
-science data set, and the flat-field DQ array is combined with the science DQ
-array using a bitwise OR operation. Details for particular modes are given
-in the sections below.
+flat-field reference file is divided into the SCI array of the
+science dataset, the flat-field DQ array is combined with the science DQ
+array using a bitwise OR operation, and variance and error arrays in the
+science dataset are updated to include the flat-field uncertainty.
+Details for particular modes are given in the sections below.
 
 Upon completion of the step, the step status keyword "S_FLAT" gets set
 to "COMPLETE" in the output science data.
 
 Imaging and Non-NIRSpec Spectroscopic Data
 ------------------------------------------
-Simple imaging data, usually in the form of an ImageModel, and many
+Simple imaging data, usually in the form of an ImageModel, and some
 spectroscopic modes, use a straight-forward approach that involves applying
 a single flat-field reference file to the science image. The spectroscopic
 modes included in this category are NIRCam WFSS and Time-Series Grism,
-NIRISS WFSS and SOSS, MIRI MRS and LRS. All of these modes are processed
+NIRISS WFSS and SOSS, and MIRI MRS and LRS. All of these modes are processed
 as follows:
 
-- If the science data have been taken using a subarray and the flat-field
+- If the science data have been taken using a subarray and the FLAT
   reference file is a full-frame image, extract the corresponding subarray
   region from the flat-field data.
 
 - Find pixels that have a value of NaN or zero in the FLAT reference file
-  SCI array and set their DQ values to "NO_FLAT_FIELD."
+  SCI array and set their DQ values to "NO_FLAT_FIELD" and "DO_NOT_USE."
 
 - Reset the values of pixels in the flat that have DQ="NO_FLAT_FIELD" to
   1.0, so that they have no effect when applied to the science data.
 
-- Apply the flat by dividing it into the science exposure SCI and ERR arrays.
-
 - Propagate the FLAT reference file DQ values into the science exposure
   DQ array using a bitwise OR operation.
 
+- Apply the flat according to:
+
+  .. math::
+     SCI_{science} = SCI_{science} / SCI_{flat}
+
+  .. math::
+     VAR\_POISSON_{science} = VAR\_POISSON_{science} / SCI_{flat}^2
+
+  .. math::
+     VAR\_RNOISE_{science} = VAR\_RNOISE_{science} / SCI_{flat}^2
+
+  .. math::
+     VAR\_FLAT_{science} = ( SCI_{science}^{2} / SCI_{flat}^{2} ) * ERR_{flat}^{2}
+
+  .. math::
+     ERR_{science} = \sqrt{VAR\_POISSON + VAR\_RNOISE + VAR\_FLAT}
+
 Multi-integration datasets ("_rateints.fits" products), which are common
 for modes like NIRCam Time-Series Grism, NIRISS SOSS, and MIRI LRS Slitless,
-are handled by applying the above flat-field procedures to each integration.
+are handled by applying the above equations to each integration.
 
 NIRSpec Spectroscopic Data
 --------------------------
@@ -61,10 +77,10 @@ NIRSpec NRS_BRIGHTOBJ data are processed just like NIRSpec Fixed-Slit
 data, except that NRS_BRIGHTOBJ data are stored in a CubeModel,
 rather than a MultiSlitModel.  A 2-D flat-field image is constructed
 on-the-fly as usual, but this image is then divided into each plane of
-the 3-D SCI and ERR arrays.
+the 3-D science data arrays.
 
 In all cases, there is a step option that allows for saving the
-on-the-fly flat field to a file, if desired.
+on-the-fly flatfield to a file, if desired.
 
 NIRSpec Fixed-Slit Primary Slit
 -------------------------------
@@ -95,16 +111,3 @@ do not have source centering information available, so the
 :ref:`wavecorr <wavecorr_step>` step is not applied, and hence there's no
 difference between the point source and uniform source flatfield
 conversions for those slits.
-
-Error Propagation
------------------
-The VAR_POISSON and VAR_RNOISE variance arrays of the science exposure
-are divided by the square of the flat-field value for each pixel.
-A flat-field variance array, VAR_FLAT, is created from the science exposure
-and flat-field reference file data using the following formula:
-
-.. math::
-   VAR\_FLAT = ( SCI_{science}^{2} / SCI_{flat}^{2} ) * ERR_{flat}^{2}
-
-The total ERR array in the science exposure is updated as the square root
-of the quadratic sum of VAR_POISSON, VAR_RNOISE, and VAR_FLAT.
