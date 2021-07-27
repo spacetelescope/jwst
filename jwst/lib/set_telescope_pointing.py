@@ -1048,8 +1048,8 @@ def calc_transforms_coarse_tr_202107(t_pars: TransformParameters):
     is given by the following formula. Each term is a 3x3 matrix:
 
         M_eci_to_siaf =
-            transpose(M_fgsx_to_v)  *
-            transpose(M_gs_to_fgsx) *
+            transpose(M_v_to_fgsx)  *
+            transpose(M_fgsx_to_gs) *
             M_x_to_z                *
             M_eci_to_gs
 
@@ -1072,9 +1072,7 @@ def calc_transforms_coarse_tr_202107(t_pars: TransformParameters):
     t.m_v2fgsx = calc_v2siaf_matrix(siaf)
 
     # Determine M_eci_to_v frame.
-    # Note that the left two terms, as written in the equation, are to be transposed.
-    # Here, the already-transposed versions are being used.
-    t.m_eci2v = np.linalg.multi_dot([t.m_v2fgsx, t.m_fgsx2gs, MX2Z, t.m_eci2gs])
+    t.m_eci2v = np.linalg.multi_dot([np.transpose(t.m_v2fgsx), np.transpose(t.m_fgsx2gs), MX2Z, t.m_eci2gs])
     logger.debug('M_eci2v: %s', t.m_eci2v)
 
     # Calculate the SIAF transform matrix
