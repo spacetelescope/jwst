@@ -59,6 +59,12 @@ source_catalog
 
 - Fixed issue with non-finite positions for aperture photometry. [#6206]
 
+wavecorr
+--------
+
+- Location of source in NIRspec fixed slit updated
+  (keywords ``SCRCXPOS``, ``SRCYPOS``). [#6243]
+
 wfss_contam
 -----------
 

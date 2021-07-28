@@ -253,9 +253,21 @@ def get_source_xpos(slit, slit_wcs, lam, msa_model):
     # Compute the location in V2,V3 [in arcsec]
     xv, yv = idl2v23(xoffset, yoffset)
 
-    v2v3_to_msa_frame = slit_wcs.get_transform("v2v3", "msa_frame")
-    xpos_abs, ypos_abs, lam = v2v3_to_msa_frame(xv, yv, lam)
+    v2v3_to_msa = slit_wcs.get_transform("v2v3", "msa_frame")
+    msa_to_slit = slit_wcs.get_transform("msa_frame", "slit_frame")
+
+    # Position in the MSA
+    xpos_abs, ypos_abs, lam = v2v3_to_msa(xv, yv, lam)
     xpos_frac = absolute2fractional(msa_model, slit, xpos_abs, ypos_abs)
+    # Position in the virtual slit
+    xpos_slit, ypos_slit, lam_slit = msa_to_slit(xpos_abs, ypos_abs, lam)
+    # Update slit.source_xpos, slit.source_ypos
+    slit.source_xpos = xpos_slit
+    slit.source_ypos = ypos_slit
+    log.debug('Source X/Y position in the slit: {0}, {1}'.format(xpos_slit, ypos_slit))
+
+    log.debug('Source X/Y position in the MSA: {0}, {1}'.format(xpos_abs, ypos_abs))
+    log.debug('Fractional position of source in aperture {}'.format(xpos_frac))
     return xpos_frac
 
 
