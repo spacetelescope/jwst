@@ -59,6 +59,11 @@ source_catalog
 
 - Fixed issue with non-finite positions for aperture photometry. [#6206]
 
+tweakreg
+--------
+
+- Add an upper tweak threshold of 10 arcsec to tweakreg [#6252]
+
 wavecorr
 --------
 

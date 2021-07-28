@@ -7,6 +7,9 @@ JWST pipeline step for image alignment.
 from os import path
 
 from astropy.table import Table
+from astropy import units as u
+from astropy.coordinates import SkyCoord
+from gwcs.wcstools import grid_from_bounding_box
 from tweakwcs.imalign import align_wcs
 from tweakwcs.tpwcs import JWSTgWCS
 from tweakwcs.matchutils import TPMatch
@@ -207,6 +210,15 @@ class TweakRegStep(Step):
             else:
                 raise e
 
+        for imcat in imcats:
+            if not self.fit_quality_is_good(imcat):
+                self.log.warning("WCS has been tweaked by more than 10 arcsec")
+                self.log.warning("Skipping 'TweakRegStep'...")
+                self.skip = True
+                for model in images:
+                    model.meta.cal_step.tweakreg = "SKIPPED"
+                return images
+
         if self.align_to_gaia:
             # Get catalog of GAIA sources for the field
             #
@@ -299,6 +311,28 @@ class TweakRegStep(Step):
                 """
 
         return images
+
+    def fit_quality_is_good(self, imcat):
+        """Check that the newly tweaked wcs hasn't gone off the rails"""
+        tolerance = 10.0 * u.arcsec
+
+        wcs = imcat.meta['image_model'].meta.wcs
+        twcs = imcat.wcs
+
+        grid = grid_from_bounding_box(wcs.bounding_box, step=100)
+        # There's a bug in grid_from_bounding_box that makes the final grid
+        # item outside the bounding box.  So trim off the last one.  And trim
+        # the first one to avoid edge effects.
+        grid = grid[:,1:-1,1:-1]
+        ra, dec = wcs(*grid)
+        tra, tdec = twcs(*grid)
+
+        skycoord = SkyCoord(ra=ra, dec=dec, unit="deg")
+        tskycoord = SkyCoord(ra=tra, dec=tdec, unit="deg")
+
+        separation = skycoord.separation(tskycoord)
+
+        return (separation < tolerance).all()
 
     def _imodel2wcsim(self, image_model):
         # make sure that we have a catalog:
