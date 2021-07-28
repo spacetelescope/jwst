@@ -1252,12 +1252,12 @@ def compute_bounding_box(slit2detector, wavelength_range, slit_ymin=-.55, slit_y
     x_range, y_range = bounding_range(slit_ymin, slit_ymax)
 
     # Run inverse model to narrow range
-    inverse_range = slit2detector.inverse(x_range, y_range)
-    inverse_range_low = np.nanmin(inverse_range)
-    inverse_range_high = np.nanmax(inverse_range)
+    y_slit_range = slit2detector.inverse(x_range, y_range)[1]
+    y_slit_low = np.nanmin(y_slit_range)
+    y_slit_high = np.nanmax(y_slit_range)
 
     # Narrow ranges
-    x_range, y_range = bounding_range(inverse_range_low, inverse_range_high)
+    x_range, y_range = bounding_range(y_slit_low, y_slit_high)
 
     # add 10 px margin
     # The -1 is technically because the output of slit2detector is 1-based coordinates.
