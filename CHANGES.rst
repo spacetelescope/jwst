@@ -36,6 +36,12 @@ extract_1d
 - Updated to propagate SRCTYPE keyword during extraction of MIRI LRS
   fixed-slit inputs that are in `SlitModel` form. [#6212]
 
+flatfield
+---------
+
+- Updated flatfield step docs to include complete details on how the
+  variance and error arrays are updated. [#6245]
+
 outlier_detection
 -----------------
 
