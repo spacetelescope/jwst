@@ -1234,15 +1234,31 @@ def compute_bounding_box(slit2detector, wavelength_range, slit_ymin=-.55, slit_y
         The wavelength range for the combination of grating and filter.
 
     """
+
     lam_min, lam_max = wavelength_range
     step = 1e-10
     nsteps = int((lam_max - lam_min) / step)
     lam_grid = np.linspace(lam_min, lam_max, nsteps)
-    x_range_low, y_range_low = slit2detector([0] * nsteps, [slit_ymin] * nsteps, lam_grid)
-    x_range_high, y_range_high = slit2detector([0] * nsteps, [slit_ymax] * nsteps, lam_grid)
-    x_range = np.hstack((x_range_low, x_range_high))
 
-    y_range = np.hstack((y_range_low, y_range_high))
+    def bounding_range(y_min, y_max):
+        x_range_low, y_range_low = slit2detector([0] * nsteps, [y_min] * nsteps, lam_grid)
+        x_range_high, y_range_high = slit2detector([0] * nsteps, [y_max] * nsteps, lam_grid)
+        x_range = np.hstack((x_range_low, x_range_high))
+        y_range = np.hstack((y_range_low, y_range_high))
+
+        return x_range, y_range
+
+    # Initial guess for ranges
+    x_range, y_range = bounding_range(slit_ymin, slit_ymax)
+
+    # Run inverse model to narrow range
+    inverse_range = slit2detector.inverse(x_range, y_range)
+    inverse_range_low = np.nanmin(inverse_range)
+    inverse_range_high = np.nanmax(inverse_range)
+
+    # Narrow ranges
+    x_range, y_range = bounding_range(inverse_range_low, inverse_range_high)
+
     # add 10 px margin
     # The -1 is technically because the output of slit2detector is 1-based coordinates.
     x0 = max(0, x_range.min() - 1 - 10)
