@@ -12,10 +12,11 @@ import pytest
 
 from astropy.time import Time
 
-from jwst.lib import engdb_tools
-from jwst.lib.tests.engdb_mock import EngDB_Mocker
-from jwst.lib import set_telescope_pointing as stp
 from jwst import datamodels
+from jwst.lib import engdb_tools
+from jwst.lib import set_telescope_pointing as stp
+from jwst.lib import siafdb
+from jwst.lib.tests.engdb_mock import EngDB_Mocker
 from jwst.tests.helpers import word_precision_check
 
 # Ensure that `set_telescope_pointing` logs.
@@ -36,7 +37,7 @@ TARG_DEC = -87.0
 DATA_PATH = Path(__file__).parent / 'data'
 db_ngas_path = DATA_PATH / 'engdb_ngas'
 db_jw703_path = DATA_PATH / 'engdb_jw00703'
-siaf_db = DATA_PATH / 'siaf.db'
+siaf_path = DATA_PATH / 'siaf.db'
 
 # Some expected falues
 Q_EXPECTED = np.asarray(
@@ -69,7 +70,7 @@ METAS_EQALITY = ['meta.pointing.ra_v1',
                  'meta.wcsinfo.v3yangle',
                  'meta.wcsinfo.ra_ref',
                  'meta.wcsinfo.dec_ref',
-]
+                 ]
 METAS_ISCLOSE = ['meta.wcsinfo.cdelt1',
                  'meta.wcsinfo.cdelt2',
                  'meta.wcsinfo.pc1_1',
@@ -77,7 +78,7 @@ METAS_ISCLOSE = ['meta.wcsinfo.cdelt1',
                  'meta.wcsinfo.pc2_1',
                  'meta.wcsinfo.pc2_2',
                  'meta.wcsinfo.roll_ref',
-]
+                 ]
 
 
 def make_t_pars():
@@ -100,10 +101,10 @@ def make_t_pars():
         gs_position=np.array([-22.4002638, -8.1786461]),
         fgsid=1,
     )
-    t_pars.siaf = stp.SIAF(v2_ref=120.525464, v3_ref=-527.543132, v3yangle=-0.5627898, vparity=-1,
-                           crpix1=1024.5, crpix2=1024.5, cdelt1=0.03113928, cdelt2=0.03132232,
-                           vertices_idl=(-32.1682, 32.0906, 31.6586, -31.7234, -32.1683, -32.1904, 32.0823, 31.9456))
-    t_pars.siaf_path = siaf_db
+    t_pars.siaf = siafdb.SIAF(v2_ref=120.525464, v3_ref=-527.543132, v3yangle=-0.5627898, vparity=-1,
+                              crpix1=1024.5, crpix2=1024.5, cdelt1=0.03113928, cdelt2=0.03132232,
+                              vertices_idl=(-32.1682, 32.0906, 31.6586, -31.7234, -32.1683, -32.1904, 32.0823, 31.9456))
+    t_pars.siaf_db = siafdb.SiafDb(siaf_path)
 
     return t_pars
 
@@ -124,7 +125,10 @@ def calc_transforms(request, tmp_path_factory):
     # Save transforms for later examination
     transforms.write_to_asdf(tmp_path_factory.mktemp('transforms') / f'tforms_{request.param}.asdf')
 
-    return transforms, t_pars
+    try:
+        return transforms, t_pars
+    finally:
+        t_pars.siaf_db.close()
 
 
 @pytest.mark.parametrize(
@@ -204,7 +208,7 @@ def test_j3pa_at_gs():
     """Ensure J3PA@GS is as expected"""
     t_pars = make_t_pars()
     t_pars.method = stp.Methods.GSCMD_J3PAGS
-    transforms = stp.calc_transforms(t_pars)
+    _ = stp.calc_transforms(t_pars)
 
     assert np.allclose(t_pars.guide_star_wcs.pa, 297.3522435208429)
 
@@ -290,7 +294,7 @@ def test_change_engdb_url_fail():
 def test_strict_pointing(data_file, eng_db_jw703):
     """Test failure on strict pointing"""
     with pytest.raises(ValueError):
-        stp.add_wcs(data_file, siaf_path=siaf_db, tolerance=0)
+        stp.add_wcs(data_file, siaf_path=siaf_path, tolerance=0)
 
 
 def test_pointing_averaging(eng_db_jw703):
@@ -398,7 +402,7 @@ def test_add_wcs_default(data_file, tmp_path):
 
     try:
         stp.add_wcs(
-            data_file, siaf_path=siaf_db, tolerance=0, allow_default=True
+            data_file, siaf_path=siaf_path, tolerance=0, allow_default=True
         )
     except ValueError:
         pass  # This is what we want for the test.
@@ -428,7 +432,7 @@ def test_add_wcs_default_nosiaf(data_file_nosiaf, caplog):
     """Handle when no pointing exists and the default is used and no SIAF specified."""
     with pytest.raises(ValueError):
         stp.add_wcs(
-            data_file_nosiaf, siaf_path=siaf_db, tolerance=0, allow_default=True
+            data_file_nosiaf, siaf_path=siaf_path, tolerance=0, allow_default=True
         )
 
 
@@ -438,7 +442,7 @@ def test_add_wcs_with_db(eng_db_ngas, data_file, tmp_path):
     """Test using the database"""
     expected_name = 'add_wcs_with_db.fits'
 
-    stp.add_wcs(data_file, siaf_path=siaf_db)
+    stp.add_wcs(data_file, siaf_path=siaf_path)
 
     # Tests
     with datamodels.Level1bModel(data_file) as model:
@@ -462,7 +466,7 @@ def test_add_wcs_method_gscmd(eng_db_ngas, data_file, tmp_path):
     """Test using the database and the original, pre-JSOCINT-555 algorithms"""
     expected_name = 'add_wcs_method_gscmd.fits'
     # Calculate
-    stp.add_wcs(data_file, siaf_path=siaf_db, method=stp.Methods.GSCMD_J3PAGS)
+    stp.add_wcs(data_file, siaf_path=siaf_path, method=stp.Methods.GSCMD_J3PAGS)
 
     # Tests
     with datamodels.Level1bModel(data_file) as model:
@@ -513,7 +517,7 @@ def test_add_wcs_method_full_siafdb(eng_db_ngas, data_file, tmp_path):
     expected_name = 'add_wcs_method_full_siafdb.fits'
 
     # Calculate
-    stp.add_wcs(data_file, siaf_path=siaf_db, method=stp.Methods.TR_202105)
+    stp.add_wcs(data_file, siaf_path=siaf_path, method=stp.Methods.TR_202105)
 
     # Test
     with datamodels.Level1bModel(data_file) as model:
@@ -543,7 +547,7 @@ def test_default_siaf_values(eng_db_ngas, data_file_nosiaf):
         model.meta.aperture.name = "MIRIM_TAFULL"
         model.meta.observation.date = '2017-01-01'
         model.meta.exposure.type = "MIR_IMAGE"
-        stp.update_wcs(model, siaf_path=siaf_db, allow_default=False)
+        stp.update_wcs(model, siaf_path=siaf_path, allow_default=False)
         assert model.meta.wcsinfo.crpix1 == 24.5
         assert model.meta.wcsinfo.crpix2 == 24.5
         assert model.meta.wcsinfo.cdelt1 == 3.067124166666667e-05
@@ -561,6 +565,6 @@ def test_tsgrism_siaf_values(eng_db_ngas, data_file_nosiaf):
         model.meta.observation.date = '2017-01-01'
         model.meta.exposure.type = "NRC_TSGRISM"
         model.meta.visit.tsovisit = True
-        stp.update_wcs(model, siaf_path=siaf_db)
+        stp.update_wcs(model, siaf_path=siaf_path)
         assert model.meta.wcsinfo.siaf_xref_sci == 952
         assert model.meta.wcsinfo.siaf_yref_sci == 35

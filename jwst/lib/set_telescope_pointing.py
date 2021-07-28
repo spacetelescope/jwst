@@ -5,25 +5,23 @@ import asdf
 from collections import defaultdict, namedtuple
 from copy import copy, deepcopy
 import dataclasses
-from datetime import date
 from enum import Enum
 import logging
 from math import (asin, atan2, cos, sin, sqrt)
-import os.path
-import sqlite3
 import typing
 
 from astropy.time import Time
 import numpy as np
 from scipy.interpolate import interp1d
 
+from .exposure_types import IMAGING_TYPES, FGS_GUIDE_EXP_TYPES
 from .set_velocity_aberration import compute_va_effects_vector
+from .siafdb import SIAF, SiafDb
 from ..assign_wcs.util import update_s_region_keyword, calc_rotation_matrix
 from ..assign_wcs.pointing import v23tosky
 from ..datamodels import open as dm_open
 from ..lib.engdb_tools import ENGDB_Service
 from ..lib.pipe_utils import is_tso
-from .exposure_types import IMAGING_TYPES, FGS_GUIDE_EXP_TYPES
 
 TYPES_TO_UPDATE = set(list(IMAGING_TYPES) + FGS_GUIDE_EXP_TYPES)
 
@@ -110,34 +108,6 @@ D2R = np.pi / 180.
 A2R = D2R / 3600.
 R2A = 3600. * R2D
 PI2 = np.pi * 2.
-
-# Map instrument three character mnemonic to full name
-INSTRUMENT_MAP = {
-    'fgs': 'fgs',
-    'mir': 'miri',
-    'nis': 'niriss',
-    'nrc': 'nircam',
-    'nrs': 'nirspec'
-}
-
-# SIAF container
-# The names should correspond to the names in the ``wcsinfo`` schema.
-# It is populated by the SIAF values in the PRD database based
-# on APERNAME and UseAfterDate and used to populate the keywords
-# in Level1bModel data models.
-SIAF = namedtuple("SIAF", ["v2_ref", "v3_ref", "v3yangle", "vparity",
-                           "crpix1", "crpix2", "cdelt1", "cdelt2",
-                           "vertices_idl"])
-# Set default values for the SIAF.
-# Values which are needed by the pipeline are set to None which
-# triggers a ValueError if missing in the SIAF database.
-# Quantities not used by the pipeline get a default value -
-# FITS keywords and aperture vertices.
-SIAF.__new__.__defaults__ = (None, None, None, None, 0, 0, 3600, 3600,
-                             (0, 1, 1, 0, 0, 0, 1, 1))
-
-SIAF_VERTICIES = ['XIdlVert1', 'XIdlVert2', 'XIdlVert3', 'XIdlVert4',
-                  'YIdlVert1', 'YIdlVert2', 'YIdlVert3', 'YIdlVert4']
 
 # Pointing container
 Pointing = namedtuple('Pointing', ['q', 'j2fgs_matrix', 'fsmcorr', 'obstime', 'gs_commanded', 'fgsid', 'gs_position'])
@@ -296,8 +266,8 @@ class TransformParameters:
     siaf : `SIAF`
         The SIAF information for the input model
 
-    siaf_path : str or file-like object or None
-        The path to the SIAF database.
+    siaf_db : `SiafDb`
+        The SIAF database
 
     tolerance : int
         If no telemetry can be found during the observation,
@@ -322,7 +292,7 @@ class TransformParameters:
     pointing: Pointing = None
     reduce_func: typing.Callable = None
     siaf: SIAF = None
-    siaf_path: str = None
+    siaf_db: SiafDb = None
     tolerance: float = 60.
     useafter: str = None
     v3pa_at_gs: float = None
@@ -355,7 +325,7 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
         is not found.
 
     siaf_path : str or file-like object or None
-        The path to the SIAF database.
+        The path to the SIAF database. See `SiafDb` for more information.
 
     engdb_url : str or None
         URL of the engineering telemetry database REST interface.
@@ -524,7 +494,7 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, eng
         use this as the roll ref angle.
 
     siaf_path : str
-        The path to the SIAF file, i.e. ``XML_DATA`` env variable.
+        The path to the SIAF database. See `SiafDb` for more information.
 
     engdb_url : str or None
         URL of the engineering telemetry database REST interface.
@@ -553,35 +523,38 @@ def update_wcs(model, default_pa_v3=0., default_roll_ref=0., siaf_path=None, eng
     """
     t_pars = transforms = None  # Assume telemetry is not used.
 
-    # If the type of exposure is not FGS, then attempt to get pointing
-    # from telemetry.
-    try:
-        exp_type = model.meta.exposure.type.lower()
-    except AttributeError:
-        exp_type = None
-    aperture_name = model.meta.aperture.name.upper()
-    useafter = model.meta.observation.date
-    if aperture_name != "UNKNOWN":
-        logger.info("Updating WCS for aperture %s", aperture_name)
-        siaf = get_wcs_values_from_siaf(aperture_name, useafter, siaf_path)
-        populate_model_from_siaf(model, siaf)
-    else:
-        logger.warning("Aperture name is set to 'UNKNOWN'. "
-                       "WCS keywords will not be populated from SIAF.")
-        siaf = SIAF()
+    # Open the SIAF dabase
+    with SiafDb(siaf_path) as siaf_db:
 
-    if exp_type in FGS_GUIDE_EXP_TYPES:
-        update_wcs_from_fgs_guiding(
-            model, default_roll_ref=default_roll_ref
-        )
-    else:
-        t_pars = TransformParameters(
-            default_pa_v3=default_pa_v3, siaf=siaf, engdb_url=engdb_url,
-            tolerance=tolerance, allow_default=allow_default,
-            reduce_func=reduce_func, siaf_path=siaf_path, useafter=useafter,
-            **transform_kwargs
-        )
-        transforms = update_wcs_from_telem(model, t_pars)
+        # If the type of exposure is not FGS, then attempt to get pointing
+        # from telemetry.
+        try:
+            exp_type = model.meta.exposure.type.lower()
+        except AttributeError:
+            exp_type = None
+        aperture_name = model.meta.aperture.name.upper()
+        useafter = model.meta.observation.date
+        if aperture_name != "UNKNOWN":
+            logger.info("Updating WCS for aperture %s", aperture_name)
+            siaf = siaf_db.get_wcs(aperture_name, useafter)
+            populate_model_from_siaf(model, siaf)
+        else:
+            logger.warning("Aperture name is set to 'UNKNOWN'. "
+                           "WCS keywords will not be populated from SIAF.")
+            siaf = SIAF()
+
+        if exp_type in FGS_GUIDE_EXP_TYPES:
+            update_wcs_from_fgs_guiding(
+                model, default_roll_ref=default_roll_ref
+            )
+        else:
+            t_pars = TransformParameters(
+                default_pa_v3=default_pa_v3, siaf=siaf, engdb_url=engdb_url,
+                tolerance=tolerance, allow_default=allow_default,
+                reduce_func=reduce_func, siaf_db=siaf_db, useafter=useafter,
+                **transform_kwargs
+            )
+            transforms = update_wcs_from_telem(model, t_pars)
 
     return t_pars, transforms
 
@@ -996,7 +969,7 @@ def calc_transforms_tr202105(t_pars: TransformParameters):
     t.m_j2fgs1 = calc_j2fgs1_matrix(t_pars.pointing.j2fgs_matrix, transpose=t_pars.j2fgs_transpose)
 
     # Calculate the FGS1 ICS to SI-FOV matrix
-    t.m_fgs12sifov = calc_fgs1_to_sifov_matrix(t_pars.siaf_path, t_pars.useafter)
+    t.m_fgs12sifov = calc_fgs1_to_sifov_matrix(t_pars.siaf_db, t_pars.useafter)
 
     # Calculate the FSM corrections to the SI_FOV frame
     t.m_sifov_fsm_delta = calc_sifov_fsm_delta_matrix(
@@ -1079,7 +1052,7 @@ def calc_transforms_coarse_tr_202107(t_pars: TransformParameters):
     t = calc_m_eci2gs(t_pars)
 
     # Determine the M_fgsx_to_v matrix
-    siaf = get_wcs_values_from_siaf(FGSId2Aper[t_pars.pointing.fgsid])
+    siaf = t_pars.siaf_db.get_wcs(FGSId2Aper[t_pars.pointing.fgsid])
     t.m_v2fgsx = calc_v2siaf_matrix(siaf)
 
     # Determine M_eci_to_v frame.
@@ -1141,7 +1114,7 @@ def calc_transforms_track_tr_202107(t_pars: TransformParameters):
     t_pars.guide_star_wcs = WCSRef(t_pars.guide_star_wcs.ra, t_pars.guide_star_wcs.dec, v3pags)
 
     # Transform the guide star location in ideal detector coordinates to the telescope/V23 frame.
-    gs_pos_v23 = trans_fgs2v(t_pars.pointing.fgsid, t_pars.pointing.gs_position)
+    gs_pos_v23 = trans_fgs2v(t_pars.pointing.fgsid, t_pars.pointing.gs_position, t_pars.siaf_db)
 
     # Calculate the M_eci2v matrix. This is the attitude matrix of the observatory
     # relative to the guide star.
@@ -1239,7 +1212,7 @@ def calc_transforms_velocity_abberation_tr202105(t_pars: TransformParameters):
     )
 
     # Calculate the FGS1 ICS to SI-FOV matrix
-    t.m_fgs12sifov = calc_fgs1_to_sifov_matrix(t_pars.siaf_path, t_pars.useafter)
+    t.m_fgs12sifov = calc_fgs1_to_sifov_matrix(t_pars.siaf_db, t_pars.useafter)
 
     # Calculate SI FOV to V1 matrix
     t.m_sifov2v = calc_sifov2v_matrix()
@@ -1315,7 +1288,7 @@ def calc_transforms_original(t_pars: TransformParameters):
     # Calculate the FGS1 ICS to SI-FOV matrix
     # The SIAF is explicitly not used because this was not accounted for in
     # the original specification.
-    t.m_fgs12sifov = calc_fgs1_to_sifov_matrix(siaf_path=None, useafter=None)
+    t.m_fgs12sifov = calc_fgs1_to_sifov_matrix(siaf_db=None, useafter=None)
 
     # Calculate SI FOV to V1 matrix
     t.m_sifov2v = calc_sifov2v_matrix()
@@ -1385,7 +1358,7 @@ def calc_transforms_gscmd_j3pags(t_pars: TransformParameters):
     t.m_eci2fgs1 = calc_eci2fgs1_j3pags(t_pars)
 
     # Calculate the FGS1 ICS to SI-FOV matrix
-    t.m_fgs12sifov = calc_fgs1_to_sifov_matrix(siaf_path=t_pars.siaf_path, useafter=t_pars.useafter)
+    t.m_fgs12sifov = calc_fgs1_to_sifov_matrix(siaf_db=t_pars.siaf_db, useafter=t_pars.useafter)
 
     # Calculate the FSM corrections to the SI_FOV frame
     t.m_sifov_fsm_delta = calc_sifov_fsm_delta_matrix(
@@ -1465,7 +1438,7 @@ def calc_transforms_gscmd_v3pags(t_pars: TransformParameters):
     )
 
     # Calculate the FGS1 ICS to SI-FOV matrix
-    t.m_fgs12sifov = calc_fgs1_to_sifov_matrix(siaf_path=t_pars.siaf_path, useafter=t_pars.useafter)
+    t.m_fgs12sifov = calc_fgs1_to_sifov_matrix(siaf_db=t_pars.siaf_db, useafter=t_pars.useafter)
 
     # Calculate SI FOV to V1 matrix
     t.m_sifov2v = calc_sifov2v_matrix()
@@ -1600,7 +1573,7 @@ def calc_eci2fgs1_v3pags(t_pars: TransformParameters):
     t_pars : TransformParameters
         The transformation parameters. Parameters are updated during processing.
     """
-    fgs1_siaf = get_wcs_values_from_siaf('FGS1_FULL_OSS', useafter=t_pars.useafter, prd_db_filepath=t_pars.siaf_path)
+    fgs1_siaf = t_pars.siaf_db.get_wcs('FGS1_FULL_OSS', useafter=t_pars.useafter)
     logger.debug('fgs1_siaf: %s', fgs1_siaf)
 
     logger.debug('Incoming guide_star_wcs: %s', t_pars.guide_star_wcs)
@@ -2014,15 +1987,19 @@ def calc_sifov_fsm_delta_matrix(fsmcorr, fsmcorr_version='latest', fsmcorr_units
     return transform
 
 
-def calc_fgs1_to_sifov_matrix(siaf_path=None, useafter=None):
+def calc_fgs1_to_sifov_matrix(siaf_db=None, useafter=None):
     """
     Calculate the FGS1 to SI-FOV matrix
 
     Based on algorithm determined in JSOCINT-555 for a more
     accurate determination of the matrix using the SIAF.
     """
+    if siaf_db is None:
+        logger.warning('No SIAF database specified. Using the default FGS1_to_SIFOV matrix')
+        return FGS12SIFOV_DEFAULT
+
     try:
-        fgs1_siaf = get_wcs_values_from_siaf('FGS1_FULL_OSS', useafter, siaf_path)
+        fgs1_siaf = siaf_db.get_wcs('FGS1_FULL_OSS', useafter)
     except (KeyError, OSError, TypeError, RuntimeError):
         logger.warning('Cannot read a SIAF database. Using the default FGS1_to_SIFOV matrix')
         return FGS12SIFOV_DEFAULT
@@ -2278,180 +2255,6 @@ def _roll_angle_from_matrix(matrix, v2, v3):
     if new_roll < 0:
         new_roll += 360
     return new_roll
-
-
-def get_wcs_values_from_siaf(aperture_name, useafter=None, prd_db_filepath=None):
-    """
-    Query the SIAF database file and get WCS values.
-
-    Given an ``APERTURE_NAME`` and a ``USEAFTER`` date query the SIAF database
-    and extract the following keywords:
-    ``V2Ref``, ``V3Ref``, ``V3IdlYAngle``, ``VIdlParity``,
-    ``XSciRef``, ``YSciRef``, ``XSciScale``, ``YSciScale``,
-    ``XIdlVert1``, ``XIdlVert2``, ``XIdlVert3``, ``XIdlVert4``,
-    ``YIdlVert1``, ``YIdlVert2``, ``YIdlVert3``, ``YIdlVert4``
-
-    Parameters
-    ----------
-    aperture_name : str
-        The name of the aperture to retrieve.
-        List of values can be specified as comma-separated values within the string.
-        For example: 'FGS1_FULL_OSS, FGS1_FULL'
-    useafter : str or None
-        The date of observation (``model.meta.date``).
-        If None, use current date
-    prd_db_filepath : str
-        The path to the SIAF (PRD database) file.
-        If None, attempt to get the path from the ``XML_DATA`` environment variable.
-        If no PRD is available, use the `pysiaf` interface to retrieve the necessary information
-
-    Returns
-    -------
-    siaf : namedtuple
-        The SIAF namedtuple with values from the PRD database.
-    """
-    # Assume PRD failure
-    prd_fail = True
-
-    # Try the PRD
-    if prd_db_filepath:
-        if not useafter:
-            useafter = date.today().strftime('%Y-%m-%d')
-        try:
-            siaf = get_wcs_values_from_siaf_prd(aperture_name, useafter, prd_db_filepath=prd_db_filepath)
-        except (KeyError, OSError, TypeError, RuntimeError):
-            pass
-        else:
-            prd_fail = False
-
-    if prd_fail:
-        siaf = get_wcs_values_from_siaf_api(aperture_name)
-
-    logger.info('For aperture %s: SIAF: %s', aperture_name, siaf)
-    return siaf
-
-
-def get_wcs_values_from_siaf_api(aperture_name):
-    """
-    Query the SIAF database through pysiaf and get WCS values.
-
-    Given an ``APERTURE_NAME`` query the SIAF database
-    and extract the following keywords:
-    ``V2Ref``, ``V3Ref``, ``V3IdlYAngle``, ``VIdlParity``,
-    ``XSciRef``, ``YSciRef``, ``XSciScale``, ``YSciScale``,
-    ``XIdlVert1``, ``XIdlVert2``, ``XIdlVert3``, ``XIdlVert4``,
-    ``YIdlVert1``, ``YIdlVert2``, ``YIdlVert3``, ``YIdlVert4``
-
-    Parameters
-    ----------
-    aperture_name : str
-        The name of the aperture to retrieve.
-
-    Returns
-    -------
-    siaf : namedtuple
-        The SIAF namedtuple with values from the PRD database.
-    """
-    logger.info('Retrieving WCS through SIAF API `pysiaf`')
-    import pysiaf
-
-    # Retrieve SIAF
-    instrument = INSTRUMENT_MAP[aperture_name[:3].lower()]
-    siaf = pysiaf.Siaf(instrument)
-    aperture = siaf[aperture_name.upper()]
-
-    # Fill out the Siaf
-    verticies = tuple(getattr(aperture, key) for key in SIAF_VERTICIES)
-    siaf = SIAF(v2_ref=aperture.V2Ref, v3_ref=aperture.V3Ref, v3yangle=aperture.V3IdlYAngle, vparity=aperture.VIdlParity,
-                crpix1=aperture.XSciRef, crpix2=aperture.YSciRef, cdelt1=aperture.XSciScale, cdelt2=aperture.YSciScale,
-                vertices_idl=verticies)
-
-    return siaf
-
-
-def get_wcs_values_from_siaf_prd(aperture_name, useafter, prd_db_filepath=None):
-    """
-    Query the SIAF database file and get WCS values.
-
-    Given an ``APERTURE_NAME`` and a ``USEAFTER`` date query the SIAF database
-    and extract the following keywords:
-    ``V2Ref``, ``V3Ref``, ``V3IdlYAngle``, ``VIdlParity``,
-    ``XSciRef``, ``YSciRef``, ``XSciScale``, ``YSciScale``,
-    ``XIdlVert1``, ``XIdlVert2``, ``XIdlVert3``, ``XIdlVert4``,
-    ``YIdlVert1``, ``YIdlVert2``, ``YIdlVert3``, ``YIdlVert4``
-
-    Parameters
-    ----------
-    aperture_name : str
-        The name of the aperture to retrieve.
-    useafter : str
-        The date of observation (``model.meta.date``)
-    prd_db_filepath : str
-        The path to the SIAF (PRD database) file.
-        If None, attempt to get the path from the ``XML_DATA`` environment variable.
-
-    Returns
-    -------
-    siaf : namedtuple
-        The SIAF namedtuple with values from the PRD database.
-    """
-    if prd_db_filepath is None:
-        try:
-            prd_db_filepath = os.path.join(os.environ['XML_DATA'], "prd.db")
-        except KeyError:
-            message = "Unknown path to PRD DB file or missing env variable ``XML_DATA``."
-            logger.info(message)
-            raise KeyError(message)
-    if not os.path.exists(prd_db_filepath):
-        message = "Invalid path to PRD DB file: {0}".format(prd_db_filepath)
-        logger.info(message)
-        raise OSError(message)
-    prd_db_filepath = "file:{0}?mode=ro".format(prd_db_filepath)
-    logger.info("Using SIAF database from %s", prd_db_filepath)
-    logger.info("Quering SIAF for aperture "
-                "%s with USEAFTER %s", aperture_name, useafter)
-
-    RESULT = {}
-    PRD_DB = False
-    try:
-        PRD_DB = sqlite3.connect(prd_db_filepath, uri=True)
-
-        cursor = PRD_DB.cursor()
-        cursor.execute("SELECT Apername, V2Ref, V3Ref, V3IdlYAngle, VIdlParity, "
-                       "XSciRef, YSciRef, XSciScale, YSciScale, "
-                       "XIdlVert1, XIdlVert2, XIdlVert3, XIdlVert4, "
-                       "YIdlVert1, YIdlVert2, YIdlVert3, YIdlVert4 "
-                       "FROM Aperture WHERE Apername = ? "
-                       "and UseAfterDate <= ? ORDER BY UseAfterDate LIMIT 1",
-                       (aperture_name, useafter))
-        for row in cursor:
-            RESULT[row[0]] = tuple(row[1:17])
-        PRD_DB.commit()
-    except (sqlite3.Error, sqlite3.OperationalError) as err:
-        print("Error: " + err.args[0])
-        raise
-    finally:
-        if PRD_DB:
-            PRD_DB.close()
-    logger.info("loaded %s table rows from %s", len(RESULT), prd_db_filepath)
-    default_siaf = SIAF()
-    if RESULT:
-        # This populates the SIAF tuple with the values from the database.
-        # The last 8 values returned from the database are the vertices.
-        # They are wrapped in a list and assigned to SIAF.vertices_idl.
-        values = list(RESULT.values())[0]
-        vert = values[-8:]
-        values = list(values[: - 8])
-        values.append(vert)
-        # If any of "crpix1", "crpix2", "cdelt1", "cdelt2", "vertices_idl" is None
-        # reset ot to the default value.
-        for i in range(4, 8):
-            if values[i] is None:
-                values[i] = default_siaf[i]
-        siaf = SIAF(*values)
-        return siaf
-    else:
-        raise RuntimeError(f'No SIAF entries found for {aperture_name}')
 
 
 def get_mnemonics(obsstart, obsend, tolerance, engdb_url=None):
@@ -2901,9 +2704,7 @@ def calc_v3pags(t_pars: TransformParameters):
     gs_wcs = calc_estimated_gs_wcs(t_pars)
 
     # Retrieve the Ideal Y-angle for the desired FGS
-    fgs_siaf = get_wcs_values_from_siaf(FGSId2Aper[t_pars.pointing.fgsid],
-                                        useafter=t_pars.useafter,
-                                        prd_db_filepath=t_pars.siaf_path)
+    fgs_siaf = t_pars.siaf_db.get_wcs(FGSId2Aper[t_pars.pointing.fgsid], useafter=t_pars.useafter)
 
     # Calculate V3PAGS
     v3pags = gs_wcs.pa - fgs_siaf.v3yangle
@@ -2963,7 +2764,7 @@ def calc_m_eci2gs(t_pars: TransformParameters):
 
     t.m_eci2j = calc_eci2j_matrix(t_pars.pointing.q)
     t.m_j2fgs1 = calc_j2fgs1_matrix(t_pars.pointing.j2fgs_matrix, t_pars.j2fgs_transpose)
-    t.m_fgs12fgsx = calc_m_fgs12fgsx(t_pars.pointing.fgsid, t_pars.siaf_path)
+    t.m_fgs12fgsx = calc_m_fgs12fgsx(t_pars.pointing.fgsid, t_pars.siaf_db)
     t.m_fgsx2gs = calc_m_fgsx2gs(t_pars.pointing.gs_commanded)
 
     t.m_eci2fgs1 = np.dot(t.m_j2fgs1, t.m_eci2j)
@@ -2980,7 +2781,7 @@ def calc_m_eci2gs(t_pars: TransformParameters):
     return t
 
 
-def calc_m_fgs12fgsx(fgsid, siaf_path):
+def calc_m_fgs12fgsx(fgsid, siaf_db):
     """Calculate the FGS1 to FGSx matrix
 
     This implements equation 23 from Technical Report JWST-STScI-003222, SM-12, 2021-07
@@ -2999,8 +2800,8 @@ def calc_m_fgs12fgsx(fgsid, siaf_path):
     fgsid : int
         The id of the FGS in actually in use. 1 or 2
 
-    siaf_path : str or file-like object or None
-        The path to the SIAF database.
+    siaf_db : SiafDb
+        The SIAF database.
 
     Returns
     -------
@@ -3019,8 +2820,8 @@ def calc_m_fgs12fgsx(fgsid, siaf_path):
         raise ValueError(f'fgsid == {fgsid} is invalid. Must be 1 or 2')
 
     # FGS2 is in use. Calculate the transform from FGS1 to FGS2
-    fgs1_siaf = get_wcs_values_from_siaf(FGSId2Aper[1])
-    fgs2_siaf = get_wcs_values_from_siaf(FGSId2Aper[2])
+    fgs1_siaf = siaf_db.get_wcs(FGSId2Aper[1])
+    fgs2_siaf = siaf_db.get_wcs(FGSId2Aper[2])
     m_fgs1 = calc_v2siaf_matrix(fgs1_siaf)
     m_fgs2 = calc_v2siaf_matrix(fgs2_siaf)
 
@@ -3085,7 +2886,7 @@ def calc_m_gs2fgsx(gs_commanded):
     return m_gs2fgsx
 
 
-def trans_fgs2v(fgsid, ideal):
+def trans_fgs2v(fgsid, ideal, siaf_db):
     """Transform an Ideal coordinate to V coordinates
 
     Parameters
@@ -3096,6 +2897,9 @@ def trans_fgs2v(fgsid, ideal):
     ideal : numpy.array(2)
         The Ideal coordinates in arcseconds
 
+    siaf_db : SiafDb
+        The SIAF database.
+
     Returns
     -------
     v : numpy.array(2)
@@ -3103,7 +2907,7 @@ def trans_fgs2v(fgsid, ideal):
     """
     ideal_rads = ideal * A2R
     ideal_vec = cart_to_vector(ideal_rads)
-    siaf = get_wcs_values_from_siaf(FGSId2Aper[fgsid])
+    siaf = siaf_db.get_wcs(FGSId2Aper[fgsid])
     m_v2fgs = calc_v2siaf_matrix(siaf)
     v_vec = np.dot(m_v2fgs.transpose(), ideal_vec)
     v_rads = np.array(vector_to_angle(v_vec))

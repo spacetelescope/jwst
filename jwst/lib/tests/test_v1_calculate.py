@@ -23,6 +23,9 @@ DATA_PATH = Path(__file__).parent / 'data'
 GOOD_STARTTIME = Time('59240.10349754328', format='mjd')
 GOOD_ENDTIME = Time('59240.1082197338', format='mjd')
 
+# Requires pysiaf
+pytest.importorskip('pysiaf')
+
 
 @pytest.fixture
 def engdb():

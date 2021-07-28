@@ -15,6 +15,16 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+# Attempt imports of pysiaf and sqlite3 and flag whether there are fails.
+try:
+    import pysiaf
+except ModuleNotFoundError:
+    pysiaf = False
+try:
+    import sqlite3
+except ModuleNotFoundError:
+    sqlite3 = False
+
 # Map instrument three character mnemonic to full name
 INSTRUMENT_MAP = {
     'fgs': 'fgs',
@@ -70,25 +80,31 @@ class SiafDb:
     Otherwise, fail.
     """
     def __init__(self, source=None):
+        self._db = None
+        self._source = None
 
         # If no source, retrieve the environmental XML_DATA
         if source is None:
             source = os.environ.get('XML_DATA', None)
             if source is not None:
                 source = Path(source) / 'prd.db'
+        self._source = source
 
         # Attempt to access source as a pysiaf source
         try:
-            source = SiafDbPySiaf(source)
+            db = SiafDbPySiaf(source)
         except ValueError:
             # Source is incompatible.
             logger.debug('Could not open as a pysiaf object: %s', source)
         else:
-            self._source = source
+            self._db = db
             return
 
         # Attempt to access source as an sqlite database.
-        self._source = SiafDbSqlite(source)
+        self._db = SiafDbSqlite(source)
+
+    def close(self):
+        self._db.close()
 
     def get_wcs(self, aperture, useafter=None):
         """
@@ -116,7 +132,17 @@ class SiafDb:
         """
         if not useafter:
             useafter = date.today().strftime('%Y-%m-%d')
-        return self._source.get_wcs(aperture, useafter)
+        return self._db.get_wcs(aperture, useafter)
+
+    def __deepcopy__(self, memo):
+        """Do not copy, just return."""
+        return self
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self._db.close()
 
 
 class SiafDbPySiaf:
@@ -138,13 +164,17 @@ class SiafDbPySiaf:
     Otherwise, fail.
     """
     def __init__(self, source=None):
-        import pysiaf  # noqa: Ensure that the pysiaf package is available.
+        if not pysiaf:
+            raise ValueError('Package "psyaif" is not installed. Cannot use the psyaif api')
 
         if source is not None:
             source = Path(source)
             if not source.is_dir():
                 raise ValueError('Source %s: Needs to be a folder for use with pysiaf')
         self._source = source
+
+    def close(self):
+        pass
 
     def get_wcs(self, aperture, useafter):
         """
@@ -169,9 +199,8 @@ class SiafDbPySiaf:
         siaf : namedtuple
             The SIAF namedtuple with values from the PRD database.
         """
-        import pysiaf
         instrument = INSTRUMENT_MAP[aperture[:3].lower()]
-        siaf = pysiaf.Siaf(instrument)
+        siaf = pysiaf.Siaf(instrument, basepath=self._source)
         aperture = siaf[aperture.upper()]
 
         # Fill out the Siaf
@@ -192,16 +221,27 @@ class SiafDbSqlite:
         The SIAF database source.
     """
     def __init__(self, source):
-        import sqlite3
+        self._cursor = None
+        self._db = None
+        self._source = None
+
+        if not sqlite3:
+            raise ValueError('Package "sqlite3" is not install. Cannot use the sqlite api.')
+
+        if source is None:
+            raise ValueError('Source: %s: Cannot be None. A sqlite path needs to be specified.', source)
 
         source = Path(source)
         if not source.exists():
             raise ValueError('Source: %s does not exist.', source)
-        source = f'file:{str(source)}?mode=ro'
+        self._source = f'file:{str(source)}?mode=ro'
 
-        self._source = sqlite3.connect(source, uri=True)
-        self._cursor = self._source.cursor()
+        self._db = sqlite3.connect(self._source, uri=True)
+        self._cursor = self._db.cursor()
         logger.info("Using SIAF database from %s", source)
+
+    def close(self):
+        self._db.close()
 
     def get_wcs(self, aperture, useafter):
         """
@@ -226,7 +266,6 @@ class SiafDbSqlite:
         siaf : namedtuple
             The SIAF namedtuple with values from the PRD database.
         """
-        import sqlite3
         logger.info("Quering SIAF for aperture "
                     "%s with USEAFTER %s", aperture, useafter)
         RESULT = {}
@@ -240,7 +279,7 @@ class SiafDbSqlite:
                                  (aperture, useafter))
             for row in self._cursor:
                 RESULT[row[0]] = tuple(row[1:17])
-            self._source.commit()
+            self._db.commit()
         except (sqlite3.Error, sqlite3.OperationalError) as err:
             print("Error: " + err.args[0])
             raise
@@ -267,5 +306,5 @@ class SiafDbSqlite:
 
     def __del__(self):
         """Close out any connections"""
-        if self._source:
-            self._source.close()
+        if self._db:
+            self._db.close()
