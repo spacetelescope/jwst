@@ -9,7 +9,6 @@ from os import path
 from astropy.table import Table
 from astropy import units as u
 from astropy.coordinates import SkyCoord
-from gwcs.wcstools import grid_from_bounding_box
 from tweakwcs.imalign import align_wcs
 from tweakwcs.tpwcs import JWSTgWCS
 from tweakwcs.matchutils import TPMatch
@@ -211,8 +210,10 @@ class TweakRegStep(Step):
                 raise e
 
         for imcat in imcats:
-            if not self.fit_quality_is_good(imcat):
-                self.log.warning("WCS has been tweaked by more than 10 arcsec")
+            wcs = imcat.meta['image_model'].meta.wcs
+            twcs = imcat.wcs
+            if not self.fit_quality_is_good(wcs, twcs):
+                self.log.warning(f"WCS has been tweaked by more than {10 * self.tolerance} arcsec")
                 self.log.warning("Skipping 'TweakRegStep'...")
                 self.skip = True
                 for model in images:
@@ -312,21 +313,12 @@ class TweakRegStep(Step):
 
         return images
 
-    def fit_quality_is_good(self, imcat):
+    def fit_quality_is_good(self, wcs, twcs):
         """Check that the newly tweaked wcs hasn't gone off the rails"""
-        tolerance = 10.0 * u.arcsec
+        tolerance = 10.0 * self.tolerance * u.arcsec
 
-        wcs = imcat.meta['image_model'].meta.wcs
-        twcs = imcat.wcs
-
-        grid = grid_from_bounding_box(wcs.bounding_box, step=100)
-        # There's a bug in grid_from_bounding_box that makes the final grid
-        # item outside the bounding box.  So trim off the last one.  And trim
-        # the first one to avoid edge effects.
-        grid = grid[:,1:-1,1:-1]
-        ra, dec = wcs(*grid)
-        tra, tdec = twcs(*grid)
-
+        ra, dec = wcs.footprint(axis_type="spatial").T
+        tra, tdec = twcs.footprint(axis_type="spatial").T
         skycoord = SkyCoord(ra=ra, dec=dec, unit="deg")
         tskycoord = SkyCoord(ra=tra, dec=tdec, unit="deg")
 
