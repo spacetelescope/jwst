@@ -77,6 +77,6 @@ setup(
             ['jwst/cube_build/src/blot_median.c'],
             include_dirs=include_dirs,
             define_macros=define_macros
-        )        
+        )
     ],
 )
