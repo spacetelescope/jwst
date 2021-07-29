@@ -11,13 +11,6 @@ history:
     extension_class: asdf.extension.BuiltinExtension
     software: !core/software-1.0.0 {name: asdf, version: 2.7.3}
 transforms:
-  m_eci2fgs1: !core/ndarray-1.0.0
-    data:
-    - [0.8059929277822339, 0.5136828543524639, 0.29411795085475856]
-    - [-0.5700783362562124, 0.8073866618044395, 0.15211030759828797]
-    - [-0.1593304616602359, -0.2902701280276943, 0.9435873903379729]
-    datatype: float64
-    shape: [3, 3]
   m_eci2gs: !core/ndarray-1.0.0
     data:
     - [-0.1593953868302445, -0.2903579259648071, 0.9435494114968239]

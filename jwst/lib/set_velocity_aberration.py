@@ -65,15 +65,25 @@ def compute_va_effects_vector(velocity_x, velocity_y, velocity_z, u):
         logger.warning('Observatory speed is zero. Setting VA scale to 1.0')
         return 1.0, u
 
-    beta_u = np.dot(beta, u)
+    u_beta = np.dot(u, beta)
     igamma = np.sqrt(1.0 - beta2)  # inverse of usual gamma
-    scale_factor = (1.0 + beta_u) / igamma
+    scale_factor = (1.0 + u_beta) / igamma
 
     # Algorithm below is from Colin Cox notebook.
     # Also see: Instrument Science Report OSG-CAL-97-06 by Colin Cox (1997).
-    u_corr = (igamma * u + beta * (1.0 + (1.0 - igamma) * beta_u / beta2)) / (1.0 + beta_u)
+    u_corr = (igamma * u + beta * (1.0 + (1.0 - igamma) * u_beta / beta2)) / (1.0 + u_beta)
 
-    return scale_factor, u_corr
+    # Original return. Just u_corr
+    # return scale_factor, u_corr
+
+    # David hacking
+    # diff = u_corr - u
+    # drl = u - diff
+    # return scale_factor, drl
+
+    # Simplified, presuming the u_corr is the delta, and not the actual absolute vector.
+    diff_u = u - u_corr
+    return scale_factor, diff_u
 
 
 def compute_va_effects(velocity_x, velocity_y, velocity_z, ra, dec):

@@ -1204,7 +1204,7 @@ def calc_transforms_velocity_abberation_tr202105(t_pars: TransformParameters):
     logger.debug('m_eci2fgs1: %s', t.m_eci2fgs1)
 
     # Calculate Velocity Aberration corrections
-    t.m_gs2gsapp = calc_gs2gsapp(t.m_eci2fgs1, t_pars.jwst_velocity)
+    t.m_gs2gsapp = calc_gs2gsapp_tr_202105(t.m_eci2fgs1, t_pars.jwst_velocity)
 
     # Calculate the FSM corrections to the SI_FOV frame
     t.m_sifov_fsm_delta = calc_sifov_fsm_delta_matrix(
@@ -1512,7 +1512,60 @@ def calc_eci2fgs1_j3pags(t_pars: TransformParameters):
     return m_eci2fgs1
 
 
-def calc_gs2gsapp(m_eci2fgs1, jwst_velocity):
+def calc_gs2gsapp(m_eci2gsics, jwst_velocity):
+    """Calculate the Velocity Aberration correction
+
+    This implements equation 37 from Technical Report JWST-STScI-003222, SM-12. 2021-07
+    From Section 3.2.5:
+
+    The velocity aberration correction is applied in the direction of the of
+    the guide star. The matrix that translates from ECI to the guide star ICS
+    frame is M_(ECI→GSICS), where the GS position vector is along the z-axis in
+    the guide star ICS frame.
+
+    Parameters
+    ----------
+    m_eci2gsics : numpy.array(3, 3)
+        The the ECI to Guide Star transformation matrix, in the ICS frame.
+
+    jwst_velocity : numpy.array([dx, dy, dz])
+        The barycentric velocity of JWST.
+
+    Returns
+    -------
+    m_gs2gsapp : numpy.array(3, 3)
+        The velocity aberration correction matrix.
+    """
+    # Eq. 31: Guide star position vector
+    uz = np.array([0., 0., 1.])
+    u_gseci = np.dot(np.transpose(m_eci2gsics), uz)
+
+    # Eq. 33: Compute the apparent shift due to velocity aberration.
+    try:
+        scale_factor, u_gseci_app = compute_va_effects_vector(*jwst_velocity, u_gseci)
+    except TypeError:
+        logger.warning('Failure in computing velocity aberration. Returning identity matrix.')
+        logger.warning('Exception: %s', sys.exc_info())
+        return np.identity(3)
+
+    # Eq. 36: Rotate from ICS into the guide star frame.
+    u_gs_app = np.dot(m_eci2gsics, u_gseci_app)
+
+    # Eq. 37: Compute the M_gs2gsapp matrix
+    u_prod = np.cross(uz, u_gs_app)
+    a_hat = u_prod / np.linalg.norm(u_prod)
+    a_hat_sym = np.array([[0., -a_hat[2], a_hat[1]],
+                          [a_hat[2], 0., -a_hat[0]],
+                          [-a_hat[1], a_hat[0], 0.]])
+    theta = np.arcsin(np.linalg.norm(u_prod))
+
+    m_gs2gsapp = np.identity(3) - a_hat_sym * np.sin(theta) + 2 * a_hat_sym**2 * np.sin(theta / 2.)**2
+
+    logger.debug('m_gs2gsapp: %s', m_gs2gsapp)
+    return m_gs2gsapp
+
+
+def calc_gs2gsapp_tr_202105(m_eci2fgs1, jwst_velocity):
     """Calculate the Velocity Aberration correction
 
     Parameters
@@ -2767,14 +2820,14 @@ def calc_m_eci2gs(t_pars: TransformParameters):
     t.m_fgs12fgsx = calc_m_fgs12fgsx(t_pars.pointing.fgsid, t_pars.siaf_db)
     t.m_fgsx2gs = calc_m_fgsx2gs(t_pars.pointing.gs_commanded)
 
-    t.m_eci2fgs1 = np.dot(t.m_j2fgs1, t.m_eci2j)
-    logger.debug('m_eci2fgs1: %s', t.m_eci2fgs1)
-    t.m_gs2gsapp = calc_gs2gsapp(t.m_eci2fgs1, t_pars.jwst_velocity)
+    # Apply the Velocity Aberration. To do so, the M_eci2gs matrix must be created. This
+    # is used to calculate the aberration matrix.
+    m_eci2gsics = np.linalg.multi_dot([t.m_fgsx2gs, t.m_fgs12fgsx, t.m_j2fgs1, t.m_eci2j])
+    logger.debug('m_eci2gsics: %s', m_eci2gsics)
+    t.m_gs2gsapp = calc_gs2gsapp(m_eci2gsics, t_pars.jwst_velocity)
 
     # Put it all together
-    t.m_eci2gs = np.linalg.multi_dot(
-        [MZ2X, t.m_gs2gsapp, t.m_fgsx2gs, t.m_fgs12fgsx, t.m_eci2fgs1]
-    )
+    t.m_eci2gs = np.linalg.multi_dot([MZ2X, t.m_gs2gsapp, m_eci2gsics])
     logger.debug('m_eci2gs: %s', t.m_eci2gs)
 
     # That's all folks
