@@ -7,6 +7,8 @@ JWST pipeline step for image alignment.
 from os import path
 
 from astropy.table import Table
+from astropy import units as u
+from astropy.coordinates import SkyCoord
 from tweakwcs.imalign import align_wcs
 from tweakwcs.tpwcs import JWSTgWCS
 from tweakwcs.matchutils import TPMatch
@@ -207,6 +209,17 @@ class TweakRegStep(Step):
             else:
                 raise e
 
+        for imcat in imcats:
+            wcs = imcat.meta['image_model'].meta.wcs
+            twcs = imcat.wcs
+            if not self.fit_quality_is_good(wcs, twcs):
+                self.log.warning(f"WCS has been tweaked by more than {10 * self.tolerance} arcsec")
+                self.log.warning("Skipping 'TweakRegStep'...")
+                self.skip = True
+                for model in images:
+                    model.meta.cal_step.tweakreg = "SKIPPED"
+                return images
+
         if self.align_to_gaia:
             # Get catalog of GAIA sources for the field
             #
@@ -299,6 +312,19 @@ class TweakRegStep(Step):
                 """
 
         return images
+
+    def fit_quality_is_good(self, wcs, twcs):
+        """Check that the newly tweaked wcs hasn't gone off the rails"""
+        tolerance = 10.0 * self.tolerance * u.arcsec
+
+        ra, dec = wcs.footprint(axis_type="spatial").T
+        tra, tdec = twcs.footprint(axis_type="spatial").T
+        skycoord = SkyCoord(ra=ra, dec=dec, unit="deg")
+        tskycoord = SkyCoord(ra=tra, dec=tdec, unit="deg")
+
+        separation = skycoord.separation(tskycoord)
+
+        return (separation < tolerance).all()
 
     def _imodel2wcsim(self, image_model):
         # make sure that we have a catalog:
