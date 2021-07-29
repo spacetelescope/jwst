@@ -146,6 +146,7 @@ double find_area_quad(double MinX, double MinY, double Xcorner[], double Ycorner
   
   double PX[5];
   double PY[5];
+  double Area =0; 
 
   PX[0] = Xcorner[0] - MinX;
   PX[1] = Xcorner[1] - MinX;
@@ -159,7 +160,7 @@ double find_area_quad(double MinX, double MinY, double Xcorner[], double Ycorner
   PY[3] = Ycorner[3] - MinY;
   PY[4] = PY[0];
 
-  double Area = 0.5 * ((PX[0] * PY[1] - PX[1] * PY[0]) +
+  Area = 0.5 * ((PX[0] * PY[1] - PX[1] * PY[0]) +
 		(PX[1] * PY[2] - PX[2] * PY[1]) +
 		(PX[2] * PY[3] - PX[3] * PY[2]) +
 		(PX[3] * PY[4] - PX[4] * PY[3])); 
@@ -170,18 +171,20 @@ double find_area_quad(double MinX, double MinY, double Xcorner[], double Ycorner
 
 // find the area of a closed polygon
 double find_area_poly(int nVertices,double xPixel[],double yPixel[]){
-  
+
+  double area = 0;
+  int i; 
   double areaPoly = 0.0;
   double xmin = xPixel[0];
   double ymin = yPixel[0];
 
-  for (int i = 1; i < nVertices; i++){ 
+  for (i = 1; i < nVertices; i++){ 
     if(xPixel[i] < xmin) xmin = xPixel[i];
     if(yPixel[i] < ymin) ymin = yPixel[i];
   }
   
-  for (int i = 0; i < nVertices-1; i++){
-    double area = ( xPixel[i]- xmin)*(yPixel[i+1]-ymin) - (xPixel[i+1]-xmin)*(yPixel[i]-ymin);
+  for (i = 0; i < nVertices-1; i++){
+    area = ( xPixel[i]- xmin)*(yPixel[i+1]-ymin) - (xPixel[i+1]-xmin)*(yPixel[i]-ymin);
     areaPoly = areaPoly + area;
   }
   areaPoly = 0.5* areaPoly;
@@ -197,6 +200,10 @@ double sh_find_overlap(const double xcenter, const double ycenter,
   // Sutherland_hedgeman Polygon Clipping Algorithm to solve the overlap region
   // between a 2-D detector mapped to IFU space with cube spaxel
 
+  int i,j,k;
+  int nVertices2 = 0;
+  int condition;
+  double x1,y1,x2,y2,x,y;
   double areaClipped = 0.0;
   double top = ycenter + 0.5*ylength;
   double bottom = ycenter - 0.5*ylength;
@@ -213,26 +220,26 @@ double sh_find_overlap(const double xcenter, const double ycenter,
 
   // initialize xPixel, yPixel to the detector pixel corners.
   // xPixel,yPixel is become the clipped polygon vertices inside the cube pixel
-  for (int i = 0; i < 4; i++) {
+  for (i = 0; i < 4; i++) {
     xPixel[i] = xPixelCorner[i];
     yPixel[i] = yPixelCorner[i];
   }
   xPixel[4] = xPixelCorner[0];
   yPixel[4] = yPixelCorner[0];
 
-  for (int i = 0 ; i < 4; i++) { // 0:left, 1: right, 2: bottom, 3: top
-    int nVertices2 = 0;
-    for (int j = 0; j< nVertices; j++){
-      double x1 = xPixel[j];
-      double y1 = yPixel[j];
-      double x2 = xPixel[j+1];
-      double y2 = yPixel[j+1];
+  for (i = 0 ; i < 4; i++) { // 0:left, 1: right, 2: bottom, 3: top
+    nVertices2 = 0;
+    for (j = 0; j< nVertices; j++){
+      x1 = xPixel[j];
+      y1 = yPixel[j];
+      x2 = xPixel[j+1];
+      y2 = yPixel[j+1];
 
-      int condition = calcCondition(i,x1,y1,x2,y2,
+      condition = calcCondition(i,x1,y1,x2,y2,
                                     left,right,top,bottom);
 
-      double x = 0;
-      double y = 0;
+      x = 0;
+      y = 0;
 
       switch(condition)
         {
@@ -269,7 +276,7 @@ double sh_find_overlap(const double xcenter, const double ycenter,
    
    nVertices = nVertices2-1;
 
-   for (int k = 0; k< nVertices2; k++){
+   for (k = 0; k< nVertices2; k++){
      xPixel[k] = xnew[k];
      yPixel[k] = ynew[k];
    }

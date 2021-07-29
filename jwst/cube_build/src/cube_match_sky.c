@@ -100,7 +100,7 @@ spaxel_dq : numpy.ndarray
 // routines used from cube_utils.c
 
 extern double sh_find_overlap(const double xcenter, const double ycenter, 
-		      const double xlength, const double ylength,
+			      const double xlength, const double ylength,
 			      double xPixelCorner[],double yPixelCorner[]);
 
 extern int alloc_flux_arrays(int nelem, double **fluxv, double **weightv, double **varv,  double **ifluxv);
@@ -154,6 +154,9 @@ int corner_wave_plane_miri(int w, int start_region, int end_region,
      corner4 : xi, eta of corner 4
    */
 
+  int ipt, slice, c1_use;
+  double wave_distance;
+  float c11, c21, c12, c22, length_c1_start, length_c2_start;
   int status = 0; 
   int ic1_start_min = -1;
   int ic1_start_max = -1;
@@ -180,14 +183,14 @@ int corner_wave_plane_miri(int w, int start_region, int end_region,
   // and 
   // 2. Are for either of the 2 extreme slices
   
-  for (int ipt =0; ipt< npt ; ipt++){
-    int slice = (int)sliceno[ipt];
-    double wave_distance = fabs(zc[w] - wave[ipt]);
+  for (ipt =0; ipt< npt ; ipt++){
+    slice = (int)sliceno[ipt];
+    wave_distance = fabs(zc[w] - wave[ipt]);
 
-    float c11 = -1;  // coord1 for start region
-    float c21 = -1;  // coord2 for start region
-    float c12 = -1;  // coord1 for end region
-    float c22 = -1;  // corrd2 for end region
+    c11 = -1;  // coord1 for start region
+    c21 = -1;  // coord2 for start region
+    c12 = -1;  // coord1 for end region
+    c22 = -1;  // corrd2 for end region
 
     if(slice == start_region || slice==end_region){
       // Find all the coordinates on wave slice with slice = start region
@@ -258,12 +261,10 @@ int corner_wave_plane_miri(int w, int start_region, int end_region,
   } else {
   // Find the length in the start and end regions for c1 and c2. This will help define which coordinates to use to set corners.
   // Because we do not know the orientation on the sky pick the  longest length to set how to pick corners. 
-    float length_c1_start = c1_start_max - c1_start_min;
-    float length_c2_start = c2_start_max - c2_start_min;
-    //float length_c1_end = c1_end_max - c1_end_min;
-    // float length_c2_end = c2_end_max - c2_end_min;
+    length_c1_start = c1_start_max - c1_start_min;
+    length_c2_start = c2_start_max - c2_start_min;
 
-    int c1_use = 1; // use the c1 coords to set corners 
+    c1_use = 1; // use the c1 coords to set corners 
     if(length_c1_start < length_c2_start){
       c1_use = 0;   // use the c2 coords to set the corners
     }
@@ -350,35 +351,37 @@ int overlap_fov_with_spaxels(int overlap_partial,  int overlap_full,
   // roughly find the spaxels that might be overlapped
 
   int status = 0;
+  int i, ixy,ix,iy;
+  double area_box, tolerance_dq_overlap, x1, x2, y1, y2, area_overlap, overlap_coverage;
   double ximin = 1000.0;
   double etamin = 1000.0;
   double ximax = -10000.0;
   double etamax = -1000.0;
-  for (int i=0; i<4 ; i++){
+  for (i=0; i<4 ; i++){
     if (xi_corner[i] < ximin){ ximin = xi_corner[i];}
     if (xi_corner[i] > ximax){ ximax = xi_corner[i];}
     if (eta_corner[i] < etamin){ etamin = eta_corner[i];}
     if (eta_corner[i] < etamax){ etamax = eta_corner[i];}
   }
 
-  double area_box = cdelt1 * cdelt2;
-  float tolerance_dq_overlap = 0.05;  //spaxel has to have 5% overlap to flag in FOV
+  area_box = cdelt1 * cdelt2;
+  tolerance_dq_overlap = 0.05;  //spaxel has to have 5% overlap to flag in FOV
   // loop over cube xcenters and cube ycenters
-  for (int ix = 0; ix < naxis1; ix++){
-    double x1 = (xcenters[ix] - cdelt1)/2;
-    double x2 = (xcenters[ix] + cdelt1)/2;
+  for (ix = 0; ix < naxis1; ix++){
+    x1 = (xcenters[ix] - cdelt1)/2;
+    x2 = (xcenters[ix] + cdelt1)/2;
     if(x1 > ximin && x2 < ximax){
-      for (int iy = 0; iy< naxis2; iy++){
+      for (iy = 0; iy< naxis2; iy++){
 
-	double y1 = (ycenters[ix] - cdelt2)/2;
-	double y2 = (ycenters[ix] + cdelt2)/2;
+	y1 = (ycenters[ix] - cdelt2)/2;
+	y2 = (ycenters[ix] + cdelt2)/2;
 	if(y1 > etamin && y2 < etamax){
-	  int ixy = iy* naxis1 + ix;
-	  double area_overlap = sh_find_overlap(xcenters[ix],ycenters[iy],
+	  ixy = iy* naxis1 + ix;
+	  area_overlap = sh_find_overlap(xcenters[ix],ycenters[iy],
 						cdelt1, cdelt2,
 						xi_corner, eta_corner);
 
-	  double overlap_coverage = area_overlap / area_box;
+	  overlap_coverage = area_overlap / area_box;
 	  
 	  if (overlap_coverage > tolerance_dq_overlap){
 	    if (overlap_coverage > 0.95) {
@@ -426,22 +429,24 @@ int slice_wave_plane_nirspec(int w, int slicevalue,
      c1_min, c1_max, c2_min, c2_max
    */
 
+  int ipt, slice, status;
+  double wave_distance, c1, c2;
   double dvalue = 10000;
   *c1_min = dvalue;
   *c2_min = dvalue;
   *c1_max = -dvalue;
   *c2_max = -dvalue;
  
-  for (int ipt =0; ipt< npt ; ipt++){
-    int slice = (int)sliceno[ipt];
-    double wave_distance = fabs(zc[w] - wave[ipt]);
+  for (ipt =0; ipt< npt ; ipt++){
+    slice = (int)sliceno[ipt];
+    wave_distance = fabs(zc[w] - wave[ipt]);
 
     // Find all the coordinates on wave slice with slice = start region
 
     if (wave_distance < roiw_ave && slice == slicevalue){
 
-      double c1 = coord1[ipt];
-      double c2 = coord2[ipt];
+      c1 = coord1[ipt];
+      c2 = coord2[ipt];
       // find min, max of xi eta
       if (c1 < *c1_min) {*c1_min = c1;}
       if (c1 > *c1_max) {*c1_max = c1;}
@@ -451,7 +456,7 @@ int slice_wave_plane_nirspec(int w, int slicevalue,
 
   } // end looping over point cloud
 
-  int status = 0;
+  status = 0;
   if(*c1_min == dvalue || *c2_min == dvalue || *c1_max ==-dvalue || *c2_max == -dvalue){
     // Problem finding limits of slice for wavelength plane
     // This is likely caused the no valid data on wavelength plane
@@ -502,7 +507,7 @@ int overlap_slice_with_spaxels(int overlap_partial,
   */
 
   int status = 0;
-
+  int error, ystep, y, x, yuse, xuse, index;
   //set up line - convert to integer values
   int x1 = (int)((xi_min - xcenters[0]) / cdelt1);
   int y1 = (int)((eta_min - ycenters[0]) / cdelt2);
@@ -538,23 +543,23 @@ int overlap_slice_with_spaxels(int overlap_partial,
   dy = y2 - y1;
 
   //calculate error
-  int error = (int)(dx / 2.0);
-  int ystep = -1;
+  error = (int)(dx / 2.0);
+  ystep = -1;
   if (y1 < y2){
     ystep = 1;
   }
 
   // iterate over grid to generate points between the start and end of line
-  int y = y1;
-  for (int x = x1; x< (x2 + 1); x++){
-    int yuse  = y;
-    int xuse = x ;
+  y = y1;
+  for (x = x1; x< (x2 + 1); x++){
+    yuse  = y;
+    xuse = x ;
     if (is_steep){
 	yuse = x;
 	xuse = y;
       }
 
-    int index = (yuse * naxis1) + xuse;
+    index = (yuse * naxis1) + xuse;
     wave_slice_dq[index] = overlap_partial;
     error -= abs(dy);
     if (error < 0){
@@ -589,6 +594,9 @@ int dq_miri(int start_region, int end_region, int overlap_partial, int overlap_f
 	    long ncube, int npt, 
 	    int **spaxel_dq) {
 
+  int status, w, nxy, i, istart, iend, in, ii;
+  double xi_corner[4], eta_corner[4];
+  
   int *idqv ;  // int vector for spaxel
   if (mem_alloc_dq(ncube, &idqv)) return 1;
 
@@ -600,21 +608,20 @@ int dq_miri(int start_region, int end_region, int overlap_partial, int overlap_f
   // for each wavelength plane find the 2 extreme slices to set FOV. Use these two extreme slices to set up the
   // corner of the FOV for each wavelength
 
-  int nxy = nx * ny;
+  nxy = nx * ny;
+  int wave_slice_dq[nxy];
   // Loop over the wavelength planes and set DQ plane 
-  for (int w = 0; w  < nz; w++) {
-
-    int wave_slice_dq[nxy];
-    for( int i = 0; i < nxy; i ++){
+  for (w = 0; w  < nz; w++) {
+    
+    for( i = 0; i < nxy; i ++){
       wave_slice_dq[i] = 0;
     }
       
-    int status =  corner_wave_plane_miri( w, start_region, end_region, roiw_ave, zc,
+    status =  corner_wave_plane_miri( w, start_region, end_region, roiw_ave, zc,
 					  coord1, coord2, wave, sliceno, ncube, npt,
 					  corner1, corner2, corner3, corner4);
     if( status == 0){ // found min and max slice on wavelengh plane
-      double xi_corner[4];
-      double eta_corner[4];
+
       xi_corner[0] = corner1[0];
       xi_corner[1] = corner2[0];
       xi_corner[2] = corner3[0];
@@ -631,10 +638,10 @@ int dq_miri(int start_region, int end_region, int overlap_partial, int overlap_f
 					xc, yc,
 					xi_corner, eta_corner,
 					wave_slice_dq);
-      long istart = nxy*w;
-      long iend = istart + nxy;
-      for( long in = istart; in < iend; in ++){
-	long ii = in - istart;
+      istart = nxy*w;
+      iend = istart + nxy;
+      for( in = istart; in < iend; in ++){
+	ii = in - istart;
 	idqv[in] = wave_slice_dq[ii];
       }
     }
@@ -680,7 +687,8 @@ int dq_nirspec(int overlap_partial,
 
   */
   
-
+  int w, n_slice_found, islice, status, nxy, j, istart, iend, in, ii;
+  double c1_min, c2_min, c1_max, c2_max;
   int *idqv ;  // int vector for spaxel
   if (mem_alloc_dq(ncube, &idqv)) return 1;
   
@@ -688,26 +696,23 @@ int dq_nirspec(int overlap_partial,
   //  for each of the 30 slices - find the projection of this slice
   //     onto each of the IFU wavelength planes.
 
-  for (int w = 0; w  < nz; w++) {
-    int n_slice_found = 0;
-    for (int islice =1; islice< 31 ; islice++){
-      double c1_min;
-      double c2_min;
-      double c1_max;
-      double c2_max;
-      int status = 0; 
+  nxy = nx * ny;
+  int wave_slice_dq[nxy];
+  
+  for (w = 0; w  < nz; w++) {
+    n_slice_found = 0;
+    for (islice =1; islice< 31 ; islice++){
+      for (j =0; j< nxy; j++){
+	wave_slice_dq[j] = 0;
+      }
+      status = 0; 
       status =  slice_wave_plane_nirspec( w, islice, roiw_ave, zc,
 				   coord1, coord2, wave, sliceno, ncube, npt,
 				   &c1_min, &c2_min, &c1_max, &c2_max);
 	
       if( status ==0){
-	
 	n_slice_found++;
-	int nxy = nx * ny;
-	int wave_slice_dq[nxy];
-	for (int j =0; j< nxy; j++){
-	  wave_slice_dq[j] = 0;
-	}
+
 	status = overlap_slice_with_spaxels(overlap_partial,
 					    cdelt1,cdelt2,
 					    nx, ny,
@@ -715,10 +720,10 @@ int dq_nirspec(int overlap_partial,
 					    c1_min, c2_min, c1_max, c2_max,
 					    wave_slice_dq);
       
-	long istart = nxy*w;
-	long iend = istart + nxy;
-	for( long in = istart; in < iend; in ++){
-	  long ii = in - istart;
+	istart = nxy*w;
+	iend = istart + nxy;
+	for( in = istart; in < iend; in ++){
+	  ii = in - istart;
 	  idqv[in] = wave_slice_dq[ii];
 	}
       } // end loop over status
@@ -749,21 +754,27 @@ int match_point_emsm(double *xc, double *yc, double *zc,
 
   double *fluxv, *weightv, *varv, *ifluxv;  // vector for spaxel
 
+  int k, iwstart, iwend, ixstart,  ixend, iystart, iyend;
+  int ii, nxy, ix, iy, iw, index_xy, index_cube;
+  int done_search_w, done_search_y, done_search_x;
+  double wdiff, ydiff, xdiff, ydist, xdist, radius;
+  double d1, d2, dxy, d3, d32, w, wn, ww, weighted_flux, weighted_var;
+  
   // allocate memory to hold output 
   if (alloc_flux_arrays(ncube, &fluxv, &weightv, &varv, &ifluxv)) return 1;
   
     
     // loop over each point cloud member and find which roi spaxels it is found
 
-    for (int k = 0; k < npt; k++) {
+    for (k = 0; k < npt; k++) {
        // Search wave and find match
-      int iwstart = -1;
-      int iwend = -1;
-      int ii = 0;
-      int done_search_w = 0;
+      iwstart = -1;
+      iwend = -1;
+      ii = 0;
+      done_search_w = 0;
 
       while (ii < nwave && done_search_w == 0) {
-	float wdiff = fabs(zc[ii] - wave[k]);
+	 wdiff = fabs(zc[ii] - wave[k]);
 	if(wdiff <= roiw_pixel[k]){
 	  if (iwstart == -1){
 	    iwstart = ii;
@@ -781,15 +792,14 @@ int match_point_emsm(double *xc, double *yc, double *zc,
       	iwend = nwave;
       	done_search_w = 1;
       }
-
       
       // Search xcenters and find match
-      int ixstart = -1;
-      int ixend = -1;
+      ixstart = -1;
+      ixend = -1;
       ii = 0;
-      int done_search_x = 0;
+      done_search_x = 0;
       while (ii < nx && done_search_x == 0) {
-	double xdiff = fabs(xc[ii] - coord1[k]);
+	xdiff = fabs(xc[ii] - coord1[k]);
 	if(xdiff <= rois_pixel[k]){
 	  if (ixstart == -1){
 	    ixstart = ii;
@@ -809,12 +819,12 @@ int match_point_emsm(double *xc, double *yc, double *zc,
       }
       
        // Search ycenters and find match
-      int iystart = -1;
-      int iyend = -1;
+      iystart = -1;
+      iyend = -1;
       ii = 0;
-      int done_search_y = 0;
+      done_search_y = 0;
       while (ii < ny && done_search_y == 0) {
-	double ydiff = fabs(yc[ii] - coord2[k]);
+	ydiff = fabs(yc[ii] - coord2[k]);
 	if(ydiff <= rois_pixel[k]){
 	  if (iystart == -1){
 	    iystart = ii;
@@ -834,39 +844,37 @@ int match_point_emsm(double *xc, double *yc, double *zc,
       }
 
       // set up the values for fluxv, weightv, ifluxv, varv
-      int nxy = nx * ny;
+      nxy = nx * ny;
       if(done_search_x == 1 && done_search_y ==1 && done_search_w ==1){
 	// The search above for x,y  was a crude search - now narrow the search using the distance between
 	// the spaxel center and point cloud
-	for (int ix = ixstart; ix< ixend; ix ++){
-	  for ( int iy = iystart; iy < iyend; iy ++){
-	    double ydist = fabs(yc[iy] - coord2[k]);
-	    double xdist = fabs(xc[ix] - coord1[k]);
-	    double radius = sqrt( xdist*xdist + ydist*ydist);
+	for (ix = ixstart; ix< ixend; ix ++){
+	  for ( iy = iystart; iy < iyend; iy ++){
+	    ydist = fabs(yc[iy] - coord2[k]);
+	    xdist = fabs(xc[ix] - coord1[k]);
+	    radius = sqrt( xdist*xdist + ydist*ydist);
 
 	    if (radius <= rois_pixel[k]){
 	      // Find the index for this in spatial plane
- 	      int index_xy = iy* nx + ix;
-	      for (int iw = iwstart; iw< iwend; iw++){
-		int index_cube = iw*nxy + index_xy;
+ 	      index_xy = iy* nx + ix;
+	      for (iw = iwstart; iw< iwend; iw++){
+		index_cube = iw*nxy + index_xy;
 
-		double d1 = xdist/cdelt1;
-		double d2 = ydist/cdelt2;
-		double dxy = (d1 * d1) + (d2 * d2);
-		double d3 = (wave[k] - zc[iw])/ zcdelt3[iw];
-		//double wdist = fabs( wave[k] - zc[iw]);
-		double d32 = d3 * d3;
-		double w = d32  +  dxy;
-		double wn = -w/(scalerad_pixel[k]/cdelt1);
-		double ww = exp(wn);
+		d1 = xdist/cdelt1;
+		d2 = ydist/cdelt2;
+		dxy = (d1 * d1) + (d2 * d2);
+		d3 = (wave[k] - zc[iw])/ zcdelt3[iw];
+		d32 = d3 * d3;
+		w = d32  +  dxy;
+		wn = -w/(scalerad_pixel[k]/cdelt1);
+		ww = exp(wn);
 
-		double weighted_flux =  flux[k]* ww;
-		double weighted_var = (err[k]* ww) * (err[k]*ww);
+		weighted_flux =  flux[k]* ww;
+		weighted_var = (err[k]* ww) * (err[k]*ww);
 		fluxv[index_cube] = fluxv[index_cube] + weighted_flux;
 		weightv[index_cube] = weightv[index_cube] + ww;
 		varv[index_cube] = varv[index_cube] + weighted_var;
 		ifluxv[index_cube] = ifluxv[index_cube] +1.0;
-
 	      }
 	    }
 	  } // end loop over iy
@@ -905,21 +913,29 @@ int match_point_msm(double *xc, double *yc, double *zc,
 
 
   double *fluxv, *weightv, *varv, *ifluxv;  // vector for spaxel
+
+  int k;
+  int iwstart, iwend, ixstart, ixend, iystart, iyend;
+  int ii, nxy, iw, ix, iy, index_xy, index_cube;
+  int done_search_w, done_search_x, done_search_y; 
+  double wdiff, xdiff, ydiff, radius, ydist, xdist;
+  double d1, d2, dxy, d3, d32, w, wn, ww;
+  double weighted_flux, weighted_var;
   
   // allocate memory to hold output
   if (alloc_flux_arrays(ncube, &fluxv, &weightv, &varv, &ifluxv)) return 1;
         
   // loop over each point cloud member and find which roi spaxels it is found
 
-  for (int k = 0; k < npt; k++) {
+  for ( k = 0; k < npt; k++) {
     // Search wave and find match
-    int iwstart = -1;
-    int iwend = -1;
-    int ii = 0;
-    int done_search_w = 0;
+    iwstart = -1;
+    iwend = -1;
+    ii = 0;
+    done_search_w = 0;
 
     while (ii < nwave && done_search_w == 0) {
-	float wdiff = fabs(zc[ii] - wave[k]);
+	wdiff = fabs(zc[ii] - wave[k]);
 	if(wdiff <= roiw_pixel[k]){
 	  if (iwstart == -1){
 	    iwstart = ii;
@@ -938,14 +954,13 @@ int match_point_msm(double *xc, double *yc, double *zc,
       	done_search_w = 1;
       }
 
-      
       // Search xcenters and find match
-      int ixstart = -1;
-      int ixend = -1;
+      ixstart = -1;
+      ixend = -1;
       ii = 0;
-      int done_search_x = 0;
+      done_search_x = 0;
       while (ii < nx && done_search_x == 0) {
-	double xdiff = fabs(xc[ii] - coord1[k]);
+	xdiff = fabs(xc[ii] - coord1[k]);
 	if(xdiff <= rois_pixel[k]){
 	  if (ixstart == -1){
 	    ixstart = ii;
@@ -965,12 +980,12 @@ int match_point_msm(double *xc, double *yc, double *zc,
       }
       
        // Search ycenters and find match
-      int iystart = -1;
-      int iyend = -1;
+      iystart = -1;
+      iyend = -1;
       ii = 0;
-      int done_search_y = 0;
+      done_search_y = 0;
       while (ii < ny && done_search_y == 0) {
-	double ydiff = fabs(yc[ii] - coord2[k]);
+	ydiff = fabs(yc[ii] - coord2[k]);
 	if(ydiff <= rois_pixel[k]){
 	  if (iystart == -1){
 	    iystart = ii;
@@ -990,37 +1005,37 @@ int match_point_msm(double *xc, double *yc, double *zc,
       }
 
       // set up the values for fluxv, weightv, ifluxv, varv
-      int nxy = nx * ny;
+      nxy = nx * ny;
       if(done_search_x == 1 && done_search_y ==1 && done_search_w ==1){
 	// The search above for x,y  was a crude search - now narrow the search using the distance between
 	// the spaxel center and point cloud
-	for (int ix = ixstart; ix< ixend; ix ++){
-	  for ( int iy = iystart; iy < iyend; iy ++){
-	    double ydist = fabs(yc[iy] - coord2[k]);
-	    double xdist = fabs(xc[ix] - coord1[k]);
-	    double radius = sqrt( xdist*xdist + ydist*ydist);
+	for (ix = ixstart; ix< ixend; ix ++){
+	  for ( iy = iystart; iy < iyend; iy ++){
+	    ydist = fabs(yc[iy] - coord2[k]);
+	    xdist = fabs(xc[ix] - coord1[k]);
+	    radius = sqrt( xdist*xdist + ydist*ydist);
 
 	    if (radius <= rois_pixel[k]){
 	      // Find the index for this in spatial plane
- 	      int index_xy = iy* nx + ix;
-	      for (int iw = iwstart; iw< iwend; iw++){
-		int index_cube = iw*nxy + index_xy;
+ 	      index_xy = iy* nx + ix;
+	      for (iw = iwstart; iw< iwend; iw++){
+		index_cube = iw*nxy + index_xy;
 
-		double d1 = xdist/cdelt1;
-		double d2 = ydist/cdelt2;
-		double dxy = (d1 * d1) + (d2 * d2);
-		double d3 = (wave[k] - zc[iw])/ zcdelt3[iw];
+		d1 = xdist/cdelt1;
+		d2 = ydist/cdelt2;
+		dxy = (d1 * d1) + (d2 * d2);
+		d3 = (wave[k] - zc[iw])/ zcdelt3[iw];
 
-		double d32 = d3 * d3;
-		double w = d32  +  dxy;
-		double wn = pow(sqrt(w), weight_pixel[k]);
+		d32 = d3 * d3;
+		w = d32  +  dxy;
+		wn = pow(sqrt(w), weight_pixel[k]);
 		if( wn < softrad_pixel[k]){
 		  wn = softrad_pixel[k];
 		}
 		
-		double ww = 1.0/wn;
-		double weighted_flux =  flux[k]* ww;
-		double weighted_var = (err[k]* ww) * (err[k]*ww);
+		ww = 1.0/wn;
+		weighted_flux =  flux[k]* ww;
+		weighted_var = (err[k]* ww) * (err[k]*ww);
 		fluxv[index_cube] = fluxv[index_cube] + weighted_flux;
 		weightv[index_cube] = weightv[index_cube] + ww;
 		varv[index_cube] = varv[index_cube] + weighted_var;
