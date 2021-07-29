@@ -110,16 +110,16 @@ int match_detector_cube(int instrument, int naxis1, int naxis2, int nz, int npt,
 			double **spaxel_flux, double **spaxel_weight, double **spaxel_var,double **spaxel_iflux){
 
   double *fluxv, *weightv, *varv, *ifluxv ;  // vectors for spaxel 
+  double along_corner[4], wave_corner[4], along_min, wave_min, along_max, wave_max, Area, MinW, MaxW, zcenter, acenter, area_overlap,
+    AreaRatio, err;
+  int ipixel, ia1, ia2, iz1, iz2, nplane, zz, istart, aa, j, cube_index;
 
   // allocate memory to hold output 
   if (alloc_flux_arrays(ncube, &fluxv, &weightv, &varv, &ifluxv)) return 1;
     
-
   // loop over each valid point on detector and find match to IFU cube based
   // on along slice coordinate and wavelength
-  for (int ipixel= 0; ipixel< npt; ipixel++){
-    double along_corner[4];
-    double wave_corner[4];
+  for (ipixel= 0; ipixel< npt; ipixel++){
 
     along_corner[0] = a1[ipixel];
     along_corner[1] = a2[ipixel];
@@ -131,59 +131,58 @@ int match_detector_cube(int instrument, int naxis1, int naxis2, int nz, int npt,
     wave_corner[2] = lam3[ipixel];
     wave_corner[3] = lam4[ipixel];
 
-    double along_min = 10000;
-    double wave_min = 10000;
-    double along_max = -10000;
-    double wave_max = -10000;
-    for (int j = 0; j< 4; j++){
+    along_min = 10000;
+    wave_min = 10000;
+    along_max = -10000;
+    wave_max = -10000;
+    for (j = 0; j< 4; j++){
       if(along_corner[j] < along_min) { along_min = along_corner[j];}
       if(along_corner[j] > along_max) { along_max = along_corner[j];}
       if(wave_corner[j] < wave_min) { wave_min = wave_corner[j];}
       if(wave_corner[j] > wave_max) { wave_max = wave_corner[j];}
     }
 
-    double Area = find_area_quad(along_min, wave_min, along_corner, wave_corner);
+    Area = find_area_quad(along_min, wave_min, along_corner, wave_corner);
 
     // estimate where the pixel overlaps in the cube
     // find the min and max values in the cube appropriate xcoord,ycoord or zcoord
 
-    int ia1 = (along_min - crval_along) / cdelt_along;
-    int ia2 = (along_max - crval_along) / cdelt_along;
+    ia1 = (along_min - crval_along) / cdelt_along;
+    ia2 = (along_max - crval_along) / cdelt_along;
     if (ia1 < 0){ ia1 = 0;}
     if (ia2 >= na){ ia2 = na -1;}
 
-    double MinW = (wave_min - crval3) / cdelt3;
-    double MaxW = (wave_max - crval3) / cdelt3;
-    int iz1= (int) MinW;
-    int iz2 = round(MaxW);
+    MinW = (wave_min - crval3) / cdelt3;
+    MaxW = (wave_max - crval3) / cdelt3;
+    iz1= (int) MinW;
+    iz2 = round(MaxW);
 
     if(iz1 < 0){ iz1 = 0;}
     if (iz2 >= nz){iz2 = nz - 1;}
 
-    int nplane = naxis1 * naxis2;
+     nplane = naxis1 * naxis2;
     // loop over possible overlapping cube pixels      
-    for(int zz =iz1; zz < iz2+1; zz++){
-      double zcenter = zcoord[zz];
-      int istart = zz * nplane;
-      for (int aa= ia1; aa< ia2 + 1; aa++){
-	int cube_index = 0;
+    for(zz = iz1; zz < iz2+1; zz++){
+      zcenter = zcoord[zz];
+      istart = zz * nplane;
+      for (aa = ia1; aa< ia2 + 1; aa++){
+	cube_index = 0;
 	if(instrument == 1) { // NIRSPec
 	  cube_index = istart + aa * naxis1 + ss;  // ss = slice #
 	} else {
 	  cube_index = istart + ss * naxis1 + aa;   // yy = slice #
 	}
-	double acenter = acoord[aa];
-	double area_overlap = sh_find_overlap(acenter, zcenter,
+	acenter = acoord[aa];
+	area_overlap = sh_find_overlap(acenter, zcenter,
 					      cdelt_along, cdelt3,
 					      along_corner, wave_corner);
 
-
 	if (area_overlap > 0.0) {
-	  double AreaRatio = area_overlap / Area;
+	  AreaRatio = area_overlap / Area;
 	  fluxv[cube_index] = fluxv[cube_index] + (AreaRatio * pixel_flux[ipixel]);
 	  weightv[cube_index] = weightv[cube_index] +	AreaRatio;
 	  ifluxv[cube_index] = ifluxv[cube_index] + 1;
-	  double err = (AreaRatio * pixel_err[ipixel]) * (AreaRatio * pixel_err[ipixel]);
+	  err = (AreaRatio * pixel_err[ipixel]) * (AreaRatio * pixel_err[ipixel]);
 	  varv[cube_index] = varv[cube_index] + err;
 	}
       }
@@ -234,7 +233,8 @@ static PyObject *cube_wrapper_internal(PyObject *module, PyObject *args) {
   int free_a1=0, free_a2=0, free_a3=0, free_a4 =0, free_lam1=0, free_lam2 =0, free_lam3=0, free_lam4=0;
   int free_acoord=0, free_zcoord=0, status=0;
   int free_flux=0, free_err=0; 
-  
+
+  int n1, n2;
   PyArrayObject *a1, *a2, *a3, *a4, *lam1, *lam2, *lam3, *lam4, *flux, *err, *acoord, *zcoord;
 
   PyArrayObject *spaxel_flux_arr=NULL, *spaxel_weight_arr=NULL, *spaxel_var_arr=NULL;
@@ -281,8 +281,8 @@ static PyObject *cube_wrapper_internal(PyObject *module, PyObject *args) {
   npt = (int) PyArray_Size((PyObject *) flux);
   nz = (int) PyArray_Size((PyObject *) zcoord);
   na = (int) PyArray_Size((PyObject *) acoord);
-  int n1 = (int) PyArray_Size((PyObject *) a1);
-  int n2 = (int) PyArray_Size((PyObject *) lam1);
+  n1 = (int) PyArray_Size((PyObject *) a1);
+  n2 = (int) PyArray_Size((PyObject *) lam1);
 
   if (n1 != npt || n2 != npt ) {
     PyErr_SetString(PyExc_ValueError,
