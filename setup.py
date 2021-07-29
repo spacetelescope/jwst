@@ -71,6 +71,12 @@ setup(
             ['jwst/cube_build/src/cube_match_sky.c','jwst/cube_build/src/cube_utils.c'],
             include_dirs=include_dirs,
             define_macros=define_macros
-        )
+        ),
+        Extension(
+            'jwst.cube_build.blot_median',
+            ['jwst/cube_build/src/blot_median.c'],
+            include_dirs=include_dirs,
+            define_macros=define_macros
+        )        
     ],
 )
