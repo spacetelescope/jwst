@@ -17,6 +17,8 @@ cube_build
 ----------
 
 - Fix bug when creating cubes using output_type=channel. [#6138]
+- Move computationally intensive routines to c extensions and
+  removed miri psf weight function. [#6093]
 
 datamodels
 ----------

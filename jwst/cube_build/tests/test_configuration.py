@@ -213,7 +213,6 @@ def test_calspec2_config(_jail, miri_ifushort_short):
     output_type = 'multi'  # calspec 2 setup. Only 1 cube create from 2 chanels
     single = False
     par_filename = 'None'
-    resol_filename = 'None'
 
     input_file = 'test.fits'
     input_models = []
@@ -234,7 +233,6 @@ def test_calspec2_config(_jail, miri_ifushort_short):
         input_models,
         input_filenames,
         par_filename,
-        resol_filename,
         **pars)
 
     master_table = file_table.FileTable()
@@ -266,7 +264,6 @@ def test_calspec3_config_miri(_jail, miri_full_coverage):
     output_type = 'band'
     single = False
     par_filename = 'None'
-    resol_filename = 'None'
 
     input_file = 'test.fits'
     num_files = len(miri_full_coverage)
@@ -287,7 +284,6 @@ def test_calspec3_config_miri(_jail, miri_full_coverage):
         miri_full_coverage,
         input_filenames,
         par_filename,
-        resol_filename,
         **pars)
 
     master_table = file_table.FileTable()
@@ -348,7 +344,6 @@ def test_calspec3_config_miri_multi(_jail, miri_full_coverage):
     output_type = 'multi'
     single = False
     par_filename = 'None'
-    resol_filename = 'None'
 
     input_file = 'test.fits'
     num_files = len(miri_full_coverage)
@@ -369,7 +364,6 @@ def test_calspec3_config_miri_multi(_jail, miri_full_coverage):
         miri_full_coverage,
         input_filenames,
         par_filename,
-        resol_filename,
         **pars)
 
     master_table = file_table.FileTable()
@@ -411,7 +405,6 @@ def test_calspec3_config_nirspec(_jail, nirspec_medium_coverage):
     output_type = 'band'
     single = False
     par_filename = 'None'
-    resol_filename = 'None'
 
     input_file = 'test.fits'
     num_files = len(nirspec_medium_coverage)
@@ -432,7 +425,6 @@ def test_calspec3_config_nirspec(_jail, nirspec_medium_coverage):
         nirspec_medium_coverage,
         input_filenames,
         par_filename,
-        resol_filename,
         **pars)
 
     master_table = file_table.FileTable()
@@ -468,7 +460,6 @@ def test_calspec3_config_nirspec_multi(_jail, nirspec_medium_coverage):
     output_type = 'multi'
     single = False
     par_filename = 'None'
-    resol_filename = 'None'
 
     input_file = 'test.fits'
     num_files = len(nirspec_medium_coverage)
@@ -489,7 +480,6 @@ def test_calspec3_config_nirspec_multi(_jail, nirspec_medium_coverage):
         nirspec_medium_coverage,
         input_filenames,
         par_filename,
-        resol_filename,
         **pars)
 
     master_table = file_table.FileTable()
