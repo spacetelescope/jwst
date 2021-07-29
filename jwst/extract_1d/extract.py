@@ -27,6 +27,8 @@ from . import ifu
 from . import spec_wcs
 from .apply_apcorr import select_apcorr
 
+from json.decoder import JSONDecodeError
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -141,7 +143,7 @@ def open_extract1d_ref(refname: str, exptype: str) -> dict:
             ref_dict = json.load(fd)
             ref_dict['ref_file_type'] = FILE_TYPE_JSON
             fd.close()
-        except UnicodeDecodeError:
+        except (UnicodeDecodeError, JSONDecodeError):
             fd.close()
             # Try opening the file as a reference image.
             try:
@@ -418,6 +420,11 @@ def get_extract_parameters(
                 extract_params['use_source_posn'] = use_source_posn
 
             extract_params['position_correction'] = 0
+
+            if -1 in extract_params['ref_image'].data:
+                extract_params['subtract_background'] = True
+            else:
+                extract_params['subtract_background'] = False
 
     else:
         log.error(f"Reference file type {ref_dict['ref_file_type']} not recognized")
@@ -2139,13 +2146,16 @@ class ImageExtractModel(ExtractBase):
 
         return location
 
-    def add_position_correction(self, verbose: bool):
+    def add_position_correction(self, verbose: bool, shape: tuple):
         """Shift the reference image (in-place).
 
         Parameters
         ----------
         verbose : bool
             If True, messages can be logged.
+
+        shape : tuple
+            Not sure if needed yet?
 
         """
         if self.position_correction == 0:
