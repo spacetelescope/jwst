@@ -66,7 +66,7 @@ def test_miri_lrs_extract1d_image_ref(run_pipeline, rtdata_module, fitsdiff_defa
     rtdata.get_data("miri/lrs/jw00623032001_03102_00001_mirimage_image_ref.fits")
     rtdata.input = "jw00623032001_03102_00001_mirimage_cal.fits"
     Extract1dStep.call(rtdata.input,
-                       override_extract1d='miri/lrs/jw00623032001_03102_00001_mirimage_image_ref.fits',
+                       override_extract1d="jw00623032001_03102_00001_mirimage_image_ref.fits",
                        suffix='x1dfromrefimage',
                        save_results=True)
     output = "jw00623032001_03102_00001_mirimage_x1dfromrefimage.fits"
