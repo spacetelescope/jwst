@@ -90,18 +90,18 @@ class SiafDb:
                 source = Path(source) / 'prd.db'
         self._source = source
 
-        # Attempt to access source as a pysiaf source
+        # Attempt to access source as an sqlite database.
         try:
-            db = SiafDbPySiaf(source)
+            db = SiafDbSqlite(source)
         except ValueError:
             # Source is incompatible.
-            logger.debug('Could not open as a pysiaf object: %s', source)
+            logger.debug('Could not open as a sqlite object: %s', source)
         else:
             self._db = db
             return
 
-        # Attempt to access source as an sqlite database.
-        self._db = SiafDbSqlite(source)
+        # Attempt to access source as a pysiaf source
+        self._db = SiafDbPySiaf(source)
 
     def close(self):
         self._db.close()
