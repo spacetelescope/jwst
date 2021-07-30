@@ -1250,10 +1250,7 @@ def compute_bounding_box(transform, wavelength_range, slit_ymin=-.55, slit_ymax=
     lam_grid = np.linspace(lam_min, lam_max, nsteps)
 
     def check_range(lower, upper):
-        if lower <= upper:
-            return lower, upper
-        else:
-            return -0.5, 2047.5
+        return lower <= upper
 
     def bbox_from_range(x_range, y_range):
         # The -1 on both is technically because the output of slit2detector is 1-based coordinates.
@@ -1265,7 +1262,7 @@ def compute_bounding_box(transform, wavelength_range, slit_ymin=-.55, slit_ymax=
         pad_y = (max(0, y_range.min() - 1 - 2) - 0.5,
                  min(2047, y_range.max() - 1 + 2) + 0.5)
 
-        return check_range(*pad_x), check_range(*pad_y)
+        return pad_x, pad_y
 
     x_range_low, y_range_low = slit2detector([0] * nsteps, [slit_ymin] * nsteps, lam_grid)
     x_range_high, y_range_high = slit2detector([0] * nsteps, [slit_ymax] * nsteps, lam_grid)
@@ -1276,7 +1273,7 @@ def compute_bounding_box(transform, wavelength_range, slit_ymin=-.55, slit_ymax=
     bbox = bbox_from_range(x_range, y_range)
 
     # Run inverse model to narrow range
-    if detector2slit is not None:
+    if detector2slit is not None and check_range(*bbox[0]) and check_range(*bbox[1]):
         x, y = grid_from_bounding_box(bbox)
         _, _, lam = detector2slit(x, y)
         y_range = y[np.isfinite(lam)]
