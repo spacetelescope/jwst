@@ -153,7 +153,8 @@ def test_override_calc_wcs():
     wcsinfo_new, vinfo_new, transforms_new = stp.calc_wcs(t_pars)
 
     assert vinfo_new != vinfo
-    assert vinfo_new == stp.WCSRef(ra=32.50407337171124, dec=17.161233048951043, pa=352.28553015159287)
+    assert all(np.isclose(vinfo_new,
+                          stp.WCSRef(ra=32.50407337171124, dec=17.161233048951043, pa=352.28553015159287)))
 
 
 @pytest.mark.parametrize(
