@@ -13,6 +13,7 @@ from astropy import units as u
 from astropy import coordinates as coord
 from astropy.io import fits
 from gwcs import coordinate_frames as cf
+from gwcs.wcstools import grid_from_bounding_box
 
 from ..transforms.models import (Rotation3DToGWA, DirCos2Unitless, Slit2Msa,
                                  AngleFromGratingEquation, WavelengthFromGratingEquation,
@@ -1248,39 +1249,33 @@ def compute_bounding_box(transform, wavelength_range, slit_ymin=-.55, slit_ymax=
     nsteps = int((lam_max - lam_min) / step)
     lam_grid = np.linspace(lam_min, lam_max, nsteps)
 
-    def bounding_range(y_min, y_max):
+    def bounding_box(y_min, y_max):
         x_range_low, y_range_low = slit2detector([0] * nsteps, [y_min] * nsteps, lam_grid)
         x_range_high, y_range_high = slit2detector([0] * nsteps, [y_max] * nsteps, lam_grid)
         x_range = np.hstack((x_range_low, x_range_high))
         y_range = np.hstack((y_range_low, y_range_high))
+        # add 10 px margin
+        # The -1 is technically because the output of slit2detector is 1-based coordinates.
+        x0 = max(0, x_range.min() - 1 - 10)
+        x1 = min(2047, x_range.max() - 1 + 10)
+        # add 2 px margin
+        y0 = max(0, y_range.min() - 1 - 2)
+        y1 = min(2047, y_range.max() - 1 + 2)
 
-        return x_range, y_range
+        return ((x0 - 0.5, x1 + 0.5), (y0 - 0.5, y1 + 0.5))
 
     # Initial guess for ranges
-    x_range, y_range = bounding_range(slit_ymin, slit_ymax)
+    bbox = bounding_box(slit_ymin, slit_ymax)
 
     # Run inverse model to narrow range
     if detector2slit is not None:
-        y_slit_range = detector2slit(x_range, y_range)[1]
-        y_slit_low = np.nanmin(y_slit_range)
-        y_slit_high = np.nanmax(y_slit_range)
+        x, y = grid_from_bounding_box(bbox)
+        _, _, lam = detector2slit(x, y)
+        y_range = y[np.isfinite(lam)]
 
-        # Narrow ranges
-        x_range, y_range = bounding_range(y_slit_low, y_slit_high)
-        print('Success')
-    else:
-        print('Fail')
+        bbox = (bbox[0], (y_range.min(), y_range.max()))
 
-    # add 10 px margin
-    # The -1 is technically because the output of slit2detector is 1-based coordinates.
-    x0 = max(0, x_range.min() - 1 - 10)
-    x1 = min(2047, x_range.max() - 1 + 10)
-    # add 2 px margin
-    y0 = max(0, y_range.min() - 1 - 2)
-    y1 = min(2047, y_range.max() - 1 + 2)
-
-    bounding_box = ((x0 - 0.5, x1 + 0.5), (y0 - 0.5, y1 + 0.5))
-    return bounding_box
+    return bbox
 
 
 def collimator_to_gwa(reference_files, disperser):
