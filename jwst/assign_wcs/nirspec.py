@@ -1249,23 +1249,25 @@ def compute_bounding_box(transform, wavelength_range, slit_ymin=-.55, slit_ymax=
     nsteps = int((lam_max - lam_min) / step)
     lam_grid = np.linspace(lam_min, lam_max, nsteps)
 
-    def bounding_box(y_min, y_max):
-        x_range_low, y_range_low = slit2detector([0] * nsteps, [y_min] * nsteps, lam_grid)
-        x_range_high, y_range_high = slit2detector([0] * nsteps, [y_max] * nsteps, lam_grid)
-        x_range = np.hstack((x_range_low, x_range_high))
-        y_range = np.hstack((y_range_low, y_range_high))
-        # add 10 px margin
-        # The -1 is technically because the output of slit2detector is 1-based coordinates.
-        x0 = max(0, x_range.min() - 1 - 10)
-        x1 = min(2047, x_range.max() - 1 + 10)
-        # add 2 px margin
-        y0 = max(0, y_range.min() - 1 - 2)
-        y1 = min(2047, y_range.max() - 1 + 2)
+    def bbox_from_range(x_range, y_range):
+        # The -1 on both is technically because the output of slit2detector is 1-based coordinates.
 
-        return ((x0 - 0.5, x1 + 0.5), (y0 - 0.5, y1 + 0.5))
+        # add 10 px margin
+        pad_x = (max(0, x_range.min() - 1 - 10) - 0.5,
+                 min(2047, x_range.max() - 1 + 10) + 0.5)
+        # add 2 px margin
+        pad_y = (max(0, y_range.min() - 1 - 2) - 0.5,
+                 min(2047, y_range.max() - 1 + 2) + 0.5)
+
+        return pad_x, pad_y
+
+    x_range_low, y_range_low = slit2detector([0] * nsteps, [slit_ymin] * nsteps, lam_grid)
+    x_range_high, y_range_high = slit2detector([0] * nsteps, [slit_ymax] * nsteps, lam_grid)
+    x_range = np.hstack((x_range_low, x_range_high))
+    y_range = np.hstack((y_range_low, y_range_high))
 
     # Initial guess for ranges
-    bbox = bounding_box(slit_ymin, slit_ymax)
+    bbox = bbox_from_range(x_range, y_range)
 
     # Run inverse model to narrow range
     if detector2slit is not None:
@@ -1273,7 +1275,7 @@ def compute_bounding_box(transform, wavelength_range, slit_ymin=-.55, slit_ymax=
         _, _, lam = detector2slit(x, y)
         y_range = y[np.isfinite(lam)]
 
-        bbox = (bbox[0], (y_range.min(), y_range.max()))
+        bbox = bbox_from_range(x_range, y_range)
 
     return bbox
 
