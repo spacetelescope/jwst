@@ -1538,7 +1538,7 @@ def calc_gs2gsapp(m_eci2gsics, jwst_velocity):
     """
     # Check velocity. If present, negate the velocity since
     # the desire is to remove the correction.
-    if jwst_velocity is None or any(jwst_velocity == None):
+    if jwst_velocity is None or any(jwst_velocity == None):  # noqa Syntax needed for numpy arrays.
         logger.warning('Velocity: %s contains None. Cannot calculate aberration. Returning identity matrix', jwst_velocity)
         return np.identity(3)
     velocity = -1 * jwst_velocity

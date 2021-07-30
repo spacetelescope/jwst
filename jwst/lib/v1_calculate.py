@@ -1,7 +1,6 @@
 """V1 Calculation based on time and engineering database info
 """
 from collections import defaultdict
-from dataclasses import asdict
 import logging
 
 from astropy.table import Table
