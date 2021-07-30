@@ -188,37 +188,38 @@ class ResampleData:
         """Resample variance arrays from self.input_models to the output_model
 
         Resample the `name` variance array to the same name in output_model,
-        using a cummulative sum instead of weighted average.
+        using a cummulative sum.
 
         This modifies output_model in-place.
         """
         output_wcs = output_model.meta.wcs
-        output_array = np.zeros_like(output_model.data)
-        outwht = np.zeros_like(output_model.data)
-        outcon = np.zeros_like(output_model.con)
+        inverse_variance_sum = np.zeros_like(output_model.data)
 
         log.info(f"Resampling {name}")
-        uniqid = 1
         for model in self.input_models:
-            with np.errstate(divide="ignore"):
-                inv_var = np.reciprocal(getattr(model, name))
-            inwht = np.ones_like(model.data)
+            variance = getattr(model, name)
+            # Make input weight map of unity where there is science data
+            inwht = resample_utils.build_driz_weight(model, weight_type=None,
+                                                     good_bits="~NON_SCIENCE+REFERENCE_PIXEL")
 
-            # Resample the inverse variance array
-            self.drizzle_arrays(inv_var, inwht, model.meta.wcs,
-                                output_wcs, output_array, outwht, outcon,
+            resampled_variance = np.zeros_like(output_model.data)
+            outwht = np.zeros_like(output_model.data)
+            outcon = np.zeros_like(output_model.con)
+
+            # Resample the variance array.  Use fillval=np.inf so that when we
+            # take the reciprocal for summing, it is zero where there is zero weight
+            self.drizzle_arrays(variance, inwht, model.meta.wcs,
+                                output_wcs, resampled_variance, outwht, outcon,
                                 pixfrac=self.pixfrac, kernel=self.kernel,
-                                fillval=np.nan, uniqid=uniqid)
-            uniqid += 1
+                                fillval=np.inf)
 
-        # Drizzle produces a weighted average of the new image with the
-        # existing cumulative image.  But we want a weighted sum.  We have
-        # specified all the input weights to be unity above, which means to get
-        # a sum, we just multiply the final cummulative weighted average image
-        # by the total cummulative weights to get the sum.
-        output_array *= outwht
+            # Add the inverse of the resampled variance to a running sum
+            with np.errstate(divide="ignore"):
+                inverse_variance_sum += np.reciprocal(resampled_variance)
 
-        output_variance = np.reciprocal(output_array)
+        # We now have a sum of the inverse resampled variances.  We need the
+        # inverse of that to get back to units of variance.
+        output_variance = np.reciprocal(inverse_variance_sum)
         output_variance[~np.isfinite(output_variance)] = np.nan
         setattr(output_model, name, output_variance)
 
