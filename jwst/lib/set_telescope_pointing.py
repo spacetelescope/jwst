@@ -1536,22 +1536,27 @@ def calc_gs2gsapp(m_eci2gsics, jwst_velocity):
     m_gs2gsapp : numpy.array(3, 3)
         The velocity aberration correction matrix.
     """
+    # Check velocity. If present, negate the velocity since
+    # the desire is to remove the correction.
+    if jwst_velocity is None or any(jwst_velocity == None):
+        logger.warning('Velocity: %s contains None. Cannot calculate aberration. Returning identity matrix', jwst_velocity)
+        return np.identity(3)
+    velocity = -1 * jwst_velocity
+
     # Eq. 31: Guide star position vector
     uz = np.array([0., 0., 1.])
     u_gseci = np.dot(np.transpose(m_eci2gsics), uz)
 
     # Eq. 33: Compute the apparent shift due to velocity aberration.
     try:
-        scale_factor, u_gseci_app = compute_va_effects_vector(*jwst_velocity, u_gseci)
+        scale_factor, u_gseci_app = compute_va_effects_vector(*velocity, u_gseci)
     except TypeError:
         logger.warning('Failure in computing velocity aberration. Returning identity matrix.')
         logger.warning('Exception: %s', sys.exc_info())
         return np.identity(3)
 
     # Eq. 36: Rotate from ICS into the guide star frame.
-    # Though not specified in the document, the correction
-    # needs to be negated.
-    u_gs_app = np.dot(m_eci2gsics, -u_gseci_app)
+    u_gs_app = np.dot(m_eci2gsics, u_gseci_app)
 
     # Eq. 37: Compute the M_gs2gsapp matrix
     u_prod = np.cross(uz, u_gs_app)
@@ -2825,8 +2830,9 @@ def calc_m_eci2gs(t_pars: TransformParameters):
     t.m_fgs12fgsx = calc_m_fgs12fgsx(t_pars.pointing.fgsid, t_pars.siaf_db)
     t.m_fgsx2gs = calc_m_fgsx2gs(t_pars.pointing.gs_commanded)
 
-    # Apply the Velocity Aberration. To do so, the M_eci2gs matrix must be created. This
+    # Apply the Velocity Aberration. To do so, the M_eci2gsics matrix must be created. This
     # is used to calculate the aberration matrix.
+    # Also, since the aberration is to be removed, the velocity is negated.
     m_eci2gsics = np.linalg.multi_dot([t.m_fgsx2gs, t.m_fgs12fgsx, t.m_j2fgs1, t.m_eci2j])
     logger.debug('m_eci2gsics: %s', m_eci2gsics)
     t.m_gs2gsapp = calc_gs2gsapp(m_eci2gsics, t_pars.jwst_velocity)
