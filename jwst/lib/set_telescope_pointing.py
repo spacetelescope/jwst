@@ -1549,17 +1549,22 @@ def calc_gs2gsapp(m_eci2gsics, jwst_velocity):
         return np.identity(3)
 
     # Eq. 36: Rotate from ICS into the guide star frame.
-    u_gs_app = np.dot(m_eci2gsics, u_gseci_app)
+    # Though not specified in the document, the correction
+    # needs to be negated.
+    u_gs_app = np.dot(m_eci2gsics, -u_gseci_app)
 
     # Eq. 37: Compute the M_gs2gsapp matrix
     u_prod = np.cross(uz, u_gs_app)
-    a_hat = u_prod / np.linalg.norm(u_prod)
-    a_hat_sym = np.array([[0., -a_hat[2], a_hat[1]],
-                          [a_hat[2], 0., -a_hat[0]],
-                          [-a_hat[1], a_hat[0], 0.]])
-    theta = np.arcsin(np.linalg.norm(u_prod))
+    u_prod_mag = np.linalg.norm(u_prod)
+    a_hat = u_prod / u_prod_mag
+    m_a_hat = np.array([[0., -a_hat[2], a_hat[1]],
+                        [a_hat[2], 0., -a_hat[0]],
+                        [-a_hat[1], a_hat[0], 0.]])
+    theta = np.arcsin(u_prod_mag)
 
-    m_gs2gsapp = np.identity(3) - a_hat_sym * np.sin(theta) + 2 * a_hat_sym**2 * np.sin(theta / 2.)**2
+    m_gs2gsapp = np.identity(3) \
+        - (m_a_hat * np.sin(theta)) \
+        + (2 * m_a_hat**2 * np.sin(theta / 2.)**2)
 
     logger.debug('m_gs2gsapp: %s', m_gs2gsapp)
     return m_gs2gsapp
