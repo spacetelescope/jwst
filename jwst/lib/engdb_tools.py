@@ -18,11 +18,11 @@ logger.addHandler(logging.NullHandler())
 # Where is the engineering service? Its HERE!!!
 # #############################################
 
-# This is currently set to the D-string hostname:
-ENGDB_HOST = 'http://twjwdmsemwebag.stsci.edu/'
+# This is currently set to the OPS database.
+ENGDB_HOST = 'http://pwjwdmsemwebag.stsci.edu/'
 ENGDB_BASE_URL = ''.join([
     ENGDB_HOST,
-    'JWDMSEngFqAccSide2/',
+    'JWDMSEngFqAcc/',
     'TlmMnemonicDataSrv.svc/',
 ])
 

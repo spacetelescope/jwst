@@ -254,10 +254,11 @@ properties:
           engdb_pointing_quality:
             title: Quality of pointing information from EngDB
             type: string
-            enum: [CALCULATED,
-                   CALCULATED_FULLVA, CALCULATED_FULL,
+            enum: [CALCULATED, CALCULATED_COARSE_TR_202107,
+                   CALCULATED_FULL, CALCULATED_FULLVA,
                    CALCULATED_GSCMD, CALCULATED_GSCMD_V3PAGS,
-                   CALCULATED_ORIGINAL, PLANNED]
+                   CALCULATED_ORIGINAL, PLANNED,
+                   CALCULATED_TR_202105, CALCULATED_TR_202105_VA, CALCULATED_TRACK_TR_202107]
             fits_keyword: ENGQLPTG
             blend_table: True
           type:
