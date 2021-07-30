@@ -27,7 +27,12 @@ package_data = {
         "tests/okfile/*.prop",
     ],
 
-    "jwst.lib": ["tests/data/siaf.db"],
+    "jwst.lib": [
+        "tests/data/*.asdf",
+        "tests/data/*.db",
+        "tests/data/*.ecsv",
+        "tests/data/*.fits",
+    ],
 
     # Include the rules .py files in associations test data
     "jwst.associations": ["tests/data/*.py"],
