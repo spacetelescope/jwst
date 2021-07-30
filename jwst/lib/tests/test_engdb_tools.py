@@ -18,10 +18,10 @@ from jwst.lib import engdb_tools
 from jwst.lib.tests.engdb_mock import EngDB_Mocker
 
 GOOD_MNEMONIC = 'INRSI_GWA_Y_TILT_AVGED'
-GOOD_STARTTIME = '2016-01-18'
-GOOD_ENDTIME = '2016-01-19'
+GOOD_STARTTIME = '2021-01-25'
+GOOD_ENDTIME = '2021-01-26'
 
-SHORT_STARTTIME = '2016-01-18 15:30:00'
+SHORT_STARTTIME = '2021-01-26 02:29:02.188'
 
 BAD_SERVER = 'https://www.stsci.edu'
 BAD_MNEMONIC = 'No_Such_MNEMONIC'
@@ -119,30 +119,30 @@ def test_values(engdb):
     records = engdb.get_records(
         GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME
     )
-    assert records['Count'] == 3
+    assert records['Count'] == 2
     values = engdb.get_values(
-        GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME
+        GOOD_MNEMONIC, GOOD_STARTTIME, SHORT_STARTTIME
     )
     assert len(values) == 1
-    assert values[0] == 0.19687812
+    assert values[0] == 0
 
 
 def test_values_with_bracket(engdb):
     records = engdb.get_records(
         GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME
     )
-    assert records['Count'] == 3
+    assert records['Count'] == 2
     values = engdb.get_values(
         GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME,
         include_bracket_values=True
     )
-    assert len(values) == 3
-    assert values[1] == 0.19687812
+    assert len(values) == 2
+    assert values[1] == 0
 
 
 def test_values_with_time(engdb):
     values = engdb.get_values(
-        GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME,
+        GOOD_MNEMONIC, GOOD_STARTTIME, SHORT_STARTTIME,
         include_obstime=True
     )
     assert len(values) >= 1

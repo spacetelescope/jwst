@@ -12,9 +12,10 @@ from astropy.time import Time
 from jwst.lib.tests import engdb_mock
 from jwst.lib import engdb_tools
 
+# Midpoint is about 2021-01-26T02:32:26.205
+GOOD_STARTTIME = '2021-01-26 02:29:02.188'
+GOOD_ENDTIME = '2021-01-26 02:35:50.185'
 GOOD_MNEMONIC = 'inrsi_gwa_y_tilt_avged'
-GOOD_STARTTIME = '2016-01-23 00:00:00'
-GOOD_ENDTIME = '2016-01-23 00:03:00'
 EARLY_STARTTIME = '2014-01-01'
 EARLY_ENDTIME = '2014-01-02'
 LATE_STARTTIME = '2034-01-01'

@@ -21,8 +21,8 @@ class EngDBLogStep(Step):
     """
 
     spec = """
-    stime = string(default='2016-01-01') # Start time
-    etime = string(default='2016-01-31') # End time
+    stime = string(default='2021-01-25') # Start time
+    etime = string(default='2021-01-27') # End time
     verbosity = option('initial', 'all', default='initial') # How much to report.
     """
 
