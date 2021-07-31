@@ -100,7 +100,7 @@ class CubeBlot():
         """
         log.info('Information on Blotting')
         log.info('Working with instrument %s', self.instrument)
-        log.info('shape of sky cube %f %f %f',
+        log.info('Shape of sky cube %f %f %f',
                  self.median_skycube.data.shape[2],
                  self.median_skycube.data.shape[1],
                  self.median_skycube.data.shape[0])
@@ -250,12 +250,9 @@ class CubeBlot():
 
             # for NIRSPEC wcs information accessed seperately for each slice
             nslices = 30
-            log.info('Blotting  30 slices on NIRSPEC detector, this takes a little while')
+            log.info('Blotting 30 slices on NIRSPEC detector')
             roi_det = 1.0  # Just large enough that we don't get holes
 
-            x_total = []
-            y_total = []
-            flux_total = []
             for ii in range(nslices):
                 # for each slice pull out the blotted values that actually fall on the slice region
                 # use the bounding box of each slice to determine the slice limits
@@ -295,20 +292,19 @@ class CubeBlot():
                 y_slice = y_slice[fuse]
                 flux_slice = flux_slice[fuse]
 
-                nslice = len(x_slice)
-                for i in range(nslice):
-                    x_total.append(x_slice[i])
-                    y_total.append(y_slice[i])
-                    flux_total.append(flux_slice[i])
+                if ii == 0:
+                    x_total = x_slice
+                    y_total = y_slice
+                    flux_total = flux_slice
+                else:
+                    x_total = np.concatenate((x_total, x_slice))
+                    y_total = np.concatenate((y_total, y_slice))
+                    flux_total = np.concatenate((flux_total, flux_slice))
 
             # end looping over the 30 slices
-
             # set up c wrapper for blotting
             xstart = 0
             xsize2 = blot_xsize
-            x_total = np.array(x_total)
-            y_total = np.array(y_total)
-            flux_total = np.array(flux_total)
 
             result = blot_wrapper(roi_det, blot_xsize, blot_ysize, xstart, xsize2,
                                   xcenter, ycenter,

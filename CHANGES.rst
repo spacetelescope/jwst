@@ -20,6 +20,8 @@ cube_build
 - Move computationally intensive routines to c extensions and
   removed miri psf weight function. [#6093]
 - Moved cube blotting to a c extension [#6256]
+- Moved variable definitions to top of code in c extension to
+  support changes in #6093. [#6255]
 
 datamodels
 ----------
