@@ -40,18 +40,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Get CRDS context
-        id: crds-context
-        run: |
-          pip install crds
-          echo "::set-output name=pmap::$(crds list --resolve-contexts --contexts | cut -f 1 -d ".")"
-
-      - name: Restore CRDS cache
-        uses: actions/cache@v2
-        with:
-          path: ${{ env.CRDS_PATH }}
-          key: crds-${{ matrix.toxenv }}-${{ steps.crds-context.outputs.pmap }}
-
       - name: Install tox
         run: |
           pip install tox
@@ -65,3 +53,4 @@ jobs:
         with:
           file: ./coverage.xml
           flags: unit
+          fail_ci_if_error: true
