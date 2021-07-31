@@ -1,4 +1,4 @@
-1.3.0 (unreleased)
+1.4.0 (unreleased)
 ==================
 
 assign_wcs
@@ -25,13 +25,6 @@ datamodels
 
 - Remove astropy.io registration of JwstDataModel. [#6179]
 
-- Add NOUTPUTS keyword to the `DarkModel` schema. [#6213]
-
-- Update `DarkModel` to use uint32 for DQ array. [#6228]
-
-- Add new PATTTYPE values for MIRI Coronagraphic flats:
-  4QPM_LFLAT, 4QPM_PFLAT, LYOT_LFLAT, LYOT_PFLAT. [#6232]
-
 extract_1d
 ----------
 
@@ -56,20 +49,10 @@ ramp_fitting
 - Update ``RampFitStep`` to pass DQ flags as a parameter to the ``ramp_fit``
   algorithm code in stcal.  Bump version requirement for stcal.  [#6072]
 
-resample
---------
-
-Fix the extreme memory consumption seen in resampling of variance arrays. [#6251]
-
 source_catalog
 --------------
 
 - Fixed issue with non-finite positions for aperture photometry. [#6206]
-
-tweakreg
---------
-
-- Add an upper tweak threshold of 10 arcsec to tweakreg [#6252]
 
 wavecorr
 --------
@@ -86,13 +69,52 @@ wfss_contam
 
 - Fixed handling of filter/pupil names for NIRISS WFSS mode [#6233]
 
-1.2.3 (2021-06-08)
+1.3.0 (2021-07-31)
 ==================
 
 associations
 ------------
 
 - Ensure no Lv3_WFSC associations created on group candidates [#6131]
+
+datamodels
+----------
+
+- Add new PATTTYPE values for MIRI Coronagraphic flats:
+  4QPM_LFLAT, 4QPM_PFLAT, LYOT_LFLAT, LYOT_PFLAT. [#6232]
+
+- Update ``DarkModel`` to use uint32 for DQ array. [#6228]
+
+- Add NOUTPUTS keyword to the `DarkModel` schema. [#6213]
+
+lib
+---
+
+- Add overriding of the matrix calculations to ``set_telescope_pointing.py`` [#5843]
+
+- Add guide star-based pointing algorithm to ``set_telescope_pointing.py`` [#5843]
+
+resample
+--------
+
+Fix the extreme memory consumption seen in resampling of variance arrays. [#6251]
+
+tweakreg
+--------
+
+- Add an upper tweak threshold of 10 arcsec to tweakreg [#6252]
+
+wfs_combine
+-----------
+
+-- Add option to flip the dither locations so that images with different
+   filters will have the same pixel locations [#6101]
+
+-- Fixed the refine option to correctly use the cross correlation to align
+   the images if the WCS is off [#6101]
+
+1.2.3 (2021-06-08)
+==================
 
 datamodels
 ----------
@@ -356,10 +378,6 @@ jump
 
 lib
 ---
-
-- Add overriding of the matrix calculations to ``set_telescope_pointing.py`` [#5843]
-
-- Add guide star-based pointing algorithm to ``set_telescope_pointing.py`` [#5843]
 
 - Update ``update_mt_kwds`` function in ``set_telescope_pointing.py`` to  populate the TARG_RA/TARG_DEC [#5808]
 
@@ -4081,13 +4099,6 @@ tso_photometry
 tweakreg
 --------
 
-wfs_combine
------------
-
--- add option to flip the dither locations so that images with different
-   filters will have the same pixel locations [#2051]
--- Fixed the refine option to correctly use the cross correlation to align
-   the images if the WCS is off [#2051]
 
 white_light
 -----------
