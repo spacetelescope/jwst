@@ -1,3 +1,47 @@
+1.3.0 (2021-07-31)
+==================
+
+associations
+------------
+
+- Ensure no Lv3_WFSC associations created on group candidates [#6131]
+
+datamodels
+----------
+
+- Add new PATTTYPE values for MIRI Coronagraphic flats:
+  4QPM_LFLAT, 4QPM_PFLAT, LYOT_LFLAT, LYOT_PFLAT. [#6232]
+
+- Update ``DarkModel`` to use uint32 for DQ array. [#6228]
+
+- Add NOUTPUTS keyword to the `DarkModel` schema. [#6213]
+
+lib
+---
+
+- Add overriding of the matrix calculations to ``set_telescope_pointing.py`` [#5843]
+
+- Add guide star-based pointing algorithm to ``set_telescope_pointing.py`` [#5843]
+
+resample
+--------
+
+Fix the extreme memory consumption seen in resampling of variance arrays. [#6251]
+
+tweakreg
+--------
+
+- Add an upper tweak threshold of 10 arcsec to tweakreg [#6252]
+
+wfs_combine
+-----------
+
+-- Add option to flip the dither locations so that images with different
+   filters will have the same pixel locations [#6101]
+
+-- Fixed the refine option to correctly use the cross correlation to align
+   the images if the WCS is off [#6101]
+   
 1.2.3 (2021-06-08)
 ==================
 
