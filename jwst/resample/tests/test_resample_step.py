@@ -398,3 +398,27 @@ def test_wcs_keywords(nircam_rate):
     assert result.meta.wcsinfo.roll_ref is None
     assert result.meta.wcsinfo.v3yangle is None
     assert result.meta.wcsinfo.vparity is None
+
+
+@pytest.mark.parametrize("n_images", [1, 2, 3, 9])
+def test_resample_variance(nircam_rate, n_images):
+    """Test that resampled variance and error arrays are computed properly"""
+    err = 0.02429
+    var_rnoise = 0.00034
+    var_poisson = 0.00025
+    im = AssignWcsStep.call(nircam_rate)
+    im.var_rnoise += var_rnoise
+    im.var_poisson += var_poisson
+    im.err += err
+    im.meta.filename = "foo.fits"
+
+    c = ModelContainer()
+    for n in range(n_images):
+        c.append(im.copy())
+
+    result = ResampleStep.call(c, blendheaders=False)
+
+    # Verify that the combined uncertainty goes as 1 / sqrt(N)
+    assert_allclose(result.err[5:-5,5:-5].mean(), err / np.sqrt(n_images), atol=1e-5)
+    assert_allclose(result.var_rnoise[5:-5,5:-5].mean(), var_rnoise / n_images, atol=1e-7)
+    assert_allclose(result.var_poisson[5:-5,5:-5].mean(), var_poisson / n_images, atol=1e-7)
