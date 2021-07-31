@@ -219,7 +219,8 @@ class ResampleData:
 
         # We now have a sum of the inverse resampled variances.  We need the
         # inverse of that to get back to units of variance.
-        output_variance = np.reciprocal(inverse_variance_sum)
+        with np.errstate(divide="ignore"):
+            output_variance = np.reciprocal(inverse_variance_sum)
         output_variance[~np.isfinite(output_variance)] = np.nan
         setattr(output_model, name, output_variance)
 
