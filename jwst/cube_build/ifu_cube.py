@@ -735,7 +735,7 @@ class IFUCubeData():
                 input_model = self.master_table.FileMap[self.instrument][this_par1][this_par2][k]
 
                 log.debug("Working on next Single IFU Cube = %i" % (j + 1))
-                t0 = time.time()
+
                 # for each new data model create a new spaxel
                 total_num = self.naxis1 * self.naxis2 * self.naxis3
                 self.spaxel_flux = np.zeros(total_num,dtype=np.float64)
@@ -789,8 +789,7 @@ class IFUCubeData():
                 status = 0
                 result = self.setup_final_ifucube_model(input_model)
                 ifucube_model, status = result
-                t1 = time.time()
-                log.debug("Time to Create Single ifucube = %.1f s" % (t1 - t0,))
+
                 single_ifucube_container.append(ifucube_model)
                 if status != 0:
                     log.debug("Possible problem with single ifu cube, no valid data in cube")
@@ -1433,7 +1432,7 @@ class IFUCubeData():
         wave[:] = wave_all[good_data]
         slice_no[:] = slice_no_all[good_data]
 
-        log.info(f'After removing pixels based on criteria min and max wave: {np.min(wave)}, {np.max(wave)}')
+        log.debug(f'After removing pixels based on criteria min and max wave: {np.min(wave)}, {np.max(wave)}')
 
         # based on the wavelength define the sroi, wroi, weight_power and
         # softrad to use in matching detector to spaxel values
@@ -1586,7 +1585,6 @@ class IFUCubeData():
         nslices = 30
         log.info("Mapping each NIRSpec slice to sky for input file")
 
-        # t80 = time.time()
         for ii in range(nslices):
             # t10 = time.time()
             slice_wcs = nirspec.nrs_wcs_set_input(input_model, ii)
@@ -1616,8 +1614,7 @@ class IFUCubeData():
             flag_det[yind, xind] = 1
             slice_det[yind, xind] = ii + 1
         # after looping over slices  - pull out valid values
-        # t81 = time.time()
-        # log.debug(f'Time to map NIRSpec slices to sky  {t81-t80} ')
+
         valid_data = np.where(flag_det == 1)
         y, x = valid_data
 
