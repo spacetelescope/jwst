@@ -97,7 +97,7 @@ lib
 resample
 --------
 
-Fix the extreme memory consumption seen in resampling of variance arrays. [#6251]
+- Fix the extreme memory consumption seen in resampling of variance arrays. [#6251]
 
 tweakreg
 --------
@@ -107,11 +107,11 @@ tweakreg
 wfs_combine
 -----------
 
--- Add option to flip the dither locations so that images with different
-   filters will have the same pixel locations [#6101]
+- Add option to flip the dither locations so that images with different
+  filters will have the same pixel locations [#6101]
 
--- Fixed the refine option to correctly use the cross correlation to align
-   the images if the WCS is off [#6101]
+- Fixed the refine option to correctly use the cross correlation to align
+  the images if the WCS is off [#6101]
 
 1.2.3 (2021-06-08)
 ==================
