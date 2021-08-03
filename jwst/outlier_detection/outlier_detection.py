@@ -17,9 +17,8 @@ from jwst.stpipe import Step
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-CRBIT = np.uint32(
-    datamodels.dqflags.pixel['DO_NOT_USE'] + datamodels.dqflags.pixel['OUTLIER']
-)
+DO_NOT_USE = datamodels.dqflags.pixel['DO_NOT_USE']
+OUTLIER = datamodels.dqflags.pixel['OUTLIER']
 
 
 __all__ = ["OutlierDetection", "flag_cr", "abs_deriv"]
@@ -351,7 +350,7 @@ class OutlierDetection:
             The dq array in each input model is modified in place
 
         """
-
+        log.info("Flagging outliers")
         for image, blot in zip(self.input_models, blot_models):
             image_copy = image.copy()
             flag_cr(image_copy, blot, **self.outlierpars)
@@ -385,7 +384,6 @@ def flag_cr(sci_image, blot_image, **pars):
     snr      = "5.0 4.0"       # Signal-to-noise ratio
     scale    = "1.2 0.7"       # scaling factor applied to the derivative
     backg    = 0               # Background value
-
     """
     backg = pars.get('backg', 0)
     snr1, snr2 = [float(val) for val in pars.get('snr', '5.0 4.0').split()]
@@ -408,46 +406,49 @@ def flag_cr(sci_image, blot_image, **pars):
 
     err_data = np.nan_to_num(sci_image.err)
 
-    # Define output cosmic ray mask to populate
-    cr_mask = np.zeros(sci_image.shape, dtype=np.uint8)
-
     # create the outlier mask
     if pars.get('resample_data', True):  # dithered outlier detection
         blot_data += subtracted_background
         diff_noise = np.abs(sci_data - blot_data)
 
-        # create an initial mask based on
-        # a scaled version of the derivative image (dealing with interpolating issues?)
+        # Create an initial boolean mask based on a scaled version of
+        # the derivative image (dealing with interpolating issues?)
         # and the standard n*sigma above the noise
-        t2 = scl1 * blot_deriv + snr1 * err_data
-        # in this mask
-        init_mask = np.logical_not(np.greater(diff_noise, t2))
+        threshold1 = scl1 * blot_deriv + snr1 * err_data
+        init_mask = np.logical_not(np.greater(diff_noise, threshold1))
 
-        # Convolve mask with 3x3 kernel
-        kernel = np.ones((3, 3), dtype=np.uint8)
-        init_mask_smoothed = np.zeros(init_mask.shape, dtype=np.int32)
-        ndimage.convolve(init_mask, kernel, output=init_mask_smoothed, mode='nearest', cval=0)
+        # Convert mask to integer mask and convolve with 3x3 boxcar kernel
+        kernel = np.ones((3, 3), dtype=int)
+        init_mask_smoothed = ndimage.convolve(init_mask.astype(int), kernel,
+                                              mode='nearest')
+        mask1 = np.less(init_mask_smoothed, 9)
 
-        # create a 2nd mask like the first, but based on the 2nd set of
+        # Create a 2nd boolean mask based on the 2nd set of
         # scale and threshold values
-        mask_2ndpass = scl2 * blot_deriv + snr2 * err_data
+        threshold2 = scl2 * blot_deriv + snr2 * err_data
+        mask2 = np.greater(diff_noise, threshold2)
 
-        cr_mask = np.logical_not(np.greater(diff_noise, mask_2ndpass) & np.less(init_mask_smoothed, 9))
+        # Final boolean mask
+        cr_mask = mask1 & mask2
 
     else:  # stack outlier detection
         diff_noise = np.abs(sci_data - blot_data)
 
-        # straightforward detection of outliers for non-dithered data
-        #   as err_data includes all noise sources (photon, read, and flat for baseline)
-        cr_mask = np.logical_not(np.greater(diff_noise, snr1 * err_data))
+        # straightforward detection of outliers for non-dithered data since
+        # err_data includes all noise sources (photon, read, and flat for baseline)
+        cr_mask = np.greater(diff_noise, snr1 * err_data)
 
-    count_sci = np.count_nonzero(sci_image.dq)
-    count_cr = np.count_nonzero(cr_mask)
-    log.debug("Pixels in input DQ: {}".format(count_sci))
-    log.debug("Pixels in cr_mask:  {}".format(count_cr))
+    # Count existing DO_NOT_USE pixels
+    count_existing = np.count_nonzero(sci_image.dq & DO_NOT_USE)
 
     # Update the DQ array in the input image.
-    sci_image.dq = np.bitwise_or(sci_image.dq, np.invert(cr_mask) * CRBIT)
+    sci_image.dq = np.bitwise_or(sci_image.dq, cr_mask * (DO_NOT_USE | OUTLIER))
+
+    # Report number (and percent) of new DO_NOT_USE pixels found
+    count_outlier = np.count_nonzero(sci_image.dq & DO_NOT_USE)
+    count_added = count_outlier - count_existing
+    percent_cr = count_added / (sci_image.shape[0] * sci_image.shape[1]) * 100
+    log.info(f"New pixels flagged as outliers: {count_added} ({percent_cr:.2f}%)")
 
 
 def abs_deriv(array):
