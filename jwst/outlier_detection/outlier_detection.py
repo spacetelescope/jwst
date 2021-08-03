@@ -352,9 +352,7 @@ class OutlierDetection:
         """
         log.info("Flagging outliers")
         for image, blot in zip(self.input_models, blot_models):
-            image_copy = image.copy()
-            flag_cr(image_copy, blot, **self.outlierpars)
-            image.dq = image_copy.dq.copy()
+            flag_cr(image, blot, **self.outlierpars)
 
         if self.converted:
             # Make sure actual input gets updated with new results
@@ -362,7 +360,8 @@ class OutlierDetection:
                 self.inputs.dq[i, :, :] = self.input_models[i].dq
 
 
-def flag_cr(sci_image, blot_image, **pars):
+def flag_cr(sci_image, blot_image, snr="5.0 4.0", scale="1.2 0.7", backg=0,
+            resample_data=True, **kwargs):
     """Masks outliers in science image by updating DQ in-place
 
     Mask blemishes in dithered data by comparing a science image
@@ -376,18 +375,21 @@ def flag_cr(sci_image, blot_image, **pars):
     blot_image : ~jwst.datamodels.ImageModel
         the blotted median image of the dithered science frames
 
-    pars : dict
-        the user parameters for Outlier Detection
+    snr : str
+        Signal-to-noise ratio
 
-    Default parameters:
+    scale : str
+        scaling factor applied to the derivative
 
-    snr      = "5.0 4.0"       # Signal-to-noise ratio
-    scale    = "1.2 0.7"       # scaling factor applied to the derivative
-    backg    = 0               # Background value
+    backg : float
+        Background value (scalar) to subtract
+
+    resample_data : bool
+        Boolean to indicate whether blot_image is created from resampled,
+        dithered data or not
     """
-    backg = pars.get('backg', 0)
-    snr1, snr2 = [float(val) for val in pars.get('snr', '5.0 4.0').split()]
-    scl1, scl2 = [float(val) for val in pars.get('scale', '1.2 0.7').split()]
+    snr1, snr2 = [float(val) for val in snr.split()]
+    scale1, scale2 = [float(val) for val in scale.split()]
 
     # Get background level of science data if it has not been subtracted, so it
     # can be added into the level of the blotted data, which has been
@@ -403,33 +405,30 @@ def flag_cr(sci_image, blot_image, **pars):
     sci_data = sci_image.data
     blot_data = blot_image.data
     blot_deriv = abs_deriv(blot_data)
-
     err_data = np.nan_to_num(sci_image.err)
 
     # create the outlier mask
-    if pars.get('resample_data', True):  # dithered outlier detection
+    if resample_data:  # dithered outlier detection
         blot_data += subtracted_background
         diff_noise = np.abs(sci_data - blot_data)
 
-        # Create an initial boolean mask based on a scaled version of
+        # Create a boolean mask based on a scaled version of
         # the derivative image (dealing with interpolating issues?)
         # and the standard n*sigma above the noise
-        threshold1 = scl1 * blot_deriv + snr1 * err_data
-        init_mask = np.logical_not(np.greater(diff_noise, threshold1))
+        threshold1 = scale1 * blot_deriv + snr1 * err_data
+        mask1 = np.greater(diff_noise, threshold1)
 
-        # Convert mask to integer mask and convolve with 3x3 boxcar kernel
+        # Smooth the boolean mask with a 3x3 boxcar kernel
         kernel = np.ones((3, 3), dtype=int)
-        init_mask_smoothed = ndimage.convolve(init_mask.astype(int), kernel,
-                                              mode='nearest')
-        mask1 = np.less(init_mask_smoothed, 9)
+        mask1_smoothed = ndimage.convolve(mask1, kernel, mode='nearest')
 
         # Create a 2nd boolean mask based on the 2nd set of
         # scale and threshold values
-        threshold2 = scl2 * blot_deriv + snr2 * err_data
+        threshold2 = scale2 * blot_deriv + snr2 * err_data
         mask2 = np.greater(diff_noise, threshold2)
 
         # Final boolean mask
-        cr_mask = mask1 & mask2
+        cr_mask = mask1_smoothed & mask2
 
     else:  # stack outlier detection
         diff_noise = np.abs(sci_data - blot_data)
