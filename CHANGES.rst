@@ -7,6 +7,9 @@ assign_wcs
 - Open the specwcs reference file for WFSS modes using the ``with`` context
   manger. [#6160]
 
+- Fix bug in NIRspec where ``bounding_box`` can be oversized in height for
+  some of the slits.
+
 associations
 ------------
 
