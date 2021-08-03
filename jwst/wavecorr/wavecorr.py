@@ -55,17 +55,28 @@ def do_correction(input_model, wavecorr_file):
         # For FS only work on the primary slit
         if exp_type == 'NRS_FIXEDSLIT':
             for slit in output_model.slits:
-                if slit.name == primary_slit and _is_point_source(slit, exp_type):
-                    apply_zero_point_correction(slit, wavecorr_file)
-                    break
+                if slit.name == primary_slit:
+                    if not hasattr(slit.meta, "dither"):
+                        log.warning('meta.dither is not populated for the primary slit')
+                        log.warning('Skipping wavecorr correction')
+                        input_model.meta.cal_step.wavecorr = 'SKIPPED'
+                        break
+                    if (slit.meta.dither.x_offset is None or slit.meta.dither.y_offset is None):
+                        log.warning('dither.x(y)_offset values are None for primary slit')
+                        log.warning('Skipping wavecorr correction')
+                        input_model.meta.cal_step.wavecorr = 'SKIPPED'
+                        break
+                    if _is_point_source(slit, exp_type):
+                        apply_zero_point_correction(slit, wavecorr_file)
+                        output_model.meta.cal_step.wavecorr = 'COMPLETE'
+                        break
 
         # For MOS work on all slits containing a point source
         else:
             for slit in output_model.slits:
                 if _is_point_source(slit, exp_type):
                     apply_zero_point_correction(slit, wavecorr_file)
-
-    output_model.meta.cal_step.wavecorr = 'COMPLETE'
+                    output_model.meta.cal_step.wavecorr = 'COMPLETE'
 
     return output_model
 
@@ -264,10 +275,10 @@ def get_source_xpos(slit, slit_wcs, lam, msa_model):
     # Update slit.source_xpos, slit.source_ypos
     slit.source_xpos = xpos_slit
     slit.source_ypos = ypos_slit
-    log.debug('Source X/Y position in the slit: {0}, {1}'.format(xpos_slit, ypos_slit))
+    log.info('Source X/Y position in the slit: {0}, {1}'.format(xpos_slit, ypos_slit))
 
-    log.debug('Source X/Y position in the MSA: {0}, {1}'.format(xpos_abs, ypos_abs))
-    log.debug('Fractional position of source in aperture {}'.format(xpos_frac))
+    log.info('Source X/Y position in the MSA: {0}, {1}'.format(xpos_abs, ypos_abs))
+    log.info('Fractional position of source in aperture {}'.format(xpos_frac))
     return xpos_frac
 
 
