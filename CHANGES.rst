@@ -34,6 +34,11 @@ extract_1d
 - Updated to propagate SRCTYPE keyword during extraction of MIRI LRS
   fixed-slit inputs that are in `SlitModel` form. [#6212]
 
+jump
+----
+- jump detection step now uses common code moved to stcal [#6089]
+
+
 outlier_detection
 -----------------
 
