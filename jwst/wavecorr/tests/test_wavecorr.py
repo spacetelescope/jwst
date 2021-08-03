@@ -12,10 +12,9 @@ from jwst.srctype import SourceTypeStep
 from jwst.transforms import models
 from jwst.wavecorr import WavecorrStep
 from jwst.wavecorr import wavecorr
-from crds import CrdsLookupError
 
 from jwst.assign_wcs.tests.test_nirspec import (create_nirspec_mos_file,
-    create_nirspec_fs_file)
+                                                create_nirspec_fs_file)
 
 
 def test_wavecorr():
@@ -71,12 +70,12 @@ def test_skipped():
     im = datamodels.ImageModel(hdul)
 
     # test a non-valid exp_type2transform
-    im.meta.exposure.type='NRS_IMAGE'
+    im.meta.exposure.type = 'NRS_IMAGE'
     out = WavecorrStep.call(im)
     assert out.meta.cal_step.wavecorr == "SKIPPED"
 
     # Test an error is raised if assign_wcs or extract_2d were not run.
-    im.meta.exposure.type='NRS_FIXEDSLIT'
+    im.meta.exposure.type = 'NRS_FIXEDSLIT'
     with pytest.raises(AttributeError):
         WavecorrStep.call(im)
 
@@ -85,11 +84,11 @@ def test_skipped():
     outs = SourceTypeStep.call(oute)
 
     # Test step is skipped if no coverage in CRDS
-    outs.slits[0].meta.observation.date='2001-08-03'
+    outs.slits[0].meta.observation.date = '2001-08-03'
     outw = WavecorrStep.call(outs)
     assert out.meta.cal_step.wavecorr == "SKIPPED"
 
-    outs.meta.observation.date='2017-08-03'
+    outs.meta.observation.date = '2017-08-03'
     outw = WavecorrStep.call(outs)
     # Primary name not set
     assert out.meta.cal_step.wavecorr == "SKIPPED"
@@ -101,7 +100,7 @@ def test_skipped():
     assert out.meta.cal_step.wavecorr == "SKIPPED"
 
     dither = {'x_offset': 0.0, 'y_offset': 0.0}
-    ind = np.nonzero([s.name=='S400A1' for s in outs.slits])[0].item()
+    ind = np.nonzero([s.name == 'S400A1' for s in outs.slits])[0].item()
     outs.slits[ind].meta.dither = dither
     outs.slits[ind].meta.wcsinfo.v3yangle = 138.78
     outs.slits[ind].meta.wcsinfo.vparity = -1
