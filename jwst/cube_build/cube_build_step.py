@@ -41,7 +41,7 @@ class CubeBuildStep (Step):
          scale1 = float(default=0.0) # cube sample size to use for axis 1, arc seconds
          scale2 = float(default=0.0) # cube sample size to use for axis 2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
-         weighting = option('emsm','msm','miripsf',default = 'emsm') # Type of weighting function
+         weighting = option('emsm','msm',default = 'emsm') # Type of weighting function
          coord_system = option('skyalign','world','internal_cal','ifualign',default='skyalign') # Output Coordinate system.
          rois = float(default=0.0) # region of interest spatial size, arc seconds
          roiw = float(default=0.0) # region of interest wavelength size, microns
@@ -57,7 +57,7 @@ class CubeBuildStep (Step):
          output_use_model = boolean(default=true) # Use filenames in the output models
        """
 
-    reference_file_types = ['cubepar', 'resol']
+    reference_file_types = ['cubepar']
 
 # ________________________________________________________________________________
     def process(self, input):
@@ -140,7 +140,7 @@ class CubeBuildStep (Step):
         # if interpolation is point cloud then weighting can be
         # 1. MSM: modified shepard method
         # 2. EMSM
-        # 3. miripsf - weighting for MIRI based on PSF and LSF
+
         if self.coord_system == 'skyalign':
             self.interpolation = 'pointcloud'
 
@@ -221,16 +221,6 @@ class CubeBuildStep (Step):
             self.log.warning('No default cube parameters reference file found')
             return
 # ________________________________________________________________________________
-# If miripsf weight is set then set up reference file
-        resol_filename = None
-        if self.weighting == 'miripsf':
-            resol_filename = self.get_reference_file(self.input_models[0], 'resol')
-            self.log.info(f'MIRI resol reference file {resol_filename}')
-            if resol_filename == 'N/A':
-                self.log.warning('No spectral resolution reference file found')
-                self.log.warning('Run again and turn off miripsf')
-                return
-# ________________________________________________________________________________
 # shove the input parameters in to pars to pull out in general cube_build.py
 
         pars = {
@@ -269,7 +259,6 @@ class CubeBuildStep (Step):
             self.input_models,
             self.input_filenames,
             par_filename,
-            resol_filename,
             **pars)
 # ________________________________________________________________________________
 # cubeinfo.setup:

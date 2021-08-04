@@ -52,7 +52,7 @@ You can also install a specific version (from `jwst 0.17.0` onward):
 
     conda create -n <env_name> python
     conda activate <env_name>
-    pip install jwst==1.2.3
+    pip install jwst==1.3.0
 
 Installing specific versions before `jwst 0.17.0` need to be installed from Github:
 
@@ -81,7 +81,7 @@ exact versions of all packages to be installed.
 To install a particular DMS build, consult the
 [Software vs DMS build version map](https://github.com/spacetelescope/jwst#software-vs-dms-build-version-map)
 table shown below to determine the correct jwst tag. For example, to install the
-version of `jwst` used in DMS build 7.8, use jwst tag 1.2.3. The overall
+version of `jwst` used in DMS build 7.8.1, use jwst tag 1.3.0. The overall
 procedure is similar to the 3-step process outlined in the previous section, but the
 details of each command vary, due to the use of environment snapshot files that specify
 all of the particular packages to install. Also note that different snapshot files are
@@ -89,15 +89,15 @@ used for Linux and Mac OS systems.
 
 Linux:
 
-    conda create -n jwstdp-1.2.3 --file https://ssb.stsci.edu/releases/jwstdp/1.2.3/conda_python_stable-deps.txt
-    conda activate jwstdp-1.2.3
-    pip install -r https://ssb.stsci.edu/releases/jwstdp/1.2.3/reqs_stable-deps.txt
+    conda create -n jwstdp-1.3.0 --file https://ssb.stsci.edu/releases/jwstdp/1.3.0/conda_python_stable-deps.txt
+    conda activate jwstdp-1.3.0
+    pip install -r https://ssb.stsci.edu/releases/jwstdp/1.3.0/reqs_stable-deps.txt
 
 MacOS:
 
-    conda create -n jwstdp-1.2.3 --file https://ssb.stsci.edu/releases/jwstdp/1.2.3/conda_python_macos-stable-deps.txt
-    conda activate jwstdp-1.2.3
-    pip install -r https://ssb.stsci.edu/releases/jwstdp/1.2.3/reqs_macos-stable-deps.txt
+    conda create -n jwstdp-1.3.0 --file https://ssb.stsci.edu/releases/jwstdp/1.3.0/conda_python_macos-stable-deps.txt
+    conda activate jwstdp-1.3.0
+    pip install -r https://ssb.stsci.edu/releases/jwstdp/1.3.0/reqs_macos-stable-deps.txt
 
 Each DMS delivery has its own installation instructions, which may be found in
 the corresponding release documentation linked from this page:
@@ -188,7 +188,8 @@ contact the [JWST Help Desk](https://jwsthelp.stsci.edu).
 
 | jwst tag | DMS build | CRDS_CONTEXT |   Date     |          Notes                                |
 | -------- | --------- | ------------ | ---------- | ----------------------------------------------|
-|  1.2.3   | B7.8rc4   | 0732         | 06/08/2021 | Fourth release candidate for B7.8             |
+|  1.3.0   | B7.8.1    | 0741         | 08/02/2021 | Final release candidate for B7.8.1            |
+|  1.2.3   | B7.8      | 0732         | 06/08/2021 | Final release candidate for B7.8              |
 |  1.2.2   | B7.8rc3   | 0732         | 06/08/2021 | Third release candidate for B7.8              |
 |  1.2.1   | B7.8rc2   | 0732         | 06/07/2021 | Second release candidate for B7.8             |
 |  1.2.0   | B7.8rc1   | 0723         | 05/24/2021 | First release candidate for B7.8              |
