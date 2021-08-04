@@ -17,9 +17,12 @@ cube_build
 ----------
 
 - Fix bug when creating cubes using output_type=channel. [#6138]
+
 - Move computationally intensive routines to c extensions and
   removed miri psf weight function. [#6093]
+
 - Moved cube blotting to a c extension [#6256]
+
 - Moved variable definitions to top of code in c extension to
   support changes in #6093. [#6255]
 
@@ -34,10 +37,16 @@ extract_1d
 - Updated to propagate SRCTYPE keyword during extraction of MIRI LRS
   fixed-slit inputs that are in `SlitModel` form. [#6212]
 
+flatfield
+---------
+
+- Updated flatfield step docs to include complete details on how the
+  variance and error arrays are updated. [#6245]
+
 jump
 ----
-- jump detection step now uses common code moved to stcal [#6089]
 
+- Updated jump detection step to use common code moved to stcal [#6089]
 
 outlier_detection
 -----------------
