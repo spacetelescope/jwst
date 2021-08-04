@@ -1230,7 +1230,8 @@ def compute_bounding_box(transform, wavelength_range, slit_ymin=-.55, slit_ymax=
     Parameters
     ----------
     transform : `astropy.modeling.core.Model`
-        The transform from slit to detector, or detector to slit
+        The transform from slit to detector, or detector to slit.
+        `nrs_wcs_set_input` uses "detector to slit", validate_open_slits uses "slit to detector".
     wavelength_range : tuple
         The wavelength range for the combination of grating and filter.
 

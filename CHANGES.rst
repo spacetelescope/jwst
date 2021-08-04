@@ -8,7 +8,7 @@ assign_wcs
   manger. [#6160]
 
 - Fix bug in NIRspec where ``bounding_box`` can be oversized in height for
-  some of the slits.
+  some of the slits. [#6257]
 
 associations
 ------------
