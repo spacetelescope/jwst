@@ -78,7 +78,7 @@ wavecorr
 --------
 
 - Location of source in NIRspec fixed slit updated
-  (keywords ``SCRCXPOS``, ``SRCYPOS``). [#6243]
+  (keywords ``SCRCXPOS``, ``SRCYPOS``). [#6243, #6261]
 
 wfss_contam
 -----------
