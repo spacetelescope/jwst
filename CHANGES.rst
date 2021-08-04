@@ -58,6 +58,8 @@ outlier_detection
   The bug in the implimentation of the bilinear interpolator in the ``drizzle``
   package is now fixed. [#6146]
 
+- Log number of flagged outliers in ``outlier_detection`` [#6260]
+
 pipeline
 --------
 
