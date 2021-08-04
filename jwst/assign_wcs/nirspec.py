@@ -1650,17 +1650,13 @@ def nrs_wcs_set_input(input_model, slit_name, wavelength_range=None,
         _, wavelength_range = spectral_order_wrange_from_model(input_model)
 
     slit_wcs = _nrs_wcs_set_input(input_model, slit_name)
-    # slit2detector = slit_wcs.get_transform('slit_frame', 'detector')
     transform = slit_wcs.get_transform('detector', 'slit_frame')
     is_nirspec_ifu = is_nrs_ifu_lamp(input_model) or input_model.meta.exposure.type.lower() == 'nrs_ifu'
     if is_nirspec_ifu:
-        # bb = compute_bounding_box(slit2detector, wavelength_range)
         bb = compute_bounding_box(transform, wavelength_range)
     else:
         if slit_y_low is None or slit_y_high is None:
             slit_y_low, slit_y_high = _get_y_range(input_model)
-        # bb = compute_bounding_box(slit2detector, wavelength_range,
-        #                           slit_ymin=slit_y_low, slit_ymax=slit_y_high)
         bb = compute_bounding_box(transform, wavelength_range,
                                   slit_ymin=slit_y_low, slit_ymax=slit_y_high)
 
