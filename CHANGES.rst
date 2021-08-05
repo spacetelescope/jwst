@@ -6,6 +6,7 @@ lib
 
 - Fixed a bug in set_telescope_pointing that was setting wrong meta for the pointing quality [#6264]
 
+
 1.3.0 (2021-07-31)
 ==================
 
@@ -49,6 +50,7 @@ wfs_combine
 
 -- Fixed the refine option to correctly use the cross correlation to align
    the images if the WCS is off [#6101]
+
 
 1.2.3 (2021-06-08)
 ==================
