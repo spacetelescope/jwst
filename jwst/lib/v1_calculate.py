@@ -125,10 +125,7 @@ def simplify_table(v1_table):
     formatted: astropy.table.Table
         Reformatted table.
     """
-    if v1_table['source'].dtype == object:
-        source_formatted = [v.meta.filename for v in v1_table['source']]
-    else:
-        source_formatted = v1_table['source']
+    source_formatted = [str(v) for v in v1_table['source']]
     obstime_formatted = v1_table['obstime'].isot
     ras, decs, pa_v3s = list(map(list, zip(*v1_table['v1'])))
 
