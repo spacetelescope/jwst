@@ -14,7 +14,7 @@ import requests
 
 from astropy.time import Time
 
-from jwst.lib import engdb_tools
+from jwst.lib import engdb_direct, engdb_tools
 from jwst.lib.tests.engdb_mock import EngDB_Mocker
 
 GOOD_MNEMONIC = 'INRSI_GWA_Y_TILT_AVGED'
@@ -111,7 +111,7 @@ def test_db_time():
         '+1234',
         ')/'
     ])
-    result = engdb_tools.extract_db_time(stime)
+    result = engdb_direct.extract_db_time(stime)
     assert result == time
 
 

@@ -10,7 +10,7 @@ import warnings
 from astropy.time import Time
 
 from jwst.lib.tests import engdb_mock
-from jwst.lib import engdb_tools
+from jwst.lib import engdb_direct, engdb_tools
 
 # Midpoint is about 2021-01-26T02:32:26.205
 GOOD_STARTTIME = '2021-01-26 02:29:02.188'
@@ -89,7 +89,7 @@ def test_cache_partial_data(db_cache, engdb):
     data = db_cache.fetch_data(GOOD_MNEMONIC, GOOD_STARTTIME, GOOD_ENDTIME)
     assert data['Count'] > 4  # Just to make sure we have some data
     endtime = Time(
-        engdb_tools.extract_db_time(data['Data'][1]['ObsTime']) / 1000.,
+        engdb_direct.extract_db_time(data['Data'][1]['ObsTime']) / 1000.,
         format='unix'
     )
 
@@ -148,8 +148,8 @@ def test_cache_end_data(db_cache, engdb):
 def test_mocker_alive(db_cache):
     with engdb_mock.EngDB_Mocker(db_path=db_cache.db_path):
         query = ''.join([
-            engdb_tools.ENGDB_BASE_URL,
-            engdb_tools.ENGDB_METADATA
+            engdb_direct.ENGDB_BASE_URL,
+            engdb_direct.ENGDB_METADATA
         ])
         response = requests.get(query)
         assert response.status_code == 200
@@ -166,8 +166,8 @@ def test_mocker_alive(db_cache):
 def test_mocker_meta(db_cache, mnemonic, count):
     with engdb_mock.EngDB_Mocker(db_path=db_cache.db_path):
         query = ''.join([
-            engdb_tools.ENGDB_BASE_URL,
-            engdb_tools.ENGDB_METADATA,
+            engdb_direct.ENGDB_BASE_URL,
+            engdb_direct.ENGDB_METADATA,
             mnemonic
         ])
         response = requests.get(query)
@@ -179,8 +179,8 @@ def test_mocker_meta(db_cache, mnemonic, count):
 def test_mocker_data(db_cache, engdb):
     with engdb_mock.EngDB_Mocker(db_path=db_cache.db_path):
         query = ''.join([
-            engdb_tools.ENGDB_BASE_URL,
-            engdb_tools.ENGDB_DATA,
+            engdb_direct.ENGDB_BASE_URL,
+            engdb_direct.ENGDB_DATA,
             GOOD_MNEMONIC,
             '?sTime=',
             GOOD_STARTTIME,

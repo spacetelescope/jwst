@@ -7,7 +7,7 @@ import os
 import re
 import requests_mock
 
-from jwst.lib import engdb_tools
+from jwst.lib import engdb_direct, engdb_tools
 
 __all__ = [
     'ENGDB_PATH',
@@ -63,14 +63,14 @@ class EngDB_Mocker(requests_mock.Mocker):
 
         # Setup from meta query
         meta_query = re.compile(''.join([
-            engdb_tools.ENGDB_METADATA,
+            engdb_direct.ENGDB_METADATA,
             '.*'
         ]))
         self.get(meta_query, json=self.response_meta)
 
         # Setup to return a general data query
         data_query = re.compile(''.join([
-            engdb_tools.ENGDB_DATA,
+            engdb_direct.ENGDB_DATA,
             r'.+\?sTime=.+\&eTime=.+'
         ]))
         self.get(data_query, json=self.response_data)
@@ -173,13 +173,13 @@ class EngDB_Local():
         data = db_data['Data']
         start_idx = 0
         try:
-            while engdb_tools.extract_db_time(data[start_idx]['ObsTime']) < stime_mil:
+            while engdb_direct.extract_db_time(data[start_idx]['ObsTime']) < stime_mil:
                 start_idx += 1
         except IndexError:
             pass
         end_idx = start_idx
         try:
-            while engdb_tools.extract_db_time(data[end_idx]['ObsTime']) <= etime_mil:
+            while engdb_direct.extract_db_time(data[end_idx]['ObsTime']) <= etime_mil:
                 end_idx += 1
         except IndexError:
             end_idx -= 1
