@@ -65,6 +65,9 @@ pipeline
 
 - Added wfss_contam step to `calwebb_spec2` pipeline flow for WFSS modes [#6207]
 
+- Updated calwebb_tso3 to be more robust in handling null results from
+  the ``tso_photometry`` step. [#6265]
+
 ramp_fitting
 ------------
 
@@ -79,7 +82,7 @@ source_catalog
 wavecorr
 --------
 
-- Location of source in NIRspec fixed slit updated
+- Location of source in NIRSpec fixed slit updated
   (keywords ``SCRCXPOS``, ``SRCYPOS``). [#6243, #6261]
 
 wfss_contam
