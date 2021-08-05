@@ -76,7 +76,7 @@ class Extract1dStep(Step):
 
     """
 
-    # TODO add SOSS extraction parameters (e.g. threhold).
+    # TODO set soss_theta, soss_dx, soss_dy as single parameter transform? Unclear how to type.
     spec = """
     smoothing_length = integer(default=None)  # background smoothing size
     bkg_fit = option("poly", "mean", "median", default="poly")  # background fitting type
@@ -87,7 +87,13 @@ class Extract1dStep(Step):
     use_source_posn = boolean(default=None)  # use source coords to center extractions?
     center_xy = int_list(min=2, max=2, default=None)  # IFU extraction x/y center
     apply_apcorr = boolean(default=True)  # apply aperture corrections?
+    soss_threshold = float(default=1e-4)  # threshold value for a pixel to be included when modelling the trace.
+    soss_n_os = integer(default=5)  # oversampling factor of the underlying wavelength grid used when modelling the trace. 
+    soss_theta = float(default=0.)  # rotation angle applied to the reference files to match the observation.
+    soss_dx = float(default=0.)  # x-shift applied to the reference files to match the observation.
+    soss_dy = float(default=0.)  # y-shift applied to the reference files to match the observation.
     soss_tikfac = float(default=None)  # regularisation factor for NIRISS SOSS extraction
+    soss_width = float(default=40.)  # aperture width used to extract the 1D spectrum from the de-contaminated trace.
     """
 
     # TODO add SOSS reference file types.
@@ -153,6 +159,13 @@ class Extract1dStep(Step):
             specprofile_ref_name = os.path.join(soss_ref_path, 'SOSS_ref_2D_profile_SUBSTRIP256.fits.gz')  # SpecProfileModel
             speckernel_ref_name = os.path.join(soss_ref_path, 'SOSS_ref_spectral_kernel.fits.gz')  # SpecKernelModel
 
+            # Build SOSS kwargs dictionary.
+            soss_kwargs = dict()
+            soss_kwargs['threshold'] = self.soss_threshold
+            soss_kwargs['n_os'] = self.soss_n_os
+            soss_kwargs['tikfac'] = self.soss_tikfac
+            soss_kwargs['width'] = self.soss_width
+
             # Run the extraction.
             # TODO additional user-controlled parameters (e.g. threshold)?
             result = soss_extract.run_extract1d(input_model,
@@ -160,7 +173,7 @@ class Extract1dStep(Step):
                                                 wavemap_ref_name,
                                                 specprofile_ref_name,
                                                 speckernel_ref_name,
-                                                self.soss_tikfac)
+                                                soss_kwargs)
 
             # Set the step flag to complete
             result.meta.cal_step.extract_1d = 'COMPLETE'

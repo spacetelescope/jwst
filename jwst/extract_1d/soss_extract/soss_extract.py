@@ -65,7 +65,7 @@ def get_ref_file_args(ref_files, transform):
 
 # TODO how best to pass reference files and additional parameters (e.g. threshold)?
 def extract_image(scidata, scierr, scimask, ref_files, transform=None,
-                  tikfac=None, n_os=5, threshold=1e-4):
+                  tikfac=None, n_os=5, threshold=1e-4, width=40):
     """Perform the spectral extraction on a single image.
 
     :param scidata: A single NIRISS SOSS detector image.
@@ -81,6 +81,7 @@ def extract_image(scidata, scierr, scimask, ref_files, transform=None,
         solving for the uncontaminated flux.
     :param threshold: The threshold value for using pixels based on the spectral
         profile.
+    :param width: The width of the aperture used to extract the un-contaminated spectrum.
 
     :type scidata: array[float]
     :type scierr: array[float]
@@ -90,6 +91,7 @@ def extract_image(scidata, scierr, scimask, ref_files, transform=None,
     :type tikfac: float
     :type n_os: int
     :type threshold: float
+    :type width: float
 
     :returns: TODO TBD
     :rtype: TODO TBD
@@ -124,6 +126,7 @@ def extract_image(scidata, scierr, scimask, ref_files, transform=None,
     ref_file_args = get_ref_file_args(ref_files, transform)
 
     # Initialize the Engine.
+    # TODO set c_kwargs?
     engine = ExtractionEngine(*ref_file_args, n_os=n_os, threshold=threshold)
 
     if tikfac is None:
@@ -157,7 +160,7 @@ def extract_image(scidata, scierr, scimask, ref_files, transform=None,
     model_order_2 = engine.rebuild(f_k, i_orders=[1])
 
     # Run a box extraction on the order 1/2 subtracted image for orders 1,2 and 3.
-    # TODO still being written.
+    # TODO still being written, use width here.
 
     # TODO Placeholders for return values.
     wavelengths = dict()
@@ -173,7 +176,7 @@ def run_extract1d(input_model: DataModel,
                   wavemap_ref_name: str,
                   specprofile_ref_name: str,
                   speckernel_ref_name: str,
-                  tikfac: float):  # TODO What other parameters are needed: threshold, oversampling etc.
+                  soss_kwargs: dict):
     """Run the spectral extraction on NIRISS SOSS data.
 
     :param input_model:
@@ -214,7 +217,8 @@ def run_extract1d(input_model: DataModel,
         scimask = input_model.dq > 0  # Mask bad pixels with True.
 
         # Perform the extraction.
-        wavelengths, fluxes, fluxerrs, transform, tikfac = extract_image(scidata, scierr, scimask, ref_files, tikfac=tikfac)
+        result = extract_image(scidata, scierr, scimask, ref_files, transform=None, tikfac=soss_kwargs['tikfac'], n_os=soss_kwargs['n_os'], threshold=soss_kwargs['threshold'])
+        wavelengths, fluxes, fluxerrs, transform, soss_kwargs['tikfac'] = result
 
         # Initialize the output model.
         output_model = datamodels.MultiSpecModel()  # TODO is this correct for ImageModel input?
@@ -268,8 +272,8 @@ def run_extract1d(input_model: DataModel,
             scimask = input_model.dq[i] > 0
 
             # Perform the extraction.
-            result = extract_image(scidata, scierr, scimask, ref_files, transform=transform, tikfac=tikfac)
-            wavelengths, fluxes, fluxerrs, transform, tikfac = result
+            result = extract_image(scidata, scierr, scimask, ref_files, transform=transform, tikfac=soss_kwargs['tikfac'], n_os=soss_kwargs['n_os'], threshold=soss_kwargs['threshold'])
+            wavelengths, fluxes, fluxerrs, transform, soss_kwargs['tikfac'] = result
 
             # Copy spectral data for each order into the output model.
             # TODO how to include parameters like transform and tikfac in the output.
