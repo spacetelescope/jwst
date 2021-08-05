@@ -701,7 +701,7 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
             wcsinfo, vinfo, transforms = calc_wcs(t_pars)
             pointing_engdb_quality = f'CALCULATED_{t_pars.method.value.upper()}'
             logger.info('Setting ENGQLPTG keyword to %s', pointing_engdb_quality)
-            model.meta.visit.pointing_engdb_quality = pointing_engdb_quality
+            model.meta.visit.engdb_pointing_quality = pointing_engdb_quality
         except Exception as e:
             logger.warning(
                 'WCS calculation has failed and will be skipped.'
@@ -712,7 +712,7 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
                 raise
             else:
                 logger.info("Setting ENGQLPTG keyword to PLANNED")
-                model.meta.visit.pointing_engdb_quality = "PLANNED"
+                model.meta.visit.engdb_pointing_quality = "PLANNED"
     logger.info('Aperture WCS info: %s', wcsinfo)
     logger.info('V1 WCS info: %s', vinfo)
 
