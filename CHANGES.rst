@@ -91,6 +91,14 @@ wfss_contam
 
 - Fixed handling of filter/pupil names for NIRISS WFSS mode [#6233]
 
+1.3.1 (2021-08-05)
+==================
+
+lib
+---
+
+- Fixed a bug in set_telescope_pointing that was setting wrong meta for the pointing quality [#6264]
+
 1.3.0 (2021-07-31)
 ==================
 
