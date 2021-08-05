@@ -52,7 +52,8 @@ FSMCORR_EXPECTED = np.zeros((2,))
 OBSTIME_EXPECTED = STARTTIME
 
 # Meta attributes for test comparisions
-METAS_EQALITY = ['meta.pointing.ra_v1',
+METAS_EQALITY = ['meta.visit.engdb_pointing_quality',
+                 'meta.pointing.ra_v1',
                  'meta.pointing.dec_v1',
                  'meta.pointing.pa_v3',
                  'meta.wcsinfo.wcsaxes',
