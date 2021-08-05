@@ -147,6 +147,11 @@ def extract_image(scidata, scierr, scimask, ref_files, transform=None,
     # Run the extract method of the Engine.
     f_k = engine.extract(data=scidata_bkg, error=scierr, mask=scimask, tikhonov=True, factor=tikfac)
 
+    # Compute the log-likelihood of the best fit.
+    logl = engine.compute_likelihood(f_k, same=False)
+
+    log.info('Optimal solution has a log-likelihood of {}'.format(logl))
+
     # Re-construct orders 1 and 2.
     model_order_1 = engine.rebuild(f_k, i_orders=[0])
     model_order_2 = engine.rebuild(f_k, i_orders=[1])
