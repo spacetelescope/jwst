@@ -1143,9 +1143,6 @@ class _BaseOverlap:  # TODO Merge with TrpzOverlap?
             # Evaluate the model of the current order.
             model[~mask] += pixel_mapping.dot(spectrum)
 
-        # Set masked values to NaN.
-        model[mask] = np.nan
-
         return model
 
     def compute_likelihood(self, spectrum=None, same=False):
@@ -1176,9 +1173,11 @@ class _BaseOverlap:  # TODO Merge with TrpzOverlap?
         # Get data and error attributes.
         data = self.data
         error = self.error
+        mask = self.mask
 
         # Compute the log-likelihood for the spectrum.
-        logl = -np.nansum((model - data)**2/error**2)
+        logl = (model - data)/error
+        logl = -np.nansum((logl[~mask])**2)
 
         return logl
 
