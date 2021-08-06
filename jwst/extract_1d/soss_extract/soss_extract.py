@@ -156,8 +156,16 @@ def extract_image(scidata, scierr, scimask, ref_files, transform=None,
     log.info('Optimal solution has a log-likelihood of {}'.format(logl))
 
     # Re-construct orders 1 and 2.
-    model_order_1 = engine.rebuild(f_k, i_orders=[0])
-    model_order_2 = engine.rebuild(f_k, i_orders=[1])
+    # TODO get this mask from the DQ array? Ensure it works for all subarrays.
+    border_mask = np.zeros_like(scidata)
+    border_mask[-4:] = True
+    border_mask[:, :4] = True
+    border_mask[:, -4:] = True
+
+    model = ExtractionEngine(*ref_file_args, wave_grid=engine.wave_grid, threshold=1e-5, global_mask=border_mask)
+
+    model_order_1 = model.rebuild(f_k, i_orders=[0])
+    model_order_2 = model.rebuild(f_k, i_orders=[1])
 
     # Run a box extraction on the order 1/2 subtracted image for orders 1,2 and 3.
     # TODO still being written, use width here.
