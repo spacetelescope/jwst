@@ -10,6 +10,12 @@ from .soss_solver import solve_transform, apply_transform
 from .soss_engine import ExtractionEngine
 from .engine_utils import ThroughputSOSS, WebbKernel
 
+# TODO integrate box extraction into DMS.
+from SOSS.dms.soss_boxextract import get_box_weights, box_extract
+
+# TODO remove once code is sufficiently tested.
+import devtools
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -155,7 +161,8 @@ def extract_image(scidata, scierr, scimask, ref_files, transform=None,
 
     log.info('Optimal solution has a log-likelihood of {}'.format(logl))
 
-    # Re-construct orders 1 and 2.
+    # Create a new instance of the engine for evaluating the trace model.
+    # This allows bad pixels and pixels below the threshold to be reconstructed as well.
     # TODO get this mask from the DQ array? Ensure it works for all subarrays.
     border_mask = np.zeros_like(scidata)
     border_mask[-4:] = True
@@ -164,18 +171,73 @@ def extract_image(scidata, scierr, scimask, ref_files, transform=None,
 
     model = ExtractionEngine(*ref_file_args, wave_grid=engine.wave_grid, threshold=1e-5, global_mask=border_mask)
 
-    model_order_1 = model.rebuild(f_k, i_orders=[0])
-    model_order_2 = model.rebuild(f_k, i_orders=[1])
+    # Model the order 1 and order 2 trace seperately.
+    tracemodel_o1 = model.rebuild(f_k, i_orders=[0])
+    tracemodel_o2 = model.rebuild(f_k, i_orders=[1])
 
-    # Run a box extraction on the order 1/2 subtracted image for orders 1,2 and 3.
-    # TODO still being written, use width here.
+    # TODO this shouldn't be necessary, adjust the engines use of masks.
+    tracemodel_o1 = np.where(np.isnan(tracemodel_o1), 0, tracemodel_o1)
+    tracemodel_o2 = np.where(np.isnan(tracemodel_o2), 0, tracemodel_o2)
 
-    # TODO Placeholders for return values.
+    devtools.diagnostic_plot(scidata_bkg, scierr, scimask, tracemodel_o1, tracemodel_o2)
+
     wavelengths = dict()
     fluxes = dict()
     fluxerrs = dict()
 
-    # TODO update return products when box extraction finished.
+    # TODO write function that computes lambda, x, y for each order.
+    # TODO need way to fill in bad pixels.
+    # Don't extract orders 2 and 3 for SUBSTRIP96.
+    # Use the model of order 2 to de-contaminate and extract order 1.
+    spectrace_ref = ref_files['spectrace']
+    xref = spectrace_ref.trace[0].data['X']  # TODO should be rotated and shifted by transform.
+    yref = spectrace_ref.trace[0].data['Y']
+
+    sort = np.argsort(xref)
+    xtrace_o1 = np.arange(4, 2044)
+    ytrace_o1 = np.interp(xtrace_o1, xref[sort], yref[sort])
+
+    box_weights_o1 = get_box_weights(ytrace_o1, width, scidata.shape, cols=xtrace_o1)
+    out = box_extract(scidata_bkg - tracemodel_o2, scierr, scimask, box_weights_o1)
+    wavelengths['Order 1'], fluxes['Order 1'], fluxerrs['Order 1'] = out
+
+    devtools.plot_weights(box_weights_o1)
+    devtools.plot_data(scidata_bkg - tracemodel_o2, scimask)
+
+    # Use the model of order 1 to de-contaminate and extract order 2.
+    spectrace_ref = ref_files['spectrace']
+    xref = spectrace_ref.trace[1].data['X']  # TODO should be rotated and shifted by transform.
+    yref = spectrace_ref.trace[1].data['Y']
+
+    sort = np.argsort(xref)
+    xtrace_o2 = np.arange(4, 2044)  # TODO how to set good limits in orders 2 and 3.
+    ytrace_o2 = np.interp(xtrace_o2, xref[sort], yref[sort])
+
+    box_weights_o2 = get_box_weights(ytrace_o2, width, scidata.shape, cols=xtrace_o2)
+    out = box_extract(scidata_bkg - tracemodel_o1, scierr, scimask, box_weights_o2)
+    wavelengths['Order 2'], fluxes['Order 2'], fluxerrs['Order 2'] = out
+
+    devtools.plot_weights(box_weights_o2)
+    devtools.plot_data(scidata_bkg - tracemodel_o1, scimask)
+
+    # Use both models to de-contaminate and extract order 3.
+    spectrace_ref = ref_files['spectrace']
+    xref = spectrace_ref.trace[2].data['X']  # TODO should be rotated and shifted by transform.
+    yref = spectrace_ref.trace[2].data['Y']
+
+    sort = np.argsort(xref)
+    xtrace_o3 = np.arange(4, 2044)  # TODO how to set good limits in orders 2 and 3.
+    ytrace_o3 = np.interp(xtrace_o3, xref[sort], yref[sort])
+
+    box_weights_o3 = get_box_weights(ytrace_o3, width, scidata.shape, cols=xtrace_o3)
+    out = box_extract(scidata_bkg - tracemodel_o1 - tracemodel_o2, scierr, scimask, box_weights_o3)
+    wavelengths['Order 3'], fluxes['Order 3'], fluxerrs['Order 3'] = out
+
+    devtools.plot_weights(box_weights_o3)
+    devtools.plot_data(scidata_bkg - tracemodel_o1 - tracemodel_o2, scimask)
+
+    devtools.plot_1d_spectra(wavelengths, fluxes, fluxerrs)
+
     return wavelengths, fluxes, fluxerrs, transform, tikfac
 
 
@@ -192,12 +254,14 @@ def run_extract1d(input_model: DataModel,
     :param wavemap_ref_name:
     :param specprofile_ref_name:
     :param speckernel_ref_name:
+    :param soss_kwargs:
 
     :type input_model:
     :type spectrace_ref_name:
     :type wavemap_ref_name:
     :type specprofile_ref_name:
     :type speckernel_ref_name:
+    :type soss_kwargs:
 
     :returns: An output_model containing the extracted spectra.
     :rtype:
