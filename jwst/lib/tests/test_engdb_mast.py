@@ -38,6 +38,7 @@ def test_aliveness():
 
 
 def test_negative_aliveness():
+    """Ensure failure occurs with a bad url"""
     with pytest.raises(RuntimeError):
         engdb_mast.EngdbMast(base_url='https://127.0.0.1/_engdb_mast_test', token='dummytoken')
 
