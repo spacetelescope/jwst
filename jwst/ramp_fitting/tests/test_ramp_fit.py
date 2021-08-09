@@ -125,7 +125,7 @@ def test_gls_vs_ols_two_ints_ols():
     np.testing.assert_allclose(slopes_gls[0].data[50, 50], 150.0, 1e-6)
 
 
-@pytest.mark.skip(reason="Jenkins environment does not correctly handle multi-processing.")
+# @pytest.mark.skip(reason="Jenkins environment does not correctly handle multi-processing.")
 def test_multiprocessing():
     nints, ngroups, nrows = 3, 25, 100
     ncols = nrows  # make sure these are the same, so the loops below work
@@ -147,6 +147,10 @@ def test_multiprocessing():
         model1.data[2, j + 1, :, :] = model1.data[2, j, :, :] + delta_plane1 + delta_plane2
     model1.data = np.round(model1.data + np.random.normal(0, 5, (nints, ngroups, ncols, nrows)))
 
+    model2 = model1.copy()
+    gain2 = gain.copy()
+    rnoise2 = rnoise.copy()
+
     # TODO change this to be parametrized once GLS gets working.
     algo = "OLS"
     # algo = "GLS"
@@ -154,12 +158,12 @@ def test_multiprocessing():
         model1, 1024 * 30000., False, rnoise, gain, algo, 'optimal', 'none', test_dq_flags)
 
     slopes_multi, int_model_multi, opt_model_multi, gls_opt_model_multi = ramp_fit(
-        model1, 1024 * 30000., False, rnoise, gain, algo, 'optimal', 'half', test_dq_flags)
+        model2, 1024 * 30000., False, rnoise2, gain2, algo, 'optimal', 'all', test_dq_flags)
 
-    np.testing.assert_allclose(slopes.data, slopes_multi.data, rtol=1e-5)
+    np.testing.assert_allclose(slopes[0], slopes_multi[0], rtol=1e-5)
 
 
-@pytest.mark.skip(reason="Jenkins environment does not correctly handle multi-processing.")
+# @pytest.mark.skip(reason="Jenkins environment does not correctly handle multi-processing.")
 def test_multiprocessing2():
     nints, ngroups, nrows = 1, 25, 100
     ncols = nrows  # make sure these are the same, so the loops below work
@@ -178,16 +182,20 @@ def test_multiprocessing2():
         model1.data[0, j + 1, :, :] = model1.data[0, j, :, :] + delta_plane1 + delta_plane2
     model1.data = np.round(model1.data + np.random.normal(0, 5, (nints, ngroups, ncols, nrows)))
 
+    model2 = model1.copy()
+    gain2 = gain.copy()
+    rnoise2 = rnoise.copy()
+
     # TODO change this to be parametrized once GLS gets working.
     algo = "OLS"
     # algo = "GLS"
     slopes, int_model, opt_model, gls_opt_model = ramp_fit(
-        model1, 1024 * 30000., True, rnoise, gain, algo, 'optimal', 'none', test_dq_flags)
+        model1, 1024 * 30000., False, rnoise, gain, algo, 'optimal', 'none', test_dq_flags)
 
     slopes_multi, int_model_multi, opt_model_multi, gls_opt_model_multi = ramp_fit(
-        model1, 1024 * 30000., True, rnoise, gain, algo, 'optimal', 'half', test_dq_flags)
+        model2, 1024 * 30000., False, rnoise2, gain2, algo, 'optimal', 'all', test_dq_flags)
 
-    np.testing.assert_allclose(slopes.data, slopes_multi.data, rtol=1e-5)
+    np.testing.assert_allclose(slopes[0], slopes_multi[0], rtol=1e-5)
 
 
 @pytest.mark.xfail(reason="GLS code does not [yet] handle single group integrations.")
