@@ -5,11 +5,12 @@ import logging
 from os import getenv
 import requests
 
-# Default MAST base url
-MAST_BASE_URL = 'https://mast.stsci.edu'
+from astropy.time import Time
 
-# Aliveness query
-ALIVE_QUERY = 'SA_ZATTEST2-20210522T000000-20210522T000001.csv'
+# Default MAST info.
+MAST_BASE_URL = 'https://mast.stsci.edu'
+API_URI = 'api/v0.1/Download/file'
+SERVICE_URI = 'mast:jwstedb/'
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -38,16 +39,24 @@ class EngdbMast():
 
     Attributes
     ----------
+    req: `requests.Request`
+        The pre-built Request, with authorization and url defined.
+
     response: `requests.response`
         The results of the last query.
+
+    session: `requests.Session`
+        The session used for the connection.
 
     starttime: `astropy.time.Time`
         The start time of the last query.
 
     endtime: `astropy.time.Time`
 
-    base_url: str
-        The base URL for the engineering service.
+    Raises
+    ------
+    RuntimeError
+        Any and all failures with connecting with the MAST server.
     """
     def __init__(self, base_url=None, token=None, **db_kwargs):
 
@@ -70,3 +79,72 @@ class EngdbMast():
             raise RuntimeError(f'MAST url: {base_url} is unreachable.') from exception
         if resp.status_code != 200:
             raise RuntimeError(f'MAST url: {base_url} is not available. Returned HTTPS status {resp.status_code}')
+
+        # Basics are covered. Finalize initialization.
+        self.req = requests.Request(method='GET',
+                                    url=base_url + API_URI,
+                                    headers={'Authorization': f'token {token}'})
+        self.session = requests.Session()
+
+    def get_records(
+            self,
+            mnemonic,
+            starttime,
+            endtime,
+            time_format=None,
+            **other_kwargs
+    ):
+        """
+        Retrieve all results for a mnemonic in the requested time range.
+
+        Parameters
+        ----------
+        mnemonic: str
+            The engineering mnemonic to retrieve
+
+        starttime: str or astropy.time.Time
+            The, inclusive, start time to retireve from.
+
+        endttime: str or astropy.time.Time
+            The, inclusive, end time to retireve from.
+
+        result_format: str
+            The format to request from the service.
+            If None, the `default_format` is used.
+
+        time_format: str
+            The format of the input time used if the input times
+            are strings. If None, a guess is made.
+
+        other_kwargs : dict
+            Keyword arguments not relevant to this implementation.
+
+        Returns
+        -------
+        records: dict
+            Returns the dict of the request. This includes all
+            the data returned form the DB concerning the requested
+            mnemonic.
+
+        Notes
+        -----
+        The engineering service always returns the bracketing entries
+        before and after the requested time range.
+        """
+        if not isinstance(starttime, Time):
+            starttime = Time(starttime, format=time_format)
+        if not isinstance(endtime, Time):
+            endtime = Time(endtime, format=time_format)
+
+        # Make the request
+        mnemonic = mnemonic.strip()
+        mnemonic = mnemonic.upper()
+        starttime_fmt = starttime.strftime('%Y%m%dT%H%M%S')
+        endtime_fmt = endtime.strftime('%Y%m%dT%H%M%S')
+        uri = f'{mnemonic}-{starttime_fmt}-{endtime_fmt}.csv'
+        self.req.params = {'uri': SERVICE_URI + uri}
+        prepped = self.session.prepare_request(self.req)
+        settings = self.session.merge_environment_settings(prepped.url, {}, None, None, None)
+        response = self.session.send(prepped, **settings)
+
+        return response.text
