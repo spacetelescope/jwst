@@ -44,9 +44,9 @@ class _Value_Collection():
     ----------
     include_obstime: bool
         If `True`, the return values will include observation
-        time as `astropy.time.Time`. See `zip` for further details.
+        time as `astropy.time.Time`. See `zip_results` for further details.
 
-    zip: bool
+    zip_results: bool
         If `True` and `include_obstime` is `True`, the return values
         will be a list of 2-tuples. If false, the return will
         be a single 2-tuple, where each element is a list.
@@ -56,13 +56,13 @@ class _Value_Collection():
     ----------
     collection: [value, ...] or [(obstime, value), ...] or ([obstime,...], [value, ...])
         Returns the list of values.
-        See `include_obstime` and `zip` for modifications.
+        See `include_obstime` and `zip_results` for modifications.
     """
 
-    def __init__(self, include_obstime=False, zip=True):
+    def __init__(self, include_obstime=False, zip_results=True):
         self._include_obstime = include_obstime
-        self._zip = zip
-        if zip:
+        self._zip_results = zip_results
+        if zip_results:
             self.collection = []
         else:
             self.collection = EngDB_Value([], [])
@@ -85,7 +85,7 @@ class _Value_Collection():
         """
         if self._include_obstime:
             obstime = Time(obstime / 1000., format='unix')
-            if self._zip:
+            if self._zip_results:
                 self.collection.append(
                     EngDB_Value(obstime, value)
                 )
@@ -241,7 +241,7 @@ class EngdbDirect():
             time_format=None,
             include_obstime=False,
             include_bracket_values=False,
-            zip=True
+            zip_results=True
     ):
         """
         Retrieve all results for a mnemonic in the requested time range.
@@ -263,14 +263,14 @@ class EngdbDirect():
 
         include_obstime: bool
             If `True`, the return values will include observation
-            time as `astropy.time.Time`. See `zip` for further details.
+            time as `astropy.time.Time`. See `zip_results` for further details.
 
         include_bracket_values: bool
             The DB service, by default, returns the bracketing
             values outside of the requested time. If `True`, include
             these values.
 
-        zip: bool
+        zip_results: bool
             If `True` and `include_obstime` is `True`, the return values
             will be a list of 2-tuples. If false, the return will
             be a single 2-tuple, where each element is a list.
@@ -278,7 +278,7 @@ class EngdbDirect():
         Returns
         -------
         values: [value, ...] or [(obstime, value), ...] or ([obstime,...], [value, ...])
-            Returns the list of values. See `include_obstime` and `zip` for modifications.
+            Returns the list of values. See `include_obstime` and `zip_results` for modifications.
 
         Raises
         ------
@@ -298,7 +298,7 @@ class EngdbDirect():
         db_endttime = extract_db_time(records['ReqETime'])
         results = _Value_Collection(
             include_obstime=include_obstime,
-            zip=zip
+            zip_results=zip_results
         )
         if records['Data'] is not None:
             for record in records['Data']:

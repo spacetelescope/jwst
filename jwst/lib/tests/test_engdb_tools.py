@@ -167,7 +167,7 @@ def test_unzip(engdb):
     values = engdb.get_values(
         GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME,
         include_obstime=True,
-        zip=False
+        zip_results=False
     )
     assert isinstance(values, tuple)
     assert len(values.obstime) == len(values.value)
