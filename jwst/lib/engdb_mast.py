@@ -90,6 +90,13 @@ class EngdbMast():
                                     headers={'Authorization': f'token {token}'})
         self.session = requests.Session()
 
+    def get_meta(self, *kwargs):
+        """Get the menonics meta info
+
+        The MAST interface does not provide any meta.
+        """
+        raise NotImplementedError('MAST Engineering AUI does not provide a meta service')
+
     def get_records(
             self,
             mnemonic,
