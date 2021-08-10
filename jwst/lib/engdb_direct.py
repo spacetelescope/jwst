@@ -3,11 +3,12 @@ Access the JWST Engineering Mnemonic Database through direct connection
 """
 
 from astropy.time import Time
-from collections import namedtuple
 import logging
 from os import getenv
 import re
 import requests
+
+from .engdb_lib import EngDB_Value
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -34,9 +35,6 @@ ENGDB_METADATA_XML = 'xml/MetaData/TlmMnemonics/'
 __all__ = [
     'EngdbDirect'
 ]
-
-# Define the returned value tuple.
-EngDB_Value = namedtuple('EngDB_Value', ['obstime', 'value'])
 
 
 class _Value_Collection():
