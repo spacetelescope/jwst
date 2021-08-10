@@ -6,7 +6,7 @@ from stdatamodels import DataModel
 
 from ... import datamodels
 from .soss_syscor import make_background_mask, soss_background
-from .soss_solver import solve_transform, apply_transform
+from .soss_solver import solve_transform, apply_transform, transform_coords
 from .soss_engine import ExtractionEngine
 from .engine_utils import ThroughputSOSS, WebbKernel
 
@@ -67,6 +67,50 @@ def get_ref_file_args(ref_files, transform):
     kernels_o2 = WebbKernel(speckernel_ref.wavelengths, speckernel_ref.kernels, wavemap_o2, ovs, n_pix)
 
     return [wavemap_o1, wavemap_o2], [specprofile_o1, specprofile_o2], [throughput_o1, throughput_o2], [kernels_o1, kernels_o2]
+
+
+def get_trace_1d(ref_files, transform, order, cols=None):
+    """Get the x, y, wavelength of the trace after applying the transform.
+
+    :param ref_files: A dictionary of the reference file DataModels. # TODO not final?
+    :param transform: A 3-elemnt list or array describing the rotation and
+        translation to apply to the reference files in order to match the
+        observation.
+    :param order: The spectral order for which to return the trace parameters.
+    :param cols: The columns on the detector for which to compute the trace
+        parameters.
+
+    :type ref_files: dict
+    :type transform: array_like
+    :type order: int
+    :type cols: array[int]
+
+    :returns: xtrace, ytrace, wavetrace - The x, y and wavelength of the trace.
+    :rtype: Tuple(array[float], array[float], array[float])
+    """
+
+    if cols is None:
+        xtrace = np.arange(4, 2044)
+    else:
+        xtrace = cols
+
+    spectrace_ref = ref_files['spectrace']
+
+    # Read x, y, wavelength for the relevant order.
+    xref = spectrace_ref.trace[order - 1].data['X']
+    yref = spectrace_ref.trace[order - 1].data['Y']
+    waveref = spectrace_ref.trace[order - 1].data['WAVELENGTH']
+
+    # Rotate and shift the positions based on transform.
+    angle, xshift, yshift = transform
+    xrot, yrot = transform_coords(angle, xshift, yshift, xref, yref)
+
+    # Interpolate y and wavelength to the requested columns.
+    sort = np.argsort(xrot)
+    ytrace = np.interp(xtrace, xrot[sort], yrot[sort])
+    wavetrace = np.interp(xtrace, xrot[sort], waveref[sort])
+
+    return xtrace, ytrace, wavetrace
 
 
 # TODO how best to pass reference files and additional parameters (e.g. threshold)?
@@ -185,53 +229,34 @@ def extract_image(scidata, scierr, scimask, ref_files, transform=None,
     fluxes = dict()
     fluxerrs = dict()
 
-    # TODO write function that computes lambda, x, y for each order.
     # TODO need way to fill in bad pixels.
     # Don't extract orders 2 and 3 for SUBSTRIP96.
     # Use the model of order 2 to de-contaminate and extract order 1.
-    spectrace_ref = ref_files['spectrace']
-    xref = spectrace_ref.trace[0].data['X']  # TODO should be rotated and shifted by transform.
-    yref = spectrace_ref.trace[0].data['Y']
-
-    sort = np.argsort(xref)
-    xtrace_o1 = np.arange(4, 2044)
-    ytrace_o1 = np.interp(xtrace_o1, xref[sort], yref[sort])
+    xtrace_o1, ytrace_o1, wavelengths['Order 1'] = get_trace_1d(ref_files, transform, 1)
 
     box_weights_o1 = get_box_weights(ytrace_o1, width, scidata.shape, cols=xtrace_o1)
-    out = box_extract(scidata_bkg - tracemodel_o2, scierr, scimask, box_weights_o1)
-    wavelengths['Order 1'], fluxes['Order 1'], fluxerrs['Order 1'] = out
+    out = box_extract(scidata_bkg - tracemodel_o2, scierr, scimask, box_weights_o1, cols=xtrace_o1)
+    _, fluxes['Order 1'], fluxerrs['Order 1'] = out
 
     devtools.plot_weights(box_weights_o1)
     devtools.plot_data(scidata_bkg - tracemodel_o2, scimask)
 
     # Use the model of order 1 to de-contaminate and extract order 2.
-    spectrace_ref = ref_files['spectrace']
-    xref = spectrace_ref.trace[1].data['X']  # TODO should be rotated and shifted by transform.
-    yref = spectrace_ref.trace[1].data['Y']
-
-    sort = np.argsort(xref)
-    xtrace_o2 = np.arange(4, 2044)  # TODO how to set good limits in orders 2 and 3.
-    ytrace_o2 = np.interp(xtrace_o2, xref[sort], yref[sort])
+    xtrace_o2, ytrace_o2, wavelengths['Order 2'] = get_trace_1d(ref_files, transform, 2)
 
     box_weights_o2 = get_box_weights(ytrace_o2, width, scidata.shape, cols=xtrace_o2)
-    out = box_extract(scidata_bkg - tracemodel_o1, scierr, scimask, box_weights_o2)
-    wavelengths['Order 2'], fluxes['Order 2'], fluxerrs['Order 2'] = out
+    out = box_extract(scidata_bkg - tracemodel_o1, scierr, scimask, box_weights_o2, cols=xtrace_o2)
+    _, fluxes['Order 2'], fluxerrs['Order 2'] = out
 
     devtools.plot_weights(box_weights_o2)
     devtools.plot_data(scidata_bkg - tracemodel_o1, scimask)
 
     # Use both models to de-contaminate and extract order 3.
-    spectrace_ref = ref_files['spectrace']
-    xref = spectrace_ref.trace[2].data['X']  # TODO should be rotated and shifted by transform.
-    yref = spectrace_ref.trace[2].data['Y']
-
-    sort = np.argsort(xref)
-    xtrace_o3 = np.arange(4, 2044)  # TODO how to set good limits in orders 2 and 3.
-    ytrace_o3 = np.interp(xtrace_o3, xref[sort], yref[sort])
+    xtrace_o3, ytrace_o3, wavelengths['Order 3'] = get_trace_1d(ref_files, transform, 3)
 
     box_weights_o3 = get_box_weights(ytrace_o3, width, scidata.shape, cols=xtrace_o3)
-    out = box_extract(scidata_bkg - tracemodel_o1 - tracemodel_o2, scierr, scimask, box_weights_o3)
-    wavelengths['Order 3'], fluxes['Order 3'], fluxerrs['Order 3'] = out
+    out = box_extract(scidata_bkg - tracemodel_o1 - tracemodel_o2, scierr, scimask, box_weights_o3, cols=xtrace_o3)
+    _, fluxes['Order 3'], fluxerrs['Order 3'] = out
 
     devtools.plot_weights(box_weights_o3)
     devtools.plot_data(scidata_bkg - tracemodel_o1 - tracemodel_o2, scimask)
@@ -323,7 +348,7 @@ def run_extract1d(input_model: DataModel,
 
         log.info('Input is a CubeModel containing {} integrations.'.format(nimages))
 
-        # Build deepstack out of max N images OPTIONAL.
+        # Build deepstack out of max N images TODO OPTIONAL.
         # TODO making a deepstack could be used to get a more robust transform and tikfac, 1/f.
 
         # Set transform and tikfac, will be computed first iteration only.
