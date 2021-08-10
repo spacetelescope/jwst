@@ -5,6 +5,7 @@ import logging
 from os import getenv
 import requests
 
+from astropy.table import Table
 from astropy.time import Time
 
 # Default MAST info.
@@ -121,10 +122,8 @@ class EngdbMast():
 
         Returns
         -------
-        records: dict
-            Returns the dict of the request. This includes all
-            the data returned form the DB concerning the requested
-            mnemonic.
+        records: `astropy.Table`
+            Returns the resulting table.
 
         Notes
         -----
@@ -147,4 +146,8 @@ class EngdbMast():
         settings = self.session.merge_environment_settings(prepped.url, {}, None, None, None)
         response = self.session.send(prepped, **settings)
 
-        return response.text
+        # Convert to table.
+        r_list = response.text.split('\r\n')
+        table = Table.read(r_list, format='ascii.csv')
+
+        return table
