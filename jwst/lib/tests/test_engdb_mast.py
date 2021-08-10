@@ -4,8 +4,10 @@ import pytest
 import requests
 
 from astropy.table import Table
+from astropy.time import Time
 from astropy.utils.diff import report_diff_values
 
+from jwst.lib.engdb_lib import EngDB_Value
 from jwst.lib import engdb_mast
 
 # Test query
@@ -59,6 +61,28 @@ def test_get_records(engdb):
     records = engdb.get_records(*QUERY)
     assert engdb.response.text == EXPECTED_RESPONSE
     assert report_diff_values(records, EXPECTED_RECORDS)
+
+
+@pytest.mark.parametrize(
+    'pars, expected',
+    [
+        ({}, [0.4641213417, 0.4641213417, 0.4641213119, 0.4641213119]),
+        ({'include_obstime': True}, [EngDB_Value(obstime=Time(59356.0000008333, scale='utc', format='mjd'), value=0.4641213417),
+                                     EngDB_Value(obstime=Time(59356.0000037963, scale='utc', format='mjd'), value=0.4641213417),
+                                     EngDB_Value(obstime=Time(59356.0000067593, scale='utc', format='mjd'), value=0.4641213119),
+                                     EngDB_Value(obstime=Time(59356.0000097222, scale='utc', format='mjd'), value=0.4641213119)]),
+        ({'include_obstime': True, 'zip_results': False}, EngDB_Value(
+            obstime=[Time(59356.0000008333, scale='utc', format='mjd'),
+                     Time(59356.0000037963, scale='utc', format='mjd'),
+                     Time(59356.0000067593, scale='utc', format='mjd'),
+                     Time(59356.0000097222, scale='utc', format='mjd')],
+            value=[0.4641213417, 0.4641213417, 0.4641213119, 0.4641213119]
+        )),
+        ({'include_bracket_values': True}, [0.4641213417, 0.4641213417, 0.4641213417, 0.4641213119, 0.4641213119, 0.4641212821])
+    ])
+def test_get_values(engdb, pars, expected):
+    values = engdb.get_values(*QUERY, **pars)
+    assert values == expected
 
 
 def test_negative_aliveness():

@@ -156,7 +156,7 @@ class EngdbMast():
         return table
 
     def get_values(self, mnemonic, starttime, endtime,
-                   time_format=None, include_obstime=False, include_bracket_values=False, zip=True):
+                   time_format=None, include_obstime=False, include_bracket_values=False, zip_results=True):
         """
         Retrieve all results for a mnemonic in the requested time range.
 
@@ -177,14 +177,14 @@ class EngdbMast():
 
         include_obstime: bool
             If `True`, the return values will include observation
-            time as `astropy.time.Time`. See `zip` for further details.
+            time as `astropy.time.Time`. See `zip_results` for further details.
 
         include_bracket_values: bool
             The DB service, by default, returns the bracketing
             values outside of the requested time. If `True`, include
             these values.
 
-        zip: bool
+        zip_results: bool
             If `True` and `include_obstime` is `True`, the return values
             will be a list of 2-tuples. If false, the return will
             be a single 2-tuple, where each element is a list.
@@ -211,7 +211,7 @@ class EngdbMast():
         # Reformat to the desired list formatting.
         results = _Value_Collection(
             include_obstime=include_obstime,
-            zip=zip
+            zip_results=zip_results
         )
         values = records['euvalue']
         obstimes = Time(records['MJD'], format='mjd')
@@ -228,9 +228,9 @@ class _Value_Collection:
     ----------
     include_obstime: bool
         If `True`, the return values will include observation
-        time as `astropy.time.Time`. See `zip` for further details.
+        time as `astropy.time.Time`. See `zip_results` for further details.
 
-    zip: bool
+    zip_results: bool
         If `True` and `include_obstime` is `True`, the return values
         will be a list of 2-tuples. If false, the return will
         be a single 2-tuple, where each element is a list.
@@ -240,13 +240,13 @@ class _Value_Collection:
     ----------
     collection: [value, ...] or [(obstime, value), ...] or ([obstime,...], [value, ...])
         Returns the list of values.
-        See `include_obstime` and `zip` for modifications.
+        See `include_obstime` and `zip_results` for modifications.
     """
 
-    def __init__(self, include_obstime=False, zip=True):
+    def __init__(self, include_obstime=False, zip_results=True):
         self._include_obstime = include_obstime
-        self._zip = zip
-        if zip:
+        self._zip_results = zip_results
+        if zip_results:
             self.collection = []
         else:
             self.collection = EngDB_Value([], [])
@@ -263,7 +263,7 @@ class _Value_Collection:
             Value from db.
         """
         if self._include_obstime:
-            if self._zip:
+            if self._zip_results:
                 self.collection.append(
                     EngDB_Value(obstime, value)
                 )
