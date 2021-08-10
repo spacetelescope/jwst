@@ -97,7 +97,72 @@ class EngdbMast():
         """
         raise NotImplementedError('MAST Engineering AUI does not provide a meta service')
 
-    def get_records(
+    def get_values(self, mnemonic, starttime, endtime,
+                   time_format=None, include_obstime=False, include_bracket_values=False, zip_results=True):
+        """
+        Retrieve all results for a mnemonic in the requested time range.
+
+        Parameters
+        ----------
+        mnemonic: str
+            The engineering mnemonic to retrieve
+
+        starttime: str or `astropy.time.Time`
+            The, inclusive, start time to retireve from.
+
+        endttime: str or `astropy.time.Time`
+            The, inclusive, end time to retireve from.
+
+        time_format: str
+            The format of the input time used if the input times
+            are strings. If None, a guess is made.
+
+        include_obstime: bool
+            If `True`, the return values will include observation
+            time as `astropy.time.Time`. See `zip_results` for further details.
+
+        include_bracket_values: bool
+            The DB service, by default, returns the bracketing
+            values outside of the requested time. If `True`, include
+            these values.
+
+        zip_results: bool
+            If `True` and `include_obstime` is `True`, the return values
+            will be a list of 2-tuples. If false, the return will
+            be a single 2-tuple, where each element is a list.
+
+        Returns
+        -------
+        values: [value, ...] or [(obstime, value), ...] or ([obstime,...], [value, ...])
+            Returns the list of values. See `include_obstime` and `zip` for modifications.
+        """
+        if not isinstance(starttime, Time):
+            starttime = Time(starttime, format=time_format)
+        if not isinstance(endtime, Time):
+            endtime = Time(endtime, format=time_format)
+
+        records = self._get_records(mnemonic=mnemonic, starttime=starttime,
+                                   endtime=endtime, time_format=time_format)
+
+        # If desired, remove bracket or outside of timeframe entries.
+        if not include_bracket_values:
+            selection = np.logical_and(records['MJD'] >= starttime.mjd,
+                                       records['MJD'] <= endtime.mjd)
+            records = records[selection]
+
+        # Reformat to the desired list formatting.
+        results = _Value_Collection(
+            include_obstime=include_obstime,
+            zip_results=zip_results
+        )
+        values = records['euvalue']
+        obstimes = Time(records['MJD'], format='mjd')
+        for obstime, value in zip(obstimes, values):
+            results.append(obstime, value)
+
+        return results.collection
+
+    def _get_records(
             self,
             mnemonic,
             starttime,
@@ -161,71 +226,6 @@ class EngdbMast():
         table = Table.read(r_list, format='ascii.csv')
 
         return table
-
-    def get_values(self, mnemonic, starttime, endtime,
-                   time_format=None, include_obstime=False, include_bracket_values=False, zip_results=True):
-        """
-        Retrieve all results for a mnemonic in the requested time range.
-
-        Parameters
-        ----------
-        mnemonic: str
-            The engineering mnemonic to retrieve
-
-        starttime: str or `astropy.time.Time`
-            The, inclusive, start time to retireve from.
-
-        endttime: str or `astropy.time.Time`
-            The, inclusive, end time to retireve from.
-
-        time_format: str
-            The format of the input time used if the input times
-            are strings. If None, a guess is made.
-
-        include_obstime: bool
-            If `True`, the return values will include observation
-            time as `astropy.time.Time`. See `zip_results` for further details.
-
-        include_bracket_values: bool
-            The DB service, by default, returns the bracketing
-            values outside of the requested time. If `True`, include
-            these values.
-
-        zip_results: bool
-            If `True` and `include_obstime` is `True`, the return values
-            will be a list of 2-tuples. If false, the return will
-            be a single 2-tuple, where each element is a list.
-
-        Returns
-        -------
-        values: [value, ...] or [(obstime, value), ...] or ([obstime,...], [value, ...])
-            Returns the list of values. See `include_obstime` and `zip` for modifications.
-        """
-        if not isinstance(starttime, Time):
-            starttime = Time(starttime, format=time_format)
-        if not isinstance(endtime, Time):
-            endtime = Time(endtime, format=time_format)
-
-        records = self.get_records(mnemonic=mnemonic, starttime=starttime,
-                                   endtime=endtime, time_format=time_format)
-
-        # If desired, remove bracket or outside of timeframe entries.
-        if not include_bracket_values:
-            selection = np.logical_and(records['MJD'] >= starttime.mjd,
-                                       records['MJD'] <= endtime.mjd)
-            records = records[selection]
-
-        # Reformat to the desired list formatting.
-        results = _Value_Collection(
-            include_obstime=include_obstime,
-            zip_results=zip_results
-        )
-        values = records['euvalue']
-        obstimes = Time(records['MJD'], format='mjd')
-        for obstime, value in zip(obstimes, values):
-            results.append(obstime, value)
-
-        return results.collection
 
 
 class _Value_Collection:

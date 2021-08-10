@@ -78,7 +78,7 @@ def test_cache_data(db_cache, engdb):
     Test read of the data information
     """
     data = db_cache.fetch_data(GOOD_MNEMONIC, GOOD_STARTTIME, GOOD_ENDTIME)
-    live_data = engdb.get_records(GOOD_MNEMONIC, GOOD_STARTTIME, GOOD_ENDTIME)
+    live_data = engdb._get_records(GOOD_MNEMONIC, GOOD_STARTTIME, GOOD_ENDTIME)
     assert data == live_data
 
 
@@ -98,7 +98,7 @@ def test_cache_partial_data(db_cache, engdb):
         GOOD_STARTTIME,
         endtime.iso
     )
-    live_data_short = engdb.get_records(
+    live_data_short = engdb._get_records(
         GOOD_MNEMONIC,
         GOOD_STARTTIME,
         endtime.iso
@@ -119,7 +119,7 @@ def test_cache_end_data(db_cache, engdb):
         EARLY_STARTTIME,
         EARLY_ENDTIME
     )
-    live_data_short = engdb.get_records(
+    live_data_short = engdb._get_records(
         GOOD_MNEMONIC,
         EARLY_STARTTIME,
         EARLY_ENDTIME
@@ -136,7 +136,7 @@ def test_cache_end_data(db_cache, engdb):
         LATE_STARTTIME,
         LATE_ENDTIME
     )
-    live_data_short = engdb.get_records(
+    live_data_short = engdb._get_records(
         GOOD_MNEMONIC,
         LATE_STARTTIME,
         LATE_ENDTIME
@@ -189,7 +189,7 @@ def test_mocker_data(db_cache, engdb):
         ])
         response = requests.get(query)
 
-    live_data = engdb.get_records(GOOD_MNEMONIC, GOOD_STARTTIME, GOOD_ENDTIME)
+    live_data = engdb._get_records(GOOD_MNEMONIC, GOOD_STARTTIME, GOOD_ENDTIME)
     assert response.json() == live_data
 
 

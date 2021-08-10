@@ -58,7 +58,7 @@ def test_aliveness(is_alive):
 
 def test_get_records(engdb):
     """Test getting records"""
-    records = engdb.get_records(*QUERY)
+    records = engdb._get_records(*QUERY)
     assert engdb.response.text == EXPECTED_RESPONSE
     assert report_diff_values(records, EXPECTED_RECORDS)
 

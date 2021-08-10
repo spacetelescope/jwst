@@ -95,7 +95,7 @@ def test_environmetal_bad():
 
 
 def test_basic(engdb):
-    assert engdb.get_records(GOOD_MNEMONIC, GOOD_STARTTIME, GOOD_ENDTIME)
+    assert engdb._get_records(GOOD_MNEMONIC, GOOD_STARTTIME, GOOD_ENDTIME)
 
 
 def test_bad_server():
@@ -116,7 +116,7 @@ def test_db_time():
 
 
 def test_values(engdb):
-    records = engdb.get_records(
+    records = engdb._get_records(
         GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME
     )
     assert records['Count'] == 2
@@ -128,7 +128,7 @@ def test_values(engdb):
 
 
 def test_values_with_bracket(engdb):
-    records = engdb.get_records(
+    records = engdb._get_records(
         GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME
     )
     assert records['Count'] == 2

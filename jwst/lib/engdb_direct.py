@@ -154,7 +154,117 @@ class EngdbDirect():
             result_format = ''
         self._default_format = result_format
 
-    def get_records(
+    def get_meta(self, mnemonic='', result_format=None):
+        """Get the menonics meta info
+
+        Parameters
+        ----------
+        mnemonic: str
+            The engineering mnemonic to retrieve
+
+        result_format: str
+            The format to request from the service.
+            If None, the `default_format` is used.
+        """
+        if result_format is None:
+            result_format = self.default_format
+
+        query = ''.join([
+            self.base_url,
+            result_format,
+            ENGDB_METADATA,
+            mnemonic
+        ])
+        logger.debug('Query URL="{}"'.format(query))
+
+        # Make our request
+        response = requests.get(query)
+        logger.debug('Response="{}"'.format(response))
+        response.raise_for_status()
+
+        # That's all folks
+        self.response = response
+        return response.json()
+
+    def get_values(
+            self,
+            mnemonic,
+            starttime,
+            endtime,
+            time_format=None,
+            include_obstime=False,
+            include_bracket_values=False,
+            zip_results=True
+    ):
+        """
+        Retrieve all results for a mnemonic in the requested time range.
+
+        Parameters
+        ----------
+        mnemonic: str
+            The engineering mnemonic to retrieve
+
+        starttime: str or `astropy.time.Time`
+            The, inclusive, start time to retireve from.
+
+        endttime: str or `astropy.time.Time`
+            The, inclusive, end time to retireve from.
+
+        time_format: str
+            The format of the input time used if the input times
+            are strings. If None, a guess is made.
+
+        include_obstime: bool
+            If `True`, the return values will include observation
+            time as `astropy.time.Time`. See `zip_results` for further details.
+
+        include_bracket_values: bool
+            The DB service, by default, returns the bracketing
+            values outside of the requested time. If `True`, include
+            these values.
+
+        zip_results: bool
+            If `True` and `include_obstime` is `True`, the return values
+            will be a list of 2-tuples. If false, the return will
+            be a single 2-tuple, where each element is a list.
+
+        Returns
+        -------
+        values: [value, ...] or [(obstime, value), ...] or ([obstime,...], [value, ...])
+            Returns the list of values. See `include_obstime` and `zip_results` for modifications.
+
+        Raises
+        ------
+        requests.exceptions.HTTPError
+            Either a bad URL or non-existant mnemonic.
+        """
+        records = self._get_records(
+            mnemonic=mnemonic,
+            starttime=starttime,
+            endtime=endtime,
+            time_format=time_format
+        )
+
+        # Records returned are apparent not strictly correlated with
+        # observation time. So, need to filter further.
+        db_starttime = extract_db_time(records['ReqSTime'])
+        db_endttime = extract_db_time(records['ReqETime'])
+        results = _Value_Collection(
+            include_obstime=include_obstime,
+            zip_results=zip_results
+        )
+        if records['Data'] is not None:
+            for record in records['Data']:
+                obstime = extract_db_time(record['ObsTime'])
+                if not include_bracket_values:
+                    if obstime < db_starttime or obstime > db_endttime:
+                        continue
+                value = record['EUValue']
+                results.append(obstime, value)
+
+        return results.collection
+
+    def _get_records(
             self,
             mnemonic,
             starttime,
@@ -231,116 +341,6 @@ class EngdbDirect():
         self.response = response
         self.starttime = starttime
         self.endtime = endtime
-        return response.json()
-
-    def get_values(
-            self,
-            mnemonic,
-            starttime,
-            endtime,
-            time_format=None,
-            include_obstime=False,
-            include_bracket_values=False,
-            zip_results=True
-    ):
-        """
-        Retrieve all results for a mnemonic in the requested time range.
-
-        Parameters
-        ----------
-        mnemonic: str
-            The engineering mnemonic to retrieve
-
-        starttime: str or `astropy.time.Time`
-            The, inclusive, start time to retireve from.
-
-        endttime: str or `astropy.time.Time`
-            The, inclusive, end time to retireve from.
-
-        time_format: str
-            The format of the input time used if the input times
-            are strings. If None, a guess is made.
-
-        include_obstime: bool
-            If `True`, the return values will include observation
-            time as `astropy.time.Time`. See `zip_results` for further details.
-
-        include_bracket_values: bool
-            The DB service, by default, returns the bracketing
-            values outside of the requested time. If `True`, include
-            these values.
-
-        zip_results: bool
-            If `True` and `include_obstime` is `True`, the return values
-            will be a list of 2-tuples. If false, the return will
-            be a single 2-tuple, where each element is a list.
-
-        Returns
-        -------
-        values: [value, ...] or [(obstime, value), ...] or ([obstime,...], [value, ...])
-            Returns the list of values. See `include_obstime` and `zip_results` for modifications.
-
-        Raises
-        ------
-        requests.exceptions.HTTPError
-            Either a bad URL or non-existant mnemonic.
-        """
-        records = self.get_records(
-            mnemonic=mnemonic,
-            starttime=starttime,
-            endtime=endtime,
-            time_format=time_format
-        )
-
-        # Records returned are apparent not strictly correlated with
-        # observation time. So, need to filter further.
-        db_starttime = extract_db_time(records['ReqSTime'])
-        db_endttime = extract_db_time(records['ReqETime'])
-        results = _Value_Collection(
-            include_obstime=include_obstime,
-            zip_results=zip_results
-        )
-        if records['Data'] is not None:
-            for record in records['Data']:
-                obstime = extract_db_time(record['ObsTime'])
-                if not include_bracket_values:
-                    if obstime < db_starttime or obstime > db_endttime:
-                        continue
-                value = record['EUValue']
-                results.append(obstime, value)
-
-        return results.collection
-
-    def get_meta(self, mnemonic='', result_format=None):
-        """Get the menonics meta info
-
-        Parameters
-        ----------
-        mnemonic: str
-            The engineering mnemonic to retrieve
-
-        result_format: str
-            The format to request from the service.
-            If None, the `default_format` is used.
-        """
-        if result_format is None:
-            result_format = self.default_format
-
-        query = ''.join([
-            self.base_url,
-            result_format,
-            ENGDB_METADATA,
-            mnemonic
-        ])
-        logger.debug('Query URL="{}"'.format(query))
-
-        # Make our request
-        response = requests.get(query)
-        logger.debug('Response="{}"'.format(response))
-        response.raise_for_status()
-
-        # That's all folks
-        self.response = response
         return response.json()
 
 

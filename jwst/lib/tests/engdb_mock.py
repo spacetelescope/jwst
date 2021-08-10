@@ -300,7 +300,7 @@ def cache_engdb(
         json.dump(meta, fp)
 
     for mnemonic in mnemonics:
-        records = edb.get_records(mnemonic, starttime, endtime)
+        records = edb._get_records(mnemonic, starttime, endtime)
 
         # Remove the request times. These are filled back in
         # during retrieval.
