@@ -94,7 +94,7 @@ wfss_contam
 
 - Fixed handling of filter/pupil names for NIRISS WFSS mode [#6233]
 
-1.3.1 (2021-08-05)
+1.3.1 (2021-08-09)
 ==================
 
 lib
