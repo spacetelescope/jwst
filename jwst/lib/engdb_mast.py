@@ -144,10 +144,10 @@ class EngdbMast():
         self.req.params = {'uri': SERVICE_URI + uri}
         prepped = self.session.prepare_request(self.req)
         settings = self.session.merge_environment_settings(prepped.url, {}, None, None, None)
-        response = self.session.send(prepped, **settings)
+        self.response = self.session.send(prepped, **settings)
 
         # Convert to table.
-        r_list = response.text.split('\r\n')
+        r_list = self.response.text.split('\r\n')
         table = Table.read(r_list, format='ascii.csv')
 
         return table

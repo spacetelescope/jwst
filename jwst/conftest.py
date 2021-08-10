@@ -11,6 +11,16 @@ from jwst.associations.tests.helpers import t_path
 from jwst.lib.tests import helpers as lib_helpers
 
 
+@pytest.fixture
+def jail_environ():
+    """Lock changes to the environment"""
+    original = os.environ.copy()
+    try:
+        yield
+    finally:
+        os.environ = original
+
+
 @pytest.fixture(scope='session')
 def full_pool_rules(request):
     """Setup to use the full example pool and registry"""
