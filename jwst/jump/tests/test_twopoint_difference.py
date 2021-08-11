@@ -5,7 +5,7 @@ from jwst.jump.twopoint_difference import find_crs
 from jwst.jump.twopoint_difference import get_clipped_median_vector
 from jwst.jump.twopoint_difference import get_clipped_median_array
 from jwst.datamodels import dqflags
-from astropy.io import fits
+
 
 def test_nocrs_noflux(setup_cube):
     ngroups = 5
