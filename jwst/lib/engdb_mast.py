@@ -219,6 +219,7 @@ class EngdbMast():
         prepped = self.session.prepare_request(self.req)
         settings = self.session.merge_environment_settings(prepped.url, {}, None, None, None)
         self.response = self.session.send(prepped, **settings)
+        self.response.raise_for_status()
 
         # Convert to table.
         r_list = self.response.text.split('\r\n')

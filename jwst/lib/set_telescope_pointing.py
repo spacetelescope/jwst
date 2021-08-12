@@ -2392,13 +2392,7 @@ def get_mnemonics(obsstart, obsend, tolerance, engdb_url=None):
                 include_bracket_values=True
             )
         except Exception as exception:
-            raise ValueError(
-                'Cannot retrive {} from engineering.'
-                '\nFailure was {}'.format(
-                    mnemonic,
-                    exception
-                )
-            )
+            raise ValueError(f'Cannot retrieve {mnemonic} from engineering.') from exception
 
         # If more than two points exist, throw off the bracket values.
         # Else, ensure the bracket values are within the allowed time.
