@@ -228,6 +228,7 @@ def extract_image(scidata, scierr, scimask, ref_files, transform=None,
     wavelengths = dict()
     fluxes = dict()
     fluxerrs = dict()
+    npixels = dict()
 
     # TODO need way to fill in bad pixels.
     # Don't extract orders 2 and 3 for SUBSTRIP96.
@@ -236,7 +237,7 @@ def extract_image(scidata, scierr, scimask, ref_files, transform=None,
 
     box_weights_o1 = get_box_weights(ytrace_o1, width, scidata.shape, cols=xtrace_o1)
     out = box_extract(scidata_bkg - tracemodel_o2, scierr, scimask, box_weights_o1, cols=xtrace_o1)
-    _, fluxes['Order 1'], fluxerrs['Order 1'] = out
+    _, fluxes['Order 1'], fluxerrs['Order 1'], npixels['Order 1'] = out
 
     devtools.plot_weights(box_weights_o1)
     devtools.plot_data(scidata_bkg - tracemodel_o2, scimask)
@@ -246,7 +247,7 @@ def extract_image(scidata, scierr, scimask, ref_files, transform=None,
 
     box_weights_o2 = get_box_weights(ytrace_o2, width, scidata.shape, cols=xtrace_o2)
     out = box_extract(scidata_bkg - tracemodel_o1, scierr, scimask, box_weights_o2, cols=xtrace_o2)
-    _, fluxes['Order 2'], fluxerrs['Order 2'] = out
+    _, fluxes['Order 2'], fluxerrs['Order 2'], npixels['Order 2'] = out
 
     devtools.plot_weights(box_weights_o2)
     devtools.plot_data(scidata_bkg - tracemodel_o1, scimask)
@@ -256,14 +257,15 @@ def extract_image(scidata, scierr, scimask, ref_files, transform=None,
 
     box_weights_o3 = get_box_weights(ytrace_o3, width, scidata.shape, cols=xtrace_o3)
     out = box_extract(scidata_bkg - tracemodel_o1 - tracemodel_o2, scierr, scimask, box_weights_o3, cols=xtrace_o3)
-    _, fluxes['Order 3'], fluxerrs['Order 3'] = out
+    _, fluxes['Order 3'], fluxerrs['Order 3'], npixels['Order 3'] = out
 
     devtools.plot_weights(box_weights_o3)
     devtools.plot_data(scidata_bkg - tracemodel_o1 - tracemodel_o2, scimask)
 
-    devtools.plot_1d_spectra(wavelengths, fluxes, fluxerrs)
+    # TODO temporary debug plot.
+    devtools.plot_1d_spectra(wavelengths, fluxes, fluxerrs, npixels)
 
-    return wavelengths, fluxes, fluxerrs, transform, tikfac
+    return wavelengths, fluxes, fluxerrs, npixels, transform, tikfac
 
 
 def run_extract1d(input_model: DataModel,
@@ -315,7 +317,7 @@ def run_extract1d(input_model: DataModel,
 
         # Perform the extraction.
         result = extract_image(scidata, scierr, scimask, ref_files, **soss_kwargs)
-        wavelengths, fluxes, fluxerrs, soss_kwargs['transform'], soss_kwargs['tikfac'] = result
+        wavelengths, fluxes, fluxerrs, npixels, soss_kwargs['transform'], soss_kwargs['tikfac'] = result
 
         # Initialize the output model.
         output_model = datamodels.MultiSpecModel()  # TODO is this correct for ImageModel input?
@@ -332,12 +334,12 @@ def run_extract1d(input_model: DataModel,
             dq = np.zeros_like(flux, dtype=np.uint32)
             background = np.zeros_like(flux)  # TODO we do compute a background but not per order.
             berror = np.zeros_like(flux)
-            npixels = np.zeros_like(flux)
+            npix = npixels[order]
 
             out_table = np.array(list(zip(wavelength,
                                           flux, fluxerr,
                                           surf_bright, sb_error,
-                                          dq, background, berror, npixels)),
+                                          dq, background, berror, npix)),
                                  dtype=datamodels.SpecModel().spec_table.dtype)
             spec = datamodels.SpecModel(spec_table=out_table)
             output_model.spec.append(spec)
@@ -367,7 +369,7 @@ def run_extract1d(input_model: DataModel,
 
             # Perform the extraction.
             result = extract_image(scidata, scierr, scimask, ref_files, **soss_kwargs)
-            wavelengths, fluxes, fluxerrs, soss_kwargs['transform'], soss_kwargs['tikfac'] = result
+            wavelengths, fluxes, fluxerrs, npixels, soss_kwargs['transform'], soss_kwargs['tikfac'] = result
 
             # Copy spectral data for each order into the output model.
             # TODO how to include parameters like transform and tikfac in the output.
@@ -380,12 +382,12 @@ def run_extract1d(input_model: DataModel,
                 dq = np.zeros_like(flux, dtype=np.uint32)
                 background = np.zeros_like(flux)  # TODO we do compute a background but not per order.
                 berror = np.zeros_like(flux)
-                npixels = np.zeros_like(flux)
+                npix = npixels[order]
 
                 out_table = np.array(list(zip(wavelength,
                                               flux, fluxerr,
                                               surf_bright, sb_error,
-                                              dq, background, berror, npixels)),
+                                              dq, background, berror, npix)),
                                      dtype=datamodels.SpecModel().spec_table.dtype)
                 spec = datamodels.SpecModel(spec_table=out_table)
                 output_model.spec.append(spec)
