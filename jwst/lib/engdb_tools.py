@@ -7,6 +7,7 @@ import logging
 from os import getenv
 
 from .engdb_direct import EngdbDirect
+from .engdb_mast import EngdbMast
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -61,7 +62,7 @@ class ENGDB_Service:
         if base_url[-1] != '/':
             base_url += '/'
 
-        for db_attempt in [EngdbDirect]:
+        for db_attempt in [EngdbMast, EngdbDirect]:
             try:
                 db = db_attempt(base_url=base_url, default_format=default_format)
             except RuntimeError as excp:
