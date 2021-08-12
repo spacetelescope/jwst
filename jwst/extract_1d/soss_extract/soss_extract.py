@@ -14,7 +14,7 @@ from .engine_utils import ThroughputSOSS, WebbKernel
 from SOSS.dms.soss_boxextract import get_box_weights, box_extract
 
 # TODO remove once code is sufficiently tested.
-import devtools
+from . import devtools
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -49,8 +49,9 @@ def get_ref_file_args(ref_files, transform):
     ovs = specprofile_ref.profile[0].oversampling
     pad = specprofile_ref.profile[0].padding
 
-    specprofile_o1 = apply_transform(transform, specprofile_ref.profile[0].data, ovs, pad, norm=True)
-    specprofile_o2 = apply_transform(transform, specprofile_ref.profile[1].data, ovs, pad, norm=True)
+    # TODO unclear if norm should be True or False.
+    specprofile_o1 = apply_transform(transform, specprofile_ref.profile[0].data, ovs, pad, norm=False)
+    specprofile_o2 = apply_transform(transform, specprofile_ref.profile[1].data, ovs, pad, norm=False)
 
     # The throughput curves for order 1 and 2.
     spectrace_ref = ref_files['spectrace']
@@ -187,13 +188,13 @@ def extract_image(scidata, scierr, scimask, ref_files, transform=None,
         # Initial pass 14 orders of magnitude.
         factors = np.logspace(-25, -12, 14)
         tiktests = engine.get_tikho_tests(factors, data=scidata_bkg, error=scierr, mask=scimask)
-        tikfac = engine.best_tikho_factor(tests=tiktests)
+        tikfac = engine.best_tikho_factor(tests=tiktests, i_plot=True)  # TODO temporarily make figure.
 
         # Refine across 4 orders of magnitude.
         tikfac = np.log10(tikfac)
         factors = np.logspace(tikfac - 2, tikfac + 2, 20)
         tiktests = engine.get_tikho_tests(factors, data=scidata_bkg, error=scierr, mask=scimask)
-        tikfac = engine.best_tikho_factor(tests=tiktests)
+        tikfac = engine.best_tikho_factor(tests=tiktests, i_plot=True)  # TODO temporarily make figure.
 
     log.info('Using a Tikhonov factor of {}'.format(tikfac))
 
@@ -208,6 +209,9 @@ def extract_image(scidata, scierr, scimask, ref_files, transform=None,
     # Create a new instance of the engine for evaluating the trace model.
     # This allows bad pixels and pixels below the threshold to be reconstructed as well.
     # TODO get this mask from the DQ array? Ensure it works for all subarrays.
+    # from stcal.dqflags import interpret_bit_flags
+    # from jwst.datamodels.dqflags import pixel
+    # bad_bitvalue = interpret_bit_flags(bad_bitvalue, mnemonic_map=pixel) ???
     border_mask = np.zeros_like(scidata)
     border_mask[-4:] = True
     border_mask[:, :4] = True
@@ -219,10 +223,11 @@ def extract_image(scidata, scierr, scimask, ref_files, transform=None,
     tracemodel_o1 = model.rebuild(f_k, i_orders=[0])
     tracemodel_o2 = model.rebuild(f_k, i_orders=[1])
 
-    # TODO this shouldn't be necessary, adjust the engines use of masks.
+    # TODO this shouldn't be necessary, adjust the engines use of masks?
     tracemodel_o1 = np.where(np.isnan(tracemodel_o1), 0, tracemodel_o1)
     tracemodel_o2 = np.where(np.isnan(tracemodel_o2), 0, tracemodel_o2)
 
+    # TODO temporary debug plot.
     devtools.diagnostic_plot(scidata_bkg, scierr, scimask, tracemodel_o1, tracemodel_o2)
 
     wavelengths = dict()
@@ -239,6 +244,7 @@ def extract_image(scidata, scierr, scimask, ref_files, transform=None,
     out = box_extract(scidata_bkg - tracemodel_o2, scierr, scimask, box_weights_o1, cols=xtrace_o1)
     _, fluxes['Order 1'], fluxerrs['Order 1'], npixels['Order 1'] = out
 
+    # TODO temporary debug plot.
     devtools.plot_weights(box_weights_o1)
     devtools.plot_data(scidata_bkg - tracemodel_o2, scimask)
 
@@ -249,6 +255,7 @@ def extract_image(scidata, scierr, scimask, ref_files, transform=None,
     out = box_extract(scidata_bkg - tracemodel_o1, scierr, scimask, box_weights_o2, cols=xtrace_o2)
     _, fluxes['Order 2'], fluxerrs['Order 2'], npixels['Order 2'] = out
 
+    # TODO temporary debug plot.
     devtools.plot_weights(box_weights_o2)
     devtools.plot_data(scidata_bkg - tracemodel_o1, scimask)
 
@@ -259,6 +266,7 @@ def extract_image(scidata, scierr, scimask, ref_files, transform=None,
     out = box_extract(scidata_bkg - tracemodel_o1 - tracemodel_o2, scierr, scimask, box_weights_o3, cols=xtrace_o3)
     _, fluxes['Order 3'], fluxerrs['Order 3'], npixels['Order 3'] = out
 
+    # TODO temporary debug plot.
     devtools.plot_weights(box_weights_o3)
     devtools.plot_data(scidata_bkg - tracemodel_o1 - tracemodel_o2, scimask)
 
@@ -310,8 +318,8 @@ def run_extract1d(input_model: DataModel,
 
         log.info('Input is an ImageModel, processing a single integration.')
 
-        # Received a single 2D image.
-        scidata = input_model.data.astype('float64')  # TODO eewww.
+        # Received a single 2D image set dtype to float64 and convert DQ to boolian mask.
+        scidata = input_model.data.astype('float64')
         scierr = input_model.err.astype('float64')
         scimask = input_model.dq > 0  # Mask bad pixels with True.
 
@@ -325,6 +333,7 @@ def run_extract1d(input_model: DataModel,
 
         # Copy spectral data for each order into the output model.
         # TODO how to include parameters like transform and tikfac in the output.
+        # TODO output is broken, want 18 fields not 9?
         for order in wavelengths.keys():
             wavelength = wavelengths[order]
             flux = fluxes[order]
@@ -362,8 +371,8 @@ def run_extract1d(input_model: DataModel,
 
             log.info('Processing integration {} of {}.'.format(i + 1, nimages))
 
-            # Unpack the i-th image.
-            scidata = input_model.data[i].astype('float64')  # TODO eewww.
+            # Unpack the i-th image, set dtype to float64 and convert DQ to boolian mask.
+            scidata = input_model.data[i].astype('float64')
             scierr = input_model.err[i].astype('float64')
             scimask = input_model.dq[i] > 0
 
@@ -373,6 +382,7 @@ def run_extract1d(input_model: DataModel,
 
             # Copy spectral data for each order into the output model.
             # TODO how to include parameters like transform and tikfac in the output.
+            # TODO output is broken, want 18 fields not 9?
             for order in wavelengths.keys():
                 wavelength = wavelengths[order]
                 flux = fluxes[order]
