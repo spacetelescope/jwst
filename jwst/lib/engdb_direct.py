@@ -37,65 +37,6 @@ __all__ = [
 ]
 
 
-class _Value_Collection():
-    """Engineering Value Collection
-
-    Parameters
-    ----------
-    include_obstime: bool
-        If `True`, the return values will include observation
-        time as `astropy.time.Time`. See `zip_results` for further details.
-
-    zip_results: bool
-        If `True` and `include_obstime` is `True`, the return values
-        will be a list of 2-tuples. If false, the return will
-        be a single 2-tuple, where each element is a list.
-
-
-    Attributes
-    ----------
-    collection: [value, ...] or [(obstime, value), ...] or ([obstime,...], [value, ...])
-        Returns the list of values.
-        See `include_obstime` and `zip_results` for modifications.
-    """
-
-    def __init__(self, include_obstime=False, zip_results=True):
-        self._include_obstime = include_obstime
-        self._zip_results = zip_results
-        if zip_results:
-            self.collection = []
-        else:
-            self.collection = EngDB_Value([], [])
-
-    def append(self, obstime, value):
-        """Append value to collection
-
-        Parameters
-        ----------
-        obstime: int(milliseconds)
-            Observation time as returned from the engineering
-            db, in milliseconds
-
-        value: numeric
-            Value from db.
-
-        Notes
-        -----
-        The `obstime` is converted to an `astropy.time.Time`
-        """
-        if self._include_obstime:
-            obstime = Time(obstime / 1000., format='unix')
-            if self._zip_results:
-                self.collection.append(
-                    EngDB_Value(obstime, value)
-                )
-            else:
-                self.collection.obstime.append(obstime)
-                self.collection.value.append(value)
-        else:
-            self.collection.append(value)
-
-
 class EngdbDirect():
     """
     Access the JWST Engineering Database through direct connection
@@ -330,7 +271,8 @@ class EngdbDirect():
 
         # Make our request
         response = requests.get(query)
-        logger.debug('Response="{}"'.format(response))
+        logger.debug('Response: %s', response)
+        logger.debug('Respone: %s', response.json())
         response.raise_for_status()
 
         # That's all folks
@@ -338,6 +280,66 @@ class EngdbDirect():
         self.starttime = starttime
         self.endtime = endtime
         return response.json()
+
+
+class _Value_Collection():
+    """Engineering Value Collection
+
+    Parameters
+    ----------
+    include_obstime: bool
+        If `True`, the return values will include observation
+        time as `astropy.time.Time`. See `zip_results` for further details.
+
+    zip_results: bool
+        If `True` and `include_obstime` is `True`, the return values
+        will be a list of 2-tuples. If false, the return will
+        be a single 2-tuple, where each element is a list.
+
+
+    Attributes
+    ----------
+    collection: [value, ...] or [(obstime, value), ...] or ([obstime,...], [value, ...])
+        Returns the list of values.
+        See `include_obstime` and `zip_results` for modifications.
+    """
+
+    def __init__(self, include_obstime=False, zip_results=True):
+        self._include_obstime = include_obstime
+        self._zip_results = zip_results
+        if zip_results:
+            self.collection = []
+        else:
+            self.collection = EngDB_Value([], [])
+
+    def append(self, obstime, value):
+        """Append value to collection
+
+        Parameters
+        ----------
+        obstime: int(milliseconds)
+            Observation time as returned from the engineering
+            db, in milliseconds
+
+        value: numeric
+            Value from db.
+
+        Notes
+        -----
+        The `obstime` is converted to an `astropy.time.Time`
+        """
+        if self._include_obstime:
+            obstime = Time(obstime / 1000., format='unix')
+            obstime.format = 'isot'
+            if self._zip_results:
+                self.collection.append(
+                    EngDB_Value(obstime, value)
+                )
+            else:
+                self.collection.obstime.append(obstime)
+                self.collection.value.append(value)
+        else:
+            self.collection.append(value)
 
 
 # #########

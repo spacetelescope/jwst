@@ -218,8 +218,11 @@ class EngdbMast():
         self.req.params = {'uri': SERVICE_URI + uri}
         prepped = self.session.prepare_request(self.req)
         settings = self.session.merge_environment_settings(prepped.url, {}, None, None, None)
+        logger.debug('Query: %s', prepped.url)
         self.response = self.session.send(prepped, **settings)
         self.response.raise_for_status()
+        logger.debug('Response: %s', self.response)
+        logger.debug('Response test: %s', self.response.text)
 
         # Convert to table.
         r_list = self.response.text.split('\r\n')
@@ -269,6 +272,10 @@ class _Value_Collection:
         value: numeric
             Value from db.
         """
+        # Make all the times readable
+        obstime.format = 'isot'
+
+        # Append
         if self._include_obstime:
             if self._zip_results:
                 self.collection.append(
