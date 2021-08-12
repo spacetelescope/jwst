@@ -70,7 +70,7 @@ class Extract1dStep(Step):
 
     """
 
-    # TODO set soss_theta, soss_dx, soss_dy as single parameter transform? Unclear how to type.
+    # TODO Consider optimal defaults.
     spec = """
     smoothing_length = integer(default=None)  # background smoothing size
     bkg_fit = option("poly", "mean", "median", default="poly")  # background fitting type
@@ -82,9 +82,7 @@ class Extract1dStep(Step):
     apply_apcorr = boolean(default=True)  # apply aperture corrections?
     soss_threshold = float(default=1e-4)  # threshold value for a pixel to be included when modelling the trace.
     soss_n_os = integer(default=5)  # oversampling factor of the underlying wavelength grid used when modelling the trace. 
-    soss_theta = float(default=0.)  # rotation angle applied to the reference files to match the observation.
-    soss_dx = float(default=0.)  # x-shift applied to the reference files to match the observation.
-    soss_dy = float(default=0.)  # y-shift applied to the reference files to match the observation.
+    soss_transform = float_list(default=None, min=3, max=3)  # rotation angle applied to the reference files to match the observation.
     soss_tikfac = float(default=None)  # regularisation factor for NIRISS SOSS extraction
     soss_width = float(default=40.)  # aperture width used to extract the 1D spectrum from the de-contaminated trace.
     """
@@ -158,6 +156,7 @@ class Extract1dStep(Step):
             soss_kwargs['n_os'] = self.soss_n_os
             soss_kwargs['tikfac'] = self.soss_tikfac
             soss_kwargs['width'] = self.soss_width
+            soss_kwargs['transform'] = self.soss_transform
 
             # Run the extraction.
             # TODO additional user-controlled parameters (e.g. threshold)?

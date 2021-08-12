@@ -314,8 +314,8 @@ def run_extract1d(input_model: DataModel,
         scimask = input_model.dq > 0  # Mask bad pixels with True.
 
         # Perform the extraction.
-        result = extract_image(scidata, scierr, scimask, ref_files, transform=None, tikfac=soss_kwargs['tikfac'], n_os=soss_kwargs['n_os'], threshold=soss_kwargs['threshold'])
-        wavelengths, fluxes, fluxerrs, transform, soss_kwargs['tikfac'] = result
+        result = extract_image(scidata, scierr, scimask, ref_files, **soss_kwargs)
+        wavelengths, fluxes, fluxerrs, soss_kwargs['transform'], soss_kwargs['tikfac'] = result
 
         # Initialize the output model.
         output_model = datamodels.MultiSpecModel()  # TODO is this correct for ImageModel input?
@@ -351,9 +351,6 @@ def run_extract1d(input_model: DataModel,
         # Build deepstack out of max N images TODO OPTIONAL.
         # TODO making a deepstack could be used to get a more robust transform and tikfac, 1/f.
 
-        # Set transform and tikfac, will be computed first iteration only.
-        transform = None
-
         # Initialize the output model.
         output_model = datamodels.MultiSpecModel()  # TODO is this correct for CubeModel input?
         output_model.update(input_model)  # Copy meta data from input to output.
@@ -369,8 +366,8 @@ def run_extract1d(input_model: DataModel,
             scimask = input_model.dq[i] > 0
 
             # Perform the extraction.
-            result = extract_image(scidata, scierr, scimask, ref_files, transform=transform, tikfac=soss_kwargs['tikfac'], n_os=soss_kwargs['n_os'], threshold=soss_kwargs['threshold'])
-            wavelengths, fluxes, fluxerrs, transform, soss_kwargs['tikfac'] = result
+            result = extract_image(scidata, scierr, scimask, ref_files, **soss_kwargs)
+            wavelengths, fluxes, fluxerrs, soss_kwargs['transform'], soss_kwargs['tikfac'] = result
 
             # Copy spectral data for each order into the output model.
             # TODO how to include parameters like transform and tikfac in the output.
