@@ -13,6 +13,7 @@ import pytest
 from astropy.time import Time
 
 from jwst import datamodels
+from jwst.lib import engdb_mast
 from jwst.lib import engdb_tools
 from jwst.lib import set_telescope_pointing as stp
 from jwst.lib import siafdb
@@ -254,6 +255,29 @@ def data_file(tmp_path):
 
 
 @pytest.fixture
+def data_file_fromsim(tmp_path):
+    """Create data using times that were executed during a simulation using the OTB Simulator"""
+    model = datamodels.Level1bModel()
+    model.meta.exposure.start_time = Time('2021-05-22T00:00:00').mjd
+    model.meta.exposure.end_time = Time('2021-05-22T00:00:01').mjd
+    model.meta.target.ra = TARG_RA
+    model.meta.target.dec = TARG_DEC
+    model.meta.guidestar.gs_ra = TARG_RA + 0.0001
+    model.meta.guidestar.gs_dec = TARG_DEC + 0.0001
+    model.meta.aperture.name = "MIRIM_FULL"
+    model.meta.observation.date = '2017-01-01'
+    model.meta.exposure.type = "MIR_IMAGE"
+    model.meta.ephemeris.velocity_x = -25.021
+    model.meta.ephemeris.velocity_y = -16.507
+    model.meta.ephemeris.velocity_z = -7.187
+
+    file_path = tmp_path / 'file_fromsim.fits'
+    model.save(file_path)
+    model.close()
+    yield file_path
+
+
+@pytest.fixture
 def data_file_nosiaf():
     model = datamodels.Level1bModel()
     model.meta.exposure.start_time = STARTTIME.mjd
@@ -448,6 +472,37 @@ def test_add_wcs_with_db(eng_db_ngas, data_file, tmp_path):
 
     # Tests
     with datamodels.Level1bModel(data_file) as model:
+
+        # Save for post-test comparision and update
+        model.save(tmp_path / expected_name)
+
+        with datamodels.open(DATA_PATH / expected_name) as expected:
+            for meta in METAS_EQALITY:
+                assert model[meta] == expected[meta]
+
+            for meta in METAS_ISCLOSE:
+                assert np.isclose(model[meta], expected[meta])
+
+            assert word_precision_check(model.meta.wcsinfo.s_region, expected.meta.wcsinfo.s_region)
+
+
+@pytest.mark.skipif(sys.version_info.major < 3,
+                    reason="No URI support in sqlite3")
+def test_add_wcs_with_mast(data_file_fromsim, tmp_path):
+    """Test using the database"""
+    expected_name = 'add_wcs_with_mast.fits'
+
+    # See if access to MAST is available.
+    try:
+        engdb = engdb_mast.EngdbMast()
+    except RuntimeError as exception:
+        pytest.skip(f'Live MAST Engineering Service not available: {exception}')
+
+    # Execute the operation.
+    stp.add_wcs(data_file_fromsim, siaf_path=siaf_path, engdb_url=engdb_mast.MAST_BASE_URL)
+
+    # Tests
+    with datamodels.Level1bModel(data_file_fromsim) as model:
 
         # Save for post-test comparision and update
         model.save(tmp_path / expected_name)
