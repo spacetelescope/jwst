@@ -142,6 +142,21 @@ class Extract1dStep(Step):
 
             self.log.info('Input is a NIRISS SOSS observation, the specialized SOSS extraction will be used.')
 
+            # TODO implement the extraction for the F277 filter.
+            if input_model.meta.instrument.filter != 'CLEAR':
+                self.log.error('The SOSS extraction is implemented for the CLEAR filter only.')
+                self.log.error('extract_1d will be skipped.')
+                input_model.meta.cal_step.extract_1d = 'SKIPPED'
+                return input_model
+
+            # TODO implement the extraction for the FULL subarray (no change except ref files?),
+            # TODO and SUBSTRIP96 subarray (skip order 2, 3 box extraction?).
+            if input_model.meta.subarray.name != 'SUBSTRIP256':
+                self.log.error('The SOSS extraction is implemented for the SUBSTRIP256 subarray only.')
+                self.log.error('extract_1d will be skipped.')
+                input_model.meta.cal_step.extract_1d = 'SKIPPED'
+                return input_model
+
             # Load reference files.
             # TODO Local placeholders inserted, correct usage example: self.get_reference_file(input_model, 'apcorr')
             soss_ref_path = '/home/talens-irex/Dropbox/SOSS_Ref_Files/'
