@@ -70,6 +70,7 @@ def soss_background(scidata, scimask, bkg_mask=None):
 
     # Compute the mean for each column and record the number of pixels used.
     col_bkg = scidata_clipped.mean(axis=0)
+    col_bkg = np.where(np.all(scidata_clipped.mask, axis=0), 0., col_bkg)
     npix_bkg = (~scidata_clipped.mask).sum(axis=0)
 
     # Background subtract the science data.
