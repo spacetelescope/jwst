@@ -116,7 +116,7 @@ def get_trace_1d(ref_files, transform, order, cols=None):
 
 # TODO how best to pass reference files and additional parameters (e.g. threshold)?
 def extract_image(scidata, scierr, scimask, ref_files, transform=None,
-                  tikfac=None, n_os=5, threshold=1e-4, width=40):
+                  tikfac=None, n_os=5, threshold=1e-4, width=40, devname=None):
     """Perform the spectral extraction on a single image.
 
     :param scidata: A single NIRISS SOSS detector image.
@@ -188,13 +188,13 @@ def extract_image(scidata, scierr, scimask, ref_files, transform=None,
         # Initial pass 14 orders of magnitude.
         factors = np.logspace(-25, -12, 14)
         tiktests = engine.get_tikho_tests(factors, data=scidata_bkg, error=scierr, mask=scimask)
-        tikfac = engine.best_tikho_factor(tests=tiktests, i_plot=True)  # TODO temporarily make figure.
+        tikfac = engine.best_tikho_factor(tests=tiktests, devname=devname + '_tik1.png')  # TODO temporarily make figure.
 
         # Refine across 4 orders of magnitude.
         tikfac = np.log10(tikfac)
         factors = np.logspace(tikfac - 2, tikfac + 2, 20)
         tiktests = engine.get_tikho_tests(factors, data=scidata_bkg, error=scierr, mask=scimask)
-        tikfac = engine.best_tikho_factor(tests=tiktests, i_plot=True)  # TODO temporarily make figure.
+        tikfac = engine.best_tikho_factor(tests=tiktests, devname=devname + '_tik2.png')  # TODO temporarily make figure.
 
     log.info('Using a Tikhonov factor of {}'.format(tikfac))
 
@@ -228,7 +228,7 @@ def extract_image(scidata, scierr, scimask, ref_files, transform=None,
     tracemodel_o2 = np.where(np.isnan(tracemodel_o2), 0, tracemodel_o2)
 
     # TODO temporary debug plot.
-    devtools.diagnostic_plot(scidata_bkg, scierr, scimask, tracemodel_o1, tracemodel_o2)
+    devtools.diagnostic_plot(scidata_bkg, scierr, scimask, tracemodel_o1, tracemodel_o2, devname=devname)
 
     wavelengths = dict()
     fluxes = dict()
@@ -244,20 +244,12 @@ def extract_image(scidata, scierr, scimask, ref_files, transform=None,
     out = box_extract(scidata_bkg - tracemodel_o2, scierr, scimask, box_weights_o1, cols=xtrace_o1)
     _, fluxes['Order 1'], fluxerrs['Order 1'], npixels['Order 1'] = out
 
-    # TODO temporary debug plot.
-    devtools.plot_weights(box_weights_o1)
-    devtools.plot_data(scidata_bkg - tracemodel_o2, scimask)
-
     # Use the model of order 1 to de-contaminate and extract order 2.
     xtrace_o2, ytrace_o2, wavelengths['Order 2'] = get_trace_1d(ref_files, transform, 2)
 
     box_weights_o2 = get_box_weights(ytrace_o2, width, scidata.shape, cols=xtrace_o2)
     out = box_extract(scidata_bkg - tracemodel_o1, scierr, scimask, box_weights_o2, cols=xtrace_o2)
     _, fluxes['Order 2'], fluxerrs['Order 2'], npixels['Order 2'] = out
-
-    # TODO temporary debug plot.
-    devtools.plot_weights(box_weights_o2)
-    devtools.plot_data(scidata_bkg - tracemodel_o1, scimask)
 
     # Use both models to de-contaminate and extract order 3.
     xtrace_o3, ytrace_o3, wavelengths['Order 3'] = get_trace_1d(ref_files, transform, 3)
@@ -267,11 +259,16 @@ def extract_image(scidata, scierr, scimask, ref_files, transform=None,
     _, fluxes['Order 3'], fluxerrs['Order 3'], npixels['Order 3'] = out
 
     # TODO temporary debug plot.
-    devtools.plot_weights(box_weights_o3)
-    devtools.plot_data(scidata_bkg - tracemodel_o1 - tracemodel_o2, scimask)
+    devtools.plot_1d_spectra(wavelengths, fluxes, fluxerrs, npixels, devname)
 
-    # TODO temporary debug plot.
-    devtools.plot_1d_spectra(wavelengths, fluxes, fluxerrs, npixels)
+    # TODO temporary output file.
+    np.savez(devname + '_spectra.npz',
+             wavelength_o1=wavelengths['Order 1'], flux_o1=fluxes['Order 1'], fluxerr_o1=fluxerrs['Order 1'],
+             npixels_o1=npixels['Order 1'],
+             wavelength_o2=wavelengths['Order 2'], flux_o2=fluxes['Order 2'], fluxerr_o2=fluxerrs['Order 2'],
+             npixels_o2=npixels['Order 2'],
+             wavelength_o3=wavelengths['Order 3'], flux_o3=fluxes['Order 3'], fluxerr_o3=fluxerrs['Order 3'],
+             npixels_o3=npixels['Order 3'])
 
     return wavelengths, fluxes, fluxerrs, npixels, transform, tikfac
 

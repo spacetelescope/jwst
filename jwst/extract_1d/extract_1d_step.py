@@ -85,6 +85,7 @@ class Extract1dStep(Step):
     soss_transform = float_list(default=None, min=3, max=3)  # rotation angle applied to the reference files to match the observation.
     soss_tikfac = float(default=None)  # regularisation factor for NIRISS SOSS extraction
     soss_width = float(default=40.)  # aperture width used to extract the 1D spectrum from the de-contaminated trace.
+    soss_devname = string(default=None)  # TODO temporray output name.
     """
 
     # TODO add SOSS reference file types.
@@ -172,6 +173,7 @@ class Extract1dStep(Step):
             soss_kwargs['tikfac'] = self.soss_tikfac
             soss_kwargs['width'] = self.soss_width
             soss_kwargs['transform'] = self.soss_transform
+            soss_kwargs['devname'] = self.soss_devname
 
             # Run the extraction.
             # TODO additional user-controlled parameters (e.g. threshold)?
