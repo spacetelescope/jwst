@@ -129,6 +129,23 @@ class EngDB_Mocker(requests_mock.Mocker):
         context.status_code = 200
         return data
 
+    def __enter__(self):
+        """Setup environment for the context
+
+        Remove MAST_API_TOKEN to ensure the EngdbMast service is not used.
+        """
+        self._environ = os.environ.copy()
+        try:
+            del os.environ['MAST_API_TOKEN']
+        except KeyError:
+            pass
+        super().__enter__()
+
+    def __exit__(self, type, value, traceback):
+        """Restore the environment"""
+        super().__exit__(type, value, traceback)
+        os.environ = self._environ
+
 
 class EngDB_Local():
     """
