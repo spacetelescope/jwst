@@ -47,8 +47,10 @@ class ENGDB_Service:
 
     endtime: `astropy.time.Time`
 
-    base_url: str
+    base_url: str or None
         The base URL for the engineering service.
+        If None, the MAST AUI will be tried first, then
+        the direct service.
 
     default_format: str
         The format to retrieve from the service.
@@ -57,11 +59,6 @@ class ENGDB_Service:
     def __init__(self, base_url=None, default_format='dict'):
 
         # Determine the database to use
-        if base_url is None:
-            base_url = getenv('ENG_BASE_URL', ENGDB_BASE_URL)
-        if base_url[-1] != '/':
-            base_url += '/'
-
         for db_attempt in [EngdbMast, EngdbDirect]:
             try:
                 db = db_attempt(base_url=base_url, default_format=default_format)

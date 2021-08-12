@@ -197,10 +197,14 @@ def test_mocker_data(db_cache, engdb):
 # Utilities
 # #########
 @pytest.fixture
-def engdb(scope='module'):
+def engdb(jail_environ):
     """
     Ensure the live engineering RESTful service is available
     """
+    try:
+        del os.environ['MAST_API_TOKEN']
+    except KeyError:
+        pass
     try:
         engdb = engdb_tools.ENGDB_Service()
     except Exception:

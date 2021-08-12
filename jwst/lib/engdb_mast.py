@@ -43,19 +43,17 @@ class EngdbMast():
 
     Attributes
     ----------
-    req: `requests.Request`
-        The pre-built Request, with authorization and url defined.
+    base_url: str
+        The base URL for the engineering service.
+
+    endtime: `astropy.time.Time`
+        The end time of the last query.
 
     response: `requests.response`
         The results of the last query.
 
-    session: `requests.Session`
-        The session used for the connection.
-
     starttime: `astropy.time.Time`
         The start time of the last query.
-
-    endtime: `astropy.time.Time`
 
     Raises
     ------
@@ -69,6 +67,7 @@ class EngdbMast():
             base_url = getenv('ENG_BASE_URL', MAST_BASE_URL)
         if base_url[-1] != '/':
             base_url += '/'
+        self.base_url = base_url
 
         # Get the token
         if token is None:

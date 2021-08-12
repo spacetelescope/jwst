@@ -111,22 +111,18 @@ class EngdbDirect():
 
     Attributes
     ----------
+    base_url: str
+        The base URL for the engineering service.
+
+    endtime: `astropy.time.Time`
+        The end time of the last query.
+
     response: `requests.response`
         The results of the last query.
 
     starttime: `astropy.time.Time`
         The start time of the last query.
-
-    endtime: `astropy.time.Time`
-
-    base_url: str
-        The base URL for the engineering service.
-
-    default_format: str
-        The format to retrieve from the service.
-        This is not the format of the returned data.
     """
-
     def __init__(self, base_url=None, default_format='dict'):
         if base_url is None:
             base_url = getenv('ENG_BASE_URL', ENGDB_BASE_URL)
