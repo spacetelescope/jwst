@@ -90,10 +90,10 @@ class EngdbMast(EngdbABC):
             raise RuntimeError(f'MAST url: {base_url} is not available. Returned HTTPS status {resp.status_code}')
 
         # Basics are covered. Finalize initialization.
-        self.req = requests.Request(method='GET',
+        self._req = requests.Request(method='GET',
                                     url=base_url + API_URI,
                                     headers={'Authorization': f'token {token}'})
-        self.session = requests.Session()
+        self._session = requests.Session()
 
     def get_meta(self, *kwargs):
         """Get the menonics meta info
@@ -147,7 +147,7 @@ class EngdbMast(EngdbABC):
             endtime = Time(endtime, format=time_format)
 
         records = self._get_records(mnemonic=mnemonic, starttime=starttime,
-                                   endtime=endtime, time_format=time_format)
+                                    endtime=endtime, time_format=time_format)
 
         # If desired, remove bracket or outside of timeframe entries.
         if not include_bracket_values:
@@ -214,6 +214,8 @@ class EngdbMast(EngdbABC):
             starttime = Time(starttime, format=time_format)
         if not isinstance(endtime, Time):
             endtime = Time(endtime, format=time_format)
+        self.starttime = starttime
+        self.endtime = endtime
 
         # Make the request
         mnemonic = mnemonic.strip()
@@ -221,11 +223,11 @@ class EngdbMast(EngdbABC):
         starttime_fmt = starttime.strftime('%Y%m%dT%H%M%S')
         endtime_fmt = endtime.strftime('%Y%m%dT%H%M%S')
         uri = f'{mnemonic}-{starttime_fmt}-{endtime_fmt}.csv'
-        self.req.params = {'uri': SERVICE_URI + uri}
-        prepped = self.session.prepare_request(self.req)
-        settings = self.session.merge_environment_settings(prepped.url, {}, None, None, None)
+        self._req.params = {'uri': SERVICE_URI + uri}
+        prepped = self._session.prepare_request(self._req)
+        settings = self._session.merge_environment_settings(prepped.url, {}, None, None, None)
         logger.debug('Query: %s', prepped.url)
-        self.response = self.session.send(prepped, **settings)
+        self.response = self._session.send(prepped, **settings)
         self.response.raise_for_status()
         logger.debug('Response: %s', self.response)
         logger.debug('Response test: %s', self.response.text)
