@@ -50,6 +50,10 @@ class EngdbDirect(EngdbABC):
         The format the results of the data should be returned from the service.
         If 'dict', the result will be in Python dict format.
 
+    service_kwargs : **dict
+        Service-specific keyword arguments that are not relevant to this implementation
+        of EngdbABC.
+
     Attributes
     ----------
     base_url: str
@@ -74,7 +78,9 @@ class EngdbDirect(EngdbABC):
     response = None
     starttime = None
 
-    def __init__(self, base_url=None, default_format='dict'):
+    def __init__(self, base_url=None, default_format='dict', **service_kwargs):
+        logger.debug('kwargs not used by this service: %s', service_kwargs)
+
         if base_url is None:
             base_url = getenv('ENG_BASE_URL', ENGDB_BASE_URL)
         if base_url[-1] != '/':

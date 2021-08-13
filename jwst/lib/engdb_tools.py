@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
-def ENGDB_Service(base_url=None, default_format='dict'):
+def ENGDB_Service(base_url=None, **service_kwargs):
     """Access the JWST Engineering Database
 
     Access can be either through the public MAST API
@@ -21,12 +21,12 @@ def ENGDB_Service(base_url=None, default_format='dict'):
 
     Parameters
     ----------
-    base_url: str
+    base_url : str
         The base url for the engineering RESTful service
 
-    default_format: str
-        The format the results of the data should be returned.
-        If 'dict', the result will be in Python dict format.
+    service_kwargs : **dict
+        Service-specific keyword arguments. Refer to the concrete implementations
+        of EngdbABC.
 
     Returns
     -------
@@ -37,7 +37,7 @@ def ENGDB_Service(base_url=None, default_format='dict'):
     # Determine the database to use
     for db_attempt in [EngdbMast, EngdbDirect]:
         try:
-            service = db_attempt(base_url=base_url, default_format=default_format)
+            service = db_attempt(base_url=base_url, **service_kwargs)
         except RuntimeError as excp:
             logger.debug('Service %s cannot use base_url %s.', db_attempt, base_url)
             logger.debug('Exception: %s', excp)

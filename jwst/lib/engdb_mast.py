@@ -39,9 +39,9 @@ class EngdbMast(EngdbABC):
         MAST_API_TOKEN is queried. A token is required.
         For more information, see 'https://auth.mast.stsci.edu/'
 
-    db_kwargs : dict
-        Other keyword arguments that may be needed by other versions of the service
-        but are not used by this service.
+    service_kwargs : **dict
+        Service-specific keyword arguments that are not relevant to this implementation
+        of EngdbABC.
 
     Attributes
     ----------
@@ -68,7 +68,8 @@ class EngdbMast(EngdbABC):
     response = None
     starttime = None
 
-    def __init__(self, base_url=None, token=None, **db_kwargs):
+    def __init__(self, base_url=None, token=None, **service_kwargs):
+        logger.debug('kwargs not used by this service: %s', service_kwargs)
 
         # Determine the database to use
         if base_url is None:

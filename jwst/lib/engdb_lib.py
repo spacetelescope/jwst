@@ -20,6 +20,10 @@ class EngdbABC(abc.ABC):
     base_url: str
         The base url for the engineering RESTful service
 
+    service_kwargs : **dict
+        Service-specific keyword arguments. Refer to the concrete implementations
+        of EngdbABC.
+
     Attributes
     ----------
     base_url: str
@@ -58,11 +62,11 @@ class EngdbABC(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def __init__(self, base_url=None, **kwargs):
+    def __init__(self, base_url=None, **service_kwargs):
         pass
 
     @abc.abstractmethod
-    def get_meta(self, mnemonic='', **kwargs):
+    def get_meta(self, mnemonic='', **service_kwargs):
         """Get the menonics meta info
 
         Parameters
@@ -74,6 +78,10 @@ class EngdbABC(abc.ABC):
         -------
         meta : object
             The meta information. Type of return is dependent on the type of service
+
+        service_kwargs : **dict
+            Service-specific keyword arguments. Refer to the concrete implementations
+            of EngdbABC.
         """
         pass
 
