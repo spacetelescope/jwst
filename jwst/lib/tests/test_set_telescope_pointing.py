@@ -13,6 +13,7 @@ import pytest
 from astropy.time import Time
 
 from jwst import datamodels
+from jwst.lib import engdb_direct
 from jwst.lib import engdb_mast
 from jwst.lib import engdb_tools
 from jwst.lib import set_telescope_pointing as stp
@@ -303,7 +304,7 @@ def test_change_engdb_url():
         stp.get_pointing(
             STARTTIME.mjd,
             ENDTIME.mjd,
-            engdb_url=engdb_tools.ENGDB_BASE_URL
+            engdb_url=engdb_direct.ENGDB_BASE_URL
         )
 
 
@@ -494,7 +495,7 @@ def test_add_wcs_with_mast(data_file_fromsim, tmp_path):
 
     # See if access to MAST is available.
     try:
-        engdb = engdb_mast.EngdbMast()
+        engdb_mast.EngdbMast()
     except RuntimeError as exception:
         pytest.skip(f'Live MAST Engineering Service not available: {exception}')
 

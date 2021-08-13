@@ -64,10 +64,8 @@ import logging
 import astropy.io.fits as fits
 import numpy as np
 from numpy import cos, sin
-from jwst.lib.engdb_tools import (
-    ENGDB_BASE_URL,
-    ENGDB_Service,
-)
+from jwst.lib.engdb_direct import ENGDB_BASE_URL
+from jwst.lib.engdb_tools import ENGDB_Service
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
