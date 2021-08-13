@@ -11,6 +11,8 @@ import numpy as np
 
 from .engdb_lib import EngDB_Value, EngdbABC
 
+__all__ = ['EngdbMast']
+
 # Default MAST info.
 MAST_BASE_URL = 'https://mast.stsci.edu'
 API_URI = 'api/v0.1/Download/file'
