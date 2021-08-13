@@ -1,7 +1,49 @@
 """Access the JWST Engineering Mnemonic Database
 
-Access can be either through the public MAST API
-or by direct connection to the database server.
+The engineering mnemonics are provided by multiple services, all of which require a level of authentication.
+
+For non-operational use, the providing service is through the MAST AUI website
+
+    https://mast.stsci.edu
+
+Authorization can be requested through
+
+    https://auth.mast.stsci.edu/
+
+Interface
+---------
+
+The primary entry point is the function `jwst.lib.engdb_tools.ENGDB_Service`.
+This function returns a `jwst.lib.engdb_lib.EngdbABC` connection object. Using
+this object, values for a mnemonic covering a specified time range can be
+retrieved using the `get_values` method.
+
+By default, only values inclusively between the time end points are returned.
+Depending on the frequency a mnemonic is updated, there can be no values. If
+values are always desired, the nearest, bracketing values outside the time
+range can be requested.
+
+Warning
+-------
+
+Many mnemonics are updated very quickly, up to 16Hz. When in doubt, specify a
+very short time frame, and request bracketing values. Otherwise, the request
+can return a very large amount of data, risking timeout, unnecessary memory
+consumption, or access restrictions.
+
+Examples
+--------
+
+The typical workflow is as follows:
+
+.. code-block:: python
+
+    from jwst.lib.engdb_tools import ENGDB_Service
+
+    service = ENGDB_Service()  # By default, will use the public MAST service.
+
+    values = service.get_values('sa_zattest2', '2021-05-22T00:00:00', '2021-05-22T00:00:01')
+
 """
 import logging
 
@@ -21,7 +63,7 @@ def ENGDB_Service(base_url=None, **service_kwargs):
 
     Parameters
     ----------
-    base_url : str
+    base_url : str or None.
         The base url for the engineering RESTful service
 
     service_kwargs : **dict
