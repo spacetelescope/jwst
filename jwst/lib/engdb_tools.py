@@ -1,4 +1,4 @@
-"""Access the JWST Engineering Database
+"""Access the JWST Engineering Mnemonic Database
 
 Access can be either through the public MAST API
 or by direct connection to the database server.
