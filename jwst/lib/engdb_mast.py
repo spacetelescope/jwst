@@ -9,7 +9,7 @@ from astropy.table import Table
 from astropy.time import Time
 import numpy as np
 
-from .engdb_lib import EngDB_Value
+from .engdb_lib import EngDB_Value, EngdbABC
 
 # Default MAST info.
 MAST_BASE_URL = 'https://mast.stsci.edu'
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
-class EngdbMast():
+class EngdbMast(EngdbABC):
     """
     Access the JWST Engineering Database through MAST
 
@@ -60,6 +60,12 @@ class EngdbMast():
     RuntimeError
         Any and all failures with connecting with the MAST server.
     """
+
+    base_url = None
+    endtime = None
+    response = None
+    starttime = None
+
     def __init__(self, base_url=None, token=None, **db_kwargs):
 
         # Determine the database to use
