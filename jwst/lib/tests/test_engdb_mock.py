@@ -207,8 +207,8 @@ def engdb(jail_environ):
         pass
     try:
         engdb = engdb_tools.ENGDB_Service()
-    except Exception:
-        pytest.skip('ENGDB service is not accessible.')
+    except Exception as exception:
+        pytest.skip(f'ENGDB service is not accessible: {exception}')
     else:
         return engdb
 

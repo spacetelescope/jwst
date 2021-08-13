@@ -47,13 +47,17 @@ class EngdbDirect(EngdbABC):
         The base url for the engineering RESTful service
 
     default_format: str
-        The format the results of the data should be returned.
+        The format the results of the data should be returned from the service.
         If 'dict', the result will be in Python dict format.
 
     Attributes
     ----------
     base_url: str
         The base URL for the engineering service.
+
+    default_format: str
+        The format the results of the data should be returned from the service.
+        If 'dict', the result will be in Python dict format.
 
     endtime: `astropy.time.Time`
         The end time of the last query.
@@ -76,12 +80,12 @@ class EngdbDirect(EngdbABC):
         if base_url[-1] != '/':
             base_url += '/'
         self.base_url = base_url
-        self._default_format = default_format
+        self.default_format = default_format
 
         # Check for aliveness
         response = requests.get(''.join([
             self.base_url,
-            self._default_format,
+            self.default_format,
             ENGDB_METADATA
         ]))
         response.raise_for_status()
@@ -110,7 +114,7 @@ class EngdbDirect(EngdbABC):
             If None, the `default_format` is used.
         """
         if result_format is None:
-            result_format = self._default_format
+            result_format = self.default_format
 
         query = ''.join([
             self.base_url,
@@ -255,7 +259,7 @@ class EngdbDirect(EngdbABC):
         before and after the requested time range.
         """
         if result_format is None:
-            result_format = self._default_format
+            result_format = self.default_format
 
         if not isinstance(starttime, Time):
             starttime = Time(starttime, format=time_format)
