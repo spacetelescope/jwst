@@ -76,12 +76,12 @@ class EngdbDirect(EngdbABC):
         if base_url[-1] != '/':
             base_url += '/'
         self.base_url = base_url
-        self.default_format = default_format
+        self._default_format = default_format
 
         # Check for aliveness
         response = requests.get(''.join([
             self.base_url,
-            self.default_format,
+            self._default_format,
             ENGDB_METADATA
         ]))
         response.raise_for_status()
@@ -110,7 +110,7 @@ class EngdbDirect(EngdbABC):
             If None, the `default_format` is used.
         """
         if result_format is None:
-            result_format = self.default_format
+            result_format = self._default_format
 
         query = ''.join([
             self.base_url,
@@ -255,12 +255,14 @@ class EngdbDirect(EngdbABC):
         before and after the requested time range.
         """
         if result_format is None:
-            result_format = self.default_format
+            result_format = self._default_format
 
         if not isinstance(starttime, Time):
             starttime = Time(starttime, format=time_format)
         if not isinstance(endtime, Time):
             endtime = Time(endtime, format=time_format)
+        self.starttime = starttime
+        self.endtime = endtime
 
         # Build the URL
         query = ''.join([
@@ -283,8 +285,6 @@ class EngdbDirect(EngdbABC):
 
         # That's all folks
         self.response = response
-        self.starttime = starttime
-        self.endtime = endtime
         return response.json()
 
 
