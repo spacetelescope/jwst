@@ -8,7 +8,7 @@ from os import getenv
 import re
 import requests
 
-from .engdb_lib import EngDB_Value
+from .engdb_lib import EngDB_Value, EngdbABC
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ __all__ = [
 ]
 
 
-class EngdbDirect():
+class EngdbDirect(EngdbABC):
     """
     Access the JWST Engineering Database through direct connection
 
@@ -64,6 +64,12 @@ class EngdbDirect():
     starttime: `astropy.time.Time`
         The start time of the last query.
     """
+
+    base_url = None
+    endtime = None
+    response = None
+    starttime = None
+
     def __init__(self, base_url=None, default_format='dict'):
         if base_url is None:
             base_url = getenv('ENG_BASE_URL', ENGDB_BASE_URL)
