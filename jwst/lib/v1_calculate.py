@@ -12,7 +12,7 @@ from .. import datamodels as dm
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-__all__ = ['v1_calculate_from_models', 'v1_calculate_over_time', 'simplify_table']
+__all__ = ['v1_calculate_from_models', 'v1_calculate_over_time']
 
 
 def v1_calculate_from_models(sources, siaf_path=None, **calc_wcs_from_time_kwargs):
