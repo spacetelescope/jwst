@@ -43,10 +43,10 @@ class EngdbDirect(EngdbABC):
 
     Parameters
     ----------
-    base_url: str
+    base_url : str
         The base url for the engineering RESTful service
 
-    default_format: str
+    default_format : str
         The format the results of the data should be returned from the service.
         If 'dict', the result will be in Python dict format.
 
@@ -57,6 +57,9 @@ class EngdbDirect(EngdbABC):
 
     #: The base URL for the engineering service.
     base_url = None
+
+    #: The format the results of the data should be returned from the service.
+    default_format = None
 
     #: The end time of the last query.
     endtime = None
