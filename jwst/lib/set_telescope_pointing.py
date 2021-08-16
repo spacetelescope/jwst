@@ -300,88 +300,45 @@ WCSRef.__new__.__defaults__ = (None, None, None)
 @dataclasses.dataclass
 class TransformParameters:
     """Parameters required the calculations
-
-    Parameters
-    ----------
-    allow_default : bool
-        If telemetry cannot be determined, use existing
-        information in the observation's header.
-
-    default_pa_v3 : float
-        The V3 position angle to use if the pointing information
-        is not found.
-
-    dry_run : bool
-        Do not write out the modified file.
-
-    engdb_url : str or None
-        URL of the engineering telemetry database REST interface.
-
-    fsmcorr_version : str
-        The version of the FSM correction calculation to use.
-        See :ref:`calc_sifov_fsm_delta_matrix`
-
-    fsmcorr_units : str
-        Units of the FSM correction values. Default is 'arcsec'.
-        See :ref:`calc_sifov_fsm_delta_matrix`
-
-    guide_star_wcs : WCSRef
-        Guide star WCS info, typically from the input model.
-
-    j2fgs_transpose : bool
-        Transpose the `j2fgs1` matrix.
-
-    jwst_velocity : numpy.array
-        The [DX, DY, DZ] barycentri velocity vector
-
-    method : `Methods`
-        The method, or algorithm, to use in calculating the transform.
-        If not specified, the default method is used.
-
-    override_transforms : `Transforms`
-        If set, matrices that should be used instead of the calculated one.
-
-    pcs_mode : str
-        The tracking mode in use.
-
-    pointing : `Pointing`
-        The quaternion.
-
-    reduce_func : func or None
-        Reduction function to use on values.
-
-    siaf : `SIAF`
-        The SIAF information for the input model
-
-    siaf_db : `SiafDb`
-        The SIAF database
-
-    tolerance : int
-        If no telemetry can be found during the observation,
-        the time, in seconds, beyond the observation time to
-        search for telemetry.
-
-    useafter : str
-        The date of observation (``model.meta.date``)
     """
+    #: If telemetry cannot be determined, use existing information in the observation's header.
     allow_default: bool = False
+    #: The V3 position angle to use if the pointing information is not found.
     default_pa_v3: float = 0.
+    #: Do not write out the modified file.
     dry_run: bool = False
+    #: URL of the engineering telemetry database REST interface.
     engdb_url: str = None
+    #: The version of the FSM correction calculation to use. See `calc_sifov_fsm_delta_matrix`
     fsmcorr_version: str = 'latest'
+    #: Units of the FSM correction values. Default is 'arcsec'. See `calc_sifov_fsm_delta_matrix`
     fsmcorr_units: str = 'arcsec'
+    #: Guide star WCS info, typically from the input model.
     guide_star_wcs: WCSRef = WCSRef()
+    #: Transpose the `j2fgs1` matrix.
     j2fgs_transpose: bool = True
+    #: The [DX, DY, DZ] barycentri velocity vector
     jwst_velocity: np.array = None
+    #: The method, or algorithm, to use in calculating the transform. If not specified, the default method is used.
     method: Methods = None
+    #: If set, matrices that should be used instead of the calculated one.
     override_transforms: Transforms = None
+    #: The tracking mode in use.
     pcs_mode: str = None
+    #: The observatory orientation, represented by the ECI quaternion, and other engineering mnemonics
     pointing: Pointing = None
+    #: Reduction function to use on values.
     reduce_func: typing.Callable = None
+    #: The SIAF information for the input model
     siaf: SIAF = None
+    #: The SIAF database
     siaf_db: SiafDb = None
+    #: If no telemetry can be found during the observation,
+    #: the time, in seconds, beyond the observation time to search for telemetry.
     tolerance: float = 60.
+    #: The date of observation (`jwst.datamodel.DataModel.meta.date`)
     useafter: str = None
+    #: V3 position angle at Guide Star (`jwst.datamodel.DataModel.meta.guide_star.gs_v3_pa_science`)
     v3pa_at_gs: float = None
 
     def as_reprdict(self):
