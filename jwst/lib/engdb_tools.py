@@ -11,12 +11,12 @@ Authorization can be requested through
     https://auth.mast.stsci.edu/
 
 Interface
----------
+=========
 
 The primary entry point is the function `jwst.lib.engdb_tools.ENGDB_Service`.
 This function returns a `jwst.lib.engdb_lib.EngdbABC` connection object. Using
 this object, values for a mnemonic covering a specified time range can be
-retrieved using the `get_values` method.
+retrieved using the `~jwst.lib.engdb_lib.EngdbABC.get_values` method.
 
 By default, only values inclusively between the time end points are returned.
 Depending on the frequency a mnemonic is updated, there can be no values. If
@@ -24,7 +24,7 @@ values are always desired, the nearest, bracketing values outside the time
 range can be requested.
 
 Warning
--------
+=======
 
 Many mnemonics are updated very quickly, up to 16Hz. When in doubt, specify a
 very short time frame, and request bracketing values. Otherwise, the request
@@ -32,7 +32,7 @@ can return a very large amount of data, risking timeout, unnecessary memory
 consumption, or access restrictions.
 
 Examples
---------
+========
 
 The typical workflow is as follows:
 
@@ -44,6 +44,17 @@ The typical workflow is as follows:
 
     values = service.get_values('sa_zattest2', '2021-05-22T00:00:00', '2021-05-22T00:00:01')
 
+Environmental Variables
+=======================
+
+ENG_BASE_URL
+    If no URL is specified in code or by command line parameters, this value is used.
+    If not defined, a default, as defined by the individual services, will be attempted.
+
+MAST_API_TOKEN
+    If no token is provided in code or by command line parameters, this value will be used.
+    `~jwst.lib.engdb_mast.EngdbMast` service requires a token to be provided.
+    See https://auth.mast.stsci.edu/ for more information.
 """
 import logging
 
