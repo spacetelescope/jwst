@@ -105,36 +105,36 @@ class EngdbMast(EngdbABC):
 
         Parameters
         ----------
-        mnemonic: str
+        mnemonic : str
             The engineering mnemonic to retrieve
 
-        starttime: str or `astropy.time.Time`
+        starttime : str or `astropy.time.Time`
             The, inclusive, start time to retireve from.
 
-        endttime: str or `astropy.time.Time`
+        endttime : str or `astropy.time.Time`
             The, inclusive, end time to retireve from.
 
-        time_format: str
+        time_format : str
             The format of the input time used if the input times
             are strings. If None, a guess is made.
 
-        include_obstime: bool
+        include_obstime : bool
             If `True`, the return values will include observation
             time as `astropy.time.Time`. See `zip_results` for further details.
 
-        include_bracket_values: bool
+        include_bracket_values : bool
             The DB service, by default, returns the bracketing
             values outside of the requested time. If `True`, include
             these values.
 
-        zip_results: bool
+        zip_results : bool
             If `True` and `include_obstime` is `True`, the return values
             will be a list of 2-tuples. If false, the return will
             be a single 2-tuple, where each element is a list.
 
         Returns
         -------
-        values: [value, ...] or [(obstime, value), ...] or ([obstime,...], [value, ...])
+        values : [value, ...] or [(obstime, value), ...] or ([obstime,...], [value, ...])
             Returns the list of values. See `include_obstime` and `zip` for modifications.
         """
         if not isinstance(starttime, Time):
@@ -176,20 +176,20 @@ class EngdbMast(EngdbABC):
 
         Parameters
         ----------
-        mnemonic: str
+        mnemonic : str
             The engineering mnemonic to retrieve
 
-        starttime: str or astropy.time.Time
+        starttime : str or astropy.time.Time
             The, inclusive, start time to retireve from.
 
-        endttime: str or astropy.time.Time
+        endttime : str or astropy.time.Time
             The, inclusive, end time to retireve from.
 
-        result_format: str
+        result_format : str
             The format to request from the service.
             If None, the `default_format` is used.
 
-        time_format: str
+        time_format : str
             The format of the input time used if the input times
             are strings. If None, a guess is made.
 
@@ -198,7 +198,7 @@ class EngdbMast(EngdbABC):
 
         Returns
         -------
-        records: `astropy.Table`
+        records : `astropy.Table`
             Returns the resulting table.
 
         Notes
@@ -240,11 +240,11 @@ class _Value_Collection:
 
     Parameters
     ----------
-    include_obstime: bool
+    include_obstime : bool
         If `True`, the return values will include observation
         time as `astropy.time.Time`. See `zip_results` for further details.
 
-    zip_results: bool
+    zip_results : bool
         If `True` and `include_obstime` is `True`, the return values
         will be a list of 2-tuples. If false, the return will
         be a single 2-tuple, where each element is a list.
@@ -252,7 +252,7 @@ class _Value_Collection:
 
     Attributes
     ----------
-    collection: [value, ...] or [(obstime, value), ...] or ([obstime,...], [value, ...])
+    collection : [value, ...] or [(obstime, value), ...] or ([obstime,...], [value, ...])
         Returns the list of values.
         See `include_obstime` and `zip_results` for modifications.
     """
@@ -270,10 +270,10 @@ class _Value_Collection:
 
         Parameters
         ----------
-        obstime: `astropy.time.Time`
+        obstime : `astropy.time.Time`
             Observation time as returned from the engineering
 
-        value: numeric
+        value : numeric
             Value from db.
         """
         # Make all the times readable

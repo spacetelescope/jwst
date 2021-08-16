@@ -17,26 +17,12 @@ class EngdbABC(abc.ABC):
 
     Parameters
     ----------
-    base_url: str
+    base_url : str
         The base url for the engineering RESTful service
 
     service_kwargs : **dict
         Service-specific keyword arguments. Refer to the concrete implementations
         of EngdbABC.
-
-    Attributes
-    ----------
-    base_url: str
-        The base URL for the engineering service.
-
-    endtime: `astropy.time.Time`
-        The end time of the last query.
-
-    response: `requests.response`
-        The results of the last query.
-
-    starttime: `astropy.time.Time`
-        The start time of the last query.
     """
     @property
     @abc.abstractmethod
@@ -71,7 +57,7 @@ class EngdbABC(abc.ABC):
 
         Parameters
         ----------
-        mnemonic: str
+        mnemonic : str
             The engineering mnemonic to retrieve
 
         Returns
@@ -93,36 +79,36 @@ class EngdbABC(abc.ABC):
 
         Parameters
         ----------
-        mnemonic: str
+        mnemonic : str
             The engineering mnemonic to retrieve
 
-        starttime: str or `astropy.time.Time`
+        starttime : str or `astropy.time.Time`
             The, inclusive, start time to retireve from.
 
-        endttime: str or `astropy.time.Time`
+        endttime : str or `astropy.time.Time`
             The, inclusive, end time to retireve from.
 
-        time_format: str
+        time_format : str
             The format of the input time used if the input times
             are strings. If None, a guess is made.
 
-        include_obstime: bool
+        include_obstime : bool
             If `True`, the return values will include observation
             time as `astropy.time.Time`. See `zip_results` for further details.
 
-        include_bracket_values: bool
+        include_bracket_values : bool
             The DB service, by default, returns the bracketing
             values outside of the requested time. If `True`, include
             these values.
 
-        zip_results: bool
+        zip_results : bool
             If `True` and `include_obstime` is `True`, the return values
             will be a list of 2-tuples. If false, the return will
             be a single 2-tuple, where each element is a list.
 
         Returns
         -------
-        values: [value, ...] or [(obstime, value), ...] or ([obstime,...], [value, ...])
+        values : [value, ...] or [(obstime, value), ...] or ([obstime,...], [value, ...])
             Returns the list of values. See `include_obstime` and `zip_results` for modifications.
 
         Raises
