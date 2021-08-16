@@ -88,20 +88,37 @@ LOGLEVELS = [logging.INFO, logging.DEBUG, DEBUG_FULL]
 
 # The available methods for transformation
 class Methods(Enum):
+    """Available methods to calculate V1 and aperture WCS information
+
+    Current state-of-art is OPS_TR_202107. This method chooses either COARSE_TR_202107 or
+    TRACK_TR_202107 depending on the guidance mode, as specified by header keyword PCS_MODE.
+    """
+    #: COARSE tracking mode algorithm, TR version 2021-07
     COARSE_TR_202107 = ('coarse_tr_202107', 'calc_transforms_coarse_tr_202107')
+    #: Guides Star commanded algorithm using the J3 position angle, TR version 2021-05
     GSCMD_J3PAGS = ('gscmd', 'calc_transforms_gscmd_j3pags')
+    #: Guides Star commanded algorithm using the V3 position angle, TR version 2021-05
     GSCMD_V3PAGS = ('gscmd_v3pags', 'calc_transforms_gscmd_v3pags')
+    #: Current state-of-art algorithm, TR version 2021-07
     OPS_TR_202107 = ('ops_tr_202107', 'calc_transforms_ops_tr_202107')
+    #: Original algorithm, pre-JSOCINT-555 work.
     ORIGINAL = ('original', 'calc_transforms_original')
-    TR_202105 = ('tr_202105', 'calc_transforms_tr202105')  # Was FULL
-    TR_202105_VA = ('tr_202105_va', 'calc_transforms_velocity_abberation_tr202105')  # Was FULLVA
+    #: Observatory orientation without velocity correction, TR 2021-05
+    TR_202105 = ('tr_202105', 'calc_transforms_tr202105')
+    #: Observatory orientation with velocity correction, TR 2021-05
+    TR_202105_VA = ('tr_202105_va', 'calc_transforms_velocity_abberation_tr202105')
+    #: TRACK and FINEGUIDE mode alorithm, TR version 2021-07
     TRACK_TR_202107 = ('track_tr_202107', 'calc_transforms_track_tr_202107')
 
     # Aliases
-    default = OPS_TR_202107  # Algorithm to use by default. Used by Operations.
-    COARSE = COARSE_TR_202107  # Default algorithm under PCS_MODE COARSE.
-    OPS = OPS_TR_202107  # Default algorithm for use by Operations.
-    TRACK = TRACK_TR_202107  # Default algorithm under PCS_MODE TRACK/FINEGUIDE.
+    #: Algorithm to use by default. Used by Operations.
+    default = OPS_TR_202107
+    #: Default algorithm under PCS_MODE COARSE.
+    COARSE = COARSE_TR_202107
+    #: Default algorithm for use by Operations.
+    OPS = OPS_TR_202107
+    #: Default algorithm under PCS_MODE TRACK/FINEGUIDE.
+    TRACK = TRACK_TR_202107
 
     def __new__(cls: object, value: str, func_name: str):
         obj = object.__new__(cls)
@@ -111,6 +128,7 @@ class Methods(Enum):
 
     @property
     def func(self):
+        """Function associated with the method"""
         return globals()[self._func_name]
 
     def __str__(self):
@@ -875,7 +893,7 @@ def calc_wcs_over_time(obsstart, obsend, t_pars: TransformParameters):
 
     Returns
     -------
-    obstimes, wcsinfos, vinfos : [], [WCSRef[,...]], [WCSRef[,...]]
+    obstimes, wcsinfos, vinfos : [astropy.time.Time[,...]], [WCSRef[,...]], [WCSRef[,...]]
         A 3-tuple is returned with the WCS pointings for
         the aperture and the V1 axis
     """
@@ -904,8 +922,7 @@ def calc_wcs_over_time(obsstart, obsend, t_pars: TransformParameters):
 
 
 def calc_wcs(t_pars: TransformParameters):
-    """Transform from the given SIAF information and Pointing
-    the aperture and V1 wcs
+    """Given observatory orientation and target aperture, calculate V1 and Reference Pixel sky coordinates
 
     Parameters
     ----------
@@ -917,31 +934,6 @@ def calc_wcs(t_pars: TransformParameters):
     wcsinfo, vinfo, transforms : WCSRef, WCSRef, Transforms
         A 3-tuple is returned with the WCS pointing for
         the aperture and the V1 axis, and the transformation matrices.
-
-    Notes
-    -----
-
-    The SIAF information is as follows:
-
-    v2ref (arcsec), v3ref (arcsec), v3idlyang (deg), vidlparity
-    (+1 or -1), are the relevant siaf parameters. The assumed
-    units are shown in parentheses.
-
-    It is assumed that the siaf ref position is the corresponding WCS
-    reference position.
-
-    The `Pointing` information is as follows:
-
-    Parameter q is the SA_ZATTEST<n> engineering parameters where
-    n ranges from 1 to 4.
-
-    Parameter j2fgs_matrix is the transformation matrix specified by
-    engineering parameters SA_ZRFGS2J<n><m> where both n and m range
-    from 1 to 3. This is to be provided as a 1d list using this order:
-    11, 21, 31, 12, 22, 32, 13, 23, 33
-
-    Parameter fsmcorr are two values provided as a list consisting of:
-    [SA_ZADUCMDX, SA_ZADUCMDY]
     """
     if t_pars.siaf is None:
         t_pars.siaf = SIAF()
