@@ -1,4 +1,47 @@
-"""Set Telescope Pointing from quaternions"""
+"""Set Telescope Pointing from quaternions
+
+Calculate and update the pointing-related and world coordinate system-related
+keywords. Given a time period, usually defined by an exposure, the engineering
+mnemonic database is queried for observatory orientation. The orientation
+defines the sky coordinates a particular point on the observatory is pointed to.
+Then, using a set of matrix transformations, the sky coordinates of the
+reference pixel of a desired aperture is calculated.
+
+The transformations are defined by the Technical Reference JWST-STScI-003222,
+SM-12. This document has undergone a number of revisions. For JWST release
+v1.3.1, the version implemented is based on an internal email version produced
+2021-07.
+
+There are a number of algorithms, or *methods*, that have been implemented.
+Most represent the historical refinement of the algorithm. Until the technical
+reference is finalized, all methods will remain in the code. The default,
+state-of-the art algorithm is represented by method ``OPS_TR_202107``,
+implemented by
+`~jwst.lib.set_telescope_pointing.calc_transforms_ops_tr_202107`.
+
+Interface
+=========
+
+The primary usage is through the command line interface
+`set_telescope_pointing.py`. Operating on a list of JWST Level 1b exposures,
+this command updates the world coordinate system keywords with the values
+necessary to translate from aperture pixel to sky coordinates.
+
+Access to the JWST Engineering Mnemonic database is required. See the
+:ref:`Engineering Database Interface<engdb>` for more information.
+
+Programmatically, the command line is implemented by the function
+`~jwst.lib.set_telescope_pointing.add_wcs`, which calls the basic function
+`~jwst.lib.set_telescope_pointing.calc_wcs`. The available methods are defined
+by `~jwst.lib.set_telescope_pointing.Methods`.
+
+There are two data structures used to maintain the state of the transformation.
+`~jwst.lib.set_telescope_pointing.TransformParameters` contains the parameters
+needed to perform the transformations.
+`~jwst.lib.set_telescope_pointing.Transforms` contains the calculated
+transformation matrices.
+
+"""
 import sys
 
 import asdf
@@ -24,6 +67,17 @@ from ..lib.engdb_tools import ENGDB_Service
 from ..lib.pipe_utils import is_tso
 
 TYPES_TO_UPDATE = set(list(IMAGING_TYPES) + FGS_GUIDE_EXP_TYPES)
+
+__all__ = [
+    'Methods',
+    'TransformParameters',
+    'Transforms',
+    'add_wcs',
+    'calc_transforms',
+    'calc_wcs',
+    'calc_wcs_over_time',
+    'update_wcs',
+]
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -117,21 +171,36 @@ Pointing.__new__.__defaults__ = ((None,) * 5)
 # Transforms
 @dataclasses.dataclass
 class Transforms:
-    m_eci2fgs1: np.array = None         # ECI to FGS1
-    m_eci2gs: np.array = None           # ECI to Guide Star
-    m_eci2j: np.array = None            # ECI to J-Frame
-    m_eci2siaf: np.array = None         # ECI to SIAF
-    m_eci2sifov: np.array = None        # ECI to SIFOV
-    m_eci2v: np.array = None            # ECI to V
-    m_fgs12fgsx: np.array = None        # FGS1 to FGSx transformation
-    m_fgs12sifov: np.array = None       # FGS1 to SIFOV
-    m_gs2gsapp: np.array = None         # Velocity abberation
-    m_j2fgs1: np.array = None           # J-Frame to FGS1
-    m_sifov_fsm_delta: np.array = None  # FSM correction
-    m_sifov2v: np.array = None          # SIFOV to V1
-    m_v2siaf: np.array = None           # V to SIAF
-    override: object = None             # Override values. Either another Transforms or dict-like object
-    """Transformation matrices"""
+    """The matrices used in calculation of the M_eci2siaf transformation
+    """
+    #: ECI to FGS1
+    m_eci2fgs1: np.array = None
+    #: ECI to Guide Star
+    m_eci2gs: np.array = None
+    #: ECI to J-Frame
+    m_eci2j: np.array = None
+    #: ECI to SIAF
+    m_eci2siaf: np.array = None
+    #: ECI to SIFOV
+    m_eci2sifov: np.array = None
+    #: ECI to V
+    m_eci2v: np.array = None
+    #: FGS1 to FGSx transformation
+    m_fgs12fgsx: np.array = None
+    #: FGS1 to SIFOV
+    m_fgs12sifov: np.array = None
+    #: Velocity abberation
+    m_gs2gsapp: np.array = None
+    #: J-Frame to FGS1
+    m_j2fgs1: np.array = None
+    #: FSM correction
+    m_sifov_fsm_delta: np.array = None
+    #: SIFOV to V1
+    m_sifov2v: np.array = None
+    #: V to SIAF
+    m_v2siaf: np.array = None
+    #: Override values. Either another Transforms or dict-like object
+    override: object = None
 
     @classmethod
     def from_asdf(cls, asdf_file):
@@ -1982,15 +2051,15 @@ def calc_sifov_fsm_delta_matrix(fsmcorr, fsmcorr_version='latest', fsmcorr_units
     ----------
     fsmcorr : np.array((2,))
         The FSM correction parameters:
-            0: SA_ZADUCMDX
-            1: SA_ZADUCMDY
+        0: SA_ZADUCMDX
+        1: SA_ZADUCMDY
 
     fsmcorr_version : str
         The version of the FSM correction calculation to use.
         Versions available:
-            latest: The state-of-art. Currently `v2`
-            v2: Update 201708 to use actual spherical calculations
-            v1: Original linear approximation
+        latest: The state-of-art. Currently `v2`
+        v2: Update 201708 to use actual spherical calculations
+        v1: Original linear approximation
 
     fsmcorr_units : str
         The units of the FSM correction values. Default is `arcsec`.
