@@ -77,7 +77,7 @@ def ENGDB_Service(base_url=None, **service_kwargs):
     base_url : str or None.
         The base url for the engineering RESTful service
 
-    service_kwargs : **dict
+    service_kwargs : dict
         Service-specific keyword arguments. Refer to the concrete implementations
         of `~jwst.lib.engdb_lib.EngdbABC`.
 

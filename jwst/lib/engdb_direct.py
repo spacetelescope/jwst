@@ -50,7 +50,7 @@ class EngdbDirect(EngdbABC):
         The format the results of the data should be returned from the service.
         If 'dict', the result will be in Python dict format.
 
-    service_kwargs : **dict
+    service_kwargs : dict
         Service-specific keyword arguments that are not relevant to this implementation
         of EngdbABC.
     """

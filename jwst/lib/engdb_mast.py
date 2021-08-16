@@ -39,7 +39,7 @@ class EngdbMast(EngdbABC):
         MAST_API_TOKEN is queried. A token is required.
         For more information, see 'https://auth.mast.stsci.edu/'
 
-    service_kwargs : **dict
+    service_kwargs : dict
         Service-specific keyword arguments that are not relevant to this implementation
         of EngdbABC.
 

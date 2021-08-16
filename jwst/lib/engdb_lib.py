@@ -20,7 +20,7 @@ class EngdbABC(abc.ABC):
     base_url : str
         The base url for the engineering RESTful service
 
-    service_kwargs : **dict
+    service_kwargs : dict
         Service-specific keyword arguments. Refer to the concrete implementations
         of EngdbABC.
     """
@@ -65,7 +65,7 @@ class EngdbABC(abc.ABC):
         meta : object
             The meta information. Type of return is dependent on the type of service
 
-        service_kwargs : **dict
+        service_kwargs : dict
             Service-specific keyword arguments. Refer to the concrete implementations
             of EngdbABC.
         """
