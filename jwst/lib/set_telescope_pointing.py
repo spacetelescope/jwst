@@ -72,6 +72,7 @@ __all__ = [
     'Methods',
     'TransformParameters',
     'Transforms',
+    'WCSRef',
     'add_wcs',
     'calc_transforms',
     'calc_wcs',
