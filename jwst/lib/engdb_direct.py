@@ -53,29 +53,18 @@ class EngdbDirect(EngdbABC):
     service_kwargs : **dict
         Service-specific keyword arguments that are not relevant to this implementation
         of EngdbABC.
-
-    Attributes
-    ----------
-    base_url: str
-        The base URL for the engineering service.
-
-    default_format: str
-        The format the results of the data should be returned from the service.
-        If 'dict', the result will be in Python dict format.
-
-    endtime: `astropy.time.Time`
-        The end time of the last query.
-
-    response: `requests.response`
-        The results of the last query.
-
-    starttime: `astropy.time.Time`
-        The start time of the last query.
     """
 
+    #: The base URL for the engineering service.
     base_url = None
+
+    #: The end time of the last query.
     endtime = None
+
+    #: The results of the last query.
     response = None
+
+    #: The start time of the last query.
     starttime = None
 
     def __init__(self, base_url=None, default_format='dict', **service_kwargs):

@@ -34,7 +34,7 @@ class EngdbMast(EngdbABC):
         the environmental variable ENG_BASE_URL is queried. Otherwise
         the default MAST website is used.
 
-    token : str
+    token : str or None
         The MAST access token. If not defined, the environmental variable
         MAST_API_TOKEN is queried. A token is required.
         For more information, see 'https://auth.mast.stsci.edu/'
@@ -43,29 +43,22 @@ class EngdbMast(EngdbABC):
         Service-specific keyword arguments that are not relevant to this implementation
         of EngdbABC.
 
-    Attributes
-    ----------
-    base_url: str
-        The base URL for the engineering service.
-
-    endtime: `astropy.time.Time`
-        The end time of the last query.
-
-    response: `requests.response`
-        The results of the last query.
-
-    starttime: `astropy.time.Time`
-        The start time of the last query.
-
     Raises
     ------
     RuntimeError
         Any and all failures with connecting with the MAST server.
     """
 
+    #: The base URL for the engineering service.
     base_url = None
+
+    #: The end time of the last query.
     endtime = None
+
+    #: The results of the last query.
     response = None
+
+    #: The start time of the last query.
     starttime = None
 
     def __init__(self, base_url=None, token=None, **service_kwargs):
@@ -94,8 +87,8 @@ class EngdbMast(EngdbABC):
 
         # Basics are covered. Finalize initialization.
         self._req = requests.Request(method='GET',
-                                    url=base_url + API_URI,
-                                    headers={'Authorization': f'token {token}'})
+                                     url=base_url + API_URI,
+                                     headers={'Authorization': f'token {token}'})
         self._session = requests.Session()
 
     def get_meta(self, *kwargs):

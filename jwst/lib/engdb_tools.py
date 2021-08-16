@@ -79,11 +79,11 @@ def ENGDB_Service(base_url=None, **service_kwargs):
 
     service_kwargs : **dict
         Service-specific keyword arguments. Refer to the concrete implementations
-        of EngdbABC.
+        of `~jwst.lib.engdb_lib.EngdbABC`.
 
     Returns
     -------
-    service : EngdbABC
+    service : `~jwst.lib.engdb_lib.EngdbABC`
         The engineering database service to use.
     """
 
