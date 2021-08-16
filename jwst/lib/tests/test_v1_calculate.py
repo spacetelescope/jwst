@@ -85,7 +85,8 @@ def test_from_models_mast(tmp_path):
 def test_over_time_mast(tmp_path):
     """Test v1_calculate_over_time for basic running"""
     try:
-        v1_table = v1c.v1_calculate_over_time(GOOD_STARTTIME.mjd, GOOD_ENDTIME.mjd, method=stp.Methods.COARSE_TR_202107, engdb_url=engdb_mast.MAST_BASE_URL)
+        v1_table = v1c.v1_calculate_over_time(GOOD_STARTTIME.mjd, GOOD_ENDTIME.mjd,
+                                              method=stp.Methods.COARSE_TR_202107, engdb_url=engdb_mast.MAST_BASE_URL)
     except ValueError as exception:
         pytest.xfail(f'MAST engineering database not available, possibly no token specified: {exception}')
     v1_formatted = v1c.simplify_table(v1_table)
