@@ -54,7 +54,7 @@ def get_steps():
         ("jwst.step.FringeStep", 'jw_fringe', False),
         ("jwst.step.GainScaleStep", 'jw_gain_scale', False),
         ("jwst.step.GroupScaleStep", 'jw_group_scale', False),
-        ("jwst.step.GuiderCdsStep", 'jw_guider_cds', False),
+        ("jwst.step.GuiderCdsStep", 'jw_guider_cds', False),  #GuiderCDS name?
         ("jwst.step.ImprintStep", 'jw_imprint', False),
         ("jwst.step.IPCStep", 'jw_ipc', False),
         ("jwst.step.JumpStep", 'jw_jump', False),
@@ -70,7 +70,7 @@ def get_steps():
         ("jwst.step.PathLossStep", 'jw_pathloss', False),
         ("jwst.step.PersistenceStep", 'jw_persistence', False),
         ("jwst.step.PhotomStep", 'jw_photom', False),
-        ("jwst.step.RampFitStep", 'jw_ramp_fit', False),
+        ("jwst.step.RampFitStep", 'jw_ramp_fit', False),  #RampFit name?
         ("jwst.step.RefPixStep", 'jw_refpix', False),
         ("jwst.step.ResampleStep", 'jw_resample', False),
         ("jwst.step.ResampleSpecStep", 'jw_resample_spec', False),
@@ -86,7 +86,7 @@ def get_steps():
         ("jwst.step.TSOPhotometryStep", 'jw_tso_photometry', False),
         ("jwst.step.TweakRegStep", 'jw_tweakreg', False),
         ("jwst.step.WavecorrStep", 'jw_wavecorr', False),
-        ("jwst.step.WfsCombineStep", ['calwebb_wfs-image3', 'jw_wfs-image3'], False),
+        ("jwst.step.WfsCombineStep", ['calwebb_wfs-image3', 'jw_wfs-image3'], False),  #WfsCombine name?
         ("jwst.step.WfssContamStep", 'jw_wfss_contam', False),
         ("jwst.step.WhiteLightStep", 'jw_white_light', False),
     ]
