@@ -109,8 +109,8 @@ class ResampleSpecData(ResampleData):
 
         for im, model in enumerate(self.input_models):
             wcs = model.meta.wcs
-            bb = wcs.bounding_box
-            grid = wcstools.grid_from_bounding_box(bb)
+            bbox = wcs.bounding_box
+            grid = wcstools.grid_from_bounding_box(bbox)
             ra, dec, lam = np.array(wcs(*grid))
             spectral_axis = find_dispersion_axis(model)
             spatial_axis = spectral_axis ^ 1
@@ -140,8 +140,8 @@ class ResampleSpecData(ResampleData):
                 all_wavelength = np.append(all_wavelength, wavelength_array)
 
                 # find the center ra and dec for this slit at central wavelength
-                lam_center_index = int((bb[spectral_axis][1] -
-                                        bb[spectral_axis][0]) / 2)
+                lam_center_index = int((bbox[spectral_axis][1] -
+                                        bbox[spectral_axis][0]) / 2)
                 if spatial_axis == 0:  # MIRI LRS, the WCS x axis is spatial
                     ra_slice = ra[lam_center_index, :]
                     dec_slice = dec[lam_center_index, :]
@@ -317,9 +317,9 @@ class ResampleSpecData(ResampleData):
 
     def build_nirspec_lamp_output_wcs(self):
         """
-        Create a spatial/spectral WCS output frame using all the input models
+        Create a spatial/spectral WCS output frame for NIRSpec lamp mode
 
-        Creates output frame by linearly fitting RA, Dec along the slit and
+        Creates output frame by linearly fitting x_msa, y_msa along the slit and
         producing a lookup table to interpolate wavelengths in the dispersion
         direction.
 
@@ -328,21 +328,11 @@ class ResampleSpecData(ResampleData):
         output_wcs : `~gwcs.WCS` object
             A gwcs WCS object defining the output frame WCS
         """
-
-        # for each input model convert slit x,y to ra,dec,lam
-        # use first input model to set spatial scale
-        # use center of appended ra and dec arrays to set up
-        # center of final ra,dec
-        # append all ra,dec, wavelength array for each slit
-        # use first model to initialize wavelenth array
-        # append wavelengths that fall outside the endpoint of
-        # of wavelength array when looping over additional data
-
         model = self.input_models[0]
-        wcs= model.meta.wcs
-        bb = wcs.bounding_box
-        grid = wcstools.grid_from_bounding_box(bb)
-        ra, dec, lam = np.array(wcs(*grid))
+        wcs = model.meta.wcs
+        bbox = wcs.bounding_box
+        grid = wcstools.grid_from_bounding_box(bbox)
+        x_msa, y_msa, lam = np.array(wcs(*grid))
         spectral_axis = find_dispersion_axis(model)
         spatial_axis = spectral_axis ^ 1
 
@@ -353,75 +343,23 @@ class ResampleSpecData(ResampleData):
         warnings.resetwarnings()
         wavelength_array = wavelength_array[~np.isnan(wavelength_array)]
 
-        # We need to estimate the spatial sampling to use for the output WCS.
-        # Tt is assumed the spatial sampling is the same for all the input
-        # models. So we can use the first input model to set the spatial
-        # sampling.
+        # Find the center ra and dec for this slit at central wavelength
+        lam_center_index = int((bbox[spectral_axis][1] -
+                                bbox[spectral_axis][0]) / 2)
+        x_msa_array = x_msa.T[lam_center_index]
+        y_msa_array = y_msa.T[lam_center_index]
+        x_msa_array = x_msa_array[~np.isnan(x_msa_array)]
+        y_msa_array = y_msa_array[~np.isnan(y_msa_array)]
 
-        # Steps to do this for first input model:
-        # 1. find the middle of the spectrum in wavelength
-        # 2. Pull out the ra and dec at the center of the slit.
-        # 3. Find the mean ra,dec and the center of the slit this will
-        #    represent the tangent point
-        # 4. Convert ra,dec -> tangent plane projection: x_tan,y_tan
-        # 5. using x_tan, y_tan perform a linear fit to find spatial sampling
-        # first input model sets intializes wavelength array and defines
-        # the spatial scale of the output wcs
-
-        # find the center ra and dec for this slit at central wavelength
-        lam_center_index = int((bb[spectral_axis][1] -
-                                bb[spectral_axis][0]) / 2)
-        if spatial_axis == 0:  # MIRI LRS, the WCS x axis is spatial
-            ra_slice = ra[lam_center_index, :]
-            dec_slice = dec[lam_center_index, :]
-        else:
-            ra_slice = ra[:, lam_center_index]
-            dec_slice = dec[:, lam_center_index]
-        # wrap RA if near zero
-        ra_center_pt = np.nanmean(wrap_ra(ra_slice))
-        dec_center_pt = np.nanmean(dec_slice)
-
-        x_tan, y_tan = ra, dec
-
-        # pull out data from center
-        if spectral_axis == 0:  # MIRI LRS, the WCS x axis is spatial
-            x_tan_array = x_tan.T[lam_center_index]
-            y_tan_array = y_tan.T[lam_center_index]
-        else:
-            x_tan_array = x_tan[lam_center_index]
-            y_tan_array = y_tan[lam_center_index]
-
-        x_tan_array = x_tan_array[~np.isnan(x_tan_array)]
-        y_tan_array = y_tan_array[~np.isnan(y_tan_array)]
-
-        # estimate the spatial sampling
+        # Estimate and fit the spatial sampling
         fitter = LinearLSQFitter()
         fit_model = Linear1D()
-        xstop = x_tan_array.shape[0] / self.pscale_ratio
+        xstop = x_msa_array.shape[0] / self.pscale_ratio
         xstep = 1 / self.pscale_ratio
-        ystop = y_tan_array.shape[0] / self.pscale_ratio
+        ystop = y_msa_array.shape[0] / self.pscale_ratio
         ystep = 1 / self.pscale_ratio
-        pix_to_xtan = fitter(fit_model, np.arange(0, xstop, xstep), x_tan_array)
-        pix_to_ytan = fitter(fit_model, np.arange(0, ystop, ystep), y_tan_array)
-
-        # append all ra and dec values to use later to find min and max
-        # ra and dec
-        all_ra = ra[~np.isnan(ra)].flatten()
-        all_dec = dec[~np.isnan(dec)].flatten()
-        # This was the end of the looping through models
-        # ------------------------------------
-
-        wavelength_array = wavelength_array[~np.isnan(wavelength_array)]
-        wavelength_array = np.sort(wavelength_array, axis=None)
-        wavelength_array = np.unique(wavelength_array)
-
-        # Tabular interpolation model, pixels -> lambda
-
-        # Check if the data is MIRI LRS FIXED Slit. If it is then
-        # the wavelength array needs to be flipped so that the resampled
-        # dispersion direction matches the disperion direction on the detector.
-        if self.input_models[0].meta.exposure.type == 'MIR_LRS-FIXEDSLIT':
-            wavelength_array = np.flip(wavelength_array, axis=None)
+        pix_to_x_msa = fitter(fit_model, np.arange(0, xstop, xstep), x_msa_array)
+        pix_to_y_msa = fitter(fit_model, np.arange(0, ystop, ystep), y_msa_array)
 
         step = 1 / self.pscale_ratio
         stop = wavelength_array.shape[0] / self.pscale_ratio
@@ -448,51 +386,11 @@ class ResampleSpecData(ResampleData):
 
         # For the input mapping, duplicate the spatial coordinate
         mapping = Mapping((spatial_axis, spatial_axis, spectral_axis))
-
-        # Sometimes the slit is perpendicular to the RA or Dec axis.
-        # For example, if the slit is perpendicular to RA, that means
-        # the slope of pix_to_xtan will be nearly zero, so make sure
-        # mapping.inverse uses pix_to_ytan.inverse.  The auto definition
-        # of mapping.inverse is to use the 2nd spatial coordinate, i.e. Dec.
-        if np.isclose(pix_to_ytan.slope, 0, atol=1e-8):
-            mapping_tuple = (0, 1)
-            # Account for vertical or horizontal dispersion on detector
-            if spatial_axis:
-                mapping.inverse = Mapping(mapping_tuple[::-1])
-            else:
-                mapping.inverse = Mapping(mapping_tuple)
-        # TODO: clean up above to produce the following
         mapping.inverse = Mapping((2, 1))
 
         # The final transform
-        # redefine the ra, dec center tangent point to include all data
-
-        # check if all_ra crosses 0 degress - this makes it hard to
-        # define the min and max ra correctly
-        all_ra = wrap_ra(all_ra)
-        ra_min = np.amin(all_ra)
-        ra_max = np.amax(all_ra)
-        ra_center_final = (ra_max + ra_min) / 2.0
-
-        dec_min = np.amin(all_dec)
-        dec_max = np.amax(all_dec)
-        dec_center_final = (dec_max + dec_min) / 2.0
-
-        ra_center_final = ra_center_pt
-        dec_center_final = dec_center_pt
-
-        x_tan_all = all_ra
-        x_min = np.amin(x_tan_all)
-        x_max = np.amax(x_tan_all)
-        x_size = int(np.ceil((x_max - x_min) / np.absolute(pix_to_xtan.slope)))
-
-        # single model use size of x_tan_array
-        # to be consistent with method before
-        if len(self.input_models) == 1:
-            x_size = len(x_tan_array)
-
         # define the output wcs
-        transform = mapping | pix_to_xtan & pix_to_ytan & pix_to_wavelength
+        transform = mapping | pix_to_x_msa & pix_to_y_msa & pix_to_wavelength
 
         det = cf.Frame2D(name='detector', axes_order=(0, 1))
         sky = cf.Frame2D(name=f'resampled_{model.meta.wcs.output_frame.name}', axes_order=(0, 1))
@@ -505,9 +403,10 @@ class ResampleSpecData(ResampleData):
 
         output_wcs = WCS(pipeline)
 
-        # compute the output array size in WCS axes order, i.e. (x, y)
+        # Compute the output array size and bounding box
         output_array_size = [0, 0]
         output_array_size[spectral_axis] = int(np.ceil(len(wavelength_array) / self.pscale_ratio))
+        x_size = len(x_msa_array)
         output_array_size[spatial_axis] = int(np.ceil(x_size / self.pscale_ratio))
         # turn the size into a numpy shape in (y, x) order
         self.data_size = tuple(output_array_size[::-1])
