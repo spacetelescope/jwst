@@ -54,7 +54,7 @@ jump
 lib
 ---
 
-- Implement the MAST AUI interface to the Engineering Database [#6288]
+- Implement the MAST AUI interface to the Engineering Database. [#6288]
 
 outlier_detection
 -----------------
