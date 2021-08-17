@@ -330,23 +330,18 @@ def run_extract1d(input_model: DataModel,
 
         # Copy spectral data for each order into the output model.
         # TODO how to include parameters like transform and tikfac in the output.
-        # TODO output is broken, want 18 fields not 9?
         for order in wavelengths.keys():
-            wavelength = wavelengths[order]
-            flux = fluxes[order]
-            fluxerr = fluxerrs[order]
-            surf_bright = np.zeros_like(flux)
-            sb_error = np.zeros_like(flux)
-            dq = np.zeros_like(flux, dtype=np.uint32)
-            background = np.zeros_like(flux)  # TODO we do compute a background but not per order.
-            berror = np.zeros_like(flux)
-            npix = npixels[order]
 
-            out_table = np.array(list(zip(wavelength,
-                                          flux, fluxerr,
-                                          surf_bright, sb_error,
-                                          dq, background, berror, npix)),
-                                 dtype=datamodels.SpecModel().spec_table.dtype)
+            table_size = len(wavelengths[order])
+
+            out_table = np.zeros(table_size, dtype=datamodels.SpecModel().spec_table.dtype)
+            out_table['WAVELENGTH'] = wavelengths[order]
+            out_table['FLUX'] = fluxes[order]
+            out_table['FLUX_ERROR'] = fluxerrs[order]
+            out_table['DQ'] = np.zeros(table_size)  # TODO how should these be set?
+            out_table['BACKGROUND'] = np.zeros(table_size)  # TODO we do compute a background but not per order.
+            out_table['NPIXELS'] = npixels[order]
+
             spec = datamodels.SpecModel(spec_table=out_table)
             output_model.spec.append(spec)
 
@@ -379,23 +374,18 @@ def run_extract1d(input_model: DataModel,
 
             # Copy spectral data for each order into the output model.
             # TODO how to include parameters like transform and tikfac in the output.
-            # TODO output is broken, want 18 fields not 9?
             for order in wavelengths.keys():
-                wavelength = wavelengths[order]
-                flux = fluxes[order]
-                fluxerr = fluxerrs[order]
-                surf_bright = np.zeros_like(flux)
-                sb_error = np.zeros_like(flux)
-                dq = np.zeros_like(flux, dtype=np.uint32)
-                background = np.zeros_like(flux)  # TODO we do compute a background but not per order.
-                berror = np.zeros_like(flux)
-                npix = npixels[order]
 
-                out_table = np.array(list(zip(wavelength,
-                                              flux, fluxerr,
-                                              surf_bright, sb_error,
-                                              dq, background, berror, npix)),
-                                     dtype=datamodels.SpecModel().spec_table.dtype)
+                table_size = len(wavelengths[order])
+
+                out_table = np.zeros(table_size, dtype=datamodels.SpecModel().spec_table.dtype)
+                out_table['WAVELENGTH'] = wavelengths[order]
+                out_table['FLUX'] = fluxes[order]
+                out_table['FLUX_ERROR'] = fluxerrs[order]
+                out_table['DQ'] = np.zeros(table_size)  # TODO how should these be set?
+                out_table['BACKGROUND'] = np.zeros(table_size)  # TODO we do compute a background but not per order.
+                out_table['NPIXELS'] = npixels[order]
+
                 spec = datamodels.SpecModel(spec_table=out_table)
                 output_model.spec.append(spec)
 
