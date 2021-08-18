@@ -115,7 +115,7 @@ extern double sh_find_overlap(double xcenter, double ycenter,
                               double xlength, double ylength,
                               double xPixelCorner[],double yPixelCorner[]);
 
-extern double find_area_quad(double MinX, double MinY, double Xcorner[], double Ycorner[]);
+// extern double find_area_quad(double MinX, double MinY, double Xcorner[], double Ycorner[]);
 
 
 // return values: spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux
@@ -142,10 +142,12 @@ int match_driz(double *xc, double *yc, double *zc,
   double weighted_flux, weighted_var;
   double max_dwave;
   double xpixel[5], ypixel[5];
-  double xmax, ymax, xmin, ymin, area_quad, max_cdelt3, area, area_weight;
+  double xmax, ymax, xmin, ymin, max_cdelt3, area, area_weight;
+
   double ptmin, ptmax, spxmin, spxmax, zoverlap, z1, z2, z3;
   double cdelt1_half, cdelt2_half;
-  double xleft, xright, ybot, ytop; 
+  double xleft, xright, ybot, ytop;
+  // double area_quad;
   // allocate memory to hold output 
   if (alloc_flux_arrays(ncube, &fluxv, &weightv, &varv, &ifluxv)) return 1;
     
@@ -190,8 +192,8 @@ int match_driz(double *xc, double *yc, double *zc,
       cdelt1_half = cdelt1/2.0;
       cdelt2_half = cdelt2/2.0;
 
-      // find the area of the pixel (quadilateral)
-      area_quad = find_area_quad(xmin, ymin, xpixel, ypixel);
+      // find the area of the pixel (quadilateral) not needed now - keeping if needed later
+      // area_quad = find_area_quad(xmin, ymin, xpixel, ypixel);
 
       // convert to integer values to get the approximate region to search
       // cdelt1_half and cdelt2_half - may not be needed. 
@@ -271,8 +273,8 @@ int match_driz(double *xc, double *yc, double *zc,
 				       cdelt1, cdelt2,
 				       xpixel,ypixel);
 
-		// area_weight = (area of overlap/area of pixel) * wavelength overlap
-		area_weight = (area/area_quad)  * zoverlap;
+		// area_weight = area of overlap * wavelength overlap
+		area_weight = area * zoverlap;
 		if(area_weight > 0) {
 		  weighted_flux =  flux[k]* area_weight;
 		  weighted_var = (err[k]* area_weight) * (err[k]*area_weight);
