@@ -41,7 +41,7 @@ class CubeBuildStep (Step):
          scale1 = float(default=0.0) # cube sample size to use for axis 1, arc seconds
          scale2 = float(default=0.0) # cube sample size to use for axis 2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
-         weighting = option('emsm','msm',default = 'emsm') # Type of weighting function
+         weighting = option('emsm','msm','driz','drizp',default = 'emsm') # Type of weighting function
          coord_system = option('skyalign','world','internal_cal','ifualign',default='skyalign') # Output Coordinate system.
          rois = float(default=0.0) # region of interest spatial size, arc seconds
          roiw = float(default=0.0) # region of interest wavelength size, microns
@@ -49,9 +49,6 @@ class CubeBuildStep (Step):
          wavemin = float(default=None)  # Minimum wavelength to be used in the IFUCube
          wavemax = float(default=None)  # Maximum wavelength to be used in the IFUCube
          single = boolean(default=false) # Internal pipeline option used by mrs_imatch & outlier detection
-         xdebug = integer(default=None) # debug option, x spaxel value to report information on
-         ydebug = integer(default=None) # debug option, y spaxel value to report information on
-         zdebug = integer(default=None) # debug option, z spaxel value to report  information on
          skip_dqflagging = boolean(default=false) # skip setting the DQ plane of the IFU
          search_output_file = boolean(default=false)
          output_use_model = boolean(default=true) # Use filenames in the output models
@@ -107,23 +104,6 @@ class CubeBuildStep (Step):
         if self.roiw != 0.0:
             self.log.info(f'Input Wave ROI size {self.roiw}')
 
-        self.debug_file = None
-        if(self.xdebug is not None and self.ydebug is not None and self.zdebug is not None):
-            self.log.info('Writing debug information for spaxel %i %i %i',
-                          self.xdebug,
-                          self.ydebug,
-                          self.zdebug)
-            self.log.debug('Writing debug information for spaxel %i %i %i',
-                           self.xdebug,
-                           self.ydebug,
-                           self.zdebug)
-            self.xdebug = self.xdebug - 1
-            self.ydebug = self.ydebug - 1
-            self.zdebug = self.zdebug - 1
-            self.debug_file = open('cube_spaxel_info.results', 'w')
-            self.debug_file.write('Writing debug information for spaxel %i %i %i' %
-                                  (self.xdebug, self.ydebug, self.zdebug) + '\n')
-
         # valid coord_system:
         # 1. skyalign (ra dec) (aka world)
         # 2. ifualign (ifu cube aligned with slicer plane/ MRS local coord system)
@@ -146,6 +126,12 @@ class CubeBuildStep (Step):
 
         if self.coord_system == 'ifualign':
             self.interpolation = 'pointcloud'
+
+        if self.weighting == 'driz':
+            self.interpolation = 'driz'
+
+        if self.weighting == 'drizp':   # REMOVE AFTER C CODE IS CONFIRMED
+            self.interpolation = 'driz'
 
         self.log.info(f'Input interpolation: {self.interpolation}')
         self.log.info(f'Coordinate system to use: {self.coord_system}')
@@ -247,11 +233,8 @@ class CubeBuildStep (Step):
             'roiw': self.roiw,
             'wavemin': self.wavemin,
             'wavemax': self.wavemax,
-            'skip_dqflagging': self.skip_dqflagging,
-            'xdebug': self.xdebug,
-            'ydebug': self.ydebug,
-            'zdebug': self.zdebug,
-            'debug_file': self.debug_file}
+            'skip_dqflagging': self.skip_dqflagging}
+
 # ________________________________________________________________________________
 # create an instance of class CubeData
 
@@ -339,9 +322,6 @@ class CubeBuildStep (Step):
                 cube_result = thiscube.build_ifucube()
                 result, status = cube_result
                 cube_container.append(result)
-
-            if self.debug_file is not None:
-                self.debug_file.close()
 
             # check if cube_build failed
             # **************************

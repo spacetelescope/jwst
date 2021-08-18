@@ -1070,6 +1070,14 @@ class InstrumentInfo():
         self.multich_power.append(None)
         self.multich_softrad.append(None)
 
+    def SetMultiChannelDrizTable(self, wave):
+        self.multich_wavelength.append(wave)
+        self.multich_sroi.append(None)
+        self.multich_wroi.append(None)
+        self.multich_scalerad.append(None)
+        self.multich_power.append(None)
+        self.multich_softrad.append(None)
+
     def SetPrismTable(self, wave, sroi, wroi, power, softrad):
         self.prism_wavelength.append(wave)
         self.prism_sroi.append(sroi)
