@@ -5,6 +5,9 @@ import numpy as np
 from stdatamodels import DataModel
 
 from ... import datamodels
+from ...datamodels.dqflags import pixel
+from astropy.nddata.bitmask import bitfield_to_boolean_mask
+
 from .soss_syscor import make_background_mask, soss_background
 from .soss_solver import solve_transform, apply_transform, transform_coords
 from .soss_engine import ExtractionEngine
@@ -115,13 +118,14 @@ def get_trace_1d(ref_files, transform, order, cols=None):
 
 
 # TODO how best to pass reference files and additional parameters (e.g. threshold)?
-def extract_image(scidata, scierr, scimask, ref_files, transform=None,
+def extract_image(scidata, scierr, scimask, refmask, ref_files, transform=None,
                   tikfac=None, n_os=5, threshold=1e-4, width=40, devname=None):
     """Perform the spectral extraction on a single image.
 
     :param scidata: A single NIRISS SOSS detector image.
     :param scierr: The uncertainties corresponding to the detector image.
-    :param scimask: Pixel that should be masked from the detectot image.
+    :param scimask: Pixel that should be masked from the detector image.
+    :param refmask: Pixels that should never be reconstructed e.g. the reference pixels.
     :param ref_files: A dictionary of the reference file DataModels. # TODO not final?
     :param transform: A 3-elemnt list or array describing the rotation and
         translation to apply to the reference files in order to match the
@@ -136,7 +140,8 @@ def extract_image(scidata, scierr, scimask, ref_files, transform=None,
 
     :type scidata: array[float]
     :type scierr: array[float]
-    :type scimask: array[float]
+    :type scimask: array[bool]
+    :type refmask: array[bool]
     :type ref_files: dict
     :type transform: array_like
     :type tikfac: float
@@ -208,16 +213,7 @@ def extract_image(scidata, scierr, scimask, ref_files, transform=None,
 
     # Create a new instance of the engine for evaluating the trace model.
     # This allows bad pixels and pixels below the threshold to be reconstructed as well.
-    # TODO get this mask from the DQ array? Ensure it works for all subarrays.
-    # from stcal.dqflags import interpret_bit_flags
-    # from jwst.datamodels.dqflags import pixel
-    # bad_bitvalue = interpret_bit_flags(bad_bitvalue, mnemonic_map=pixel) ???
-    border_mask = np.zeros_like(scidata)
-    border_mask[-4:] = True
-    border_mask[:, :4] = True
-    border_mask[:, -4:] = True
-
-    model = ExtractionEngine(*ref_file_args, wave_grid=engine.wave_grid, threshold=1e-5, global_mask=border_mask)
+    model = ExtractionEngine(*ref_file_args, wave_grid=engine.wave_grid, threshold=1e-5, global_mask=refmask)
 
     # Model the order 1 and order 2 trace seperately.
     tracemodel_o1 = model.rebuild(f_k, i_orders=[0])
@@ -319,9 +315,10 @@ def run_extract1d(input_model: DataModel,
         scidata = input_model.data.astype('float64')
         scierr = input_model.err.astype('float64')
         scimask = input_model.dq > 0  # Mask bad pixels with True.
+        refmask = bitfield_to_boolean_mask(input_model.dq, ignore_flags=pixel['REFERENCE_PIXEL'], flip_bits=True)
 
         # Perform the extraction.
-        result = extract_image(scidata, scierr, scimask, ref_files, **soss_kwargs)
+        result = extract_image(scidata, scierr, scimask, refmask, ref_files, **soss_kwargs)
         wavelengths, fluxes, fluxerrs, npixels, soss_kwargs['transform'], soss_kwargs['tikfac'] = result
 
         # Initialize the output model.
@@ -367,9 +364,10 @@ def run_extract1d(input_model: DataModel,
             scidata = input_model.data[i].astype('float64')
             scierr = input_model.err[i].astype('float64')
             scimask = input_model.dq[i] > 0
+            refmask = bitfield_to_boolean_mask(input_model.dq[i], ignore_flags=pixel['REFERENCE_PIXEL'], flip_bits=True)
 
             # Perform the extraction.
-            result = extract_image(scidata, scierr, scimask, ref_files, **soss_kwargs)
+            result = extract_image(scidata, scierr, scimask, refmask, ref_files, **soss_kwargs)
             wavelengths, fluxes, fluxerrs, npixels, soss_kwargs['transform'], soss_kwargs['tikfac'] = result
 
             # Copy spectral data for each order into the output model.
