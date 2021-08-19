@@ -10,7 +10,8 @@ from scipy.ndimage import shift, rotate
 from scipy.optimize import minimize
 import warnings
 
-from .soss_centroids import get_soss_centroids
+from .soss_syscor import aperture_mask
+from .soss_centroids import get_centroids_com
 
 
 def transform_coords(angle, xshift, yshift, xpix, ypix, cenx=1024, ceny=50):
@@ -59,24 +60,21 @@ def transform_coords(angle, xshift, yshift, xpix, ypix, cenx=1024, ceny=50):
     return xrot, yrot
 
 
-def _chi_squared(transform, xref, yref, xdat, ydat):
-    """"Compute the chi-squared statistic for fitting the reference positions
-    to the true positions.
+def evaluate_model(xmod, transform, xref, yref):
+    """Evaluate the transformed reference coordinates at particular x-values.
 
+    :param xmod: The x-values at which to evaluate the transformed coordinates.
     :param transform: The transformation parameters.
     :param xref: The reference x-positions.
     :param yref: The reference y-positions.
-    :param xdat: The data x-positions.
-    :param ydat: The data y-positions.
 
+    :type xmod: array[float]
     :type transform: Tuple, List, Array
     :type xref: array[float]
-    :type xref: array[float]
-    :type xdat: array[float]
-    :type ydat: array[float]
+    :type yref: array[float]
 
-    :returns: chisq - The chi-squared value of the model fit.
-    :rtype: float
+    :returns: ymod - The transformed y-coordinates corresponding to xmod.
+    :rtype: array[float]
     """
 
     angle, xshift, yshift = transform
@@ -84,36 +82,78 @@ def _chi_squared(transform, xref, yref, xdat, ydat):
     # Calculate rotated reference positions.
     xrot, yrot = transform_coords(angle, xshift, yshift, xref, yref)
 
-    # After rotation, need to re-sort the x-positions.
+    # After rotation, need to re-sort the x-positions for interpolation.
     sort = np.argsort(xrot)
     xrot, yrot = xrot[sort], yrot[sort]
 
     # Interpolate rotated model onto same x scale as data.
-    ymod = np.interp(xdat, xrot, yrot)
+    ymod = np.interp(xmod, xrot, yrot)
+
+    return ymod
+
+
+def _chi_squared(transform, xref_o1, yref_o1, xref_o2, yref_o2,
+                 xdat_o1, ydat_o1, xdat_o2, ydat_o2):
+    """Compute the chi-squared statistic for fitting the reference positions
+    to the true positions.
+
+    :param transform: The transformation parameters.
+    :param xref_o1: The order 1 reference x-positions.
+    :param yref_o1: The order 1 reference y-positions.
+    :param xref_o2: The order 2 reference x-positions.
+    :param yref_o2: The order 2 reference y-positions.
+    :param xdat_o1: The order 1 data x-positions.
+    :param ydat_o1: The order 1 data y-positions.
+    :param xdat_o2: The order 2 data x-positions.
+    :param ydat_o2: The order 2 data y-positions.
+
+    :type transform: Tuple, List, Array
+    :type xref_o1: array[float]
+    :type xref_o1: array[float]
+    :type xref_o2: array[float]
+    :type xref_o2: array[float]
+    :type xdat_o1: array[float]
+    :type ydat_o1: array[float]
+    :type xdat_o2: array[float]
+    :type ydat_o2: array[float]
+
+    :returns: chisq - The chi-squared value of the model fit.
+    :rtype: float
+    """
+
+    # Interpolate rotated model onto same x scale as data.
+    ymod_o1 = evaluate_model(xdat_o1, transform, xref_o1, yref_o1)
+    ymod_o2 = evaluate_model(xdat_o2, transform, xref_o2, yref_o2)
 
     # Compute the chi-square.
-    chisq = np.nansum((ydat - ymod)**2)
+    chisq_o1 = np.nansum((ydat_o1 - ymod_o1)**2)
+    chisq_o2 = np.nansum((ydat_o2 - ymod_o2)**2)
+    chisq = chisq_o1 + chisq_o2
 
     return chisq
 
 
-def solve_transform(scidata, scimask, xref, yref, subarray, verbose=False):
+def solve_transform(scidata, scimask, xref_o1, yref_o1, xref_o2, yref_o2,
+                    halfwidth=30.):
     """Given a science image, determine the centroids and find the simple
     transformation needed to match xcen_ref and ycen_ref to the image.
 
     :param scidata: the image of the SOSS trace.
     :param scimask: a boolean mask of pixls to be excluded.
-    :param xref: a priori expectation of the trace x-positions.
-    :param yref: a priori expectation of the trace y-positions.
-    :param subarray: the subarray of the observations.
-    :param verbose: If set True provide diagnostic information.
+    :param xref_o1: a priori expectation of the order 1 trace x-positions.
+    :param yref_o1: a priori expectation of the order 1 trace y-positions.
+    :param xref_o2: a priori expectation of the order 2 trace x-positions.
+    :param yref_o2: a priori expectation of the order 2 trace y-positions.
+    :param halfwidth: size of the aperture mask used when extracting the trace
+        positions from the data.
 
     :type scidata: array[float]
     :type scimask: array[bool]
-    :type xref: array[float]
-    :type yref: array[float]
-    :type subarray: str
-    :type verbose: bool
+    :type xref_o1: array[float]
+    :type yref_o1: array[float]
+    :type xref_o2: array[float]
+    :type yref_o2: array[float]
+    :type halfwidth: float
 
     :returns: simple_transform - Array containing the angle, x-shift and y-shift
         needed to match xcen_ref and ycen_ref to the image.
@@ -121,19 +161,36 @@ def solve_transform(scidata, scimask, xref, yref, subarray, verbose=False):
     """
 
     # Remove any NaNs used to pad the xref, yref coordinates.
-    mask = np.isfinite(xref) & np.isfinite(yref)
-    xref = xref[mask]
-    yref = yref[mask]
+    mask = np.isfinite(xref_o1) & np.isfinite(yref_o1)
+    xref_o1 = xref_o1[mask]
+    yref_o1 = yref_o1[mask]
+
+    mask = np.isfinite(xref_o2) & np.isfinite(yref_o2)
+    xref_o2 = xref_o2[mask]
+    yref_o2 = yref_o2[mask]
 
     # Get centroids from data.
-    centroids = get_soss_centroids(scidata, mask=scimask, subarray=subarray,
-                                   verbose=verbose)
-    xdat = centroids['order 1']['X centroid']
-    ydat = centroids['order 1']['Y centroid']
+    aper_mask_o1 = aperture_mask(xref_o1, yref_o1, halfwidth, scidata.shape)
+    mask = aper_mask_o1 | scimask
+    xdat_o1, ydat_o1, _ = get_centroids_com(scidata, mask=mask, poly_order=None)
+
+    aper_mask_o2 = aperture_mask(xref_o2, yref_o2, halfwidth, scidata.shape)
+    mask = aper_mask_o2 | scimask
+    xdat_o2, ydat_o2, _ = get_centroids_com(scidata, mask=mask, poly_order=None)
+
+    # Use only the clean range between x=800 and x=1700.
+    mask = (xdat_o1 >= 800) & (xdat_o1 <= 1700)
+    xdat_o1 = xdat_o1[mask]
+    ydat_o1 = ydat_o1[mask]
+
+    mask = (xdat_o2 >= 800) & (xdat_o2 <= 1700)
+    xdat_o2 = xdat_o2[mask]
+    ydat_o2 = ydat_o2[mask]
 
     # Set up the optimization problem.
-    guess_transform = np.array([0.15, 1, 1])
-    min_args = (xref, yref, xdat, ydat)
+    guess_transform = np.array([0., 0., 0.])
+    min_args = (xref_o1, yref_o1, xref_o2, yref_o2,
+                xdat_o1, ydat_o1, xdat_o2, ydat_o2)
 
     # Find the best-fit transformation.
     result = minimize(_chi_squared, guess_transform, args=min_args)

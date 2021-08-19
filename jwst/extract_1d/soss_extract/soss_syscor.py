@@ -26,6 +26,40 @@ def make_profile_mask(ref_2d_profile, threshold=1e-3):
     return bkg_mask
 
 
+def aperture_mask(xref, yref, halfwidth, shape):
+    """Build a mask of the trace based on the trace positions.
+
+    :param xref: The reference x-positions.
+    :param yref: The reference y-positions.
+    :param halfwidth: Size of the aperture mask used when extracting the trace
+        positions from the data.
+    :param shape: The shape of the array to be masked.
+
+    :type xref: array[float]:
+    :type yref: array[float]:
+    :type halfwidth: float
+    :type shape: Tuple(int, int)
+
+    :returns: aper_mask - Masks pixels in the trace based on the given trace
+        positions.
+    :rtype: array[bool]
+    """
+
+    # Create a coordinate grid.
+    x = np.arange(shape[1])
+    y = np.arange(shape[0])
+    xx, yy = np.meshgrid(x, y)
+
+    # Interpolate the trace positions onto the grid.
+    sort = np.argsort(xref)
+    ytrace = np.interp(x, xref[sort], yref[sort])
+
+    # Compute the aperture mask.
+    aper_mask = np.abs(yy - ytrace) > halfwidth
+
+    return aper_mask
+
+
 def soss_background(scidata, scimask, bkg_mask=None):
     """Compute a columnwise background for a SOSS observation.
 
