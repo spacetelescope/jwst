@@ -118,11 +118,11 @@ def get_trace_1d(ref_files, transform, order, cols=None):
 
 
 # TODO how best to pass reference files and additional parameters (e.g. threshold)?
-def extract_image(scidata, scierr, scimask, refmask, ref_files, transform=None,
-                  tikfac=None, n_os=5, threshold=1e-4, width=40, devname=None):
+def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, transform=None,
+                tikfac=None, n_os=5, threshold=1e-4, devname=None):
     """Perform the spectral extraction on a single image.
 
-    :param scidata: A single NIRISS SOSS detector image.
+    :param scidata_bkg: A single background subtracted NIRISS SOSS detector image.
     :param scierr: The uncertainties corresponding to the detector image.
     :param scimask: Pixel that should be masked from the detector image.
     :param refmask: Pixels that should never be reconstructed e.g. the reference pixels.
@@ -136,9 +136,8 @@ def extract_image(scidata, scierr, scimask, refmask, ref_files, transform=None,
         solving for the uncontaminated flux.
     :param threshold: The threshold value for using pixels based on the spectral
         profile.
-    :param width: The width of the aperture used to extract the un-contaminated spectrum.
 
-    :type scidata: array[float]
+    :type scidata_bkg: array[float]
     :type scierr: array[float]
     :type scimask: array[bool]
     :type refmask: array[bool]
@@ -147,15 +146,10 @@ def extract_image(scidata, scierr, scimask, refmask, ref_files, transform=None,
     :type tikfac: float
     :type n_os: int
     :type threshold: float
-    :type width: float
 
     :returns: TODO TBD
     :rtype: TODO TBD
     """
-
-    # Perform background correction.
-    bkg_mask = make_background_mask(scidata, width=40)
-    scidata_bkg, col_bkg, npix_bkg = soss_background(scidata, scimask, bkg_mask=bkg_mask)
 
     # Some error values are 0, we need to mask those pixels for the ectraction engine.
     scimask = scimask | ~(scierr > 0)
@@ -175,7 +169,8 @@ def extract_image(scidata, scierr, scimask, refmask, ref_files, transform=None,
         yref_o2 = spectrace_ref.trace[1].data['Y']
 
         # Use the solver on the image.
-        transform = solve_transform(scidata, scimask, xref_o1, yref_o1, xref_o2, yref_o2)
+        # TODO Solver performs its own background correction, is this an issue?
+        transform = solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2, yref_o2)
 
     log.info('Using transformation parameters {}'.format(transform))
 
@@ -214,9 +209,12 @@ def extract_image(scidata, scierr, scimask, refmask, ref_files, transform=None,
 
     # Create a new instance of the engine for evaluating the trace model.
     # This allows bad pixels and pixels below the threshold to be reconstructed as well.
+    # TODO with the right parameters could we rebuild order 3 as well?
     model = ExtractionEngine(*ref_file_args, wave_grid=engine.wave_grid, threshold=1e-5, global_mask=refmask)
 
     # Model the order 1 and order 2 trace seperately.
+    log.info('Building the model images of the individual orders.')
+
     tracemodel_o1 = model.rebuild(f_k, i_orders=[0])
     tracemodel_o2 = model.rebuild(f_k, i_orders=[1])
 
@@ -225,49 +223,90 @@ def extract_image(scidata, scierr, scimask, refmask, ref_files, transform=None,
     tracemodel_o2 = np.where(np.isnan(tracemodel_o2), 0, tracemodel_o2)
 
     # TODO temporary debug plot.
-    devtools.diagnostic_plot(scidata_bkg, scierr, scimask, tracemodel_o1, tracemodel_o2, devname=devname)
+    if devname is not None:
+        devtools.diagnostic_plot(scidata_bkg, scierr, scimask, tracemodel_o1, tracemodel_o2, devname=devname)
 
+    # Add tracemodels to a dictionary. TODO make a 3D array instead?
+    tracemodels = dict()
+    tracemodels['Order 1'] = tracemodel_o1
+    tracemodels['Order 2'] = tracemodel_o2
+
+    return tracemodels, transform, tikfac, logl
+
+
+def extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files,
+                  transform, width=40., devname=None):
+    """Perform the box-extraction on the image, while using the trace model to
+    correct for contamination.
+
+    :param scidata_bkg: A single backround subtracted NIRISS SOSS detector image.
+    :param scierr: The uncertainties corresponding to the detector image.
+    :param scimask: Pixel that should be masked from the detector image.
+    :param tracemodels:
+    :param ref_files: A dictionary of the reference file DataModels. # TODO not final?
+    :param transform: A 3-elemnt list or array describing the rotation and
+        translation to apply to the reference files in order to match the
+        observation. If None the transformation is computed.
+    :param width: The width of the aperture used to extract the un-contaminated spectrum.
+
+    :type scidata_bkg: array[float]
+    :type scierr: array[float]
+    :type scimask: array[bool]
+    :type tracemodels: dict
+    :type ref_files: dict
+    :type transform: array_like
+    :type width: float
+
+    :returns: TODO TBD
+    :rtype: TODO TBD
+    """
+
+    # Unpack the models for the inbdividual orders.
+    tracemodel_o1 = tracemodels['Order 1']
+    tracemodel_o2 = tracemodels['Order 2']
+
+    # Create dictionaries for the output spectra.
     wavelengths = dict()
     fluxes = dict()
     fluxerrs = dict()
     npixels = dict()
 
+    log.info('Performing the de-contaminated box-extraction.')
+
     # TODO need way to fill in bad pixels.
     # Don't extract orders 2 and 3 for SUBSTRIP96.
     # Use the model of order 2 to de-contaminate and extract order 1.
-    xtrace_o1, ytrace_o1, wavelengths['Order 1'] = get_trace_1d(ref_files, transform, 1)
+    log.info('Extracting order 1.')
 
-    box_weights_o1 = get_box_weights(ytrace_o1, width, scidata.shape, cols=xtrace_o1)
+    xtrace_o1, ytrace_o1, wavelengths['Order 1'] = get_trace_1d(ref_files, transform, 1)
+    box_weights_o1 = get_box_weights(ytrace_o1, width, scidata_bkg.shape, cols=xtrace_o1)
+
     out = box_extract(scidata_bkg - tracemodel_o2, scierr, scimask, box_weights_o1, cols=xtrace_o1)
     _, fluxes['Order 1'], fluxerrs['Order 1'], npixels['Order 1'] = out
 
     # Use the model of order 1 to de-contaminate and extract order 2.
-    xtrace_o2, ytrace_o2, wavelengths['Order 2'] = get_trace_1d(ref_files, transform, 2)
+    log.info('Extracting order 2.')
 
-    box_weights_o2 = get_box_weights(ytrace_o2, width, scidata.shape, cols=xtrace_o2)
+    xtrace_o2, ytrace_o2, wavelengths['Order 2'] = get_trace_1d(ref_files, transform, 2)
+    box_weights_o2 = get_box_weights(ytrace_o2, width, scidata_bkg.shape, cols=xtrace_o2)
+
     out = box_extract(scidata_bkg - tracemodel_o1, scierr, scimask, box_weights_o2, cols=xtrace_o2)
     _, fluxes['Order 2'], fluxerrs['Order 2'], npixels['Order 2'] = out
 
     # Use both models to de-contaminate and extract order 3.
-    xtrace_o3, ytrace_o3, wavelengths['Order 3'] = get_trace_1d(ref_files, transform, 3)
+    log.info('Extracting order 3.')
 
-    box_weights_o3 = get_box_weights(ytrace_o3, width, scidata.shape, cols=xtrace_o3)
+    xtrace_o3, ytrace_o3, wavelengths['Order 3'] = get_trace_1d(ref_files, transform, 3)
+    box_weights_o3 = get_box_weights(ytrace_o3, width, scidata_bkg.shape, cols=xtrace_o3)
+
     out = box_extract(scidata_bkg - tracemodel_o1 - tracemodel_o2, scierr, scimask, box_weights_o3, cols=xtrace_o3)
     _, fluxes['Order 3'], fluxerrs['Order 3'], npixels['Order 3'] = out
 
     # TODO temporary debug plot.
-    devtools.plot_1d_spectra(wavelengths, fluxes, fluxerrs, npixels, devname)
+    if devname is not None:
+        devtools.plot_1d_spectra(wavelengths, fluxes, fluxerrs, npixels, devname)
 
-    # TODO temporary output file.
-    np.savez(devname + '_spectra.npz',
-             wavelength_o1=wavelengths['Order 1'], flux_o1=fluxes['Order 1'], fluxerr_o1=fluxerrs['Order 1'],
-             npixels_o1=npixels['Order 1'],
-             wavelength_o2=wavelengths['Order 2'], flux_o2=fluxes['Order 2'], fluxerr_o2=fluxerrs['Order 2'],
-             npixels_o2=npixels['Order 2'],
-             wavelength_o3=wavelengths['Order 3'], flux_o3=fluxes['Order 3'], fluxerr_o3=fluxerrs['Order 3'],
-             npixels_o3=npixels['Order 3'])
-
-    return wavelengths, fluxes, fluxerrs, npixels, transform, tikfac
+    return wavelengths, fluxes, fluxerrs, npixels
 
 
 def run_extract1d(input_model: DataModel,
@@ -318,9 +357,28 @@ def run_extract1d(input_model: DataModel,
         scimask = input_model.dq > 0  # Mask bad pixels with True.
         refmask = bitfield_to_boolean_mask(input_model.dq, ignore_flags=pixel['REFERENCE_PIXEL'], flip_bits=True)
 
-        # Perform the extraction.
-        result = extract_image(scidata, scierr, scimask, refmask, ref_files, **soss_kwargs)
-        wavelengths, fluxes, fluxerrs, npixels, soss_kwargs['transform'], soss_kwargs['tikfac'] = result
+        # Perform background correction.
+        bkg_mask = make_background_mask(scidata, width=40)
+        scidata_bkg, col_bkg, npix_bkg = soss_background(scidata, scimask, bkg_mask=bkg_mask)
+
+        # Model the image.
+        kwargs = dict()
+        kwargs['transform'] = soss_kwargs['transform']
+        kwargs['tikfac'] = soss_kwargs['tikfac']
+        kwargs['n_os'] = soss_kwargs['n_os']
+        kwargs['threshold'] = soss_kwargs['threshold']
+        kwargs['devname'] = soss_kwargs['devname']
+
+        result = model_image(scidata_bkg, scierr, scimask, refmask, ref_files, **kwargs)
+        tracemodels, soss_kwargs['transform'], soss_kwargs['tikfac'], logl = result
+
+        # Use the trace models to perform a de-contaminated extraction.
+        kwargs = dict()
+        kwargs['width'] = soss_kwargs['width']
+        kwargs['devname'] = soss_kwargs['devname']
+
+        result = extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files, soss_kwargs['transform'], **kwargs)
+        wavelengths, fluxes, fluxerrs, npixels = result
 
         # Initialize the output model.
         output_model = datamodels.MultiSpecModel()  # TODO is this correct for ImageModel input?
@@ -367,9 +425,28 @@ def run_extract1d(input_model: DataModel,
             scimask = input_model.dq[i] > 0
             refmask = bitfield_to_boolean_mask(input_model.dq[i], ignore_flags=pixel['REFERENCE_PIXEL'], flip_bits=True)
 
-            # Perform the extraction.
-            result = extract_image(scidata, scierr, scimask, refmask, ref_files, **soss_kwargs)
-            wavelengths, fluxes, fluxerrs, npixels, soss_kwargs['transform'], soss_kwargs['tikfac'] = result
+            # Perform background correction.
+            bkg_mask = make_background_mask(scidata, width=40)
+            scidata_bkg, col_bkg, npix_bkg = soss_background(scidata, scimask, bkg_mask=bkg_mask)
+
+            # Model the image.
+            kwargs = dict()
+            kwargs['transform'] = soss_kwargs['transform']
+            kwargs['tikfac'] = soss_kwargs['tikfac']
+            kwargs['n_os'] = soss_kwargs['n_os']
+            kwargs['threshold'] = soss_kwargs['threshold']
+            kwargs['devname'] = soss_kwargs['devname']
+
+            result = model_image(scidata_bkg, scierr, scimask, refmask, ref_files, **kwargs)
+            tracemodels, soss_kwargs['transform'], soss_kwargs['tikfac'], logl = result
+
+            # Use the trace models to perform a de-contaminated extraction.
+            kwargs = dict()
+            kwargs['width'] = soss_kwargs['width']
+            kwargs['devname'] = soss_kwargs['devname']
+
+            result = extract_image(scidata_bkg, scierr, scimask, tracemodels, ref_files, soss_kwargs['transform'], **kwargs)
+            wavelengths, fluxes, fluxerrs, npixels = result
 
             # Copy spectral data for each order into the output model.
             # TODO how to include parameters like transform and tikfac in the output.
