@@ -7,7 +7,7 @@ import numpy as np
 
 from astropy.io import fits
 
-from SOSS.extract import soss_read_refs
+from SOSS.extract import soss_read_refs  # TODO need to remove this dependency somehow. BIG ISSUE
 from .soss_utils import zero_roll, robust_polyfit, get_image_dim
 
 from matplotlib import colors
@@ -162,7 +162,7 @@ def get_centroids_com(image, header=None, mask=None, poly_order=11, verbose=Fals
     :type image: array[float]
     :type header: astropy.io.fits.Header
     :type mask: array[bool]
-    :type poly_order: int
+    :type poly_order: None or int
     :type verbose: bool
 
     :returns: xtrace, ytrace, param - The x, y coordinates of trace as computed from the best fit polynomial

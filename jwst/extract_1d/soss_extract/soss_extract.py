@@ -167,14 +167,15 @@ def extract_image(scidata, scierr, scimask, refmask, ref_files, transform=None,
 
         log.info('Solving for the transformation parameters.')
 
-        # Unpack the expected order 1 positions.
+        # Unpack the expected order 1 & 2 positions.
         spectrace_ref = ref_files['spectrace']
-        xref = spectrace_ref.trace[0].data['X']
-        yref = spectrace_ref.trace[0].data['Y']
-        subarray = spectrace_ref.meta.subarray.name  # TODO better way of propagating the subarray?
+        xref_o1 = spectrace_ref.trace[0].data['X']
+        yref_o1 = spectrace_ref.trace[0].data['Y']
+        xref_o2 = spectrace_ref.trace[1].data['X']
+        yref_o2 = spectrace_ref.trace[1].data['Y']
 
-        # Use the Solver on the image.
-        transform = solve_transform(scidata, scimask, xref, yref, subarray)
+        # Use the solver on the image.
+        transform = solve_transform(scidata, scimask, xref_o1, yref_o1, xref_o2, yref_o2)
 
     log.info('Using transformation parameters {}'.format(transform))
 
