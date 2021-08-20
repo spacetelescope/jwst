@@ -12,9 +12,7 @@ from .soss_syscor import make_background_mask, soss_background
 from .soss_solver import solve_transform, apply_transform, transform_coords
 from .soss_engine import ExtractionEngine
 from .engine_utils import ThroughputSOSS, WebbKernel
-
-# TODO integrate box extraction into DMS.
-from SOSS.dms.soss_boxextract import get_box_weights, box_extract
+from .soss_boxextract import get_box_weights, box_extract
 
 # TODO remove once code is sufficiently tested.
 from . import devtools
