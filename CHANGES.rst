@@ -21,18 +21,20 @@ cube_build
 
 - Fix bug when creating cubes using output_type=channel. [#6138]
 
-- Move computationally intensive routines to c extensions and
+- Move computationally intensive routines to C extensions and
   removed miri psf weight function. [#6093]
 
-- Moved cube blotting to a c extension [#6256]
+- Moved cube blotting to a C extension [#6256]
 
-- Moved variable definitions to top of code in c extension to
+- Moved variable definitions to top of code in C extension to
   support changes in #6093. [#6255]
 
 datamodels
 ----------
 
 - Remove astropy.io registration of JwstDataModel. [#6179]
+
+- Update VELOSYS keyword comment [#6298]
 
 extract_1d
 ----------
