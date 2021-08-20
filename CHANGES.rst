@@ -87,6 +87,9 @@ source_catalog
 
 - Fixed issue with non-finite positions for aperture photometry. [#6206]
 
+- Fixed the documentation for ``bkg_boxsize`` to reflect that its data
+  type should be integer. [#6300]
+
 wavecorr
 --------
 

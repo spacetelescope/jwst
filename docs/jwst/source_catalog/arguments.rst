@@ -3,8 +3,8 @@ Arguments
 
 The ``source_catalog`` step uses the following user-settable arguments:
 
-* ``--bkg_boxsize``: A floating-point value giving the background mesh
-  box size in pixels
+* ``--bkg_boxsize``: An integer value giving the background mesh box
+  size in pixels
 
 * ``--kernel_fwhm``: A floating-point value giving the Gaussian kernel
   FWHM in pixels [default=2.0]
