@@ -16,6 +16,8 @@ class RscdStep(Step):
     Enhanced version is not ready nor enabled.
     """
 
+    class_alias = "rscd"
+
     # allow swtiching between baseline and enhanced algorithms
     spec = """
          type = option('baseline','enhanced',default = 'baseline') # Type of correction

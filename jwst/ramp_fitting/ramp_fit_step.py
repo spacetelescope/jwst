@@ -178,6 +178,8 @@ class RampFitStep(Step):
     determine the mean count rate for each pixel.
     """
 
+    class_alias = "ramp_fit"
+
     spec = """
         int_name = string(default='')
         save_opt = boolean(default=False) # Save optional output

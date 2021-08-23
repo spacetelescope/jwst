@@ -30,6 +30,8 @@ class CubeSkyMatchStep(Step):
 
     """
 
+    class_alias = "cube_skymatch"
+
     spec = """
         # General sky matching parameters:
         bkg_degree = integer(min=0, default=1) # Degree of the polynomial for background fitting

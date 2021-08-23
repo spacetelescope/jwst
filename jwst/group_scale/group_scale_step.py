@@ -13,6 +13,8 @@ class GroupScaleStep(Step):
     All groups in the exposure are rescaled by FRMDIVSR/NFRAMES.
     """
 
+    class_alias = "group_scale"
+
     def process(self, input):
 
         # Open the input data model

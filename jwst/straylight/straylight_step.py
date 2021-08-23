@@ -12,6 +12,8 @@ class StraylightStep (Step):
     StraylightStep: Performs straylight correction image using a Mask file.
     """
 
+    class_alias = "straylight"
+
     spec = """
          method = option('Nearest','ModShepard',default='ModShepard') #Algorithm method
          roi = integer(2, 1024, default = 50) # Region of interest given as even integer
