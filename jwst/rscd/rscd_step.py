@@ -1,7 +1,6 @@
 from ..stpipe import Step
 from .. import datamodels
 from . import rscd_sub
-from ..lib.basic_utils import deprecate_class
 
 
 __all__ = ["RscdStep"]
