@@ -13,6 +13,7 @@ from jwst.associations.lib.dms_base import (
     item_getattr,
     nrsfss_valid_detector,
     nrsifu_valid_detector,
+    nrslamp_valid_detector,
 )
 from jwst.associations.lib.member import Member
 from jwst.associations.lib.process_list import ProcessList
@@ -506,6 +507,11 @@ class Asn_Lv2NRSLAMPSpectral(
                 name='opt_elem',
                 sources=['filter'],
                 value='opaque'
+            ),
+            SimpleConstraint(
+                value=True,
+                test=lambda value, item: nrslamp_valid_detector(item),
+                force_unique=False
             ),
             Constraint(
                 [
