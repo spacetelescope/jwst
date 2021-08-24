@@ -14,6 +14,8 @@ class PhotomStep(Step):
         data model
     """
 
+    class_alias = "photom"
+
     spec = """
         inverse = boolean(default=False)    # Invert the operation
         source_type = string(default=None)  # Process as specified source type.

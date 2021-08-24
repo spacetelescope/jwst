@@ -22,6 +22,8 @@ class ResampleSpecStep(ResampleStep):
         A singe datamodel, a container of datamodels, or an association file
     """
 
+    class_alias = "resample_spec"
+
     def process(self, input):
         input_new = datamodels.open(input)
 

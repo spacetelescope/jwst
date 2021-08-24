@@ -11,6 +11,8 @@ class AmiNormalizeStep(Step):
     AmiNormalizeStep: Normalize target LG results using reference LG results
     """
 
+    class_alias = "ami_normalize"
+
     spec = """
     """
 

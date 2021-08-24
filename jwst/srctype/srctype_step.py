@@ -17,6 +17,8 @@ class SourceTypeStep(Step):
     containing a single pre-defined target.
     """
 
+    class_alias = "srctype"
+
     spec = """
         source_type = option('POINT','EXTENDED', default=None)  # user-supplied source type
     """
