@@ -76,7 +76,6 @@ def get_steps():
         ("jwst.step.ResampleSpecStep", 'resample_spec', False),
         ("jwst.step.ResetStep", 'reset', False),
         ("jwst.step.RscdStep", 'rscd', False),
-        ("jwst.step.RSCD_Step", None, False),
         ("jwst.step.SaturationStep", 'saturation', False),
         ("jwst.step.SkyMatchStep", 'skymatch', False),
         ("jwst.step.SourceCatalogStep", 'source_catalog', False),
