@@ -66,8 +66,8 @@ jump
 lib
 ---
 
-- Updated step names for default suffix name for RampFit and
-  GuiderCDS steps [#6158]
+- Updated default suffix names for RampFit and GuiderCDS steps to
+  'ramp_fit' and 'guider_cds' to match alias convention [#6158]
 
 outlier_detection
 -----------------
