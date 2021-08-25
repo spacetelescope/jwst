@@ -16,6 +16,10 @@ associations
 - Fix bug causing ``pytest`` to encounter an error in test collection when
   running with recent commits to ``astropy`` main (``5.0.dev``). [#6176]
 
+- Enhanced level-2b ASN rules for NIRSpec internal lamp exposures to
+  handle certain opmode/grating/lamp combinations that result in no data
+  on one of the detectors. [#6304]
+
 cube_build
 ----------
 
