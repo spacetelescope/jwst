@@ -147,7 +147,7 @@ def build_driz_weight(model, weight_type=None, good_bits=None):
                 inv_variance = model.var_rnoise**-1
             inv_variance[~np.isfinite(inv_variance)] = 1
         else:
-            warnings.warn("var_rnoise array not available.  Setting drizzle weight map to 1",
+            warnings.warn("var_rnoise array not available. Setting drizzle weight map to 1",
                           RuntimeWarning)
             inv_variance = 1.0
         result = inv_variance * dqmask
