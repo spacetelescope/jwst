@@ -82,6 +82,8 @@ resample
 - Refactor ``resample_spec`` to use a separate function for computing the output
   rectified WCS for lamp data.  [#6296]
 
+- Fix a crash in ``resample_spec`` due to undefined variance arrays. [#6305]
+
 source_catalog
 --------------
 
