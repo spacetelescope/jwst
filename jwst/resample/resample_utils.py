@@ -142,7 +142,7 @@ def build_driz_weight(model, weight_type=None, good_bits=None):
 
     if weight_type == 'ivm':
         if (model.hasattr("var_rnoise") and model.var_rnoise is not None
-            and model.var_rnoise.shape == model.data.shape):
+                and model.var_rnoise.shape == model.data.shape):
             with np.errstate(divide="ignore", invalid="ignore"):
                 inv_variance = model.var_rnoise**-1
             inv_variance[~np.isfinite(inv_variance)] = 1
