@@ -4,8 +4,8 @@ import warnings
 import numpy as np
 from astropy import coordinates as coord
 from astropy import units as u
-from astropy.modeling.models import (Mapping, Tabular1D, Linear1D,
-                                     Pix2Sky_TAN, RotateNative2Celestial)
+from astropy.modeling.models import (Mapping, Tabular1D, Linear1D, Shift,
+                                     Pix2Sky_TAN, RotateNative2Celestial, Identity)
 from astropy.modeling.fitting import LinearLSQFitter
 from gwcs import wcstools, WCS
 from gwcs import coordinate_frames as cf
@@ -66,7 +66,10 @@ class ResampleSpecData(ResampleData):
 
         # Define output WCS based on all inputs, including a reference WCS
         if resample_utils.is_sky_like(self.input_models[0].meta.wcs.output_frame):
-            self.output_wcs = self.build_interpolated_output_wcs()
+            if self.input_models[0].meta.instrument.name != "NIRSPEC":
+                self.output_wcs = self.build_interpolated_output_wcs()
+            else:
+                self.output_wcs = self.build_nirspec_output_wcs()
         else:
             self.output_wcs = self.build_nirspec_lamp_output_wcs()
         self.blank_output = datamodels.SlitModel(self.data_size)
@@ -316,6 +319,110 @@ class ResampleSpecData(ResampleData):
         output_wcs.bounding_box = bounding_box
 
         return output_wcs
+
+    def build_nirspec_output_wcs(self, refmodel=None):
+        """
+        Create a spatial/spectral WCS covering footprint of the input
+        """
+        if not refmodel:
+            refmodel = self.input_models[0]
+        refwcs = refmodel.meta.wcs
+        bbox = refwcs.bounding_box
+
+        ref_det2slit = refwcs.get_transform('detector', 'slit_frame')
+        ref_slit2world = refwcs.get_transform('slit_frame', 'world')
+
+        grid = wcstools.grid_from_bounding_box(bbox)
+        _, y_slit, wavelength = ref_det2slit(*grid)
+
+        # Find the spatial pixel scale in the slit by computing the length of
+        # the vector in pixels going from top of slit to bottom of slit at a
+        # constant fiducial wavelength in the middle
+        slit_ymin = refmodel.slit_ymin
+        slit_ymax = refmodel.slit_ymax
+        ref_wavelength = np.nanmean(wavelength)
+        fid = np.array([[0., 0.], [slit_ymin, slit_ymax], np.repeat(ref_wavelength, 2)])
+        slit_extents = np.array(ref_det2slit.inverse(*fid)).T
+        pixels_in_ref_slit = np.linalg.norm(slit_extents[0] - slit_extents[1])
+        pixel_scale = (slit_ymax - slit_ymin) / pixels_in_ref_slit
+
+        # Find the spatial extent of all combined nodded slits in both slit
+        # and detector frame
+        virt_slit_ymin, virt_slit_ymax = self.compute_virtual_slit_extents(refwcs)
+        fid2 = np.array([[0., 0.], [virt_slit_ymin, virt_slit_ymax], np.repeat(ref_wavelength, 2)])
+        virt_slit_extents = np.array(ref_det2slit.inverse(*fid2)).T
+        pixels_in_slit = np.linalg.norm(virt_slit_extents[0] - virt_slit_extents[1])
+
+        # Define spatial detector to slit transforms. x2slit will not be used.
+        # y2slit maps y pixel position to slit frame location via a line.  Shift
+        # by half a pixel to get all the pixel (coordinates or pixel centers)
+        slope = pixel_scale * self.pscale_ratio
+        y2slit = Shift(-0.5 / self.pscale_ratio) | Linear1D(slope=slope, intercept=virt_slit_ymin)
+        x2slit = Identity(1)
+
+        # Compute grid of wavelengths and make tabular model w/inverse
+        wavelength_table = np.nanmean(wavelength, axis=0)
+        wavelength_table = wavelength_table[~np.isnan(wavelength_table)]
+        pixel_index = np.arange(len(wavelength_table))
+        wavelength_transform = Tabular1D(points=pixel_index,
+                                         lookup_table=wavelength_table,
+                                         bounds_error=False, fill_value=np.nan)
+        wavelength_transform.inverse = Tabular1D(points=wavelength_table,
+                                                 lookup_table=pixel_index,
+                                                 bounds_error=False,
+                                                 fill_value=np.nan)
+
+        # Construct the final transform
+        mapping = Mapping((0, 1, 0))
+        mapping.inverse = Mapping((2, 1))
+        out_det2slit = mapping | x2slit & y2slit & wavelength_transform
+
+        # Create coordinate frames
+        det = cf.Frame2D(name='detector', axes_order=(0, 1))
+        slit_spatial = cf.Frame2D(name='slit_spatial', axes_order=(0, 1),
+                                  unit=("", ""), axes_names=('x_slit', 'y_slit'))
+        spec = cf.SpectralFrame(name='spectral', axes_order=(2,),
+                                unit=(u.micron,), axes_names=('wavelength',))
+        slit_frame = cf.CompositeFrame([slit_spatial, spec], name='slit_frame')
+        sky = cf.CelestialFrame(name='sky', axes_order=(0, 1),
+                                reference_frame=coord.ICRS())
+        world = cf.CompositeFrame([sky, spec], name='world')
+
+        pipeline = [(det, out_det2slit),
+                    (slit_frame, ref_slit2world),
+                    (world, None)]
+
+        output_wcs = WCS(pipeline)
+
+        # Compute bounding box and output array shape.  Add one to the y (slit)
+        # height to account for the half pixel at top and bottom due to pixel
+        # coordinates being centers of pixels
+        self.data_size = (int(np.ceil(pixels_in_slit + 1) / self.pscale_ratio),
+                          len(wavelength_table))
+        bounding_box = resample_utils.wcs_bbox_from_shape(self.data_size)
+        output_wcs.bounding_box = bounding_box
+
+        return output_wcs
+
+    def compute_virtual_slit_extents(self, refwcs):
+        """Compute height of virtual slit for all nods in the refwcs slit frame"""
+        world2slit = refwcs.get_transform('world', 'slit_frame')
+        slit_ymin = []
+        slit_ymax = []
+        # Run the RA/Dec from each nod through the above reference transform to
+        # see where it lands in the reference slit frame
+        for model in self.input_models:
+            bbox = model.meta.wcs.bounding_box
+            grid = wcstools.grid_from_bounding_box(bbox)
+            ra, dec, lam = model.meta.wcs(*grid)
+
+            x_slit_array, y_slit_array, _ = world2slit(ra, dec, lam)
+            ymin = np.nanmin(y_slit_array)
+            ymax = np.nanmax(y_slit_array)
+            slit_ymin.append(ymin)
+            slit_ymax.append(ymax)
+
+        return min(slit_ymin), max(slit_ymax)
 
     def build_nirspec_lamp_output_wcs(self):
         """
