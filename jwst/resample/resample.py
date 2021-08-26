@@ -187,7 +187,7 @@ class ResampleData:
     def resample_variance_array(self, name, output_model):
         """Resample variance arrays from self.input_models to the output_model
 
-        Resample the `name` variance array to the same name in output_model,
+        Resample the ``name`` variance array to the same name in output_model,
         using a cummulative sum.
 
         This modifies output_model in-place.
@@ -198,6 +198,20 @@ class ResampleData:
         log.info(f"Resampling {name}")
         for model in self.input_models:
             variance = getattr(model, name)
+            if variance is None or variance.size == 0:
+                log.debug(
+                    f"No data for '{name}' for model "
+                    f"{repr(model.meta.filename)}. Skipping ..."
+                )
+                continue
+
+            elif variance.shape != model.data.shape:
+                log.warning(
+                    f"Data shape mismatch for '{name}' for model "
+                    f"{repr(model.meta.filename)}. Skipping ..."
+                )
+                continue
+
             # Make input weight map of unity where there is science data
             inwht = resample_utils.build_driz_weight(model, weight_type=None,
                                                      good_bits="~NON_SCIENCE+REFERENCE_PIXEL")
