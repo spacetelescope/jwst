@@ -10,6 +10,9 @@ assign_wcs
 - Fix bug in NIRspec where ``bounding_box`` can be oversized in height for
   some of the slits. [#6257]
 
+- Updated ``create_grism_bbox`` to be more robust against failures caused by
+  bad input data. [#6309]
+
 associations
 ------------
 
