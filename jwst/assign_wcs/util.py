@@ -688,10 +688,10 @@ def _create_grism_bbox(input_model, mmag_extract=99.0,
                     # didn't call this bounding box code. So I think it's safe to leave the subarray
                     # subtraction out, i.e. do not subtract x/ystart.
 
-                    xmin = int(np.min(xstack))
-                    xmax = int(np.max(xstack))
-                    ymin = int(np.min(ystack))
-                    ymax = int(np.max(ystack))
+                    xmin = int(np.nanmin(xstack))
+                    xmax = int(np.nanmax(xstack))
+                    ymin = int(np.nanmin(ystack))
+                    ymax = int(np.nanmax(ystack))
 
                     if wfss_extract_half_height is not None and not obj.is_extended:
                         if input_model.meta.wcsinfo.dispersion_direction == 2:
