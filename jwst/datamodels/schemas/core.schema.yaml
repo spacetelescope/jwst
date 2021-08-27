@@ -486,6 +486,16 @@ properties:
             type: string
             fits_keyword: PREIMAGE
             blend_table: True
+          miri_fpe_side:
+            title: Active side for FPE (A or B)
+            type: string
+            enum: [A, B, BOTH, NEITHER, UNKNOWN]
+            fits_keyword: FPE_SIDE
+          miri_ice_side:
+            title: Active side for ICE (A or B)
+            type: string
+            enum: [A, B, BOTH, NEITHER, UNKNOWN]
+            fits_keyword: ICE_SIDE
           ccc_state:
             title: Contamination control cover state
             type: string

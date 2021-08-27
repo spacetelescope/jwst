@@ -43,6 +43,8 @@ datamodels
 
 - Update VELOSYS keyword comment [#6298]
 
+- Added new keywords FPE_SIDE and ICE_SIDE to core schema [#6314]
+
 extract_1d
 ----------
 
