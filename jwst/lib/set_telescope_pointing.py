@@ -1,4 +1,4 @@
-"""Set Telescope Pointing from quaternions
+"""Set Telescope Pointing from Observatory Engineering Telemetry
 
 Calculate and update the pointing-related and world coordinate system-related
 keywords. Given a time period, usually defined by an exposure, the engineering
@@ -75,6 +75,7 @@ __all__ = [
     'WCSRef',
     'add_wcs',
     'calc_transforms',
+    'calc_transforms_ops_tr_202107',
     'calc_wcs',
     'calc_wcs_over_time',
     'update_wcs',
@@ -398,11 +399,7 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
 
     Notes
     -----
-    This function adds absolute pointing information to the FITS files provided
-    to it on the command line (one or more).
-
-    Currently it only uses a constant value for the engineering keywords
-    since the Engineering Database does not yet contain them.
+    This function adds absolute pointing information to the JWST datamodels provided.
 
     It starts by populating the headers with values from the SIAF database.
     It adds the following keywords to all files:
@@ -411,18 +408,6 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, engdb_url=None,
     V3_REF (arcseconds)
     VPARITY (+1 or -1)
     V3I_YANG (decimal degrees)
-
-    In addition for ``IMAGING_MODES`` it adds these keywords:
-
-    CRPIX1 (pixels)
-    CRPIX2 (pixels)
-    CDELT1 (deg/pix)
-    CDELT2 (deg/pix)
-    CUNIT1 (str)
-    CUNIT2
-    CTYPE1
-    CTYPE2
-    WCSAXES
 
     The keywords computed and added to all files are:
 
