@@ -980,5 +980,5 @@ def test_in_slice(slice, wcs_ifu_grating, ifu_world_coord):
     slice_wcs = nirspec.nrs_wcs_set_input(im, slice)
     x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
     xinv, yinv = in_ifu_slice(slice_wcs, ra_all, dec_all, lam_all)
-    r, d, l = slice_wcs(x, y)
+    r, d, _ = slice_wcs(x, y)
     assert r[~np.isnan(r)].size == xinv.size
