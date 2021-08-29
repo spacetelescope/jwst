@@ -960,10 +960,10 @@ def ifu_world_coord(wcs_ifu_grating):
     for sl in range(30):
         slice_wcs = nirspec.nrs_wcs_set_input(im, sl)
         x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
-        r, d, l = slice_wcs(x, y)
+        r, d, lam = slice_wcs(x, y)
         ra_all.append(r)
         dec_all.append(d)
-        lam_all.append(l)
+        lam_all.append(lam)
     ra_all = np.concatenate([r.flatten() for r in ra_all])
     dec_all = np.concatenate([r.flatten() for r in dec_all])
     lam_all = np.concatenate([r.flatten() for r in lam_all])
