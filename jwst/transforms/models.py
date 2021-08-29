@@ -997,8 +997,8 @@ class IdealToV2V3(Model):
         """
         v3idlyangle = np.deg2rad(v3idlyangle)
 
-        v2 = v2ref + vparity * xidl * np.cos(v3idlyangle) + yidl * np.sin(v3idlyangle)
-        v3 = v3ref - vparity * xidl * np.sin(v3idlyangle) + yidl * np.cos(v3idlyangle)
+        v2 = v2ref + xidl * np.cos(v3idlyangle) + yidl * np.sin(v3idlyangle)
+        v3 = v3ref - xidl * np.sin(v3idlyangle) + yidl * np.cos(v3idlyangle)
         return v2, v3
 
     def inverse(self):

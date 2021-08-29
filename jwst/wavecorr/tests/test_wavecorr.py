@@ -49,7 +49,7 @@ def test_wavecorr():
     zero_point1 = wavecorr.compute_zero_point_correction(lam, freference, source_xpos1, 'MOS', dispersion)
     zero_point2 = wavecorr.compute_zero_point_correction(lam, freference, source_xpos2, 'MOS', dispersion)
     diff_correction = np.abs(zero_point1[1] - zero_point2[1])
-    assert_allclose(diff_correction[diff_correction.nonzero()].mean(), 0.02, atol=0.01)
+    assert_allclose(np.nanmean(diff_correction), 0.02, atol=0.01)
 
 
 def test_ideal_to_v23_fs():
@@ -117,3 +117,64 @@ def test_skipped():
 
     source_pos = (0.004938526981283373, -0.02795306204991911)
     assert_allclose((outw.slits[ind].source_xpos, outw.slits[ind].source_ypos), source_pos)
+
+
+def test_wavecorr_fs():
+    hdul = create_nirspec_fs_file(grating="PRISM", filter="CLEAR")
+    im = datamodels.ImageModel(hdul)
+    dither = {'x_offset': -0.0264, 'y_offset': 1.089798712}
+
+    im.meta.dither = dither
+    im.meta.instrument.fixed_slit = 'S200A1'
+    im.meta.instrument.lamp_state = 'NONE'
+    im.meta.instrument.lamp_mode = 'FIXEDSLIT'
+    im.meta.instrument.gwa_tilt = 698.1256999999999
+    im.meta.instrument.gwa_xtilt = 0.334691644
+    im.meta.instrument.gwa_ytilt = 0.0349255353
+    im.meta.exposure.type = 'NRS_FIXEDSLIT'
+    im.meta.wcsinfo = {'dec_ref': -70.77497509320972,
+                       'dispersion_direction': 1,
+                       'ra_ref': 90.75414044948525,
+                       'roll_ref': 38.2179067606001,
+                       'specsys': 'BARYCENT',
+                       'spectral_order': 0,
+                       'v2_ref': 332.136078,
+                       'v3_ref': -479.224213,
+                       'v3yangle': 138.7605896,
+                       'velosys': -1398.2,
+                       'vparity': -1,
+                       'waverange_end': 5.3e-06,
+                       'waverange_start': 6e-07}
+
+    result = AssignWcsStep.call(im)
+    result = Extract2dStep.call(result)
+    bbox = ((-.5, 428.5), (-.5, 38.5))
+    result.slits[0].meta.wcs.bounding_box = bbox
+    x, y = wcstools.grid_from_bounding_box(bbox)
+    ra, dec, lam_before = result.slits[0].meta.wcs(x, y)
+    result.slits[0].wavelength = lam_before
+    src_result = SourceTypeStep.call(result)
+    result = WavecorrStep.call(src_result)
+
+    assert_allclose(result.slits[0].source_xpos, -0.1271444347)
+
+    slit = result.slits[0]
+    source_xpos = wavecorr.get_source_xpos(slit, slit.meta.wcs, lam=2)
+    assert_allclose(result.slits[0].source_xpos, source_xpos)
+
+    mean_correction = np.abs(src_result.slits[0].wavelength - result.slits[0].wavelength)
+    assert_allclose(np.nanmean(mean_correction), 0.003, atol=.001)
+
+    dispersion = wavecorr.compute_dispersion(slit.meta.wcs, x, y)
+    assert_allclose(dispersion[~np.isnan(dispersion)], 1e-8, atol=1.04e-8)
+
+    # test on both sides of the slit center
+    source_xpos1 = -.2
+    source_xpos2 = .2
+
+    ref_name = result.meta.ref_file.wavecorr.name
+    freference = datamodels.WaveCorrModel(WavecorrStep.reference_uri_to_cache_path(ref_name, im.crds_observatory))
+    zero_point1 = wavecorr.compute_zero_point_correction(lam_before, freference, source_xpos1, 'S200A1', dispersion)
+    zero_point2 = wavecorr.compute_zero_point_correction(lam_before, freference, source_xpos2, 'S200A1', dispersion)
+    diff_correction = np.abs(zero_point1[1] - zero_point2[1])
+    assert_allclose(np.nanmean(diff_correction), 0.06, atol=0.01)

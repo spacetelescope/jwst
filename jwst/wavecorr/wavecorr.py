@@ -1,7 +1,30 @@
-#
-#  Module for applying wavelength corrections to NIRSpec MOS and FS
-#  slit instances in which the source is off center.
-#
+"""
+Module for applying wavelength corrections to NIRSpec MOS and FS
+slits in which the source is off center. The correction is applied
+only to point sources.
+
+The algorithm uses a reference file which is a look up table of
+wavelenght_correction as a function of slit_x_position and wavelength.
+
+The slit_x_position is determined in the following way.
+
+MOS data:
+``slit.source_xpos`` is used. It is read in from the msa_metadata_file
+in the assign_wcs step.
+
+FS data:
+``input_model.meta.dither.x_offset``, populated by SDP, is used. The
+value is in the telescope Ideal frame. To calculate the slit position,
+it is transformed Ideal --> V2, V3 --> slit_frame.
+
+The interpolation of the lookup table uses the absolute fractional offset in x.
+This can be computed in two ways. The above transform gives the absolute
+fractional position within the slit directly. The second way is to transform the
+Ideal source_xpos position to the MSA frame and use the metrology data in the
+``msa`` reference file to compute ``(xposabs - xcenter) / (xsize)``.
+Both ways give the same result, the current code uses the first one.
+
+"""
 import logging
 import numpy as np
 from gwcs import wcstools
@@ -14,8 +37,7 @@ log.setLevel(logging.DEBUG)
 
 
 def do_correction(input_model, wavecorr_file):
-    """
-    Main wavecorr correction function for NIRSpec MOS and FS.
+    """ Main wavecorr correction function for NIRSpec MOS and FS.
 
     Parameters
     ----------
@@ -49,9 +71,7 @@ def do_correction(input_model, wavecorr_file):
     if isinstance(input_model, datamodels.SlitModel):
         if _is_point_source(input_model, exp_type):
             apply_zero_point_correction(output_model, wavecorr_file)
-
     else:
-
         # For FS only work on the primary slit
         if exp_type == 'NRS_FIXEDSLIT':
             for slit in output_model.slits:
@@ -82,8 +102,7 @@ def do_correction(input_model, wavecorr_file):
 
 
 def apply_zero_point_correction(slit, reffile):
-    """
-    Apply the NIRSpec wavelength zero-point correction.
+    """ Apply the NIRSpec wavelength zero-point correction.
 
     Parameters
     ----------
@@ -92,22 +111,21 @@ def apply_zero_point_correction(slit, reffile):
     reffile : str
         The ``wavecorr`` reference file.
     """
+    log.info(f'slit name {slit.name}')
     slit_wcs = slit.meta.wcs
 
     # Get the source position in the slit and set the aperture name
     if slit.meta.exposure.type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
         # pass lam = 2 microns
         # needed for wavecorr with fixed slits
-        msa_model = get_msa_model(slit)
-        source_xpos = get_source_xpos(slit, slit_wcs, lam=2,
-                                      msa_model=msa_model)
+        source_xpos = get_source_xpos(slit, slit_wcs, lam=2)
         aperture_name = slit.name
     else:
         source_xpos = slit.source_xpos
         # For the MSA the aperture name is "MOS"
         aperture_name = "MOS"
 
-    lam = slit.wavelength
+    lam = slit.wavelength.copy()
     dispersion = compute_dispersion(slit.meta.wcs)
     corr, dq_lam = compute_zero_point_correction(lam, reffile, source_xpos,
                                                  aperture_name, dispersion)
@@ -115,12 +133,12 @@ def apply_zero_point_correction(slit, reffile):
     # The only purpose of dq_lam is to set that flag.
 
     # Wavelength is in um, the correction is computed in meters.
-    slit.wavelength = lam - corr * 10 ** 6
+    slit.wavelength = slit.wavelength - corr * 10 ** 6
 
 
-def compute_zero_point_correction(lam, freference, source_xpos, aperture_name, dispersion):
-    """
-    Compute the NIRSpec wavelength zero-point correction.
+def compute_zero_point_correction(lam, freference, source_xpos,
+                                  aperture_name, dispersion):
+    """ Compute the NIRSpec wavelength zero-point correction.
 
     Parameters
     ----------
@@ -171,8 +189,7 @@ def compute_zero_point_correction(lam, freference, source_xpos, aperture_name, d
 
 
 def compute_dispersion(wcs, xpix=None, ypix=None):
-    """
-    Compute the pixel dispersion.
+    """ Compute the pixel dispersion.
 
     Parameters
     ----------
@@ -233,7 +250,7 @@ def _is_point_source(slit, exp_type):
     return result
 
 
-def get_source_xpos(slit, slit_wcs, lam, msa_model):
+def get_source_xpos(slit, slit_wcs, lam):
     """
     Compute the source position within the slit for a NIRSpec fixed slit.
 
@@ -245,8 +262,6 @@ def get_source_xpos(slit, slit_wcs, lam, msa_model):
         The WCS object for this slit.
     lam : float
         Wavelength in microns.
-    msa_model : `~jwst.datamodels.MSAModel`
-        NIRSpec MSA model.
 
     Returns
     -------
@@ -261,55 +276,18 @@ def get_source_xpos(slit, slit_wcs, lam, msa_model):
     vparity = slit.meta.wcsinfo.vparity
 
     idl2v23 = trmodels.IdealToV2V3(v3idlyangle, v2ref, v3ref, vparity)
+    log.debug("wcsinfo: {0}, {1}, {2}, {3}".format(v2ref, v3ref, v3idlyangle, vparity))
     # Compute the location in V2,V3 [in arcsec]
     xv, yv = idl2v23(xoffset, yoffset)
+    log.info(f'xoffset, yoffset, {xoffset}, {yoffset}, {lam}')
 
-    v2v3_to_msa = slit_wcs.get_transform("v2v3", "msa_frame")
-    msa_to_slit = slit_wcs.get_transform("msa_frame", "slit_frame")
-
-    # Position in the MSA
-    xpos_abs, ypos_abs, lam = v2v3_to_msa(xv, yv, lam)
-    xpos_frac = absolute2fractional(msa_model, slit, xpos_abs, ypos_abs)
     # Position in the virtual slit
-    xpos_slit, ypos_slit, lam_slit = msa_to_slit(xpos_abs, ypos_abs, lam)
+    xpos_slit, ypos_slit, lam_slit = slit.meta.wcs.get_transform('v2v3', 'slit_frame')(
+        xv, yv, 2)
     # Update slit.source_xpos, slit.source_ypos
     slit.source_xpos = xpos_slit
     slit.source_ypos = ypos_slit
-    log.info('Source X/Y position in the slit: {0}, {1}'.format(xpos_slit, ypos_slit))
+    log.debug('Source X/Y position in V2V3: {0}, {1}'.format(xv, yv))
+    log.info('Source X/Y position in the slit: {0}, {1}, {2}, {3}'.format(xpos_slit, ypos_slit, lam, lam_slit))
 
-    log.info('Source X/Y position in the MSA: {0}, {1}'.format(xpos_abs, ypos_abs))
-    log.info('Fractional position of source in aperture {}'.format(xpos_frac))
-    return xpos_frac
-
-
-def get_msa_model(input_model):
-    """Get the reference file used in constructing the WCS.
-    """
-    msa_ref = input_model.meta.ref_file.msa.name
-    from .. import assign_wcs
-    from .. datamodels import MSAModel
-    step = assign_wcs.AssignWcsStep()
-    msa = MSAModel(step.reference_uri_to_cache_path(msa_ref, "jwst"))
-    return msa
-
-
-def absolute2fractional(msa_model, slit, xposabs, yposabs):
-    """
-    Compute the fractional position in ``x`` within the slit in MSA coordinates.
-
-    Parameters
-    ----------
-    msa_model : `~jwst.datamodels.MSAModel`
-        NIRSpec MSA model.
-    slit : `~jwst.datamodels.SlitModel`
-        The slit data object.
-    xposabs, yposabs : float
-        (x, y) positions in the ``msa_frame``.
-
-    Returns
-    -------
-    xpos : float
-        The fractional X coordinates within the slit.
-    """
-    num, xcenter, ycenter, xsize, ysize = msa_model.Q5.data[slit.shutter_id]
-    return (xposabs - xcenter) / (xsize / 2.)
+    return xpos_slit
