@@ -161,7 +161,7 @@ def test_nirspec_imaging():
     im.meta.wcs(1, 2)
 
 
-def test_nirspec_ifu_against_esa():
+def test_nirspec_ifu_against_esa(wcs_ifu_grating):
     """
     Test Nirspec IFU mode using CV3 reference files.
     """
@@ -169,15 +169,8 @@ def test_nirspec_ifu_against_esa():
 
     # Test NRS1
     pyw = astwcs.WCS(ref['SLITY1'].header)
-    hdul = create_nirspec_ifu_file("OPAQUE", "G140M")
-    im = datamodels.ImageModel(hdul)
-    im.meta.filename = "test_ifu.fits"
-    refs = create_reference_files(im)
-
-    pipe = nirspec.create_pipeline(im, refs, slit_y_range=[-.5, .5])
-    w = wcs.WCS(pipe)
-    im.meta.wcs = w
     # Test evaluating the WCS (slice 0)
+    im, refs = wcs_ifu_grating("G140M", "OPAQUE")
     w0 = nirspec.nrs_wcs_set_input(im, 0)
 
     # get positions within the slit and the coresponding lambda
@@ -588,11 +581,10 @@ def test_functional_fs_msa(mode):
 @pytest.fixture
 def wcs_ifu_grating():
     def _create_image_model(grating='G395H', filter='F290LP'):
-        hdul = create_nirspec_ifu_file(grating=grating, filter=filter,
-                                       gwa_xtil=0.35986012, gwa_ytil=0.13448857)
+        hdul = create_nirspec_ifu_file(grating=grating, filter=filter)
         im = datamodels.ImageModel(hdul)
         refs = create_reference_files(im)
-        pipeline = nirspec.create_pipeline(im, refs, slit_y_range=[-0.55, 0.55])
+        pipeline = nirspec.create_pipeline(im, refs, slit_y_range=[-0.5, 0.5])
         w = wcs.WCS(pipeline)
         im.meta.wcs = w
         return im, refs
