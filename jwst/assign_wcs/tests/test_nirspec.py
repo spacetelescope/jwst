@@ -580,8 +580,8 @@ def test_functional_fs_msa(mode):
 
 @pytest.fixture
 def wcs_ifu_grating():
-    def _create_image_model(grating='G395H', filter='F290LP'):
-        hdul = create_nirspec_ifu_file(grating=grating, filter=filter)
+    def _create_image_model(grating='G395H', filter='F290LP', **kwargs):
+        hdul = create_nirspec_ifu_file(grating=grating, filter=filter, **kwargs)
         im = datamodels.ImageModel(hdul)
         refs = create_reference_files(im)
         pipeline = nirspec.create_pipeline(im, refs, slit_y_range=[-0.5, 0.5])
@@ -596,7 +596,7 @@ def test_functional_ifu_grating(wcs_ifu_grating):
 
     # setup test
     model_file = 'ifu_grating_functional_ESA_v1_20180619.txt'
-    im, refs = wcs_ifu_grating()
+    im, refs = wcs_ifu_grating('G395H', 'F290LP', gwa_xtil=0.35986012, gwa_ytil=0.13448857)
 
     slit_wcs = nirspec.nrs_wcs_set_input(im, 0)  # use slice 0
     ins_file = get_file_path(model_file)
@@ -970,7 +970,7 @@ def ifu_world_coord(wcs_ifu_grating):
     return ra_all, dec_all, lam_all
 
 
-@pytest.mark.parametrize("slice", [1, 15, 29])
+@pytest.mark.parametrize("slice", [1, 17])
 def test_in_slice(slice, wcs_ifu_grating, ifu_world_coord):
     """ Test that the number of valid outputs from a slice forward transform
     equals the valid pixels within the slice from the slice backward transform.
