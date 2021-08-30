@@ -1117,3 +1117,30 @@ def wrap_ra(ravalues):
         ravalues = ravalues_wrap.tolist()
 
     return ravalues_wrap
+
+
+def in_ifu_slice(slice_wcs, ra, dec, lam):
+    """
+    Given RA, DEC and LAM return the x, y positions within a slice.
+
+    Parameters
+    ----------
+    slice_wcs : `~gwcs.WCS`
+        Slice WCS object.
+    ra, dec, lam : float, ndarray
+        Physical Coordinates.
+
+    Returns
+    -------
+    x, y : float, ndarray
+        x, y locations within the slice.
+    """
+    detector2slicer = slice_wcs.get_transform('detector', 'slicer')
+    slicer2world = slice_wcs.get_transform('slicer', 'world')
+    slx, sly, sllam = slicer2world.inverse(ra, dec, lam)
+
+    # Compute the slice X coordinate using the center of the slit.
+    SLX, _, _ = slice_wcs.get_transform('slit_frame', 'slicer')(0, 0, 2e-6)
+    onslice_ind = np.isclose(slx, SLX)
+    x, y = detector2slicer.inverse(slx[onslice_ind], sly[onslice_ind], sllam[onslice_ind])
+    return x, y

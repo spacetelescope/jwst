@@ -15,13 +15,14 @@ from astropy import wcs as astwcs
 import astropy.units as u
 import astropy.coordinates as coords
 from gwcs import wcs
+from gwcs import wcstools
 
 from jwst import datamodels
 from jwst.transforms import models as trmodels
 from jwst.assign_wcs import nirspec
 from jwst.assign_wcs import assign_wcs_step
 from jwst.assign_wcs.tests import data
-from jwst.assign_wcs.util import MSAFileError
+from jwst.assign_wcs.util import MSAFileError, in_ifu_slice
 
 
 data_path = os.path.split(os.path.abspath(data.__file__))[0]
@@ -160,7 +161,7 @@ def test_nirspec_imaging():
     im.meta.wcs(1, 2)
 
 
-def test_nirspec_ifu_against_esa():
+def test_nirspec_ifu_against_esa(wcs_ifu_grating):
     """
     Test Nirspec IFU mode using CV3 reference files.
     """
@@ -168,15 +169,8 @@ def test_nirspec_ifu_against_esa():
 
     # Test NRS1
     pyw = astwcs.WCS(ref['SLITY1'].header)
-    hdul = create_nirspec_ifu_file("OPAQUE", "G140M")
-    im = datamodels.ImageModel(hdul)
-    im.meta.filename = "test_ifu.fits"
-    refs = create_reference_files(im)
-
-    pipe = nirspec.create_pipeline(im, refs, slit_y_range=[-.5, .5])
-    w = wcs.WCS(pipe)
-    im.meta.wcs = w
     # Test evaluating the WCS (slice 0)
+    im, refs = wcs_ifu_grating("G140M", "OPAQUE")
     w0 = nirspec.nrs_wcs_set_input(im, 0)
 
     # get positions within the slit and the coresponding lambda
@@ -584,18 +578,26 @@ def test_functional_fs_msa(mode):
     assert_allclose(v3, ins_tab['yV2V3'])
 
 
-def test_functional_ifu_grating():
+@pytest.fixture
+def wcs_ifu_grating():
+    def _create_image_model(grating='G395H', filter='F290LP', **kwargs):
+        hdul = create_nirspec_ifu_file(grating=grating, filter=filter, **kwargs)
+        im = datamodels.ImageModel(hdul)
+        refs = create_reference_files(im)
+        pipeline = nirspec.create_pipeline(im, refs, slit_y_range=[-0.5, 0.5])
+        w = wcs.WCS(pipeline)
+        im.meta.wcs = w
+        return im, refs
+    return _create_image_model
+
+
+def test_functional_ifu_grating(wcs_ifu_grating):
     """Compare Nirspec instrument model with IDT model for IFU grating."""
 
     # setup test
     model_file = 'ifu_grating_functional_ESA_v1_20180619.txt'
-    hdul = create_nirspec_ifu_file(grating='G395H', filter='F290LP',
-                                   gwa_xtil=0.35986012, gwa_ytil=0.13448857)
-    im = datamodels.ImageModel(hdul)
-    refs = create_reference_files(im)
-    pipeline = nirspec.create_pipeline(im, refs, slit_y_range=[-0.55, 0.55])
-    w = wcs.WCS(pipeline)
-    im.meta.wcs = w
+    im, refs = wcs_ifu_grating('G395H', 'F290LP', gwa_xtil=0.35986012, gwa_ytil=0.13448857)
+
     slit_wcs = nirspec.nrs_wcs_set_input(im, 0)  # use slice 0
     ins_file = get_file_path(model_file)
     ins_tab = table.Table.read(ins_file, format='ascii')
@@ -946,3 +948,37 @@ def test_ifu_bbox():
         m = functools.reduce(lambda x, y: x | y, [tr.inverse for tr in transforms[:3][::-1]])
         bbox_sl = nirspec.compute_bounding_box(m, wrange)
         assert_allclose(bbox[sl], bbox_sl)
+
+
+@pytest.fixture
+def ifu_world_coord(wcs_ifu_grating):
+    """ Return RA, DEC, LAM for all slices in the NRS IFU."""
+    ra_all = []
+    dec_all = []
+    lam_all = []
+    im, refs = wcs_ifu_grating(grating="G140H", filter="F100LP")
+    for sl in range(30):
+        slice_wcs = nirspec.nrs_wcs_set_input(im, sl)
+        x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
+        r, d, lam = slice_wcs(x, y)
+        ra_all.append(r)
+        dec_all.append(d)
+        lam_all.append(lam)
+    ra_all = np.concatenate([r.flatten() for r in ra_all])
+    dec_all = np.concatenate([r.flatten() for r in dec_all])
+    lam_all = np.concatenate([r.flatten() for r in lam_all])
+    return ra_all, dec_all, lam_all
+
+
+@pytest.mark.parametrize("slice", [1, 17])
+def test_in_slice(slice, wcs_ifu_grating, ifu_world_coord):
+    """ Test that the number of valid outputs from a slice forward transform
+    equals the valid pixels within the slice from the slice backward transform.
+    """
+    ra_all, dec_all, lam_all = ifu_world_coord
+    im, refs = wcs_ifu_grating("G140H", "F100LP")
+    slice_wcs = nirspec.nrs_wcs_set_input(im, slice)
+    x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
+    xinv, yinv = in_ifu_slice(slice_wcs, ra_all, dec_all, lam_all)
+    r, d, _ = slice_wcs(x, y)
+    assert r[~np.isnan(r)].size == xinv.size

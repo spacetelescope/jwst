@@ -5,13 +5,16 @@ assign_wcs
 ----------
 
 - Open the specwcs reference file for WFSS modes using the ``with`` context
-  manger. [#6160]
+  manager. [#6160]
 
 - Fix bug in NIRspec where ``bounding_box`` can be oversized in height for
   some of the slits. [#6257]
 
 - Updated ``create_grism_bbox`` to be more robust against failures caused by
   bad input data. [#6309]
+
+- Added a function which given ra, dec, lambda computes which ones project
+  within a given NIRSpec IFU slice. [#6316]
 
 associations
 ------------
