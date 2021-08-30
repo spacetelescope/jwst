@@ -45,17 +45,19 @@ class CubeBlot():
         self.filter = None
         self.subchannel = None
         self.channel = None
-        self.par_median = None
+        self.par_median_select1 = None
+        self.par_median_select2 = None
 
         if self.instrument == 'MIRI':
             self.channel = median_model.meta.instrument.channel
             self.subchannel = median_model.meta.instrument.band.lower()
-            self.par_median = self.channel
+            self.par_median_select1 = self.channel
+            self.par_median_select2 = self.subchannel
 
         elif self.instrument == 'NIRSPEC':
             self.grating = median_model.meta.instrument.grating
             self.filter = median_model.meta.instrument.filter
-            self.par_median = self.grating
+            self.par_median_select1 = self.grating
         # ________________________________________________________________
         # set up x,y,z of Median Cube
         # Median cube shoud have linear wavelength
@@ -71,10 +73,11 @@ class CubeBlot():
         # cube_ra,dec,wave
         self.cube_flux = self.median_skycube.data
 
-        # remove all the nan values
+        # remove all the nan values - just in case 
         valid1 = ~np.isnan(self.cube_ra)
         valid2 = ~np.isnan(self.cube_dec)
         good_data = np.where(valid1 & valid2)
+
         self.cube_ra = self.cube_ra[good_data]
         self.cube_dec = self.cube_dec[good_data]
         self.cube_wave = self.cube_wave[good_data]
@@ -84,15 +87,22 @@ class CubeBlot():
         # read channel (MIRI) or grating (NIRSpec) value that the Median Image covers
         # only use input models in this range
         self.input_models = []
-        for model in input_models:
-            if self.instrument == 'MIRI':
-                par = model.meta.instrument.channel
-            if self.instrument == 'NIRSPEC':
-                par = model.meta.instrument.grating
+        self.input_list_number = []
 
-            found = par.find(self.par_median)
-            if found > -1:
+        for icount, model in enumerate(input_models):
+            if self.instrument == 'MIRI':
+                par1 = model.meta.instrument.channel
+                par2 = model.meta.instrument.band.lower()
+                found2 = par2.find(self.par_median_select2)
+            if self.instrument == 'NIRSPEC':
+                par1 = model.meta.instrument.grating
+                par2 = model.meta.instrument.grating
+                found2 = 1
+
+            found1 = par1.find(self.par_median_select1)
+            if found1 > -1 and found2 > -1:
                 self.input_models.append(model)
+                self.input_list_number.append(icount)
     # **********************************************************************
 
     def blot_info(self):
@@ -113,8 +123,6 @@ class CubeBlot():
             log.info('Grating %s', self.grating)
             log.info('Filter %s', self.filter)
 
-        log.info('Number of input models %i ', len(self.input_models))
-
     # ***********************************************************************
 
     def blot_images(self):
@@ -122,7 +130,7 @@ class CubeBlot():
             blotmodels = self.blot_images_miri()
         elif self.instrument == 'NIRSPEC':
             blotmodels = self.blot_images_nirspec()
-        return blotmodels
+        return blotmodels, self.input_list_number
     # ************************************************************************
 
     def blot_images_miri(self):
@@ -261,23 +269,37 @@ class CubeBlot():
                 # using forward transform to limit the ra and dec values to
                 # invert. The inverse transform for NIRSpec maps too many
                 ra, dec, lam = slice_wcs(x, y)
-                ramin = np.nanmin(ra)
-                ramax = np.nanmax(ra)
-                decmin = np.nanmin(dec)
-                decmax = np.nanmax(dec)
+                ramin = np.nanmin(ra) - self.median_skycube.meta.wcsinfo.cdelt1*2
+                ramax = np.nanmax(ra) + self.median_skycube.meta.wcsinfo.cdelt1*2
+                decmin = np.nanmin(dec) - self.median_skycube.meta.wcsinfo.cdelt2*2
+                decmax = np.nanmax(dec) + self.median_skycube.meta.wcsinfo.cdelt2*2
+                # print('min and max of cube ra',np.nanmin(self.cube_ra), np.nanmax(self.cube_ra))
+                # print('min and max of cube dec',np.nanmin(self.cube_dec), np.nanmax(self.cube_dec))
                 use1 = np.logical_and(self.cube_ra >= ramin, self.cube_ra <= ramax)
                 use2 = np.logical_and(self.cube_dec >= decmin, self.cube_dec <= decmax)
                 use = np.logical_and(use1, use2)
+                use1num = np.where(use1)
+                use2num = np.where(use2)
+                usenum = np.where(use)
+                # print('for model, slice info',ii,ramin,ramax,decmin,decmax,len(usenum[0]),
+                #      len(use1num[0]), len(use2num[0]))
 
                 ra_use = self.cube_ra[use]
                 dec_use = self.cube_dec[use]
                 wave_use = self.cube_wave[use]
                 flux_use = self.cube_flux[use]
 
+                #ra_use = self.cube_ra
+                #dec_use = self.cube_dec
+                #wave_use = self.cube_wave
+                #flux_use = self.cube_flux
+
                 # median cube ra,dec,wave -> x_slice, y_slice
+                # x_slice, y_slice = slice_wcs.invert(self.cube_ra, self.cube_dec, self.cube_wave)
                 x_slice, y_slice = slice_wcs.invert(ra_use, dec_use, wave_use)
                 x_slice = np.ndarray.flatten(x_slice)
                 y_slice = np.ndarray.flatten(y_slice)
+                # flux_slice = np.ndarray.flatten(self.cube_flux)
                 flux_slice = np.ndarray.flatten(flux_use)
 
                 # only use values what fall in bounding box of the slice
@@ -288,6 +310,9 @@ class CubeBlot():
 
                 # fuse = np.logical_and(xuse, yuse)
                 fuse = np.where(fgood & xuse & yuse)
+                xyuse = np.where(xuse & yuse)
+                print('number of values ',len(fuse[0]),len(xyuse[0]))
+
                 x_slice = x_slice[fuse]
                 y_slice = y_slice[fuse]
                 flux_slice = flux_slice[fuse]

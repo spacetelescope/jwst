@@ -202,7 +202,7 @@ class IFUCubeData():
                         '_internal_s3d.fits'
                 if self.output_type == 'single':
                     newname = self.output_name_base + ch_name + '-' + b_name + \
-                        '_single_s3d.fits'
+                        '-single_s3d.fits'
             # ________________________________________________________________________________
             elif self.instrument == 'NIRSPEC':
 
@@ -221,7 +221,7 @@ class IFUCubeData():
                 fg_name = fg_name.lower()
                 newname = self.output_name_base + fg_name + '_s3d.fits'
                 if self.output_type == 'single':
-                    newname = self.output_name_base + fg_name + '_single_s3d.fits'
+                    newname = self.output_name_base + fg_name + '-single_s3d.fits'
                 if self.coord_system == 'internal_cal':
                     newname = self.output_name_base + fg_name + '_internal_s3d.fits'
         # ______________________________________________________________________________
@@ -1878,16 +1878,6 @@ class IFUCubeData():
             # Reset to original
             ifucube_model.meta.model_type = saved_model_type
 # ______________________________________________________________________
-        if self.output_type == 'single':
-            with datamodels.open(model_ref) as input:
-                # define the cubename for each single
-                filename = input.meta.filename
-                indx = filename.rfind('.fits')
-                self.output_name_base = filename[:indx]
-                self.output_file = None
-                newname = self.define_cubename()
-                ifucube_model.meta.filename = newname
-# ______________________________________________________________________
 # fill in Channel for MIRI
         if self.instrument == 'MIRI':
             # fill in Channel output meta data
@@ -1899,6 +1889,27 @@ class IFUCubeData():
             outchannel = "".join(set(outchannel))
             outchannel = "".join(sorted(outchannel))
             ifucube_model.meta.instrument.channel = outchannel
+# ______________________________________________________________________
+# single files are created for a single band,
+
+        if self.output_type == 'single':
+            with datamodels.open(model_ref) as input:
+                # define the cubename for each single
+                filename = input.meta.filename
+                indx = filename.rfind('.fits')
+                self.output_name_base = filename[:indx]
+                self.output_file = None
+                newname = self.define_cubename()
+                ifucube_model.meta.filename = newname
+                # single files
+                if self.instrument == 'MIRI':
+                    outchannel = self.list_par1[0]
+                    outband = self.list_par2[0]
+                    ifucube_model.meta.instrument.channel = outchannel
+                    ifucube_model.meta.instrument.band = outband.upper()
+                else:
+                    outgrating = self.list_par1[0]
+                    ifucube_model.meta.instrument.grating = outgrating.upper()
 # ______________________________________________________________________
         ifucube_model.meta.wcsinfo.crval1 = self.crval1
         ifucube_model.meta.wcsinfo.crval2 = self.crval2

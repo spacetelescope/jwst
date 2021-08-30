@@ -74,7 +74,6 @@ class OutlierDetectionStep(Step):
                 self.input_container = False
             else:
                 self.input_container = True
-
             # Setup output path naming if associations are involved.
             asn_id = None
             try:
