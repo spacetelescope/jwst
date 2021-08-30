@@ -422,3 +422,16 @@ def test_resample_variance(nircam_rate, n_images):
     assert_allclose(result.err[5:-5,5:-5].mean(), err / np.sqrt(n_images), atol=1e-5)
     assert_allclose(result.var_rnoise[5:-5,5:-5].mean(), var_rnoise / n_images, atol=1e-7)
     assert_allclose(result.var_poisson[5:-5,5:-5].mean(), var_poisson / n_images, atol=1e-7)
+
+
+@pytest.mark.parametrize("shape", [(0, ), (10, 1)])
+def test_resample_undefined_variance(nircam_rate, shape):
+    """Test that resampled variance and error arrays are computed properly"""
+    im = AssignWcsStep.call(nircam_rate)
+    im.var_rnoise = np.ones(shape, dtype=im.var_rnoise.dtype.type)
+    im.var_poisson = np.ones(shape, dtype=im.var_poisson.dtype.type)
+    im.var_flat = np.ones(shape, dtype=im.var_flat.dtype.type)
+    im.meta.filename = "foo.fits"
+
+    c = ModelContainer([im])
+    ResampleStep.call(c, blendheaders=False)

@@ -10,6 +10,9 @@ assign_wcs
 - Fix bug in NIRspec where ``bounding_box`` can be oversized in height for
   some of the slits. [#6257]
 
+- Updated ``create_grism_bbox`` to be more robust against failures caused by
+  bad input data. [#6309]
+
 associations
 ------------
 
@@ -39,6 +42,8 @@ datamodels
 - Remove astropy.io registration of JwstDataModel. [#6179]
 
 - Update VELOSYS keyword comment [#6298]
+
+- Added new keywords FPE_SIDE and ICE_SIDE to core schema [#6314]
 
 extract_1d
 ----------
@@ -102,6 +107,8 @@ rscd
 ----
 
 - Removed support for deprecated step name 'RSCD_Step' [#6158]
+
+- Fix a crash in ``resample_spec`` due to undefined variance arrays. [#6305]
 
 source_catalog
 --------------
