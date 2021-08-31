@@ -102,7 +102,9 @@ _calculated_suffixes = set([
     'assignwcsstep',
     'skymatch',
     'extract_2d',
-    'cubebuildstep',
+    'cubebuildstep'
+    'residualfringstep',
+    'residual_fringe',
     'spec2nrslamp',
     'ipc',
     'refpix',
