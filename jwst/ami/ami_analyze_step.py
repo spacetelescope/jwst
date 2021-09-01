@@ -8,6 +8,9 @@ __all__ = ["AmiAnalyzeStep"]
 class AmiAnalyzeStep(Step):
     """Performs analysis of an AMI mode exposure by applying the LG algorithm.
     """
+
+    class_alias = "ami_analyze"
+
     spec = """
         oversample = integer(default=3, min=1)  # Oversampling factor
         rotation = float(default=0.0)           # Rotation initial guess [deg]

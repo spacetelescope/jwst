@@ -11,6 +11,8 @@ class SuperBiasStep(Step):
     super-bias reference data from the input science data model.
     """
 
+    class_alias = "superbias"
+
     spec = """
 
     """

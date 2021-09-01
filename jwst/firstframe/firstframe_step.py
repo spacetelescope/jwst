@@ -13,6 +13,8 @@ class FirstFrameStep(Step):
     first group.
     """
 
+    class_alias = "firstframe"
+
     def process(self, input):
 
         # Open the input data model

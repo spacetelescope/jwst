@@ -20,6 +20,8 @@ class AssignMTWcsStep(Step):
         A JWST association file.
     """
 
+    class_alias = "assign_mtwcs"
+
     spec = """
         suffix = string(default='assign_mtwcs')    # Default suffix for output files
         output_use_model = boolean(default=True)   # When saving use `DataModel.meta.filename`

@@ -13,6 +13,8 @@ class Extract2dStep(Step):
     This Step performs a 2D extraction of spectra.
     """
 
+    class_alias = "extract_2d"
+
     spec = """
         slit_name = string(default=None)
         extract_orders = int_list(default=None)  # list of orders to extract

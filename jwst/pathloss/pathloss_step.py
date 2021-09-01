@@ -13,6 +13,8 @@ class PathLossStep(Step):
     source is a point source.
     """
 
+    class_alias = "pathloss"
+
     spec = """
         inverse = boolean(default=False)    # Invert the operation
         source_type = string(default=None)  # Process as specified source type.

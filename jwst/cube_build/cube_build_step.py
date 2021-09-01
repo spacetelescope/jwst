@@ -32,6 +32,8 @@ class CubeBuildStep (Step):
 
     """
 
+    class_alias = "cube_build"
+
     spec = """
          channel = option('1','2','3','4','all',default='all') # Channel
          band = option('short','medium','long','all',default='all') # Band

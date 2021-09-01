@@ -15,6 +15,8 @@ class MasterBackgroundStep(Step):
     MasterBackgroundStep:  Compute and subtract master background from spectra
     """
 
+    class_alias = "master_background"
+
     spec = """
         user_background = string(default=None) # Path to user-supplied master background
         save_background = boolean(default=False) # Save computed master background
