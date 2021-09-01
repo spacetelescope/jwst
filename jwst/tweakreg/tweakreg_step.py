@@ -30,6 +30,8 @@ class TweakRegStep(Step):
     input images.
     """
 
+    class_alias = "tweakreg"
+
     spec = """
         save_catalogs = boolean(default=False) # Write out catalogs?
         catalog_format = string(default='ecsv') # Catalog output file format

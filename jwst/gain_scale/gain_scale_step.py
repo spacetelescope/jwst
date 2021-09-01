@@ -13,6 +13,8 @@ class GainScaleStep(Step):
     factor GAINFACT.
     """
 
+    class_alias = "gain_scale"
+
     reference_file_types = ['gain']
 
     def process(self, input):

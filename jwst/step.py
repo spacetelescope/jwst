@@ -43,7 +43,6 @@ from .resample.resample_step import ResampleStep
 from .resample.resample_spec_step import ResampleSpecStep
 from .reset.reset_step import ResetStep
 from .rscd.rscd_step import RscdStep
-from .rscd.rscd_step import RSCD_Step
 from .saturation.saturation_step import SaturationStep
 from .skymatch.skymatch_step import SkyMatchStep
 from .source_catalog.source_catalog_step import SourceCatalogStep
@@ -104,7 +103,6 @@ __all__ = [
     "ResampleSpecStep",
     "ResetStep",
     "RscdStep",
-    "RSCD_Step",
     "SaturationStep",
     "SkyMatchStep",
     "SourceCatalogStep",

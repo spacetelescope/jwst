@@ -44,6 +44,8 @@ class AssignWcsStep(Step):
         Input exposure.
     """
 
+    class_alias = "assign_wcs"
+
     spec = """
         sip_approx = boolean(default=True)  # enables SIP approximation for imaging modes.
         sip_max_pix_error = float(default=0.25)  # max err for SIP fit, forward.

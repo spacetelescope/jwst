@@ -27,6 +27,8 @@ class SourceCatalogStep(Step):
         A FITS filename or an `ImageModel` of a drizzled image.
     """
 
+    class_alias = "source_catalog"
+
     spec = """
         bkg_boxsize = integer(default=100)    # background mesh box size in pixels
         kernel_fwhm = float(default=2.0)      # Gaussian kernel FWHM in pixels
