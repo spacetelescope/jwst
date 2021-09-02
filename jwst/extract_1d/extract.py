@@ -229,7 +229,6 @@ def get_extract_parameters(
 
     meta : metadata for the actual input model, i.e. not just for the
         current slit.
-        Not currently used.
 
     smoothing_length : int or None
         Width of a boxcar function for smoothing the background regions.
@@ -392,7 +391,6 @@ def get_extract_parameters(
         # without regard for the distinction between point source and
         # extended source.
         extract_params['ref_file_type'] = ref_dict['ref_file_type']
-        foundit = False
         im = None
 
         for im in ref_dict['ref_model'].images:
@@ -402,10 +400,9 @@ def get_extract_parameters(
                 if im.spectral_order == sp_order or im.spectral_order >= ANY_ORDER:
                     extract_params['match'] = EXACT
                     extract_params['spectral_order'] = sp_order
-                    foundit = True
                     break
 
-        if foundit:
+        if extract_params['match'] == EXACT:
             extract_params['ref_image'] = im
             # Note that extract_params['dispaxis'] is not assigned.  This will be done later, possibly slit by slit.
             if smoothing_length is None:
@@ -2919,189 +2916,8 @@ def do_extract1d(
         save_use_source_posn = use_source_posn
 
         for slit in slits:  # Loop over the slits in the input model
-            log.info(f'Working on slit {slit.name}')
-            slitname = slit.name
-            prev_offset = OFFSET_NOT_ASSIGNED_YET
-            use_source_posn = save_use_source_posn  # restore original value
 
-            if np.size(slit.data) <= 0:
-                log.info(f'No data for slit {slit.name}, skipping ...')
-                continue
-
-            sp_order = get_spectral_order(slit)
-            if sp_order == 0 and not prism_mode:
-                log.info("Spectral order 0 is a direct image, skipping ...")
-                continue
-
-            # Turn off use_source_posn if the source is not POINT
-            source_type = slit.source_type
-            if source_type != 'POINT':
-                use_source_posn = False
-                log.info(f"Setting use_source_posn to False for source type {source_type}")
-
-            # Turn off use_source_posn if working on non-primary NRS fixed slits
-            if exp_type == 'NRS_FIXEDSLIT' and slitname != slit.meta.instrument.fixed_slit:
-                use_source_posn = False
-                log.info("Can only compute source location for primary NIRSpec slit, ")
-                log.info("so setting use_source_posn to False")
-
-            extract_params = get_extract_parameters(
-                extract_ref_dict,
-                slit,
-                slit.name,
-                sp_order,
-                input_model.meta,
-                smoothing_length,
-                bkg_fit,
-                bkg_order,
-                use_source_posn
-            )
-
-            if subtract_background is not None:
-                extract_params['subtract_background'] = subtract_background
-
-            if extract_params['match'] == NO_MATCH:
-                log.critical('Missing extraction parameters.')
-                raise ValueError('Missing extraction parameters.')
-            elif extract_params['match'] == PARTIAL:
-                log.info(f'Spectral order {sp_order} not found, skipping ...')
-                continue
-
-            extract_params['dispaxis'] = slit.meta.wcsinfo.dispersion_direction
-
-            if extract_params['dispaxis'] is None:
-                log.warning("The dispersion direction information is missing, so skipping ...")
-                continue
-
-            if photom_has_been_run:
-                pixel_solid_angle = slit.meta.photometry.pixelarea_steradians
-
-                if pixel_solid_angle is None:
-                    pixel_solid_angle = 1.
-                    log.warning("Pixel area (solid angle) is not populated; the flux will not be correct.")
-            else:
-                pixel_solid_angle = 1.  # not needed
-
-            try:
-                ra, dec, wavelength, temp_flux, f_var_poisson,\
-                    f_var_rnoise, f_var_flat, background, b_var_poisson,\
-                    b_var_rnoise, b_var_flat, npixels, dq, prev_offset = extract_one_slit(
-                        input_model,
-                        slit,
-                        -1,  # Integration number is not relevant in this case
-                        prev_offset,
-                        True,
-                        extract_params
-                    )
-            except InvalidSpectralOrderNumberError as e:
-                log.info(f'{str(e)}, skipping ...')
-                continue
-
-            # Convert the sum to an average, for surface brightness.
-            npixels_temp = np.where(npixels > 0., npixels, 1.)
-            surf_bright = temp_flux / npixels_temp  # may be reset below
-            sb_var_poisson = f_var_poisson / npixels_temp
-            sb_var_rnoise = f_var_rnoise / npixels_temp
-            sb_var_flat = f_var_flat / npixels_temp
-            background /= npixels_temp
-            b_var_poisson = b_var_poisson / npixels_temp
-            b_var_rnoise = b_var_rnoise / npixels_temp
-            b_var_flat = b_var_flat / npixels_temp
-
-            del npixels_temp
-
-            # Convert to flux density.
-            # The input units will normally be MJy / sr, but for NIRSpec and NIRISS SOSS point-source spectra the units
-            # will be MJy.
-            input_units_are_megajanskys = (
-                photom_has_been_run
-                and source_type == 'POINT'
-                and (instrument == 'NIRSPEC' or exp_type == 'NIS_SOSS')
-
-            )
-
-            if photom_has_been_run:
-                # for NIRSpec data and NIRISS SOSS, point source
-                if input_units_are_megajanskys:
-                    flux = temp_flux * 1.e6  # MJy --> Jy
-                    f_var_poisson *= 1.e12  # MJy**2 --> Jy**2
-                    f_var_rnoise *= 1.e12  # MJy**2 --> Jy**2
-                    f_var_flat *= 1.e12  # MJy**2 --> Jy**2
-                    surf_bright[:] = 0.
-                    sb_var_poisson[:] = 0.
-                    sb_var_rnoise[:] = 0.
-                    sb_var_flat[:] = 0.
-                    background[:] /= pixel_solid_angle  # MJy / sr
-                    b_var_poisson /= pixel_solid_angle
-                    b_var_rnoise /= pixel_solid_angle
-                    b_var_flat /= pixel_solid_angle
-
-                else:
-                    flux = temp_flux * pixel_solid_angle * 1.e6  # MJy / steradian --> Jy
-                    f_var_poisson *= (pixel_solid_angle**2 * 1.e12)  # (MJy / sr)**2 --> Jy**2
-                    f_var_rnoise *= (pixel_solid_angle**2 * 1.e12)  # (MJy / sr)**2 --> Jy**2
-                    f_var_flat *= (pixel_solid_angle**2 * 1.e12)  # (MJy / sr)**2 --> Jy**2
-                    # surf_bright was assigned above
-            else:
-                flux = temp_flux  # count rate
-
-            del temp_flux
-
-            error = np.sqrt(f_var_poisson + f_var_rnoise + f_var_flat)
-            sb_error = np.sqrt(sb_var_poisson + sb_var_rnoise + sb_var_flat)
-            berror = np.sqrt(b_var_poisson + b_var_rnoise + b_var_flat)
-
-            otab = np.array(
-                list(
-                    zip(wavelength, flux, error, f_var_poisson,f_var_rnoise, f_var_flat,
-                        surf_bright, sb_error, sb_var_poisson, sb_var_rnoise, sb_var_flat,
-                        dq, background, berror, b_var_poisson, b_var_rnoise, b_var_flat, npixels)
-                ),
-                dtype=spec_dtype
-            )
-
-            spec = datamodels.SpecModel(spec_table=otab)
-            spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
-            spec.spec_table.columns['wavelength'].unit = 'um'
-            spec.spec_table.columns['flux'].unit = flux_units
-            spec.spec_table.columns['flux_error'].unit = flux_units
-            spec.spec_table.columns['flux_var_poisson'].unit = f_var_units
-            spec.spec_table.columns['flux_var_rnoise'].unit = f_var_units
-            spec.spec_table.columns['flux_var_flat'].unit = f_var_units
-            spec.spec_table.columns['surf_bright'].unit = sb_units
-            spec.spec_table.columns['sb_error'].unit = sb_units
-            spec.spec_table.columns['sb_var_poisson'].unit = sb_var_units
-            spec.spec_table.columns['sb_var_rnoise'].unit = sb_var_units
-            spec.spec_table.columns['sb_var_flat'].unit = sb_var_units
-            spec.spec_table.columns['background'].unit = sb_units
-            spec.spec_table.columns['bkgd_error'].unit = sb_units
-            spec.spec_table.columns['bkgd_var_poisson'].unit = sb_var_units
-            spec.spec_table.columns['bkgd_var_rnoise'].unit = sb_var_units
-            spec.spec_table.columns['bkgd_var_flat'].unit = sb_var_units
-            spec.slit_ra = ra
-            spec.slit_dec = dec
-            spec.spectral_order = sp_order
-            spec.dispersion_direction = extract_params['dispaxis']
-            copy_keyword_info(slit, slit.name, spec)
-
-            if source_type is not None and source_type.upper() == 'POINT' and apcorr_ref_model is not None:
-                log.info('Applying Aperture correction.')
-                # NIRSpec needs to use a wavelength in the middle of the range rather then the beginning of the range
-                # for calculating the pixel scale since some wavelengths at the edges of the range won't map to the sky
-                if instrument == 'NIRSPEC':
-                    wl = np.median(wavelength)
-                else:
-                    wl = wavelength.min()
-
-                match_kwargs = {'location': (ra, dec, wl)}
-                if exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
-                    match_kwargs['slit'] = slitname
-
-                apcorr = select_apcorr(input_model)(
-                    input_model, apcorr_ref_model.apcorr_table, apcorr_ref_model.sizeunit,
-                    slit_name=slitname, **match_kwargs
-                )
-                apcorr.apply(spec.spec_table)
+            # TODO : call the multislit_byslit fragment
 
             output_model.spec.append(spec)
     else:
