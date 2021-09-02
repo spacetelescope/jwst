@@ -338,7 +338,7 @@ During :ref:`calwebb_spec2 <calwebb_spec2>` processing, all source and backgroun
 slits are first partially calibrated up through the :ref:`extract_2d <extract_2d_step>`
 and :ref:`srctype <srctype_step>` steps of :ref:`calwebb_spec2 <calwebb_spec2>`,
 which results in 2D cutouts for each slit with the source type identified. At this
-point the :ref:`master_background_mos_step` step is applied, which is a unique version
+point the `master_background_mos_step` step is applied, which is a unique version
 of the step specifically tailored to NIRSpec MOS mode. 
 
 This version of the master background step completes the remaining calibration
