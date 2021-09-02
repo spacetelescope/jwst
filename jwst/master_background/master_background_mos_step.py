@@ -1,4 +1,4 @@
-"""Master Background Pipeline for applying Master Background to NIRSpec Slit-like data"""
+"""Master Background Pipeline for applying Master Background to NIRSpec MOS data"""
 from stpipe.step import preserve_step_pars
 
 from . import nirspec_utils
@@ -9,15 +9,15 @@ from ..pathloss import pathloss_step
 from ..photom import photom_step
 from ..stpipe import Pipeline
 
-__all__ = ['MasterBackgroundNrsSlitsStep']
+__all__ = ['MasterBackgroundMosStep']
 
 # Step parameters to generally ignore when copying from the parent steps.
 GLOBAL_PARS_TO_IGNORE = ['output_ext', 'output_file', 'output_use_model', 'output_use_index',
                          'inverse', 'pre_hooks', 'post_hooks', 'save_results', 'suffix']
 
 
-class MasterBackgroundNrsSlitsStep(Pipeline):
-    """Apply master background processing to NIRSpec Slit-like data
+class MasterBackgroundMosStep(Pipeline):
+    """Apply master background processing to NIRSpec MOS data
 
     For MOS, and ignoring FS, the calibration process needs to occur
     twice: Once to calibrate background slits and create a master background.
@@ -42,7 +42,7 @@ class MasterBackgroundNrsSlitsStep(Pipeline):
       - Subtract the background from the input slit data
     """
 
-    class_alias = "master_background_nrs"
+    class_alias = "master_background_mos"
 
     spec = """
         force_subtract = boolean(default=False)  # Force subtracting master background
@@ -107,7 +107,7 @@ class MasterBackgroundNrsSlitsStep(Pipeline):
             if not self.force_subtract and \
                'COMPLETE' in [data_model.meta.cal_step.back_sub, data_model.meta.cal_step.master_background]:
                 self.log.info('Background subtraction has already occurred. Skipping.')
-                self.record_step_status(data, 'master_background', False)
+                self.record_step_status(data, 'master_background_mos', False)
                 return data
 
             if self.user_background:
@@ -122,11 +122,11 @@ class MasterBackgroundNrsSlitsStep(Pipeline):
                 num_bkg, num_src = self._classify_slits(data_model)
                 if num_bkg == 0:
                     self.log.warning('No background slits available for creating master background. Skipping')
-                    self.record_step_status(data, 'master_background', False)
+                    self.record_step_status(data, 'master_background_mos', False)
                     return data
                 elif num_src == 0:
                     self.log.warning('No source slits for applying master background. Skipping')
-                    self.record_step_status(data, 'master_background', False)
+                    self.record_step_status(data, 'master_background_mos', False)
                     return data
 
                 self.log.info('Calculating master background')
@@ -135,14 +135,14 @@ class MasterBackgroundNrsSlitsStep(Pipeline):
             # Check that a master background was actually determined.
             if master_background is None:
                 self.log.info('No master background could be calculated. Skipping.')
-                self.record_step_status(data, 'master_background', False)
+                self.record_step_status(data, 'master_background_mos', False)
                 return data
 
             # Now apply the de-calibrated background to the original science
             result = nirspec_utils.apply_master_background(data_model, mb_multislit, inverse=self.inverse)
 
             # Mark as completed and setup return data
-            self.record_step_status(result, 'master_background', True)
+            self.record_step_status(result, 'master_background_mos', True)
             self.correction_pars = {
                 'masterbkg_1d': master_background,
                 'masterbkg_2d': mb_multislit
