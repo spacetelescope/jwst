@@ -1,3 +1,25 @@
+1.3.2 (2021-09-02)
+==================
+
+associations
+------------
+
+- Enhanced level-2b ASN rules for NIRSpec internal lamp exposures to
+  handle certain opmode/grating/lamp combinations that result in no data
+  on one of the detectors. [#6304]
+
+cube_build
+----------
+
+- Fix bug when creating cubes using output_type=channel. [#6138]
+
+pipeline
+--------
+
+- Updated calwebb_tso3 to be more robust in handling null results from
+  the ``tso_photometry`` step. [#6265]
+
+
 1.3.1 (2021-08-09)
 ==================
 
