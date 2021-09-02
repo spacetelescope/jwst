@@ -2,9 +2,11 @@
 """
 import numpy as np
 import logging
+import time
 from .. import datamodels
 from ..assign_wcs import nirspec
 from gwcs import wcstools
+from jwst.assign_wcs.util import in_ifu_slice
 from . import instrument_defaults
 from .blot_median import blot_wrapper  # c extension
 log = logging.getLogger(__name__)
@@ -129,7 +131,10 @@ class CubeBlot():
         if self.instrument == 'MIRI':
             blotmodels = self.blot_images_miri()
         elif self.instrument == 'NIRSPEC':
+            t1 = time.time()
             blotmodels = self.blot_images_nirspec()
+            t2 = time.time()
+            print('***** Total time to blot', t2 - t1)
         return blotmodels, self.input_list_number
     # ************************************************************************
 
@@ -244,6 +249,8 @@ class CubeBlot():
         blot_models = datamodels.ModelContainer()
 
         for model in self.input_models:
+            t1 = time.time()
+            
             blot_ysize, blot_xsize = model.shape
             ntotal = blot_ysize * blot_xsize
             blot_flux = np.zeros(ntotal, dtype=np.float32)
@@ -265,69 +272,43 @@ class CubeBlot():
                 # for each slice pull out the blotted values that actually fall on the slice region
                 # use the bounding box of each slice to determine the slice limits
                 slice_wcs = nirspec.nrs_wcs_set_input(model, ii)
-                x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
-                # using forward transform to limit the ra and dec values to
-                # invert. The inverse transform for NIRSpec maps too many
-                ra, dec, lam = slice_wcs(x, y)
-                ramin = np.nanmin(ra) - self.median_skycube.meta.wcsinfo.cdelt1*2
-                ramax = np.nanmax(ra) + self.median_skycube.meta.wcsinfo.cdelt1*2
-                decmin = np.nanmin(dec) - self.median_skycube.meta.wcsinfo.cdelt2*2
-                decmax = np.nanmax(dec) + self.median_skycube.meta.wcsinfo.cdelt2*2
-                # print('min and max of cube ra',np.nanmin(self.cube_ra), np.nanmax(self.cube_ra))
-                # print('min and max of cube dec',np.nanmin(self.cube_dec), np.nanmax(self.cube_dec))
-                use1 = np.logical_and(self.cube_ra >= ramin, self.cube_ra <= ramax)
-                use2 = np.logical_and(self.cube_dec >= decmin, self.cube_dec <= decmax)
-                use = np.logical_and(use1, use2)
-                use1num = np.where(use1)
-                use2num = np.where(use2)
-                usenum = np.where(use)
-                # print('for model, slice info',ii,ramin,ramax,decmin,decmax,len(usenum[0]),
-                #      len(use1num[0]), len(use2num[0]))
+                slicer2world = slice_wcs.get_transform('slicer','world')
+                detector2slicer = slice_wcs.get_transform('detector','slicer')
 
-                ra_use = self.cube_ra[use]
-                dec_use = self.cube_dec[use]
-                wave_use = self.cube_wave[use]
-                flux_use = self.cube_flux[use]
-
-                #ra_use = self.cube_ra
-                #dec_use = self.cube_dec
-                #wave_use = self.cube_wave
-                #flux_use = self.cube_flux
-
-                # median cube ra,dec,wave -> x_slice, y_slice
-                # x_slice, y_slice = slice_wcs.invert(self.cube_ra, self.cube_dec, self.cube_wave)
-                x_slice, y_slice = slice_wcs.invert(ra_use, dec_use, wave_use)
-                x_slice = np.ndarray.flatten(x_slice)
-                y_slice = np.ndarray.flatten(y_slice)
-                # flux_slice = np.ndarray.flatten(self.cube_flux)
-                flux_slice = np.ndarray.flatten(flux_use)
-
+                # get the indices of elements on the slice
+                onslice_ind = in_ifu_slice(slice_wcs,self.cube_ra,self.cube_dec,self.cube_wave)
+                slx, sly, sllam = slicer2world.inverse(self.cube_ra, self.cube_dec, self.cube_wave)
+                xslice,yslice = detector2slicer.inverse(slx[onslice_ind], sly[onslice_ind],
+                                                        sllam[onslice_ind])
+                raslice = self.cube_ra[onslice_ind]
+                decslice = self.cube_dec[onslice_ind]
+                lamslice = self.cube_wave[onslice_ind]
+                fluxslice = self.cube_flux[onslice_ind]
                 # only use values what fall in bounding box of the slice
                 xlimit, ylimit = slice_wcs.bounding_box
-                xuse = np.logical_and(x_slice >= xlimit[0], x_slice <= xlimit[1])
-                yuse = np.logical_and(y_slice >= ylimit[0], y_slice <= ylimit[1])
-                fgood = (flux_slice != 0)  # edge cube pixel may = 0
 
-                # fuse = np.logical_and(xuse, yuse)
-                fuse = np.where(fgood & xuse & yuse)
-                xyuse = np.where(xuse & yuse)
-                print('number of values ',len(fuse[0]),len(xyuse[0]))
-
-                x_slice = x_slice[fuse]
-                y_slice = y_slice[fuse]
-                flux_slice = flux_slice[fuse]
+                xuse= np.logical_and(xslice >= xlimit[0], xslice <= xlimit[1])
+                yuse = np.logical_and(yslice >= ylimit[0], yslice <= ylimit[1])
+                use = np.logical_and(xuse,yuse)
+                xuse = xslice[use]
+                yuse = yslice[use]
+                ra_use = raslice[use]
+                dec_use = decslice[use]
+                lam_use = lamslice[use]
+                flux_use = fluxslice[use]
 
                 if ii == 0:
-                    x_total = x_slice
-                    y_total = y_slice
-                    flux_total = flux_slice
+                    x_total = xuse
+                    y_total = yuse
+                    flux_total = flux_use
                 else:
-                    x_total = np.concatenate((x_total, x_slice))
-                    y_total = np.concatenate((y_total, y_slice))
-                    flux_total = np.concatenate((flux_total, flux_slice))
+                    x_total = np.concatenate((x_total, xuse))
+                    y_total = np.concatenate((y_total, yuse))
+                    flux_total = np.concatenate((flux_total, flux_use))
 
             # end looping over the 30 slices
             # set up c wrapper for blotting
+            t2 = time.time()
             xstart = 0
             xsize2 = blot_xsize
 
@@ -348,4 +329,8 @@ class CubeBlot():
             blot_flux = blot_flux.reshape((blot_ysize, blot_xsize))
             blot.data = blot_flux
             blot_models.append(blot)
+            t3 = time.time()
+            print('Time to set up blotting',t2 -t1)
+            print('Time to blot wrapper', t3 - t2)
+            
         return blot_models

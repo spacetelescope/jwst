@@ -1141,6 +1141,8 @@ def in_ifu_slice(slice_wcs, ra, dec, lam):
 
     # Compute the slice X coordinate using the center of the slit.
     SLX, _, _ = slice_wcs.get_transform('slit_frame', 'slicer')(0, 0, 2e-6)
-    onslice_ind = np.isclose(slx, SLX)
-    x, y = detector2slicer.inverse(slx[onslice_ind], sly[onslice_ind], sllam[onslice_ind])
-    return x, y
+    onslice_ind = np.isclose(slx, SLX,atol = 5e-4)
+    #x, y = detector2slicer.inverse(slx[onslice_ind], sly[onslice_ind], sllam[onslice_ind])
+    return onslice_ind
+
+
