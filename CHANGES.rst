@@ -22,23 +22,6 @@ associations
 - Fix bug causing ``pytest`` to encounter an error in test collection when
   running with recent commits to ``astropy`` main (``5.0.dev``). [#6176]
 
-- Enhanced level-2b ASN rules for NIRSpec internal lamp exposures to
-  handle certain opmode/grating/lamp combinations that result in no data
-  on one of the detectors. [#6304]
-
-cube_build
-----------
-
-- Fix bug when creating cubes using output_type=channel. [#6138]
-
-- Move computationally intensive routines to C extensions and
-  removed miri psf weight function. [#6093]
-
-- Moved cube blotting to a C extension [#6256]
-
-- Moved variable definitions to top of code in C extension to
-  support changes in #6093. [#6255]
-
 datamodels
 ----------
 
@@ -91,9 +74,6 @@ pipeline
 
 - Added wfss_contam step to `calwebb_spec2` pipeline flow for WFSS modes [#6207]
 
-- Updated calwebb_tso3 to be more robust in handling null results from
-  the ``tso_photometry`` step. [#6265]
-
 ramp_fitting
 ------------
 
@@ -136,6 +116,37 @@ wfss_contam
 
 - Fixed handling of filter/pupil names for NIRISS WFSS mode [#6233]
 
+
+1.3.2 (2021-09-03)
+==================
+
+associations
+------------
+
+- Enhanced level-2b ASN rules for NIRSpec internal lamp exposures to
+  handle certain opmode/grating/lamp combinations that result in no data
+  on one of the detectors. [#6304]
+
+cube_build
+----------
+
+- Fix bug when creating cubes using output_type=channel. [#6138]
+
+- Move computationally intensive routines to c extensions and
+  removed miri psf weight function. [#6093]
+
+- Moved variable definitions to top of code in c extension to
+  support changes in #6093. [#6255]
+
+- Moved cube blotting to a c extension [#6256]
+
+pipeline
+--------
+
+- Updated calwebb_tso3 to be more robust in handling null results from
+  the ``tso_photometry`` step. [#6265]
+
+
 1.3.1 (2021-08-09)
 ==================
 
@@ -143,6 +154,7 @@ lib
 ---
 
 - Fixed a bug in set_telescope_pointing that was setting wrong meta for the pointing quality [#6264]
+
 
 1.3.0 (2021-07-31)
 ==================
@@ -187,6 +199,7 @@ wfs_combine
 
 - Fixed the refine option to correctly use the cross correlation to align
   the images if the WCS is off [#6101]
+
 
 1.2.3 (2021-06-08)
 ==================
