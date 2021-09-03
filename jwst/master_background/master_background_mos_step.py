@@ -107,7 +107,7 @@ class MasterBackgroundMosStep(Pipeline):
             if not self.force_subtract and \
                'COMPLETE' in [data_model.meta.cal_step.back_sub, data_model.meta.cal_step.master_background]:
                 self.log.info('Background subtraction has already occurred. Skipping.')
-                self.record_step_status(data, 'master_background_mos', False)
+                self.record_step_status(data, 'master_background', False)
                 return data
 
             if self.user_background:
@@ -122,11 +122,11 @@ class MasterBackgroundMosStep(Pipeline):
                 num_bkg, num_src = self._classify_slits(data_model)
                 if num_bkg == 0:
                     self.log.warning('No background slits available for creating master background. Skipping')
-                    self.record_step_status(data, 'master_background_mos', False)
+                    self.record_step_status(data, 'master_background', False)
                     return data
                 elif num_src == 0:
                     self.log.warning('No source slits for applying master background. Skipping')
-                    self.record_step_status(data, 'master_background_mos', False)
+                    self.record_step_status(data, 'master_background', False)
                     return data
 
                 self.log.info('Calculating master background')
@@ -135,14 +135,14 @@ class MasterBackgroundMosStep(Pipeline):
             # Check that a master background was actually determined.
             if master_background is None:
                 self.log.info('No master background could be calculated. Skipping.')
-                self.record_step_status(data, 'master_background_mos', False)
+                self.record_step_status(data, 'master_background', False)
                 return data
 
             # Now apply the de-calibrated background to the original science
             result = nirspec_utils.apply_master_background(data_model, mb_multislit, inverse=self.inverse)
 
             # Mark as completed and setup return data
-            self.record_step_status(result, 'master_background_mos', True)
+            self.record_step_status(result, 'master_background', True)
             self.correction_pars = {
                 'masterbkg_1d': master_background,
                 'masterbkg_2d': mb_multislit
