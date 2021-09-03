@@ -11,6 +11,7 @@ import pytest
 import numpy as np
 from astropy.io import fits
 from stdatamodels import DataModel
+from stdatamodels.validate import ValidationError, ValidationWarning
 
 from jwst.datamodels import (JwstDataModel, ModelContainer, ImageModel,
                              RampModel, CubeModel, ReferenceFileModel, ReferenceImageModel,
@@ -287,3 +288,41 @@ def test_open_asdf(tmp_path):
 
     with datamodels.open(path) as m:
         assert isinstance(m, DataModel)
+
+
+def test_open_kwargs_asdf(tmp_path):
+    """
+    Test that unrecognized kwargs to the datamodels.open function
+    are passed on to the model class constructor.
+    """
+    file_path = tmp_path / "test.asdf"
+
+    with pytest.warns(ValidationWarning):
+        model = ImageModel((4, 4), pass_invalid_values=True)
+        model.meta.instrument.name = "CELESTRON"
+        model.save(file_path)
+
+    with pytest.raises(ValidationError):
+        with datamodels.open(file_path, strict_validation=True) as model:
+            model.validate()
+
+
+def test_open_kwargs_fits(tmp_path):
+    """
+    Test that unrecognized kwargs to the datamodels.open function
+    are passed on to the model class constructor.  Similar to the
+    above, except the invalid file must be created differently
+    because DataModel can't save an invalid .fits file.
+    """
+    file_path = tmp_path / "test.fits"
+
+    model = ImageModel((4, 4))
+    model.save(file_path)
+
+    with fits.open(file_path, mode="update") as hdul:
+        hdul[0].header["INSTRUME"] = "CELESTRON"
+        hdul.flush()
+
+    with pytest.raises(ValidationError):
+        with datamodels.open(file_path, strict_validation=True) as model:
+            model.validate()

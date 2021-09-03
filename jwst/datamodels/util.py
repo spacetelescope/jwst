@@ -44,7 +44,7 @@ def open(init=None, memmap=False, **kwargs):
 
         - shape tuple: Initialize with empty data of the given shape
 
-        - file path: Initialize from the given file (FITS , JSON or ASDF)
+        - file path: Initialize from the given file (FITS, JSON or ASDF)
 
         - readable file object: Initialize from the given file object
 
@@ -57,16 +57,26 @@ def open(init=None, memmap=False, **kwargs):
         - dict: The object model tree for the data model
 
     memmap : bool
-        Turn memmap of FITS file on or off.  (default: False).  Ignored for
-        ASDF files.
+        Turn memmap of file on or off.  (default: False).
 
     kwargs : dict
-        Additional keyword arguments passed to lower level functions. These arguments
-        are generally file format-specific. Arguments of note are:
+        Additional keyword arguments passed to the DataModel constructor.  Some arguments
+        are general, others are file format-specific.  Arguments of note are:
+
+        - General
+
+           validate_arrays : bool
+             If `True`, arrays will be validated against ndim, max_ndim, and datatype
+             validators in the schemas.
 
         - FITS
 
-           skip_fits_update - bool or None
+           cast_fits_arrays : bool
+             If `True`, arrays will be cast to the dtype described by the schema
+             when read from a FITS file.
+             If `False`, arrays will be read without casting.
+
+           skip_fits_update :  bool or None
               `True` to skip updating the ASDF tree from the FITS headers, if possible.
               If `None`, value will be taken from the environmental SKIP_FITS_UPDATE.
               Otherwise, the default value is `True`.
@@ -92,11 +102,11 @@ def open(init=None, memmap=False, **kwargs):
         init = str(init)
 
     if init is None:
-        return model_base.JwstDataModel(None)
+        return model_base.JwstDataModel(None, **kwargs)
 
     elif isinstance(init, model_base.JwstDataModel):
         # Copy the object so it knows not to close here
-        return init.__class__(init)
+        return init.__class__(init, **kwargs)
 
     elif isinstance(init, (str, bytes)) or hasattr(init, "read"):
         # If given a string, presume its a file path.
@@ -122,17 +132,20 @@ def open(init=None, memmap=False, **kwargs):
 
         elif file_type == "asdf":
             if s3_utils.is_s3_uri(init):
-                asdffile = asdf.open(s3_utils.get_object(init), **kwargs)
+                asdffile = asdf.open(s3_utils.get_object(init), copy_arrays=not memmap)
             else:
-                asdffile = asdf.open(init, **kwargs)
+                asdffile = asdf.open(init, copy_arrays=not memmap)
 
             # Detect model type, then get defined model, and call it.
             new_class = _class_from_model_type(asdffile)
             if new_class is None:
                 # No model class found, so return generic DataModel.
-                return model_base.JwstDataModel(asdffile, **kwargs)
+                model = model_base.JwstDataModel(asdffile, **kwargs)
+                _handle_missing_model_type(model, file_name)
+            else:
+                model = new_class(asdffile, **kwargs)
 
-            return new_class(asdffile)
+            return model
 
     elif isinstance(init, tuple):
         for item in init:
@@ -204,16 +217,20 @@ def open(init=None, memmap=False, **kwargs):
         model._file_references.append(_FileReference(file_to_close))
 
     if not has_model_type:
-        class_name = new_class.__name__.split('.')[-1]
-        if file_name:
-            warnings.warn(f"model_type not found. Opening {file_name} as a {class_name}",
-                          NoTypeWarning)
-        try:
-            delattr(model.meta, 'model_type')
-        except AttributeError:
-            pass
+        _handle_missing_model_type(model, file_name)
 
     return model
+
+
+def _handle_missing_model_type(model, file_name):
+    if file_name:
+        class_name = model.__class__.__name__.split('.')[-1]
+        warnings.warn(f"model_type not found. Opening {file_name} as a {class_name}",
+                      NoTypeWarning)
+    try:
+        delattr(model.meta, 'model_type')
+    except AttributeError:
+        pass
 
 
 def _class_from_model_type(init):
