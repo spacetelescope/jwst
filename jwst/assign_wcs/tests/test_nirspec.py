@@ -984,7 +984,7 @@ def test_in_slice(slice, wcs_ifu_grating, ifu_world_coord):
     onslice_ind = in_ifu_slice(slice_wcs, ra_all, dec_all, lam_all)
     slx, sly, sllam = slicer2world.inverse(ra_all, dec_all, lam_all)
     xinv,yinv = detector2slicer.inverse(slx[onslice_ind], sly[onslice_ind],
-                                            sllam[onslice_ind])
+                                        sllam[onslice_ind])
 
     r, d, _ = slice_wcs(x, y)
     assert r[~np.isnan(r)].size == xinv.size
