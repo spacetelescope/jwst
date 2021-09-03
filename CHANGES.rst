@@ -16,11 +16,35 @@ assign_wcs
 - Added a function which given ra, dec, lambda computes which ones project
   within a given NIRSpec IFU slice. [#6316]
 
+- Changed in_ifu_slice in util.py to return the indices of elements in slice.
+  Also the x tolerance on finding slice elements was increased. [#6326] 
+
 associations
 ------------
 
 - Fix bug causing ``pytest`` to encounter an error in test collection when
   running with recent commits to ``astropy`` main (``5.0.dev``). [#6176]
+
+
+- Enhanced level-2b ASN rules for NIRSpec internal lamp exposures to
+  handle certain opmode/grating/lamp combinations that result in no data
+  on one of the detectors. [#6304]
+
+cube_build
+----------
+
+- Fix bug when creating cubes using output_type=channel. [#6138]
+
+- Move computationally intensive routines to C extensions and
+  removed miri psf weight function. [#6093]
+
+- Moved cube blotting to a C extension [#6256]
+
+- Moved variable definitions to top of code in C extension to
+  support changes in #6093. [#6255]
+
+- Using assign_wsc.utils.in_ifu_slice function to determine which NIRSpec
+  sky values mapped to each detector slice. [#6326] 
 
 datamodels
 ----------
