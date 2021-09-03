@@ -31,6 +31,12 @@ datamodels
 
 - Added new keywords FPE_SIDE and ICE_SIDE to core schema [#6314]
 
+- Fix bug preventing extra arguments when calling ``datamodels.open``
+  on an ASDF file. [#6327]
+
+- Implement memmap argument when calling ``datamodels.open`` on an ASDF
+  file. [#6327]
+
 extract_1d
 ----------
 
