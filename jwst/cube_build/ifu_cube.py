@@ -202,7 +202,7 @@ class IFUCubeData():
                         '_internal_s3d.fits'
                 if self.output_type == 'single':
                     newname = self.output_name_base + ch_name + '-' + b_name + \
-                        '-single_s3d.fits'
+                        '_single_s3d.fits'
             # ________________________________________________________________________________
             elif self.instrument == 'NIRSPEC':
 
@@ -221,7 +221,7 @@ class IFUCubeData():
                 fg_name = fg_name.lower()
                 newname = self.output_name_base + fg_name + '_s3d.fits'
                 if self.output_type == 'single':
-                    newname = self.output_name_base + fg_name + '-single_s3d.fits'
+                    newname = self.output_name_base + fg_name + '_single_s3d.fits'
                 if self.coord_system == 'internal_cal':
                     newname = self.output_name_base + fg_name + '_internal_s3d.fits'
         # ______________________________________________________________________________
