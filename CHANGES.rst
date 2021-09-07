@@ -60,6 +60,12 @@ lib
 - Updated default suffix names for RampFit and GuiderCDS steps to
   'ramp_fit' and 'guider_cds' to match alias convention [#6158]
 
+master_background
+-----------------
+
+- Renamed MasterBackgroundNrsSlitsStep with alias master_background_nrs
+  to MasterBackgroundMosStep with alias master_background_mos [#6321]
+
 outlier_detection
 -----------------
 
