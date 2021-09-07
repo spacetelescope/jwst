@@ -58,7 +58,7 @@ SUFFIXES_TO_DISCARD = ['engdblogstep', 'functionwrapper', 'pipeline', 'rscd_step
 # Calculated suffixes.
 # This is produced by the `find_suffixes` function below
 _calculated_suffixes = {
-    'masterbackgroundnrsslitsstep',
+    'masterbackgroundmosstep',
     'ami3pipeline',
     'whitelightstep',
     'ami_average',

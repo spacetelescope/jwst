@@ -1,4 +1,4 @@
 from .master_background_step import MasterBackgroundStep
-from .master_background_nrs_slits_step import MasterBackgroundNrsSlitsStep
+from .master_background_mos_step import MasterBackgroundMosStep
 
-__all__ = ['MasterBackgroundStep', 'MasterBackgroundNrsSlitsStep']
+__all__ = ['MasterBackgroundStep', 'MasterBackgroundMosStep']
