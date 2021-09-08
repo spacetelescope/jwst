@@ -41,8 +41,6 @@ class OutlierDetectionStep(Step):
 
     """
 
-    class_alias = "outlier_detection"
-
     # The members of spec needs to be a super-set of all parameters needed
     # by the various versions of the outlier_detection algorithms, and each
     # version will pick and choose what they need while ignoring the rest.

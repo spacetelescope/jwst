@@ -13,8 +13,6 @@ class WhiteLightStep(Step):
     multi-integration spectroscopic observation.
     """
 
-    class_alias = "white_light"
-
     spec = """
     min_wavelength     = float(default=None)      # Default wavelength minimum for integration
     max_wavelength     = float(default=None)      # Default wavelength maximum for integration

@@ -10,8 +10,6 @@ class AmiAverageStep(Step):
     AmiAverageStep: Averages LG results for multiple NIRISS AMI mode exposures
     """
 
-    class_alias = "ami_average"
-
     spec = """
     """
 

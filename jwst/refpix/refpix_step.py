@@ -17,8 +17,6 @@ class RefPixStep(Step):
 
     """
 
-    class_alias = "refpix"
-
     spec = """
         odd_even_columns = boolean(default=True)
         use_side_ref_pixels = boolean(default=True)

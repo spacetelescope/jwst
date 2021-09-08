@@ -11,8 +11,6 @@ class ResetStep(Step):
     the reset correction reference data from the input science data model.
     """
 
-    class_alias = "reset"
-
     reference_file_types = ['reset']
 
     def process(self, input):

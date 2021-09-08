@@ -17,8 +17,6 @@ class BarShadowStep(Step):
 
     """
 
-    class_alias = "barshadow"
-
     spec = """
         inverse = boolean(default=False)    # Invert the operation
         source_type = string(default=None)  # Process as specified source type.

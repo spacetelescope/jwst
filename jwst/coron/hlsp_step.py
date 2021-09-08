@@ -14,8 +14,6 @@ class HlspStep(Step):
     coronagraphic exposure that's had KLIP processing applied to it.
     """
 
-    class_alias = "hlsp"
-
     spec = """
         annuli_width = integer(default=2, min=1) # Width of contrast annuli
         save_results = boolean(default=true) # Save results

@@ -53,8 +53,6 @@ class FlatFieldStep(Step):
         Use the flat stored in `correction_pars`
     """
 
-    class_alias = "flat_field"
-
     spec = """
         save_interpolated_flat = boolean(default=False) # Save interpolated NRS flat
         user_supplied_flat = string(default=None)  # User-supplied flat

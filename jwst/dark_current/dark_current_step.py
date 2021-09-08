@@ -12,8 +12,6 @@ class DarkCurrentStep(Step):
     dark current reference data from the input science data model.
     """
 
-    class_alias = "dark_current"
-
     spec = """
         dark_output = output_file(default = None) # Dark model or averaged dark subtracted
     """

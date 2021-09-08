@@ -63,7 +63,7 @@ class Spec2Pipeline(Pipeline):
         'imprint_subtract': imprint_step.ImprintStep,
         'msa_flagging': msaflagopen_step.MSAFlagOpenStep,
         'extract_2d': extract_2d_step.Extract2dStep,
-        'master_background_nrs': master_background_nrs_slits_step.MasterBackgroundNrsSlitsStep,
+        'master_background': master_background_nrs_slits_step.MasterBackgroundNrsSlitsStep,
         'wavecorr': wavecorr_step.WavecorrStep,
         'flat_field': flat_field_step.FlatFieldStep,
         'srctype': srctype_step.SourceTypeStep,
@@ -77,12 +77,6 @@ class Spec2Pipeline(Pipeline):
         'cube_build': cube_build_step.CubeBuildStep,
         'extract_1d': extract_1d_step.Extract1dStep
     }
-
-    def __init__(self, *args, **kwargs):
-
-        Pipeline.__init__(self, *args, **kwargs)
-
-        self.master_background = self.master_background_nrs
 
     # Main processing
     def process(self, data):

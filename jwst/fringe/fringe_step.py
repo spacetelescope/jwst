@@ -13,8 +13,6 @@ class FringeStep(Step):
     reference image.
     """
 
-    class_alias = "fringe"
-
     reference_file_types = ['fringe']
 
     def process(self, input):

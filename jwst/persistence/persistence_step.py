@@ -12,8 +12,6 @@ class PersistenceStep(Step):
     PersistenceStep: Correct a science image for persistence.
     """
 
-    class_alias = "persistence"
-
     spec = """
         # `input_trapsfilled` is the name of the most recent trapsfilled
         # file for the current detector.
