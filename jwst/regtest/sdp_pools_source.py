@@ -15,10 +15,7 @@ class SDPPoolsSource(RegtestData):
     running under pytest. Such references are stubbed out with best defaults used.
     """
 
-    # The following will be set during both plugin instantiation
-    # of `BaseJWSTTest`, or explicitly during dynamic parametrization
-    # The empty string defaults indicate that data source roots have
-    # been defined.
+    # Setup some defaults.
     test_dir = 'associations/sdp'
     ref_loc = [test_dir, 'truth']
 
