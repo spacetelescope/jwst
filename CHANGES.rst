@@ -65,6 +65,11 @@ cube_build
 
 - Fix a bug when creating internal_cal type cubes [#6398]
 
+dark_current
+----------
+
+- Refactored the code in preparation for moving the code to STCAL. [#6336]
+
 datamodels
 ----------
 
