@@ -1798,21 +1798,23 @@ class IFUCubeData():
 
                 detector2slicer = slice_wcs.get_transform('detector', 'slicer')
                 slicer2world = slice_wcs.get_transform('slicer','world')
-                across1,along1,_ = detector2slicer(x, y - 0.4999 * pixfrac)
-                across2,along2,_ = detector2slicer(x, y + 0.4999 * pixfrac)
+                across1,along1,_ = detector2slicer(x, y - 0.49 * pixfrac)
+                _,along2,_ = detector2slicer(x, y + 0.49 * pixfrac)
+
+                print('across1', across1)
+
+                print('along1',along1)
+                print('along2',along2)
+                print('x',x)
+                print('y',y)
                 # Use the slice width determined above
 
-                #ra1, dec1, _ = slicer2world(across1 - across_width * pixfrac /2  , along1, lam)
-                #ra2, dec2, _ = slicer2world(across1 + across_width * pixfrac /2  , along1, lam)
+                ra1, dec1, _ = slicer2world(across1 - across_width * pixfrac /2  , along1, lam)
+                ra2, dec2, _ = slicer2world(across1 + across_width * pixfrac /2  , along1, lam)
 
-                #ra3, dec3, _ = slicer2world(across1 - across_width * pixfrac /2  , along2, lam)
-                #ra4, dec4, _ = slicer2world(across1 + across_width * pixfrac /2  , along2, lam)
+                ra3, dec3, _ = slicer2world(across1 - across_width * pixfrac /2  , along2, lam)
+                ra4, dec4, _ = slicer2world(across1 + across_width * pixfrac /2  , along2, lam)
 
-                ra1, dec1, _ = slicer2world(along1, across1 - across_width * pixfrac /2, lam)
-                ra2, dec2, _ = slicer2world(along1, across1 + across_width * pixfrac /2, lam)
-
-                ra3, dec3, _ = slicer2world(along2, across1 - across_width * pixfrac /2, lam)
-                ra4, dec4, _ = slicer2world(along2, across1 + across_width * pixfrac /2, lam)
 
                 print(ra1[0:5])
                 print(dec1[0:5])
