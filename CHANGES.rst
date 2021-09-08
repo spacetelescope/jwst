@@ -17,7 +17,7 @@ assign_wcs
   within a given NIRSpec IFU slice. [#6316]
 
 - Changed in_ifu_slice in util.py to return the indices of elements in slice.
-  Also the x tolerance on finding slice elements was increased. [#6326] 
+  Also the x tolerance on finding slice elements was increased. [#6326]
 
 associations
 ------------
@@ -43,7 +43,7 @@ cube_build
   support changes in #6093. [#6255]
 
 - Using assign_wsc.utils.in_ifu_slice function to determine which NIRSpec
-  sky values mapped to each detector slice. [#6326] 
+  sky values mapped to each detector slice. [#6326]
 
 datamodels
 ----------
@@ -59,6 +59,10 @@ datamodels
 
 - Implement memmap argument when calling ``datamodels.open`` on an ASDF
   file. [#6327]
+
+- Fix bug in schema that disallowed valid p_grating values. [#6333]
+
+- Add ``NDArrayType`` to list of valid types for ``RegionsModel.regions``. [#6333]
 
 extract_1d
 ----------

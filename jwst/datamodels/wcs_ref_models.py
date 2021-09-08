@@ -1,6 +1,7 @@
 import traceback
 import warnings
 
+from asdf.tags.core import NDArrayType
 import numpy as np
 from astropy.modeling.core import Model
 from astropy import units as u
@@ -368,7 +369,7 @@ class RegionsModel(ReferenceFileModel):
     def validate(self):
         super().validate()
         try:
-            assert isinstance(self.regions, np.ndarray)
+            assert isinstance(self.regions, (np.ndarray, NDArrayType))
             assert self.meta.instrument.name == "MIRI"
             assert self.meta.exposure.type == "MIR_MRS"
             assert self.meta.instrument.channel in ("12", "34", "1", "2", "3", "4")
