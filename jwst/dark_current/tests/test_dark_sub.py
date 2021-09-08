@@ -10,12 +10,59 @@ from jwst.dark_current.dark_sub import (
     average_dark_frames,
     do_correction as darkcorr
 )
+
+from jwst.dark_current.dark_class import DarkData
+
 from jwst.datamodels import RampModel, DarkModel, DarkMIRIModel, dqflags
 
 
 # Define frame_time and number of groups in the generated dark reffile
 TFRAME = 10.73677
 NGROUPS_DARK = 10
+
+
+@pytest.fixture(scope='function')
+def setup_nrc_cube():
+    '''Set up fake NIRCam data to test.'''
+
+    def _cube(readpatt, ngroups, nframes, groupgap, nrows, ncols):
+
+        nints = 1
+
+        data_model = RampModel((nints, ngroups, nrows, ncols))
+        data_model.meta.subarray.xstart = 1
+        data_model.meta.subarray.ystart = 1
+        data_model.meta.subarray.xsize = ncols
+        data_model.meta.subarray.ysize = nrows
+        data_model.meta.exposure.ngroups = ngroups
+        data_model.meta.exposure.groupgap = groupgap
+        data_model.meta.exposure.nframes = nframes
+        data_model.meta.exposure.frame_time = TFRAME
+        data_model.meta.exposure.group_time = (nframes + groupgap) * TFRAME
+        data_model.meta.instrument.name = 'NIRCAM'
+        data_model.meta.instrument.detector = 'NRCA1'
+        data_model.meta.observation.date = '2017-10-01'
+        data_model.meta.observation.time = '00:00:00'
+
+        dark_model = DarkModel((NGROUPS_DARK, 2048, 2048))
+        dark_model.meta.subarray.xstart = 1
+        dark_model.meta.subarray.ystart = 1
+        dark_model.meta.subarray.xsize = 2048
+        dark_model.meta.subarray.ysize = 2048
+        dark_model.meta.exposure.ngroups = NGROUPS_DARK
+        dark_model.meta.exposure.groupgap = 0
+        dark_model.meta.exposure.nframes = 1
+        dark_model.meta.instrument.name = 'NIRCAM'
+        dark_model.meta.description = 'Fake data.'
+        dark_model.meta.telescope = 'JWST'
+        dark_model.meta.reftype = 'DarkModel'
+        dark_model.meta.author = 'Alicia'
+        dark_model.meta.pedigree = 'Dummy'
+        dark_model.meta.useafter = '2015-10-01T00:00:00'
+
+        return data_model, dark_model
+
+    return _cube
 
 
 def _params():
@@ -58,7 +105,8 @@ def test_frame_averaging(setup_nrc_cube, readpatt, ngroups, nframes, groupgap, n
        settings of the exposure.'''
 
     # Create data and dark model
-    data, dark = setup_nrc_cube(readpatt, ngroups, nframes, groupgap, nrows, ncols)
+    data, dark_model = setup_nrc_cube(readpatt, ngroups, nframes, groupgap, nrows, ncols)
+    dark = DarkData(dark_model=dark_model)
 
     # Add ramp values to dark model data array
     dark.data[:, 10, 10] = np.arange(0, NGROUPS_DARK)
@@ -93,9 +141,9 @@ def test_frame_averaging(setup_nrc_cube, readpatt, ngroups, nframes, groupgap, n
     assert_allclose(manual_errs, avg_dark.err[:, 10, 10], rtol=1e-5)
 
     # Check that meta data was properly updated
-    assert avg_dark.meta.exposure.nframes == nframes
-    assert avg_dark.meta.exposure.ngroups == ngroups
-    assert avg_dark.meta.exposure.groupgap == groupgap
+    assert avg_dark.exp_nframes == nframes
+    assert avg_dark.exp_ngroups == ngroups
+    assert avg_dark.exp_groupgap == groupgap
 
 
 def test_more_sci_frames(make_rampmodel, make_darkmodel):
@@ -401,47 +449,3 @@ def make_darkmodel():
         return dark
 
     return _dark
-
-
-@pytest.fixture(scope='function')
-def setup_nrc_cube():
-    '''Set up fake NIRCam data to test.'''
-
-    def _cube(readpatt, ngroups, nframes, groupgap, nrows, ncols):
-
-        nints = 1
-
-        data_model = RampModel((nints, ngroups, nrows, ncols))
-        data_model.meta.subarray.xstart = 1
-        data_model.meta.subarray.ystart = 1
-        data_model.meta.subarray.xsize = ncols
-        data_model.meta.subarray.ysize = nrows
-        data_model.meta.exposure.ngroups = ngroups
-        data_model.meta.exposure.groupgap = groupgap
-        data_model.meta.exposure.nframes = nframes
-        data_model.meta.exposure.frame_time = TFRAME
-        data_model.meta.exposure.group_time = (nframes + groupgap) * TFRAME
-        data_model.meta.instrument.name = 'NIRCAM'
-        data_model.meta.instrument.detector = 'NRCA1'
-        data_model.meta.observation.date = '2017-10-01'
-        data_model.meta.observation.time = '00:00:00'
-
-        dark_model = DarkModel((NGROUPS_DARK, 2048, 2048))
-        dark_model.meta.subarray.xstart = 1
-        dark_model.meta.subarray.ystart = 1
-        dark_model.meta.subarray.xsize = 2048
-        dark_model.meta.subarray.ysize = 2048
-        dark_model.meta.exposure.ngroups = NGROUPS_DARK
-        dark_model.meta.exposure.groupgap = 0
-        dark_model.meta.exposure.nframes = 1
-        dark_model.meta.instrument.name = 'NIRCAM'
-        dark_model.meta.description = 'Fake data.'
-        dark_model.meta.telescope = 'JWST'
-        dark_model.meta.reftype = 'DarkModel'
-        dark_model.meta.author = 'Alicia'
-        dark_model.meta.pedigree = 'Dummy'
-        dark_model.meta.useafter = '2015-10-01T00:00:00'
-
-        return data_model, dark_model
-
-    return _cube

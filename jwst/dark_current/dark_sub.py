@@ -6,6 +6,8 @@ import numpy as np
 import logging
 from .. import datamodels
 
+from . import dark_class
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -162,8 +164,8 @@ def average_dark_frames(input_dark, ngroups, nframes, groupgap):
     # Create a model for the averaged dark data
     dny = input_dark.data.shape[1]
     dnx = input_dark.data.shape[2]
-    avg_dark = datamodels.DarkModel((ngroups, dny, dnx))
-    avg_dark.update(input_dark)
+    dims = (ngroups, dny, dnx)
+    avg_dark = dark_class.DarkData(dims=dims)
 
     # Do a direct copy of the 2-d DQ array into the new dark
     avg_dark.dq = input_dark.dq
@@ -193,9 +195,9 @@ def average_dark_frames(input_dark, ngroups, nframes, groupgap):
         start = end + groupgap
 
     # Reset some metadata values for the averaged dark
-    avg_dark.meta.exposure.nframes = nframes
-    avg_dark.meta.exposure.ngroups = ngroups
-    avg_dark.meta.exposure.groupgap = groupgap
+    avg_dark.exp_nframes = nframes
+    avg_dark.exp_ngroups = ngroups
+    avg_dark.exp_groupgap = groupgap
 
     return avg_dark
 
