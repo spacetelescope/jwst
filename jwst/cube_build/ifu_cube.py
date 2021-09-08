@@ -1729,7 +1729,8 @@ class IFUCubeData():
         dec4_det = np.zeros((ysize,xsize))
         
         pixfrac = 1.0
-        
+
+        # determine the slice width using slice 1 and 3 
         t0 = time.time()
         slice_wcs1 = nirspec.nrs_wcs_set_input(input_model, 0)
         detector2slicer = slice_wcs1.get_transform('detector', 'slicer')
@@ -1788,8 +1789,8 @@ class IFUCubeData():
             
             if self.interpolation == 'driz':
                 # Delta wavelengths
-                _,_,wave1 = slice_wcs(x - 0.4999, y - 0.4999)
-                _,_,wave2 = slice_wcs(x + 0.4999, y + 0.4999)
+                _,_,wave1 = slice_wcs(x - 0.4999, y)
+                _,_,wave2 = slice_wcs(x + 0.4999, y)
                 dwave = np.abs(wave1 - wave2)
 
                 # Pixel corners
