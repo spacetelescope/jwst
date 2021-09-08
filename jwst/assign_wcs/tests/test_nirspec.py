@@ -978,7 +978,13 @@ def test_in_slice(slice, wcs_ifu_grating, ifu_world_coord):
     ra_all, dec_all, lam_all = ifu_world_coord
     im, refs = wcs_ifu_grating("G140H", "F100LP")
     slice_wcs = nirspec.nrs_wcs_set_input(im, slice)
+    slicer2world = slice_wcs.get_transform('slicer','world')
+    detector2slicer = slice_wcs.get_transform('detector','slicer')
     x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
-    xinv, yinv = in_ifu_slice(slice_wcs, ra_all, dec_all, lam_all)
+    onslice_ind = in_ifu_slice(slice_wcs, ra_all, dec_all, lam_all)
+    slx, sly, sllam = slicer2world.inverse(ra_all, dec_all, lam_all)
+    xinv,yinv = detector2slicer.inverse(slx[onslice_ind], sly[onslice_ind],
+                                        sllam[onslice_ind])
+
     r, d, _ = slice_wcs(x, y)
     assert r[~np.isnan(r)].size == xinv.size

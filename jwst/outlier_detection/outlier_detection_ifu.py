@@ -1,8 +1,6 @@
 """Class definition for performing outlier detection on IFU data."""
 
-from functools import partial
 import numpy as np
-
 from stsci.image import median
 from astropy.stats import sigma_clipped_stats
 
@@ -70,27 +68,45 @@ class OutlierDetectionIFU(OutlierDetection):
 
     def _find_ifu_coverage(self):
         self.channels = []
+        self.subchannels = []
+        self.band_name = []
         self.gratings = []
+        self.ifu_band1 = []
+        self.ifu_band2 = []
         self.instrument = self.input_models[0].meta.instrument.name.upper()
         n = len(self.input_models)
         for i in range(n):
             if self.instrument == 'MIRI':
-                this_channel = (self.input_models[i].meta.instrument.channel)
+                this_channel = self.input_models[i].meta.instrument.channel
+                this_subchannel = self.input_models[i].meta.instrument.band.lower()
                 nc = len(this_channel)
                 for k in range(nc):
-                    self.channels.append(this_channel[k])
+                    self.band_name.append('ch' + this_channel[k] + '_' + this_subchannel)
+
             elif self.instrument == 'NIRSPEC':
                 self.gratings.append(self.input_models[i].meta.instrument.grating.lower())
             else:
                 # add error
                 raise ErrorWrongInstrument('Instrument must be MIRI or NIRSPEC')
-        self.channels = list(set(self.channels))
-        self.gratings = list(set(self.gratings))
-        self.ifu_band = []
         if self.instrument == 'MIRI':
-            self.ifu_band = self.channels
+            band_no_repeat = list(set(self.band_name))
+            bands = ['short','medium','long']
+            channels = ['1','2','3','4']
+            for this_band in band_no_repeat:
+                for j in channels:
+                    check_channel = 'ch' + j
+                    if check_channel in this_band:
+                        self.channels.append(j)
+                for k in bands:
+                    if k in this_band:
+                        self.subchannels.append(k)
+            self.ifu_band1 = self.channels
+            self.ifu_band2 = self.subchannels
+
         elif self.instrument == 'NIRSPEC':
-            self.ifu_band = self.gratings
+            self.gratings = list(set(self.gratings))
+            self.ifu_band1 = self.gratings
+            self.ifu_band2 = self.gratings  # not used in NIRSpec
 
     def _convert_inputs(self):
         self.input_models = self.inputs
@@ -118,15 +134,19 @@ class OutlierDetectionIFU(OutlierDetection):
         exptype = self.input_models[0].meta.exposure.type
         log.info("Performing IFU outlier_detection for exptype {}".format(
                  exptype))
-        for band in self.ifu_band:
+        num_bands = len(self.ifu_band1)
+        for i in range(num_bands):
+            select1 = self.ifu_band1[i]
+            select2 = self.ifu_band2[i]
+
             if self.instrument == 'MIRI':
                 cubestep = CubeBuildStep(config_file=cube_build_config,
-                                         channel=band, weighting='emsm',
+                                         channel=select1, band=select2, weighting='emsm',
                                          single=True)
 
             if self.instrument == 'NIRSPEC':
                 cubestep = CubeBuildStep(config_file=cube_build_config,
-                                         grating=band, weighting='emsm',
+                                         grating=select1, weighting='emsm',
                                          single=True)
 
             single_IFUCube_result = cubestep.process(self.input_models)
@@ -134,9 +154,8 @@ class OutlierDetectionIFU(OutlierDetection):
             for model in single_IFUCube_result:
                 model.meta.filename = self.make_output_path(
                     basepath=model.meta.filename,
-                    suffix=self.resample_suffix
+                    suffix='outlier_s3d'
                 )
-
                 if save_intermediate_results:
                     log.info("Writing out (single) IFU cube {}".format(model.meta.filename))
                     model.save(model.meta.filename)
@@ -146,11 +165,14 @@ class OutlierDetectionIFU(OutlierDetection):
                 init=single_IFUCube_result[0].data.shape)
             median_model.meta = single_IFUCube_result[0].meta
 
-            median_model.meta.filename = self.make_output_path(
-                basepath=self.input_models[0].meta.filename,
-                suffix='band{}_median'.format(band)
-            )
-
+            if self.instrument == 'MIRI':
+                median_model.meta.filename = self.make_output_path(
+                    basepath=self.input_models.meta.asn_table.products[0].name,
+                    suffix='ch{}_{}_median_s3d'.format(select1,select2))
+            else:
+                median_model.meta.filename = self.make_output_path(
+                    basepath=self.input_models.meta.asn_table.products[0].name,
+                    suffix='{}_median_s3d'.format(select1))
             # Perform median combination on set of drizzled mosaics
             median_model.data = self.create_median(single_IFUCube_result)
 
@@ -171,13 +193,12 @@ class OutlierDetectionIFU(OutlierDetection):
         if save_intermediate_results:
             log.info("Writing out BLOT images...")
 
-            self.blot_models.save(
-                partial(self.make_output_path, suffix='blot')
-            )
-
             for model in self.blot_models:
-                log.info("Blotted files {}".format(model.meta.filename))
+                model.meta.filename = self.make_output_path(
+                    basepath=model.meta.filename, suffix='blot')
 
+                log.info("Blotted files {}".format(model.meta.filename))
+                model.save(model.meta.filename)
         # Perform outlier detection using statistical comparisons between
         # each original input image and the blotted version of the
         # median image of all channels
@@ -192,7 +213,6 @@ class OutlierDetectionIFU(OutlierDetection):
         """IFU-specific version of create_median."""
         resampled_sci = [i.data for i in resampled_models]
         resampled_wht = [i.weightmap for i in resampled_models]
-
         nlow = self.outlierpars.get('nlow', 0)
         nhigh = self.outlierpars.get('nhigh', 0)
         maskpt = self.outlierpars.get('maskpt', 0.7)
@@ -207,7 +227,6 @@ class OutlierDetectionIFU(OutlierDetection):
                     w, sigma=3.0, mask_value=0.
                 )
             weight_threshold = mean_weight * maskpt
-
             # Mask pixels were weight falls below MASKPT percent of
             #    the mean weight
             mask = np.less(w, weight_threshold)
@@ -219,18 +238,20 @@ class OutlierDetectionIFU(OutlierDetection):
         # values
         median_image = median(resampled_sci, nlow=nlow, nhigh=nhigh,
                               badmasks=badmasks)
-
+        # for i in range(len(resampled_sci)):
+        #    data = resampled_sci[i]
+        #    mask = badmasks[i]
         return median_image
 
     def blot_median(self, median_image):
         """IFU-specific version of blot_median."""
         cubeblot = blot_cube_build.CubeBlot(median_image, self.input_models)
         cubeblot.blot_info()
-        blot_models = cubeblot.blot_images()
-
+        blot_models, input_list_number = cubeblot.blot_images()
         for j in range(len(blot_models)):
-            self.blot_models[j].data += blot_models[j].data
-            self.blot_models[j].meta = blot_models[j].meta
+            k = input_list_number[j]
+            self.blot_models[k].data += blot_models[j].data
+            self.blot_models[k].meta = blot_models[j].meta
 
 
 class ErrorWrongInstrument(Exception):
