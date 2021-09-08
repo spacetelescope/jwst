@@ -104,6 +104,7 @@ __all__ = [
     "ResampleStep",
     "ResampleSpecStep",
     "ResetStep",
+    "ResidualFringeStep",
     "RscdStep",
     "RSCD_Step",
     "SaturationStep",

@@ -131,7 +131,7 @@ __all__ = [
     'QuadModel', 'RampModel', 'MIRIRampModel',
     'RampFitOutputModel', 'ReadnoiseModel',
     'ReferenceFileModel', 'ReferenceCubeModel', 'ReferenceImageModel', 'ReferenceQuadModel',
-    'RegionsModel', 'ResetModel',
+    'RegionsModel', 'ResetModel','ResidualFringeModel',
     'ResolutionModel', 'MiriResolutionModel',
     'RSCDModel', 'SaturationModel', 'SlitDataModel', 'SlitModel', 'SpecModel',
     'SegmentationMapModel', 'SourceModelContainer',

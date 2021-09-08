@@ -1,6 +1,4 @@
 from .reference import ReferenceFileModel
-from stcal.dynamicdq import dynamic_mask
-
 
 __all__ = ['ResidualFringeModel']
 
