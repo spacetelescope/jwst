@@ -11,8 +11,6 @@ class ImprintStep(Step):
     by subtracting an imprint exposure.
     """
 
-    class_alias = "imprint"
-
     spec = """
     """
 

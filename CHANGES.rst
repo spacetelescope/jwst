@@ -49,22 +49,10 @@ flatfield
 - Updated flatfield step docs to include complete details on how the
   variance and error arrays are updated. [#6245]
 
-general
--------
-
-- Added aliases for all steps, following naming conventions used in
-  pipeline step_defs [#6158]
-
 jump
 ----
 
 - Updated jump detection step to use common code moved to stcal [#6089]
-
-lib
----
-
-- Updated default suffix names for RampFit and GuiderCDS steps to
-  'ramp_fit' and 'guider_cds' to match alias convention [#6158]
 
 outlier_detection
 -----------------
@@ -91,11 +79,6 @@ resample
 
 - Refactor ``resample_spec`` to use a separate function for computing the output
   rectified WCS for lamp data.  [#6296]
-
-rscd
-----
-
-- Removed support for deprecated step name 'RSCD_Step' [#6158]
 
 - Fix a crash in ``resample_spec`` due to undefined variance arrays. [#6305]
 

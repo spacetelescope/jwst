@@ -12,8 +12,6 @@ class LastFrameStep(Step):
     be set to DO_NOT_USE.
     """
 
-    class_alias = "lastframe"
-
     def process(self, input):
 
         # Open the input data model

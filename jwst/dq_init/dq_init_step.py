@@ -19,8 +19,6 @@ class DQInitStep(Step):
     with the pixeldq (or dq) attribute of the input model.
     """
 
-    class_alias = "dq_init"
-
     reference_file_types = ['mask']
 
     def process(self, input):

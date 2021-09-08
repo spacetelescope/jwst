@@ -14,8 +14,6 @@ class JumpStep(Step):
     exposure. The 2-point difference method is applied.
     """
 
-    class_alias = "jump"
-
     spec = """
         rejection_threshold = float(default=4.0,min=0) # CR sigma rejection threshold
         three_group_rejection_threshold = float(default=6.0,min=0) # CR sigma rejection threshold

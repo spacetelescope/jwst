@@ -10,8 +10,6 @@ class MSAFlagOpenStep(Step):
     MSAFlagOpenStep: Flags pixels affected by MSA failed open shutters
     """
 
-    class_alias = "msa_flagging"
-
     spec = """
 
     """

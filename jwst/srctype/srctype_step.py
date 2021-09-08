@@ -15,8 +15,6 @@ class SourceTypeStep(Step):
     is populated from user info in the APT, or the NIRSpec MSA planning tool.
     """
 
-    class_alias = "srctype"
-
     spec = """
     """
 

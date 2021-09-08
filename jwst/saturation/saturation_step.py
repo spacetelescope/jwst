@@ -13,8 +13,6 @@ class SaturationStep(Step):
     This Step sets saturation flags.
     """
 
-    class_alias = "saturation"
-
     reference_file_types = ['saturation']
 
     def process(self, input):
