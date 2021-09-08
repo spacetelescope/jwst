@@ -28,7 +28,7 @@ from .jump.jump_step import JumpStep
 from .lastframe.lastframe_step import LastFrameStep
 from .linearity.linearity_step import LinearityStep
 from .master_background.master_background_step import MasterBackgroundStep
-from .master_background.master_background_mos_step import MasterBackgroundMosStep
+from .master_background.master_background_nrs_slits_step import MasterBackgroundNrsSlitsStep
 from .mrs_imatch.mrs_imatch_step import MRSIMatchStep
 from .msaflagopen.msaflagopen_step import MSAFlagOpenStep
 from .outlier_detection.outlier_detection_step import OutlierDetectionStep
@@ -88,7 +88,7 @@ __all__ = [
     "LastFrameStep",
     "LinearityStep",
     "MasterBackgroundStep",
-    "MasterBackgroundMosStep",
+    "MasterBackgroundNrsSlitsStep",
     "MRSIMatchStep",
     "MSAFlagOpenStep",
     "OutlierDetectionStep",

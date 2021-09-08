@@ -18,7 +18,7 @@ from ..extract_2d import extract_2d_step
 from ..flatfield import flat_field_step
 from ..fringe import fringe_step
 from ..imprint import imprint_step
-from ..master_background import master_background_mos_step
+from ..master_background import master_background_nrs_slits_step
 from ..msaflagopen import msaflagopen_step
 from ..pathloss import pathloss_step
 from ..photom import photom_step
@@ -63,7 +63,7 @@ class Spec2Pipeline(Pipeline):
         'imprint_subtract': imprint_step.ImprintStep,
         'msa_flagging': msaflagopen_step.MSAFlagOpenStep,
         'extract_2d': extract_2d_step.Extract2dStep,
-        'master_background_mos': master_background_mos_step.MasterBackgroundMosStep,
+        'master_background_nrs': master_background_nrs_slits_step.MasterBackgroundNrsSlitsStep,
         'wavecorr': wavecorr_step.WavecorrStep,
         'flat_field': flat_field_step.FlatFieldStep,
         'srctype': srctype_step.SourceTypeStep,
@@ -77,6 +77,12 @@ class Spec2Pipeline(Pipeline):
         'cube_build': cube_build_step.CubeBuildStep,
         'extract_1d': extract_1d_step.Extract1dStep
     }
+
+    def __init__(self, *args, **kwargs):
+
+        Pipeline.__init__(self, *args, **kwargs)
+
+        self.master_background = self.master_background_nrs
 
     # Main processing
     def process(self, data):
@@ -365,9 +371,9 @@ class Spec2Pipeline(Pipeline):
             self.barshadow.skip = True
 
         # Apply master background only to NIRSPEC MSA exposures
-        if not self.master_background_mos.skip and exp_type != 'NRS_MSASPEC':
-            self.log.debug('Science data does not allow master background correction. Skipping "master_background_mos".')
-            self.master_background_mos.skip = True
+        if not self.master_background.skip and exp_type != 'NRS_MSASPEC':
+            self.log.debug('Science data does not allow master background correction. Skipping "master_background".')
+            self.master_background.skip = True
 
         # Apply WFSS contamination correction only to WFSS exposures
         if not self.wfss_contam.skip and exp_type not in WFSS_TYPES:
@@ -399,7 +405,7 @@ class Spec2Pipeline(Pipeline):
         """
         calibrated = self.extract_2d(data)
         calibrated = self.srctype(calibrated)
-        calibrated = self.master_background_mos(calibrated)
+        calibrated = self.master_background(calibrated)
         calibrated = self.wavecorr(calibrated)
         calibrated = self.flat_field(calibrated)
         calibrated = self.pathloss(calibrated)

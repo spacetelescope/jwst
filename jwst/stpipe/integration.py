@@ -61,7 +61,7 @@ def get_steps():
         ("jwst.step.LastFrameStep", 'lastframe', False),
         ("jwst.step.LinearityStep", 'linearity', False),
         ("jwst.step.MasterBackgroundStep", 'master_background', False),
-        ("jwst.step.MasterBackgroundMosStep", 'master_background_mos', False),
+        ("jwst.step.MasterBackgroundNrsSlitsStep", 'master_background_nrs', False),
         ("jwst.step.MRSIMatchStep", 'mrs_imatch', False),
         ("jwst.step.MSAFlagOpenStep", 'msa_flagging', False),
         ("jwst.step.OutlierDetectionStep", 'outlier_detection', False),
