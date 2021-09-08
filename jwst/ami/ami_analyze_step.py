@@ -47,7 +47,7 @@ class AmiAnalyzeStep(Step):
         try:
             input_model = datamodels.ImageModel(input)
         except ValueError as err:
-            raise RuntimeError("Input must be a 2D ImageModel")
+            raise RuntimeError(f"{err}. Input must be a 2D ImageModel.")
 
         # check for 2D data array
         if len(input_model.data.shape) != 2:
