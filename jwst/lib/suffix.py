@@ -57,7 +57,7 @@ SUFFIXES_TO_DISCARD = ['engdblogstep', 'functionwrapper', 'pipeline', 'rscd_step
 
 # Calculated suffixes.
 # This is produced by the `find_suffixes` function below
-_calculated_suffixes = {
+_calculated_suffixes = set([
     'masterbackgroundnrsslitsstep',
     'ami3pipeline',
     'whitelightstep',
@@ -89,7 +89,7 @@ _calculated_suffixes = {
     'saturation',
     'pathloss',
     'groupscalestep',
-    'ramp_fit',
+    'rampfit',
     'lastframe',
     'darkpipeline',
     'image2pipeline',
@@ -129,7 +129,7 @@ _calculated_suffixes = {
     'outlierdetectionscaledstep',
     'superbias',
     'assign_wcs',
-    'guider_cds',
+    'guidercds',
     'firstframe',
     'masterbackgroundstep',
     'master_background',
@@ -187,7 +187,7 @@ _calculated_suffixes = {
     'assign_mtwcs',
     'wavecorrstep',
     'wfsscontamstep',
-}
+])
 
 
 # ##########

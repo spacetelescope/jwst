@@ -13,8 +13,6 @@ class StackRefsStep(Step):
     single CubeModel, for use by subsequent coronagraphic steps.
     """
 
-    class_alias = "stack_refs"
-
     spec = """
     """
 

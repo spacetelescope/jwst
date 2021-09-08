@@ -11,8 +11,6 @@ class IPCStep(Step):
     data model with the IPC reference data.
     """
 
-    class_alias = "ipc"
-
     reference_file_types = ['ipc']
 
     def process(self, input):

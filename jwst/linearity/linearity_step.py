@@ -11,8 +11,6 @@ class LinearityStep(Step):
     detector response, using the "classic" polynomial method.
     """
 
-    class_alias = "linearity"
-
     reference_file_types = ['linearity']
 
     def process(self, input):

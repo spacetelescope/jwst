@@ -66,8 +66,6 @@ class Extract1dStep(Step):
 
     """
 
-    class_alias = "extract_1d"
-
     spec = """
     smoothing_length = integer(default=None)  # background smoothing size
     bkg_fit = option("poly", "mean", "median", default="poly")  # background fitting type

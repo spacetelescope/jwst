@@ -42,8 +42,6 @@ class MasterBackgroundNrsSlitsStep(Pipeline):
       - Subtract the background from the input slit data
     """
 
-    class_alias = "master_background_nrs"
-
     spec = """
         force_subtract = boolean(default=False)  # Force subtracting master background
         save_background = boolean(default=False) # Save computed master background
