@@ -1,19 +1,15 @@
 import numpy as np
 import math
 import numpy.polynomial.polynomial as poly
-# import scipy.signal as signal
 
 from scipy.interpolate import pchip
-# from astropy.modeling import models
-# from astropy.modeling.models import Sine1D
 from astropy.timeseries import LombScargle
+from BayesicFitting import SplinesModel
+from BayesicFitting import Fitter
+from BayesicFitting import SineModel
+from BayesicFitting import LevenbergMarquardtFitter
+from BayesicFitting import RobustShell
 
-from .SplinesModel import SplinesModel
-from .Fitter import Fitter
-from .SineModel import SineModel
-
-from .LevenbergMarquardtFitter import LevenbergMarquardtFitter
-from .RobustShell import RobustShell
 from numpy.linalg.linalg import LinAlgError
 
 import logging
