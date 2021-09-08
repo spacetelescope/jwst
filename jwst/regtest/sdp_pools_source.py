@@ -10,9 +10,9 @@ from jwst.regtest.regtestdata import RegtestData
 class SDPPoolsSource(RegtestData):
     """Retreive the SDP pools from the test data source
 
-    These tests are very much tied to using `pytest` and the `ci-watson` plugin.
-    In particular, there are references to `pytest.config` that only exist when
-    running under pytest. Such references are stubbed out with best defaults used.
+    This class defines a common relationship between test collection, via
+    `jwst.regtest.conftest.pool_path_fixture` and the test using said fixture,
+    `jwst.regtest.test_associations_sdp_pools`.
     """
 
     # Setup some defaults.
