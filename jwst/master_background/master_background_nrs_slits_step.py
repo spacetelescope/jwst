@@ -1,4 +1,4 @@
-"""Master Background Pipeline for applying Master Background to NIRSpec MOS data"""
+"""Master Background Pipeline for applying Master Background to NIRSpec Slit-like data"""
 from stpipe.step import preserve_step_pars
 
 from . import nirspec_utils
@@ -9,15 +9,15 @@ from ..pathloss import pathloss_step
 from ..photom import photom_step
 from ..stpipe import Pipeline
 
-__all__ = ['MasterBackgroundMosStep']
+__all__ = ['MasterBackgroundNrsSlitsStep']
 
 # Step parameters to generally ignore when copying from the parent steps.
 GLOBAL_PARS_TO_IGNORE = ['output_ext', 'output_file', 'output_use_model', 'output_use_index',
                          'inverse', 'pre_hooks', 'post_hooks', 'save_results', 'suffix']
 
 
-class MasterBackgroundMosStep(Pipeline):
-    """Apply master background processing to NIRSpec MOS data
+class MasterBackgroundNrsSlitsStep(Pipeline):
+    """Apply master background processing to NIRSpec Slit-like data
 
     For MOS, and ignoring FS, the calibration process needs to occur
     twice: Once to calibrate background slits and create a master background.
@@ -42,7 +42,7 @@ class MasterBackgroundMosStep(Pipeline):
       - Subtract the background from the input slit data
     """
 
-    class_alias = "master_background_mos"
+    class_alias = "master_background_nrs"
 
     spec = """
         force_subtract = boolean(default=False)  # Force subtracting master background
