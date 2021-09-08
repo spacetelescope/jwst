@@ -58,25 +58,14 @@ class RegtestData:
         # Initialize non-initialized attributes
         self.asn = None
 
-    @classmethod
-    def open(cls, filename):
-        with asdf.open(filename) as af:
-            return cls(**af.tree)
-
-    @property
-    def bigdata_root(self):
-        return self._bigdata_root
-
-    @property
-    def input(self):
-        return self._input
-
-    @input.setter
-    def input(self, value):
-        if value:
-            self._input = os.path.abspath(value)
-        else:
-            self._input = value
+    def __repr__(self):
+        return pprint.pformat(
+            dict(input=self.input, output=self.output, truth=self.truth,
+                 input_remote=self.input_remote, truth_remote=self.truth_remote,
+                 remote_results_path=self.remote_results_path, test_name=self.test_name,
+                 traceback=self.traceback),
+            indent=1
+        )
 
     @property
     def input_remote(self):
@@ -93,28 +82,6 @@ class RegtestData:
             self._input_remote = value
 
     @property
-    def output(self):
-        return self._output
-
-    @output.setter
-    def output(self, value):
-        if value:
-            self._output = os.path.abspath(value)
-        else:
-            self._output = value
-
-    @property
-    def truth(self):
-        return self._truth
-
-    @truth.setter
-    def truth(self, value):
-        if value:
-            self._truth = os.path.abspath(value)
-        else:
-            self._truth = value
-
-    @property
     def truth_remote(self):
         if self._truth_remote is not None:
             return os.path.join(*self._truth_remote)
@@ -128,10 +95,62 @@ class RegtestData:
         else:
             self._truth_remote = value
 
-    # ###########
+    @property
+    def input(self):
+        return self._input
+
+    @input.setter
+    def input(self, value):
+        if value:
+            self._input = os.path.abspath(value)
+        else:
+            self._input = value
+
+    @property
+    def truth(self):
+        return self._truth
+
+    @truth.setter
+    def truth(self, value):
+        if value:
+            self._truth = os.path.abspath(value)
+        else:
+            self._truth = value
+
+    @property
+    def output(self):
+        return self._output
+
+    @output.setter
+    def output(self, value):
+        if value:
+            self._output = os.path.abspath(value)
+        else:
+            self._output = value
+
+    @property
+    def bigdata_root(self):
+        return self._bigdata_root
+
     # The methods
-    # ###########
-    def data_glob(self, path=None, glob='*'):
+    def get_data(self, path=None, docopy=None):
+        """Copy data from Artifactory remote resource to the CWD
+
+        Updates self.input and self.input_remote upon completion
+        """
+        if path is None:
+            path = self.input_remote
+        else:
+            self.input_remote = path
+        if docopy is None:
+            docopy = self.docopy
+        self.input = get_bigdata(self._inputs_root, self.env, path,
+                                 docopy=docopy)
+        self.input_remote = os.path.join(self._inputs_root, self.env, path)
+
+        return self.input
+
+    def data_glob(self, path=None, glob='*', docopy=None):
         """Get a list of files"""
         if path is None:
             path = self.input_remote
@@ -158,6 +177,25 @@ class RegtestData:
             for file_path in file_paths
         ]
         return file_paths
+
+    def get_truth(self, path=None, docopy=None):
+        """Copy truth data from Artifactory remote resource to the CWD/truth
+
+        Updates self.truth and self.truth_remote on completion
+        """
+        if path is None:
+            path = self.truth_remote
+        else:
+            self.truth_remote = path
+        if docopy is None:
+            docopy = self.docopy
+        os.makedirs('truth', exist_ok=True)
+        with pushdir('truth'):
+            self.truth = get_bigdata(self._inputs_root, self.env, path,
+                                     docopy=docopy)
+            self.truth_remote = os.path.join(self._inputs_root, self.env, path)
+
+        return self.truth
 
     def get_asn(self, path=None, docopy=True, get_members=True):
         """Copy association and association members from Artifactory remote
