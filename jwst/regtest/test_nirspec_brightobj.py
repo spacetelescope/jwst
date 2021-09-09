@@ -75,9 +75,8 @@ def test_flat_field_bots_interp_flat(rtdata, fitsdiff_default_kwargs):
     """Test the interpolated flat for a NRS BOTS exposure"""
     data = rtdata.get_data('nirspec/tso/jw93056001001_short_nrs1_wavecorr.fits')
 
-    data_flat_fielded = FlatFieldStep.call(data, save_interpolated_flat=True)
+    FlatFieldStep.call(data, save_interpolated_flat=True)
     rtdata.output = 'jw93056001001_short_nrs1_wavecorr_interpolatedflat.fits'
-    #data_flat_fielded.write(rtdata.output)
 
     rtdata.get_truth('truth/test_nirspec_brightobj_spec2/jw93056001001_short_nrs1_wavecorr_interpolatedflat.fits')
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
