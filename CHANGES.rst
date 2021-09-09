@@ -72,6 +72,9 @@ flatfield
 - Updated flatfield step docs to include complete details on how the
   variance and error arrays are updated. [#6245]
 
+- Fixed a bug in flatfield for brightobj mode where the S-flat cutout
+  was calculated incorrectly by not accounting for the slit offset [#6332]
+
 jump
 ----
 
