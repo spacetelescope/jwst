@@ -123,15 +123,21 @@ def generate_artifactory_json(request, artifactory_repos):
                 json.dump(okify_schema, fd, indent=2)
 
             # Generate an upload JSON file, including the OKify, asdf file
-            if rtdata.okify_op == 'folder_copy':
-                rtdata.output = rtdata.output + '/'
-                rtdata.remote_results_path = rtdata.remote_results_path + os.path.basename(rtdata.output) + '/'
-
-            upload_schema_pattern.append(rtdata.output)
             upload_schema_pattern.append(os.path.abspath(jsonfile))
             upload_schema_pattern.append(path_asdf)
             upload_schema = generate_upload_schema(upload_schema_pattern,
                                                    rtdata.remote_results_path)
+
+            if rtdata.okify_op == 'file_copy':
+                upload_schema = generate_upload_schema(rtdata.output,
+                                                       rtdata.remote_results_path,
+                                                       schema=upload_schema)
+            elif rtdata.okify_op == 'folder_copy':
+                output = rtdata.output + '/'
+                target = rtdata.remote_results_path + os.path.basename(rtdata.output) + '/'
+                upload_schema = generate_upload_schema(output, target, schema=upload_schema)
+            else:
+                raise RuntimeError(f'Unknown artifactory operation: {rtdata.okify_op}')
 
             jsonfile = os.path.join(cwd, f"{request.node.name}_results.json")
             with open(jsonfile, 'w') as fd:
