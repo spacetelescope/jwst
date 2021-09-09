@@ -1786,8 +1786,8 @@ def flat_for_nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_
     shape = output_model.data.shape
     ysize, xsize = shape[-2:]
     # pixels with respect to the original image
-    xstart = output_model.meta.subarray.xstart - 1
-    ystart = output_model.meta.subarray.ystart - 1
+    xstart = output_model.meta.subarray.xstart - 1 + output_model.xstart - 1
+    ystart = output_model.meta.subarray.ystart - 1 + output_model.ystart - 1
     xstop = xstart + xsize
     ystop = ystart + ysize
 
