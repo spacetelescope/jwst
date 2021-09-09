@@ -4,6 +4,8 @@ from astropy.io.fits.diff import FITSDiff
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
+from jwst.ami import AmiAnalyzeStep
+
 
 @pytest.fixture(scope="module")
 def run_pipeline(jail, rtdata_module):
@@ -48,5 +50,18 @@ def test_niriss_ami3_product(run_pipeline, suffix, fitsdiff_default_kwargs):
     rtdata.get_truth("truth/test_niriss_ami3/" + output)
 
     fitsdiff_default_kwargs['atol'] = 1e-5
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
+
+
+@pytest.mark.bigdata
+def test_ami_analyze_with_nans(rtdata, fitsdiff_default_kwargs):
+    """Test the AmiAnalyzeStep using an input image with NaNs"""
+    data = rtdata.get_data('niriss/ami/jw00042004001_01101_00005_nis_withNAN_cal.fits')
+
+    AmiAnalyzeStep.call(data, save_results=True)
+    rtdata.output = 'jw00042004001_01101_00005_nis_withNAN_amianalyzestep.fits'
+
+    rtdata.get_truth('truth/test_niriss_ami3/jw00042004001_01101_00005_nis_withNAN_amianalyzestep.fits')
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()

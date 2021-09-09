@@ -7,6 +7,7 @@ import numpy as np
 import numpy.fft as fft
 
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 log.addHandler(logging.NullHandler())
 
 
@@ -1135,23 +1136,24 @@ def pix_median_fill_value(input_array, input_dq_array, bsize, xc, yc):
 
     # Extract the region of interest for the data
     try:
-        data_array = input_array[xc - hbox:xc + hbox, yc - hbox: yc + hbox]
-        dq_array = input_dq_array[xc - hbox:xc + hbox, yc - hbox: yc + hbox]
+        data_array = input_array[yc - hbox:yc + hbox + 1, xc - hbox: xc + hbox + 1]
+        dq_array = input_dq_array[yc - hbox:yc + hbox + 1, xc - hbox: xc + hbox + 1]
     except IndexError:
-        # If the box is outside the data return 0
-        log.warning('Box for median filter is outside the data.')
+        # If the box is outside the data, return 0
+        log.warning('Box for median filter is outside the data')
         return 0.
 
+    # only keep pixels not flagged with DO_NOT_USE
     wh_good = np.where((np.bitwise_and(dq_array, dqflags.pixel['DO_NOT_USE'])
                         == 0))
-
     filtered_array = data_array[wh_good]
 
+    # compute the median, exluding NaN's
     median_value = np.nanmedian(filtered_array)
 
+    # check for bad result
     if np.isnan(median_value):
-        # If the median fails return 0
-        log.warning('Median filter returned NaN setting value to 0.')
+        log.warning('Median filter returned NaN; setting value to 0.')
         median_value = 0.
 
     return median_value
@@ -1181,7 +1183,7 @@ def img_median_replace(img_model, box_size):
     """
     Short Summary
     -------------
-    Replace bad pixels (either due to a dq value of DO_NOT_USE or having a
+    Replace bad pixels (either due to a DQ value of DO_NOT_USE or having a
     value of NaN) with the median value of surrounding good pixels.
 
     Parameters
@@ -1202,21 +1204,21 @@ def img_median_replace(img_model, box_size):
     num_nan = np.count_nonzero(np.isnan(input_data))
     num_dq_bad = np.count_nonzero(input_dq == dqflags.pixel['DO_NOT_USE'])
 
-    # check to see if any of the pixels are flagged
+    # check to see if any of the pixels are bad
     if (num_nan + num_dq_bad > 0):
+
+        log.info(f'Applying median filter for {num_nan} NaN and {num_dq_bad} DO_NOT_USE pixels')
         bad_locations = np.where(np.isnan(input_data) |
                                  np.equal(input_dq,
                                           dqflags.pixel['DO_NOT_USE']))
 
         # fill the bad pixel values with the median of the data in a box region
         for i_pos in range(len(bad_locations[0])):
-            x_box_pos = bad_locations[0][i_pos]
-            y_box_pos = bad_locations[1][i_pos]
-
+            y_box_pos = bad_locations[0][i_pos]
+            x_box_pos = bad_locations[1][i_pos]
             median_fill = pix_median_fill_value(input_data, input_dq,
                                                 box_size, x_box_pos, y_box_pos)
-
-            input_data[x_box_pos, y_box_pos] = median_fill
+            input_data[y_box_pos, x_box_pos] = median_fill
 
         img_model.data = input_data
 

@@ -1,6 +1,12 @@
 1.4.0 (unreleased)
 ==================
 
+ami_analyze
+-----------
+
+- Call ``img_median_replace`` to replace NaN's and pixels flagged with
+  DO_NOT_USE in the input image. [#6334]
+
 assign_wcs
 ----------
 
