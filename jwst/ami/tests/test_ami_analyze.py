@@ -175,6 +175,49 @@ def test_utils_crosscorrelate():
     assert_allclose(result, true_result)
 
 
+def test_utils_imgmedian():
+    '''Test of img_median_replace() in utils module'''
+
+    # create input image model containing NaN's and DO_NOT_USE flags
+    data = np.array(
+        [
+            [1.0, 2.0, 3.0, 4.0, 5.0],
+            [6.0, 0.0, 8.0, 9.0, 10.0],
+            [11.0, 12.0, 13.0, 14.0, 15.0],
+            [16.0, 17.0, np.nan, 0.0, 20.0],
+            [21.0, 22.0, 23.0, 24.0, 25.0],
+        ], dtype=np.float32,
+    )
+
+    dq = np.array(
+        [
+            [0, 0, 0, 0, 0],
+            [0, 1, 4, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0],
+        ], dtype=np.uint32,
+    )
+
+    input_model = datamodels.ImageModel(data=data, dq=dq)
+
+    # send to img_median_replace to replace bad pixels
+    input_model = utils.img_median_replace(input_model, box_size=3)
+
+    expected_result = np.array(
+        [
+            [1.0, 2.0, 3.0, 4.0, 5.0],
+            [6.0, 7.0, 8.0, 9.0, 10.0],
+            [11.0, 12.0, 13.0, 14.0, 15.0],
+            [16.0, 17.0, 17.0, 18.5, 20.0],
+            [21.0, 22.0, 23.0, 24.0, 25.0],
+        ], dtype=np.float32,
+    )
+    
+    print(input_model.data)
+    assert_allclose(input_model.data, expected_result)
+
+
 # ---------------------------------------------------------------
 # leastsqnrm module tests:
 #
