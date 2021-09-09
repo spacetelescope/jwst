@@ -58,7 +58,7 @@ def apply_LG_plus(input_model, filter_model, oversample, rotation,
         input_copy.err = input_copy.err[ystart - 1:ystop, xstart - 1:xstop]
 
     # Replace NaN's and DO_NOT_USE pixels in the input image
-    # with median of surrounding pixel values
+    # with median of surrounding pixel values in a 3x3 box
     box_size = 3
     input_copy = img_median_replace(input_copy, box_size)
 
