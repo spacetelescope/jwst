@@ -213,7 +213,7 @@ def test_utils_imgmedian():
             [21.0, 22.0, 23.0, 24.0, 25.0],
         ], dtype=np.float32,
     )
-    
+
     assert_allclose(input_model.data, expected_result)
 
 
