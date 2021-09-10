@@ -15,7 +15,7 @@ class DarkData:
         dims: tuple
             A tuple of integers to describe the dimensions of the arrays used
             during the dark current step.
-        
+
         dark_model: data model
             Input data model, assumed to be a JWST DarkModel like model.
         """
