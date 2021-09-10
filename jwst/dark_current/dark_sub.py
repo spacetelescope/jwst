@@ -6,7 +6,6 @@ import copy
 
 import numpy as np
 import logging
-from .. import datamodels
 
 from . import dark_class
 

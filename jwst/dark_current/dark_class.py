@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class DarkData:
     """
     Class removing data model dependencies.
