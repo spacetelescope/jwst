@@ -1708,10 +1708,6 @@ class IFUCubeData():
         # the flag_det will be set when a slice_no pixel is filled in
         # at the end we will use this flag to pull out valid data
 
-        slicemap = [15, 14, 16, 13, 17, 12, 18, 11, 19, 10,
-                    20, 9, 21, 8, 22, 7, 23, 6, 24, 5, 25,
-                    4, 26, 3, 27, 2, 28, 1, 29, 0]
-
         ysize, xsize = input_model.data.shape
         ra_det = np.zeros((ysize, xsize))
         dec_det = np.zeros((ysize, xsize))
