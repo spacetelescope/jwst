@@ -48,7 +48,6 @@ def do_correction_data(science_data, dark_data, dark_output=None):
 
     """
 
-    print("    ---->  Here")
     # Save some data params for easy use later
     instrument = science_data.instrument_name
     sci_nints = science_data.data.shape[0]
@@ -86,8 +85,8 @@ def do_correction_data(science_data, dark_data, dark_output=None):
         )
         log.warning("Input will be returned without subtracting dark current.")
         science_data.cal_step = 'SKIPPED'
-        # return science_data.copy()  # TODO
         out_data = copy.deepcopy(science_data)
+
         return out_data, None
 
     # Check that the value of nframes and groupgap in the dark
@@ -99,7 +98,6 @@ def do_correction_data(science_data, dark_data, dark_output=None):
             "Input will be returned without subtracting dark current."
         )
         science_data.cal_step = 'SKIPPED'
-        # return science_data.copy()  # TODO
         out_data = copy.deepcopy(science_data)
         return out_data, None
 
@@ -118,6 +116,7 @@ def do_correction_data(science_data, dark_data, dark_output=None):
         # save the reference model as this file. This will
         # ensure consistency from the user's standpoint
         if dark_output is not None:
+            averaged_dark = dark_data
             averaged_dark.save = True
             averaged_dark.oname = dark_output
 
@@ -254,10 +253,8 @@ def average_MIRIdark_frames(dark_data, nints, ngroups, nframes, groupgap):
     dint = dark_data.data.shape[0]
     dny = dark_data.data.shape[2]
     dnx = dark_data.data.shape[3]
-    # avg_dark = datamodels.DarkMIRIModel((dint, ngroups, dny, dnx))  # TODO
     dims = (dint, ngroups, dny, dnx)
     avg_dark = dark_class.DarkData(dims)
-    # avg_dark.update(input_dark)
 
     # Do a direct copy of the 2-d DQ array into the new dark
     avg_dark.dq = dark_data.dq

@@ -53,6 +53,78 @@ class DarkCurrentStep(Step):
             result = dark_sub.do_correction(
                 input_model, dark_model, dark_output
             )
-            dark_model.close()
 
-        return result
+        out_data, dark_data = result
+
+        if dark_data is not None and dark_data.save:
+            save_dark_data_as_dark_model(dark_data, dark_model, instrument)
+        dark_model.close()
+
+        out_ramp = dark_output_data_2_ramp_model(out_data, input_model)
+
+        return out_ramp
+
+
+def save_dark_data_as_dark_model(dark_data, dark_model, instrument):
+    """
+    Save dark data from the dark current step as the appropriate dark model.
+
+    Parameters
+    ----------
+    dark_data: DarkData
+        Dark data used in the dark current step.
+
+    dark_model: DarkMIRIModel or DarkModel
+        The input dark model from reference.
+
+    instrument: str
+        The instrument name.
+    """
+    if instrument == "MIRI":
+        out_dark_model = datamodels.DarkMIRIModel(
+            data=dark_data.data,
+            dq=dark_data.dq,
+            err=dark_data.err)
+    else:
+        out_dark_model = datamodels.DarkModel(
+            data=dark_data.data,
+            dq=dark_data.dq,
+            err=dark_data.err)
+    out_dark_model.update(dark_model)
+
+    out_dark_model.meta.exposure.nframes = dark_data.exp_nframes
+    out_dark_model.meta.exposure.ngroups = dark_data.exp_ngroups
+    out_dark_model.meta.exposure.groupgap = dark_data.exp_groupgap
+    out_dark_model.save(dark_data.oname)
+    out_dark_model.close()
+
+
+def dark_output_data_2_ramp_model(out_data, input_model):
+    """
+    Convert computed output data from the dark step to a RampModel.
+
+    Parameters
+    ----------
+    out_data: DarkScienceData
+        Computed science data from the dark current step.
+
+    input_model: RampModel
+        The input ramp model from which to subtract the dark current.
+
+    Return
+    ------
+    out_model: RampModel
+        The output ramp model from the dark current step.
+    """
+    out_model = input_model.copy()
+    out_model.meta.cal_step.dark_sub = out_data.cal_step
+
+    if out_data.cal_step == "SKIPPED":
+        return out_model
+
+    out_model.data = out_data.data
+    out_model.groupdq = out_data.dq
+    out_model.pixeldq = out_data.pixeldq
+    out_model.err = out_data.err
+
+    return out_model
