@@ -243,10 +243,55 @@ class RegtestData:
                     get_bigdata(self._inputs_root, self.env, fullpath,
                                 docopy=self.docopy)
 
+    def get_data(self, path=None, docopy=None):
+        """Copy data from Artifactory remote resource to the CWD
+
+        Updates self.input and self.input_remote upon completion
+        """
+        if path is None:
+            path = self.input_remote
+        else:
+            self.input_remote = path
+        if docopy is None:
+            docopy = self.docopy
+        self.input = get_bigdata(self._inputs_root, self.env, path,
+                                 docopy=docopy)
+        self.input_remote = os.path.join(self._inputs_root, self.env, path)
+
+        return self.input
+
+    def get_truth(self, path=None, docopy=None):
+        """Copy truth data from Artifactory remote resource to the CWD/truth
+
+        Updates self.truth and self.truth_remote on completion
+        """
+        if path is None:
+            path = self.truth_remote
+        else:
+            self.truth_remote = path
+        if docopy is None:
+            docopy = self.docopy
+        os.makedirs('truth', exist_ok=True)
+        with pushdir('truth'):
+            self.truth_remote = os.path.join(self._inputs_root, self.env, path)
+            self.truth = get_bigdata(self._inputs_root, self.env, path,
+                                     docopy=docopy)
+
+        return self.truth
+
     def to_asdf(self, path):
         tree = eval(str(self))
         af = asdf.AsdfFile(tree=tree)
         af.write_to(path)
+
+    def __repr__(self):
+        return pprint.pformat(
+            dict(input=self.input, output=self.output, truth=self.truth,
+                 input_remote=self.input_remote, truth_remote=self.truth_remote,
+                 remote_results_path=self.remote_results_path, test_name=self.test_name,
+                 traceback=self.traceback, okify_op=self.okify_op),
+            indent=1
+        )
 
 
 def run_step_from_dict(rtdata, **step_params):
