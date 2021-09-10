@@ -3,7 +3,6 @@
 #
 
 import copy
-
 import numpy as np
 import logging
 
@@ -16,6 +15,17 @@ log.setLevel(logging.DEBUG)
 def do_correction(input_model, dark_model, dark_output=None):
     """
     Convert models to classes to remove internal dependence on data models.
+
+    Parameters
+    ----------
+    input_model: data model
+        Input model assumed to be like a JWST RampModel.
+
+    dark_model: data model
+        Input model assumed to be like a JWST DarkModel.
+
+    dark_output: str
+        A path to denote where to save the dark model, if desired.
     """
     science_data = dark_class.DarkScienceData(input_model)
     dark_data = dark_class.DarkData(dark_model=dark_model)
@@ -245,7 +255,6 @@ def average_MIRIdark_frames(dark_data, nints, ngroups, nframes, groupgap):
     -------
     avg_dark: dark data model
         New dark object with averaged frames
-
     """
 
     # Create a model for the averaged dark data
@@ -301,7 +310,6 @@ def average_MIRIdark_frames(dark_data, nints, ngroups, nframes, groupgap):
     return avg_dark
 
 
-# def subtract_dark(input, dark):
 def subtract_dark(science_data, dark_data):
     """
     Subtracts dark current data from science arrays, combines

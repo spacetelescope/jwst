@@ -6,6 +6,19 @@ class DarkData:
     Class removing data model dependencies.
     """
     def __init__(self, dims=None, dark_model=None):
+        """
+        Creates a class to remove data model dependencies in the internals of
+        the dark current code.
+
+        Paramters
+        ---------
+        dims: tuple
+            A tuple of integers to describe the dimensions of the arrays used
+            during the dark current step.
+        
+        dark_model: data model
+            Input data model, assumed to be a JWST DarkModel like model.
+        """
         if dark_model is not None:
             self.data = dark_model.data
             self.dq = dark_model.dq
@@ -38,10 +51,16 @@ class DarkData:
 
 
 class DarkScienceData:
-    """
-    Class removing data model dependencies.
-    """
     def __init__(self, science_model):
+        """
+        Creates a class to remove data model dependencies in the internals of
+        the dark current code.
+
+        Paramters
+        ---------
+        science_model: data model
+            Input data model, assumed to be a JWST RampModel like model.
+        """
         self.data = science_model.data
         self.dq = science_model.groupdq
         self.pixeldq = science_model.pixeldq
