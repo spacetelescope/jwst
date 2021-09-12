@@ -1974,6 +1974,11 @@ refpix
 - Changed the data type of columns OUTPUT and ODD_EVEN in the section of the
   schema for the DQ table in the NIRSpec IRS2 refpix reference file [#4618]
 
+residual_fringe
+---------------
+
+- First implementation of step. Added third party package (BayesicFitting) to setup.cfg [#6211] 
+
 set_telescope_pointing
 ----------------------
 
