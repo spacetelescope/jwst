@@ -46,7 +46,7 @@ SUFFIXES_TO_ADD = [
     'ramp', 'rate', 'rateints',
     's2d', 's3d', 'snr',
     'uncal',
-    'wfscmb', 'whtlt',
+    'wfscmb', 'whtlt','residual_fringe',
     'x1d', 'x1dints',
 ]
 
