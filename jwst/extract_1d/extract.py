@@ -105,6 +105,7 @@ class InvalidSpectralOrderNumberError(Extract1dError):
 class ContinueError(Exception):
     pass
 
+
 def open_extract1d_ref(refname: str, exptype: str) -> dict:
     """Open the extract1d reference file.
 
@@ -2019,23 +2020,12 @@ class ExtractModel(ExtractBase):
 
         disp_range = [slice0, slice1]  # Range (slice) of pixel numbers in the dispersion direction.
 
-        temp_flux, f_var_poisson, f_var_rnoise, f_var_flat, \
-        background, b_var_poisson, b_var_rnoise, b_var_flat, \
-        npixels = extract1d.extract1d(
-            image,
-            var_poisson,
-            var_rnoise,
-            var_flat,
-            temp_wl,
-            disp_range,
-            self.p_src,
-            self.p_bkg,
-            self.independent_var,
-            self.smoothing_length,
-            self.bkg_fit,
-            self.bkg_order,
-            weights=None
-        )
+        temp_flux, f_var_poisson, f_var_rnoise, f_var_flat, background, \
+            b_var_poisson, b_var_rnoise, b_var_flat, npixels = \
+            extract1d.extract1d(image, var_poisson, var_rnoise, var_flat,
+                                temp_wl, disp_range, self.p_src, self.p_bkg,
+                                self.independent_var, self.smoothing_length,
+                                self.bkg_fit, self.bkg_order, weights=None)
 
         del temp_wl
 
@@ -2914,22 +2904,13 @@ def do_extract1d(
                 continue
 
             try:
-                output_model = new_func(extract_ref_dict,
-                                        slit,
-                                        slitname,
-                                        sp_order,
-                                        smoothing_length,
-                                        bkg_fit,
-                                        bkg_order,
-                                        use_source_posn,
-                                        prev_offset,
-                                        exp_type,
-                                        subtract_background,
-                                        input_model,
-                                        output_model,
-                                        apcorr_ref_model,
-                                        log_increment,
-                                        is_multiple_slits)
+                output_model = create_extraction(
+                    extract_ref_dict, slit, slitname, sp_order,
+                    smoothing_length, bkg_fit, bkg_order, use_source_posn,
+                    prev_offset, exp_type, subtract_background, input_model,
+                    output_model, apcorr_ref_model, log_increment,
+                    is_multiple_slits
+                )
             except ContinueError:
                 continue
 
@@ -2972,22 +2953,13 @@ def do_extract1d(
                 log.info(f'Processing spectral order {sp_order}')
 
                 try:
-                    output_model = new_func(extract_ref_dict,
-                                            slit,
-                                            slitname,
-                                            sp_order,
-                                            smoothing_length,
-                                            bkg_fit,
-                                            bkg_order,
-                                            use_source_posn,
-                                            prev_offset,
-                                            exp_type,
-                                            subtract_background,
-                                            input_model,
-                                            output_model,
-                                            apcorr_ref_model,
-                                            log_increment,
-                                            is_multiple_slits)
+                    output_model = create_extraction(
+                        extract_ref_dict, slit, slitname, sp_order,
+                        smoothing_length, bkg_fit, bkg_order, use_source_posn,
+                        prev_offset, exp_type, subtract_background, input_model,
+                        output_model, apcorr_ref_model, log_increment,
+                        is_multiple_slits
+                    )
                 except ContinueError:
                     continue
 
@@ -3026,22 +2998,13 @@ def do_extract1d(
                 log.info(f'Processing spectral order {sp_order}')
 
                 try:
-                    output_model = new_func(extract_ref_dict,
-                                            slit,
-                                            slitname,
-                                            sp_order,
-                                            smoothing_length,
-                                            bkg_fit,
-                                            bkg_order,
-                                            use_source_posn,
-                                            prev_offset,
-                                            exp_type,
-                                            subtract_background,
-                                            input_model,
-                                            output_model,
-                                            apcorr_ref_model,
-                                            log_increment,
-                                            is_multiple_slits)
+                    output_model = create_extraction(
+                        extract_ref_dict, slit, slitname, sp_order,
+                        smoothing_length, bkg_fit, bkg_order, use_source_posn,
+                        prev_offset, exp_type, subtract_background, input_model,
+                        output_model, apcorr_ref_model, log_increment,
+                        is_multiple_slits
+                    )
                 except ContinueError:
                     continue
 
@@ -3562,10 +3525,10 @@ def extract_one_slit(
         if extract_params['subtract_background']:
             log.info("with background subtraction")
 
-    ra, dec, wavelength, temp_flux, f_var_poisson, \
-    f_var_rnoise, f_var_flat, background, b_var_poisson, \
-    b_var_rnoise, b_var_flat, npixels, dq = extract_model.extract(data, var_poisson, var_rnoise,
-                                                                  var_flat, wl_array, verbose)
+    ra, dec, wavelength, temp_flux, f_var_poisson, f_var_rnoise, f_var_flat, \
+        background, b_var_poisson, b_var_rnoise, b_var_flat, npixels, dq = \
+        extract_model.extract(data, var_poisson, var_rnoise, var_flat,
+                              wl_array, verbose)
 
     return (ra, dec, wavelength, temp_flux, f_var_poisson, f_var_rnoise, f_var_flat,
             background, b_var_poisson, b_var_rnoise, b_var_flat, npixels, dq, offset)
@@ -3678,22 +3641,22 @@ def nans_at_endpoints(
     return new_wl, new_dq, slc
 
 
-def new_func(extract_ref_dict,
-             slit,
-             slitname,
-             sp_order,
-             smoothing_length,
-             bkg_fit,
-             bkg_order,
-             use_source_posn,
-             prev_offset,
-             exp_type,
-             subtract_background,
-             input_model,
-             output_model,
-             apcorr_ref_model,
-             log_increment,
-             is_multiple_slits):
+def create_extraction(extract_ref_dict,
+                      slit,
+                      slitname,
+                      sp_order,
+                      smoothing_length,
+                      bkg_fit,
+                      bkg_order,
+                      use_source_posn,
+                      prev_offset,
+                      exp_type,
+                      subtract_background,
+                      input_model,
+                      output_model,
+                      apcorr_ref_model,
+                      log_increment,
+                      is_multiple_slits):
     if slit is None:
         meta_source = input_model
     else:
@@ -3799,16 +3762,16 @@ def new_func(extract_ref_dict,
 
     for integ in integrations:
         try:
-            ra, dec, wavelength, temp_flux, f_var_poisson, \
-            f_var_rnoise, f_var_flat, background, b_var_poisson, \
-            b_var_rnoise, b_var_flat, npixels, dq, prev_offset = extract_one_slit(
-                input_model,
-                slit,
-                integ,
-                prev_offset,
-                verbose,
-                extract_params
-            )
+            ra, dec, wavelength, temp_flux, f_var_poisson, f_var_rnoise, \
+                f_var_flat, background, b_var_poisson, b_var_rnoise, \
+                b_var_flat, npixels, dq, prev_offset = extract_one_slit(
+                    input_model,
+                    slit,
+                    integ,
+                    prev_offset,
+                    verbose,
+                    extract_params
+                )
         except InvalidSpectralOrderNumberError as e:
             log.info(f'{str(e)}, skipping ...')
             raise ContinueError()
@@ -3830,9 +3793,9 @@ def new_func(extract_ref_dict,
         # The input units will normally be MJy / sr, but for NIRSpec and NIRISS SOSS point-source spectra the units
         # will be MJy.
         input_units_are_megajanskys = (
-                photom_has_been_run
-                and source_type == 'POINT'
-                and (instrument == 'NIRSPEC' or exp_type == 'NIS_SOSS')
+            photom_has_been_run
+            and source_type == 'POINT'
+            and (instrument == 'NIRSPEC' or exp_type == 'NIS_SOSS')
         )
 
         if photom_has_been_run:
@@ -3870,7 +3833,7 @@ def new_func(extract_ref_dict,
                     surf_bright, sb_error, sb_var_poisson, sb_var_rnoise, sb_var_flat,
                     dq, background, berror, b_var_poisson, b_var_rnoise, b_var_flat, npixels)
             ),
-            dtype= datamodels.SpecModel().spec_table.dtype
+            dtype=datamodels.SpecModel().spec_table.dtype
         )
 
         spec = datamodels.SpecModel(spec_table=otab)
