@@ -2894,9 +2894,6 @@ def do_extract1d(
         for slit in slits:  # Loop over the slits in the input model
             log.info(f'Working on slit {slit.name}')
 
-            # Overwrite old source of metadata to new slit, for slit-specific calls
-            meta_source = slit
-
             slitname = slit.name
             prev_offset = OFFSET_NOT_ASSIGNED_YET
             use_source_posn = save_use_source_posn  # restore original value
@@ -2910,30 +2907,29 @@ def do_extract1d(
                 log.info("Spectral order 0 is a direct image, skipping ...")
                 continue
 
-            # TODO : call the multislit_byslit fragment, return spec
             try:
                 output_model = new_func(extract_ref_dict,
-                                    meta_source,
-                                    slitname,
-                                    sp_order,
-                                    smoothing_length,
-                                    bkg_fit,
-                                    bkg_order,
-                                    use_source_posn,
-                                    prev_offset,
-                                    exp_type,
-                                    subtract_background,
-                                    input_model,
-                                    output_model,
-                                    apcorr_ref_model,
-                                    log_increment,
-                                    is_multiple_slits)
+                                        slit,
+                                        slitname,
+                                        sp_order,
+                                        smoothing_length,
+                                        bkg_fit,
+                                        bkg_order,
+                                        use_source_posn,
+                                        prev_offset,
+                                        exp_type,
+                                        subtract_background,
+                                        input_model,
+                                        output_model,
+                                        apcorr_ref_model,
+                                        log_increment,
+                                        is_multiple_slits)
             except ContinueError:
                 continue
 
     else:
         # Define source of metadata
-        meta_source = input_model
+        slit = None
         is_multiple_slits = False
 
         # These default values for slitname are not really slit names, and slitname may be assigned a better value
@@ -2969,24 +2965,23 @@ def do_extract1d(
 
                 log.info(f'Processing spectral order {sp_order}')
 
-                # TODO : call multislit_byslit here?
                 try:
                     output_model = new_func(extract_ref_dict,
-                                        meta_source,
-                                        slitname,
-                                        sp_order,
-                                        smoothing_length,
-                                        bkg_fit,
-                                        bkg_order,
-                                        use_source_posn,
-                                        prev_offset,
-                                        exp_type,
-                                        subtract_background,
-                                        input_model,
-                                        output_model,
-                                        apcorr_ref_model,
-                                        log_increment,
-                                        is_multiple_slits)
+                                            slit,
+                                            slitname,
+                                            sp_order,
+                                            smoothing_length,
+                                            bkg_fit,
+                                            bkg_order,
+                                            use_source_posn,
+                                            prev_offset,
+                                            exp_type,
+                                            subtract_background,
+                                            input_model,
+                                            output_model,
+                                            apcorr_ref_model,
+                                            log_increment,
+                                            is_multiple_slits)
                 except ContinueError:
                     continue
 
@@ -3003,7 +2998,6 @@ def do_extract1d(
             meta_source = input_model
 
             # Replace the default value for slitname with a more accurate value, if possible.
-            slit = None
 
             # For NRS_BRIGHTOBJ, the slit name comes from the slit model info
             if input_model.meta.exposure.type == 'NRS_BRIGHTOBJ' and hasattr(input_model, "name"):
@@ -3025,24 +3019,23 @@ def do_extract1d(
 
                 log.info(f'Processing spectral order {sp_order}')
 
-                # TODO : call multislit_byslit here?
                 try:
                     output_model = new_func(extract_ref_dict,
-                                        meta_source,
-                                        slitname,
-                                        sp_order,
-                                        smoothing_length,
-                                        bkg_fit,
-                                        bkg_order,
-                                        use_source_posn,
-                                        prev_offset,
-                                        exp_type,
-                                        subtract_background,
-                                        input_model,
-                                        output_model,
-                                        apcorr_ref_model,
-                                        log_increment,
-                                        is_multiple_slits)
+                                            slit,
+                                            slitname,
+                                            sp_order,
+                                            smoothing_length,
+                                            bkg_fit,
+                                            bkg_order,
+                                            use_source_posn,
+                                            prev_offset,
+                                            exp_type,
+                                            subtract_background,
+                                            input_model,
+                                            output_model,
+                                            apcorr_ref_model,
+                                            log_increment,
+                                            is_multiple_slits)
                 except ContinueError:
                     continue
 
@@ -3680,7 +3673,7 @@ def nans_at_endpoints(
 
 
 def new_func(extract_ref_dict,
-             meta_source,
+             slit,
              slitname,
              sp_order,
              smoothing_length,
@@ -3695,6 +3688,11 @@ def new_func(extract_ref_dict,
              apcorr_ref_model,
              log_increment,
              is_multiple_slits):
+
+    if slit is None:
+        meta_source = input_model
+    else:
+        meta_source = slit
 
     instrument = meta_source.meta.instrument.name
     if instrument is not None:
@@ -3745,7 +3743,7 @@ def new_func(extract_ref_dict,
     if is_multiple_slits:
         if exp_type == 'NRS_FIXEDSLIT' and slitname != slit.meta.instrument.fixed_slit:
             use_source_posn = False
-            log.info("Can only compute source location for primary NIRSpec slit, ")
+            log.info("Can only compute source location for primary NIRSpec slit,")
             log.info("so setting use_source_posn to False")
 
     if photom_has_been_run:
@@ -3786,7 +3784,7 @@ def new_func(extract_ref_dict,
 
     # Loop over each integration in the input model
     verbose = True  # for just the first integration
-    shape = input_model.data.shape
+    shape = meta_source.data.shape
 
     if len(shape) == 3 and shape[0] == 1 or len(shape) == 2:
         integrations = [-1]
@@ -3797,15 +3795,15 @@ def new_func(extract_ref_dict,
     for integ in integrations:
         try:
             ra, dec, wavelength, temp_flux, f_var_poisson, \
-            f_var_rnoise, f_var_flat, background, b_var_poisson, \
-            b_var_rnoise, b_var_flat, npixels, dq, prev_offset = extract_one_slit(
-                input_model,
-                slit,
-                integ,
-                prev_offset,
-                verbose,
-                extract_params
-            )
+                f_var_rnoise, f_var_flat, background, b_var_poisson, \
+                b_var_rnoise, b_var_flat, npixels, dq, prev_offset = extract_one_slit(
+                    input_model,
+                    slit,
+                    integ,
+                    prev_offset,
+                    verbose,
+                    extract_params
+                )
         except InvalidSpectralOrderNumberError as e:
             log.info(f'{str(e)}, skipping ...')
             raise ContinueError()
@@ -3904,7 +3902,7 @@ def new_func(extract_ref_dict,
                 wl = wavelength.min()
 
             # TODO : Tried to simplify apcorr calling wrt. slit_name usage,
-            #        but expect some issues depending on assumptions made.
+            #        but may see some issues depending on assumptions made.
             if isinstance(input_model, datamodels.ImageModel):
                 apcorr = select_apcorr(input_model)(
                     input_model,
@@ -3926,7 +3924,7 @@ def new_func(extract_ref_dict,
                 )
             apcorr.apply(spec.spec_table)
 
-            output_model.spec.append(spec)
+        output_model.spec.append(spec)
 
         if log_increment > 0 and (integ + 1) % log_increment == 0:
             if integ == -1:
