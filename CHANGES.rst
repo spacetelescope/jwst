@@ -1,6 +1,12 @@
 1.4.0 (unreleased)
 ==================
 
+ami_analyze
+-----------
+
+- Call ``img_median_replace`` to replace NaN's and pixels flagged with
+  DO_NOT_USE in the input image. [#6334]
+
 assign_wcs
 ----------
 
@@ -15,6 +21,9 @@ assign_wcs
 
 - Added a function which given ra, dec, lambda computes which ones project
   within a given NIRSpec IFU slice. [#6316]
+
+- Changed in_ifu_slice in util.py to return the indices of elements in slice.
+  Also the x tolerance on finding slice elements was increased. [#6326] 
 
 associations
 ------------
@@ -39,6 +48,9 @@ cube_build
 - Moved variable definitions to top of code in C extension to
   support changes in #6093. [#6255]
 
+- Using assign_wsc.utils.in_ifu_slice function to determine which NIRSpec
+  sky values mapped to each detector slice. [#6326] 
+
 datamodels
 ----------
 
@@ -47,6 +59,12 @@ datamodels
 - Update VELOSYS keyword comment [#6298]
 
 - Added new keywords FPE_SIDE and ICE_SIDE to core schema [#6314]
+
+- Fix bug preventing extra arguments when calling ``datamodels.open``
+  on an ASDF file. [#6327]
+
+- Implement memmap argument when calling ``datamodels.open`` on an ASDF
+  file. [#6327]
 
 extract_1d
 ----------
@@ -60,22 +78,13 @@ flatfield
 - Updated flatfield step docs to include complete details on how the
   variance and error arrays are updated. [#6245]
 
-general
--------
-
-- Added aliases for all steps, following naming conventions used in
-  pipeline step_defs [#6158]
+- Fixed a bug in flatfield for brightobj mode where the S-flat cutout
+  was calculated incorrectly by not accounting for the slit offset [#6332]
 
 jump
 ----
 
 - Updated jump detection step to use common code moved to stcal [#6089]
-
-lib
----
-
-- Updated default suffix names for RampFit and GuiderCDS steps to
-  'ramp_fit' and 'guider_cds' to match alias convention [#6158]
 
 outlier_detection
 -----------------
@@ -91,9 +100,6 @@ pipeline
 
 - Added wfss_contam step to `calwebb_spec2` pipeline flow for WFSS modes [#6207]
 
-- Updated calwebb_tso3 to be more robust in handling null results from
-  the ``tso_photometry`` step. [#6265]
-
 ramp_fitting
 ------------
 
@@ -105,11 +111,6 @@ resample
 
 - Refactor ``resample_spec`` to use a separate function for computing the output
   rectified WCS for lamp data.  [#6296]
-
-rscd
-----
-
-- Removed support for deprecated step name 'RSCD_Step' [#6158]
 
 - Fix a crash in ``resample_spec`` due to undefined variance arrays. [#6305]
 
@@ -136,6 +137,37 @@ wfss_contam
 
 - Fixed handling of filter/pupil names for NIRISS WFSS mode [#6233]
 
+
+1.3.2 (2021-09-03)
+==================
+
+associations
+------------
+
+- Enhanced level-2b ASN rules for NIRSpec internal lamp exposures to
+  handle certain opmode/grating/lamp combinations that result in no data
+  on one of the detectors. [#6304]
+
+cube_build
+----------
+
+- Fix bug when creating cubes using output_type=channel. [#6138]
+
+- Move computationally intensive routines to c extensions and
+  removed miri psf weight function. [#6093]
+
+- Moved variable definitions to top of code in c extension to
+  support changes in #6093. [#6255]
+
+- Moved cube blotting to a c extension [#6256]
+
+pipeline
+--------
+
+- Updated calwebb_tso3 to be more robust in handling null results from
+  the ``tso_photometry`` step. [#6265]
+
+
 1.3.1 (2021-08-09)
 ==================
 
@@ -143,6 +175,7 @@ lib
 ---
 
 - Fixed a bug in set_telescope_pointing that was setting wrong meta for the pointing quality [#6264]
+
 
 1.3.0 (2021-07-31)
 ==================
@@ -187,6 +220,7 @@ wfs_combine
 
 - Fixed the refine option to correctly use the cross correlation to align
   the images if the WCS is off [#6101]
+
 
 1.2.3 (2021-06-08)
 ==================
@@ -1948,6 +1982,11 @@ refpix
 
 - Changed the data type of columns OUTPUT and ODD_EVEN in the section of the
   schema for the DQ table in the NIRSpec IRS2 refpix reference file [#4618]
+
+residual_fringe
+---------------
+
+- First implementation of step. Added third party package (BayesicFitting) to setup.cfg [#6211] 
 
 set_telescope_pointing
 ----------------------
