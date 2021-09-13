@@ -2883,8 +2883,8 @@ def do_extract1d(
 
             # The subsequent work on data uses the individual SlitModels, but there are many places where meta
             # attributes are retreived from input_model, so set this to allow that to work.
-            #if not isinstance(input_model, datamodels.SlitModel):
-            #    input_model = input_model[0]
+            if not isinstance(input_model, datamodels.SlitModel):
+                input_model = input_model[0]
 
         elif isinstance(input_model, datamodels.MultiSlitModel):  # A simple MultiSlitModel, not in a container
             slits = input_model.slits
@@ -3707,7 +3707,7 @@ def new_func(extract_ref_dict,
     # We need a flag to indicate whether the photom step has been run.
     # If it hasn't, we'll copy the count rate to the flux column.
     try:
-        s_photom = meta_source.meta.cal_step.photom
+        s_photom = input_model.meta.cal_step.photom
     except AttributeError:
         s_photom = None
 
