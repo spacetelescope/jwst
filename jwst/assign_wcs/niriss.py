@@ -15,11 +15,10 @@ from ..transforms.models import (NirissSOSSModel,
                                  NIRISSForwardRowGrismDispersion,
                                  NIRISSBackwardGrismDispersion,
                                  NIRISSForwardColumnGrismDispersion)
-from ..datamodels import (ImageModel, 
-                          NIRISSGrismModel, 
+from ..datamodels import (ImageModel,
+                          NIRISSGrismModel,
                           DistortionModel,
                           NirissSOSSTableModel)
-from stdatamodels import s3_utils
 from ..lib.reffile_utils import find_row
 
 log = logging.getLogger(__name__)
@@ -144,21 +143,10 @@ def niriss_soss(input_model, reference_files):
     world = cf.CompositeFrame([sky, spec], name='world')
 
     try:
-        # We'd like to open this file as a DataModel, so we can consolidate
-        # the S3 URI handling to one place.  The S3-related code here can
-        # be removed once we have a specwcs DataModel subclass.
-        # if s3_utils.is_s3_uri(reference_files['specwcs']):
-        #     bytesio_or_path = s3_utils.get_object(reference_files['specwcs'])
-        # else:
-        #     bytesio_or_path = reference_files['specwcs']
-        # with asdf.open(bytesio_or_path) as af:
-        #     wl1 = af.tree[1].copy()
-        #     wl2 = af.tree[2].copy()
-        #     wl3 = af.tree[3].copy()
         with NirissSOSSTableModel(reference_files['specwcs']) as f:
-            wl1 = f.models[0] # order 1
-            wl2 = f.model[1]  # order 2
-            wl3 = f.model[2]  # order 3
+            wl1 = f.models[0]  # order 1
+            wl2 = f.models[1]  # order 2
+            wl3 = f.models[2]  # order 3
 
     except IOError as e:
         raise IOError(f"Error reading wavelength correction from {reference_files['specwcs']}") from e

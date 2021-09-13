@@ -25,6 +25,9 @@ assign_wcs
 - Changed in_ifu_slice in util.py to return the indices of elements in slice.
   Also the x tolerance on finding slice elements was increased. [#6326] 
 
+- Replaced the asdf read for the NIRISS SOSS reference file with a datamodel
+
+
 associations
 ------------
 
@@ -65,6 +68,9 @@ datamodels
 
 - Implement memmap argument when calling ``datamodels.open`` on an ASDF
   file. [#6327]
+
+- NirissSOSSTableModel for the specwcs reference file
+
 
 extract_1d
 ----------
