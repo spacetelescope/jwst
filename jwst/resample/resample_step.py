@@ -30,8 +30,6 @@ class ResampleStep(Step):
         Single filename for either a single image or an association table.
     """
 
-    class_alias = "resample"
-
     spec = """
         pixfrac = float(default=1.0)
         kernel = string(default='square')
