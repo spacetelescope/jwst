@@ -12,7 +12,7 @@ __all__ = ['DistortionModel', 'DistortionMRSModel', 'SpecwcsModel', 'RegionsMode
            'WavelengthrangeModel', 'CameraModel', 'CollimatorModel', 'OTEModel',
            'FOREModel', "FPAModel", 'IFUPostModel', 'IFUFOREModel', 'IFUSlicerModel',
            'MSAModel', 'FilteroffsetModel', 'DisperserModel',
-           'NIRCAMGrismModel', 'NIRISSGrismModel', 'WaveCorrModel']
+           'NIRCAMGrismModel', 'NIRISSGrismModel', 'NirissSOSSTableModel','WaveCorrModel']
 
 
 class _SimpleModel(ReferenceFileModel):
@@ -336,6 +336,56 @@ class NIRISSGrismModel(ReferenceFileModel):
                 raise
             else:
                 warnings.warn(traceback.format_exc(), ValidationWarning)
+
+    def to_fits(self):
+        raise NotImplementedError("FITS format is not supported for this file.")
+
+
+class NirissSOSSTableModel(ReferenceFileModel):
+    """
+    A model for a reference file of type "specwcs" for NIRISS SOSS wavelength tables.
+
+    Parameters
+    ----------
+    models: `~astropy.modeling.Tabular`
+          NIRISS SOSS wavelength  model
+    """
+    schema_url = "http://stsci.edu/schemas/jwst_datamodel/specwcs_niriss_soss.schema"
+    reftype = "specwcs"
+
+    def __init__(self, init=None,
+                 models=None,
+                 **kwargs):
+        super().__init__(init=init, **kwargs)
+
+        if init is None:
+            self.populate_meta()
+        if models is not None:
+            self.models = models
+        
+    def populate_meta(self):
+        self.meta.instrument.name = "NIRISS"
+        self.meta.instrument.detector = "NIS"
+        self.meta.exposure.type = "NIS_SOSS"
+        self.meta.reftype = self.reftype
+
+    def validate(self):
+        super(NirissSOSSTableModel, self).validate()
+        try:
+            assert isinstance(self.meta.input_units, (str, u.NamedUnit))
+            assert isinstance(self.meta.output_units, (str, u.NamedUnit))
+            assert self.meta.instrument.name == "NIRISS"
+            assert self.meta.exposure.type == "NIS_SOSS"
+            assert self.meta.instrument.detector == "NIS"
+            assert self.meta.reftype == self.reftype
+        except AssertionError:
+            if self._strict_validation:
+                raise
+            else:
+                warnings.warn(traceback.format_exc(), ValidationWarning)
+
+    def on_save(self, path=None):
+        self.meta.reftype = self.reftype
 
     def to_fits(self):
         raise NotImplementedError("FITS format is not supported for this file.")

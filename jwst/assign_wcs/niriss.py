@@ -15,7 +15,10 @@ from ..transforms.models import (NirissSOSSModel,
                                  NIRISSForwardRowGrismDispersion,
                                  NIRISSBackwardGrismDispersion,
                                  NIRISSForwardColumnGrismDispersion)
-from ..datamodels import ImageModel, NIRISSGrismModel, DistortionModel
+from ..datamodels import (ImageModel, 
+                          NIRISSGrismModel, 
+                          DistortionModel,
+                          NirissSOSSTableModel)
 from stdatamodels import s3_utils
 from ..lib.reffile_utils import find_row
 
@@ -51,7 +54,7 @@ def create_pipeline(input_model, reference_files):
 
 def niriss_soss_set_input(model, order_number):
     """
-    Extract a WCS fr a specific spectral order.
+    Extract the WCS for a specific spectral order.
 
     Parameters
     ----------
@@ -67,8 +70,8 @@ def niriss_soss_set_input(model, order_number):
     """
 
     # Make sure the spectral order is available.
-    if order_number < 1 or order_number > 3:
-        raise ValueError('Order must be between 1 and 3')
+    if 1 <= int(order_number) <= 3:
+        raise ValueError('Order must be integer between 1 and 3')
 
     # Return the correct transform based on the order_number
     obj = model.meta.wcs.forward_transform.get_model(order_number)
@@ -108,11 +111,19 @@ def niriss_soss(input_model, reference_files):
 
     Notes
     -----
-    It includes tWO coordinate frames -
+    It includes two coordinate frames -
     "detector" and "world".
 
-    It uses the "specwcs" reference file.
+    It uses the "specwcs" reference file type.
     """
+
+    # The input is the grism image
+    if not isinstance(input_model, ImageModel):
+        raise TypeError('The input data model must be an ImageModel.')
+
+    # make sure this is a SOSS image
+    if "NIS_SOSS" != input_model.meta.exposure.type:
+        raise ValueError('The input exposure is not NIRISS SOSS')
 
     # Get the target RA and DEC, they will be used for setting the WCS RA
     # and DEC based on a conversation with Kevin Volk.
@@ -136,15 +147,20 @@ def niriss_soss(input_model, reference_files):
         # We'd like to open this file as a DataModel, so we can consolidate
         # the S3 URI handling to one place.  The S3-related code here can
         # be removed once we have a specwcs DataModel subclass.
-        if s3_utils.is_s3_uri(reference_files['specwcs']):
-            bytesio_or_path = s3_utils.get_object(reference_files['specwcs'])
-        else:
-            bytesio_or_path = reference_files['specwcs']
-        with asdf.open(bytesio_or_path) as af:
-            wl1 = af.tree[1].copy()
-            wl2 = af.tree[2].copy()
-            wl3 = af.tree[3].copy()
-    except Exception as e:
+        # if s3_utils.is_s3_uri(reference_files['specwcs']):
+        #     bytesio_or_path = s3_utils.get_object(reference_files['specwcs'])
+        # else:
+        #     bytesio_or_path = reference_files['specwcs']
+        # with asdf.open(bytesio_or_path) as af:
+        #     wl1 = af.tree[1].copy()
+        #     wl2 = af.tree[2].copy()
+        #     wl3 = af.tree[3].copy()
+        with NirissSOSSTableModel(reference_files['specwcs']) as f:
+            wl1 = f.models[0] # order 1
+            wl2 = f.model[1]  # order 2
+            wl3 = f.model[2]  # order 3
+
+    except IOError as e:
         raise IOError(f"Error reading wavelength correction from {reference_files['specwcs']}") from e
 
     velosys = input_model.meta.wcsinfo.velosys

@@ -1,0 +1,32 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/asdf/asdf-schema-1.0.0"
+id: "http://stsci.edu/schemas/jwst_datamodel/specwcs_niriss_soss.schema"
+title: SPECWCS_NIRISS_SOSS reference file model
+allOf:
+- $ref: referencefile.schema
+- $ref: keyword_exptype.schema
+- type: object
+  properties:
+    models:
+        description: |
+          Niriss SOSS tabular wavelength models
+        type: array
+        items:
+          $ref: http://stsci.edu/schemas/asdf/transform/transform-1.2.0
+    
+    meta:
+      type: object
+      properties:
+        input_units:
+          description: |
+            Input units for wavelength
+          anyOf:
+            - type: string
+            - $ref: http://stsci.edu/schemas/asdf/unit/unit-1.0.0
+        output_units:
+          description: |
+            Output units for wavelength
+          anyOf:
+            - type: string
+            - $ref: http://stsci.edu/schemas/asdf/unit/unit-1.0.0
