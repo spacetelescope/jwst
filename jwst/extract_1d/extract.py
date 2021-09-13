@@ -2872,17 +2872,19 @@ def do_extract1d(
 
         is_multiple_slits = True
         if was_source_model:   # SourceContainer has a single list of SlitModels
+            log.warning("Input is a Source Model.")
             if isinstance(input_model, datamodels.SlitModel):
                 # If input is a single SlitModel, as opposed to a list of SlitModels,
                 # put it into a list so that it's iterable later on
                 slits = [input_model]
             else:
+                log.warning("INput is not just a SlitModel")
                 slits = input_model
 
             # The subsequent work on data uses the individual SlitModels, but there are many places where meta
             # attributes are retreived from input_model, so set this to allow that to work.
-            if not isinstance(input_model, datamodels.SlitModel):
-                input_model = input_model[0]
+            #if not isinstance(input_model, datamodels.SlitModel):
+            #    input_model = input_model[0]
 
         elif isinstance(input_model, datamodels.MultiSlitModel):  # A simple MultiSlitModel, not in a container
             slits = input_model.slits
@@ -2893,6 +2895,7 @@ def do_extract1d(
 
         for slit in slits:  # Loop over the slits in the input model
             log.info(f'Working on slit {slit.name}')
+            log.info(f'Slit is of type {type(slit)}')
 
             slitname = slit.name
             prev_offset = OFFSET_NOT_ASSIGNED_YET
@@ -3694,7 +3697,10 @@ def new_func(extract_ref_dict,
     else:
         meta_source = slit
 
-    instrument = meta_source.meta.instrument.name
+    if exp_type in WFSS_EXPTYPES:
+        instrument = input_model.meta.instrument.name
+    else:
+        instrument = meta_source.meta.instrument.name
     if instrument is not None:
         instrument = instrument.upper()
 
@@ -3912,7 +3918,7 @@ def new_func(extract_ref_dict,
                 )
             else:
                 match_kwargs = {'location': (ra, dec, wl)}
-                if meta_source.meta.exposure.type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
+                if exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
                     match_kwargs['slit'] = slitname
 
                 apcorr = select_apcorr(input_model)(
