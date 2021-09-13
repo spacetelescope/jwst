@@ -43,10 +43,10 @@ SUFFIXES_TO_ADD = [
     'i2d',
     'median',
     'phot', 'psf-amiavg', 'psfalign', 'psfstack', 'psfsub',
-    'ramp', 'rate', 'rateints',
+    'ramp', 'rate', 'rateints','residual_fringe',
     's2d', 's3d', 'snr',
     'uncal',
-    'wfscmb', 'whtlt','residual_fringe',
+    'wfscmb', 'whtlt',
     'x1d', 'x1dints',
 ]
 
