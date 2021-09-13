@@ -18,7 +18,7 @@ from ..datamodels.apcorr import (
     NrsMosApcorrModel, NrsIfuApcorrModel, NisWfssApcorrModel
 )
 
-from ..assign_wcs import niriss         # for specifying spectral order number
+from ..assign_wcs import niriss  # for specifying spectral order number
 from ..assign_wcs.util import wcs_bbox_from_shape
 from ..lib import pipe_utils
 from ..lib.wcs_utils import get_wavelengths
@@ -31,8 +31,6 @@ from json.decoder import JSONDecodeError
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
-
-class ContinueError(Exception): pass
 
 # WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_WFSS', 'NRC_GRISM', 'NRC_TSGRISM']
 WFSS_EXPTYPES = ['NIS_WFSS', 'NRC_WFSS', 'NRC_GRISM']
@@ -102,6 +100,10 @@ class InvalidSpectralOrderNumberError(Extract1dError):
     """The spectral order number was invalid or off the detector."""
     pass
 
+
+# Create custom error to pass continue from a function inside of a loop
+class ContinueError(Exception):
+    pass
 
 def open_extract1d_ref(refname: str, exptype: str) -> dict:
     """Open the extract1d reference file.
@@ -1657,7 +1659,8 @@ class ExtractModel(ExtractBase):
             self.xstop = min(self.xstop, shape[-1] - 1)  # inclusive limit
 
         if self.src_coeff is None and verbose:
-            log.info(f"Applying position offset of {self.position_correction:.2f} to {direction}start and {direction}stop")
+            log.info(
+                f"Applying position offset of {self.position_correction:.2f} to {direction}start and {direction}stop")
 
         if self.src_coeff is not None or self.bkg_coeff is not None:
             if verbose:
@@ -2017,22 +2020,22 @@ class ExtractModel(ExtractBase):
         disp_range = [slice0, slice1]  # Range (slice) of pixel numbers in the dispersion direction.
 
         temp_flux, f_var_poisson, f_var_rnoise, f_var_flat, \
-            background, b_var_poisson, b_var_rnoise, b_var_flat, \
-            npixels = extract1d.extract1d(
-                image,
-                var_poisson,
-                var_rnoise,
-                var_flat,
-                temp_wl,
-                disp_range,
-                self.p_src,
-                self.p_bkg,
-                self.independent_var,
-                self.smoothing_length,
-                self.bkg_fit,
-                self.bkg_order,
-                weights=None
-            )
+        background, b_var_poisson, b_var_rnoise, b_var_flat, \
+        npixels = extract1d.extract1d(
+            image,
+            var_poisson,
+            var_rnoise,
+            var_flat,
+            temp_wl,
+            disp_range,
+            self.p_src,
+            self.p_bkg,
+            self.independent_var,
+            self.smoothing_length,
+            self.bkg_fit,
+            self.bkg_order,
+            weights=None
+        )
 
         del temp_wl
 
@@ -2871,7 +2874,7 @@ def do_extract1d(
     if was_source_model or isinstance(input_model, datamodels.MultiSlitModel):
 
         is_multiple_slits = True
-        if was_source_model:   # SourceContainer has a single list of SlitModels
+        if was_source_model:  # SourceContainer has a single list of SlitModels
             log.warning("Input is a Source Model.")
             if isinstance(input_model, datamodels.SlitModel):
                 # If input is a single SlitModel, as opposed to a list of SlitModels,
@@ -3559,10 +3562,10 @@ def extract_one_slit(
         if extract_params['subtract_background']:
             log.info("with background subtraction")
 
-    ra, dec, wavelength, temp_flux, f_var_poisson,\
-        f_var_rnoise, f_var_flat, background, b_var_poisson,\
-        b_var_rnoise, b_var_flat, npixels, dq = extract_model.extract(data, var_poisson, var_rnoise,
-                                                                      var_flat, wl_array, verbose)
+    ra, dec, wavelength, temp_flux, f_var_poisson, \
+    f_var_rnoise, f_var_flat, background, b_var_poisson, \
+    b_var_rnoise, b_var_flat, npixels, dq = extract_model.extract(data, var_poisson, var_rnoise,
+                                                                  var_flat, wl_array, verbose)
 
     return (ra, dec, wavelength, temp_flux, f_var_poisson, f_var_rnoise, f_var_flat,
             background, b_var_poisson, b_var_rnoise, b_var_flat, npixels, dq, offset)
@@ -3691,7 +3694,6 @@ def new_func(extract_ref_dict,
              apcorr_ref_model,
              log_increment,
              is_multiple_slits):
-
     if slit is None:
         meta_source = input_model
     else:
@@ -3729,7 +3731,6 @@ def new_func(extract_ref_dict,
     if is_multiple_slits:
         source_type = meta_source.source_type
     else:
-        slit = None
         if isinstance(input_model, datamodels.SlitModel):
             source_type = input_model.source_type
             if source_type is None:
@@ -3744,8 +3745,6 @@ def new_func(extract_ref_dict,
         log.info(f"Setting use_source_posn to False for source type {source_type}")
 
     # Turn off use_source_posn if working on non-primary NRS fixed slits
-    # TODO : does NRS_FIXEDSLIT always imply is_multiple_slits? Otherwise error
-    #        on slit.meta call!
     if is_multiple_slits:
         if exp_type == 'NRS_FIXEDSLIT' and slitname != slit.meta.instrument.fixed_slit:
             use_source_posn = False
@@ -3801,15 +3800,15 @@ def new_func(extract_ref_dict,
     for integ in integrations:
         try:
             ra, dec, wavelength, temp_flux, f_var_poisson, \
-                f_var_rnoise, f_var_flat, background, b_var_poisson, \
-                b_var_rnoise, b_var_flat, npixels, dq, prev_offset = extract_one_slit(
-                    input_model,
-                    slit,
-                    integ,
-                    prev_offset,
-                    verbose,
-                    extract_params
-                )
+            f_var_rnoise, f_var_flat, background, b_var_poisson, \
+            b_var_rnoise, b_var_flat, npixels, dq, prev_offset = extract_one_slit(
+                input_model,
+                slit,
+                integ,
+                prev_offset,
+                verbose,
+                extract_params
+            )
         except InvalidSpectralOrderNumberError as e:
             log.info(f'{str(e)}, skipping ...')
             raise ContinueError()
@@ -3907,8 +3906,6 @@ def new_func(extract_ref_dict,
             else:
                 wl = wavelength.min()
 
-            # TODO : Tried to simplify apcorr calling wrt. slit_name usage,
-            #        but may see some issues depending on assumptions made.
             if isinstance(input_model, datamodels.ImageModel):
                 apcorr = select_apcorr(input_model)(
                     input_model,
