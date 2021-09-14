@@ -8,7 +8,8 @@ class DarkData:
     def __init__(self, dims=None, dark_model=None):
         """
         Creates a class to remove data model dependencies in the internals of
-        the dark current code.
+        the dark current code.  The data contained in this class comes from the
+        dark reference data file.
 
         Paramters
         ---------
@@ -30,7 +31,7 @@ class DarkData:
 
         elif dims is not None:
             self.data = np.zeros(dims, dtype=np.float32)
-            self.dq = np.zeros(dims, dtype=np.uint8)
+            self.dq = np.zeros(dims, dtype=np.uint32)
             self.err = np.zeros(dims, dtype=np.float32)
 
             self.exp_nframes = None
@@ -47,14 +48,15 @@ class DarkData:
             self.exp_groupgap = None
 
         self.save = False
-        self.oname = None
+        self.output_name = None
 
 
-class DarkScienceData:
+class ScienceData:
     def __init__(self, science_model):
         """
         Creates a class to remove data model dependencies in the internals of
-        the dark current code.
+        the dark current code.  The data in this class are for the science
+        exposure data on which to do the dark current step.
 
         Paramters
         ---------

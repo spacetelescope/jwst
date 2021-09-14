@@ -15,6 +15,8 @@ log.setLevel(logging.DEBUG)
 def do_correction(input_model, dark_model, dark_output=None):
     """
     Convert models to classes to remove internal dependence on data models.
+    After the creation of internal classes, the dark current subtraction is
+    done.
 
     Parameters
     ----------
@@ -27,7 +29,7 @@ def do_correction(input_model, dark_model, dark_output=None):
     dark_output: str
         A path to denote where to save the dark model, if desired.
     """
-    science_data = dark_class.DarkScienceData(input_model)
+    science_data = dark_class.ScienceData(input_model)
     dark_data = dark_class.DarkData(dark_model=dark_model)
 
     return do_correction_data(science_data, dark_data, dark_output)
@@ -41,7 +43,7 @@ def do_correction_data(science_data, dark_data, dark_output=None):
 
     Parameters
     ----------
-    science_data: DarkScienceData
+    science_data: ScienceData
         science data to be corrected
 
     dark_data: dark model object
@@ -127,7 +129,7 @@ def do_correction_data(science_data, dark_data, dark_output=None):
         if dark_output is not None:
             averaged_dark = dark_data
             averaged_dark.save = True
-            averaged_dark.oname = dark_output
+            averaged_dark.output_name = dark_output
 
     else:
 
@@ -149,7 +151,7 @@ def do_correction_data(science_data, dark_data, dark_output=None):
         # if requested by the user
         if dark_output is not None:
             averaged_dark.save = True
-            averaged_dark.oname = dark_output
+            averaged_dark.output_name = dark_output
 
         # Subtract the frame-averaged dark data from the science data
         output_data = subtract_dark(science_data, averaged_dark)
@@ -318,7 +320,7 @@ def subtract_dark(science_data, dark_data):
 
     Parameters
     ----------
-    science_data: DarkScienceData
+    science_data: ScienceData
         the input science data
 
     dark_data: DarkData

@@ -95,7 +95,7 @@ def save_dark_data_as_dark_model(dark_data, dark_model, instrument):
     out_dark_model.meta.exposure.nframes = dark_data.exp_nframes
     out_dark_model.meta.exposure.ngroups = dark_data.exp_ngroups
     out_dark_model.meta.exposure.groupgap = dark_data.exp_groupgap
-    out_dark_model.save(dark_data.oname)
+    out_dark_model.save(dark_data.output_name)
     out_dark_model.close()
 
 
@@ -105,7 +105,7 @@ def dark_output_data_2_ramp_model(out_data, input_model):
 
     Parameters
     ----------
-    out_data: DarkScienceData
+    out_data: ScienceData
         Computed science data from the dark current step.
 
     input_model: RampModel
