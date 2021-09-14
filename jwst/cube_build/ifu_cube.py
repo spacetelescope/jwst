@@ -609,8 +609,6 @@ class IFUCubeData():
                     weight_type = 0  # default to emsm
                     if self.weighting == 'msm':
                         weight_type = 1
-                    # if self.interpolation == 'driz':
-                    #    weight_type = 2
 
                     if self.interpolation == 'pointcloud':
                         result = cube_wrapper(instrument, flag_dq_plane, weight_type, start_region, end_region,
@@ -1451,8 +1449,6 @@ class IFUCubeData():
             if self.linear_wavelength:
                 min_wave_tolerance = self.zcoord[0] - (self.cdelt3 + dmax)
                 max_wave_tolerance = self.zcoord[-1] + (self.cdelt3 + dmax)
-                # min_wave_tolerance = self.zcoord[0] - 0.0025
-                # max_wave_tolerance = self.zcoord[-1] + 0.0025
             else:
                 min_wave_tolerance = self.zcoord[0] - self.cdelt3_normal[0]
                 max_wave_tolerance = self.zcoord[-1] + self.cdelt3_normal[-1]
@@ -1577,6 +1573,7 @@ class IFUCubeData():
                                         self.crval2,
                                         ra4, dec4,
                                         self.rot_angle)
+            print(xi1,eta1)
             corner_coord = [xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4]
         return coord1, coord2, corner_coord, wave, dwave, flux, err, \
             slice_no, rois_det, roiw_det, weight_det, \
@@ -1754,57 +1751,34 @@ class IFUCubeData():
         log.info("Mapping each NIRSpec slice to sky for input file")
 
         for ii in range(nslices):
-            # t10 = time.time()
+            t10 = time.time()
             slice_wcs = nirspec.nrs_wcs_set_input(input_model, ii)
-            # t11 = time.time()
-            # log.debug(f'Time to run nirspec nrs_wcs_set_input  {t11-t10} ')
+            t11 = time.time()
+            log.debug(f'Time to run nirspec nrs_wcs_set_input  {t11-t10} ')
             x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
             ra, dec, lam = slice_wcs(x, y)
 
             # the slices are curved on detector so a rectangular region returns NaNs
             valid = ~np.isnan(lam)
+
+            x = x[valid]
+            y = y[valid]
             ra = ra[valid]
             dec = dec[valid]
             lam = lam[valid]
-            x = x[valid]
-            y = y[valid]
-
-            xind = _toindex(x)
-            yind = _toindex(y)
-            xind = np.ndarray.flatten(xind)
-            yind = np.ndarray.flatten(yind)
-            ra = np.ndarray.flatten(ra)
-            dec = np.ndarray.flatten(dec)
-            lam = np.ndarray.flatten(lam)
-            ra_det[yind, xind] = ra
-            dec_det[yind, xind] = dec
-            lam_det[yind, xind] = lam
-            flag_det[yind, xind] = 1
-            slice_det[yind, xind] = ii + 1
-
-            
+        
             if self.interpolation == 'driz':
                 # Delta wavelengths
                 _,_,wave1 = slice_wcs(x - 0.4999, y)
                 _,_,wave2 = slice_wcs(x + 0.4999, y)
                 dwave = np.abs(wave1 - wave2)
-
+                
                 # Pixel corners
-                # UPDATE BELOW FOR NIRSPEC
                 pixfrac = 1.0
-
                 detector2slicer = slice_wcs.get_transform('detector', 'slicer')
                 slicer2world = slice_wcs.get_transform('slicer','world')
                 across1,along1,_ = detector2slicer(x, y - 0.49 * pixfrac)
                 _,along2,_ = detector2slicer(x, y + 0.49 * pixfrac)
-
-                print('across1', across1)
-
-                print('along1',along1)
-                print('along2',along2)
-                print('x',x)
-                print('y',y)
-                # Use the slice width determined above
 
                 ra1, dec1, _ = slicer2world(across1 - across_width * pixfrac /2  , along1, lam)
                 ra2, dec2, _ = slicer2world(across1 + across_width * pixfrac /2  , along1, lam)
@@ -1812,17 +1786,52 @@ class IFUCubeData():
                 ra3, dec3, _ = slicer2world(across1 - across_width * pixfrac /2  , along2, lam)
                 ra4, dec4, _ = slicer2world(across1 + across_width * pixfrac /2  , along2, lam)
 
+                print('ra1',ra1)
+                print('ra2',ra2)
+                print('ra3',ra3)
+                print('ra4',ra4)
+                
+                valid1 = np.logical_and(~np.isnan(ra1), ~np.isnan(ra2))
+                valid2 = np.logical_and(~np.isnan(ra3), ~np.isnan(ra4))
+                print(ra1.shape, ra2.shape, ra3.shape, ra4.shape, valid1.shape)
+                print(np.nanmin(ra1), np.nanmax(ra1))
+                print(np.nanmin(ra2), np.nanmax(ra2))
+                print(np.nanmin(ra3), np.nanmax(ra3))
+                print(np.nanmin(ra4), np.nanmax(ra4))
+                final = np.where( np.logical_and(valid1, valid2))
 
-                print(ra1[0:5])
-                print(dec1[0:5])
-                print(ra2[0:5])
-                print(dec2[0:5])
-                print(across1[0:5])
-                print(along1[0:5])
-                print(x[0:5])
-                print(y[0:5])
-                print(lam[0:5])
+                print('for slice',ii, len(final[0]))
+                print(ra1[final])
+                x = x[final]
+                y = y[final]
+                ra = ra[final]
+                dec = dec[final]
+                lam = lam[final]
+                ra1 = ra1[final]
+                dec1 = dec1[final]
+                ra2 = ra2[final]
+                dec2 = dec2[final]
+                ra3 = ra3[final]
+                dec3 = dec4[final]
+                ra4 = ra4[final]
+                dec4 = dec4[final]
+                dwave = dwave[final]
+                
+                
+                xind = _toindex(x)
+                yind = _toindex(y)
+                xind = np.ndarray.flatten(xind)
+                yind = np.ndarray.flatten(yind)
+                ra = np.ndarray.flatten(ra)
+                dec = np.ndarray.flatten(dec)
+                lam = np.ndarray.flatten(lam)
+                ra_det[yind, xind] = ra
+                dec_det[yind, xind] = dec
+                lam_det[yind, xind] = lam
+                flag_det[yind, xind] = 1
+                slice_det[yind, xind] = ii + 1
 
+                # fill in corner values 
                 dwave_det[yind, xind] = dwave
                 ra1_det[yind, xind] = ra1
                 ra2_det[yind, xind] = ra2
@@ -1833,7 +1842,22 @@ class IFUCubeData():
                 dec2_det[yind, xind] = dec2
                 dec3_det[yind, xind] = dec3
                 dec4_det[yind, xind] = dec4
-            
+
+            else:   # not drizzling
+                xind = _toindex(x)
+                yind = _toindex(y)
+                xind = np.ndarray.flatten(xind)
+                yind = np.ndarray.flatten(yind)
+
+                ra = np.ndarray.flatten(ra)
+                dec = np.ndarray.flatten(dec)
+                lam = np.ndarray.flatten(lam)
+                ra_det[yind, xind] = ra
+                dec_det[yind, xind] = dec
+                lam_det[yind, xind] = lam
+                flag_det[yind, xind] = 1
+                slice_det[yind, xind] = ii + 1
+
         # after looping over slices  - pull out valid values
 
         valid_data = np.where(flag_det == 1)
@@ -1852,6 +1876,7 @@ class IFUCubeData():
         dec2  = dec2_det[valid_data]
         dec3  = dec3_det[valid_data]
         dec4  = dec4_det[valid_data]
+        #print('ra1',ra1)
         corner_coord = [ra1, dec1, ra2, dec2, ra3, dec3, ra4, dec4]
         sky_result = (x, y, ra, dec, wave, slice_no, dwave, corner_coord)
         return sky_result
