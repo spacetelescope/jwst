@@ -13,7 +13,6 @@ import pytest
 from astropy.time import Time
 
 from jwst import datamodels
-from jwst.lib import engdb_direct
 from jwst.lib import engdb_mast
 from jwst.lib import engdb_tools
 from jwst.lib import set_telescope_pointing as stp
@@ -221,7 +220,7 @@ def test_j3pa_at_gs():
 def eng_db_ngas():
     """Setup the test engineering database"""
     with EngDB_Mocker(db_path=db_ngas_path):
-        engdb = engdb_tools.ENGDB_Service()
+        engdb = engdb_tools.ENGDB_Service(base_url='http://localhost')
         yield engdb
 
 
@@ -229,7 +228,7 @@ def eng_db_ngas():
 def eng_db_jw703():
     """Setup the test engineering database"""
     with EngDB_Mocker(db_path=db_jw703_path):
-        engdb = engdb_tools.ENGDB_Service()
+        engdb = engdb_tools.ENGDB_Service(base_url='http://localhost')
         yield engdb
 
 
@@ -304,7 +303,7 @@ def test_change_engdb_url():
         stp.get_pointing(
             STARTTIME.mjd,
             ENDTIME.mjd,
-            engdb_url=engdb_direct.ENGDB_BASE_URL
+            engdb_url=engdb_mast.MAST_BASE_URL
         )
 
 
@@ -349,6 +348,7 @@ def test_pointing_averaging(eng_db_jw703):
      gs_position) = stp.get_pointing(
          Time('2019-06-03T17:25:40', format='isot').mjd,
          Time('2019-06-03T17:25:56', format='isot').mjd,
+         engdb_url='http://localhost'
     )
 
     assert np.allclose(q, q_exp)
@@ -369,7 +369,7 @@ def test_get_pointing(eng_db_ngas):
      obstime,
      gs_commanded,
      fgsid,
-     gs_position) = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd)
+     gs_position) = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd, engdb_url='http://localhost')
     assert np.isclose(q, Q_EXPECTED).all()
     assert np.isclose(j2fgs_matrix, J2FGS_MATRIX_EXPECTED).all()
     assert np.isclose(fsmcorr, FSMCORR_EXPECTED).all()
@@ -383,7 +383,7 @@ def test_logging(eng_db_ngas, caplog):
      obstime,
      gs_commanded,
      fgsid,
-     gs_position) = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd)
+     gs_position) = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd, engdb_url='http://localhost')
     assert 'Determining pointing between observations times' in caplog.text
     assert 'Telemetry search tolerance' in caplog.text
     assert 'Reduction function' in caplog.text
@@ -391,7 +391,7 @@ def test_logging(eng_db_ngas, caplog):
 
 
 def test_get_pointing_list(eng_db_ngas):
-    results = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd, reduce_func=stp.all_pointings)
+    results = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd, reduce_func=stp.all_pointings, engdb_url='http://localhost')
     assert isinstance(results, list)
     assert len(results) > 0
     assert np.isclose(results[0].q, Q_EXPECTED).all()
@@ -407,7 +407,9 @@ def test_get_pointing_with_zeros(eng_db_ngas):
      obstime,
      gs_commanded,
      fgsid,
-     gs_position) = stp.get_pointing(ZEROTIME_START.mjd, ENDTIME.mjd, reduce_func=stp.first_pointing)
+     gs_position) = stp.get_pointing(ZEROTIME_START.mjd, ENDTIME.mjd,
+                                     reduce_func=stp.first_pointing,
+                                     engdb_url='http://localhost')
     assert j2fgs_matrix.any()
     (q_desired,
      j2fgs_matrix_desired,
@@ -415,7 +417,7 @@ def test_get_pointing_with_zeros(eng_db_ngas):
      obstime,
      gs_commanded,
      fgsid,
-     gs_position) = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd)
+     gs_position) = stp.get_pointing(STARTTIME.mjd, ENDTIME.mjd, engdb_url='http://localhost')
     assert np.array_equal(q, q_desired)
     assert np.array_equal(j2fgs_matrix, j2fgs_matrix_desired)
     assert np.array_equal(fsmcorr, fsmcorr_desired)
@@ -469,7 +471,7 @@ def test_add_wcs_with_db(eng_db_ngas, data_file, tmp_path):
     """Test using the database"""
     expected_name = 'add_wcs_with_db.fits'
 
-    stp.add_wcs(data_file, siaf_path=siaf_path)
+    stp.add_wcs(data_file, siaf_path=siaf_path, engdb_url='http://localhost')
 
     # Tests
     with datamodels.Level1bModel(data_file) as model:
@@ -524,7 +526,7 @@ def test_add_wcs_method_gscmd(eng_db_ngas, data_file, tmp_path):
     """Test using the database and the original, pre-JSOCINT-555 algorithms"""
     expected_name = 'add_wcs_method_gscmd.fits'
     # Calculate
-    stp.add_wcs(data_file, siaf_path=siaf_path, method=stp.Methods.GSCMD_J3PAGS)
+    stp.add_wcs(data_file, siaf_path=siaf_path, method=stp.Methods.GSCMD_J3PAGS, engdb_url='http://localhost')
 
     # Tests
     with datamodels.Level1bModel(data_file) as model:
@@ -550,7 +552,7 @@ def test_add_wcs_method_full_nosiafdb(eng_db_ngas, data_file, tmp_path):
     expected_name = 'add_wcs_method_full_nosiafdb.fits'
 
     # Calculate
-    stp.add_wcs(data_file, method=stp.Methods.TR_202105)
+    stp.add_wcs(data_file, method=stp.Methods.TR_202105, engdb_url='http://localhost')
 
     # Tests
     with datamodels.Level1bModel(data_file) as model:
@@ -575,7 +577,7 @@ def test_add_wcs_method_full_siafdb(eng_db_ngas, data_file, tmp_path):
     expected_name = 'add_wcs_method_full_siafdb.fits'
 
     # Calculate
-    stp.add_wcs(data_file, siaf_path=siaf_path, method=stp.Methods.TR_202105)
+    stp.add_wcs(data_file, siaf_path=siaf_path, method=stp.Methods.TR_202105, engdb_url='http://localhost')
 
     # Test
     with datamodels.Level1bModel(data_file) as model:
@@ -605,7 +607,7 @@ def test_default_siaf_values(eng_db_ngas, data_file_nosiaf):
         model.meta.aperture.name = "MIRIM_TAFULL"
         model.meta.observation.date = '2017-01-01'
         model.meta.exposure.type = "MIR_IMAGE"
-        stp.update_wcs(model, siaf_path=siaf_path, allow_default=False)
+        stp.update_wcs(model, siaf_path=siaf_path, allow_default=False, engdb_url='http://localhost')
         assert model.meta.wcsinfo.crpix1 == 24.5
         assert model.meta.wcsinfo.crpix2 == 24.5
         assert model.meta.wcsinfo.cdelt1 == 3.067124166666667e-05
@@ -623,6 +625,6 @@ def test_tsgrism_siaf_values(eng_db_ngas, data_file_nosiaf):
         model.meta.observation.date = '2017-01-01'
         model.meta.exposure.type = "NRC_TSGRISM"
         model.meta.visit.tsovisit = True
-        stp.update_wcs(model, siaf_path=siaf_path)
+        stp.update_wcs(model, siaf_path=siaf_path, engdb_url='http://localhost')
         assert model.meta.wcsinfo.siaf_xref_sci == 952
         assert model.meta.wcsinfo.siaf_yref_sci == 35

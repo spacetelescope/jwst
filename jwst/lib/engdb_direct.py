@@ -18,14 +18,6 @@ logger.addHandler(logging.NullHandler())
 # Where is the engineering service? Its HERE!!!
 # #############################################
 
-# This is currently set to the OPS database.
-ENGDB_HOST = 'http://pwjwdmsemwebag.stsci.edu/'
-ENGDB_BASE_URL = ''.join([
-    ENGDB_HOST,
-    'JWDMSEngFqAcc/',
-    'TlmMnemonicDataSrv.svc/',
-])
-
 # URI paths necessary to access the db
 ENGDB_DATA = 'Data/'
 ENGDB_DATA_XML = 'xml/Data/'
@@ -74,7 +66,9 @@ class EngdbDirect(EngdbABC):
         logger.debug('kwargs not used by this service: %s', service_kwargs)
 
         if base_url is None:
-            base_url = getenv('ENG_BASE_URL', ENGDB_BASE_URL)
+            base_url = getenv('ENG_BASE_URL')
+        if not base_url:
+            raise RuntimeError('No engineering database URL given.')
         if base_url[-1] != '/':
             base_url += '/'
         self.base_url = base_url

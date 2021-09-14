@@ -58,7 +58,7 @@ def is_alive(url):
 def engdb():
     """Setup the service to operate through the mock service"""
     with EngDB_Mocker():
-        engdb = engdb_tools.ENGDB_Service()
+        engdb = engdb_tools.ENGDB_Service(base_url='http://localhost')
         yield engdb
 
 
