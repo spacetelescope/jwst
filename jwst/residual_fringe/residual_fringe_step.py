@@ -22,7 +22,7 @@ class ResidualFringeStep(Step):
         save_intermediate_results  = boolean(default = False)
         transmission_level = integer(default=80) # transmission level to use to define slice locations
         search_output_file = boolean(default = False)
-        self.suffix = string('residual_fringe')
+        suffix = string('residual_fringe')
     """
 
     reference_file_types = ['fringefreq','regions']
