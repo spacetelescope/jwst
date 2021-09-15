@@ -143,4 +143,4 @@ if __name__ == '__main__':
                 override_transforms=override_transforms
             )
         except ValueError as exception:
-            logger.info('Cannot determine pointing information: ' + str(exception))
+            logger.info('Cannot determine pointing information', exc_info=exception)

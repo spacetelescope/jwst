@@ -14,7 +14,7 @@ import requests
 
 from astropy.time import Time
 
-from jwst.lib import engdb_tools
+from jwst.lib import engdb_direct, engdb_tools
 from jwst.lib.tests.engdb_mock import EngDB_Mocker
 
 GOOD_MNEMONIC = 'INRSI_GWA_Y_TILT_AVGED'
@@ -58,7 +58,7 @@ def is_alive(url):
 def engdb():
     """Setup the service to operate through the mock service"""
     with EngDB_Mocker():
-        engdb = engdb_tools.ENGDB_Service()
+        engdb = engdb_tools.ENGDB_Service(base_url='http://localhost')
         yield engdb
 
 
@@ -95,7 +95,7 @@ def test_environmetal_bad():
 
 
 def test_basic(engdb):
-    assert engdb.get_records(GOOD_MNEMONIC, GOOD_STARTTIME, GOOD_ENDTIME)
+    assert engdb._get_records(GOOD_MNEMONIC, GOOD_STARTTIME, GOOD_ENDTIME)
 
 
 def test_bad_server():
@@ -111,12 +111,12 @@ def test_db_time():
         '+1234',
         ')/'
     ])
-    result = engdb_tools.extract_db_time(stime)
+    result = engdb_direct.extract_db_time(stime)
     assert result == time
 
 
 def test_values(engdb):
-    records = engdb.get_records(
+    records = engdb._get_records(
         GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME
     )
     assert records['Count'] == 2
@@ -128,7 +128,7 @@ def test_values(engdb):
 
 
 def test_values_with_bracket(engdb):
-    records = engdb.get_records(
+    records = engdb._get_records(
         GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME
     )
     assert records['Count'] == 2
@@ -167,7 +167,7 @@ def test_unzip(engdb):
     values = engdb.get_values(
         GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME,
         include_obstime=True,
-        zip=False
+        zip_results=False
     )
     assert isinstance(values, tuple)
     assert len(values.obstime) == len(values.value)

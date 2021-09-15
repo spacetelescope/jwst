@@ -10,7 +10,7 @@ import warnings
 from astropy.time import Time
 
 from jwst.lib.tests import engdb_mock
-from jwst.lib import engdb_tools
+from jwst.lib import engdb_direct, engdb_tools
 
 # Midpoint is about 2021-01-26T02:32:26.205
 GOOD_STARTTIME = '2021-01-26 02:29:02.188'
@@ -78,7 +78,7 @@ def test_cache_data(db_cache, engdb):
     Test read of the data information
     """
     data = db_cache.fetch_data(GOOD_MNEMONIC, GOOD_STARTTIME, GOOD_ENDTIME)
-    live_data = engdb.get_records(GOOD_MNEMONIC, GOOD_STARTTIME, GOOD_ENDTIME)
+    live_data = engdb._get_records(GOOD_MNEMONIC, GOOD_STARTTIME, GOOD_ENDTIME)
     assert data == live_data
 
 
@@ -89,7 +89,7 @@ def test_cache_partial_data(db_cache, engdb):
     data = db_cache.fetch_data(GOOD_MNEMONIC, GOOD_STARTTIME, GOOD_ENDTIME)
     assert data['Count'] > 4  # Just to make sure we have some data
     endtime = Time(
-        engdb_tools.extract_db_time(data['Data'][1]['ObsTime']) / 1000.,
+        engdb_direct.extract_db_time(data['Data'][1]['ObsTime']) / 1000.,
         format='unix'
     )
 
@@ -98,7 +98,7 @@ def test_cache_partial_data(db_cache, engdb):
         GOOD_STARTTIME,
         endtime.iso
     )
-    live_data_short = engdb.get_records(
+    live_data_short = engdb._get_records(
         GOOD_MNEMONIC,
         GOOD_STARTTIME,
         endtime.iso
@@ -119,7 +119,7 @@ def test_cache_end_data(db_cache, engdb):
         EARLY_STARTTIME,
         EARLY_ENDTIME
     )
-    live_data_short = engdb.get_records(
+    live_data_short = engdb._get_records(
         GOOD_MNEMONIC,
         EARLY_STARTTIME,
         EARLY_ENDTIME
@@ -136,7 +136,7 @@ def test_cache_end_data(db_cache, engdb):
         LATE_STARTTIME,
         LATE_ENDTIME
     )
-    live_data_short = engdb.get_records(
+    live_data_short = engdb._get_records(
         GOOD_MNEMONIC,
         LATE_STARTTIME,
         LATE_ENDTIME
@@ -148,8 +148,8 @@ def test_cache_end_data(db_cache, engdb):
 def test_mocker_alive(db_cache):
     with engdb_mock.EngDB_Mocker(db_path=db_cache.db_path):
         query = ''.join([
-            engdb_tools.ENGDB_BASE_URL,
-            engdb_tools.ENGDB_METADATA
+            engdb_direct.ENGDB_BASE_URL,
+            engdb_direct.ENGDB_METADATA
         ])
         response = requests.get(query)
         assert response.status_code == 200
@@ -166,8 +166,8 @@ def test_mocker_alive(db_cache):
 def test_mocker_meta(db_cache, mnemonic, count):
     with engdb_mock.EngDB_Mocker(db_path=db_cache.db_path):
         query = ''.join([
-            engdb_tools.ENGDB_BASE_URL,
-            engdb_tools.ENGDB_METADATA,
+            engdb_direct.ENGDB_BASE_URL,
+            engdb_direct.ENGDB_METADATA,
             mnemonic
         ])
         response = requests.get(query)
@@ -179,8 +179,8 @@ def test_mocker_meta(db_cache, mnemonic, count):
 def test_mocker_data(db_cache, engdb):
     with engdb_mock.EngDB_Mocker(db_path=db_cache.db_path):
         query = ''.join([
-            engdb_tools.ENGDB_BASE_URL,
-            engdb_tools.ENGDB_DATA,
+            engdb_direct.ENGDB_BASE_URL,
+            engdb_direct.ENGDB_DATA,
             GOOD_MNEMONIC,
             '?sTime=',
             GOOD_STARTTIME,
@@ -189,7 +189,7 @@ def test_mocker_data(db_cache, engdb):
         ])
         response = requests.get(query)
 
-    live_data = engdb.get_records(GOOD_MNEMONIC, GOOD_STARTTIME, GOOD_ENDTIME)
+    live_data = engdb._get_records(GOOD_MNEMONIC, GOOD_STARTTIME, GOOD_ENDTIME)
     assert response.json() == live_data
 
 
@@ -197,14 +197,18 @@ def test_mocker_data(db_cache, engdb):
 # Utilities
 # #########
 @pytest.fixture
-def engdb(scope='module'):
+def engdb(jail_environ):
     """
     Ensure the live engineering RESTful service is available
     """
     try:
+        del os.environ['MAST_API_TOKEN']
+    except KeyError:
+        pass
+    try:
         engdb = engdb_tools.ENGDB_Service()
-    except Exception:
-        pytest.skip('ENGDB service is not accessible.')
+    except Exception as exception:
+        pytest.skip(f'ENGDB service is not accessible: {exception}')
     else:
         return engdb
 

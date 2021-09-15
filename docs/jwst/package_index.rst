@@ -34,6 +34,7 @@ Package Index
    ipc/index.rst
    jump/index.rst
    klip/index.rst
+   lib/index.rst
    lastframe/index.rst
    linearity/index.rst
    master_background/index.rst
