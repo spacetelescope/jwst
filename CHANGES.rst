@@ -86,6 +86,11 @@ jump
 
 - Updated jump detection step to use common code moved to stcal [#6089]
 
+lib
+---
+
+- Implement the MAST AUI interface to the Engineering Database. [#6288]
+
 outlier_detection
 -----------------
 
