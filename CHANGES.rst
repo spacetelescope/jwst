@@ -1990,6 +1990,9 @@ residual_fringe
 
 - Fixed suffix defined in spec [#6347]
 
+- Fixed an error when a filename was give as the input to apply the residual fringe correction [#6349]
+  
+
 set_telescope_pointing
 ----------------------
 

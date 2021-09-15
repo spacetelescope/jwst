@@ -22,7 +22,7 @@ class ResidualFringeStep(Step):
         save_intermediate_results  = boolean(default = False)
         transmission_level = integer(default=80) # transmission level to use to define slice locations
         search_output_file = boolean(default = False)
-        suffix = string('residual_fringe')
+        suffix = string(default = 'residual_fringe')
     """
 
     reference_file_types = ['fringefreq','regions']
@@ -32,15 +32,16 @@ class ResidualFringeStep(Step):
         input = datamodels.open(input)
 
         # If single file, wrap in a ModelContainter
-        if not isinstance(input, datamodels.ModelContainer):
+        if isinstance(input, datamodels.IFUImageModel):
             input_models = datamodels.ModelContainer([input])
-            input_models.meta.residual_fringe.output = input.meta.filename
             self.input_container = False
-            exptype = input_models.meta.exposure.type
-        else:
+            exptype = input.meta.exposure.type
+        elif isinstance(input, datamodels.ModelContainer):
             input_models = input
             self.input_container = True
             exptype = input[0].meta.exposure.type
+        else:
+            raise TypeError("Failed to process file type {}".format(type(input)))
 
         # Setup output path naming if associations are involved.
         asn_id = None
@@ -77,7 +78,6 @@ class ResidualFringeStep(Step):
                 else:
                     input_models.meta.cal_step.outlier_detection = "SKIPPED"
                 self.skip = True
-
                 return input_models
 
         # loop over each model
@@ -85,8 +85,7 @@ class ResidualFringeStep(Step):
         # 2. correct each model
         # 3. append corrected data to output_models - to return from step
         self.output_models = datamodels.ModelContainer()
-        for model in input:
-
+        for model in input_models:
             # Open the residual fringe reference file
             self.residual_fringe_filename = self.get_reference_file(model,
                                                                     'fringefreq')
