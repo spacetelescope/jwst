@@ -248,6 +248,11 @@ class RegtestData:
         af = asdf.AsdfFile(tree=tree)
         af.write_to(path)
 
+    @classmethod
+    def open(cls, filename):
+        with asdf.open(filename) as af:
+            return cls(**af.tree)
+
 
 def run_step_from_dict(rtdata, **step_params):
     """Run Steps with given parameter
