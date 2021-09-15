@@ -7,7 +7,7 @@ import pytest
 
 from ci_watson.artifactory_helpers import get_bigdata_root
 
-from jwst.tests.base_classes import (
+from jwst.regtest.regtestdata import (
     _data_glob_local,
     _data_glob_url
 )
