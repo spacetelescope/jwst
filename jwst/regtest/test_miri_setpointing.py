@@ -2,7 +2,6 @@ import pytest
 from astropy.io.fits.diff import FITSDiff
 
 from jwst.lib.set_telescope_pointing import add_wcs
-from jwst.lib import engdb_tools
 
 
 @pytest.mark.bigdata
