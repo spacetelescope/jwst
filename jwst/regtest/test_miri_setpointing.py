@@ -2,7 +2,6 @@ import pytest
 from astropy.io.fits.diff import FITSDiff
 
 from jwst.lib.set_telescope_pointing import add_wcs
-from jwst.lib import engdb_tools
 
 
 @pytest.mark.bigdata
@@ -26,8 +25,7 @@ def test_miri_setpointing(_jail, rtdata, fitsdiff_default_kwargs):
     # default values for the pointing-related keywords. Keyword values retrieved
     # from the SIAF will be good.
     add_wcs(rtdata.input, allow_default=True,
-            siaf_path=siaf_path,
-            engdb_url=engdb_tools.ENGDB_BASE_URL)
+            siaf_path=siaf_path)
 
     # Compare the results
     rtdata.get_truth("truth/test_miri_setpointing/jw80600010001_02101_00001_mirimage_uncal.fits")
