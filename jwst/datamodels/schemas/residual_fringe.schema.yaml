@@ -6,84 +6,67 @@ title: Default MIRI Residual Fringe Correction
 allOf:
 - $ref: referencefile.schema
 - type: object
+  title: MIRI MRS fringe frequencies model
   properties:
     rfc_freq_short_table:
-      title: default residual fringe short table
+      title: residual fringe short table
       fits_hdu: RFC_FREQ_SHORT
       datatype:
       - name: slice
-        datatype: float32
+        datatype: float64
       - name: ffreq
-        datatype: float32
-        ndim: 2
+        datatype: float64
       - name: dffreq
-        datatype: float32
-        ndim: 2
+        datatype: float64
       - name: min_nfringes
-        datatype: int32
-        ndim: 2
+        datatype: int64
       - name: max_nfringes
-        datatype: int32
-        ndim: 2
+        datatype: int64
       - name: min_snr
-        datatype: float32
-        ndim: 2
+        datatype: float64
       - name: pgram_res
-        datatype: float32
-        ndim: 2
+        datatype: float64
     rfc_freq_medium_table:
       title: default residual fringe medium table
       fits_hdu: RFC_FREQ_MEDIUM
       datatype:
       - name: slice
-        datatype: float32
+        datatype: float64
       - name: ffreq
-        datatype: float32
-        ndim: 2
+        datatype: float64
       - name: dffreq
-        datatype: float32
-        ndim: 2
+        datatype: float64
       - name: min_nfringes
-        datatype: int32
-        ndim: 2
+        datatype: int64
       - name: max_nfringes
-        datatype: int32
-        ndim: 2
+        datatype: int64
       - name: min_snr
-        datatype: float32
-        ndim: 2
+        datatype: float64
       - name: pgram_res
-        datatype: float32
-        ndim: 2
+        datatype: float64
     rfc_freq_long_table:
       title: default residual fringe long table
       fits_hdu: RFC_FREQ_LONG
       datatype:
       - name: slice
-        datatype: float32
+        datatype: float64
       - name: ffreq
-        datatype: float32
-        ndim: 2
+        datatype: float64
       - name: dffreq
-        datatype: float32
-        ndim: 2
+        datatype: float64
       - name: min_nfringes
-        datatype: int32
-        ndim: 2
+        datatype: int64
       - name: max_nfringes
-        datatype: int32
-        ndim: 2
+        datatype: int64
       - name: min_snr
-        datatype: float32
-        ndim: 2
+        datatype: float64
       - name: pgram_res
-        datatype: float32
-        ndim: 2
+        datatype: float64
     max_amp_table:
       title: default residual fringe max amp table
       fits_hdu: MAX_AMP
       datatype:
       - name: wavelength
-        datatype: float32
+        datatype: float64
       - name: amplitude
-        datatype: float32
+        datatype: float64

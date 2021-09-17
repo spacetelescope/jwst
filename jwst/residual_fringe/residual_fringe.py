@@ -183,12 +183,12 @@ class ResidualFringeCorrection():
                 log.debug('Row in reference file for slice {}'.format(this_row))
 
                 slice_row = self.freq_table[(self.freq_table['slice'] == float(ss))]
-                ffreq = slice_row['ffreq'][0][0]
-                dffreq = slice_row['dffreq'][0][0]
-                min_nfringes = slice_row['min_nfringes'][0][0]
-                max_nfringes = slice_row['max_nfringes'][0][0]
-                min_snr = slice_row['min_snr'][0][0]
-                pgram_res = slice_row['pgram_res'][0][0]
+                ffreq = slice_row['ffreq'][0]
+                dffreq = slice_row['dffreq'][0]
+                min_nfringes = slice_row['min_nfringes'][0]
+                max_nfringes = slice_row['max_nfringes'][0]
+                min_snr = slice_row['min_snr'][0]
+                pgram_res = slice_row['pgram_res'][0]
 
                 # cycle through the cols and fit the fringes
                 for col in np.arange(slice_x_ranges[n,1], slice_x_ranges[n,2]):
