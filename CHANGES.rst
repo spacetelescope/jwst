@@ -111,6 +111,12 @@ ramp_fitting
 - Update ``RampFitStep`` to pass DQ flags as a parameter to the ``ramp_fit``
   algorithm code in stcal.  Bump version requirement for stcal.  [#6072]
 
+refpix
+------
+
+- Refactored the ``subtract_reference`` routine for NRS IRS2 data to reduce
+  memory usage. [#6356]
+
 resample
 --------
 
