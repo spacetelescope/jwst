@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-
 from ..stpipe import Step
 from ..lib import pipe_utils
 from .. import datamodels
@@ -7,14 +5,12 @@ from . import reference_pixels
 from . import irs2_subtract_reference
 
 
-__all__ = ["RefPixStep", "refpix_correction"]
+__all__ = ["RefPixStep"]
 
 
 class RefPixStep(Step):
     """
-
     RefPixStep: Use reference pixels to correct bias drifts
-
     """
 
     spec = """
@@ -29,12 +25,15 @@ class RefPixStep(Step):
 
     def process(self, input):
 
+        # Load the input science data
         with datamodels.RampModel(input) as input_model:
-            # shape[-2] will be 3200 for IRS2 data.
+
             if pipe_utils.is_irs2(input_model):
+
+                # If the science data uses NIRSpec IRS2 readout mode,
+                # get the necessary refpix reference file
                 self.irs2_name = self.get_reference_file(input_model, 'refpix')
-                self.log.info('Using refpix reference file: %s' %
-                              self.irs2_name)
+                self.log.info(f'Using refpix reference file: {self.irs2_name}')
 
                 # Check for a valid reference file
                 if self.irs2_name == 'N/A':
@@ -45,22 +44,25 @@ class RefPixStep(Step):
                     input_model.close()
                     return result
 
+                # Load the reference file into a datamodel
                 irs2_model = datamodels.IRS2Model(self.irs2_name)
-                result = irs2_subtract_reference.correct_model(input_model,
-                                                               irs2_model)
+
+                # Apply the IRS2 correction scheme
+                result = irs2_subtract_reference.correct_model(input_model, irs2_model)
+
                 if result.meta.cal_step.refpix != 'SKIPPED':
                     result.meta.cal_step.refpix = 'COMPLETE'
                 irs2_model.close()
                 return result
+
             else:
-                self.log.info('use_side_ref_pixels = %s' %
-                              (self.use_side_ref_pixels,))
-                self.log.info('odd_even_columns = %s' %
-                              (self.odd_even_columns,))
-                self.log.info('side_smoothing_length = %d' %
-                              (self.side_smoothing_length,))
-                self.log.info('side_gain = %f' % (self.side_gain,))
-                self.log.info('odd_even_rows = %s' % (self.odd_even_rows,))
+                # Not an NRS IRS2 exposure. Do the normal refpix correction.
+                self.log.info(f'use_side_ref_pixels = {self.use_side_ref_pixels}')
+                self.log.info(f'odd_even_columns = {self.odd_even_columns}')
+                self.log.info(f'side_smoothing_length = {self.side_smoothing_length}')
+                self.log.info(f'side_gain = {self.side_gain}')
+                self.log.info(f'odd_even_rows = {self.odd_even_rows}')
+
                 datamodel = input_model.copy()
                 status = reference_pixels.correct_model(datamodel,
                                                         self.odd_even_columns,
@@ -68,6 +70,7 @@ class RefPixStep(Step):
                                                         self.side_smoothing_length,
                                                         self.side_gain,
                                                         self.odd_even_rows)
+
                 if status == reference_pixels.REFPIX_OK:
                     datamodel.meta.cal_step.refpix = 'COMPLETE'
                 elif status == reference_pixels.SUBARRAY_DOESNTFIT:
@@ -79,9 +82,3 @@ class RefPixStep(Step):
                 elif status == reference_pixels.SUBARRAY_SKIPPED:
                     datamodel.meta.cal_step.refpix = 'SKIPPED'
                 return datamodel
-
-
-def refpix_correction(input):
-    a = RefPixStep()
-    result = a.process(input)
-    return result
