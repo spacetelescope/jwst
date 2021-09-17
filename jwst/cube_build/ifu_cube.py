@@ -20,7 +20,6 @@ from ..datamodels import dqflags
 from . import cube_build_wcs_util
 from . import cube_internal_cal
 from . import coord
-from . import cube_cloud
 from ..mrs_imatch.mrs_imatch_step import apply_background_2d
 from .cube_match_sky_pointcloud import cube_wrapper  # c extension
 from .cube_match_sky_driz import cube_wrapper_driz  # c extension
@@ -340,7 +339,7 @@ class IFUCubeData():
             self.zcoord = np.asarray(self.wavelength_table)
             self.crval3 = self.wavelength_table[0]
             self.crpix3 = 1.0
-        # set up the cdelt3_normal normalizing array used in cube_cloud.py
+        # set up the cdelt3_normal normalizing array used
         cdelt3_normal = np.zeros(self.naxis3)
         for j in range(self.naxis3 - 1):
             cdelt3_normal[j] = self.zcoord[j + 1] - self.zcoord[j]
@@ -629,58 +628,31 @@ class IFUCubeData():
                         spaxel_dq.astype(np.uint)
                         self.spaxel_dq = np.bitwise_or(self.spaxel_dq, spaxel_dq)
                         result = None
-                    else:
-                        if self.weighting == 'driz':
-                            print('Calling C driz 3d')
-                            t0 = time.time()
-                            cdelt3_mean = np.nanmean(self.cdelt3_normal)
-                            xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4 = corner_coord
+                    if self.weighting == 'driz':
+                        cdelt3_mean = np.nanmean(self.cdelt3_normal)
+                        xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4 = corner_coord
+                        linear = 0
+                        if self.linear_wavelength:
+                            linear = 1
+                        result = cube_wrapper_driz(instrument, flag_dq_plane,
+                                                   start_region, end_region,
+                                                   self.overlap_partial, self.overlap_full,
+                                                   self.xcoord, self.ycoord, self.zcoord,
+                                                   coord1, coord2, wave, flux, err, slice_no,
+                                                   xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4,
+                                                   dwave,
+                                                   self.cdelt3_normal,
+                                                   self.cdelt1, self.cdelt2, cdelt3_mean,linear)
 
-                            # print(' before driz')
-                            # print('xcenter', self.xcoord[0:20])
-                            # print('ycenter', self.ycoord[20:40])
-                            # print('zcenter', self.zcoord[0:20])
+                        spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq = result
+                        self.spaxel_flux = self.spaxel_flux + np.asarray(spaxel_flux, np.float64)
+                        self.spaxel_weight = self.spaxel_weight + np.asarray(spaxel_weight, np.float64)
+                        self.spaxel_var = self.spaxel_var + np.asarray(spaxel_var, np.float64)
+                        self.spaxel_iflux = self.spaxel_iflux + np.asarray(spaxel_iflux,np.float64)
+                        spaxel_dq.astype(np.uint)
+                        self.spaxel_dq = np.bitwise_or(self.spaxel_dq, spaxel_dq)
+                        result = None
 
-                            linear = 0
-                            if self.linear_wavelength:
-                                linear = 1
-                            result = cube_wrapper_driz(instrument, flag_dq_plane,
-                                                       start_region, end_region,
-                                                       self.overlap_partial, self.overlap_full,
-                                                       self.xcoord, self.ycoord, self.zcoord,
-                                                       coord1, coord2, wave, flux, err, slice_no,
-                                                       xi1, eta1, xi2, eta2, xi3, eta3, xi4, eta4,
-                                                       dwave,
-                                                       self.cdelt3_normal,
-                                                       self.cdelt1, self.cdelt2, cdelt3_mean,linear)
-
-                            spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq = result
-                            self.spaxel_flux = self.spaxel_flux + np.asarray(spaxel_flux, np.float64)
-                            self.spaxel_weight = self.spaxel_weight + np.asarray(spaxel_weight, np.float64)
-                            self.spaxel_var = self.spaxel_var + np.asarray(spaxel_var, np.float64)
-                            self.spaxel_iflux = self.spaxel_iflux + np.asarray(spaxel_iflux,np.float64)
-                            spaxel_dq.astype(np.uint)
-                            self.spaxel_dq = np.bitwise_or(self.spaxel_dq, spaxel_dq)
-                            result = None
-
-                        elif self.weighting == 'drizp':
-                            print('Calling Python driz 3d')
-                            # this code is only used for testing c code. It will be removed once the
-                            # c code is confirmed to be working correctly
-                            cube_cloud.match_det2cube_driz(self.naxis1, self.naxis2, self.naxis3,
-                                                           self.cdelt1, self.cdelt2,
-                                                           self.cdelt3_normal,
-                                                           self.xcenters, self.ycenters, self.zcoord,
-                                                           self.spaxel_flux,
-                                                           self.spaxel_weight,
-                                                           self.spaxel_iflux,
-                                                           self.spaxel_var,
-                                                           flux,
-                                                           err,
-                                                           corner_coord, wave, dwave)
-
-                        t1 = time.time()
-                        log.info("Time to match file to ifucube = %.1f s" % (t1 - t0,))
                 # --------------------------------------------------------------------------------
                 #                     # AREA - 2d method only works for single files local slicer plane (internal_cal)
                 # --------------------------------------------------------------------------------

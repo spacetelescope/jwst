@@ -47,6 +47,7 @@ cube_build
 
 - Moved variable definitions to top of code in C extension to
   support changes in #6093. [#6255]
+- Added weighting option driz (3D drizzling) [#6297] 
 
 - Using assign_wsc.utils.in_ifu_slice function to determine which NIRSpec
   sky values mapped to each detector slice. [#6326] 
