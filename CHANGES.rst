@@ -49,7 +49,10 @@ cube_build
   support changes in #6093. [#6255]
 
 - Using assign_wsc.utils.in_ifu_slice function to determine which NIRSpec
-  sky values mapped to each detector slice. [#6326] 
+  sky values mapped to each detector slice. [#6326]
+
+- Fixed error final exposure times calculated by blend headers.Only the input models
+  used in the IFU cube are past to blend headers. [#6360]
 
 datamodels
 ----------
