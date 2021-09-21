@@ -52,7 +52,6 @@ def get_box_weights(centroid, n_pix, shape, cols=None):
     return out
 
 
-# TODO what about missing flux due to bad pixels?
 def box_extract(scidata, scierr, scimask, box_weights, cols=None):
     """ Perform a box extraction.
 
