@@ -7,9 +7,7 @@ from .soss_extract import soss_extract
 
 __all__ = ["Extract1dStep"]
 
-# TODO I currently seen no overlap between the existing step and the SOSS
-# TODO specific components (different parameters and reference files). Perhaps
-# TODO an entirely separate step is preferable after all?
+
 class Extract1dStep(Step):
     """Extract a 1-d spectrum from 2-d data
 
@@ -80,8 +78,8 @@ class Extract1dStep(Step):
     subtract_background = boolean(default=None)  # subtract background?
     use_source_posn = boolean(default=None)  # use source coords to center extractions?
     apply_apcorr = boolean(default=True)  # apply aperture corrections?
-    soss_threshold = float(default=1e-4)  # threshold value for a pixel to be included when modelling the trace.
-    soss_n_os = integer(default=5)  # oversampling factor of the underlying wavelength grid used when modelling the trace. 
+    soss_threshold = float(default=1e-2)  # threshold value for a pixel to be included when modelling the trace.
+    soss_n_os = integer(default=2)  # oversampling factor of the underlying wavelength grid used when modelling the trace. 
     soss_transform = float_list(default=None, min=3, max=3)  # rotation angle applied to the reference files to match the observation.
     soss_tikfac = float(default=None)  # regularisation factor for NIRISS SOSS extraction
     soss_width = float(default=40.)  # aperture width used to extract the 1D spectrum from the de-contaminated trace.
@@ -176,7 +174,6 @@ class Extract1dStep(Step):
             soss_kwargs['devname'] = self.soss_devname
 
             # Run the extraction.
-            # TODO additional user-controlled parameters (e.g. threshold)?
             result = soss_extract.run_extract1d(input_model,
                                                 spectrace_ref_name,
                                                 wavemap_ref_name,

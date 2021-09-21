@@ -115,7 +115,6 @@ def get_trace_1d(ref_files, transform, order, cols=None):
     return xtrace, ytrace, wavetrace
 
 
-# TODO how best to pass reference files and additional parameters (e.g. threshold)?
 def model_image(scidata_bkg, scierr, scimask, refmask, ref_files, transform=None,
                 tikfac=None, n_os=5, threshold=1e-4, devname=None):
     """Perform the spectral extraction on a single image.

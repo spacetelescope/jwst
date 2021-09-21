@@ -412,7 +412,6 @@ def grid_from_map(wave_map, aperture, wave_range=None, n_os=1, poly_ord=1,
 
 
 def get_soss_grid(wave_maps, apertures, wave_min=0.55, wave_max=3.0, n_os=None):
-    # TODO replace wave_min, wave_max with wave_range?
     """Create a wavelength grid specific to NIRISS SOSS mode observations.
     Assumes 2 orders are given, use grid_from_map if only one order is needed.
 
@@ -438,7 +437,7 @@ def get_soss_grid(wave_maps, apertures, wave_min=0.55, wave_max=3.0, n_os=None):
     """
 
     # Check n_os input, default value is 2 for all orders.
-    if n_os is None:  # TODO check for integer type?
+    if n_os is None:
         n_os = [2, 2]
     elif np.ndim(n_os) == 0:
         n_os = [n_os, n_os]
