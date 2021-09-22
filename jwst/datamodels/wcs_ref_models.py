@@ -138,7 +138,8 @@ class DistortionMRSModel(ReferenceFileModel):
             assert self.meta.instrument.name == "MIRI"
             assert self.meta.exposure.type == "MIR_MRS"
             assert self.meta.instrument.channel in ("12", "34", "1", "2", "3", "4")
-            assert self.meta.instrument.band in ("SHORT", "LONG", "MEDIUM")
+            assert self.meta.instrument.band in ("SHORT", "LONG", "MEDIUM", "SHORT-LONG", "SHORT-MEDIUM",
+                                                 "MEDIUM-SHORT", "MEDIUM-LONG", "LONG-SHORT", "LONG-MEDIUM")
             assert self.meta.instrument.detector in ("MIRIFUSHORT", "MIRIFULONG")
             assert all([isinstance(m, Model) for m in self.x_model])
             assert all([isinstance(m, Model) for m in self.y_model])
@@ -153,7 +154,7 @@ class DistortionMRSModel(ReferenceFileModel):
                 warnings.warn(traceback.format_exc(), ValidationWarning)
 
 
-class SpecwcsModel(_SimpleModel):
+class SpecwcsModel(ReferenceFileModel):
     """
     A model for a reference file of type "specwcs".
 
@@ -165,6 +166,9 @@ class SpecwcsModel(_SimpleModel):
     """
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/specwcs.schema"
     reftype = "specwcs"
+
+    def on_save(self, path=None):
+        self.meta.reftype = self.reftype
 
     def validate(self):
         super().validate()
@@ -372,7 +376,8 @@ class RegionsModel(ReferenceFileModel):
             assert self.meta.instrument.name == "MIRI"
             assert self.meta.exposure.type == "MIR_MRS"
             assert self.meta.instrument.channel in ("12", "34", "1", "2", "3", "4")
-            assert self.meta.instrument.band in ("SHORT", "LONG")
+            assert self.meta.instrument.band in ("SHORT", "MEDIUM", "LONG", "SHORT-LONG", "SHORT-MEDIUM",
+                                                 "MEDIUM-SHORT", "MEDIUM-LONG", "LONG-SHORT", "LONG-MEDIUM")
             assert self.meta.instrument.detector in ("MIRIFUSHORT", "MIRIFULONG")
         except AssertionError:
             if self._strict_validation:
@@ -689,7 +694,7 @@ class DisperserModel(ReferenceFileModel):
 
 class FilteroffsetModel(ReferenceFileModel):
     """
-    A model for a NIRSPEC reference file of type "disperser".
+    A model for filter-dependent boresight offsets.
     """
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/filteroffset.schema"
     reftype = "filteroffset"
