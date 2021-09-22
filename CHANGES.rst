@@ -120,6 +120,11 @@ refpix
 - Refactored the ``subtract_reference`` routine for NRS IRS2 data to reduce
   memory usage. [#6356]
 
+regtest
+-------
+
+- Update okifying to handle full folder updates for associations [#6218]
+
 resample
 --------
 

@@ -7,8 +7,7 @@ import pytest
 
 from ci_watson.artifactory_helpers import get_bigdata_root
 
-from jwst.tests.base_classes import (
-    BaseJWSTTest,
+from jwst.regtest.regtestdata import (
     _data_glob_local,
     _data_glob_url
 )
@@ -84,39 +83,6 @@ def test_data_glob_url(glob_filter, nfiles, pytestconfig, request):
 
     files = _data_glob_url(path, glob_filter, root=get_bigdata_root())
     assert len(files) == nfiles
-
-
-class TestBaseJWSTTest(BaseJWSTTest):
-    """Test globbing from the class"""
-
-    input_loc = 'infrastructure'
-    ref_loc = ['test_data_glob']
-
-    @pytest.mark.parametrize(
-        'glob_filter, nfiles',
-        [
-            ('*', 1),
-            ('*.txt', 0),
-            ('*.fits', 1)
-        ], ids=['all', 'txt', 'fits']
-    )
-    def test_data_glob_from_class(self, glob_filter, nfiles):
-        """Test data globbing
-
-        Ensure glob gets the right files.
-
-        Parameters
-        ----------
-        glob_filter: str
-            The `glob`-like filter to use.
-
-        nfiles: [int[,...]]
-            Number of files expected to be returned.
-            List because the number can change depending on whether
-            url-based artifactory location or local.
-        """
-        files = self.data_glob('test_data_glob', glob=glob_filter)
-        assert len(files) == nfiles
 
 
 def test_submodules_can_be_imported():

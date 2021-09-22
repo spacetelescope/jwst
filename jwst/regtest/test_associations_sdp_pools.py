@@ -10,8 +10,7 @@ from jwst.associations.lib.diff import (
     compare_asn_files,
 )
 from jwst.associations.main import Main as asn_generate
-
-from jwst.regtest.sdp_pools_source import SDPPoolsSource
+from jwst.lib.file_utils import pushdir
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -104,52 +103,43 @@ SPECIAL_POOLS = {
 # #####
 # Tests
 # #####
-class TestSDPPools(SDPPoolsSource):
-    """Test creation of association from SDP-created pools"""
+@pytest.mark.filterwarnings('error')
+def test_against_standard(sdpdata_module, pool_path, slow):
+    """Compare a generated association against a standard
 
-    @pytest.mark.filterwarnings('error')
-    def test_against_standard(self, pool_path, slow):
-        """Compare a generated association against a standard
+    Success is when no other AssertionError occurs.
+    """
 
-        Success is when no other AssertionError occurs.
-        """
+    # Parse pool name
+    pool = Path(pool_path).stem
+    proposal, version_id = pool_regex.match(pool).group('proposal', 'versionid')
+    special = SPECIAL_POOLS.get(pool, SPECIAL_DEFAULT)
 
-        # Parse pool name
-        pool = Path(pool_path).stem
-        proposal, version_id = pool_regex.match(pool).group('proposal', 'versionid')
-        special = SPECIAL_POOLS.get(pool, SPECIAL_DEFAULT)
+    if special['slow'] and not slow:
+        pytest.skip(f'Pool {pool} requires "--slow" option')
 
-        if special['slow'] and not slow:
-            pytest.skip(f'Pool {pool} requires "--slow" option')
+    # Setup test path
+    cwd = Path(pool)
+    cwd.mkdir()
+    with pushdir(cwd):
 
         # Create the generator running arguments
-        generated_path = Path('generate')
-        generated_path.mkdir()
+        output_path = Path(pool)
+        output_path.mkdir()
+        sdpdata_module.output = str(output_path)
         args = special['args'] + [
-            '-p', str(generated_path),
+            '-p', sdpdata_module.output,
             '--version-id', version_id,
-            self.get_data(pool_path)
+            sdpdata_module.get_data(pool_path)
         ]
 
         # Create the associations
         asn_generate(args)
 
-        # Retrieve the truth files
-        asn_regex = re.compile(
-            r'.+{proposal}.+{version_id}(_[^_]+?_[^_]+?_asn\.json)$'.format(
-                proposal=proposal, version_id=version_id
-            ),
-            flags=re.IGNORECASE
-        )
-        truth_paths = [
-            self.get_data(truth_path)
-            for truth_path in self.truth_paths
-            if asn_regex.match(truth_path)
-        ]
-
-        # Compare the association sets.
+        # Compare to the truth associations.
+        truth_paths = sdpdata_module.truth_paths(pool)
         try:
-            compare_asn_files(generated_path.glob('*.json'), truth_paths)
+            compare_asn_files(output_path.glob('*.json'), truth_paths)
         except AssertionError:
             if special['xfail']:
                 pytest.xfail(special['xfail'])
