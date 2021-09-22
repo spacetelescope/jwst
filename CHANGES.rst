@@ -68,8 +68,7 @@ datamodels
 
 - Fix a bug in wcs_ref_models where SpecwcsModel was failing the SimpleModel
   validation as it contains a list of models rather than one simple model.
-  Also add an on_save setting of self.meta.reftype and
-  add some missing allowed BAND values for MIRI MRS distortion
+  Also add some missing allowed BAND values for MIRI MRS distortion
   and regions files.  Fix an incorrect comment on
   FilteroffsetModel. [#6362]
 

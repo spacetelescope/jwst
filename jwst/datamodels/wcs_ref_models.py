@@ -167,9 +167,6 @@ class SpecwcsModel(_SimpleModel):
     schema_url = "http://stsci.edu/schemas/jwst_datamodel/specwcs.schema"
     reftype = "specwcs"
 
-    def on_save(self, path=None):
-        self.meta.reftype = self.reftype
-
     def validate(self):
         super().validate()
         try:
