@@ -70,7 +70,7 @@ datamodels
   ReferenceFileModel, and add an on_save setting of self.meta.reftype
   Also add some missing allowed BAND values for MIRI MRS distortion
   and regions files, and fix an incorrect comment on
-  FilteroffsetModel.
+  FilteroffsetModel. [#6362]
 
 extract_1d
 ----------
