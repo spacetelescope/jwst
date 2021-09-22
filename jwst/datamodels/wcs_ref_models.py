@@ -52,7 +52,7 @@ class _SimpleModel(ReferenceFileModel):
     def validate(self):
         super().validate()
         try:
-            assert isinstance(self.model, Model)
+            assert isinstance(self.model, Model) or all([isinstance(m, Model) for m in self.model])
             assert self.meta.instrument.name in ["NIRCAM", "NIRSPEC", "MIRI", "TFI", "FGS", "NIRISS"]
         except AssertionError:
             if self._strict_validation:
@@ -154,7 +154,7 @@ class DistortionMRSModel(ReferenceFileModel):
                 warnings.warn(traceback.format_exc(), ValidationWarning)
 
 
-class SpecwcsModel(ReferenceFileModel):
+class SpecwcsModel(_SimpleModel):
     """
     A model for a reference file of type "specwcs".
 
