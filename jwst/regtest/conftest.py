@@ -89,7 +89,9 @@ def generate_artifactory_json(request, artifactory_repos):
     upload_schema_pattern = []
     okify_schema_pattern = []
 
-    rtdata = postmortem(request, 'rtdata') or postmortem(request, 'rtdata_module')
+    rtdata = postmortem(request, 'rtdata') or \
+        postmortem(request, 'rtdata_module') or \
+        postmortem(request, 'sdpdata_module')
     if rtdata:
         try:
             # The _jail fixture from ci_watson sets tmp_path
@@ -121,18 +123,28 @@ def generate_artifactory_json(request, artifactory_repos):
                 json.dump(okify_schema, fd, indent=2)
 
             # Generate an upload JSON file, including the OKify, asdf file
-            upload_schema_pattern.append(rtdata.output)
             upload_schema_pattern.append(os.path.abspath(jsonfile))
             upload_schema_pattern.append(path_asdf)
             upload_schema = generate_upload_schema(upload_schema_pattern,
                                                    rtdata.remote_results_path)
+
+            if rtdata.okify_op == 'file_copy':
+                upload_schema = generate_upload_schema(rtdata.output,
+                                                       rtdata.remote_results_path,
+                                                       schema=upload_schema)
+            elif rtdata.okify_op == 'folder_copy':
+                output = rtdata.output + '/'
+                target = rtdata.remote_results_path + os.path.basename(rtdata.output) + '/'
+                upload_schema = generate_upload_schema(output, target, schema=upload_schema)
+            else:
+                raise RuntimeError(f'Unknown artifactory operation: {rtdata.okify_op}')
 
             jsonfile = os.path.join(cwd, f"{request.node.name}_results.json")
             with open(jsonfile, 'w') as fd:
                 json.dump(upload_schema, fd, indent=2)
 
 
-def generate_upload_schema(pattern, target, recursive=False):
+def generate_upload_schema(pattern, target, recursive=False, schema=None):
     """
     Generate JSON schema for Artifactory upload specfile using JFROG.
 
@@ -155,27 +167,28 @@ def generate_upload_schema(pattern, target, recursive=False):
         Specify whether or not to identify files listed in sub-directories
         for uploading.  Default: `False`
 
+    schema : dict
+        Existing schema to append to.
+
     Returns
     -------
     upload_schema : dict
         Dictionary specifying the upload schema
     """
     recursive = repr(recursive).lower()
-
-    if not isinstance(pattern, str):
-        # Populate schema for this test's data
+    if schema is None:
         upload_schema = {"files": []}
-
-        for p in pattern:
-            temp_schema = copy.deepcopy(UPLOAD_SCHEMA["files"][0])
-            temp_schema.update({"pattern": p, "target": target,
-                                "recursive": recursive})
-            upload_schema["files"].append(temp_schema)
     else:
-        # Populate schema for this test's data
-        upload_schema = copy.deepcopy(UPLOAD_SCHEMA)
-        upload_schema["files"][0].update({"pattern": pattern, "target": target,
-                                          "recursive": recursive})
+        upload_schema = copy.deepcopy(schema)
+    if isinstance(pattern, str):
+        pattern = [pattern]
+
+    for p in pattern:
+        temp_schema = copy.deepcopy(UPLOAD_SCHEMA["files"][0])
+        temp_schema.update({"pattern": p, "target": target,
+                            "recursive": recursive})
+        upload_schema["files"].append(temp_schema)
+
     return upload_schema
 
 
@@ -194,6 +207,18 @@ def rtdata(artifactory_repos, envopt, request, _jail):
 @pytest.fixture(scope='module')
 def rtdata_module(artifactory_repos, envopt, request, jail):
     return _rtdata_fixture_implementation(artifactory_repos, envopt, request)
+
+
+def _sdpdata_fixture_implementation(artifactory_repos, envopt, request):
+    """Provides the RemoteResource class"""
+    inputs_root, results_root = artifactory_repos
+    return SDPPoolsSource(env=envopt, inputs_root=inputs_root,
+                          results_root=results_root)
+
+
+@pytest.fixture(scope='module')
+def sdpdata_module(artifactory_repos, envopt, request, jail):
+    return _sdpdata_fixture_implementation(artifactory_repos, envopt, request)
 
 
 @pytest.fixture
@@ -304,25 +329,46 @@ def standard_pool(request):
 def pytest_generate_tests(metafunc):
     """Prefetch and parametrize a set of test pools"""
     if 'pool_path' in metafunc.fixturenames:
-        try:
-            SDPPoolsSource.inputs_root = metafunc.config.getini('inputs_root')[0]
-            SDPPoolsSource.results_root = metafunc.config.getini('results_root')[0]
-            SDPPoolsSource.env = metafunc.config.getoption('env')
-        except IndexError:
-            SDPPoolsSource.inputs_root = "jwst-pipeline"
-            SDPPoolsSource.results_root = "jwst-pipeline-results"
-            SDPPoolsSource.env = "dev"
+        pool_path_fixture(metafunc)
 
-        pools = SDPPoolsSource()
 
-        try:
-            pool_paths = pools.pool_paths
-        except Exception:
-            pool_paths = []
+def pool_path_fixture(metafunc):
+    """Define the pool_path fixture
 
-        ids = [
-            Path(pool_path).stem
-            for pool_path in pool_paths
-        ]
+    This is needed to build a list during test colleciton for the test
+    `jwst.regtest.test_associations_sdp_pools.test_against_standard`
 
-        metafunc.parametrize('pool_path', pool_paths, ids=ids)
+    Parameters
+    ----------
+    metafunc: pytest.Metafunc
+        The pytest test generation inspection object.
+    """
+    # If doing "big data" regressions has not been requested,
+    # do not invoke any tests.
+    if not metafunc.config.getoption('bigdata'):
+        skip = pytest.skip('For "pool_path" fixtures, option "--bigdata" was not specified.')
+        metafunc.parametrize('pool_path', skip)
+        return
+
+    try:
+        inputs_root = metafunc.config.getini('inputs_root')[0]
+        results_root = metafunc.config.getini('results_root')[0]
+        env = metafunc.config.getoption('env')
+    except IndexError:
+        inputs_root = "jwst-pipeline"
+        results_root = "jwst-pipeline-results"
+        env = "dev"
+
+    pools = SDPPoolsSource(env=env, inputs_root=inputs_root, results_root=results_root)
+
+    try:
+        pool_paths = pools.pool_paths
+    except Exception:
+        pool_paths = []
+
+    ids = [
+        Path(pool_path).stem
+        for pool_path in pool_paths
+    ]
+
+    metafunc.parametrize('pool_path', pool_paths, ids=ids)
