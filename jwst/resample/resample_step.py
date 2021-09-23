@@ -35,7 +35,14 @@ class ResampleStep(Step):
         kernel = string(default='square')
         fillval = string(default='INDEF')
         weight_type = option('ivm', 'exptime', default='ivm')
-        pixel_scale_ratio = float(default=1.0) # Ratio of output to input pixel scale
+        outnx = integer(min=1, default=None)
+        outny = integer(min=1, default=None)
+        crpix1 = float(default=None)
+        crpix2 = float(default=None)
+        crval1 = float(default=None)
+        crval2 = float(default=None)
+        rotation = float(default=None)
+        pixel_scale_ratio = float(default=1.0) # Ratio of input to output pixel scale
         single = boolean(default=False)
         blendheaders = boolean(default=True)
         allowed_memory = float(default=None)  # Fraction of memory to use for the combined image.
@@ -73,6 +80,7 @@ class ResampleStep(Step):
         if ref_filename != 'N/A':
             self.log.info('Drizpars reference file: {}'.format(ref_filename))
             kwargs = self.get_drizpars(ref_filename, input_models)
+
         else:
             # If there is no drizpars reffile
             self.log.info("No DIRZPARS reffile")
@@ -83,6 +91,14 @@ class ResampleStep(Step):
         if self.weight_type == 'exptime':
             self.log.warning("Use of EXPTIME weighting will result in incorrect")
             self.log.warning("propagated errors in the resampled product")
+
+        # Custom output WCS parameters.
+        # Modify get_drizpars if any of these get into reference files:
+        kwargs['ref_wcs'] = None  # TODO: add mechanism of specifying a ref WCS
+        kwargs['out_shape'] = _check_double_pars(self.outny, self.outnx, 'outnx(y)')
+        kwargs['crpix'] = _check_double_pars(self.crpix1, self.crpix2, 'crpix1(2)')
+        kwargs['crval'] = _check_double_pars(self.crval1, self.crval2, 'crval1(2)')
+        kwargs['rotation'] = self.rotation
 
         # Call the resampling routine
         resamp = resample.ResampleData(input_models, output=output, **kwargs)
@@ -226,3 +242,13 @@ class ResampleStep(Step):
                 log.info('  setting: %s=%s', k, repr(v))
 
         return kwargs
+
+
+def _check_double_pars(val1, val2, name):
+    n = (0 if val1 is None else 1) + (0 if val2 is None else 1)
+    if n == 0:
+        return None
+    elif n == 2:
+        return [val1, val2]
+    else:
+        raise ValueError(f"Both '{name}' values must be either None or not None.")

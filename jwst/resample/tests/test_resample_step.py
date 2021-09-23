@@ -1,3 +1,5 @@
+from itertools import product
+
 from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
 import numpy as np
@@ -435,3 +437,37 @@ def test_resample_undefined_variance(nircam_rate, shape):
 
     c = ModelContainer([im])
     ResampleStep.call(c, blendheaders=False)
+
+
+@pytest.mark.parametrize('ratio, rotation, crpix, crval, shape', (
+    x for x in product(
+        [0.7, 1.2],
+        [0, 15, 135],
+        [(256, 488), (700, 124)],
+        [(50, 77), (250, -30)],
+        [(1100, 1205)]
+    )
+))
+def test_custom_rwcs_resample_imaging(nircam_rate, ratio, rotation, crpix, crval, shape):
+    im = AssignWcsStep.call(nircam_rate, sip_approx=False)
+    im.data += 5
+    result = ResampleStep.call(
+        im,
+        outnx=shape[1], outny=shape[0],
+        crpix1=crpix[0], crpix2=crpix[1],
+        crval1=crval[0], crval2=crval[1],
+        rotation=rotation,
+        pixel_scale_ratio=ratio
+    )
+
+    t = result.meta.wcs.forward_transform
+
+    pc = t['pc_rotation_matrix'].matrix
+    orientat = np.rad2deg(np.arctan2(pc[0, 1], pc[1, 1]))
+    assert np.allclose(rotation, orientat)
+
+    assert np.allclose((t['crpix1'], t['crpix2']), ratio)
+
+    assert np.allclose(t(*crpix), crval)
+
+    assert result.data.shape == shape

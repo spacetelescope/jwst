@@ -65,9 +65,22 @@ class ResampleData:
         self.weight_type = weight_type
         self.good_bits = good_bits
 
+        ref_wcs = kwargs['ref_wcs']
+        out_shape = kwargs['out_shape']
+        crpix = kwargs['crpix']
+        crval = kwargs['crval']
+        rotation = kwargs['rotation']
+
         # Define output WCS based on all inputs, including a reference WCS
-        self.output_wcs = resample_utils.make_output_wcs(self.input_models,
-                                                         pscale_ratio=self.pscale_ratio)
+        self.output_wcs = resample_utils.make_output_wcs(
+            self.input_models,
+            ref_wcs=ref_wcs,
+            pscale_ratio=self.pscale_ratio,
+            rotation=rotation,
+            shape=out_shape,
+            crpix=crpix,
+            crval=crval
+        )
         log.debug('Output mosaic size: {}'.format(self.output_wcs.data_size))
         can_allocate, required_memory = datamodels.util.check_memory_allocation(
             self.output_wcs.data_size, kwargs['allowed_memory'], datamodels.ImageModel
