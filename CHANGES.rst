@@ -69,6 +69,12 @@ datamodels
 - Implement memmap argument when calling ``datamodels.open`` on an ASDF
   file. [#6327]
 
+- Fix a bug in wcs_ref_models where SpecwcsModel was failing the SimpleModel
+  validation as it contains a list of models rather than one simple model.
+  Also add some missing allowed BAND values for MIRI MRS distortion
+  and regions files.  Fix an incorrect comment on
+  FilteroffsetModel. [#6362]
+
 extract_1d
 ----------
 
