@@ -382,7 +382,7 @@ def test_build_interpolated_output_wcs(miri_rate_pair):
 
     # Make sure the output slit size is larger than the input slit size
     # for this nodded data
-    assert driz.data_size[1] > ra.shape[1]
+    assert output_wcs.array_shape[1] > ra.shape[1]
 
 
 def test_wcs_keywords(nircam_rate):

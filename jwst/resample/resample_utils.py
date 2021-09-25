@@ -77,12 +77,9 @@ def make_output_wcs(input_models, ref_wcs=None,
         crval=crval
     )
 
-    output_wcs.data_size = tuple(output_wcs.array_shape)
-
     # Check that the output data shape has no zero length dimensions
-    if not np.product(output_wcs.data_size):
-        raise ValueError("Invalid output frame shape: "
-                         "{}".format(output_wcs.data_size))
+    if not np.product(output_wcs.array_shape):
+        raise ValueError(f"Invalid output frame shape: {tuple(output_wcs.array_shape)}")
 
     return output_wcs
 

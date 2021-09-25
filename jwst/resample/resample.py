@@ -65,11 +65,11 @@ class ResampleData:
         self.weight_type = weight_type
         self.good_bits = good_bits
 
-        ref_wcs = kwargs['ref_wcs']
-        out_shape = kwargs['out_shape']
-        crpix = kwargs['crpix']
-        crval = kwargs['crval']
-        rotation = kwargs['rotation']
+        ref_wcs = kwargs.get('ref_wcs', None)
+        out_shape = kwargs.get('out_shape', None)
+        crpix = kwargs.get('crpix', None)
+        crval = kwargs.get('crval', None)
+        rotation = kwargs.get('rotation', None)
 
         # Define output WCS based on all inputs, including a reference WCS
         self.output_wcs = resample_utils.make_output_wcs(
@@ -81,17 +81,17 @@ class ResampleData:
             crpix=crpix,
             crval=crval
         )
-        log.debug('Output mosaic size: {}'.format(self.output_wcs.data_size))
+        log.debug('Output mosaic size: {}'.format(self.output_wcs.array_shape))
         can_allocate, required_memory = datamodels.util.check_memory_allocation(
-            self.output_wcs.data_size, kwargs['allowed_memory'], datamodels.ImageModel
+            self.output_wcs.array_shape, kwargs['allowed_memory'], datamodels.ImageModel
         )
         if not can_allocate:
             raise OutputTooLargeError(
-                f'Combined ImageModel size {self.output_wcs.data_size} '
+                f'Combined ImageModel size {self.output_wcs.array_shape} '
                 f'requires {bytes2human(required_memory)}. '
                 f'Model cannot be instantiated.'
             )
-        self.blank_output = datamodels.ImageModel(self.output_wcs.data_size)
+        self.blank_output = datamodels.ImageModel(tuple(self.output_wcs.array_shape))
 
         # update meta data and wcs
         self.blank_output.update(input_models[0])

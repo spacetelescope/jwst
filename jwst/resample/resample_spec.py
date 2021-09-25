@@ -69,7 +69,7 @@ class ResampleSpecData(ResampleData):
             self.output_wcs = self.build_interpolated_output_wcs()
         else:
             self.output_wcs = self.build_nirspec_lamp_output_wcs()
-        self.blank_output = datamodels.SlitModel(self.data_size)
+        self.blank_output = datamodels.SlitModel(tuple(self.output_wcs.array_shape))
         self.blank_output.update(self.input_models[0])
         self.blank_output.meta.wcs = self.output_wcs
         self.output_models = datamodels.ModelContainer()
@@ -311,8 +311,9 @@ class ResampleSpecData(ResampleData):
         output_array_size[spectral_axis] = int(np.ceil(len(wavelength_array) / self.pscale_ratio))
         output_array_size[spatial_axis] = int(np.ceil(x_size / self.pscale_ratio))
         # turn the size into a numpy shape in (y, x) order
-        self.data_size = tuple(output_array_size[::-1])
-        bounding_box = resample_utils.wcs_bbox_from_shape(self.data_size)
+        output_wcs.array_shape = output_array_size[::-1]
+        output_wcs.pixel_shape = output_array_size
+        bounding_box = resample_utils.wcs_bbox_from_shape(output_array_size[::-1])
         output_wcs.bounding_box = bounding_box
 
         return output_wcs
@@ -413,8 +414,9 @@ class ResampleSpecData(ResampleData):
         x_size = len(x_msa_array)
         output_array_size[spatial_axis] = int(np.ceil(x_size / self.pscale_ratio))
         # turn the size into a numpy shape in (y, x) order
-        self.data_size = tuple(output_array_size[::-1])
-        bounding_box = resample_utils.wcs_bbox_from_shape(self.data_size)
+        output_wcs.array_shape = output_array_size[::-1]
+        output_wcs.pixel_shape = output_array_size
+        bounding_box = resample_utils.wcs_bbox_from_shape(output_array_size[::-1])
         output_wcs.bounding_box = bounding_box
 
         return output_wcs
