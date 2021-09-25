@@ -35,12 +35,9 @@ class ResampleStep(Step):
         kernel = string(default='square')
         fillval = string(default='INDEF')
         weight_type = option('ivm', 'exptime', default='ivm')
-        outnx = integer(min=1, default=None)
-        outny = integer(min=1, default=None)
-        crpix1 = float(default=None)
-        crpix2 = float(default=None)
-        crval1 = float(default=None)
-        crval2 = float(default=None)
+        output_shape = int_list(min=2, max=2, default=None)  # [y, x] - numpy convention
+        crpix = float_list(min=2, max=2, default=None)
+        crval = float_list(min=2, max=2, default=None)
         rotation = float(default=None)
         pixel_scale_ratio = float(default=1.0) # Ratio of input to output pixel scale
         single = boolean(default=False)
@@ -95,9 +92,10 @@ class ResampleStep(Step):
         # Custom output WCS parameters.
         # Modify get_drizpars if any of these get into reference files:
         kwargs['ref_wcs'] = None  # TODO: add mechanism of specifying a ref WCS
-        kwargs['out_shape'] = _check_double_pars(self.outny, self.outnx, 'outnx(y)')
-        kwargs['crpix'] = _check_double_pars(self.crpix1, self.crpix2, 'crpix1(2)')
-        kwargs['crval'] = _check_double_pars(self.crval1, self.crval2, 'crval1(2)')
+        kwargs['out_shape'] = _check_list_pars(self.output_shape, 'output_shape',
+                                               min_vals=[1, 1])
+        kwargs['crpix'] = _check_list_pars(self.crpix, 'crpix')
+        kwargs['crval'] = _check_list_pars(self.crval, 'crval')
         kwargs['rotation'] = self.rotation
 
         # Call the resampling routine
@@ -244,11 +242,17 @@ class ResampleStep(Step):
         return kwargs
 
 
-def _check_double_pars(val1, val2, name):
-    n = (0 if val1 is None else 1) + (0 if val2 is None else 1)
-    if n == 0:
+def _check_list_pars(vals, name, min_vals=None):
+    if vals is None:
         return None
-    elif n == 2:
-        return [val1, val2]
+    if len(vals) != 2:
+        raise ValueError(f"List '{name}' must have exactly two elements.")
+    n = sum(x is None for x in vals)
+    if n == 2:
+        return None
+    elif n == 0:
+        if min_vals and sum(x >= y for x, y in zip(vals, min_vals)) != 2:
+            raise ValueError(f"'{name}' values must be larger or equal to {list(min_vals)}")
+        return list(vals)
     else:
         raise ValueError(f"Both '{name}' values must be either None or not None.")
