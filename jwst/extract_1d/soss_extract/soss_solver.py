@@ -261,8 +261,7 @@ def transform_image(angle, xshift, yshift, image, cenx=1024, ceny=50):
     return image_rot
 
 
-def apply_transform(simple_transform, ref_map, oversample, pad, native=True,
-                    norm=False):
+def apply_transform(simple_transform, ref_map, oversample, pad, native=True):
     """Apply the transformation found by solve_transform() to a 2D reference map.
 
     :param simple_transform: The transformation parameters returned by
@@ -273,17 +272,14 @@ def apply_transform(simple_transform, ref_map, oversample, pad, native=True,
     :param pad: The padding (in native pixels) on the reference map.
     :param native: If True bin down to native pixel sizes and remove padding.
         Default is True
-    :param norm: If True normalize columns to 1, used for trace profile
-        reference maps. Default is False.
 
     :type simple_transform: Tuple, List, Array
     :type ref_map: array[float]
     :type oversample: int
     :type pad: int
     :type native: bool
-    :type norm: bool
 
-    :returns: trans_maps - the ref_maps after having the transformation applied.
+    :returns: trans_map - the ref_map after having the transformation applied.
     :rtype: array[float]
     """
 
@@ -298,14 +294,11 @@ def apply_transform(simple_transform, ref_map, oversample, pad, native=True,
     cenx = ovs*(pad + 1024)
     ceny = ovs*(pad + 50)
 
-    # Set NaN pixels to zero - the rotation doesn't handle NaNs well.
-    fill_value = np.nanmin(ref_map)
-    ref_map[np.isnan(ref_map)] = fill_value
-
     # Apply the transformation to the reference map.
     trans_map = transform_image(-angle, xshift, yshift, ref_map, cenx, ceny)
 
     if native:
+
         # Bin the transformed map down to native resolution.
         nrows, ncols = trans_map.shape
         trans_map = trans_map.reshape(nrows//ovs, ovs, ncols//ovs, ovs)
@@ -314,15 +307,83 @@ def apply_transform(simple_transform, ref_map, oversample, pad, native=True,
         # Remove the padding.
         trans_map = trans_map[pad:-pad, pad:-pad]
 
+    return trans_map
+
+
+def transform_wavemap(simple_transform, wavemap, oversample, pad, native=True):
+    """Apply the transformation found by solve_transform() to a 2D reference map.
+
+    :param simple_transform: The transformation parameters returned by
+        solve_transform().
+    :param wavemap: A reference wavelength map.
+    :param oversample: The oversampling factor the reference map.
+    :param pad: The padding (in native pixels) on the reference map.
+    :param native: If True bin down to native pixel sizes and remove padding.
+        Default is True
+
+    :type simple_transform: Tuple, List, Array
+    :type wavemap: array[float]
+    :type oversample: int
+    :type pad: int
+    :type native: bool
+
+    :returns: trans_wavemap - the wavemap after having the transformation applied.
+    :rtype: array[float]
+    """
+
+    # Find the minimum and maximum wavelength of the wavemap.
+    minval = np.nanmin(wavemap)
+    maxval = np.nanmax(wavemap)
+
+    # Set NaNs to zero to prevent errors when shifting/rotating.
+    mask = np.isnan(wavemap)
+    wavemap[mask] = 0.
+
+    # Apply the transformation to the wavemap.
+    trans_wavemap = apply_transform(simple_transform, wavemap, oversample, pad, native=native)
+
+    # Set pixels with interpolation artefacts zero by enforcing the original min/max.
+    mask = (trans_wavemap < minval) | (trans_wavemap > maxval)
+    trans_wavemap[mask] = 0
+
+    return trans_wavemap
+
+
+def transform_profile(simple_transform, profile, oversample, pad, native=True, norm=True):
+    """Apply the transformation found by solve_transform() to a 2D reference map.
+
+    :param simple_transform: The transformation parameters returned by
+        solve_transform().
+    :param profile: A reference trace profile map.
+    :param oversample: The oversampling factor the reference map.
+    :param pad: The padding (in native pixels) on the reference map.
+    :param native: If True bin down to native pixel sizes and remove padding.
+        Default is True
+    :param norm: If True (re-)normalize columns so they sum to 1, as expected by the engine.
+
+    :type simple_transform: Tuple, List, Array
+    :type profile: array[float]
+    :type oversample: int
+    :type pad: int
+    :type native: bool
+
+    :returns: trans_profile - the trace profile after having the transformation applied.
+    :rtype: array[float]
+    """
+
+    # Apply the transformation to the wavemap.
+    trans_profile = apply_transform(simple_transform, profile, oversample, pad, native=native)
+
     if norm:
+
         # Normalize so that the columns sum to 1.
         with warnings.catch_warnings():
             warnings.simplefilter(action="ignore", category=RuntimeWarning)
-            trans_map = trans_map/np.nansum(trans_map, axis=0)
+            trans_profile = trans_profile/np.nansum(trans_profile, axis=0)
 
-        trans_map[~np.isfinite(trans_map)] = 0.
+        trans_profile[~np.isfinite(trans_profile)] = 0.
 
-    return trans_map
+    return trans_profile
 
 
 def write_to_file(stack, filename):  # TODO function not needed?
