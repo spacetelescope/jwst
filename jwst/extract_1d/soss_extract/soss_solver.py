@@ -4,7 +4,6 @@
 # TODO Theoretically it could be removed entirely, but the way coords and image
 # TODO handle it are different by default (lower-left vs center).
 
-from astropy.io import fits
 import numpy as np
 from scipy.ndimage import shift, rotate
 from scipy.optimize import minimize
@@ -12,6 +11,8 @@ import warnings
 
 from .soss_syscor import aperture_mask
 from .soss_centroids import get_centroids_com
+
+import matplotlib.pyplot as plt
 
 
 def transform_coords(angle, xshift, yshift, xpix, ypix, cenx=1024, ceny=50):
@@ -134,7 +135,7 @@ def _chi_squared(transform, xref_o1, yref_o1, xref_o2, yref_o2,
 
 
 def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2, yref_o2,
-                    halfwidth=30.):
+                    halfwidth=30., verbose=False):
     """Given a science image, determine the centroids and find the simple
     transformation needed to match xcen_ref and ycen_ref to the image.
 
@@ -146,6 +147,7 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2, yref_o2,
     :param yref_o2: a priori expectation of the order 2 trace y-positions.
     :param halfwidth: size of the aperture mask used when extracting the trace
         positions from the data.
+    :param verbose: if True make a diagnostic image of the best-fit transformation.
 
     :type scidata_bkg: array[float]
     :type scimask: array[bool]
@@ -154,6 +156,7 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2, yref_o2,
     :type xref_o2: array[float]
     :type yref_o2: array[float]
     :type halfwidth: float
+    :type verbose: bool
 
     :returns: simple_transform - Array containing the angle, x-shift and y-shift
         needed to match xcen_ref and ycen_ref to the image.
@@ -195,6 +198,48 @@ def solve_transform(scidata_bkg, scimask, xref_o1, yref_o1, xref_o2, yref_o2,
     # Find the best-fit transformation.
     result = minimize(_chi_squared, guess_transform, args=min_args)
     simple_transform = result.x
+
+    if verbose:
+
+        # Calculate model positions.
+        ymod_o1 = evaluate_model(xdat_o1, simple_transform, xref_o1, yref_o1)
+        ymod_o2 = evaluate_model(xdat_o2, simple_transform, xref_o2, yref_o2)
+
+        # Make a figure showing the extracted and best-fit trace positions.
+        plt.figure(figsize=(16, 5))
+
+        ax = plt.subplot(221)
+        plt.plot(xdat_o1, ydat_o1, 'o')
+        plt.plot(xdat_o1, ymod_o1)
+
+        plt.xlabel('X [pix]')
+        plt.ylabel('Y [pix]')
+
+        plt.subplot(223, sharex=ax)
+        plt.plot(xdat_o1, ydat_o1 - ymod_o1, 'o')
+
+        plt.ylim(-5, 5)
+
+        plt.xlabel('X [pix]')
+        plt.ylabel('O - C')
+
+        ax = plt.subplot(222)
+        plt.plot(xdat_o2, ydat_o2, 'o')
+        plt.plot(xdat_o2, ymod_o2)
+
+        plt.xlabel('X [pix]')
+        plt.ylabel('Y [pix]')
+
+        plt.subplot(224, sharex=ax)
+        plt.plot(xdat_o2, ydat_o2 - ymod_o2, 'o')
+
+        plt.ylim(-5, 5)
+
+        plt.xlabel('X [pix]')
+        plt.ylabel('O - C')
+
+        plt.tight_layout()
+        plt.show()
 
     return simple_transform
 
