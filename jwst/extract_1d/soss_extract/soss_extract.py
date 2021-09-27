@@ -9,7 +9,7 @@ from ...datamodels.dqflags import pixel
 from astropy.nddata.bitmask import bitfield_to_boolean_mask
 
 from .soss_syscor import make_background_mask, soss_background
-from .soss_solver import solve_transform, apply_transform, transform_coords
+from .soss_solver import solve_transform, transform_wavemap, transform_profile, transform_coords
 from .soss_engine import ExtractionEngine
 from .engine_utils import ThroughputSOSS, WebbKernel
 from .soss_boxextract import get_box_weights, box_extract
@@ -42,8 +42,8 @@ def get_ref_file_args(ref_files, transform):
     ovs = wavemap_ref.map[0].oversampling
     pad = wavemap_ref.map[0].padding
 
-    wavemap_o1 = apply_transform(transform, wavemap_ref.map[0].data, ovs, pad)
-    wavemap_o2 = apply_transform(transform, wavemap_ref.map[1].data, ovs, pad)
+    wavemap_o1 = transform_wavemap(transform, wavemap_ref.map[0].data, ovs, pad)
+    wavemap_o2 = transform_wavemap(transform, wavemap_ref.map[1].data, ovs, pad)
 
     # The spectral profiles for order 1 and 2.
     specprofile_ref = ref_files['specprofile']
@@ -51,8 +51,8 @@ def get_ref_file_args(ref_files, transform):
     pad = specprofile_ref.profile[0].padding
 
     # TODO unclear if norm should be True or False.
-    specprofile_o1 = apply_transform(transform, specprofile_ref.profile[0].data, ovs, pad, norm=False)
-    specprofile_o2 = apply_transform(transform, specprofile_ref.profile[1].data, ovs, pad, norm=False)
+    specprofile_o1 = transform_profile(transform, specprofile_ref.profile[0].data, ovs, pad, norm=False)
+    specprofile_o2 = transform_profile(transform, specprofile_ref.profile[1].data, ovs, pad, norm=False)
 
     # The throughput curves for order 1 and 2.
     spectrace_ref = ref_files['spectrace']

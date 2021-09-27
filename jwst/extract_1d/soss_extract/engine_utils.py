@@ -890,7 +890,7 @@ class WebbKernel:  # TODO could probably be cleaned-up somewhat, may need furthe
         image = np.clip(self.kernels, np.min(self.kernels[self.kernels > 0]), np.inf)
 
         # plot
-        plt.pcolormesh(self.wave_center, self.pixels,  image, norm=LogNorm())
+        plt.pcolormesh(self.wave_center, self.pixels, image, norm=LogNorm(), shading='nearest')
 
         # Labels and others
         plt.colorbar(label="Kernel")
