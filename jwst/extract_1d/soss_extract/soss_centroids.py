@@ -148,18 +148,18 @@ def center_of_mass(column, ypos, halfwidth):
     return ycom
 
 
-def get_centroids_com(image, header=None, mask=None, poly_order=11, verbose=False):
+def get_centroids_com(scidata_bkg, header=None, mask=None, poly_order=11, verbose=False):
     """Determine the x, y coordinates of the trace using a center-of-mass analysis.
     Works for either order if there is no contamination, or for order 1 on a detector
     where the two orders are overlapping.
 
-    :param image: A 2D image of the detector.
+    :param scidata_bkg: A background subtracted observation.
     :param header: The header from one of the SOSS reference files.
     :param mask: A boolean array of the same shape as image. Pixels corresponding to True values will be masked.
     :param poly_order: Order of the polynomial to fit to the extracted trace positions.
     :param verbose: If set True some diagnostic plots will be made.
 
-    :type image: array[float]
+    :type scidata_bkg: array[float]
     :type header: astropy.io.fits.Header
     :type mask: array[bool]
     :type poly_order: None or int
@@ -172,23 +172,19 @@ def get_centroids_com(image, header=None, mask=None, poly_order=11, verbose=Fals
 
     # If no mask was given use all pixels.
     if mask is None:
-        mask = np.zeros_like(image, dtype='bool')
+        mask = np.zeros_like(scidata_bkg, dtype='bool')
 
     # Call the script that determines the dimensions of the stack.
-    result = get_image_dim(image, header=header, verbose=verbose)
+    result = get_image_dim(scidata_bkg, header=header, verbose=verbose)
     dimx, dimy, xos, yos, xnative, ynative, padding, refpix_mask = result
 
     # Replace masked pixel values with NaNs.
-    image_masked = np.where(mask | ~refpix_mask, np.nan, image)
-
-    # Compute and subtract the background level of each column.
-    col_bkg = np.nanpercentile(image_masked, 10, axis=0)
-    image_masked_bkg = image_masked - col_bkg
+    scidata_bkg_masked = np.where(mask | ~refpix_mask, np.nan, scidata_bkg)
 
     # Find centroid - first pass, use all pixels in the column.
     # Normalize each column
     with np.errstate(invalid='ignore'):
-        image_norm = image_masked_bkg / np.nanmax(image_masked_bkg, axis=0)
+        scidata_norm = scidata_bkg_masked/np.nanmax(scidata_bkg_masked, axis=0)
 
     # Create 2D Array of pixel positions.
     xpix = np.arange(dimx)
@@ -197,13 +193,13 @@ def get_centroids_com(image, header=None, mask=None, poly_order=11, verbose=Fals
 
     # CoM analysis to find initial positions using all rows.
     with np.errstate(invalid='ignore'):
-        ytrace = np.nansum(image_norm*ygrid, axis=0)/np.nansum(image_norm, axis=0)
+        ytrace = np.nansum(scidata_norm*ygrid, axis=0)/np.nansum(scidata_norm, axis=0)
 
     # Second pass - use a windowed CoM at the previous position.
     halfwidth = 30 * yos
     for icol in range(dimx):
 
-        ycom = center_of_mass(image_norm[:, icol], ytrace[icol], halfwidth)
+        ycom = center_of_mass(scidata_norm[:, icol], ytrace[icol], halfwidth)
 
         # If NaN was returned we are done.
         if not np.isfinite(ycom):
@@ -215,8 +211,8 @@ def get_centroids_com(image, header=None, mask=None, poly_order=11, verbose=Fals
         irow = np.int(np.around(ycom))
         miny = np.int(np.fmax(np.around(ycom) - halfwidth, 0))
         maxy = np.int(np.fmin(np.around(ycom) + halfwidth + 1, dimy))
-        if image_norm[irow, icol] < np.nanmean(image_norm[miny:maxy, icol]):
-            ycom = center_of_mass(image_norm[:, icol], ycom - halfwidth, halfwidth)
+        if scidata_norm[irow, icol] < np.nanmean(scidata_norm[miny:maxy, icol]):
+            ycom = center_of_mass(scidata_norm[:, icol], ycom - halfwidth, halfwidth)
 
         # If NaN was returned or the position is too close to the array edge, use NaN.
         if not np.isfinite(ycom) or (ycom <= 5 * yos) or (ycom >= (ynative - 6) * yos):
@@ -230,7 +226,7 @@ def get_centroids_com(image, header=None, mask=None, poly_order=11, verbose=Fals
     halfwidth = 16 * yos
     for icol in range(dimx):
 
-        ytrace[icol] = center_of_mass(image_norm[:, icol], ytrace[icol], halfwidth)
+        ytrace[icol] = center_of_mass(scidata_norm[:, icol], ytrace[icol], halfwidth)
 
     # Fit the y-positions with a polynomial and use the result as the true y-positions.
     xtrace = np.arange(dimx)
@@ -249,7 +245,7 @@ def get_centroids_com(image, header=None, mask=None, poly_order=11, verbose=Fals
 
     # If verbose visualize the result.
     if verbose is True:
-        _plot_centroid(image_masked, xtrace, ytrace)
+        _plot_centroid(scidata_bkg_masked, xtrace, ytrace)
 
     return xtrace, ytrace, param
 
